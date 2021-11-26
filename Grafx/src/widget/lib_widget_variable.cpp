@@ -170,6 +170,32 @@ Gif_t Gif[APP_NB_GIF_CONST] =
 #endif   // GIF_DEF
 
 //-------------------------------------------------------------------------------------------------
+//  GRAPH Widget
+//-------------------------------------------------------------------------------------------------
+
+#ifdef GRAPH_DEF
+Graph_t Graph[APP_NB_GRAPH_CONST] =
+{
+    #define X_GRAPH(ENUM_ID, SERVICE, SUB_SERVICE, TIMING, POS_X, POS_Y, SIZE_X, SIZE_Y, GRAPH, GRID_COLOR, GRID_X, GRID_Y, SCALE_X, SCALE_Y, SCROLL, OPTION)\
+    {                                                       \
+        {(uint32_t)SERVICE, (uint16_t)SUB_SERVICE, TIMING}, \
+        {{(int16_t)POS_X, (int16_t)POS_Y},                  \
+         {(uint16_t)SIZE_X, (uint16_t)SIZE_Y}},             \
+        GRAPH,                                              \
+        GRID_COLOR,                                         \
+        GRID_X,                                             \
+        GRID_Y,                                             \
+        SCALE_X,                                            \
+        SCALE_Y,                                            \
+        SCROLL,                                             \
+        OPTION_NONE,                                        \
+    },
+    GRAPH_DEF
+    #undef XGRAPH
+};
+#endif   // GRAPH_DEF
+
+//-------------------------------------------------------------------------------------------------
 //  ICON Widget
 //-------------------------------------------------------------------------------------------------
 

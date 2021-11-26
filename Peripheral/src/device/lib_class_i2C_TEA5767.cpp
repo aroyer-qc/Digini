@@ -271,7 +271,7 @@ SystemState_e TEA5767::SetFrequency(TEA5767_Freq_t Frequency)
 //
 //  Name:           FindStations
 //
-//  Parameter(s):   uint8_t             searchLevel
+//  Parameter(s):   uint8_t             SearchLevel
 //                  TEA5767_Freq_t**    pFrequencyArray
 //                  uint16_t*           StationCount    On call this is the max station to scan
 //                                                      Upon return it the number of station found

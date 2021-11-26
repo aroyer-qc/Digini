@@ -130,6 +130,8 @@ void I2C_Driver::Initialize(void)
     NVIC_SetPriority(m_pInfo->EV_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
     NVIC_SetPriority(m_pInfo->ER_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
 
+// TODO use lib_isr ( don't know if comment is relevant)
+
     // ---- Peripheral software reset ----
     pI2Cx->CR1  =  I2C_CR1_SWRST;                                                                   // Peripheral software reset
     pI2Cx->CR1 &= ~I2C_CR1_SWRST;

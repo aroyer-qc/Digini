@@ -1,32 +1,14 @@
-# Prerequisites
+*.depend
+*.elay
+*.eds
+GRBL_Digini_STM32Fx/bin/
+GRBL_Digini_STM32Fx/obj/
 *.d
-
-# Compiled Object files
-*.slo
-*.lo
 *.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+*.elf
+*.hex
+*.map
+/App/lwip
+/original
+/module/lwip
+*.gittp

@@ -5,7 +5,7 @@ GUI and low level library C++
 
 # Digini
 
-Digini is a HAL and GUI library written in embedded C++. It is highly optimized and is also a highly configurable graphic library. GUI is based on Widget/Service concept. What this mean is, your application on his own task loop, and is not aware the GUI even exist. the GUI on his side is running multiple task to display graphic page. Those page are a chain list of widget, and those widget are configured with information about position, graphic to use, service to call to display the proper information and link to other page. all information is processed via variables and/or call to users functions.
+Digini is a HAL and GUI library written in embedded C++. It is highly optimized and is also a highly configurable graphic library. GUI is based on Widget/Service concept. What this mean is, your application is running on his own task loop, and is not aware the GUI even exist. the GUI on its side is running multiple task to display graphic page. Those page are a chain list of widget, and those widget are configured with information about position, graphic to use, service to call to display the proper information and link to other page. all information is processed via variables and/or call to users functions.
 
   ## Note(s):
   

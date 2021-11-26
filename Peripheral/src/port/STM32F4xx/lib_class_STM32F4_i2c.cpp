@@ -176,7 +176,6 @@ void I2C_Driver::Initialize(void)
     NVIC_EnableIRQ(m_pInfo->ER_IRQn);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:      GetStatus
@@ -189,7 +188,7 @@ void I2C_Driver::Initialize(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2C_Driver::GetStatus()
+SystemState_e I2C_Driver::GetStatus(void)
 {
     return m_State;
 }
@@ -472,7 +471,7 @@ void I2C_Driver::Lock(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void I2C_Driver::Unlock()
+void I2C_Driver::Unlock(void)
 {
     nOS_MutexUnlock(&m_Mutex);
 }
@@ -634,5 +633,3 @@ void I2C_Driver::ER_IRQHandler()
 //-------------------------------------------------------------------------------------------------
 
 #endif // USE_I2C_DRIVER == DEF_ENABLED
-
-

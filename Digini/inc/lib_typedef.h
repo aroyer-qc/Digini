@@ -120,7 +120,6 @@ enum SystemState_e
     SYS_DEVICE_NOT_PRESENT,
     SYS_DEVICE_NOT_READY,
     SYS_DMA_ERROR,
-    SYS_ERROR,
     SYS_FAIL,
     SYS_ERROR,
     SYS_RESET,

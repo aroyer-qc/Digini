@@ -36,7 +36,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if USE_I2C_DRIVER == DEF_ENABLED
+#if (USE_I2C_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // typedef Type(s)
@@ -80,8 +80,8 @@ class EEPROM_Driver
 
 //-------------------------------------------------------------------------------------------------
 
-#else // USE_I2C_DRIVER == DEF_ENABLED
+#else // (USE_I2C_DRIVER == DEF_ENABLED)
 
 #pragma message("DIGINI driver for I2C must be enable and configure to use this device driver")
 
-#endif // USE_I2C_DRIVER == DEF_ENABLED
+#endif // (USE_I2C_DRIVER == DEF_ENABLED)

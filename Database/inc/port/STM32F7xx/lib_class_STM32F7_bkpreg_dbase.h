@@ -38,7 +38,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if USE_RTC_DRIVER == DEF_ENABLED
+#if (USE_RTC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // typedef struct(s) and const(s)
@@ -86,4 +86,4 @@ class CBKPREG_DataBase : public CDataBaseInterface
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_RTC_DRIVER == DEF_ENABLED
+#endif // (USE_RTC_DRIVER == DEF_ENABLED)

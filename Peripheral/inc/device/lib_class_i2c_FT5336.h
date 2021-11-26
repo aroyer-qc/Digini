@@ -36,7 +36,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if USE_I2C_DRIVER == DEF_ENABLED
+#if (USE_I2C_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // define(s)
@@ -99,8 +99,8 @@ extern class   PointingDeviceInterface*    PDI_pDriver;
 
 //-------------------------------------------------------------------------------------------------
 
-#else // USE_I2C_DRIVER == DEF_ENABLED
+#else // (USE_I2C_DRIVER == DEF_ENABLED)
 
 #pragma message("DIGINI driver for I2C must be enable and configure to use this device driver")
 
-#endif // USE_I2C_DRIVER == DEF_ENABLED
+#endif // (USE_I2C_DRIVER == DEF_ENABLED)

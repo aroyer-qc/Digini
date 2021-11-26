@@ -33,7 +33,7 @@
 #include "digini_cfg.h"
 #ifdef DIGINI_USE_GRAFX
 #include "lib_grafx.h"
-#include "lib_lcd_driver.h"
+#include "lib_driver.h"
 #include "stm32f7xx.h"
 
 //-------------------------------------------------------------------------------------------------

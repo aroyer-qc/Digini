@@ -35,7 +35,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if USE_QSPI_DRIVER == DEF_ENABLED
+#if (USE_QSPI_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -626,4 +626,4 @@ static uint8_t QSPI_AutoPollingMemReady(QSPI_HandleTypeDef *hqspi, uint32_t Time
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_QSPI_DRIVER == DEF_ENABLED
+#endif // (USE_QSPI_DRIVER == DEF_ENABLED)

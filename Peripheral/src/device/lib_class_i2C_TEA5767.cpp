@@ -141,7 +141,7 @@ SystemState_e TEA5767::Initialize(I2C_Driver* pI2C)
 
 
 
-//    return this->SaveRegisters();
+    return SYS_OK;//this->SaveRegisters();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -283,7 +283,8 @@ SystemState_e TEA5767::SetFrequency(TEA5767_Freq_t Frequency)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::FindStations(uint8_t SearchLevel, TEA5767_Freq_t* pFrequencyArray, uint16_t* pStationCount)
+SystemState_e TEA5767::FindStations(uint8_t SearchLevel, TEA5767_Freq_t** pFrequencyArray, uint16_t* pStationCount)
+//SystemState_e TEA5767::FindStations(uint8_t SearchLevel, TEA5767_Freq_t* pFrequencyArray, uint16_t* pStationCount)
 {
 	SystemState_e  State;
 	uint8_t        Level;

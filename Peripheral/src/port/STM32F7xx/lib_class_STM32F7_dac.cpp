@@ -32,7 +32,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if USE_DAC_DRIVER == DEF_ENABLED
+#if (USE_DAC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 /*
@@ -512,4 +512,4 @@ void CSound::Volume(uint8_t Volume, uint8_t Priority)
 */
 
 
-#endif // USE_DAC_DRIVER == DEF_ENABLED
+#endif // (USE_DAC_DRIVER == DEF_ENABLED)

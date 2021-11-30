@@ -83,47 +83,6 @@
 #endif
 
 
-//-------------------------------------------------------------------------------------------------
-//
-//   Class: CDataBaseInterface
-//
-//
-//   Description:   Class CDataBaseInterface
-//
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Constructor:   CDataBaseInterface
-//
-//   Parameter(s):  None
-//
-//   Description:   Initializes the database
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-CDataBaseInterface::CDataBaseInterface(void)
-{
-     // nothing to do yet
-}
-
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Destructor:    CDataBaseInterface
-//
-//   Description:   Free up any resources if any
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-CDataBaseInterface::~CDataBaseInterface(void)
-{
-    // nothing to do yet
-}
-
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -145,7 +104,7 @@ CDataBaseInterface::~CDataBaseInterface(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CDataBase::CDataBase(void)
+CDataBase::CDataBase()
 {
     // Make sure pool is empty
     for(int i = 0; i < DBASE_INTERFACE_POOL; i++)
@@ -156,22 +115,6 @@ CDataBase::CDataBase(void)
     // Reset Pool Count, no interface present
     m_PoolCount = 0;
 }
-
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Destructor:    CDataBase
-//
-//   Description:   Free up any resources if any
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-CDataBase::~CDataBase(void)
-{
-    // nothing to do yet
-}
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -458,6 +401,7 @@ SystemState_e CDataBase::ForceUpdate(uint16_t Record, uint16_t Number, uint16_t 
 //-------------------------------------------------------------------------------------------------
 void CDataBase::TimerCallBack(void)
 {
+    __asm("nop");
 }
 
 //-------------------------------------------------------------------------------------------------

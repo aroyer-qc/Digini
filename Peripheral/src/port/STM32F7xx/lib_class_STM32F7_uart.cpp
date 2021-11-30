@@ -556,7 +556,7 @@ uint32_t UART_Driver::GetBaudRate(void)
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::ClearAutomaticFlag(void)
 {
-    volatile uint32_t tmpreg;
+    uint32_t tmpreg;
 
     tmpreg = m_pUart->ISR;
     VAR_UNUSED(tmpreg);

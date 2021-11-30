@@ -805,3 +805,5 @@ void SAI_Driver::StopDMA(void)
     CLEAR_BIT(m_pPort->pDMA->CR, DMA_SxCR_EN);
     CLEAR_BIT(m_pPort->pSAI_BlockOut->CR1, SAI_xCR1_DMAEN);
 }
+
+#endif

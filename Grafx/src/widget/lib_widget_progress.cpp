@@ -183,7 +183,7 @@ void CProgress::Draw(ServiceReturn_t* pService)
    #ifdef GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER
     BackLayerToDraw = CONSTRUCTION_BACKGROUND_LAYER;
    #else
-    BackLayerToDraw = BACKEGROUND_DISPLAY_LAYER_0;
+    BackLayerToDraw = BACKGROUND_DISPLAY_LAYER_0;
    #endif
 
     if(SKIN_pTask->IsSkinLoaded() != true)
@@ -223,7 +223,7 @@ void CProgress::Draw(ServiceReturn_t* pService)
 
     if(m_pProgress->Cursor != INVALID_IMAGE)
     {
-        CopyLinear(m_pProgress->Cursor, CursorPos, ALPHA_BLEND);                        // Put cursor if priority is disable
+        myGrafx->CopyLinear(m_pProgress->Cursor, CursorPos, ALPHA_BLEND);                        // Put cursor if priority is disable
     }
 
     if(m_pProgress->Bar != INVALID_IMAGE)
@@ -234,7 +234,7 @@ void CProgress::Draw(ServiceReturn_t* pService)
             {
                 while(m_CursorPos.X != CursorPos.X)
                 {
-                    CopyLinear(m_pProgress->Bar, m_CursorPos, ALPHA_BLEND);
+                    myGrafx->CopyLinear(m_pProgress->Bar, m_CursorPos, ALPHA_BLEND);
                     m_CursorPos.X++;
                 }
             }
@@ -242,7 +242,7 @@ void CProgress::Draw(ServiceReturn_t* pService)
             {
                 while(m_CursorPos.Y != CursorPos.Y)
                 {
-                    CopyLinear(m_pProgress->Bar, m_CursorPos, ALPHA_BLEND);
+                    myGrafx->CopyLinear(m_pProgress->Bar, m_CursorPos, ALPHA_BLEND);
                     m_CursorPos.Y--;
                 }
             }
@@ -281,7 +281,7 @@ void CProgress::DrawOnce(ServiceReturn_t* pService)
 
     if(m_pProgress->Background != INVALID_IMAGE)
     {
-        CopyLinear(m_pProgress->Background, m_pProgress->Box.Pos, ALPHA_BLEND);
+        myGrafx->CopyLinear(m_pProgress->Background, m_pProgress->Box.Pos, ALPHA_BLEND);
     }
 
     CLayer::PopDrawing();

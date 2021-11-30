@@ -122,7 +122,7 @@ uint8_t GetXY_Justification(void)
 {
     return Justification;
 }
-
+/*
 //-------------------------------------------------------------------------------------------------
 //
 //   Function Name: GFX_WaitFor_V_Sync
@@ -139,7 +139,7 @@ void WaitFor_V_Sync(void)
     myGrafx->WaitFor_V_Sync();
 }
 #endif
-
+*/
 //-------------------------------------------------------------------------------------------------
 
 #endif // DIGINI_USE_GRAFX

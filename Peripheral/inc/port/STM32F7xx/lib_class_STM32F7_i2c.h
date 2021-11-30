@@ -30,8 +30,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "stm32f7xx.h"
-#include "lib_peripheral_cfg.h"
+#include "lib_io.h"
+#include "lib_typedef.h"
+#include "driver_cfg.h"
+#include "i2c_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -41,6 +43,27 @@
 // typedef struct(s) and enum(s)
 //-------------------------------------------------------------------------------------------------
 
+enum I2C_ID_e
+{
+    #if (I2C_DRIVER_SUPPORT_I2C1 == DEF_ENABLED)
+        DRIVER_I2C1_ID,
+    #endif
+
+    #if (I2C_DRIVER_SUPPORT_I2C2 == DEF_ENABLED)
+        DRIVER_I2C2_ID,
+    #endif
+
+    #if (I2C_DRIVER_SUPPORT_I2C3 == DEF_ENABLED)
+        DRIVER_I2C3_ID,
+    #endif
+
+    #if (I2C_DRIVER_SUPPORT_I2C4 == DEF_ENABLED)
+        DRIVER_I2C4_ID,
+    #endif
+
+    NB_OF_I2C_DRIVER,
+};
+
 struct I2C_Info_t
 {
     I2C_ID_e            I2C_ID;
@@ -48,7 +71,7 @@ struct I2C_Info_t
     IO_ID_e             SCL;
     IO_ID_e             SDA;
     uint32_t            RCC_APB1_En;
-    uint32_t            Speed;
+    uint32_t            Timing;
     uint8_t             PreempPrio;
     IRQn_Type           EV_IRQn;
     IRQn_Type           ER_IRQn;
@@ -68,8 +91,6 @@ class I2C_Driver
         SystemState_e   UnlockFromDevice    (uint8_t Device);       // Unlock I2C from device
         SystemState_e   GetStatus           (void);
 
-//        SystemState_e   ReadRegister        (uint8_t Register, const void* pRxBuffer, size_t RxSize);
-        SystemState_e   ReadRegister        (uint8_t Register, const void* pRxBuffer, size_t RxSize, uint8_t Device);
         SystemState_e   Transfer            (uint32_t Address, uint32_t AddressSize, const void* pTxBuffer, size_t TxSize, const void* pRxBuffer, size_t RxSize);
         SystemState_e   Transfer            (uint32_t Address, uint32_t AddressSize, const void* pTxBuffer, size_t TxSize, const void* pRxBuffer, size_t RxSize, uint8_t Device);
         SystemState_e   Write               (const void* pBuffer, size_t Size, uint8_t Device);
@@ -83,6 +104,8 @@ class I2C_Driver
 
     private:
 
+        void            ClearBus            (void);
+        uint32_t        CalculateBitMask    (uint8_t Mask, uint16_t BitConfig);
         void            Lock                (void);
         void            Unlock              (void);
 
@@ -108,7 +131,7 @@ class I2C_Driver
 };
 
 //-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
+// constant data
 //-------------------------------------------------------------------------------------------------
 
 #include "i2c_var.h"

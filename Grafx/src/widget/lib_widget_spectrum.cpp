@@ -165,7 +165,7 @@ void CSpectrum::Draw(ServiceReturn_t* pService)
     PosX        = m_pSpectrum->Box.Pos.X;
 
     CLayer::SetColor(TRANSPARENT);
-    DrawRectangle(&m_pSpectrum->Box);
+    myGrafx->DrawRectangle(&m_pSpectrum->Box);
 
     for(int i = 0; i < NumberOfBar; i++)
     {
@@ -176,7 +176,7 @@ void CSpectrum::Draw(ServiceReturn_t* pService)
         Height = ((*(pData + i) * m_DotSize));
         PosY   = m_pSpectrum->Box.Pos.Y;
         PosY  += m_BarSize.Height - Height;
-        CopyLinear(m_BarAddress, PosX, PosY, Width, Height, m_PixelFormat, CLEAR_BLEND);
+        myGrafx->CopyLinear(m_BarAddress, PosX, PosY, Width, Height, m_PixelFormat, CLEAR_BLEND);
     }
 
     CLayer::PopDrawing();

@@ -68,8 +68,6 @@ class I2C_Driver
         SystemState_e   UnlockFromDevice    (uint8_t Device);       // Unlock I2C from device
         SystemState_e   GetStatus           (void);
 
-//        SystemState_e   ReadRegister        (uint8_t Register, const void* pRxBuffer, size_t RxSize);
-//        SystemState_e   ReadRegister        (uint8_t Register, const void* pRxBuffer, size_t RxSize, uint8_t Device);
         SystemState_e   Transfer            (uint32_t Address, uint32_t AddressSize, const void* pTxBuffer, size_t TxSize, const void* pRxBuffer, size_t RxSize);
         SystemState_e   Transfer            (uint32_t Address, uint32_t AddressSize, const void* pTxBuffer, size_t TxSize, const void* pRxBuffer, size_t RxSize, uint8_t Device);
         SystemState_e   Write               (const void* pBuffer, size_t Size, uint8_t Device);

@@ -43,7 +43,7 @@
 
 #include <stdint.h>
 #define STM32F7_RTC_GLOBAL
-#include "lib_class_STM32F4_rtc.h"
+#include "lib_class_STM32F7_rtc.h"
 #undef STM32F7_RTC_GLOBAL
 #include "string.h"
 #include "STM32F7xx.h"

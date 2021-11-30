@@ -30,7 +30,6 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "bsp_cfg.h"
 #include "stm32f7xx.h"
 #include "nOS.h"
 #include "lib_typedef.h"

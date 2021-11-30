@@ -71,7 +71,8 @@ class TEA5767
 
         SystemState_e       SetFrequency            (TEA5767_Freq_t Frequency);
         SystemState_e       GetFrequency            (TEA5767_Freq_t* pFrequency);
-        SystemState_e       FindStations            (uint8_t SearchLevel, TEA5767_Freq_t* pFrequencyArray, uint16_t* pStationCount);
+        SystemState_e       FindStations            (uint8_t SearchLevel, TEA5767_Freq_t** pFrequencyArray, uint16_t* pStationCount);
+//        SystemState_e       FindStations            (uint8_t SearchLevel, TEA5767_Freq_t* pFrequencyArray, uint16_t* pStationCount);
         SystemState_e       SeekUp                  (uint8_t SearchLevel);      // Start seek mode upwards
         SystemState_e       SeekDown                (uint8_t SearchLevel);      // Start seek mode downwards
         SystemState_e       GetRadioInfo            (TEA5767_Info_t *info);

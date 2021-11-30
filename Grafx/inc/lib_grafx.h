@@ -38,7 +38,6 @@
 
 //#ifdef DIGINI_USE_GRAFX
 #include "lib_compression.h"
-#include "widget_cfg.h"
 #include "grafx_cfg.h"
 #include "lib_typedef.h"
 #include "lib_label.h"
@@ -49,10 +48,12 @@
 #include "lib_grafx_enum_x_macro.h"
 #include "menu_link_cfg.h"
 #include "lib_grafx_link_enum.h"
-#include "lib_grafx_link_list.h"
+#include "menu_link_list_cfg.h"
+#include "lib_grafx_link_list_enum.h"
 #include "lib_grafx_page_widget.h"
 #include "menu_cfg.h"
 #include "lib_grafx_link_const.h"
+#include "lib_grafx_link_list_const.h"
 #include "lib_grafx_enum.h"
 #include "lib_grafx_typedef.h"
 #include "lib_class_widget.h"
@@ -70,7 +71,7 @@
 #endif
 
 #include "driver_cfg.h"
-//#include GRAFX_DRIVER_INCLUDE
+#include GRAFX_DRIVER_INCLUDE
 
 #ifdef DIGINI_USE_POINTING_DEVICE
   #include "lib_class_pointing_device_interface.h"

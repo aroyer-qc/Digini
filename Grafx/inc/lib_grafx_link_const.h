@@ -27,26 +27,25 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+// Object
+#define EXPAND_X_LINK_AS_OBJECT(ENUM_ID, OBJECT) OBJECT,
+
+//-------------------------------------------------------------------------------------------------
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef GFX_GLOBAL
-
-  const PageWidget_t* PageWidget[NB_LINK_CONST] =
-  {
-    #ifdef LINK_DEF
-     #define X_LINK(ENUM_ID, OBJECT) OBJECT,
-      LINK_DEF
-     #undef X_LINK
-    #endif
-  };
-
-#else
-
-extern const PageWidget_t* PageWidget[NB_LINK_CONST];
-
-#endif // GFX_GLOBAL
+#ifdef LINK_DEF
+  #ifdef GFX_GLOBAL
+    const PageWidget_t* PageWidget[NB_LINK_CONST] =
+    {
+        LINK_DEF(EXPAND_X_LINK_AS_OBJECT)
+    };
+  #else
+    extern const PageWidget_t* PageWidget[NB_LINK_CONST];
+  #endif // GFX_GLOBAL
+#endif
 
 //-------------------------------------------------------------------------------------------------
-
-

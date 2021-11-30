@@ -72,7 +72,10 @@ Link_e CVirtualHub::Create(PageWidget_t* pPageWidget)
     {
         if(pService->ServiceType == SERVICE_RETURN)
         {
-            Link_e Link = m_pVirtualHub->LinkID[pService->IndexState];
+         //   LinkList_t* pLinkList = &LinkList[m_pVirtualHub->LinkList];
+         //   LinkList[LinkList]
+            // TODO, there is one file missing to to this ...get the link from array of link_e
+            Link_e Link = 0;
             FreeServiceStruct(&pService);
             return Link;                                                // Stop here, useless to continue because we will switch screen
         }
@@ -103,7 +106,9 @@ Link_e CVirtualHub::Refresh(MsgRefresh_t* pMsg)
     {
         if(pService->ServiceType == SERVICE_RETURN)
         {
-            Link_e Link = m_pVirtualHub->LinkID[pService->IndexState];
+           LinkList_e LinkList = m_pVirtualHub->LinkList;
+            // TODO, there is one file missing to to this ...get the link from array of link_e
+            Link_e Link = 0;
             FreeServiceStruct(&pService);
             return Link;                                                // Stop here, useless to continue because we will switch screen
         }

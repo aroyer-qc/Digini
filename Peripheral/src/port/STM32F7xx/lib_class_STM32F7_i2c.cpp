@@ -31,6 +31,8 @@
 #define I2C_DRIVER_GLOBAL
 #include "lib_class_STM32F7_i2c.h"
 #undef  I2C_DRIVER_GLOBAL
+#include "nOS.h"
+#include "lib_macro.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -40,25 +42,24 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define I2C_ADDRESS_7_BITS                          ((uint16_t)0x4000)
-#define I2C_ADDRESS_10_BITS                         ((uint16_t)0xC000)
+//#define I2C_ADDRESS_7_BITS                          ((uint16_t)0x4000)
+//#define I2C_ADDRESS_10_BITS                         ((uint16_t)0xC000)
 
-#define CR1_CLEAR_MASK                              ((uint16_t)0xFBF5)          // I2C registers Masks
-#define FLAG_MASK                                   ((uint32_t)0x00FFFFFF)      // I2C FLAG mask
+//#define CR1_CLEAR_MASK                              ((uint16_t)0xFBF5)          // I2C registers Masks
+//#define FLAG_MASK                                   ((uint32_t)0x00FFFFFF)      // I2C FLAG mask
 #define I2C_TIME_OUT                100                         // 100 Milliseconds
-#define I2C_NO_ACK                                  ((uint32_t)0x00000400)
-#define I2C_EVENT_MASTER_MODE_SELECT                ((uint32_t)0x00030001)      // BUSY, MSL and SB flag
-#define I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED  ((uint32_t)0x00070082)      // BUSY, MSL, ADDR, TXE and TRA flags
-#define I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED     ((uint32_t)0x00030002)      // BUSY, MSL and ADDR flags
-#define I2C_EVENT_MASTER_BYTE_RECEIVED              ((uint32_t)0x00030040)      // BUSY, MSL and RXNE flags
-#define I2C_EVENT_MASTER_BYTE_TRANSMITTING          ((uint32_t)0x00070080)      // TRA, BUSY, MSL, TXE flags
-#define I2C_EVENT_MASTER_BYTE_TRANSMITTED           ((uint32_t)0x00070084)      // TRA, BUSY, MSL, TXE and BTF flags
-#define I2C_DEVICE_READ                             0x01
+//#define I2C_NO_ACK                                  ((uint32_t)0x00000400)
+//#define I2C_EVENT_MASTER_MODE_SELECT                ((uint32_t)0x00030001)      // BUSY, MSL and SB flag
+//#define I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED  ((uint32_t)0x00070082)      // BUSY, MSL, ADDR, TXE and TRA flags
+//#define I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED     ((uint32_t)0x00030002)      // BUSY, MSL and ADDR flags
+//#define I2C_EVENT_MASTER_BYTE_RECEIVED              ((uint32_t)0x00030040)      // BUSY, MSL and RXNE flags
+//#define I2C_EVENT_MASTER_BYTE_TRANSMITTING          ((uint32_t)0x00070080)      // TRA, BUSY, MSL, TXE flags
+//#define I2C_EVENT_MASTER_BYTE_TRANSMITTED           ((uint32_t)0x00070084)      // TRA, BUSY, MSL, TXE and BTF flags
+//#define I2C_DEVICE_READ                             0x01
 
 //-------------------------------------------------------------------------------------------------
 //
 //   Class: I2C_Driver
-//
 //
 //   Description:   Class to handle I2C_Driver
 //
@@ -68,16 +69,18 @@
 //
 //   Constructor:   I2C_Driver
 //
-//   Parameter(s):
-//   Return Value:
+//   Parameter(s):  I2C_ID_e
 //
-//   Description:   Initializes the I2C_ID peripheral according to the specified Parameters
+//   Description:   Initialize the I2Cx peripheral according to the specified Parameters
+//
+//   Note(s):		To use the I2C at 400 KHz (in fast mode), the PCLK1 frequency
+//					(I2C peripheral input clock) must be a multiple of 10 MHz.
 //
 //-------------------------------------------------------------------------------------------------
 I2C_Driver::I2C_Driver(I2C_ID_e I2C_ID)
 {
     m_IsItInitialize = false;
-    m_pInfo          = &I2C_Info[I2C_ID];
+    m_pInfo          = const_cast<I2C_Info_t*>(&I2C_Info[I2C_ID]);
     m_Device         = -1;
     m_State          = SYS_DEVICE_NOT_PRESENT;
 }
@@ -96,18 +99,14 @@ I2C_Driver::I2C_Driver(I2C_ID_e I2C_ID)
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::Initialize(void)
 {
-    uint16_t            Result;
-    uint16_t            Register;
-    uint16_t            FreqRange;
     nOS_Error    Error;
     uint32_t     PriorityGroup;
     I2C_TypeDef*        pI2Cx;
 
-
     if(m_IsItInitialize == false)
     {
         m_IsItInitialize = true;
-        Error = nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
+    	Error = nOS_MutexCreate(&this->m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
         VAR_UNUSED(Error);
     }
 
@@ -125,51 +124,18 @@ void I2C_Driver::Initialize(void)
     IO_PinInit(m_pInfo->SCL);
     IO_PinInit(m_pInfo->SDA);
 
+	// Configure I2C module Frequency
+	// todo use auto calculation instead
+	// m_pInfo->pI2Cx->TIMINGR = m_pInfo->Timing;
+
+ // TODO use lib_isr
     // ---- Configure event interrupt ----
     PriorityGroup = NVIC_GetPriorityGrouping();
     NVIC_SetPriority(m_pInfo->EV_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
     NVIC_SetPriority(m_pInfo->ER_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
 
-// TODO use lib_isr ( don't know if comment is relevant)
-
-    // ---- Peripheral software reset ----
-    pI2Cx->CR1  =  I2C_CR1_SWRST;                                                                   // Peripheral software reset
-    pI2Cx->CR1 &= ~I2C_CR1_SWRST;
-
-    // ---- I2Cx CR2 Configuration ----
-    FreqRange  = (uint16_t)(SYS_APB1_CLOCK_FREQUENCY / 1000000);
-    Register   = pI2Cx->CR2;                                                                        // Get the I2Cx CR2 value
-    Register  &= (uint16_t)~(I2C_CR2_FREQ);                                                         // Clear frequency FREQ[5:0] bits
-    Register  |= FreqRange;
-    pI2Cx->CR2  = Register;                                                                         // Write to I2Cx CR2
-
-    // ---- I2Cx CCR Configuration ----
-    Register = pI2Cx->CCR;
-
-    if(m_pInfo->Speed <= 100000)                                                                    // Configure speed in standard mode
-    {
-        Result = (uint16_t)(SYS_APB1_CLOCK_FREQUENCY / (m_pInfo->Speed << 1));                      // Standard mode speed calculate
-        Result = AbsMin(Result, 4);                                                                 // Test if CCR value is under 0x04
-        Register |= Result;                                                                         // Set speed value for standard mode
-        pI2Cx->TRISE = FreqRange + 1;                                                               // Set Maximum Rise Time for standard mode
-    }
-    else                                                                                            // (m_pInfo->Speed <= 400000) Configure speed in fast mode
-    {                                                                                               // To use the I2C at 400 KHz (in fast mode), the PCLK1 frequency (I2C peripheral input clock) must be a multiple of 10 MHz
-        Result = (uint16_t)(SYS_APB1_CLOCK_FREQUENCY / (m_pInfo->Speed * 3));                       // Fast mode speed calculate: Tlow/Thigh = 2
-
-        if((Result & I2C_CCR_CCR) == 0)                                                             // Test if CCR value is under 0x1
-        {
-            Result |= (uint16_t)0x0001;                                                             // Set minimum allowed value
-        }
-
-        Register |= (Result | I2C_CCR_FS);                                                          // Set speed value and set F/S bit for fast mode
-        pI2Cx->TRISE = (((FreqRange * 300) / 1000) + 1);                                            // Set Maximum Rise Time for fast mode
-    }
-
-    pI2Cx->CCR  = Register;                                                                         // Write to I2Cx CCR
-
     // ---- I2Cx CR1 Configuration ----
-    pI2Cx->CR1 |= I2C_CR1_PE;                                                                       // Enable the selected I2C peripheral
+    pI2Cx->CR1 |= I2C_CR1_PE;                                               // Enable the selected I2C peripheral and Ack
 
     // ---- Enable I2C event interrupt ----
     NVIC_EnableIRQ(m_pInfo->EV_IRQn);
@@ -282,7 +248,9 @@ SystemState_e I2C_Driver::UnlockFromDevice(uint8_t Device)
 //-------------------------------------------------------------------------------------------------
 SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const void* pTxBuffer, size_t TxSize, const void* pRxBuffer, size_t RxSize)
 {
-    nOS_TickCounter TickStart;
+    uint32_t        RegisterCR1;
+    uint32_t        RegisterCR2;
+    nOS_TickCounter TimeOut;
     I2C_TypeDef*    pI2Cx;
 
     if(m_Device != -1)
@@ -292,7 +260,6 @@ SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const
 		m_State = SYS_BUSY;
 
         // Setup I2C transfer record
-		//m_DeviceAddress = Device;
         m_Address     = Address;
         m_AddressSize = AddressSize;
 		m_pTxBuffer     = (uint8_t*)pTxBuffer;
@@ -300,12 +267,40 @@ SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const
 		m_pRxBuffer     = (uint8_t*)pRxBuffer;
         m_RxSize      = (pRxBuffer != nullptr) ? RxSize : 0;   // If RX buffer is null, this make sure size is 0
 
-		// Enable the selected I2C interrupts
-		pI2Cx->CR2 &= ~I2C_CR2_ITBUFEN;
-		pI2Cx->CR2 |= (I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);
+        if((m_TxSize != 0) || (m_AddressSize != 0))
+        {
+            RegisterCR1 = I2C_CR1_PE     |
+                          I2C_CR1_TXIE   |
+                          I2C_CR1_TCIE   |
+                          I2C_CR1_STOPIE;
 
-		// Generate a START condition
-		pI2Cx->CR1 |= I2C_CR1_START;
+            RegisterCR2 = ((m_TxSize + m_AddressSize) << 16)  | // Size of transfer in NBYTE
+                          ((uint32_t)m_Device << 1);            // Device slave address
+
+            if(m_RxSize == 0)                                   // if we have data to receive then IRQ on reload
+            {
+                RegisterCR2 |= I2C_CR2_AUTOEND;                 // STOP condition is automatically sent when NBYTES data are transferred.
+            }
+            else
+            {
+                RegisterCR1 |= I2C_CR1_RXIE;
+            }
+
+            pI2Cx->CR1  = RegisterCR1;
+            pI2Cx->CR2  = RegisterCR2;
+        }
+        else // RX Only
+        {
+            pI2Cx->CR1 = I2C_CR1_PE    |
+                         I2C_CR1_RXIE  |
+                         I2C_CR1_STOPIE;
+            pI2Cx->CR2 = I2C_CR2_AUTOEND   |
+                         I2C_CR2_RD_WRN    |
+                         (m_RxSize << 16)  |
+                         ((uint32_t)m_Device << 1);    // Device slave address
+        }
+
+        pI2Cx->CR2 |= I2C_CR2_START;
 
         // Wait here until I2C transaction is completed or time out
         TimeOut = GetTick();
@@ -317,13 +312,11 @@ SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const
             {
                 // We need to reset module if I2C is jammed or in error
                 this->Initialize();
-				m_State = SYS_ERROR;
-				return SYS_TIME_OUT;
             }
         }
-		while(m_State == SYS_BUSY);
+        while(((pI2Cx->ISR & I2C_ISR_TC) != 1) && (m_State == SYS_BUSY));
 
-		return SYS_READY;
+        return m_State;
     }
 
     return SYS_NOT_LOCK_TO_DEVICE;
@@ -367,7 +360,7 @@ SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const
 //
 //  Parameter(s):   void*           pBuffer
 //                  size_t          Size
-//                  size_t          RxSize
+//
 //  Return:         SystemState_e   State
 //
 //  Description:    writes data to I2C device.
@@ -488,119 +481,75 @@ void I2C_Driver::Unlock(void)
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::EV_IRQHandler()
 {
-    I2C_TypeDef* pI2Cx;
     uint32_t     Status;
+    I2C_TypeDef* pI2Cx;
 
     pI2Cx  = m_pInfo->pI2Cx;
-    Status = ((uint32_t)pI2Cx->SR1 | ((uint32_t)pI2Cx->SR2 << 16)) & FLAG_MASK;
 
-    switch(Status)
+    Status = pI2Cx->ISR;                                            // Get I2C Status
+
+    if(Status & I2C_ISR_ARLO)                                       // --- Master Lost Arbitration ---
     {
-        // ---- Master Mode ----
-        case I2C_EVENT_MASTER_MODE_SELECT:
-        {
-            if((m_TxSize != 0) || (m_AddressSize != 0))
-            {
-                pI2Cx->DR = m_Device;                                   // Send slave address for write
+        m_State  = SYS_ARBITRATION_LOST;                                // Set transfer status as Arbitration Lost
+        pI2Cx->ICR = I2C_ICR_ARLOCF;                                    // Clear Status Flags
             }
-            else
+    else if(Status & I2C_ISR_BERR)                                  // --- Master Start Stop Error ---
             {
-                pI2Cx->DR = m_Device | I2C_DEVICE_READ;                 // Send slave address for read
+        m_State  = SYS_BUS_ERROR;                                       // Set transfer status as Bus Error
+        pI2Cx->ICR = I2C_ICR_BERRCF;                                    // Clear Status Flags
             }
-        }
-        break;
 
-        // ---- Master Transmitter ----
-        case I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED:
+    if(pI2Cx->CR1 & I2C_CR1_TXIE)
         {
-            pI2Cx->CR2 |= I2C_CR2_ITBUFEN;                              // Next we send data buffer, enable buffer interrupt
-        }
-        // Pass through in write so no "break" here
-
-        case I2C_EVENT_MASTER_BYTE_TRANSMITTING:                        // Without BTF
+        if(Status & I2C_ISR_TXE)                                    // ... Master Transmit available ...
         {
             if(m_AddressSize != 0)
             {
-                pI2Cx->DR = *(reinterpret_cast<uint8_t*>(m_Address) + (2 - m_AddressSize));
+                pI2Cx->TXDR = uint8_t(m_Address >> ((m_AddressSize - 1) << 3));
                 m_AddressSize--;
             }
-            else if(m_TxSize != 0)
+            else if(m_TxSize == 0)
             {
-                pI2Cx->DR = *m_pTxBuffer;                               // If TX data available transmit data and continue
-                m_pTxBuffer++;
-                m_TxSize--;
+                pI2Cx->CR1  &= ~I2C_CR1_TXIE;
+                if(m_RxSize != 0)
+            {
+                    pI2Cx->CR2 &= ~I2C_CR2_NBYTES;                     // Flush the NBYTES
+                    pI2Cx->CR2 |= (I2C_CR2_START |
+                                  I2C_CR2_RD_WRN    |
+                                  (m_RxSize << 16));                   // Request a read
             }
                 else
             {
-                pI2Cx->CR2 &= ~I2C_CR2_ITBUFEN;                         // Done sending data before reading data
+                    pI2Cx->CR2 |= I2C_CR2_STOP;
             }
         }
-        break;
-
-        case I2C_EVENT_MASTER_BYTE_TRANSMITTED:
-        {
-            if(m_RxSize != 0)                                           // If was transmitting address bytes before read
+            else
             {
-                pI2Cx->CR1 |= I2C_CR1_START;                            // Generate a START condition to read data
+                pI2Cx->TXDR = *m_pTxBuffer;                            // If TX data available transmit data and continue
+                m_pTxBuffer++;
+                m_TxSize--;
             }
-            else                                                        // If we are done transmitting\A0
-            {
-                pI2Cx->CR1 |= I2C_CR1_STOP;                             // Generate a STOP condition
-                pI2Cx->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);     // Disable the selected I2C interrupts
-                m_State = SYS_READY;
             }
         }
-        break;
 
-        // Master Receiver -----------------------------------------------------
-
-        case I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED:
-        {
-            if(m_RxSize == 1)
+    if(Status & I2C_ISR_TC)
             {
-                pI2Cx->CR1 &= ~I2C_CR1_ACK;                             // Disable the acknowledgement
-                pI2Cx->CR1 |=  I2C_CR1_STOP;                            // Generate a STOP condition
-            }
-
-            pI2Cx->CR2 |= I2C_CR2_ITBUFEN;                              // Next we receive data buffer
+        pI2Cx->CR2 |= I2C_CR2_AUTOEND;
         }
-        break;
 
-        case I2C_EVENT_MASTER_BYTE_RECEIVED:
-        {
-            if(m_RxSize > 0)                                            // If waiting for bytes?
-            {
-                *m_pRxBuffer = (uint8_t)pI2Cx->DR;                      // Store I2Cx received data
-                m_pRxBuffer++;
-                m_RxSize--;
-
-                if(m_RxSize == 1)                                       // One more byte to go?
+    if(pI2Cx->CR1 & I2C_CR1_RXIE)
                 {
-                    pI2Cx->CR1 &= ~I2C_CR1_ACK;                         // Disable the acknowledgment
-                    pI2Cx->CR1 |=  I2C_CR1_STOP;                        // Generate a STOP condition
-                }
-                else if(m_RxSize == 0)                                  // last byte received?
-                {
-                    pI2Cx->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITERREN); // Disable the selected I2C interrupts
-                    m_State = SYS_READY;                                // We're done!
-                }
-            }
-            else                                                        // Not waiting for bytes, not supposed to be here
+        if(Status & I2C_ISR_RXNE)                                   // ... Master Receive data available ...
             {
-                pI2Cx->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);     // Disable the selected I2C interrupts
-                m_State = SYS_READY;                                    // We're done!
+            *m_pRxBuffer++ = pI2Cx->RXDR;
             }
         }
-        break;
 
-        default:                                                        // Not supposed to be here
+    if(Status & I2C_ISR_STOPF)                                      // ... STOP is sent
         {
-            // Reset all flags : Do not modify configuration here
-            // Timeout will be generated
-            Status = pI2Cx->SR1 | pI2Cx->SR2 | pI2Cx->DR;               // Dummy read
-            pI2Cx->SR1 = 0;
-        }
-        break;
+        m_State     = SYS_READY;
+        pI2Cx->CR1 &= ~(uint32_t)I2C_CR1_STOPIE;
+        pI2Cx->ICR  =  I2C_ICR_STOPCF;
     }
 }
 
@@ -615,19 +564,7 @@ void I2C_Driver::EV_IRQHandler()
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::ER_IRQHandler()
 {
-    I2C_TypeDef* pI2Cx;
-    uint32_t     Status;
-
-    pI2Cx  = m_pInfo->pI2Cx;
-    Status = pI2Cx->SR1;
-
-    if((Status & I2C_NO_ACK) != 0)
-    {
-        pI2Cx->CR1 |= I2C_CR1_STOP;
-    }
-
-    Status     = pI2Cx->SR1 | pI2Cx->SR2 | pI2Cx->DR;       // Dummy read
-    pI2Cx->SR1 = 0;                                         // After a  NACK, transfer is done
+    m_Timeout  = 0;
     m_State    = SYS_READY;                                 // We're done!
 }
 

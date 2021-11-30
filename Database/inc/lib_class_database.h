@@ -70,9 +70,7 @@ class CDataBaseInterface
 {
     public:
 
-                                CDataBaseInterface       ();
-                               ~CDataBaseInterface       ();
-
+                                CDataBaseInterface       (){};
         virtual SystemState_e   Initialize               (void* pConfig, size_t ObjectSize)                                          = 0;    // Initialize DataBase
         virtual SystemState_e   Get                      (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)   = 0;    // Read a Record
         virtual SystemState_e   Set                      (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)   = 0;    // Write a Record
@@ -89,7 +87,6 @@ class CDataBase
     public:
 
                                  CDataBase               ();
-                                ~CDataBase               ();
         SystemState_e            RegisterDriver          (CDataBaseInterface* DataBaseInterface);                                       // Register a hardware access database
         SystemState_e            Initialize              (void);                                                                        // Initialize DataBase
         SystemState_e            Get                     (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber = 0); // Read a Record

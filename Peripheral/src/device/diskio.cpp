@@ -183,10 +183,6 @@ extern "C" DSTATUS disk_initialize(uint8_t Device)
 //
 //  Note(s):
 //
-//  Date            Author              Description
-//  -------------   ----------------    -----------------------------------------------------------
-//  Apr 21,  2014   Alain Royer
-//
 //-------------------------------------------------------------------------------------------------
 extern "C" DSTATUS disk_status(uint8_t Device)
 {
@@ -238,12 +234,7 @@ extern "C" DSTATUS disk_status(uint8_t Device)
 //
 //  Description:    Read Sector(s)
 //
-//
 //  Note(s):
-//
-//  Date            Author              Description
-//  -------------   ----------------    -----------------------------------------------------------
-//  Apr 21,  2014   Alain Royer
 //
 //-------------------------------------------------------------------------------------------------
 extern "C" DRESULT disk_read(uint8_t Device, uint8_t* pBuffer, uint32_t Sector, uint16_t Count)
@@ -297,12 +288,7 @@ extern "C" DRESULT disk_read(uint8_t Device, uint8_t* pBuffer, uint32_t Sector, 
 //
 //  Description:    Write Sector(s)
 //
-//
 //  Note(s):
-//
-//  Date            Author              Description
-//  -------------   ----------------    -----------------------------------------------------------
-//  Apr 21,  2014   Alain Royer
 //
 //-------------------------------------------------------------------------------------------------
 #if _USE_WRITE == 1
@@ -358,12 +344,7 @@ extern "C" DRESULT disk_write(uint8_t Device, const uint8_t* pBuffer, uint32_t S
 //
 //  Description:    Miscellaneous Functions
 //
-//
 //  Note(s):
-//
-//  Date            Author              Description
-//  -------------   ----------------    -----------------------------------------------------------
-//  Apr 21,  2014   Alain Royer
 //
 //-------------------------------------------------------------------------------------------------
 extern "C" DRESULT disk_ioctl(uint8_t Device, uint8_t Control, void* pBuffer)
@@ -415,12 +396,7 @@ extern "C" DRESULT disk_ioctl(uint8_t Device, uint8_t Control, void* pBuffer)
 //
 //  Description:    Coded time stamp
 //
-//
 //  Note(s):
-//
-//  Date            Author              Description
-//  -------------   ----------------    -----------------------------------------------------------
-//  Apr 24,  2014   Alain Royer
 //
 //-------------------------------------------------------------------------------------------------
 extern "C" uint32_t get_fattime()

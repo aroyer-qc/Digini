@@ -87,9 +87,6 @@ class CBasicBox : public CWidgetInterface
         void                DrawOnce                    (ServiceReturn_t* pService);
 
         BasicBox_t*         m_pBasicBox;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
-
         Cartesian_t         m_TopLeft;
         Cartesian_t         m_TopRight;
         Cartesian_t         m_BottomLeft;
@@ -106,6 +103,9 @@ class CBasicBox : public CWidgetInterface
         int16_t             m_X_VerLeft;
         int16_t             m_X_VerRight;
         int16_t             m_VerUpTo;
+
+        ServiceEvent_e      m_ServiceState;
+        PageWidget_t*       m_pPageWidget;
 };
 #endif
 

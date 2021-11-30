@@ -461,7 +461,7 @@ struct Terminal_t
 struct VirtualHub_t
 {
     Service_t      Service;
-    Link_e         LinkID[8];
+    LinkList_e     LinkList;
 };
 
 struct VirtualWindow_t

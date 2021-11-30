@@ -193,7 +193,7 @@ void CButton::Draw(ServiceReturn_t* pService)
 
     if(m_pButton->Image.ID_List[pService->IndexState] != INVALID_IMAGE)
     {
-        CopyLinear(m_pButton->Image.ID_List[pService->IndexState], m_pButton->Pos, CLEAR_BLEND);
+        myGrafx->CopyLinear(m_pButton->Image.ID_List[pService->IndexState], m_pButton->Pos, CLEAR_BLEND);
 
         // Need image button for label
         if(m_pButton->Text.Label != INVALID_LABEL)
@@ -205,7 +205,7 @@ void CButton::Draw(ServiceReturn_t* pService)
     // Glyph can be a button
     if(m_pButton->Glyph.ID_List[pService->IndexState] != INVALID_IMAGE)
     {
-        CopyLinear(m_pButton->Glyph.ID_List[pService->IndexState], m_pButton->Glyph.Pos, ALPHA_BLEND);
+        myGrafx->CopyLinear(m_pButton->Glyph.ID_List[pService->IndexState], m_pButton->Glyph.Pos, ALPHA_BLEND);
     }
 
     CLayer::PopDrawing();

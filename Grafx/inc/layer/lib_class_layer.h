@@ -47,16 +47,12 @@ class CLayer
 {
     public:
 
-        // Constructor
                                 CLayer                  (Layer_e          VirtualLayer,
                                                          uint32_t         u32LayerAddress,
                                                          LayerType_e      ActiveOnLayer,
                                                          uint16_t         SizeX,
                                                          uint16_t         SizeY,
                                                          PixelFormat_e    PixelFormat);
-
-        // Destructor
-                               ~CLayer                  ();
 
         // Function
         void                    Clear                   ();

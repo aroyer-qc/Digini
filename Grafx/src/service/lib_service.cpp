@@ -107,7 +107,7 @@ char Buffer[20];   // TODO fix this for needed size by using mem alloc class
 //  Parameter(s):   ServiceEvent_e*  pServiceState
 //  Return:         ServiceReturn_t
 //
-//  Description:    This function is used to display a backgrounf, in a single draw
+//  Description:    This function is used to display a background, in a single draw
 //
 //-------------------------------------------------------------------------------------------------
 static ServiceReturn_t* SERV_BACK(ServiceEvent_e* pServiceState)

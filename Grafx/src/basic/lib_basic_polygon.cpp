@@ -73,7 +73,6 @@ void DrawPolygon(Polygon_t* pPolygon, PolygonMode_e PolygonMode)
     _DrawPolygon(nullptr, 0, Dummy, pPolygon->Pos1, pPolygon->Pos2, pPolygon->Pos3, pPolygon->Pos4, PolygonMode, DUMMY_PIXEL_FORMAT, NO_BLEND);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function Name: DrawPolygon
@@ -96,7 +95,6 @@ void DrawPolygon(Cartesian_t Pos1, Cartesian_t Pos2, Cartesian_t Pos3, Cartesian
     Cartesian_t Dummy = {0};
     _DrawPolygon(nullptr, 0, Dummy, Pos1, Pos2, Pos3, Pos4, PolygonMode, DUMMY_PIXEL_FORMAT, NO_BLEND);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -129,7 +127,6 @@ void DrawPatternPolygon(void*         pSrc,
 {
     _DrawPolygon(pSrc, SrcLineWidth, SrcOffset, Pos1, Pos2, Pos3, Pos4, POLY_FILL, PixelFormat, BlendMode);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -206,7 +203,7 @@ static void _DrawPolygon(void*         pSrc,
         {
             for(i = 0; i < Size; i++)
             {
-                DrawHLine(i + MinY, pMin[i], pMax[i], 1);
+                myGrafx->DrawHLine(i + MinY, pMin[i], pMax[i], 1);
             }
         }
     }
@@ -228,15 +225,13 @@ static void _DrawPolygon(void*         pSrc,
             Address += (pMin[i] - OffsetX);                                                         // + Polygon X Offset
   //Address *= uint32_t(CLayer.GetPixelSize(PixelFormat);                                            // * Pixel Size
             Address += uint32_t(pSrc);                                                                  // + Base address of image
-            CopyLinear((void*)Address, pMin[i], MinY + i, pMax[i] - pMin[i], 1, PixelFormat, BlendMode);
+            myGrafx->CopyLinear((void*)Address, pMin[i], MinY + i, pMax[i] - pMin[i], 1, PixelFormat, BlendMode);
         }
     }
-
 
     //pMemory->Free(GRAFX_pMax);
     //pMemory->Free(GRAFX_pMin);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -270,7 +265,7 @@ static void _DrawLineForPolygonFill(Cartesian_t Pos1, Cartesian_t Pos2, bool IsI
         for(i = Pos1.Y; i != Pos2.Y; ((Pos1.Y < Pos2.Y) ? i++ : i--))
         {
             Offset = i - MinY;
-            if(IsItDraw == true) DrawPixel(Pos1.X, i);
+            if(IsItDraw == true) myGrafx->DrawPixel(Pos1.X, i);
 
             if(Pos1.X < pMin[Offset]) pMin[Offset] = Pos1.X;
             if(Pos1.X > pMax[Offset]) pMax[Offset] = Pos1.X;
@@ -280,10 +275,10 @@ static void _DrawLineForPolygonFill(Cartesian_t Pos1, Cartesian_t Pos2, bool IsI
     {
         if(IsItDraw == true)
         {
-            DrawHLine(Pos1.Y,
-                     (Pos1.X > Pos2.X) ? Pos2.X : Pos1.X,
-                     (Pos1.X > Pos2.X) ? Pos1.X : Pos2.X,
-                     1);
+            myGrafx->DrawHLine(Pos1.Y,
+                              (Pos1.X > Pos2.X) ? Pos2.X : Pos1.X,
+                              (Pos1.X > Pos2.X) ? Pos1.X : Pos2.X,
+                               1);
         }
         Offset = Pos1.Y - MinY;
         if(Pos1.X < pMin[Offset])  pMin[Offset] = Pos1.X;
@@ -329,7 +324,7 @@ static void _DrawLineForPolygonFill(Cartesian_t Pos1, Cartesian_t Pos2, bool IsI
                 if(Pos1.X < pMin[Offset])  pMin[Offset] = Pos1.X;
                 if(Pos1.X > pMax[Offset])  pMax[Offset] = Pos1.X;
 
-                if(IsItDraw == true) DrawPixel(Pos1.X, Pos1.Y);
+                if(IsItDraw == true) myGrafx->DrawPixel(Pos1.X, Pos1.Y);
 
                 if(Error >= 0)
                 {
@@ -350,7 +345,7 @@ static void _DrawLineForPolygonFill(Cartesian_t Pos1, Cartesian_t Pos2, bool IsI
                 if(Pos1.X < pMin[Offset])  pMin[Offset] = Pos1.X;
                 if(Pos1.X > pMax[Offset])  pMax[Offset] = Pos1.X;
 
-                if(IsItDraw == true) DrawPixel(Pos1.X, Pos1.Y);
+                if(IsItDraw == true) myGrafx->DrawPixel(Pos1.X, Pos1.Y);
 
                 if(Error >= 0)
                 {
@@ -363,7 +358,6 @@ static void _DrawLineForPolygonFill(Cartesian_t Pos1, Cartesian_t Pos2, bool IsI
         }
     }
 }
-
 
 //-------------------------------------------------------------------------------------------------
 #endif // DIGINI_USE_GRAFX

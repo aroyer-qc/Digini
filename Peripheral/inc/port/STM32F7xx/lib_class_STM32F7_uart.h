@@ -27,19 +27,6 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "stm32f7xx.h"
-#include "nOS.h"
-#include "lib_typedef.h"
-#include "lib_io.h"
-#include "lib_isr.h"
-#include "lib_dma.h"
-#include "uart_cfg.h"
-#include "driver_cfg.h"
-
-//-------------------------------------------------------------------------------------------------
 
 #if (USE_UART_DRIVER == DEF_ENABLED)
 

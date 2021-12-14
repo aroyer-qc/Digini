@@ -24,21 +24,55 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+//-------------------------------------------------------------------------------------------------
+// Standard header
+//
+#include <stdint.h>
+#include <ctype.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "digini_cfg.h"
+#include <cstddef>
+#include <string.h>
 
+//-------------------------------------------------------------------------------------------------
+// Common configuration header
+//
+#include "clock_cfg.h"
+#include "digini_cfg.h"
+#include "driver_cfg.h"
+#include "bsp_io_def.h"
+#include "app_cfg.h"
+#include "label_cfg.h"
+
+//-------------------------------------------------------------------------------------------------
+// Digini library
+//
+#include "lib_assert.h"
 #include "lib_memory.h"
+#include "lib_class_database.h"
 #include "lib_label.h"
 #include "lib_macro.h"
 #include "lib_define.h"
 #include "lib_typedef.h"
-#include "assert.h"
+#include "lib_string.h"
+#include "lib_CQueue.h"
+#include "lib_utility.h"
 #include "lib_io.h"
+#include "lib_isr.h"
+#include "lib_dma.h"
 
-#include "driver_cfg.h"
+//-------------------------------------------------------------------------------------------------
+// Operating system
+//
+#include "nOS.h"
 
-#if (USE_ADC_DRIVER == DEF_ENABLED)           // TODO
+//-------------------------------------------------------------------------------------------------
+// Driver
+//
+#if (USE_ADC_DRIVER == DEF_ENABLED)
 #include "lib_class_adc.h"
 #endif
 
@@ -47,6 +81,7 @@
 #endif
 
 #if (USE_I2C_DRIVER == DEF_ENABLED)
+#include "i2c_cfg.h"
 #include "lib_class_i2c.h"
 #endif
 
@@ -59,6 +94,7 @@
 #endif
 
 #if (USE_QSPI_DRIVER == DEF_ENABLED)
+ #include "qspi_cfg.h"
  #include "lib_class_qspi.h"
 #endif
 
@@ -66,7 +102,7 @@
 #include "lib_class_rtc.h"
 #endif
 
-#if (USE_SAI_DRIVER == DEF_ENABLED)           // TODO
+#if (USE_SAI_DRIVER == DEF_ENABLED)
 #include "lib_class_sai.h"
 #endif
 
@@ -75,14 +111,17 @@
 #endif
 
 #if (USE_SPI_DRIVER == DEF_ENABLED)
+#include "spi_cfg.h"
 #include "lib_class_spi.h"
 #endif
 
 #if (USE_TIM_DRIVER == DEF_ENABLED)
+#include "tim_cfg.h"
 #include "lib_class_tim.h"
 #endif
 
 #if (USE_UART_DRIVER == DEF_ENABLED)
+#include "uart_cfg.h"
 #include "lib_class_uart.h"
 #endif
 
@@ -90,10 +129,22 @@
 #include "lib_class_usb.h"
 #endif
 
+//-------------------------------------------------------------------------------------------------
+// High level Peripheral
+//
+
+#ifdef DIGINI_USE_EEPROM
+#include "eeprom_cfg.h"
+#include "lib_class_I2C_EEprom.h"
+#endif
+
+
 #ifdef DIGINI_USE_FATFS
 #include "ff.h"
 #include "lib_fatfs_disk.h"
 #endif
+
+#include "lib_grafx.h"
 
 //-------------------------------------------------------------------------------------------------
 // Functions prototypes
@@ -101,8 +152,5 @@
 
 SystemState_e       DIGINI_Initialize       (void);
 SystemState_e       DIGINI_PostInitialize   (void);
-
-void                Delay_mSec              (uint32_t Delay);
-void                Delay_uSec              (uint32_t Delay);
 
 //-------------------------------------------------------------------------------------------------

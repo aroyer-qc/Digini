@@ -87,7 +87,7 @@ void GRAFX_CursorOnCircle(Skin_e Image, Cartesian_t* pPos, uint16_t Radius, uint
         case 3: PosX -= OffX; PosY -= OffY; break;
     }
 
-    CopyLinear(ImageInfo.pPointer, PosX, PosY, ImageInfo.Size.Width, ImageInfo.Size.Width, ImageInfo.PixelFormat, ALPHA_BLEND);
+    myGrafx->CopyLinear(ImageInfo.pPointer, PosX, PosY, ImageInfo.Size.Width, ImageInfo.Size.Width, ImageInfo.PixelFormat, ALPHA_BLEND);
 }
 
 

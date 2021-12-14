@@ -26,6 +26,8 @@
 
 #pragma once
 
+//-------------------------------------------------------------------------------------------------
+
 #ifdef DIGINI_USE_QUAD_SPI_FOR_GRAFX_DATABASE
 
  #define GFX_RAM_DBASE_DEF  X_GFX_RAM_DBASE(  GFX_FREE_RAM_POINTER,    1,                          1,                           sizeof(void*)               )   \

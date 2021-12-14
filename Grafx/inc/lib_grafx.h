@@ -30,21 +30,18 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdarg.h>
-#include "digini_cfg.h"
-
-//#ifdef DIGINI_USE_GRAFX
-#include "lib_compression.h"
+#include "widget_cfg.h"
+#include "color_cfg.h"
 #include "grafx_cfg.h"
-#include "lib_typedef.h"
+
+#ifdef DIGINI_USE_GRAFX
+#include "lib_compression.h"
 #include "lib_label.h"
 #include "lib_grafx_define.h"
 #include "lib_grafx_font.h"
 #include "static_skin_image.h"
 #include "lib_grafx_skin.h"
+#include "grafx_display_layer_cfg.h"
 #include "lib_grafx_enum_x_macro.h"
 #include "menu_link_cfg.h"
 #include "lib_grafx_link_enum.h"
@@ -58,23 +55,25 @@
 #include "lib_grafx_typedef.h"
 #include "lib_class_widget.h"
 #include "lib_widget_variable.h"
-#include "lib_grafx_basic.h"
 #include "lib_grafx_color.h"
 #include "lib_grafx_const.h"
 #include "lib_class_layer.h"
 #include "lib_class_font.h"
 #include "lib_gui_task.h"
 #include "widget_var.h"
+#include "lib_service.h"
+#include "service.h"
 
-#ifdef DIGINI_USE_A_SKIN
+#ifdef GRAFX_USE_A_SKIN
   #include "lib_skin_task.h"
 #endif
 
-#include "driver_cfg.h"
+#include "lib_grafx_driver.h"
 #include GRAFX_DRIVER_INCLUDE
 
-#ifdef DIGINI_USE_POINTING_DEVICE
+#ifdef GRAFX_USE_POINTING_DEVICE
   #include "lib_class_pointing_device_interface.h"
+  #include PDI_DRIVER_INCLUDE
   #include "lib_pdi_task.h"
 #endif
 
@@ -120,7 +119,7 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-//#if defined(DIGINI_USE_POINTING_DEVICE) /* || defined(DIGINI_USE_XXX) */
+//#if defined(GRAFX_USE_POINTING_DEVICE) /* || defined(DIGINI_USE_XXX) */
 struct GRAFX_PostInitSubDriverPtr_t
 {
 /*
@@ -129,9 +128,9 @@ struct GRAFX_PostInitSubDriverPtr_t
     #endif // DIGINI_USE_XXX
 */
 
-  #ifdef DIGINI_USE_POINTING_DEVICE
+  #ifdef GRAFX_USE_POINTING_DEVICE
     void*  PDI_pHardInterface;                  // Communication interface for "Pointing Device Interface" ( I2C, SPI, etc...)
-  #endif // DIGINI_USE_POINTING_DEVICE
+  #endif // GRAFX_USE_POINTING_DEVICE
 
 };
 //#endif
@@ -168,7 +167,7 @@ extern const uint32_t __gfx_qspi_data_base__;           // Pointer to database f
 #endif
 
 
-#if defined(DIGINI_USE_POINTING_DEVICE) /* || defined(DIGINI_USE_XXX) */
+#if defined(GRAFX_USE_POINTING_DEVICE) /* || defined(DIGINI_USE_XXX) */
     extern GRAFX_PostInitSubDriverPtr_t GRAFX_PostInitSubDriverPtr;
 
  #ifdef GFX_GLOBAL
@@ -180,9 +179,9 @@ extern const uint32_t __gfx_qspi_data_base__;           // Pointer to database f
       #endif // DIGINI_USE_XXX
         */
 
-      #ifdef DIGINI_USE_POINTING_DEVICE
+      #ifdef GRAFX_USE_POINTING_DEVICE
         GRAFX_PDI_HARD_INTERFACE,
-      #endif // DIGINI_USE_POINTING_DEVICE
+      #endif // GRAFX_USE_POINTING_DEVICE
     };
  #endif
 #endif
@@ -247,7 +246,7 @@ class GPrintf
         uint16_t            m_OffsetJustY;
 
         // Multi line support
-     // #ifdef DIGINI_USE_MULTI_LINE
+     // #ifdef GRAFX_USE_MULTI_LINE
         uint8_t             m_Line;                                                   // Number of line in the print
         char*               m_pSubLineString  [DIGINI_MAX_PRINT_NUMBER_OF_LINE];      // Pointer on each start of a sub line
         size_t              m_SubLineSizeChar [DIGINI_MAX_PRINT_NUMBER_OF_LINE];      // Size of each line    in caracter
@@ -258,6 +257,6 @@ class GPrintf
 
 //-------------------------------------------------------------------------------------------------
 
-//#endif //DIGINI_USE_GRAFX
+#endif //DIGINI_USE_GRAFX
 
 //-------------------------------------------------------------------------------------------------

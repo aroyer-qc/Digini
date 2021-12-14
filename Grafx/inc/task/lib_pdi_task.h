@@ -30,11 +30,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
-#ifdef DIGINI_USE_POINTING_DEVICE
-#include "lib_grafx.h"
-#include "nOS.h"
+#ifdef GRAFX_USE_POINTING_DEVICE
 
 //-------------------------------------------------------------------------------------------------
 // Global Define(s)
@@ -49,7 +47,7 @@
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
-#define TOUCH_LOOP_DELAY                    10 //BSP_TICK_PER_SECOND / 100
+#define TOUCH_LOOP_DELAY                    10 //SYSTICK_RATE / 100
 #define TOUCH_PRESS_COUNT                   1
 #define TOUCH_SUPERKEY_COUNT                30
 #define TOUCH_TYPEMATIC_PRECOUNT            30
@@ -75,7 +73,7 @@ class PDI_myClassTask
         SystemState_e       Initialize          (PointingDeviceInterface* pDriver, uint16_t SizeX, uint16_t SizeY, uint8_t Orientation);
         SystemState_e       GetState            (void);
 
-      #ifdef DIGINI_USE_PDI_MULTI_EVENT
+      #ifdef GRAFX_USE_PDI_MULTI_EVENT
         ServiceEvent_e      GetGestureID        (void);
       #endif
 
@@ -109,7 +107,7 @@ class PDI_myClassTask
         uint8_t                             m_Orientation;
         uint8_t                             m_EventDetected;                        // Total number of active events detected at last scan
 
-      #ifdef DIGINI_USE_PDI_MULTI_EVENT
+      #ifdef GRAFX_USE_PDI_MULTI_EVENT
         ServiceEvent_e                      m_EventX      [PDI_NUMBER_OF_EVENT];
         ServiceEvent_e                      m_EventY      [PDI_NUMBER_OF_EVENT];
         uint8_t                             m_EventWeight [PDI_NUMBER_OF_EVENT];    // Weight property of events
@@ -142,6 +140,6 @@ extern "C" void     PDI_TaskWrapper     (void* pvParameters);
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // DIGINI_USE_POINTING_DEVICE
+#endif // GRAFX_USE_POINTING_DEVICE
 
 #endif // DIGINI_USE_GRAFX

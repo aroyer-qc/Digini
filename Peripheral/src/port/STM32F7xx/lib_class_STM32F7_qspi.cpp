@@ -29,15 +29,8 @@
 //-------------------------------------------------------------------------------------------------
 
 #define STM32F7_QSPI_GLOBAL
-#include "lib_class_STM32F7_qspi.h"
+#include "lib_digini.h"
 #undef  STM32F7_QSPI_GLOBAL
-#include "lib_STM32F7_dma.h"
-#include "lib_memory.h"
-#include "lib_utility.h"
-#include "lib_define.h"
-#include "lib_macro.h"
-#include "clock_cfg.h"
-
 //-------------------------------------------------------------------------------------------------
 
 #if (USE_QSPI_DRIVER == DEF_ENABLED)

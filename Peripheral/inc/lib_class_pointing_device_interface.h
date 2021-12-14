@@ -30,7 +30,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "driver_cfg.h"
+//#include "driver_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -50,7 +50,7 @@ class PointingDeviceInterface
         virtual SystemState_e   ITStatus                        (void)                      = 0;
         virtual SystemState_e   ClearIT                         (void)                      = 0;
       #endif
-      #ifdef DIGINI_USE_PDI_MULTI_EVENT
+      #ifdef GRAFX_USE_PDI_MULTI_EVENT
         virtual ServiceEvent_e  GetGestureID                    (void)                      = 0;
         virtual void            GetEventInfo                    (uint32_t  EventIdx,
                                                                  uint32_t* pWeight,

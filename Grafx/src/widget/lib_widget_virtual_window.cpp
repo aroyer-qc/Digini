@@ -28,13 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
 #include "widget_cfg.h"
 #ifdef VIRTUAL_WINDOW_DEF
-#include <stdint.h>
-#include "lib_grafx.h"
-#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -145,7 +142,7 @@ void CVirtualWindow::Draw()
       #else
         CLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
       #endif
-        CopyLinear(m_pAddress, &m_pVirtualWindow->Box, m_PixelFormat, CLEAR_BLEND);
+        myGrafx->CopyLinear(m_pAddress, &m_pVirtualWindow->Box, m_PixelFormat, CLEAR_BLEND);
         CLayer::PopDrawing();
     }
 }

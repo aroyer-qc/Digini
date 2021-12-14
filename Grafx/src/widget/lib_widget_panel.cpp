@@ -28,13 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
 #include "widget_cfg.h"
 #ifdef PANEL_DEF
-#include <stdint.h>
-#include "lib_grafx.h"
-#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -76,7 +73,7 @@ Link_e CPanel::Create(PageWidget_t* pPageWidget)
     {
         if(pService->IndexState < SERVICE_ID_STATE_SIZE)                                                // Protect array boundary
         {
-          #ifdef DIGINI_USE_POINTING_DEVICE
+          #ifdef GRAFX_USE_POINTING_DEVICE
             PDI_pTask->CreateZone((EventArea_t*)&m_pPanel->Box, OPTION_TOUCH_RECTANGLE, pPageWidget->ID);  // Create the zone on the touch sense virtual screen
           #endif
             Draw(pService);
@@ -185,13 +182,15 @@ void CPanel::Draw(ServiceReturn_t* pService)
     {
         pService->IndexState++;
     }
+
     m_LastServiceState = m_ServiceState;
 
     if((m_ServiceState == SERVICE_RELEASED) && (m_LastServiceState == SERVICE_RELEASED))
     {
         m_LastServiceState = SERVICE_IDLE;
     }
-    CopyLinear(m_pPanel->Image.ID_List[pService->IndexState], m_pPanel->Box.Pos, CLEAR_BLEND);
+
+    myGrafx->CopyLinear(m_pPanel->Image.ID_List[pService->IndexState], m_pPanel->Box.Pos, CLEAR_BLEND);
     WidgetPrint(&m_pPanel->Text, pService);
     CLayer::PopDrawing();
 }

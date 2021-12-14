@@ -41,13 +41,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
 #define STM32F7_RTC_GLOBAL
-#include "lib_class_STM32F7_rtc.h"
+#include "lib_digini.h"
 #undef STM32F7_RTC_GLOBAL
-#include "string.h"
-#include "STM32F7xx.h"
-#include "lib_utility.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -83,13 +79,13 @@ CRTC::CRTC(nOS_Mutex* pMutex, uint32_t Mode)
     m_pMutex = pMutex;
     // Init power and clock for RTC
     RCC->APB1ENR |=  ( RCC_APB1ENR_PWREN);     // Backup interface & Power interface clock enable
-    PWR->CR   |= PWR_CR_DBP;                                        // RTC register access allowed
+    PWR->CR1   |= PWR_CR1_DBP;                                      // RTC register access allowed
     RCC->BDCR &= uint32_t(~RCC_BDCR_RTCSEL);                        // Clear clock selection
     RCC->BDCR |= Mode;                                              // Set it with argument
     RCC->BDCR |= RCC_BDCR_RTCEN;                                    // RTC clock enable
     if(Mode == RTC_CLOCK_MODE_LSE) RCC->BDCR |= RCC_BDCR_LSEON;     // External 32.768 kHz oscillator ON
     if(Mode == RTC_CLOCK_MODE_LSI) RCC->CSR  |= RCC_CSR_LSION;      // Internal 32 kHz oscillator ON
-    PWR->CR   &= uint32_t(~PWR_CR_DBP);                             // RTC register access blocked
+    PWR->CR1   &= uint32_t(~PWR_CR1_DBP);                           // RTC register access blocked
     UnlockRegister();
     EnterInitMode();
     switch(Mode)
@@ -149,9 +145,9 @@ uint32_t CRTC::GetBackupRegister(uint8_t Register)
 //-------------------------------------------------------------------------------------------------
 void CRTC::SetBackupRegister(uint8_t Register, uint32_t Value)
 {
-    PWR->CR  |= PWR_CR_DBP;
+    PWR->CR1  |= PWR_CR1_DBP;
     *(&RTC->BKP0R + Register) = Value;
-    PWR->CR  &= uint32_t(~PWR_CR_DBP);
+    PWR->CR1  &= uint32_t(~PWR_CR1_DBP);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -345,11 +341,11 @@ SystemState_e CRTC::EnterInitMode()
     m_TimeOut = 10;
     do
     {
-        OS_TaskYield();
+        nOS_Yield();
     }
     while(((RTC->ISR & RTC_ISR_INITF) == 0) && (m_TimeOut != 0));
 
-    if(m_TimeOut == 0) State = TIME_OUT;
+    if(m_TimeOut == 0) State = SYS_TIME_OUT;
     else               State = SYS_READY;
 
     return State;
@@ -456,14 +452,14 @@ void CRTC::LockRegister(void)
 {
     // Write wrong key to relock "Write Protection Register"
     RTC->WPR  = 0x00;
-    PWR->CR  &= uint32_t(~PWR_CR_DBP);
+    PWR->CR1  &= uint32_t(~PWR_CR1_DBP);
 }
 
 
 void CRTC::UnlockRegister(void)
 {
     // Write unlock key to "Write Protection Register"
-    PWR->CR  |= PWR_CR_DBP;
+    PWR->CR1  |= PWR_CR1_DBP;
     RTC->WPR  = 0xCA;
     RTC->WPR  = 0x53;
 }
@@ -541,11 +537,11 @@ SystemState_e CRTC::WaitForSynchro(void)
     m_TimeOut = 10;
     do
     {
-        OS_TaskYield();
+        nOS_Yield();
     }
     while(((RTC->ISR & RTC_ISR_RSF) == 0) && (m_TimeOut != 0));
 
-    if(m_TimeOut == 0) State = TIME_OUT;
+    if(m_TimeOut == 0) State = SYS_TIME_OUT;
     else               State = SYS_READY;
 
     return State;

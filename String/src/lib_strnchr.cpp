@@ -28,9 +28,8 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include "lib_string.h"
-#include "grafx_cfg.h"
+#include "lib_digini.h"
+#ifdef DIGINI_USE_GRAFX    // remove this and use more common define for DIGINI_MAX_PRINT_SIZE
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -68,3 +67,4 @@ char* STR_strnchr(char* pStr, size_t Size, char Chr)
     return pStr;
 }
 
+#endif

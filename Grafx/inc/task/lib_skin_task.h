@@ -30,22 +30,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
-#include "nOS.h"
 #include "ff.h"
-#include "lib_compression.h"
-
-
-//-------------------------------------------------------------------------------------------------
-// Global Define(s)
-//-------------------------------------------------------------------------------------------------
-
-#ifdef LIB_SKIN_TASK_GLOBAL
-  #define LIB_SKIN_TASK_EXTERN
-#else
-  #define LIB_SKIN_TASK_EXTERN extern
-#endif
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -67,13 +54,13 @@ typedef void (* SKIN_PostLoadCallBack_t)           (void);
 class SKIN_myClassTask
 {
     public:
-                      #ifdef DIGINI_USE_LOAD_SKIN
+      #ifdef GRAFX_USE_LOAD_SKIN
                         SKIN_myClassTask            (const char* pDrive, const char* pFileName);
-                      #endif
+      #endif
 
         void            Run                         (void);
         nOS_Error       Initialize                  (void);
-      #ifdef DIGINI_USE_LOAD_SKIN
+      #ifdef GRAFX_USE_LOAD_SKIN
         bool            IsSkinLoaded                (void);
         uint16_t        PercentLoader               (void);
       #endif
@@ -85,7 +72,7 @@ class SKIN_myClassTask
 
     private:
 
-      #ifdef DIGINI_USE_LOAD_SKIN
+      #ifdef GRAFX_USE_LOAD_SKIN
         SystemState_e   Load                        (void);
         SystemState_e   GetImageInfo                (void);
         SystemState_e   DeCompressAllImage          (void);
@@ -105,7 +92,7 @@ class SKIN_myClassTask
         nOS_Thread                                  m_Handle;
         nOS_Stack                                   m_Stack[SKIN_TASK_STACK_SIZE];
 
-      #ifdef DIGINI_USE_LOAD_SKIN
+      #ifdef GRAFX_USE_LOAD_SKIN
         bool                                        m_IsSkinLoaded;
         uint32_t                                    m_TotalToLoad;
         uint32_t                                    m_ReadCount;
@@ -131,10 +118,9 @@ class SKIN_myClassTask
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-
 #ifdef LIB_SKIN_TASK_GLOBAL
-  #ifdef DIGINI_USE_LOAD_SKIN
-                     class   SKIN_myClassTask       SKIN_Task("0:", SKIN_FILENAME);
+  #ifdef GRAFX_USE_LOAD_SKIN
+                     class   SKIN_myClassTask       SKIN_Task("0:", GRAFX_SKIN_FILENAME);
   #else
                      class   SKIN_myClassTask       SKIN_Task;
   #endif

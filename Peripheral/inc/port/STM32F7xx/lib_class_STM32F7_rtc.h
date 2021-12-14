@@ -35,14 +35,6 @@
 #endif
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "nOS.h"
-#include "lib_typedef.h"
-#include "lib_time_typedef.h"
-
-//-------------------------------------------------------------------------------------------------
 // define(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -103,7 +95,7 @@ class CRTC
         nOS_Mutex*              m_pMutex;
         uint32_t                m_TimeOut;
         TimeFormat_e            m_TimeFormat;
-        //  Clock_t                 m_Clock;    use nOS clock def
+        Clock_t                 m_Clock;
         static const uint8_t    m_MonthSize[12];
         static const uint8_t    m_WeekDayTable[12];
         static const uint16_t   m_DaysSoFar[12];

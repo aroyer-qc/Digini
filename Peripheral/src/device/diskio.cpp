@@ -28,18 +28,17 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
-#ifdef DIGINI_USE_FATFS
 #define DISKIO_GLOBAL
-#include "diskio.h"
+#include "lib_digini.h"
 #undef  DISKIO_GLOBAL
+#ifdef DIGINI_USE_FATFS
 
 #ifdef DIGINI_FATFS_USE_USB_KEY
-#include "lib_class_fatfs_usb.h"
+//#include "lib_class_fatfs_usb.h"
 #endif
 
 #ifdef DIGINI_FATFS_USE_SDIO_SD_CARD
-#include "lib_class_sdio.h"
+//#include "lib_class_sdio.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

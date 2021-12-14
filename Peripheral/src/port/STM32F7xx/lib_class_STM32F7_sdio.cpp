@@ -43,15 +43,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
 #define STM32F7_SDIO_GLOBAL
-#include "lib_class_sdio.h"
+#include "lib_digini.h"
 #undef  STM32F7_SDIO_GLOBAL
-#include "lib_dma.h"
-#include "nOS.h"
-#include "stm32f7xx_ll_sdmmc.h"
-#include "string.h"
-#include "lib_io.h"
+#include "stm32f7xx_ll_sdmmc.h"   // to replace this my my stuff
 
 //-------------------------------------------------------------------------------------------------
 

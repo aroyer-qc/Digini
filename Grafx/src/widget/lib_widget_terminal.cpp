@@ -28,13 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
 #include "widget_cfg.h"
 #ifdef TERMINAL_DEF
-#include <stdint.h>
-#include "lib_grafx.h"
-#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -93,13 +90,13 @@ CTerminal::CTerminal(Terminal_t* pTerminal)
 //-------------------------------------------------------------------------------------------------
 Link_e CTerminal::Create(PageWidget_t* pPageWidget)
 {
-  #ifdef DIGINI_USE_POINTING_DEVICE
+  #ifdef GRAFX_USE_POINTING_DEVICE
     EventArea_t      EventArea;
   #endif
 
     m_pPageWidget  = pPageWidget;
     m_ServiceState = SERVICE_START;
-  #ifdef DIGINI_USE_POINTING_DEVICE
+  #ifdef GRAFX_USE_POINTING_DEVICE
     EventArea.Rectangle.Box = m_pTerminal->Box;
     PDI_pTask->CreateZone(&EventArea, m_pTerminal->Options, pPageWidget->ID);       // Create the zone on the touch sense virtual screen
   #endif
@@ -231,7 +228,7 @@ void CTerminal::Draw(ServiceReturn_t* pService)
   #endif
 
     CLayer::SetColor(BLACK);
-    DrawRectangle(&m_pTerminal->Box);
+    myGrafx->DrawRectangle(&m_pTerminal->Box);
 
     CLayer::SetColor(m_pTerminal->TextColor);
     FontDefault.Set(m_pTerminal->Font);

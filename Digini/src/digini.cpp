@@ -32,10 +32,6 @@
 #include "lib_digini.h"
 #undef  DIGINI_GLOBAL
 #include "bsp.h"
-#include "lib_grafx.h"
-#include "lib_class_spi.h"
-//#include "lib_class_usb.h"
-#include "lib_class_sdio.h"
 
 //-------------------------------------------------------------------------------------------------
 // local Class
@@ -125,7 +121,9 @@ SystemState_e DIGINI_Initialize(void)
     DB_Central.RegisterDriver(pDB_Hardware);
    #endif
 
+  #ifdef DIGINI_USE_GRAFX
     GRAFX_Initialize();
+  #endif
 
     return SYS_READY;
 }

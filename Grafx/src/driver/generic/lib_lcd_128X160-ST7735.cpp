@@ -406,7 +406,7 @@ void GrafxDriver::SendCommand(uint8_t Register, uint8_t* pData, uint32_t Size, u
 
     if(Delay > 0)
     {
-        Delay_mSec(Delay);
+        LIB_Delay_mSec(Delay);
     }
 }
 
@@ -441,9 +441,9 @@ void GrafxDriver::Initialize(void* pArg)
 
     m_pSPI->Initialize();                                       // CS(NSS) handle by class
 
-    Delay_mSec(1);                                              // Hold Reset at least 10 uSec
+    LIB_Delay_mSec(1);                                              // Hold Reset at least 10 uSec
     IO_SetPinHigh(IO_ST7735_RESET);
-    Delay_mSec(50);
+    LIB_Delay_mSec(50);
 
     SendCommand(ST7735_SWRESET, nullptr, 0, 50);            // Software reset
 
@@ -1092,18 +1092,18 @@ char ST7735_CheckPosition(unsigned char x, unsigned char y, unsigned char max_y,
 IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_SWRESET);                               // Software reset
 IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(50);
+    LIB_Delay_mSec(50);
 
 IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_SLPOUT);                                // Out Of Sleep
 IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(500);
+    LIB_Delay_mSec(500);
 
 IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_COLMOD);                                // Set color mode
     WriteData(uint8_t(0x05));
 IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_FRMCTR1);           // Frame rate control
@@ -1111,7 +1111,7 @@ IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteData(uint8_t(0x06));               //     6 lines front porch
     WriteData(uint8_t(0x03));               //     3 lines back porch
 IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
       // D7  D6  D5  D4  D3  D2  D1  D0
       // MY  MX  MV  ML RGB  MH   -   -
@@ -1163,7 +1163,7 @@ IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteData(uint8_t(0x02));
   WriteData(uint8_t(0x70));
 IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-  Delay_mSec(10);
+  LIB_Delay_mSec(10);
 
 IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_POWER_CTRL_2);
@@ -1182,7 +1182,7 @@ IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   //WriteData(uint8_t(0x3C));
   //WriteData(uint8_t(0x38));
 IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-  Delay_mSec(10);
+  LIB_Delay_mSec(10);
 
 IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_POWER_CTRL_6);
@@ -1205,7 +1205,7 @@ IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteData(uint8_t(0x1B)); WriteData(uint8_t(0x1A)); WriteData(uint8_t(0x24)); WriteData(uint8_t(0x2B));
   WriteData(uint8_t(0x06)); WriteData(uint8_t(0x06)); WriteData(uint8_t(0x02)); WriteData(uint8_t(0x0F));
 IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-  Delay_mSec(10);
+  LIB_Delay_mSec(10);
 
 IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_CASET);
@@ -1220,12 +1220,12 @@ IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
 IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_NORON);
 IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_DISPON);                                // Main screen turn on
 IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(500);
+    LIB_Delay_mSec(500);
 
 #endif
 
@@ -1236,7 +1236,7 @@ static uint8_t Test[4];
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_SWRESET);                           // Software reset
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(50);
+    LIB_Delay_mSec(50);
 
 
 //IO_SetPinLow(IO_ST7735_CS);
@@ -1264,13 +1264,13 @@ IO_SetPinHigh(IO_ST7735_CS);
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_SLPOUT);                                // Out Of Sleep
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(500);
+    LIB_Delay_mSec(500);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_COLMOD);                                // Set color mode
     WriteData(uint8_t(0x05));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_FRMCTR1);           // Frame rate control - normal Rate = fosc/(1x2+40) * (LINE+2C+2D)
@@ -1281,7 +1281,7 @@ IO_SetPinHigh(IO_ST7735_CS);
     WriteData(uint8_t(0x2C));
     WriteData(uint8_t(0x2D));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_FRMCTR2);           // Frame rate control - idle mode = fosc/(1x2+40) * (LINE+2C+2D)
@@ -1292,7 +1292,7 @@ IO_SetPinHigh(IO_ST7735_CS);
     WriteData(uint8_t(0x2C));
     WriteData(uint8_t(0x2D));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
    WriteCommand(ST7735_FRMCTR3);           // Frame rate control - partial mode = fosc/(1x2+40) * (LINE+2C+2D)
@@ -1306,14 +1306,14 @@ IO_SetPinHigh(IO_ST7735_CS);
     WriteData(uint8_t(0x2C));
     WriteData(uint8_t(0x2D));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_INVCTR);
   WriteData(uint8_t(0x03));
 //  WriteData(uint8_t(0x07));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_POWER_CTRL_1);
@@ -1324,14 +1324,14 @@ IO_SetPinHigh(IO_ST7735_CS);
 //  WriteData(uint8_t(0x02));
 //  WriteData(uint8_t(0x84));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-  Delay_mSec(10);
+  LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_POWER_CTRL_2);
   WriteData(uint8_t(0xC0));
 //  WriteData(uint8_t(0xC5));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_POWER_CTRL_3);
@@ -1340,7 +1340,7 @@ IO_SetPinHigh(IO_ST7735_CS);
 //  WriteData(uint8_t(0x0A));
 //  WriteData(uint8_t(0x00));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_POWER_CTRL_4);
@@ -1349,7 +1349,7 @@ IO_SetPinHigh(IO_ST7735_CS);
 //  WriteData(uint8_t(0x8A));
 //  WriteData(uint8_t(0x2A));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_POWER_CTRL_5);
@@ -1358,18 +1358,18 @@ IO_SetPinHigh(IO_ST7735_CS);
 //  WriteData(uint8_t(0x8A));
 //  WriteData(uint8_t(0xEE));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_VMCTR1);
   WriteData(uint8_t(0x0E));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-  Delay_mSec(10);
+  LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_INVOFF);
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
       // D7  D6  D5  D4  D3  D2  D1  D0
       // MY  MX  MV  ML RGB  MH   -   -
@@ -1404,25 +1404,25 @@ IO_SetPinHigh(IO_ST7735_CS);
     //WriteData(uint8_t(0xC0));
     WriteData(uint8_t(0xC8));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_COLMOD);
     WriteData(uint8_t(0x05));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_CASET);
   WriteData(uint8_t(0x00)); WriteData(uint8_t(0x02)); WriteData(uint8_t(0x00)); WriteData(uint8_t(0x81));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_RASET);
   WriteData(uint8_t(0x00)); WriteData(uint8_t(0x01)); WriteData(uint8_t(0x00)); WriteData(uint8_t(0xA0));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_GMCTRP1);
@@ -1435,7 +1435,7 @@ IO_SetPinHigh(IO_ST7735_CS);
   WriteData(uint32_t(0x392B2529));
   WriteData(uint32_t(0x10030100));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
   WriteCommand(ST7735_GMCTRN1);
@@ -1448,17 +1448,17 @@ IO_SetPinHigh(IO_ST7735_CS);
   WriteData(uint32_t(0x3F372E2E));
   WriteData(uint32_t(0x10020000));
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-  Delay_mSec(10);
+  LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_NORON);
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(10);
+    LIB_Delay_mSec(10);
 
 //IO_SetPinLow(IO_ST7735_CS);				    // Chip enable - active low
     WriteCommand(ST7735_DISPON);                                // Main screen turn on
 //IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-    Delay_mSec(500);
+    LIB_Delay_mSec(500);
 
 #endif
 

@@ -28,10 +28,14 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
-#include "lib_grafx.h"
+
+//-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_LAYER_AS_COLOR_TABLE(ENUM_ID, WORK_LAYER, PIXEL_FORMAT, SIZE_X, SIZE_Y) CLayer(ENUM_ID, 0, WORK_LAYER, SIZE_X, SIZE_Y, PIXEL_FORMAT),
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -42,9 +46,7 @@
 #ifdef LAYER_DEF
 CLayer LayerTable[LAYER_COUNT] =
 {
-  #define X_LAYER(ENUM_ID, WORK_LAYER, PIXEL_FORMAT, SIZE_X, SIZE_Y) CLayer(ENUM_ID, 0, WORK_LAYER, SIZE_X, SIZE_Y, PIXEL_FORMAT),
-    LAYER_DEF
-  #undef X_LAYER
+    LAYER_DEF(EXPAND_X_LAYER_AS_COLOR_TABLE)
 };
 #endif
 

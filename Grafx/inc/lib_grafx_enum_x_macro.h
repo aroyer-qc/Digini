@@ -57,6 +57,8 @@
 #define EXPAND_X_TERMINAL_AS_ENUM(ENUM_ID, SERVICE, SUB_SERVICE, TIMING, POS_X, POS_Y, SIZE_X, SIZE_Y, TEXT_COLOR, FONT_ID, SERVICE_FILTER, OPTIONS) ENUM_ID,
 #define EXPAND_X_HUB_AS_ENUM(ENUM_ID, SERVICE, SUB_SERVICE, TIMING, LINK_LIST) ENUM_ID,
 #define EXPAND_X_WINDOW_AS_ENUM(ENUM_ID, SERVICE, SUB_SERVICE, TIMING, POS_X, POS_Y, SIZE_X, SIZE_Y) ENUM_ID,
+#define EXPAND_X_LAYER_AS_ENUM(ENUM_ID, WORK_LAYER, PIXEL_FORMAT, SIZE_X, SIZE_Y) ENUM_ID,
+#define EXPAND_X_XCHANGE_AS_ENUM(ENUM_ID, POINTER) ENUM_ID,
 
 //-------------------------------------------------------------------------------------------------
 // Auto generated Enum Typedef(s)
@@ -222,30 +224,25 @@ enum Widget_e
 
 //-------------------------------------------------------------------------------------------------
 
-  // Exchange data list
+// Exchange data list
+#ifdef XCHANGE_DEF
 enum Exchange_e
 {
-  #ifdef XCHANGE_DEF
-    #define X_XCHANGE(ENUM_ID, POINTER) ENUM_ID,
-      XCHANGE_DEF
-    #undef  X_XCHANGE
-      XCHANGE_COUNT,
-  #endif
+    XCHANGE_DEF(EXPAND_X_XCHANGE_AS_ENUM)
+    XCHANGE_COUNT,
 };
+#endif
 
 //-------------------------------------------------------------------------------------------------
 
+#ifdef LAYER_DEF
 enum Layer_e
 {
-  #ifdef LAYER_DEF
-   #define X_LAYER(ENUM_ID, WORK_LAYER, PIXEL_FORMAT, SIZE_X, SIZE_Y) ENUM_ID,
-    LAYER_DEF
-   #undef X_LAYER
-  #endif
+    LAYER_DEF(EXPAND_X_LAYER_AS_ENUM)
     LAYER_COUNT,
     LAYER_FIRST_ITEM = 0,
 };
-
+#endif
 
 // 16 bits colors
 enum ColorTable_e

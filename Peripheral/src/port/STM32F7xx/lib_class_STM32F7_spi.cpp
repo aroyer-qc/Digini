@@ -29,10 +29,8 @@
 //-------------------------------------------------------------------------------------------------
 
 #define STM32F7_SPI_GLOBAL
-#include "lib_class_STM32F7_spi.h"
+#include "lib_digini.h"
 #undef STM32F7_SPI_GLOBAL
-#include "lib_utility.h"
-//#include "lib_macro.h"
 
 //-------------------------------------------------------------------------------------------------
 

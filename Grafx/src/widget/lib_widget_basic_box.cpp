@@ -28,13 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
 #include "widget_cfg.h"
 #ifdef BASIC_BOX_DEF
-#include <stdint.h>
-#include "lib_grafx.h"
-#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -104,7 +101,7 @@ Link_e CBasicBox::Create(PageWidget_t* pPageWidget)
     if((pService = ServiceCall(&m_pBasicBox->Service, &m_ServiceState)) != nullptr)
     {
         EventArea.Rectangle.Box = m_pBasicBox->Box;
-      #ifdef DIGINI_USE_POINTING_DEVICE
+      #ifdef GRAFX_USE_POINTING_DEVICE
         PDI_pTask->CreateZone(&EventArea, m_pBasicBox->Options, pPageWidget->ID);       // Create the zone on the touch sense virtual screen
       #endif
         Draw(pService);
@@ -241,13 +238,13 @@ void CBasicBox::Draw(ServiceReturn_t* pService)
     if((m_pBasicBox->Options & GRAFX_OPTION_CLEAR) != 0)
     {
         CLayer::SetColor(BLACK);
-        DrawRectangle(&m_pBasicBox->Box);
+        myGrafx->DrawRectangle(&m_pBasicBox->Box);
     }
 
-    CopyLinear(m_pBasicBox->ImageTL, m_TopLeft,     ALPHA_BLEND);
-    CopyLinear(m_pBasicBox->ImageTR, m_TopRight,    ALPHA_BLEND);
-    CopyLinear(m_pBasicBox->ImageBL, m_BottomLeft,  ALPHA_BLEND);
-    CopyLinear(m_pBasicBox->ImageBR, m_BottomRight, ALPHA_BLEND);
+    myGrafx->CopyLinear(m_pBasicBox->ImageTL, m_TopLeft,     ALPHA_BLEND);
+    myGrafx->CopyLinear(m_pBasicBox->ImageTR, m_TopRight,    ALPHA_BLEND);
+    myGrafx->CopyLinear(m_pBasicBox->ImageBL, m_BottomLeft,  ALPHA_BLEND);
+    myGrafx->CopyLinear(m_pBasicBox->ImageBR, m_BottomRight, ALPHA_BLEND);
 
     Cartesian_t Top;
     Cartesian_t Bot;
@@ -260,8 +257,8 @@ void CBasicBox::Draw(ServiceReturn_t* pService)
         Top.X = i;
         Bot.X = i;
 
-        CopyLinear(m_pBasicBox->ImageH, Top, ALPHA_BLEND);
-        CopyLinear(m_pBasicBox->ImageH, Bot, ALPHA_BLEND);
+        myGrafx->CopyLinear(m_pBasicBox->ImageH, Top, ALPHA_BLEND);
+        myGrafx->CopyLinear(m_pBasicBox->ImageH, Bot, ALPHA_BLEND);
     }
 
     Cartesian_t Left;
@@ -275,8 +272,8 @@ void CBasicBox::Draw(ServiceReturn_t* pService)
         Left.Y  = i;
         Right.Y = i;
 
-        CopyLinear(m_pBasicBox->ImageV, Left,  ALPHA_BLEND);
-        CopyLinear(m_pBasicBox->ImageV, Right, ALPHA_BLEND);
+        myGrafx->CopyLinear(m_pBasicBox->ImageV, Left,  ALPHA_BLEND);
+        myGrafx->CopyLinear(m_pBasicBox->ImageV, Right, ALPHA_BLEND);
     }
 
 

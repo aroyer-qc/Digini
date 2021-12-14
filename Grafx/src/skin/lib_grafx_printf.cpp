@@ -34,12 +34,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include <string.h>
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
-#include "lib_grafx.h"
-#include "bsp.h"
+#include "bsp.h"            // why?
 
 //-------------------------------------------------------------------------------------------------
 //

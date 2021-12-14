@@ -28,14 +28,8 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include <string.h>
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
-#include "lib_grafx.h"
-#include "lib_memory.h"
-#include "lib_string.h"
-#include "lib_utility.h"
 #include "bsp.h"
 
 //-------------------------------------------------------------------------------------------------
@@ -160,7 +154,7 @@ size_t GPrintf::PutString(void)
     DB_Central.Get(&FontInfo, GFX_FONT_INFO, *m_pFontUsedInString, 0);
 
     // Print each individual line according to justification
-  //#ifdef DIGINI_USE_MULTI_LINE
+  //#ifdef GRAFX_USE_MULTI_LINE
     for(i = 0; i < m_Line; i++)
     {
         // Justify each line inside the print box

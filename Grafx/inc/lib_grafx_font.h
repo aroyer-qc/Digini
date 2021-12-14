@@ -27,12 +27,6 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "grafx_cfg.h"
-
-//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -45,15 +39,15 @@
 // To Get the number of system font
 enum Font_e
 {
-    #ifdef DIGINI_USE_FONT_SIZE_8
+    #ifdef GRAFX_USE_FONT_SIZE_8
       SYS_FT_8,
     #endif
 
-    #ifdef DIGINI_USE_FONT_SIZE_12
+    #ifdef GRAFX_USE_FONT_SIZE_12
       SYS_FT_12,
     #endif
 
-    #ifdef DIGINI_USE_FONT_SIZE_16
+    #ifdef GRAFX_USE_FONT_SIZE_16
       SYS_FT_16,
     #endif
 
@@ -81,7 +75,7 @@ struct StaticFontDescriptor_t
 #ifdef GFX_GLOBAL
 
 // Font 8x8
-#ifdef DIGINI_USE_FONT_SIZE_8
+#ifdef GRAFX_USE_FONT_SIZE_8
 //#pragma section rom SectionDscFont8
 const StaticFontDescriptor_t FontDesc8[96] =
 {
@@ -286,7 +280,7 @@ const uint8_t FontRaw8[664] =
 #endif
 
 // Font 12x12
-#ifdef DIGINI_USE_FONT_SIZE_12
+#ifdef GRAFX_USE_FONT_SIZE_12
 //#pragma section rom SectionDscFont12
 const StaticFontDescriptor_t FontDesc12[96] =
 {
@@ -491,7 +485,7 @@ const uint8_t FontRaw12[1182] =
 #endif
 
 // Font 16x16
-#ifdef DIGINI_USE_FONT_SIZE_16
+#ifdef GRAFX_USE_FONT_SIZE_16
 //#pragma section rom SectionDscFont16
 const StaticFontDescriptor_t FontDesc16[96] =
 {
@@ -695,56 +689,56 @@ const uint8_t FontRaw16[1516] =
 };
 #endif
 
- #if defined(DIGINI_USE_FONT_SIZE_8) || defined(DIGINI_USE_FONT_SIZE_12) || defined (DIGINI_USE_FONT_SIZE_16)
+ #if defined(GRAFX_USE_FONT_SIZE_8) || defined(GRAFX_USE_FONT_SIZE_12) || defined (GRAFX_USE_FONT_SIZE_16)
 
   const StaticFontDescriptor_t* StaticFontDescriptor[NB_SYSTEM_FONTS] =
   {
-    #ifdef DIGINI_USE_FONT_SIZE_8
+    #ifdef GRAFX_USE_FONT_SIZE_8
       FontDesc8,
     #endif
-    #ifdef DIGINI_USE_FONT_SIZE_12
+    #ifdef GRAFX_USE_FONT_SIZE_12
       FontDesc12,
     #endif
-    #ifdef DIGINI_USE_FONT_SIZE_16
+    #ifdef GRAFX_USE_FONT_SIZE_16
       FontDesc16,
     #endif
   };
 
   const uint8_t* FontRaw[NB_SYSTEM_FONTS] =
   {
-    #ifdef DIGINI_USE_FONT_SIZE_8
+    #ifdef GRAFX_USE_FONT_SIZE_8
       FontRaw8,
     #endif
-    #ifdef DIGINI_USE_FONT_SIZE_12
+    #ifdef GRAFX_USE_FONT_SIZE_12
       FontRaw12,
     #endif
-    #ifdef DIGINI_USE_FONT_SIZE_16
+    #ifdef GRAFX_USE_FONT_SIZE_16
       FontRaw16,
     #endif
   };
- #endif // defined(DIGINI_USE_FONT_SIZE_8) || defined(DIGINI_USE_FONT_SIZE_12) || defined (DIGINI_USE_FONT_SIZE_16)
+ #endif // defined(GRAFX_USE_FONT_SIZE_8) || defined(GRAFX_USE_FONT_SIZE_12) || defined (GRAFX_USE_FONT_SIZE_16)
 
 #else
 
- #ifdef DIGINI_USE_FONT_SIZE_8
+ #ifdef GRAFX_USE_FONT_SIZE_8
   extern const StaticFontDescriptor_t  FontDesc8[96];
   extern const uint8_t                 FontRaw8[664];
  #endif
 
- #ifdef DIGINI_USE_FONT_SIZE_12
+ #ifdef GRAFX_USE_FONT_SIZE_12
   extern const StaticFontDescriptor_t  FontDesc12[96];
   extern const uint8_t                 FontRaw12[1182];
  #endif
 
- #ifdef DIGINI_USE_FONT_SIZE_16
+ #ifdef GRAFX_USE_FONT_SIZE_16
   extern const StaticFontDescriptor_t  FontDesc16[96];
   extern const uint8_t                 FontRaw16[1516];
  #endif
 
- #if defined(DIGINI_USE_FONT_SIZE_8) || defined(DIGINI_USE_FONT_SIZE_12) || defined (DIGINI_USE_FONT_SIZE_16)
+ #if defined(GRAFX_USE_FONT_SIZE_8) || defined(GRAFX_USE_FONT_SIZE_12) || defined (GRAFX_USE_FONT_SIZE_16)
   extern const StaticFontDescriptor_t* StaticFontDescriptor    [NB_SYSTEM_FONTS];
   extern const uint8_t*                FontRaw                 [NB_SYSTEM_FONTS];
- #endif // defined(DIGINI_USE_FONT_SIZE_8) || defined(DIGINI_USE_FONT_SIZE_12) || defined (DIGINI_USE_FONT_SIZE_16)
+ #endif // defined(GRAFX_USE_FONT_SIZE_8) || defined(GRAFX_USE_FONT_SIZE_12) || defined (GRAFX_USE_FONT_SIZE_16)
 
 #endif // GFX_GLOBAL
 

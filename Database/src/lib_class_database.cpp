@@ -28,11 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
 #define LIB_CLASS_DATABASE_GLOBAL
-#include "lib_class_database.h"
+#include "lib_digini.h"
 #undef  LIB_CLASS_DATABASE_GLOBAL
-#include "lib_macro.h"
 
 //-------------------------------------------------------------------------------------------------
 //

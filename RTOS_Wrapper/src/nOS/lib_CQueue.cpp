@@ -28,8 +28,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include "lib_CQueue.h"
+#include "lib_digini.h"
 
 #if (NOS_CONFIG_QUEUE_ENABLE > 0)
 

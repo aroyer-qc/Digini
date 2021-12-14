@@ -28,13 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
 #include "widget_cfg.h"
 #ifdef BASIC_BTN_DEF
-#include <stdint.h>
-#include "lib_grafx.h"
-#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -77,7 +74,7 @@ Link_e CBasicButton::Create(PageWidget_t* pPageWidget)
     if((pService = ServiceCall(&m_pBasicButton->Service, &m_ServiceState)) != nullptr)
     {
         EventArea.Rectangle.Box = m_pBasicButton->Box;
-      #ifdef DIGINI_USE_POINTING_DEVICE
+      #ifdef GRAFX_USE_POINTING_DEVICE
         PDI_pTask->CreateZone(&EventArea, m_pBasicButton->Options, pPageWidget->ID);       // Create the zone on the touch sense virtual screen
       #endif
         Draw(pService);

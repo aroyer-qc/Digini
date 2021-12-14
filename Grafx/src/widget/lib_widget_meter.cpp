@@ -28,13 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
 #include "widget_cfg.h"
 #ifdef METER_DEF
-#include <stdint.h>
-#include "lib_grafx.h"
-#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -175,7 +172,7 @@ void CMeter::Draw(ServiceReturn_t* pService)
    #endif
   #endif
 
-     CopyLinear(m_pMeter->Minimum, m_pMeter->Box.Pos, BlendMode);
+     myGrafx->CopyLinear(m_pMeter->Minimum, m_pMeter->Box.Pos, BlendMode);
   //  CursorOnCircle(m_pMeter->Cursor, &m_pMeter->Box.Pos, m_pMeter->Radius, 0);                              // Put a cursor at the start
 
     if((m_pMeter->Options & OPTION_CURSOR_PRIORITY) != 0)

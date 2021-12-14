@@ -27,19 +27,11 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "lib_typedef.h"
-#include <string.h>
-
-//-------------------------------------------------------------------------------------------------
 // define(s)
 //-------------------------------------------------------------------------------------------------
 
 #define     LIB_MASK_CCITT                  0x1021
 #define     LIB_MASK_CRC                    0xA005
-
 
 #define     LIB_memchr                      memchr
 #define     LIB_memcmp                      memcmp
@@ -86,6 +78,11 @@ void        LIB_ProcessFloatToString        (char* pStr, double Value, int Numbe
 void		LIB_Delay_uSec					(uint32_t Delay);
 void		LIB_Delay_mSec					(uint32_t Delay);
 
+void        LIB_GetTime                     (Time_t* pData);
+void        LIB_SetTime                     (Time_t* pData);
+void        LIB_GetDate                     (Date_t* pData);
+void        LIB_SetDate                     (Date_t* pData);
+
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
@@ -97,7 +94,7 @@ class RawArray
                     RawArray        ();
                     RawArray        (void* pBuffer);
                     RawArray        (void* pBuffer, size_t Size);
-                    ~RawArray       ();
+                   ~RawArray        ();
 
         void        append          (uint8_t data);
         void        append          (uint16_t data);

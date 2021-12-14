@@ -30,9 +30,8 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
-#include "widget_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
@@ -196,7 +195,7 @@ class CGif : public CWidgetInterface
 };
 #endif
 
-#ifdef GGRAPH_DEF
+#ifdef GRAPH_DEF
 class CGraph : public CWidgetInterface
 {
     public:
@@ -215,8 +214,8 @@ class CGraph : public CWidgetInterface
         ServiceEvent_e      m_ServiceState;
         PageWidget_t*       m_pPageWidget;
 
-        uint16_t            m_DrawX,
-        uint16_t            m_MaxDrawX,
+        uint16_t            m_DrawX;
+        uint16_t            m_MaxDrawX;
 };
 #endif
 

@@ -28,11 +28,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include "lib_class_STM32F7_bkpreg_dbase.h"
-#include "lib_class_STM32F7_rtc.h"
-#include "lib_macro.h"
-#include "driver_cfg.h"
+#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 

@@ -28,14 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include "digini_cfg.h"
-#ifdef DIGINI_USE_GRAFX
 #define WIDGET_VARIABLE_GLOBAL
-#include "lib_grafx.h"
+#include "lib_digini.h"
 #undef  WIDGET_VARIABLE_GLOBAL
-#include "lib_service.h"
-#include "service.h"
+#ifdef DIGINI_USE_GRAFX
 
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
@@ -107,7 +103,7 @@
         {{GIF}},                                            \
         OPTION_NONE,                                        \
     },
- 
+
 #define EXPAND_X_GRAPH_AS_STRUCT(ENUM_ID, SERVICE, SUB_SERVICE, TIMING, POS_X, POS_Y, SIZE_X, SIZE_Y, GRAPH, GRID_COLOR, GRID_X, GRID_Y, SCALE_X, SCALE_Y, SCROLL, OPTIONS)\
     {                                                       \
         {(uint32_t)SERVICE, (uint16_t)SUB_SERVICE, TIMING}, \
@@ -256,6 +252,8 @@
     {{(int16_t)POS_X, (int16_t)POS_Y},                  \
      {(uint16_t)SIZE_X, (uint16_t)SIZE_Y}},             \
 },
+
+#define EXPAND_X_XCHANGE_AS_PTR( ENUM_ID, PTR) (ExchangeCommon_t*)PTR,
 
 //-------------------------------------------------------------------------------------------------
 //  BACKGROUND Widget
@@ -473,9 +471,7 @@ VirtualWindow_t VirtualWindow[APP_NB_VIRTUAL_WINDOW_CONST] =
 #ifdef XCHANGE_DEF
 ExchangeCommon_t* pExchange[XCHANGE_COUNT] =
 {
-    #define X_XCHANGE( ENUM_ID, PTR) (ExchangeCommon_t*)PTR,
-    XCHANGE_DEF
-    #undef X_XCHANGE
+    XCHANGE_DEF(EXPAND_X_XCHANGE_AS_PTR)
 };
 #endif   // XCHANGE_DEF
 

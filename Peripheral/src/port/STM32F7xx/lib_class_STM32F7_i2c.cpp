@@ -29,10 +29,8 @@
 //-------------------------------------------------------------------------------------------------
 
 #define I2C_DRIVER_GLOBAL
-#include "lib_class_STM32F7_i2c.h"
+#include "lib_digini.h"
 #undef  I2C_DRIVER_GLOBAL
-#include "nOS.h"
-#include "lib_macro.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -312,9 +310,10 @@ SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const
             {
                 // We need to reset module if I2C is jammed or in error
                 this->Initialize();
+                m_State = SYS_TIME_OUT;
             }
         }
-        while(((pI2Cx->ISR & I2C_ISR_TC) != 1) && (m_State == SYS_BUSY));
+        while(((pI2Cx->ISR & I2C_ISR_TC) == 0) && (m_State == SYS_BUSY));
 
         return m_State;
     }

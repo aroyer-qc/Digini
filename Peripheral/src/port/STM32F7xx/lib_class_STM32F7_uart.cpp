@@ -28,12 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include "lib_macro.h"
 #define UART_DRIVER_GLOBAL
-#include "lib_class_STM32F7_uart.h"
+#include "lib_digini.h"
 #undef  UART_DRIVER_GLOBAL
-#include "clock_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 

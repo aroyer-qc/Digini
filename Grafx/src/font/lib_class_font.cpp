@@ -70,12 +70,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
-#include "lib_typedef.h"
-#include "lib_grafx.h"
-#include "bsp.h"
+#include "bsp.h"   // why??
 
 //-------------------------------------------------------------------------------------------------
 // Private variable(s) and constant(s)
@@ -96,7 +93,7 @@ CFont        FontDefault;
 //-------------------------------------------------------------------------------------------------
 void FONT_Initialize(void)
 {
-  #if defined(DIGINI_USE_FONT_SIZE_8) || defined (DIGINI_USE_FONT_SIZE_12) || defined(DIGINI_USE_FONT_SIZE_16)
+  #if defined(GRAFX_USE_FONT_SIZE_8) || defined (GRAFX_USE_FONT_SIZE_12) || defined(GRAFX_USE_FONT_SIZE_16)
     FontDescriptor_t                FontDescriptor;
     const StaticFontDescriptor_t*   pDscFont;
     uint8_t*                        pMemory;
@@ -137,7 +134,7 @@ void FONT_Initialize(void)
             FontDescriptor.RightBearing     = pDscFont->Padding >> 4;
             FontDescriptor.OffsetY          = pDscFont->Offset & 0x0F;
 
-            #ifdef DIGINI_USE_FONT_SIZE_16
+            #ifdef GRAFX_USE_FONT_SIZE_16
               if(Font == SYS_FT_16)    // Only for 16x16
               {
                   if(Character > 34)         // 32,33,34 hold special value code

@@ -28,13 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
 #include "widget_cfg.h"
 #ifdef GRAPH_DEF
-#include <stdint.h>
-#include "lib_grafx.h"
-#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -71,7 +68,7 @@ Link_e CGraph::Create(PageWidget_t* pPageWidget)
 
     m_pPageWidget  = pPageWidget;
     m_ServiceState = SERVICE_START;
-    
+
     if((pService = ServiceCall(&m_pGraph->Service, &m_ServiceState)) != nullptr)
     {
         Draw(pService, true);
@@ -101,7 +98,7 @@ Link_e CGraph::Refresh(MsgRefresh_t* pMsg)
 
     if((pService = ServiceCall(&m_pGraph->Service, &m_ServiceState)) != nullptr)        // Invoke the application service for this icon (It might change by itself the m_ServiceState)
     {
-        Draw(pService);
+        Draw(pService, true);
         FreeServiceStruct(&pService);
     }
 
@@ -144,7 +141,7 @@ void CGraph::Draw(ServiceReturn_t* pService, bool IsItDrawingGrid)
     uint16_t X;
     uint16_t EndX;
     uint16_t Y;
-    
+
     CLayer::PushDrawing();
 
   #ifdef GRAFX_DEBUG_GUI
@@ -181,9 +178,12 @@ struct Graph_t
 
     if(IsItDrawingGrid == true)
     {
-        EndX = (m_pGraph->Box.Pos.X + )
-        
-        for(X = m_pGraph->Box.Pos.X; X < EndX; x += m_pGraph->Scale_X)
+        EndX = (m_pGraph->Box.Pos.X + 2);
+
+        for(X = m_pGraph->Box.Pos.X; X < EndX; X += m_pGraph->Scale_X)
+        {
+
+        }
         // Do iteration to draw the vertical grid
 
         // Do iteration to draw the horizontal grid
@@ -194,7 +194,7 @@ struct Graph_t
         // Check if we if we need to add a new vertical line do it..
         {
         }
-        
+
         // Add every horizontal line pixel of the graph
     }
 

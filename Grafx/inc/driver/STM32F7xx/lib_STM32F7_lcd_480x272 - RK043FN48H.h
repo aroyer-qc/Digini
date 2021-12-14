@@ -27,17 +27,8 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
-//#include "lib_grafx.h"
-#include "lib_driver.h"
-#include "stm32f7xx.h"
-
-//-------------------------------------------------------------------------------------------------
-
-#ifdef DIGINI_USE_GRAFX
+#if 1 //def DIGINI_USE_GRAFX
 
 //-------------------------------------------------------------------------------------------------
 // define(s)
@@ -68,13 +59,12 @@
 
 //-------------------------------------------------------------------------------------------------
 
-
 class GrafxDriver : public GRAFX_Interface
 {
     public:
 
         // This include all required prototype for a driver.
-        #include "lib_driver_common.h"
+        #include "lib_grafx_driver_common.h"
 
     private:
 

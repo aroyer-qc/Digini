@@ -27,12 +27,6 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include <stdint.h>
-
-//-------------------------------------------------------------------------------------------------
 // Type definition(s), enum(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -384,6 +378,44 @@ union s64_t
         uint16_t u3;
     } u_16;
 };
+
+// --------- Time and Date ---------
+
+#ifdef __cplusplus   // need to provide wrapper
+
+struct Time_t
+{
+    uint8_t     Second;
+    uint8_t     Minute;
+    uint8_t     Hour;
+};
+
+struct Date_t
+{
+    uint8_t     Day;
+    uint8_t     Month;
+    uint8_t     Year;
+};
+
+struct Clock_t
+{
+    Time_t      Time;
+    Date_t      Date;
+    uint8_t     DayOfWeek;
+    uint16_t    DayOfYear;
+    uint8_t     WeekOfYear;
+    uint8_t     Century;
+    uint16_t    MinuteOfDay;
+    uint32_t    SecondStamp;
+};
+
+enum TimeFormat_e
+{
+    TIME_FORMAT_24_HOUR = 0,
+    TIME_FORMAT_12_HOUR,
+};
+
+#endif
 
 // --------- Miscelleaneous ---------
 

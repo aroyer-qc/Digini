@@ -27,16 +27,9 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
 
-#include "lib_class_i2c.h"
-#include "eeprom_cfg.h"
-#include "driver_cfg.h"
-
-//-------------------------------------------------------------------------------------------------
-
-#if (USE_I2C_DRIVER == DEF_ENABLED)
+#ifdef DIGINI_USE_EEPROM
+ #if (USE_I2C_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // typedef Type(s)
@@ -76,12 +69,16 @@ class EEPROM_Driver
 // constant data
 //-------------------------------------------------------------------------------------------------
 
-#include "eeprom_var.h"         // Project variable
+  #include "eeprom_var.h"         // Project variable
 
 //-------------------------------------------------------------------------------------------------
 
-#else // (USE_I2C_DRIVER == DEF_ENABLED)
+ #else // (USE_I2C_DRIVER == DEF_ENABLED)
 
-#pragma message("DIGINI driver for I2C must be enable and configure to use this device driver")
+  #pragma message("DIGINI driver for I2C must be enable and configure to use this device driver")
 
-#endif // (USE_I2C_DRIVER == DEF_ENABLED)
+ #endif // (USE_I2C_DRIVER == DEF_ENABLED)
+
+#endif // #ifdef DIGINI_USE_EEPROM
+
+//-------------------------------------------------------------------------------------------------

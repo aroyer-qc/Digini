@@ -28,12 +28,12 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
+//#include <stdint.h>
 #include <string.h>
 #define MEM_GLOBAL
 #include "lib_digini.h"
 #undef MEM_GLOBAL
-#include "nOS.h"
+//#include "nOS.h"
 #ifdef MEM_BLOCK_DEF
 
 //-------------------------------------------------------------------------------------------------

@@ -28,12 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
-#ifdef DIGINI_FATFS_USE_USB_KEY
-#include <stdint.h>
 #define STM32F7_USB_GLOBAL
-#include "lib_class_STM32F7_fatfs_usb.h"
+##include "lib_digini.h"
 #undef  STM32F7_USB_GLOBAL
+#ifdef DIGINI_FATFS_USE_USB_KEY
 //#include "lib_class_usb_interface.h"
 //#include "usb_hcd.h"
 

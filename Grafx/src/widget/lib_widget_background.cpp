@@ -28,14 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
 #include "widget_cfg.h"
 #ifdef BACK_DEF
-#include <stdint.h>
-#include "lib_grafx.h"
-#include "lib_digini.h"
-#include "lib_class_database.h"
 
 //-------------------------------------------------------------------------------------------------
 //

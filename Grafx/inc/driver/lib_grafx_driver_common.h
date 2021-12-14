@@ -49,9 +49,9 @@
 	void                CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, Box_t* pBox);
 	void                CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height);
 	void                CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, uint16_t SrcX, uint16_t SrcY, uint16_t DstX, uint16_t DstY, uint16_t Width, uint16_t Height);
-	#ifdef GRAFX_USE_V_SYNC
+   #ifdef GRAFX_USE_V_SYNC
 	void                WaitFor_V_Sync        (void);
-	#endif
-    #ifdef DIGINI_USE_A_SKIN
+   #endif
+   #ifdef GRAFX_USE_A_SKIN
     void                CopyLinear            (Skin_e Image, Cartesian_t Position, BlendMode_e BlendMode);
-    #endif
+   #endif

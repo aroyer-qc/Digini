@@ -28,13 +28,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
-#ifdef DIGINI_USE_GRAFX
-#include "lib_grafx.h"
-#endif
-#include "lib_macro.h"
-#include <stdint.h>
-#include "lib_class_ram_dbase.h"
+#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 

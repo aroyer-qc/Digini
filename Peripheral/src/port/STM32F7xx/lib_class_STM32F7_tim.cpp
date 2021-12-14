@@ -28,12 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
 #define TIM_DRIVER_GLOBAL
-#include "lib_class_STM32F7_tim.h"
+#include "lib_digini.h"
 #undef  TIM_DRIVER_GLOBAL
-#include "lib_macro.h"
-#include "clock_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -405,11 +402,11 @@ void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
         ISR_Prio.SubPriority       = 0;
       #endif
 
-        switch(int(m_pTim))
+        switch(intptr_t(m_pTim))
         {
 
           #if ((TIM_DRIVER_SUPPORT_TIM1_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG == DEF_ENABLED))
-            case int(TIM1):
+            case TIM1_BASE:
             {
                 // Init compare IRQ for TIM1 Compare
                 ISR_Init(TIM1_CC_IRQn, &ISR_Prio);
@@ -418,10 +415,10 @@ void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
           #endif
 
           #if (TIM_DRIVER_SUPPORT_TIM6_CFG == DEF_ENABLED)
-            case int(TIM6):
+            case TIM6_BASE:
           #endif
           #if (TIM_DRIVER_SUPPORT_TIM7_CFG == DEF_ENABLED)
-            case int(TIM7):
+            case TIM7_BASE:
           #endif
           #if ((TIM_DRIVER_SUPPORT_TIM6_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM7_CFG == DEF_ENABLED))
             {
@@ -430,7 +427,7 @@ void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
           #endif
 
           #if ((TIM_DRIVER_SUPPORT_TIM8_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG == DEF_ENABLED))
-            case int(TIM8):
+            case TIM8_BASE:
             {
                 // Init compare IRQ for TIM8 Compare
                 ISR_Init(TIM8_CC_IRQn, &ISR_Prio);
@@ -439,10 +436,10 @@ void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
           #endif
 
           #if ((TIM_DRIVER_SUPPORT_TIM9_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM9_OR_TIM12_COMPARE_CFG == DEF_ENABLED))
-            case int(TIM9):
+            case TIM9_BASE:
           #endif
           #if ((TIM_DRIVER_SUPPORT_TIM12_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM9_OR_TIM12_COMPARE_CFG == DEF_ENABLED))
-            case int(TIM12):
+            case TIM12_BASE:
           #endif
           #if (((TIM_DRIVER_SUPPORT_TIM9_CFG  == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM12_CFG == DEF_ENABLED)) && \
           (TIM_DRIVER_SUPPORT_TIM9_OR_TIM12_COMPARE_CFG  == DEF_ENABLED))
@@ -456,16 +453,16 @@ void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
           #endif
 
           #if ((TIM_DRIVER_SUPPORT_TIM10_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM10_COMPARE_CFG == DEF_ENABLED))
-            case int(TIM10):
+            case TIM10_BASE:
           #endif
           #if ((TIM_DRIVER_SUPPORT_TIM11_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM11_COMPARE_CFG == DEF_ENABLED))
-            case int(TIM11):
+            case TIM11_BASE:
           #endif
           #if ((TIM_DRIVER_SUPPORT_TIM13_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM13_COMPARE_CFG == DEF_ENABLED))
-            case int(TIM13):
+            case TIM13_BASE:
           #endif
           #if ((TIM_DRIVER_SUPPORT_TIM14_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM14_COMPARE_CFG == DEF_ENABLED))
-            case int(TIM14):
+            case TIM14_BASE:
           #endif
           #if (((TIM_DRIVER_SUPPORT_TIM10_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM10_COMPARE_CFG == DEF_ENABLED)) || \
                ((TIM_DRIVER_SUPPORT_TIM11_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM11_COMPARE_CFG == DEF_ENABLED)) || \

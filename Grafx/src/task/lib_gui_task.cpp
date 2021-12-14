@@ -28,14 +28,11 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include <string.h>
-#include "digini_cfg.h"
-#ifdef DIGINI_USE_GRAFX
 #define LIB_GUI_TASK_GLOBAL
-#include "lib_grafx.h"
+#include "lib_digini.h"
 #undef  LIB_GUI_TASK_GLOBAL
-#include "lib_memory.h"
+#ifdef DIGINI_USE_GRAFX
+#include <new>
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -110,7 +107,7 @@ void GUI_myClassTask::Run()
     m_Link    = INVALID_LINK;
     NewLink   = LINK_MAIN_LOADING;
 
-  #if defined(DIGINI_USE_A_SKIN) && defined(STATIC_SKIN_DEF)
+  #if defined(GRAFX_USE_A_SKIN) && defined(STATIC_SKIN_DEF)
     // Static skin must be loaded
     while(SKIN_pTask->IsStaticSkinLoaded() != true)
     {
@@ -142,7 +139,7 @@ void GUI_myClassTask::Run()
                 {
                     FinalizeAllWidget();
                 }
-              #ifdef DIGINI_USE_POINTING_DEVICE
+              #ifdef GRAFX_USE_POINTING_DEVICE
              //   PDI_pTask->ClearAllZone();
               #endif
                 GUI_ClearWidgetLayer();
@@ -153,7 +150,7 @@ void GUI_myClassTask::Run()
                 NewLink = CreateAllWidget();
 
               #ifdef GRAFX_USE_SLIDING_PAGE
-               #ifdef DIGINI_USE_LOAD_SKIN
+               #ifdef GRAFX_USE_LOAD_SKIN
                 if(SKIN_pTask->IsSkinLoaded() == true)
                #endif
                 {
@@ -176,7 +173,7 @@ void GUI_myClassTask::Run()
 
          #ifndef GRAFX_DEBUG_GUI
           #ifdef GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER
-           #ifdef DIGINI_USE_LOAD_SKIN
+           #ifdef GRAFX_USE_LOAD_SKIN
             if(SKIN_pTask->IsSkinLoaded() == true)
            #endif
             {
@@ -222,7 +219,6 @@ Link_e GUI_myClassTask::CreateAllWidget()
     Link_e              NewLink = INVALID_LINK;
     int                 Count;                                                          // Widget count in page
     int                 CountCopy;
-    void*               pWidgetTemp;
 
     m_pPage = (PageWidget_t*)PageWidget[m_Link];                                        // Get the page pointer
     pPage   = m_pPage;
@@ -246,15 +242,11 @@ Link_e GUI_myClassTask::CreateAllWidget()
             // Do Nothing
         }
 
-// todo remap for the more frequent first
        #ifdef BACK_DEF
         else if((Widget > APP_START_BACK_CONST) && (Widget < APP_END_BACK_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CBackground));                   // Get the memory block for the widget class object
-            *pWidgetListPointer = pWidget;                                                                  // copy this pointer to our list of widget pointer for delete later
-            pWidgetTemp         = new CBackground(&Background[Widget - (APP_START_BACK_CONST + 1)]);        // Get a class object of the widget
-            memcpy(pWidget, pWidgetTemp, sizeof(CBackground));                                              // copy the class object to new reserve location
-            delete (CBackground*)pWidgetTemp;                                                               // delete the dynamically allocated object
+            *pWidgetListPointer = new(pWidget) CBackground(&Background[Widget - (APP_START_BACK_CONST + 1)]);        // Get a class object of the widget
         }
        #endif
 
@@ -262,10 +254,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_BASIC_BOX_CONST) && (Widget < APP_END_BASIC_BOX_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CBasicBox));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CBasicBox(&BasicBox[Widget - (APP_START_BASIC_BOX_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CBasicBox));
-            delete (CBasicBox*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CBasicBox(&BasicBox[Widget - (APP_START_BASIC_BOX_CONST + 1)]);
         }
        #endif
 
@@ -273,10 +262,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_BASIC_BTN_CONST) && (Widget < APP_END_BASIC_BTN_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CBasicButton));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CBasicButton(&BasicButton[Widget - (APP_START_BASIC_BTN_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CBasicButton));
-            delete (CBasicButton*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CBasicButton(&BasicButton[Widget - (APP_START_BASIC_BTN_CONST + 1)]);
         }
        #endif
 
@@ -284,10 +270,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_BASIC_RECT_CONST) && (Widget < APP_END_BASIC_RECT_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CBasicRect));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CBasicRect(&BasicRect[Widget - (APP_START_BASIC_RECT_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CBasicRect));
-            delete (CBasicRect*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CBasicRect(&BasicRect[Widget - (APP_START_BASIC_RECT_CONST + 1)]);
         }
        #endif
 
@@ -295,10 +278,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_BTN_CONST) && (Widget < APP_END_BTN_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CButton));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CButton(&Button[Widget - (APP_START_BTN_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CButton));
-            delete (CButton*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CButton(&Button[Widget - (APP_START_BTN_CONST + 1)]);
         }
        #endif
 
@@ -306,10 +286,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_GIF_CONST) && (Widget < APP_END_GIF_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CGif));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CGif(&Gif[Widget - (APP_START_GIF_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CGif));
-            delete (CGif*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CGif(&Gif[Widget - (APP_START_GIF_CONST + 1)]);
         }
        #endif
 
@@ -317,10 +294,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_GRAPH_CONST) && (Widget < APP_END_GRAPH_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CGraph));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CGraph(&Graph[Widget - (APP_START_GRAPH_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CGraph));
-            delete (CGraph*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CGraph(&Graph[Widget - (APP_START_GRAPH_CONST + 1)]);
         }
        #endif
 
@@ -328,10 +302,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_ICON_CONST) && (Widget < APP_END_ICON_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CIcon));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CIcon(&Icon[Widget - (APP_START_ICON_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CIcon));
-            delete (CIcon*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CIcon(&Icon[Widget - (APP_START_ICON_CONST + 1)]);
         }
        #endif
 
@@ -339,10 +310,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_LABEL_CONST) && (Widget < APP_END_LABEL_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CLabel));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CLabel(&Label[Widget - (APP_START_LABEL_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CLabel));
-            delete (CLabel*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CLabel(&Label[Widget - (APP_START_LABEL_CONST + 1)]);
         }
        #endif
 
@@ -350,10 +318,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_LABEL_LIST_CONST)  && (Widget < APP_END_LABEL_LIST_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CLabelList));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CLabelList(&LabelList[Widget - (APP_START_LABEL_LIST_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CLabelList));
-            delete (CLabelList*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CLabelList(&LabelList[Widget - (APP_START_LABEL_LIST_CONST + 1)]);
         }
        #endif
 
@@ -361,10 +326,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_METER_CONST) && (Widget < APP_END_METER_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CMeter));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CMeter(&Meter[Widget - (APP_START_METER_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CMeter));
-            delete (CMeter*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CMeter(&Meter[Widget - (APP_START_METER_CONST + 1)]);
         }
        #endif
 
@@ -372,21 +334,15 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_PAGE_SLIDE_CONST) && (Widget < APP_END_PAGE_SLIDE_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CPageSlide));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CPageSlide(&PageSlide[Widget - (APP_START_PAGE_SLIDE_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CPageSlide));
-            delete (CPageSlide*)pWidgetTemp;
-        }
+            *pWidgetListPointer = new(pWidget) CPageSlide(&PageSlide[Widget - (APP_START_PAGE_SLIDE_CONST + 1)]);
+       }
        #endif
 
        #ifdef PANEL_DEF
         else if((Widget > APP_START_PANEL_CONST) && (Widget < APP_END_PANEL_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CPanel));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CPanel(&Panel[Widget - (APP_START_PANEL_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CPanel));
-            delete (CPanel*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CPanel(&Panel[Widget - (APP_START_PANEL_CONST + 1)]);
         }
        #endif
 
@@ -394,21 +350,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_PROGRESS_CONST) && (Widget < APP_END_PROGRESS_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CProgress));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CProgress(&Progress[Widget - (APP_START_PROGRESS_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CProgress));
-            delete (CProgress*)pWidgetTemp;
-        }
-       #endif
-
-       #ifdef TERMINAL_DEF
-        else if((Widget > APP_START_TERMINAL_CONST) && (Widget < APP_END_TERMINAL_CONST))
-        {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CTerminal));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CTerminal(&Terminal[Widget - (APP_START_TERMINAL_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CTerminal));
-            delete (CTerminal*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CProgress(&Progress[Widget - (APP_START_PROGRESS_CONST + 1)]);
         }
        #endif
 
@@ -416,10 +358,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_SPECTRUM_CONST) && (Widget < APP_END_SPECTRUM_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CSpectrum));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CSpectrum(&Spectrum[Widget - (APP_START_SPECTRUM_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CSpectrum));
-            delete (CSpectrum*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CSpectrum(&Spectrum[Widget - (APP_START_SPECTRUM_CONST + 1)]);
         }
        #endif
 
@@ -427,10 +366,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_SPRITE_CONST) && (Widget < APP_END_SPRITE_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CSprite));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CSprite(&Sprite[Widget - (APP_START_SPRITE_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CSprite));
-            delete (CSprite*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CSprite(&Sprite[Widget - (APP_START_SPRITE_CONST + 1)]);
         }
        #endif
 
@@ -438,10 +374,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_TERMINAL_CONST) && (Widget < APP_END_TERMINAL_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CTerminal));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CTerminal(&Terminal[Widget - (APP_START_TERMINAL_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CTerminal));
-            delete (CTerminal*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CTerminal(&Terminal[Widget - (APP_START_TERMINAL_CONST + 1)]);
         }
        #endif
 
@@ -449,10 +382,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_VIRTUAL_HUB_CONST) && (Widget < APP_END_VIRTUAL_HUB_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CVirtualHub));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CVirtualHub(&VirtualHub[Widget - (APP_START_VIRTUAL_HUB_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CVirtualHub));
-            delete (CVirtualHub*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CVirtualHub(&VirtualHub[Widget - (APP_START_VIRTUAL_HUB_CONST + 1)]);
         }
        #endif
 
@@ -460,10 +390,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_VIRTUAL_WINDOW_CONST) && (Widget < APP_END_VIRTUAL_WINDOW_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CVirtualWindow));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CVirtualWindow(&VirtualWindow[Widget - (APP_START_VIRTUAL_WINDOW_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CVirtualWindow));
-            delete (CVirtualWindow*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CVirtualWindow(&VirtualWindow[Widget - (APP_START_VIRTUAL_WINDOW_CONST + 1)]);
         }
        #endif
 /*  // TODO (Alain#1#)  remove if the new method of exchange data work!!
@@ -471,10 +398,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         else if((Widget > APP_START_XCHANGE_CONST) && (Widget < APP_END_XCHANGE_CONST))
         {
             pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CExchange));
-            *pWidgetListPointer = pWidget;
-            pWidgetTemp         = new CExchange(&Exchange[Widget - (APP_START_XCHANGE_CONST + 1)]);
-            memcpy(pWidget, pWidgetTemp, sizeof(CExchange));
-            delete (CExchange*)pWidgetTemp;
+            *pWidgetListPointer = new(pWidget) CExchange(&Exchange[Widget - (APP_START_XCHANGE_CONST + 1)]);
         }
        #endif
 */
@@ -490,7 +414,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
 
     while((Count < m_WidgetCount) && (NewLink == INVALID_LINK))
     {
-        // TO DO init a timer for each widget contained in the page and according to his refresh rate
+        // TO DO init a timer for each widget contained in the page and refresh according to his configuration rate
 
         NewLink = (*pWidgetListPointer)->Create(pPage);
 
@@ -498,7 +422,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         if(NewLink == REMOVE_WIDGET)
         {
             // Free this widget
-            pMemory->Free((void**)&(*pWidgetListPointer));
+            pMemory->Free ((void**)&(*pWidgetListPointer));
 
             // Move all widget in the list up one position
             CountCopy = Count;
@@ -579,7 +503,7 @@ void GUI_myClassTask::FinalizeAllWidget()
     while(Count < m_WidgetCount)
     {
         (*pWidgetListPointer)->Finalize();
-        pMemory->Free((void**)&(*pWidgetListPointer));
+        pMemory->Free ((void**)&(*pWidgetListPointer));
         pWidgetListPointer++;
         Count++;
         nOS_Yield();

@@ -28,13 +28,11 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
-#ifdef DIGINI_USE_GRAFX
-#ifdef DIGINI_USE_POINTING_DEVICE
-//#include "grafx_cfg.h"
 #define LIB_FT5336_GLOBAL
-#include "lib_grafx.h"
+#include "lib_digini.h"
 #undef  LIB_FT5336_GLOBAL
+#ifdef DIGINI_USE_GRAFX
+#ifdef GRAFX_USE_POINTING_DEVICE
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -274,7 +272,6 @@ uint16_t FT5336::ReadID(void)
     uint8_t ID;
     uint8_t ReadAttempts;
     bool    FoundDevice;
-    uint8_t Register;
 
     ID          = 0;                    // In case we cannot read the ID
     FoundDevice = false;                // Devive not found by default
@@ -283,8 +280,8 @@ uint16_t FT5336::ReadID(void)
     for(ReadAttempts = 0; ((ReadAttempts < 3) && (FoundDevice == false)); ReadAttempts++)
     {
         // Read register FT5336_CHIP_ID_REG as DeviceID detection
-        Register = FT5336_CHIP_ID_REG;
-        m_pI2C->ReadRegister(Register, &ID, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
+        m_pI2C->Transfer(FT5336_CHIP_ID_REG, sizeof(uint8_t), 0, 0, &ID, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
+
         if(ID == FT5336_ID_VALUE)       // Found the searched device ID?
         {
             FoundDevice = true;         // Set device as found
@@ -314,7 +311,7 @@ uint8_t FT5336::DetectEvent(void)
     uint8_t Event;
 
     // Read register FT5336_TD_STAT_REG to check number of touches detection
-    m_pI2C->ReadRegister(FT5336_TD_STAT_REG, &Event, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
+    m_pI2C->Transfer(FT5336_TD_STAT_REG, sizeof(uint8_t), 0, 0, &Event, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
     Event &= FT5336_TD_STAT_MASK;
 
     if(Event > FT5336_MAX_DETECTABLE_TOUCH)
@@ -348,11 +345,11 @@ uint8_t FT5336::DetectEvent(void)
 //-------------------------------------------------------------------------------------------------
 void FT5336::GetXY(Cartesian_t* pCartesian)
 {
-    uint8_t  ReadData = 0;
-    uint8_t  regAddressXLow  = 0;
-    uint8_t  regAddressXHigh = 0;
-    uint8_t  regAddressYLow  = 0;
-    uint8_t  regAddressYHigh = 0;
+    uint8_t   ReadData = 0;
+    uint32_t  regAddressXLow  = 0;
+    uint32_t  regAddressXHigh = 0;
+    uint32_t  regAddressYLow  = 0;
+    uint32_t  regAddressYHigh = 0;
 
     if(m_CurrentActiveEventIndex < m_CurrentActiveEventNumber)
     {
@@ -456,14 +453,16 @@ void FT5336::GetXY(Cartesian_t* pCartesian)
         m_pI2C->LockToDevice(FT5336_I2C_SLAVE_ADDRESS);
 
         // Read low part of X position
-        m_pI2C->ReadRegister(regAddressXLow, &ReadData, sizeof(uint8_t));
+        m_pI2C->Transfer(regAddressXLow, sizeof(uint8_t), 0, 0, &ReadData, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
+
+
       #ifndef GRAFX_PDI_SWAP_XY
         pCartesian->X = ReadData;
       #else
         pCartesian->Y = ReadData;
       #endif
         // Read high part of X position
-        m_pI2C->ReadRegister(regAddressXHigh, &ReadData, sizeof(uint8_t));
+        m_pI2C->Transfer(regAddressXHigh, sizeof(uint8_t), 0, 0, &ReadData, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
       #ifndef GRAFX_PDI_SWAP_XY
         pCartesian->X |= (ReadData & FT5336_TOUCH_POS_MSB_MASK) << 8;
       #else
@@ -471,7 +470,7 @@ void FT5336::GetXY(Cartesian_t* pCartesian)
       #endif
 
         // Read low part of Y position
-        m_pI2C->ReadRegister(regAddressYLow, &ReadData, sizeof(uint8_t));
+        m_pI2C->Transfer(regAddressYLow, sizeof(uint8_t), 0, 0, &ReadData, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
       #ifndef GRAFX_PDI_SWAP_XY
         pCartesian->Y = ReadData;
       #else
@@ -479,7 +478,7 @@ void FT5336::GetXY(Cartesian_t* pCartesian)
       #endif
 
         // Read high part of Y position
-        m_pI2C->ReadRegister(regAddressYHigh, &ReadData, sizeof(uint8_t));
+        m_pI2C->Transfer(regAddressYHigh, sizeof(uint8_t), 0, 0, &ReadData, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
       #ifndef GRAFX_PDI_SWAP_XY
         pCartesian->Y |= (ReadData & FT5336_TOUCH_POS_MSB_MASK) << 8;
       #else
@@ -579,7 +578,7 @@ SystemState_e FT5336::ClearIT(void)
 
 /**** NEW FEATURES enabled when Multi-touch support is enabled ****/
 
-#ifdef DIGINI_USE_PDI_MULTI_EVENT
+#ifdef GRAFX_USE_PDI_MULTI_EVENT
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -602,7 +601,7 @@ ServiceEvent_e FT5336::GetGestureID(void)
     // TODO handle return for error
 
     // Read gesture ID register
-    m_pI2C->ReadRegister(FT5336_GEST_ID_REG, &ReadData, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
+    m_pI2C->Transfer(FT5336_GEST_ID_REG, sizeof(uint8_t),  0, 0, &ReadData, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
 
     // Translate FT5336 ID to Digini ID
     switch(ReadData)
@@ -759,9 +758,9 @@ void FT5336::GetEventInfo(uint32_t EventIdx, uint32_t * pWeight, uint32_t * pAre
     }
 }
 
-#endif // DIGINI_USE_PDI_MULTI_EVENT
+#endif // GRAFX_USE_PDI_MULTI_EVENT
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // DIGINI_USE_POINTING_DEVICE
+#endif // GRAFX_USE_POINTING_DEVICE
 #endif // DIGINI_USE_GRAFX

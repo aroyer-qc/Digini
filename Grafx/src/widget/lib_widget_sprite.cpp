@@ -28,13 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
 #include "widget_cfg.h"
 #ifdef SPRITE_DEF
-#include <stdint.h>
-#include "lib_grafx.h"
-#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -151,7 +148,7 @@ void CSprite::Draw()
        #endif
       #endif
 
-        //CopyLinear(m_pAddress, &m_pSprite->Box, m_PixelFormat, CLEAR_BLEND);
+        //myGrafx->CopyLinear(m_pAddress, &m_pSprite->Box, m_PixelFormat, CLEAR_BLEND);
         CLayer::PopDrawing();
     }
 }

@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define STM32F7_USB_GLOBAL
-#include "lib_class_STM32F7_usb.h"
+#include "lib|_digini.h"
 #undef  STM32F7_USB_GLOBAL
 #include "usb_hcd_int.h"
 

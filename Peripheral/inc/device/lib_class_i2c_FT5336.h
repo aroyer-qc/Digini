@@ -27,14 +27,6 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "lib_class_i2c.h"
-#include "lib_class_pointing_device_interface.h"
-#include "driver_cfg.h"
-
-//-------------------------------------------------------------------------------------------------
 
 #if (USE_I2C_DRIVER == DEF_ENABLED)
 
@@ -67,7 +59,7 @@ class FT5336 : public PointingDeviceInterface
         SystemState_e   DisableIT                       (void);
         SystemState_e   ITStatus                        (void);
         SystemState_e   ClearIT                         (void);
-      #ifdef DIGINI_USE_PDI_MULTI_EVENT
+      #ifdef GRAFX_USE_PDI_MULTI_EVENT
         ServiceEvent_e  GetGestureID                    (void);
         void            GetEventInfo                    (uint32_t EventIdx, uint32_t* pWeight, uint32_t* pArea, uint32_t* pEvent);
       #endif

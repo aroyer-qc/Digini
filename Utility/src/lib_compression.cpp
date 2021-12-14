@@ -28,8 +28,8 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include "lib_compression.h"
+#include "lib_digini.h"
+#ifdef DIGINI_USE_GRAFX
 #include "jpeg.h"
 #include "picopng.h"
 
@@ -91,11 +91,13 @@ size_t DeCompression::Process(RawArray* pRawData, RawArray* pCompxData, size_t D
             DecompressedSize = this->LZW_Method();
             break;
         }
+
         case COMPX_JPEG:
         {
             JPEG_Decode(pCompxData->data(), pRawData->data(), &DecompressedSize);
             break;
         }
+
         case COMPX_PNG:
         {
             PNG_Info_t Info = {0};
@@ -112,12 +114,14 @@ size_t DeCompression::Process(RawArray* pRawData, RawArray* pCompxData, size_t D
             DecompressedSize         = PNG_decode(&Info);
             break;
         }
+
         case COMPX_COMPRESSION_NONE:
         {
             for(size_t i = 0; i < m_DataSize; i++)
             {
                 m_pRawData->append(m_pCompxData->at(i));
             }
+
             DecompressedSize = m_DataSize;
             break;
         }
@@ -165,11 +169,12 @@ size_t DeCompression::RLE_4_Method(void)
         {
             m_pRawData->append(ReadValue);
         }
+
         m_DataSize--;
     }
+
     return m_pRawData->size();
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -200,11 +205,12 @@ size_t DeCompression::RLE_8_Method(void)
         {
             m_pRawData->append(ReadValue);
         }
+
         m_DataSize--;
     }
+
     return m_pRawData->size();
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -236,11 +242,12 @@ size_t DeCompression::RLE_16_Method(void)
         {
             m_pRawData->append(ReadValue);
         }
+
         m_DataSize--;
     }
+
     return m_pRawData->size();
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -272,11 +279,12 @@ size_t DeCompression::RLE_32_Method(void)
         {
             m_pRawData->append(ReadValue);
         }
+
         m_DataSize--;
     }
+
     return m_pRawData->size();
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -315,11 +323,12 @@ size_t DeCompression::RLE_16_CLUT_Method(void)
         {
             m_pRawData->append(ReadValue);
         }
+
         m_DataSize--;
     }
+
     return m_pRawData->size();
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -358,11 +367,12 @@ size_t DeCompression::RLE_32_CLUT_Method(void)
         {
             m_pRawData->append(ReadValue);
         }
+
         m_DataSize--;
     }
+
     return m_pRawData->size();
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -418,6 +428,7 @@ size_t DeCompression::LZW_Method(void)
 
         // Now we output the decoded string in reverse order.
         Code = m_WorkMem.pDecode->uint32_Last();
+
         while(m_WorkMem.pDecode->size() != 0)
         {
 //            uint8_t Value = m_WorkMem.pDecode->uint32_TakeLast();
@@ -432,12 +443,12 @@ size_t DeCompression::LZW_Method(void)
             m_WorkMem.pAppend->replace(NextCode * sizeof(uint32_t), Code);
             NextCode++;
         }
+
         OldCode = NewCode;
     }
 
     return m_pRawData->size();
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -466,9 +477,9 @@ void DeCompression::LZW_DecodeArray(uint32_t Code)
             __asm("nop");
         }
     }
+
     m_WorkMem.pDecode->append(Code);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -499,5 +510,9 @@ uint32_t DeCompression::LZW_InputCode(void)
 
     return Value;
 }
+
+//-------------------------------------------------------------------------------------------------
+
+#endif
 
 //-------------------------------------------------------------------------------------------------

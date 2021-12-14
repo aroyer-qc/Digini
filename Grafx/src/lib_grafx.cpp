@@ -28,14 +28,11 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
-#ifdef DIGINI_USE_GRAFX
 #define GFX_GLOBAL
-#include "lib_grafx.h"
+#include "lib_digini.h"
 #undef  GFX_GLOBAL
-#include <stdint.h>
-#include "bsp.h"
-#include "driver_cfg.h"
+#ifdef DIGINI_USE_GRAFX
+//#include "bsp.h"
 
 //-------------------------------------------------------------------------------------------------
 // const(s)
@@ -121,11 +118,13 @@ SystemState_e GRAFX_Initialize(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e GRAFX_PostInitialize(void)
 {
-  #ifdef DIGINI_USE_POINTING_DEVICE
+  #ifdef GRAFX_USE_POINTING_DEVICE
     SystemState_e State;
   #endif
     nOS_Error     Error;
+  #ifdef GRAFX_USE_A_SKIN
     uint32_t      FreePointer;
+  #endif
 
     DB_Central.Set(&GFX_LoadingAddress, GFX_FREE_RAM_POINTER, 0, 0);   // Record the free SDRAM pointer in database at reload ID
 
@@ -136,7 +135,7 @@ SystemState_e GRAFX_PostInitialize(void)
         return SYS_FAIL;
     }
 
-  #ifdef DIGINI_USE_A_SKIN
+  #ifdef GRAFX_USE_A_SKIN
     //  SKIN_pTask need then at the same pointer
     DB_Central.Get(&FreePointer, GFX_FREE_RAM_POINTER,  0, 0);
     LIB_AlignPointer(FreePointer);
@@ -149,7 +148,7 @@ SystemState_e GRAFX_PostInitialize(void)
     }
   #endif
 
-  #ifdef DIGINI_USE_POINTING_DEVICE
+  #ifdef GRAFX_USE_POINTING_DEVICE
     if((State = PDI_pDriver->Initialize(GRAFX_PostInitSubDriverPtr.PDI_pHardInterface)) != SYS_READY)
     {
         return State;

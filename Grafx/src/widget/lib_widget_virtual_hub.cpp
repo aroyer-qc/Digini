@@ -28,13 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
 #include "widget_cfg.h"
 #ifdef VIRTUAL_HUB_DEF
-#include <stdint.h>
-#include "lib_grafx.h"
-#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -75,7 +72,7 @@ Link_e CVirtualHub::Create(PageWidget_t* pPageWidget)
          //   LinkList_t* pLinkList = &LinkList[m_pVirtualHub->LinkList];
          //   LinkList[LinkList]
             // TODO, there is one file missing to to this ...get the link from array of link_e
-            Link_e Link = 0;
+            Link_e Link = INVALID_LINK;
             FreeServiceStruct(&pService);
             return Link;                                                // Stop here, useless to continue because we will switch screen
         }
@@ -106,9 +103,9 @@ Link_e CVirtualHub::Refresh(MsgRefresh_t* pMsg)
     {
         if(pService->ServiceType == SERVICE_RETURN)
         {
-           LinkList_e LinkList = m_pVirtualHub->LinkList;
+            //LinkList_e LinkList = m_pVirtualHub->LinkList;
             // TODO, there is one file missing to to this ...get the link from array of link_e
-            Link_e Link = 0;
+            Link_e Link = INVALID_LINK;
             FreeServiceStruct(&pService);
             return Link;                                                // Stop here, useless to continue because we will switch screen
         }

@@ -28,12 +28,11 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
-#ifdef DIGINI_USE_GRAFX
-#ifdef DIGINI_USE_POINTING_DEVICE
 #define LIB_PDI_TASK_GLOBAL
-#include "lib_pdi_task.h"
+#include "lib_digini.h"
 #undef  LIB_PDI_TASK_GLOBAL
+#ifdef DIGINI_USE_GRAFX
+#ifdef GRAFX_USE_POINTING_DEVICE
 
 //-------------------------------------------------------------------------------------------------
 // Local function
@@ -293,7 +292,7 @@ void PDI_myClassTask::ClearAllZone(void)
     CLayer::PushDrawing();
     CLayer::SetDrawing(TOUCH_SENSE_LAYER);
     CLayer::SetColor(BLACK);
-    DrawRectangle(&Box);
+    myGrafx->DrawRectangle(&Box);
     CLayer::PopDrawing();
 }
 
@@ -318,9 +317,9 @@ void PDI_myClassTask::CreateZone(EventArea_t* pEventArea, uint16_t Options, Widg
 
     switch(Options & GRAFX_OPTION_TOUCH_MASK)
     {
-        case GRAFX_OPTION_TOUCH_RECTANGLE:    DrawRectangle(&pEventArea->Rectangle.Box);          break;
-        case GRAFX_OPTION_TOUCH_CIRCLE:       DrawCircle   (&pEventArea->Circle.C, POLY_FILL);    break;
-        case GRAFX_OPTION_TOUCH_POLYGON:      DrawPolygon  (&pEventArea->Polygon, POLY_FILL);     break;
+        case GRAFX_OPTION_TOUCH_RECTANGLE:    myGrafx->DrawRectangle(&pEventArea->Rectangle.Box);          break;
+        case GRAFX_OPTION_TOUCH_CIRCLE:       myGrafx->DrawCircle   (&pEventArea->Circle.C, POLY_FILL);    break;
+ //       case GRAFX_OPTION_TOUCH_POLYGON:      myGrafx->DrawPolygon  (&pEventArea->Polygon, POLY_FILL);     break;
     }
 
     CLayer::PopDrawing();
@@ -339,7 +338,7 @@ void PDI_myClassTask::CreateZone(EventArea_t* pEventArea, uint16_t Options, Widg
 //-------------------------------------------------------------------------------------------------
 void PDI_myClassTask::ResetEventData(void)
 {
-  #ifdef DIGINI_USE_PDI_MULTI_EVENT
+  #ifdef GRAFX_USE_PDI_MULTI_EVENT
     m_GestureID = SERVICE_NO_STATE;
 
     for(int Index = 0; Index < PDI_NUMBER_OF_EVENT; Index++)
@@ -368,7 +367,7 @@ void PDI_myClassTask::ResetEventData(void)
 //  Description:    Get the gesture ID from the device
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef DIGINI_USE_PDI_MULTI_EVENT
+#ifdef GRAFX_USE_PDI_MULTI_EVENT
 ServiceEvent_e PDI_myClassTask::GetGestureID(void)
 {
     return m_pDriver->GetGestureID();
@@ -505,7 +504,7 @@ SystemState_e PDI_myClassTask::ClearIT(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e PDI_myClassTask::GetState(void)
 {
-  #ifdef DIGINI_USE_PDI_MULTI_EVENT
+  #ifdef GRAFX_USE_PDI_MULTI_EVENT
     uint32_t weight = 0;
     uint32_t area = 0;
     uint32_t event = 0;
@@ -524,7 +523,9 @@ SystemState_e PDI_myClassTask::GetState(void)
     SystemState_e State;
     uint16_t x_diff;
     uint16_t y_diff;
+  #ifdef GRAFX_USE_PDI_MULTI_EVENT
     uint32_t index;
+  #endif
 
     State = SYS_READY;
 
@@ -533,7 +534,7 @@ SystemState_e PDI_myClassTask::GetState(void)
 
     if(m_EventDetected)
     {
-      #ifdef DIGINI_USE_PDI_MULTI_EVENT
+      #ifdef GRAFX_USE_PDI_MULTI_EVENT
         for(index = 0; index < m_EventDetected; index++)
         {
             // Get each touch coordinates
@@ -607,5 +608,5 @@ void PDI_myClassTask::IRQ_Handler(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // DIGINI_USE_POINTING_DEVICE
+#endif // GRAFX_USE_POINTING_DEVICE
 #endif // DIGINI_USE_GRAFX

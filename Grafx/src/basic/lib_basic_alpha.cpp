@@ -28,9 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include "digini_cfg.h"
+#include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
+
+//-------------------------------------------------------------------------------------------------
 
 //static void    PrecomputeAlphaTable       ();            // TODO change for externally accessible
 // ...

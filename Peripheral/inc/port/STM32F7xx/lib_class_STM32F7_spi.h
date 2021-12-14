@@ -32,20 +32,6 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include <stdint.h>
-#include "stm32f7xx.h"
-#include "nOS.h"
-#include "lib_dma.h"
-#include "lib_isr.h"
-#include "lib_io.h"
-#include "lib_typedef.h"
-#include "driver_cfg.h"
-#include "spi_cfg.h"
-
-//-------------------------------------------------------------------------------------------------
 
 #if (USE_SPI_DRIVER == DEF_ENABLED)
 

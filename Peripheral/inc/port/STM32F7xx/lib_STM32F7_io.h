@@ -184,26 +184,30 @@
 #define IO_EXT_MODE_IT_BOTH             ((uint32_t)0x00000003)
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_IO_AS_ENUM(ENUM_ID, IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA) ENUM_ID,
+#define EXPAND_X_IO_IRQ_AS_ENUM(ENUM_ID, IO_ID, NUMBER, TRIGGER) ENUM_ID,
+#define EXPAND_X_IO_AS_STRUCT_DATA(ENUM_ID,  IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA ) \
+                                           { IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA },
+#define EXPAND_X_IO_IRQ_AS_STRUCT_DATA(ENUM_ID, IO_ID, NUMBER, TRIGGER) \
+                                              { IO_ID, NUMBER, TRIGGER},
+
+//-------------------------------------------------------------------------------------------------
 // typedef struct(s) and enum(s)
 //-------------------------------------------------------------------------------------------------
 enum IO_ID_e
 {
     IO_NOT_DEFINED = -1,
-
-  #define X_IO(ENUM_ID, IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA) ENUM_ID,
-    IO_DEF
-  #undef  X_IO
-
+    IO_DEF(EXPAND_X_IO_AS_ENUM)
     IO_NUM,
 };
 
 #ifdef IO_IRQ_DEF
 enum IO_IrqID_e
 {
-  #define X_IO_IRQ(ENUM_ID, IO_ID, NUMBER, TRIGGER) ENUM_ID,
-    IO_IRQ_DEF
-  #undef  X_IO_IRQ
-
+    IO_IRQ_DEF(EXPAND_X_IO_IRQ_AS_ENUM)
     IO_IRQ_NUM,
 };
 #endif
@@ -239,19 +243,13 @@ typedef void (*IO_PinChangeCallback_t)(void* pArg);
 
 const IO_Properties_t IO_Properties[IO_NUM] =
 {
-  #define X_IO(ENUM_ID,  IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA ) \
-                       { IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA },
-    IO_DEF
-  #undef  X_IO
+    IO_DEF(EXPAND_X_IO_AS_STRUCT_DATA)
 };
 
   #ifdef IO_IRQ_DEF
     const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM] =
     {
-      #define X_IO_IRQ(ENUM_ID, IO_ID, NUMBER, TRIGGER) \
-                              { IO_ID, NUMBER, TRIGGER},
-        IO_IRQ_DEF
-      #undef  X_IO_IRQ
+        IO_IRQ_DEF(EXPAND_X_IO_IRQ_AS_STRUCT_DATA)
     };
   #endif
 

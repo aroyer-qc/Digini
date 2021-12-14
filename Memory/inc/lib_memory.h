@@ -31,15 +31,20 @@
 #ifdef MEM_BLOCK_DEF
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_MEM_BLOCK_AS_ENUM(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE) ENUM_ID,
+#define EXPAND_X_MEM_BLOCK_AS_ARRAY_DECL(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)  uint8_t m_##GROUP_NAME[BLOCK_MAX][BLOCK_SIZE] __attribute__ ((aligned (4)));
+
+//-------------------------------------------------------------------------------------------------
 // MEM_BLOCK list declaration section
 //-------------------------------------------------------------------------------------------------
 
 // To found how many block type there is
     enum MEM_BlockList_e
     {
-      #define X_MEM_BLOCK(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE) ENUM_ID,
-        MEM_BLOCK_DEF
-      #undef X_MEM_BLOCK
+        MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_ENUM)
         MEM_BLOCK_GROUP_SIZE
     };
 
@@ -65,9 +70,7 @@ class CMem
         void*                       m_pBufferArray      [MEM_BLOCK_GROUP_SIZE];                  // pointer array of the memory block
         nOS_Error                   m_LastError;
 
-      #define X_MEM_BLOCK(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE) uint8_t m_##GROUP_NAME[BLOCK_MAX][BLOCK_SIZE] __attribute__ ((aligned (4)));
-        MEM_BLOCK_DEF
-      #undef X_MEM_BLOCK
+        MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_ARRAY_DECL)
 };
 
 

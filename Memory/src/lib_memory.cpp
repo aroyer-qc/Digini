@@ -28,13 +28,20 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//#include <stdint.h>
-#include <string.h>
 #define MEM_GLOBAL
 #include "lib_digini.h"
 #undef MEM_GLOBAL
-//#include "nOS.h"
 #ifdef MEM_BLOCK_DEF
+
+//-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_MEM_BLOCK_AS_ARRAY(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE) m_pBufferArray[i++] = (void*)&m_##GROUP_NAME[0][0];
+#define EXPAND_X_MEM_BLOCK_AS_INITIALIZE_ARRAY(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)   \
+                                               memset(&m_nOS_MemArray[i], 0, sizeof(nOS_Mem));                              \
+                                               nOS_MemCreate(&m_nOS_MemArray[i], m_pBufferArray[i], BLOCK_SIZE, BLOCK_MAX); \
+                                               i++;
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -54,18 +61,13 @@ CMem::CMem()
 
     i = 0;
     // Get the address of each group in pointer array
-    #define X_MEM_BLOCK(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE) m_pBufferArray[i++] = (void*)&m_##GROUP_NAME[0][0];
-      MEM_BLOCK_DEF
-    #undef X_MEM_BLOCK
+
+     MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_ARRAY)
 
     //Initialize nOS Memory array structure
      i = 0;
-    #define X_MEM_BLOCK(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)   \
-     memset(&m_nOS_MemArray[i], 0, sizeof(nOS_Mem));                              \
-     nOS_MemCreate(&m_nOS_MemArray[i], m_pBufferArray[i], BLOCK_SIZE, BLOCK_MAX); \
-     i++;
-      MEM_BLOCK_DEF
-    #undef X_MEM_BLOCK
+
+    MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_INITIALIZE_ARRAY)
 }
 
 //-------------------------------------------------------------------------------------------------

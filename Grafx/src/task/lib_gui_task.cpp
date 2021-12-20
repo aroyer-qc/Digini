@@ -233,6 +233,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
 
     Count               = 0;
     pWidgetListPointer  = m_pWidgetList;
+
     while(Count < m_WidgetCount)
     {
         Widget = pPage->ID;

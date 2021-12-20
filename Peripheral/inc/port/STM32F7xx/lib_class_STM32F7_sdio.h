@@ -53,7 +53,7 @@
 #define SD_CARD_USE_DETECT_SIGNAL                   0                           // We are using a form of detect signal     TODO TODO TODO
 
 //-------------------------------------------------------------------------------------------------
-// enum(s)
+//  typedef(s)
 //-------------------------------------------------------------------------------------------------
 
 #if SD_CARD_USE_POWER_CONTROL == 1

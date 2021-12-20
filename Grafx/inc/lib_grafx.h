@@ -43,16 +43,19 @@
 #include "lib_grafx_skin.h"
 #include "grafx_display_layer_cfg.h"
 #include "lib_grafx_enum_x_macro.h"
+
 #include "menu_link_cfg.h"
 #include "lib_grafx_link_enum.h"
+
 #include "menu_link_list_cfg.h"
 #include "lib_grafx_link_list_enum.h"
+
 #include "lib_grafx_page_widget.h"
 #include "menu_cfg.h"
 #include "lib_grafx_link_const.h"
-#include "lib_grafx_link_list_const.h"
 #include "lib_grafx_enum.h"
 #include "lib_grafx_typedef.h"
+#include "lib_grafx_link_list_const.h"
 #include "lib_class_widget.h"
 #include "lib_widget_variable.h"
 #include "lib_grafx_color.h"

@@ -137,27 +137,32 @@ struct PageSlideRange_t
     int16_t        EndPos;
 };
 
+struct LinkList_t
+{
+     Link_e Link[8];
+};
+
 // --------- Widget element ---------
 
 struct Image_t
 {
-    Skin_e         ID_List[SERVICE_ID_STATE_SIZE];         // IMAGE_INVALID = No icon or glyph present
+    Skin_e         ID_List[SERVICE_ID_STATE_SIZE];          // IMAGE_INVALID = No icon or glyph present
 };
 
 struct Glyph_t
 {
     Cartesian_t    Pos;
-    Skin_e         ID_List[SERVICE_ID_STATE_SIZE];         // IMAGE_INVALID = No icon or glyph present
+    Skin_e         ID_List[SERVICE_ID_STATE_SIZE];          // IMAGE_INVALID = No icon or glyph present
 };
 
 struct Text_t
 {
-    Box_t           Box;
+    Box_t          Box;
     uint32_t       Color[3];
     Font_e         Font;
     BlendMode_e    Blend;
-    Label_e         Label;                                   // INVALID_LABEL //0xFF = No label present
-    uint8_t           Options;
+    Label_e        Label;                                   // INVALID_LABEL //0xFF = No label present
+    uint8_t        Options;
 };
 
 // --------- Exchange Widget element ---------
@@ -179,7 +184,7 @@ struct InputDecimal_t
 
 struct InputFloat_t
 {
-    ExchangeCommon_t   Common;
+    ExchangeCommon_t    Common;
     Label_e             FormatLabel;
     float               Min;
     float               Max;
@@ -274,7 +279,7 @@ struct ServiceType8_t                   // Service to override position of a wid
 struct Background_t
 {
     Service_t      Service;
-    Cartesian_t       Pos;
+    Cartesian_t    Pos;
     Image_t        Image;
     uint16_t       Options;
 //    uint16_t     RefreshRate;      // background animation ??
@@ -320,7 +325,7 @@ struct BasicRect_t
 struct Button_t
 {
     Service_t      Service;
-    Cartesian_t       Pos;
+    Cartesian_t    Pos;
     Image_t        Image;
     Glyph_t        Glyph;
     Text_t         Text;
@@ -332,7 +337,7 @@ struct Button_t
 
 struct Icon_t
 {
-    Service_t        Service;
+    Service_t      Service;
     Box_t          Box;
     Image_t        Image;
     uint16_t       Options;
@@ -340,7 +345,7 @@ struct Icon_t
 
 struct Gif_t
 {
-    Service_t        Service;
+    Service_t      Service;
     Cartesian_t    Pos;
     Image_t        Image;
     uint16_t       Options;
@@ -371,7 +376,7 @@ struct LabelList_t
 {
     Service_t      Service;
     Text_t         Text;
-    Label_e         Label[LABEL_LIST_SIZE];
+    Label_e        Label[LABEL_LIST_SIZE];
     uint16_t       Options;
 };
 
@@ -403,8 +408,8 @@ struct Panel_t
 {
     Service_t      Service;
     uint16_t       ServiceFilter;
-    Box_t           Box;                // It is also the Touch Area
-    Image_t           Image;
+    Box_t          Box;                // It is also the Touch Area
+    Image_t        Image;
     Text_t         Text;
     uint16_t       Options;
 };
@@ -455,7 +460,7 @@ struct Terminal_t
 struct VirtualHub_t
 {
     Service_t      Service;
-    LinkList_e     LinkList;
+    LinkList_e     List;
 };
 
 struct VirtualWindow_t

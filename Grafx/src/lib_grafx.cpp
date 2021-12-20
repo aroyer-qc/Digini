@@ -32,24 +32,23 @@
 #include "lib_digini.h"
 #undef  GFX_GLOBAL
 #ifdef DIGINI_USE_GRAFX
-//#include "bsp.h"
+
+//-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_LAYER_AS_CALC(ENUM_ID, WORK_LAYER, PIXEL_FORMAT, SIZE_X, SIZE_Y) ((SIZE_X * SIZE_Y) * GFX_PixelSize[PIXEL_FORMAT]) +
 
 //-------------------------------------------------------------------------------------------------
 // const(s)
 //-------------------------------------------------------------------------------------------------
 
-#if 0
 // Calculate the offset for the Free memory after the layers used by GRAFX
 #ifdef LAYER_DEF
 const uint32_t GFX_LoadingAddress =
-  #define X_LAYER(ENUM_ID, WORK_LAYER, PIXEL_FORMAT, SIZE_X, SIZE_Y) ((SIZE_X * SIZE_Y) * GFX_PixelSize[PIXEL_FORMAT]) +
-    LAYER_DEF
-  #undef X_LAYER
+    LAYER_DEF(EXPAND_X_LAYER_AS_CALC)
     GFX_BASE_ADDRESS;
 #endif
-#endif
-
-const uint32_t GFX_LoadingAddress = GFX_BASE_ADDRESS;
 
 //-------------------------------------------------------------------------------------------------
 // External low level function from driver
@@ -85,7 +84,6 @@ SystemState_e GRAFX_Initialize(void)
     {
         LayerTable[Layer].SetAddress(Address);
         Address += LayerTable[Layer].GetTotalSize();
-
         LayerTable[Layer].Clear();
     }
   #endif

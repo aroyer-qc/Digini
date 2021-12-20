@@ -30,35 +30,22 @@
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-// Object
-
 #define EXPAND_X_LINK_LIST_AS_OBJECT(ENUM_ID, ID1, ID2, ID3, ID4, ID5, ID6, ID7, ID8) \
-{ID1, ID2, ID3, ID4, ID5, ID6, ID7, ID8 },
-
-
-
-struct LinkList_t
-{
-     Link_e              Link[8];
-};
-
-
+                                             {ID1, ID2, ID3, ID4, ID5, ID6, ID7, ID8},
 
 //-------------------------------------------------------------------------------------------------
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef GFX_GLOBAL
-  #ifdef LINK_LIST_DEF
+#ifdef LINK_LIST_DEF
+  #ifdef GFX_GLOBAL
     const LinkList_t LinkList[NB_LINK_LIST_CONST] =
     {
         LINK_LIST_DEF(EXPAND_X_LINK_LIST_AS_OBJECT)
     };
   #else
     extern const LinkList_t LinkList[NB_LINK_LIST_CONST];
-  #endif
-#endif // GFX_GLOBAL
+  #endif // GFX_GLOBAL
+#endif
 
 //-------------------------------------------------------------------------------------------------
-
-

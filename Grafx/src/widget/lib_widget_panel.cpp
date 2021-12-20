@@ -30,7 +30,7 @@
 
 #include "lib_digini.h"
 #ifdef DIGINI_USE_GRAFX
-#include "widget_cfg.h"
+//#include "widget_cfg.h"
 #ifdef PANEL_DEF
 
 //-------------------------------------------------------------------------------------------------

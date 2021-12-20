@@ -31,8 +31,11 @@
 #define LIB_GUI_TASK_GLOBAL
 #include "lib_digini.h"
 #undef  LIB_GUI_TASK_GLOBAL
-#ifdef DIGINI_USE_GRAFX
 #include <new>
+
+//-------------------------------------------------------------------------------------------------
+
+#ifdef DIGINI_USE_GRAFX
 
 //-------------------------------------------------------------------------------------------------
 //

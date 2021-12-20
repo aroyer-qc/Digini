@@ -31,8 +31,10 @@
 #define GFX_GLOBAL
 #include "lib_digini.h"
 #undef  GFX_GLOBAL
+
+//-------------------------------------------------------------------------------------------------
+
 #ifdef DIGINI_USE_GRAFX
-//#include "bsp.h"
 
 //-------------------------------------------------------------------------------------------------
 // const(s)
@@ -79,13 +81,12 @@ SystemState_e GRAFX_Initialize(void)
     myGrafx->Initialize(GRAFX_DRIVER_ARGUMENT);                                                         // Call the right driver according to configuration
 
   #ifdef LAYER_DEF
-    // Precalculate address for each layer and also clear the layer
+    // Pre calculate address for each layer and also clear the layer
     Address = GFX_BASE_ADDRESS;
     for(int Layer = LAYER_FIRST_ITEM; Layer < LAYER_COUNT; Layer++)
     {
         LayerTable[Layer].SetAddress(Address);
         Address += LayerTable[Layer].GetTotalSize();
-
         LayerTable[Layer].Clear();
     }
   #endif
@@ -105,7 +106,6 @@ SystemState_e GRAFX_Initialize(void)
 
     return SYS_READY;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -153,6 +153,7 @@ SystemState_e GRAFX_PostInitialize(void)
     {
         return State;
     }
+
     if((State = PDI_pTask->Initialize(PDI_pDriver, GRAFX_SIZE_X, GRAFX_SIZE_Y, PDI_SWAP_NONE)) != SYS_READY)
     {
         return State;

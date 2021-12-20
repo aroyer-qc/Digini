@@ -31,11 +31,6 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "lib_digini.h"
-//#include "lib_typedef.h"
-//#include "database_cfg.h"
-//#include "lib_class_database.h"
-//#include "lib_class_STM32F7_rtc.h"
-//#include "driver_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 

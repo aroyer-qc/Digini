@@ -167,6 +167,7 @@ extern "C" DSTATUS disk_initialize(uint8_t Device)
 
       default: break;
     }
+
     return Status;
 }
 

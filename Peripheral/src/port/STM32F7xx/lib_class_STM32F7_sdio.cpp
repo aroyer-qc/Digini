@@ -777,7 +777,12 @@ SystemState_e SDIO_Driver::TransmitCommand(uint8_t Command, uint32_t Argument, i
     SDMMC1->ARG = (uint32_t)Argument;                                   // Set the SDMMC Argument value
     SDMMC1->CMD = (uint32_t)(Command | SDMMC_CMD_CPSMEN);               // Set SDMMC command parameters
     m_LastCommand = Command;
-    if((Argument == 0) && (ResponseType == 0)) ResponseType = -1;       // Go idle command
+
+    if((Argument == 0) && (ResponseType == 0))
+    {
+        ResponseType = -1;       // Go idle command
+    }
+
     State = this->CmdResponse(Command & SDMMC_CMD_CMDINDEX, ResponseType);
     ClearAllFlag();                                                     // Clear the Command Flags
 

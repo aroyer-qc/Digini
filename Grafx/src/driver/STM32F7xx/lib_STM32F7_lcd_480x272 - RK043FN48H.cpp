@@ -31,6 +31,9 @@
 #define LIB_RK043FN48H_GLOBAL
 #include "lib_digini.h"
 #undef  LIB_RK043FN48H_GLOBAL
+
+//-------------------------------------------------------------------------------------------------
+
 #ifdef DIGINI_USE_GRAFX
 
 //-------------------------------------------------------------------------------------------------
@@ -205,7 +208,7 @@ void GrafxDriver::LCD_Initialize(void)
     SET_BIT(RCC->DCKCFGR2, 1 << RCC_DCKCFGR2_CK48MSEL_Pos);
 
     MODIFY_REG(RCC->DCKCFGR1, RCC_DCKCFGR1_PLLSAIDIVR, RCC_DCKCFGR1_PLLSAIDIVR_0); // PLLSA IDIVR 4;
-    RCC->CR         |= RCC_CR_PLLSAION;
+    RCC->CR |= RCC_CR_PLLSAION;
     while((RCC->CR & RCC_CR_PLLSAIRDY) == 0);
 
     RCC->APB2ENR |= RCC_APB2ENR_LTDCEN;

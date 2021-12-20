@@ -136,7 +136,7 @@ EXTERN_LIB_CLASS_DATABASE class CDataBase DB_Central;
 #include "lib_class_rom_dbase.h"
 #include "lib_class_bkpreg_dbase.h"
 #include "lib_database_wrapper.h"
-#include "lib_typedef.h"
+//#include "lib_typedef.h"
 
 //#define __DATABASE_POST_INCLUDE__
 //#include "database_cfg.h"

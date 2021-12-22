@@ -73,7 +73,7 @@ Link_e CLabel::Create(PageWidget_t* pPageWidget)
     {
         if(m_ServiceState == SERVICE_REFRESH)
         {
-            Draw(pService);
+            this->Draw(pService);
         }
         FreeServiceStruct(&pService);
     }
@@ -119,7 +119,7 @@ Link_e CLabel::Refresh(MsgRefresh_t* pMsg)
         {
             if((m_pLabel->Options & GRAFX_OPTION_DRAW_ONCE) != GRAFX_OPTION_DRAW_ONCE)
             {
-                Draw(pService);
+                this->Draw(pService);
             }
         }
 

@@ -27,6 +27,12 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_COLOR_AS_DATA(ENUM_ID, VALUE) {VALUE},
+
+//-------------------------------------------------------------------------------------------------
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -81,17 +87,10 @@ extern const int8_t GFX_PixelSize[PIXEL_FORMAT_COUNT] =
 
 extern const s32_t GFX_ColorTable[COL_NB_COLOR_CONST] =
 {
-  #define X_COLOR(ENUM_ID, VALUE) {VALUE},
-    COLOR_DEF
-  #undef X_COLOR
-  #define X_GRAY(ENUM_ID, VALUE) {VALUE},
-    GRAY_DEF
-  #undef X_GRAY
-
+    COLOR_DEF(EXPAND_X_COLOR_AS_DATA)
+    GRAY_DEF(EXPAND_X_COLOR_AS_DATA)
   #ifdef CUSTOM_COLOR_DEF
-   #define X_CUSTOM_COLOR(ENUM_ID, VALUE) {VALUE},
-    CUSTOM_COLOR_DEF
-   #undef  X_CUSTOM_COLOR
+    CUSTOM_COLOR_DEF(EXPAND_X_COLOR_AS_DATA)
   #endif
 };
 

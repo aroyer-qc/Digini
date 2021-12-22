@@ -33,7 +33,14 @@ extern "C" {
 #endif
 
 //-------------------------------------------------------------------------------------------------
-// Enum(s)
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_LABEL_AS_ENUM(ENUM_ID, LBL1, LBL2) ENUM_ID,
+#define EXPAND_X_LABEL_AS_DATA(ENUM_ID, LBL1, LBL2) {LBL1, LBL2},
+
+//-------------------------------------------------------------------------------------------------
+//  typedef(s)
 //-------------------------------------------------------------------------------------------------
 
 enum Language_e
@@ -46,11 +53,9 @@ enum Language_e
 
 enum Label_e
 {
-    #define X_LABEL(ID, LBL1, LBL2) ID,
-        LABEL_LANGUAGE_DEF
-    #undef X_LABEL
-        NB_LABEL_CONST,
-        INVALID_LABEL,
+    LABEL_LANGUAGE_DEF(EXPAND_X_LABEL_AS_ENUM)
+    NB_LABEL_CONST,
+    INVALID_LABEL,
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -61,9 +66,7 @@ enum Label_e
 
   const char* LBL_Application[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
   {
-    #define X_LABEL(ID, LBL1, LBL2) {LBL1, LBL2},
-      LABEL_LANGUAGE_DEF
-    #undef X_LABEL
+    LABEL_LANGUAGE_DEF(EXPAND_X_LABEL_AS_DATA)
   };
 
 #else

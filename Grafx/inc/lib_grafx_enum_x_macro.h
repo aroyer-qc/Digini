@@ -59,6 +59,8 @@
 #define EXPAND_X_WINDOW_AS_ENUM(ENUM_ID, SERVICE, SUB_SERVICE, TIMING, POS_X, POS_Y, SIZE_X, SIZE_Y) ENUM_ID,
 #define EXPAND_X_LAYER_AS_ENUM(ENUM_ID, WORK_LAYER, PIXEL_FORMAT, SIZE_X, SIZE_Y) ENUM_ID,
 #define EXPAND_X_XCHANGE_AS_ENUM(ENUM_ID, POINTER) ENUM_ID,
+#define EXPAND_X_COLOR_AS_ENUM(ENUM_ID, VALUE) ENUM_ID,
+
 
 //-------------------------------------------------------------------------------------------------
 // Auto generated Enum Typedef(s)
@@ -247,16 +249,10 @@ enum Layer_e
 // 16 bits colors
 enum ColorTable_e
 {
-  #define X_COLOR(ENUM_ID, VALUE) ENUM_ID,
-    COLOR_DEF
-  #undef X_COLOR
-  #define X_GRAY(ENUM_ID, VALUE) ENUM_ID,
-    GRAY_DEF
-  #undef X_GRAY
-    #ifdef CUSTOM_COLOR_DEF
-    #define X_CUSTOM_COLOR(ENUM_ID, VALUE) ENUM_ID,
-        CUSTOM_COLOR_DEF
-    #undef  X_CUSTOM_COLOR
+    COLOR_DEF(EXPAND_X_COLOR_AS_ENUM)
+    GRAY_DEF(EXPAND_X_COLOR_AS_ENUM)
+  #ifdef CUSTOM_COLOR_DEF
+      CUSTOM_COLOR_DEF(EXPAND_X_COLOR_AS_ENUM)
   #endif
     COL_NB_COLOR_CONST
 } ;

@@ -66,57 +66,59 @@
 #define LINK_LIST_ID_SIZE                           8
 
 
-#define COLOR_DEF      X_COLOR( BLACK,            0x00000000 )\
-                       X_COLOR( BLUE,             0x000000FF )\
-                       X_COLOR( GREEN,            0x0000FF00 )\
-                       X_COLOR( CYAN,             0x0000FFFF )\
-                       X_COLOR( RED,              0x00FF0000 )\
-                       X_COLOR( MAGENTA,          0x00FF00FF )\
-                       X_COLOR( BROWN,            0x004F2700 )\
-                       X_COLOR( LIGHT_GRAY,       0x00A7A7A7 )\
-                       X_COLOR( GRAY,             0x007F7F7F )\
-                       X_COLOR( LIGHT_BLUE,       0x003F7FFF )\
-                       X_COLOR( LIGHT_GREEN,      0x007FFF7F )\
-                       X_COLOR( LIGHT_CYAN,       0x007FFFFF )\
-                       X_COLOR( LIGHT_RED,        0x00FF7F7F )\
-                       X_COLOR( LIGHT_MAGENTA,    0x00FF7FFF )\
-                       X_COLOR( YELLOW,           0x00FFF700 )\
-                       X_COLOR( WHITE,            0x00FFFFFF )\
-                       X_COLOR( ORANGE,           0x00FF4F2F )\
-                       X_COLOR( LIGHT_YELLOW,     0x00FFFF21 )\
-                       X_COLOR( TRANSPARENT,      0x00000000 )\
+#define COLOR_DEF(X_COLOR)\
+       X_COLOR( BLACK,            0x00000000 )\
+       X_COLOR( BLUE,             0x000000FF )\
+       X_COLOR( GREEN,            0x0000FF00 )\
+       X_COLOR( CYAN,             0x0000FFFF )\
+       X_COLOR( RED,              0x00FF0000 )\
+       X_COLOR( MAGENTA,          0x00FF00FF )\
+       X_COLOR( BROWN,            0x004F2700 )\
+       X_COLOR( LIGHT_GRAY,       0x00A7A7A7 )\
+       X_COLOR( GRAY,             0x007F7F7F )\
+       X_COLOR( LIGHT_BLUE,       0x003F7FFF )\
+       X_COLOR( LIGHT_GREEN,      0x007FFF7F )\
+       X_COLOR( LIGHT_CYAN,       0x007FFFFF )\
+       X_COLOR( LIGHT_RED,        0x00FF7F7F )\
+       X_COLOR( LIGHT_MAGENTA,    0x00FF7FFF )\
+       X_COLOR( YELLOW,           0x00FFF700 )\
+       X_COLOR( WHITE,            0x00FFFFFF )\
+       X_COLOR( ORANGE,           0x00FF4F2F )\
+       X_COLOR( LIGHT_YELLOW,     0x00FFFF21 )\
+       X_COLOR( TRANSPARENT,      0x00000000 )\
 
-#define GRAY_DEF       X_GRAY( GRAY_1,            0x00070707 )\
-                       X_GRAY( GRAY_2,            0x000F0F0F )\
-                       X_GRAY( GRAY_3,            0x00171717 )\
-                       X_GRAY( GRAY_4,            0x001F1F1F )\
-                       X_GRAY( GRAY_5,            0x00272727 )\
-                       X_GRAY( GRAY_6,            0x002F2F2F )\
-                       X_GRAY( GRAY_7,            0x00373737 )\
-                       X_GRAY( GRAY_8,            0x003F3F3F )\
-                       X_GRAY( GRAY_9,            0x00474747 )\
-                       X_GRAY( GRAY_10,           0x004F4F4F )\
-                       X_GRAY( GRAY_11,           0x00575757 )\
-                       X_GRAY( GRAY_12,           0x005F5F5F )\
-                       X_GRAY( GRAY_13,           0x00676767 )\
-                       X_GRAY( GRAY_14,           0x006F6F6F )\
-                       X_GRAY( GRAY_15,           0x00777777 )\
-                       X_GRAY( GRAY_16,           0x007F7F7F )\
-                       X_GRAY( GRAY_17,           0x00878787 )\
-                       X_GRAY( GRAY_18,           0x008F8F8F )\
-                       X_GRAY( GRAY_19,           0x00979797 )\
-                       X_GRAY( GRAY_20,           0x009F9F9F )\
-                       X_GRAY( GRAY_21,           0x00A7A7A7 )\
-                       X_GRAY( GRAY_22,           0x00AFAFAF )\
-                       X_GRAY( GRAY_23,           0x00B7B7B7 )\
-                       X_GRAY( GRAY_24,           0x00BFBFBF )\
-                       X_GRAY( GRAY_25,           0x00C7C7C7 )\
-                       X_GRAY( GRAY_26,           0x00CFCFCF )\
-                       X_GRAY( GRAY_27,           0x00D7D7D7 )\
-                       X_GRAY( GRAY_28,           0x00DFDFDF )\
-                       X_GRAY( GRAY_29,           0x00E7E7E7 )\
-                       X_GRAY( GRAY_30,           0x00EFEFEF )\
-                       X_GRAY( GRAY_31,           0x00F7F7F7 )
+#define GRAY_DEF(X_GRAY)\
+       X_GRAY( GRAY_1,            0x00070707 )\
+       X_GRAY( GRAY_2,            0x000F0F0F )\
+       X_GRAY( GRAY_3,            0x00171717 )\
+       X_GRAY( GRAY_4,            0x001F1F1F )\
+       X_GRAY( GRAY_5,            0x00272727 )\
+       X_GRAY( GRAY_6,            0x002F2F2F )\
+       X_GRAY( GRAY_7,            0x00373737 )\
+       X_GRAY( GRAY_8,            0x003F3F3F )\
+       X_GRAY( GRAY_9,            0x00474747 )\
+       X_GRAY( GRAY_10,           0x004F4F4F )\
+       X_GRAY( GRAY_11,           0x00575757 )\
+       X_GRAY( GRAY_12,           0x005F5F5F )\
+       X_GRAY( GRAY_13,           0x00676767 )\
+       X_GRAY( GRAY_14,           0x006F6F6F )\
+       X_GRAY( GRAY_15,           0x00777777 )\
+       X_GRAY( GRAY_16,           0x007F7F7F )\
+       X_GRAY( GRAY_17,           0x00878787 )\
+       X_GRAY( GRAY_18,           0x008F8F8F )\
+       X_GRAY( GRAY_19,           0x00979797 )\
+       X_GRAY( GRAY_20,           0x009F9F9F )\
+       X_GRAY( GRAY_21,           0x00A7A7A7 )\
+       X_GRAY( GRAY_22,           0x00AFAFAF )\
+       X_GRAY( GRAY_23,           0x00B7B7B7 )\
+       X_GRAY( GRAY_24,           0x00BFBFBF )\
+       X_GRAY( GRAY_25,           0x00C7C7C7 )\
+       X_GRAY( GRAY_26,           0x00CFCFCF )\
+       X_GRAY( GRAY_27,           0x00D7D7D7 )\
+       X_GRAY( GRAY_28,           0x00DFDFDF )\
+       X_GRAY( GRAY_29,           0x00E7E7E7 )\
+       X_GRAY( GRAY_30,           0x00EFEFEF )\
+       X_GRAY( GRAY_31,           0x00F7F7F7 )
 
 // ---------- Service definition ----------
 

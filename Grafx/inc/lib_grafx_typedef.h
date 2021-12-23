@@ -137,11 +137,6 @@ struct PageSlideRange_t
     int16_t        EndPos;
 };
 
-struct LinkList_t
-{
-     Link_e Link[8];
-};
-
 // --------- Widget element ---------
 
 struct Image_t

@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_grafx_link_list_enum.h
+//  File : lib_grafx_link_const.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -27,14 +27,48 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+// Include file(s)
+//-------------------------------------------------------------------------------------------------
+
+#include "menu_link_cfg.h"
+#include "menu_link_list_cfg.h"
+
+//-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_LINK_LIST_AS_ENUM(ENUM_ID, ID1, ID2, ID3, ID4, ID5, ID6, ID7, ID8 ) ENUM_ID,
+#define EXPAND_X_LINK_AS_ENUM(ENUM_ID, OBJECT) ENUM_ID,
+#define EXPAND_X_LINK_AS_OBJECT(ENUM_ID, OBJECT) OBJECT,
+#define EXPAND_X_LINK_LIST_AS_ENUM(ENUM_ID, ID1, ID2, ID3, ID4, ID5, ID6, ID7, ID8) ENUM_ID,
+#define EXPAND_X_LINK_LIST_AS_OBJECT(ENUM_ID, ID1, ID2, ID3, ID4, ID5, ID6, ID7, ID8) \
+                                             {ID1, ID2, ID3, ID4, ID5, ID6, ID7, ID8},
+
+//-------------------------------------------------------------------------------------------------
+
+#ifdef LINK_DEF
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
+
+
+enum Link_e
+{
+  #ifdef LINK_DEF
+    LINK_DEF(EXPAND_X_LINK_AS_ENUM)
+  #endif
+    NB_LINK_CONST,
+    PREVIOUS_LINK = 0xFFFD,
+    REMOVE_WIDGET = 0xFFFE,
+    INVALID_LINK  = 0xFFFF,
+};
+
+
+struct PageWidget_t
+{
+    Widget_e ID;
+    Link_e   Link;
+};
 
 #ifdef LINK_LIST_DEF
 enum LinkList_e
@@ -43,8 +77,44 @@ enum LinkList_e
     NB_LINK_LIST_CONST,
     INVALID_LINK_LIST = 0xFFFF,
 };
-#endif
+
+struct LinkList_t
+{
+     Link_e Link[8];
+};
+#endif // LINK_LIST_DEF
+
+//-------------------------------------------------------------------------------------------------
+// Post include file(s)
+//-------------------------------------------------------------------------------------------------
+
+#include "menu_cfg.h"
+
+//-------------------------------------------------------------------------------------------------
+// Const(s)
+//-------------------------------------------------------------------------------------------------
+
+#ifdef GFX_GLOBAL
+  const PageWidget_t* PageWidget[NB_LINK_CONST] =
+  {
+      LINK_DEF(EXPAND_X_LINK_AS_OBJECT)
+  };
+#else
+  extern const PageWidget_t* PageWidget[NB_LINK_CONST];
+#endif // GFX_GLOBAL
+
+
+#ifdef LINK_LIST_DEF
+ #ifdef GFX_GLOBAL
+  LinkList_t LinkList[NB_LINK_LIST_CONST] =
+  {
+      LINK_LIST_DEF(EXPAND_X_LINK_LIST_AS_OBJECT)
+  };
+ #else
+  extern LinkList_t LinkList[NB_LINK_LIST_CONST];
+ #endif
+#endif // LINK_LIST_DEF
 
 //-------------------------------------------------------------------------------------------------
 
-
+#endif // LINK_DEF

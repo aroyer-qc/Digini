@@ -41,7 +41,7 @@ extern const s32_t  GFX_ColorTable[COL_NB_COLOR_CONST];
 
 #ifdef GFX_GLOBAL
 
-extern const int8_t GFX_PixelSize[PIXEL_FORMAT_COUNT] =
+const int8_t GFX_PixelSize[PIXEL_FORMAT_COUNT] =
 {
   #ifdef GRAFX_COLOR_ARGB8888
     4,
@@ -85,7 +85,7 @@ extern const int8_t GFX_PixelSize[PIXEL_FORMAT_COUNT] =
     -1
 };
 
-extern const s32_t GFX_ColorTable[COL_NB_COLOR_CONST] =
+const s32_t GFX_ColorTable[COL_NB_COLOR_CONST] =
 {
     COLOR_DEF(EXPAND_X_COLOR_AS_DATA)
     GRAY_DEF(EXPAND_X_COLOR_AS_DATA)

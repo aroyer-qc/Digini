@@ -119,7 +119,6 @@ enum ServiceType_e
     NB_SERVICE_CONST,
 };
 
-
 enum ServiceEvent_e
 {
     SERVICE_NO_STATE                    =  0x00000000,
@@ -213,7 +212,6 @@ enum SlideDir_e
     SLIDING_DOWN_DE_OVLAP       = 0x14,
     SLIDING_DE_OVERLAP_MASK     = 0x10,
 };
-
 
 //-------------------------------------------------------------------------------------------------
 

@@ -142,7 +142,7 @@ void CGraph::Draw(ServiceReturn_t* pService, bool IsItDrawingGrid)
 {
     uint16_t X;
     uint16_t EndX;
-    uint16_t Y;
+    //uint16_t Y;
 
     CLayer::PushDrawing();
 

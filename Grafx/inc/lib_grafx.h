@@ -43,8 +43,7 @@
 #include "lib_grafx_skin.h"
 #include "grafx_display_layer_cfg.h"
 #include "lib_grafx_enum_x_macro.h"
-#include "lib_grafx_link_const.h"
-//#include "lib_grafx_link_list_const.h"
+#include "lib_grafx_link.h"
 #include "lib_grafx_enum.h"
 #include "lib_grafx_typedef.h"
 #include "lib_class_widget.h"
@@ -174,7 +173,7 @@ extern const uint32_t __gfx_qspi_data_base__;           // Pointer to database f
 
       #ifdef GRAFX_USE_POINTING_DEVICE
         GRAFX_PDI_HARD_INTERFACE,
-      #endif // GRAFX_USE_POINTING_DEVICE
+      #endif
     };
  #endif
 #endif

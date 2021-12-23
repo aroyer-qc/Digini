@@ -28,10 +28,6 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-
-//#include <stdint.h>
-//#include "lib_macro.h"
-//#include "lib_class_i2c.h"
 #define EEPROM_DRIVER_GLOBAL
 #include "lib_digini.h"
 #undef  EEPROM_DRIVER_GLOBAL

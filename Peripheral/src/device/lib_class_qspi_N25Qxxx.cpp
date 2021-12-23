@@ -29,9 +29,9 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_N25QXXX_GLOBAL
-#include "lib_grafx.h"
+#include "lib_digini.h"
 #undef  LIB_N25QXXX_GLOBAL
-#include "lib_class_qspi_N25Qxxx.h"
+//#include "lib_class_qspi_N25Qxxx.h"
 
 //-------------------------------------------------------------------------------------------------
 

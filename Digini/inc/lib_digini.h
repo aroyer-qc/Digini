@@ -23,7 +23,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
-
+#pragma once
 //-------------------------------------------------------------------------------------------------
 // Standard header
 //
@@ -34,7 +34,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <cstddef>
+//#include <cstddef>
 #include <string.h>
 
 //-------------------------------------------------------------------------------------------------

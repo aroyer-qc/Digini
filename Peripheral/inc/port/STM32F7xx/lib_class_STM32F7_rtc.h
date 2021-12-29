@@ -27,14 +27,6 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-
-#ifdef STM32F7_RTC_GLOBAL
-    #define STM32F7_RTC_EXTERN
-#else
-    #define STM32F7_RTC_EXTERN extern
-#endif
-
-//-------------------------------------------------------------------------------------------------
 // define(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -71,26 +63,26 @@ class CRTC
         void                    SetTimeFormat           (TimeFormat_e* pTimeFormat)                            {m_TimeFormat = *pTimeFormat;};
         uint32_t                GetBackupRegister       (uint8_t Register);
         void                    SetBackupRegister       (uint8_t Register, uint32_t);
-        void                    TickHook                ();
+        void                    TickHook                (void);
 
-        void                    WakeUp_IRQ_Handler      ();
-        void                    Stamp_IRQ_Handler       ();
-        void                    Alarm_IRQ_Handler       ();
+        void                    WakeUp_IRQ_Handler      (void);
+        void                    Stamp_IRQ_Handler       (void);
+        void                    Alarm_IRQ_Handler       (void);
 
     private:
 
-        void                    Disable                 ();
-        void                    Enable                  ();
-        SystemState_e           EnterInitMode           ();
-        void                    ExitInitMode            ();
+        void                    Disable                 (void);
+        void                    Enable                  (void);
+        SystemState_e           EnterInitMode           (void);
+        void                    ExitInitMode            (void);
         uint8_t                 GetDayOfWeek            (Date_t* pDate);
-        void                    Lock                    ();
-        void                    Unlock                  ();
-        void                    LockRegister            ();
-        void                    UnlockRegister          ();
-        void                    SetRTC                  ();
-        void                    UpdateTimeFeature       ();
-        SystemState_e           WaitForSynchro          ();
+        void                    Lock                    (void);
+        void                    Unlock                  (void);
+        void                    LockRegister            (void);
+        void                    UnlockRegister          (void);
+        void                    SetRTC                  (void);
+        void                    UpdateTimeFeature       (void);
+        SystemState_e           WaitForSynchro          (void);
 
         nOS_Mutex*              m_pMutex;
         uint32_t                m_TimeOut;

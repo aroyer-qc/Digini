@@ -134,13 +134,7 @@ SystemState_e TEA5767::Initialize(I2C_Driver* pI2C)
 
 
     this->SaveRegisters();
-
-
-
     this->FindStations(REG_3_SSL_LO, &Stations[0], 20);
-
-
-
     return SYS_OK;//this->SaveRegisters();
 }
 

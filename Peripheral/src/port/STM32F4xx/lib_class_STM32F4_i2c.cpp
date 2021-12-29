@@ -103,8 +103,6 @@ void I2C_Driver::Initialize(void)
     uint32_t            PriorityGroup;
     I2C_TypeDef*        pI2Cx;
 
-    pI2Cx     = m_pInfo->pI2Cx;
-    m_Timeout = 0;
 
     if(m_IsItInitialize == false)
     {
@@ -113,6 +111,9 @@ void I2C_Driver::Initialize(void)
         VAR_UNUSED(Error);
     }
 	
+    pI2Cx     = m_pInfo->pI2Cx;
+    m_Timeout = 0;
+
     NVIC_DisableIRQ(m_pInfo->EV_IRQn);
     NVIC_DisableIRQ(m_pInfo->ER_IRQn);
 
@@ -128,8 +129,6 @@ void I2C_Driver::Initialize(void)
     PriorityGroup = NVIC_GetPriorityGrouping();
     NVIC_SetPriority(m_pInfo->EV_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
     NVIC_SetPriority(m_pInfo->ER_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
-
-// TODO use lib_isr ( don't know if comment is relevant)
 
     // ---- Peripheral software reset ----
     pI2Cx->CR1  =  I2C_CR1_SWRST;                                                                   // Peripheral software reset
@@ -284,42 +283,48 @@ SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const
     nOS_TickCounter TickStart;
     I2C_TypeDef*    pI2Cx;
 
-	pI2Cx   = m_pInfo->pI2Cx;
-	m_State = SYS_BUSY;
-
-	// Setup I2C transfer record
-	//m_DeviceAddress = Device;
-	m_Address       = Address;
-	m_AddressSize   = AddressSize;
-	m_pTxBuffer     = (uint8_t*)pTxBuffer;
-	m_TxSize        = (pTxBuffer != nullptr) ? TxSize : 0;    // If TX buffer is null, this make sure size is 0
-	m_pRxBuffer     = (uint8_t*)pRxBuffer;
-	m_RxSize        = (pRxBuffer != nullptr) ? RxSize : 0;    // If RX buffer is null, this make sure size is 0
-
-	// Enable the selected I2C interrupts
-	pI2Cx->CR2 &= ~I2C_CR2_ITBUFEN;
-	pI2Cx->CR2 |= (I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);
-
-	// Generate a START condition
-	pI2Cx->CR1 |= I2C_CR1_START;
-
-	// Wait here until I2C transaction is completed or time out
-	TickStart = GetTick();
-	do
+    if(m_Device != -1)
 	{
-		nOS_Yield();
+		pI2Cx   = m_pInfo->pI2Cx;
+		m_State = SYS_BUSY;
 
-		if(TickHasTimeOut(TickStart, I2C_TIME_OUT) == true)
+		// Setup I2C transfer record
+		//m_DeviceAddress = Device;
+		m_Address       = Address;
+		m_AddressSize   = AddressSize;
+		m_pTxBuffer     = (uint8_t*)pTxBuffer;
+		m_TxSize        = (pTxBuffer != nullptr) ? TxSize : 0;    // If TX buffer is null, this make sure size is 0
+		m_pRxBuffer     = (uint8_t*)pRxBuffer;
+		m_RxSize        = (pRxBuffer != nullptr) ? RxSize : 0;    // If RX buffer is null, this make sure size is 0
+
+		// Enable the selected I2C interrupts
+		pI2Cx->CR2 &= ~I2C_CR2_ITBUFEN;
+		pI2Cx->CR2 |= (I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);
+
+		// Generate a START condition
+		pI2Cx->CR1 |= I2C_CR1_START;
+
+		// Wait here until I2C transaction is completed or time out
+		TickStart = GetTick();
+		
+		do
 		{
-			// We need to reset module if I2C is jammed or in error
-			this->Initialize();
-			m_State = SYS_ERROR;
-			return SYS_TIME_OUT;
-		}
-	}
-	while(m_State == SYS_BUSY);
+			nOS_Yield();
 
-	return SYS_READY;
+			if(TickHasTimeOut(TickStart, I2C_TIME_OUT) == true)
+			{
+				// We need to reset module if I2C is jammed or in error
+				this->Initialize();
+				m_State = SYS_ERROR;
+				return SYS_TIME_OUT;
+			}
+		}
+		while(m_State == SYS_BUSY);
+
+		return SYS_READY;
+	}
+
+    return SYS_NOT_LOCK_TO_DEVICE;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -525,7 +530,7 @@ void I2C_Driver::EV_IRQHandler()
             }
             else
             {
-                    pI2C->CR2 |= I2C_CR2_STOP;
+                pI2Cx->CR2 &= ~I2C_CR2_ITBUFEN;                         // Done sending data before reading data
             }
         }
         break;

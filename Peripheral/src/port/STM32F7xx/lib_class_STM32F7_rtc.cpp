@@ -330,7 +330,7 @@ void CRTC::Disable(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CRTC::EnterInitMode()
+SystemState_e CRTC::EnterInitMode(void)
 {
     SystemState_e    State;
 

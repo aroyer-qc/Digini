@@ -487,7 +487,6 @@ void FT5336::GetXY(Cartesian_t* pCartesian)
 
         m_pI2C->UnlockFromDevice(FT5336_I2C_SLAVE_ADDRESS);
         m_CurrentActiveEventIndex++; // Next call will work on next touch
-
     }
 }
 

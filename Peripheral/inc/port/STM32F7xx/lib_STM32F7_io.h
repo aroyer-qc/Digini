@@ -27,21 +27,10 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-
-#ifdef STM32F7_IO_GLOBAL
-    #define STM32F7_IO_EXTERN
-#else
-    #define STM32F7_IO_EXTERN extern
-#endif
-
-//-------------------------------------------------------------------------------------------------
 // define(s) and macro(s)
 //-------------------------------------------------------------------------------------------------
 
-// TODO this is not the place for this
 #define LED_Init(p)                     IO_PinInit(p)
-//#define LED_ON(p)                     IO_Output(p, IO_SET)      todo need to be defined for state on and off
-//#define LED_OFF(p)                    IO_Output(p, IO_RESET)
 #define LED_Toggle(p)                   IO_TogglePin(p)
 
 //#define IO_NULL                       ((IO_TypeDef *)nullptr)
@@ -214,18 +203,18 @@ enum IO_IrqID_e
 
 struct IO_Properties_t
 {
-    GPIO_TypeDef*     pPort;
-    uint32_t         PinNumber;
-    uint32_t         PinMode;
-    uint32_t         PinType;
-    uint32_t         PinSpeed;
-    uint32_t         State;
+    GPIO_TypeDef*   pPort;
+    uint32_t        PinNumber;
+    uint32_t        PinMode;
+    uint32_t        PinType;
+    uint32_t        PinSpeed;
+    uint32_t        State;
 };
 
 struct IO_IRQ_Properties_t
 {
     IO_ID_e         IO_Id;
-    IRQn_Type          IRQ_Channel;
+    IRQn_Type       IRQ_Channel;
     uint32_t        Trigger;
 };
 

@@ -49,7 +49,7 @@
 CButton::CButton(Button_t* pButton)
 {
     m_pButton = pButton;
-    m_pButton->Text.Blend      = ALPHA_BLEND;
+    m_pButton->Text.Blend = ALPHA_BLEND;
 }
 
 //-------------------------------------------------------------------------------------------------

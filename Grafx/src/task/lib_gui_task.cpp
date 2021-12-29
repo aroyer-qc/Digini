@@ -143,7 +143,7 @@ void GUI_myClassTask::Run()
                     FinalizeAllWidget();
                 }
               #ifdef GRAFX_USE_POINTING_DEVICE
-             //   PDI_pTask->ClearAllZone();
+                PDI_pTask->ClearAllZone();
               #endif
                 GUI_ClearWidgetLayer();
 

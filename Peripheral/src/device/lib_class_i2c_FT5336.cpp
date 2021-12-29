@@ -453,7 +453,7 @@ void FT5336::GetXY(Cartesian_t* pCartesian)
         m_pI2C->LockToDevice(FT5336_I2C_SLAVE_ADDRESS);
 
         // Read low part of X position
-        m_pI2C->Transfer(regAddressXLow, sizeof(uint8_t), 0, 0, &ReadData, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
+        m_pI2C->Transfer(regAddressXLow, sizeof(uint8_t), 0, 0, &ReadData, sizeof(uint8_t));
 
 
       #ifndef GRAFX_PDI_SWAP_XY
@@ -462,7 +462,7 @@ void FT5336::GetXY(Cartesian_t* pCartesian)
         pCartesian->Y = ReadData;
       #endif
         // Read high part of X position
-        m_pI2C->Transfer(regAddressXHigh, sizeof(uint8_t), 0, 0, &ReadData, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
+        m_pI2C->Transfer(regAddressXHigh, sizeof(uint8_t), 0, 0, &ReadData, sizeof(uint8_t));
       #ifndef GRAFX_PDI_SWAP_XY
         pCartesian->X |= (ReadData & FT5336_TOUCH_POS_MSB_MASK) << 8;
       #else
@@ -470,7 +470,7 @@ void FT5336::GetXY(Cartesian_t* pCartesian)
       #endif
 
         // Read low part of Y position
-        m_pI2C->Transfer(regAddressYLow, sizeof(uint8_t), 0, 0, &ReadData, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
+        m_pI2C->Transfer(regAddressYLow, sizeof(uint8_t), 0, 0, &ReadData, sizeof(uint8_t));
       #ifndef GRAFX_PDI_SWAP_XY
         pCartesian->Y = ReadData;
       #else
@@ -478,7 +478,7 @@ void FT5336::GetXY(Cartesian_t* pCartesian)
       #endif
 
         // Read high part of Y position
-        m_pI2C->Transfer(regAddressYHigh, sizeof(uint8_t), 0, 0, &ReadData, sizeof(uint8_t), FT5336_I2C_SLAVE_ADDRESS);
+        m_pI2C->Transfer(regAddressYHigh, sizeof(uint8_t), 0, 0, &ReadData, sizeof(uint8_t));
       #ifndef GRAFX_PDI_SWAP_XY
         pCartesian->Y |= (ReadData & FT5336_TOUCH_POS_MSB_MASK) << 8;
       #else
@@ -486,8 +486,7 @@ void FT5336::GetXY(Cartesian_t* pCartesian)
       #endif
 
         m_pI2C->UnlockFromDevice(FT5336_I2C_SLAVE_ADDRESS);
-
-        m_CurrentActiveEventIndex++; // next call will work on next touch
+        m_CurrentActiveEventIndex++; // Next call will work on next touch
 
     }
 }

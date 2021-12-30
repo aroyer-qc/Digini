@@ -35,6 +35,15 @@
 #if defined(ROM_DBASE_DEF)
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_ROM_DBASE_AS_ITEM_ADDRESS(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)   (uint8_t*)ITEM_ADDRESS,
+#define EXPAND_X_ROM_DBASE_AS_ITEMS_QTY(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)      ITEMS_QTY,
+#define EXPAND_X_ROM_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)  ITEMS_SubQTY,
+#define EXPAND_X_ROM_DBASE_AS_ITEMS_SIZE(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEM_SIZE,
+
+//-------------------------------------------------------------------------------------------------
 //
 //   Class: CROM_DataBase
 //
@@ -46,33 +55,25 @@
 // Create pointer list for each record item
 const uint8_t* CROM_DataBase::m_ItemsPointer[NB_ROM_DBASE_ITEMS_CONST] =                                   // &Array[0][0]
 {
-  #define X_ROM_DBASE(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) (uint8_t*)ITEM_ADDRESS,
-    ROM_DBASE_DEF
-  #undef X_ROM_DBASE
+    ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEM_ADDRESS)
 };
 
 // Create Quantity list for each record item
 const uint16_t CROM_DataBase::m_ItemsQTY[NB_ROM_DBASE_ITEMS_CONST] =                                       // Array[THIS][]
 {
-  #define X_ROM_DBASE(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_QTY,
-    ROM_DBASE_DEF
-  #undef X_ROM_DBASE
+    ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEMS_QTY)
 };
 
 // Create SUB Quantity list for each record item
 const uint16_t CROM_DataBase::m_ItemsSubQTY[NB_ROM_DBASE_ITEMS_CONST] =                                    // Array[][THIS]
 {
-  #define X_ROM_DBASE(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_SubQTY,
-    ROM_DBASE_DEF
-  #undef X_ROM_DBASE
+    ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEMS_SUB_QTY)
 };
 
 // Create size list for each record item
 const size_t CROM_DataBase::m_ItemSize[NB_ROM_DBASE_ITEMS_CONST] =                                         // sizeof()
 {
-  #define X_ROM_DBASE(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEM_SIZE,
-    ROM_DBASE_DEF
-  #undef X_ROM_DBASE
+    ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEMS_SIZE)
 };
 
 

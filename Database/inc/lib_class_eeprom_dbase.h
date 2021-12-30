@@ -38,17 +38,19 @@
 #if defined(EEPROM_DBASE_DEF)
 
 //-------------------------------------------------------------------------------------------------
-// typedef struct(s) and const(s)
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_EEPROM_DBASE_AS_ENUM(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ENUM_ID,
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
 enum EEPROM_DBaseItemList_e
 {
     START_EEPROM_DBASE = DBASE_INDEX_EEPROM_RANGE - 1,
-
-  #define X_EEPROM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ENUM_ID,
-    EEPROM_DBASE_DEF
-  #undef X_EEPROM_DBASE
-
+    EEPROM_DBASE_DEF(EXPAND_X_EEPROM_DBASE_AS_ENUM)
     END_EEPROM_DBASE
 };
 

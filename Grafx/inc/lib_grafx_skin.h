@@ -27,6 +27,12 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_STATIC_SKIN_AS_ENUM(ENUM_ID, SII) ENUM_ID,
+
+//-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -34,11 +40,9 @@ enum Skin_e
 {
     INVALID_IMAGE,
 
-    #ifdef STATIC_SKIN_DEF
-   #define X_STATIC_SKIN(ENUM_ID, SII) ENUM_ID,
-    STATIC_SKIN_DEF
-   #undef X_STATIC_SKIN
-  #endif
+   #ifdef STATIC_SKIN_DEF
+    STATIC_SKIN_DEF(EXPAND_X_STATIC_SKIN_AS_ENUM)
+   #endif
 
     NUMBER_OF_STATIC_IMAGE,         // all image after this are loaded from external device
 

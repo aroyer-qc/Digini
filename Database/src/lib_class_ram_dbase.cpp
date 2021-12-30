@@ -35,6 +35,22 @@
 #if defined(RAM_DBASE_DEF) || defined(GFX_RAM_DBASE_DEF) || defined(NV_RAM_DBASE_DEF)
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_RAM_DBASE_AS_ITEMS_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)         ITEMS_QTY,
+#define EXPAND_X_RAM_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEMS_SUB_QTY,
+#define EXPAND_X_RAM_DBASE_AS_ITEM_SIZE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)         ITEM_SIZE,
+
+#define EXPAND_X_GFX_RAM_DBASE_AS_ITEMS_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEMS_QTY,
+#define EXPAND_X_GFX_RAM_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_SUB_QTY,
+#define EXPAND_X_GFX_RAM_DBASE_AS_ITEM_SIZE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEM_SIZE,
+
+#define EXPAND_X_NV_RAM_DBASE_AS_ITEMS_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)      ITEMS_QTY,
+#define EXPAND_X_NV_RAM_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)  ITEMS_SUB_QTY,
+#define EXPAND_X_NV_RAM_DBASE_AS_ITEM_SIZE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)      ITEM_SIZE,
+
+//-------------------------------------------------------------------------------------------------
 //
 //   Class: CRAM_DataBase
 //
@@ -47,21 +63,15 @@
 const uint16_t CRAM_DataBase::m_ItemsQTY[NB_RAM_DBASE_ITEMS_CONST]=                       // Array[THIS][]
 {
   #ifdef RAM_DBASE_DEF
-   #define X_RAM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_QTY,
-    RAM_DBASE_DEF
-   #undef X_RAM_DBASE
+    RAM_DBASE_DEF(EXPAND_X_RAM_DBASE_AS_ITEMS_QTY)
   #endif
 
   #ifdef GFX_RAM_DBASE_DEF
-   #define X_GFX_RAM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_QTY,
-    GFX_RAM_DBASE_DEF
-   #undef X_GFX_RAM_DBASE
+    GFX_RAM_DBASE_DEF(EXPAND_X_GFX_RAM_DBASE_AS_ITEMS_QTY)
   #endif
 
   #ifdef NV_RAM_DBASE_DEF
-   #define X_NV_RAM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_QTY,
-    NV_RAM_DBASE_DEF
-   #undef X_NV_RAM_DBASE
+    NV_RAM_DBASE_DEF(EXPAND_X_NV_RAM_DBASE_AS_ITEMS_QTY)
   #endif
 };
 
@@ -69,21 +79,15 @@ const uint16_t CRAM_DataBase::m_ItemsQTY[NB_RAM_DBASE_ITEMS_CONST]=             
 const uint16_t CRAM_DataBase::m_ItemsSubQTY[NB_RAM_DBASE_ITEMS_CONST] =                    // Array[][THIS]
 {
   #ifdef RAM_DBASE_DEF
-   #define X_RAM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_SubQTY,
-    RAM_DBASE_DEF
-   #undef X_RAM_DBASE
+    RAM_DBASE_DEF(EXPAND_X_RAM_DBASE_AS_ITEMS_SUB_QTY)
   #endif
 
   #ifdef GFX_RAM_DBASE_DEF
-   #define X_GFX_RAM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_SubQTY,
-    GFX_RAM_DBASE_DEF
-   #undef X_GFX_RAM_DBASE
+    GFX_RAM_DBASE_DEF(EXPAND_X_GFX_RAM_DBASE_AS_ITEMS_SUB_QTY)
   #endif
 
   #ifdef NV_RAM_DBASE_DEF
-   #define X_NV_RAM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_SubQTY,
-    NV_RAM_DBASE_DEF
-   #undef X_NV_RAM_DBASE
+    NV_RAM_DBASE_DEF(EXPAND_X_NV_RAM_DBASE_AS_ITEMS_SUB_QTY)
   #endif
 };
 
@@ -91,21 +95,15 @@ const uint16_t CRAM_DataBase::m_ItemsSubQTY[NB_RAM_DBASE_ITEMS_CONST] =         
 const size_t CRAM_DataBase::m_ItemSize[NB_RAM_DBASE_ITEMS_CONST] =                         // sizeof()
 {
   #ifdef RAM_DBASE_DEF
-   #define X_RAM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEM_SIZE,
-    RAM_DBASE_DEF
-   #undef X_RAM_DBASE
+    RAM_DBASE_DEF(EXPAND_X_RAM_DBASE_AS_ITEM_SIZE)
   #endif
 
   #ifdef GFX_RAM_DBASE_DEF
-   #define X_GFX_RAM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEM_SIZE,
-    GFX_RAM_DBASE_DEF
-   #undef X_GFX_RAM_DBASE
+    GFX_RAM_DBASE_DEF(EXPAND_X_RAM_DBASE_AS_ITEM_SIZE)
   #endif
 
   #ifdef NV_RAM_DBASE_DEF
-   #define X_NV_RAM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEM_SIZE,
-    NV_RAM_DBASE_DEF
-   #undef X_NV_RAM_DBASE
+    NV_RAM_DBASE_DEF(EXPAND_X_NV_RAM_DBASE_AS_ITEM_SIZE)
   #endif
 };
 

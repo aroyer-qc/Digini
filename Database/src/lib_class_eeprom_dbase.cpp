@@ -35,6 +35,14 @@
 #if defined(EEPROM_DBASE_DEF)
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_EEPROM_DBASE_AS_ITEMS_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEMS_QTY,
+#define EXPAND_X_EEPROM_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_SUB_QTY,
+#define EXPAND_X_EEPROM_DBASE_AS_ITEM_SIZE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEM_SIZE,
+
+//-------------------------------------------------------------------------------------------------
 //
 //   Class: CEEPROM_DataBase
 //
@@ -46,25 +54,19 @@
 // Create Quantity list for each record item
 const uint16_t CEEPROM_DataBase::m_ItemsQTY[NB_EEPROM_DBASE_ITEMS_CONST] =                       // Array[THIS][]
 {
-  #define X_EEPROM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_QTY,
-    EEPROM_DBASE_DEF
-  #undef X_EEPROM_DBASE
+    EEPROM_DBASE_DEF(EXPAND_X_EEPROM_DBASE_AS_ITEMS_QTY)
 };
 
 // Create SUB Quantity list for each record item
 const uint16_t CEEPROM_DataBase::m_ItemsSubQTY[NB_EEPROM_DBASE_ITEMS_CONST] =                    // Array[][THIS]
 {
-  #define X_EEPROM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_SubQTY,
-    EEPROM_DBASE_DEF
-  #undef X_EEPROM_DBASE
+    EEPROM_DBASE_DEF(EXPAND_X_EEPROM_DBASE_AS_ITEMS_SUB_QTY)
 };
 
 // Create size list for each record item
 const size_t CEEPROM_DataBase::m_ItemSize[NB_EEPROM_DBASE_ITEMS_CONST] =                         // sizeof()
 {
-  #define X_EEPROM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEM_SIZE,
-    EEPROM_DBASE_DEF
-  #undef X_EEPROM_DBASE
+    EEPROM_DBASE_DEF(EXPAND_X_EEPROM_DBASE_AS_ITEM_SIZE)
 };
 
 

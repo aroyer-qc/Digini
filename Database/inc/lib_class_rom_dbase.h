@@ -30,7 +30,6 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//#include "project_def.h"
 #include "lib_class_database.h"
 
 //-------------------------------------------------------------------------------------------------
@@ -38,17 +37,19 @@
 #if defined(ROM_DBASE_DEF)
 
 //-------------------------------------------------------------------------------------------------
-// typedef struct(s) and const(s)
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_ROM_DBASE_AS_ENUM(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ENUM_ID,
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
 enum ROM_DBaseItemList_e
 {
     START_ROM_DBASE = DBASE_INDEX_ROM_RANGE - 1,
-
-  #define X_ROM_DBASE(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ENUM_ID,
-    ROM_DBASE_DEF
-  #undef X_ROM_DBASE
-
+    ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ENUM)
     END_ROM_DBASE
 };
 

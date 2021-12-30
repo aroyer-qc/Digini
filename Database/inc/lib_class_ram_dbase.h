@@ -38,6 +38,14 @@
 #if defined(RAM_DBASE_DEF) || defined(GFX_RAM_DBASE_DEF) || defined(NV_RAM_DBASE_DEF)
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_RAM_DBASE_AS_ENUM(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ENUM_ID,
+#define EXPAND_X_GFX_RAM_DBASE_AS_ENUM(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ENUM_ID,
+#define EXPAND_X_NV_RAM_DBASE_AS_ENUM(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)  ENUM_ID,
+
+//-------------------------------------------------------------------------------------------------
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -47,10 +55,7 @@ enum RAM_DBaseItemList_e
 
   #ifdef RAM_DBASE_DEF
     START_RAM_INDEX = START_RAM_DBASE,
-
-   #define X_RAM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ENUM_ID,
-    RAM_DBASE_DEF
-   #undef X_RAM_DBASE
+    RAM_DBASE_DEF(EXPAND_X_RAM_DBASE_AS_ENUM)
     END_RAM_INDEX,
   #endif
 
@@ -61,9 +66,7 @@ enum RAM_DBaseItemList_e
     START_GFX_RAM_INDEX = START_RAM_DBASE,      // or start it at the beginning
    #endif
 
-   #define X_GFX_RAM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ENUM_ID,
-    GFX_RAM_DBASE_DEF
-   #undef X_GFX_RAM_DBASE
+    GFX_RAM_DBASE_DEF(EXPAND_X_GFX_RAM_DBASE_AS_ENUM)
     END_GFX_RAM_INDEX,
   #endif
 
@@ -76,9 +79,7 @@ enum RAM_DBaseItemList_e
     START_NV_RAM_INDEX = START_RAM_DBASE,       // or start it at the beginning
    #endif
 
-   #define X_NV_RAM_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ENUM_ID,
-    NV_RAM_DBASE_DEF
-   #undef X_NV_RAM_DBASE
+    NV_RAM_DBASE_DEF(EXPAND_X_NV_RAM_DBASE_AS_ENUM)
     END_NV_RAM_INDEX,
   #endif
 

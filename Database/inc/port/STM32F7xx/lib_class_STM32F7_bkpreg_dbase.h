@@ -37,7 +37,13 @@
 #if (USE_RTC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// typedef struct(s) and const(s)
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_BKPREG_DBASE_AS_ENUM(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY) ENUM_ID,
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
 #define BACKUP_REGISTER         0x40002850
@@ -45,11 +51,7 @@
 typedef enum BKPREG_DBaseItemList_e
 {
     START_BKPREG_INDEX = DBASE_INDEX_BKPREG_RANGE - 1,
-
-  #define X_BKPREG_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY) ENUM_ID,
-    BKPREG_DBASE_DEF
-  #undef X_BKPREG_DBASE
-
+    BKPREG_DBASE_DEF(EXPAND_X_BKPREG_DBASE_AS_ENUM)
     END_BKPREG_INDEX
 } eBKPREG_DBaseItemList;
 

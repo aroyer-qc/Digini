@@ -37,18 +37,21 @@
 #if defined(HARD_DBASE_DEF)
 
 //-------------------------------------------------------------------------------------------------
-// typedef struct(s) and const(s)
+// Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
+#define EXPAND_X_HARD_DBASE_AS_ENUM(ENUM_ID, RAM_RECORD, ROM_RECORD, MINIMUM, MAXIMUM, DEFAULT) ENUM_ID,
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
 
 enum HARD_DBaseItemList_e
 {
     START_HARD_DBASE = DBASE_INDEX_HARD_RANGE - 1,
 
   #ifdef HARD_DBASE_DEF
-    #define X_HARD_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE, CALLBACK) ENUM_ID,
-      HARD_DBASE_DEF
-    #undef X_HARD_DBASE
+      HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_ENUM)
   #endif
 
     END_HARD_DBASE

@@ -47,18 +47,21 @@
 #endif
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_DBASE_AS_ENUM(ENUM_ID, RAM_RECORD, ROM_RECORD, INTERVAL, START_TIME) ENUM_ID,
+
+//-------------------------------------------------------------------------------------------------
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
 enum DBaseItemList_e
 {
     START_DBASE_INDEX = - 1,
-
- #ifdef DBASE_DEF
-  #define X_DBASE(ENUM_ID, RAM_RECORD, ROM_RECORD, INTERVAL, START_TIME) ENUM_ID,
-    DBASE_DEF
-  #undef X_DBASE
- #endif
+  #ifdef DBASE_DEF
+    DBASE_DEF(EXPAND_X_DBASE_AS_ENUM)
+  #endif
     END_DBASE_INDEX
 };
 

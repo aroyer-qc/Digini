@@ -33,6 +33,16 @@
 #undef  LIB_CLASS_DATABASE_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_HARD_DBASE_AS_RAM_RECORD(ENUM_ID, RAM_RECORD, ROM_RECORD, MINIMUM, MAXIMUM, DEFAULT) RAM_RECORD,
+#define EXPAND_X_HARD_DBASE_AS_ROM_RECORD(ENUM_ID, RAM_RECORD, ROM_RECORD, MINIMUM, MAXIMUM, DEFAULT) ROM_RECORD,
+#define EXPAND_X_HARD_DBASE_AS_MINIMUM(ENUM_ID, RAM_RECORD, ROM_RECORD, MINIMUM, MAXIMUM, DEFAULT)    MINIMUM,
+#define EXPAND_X_HARD_DBASE_AS_MAXIMUM(ENUM_ID, RAM_RECORD, ROM_RECORD, MINIMUM, MAXIMUM, DEFAULT)    MAXIMUM,
+#define EXPAND_X_HARD_DBASE_AS_DEFAULT(ENUM_ID, RAM_RECORD, ROM_RECORD, MINIMUM, MAXIMUM, DEFAULT)    DEFAULT,
+
+//-------------------------------------------------------------------------------------------------
 //
 //   Class: CDataBase
 //
@@ -43,44 +53,32 @@
 
 #ifdef DBASE_DEF
 
-    const uint16_t CDataBase::m_RamRecord[NB_DBASE_ITEMS_CONST] =                                         // Array[THIS][]
+    const uint16_t CDataBase::m_RamRecord[NB_DBASE_ITEMS_CONST] =
     {
-      #define X_DBASE(ENUM_ID, RAM_RECORD, ROM_RECORD, MINIMUM, MAXIMUM, DEFAULT) RAM_RECORD,
-        DBASE_DEF
-      #undef X_DBASE
+        DBASE_DEF(EXPAND_X_HARD_DBASE_AS_RAM_RECORD)
     };
 
-    const uint16_t CDataBase::m_RomRecord[NB_DBASE_ITEMS_CONST] =                                         // Array[][THIS]
+    const uint16_t CDataBase::m_RomRecord[NB_DBASE_ITEMS_CONST] =
     {
-      #define X_DBASE(ENUM_ID, RAM_RECORD, ROM_RECORD, MINIMUM, MAXIMUM, DEFAULT) ROM_RECORD,
-        DBASE_DEF
-      #undef X_DBASE
+        DBASE_DEF(EXPAND_X_HARD_DBASE_AS_ROM_RECORD)
     };
 
-    const uint32_t CDataBase::m_Minimum[NB_DBASE_ITEMS_CONST] =                                          // sizeof()
+    const uint32_t CDataBase::m_Minimum[NB_DBASE_ITEMS_CONST] =
     {
-      #define X_DBASE(ENUM_ID, RAM_RECORD, ROM_RECORD, MINIMUM, MAXIMUM, DEFAULT) INTERVAL,
-        DBASE_DEF
-      #undef X_DBASE
+        DBASE_DEF(EXPAND_X_HARD_DBASE_AS_MINIMUM)
     };
 
-    const uint32_t CDataBase::m_Maximum[NB_DBASE_ITEMS_CONST] =                                         // sizeof()
+    const uint32_t CDataBase::m_Maximum[NB_DBASE_ITEMS_CONST] =
     {
-      #define X_DBASE(ENUM_ID, RAM_RECORD, ROM_RECORD, MINIMUM, MAXIMUM, DEFAULT) START_TIME,
-        DBASE_DEF
-      #undef X_DBASE
+        DBASE_DEF(EXPAND_X_HARD_DBASE_AS_MAXIMUM)
     };
 
-    const uint32_t CDataBase::m_Default[NB_DBASE_ITEMS_CONST] =                                         // sizeof()
+    const uint32_t CDataBase::m_Default[NB_DBASE_ITEMS_CONST] =
     {
-      #define X_DBASE(ENUM_ID, RAM_RECORD, ROM_RECORD, MINIMUM, MAXIMUM, DEFAULT) START_TIME,
-        DBASE_DEF
-      #undef X_DBASE
+        DBASE_DEF(EXPAND_X_HARD_DBASE_AS_DEFAULT)
     };
 
 #endif
-
-
 
 //-------------------------------------------------------------------------------------------------
 //

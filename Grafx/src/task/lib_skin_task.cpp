@@ -45,22 +45,24 @@
 #define SKIN_FLAG_SKIN_STATIC_IS_LOADED       0x04
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_STATIC_SKIN_AS_CONST(ENUM_ID, SII)      extern const StaticImageInfo_t SII;
+#define EXPAND_X_STATIC_SKIN_AS_CONST_PTR(ENUM_ID, SII)  &SII,
+
+//-------------------------------------------------------------------------------------------------
 // Private variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
 #ifdef STATIC_SKIN_DEF
 
-  #define X_STATIC_SKIN(ENUM_ID, SII) extern const StaticImageInfo_t SII;
-    STATIC_SKIN_DEF
-  #undef X_STATIC_SKIN
+ STATIC_SKIN_DEF(EXPAND_X_STATIC_SKIN_AS_CONST)
 
  const StaticImageInfo_t* SII_Array[NUMBER_OF_STATIC_IMAGE] =
  {
     nullptr,
-
-   #define X_STATIC_SKIN(ENUM_ID, SII) &SII,
-    STATIC_SKIN_DEF
-   #undef  X_STATIC_SKIN
+    STATIC_SKIN_DEF(EXPAND_X_STATIC_SKIN_AS_CONST_PTR)
  };
 #endif
 

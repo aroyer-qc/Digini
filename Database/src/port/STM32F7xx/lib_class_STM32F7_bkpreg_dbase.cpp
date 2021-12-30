@@ -35,6 +35,13 @@
 #if (USE_RTC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_BKPREG_DBASE_AS_ITEMS_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY)        ITEMS_QTY,
+#define EXPAND_X_BKPREG_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY)    ITEMS_SubQTY,
+
+//-------------------------------------------------------------------------------------------------
 //
 //   Class: CBKPREG_DataBase
 //
@@ -46,17 +53,13 @@
 // Create Quantity list for each record item
 const uint8_t CBKPREG_DataBase::m_ItemsQTY[NB_BKPREG_DBASE_ITEMS_CONST] =                                       // Array[THIS][]
 {
-  #define X_BKPREG_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY) ITEMS_QTY,
-    BKPREG_DBASE_DEF
-  #undef X_BKPREG_DBASE
+    BKPREG_DBASE_DEF(EXPAND_X_BKPREG_DBASE_AS_ITEMS_QTY)
 };
 
 // Create SUB Quantity list for each record item
 const uint8_t CBKPREG_DataBase::m_ItemsSubQTY[NB_BKPREG_DBASE_ITEMS_CONST] =                                    // Array[][THIS]
 {
-  #define X_BKPREG_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY) ITEMS_SubQTY,
-    BKPREG_DBASE_DEF
-  #undef X_BKPREG_DBASE
+    BKPREG_DBASE_DEF(EXPAND_X_BKPREG_DBASE_AS_ITEMS_SUB_QTY)
 };
 
 //-------------------------------------------------------------------------------------------------

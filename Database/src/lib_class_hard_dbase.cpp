@@ -35,6 +35,15 @@
 #if defined(RTC_DBASE_DEF) || defined(HARD_DBASE_DEF)
 
 //-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_HARD_DBASE_AS_ITEMS_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE, CALLBACK)     ITEMS_QTY,
+#define EXPAND_X_HARD_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE, CALLBACK) ITEMS_SubQTY,
+#define EXPAND_X_HARD_DBASE_AS_ITEM_SIZE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE, CALLBACK)     ITEM_SIZE,
+#define EXPAND_X_HARD_DBASE_AS_CALLBACK(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE, CALLBACK)      CALLBACK,
+
+//-------------------------------------------------------------------------------------------------
 //
 //   Class: CHARD_DataBase
 //
@@ -47,9 +56,7 @@
 const uint16_t CHARD_DataBase::m_ItemsQTY[NB_HARD_DBASE_ITEMS_CONST] =                                      // Array[THIS][]
 {
   #ifdef HARD_DBASE_DEF
-    #define X_HARD_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE, CALLBACK) ITEMS_QTY,
-      HARD_DBASE_DEF
-    #undef X_HARD_DBASE
+      HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_ITEMS_QTY)
   #endif
 };
 
@@ -57,9 +64,7 @@ const uint16_t CHARD_DataBase::m_ItemsQTY[NB_HARD_DBASE_ITEMS_CONST] =          
 const uint16_t CHARD_DataBase::m_ItemsSubQTY[NB_HARD_DBASE_ITEMS_CONST] =                                   // Array[][THIS]
 {
   #ifdef HARD_DBASE_DEF
-    #define X_HARD_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE, CALLBACK) ITEMS_SubQTY,
-      HARD_DBASE_DEF
-    #undef X_HARD_DBASE
+      HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_ITEMS_SUB_QTY)
   #endif
 };
 
@@ -67,9 +72,7 @@ const uint16_t CHARD_DataBase::m_ItemsSubQTY[NB_HARD_DBASE_ITEMS_CONST] =       
 const size_t CHARD_DataBase::m_ItemSize[NB_HARD_DBASE_ITEMS_CONST] =                                        // sizeof()
 {
   #ifdef HARD_DBASE_DEF
-    #define X_HARD_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE, CALLBACK) ITEM_SIZE,
-      HARD_DBASE_DEF
-    #undef X_HARD_DBASE
+      HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_ITEM_SIZE)
   #endif
 };
 
@@ -77,9 +80,7 @@ const size_t CHARD_DataBase::m_ItemSize[NB_HARD_DBASE_ITEMS_CONST] =            
 const Func_DatabaseCallBack CHARD_DataBase::m_CallBack[NB_HARD_DBASE_ITEMS_CONST] =
 {
   #ifdef HARD_DBASE_DEF
-    #define X_HARD_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE, CALLBACK) CALLBACK,
-      HARD_DBASE_DEF
-    #undef X_HARD_DBASE
+      HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_CALLBACK)
   #endif
 };
 

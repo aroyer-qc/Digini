@@ -28,12 +28,13 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include "lib_class_STM32F4_io_port.h"
+#define IO_PORT_DRIVER_GLOBAL
+#include "lib_digini.h"
+#undef  IO_PORT_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
-#ifdef IO_PORT_DEF
+#ifdef (USE_IO_PORT_DRIVER == DF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // define(s) and macro(s)
@@ -163,6 +164,6 @@ void IO_PortDriver::SetDirection(IO_PortDir_e Direction)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // IO_PORT_DEF
+#endif // (USE_IO_PORT_DRIVER == DF_ENABLED)
 
 

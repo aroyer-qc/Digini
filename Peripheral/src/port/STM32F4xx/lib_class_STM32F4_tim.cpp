@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define TIM_DRIVER_GLOBAL
-#include "lib_class_STM32F4_tim.h"
+#include "lib_digini.h"
 #undef  TIM_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -513,4 +513,4 @@ void TIM_Driver::CallBack(bool ProcessUpdate)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_TIM_DRIVER == DEF_ENABLED
+#endif // (USE_TIM_DRIVER == DEF_ENABLED)

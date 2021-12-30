@@ -27,25 +27,16 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "digini_cfg.h"
-#include "lib_grafx.h"
-#include "lib_driver.h"
-#include "lib_io.h"
-#include "lib_class_spi.h"
-
-//-------------------------------------------------------------------------------------------------
 
 #ifdef DIGINI_USE_GRAFX
+
 #if (USE_SPI_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define GRAFX_NUMBER_OF_ACTIVE_LAYER              2
+#define GRAFX_NUMBER_OF_ACTIVE_LAYER                2
 
 //#define GRAFX_USE_V_SYNC
 #define GRAFX_USE_SOFT_COPY_LINEAR
@@ -59,16 +50,16 @@
 //#define GRAFX_USE_SOFT_RECTANGLE
 
 //#define GRAFX_USE_SOFT_PRINT_FONT
-#define GRAFX_USE_SOFT_ALPHA
+//#define GRAFX_USE_SOFT_ALPHA                      needon this project as LCD doesn't have alpha
 //#define GRAFX_USE_SOFT_COPY
 //#define GRAFX_USE_SOFT_FILL
 
 // Display size
-#define GRAFX_SIZE_X            128
-#define GRAFX_SIZE_Y            160
+#define GRAFX_SIZE_X                                128
+#define GRAFX_SIZE_Y                                160
 
-#define GRAFX_RAM_SIZE_X        132
-#define GRAFX_RAM_SIZE_Y        162
+#define GRAFX_RAM_SIZE_X                            132
+#define GRAFX_RAM_SIZE_Y                            162
 
 //-------------------------------------------------------------------------------------------------
 // Class
@@ -79,7 +70,7 @@ class GrafxDriver : public GRAFX_Interface
     public:
 
         // This include all required prototype for a driver.
-        #include "lib_driver_common.h"
+        #include "lib_grafx_driver_common.h"
 
     private:
 

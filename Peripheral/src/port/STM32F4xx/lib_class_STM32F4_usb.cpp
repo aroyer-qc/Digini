@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define STM32F4_USB_GLOBAL
-#include "lib_class_STM32F4_usb.h"
+#include "lib_digini.h"
 #undef  STM32F4_USB_GLOBAL
 #include "usb_hcd_int.h"
 
@@ -149,4 +149,4 @@ void CUSB::IRQHandler(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_USB_DRIVER == DEF_ENABLED
+#endif // (USE_USB_DRIVER == DEF_ENABLED)

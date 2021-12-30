@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define I2C_DRIVER_GLOBAL
-#include "lib_class_STM32F4_i2c.h"
+#include "lib_digini.h"
 #undef  I2C_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ void I2C_Driver::Initialize(void)
         Error = nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
         VAR_UNUSED(Error);
     }
-	
+
     pI2Cx     = m_pInfo->pI2Cx;
     m_Timeout = 0;
 
@@ -306,7 +306,7 @@ SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const
 
 		// Wait here until I2C transaction is completed or time out
 		TickStart = GetTick();
-		
+
 		do
 		{
 			nOS_Yield();
@@ -631,4 +631,4 @@ void I2C_Driver::ER_IRQHandler()
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_I2C_DRIVER == DEF_ENABLED
+#endif // (USE_I2C_DRIVER == DEF_ENABLED)

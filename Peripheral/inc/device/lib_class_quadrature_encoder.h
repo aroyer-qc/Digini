@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_quadrature_encoder..h
+//  File : lib_class_quadrature_encoder.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -42,18 +42,20 @@
 #include "device_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
-// typedef(s)
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_QUAD_ENCODER_AS_ENUM(ENUM_ID, IO_CLK, IO_DATA, IO_PUSH) ENUM_ID,
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
 #ifdef QUAD_ENCODER_DEF
 enum QuadEncoderID_e
 {
     QUAD_ENCODER_NONE = -1,
-
-  #define X_QUAD_ENCODER(ENUM_ID, IO_CLK, IO_DATA, IO_PUSH) ENUM_ID,
-    QUAD_ENCODER_DEF
-  #undef  X_QUAD_ENCODER
-
+    QUAD_ENCODER_DEF(EXPAND_X_QUAD_ENCODER_AS_ENUM)
     NB_OF_QUADRATURE_ENCODER,
 };
 

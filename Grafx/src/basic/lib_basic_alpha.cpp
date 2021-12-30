@@ -41,7 +41,7 @@
 #ifdef GRAFX_USE_SOFT_ALPHA
 // TO DO add other mode if required
 // this is only for RGB565
-static void GRAFX_PrecomputeAlphaTable()
+static void GRAFX_PrecomputeAlphaTable(void)
 {
     uint32_t   c;
     uint32_t   a;
@@ -53,7 +53,7 @@ static void GRAFX_PrecomputeAlphaTable()
         {
             d = ((c * a) / 31) & 31;
             d <<= 11;
-            g_AlphaTableRed[c][a] = d;
+            AlphaTableRed[c][a] = d;
         }
     }
     for(c = 0; c < 64; c++)
@@ -62,7 +62,7 @@ static void GRAFX_PrecomputeAlphaTable()
         {
             d = ((c * a) / 63) & 63;
             d <<= 5;
-            g_AlphaTableGreen[c][a] = d;
+            AlphaTableGreen[c][a] = d;
         }
     }
     for(c = 0; c < 32; c++)
@@ -70,7 +70,7 @@ static void GRAFX_PrecomputeAlphaTable()
         for(a = 0; a < 32; a++)
         {
             d = ((c * a) / 31) & 31;
-            g_AlphaTableBlue[c][a] = d;
+            AlphaTableBlue[c][a] = d;
         }
     }
 }

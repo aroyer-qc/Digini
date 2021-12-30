@@ -229,7 +229,7 @@ typedef void (*IO_PinChangeCallback_t)(void* pArg);
 //   Global const and variables
 //-------------------------------------------------------------------------------------------------
 
-#ifdef STM32F7_IO_GLOBAL
+#ifdef IO_DRIVER_GLOBAL
 
 const IO_Properties_t IO_Properties[IO_NUM] =
 {
@@ -243,7 +243,7 @@ const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM] =
 };
 #endif
 
-#else
+#else // IO_DRIVER_GLOBAL
 
 extern const IO_Properties_t IO_Properties[IO_NUM];
 
@@ -251,7 +251,7 @@ extern const IO_Properties_t IO_Properties[IO_NUM];
 extern const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM];
 #endif
 
-#endif
+#endif // IO_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)

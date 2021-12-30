@@ -28,9 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define STM32F7_USB_GLOBAL
+#define USB_DRIVER_GLOBAL
 #include "lib_digini.h"
-#undef  STM32F7_USB_GLOBAL
+#undef  USB_DRIVER_GLOBAL
 #ifdef DIGINI_FATFS_USE_USB_KEY
 //#include "lib_class_usb_interface.h"
 //#include "usb_hcd.h"

@@ -28,9 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define STM32F7_DMA_GLOBAL
+#define DMA_DRIVER_GLOBAL
 #include "lib_digini.h"
-#undef  STM32F7_DMA_GLOBAL
+#undef  DMA_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 // Public Function

@@ -30,30 +30,32 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_typedef.h"
-#include "database_cfg.h"
-#include "lib_class_database.h"
-//#include "lib_class_STM32F4_rtc.h"
-#include "driver_cfg.h"
+#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 
 #if (USE_RTC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// Typedef(s)
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
 #define BACKUP_REGISTER         0x40002850
 
+//-------------------------------------------------------------------------------------------------
+// Expand macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_BKPREG_DBASE_AS_ENUM(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY) ENUM_ID,
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
 typedef enum BKPREG_DBaseItemList_e
 {
     START_BKPREG_INDEX = DBASE_INDEX_BKPREG_RANGE - 1,
-
-  #define X_BKPREG_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY) ENUM_ID,
-    BKPREG_DBASE_DEF
-  #undef X_BKPREG_DBASE
-
+    BKPREG_DBASE_DEF(EXPAND_X_BKPREG_DBASE_AS_ENUM)
     END_BKPREG_INDEX
 } eBKPREG_DBaseItemList;
 

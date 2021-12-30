@@ -184,8 +184,9 @@
                                               { IO_ID, NUMBER, TRIGGER},
 
 //-------------------------------------------------------------------------------------------------
-// typedef struct(s) and enum(s)
+// typedef Typedef(s)
 //-------------------------------------------------------------------------------------------------
+
 enum IO_ID_e
 {
     IO_NOT_DEFINED = -1,
@@ -235,20 +236,20 @@ const IO_Properties_t IO_Properties[IO_NUM] =
     IO_DEF(EXPAND_X_IO_AS_STRUCT_DATA)
 };
 
-  #ifdef IO_IRQ_DEF
-    const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM] =
-    {
-        IO_IRQ_DEF(EXPAND_X_IO_IRQ_AS_STRUCT_DATA)
-    };
-  #endif
+#ifdef IO_IRQ_DEF
+const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM] =
+{
+    IO_IRQ_DEF(EXPAND_X_IO_IRQ_AS_STRUCT_DATA)
+};
+#endif
 
 #else
 
 extern const IO_Properties_t IO_Properties[IO_NUM];
 
-  #ifdef IO_IRQ_DEF
-    extern const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM];
-  #endif
+#ifdef IO_IRQ_DEF
+extern const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM];
+#endif
 
 #endif
 

@@ -28,9 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define STM32F7_IO_GLOBAL
+#define IO_DRIVER_GLOBAL
 #include "lib_digini.h"
-#undef  STM32F7_IO_GLOBAL
+#undef  IO_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 // define(s)

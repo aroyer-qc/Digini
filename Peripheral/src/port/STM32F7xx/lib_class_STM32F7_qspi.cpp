@@ -28,9 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define STM32F7_QSPI_GLOBAL
+#define QSPI_DRIVER_GLOBAL
 #include "lib_digini.h"
-#undef  STM32F7_QSPI_GLOBAL
+#undef  QSPI_DRIVER_GLOBAL
+
 //-------------------------------------------------------------------------------------------------
 
 #if (USE_QSPI_DRIVER == DEF_ENABLED)

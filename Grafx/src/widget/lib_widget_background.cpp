@@ -183,7 +183,9 @@ void CBackground::Draw(ServiceReturn_t* pService)
   #ifndef GRAFX_DEBUG_GUI
     if(SKIN_pTask->IsSkinLoaded() == true)
     {
+      #ifdef GRAFX_USE_V_SYNC
         myGrafx->WaitFor_V_Sync();
+      #endif
         myGrafx->CopyLayerToLayer(CONSTRUCTION_BACKGROUND_LAYER, BACKGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_SIZE_X, GRAFX_SIZE_Y);
     }
   #endif

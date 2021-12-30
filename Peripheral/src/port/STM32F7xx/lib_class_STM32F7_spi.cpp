@@ -28,9 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define STM32F7_SPI_GLOBAL
+#define SPI_DRIVER_GLOBAL
 #include "lib_digini.h"
-#undef STM32F7_SPI_GLOBAL
+#undef  SPI_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 

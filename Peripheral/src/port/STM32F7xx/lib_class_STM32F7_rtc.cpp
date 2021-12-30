@@ -41,9 +41,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define STM32F7_RTC_GLOBAL
+#define RTC_DRIVER_GLOBAL
 #include "lib_digini.h"
-#undef STM32F7_RTC_GLOBAL
+#undef  RTC_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 

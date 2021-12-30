@@ -43,9 +43,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define STM32F7_SDIO_GLOBAL
+#define SDIO_DRIVER_GLOBAL
 #include "lib_digini.h"
-#undef  STM32F7_SDIO_GLOBAL
+#undef  SDIO_DRIVER_GLOBAL
 #include "stm32f7xx_ll_sdmmc.h"   // to replace this my my stuff
 
 //-------------------------------------------------------------------------------------------------
@@ -168,7 +168,7 @@
 #define IFCR_CLEAR_MASK_STREAM6         (DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6)
 
 //-------------------------------------------------------------------------------------------------
-// typedef(s)
+// Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
 enum SD_CardState_t

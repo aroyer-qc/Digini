@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_label.h
+//  File : lib_class_STM32F7_pwm.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -27,58 +27,58 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//-------------------------------------------------------------------------------------------------
-// Expand macro(s)
+// Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_LABEL_AS_ENUM(ENUM_ID, LBL1, LBL2) ENUM_ID,
-#define EXPAND_X_LABEL_AS_DATA(ENUM_ID, LBL1, LBL2) {LBL1, LBL2},
+#include "stm32f4xx.h"
+#include "lib_peripheral_cfg.h"
+#include "lib_class_STM32F4_tim.h"
 
 //-------------------------------------------------------------------------------------------------
-//  Typedef(s)
+
+#if (USE_PWM_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+// typedef Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-enum Language_e
+struct PWM_Info_t
 {
-    LANG_ENGLISH = 0,
-    LANG_FRENCH,
-    NB_LANGUAGE_CONST,
+    IO_ID_e         PinID;
+    TIM_ID_e        TimID;
+    TIM_Channel_e   Channel;
+    uint16_t        InitialDuty;
 };
 
+//-------------------------------------------------------------------------------------------------
+// class definition(s)
+//-------------------------------------------------------------------------------------------------
 
-enum Label_e
+class PWM_Driver
 {
-    LABEL_LANGUAGE_DEF(EXPAND_X_LABEL_AS_ENUM)
-    NB_LABEL_CONST,
-    INVALID_LABEL,
+    public:
+
+                                        PWM_Driver              (PWM_ChannelID_e PWM_ID);
+
+        void                            Initialize              (void);
+        void                            SetDuty                 (uint16_t Duty);
+        void                            Start                   (void);
+        void                            Stop                    (void);
+
+    private:
+
+        const PWM_Info_t*               m_pInfo;
+        TIM_TypeDef*                    m_pTimer;
+        IO_ID_e                         m_IO_Pin;
+        uint16_t                        m_Duty;
 };
 
 //-------------------------------------------------------------------------------------------------
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef DIGINI_GLOBAL
-
-  const char* LBL_Application[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
-  {
-    LABEL_LANGUAGE_DEF(EXPAND_X_LABEL_AS_DATA)
-  };
-
-#else
-
- extern const char* LBL_Application[NB_LABEL_CONST][NB_LANGUAGE_CONST];
-
-#endif // DIGINI_GLOBAL
+#include "pwm_var.h"         // Project variable
 
 //-------------------------------------------------------------------------------------------------
 
-#ifdef __cplusplus
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
+#endif // USE_PWM_DRIVER == DEF_ENABLED

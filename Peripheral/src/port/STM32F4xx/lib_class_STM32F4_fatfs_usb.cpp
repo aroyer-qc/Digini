@@ -28,14 +28,12 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
-#ifdef DIGINI_FATFS_USE_USB_KEY
-#include <stdint.h>
-#define STM32F4_USB_GLOBAL
-#include "lib_class_STM32F4_fatfs_usb.h"
-#undef  STM32F4_USB_GLOBAL
+#define USB_DRIVER_GLOBAL
+#include "lib_digini.h"
+#undef  USB_DRIVER_GLOBAL
 #include "lib_class_usb.h"
 #include "usb_hcd.h"
+#ifdef DIGINI_FATFS_USE_USB_KEY
 
 //-------------------------------------------------------------------------------------------------
 //

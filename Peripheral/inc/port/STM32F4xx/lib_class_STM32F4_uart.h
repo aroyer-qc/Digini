@@ -27,19 +27,6 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "stm32f4xx.h"
-#include "nOS.h"
-#include "lib_typedef.h"
-#include "lib_io.h"
-#include "lib_isr.h"
-#include "lib_dma.h"
-#include "uart_cfg.h"
-#include "driver_cfg.h"
-
-//-------------------------------------------------------------------------------------------------
 
 #if (USE_UART_DRIVER == DEF_ENABLED)
 
@@ -54,8 +41,90 @@
 #define UART_ISR_TX_COMPLETED_MASK          0x02
 
 //-------------------------------------------------------------------------------------------------
-// typedef struct(s) and enum(s)
+//  Typedef(s)
 //-------------------------------------------------------------------------------------------------
+
+enum UART_ID_e
+{
+    #if (UART_DRIVER_SUPPORT_UART1_CFG == DEF_ENABLED)
+        UART_DRIVER_ID_1,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART2_CFG == DEF_ENABLED)
+        UART_DRIVER_ID_2,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART3_CFG == DEF_ENABLED)
+        UART_DRIVER_ID_3,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART4_CFG == DEF_ENABLED)
+        UART_DRIVER_ID_4,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART5_CFG == DEF_ENABLED)
+        UART_DRIVER_ID_5,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART6_CFG == DEF_ENABLED)
+        UART_DRIVER_ID_6,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART7_CFG == DEF_ENABLED)
+        UART_DRIVER_ID_7,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART8_CFG == DEF_ENABLED)
+        UART_DRIVER_ID_8,
+    #endif
+
+    NB_OF_REAL_UART_DRIVER,
+    INTERNAL_RESYNC_OFFSET = NB_OF_REAL_UART_DRIVER - 1,
+
+    #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
+        UART_DRIVER_VIRTUAL,
+    #endif
+
+     NB_OF_UART_DRIVER,
+};
+
+enum UART_DMA_ID_e
+{
+    #if (UART_DRIVER_SUPPORT_UART1_DMA_CFG == DEF_ENABLED)
+        UART_DMA_DRIVER_ID_1,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART2_DMA_CFG == DEF_ENABLED)
+        UART_DMA_DRIVER_ID_2,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART3_DMA_CFG == DEF_ENABLED)
+        UART_DMA_DRIVER_ID_3,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART4_DMA_CFG == DEF_ENABLED)
+        UART_DMA_DRIVER_ID_4,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART5_DMA_CFG == DEF_ENABLED)
+        UART_DMA_DRIVER_ID_5,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART6_DMA_CFG == DEF_ENABLED)
+        UART_DMA_DRIVER_ID_6,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART7_DMA_CFG == DEF_ENABLED)
+        UART_DMA_DRIVER_ID_7,
+    #endif
+
+    #if (UART_DRIVER_SUPPORT_UART8_DMA_CFG == DEF_ENABLED)
+        UART_DMA_DRIVER_ID_8,
+    #endif
+
+     NB_OF_UART_DMA_DRIVER,
+
+};
 
 enum UART_Baud_e
 {

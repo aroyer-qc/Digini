@@ -48,10 +48,7 @@
 #define NUMBER_OF_IO_PORT               ((uint32_t)11)
 #define NUMBER_OF_PIN_PER_PORT          ((uint32_t)16)
 
-// TODO this is not the place for this
 #define LED_Init(p)                     IO_PinInit(p)
-//#define LED_ON(p)                     IO_Output(p, IO_SET)      todo need to be defined for state on and off
-//#define LED_OFF(p)                    IO_Output(p, IO_RESET)
 #define LED_Toggle(p)                   IO_TogglePin(p)
 
 //#define IO_NULL                       ((IO_TypeDef *)nullptr)
@@ -184,26 +181,31 @@
 #define IO_EXT_MODE_IT_BOTH             ((uint32_t)0x00000003)
 
 //-------------------------------------------------------------------------------------------------
-// typedef struct(s) and enum(s)
+// Expand macro(s)
 //-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_IO_AS_ENUM(ENUM_ID, IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA) ENUM_ID,
+#define EXPAND_X_IO_IRQ_AS_ENUM(ENUM_ID, IO_ID, NUMBER, TRIGGER) ENUM_ID,
+#define EXPAND_X_IO_AS_STRUCT_DATA(ENUM_ID,  IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA ) \
+                                           { IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA },
+#define EXPAND_X_IO_IRQ_AS_STRUCT_DATA(ENUM_ID, IO_ID, NUMBER, TRIGGER) \
+                                              { IO_ID, NUMBER, TRIGGER},
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
 enum IO_ID_e
 {
     IO_NOT_DEFINED = -1,
-
-  #define X_IO(ENUM_ID, IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA) ENUM_ID,
-    IO_DEF
-  #undef  X_IO
-
+    IO_DEF(EXPAND_X_IO_AS_ENUM)
     IO_NUM,
 };
 
 #ifdef IO_IRQ_DEF
 enum IO_IrqID_e
 {
-  #define X_IO_IRQ(ENUM_ID, IO_ID, NUMBER, TRIGGER) ENUM_ID,
-    IO_IRQ_DEF
-  #undef  X_IO_IRQ
-
+    IO_IRQ_DEF(EXPAND_X_IO_IRQ_AS_ENUM)
     IO_IRQ_NUM,
 };
 #endif
@@ -224,10 +226,6 @@ struct IO_IRQ_Properties_t
     IRQn_Type       IRQ_Channel;
     uint32_t        Trigger;
 };
-
-//-------------------------------------------------------------------------------------------------
-// Typedef(s)
-//-------------------------------------------------------------------------------------------------
 
 typedef void (*IO_PinChangeCallback_t)(void* pArg);
 
@@ -254,20 +252,14 @@ const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
 
 const IO_Properties_t IO_Properties[IO_NUM] =
 {
-  #define X_IO(ENUM_ID,  IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA ) \
-                       { IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA },
-    IO_DEF
-  #undef  X_IO
+    IO_DEF(EXPAND_X_IO_AS_STRUCT_DATA)
 };
 
 #ifdef IO_IRQ_DEF
-  const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM] =
-  {
-    #define X_IO_IRQ(ENUM_ID, IO_ID, NUMBER, TRIGGER) \
-                            { IO_ID, NUMBER, TRIGGER},
-    IO_IRQ_DEF
-    #undef  X_IO_IRQ
-  };
+const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM] =
+{
+    IO_IRQ_DEF(EXPAND_X_IO_IRQ_AS_STRUCT_DATA)
+};
 #endif
 
 #else
@@ -275,9 +267,9 @@ const IO_Properties_t IO_Properties[IO_NUM] =
 extern const GPIO_TypeDef*          IO_Port[NUMBER_OF_IO_PORT];
 extern const IO_Properties_t        IO_Properties[IO_NUM];
 
- #ifdef IO_IRQ_DEF
-  extern const IO_IRQ_Properties_t  IO_IRQ_Properties[IO_IRQ_NUM];
- #endif
+#ifdef IO_IRQ_DEF
+extern const IO_IRQ_Properties_t  IO_IRQ_Properties[IO_IRQ_NUM];
+#endif
 
 #endif
 
@@ -286,7 +278,7 @@ extern const IO_Properties_t        IO_Properties[IO_NUM];
 //-------------------------------------------------------------------------------------------------
 
 void        IO_PinInit                  (IO_ID_e IO_ID);
-void        IO_PinInit                  (GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint32_t PinType, uint32_t PinSpeed, uint32_t State);
+void        IO_PinInit                  (GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint32_t PinType, uint32_t PinSpeed, uint32_t State); // is it necessary?
 void        IO_PinInitInput             (IO_ID_e IO_ID);
 void        IO_PinInitOutput            (IO_ID_e IO_ID);
 void        IO_SetPinLow                (IO_ID_e IO_ID);
@@ -295,7 +287,7 @@ void        IO_TogglePin                (IO_ID_e IO_ID);
 void        IO_SetPin                   (IO_ID_e IO_ID);
 uint32_t    IO_GetInputPin              (IO_ID_e IO_ID);
 uint32_t    IO_GetOutputPin             (IO_ID_e IO_ID);
-void        IO_EnableClock              (GPIO_TypeDef* pPort);
+void        IO_EnableClock              (GPIO_TypeDef* pPort);// is it necessary?
 #ifdef IO_IRQ_DEF
 void        IO_InitIRQ                  (IO_IrqID_e IO_IRQ_Id, IO_PinChangeCallback_t pCallback);
 void        IO_EnableIRQ                (IO_IrqID_e IO_IRQ_Id);

@@ -28,13 +28,13 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include "lib_class_STM32F4_io_bus.h"
-#include "device_cfg.h"
+#define IO_BUS_DRIVER_GLOBAL
+#include "lib_digini.h"
+#undef  IO_BUS_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
-#ifdef IO_BUS_DEF
+#ifdef (USE_IO_BUS_DRIVER == DF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Static variable(s) and constant(s)
@@ -156,4 +156,4 @@ void IO_BusDriver::Write(uint32_t Data)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // IO_BUS_DEF
+#endif // (USE_IO_BUS_DRIVER == DF_ENABLED)

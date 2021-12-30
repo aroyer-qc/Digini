@@ -32,10 +32,8 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+#include "ff.h"
 #include "diskio.h"
-//#include "lib_class_sd_card_interface.h"
-//#include "lib_class_sd_card.h"
-#include "driver_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -57,7 +55,7 @@
 #define SDIO_DMA_BLOCK_SIZE_512                     0x00000090
 
 //-------------------------------------------------------------------------------------------------
-// typedef struct(s) and enum(s)
+// typedef Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
 // To found how many port there is (Only ONE on STM32F4, but we keep this driver generic)
@@ -195,4 +193,4 @@ class CSDIO : public CSD_CardInterface
 
 #endif
 
-#endif // USE_SDIO_DRIVER == DEF_ENABLED
+#endif // (USE_SDIO_DRIVER == DEF_ENABLED)

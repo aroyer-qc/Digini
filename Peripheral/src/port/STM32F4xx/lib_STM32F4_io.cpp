@@ -28,10 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#define STM32F4_IO_GLOBAL
-#include "lib_STM32F4_io.h"
-#undef  STM32F4_IO_GLOBAL
+#define IO_DRIVER_GLOBAL
+#include "lib_digini.h"
+#undef  IO_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 // define(s)

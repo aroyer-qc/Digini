@@ -28,15 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define STM32F4_QSPI_GLOBAL
-#include "lib_class_STM32F4_qspi.h"
-#undef  STM32F4_QSPI_GLOBAL
-#include "lib_STM32F4_dma.h"
-#include "lib_memory.h"
-#include "lib_utility.h"
-#include "lib_define.h"
-#include "lib_macro.h"
-#include "clock_cfg.h"
+#define QSPI_DRIVER_GLOBAL
+#include "lib_digini.h"
+#undef  QSPI_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -2184,5 +2178,5 @@ void QSPI_Driver::IRQHandler(void)
 }
 #endif
 
-#endif // USE_QSPI_DRIVER == DEF_ENABLED
+#endif // (USE_QSPI_DRIVER == DEF_ENABLED)
 

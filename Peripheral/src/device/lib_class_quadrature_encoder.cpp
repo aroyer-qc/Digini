@@ -37,8 +37,11 @@
 #ifdef QUAD_ENCODER_DEF
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
+// Expand macro(s)
 //-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_QUAD_ENCODER_AS_STRUCT_DATA(ENUM_ID, IO_CLK, IO_DATA, IO_PUSH) \
+                                                     {IO_CLK, IO_DATA, IO_PUSH},
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -55,10 +58,7 @@
 
 Quad_Info_t QUAD_Encoder::m_QuadInfo[NB_OF_QUADRATURE_ENCODER] =
 {
-  #define X_QUAD_ENCODER(ENUM_ID, IO_CLK, IO_DATA, IO_PUSH) \
-                                 {IO_CLK, IO_DATA, IO_PUSH},
-    QUAD_ENCODER_DEF
-  #undef  X_QUAD_ENCODER
+    QUAD_ENCODER_DEF(EXPAND_X_QUAD_ENCODER_AS_STRUCT_DATA)
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -28,7 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
+#define DAC_DRIVER_GLOBAL
+#include <lib_digini.h>
+#undef  DAC_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -510,5 +512,5 @@ void CSound::Volume(uint8_t Volume, uint8_t Priority)
 
 */
 
-#endif // USE_DAC_DRIVER == DEF_ENABLED
+#endif // (USE_DAC_DRIVER == DEF_ENABLED)
 

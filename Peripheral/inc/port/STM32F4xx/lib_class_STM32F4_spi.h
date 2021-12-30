@@ -31,20 +31,6 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include <stdint.h>
-#include "stm32f4xx.h"
-#include "nOS.h"
-#include "lib_STM32F4_dma.h"
-#include "lib_STM32F4_isr.h"
-#include "lib_STM32F4_io.h"
-#include "lib_typedef.h"
-#include "driver_cfg.h"
-#include "spi_cfg.h"
-
-//-------------------------------------------------------------------------------------------------
 
 #if (USE_SPI_DRIVER == DEF_ENABLED)
 
@@ -103,8 +89,25 @@
 #define SPI_DATA_WIDTH_16_BIT       (SPI_CR1_DFF)
 
 //-------------------------------------------------------------------------------------------------
-// typedef struct(s) and enum(s)
+//  Typedef(s)
 //-------------------------------------------------------------------------------------------------
+
+enum SPI_ID_e
+{
+    #if (SPI_DRIVER_SUPPORT_SPI1 == DEF_ENABLED)
+		DRIVER_SPI1_ID,
+	#endif
+
+    #if (SPI_DRIVER_SUPPORT_SPI2 == DEF_ENABLED)
+		DRIVER_SPI2_ID,
+	#endif
+
+    #if (SPI_DRIVER_SUPPORT_SPI3 == DEF_ENABLED)
+		DRIVER_SPI3_ID,
+	#endif
+
+    NB_OF_SPI_DRIVER,
+};
 
 struct SPI_Info_t
 {
@@ -197,4 +200,4 @@ class SPI_Driver
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_SPI_DRIVER == DEF_ENABLED
+#endif // (USE_SPI_DRIVER == DEF_ENABLED)

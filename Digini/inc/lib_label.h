@@ -50,7 +50,6 @@ enum Language_e
     NB_LANGUAGE_CONST,
 };
 
-
 enum Label_e
 {
     LABEL_LANGUAGE_DEF(EXPAND_X_LABEL_AS_ENUM)

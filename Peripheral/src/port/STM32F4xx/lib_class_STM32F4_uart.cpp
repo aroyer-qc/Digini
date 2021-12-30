@@ -28,12 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include "lib_macro.h"
 #define UART_DRIVER_GLOBAL
-#include "lib_class_STM32F4_uart.h"
+#include "lib_digini.h"
 #undef  UART_DRIVER_GLOBAL
-//#include "clock_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -1341,4 +1338,4 @@ void UART_Driver::VirtualUartTX_IRQHandler(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_UART_DRIVER == DEF_ENABLED
+#endif // (USE_UART_DRIVER == DEF_ENABLED)

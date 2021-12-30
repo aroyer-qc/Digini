@@ -29,10 +29,8 @@
 //-------------------------------------------------------------------------------------------------
 
 #define SPI_DRIVER_GLOBAL
-#include "lib_class_STM32F4_spi.h"
+#include "lib_digini.h"
 #undef  SPI_DRIVER_GLOBAL
-#include "lib_utility.h"
-#include "lib_macro.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -1043,4 +1041,4 @@ uint32_t SPI_Driver::GetDMA_Status(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_SPI_DRIVER == DEF_ENABLED
+#endif // (USE_SPI_DRIVER == DEF_ENABLED)

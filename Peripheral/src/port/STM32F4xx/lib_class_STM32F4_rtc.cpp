@@ -40,14 +40,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#define STM32F4_RTC_GLOBAL
-#include "lib_class_STM32F4_rtc.h"
-#undef  STM32F4_RTC_GLOBAL
-#include "string.h"
-#include "STM32F4xx.h"
-#include "lib_utility.h"
-
+#define RTC_DRIVER_GLOBAL
+#include "lib_digini.h"
+#undef  RTC_DRIVER_GLOBAL
 //-------------------------------------------------------------------------------------------------
 
 #if (USE_RTC_DRIVER == DEF_ENABLED)
@@ -612,4 +607,4 @@ void CRTC::Alarm_IRQ_Handler(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_RTC_DRIVER == DEF_ENABLED
+#endif // (USE_RTC_DRIVER == DEF_ENABLED)

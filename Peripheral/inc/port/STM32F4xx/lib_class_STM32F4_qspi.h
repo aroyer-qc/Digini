@@ -203,15 +203,15 @@ class QSPI_Driver
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef STM32F7_QSPI_GLOBAL
+#ifdef QSPI_DRIVER_GLOBAL
 
   QSPI_Driver           QSPI;
 
-#else // STM32F7_QSPI_GLOBAL
+#else // QSPI_DRIVER_GLOBAL
 
   extern QSPI_Driver    QSPI;
 
-#endif // STM32F7_QSPI_GLOBAL
+#endif // QSPI_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 

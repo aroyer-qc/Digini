@@ -40,7 +40,7 @@
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_HARD_DBASE_AS_ENUM(ENUM_ID, RAM_RECORD, ROM_RECORD, MINIMUM, MAXIMUM, DEFAULT) ENUM_ID,
+#define EXPAND_X_HARD_DBASE_AS_ENUM(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE, CALLBACK) ENUM_ID,
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)

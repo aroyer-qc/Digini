@@ -105,11 +105,11 @@ size_t DeCompression::Process(RawArray* pRawData, RawArray* pCompxData, size_t D
             Info.pOut                = pRawData->data();
             Info.pIn                 = pCompxData->data();
             Info.DataSize            = DataSize;
-            Info.IDAT.data.u8        = m_WorkMem.pAppend->data();    // Append buffer from lzw for PNG chunk data
+     //       Info.IDAT.data.u8        = m_WorkMem.pAppend->data();    // Append buffer from lzw for PNG chunk data
             Info.IDAT.allocsize      = 522240;
-            Info.ScanLines.data.u8   = m_WorkMem.pPrefix->data();    // Prefix buffer from lzw for PNG chunk data
+     //       Info.ScanLines.data.u8   = m_WorkMem.pPrefix->data();    // Prefix buffer from lzw for PNG chunk data
             Info.ScanLines.allocsize = 522240;
-            Info.Image.data.u8       = m_WorkMem.pDecode->data();    // Prefix buffer from lzw for PNG chunk data
+     //       Info.Image.data.u8       = m_WorkMem.pDecode->data();    // Prefix buffer from lzw for PNG chunk data
             Info.Image.allocsize     = 522240;
             DecompressedSize         = PNG_decode(&Info);
             break;

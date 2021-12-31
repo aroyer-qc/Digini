@@ -138,10 +138,10 @@ void SPI_Driver::Initialize(void)
     IO_PinInit(m_pInfo->PinMISO);
     IO_PinInit(m_pInfo->PinNSS);
 
-    switch(uint32_t(m_pInfo->pSPIx))
+    switch(uint32_t(m_pInfo->SPI_ID))
     {
       #if (SPI_DRIVER_SUPPORT_SPI1 == DEF_ENABLE)
-        case uint32_t(SPI1):
+        case uint32_t(DRIVER_SPI1_ID):
         {
             // ---- Reset peripheral and set clock ----
             RCC->APB2RSTR |=  RCC_APB2RSTR_SPI1RST;             // Enable SPI1 reset state
@@ -152,7 +152,7 @@ void SPI_Driver::Initialize(void)
       #endif
 
       #if (SPI_DRIVER_SUPPORT_SPI2 == DEF_ENABLE)
-        case uint32_t(SPI2):
+        case uint32_t(DRIVER_SPI2_ID):
         {
             // ---- Reset peripheral and set clock ----
             RCC->APB1RSTR |=  RCC_APB1RSTR_SPI2RST;             // Enable SPI2 reset state
@@ -163,7 +163,7 @@ void SPI_Driver::Initialize(void)
       #endif
 
       #if (SPI_DRIVER_SUPPORT_SPI3 == DEF_ENABLE)
-        case uint32_t(SPI3):
+        case uint32_t(DRIVER_SPI3_ID):
         {
             // ---- Reset peripheral and set clock ----
             RCC->APB1RSTR |=  (RCC_APB1RSTR_SPI3RST;            // Enable sPI3 reset state

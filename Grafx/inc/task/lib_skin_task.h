@@ -56,6 +56,8 @@ class SKIN_myClassTask
     public:
       #ifdef GRAFX_USE_LOAD_SKIN
                         SKIN_myClassTask            (const char* pDrive, const char* pFileName);
+      #else
+                        SKIN_myClassTask            ();
       #endif
 
         void            Run                         (void);

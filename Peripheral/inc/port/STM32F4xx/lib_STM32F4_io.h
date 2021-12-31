@@ -218,7 +218,7 @@ typedef void (*IO_PinChangeCallback_t)(void* pArg);
 //   Global const and variables
 //-------------------------------------------------------------------------------------------------
 
-#ifdef STM32F4_IO_GLOBAL
+#ifdef IO_DRIVER_GLOBAL
 
 const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
 {

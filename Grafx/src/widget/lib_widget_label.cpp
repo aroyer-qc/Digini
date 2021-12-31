@@ -165,7 +165,9 @@ void CLabel::Finalize()
 void CLabel::Draw(ServiceReturn_t* pService)
 {
   #ifndef GRAFX_DEBUG_GUI
+   #ifdef GRAFX_USE_BACKGROUND_LAYER
     Layer_e BackLayerToDraw;
+   #endif
     Layer_e ForeLayerToDraw;
   #endif
 

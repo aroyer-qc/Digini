@@ -28,13 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
-#ifdef DIGINI_USE_GRAFX
 #define LIB_ST7735_GLOBAL
-#include "lib_lcd_128x160-ST7735.h"
-#undef  LIB_ST7735_GLOBAL
 #include "lib_digini.h"
-#include "lib_macro.h"
+#undef  LIB_ST7735_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 // define(s)
@@ -633,7 +629,13 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawRectangle(Box_t* pBox)
 {
-    DrawRectangle(pBox->Pos.X, pBox->Pos.Y, pBox->Size.Width, pBox->Size.Height);
+    //DrawRectangle(pBox->Pos.X, pBox->Pos.Y, pBox->Size.Width, pBox->Size.Height);
+  	uint16_t Color;
+
+    m_pLayer = &LayerTable[CLayer::GetDrawing()];
+	Color    = (uint16_t(m_pLayer->GetColor()));   // TODO do a function to get the color
+	SetWindow(pBox->Pos.X, pBox->Pos.Y, pBox->Pos.X + (pBox->Size.Width - 1), pBox->Pos.Y + (pBox->Size.Height - 1));
+	PutColor(Color, pBox->Size.Width * pBox->Size.Height);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -651,6 +653,7 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+/*
 void GrafxDriver::DrawRectangle(uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height)
 {
 	uint16_t Color;
@@ -660,7 +663,7 @@ void GrafxDriver::DrawRectangle(uint16_t PosX, uint16_t PosY, uint16_t Width, ui
 	SetWindow(PosX, PosY, PosX + (Width - 1), PosY + (Height - 1));
 	PutColor(Color, Width * Height);
 }
-
+*/ // already define in lib_grafx_driver
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DrawBox
@@ -933,8 +936,11 @@ void GrafxDriver::Clear(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // DIGINI_USE_GRAFX
 
+void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
+{
+
+}
 
 
 #if 0

@@ -117,7 +117,7 @@
 SystemState_e TEA5767::Initialize(I2C_Driver* pI2C)
 {
     TEA5767_Freq_t Stations[20];
-
+uint16_t NumberOfStation = 20;
 
     m_pI2C = pI2C;
 
@@ -134,8 +134,8 @@ SystemState_e TEA5767::Initialize(I2C_Driver* pI2C)
 
 
     this->SaveRegisters();
-    this->FindStations(REG_3_SSL_LO, &Stations[0], 20);
-    return SYS_OK;//this->SaveRegisters();
+    this->FindStations(REG_3_SSL_LO, &Stations[0], &NumberOfStation);
+    return SYS_READY;//this->SaveRegisters();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -266,7 +266,7 @@ SystemState_e TEA5767::SetFrequency(TEA5767_Freq_t Frequency)
 //  Name:           FindStations
 //
 //  Parameter(s):   uint8_t             SearchLevel
-//                  TEA5767_Freq_t**    pFrequencyArray
+//                  TEA5767_Freq_t*    pFrequencyArray
 //                  uint16_t*           StationCount    On call this is the max station to scan
 //                                                      Upon return it the number of station found
 //
@@ -277,8 +277,7 @@ SystemState_e TEA5767::SetFrequency(TEA5767_Freq_t Frequency)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::FindStations(uint8_t SearchLevel, TEA5767_Freq_t** pFrequencyArray, uint16_t* pStationCount)
-//SystemState_e TEA5767::FindStations(uint8_t SearchLevel, TEA5767_Freq_t* pFrequencyArray, uint16_t* pStationCount)
+SystemState_e TEA5767::FindStations(uint8_t SearchLevel, TEA5767_Freq_t* pFrequencyArray, uint16_t* pStationCount)
 {
 	SystemState_e  State;
 	uint8_t        Level;
@@ -348,7 +347,7 @@ SystemState_e TEA5767::SeekUp(uint8_t SearchLevel)
     m_Registers[REG_3] |=  REG_3_SUD;
     m_Registers[REG_3] &= ~REG_3_SSL_MASK;
     m_Registers[REG_3] |=  SearchLevel;
-    this->SaveRegisters();
+    return this->SaveRegisters();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -369,7 +368,7 @@ SystemState_e TEA5767::SeekDown(uint8_t SearchLevel)
     m_Registers[REG_1] |=   REG_1_SM;
     m_Registers[REG_3] &= ~(REG_3_SSL_MASK | REG_3_SUD);
     m_Registers[REG_3] |=   SearchLevel;
-    this->SaveRegisters();
+    return this->SaveRegisters();
 }
 
 //-------------------------------------------------------------------------------------------------

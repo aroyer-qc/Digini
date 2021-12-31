@@ -28,9 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define STM32F4_USB_GLOBAL
+#define USB_DRIVER_GLOBAL
 #include "lib_digini.h"
-#undef  STM32F4_USB_GLOBAL
+#undef  USB_DRIVER_GLOBAL
 #include "usb_hcd_int.h"
 
 //-------------------------------------------------------------------------------------------------

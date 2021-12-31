@@ -122,15 +122,15 @@ class CUSB
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef STM32F4_USB_GLOBAL
+#ifdef USB_DRIVER_GLOBAL
 
 CUSB USB;
 
-#else // STM32F4_USB_GLOBAL
+#else // USB_DRIVER_GLOBAL
 
 extern class CUSB USB;
 
-#endif // STM32F4_USB_GLOBAL
+#endif // USB_DRIVER_GLOBAL
 
 /*
 

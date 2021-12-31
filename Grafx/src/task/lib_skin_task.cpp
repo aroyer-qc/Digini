@@ -64,6 +64,7 @@
     nullptr,
     STATIC_SKIN_DEF(EXPAND_X_STATIC_SKIN_AS_CONST_PTR)
  };
+
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -102,6 +103,11 @@ SKIN_myClassTask::SKIN_myClassTask(const char* pDrive, const char* pFileName)
 {
     m_pDrive = pDrive;
     snprintf(m_Path, 15, "%s%s", pDrive, pFileName);
+}
+#else
+SKIN_myClassTask::SKIN_myClassTask()
+{
+    // Nothing to do
 }
 #endif
 
@@ -216,9 +222,9 @@ uint16_t SKIN_myClassTask::PercentLoader(void)
 //-------------------------------------------------------------------------------------------------
 void SKIN_myClassTask::Run(void)
 {
-  #ifdef GRAFX_USE_LOAD_SKIN
+  //#ifdef GRAFX_USE_LOAD_SKIN
     uint8_t*  pFreePointer;
-  #endif
+  //#endif
 
     for(;;)
     {

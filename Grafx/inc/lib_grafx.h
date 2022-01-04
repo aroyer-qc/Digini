@@ -56,11 +56,7 @@
 #include "widget_var.h"
 #include "lib_service.h"
 #include "service.h"
-
-#ifdef GRAFX_USE_A_SKIN
-  #include "lib_skin_task.h"
-#endif
-
+#include "lib_skin_task.h"
 #include "lib_grafx_driver.h"
 #include GRAFX_DRIVER_INCLUDE
 

@@ -273,10 +273,12 @@ void SKIN_myClassTask::Run(void)
             pMemory->Free((void**)&m_pFS);
           #endif
 
+          #ifdef GRAFX_USE_LOAD_SKIN
             delete m_pDecompress;
             delete m_CompxWorkMem.pPrefix;
             delete m_CompxWorkMem.pDecode;
             delete m_CompxWorkMem.pAppend;
+          #endif
 
             if(this->m_pCallBack != nullptr)
             {

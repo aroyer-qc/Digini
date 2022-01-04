@@ -49,8 +49,12 @@
 // Calculate the offset for the Free memory after the layers used by GRAFX
 #ifdef LAYER_DEF
 const uint32_t GFX_LoadingAddress =
+  #ifdef GRAFX_USE_RAM_DATA
+    GFX_RAM_ADDRESS;
+  #else
     LAYER_DEF(EXPAND_X_LAYER_AS_CALC)
     GFX_BASE_ADDRESS;
+  #endif
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -122,9 +126,7 @@ SystemState_e GRAFX_PostInitialize(void)
     SystemState_e State;
   #endif
     nOS_Error     Error;
-  #ifdef GRAFX_USE_A_SKIN
     uint32_t      FreePointer;
-  #endif
 
     DB_Central.Set(&GFX_LoadingAddress, GFX_FREE_RAM_POINTER, 0, 0);   // Record the free SDRAM pointer in database at reload ID
 
@@ -135,7 +137,6 @@ SystemState_e GRAFX_PostInitialize(void)
         return SYS_FAIL;
     }
 
-  #ifdef GRAFX_USE_A_SKIN
     //  SKIN_pTask need then at the same pointer
     DB_Central.Get(&FreePointer, GFX_FREE_RAM_POINTER,  0, 0);
     LIB_AlignPointer(FreePointer);
@@ -146,7 +147,6 @@ SystemState_e GRAFX_PostInitialize(void)
     {
         return SYS_FAIL;
     }
-  #endif
 
   #ifdef GRAFX_USE_POINTING_DEVICE
     if((State = PDI_pDriver->Initialize(GRAFX_PostInitSubDriverPtr.PDI_pHardInterface)) != SYS_READY)

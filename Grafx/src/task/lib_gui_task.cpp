@@ -110,7 +110,7 @@ void GUI_myClassTask::Run()
     m_Link    = INVALID_LINK;
     NewLink   = LINK_MAIN_LOADING;
 
-  #if defined(GRAFX_USE_A_SKIN) && defined(STATIC_SKIN_DEF)
+  #if defined(STATIC_SKIN_DEF)
     // Static skin must be loaded
     while(SKIN_pTask->IsStaticSkinLoaded() != true)
     {

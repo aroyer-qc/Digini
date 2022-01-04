@@ -80,7 +80,7 @@
 // Private variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-CFont        FontDefault;
+CFont FontDefault;
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -93,12 +93,10 @@ CFont        FontDefault;
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+
 void FONT_Initialize(void)
 {
   #if defined(GRAFX_USE_FONT_SIZE_8) || defined (GRAFX_USE_FONT_SIZE_12) || defined(GRAFX_USE_FONT_SIZE_16)
-    FontDescriptor_t                FontDescriptor;
-    const StaticFontDescriptor_t*   pDscFont;
-    uint8_t*                        pMemory;
     uint16_t                        Counter;
     uint16_t                        SizeCount;
     uint8_t                         Font;
@@ -106,6 +104,9 @@ void FONT_Initialize(void)
     uint8_t                         Value;
     uint8_t                         BitCount;
     uint8_t                         BitValue;
+    uint8_t*                        pMemory;
+    const StaticFontDescriptor_t*   pDscFont;
+    FontDescriptor_t                FontDescriptor;
     FontInfo_t                      FontInfo;
 
     // load in RAM default 8x8 and/or 12x12 and/or 16x16 font
@@ -123,8 +124,8 @@ void FONT_Initialize(void)
         FontInfo.Height    = (FontInfo.Height == 0) ? 16 : FontInfo.Height;  // Save the height of the font into database
         FontInfo.Interline = StaticFontDescriptor[Font][2].Padding & 0x0F;   // Get Interline
         DB_Central.Set(&FontInfo, GFX_FONT_INFO, Font, 0);
-
         Counter = 0;
+
         for(Character = 32; Character < 128; Character++)
         {
             DB_Central.Get(&pMemory, GFX_FREE_RAM_POINTER, 0, 0);
@@ -136,26 +137,26 @@ void FONT_Initialize(void)
             FontDescriptor.RightBearing     = pDscFont->Padding >> 4;
             FontDescriptor.OffsetY          = pDscFont->Offset & 0x0F;
 
-            #ifdef GRAFX_USE_FONT_SIZE_16
-              if(Font == SYS_FT_16)    // Only for 16x16
-              {
-                  if(Character > 34)         // 32,33,34 hold special value code
-                  {
-                      if((FontDescriptor.Size.Width == 0)  && ((pDscFont->Padding & 0x01) != 0)) FontDescriptor.Size.Width  = 16;
-                      if((FontDescriptor.Size.Height == 0) && ((pDscFont->Padding & 0x02) != 0)) FontDescriptor.Size.Height = 16;
-                  }
-              }
-            #endif
+          #ifdef GRAFX_USE_FONT_SIZE_16
+            if(Font == SYS_FT_16)    // Only for 16x16
+            {
+                if(Character > 34)         // 32,33,34 hold special value code
+                {
+                    if((FontDescriptor.Size.Width == 0)  && ((pDscFont->Padding & 0x01) != 0)) FontDescriptor.Size.Width  = 16;
+                    if((FontDescriptor.Size.Height == 0) && ((pDscFont->Padding & 0x02) != 0)) FontDescriptor.Size.Height = 16;
+                }
+            }
+          #endif
 
             FontDescriptor.Width      = FontDescriptor.Size.Width + FontDescriptor.LeftBearing + FontDescriptor.RightBearing;
             FontDescriptor.TotalSize  = FontDescriptor.Size.Width * FontDescriptor.Size.Height;                      // Calculate size
 
-            #ifdef LCD_INVERT_SCREEN
-              if(Font.Size > 0)
-              {
-                  pMemory += (Font.Size - 1);
-              }
-            #endif
+          #ifdef LCD_INVERT_SCREEN
+            if(Font.Size > 0)
+            {
+                pMemory += (Font.Size - 1);
+            }
+          #endif
 
             if(FontDescriptor.TotalSize == 0)
             {
@@ -164,6 +165,7 @@ void FONT_Initialize(void)
             else
             {
                 SizeCount = 0;
+
                 while(SizeCount < FontDescriptor.TotalSize)
                 {
                     Value = FontRaw[Font][Counter++];
@@ -176,15 +178,14 @@ void FONT_Initialize(void)
 
                         while(BitCount--)
                         {
-                            if(BitValue)  *pMemory = 0xFF;
-                            else          *pMemory = 0x00;
+                            *pMemory = (BitValue != 0) ? 0xFF : 0x00;
                             SizeCount++;
-                            #ifdef LCD_INVERT_SCREEN
-                                pMemory--;
-                            #else
-                                pMemory++;
-                            #endif
-                         }
+                          #ifdef LCD_INVERT_SCREEN
+                            pMemory--;
+                          #else
+                            pMemory++;
+                          #endif
+                        }
                     }
 
                     // Second Nibble

@@ -73,7 +73,6 @@ class CLayer
 
         // Static function
 
-        static Layer_e          GetActiveLayer          (LayerType_e LayerType);
         static void             SetActiveLayer          (LayerType_e LayerType, CLayer* pLayer);
         static void             SetActiveLayer          (LayerType_e LayerType, Layer_e Layer);
 

@@ -446,24 +446,6 @@ uint32_t CLayer::GetTextColor()
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function Name: GetActiveLayer
-//
-//   Parameter(s):  LayerType_e LayerType               Physical layer affected
-//
-//   Return Value:  Layer_e     Layer                   Virtual layer used
-//
-
-//   Description:   Get the active layer according to Parameter
-//
-//-------------------------------------------------------------------------------------------------
-
-Layer_e CLayer::GetActiveLayer(LayerType_e LayerType)
-{
-    return GetActiveLayer(LayerType);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
 //   Function Name: SetActiveLayer
 //
 //   Parameter(s):  LayerType_e LayerType               Physical layer affected

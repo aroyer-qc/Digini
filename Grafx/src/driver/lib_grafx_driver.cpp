@@ -46,7 +46,6 @@
 //   Description:   Copy a rectangle region from linear memory region to square memory area
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_A_SKIN
 #ifdef GRAFX_USE_SOFT_COPY_LINEAR
 void GrafxDriver::CopyLinear(Skin_e Image, Cartesian_t Position, BlendMode_e BlendMode)
 {
@@ -63,7 +62,6 @@ void GrafxDriver::CopyLinear(Skin_e Image, Cartesian_t Position, BlendMode_e Ble
         myGrafx->CopyLinear(ImageInfo.pPointer, &Box, ImageInfo.PixelFormat, BlendMode);
     }
 }
-#endif
 #endif
 
 //-------------------------------------------------------------------------------------------------

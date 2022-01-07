@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_LMT86.h
+//  File : lib_class_STM32F4_adc.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -23,37 +23,62 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
-//
-//  Note(s)
-//
-//      Add one or both of the define into the configuration file "device_cfg.h"
-//
-//          - USE_LMT86_LOOK_UP_TABLE                 Use the look_up table method
-//          - USE_LMT86_FLOAT_CALCULATION             Use the float formula calculation
-//
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
 
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
 
-#include "device_cfg.h"
-#include "lib_class_adc.h"
+#if (USE_ADC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// Prototype(s)
+// Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef USE_LMT86_FLOAT_CALCULATION
-float   LMT86_FloatCalculation      (uint16_t RawAdc);
-#endif
+enum ADC_ID_e
+{
+/*    #if (I2C_DRIVER_SUPPORT_I2C1 == DEF_ENABLED)
+        DRIVER_I2C1_ID,
+    #endif
 
-#ifdef USE_LMT86_LOOK_UP_TABLE
-int     LMT86_LookUpCalculation     (uint16_t RawAdc);
-#endif
+    #if (I2C_DRIVER_SUPPORT_I2C2 == DEF_ENABLED)
+        DRIVER_I2C2_ID,
+    #endif
+*/
+    NB_OF_ADC_DRIVER,
+};
+
+struct I2C_Info_t
+{
+    I2C_ID_e            I2C_ID;
+    I2C_TypeDef*        pI2Cx;
+    IO_ID_e             SCL;
+    IO_ID_e             SDA;
+    uint32_t            RCC_APB1_En;
+    uint32_t            Speed;
+    uint8_t             PreempPrio;
+    IRQn_Type           EV_IRQn;
+    IRQn_Type           ER_IRQn;
+};
 
 //-------------------------------------------------------------------------------------------------
+// class definition(s)
+//-------------------------------------------------------------------------------------------------
+
+class ADC_Driver
+{
+    public:
+
+                        ADC_Driver          (ADC_ID_e ADC_ID);
+
+    private:
+};
+
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+#include "adc_var.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // (USE_ADC_DRIVER == DEF_ENABLED)

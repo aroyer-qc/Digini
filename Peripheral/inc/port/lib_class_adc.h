@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_LMT86.h
+//  File : lib_class_adc.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2021 Alain Royer.
+// Copyright(c) 2020 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -23,37 +23,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
-//
-//  Note(s)
-//
-//      Add one or both of the define into the configuration file "device_cfg.h"
-//
-//          - USE_LMT86_LOOK_UP_TABLE                 Use the look_up table method
-//          - USE_LMT86_FLOAT_CALCULATION             Use the float formula calculation
-//
-//-------------------------------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------
-
-#pragma once
-
-//-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "device_cfg.h"
-#include "lib_class_adc.h"
-
-//-------------------------------------------------------------------------------------------------
-// Prototype(s)
-//-------------------------------------------------------------------------------------------------
-
-#ifdef USE_LMT86_FLOAT_CALCULATION
-float   LMT86_FloatCalculation      (uint16_t RawAdc);
-#endif
-
-#ifdef USE_LMT86_LOOK_UP_TABLE
-int     LMT86_LookUpCalculation     (uint16_t RawAdc);
+#if defined STM32F4xx
+ #include "lib_class_STM32F4_adc.h"
+#elif defined STM32F7xx
+ #include "lib_class_STM32F7_adc.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

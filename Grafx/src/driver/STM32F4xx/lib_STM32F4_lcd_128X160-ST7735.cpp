@@ -577,6 +577,49 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
     }
 }
 
+
+void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
+{
+    uint32_t           PixelFormatSrc;
+    uint32_t           PixelFormatDst;
+    uint32_t           Address;
+    s32_t              AreaConfig;
+    CLayer*            pLayer;
+    uint8_t            PixelSize;
+
+    pLayer             = &LayerTable[CLayer::GetDrawing()];
+    PixelFormatSrc     = DRV_PixelFormatTable[SrcPixelFormat];
+    PixelFormatDst     = DRV_PixelFormatTable[pLayer->GetPixelFormat()];
+    PixelSize          = pLayer->GetPixelSize();
+    Address            = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
+
+    AreaConfig.u_16.u1 = pBox->Size.Width;
+    AreaConfig.u_16.u0 = pBox->Size.Height;
+
+    DMA2D->CR          = (BlendMode == CLEAR_BLEND) ? 0x00000000UL : 0x00020000UL;         // Memory to memory and TCIE blending BG + Source
+    DMA2D->CR         |= (1 << 9);
+
+    // Source
+    DMA2D->FGMAR       = (uint32_t)pSrc;                                                   // Source address
+    DMA2D->FGOR        = 0;                                                                // Source line offset none as we are linear
+    DMA2D->FGPFCCR     = PixelFormatSrc;                                                   // Defines the size of pixel
+
+    // Source
+    DMA2D->BGMAR       = Address;                                                          // Source address
+    DMA2D->BGOR        = (uint32_t)GRAFX_SIZE_X - (uint32_t)pBox->Size.Width;              // Source line offset
+    DMA2D->BGPFCCR     = PixelFormatDst;                                                   // Defines the size of pixel
+
+    // Destination
+    DMA2D->OMAR        = Address;                                                          // Destination address
+    DMA2D->OOR         = (uint32_t)GRAFX_SIZE_X - (uint32_t)pBox->Size.Width;              // Destination line offset
+    DMA2D->OPFCCR      = PixelFormatDst;                                                   // Defines the size of pixel
+
+    DMA2D->NLR         = AreaConfig.u_32;                                                  // Size configuration of area to be transfered
+    DMA2D->CR         |= 1;                                                                // Start operation
+
+    while(DMA2D->CR & DMA2D_CR_START);                                                     // Wait until transfer is done
+}
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           BlockCopy
@@ -654,14 +697,33 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawRectangle(Box_t* pBox)
 {
-    //DrawRectangle(pBox->Pos.X, pBox->Pos.Y, pBox->Size.Width, pBox->Size.Height);
   	uint16_t Color;
 
     m_pLayer = &LayerTable[CLayer::GetDrawing()];
-	Color    = (uint16_t(m_pLayer->GetColor()));   // TODO do a function to get the color
+	Color    = (uint16_t(m_pLayer->GetColor()));
+
 	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
     {
+        uint32_t           PixelFormat;
+        uint32_t           Address;
+        s32_t              AreaConfig;
+        uint8_t            PixelSize;
 
+        PixelFormat        = DRV_PixelFormatTable[m_pLayer->GetPixelFormat()];
+        PixelSize          = m_pLayer->GetPixelSize();
+        Address            = m_pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
+        AreaConfig.u_16.u1 = pBox->Size.Width;
+        AreaConfig.u_16.u0 = pBox->Size.Height;
+
+        DMA2D->CR          = 0x00030000UL | (1 << 9);                              // Register to memory and TCIE
+        DMA2D->OCOLR       = (uint32_t)Color;                                      // Color to be used
+        DMA2D->OMAR        = Address;                                              // Destination address
+        DMA2D->OOR         = (uint32_t)GRAFX_SIZE_X - (uint32_t)pBox->Size.Width;  // Destination line offset
+        DMA2D->OPFCCR      = PixelFormat;                                          // Defines the number of pixels to be transfered
+        DMA2D->NLR         = AreaConfig.u_32;                                      // Size configuration of area to be transfered
+        DMA2D->CR         |= 1;                                                    // Start operation
+
+        while(DMA2D->CR & DMA2D_CR_START);                                         // Wait until transfer is done
     }
     else
     {
@@ -670,32 +732,6 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
     }
 }
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           DrawRectangle
-//
-//  Parameter(s):   uint16_t    PosX
-//                  uint16_t    PosY
-//                  uint16_t    Width
-//                  uint16_t    Height
-//  Return:         None
-//
-//  Description:    Fill a region in a specific color
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-/*
-void GrafxDriver::DrawRectangle(uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height)
-{
-	uint16_t Color;
-
-    m_pLayer = &LayerTable[CLayer::GetDrawing()];
-	Color    = (uint16_t(m_pLayer->GetColor()));   // TODO do a function to get the color
-	SetWindow(PosX, PosY, PosX + (Width - 1), PosY + (Height - 1));
-	PutColor(Color, Width * Height);
-}
-*/ // already define in lib_grafx_driver
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DrawBox
@@ -1004,13 +1040,6 @@ void GrafxDriver::Clear(void)
 }
 
 //-------------------------------------------------------------------------------------------------
-
-
-void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
-{
-
-}
-
 
 #if 0
 

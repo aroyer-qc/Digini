@@ -504,6 +504,7 @@ void GUI_myClassTask::FinalizeAllWidget()
 
     pWidgetListPointer = m_pWidgetList;
     Count = 0;
+
     while(Count < m_WidgetCount)
     {
         (*pWidgetListPointer)->Finalize();

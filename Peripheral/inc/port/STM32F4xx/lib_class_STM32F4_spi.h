@@ -94,15 +94,15 @@
 
 enum SPI_ID_e
 {
-    #if (SPI_DRIVER_SUPPORT_SPI1 == DEF_ENABLED)
+    #if (SPI_DRIVER_SUPPORT_SPI1_CFG == DEF_ENABLED)
 		DRIVER_SPI1_ID,
 	#endif
 
-    #if (SPI_DRIVER_SUPPORT_SPI2 == DEF_ENABLED)
+    #if (SPI_DRIVER_SUPPORT_SPI2_CFG == DEF_ENABLED)
 		DRIVER_SPI2_ID,
 	#endif
 
-    #if (SPI_DRIVER_SUPPORT_SPI3 == DEF_ENABLED)
+    #if (SPI_DRIVER_SUPPORT_SPI3_CFG == DEF_ENABLED)
 		DRIVER_SPI3_ID,
 	#endif
 
@@ -123,7 +123,7 @@ struct SPI_Info_t
     volatile uint32_t*  RCC_APBxEN_Register;
     IRQn_Type           IRQn_Channel;
 
-  #if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     DMA_TypeDef*        pDMAx;
     uint32_t            DMA_ChannelRX;
     uint32_t            RX_IT_Flag;
@@ -161,7 +161,7 @@ class SPI_Driver
         SystemState_e           WaitReady               (void);
 
 
-      #if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+      #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
         SystemState_e           Transfer                (const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size);
         SystemState_e           Transfer                (const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, void* pDevice);
         SystemState_e           Transfer                (const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size);
@@ -185,7 +185,7 @@ class SPI_Driver
         volatile SystemState_e  m_Status;
         volatile uint8_t        m_Timeout;
 
-      #if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+      #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
         SystemState_e           WaitDMA                 (void);
 
         volatile SystemState_e  m_DMA_Status;

@@ -707,7 +707,7 @@ void UART_Driver::DMA_ConfigRX(uint8_t* pBufferRX, size_t SizeRX)
 
         this->DMA_EnableRX();
     }
-  #if (SUPPORT_VIRTUAL_UART == DEF_ENABLED)
+  #if (SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
     else if(m_UartID == UART_DRIVER_VIRTUAL)
     {
         if(pBufferRX != nullptr)
@@ -1326,7 +1326,7 @@ void UART_Driver::VirtualUartRX_IRQHandler(void)
 //  Description:    This function handles virtual UART interrupt.
 //
 //-------------------------------------------------------------------------------------------------
-#if (SUPPORT_VIRTUAL_UART == DEF_ENABLED)
+#if (SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
 void UART_Driver::VirtualUartTX_IRQHandler(void)
 {
 	if(m_pContextCompletedTX == nullptr) m_pCallbackCompletedTX(m_pContextTX);

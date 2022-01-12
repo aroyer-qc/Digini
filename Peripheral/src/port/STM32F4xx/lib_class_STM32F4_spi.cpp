@@ -122,16 +122,11 @@ void SPI_Driver::Initialize(void)
     ISR_Prio_t          ISR_Prio;
     uint32_t            PriorityGroup;
 
-  #if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     DMA_Stream_TypeDef* pDMA;
   #endif
 
     nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
-
-    // ---- Configure and enable SPI interrupt ----
-    //uint32_t Priority = NVIC_EncodePriority(NVIC_GetPriorityGrouping(), m_pPort->PreempPrio, 0x00);
-    //NVIC_SetPriority(m_pPort->IRQn, Priority);
-    //NVIC_EnableIRQ(m_pPort->IRQn);
 
     IO_PinInit(m_pInfo->PinCLK);
     IO_PinInit(m_pInfo->PinMOSI);
@@ -140,7 +135,7 @@ void SPI_Driver::Initialize(void)
 
     switch(uint32_t(m_pInfo->SPI_ID))
     {
-      #if (SPI_DRIVER_SUPPORT_SPI1 == DEF_ENABLE)
+      #if (SPI_DRIVER_SUPPORT_SPI1_CFG == DEF_ENABLE)
         case uint32_t(DRIVER_SPI1_ID):
         {
             // ---- Reset peripheral and set clock ----
@@ -151,7 +146,7 @@ void SPI_Driver::Initialize(void)
         break;
       #endif
 
-      #if (SPI_DRIVER_SUPPORT_SPI2 == DEF_ENABLE)
+      #if (SPI_DRIVER_SUPPORT_SPI2_CFG == DEF_ENABLE)
         case uint32_t(DRIVER_SPI2_ID):
         {
             // ---- Reset peripheral and set clock ----
@@ -162,7 +157,7 @@ void SPI_Driver::Initialize(void)
         break;
       #endif
 
-      #if (SPI_DRIVER_SUPPORT_SPI3 == DEF_ENABLE)
+      #if (SPI_DRIVER_SUPPORT_SPI3_CFG == DEF_ENABLE)
         case uint32_t(DRIVER_SPI3_ID):
         {
             // ---- Reset peripheral and set clock ----
@@ -193,7 +188,7 @@ void SPI_Driver::Initialize(void)
                                    SPI_MSB_FIRST        |
                                    m_pInfo->Speed);
 
-  #if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     RCC->AHB1ENR |= m_pInfo->RCC_AHBxPeriph;            // Initialize DMA clock
     m_DMA_Status  = SYS_IDLE;
     m_NoMemoryIncrement = false;
@@ -424,7 +419,7 @@ uint8_t SPI_Driver::Send(uint8_t Data)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, void* pDevice)
 {
     SystemState_e State;
@@ -454,7 +449,7 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size)
 {
 	SPI_TypeDef*              pSPIx;
@@ -629,7 +624,7 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size, void* pDevice)
 {
     SystemState_e State;
@@ -659,7 +654,7 @@ SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, u
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size)
 {
 	SPI_TypeDef*              pSPIx;
@@ -987,7 +982,7 @@ SystemState_e SPI_Driver::WaitDMA(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 void SPI_Driver::DMA_TX_IRQ_Handler(SPI_ID_e SPI_ID)
 {
     SPI_Info_t*         pInfo;
@@ -1014,7 +1009,7 @@ void SPI_Driver::DMA_TX_IRQ_Handler(SPI_ID_e SPI_ID)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 void SPI_Driver::DMA_RX_IRQ_Handler(SPI_ID_e SPI_ID)
 {
     SPI_Info_t*         pInfo;

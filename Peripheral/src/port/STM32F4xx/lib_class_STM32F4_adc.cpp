@@ -40,6 +40,11 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+//-------------------------------------------------------------------------------------------------
+// Variable(s)
+//-------------------------------------------------------------------------------------------------
+
+bool ADC_Driver::m_CommonInitialize_IsItDone = false;
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -64,7 +69,6 @@ ADC_Driver::ADC_Driver(ADC_ID_e ADC_ID)
 {
     m_IsItInitialize = false;
     m_pInfo          = &ADC_Info[ADC_ID];
-    m_Device         = -1;
     m_State          = SYS_DEVICE_NOT_PRESENT;
 }
 
@@ -75,23 +79,146 @@ ADC_Driver::ADC_Driver(ADC_ID_e ADC_ID)
 //  Parameter(s):   None
 //  Return:         none
 //
-//  Description:    It start the initialize process from configuration in struct
-//
-//  Note(s):
+//  Description:    Initializes the ADCx peripheral according to the specified parameters in the
+//                  ADC configuration file.
+//  Note(s):        This function is used to configure the global features of the ADC
+//                      - ClockPrescaler
+//                      - Resolution
+//                      - Data Alignment
+//                      - Number of conversion
+//                  however, the rest of the configuration parameters are specific to the regular
+//                  channels group (scan mode activation, continuous mode activation, External
+//                  trigger source and edge, DMA continuous request after the last transfer and End
+//                  of conversion selection).
 //
 //-------------------------------------------------------------------------------------------------
+
 void ADC_Driver::Initialize(void)
 {
+    ISR_Prio_t    ISR_Prio;
+    uint32_t      PriorityGroup;
+    //SystemState_e State         = SYS_READY;
 
     if(m_IsItInitialize == false)
     {
         m_IsItInitialize = true;
-//        Error = nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
-        VAR_UNUSED(Error);
+        // Allocate lock resource and initialize it
+        /*Error =*/ nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
     }
 
-    pADCx     = m_pInfo->pADCx;
-    m_Timeout = 0;
+    if(m_CommonInitialize_IsItDone == false)
+    {
+        // ADC interrupt are common to all module
+        PriorityGroup = NVIC_GetPriorityGrouping();
+        ISR_Prio.PriorityGroup     = PriorityGroup;
+        ISR_Prio.SubPriority       = 0;
+        ISR_Prio.PremptionPriority = 0;
+        ISR_Init(ADC_IRQn, &ISR_Prio);
+
+        // Set the ADC clock prescaler
+        ADC->CCR &= ~(ADC_CCR_ADCPRE);
+        ADC->CCR |= ADC_COMMON_CLOCK_PRESCALER_CONFIG;
+
+        m_CommonInitialize_IsItDone = true;
+    }
+
+    SET_BIT(RCC->APB2ENR, m_pInfo->RCC_APB2_En);         // Enable lock for this ADC
+
+
+
+
+
+/*
+if (USE_HAL_ADC_REGISTER_CALLBACKS == 1)
+    // Init the ADC Callback settings
+    hadc->ConvCpltCallback              = HAL_ADC_ConvCpltCallback;                 // Legacy weak callback
+    hadc->ConvHalfCpltCallback          = HAL_ADC_ConvHalfCpltCallback;             // Legacy weak callback
+    hadc->LevelOutOfWindowCallback      = HAL_ADC_LevelOutOfWindowCallback;         // Legacy weak callback
+    hadc->ErrorCallback                 = HAL_ADC_ErrorCallback;                    // Legacy weak callback
+    hadc->InjectedConvCpltCallback      = HAL_ADCEx_InjectedConvCpltCallback;       // Legacy weak callback
+    if (hadc->MspInitCallback == NULL)
+    {
+      hadc->MspInitCallback = HAL_ADC_MspInit; // Legacy weak MspInit
+    }
+
+    // Init the low level hardware
+    hadc->MspInitCallback(hadc);
+endif // USE_HAL_ADC_REGISTER_CALLBACKS
+*/
+    m_State = SYS_READY;                   // Initialize ADC error code
+
+//        MODIFY_REG(ADCx->CR1, ADC_CR1_RES | ADC_CR1_SCAN, ADC_InitStruct->Resolution | ADC_InitStruct->SequencersScanMode); // Set ADC data resolution
+//        MODIFY_REG(ADCx->CR2, ADC_CR2_ALIGN, ADC_InitStruct->DataAlignment);                          // Set ADC conversion data alignment
+
+ //   MODIFY_REG(m_State, ADC_STATE_REG_BUSY | ADC_STATE_INJ_BUSY, ADC_STATE_BUSY_INTERNAL);       // Set ADC state
+    //----------------------------------
+
+
+    // Set ADC scan mode
+    m_pInfo->pADCx->CR1 &= ~(ADC_CR1_SCAN);
+   // m_pInfo->pADCx->CR1 |=  ADC_CR1_SCANCONV(hadc->Init.ScanConvMode);
+
+    // Set ADC resolution
+    m_pInfo->pADCx->CR1 &= ~(ADC_CR1_RES);
+   // m_pInfo->pADCx->CR1 |=  hadc->Init.Resolution;
+
+    // Set ADC data alignment
+    m_pInfo->pADCx->CR2 &= ~(ADC_CR2_ALIGN);
+   // m_pInfo->pADCx->CR2 |= hadc->Init.DataAlign;
+
+    // Enable external trigger if trigger selection is different of software start.
+    // Note: This configuration keeps the hardware feature of parameter ExternalTrigConvEdge "trigger edge none" equivalent to software start.
+    //if(hadc->Init.ExternalTrigConv != ADC_SOFTWARE_START)
+    {
+        // Select external trigger to start conversion
+        m_pInfo->pADCx->CR2 &= ~(ADC_CR2_EXTSEL);
+      //  m_pInfo->pADCx->CR2 |= hadc->Init.ExternalTrigConv;
+
+        // Select external trigger polarity
+        m_pInfo->pADCx->CR2 &= ~(ADC_CR2_EXTEN);
+      //  m_pInfo->pADCx->CR2 |= hadc->Init.ExternalTrigConvEdge;
+    }
+    //else
+    {
+        // Reset the external trigger
+        m_pInfo->pADCx->CR2 &= ~(ADC_CR2_EXTSEL);
+        m_pInfo->pADCx->CR2 &= ~(ADC_CR2_EXTEN);
+    }
+
+    // Enable or disable ADC continuous conversion mode
+    m_pInfo->pADCx->CR2 &= ~(ADC_CR2_CONT);
+   // m_pInfo->pADCx->CR2 |= ADC_CR2_CONTINUOUS((uint32_t)hadc->Init.ContinuousConvMode);
+
+ //   if(hadc->Init.DiscontinuousConvMode != DISABLE)
+    {
+        // Enable the selected ADC regular discontinuous mode
+        m_pInfo->pADCx->CR1 |= (uint32_t)ADC_CR1_DISCEN;
+
+        // Set the number of channels to be converted in discontinuous mode
+        m_pInfo->pADCx->CR1 &= ~(ADC_CR1_DISCNUM);
+      //  m_pInfo->pADCx->CR1 |=  ADC_CR1_DISCONTINUOUS(hadc->Init.NbrOfDiscConversion);
+    }
+ //   else
+    {
+        // Disable the selected ADC regular discontinuous mode
+        m_pInfo->pADCx->CR1 &= ~(ADC_CR1_DISCEN);
+    }
+
+    // Set ADC number of conversion
+    m_pInfo->pADCx->SQR1 &= ~(ADC_SQR1_L);
+  //  m_pInfo->pADCx->SQR1 |=  ADC_SQR1(hadc->Init.NbrOfConversion);
+
+    // Enable or disable ADC DMA continuous request
+    m_pInfo->pADCx->CR2 &= ~(ADC_CR2_DDS);
+  //  m_pInfo->pADCx->CR2 |= ADC_CR2_DMAContReq((uint32_t)hadc->Init.DMAContinuousRequests);
+
+    // Enable or disable ADC end of conversion selection
+    m_pInfo->pADCx->CR2 &= ~(ADC_CR2_EOCS);
+  //  m_pInfo->pADCx->CR2 |= ADC_CR2_EOCSelection(hadc->Init.EOCSelection);
+
+
+    //----------------------------------
+  // MODIFY_REG(m_State, ADC_STATE_BUSY_INTERNAL, HAL_ADC_STATE_READY);                       // Set the ADC state
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -123,10 +250,10 @@ SystemState_e ADC_Driver::GetStatus(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void ADC_Driver::Lock(void)
-{
-    while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
-}
+//void ADC_Driver::Lock(void)
+//{
+    //while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
+//}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -140,10 +267,10 @@ void ADC_Driver::Lock(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void ADC_Driver::Unlock(void)
-{
-    nOS_MutexUnlock(&m_Mutex);
-}
+//void ADC_Driver::Unlock(void)
+//{
+    //nOS_MutexUnlock(&m_Mutex);
+//}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -156,6 +283,13 @@ void ADC_Driver::Unlock(void)
 //-------------------------------------------------------------------------------------------------
 void ADC_Driver::IRQHandler()
 {
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void ADC_ChannelDriver::Initialize(void)
+{
+    IO_PinInit(IO_TEMPERATURE);
 }
 
 //-------------------------------------------------------------------------------------------------

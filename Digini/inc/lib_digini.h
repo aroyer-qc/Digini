@@ -34,7 +34,6 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
-//#include <cstddef>
 #include <string.h>
 
 //-------------------------------------------------------------------------------------------------
@@ -81,7 +80,6 @@
 #endif
 
 #if (USE_I2C_DRIVER == DEF_ENABLED)
-#include "i2c_cfg.h"
 #include "lib_class_i2c.h"
 #endif
 
@@ -89,13 +87,8 @@
 #include "lib_class_i2s.h"
 #endif
 
-#if (USE_PWM_DRIVER == DEF_ENABLED)
-#include "lib_class_pwm.h"
-#endif
-
 #if (USE_QSPI_DRIVER == DEF_ENABLED)
- #include "qspi_cfg.h"
- #include "lib_class_qspi.h"
+#include "lib_class_qspi.h"
 #endif
 
 #if (USE_RTC_DRIVER == DEF_ENABLED)
@@ -111,17 +104,18 @@
 #endif
 
 #if (USE_SPI_DRIVER == DEF_ENABLED)
-#include "spi_cfg.h"
 #include "lib_class_spi.h"
 #endif
 
 #if (USE_TIM_DRIVER == DEF_ENABLED)
-#include "tim_cfg.h"
 #include "lib_class_tim.h"
 #endif
 
+#if (USE_PWM_DRIVER == DEF_ENABLED)
+#include "lib_class_pwm.h"
+#endif
+
 #if (USE_UART_DRIVER == DEF_ENABLED)
-#include "uart_cfg.h"
 #include "lib_class_uart.h"
 #endif
 
@@ -132,12 +126,10 @@
 //-------------------------------------------------------------------------------------------------
 // High level Peripheral
 //
-
 #ifdef DIGINI_USE_EEPROM
 #include "eeprom_cfg.h"
 #include "lib_class_I2C_EEprom.h"
 #endif
-
 
 #ifdef DIGINI_USE_FATFS
 #include "ff.h"

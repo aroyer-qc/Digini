@@ -135,7 +135,7 @@ void SPI_Driver::Initialize(void)
 
     switch(uint32_t(m_pInfo->SPI_ID))
     {
-      #if (SPI_DRIVER_SUPPORT_SPI1_CFG == DEF_ENABLE)
+      #if (SPI_DRIVER_SUPPORT_SPI1_CFG == DEF_ENABLED)
         case uint32_t(DRIVER_SPI1_ID):
         {
             // ---- Reset peripheral and set clock ----
@@ -146,7 +146,7 @@ void SPI_Driver::Initialize(void)
         break;
       #endif
 
-      #if (SPI_DRIVER_SUPPORT_SPI2_CFG == DEF_ENABLE)
+      #if (SPI_DRIVER_SUPPORT_SPI2_CFG == DEF_ENABLED)
         case uint32_t(DRIVER_SPI2_ID):
         {
             // ---- Reset peripheral and set clock ----
@@ -157,7 +157,7 @@ void SPI_Driver::Initialize(void)
         break;
       #endif
 
-      #if (SPI_DRIVER_SUPPORT_SPI3_CFG == DEF_ENABLE)
+      #if (SPI_DRIVER_SUPPORT_SPI3_CFG == DEF_ENABLED)
         case uint32_t(DRIVER_SPI3_ID):
         {
             // ---- Reset peripheral and set clock ----

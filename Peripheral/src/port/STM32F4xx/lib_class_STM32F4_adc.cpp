@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2021 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -60,7 +60,6 @@ bool ADC_Driver::m_CommonInitialize_IsItDone = false;
 //   Constructor:   ADC_Driver
 //
 //   Parameter(s):  ADC_ID_e
-//   Return Value:
 //
 //   Description:   Initializes the ADC_ID peripheral according to the specified Parameters
 //
@@ -117,7 +116,7 @@ void ADC_Driver::Initialize(void)
 
         // Set the ADC clock prescaler
         ADC->CCR &= ~(ADC_CCR_ADCPRE);
-        ADC->CCR |= ADC_COMMON_CLOCK_PRESCALER_CONFIG;
+        ADC->CCR |= ADC_COMMON_CLOCK_PRESCALER_CFG;
 
         m_CommonInitialize_IsItDone = true;
     }
@@ -147,75 +146,20 @@ endif // USE_HAL_ADC_REGISTER_CALLBACKS
 */
     m_State = SYS_READY;                   // Initialize ADC error code
 
-//        MODIFY_REG(ADCx->CR1, ADC_CR1_RES | ADC_CR1_SCAN, ADC_InitStruct->Resolution | ADC_InitStruct->SequencersScanMode); // Set ADC data resolution
-//        MODIFY_REG(ADCx->CR2, ADC_CR2_ALIGN, ADC_InitStruct->DataAlignment);                          // Set ADC conversion data alignment
-
- //   MODIFY_REG(m_State, ADC_STATE_REG_BUSY | ADC_STATE_INJ_BUSY, ADC_STATE_BUSY_INTERNAL);       // Set ADC state
+    //MODIFY_REG(m_State, ADC_STATE_REG_BUSY | ADC_STATE_INJ_BUSY, ADC_STATE_BUSY_INTERNAL);       // Set ADC state
     //----------------------------------
 
+    // Set ADC scan mode and resolution, Discontinuous mode, Number of channels to be converted in discontinuous mode
+    m_pInfo->pADCx->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_RES | ADC_CR1_DISCEN | ADC_CR1_DISCNUM);
+    m_pInfo->pADCx->CR1 |= m_pInfo->CR1_Common;
 
-    // Set ADC scan mode
-    m_pInfo->pADCx->CR1 &= ~(ADC_CR1_SCAN);
-   // m_pInfo->pADCx->CR1 |=  ADC_CR1_SCANCONV(hadc->Init.ScanConvMode);
-
-    // Set ADC resolution
-    m_pInfo->pADCx->CR1 &= ~(ADC_CR1_RES);
-   // m_pInfo->pADCx->CR1 |=  hadc->Init.Resolution;
-
-    // Set ADC data alignment
-    m_pInfo->pADCx->CR2 &= ~(ADC_CR2_ALIGN);
-   // m_pInfo->pADCx->CR2 |= hadc->Init.DataAlign;
-
-    // Enable external trigger if trigger selection is different of software start.
-    // Note: This configuration keeps the hardware feature of parameter ExternalTrigConvEdge "trigger edge none" equivalent to software start.
-    //if(hadc->Init.ExternalTrigConv != ADC_SOFTWARE_START)
-    {
-        // Select external trigger to start conversion
-        m_pInfo->pADCx->CR2 &= ~(ADC_CR2_EXTSEL);
-      //  m_pInfo->pADCx->CR2 |= hadc->Init.ExternalTrigConv;
-
-        // Select external trigger polarity
-        m_pInfo->pADCx->CR2 &= ~(ADC_CR2_EXTEN);
-      //  m_pInfo->pADCx->CR2 |= hadc->Init.ExternalTrigConvEdge;
-    }
-    //else
-    {
-        // Reset the external trigger
-        m_pInfo->pADCx->CR2 &= ~(ADC_CR2_EXTSEL);
-        m_pInfo->pADCx->CR2 &= ~(ADC_CR2_EXTEN);
-    }
-
-    // Enable or disable ADC continuous conversion mode
-    m_pInfo->pADCx->CR2 &= ~(ADC_CR2_CONT);
-   // m_pInfo->pADCx->CR2 |= ADC_CR2_CONTINUOUS((uint32_t)hadc->Init.ContinuousConvMode);
-
- //   if(hadc->Init.DiscontinuousConvMode != DISABLE)
-    {
-        // Enable the selected ADC regular discontinuous mode
-        m_pInfo->pADCx->CR1 |= (uint32_t)ADC_CR1_DISCEN;
-
-        // Set the number of channels to be converted in discontinuous mode
-        m_pInfo->pADCx->CR1 &= ~(ADC_CR1_DISCNUM);
-      //  m_pInfo->pADCx->CR1 |=  ADC_CR1_DISCONTINUOUS(hadc->Init.NbrOfDiscConversion);
-    }
- //   else
-    {
-        // Disable the selected ADC regular discontinuous mode
-        m_pInfo->pADCx->CR1 &= ~(ADC_CR1_DISCEN);
-    }
+    // Set ADC data alignment, external trigger, external trigger polarity, continuous conversion mode, EOC selection, DMA continuous request
+    m_pInfo->pADCx->CR2 &= ~(ADC_CR2_ALIGN | ADC_CR2_EXTSEL | ADC_CR2_EXTEN | ADC_CR2_CONT | ADC_CR2_EOCS | ADC_CR2_DDS);
+    m_pInfo->pADCx->CR2 |= m_pInfo->CR2_Common;
 
     // Set ADC number of conversion
     m_pInfo->pADCx->SQR1 &= ~(ADC_SQR1_L);
-  //  m_pInfo->pADCx->SQR1 |=  ADC_SQR1(hadc->Init.NbrOfConversion);
-
-    // Enable or disable ADC DMA continuous request
-    m_pInfo->pADCx->CR2 &= ~(ADC_CR2_DDS);
-  //  m_pInfo->pADCx->CR2 |= ADC_CR2_DMAContReq((uint32_t)hadc->Init.DMAContinuousRequests);
-
-    // Enable or disable ADC end of conversion selection
-    m_pInfo->pADCx->CR2 &= ~(ADC_CR2_EOCS);
-  //  m_pInfo->pADCx->CR2 |= ADC_CR2_EOCSelection(hadc->Init.EOCSelection);
-
+    m_pInfo->pADCx->SQR1 |= m_pInfo->NumberOfConversion;
 
     //----------------------------------
   // MODIFY_REG(m_State, ADC_STATE_BUSY_INTERNAL, HAL_ADC_STATE_READY);                       // Set the ADC state
@@ -274,6 +218,62 @@ SystemState_e ADC_Driver::GetStatus(void)
 
 //-------------------------------------------------------------------------------------------------
 //
+//   IRQ Function:  ADC_VBAT_Control
+//
+//   Description:   Enables or disables the temperature sensor and Vrefint channels.
+//
+//   Parameter(s):  NewState        New state of the temperature sensor and Vrefint channels.
+//                                  DEF_ENABLE or DEF_DISABLE
+//   Return Value:  None
+//
+//   Note(s):       The Battery voltage measured is equal to VBAT/2 on STM32F40xx and STM32F41xx
+//                  devices and equal to VBAT/4 on STM32F42xx and STM32F43xx devices.
+//
+//-------------------------------------------------------------------------------------------------
+void ADC_Driver::TempSensorVrefintControl(bool NewState)
+{
+    if(NewState == DEF_ENABLE)
+    {
+        // Enable the temperature sensor and Vrefint channel
+        ADC->CCR |= (uint32_t)ADC_CCR_TSVREFE;
+    }
+    else
+    {
+        // Disable the temperature sensor and Vrefint channel
+        ADC->CCR &= (uint32_t)(~ADC_CCR_TSVREFE);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   IRQ Function:  VBAT_Control
+//
+//   Description:   Enables or disables the VBAT (Voltage Battery) channel.
+//
+//   Parameter(s):  NewState     New state of the VBAT channel.
+//                                  DEF_ENABLE or DEF_DISABLE
+//   Return Value:  None
+//
+//   Note(s):       The Battery voltage measured is equal to VBAT/2 on STM32F40xx and STM32F41xx
+//                  devices and equal to VBAT/4 on STM32F42xx and STM32F43xx devices.
+//
+//-------------------------------------------------------------------------------------------------
+void ADC_Driver::VBAT_Control(bool NewState)
+{
+    if(NewState == DEF_ENABLE)
+    {
+        // Enable the VBAT channel
+        ADC->CCR |= (uint32_t)ADC_CCR_VBATE;
+    }
+    else
+    {
+        // Disable the VBAT channel
+        ADC->CCR &= (uint32_t)(~ADC_CCR_VBATE);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  IRQ Handler:    EV_IRQHandler
 //
 //  Description:    This function handles ADCx interrupt request.
@@ -287,9 +287,185 @@ void ADC_Driver::IRQHandler()
 
 //-------------------------------------------------------------------------------------------------
 
-void ADC_ChannelDriver::Initialize(void)
+//-------------------------------------------------------------------------------------------------
+//
+//   Constructor:   ADC_Driver
+//
+//   Parameter(s):  ADC_ChannelID
+//
+//   Description:   Initializes the channel specified by ADC_Channel ID
+//
+//-------------------------------------------------------------------------------------------------
+ADC_ChannelDriver::ADC_ChannelDriver(ADC_ChannelID_e ADC_ChannelID)
 {
-    IO_PinInit(IO_TEMPERATURE);
+  //  m_IsItInitialize = false;
+    m_pChannelInfo   = &ADC_ChannelInfo[ADC_ChannelID];
+    m_pADC_Info      = &ADC_Info[m_pChannelInfo->ADC_ID];
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function:      Initialize
+//
+//   Description:
+//
+//   Parameter(s):
+//   Return Value:  None
+//
+//   Note(s):
+//
+//
+//-------------------------------------------------------------------------------------------------
+void ADC_ChannelDriver::Initialize()
+{
+    IO_PinInit(m_pChannelInfo->IO_ID);
+  // get channel ID of pointer
+}
+
+/**
+  * @param  Rank: The rank in the regular group sequencer.
+  *          This parameter must be between 1 to 16.
+  * @param  ADC_SampleTime: The sample time value to be set for the selected channel.
+  *          This parameter can be one of the following values:
+  *            @arg ADC_SampleTime_3Cycles: Sample time equal to 3 cycles
+  *            @arg ADC_SampleTime_15Cycles: Sample time equal to 15 cycles
+  *            @arg ADC_SampleTime_28Cycles: Sample time equal to 28 cycles
+  *            @arg ADC_SampleTime_56Cycles: Sample time equal to 56 cycles
+  *            @arg ADC_SampleTime_84Cycles: Sample time equal to 84 cycles
+  *            @arg ADC_SampleTime_112Cycles: Sample time equal to 112 cycles
+  *            @arg ADC_SampleTime_144Cycles: Sample time equal to 144 cycles
+  *            @arg ADC_SampleTime_480Cycles: Sample time equal to 480 cycles
+  * @retval None
+  */
+void ADC_ChannelDriver::Config(uint8_t Rank, uint8_t ADC_SampleTime)
+{
+    uint32_t tmpreg1 = 0;
+    uint32_t tmpreg2 = 0;
+
+    /* if ADC_Channel_10 ... ADC_Channel_18 is selected */
+    if(m_pChannelInfo->Channel > ADC_CHANNEL_9)
+    {
+        /* Get the old register value */
+        tmpreg1 = m_pADC_Info->pADCx->SMPR1;
+
+        /* Calculate the mask to clear */
+        tmpreg2 = SMPR_SMP_SET << (3 * (m_pChannelInfo->Channel - 10));
+
+        /* Clear the old sample time */
+        tmpreg1 &= ~tmpreg2;
+
+        /* Calculate the mask to set */
+        tmpreg2 = (uint32_t)ADC_SampleTime << (3 * (m_pChannelInfo->Channel - 10));
+
+        /* Set the new sample time */
+        tmpreg1 |= tmpreg2;
+
+        /* Store the new register value */
+        m_pADC_Info->pADCx->SMPR1 = tmpreg1;
+    }
+    else /* ADC_Channel include in ADC_Channel_[0..9] */
+    {
+            /* Get the old register value */
+        tmpreg1 = m_pADC_Info->pADCx->SMPR2;
+
+        /* Calculate the mask to clear */
+        tmpreg2 = SMPR_SMP_SET << (3 * m_pChannelInfo->Channel);
+
+        /* Clear the old sample time */
+        tmpreg1 &= ~tmpreg2;
+
+        /* Calculate the mask to set */
+        tmpreg2 = (uint32_t)ADC_SampleTime << (3 * m_pChannelInfo->Channel);
+
+        /* Set the new sample time */
+        tmpreg1 |= tmpreg2;
+
+        /* Store the new register value */
+        m_pADC_Info->pADCx->SMPR2 = tmpreg1;
+    }
+
+    /* For Rank 1 to 6 */
+    if (Rank < 7)
+    {
+        /* Get the old register value */
+        tmpreg1 = m_pADC_Info->pADCx->SQR3;
+
+        /* Calculate the mask to clear */
+        tmpreg2 = SQR_SQ_SET << (5 * (Rank - 1));
+
+        /* Clear the old SQx bits for the selected rank */
+        tmpreg1 &= ~tmpreg2;
+
+        /* Calculate the mask to set */
+        tmpreg2 = m_pChannelInfo->Channel << (5 * (Rank - 1));
+
+        /* Set the SQx bits for the selected rank */
+        tmpreg1 |= tmpreg2;
+
+        /* Store the new register value */
+        m_pADC_Info->pADCx->SQR3 = tmpreg1;
+    }
+    /* For Rank 7 to 12 */
+    else if (Rank < 13)
+    {
+        /* Get the old register value */
+        tmpreg1 = m_pADC_Info->pADCx->SQR2;
+
+        /* Calculate the mask to clear */
+        tmpreg2 = SQR_SQ_SET << (5 * (Rank - 7));
+
+        /* Clear the old SQx bits for the selected rank */
+        tmpreg1 &= ~tmpreg2;
+
+        /* Calculate the mask to set */
+        tmpreg2 = m_pChannelInfo->Channel << (5 * (Rank - 7));
+
+        /* Set the SQx bits for the selected rank */
+        tmpreg1 |= tmpreg2;
+
+        /* Store the new register value */
+        m_pADC_Info->pADCx->SQR2 = tmpreg1;
+    }
+    /* For Rank 13 to 16 */
+    else
+    {
+        /* Get the old register value */
+        tmpreg1 = m_pADC_Info->pADCx->QR1;
+
+        /* Calculate the mask to clear */
+        tmpreg2 = SQR_SQ_SET << (5 * (Rank - 13));
+
+        /* Clear the old SQx bits for the selected rank */
+        tmpreg1 &= ~tmpreg2;
+
+        /* Calculate the mask to set */
+        tmpreg2 = m_pChannelInfo->Channel << (5 * (Rank - 13));
+
+        /* Set the SQx bits for the selected rank */
+        tmpreg1 |= tmpreg2;
+
+        /* Store the new register value */
+        m_pADC_Info->pADCx->SQR1 = tmpreg1;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function:      Initialize
+//
+//   Description:   Enables the selected ADC software start conversion of the regular channels.
+//
+//   Parameter(s):  None
+//   Return Value:  None
+//
+//   Note(s):
+//
+//
+//-------------------------------------------------------------------------------------------------
+void ADC_ChannelDriver::StartConversion(void)
+{
+    // Enable the selected ADC conversion for regular group
+    m_pADC_Info->pADCx->CR2 |= (uint32_t)ADC_CR2_SWSTART;
 }
 
 //-------------------------------------------------------------------------------------------------

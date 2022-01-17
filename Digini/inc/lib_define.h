@@ -78,11 +78,11 @@
 #endif
 
 #ifndef DEF_DISABLED
-#define DEF_DISABLED            0
+#define DEF_DISABLED            0               // Use this for macro only
 #endif
 
 #ifndef DEF_ENABLED
-#define DEF_ENABLED             1
+#define DEF_ENABLED             1               // Use this for macro only
 #endif
 
 #ifndef DEF_NO
@@ -94,11 +94,11 @@
 #endif
 
 #ifndef DEF_DISABLE
-#define DEF_DISABLE             0
+#define DEF_DISABLE             false           // Use this for code only
 #endif
 
 #ifndef DEF_ENABLE
-#define DEF_ENABLE              1
+#define DEF_ENABLE              true            // Use this for code only
 #endif
 
 #ifndef DEF_FALLING_EDGE

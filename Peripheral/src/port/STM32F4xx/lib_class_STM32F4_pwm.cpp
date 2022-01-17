@@ -67,8 +67,7 @@ PWM_Driver::PWM_Driver(PWM_ChannelID_e PWM_ID)
 //-------------------------------------------------------------------------------------------------
 void PWM_Driver::Initialize(void)
 {
-    m_pTimer = TIM_Info[m_pInfo->TimID].pTIMx;
-
+    m_pTimer = TIM_Driver::GetTimerPointer(m_pInfo->TimID);
     IO_PinInit(m_pInfo->PinID);
 
     switch(m_pInfo->Channel)
@@ -125,7 +124,7 @@ void PWM_Driver::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 void PWM_Driver::SetDuty(uint16_t Duty)
 {
-    uint32_t     Period = m_pTimer->ARR;
+    //uint32_t     Period = m_pTimer->ARR; ?? should calculate it from ARR
 
     switch(m_pInfo->Channel)
     {

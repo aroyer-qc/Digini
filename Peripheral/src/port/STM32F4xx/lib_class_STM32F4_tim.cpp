@@ -249,7 +249,7 @@ uint32_t TIM_Driver::GetReload(void)
 //
 //  Name:           SetCompare
 //
-//  Parameter(s):   Channel         STM32F7: Compare 1 to 4
+//  Parameter(s):   Channel         STM32F4: Compare 1 to 4
 //                                        - TIM_COMPARE_CH1
 //                                        - TIM_COMPARE_CH2
 //                                        - TIM_COMPARE_CH3
@@ -509,6 +509,21 @@ void TIM_Driver::CallBack(bool ProcessUpdate)
             }
         }
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           GetTimerPointer
+//
+//  Parameter(s):   TimID           ID of the timer to get the pointer
+//  Return:         TIM_TypeDef*    \pointer on the timer module
+//
+//  Description:    Return the pointer on the timer use by this ID
+//
+//-------------------------------------------------------------------------------------------------
+TIM_TypeDef* TIM_Driver::GetTimerPointer(TIM_ID_e TimID)
+{
+    return TIM_Info[TimID].pTIMx;
 }
 
 //-------------------------------------------------------------------------------------------------

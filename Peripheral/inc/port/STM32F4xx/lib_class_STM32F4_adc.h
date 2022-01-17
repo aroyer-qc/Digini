@@ -34,43 +34,68 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define ADC_CLOCK_SYNC_PCLK_DIV_2                   0
+#define ADC_CLOCK_SYNC_PCLK_DIV_2                   ((uint32_t)0x00000000)
 #define ADC_CLOCK_SYNC_PCLK_DIV_4                   ((uint32_t)ADC_CCR_ADCPRE_0)
 #define ADC_CLOCK_SYNC_PCLK_DIV_6                   ((uint32_t)ADC_CCR_ADCPRE_1)
 #define ADC_CLOCK_SYNC_PCLK_DIV_8                   ((uint32_t)ADC_CCR_ADCPRE)
 
-#define ADC_RESOLUTION_12_BITS                      0
+#define ADC_RESOLUTION_12_BITS                      ((uint32_t)0x00000000)
 #define ADC_RESOLUTION_10_BITS                      ((uint32_t)ADC_CR1_RES_0)
 #define ADC_RESOLUTION_8_BITS                       ((uint32_t)ADC_CR1_RES_1)
 #define ADC_RESOLUTION_6_BITS                       ((uint32_t)ADC_CR1_RES)
 
-#define ADC_DATA_ALIGN_RIGHT                        0
+#define ADC_DATA_ALIGN_RIGHT                        ((uint32_t)0x00000000)
 #define ADC_DATA_ALIGN_LEFT                         ((uint32_t)ADC_CR2_ALIGN)
 
-#define ADC_SEQ_SCAN_DISABLE
-#define ADC_SEQ_SCAN_ENABLE
+#define ADC_REG_TRIG_EXT_NONE                       ((uint32_t)0x00000000)
+#define ADC_REG_TRIG_EXT_TIM1_CH1                   ((uint32_t)0x00000000)
+#define ADC_REG_TRIG_EXT_TIM1_CH2                   ((uint32_t)0x01000000)
+#define ADC_REG_TRIG_EXT_TIM1_CH3                   ((uint32_t)0x02000000)
+#define ADC_REG_TRIG_EXT_TIM2_CH2                   ((uint32_t)0x03000000)
+#define ADC_REG_TRIG_EXT_TIM2_CH3                   ((uint32_t)0x04000000)
+#define ADC_REG_TRIG_EXT_TIM2_CH4                   ((uint32_t)0x05000000)
+#define ADC_REG_TRIG_EXT_TIM2_TRGO                  ((uint32_t)0x06000000)
+#define ADC_REG_TRIG_EXT_TIM3_CH1                   ((uint32_t)0x07000000)
+#define ADC_REG_TRIG_EXT_TIM3_TRGO                  ((uint32_t)0x08000000)
+#define ADC_REG_TRIG_EXT_TIM4_CH4                   ((uint32_t)0x09000000)
+#define ADC_REG_TRIG_EXT_TIM5_CH1                   ((uint32_t)0x0A000000)
+#define ADC_REG_TRIG_EXT_TIM5_CH2                   ((uint32_t)0x0B000000)
+#define ADC_REG_TRIG_EXT_TIM5_CH3                   ((uint32_t)0x0C000000)
+#define ADC_REG_TRIG_EXT_TIM8_CH1                   ((uint32_t)0x0D000000)
+#define ADC_REG_TRIG_EXT_TIM8_TRGO                  ((uint32_t)0x0E000000)
+#define ADC_REG_TRIG_EXT_EXTI_LINE11                ((uint32_t)0x0F000000)
 
-#define ADC_REG_TRIG_SOFTWARE
-#define ADC_REG_TRIG_EXT_TIM1_CH1
-#define ADC_REG_TRIG_EXT_TIM1_CH2
-#define ADC_REG_TRIG_EXT_TIM1_CH3
-#define ADC_REG_TRIG_EXT_TIM2_CH2
-#define ADC_REG_TRIG_EXT_TIM2_CH3
-#define ADC_REG_TRIG_EXT_TIM2_CH4
-#define ADC_REG_TRIG_EXT_TIM2_TRGO
-#define ADC_REG_TRIG_EXT_TIM3_CH1
-#define ADC_REG_TRIG_EXT_TIM3_TRGO
-#define ADC_REG_TRIG_EXT_TIM4_CH4
-#define ADC_REG_TRIG_EXT_TIM5_CH1
-#define ADC_REG_TRIG_EXT_TIM5_CH2
-#define ADC_REG_TRIG_EXT_TIM5_CH3
-#define ADC_REG_TRIG_EXT_TIM8_CH1
-#define ADC_REG_TRIG_EXT_TIM8_TRGO
-#define ADC_REG_TRIG_EXT_EXTI_LINE11
+#define ADC_REG_TRIG_EXT_EDGE_NONE                  ((uint32_t)0x00000000)
+#define ADC_REG_TRIG_EXT_EDGE_RISING                ((uint32_t)0x10000000)
+#define ADC_REG_TRIG_EXT_EDGE_FALLING               ((uint32_t)0x20000000)
+#define ADC_REG_TRIG_EXT_EDGE_BOTH                  ((uint32_t)0x30000000)
 
-#define ADC_REG_CONV_SINGLE
-#define ADC_REG_CONV_CONTINUOUS
+#define ADC_SCAN_MODE_DISABLE                       ((uint32_t)0x00000000)
+#define ADC_SCAN_MODE_ENABLE                        ((uint32_t)ADC_CR1_SCAN)
 
+#define ADC_DISCONTINUOUS_MODE_DISABLE              ((uint32_t)0x00000000)
+#define ADC_DISCONTINUOUS_MODE_ENABLE               ((uint32_t)ADC_CR1_DISCEN)
+
+#define ADC_CONVERSION_SINGLE                       ((uint32_t)0x00000000)
+#define ADC_CONVERSION_CONTINUOUS                   ((uint32_t)ADC_CR2_CONT)
+
+#define ADC_DMA_CONTINUOUS_REQ_DISABLE              ((uint32_t)0x00000000)
+#define ADC_DMA_CONTINUOUS_REQ_ENABLE               ((uint32_t)ADC_CR2_DDS)
+
+#define ADC_EOC_SELECT_SEQUENCE                     ((uint32_t)0x00000000)
+#define ADC_EOC_SELECT_SINGLE                       ((uint32_t)ADC_CR2_EOCS)
+
+#define ADC_DISCONTINUOUS_NB_CHANNEL_NONE           ((uint32_t)0x00000000)
+#define ADC_DISCONTINUOUS_NB_CHANNEL_1              ((uint32_t)0x00000000)
+#define ADC_DISCONTINUOUS_NB_CHANNEL_2              ((uint32_t)ADC_CR1_DISCNUM_0)
+#define ADC_DISCONTINUOUS_NB_CHANNEL_3              ((uint32_t)ADC_CR1_DISCNUM_1)
+#define ADC_DISCONTINUOUS_NB_CHANNEL_4              ((uint32_t)(ADC_CR1_DISCNUM_1 | ADC_CR1_DISCNUM_0))
+#define ADC_DISCONTINUOUS_NB_CHANNEL_5              ((uint32_t)ADC_CR1_DISCNUM_2)
+#define ADC_DISCONTINUOUS_NB_CHANNEL_6              ((uint32_t)(ADC_CR1_DISCNUM_2 | ADC_CR1_DISCNUM_0))
+#define ADC_DISCONTINUOUS_NB_CHANNEL_7              ((uint32_t)(ADC_CR1_DISCNUM_2 | ADC_CR1_DISCNUM_1))
+#define ADC_DISCONTINUOUS_NB_CHANNEL_8              ((uint32_t)(ADC_CR1_DISCNUM_2 | ADC_CR1_DISCNUM_1 | ADC_CR1_DISCNUM_0))
+
+/*
 #define ADC_REG_DMA_TRANSFER_NONE
 #define ADC_REG_DMA_TRANSFER_LIMITED
 #define ADC_REG_DMA_TRANSFER_UNLIMITED
@@ -185,6 +210,7 @@
 #define ADC_MULTI_MASTER
 #define ADC_MULTI_SLAVE
 #define ADC_MULTI_MASTER_SLAVE
+*/
 
 #define ADC_CHANNEL_0                               0x00000000U
 #define ADC_CHANNEL_1                               ((uint32_t)ADC_CR1_AWDCH_0)
@@ -208,13 +234,27 @@
 #define ADC_CHANNEL_VREFINT                         ((uint32_t)ADC_CHANNEL_17)
 #define ADC_CHANNEL_VBAT                            ((uint32_t)ADC_CHANNEL_18)
 
+
+// ADC SMPx mask
+#define SMPR_SMP_SET                                ((uint32_t)0x00000007)  
+// ADC SQx mask
+#define SQR_SQ_SET                                  ((uint32_t)0x0000001F)  
+
+
+
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_ADC_CHANNEL_AS_ENUM(ENUM_ID, ADC_ID, CHANNEL_NUMBER) ENUM_ID,
-#define EXPAND_X_ADC_CHANNEL_AS_STRUCT_DATA(ENUM_ID, ADC_ID, CHANNEL_NUMBER) \
-                                                   { ADC_ID, CHANNEL_NUMBER },
+#define EXPAND_X_ADC_AS_ENUM(ENUM_ID, ADCx, RCC_APB2ENR_ADCxEN, SCAN_MODE, RESOLUTION, CONVERSION, DISCONTINUOUS, DISCONTINUOUS_NUMBER, ADC_DATA_ALIGNMENT, EXTERNAL_TRIGGER, EXTERNAL_TRIGGER_EDGE, EOC_SELECTION, CONTINUOUS_DMA_REQ)  ENUM_ID,
+#define EXPAND_X_ADC_AS_STRUCT_DATA(ENUM_ID, ADCx, RCC_APB2ENR_ADCxEN, SCAN_MODE, RESOLUTION, CONVERSION, DISCONTINUOUS, DISCONTINUOUS_NUMBER, ADC_DATA_ALIGNMENT, EXTERNAL_TRIGGER, EXTERNAL_TRIGGER_EDGE, EOC_SELECTION, CONTINUOUS_DMA_REQ) \
+                                   { ADCx, RCC_APB2ENR_ADCxEN,                                                                                                          \
+              /* CR1 */              (SCAN_MODE | RESOLUTION | DISCONTINUOUS | DISCONTINUOUS_NUMBER),                                                                                                            \
+              /* CR2 */              (ADC_DATA_ALIGNMENT | CONVERSION | EXTERNAL_TRIGGER | EXTERNAL_TRIGGER_EDGE | EOC_SELECTION)},
+
+#define EXPAND_X_ADC_CHANNEL_AS_ENUM(ENUM_ID, ADC_ID, CHANNEL_NUMBER, IO_ID) ENUM_ID,
+#define EXPAND_X_ADC_CHANNEL_AS_STRUCT_DATA(ENUM_ID, ADC_ID, CHANNEL_NUMBER, IO_ID) \
+                                                   { ADC_ID, CHANNEL_NUMBER, IO_ID },
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -222,18 +262,7 @@
 
 enum ADC_ID_e
 {
-    #if (ADC_DRIVER_SUPPORT_ADC1_CFG == DEF_ENABLED)
-        DRIVER_ADC1_ID,
-    #endif
-
-    #if (ADC_DRIVER_SUPPORT_ADC2_CFG == DEF_ENABLED)
-        DRIVER_ADC2_ID,
-    #endif
-
-    #if (ADC_DRIVER_SUPPORT_ADC3_CFG == DEF_ENABLED)
-        DRIVER_ADC2_ID,
-    #endif
-
+    ADC_DEF(EXPAND_X_ADC_AS_ENUM)
     NB_OF_ADC_DRIVER,
 };
 
@@ -245,52 +274,19 @@ enum ADC_ChannelID_e
 
 struct ADC_Info_t
 {
-    ADC_ID_e            ADC_ID;
     ADC_TypeDef*        pADCx;
     uint32_t            RCC_APB2_En;
-    uint32_t            Resolution;                   // ADC resolution in bits.
-
-    uint32_t            ScanConversionMode;           // Configures the sequencer of regular and injected groups. This parameter can be associated to parameter 'DiscontinuousConvMode' to have main sequence subdivided in successive parts.
-    uint32_t            DataAlign;                    // Specifies ADC data alignment, can be set to ENABLE or DISABLE
+    uint32_t            CR1_Common;                 // CR1 Resolution and Scan Conversion Mode
+    uint32_t            CR2_Common;                  // CR2 ADC data alignment, Trigger, trigger edge, continuous conversion mode
+    uint32_t            NumberOfConversion;
     uint8_t             PreempPrio;
-
-
-    //hadc1.Init.ContinuousConvMode    = ENABLE;
-    //hadc1.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;
-    //hadc1.Init.ExternalTrigConv      = ADC_SOFTWARE_START;
-    //hadc1.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
-    //hadc1.Init.NbrOfConversion       = 1;
-    //hadc1.Init.EOCSelection          = ADC_EOC_SINGLE_CONV;
-  uint32_t EOCSelection;                 /*!< Specifies what EOC (End Of Conversion) flag is used for conversion by polling and interruption: end of conversion of each rank or complete sequence.
-                                              This parameter can be a value of @ref ADC_EOCSelection.
-                                              Note: For injected group, end of conversion (flag&IT) is raised only at the end of the sequence.
-                                                    Therefore, if end of conversion is set to end of each conversion, injected group should not be used with interruption (HAL_ADCEx_InjectedStart_IT)
-                                                    or polling (HAL_ADCEx_InjectedStart and HAL_ADCEx_InjectedPollForConversion). By the way, polling is still possible since driver will use an estimated timing for end of injected conversion.
-                                              Note: If overrun feature is intended to be used, use ADC in mode 'interruption' (function HAL_ADC_Start_IT() ) with parameter EOCSelection set to end of each conversion or in mode 'transfer by DMA' (function HAL_ADC_Start_DMA()).
-                                                    If overrun feature is intended to be bypassed, use ADC in mode 'polling' or 'interruption' with parameter EOCSelection must be set to end of sequence */
-  uint32_t NbrOfConversion;              /*!< Specifies the number of ranks that will be converted within the regular group sequencer.
-                                              To use regular group sequencer and convert several ranks, parameter 'ScanConvMode' must be enabled.
-                                              This parameter must be a number between Min_Data = 1 and Max_Data = 16. */
-  uint32_t ExternalTrigConv;             /*!< Selects the external event used to trigger the conversion start of regular group.
-                                              If set to ADC_SOFTWARE_START, external triggers are disabled.
-                                              If set to external trigger source, triggering is on event rising edge by default.
-                                              This parameter can be a value of @ref ADC_External_trigger_Source_Regular */
-  uint32_t ExternalTrigConvEdge;         /*!< Selects the external trigger edge of regular group.
-                                              If trigger is set to ADC_SOFTWARE_START, this parameter is discarded.
-                                              This parameter can be a value of @ref ADC_External_trigger_edge_Regular */
-/*  FunctionalState DMAContinuousRequests; /!< Specifies whether the DMA requests are performed in one shot mode (DMA transfer stop when number of conversions is reached)
-											  or in Continuous mode (DMA transfer unlimited, whatever number of conversions).
-											  Note: In continuous mode, DMA must be configured in circular mode. Otherwise an overrun will be triggered when DMA buffer maximum pointer is reached.
-											  Note: This parameter must be modified when no conversion is on going on both regular and injected groups (ADC disabled, or ADC enabled without continuous mode or external trigger that could launch a conversion).
-											  This parameter can be set to ENABLE or DISABLE. */
-
-
 };
 
 struct ADC_ChannelInfo_t
 {
     ADC_ID_e            ADC_ID;
     uint32_t            Channel;
+    IO_ID_e             IO_ID;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -301,21 +297,23 @@ class ADC_Driver
 {
     public:
 
-                        ADC_Driver              (ADC_ID_e ADC_ID);
+                        ADC_Driver                  (ADC_ID_e ADC_ID);
 
-        void            Initialize              (void);
-        SystemState_e   GetStatus               (void);
+        void            Initialize                  (void);
+        SystemState_e   GetStatus                   (void);
+        void            TempSensorVrefintControl    (bool NewState);
+        void            VBAT_Control                (bool NewState);
 
-        void            IRQHandler              ();
+        void            IRQHandler                  ();
 
     private:
 
-        const ADC_Info_t*       m_pInfo;
-        SystemState_e           m_State;
-        bool                    m_IsItInitialize;
+        const ADC_Info_t*               m_pInfo;
+        SystemState_e                   m_State;
+        bool                            m_IsItInitialize;
 
-        static bool             m_CommonInitialize_IsItDone;
-        nOS_Mutex               m_Mutex;
+        static bool                     m_CommonInitialize_IsItDone;
+        nOS_Mutex                       m_Mutex;
 
 };
 
@@ -323,14 +321,17 @@ class ADC_ChannelDriver
 {
     public:
 
-                        ADC_ChannelDriver       (ADC_ID_e ADC_ID);
+                        ADC_ChannelDriver       (ADC_ChannelID_e ADC_ChannelID);
 
         void            Initialize              (void);
+        void            Config                  (uint8_t Rank, uint8_t ADC_SampleTime);
+        void            StartConversion         (void);
 
     private:
 
-        ADC_ChannelInfo_t*      m_pInfo;
-        SystemState_e           m_State;
+        const ADC_ChannelInfo_t*        m_pChannelInfo;
+        const ADC_Info_t*               m_pADC_Info;
+        SystemState_e                   m_State;
 
 };
 
@@ -338,21 +339,65 @@ class ADC_ChannelDriver
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "adc_var.h"
-
 #ifdef ADC_DRIVER_GLOBAL
+
+const ADC_Info_t ADC_Info[NB_OF_ADC_DRIVER] =
+{
+    ADC_DEF(EXPAND_X_ADC_AS_STRUCT_DATA)
+};
 
 const ADC_ChannelInfo_t ADC_ChannelInfo[NB_OF_ADC_CHANNEL] =
 {
     ADC_CHANNEL_DEF(EXPAND_X_ADC_CHANNEL_AS_STRUCT_DATA)
-}
+};
 
-#else
+#if (ADC_DRIVER_SUPPORT_ADC1_CFG == DEF_ENABLED)
+class ADC_Driver myADC1_Driver(DRIVER_ADC1_ID);
+#endif
 
+#if (ADC_DRIVER_SUPPORT_ADC2_CFG == DEF_ENABLED)
+class ADC_Driver myADC2_Driver(DRIVER_ADC2_ID);
+#endif
+
+#if (ADC_DRIVER_SUPPORT_ADC3_CFG == DEF_ENABLED)
+class ADC_Driver myADC3_Driver(DRIVER_ADC3_ID);
+#endif
+
+#else // ADC_DRIVER_GLOBAL
+
+extern const ADC_Info_t        ADC_Info[NB_OF_ADC_DRIVER];
 extern const ADC_ChannelInfo_t ADC_ChannelInfo[NB_OF_ADC_CHANNEL];
 
+#if (ADC_DRIVER_SUPPORT_ADC1_CFG == DEF_ENABLED)
+extern class ADC_Driver myADC1_Driver;
 #endif
+
+#if (ADC_DRIVER_SUPPORT_ADC2_CFG == DEF_ENABLED)
+extern class ADC_Driver myADC2_Driver;
+#endif
+
+#if (ADC_DRIVER_SUPPORT_ADC3_CFG == DEF_ENABLED)
+extern class ADC_Driver myADC3_Driver;
+#endif
+
+#endif // ADC_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
 #endif // (USE_ADC_DRIVER == DEF_ENABLED)
+
+
+
+
+/*
+// shoot this into config file!!
+    hadc1.Init.ScanConvMode          = DISABLE;
+    hadc1.Init.ContinuousConvMode    = ENABLE;
+    hadc1.Init.DiscontinuousConvMode = DISABLE;
+    hadc1.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;
+    hadc1.Init.ExternalTrigConv      = ADC_SOFTWARE_START;
+    hadc1.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
+    hadc1.Init.NbrOfConversion       = 1;
+    hadc1.Init.DMAContinuousRequests = DISABLE;
+    hadc1.Init.EOCSelection          = ADC_EOC_SINGLE_CONV;
+*/

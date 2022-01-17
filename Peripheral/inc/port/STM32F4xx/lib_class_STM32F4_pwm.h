@@ -30,9 +30,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "stm32f4xx.h"
-#include "lib_peripheral_cfg.h"
-#include "lib_class_STM32F4_tim.h"
+//#include "stm32f4xx.h"
+//#include "lib_peripheral_cfg.h"
+//#include "lib_class_STM32F4_tim.h"
 
 //-------------------------------------------------------------------------------------------------
 

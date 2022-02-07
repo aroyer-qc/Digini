@@ -29,74 +29,70 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_SI4703_GLOBAL
-#include "lib_class_i2c_si4703.h"
+#include "lib_class_spi_si4703.h"
 #undef  LIB_SI4703_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
 #ifdef DIGINI_USE_GRAFX
-#if (USE_I2C_DRIVER == DEF_ENABLED)
+#if (USE_SPI_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-// ----- Definitions for the Wire communication
+#define  SI4703 = 0x10; //0b._001.0000 = I2C address of Si4703 - note that the Wire function assumes non-left-shifted I2C address, not 0b.0010.000W
+	static const uint16_t  I2C_FAIL_MAX = 10; //This is the number of attempts we will try to contact the device before erroring out
+	static const uint16_t  SEEK_DOWN = 0; //Direction used for seeking. Default is down
+	static const uint16_t  SEEK_UP = 1;
 
-// might be define BSP
-#define SI4703_I2C_ADR          0xC0
+	//Define the register names
+	static const uint16_t  DEVICEID = 0x00;
+	static const uint16_t  CHIPID = 0x01;
+	static const uint16_t  POWERCFG = 0x02;
+	static const uint16_t  CHANNEL = 0x03;
+	static const uint16_t  SYSCONFIG1 = 0x04;
+	static const uint16_t  SYSCONFIG2 = 0x05;
+	static const uint16_t  STATUSRSSI = 0x0A;
+	static const uint16_t  READCHAN = 0x0B;
+	static const uint16_t  RDSA = 0x0C;
+	static const uint16_t  RDSB = 0x0D;
+	static const uint16_t  RDSC = 0x0E;
+	static const uint16_t  RDSD = 0x0F;
 
-// ----- Radio chip specific definitions including the registers
+	//Register 0x02 - POWERCFG
+	static const uint16_t  SMUTE = 15;
+	static const uint16_t  DMUTE = 14;
+	static const uint16_t  SKMODE = 10;
+	static const uint16_t  SEEKUP = 9;
+	static const uint16_t  SEEK = 8;
 
-#define QUARTZ                  32768
-#define FILTER                  225000
+	//Register 0x03 - CHANNEL
+	static const uint16_t  TUNE = 15;
 
+	//Register 0x04 - SYSCONFIG1
+	static const uint16_t  RDS = 12;
+	static const uint16_t  DE = 11;
 
-// Number of registers
-#define NB_OF_WRITE_REGISTER    (5)
-#define NB_OF_READ_REGISTER     (4)
+	//Register 0x05 - SYSCONFIG2
+	static const uint16_t  SPACE1 = 5;
+	static const uint16_t  SPACE0 = 4;
 
-// Define the registers
-#define REG_1                   uint8_t(0x00)
-#define REG_2                   uint8_t(0x01)
-#define REG_3                   uint8_t(0x02)
-#define REG_4                   uint8_t(0x03)
-#define REG_5                   uint8_t(0x04)
+	//Register 0x0A - STATUSRSSI
+	static const uint16_t  RDSR = 15;
+	static const uint16_t  STC = 14;
+	static const uint16_t  SFBL = 13;
+	static const uint16_t  AFCRL = 12;
+	static const uint16_t  RDSS = 11;
+	static const uint16_t  STEREO = 8;
 
-#define REG_1_MUTE              uint8_t(0x80)
-#define REG_1_SM                uint8_t(0x40)
-#define REG_1_PLL               uint8_t(0x3F)
-
-#define REG_2_PLL               uint8_t(0xFF)
-
-#define REG_3_MS                uint8_t(0x08)
-#define REG_3_SSL_LO            uint8_t(0x20)
-#define REG_3_SSL_MID           uint8_t(0x40)
-#define REG_3_SSL_HI            uint8_t(0x60)
-#define REG_3_SSL_MASK          uint8_t(REG_3_SSL_LO | REG_3_SSL_MID |REG_3_SSL_HI)
-#define REG_3_SUD               uint8_t(0x80)
-
-#define REG_4_SMUTE             uint8_t(0x08)
-#define REG_4_XTAL              uint8_t(0x10)
-#define REG_4_BL                uint8_t(0x20)
-#define REG_4_STBY              uint8_t(0x40)
-
-#define REG_5_PLLREF            uint8_t(0x80)
-#define REG_5_DTC               uint8_t(0x40)
-
-#define STAT_3_STEREO           uint8_t(0x80)
-#define STAT_4_ADC              uint8_t(0xF0)
-#define STAT_4_ADC_SHIFT        (4)
-
-#define LOW_FREQ                uint16_t(8750)
-#define HIGH_FREQ               uint16_t(10800)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: TEA5767
+//   Class: SI4703
 //
 //
-//   Description:   Class to handle radio TEA5767
+//   Description:   Class to handle radio SI4703
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -113,28 +109,34 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::Initialize(I2C_Driver* pI2C)
+SystemState_e SI4703::Initialize(SPI_Driver* pSPI)
 {
-    TEA5767_Freq_t Stations[20];
+// done in init of SPI.. but need to do SEN
+/*
+Si4703_Breakout::Si4703_Breakout(int resetPin, int sdioPin, int sclkPin)
+{
+  _resetPin = resetPin;
+  _sdioPin = sdioPin;
+  _sclkPin = sclkPin;
+}
+*/
+
+/*
+    SI4703_Freq_t Stations[20];
 uint16_t NumberOfStation = 20;
 
-    m_pI2C = pI2C;
+    m_pSPI = pSPI;
 
     // if(this->IsOperational() == false)                                          // Read IO TEA5767 ID
     //{
     //  return false;
     //}
 
-    m_Registers[REG_1] = 0x00;
-    m_Registers[REG_2] = 0x00;
-    m_Registers[REG_3] = REG_3_SSL_MID;
-    m_Registers[REG_4] = REG_4_XTAL | REG_4_SMUTE;
-    m_Registers[REG_5] = 0x00;//REG_5_DTC;                             // 75 ms Europe setup
-
 
     this->SaveRegisters();
     this->FindStations(REG_3_SSL_LO, &Stations[0], &NumberOfStation);
-    return SYS_READY;//this->SaveRegisters();
+*/  
+  return SYS_READY;//this->SaveRegisters();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -150,14 +152,17 @@ uint16_t NumberOfStation = 20;
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::SetMono(bool SwitchOn)
+SystemState_e SI4703::SetMono(bool SwitchOn)
 {
+/*
     //m_Mono = SwitchOn;
 
     if(SwitchOn) m_Registers[REG_3] |=  REG_3_MS;
     else         m_Registers[REG_3] &= ~REG_3_MS;
 
     return this->SaveRegisters();
+    */ 
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -173,14 +178,17 @@ SystemState_e TEA5767::SetMono(bool SwitchOn)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::SetMute(bool SwitchOn)
+SystemState_e SI4703::SetMute(bool SwitchOn)
 {
+/*
     //m_Mute = SwitchOn;
 
     if(SwitchOn) m_Registers[REG_1] |=  REG_1_MUTE;
     else         m_Registers[REG_1] &= ~REG_1_MUTE;
 
     return this->SaveRegisters();
+    */ 
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -196,8 +204,9 @@ SystemState_e TEA5767::SetMute(bool SwitchOn)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::SetBand(void)
+SystemState_e SI4703::SetBand(void)
 {
+/*
     //Freq(MHz) = 0.200(in USA) * Channel + 87.5MHz
     m_Registers[REG_4] |= REG_4_BL;
 
@@ -205,6 +214,8 @@ SystemState_e TEA5767::SetBand(void)
 
     // FM mixer for conversion to IF of the US/Europe (87.5 MHz to 108 MHz)
     //                                  and Japanese  (76 MHz to 91 MHz)
+    */ 
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -220,8 +231,9 @@ SystemState_e TEA5767::SetBand(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::GetFrequency(TEA5767_Freq_t* pFrequency)
+SystemState_e SI4703::GetFrequency(TEA5767_Freq_t* pFrequency)
 {
+    /*
     SystemState_e State;
     uint32_t      _Frequency;
 
@@ -233,6 +245,8 @@ SystemState_e TEA5767::GetFrequency(TEA5767_Freq_t* pFrequency)
     }
 
     return State;
+    */ 
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -248,8 +262,9 @@ SystemState_e TEA5767::GetFrequency(TEA5767_Freq_t* pFrequency)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::SetFrequency(TEA5767_Freq_t Frequency)
+SystemState_e SI4703::SetFrequency(TEA5767_Freq_t Frequency)
 {
+/*
     uint32_t _Frequency;
 
 //unsigned int freqC = (frequency * 1000000 + 225000) / 8192;
@@ -258,6 +273,8 @@ SystemState_e TEA5767::SetFrequency(TEA5767_Freq_t Frequency)
     m_Registers[REG_1] = uint8_t(_Frequency >> 8);
     m_Registers[REG_2] = uint8_t(_Frequency);
     return this->SaveRegisters();
+    */ 
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -276,22 +293,22 @@ SystemState_e TEA5767::SetFrequency(TEA5767_Freq_t Frequency)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::FindStations(uint8_t SearchLevel, TEA5767_Freq_t* pFrequencyArray, uint16_t* pStationCount)
+SystemState_e SI4703::FindStations(uint8_t SearchLevel, TEA5767_Freq_t* pFrequencyArray, uint16_t* pStationCount)
 {
+/*
 	SystemState_e  State;
 	uint8_t        Level;
 	bool           Stereo;
 	size_t         Count = 0;
-	TEA5767_Freq_t Frequency;
-	TEA5767_Freq_t LastStation;
+	SI4703_Freq_t Frequency;
+	SI4703_Freq_t LastStation;
 
-	for(TEA5767_Freq_t Frequency = LOW_FREQ;
+	for(SI4703_Freq_t Frequency = LOW_FREQ;
 	    (Frequency <= HIGH_FREQ) && (Count < *pStationCount);
 	    Frequency += 20)
     {
 	    State = this->SetFrequency(Frequency);
 		nOS_Sleep(2000);
-		/*
 		State  = this->GetFrequency(&Frequency);
         Stereo =(m_Status[REG_3] & STAT_3_STEREO) ? true : false;
         Level  = m_Status[REG_4] >> STAT_4_ADC_SHIFT;
@@ -315,7 +332,6 @@ SystemState_e TEA5767::FindStations(uint8_t SearchLevel, TEA5767_Freq_t* pFreque
 			LastStation = Frequency;
 			Level = SearchLevel;
 		}
-		*/
 	}
 
 	if(Count > 0)
@@ -326,6 +342,8 @@ SystemState_e TEA5767::FindStations(uint8_t SearchLevel, TEA5767_Freq_t* pFreque
 	*pStationCount = Count;
 
 	return State;
+    */ 
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -340,13 +358,16 @@ SystemState_e TEA5767::FindStations(uint8_t SearchLevel, TEA5767_Freq_t* pFreque
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::SeekUp(uint8_t SearchLevel)
+SystemState_e SI4703::SeekUp(uint8_t SearchLevel)
 {
+/*
     m_Registers[REG_1] |=  REG_1_SM;
     m_Registers[REG_3] |=  REG_3_SUD;
     m_Registers[REG_3] &= ~REG_3_SSL_MASK;
     m_Registers[REG_3] |=  SearchLevel;
     return this->SaveRegisters();
+    */ 
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -362,12 +383,15 @@ SystemState_e TEA5767::SeekUp(uint8_t SearchLevel)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::SeekDown(uint8_t SearchLevel)
+SystemState_e SI4703::SeekDown(uint8_t SearchLevel)
 {
+    /*
     m_Registers[REG_1] |=   REG_1_SM;
     m_Registers[REG_3] &= ~(REG_3_SSL_MASK | REG_3_SUD);
     m_Registers[REG_3] |=   SearchLevel;
     return this->SaveRegisters();
+    */ 
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -383,8 +407,9 @@ SystemState_e TEA5767::SeekDown(uint8_t SearchLevel)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::GetRadioInfo(TEA5767_Info_t* pInfo)
+SystemState_e SI4703::GetRadioInfo(TEA5767_Info_t* pInfo)
 {
+/*
     SystemState_e State;
 
     if((State = this->ReadRegisters()) == SYS_READY)
@@ -395,6 +420,8 @@ SystemState_e TEA5767::GetRadioInfo(TEA5767_Info_t* pInfo)
     }
 
     return State;
+*/
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -409,9 +436,10 @@ SystemState_e TEA5767::GetRadioInfo(TEA5767_Info_t* pInfo)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::ReadRegisters(void)
+SystemState_e SI4703::ReadRegisters(void)
 {
-    return m_pI2C->Read(&m_Status[0], NB_OF_READ_REGISTER, TEA5767_I2C_ADR);
+    //return m_pSPI->Read(&m_Status[0], NB_OF_READ_REGISTER, SI4703_I2C_ADR);
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -427,27 +455,15 @@ SystemState_e TEA5767::ReadRegisters(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e TEA5767::SaveRegisters(void)
+SystemState_e SI4703::SaveRegisters(void)
 {
-    return m_pI2C->Write(&m_Registers[0], NB_OF_WRITE_REGISTER, TEA5767_I2C_ADR);
+    //return m_pI2C->Write(&m_Registers[0], NB_OF_WRITE_REGISTER, SI4703_I2C_ADR);
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
-#endif // USE_I2C_DRIVER == DEF_ENABLED
+#endif // (USE_SPI_DRIVER == DEF_ENABLED)
 #endif // DIGINI_USE_GRAFX
-
-
-
-#include "Arduino.h"
-#include "SparkFunSi4703.h"
-#include "Wire.h"
-
-Si4703_Breakout::Si4703_Breakout(int resetPin, int sdioPin, int sclkPin)
-{
-  _resetPin = resetPin;
-  _sdioPin = sdioPin;
-  _sclkPin = sclkPin;
-}
 
 void Si4703_Breakout::powerOn()
 {

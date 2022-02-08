@@ -119,8 +119,8 @@ SystemState_e SPI_Driver::GetStatus(void)
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::Initialize(void)
 {
-    ISR_Prio_t          ISR_Prio;
-    uint32_t            PriorityGroup;
+    ISR_Prio_t ISR_Prio;
+    uint32_t   PriorityGroup;
 
   #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     DMA_Stream_TypeDef* pDMA;
@@ -390,9 +390,8 @@ void SPI_Driver::Config(uint32_t Mask, uint32_t Config)
 //-------------------------------------------------------------------------------------------------
 uint8_t SPI_Driver::Send(uint8_t Data)
 {
-    SPI_TypeDef* pSPIx = m_pInfo->pSPIx;
-
-    uint16_t u16_Data = Data;
+    SPI_TypeDef* pSPIx    = m_pInfo->pSPIx;
+    uint16_t     u16_Data = Data;
 
     while((pSPIx->SR & SPI_SR_TXE) == 0);
     pSPIx->DR = u16_Data;
@@ -657,10 +656,10 @@ SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, u
 #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size)
 {
-	SPI_TypeDef*              pSPIx;
-    DMA_Stream_TypeDef*       pDMA;
-    uint32_t                  Flag;
-    uint32_t                  Dummy;
+	SPI_TypeDef*        pSPIx;
+    DMA_Stream_TypeDef* pDMA;
+    uint32_t            Flag;
+    uint32_t            Dummy;
 
     if(m_pDevice != nullptr)
     {
@@ -838,7 +837,7 @@ void SPI_Driver::ChipSelect(bool IsItActive)
     {
         while((m_pInfo->pSPIx->SR & SPI_SR_BSY) != 0)                // Wait for busy to clear
         {
-                nOS_Yield();
+            nOS_Yield();
         }
 
         IO_SetPinHigh(m_pInfo->PinNSS);                     // De select the NSS pin

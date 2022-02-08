@@ -102,7 +102,7 @@ void I2C_Driver::Initialize(void)
     nOS_Error           Error;
     ISR_Prio_t          ISR_Prio;
     uint32_t            PriorityGroup;
-   I2C_TypeDef*         pI2Cx;
+    I2C_TypeDef*        pI2Cx;
 
 
     if(m_IsItInitialize == false)
@@ -176,9 +176,6 @@ void I2C_Driver::Initialize(void)
 
     // NVIC Setup for RX DMA channels interrupt request
     ISR_Init(m_pInfo->ER_IRQn, &ISR_Prio);
-
-
-
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -213,8 +210,8 @@ SystemState_e I2C_Driver::GetStatus(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e I2C_Driver::LockToDevice(uint8_t Device)
 {
-    SystemState_e State = SYS_NOT_LOCK_TO_DEVICE;
-    nOS_StatusReg   sr;
+    SystemState_e  State = SYS_NOT_LOCK_TO_DEVICE;
+    nOS_StatusReg  sr;
 
     nOS_EnterCritical(sr);
 

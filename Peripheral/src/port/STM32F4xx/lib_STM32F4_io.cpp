@@ -261,7 +261,7 @@ void IO_PinInitOutput(IO_ID_e IO_ID)
 void IO_SetPinLow(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort     = IO_Properties[IO_ID].pPort;
-    uint32_t       PinNumber = IO_Properties[IO_ID].PinNumber;
+    uint32_t      PinNumber = IO_Properties[IO_ID].PinNumber;
     pPort->BSRRH = (1 << PinNumber);
 }
 

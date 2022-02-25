@@ -59,7 +59,6 @@
 //
 //   Class: I2C_Driver
 //
-//
 //   Description:   Class to handle I2C_Driver
 //
 //-------------------------------------------------------------------------------------------------
@@ -69,7 +68,6 @@
 //   Constructor:   I2C_Driver
 //
 //   Parameter(s):  I2C_ID_e
-//   Return Value:
 //
 //   Description:   Initializes the I2C_ID peripheral according to the specified Parameters
 //

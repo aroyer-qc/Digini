@@ -126,8 +126,7 @@
 //-------------------------------------------------------------------------------------------------
 // High level Peripheral
 //
-#ifdef DIGINI_USE_EEPROM
-#include "eeprom_cfg.h"
+#ifdef USE_EEPROM_DRIVER
 #include "lib_class_I2C_EEprom.h"
 #endif
 

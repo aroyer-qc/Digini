@@ -39,7 +39,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define EXPAND_X_EEPROM_DBASE_AS_ITEMS_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEMS_QTY,
-#define EXPAND_X_EEPROM_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_SUB_QTY,
+#define EXPAND_X_EEPROM_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_SubQTY,
 #define EXPAND_X_EEPROM_DBASE_AS_ITEM_SIZE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEM_SIZE,
 
 //-------------------------------------------------------------------------------------------------
@@ -88,8 +88,8 @@ SystemState_e CEEPROM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
     if(ObjectSize > sizeof(size_t)) return SYS_WRONG_SIZE;
     if(ObjectSize < sizeof(size_t)) return SYS_WRONG_SIZE;
 
-    m_pEEprom         = ((sEEpromDBaseInfo*)(pConfig))->pEEprom;
-    m_ItemsAddress[0] = ((sEEpromDBaseInfo*)(pConfig))->Address;
+    m_pE2             = ((EEpromDBaseInfo_t*)pConfig)->pE2;
+    m_ItemsAddress[0] = ((EEpromDBaseInfo_t*)pConfig)->Address;
 
     for(i = 0; i < NB_EEPROM_DBASE_ITEMS_CONST; i++)
     {
@@ -127,7 +127,7 @@ SystemState_e CEEPROM_DataBase::Get(void* pData, uint16_t Record, uint16_t Numbe
     }
 
     Address = GetAddress(Record, Number, SubNumber);
-    m_pEEprom->Read(Address, pData, m_ItemSize[Record]);
+    m_pE2->Read(Address, pData, m_ItemSize[Record]);
 
     return SYS_READY;
 }
@@ -158,7 +158,7 @@ SystemState_e CEEPROM_DataBase::Set(const void* pData, uint16_t Record, uint16_t
     }
 
     Address = GetAddress(Record, Number, SubNumber);
-    m_pEEprom->Write(Address, pData, m_ItemSize[Record]);
+    m_pE2->Write(Address, pData, m_ItemSize[Record]);
 
     return SYS_READY;
 }

@@ -348,47 +348,47 @@ void ADC_ChannelDriver::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 void ADC_ChannelDriver::Config(uint8_t Rank, uint8_t ADC_SampleTime)
 {
-    uint32_t* pRegister;
+    volatile uint32_t* pRegister;
     uint32_t  Offset = 0;
     uint32_t  Shift  = 0;
-    
+
     // if ADC_Channel_10 ... ADC_Channel_18 is selected
     if(m_pChannelInfo->Channel > ADC_CHANNEL_9)
     {
-        Offset    = 10
-        pRegister = m_pADC_Info->pADCx->SMPR1,
+        Offset    = 10;
+        pRegister = &m_pADC_Info->pADCx->SMPR1;
     }
     else // ADC_Channel include in ADC_Channel_[0..9]
     {
-        pRegister = m_pADC_Info->pADCx->SMPR2,
+        pRegister = &m_pADC_Info->pADCx->SMPR2;
     }
 
     Shift = 3 * (m_pChannelInfo->Channel - Offset);
-    MODIFY_REG(pRegister, SMPR_SMP_SET << Shift, uint32_t(ADC_SampleTime) << Shift);    // Set new sample time
+    MODIFY_REG(*pRegister, SMPR_SMP_SET << Shift, uint32_t(ADC_SampleTime) << Shift);    // Set new sample time
 
 
 
     // For Rank 1 to 6
     if (Rank < 7)
     {
-        pRegister = m_pADC_Info->pADCx->SQR3;
+        pRegister = &m_pADC_Info->pADCx->SQR3;
         Offset    = 1;
     }
     // For Rank 7 to 12
     else if (Rank < 13)
     {
-        pRegister = m_pADC_Info->pADCx->SQR2;
+        pRegister = &m_pADC_Info->pADCx->SQR2;
         Offset    = 7;
     }
     // For Rank 13 to 16
     else
     {
-        pRegister = m_pADC_Info->pADCx->SQR1;
-        Offset    = 13
+        pRegister = &m_pADC_Info->pADCx->SQR1;
+        Offset    = 13;
     }
 
     Shift = 5 * (Rank - Offset);
-    MODIFY_REG(pRegister, SQR_SQ_SET << Shift, m_pChannelInfo->Channel << Shift);       // Set the SQx bits for the selected rank
+    MODIFY_REG(*pRegister, SQR_SQ_SET << Shift, m_pChannelInfo->Channel << Shift);       // Set the SQx bits for the selected rank
 }
 
 //-------------------------------------------------------------------------------------------------

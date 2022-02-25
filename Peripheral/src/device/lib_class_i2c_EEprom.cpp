@@ -29,12 +29,13 @@
 //-------------------------------------------------------------------------------------------------
 
 #define EEPROM_DRIVER_GLOBAL
-#include "lib_digini.h"
+#include "lib_class_I2C_EEprom.h"
 #undef  EEPROM_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
-#if (USE_I2C_DRIVER == DEF_ENABLED)
+#if (USE_EEPROM_DRIVER == DEF_ENABLED)
+ #if (USE_I2C_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -159,4 +160,5 @@ SystemState_e EEPROM_Driver::Write(uint32_t Address, const void* pSrc, size_t Si
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_I2C_DRIVER == DEF_ENABLED
+ #endif // (USE_I2C_DRIVER == DEF_ENABLED)
+#endif // (USE_EEPROM_DRIVER == DEF_ENABLED)

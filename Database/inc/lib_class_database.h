@@ -90,14 +90,14 @@ class CDataBase
     public:
 
                                  CDataBase               ();
-        SystemState_e            RegisterDriver          (CDataBaseInterface* DataBaseInterface);                                       // Register a hardware access database
-        SystemState_e            Initialize              (void);                                                                        // Initialize DataBase
-        SystemState_e            Get                     (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber = 0); // Read a Record
-        SystemState_e            Set                     (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber = 0); // Write a Record
-        SystemState_e            GetSize                 (uint32_t* pSize,   uint16_t Record, uint16_t Number, uint16_t SubNumber = 0); // Get Record Size
-        SystemState_e            Fill                    (const void* pData, uint16_t Record);                                          // Fill all item of a record if supported by module
-        SystemState_e            GetPointer              (void** pAddress, uint16_t Record, uint16_t Number, uint16_t SubNumber = 0);   // Read a record pointer address
-        SystemState_e            SetDB_Address           (void** pAddress, uint16_t Record);                                            // Set database address if supported by module
+        SystemState_e            RegisterDriver          (CDataBaseInterface* DataBaseInterface);                                           // Register a hardware access database
+        SystemState_e            Initialize              (void);                                                                            // Initialize DataBase
+        SystemState_e            Get                     (void*       pData, uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0); // Read a Record
+        SystemState_e            Set                     (const void* pData, uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0); // Write a Record
+        SystemState_e            GetSize                 (uint32_t* pSize,   uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0); // Get Record Size
+        SystemState_e            Fill                    (const void* pData, uint16_t Record);                                              // Fill all item of a record if supported by module
+        SystemState_e            GetPointer              (void** pAddress, uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0);   // Read a record pointer address
+        SystemState_e            SetDB_Address           (void** pAddress, uint16_t Record);                                                // Set database address if supported by module
        #ifdef DBASE_DEF
         SystemState_e            ForceUpdate             (uint16_t Record, uint16_t Number, uint16_t SubNumber);
        #endif

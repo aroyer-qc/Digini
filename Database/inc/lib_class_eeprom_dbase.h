@@ -54,10 +54,10 @@ enum EEPROM_DBaseItemList_e
     END_EEPROM_DBASE
 };
 
-struct EEpromDBaseInfo_s
+struct EEpromDBaseInfo_t
 {
-    class CEEprom*  pEEprom;
-    uint32_t        Address;
+    class EEPROM_Driver*  pE2;
+    uint32_t              Address;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ class CEEPROM_DataBase : public CDataBaseInterface
         SystemState_e   CheckRange          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
         uint32_t        GetAddress          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
 
-        CEEprom*                m_pEEprom;
+        EEPROM_Driver*          m_pE2;
         uint32_t                m_ItemsAddress  [NB_EEPROM_DBASE_ITEMS_CONST + 1];             // need one more for boundary top limit
         static const uint16_t   m_ItemsQTY      [NB_EEPROM_DBASE_ITEMS_CONST];
         static const uint16_t   m_ItemsSubQTY   [NB_EEPROM_DBASE_ITEMS_CONST];

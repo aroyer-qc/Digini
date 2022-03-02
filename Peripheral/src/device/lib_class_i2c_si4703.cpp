@@ -225,7 +225,7 @@ void SI4703::SetVolume(uint32_t Volume)
 //
 //  Return:         SystemState_e   State
 //
-//  Description:    Set the volume on the SI4703.
+//  Description:    Set the frequency (station) on the SI4703.
 //
 //  Note(s):
 //

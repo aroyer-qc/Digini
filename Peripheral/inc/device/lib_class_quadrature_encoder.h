@@ -24,8 +24,12 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#pragma once
+// Note(s)  When configuring a clock/data quadrature encoder only choose falling or rising for ISR.
+//          If encoder is not incrementing in the right direction, then change only clock polarity.
+//
+//-------------------------------------------------------------------------------------------------
 
+#pragma once
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
@@ -43,6 +47,12 @@
 #endif
 
 //-------------------------------------------------------------------------------------------------
+// define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define QUAD_SUPERKEY_TIMEOUT               1000
+
+//-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -53,7 +63,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #ifdef QUAD_ENCODER_DEF
-enum QuadEncoderID_e
+enum QUAD_EncoderID_e
 {
     QUAD_ENCODER_NONE = -1,
     QUAD_ENCODER_DEF(EXPAND_X_QUAD_ENCODER_AS_ENUM)
@@ -62,6 +72,7 @@ enum QuadEncoderID_e
 
 enum QUAD_EncoderChange_e
 {
+    QUAD_IDLE,
     QUAD_PRESSED,
     QUAD_RELEASED,
     QUAD_SUPERKEY,
@@ -70,7 +81,7 @@ enum QUAD_EncoderChange_e
 };
 
 
-struct Quad_Info_t
+struct QUAD_EncoderInfo_t
 {
     IO_IrqID_e  IO_Clk;
     IO_ID_e     IO_Data;
@@ -88,27 +99,24 @@ class QUAD_Encoder
 {
     public:
 
-                                QUAD_Encoder            (QuadEncoderID_e QuadID);
+                                QUAD_Encoder            (QUAD_EncoderID_e QuadID);
 
-        void                    RegisterChangeCallback  (void* pCallback);
-        void                    SetNumberOfPosition     (uint32_t NumberOfPostion);
-
-        void                    SetPosition             (uint32_t Position);
-        uint32_t                GetPosition             (void);
-        uint32_t                GetPushButtonState      (void);
-        void                    EnablePushButtonISR     (void);
-        void                    DisablePushButtonISR    (void);
+        void                    Process                 (void);
+        void                    RegisterChangeCallback  (QUAD_EncoderCallBack_t pCallback);
+        void                    Enable                  (void);
+        void                    Disable                 (void);
 
         void                    PushButtonISR           (void);
         void                    EncoderISR              (void);
 
     private:
 
-                Quad_Info_t*            m_pQuadInfo;
-                uint32_t                m_NumberOfPosition;
-                uint32_t                m_Position;
+                QUAD_EncoderChange_e    m_State;
+                QUAD_EncoderChange_e    m_PreviousState;
+                nOS_TickCounter         m_StateTick;
+                QUAD_EncoderInfo_t*     m_pQuadInfo;
                 QUAD_EncoderCallBack_t  m_pCallback;
-        static  Quad_Info_t             m_QuadInfo[NB_OF_QUADRATURE_ENCODER];
+        static  QUAD_EncoderInfo_t      m_QuadInfo[NB_OF_QUADRATURE_ENCODER];
 };
 
 //-------------------------------------------------------------------------------------------------

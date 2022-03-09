@@ -34,8 +34,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (USE_EEPROM_DRIVER == DEF_ENABLED)
- #if (USE_I2C_DRIVER == DEF_ENABLED)
+#if (USE_I2C_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -160,5 +159,4 @@ SystemState_e EEPROM_Driver::Write(uint32_t Address, const void* pSrc, size_t Si
 
 //-------------------------------------------------------------------------------------------------
 
- #endif // (USE_I2C_DRIVER == DEF_ENABLED)
-#endif // (USE_EEPROM_DRIVER == DEF_ENABLED)
+#endif // (USE_I2C_DRIVER == DEF_ENABLED)

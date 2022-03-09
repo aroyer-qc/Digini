@@ -62,7 +62,7 @@ static void _IO_GetPinInfo (IO_IrqID_e IO_ID, uint32_t* pPinNumber, uint32_t* pP
 //
 //  Function:       _IO_GetPinInfo
 //
-//  Parameter(s):   IO_IRQ_Id        ID of the IO "IRQ" pin definition
+//  Parameter(s):   IO_IRQ_ID        ID of the IO "IRQ" pin definition
 //                  pPinNumber       Pointer on variable to return pin number
 //                  pPinMask         Pointer on variable to return pin mask
 //  Return:         None
@@ -73,14 +73,14 @@ static void _IO_GetPinInfo (IO_IrqID_e IO_ID, uint32_t* pPinNumber, uint32_t* pP
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
-static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_Id, uint32_t* pPinNumber, uint32_t* pPinMask)
+static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_ID, uint32_t* pPinNumber, uint32_t* pPinMask)
 {
     const    IO_IRQ_Properties_t* pIRQ_Properties;
     const    IO_Properties_t*     pIO_Properties;
     uint32_t PinNumber;
     uint32_t PinMask;
 
-    pIRQ_Properties = &IO_IRQ_Properties[IO_IRQ_Id];
+    pIRQ_Properties = &IO_IRQ_Properties[IO_IRQ_ID];
     pIO_Properties  = &IO_Properties[pIRQ_Properties->IO_ID];
     PinNumber       = pIO_Properties->PinNumber;
     PinMask         = 1 << PinNumber;
@@ -382,7 +382,7 @@ uint32_t IO_GetOutputPin(IO_ID_e IO_ID)
 //
 //  Function:       IO_InitIRQ
 //
-//  Parameter(s):   IO_IRQ_Id       ID of the IRQ to initialize
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to initialize
 //                  pCallback       Callback to call when condition of IRQ are met
 //  Return:         None
 //
@@ -392,7 +392,7 @@ uint32_t IO_GetOutputPin(IO_ID_e IO_ID)
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
-void IO_InitIRQ(IO_IrqID_e IO_IRQ_Id, IO_PinChangeCallback_t pCallback)
+void IO_InitIRQ(IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback)
 {
     const IO_IRQ_Properties_t* pIRQ_Properties;
     const IO_Properties_t*     pIO_Properties;
@@ -400,7 +400,7 @@ void IO_InitIRQ(IO_IrqID_e IO_IRQ_Id, IO_PinChangeCallback_t pCallback)
     uint32_t                   PinNumber;
     uint32_t                   PinMask;
 
-    pIRQ_Properties = &IO_IRQ_Properties[IO_IRQ_Id];
+    pIRQ_Properties = &IO_IRQ_Properties[IO_IRQ_ID];
     pIO_Properties  = &IO_Properties[pIRQ_Properties->IO_ID];
     PinNumber       = pIO_Properties->PinNumber;
     PinMask         = 1 << PinNumber;
@@ -439,7 +439,7 @@ void IO_InitIRQ(IO_IrqID_e IO_IRQ_Id, IO_PinChangeCallback_t pCallback)
         CLEAR_BIT(EXTI->FTSR, PinMask);
     }
 
-    IO_PinChangeCallback[IO_IRQ_Id] = pCallback;
+    IO_PinChangeCallback[IO_IRQ_ID] = pCallback;
 
     // Configure interrupt priority for IO
 
@@ -454,7 +454,7 @@ void IO_InitIRQ(IO_IrqID_e IO_IRQ_Id, IO_PinChangeCallback_t pCallback)
 //
 //  Function:       IO_EnableIRQ
 //
-//  Parameter(s):   IO_IRQ_Id       ID of the IRQ to enable
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to enable
 //  Return:         None
 //
 //  Description:    Enable the IRQ for specify ID.
@@ -463,11 +463,11 @@ void IO_InitIRQ(IO_IrqID_e IO_IRQ_Id, IO_PinChangeCallback_t pCallback)
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
-void IO_EnableIRQ(IO_IrqID_e IO_IRQ_Id)
+void IO_EnableIRQ(IO_IrqID_e IO_IRQ_ID)
 {
     uint32_t PinMask;
 
-    _IO_GetPinInfo(IO_IRQ_Id, nullptr, &PinMask);
+    _IO_GetPinInfo(IO_IRQ_ID, nullptr, &PinMask);
     EXTI->PR = PinMask;
     SET_BIT(EXTI->IMR, PinMask);                    // Enable IT on provided Lines
 }
@@ -477,7 +477,7 @@ void IO_EnableIRQ(IO_IrqID_e IO_IRQ_Id)
 //
 //  Function:       IO_EnableIRQ
 //
-//  Parameter(s):   IO_IRQ_Id       ID of the IRQ to disable
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to disable
 //  Return:         None
 //
 //  Description:    Disable the IRQ for specify ID.
@@ -486,11 +486,11 @@ void IO_EnableIRQ(IO_IrqID_e IO_IRQ_Id)
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
-void IO_DisableIRQ(IO_IrqID_e IO_IRQ_Id)
+void IO_DisableIRQ(IO_IrqID_e IO_IRQ_ID)
 {
     uint32_t PinMask;
 
-    _IO_GetPinInfo(IO_IRQ_Id, nullptr, &PinMask);
+    _IO_GetPinInfo(IO_IRQ_ID, nullptr, &PinMask);
     CLEAR_BIT(EXTI->IMR, PinMask);                  // Disable IT on provided Lines
 }
 #endif
@@ -499,7 +499,25 @@ void IO_DisableIRQ(IO_IrqID_e IO_IRQ_Id)
 //
 //  Function:       IO_EnableIRQ
 //
-//  Parameter(s):   IO_IRQ_Id       ID of the IRQ to get the state
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to get the state
+//  Return:         IO_ID_e         ID of the IO used
+//
+//  Description:    Get the IO ID for this IO IRQ ID
+//
+//-------------------------------------------------------------------------------------------------
+#ifdef IO_IRQ_DEF
+IO_ID_e IO_GetIO_ID(IO_IrqID_e IO_IRQ_ID)
+{
+    const IO_IRQ_Properties_t* pIRQ_Properties = &IO_IRQ_Properties[IO_IRQ_ID];
+    return pIRQ_Properties->IO_ID;
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_EnableIRQ
+//
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to get the state
 //  Return:         bool            level on input pin 0 or 1
 //
 //  Description:    Get the state of the IRQ for specify ID.
@@ -508,11 +526,11 @@ void IO_DisableIRQ(IO_IrqID_e IO_IRQ_Id)
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
-bool IO_GetIRQ_State(IO_IrqID_e IO_IRQ_Id)
+bool IO_GetIRQ_State(IO_IrqID_e IO_IRQ_ID)
 {
     uint32_t PinMask;
 
-    _IO_GetPinInfo(IO_IRQ_Id, nullptr, &PinMask);
+    _IO_GetPinInfo(IO_IRQ_ID, nullptr, &PinMask);
 
     if((EXTI->IMR & PinMask) != 0)
     {
@@ -525,10 +543,10 @@ bool IO_GetIRQ_State(IO_IrqID_e IO_IRQ_Id)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       IO_callBak
+//  Function:       IO_callBack
 //
-//  Parameter(s):   IO_IRQ_Id       ID of the IRQ to get the state
-//  Return:         bool            level on input pin 0 or 1
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to get the state
+//  Return:         None
 //
 //  Description:    Get the state of the IRQ for specify ID.
 //
@@ -536,11 +554,11 @@ bool IO_GetIRQ_State(IO_IrqID_e IO_IRQ_Id)
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
-void IO_CallBack(IO_IrqID_e IO_IRQ_Id)
+void IO_CallBack(IO_IrqID_e IO_IRQ_ID)
 {
-    if(IO_PinChangeCallback[IO_IRQ_Id] != nullptr)
+    if(IO_PinChangeCallback[IO_IRQ_ID] != nullptr)
     {
-        IO_PinChangeCallback[IO_IRQ_Id](nullptr);
+        IO_PinChangeCallback[IO_IRQ_ID](nullptr);
     }
 }
 #endif
@@ -549,7 +567,10 @@ void IO_CallBack(IO_IrqID_e IO_IRQ_Id)
 //
 //  Function:       IO_PinLowLevelAccess
 //
-//  Parameter(s):
+//  Parameter(s):   PortIO
+//                  PinNumber
+//                  Direction
+//                  State
 //  Return:         uint32_t
 //
 //  Description:    Get the state of the IRQ for specify ID.

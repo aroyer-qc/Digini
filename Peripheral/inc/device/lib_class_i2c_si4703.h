@@ -24,7 +24,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-//  Notes:  Library header file for the radio library to control the TEA5767 radio chip.
+//  Notes:  Library header file for the radio library to control the si4703 radio chip.
 //
 //-------------------------------------------------------------------------------------------------
 

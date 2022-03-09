@@ -274,11 +274,12 @@ uint32_t    IO_GetInputPin              (IO_ID_e IO_ID);
 uint32_t    IO_GetOutputPin             (IO_ID_e IO_ID);
 void        IO_EnableClock              (GPIO_TypeDef* pPort);// is it necessary?
 #ifdef IO_IRQ_DEF
-void        IO_InitIRQ                  (IO_IrqID_e IO_IRQ_Id, IO_PinChangeCallback_t pCallback);
-void        IO_EnableIRQ                (IO_IrqID_e IO_IRQ_Id);
-void        IO_DisableIRQ               (IO_IrqID_e IO_IRQ_Id);
-bool        IO_GetIRQ_State             (IO_IrqID_e IO_IRQ_Id);
-void        IO_CallBack                 (IO_IrqID_e IO_IRQ_Id);
+void        IO_InitIRQ                  (IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback);
+void        IO_EnableIRQ                (IO_IrqID_e IO_IRQ_ID);
+void        IO_DisableIRQ               (IO_IrqID_e IO_IRQ_ID);
+IO_ID_e     IO_GetIO_ID                 (IO_IrqID_e IO_IRQ_ID);
+bool        IO_GetIRQ_State             (IO_IrqID_e IO_IRQ_ID);
+void        IO_CallBack                 (IO_IrqID_e IO_IRQ_ID);
 #endif
 
 uint32_t HALIO_PinLowLevelAccess   (uint32_t PortNumber, uint32_t PinNumber, uint32_t Direction, uint32_t State);

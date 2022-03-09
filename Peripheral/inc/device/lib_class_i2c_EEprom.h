@@ -32,10 +32,7 @@
 
 #include "lib_digini.h"
 
-//-------------------------------------------------------------------------------------------------
-
-#if (USE_EEPROM_DRIVER == DEF_ENABLED)
- #if (USE_I2C_DRIVER == DEF_ENABLED)
+#if (USE_I2C_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // typedef Type(s)
@@ -75,16 +72,14 @@ class EEPROM_Driver
 // constant data
 //-------------------------------------------------------------------------------------------------
 
-  #include "eeprom_var.h"         // Project variable
+#include "eeprom_var.h"         // Project variable
 
 //-------------------------------------------------------------------------------------------------
 
- #else // (USE_I2C_DRIVER == DEF_ENABLED)
+#else // (USE_I2C_DRIVER == DEF_ENABLED)
 
-  #pragma message("DIGINI driver for I2C must be enable and configure to use this device driver")
+ #pragma message("DIGINI driver for I2C must be enable and configure to use this device driver")
 
- #endif // (USE_I2C_DRIVER == DEF_ENABLED)
-
-#endif // (USE_EEPROM_DRIVER == DEF_ENABLED)
+#endif // (USE_I2C_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

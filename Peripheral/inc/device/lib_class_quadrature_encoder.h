@@ -26,13 +26,6 @@
 
 #pragma once
 
-//-------------------------------------------------------------------------------------------------
-
-#ifdef QUAD_ENCODER_GLOBAL
-    #define QUAD_ENCODER_EXTERN
-#else
-    #define QUAD_ENCODER_EXTERN extern
-#endif
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
@@ -40,6 +33,14 @@
 
 #include "lib_digini.h"
 #include "device_cfg.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#ifdef QUAD_ENCODER_GLOBAL
+    #define QUAD_ENCODER_EXTERN
+#else
+    #define QUAD_ENCODER_EXTERN extern
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
@@ -71,9 +72,10 @@ enum QUAD_EncoderChange_e
 
 struct Quad_Info_t
 {
-    IO_ID_e IO_Clk;
-    IO_ID_e IO_Data;
-    IO_ID_e IO_Push;
+    IO_IrqID_e  IO_Clk;
+    IO_ID_e     IO_Data;
+    IO_IrqID_e  IO_Push;
+
 };
 
 typedef void (* QUAD_EncoderCallBack_t) (QUAD_EncoderChange_e Change);
@@ -94,8 +96,11 @@ class QUAD_Encoder
         void                    SetPosition             (uint32_t Position);
         uint32_t                GetPosition             (void);
         uint32_t                GetPushButtonState      (void);
-        void                    EnablePushButtonISR     (IO_IrqID_e IO_IRQ_Id);
-        void                    DisablePushButtonISR    (IO_IrqID_e IO_IRQ_Id);
+        void                    EnablePushButtonISR     (void);
+        void                    DisablePushButtonISR    (void);
+
+        void                    PushButtonISR           (void);
+        void                    EncoderISR              (void);
 
     private:
 

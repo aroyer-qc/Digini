@@ -152,7 +152,7 @@ uint32_t QUAD_Encoder::GetPushButtonState(void)
 {
     if(m_pQuadInfo != nullptr)
     {
-        return IO_GetInputPin(m_pQuadInfo->IO_Push);
+        return IO_GetInputPin(IO_GetIO_ID(m_pQuadInfo->IO_Push));
     }
 
     return 0;
@@ -162,34 +162,30 @@ uint32_t QUAD_Encoder::GetPushButtonState(void)
 //
 //  Name:           EnablePushButtonISR
 //
-//  Parameter(s):   IO_IRQ_Id           IO IRQ ID for the push button
+//  Parameter(s):   None
 //  Return:         None
 //
 //  Description:    Enable the ISR for the push button
 //
-//  Note(s)         Need to fill the X_IO_IRQ in the bsp_io_def.h for configuration
-//
 //-------------------------------------------------------------------------------------------------
-void QUAD_Encoder::EnablePushButtonISR(IO_IrqID_e IO_IRQ_Id)
+void QUAD_Encoder::EnablePushButtonISR(void)
 {
-    IO_EnableIRQ(IO_IRQ_Id);
+    IO_EnableIRQ(m_pQuadInfo->IO_Push);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DisablePushButtonISR
 //
-//  Parameter(s):   IO_IRQ_Id           IO IRQ ID for the push button
+//  Parameter(s):   None
 //  Return:         None
 //
 //  Description:    Disable the ISR for the push button
 //
-//  Note(s)         Need to fill the X_IO_IRQ in the bsp_io_def.h for configuration
-//
 //-------------------------------------------------------------------------------------------------
-void QUAD_Encoder::DisablePushButtonISR(IO_IrqID_e IO_IRQ_Id)
+void QUAD_Encoder::DisablePushButtonISR(void)
 {
-    IO_DisableIRQ(IO_IRQ_Id);
+    IO_DisableIRQ(m_pQuadInfo->IO_Push);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -208,5 +204,37 @@ void QUAD_Encoder::RegisterChangeCallback(void* pCallback)
 }
 
 //-------------------------------------------------------------------------------------------------
+//
+//  Name:           PushButtonISR
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    ISR for the push button
+//
+//-------------------------------------------------------------------------------------------------
+void QUAD_Encoder::PushButtonISR(void)
+{
+    // Need to do process for Pressed and released, maybe superkey??
+    //m_pCallback
+}
 
-#endif // #ifdef QUAD_ENCODER_DEF
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           EncoderISR
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    ISR for the push button
+//
+//-------------------------------------------------------------------------------------------------
+void QUAD_Encoder::EncoderISR(void)
+{
+    // Need to do process for QUAD_INCREMENTED and QUAD_DECREMENTED
+    //m_pCallback
+}
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // QUAD_ENCODER_DEF

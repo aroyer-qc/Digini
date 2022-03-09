@@ -32,6 +32,8 @@
 
 #include "lib_database_wrapper.h"
 #include "lib_typedef.h"
+#include "project_def.h"
+#include "lib_label.h"
 #include "database_cfg.h"
 #include "lib_grafx_dbase.h"
 #include <string.h>

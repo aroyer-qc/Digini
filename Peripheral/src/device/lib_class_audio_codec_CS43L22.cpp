@@ -41,8 +41,8 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if USE_I2C_DRIVER == DEF_ENABLED
-#if USE_I2S_DRIVER == DEF_ENABLED
+#if (USE_I2C_DRIVER == DEF_ENABLED)
+#if (USE_I2S_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -51,13 +51,13 @@
 // I2C Slave address of of the audio codec Cirrus Logic CS43L22
 #define CS43L22_I2C_SLAVE_ADDRESS                   ((uint8_t)0x94)
 
-/* Mask for the bit EN of the I2S CFGR register */
+// Mask for the bit EN of the I2S CFGR register
 #define I2S_ENABLE_MASK                 0x0400
 
-/* Delay for the Codec to be correctly reset */
+// Delay for the Codec to be correctly reset
 #define CODEC_RESET_DELAY               0x4FFF
 
-/* Codec audio Standards */
+// Codec audio Standards
 #ifdef I2S_STANDARD_PHILLIPS
  #define  CODEC_STANDARD                0x04
  #define I2S_STANDARD                   I2S_Standard_Phillips
@@ -69,7 +69,7 @@
  #define I2S_STANDARD                   I2S_Standard_LSB
 #else
  #error "Error: No audio communication standard selected !"
-#endif /* I2S_STANDARD */
+#endif // I2S_STANDARD
 
 
 #define VOLUME_CONVERT(Volume)    (((Volume) > 100)? 100:((uint8_t)(((Volume) * 255) / 100)))

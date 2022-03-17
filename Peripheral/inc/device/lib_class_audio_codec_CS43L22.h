@@ -30,10 +30,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
-#include "lib_class_audio_codec_C43L22.h"
-#include "lib_class_i2c.h"
-#include "lib_class_i2s.h"
+#include "lib_digini.h"
+#include "lib_class_audio_interface.h"
+#include "device_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 // define(s)
@@ -48,35 +47,47 @@
 //-------------------------------------------------------------------------------------------------
 
 class CS43L22 : public AudioInterface
+
 {
     public:
 
-        SystemState_e         Initialize                    (void* pArgControl, void* pArgData);;
-        //SystemState_e     DeInitialize                (void);
-        uint16_t            ReadID                        (void);
-        SystemState_e        Reset                        (void);
+        SystemState_e       Initialize            (void* pArg);
+        //SystemState_e       Initialize            (void* pArgControl, void* pArgData);
+        //SystemState_e     DeInitialize          (void);
+        uint16_t            ReadID                (void);
+        SystemState_e       Reset                 (void);
 
-        SystemState_e         Play                        (uint16_t* pBuffer, uint16_t Size);
-        SystemState_e         Stop                        (uint32_t CodecPdwnMode);
-        SystemState_e         Pause                        (void);
-        SystemState_e         Resume                        (void);
+        SystemState_e       Play                  (uint16_t* pBuffer, uint16_t Size);
+        SystemState_e       Stop                  (uint32_t CodecPdwnMode);
+        SystemState_e       Pause                 (void);
+        SystemState_e       Resume                (void);
 
-        SystemState_e         SetVolume                    (uint8_t Volume);
-        SystemState_e         SetFrequency                (uint32_t AudioFrequency);
-        SystemState_e         SetMute                        (uint32_t Command);
-        SystemState_e         SetOutputMode                (uint8_t Mode);
+        SystemState_e       SetVolume             (uint8_t Volume);
+        SystemState_e       SetFrequency          (uint32_t AudioFrequency);
+        SystemState_e       SetMute               (uint32_t Command);
+        SystemState_e       SetOutputMode         (uint8_t Mode);
 
     private:
 
-        SystemState_e         Write                        (uint8_t Register, uint8_t Data);
+        SystemState_e       Write                 (uint8_t Register, uint8_t Data);
 
-        uint8_t                m_DeviceAddress;
+        uint8_t             m_DeviceAddress;
         uint8_t             m_OutputConfig;
-        bool                 m_IsItStopped;
+        bool                m_IsItStopped;
 
-        I2C*                m_pI2C;
-        I2S*                m_pI2S;
+        I2C_Driver*         m_pI2C;
+        I2S_Driver*         m_pI2S;
 };
+
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+extern class CS43L22                     CS43L22_AudioCodec;
+
+#ifdef LIB_CS43L22_GLOBAL
+ class CS43L22                           CS43L22_AudioCodec;
+#endif
 
 //-------------------------------------------------------------------------------------------------
 
@@ -115,20 +126,6 @@ class CS43L22 : public AudioInterface
 
 /*------------------------------------
                     OPTIONAL Configuration defines parameters
-                                      ----------------------------------------*/
-/* I2C clock speed configuration (in Hz)
-  WARNING:
-   Make sure that this define is not already declared in other files (ie.
-  stm322xg_eval.h file). It can be used in parallel by other modules. */
-#ifndef I2C_SPEED
- #define I2C_SPEED                        100000
-#endif /* I2C_SPEED */
-
-/* Uncomment defines below to select standard for audio communication between
-  Codec and I2S peripheral */
-#define I2S_STANDARD_PHILLIPS
-/* #define I2S_STANDARD_MSB */
-/* #define I2S_STANDARD_LSB */
 
 /* Uncomment the defines below to select if the Master clock mode should be
   enabled or not */

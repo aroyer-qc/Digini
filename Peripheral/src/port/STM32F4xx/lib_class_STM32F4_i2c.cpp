@@ -116,11 +116,12 @@ void I2C_Driver::Initialize(void)
     NVIC_DisableIRQ(m_pInfo->EV_IRQn);
     NVIC_DisableIRQ(m_pInfo->ER_IRQn);
 
-    // ---- GPIO configuration ----
+    // ---- Module configuration ----
     RCC->APB1RSTR |=  m_pInfo->RCC_APB1_En;             // Reset I2C
     RCC->APB1RSTR &= ~m_pInfo->RCC_APB1_En;             // Release reset signal of I2C
     RCC->APB1ENR  |=  m_pInfo->RCC_APB1_En;
 
+    // ---- GPIO configuration ----
     IO_PinInit(m_pInfo->SCL);
     IO_PinInit(m_pInfo->SDA);
 

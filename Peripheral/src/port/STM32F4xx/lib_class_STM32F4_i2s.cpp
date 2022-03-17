@@ -175,36 +175,25 @@
 // forward declaration(s)
 //-------------------------------------------------------------------------------------------------
 
-#define X_I2S(I2C_NUMBER, CLOCK, SPEED, PREEMP_PRIO, EVENT_IRQ_NB, ERROR_IRQ_NB, GPIO_SCL, AF_SCL, PIN_SCL, SCL_GPIO_CLOCK, GPIO_SDA, AF_SDA, PIN_SDA, SDA_GPIO_CLOCK) \
-  extern "C" void I2S##I2S_NUMBER##_EV_IRQHandler();      \
-  extern "C" void I2S##I2S_NUMBER##_ER_IRQHandler();
-  I2S_DEF
-#undef X_I2S
+// These PLL parameters are valid when the f(VCO clock) = 1Mhz
+const uint32_t I2S::m_PLLN[NB_OF_I2S_FREQUENCY] = {256, 429, 213, 429, 426, 271, 258, 344};
+const uint32_t I2S::m_PLLR[NB_OF_I2S_FREQUENCY] = {5,   4,   4,   4,   4,   6,   3,   1};
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: I2S
+//   Constructor:   I2S_Driver
 //
-//   Description:   Class to handle I2S
+//   Parameter(s):  I2S_ID          ID of the I2S info
 //
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Constructor:   I2S
-//
-//   Parameter(s):  I2S_PortInfo_t*  pPort
-//
-//   Description:   Initialize the I2Sx peripheral according to the specified Parameters
+//   Description:   Initializes the I2Sx peripheral according to the specified Parameters
 //
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-I2S::I2S(I2S_PortInfo_t* pPort)
+I2S_Driver::I2S_Driver(I2S_ID_e I2S_ID)
 {
-    m_pPort   = pPort;
-    m_Device  = -1;
-    m_Status  = SYS_DEVICE_NOT_PRESENT;
+    //m_IsItInitialize = false;
+    m_pInfo = &I2S_Info[I2S_ID];
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -221,8 +210,10 @@ I2S::I2S(I2S_PortInfo_t* pPort)
 //-------------------------------------------------------------------------------------------------
 void I2S::Initialize(void)
 {
-    nOS_Error               Error;
-    uint32_t                PriorityGroup;
+    nOS_Error       Error;
+    uint32_t        PriorityGroup;
+    I2S_TypeDef*    pI2Sx;
+
 
     // TODO put an initialization flag
     Error = nOS_MutexCreate(&this->m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
@@ -230,114 +221,121 @@ void I2S::Initialize(void)
 
     m_Timeout = 0;
 
-    NVIC_DisableIRQ(m_pPort->EV_IRQn);
-    NVIC_DisableIRQ(m_pPort->ER_IRQn);
+    NVIC_DisableIRQ(m_pInfo->I2S_DMA_IRQn);
+
+    // ---- Module configuration ----
+    RCC->APB1ENR  |=  m_pInfo->Clock;                                   // I2S exist only on APB1
+    RCC->APB1RSTR |=  m_pInfo->Clock;                                   // Reset I2S
+    RCC->APB1RSTR &= ~m_pInfo->Clock;                                   // Release reset signal of I2S
 
     // ---- GPIO configuration ----
-    RCC->APB1ENR  |=  m_pPort->Clock;
-    RCC->APB1RSTR |=  m_pPort->Clock;                                   // Reset I2C
-    RCC->APB1RSTR &= ~m_pPort->Clock;                                   // Release reset signal of I2C
+    IO_PinInit(&m_pInfo->SCK);
+    IO_PinInit(&m_pInfo->SD);
+    IO_PinInit(&m_pInfo->WS);
+    IO_PinInit(&m_pInfo->MCLK);
 
-    IO_PinInit(&m_pPort->SCL);
-    IO_PinInit(&m_pPort->SDA);
+// for config
+//    GPIO_InitStruct.Pin         = I2S3_SCK_PIN | I2S3_SD_PIN; 
+//    GPIO_InitStruct.Mode        = GPIO_MODE_AF_PP;
+//    GPIO_InitStruct.Pull        = GPIO_NOPULL;
+//    GPIO_InitStruct.Speed       = GPIO_SPEED_FAST;
+//    GPIO_InitStruct.Alternate   = I2S3_SCK_SD_WS_AF;
 
+    RCC->AHB1ENR |= m_pInfo->RCC_AHBxPeriph;            // Initialize DMA clock
+    m_DMA_Status  = SYS_IDLE;
+    m_NoMemoryIncrement = false;
+
+    // Preinit register that won't change
+    pDMA = m_pInfo->DMA_Stream;
+    pDMA->PAR = (uint32_t)&m_pInfo->pI2Sx->DR;          // Configure receive data register
+    pDMA->CR = DMA_PERIPH_TO_MEMORY           |
+               DMA_MODE_NORMAL                |
+               DMA_PERIPH_NO_INCREMENT        |
+               DMA_MEMORY_INCREMENT           |
+               DMA_P_DATA_ALIGN_BYTE          |  //I2S3_DMAx_PERIPH_DATA_SIZE
+               DMA_M_DATA_ALIGN_BYTE          |  //I2S3_DMAx_MEM_DATA_SIZE
+               DMA_P_BURST_SINGLE             |
+               DMA_M_BURST_SINGLE             |
+               DMA_PRIORITY_HIGH              |
+               DMA_SxCR_TCIE                  |
+        //hdma_i2sTx.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;         
+        //hdma_i2sTx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
+               m_pInfo->DMA_Channel;
+  
+    // I2S DMA IRQ Channel configuration
     PriorityGroup = NVIC_GetPriorityGrouping();
-    NVIC_SetPriority(m_pPort->EV_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
-    NVIC_EnableIRQ(m_pPort->EV_IRQn);
-    NVIC_SetPriority(m_pPort->ER_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
-    NVIC_EnableIRQ(m_pPort->ER_IRQn);
-
-
-    ///  ___________________________________________________________________
-
-    uint16_t tmpreg = 0;
-    uint16_t i2sdiv = 2;
-    uint16_t i2sodd = 0;
-    packetlength = 1;
-    uint32_t tmp = 0;
-    uint32_t i2sclk = 0;
-
-    // Init the low level hardware : GPIO, CLOCK, CORTEX...etc
-    HAL_I2S_MspInit(m_pPort->pI2Sx);
-
-    /*----------------------- SPIx I2SCFGR & I2SPR Configuration -----------------*/
-    /* Clear I2SMOD, I2SE, I2SCFG, PCMSYNC, I2SSTD, CKPOL, DATLEN and CHLEN bits */
-    m_pPort->pI2Sx->I2SCFGR &= ~(SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_DATLEN | SPI_I2SCFGR_CKPOL |
-                                 SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_PCMSYNC | SPI_I2SCFGR_I2SCFG |
-                                 SPI_I2SCFGR_I2SE | SPI_I2SCFGR_I2SMOD);
-    m_pPort->pI2Sx->I2SPR = 0x0002;
-
-    // Get the I2SCFGR register value
-    tmpreg = m_pPort->pI2Sx->I2SCFGR;
-
-    // If the default value has to be written, reinitialize i2sdiv and i2sodd
-    if(hi2s->Init.AudioFreq == I2S_AUDIOFREQ_DEFAULT)
-    {
-      i2sodd = (uint16_t)0;
-      i2sdiv = (uint16_t)2;
-    }
-    /* If the requested audio frequency is not the default, compute the prescaler */
-    else
-    {
-      /* Check the frame length (For the Prescaler computing) *******************/
-      if(hi2s->Init.DataFormat == I2S_DATAFORMAT_16B)
-      {
-        /* Packet length is 16 bits */
-        packetlength = 1;
-      }
-      else
-      {
-        /* Packet length is 32 bits */
-        packetlength = 2;
-      }
-
-      /* Get I2S source Clock frequency  ****************************************/
-
-      /* If an external I2S clock has to be used, the specific define should be set
-      in the project configuration or in the stm32f3xx_conf.h file */
-      if(hi2s->Init.ClockSource == I2S_CLOCK_EXTERNAL)
-      {
-        /* Set the I2S clock to the external clock  value */
-        i2sclk = EXTERNAL_CLOCK_VALUE;
-      }
-      else
-      {
-              i2sclk = I2S_GetClockFreq(hi2s);                // Get the I2S source clock value
-      }
-
-      if(hi2s->Init.MCLKOutput == I2S_MCLKOUTPUT_ENABLE)    // Compute the Real divider depending on the MCLK output state, with a floating point
-      {
-        tmp = (uint16_t)(((((i2sclk / 256) * 10) / hi2s->Init.AudioFreq)) + 5);                    // MCLK output is enabled
-      }
-      else
-      {
-        tmp = (uint16_t)(((((i2sclk / (32 * packetlength)) *10 ) / hi2s->Init.AudioFreq)) + 5);    // MCLK output is disabled
-      }
-
-      tmp = tmp / 10;                                // Remove the floating point
-      i2sodd = (uint16_t)(tmp & (uint16_t)0x0001);    // Check the parity of the divider
-      i2sdiv = (uint16_t)((tmp - i2sodd) / 2);        // Compute the i2sdiv prescaler
-      i2sodd = (uint16_t) (i2sodd << 8);            // Get the Mask for the Odd bit (SPI_I2SPR[8]) register
-    }
-
-    // Test if the divider is 1 or 0 or greater than 0xFF
-    if((i2sdiv < 2) || (i2sdiv > 0xFF))
-    {
-      // Set the default values
-      i2sdiv = 2;
-      i2sodd = 0;
-    }
-
-    // Write to SPIx I2SPR register the computed value
-    m_pPort->pI2Sx->I2SPR = (uint16_t)((uint16_t)i2sdiv | (uint16_t)(i2sodd | (uint16_t)hi2s->Init.MCLKOutput));
-
-    // Configure the I2S with the I2S_InitStruct values
-    tmpreg |= (uint16_t)((uint16_t)SPI_I2SCFGR_I2SMOD | (uint16_t)(hi2s->Init.Mode |
-                         (uint16_t)(hi2s->Init.Standard | (uint16_t)(hi2s->Init.DataFormat |
-                         (uint16_t)hi2s->Init.CPOL))));
-
-    m_pPort->pI2Sx->I2SCFGR = tmpreg;        // Write to SPIx I2SCFGR
+    NVIC_SetPriority(m_pInfo->I2S_DMA_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
+    NVIC_EnableIRQ(m_pInfo->I2S_DMA_IRQn);
 }
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function:      SetFrequency
+//
+//   Parameter(s):  Frequency           Audio frequency used to play the audio stream.
+//   Return Value:  SystemState_e
+//
+//   Description:   Update the audio frequency
+//
+//   Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e I2S::SetFrequency(I2S_Frequency_e Frequency)
+{
+    nOS_TickCounter TickStart;
+    
+    // Disable the PLLI2S
+    RCC_CR_PLLI2SON_BB = DISABLE)
+
+    // Wait here until PLLI2S is disabled or time out
+    TickStart = GetTick();
+
+    while((RCC->CR & RCC_CR_PLLI2SRDY) != 0)
+    {
+        if(TickHasTimeOut(TickStart, PLLI2S_TIMEOUT_VALUE) == true)
+        {
+            return SYS_TIME_OUT;            // Return in case of timeout detected
+        }
+    }
+
+    if((Frequency == I2S_8000_HZ)
+    {
+        // I2S clock config 
+        // PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
+        // I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR
+        RCC->PLLI2SCFGR = (m_PLLN[Frequency] << RCC_PLLI2SCFGR_PLLI2SN_Pos) | (I2S::m_PLLR[Frequency] << RCC_PLLI2SCFGR_PLLI2SR_Pos)
+    }
+    else 
+    {
+        // I2S clock config 
+        // PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
+        // I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR
+        RCC->PLLI2SCFGR = (258 << RCC_PLLI2SCFGR_PLLI2SN_Pos) | (3 << RCC_PLLI2SCFGR_PLLI2SR_Pos)
+    }
+    
+    // Enable the PLLI2S
+    SetBit(RCC->CR, RCC_CR_PLLI2SON);
+    
+    // Wait till PLLI2S is ready
+    TickStart = GetTick();
+
+    while((RCC->CR & RCC_CR_PLLI2SRDY) == 0)
+    {
+        if(TickHasTimeOut(TickStart, PLLI2S_TIMEOUT_VALUE) == true)
+        {
+            // Return in case of Timeout detected
+            return SYS_TIME_OUT;            // Return in case of timeout detected
+        }
+    }
+
+  return SYS_READY;
+}
+
+
+
+// Update the I2S audio frequency configuration
+//??? why I2S3_Init(AudioFreq);
+//}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -358,59 +356,22 @@ SystemState_e I2S::GetStatus(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           LockToDevice
+//   Function:      ChangeBuffer
 //
-//  Parameter(s):   uint8_t*        pDevice
-//  Return:         SystemState_e   Status
+//   Parameter(s):  pData       Pointer to data address.
+//                  Size        umber of data to be written.
+//   Return Value:  None
 //
-//  Description:    This routine will configure the I2C port to work with a specific device and
-//                  lock it, so any other access to the port will be block until unlock
+//   Description:   Sends n-Bytes on the I2S interface.
 //
-//  Note(s):        If a write without lock is executed then it will be done on the locked device
+//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2S::LockToDevice(uint8_t Device)
+void I2S::ChangeBuffer(uint16_t* pData, uint16_t Size)
 {
-    if(m_Device == -1)
-    {
-        m_Device = Device;
-        this->Lock();
-        return SYS_READY;
-    }
-    return SYS_NOT_LOCK_TO_DEVICE;
+  // todo get stuff and degrease that shit
+  HAL_I2S_Transmit_DMA(&hAudioOutI2s, pData, Size); 
 }
-
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           UnlockFromDevice
-//
-//  Parameter(s):   I2C_DeviceInfo_t*    pDevice
-//  Return:         I2C_eStatus         Status
-//
-//  Description:    This routine will unlock I2C port from a specific device
-//
-//  Note(s):        If a write without lock is executed then it will be done on the locked device
-//                  if lock and no write at all if not lock to a device
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e I2S::UnlockFromDevice(uint8_t Device)
-{
-    if(Device == m_Device)
-    {
-        this->Unlock();
-        m_Device = -1;
-        return SYS_READY;
-    }
-
-    if(m_Device == -1)
-    {
-        return SYS_NOT_LOCK_TO_DEVICE;
-    }
-
-    return SYS_WRONG_DEVICE;
-}
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -448,39 +409,31 @@ SystemState_e I2S:: ()
     return SYS_BUSY;
 }
 
-//-------------------------------------------------------------------------------------------------
-//
-//   Function:      Lock
-//
-//   Parameter(s):  None
-//   Return Value:  None
-//
-//   Description:   Lock the driver
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void I2S::Lock(void)
+/**
+  * @brief  Tx Transfer completed callbacks.
+  * @param  hi2s: I2S handle
+  */
+void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-    while(nOS_MutexLock(&this->m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
+    if(hi2s->Instance == I2S3)
+    {
+        /* Call the user function which will manage directly transfer complete */  
+        BSP_AUDIO_OUT_TransferComplete_CallBack();       
+    }
 }
 
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function:      Unlock
-//
-//   Parameter(s):  None
-//   Return Value:  None
-//
-//   Description:   Unlock the driver
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void I2S::Unlock(void)
+/**
+  * @brief  Tx Half Transfer completed callbacks.
+  * @param  hi2s: I2S handle
+  */
+void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-    nOS_MutexUnlock(&this->m_Mutex);
+    if(hi2s->Instance == I2S3)
+    {
+        /* Manage the remaining file size and new address offset: This function should
+        be coded by user (its prototype is already declared in stm32f4_discovery_audio.h) */  
+        BSP_AUDIO_OUT_HalfTransfer_CallBack();
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -578,13 +531,6 @@ b) RECORD A FILE:
    + Call the function AUDIO_IN_STOP() to stop recording 
 ==============================================================================*/
 
-/* Includes ------------------------------------------------------------------*/
-#include "stm32f401_discovery_audio.h"
-
-/* These PLL parameters are valid when the f(VCO clock) = 1Mhz */
-const uint32_t I2SFreq[8] = {8000, 11025, 16000, 22050, 32000, 44100, 48000, 96000};
-const uint32_t I2SPLLN[8] = {256, 429, 213, 429, 426, 271, 258, 344};
-const uint32_t I2SPLLR[8] = {5, 4, 4, 4, 4, 6, 3, 1};
 
 /*##### PLAY #####*/
 static AUDIO_DrvTypeDef           *pAudioDrv;
@@ -611,7 +557,7 @@ static void PDMDecoder_Init(uint32_t AudioFreq, uint32_t ChnlNbrIn, uint32_t Chn
   * @param  AudioFreq: Audio frequency used to play the audio stream.
   * @retval SYS_READY if correct communication, else wrong communication
   */
-SystemState_e BSP_AUDIO_OUT_Init(uint16_t OutputDevice, uint8_t Volume, uint32_t AudioFreq)
+SystemState_e I2S::InitInput(uint16_t OutputDevice, uint8_t Volume, uint32_t AudioFreq)
 {    
     SystemState_e ret = SYS_READY;
   
@@ -678,16 +624,6 @@ SystemState_e BSP_AUDIO_OUT_Play(uint16_t* pBuffer, uint32_t Size)
   }
 }
   
-/**
-  * @brief  Sends n-Bytes on the I2S interface.
-  * @param  pData: Pointer to data address 
-  * @param  Size: Number of data to be written
-  */
-void BSP_AUDIO_OUT_ChangeBuffer(uint16_t *pData, uint16_t Size)
-{
-  HAL_I2S_Transmit_DMA(&hAudioOutI2s, pData, Size); 
-}
-
 /**
   * @brief   Pauses the audio file stream. In case of using DMA, the DMA Pause
   *          feature is used.
@@ -832,215 +768,8 @@ SystemState_e BSP_AUDIO_OUT_SetOutputMode(uint8_t Output)
     }
 }
 
-/**
-  * @brief  Update the audio frequency.
-  * @param  AudioFreq: Audio frequency used to play the audio stream.
-  * @note   This API should be called after the BSP_AUDIO_OUT_Init() to adjust the
-  *         audio frequency. 
-  */
-void BSP_AUDIO_OUT_SetFrequency(uint32_t AudioFreq)
-{ 
-    /* PLL clock is set depending by the AudioFreq (44.1khz vs 48khz groups) */ 
-    BSP_AUDIO_OUT_ClockConfig(&hAudioOutI2s, AudioFreq, NULL);
-  
-    /* Update the I2S audio frequency configuration */
-    I2S3_Init(AudioFreq);
-}
 
-/**
-  * @brief  Tx Transfer completed callbacks.
-  * @param  hi2s: I2S handle
-  */
-void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    if(hi2s->Instance == I2S3)
-    {
-        /* Call the user function which will manage directly transfer complete */  
-        BSP_AUDIO_OUT_TransferComplete_CallBack();       
-    }
-}
 
-/**
-  * @brief  Tx Half Transfer completed callbacks.
-  * @param  hi2s: I2S handle
-  */
-void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    if(hi2s->Instance == I2S3)
-    {
-        /* Manage the remaining file size and new address offset: This function should
-        be coded by user (its prototype is already declared in stm32f4_discovery_audio.h) */  
-        BSP_AUDIO_OUT_HalfTransfer_CallBack();
-    }
-}
-
-/**
-  * @brief  Clock Config.
-  * @param  hi2s: might be required to set audio peripheral predivider if any.
-  * @param  AudioFreq: Audio frequency used to play the audio stream.
-  * @note   This API is called by BSP_AUDIO_OUT_Init() and BSP_AUDIO_OUT_SetFrequency()
-  *         Being __weak it can be overwritten by the application     
-  * @param  Params : pointer on additional configuration parameters, can be NULL.
-  */
-__weak void BSP_AUDIO_OUT_ClockConfig(I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params)
-{ 
-    RCC_PeriphCLKInitTypeDef rccclkinit;
-    uint8_t index = 0, freqindex = 0xFF;
-  
-    for(index = 0; index < 8; index++)
-    {
-        if(I2SFreq[index] == AudioFreq)
-        {
-            freqindex = index;
-        }
-    }
-    /* Enable PLLI2S clock */
-    HAL_RCCEx_GetPeriphCLKConfig(&rccclkinit);
-    /* PLLI2S_VCO Input = HSE_VALUE/PLL_M = 1 Mhz */
-    if ((freqindex & 0x7) == 0)
-    {
-        /* I2S clock config 
-        PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
-        I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR */
-        rccclkinit.PeriphClockSelection = RCC_PERIPHCLK_I2S;
-        rccclkinit.PLLI2S.PLLI2SN = I2SPLLN[freqindex];
-        rccclkinit.PLLI2S.PLLI2SR = I2SPLLR[freqindex];
-        HAL_RCCEx_PeriphCLKConfig(&rccclkinit);
-    }
-    else 
-    {
-        /* I2S clock config 
-        PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
-        I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR */
-        rccclkinit.PeriphClockSelection = RCC_PERIPHCLK_I2S;
-        rccclkinit.PLLI2S.PLLI2SN = 258;
-        rccclkinit.PLLI2S.PLLI2SR = 3;
-        HAL_RCCEx_PeriphCLKConfig(&rccclkinit);
-    }
-}
-
-/**
-  * @brief  AUDIO OUT I2S MSP Init.
-  * @param  hi2s: might be required to set audio peripheral predivider if any.
-  * @param  Params : pointer on additional configuration parameters, can be NULL.
-  */
-__weak void BSP_AUDIO_OUT_MspInit(I2S_HandleTypeDef *hi2s, void *Params)
-{
-    static DMA_HandleTypeDef hdma_i2sTx;
-    GPIO_InitTypeDef  GPIO_InitStruct;
-  
-    /* Enable I2S3 clock */
-    I2S3_CLK_ENABLE();
-  
-    /*** Configure the GPIOs ***/  
-    /* Enable I2S GPIO clocks */
-    I2S3_SCK_SD_CLK_ENABLE();
-    I2S3_WS_CLK_ENABLE();
-  
-    /* I2S3 pins configuration: WS, SCK and SD pins ----------------------------*/
-    GPIO_InitStruct.Pin         = I2S3_SCK_PIN | I2S3_SD_PIN; 
-    GPIO_InitStruct.Mode        = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull        = GPIO_NOPULL;
-    GPIO_InitStruct.Speed       = GPIO_SPEED_FAST;
-    GPIO_InitStruct.Alternate   = I2S3_SCK_SD_WS_AF;
-    HAL_GPIO_Init(I2S3_SCK_SD_GPIO_PORT, &GPIO_InitStruct);
-  
-    GPIO_InitStruct.Pin         = I2S3_WS_PIN ;
-    HAL_GPIO_Init(I2S3_WS_GPIO_PORT, &GPIO_InitStruct); 
-  
-    /* I2S3 pins configuration: MCK pin */
-    I2S3_MCK_CLK_ENABLE();
-    GPIO_InitStruct.Pin         = I2S3_MCK_PIN; 
-    HAL_GPIO_Init(I2S3_MCK_GPIO_PORT, &GPIO_InitStruct);   
-  
-    /* Enable the I2S DMA clock */
-    I2S3_DMAx_CLK_ENABLE(); 
-      
-    if(hi2s->Instance == I2S3)
-        {
-        /* Configure the hdma_i2sTx handle parameters */   
-        hdma_i2sTx.Init.Channel             = I2S3_DMAx_CHANNEL;  
-        hdma_i2sTx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
-        hdma_i2sTx.Init.PeriphInc           = DMA_PINC_DISABLE;
-        hdma_i2sTx.Init.MemInc              = DMA_MINC_ENABLE;
-        hdma_i2sTx.Init.PeriphDataAlignment = I2S3_DMAx_PERIPH_DATA_SIZE;
-        hdma_i2sTx.Init.MemDataAlignment    = I2S3_DMAx_MEM_DATA_SIZE;
-        hdma_i2sTx.Init.Mode                = DMA_NORMAL;
-        hdma_i2sTx.Init.Priority            = DMA_PRIORITY_HIGH;
-        hdma_i2sTx.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;         
-        hdma_i2sTx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
-        hdma_i2sTx.Init.MemBurst            = DMA_MBURST_SINGLE;
-        hdma_i2sTx.Init.PeriphBurst         = DMA_PBURST_SINGLE; 
-        
-        hdma_i2sTx.Instance                 = I2S3_DMAx_STREAM;
-        
-        /* Associate the DMA handle */
-        __HAL_LINKDMA(hi2s, hdmatx, hdma_i2sTx);
-        
-        /* Deinitialize the Stream for new transfer */
-        HAL_DMA_DeInit(&hdma_i2sTx);
-        
-        /* Configure the DMA Stream */
-        HAL_DMA_Init(&hdma_i2sTx);
-    }
-  
-    /* I2S DMA IRQ Channel configuration */
-    HAL_NVIC_SetPriority(I2S3_DMAx_IRQ, AUDIO_OUT_IRQ_PREPRIO, 0);
-    HAL_NVIC_EnableIRQ(I2S3_DMAx_IRQ); 
-}
-
-/**
-  * @brief  De-Initializes BSP_AUDIO_OUT MSP.
-  * @param  hi2s: might be required to set audio peripheral predivider if any.
-  * @param  Params : pointer on additional configuration parameters, can be NULL.
-  */
-__weak void BSP_AUDIO_OUT_MspDeInit(I2S_HandleTypeDef *hi2s, void *Params)
-{  
-    GPIO_InitTypeDef  GPIO_InitStruct;
-
-    /* I2S DMA IRQ Channel deactivation */
-    HAL_NVIC_DisableIRQ(I2S3_DMAx_IRQ); 
-  
-    if(hi2s->Instance == I2S3)
-    {
-        /* Deinitialize the Stream for new transfer */
-        HAL_DMA_DeInit(hi2s->hdmatx);
-    }
-
-    /* Disable I2S block */
-    __HAL_I2S_DISABLE(hi2s);
-
-    /* CODEC_I2S pins configuration: SCK and SD pins */
-    GPIO_InitStruct.Pin = I2S3_SCK_PIN | I2S3_SD_PIN;
-    HAL_GPIO_DeInit(I2S3_SCK_SD_GPIO_PORT, GPIO_InitStruct.Pin);
-  
-    /* CODEC_I2S pins configuration: WS pin */
-    GPIO_InitStruct.Pin = I2S3_WS_PIN;
-    HAL_GPIO_DeInit(I2S3_WS_GPIO_PORT, GPIO_InitStruct.Pin);
-  
-    /* CODEC_I2S pins configuration: MCK pin */
-    GPIO_InitStruct.Pin = I2S3_MCK_PIN;
-    HAL_GPIO_DeInit(I2S3_MCK_GPIO_PORT, GPIO_InitStruct.Pin); 
-
-    /* Disable I2S clock */
-    I2S3_CLK_DISABLE();
-
-    // GPIO pins clock and DMA clock can be shut down in the application by surcharging this __weak function
-}
-
-/**
-  * @brief  Manages the DMA full Transfer complete event.
-  */
-__weak void BSP_AUDIO_OUT_TransferComplete_CallBack(void)
-{
-}
-
-/**
-  * @brief  Manages the DMA Half Transfer complete event.
-  */
-__weak void BSP_AUDIO_OUT_HalfTransfer_CallBack(void)
-{
-}
 
 /**
   * @brief  Manages the DMA FIFO error event.
@@ -1206,28 +935,6 @@ uint8_t BSP_AUDIO_IN_PDMToPCM(uint16_t *PDMBuf, uint16_t *PCMBuf)
   /* Return AUDIO_OK when all operations are correctly done */
   return AUDIO_OK; 
 }
-
-/**
-  * @brief  Rx Transfer completed callbacks
-  * @param  hi2s: I2S handle
-  */
-void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-  /* Call the record update function to get the next buffer to fill and its size (size is ignored) */
-  BSP_AUDIO_IN_TransferComplete_CallBack();
-}
-
-/**
-  * @brief  Rx Half Transfer completed callbacks.
-  * @param  hi2s: I2S handle
-  */
-void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-  /* Manage the remaining file size and new address offset: This function 
-     should be coded by user (its prototype is already declared in stm32f401_discovery_audio.h) */
-  BSP_AUDIO_IN_HalfTransfer_CallBack();
-}
-
 /**
   * @brief  Audio In Clock Config.
   * @param  hi2s: I2S handle
@@ -1331,39 +1038,6 @@ __weak void BSP_AUDIO_IN_MspInit(I2S_HandleTypeDef *hi2s, void *Params)
   HAL_NVIC_EnableIRQ(I2S2_DMAx_IRQ); 
 }
 
-/**
-  * @brief  DeInitializes BSP_AUDIO_IN MSP.
-  * @param  hi2s: I2S handle
-  * @param  Params : pointer on additional configuration parameters, can be NULL.
-  */
-__weak void BSP_AUDIO_IN_MspDeInit(I2S_HandleTypeDef *hi2s, void *Params)
-{
-  GPIO_InitTypeDef  gpio_init_structure;
-
-  /* I2S DMA IRQ Channel deactivation */
-  HAL_NVIC_DisableIRQ(I2S2_DMAx_IRQ); 
-  
-  if(hi2s->Instance == I2S2)
-  {
-    /* Deinitialize the Stream for new transfer */
-    HAL_DMA_DeInit(hi2s->hdmarx);
-  }
-
- /* Disable I2S block */
-  __HAL_I2S_DISABLE(hi2s);
-
-  /* Disable pins: SCK and SD pins */
-  gpio_init_structure.Pin = I2S2_SCK_PIN;
-  HAL_GPIO_DeInit(I2S2_SCK_GPIO_PORT, gpio_init_structure.Pin);
-  gpio_init_structure.Pin = I2S2_MOSI_PIN;
-  HAL_GPIO_DeInit(I2S2_MOSI_GPIO_PORT, gpio_init_structure.Pin); 
-
-  /* Disable I2S clock */
-  I2S2_CLK_DISABLE();
-
-  /* GPIO pins clock and DMA clock can be shut down in the applic 
-     by surcgarging this __weak function */ 
-}
 
 /**
   * @brief  User callback when record buffer is filled.
@@ -1682,46 +1356,6 @@ void HAL_I2S_ErrorCallback(I2S_HandleTypeDef *hi2s)
       mode and Slave mode (details for these procedures are available in reference 
       manual (RM0090)).
 
-
-/**
-  * @brief  Initializes the SPIx peripheral according to the specified 
-  *         parameters in the SPI_InitStruct.
-  * @param  SPIx: where x can be 1, 2, 3, 4, 5 or 6 to select the SPI peripheral.
-  * @param  SPI_InitStruct: pointer to a SPI_InitTypeDef structure that
-  *         contains the configuration information for the specified SPI peripheral.
-  * @retval None
-  */
-void SPI_Init(SPI_TypeDef* SPIx, SPI_InitTypeDef* SPI_InitStruct)
-{
-  uint16_t tmpreg = 0;
-  
-/*---------------------------- SPIx CR1 Configuration ------------------------*/
-  /* Get the SPIx CR1 value */
-  tmpreg = SPIx->CR1;
-  /* Clear BIDIMode, BIDIOE, RxONLY, SSM, SSI, LSBFirst, BR, MSTR, CPOL and CPHA bits */
-  tmpreg &= CR1_CLEAR_MASK;
-  /* Configure SPIx: direction, NSS management, first transmitted bit, BaudRate prescaler
-     master/salve mode, CPOL and CPHA */
-  /* Set BIDImode, BIDIOE and RxONLY bits according to SPI_Direction value */
-  /* Set SSM, SSI and MSTR bits according to SPI_Mode and SPI_NSS values */
-  /* Set LSBFirst bit according to SPI_FirstBit value */
-  /* Set BR bits according to SPI_BaudRatePrescaler value */
-  /* Set CPOL bit according to SPI_CPOL value */
-  /* Set CPHA bit according to SPI_CPHA value */
-  tmpreg |= (uint16_t)((uint32_t)SPI_InitStruct->SPI_Direction | SPI_InitStruct->SPI_Mode |
-                  SPI_InitStruct->SPI_DataSize | SPI_InitStruct->SPI_CPOL |  
-                  SPI_InitStruct->SPI_CPHA | SPI_InitStruct->SPI_NSS |  
-                  SPI_InitStruct->SPI_BaudRatePrescaler | SPI_InitStruct->SPI_FirstBit);
-  /* Write to SPIx CR1 */
-  SPIx->CR1 = tmpreg;
-
-  /* Activate the SPI mode (Reset I2SMOD bit in I2SCFGR register) */
-  SPIx->I2SCFGR &= (uint16_t)~((uint16_t)SPI_I2SCFGR_I2SMOD);
-/*---------------------------- SPIx CRCPOLY Configuration --------------------*/
-  /* Write to SPIx CRCPOLY */
-  SPIx->CRCPR = SPI_InitStruct->SPI_CRCPolynomial;
-}
-
 /**
   * @brief  Initializes the SPIx peripheral according to the specified 
   *         parameters in the I2S_InitStruct.
@@ -1857,34 +1491,6 @@ void I2S_Init(SPI_TypeDef* SPIx, I2S_InitTypeDef* I2S_InitStruct)
  
   /* Write to SPIx I2SCFGR */  
   SPIx->I2SCFGR = tmpreg;
-}
-
-/**
-  * @brief  Fills each SPI_InitStruct member with its default value.
-  * @param  SPI_InitStruct: pointer to a SPI_InitTypeDef structure which will be initialized.
-  * @retval None
-  */
-void SPI_StructInit(SPI_InitTypeDef* SPI_InitStruct)
-{
-/*--------------- Reset SPI init structure parameters values -----------------*/
-  /* Initialize the SPI_Direction member */
-  SPI_InitStruct->SPI_Direction = SPI_Direction_2Lines_FullDuplex;
-  /* initialize the SPI_Mode member */
-  SPI_InitStruct->SPI_Mode = SPI_Mode_Slave;
-  /* initialize the SPI_DataSize member */
-  SPI_InitStruct->SPI_DataSize = SPI_DataSize_8b;
-  /* Initialize the SPI_CPOL member */
-  SPI_InitStruct->SPI_CPOL = SPI_CPOL_Low;
-  /* Initialize the SPI_CPHA member */
-  SPI_InitStruct->SPI_CPHA = SPI_CPHA_1Edge;
-  /* Initialize the SPI_NSS member */
-  SPI_InitStruct->SPI_NSS = SPI_NSS_Hard;
-  /* Initialize the SPI_BaudRatePrescaler member */
-  SPI_InitStruct->SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_2;
-  /* Initialize the SPI_FirstBit member */
-  SPI_InitStruct->SPI_FirstBit = SPI_FirstBit_MSB;
-  /* Initialize the SPI_CRCPolynomial member */
-  SPI_InitStruct->SPI_CRCPolynomial = 7;
 }
 
 /**

@@ -23,12 +23,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
-//
-//  use one of the define in device_cfg.h
-//            I2S_STANDARD_PHILLIPS
-//            I2S_STANDARD_MSB
-//            I2S_STANDARD_LSB
-//
 
 #pragma once
 
@@ -66,20 +60,61 @@ enum I2S_Frequency_e
     I2S_44100_HZ,
     I2S_48000_HZ,
     I2S_96000_HZ,
+    I2S_192000_HZ,
     NB_OF_I2S_FREQUENCY,
 };
 
-struct I2S_Init_t
+// I2S_Mode
+enum I2S_Mode_e
 {
-    uint16_t I2S_Mode;          // Specifies the I2S operating mode.                            This Parameter can be a value of @ref I2S_Mode
-    uint16_t I2S_Standard;      // Specifies the standard used for the I2S communication.       This Parameter can be a value of @ref I2S_Standard
-    uint16_t I2S_DataFormat;    // Specifies the data format for the I2S communication.         This Parameter can be a value of @ref I2S_Data_Format
-    uint16_t I2S_MCLKOutput;    // Specifies whether the I2S MCLK output is enabled or not.     This Parameter can be a value of @ref I2S_MCLK_Output
-    uint32_t I2S_AudioFreq;     // Specifies the frequency selected for the I2S communication.  This Parameter can be a value of @ref I2S_Audio_Frequency
-    uint16_t I2S_CPOL;          // Specifies the idle state of the I2S clock.                   This Parameter can be a value of @ref I2S_Clock_Polarity
+    I2S_MODE_SLAVE_TX       = 0x0000,
+    I2S_MODE_SLAVE_RX       = 0x0100,
+    I2S_MODE_MASTER_TX      = 0x0200,
+    I2S_MODE_MASTER_RX      = 0x0300,
 };
 
-typedef struct
+// I2S_Standard
+enum I2S_Standard_e
+{
+    I2S_STANDARD_PHILLIPS   = 0x0000,
+    I2S_STANDARD_MSB        = 0x0010,
+    I2S_STANDARD_LSB        = 0x0020,
+    I2S_STANDARD_PCM_SHORT  = 0x0030,
+    I2S_STANDARD_PCM_LONG   = 0x00B0,
+};
+
+// I2S_Data Format
+enum I2S_DataFormat_e
+{
+    I2S_DATAFORMAT_16B          = 0,
+    I2S_DATAFORMAT_16B_EXTENDED = 1,
+    I2S_DATAFORMAT_24B          = 3,
+    I2S_DATAFORMAT_32B          = 5,
+};
+
+// I2S_MCLK_Output
+enum I2S_MCLK_Output_e
+{
+    I2S_MCLK_OUTPUT_ENABLE  = 0x0200,
+    I2S_MCLK_OUTPUT_DISABLE = 0x0000,
+};
+
+// I2S_Clock_Polarity
+enum I2S_CPOL_Level_e
+{
+    I2S_CPOL_LOW            = 0x0000,
+    I2S_CPOL_HIGH           = 0x0008,
+};
+
+// I2S_CallBack
+enum I2S_CallBackType_e
+{
+    I2S_CALLBACK_HALF_COMPLETE,
+    I2S_CALLBACK_COMPLETE,
+    I2S_CALLBACK_ERROR,
+};
+
+struct I2S_TypeDef
 {
     uint32_t      RESERVED0;    //                                  Reserved:       0x00
     __IO uint16_t CR2;          // SPI/I2S control register 2,      Address offset: 0x04
@@ -95,7 +130,7 @@ typedef struct
     uint16_t      RESERVED7;    //                                  Reserved:       0x1E
     __IO uint16_t I2SPR;        // SPI_I2S prescaler register,      Address offset: 0x20
     uint16_t      RESERVED8;    //                                  Reserved:       0x22
-} I2S_TypeDef;
+};
 
 struct I2S_Info_t
 {
@@ -104,7 +139,12 @@ struct I2S_Info_t
     IO_ID_e             SCK;
     IO_ID_e             SD;
     IRQn_Type           I2S_DMA_IRQn;
-
+    I2S_Mode_e          Mode;           // Specifies the I2S operating mode.
+    I2S_DataFormat_e    DataFormat;     // Specifies the data format for the I2S communication.
+    I2S_Standard_e      Standard;       // Specifies the standard used for the I2S communication.
+    I2S_Frequency_e     Frequency;
+    I2S_MCLK_Output_e   CLK_Output;     // Specifies whether the I2S MCLK output is enabled or not.
+    I2S_CPOL_Level_e    CPOL_Level;     // Specifies the idle state of the I2S clock.
     // DMA
     DMA_TypeDef*        pDMAx;
     uint32_t            DMA_Channel;
@@ -120,31 +160,45 @@ class I2S_Driver
 {
     public:
 
-                        I2S_Driver          (I2S_ID_e* I2S_ID);
+                        I2S_Driver              (I2S_ID_e* I2S_ID);
 
-        SystemState_e   GetStatus           (void);
+        SystemState_e   GetStatus               (void);
 
-        void            Initialize          (void);
-        SystemState_e   SetFrequency        (I2S_Frequency_e Frequency);
+        void            Initialize              (void);
+        SystemState_e   RegisterCallBack        (I2S_CallBackType_e CallBackType, void* pCallBack);
+        SystemState_e   SetFrequency            (I2S_Frequency_e Frequency);
+        void            I2S_TransmitDMA         (uint16_t* pBuffer, uint16_t Size);
+        SystemState_e   TX_CompleteCallback     (void);
+        SystemState_e   TX_HalfCompleteCallback (void);
+        SystemState_e   ErrorCallback           (void);
 
     private:
 
-        void            ChangeBuffer        (uint16_t *pData, uint16_t Size);
 
-        I2S_Info_t*                         m_pInfo;
-
-        //volatile size_t                   m_Size;
-        //volatile uint8_t*                 m_pBuffer;
-
-        volatile size_t                     m_Size;
-
-        volatile SystemState_e              m_Status;
-        volatile uint8_t                    m_Timeout;
-
-        static const uint32_t               m_PLLN[NB_OF_I2S_FREQUENCY];
-        static const uint32_t               m_PLLR[NB_OF_I2S_FREQUENCY];
+        I2S_Info_t*                             m_pInfo;
+        //volatile size_t                       m_Size;
+        volatile uint16_t*                      m_pBuffer;
+        volatile size_t                         m_Size;
+        volatile SystemState_e                  m_Status;
+        volatile uint8_t                        m_Timeout;
+        static const uint32_t                   m_PLLN[NB_OF_I2S_FREQUENCY];
+        static const uint32_t                   m_PLLR[NB_OF_I2S_FREQUENCY];
+             void*                       m_pHalfCompleteCallBack;
+             void*                       m_pCompleteCallBack;
+             void*                       m_pErrorCallBack;
 };
 
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+#include "i2s_var.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // STM32F4_I2S_GLOBAL
+
+//-------------------------------------------------------------------------------------------------
 
 #if 0
 /* Initialization and Configuration functions *********************************/
@@ -163,19 +217,6 @@ void SPI_I2S_ClearFlag(SPI_TypeDef* SPIx, uint16_t SPI_I2S_FLAG);
 ITStatus SPI_I2S_GetITStatus(SPI_TypeDef* SPIx, uint8_t SPI_I2S_IT);
 void SPI_I2S_ClearITPendingBit(SPI_TypeDef* SPIx, uint8_t SPI_I2S_IT);
 #endif
-
-//-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "i2s_var.h"
-
-//-------------------------------------------------------------------------------------------------
-
-#endif // STM32F4_I2S_GLOBAL
-
-//-------------------------------------------------------------------------------------------------
-
 
 
 

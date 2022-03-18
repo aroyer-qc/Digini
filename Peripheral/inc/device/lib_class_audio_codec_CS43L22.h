@@ -126,7 +126,7 @@ extern class CS43L22                     CS43L22_AudioCodec;
 
 /*------------------------------------
                     OPTIONAL Configuration defines parameters
-
+*/
 /* Uncomment the defines below to select if the Master clock mode should be
   enabled or not */
 #define CODEC_MCLK_ENABLED

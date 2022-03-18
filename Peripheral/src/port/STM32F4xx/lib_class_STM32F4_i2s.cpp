@@ -24,8 +24,6 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-// TODO TODO TODO TODO....  
-
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
@@ -41,66 +39,6 @@
 #define CR1_CLEAR_MASK              ((uint16_t)0xFBF5)          // I2S registers Masks
 #define FLAG_MASK                   ((uint32_t)0x00FFFFFF)      // I2S FLAG mask
 #define I2S_TIME_OUT                100                         // 100 Milliseconds
-
-
-// SPI_I2S_Mode 
-#define I2S_Mode_SlaveTx                ((uint16_t)0x0000)
-#define I2S_Mode_SlaveRx                ((uint16_t)0x0100)
-#define I2S_Mode_MasterTx               ((uint16_t)0x0200)
-#define I2S_Mode_MasterRx               ((uint16_t)0x0300)
-#define IS_I2S_MODE(MODE) (((MODE) == I2S_Mode_SlaveTx) || \
-                           ((MODE) == I2S_Mode_SlaveRx) || \
-                           ((MODE) == I2S_Mode_MasterTx)|| \
-                           ((MODE) == I2S_Mode_MasterRx))
-
-// SPI_I2S_Standard
-#define I2S_Standard_Phillips           ((uint16_t)0x0000)
-#define I2S_Standard_MSB                ((uint16_t)0x0010)
-#define I2S_Standard_LSB                ((uint16_t)0x0020)
-#define I2S_Standard_PCMShort           ((uint16_t)0x0030)
-#define I2S_Standard_PCMLong            ((uint16_t)0x00B0)
-#define IS_I2S_STANDARD(STANDARD) (((STANDARD) == I2S_Standard_Phillips) || \
-                                   ((STANDARD) == I2S_Standard_MSB) || \
-                                   ((STANDARD) == I2S_Standard_LSB) || \
-                                   ((STANDARD) == I2S_Standard_PCMShort) || \
-                                   ((STANDARD) == I2S_Standard_PCMLong))
-
-// SPI_I2S_Data_Format
-#define I2S_DataFormat_16b              ((uint16_t)0x0000)
-#define I2S_DataFormat_16bextended      ((uint16_t)0x0001)
-#define I2S_DataFormat_24b              ((uint16_t)0x0003)
-#define I2S_DataFormat_32b              ((uint16_t)0x0005)
-#define IS_I2S_DATA_FORMAT(FORMAT) (((FORMAT) == I2S_DataFormat_16b) || \
-                                    ((FORMAT) == I2S_DataFormat_16bextended) || \
-                                    ((FORMAT) == I2S_DataFormat_24b) || \
-                                    ((FORMAT) == I2S_DataFormat_32b))
-
-//SPI_I2S_MCLK_Output
-#define I2S_MCLKOutput_Enable           ((uint16_t)0x0200)
-#define I2S_MCLKOutput_Disable          ((uint16_t)0x0000)
-#define IS_I2S_MCLK_OUTPUT(OUTPUT) (((OUTPUT) == I2S_MCLKOutput_Enable) || \
-
-// SPI_I2S_Audio_Frequency
-#define I2S_AudioFreq_192k               ((uint32_t)192000)
-#define I2S_AudioFreq_96k                ((uint32_t)96000)
-#define I2S_AudioFreq_48k                ((uint32_t)48000)
-#define I2S_AudioFreq_44k                ((uint32_t)44100)
-#define I2S_AudioFreq_32k                ((uint32_t)32000)
-#define I2S_AudioFreq_22k                ((uint32_t)22050)
-#define I2S_AudioFreq_16k                ((uint32_t)16000)
-#define I2S_AudioFreq_11k                ((uint32_t)11025)
-#define I2S_AudioFreq_8k                 ((uint32_t)8000)
-#define I2S_AudioFreq_Default            ((uint32_t)2)
-
-#define IS_I2S_AUDIO_FREQ(FREQ) ((((FREQ) >= I2S_AudioFreq_8k) && \
-                                 ((FREQ) <= I2S_AudioFreq_192k)) || \
-                                 ((FREQ) == I2S_AudioFreq_Default))
-           
-//SPI_I2S_Clock_Polarity
-#define I2S_CPOL_Low                    ((uint16_t)0x0000)
-#define I2S_CPOL_High                   ((uint16_t)0x0008)
-#define IS_I2S_CPOL(CPOL) (((CPOL) == I2S_CPOL_Low) || \
-                           ((CPOL) == I2S_CPOL_High))
 
 // SPI_I2S_DMA_transfer_requests
 #define SPI_I2S_DMAReq_Tx               ((uint16_t)0x0002)
@@ -176,8 +114,8 @@
 //-------------------------------------------------------------------------------------------------
 
 // These PLL parameters are valid when the f(VCO clock) = 1Mhz
-const uint32_t I2S::m_PLLN[NB_OF_I2S_FREQUENCY] = {256, 429, 213, 429, 426, 271, 258, 344};
-const uint32_t I2S::m_PLLR[NB_OF_I2S_FREQUENCY] = {5,   4,   4,   4,   4,   6,   3,   1};
+const uint32_t I2S::m_PLLN[NB_OF_I2S_FREQUENCY] = {256, 429, 213, 429, 426, 271, 258, 344, 0/*xxx*/};
+const uint32_t I2S::m_PLLR[NB_OF_I2S_FREQUENCY] = {5,   4,   4,   4,   4,   6,   3,   1, 0/*xxx*/};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -208,25 +146,19 @@ I2S_Driver::I2S_Driver(I2S_ID_e I2S_ID)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void I2S::Initialize(void)
+void I2S_Driver::Initialize(void)
 {
-    nOS_Error       Error;
     uint32_t        PriorityGroup;
     I2S_TypeDef*    pI2Sx;
-
-
-    // TODO put an initialization flag
-    Error = nOS_MutexCreate(&this->m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
-    VAR_UNUSED(Error);
 
     m_Timeout = 0;
 
     NVIC_DisableIRQ(m_pInfo->I2S_DMA_IRQn);
 
     // ---- Module configuration ----
-    RCC->APB1ENR  |=  m_pInfo->Clock;                                   // I2S exist only on APB1
-    RCC->APB1RSTR |=  m_pInfo->Clock;                                   // Reset I2S
-    RCC->APB1RSTR &= ~m_pInfo->Clock;                                   // Release reset signal of I2S
+    RCC->APB1ENR  |=  m_pInfo->Clock;                   // I2S exist only on APB1
+    RCC->APB1RSTR |=  m_pInfo->Clock;                   // Reset I2S
+    RCC->APB1RSTR &= ~m_pInfo->Clock;                   // Release reset signal of I2S
 
     // ---- GPIO configuration ----
     IO_PinInit(&m_pInfo->SCK);
@@ -234,16 +166,9 @@ void I2S::Initialize(void)
     IO_PinInit(&m_pInfo->WS);
     IO_PinInit(&m_pInfo->MCLK);
 
-// for config
-//    GPIO_InitStruct.Pin         = I2S3_SCK_PIN | I2S3_SD_PIN; 
-//    GPIO_InitStruct.Mode        = GPIO_MODE_AF_PP;
-//    GPIO_InitStruct.Pull        = GPIO_NOPULL;
-//    GPIO_InitStruct.Speed       = GPIO_SPEED_FAST;
-//    GPIO_InitStruct.Alternate   = I2S3_SCK_SD_WS_AF;
-
     RCC->AHB1ENR |= m_pInfo->RCC_AHBxPeriph;            // Initialize DMA clock
     m_DMA_Status  = SYS_IDLE;
-    m_NoMemoryIncrement = false;
+    //m_NoMemoryIncrement = false; ??
 
     // Preinit register that won't change
     pDMA = m_pInfo->DMA_Stream;
@@ -270,6 +195,29 @@ void I2S::Initialize(void)
 
 //-------------------------------------------------------------------------------------------------
 //
+//   Function:      RegisterCallBack
+//
+//   Parameter(s):  CallBackType            Define to register for what callback
+//                  pCallBack
+//   Return Value:
+//
+//   Description:   Register user callback by type.
+//
+//   Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void I2S_Driver::RegisterCallBack(I2S_CallBackType_e CallBackType, void* pCallBack)
+{
+    switch(int(CallBackType))
+    {
+        case I2S_CALLBACK_HALF_COMPLETE: { m_pHalfCompleteCallBack = pCallBack; }  break;
+        case I2S_CALLBACK_COMPLETE:      { m_pCompleteCallBack     = pCallBack; }  break;
+        case I2S_CALLBACK_ERROR:         { m_pErrorCallBack        = pCallBack; }  break;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //   Function:      SetFrequency
 //
 //   Parameter(s):  Frequency           Audio frequency used to play the audio stream.
@@ -280,12 +228,12 @@ void I2S::Initialize(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2S::SetFrequency(I2S_Frequency_e Frequency)
+SystemState_e I2S_Driver::SetFrequency(I2S_Frequency_e Frequency)
 {
     nOS_TickCounter TickStart;
     
     // Disable the PLLI2S
-    RCC_CR_PLLI2SON_BB = DISABLE)
+    ClearBit(RCC->CR, RCC_CR_PLLI2SON);
 
     // Wait here until PLLI2S is disabled or time out
     TickStart = GetTick();
@@ -329,13 +277,10 @@ SystemState_e I2S::SetFrequency(I2S_Frequency_e Frequency)
     }
 
   return SYS_READY;
-}
-
-
 
 // Update the I2S audio frequency configuration
 //??? why I2S3_Init(AudioFreq);
-//}
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -349,29 +294,90 @@ SystemState_e I2S::SetFrequency(I2S_Frequency_e Frequency)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2S::GetStatus(void)
+SystemState_e I2S_Driver::GetStatus(void)
 {
     return m_Status;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      ChangeBuffer
+//   Function:      I2S_TransmitDMA
 //
-//   Parameter(s):  pData       Pointer to data address.
-//                  Size        umber of data to be written.
+//   Parameter(s):  pBuffer     Pointer to buffer address.
+//                  Size        Bumber of data to be written.
 //   Return Value:  None
 //
-//   Description:   Sends n-Bytes on the I2S interface.
+//   Description:   Sends n-Bytes on the I2S interface using DMA.
 //
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void I2S::ChangeBuffer(uint16_t* pData, uint16_t Size)
+SystemState_e I2S_Driver::I2S_TransmitDMA(uint16_t* pBuffer, uint16_t Size)
 {
-  // todo get stuff and degrease that shit
-  HAL_I2S_Transmit_DMA(&hAudioOutI2s, pData, Size); 
-}
+    uint32_t Register;
+
+    if((pData == nullptr) || (Size == 0))
+    {
+        return  SYS_ERROR;
+    }
+
+    if(m_Status != SYS_READY)
+    {
+        return SYS_BUSY;
+    }
+
+    // Set state and reset error code
+    m_Status = SYS_BUSY_TX;
+    //hi2s->ErrorCode = HAL_I2S_ERROR_NONE;
+    m_pBuffer = pData;
+
+    Register = m_pInfo->pI2Sx->I2SCFGR & (SPI_I2SCFGR_DATLEN | SPI_I2SCFGR_CHLEN);
+
+    if((Register == uint32_t(I2S_DATAFORMAT_24B)) || (Register == uint32_t(I2S_DATAFORMAT_32B)))
+    {
+        hi2s->TxXferSize  = (Size << 1);
+        hi2s->TxXferCount = (Size << 1);
+    }
+    else
+    {
+        hi2s->TxXferSize = Size;
+        hi2s->TxXferCount = Size;
+    }
+
+    // kept for reference until handle properly with register callback
+    // hi2s->hdmatx->XferHalfCpltCallback = I2S_DMATxHalfCplt;   // Set the I2S Tx DMA Half transfer complete callback
+    // hi2s->hdmatx->XferCpltCallback = I2S_DMATxCplt;           // Set the I2S Tx DMA transfer complete callback
+    // hi2s->hdmatx->XferErrorCallback = I2S_DMAError;           // Set the DMA error callback
+
+    // Enable the Tx DMA Stream/Channel
+    if(HAL_DMA_Start_IT(hi2s->hdmatx,
+                                 (uint32_t)hi2s->pTxBuffPtr,
+                                 (uint32_t)&m_pInfo->pI2Sx->DR,
+                                 hi2s->TxXferSize)
+                                  != SYS_READY)
+    {
+        // Update SPI error code
+        //SET_BIT(hi2s->ErrorCode, HAL_I2S_ERROR_DMA);
+        m_Status = SYS_READY;
+
+        return SYS_ERROR;
+    }
+
+    // Check if the I2S is already enabled
+//    if(CheckBit(m_pInfo->pI2Sx->I2SCFGR, SPI_I2SCFGR_I2SE) == 0)   // ?? why ?
+    {
+        // Enable I2S peripheral
+        SET_BIT(m_pInfo->pI2Sx->I2SCFGR, SPI_I2SCFGR_I2SE))     
+    }
+
+    // Check if the I2S Tx request is already enabled
+//    if(CheckBit(m_pInfo->pI2Sx->CR2, SPI_CR2_TXDMAEN) == 0)   ?? why ?
+    {
+        // Enable Tx DMA Request
+        SET_BIT(m_pInfo->pI2Sx->CR2, SPI_CR2_TXDMAEN);
+    }
+
+    return SYS_READY;
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -386,8 +392,10 @@ void I2S::ChangeBuffer(uint16_t* pData, uint16_t Size)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2S:: ()
+SystemState_e I2S_Driver::TX_CompleteCallback(void)
 {
+    // Call the user function which will manage directly transfer complete
+    // TODO call user callback 
     return SYS_BUSY;
 }
 
@@ -404,36 +412,11 @@ SystemState_e I2S:: ()
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2S:: ()
+SystemState_e I2S_Driver::TX_HalfCompleteCallback(void)
 {
+    // Manage the remaining file size and new address offset: This function should be coded by user
+    // TODO call user callback 
     return SYS_BUSY;
-}
-
-/**
-  * @brief  Tx Transfer completed callbacks.
-  * @param  hi2s: I2S handle
-  */
-void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    if(hi2s->Instance == I2S3)
-    {
-        /* Call the user function which will manage directly transfer complete */  
-        BSP_AUDIO_OUT_TransferComplete_CallBack();       
-    }
-}
-
-/**
-  * @brief  Tx Half Transfer completed callbacks.
-  * @param  hi2s: I2S handle
-  */
-void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-    if(hi2s->Instance == I2S3)
-    {
-        /* Manage the remaining file size and new address offset: This function should
-        be coded by user (its prototype is already declared in stm32f4_discovery_audio.h) */  
-        BSP_AUDIO_OUT_HalfTransfer_CallBack();
-    }
 }
 
 //-------------------------------------------------------------------------------------------------

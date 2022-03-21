@@ -141,9 +141,14 @@ I2S_Driver::I2S_Driver(I2S_ID_e I2S_ID)
 //  Parameter(s):   None
 //  Return:         none
 //
-//  Description:    It start the initialize process from configuration in struct
+//  Description:    Initializes the I2Sx peripheral according to the specified parameters in
+//                  config.
 //
-//  Note(s):
+//  Note(s):        The function calculates the optimal prescaler needed to obtain the most
+//                  accurate audio frequency (depending on the I2S clock source, the PLL values 
+//                  and the product configuration). But in case the prescaler value is greater 
+//                  than 511, the default value (0x02) will be configured instead.
+  * 
 //
 //-------------------------------------------------------------------------------------------------
 void I2S_Driver::Initialize(void)
@@ -186,6 +191,144 @@ void I2S_Driver::Initialize(void)
         //hdma_i2sTx.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;         
         //hdma_i2sTx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
                m_pInfo->DMA_Channel;
+  
+  
+
+/**
+  * @note   if an external clock is used as source clock for the I2S, then the define
+  *         I2S_EXTERNAL_CLOCK_VAL in file stm32f4xx_conf.h should be enabled and set
+  *         to the value of the the source clock frequency (in Hz).
+  */
+void I2S_Init(SPI_TypeDef* SPIx, I2S_InitTypeDef* I2S_InitStruct)
+{
+    uint16_t tmpreg = 0;
+    uint16_t i2sdiv = 2;
+    uint16_t i2sodd = 0;
+    uint16_t packetlength = 1;
+    uint32_t tmp = 0, i2sclk = 0;
+  #ifndef I2S_EXTERNAL_CLOCK_VAL
+    uint32_t pllm = 0;
+    uint32_t plln = 0;
+    uint32_t pllr = 0;
+  #endif // I2S_EXTERNAL_CLOCK_VAL
+  
+    //----------------------- SPIx I2SCFGR & I2SPR Configuration -----------------
+    // Clear I2SMOD, I2SE, I2SCFG, PCMSYNC, I2SSTD, CKPOL, DATLEN and CHLEN bits
+    SPIx->I2SCFGR &= I2SCFGR_CLEAR_MASK; 
+    SPIx->I2SPR = 0x0002;
+  
+    // Get the I2SCFGR register value
+    tmpreg = SPIx->I2SCFGR;
+  
+    // If the default value has to be written, reinitialize i2sdiv and i2sodd
+    if(I2S_InitStruct->I2S_AudioFreq == I2S_AudioFreq_Default)
+    {
+        i2sodd = (uint16_t)0;
+        i2sdiv = (uint16_t)2;   
+    }
+    // If the requested audio frequency is not the default, compute the prescaler
+    else
+    {
+        // Check the frame length (For the Prescaler computing) *******************
+        if(I2S_InitStruct->I2S_DataFormat == I2S_DataFormat_16b)
+        {
+            packetlength = 1;       // Packet length is 16 bits
+        }
+        else
+        {
+            packetlength = 2;       // Packet length is 32 bits
+        }
+
+        // Get I2S source Clock frequency  ****************************************
+      
+        // If an external I2S clock has to be used, this define should be set in the project configuration or in the stm32f4xx_conf.h file
+      #ifdef I2S_EXTERNAL_CLOCK_VAL     
+        if((RCC->CFGR & RCC_CFGR_I2SSRC) == 0)                                                                  // Set external clock as I2S clock source
+        {
+            RCC->CFGR |= (uint32_t)RCC_CFGR_I2SSRC;
+        }
+    
+        i2sclk = I2S_EXTERNAL_CLOCK_VAL;                                                                        // Set the I2S clock to the external clock  value
+
+      #else // There is no define for External I2S clock source
+        if((RCC->CFGR & RCC_CFGR_I2SSRC) != 0)                                                                  // Set PLLI2S as I2S clock source
+        {
+            RCC->CFGR &= ~(uint32_t)RCC_CFGR_I2SSRC;
+        }    
+    
+        plln = (uint32_t)(((RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SN) >> 6) & (RCC_PLLI2SCFGR_PLLI2SN >> 6));   // Get the PLLI2SN value
+        pllr = (uint32_t)(((RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SR) >> 28) & (RCC_PLLI2SCFGR_PLLI2SR >> 28)); // Get the PLLI2SR value
+        pllm = (uint32_t)(RCC->PLLCFGR & RCC_PLLCFGR_PLLM);                                                     // Get the PLLM value
+        i2sclk = (uint32_t)(((HSE_VALUE / pllm) * plln) / pllr);                                                // Get the I2S source clock value
+      #endif // I2S_EXTERNAL_CLOCK_VAL
+    
+        // Compute the Real divider depending on the MCLK output state, with a floating point
+        if(I2S_InitStruct->I2S_MCLKOutput == I2S_MCLKOutput_Enable)
+        {
+            tmp = (uint16_t)(((((i2sclk / 256) * 10) / I2S_InitStruct->I2S_AudioFreq)) + 5);                    // MCLK output is enabled
+        }
+        else
+        {
+            tmp = (uint16_t)(((((i2sclk / (32 * packetlength)) *10 ) / I2S_InitStruct->I2S_AudioFreq)) + 5);    // MCLK output is disabled
+        }
+    
+        tmp = tmp / 10;                                                                                         // Remove the flatting point
+        i2sodd = (uint16_t)(tmp & (uint16_t)0x0001);                                                            // Check the parity of the divider
+        i2sdiv = (uint16_t)((tmp - i2sodd) / 2);                                                                // Compute the i2sdiv prescaler
+        i2sodd = (uint16_t) (i2sodd << 8);                                                                      // Get the Mask for the Odd bit (SPI_I2SPR[8]) register
+    }
+
+    // Test if the divider is 1 or 0 or greater than 0xFF
+    if((i2sdiv < 2) || (i2sdiv > 0xFF))
+    {                                                                                                           // Set the default values
+        i2sdiv = 2;
+        i2sodd = 0;
+    }
+
+    // Write to SPIx I2SPR register the computed value
+    SPIx->I2SPR = (uint16_t)((uint16_t)i2sdiv | (uint16_t)(i2sodd | (uint16_t)I2S_InitStruct->I2S_MCLKOutput));
+ 
+    // Configure the I2S with the SPI_InitStruct values
+    tmpreg |= (uint16_t)((uint16_t)SPI_I2SCFGR_I2SMOD              |
+                         (uint16_t)(I2S_InitStruct->I2S_Mode       |
+                         (uint16_t)(I2S_InitStruct->I2S_Standard   |
+                         (uint16_t)(I2S_InitStruct->I2S_DataFormat |
+                         (uint16_t)I2S_InitStruct->I2S_CPOL))));
+ 
+    // Write to SPIx I2SCFGR
+    SPIx->I2SCFGR = tmpreg;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   
     // I2S DMA IRQ Channel configuration
     PriorityGroup = NVIC_GetPriorityGrouping();
@@ -271,7 +414,6 @@ SystemState_e I2S_Driver::SetFrequency(I2S_Frequency_e Frequency)
     {
         if(TickHasTimeOut(TickStart, PLLI2S_TIMEOUT_VALUE) == true)
         {
-            // Return in case of Timeout detected
             return SYS_TIME_OUT;            // Return in case of timeout detected
         }
     }
@@ -1474,54 +1616,6 @@ void I2S_Init(SPI_TypeDef* SPIx, I2S_InitTypeDef* I2S_InitStruct)
  
   /* Write to SPIx I2SCFGR */  
   SPIx->I2SCFGR = tmpreg;
-}
-
-/**
-  * @brief  Fills each I2S_InitStruct member with its default value.
-  * @param  I2S_InitStruct: pointer to a I2S_InitTypeDef structure which will be initialized.
-  * @retval None
-  */
-void I2S_StructInit(I2S_InitTypeDef* I2S_InitStruct)
-{
-/*--------------- Reset I2S init structure parameters values -----------------*/
-  /* Initialize the I2S_Mode member */
-  I2S_InitStruct->I2S_Mode = I2S_Mode_SlaveTx;
-  
-  /* Initialize the I2S_Standard member */
-  I2S_InitStruct->I2S_Standard = I2S_Standard_Phillips;
-  
-  /* Initialize the I2S_DataFormat member */
-  I2S_InitStruct->I2S_DataFormat = I2S_DataFormat_16b;
-  
-  /* Initialize the I2S_MCLKOutput member */
-  I2S_InitStruct->I2S_MCLKOutput = I2S_MCLKOutput_Disable;
-  
-  /* Initialize the I2S_AudioFreq member */
-  I2S_InitStruct->I2S_AudioFreq = I2S_AudioFreq_Default;
-  
-  /* Initialize the I2S_CPOL member */
-  I2S_InitStruct->I2S_CPOL = I2S_CPOL_Low;
-}
-
-/**
-  * @brief  Enables or disables the specified SPI peripheral.
-  * @param  SPIx: where x can be 1, 2, 3, 4, 5 or 6 to select the SPI peripheral.
-  * @param  NewState: new state of the SPIx peripheral. 
-  *          This parameter can be: ENABLE or DISABLE.
-  * @retval None
-  */
-void SPI_Cmd(SPI_TypeDef* SPIx, FunctionalState NewState)
-{
-  if (NewState != DISABLE)
-  {
-    /* Enable the selected SPI peripheral */
-    SPIx->CR1 |= SPI_CR1_SPE;
-  }
-  else
-  {
-    /* Disable the selected SPI peripheral */
-    SPIx->CR1 &= (uint16_t)~((uint16_t)SPI_CR1_SPE);
-  }
 }
 
 /**

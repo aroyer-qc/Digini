@@ -152,6 +152,8 @@ struct I2S_Info_t
     DMA_Stream_TypeDef* DMA_Stream;
 };
 
+typedef void (*I2S_CallBack_t)(void);
+
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
@@ -165,7 +167,7 @@ class I2S_Driver
         SystemState_e   GetStatus               (void);
 
         void            Initialize              (void);
-        SystemState_e   RegisterCallBack        (I2S_CallBackType_e CallBackType, void* pCallBack);
+        SystemState_e   RegisterCallBack        (I2S_CallBackType_e CallBackType, I2S_CallBack_t pCallBack);
         SystemState_e   SetFrequency            (I2S_Frequency_e Frequency);
         void            I2S_TransmitDMA         (uint16_t* pBuffer, uint16_t Size);
         SystemState_e   TX_CompleteCallback     (void);
@@ -183,9 +185,9 @@ class I2S_Driver
         volatile uint8_t                        m_Timeout;
         static const uint32_t                   m_PLLN[NB_OF_I2S_FREQUENCY];
         static const uint32_t                   m_PLLR[NB_OF_I2S_FREQUENCY];
-             void*                       m_pHalfCompleteCallBack;
-             void*                       m_pCompleteCallBack;
-             void*                       m_pErrorCallBack;
+        I2S_CallBack_t                          m_pHalfCompleteCallBack;
+        I2S_CallBack_t                          m_pCompleteCallBack;
+        I2S_CallBack_t                          m_pErrorCallBack;
 };
 
 //-------------------------------------------------------------------------------------------------

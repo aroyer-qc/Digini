@@ -46,7 +46,7 @@
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class CS43L22 : public AudioInterface
+class CS43L22 : public AudioDriverInterface
 
 {
     public:

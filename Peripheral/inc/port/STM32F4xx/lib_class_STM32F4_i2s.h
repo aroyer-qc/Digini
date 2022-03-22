@@ -26,6 +26,91 @@
 
 #pragma once
 
+#if 0
+
+example call for
+  EVAL_AUDIO_SetAudioInterface(AUDIO_INTERFACE_I2S);            Initialize I2S interface
+  EVAL_AUDIO_Init(OUTPUT_DEVICE_AUTO, volume, AudioFreq );      Initialize the Audio codec and all related peripherals (I2S, I2C, IOExpander, IOs...)
+        Codec_Init(OutputDevice, VOLUME_CONVERT(Volume), AudioFreq)
+            Codec_GPIO_Init();          // Configure the Codec related IOs  only reset to init
+            Codec_Reset();              // Reset the Codec Registers
+            Codec_CtrlInterface_Init(); // Initialize the Control interface of the Audio Codec
+            counter += Codec_WriteRegister(0x02, 0x01)      // Keep Codec powered OFF
+            counter += Codec_WriteRegister(0x04, 0xAF);     // SPK always OFF & HP always ON
+            OutputDev = 0xAF;
+            counter += Codec_WriteRegister(0x05, 0x81);           // Clock configuration: Auto detection
+            counter += Codec_WriteRegister(0x06, CODEC_STANDARD); // Set the Slave Mode and the audio Standard
+            Codec_VolumeCtrl(Volume);                             // Set the Master volume
+
+            if (CurrAudioInterface == AUDIO_INTERFACE_DAC)
+            {
+                counter += Codec_WriteRegister(0x08, 0x01);       // Enable the PassThrough on AIN1A and AIN1B
+                counter += Codec_WriteRegister(0x09, 0x01);
+                counter += Codec_WriteRegister(0x0E, 0xC0);       // Route the analog input to the HP line
+                counter += Codec_WriteRegister(0x14, 0x00);       // Set the Passthough volume
+                counter += Codec_WriteRegister(0x15, 0x00);
+            }
+
+            counter += Codec_WriteRegister(0x02, 0x9E);             // Power on the Codec
+
+            /* Additional configuration for the CODEC. These configurations are done to reduce
+                the time needed for the Codec to power off. If these configurations are removed,
+                then a long delay should be added between powering off the Codec and switching
+                off the I2S peripheral MCLK clock (which is the operating clock for Codec).
+                If this delay is not inserted, then the codec will not shut down properly and
+                it results in high noise after shut down. */
+
+            counter += Codec_WriteRegister(0x0A, 0x00);             // Disable the analog soft ramp
+
+            if (CurrAudioInterface != AUDIO_INTERFACE_DAC)
+            {
+                counter += Codec_WriteRegister(0x0E, 0x04);         // Disable the digital soft ramp
+            }
+            counter += Codec_WriteRegister(0x27, 0x00);             // Disable the limiter attack level
+            counter += Codec_WriteRegister(0x1F, 0x0F);             // Adjust Bass and Treble levels
+            counter += Codec_WriteRegister(0x1A, 0x0A);             // Adjust PCM volume level
+            counter += Codec_WriteRegister(0x1B, 0x0A);
+
+            Codec_AudioInterface_Init(AudioFreq);                   // Configure the I2S peripheral
+                RCC_APB1PeriphClockCmd(CODEC_I2S_CLK, ENABLE);      // Enable the CODEC_I2S peripheral clock
+
+                SPI_I2S_DeInit(CODEC_I2S);                          // CODEC_I2S peripheral configuration
+                I2S_InitStructure.I2S_AudioFreq = AudioFreq;
+                I2S_InitStructure.I2S_Standard = I2S_STANDARD;
+                I2S_InitStructure.I2S_DataFormat = I2S_DataFormat_16b;
+                I2S_InitStructure.I2S_CPOL = I2S_CPOL_Low;
+                if (CurrAudioInterface == AUDIO_INTERFACE_DAC)
+                {
+                    I2S_InitStructure.I2S_Mode = I2S_Mode_MasterRx;
+                }
+                else
+                {
+                    I2S_InitStructure.I2S_Mode = I2S_Mode_MasterTx;
+                }
+                #ifdef CODEC_MCLK_ENABLED
+                I2S_InitStructure.I2S_MCLKOutput = I2S_MCLKOutput_Enable;
+                #elif defined(CODEC_MCLK_DISABLED)
+                I2S_InitStructure.I2S_MCLKOutput = I2S_MCLKOutput_Disable;
+                #else
+                  #error "No selection for the MCLK output has been defined !"
+                #endif /* CODEC_MCLK_ENABLED */
+
+                I2S_Init(CODEC_I2S, &I2S_InitStructure);            // Initialize the I2S peripheral with the structure above
+                if(CurrAudioInterface == AUDIO_INTERFACE_DAC)       // Configure the DAC interface
+                {
+                RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, ENABLE); // DAC Periph clock enable
+                DAC_InitStructure.DAC_Trigger = DAC_Trigger_None;   // DAC channel1 Configuration
+                DAC_InitStructure.DAC_WaveGeneration = DAC_WaveGeneration_None;
+                DAC_InitStructure.DAC_OutputBuffer = DAC_OutputBuffer_Enable;
+                DAC_Init(AUDIO_DAC_CHANNEL, &DAC_InitStructure);
+                DAC_Cmd(AUDIO_DAC_CHANNEL, ENABLE);                 // Enable DAC Channel1
+              }
+
+              // The I2S peripheral will be enabled only in the EVAL_AUDIO_Play() function or by user functions if DMA mode not enabled
+
+
+        Audio_MAL_Init();  // this should not be in the driver..
+#endif
 //-------------------------------------------------------------------------------------------------
 
 #if (USE_I2S_DRIVER == DEF_ENABLED)

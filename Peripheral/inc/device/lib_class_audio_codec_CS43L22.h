@@ -51,9 +51,9 @@ class CS43L22 : public AudioDriverInterface
 {
     public:
 
+        SystemState_e       InitializeLowLevel    (IO_ID_e RST_Pin);
+
         SystemState_e       Initialize            (void* pArg);
-        //SystemState_e       Initialize            (void* pArgControl, void* pArgData);
-        //SystemState_e     DeInitialize          (void);
         uint16_t            ReadID                (void);
         SystemState_e       Reset                 (void);
 
@@ -77,6 +77,7 @@ class CS43L22 : public AudioDriverInterface
 
         I2C_Driver*         m_pI2C;
         I2S_Driver*         m_pI2S;
+        IO_ID_e             m_IO_ID;
 };
 
 //-------------------------------------------------------------------------------------------------

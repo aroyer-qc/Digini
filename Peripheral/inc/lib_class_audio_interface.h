@@ -49,10 +49,7 @@ class AudioDriverInterface
 {
     public:
 
-        virtual SystemState_e   Initialize             (void*    pArgControl,
-                                                        void*    pArgData,
-                                                        uint16_t InOutDevice,
-                                                        uint8_t  InitialVolume)            = 0;
+        virtual SystemState_e   Initialize             (void* pArg)                        = 0;
         //virtual SystemState_e DeInitialize           (void)                              = 0;
         virtual uint16_t        ReadID                 (void)                              = 0;
         virtual SystemState_e   Reset                  (void)                              = 0;

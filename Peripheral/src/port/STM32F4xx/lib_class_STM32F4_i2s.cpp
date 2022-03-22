@@ -110,12 +110,12 @@
 #define SPI_ClearITPendingBit        SPI_I2S_ClearITPendingBit
 
 //-------------------------------------------------------------------------------------------------
-// forward declaration(s)
+// variable(s)
 //-------------------------------------------------------------------------------------------------
 
 // These PLL parameters are valid when the f(VCO clock) = 1Mhz
 const uint32_t I2S::m_PLLN[NB_OF_I2S_FREQUENCY] = {256, 429, 213, 429, 426, 271, 258, 344, 0/*xxx*/};
-const uint32_t I2S::m_PLLR[NB_OF_I2S_FREQUENCY] = {5,   4,   4,   4,   4,   6,   3,   1, 0/*xxx*/};
+const uint32_t I2S::m_PLLR[NB_OF_I2S_FREQUENCY] = {5,   4,   4,   4,   4,   6,   3,   1,   0/*xxx*/};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -215,7 +215,7 @@ void I2S_Init(SPI_TypeDef* SPIx, I2S_InitTypeDef* I2S_InitStruct)
     //----------------------- SPIx I2SCFGR & I2SPR Configuration -----------------
     // Clear I2SMOD, I2SE, I2SCFG, PCMSYNC, I2SSTD, CKPOL, DATLEN and CHLEN bits
     SPIx->I2SCFGR &= I2SCFGR_CLEAR_MASK; 
-    SPIx->I2SPR = 0x0002;
+    SPIx->I2SPR    = 0x0002;
   
     // Get the I2SCFGR register value
     tmpreg = SPIx->I2SCFGR;
@@ -265,16 +265,16 @@ void I2S_Init(SPI_TypeDef* SPIx, I2S_InitTypeDef* I2S_InitStruct)
         // Compute the Real divider depending on the MCLK output state, with a floating point
         if(I2S_InitStruct->I2S_MCLKOutput == I2S_MCLKOutput_Enable)
         {
-            tmp = (uint16_t)(((((i2sclk / 256) * 10) / I2S_InitStruct->I2S_AudioFreq)) + 5);                    // MCLK output is enabled
+            tmp = (uint16_t)(((((i2sclk >> 8) * 10) / I2S_InitStruct->I2S_AudioFreq)) + 5);                    // MCLK output is enabled
         }
         else
         {
-            tmp = (uint16_t)(((((i2sclk / (32 * packetlength)) *10 ) / I2S_InitStruct->I2S_AudioFreq)) + 5);    // MCLK output is disabled
+            tmp = (uint16_t)(((((i2sclk / (packetlength << 5)) * 10) / I2S_InitStruct->I2S_AudioFreq)) + 5);    // MCLK output is disabled
         }
     
         tmp = tmp / 10;                                                                                         // Remove the flatting point
         i2sodd = (uint16_t)(tmp & (uint16_t)0x0001);                                                            // Check the parity of the divider
-        i2sdiv = (uint16_t)((tmp - i2sodd) / 2);                                                                // Compute the i2sdiv prescaler
+        i2sdiv = (uint16_t)((tmp - i2sodd) >> 1);                                                                // Compute the i2sdiv prescaler
         i2sodd = (uint16_t) (i2sodd << 8);                                                                      // Get the Mask for the Odd bit (SPI_I2SPR[8]) register
     }
 

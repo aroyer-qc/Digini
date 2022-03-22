@@ -115,7 +115,7 @@ enum SI4703_Register_e  // Register names
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Initialize
+//  Name:           InitializeLowLevel
 //
 //  Parameter(s):
 //

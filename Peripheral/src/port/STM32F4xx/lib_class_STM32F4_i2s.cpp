@@ -176,7 +176,7 @@ void I2S_Driver::Initialize(void)
     //m_NoMemoryIncrement = false; ??
 
     // Preinit register that won't change
-    pDMA = m_pInfo->DMA_Stream;
+    pDMA = m_pInfo->pDMA_Stream;
     pDMA->PAR = (uint32_t)&m_pInfo->pI2Sx->DR;          // Configure receive data register
     pDMA->CR = DMA_PERIPH_TO_MEMORY           |
                DMA_MODE_NORMAL                |

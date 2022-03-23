@@ -221,9 +221,10 @@ struct I2S_Info_t
 {
     I2S_ID_e            I2S_ID;
     I2S_TypeDef*        pI2Sx;
-    IO_ID_e             SCK;
+    IO_ID_e             MCK;
+    IO_ID_e             CK;
     IO_ID_e             SD;
-    IRQn_Type           I2S_DMA_IRQn;
+    IO_ID_e             WS;
     I2S_Mode_e          Mode;           // Specifies the I2S operating mode.
     I2S_DataFormat_e    DataFormat;     // Specifies the data format for the I2S communication.
     I2S_Standard_e      Standard;       // Specifies the standard used for the I2S communication.
@@ -231,10 +232,11 @@ struct I2S_Info_t
     I2S_MCLK_Output_e   CLK_Output;     // Specifies whether the I2S MCLK output is enabled or not.
     I2S_CPOL_Level_e    CPOL_Level;     // Specifies the idle state of the I2S clock.
     // DMA
-    DMA_TypeDef*        pDMAx;
+    //DMA_TypeDef*        pDMAx;              // DMA0 is the only DMA for I2S
     uint32_t            DMA_Channel;
     uint32_t            IT_Flag;
-    DMA_Stream_TypeDef* DMA_Stream;
+    DMA_Stream_TypeDef* pDMA_Stream;
+    IRQn_Type           I2S_DMA_IRQn;
 };
 
 typedef void (*I2S_CallBack_t)(void);

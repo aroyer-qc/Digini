@@ -88,6 +88,10 @@ class I2C_Driver
         SystemState_e   Write               (const void* pBuffer, size_t Size);
         SystemState_e   Read                (const void* pBuffer, size_t Size);
         SystemState_e   Read                (const void* pBuffer, size_t Size, uint8_t Device);
+        SystemState_e   ReadRegister        (uint8_t Register, uint8_t* pValue, uint8_t Device);
+        SystemState_e   ReadRegister        (uint8_t Register, uint8_t* pValue);
+        SystemState_e   WriteRegister       (uint8_t Register, uint8_t Value, uint8_t Device);
+        SystemState_e   WriteRegister       (uint8_t Register, uint8_t Value);
 
         void            Initialize          (void);
         void            ER_IRQHandler       (void);

@@ -36,9 +36,9 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define CR1_CLEAR_MASK              ((uint16_t)0xFBF5)          // I2S registers Masks
-#define FLAG_MASK                   ((uint32_t)0x00FFFFFF)      // I2S FLAG mask
-#define I2S_TIME_OUT                100                         // 100 Milliseconds
+#define CR1_CLEAR_MASK                  ((uint16_t)0xFBF5)          // I2S registers Masks
+#define FLAG_MASK                       ((uint32_t)0x00FFFFFF)      // I2S FLAG mask
+#define I2S_TIME_OUT                    100                         // 100 Milliseconds
 
 // SPI_I2S_DMA_transfer_requests
 #define SPI_I2S_DMAReq_Tx               ((uint16_t)0x0002)
@@ -82,10 +82,10 @@
 #define SPI_I2S_FLAG_TIFRFE             ((uint16_t)0x0100)
 
 #define IS_SPI_I2S_CLEAR_FLAG(FLAG) (((FLAG) == SPI_FLAG_CRCERR))
-#define IS_SPI_I2S_GET_FLAG(FLAG) (((FLAG) == SPI_I2S_FLAG_BSY) || ((FLAG) == SPI_I2S_FLAG_OVR) || \
-                                   ((FLAG) == SPI_FLAG_MODF) || ((FLAG) == SPI_FLAG_CRCERR) || \
-                                   ((FLAG) == I2S_FLAG_UDR) || ((FLAG) == I2S_FLAG_CHSIDE) || \
-                                   ((FLAG) == SPI_I2S_FLAG_TXE) || ((FLAG) == SPI_I2S_FLAG_RXNE)|| \
+#define IS_SPI_I2S_GET_FLAG(FLAG) (((FLAG) == SPI_I2S_FLAG_BSY) || ((FLAG) == SPI_I2S_FLAG_OVR)  || \
+                                   ((FLAG) == SPI_FLAG_MODF)    || ((FLAG) == SPI_FLAG_CRCERR)   || \
+                                   ((FLAG) == I2S_FLAG_UDR)     || ((FLAG) == I2S_FLAG_CHSIDE)   || \
+                                   ((FLAG) == SPI_I2S_FLAG_TXE) || ((FLAG) == SPI_I2S_FLAG_RXNE) || \
                                    ((FLAG) == SPI_I2S_FLAG_TIFRFE))
 
 
@@ -178,19 +178,19 @@ void I2S_Driver::Initialize(void)
     // Preinit register that won't change
     pDMA = m_pInfo->pDMA_Stream;
     pDMA->PAR = (uint32_t)&m_pInfo->pI2Sx->DR;          // Configure receive data register
-    pDMA->CR = DMA_PERIPH_TO_MEMORY           |
-               DMA_MODE_NORMAL                |
-               DMA_PERIPH_NO_INCREMENT        |
-               DMA_MEMORY_INCREMENT           |
-               DMA_P_DATA_ALIGN_BYTE          |  //I2S3_DMAx_PERIPH_DATA_SIZE
-               DMA_M_DATA_ALIGN_BYTE          |  //I2S3_DMAx_MEM_DATA_SIZE
-               DMA_P_BURST_SINGLE             |
-               DMA_M_BURST_SINGLE             |
-               DMA_PRIORITY_HIGH              |
-               DMA_SxCR_TCIE                  |
+    pDMA->CR  = DMA_PERIPH_TO_MEMORY          |
+                DMA_MODE_NORMAL               |
+                DMA_PERIPH_NO_INCREMENT       |
+                DMA_MEMORY_INCREMENT          |
+                DMA_P_DATA_ALIGN_BYTE         |  //I2S3_DMAx_PERIPH_DATA_SIZE
+                DMA_M_DATA_ALIGN_BYTE         |  //I2S3_DMAx_MEM_DATA_SIZE
+                DMA_P_BURST_SINGLE            |
+                DMA_M_BURST_SINGLE            |
+                DMA_PRIORITY_HIGH             |
+                DMA_SxCR_TCIE                 |
         //hdma_i2sTx.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;         
         //hdma_i2sTx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
-               m_pInfo->DMA_Channel;
+                m_pInfo->DMA_Channel;
   
   
 

@@ -446,6 +446,85 @@ SystemState_e I2C_Driver::Read(const void* pBuffer, size_t Size, uint8_t Device)
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           ReadRegister
+//
+//  Parameter(s):   uint8_t         Register
+//                  uint8_t*        pValue
+//                  uint8_t         Device
+//
+//  Return:         SystemState_e   State
+//
+//  Description:    Read data from a specific register in the I2C device
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e I2C_Driver::ReadRegister(uint8_t Register, uint8_t* pValue, uint8_t Device)
+{
+    return Transfer(0, 0, &Register, sizeof(uint8_t), pValue, sizeof(uint8_t), Device);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ReadRegister
+//
+//  Parameter(s):   uint8_t         Register
+//                  uint8_t*        pValue
+//
+//  Return:         SystemState_e   State
+//
+//  Description:    Read data from a specific register in the I2C device
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e I2C_Driver::ReadRegister(uint8_t Register, uint8_t* pValue)
+{
+    return Transfer(0, 0, &Register, sizeof(uint8_t), pValue, sizeof(uint8_t));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           WriteRegister
+//
+//  Parameter(s):   uint8_t         Register
+//                  uint8_t         Value
+//
+//  Return:         SystemState_e   State
+//
+//  Description:    Write data to a specific register in the I2C device
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e I2C_Driver::WriteRegister(uint8_t Register, uint8_t Value, uint8_t Device)
+{
+    uint8_t Buffer[2];
+
+    Buffer[0] = Register;
+    Buffer[1] = Value;
+
+    return Transfer(0, 0, &Buffer[0], 2, nullptr, 0, Device);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           WriteRegister
+//
+//  Parameter(s):   uint8_t         Register
+//                  uint8_t         Value
+//
+//  Return:         SystemState_e   State
+//
+//  Description:    Write data to a specific register in the I2C device
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e I2C_Driver::WriteRegister(uint8_t Register, uint8_t Value)
+{
+    uint8_t Buffer[2];
+
+    Buffer[0] = Register;
+    Buffer[1] = Value;
+
+    return Transfer(0, 0, &Buffer[0], 2, nullptr, 0);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //   Function:      Lock
 //
 //   Parameter(s):  None

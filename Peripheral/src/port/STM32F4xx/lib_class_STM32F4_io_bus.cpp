@@ -36,6 +36,8 @@
 
 #if (USE_IO_BUS_DRIVER == DEF_ENABLED)
 
+#define CFG_CHIP_SELECT_LOW_TIME            3  // Chip select active time for 6800/8080 bus
+
 //-------------------------------------------------------------------------------------------------
 // Static variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
@@ -95,7 +97,7 @@ uint32_t IO_BusDriver::Read(void)
     {
         IO_SetPinLow(m_pBus->u.Intel.RD);
         IO_SetPinLow(m_pBus->ChipSelect);
-        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }
+        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }         // todo fix that!!
         for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }
         for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }
         Data = m_Port.Read();
@@ -107,7 +109,7 @@ uint32_t IO_BusDriver::Read(void)
         IO_SetPinHigh(m_pBus->u.Motorola.RW);
         IO_SetPinLow(m_pBus->ChipSelect);
         IO_SetPinHigh(m_pBus->u.Motorola.E);
-        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }
+        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }         // todo fix that!!
         Data = m_Port.Read();
         IO_SetPinLow(m_pBus->u.Motorola.E);
         IO_SetPinHigh(m_pBus->ChipSelect);
@@ -137,7 +139,7 @@ void IO_BusDriver::Write(uint32_t Data)
     {
         IO_SetPinLow(m_pBus->u.Intel.WR);
         IO_SetPinLow(m_pBus->ChipSelect);
-        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }
+        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }        // todo fix that!!
         IO_SetPinHigh(m_pBus->ChipSelect);
         IO_SetPinHigh(m_pBus->u.Intel.WR);
     }
@@ -146,7 +148,7 @@ void IO_BusDriver::Write(uint32_t Data)
         IO_SetPinLow(m_pBus->u.Motorola.RW);
         IO_SetPinLow(m_pBus->ChipSelect);
         IO_SetPinHigh(m_pBus->u.Motorola.E);
-        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }
+        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }        // todo fix that!!
         IO_SetPinLow(m_pBus->u.Motorola.E);
         IO_SetPinHigh(m_pBus->ChipSelect);
     }

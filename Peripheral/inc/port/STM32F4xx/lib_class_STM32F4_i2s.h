@@ -116,6 +116,10 @@ example call for
 #if (USE_I2S_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------
 // typedef(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -232,7 +236,6 @@ struct I2S_Info_t
     I2S_MCLK_Output_e   CLK_Output;     // Specifies whether the I2S MCLK output is enabled or not.
     I2S_CPOL_Level_e    CPOL_Level;     // Specifies the idle state of the I2S clock.
     // DMA
-    //DMA_TypeDef*        pDMAx;              // DMA0 is the only DMA for I2S
     uint32_t            DMA_Channel;
     uint32_t            IT_Flag;
     DMA_Stream_TypeDef* pDMA_Stream;

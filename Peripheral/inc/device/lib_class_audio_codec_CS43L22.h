@@ -23,8 +23,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+//
+// Note(s)
+//          If data need to be verified after write to the codec
+//                      Put #define CS443L22_VERIFY_WRITTEN_DATA in device_cfg.h
+//
+//          Mandatory in device_cfg.h : #define CS43L22_CODEC_STANDARD    CS43L22_STANDARD_xxxx
+//                      Avaliable option are:
+//                          CS443L22_STANDARD_PHILLIPS
+//                          CS443L22_STANDARD_MSB
+//                          CS443L22_STANDARD_LSB
+//
+//          Mandatory in device_cfg.h : #define CS43L22_DEFAULT_VOLUME    0-255
+//
+//-------------------------------------------------------------------------------------------------
 
 #pragma once
+
+//-------------------------------------------------------------------------------------------------
+// Pre define(s) used in "device_cfg.h"
+//-------------------------------------------------------------------------------------------------
+
+#define CS43L22_STANDARD_MSB                0x00
+#define CS43L22_STANDARD_PHILLIPS           0x04
+#define CS43L22_STANDARD_LSB                0x08
+
+// Codec output DEVICE
+#define CS43L22_OUTPUT_DEVICE_SPEAKER       1
+#define CS43L22_OUTPUT_DEVICE_HEADPHONE     2
+#define CS43L22_OUTPUT_DEVICE_BOTH          3
+#define CS43L22_OUTPUT_DEVICE_AUTO          4
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
@@ -35,19 +63,21 @@
 #include "device_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
-// define(s)
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------
-// Typedef(s)
-//-------------------------------------------------------------------------------------------------
+#define AUDIO_PAUSE                     0
+#define AUDIO_RESUME                    1
+
+// MUTE commands
+#define AUDIO_MUTE_ON                   1
+#define AUDIO_MUTE_OFF                  0
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
 class CS43L22 : public AudioDriverInterface
-
 {
     public:
 
@@ -77,7 +107,7 @@ class CS43L22 : public AudioDriverInterface
 
         I2C_Driver*         m_pI2C;
         I2S_Driver*         m_pI2S;
-        IO_ID_e             m_IO_ID;
+        IO_ID_e             m_IO_ResetPinID;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -91,6 +121,23 @@ extern class CS43L22                     CS43L22_AudioCodec;
 #endif
 
 //-------------------------------------------------------------------------------------------------
+
+// Codec audio Standards
+#ifndef CS43L22_CODEC_STANDARD
+ #error "Error: No audio communication standard defined in device_cfg.h"
+#endif // CS43L22_CODEC_STANDARD
+
+#ifndef CS43L22_OUTPUT_DEVICE
+ #define CS43L22_OUTPUT_DEVICE = CS43L22_OUTPUT_DEVICE_HEADPHONE
+#endif // CS43L22_OUTPUT_DEVICE
+
+#ifndef CS43L22_DEFAULT_VOLUME
+ #error "Error: No default volume found in device_cfg.h"
+#endif // CS43L22_DEFAULT_VOLUME
+
+//-------------------------------------------------------------------------------------------------
+
+
 
 #if 0
 
@@ -128,61 +175,19 @@ extern class CS43L22                     CS43L22_AudioCodec;
 /*------------------------------------
                     OPTIONAL Configuration defines parameters
 */
-/* Uncomment the defines below to select if the Master clock mode should be
-  enabled or not */
-#define CODEC_MCLK_ENABLED
-/* #deine CODEC_MCLK_DISABLED */
-
 /* Uncomment this line to enable verifying data sent to codec after each write
   operation */
-#define VERIFY_WRITTENDATA
 /*----------------------------------------------------------------------------*/
 
-/*-----------------------------------
-                    Hardware Configuration defines parameters
-                                     -----------------------------------------*/
-/* Audio Reset Pin definition */
-#define AUDIO_RESET_GPIO_CLK           RCC_AHB1Periph_GPIOD
-#define AUDIO_RESET_PIN                GPIO_Pin_4
-#define AUDIO_RESET_GPIO               GPIOD
-
-/* I2S peripheral configuration defines */
-#define CODEC_I2S                      SPI3
-#define CODEC_I2S_CLK                  RCC_APB1Periph_SPI3
 #define CODEC_I2S_ADDRESS              0x40003C0C
-#define CODEC_I2S_GPIO_AF              GPIO_AF_SPI3
 #define CODEC_I2S_IRQ                  SPI3_IRQn
-#define CODEC_I2S_GPIO_CLOCK           (RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOA)
-#define CODEC_I2S_WS_PIN               GPIO_Pin_4
-#define CODEC_I2S_SCK_PIN              GPIO_Pin_10
-#define CODEC_I2S_SD_PIN               GPIO_Pin_12
-#define CODEC_I2S_MCK_PIN              GPIO_Pin_7
-#define CODEC_I2S_WS_PINSRC            GPIO_PinSource4
-#define CODEC_I2S_SCK_PINSRC           GPIO_PinSource10
-#define CODEC_I2S_SD_PINSRC            GPIO_PinSource12
-#define CODEC_I2S_MCK_PINSRC           GPIO_PinSource7
-#define CODEC_I2S_GPIO                 GPIOC
-#define CODEC_I2S_WS_GPIO              GPIOA
-#define CODEC_I2S_MCK_GPIO             GPIOC
 #define Audio_I2S_IRQHandler           SPI3_IRQHandler
-
 
  #define AUDIO_MAL_DMA_PERIPH_DATA_SIZE DMA_PeripheralDataSize_HalfWord
  #define AUDIO_MAL_DMA_MEM_DATA_SIZE    DMA_MemoryDataSize_HalfWord
  #define DMA_MAX_SIZE                   0xFFFF
 
-
- #define DAC_DHR12L1_ADDRESS            0x4000740C
- #define DAC_DHR12R1_ADDRESS            0x40007408
- #define DAC_DHR8R1_ADDRESS             0x40007410
- #define AUDIO_DAC_CHANNEL              DAC_Channel_1
-
- /* I2S DMA Stream definitions */
  #define AUDIO_I2S_DMA_CLOCK            RCC_AHB1Periph_DMA1
- #define AUDIO_I2S_DMA_STREAM           DMA1_Stream7
- #define AUDIO_I2S_DMA_DREG             CODEC_I2S_ADDRESS
- #define AUDIO_I2S_DMA_CHANNEL          DMA_Channel_0
- #define AUDIO_I2S_DMA_IRQ              DMA1_Stream7_IRQn
  #define AUDIO_I2S_DMA_FLAG_TC          DMA_FLAG_TCIF7
  #define AUDIO_I2S_DMA_FLAG_HT          DMA_FLAG_HTIF7
  #define AUDIO_I2S_DMA_FLAG_FE          DMA_FLAG_FEIF7
@@ -190,33 +195,6 @@ extern class CS43L22                     CS43L22_AudioCodec;
  #define AUDIO_I2S_DMA_FLAG_DME         DMA_FLAG_DMEIF7
 
  #define Audio_MAL_I2S_IRQHandler       DMA1_Stream7_IRQHandler
-
-
- /* DAC DMA Stream definitions */
- #define AUDIO_DAC_DMA_CLOCK            RCC_AHB1Periph_DMA1
- #define AUDIO_DAC_DMA_STREAM           DMA1_Stream0
- #define AUDIO_DAC_DMA_DREG             DAC_DHR12L1_ADDRESS
- #define AUDIO_DAC_DMA_CHANNEL          DMA_Channel_0
- #define AUDIO_DAC_DMA_IRQ              DMA1_Stream0_IRQn
- #define AUDIO_DAC_DMA_FLAG_TC          DMA_FLAG_TCIF0
- #define AUDIO_DAC_DMA_FLAG_HT          DMA_FLAG_HTIF0
- #define AUDIO_DAC_DMA_FLAG_FE          DMA_FLAG_FEIF0
- #define AUDIO_DAC_DMA_FLAG_TE          DMA_FLAG_TEIF0
- #define AUDIO_DAC_DMA_FLAG_DME         DMA_FLAG_DMEIF0
-
- #define Audio_MAL_DAC_IRQHandler       DMA1_Stream0_IRQHandler
-
-
-/* I2C peripheral configuration defines (control interface of the audio codec) */
-#define CODEC_I2C                      I2C1
-#define CODEC_I2C_CLK                  RCC_APB1Periph_I2C1
-#define CODEC_I2C_GPIO_CLOCK           RCC_AHB1Periph_GPIOB
-#define CODEC_I2C_GPIO_AF              GPIO_AF_I2C1
-#define CODEC_I2C_GPIO                 GPIOB
-#define CODEC_I2C_SCL_PIN              GPIO_Pin_6
-#define CODEC_I2C_SDA_PIN              GPIO_Pin_9
-#define CODEC_I2S_SCL_PINSRC           GPIO_PinSource6
-#define CODEC_I2S_SDA_PINSRC           GPIO_PinSource9
 
 /* Maximum Timeout values for flags and events waiting loops. These timeouts are
    not based on accurate values, they just guarantee that the application will
@@ -230,32 +208,13 @@ extern class CS43L22                     CS43L22_AudioCodec;
 /*-----------------------------------
                         Audio Codec User defines
                                      -----------------------------------------*/
-/* Audio interface : I2S or DAC */
-#define AUDIO_INTERFACE_I2S           1
-#define AUDIO_INTERFACE_DAC           2
-
-/* Codec output DEVICE */
-#define OUTPUT_DEVICE_SPEAKER         1
-#define OUTPUT_DEVICE_HEADPHONE       2
-#define OUTPUT_DEVICE_BOTH            3
-#define OUTPUT_DEVICE_AUTO            4
-
 /* Volume Levels values */
 #define DEFAULT_VOLMIN                0x00
 #define DEFAULT_VOLMAX                0xFF
 #define DEFAULT_VOLSTEP               0x04
-
-#define AUDIO_PAUSE                   0
-#define AUDIO_RESUME                  1
-
 /* Codec POWER DOWN modes */
 #define CODEC_PDWN_HW                 1
 #define CODEC_PDWN_SW                 2
-
-/* MUTE commands */
-#define AUDIO_MUTE_ON                 1
-#define AUDIO_MUTE_OFF                0
-
 /*----------------------------------------------------------------------------*/
 #define VOLUME_CONVERT(x)    ((Volume > 100)? 100:((uint8_t)((Volume * 255) / 100)))
 #define DMA_MAX(x)           (((x) <= DMA_MAX_SIZE)? (x):DMA_MAX_SIZE)

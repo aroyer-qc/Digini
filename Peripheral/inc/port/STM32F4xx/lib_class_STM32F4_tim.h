@@ -42,7 +42,7 @@
 #if (USE_TIM_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// define(s)
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
 #define TIM_SR_UPDATE_AND_COMPARE_MASK              (TIM_SR_UIF | TIM_SR_CC1IF | TIM_SR_CC2IF | TIM_SR_CC3IF | TIM_SR_CC4IF)

@@ -430,7 +430,7 @@ void ADC_ChannelDriver::Config(uint8_t Rank, uint8_t ADC_SampleTime)
     else
     {
         /* Get the old register value */
-        tmpreg1 = m_pADC_Info->pADCx->QR1;
+        tmpreg1 = m_pADC_Info->pADCx->SQR1;
 
         /* Calculate the mask to clear */
         tmpreg2 = SQR_SQ_SET << (5 * (Rank - 13));

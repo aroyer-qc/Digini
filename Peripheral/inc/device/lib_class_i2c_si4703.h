@@ -24,7 +24,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-//  Notes:  Library header file for the radio library to control the TEA5767 radio chip.
+//  Notes:  Library header file for the radio library to control the si4703 radio chip.
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -35,6 +35,10 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "lib_digini.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#if (USE_I2C_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -106,3 +110,8 @@ extern class SI4703                     SI4703_Radio;
 
 //-------------------------------------------------------------------------------------------------
 
+#else // (USE_I2C_DRIVER == DEF_ENABLED)
+
+#pragma message("DIGINI driver for I2C must be enable and configure to use this device driver")
+
+#endif // (USE_I2C_DRIVER == DEF_ENABLED)

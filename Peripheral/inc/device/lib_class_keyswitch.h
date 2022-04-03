@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_eeprom_dbase.h
+//  File : lib_class_keyswitch.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2022 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,75 +24,86 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+// Note(s)  When configuring a clock/data quadrature encoder only choose falling or rising for ISR.
+//          If encoder is not incrementing in the right direction, then change only clock polarity.
+//
+//-------------------------------------------------------------------------------------------------
+
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "label_cfg.h"
-#include "lib_class_database.h"
+#include "lib_digini.h"
+#include "device_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 
-#if defined(EEPROM_DBASE_DEF)
+#ifdef KEYSWICH_GLOBAL
+    #define KEYSWICH_EXTERN
+#else
+    #define KEYSWICH_EXTERN extern
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_EEPROM_DBASE_AS_ENUM(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ENUM_ID,
+#define EXPAND_X_KEYSWITCH_AS_ENUM(ENUM_ID, IO_KEYSWITCH) ENUM_ID,
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-enum EEPROM_DBaseItemList_e
+#ifdef QUAD_ENCODER_DEF
+enum KEYSwitchID_e
 {
-    START_EEPROM_DBASE = DBASE_INDEX_EEPROM_RANGE - 1,
-    EEPROM_DBASE_DEF(EXPAND_X_EEPROM_DBASE_AS_ENUM)
-    END_EEPROM_DBASE
+    KEYSWITCH_NONE = -1,
+    KEYSWITCH_DEF(EXPAND_X_KEYSWITCH_AS_ENUM)
+    NB_OF_KEYSWITCH,
 };
 
-struct EEpromDBaseInfo_t
+enum KEYSWITCH_Change_e
 {
-    class EEPROM_Driver*  pE2;
-    uint32_t              Address;
+    KEY_PRESSED,
+    KEY_RELEASED,
+    KEY_SUPERKEY,
 };
 
+struct KEYSWITCH_Info_t
+{
+    IO_IrqID_e IO_KeySwitch;
+};
+
+typedef void (* KEYSWITCH_CallBack_t) (KEYSWITCH_Change_e Change);
+
+//-------------------------------------------------------------------------------------------------
+// class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-#define NB_EEPROM_DBASE_ITEMS_CONST        ((END_EEPROM_DBASE - START_EEPROM_DBASE) - 1)
-
-//-------------------------------------------------------------------------------------------------
-
-class CEEPROM_DataBase : public CDataBaseInterface
+class KEY_Switch
 {
     public:
 
-        SystemState_e   Initialize          (void* pConfig, size_t ObjectSize);
-        SystemState_e   Get                 (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        SystemState_e   Set                 (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        uint16_t        GetDriverIndex      (Range_e Range);
-        SystemState_e   GetSize             (uint32_t* pSize,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        SystemState_e   GetPointer          (void** pAddress,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        SystemState_e   SetDB_Address       (void** pAddress) {return SYS_UNSUPPORTED_FEATURE;};
+                                KEY_Switch              (KeySwitchID_e KeyID);
+
+        void                    RegisterChangeCallback  (void* pCallback);
+        void                    Enable                  (void);
+        void                    Disable                 (void);
+
+        void                    KeySwitchISR            (void);
 
     private:
 
-        SystemState_e   CheckRange          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        uint32_t        GetAddress          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
-
-        EEPROM_Driver*          m_pE2;
-        uint32_t                m_ItemsAddress  [NB_EEPROM_DBASE_ITEMS_CONST + 1];             // need one more for boundary top limit
-        static const uint16_t   m_ItemsQTY      [NB_EEPROM_DBASE_ITEMS_CONST];
-        static const uint16_t   m_ItemsSubQTY   [NB_EEPROM_DBASE_ITEMS_CONST];
-        static const size_t     m_ItemSize      [NB_EEPROM_DBASE_ITEMS_CONST];
-
+                KEYSWITCH_Info_t*     m_pKeySwitchInfo;
+                KEYSWITCH_CallBack_t  m_pCallback;
+        static  KEYSWITCH_Info_t      m_KeySwitchInfo[NB_OF_KEYSWITCH];
 };
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // #if defined(EEPROM_DBASE_DEF)
+#endif
 
-//-------------------------------------------------------------------------------------------------
+
+

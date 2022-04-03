@@ -81,7 +81,7 @@ ADC_Driver::ADC_Driver(ADC_ID_e ADC_ID)
 //  Description:    Initializes the ADCx peripheral according to the specified parameters in the
 //                  ADC configuration file.
 //  Note(s):        This function is used to configure the global features of the ADC
-//                      - ClockPrescaler
+//                      - Clock Prescaler
 //                      - Resolution
 //                      - Data Alignment
 //                      - Number of conversion
@@ -316,137 +316,79 @@ ADC_ChannelDriver::ADC_ChannelDriver(ADC_ChannelID_e ADC_ChannelID)
 //
 //
 //-------------------------------------------------------------------------------------------------
-void ADC_ChannelDriver::Initialize()
+void ADC_ChannelDriver::Initialize(void)
 {
     IO_PinInit(m_pChannelInfo->IO_ID);
   // get channel ID of pointer
 }
 
-/**
-  * @param  Rank: The rank in the regular group sequencer.
-  *          This parameter must be between 1 to 16.
-  * @param  ADC_SampleTime: The sample time value to be set for the selected channel.
-  *          This parameter can be one of the following values:
-  *            @arg ADC_SampleTime_3Cycles: Sample time equal to 3 cycles
-  *            @arg ADC_SampleTime_15Cycles: Sample time equal to 15 cycles
-  *            @arg ADC_SampleTime_28Cycles: Sample time equal to 28 cycles
-  *            @arg ADC_SampleTime_56Cycles: Sample time equal to 56 cycles
-  *            @arg ADC_SampleTime_84Cycles: Sample time equal to 84 cycles
-  *            @arg ADC_SampleTime_112Cycles: Sample time equal to 112 cycles
-  *            @arg ADC_SampleTime_144Cycles: Sample time equal to 144 cycles
-  *            @arg ADC_SampleTime_480Cycles: Sample time equal to 480 cycles
-  * @retval None
-  */
+//-------------------------------------------------------------------------------------------------
+//
+//   Function:      Config
+//
+//   Description:
+//
+//   Parameter(s):  Rank: The rank in the regular group sequencer.
+//                        This parameter must be between 1 to 16.
+//                  ADC_SampleTime: The sample time value to be set for the selected channel.
+//                        This parameter can be one of the following values:
+//                            ADC_SampleTime_3Cycles: Sample time equal to 3 cycles
+//                            ADC_SampleTime_15Cycles: Sample time equal to 15 cycles
+//                            ADC_SampleTime_28Cycles: Sample time equal to 28 cycles
+//                            ADC_SampleTime_56Cycles: Sample time equal to 56 cycles
+//                            ADC_SampleTime_84Cycles: Sample time equal to 84 cycles
+//                            ADC_SampleTime_112Cycles: Sample time equal to 112 cycles
+//                            ADC_SampleTime_144Cycles: Sample time equal to 144 cycles
+//                            ADC_SampleTime_480Cycles: Sample time equal to 480 cycles
+//   Return Value:  None
+//
+//   Note(s):
+//
+//
+//-------------------------------------------------------------------------------------------------
 void ADC_ChannelDriver::Config(uint8_t Rank, uint8_t ADC_SampleTime)
 {
-    uint32_t tmpreg1 = 0;
-    uint32_t tmpreg2 = 0;
+    volatile uint32_t* pRegister;
+    uint32_t  Offset = 0;
+    uint32_t  Shift  = 0;
 
-    /* if ADC_Channel_10 ... ADC_Channel_18 is selected */
+    // if ADC_Channel_10 ... ADC_Channel_18 is selected
     if(m_pChannelInfo->Channel > ADC_CHANNEL_9)
     {
-        /* Get the old register value */
-        tmpreg1 = m_pADC_Info->pADCx->SMPR1;
-
-        /* Calculate the mask to clear */
-        tmpreg2 = SMPR_SMP_SET << (3 * (m_pChannelInfo->Channel - 10));
-
-        /* Clear the old sample time */
-        tmpreg1 &= ~tmpreg2;
-
-        /* Calculate the mask to set */
-        tmpreg2 = (uint32_t)ADC_SampleTime << (3 * (m_pChannelInfo->Channel - 10));
-
-        /* Set the new sample time */
-        tmpreg1 |= tmpreg2;
-
-        /* Store the new register value */
-        m_pADC_Info->pADCx->SMPR1 = tmpreg1;
+        Offset    = 10;
+        pRegister = &m_pADC_Info->pADCx->SMPR1;
     }
-    else /* ADC_Channel include in ADC_Channel_[0..9] */
+    else // ADC_Channel include in ADC_Channel_[0..9]
     {
-            /* Get the old register value */
-        tmpreg1 = m_pADC_Info->pADCx->SMPR2;
-
-        /* Calculate the mask to clear */
-        tmpreg2 = SMPR_SMP_SET << (3 * m_pChannelInfo->Channel);
-
-        /* Clear the old sample time */
-        tmpreg1 &= ~tmpreg2;
-
-        /* Calculate the mask to set */
-        tmpreg2 = (uint32_t)ADC_SampleTime << (3 * m_pChannelInfo->Channel);
-
-        /* Set the new sample time */
-        tmpreg1 |= tmpreg2;
-
-        /* Store the new register value */
-        m_pADC_Info->pADCx->SMPR2 = tmpreg1;
+        pRegister = &m_pADC_Info->pADCx->SMPR2;
     }
 
-    /* For Rank 1 to 6 */
+    Shift = 3 * (m_pChannelInfo->Channel - Offset);
+    MODIFY_REG(*pRegister, SMPR_SMP_SET << Shift, uint32_t(ADC_SampleTime) << Shift);    // Set new sample time
+
+
+
+    // For Rank 1 to 6
     if (Rank < 7)
     {
-        /* Get the old register value */
-        tmpreg1 = m_pADC_Info->pADCx->SQR3;
-
-        /* Calculate the mask to clear */
-        tmpreg2 = SQR_SQ_SET << (5 * (Rank - 1));
-
-        /* Clear the old SQx bits for the selected rank */
-        tmpreg1 &= ~tmpreg2;
-
-        /* Calculate the mask to set */
-        tmpreg2 = m_pChannelInfo->Channel << (5 * (Rank - 1));
-
-        /* Set the SQx bits for the selected rank */
-        tmpreg1 |= tmpreg2;
-
-        /* Store the new register value */
-        m_pADC_Info->pADCx->SQR3 = tmpreg1;
+        pRegister = &m_pADC_Info->pADCx->SQR3;
+        Offset    = 1;
     }
-    /* For Rank 7 to 12 */
+    // For Rank 7 to 12
     else if (Rank < 13)
     {
-        /* Get the old register value */
-        tmpreg1 = m_pADC_Info->pADCx->SQR2;
-
-        /* Calculate the mask to clear */
-        tmpreg2 = SQR_SQ_SET << (5 * (Rank - 7));
-
-        /* Clear the old SQx bits for the selected rank */
-        tmpreg1 &= ~tmpreg2;
-
-        /* Calculate the mask to set */
-        tmpreg2 = m_pChannelInfo->Channel << (5 * (Rank - 7));
-
-        /* Set the SQx bits for the selected rank */
-        tmpreg1 |= tmpreg2;
-
-        /* Store the new register value */
-        m_pADC_Info->pADCx->SQR2 = tmpreg1;
+        pRegister = &m_pADC_Info->pADCx->SQR2;
+        Offset    = 7;
     }
-    /* For Rank 13 to 16 */
+    // For Rank 13 to 16
     else
     {
-        /* Get the old register value */
-        tmpreg1 = m_pADC_Info->pADCx->SQR1;
-
-        /* Calculate the mask to clear */
-        tmpreg2 = SQR_SQ_SET << (5 * (Rank - 13));
-
-        /* Clear the old SQx bits for the selected rank */
-        tmpreg1 &= ~tmpreg2;
-
-        /* Calculate the mask to set */
-        tmpreg2 = m_pChannelInfo->Channel << (5 * (Rank - 13));
-
-        /* Set the SQx bits for the selected rank */
-        tmpreg1 |= tmpreg2;
-
-        /* Store the new register value */
-        m_pADC_Info->pADCx->SQR1 = tmpreg1;
+        pRegister = &m_pADC_Info->pADCx->SQR1;
+        Offset    = 13;
     }
+
+    Shift = 5 * (Rank - Offset);
+    MODIFY_REG(*pRegister, SQR_SQ_SET << Shift, m_pChannelInfo->Channel << Shift);       // Set the SQx bits for the selected rank
 }
 
 //-------------------------------------------------------------------------------------------------

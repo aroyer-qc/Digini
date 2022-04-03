@@ -77,9 +77,8 @@
 #define SI4703_STEREO_MASK          0x0100
 #define SI4703_RSSI_MASK            0x00FF
 
-
-#define SI4703_NB_OF_READ_REGISTER  32
-#define SI4703_NB_OF_WRITE_REGISTER 32
+#define SI4703_NB_OF_READ_REGISTER  16
+#define SI4703_NB_OF_WRITE_REGISTER 6
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -87,18 +86,22 @@
 
 enum SI4703_Register_e  // Register names
 {
-    DEVICE_ID         = 0x00,
-    CHIP_ID           = 0x01,
-    POWER_CFG         = 0x02,
-    CHANNEL           = 0x03,
-    SYS_CONFIG1       = 0x04,
-    SYS_CONFIG2       = 0x05,
-    STATUS            = 0x0A,
-    READ_CHANNEL      = 0x0B,
-    RDSA              = 0x0C,
-    RDSB              = 0x0D,
-    RDSC              = 0x0E,
-    RDSD              = 0x0F,
+    SI4703_STATUS            = 0,  // 0x0A
+    SI4703_READ_CHANNEL      = 1,  // 0x0B
+    SI4703_RDSA              = 2,  // 0x0C
+    SI4703_RDSB              = 3,  // 0x0D
+    SI4703_RDSC              = 4,  // 0x0E
+    SI4703_RDSD              = 5,  // 0x0F
+    SI4703_DEVICE_ID         = 6,  // 0x00
+    SI4703_CHIP_ID           = 7,  // 0x01
+    SI4703_POWER_CFG         = 8,  // 0x02
+    SI4703_CHANNEL           = 9,  // 0x03
+    SI4703_SYS_CONFIG1       = 10, // 0x04
+    SI4703_SYS_CONFIG2       = 11, // 0x05
+    SI4703_REGISTER_6        = 12, // 0x06
+    SI4703_REGISTER_7        = 13, // 0x07
+    SI4703_REGISTER_8        = 14, // 0x08
+    SI4703_REGISTER_9        = 15, // 0x09
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -112,7 +115,7 @@ enum SI4703_Register_e  // Register names
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Initialize
+//  Name:           InitializeLowLevel
 //
 //  Parameter(s):
 //
@@ -173,15 +176,15 @@ SystemState_e SI4703::Initialize(I2C_Driver* pI2C)
     nOS_Sleep(500);                                     // Wait for clock to settle - from AN230 page 9
 
     this->ReadRegisters();                              // Read the current register set
-    m_Registers[POWER_CFG] = 0x4001;                    // Enable the IC
+    m_Registers[SI4703_POWER_CFG] = 0x4001;                    // Enable the IC
     // m_Registers[POWER_CFG] |= (1 << SI4703_SMUTE) | (1 << SI4703_DMUTE); //Disable Mute, disable softmute
-    m_Registers[SYS_CONFIG1] |= SI4703_RDS_MASK;        // Enable RDS
+    m_Registers[SI4703_SYS_CONFIG1] |= SI4703_RDS_MASK;        // Enable RDS
 
 // TODO  Create a config page so this can be set at startup within the init parameter
-    m_Registers[SYS_CONFIG1] |=  SI4703_DE_MASK;        // 50kHz Europe setup
-    m_Registers[SYS_CONFIG2] |=  SI4703_SPACE0_MASK;    // 100kHz channel spacing for Europe
-    m_Registers[SYS_CONFIG2] &= ~SI4703_VOLUME_MASK;    // Clear volume bits
-    m_Registers[SYS_CONFIG2] |= 0x0001;                 // Set volume to lowest
+    m_Registers[SI4703_SYS_CONFIG1] |=  SI4703_DE_MASK;        // 50kHz Europe setup
+    m_Registers[SI4703_SYS_CONFIG2] |=  SI4703_SPACE0_MASK;    // 100kHz channel spacing for Europe
+    m_Registers[SI4703_SYS_CONFIG2] &= ~SI4703_VOLUME_MASK;    // Clear volume bits
+    m_Registers[SI4703_SYS_CONFIG2] |= 0x0001;                 // Set volume to lowest
     this->SaveRegisters();                              // Update
     nOS_Sleep(110);                                     // Max powerup time, from datasheet page 13
     return SYS_READY;
@@ -209,8 +212,8 @@ void SI4703::SetVolume(uint32_t Volume)
         Volume = 15;
     }
 
-    m_Registers[SYS_CONFIG2] &= ~SI4703_VOLUME_MASK;    // Clear volume bits
-    m_Registers[SYS_CONFIG2] |=  Volume;                // Set new volume
+    m_Registers[SI4703_SYS_CONFIG2] &= ~SI4703_VOLUME_MASK;    // Clear volume bits
+    m_Registers[SI4703_SYS_CONFIG2] |=  Volume;                // Set new volume
     this->SaveRegisters();                              // Update
 }
 
@@ -222,7 +225,7 @@ void SI4703::SetVolume(uint32_t Volume)
 //
 //  Return:         SystemState_e   State
 //
-//  Description:    Set the volume on the SI4703.
+//  Description:    Set the frequency (station) on the SI4703.
 //
 //  Note(s):
 //
@@ -240,9 +243,9 @@ void SI4703::SetChannel(uint32_t Channel)
 
     // These steps come from AN230 page 20 rev 0.5
     this->ReadRegisters();
-    m_Registers[CHANNEL] &= ~SI4703_CHANNEL_MASK;       // Clear out the channel bits
-    m_Registers[CHANNEL] |=  NewChannel;                // Mask in the new channel
-    m_Registers[CHANNEL] |=  SI4703_TUNE_MASK;          // Set the TUNE bit to start
+    m_Registers[SI4703_CHANNEL] &= ~SI4703_CHANNEL_MASK;       // Clear out the channel bits
+    m_Registers[SI4703_CHANNEL] |=  NewChannel;                // Mask in the new channel
+    m_Registers[SI4703_CHANNEL] |=  SI4703_TUNE_MASK;          // Set the TUNE bit to start
     this->SaveRegisters();
 
     //delay(60); //Wait 60ms - you can use or skip this delay
@@ -252,14 +255,14 @@ void SI4703::SetChannel(uint32_t Channel)
     {
         this->ReadRegisters();
 
-        if((m_Registers[STATUS] & SI4703_STC_MASK) != 0)
+        if((m_Registers[SI4703_STATUS] & SI4703_STC_MASK) != 0)
         {
             break; //Tuning complete!
         }
     }
 
     this->ReadRegisters();
-    m_Registers[CHANNEL] &= ~SI4703_TUNE_MASK;   // Clear the tune after a tune has completed
+    m_Registers[SI4703_CHANNEL] &= ~SI4703_TUNE_MASK;   // Clear the tune after a tune has completed
     this->SaveRegisters();
 
     //Wait for the si4703 to clear the STC as well
@@ -267,7 +270,7 @@ void SI4703::SetChannel(uint32_t Channel)
     {
         this->ReadRegisters();
 
-        if((m_Registers[STATUS] & SI4703_STC_MASK) == 0)
+        if((m_Registers[SI4703_STATUS] & SI4703_STC_MASK) == 0)
         {
             break;                          // Tuning complete!
         }
@@ -291,8 +294,8 @@ SystemState_e SI4703::SetMono(bool Mono)
 {
     this->ReadRegisters(); // Read the current register set
 
-    if(Mono == true) m_Registers[POWER_CFG] |=  SI4703_MONO_MASK;
-    else             m_Registers[POWER_CFG] &= ~SI4703_MONO_MASK;
+    if(Mono == true) m_Registers[SI4703_POWER_CFG] |=  SI4703_MONO_MASK;
+    else             m_Registers[SI4703_POWER_CFG] &= ~SI4703_MONO_MASK;
 
     return this->SaveRegisters();
     return SYS_READY;
@@ -315,8 +318,8 @@ SystemState_e SI4703::SetMute(bool Mute)
 {
     this->ReadRegisters(); // Read the current register set
 
-    if(Mute == true) m_Registers[POWER_CFG] |=  SI4703_DMUTE_MASK;
-    else             m_Registers[POWER_CFG] &= ~SI4703_DMUTE_MASK;
+    if(Mute == true) m_Registers[SI4703_POWER_CFG] |=  SI4703_DMUTE_MASK;
+    else             m_Registers[SI4703_POWER_CFG] &= ~SI4703_DMUTE_MASK;
 
     return this->SaveRegisters();
     return SYS_READY;
@@ -479,19 +482,19 @@ void SI4703::GetRDS(char* pMessage, nOS_TickCounter TimeOut)
     {
         this->ReadRegisters();
 
-        if((m_Registers[STATUS] & SI4703_RDSR_MASK) != 0)
+        if((m_Registers[SI4703_STATUS] & SI4703_RDSR_MASK) != 0)
         {
             // ls 2 bits of B determine the 4 letter pairs once we have a full set return
             // if you get nothing after 20 readings return with empty string
-            uint16_t b     = m_Registers[RDSB];
+            uint16_t b     = m_Registers[SI4703_RDSB];
             int      Index = b & 0x03;
 
             if((Completed[Index] == 0) && (b < 500))
             {
                 Completed[Index] = true;
                 CompletedCount++;
-                char Dh = char(m_Registers[RDSD] >> 8);
-                char Dl = char(m_Registers[RDSD]);
+                char Dh = char(m_Registers[SI4703_RDSD] >> 8);
+                char Dl = char(m_Registers[SI4703_RDSD]);
                 pMessage[Index * 2]       = Dh;
                 pMessage[(Index * 2) + 1] = Dl;
                 // Serial.print(si4703_registers[RDSD]); Serial.print(" ");
@@ -538,11 +541,11 @@ SystemState_e SI4703::GetRadioInfo(SI4703_RadioInfo_t* pInfo)
 
     if((State = this->ReadRegisters()) == SYS_READY)
     {
-        pInfo->Stereo = (m_Registers[STATUS] & SI4703_STEREO_MASK)   ? true : false;
-        pInfo->RSSI   = uint8_t(m_Registers[STATUS] & SI4703_RSSI_MASK);
-        pInfo->Mute   = (m_Registers[POWER_CFG] & SI4703_DMUTE_MASK) ? true : false;
-        pInfo->Mono   = (m_Registers[POWER_CFG] & SI4703_MONO_MASK)  ? true : false;
-        pInfo->Tuned  = (m_Registers[CHANNEL]   & SI4703_TUNE_MASK)  ? true : false;
+        pInfo->Stereo = (m_Registers[SI4703_STATUS] & SI4703_STEREO_MASK)   ? true : false;
+        pInfo->RSSI   = uint8_t(m_Registers[SI4703_STATUS] & SI4703_RSSI_MASK);
+        pInfo->Mute   = (m_Registers[SI4703_POWER_CFG] & SI4703_DMUTE_MASK) ? true : false;
+        pInfo->Mono   = (m_Registers[SI4703_POWER_CFG] & SI4703_MONO_MASK)  ? true : false;
+        pInfo->Tuned  = (m_Registers[SI4703_CHANNEL]   & SI4703_TUNE_MASK)  ? true : false;
     }
 
     return State;
@@ -562,24 +565,20 @@ SystemState_e SI4703::GetRadioInfo(SI4703_RadioInfo_t* pInfo)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SI4703::ReadRegisters(void)
 {
-    return m_pI2C->Read(&m_Registers[0], SI4703_NB_OF_READ_REGISTER, SI4703_ADDRESS);
-    //return SYS_READY;
+    SystemState_e State;
 
-/*
-  //Si4703 begins reading from register upper register of 0x0A and reads to 0x0F, then loops to 0x00.
-  Wire.requestFrom(SI4703, 32); //We want to read the entire register set from 0x0A to 0x09 = 32 bytes.
+    // Si4703 begins reading from register upper register of 0x0A and reads to 0x0F, then loops to 0x00.
+    if((State = m_pI2C->Read(&m_Registers[SI4703_STATUS], SI4703_NB_OF_READ_REGISTER, SI4703_ADDRESS)) == SYS_READY)
+    {
+      #if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+        for(int i = int(SI4703_STATUS); i <= int(SI4703_REGISTER_9); i++)
+        {
+            LIB_uint16_t_Swap(&m_Registers[i]);
+        }
+      #endif
+    }
 
-  while(Wire.available() < 32) ; //Wait for 16 words/32 bytes to come back from slave I2C device
-  //We may want some time-out error here
-
-  //Remember, register 0x0A comes in first so we have to shuffle the array around a bit
-  for(int x = 0x0A ; ; x++) { //Read in these 32 bytes
-    if(x == 0x10) x = 0; //Loop back to zero
-    si4703_registers[x] = Wire.read() << 8;
-    si4703_registers[x] |= Wire.read();
-    if(x == 0x09) break; //We're done!
-  }
-*/
+    return State;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -597,36 +596,20 @@ SystemState_e SI4703::ReadRegisters(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SI4703::SaveRegisters(void)
 {
-    return m_pI2C->Write(&m_Registers[0], SI4703_NB_OF_WRITE_REGISTER, SI4703_ADDRESS);
+    SystemState_e State;
 
-/*
+  #if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+    for(int i = int(SI4703_POWER_CFG); i <= int(SI4703_REGISTER_7); i++)
+    {
+        LIB_uint16_t_Swap(&m_Registers[i]);
+    }
+  #endif
 
-//Write the current 9 control registers (0x02 to 0x07) to the Si4703
-//It's a little weird, you don't write an I2C addres
-//The Si4703 assumes you are writing to 0x02 first, then increments
+    // Write the current control registers (0x02 to 0x07) to the Si4703
+    // The Si4703 assumes you are writing to 0x02 first, then increments
+    State = m_pI2C->Write(&m_Registers[SI4703_POWER_CFG], SI4703_NB_OF_WRITE_REGISTER, SI4703_ADDRESS);
 
-
-  Wire.beginTransmission(SI4703);
-  //A write command automatically begins with register 0x02 so no need to send a write-to address
-  //First we send the 0x02 to 0x07 control registers
-  //In general, we should not write to registers 0x08 and 0x09
-  for(int regSpot = 0x02 ; regSpot < 0x08 ; regSpot++) {
-    byte high_byte = si4703_registers[regSpot] >> 8;
-    byte low_byte = si4703_registers[regSpot] & 0x00FF;
-
-    Wire.write(high_byte); //Upper 8 bits
-    Wire.write(low_byte); //Lower 8 bits
-  }
-
-  //End this transmission
-  byte ack = Wire.endTransmission();
-  if(ack != 0) { //We have a problem!
-    return(FAIL);
-  }
-  return(SUCCESS);
-
-*/
-
+    return State;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -650,48 +633,48 @@ uint32_t SI4703::Seek(SI4703_Seek_e Seek)
 
     this->ReadRegisters();
     // Set seek mode wrap bit
-    m_Registers[POWER_CFG] |= (SI4703_SK_MODE_MASK);        // Allow wrap
-    //m_Registers[POWER_CFG] &= ~(1 << SI4703_SK_MODE_MASK);// Disallow wrap - if you disallow wrap, you may want to tune to 87.5 first
+    m_Registers[SI4703_POWER_CFG] |= (SI4703_SK_MODE_MASK);         // Allow wrap
+    //m_Registers[POWER_CFG] &= ~(1 << SI4703_SK_MODE_MASK);        // Disallow wrap - if you disallow wrap, you may want to tune to 87.5 first
 
     if(Seek == SI4703_SEEK_DOWN)
     {
-        m_Registers[POWER_CFG] &= ~SI4703_SEEK_UP_MASK;     // Seek down is the default upon reset
+        m_Registers[SI4703_POWER_CFG] &= ~SI4703_SEEK_UP_MASK;      // Seek down is the default upon reset
     }
     else
     {
-        m_Registers[POWER_CFG] |= SI4703_SEEK_UP_MASK;      // Set the bit to seek up
+        m_Registers[SI4703_POWER_CFG] |= SI4703_SEEK_UP_MASK;       // Set the bit to seek up
     }
 
-    m_Registers[POWER_CFG] |= SI4703_SEEK_MASK;             // Start seek
-    this->SaveRegisters();                                  // Seeking will now start
+    m_Registers[SI4703_POWER_CFG] |= SI4703_SEEK_MASK;              // Start seek
+    this->SaveRegisters();                                          // Seeking will now start
 
     // Poll to see if STC is set
     while(1)
     {
         this->ReadRegisters();
 
-        if((m_Registers[STATUS] & SI4703_STC_MASK) != 0)
+        if((m_Registers[SI4703_STATUS] & SI4703_STC_MASK) != 0)
         {
-            break;                                          // Tuning complete!
+            break;                                                  // Tuning complete!
         }
     }
 
     this->ReadRegisters();
-    valueSFBL = m_Registers[STATUS] & SI4703_SFBL_MASK;     // Store the value of SFBL
-    m_Registers[POWER_CFG] &= ~SI4703_SEEK_MASK;            // Clear the seek bit after seek has completed
+    valueSFBL = m_Registers[SI4703_STATUS] & SI4703_SFBL_MASK;      // Store the value of SFBL
+    m_Registers[SI4703_POWER_CFG] &= ~SI4703_SEEK_MASK;             // Clear the seek bit after seek has completed
     this->SaveRegisters();
 
     // Wait for the si4703 to clear the STC as well
     while(1)
     {
         this->ReadRegisters();
-        if((m_Registers[STATUS] & SI4703_STC_MASK) == 0)
+        if((m_Registers[SI4703_STATUS] & SI4703_STC_MASK) == 0)
         {
-            break;                                      // Tuning complete!
+            break;                                                  // Tuning complete!
         }
     }
 
-    if(valueSFBL != 0)                                  // The bit was set indicating we hit a band limit or failed to find a station
+    if(valueSFBL != 0)                                              // The bit was set indicating we hit a band limit or failed to find a station
     {
         return(0);
     }
@@ -721,7 +704,7 @@ uint32_t SI4703::GetChannel(void)
     uint32_t Channel;
 
     this->ReadRegisters();
-    Channel = m_Registers[READ_CHANNEL] & SI4703_CHANNEL_MASK;  // Mask out everything but the lower 10 bits
+    Channel = m_Registers[SI4703_READ_CHANNEL] & SI4703_CHANNEL_MASK;  // Mask out everything but the lower 10 bits
 
     //Freq(MHz) = 0.100(in Europe) * Channel + 87.5MHz
     //X = 0.1 * Chan + 87.5

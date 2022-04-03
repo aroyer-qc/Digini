@@ -56,7 +56,7 @@
 // static variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-Quad_Info_t QUAD_Encoder::m_QuadInfo[NB_OF_QUADRATURE_ENCODER] =
+QUAD_EncoderInfo_t QUAD_Encoder::m_QuadInfo[NB_OF_QUADRATURE_ENCODER] =
 {
     QUAD_ENCODER_DEF(EXPAND_X_QUAD_ENCODER_AS_STRUCT_DATA)
 };
@@ -70,7 +70,7 @@ Quad_Info_t QUAD_Encoder::m_QuadInfo[NB_OF_QUADRATURE_ENCODER] =
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-QUAD_Encoder::QUAD_Encoder(QuadEncoderID_e QuadID)
+QUAD_Encoder::QUAD_Encoder(QUAD_EncoderID_e QuadID)
 {
     if((QuadID > QUAD_ENCODER_NONE) && (QuadID < NB_OF_QUADRATURE_ENCODER))
     {
@@ -81,61 +81,8 @@ QUAD_Encoder::QUAD_Encoder(QuadEncoderID_e QuadID)
         m_pQuadInfo = nullptr;
     }
 
-    m_Position = 0;
     m_pCallback = nullptr;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           SetNumberOfPosition
-//
-//  Parameter(s):   NumberOfPosition        number of possible selection
-//  Return:         None
-//
-//  Description:    Set the number of position to offload application of handling this
-//
-//-------------------------------------------------------------------------------------------------
-void QUAD_Encoder::SetNumberOfPosition(uint32_t NumberOfPosition)
-{
-    m_NumberOfPosition = NumberOfPosition;
-
-    if(m_Position >= m_NumberOfPosition)
-    {
-        m_Position = m_NumberOfPosition - 1;
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           SetPosition
-//
-//  Parameter(s):   Position        New position
-//  Return:         None
-//
-//  Description:    Set position of the quadrature encoder
-//
-//-------------------------------------------------------------------------------------------------
-void QUAD_Encoder::SetPosition(uint32_t Position)
-{
-    if(Position < m_NumberOfPosition)
-    {
-        m_Position = Position;
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           GetPosition
-//
-//  Parameter(s):   None
-//  Return:         Position        Actual position
-//
-//  Description:    Get the actual position of the quadrature encoder
-//
-//-------------------------------------------------------------------------------------------------
-uint32_t QUAD_Encoder::GetPosition(void)
-{
-    return m_Position;
+    m_State     = QUAD_IDLE;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -148,48 +95,90 @@ uint32_t QUAD_Encoder::GetPosition(void)
 //  Description:    Return the state od the push button
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t QUAD_Encoder::GetPushButtonState(void)
+void QUAD_Encoder::Process(void)
+{
+    switch(int(m_State))
+    {
+        case int(QUAD_PRESSED):
+        {
+            if( m_PreviousState != QUAD_PRESSED)
+            {
+                m_PreviousState = QUAD_PRESSED;
+                m_StateTick = GetTick();
+            }
+            else
+            {
+                if(TickHasTimeOut(m_StateTick, QUAD_SUPERKEY_TIMEOUT) == true)
+                {
+                    m_State         = QUAD_SUPERKEY;
+                    m_PreviousState = QUAD_SUPERKEY;
+                    m_pCallback(QUAD_SUPERKEY);
+                }
+            }
+        }
+        break;
+
+        case int(QUAD_RELEASED):
+        {
+            m_State         = QUAD_IDLE;
+            m_PreviousState = QUAD_IDLE;
+        }
+        break;
+
+        default: break;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           GetPushButtonState
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Return the state od the push button
+//
+//-------------------------------------------------------------------------------------------------
+/*uint32_t QUAD_Encoder::GetPushButtonState(void)
 {
     if(m_pQuadInfo != nullptr)
     {
-        return IO_GetInputPin(m_pQuadInfo->IO_Push);
+        return IO_GetInputPin(IO_GetIO_ID(m_pQuadInfo->IO_Push));
     }
 
     return 0;
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           EnablePushButtonISR
+//  Name:           Enable
 //
-//  Parameter(s):   IO_IRQ_Id           IO IRQ ID for the push button
+//  Parameter(s):   None
 //  Return:         None
 //
-//  Description:    Enable the ISR for the push button
-//
-//  Note(s)         Need to fill the X_IO_IRQ in the bsp_io_def.h for configuration
+//  Description:    Enable the ISR for the push button and encoder clock
 //
 //-------------------------------------------------------------------------------------------------
-void QUAD_Encoder::EnablePushButtonISR(IO_IrqID_e IO_IRQ_Id)
+void QUAD_Encoder::Enable(void)
 {
-    IO_EnableIRQ(IO_IRQ_Id);
+    IO_EnableIRQ(m_pQuadInfo->IO_Clk);
+    IO_EnableIRQ(m_pQuadInfo->IO_Push);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           DisablePushButtonISR
+//  Name:           Disable
 //
-//  Parameter(s):   IO_IRQ_Id           IO IRQ ID for the push button
+//  Parameter(s):   None
 //  Return:         None
 //
-//  Description:    Disable the ISR for the push button
-//
-//  Note(s)         Need to fill the X_IO_IRQ in the bsp_io_def.h for configuration
+//  Description:    Disable the ISR for the push button and encoder clock
 //
 //-------------------------------------------------------------------------------------------------
-void QUAD_Encoder::DisablePushButtonISR(IO_IrqID_e IO_IRQ_Id)
+void QUAD_Encoder::Disable(void)
 {
-    IO_DisableIRQ(IO_IRQ_Id);
+    IO_DisableIRQ(m_pQuadInfo->IO_Clk);
+    IO_DisableIRQ(m_pQuadInfo->IO_Push);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -202,11 +191,45 @@ void QUAD_Encoder::DisablePushButtonISR(IO_IrqID_e IO_IRQ_Id)
 //  Description:    Register callback for user code
 //
 //-------------------------------------------------------------------------------------------------
-void QUAD_Encoder::RegisterChangeCallback(void* pCallback)
+void QUAD_Encoder::RegisterChangeCallback(QUAD_EncoderCallBack_t pCallback)
 {
     m_pCallback = (QUAD_EncoderCallBack_t)pCallback;
 }
 
 //-------------------------------------------------------------------------------------------------
+//
+//  Name:           PushButtonISR
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    ISR for the push button
+//
+//-------------------------------------------------------------------------------------------------
+void QUAD_Encoder::PushButtonISR(void)
+{
+    m_State = (IO_GetInputPin(IO_GetIO_ID(m_pQuadInfo->IO_Push)) == 1) ? QUAD_PRESSED : QUAD_RELEASED;
+    m_pCallback(m_State);
+}
 
-#endif // #ifdef QUAD_ENCODER_DEF
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           EncoderISR
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    ISR for the push button
+//
+//-------------------------------------------------------------------------------------------------
+void QUAD_Encoder::EncoderISR(void)
+{
+    QUAD_EncoderChange_e Change;
+
+    Change = (IO_GetInputPin(IO_GetIO_ID(m_pQuadInfo->IO_Clk)) == 1) ? QUAD_INCREMENTED : QUAD_DECREMENTED;
+    m_pCallback(Change);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // QUAD_ENCODER_DEF

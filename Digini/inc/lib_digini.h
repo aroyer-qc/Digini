@@ -23,7 +23,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+
 #pragma once
+
+//-------------------------------------------------------------------------------------------------
+// Include file(s)
+//-------------------------------------------------------------------------------------------------
+
 //-------------------------------------------------------------------------------------------------
 // Standard header
 //
@@ -126,10 +132,9 @@
 //-------------------------------------------------------------------------------------------------
 // High level Peripheral
 //
-#ifdef DIGINI_USE_EEPROM
-#include "eeprom_cfg.h"
-#include "lib_class_I2C_EEprom.h"
-#endif
+// Note(s) All specific driver or high level device driver must be include in device_cfg.h
+
+#include "device_cfg.h"
 
 #ifdef DIGINI_USE_FATFS
 #include "ff.h"
@@ -137,6 +142,10 @@
 #endif
 
 #include "lib_grafx.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#include "project_def.h"
 
 //-------------------------------------------------------------------------------------------------
 // Functions prototypes

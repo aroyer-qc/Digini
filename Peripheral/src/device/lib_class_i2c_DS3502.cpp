@@ -40,8 +40,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define DS3502_WR_IVR_REGISTER                        ((uint8_t)0x00)
-#define DS3502_CR_REGISTER                            ((uint8_t)0x02)
+#define DS3502_WR_IVR_REGISTER                      ((uint8_t)0x00)
+#define DS3502_CR_REGISTER                          ((uint8_t)0x02)
 
 #define DS3502_CR_MODE_0__WRITE_BOTH_WR_IVR         ((uint8_t)0x00)
 #define DS3502_CR_MODE_1__WRITE_WR_ONLY             ((uint8_t)0x80)

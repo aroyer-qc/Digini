@@ -699,6 +699,7 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
 {
   	uint16_t Color;
 
+/* TODO problem here
     m_pLayer = &LayerTable[CLayer::GetDrawing()];
 	Color    = (uint16_t(m_pLayer->GetColor()));
 
@@ -714,7 +715,6 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
         Address            = m_pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
         AreaConfig.u_16.u1 = pBox->Size.Width;
         AreaConfig.u_16.u0 = pBox->Size.Height;
-
         DMA2D->CR          = 0x00030000UL | (1 << 9);                              // Register to memory and TCIE
         DMA2D->OCOLR       = (uint32_t)Color;                                      // Color to be used
         DMA2D->OMAR        = Address;                                              // Destination address
@@ -722,7 +722,6 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
         DMA2D->OPFCCR      = PixelFormat;                                          // Defines the number of pixels to be transfered
         DMA2D->NLR         = AreaConfig.u_32;                                      // Size configuration of area to be transfered
         DMA2D->CR         |= 1;                                                    // Start operation
-
         while(DMA2D->CR & DMA2D_CR_START);                                         // Wait until transfer is done
     }
     else
@@ -730,6 +729,7 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
         SetWindow(pBox->Pos.X, pBox->Pos.Y, pBox->Pos.X + (pBox->Size.Width - 1), pBox->Pos.Y + (pBox->Size.Height - 1));
         PutColor(Color, pBox->Size.Width * pBox->Size.Height);
     }
+*/
 }
 
 //-------------------------------------------------------------------------------------------------

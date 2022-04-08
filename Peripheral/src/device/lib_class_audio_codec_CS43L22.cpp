@@ -473,41 +473,6 @@ SystemState_e CS43L22::Reset(void)
 #endif // USE_I2S_DRIVER == DEF_ENABLED
 #endif // USE_I2C_DRIVER == DEF_ENABLED
 
-
-
-#if 0
-
-
-
-/* Uncomment this line to enable verifying data sent to codec after each write
-   operation (for debug purpose) */
-#if !defined (VERIFY_WRITTENDATA)
-/* #define VERIFY_WRITTENDATA */
-#endif /* VERIFY_WRITTENDATA */
-/* Audio codec driver structure initialization */
-AUDIO_DrvTypeDef cs43l22_drv =
-{
-  cs43l22_Init,
-  cs43l22_DeInit,
-  cs43l22_ReadID,
-
-  cs43l22_Play,
-  cs43l22_Pause,
-  cs43l22_Resume,
-  cs43l22_Stop,
-
-  cs43l22_SetFrequency,
-  cs43l22_SetVolume,
-  cs43l22_SetMute,
-  cs43l22_SetOutputMode,
-  cs43l22_Reset,
-};
-
-
-
-#endif
-
-
 #if 0
 /*==============================================================================================================================
                                              User NOTES

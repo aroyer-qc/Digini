@@ -24,6 +24,32 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+#if 0
+
+single conversion
+
+handle start
+offer polling, but if call back is set then enable the interrupt
+External trigger
+
+
+single conversion, continuous mode
+
+offer polling, but if call back is set then enable the interrupt
+
+
+multiple conversion, continuous mode
+
+Channel-wise programmable sampling time
+DMA!!!
+Configurable delay
+
+
+
+
+#endif
+
+
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
@@ -67,6 +93,11 @@ bool ADC_Driver::m_CommonInitialize_IsItDone = false;
 ADC_Driver::ADC_Driver(ADC_ID_e ADC_ID)
 {
     m_IsItInitialize = false;
+    
+    m_NumberofChannel          = 0;
+    m_NumberofInjectedChannel  = 0;
+    
+    
     m_pInfo          = &ADC_Info[ADC_ID];
     m_State          = SYS_DEVICE_NOT_PRESENT;
 }
@@ -101,69 +132,51 @@ void ADC_Driver::Initialize(void)
     if(m_IsItInitialize == false)
     {
         m_IsItInitialize = true;
-        // Allocate lock resource and initialize it
-        /*Error =*/ nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
-    }
-
-    if(m_CommonInitialize_IsItDone == false)
-    {
-        // ADC interrupt are common to all module
-        PriorityGroup = NVIC_GetPriorityGrouping();
-        ISR_Prio.PriorityGroup     = PriorityGroup;
-        ISR_Prio.SubPriority       = 0;
-        ISR_Prio.PremptionPriority = 0;
-        ISR_Init(ADC_IRQn, &ISR_Prio);
 
         // Set the ADC clock prescaler
         ADC->CCR &= ~(ADC_CCR_ADCPRE);
         ADC->CCR |= ADC_COMMON_CLOCK_PRESCALER_CFG;
 
-        m_CommonInitialize_IsItDone = true;
+        SET_BIT(RCC->APB2ENR, m_pInfo->RCC_APB2_En);            // Enable clock for this ADC
+
+        // No channel and no ranking in both regular and injected conversion
+        m_pInfo->pADCx->SQR1 = 0;
+        m_pInfo->pADCx->SQR2 = 0;
+        m_pInfo->pADCx->SQR3 = 0;
+        m_pInfo->pADCx->JSQR = 0;
+                
+        // No channel and no ranking in both regular and injected conversion
+        m_pInfo->pADCx->SMPR1 = 0;
+        m_pInfo->pADCx->SMPR2 = 0;
+        
+        // Set ADC resolution, Discontinuous mode, Number of channels to be converted in discontinuous mode
+        Mm_pInfo->pADCx->CR1 = m_pInfo->CR1_Common | ADC_SCAN_MODE_DISABLE | ... TODO set default value;
+    
+        // Set ADC data alignment, external trigger, external trigger polarity, continuous conversion mode, EOC selection, DMA continuous request
+        m_pInfo->pADCx->CR2 = m_pInfo->CR2_Common | ADC_REG_TRIG_EXT_NONE | ADC_REG_TRIG_EXT_EDGE_NONE;
     }
 
-    SET_BIT(RCC->APB2ENR, m_pInfo->RCC_APB2_En);         // Enable lock for this ADC
-
-
-
-
-
-/*
-if (USE_HAL_ADC_REGISTER_CALLBACKS == 1)
-    // Init the ADC Callback settings
-    hadc->ConvCpltCallback              = HAL_ADC_ConvCpltCallback;                 // Legacy weak callback
-    hadc->ConvHalfCpltCallback          = HAL_ADC_ConvHalfCpltCallback;             // Legacy weak callback
-    hadc->LevelOutOfWindowCallback      = HAL_ADC_LevelOutOfWindowCallback;         // Legacy weak callback
-    hadc->ErrorCallback                 = HAL_ADC_ErrorCallback;                    // Legacy weak callback
-    hadc->InjectedConvCpltCallback      = HAL_ADCEx_InjectedConvCpltCallback;       // Legacy weak callback
-    if (hadc->MspInitCallback == NULL)
+    if(m_CommonIsItInitialize == false)
     {
-      hadc->MspInitCallback = HAL_ADC_MspInit; // Legacy weak MspInit
+        m_CommonIsItInitialize = true;
+
+        // ADC interrupt are common to all module
+        PriorityGroup              = NVIC_GetPriorityGrouping();
+        ISR_Prio.PriorityGroup     = PriorityGroup;
+        ISR_Prio.SubPriority       = 0;
+        ISR_Prio.PremptionPriority = 0;
+        ISR_Init(ADC_IRQn, &ISR_Prio);
     }
 
-    // Init the low level hardware
-    hadc->MspInitCallback(hadc);
-endif // USE_HAL_ADC_REGISTER_CALLBACKS
-*/
-    m_State = SYS_READY;                   // Initialize ADC error code
-
-    //MODIFY_REG(m_State, ADC_STATE_REG_BUSY | ADC_STATE_INJ_BUSY, ADC_STATE_BUSY_INTERNAL);       // Set ADC state
-    //----------------------------------
-
-    // Set ADC scan mode and resolution, Discontinuous mode, Number of channels to be converted in discontinuous mode
-    m_pInfo->pADCx->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_RES | ADC_CR1_DISCEN | ADC_CR1_DISCNUM);
-    m_pInfo->pADCx->CR1 |= m_pInfo->CR1_Common;
-
-    // Set ADC data alignment, external trigger, external trigger polarity, continuous conversion mode, EOC selection, DMA continuous request
-    m_pInfo->pADCx->CR2 &= ~(ADC_CR2_ALIGN | ADC_CR2_EXTSEL | ADC_CR2_EXTEN | ADC_CR2_CONT | ADC_CR2_EOCS | ADC_CR2_DDS);
-    m_pInfo->pADCx->CR2 |= m_pInfo->CR2_Common;
-
-    // Set ADC number of conversion
-    m_pInfo->pADCx->SQR1 &= ~(ADC_SQR1_L);
-    m_pInfo->pADCx->SQR1 |= m_pInfo->NumberOfConversion;
-
-    //----------------------------------
-  // MODIFY_REG(m_State, ADC_STATE_BUSY_INTERNAL, HAL_ADC_STATE_READY);                       // Set the ADC state
+    // m_State = SYS_READY;                   // Initialize ADC error code
+    // MODIFY_REG(m_State, ADC_STATE_REG_BUSY | ADC_STATE_INJ_BUSY, ADC_STATE_BUSY_INTERNAL);       // Set ADC state
+    // MODIFY_REG(m_State, ADC_STATE_BUSY_INTERNAL, HAL_ADC_STATE_READY);                       // Set the ADC state
 }
+
+
+//  To be set by ConfigConversionTrigger ConfigInjectedConversionTrigger
+ADC_REG_TRIG_EXT_EDGE_NONE
+ADC_REG_TRIG_EXT_NONE
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -184,41 +197,123 @@ SystemState_e ADC_Driver::GetStatus(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      Lock
+//   Function:      AddChannelToGroup
+//
+//   Parameter(s):  ChannelID
+//
+//   Parameter(s):  Rank                The rank in the regular group sequencer.
+//                                      This parameter must be between 1 to 16.
+//   Return Value:  None
+//
+//   Description:
+//
+//
+//   Note(s):
+//
+//
+//
+//   Description:   Initializes the channel specified by ADC_Channel ID
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e ADC_Driver::AddChannelToGroup(ADC_ChannelID_e ChannelID, uint8_t Rank)
+{
+  //  m_IsItInitialize = false;
+    m_pChannelInfo   = &ADC_ChannelInfo[ChannelID];
+    m_pADC_Info      = &ADC_Info[m_pChannelInfo->ADC_ID];
+
+
+    IO_PinInit(m_pChannelInfo->IO_ID);        //  TODO validate
+
+
+
+// To be set by AddChannelToGroupand AddInjectedChannelToGroup when more than 1 channel in the group
+ADC_SCAN_MODE_ENABLE
+
+
+    volatile uint32_t* pRegister;
+    uint32_t  Offset = 0;
+    uint32_t  Shift  = 0;
+
+    // if ADC_Channel_10 ... ADC_Channel_18 is selected
+    if(m_pChannelInfo->Channel > ADC_CHANNEL_9)
+    {
+        Offset    = 10;
+        pRegister = &m_pADC_Info->pADCx->SMPR1;
+    }
+    else // ADC_Channel include in ADC_Channel_[0..9]
+    {
+        pRegister = &m_pADC_Info->pADCx->SMPR2;
+    }
+
+    Shift = 3 * (m_pChannelInfo->Channel - Offset);
+    MODIFY_REG(*pRegister, SMPR_SMP_SET << Shift, uint32_t(ADC_SampleTime) << Shift);    // Set new sample time
+
+
+
+    // For Rank 1 to 6
+    if (Rank < 7)
+    {
+        pRegister = &m_pADC_Info->pADCx->SQR3;
+        Offset    = 1;
+    }
+    // For Rank 7 to 12
+    else if (Rank < 13)
+    {
+        pRegister = &m_pADC_Info->pADCx->SQR2;
+        Offset    = 7;
+    }
+    // For Rank 13 to 16
+    else
+    {
+        pRegister = &m_pADC_Info->pADCx->SQR1;
+        Offset    = 13;
+    }
+
+    Shift = 5 * (Rank - Offset);
+    MODIFY_REG(*pRegister, SQR_SQ_SET << Shift, m_pChannelInfo->Channel << Shift);       // Set the SQx bits for the selected rank
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function:      StartConversion
+//
+//   Description:   Enables the selected ADC software start conversion of the regular channels.
 //
 //   Parameter(s):  None
 //   Return Value:  None
 //
-//   Description:   Lock the driver
-//
 //   Note(s):
 //
+//
 //-------------------------------------------------------------------------------------------------
-//void ADC_Driver::Lock(void)
-//{
-    //while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
-//}
+void ADC_Driver::StartConversion(void)
+{
+    // Enable the selected ADC conversion for regular group
+    m_pADC_Info->pADCx->CR2 |= (uint32_t)ADC_CR2_SWSTART;
+}
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      Unlock
+//   Function:      StartInjectedConversion
+//
+//   Description:   Enables the selected ADC software start conversion of the injected channels.
 //
 //   Parameter(s):  None
 //   Return Value:  None
 //
-//   Description:   Unlock the driver
-//
 //   Note(s):
 //
+//
 //-------------------------------------------------------------------------------------------------
-//void ADC_Driver::Unlock(void)
-//{
-    //nOS_MutexUnlock(&m_Mutex);
-//}
+void ADC_Driver::StartInjectedConversion(void)
+{
+    // Enable the selected ADC conversion for regular group
+    //m_pADC_Info->pADCx->CR2 |= (uint32_t)ADC_CR2_SWSTART;
+}
 
 //-------------------------------------------------------------------------------------------------
 //
-//   IRQ Function:  ADC_VBAT_Control
+//   IRQ Function:  TempSensorVrefintControl
 //
 //   Description:   Enables or disables the temperature sensor and Vrefint channels.
 //
@@ -286,129 +381,6 @@ void ADC_Driver::IRQHandler()
 }
 
 //-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Constructor:   ADC_Driver
-//
-//   Parameter(s):  ADC_ChannelID
-//
-//   Description:   Initializes the channel specified by ADC_Channel ID
-//
-//-------------------------------------------------------------------------------------------------
-ADC_ChannelDriver::ADC_ChannelDriver(ADC_ChannelID_e ADC_ChannelID)
-{
-  //  m_IsItInitialize = false;
-    m_pChannelInfo   = &ADC_ChannelInfo[ADC_ChannelID];
-    m_pADC_Info      = &ADC_Info[m_pChannelInfo->ADC_ID];
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function:      Initialize
-//
-//   Description:
-//
-//   Parameter(s):
-//   Return Value:  None
-//
-//   Note(s):
-//
-//
-//-------------------------------------------------------------------------------------------------
-void ADC_ChannelDriver::Initialize(void)
-{
-    IO_PinInit(m_pChannelInfo->IO_ID);
-  // get channel ID of pointer
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function:      Config
-//
-//   Description:
-//
-//   Parameter(s):  Rank: The rank in the regular group sequencer.
-//                        This parameter must be between 1 to 16.
-//                  ADC_SampleTime: The sample time value to be set for the selected channel.
-//                        This parameter can be one of the following values:
-//                            ADC_SampleTime_3Cycles: Sample time equal to 3 cycles
-//                            ADC_SampleTime_15Cycles: Sample time equal to 15 cycles
-//                            ADC_SampleTime_28Cycles: Sample time equal to 28 cycles
-//                            ADC_SampleTime_56Cycles: Sample time equal to 56 cycles
-//                            ADC_SampleTime_84Cycles: Sample time equal to 84 cycles
-//                            ADC_SampleTime_112Cycles: Sample time equal to 112 cycles
-//                            ADC_SampleTime_144Cycles: Sample time equal to 144 cycles
-//                            ADC_SampleTime_480Cycles: Sample time equal to 480 cycles
-//   Return Value:  None
-//
-//   Note(s):
-//
-//
-//-------------------------------------------------------------------------------------------------
-void ADC_ChannelDriver::Config(uint8_t Rank, uint8_t ADC_SampleTime)
-{
-    volatile uint32_t* pRegister;
-    uint32_t  Offset = 0;
-    uint32_t  Shift  = 0;
-
-    // if ADC_Channel_10 ... ADC_Channel_18 is selected
-    if(m_pChannelInfo->Channel > ADC_CHANNEL_9)
-    {
-        Offset    = 10;
-        pRegister = &m_pADC_Info->pADCx->SMPR1;
-    }
-    else // ADC_Channel include in ADC_Channel_[0..9]
-    {
-        pRegister = &m_pADC_Info->pADCx->SMPR2;
-    }
-
-    Shift = 3 * (m_pChannelInfo->Channel - Offset);
-    MODIFY_REG(*pRegister, SMPR_SMP_SET << Shift, uint32_t(ADC_SampleTime) << Shift);    // Set new sample time
-
-
-
-    // For Rank 1 to 6
-    if (Rank < 7)
-    {
-        pRegister = &m_pADC_Info->pADCx->SQR3;
-        Offset    = 1;
-    }
-    // For Rank 7 to 12
-    else if (Rank < 13)
-    {
-        pRegister = &m_pADC_Info->pADCx->SQR2;
-        Offset    = 7;
-    }
-    // For Rank 13 to 16
-    else
-    {
-        pRegister = &m_pADC_Info->pADCx->SQR1;
-        Offset    = 13;
-    }
-
-    Shift = 5 * (Rank - Offset);
-    MODIFY_REG(*pRegister, SQR_SQ_SET << Shift, m_pChannelInfo->Channel << Shift);       // Set the SQx bits for the selected rank
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function:      Initialize
-//
-//   Description:   Enables the selected ADC software start conversion of the regular channels.
-//
-//   Parameter(s):  None
-//   Return Value:  None
-//
-//   Note(s):
-//
-//
-//-------------------------------------------------------------------------------------------------
-void ADC_ChannelDriver::StartConversion(void)
-{
-    // Enable the selected ADC conversion for regular group
-    m_pADC_Info->pADCx->CR2 |= (uint32_t)ADC_CR2_SWSTART;
-}
 
 //-------------------------------------------------------------------------------------------------
 

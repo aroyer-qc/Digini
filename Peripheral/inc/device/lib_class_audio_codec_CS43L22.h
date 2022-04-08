@@ -142,12 +142,6 @@ extern class CS43L22                     CS43L22_AudioCodec;
 #if 0
 
 
-/*------------------------------------
-    CONFIGURATION: Audio Codec Driver Configuration parameters
-----------------------------------------*/
-// Audio Transfer mode (I2S Interrupt)
-//#define I2S_INTERRUPT                 // Uncomment this line to enable audio transfert with I2S interrupt
-
 // Audio Transfer mode (DMA, Interrupt or Polling)
 #define AUDIO_MAL_MODE_NORMAL         // Uncomment this line to enable the audio Transfer using DMA
 // #define AUDIO_MAL_MODE_CIRCULAR    // Uncomment this line to enable the audio Transfer using DMA
@@ -157,9 +151,6 @@ extern class CS43L22                     CS43L22_AudioCodec;
 // #define AUDIO_MAL_DMA_IT_HT_EN     // Uncomment this line to enable DMA Half Transfer Complete interrupt
 // #define AUDIO_MAL_DMA_IT_TE_EN     // Uncomment this line to enable DMA Transfer Error interrupt
 
-// Select the interrupt preemption priority and subpriority for the DMA interrupt
-#define EVAL_AUDIO_IRQ_PREPRIO           0   // Select the preemption priority level(0 is the highest)
-#define EVAL_AUDIO_IRQ_SUBRIO            0   // Select the sub-priority level (0 is the highest)
 
 /* Uncomment the following line to use the default Codec_TIMEOUT_UserCallback()
    function implemented in stm32f4_discovery_audio_codec.c file.

@@ -47,15 +47,6 @@
 #define ADC_DATA_ALIGN_RIGHT                        ((uint32_t)0x00000000)
 #define ADC_DATA_ALIGN_LEFT                         ((uint32_t)ADC_CR2_ALIGN)
 
-#define ADC_SAMPLE_TIME_3_CYCLES                    ((uint8_t)0x00)                     // Sample time equal to 3   cycles
-#define ADC_SAMPLE_TIME_15_CYCLES                   ((uint8_t)0x01)                     // Sample time equal to 15  cycles
-#define ADC_SAMPLE_TIME_28_CYCLES                   ((uint8_t)0x02)                     // Sample time equal to 28  cycles
-#define ADC_SAMPLE_TIME_56_CYCLES                   ((uint8_t)0x03)                     // Sample time equal to 56  cycles
-#define ADC_SAMPLE_TIME_84_CYCLES                   ((uint8_t)0x04)                     // Sample time equal to 84  cycles
-#define ADC_SAMPLE_TIME_112_CYCLES                  ((uint8_t)0x05)                     // Sample time equal to 112 cycles
-#define ADC_SAMPLE_TIME_144_CYCLES                  ((uint8_t)0x06)                     // Sample time equal to 144 cycles
-#define ADC_SAMPLE_TIME_480_CYCLES                  ((uint8_t)0x07)                     // Sample time equal to 480 cycles
-
 #define ADC_REG_TRIG_EXT_NONE                       ((uint32_t)0x00000000)
 #define ADC_REG_TRIG_EXT_TIM1_CH1                   ((uint32_t)0x00000000)
 #define ADC_REG_TRIG_EXT_TIM1_CH2                   ((uint32_t)0x01000000)
@@ -222,9 +213,9 @@
 */
 
 // ADC SMPx mask
-#define SMPR_SMP_SET                                ((uint32_t)0x00000007)  
+#define SMPR_SMP_SET                                ((uint32_t)0x00000007)
 // ADC SQx mask
-#define SQR_SQ_SET                                  ((uint32_t)0x0000001F)  
+#define SQR_SQ_SET                                  ((uint32_t)0x0000001F)
 
 #define ADC_NUMBER_OF_RANK_FOR_CONVERSION           16
 #define ADC_NUMBER_OF_RANK_FOR_INJECTED_CONVERSION  4
@@ -235,12 +226,12 @@
 
 // I have remove SCAN_MODE, EXTERNAL_TRIGGER, EXTERNAL_TRIGGER_EDGE
 #define EXPAND_X_ADC_AS_ENUM(ENUM_ID, ADCx, RCC_APB2ENR_ADCxEN, RESOLUTION, CONVERSION, DISCONTINUOUS, DISCONTINUOUS_NUMBER, ADC_DATA_ALIGNMENT, EOC_SELECTION, CONTINUOUS_DMA_REQ)  ENUM_ID,
-#define EXPAND_X_ADC_AS_STRUCT_DATA(ENUM_ID, ADCx, RCC_APB2ENR_ADCxEN, RESOLUTION, CONVERSION, DISCONTINUOUS, DISCONTINUOUS_NUMBER, ADC_DATA_ALIGNMENT, 3EOC_SELECTION, CONTINUOUS_DMA_REQ) \
+#define EXPAND_X_ADC_AS_STRUCT_DATA(ENUM_ID, ADCx, RCC_APB2ENR_ADCxEN, RESOLUTION, CONVERSION, DISCONTINUOUS, DISCONTINUOUS_NUMBER, ADC_DATA_ALIGNMENT, EOC_SELECTION, CONTINUOUS_DMA_REQ) \
                                    { ADCx, RCC_APB2ENR_ADCxEN,                                                                                                          \
-              /* CR1 */              (SCAN_MODE | RESOLUTION | DISCONTINUOUS | DISCONTINUOUS_NUMBER),                                                                                                            \
+              /* CR1 */              (RESOLUTION | DISCONTINUOUS | DISCONTINUOUS_NUMBER),                                                                                                            \
               /* CR2 */              (ADC_DATA_ALIGNMENT | CONVERSION | EOC_SELECTION)},
 
-#define EXPAND_X_ADC_CHANNEL_AS_ENUM(ENUM_ID, ADC_ID, CHANNEL_NUMBER, IO_ID) ENUM_ID,
+#define EXPAND_X_ADC_CHANNEL_AS_ENUM(ENUM_ID, ADC_ID, CHANNEL_NUMBER, IO_ID, SAMPLE_TIME) ENUM_ID,
 #define EXPAND_X_ADC_CHANNEL_AS_STRUCT_DATA(ENUM_ID, ADC_ID, CHANNEL_NUMBER, IO_ID, SAMPLE_TIME) \
                                                    { ADC_ID, CHANNEL_NUMBER, IO_ID, SAMPLE_TIME},
 
@@ -258,7 +249,7 @@ enum ADC_Channel_e
 {
     ADC_CHANNEL_0       = 0,
     ADC_CHANNEL_1       = ((uint32_t)ADC_CR1_AWDCH_0),
-    ADC_CHANNEL_2       = ((uint32_t)ADC_CR1_AWDCH_1)
+    ADC_CHANNEL_2       = ((uint32_t)ADC_CR1_AWDCH_1),
     ADC_CHANNEL_3       = ((uint32_t)(ADC_CR1_AWDCH_1 | ADC_CR1_AWDCH_0)),
     ADC_CHANNEL_4       = ((uint32_t)ADC_CR1_AWDCH_2),
     ADC_CHANNEL_5       = ((uint32_t)(ADC_CR1_AWDCH_2 | ADC_CR1_AWDCH_0)),
@@ -277,7 +268,19 @@ enum ADC_Channel_e
     ADC_CHANNEL_18      = ((uint32_t)(ADC_CR1_AWDCH_4 | ADC_CR1_AWDCH_1)),
     ADC_CHANNEL_VREFINT = ((uint32_t)ADC_CHANNEL_17),
     ADC_CHANNEL_VBAT    = ((uint32_t)ADC_CHANNEL_18),
-}
+};
+
+enum ADC_SampleTime_e
+{
+    ADC_SAMPLE_TIME_3_CYCLES   = 0x00,                     // Sample time equal to 3   cycles
+    ADC_SAMPLE_TIME_15_CYCLES  = 0x01,                     // Sample time equal to 15  cycles
+    ADC_SAMPLE_TIME_28_CYCLES  = 0x02,                     // Sample time equal to 28  cycles
+    ADC_SAMPLE_TIME_56_CYCLES  = 0x03,                     // Sample time equal to 56  cycles
+    ADC_SAMPLE_TIME_84_CYCLES  = 0x04,                     // Sample time equal to 84  cycles
+    ADC_SAMPLE_TIME_112_CYCLES = 0x05,                     // Sample time equal to 112 cycles
+    ADC_SAMPLE_TIME_144_CYCLES = 0x06,                     // Sample time equal to 144 cycles
+    ADC_SAMPLE_TIME_480_CYCLES = 0x07,                     // Sample time equal to 480 cycles
+};
 
 enum ADC_ChannelID_e
 {
@@ -291,12 +294,14 @@ struct ADC_Info_t
     uint32_t            RCC_APB2_En;
     uint32_t            CR1_Common;                 // CR1 Resolution and Scan Conversion Mode
     uint32_t            CR2_Common;                  // CR2 ADC data alignment, Trigger, trigger edge, continuous conversion mode
+
+    // todo CONTINUOUS_DMA_REQ not set or handle
     //uint32_t            NumberOfConversion;   // now this is config by adding channel to convert
     uint8_t             PreempPrio;
 
 /*
 // TODO verify the macro for those!!
-    hadc1.Init.ContinuousConvMode    = ENABLE;                                  
+    hadc1.Init.ContinuousConvMode    = ENABLE;
     hadc1.Init.DiscontinuousConvMode = DISABLE;
     hadc1.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
     hadc1.Init.DMAContinuousRequests = DISABLE;
@@ -310,8 +315,8 @@ struct ADC_ChannelInfo_t
 {
     ADC_ID_e            ADC_ID;
     uint32_t            Channel;
-                        SampleTime; need to be added to config
     IO_ID_e             IO_ID;
+    ADC_SampleTime_e    SampleTime;
 };
 
 // ADC_CallBack
@@ -324,8 +329,6 @@ enum ADC_CallBackType_e
     ADC_CALLBACK_INJECTED_CONVERSION_COMPLETED,
 };
 
-
-
 typedef void (*ADC_CallBack_t)(void);
 
 //-------------------------------------------------------------------------------------------------
@@ -336,11 +339,11 @@ class ADC_Driver
 {
     public:
 
-                        ADC_Driver                      ();
+                        ADC_Driver                      (ADC_ID_e ADC_ID);
 
         void            Initialize                      (void);
         SystemState_e   RegisterCallBack                (ADC_CallBackType_e CallBackType, ADC_CallBack_t pCallBack);
-        
+
         // Normal conversion group (Up to 16 Channel)
         SystemState_e   AddChannelToGroup               (ADC_ChannelID_e Channel, uint8_t Rank);        // TODO use config to define channel information!!
         SystemState_e   RemoveChannelFromGroup          (ADC_ChannelID_e Channel, uint8_t Rank);
@@ -352,7 +355,7 @@ class ADC_Driver
         SystemState_e   RemoveInjectedChannelFromGroup  (ADC_ChannelID_e Channel, uint8_t Rank);
         void            StartInjectedConversion         (void);
         void            ConfigInjectedConversionTrigger (void);
-        
+
         SystemState_e   GetStatus                   (void);
         void            TempSensorVrefintControl    (bool NewState);
         void            VBAT_Control                (bool NewState);
@@ -361,20 +364,19 @@ class ADC_Driver
 
     private:
 
-        const ADC_Info_t*               m_pInfo;
+        ADC_Info_t*                     m_pInfo;
         SystemState_e                   m_State;
         bool                            m_IsItInitialize;
-        
+
         uint8_t                         m_NumberOfChannel;
+        uint8_t                         m_CurrentFreeChannel;
         ADC_ChannelInfo_t*              m_pChannelInfo[ADC_NUMBER_OF_RANK_FOR_CONVERSION];                     // this should represent the rank pointer on channel info
         uint8_t                         m_NumberOfInjectedChannel;
         ADC_ChannelInfo_t*              m_pInjectedChannelInfo[ADC_NUMBER_OF_RANK_FOR_INJECTED_CONVERSION];             // this should represent the rank pointer on channel info
-        
-
         static bool                     m_CommonIsItInitialize;
-        //const ADC_Info_t*               m_pADC_Info;
-        //SystemState_e                   m_State;
 
+        static const ADC_Info_t         m_ConstInfo[NB_OF_ADC_DRIVER];
+        static const ADC_ChannelInfo_t  m_ConstChannelInfo[NB_OF_ADC_CHANNEL];
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -382,16 +384,6 @@ class ADC_Driver
 //-------------------------------------------------------------------------------------------------
 
 #ifdef ADC_DRIVER_GLOBAL
-
-const ADC_Info_t ADC_Info[NB_OF_ADC_DRIVER] =
-{
-    ADC_DEF(EXPAND_X_ADC_AS_STRUCT_DATA)
-};
-
-const ADC_ChannelInfo_t ADC_ChannelInfo[NB_OF_ADC_CHANNEL] =
-{
-    ADC_CHANNEL_DEF(EXPAND_X_ADC_CHANNEL_AS_STRUCT_DATA)
-};
 
 #if (ADC_DRIVER_SUPPORT_ADC1_CFG == DEF_ENABLED)
 class ADC_Driver myADC1_Driver(DRIVER_ADC1_ID);
@@ -406,9 +398,6 @@ class ADC_Driver myADC3_Driver(DRIVER_ADC3_ID);
 #endif
 
 #else // ADC_DRIVER_GLOBAL
-
-extern const ADC_Info_t        ADC_Info[NB_OF_ADC_DRIVER];
-extern const ADC_ChannelInfo_t ADC_ChannelInfo[NB_OF_ADC_CHANNEL];
 
 #if (ADC_DRIVER_SUPPORT_ADC1_CFG == DEF_ENABLED)
 extern class ADC_Driver myADC1_Driver;

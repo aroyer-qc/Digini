@@ -50,23 +50,8 @@
 #define AscHex(A)                           ((((A-=48)>9?(A-=7):A)>15)?(A-=32):A)
 
 // Bit operation on uint8_t
-//#define SetBit(DATA, BIT)                 (DATA |=  (0x01 << BIT))
-//#define ClrBit(DATA, BIT)                 (DATA &=  (0xFF ^ (0x01 << BIT)))
 #define CheckBit(DATA, BIT)                 (DATA &   (0x01 << BIT))
 #define ToggleBit(DATA, BIT)                (DATA ^=  (0x01 << BIT))
-
-
-// Bit operation on uint16_t
-#define SetBit_u16(DATA, BIT)               (DATA |=  ((uint16_t)0x01 << BIT))
-#define ClrBit_u16(DATA, BIT)               (DATA &=  (0xFFFF ^ ((uint16_t)0x01 << BIT)))
-#define CheckBit_u16(DATA, BIT)             (DATA &   ((uint16_t)0x01 << BIT))
-#define ToggleBit_u16(DATA, BIT)            (DATA ^=  ((uint16_t)0x01 << BIT))
-
-// Bit operation on LONG data
-#define SetBit_u32(DATA, BIT)               (DATA |=  ((uint32_t)0x01 << BIT))
-#define ClrBit_u32(DATA, BIT)               (DATA &=  (0xFFFFFFFF ^ ((uint32_t)0x01 << BIT)))
-#define CheckBit_u32(DATA, BIT)             (DATA &   ((uint32_t)0x01 << BIT))
-#define ToggleBit_u32(DATA, BIT)            (DATA ^=  ((uint32_t)0x01 << BIT))
 
 // Create uint32_t value fron 4 uint8_t value ou ascii char
 #define U32MACRO(A,B,C,D)                   ((uint32_t(D) << 24) + (uint32_t(C) << 16) + (uint32_t(B) << 8) + uint32_t(A))

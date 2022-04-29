@@ -104,7 +104,7 @@ class CUSB
 
        void         IRQHandler (void);
 
-        //also fatfs_usb should derive form this
+        //also fatfs_usb should derive from this
 
         USB_OTG_CORE_HANDLE     m_OTG_Core;
         USB_MSC_HostStatus_e    m_MSC_HostStatus;  // use getter setter

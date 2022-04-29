@@ -405,7 +405,7 @@ SystemState_e I2S_Driver::SetFrequency(I2S_Frequency_e Frequency)
     }
     
     // Enable the PLLI2S
-    SetBit(RCC->CR, RCC_CR_PLLI2SON);
+    SET_BIT(RCC->CR, RCC_CR_PLLI2SON);
     
     // Wait till PLLI2S is ready
     TickStart = GetTick();

@@ -67,10 +67,24 @@ Configurable delay
 //-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
+// const(s)
+//-------------------------------------------------------------------------------------------------
+
+const ADC_Info_t        ADC_Driver::m_ConstInfo[NB_OF_ADC_DRIVER] =
+{
+    ADC_DEF(EXPAND_X_ADC_AS_STRUCT_DATA)
+};
+
+const ADC_ChannelInfo_t ADC_Driver::m_ConstChannelInfo[NB_OF_ADC_CHANNEL] =
+{
+    ADC_CHANNEL_DEF(EXPAND_X_ADC_CHANNEL_AS_STRUCT_DATA)
+};
+
+//-------------------------------------------------------------------------------------------------
 // Variable(s)
 //-------------------------------------------------------------------------------------------------
 
-bool ADC_Driver::m_CommonInitialize_IsItDone = false;
+bool ADC_Driver::m_CommonIsItInitialize = false;
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -93,13 +107,13 @@ bool ADC_Driver::m_CommonInitialize_IsItDone = false;
 ADC_Driver::ADC_Driver(ADC_ID_e ADC_ID)
 {
     m_IsItInitialize = false;
-    
-    m_NumberofChannel          = 0;
-    m_NumberofInjectedChannel  = 0;
-    
-    
-    m_pInfo          = &ADC_Info[ADC_ID];
-    m_State          = SYS_DEVICE_NOT_PRESENT;
+
+    m_NumberOfChannel          = 0;
+    m_NumberOfInjectedChannel  = 0;
+    m_CurrentFreeChannel       = 0;
+
+    m_pInfo = (ADC_Info_t*)&m_ConstInfo[ADC_ID];
+    m_State = SYS_DEVICE_NOT_PRESENT;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -127,7 +141,6 @@ void ADC_Driver::Initialize(void)
 {
     ISR_Prio_t    ISR_Prio;
     uint32_t      PriorityGroup;
-    //SystemState_e State         = SYS_READY;
 
     if(m_IsItInitialize == false)
     {
@@ -144,14 +157,14 @@ void ADC_Driver::Initialize(void)
         m_pInfo->pADCx->SQR2 = 0;
         m_pInfo->pADCx->SQR3 = 0;
         m_pInfo->pADCx->JSQR = 0;
-                
+
         // No channel and no ranking in both regular and injected conversion
         m_pInfo->pADCx->SMPR1 = 0;
         m_pInfo->pADCx->SMPR2 = 0;
-        
+
         // Set ADC resolution, Discontinuous mode, Number of channels to be converted in discontinuous mode
-        Mm_pInfo->pADCx->CR1 = m_pInfo->CR1_Common | ADC_SCAN_MODE_DISABLE | ... TODO set default value;
-    
+        m_pInfo->pADCx->CR1 = m_pInfo->CR1_Common | ADC_SCAN_MODE_DISABLE ;//| .. TODO set default value;
+
         // Set ADC data alignment, external trigger, external trigger polarity, continuous conversion mode, EOC selection, DMA continuous request
         m_pInfo->pADCx->CR2 = m_pInfo->CR2_Common | ADC_REG_TRIG_EXT_NONE | ADC_REG_TRIG_EXT_EDGE_NONE;
     }
@@ -175,8 +188,8 @@ void ADC_Driver::Initialize(void)
 
 
 //  To be set by ConfigConversionTrigger ConfigInjectedConversionTrigger
-ADC_REG_TRIG_EXT_EDGE_NONE
-ADC_REG_TRIG_EXT_NONE
+//ADC_REG_TRIG_EXT_EDGE_NONE
+//ADC_REG_TRIG_EXT_NONE
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -200,87 +213,79 @@ SystemState_e ADC_Driver::GetStatus(void)
 //   Function:      AddChannelToGroup
 //
 //   Parameter(s):  ChannelID
-//
-//   Parameter(s):  Rank                The rank in the regular group sequencer.
+//                  Rank                The rank in the regular group sequencer.
 //                                      This parameter must be between 1 to 16.
-//   Return Value:  None
-//
-//   Description:
-//
-//
-//   Note(s):
-//
-//
+//   Return Value:  SystemState_e
 //
 //   Description:   Initializes the channel specified by ADC_Channel ID
+//
+//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e ADC_Driver::AddChannelToGroup(ADC_ChannelID_e ChannelID, uint8_t Rank)
 {
-  //  m_IsItInitialize = false;
-    m_pChannelInfo   = &ADC_ChannelInfo[ChannelID];
-    m_pADC_Info      = &ADC_Info[m_pChannelInfo->ADC_ID];
-
-
-    IO_PinInit(m_pChannelInfo->IO_ID);        //  TODO validate
-
-
-
-// To be set by AddChannelToGroupand AddInjectedChannelToGroup when more than 1 channel in the group
-ADC_SCAN_MODE_ENABLE
-
-
     volatile uint32_t* pRegister;
-    uint32_t  Offset = 0;
-    uint32_t  Shift  = 0;
+    uint32_t           Offset = 0;
+    uint32_t           Shift  = 0;
+    ADC_ChannelInfo_t* pChannel;
+
+    m_pChannelInfo[m_CurrentFreeChannel] = (ADC_ChannelInfo_t*)&m_ConstChannelInfo[uint32_t(ChannelID)];;
+    pChannel = m_pChannelInfo[m_CurrentFreeChannel];
+    m_pInfo  = (ADC_Info_t*)&m_ConstInfo[uint32_t(pChannel->ADC_ID)];
+    IO_PinInit(pChannel->IO_ID);
+
+// To be set by AddChannelToGroup and AddInjectedChannelToGroup when more than 1 channel in the group
+//ADC_SCAN_MODE_ENABLE
 
     // if ADC_Channel_10 ... ADC_Channel_18 is selected
-    if(m_pChannelInfo->Channel > ADC_CHANNEL_9)
+    if(pChannel->Channel > ADC_CHANNEL_9)
     {
         Offset    = 10;
-        pRegister = &m_pADC_Info->pADCx->SMPR1;
+        pRegister = &m_pInfo->pADCx->SMPR1;
     }
     else // ADC_Channel include in ADC_Channel_[0..9]
     {
-        pRegister = &m_pADC_Info->pADCx->SMPR2;
+        pRegister = &m_pInfo->pADCx->SMPR2;
     }
 
-    Shift = 3 * (m_pChannelInfo->Channel - Offset);
-    MODIFY_REG(*pRegister, SMPR_SMP_SET << Shift, uint32_t(ADC_SampleTime) << Shift);    // Set new sample time
-
-
+    Shift = 3 * (pChannel->Channel - Offset);
+    MODIFY_REG(*pRegister, SMPR_SMP_SET << Shift, uint32_t(pChannel->SampleTime) << Shift);    // Set new sample time
 
     // For Rank 1 to 6
     if (Rank < 7)
     {
-        pRegister = &m_pADC_Info->pADCx->SQR3;
+        pRegister = &m_pInfo->pADCx->SQR3;
         Offset    = 1;
     }
     // For Rank 7 to 12
     else if (Rank < 13)
     {
-        pRegister = &m_pADC_Info->pADCx->SQR2;
+        pRegister = &m_pInfo->pADCx->SQR2;
         Offset    = 7;
     }
     // For Rank 13 to 16
     else
     {
-        pRegister = &m_pADC_Info->pADCx->SQR1;
+        pRegister = &m_pInfo->pADCx->SQR1;
         Offset    = 13;
     }
 
     Shift = 5 * (Rank - Offset);
-    MODIFY_REG(*pRegister, SQR_SQ_SET << Shift, m_pChannelInfo->Channel << Shift);       // Set the SQx bits for the selected rank
+    MODIFY_REG(*pRegister, SQR_SQ_SET << Shift, pChannel->Channel << Shift);       // Set the SQx bits for the selected rank
+
+    m_CurrentFreeChannel++; // TODO add protection
+
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:      StartConversion
 //
-//   Description:   Enables the selected ADC software start conversion of the regular channels.
-//
 //   Parameter(s):  None
 //   Return Value:  None
+//
+//   Description:   Enables the selected ADC software start conversion of the regular channels.
 //
 //   Note(s):
 //
@@ -289,37 +294,36 @@ ADC_SCAN_MODE_ENABLE
 void ADC_Driver::StartConversion(void)
 {
     // Enable the selected ADC conversion for regular group
-    m_pADC_Info->pADCx->CR2 |= (uint32_t)ADC_CR2_SWSTART;
+    SET_BIT(m_pInfo->pADCx->CR2, ADC_CR2_SWSTART);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:      StartInjectedConversion
 //
-//   Description:   Enables the selected ADC software start conversion of the injected channels.
-//
 //   Parameter(s):  None
 //   Return Value:  None
 //
-//   Note(s):
+//   Description:   Enables the selected ADC software start conversion of the injected channels.
 //
+//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void ADC_Driver::StartInjectedConversion(void)
 {
     // Enable the selected ADC conversion for regular group
-    //m_pADC_Info->pADCx->CR2 |= (uint32_t)ADC_CR2_SWSTART;
+    // SET_BIT(m_pADC_Info->pADCx->CR2, ADC_CR2_SWSTART);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //   IRQ Function:  TempSensorVrefintControl
 //
-//   Description:   Enables or disables the temperature sensor and Vrefint channels.
-//
 //   Parameter(s):  NewState        New state of the temperature sensor and Vrefint channels.
 //                                  DEF_ENABLE or DEF_DISABLE
 //   Return Value:  None
+//
+//   Description:   Enables or disables the temperature sensor and Vrefint channels.
 //
 //   Note(s):       The Battery voltage measured is equal to VBAT/2 on STM32F40xx and STM32F41xx
 //                  devices and equal to VBAT/4 on STM32F42xx and STM32F43xx devices.
@@ -330,12 +334,12 @@ void ADC_Driver::TempSensorVrefintControl(bool NewState)
     if(NewState == DEF_ENABLE)
     {
         // Enable the temperature sensor and Vrefint channel
-        ADC->CCR |= (uint32_t)ADC_CCR_TSVREFE;
+        SET_BIT(ADC->CCR, ADC_CCR_TSVREFE);
     }
     else
     {
         // Disable the temperature sensor and Vrefint channel
-        ADC->CCR &= (uint32_t)(~ADC_CCR_TSVREFE);
+        CLEAR_BIT(ADC->CCR, ADC_CCR_TSVREFE);
     }
 }
 
@@ -343,11 +347,11 @@ void ADC_Driver::TempSensorVrefintControl(bool NewState)
 //
 //   IRQ Function:  VBAT_Control
 //
-//   Description:   Enables or disables the VBAT (Voltage Battery) channel.
-//
 //   Parameter(s):  NewState     New state of the VBAT channel.
 //                                  DEF_ENABLE or DEF_DISABLE
 //   Return Value:  None
+//
+//   Description:   Enables or disables the VBAT (Voltage Battery) channel.
 //
 //   Note(s):       The Battery voltage measured is equal to VBAT/2 on STM32F40xx and STM32F41xx
 //                  devices and equal to VBAT/4 on STM32F42xx and STM32F43xx devices.
@@ -358,12 +362,12 @@ void ADC_Driver::VBAT_Control(bool NewState)
     if(NewState == DEF_ENABLE)
     {
         // Enable the VBAT channel
-        ADC->CCR |= (uint32_t)ADC_CCR_VBATE;
+        SET_BIT(ADC->CCR, ADC_CCR_VBATE);
     }
     else
     {
         // Disable the VBAT channel
-        ADC->CCR &= (uint32_t)(~ADC_CCR_VBATE);
+        CLEAR_BIT(ADC->CCR, ADC_CCR_VBATE);
     }
 }
 

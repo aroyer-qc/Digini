@@ -28,16 +28,15 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_LABEL_AS_ENUM(ENUM_ID, LBL1, LBL2) ENUM_ID,
-#define EXPAND_X_LABEL_AS_DATA(ENUM_ID, LBL1, LBL2) {LBL1, LBL2},
+// TO DO  find a way for expansion to follow number of language
+
+
+#define EXPAND_X_LBL_CFG_AS_ENUM(ENUM_ID, LBL1, LBL2) ENUM_ID,
+#define EXPAND_X_LBL_CFG_AS_DATA(ENUM_ID, LBL1, LBL2) {LBL1, LBL2},
 
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
@@ -52,7 +51,7 @@ enum Language_e
 
 enum Label_e
 {
-    LABEL_LANGUAGE_DEF(EXPAND_X_LABEL_AS_ENUM)
+    LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
     NB_LABEL_CONST,
     INVALID_LABEL,
 };
@@ -65,7 +64,7 @@ enum Label_e
 
   const char* LBL_Application[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
   {
-    LABEL_LANGUAGE_DEF(EXPAND_X_LABEL_AS_DATA)
+      LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
   };
 
 #else
@@ -73,11 +72,5 @@ enum Label_e
  extern const char* LBL_Application[NB_LABEL_CONST][NB_LANGUAGE_CONST];
 
 #endif // DIGINI_GLOBAL
-
-//-------------------------------------------------------------------------------------------------
-
-#ifdef __cplusplus
-}
-#endif
 
 //-------------------------------------------------------------------------------------------------

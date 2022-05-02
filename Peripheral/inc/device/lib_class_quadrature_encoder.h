@@ -113,7 +113,7 @@ class QUAD_Encoder
 
                 QUAD_EncoderChange_e    m_State;
                 QUAD_EncoderChange_e    m_PreviousState;
-                nOS_TickCounter         m_StateTick;
+                TickCount_t             m_StateTick;
                 QUAD_EncoderInfo_t*     m_pQuadInfo;
                 QUAD_EncoderCallBack_t  m_pCallback;
         static  QUAD_EncoderInfo_t      m_QuadInfo[NB_OF_QUADRATURE_ENCODER];

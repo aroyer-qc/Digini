@@ -36,26 +36,47 @@
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class CFIFO
+class FIFO_Buffer
 {
     public:
-                        CFIFO                    ();
-                        CFIFO                   (uint16_t Size);
-                        ~CFIFO                    ();
-        void            Init                    (uint16_t Size);
-        bool            IsEmpty                 ();
-        bool            IsFull                  ();
-        bool            Pop                     (uint8_t* pData);
-        bool            Push                    (uint8_t Data);
-        uint16_t        Count                   ();
+                        FIFO_Buffer             ();
+                        FIFO_Buffer             (uint16_t Size);
+                        ~FIFO_Buffer            ();
+        void            Initialize              (uint16_t Size);
+
+
+
+        int32_t         At                      (uint32_t Offset);
+        uint32_t        Flush                   (uint32_t BytesToFlush);
+        uint8_t         Atoi                    (int32_t* Value, uint8_t Base);
+        uint8_t         AtoiAt                  (uint32_t Offset, int32_t* Value);
+        bool            Memncmp                 (const void* pMemPtr, uint32_t Length);
+        int32_t         Memnchr                 (char Character, uint32_t Length);
+        void            ToUpper                 (uint32_t Length);
+        bool            Move                    (FIFO_Buffer* pFifoDst, uint32_t Length);
+
+//        bool            Pop                     (uint8_t* pData);
+        uint32_t        Pop                     (void* pBuffer, uint32_t BytesToRead);
+//        bool            Push                    (uint8_t Data);
+        uint32_t        Push                    (const void *pBuffer, uint32_t BytesToWrite);
+
+        bool            ReadyRead               (void);
+        bool            ReadyWrite              (void);
+
+        uint32_t        CheckFreeSpace          (void);
+        uint32_t        CheckUsedSpace          (void);
+
+        void            PopForward              (uint32_t Size);
+        void            PushForward             (uint32_t Size);
+        void            PushBackward            (uint32_t Size);
 
     private:
 
-        uint16_t                                m_PushIndex;
-        uint16_t                                m_PopIndex;
-        uint16_t                                m_Count;
-        uint8_t*                                m_pBuffer;
-        uint16_t                                m_Size;
+        volatile uint16_t                       m_PushIndex;
+        volatile uint16_t                       m_PopIndex;
+        volatile uint8_t*                       m_pBuffer;
+        volatile uint16_t                       m_Size;
+
 
         void            IndexIncrement          (uint16_t *p, uint16_t *msb);
 

@@ -130,6 +130,14 @@
 #endif
 
 //-------------------------------------------------------------------------------------------------
+// Digini included functionality
+//
+
+#ifdef DIGINI_USE_CMD_LINE
+#include "lib_cli.h"
+#endif
+
+//-------------------------------------------------------------------------------------------------
 // High level Peripheral
 //
 // Note(s) All specific driver or high level device driver must be include in device_cfg.h

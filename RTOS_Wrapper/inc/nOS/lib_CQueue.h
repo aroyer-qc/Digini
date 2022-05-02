@@ -39,8 +39,8 @@ class CQueue
                 ~CQueue();
 
         bool    CreateQueue     (void* pBuffer, size_t Size, size_t ItemSize);
-        bool    Send            (void* ptr, nOS_TickCounter TicksToWait = NOS_WAIT_INFINITE);
-        bool    Receive         (void* ptr, nOS_TickCounter TicksToWait = NOS_WAIT_INFINITE);
+        bool    Send            (void* ptr, TickCount_t TicksToWait = NOS_WAIT_INFINITE);
+        bool    Receive         (void* ptr, TickCount_t TicksToWait = NOS_WAIT_INFINITE);
 
     private:
 

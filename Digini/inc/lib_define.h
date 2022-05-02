@@ -30,7 +30,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define TickCount_t          nOS_TickCounter
+#define TickCount_t             nOS_TickCounter
 
 // ---------- General define ----------
 #ifdef DEBUG
@@ -132,6 +132,11 @@
 //#ifndef ERR_NONE
 //#define ERR_NONE                0
 //#endif
+
+#define DEF_DECIMAL_BASE        10
+#define DEF_HEXADECIMAL_BASE    16
+#define DEF_STRING_BASE         1
+
 
 #ifndef KHz
 #define KHz                     000UL

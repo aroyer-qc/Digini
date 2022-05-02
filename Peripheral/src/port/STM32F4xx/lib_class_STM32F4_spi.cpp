@@ -937,8 +937,8 @@ void SPI_Driver::IRQHandler(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::WaitDMA(void)
 {
-    nOS_TickCounter   TickStart;
-    SPI_TypeDef*      pSPIx;
+    TickCount_t  TickStart;
+    SPI_TypeDef* pSPIx;
 
     pSPIx = m_pInfo->pSPIx;
 

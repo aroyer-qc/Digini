@@ -59,7 +59,7 @@
 #define U16MACRO(A,B)                       ((uint16_t(B) << 8) + uint16_t(A))
 
 #define GetTick()                           nOS_GetTickCount()
-#define TickHasTimeOut(start_time,delay)    ((nOS_GetTickCount() - (start_time)) > ((nOS_TickCounter)delay))
+#define TickHasTimeOut(start_time,delay)    ((GetTick() - (start_time)) > ((TickCount_t)delay))
 
 #define CVT_HOUR_TO_SECOND(H)               ((H) * 3600)
 

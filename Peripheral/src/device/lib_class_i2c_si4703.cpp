@@ -470,11 +470,11 @@ uint32_t SI4703::SeekDown(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void SI4703::GetRDS(char* pMessage, nOS_TickCounter TimeOut)
+void SI4703::GetRDS(char* pMessage, TickCount_t TimeOut)
 {
-	nOS_TickCounter StartTick;
-    bool            Completed[4]   = {false, false, false, false};
-    uint32_t        CompletedCount = 0;
+	TickCount_t StartTick;
+    bool        Completed[4]   = {false, false, false, false};
+    uint32_t    CompletedCount = 0;
 
     StartTick = GetTick();
 

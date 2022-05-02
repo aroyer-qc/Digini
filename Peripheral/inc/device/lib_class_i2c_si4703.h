@@ -82,7 +82,7 @@ class SI4703
         uint32_t            SeekUp                  (void);                                 // Start seek mode upwards
         uint32_t            SeekDown                (void);                                 // Start seek mode downwards
         SystemState_e       GetRadioInfo            (SI4703_RadioInfo_t* pInfo);
-        void                GetRDS                  (char* Message, nOS_TickCounter TimeOut);
+        void                GetRDS                  (char* Message, TickCount_t TimeOut);
 									// message should be at least 9 chars
 									// result will be null terminated
 									// timeout in milliseconds

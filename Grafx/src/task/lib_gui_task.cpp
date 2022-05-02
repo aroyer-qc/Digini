@@ -539,7 +539,7 @@ bool GUI_myClassTask::SlidingPage(void)
     bool            IsPageWasSliding;
     bool            IsItOverlapped;
     bool            IsItDeOverlapped;
-    nOS_TickCounter Wait;
+    TickCount_t     Wait;
     uint16_t        Start;
     uint16_t        Size;
 

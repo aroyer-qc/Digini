@@ -45,12 +45,12 @@ bool CQueue::CreateQueue(void* pBuffer, size_t Size, size_t ItemSize)
     return bool(nOS_QueueCreate(&m_Queue, pBuffer, Size, ItemSize) == NOS_OK);
 }
 
-bool CQueue::Send(void* ptr, nOS_TickCounter TicksToWait)
+bool CQueue::Send(void* ptr, TickCount_t TicksToWait)
 {
     return bool(nOS_QueueWrite(&m_Queue, ptr, TicksToWait) == NOS_OK);
 }
 
-bool CQueue::Receive(void* ptr, nOS_TickCounter TicksToWait)
+bool CQueue::Receive(void* ptr, TickCount_t TicksToWait)
 {
     return bool(nOS_QueueRead(&m_Queue, ptr, TicksToWait) == NOS_OK);
 }

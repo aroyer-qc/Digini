@@ -97,7 +97,7 @@ CMem::~CMem()
 //   Function name: Alloc
 //
 //   Parameter(s):  size_t          SizeRequired,       Size of the needed data block
-//                  nOS_TickCounter TimeOut             How it can wait for the data block
+//                  TickCount_t     TimeOut             How it can wait for the data block
 //
 //                                  NOS_NO_WAIT :                 Don't wait if no blocks available.
 //                                  0 > tout < NOS_WAIT_INIFITE : Maximum number of ticks to wait
@@ -118,7 +118,7 @@ CMem::~CMem()
 //   Note(s):       This class wrap the nOS Function
 //
 //-------------------------------------------------------------------------------------------------
-void* CMem::Alloc(size_t SizeRequired, nOS_TickCounter TimeOut)
+void* CMem::Alloc(size_t SizeRequired, TickCount_t TimeOut)
 {
    void* MemPtr;
 
@@ -155,7 +155,7 @@ void* CMem::Alloc(size_t SizeRequired, nOS_TickCounter TimeOut)
 //   Function name: AllocAndClear
 //
 //   Parameter(s):  size_t          SizeRequired,       Size of the needed data block
-//                  nOS_TickCounter TimeOut             How it can wait for the data block
+//                  TickCount_t     TimeOut             How it can wait for the data block
 //
 //                                  NOS_NO_WAIT :                 Don't wait if no blocks available.
 //                                  0 > tout < NOS_WAIT_INIFITE : Maximum number of ticks to wait
@@ -176,7 +176,7 @@ void* CMem::Alloc(size_t SizeRequired, nOS_TickCounter TimeOut)
 //   Note(s):       This class wrap the nOS Function
 //
 //-------------------------------------------------------------------------------------------------
-void* CMem::AllocAndClear(size_t SizeRequired, nOS_TickCounter TimeOut)
+void* CMem::AllocAndClear(size_t SizeRequired, TickCount_t TimeOut)
 {
     return AllocAndSet(SizeRequired, 0, TimeOut);
 }
@@ -186,7 +186,7 @@ void* CMem::AllocAndClear(size_t SizeRequired, nOS_TickCounter TimeOut)
 //   Function name: AllocAndClear
 //
 //   Parameter(s):  size_t          SizeRequired,       Size of the needed data block
-//                  nOS_TickCounter TimeOut             How it can wait for the data block
+//                  TickCount_t     TimeOut             How it can wait for the data block
 //
 //                                  NOS_NO_WAIT :                 Don't wait if no blocks available.
 //                                  0 > tout < NOS_WAIT_INIFITE : Maximum number of ticks to wait
@@ -207,7 +207,7 @@ void* CMem::AllocAndClear(size_t SizeRequired, nOS_TickCounter TimeOut)
 //   Note(s):       This class wrap the nOS Function
 //
 //-------------------------------------------------------------------------------------------------
-void* CMem::AllocAndSet(size_t SizeRequired, uint8_t FillValue, nOS_TickCounter TimeOut)
+void* CMem::AllocAndSet(size_t SizeRequired, uint8_t FillValue, TickCount_t TimeOut)
 {
     void* MemPtr;
 

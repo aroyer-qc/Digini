@@ -283,8 +283,8 @@ SystemState_e I2C_Driver::UnlockFromDevice(uint8_t Device)
 //-------------------------------------------------------------------------------------------------
 SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const void* pTxBuffer, size_t TxSize, const void* pRxBuffer, size_t RxSize)
 {
-    nOS_TickCounter TickStart;
-    I2C_TypeDef*    pI2Cx;
+    TickCount_t  TickStart;
+    I2C_TypeDef* pI2Cx;
 
     if(m_Device != -1)
 	{

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_memory.h
+//  File : lib_cli_command.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2021 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,64 +27,91 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include(s)
+// Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_define.h"
+#include "lib_cli.h"
+#include "lib_cli_expanding_macro.h"
 
 //-------------------------------------------------------------------------------------------------
-
-#ifdef MEM_BLOCK_DEF
-
-//-------------------------------------------------------------------------------------------------
-// Expand macro(s)
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_MEM_BLOCK_AS_ENUM(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE) ENUM_ID,
-#define EXPAND_X_MEM_BLOCK_AS_ARRAY_DECL(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)  uint8_t m_##GROUP_NAME[BLOCK_MAX][BLOCK_SIZE] __attribute__ ((aligned (4)));
-
-//-------------------------------------------------------------------------------------------------
-// MEM_BLOCK list declaration section
-//-------------------------------------------------------------------------------------------------
-
-// To found how many block type there is
-    enum MEM_BlockList_e
-    {
-        MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_ENUM)
-        MEM_BLOCK_GROUP_SIZE
-    };
-
-//-------------------------------------------------------------------------------------------------
-
-class CMem
-{
-    public:
-
-                    CMem                        ();
-                    ~CMem                       ();
-
-        void*       Alloc                       (size_t SizeRequired, TickCount_t TimeOut = NOS_WAIT_INFINITE);
-        void*       AllocAndClear               (size_t SizeRequired, TickCount_t TimeOut = NOS_WAIT_INFINITE);
-        void*       AllocAndSet                 (size_t SizeRequired, uint8_t FillValue, TickCount_t TimeOut = NOS_WAIT_INFINITE);
-        bool        Free                        (void** pBlock);
-        bool        IsAvailable                 (size_t SizeRequired);
-        nOS_Error   GetLastError                (void);
-
-    private:
-
-        nOS_Mem                     m_nOS_MemArray      [MEM_BLOCK_GROUP_SIZE];                  // handler to give to nOS_Mem... function
-        void*                       m_pBufferArray      [MEM_BLOCK_GROUP_SIZE];                  // pointer array of the memory block
-        nOS_Error                   m_LastError;
-
-        MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_ARRAY_DECL)
-};
-
-
-// ----- Memory allocation(s) ------
-#ifdef MEM_GLOBAL
-class CMem*                      pMemory;
+#ifdef CLI_GLOBAL
+    #define CLI_EXTERN
 #else
-extern class CMem*               pMemory;
+    #define CLI_EXTERN extern
 #endif
 
-#endif  // MEM_BLOCK_DEF
+//-------------------------------------------------------------------------------------------------
+// typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+enum CLI_StrCmdSize_e
+{
+    #if CLI_USE_VT100_MENU == DEF_ENABLED
+      SIZE_OF_AT_MENU = sizeof("MENU") - 1,
+    #endif
+
+    X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_SIZE_OF)                // Create the sizeof() for each string
+
+};
+
+SystemState_e (*CLI_Function_t)(void);
+
+
+//-------------------------------------------------------------------------------------------------
+// Function(s) Prototype(s)
+//-------------------------------------------------------------------------------------------------
+
+X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION)               // Generation of all prototype
+
+//-------------------------------------------------------------------------------------------------
+// Variable(s)
+//-------------------------------------------------------------------------------------------------
+
+#ifdef CLI_GLOBAL
+
+  #if CLI_USE_VT100_MENU == DEF_ENABLED
+    const char StrAT_MENU[SIZE_OF_AT_MENU] = "MENU";
+  #endif
+
+    X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CONST_STRING)           // Generation of all the string
+
+
+class CommandLineInterface
+{
+    const CLI_Function_t m_Function[NUMBER_OF_CLI_CMD] =
+    {
+      #if CLI_USE_VT100_MENU == DEF_ENABLED
+        CLI_CmdMENU,
+      #endif
+
+        X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION_POINTER)   // Generation of the function pointer array
+    };
+
+    const char* m_pCmdStr[NUMBER_OF_CLI_CMD] =
+    {
+      #if CLI_USE_VT100_MENU == DEF_ENABLED
+        &StrAT_MENU[0],
+      #endif
+
+        X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CMD_STRING)
+    };
+
+    const int m_CmdStrSize[NUMBER_OF_CLI_CMD] =
+    {
+      #if CLI_USE_VT100_MENU == DEF_ENABLED
+        sizeof("MENU") - 1,
+      #endif
+
+        X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_STRING_SIZE)
+    };
+};
+
+#else
+
+#endif
+
+//-------------------------------------------------------------------------------------------------
+

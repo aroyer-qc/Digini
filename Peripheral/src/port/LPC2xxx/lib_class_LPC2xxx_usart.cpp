@@ -66,8 +66,8 @@ CUSART::CUSART(USART_PortInfo_t* pPort)
     m_pPort   = pPort;
     m_pDevice = nullptr;
     m_Status  = SYS_DEVICE_NOT_PRESENT;
-    m_pTxFifo = new CFIFO(m_pPort->BufferSize);
-    m_pRxFifo = new CFIFO(m_pPort->BufferSize);
+    m_pTxFifo = new FIFO_Buffer(m_pPort->BufferSize);
+    m_pRxFifo = new FIFO_Buffer(m_pPort->BufferSize);
 
 }
 

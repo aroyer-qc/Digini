@@ -32,28 +32,14 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define _CLI_COMMAND_GLOBAL
-#include "lib_cli_command.h"
-#undef  _CLI_COMMAND_GLOBAL
-#include "lib_macro.h"
+
+#include "lib_digini.h"
+//#include "lib_cli.h"
+//#include "lib_macro.h"
 //#include "generic.h"
-#include <string.h>
-#include "lib_memory.h"
+//#include <string.h>
+//#include "lib_memory.h"
 #include "project_def.h"
-
-//-------------------------------------------------------------------------------------------------
-// Prototype(s)
-//-------------------------------------------------------------------------------------------------
-
-SystemState_e   CLI_CmdHOLD             (void);
-SystemState_e   CLI_CmdRELEASE          (void);
-SystemState_e   CLI_CmdRESET            (void);
-SystemState_e   CLI_CmdSTATUS           (void);
-SystemState_e   CLI_CmdINFO             (void);
-SystemState_e   CLI_CmdVERSION          (void);
-SystemState_e   CLI_CmdTEST1            (void);
-SystemState_e   CLI_CmdTEST2            (void);
-SystemState_e   CLI_CmdTEST3            (void);
 
 //-------------------------------------------------------------------------------------------------
 // Private(s) function(s)
@@ -111,16 +97,16 @@ SystemState_e CommandLineInterface::CmdRELEASE(void)
         if(m_PlainCommand == true)
         {
             m_IsItOnHold = false;
-            Error        =  SYS_READY;
+            Error        = SYS_READY;
         }
         else
         {
-            Error =  SYS_INVALID_PARAMETER;       // No parameter write or read on this command
+            Error = SYS_INVALID_PARAMETER;       // No parameter write or read on this command
         }
     }
     else
     {
-        Error =  SYS_OK_DENIED;                   // Access to this command is forbidden in run mode
+        Error = SYS_OK_DENIED;                   // Access to this command is forbidden in run mode
     }
 
     return Error;
@@ -149,7 +135,7 @@ SystemState_e CommandLineInterface::CmdRESET(void)
     }
     else
     {
-        Error =  SYS_INVALID_PARAMETER;       // No parameter on this command
+        Error = SYS_INVALID_PARAMETER;       // No parameter on this command
     }
 
     return Error;
@@ -181,15 +167,14 @@ SystemState_e CommandLineInterface::CmdSTATUS(void)
     if((m_ReadCommand == true) || (m_PlainCommand == true))
     {
          // In this example we only return the state of the CLI
-        if(m_IsItOnHold == true) Status = 0;
-        else                     Status = 1;
+        Status = (m_IsItOnHold == true) ? 0 : 1;
         snprintf(Response, 20, "%d", Status);
         SendAnswer(AT_STATUS, SYS_OK_READ, Response);
-        Error =  SYS_OK_SILENT;
+        Error = SYS_OK_SILENT;
     }
     else
     {
-        Error =  SYS_CMD_NO_WRITE_SUPPORT;     // No write support for this command
+        Error = SYS_CMD_NO_WRITE_SUPPORT;     // No write support for this command
     }
 
     return Error;
@@ -222,7 +207,7 @@ SystemState_e CommandLineInterface::CmdTEST1(void)
         Count++;
         snprintf(Response, 11, "0x%08llX", Count);
         SendAnswer(AT_TEST1,  SYS_OK_READ, Response);
-        Error =  SYS_OK_SILENT;
+        Error = SYS_OK_SILENT;
     }
     else
     {
@@ -265,7 +250,7 @@ SystemState_e CommandLineInterface::CmdTEST2(void)
             snprintf(Response, 20, "%d,%d,%d", State_1, Value_1, Value_2);
 
             SendAnswer(AT_TEST2, SYS_OK_READ, Response);
-            Error =  SYS_OK_SILENT;
+            Error = SYS_OK_SILENT;
         }
         else
         {
@@ -308,7 +293,7 @@ SystemState_e CommandLineInterface::CmdTEST3(void)
         {
             snprintf(Response, 64, "%d,%d,0x%04lX,\"%s\"", Test1, Test2, Test3, Test);
             SendAnswer(AT_TEST3,  SYS_OK_READ, Response);
-            Error =  SYS_OK_SILENT;
+            Error = SYS_OK_SILENT;
         }
         else
         {
@@ -322,7 +307,7 @@ SystemState_e CommandLineInterface::CmdTEST3(void)
     }
     else
     {
-        Error =  SYS_OK_DENIED;               // Access to this command is forbidden in run mode
+        Error = SYS_OK_DENIED;               // Access to this command is forbidden in run mode
     }
 
     return Error;
@@ -350,7 +335,7 @@ SystemState_e CommandLineInterface::CmdINFO(void)
                                                                                 OUR_SERIAL_NUMBER,
                                                                                 OUR_BUILD_DATE);
         SendAnswer(AT_INFO, SYS_OK_READ, Response);
-        Error =  SYS_OK_SILENT;
+        Error = SYS_OK_SILENT;
     }
     else
     {
@@ -377,7 +362,7 @@ SystemState_e CommandLineInterface::CmdVERSION(void)
     if(m_PlainCommand == true)
     {
         SendAnswer(AT_VERSION, SYS_OK_READ, OUR_FIRMWARE_VERSION);
-        Error =  SYS_OK_SILENT;
+        Error = SYS_OK_SILENT;
     }
     else
     {
@@ -401,7 +386,7 @@ SystemState_e CommandLineInterface::CmdDBG_LEVEL(void)
 {
     SystemState_e       Error;
     char                Response[64];
-    uint8_t             DebugLevel = (uint8_t)CLI_DebugLevel;
+    uint8_t             DebugLevel = (uint8_t)m_DebugLevel;
 
     if((m_ReadCommand == true) || (m_PlainCommand == true))     // Process also a plain command has a read
     {
@@ -420,7 +405,7 @@ SystemState_e CommandLineInterface::CmdDBG_LEVEL(void)
     }
     else
     {
-        m_DebugLevel = ParamValue[0];
+        m_DebugLevel = m_ParamValue[0];
         Error        = SYS_READY;
     }
 

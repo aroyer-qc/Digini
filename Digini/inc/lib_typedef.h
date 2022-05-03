@@ -91,7 +91,6 @@ enum SystemState_e
     STA_PROTECT                     = 4,        // Write protected
 
     // General use status (SD Card, SPI, I2C etc...)
-
     SYS_ADDRESS_MISALIGNED,
     SYS_ALREADY_BLANK,
     SYS_ARBITRATION_LOST,
@@ -121,10 +120,10 @@ enum SystemState_e
     SYS_GENERAL_UNKNOWN_ERROR,
     SYS_HUNG,
     SYS_IDLE,
-//    SYS_ILLEGAL_COMMAND,  see instead SYS_INVALID_COMMAND
     SYS_INITIALIZATION_FAIL,
     SYS_INVALID_COMMAND,
     SYS_INVALID_PARAMETER,
+    SYS_INVALID_PASSWORD,
     SYS_INVALID_VALUE,
     SYS_INVALID_VOLTAGE_RANGE,
     SYS_IO_ERROR,
@@ -142,7 +141,7 @@ enum SystemState_e
     SYS_POOL_NOT_ALLOCATED_ERROR,
     SYS_POOL_USED,
     SYS_READ_ONLY,
-    SYS_RESPONSE_RECEIVED           = 7,
+    SYS_RESPONSE_RECEIVED,
     SYS_REQUEST_NOT_APPLICABLE,
     SYS_SDRAM_ERROR,
     SYS_SECTOR_LOCK_FOUND,                          // SPi Flash
@@ -157,6 +156,7 @@ enum SystemState_e
     SYS_WRONG_SIZE,
     SYS_WRONG_VALUE,
 
+    // SD state
     SD_CC_ERROR,
     SD_ERASE_SEQ_ERR,
     SD_CARD_ECC_FAILED,
@@ -168,6 +168,13 @@ enum SystemState_e
     SD_ERASE_RESET,
     SD_AKE_SEQ_ERROR,
     SD_ADDRESS_OUT_OF_RANGE,
+    
+    // CLI state
+    SYS_CMD_NO_READ_SUPPORT,
+    SYS_CMD_NO_WRITE_SUPPORT,
+    SYS_OK_READ,
+    SYS_OK_SILENT,
+    SYS_OK_DENIED,
 };
 
 enum ChipSelect_e

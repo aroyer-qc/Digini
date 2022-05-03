@@ -458,8 +458,8 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
 
     if(m_pDevice != nullptr)
     {
-        if(((pTX_Data == NULL) || (TX_Size == 0)) &&
-           ((pRX_Data == NULL) || (RX_Size == 0)))
+        if(((pTX_Data == nullptr) || (TX_Size == 0)) &&
+           ((pRX_Data == nullptr) || (RX_Size == 0)))
         {
             return SYS_NULLPTR;
         }
@@ -481,7 +481,7 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
             pSPIx = m_pInfo->pSPIx;
             Flag  = m_pInfo->TX_IT_Flag;
 
-            if((pTX_Data != NULL) && (TX_Size != 0))
+            if((pTX_Data != nullptr) && (TX_Size != 0))
             {
                 // TX DMA
                 m_DMA_Status = SYS_BUSY_TX;                                 // Set flag to busy in TX
@@ -530,7 +530,7 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
             // ----------------------------------------------------------------------------------------
             // RX setup
 
-            if((pRX_Data != NULL) && (RX_Size != 0))
+            if((pRX_Data != nullptr) && (RX_Size != 0))
             {
 
                 while((pSPIx->SR & SPI_SR_RXNE) != 0)
@@ -663,8 +663,8 @@ SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, u
 
     if(m_pDevice != nullptr)
     {
-        if(((pTX_Data == NULL) || (TX_Size == 0)) &&
-           ((pRX_Data == NULL) || (RX_Size == 0)))
+        if(((pTX_Data == nullptr) || (TX_Size == 0)) &&
+           ((pRX_Data == nullptr) || (RX_Size == 0)))
         {
             return SYS_NULLPTR;
         }
@@ -686,7 +686,7 @@ SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, u
             pSPIx = m_pInfo->pSPIx;
             Flag  = m_pInfo->TX_IT_Flag;
 
-            if((pTX_Data != NULL) && (TX_Size != 0))
+            if((pTX_Data != nullptr) && (TX_Size != 0))
             {
                 // TX DMA
                 m_DMA_Status = SYS_BUSY_TX;                                                     // Set flag to busy in TX
@@ -736,7 +736,7 @@ SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, u
             // ----------------------------------------------------------------------------------------
             // RX setup
 
-            if((pRX_Data != NULL) && (RX_Size != 0))
+            if((pRX_Data != nullptr) && (RX_Size != 0))
             {
 
                 while((pSPIx->SR & SPI_SR_RXNE) != 0)

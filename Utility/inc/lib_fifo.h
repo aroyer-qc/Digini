@@ -33,6 +33,12 @@
 #include "lib_typedef.h"
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define FIFO_INDEX_OUT_OF_BOUNDS            -1
+
+//-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -42,10 +48,8 @@ class FIFO_Buffer
                         FIFO_Buffer             ();
                         FIFO_Buffer             (uint16_t Size);
                         ~FIFO_Buffer            ();
+
         void            Initialize              (uint16_t Size);
-
-
-
         int32_t         At                      (uint32_t Offset);
         uint32_t        Flush                   (uint32_t BytesToFlush);
         uint8_t         Atoi                    (int32_t* Value, uint8_t Base);
@@ -55,10 +59,10 @@ class FIFO_Buffer
         void            ToUpper                 (uint32_t Length);
         bool            Move                    (FIFO_Buffer* pFifoDst, uint32_t Length);
 
-//        bool            Pop                     (uint8_t* pData);
-        uint32_t        Pop                     (void* pBuffer, uint32_t BytesToRead);
-//        bool            Push                    (uint8_t Data);
-        uint32_t        Push                    (const void *pBuffer, uint32_t BytesToWrite);
+        //bool            Read                    (uint8_t* pData);
+        uint32_t        Read                    (void* pBuffer, uint32_t BytesToRead);
+        //bool            Write                   (uint8_t Data);
+        uint32_t        Write                   (const void *pBuffer, uint32_t BytesToWrite);
 
         bool            ReadyRead               (void);
         bool            ReadyWrite              (void);
@@ -66,9 +70,9 @@ class FIFO_Buffer
         uint32_t        CheckFreeSpace          (void);
         uint32_t        CheckUsedSpace          (void);
 
-        void            PopForward              (uint32_t Size);
-        void            PushForward             (uint32_t Size);
-        void            PushBackward            (uint32_t Size);
+        void            TailForward             (uint32_t Size);
+        void            HeadForward             (uint32_t Size);
+        void            HeadBackward            (uint32_t Size);
 
     private:
 
@@ -76,10 +80,6 @@ class FIFO_Buffer
         volatile uint16_t                       m_PopIndex;
         volatile uint8_t*                       m_pBuffer;
         volatile uint16_t                       m_Size;
-
-
-        void            IndexIncrement          (uint16_t *p, uint16_t *msb);
-
 };
 
 //-------------------------------------------------------------------------------------------------

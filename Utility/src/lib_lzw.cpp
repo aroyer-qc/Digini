@@ -147,7 +147,7 @@ uint32_t lzw::InputCode(RawArray* pCompxData, uint32_t* pIndex)
     {
         // ****************************************************************************************
         // NEW CODE
-        static  // TODO put in class variable
+        //static  // TODO put in class variable
 
         if(m_BytesLeftCounter == 0)
         {

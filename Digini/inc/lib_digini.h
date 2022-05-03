@@ -133,9 +133,9 @@
 // Digini included functionality
 //
 
-#ifdef DIGINI_USE_CMD_LINE
+//#ifdef DIGINI_USE_CMD_LINE
 #include "lib_cli.h"
-#endif
+//#endif
 
 //-------------------------------------------------------------------------------------------------
 // High level Peripheral

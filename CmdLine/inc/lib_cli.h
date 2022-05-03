@@ -34,23 +34,18 @@
 //nclude <stdbool.h>
 //nclude <time.h>
 #include "lib_digini.h"
-
-//#include "lib_label.h"
 #include "cli_cfg.h"
 #include "lib_cli_expanding_macro.h"
-//#include "lib_macro.h"
-//#include "lib_fifo.h"
-//#include "lib_class_uart.h"
-//#include "lib_class_rtc.h"
+#include "lib_fifo.h"                   //?????? in lib_digini.h
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
 #ifdef CLI_GLOBAL
-    #define CLI_EXTERN
+  #define CLI_EXTERN
 #else
-    #define CLI_EXTERN extern
+  #define CLI_EXTERN            extern
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -173,7 +168,7 @@ class CommandLineInterface
 {
     public:
 
-        void        Initialize                  (UART_ID_e UartID);
+        void        Initialize                  (UART_Driver* pUartDriver);
         void        Process                     (void);
         void        GiveControlToChildProcess   (void(*pProcess)(uint8_t Data));
         void        DisplayTimeDateStamp        (Date_t* pDate, Time_t* pTime);
@@ -200,13 +195,13 @@ class CommandLineInterface
 
 
     // ----------------------------------------------------------------------------------------------------------------------------
-    // Expansion of all user CLI function    
+    // Expansion of all user CLI function
 
         X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION)               // Generation of all prototype
 
     // ----------------------------------------------------------------------------------------------------------------------------
 
-        UART_ID_e                               m_UartID;
+        UART_Driver*                            m_pUartDriver;
         CLI_InputState_e                        m_InputState;
         int                                     m_ParserRX_Offset;
         CLI_Step_e                              m_Step;
@@ -218,22 +213,26 @@ class CommandLineInterface
         TickCount_t                             m_StartupTick;
         bool                                    m_IsItOnStartup;
         char                                    m_BufferParserRX[CLI_FIFO_PARSER_RX_SIZE];
-//        Fifo_t                                  m_FIFO_ParserRX;   handle by class
+        FIFO_Buffer*                            m_pTxFifo;
         bool                                    m_IsItOnHold;
         CLI_DebugLevel_e                        m_DebugLevel;
         bool                                    m_ReadCommand;
         bool                                    m_PlainCommand;
         uint32_t                                m_ParamValue[CLI_NUMBER_OF_SUPPORTED_PARAM];
-        void*                                   m_pParamStr[CLI_NUMBER_OF_SUPPORTED_PARAM];
+        char*                                   m_pParamStr[CLI_NUMBER_OF_SUPPORTED_PARAM];
 
 
 
         static const CLI_CmdInputInfo_t         m_CmdInputInfo[NUMBER_OF_CLI_CMD];
         static const char*                      m_ErrorLabel;
-        static const char                       m_StrAT_MENU[SIZE_OF_AT_MENU] = "MENU";
-        static const char*                      m_pCmdStr[NUMBER_OF_CLI_CMD] =
-        static const int                        m_CmdStrSize[NUMBER_OF_CLI_CMD] =
+        static const char*                      m_pCmdStr[NUMBER_OF_CLI_CMD];
+        static const int                        m_CmdStrSize[NUMBER_OF_CLI_CMD];
 
+      #if (CLI_USE_VT100_MENU == DEF_ENABLED)
+        static const char                       m_StrAT_MENU[SIZE_OF_AT_MENU];
+      #endif
+
+        X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CLASS_CONST_STRING)           // Generation of all the string
 
       #if (CLI_USE_PASSWORD == DEF_ENABLED)
         static char                             m_CMD_Password[CLI_PASSWORD_SIZE];
@@ -242,4 +241,6 @@ class CommandLineInterface
 
 //-------------------------------------------------------------------------------------------------
 
+CLI_EXTERN CommandLineInterface CmdLine;
 
+//-------------------------------------------------------------------------------------------------

@@ -28,15 +28,14 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdarg.h>
+//#include <stdio.h>
+//#include <stdarg.h>
 #define CLI_GLOBAL
 #include "lib_cli.h"
-#include "lib_cli_command.h"
 #undef  CLI_GLOBAL
-#include "lib_memory.h"
-#include "lib_utility.h"
-#include "lib_class_uart.h"
+//#include "lib_memory.h"
+//#include "lib_utility.h"
+//#include "lib_class_uart.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -47,8 +46,8 @@
 #define CLI_TERMINAL_RESET_DELAY                    100
 #define CLI_AT_STR_SIZE                             2
 
-#define CLI_STRING_CLEAR_SCREEN                     "\e[2J\e[H"
-#define CLI_STRING_RESET_TERMINAL                   "\ec\r\n"
+#define CLI_STRING_CLEAR_SCREEN                     "\033[2J\e[H"
+#define CLI_STRING_RESET_TERMINAL                   "\033c\r\n"
 #define CLI_TIME_DATE_STAMP                         "%04u-%02u-%02u %2u:%02u:%02u: "
 
 //-------------------------------------------------------------------------------------------------
@@ -297,7 +296,7 @@ void CommandLineInterface::RX_Callback(uint8_t Data)
 
         case CLI_USER_FUNCTION:
         {
-            if(m_ChildProcess != NULL)
+            if(m_ChildProcess != nullptr)
             {
                 m_ChildProcess(Data);
             }
@@ -363,9 +362,9 @@ void CommandLineInterface::ProcessParams(CLI_CmdName_e Command)
         }
         else
         {
-            m_pParamStr[i] = pMemory->Alloc(CLI_STRING_SIZE);
+            m_pParamStr[i] = (char*)pMemory->Alloc(CLI_STRING_SIZE);
 
-            if(m_pParamStr[i] != NULL)
+            if(m_pParamStr[i] != nullptr)
             {
                 if(GetString(m_pParamStr[i], CLI_STRING_SIZE) == false)
                 {
@@ -390,7 +389,7 @@ void CommandLineInterface::ProcessParams(CLI_CmdName_e Command)
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   UART_ID_e   UartID                  ID of the UART used by this module
+//  Parameter(s):   UART_Driver*    UartDriver       Pointer on the UART driver to use.
 //  Return:         None
 //
 //  Description:    Initialize command line interface
@@ -398,11 +397,11 @@ void CommandLineInterface::ProcessParams(CLI_CmdName_e Command)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CommandLineInterface::Initialize(UART_ID_e UartID)
+void CommandLineInterface::Initialize(UART_Driver* pUartDriver)
 {
     TickCount_t Delay;
 
-    m_UartID                = UartID;
+    m_pUartDriver           = pUartDriver;
     m_InputState            = CLI_CMD_LINE;       // Initial input type
     m_Step                  = CLI_STEP_IDLE;      // Initial step of the parser
     m_ParserRX_Offset       = 0;
@@ -412,10 +411,9 @@ void CommandLineInterface::Initialize(UART_ID_e UartID)
     m_DebugLevel            = CLI_DEBUG_LEVEL_0;
     m_ChildProcess          = nullptr;
 
-    m_UartID = UartID;
     m_pTxFifo = new FIFO_Buffer(CLI_FIFO_PARSER_RX_SIZE);
-    UART_RegisterCallbackNotEmpty(UartID, (UART_CallBackRX_t)CLI_RX_Callback);
-    UART_RegisterCallbackCompletedTX(UartID, m_TX_Completed, NULL);
+    //pUartDriver->RegisterCallbackNotEmpty((UART_CallBackRX_t)CLI_RX_Callback);
+    //pUartDriver->RegisterCallbackCompletedTX(m_TX_Completed, nullptr);
     Printf(CLI_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
     Delay = GetTick();
     while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
@@ -438,7 +436,7 @@ void CommandLineInterface::Process(void)
 {
     SystemState_e        State;
     int16_t              CommandNameSize;
-    CLI_CmdName_e        Command;
+    int                  Command;
     CLI_CommandSupport_e Support;
 
     if(m_IsItOnStartup == true)
@@ -463,17 +461,18 @@ void CommandLineInterface::Process(void)
                 m_pTxFifo->ToUpper(CommandNameSize);
                 State = SYS_INVALID_COMMAND;
 
-                for(Command = FIRST_CLI_COMMAND; Command < NUMBER_OF_CLI_CMD; Command++)                    // Process the valid input by looking through valid command list
+            // Process the valid input by iterating through valid command list
+                for(Command = int(FIRST_CLI_COMMAND); Command < int(NUMBER_OF_CLI_CMD); Command++)
                 {
                     if(CommandNameSize == m_CmdStrSize[Command])                                          // First size must match
                     {
-                        if(m_pTxFifo->Memncmp(CLI_pCmdStr[Command], CommandNameSize) == true)               // Compare command string
+                        if(m_pTxFifo->Memncmp(m_pCmdStr[Command], CommandNameSize) == true)               // Compare command string
                         {
                             m_pTxFifo->Flush(CommandNameSize);                                              // Flush the command from the FIFO
 
                             if((m_ReadCommand == false) && (m_PlainCommand == false))
                             {
-                               ProcessParams(Command);                                                  // if its a write command, get all parameters.
+                               ProcessParams(CLI_CmdName_e(Command));                                                  // if its a write command, get all parameters.
                             }
 
                             Support = m_CmdInputInfo[Command].Support;
@@ -482,8 +481,8 @@ void CommandLineInterface::Process(void)
                                (((Support & CLI_CMD_S) != 0) && (m_IsItOnStartup == true))      ||          // Startup specified command only startup phase
                                ((Support & (CLI_CMD_H | CLI_CMD_S)) == 0))                                  // All other command
                             {
-                                State = Function[Command]();                                            // Call the command
-                                SendAnswer(Command, State, NULL);
+  // TODO                              State = Function[Command]();                                                // Call the command
+                                SendAnswer(CLI_CmdName_e(Command), State, nullptr);
                             }
                         }
                     }
@@ -544,7 +543,7 @@ void CommandLineInterface::Process(void)
 //-------------------------------------------------------------------------------------------------
 void CommandLineInterface::GiveControlToChildProcess(void(*pProcess)(uint8_t Data))
 {
-    if(pProcess != NULL)
+    if(pProcess != nullptr)
     {
         m_ChildProcess = pProcess;
         m_InputState   = CLI_USER_FUNCTION;
@@ -572,7 +571,7 @@ size_t CommandLineInterface::Printf(int MaxSize, const char* pFormat, ...)
     va_list vaArg;
     size_t  Size = 0;
 
-    if((pBuffer = SMEM_Alloc(CLI_SERIAL_OUT_SIZE)) == NULL)
+    if((pBuffer = (char*)pMemory->Alloc(CLI_SERIAL_OUT_SIZE)) == nullptr)
     {
         return 0;
     }
@@ -580,8 +579,8 @@ size_t CommandLineInterface::Printf(int MaxSize, const char* pFormat, ...)
     Size = (MaxSize == CLI_SIZE_NONE) ? CLI_SERIAL_OUT_SIZE : MaxSize;
     va_start(vaArg, (const char*)pFormat);
     Size = vsnprintf(&pBuffer[0], Size, pFormat, vaArg);
-    while(UART_IsItBusy(m_UartID) == true){};
-    UART_SendData(m_UartID, &pBuffer[0], &Size, pBuffer);
+    while(m_pUartDriver->IsItBusy() == true){};
+    m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);
     va_end(vaArg);
 
     return Size;
@@ -591,18 +590,18 @@ size_t CommandLineInterface::Printf(int MaxSize, const char* pFormat, ...)
 //
 //  Name:           PrintSerialLog
 //
-//  Parameter(s):   m_DebugLevel_e    Level       Level of printf logging.
+//  Parameter(s):   CLI_DebugLevel_e    Level       Level of printf logging.
 //                  const char*         pFormat     Formatted string.
 //                  ...                             Parameter if any.
 //
-//  Return:         size_t              Number of caracter printed.
+//  Return:         size_t              Number of character printed.
 //
 //  Description:    Send formatted string to console if menu system is active.
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-size_t CommandLineInterface::PrintSerialLog(m_DebugLevel_e Level, const char* pFormat, ...)
+size_t CommandLineInterface::PrintSerialLog(CLI_DebugLevel_e Level, const char* pFormat, ...)
 {
     va_list          vaArg;
     char*            pBuffer;
@@ -612,11 +611,11 @@ size_t CommandLineInterface::PrintSerialLog(m_DebugLevel_e Level, const char* pF
     {
         if((m_DebugLevel & Level) != CLI_DEBUG_LEVEL_0)
         {
-            if((pBuffer = pMemory->Alloc(CLI_SERIAL_OUT_SIZE)) != nullptr)
+            if((pBuffer = (char*)pMemory->Alloc(CLI_SERIAL_OUT_SIZE)) != nullptr)
             {
                 va_start(vaArg, (const char*)pFormat);
                 Size = vsnprintf(pBuffer, CLI_SERIAL_OUT_SIZE, pFormat, vaArg);
-                UART_SendData(TERMINAL_SERIAL, pBuffer, &Size, nullptr);
+                m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size, nullptr);
                 va_end(vaArg);
                 pMemory->Free((void**)&pBuffer);
             }
@@ -683,14 +682,14 @@ void CommandLineInterface::LockDisplay(bool State)
 //
 //-------------------------------------------------------------------------------------------------
 
-void CommandLineInterface::DisplayTimeDateStamp((Date_t* pDate, Time_t* pTime)
+void CommandLineInterface::DisplayTimeDateStamp(Date_t* pDate, Time_t* pTime)
 {
-    CLI_Printf(CLI_SIZE_NONE, CLI_TIME_DATE_STAMP, pDate->Year,
-                                                   pDate->Month,
-                                                   pDate->Day,
-                                                   pTime->Hour,
-                                                   pTime->Minute,
-                                                   pTime->Second);
+    Printf(CLI_SIZE_NONE, CLI_TIME_DATE_STAMP, pDate->Year,
+                                               pDate->Month,
+                                               pDate->Day,
+                                               pTime->Hour,
+                                               pTime->Minute,
+                                               pTime->Second);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -699,7 +698,7 @@ void CommandLineInterface::DisplayTimeDateStamp((Date_t* pDate, Time_t* pTime)
 //
 //  Parameter(s):   CLI_CmdName_e   CommandID           Command identification.
 //                  SystemState_e   State               State code.
-//                  const char*     Answer              Specific error string if not NULL.
+//                  const char*     Answer              Specific error string if not nullptr.
 //
 //  Return:         None
 //
@@ -744,7 +743,7 @@ void CommandLineInterface::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, co
 
     if(State != SYS_OK_SILENT)
     {
-        CLI_Printf(CLI_SIZE_NONE, "AT%s=%s%s\r\n", CLI_pCmdStr[Cmd], pMsg1, pMsg2);
+        Printf(CLI_SIZE_NONE, "AT%s=%s%s\r\n", m_pCmdStr[Cmd], pMsg1, pMsg2);
     }
 }
 
@@ -814,7 +813,7 @@ bool CommandLineInterface::IsItA_Comma(void)
 {
     bool Result = false;
 
-    ifm_pTxFifo->At(0) == ',')
+    if(m_pTxFifo->At(0) == ',')
     {
         m_pTxFifo->Flush(1);
         Result = true;

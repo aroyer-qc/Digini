@@ -575,7 +575,7 @@ void UART_Driver::VirtualSendData(const uint8_t* pBuffer, uint16_t Size)
 //   Function:      SendData
 //
 //   Parameter(s):  p_BufferTX  Ptr on buffer with data to send.
-//                              if = NULL, internal TX Buffer remains the one set previously
+//                              if = nullptr, internal TX Buffer remains the one set previously
 //                  pSizeTX     Number of bytes to send, and on return, number of bytes sent
 //   Return Value:  SystemState_e
 //

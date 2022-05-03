@@ -61,6 +61,32 @@ const CLI_CmdInputInfo_t CommandLineInterface::m_CmdInputInfo[NUMBER_OF_CLI_CMD]
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_INPUT_INFO)
 };
 
+
+#if CLI_USE_VT100_MENU == DEF_ENABLED
+  const char CommandLineInterface::m_StrAT_MENU[SIZE_OF_AT_MENU] = "MENU";
+#endif
+
+X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CONST_STRING)           // Generation of all the string
+
+
+const char* CommandLineInterface::m_pCmdStr[NUMBER_OF_CLI_CMD] =
+{
+  #if CLI_USE_VT100_MENU == DEF_ENABLED
+    &StrAT_MENU[0],
+  #endif
+
+    X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CMD_STRING)
+};
+
+const int CommandLineInterface::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
+{
+  #if CLI_USE_VT100_MENU == DEF_ENABLED
+    sizeof("MENU") - 1,
+  #endif
+
+    X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_STRING_SIZE)
+};
+
 //-------------------------------------------------------------------------------------------------
 // Private(s) Function(s)
 //-------------------------------------------------------------------------------------------------

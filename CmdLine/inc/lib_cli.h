@@ -152,7 +152,18 @@ enum CLI_Step_e
     CLI_STEP_CMD_BUFFER_OVERFLOW  = 5,
 };
 
-typedef void (*CLI_ChildProcess_t)(uint8_t Data);
+enum CLI_StrCmdSize_e
+{
+    #if CLI_USE_VT100_MENU == DEF_ENABLED
+      SIZE_OF_AT_MENU = sizeof("MENU") - 1,
+    #endif
+
+    X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_SIZE_OF)                // Create the sizeof() for each string
+
+};
+
+typedef void            (*CLI_ChildProcess_t)(uint8_t Data);
+typedef SystemState_e   (*CLI_Function_t)(void);
 
 //-------------------------------------------------------------------------------------------------
 // Function(s) Prototype(s)
@@ -188,6 +199,13 @@ class CommandLineInterface
         void        ProcessParams               (CLI_CmdName_e Command);
 
 
+    // ----------------------------------------------------------------------------------------------------------------------------
+    // Expansion of all user CLI function    
+
+        X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION)               // Generation of all prototype
+
+    // ----------------------------------------------------------------------------------------------------------------------------
+
         UART_ID_e                               m_UartID;
         CLI_InputState_e                        m_InputState;
         int                                     m_ParserRX_Offset;
@@ -212,6 +230,10 @@ class CommandLineInterface
 
         static const CLI_CmdInputInfo_t         m_CmdInputInfo[NUMBER_OF_CLI_CMD];
         static const char*                      m_ErrorLabel;
+        static const char                       m_StrAT_MENU[SIZE_OF_AT_MENU] = "MENU";
+        static const char*                      m_pCmdStr[NUMBER_OF_CLI_CMD] =
+        static const int                        m_CmdStrSize[NUMBER_OF_CLI_CMD] =
+
 
       #if (CLI_USE_PASSWORD == DEF_ENABLED)
         static char                             m_CMD_Password[CLI_PASSWORD_SIZE];

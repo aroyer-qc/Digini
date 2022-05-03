@@ -157,7 +157,7 @@ SystemState_e CommandLineInterface::CmdRESET(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CLI_CmdSTATUS
+//  Name:           CmdSTATUS
 //
 //  Parameter(s):   None
 //  Return:         SystemState_e
@@ -171,7 +171,7 @@ SystemState_e CommandLineInterface::CmdRESET(void)
 //                    - Write is not supported in this example.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CLI_CmdSTATUS(void)
+SystemState_e CommandLineInterface::CmdSTATUS(void)
 {
     SystemState_e Error;
     char          Response[20];
@@ -197,7 +197,7 @@ SystemState_e CLI_CmdSTATUS(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CLI_CmdTEST1
+//  Name:           CmdTEST1
 //
 //  Parameter(s):   None
 //  Return:         SystemState_e
@@ -211,7 +211,7 @@ SystemState_e CLI_CmdSTATUS(void)
 //                    - Write is not supported in this example.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CLI_CmdTEST1(void)
+SystemState_e CommandLineInterface::CmdTEST1(void)
 {
     SystemState_e   Error;
     char            Response[11];
@@ -235,7 +235,7 @@ SystemState_e CLI_CmdTEST1(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CLI_CmdTEST2
+//  Name:           CmdTEST2
 //
 //  Parameter(s):   None
 //  Return:         SystemState_e
@@ -250,7 +250,7 @@ SystemState_e CLI_CmdTEST1(void)
 //                    - Write new value for application data or function.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CLI_CmdTEST2(void)
+SystemState_e CommandLineInterface::CmdTEST2(void)
 {
     SystemState_e       Error;
     char                Response[20];
@@ -285,7 +285,7 @@ SystemState_e CLI_CmdTEST2(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CLI_CmdTEST3
+//  Name:           CmdTEST3
 //
 //  Parameter(s):   None
 //  Return:         SystemState_e
@@ -293,7 +293,7 @@ SystemState_e CLI_CmdTEST2(void)
 //  Description:    Example of a command
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CLI_CmdTEST3(void)
+SystemState_e CommandLineInterface::CmdTEST3(void)
 {
     SystemState_e            Error;
     char                     Response[64];
@@ -330,7 +330,7 @@ SystemState_e CLI_CmdTEST3(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CLI_CmdINFO
+//  Name:           CmdINFO
 //
 //  Parameter(s):   None
 //  Return:         SystemState_e
@@ -338,7 +338,7 @@ SystemState_e CLI_CmdTEST3(void)
 //  Description:    Return information
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CLI_CmdINFO(void)
+SystemState_e CommandLineInterface::CmdINFO(void)
 {
     SystemState_e Error;
     char          Response[100];
@@ -362,7 +362,7 @@ SystemState_e CLI_CmdINFO(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CLI_CmdVERSION
+//  Name:           CmdVERSION
 //
 //  Parameter(s):   None
 //  Return:         SystemState_e
@@ -370,7 +370,7 @@ SystemState_e CLI_CmdINFO(void)
 //  Description:    Return the version
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CLI_CmdVERSION(void)
+SystemState_e CommandLineInterface::CmdVERSION(void)
 {
     SystemState_e Error;
 
@@ -389,7 +389,7 @@ SystemState_e CLI_CmdVERSION(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CLI_CmdDBG_LEVEL
+//  Name:           CmdDBG_LEVEL
 //
 //  Parameter(s):   None
 //  Return:         SystemState_e
@@ -397,7 +397,7 @@ SystemState_e CLI_CmdVERSION(void)
 //  Description:    Set individual debug level (bit position)
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CLI_CmdDBG_LEVEL(void)
+SystemState_e CommandLineInterface::CmdDBG_LEVEL(void)
 {
     SystemState_e       Error;
     char                Response[64];

@@ -24,8 +24,6 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-//#include "usb_cfg.h"
-
 #if defined STM32F4xx
  #include "lib_class_STM32F4_usb.h"
 #elif defined STM32F7xx

@@ -28,14 +28,15 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//#include <stdio.h>
-//#include <stdarg.h>
 #define CLI_GLOBAL
 #include "lib_cli.h"
 #undef  CLI_GLOBAL
-//#include "lib_memory.h"
-//#include "lib_utility.h"
-//#include "lib_class_uart.h"
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+typedef SystemState_e (CommandLineInterface::*const CLI_Function_t)(void);
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -54,12 +55,21 @@
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
+const CLI_Function_t CLI_Function[NUMBER_OF_CLI_CMD] =
+{
+  #if CLI_USE_VT100_MENU == DEF_ENABLED
+    CmdMENU,
+  #endif
+
+    X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION_POINTER)   // Generation of the function pointer array
+ };
+
+
 const char*              CommandLineInterface::m_ErrorLabel                       = "ERROR, %s";
 const CLI_CmdInputInfo_t CommandLineInterface::m_CmdInputInfo[NUMBER_OF_CLI_CMD]  =
 {
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_INPUT_INFO)
 };
-
 
 #if CLI_USE_VT100_MENU == DEF_ENABLED
   const char CommandLineInterface::m_StrAT_MENU[SIZE_OF_AT_MENU] = "MENU";
@@ -249,8 +259,8 @@ void CommandLineInterface::RX_Callback(uint8_t Data)
                         }
 
                         m_Step     = CLI_STEP_CMD_VALID;
-                        m_DataSize = m_ParserRX_Offset;   //  TODO found usage because not used !!!!!!!
-                        }
+//                        m_DataSize = m_ParserRX_Offset;   //  TODO found usage because not used !!!!!!!
+                    }
                     else if((char)Data == '\b')
                     {
                         m_ParserRX_Offset--;
@@ -326,7 +336,7 @@ void CommandLineInterface::ProcessParams(CLI_CmdName_e Command)
 {
     SystemState_e         State;
     const CLI_CmdParam_t* pParam;
-    uint32_t*             pValue;
+    int32_t*              pValue;
     uint8_t               NbParam;
 
     State   = SYS_READY;
@@ -413,12 +423,22 @@ void CommandLineInterface::Initialize(UART_Driver* pUartDriver)
 
     m_pTxFifo = new FIFO_Buffer(CLI_FIFO_PARSER_RX_SIZE);
     //pUartDriver->RegisterCallbackNotEmpty((UART_CallBackRX_t)CLI_RX_Callback);
-    //pUartDriver->RegisterCallbackCompletedTX(m_TX_Completed, nullptr);
+    pUartDriver->RegisterCallbackCompletedTX(&this->TX_Completed, nullptr);
     Printf(CLI_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
     Delay = GetTick();
     while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
     m_StartupTick = GetTick();
 }
+
+/*
+m_cRedundencyManager->Init(&CLoggersInfra::Callback, this);
+The function can be defined as follows
+
+static void Callback(int other_arg, void * this_pointer) {
+    CLoggersInfra * self = static_cast<CLoggersInfra*>(this_pointer);
+    self->RedundencyManagerCallBack(other_arg);
+}
+*/
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -481,7 +501,7 @@ void CommandLineInterface::Process(void)
                                (((Support & CLI_CMD_S) != 0) && (m_IsItOnStartup == true))      ||          // Startup specified command only startup phase
                                ((Support & (CLI_CMD_H | CLI_CMD_S)) == 0))                                  // All other command
                             {
-  // TODO                              State = Function[Command]();                                                // Call the command
+                                State = (this->*CLI_Function[Command])();
                                 SendAnswer(CLI_CmdName_e(Command), State, nullptr);
                             }
                         }
@@ -771,7 +791,7 @@ bool CommandLineInterface::GetString(char* pBuffer, size_t Size)
     {
         m_pTxFifo->Flush(1);
 
-        for(int i = 0; ((i <= Size) && (Result == false)); i++)
+        for(size_t i = 0; ((i <= Size) && (Result == false)); i++)
         {
             if(m_pTxFifo->Read(&Character, 1) == 1)
             {

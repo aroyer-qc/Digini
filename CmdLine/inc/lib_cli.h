@@ -30,13 +30,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//clude <stdio.h>
-//nclude <stdbool.h>
-//nclude <time.h>
 #include "lib_digini.h"
 #include "cli_cfg.h"
 #include "lib_cli_expanding_macro.h"
-#include "lib_fifo.h"                   //?????? in lib_digini.h
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -158,7 +154,6 @@ enum CLI_StrCmdSize_e
 };
 
 typedef void            (*CLI_ChildProcess_t)(uint8_t Data);
-typedef SystemState_e   (*CLI_Function_t)(void);
 
 //-------------------------------------------------------------------------------------------------
 // Function(s) Prototype(s)
@@ -166,38 +161,38 @@ typedef SystemState_e   (*CLI_Function_t)(void);
 
 class CommandLineInterface
 {
+
     public:
 
-        void        Initialize                  (UART_Driver* pUartDriver);
-        void        Process                     (void);
-        void        GiveControlToChildProcess   (void(*pProcess)(uint8_t Data));
-        void        DisplayTimeDateStamp        (Date_t* pDate, Time_t* pTime);
-        size_t      Printf                      (int nSize, const char* pFormat, ...);
-        void        LockDisplay                 (bool State);
-        void        SendAnswer                  (CLI_CmdName_e CmdName, SystemState_e State, const char* Answer);
-        bool        GetString                   (char* pBuffer, size_t Size);
-        bool        GetAtoi                     (int32_t* pValue, int32_t Min, int32_t Max, uint8_t Base);
-        bool        IsItA_Comma                 (void);
-        bool        IsItAnEOL                   (void);
+        void            Initialize                  (UART_Driver* pUartDriver);
+        void            Process                     (void);
+        void            GiveControlToChildProcess   (void(*pProcess)(uint8_t Data));
+        void            DisplayTimeDateStamp        (Date_t* pDate, Time_t* pTime);
+        size_t          Printf                      (int nSize, const char* pFormat, ...);
+        void            LockDisplay                 (bool State);
+        void            SendAnswer                  (CLI_CmdName_e CmdName, SystemState_e State, const char* Answer);
+        bool            GetString                   (char* pBuffer, size_t Size);
+        bool            GetAtoi                     (int32_t* pValue, int32_t Min, int32_t Max, uint8_t Base);
+        bool            IsItA_Comma                 (void);
+        bool            IsItAnEOL                   (void);
 
-        size_t      PrintSerialLog              (CLI_DebugLevel_e Level, const char* pFormat, ...);
-        void        SetSerialLogging            (bool Mute);
-
-    private:
-
-      #if (CLI_USE_PASSWORD == DEF_ENABLED)
-        SystemState_e CLI_HandleCmdPassword     (void);
-      #endif
-
-        void        TX_Completed                (void* pContext);  // Callback from UART driver for TX Completed
-        void        RX_Callback                 (uint8_t Data);
-        void        ProcessParams               (CLI_CmdName_e Command);
-
+        size_t          PrintSerialLog              (CLI_DebugLevel_e Level, const char* pFormat, ...);
+        void            SetSerialLogging            (bool Mute);
 
     // ----------------------------------------------------------------------------------------------------------------------------
     // Expansion of all user CLI function
 
         X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION)               // Generation of all prototype
+
+    private:
+
+      #if (CLI_USE_PASSWORD == DEF_ENABLED)
+        SystemState_e   CLI_HandleCmdPassword       (void);
+      #endif
+
+        void            TX_Completed                (void* pContext);  // Callback from UART driver for TX Completed
+        void            RX_Callback                 (uint8_t Data);
+        void            ProcessParams               (CLI_CmdName_e Command);
 
     // ----------------------------------------------------------------------------------------------------------------------------
 
@@ -208,7 +203,7 @@ class CommandLineInterface
         CLI_ChildProcess_t                      m_ChildProcess;
         TickCount_t                             m_CommandTimeOut;
         int16_t                                 m_CommandNameSize;
-        int16_t                                 m_DataSize;
+        //int16_t                                 m_DataSize;
         bool                                    m_MuteSerialLogging;
         TickCount_t                             m_StartupTick;
         bool                                    m_IsItOnStartup;
@@ -218,10 +213,8 @@ class CommandLineInterface
         CLI_DebugLevel_e                        m_DebugLevel;
         bool                                    m_ReadCommand;
         bool                                    m_PlainCommand;
-        uint32_t                                m_ParamValue[CLI_NUMBER_OF_SUPPORTED_PARAM];
+        int32_t                                 m_ParamValue[CLI_NUMBER_OF_SUPPORTED_PARAM];
         char*                                   m_pParamStr[CLI_NUMBER_OF_SUPPORTED_PARAM];
-
-
 
         static const CLI_CmdInputInfo_t         m_CmdInputInfo[NUMBER_OF_CLI_CMD];
         static const char*                      m_ErrorLabel;

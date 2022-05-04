@@ -32,14 +32,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-
 #include "lib_digini.h"
-//#include "lib_cli.h"
-//#include "lib_macro.h"
-//#include "generic.h"
-//#include <string.h>
-//#include "lib_memory.h"
-#include "project_def.h"
 
 //-------------------------------------------------------------------------------------------------
 // Private(s) function(s)
@@ -301,7 +294,7 @@ SystemState_e CommandLineInterface::CmdTEST3(void)
             Test2 = m_ParamValue[1];
             Test3 = m_ParamValue[2];
             memcpy(&Test[0], m_pParamStr[3], CLI_STRING_SIZE);
-            pMemory->Free(&m_pParamStr[3]);
+            pMemory->Free((void**)&m_pParamStr[3]);
             Error = SYS_READY;
         }
     }
@@ -405,7 +398,7 @@ SystemState_e CommandLineInterface::CmdDBG_LEVEL(void)
     }
     else
     {
-        m_DebugLevel = m_ParamValue[0];
+        m_DebugLevel = (CLI_DebugLevel_e)m_ParamValue[0];
         Error        = SYS_READY;
     }
 

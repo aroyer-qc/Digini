@@ -51,6 +51,7 @@
 #include "bsp_io_def.h"
 #include "app_cfg.h"
 #include "label_cfg.h"
+#include "project_def.h"
 
 //-------------------------------------------------------------------------------------------------
 // Digini library
@@ -68,6 +69,7 @@
 #include "lib_io.h"
 #include "lib_isr.h"
 #include "lib_dma.h"
+#include "lib_fifo.h"
 
 //-------------------------------------------------------------------------------------------------
 // Operating system

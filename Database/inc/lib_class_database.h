@@ -133,7 +133,6 @@ EXTERN_LIB_CLASS_DATABASE class CDataBase DB_Central;
 // Post Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//#include "lib_class_database.h"
 #include "lib_class_eeprom_dbase.h"
 #include "lib_class_qspi_dbase.h"
 #include "lib_class_hard_dbase.h"
@@ -141,7 +140,6 @@ EXTERN_LIB_CLASS_DATABASE class CDataBase DB_Central;
 #include "lib_class_rom_dbase.h"
 #include "lib_class_bkpreg_dbase.h"
 #include "lib_database_wrapper.h"
-//#include "lib_typedef.h"
 
 //#define __DATABASE_POST_INCLUDE__
 //#include "database_cfg.h"

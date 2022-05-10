@@ -59,6 +59,7 @@
 #include "lib_assert.h"
 #include "lib_memory.h"
 #include "lib_class_database.h"
+#include "lib_class_cbi.h"                      // Callback interface
 #include "lib_label.h"
 #include "lib_macro.h"
 #include "lib_define.h"

@@ -35,10 +35,6 @@
 #include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
-// Private(s) function(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
 //
 //  Name:           CmdHOLD
 //
@@ -52,7 +48,7 @@
 //                  time.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLineInterface::CmdHOLD(void)
+SystemState_e CommandLine::CmdHOLD(void)
 {
     SystemState_e Error;
 
@@ -81,7 +77,7 @@ SystemState_e CommandLineInterface::CmdHOLD(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLineInterface::CmdRELEASE(void)
+SystemState_e CommandLine::CmdRELEASE(void)
 {
     SystemState_e Error;
 
@@ -115,7 +111,7 @@ SystemState_e CommandLineInterface::CmdRELEASE(void)
 //  Description:  	Command to reset and rebbot the system
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLineInterface::CmdRESET(void)
+SystemState_e CommandLine::CmdRESET(void)
 {
     SystemState_e Error;
 
@@ -150,7 +146,7 @@ SystemState_e CommandLineInterface::CmdRESET(void)
 //                    - Write is not supported in this example.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLineInterface::CmdSTATUS(void)
+SystemState_e CommandLine::CmdSTATUS(void)
 {
     SystemState_e Error;
     char          Response[20];
@@ -189,7 +185,7 @@ SystemState_e CommandLineInterface::CmdSTATUS(void)
 //                    - Write is not supported in this example.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLineInterface::CmdTEST1(void)
+SystemState_e CommandLine::CmdTEST1(void)
 {
     SystemState_e   Error;
     char            Response[11];
@@ -228,7 +224,7 @@ SystemState_e CommandLineInterface::CmdTEST1(void)
 //                    - Write new value for application data or function.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLineInterface::CmdTEST2(void)
+SystemState_e CommandLine::CmdTEST2(void)
 {
     SystemState_e       Error;
     char                Response[20];
@@ -271,7 +267,7 @@ SystemState_e CommandLineInterface::CmdTEST2(void)
 //  Description:    Example of a command
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLineInterface::CmdTEST3(void)
+SystemState_e CommandLine::CmdTEST3(void)
 {
     SystemState_e            Error;
     char                     Response[64];
@@ -316,7 +312,7 @@ SystemState_e CommandLineInterface::CmdTEST3(void)
 //  Description:    Return information
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLineInterface::CmdINFO(void)
+SystemState_e CommandLine::CmdINFO(void)
 {
     SystemState_e Error;
     char          Response[100];
@@ -348,7 +344,7 @@ SystemState_e CommandLineInterface::CmdINFO(void)
 //  Description:    Return the version
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLineInterface::CmdVERSION(void)
+SystemState_e CommandLine::CmdVERSION(void)
 {
     SystemState_e Error;
 
@@ -375,7 +371,7 @@ SystemState_e CommandLineInterface::CmdVERSION(void)
 //  Description:    Set individual debug level (bit position)
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLineInterface::CmdDBG_LEVEL(void)
+SystemState_e CommandLine::CmdDBG_LEVEL(void)
 {
     SystemState_e       Error;
     char                Response[64];

@@ -187,29 +187,29 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
         IO_PinInit(m_pInfo->PinRTS);
       #endif
 
-      #if (UART_ISR_RX_CFG == DEF_ENABLED)
-        m_pCallbackRX = nullptr;
-        m_pContextRX  = nullptr;
-      #endif
-      #if UART_ISR_RX_IDLE_CFG == DEF_ENABLED
-        m_pCallbackIDLE = nullptr;
-        m_pContextIDLE  = nullptr;
-      #endif
-      #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
-        m_pCallbackERROR = nullptr;
-        m_pContextERROR  = nullptr;
-      #endif
-      #if (UART_ISR_CTS_CFG == DEF_ENABLED)
-        m_pCallbackCTS = nullptr;
-        m_pContextCTS  = nullptr;
-      #endif
-      #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
-        m_pCallbackEmptyTX = nullptr;
-        m_pContextEmptyTX  = nullptr;
-      #endif
-      #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
-        m_pCallbackCompletedTX = nullptr;
-        m_pContextCompletedTX  = nullptr;
+      #if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
+          (UART_ISR_CTS_CFG == DEF_ENABLED) || (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+        m_pCallback    = nullptr;
+        m_CallBackType = UART_CB_NONE;
+
+       #if (UART_ISR_RX_CFG == DEF_ENABLED)
+        m_pContextRX = nullptr;
+       #endif
+       #if UART_ISR_RX_IDLE_CFG == DEF_ENABLED
+        m_pContextIDLE = nullptr;
+       #endif
+       #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
+        m_pContextERROR = nullptr;
+       #endif
+       #if (UART_ISR_CTS_CFG == DEF_ENABLED)
+        m_pContextCTS = nullptr;
+       #endif
+       #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
+        m_pContextEmptyTX = nullptr;
+       #endif
+       #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+        m_pContextCompletedTX = nullptr;
+       #endif
       #endif
 
         ISR_Init(m_pInfo->IRQn_Channel, &ISR_Prio);
@@ -321,7 +321,7 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
       #if (UART_DRIVER_SUPPORT_UART1_CFG == DEF_ENABLED)
         if(m_pUart == USART1)
         {
-          PeriphClk = 108000000;//SYS_APB2_CLOCK_FREQUENCY;
+          PeriphClk = 108000000;//SYS_APB2_CLOCK_FREQUENCY;    // TODO TODO TODO
         }
       #endif
 
@@ -1143,7 +1143,7 @@ void UART_Driver::DisableTX_ISR(uint8_t Mask)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           RegisterCallback...
+//  Name:           RegisterCallback
 //
 //  Parameter(s):   pCallback       Callback pointer
 //                  pContext        Context for ISR
@@ -1152,53 +1152,76 @@ void UART_Driver::DisableTX_ISR(uint8_t Mask)
 //  Description:    Register callback for user code in ISR
 //
 //-------------------------------------------------------------------------------------------------
-#if (UART_ISR_RX_CFG == DEF_ENABLED)
-void UART_Driver::RegisterCallbackRX(void* pCallback, void* pContext)
+void UART_Driver::RegisterCallback(CallbackInterface* pCallback)
 {
-    m_pCallbackRX = (UART_CallBack_t)pCallback;
-    m_pContextRX  = pContext;
+    m_pCallback = pCallback;
 }
-#endif
 
-#if UART_ISR_RX_IDLE_CFG == DEF_ENABLED
-void UART_Driver::RegisterCallbackIdle(void* pCallback, void* pContext)
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           EnableCallbackType
+//
+//  Parameter(s):   CallbackType    Type if the ISR callback
+//                  pContext        Context for ISR
+//  Return:         None
+//
+//  Description:    Enable the type of interrupt for the callback.
+//
+//-------------------------------------------------------------------------------------------------
+void UART_Driver::EnableCallbackType(uint32_t CallbackType, void* pContext)
 {
-    m_pCallbackIDLE = (UART_CallBack_t)pCallback;
-    m_pContextIDLE  = pContext;
-}
-#endif
+    switch(CallbackType)
+    {
+      #if (UART_ISR_RX_CFG == DEF_ENABLED)
+        case UART_CB_RX:
+        {
+            m_pContextRX = pContext;
+        }
+        break;
+      #endif
 
-#if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
-void UART_Driver::RegisterCallbackError(void* pCallback, void* pContext)
-{
-    m_pCallbackERROR = (UART_CallBack_t)pCallback;
-    m_pContextERROR  = pContext;
-}
-#endif
+      #if UART_ISR_RX_IDLE_CFG == DEF_ENABLED
+        case UART_CB_IDLE:
+        {
+            m_pContextIDLE = pContext;
+        }
+        break;
+      #endif
 
-#if (UART_ISR_CTS_CFG == DEF_ENABLED)
-void UART_Driver::RegisterCallbackCTS(void* pCallback, void* pContext)
-{
-    m_pCallbackCTS = (UART_CallBack_t)pCallback;
-    m_pContextCTS  = pContext;
-}
-#endif
+    #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
+        case UART_CB_ERROR:
+        {
+            m_pContextERROR = pContext;
+        }
+        break;
+      #endif
 
-#if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
-void UART_Driver::RegisterCallbackEmptyTX(void* pCallback, void* pContext)
-{
-    m_pCallbackEmptyTX = (UART_CallBack_t)pCallback;
-    m_pContextEmptyTX  = pContext;
-}
-#endif
+      #if (UART_ISR_CTS_CFG == DEF_ENABLED)
+        case UART_CB_CTS:
+        {
+            m_pContextCTS = pContext;
+        }
+        break;
+      #endif
 
-#if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
-void UART_Driver::RegisterCallbackCompletedTX(void* pCallback, void* pContext)
-{
-    m_pCallbackCompletedTX = (UART_CallBack_t)pCallback;
-    m_pContextCompletedTX  = pContext;
+      #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
+        case UART_CB_EMPTY_TX:
+        {
+            m_pContextEmptyTX = pContext;
+        }
+        break;
+      #endif
+
+      #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+        case UART_CB_COMPLETED_TX:
+        {
+            m_pContextCompletedTX = pContext;
+        }
+        break;
+      #endif
+    }
 }
-#endif
+
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1221,10 +1244,10 @@ void UART_Driver::IRQ_Handler(void)
         {
             this->ClearAutomaticFlag();
 
-            if(m_pCallbackERROR != nullptr)
+            if(m_pCallback != nullptr)
             {
-                if(m_pContextERROR == nullptr) m_pCallbackERROR(m_pContextRX);
-                else                           m_pCallbackERROR(m_pContextERROR);
+                if(m_pContextERROR == nullptr) m_pCallback->CallbackFunction(m_pContextRX,    UART_CB_RX);
+                else                           m_pCallback->CallbackFunction(m_pContextERROR, UART_CB_ERROR);
             }
 
             m_DMA_IsItBusyTX = false;
@@ -1255,10 +1278,10 @@ void UART_Driver::IRQ_Handler(void)
 
              this->ClearAutomaticFlag();
 
-             if(m_pCallbackIDLE != nullptr)
+             if(m_pCallback != nullptr)
              {
-                if(m_pContextIDLE == nullptr) m_pCallbackIDLE(m_pContextRX);
-                else                          m_pCallbackIDLE(m_pContextIDLE);
+                if(m_pContextIDLE == nullptr) m_pCallback->CallbackFunction(m_pContextRX,   UART_CB_RX);
+                else                          m_pCallback->CallbackFunction(m_pContextIDLE, UART_CB_IDLE);
              }
              else
              {
@@ -1274,8 +1297,8 @@ void UART_Driver::IRQ_Handler(void)
         {
             if(m_pCallbackEmptyTX != nullptr)
             {
-                if(m_pContextEmptyTX == nullptr) m_pCallbackEmptyTX(m_pContextTX);
-                else                             m_pCallbackEmptyTX(m_pContextEmptyTX);
+                if(m_pContextEmptyTX == nullptr) m_pCallback->CallbackFunction(m_pContextTX,      UART_CB_COMPLETED_TX);  //??
+                else                             m_pCallback->CallbackFunction(m_pContextEmptyTX, UART_CB_EMPTY_TX);
             }
         }
        #endif
@@ -1285,10 +1308,10 @@ void UART_Driver::IRQ_Handler(void)
         {
             WRITE_REG(m_pUart->SR, ~(USART_SR_TC));
 
-            if(m_pCallbackCompletedTX != nullptr)
+            if(m_pCallback != nullptr)
             {
-                if(m_pContextCompletedTX == nullptr) m_pCallbackCompletedTX(m_pContextTX);
-                else                                 m_pCallbackCompletedTX(m_pContextCompletedTX);
+                if(m_pContextCompletedTX == nullptr) m_pCallback->CallbackFunction(m_pContextTX,          UART_CB_COMPLETED_TX);  //??
+                else                                 m_pCallback->CallbackFunction(m_pContextCompletedTX, UART_CB_COMPLETED_TX);
             }
 
             this->DMA_DisableTX();

@@ -46,6 +46,17 @@
 #define UART_ISR_TX_EMPTY_MASK              0x01
 #define UART_ISR_TX_COMPLETED_MASK          0x02
 
+// Callback type in bit position
+
+#define UART_CB_NONE                        0x00
+#define UART_CB_RX                          0x01
+#define UART_CB_IDLE                        0x02
+#define UART_CB_ERROR                       0x04
+#define UART_CB_CTS                         0x08
+#define UART_CB_EMPTY_TX                    0x10
+#define UART_CB_COMPLETED_TX                0x20
+
+
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -200,6 +211,14 @@ enum UART_Config_e
     UART_CONFIG_O_9_2    =   (UART_ODD_PARITY  | UART_9_LEN_BITS | UART_2_STOP_BITS),
 };
 
+enum UART_CB_Type_t
+{
+  #if (UART_ISR_RX_CFG == DEF_ENABLED)
+  #endif
+
+    NB_OF_UART_CALLBACK_TYPE,
+};
+
 struct UART_Info_t
 {
     USART_TypeDef*      pUARTx;
@@ -275,50 +294,34 @@ class UART_Driver
         size_t              DMA_GetSizeRX                   (uint16_t SizeRX);
       #endif
 
-      #if (UART_ISR_RX_CFG == DEF_ENABLED)
-        void            RegisterCallbackRX                  (void* pCallback, void* pContext = nullptr);
-      #endif
-      #if UART_ISR_RX_IDLE_CFG == DEF_ENABLED
-        void            RegisterCallbackIdle                (void* pCallback, void* pContext = nullptr);
-      #endif
-      #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
-        void            RegisterCallbackError               (void* pCallback, void* pContext = nullptr);
-      #endif
-      #if (UART_ISR_CTS_CFG == DEF_ENABLED)
-        void            RegisterCallbackCTS                 (void* pCallback, void* pContext = nullptr);
-      #endif
-      #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
-        void            RegisterCallbackEmptyTX             (void* pCallback, void* pContext = nullptr);
-      #endif
-      #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
-        void            RegisterCallbackCompletedTX         (void* pCallback, void* pContext = nullptr);
+      #if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
+          (UART_ISR_CTS_CFG == DEF_ENABLED) || (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+        void                RegisterCallback                (CallbackInterface* pCallback);
+        void                EnableCallbackType              (uint32_t CallbackType, void* pContext = nullptr);
       #endif
 
-        // TODO need register for callback virtual  not sure
+        void                Enable                          (void);
+        void                Disable                         (void);
 
-
-        void            Enable                              (void);
-        void            Disable                             (void);
-
-        void            IRQ_Handler                         (void);
+        void                IRQ_Handler                     (void);
 
        #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-        void            VirtualUartRX_IRQHandler            (void);
-        void            VirtualUartTX_IRQHandler            (void);
+        void                VirtualUartRX_IRQHandler        (void);
+        void                VirtualUartTX_IRQHandler        (void);
       #endif
 
     private:
 
-        void            ClearAutomaticFlag                  (void);
+        void                ClearAutomaticFlag              (void);
 
       #if (UART_ISR_RX_IDLE_CFG  == DEF_ENABLED) || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || (UART_ISR_RX_CFG == DEF_ENABLED)
-        void            EnableRX_ISR                        (uint8_t Mask);
-        void            DisableRX_ISR                       (uint8_t Mask);
+        void                EnableRX_ISR                    (uint8_t Mask);
+        void                DisableRX_ISR                   (uint8_t Mask);
       #endif
 
       #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
-        void            EnableTX_ISR                        (uint8_t Mask);
-        void            DisableTX_ISR                       (uint8_t Mask);
+        void                EnableTX_ISR                    (uint8_t Mask);
+        void                DisableTX_ISR                   (uint8_t Mask);
       #endif
 
         UART_ID_e                   m_UartID;
@@ -341,29 +344,30 @@ class UART_Driver
         bool                        m_VirtualUartBusyTX;
       #endif
 
-      #if (UART_ISR_RX_CFG == DEF_ENABLED)
-        UART_CallBack_t             m_pCallbackRX;
-        //void*                       m_pContextRX;
-      #endif
-      #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
-        UART_CallBack_t             m_pCallbackIDLE;
+// we might use only one callback here
+      #if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
+          (UART_ISR_CTS_CFG == DEF_ENABLED) || (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+        CallbackInterface*          m_pCallback;
+        uint32_t                    m_CallBackType;
+
+       #if (UART_ISR_RX_CFG == DEF_ENABLED)
+        void*                       m_pContextRX;
+       #endif
+       #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
         void*                       m_pContextIDLE;
-      #endif
-      #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
-        UART_CallBack_t             m_pCallbackERROR;
+       #endif
+       #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
         void*                       m_pContextERROR;
-      #endif
-      #if (UART_ISR_CTS_CFG == DEF_ENABLED)
-        UART_CallBack_t             m_pCallbackCTS;
+       #endif
+       #if (UART_ISR_CTS_CFG == DEF_ENABLED)
         void*                       m_pContextCTS;
-      #endif
-      #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
-        UART_CallBack_t             m_pCallbackEmptyTX;
+       #endif
+       #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
         void*                       m_pContextEmptyTX;
-      #endif
-      #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
-        UART_CallBack_t             m_pCallbackCompletedTX;
+       #endif
+       #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
         void*                       m_pContextCompletedTX;
+       #endif
       #endif
 };
 

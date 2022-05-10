@@ -159,7 +159,7 @@ typedef void            (*CLI_ChildProcess_t)(uint8_t Data);
 // Function(s) Prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-class CommandLineInterface
+class CommandLine : public CallbackInterface
 {
 
     public:
@@ -190,8 +190,10 @@ class CommandLineInterface
         SystemState_e   CLI_HandleCmdPassword       (void);
       #endif
 
+        void            CallbackFunction            (void* pContext, uint32_t Type);
         void            TX_Completed                (void* pContext);  // Callback from UART driver for TX Completed
         void            RX_Callback                 (uint8_t Data);
+
         void            ProcessParams               (CLI_CmdName_e Command);
 
     // ----------------------------------------------------------------------------------------------------------------------------
@@ -234,6 +236,6 @@ class CommandLineInterface
 
 //-------------------------------------------------------------------------------------------------
 
-CLI_EXTERN CommandLineInterface CmdLine;
+CLI_EXTERN CommandLine CmdLine;
 
 //-------------------------------------------------------------------------------------------------

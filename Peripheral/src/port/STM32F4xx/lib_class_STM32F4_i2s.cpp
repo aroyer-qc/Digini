@@ -182,7 +182,7 @@ void I2S_Driver::Initialize(void)
 
     // Preinit register that won't change
     pDMA = m_pInfo->pDMA_Stream;
-    pDMA->PAR = (uint32_t)&m_pInfo->pI2Sx->DR;          // Configure receive data register
+    pDMA->PAR = uint32_t(&m_pInfo->pI2Sx->DR);          // Configure receive data register
     pDMA->CR  = DMA_PERIPH_TO_MEMORY          |
                 DMA_MODE_NORMAL               |
                 DMA_PERIPH_NO_INCREMENT       |
@@ -481,11 +481,12 @@ SystemState_e I2S_Driver::GetStatus(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e I2S_Driver::Transmit(uint16_t* pBuffer, size_t Size)
 {
-    uint32_t Register;
+    uint32_t            Register;
+    DMA_Stream_TypeDef* pDMA;
 
     if((pBuffer == nullptr) || (Size == 0))
     {
-        return  SYS_ERROR;
+        return SYS_ERROR;
     }
 
     if(m_Status != SYS_READY)
@@ -511,14 +512,18 @@ SystemState_e I2S_Driver::Transmit(uint16_t* pBuffer, size_t Size)
         m_TX_transfertCount = Size;
     }
 
-    // Enable the Tx DMA Stream/Channel
-    if(HAL_DMA_Start_IT((uint32_t)pBuffer, (uint32_t)&m_pInfo->pI2Sx->DR, m_TX_transfertSize) != SYS_READY)
-    {
-        // Update SPI error code
-        //SET_BIT(hi2s->ErrorCode, HAL_I2S_ERROR_DMA);
-        m_Status = SYS_READY;
-        return SYS_ERROR;
-    }
+    pDMA  = m_pInfo->pDMA_Stream;
+
+    m_Status = SYS_BUSY_TX;                 // Set flag to busy in TX
+    pDMA->M0AR = uint32_t(pBuffer);       // Set DMA source
+    pDMA->PAR  = uint32_t(&m_pInfo->pI2Sx->DR);        // Configure DMA Stream destination address
+    // TODO size must be of the buffer size used by DMA
+    pDMA->NDTR = Size;                      // Set size of the TX
+    pDMA->CR &= uint32_t(~DMA_SxCR_DBM);  // Clear DBM bit
+    DMA_EnableInterrupt(pDMA, m_pInfo->IT_Flag);                                             // TODO if transfer is less than HT of full buffer lenght.. handle ending
+    SET_BIT(pDMA->FCR, DMA_SxFCR_FEIE);      // Enable Common interrupts
+    SET_BIT(pDMA->CR, DMA_SxCR_EN);          // Enable the DMA module
+    DMA_ClearFlag(pDMA, m_pInfo->IT_Flag);   // Clear IRQ DMA flag
 
     // Check if the I2S is already enabled
 //    if(CheckBit(m_pInfo->pI2Sx->I2SCFGR, SPI_I2SCFGR_I2SE) == 0)   // ?? why ?

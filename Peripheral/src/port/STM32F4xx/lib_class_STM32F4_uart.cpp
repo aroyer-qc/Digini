@@ -153,7 +153,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
                        DMA_M_BURST_SINGLE                 |
                        DMA_PRIORITY_HIGH;
             SET_BIT(pDMA->CR, m_pDMA_Info->DMA_ChannelRX);
-            pDMA->PAR = (uint32_t)&m_pUart->DR;
+            pDMA->PAR = uint32_t(&m_pUart->DR);
 
             pDMA = m_pDMA_Info->DMA_StreamTX;                                   // Write config that will never change
             pDMA->CR = DMA_MEMORY_TO_PERIPH               |
@@ -166,7 +166,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
                        DMA_M_BURST_SINGLE                 |
                        DMA_PRIORITY_HIGH;
             SET_BIT(pDMA->CR, m_pDMA_Info->DMA_ChannelTX);
-            pDMA->PAR  = (uint32_t)&m_pUart->DR;
+            pDMA->PAR  = uint32_t(&m_pUart->DR);
         }
       #endif
 

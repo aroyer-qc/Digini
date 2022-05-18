@@ -140,7 +140,7 @@ void DMA_Enable(DMA_Stream_TypeDef* pDMA)
 //
 //  Function:       DMA_Disable
 //
-//  Parameter(s):   pDMA        DMA stream to enable
+//  Parameter(s):   pDMA        DMA stream to disable
 //  Return:         None
 //
 //  Description:    Disable a specific DMA stream.
@@ -148,6 +148,36 @@ void DMA_Enable(DMA_Stream_TypeDef* pDMA)
 void DMA_Disable(DMA_Stream_TypeDef* pDMA)
 {
     CLEAR_BIT(pDMA->CR, DMA_SxCR_EN);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DMA_EnableInterrupt
+//
+//  Parameter(s):   pDMA        DMA stream
+//                  Interrupt   Interrupt tn enable
+//  Return:         None
+//
+//  Description:    Enable a group of interrupt for specific DMA stream.
+//-------------------------------------------------------------------------------------------------
+void DMA_EnableInterrupt(DMA_Stream_TypeDef* pDMA, uint32_t Interrupt)
+{
+    SET_BIT(pDMA->CR, Interrupt);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DMA_DisableInterrupt
+//
+//  Parameter(s):   pDMA        DMA stream
+//                  Interrupt   Interrupt tn enable
+//  Return:         None
+//
+//  Description:    Disable a group of interrupt for specific DMA stream.
+//-------------------------------------------------------------------------------------------------
+void DMA_DisableInterrupt(DMA_Stream_TypeDef* pDMA, uint32_t Interrupt)
+{
+    CLEAR_BIT(pDMA->CR, Interrupt);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -176,6 +206,34 @@ void DMA_EnableTransmitCompleteInterrupt(DMA_Stream_TypeDef* pDMA)
 void DMA_DisableTransmitCompleteInterrupt(DMA_Stream_TypeDef* pDMA)
 {
     CLEAR_BIT(pDMA->CR, DMA_SxCR_TCIE);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DMA_EnableTransmitHalfCompleteInterrupt
+//
+//  Parameter(s):   pDMA        DMA stream to enable
+//  Return:         None
+//
+//  Description:    Enable the transmit complete interrupt for a specific DMA stream.
+//-------------------------------------------------------------------------------------------------
+void DMA_EnableTransmitHalfCompleteInterrupt(DMA_Stream_TypeDef* pDMA)
+{
+    SET_BIT(pDMA->CR, DMA_SxCR_HTIE);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DMA_DisableTransmitHalfCompleteInterrupt
+//
+//  Parameter(s):   pDMA        DMA stream to enable
+//  Return:         None
+//
+//  Description:    Disable the transmit complete interrupt for a specific DMA stream.
+//-------------------------------------------------------------------------------------------------
+void DMA_DisableTransmitHalfCompleteInterrupt(DMA_Stream_TypeDef* pDMA)
+{
+    CLEAR_BIT(pDMA->CR, DMA_SxCR_HTIE);
 }
 
 //---------------------------------------------------------------------------------------------------------------------------------

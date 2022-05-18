@@ -195,7 +195,7 @@ void SPI_Driver::Initialize(void)
 
     // Preinit register that won't change
     pDMA = m_pInfo->DMA_StreamTX;
-    pDMA->PAR = (uint32_t)&m_pInfo->pSPIx->DR;          // Configure transmit data register
+    pDMA->PAR = uint32_t(&m_pInfo->pSPIx->DR);          // Configure transmit data register
     pDMA->CR = DMA_MEMORY_TO_PERIPH           |
                DMA_MODE_NORMAL                |
                DMA_PERIPH_NO_INCREMENT        |
@@ -209,7 +209,7 @@ void SPI_Driver::Initialize(void)
                m_pInfo->DMA_ChannelTX;
 
     pDMA = m_pInfo->DMA_StreamRX;
-    pDMA->PAR = (uint32_t)&m_pInfo->pSPIx->DR;          // Configure receive data register
+    pDMA->PAR = uint32_t(&m_pInfo->pSPIx->DR);          // Configure receive data register
     pDMA->CR = DMA_PERIPH_TO_MEMORY           |
                DMA_MODE_NORMAL                |
                DMA_PERIPH_NO_INCREMENT        |

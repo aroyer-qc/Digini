@@ -47,15 +47,13 @@
 #define UART_ISR_TX_COMPLETED_MASK          0x02
 
 // Callback type in bit position
-
-#define UART_CB_NONE                        0x00
-#define UART_CB_RX                          0x01
-#define UART_CB_IDLE                        0x02
-#define UART_CB_ERROR                       0x04
-#define UART_CB_CTS                         0x08
-#define UART_CB_EMPTY_TX                    0x10
-#define UART_CB_COMPLETED_TX                0x20
-
+#define UART_CALLBACK_NONE                  0x00
+#define UART_CALLBACK_RX                    0x01
+#define UART_CALLBACK_IDLE                  0x02
+#define UART_CALLBACK_ERROR                 0x04
+#define UART_CALLBACK_CTS                   0x08
+#define UART_CALLBACK_EMPTY_TX              0x10
+#define UART_CALLBACK_COMPLETED_TX          0x20
 
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
@@ -211,14 +209,6 @@ enum UART_Config_e
     UART_CONFIG_O_9_2    =   (UART_ODD_PARITY  | UART_9_LEN_BITS | UART_2_STOP_BITS),
 };
 
-enum UART_CB_Type_t
-{
-  #if (UART_ISR_RX_CFG == DEF_ENABLED)
-  #endif
-
-    NB_OF_UART_CALLBACK_TYPE,
-};
-
 struct UART_Info_t
 {
     USART_TypeDef*      pUARTx;
@@ -263,7 +253,7 @@ struct UART_Variables_t
 };
 #endif
 
-typedef void    (* UART_CallBack_t)           (void* pContext);
+//typedef void    (* UART_CallBack_t)           (void* pContext);
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -297,7 +287,7 @@ class UART_Driver
       #if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
           (UART_ISR_CTS_CFG == DEF_ENABLED) || (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
         void                RegisterCallback                (CallbackInterface* pCallback);
-        void                EnableCallbackType              (uint32_t CallbackType, void* pContext = nullptr);
+        void                EnableCallbackType              (int CallbackType, void* pContext = nullptr);
       #endif
 
         void                Enable                          (void);
@@ -348,7 +338,7 @@ class UART_Driver
       #if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
           (UART_ISR_CTS_CFG == DEF_ENABLED) || (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
         CallbackInterface*          m_pCallback;
-        uint32_t                    m_CallBackType;
+        int                         m_CallBackType;
 
        #if (UART_ISR_RX_CFG == DEF_ENABLED)
         void*                       m_pContextRX;
@@ -379,4 +369,4 @@ class UART_Driver
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_UART_DRIVER == DEF_ENABLED
+#endif // (USE_UART_DRIVER == DEF_ENABLED)

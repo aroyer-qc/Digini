@@ -220,6 +220,14 @@
 #define ADC_NUMBER_OF_RANK_FOR_CONVERSION           16
 #define ADC_NUMBER_OF_RANK_FOR_INJECTED_CONVERSION  4
 
+// Callback type in bit position
+#define ADC_CALLBACK_NONE                           0x00
+#define ADC_CALLBACK_CONVERSION_COMPLETED           0x01
+#define ADC_CALLBACK_ERROR                          0x02
+#define ADC_CALLBACK_INJECTED_CONVERSION_COMPLETED  0x04
+// ??? ADC_CALLBACK_CONVERSION_HALF_COMPLETED,
+// ??? ADC_CALLBACK_LEVEL_OUT_OF_WINDOWS
+
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
@@ -298,7 +306,6 @@ struct ADC_Info_t
     // todo CONTINUOUS_DMA_REQ not set or handle
     //uint32_t            NumberOfConversion;   // now this is config by adding channel to convert
     uint8_t             PreempPrio;
-
 /*
 // TODO verify the macro for those!!
     hadc1.Init.ContinuousConvMode    = ENABLE;
@@ -307,8 +314,6 @@ struct ADC_Info_t
     hadc1.Init.DMAContinuousRequests = DISABLE;
     hadc1.Init.EOCSelection          = ADC_EOC_SINGLE_CONV;
 */
-
-
 };
 
 struct ADC_ChannelInfo_t
@@ -318,18 +323,6 @@ struct ADC_ChannelInfo_t
     IO_ID_e             IO_ID;
     ADC_SampleTime_e    SampleTime;
 };
-
-// ADC_CallBack
-enum ADC_CallBackType_e
-{
-    ADC_CALLBACK_CONVERSION_COMPLETED,
-    // ??? ADC_CALLBACK_CONVERSION_HALF_COMPLETED,
-    ADC_CALLBACK_ERROR,
-    // ??? ADC_CALLBACK_LEVEL_OUT_OF_WINDOWS
-    ADC_CALLBACK_INJECTED_CONVERSION_COMPLETED,
-};
-
-typedef void (*ADC_CallBack_t)(void);
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -342,7 +335,8 @@ class ADC_Driver
                         ADC_Driver                      (ADC_ID_e ADC_ID);
 
         void            Initialize                      (void);
-        SystemState_e   RegisterCallBack                (ADC_CallBackType_e CallBackType, ADC_CallBack_t pCallBack);
+        void            RegisterCallBack                (CallbackInterface* pCallback);
+        void            EnableCallbackType              (int CallBackType, void* pContext = nullptr);
 
         // Normal conversion group (Up to 16 Channel)
         SystemState_e   AddChannelToGroup               (ADC_ChannelID_e Channel, uint8_t Rank);        // TODO use config to define channel information!!
@@ -356,17 +350,23 @@ class ADC_Driver
         void            StartInjectedConversion         (void);
         void            ConfigInjectedConversionTrigger (void);
 
-        SystemState_e   GetStatus                   (void);
-        void            TempSensorVrefintControl    (bool NewState);
-        void            VBAT_Control                (bool NewState);
+        SystemState_e   GetStatus                       (void);
+        void            TempSensorVrefintControl        (bool NewState);
+        void            VBAT_Control                    (bool NewState);
 
-        void            IRQHandler                  ();
+        void            IRQHandler                      ();
 
     private:
 
         ADC_Info_t*                     m_pInfo;
         SystemState_e                   m_State;
         bool                            m_IsItInitialize;
+
+        CallbackInterface*              m_pCallback;
+        int                             m_CallBackType;
+        void*                           m_pContextConversionCompleted;
+        void*                           m_pContextConversionInjectionCompleted;
+        void*                           m_pContextERROR;
 
         uint8_t                         m_NumberOfChannel;
         uint8_t                         m_CurrentFreeChannel;

@@ -190,8 +190,7 @@ class CommandLine : public CallbackInterface
         SystemState_e   CLI_HandleCmdPassword       (void);
       #endif
 
-        void            CallbackFunction            (void* pContext, uint32_t Type);
-        void            TX_Completed                (void* pContext);  // Callback from UART driver for TX Completed
+        void            CallbackFunction            (int Type, void* pContext);
         void            RX_Callback                 (uint8_t Data);
 
         void            ProcessParams               (CLI_CmdName_e Command);

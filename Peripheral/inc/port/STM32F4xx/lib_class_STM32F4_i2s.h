@@ -119,6 +119,12 @@ example call for
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+// I2S_CallBack type in bit position
+#define I2S_CALLBACK_NONE               0x00
+#define I2S_CALLBACK_HALF_COMPLETE      0x01
+#define I2S_CALLBACK_COMPLETE           0x02
+#define I2S_CALLBACK_ERROR              0x04
+
 //-------------------------------------------------------------------------------------------------
 // typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -195,37 +201,12 @@ enum I2S_CPOL_Level_e
     I2S_CPOL_HIGH           = 0x0008,
 };
 
-// I2S_CallBack
-enum I2S_CallBackType_e
-{
-    I2S_CALLBACK_HALF_COMPLETE,
-    I2S_CALLBACK_COMPLETE,
-    I2S_CALLBACK_ERROR,
-};
-
-struct I2S_TypeDef
-{
-    uint32_t      RESERVED0;    //                                  Reserved:       0x00
-    __IO uint16_t CR2;          // SPI/I2S control register 2,      Address offset: 0x04
-    uint16_t      RESERVED1;    //                                  Reserved:       0x06
-    __IO uint16_t SR;           // SPI/I2S status register,         Address offset: 0x08
-    uint16_t      RESERVED2;    //                                  Reserved:       0x0A
-    __IO uint16_t DR;           // SPI/I2S data register,           Address offset: 0x0C
-    uint16_t      RESERVED3;    //                                  Reserved:       0x0E
-    uint32_t      RESERVED4;    //                                  Reserved:       0x10
-    uint32_t      RESERVED5;    //                                  Reserved:       0x14
-    uint32_t      RESERVED6;    //                                  Reserved:       0x18
-    __IO uint16_t I2SCFGR;      // SPI_I2S configuration register,  Address offset: 0x1C
-    uint16_t      RESERVED7;    //                                  Reserved:       0x1E
-    __IO uint16_t I2SPR;        // SPI_I2S prescaler register,      Address offset: 0x20
-    uint16_t      RESERVED8;    //                                  Reserved:       0x22
-};
-
 struct I2S_Info_t
 {
     I2S_ID_e            I2S_ID;
     I2S_TypeDef*        pI2Sx;
-    IO_ID_e             MCK;
+    uint32_t            RCC_APB1xPeriph;
+    IO_ID_e             MCLK;
     IO_ID_e             CK;
     IO_ID_e             SD;
     IO_ID_e             WS;
@@ -242,8 +223,6 @@ struct I2S_Info_t
     IRQn_Type           I2S_DMA_IRQn;
 };
 
-typedef void (*I2S_CallBack_t)(void);
-
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
@@ -252,43 +231,46 @@ class I2S_Driver
 {
     public:
 
-                        I2S_Driver              (I2S_ID_e* I2S_ID);
+                        I2S_Driver              (I2S_ID_e I2S_ID);
 
         SystemState_e   GetStatus               (void);
 
         void            Initialize              (void);
-        SystemState_e   RegisterCallBack        (I2S_CallBackType_e CallBackType, I2S_CallBack_t pCallBack);
+        void            RegisterCallback        (CallbackInterface* pCallback);
+        void            EnableCallbackType      (int CallbackType, void* pContext = nullptr);
         SystemState_e   SetFrequency            (I2S_Frequency_e Frequency);
-        void            I2S_TransmitDMA         (uint16_t* pBuffer, uint16_t Size);
-        SystemState_e   TX_CompleteCallback     (void);
-        SystemState_e   TX_HalfCompleteCallback (void);
-        SystemState_e   ErrorCallback           (void);
+        SystemState_e   Transmit                (uint16_t* pBuffer, size_t Size);
+        SystemState_e   Callback                (void);
 
     private:
 
-
         I2S_Info_t*                             m_pInfo;
-        //volatile size_t                       m_Size;
         volatile uint16_t*                      m_pBuffer;
         volatile size_t                         m_Size;
         volatile SystemState_e                  m_Status;
         volatile uint8_t                        m_Timeout;
         static const uint32_t                   m_PLLN[NB_OF_I2S_FREQUENCY];
         static const uint32_t                   m_PLLR[NB_OF_I2S_FREQUENCY];
-        I2S_CallBack_t                          m_pHalfCompleteCallBack;
-        I2S_CallBack_t                          m_pCompleteCallBack;
-        I2S_CallBack_t                          m_pErrorCallBack;
+
+        CallbackInterface*                      m_pCallback;
+        int                                     m_CallBackType;
+        void*                                   m_pContextHalf;
+        void*                                   m_pContext;
+        void*                                   m_pContextERROR;
+
+        size_t                                  m_TX_transfertSize;
+        size_t                                  m_TX_transfertCount;
 };
 
 //-------------------------------------------------------------------------------------------------
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "i2s_var.h"
+#include "i2s_var.h"         // Project variable
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // STM32F4_I2S_GLOBAL
+#endif // (USE_I2S_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 

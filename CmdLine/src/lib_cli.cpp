@@ -162,28 +162,35 @@ SystemState_e CommandLine::HandleCmdPassword(void)
 }
 #endif
 
-
-void CommandLine::CallbackFunction(void* pContext, uint32_t Type)
-{
-
-}
-
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           TX_Completed
+//  Name:           CallbackFunction
 //
-//  Parameter(s):   void*   pContext
+//  Parameter(s):   void
 //
 //  Return:         None
 //
-//  Description:    Callback to inform CLI when TX from uart is completed.
-//
-//  Note(s):
+//  Description:    Check if password is valid parsing the FIFO
 //
 //-------------------------------------------------------------------------------------------------
-void CommandLine::TX_Completed(void* pContext)
+void CommandLine::CallbackFunction(int Type, void* pContext)
 {
-    pMemory->Free((void**)&pContext);
+    switch(Type)
+    {
+        // TX from uart is completed then release memory.
+        case UART_CALLBACK_COMPLETED_TX:
+        {
+            pMemory->Free((void**)&pContext);
+        }
+        break;
+
+        // RX data from uart then call RX_Callback.
+        case UART_CALLBACK_RX:
+        {
+            RX_Callback(*((uint8_t*)pContext));
+        }
+        break;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -437,8 +444,8 @@ void CommandLine::Initialize(UART_Driver* pUartDriver)
 
     m_pTxFifo = new FIFO_Buffer(CLI_FIFO_PARSER_RX_SIZE);
     pUartDriver->RegisterCallback((CallbackInterface*)this);
-    pUartDriver->EnableCallbackType(UART_CB_EMPTY_TX);
-    pUartDriver->EnableCallbackType(UART_CB_COMPLETED_TX);
+    pUartDriver->EnableCallbackType(UART_CALLBACK_EMPTY_TX);
+    pUartDriver->EnableCallbackType(UART_CALLBACK_COMPLETED_TX);
     Printf(CLI_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
     Delay = GetTick();
     while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);

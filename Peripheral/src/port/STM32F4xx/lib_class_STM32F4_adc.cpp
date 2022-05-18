@@ -111,6 +111,8 @@ ADC_Driver::ADC_Driver(ADC_ID_e ADC_ID)
     m_NumberOfChannel          = 0;
     m_NumberOfInjectedChannel  = 0;
     m_CurrentFreeChannel       = 0;
+    m_pCallback                = nullptr;
+    m_CallBackType             = ADC_CALLBACK_NONE;
 
     m_pInfo = (ADC_Info_t*)&m_ConstInfo[ADC_ID];
     m_State = SYS_DEVICE_NOT_PRESENT;
@@ -190,6 +192,67 @@ void ADC_Driver::Initialize(void)
 //  To be set by ConfigConversionTrigger ConfigInjectedConversionTrigger
 //ADC_REG_TRIG_EXT_EDGE_NONE
 //ADC_REG_TRIG_EXT_NONE
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           RegisterCallback
+//
+//  Parameter(s):   pCallback       Callback pointer
+//                  None
+//
+//  Description:    Register callback for user code in ISR
+//
+//-------------------------------------------------------------------------------------------------
+void ADC_Driver::RegisterCallBack(CallbackInterface* pCallback)
+{
+    m_pCallback = pCallback;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           EnableCallbackType
+//
+//  Parameter(s):   CallBackType    Type if the ISR callback
+//                  pContext        Context for ISR
+//  Return:         None
+//
+//  Description:    Enable the type of interrupt for the callback.
+//
+//-------------------------------------------------------------------------------------------------
+void ADC_Driver::EnableCallbackType(int CallBackType, void* pContext)
+{
+    switch(CallBackType)
+    {
+      //#if (??? == DEF_ENABLED)
+        case ADC_CALLBACK_CONVERSION_COMPLETED:
+        {
+            m_pContextConversionCompleted = pContext;
+            m_CallBackType |= CallBackType;
+        }
+        break;
+      //#endif
+
+      //#if (??? == DEF_ENABLED)
+        case ADC_CALLBACK_INJECTED_CONVERSION_COMPLETED:
+        {
+            m_pContextConversionInjectionCompleted = pContext;
+            m_CallBackType |= CallBackType;
+        }
+        break;
+      //#endif
+
+      //#if (??? == DEF_ENABLED)
+        case ADC_CALLBACK_ERROR:
+        {
+            m_pContextERROR = pContext;
+            m_CallBackType |= CallBackType;
+        }
+        break;
+      //#endif
+
+    }
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -382,6 +445,10 @@ void ADC_Driver::VBAT_Control(bool NewState)
 //-------------------------------------------------------------------------------------------------
 void ADC_Driver::IRQHandler()
 {
+    // TODO check flag and call the right function
+    m_pCallback->CallbackFunction(ADC_CALLBACK_CONVERSION_COMPLETED,          m_pContextConversionCompleted);
+    m_pCallback->CallbackFunction(ADC_CALLBACK_INJECTED_CONVERSION_COMPLETED, m_pContextConversionInjectionCompleted);
+    m_pCallback->CallbackFunction(ADC_CALLBACK_ERROR,                         m_pContextERROR);
 }
 
 //-------------------------------------------------------------------------------------------------

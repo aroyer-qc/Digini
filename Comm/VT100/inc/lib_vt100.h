@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : vt100.h
+//  File : lib_vt100.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2021 Alain Royer.
+// Copyright(c) 2022 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -30,24 +30,20 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <time.h>
-#include "label.h"
-#include "console_cfg.h"
-#include "lib_macro.h"
-#include "fifo.h"
+#include "lib_digini.h"
+#include "vt100_cfg.h"
+#include "lib_vt100_expanding_macro.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+
+#if (USE_UART_DRIVER != DEF_ENABLED)
+  #error USE_UART_DRIVER must be define DEF_ENABLED
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
-//-------------------------------------------------------------------------------------------------
-
-//#ifdef CONSOLE_GLOBAL
-//    #define CONSOLE_EXTERN
-//#else
-//    #define CONSOLE_EXTERN extern
-//#endif
-
 //-------------------------------------------------------------------------------------------------
 
 #define CON_OFFSET_COLOR_FOREGROUND     30
@@ -67,10 +63,10 @@
 #endif
 
 // Console Generic Label
-#define VT100_LBL_CLEAR_SCREEN            "\e[2J\e[H"
-#define VT100_LBL_RESET_TERMINAL          "\ec\r\n"
-#define VT100_LBL_HIDE_CURSOR             "\e[?25l"
-#define VT100_LBL_SHOW_CURSOR             "\e[?25h"
+#define VT100_LBL_CLEAR_SCREEN            "\033[2J\033[H"
+#define VT100_LBL_RESET_TERMINAL          "\033c\r\n"
+#define VT100_LBL_HIDE_CURSOR             "\033[?25l"
+#define VT100_LBL_SHOW_CURSOR             "\033[?25h"
 #define VT100_LBL_LINE_SEPARATOR          "----------------------------------------------------------------------------------------------------\r\n"
 #define VT100_LBL_SELECT                  "\r\n Please Select:\r\n\r\n"
 #define VT100_LBL_QUIT                    "Quit\r\n"
@@ -80,19 +76,19 @@
 #define VT100_LBL_SAVE_CONFIGURATION      "Save the Configuration\r\n"
 #define VT100_LBL_MINIMUM                 "Minimum"
 #define VT100_LBL_MAXIMUM                 "Maximum"
-#define VT100_LBL_ATTRIBUTE               "\e[%dm"
-#define VT100_LBL_SAVE_CURSOR             "\e[s"
-#define VT100_LBL_RESTORE_CURSOR          "\e[u"
-#define VT100_LBL_SAVE_ATTRIBUTE          "\e7"
-#define VT100_LBL_RESTORE_ATTRIBUTE       "\e8"
-#define VT100_LBL_SET_CURSOR              "\e[%d;%df"
-#define VT100_LBL_CURSOR_TO_SELECT        "\e[%d;28f    \e[4D"
-#define VT100_LBL_START_PRINTING          "\e[5i"
-#define VT100_LBL_STOP_PRINTING           "\e[4i"
+#define VT100_LBL_ATTRIBUTE               "\033[%dm"
+#define VT100_LBL_SAVE_CURSOR             "\033[s"
+#define VT100_LBL_RESTORE_CURSOR          "\033[u"
+#define VT100_LBL_SAVE_ATTRIBUTE          "\0337"
+#define VT100_LBL_RESTORE_ATTRIBUTE       "\0338"
+#define VT100_LBL_SET_CURSOR              "\033[%d;%df"
+#define VT100_LBL_CURSOR_TO_SELECT        "\033[%d;28f    \e[4D"
+#define VT100_LBL_START_PRINTING          "\033[5i"
+#define VT100_LBL_STOP_PRINTING           "\033[4i"
 #define VT100_LBL_TIME_DATE_STAMP         "%04u-%02u-%02u %2u:%02u:%02u: "
-#define VT100_LBL_SCROLL_ZONE             "\e[%d;%dr"
-#define VT100_LBL_SCROLL_UP               "\eM"
-#define VT100_LBL_EOL_ERASE               "\e[K"
+#define VT100_LBL_SCROLL_ZONE             "\033[%d;%dr"
+#define VT100_LBL_SCROLL_UP               "\033M"
+#define VT100_LBL_EOL_ERASE               "\033[K"
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -164,9 +160,15 @@ enum VT100_CallBackType_e
 
 struct VT100_MenuDef_t
 {
-    LABEL_Name_e      Label;
+    // LABEL_Name_e      Label;   todo merge with label from digini
     VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e);
     VT100_Menu_e      NextMenu;
+};
+
+struct VT100_MenuObject_t
+{
+    const VT100_MenuDef_t*    pMenu;
+    size_t                    pMenuSize;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -177,58 +179,128 @@ class VT100_Terminal
 {
     public:
 
-        void            DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
-        void            DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
-        void            GoToMenu                    (VT100_Menu_e MenuID);
-        size_t          InMenuPrintf                (int nSize, const char* pFormat, ...);
-        void            RestoreAttribute            (void);
-        void            RestoreCursorPosition       (void);
-        void            SaveAttribute               (void);
-        void            SaveCursorPosition          (void);
-        void            SetAttribute                (CON_VT100_Attribute_e Attribute);
+                            VT100_Terminal              ();
+
+        void                Initialize                  (const char* pHeadLabel, const char* pDescription);
+
+        void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
+        void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
+        void                GoToMenu                    (VT100_Menu_e MenuID);
+        size_t              InMenuPrintf                (int nSize, const char* pFormat, ...);
+        void                RestoreAttribute            (void);
+        void                RestoreCursorPosition       (void);
+        void                SaveAttribute               (void);
+        void                SaveCursorPosition          (void);
+        void                SetAttribute                (VT100_Attribute_e Attribute);
 
       #ifdef CONSOLE_USE_COLOR
-        void            SetColor                    (VT100_Color_e ForeColor, VT100_Color_e BackColor);
-        void            PrintSaveLabel              (uint8_t PosX, uint8_t PosY, VT100_Color_e Color);
-        void            Bargraph                    (uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size);
+        void                SetColor                    (VT100_Color_e ForeColor, VT100_Color_e BackColor);
+        void                PrintSaveLabel              (uint8_t PosX, uint8_t PosY, VT100_Color_e Color);
+        void                Bargraph                    (uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size);
       #else
-        void            InvertMono                  (bool Invert);
-        void            PrintSaveLabel              (uint8_t PosX, uint8_t PosY);
-        void            Bargraph                    (uint8_t PosX, uint8_t PosY, uint8_t Value, uint8_t Max, uint8_t Size);
+        void                InvertMono                  (bool Invert);
+        void                PrintSaveLabel              (uint8_t PosX, uint8_t PosY);
+        void                Bargraph                    (uint8_t PosX, uint8_t PosY, uint8_t Value, uint8_t Max, uint8_t Size);
       #endif
 
-        void            SetCursorPosition           (uint8_t PosX, uint8_t PosY);
-        void            SetScrollZone               (uint8_t FirstLine, uint8_t LastLine);
+        void                SetCursorPosition           (uint8_t PosX, uint8_t PosY);
+        void                SetScrollZone               (uint8_t FirstLine, uint8_t LastLine);
 
         // Use by user callback to request a decimal input
-        void            GetDecimalInputValue        (uint32_t* pValue, uint8_t* pID);
-        void            GetStringInput              (char* pString, uint8_t* pID);
-        void            SetDecimalInput             (uint8_t PosX, uint8_t PosY, int32_t Minimum, int32_t Maximum, int32_t Value, uint16_t Divider, uint8_t ID, const char* pMsg);
-        void            SetStringInput              (uint8_t PosX, uint8_t PosY, int32_t Maximum, uint8_t ID, const char* pMsg, const char* pString);
+        void                GetDecimalInputValue        (uint32_t* pValue, uint8_t* pID);
+        void                GetStringInput              (char* pString, uint8_t* pID);
+        void                SetDecimalInput             (uint8_t PosX, uint8_t PosY, int32_t Minimum, int32_t Maximum, int32_t Value, uint16_t Divider, uint8_t ID, const char* pMsg);
+        void                SetStringInput              (uint8_t PosX, uint8_t PosY, int32_t Maximum, uint8_t ID, const char* pMsg, const char* pString);
 
 //        void            CON_SetConsoleMuteLogs      (bool Mute);
-        void            ForceMenuRefresh            (void);
+        void                ForceMenuRefresh            (void);
 
       #ifdef VT100_USE_COLOR
-        inline void     SetForeColor                (VT100_Color_e Color)		{ SetAttribute((CON_VT100_Attribute_e)Color + CON_OFFSET_COLOR_FOREGROUND); }
-        inline void     SetBackColor                (VT100_Color_e Color)       { SetAttribute((CON_VT100_Attribute_e)Color + CON_OFFSET_COLOR_BACKGROUND); }
+        inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute((CON_VT100_Attribute_e)Color + CON_OFFSET_COLOR_FOREGROUND); }
+        inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute((CON_VT100_Attribute_e)Color + CON_OFFSET_COLOR_BACKGROUND); }
       #endif
 
     private:
 
+        uint8_t             DisplayMenu                 (VT100_Menu_e MenuID);
+        void                MenuSelectItems             (char ItemsChar);
+        VT100_InputType_e   CallBack                    (VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e), VT100_CallBackType_e Type, uint8_t Item);
+        void                EscapeCallback              (nOS_Timer* pTimer, void* pArg);
+        void                InputString                 (void);
+        void                InputDecimal                (void);
+        void                ClearConfigFLag             (void);
+        void                ClearGenericString          (void);
+
+// CLI Specific
+//static void             CLI_AT_Parser           (void);
+//static void             CLI_ParseFIFO           (uint8_t Data);
+
+
+
+
         VT100_CALLBACK_DEF(EXPAND_VT100_CMD_AS_FUNCTION)   // Generation of all prototype
 
-        bool            m_IsItInStartup;
-        bool            m_BackFromEdition;
+        bool                                m_IsItInStartup;
+        bool                                m_BackFromEdition;
+
+
+        bool                                m_RefreshMenu;
+
+        VT100_Menu_e                        m_MenuID;
+        VT100_Menu_e                        m_FlushMenuID;
+        VT100_InputType_e                   m_InputType;
+        uint64_t                            m_Input;
+        uint64_t                            m_InputCount;
+        bool                                m_ValidateInput;
+        uint8_t                             m_ItemsQts;
+        bool                                m_BypassPrintf;
+        bool                                m_LogsAreMuted;
+        nOS_Timer                           m_EscapeTimer;
+        // bool                             CON_IsDisplayLock;
+        bool                                m_FlushNextEntry;
+        char*                               m_pHeadLabel;
+        char*                               m_pDescription;
+        bool                                m_ForceRefresh;
+
+        // Input string or decimal service
+        int32_t                             m_Minimum;
+        int32_t                             m_Maximum;
+        uint8_t                             m_PosX;
+        uint8_t                             m_PosY;
+        int16_t                             m_ID;
+        int32_t                             m_Value;
+        int32_t                             m_RefreshValue;
+        int32_t                             m_OldValue;
+        uint16_t                            m_Divider;
+        bool                                m_InputDecimalMode;
+        volatile bool                       m_InEscapeSequence;
+        int32_t                             m_InputPtr;
+        int32_t                             m_RefreshInputPtr;
+        char                                m_String[CON_STRING_SZ + 1];
+        bool                                m_InputStringMode;
+        bool                                m_IsItString;
+
+        static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
+
+
+        #define VT100_HEADER_CLASS_CONSTANT
+        #include "vt100_var.h"         // Project variable
+        #undef  VT100_HEADER_CLASS_CONSTANT
+
         //char                      m_BufferParserRX[CLI_FIFO_PARSER_RX_SZ];
         //Fifo_t                    m_FIFO_ParserRX;
         //CLI_ParserInfo_t            m_AT_ParserInfo;
         //uint32_t         CLI_NewConfigFlag[CONFIG_FLAG_SIZE];
         //char                  CLI_GenericString[CLI_STRING_QTS][CLI_ITEMS_QTS][CLI_STRING_SZ];
+};
 
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
 
-}
+#include "vt100_var.h"         // Project variable
 
 //-------------------------------------------------------------------------------------------------
 
+#endif // (DIGINI_USE_CMD_LINE == DEF_ENABLED)
 

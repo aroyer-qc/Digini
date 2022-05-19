@@ -30,6 +30,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+#define EXPAND_VT100_MENU_AS_ENUM(NAME, STRUCT)         NAME,
 #define EXPAND_VT100_CMD_AS_FUNCTION(FUNCTION)          VT100_InputType_e FUNCTION(uint8_t Input, VT100_CallBackType_e Type);
+
+#define EXPAND_VT100_MENU_AS_MENU_DATA()
 
 //-------------------------------------------------------------------------------------------------

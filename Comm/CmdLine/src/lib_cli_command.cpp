@@ -35,6 +35,14 @@
 #include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
+    
+#if (USE_UART_DRIVER != DEF_ENABLED)
+  #error USE_UART_DRIVER must be define DEF_ENABLED
+#endif
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Name:           CmdHOLD
 //
@@ -182,7 +190,7 @@ SystemState_e CommandLine::CmdSTATUS(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (CLI_USE_VT100_MENU == DEF_ENABLED)
+#if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
 SystemState_e CommandLine::CmdMENU(void)
 {
     SystemState_e Error;
@@ -440,3 +448,4 @@ SystemState_e CommandLine::CmdDBG_LEVEL(void)
 
 //-------------------------------------------------------------------------------------------------
 
+#endif // (DIGINI_USE_CMD_LINE == DEF_ENABLED)

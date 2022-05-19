@@ -1,10 +1,10 @@
 ///-------------------------------------------------------------------------------------------------
 //
-//  File : con_callback.h
+//  File : lib_vt100_callback.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2021 Alain Royer.
+// Copyright(c) 2022 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -90,15 +90,11 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define VT100_CALLBACK_GLOBAL
-#include "vt100_callback.h"
-#undef  VT100_CALLBACK_GLOBAL
-#include "console.h"
-#include "product_defs.h"
-//#include "rtc.h"
-#include "lib_macro.h"
-#include "strfct.h"
-#include "io.h"
+#include "lib_digini.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -208,9 +204,9 @@ void VT100_CallbackInitialize(void)
   *
   *--------------------------------------------------------------------------------------------------------------------
   */
-  
-  
-VT100_InputType_e VT100_Terminal::MenuSelection(uint8_t Input, VT100_CallBackType_e Type)
+
+
+VT100_InputType_e VT100_Terminal::CALL_MenuSelection(uint8_t Input, VT100_CallBackType_e Type)
 {
     VAR_UNUSED(Input);
 
@@ -236,7 +232,7 @@ VT100_InputType_e VT100_Terminal::MenuSelection(uint8_t Input, VT100_CallBackTyp
   *
   *--------------------------------------------------------------------------------------------------------------------
   */
-VT100_InputType_e VT100_Terminal::ProductInformation(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALL_ProductInformation(uint8_t Input, VT100_CallBackType_e Type)
 {
     nOS_Time        UpTime;
     nOS_TimeDate    TimeDate;
@@ -327,7 +323,7 @@ VT100_InputType_e VT100_Terminal::ProductInformation(uint8_t Input, VT100_CallBa
   *
   *--------------------------------------------------------------------------------------------------------------------
   */
-VT100_InputType_e VT100_Terminal::DebugLevelSetting(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALL_DebugLevelSetting(uint8_t Input, VT100_CallBackType_e Type)
 {
     static uint8_t DebugLevel = 0;
 
@@ -389,7 +385,7 @@ VT100_InputType_e VT100_Terminal::DebugLevelSetting(uint8_t Input, VT100_CallBac
   *
   *--------------------------------------------------------------------------------------------------------------------
   */
-VT100_InputType_e VT100_Terminal::LedControl(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALL_LedControl(uint8_t Input, VT100_CallBackType_e Type)
 {
     uint8_t Led;
 
@@ -465,7 +461,7 @@ VT100_InputType_e VT100_Terminal::LedControl(uint8_t Input, VT100_CallBackType_e
   *
   *--------------------------------------------------------------------------------------------------------------------
   */
-VT100_InputType_e VT100_Terminal::InputReading(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALL_InputReading(uint8_t Input, VT100_CallBackType_e Type)
 {
     int32_t                 Temperature;
     uint8_t                 VerticalOffset;
@@ -563,7 +559,7 @@ VT100_InputType_e VT100_Terminal::InputReading(uint8_t Input, VT100_CallBackType
   *
   *--------------------------------------------------------------------------------------------------------------------
   */
-VT100_InputType_e VT100_Terminal::BlueTooth(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALL_BlueTooth(uint8_t Input, VT100_CallBackType_e Type)
 {
     nOS_TimeDate TimeDate;
 
@@ -627,7 +623,7 @@ VT100_InputType_e VT100_Terminal::BlueTooth(uint8_t Input, VT100_CallBackType_e 
   *
   *--------------------------------------------------------------------------------------------------------------------
   */
-VT100_InputType_e VT100_Terminal::getRSSI(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALL_GetRSSI(uint8_t Input, VT100_CallBackType_e Type)
 {
     int8_t RSSI;
     uint8_t graphRSSI;
@@ -659,7 +655,7 @@ VT100_InputType_e VT100_Terminal::getRSSI(uint8_t Input, VT100_CallBackType_e Ty
   *
   *--------------------------------------------------------------------------------------------------------------------
   */
-VT100_InputType_e VT100_Terminal::MiscCfg(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALL_MiscCfg(uint8_t Input, VT100_CallBackType_e Type)
 {
     static int16_t  TemperatureAlarmLow;
     static int16_t  TemperatureAlarmHigh;
@@ -811,9 +807,9 @@ VT100_InputType_e VT100_Terminal::MiscCfg(uint8_t Input, VT100_CallBackType_e Ty
         }
     }
 
-    ///--------------------------------------------------------------------------------------------
-    /// Refresh all information on the page according to flag
-    ///--------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------
+    // Refresh all information on the page according to flag
+    //--------------------------------------------------------------------------------------------
 
     if(Type == VT100_CALLBACK_INIT)
     {
@@ -890,8 +886,8 @@ VT100_InputType_e VT100_Terminal::MiscCfg(uint8_t Input, VT100_CallBackType_e Ty
         VT100_BackFromEdition = false;
     }
 
-    ///--------------------------------------------------------------------------------------------
-    /// Refresh part of display
+    //--------------------------------------------------------------------------------------------
+    // Refresh part of display
 
 
     if(Refresh != 0)
@@ -965,7 +961,7 @@ VT100_InputType_e VT100_Terminal::MiscCfg(uint8_t Input, VT100_CallBackType_e Ty
   *
   *--------------------------------------------------------------------------------------------------------------------
   */
-VT100_InputType_e VT100_Terminal::TimeDateCfg(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALL_TimeDateCfg(uint8_t Input, VT100_CallBackType_e Type)
 {
     static nOS_TimeDate TimeDate;
     uint32_t            Refresh;
@@ -1042,9 +1038,9 @@ VT100_InputType_e VT100_Terminal::TimeDateCfg(uint8_t Input, VT100_CallBackType_
         }
     }
 
-    ///--------------------------------------------------------------------------------------------
-    /// Refresh all information on the page according to flag
-    ///--------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------
+    // Refresh all information on the page according to flag
+    //--------------------------------------------------------------------------------------------
 
     if(Type == VT100_CALLBACK_INIT)
     {
@@ -1090,8 +1086,8 @@ VT100_InputType_e VT100_Terminal::TimeDateCfg(uint8_t Input, VT100_CallBackType_
 
     if(Refresh & VT100_CFG_REFRESH_INFO)
     {
-        /// ***********************************************
-        /// Refresh label on the menu for what is available
+        // ***********************************************
+        // Refresh label on the menu for what is available
 
       #ifdef CONSOLE_USE_COLOR
         VT100_PrintSaveLabel(9, 16, (VT100_NewConfigFlag[0] == 1) ? VT100_COLOR_YELLOW : VT100_COLOR_BLUE);
@@ -1099,8 +1095,8 @@ VT100_InputType_e VT100_Terminal::TimeDateCfg(uint8_t Input, VT100_CallBackType_
         VT100_PrintSaveLabel(9, 16);
       #endif
 
-        /// ********************************************
-        /// Refresh information display on configuration
+        // ********************************************
+        // Refresh information display on configuration
 
         VT100_SetForeColor(VT100_COLOR_CYAN);
         VT100_SetCursorPosition(26, 24);
@@ -1112,7 +1108,8 @@ VT100_InputType_e VT100_Terminal::TimeDateCfg(uint8_t Input, VT100_CallBackType_
     return VT100_INPUT_MENU_CHOICE;
 }
 
-/* ------------------------------------------------------------------------------------------------------------------*/
+//-------------------------------------------------------------------------------------------------
 
+#endif // (DIGINI_USE_VT100_MENU == DEF_ENABLED)
 
 

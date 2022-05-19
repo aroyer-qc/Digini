@@ -137,9 +137,15 @@
 // Digini included functionality
 //
 
-//#ifdef DIGINI_USE_CMD_LINE
+//#if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
 #include "lib_cli.h"
+
 //#endif
+
+#if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+#include "lib_vt100.h"
+#endif
+
 
 //-------------------------------------------------------------------------------------------------
 // High level Peripheral

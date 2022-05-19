@@ -34,16 +34,17 @@
 #include "cli_cfg.h"
 #include "lib_cli_expanding_macro.h"
 
-//-------------------------------------------------------------------------------------------------
-// Define(s)
+
 //-------------------------------------------------------------------------------------------------
 
-#ifdef CLI_GLOBAL
-  #define CLI_EXTERN
-#else
-  #define CLI_EXTERN            extern
+#if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
+
+#if (USE_UART_DRIVER != DEF_ENABLED)
+  #error USE_UART_DRIVER must be define DEF_ENABLED
 #endif
 
+//-------------------------------------------------------------------------------------------------
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
 #define CLI_FIFO_PARSER_RX_SIZE         64
@@ -55,7 +56,7 @@
 
 enum CLI_CmdName_e
 {
-  #if (CLI_USE_VT100_MENU == DEF_ENABLED)
+  #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
     AT_MENU,
   #endif
 
@@ -149,7 +150,7 @@ enum CLI_Step_e
 
 enum CLI_StrCmdSize_e
 {
-    #if (CLI_USE_VT100_MENU == DEF_ENABLED)
+    #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
       SZ_OF_AT_MENU = sizeof("MENU") - 1,
     #endif
 
@@ -182,7 +183,7 @@ class CommandLine : public CallbackInterface
         size_t          PrintSerialLog              (CLI_DebugLevel_e Level, const char* pFormat, ...);
         void            SetSerialLogging            (bool Mute);
 
-      #if (CLI_USE_VT100_MENU == DEF_ENABLED)
+      #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
         SystemState_e   CmdMENU                     (void);
       #endif
 
@@ -228,7 +229,7 @@ class CommandLine : public CallbackInterface
         static const char*                      m_pCmdStr[NUMBER_OF_CLI_CMD];
         static const int                        m_CmdStrSize[NUMBER_OF_CLI_CMD];
 
-      #if (CLI_USE_VT100_MENU == DEF_ENABLED)
+      #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
         static const char                       m_StrAT_MENU[SZ_OF_AT_MENU];
       #endif
 
@@ -240,7 +241,11 @@ class CommandLine : public CallbackInterface
 };
 
 //-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
 
-CLI_EXTERN CommandLine CmdLine;
+#include "cli_var.h"         // Project variable
 
 //-------------------------------------------------------------------------------------------------
+
+#endif // (DIGINI_USE_CMD_LINE == DEF_ENABLED)

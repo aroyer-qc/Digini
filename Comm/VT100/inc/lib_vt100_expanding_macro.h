@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F4_pwm.h
+//  File : lib_vt100_expand_macro.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2021 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,50 +27,9 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-
-#if (USE_PWM_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-// typedef Typedef(s)
+// Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-struct PWM_Info_t
-{
-    IO_ID_e         PinID;
-    TIM_ID_e        TimID;
-    TIM_Channel_e   Channel;
-    uint16_t        InitialDuty;
-};
+#define EXPAND_VT100_CMD_AS_FUNCTION(FUNCTION)          VT100_InputType_e FUNCTION(uint8_t Input, VT100_CallBackType_e Type);
 
 //-------------------------------------------------------------------------------------------------
-// class definition(s)
-//-------------------------------------------------------------------------------------------------
-
-class PWM_Driver
-{
-    public:
-
-                                        PWM_Driver              (PWM_ChannelID_e PWM_ID);
-
-        void                            Initialize              (void);
-        void                            SetDuty                 (uint16_t Duty);
-        void                            Start                   (void);
-        void                            Stop                    (void);
-
-    private:
-
-        const PWM_Info_t*               m_pInfo;
-        TIM_TypeDef*                    m_pTimer;
-        IO_ID_e                         m_IO_Pin;
-        uint16_t                        m_Duty;
-};
-
-//-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "pwm_var.h"         // Project variable
-
-//-------------------------------------------------------------------------------------------------
-
-#endif // (USE_PWM_DRIVER == DEF_ENABLED)

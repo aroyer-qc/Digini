@@ -169,6 +169,43 @@ SystemState_e CommandLine::CmdSTATUS(void)
     return Error;
 }
 
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CmdMENU
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e
+//
+//  Description:    Access the VT100 Menu
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+#if (CLI_USE_VT100_MENU == DEF_ENABLED)
+SystemState_e CommandLine::CmdMENU(void)
+{
+    SystemState_e Error;
+    char          Response[20];
+    int           Status;
+
+    if(m_PlainCommand == true)
+    {
+        if(m_ReadCommand != true)
+        {
+            GiveControlToChildProcess(nullptr);
+        }
+    }
+    else
+    {
+        Error = SYS_INVALID_PARAMETER;       // No parameter on this command
+    }
+
+    return Error;
+}
+#endif
+
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           CmdTEST1

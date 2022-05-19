@@ -215,7 +215,7 @@ class QSPI_Driver
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_QSPI_DRIVER == DEF_ENABLED
+#endif // (USE_QSPI_DRIVER == DEF_ENABLED)
 
 
 

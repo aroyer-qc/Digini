@@ -55,6 +55,10 @@
 
 enum CLI_CmdName_e
 {
+  #if (CLI_USE_VT100_MENU == DEF_ENABLED)
+    AT_MENU,
+  #endif
+
 	X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_ENUM)
     NUMBER_OF_CLI_CMD,
     CLI_NO_CMD,
@@ -145,15 +149,15 @@ enum CLI_Step_e
 
 enum CLI_StrCmdSize_e
 {
-    #if CLI_USE_VT100_MENU == DEF_ENABLED
-      SIZE_OF_AT_MENU = sizeof("MENU") - 1,
+    #if (CLI_USE_VT100_MENU == DEF_ENABLED)
+      SZ_OF_AT_MENU = sizeof("MENU") - 1,
     #endif
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_SIZE_OF)                // Create the sizeof() for each string
 
 };
 
-typedef void            (*CLI_ChildProcess_t)(uint8_t Data);
+typedef void (*CLI_ChildProcess_t)(uint8_t Data);
 
 //-------------------------------------------------------------------------------------------------
 // Function(s) Prototype(s)
@@ -161,7 +165,6 @@ typedef void            (*CLI_ChildProcess_t)(uint8_t Data);
 
 class CommandLine : public CallbackInterface
 {
-
     public:
 
         void            Initialize                  (UART_Driver* pUartDriver);
@@ -179,10 +182,14 @@ class CommandLine : public CallbackInterface
         size_t          PrintSerialLog              (CLI_DebugLevel_e Level, const char* pFormat, ...);
         void            SetSerialLogging            (bool Mute);
 
-    // ----------------------------------------------------------------------------------------------------------------------------
+      #if (CLI_USE_VT100_MENU == DEF_ENABLED)
+        SystemState_e   CmdMENU                     (void);
+      #endif
+
+    // --------------------------------------------------------------------------------------------
     // Expansion of all user CLI function
 
-        X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION)               // Generation of all prototype
+        X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION)   // Generation of all prototype
 
     private:
 
@@ -192,10 +199,9 @@ class CommandLine : public CallbackInterface
 
         void            CallbackFunction            (int Type, void* pContext);
         void            RX_Callback                 (uint8_t Data);
-
         void            ProcessParams               (CLI_CmdName_e Command);
 
-    // ----------------------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------------------
 
         UART_Driver*                            m_pUartDriver;
         CLI_InputState_e                        m_InputState;
@@ -223,7 +229,7 @@ class CommandLine : public CallbackInterface
         static const int                        m_CmdStrSize[NUMBER_OF_CLI_CMD];
 
       #if (CLI_USE_VT100_MENU == DEF_ENABLED)
-        static const char                       m_StrAT_MENU[SIZE_OF_AT_MENU];
+        static const char                       m_StrAT_MENU[SZ_OF_AT_MENU];
       #endif
 
         X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CLASS_CONST_STRING)           // Generation of all the string

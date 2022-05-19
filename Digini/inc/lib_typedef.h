@@ -175,6 +175,8 @@ enum SystemState_e
     SYS_OK_READ,
     SYS_OK_SILENT,
     SYS_OK_DENIED,
+    SYS_TAG_FORMAT_INVALID,
+    SYS_TAG_ERROR,
 };
 
 enum ChipSelect_e

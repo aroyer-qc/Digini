@@ -65,22 +65,25 @@ typedef SystemState_e (CommandLine::*const CLI_Function_t)(void);
 
 const CLI_Function_t CLI_Function[NUMBER_OF_CLI_CMD] =
 {
-  #if CLI_USE_VT100_MENU == DEF_ENABLED
-    CmdMENU,
+  #if (CLI_USE_VT100_MENU == DEF_ENABLED)
+    &CommandLine::CmdMENU,
   #endif
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION_POINTER)   // Generation of the function pointer array
- };
-
+};
 
 const char*              CommandLine::m_ErrorLabel                       = "ERROR, %s";
 const CLI_CmdInputInfo_t CommandLine::m_CmdInputInfo[NUMBER_OF_CLI_CMD]  =
 {
+  #if (CLI_USE_VT100_MENU == DEF_ENABLED)
+    {CLI_CMD_R, 0, {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}} },
+  #endif
+
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_INPUT_INFO)
 };
 
-#if CLI_USE_VT100_MENU == DEF_ENABLED
-  const char CommandLine::m_StrAT_MENU[SIZE_OF_AT_MENU] = "MENU";
+#if (CLI_USE_VT100_MENU == DEF_ENABLED)
+  const char CommandLine::m_StrAT_MENU[SZ_OF_AT_MENU] = "MENU";
 #endif
 
 X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CONST_STRING)           // Generation of all the string
@@ -88,8 +91,8 @@ X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CONST_STRING)           // Generation of all the
 
 const char* CommandLine::m_pCmdStr[NUMBER_OF_CLI_CMD] =
 {
-  #if CLI_USE_VT100_MENU == DEF_ENABLED
-    &StrAT_MENU[0],
+  #if (CLI_USE_VT100_MENU == DEF_ENABLED)
+    &m_StrAT_MENU[0],
   #endif
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CMD_STRING)
@@ -97,7 +100,7 @@ const char* CommandLine::m_pCmdStr[NUMBER_OF_CLI_CMD] =
 
 const int CommandLine::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
 {
-  #if CLI_USE_VT100_MENU == DEF_ENABLED
+  #if (CLI_USE_VT100_MENU == DEF_ENABLED)
     sizeof("MENU") - 1,
   #endif
 

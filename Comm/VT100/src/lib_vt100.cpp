@@ -85,7 +85,7 @@ const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::Initialize(const char* pHeadLabel, const char* pDescription)
 {
-    m_pMenu = nullptr;
+    TickCount_t Delay;
 
     m_ForceRefresh = false;
     // Should read futur configuration for muting
@@ -118,9 +118,8 @@ void VT100_Terminal::Initialize(const char* pHeadLabel, const char* pDescription
 
     nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, nullptr, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
 
-    nOS_ThreadCreate(&m_ThreadHandle, m_Task, nullptr, m_Stack, CON_STACK_SIZE, CON_TASK_PRIO);
+    nOS_ThreadCreate(&m_ThreadHandle, m_Task, nullptr, m_Stack, VT100_STACK_SIZE, VT10_TASK_PRIO);
     CallbackInitialize();
-//    CLI_Initialize();
 
     FIFO_Init(&m_FIFO_ParserRX, &m_BufferParserRX[0], CON_FIFO_PARSER_RX_SZ);
     ClearConfigFLag();
@@ -406,7 +405,7 @@ VT100_InputType_e VT100_Terminal::CallBack(VT100_InputType_e (*CallBack)(uint8_t
 {
     VT100_InputType_e InputType;
 
-    InputType = CON_INPUT_MENU_CHOICE;
+    InputType = VT100_INPUT_MENU_CHOICE;
 
     if(Callback != nullptr)
     {
@@ -465,6 +464,7 @@ void VT100_Terminal::InputDecimal(void)
     {
         m_RefreshValue = m_Value;
 
+      #ifdef CONSOLE_USE_COLOR
         if((m_Value >= m_Minimum) && (m_Value <= m_Maximum))
         {
             SetColor(VT100_COLOR_BLACK, VT100_COLOR_GREEN);
@@ -473,6 +473,7 @@ void VT100_Terminal::InputDecimal(void)
         {
             SetColor(VT100_COLOR_BLACK, VT100_COLOR_RED);
         }
+      #endif
 
         SetCursorPosition(m_PosX + 36, m_PosY + 3);
 

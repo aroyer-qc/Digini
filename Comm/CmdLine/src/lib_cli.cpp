@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define CLI_GLOBAL
-#include "lib_cli.h"
+#include "lib_digini.h"
 #undef  CLI_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -131,15 +131,15 @@ SystemState_e CommandLine::HandleCmdPassword(void)
         for(int i = 0; i <= sizeof(m_CMD_Password); i++)
         {
             // There must be a comma in the FIFO
-            if(m_pTxFifo->At(i) == COMMA)
+            if(m_pFifo->At(i) == COMMA)
             {
                 // Check if password match with internal password
-                if(m_pTxFifo->Memncmp(&m_CMD_Password[0], i) == true)
+                if(m_pFifo->Memncmp(&m_CMD_Password[0], i) == true)
                 {
                     if(m_CMD_Password[i] == '\0')
                     {
                         i++;
-                        m_pTxFifo->Flush(i);
+                        m_pFifo->Flush(i);
                         break;
                     }
                     else
@@ -290,14 +290,14 @@ void CommandLine::RX_Callback(uint8_t Data)
                             m_CommandNameSize = 0;
                         }
 
-                        m_pTxFifo->HeadBackward(1);
+                        m_pFifo->HeadBackward(1);
                     }
                     else
                     {
                         // Write data into the Fifo buffer
 
                         // Check if we can write into the Fifo
-                        if(m_pTxFifo->Write((const void*)&Data, 1) != 1)
+                        if(m_pFifo->Write((const void*)&Data, 1) != 1)
                         {
                             // We have overrun the Fifo buffer
                             m_Step = CLI_STEP_CMD_BUFFER_OVERFLOW;
@@ -311,7 +311,7 @@ void CommandLine::RX_Callback(uint8_t Data)
                     // Flush the FIFO an Error has occurred.
                     if((m_Step != CLI_STEP_GETTING_DATA) && (m_Step != CLI_STEP_CMD_VALID))
                     {
-                        m_pTxFifo->Flush(CLI_FIFO_PARSER_RX_SIZE);
+                        m_pFifo->Flush(CLI_FIFO_PARSER_RX_SIZE);
                         // Parser send Error and reset the state machine
                     }
                 }
@@ -441,7 +441,7 @@ void CommandLine::Initialize(UART_Driver* pUartDriver)
     m_DebugLevel            = CLI_DEBUG_LEVEL_0;
     m_ChildProcess          = nullptr;
 
-    m_pTxFifo = new FIFO_Buffer(CLI_FIFO_PARSER_RX_SIZE);
+    m_pFifo = new FIFO_Buffer(CLI_FIFO_PARSER_RX_SIZE);
     pUartDriver->RegisterCallback((CallbackInterface*)this);
     pUartDriver->EnableCallbackType(UART_CALLBACK_EMPTY_TX);
     pUartDriver->EnableCallbackType(UART_CALLBACK_COMPLETED_TX);
@@ -481,7 +481,7 @@ void CommandLine::Process(void)
     // --------------------------------------------------------------------------------------------
     // CLI Parser
     //
-    if(m_pTxFifo->ReadyRead() == true)
+    if(m_pFifo->ReadyRead() == true)
     {
         switch(int(m_Step))
         {
@@ -489,21 +489,21 @@ void CommandLine::Process(void)
             {
                 // Preprocessing line of data to trap ERROR or OK or continue for data
                 CommandNameSize = m_CommandNameSize;
-                m_pTxFifo->ToUpper(CommandNameSize);
+                m_pFifo->ToUpper(CommandNameSize);
                 State = SYS_INVALID_COMMAND;
 
             // Process the valid input by iterating through valid command list
                 for(Command = int(FIRST_CLI_COMMAND); Command < int(NUMBER_OF_CLI_CMD); Command++)
                 {
-                    if(CommandNameSize == m_CmdStrSize[Command])                                          // First size must match
+                    if(CommandNameSize == m_CmdStrSize[Command])                                            // First size must match
                     {
-                        if(m_pTxFifo->Memncmp(m_pCmdStr[Command], CommandNameSize) == true)               // Compare command string
+                        if(m_pFifo->Memncmp(m_pCmdStr[Command], CommandNameSize) == true)                   // Compare command string
                         {
-                            m_pTxFifo->Flush(CommandNameSize);                                              // Flush the command from the FIFO
+                            m_pFifo->Flush(CommandNameSize);                                                // Flush the command from the FIFO
 
                             if((m_ReadCommand == false) && (m_PlainCommand == false))
                             {
-                               ProcessParams(CLI_CmdName_e(Command));                                                  // if its a write command, get all parameters.
+                               ProcessParams(CLI_CmdName_e(Command));                                       // if its a write command, get all parameters.
                             }
 
                             Support = m_CmdInputInfo[Command].Support;
@@ -524,7 +524,7 @@ void CommandLine::Process(void)
                     Printf(CLI_SIZE_NONE, m_ErrorLabel, "Command invalid\r\n");
                 }
 
-                m_pTxFifo->Flush(CLI_FIFO_PARSER_RX_SIZE);                                                  // Flush completely the FIFO
+                m_pFifo->Flush(CLI_FIFO_PARSER_RX_SIZE);                                                  // Flush completely the FIFO
                 m_Step = CLI_STEP_IDLE;
             }
             break;
@@ -555,7 +555,7 @@ void CommandLine::Process(void)
         {
             m_Step = CLI_STEP_IDLE;
             Printf(CLI_SIZE_NONE, m_ErrorLabel, "Command timeout\r\n");
-            m_pTxFifo->Flush(CLI_FIFO_PARSER_RX_SIZE);
+            m_pFifo->Flush(CLI_FIFO_PARSER_RX_SIZE);
         }
     }
 }
@@ -583,6 +583,27 @@ void CommandLine::GiveControlToChildProcess(void(*pProcess)(uint8_t Data))
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           ReleaseControl
+//
+//  Parameter(s):   void
+//  Return:         None
+//
+//  Description:    Release control back to the command line
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void CommandLine::ReleaseControl(void)
+{
+    if(m_ChildProcess != nullptr)
+    {
+        m_ChildProcess = nullptr;
+        m_InputState   = CLI_CMD_LINE;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           Printf
 //
 //  Parameter(s):   size_t              MaxSize     Number of byte max to print
@@ -596,6 +617,7 @@ void CommandLine::GiveControlToChildProcess(void(*pProcess)(uint8_t Data))
 //  Note(s):        Memory block will be freed by DMA TC
 //
 //-------------------------------------------------------------------------------------------------
+// TODO move in comm_utility.h and .c this is a support function, it does not need to be in CLI
 size_t CommandLine::Printf(int MaxSize, const char* pFormat, ...)
 {
     char*   pBuffer;
@@ -695,7 +717,7 @@ void CommandLine::SetSerialLogging(bool Mute)
 void CommandLine::LockDisplay(bool State)
 {
     VAR_UNUSED(State);
-   // CLI_IsDisplayLock = State;
+    //m_CLI_IsDisplayLock = State;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -712,7 +734,7 @@ void CommandLine::LockDisplay(bool State)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-
+// TODO move in comm_utility.h and .c this is a support function, it does not need to be in CLI
 void CommandLine::DisplayTimeDateStamp(Date_t* pDate, Time_t* pTime)
 {
     Printf(CLI_SIZE_NONE, CLI_TIME_DATE_STAMP, pDate->Year,
@@ -798,13 +820,13 @@ bool CommandLine::GetString(char* pBuffer, size_t Size)
     char Character;
     bool Result = false;
 
-    if(m_pTxFifo->At(0) == '"')
+    if(m_pFifo->At(0) == '"')
     {
-        m_pTxFifo->Flush(1);
+        m_pFifo->Flush(1);
 
         for(size_t i = 0; ((i <= Size) && (Result == false)); i++)
         {
-            if(m_pTxFifo->Read(&Character, 1) == 1)
+            if(m_pFifo->Read(&Character, 1) == 1)
             {
                 if(Character == '"')
                 {
@@ -840,13 +862,16 @@ bool CommandLine::GetString(char* pBuffer, size_t Size)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+// TODO move in comm_utility.h and .c this is a support function, it does not need to be in CLI
+// bool CommandLine::IsItA_Comma(give pointer to fifo or value)
+
 bool CommandLine::IsItA_Comma(void)
 {
     bool Result = false;
 
-    if(m_pTxFifo->At(0) == ',')
+    if(m_pFifo->At(0) == ',')
     {
-        m_pTxFifo->Flush(1);
+        m_pFifo->Flush(1);
         Result = true;
     }
 
@@ -871,12 +896,15 @@ bool CommandLine::IsItA_Comma(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+// TODO move in comm_utility.h and .c this is a support function, it does not need to be in CLI
+// bool CommandLine::GetAtoi(,,,, give pointer to fifo or value)
+
 bool CommandLine::GetAtoi(int32_t* pValue, int32_t Min, int32_t Max, uint8_t Base)
 {
     uint32_t Size;
     bool     Result = false;
 
-    Size = m_pTxFifo->Atoi(pValue, Base);
+    Size = m_pFifo->Atoi(pValue, Base);
 
     if(Size != 0)
     {
@@ -902,11 +930,13 @@ bool CommandLine::GetAtoi(int32_t* pValue, int32_t Min, int32_t Max, uint8_t Bas
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+// maybe do heritage
+// TODO move in comm_utility.h and .c this is a support function, it does not need to be in CLI
 bool CommandLine::IsItAnEOL(void)
 {
     bool Result = false;
 
-    if(m_pTxFifo->ReadyRead() == false)
+    if(m_pFifo->ReadyRead() == false)
     {
         Result = true;
     }

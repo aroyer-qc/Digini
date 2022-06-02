@@ -30,7 +30,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_digini.h"
+//#include "lib_digini.h"
 #include "vt100_cfg.h"
 #include "lib_vt100_expanding_macro.h"
 
@@ -54,13 +54,6 @@
 #define CON_STRING_QTS                  8
 #define CON_ITEMS_QTS                   8
 #define CON_STRING_SZ                   32
-
-
-#ifndef VT100_USE_COLOR
-#define VT100_SetColor(f,b)
-#define VT100_SetForeColor(c)
-#define VT100_SetBackColor(c)
-#endif
 
 // Console Generic Label
 #define VT100_LBL_CLEAR_SCREEN            "\033[2J\033[H"
@@ -168,7 +161,7 @@ struct VT100_MenuDef_t
 struct VT100_MenuObject_t
 {
     const VT100_MenuDef_t*    pMenu;
-    size_t                    pMenuSize;
+    //size_t                    pMenuSize;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -181,8 +174,8 @@ class VT100_Terminal
 
                             VT100_Terminal              ();
 
+        void                Process                     (void);
         void                Initialize                  (const char* pHeadLabel, const char* pDescription);
-
         void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
         void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
         void                GoToMenu                    (VT100_Menu_e MenuID);
@@ -195,6 +188,8 @@ class VT100_Terminal
 
       #ifdef CONSOLE_USE_COLOR
         void                SetColor                    (VT100_Color_e ForeColor, VT100_Color_e BackColor);
+        inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute((CON_VT100_Attribute_e)Color + CON_OFFSET_COLOR_FOREGROUND); }
+        inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute((CON_VT100_Attribute_e)Color + CON_OFFSET_COLOR_BACKGROUND); }
         void                PrintSaveLabel              (uint8_t PosX, uint8_t PosY, VT100_Color_e Color);
         void                Bargraph                    (uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size);
       #else
@@ -215,10 +210,12 @@ class VT100_Terminal
 //        void            CON_SetConsoleMuteLogs      (bool Mute);
         void                ForceMenuRefresh            (void);
 
-      #ifdef VT100_USE_COLOR
-        inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute((CON_VT100_Attribute_e)Color + CON_OFFSET_COLOR_FOREGROUND); }
-        inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute((CON_VT100_Attribute_e)Color + CON_OFFSET_COLOR_BACKGROUND); }
-      #endif
+// to check if needed in VT100
+bool                ConsoleState                (void);
+void                SeConsoleMuteLogs           (bool);
+void                LockDisplay                 (bool);
+void                DisplayTimeDateStamp        (nOS_TimeDate* pTimeDate);
+bool                GetString                   (char* pBuffer, size_t Size);
 
     private:
 
@@ -243,9 +240,10 @@ class VT100_Terminal
         bool                                m_IsItInStartup;
         bool                                m_BackFromEdition;
 
+      #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)
+      #endif
 
         bool                                m_RefreshMenu;
-
         VT100_Menu_e                        m_MenuID;
         VT100_Menu_e                        m_FlushMenuID;
         VT100_InputType_e                   m_InputType;
@@ -256,7 +254,7 @@ class VT100_Terminal
         bool                                m_BypassPrintf;
         bool                                m_LogsAreMuted;
         nOS_Timer                           m_EscapeTimer;
-        // bool                             CON_IsDisplayLock;
+        bool                                m_IsDisplayLock;
         bool                                m_FlushNextEntry;
         char*                               m_pHeadLabel;
         char*                               m_pDescription;
@@ -282,13 +280,12 @@ class VT100_Terminal
 
         static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
 
-
         #define VT100_HEADER_CLASS_CONSTANT
         #include "vt100_var.h"         // Project variable
         #undef  VT100_HEADER_CLASS_CONSTANT
 
         //char                      m_BufferParserRX[CLI_FIFO_PARSER_RX_SZ];
-        //Fifo_t                    m_FIFO_ParserRX;
+        FIFO_Buffer                 m_FIFO_ParserRX;
         //CLI_ParserInfo_t            m_AT_ParserInfo;
         //uint32_t         CLI_NewConfigFlag[CONFIG_FLAG_SIZE];
         //char                  CLI_GenericString[CLI_STRING_QTS][CLI_ITEMS_QTS][CLI_STRING_SZ];
@@ -302,5 +299,5 @@ class VT100_Terminal
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (DIGINI_USE_CMD_LINE == DEF_ENABLED)
+#endif // (DIGINI_USE_VT100_MENU == DEF_ENABLED)
 

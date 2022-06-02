@@ -30,10 +30,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_digini.h"
+//#include "lib_digini.h"
 #include "cli_cfg.h"
 #include "lib_cli_expanding_macro.h"
-
 
 //-------------------------------------------------------------------------------------------------
 
@@ -171,6 +170,7 @@ class CommandLine : public CallbackInterface
         void            Initialize                  (UART_Driver* pUartDriver);
         void            Process                     (void);
         void            GiveControlToChildProcess   (void(*pProcess)(uint8_t Data));
+        void            ReleaseControl              (void);
         void            DisplayTimeDateStamp        (Date_t* pDate, Time_t* pTime);
         size_t          Printf                      (int nSize, const char* pFormat, ...);
         void            LockDisplay                 (bool State);
@@ -216,7 +216,7 @@ class CommandLine : public CallbackInterface
         TickCount_t                             m_StartupTick;
         bool                                    m_IsItOnStartup;
         char                                    m_BufferParserRX[CLI_FIFO_PARSER_RX_SIZE];
-        FIFO_Buffer*                            m_pTxFifo;
+        FIFO_Buffer*                            m_pFifo;
         bool                                    m_IsItOnHold;
         CLI_DebugLevel_e                        m_DebugLevel;
         bool                                    m_ReadCommand;

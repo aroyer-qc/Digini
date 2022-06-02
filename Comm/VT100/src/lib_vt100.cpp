@@ -46,8 +46,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-
-#define VT100_TERMINAL_SIZE                              256
+#define VT100_FIFO_PARSER_RX_SZ                         1000
+#define VT100_TERMINAL_SIZE                             256
 #define VT100_REFRESH_TIME_OUT                          10
 #define VT100_ESCAPE_TIME_OUT                           3
 #define VT100_INPUT_INVALID_ID                          -1
@@ -68,8 +68,23 @@ const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
 #undef  VT100_CLASS_CONSTANT
 
 //-------------------------------------------------------------------------------------------------
-// Private(s) Function(s)
+//
+//  Name:           VT100_TaskWrapper
+//
+//  Parameter(s):   void* pvParameters
+//  Return:         void
+//
+//  Description:    main() for the task1
+//
+//  Note(s):
+//
 //-------------------------------------------------------------------------------------------------
+#if (VT100_IS_A_TASK == DEF_ENABLED)
+extern "C" void VT100_TaskWrapper(void* pvParameters)
+{
+    (static_cast<myClassVT100*>(pvParameters))->Run();
+}
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -110,18 +125,16 @@ void VT100_Terminal::Initialize(const char* pHeadLabel, const char* pDescription
     m_ID                    = -1;
     m_InputDecimalMode      = false;
     m_InEscapeSequence      = false;
-    //m_IsDisplayLock         = false;
+    m_IsDisplayLock         = false;
     m_BackFromEdition       = false;
     m_FlushNextEntry        = false;
     m_LogsAreMuted          = true;
     m_String[CON_STRING_SZ] = '\0';
 
-    nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, nullptr, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
+    //nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, nullptr, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
+    //CallbackInitialize();
 
-    nOS_ThreadCreate(&m_ThreadHandle, m_Task, nullptr, m_Stack, VT100_STACK_SIZE, VT10_TASK_PRIO);
-    CallbackInitialize();
-
-    FIFO_Init(&m_FIFO_ParserRX, &m_BufferParserRX[0], CON_FIFO_PARSER_RX_SZ);
+    m_FIFO_ParserRX.Initialize(VT100_FIFO_PARSER_RX_SZ);
     ClearConfigFLag();
     ClearGenericString();
 }
@@ -133,17 +146,17 @@ void VT100_Terminal::Initialize(const char* pHeadLabel, const char* pDescription
 //  Parameter(s):   void
 //  Return:         None
 //
-//  Description:    Console task
+//  Description:    Console process
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::Process(void)
 {
-    const CON_MenuDef_t*  pMenu;
-    uint8_t               Items;
-    uint8_t               ItemsQts;
-    uint32_t              Delay;
+    const VT100_MenuDef_t* pMenu;
+    uint8_t                Items;
+    uint8_t                ItemsQts;
+    uint32_t               Delay;
 
     if((m_InputDecimalMode == false) && (m_InputStringMode == false))
     {
@@ -151,30 +164,30 @@ void VT100_Terminal::Process(void)
         if(m_RefreshMenu == true)
         {
             // Call the destructor for each callback, if any
-            if((m_FlushMenuID != CON_NO_MENU) &&
-               (m_FlushMenuID != CON_MenuID))
+            if((m_FlushMenuID != VT100_NO_MENU) &&
+               (m_FlushMenuID != m_MenuID))
             {
                 m_BackFromEdition = false;
                 ClearConfigFLag();
                 ClearGenericString();
 
-                ItemsQts = CON_Menu[m_FlushMenuID].pMenuSize;
+                ItemsQts = m_Menu[m_FlushMenuID].pMenuSize;
 
                 for(Items = 0; Items < ItemsQts; Items++)
                 {
-                    pMenu = &CON_Menu[m_FlushMenuID].pMenu[Items];
-                    CallBack(pMenu->Callback, CON_CALLBACK_FLUSH, Items);
+                    pMenu = &m_Menu[m_FlushMenuID].pMenu[Items];
+                    CallBack(pMenu->Callback, VT100_CALLBACK_FLUSH, Items);
                 }
             }
 
             m_RefreshMenu = false;
-            m_ItemsQts    = m_DisplayMenu(m_MenuID);
+            m_ItemsQts    = DisplayMenu(m_MenuID);
             m_Input       = 0;
         }
 
-        if ( CON_ForceRefresh )
+        if(m_ForceRefresh == true)
         {
-            m_ItemsQts     = m_DisplayMenu(m_MenuID);
+            m_ItemsQts     = DisplayMenu(m_MenuID);
             m_Input        = 0;
             m_ForceRefresh = false;
         }
@@ -186,7 +199,7 @@ void VT100_Terminal::Process(void)
         {
             m_ValidateInput = false;
 
-            if(m_InputType == CON_INPUT_MENU_CHOICE)
+            if(m_InputType == VT100_INPUT_MENU_CHOICE)
             {
                 // Validate the range for the menu
                 if(m_Input < m_ItemsQts)
@@ -200,10 +213,10 @@ void VT100_Terminal::Process(void)
                     }
 
                     // If selection has a callback, call it and react to it's configuration for key input
-                    m_InputType = CallBack(pMenu->Callback, CON_CALLBACK_ON_INPUT, m_Input);
+                    m_InputType = CallBack(pMenu->Callback, VT100_CALLBACK_ON_INPUT, m_Input);
 
                     // Job is already done, so no refresh
-                    if(m_InputType == CON_INPUT_MENU_CHOICE)
+                    if(m_InputType == VT100_INPUT_MENU_CHOICE)
                     {
                         m_Input = 0;
                     }
@@ -219,9 +232,9 @@ void VT100_Terminal::Process(void)
         else
         {
             // Still in a callback mode
-            if(m_MenuID != CON_NO_MENU)
+            if(m_MenuID != VT100_NO_MENU)
             {
-                CallBack(pMenu->Callback, CON_CALLBACK_REFRESH, 0);
+                CallBack(pMenu->Callback, VT100_CALLBACK_REFRESH, 0);
             }
         }
     }
@@ -230,7 +243,6 @@ void VT100_Terminal::Process(void)
         if(m_InputDecimalMode == true)   { InputDecimal(); }
         if(m_InputStringMode  == true)   { InputString();  }
     }
-
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -306,11 +318,15 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
             InMenuPrintf(CON_SZ_NONE, VT100_LBL_HIDE_CURSOR);
             InMenuPrintf(CON_SZ_NONE, VT100_LBL_CLEAR_SCREEN);
             m_pHeadLabel = (char*)LABEL_pStr[LBL_MENU_TITLE];
+          #ifdef CONSOLE_USE_COLOR
             SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
+          #endif
             InMenuPrintf(CON_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
             InMenuPrintf(CON_SZ_NONE, m_pHeadLabel);
             InMenuPrintf(CON_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
+          #ifdef CONSOLE_USE_COLOR
             SetColor(VT100_COLOR_YELLOW, VT100_COLOR_BLACK);
+          #endif
             InMenuPrintf(CON_SZ_NONE, "\r\n\r\n");
 
             // Print all items in the menu list
@@ -358,7 +374,9 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
     }
 
     InMenuPrintf(CON_SZ_NONE, VT100_LBL_CLEAR_SCREEN);
+  #ifdef CONSOLE_USE_COLOR
     SetForeColor(VT100_COLOR_WHITE);
+  #endif
     m_InputType    = VT100_INPUT_CLI;
     m_BypassPrintf = false;
     return 0;
@@ -379,10 +397,14 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
 void VT100_Terminal::MenuSelectItems(char ItemsChar)
 {
     InMenuPrintf(CON_SZ_NONE, "  (");
+  #ifdef CONSOLE_USE_COLOR
     SetForeColor(VT100_COLOR_CYAN);
+  #endif
     if(ItemsChar == '0') InMenuPrintf(CON_SZ_NONE, "ESC");
     else                 InMenuPrintf(CON_SZ_NONE, "%c", ItemsChar);
+  #ifdef CONSOLE_USE_COLOR
     SetForeColor(VT100_COLOR_YELLOW);
+  #endif
     if(ItemsChar == '0') InMenuPrintf(CON_SZ_NONE, ") ");
     else                 InMenuPrintf(CON_SZ_NONE, ")   ");
 }
@@ -548,7 +570,9 @@ void VT100_Terminal::PrintSaveLabel(uint8_t PosX, uint8_t PosY, VT100_Color_e Co
 void VT100_Terminal::PrintSaveLabel(uint8_t PosX, uint8_t PosY)
 #endif
 {
+  #ifdef CONSOLE_USE_COLOR
     SetForeColor(Color);
+  #endif
     SetCursorPosition(PosX, PosY);
     InMenuPrintf(CON_SZ_NONE, VT100_LBL_SAVE_CONFIGURATION);
 }
@@ -591,7 +615,9 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
     DrawBox(PosX, PosY, 48, 8, VT100_COLOR_WHITE);
 
     // Write input information
+  #ifdef CONSOLE_USE_COLOR
     SetForeColor(VT100_COLOR_CYAN);
+  #endif
     SetCursorPosition(PosX + 2,  PosY + 1);
 
     switch(Divider)
@@ -613,7 +639,9 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
     }
 
     // Print type of input
+  #ifdef CONSOLE_USE_COLOR
     SetForeColor(VT100_COLOR_YELLOW);
+  #endif
     SetCursorPosition(PosX + 2, PosY + 3);
     InMenuPrintf(CON_SZ_NONE, "%s", pMsg);
 
@@ -692,7 +720,9 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
     DrawBox(PosX, PosY, 46, 7, VT100_COLOR_WHITE);
 
     // Write input information
+  #ifdef CONSOLE_USE_COLOR
     SetForeColor(VT100_COLOR_CYAN);
+  #endif
     SetCursorPosition(PosX + 2,  PosY + 1);
     InMenuPrintf(Maximum, "%s", pMsg);
 
@@ -701,7 +731,7 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
     InMenuPrintf(CON_SZ_NONE, VT100_LBL_INPUT_VALIDATION);
 
     // Copy string
-    m_memcpy(m_String, pString, VT100_STRING_SZ);
+    memcpy(m_String, pString, VT100_STRING_SZ);
     STR_strnstrip(m_String, Maximum);
     m_InputPtr = strlen(m_String);                          // Get string end pointer
     m_RefreshInputPtr = m_InputPtr + 1;                     // To force a refresh
@@ -767,7 +797,7 @@ size_t VT100_Terminal::InMenuPrintf(int nSize, const char* pFormat, ...)
     char*   Buffer;
     size_t  Size    = 0;
 
-    if((pBuffer = nOS_MemAlloc(&BSP_MemBlock, NOS_NO_WAIT) != nullptr)
+    if((pBuffer = nOS_MemAlloc(&BSP_MemBlock, NOS_NO_WAIT)) != nullptr)
     {
         va_start(vaArg, (const char*)pFormat);
         Size = STR_vsnprintf(pBuffer, ((nSize == CON_SZ_NONE) ? VT100_TERMINAL_SIZE : nSize), pFormat, vaArg);
@@ -794,7 +824,7 @@ size_t VT100_Terminal::InMenuPrintf(int nSize, const char* pFormat, ...)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-size_t VT100_Terminal::LoggingPrintf(CON_DebugLevel_e Level, const char* pFormat, ...)
+size_t VT100_Terminal::LoggingPrintf(VT100_DebugLevel_e Level, const char* pFormat, ...)
 {
     va_list          vaArg;
     char*            pBuffer;
@@ -834,7 +864,7 @@ size_t VT100_Terminal::LoggingPrintf(CON_DebugLevel_e Level, const char* pFormat
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void VT100_Terminal::GoToMenu(CON_Menu_e MenuID)
+void VT100_Terminal::GoToMenu(VT100_Menu_e MenuID)
 {
     m_RefreshMenu = true;
     m_FlushMenuID = m_MenuID;
@@ -1145,7 +1175,9 @@ void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t
 {
     if(m_IsDisplayLock == false)
     {
+      #ifdef CONSOLE_USE_COLOR
         SetForeColor(ForeColor);
+      #endif
         SetCursorPosition(PosX, PosY++);
         InMenuPrintf(CON_SZ_NONE, "╔");
 
@@ -1203,7 +1235,9 @@ void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100
 {
     if(m_IsDisplayLock == false)
     {
+      #ifdef CONSOLE_USE_COLOR
         SetForeColor(ForeColor);
+      #endif
 
         for(uint8_t i = 0; i < V_Size; i++)
         {
@@ -1219,7 +1253,7 @@ void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100
 //
 //  Parameter(s):   uint8_t         PosX        X Position on screen.
 //                  uint8_t         PosY        Y Position On screen.
-//                   VT100_Color_e  Color       Color of the bargraph.
+//                  VT100_Color_e   Color       Color of the bargraph.
 //                  uint8_t         Value       Actual value.
 //                  uint8_t         Max         Maximum value.
 //                  uint8_t         Size        Size in character.
@@ -1307,13 +1341,13 @@ bool VT100_Terminal::GetString(char* pBuffer, size_t Size)
 {
     char Character;
 
-    if(FIFO_At(&CON_FIFO_ParserRX, 0) == '"')
+    if(m_FIFO_ParserRX.At(0) == '"')
     {
-        FIFO_Flush(&CON_FIFO_ParserRX, 1);
+        m_FIFO_ParserRX.Flush(1);
 
         for(int i = 0; i <= Size; i++)
         {
-            if(FIFO_Read(&CON_FIFO_ParserRX, &Character, 1) == 1)
+            if(m_FIFO_ParserRX.Read(&Character, 1) == 1)
             {
                 if(Character == '"')
                 {
@@ -1402,8 +1436,8 @@ void VT100_Terminal::RX_Callback(uint8_t Data)
                 Data = 0;
             }
             m_Input = Data;
-            break;
         }
+        break;
 
         case CON_INPUT_DECIMAL:
         {
@@ -1437,9 +1471,8 @@ void VT100_Terminal::RX_Callback(uint8_t Data)
                 m_ID = CON_INPUT_INVALID_ID;
                 GoToMenu(CON_MenuID);
             }
-
-            break;
         }
+        break;
 
         case CON_INPUT_STRING:
         {
@@ -1473,9 +1506,8 @@ void VT100_Terminal::RX_Callback(uint8_t Data)
                 m_ID = CON_INPUT_INVALID_ID;
                 m_GoToMenu(CON_MenuID);
             }
-
-            break;
         }
+        break;
 
         case CON_INPUT_ESCAPE:
         {
@@ -1483,14 +1515,14 @@ void VT100_Terminal::RX_Callback(uint8_t Data)
             {
                 GoToMenu(CON_MenuID);
             }
-            break;
         }
+        break;
 
         case CON_INPUT_CLI:
         {
             ParseFIFO(Data);
-            break;
         }
+        break;
 
         case CON_INPUT_ESCAPE_TO_CONTINUE:
         {
@@ -1499,8 +1531,8 @@ void VT100_Terminal::RX_Callback(uint8_t Data)
                 m_ValidateInput = true;
                 m_InputType     = CON_INPUT_MENU_CHOICE;
             }
-            break;
         }
+        break;
 
         default: break;
     }

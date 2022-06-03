@@ -148,11 +148,11 @@ static void    VT100_PrintVoltage    (uint8_t xPos, uint8_t yPos, uint32_t Volta
 // Variable(s)
 //-------------------------------------------------------------------------------------------------
 
-static uint8_t                  VT100_LastDebugLevel;
+//static uint8_t                  VT100_LastDebugLevel;
 //static nOS_Time                 VT100_LastUpTime;
-static uint8_t                  VT100_LastSecond;
-static bool                     VT100_DrawOnlyOnce;
-static bool                     VT100_BluetoothAdvertisement;
+//static uint8_t                  VT100_LastSecond;
+//static bool                     VT100_DrawOnlyOnce;
+//static bool                     VT100_BluetoothAdvertisement;
 
 // scratch pad variable..
 // static valid for the life of one menu iteration.. should not contain data that need to live longer.
@@ -161,7 +161,7 @@ static bool                     VT100_BluetoothAdvertisement;
 //static bool                     VT100_Generic_uint64_t_Updated;
 //static nOS_TickCounter          VT100_GenericTimeOut1;
 //static nOS_TickCounter          VT100_GenericTimeOut2;
-static uint64_t                 VT100_Generic_uint64;                                                 // uint64_t that can be used by any callback
+//static uint64_t                 VT100_Generic_uint64;                                                 // uint64_t that can be used by any callback
 
 // TO DO change for the Bluetooth variable for the TX power
 static uint8_t  VT100_TX_Power;
@@ -280,7 +280,7 @@ VT100_InputType_e VT100_Terminal::CALL_ProductInformation(uint8_t Input, VT100_C
         case VT100_CALLBACK_REFRESH:
         {
             UpTime = nOS_GetTickCount() / NOS_CONFIG_TICKS_PER_SECOND;
-            
+
             if(UpTime != VT100_LastUpTime)
             {
                 VT100_LastUpTime = UpTime;
@@ -296,7 +296,7 @@ VT100_InputType_e VT100_Terminal::CALL_ProductInformation(uint8_t Input, VT100_C
             }
 
             RTC_DateAndTime(&TimeDate, STATE_GET);
-            
+
             if(TimeDate.second != VT100_LastSecond)
             {
                 VT100_LastSecond = TimeDate.second;
@@ -342,7 +342,7 @@ VT100_InputType_e VT100_Terminal::CALL_DebugLevelSetting(uint8_t Input, VT100_Ca
         SetCursorPosition(40, 9 + Input);
       #ifdef CONSOLE_USE_COLOR
         SetForeColor(VT100_COLOR_MAGENTA);
-      #endif  
+      #endif
 
         if((((uint8_t)1 << (Input - 1)) & DebugLevel) != 0)
         {
@@ -442,7 +442,7 @@ VT100_InputType_e VT100_Terminal::CALL_LedControl(uint8_t Input, VT100_CallBackT
     {
       #ifdef CONSOLE_USE_COLOR
         SetForeColor(VT100_COLOR_GREEN);
-      #endif  
+      #endif
 
         for(uint8_t i = 0; i <= 3; i++)
         {
@@ -484,33 +484,33 @@ VT100_InputType_e VT100_Terminal::CALL_InputReading(uint8_t Input, VT100_CallBac
             VT100_DisplayMfg();
           #ifdef CONSOLE_USE_COLOR
             SetForeColor(VT100_COLOR_CYAN);
-          #endif  
+          #endif
             InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_TEMP_SENSOR]);
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
           #ifdef CONSOLE_USE_COLOR
             SetForeColor(VT100_COLOR_YELLOW);
-          #endif  
+          #endif
             InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_CPU_TEMP_SENSOR]);
           #ifdef CONSOLE_USE_COLOR
             SetForeColor(VT100_COLOR_CYAN);
-          #endif  
+          #endif
             InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_INPUT_ANALOG]);
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
           #ifdef CONSOLE_USE_COLOR
             SetForeColor(VT100_COLOR_YELLOW);
-          #endif  
+          #endif
             InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_12_VOLT]);
             InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_CPU_VDD]);
             InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_BATTERY_LEVEL]);
             InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_BACKUP_BATTERY_LEVEL]);
           #ifdef CONSOLE_USE_COLOR
             SetForeColor(VT100_COLOR_CYAN);
-          #endif  
+          #endif
             InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_INPUT_DIGITAL]);
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
           #ifdef CONSOLE_USE_COLOR
             SetForeColor(VT100_COLOR_YELLOW);
-          #endif  
+          #endif
             //InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_EXTERNAL_SWITCH]);
 
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_ESCAPE);
@@ -611,7 +611,7 @@ VT100_InputType_e VT100_Terminal::CALL_BlueTooth(uint8_t Input, VT100_CallBackTy
         InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_STATUS]);
       #ifdef CONSOLE_USE_COLOR
         SetForeColor(VT100_COLOR_CYAN);
-      #endif 
+      #endif
         InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
         SetCursorPosition(1, 34);
         InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
@@ -713,7 +713,7 @@ VT100_InputType_e VT100_Terminal::CALL_MiscCfg(uint8_t Input, VT100_CallBackType
         PosY = 24;
       #ifdef CONSOLE_USE_COLOR
         SetForeColor(VT100_COLOR_YELLOW);
-      #endif 
+      #endif
         SetCursorPosition(13, PosY++);
         InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_MISC_TEMPERATURE_LOW]);
         SetCursorPosition(13, PosY++);
@@ -1016,7 +1016,7 @@ VT100_InputType_e VT100_Terminal::CALL_TimeDateCfg(uint8_t Input, VT100_CallBack
         /// Print the static info in the box
       #ifdef CONSOLE_USE_COLOR
         SetForeColor(VT100_COLOR_YELLOW);
-      #endif  
+      #endif
         SetCursorPosition(13, 24);
         InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_TIME]);
         SetCursorPosition(13, 25);
@@ -1141,7 +1141,7 @@ VT100_InputType_e VT100_Terminal::CALL_TimeDateCfg(uint8_t Input, VT100_CallBack
 
       #ifdef CONSOLE_USE_COLOR
         SetForeColor(VT100_COLOR_CYAN);
-      #endif  
+      #endif
         SetCursorPosition(26, 24);
         InMenuPrintf(VT100_SZ_NONE, "%u:%02u:%02u ", TimeDate.hour, TimeDate.minute, TimeDate.second);
         SetCursorPosition(26, 25);

@@ -183,6 +183,10 @@ class CommandLine : public CallbackInterface
         size_t          PrintSerialLog              (CLI_DebugLevel_e Level, const char* pFormat, ...);
         void            SetSerialLogging            (bool Mute);
 
+        // For child process to send data
+        SystemState_e   SendData                    (const uint8_t* p_BufferTX, size_t* pSizeTX, void* pContext = nullptr);
+
+
       #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
         SystemState_e   CmdMENU                     (void);
       #endif

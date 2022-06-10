@@ -142,7 +142,7 @@ typedef enum
 // Prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-static void    VT100_PrintVoltage    (uint8_t xPos, uint8_t yPos, uint32_t Voltage);
+//static void    VT100_PrintVoltage    (uint8_t xPos, uint8_t yPos, uint32_t Voltage);
 
 //-------------------------------------------------------------------------------------------------
 // Variable(s)
@@ -164,18 +164,18 @@ static void    VT100_PrintVoltage    (uint8_t xPos, uint8_t yPos, uint32_t Volta
 //static uint64_t                 VT100_Generic_uint64;                                                 // uint64_t that can be used by any callback
 
 // TO DO change for the Bluetooth variable for the TX power
-static uint8_t  VT100_TX_Power;
+//static uint8_t  VT100_TX_Power;
 
 //-------------------------------------------------------------------------------------------------
 // Private(s) function(s)
 //-------------------------------------------------------------------------------------------------
-
+/*
 static void VT100_PrintVoltage(uint8_t xPos, uint8_t yPos, uint32_t Voltage)
 {
     myVT100_Terminal.SetCursorPosition(xPos, yPos);
     myVT100_Terminal.InMenuPrintf(VT100_SZ_NONE, "%u.%03u", Voltage / 1000, Voltage % 1000);
 }
-
+*/
 
 //-------------------------------------------------------------------------------------------------
 // Public(s) function(s)

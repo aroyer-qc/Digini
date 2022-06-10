@@ -46,14 +46,17 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define CON_OFFSET_COLOR_FOREGROUND     30
-#define CON_OFFSET_COLOR_BACKGROUND     40
-#define CON_FIFO_PARSER_RX_SZ           64
-#define CON_SZ_NONE                     0
-#define CONFIG_FLAG_SIZE                8
-#define CON_STRING_QTS                  8
-#define CON_ITEMS_QTS                   8
-#define CON_STRING_SZ                   32
+#define VT100_OFFSET_COLOR_FOREGROUND     30
+#define VT100_OFFSET_COLOR_BACKGROUND     40
+#define CON_FIFO_PARSER_RX_SZ             64
+#define VT100_SZ_NONE                     0
+#define CONFIG_FLAG_SIZE                  8
+
+
+
+#define VT100_STRING_QTS                  8
+#define VT100_ITEMS_QTS                   8
+#define VT100_STRING_SZ                   32
 
 // Console Generic Label
 #define VT100_LBL_CLEAR_SCREEN            "\033[2J\033[H"
@@ -174,8 +177,13 @@ class VT100_Terminal
 
                             VT100_Terminal              ();
 
+
         void                Process                     (void);
+      #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)
+        void                Initialize                  (UART_Driver* pUartDriver, const char* pHeadLabel, const char* pDescription);
+      #else
         void                Initialize                  (const char* pHeadLabel, const char* pDescription);
+      #endif
         void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
         void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
         void                GoToMenu                    (VT100_Menu_e MenuID);
@@ -188,8 +196,8 @@ class VT100_Terminal
 
       #ifdef CONSOLE_USE_COLOR
         void                SetColor                    (VT100_Color_e ForeColor, VT100_Color_e BackColor);
-        inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute((CON_VT100_Attribute_e)Color + CON_OFFSET_COLOR_FOREGROUND); }
-        inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute((CON_VT100_Attribute_e)Color + CON_OFFSET_COLOR_BACKGROUND); }
+        inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute((CON_VT100_Attribute_e)Color + VT100__OFFSET_COLOR_FOREGROUND); }
+        inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute((CON_VT100_Attribute_e)Color + VT100__OFFSET_COLOR_BACKGROUND); }
         void                PrintSaveLabel              (uint8_t PosX, uint8_t PosY, VT100_Color_e Color);
         void                Bargraph                    (uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size);
       #else
@@ -210,8 +218,12 @@ class VT100_Terminal
 //        void            CON_SetConsoleMuteLogs      (bool Mute);
         void                ForceMenuRefresh            (void);
 
+        void                DisplayDescription          (void);
+
+      #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)
+        size_t              LoggingPrintf               (CLI_DebugLevel_e Level, const char* pFormat, ...);
+
 // to check if needed in VT100
-bool                ConsoleState                (void);
 void                SeConsoleMuteLogs           (bool);
 void                LockDisplay                 (bool);
 void                DisplayTimeDateStamp        (nOS_TimeDate* pTimeDate);
@@ -241,6 +253,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         bool                                m_BackFromEdition;
 
       #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)
+        UART_Driver*                        m_pUartDriver;
       #endif
 
         bool                                m_RefreshMenu;
@@ -274,9 +287,12 @@ bool                GetString                   (char* pBuffer, size_t Size);
         volatile bool                       m_InEscapeSequence;
         int32_t                             m_InputPtr;
         int32_t                             m_RefreshInputPtr;
-        char                                m_String[CON_STRING_SZ + 1];
+        char                                m_String[VT100_STRING_SZ + 1];
         bool                                m_InputStringMode;
         bool                                m_IsItString;
+        FIFO_Buffer                         m_FIFO_ParserRX;
+        uint32_t                            m_NewConfigFlag[CONFIG_FLAG_SIZE];
+        char                                m_GenericString[VT100_STRING_QTS][VT100_ITEMS_QTS][VT100_STRING_SZ];
 
         static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
 
@@ -285,10 +301,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         #undef  VT100_HEADER_CLASS_CONSTANT
 
         //char                      m_BufferParserRX[CLI_FIFO_PARSER_RX_SZ];
-        FIFO_Buffer                 m_FIFO_ParserRX;
         //CLI_ParserInfo_t            m_AT_ParserInfo;
-        //uint32_t         CLI_NewConfigFlag[CONFIG_FLAG_SIZE];
-        //char                  CLI_GenericString[CLI_STRING_QTS][CLI_ITEMS_QTS][CLI_STRING_SZ];
 };
 
 //-------------------------------------------------------------------------------------------------

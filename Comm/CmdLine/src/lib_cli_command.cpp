@@ -37,7 +37,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
-    
+
 #if (USE_UART_DRIVER != DEF_ENABLED)
   #error USE_UART_DRIVER must be define DEF_ENABLED
 #endif
@@ -194,8 +194,6 @@ SystemState_e CommandLine::CmdSTATUS(void)
 SystemState_e CommandLine::CmdMENU(void)
 {
     SystemState_e Error;
-    char          Response[20];
-    int           Status;
 
     if(m_PlainCommand == true)
     {

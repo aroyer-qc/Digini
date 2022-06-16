@@ -220,7 +220,7 @@ class VT100_Terminal
 
         void                DisplayDescription          (void);
 
-      #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)
+//      #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)
         size_t              LoggingPrintf               (CLI_DebugLevel_e Level, const char* pFormat, ...);
 
 // to check if needed in VT100

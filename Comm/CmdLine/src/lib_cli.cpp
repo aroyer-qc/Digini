@@ -419,7 +419,7 @@ void CommandLine::ProcessParams(CLI_CmdName_e Command)
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   UART_Driver*    UartDriver       Pointer on the UART driver to use.
+//  Parameter(s):
 //  Return:         None
 //
 //  Description:    Initialize command line interface
@@ -427,7 +427,7 @@ void CommandLine::ProcessParams(CLI_CmdName_e Command)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CommandLine::Initialize(UART_Driver* pUartDriver)
+void CommandLine::Initialize(/* ??? */)
 {
     TickCount_t Delay;
 
@@ -604,82 +604,6 @@ void CommandLine::ReleaseControl(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Printf
-//
-//  Parameter(s):   size_t              MaxSize     Number of byte max to print
-//                  const char*         pFormat     Formatted string.
-//                  ...                             Parameter if any.
-//
-//  Return:         size_t              Number of character printed.
-//
-//  Description:    Send formatted string.
-//
-//  Note(s):        Memory block will be freed by DMA TC
-//
-//-------------------------------------------------------------------------------------------------
-// TODO move in comm_utility.h and .c this is a support function, it does not need to be in CLI
-size_t CommandLine::Printf(int MaxSize, const char* pFormat, ...)
-{
-    char*   pBuffer;
-    va_list vaArg;
-    size_t  Size = 0;
-
-    if((pBuffer = (char*)pMemory->Alloc(CLI_SERIAL_OUT_SIZE)) == nullptr)
-    {
-        return 0;
-    }
-
-    Size = (MaxSize == CLI_SIZE_NONE) ? CLI_SERIAL_OUT_SIZE : MaxSize;
-    va_start(vaArg, (const char*)pFormat);
-    Size = vsnprintf(&pBuffer[0], Size, pFormat, vaArg);
-    while(m_pUartDriver->IsItBusy() == true){};
-    m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);
-    va_end(vaArg);
-
-    return Size;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           PrintSerialLog
-//
-//  Parameter(s):   CLI_DebugLevel_e    Level       Level of printf logging.
-//                  const char*         pFormat     Formatted string.
-//                  ...                             Parameter if any.
-//
-//  Return:         size_t              Number of character printed.
-//
-//  Description:    Send formatted string to console if menu system is active.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-size_t CommandLine::PrintSerialLog(CLI_DebugLevel_e Level, const char* pFormat, ...)
-{
-    va_list          vaArg;
-    char*            pBuffer;
-    size_t           Size = 0;
-
-    if(m_MuteSerialLogging == false)
-    {
-        if((m_DebugLevel & Level) != CLI_DEBUG_LEVEL_0)
-        {
-            if((pBuffer = (char*)pMemory->Alloc(CLI_SERIAL_OUT_SIZE)) != nullptr)
-            {
-                va_start(vaArg, (const char*)pFormat);
-                Size = vsnprintf(pBuffer, CLI_SERIAL_OUT_SIZE, pFormat, vaArg);
-                m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size, nullptr);
-                va_end(vaArg);
-                pMemory->Free((void**)&pBuffer);
-            }
-        }
-    }
-
-    return Size;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           SendData
 //
 //  p_BufferTX  Ptr on buffer with data to send.
@@ -741,31 +665,6 @@ void CommandLine::LockDisplay(bool State)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           DisplayTimeDateStamp
-//
-//  Parameter(s):   Date_t*       Pointer on the Date Structure
-//                  Time_t*       Pointer on the Time Structure
-//
-//  Return:         None
-//
-//  Description:    Display time and date stamp on terminal.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-// TODO move in comm_utility.h and .c this is a support function, it does not need to be in CLI
-void CommandLine::DisplayTimeDateStamp(Date_t* pDate, Time_t* pTime)
-{
-    Printf(CLI_SIZE_NONE, CLI_TIME_DATE_STAMP, pDate->Year,
-                                               pDate->Month,
-                                               pDate->Day,
-                                               pTime->Hour,
-                                               pTime->Minute,
-                                               pTime->Second);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           SendAnswer
 //
 //  Parameter(s):   CLI_CmdName_e   CommandID           Command identification.
@@ -817,150 +716,6 @@ void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char*
     {
         Printf(CLI_SIZE_NONE, "AT%s=%s%s\r\n", m_pCmdStr[Cmd], pMsg1, pMsg2);
     }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           GetString
-//
-//  Parameter(s):   char*   pBuffer     Pointer on the buffer to put the string
-//                  size_t  Size        MAX size of the buffer
-//
-//  Return:         bool
-//
-//  Description:    Retrieve the string in the FIFO buffer. Must be located in quote, and inside
-//                  the provided range
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-bool CommandLine::GetString(char* pBuffer, size_t Size)
-{
-    char Character;
-    bool Result = false;
-
-    if(m_pFifo->At(0) == '"')
-    {
-        m_pFifo->Flush(1);
-
-        for(size_t i = 0; ((i <= Size) && (Result == false)); i++)
-        {
-            if(m_pFifo->Read(&Character, 1) == 1)
-            {
-                if(Character == '"')
-                {
-                    Result = true;
-
-                    if(i < Size)
-                    {
-                        *pBuffer++ = '\0';
-                    }
-                }
-                else
-                {
-                    *pBuffer++ = Character;
-                }
-            }
-        }
-    }
-
-    return Result;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           IsItA_Comma
-//
-//  Parameter(s):   None
-//
-//  Return:         true or false
-//
-//  Description:    Check if next character is a comma, and extract it if true, also adjust the
-//                  size in command pool structure.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-// TODO move in comm_utility.h and .c this is a support function, it does not need to be in CLI
-// bool CommandLine::IsItA_Comma(give pointer to fifo or value)
-
-bool CommandLine::IsItA_Comma(void)
-{
-    bool Result = false;
-
-    if(m_pFifo->At(0) == ',')
-    {
-        m_pFifo->Flush(1);
-        Result = true;
-    }
-
-    return Result;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           GetAtoi
-//
-//  Parameter(s):   int32_t*    pValue          Value will be returned here.
-//                  int32_t     Min             Minimum accepted value.
-//                  int32_t     Max             Maximum accepted value.
-//                  int8_t      Base            Base of the extraction.
-//                                                  - DECIMAL_BASE
-//                                                  - HEXADECIMAL_BASE
-//
-//  Return:         true or false
-//
-//  Description:    Get the integer value from the FIFO.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-// TODO move in comm_utility.h and .c this is a support function, it does not need to be in CLI
-// bool CommandLine::GetAtoi(,,,, give pointer to fifo or value)
-
-bool CommandLine::GetAtoi(int32_t* pValue, int32_t Min, int32_t Max, uint8_t Base)
-{
-    uint32_t Size;
-    bool     Result = false;
-
-    Size = m_pFifo->Atoi(pValue, Base);
-
-    if(Size != 0)
-    {
-        if((*pValue >= Min) && (*pValue <= Max))
-        {
-            Result = true;
-        }
-    }
-
-    return Result;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           IsItAnEOL
-//
-//  Parameter(s):   None
-//
-//  Return:         true or false
-//
-//  Description:    Check to be sure there no more parameter on the command line.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-// maybe do heritage
-// TODO move in comm_utility.h and .c this is a support function, it does not need to be in CLI
-bool CommandLine::IsItAnEOL(void)
-{
-    bool Result = false;
-
-    if(m_pFifo->ReadyRead() == false)
-    {
-        Result = true;
-    }
-
-    return Result;
 }
 
 //-------------------------------------------------------------------------------------------------

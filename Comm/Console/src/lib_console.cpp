@@ -28,9 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define CLI_GLOBAL
+//#define CON_GLOBAL
 #include "lib_digini.h"
-#undef  CLI_GLOBAL
+//#undef  CON_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -40,14 +40,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define CLI_SERIAL_OUT_SIZE                         256
-#define CLI_PASSWORD_SIZE                           16
-#define CLI_TERMINAL_RESET_DELAY                    100
-#define CLI_AT_STR_SIZE                             2
-
-#define CLI_STRING_CLEAR_SCREEN                     "\033[2J\e[H"
-#define CLI_STRING_RESET_TERMINAL                   "\033c\r\n"
-#define CLI_TIME_DATE_STAMP                         "%04u-%02u-%02u %2u:%02u:%02u: "
+#define CON_SERIAL_OUT_SIZE                         256
 
 //-------------------------------------------------------------------------------------------------
 // Private(s) Function(s)
@@ -104,115 +97,6 @@ void Console::RX_Callback(uint8_t Data)
     {
         case CLI_CMD_LINE:
         {
-            //-------------------------------------------------------------------------------------
-            // Parse FIFO
-            //
-            if(m_Step != CLI_STEP_CMD_VALID)
-            {
-                //---------------------------------------------------------------------------------
-                // Waiting to process incoming command
-                //
-                if(m_Step != CLI_STEP_GETTING_DATA)
-                {
-                    // Receive more data than AT header so, this accelerate process in IRQ
-                    if((((char)Data == 'a') || ((char)Data == 'A')) && (m_Step == CLI_STEP_WAITING_FOR_A))
-                    {
-                        m_Step = CLI_STEP_WAITING_FOR_T;
-                    }
-                    else if((((char)Data == 't') || ((char)Data == 'T')) && (m_Step == CLI_STEP_WAITING_FOR_T))
-                    {
-                        m_Step            = CLI_STEP_GETTING_DATA;
-                        m_ReadCommand     = false;
-                        m_PlainCommand    = true;
-                        m_CommandNameSize = 0;
-                    }
-                    else
-                    {
-                        m_Step = CLI_STEP_IDLE;
-                    }
-
-                    m_ParserRX_Offset = 0;
-                }
-
-                //---------------------------------------------------------------------------------
-                // Receiving an AT command. Basic parsing of the command
-                else
-                {
-                    if((char)Data == '=')
-                    {
-                        m_PlainCommand = false;
-
-                        if(m_ParserRX_Offset != 0)
-                        {
-                            m_CommandNameSize = m_ParserRX_Offset;
-                        }
-                        else
-                        {
-                            m_Step = CLI_STEP_CMD_MALFORMED;
-                        }
-                    }
-                    else if((char)Data == '?')
-                    {
-                        // '?' must follow '='
-                        if(m_CommandNameSize == m_ParserRX_Offset)
-                        {
-                            m_ReadCommand = true;
-                        }
-                        else // Malformed packet
-                        {
-                            m_Step = CLI_STEP_CMD_MALFORMED;
-                        }
-                    }
-                    else if((char)Data == '\r')
-                    {
-                        if(m_CommandNameSize == 0)    // if not "=" or "=?"
-                        {
-                            m_CommandNameSize = m_ParserRX_Offset;
-                        }
-
-                        m_Step     = CLI_STEP_CMD_VALID;
-//                        m_DataSize = m_ParserRX_Offset;   //  TODO found usage because not used !!!!!!!
-                    }
-                    else if((char)Data == '\b')
-                    {
-                        m_ParserRX_Offset--;
-
-                        if(m_CommandNameSize == m_ParserRX_Offset)
-                        {
-                            m_CommandNameSize = 0;
-                        }
-
-                        m_pFifo->HeadBackward(1);
-                    }
-                    else
-                    {
-                        // Write data into the Fifo buffer
-
-                        // Check if we can write into the Fifo
-                        if(m_pFifo->Write((const void*)&Data, 1) != 1)
-                        {
-                            // We have overrun the Fifo buffer
-                            m_Step = CLI_STEP_CMD_BUFFER_OVERFLOW;
-                        }
-                        else
-                        {
-                            m_ParserRX_Offset++;
-                        }
-                    }
-
-                    // Flush the FIFO an Error has occurred.
-                    if((m_Step != CLI_STEP_GETTING_DATA) && (m_Step != CLI_STEP_CMD_VALID))
-                    {
-                        m_pFifo->Flush(CLI_FIFO_PARSER_RX_SIZE);
-                        // Parser send Error and reset the state machine
-                    }
-                }
-            }
-
-            if(m_Step != CLI_STEP_IDLE)
-            {
-                m_CommandTimeOut = GetTick();
-            }
         }
         break;
 
@@ -264,10 +148,6 @@ void Console::Initialize(UART_Driver* pUartDriver)
     pUartDriver->RegisterCallback((CallbackInterface*)this);
     pUartDriver->EnableCallbackType(UART_CALLBACK_EMPTY_TX);
     pUartDriver->EnableCallbackType(UART_CALLBACK_COMPLETED_TX);
-    Printf(CON_SIZE_NONE, CON_STRING_RESET_TERMINAL);
-    Delay = GetTick();
-    while(TickHasTimeOut(Delay, CON_TERMINAL_RESET_DELAY) == false);
-    m_StartupTick = GetTick();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -287,16 +167,7 @@ void Console::Process(void)
     SystemState_e        State;
     int16_t              CommandNameSize;
     int                  Command;
-    CLI_CommandSupport_e Support;
 
-    if(m_IsItOnStartup == true)
-    {
-        if(TickHasTimeOut(m_StartupTick, CLI_NUMBER_OF_SECOND_FOR_STARTUP) == true)
-        {
-            m_IsItOnStartup = false;
-        }
-    }
-    
     // TODO process active child
     if(m_ChildProcess != nullptr)
     {
@@ -494,7 +365,6 @@ void Console::LockDisplay(bool State)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-// TODO move in comm_utility.h and .c this is a support function, it does not need to be in CLI
 void Console::DisplayTimeDateStamp(Date_t* pDate, Time_t* pTime)
 {
     Printf(CLI_SIZE_NONE, CLI_TIME_DATE_STAMP, pDate->Year,
@@ -567,9 +437,7 @@ bool Console::GetString(char* pBuffer, size_t Size)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-// TODO move in comm_utility.h and .c this is a support function, it does not need to be in CLI
 // bool Console::IsItA_Comma(give pointer to fifo or value)
-
 bool Console::IsItA_Comma(void)
 {
     bool Result = false;
@@ -601,9 +469,7 @@ bool Console::IsItA_Comma(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-// TODO move in comm_utility.h and .c this is a support function, it does not need to be in CLI
 // bool Console::GetAtoi(,,,, give pointer to fifo or value)
-
 bool Console::GetAtoi(int32_t* pValue, int32_t Min, int32_t Max, uint8_t Base)
 {
     uint32_t Size;

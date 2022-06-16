@@ -167,21 +167,12 @@ class CommandLine : public CallbackInterface
 {
     public:
 
-        void            Initialize                  (UART_Driver* pUartDriver);
+        void            Initialize                  (void);
         void            Process                     (void);
         void            GiveControlToChildProcess   (void(*pProcess)(uint8_t Data));
         void            ReleaseControl              (void);
-        void            DisplayTimeDateStamp        (Date_t* pDate, Time_t* pTime);
-        size_t          Printf                      (int nSize, const char* pFormat, ...);
         void            LockDisplay                 (bool State);
         void            SendAnswer                  (CLI_CmdName_e CmdName, SystemState_e State, const char* Answer);
-        bool            GetString                   (char* pBuffer, size_t Size);
-        bool            GetAtoi                     (int32_t* pValue, int32_t Min, int32_t Max, uint8_t Base);
-        bool            IsItA_Comma                 (void);
-        bool            IsItAnEOL                   (void);
-
-        size_t          PrintSerialLog              (CLI_DebugLevel_e Level, const char* pFormat, ...);
-        void            SetSerialLogging            (bool Mute);
 
         // For child process to send data
         SystemState_e   SendData                    (const uint8_t* p_BufferTX, size_t* pSizeTX, void* pContext = nullptr);

@@ -141,7 +141,7 @@ SystemState_e CS43L22::InitializeLowLevel(IO_ID_e RST_Pin)
 SystemState_e CS43L22::Initialize(void* pArg)
 {
     bool    Status = true;
-    uint8_t Standard;
+   // uint8_t Standard;
 
     m_pI2C = (I2C_Driver*)pArg;                                             // I2C already initialize.
     m_IsItStopped = true;

@@ -30,7 +30,6 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//#include "lib_digini.h"
 #include "vt100_cfg.h"
 #include "lib_vt100_expanding_macro.h"
 
@@ -154,19 +153,6 @@ enum VT100_CallBackType_e
     VT100_CALLBACK_FLUSH,
 };
 
-struct VT100_MenuDef_t
-{
-    // LABEL_Name_e      Label;   todo merge with label from digini
-    VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e);
-    VT100_Menu_e      NextMenu;
-};
-
-struct VT100_MenuObject_t
-{
-    const VT100_MenuDef_t*    pMenu;
-    //size_t                    pMenuSize;
-};
-
 //-------------------------------------------------------------------------------------------------
 // Function(s) Prototype(s)
 //-------------------------------------------------------------------------------------------------
@@ -179,11 +165,7 @@ class VT100_Terminal
 
 
         void                Process                     (void);
-      #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)
-        void                Initialize                  (UART_Driver* pUartDriver, const char* pHeadLabel, const char* pDescription);
-      #else
-        void                Initialize                  (const char* pHeadLabel, const char* pDescription);
-      #endif
+        void                Initialize                  (Console* pConsole, const char* pHeadLabel, const char* pDescription);
         void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
         void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
         void                GoToMenu                    (VT100_Menu_e MenuID);
@@ -220,8 +202,11 @@ class VT100_Terminal
 
         void                DisplayDescription          (void);
 
-//      #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)
-        size_t              LoggingPrintf               (CLI_DebugLevel_e Level, const char* pFormat, ...);
+
+void RX_Callback(uint8_t Data);
+
+//      #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED) // false it will alawys work with console
+        //size_t              LoggingPrintf               (CLI_DebugLevel_e Level, const char* pFormat, ...);
 
 // to check if needed in VT100
 void                SeConsoleMuteLogs           (bool);
@@ -240,22 +225,9 @@ bool                GetString                   (char* pBuffer, size_t Size);
         void                ClearConfigFLag             (void);
         void                ClearGenericString          (void);
 
-// CLI Specific
-//static void             CLI_AT_Parser           (void);
-//static void             CLI_ParseFIFO           (uint8_t Data);
-
-
-
-
-        VT100_CALLBACK_DEF(EXPAND_VT100_CMD_AS_FUNCTION)   // Generation of all prototype
-
+        Console*                            m_pConsole;
         bool                                m_IsItInStartup;
         bool                                m_BackFromEdition;
-
-      #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)
-        UART_Driver*                        m_pUartDriver;
-      #endif
-
         bool                                m_RefreshMenu;
         VT100_Menu_e                        m_MenuID;
         VT100_Menu_e                        m_FlushMenuID;
@@ -290,25 +262,59 @@ bool                GetString                   (char* pBuffer, size_t Size);
         char                                m_String[VT100_STRING_SZ + 1];
         bool                                m_InputStringMode;
         bool                                m_IsItString;
-        FIFO_Buffer                         m_FIFO_ParserRX;
         uint32_t                            m_NewConfigFlag[CONFIG_FLAG_SIZE];
         char                                m_GenericString[VT100_STRING_QTS][VT100_ITEMS_QTS][VT100_STRING_SZ];
 
-        static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
+        //static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
 
-        #define VT100_HEADER_CLASS_CONSTANT
-        #include "vt100_var.h"         // Project variable
-        #undef  VT100_HEADER_CLASS_CONSTANT
+        #define VT100_HEADER_CLASS_CONSTANT_MEMBER
+        #include "vt100_var.h"            // Project variable
+        #undef  VT100_HEADER_CLASS_CONSTANT_MEMBER
 
-        //char                      m_BufferParserRX[CLI_FIFO_PARSER_RX_SZ];
-        //CLI_ParserInfo_t            m_AT_ParserInfo;
+// not needed I think
+//       EXPAND_VT100_MENU_AS_CALLBACK(VT100_CALLBACK_DEF)       // Generation of all prototype
+
+
+
+
+
+
+
+
+
+/*
+
+
+struct VT100_MenuDef_t
+{
+    Label_e           Label; //  ??? how  todo merge with label from digini
+    VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e);
+    VT100_Menu_e      NextMenu;
+};
+
+struct VT100_MenuObject_t
+{
+    const VT100_MenuDef_t*    pMenu;
+    //size_t                    pMenuSize;
+};
+
+
+*/
+
+
+
+
+
+
+
+
 };
 
 //-------------------------------------------------------------------------------------------------
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "vt100_var.h"         // Project variable
+#include "vt100_var.h"        // Project variable
 
 //-------------------------------------------------------------------------------------------------
 

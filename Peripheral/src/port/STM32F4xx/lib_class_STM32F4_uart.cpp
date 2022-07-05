@@ -950,6 +950,11 @@ size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
     return SizeDataRX;
 }
 
+
+// TODO or check : Do i need DMA IRQ or IDLE will manage everything here...
+
+
+
 //-------------------------------------------------------------------------------------------------
 
 #endif // UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG == DEF_ENABLED
@@ -1174,16 +1179,16 @@ void UART_Driver::EnableCallbackType(int CallBackType, void* pContext)
       #if (UART_ISR_RX_CFG == DEF_ENABLED)
         case UART_CALLBACK_RX:
         {
-            m_pContextRX    = pContext;
+            m_pContextRX    = (UART_Transfert_t*)pContext;
             m_CallBackType |= CallBackType;
         }
         break;
       #endif
 
-      #if UART_ISR_RX_IDLE_CFG == DEF_ENABLED
+      #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
         case UART_CALLBACK_IDLE:
         {
-            m_pContextIDLE  = pContext;
+            m_pContextIDLE  = (UART_Transfert_t*)pContext;
             m_CallBackType |= CallBackType;
         }
         break;
@@ -1250,8 +1255,8 @@ void UART_Driver::IRQ_Handler(void)
 
             if(m_pCallback != nullptr)
             {
-                if(m_pContextERROR == nullptr) m_pCallback->CallbackFunction(m_pContextRX,    UART_CB_RX);
-                else                           m_pCallback->CallbackFunction(m_pContextERROR, UART_CB_ERROR);
+                if(m_pContextERROR == nullptr) m_pCallback->CallbackFunction(UART_CB_RX,    m_pContextRX);
+                else                           m_pCallback->CallbackFunction(UART_CB_ERROR, m_pContextERROR);
             }
 
             m_DMA_IsItBusyTX = false;
@@ -1285,6 +1290,7 @@ void UART_Driver::IRQ_Handler(void)
              if(m_pCallback != nullptr)
              {
                 if(m_pContextIDLE == nullptr) m_pCallback->CallbackFunction(UART_CALLBACK_RX,   m_pContextRX);
+                // TODO need to check all context. for nullptr
                 else                          m_pCallback->CallbackFunction(UART_CALLBACK_IDLE, m_pContextIDLE);
              }
              else
@@ -1302,6 +1308,7 @@ void UART_Driver::IRQ_Handler(void)
             if(m_pCallbackEmptyTX != nullptr)
             {
                 if(m_pContextEmptyTX == nullptr) m_pCallback->CallbackFunction(UART_CB_COMPLETED_TX, m_pContextTX);  //??
+                // TODO need to check all context. for nullptr
                 else                             m_pCallback->CallbackFunction(UART_CB_EMPTY_TX,     m_pContextEmptyTX);
             }
         }
@@ -1314,7 +1321,9 @@ void UART_Driver::IRQ_Handler(void)
 
             if(m_pCallback != nullptr)
             {
+                // TODO need to check all context. for nullptr
                 if(m_pContextCompletedTX == nullptr) m_pCallback->CallbackFunction(UART_CALLBACK_COMPLETED_TX, m_pContextTX);  //??
+                // TODO need to check all context. for nullptr
                 else                                 m_pCallback->CallbackFunction(UART_CALLBACK_COMPLETED_TX, m_pContextCompletedTX);
             }
 

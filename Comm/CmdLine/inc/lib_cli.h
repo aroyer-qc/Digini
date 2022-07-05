@@ -30,7 +30,6 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//#include "lib_digini.h"
 #include "cli_cfg.h"
 #include "lib_cli_expanding_macro.h"
 
@@ -46,8 +45,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define CLI_FIFO_PARSER_RX_SIZE         64
-#define CLI_SIZE_NONE                   0
+#define CMD_MENU            "MENU"
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -63,19 +61,6 @@ enum CLI_CmdName_e
     NUMBER_OF_CLI_CMD,
     CLI_NO_CMD,
     FIRST_CLI_COMMAND = 0,
-};
-
-enum CLI_DebugLevel_e
-{
-    CLI_DEBUG_LEVEL_0    = 0x00,
-    CLI_DEBUG_LEVEL_1    = 0x01,
-    CLI_DEBUG_LEVEL_2    = 0x02,
-    CLI_DEBUG_LEVEL_3    = 0x04,
-    CLI_DEBUG_LEVEL_4    = 0x08,
-    CLI_DEBUG_LEVEL_5    = 0x10,
-    CLI_DEBUG_LEVEL_6    = 0x20,
-    CLI_DEBUG_LEVEL_7    = 0x40,
-    CLI_DEBUG_LEVEL_8    = 0x80,
 };
 
 enum CLI_CommandSupport_e
@@ -150,7 +135,7 @@ enum CLI_Step_e
 enum CLI_StrCmdSize_e
 {
     #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-      SZ_OF_AT_MENU = sizeof("MENU") - 1,
+      SZ_OF_AT_MENU = sizeof(CMD_MENU) - 1,
     #endif
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_SIZE_OF)                // Create the sizeof() for each string
@@ -167,7 +152,7 @@ class CommandLine : public CallbackInterface
 {
     public:
 
-        void            Initialize                  (void);
+        void            Initialize                  (Console* pConsole);
         void            Process                     (void);
         void            GiveControlToChildProcess   (void(*pProcess)(uint8_t Data));
         void            ReleaseControl              (void);
@@ -199,21 +184,17 @@ class CommandLine : public CallbackInterface
 
     // --------------------------------------------------------------------------------------------
 
-        UART_Driver*                            m_pUartDriver;
+        Console*                                m_pConsole;
         CLI_InputState_e                        m_InputState;
         int                                     m_ParserRX_Offset;
         CLI_Step_e                              m_Step;
         CLI_ChildProcess_t                      m_ChildProcess;
         TickCount_t                             m_CommandTimeOut;
         int16_t                                 m_CommandNameSize;
-        //int16_t                                 m_DataSize;
         bool                                    m_MuteSerialLogging;
         TickCount_t                             m_StartupTick;
         bool                                    m_IsItOnStartup;
-        char                                    m_BufferParserRX[CLI_FIFO_PARSER_RX_SIZE];
-        FIFO_Buffer*                            m_pFifo;
         bool                                    m_IsItOnHold;
-        CLI_DebugLevel_e                        m_DebugLevel;
         bool                                    m_ReadCommand;
         bool                                    m_PlainCommand;
         int32_t                                 m_ParamValue[CLI_NUMBER_OF_SUPPORTED_PARAM];
@@ -225,7 +206,7 @@ class CommandLine : public CallbackInterface
         static const int                        m_CmdStrSize[NUMBER_OF_CLI_CMD];
 
       #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-        static const char                       m_StrAT_MENU[SZ_OF_AT_MENU];
+        static const char                       m_StrAT_MENU[sizeof(CMD_MENU)];
       #endif
 
         X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CLASS_CONST_STRING)           // Generation of all the string
@@ -239,7 +220,7 @@ class CommandLine : public CallbackInterface
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "cli_var.h"         // Project variable
+#include "cli_var.h"        // Project variable
 
 //-------------------------------------------------------------------------------------------------
 

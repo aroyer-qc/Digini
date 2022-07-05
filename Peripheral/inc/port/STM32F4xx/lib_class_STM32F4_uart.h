@@ -54,6 +54,9 @@
 #define UART_CALLBACK_CTS                   0x08
 #define UART_CALLBACK_EMPTY_TX              0x10
 #define UART_CALLBACK_COMPLETED_TX          0x20
+#define UART_CALLBACK_DMA_RX                0x40
+
+
 
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
@@ -253,7 +256,11 @@ struct UART_Variables_t
 };
 #endif
 
-//typedef void    (* UART_CallBack_t)           (void* pContext);
+struct UART_Transfert_t
+{
+    void*   pBuffer;
+    size_t  Size;
+};
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -341,10 +348,10 @@ class UART_Driver
         int                         m_CallBackType;
 
        #if (UART_ISR_RX_CFG == DEF_ENABLED)
-        void*                       m_pContextRX;
+        UART_Transfert_t*           m_pContextRX;
        #endif
        #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
-        void*                       m_pContextIDLE;
+        UART_Transfert_t*           m_pContextIDLE;
        #endif
        #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
         void*                       m_pContextERROR;

@@ -28,9 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//#define CON_GLOBAL
+#define CONSOLE_GLOBAL
 #include "lib_digini.h"
-//#undef  CON_GLOBAL
+#undef  CONSOLE_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -71,46 +71,9 @@ void Console::CallbackFunction(int Type, void* pContext)
         // RX data from uart then call RX_Callback.
         case UART_CALLBACK_RX:
         {
-            RX_Callback(*((uint8_t*)pContext));
-        }
-        break;
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           RX_Callback
-//
-//  Parameter(s):   uint8_t     Data        First byte received
-//
-//  Return:         None
-//
-//  Description:    Here we received the character from the terminal.
-//
-//  Note(s):        This is a state machine to handle incoming character, according to state on menu
-//                  or AT Sequence or input (string or decimal/hexadecimal).
-//
-//-------------------------------------------------------------------------------------------------
-void Console::RX_Callback(uint8_t Data)
-{
-    switch(int(m_InputState))
-    {
-        case CLI_CMD_LINE:
-        {
-        }
-        break;
-
-        case CLI_USER_FUNCTION:
-        {
-            if(m_ChildProcess != nullptr)
-            {
-                m_ChildProcess(Data);
-            }
-            else
-            {
-                // Return to command line since no child process exist.
-                m_Step = CLI_STEP_IDLE;
-            }
+            // We should copy the data here from the buffer... remember here it is call from an interrupt... no time to process stuff
+            // TODO handle the fifo
+// ???
         }
         break;
     }
@@ -134,18 +97,28 @@ void Console::RX_Callback(uint8_t Data)
 //-------------------------------------------------------------------------------------------------
 void Console::Initialize(UART_Driver* pUartDriver)
 {
-    TickCount_t Delay;
-
     m_pUartDriver           = pUartDriver;
     m_ParserRX_Offset       = 0;
     m_IsItOnHold            = false;
     m_IsItOnStartup         = true;
     m_MuteSerialLogging     = true;
     m_DebugLevel            = CON_DEBUG_LEVEL_0;
+  #if (CON_CHILD_PROCESS_PUSH_POP_LEVEL > 1)
+    for(int i = 0; i < CON_CHILD_PROCESS_PUSH_POP_LEVEL; i++)
+    {
+        m_ChildProcess[i]   = nullptr;
+        m_pCallbackRX[i]    = nullptr;
+    }
+  #else
     m_ChildProcess          = nullptr;
+    m_pCallbackRX           = nullptr;
+  #endif
 
-    m_pFifo = new FIFO_Buffer(CLI_FIFO_PARSER_RX_SIZE);
+    m_ActiveProcessLevel    = CON_NOT_CONNECTED;
+
+    m_pFifo = new FIFO_Buffer(CON_FIFO_PARSER_RX_SIZE);
     pUartDriver->RegisterCallback((CallbackInterface*)this);
+    pUartDriver->EnableCallbackType(UART_CALLBACK_EMPTY_TX, m_pRX_Transfert);
     pUartDriver->EnableCallbackType(UART_CALLBACK_EMPTY_TX);
     pUartDriver->EnableCallbackType(UART_CALLBACK_COMPLETED_TX);
 }
@@ -164,20 +137,25 @@ void Console::Initialize(UART_Driver* pUartDriver)
 //-------------------------------------------------------------------------------------------------
 void Console::Process(void)
 {
-    SystemState_e        State;
-    int16_t              CommandNameSize;
-    int                  Command;
-
-    // TODO process active child
+  #if (CON_CHILD_PROCESS_PUSH_POP_LEVEL > 1)
+    if(m_ChildProcess[m_ActiveProcessLevel] != nullptr)
+    {
+        m_ChildProcess[m_ActiveProcessLevel]();
+    }
+  #else
     if(m_ChildProcess != nullptr)
     {
+        m_ChildProcess();
     }
+  #endif
+
 }
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           GiveControlToChildProcess
 //
 //  Parameter(s):   pProcess          pointer to a function  void (*pProcess) (uint8_t Data)
+//                  pCallbackRX         CallbackInterface*  for RX data
 //  Return:         None
 //
 //  Description:    Give control of the interface to a child process.
@@ -185,13 +163,23 @@ void Console::Process(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void Console::GiveControlToChildProcess(void(*pProcess)(uint8_t Data))
+void Console::GiveControlToChildProcess(void(*pProcess)(void), CallbackInterface* pCallbackRX)
 {
+  #if (CON_CHILD_PROCESS_PUSH_POP_LEVEL > 1)
+    if((pProcess != nullptr) && (m_ActiveProcessLevel < (CON_CHILD_PROCESS_PUSH_POP_LEVEL - 1)))
+    {
+        m_ActiveProcessLevel++;
+        m_ChildProcess[m_ActiveProcessLevel] = pProcess;
+        m_pCallbackRX[m_ActiveProcessLevel]  = pCallbackRX;
+    }
+  #else
     if(pProcess != nullptr)
     {
+        m_ActiveProcessLevel++;
         m_ChildProcess = pProcess;
-        m_InputState   = CLI_USER_FUNCTION;
+        m_pCallbackRX  = pCallbackRX;
     }
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -208,11 +196,21 @@ void Console::GiveControlToChildProcess(void(*pProcess)(uint8_t Data))
 //-------------------------------------------------------------------------------------------------
 void Console::ReleaseControl(void)
 {
+  #if (CON_CHILD_PROCESS_PUSH_POP_LEVEL > 1)
+    if((m_ChildProcess != nullptr) && (m_ActiveProcessLevel != CON_NOT_CONNECTED))
+    {
+        m_ChildProcess[m_ActiveProcessLevel] = nullptr;
+        m_pCallbackRX[m_ActiveProcessLevel]  = nullptr;
+        m_ActiveProcessLevel--;
+    }
+  #else
     if(m_ChildProcess != nullptr)
     {
-        m_ChildProcess = nullptr;
-        m_InputState   = CLI_CMD_LINE;
+        m_ChildProcess       = nullptr;
+        m_pCallbackRX        = nullptr;
+        m_ActiveProcessLevel = CON_NOT_CONNECTED;
     }
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -236,17 +234,15 @@ size_t Console::Printf(int MaxSize, const char* pFormat, ...)
     va_list vaArg;
     size_t  Size = 0;
 
-    if((pBuffer = (char*)pMemory->Alloc(CON_SERIAL_OUT_SIZE)) == nullptr)
+    if((pBuffer = (char*)pMemory->Alloc(CON_SERIAL_OUT_SIZE)) != nullptr)
     {
-        return 0;
+        Size = (MaxSize == CON_SIZE_NONE) ? CON_SERIAL_OUT_SIZE : MaxSize;
+        va_start(vaArg, (const char*)pFormat);
+        Size = vsnprintf(&pBuffer[0], Size, pFormat, vaArg);
+        while(m_pUartDriver->IsItBusy() == true){};
+        m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);
+        va_end(vaArg);
     }
-
-    Size = (MaxSize == CON_SIZE_NONE) ? CON_SERIAL_OUT_SIZE : MaxSize;
-    va_start(vaArg, (const char*)pFormat);
-    Size = vsnprintf(&pBuffer[0], Size, pFormat, vaArg);
-    while(m_pUartDriver->IsItBusy() == true){};
-    m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);
-    va_end(vaArg);
 
     return Size;
 }
@@ -255,7 +251,7 @@ size_t Console::Printf(int MaxSize, const char* pFormat, ...)
 //
 //  Name:           PrintSerialLog
 //
-//  Parameter(s):   CLI_DebugLevel_e    Level       Level of printf logging.
+//  Parameter(s):   CON_DebugLevel_e    Level       Level of printf logging.
 //                  const char*         pFormat     Formatted string.
 //                  ...                             Parameter if any.
 //
@@ -266,7 +262,7 @@ size_t Console::Printf(int MaxSize, const char* pFormat, ...)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-size_t Console::PrintSerialLog(CLI_DebugLevel_e Level, const char* pFormat, ...)
+size_t Console::PrintSerialLog(CON_DebugLevel_e Level, const char* pFormat, ...)
 {
     va_list          vaArg;
     char*            pBuffer;
@@ -274,12 +270,12 @@ size_t Console::PrintSerialLog(CLI_DebugLevel_e Level, const char* pFormat, ...)
 
     if(m_MuteSerialLogging == false)
     {
-        if((m_DebugLevel & Level) != CLI_DEBUG_LEVEL_0)
+        if((m_DebugLevel & Level) != CON_DEBUG_LEVEL_0)
         {
-            if((pBuffer = (char*)pMemory->Alloc(CLI_SERIAL_OUT_SIZE)) != nullptr)
+            if((pBuffer = (char*)pMemory->Alloc(CON_SERIAL_OUT_SIZE)) != nullptr)
             {
                 va_start(vaArg, (const char*)pFormat);
-                Size = vsnprintf(pBuffer, CLI_SERIAL_OUT_SIZE, pFormat, vaArg);
+                Size = vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, vaArg);
                 m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size, nullptr);
                 va_end(vaArg);
                 pMemory->Free((void**)&pBuffer);
@@ -306,7 +302,7 @@ size_t Console::PrintSerialLog(CLI_DebugLevel_e Level, const char* pFormat, ...)
 //-------------------------------------------------------------------------------------------------
 SystemState_e Console::SendData(const uint8_t* p_BufferTX, size_t* pSizeTX, void* pContext)
 {
-
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -367,7 +363,7 @@ void Console::LockDisplay(bool State)
 //-------------------------------------------------------------------------------------------------
 void Console::DisplayTimeDateStamp(Date_t* pDate, Time_t* pTime)
 {
-    Printf(CLI_SIZE_NONE, CLI_TIME_DATE_STAMP, pDate->Year,
+    Printf(CON_SIZE_NONE, CON_TIME_DATE_STAMP, pDate->Year,
                                                pDate->Month,
                                                pDate->Day,
                                                pTime->Hour,

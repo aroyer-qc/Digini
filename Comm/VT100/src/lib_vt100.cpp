@@ -38,7 +38,7 @@
 
 #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
 
-#if (USE_UART_DRIVER != DEF_ENABLED)
+#if (USE_UART_DRIVER != DEF_ENABLED)  // and console
   #error USE_UART_DRIVER must be define DEF_ENABLED
 #endif
 
@@ -90,7 +90,8 @@ extern "C" void VT100_TaskWrapper(void* pvParameters)
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   const char* pHeadLabel
+//  Parameter(s):   Console*    pConsole                   Pointer on the console class object
+//                  const char* pHeadLabel
 //  Return:         const char* pDescription
 //
 //  Description:    Initialize VT100_terminal
@@ -98,23 +99,19 @@ extern "C" void VT100_TaskWrapper(void* pvParameters)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)
-  void VT100_Terminal::Initialize(UART_Driver* pUartDriver, const char* pHeadLabel, const char* pDescription)
-#else
-  void VT100_Terminal::Initialize(const char* pHeadLabel, const char* pDescription)
-#endif
+  void VT100_Terminal::Initialize(Console* pConsole, const char* pHeadLabel, const char* pDescription)
 {
     TickCount_t Delay;
 
     m_ForceRefresh = false;
-    // Should read futur configuration for muting
+    // Should read future configuration for muting
     m_LogsAreMuted = false;
 
     InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
     Delay = GetTick();
     while(TickHasTimeOut(Delay, 100) == false){};
 
-//    UART_Initialize(UART_CONSOLE);
+    m_pConsole                = pConsole;
     m_pHeadLabel              = (char*)pHeadLabel;
     m_pDescription            = (char*)pDescription;
     m_RefreshMenu             = false;
@@ -135,14 +132,8 @@ extern "C" void VT100_TaskWrapper(void* pvParameters)
     m_LogsAreMuted            = true;
     m_String[VT100_STRING_SZ] = '\0';
 
-  #if (VT100_IS_RUNNING_STAND_ALONE == DEF_DEFINED)
-    m_pUartDriver             = pUartDriver;
-  #endif
-
     //nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, nullptr, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
     //CallbackInitialize();
-
-    m_FIFO_ParserRX.Initialize(VT100_FIFO_PARSER_RX_SZ);
     ClearConfigFLag();
     ClearGenericString();
 }
@@ -324,7 +315,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
             nOS_Sleep(100);                                                 // Terminal need time to reset
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_HIDE_CURSOR);
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_CLEAR_SCREEN);
-            m_pHeadLabel = (char*)LABEL_pStr[LBL_MENU_TITLE];
+            m_pHeadLabel = (char*)LBL_Application[LBL_MENU_TITLE][0];  // TODO fix language
           #ifdef CONSOLE_USE_COLOR
             SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
           #endif
@@ -349,7 +340,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
                     MenuSelectItems(ItemsChar);
                 }
 
-                pLabel = LABEL_pStr[pMenu->Label];
+                pLabel = LBL_Application[pMenu->Label][0];// TODO fix language
                 InMenuPrintf(VT100_SZ_NONE, pLabel);
 
                 if(Items == 0)
@@ -436,13 +427,13 @@ VT100_InputType_e VT100_Terminal::CallBack(VT100_InputType_e (*CallBack)(uint8_t
 
     InputType = VT100_INPUT_MENU_CHOICE;
 
-    if(Callback != nullptr)
+/*    if(Callback != nullptr)
     {
         SaveAttribute();
         InputType = Callback(Item, Type);
         RestoreAttribute();
     }
-
+*/
     return InputType;
 }
 
@@ -838,6 +829,7 @@ size_t VT100_Terminal::InMenuPrintf(int nSize, const char* pFormat, ...)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+/*
 size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat, ...)
 {
     va_list          vaArg;
@@ -876,7 +868,7 @@ size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat
 
     return Size;
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           GoToMenu
@@ -1329,13 +1321,13 @@ bool VT100_Terminal::GetString(char* pBuffer, size_t Size)
 {
     char Character;
 
-    if(m_FIFO_ParserRX.At(0) == '"')
+    if(m_pConsole->At(0) == '"')
     {
-        m_FIFO_ParserRX.Flush(1);
+        m_pConsole->Flush(1);
 
         for(int i = 0; i <= Size; i++)
         {
-            if(m_FIFO_ParserRX.Read(&Character, 1) == 1)
+            if(m_pConsole->Read(&Character, 1) == 1)
             {
                 if(Character == '"')
                 {
@@ -1370,6 +1362,7 @@ bool VT100_Terminal::GetString(char* pBuffer, size_t Size)
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::RX_Callback(uint8_t Data)
 {
+   /*
     if(m_FlushNextEntry == true)
     {
         m_FlushNextEntry = false;
@@ -1524,6 +1517,7 @@ void VT100_Terminal::RX_Callback(uint8_t Data)
 
         default: break;
     }
+       */
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -418,7 +418,7 @@ SystemState_e CommandLine::CmdDBG_LEVEL(void)
 {
     SystemState_e       Error;
     char                Response[64];
-    uint8_t             DebugLevel = (uint8_t)m_DebugLevel;
+    uint8_t             DebugLevel = (uint8_t)m_pConsole->GetDebugLevel();
 
     if((m_ReadCommand == true) || (m_PlainCommand == true))     // Process also a plain command has a read
     {
@@ -433,12 +433,12 @@ SystemState_e CommandLine::CmdDBG_LEVEL(void)
 
         snprintf(&Response[14], 64, "\r\n          01234567\r\n");
         SendAnswer(AT_DEBUG, SYS_OK_READ, Response);
-        Error =  SYS_OK_SILENT;
+        Error = SYS_OK_SILENT;
     }
     else
     {
-        m_DebugLevel = (CLI_DebugLevel_e)m_ParamValue[0];
-        Error        = SYS_READY;
+        m_pConsole->SetDebugLevel((CON_DebugLevel_e)m_ParamValue[0]);
+        Error = SYS_READY;
     }
 
     return Error;

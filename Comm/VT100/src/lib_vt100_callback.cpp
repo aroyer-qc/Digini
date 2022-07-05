@@ -148,11 +148,10 @@ typedef enum
 // Variable(s)
 //-------------------------------------------------------------------------------------------------
 
-//static uint8_t                  VT100_LastDebugLevel;
+static CON_DebugLevel_e         VT100_LastDebugLevel;
 //static nOS_Time                 VT100_LastUpTime;
-//static uint8_t                  VT100_LastSecond;
+static uint8_t                  VT100_LastSecond;
 //static bool                     VT100_DrawOnlyOnce;
-//static bool                     VT100_BluetoothAdvertisement;
 
 // scratch pad variable..
 // static valid for the life of one menu iteration.. should not contain data that need to live longer.
@@ -161,10 +160,7 @@ typedef enum
 //static bool                     VT100_Generic_uint64_t_Updated;
 //static nOS_TickCounter          VT100_GenericTimeOut1;
 //static nOS_TickCounter          VT100_GenericTimeOut2;
-//static uint64_t                 VT100_Generic_uint64;                                                 // uint64_t that can be used by any callback
-
-// TO DO change for the Bluetooth variable for the TX power
-//static uint8_t  VT100_TX_Power;
+static uint64_t                 VT100_Generic_uint64;                                                 // uint64_t that can be used by any callback
 
 //-------------------------------------------------------------------------------------------------
 // Private(s) function(s)
@@ -204,8 +200,6 @@ void VT100_CallbackInitialize(void)
   *
   *--------------------------------------------------------------------------------------------------------------------
   */
-
-
 VT100_InputType_e VT100_Terminal::CALL_MenuSelection(uint8_t Input, VT100_CallBackType_e Type)
 {
     VAR_UNUSED(Input);
@@ -214,11 +208,11 @@ VT100_InputType_e VT100_Terminal::CALL_MenuSelection(uint8_t Input, VT100_CallBa
     {
         if(m_IsItInStartup == true)
         {
-            GoToMenu(VT100_MENU_MAIN_BOOT_TIME);
+            GoToMenu(VT100_MENU_BOOT);
         }
         else
         {
-            GoToMenu(VT100_MENU_MAIN_APP_RUNNING);
+            GoToMenu(VT100_MENU_MAIN);
         }
     }
 
@@ -234,6 +228,7 @@ VT100_InputType_e VT100_Terminal::CALL_MenuSelection(uint8_t Input, VT100_CallBa
   */
 VT100_InputType_e VT100_Terminal::CALL_ProductInformation(uint8_t Input, VT100_CallBackType_e Type)
 {
+    /*
     nOS_Time        UpTime;
     nOS_TimeDate    TimeDate;
 
@@ -295,7 +290,7 @@ VT100_InputType_e VT100_Terminal::CALL_ProductInformation(uint8_t Input, VT100_C
                 //BLE112_getMAC();
             }
 
-            RTC_DateAndTime(&TimeDate, STATE_GET);
+           // RTC_DateAndTime(&TimeDate, STATE_GET);
 
             if(TimeDate.second != VT100_LastSecond)
             {
@@ -312,7 +307,7 @@ VT100_InputType_e VT100_Terminal::CALL_ProductInformation(uint8_t Input, VT100_C
             break;
         }
     }
-
+*/
     return VT100_INPUT_ESCAPE;
 }
 
@@ -326,7 +321,7 @@ VT100_InputType_e VT100_Terminal::CALL_ProductInformation(uint8_t Input, VT100_C
   */
 VT100_InputType_e VT100_Terminal::CALL_DebugLevelSetting(uint8_t Input, VT100_CallBackType_e Type)
 {
-    static uint8_t DebugLevel = 0;
+    static CON_DebugLevel_e DebugLevel = CON_DEBUG_LEVEL_0;
 
     if(Type != VT100_CALLBACK_FLUSH)
     {
@@ -335,7 +330,7 @@ VT100_InputType_e VT100_Terminal::CALL_DebugLevelSetting(uint8_t Input, VT100_Ca
            // all the time if it is a VT100_CALLBACK_REFRESH
            (Type == VT100_CALLBACK_REFRESH))
         {
-       //     // SYS_Read(SYS_DEBUG_LEVEL, MAIN_ACU, 0, &DebugLevel, NULL);
+            //SYS_Read(SYS_DEBUG_LEVEL, MAIN_ACU, 0, &DebugLevel, NULL);
             VT100_LastDebugLevel = DebugLevel;
         }
 
@@ -348,7 +343,7 @@ VT100_InputType_e VT100_Terminal::CALL_DebugLevelSetting(uint8_t Input, VT100_Ca
         {
             if(Type != VT100_CALLBACK_INIT)
             {
-                DebugLevel &= ~((uint8_t)1 << (Input - 1));
+                DebugLevel = CON_DebugLevel_e(uint8_t(CON_DEBUG_LEVEL_0) & ~((uint8_t)1 << (Input - 1)));
                 InMenuPrintf(VT100_SZ_NONE, " ");
             }
             else
@@ -390,6 +385,7 @@ VT100_InputType_e VT100_Terminal::CALL_DebugLevelSetting(uint8_t Input, VT100_Ca
   */
 VT100_InputType_e VT100_Terminal::CALL_LedControl(uint8_t Input, VT100_CallBackType_e Type)
 {
+    /*
     uint8_t Led;
 
     Led = Input - 1;
@@ -406,39 +402,36 @@ VT100_InputType_e VT100_Terminal::CALL_LedControl(uint8_t Input, VT100_CallBackT
         }
     }
 
-    if(Input != DOOR_CTRL_MENU_TITLE)
-    {
-      #ifdef CONSOLE_USE_COLOR
-        SetForeColor(VT100_COLOR_GREEN);
-      #endif
+  #ifdef CONSOLE_USE_COLOR
+    SetForeColor(VT100_COLOR_GREEN);
+  #endif
 
-        if((((uint64_t)1 << Input) & VT100_Generic_uint64) != 0)
+    if((((uint64_t)1 << Input) & VT100_Generic_uint64) != 0)
+    {
+        if(Type == VT100_CALLBACK_ON_INPUT)
         {
-            if(Type == VT100_CALLBACK_ON_INPUT)
-            {
-                VT100_Generic_uint64 &= ~((uint64_t)1 << Input);
-                IO_Ctrl(Led, STATE_CLEAR);
-            }
-            else
-            {
-                IO_Ctrl(Led, STATE_SET);
-            }
+            VT100_Generic_uint64 &= ~((uint64_t)1 << Input);
+            IO_Ctrl(Led, STATE_CLEAR);
         }
         else
         {
-            if(Type == VT100_CALLBACK_ON_INPUT)
-            {
-                VT100_Generic_uint64 |= ((uint64_t)1 << Input);
-                IO_Ctrl(Led, STATE_SET);
-            }
-            else
-            {
-                IO_Ctrl(Led, STATE_CLEAR);
-            }
+            IO_Ctrl(Led, STATE_SET);
+        }
+    }
+    else
+    {
+        if(Type == VT100_CALLBACK_ON_INPUT)
+        {
+            VT100_Generic_uint64 |= ((uint64_t)1 << Input);
+            IO_Ctrl(Led, STATE_SET);
+        }
+        else
+        {
+            IO_Ctrl(Led, STATE_CLEAR);
         }
     }
 
-    if((Type == VT100_CALLBACK_REFRESH) && (Input == DOOR_CTRL_MENU_TITLE))
+    if(Type == VT100_CALLBACK_REFRESH)
     {
       #ifdef CONSOLE_USE_COLOR
         SetForeColor(VT100_COLOR_GREEN);
@@ -457,7 +450,7 @@ VT100_InputType_e VT100_Terminal::CALL_LedControl(uint8_t Input, VT100_CallBackT
             }
         }
     }
-
+*/
     return VT100_INPUT_MENU_CHOICE;
 }
 
@@ -470,6 +463,7 @@ VT100_InputType_e VT100_Terminal::CALL_LedControl(uint8_t Input, VT100_CallBackT
   */
 VT100_InputType_e VT100_Terminal::CALL_InputReading(uint8_t Input, VT100_CallBackType_e Type)
 {
+    /*
     int32_t Temperature;
     uint8_t VerticalOffset;
 
@@ -553,7 +547,7 @@ VT100_InputType_e VT100_Terminal::CALL_InputReading(uint8_t Input, VT100_CallBac
 
             VerticalOffset += 3;
             SetCursorPosition(28, VerticalOffset++);
-            if(IO_Ctrl(IO_EXT_SWITCH, STATE_READ) == STATE_SET)
+            if(1)//IO_Ctrl(IO_EXT_SWITCH, STATE_READ) == STATE_SET)
             {
               #ifdef CONSOLE_USE_COLOR
                 SetColor(VT100_COLOR_BLACK, VT100_COLOR_GREEN);
@@ -572,7 +566,7 @@ VT100_InputType_e VT100_Terminal::CALL_InputReading(uint8_t Input, VT100_CallBac
         default:
             break;
     }
-
+*/
     return VT100_INPUT_ESCAPE;
 }
 
@@ -584,6 +578,7 @@ VT100_InputType_e VT100_Terminal::CALL_InputReading(uint8_t Input, VT100_CallBac
   *
   *--------------------------------------------------------------------------------------------------------------------
   */
+/*
 VT100_InputType_e VT100_Terminal::CALL_BlueTooth(uint8_t Input, VT100_CallBackType_e Type)
 {
     nOS_TimeDate TimeDate;
@@ -647,6 +642,7 @@ VT100_InputType_e VT100_Terminal::CALL_BlueTooth(uint8_t Input, VT100_CallBackTy
 
     return VT100_INPUT_MENU_CHOICE;
 }
+*/
 
 /**
   *--------------------------------------------------------------------------------------------------------------------
@@ -655,6 +651,7 @@ VT100_InputType_e VT100_Terminal::CALL_BlueTooth(uint8_t Input, VT100_CallBackTy
   *
   *--------------------------------------------------------------------------------------------------------------------
   */
+/*
 VT100_InputType_e VT100_Terminal::CALL_GetRSSI(uint8_t Input, VT100_CallBackType_e Type)
 {
     int8_t RSSI;
@@ -680,7 +677,7 @@ VT100_InputType_e VT100_Terminal::CALL_GetRSSI(uint8_t Input, VT100_CallBackType
 
     return VT100_INPUT_MENU_CHOICE;
 }
-
+*/
 
 /**
   *--------------------------------------------------------------------------------------------------------------------
@@ -691,6 +688,7 @@ VT100_InputType_e VT100_Terminal::CALL_GetRSSI(uint8_t Input, VT100_CallBackType
   */
 VT100_InputType_e VT100_Terminal::CALL_MiscCfg(uint8_t Input, VT100_CallBackType_e Type)
 {
+    /*
     static int16_t  TemperatureAlarmLow;
     static int16_t  TemperatureAlarmHigh;
     static uint16_t BackupBatteryLowVoltage;
@@ -987,7 +985,7 @@ VT100_InputType_e VT100_Terminal::CALL_MiscCfg(uint8_t Input, VT100_CallBackType
             InMenuPrintf(VT100_STRING_SZ, &m_GenericString[3][0][0]);
         }
     }
-
+*/
     return VT100_INPUT_MENU_CHOICE;
 }
 
@@ -1001,6 +999,7 @@ VT100_InputType_e VT100_Terminal::CALL_MiscCfg(uint8_t Input, VT100_CallBackType
   */
 VT100_InputType_e VT100_Terminal::CALL_TimeDateCfg(uint8_t Input, VT100_CallBackType_e Type)
 {
+    /*
     static nOS_TimeDate TimeDate;
     uint32_t            Refresh;
     uint32_t            EditedValue;        // if we come back from decimal input
@@ -1147,7 +1146,7 @@ VT100_InputType_e VT100_Terminal::CALL_TimeDateCfg(uint8_t Input, VT100_CallBack
         SetCursorPosition(26, 25);
         InMenuPrintf(VT100_SZ_NONE, "%s %u, %u ", RTC_MonthName[TimeDate.month - 1], TimeDate.day, TimeDate.year);
      }
-
+*/
     return VT100_INPUT_MENU_CHOICE;
 }
 

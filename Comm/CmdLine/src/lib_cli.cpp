@@ -46,14 +46,12 @@ typedef SystemState_e (CommandLine::*const CLI_Function_t)(void);
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define CLI_SERIAL_OUT_SIZE                         256
 #define CLI_PASSWORD_SIZE                           16
 #define CLI_TERMINAL_RESET_DELAY                    100
 #define CLI_AT_STR_SIZE                             2
 
 #define CLI_STRING_CLEAR_SCREEN                     "\033[2J\e[H"
 #define CLI_STRING_RESET_TERMINAL                   "\033c\r\n"
-#define CLI_TIME_DATE_STAMP                         "%04u-%02u-%02u %2u:%02u:%02u: "
 
 //-------------------------------------------------------------------------------------------------
 // Const(s)
@@ -79,7 +77,7 @@ const CLI_CmdInputInfo_t CommandLine::m_CmdInputInfo[NUMBER_OF_CLI_CMD]  =
 };
 
 #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-  const char CommandLine::m_StrAT_MENU[SZ_OF_AT_MENU] = "MENU";
+  const char CommandLine::m_StrAT_MENU[sizeof(CMD_MENU)] = CMD_MENU;
 #endif
 
 X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CONST_STRING)           // Generation of all the string
@@ -97,7 +95,7 @@ const char* CommandLine::m_pCmdStr[NUMBER_OF_CLI_CMD] =
 const int CommandLine::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
 {
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-    sizeof("MENU") - 1,
+    sizeof(CMD_MENU) - 1,
   #endif
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_STRING_SIZE)
@@ -169,21 +167,21 @@ SystemState_e CommandLine::HandleCmdPassword(void)
 //
 //  Return:         None
 //
-//  Description:    Check if password is valid parsing the FIFO
+//  Description:
 //
 //-------------------------------------------------------------------------------------------------
 void CommandLine::CallbackFunction(int Type, void* pContext)
 {
     switch(Type)
     {
-        // TX from uart is completed then release memory.
+        // TX from UART is completed then release memory.
         case UART_CALLBACK_COMPLETED_TX:
         {
             pMemory->Free((void**)&pContext);
         }
         break;
 
-        // RX data from uart then call RX_Callback.
+        // RX data from UART then call RX_Callback.
         case UART_CALLBACK_RX:
         {
             RX_Callback(*((uint8_t*)pContext));
@@ -290,14 +288,14 @@ void CommandLine::RX_Callback(uint8_t Data)
                             m_CommandNameSize = 0;
                         }
 
-                        m_pFifo->HeadBackward(1);
+                        m_pConsole->HeadBackward(1);
                     }
                     else
                     {
                         // Write data into the Fifo buffer
 
                         // Check if we can write into the Fifo
-                        if(m_pFifo->Write((const void*)&Data, 1) != 1)
+                        if(m_pConsole->Write((const void*)&Data, 1) != 1)
                         {
                             // We have overrun the Fifo buffer
                             m_Step = CLI_STEP_CMD_BUFFER_OVERFLOW;
@@ -311,7 +309,7 @@ void CommandLine::RX_Callback(uint8_t Data)
                     // Flush the FIFO an Error has occurred.
                     if((m_Step != CLI_STEP_GETTING_DATA) && (m_Step != CLI_STEP_CMD_VALID))
                     {
-                        m_pFifo->Flush(CLI_FIFO_PARSER_RX_SIZE);
+                        m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);
                         // Parser send Error and reset the state machine
                     }
                 }
@@ -371,16 +369,16 @@ void CommandLine::ProcessParams(CLI_CmdName_e Command)
         {
             i++;                    // Must be incremented before comparison
 
-            if(GetAtoi(pValue, pParam->Min, pParam->Max, pParam->Base) == true)
+            if(m_pConsole->GetAtoi(pValue, pParam->Min, pParam->Max, pParam->Base) == true)
             {
                 if(i < NbParam)
                 {
-                    if(IsItA_Comma() == false)
+                    if(m_pConsole->IsItA_Comma() == false)
                     {
                         State = SYS_INVALID_PARAMETER;
                     }
                 }
-                else if(IsItAnEOL() == false)
+                else if(m_pConsole->IsItAnEOL() == false)
                 {
                     State = SYS_INVALID_PARAMETER;
                 }
@@ -396,7 +394,7 @@ void CommandLine::ProcessParams(CLI_CmdName_e Command)
 
             if(m_pParamStr[i] != nullptr)
             {
-                if(GetString(m_pParamStr[i], CLI_STRING_SIZE) == false)
+                if(m_pConsole->GetString(m_pParamStr[i], CLI_STRING_SIZE) == false)
                 {
                     State = SYS_INVALID_PARAMETER;
                 }
@@ -419,7 +417,7 @@ void CommandLine::ProcessParams(CLI_CmdName_e Command)
 //
 //  Name:           Initialize
 //
-//  Parameter(s):
+//  Parameter(s):  Console*    pConsole       Pointer on the console class object
 //  Return:         None
 //
 //  Description:    Initialize command line interface
@@ -427,25 +425,20 @@ void CommandLine::ProcessParams(CLI_CmdName_e Command)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CommandLine::Initialize(/* ??? */)
+void CommandLine::Initialize(Console* pConsole)
 {
     TickCount_t Delay;
 
-    m_pUartDriver           = pUartDriver;
-    m_InputState            = CLI_CMD_LINE;       // Initial input type
-    m_Step                  = CLI_STEP_IDLE;      // Initial step of the parser
-    m_ParserRX_Offset       = 0;
-    m_IsItOnHold            = false;
-    m_IsItOnStartup         = true;
-    m_MuteSerialLogging     = true;
-    m_DebugLevel            = CLI_DEBUG_LEVEL_0;
-    m_ChildProcess          = nullptr;
+    m_pConsole          = pConsole;
+    m_InputState        = CLI_CMD_LINE;       // Initial input type
+    m_Step              = CLI_STEP_IDLE;      // Initial step of the parser
+    m_ParserRX_Offset   = 0;
+    m_IsItOnHold        = false;
+    m_IsItOnStartup     = true;
+    m_MuteSerialLogging = true;
+    m_ChildProcess      = nullptr;
 
-    m_pFifo = new FIFO_Buffer(CLI_FIFO_PARSER_RX_SIZE);
-    pUartDriver->RegisterCallback((CallbackInterface*)this);
-    pUartDriver->EnableCallbackType(UART_CALLBACK_EMPTY_TX);
-    pUartDriver->EnableCallbackType(UART_CALLBACK_COMPLETED_TX);
-    Printf(CLI_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
+    pConsole->Printf(CON_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
     Delay = GetTick();
     while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
     m_StartupTick = GetTick();
@@ -460,7 +453,9 @@ void CommandLine::Initialize(/* ??? */)
 //
 //  Description:    Command line interface process
 //
-//  Note(s):        Preprocessing line of data to trap ERROR or OK or continue for data
+//  Note(s):        (1) This process is called in the Console process. do not call this process
+//                      directly.
+//                  (2) Preprocessing line of data to trap ERROR or OK or continue for data
 //
 //-------------------------------------------------------------------------------------------------
 void CommandLine::Process(void)
@@ -481,7 +476,7 @@ void CommandLine::Process(void)
     // --------------------------------------------------------------------------------------------
     // CLI Parser
     //
-    if(m_pFifo->ReadyRead() == true)
+    if(m_pConsole->ReadyRead() == true)
     {
         switch(int(m_Step))
         {
@@ -489,7 +484,7 @@ void CommandLine::Process(void)
             {
                 // Preprocessing line of data to trap ERROR or OK or continue for data
                 CommandNameSize = m_CommandNameSize;
-                m_pFifo->ToUpper(CommandNameSize);
+                m_pConsole->ToUpper(CommandNameSize);
                 State = SYS_INVALID_COMMAND;
 
             // Process the valid input by iterating through valid command list
@@ -497,9 +492,9 @@ void CommandLine::Process(void)
                 {
                     if(CommandNameSize == m_CmdStrSize[Command])                                            // First size must match
                     {
-                        if(m_pFifo->Memncmp(m_pCmdStr[Command], CommandNameSize) == true)                   // Compare command string
+                        if(m_pConsole->Memncmp(m_pCmdStr[Command], CommandNameSize) == true)                // Compare command string
                         {
-                            m_pFifo->Flush(CommandNameSize);                                                // Flush the command from the FIFO
+                            m_pConsole->Flush(CommandNameSize);                                             // Flush the command from the FIFO
 
                             if((m_ReadCommand == false) && (m_PlainCommand == false))
                             {
@@ -521,24 +516,24 @@ void CommandLine::Process(void)
 
                 if(State == SYS_INVALID_COMMAND)
                 {
-                    Printf(CLI_SIZE_NONE, m_ErrorLabel, "Command invalid\r\n");
+                    m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Command invalid\r\n");
                 }
 
-                m_pFifo->Flush(CLI_FIFO_PARSER_RX_SIZE);                                                  // Flush completely the FIFO
+                m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);                                                  // Flush completely the FIFO
                 m_Step = CLI_STEP_IDLE;
             }
             break;
 
             case CLI_STEP_CMD_MALFORMED:
             {
-                Printf(CLI_SIZE_NONE, m_ErrorLabel, "Malformed packet\r\n");
+                m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Malformed packet\r\n");
                 m_Step = CLI_STEP_IDLE;
             }
             break;
 
             case CLI_STEP_CMD_BUFFER_OVERFLOW:
             {
-                Printf(CLI_SIZE_NONE, m_ErrorLabel, "Buffer overflow\r\n");
+                m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Buffer overflow\r\n");
                 m_Step = CLI_STEP_IDLE;
             }
             break;
@@ -554,8 +549,8 @@ void CommandLine::Process(void)
         if(TickHasTimeOut(m_CommandTimeOut, CLI_CMD_TIME_OUT) == true)
         {
             m_Step = CLI_STEP_IDLE;
-            Printf(CLI_SIZE_NONE, m_ErrorLabel, "Command timeout\r\n");
-            m_pFifo->Flush(CLI_FIFO_PARSER_RX_SIZE);
+            m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Command timeout\r\n");
+            m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);
         }
     }
 }
@@ -618,7 +613,7 @@ void CommandLine::ReleaseControl(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e CommandLine::SendData(const uint8_t* p_BufferTX, size_t* pSizeTX, void* pContext)
 {
-
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -635,10 +630,10 @@ SystemState_e CommandLine::SendData(const uint8_t* p_BufferTX, size_t* pSizeTX, 
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CommandLine::SetSerialLogging(bool Mute)
-{
-    m_MuteSerialLogging = Mute;
-}
+//void CommandLine::SetSerialLogging(bool Mute)
+//{
+    //m_MuteSerialLogging = Mute;
+//}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -714,7 +709,7 @@ void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char*
 
     if(State != SYS_OK_SILENT)
     {
-        Printf(CLI_SIZE_NONE, "AT%s=%s%s\r\n", m_pCmdStr[Cmd], pMsg1, pMsg2);
+        m_pConsole->Printf(CON_SIZE_NONE, "AT%s=%s%s\r\n", m_pCmdStr[Cmd], pMsg1, pMsg2);
     }
 }
 

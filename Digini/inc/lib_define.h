@@ -30,120 +30,126 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define TickCount_t             nOS_TickCounter
+#define TickCount_t                                 nOS_TickCounter
 
 // ---------- General define ----------
 #ifdef DEBUG
-#define debug                   static
-#define debug_point             asm("nop");
+#define debug                                       static
+#define debug_point                                 asm("nop");
 #else
 #define debug
-#define debug_point             (void)
+#define debug_point                                 (void)
 #endif
 
 #ifndef DEF_NO
-#define DEF_NO                  0
+#define DEF_NO                                      0
 #endif
 
 #ifndef DEF_YES
-#define DEF_YES                 1
+#define DEF_YES                                     1
 #endif
 
 #ifndef DEF_OFF
-#define DEF_OFF                 (unsigned char)0
+#define DEF_OFF                                     (unsigned char)0
 #endif
 
 #ifndef DEF_ON
-#define DEF_ON                  (unsigned char)1
+#define DEF_ON                                      (unsigned char)1
 #endif
 
 #ifndef DEF_TOGGLE
-#define DEF_TOGGLE              (unsigned char)2
+#define DEF_TOGGLE                                  (unsigned char)2
 #endif
 
 #ifndef DEF_FAIL
-#define DEF_FAIL                0
+#define DEF_FAIL                                    0
 #endif
 
 #ifndef DEF_OK
-#define DEF_OK                  1
+#define DEF_OK                                      1
 #endif
 
 #ifndef DEF_LOW
-#define DEF_LOW                 0
+#define DEF_LOW                                     0
 #endif
 
 #ifndef DEF_HIGH
-#define DEF_HIGH                1
+#define DEF_HIGH                                    1
 #endif
 
 #ifndef DEF_DISABLED
-#define DEF_DISABLED            0               // Use this for macro only
+#define DEF_DISABLED                                0               // Use this for macro only
 #endif
 
 #ifndef DEF_ENABLED
-#define DEF_ENABLED             1               // Use this for macro only
+#define DEF_ENABLED                                 1               // Use this for macro only
 #endif
 
 #ifndef DEF_NO
-#define DEF_NO                  0
+#define DEF_NO                                      0
 #endif
 
 #ifndef DEF_YES
-#define DEF_YES                 1
+#define DEF_YES                                     1
 #endif
 
 #ifndef DEF_DISABLE
-#define DEF_DISABLE             false           // Use this for code only
+#define DEF_DISABLE                                 false           // Use this for code only
 #endif
 
 #ifndef DEF_ENABLE
-#define DEF_ENABLE              true            // Use this for code only
+#define DEF_ENABLE                                  true            // Use this for code only
 #endif
 
 #ifndef DEF_FALLING_EDGE
-#define DEF_FALLING_EDGE        0
+#define DEF_FALLING_EDGE                            0
 #endif
 
 #ifndef DEF_RISING_EDGE
-#define DEF_RISING_EDGE         1
+#define DEF_RISING_EDGE                             1
 #endif
 
 #ifndef DEF_DIR_IN
-#define DEF_DIR_IN              0
+#define DEF_DIR_IN                                  0
 #endif
 
 #ifndef DEF_DIR_OUT
-#define DEF_DIR_OUT             1
+#define DEF_DIR_OUT                                 1
 #endif
 
 #ifndef DEF_CLEAR
-#define DEF_CLEAR               0
+#define DEF_CLEAR                                   0
 #endif
 
 //#ifndef DEF_ACK
-//#define DEF_ACK                 0
+//#define DEF_ACK                                   0
 //#endif
 
 #ifndef DEF_NACK
-#define DEF_NACK                1
+#define DEF_NACK                                    1
 #endif
 
 //#ifndef ERR_NONE
-//#define ERR_NONE                0
+//#define ERR_NONE                                  0
 //#endif
 
-#define DEF_DECIMAL_BASE        10
-#define DEF_HEXADECIMAL_BASE    16
-#define DEF_STRING_BASE         1
+#define DEF_DECIMAL_BASE                            10
+#define DEF_HEXADECIMAL_BASE                        16
+#define DEF_STRING_BASE                             1
 
 
 #ifndef KHz
-#define KHz                     000UL
+#define KHz                                         000UL
 #endif
 
 #ifndef MHz
-#define MHz                     000000UL
+#define MHz                                         000000UL
 #endif
 
-#define keep                    static volatile
+#define keep                                        static volatile
+
+#define TIME_SECONDS_FROM_UNIX_EPOCH_TO_Y2K	        946684800UL
+#define TIME_SECONDS_PER_MINUTE			            60UL
+#define TIME_SECONDS_PER_HOUR				        3600UL
+#define TIME_SECONDS_PER_DAY	    	            86400UL
+#define TIME_SECONDS_PER_YEAR				        31536000UL

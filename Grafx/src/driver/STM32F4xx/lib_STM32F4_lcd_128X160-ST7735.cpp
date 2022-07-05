@@ -697,7 +697,7 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawRectangle(Box_t* pBox)
 {
-  	uint16_t Color;
+  	//uint16_t Color;
 
 /* TODO problem here
     m_pLayer = &LayerTable[CLayer::GetDrawing()];

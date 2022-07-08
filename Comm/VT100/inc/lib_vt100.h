@@ -89,9 +89,10 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
+    VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS)
+
 enum VT100_Menu_e
 {
-    VT100_MENU_DEF(EXPAND_VT100_MENU_AS_ENUM)
     NUMBER_OF_MENU,
     VT100_NO_MENU,
 };

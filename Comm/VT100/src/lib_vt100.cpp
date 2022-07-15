@@ -58,10 +58,10 @@
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
-//const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
-//{
-//    VT100_MENU_DEF(EXPAND_VT100_MENU_AS_MENU_DATA)
-//};
+const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
+{
+    //VT100_MENU_DEF(EXPAND_VT100_MENU_AS_MENU_DATA)
+};
 
 //-------------------------------------------------------------------------------------------------
 //

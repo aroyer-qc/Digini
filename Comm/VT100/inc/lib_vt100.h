@@ -157,9 +157,9 @@ enum VT100_CallBackType_e
 
 struct VT100_MenuDef_t
 {
-    Label_e           Label; //  ??? how  todo merge with label from digini
-    VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e);
     VT100_Menu_e      NextMenu;
+    VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e);
+    Label_e           Label; //  ??? how  todo merge with label from digini
 };
 
 struct VT100_MenuObject_t

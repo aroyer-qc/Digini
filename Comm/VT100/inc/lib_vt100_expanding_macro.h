@@ -30,8 +30,14 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_VT100_MENU_ITEM_AS_ENUM(MENU_SELECT, MENU, ITEM_ID, CALLBACK, NAVIGATE, LABEL)      ITEM_ID,
-#define EXPAND_VT100_MENU_ITEM_AS_FLAG_ENUM(MENU_SELECT, MENU, ITEM_ID, CALLBACK, NAVIGATE, LABEL) WHEN(EQUAL(MENU_SELECT, MENU)) (ITEM_ID##_FLAG = (1 << abs(CAT(MENU, ItemID_e)::ITEM_ID - 1)),)
+
+#define EXPAND_VT100_MENU_ITEM_AS_ENUM(MENU, MEMBER_OF, ITEM_ID, CALLBACK, ESCAPE_TO, LABEL) WHEN(EQUALMENU, MEMBER_OF)) (ITEM_ID,)
+#define EXPAND_VT100_MENU_ITEM_AS_FLAG_ENUM(MENU, MEMBER_OF, ITEM_ID, CALLBACK, ESCAPE_TO, LABEL) WHEN(EQUAL(MENU, MEMBER_OF)) (ITEM_ID##_FLAG = (1 << abs(CAT(MENU, ItemID_e)::ITEM_ID - 1)),)
+
+
+
+
+#define EXPAND_VT100_MENU_AS_MENU_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, ESCAPE_TO, LABEL) {},
 
 #define EXPAND_VT100_MENU_AS_ENUMS(NAME) NAME,
 
@@ -50,8 +56,5 @@ enum CAT(NAME, ItemFlag_e)                                  \
 
 #define EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER(NAME)   static const VT100_MenuDef_t CAT(m_, NAME) [];
 #define EXPAND_VT100_MENU_CALLBACK(NAME)                    VT100_InputType_e NAME (uint8_t Input, VT100_CallBackType_e Type);
-
-
-//#define EXPAND_VT100_MENU_AS_MENU_DATA(NAME, STRUCT)    STRUCT,
 
 //-------------------------------------------------------------------------------------------------

@@ -49,9 +49,8 @@
 #define VT100_OFFSET_COLOR_BACKGROUND     40
 #define CON_FIFO_PARSER_RX_SZ             64
 #define VT100_SZ_NONE                     0
-#define CONFIG_FLAG_SIZE                  8
 
-
+                                                                      #define CONFIG_FLAG_SIZE                  8
 
 #define VT100_STRING_QTS                  8
 #define VT100_ITEMS_QTS                   8
@@ -89,13 +88,15 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-    VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS)
 
 enum VT100_Menu_e
 {
+    VT100_MENU_DEF(EXPAND_VT100_MENU_AS_ENUMS)
     NUMBER_OF_MENU,
-    VT100_NO_MENU,
+    VT100_MENU_NONE,
 };
+
+//VT100_MENU_DEF(EXPAND_VT100_AS_MENU_ENUMS)
 
 enum VT100_Color_e
 {
@@ -154,6 +155,19 @@ enum VT100_CallBackType_e
     VT100_CALLBACK_FLUSH,
 };
 
+struct VT100_MenuDef_t
+{
+    Label_e           Label; //  ??? how  todo merge with label from digini
+    VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e);
+    VT100_Menu_e      NextMenu;
+};
+
+struct VT100_MenuObject_t
+{
+    const VT100_MenuDef_t*    pMenu;
+    size_t                    pMenuSize;
+};
+
 //-------------------------------------------------------------------------------------------------
 // Function(s) Prototype(s)
 //-------------------------------------------------------------------------------------------------
@@ -210,7 +224,7 @@ void RX_Callback(uint8_t Data);
         //size_t              LoggingPrintf               (CLI_DebugLevel_e Level, const char* pFormat, ...);
 
 // to check if needed in VT100
-void                SeConsoleMuteLogs           (bool);
+//void                SeConsoleMuteLogs           (bool);  this should be in console... beacause when in VT100 we don't want any debug message going thru
 void                LockDisplay                 (bool);
 void                DisplayTimeDateStamp        (nOS_TimeDate* pTimeDate);
 bool                GetString                   (char* pBuffer, size_t Size);
@@ -219,12 +233,14 @@ bool                GetString                   (char* pBuffer, size_t Size);
 
         uint8_t             DisplayMenu                 (VT100_Menu_e MenuID);
         void                MenuSelectItems             (char ItemsChar);
+        void                CallbackInitialize          (void);
         VT100_InputType_e   CallBack                    (VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e), VT100_CallBackType_e Type, uint8_t Item);
         void                EscapeCallback              (nOS_Timer* pTimer, void* pArg);
         void                InputString                 (void);
         void                InputDecimal                (void);
         void                ClearConfigFLag             (void);
         void                ClearGenericString          (void);
+        VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
 
         Console*                            m_pConsole;
         bool                                m_IsItInStartup;
@@ -265,50 +281,9 @@ bool                GetString                   (char* pBuffer, size_t Size);
         bool                                m_IsItString;
         uint32_t                            m_NewConfigFlag[CONFIG_FLAG_SIZE];
         char                                m_GenericString[VT100_STRING_QTS][VT100_ITEMS_QTS][VT100_STRING_SZ];
+        static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
 
-        //static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
-
-        #define VT100_HEADER_CLASS_CONSTANT_MEMBER
-        #include "vt100_var.h"            // Project variable
-        #undef  VT100_HEADER_CLASS_CONSTANT_MEMBER
-
-// not needed I think
-//       EXPAND_VT100_MENU_AS_CALLBACK(VT100_CALLBACK_DEF)       // Generation of all prototype
-
-
-
-
-
-
-
-
-
-/*
-
-
-struct VT100_MenuDef_t
-{
-    Label_e           Label; //  ??? how  todo merge with label from digini
-    VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e);
-    VT100_Menu_e      NextMenu;
-};
-
-struct VT100_MenuObject_t
-{
-    const VT100_MenuDef_t*    pMenu;
-    //size_t                    pMenuSize;
-};
-
-
-*/
-
-
-
-
-
-
-
-
+        VT100_MENU_DEF(EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER)
 };
 
 //-------------------------------------------------------------------------------------------------

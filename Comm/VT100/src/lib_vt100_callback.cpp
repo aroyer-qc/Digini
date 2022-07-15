@@ -177,30 +177,31 @@ static void VT100_PrintVoltage(uint8_t xPos, uint8_t yPos, uint32_t Voltage)
 // Public(s) function(s)
 //-------------------------------------------------------------------------------------------------
 
-/**
-  *--------------------------------------------------------------------------------------------------------------------
-  *
-  * @brief  Callback Initialize
-  *
-  *         put in this function what you want to be initialize only once at boot up
-  *
-  *--------------------------------------------------------------------------------------------------------------------
-  */
-void VT100_CallbackInitialize(void)
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           VT100_CallbackInitialize
+//
+//  Description:    Callback Initialize
+//
+//                  put in this function what you want to be initialize only once at boot up
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void VT100_Terminal::CallbackInitialize(void)
 {
 }
 
-
-/**
-  *--------------------------------------------------------------------------------------------------------------------
-  *
-  * @brief  Menu Selection
-  *
-  *         This menu is not displayed, it only redirect a new menu
-  *
-  *--------------------------------------------------------------------------------------------------------------------
-  */
-VT100_InputType_e VT100_Terminal::CALL_MenuSelection(uint8_t Input, VT100_CallBackType_e Type)
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CALLBACK_MenuRedirection
+//
+//  Description:    This menu is not displayed, it only redirect a new menu
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+VT100_InputType_e VT100_Terminal::CALLBACK_MenuRedirection(uint8_t Input, VT100_CallBackType_e Type)
 {
     VAR_UNUSED(Input);
 
@@ -208,25 +209,27 @@ VT100_InputType_e VT100_Terminal::CALL_MenuSelection(uint8_t Input, VT100_CallBa
     {
         if(m_IsItInStartup == true)
         {
-            GoToMenu(VT100_MENU_BOOT);
+            GoToMenu(VT100_MenuBoot);
         }
         else
         {
-            GoToMenu(VT100_MENU_MAIN);
+            GoToMenu(VT100_MenuMain);
         }
     }
 
     return VT100_INPUT_MENU_CHOICE;
 }
 
-/**
-  *--------------------------------------------------------------------------------------------------------------------
-  *
-  * @brief  Product Information
-  *
-  *--------------------------------------------------------------------------------------------------------------------
-  */
-VT100_InputType_e VT100_Terminal::CALL_ProductInformation(uint8_t Input, VT100_CallBackType_e Type)
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CALLBACK_ProductInformation
+//
+//  Description:    Product Information
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT100_CallBackType_e Type)
 {
     /*
     nOS_Time        UpTime;
@@ -311,15 +314,16 @@ VT100_InputType_e VT100_Terminal::CALL_ProductInformation(uint8_t Input, VT100_C
     return VT100_INPUT_ESCAPE;
 }
 
-
-/**
-  *--------------------------------------------------------------------------------------------------------------------
-  *
-  * @brief  Configure product debug level for serial logging
-  *
-  *--------------------------------------------------------------------------------------------------------------------
-  */
-VT100_InputType_e VT100_Terminal::CALL_DebugLevelSetting(uint8_t Input, VT100_CallBackType_e Type)
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CALLBACK_DebugLevelSetting
+//
+//  Description:    Configure product debug level for serial logging
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT100_CallBackType_e Type)
 {
     static CON_DebugLevel_e DebugLevel = CON_DEBUG_LEVEL_0;
 
@@ -339,7 +343,7 @@ VT100_InputType_e VT100_Terminal::CALL_DebugLevelSetting(uint8_t Input, VT100_Ca
         SetForeColor(VT100_COLOR_MAGENTA);
       #endif
 
-        if((((uint8_t)1 << (Input - 1)) & DebugLevel) != 0)
+        if(((uint8_t(1) << (Input - 1)) & DebugLevel) != 0)
         {
             if(Type != VT100_CALLBACK_INIT)
             {
@@ -375,17 +379,19 @@ VT100_InputType_e VT100_Terminal::CALL_DebugLevelSetting(uint8_t Input, VT100_Ca
     return VT100_INPUT_MENU_CHOICE;
 }
 
-
-/**
-  *--------------------------------------------------------------------------------------------------------------------
-  *
-  * @brief  Allowed the LED to be controlled in override mode
-  *
-  *--------------------------------------------------------------------------------------------------------------------
-  */
-VT100_InputType_e VT100_Terminal::CALL_LedControl(uint8_t Input, VT100_CallBackType_e Type)
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CALLBACK_LedControl
+//
+//  Description:    Allowed the LED to be controlled in override mode
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+/*
+VT100_InputType_e VT100_Terminal::CALLBACK_LedControl(uint8_t Input, VT100_CallBackType_e Type)
 {
-    /*
+
     uint8_t Led;
 
     Led = Input - 1;
@@ -450,20 +456,22 @@ VT100_InputType_e VT100_Terminal::CALL_LedControl(uint8_t Input, VT100_CallBackT
             }
         }
     }
-*/
     return VT100_INPUT_MENU_CHOICE;
 }
+*/
 
-/**
-  *--------------------------------------------------------------------------------------------------------------------
-  *
-  * @brief  Display the Input of the Module
-  *
-  *--------------------------------------------------------------------------------------------------------------------
-  */
-VT100_InputType_e VT100_Terminal::CALL_InputReading(uint8_t Input, VT100_CallBackType_e Type)
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CALLBACK_InputReading
+//
+//  Description:    Display the input of the Module
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+/*
+VT100_InputType_e VT100_Terminal::CALLBACK_InputReading(uint8_t Input, VT100_CallBackType_e Type)
 {
-    /*
     int32_t Temperature;
     uint8_t VerticalOffset;
 
@@ -566,20 +574,21 @@ VT100_InputType_e VT100_Terminal::CALL_InputReading(uint8_t Input, VT100_CallBac
         default:
             break;
     }
-*/
     return VT100_INPUT_ESCAPE;
 }
+*/
 
-
-/**
-  *--------------------------------------------------------------------------------------------------------------------
-  *
-  * @brief  Bluetooth Test
-  *
-  *--------------------------------------------------------------------------------------------------------------------
-  */
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CALLBACK_BlueTooth
+//
+//  Description:    Menu setting configuration for orphan item
+//
+//  Note(s):        Bluetooth Test
+//
+//-------------------------------------------------------------------------------------------------
 /*
-VT100_InputType_e VT100_Terminal::CALL_BlueTooth(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALLBACK_BlueTooth(uint8_t Input, VT100_CallBackType_e Type)
 {
     nOS_TimeDate TimeDate;
 
@@ -644,15 +653,17 @@ VT100_InputType_e VT100_Terminal::CALL_BlueTooth(uint8_t Input, VT100_CallBackTy
 }
 */
 
-/**
-  *--------------------------------------------------------------------------------------------------------------------
-  *
-  * @brief  Bluetooth get RSSI
-  *
-  *--------------------------------------------------------------------------------------------------------------------
-  */
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CALLBACK_GetRSSI
+//
+//  Description:    Menu setting configuration for orphan item
+//
+//  Note(s):        Get RSSI   /// Example for an RSSI. can be used fr the radio signal strenght
+//
+//-------------------------------------------------------------------------------------------------
 /*
-VT100_InputType_e VT100_Terminal::CALL_GetRSSI(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALLBACK_GetRSSI(uint8_t Input, VT100_CallBackType_e Type)
 {
     int8_t RSSI;
     uint8_t graphRSSI;
@@ -679,14 +690,16 @@ VT100_InputType_e VT100_Terminal::CALL_GetRSSI(uint8_t Input, VT100_CallBackType
 }
 */
 
-/**
-  *--------------------------------------------------------------------------------------------------------------------
-  *
-  * @brief  Menu setting configuration for orphan item
-  *
-  *--------------------------------------------------------------------------------------------------------------------
-  */
-VT100_InputType_e VT100_Terminal::CALL_MiscCfg(uint8_t Input, VT100_CallBackType_e Type)
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CALLBACK_MiscCfg
+//
+//  Description:    Menu setting configuration for orphan item
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+VT100_InputType_e VT100_Terminal::CALLBACK_MiscCfg(uint8_t Input, VT100_CallBackType_e Type)
 {
     /*
     static int16_t  TemperatureAlarmLow;
@@ -989,15 +1002,16 @@ VT100_InputType_e VT100_Terminal::CALL_MiscCfg(uint8_t Input, VT100_CallBackType
     return VT100_INPUT_MENU_CHOICE;
 }
 
-
-/**
-  *--------------------------------------------------------------------------------------------------------------------
-  *
-  * @brief  Menu Time and Date Configuration
-  *
-  *--------------------------------------------------------------------------------------------------------------------
-  */
-VT100_InputType_e VT100_Terminal::CALL_TimeDateCfg(uint8_t Input, VT100_CallBackType_e Type)
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CALLBACK_TimeDateCfg
+//
+//  Description:    Menu Time and Date Configuration.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_CallBackType_e Type)
 {
     /*
     static nOS_TimeDate TimeDate;
@@ -1147,6 +1161,20 @@ VT100_InputType_e VT100_Terminal::CALL_TimeDateCfg(uint8_t Input, VT100_CallBack
         InMenuPrintf(VT100_SZ_NONE, "%s %u, %u ", RTC_MonthName[TimeDate.month - 1], TimeDate.day, TimeDate.year);
      }
 */
+    return VT100_INPUT_MENU_CHOICE;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CALLBACK_StackUsage
+//
+//  Description:    Display page for stack usage
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallBackType_e Type)
+{
     return VT100_INPUT_MENU_CHOICE;
 }
 

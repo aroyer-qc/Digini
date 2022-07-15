@@ -62,6 +62,7 @@
 #include "lib_class_cbi.h"                      // Callback interface
 #include "lib_label.h"
 #include "lib_macro.h"
+#include "lib_advanced_macro.h"
 #include "lib_define.h"
 #include "lib_typedef.h"
 #include "lib_string.h"

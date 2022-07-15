@@ -27,38 +27,31 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
+#define EXPAND_VT100_MENU_ITEM_AS_ENUM(MENU_SELECT, MENU, ITEM_ID, CALLBACK, NAVIGATE, LABEL)      ITEM_ID,
+#define EXPAND_VT100_MENU_ITEM_AS_FLAG_ENUM(MENU_SELECT, MENU, ITEM_ID, CALLBACK, NAVIGATE, LABEL) WHEN(EQUAL(MENU_SELECT, MENU)) (ITEM_ID##_FLAG = (1 << abs(CAT(MENU, ItemID_e)::ITEM_ID - 1)),)
 
-// TODO need an expand for this
-/*
-static const VT100_MenuDef_t VT100_Terminal::m_MENU_Select          [];
-static const VT100_MenuDef_t VT100_Terminal::m_MENU_Main            [];
-static const VT100_MenuDef_t VT100_Terminal::m_MENU_Boot            [];
-static const VT100_MenuDef_t VT100_Terminal::m_MENU_Debug           [];
-static const VT100_MenuDef_t VT100_Terminal::m_MENU_Test            [];
-static const VT100_MenuDef_t VT100_Terminal::m_MENU_Setting         [];
-static const VT100_MenuDef_t VT100_Terminal::m_MENU_SettingMisc     [];
-static const VT100_MenuDef_t VT100_Terminal::m_MENU_SettingTimeDate [];
-*/
+#define EXPAND_VT100_MENU_AS_ENUMS(NAME) NAME,
 
-#define EXPAND_MENU_ITEM_AS_ENUM(MENU_SELECT, MENU, ITEM_ID, CALLBACK, NAVIGATE, LABEL) WHEN(EQUAL(MENU_SELECT, MENU)) (ITEM_ID,)
-#define EXPAND_MENU_ITEM_AS_FLAG_ENUM(MENU_SELECT, MENU, ITEM_ID, CALLBACK, NAVIGATE, LABEL) WHEN(EQUAL(MENU_SELECT, MENU)) (ITEM_ID##_FLAG = (1 << abs(CAT(MENU, ItemID_e)::ITEM_ID - 1)),)
-
-#define EXPAND_AS_MENU_ENUMS(NAME)                     \
-enum CAT(NAME, ItemID_e)                               \
-{                                                      \
-	CON_MENU_DEF(EXPAND_MENU_ITEM_AS_ENUM , NAME)      \
-};                                                     \
-                                                       \
-enum CAT(NAME, ItemFlag_e)                             \
-{                                                      \
-    CON_MENU_DEF(EXPAND_MENU_ITEM_AS_FLAG_ENUM, NAME)  \
+#define EXPAND_VT100_AS_MENU_ENUMS(NAME)                    \
+enum CAT(NAME, ItemID_e)                                    \
+{                                                           \
+	CON_MENU_DEF(EXPAND_VT100_MENU_ITEM_AS_ENUM, NAME)      \
+};                                                          \
+                                                            \
+enum CAT(NAME, ItemFlag_e)                                  \
+{                                                           \
+    CON_MENU_DEF(EXPAND_VT100_MENU_ITEM_AS_FLAG_ENUM, NAME) \
 };
 
-//#define EXPAND_VT100_MENU_AS_ENUM(NAME, STRUCT)         NAME,
+#define TRUNCATE_VT100
+
+#define EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER(NAME)   static const VT100_MenuDef_t CAT(m_, NAME) [];
+#define EXPAND_VT100_MENU_CALLBACK(NAME)                    VT100_InputType_e NAME (uint8_t Input, VT100_CallBackType_e Type);
+
+
 //#define EXPAND_VT100_MENU_AS_MENU_DATA(NAME, STRUCT)    STRUCT,
-//#define EXPAND_VT100_MENU_AS_CALLBACK(NAME, FUNCTION)   VT100_InputType_e FUNCTION(uint8_t Input, VT100_CallBackType_e Type);
 
 //-------------------------------------------------------------------------------------------------

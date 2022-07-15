@@ -58,14 +58,10 @@
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
-const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
-{
-    VT100_MENU_DEF(EXPAND_VT100_MENU_AS_MENU_DATA)
-};
-
-#define VT100_CLASS_CONSTANT
-#include "vt100_var.h"         // Project variable
-#undef  VT100_CLASS_CONSTANT
+//const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
+//{
+//    VT100_MENU_DEF(EXPAND_VT100_MENU_AS_MENU_DATA)
+//};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -115,8 +111,8 @@ extern "C" void VT100_TaskWrapper(void* pvParameters)
     m_pHeadLabel              = (char*)pHeadLabel;
     m_pDescription            = (char*)pDescription;
     m_RefreshMenu             = false;
-    m_MenuID                  = VT100_NO_MENU;
-    m_FlushMenuID             = VT100_NO_MENU;
+    m_MenuID                  = VT100_MENU_NONE;
+    m_FlushMenuID             = VT100_MENU_NONE;
     m_InputType               = VT100_INPUT_CLI;
     m_Input                   = 0;
     m_InputCount              = 0;
@@ -133,7 +129,7 @@ extern "C" void VT100_TaskWrapper(void* pvParameters)
     m_String[VT100_STRING_SZ] = '\0';
 
     //nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, nullptr, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
-    //CallbackInitialize();
+    CallbackInitialize();               // User callback specific initialization
     ClearConfigFLag();
     ClearGenericString();
 }
@@ -162,7 +158,7 @@ void VT100_Terminal::Process(void)
         if(m_RefreshMenu == true)
         {
             // Call the destructor for each callback, if any
-            if((m_FlushMenuID != VT100_NO_MENU) &&
+            if((m_FlushMenuID != VT100_MENU_NONE) &&
                (m_FlushMenuID != m_MenuID))
             {
                 m_BackFromEdition = false;
@@ -230,7 +226,7 @@ void VT100_Terminal::Process(void)
         else
         {
             // Still in a callback mode
-            if(m_MenuID != VT100_NO_MENU)
+            if(m_MenuID != VT100_MENU_NONE)
             {
                 CallBack(pMenu->Callback, VT100_CALLBACK_REFRESH, 0);
             }
@@ -304,7 +300,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
 
     pMenu = nullptr;
 
-    if(m_MenuID != VT100_NO_MENU)
+    if(m_MenuID != VT100_MENU_NONE)
     {
         ItemsQts = m_Menu[MenuID].pMenuSize;
 
@@ -761,11 +757,12 @@ void VT100_Terminal::GetStringInput(char* pString, uint8_t* pID)
     {
         if(m_IsItString == true)
         {
-            if(strlen(m_String) <= m_Maximum)
+            if(strlen(m_String) <= size_t(m_Maximum))
             {
                 ID = m_ID;
                 memcpy(pString, m_String, VT100_STRING_SZ);
             }
+
             m_InputStringMode = false;
             m_ID = VT100_INPUT_INVALID_ID;             // We can read this only once
         }
@@ -1297,7 +1294,7 @@ void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, uint8_t Value, uint8_t
 #ifdef CONSOLE_USE_VT100_MENU
 CON_AT_Error_eVT100_Terminal::CLI_CmdCONSOLE(void)
 {
-    GoToMenu((CON_MenuID == CON_NO_MENU) ? VT100_MENU_MAIN : m_MenuID);
+    GoToMenu((CON_MenuID == CON_NO_MENU) ? VT100_MenuMain : m_MenuID);
     return CON_AT_OK_SILENT;
 }
 #endif
@@ -1325,7 +1322,7 @@ bool VT100_Terminal::GetString(char* pBuffer, size_t Size)
     {
         m_pConsole->Flush(1);
 
-        for(int i = 0; i <= Size; i++)
+        for(size_t i = 0; i <= Size; i++)
         {
             if(m_pConsole->Read(&Character, 1) == 1)
             {

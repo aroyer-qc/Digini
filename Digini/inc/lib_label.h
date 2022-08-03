@@ -27,13 +27,16 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+// Include file(s)
+//-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+#include "lib_vt100_label.h"
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
-
-// TO DO  find a way for expansion to follow number of language
-
 
 #define EXPAND_X_LBL_CFG_AS_ENUM(ENUM_ID, LBL1, LBL2) ENUM_ID,
 #define EXPAND_X_LBL_CFG_AS_DATA(ENUM_ID, LBL1, LBL2) {LBL1, LBL2},
@@ -51,9 +54,42 @@ enum Language_e
 
 enum Label_e
 {
+    LBL_STRING,
+    LBL_CHAR,
+    LBL_DOUBLE_LINEFEED,
+
     LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+
+    // Include VT100 label if VT100 is defined
+  #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+    VT100_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+   #else
+    VT100_MONO_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #endif
+  #endif
+
     NB_LABEL_CONST,
     INVALID_LABEL,
+};
+
+//-------------------------------------------------------------------------------------------------
+// Function(s) Prototype(s)
+//-------------------------------------------------------------------------------------------------
+
+class Label
+{
+    public:
+
+                            Label                       ()                              { ActualLanguage = LANG_ENGLISH;            }
+        Language_e          GetLanguage                 (void)                          { return ActualLanguage;                    }
+        const char*         GetLabelPointer             (Label_e Label)                 { return LabelArray[Label][ActualLanguage]; }
+        void                SetLanguage                 (Language_e Language)           { ActualLanguage = Language;                }
+
+    private:
+
+        static const char*  LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST];
+        Language_e          ActualLanguage;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -62,15 +98,31 @@ enum Label_e
 
 #ifdef DIGINI_GLOBAL
 
-  const char* LBL_Application[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
+  const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
   {
+      { "%s",                           "%s"       },  // LBL_STRING
+      { "%c",                           "%c"       },  // LBL_CHAR
+      { "\r\n\r\n",                     "\r\n\r\n" },  // LBL_DOUBLE_LINEFEED
+
       LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+
+      // Include VT100 label if VT100 is defined
+    #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+      VT100_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+     #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+     #else
+      VT100_MONO_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+     #endif
+  #endif
   };
+
+  Label myLabel;
 
 #else
 
- extern const char* LBL_Application[NB_LABEL_CONST][NB_LANGUAGE_CONST];
+  extern Label myLabel;
 
 #endif // DIGINI_GLOBAL
+
 
 //-------------------------------------------------------------------------------------------------

@@ -34,8 +34,20 @@
 #define EXPAND_VT100_MENU_ITEM_AS_ENUM(MENU, MEMBER_OF, ITEM_ID, CALLBACK, ESCAPE_TO, LABEL) WHEN(EQUALMENU, MEMBER_OF)) (ITEM_ID,)
 #define EXPAND_VT100_MENU_ITEM_AS_FLAG_ENUM(MENU, MEMBER_OF, ITEM_ID, CALLBACK, ESCAPE_TO, LABEL) WHEN(EQUAL(MENU, MEMBER_OF)) (ITEM_ID##_FLAG = (1 << abs(CAT(MENU, ItemID_e)::ITEM_ID - 1)),)
 
+/*
+struct VT100_MenuDef_t
+{
+    VT100_Menu_e      NextMenu;
+    VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e);
+    Label_e           Label;
+};
 
-
+struct VT100_MenuObject_t
+{
+    const VT100_MenuDef_t*    pMenu;
+    size_t                    pMenuSize;
+};
+*/
 
 #define EXPAND_VT100_MENU_AS_MENU_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, ESCAPE_TO, LABEL) {},
 

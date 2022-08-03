@@ -56,34 +56,6 @@
 #define VT100_ITEMS_QTS                   8
 #define VT100_STRING_SZ                   32
 
-// Console Generic Label
-#define VT100_LBL_CLEAR_SCREEN            "\033[2J\033[H"
-#define VT100_LBL_RESET_TERMINAL          "\033c\r\n"
-#define VT100_LBL_HIDE_CURSOR             "\033[?25l"
-#define VT100_LBL_SHOW_CURSOR             "\033[?25h"
-#define VT100_LBL_LINE_SEPARATOR          "----------------------------------------------------------------------------------------------------\r\n"
-#define VT100_LBL_SELECT                  "\r\n Please Select:\r\n\r\n"
-#define VT100_LBL_QUIT                    "Quit\r\n"
-#define VT100_LBL_ENTER_SELECTION         "\r\n Enter Selection [<ESC>, 1 - %c] > "
-#define VT100_LBL_ESCAPE                  "\r\n\r\n\r\n Press <ESC> to return to menu"
-#define VT100_LBL_INPUT_VALIDATION        "Press <ENTER> to accept or <ESC> to cancel"
-#define VT100_LBL_SAVE_CONFIGURATION      "Save the Configuration\r\n"
-#define VT100_LBL_MINIMUM                 "Minimum"
-#define VT100_LBL_MAXIMUM                 "Maximum"
-#define VT100_LBL_ATTRIBUTE               "\033[%dm"
-#define VT100_LBL_SAVE_CURSOR             "\033[s"
-#define VT100_LBL_RESTORE_CURSOR          "\033[u"
-#define VT100_LBL_SAVE_ATTRIBUTE          "\0337"
-#define VT100_LBL_RESTORE_ATTRIBUTE       "\0338"
-#define VT100_LBL_SET_CURSOR              "\033[%d;%df"
-#define VT100_LBL_CURSOR_TO_SELECT        "\033[%d;28f    \e[4D"
-#define VT100_LBL_START_PRINTING          "\033[5i"
-#define VT100_LBL_STOP_PRINTING           "\033[4i"
-#define VT100_LBL_TIME_DATE_STAMP         "%04u-%02u-%02u %2u:%02u:%02u: "
-#define VT100_LBL_SCROLL_ZONE             "\033[%d;%dr"
-#define VT100_LBL_SCROLL_UP               "\033M"
-#define VT100_LBL_EOL_ERASE               "\033[K"
-
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -159,7 +131,7 @@ struct VT100_MenuDef_t
 {
     VT100_Menu_e      NextMenu;
     VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e);
-    Label_e           Label; //  ??? how  todo merge with label from digini
+    Label_e           Label;
 };
 
 struct VT100_MenuObject_t
@@ -180,21 +152,21 @@ class VT100_Terminal
 
 
         void                Process                     (void);
-        void                Initialize                  (Console* pConsole, const char* pHeadLabel, const char* pDescription);
+        void                Initialize                  (Console* pConsole, const char* pDescription);
         void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
         void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
         void                GoToMenu                    (VT100_Menu_e MenuID);
-        size_t              InMenuPrintf                (int nSize, const char* pFormat, ...);
+        size_t              InMenuPrintf                (int nSize, Label_e Label, ...);
         void                RestoreAttribute            (void);
         void                RestoreCursorPosition       (void);
         void                SaveAttribute               (void);
         void                SaveCursorPosition          (void);
         void                SetAttribute                (VT100_Attribute_e Attribute);
 
-      #ifdef CONSOLE_USE_COLOR
+      #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
         void                SetColor                    (VT100_Color_e ForeColor, VT100_Color_e BackColor);
-        inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute((CON_VT100_Attribute_e)Color + VT100__OFFSET_COLOR_FOREGROUND); }
-        inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute((CON_VT100_Attribute_e)Color + VT100__OFFSET_COLOR_BACKGROUND); }
+        inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute((CON_VT100_Attribute_e)Color + VT100_OFFSET_COLOR_FOREGROUND); }
+        inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute((CON_VT100_Attribute_e)Color + VT100_OFFSET_COLOR_BACKGROUND); }
         void                PrintSaveLabel              (uint8_t PosX, uint8_t PosY, VT100_Color_e Color);
         void                Bargraph                    (uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size);
       #else
@@ -219,9 +191,6 @@ class VT100_Terminal
 
 
 void RX_Callback(uint8_t Data);
-
-//      #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED) // false it will alawys work with console
-        //size_t              LoggingPrintf               (CLI_DebugLevel_e Level, const char* pFormat, ...);
 
 // to check if needed in VT100
 //void                SeConsoleMuteLogs           (bool);  this should be in console... beacause when in VT100 we don't want any debug message going thru
@@ -258,7 +227,6 @@ bool                GetString                   (char* pBuffer, size_t Size);
         nOS_Timer                           m_EscapeTimer;
         bool                                m_IsDisplayLock;
         bool                                m_FlushNextEntry;
-        char*                               m_pHeadLabel;
         char*                               m_pDescription;
         bool                                m_ForceRefresh;
 

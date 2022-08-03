@@ -69,7 +69,7 @@ size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService)
     //    DB_Central.Get(&Language, SYSTEM_LANGUAGE, 0, 0);         // hide this from BSP... it should be available in Digini
     Language = LANG_ENGLISH;
 
-        DB_Central.Get(&pString, APPLICATION_LABEL, pText->Label, Language);
+        //DB_Central.Get(&pString, APPLICATION_LABEL, pText->Label, Language);
 
         if(pText->Blend == CLEAR_BLEND)
         {

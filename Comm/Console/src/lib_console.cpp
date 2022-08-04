@@ -237,7 +237,7 @@ size_t Console::Printf(int MaxSize, const char* pFormat, ...)
     if((pBuffer = (char*)pMemory->Alloc(CON_SERIAL_OUT_SIZE)) != nullptr)
     {
         Size = (MaxSize == CON_SIZE_NONE) ? CON_SERIAL_OUT_SIZE : MaxSize;
-        va_start(vaArg, (const char*)pFormat);
+        va_start(vaArg, pFormat);
         Size = vsnprintf(&pBuffer[0], Size, pFormat, vaArg);
         while(m_pUartDriver->IsItBusy() == true){};
         m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);
@@ -274,7 +274,7 @@ size_t Console::PrintSerialLog(CON_DebugLevel_e Level, const char* pFormat, ...)
         {
             if((pBuffer = (char*)pMemory->Alloc(CON_SERIAL_OUT_SIZE)) != nullptr)
             {
-                va_start(vaArg, (const char*)pFormat);
+                va_start(vaArg, pFormat);
                 Size = vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, vaArg);
                 m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size, nullptr);
                 va_end(vaArg);

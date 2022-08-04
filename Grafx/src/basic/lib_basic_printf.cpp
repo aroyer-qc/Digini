@@ -60,7 +60,7 @@ size_t GPrintf::Draw(Box_t* pBox, const char* pFormat, ...)
     va_list     vaArg;
     uint16_t    Size;
 
-    va_start(vaArg, (char*)pFormat);
+    va_start(vaArg, pFormat);
     Size = this->Draw(pBox, pFormat, vaArg);
     va_end(vaArg);
 

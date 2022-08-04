@@ -60,7 +60,7 @@
 
 const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
 {
-    //VT100_MENU_DEF(EXPAND_VT100_MENU_AS_MENU_DATA)
+    VT100_MENU_TREE_DEF(EXPAND_VT100_MENU_AS_MENU_DATA)
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -68,17 +68,17 @@ const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
 //  Name:           VT100_TaskWrapper
 //
 //  Parameter(s):   void* pvParameters
-//  Return:         void
+//  Return:         nOS_Error
 //
 //  Description:    main() for the task1
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (VT100_IS_A_TASK == DEF_ENABLED)
+#if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
 extern "C" void VT100_TaskWrapper(void* pvParameters)
 {
-    (static_cast<myClassVT100*>(pvParameters))->Run();
+    (static_cast<VT100_Terminal*>(pvParameters))->Process();
 }
 #endif
 
@@ -94,8 +94,9 @@ extern "C" void VT100_TaskWrapper(void* pvParameters)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-  void VT100_Terminal::Initialize(Console* pConsole, const char* pDescription)
+nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pDescription)
 {
+    nOS_Error Error = NOS_OK;
     TickCount_t Delay;
 
     m_ForceRefresh = false;
@@ -130,6 +131,21 @@ extern "C" void VT100_TaskWrapper(void* pvParameters)
     CallbackInitialize();               // User callback specific initialization
     ClearConfigFLag();
     ClearGenericString();
+
+
+  #if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
+    if((Error = nOS_SemCreate(&this->m_SemTaskRun, 0, 1)) == NOS_OK)
+    {
+        Error = nOS_ThreadCreate(&this->m_Handle,
+                                 VT100_TaskWrapper,
+                                 this,
+                                 &this->m_Stack[0],
+                                 TASK_VT100_STACK_SIZE,
+                                 TASK_VT100_PRIO);
+    }
+  #endif
+
+    return Error;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -150,91 +166,100 @@ void VT100_Terminal::Process(void)
     uint8_t                Items;
     uint8_t                ItemsQts;
 
-    if((m_InputDecimalMode == false) && (m_InputStringMode == false))
+  #if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
+    for(;;)
     {
-        // Display the menu
-        if(m_RefreshMenu == true)
+        nOS_SemTake(&this->m_SemTaskRun, TASK_VT100_SLEEP_TIME);
+  #endif
+
+        if((m_InputDecimalMode == false) && (m_InputStringMode == false))
         {
-            // Call the destructor for each callback, if any
-            if((m_FlushMenuID != VT100_MENU_NONE) &&
-               (m_FlushMenuID != m_MenuID))
+            // Display the menu
+            if(m_RefreshMenu == true)
             {
-                m_BackFromEdition = false;
-                ClearConfigFLag();
-                ClearGenericString();
-
-                ItemsQts = m_Menu[m_FlushMenuID].pMenuSize;
-
-                for(Items = 0; Items < ItemsQts; Items++)
+                // Call the destructor for each callback, if any
+                if((m_FlushMenuID != VT100_MENU_NONE) &&
+                   (m_FlushMenuID != m_MenuID))
                 {
-                    pMenu = &m_Menu[m_FlushMenuID].pMenu[Items];
-                    CallBack(pMenu->Callback, VT100_CALLBACK_FLUSH, Items);
+                    m_BackFromEdition = false;
+                    ClearConfigFLag();
+                    ClearGenericString();
+
+                    ItemsQts = m_Menu[m_FlushMenuID].pMenuSize;
+
+                    for(Items = 0; Items < ItemsQts; Items++)
+                    {
+                        pMenu = &m_Menu[m_FlushMenuID].pMenu[Items];
+                        CallBack(pMenu->Callback, VT100_CALLBACK_FLUSH, Items);
+                    }
                 }
+
+                m_RefreshMenu = false;
+                m_ItemsQts    = DisplayMenu(m_MenuID);
+                m_Input       = 0;
             }
 
-            m_RefreshMenu = false;
-            m_ItemsQts    = DisplayMenu(m_MenuID);
-            m_Input       = 0;
-        }
-
-        if(m_ForceRefresh == true)
-        {
-            m_ItemsQts     = DisplayMenu(m_MenuID);
-            m_Input        = 0;
-            m_ForceRefresh = false;
-        }
-
-        pMenu = &m_Menu[m_MenuID].pMenu[m_Input];
-
-        // An entry have been detected, do job accordingly
-        if(m_ValidateInput == true)
-        {
-            m_ValidateInput = false;
-
-            if(m_InputType == VT100_INPUT_MENU_CHOICE)
+            if(m_ForceRefresh == true)
             {
-                // Validate the range for the menu
-                if(m_Input < m_ItemsQts)
+                m_ItemsQts     = DisplayMenu(m_MenuID);
+                m_Input        = 0;
+                m_ForceRefresh = false;
+            }
+
+            pMenu = &m_Menu[m_MenuID].pMenu[m_Input];
+
+            // An entry have been detected, do job accordingly
+            if(m_ValidateInput == true)
+            {
+                m_ValidateInput = false;
+
+                if(m_InputType == VT100_INPUT_MENU_CHOICE)
                 {
-                    // If new menu selection, draw this new menu
-                    if(m_MenuID != pMenu->NextMenu)
+                    // Validate the range for the menu
+                    if(m_Input < m_ItemsQts)
                     {
-                        m_FlushMenuID = m_MenuID;
-                        m_MenuID      = pMenu->NextMenu;
-                        m_RefreshMenu = true;
+                        // If new menu selection, draw this new menu
+                        if(m_MenuID != pMenu->NextMenu)
+                        {
+                            m_FlushMenuID = m_MenuID;
+                            m_MenuID      = pMenu->NextMenu;
+                            m_RefreshMenu = true;
+                        }
+
+                        // If selection has a callback, call it and react to it's configuration for key input
+                        m_InputType = CallBack(pMenu->Callback, VT100_CALLBACK_ON_INPUT, m_Input);
+
+                        // Job is already done, so no refresh
+                        if(m_InputType == VT100_INPUT_MENU_CHOICE)
+                        {
+                            m_Input = 0;
+                        }
                     }
-
-                    // If selection has a callback, call it and react to it's configuration for key input
-                    m_InputType = CallBack(pMenu->Callback, VT100_CALLBACK_ON_INPUT, m_Input);
-
-                    // Job is already done, so no refresh
-                    if(m_InputType == VT100_INPUT_MENU_CHOICE)
+                    else
                     {
                         m_Input = 0;
                     }
                 }
-                else
+
+                m_InputCount = 0;
+            }
+            else
+            {
+                // Still in a callback mode
+                if(m_MenuID != VT100_MENU_NONE)
                 {
-                    m_Input = 0;
+                    CallBack(pMenu->Callback, VT100_CALLBACK_REFRESH, 0);
                 }
             }
-
-            m_InputCount = 0;
         }
-        else
+        else // Input decimal or string mode
         {
-            // Still in a callback mode
-            if(m_MenuID != VT100_MENU_NONE)
-            {
-                CallBack(pMenu->Callback, VT100_CALLBACK_REFRESH, 0);
-            }
+            if(m_InputDecimalMode == true)   { InputDecimal(); }
+            if(m_InputStringMode  == true)   { InputString();  }
         }
+  #if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
     }
-    else // Input decimal or string mode
-    {
-        if(m_InputDecimalMode == true)   { InputDecimal(); }
-        if(m_InputStringMode  == true)   { InputString();  }
-    }
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -800,7 +825,7 @@ size_t VT100_Terminal::InMenuPrintf(int nSize, Label_e Label, ...)
 
     if((pBuffer = (char*)pMemory->Alloc(VT100_TERMINAL_SIZE)) == nullptr)
     {
-        va_start(vaArg, (const char*)pFormat);
+        va_start(vaArg, pFormat);
         Size = STR_vsnprintf(pBuffer, ((nSize == VT100_SZ_NONE) ? VT100_TERMINAL_SIZE : nSize), pFormat, vaArg);
 
       #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)
@@ -1064,8 +1089,8 @@ void VT100_Terminal::SetColor(VT100_Color_e ForeColor, VT100_Color_e BackColor)
 {
     if(m_IsDisplayLock == false)
     {
-        SetAttribute((VT100_Attribute_e)ForeColor + VT100_OFFSET_COLOR_FOREGROUND);
-        SetAttribute((VT100_Attribute_e)BackColor + VT100_OFFSET_COLOR_BACKGROUND);
+        SetAttribute(VT100_Attribute_e(int(ForeColor) + VT100_OFFSET_COLOR_FOREGROUND));
+        SetAttribute(VT100_Attribute_e(int(BackColor) + VT100_OFFSET_COLOR_BACKGROUND));
     }
 }
 #endif
@@ -1278,7 +1303,7 @@ void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, uint8_t Value, uint8_t
     }
 
   #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
-    SetAttribute(VT100_COLOR_BLACK + VT100_OFFSET_COLOR_BACKGROUND);
+    SetAttribute(VT100_Attribute_e(VT100_COLOR_BLACK + VT100_OFFSET_COLOR_BACKGROUND));
   #else
     InvertMono(false);
   #endif
@@ -1521,6 +1546,10 @@ void VT100_Terminal::RX_Callback(uint8_t Data)
         default: break;
     }
        */
+
+  #if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
+    nOS_SemGive(&m_SemTaskRun);
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------

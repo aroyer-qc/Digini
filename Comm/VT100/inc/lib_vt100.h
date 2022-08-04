@@ -45,16 +45,22 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define VT100_OFFSET_COLOR_FOREGROUND     30
-#define VT100_OFFSET_COLOR_BACKGROUND     40
-#define CON_FIFO_PARSER_RX_SZ             64
-#define VT100_SZ_NONE                     0
+#define VT100_OFFSET_COLOR_FOREGROUND       30
+#define VT100_OFFSET_COLOR_BACKGROUND       40
+#define CON_FIFO_PARSER_RX_SZ               64
+#define VT100_SZ_NONE                       0
 
-                                                                      #define CONFIG_FLAG_SIZE                  8
+                                                                      #define CONFIG_FLAG_SIZE                  8  //???
 
-#define VT100_STRING_QTS                  8
-#define VT100_ITEMS_QTS                   8
-#define VT100_STRING_SZ                   32
+#define VT100_STRING_QTS                    8
+#define VT100_ITEMS_QTS                     8
+#define VT100_STRING_SZ                     32
+
+// if VT100 is a task only
+#define TASK_VT100_STACK_SIZE               256
+#define TASK_VT100_PRIO                     4
+#define TASK_VT100_SLEEP_TIME               16   // Run the task 60 times per seconds,
+                                                 // so callback can refresh console
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -67,8 +73,6 @@ enum VT100_Menu_e
     NUMBER_OF_MENU,
     VT100_MENU_NONE,
 };
-
-//VT100_MENU_DEF(EXPAND_VT100_AS_MENU_ENUMS)
 
 enum VT100_Color_e
 {
@@ -152,7 +156,7 @@ class VT100_Terminal
 
 
         void                Process                     (void);
-        void                Initialize                  (Console* pConsole, const char* pDescription);
+        nOS_Error           Initialize                  (Console* pConsole, const char* pDescription);
         void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
         void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
         void                GoToMenu                    (VT100_Menu_e MenuID);
@@ -165,8 +169,8 @@ class VT100_Terminal
 
       #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
         void                SetColor                    (VT100_Color_e ForeColor, VT100_Color_e BackColor);
-        inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute((CON_VT100_Attribute_e)Color + VT100_OFFSET_COLOR_FOREGROUND); }
-        inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute((CON_VT100_Attribute_e)Color + VT100_OFFSET_COLOR_BACKGROUND); }
+        inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute(VT100_Attribute_e(int(Color) + VT100_OFFSET_COLOR_FOREGROUND)); }
+        inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute(VT100_Attribute_e(int(Color) + VT100_OFFSET_COLOR_BACKGROUND)); }
         void                PrintSaveLabel              (uint8_t PosX, uint8_t PosY, VT100_Color_e Color);
         void                Bargraph                    (uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size);
       #else
@@ -210,6 +214,12 @@ bool                GetString                   (char* pBuffer, size_t Size);
         void                ClearConfigFLag             (void);
         void                ClearGenericString          (void);
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
+
+      #if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
+        nOS_Thread                          m_Handle;
+        nOS_Stack                           m_Stack[TASK_VT100_STACK_SIZE];
+        nOS_Sem                             m_SemTaskRun;
+      #endif
 
         Console*                            m_pConsole;
         bool                                m_IsItInStartup;
@@ -259,6 +269,18 @@ bool                GetString                   (char* pBuffer, size_t Size);
 //-------------------------------------------------------------------------------------------------
 
 #include "vt100_var.h"        // Project variable
+
+#ifdef VT100_GLOBAL
+
+  class VT100_Terminal myVT100_Terminal();
+
+#else // VT100_GLOBAL
+
+  extern class VT100_Terminal myVT100_Terminal;
+
+#endif // VT100_GLOBAL
+
+//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 

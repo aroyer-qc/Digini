@@ -58,9 +58,11 @@
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
+VT100_MENU_DEF(EXPAND_VT100_AS_MENU_DATA)
+
 const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
 {
-    VT100_MENU_TREE_DEF(EXPAND_VT100_MENU_AS_MENU_DATA)
+   // VT100_MENU_TREE_DEF(EXPAND_VT100_MENU_AS_MENU_DATA)
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -1191,7 +1193,7 @@ void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t
 
         for(uint8_t i = 0; i < (H_Size - 2); i++)
         {
-            InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "â•?");
+            InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "ï¿½?");
         }
 
         InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "â•—");
@@ -1217,9 +1219,9 @@ void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t
 
         for(uint8_t i = 0; i < (H_Size - 2); i++)
         {
-            InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "â•?");
+            InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "ï¿½?");
         }
-        InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "â•?");
+        InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "ï¿½?");
     }
 }
 

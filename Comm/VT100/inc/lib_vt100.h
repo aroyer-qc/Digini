@@ -133,16 +133,19 @@ enum VT100_CallBackType_e
 
 struct VT100_MenuDef_t
 {
-    VT100_Menu_e      NextMenu;
-    VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e);
     Label_e           Label;
+    VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e);
+    VT100_Menu_e      NextMenu;
 };
 
 struct VT100_MenuObject_t
 {
-    const VT100_MenuDef_t*    pMenu;
+    const VT100_MenuDef_t     Menu;
     size_t                    pMenuSize;
 };
+
+
+VT100_MENU_DEF(EXPAND_VT100_AS_MENU_ENUMS)
 
 //-------------------------------------------------------------------------------------------------
 // Function(s) Prototype(s)

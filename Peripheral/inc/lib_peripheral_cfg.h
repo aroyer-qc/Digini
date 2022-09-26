@@ -44,12 +44,16 @@
 #include "clock_cfg.h"
 #include "driver_cfg.h"
 
-#if (USE_DAC_DRIVER == DEF_ENABLED)
-#include "dac_cfg.h"
-#endif
-
 #if (USE_ADC_DRIVER == DEF_ENABLED)           // TODO
 #include "adc_cfg.h"
+#endif
+
+#if (USE_CAN_DRIVER == DEF_ENABLED)
+#include "can_cfg.h"
+#endif
+
+#if (USE_DAC_DRIVER == DEF_ENABLED)
+#include "dac_cfg.h"
 #endif
 
 #if (USE_I2C_DRIVER == DEF_ENABLED)

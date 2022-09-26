@@ -86,6 +86,10 @@
 #include "lib_class_adc.h"
 #endif
 
+#if (USE_CAN_DRIVER == DEF_ENABLED)
+#include "lib_class_can.h"
+#endif
+
 #if (USE_DAC_DRIVER == DEF_ENABLED)
 #include "lib_class_dac.h"
 #endif

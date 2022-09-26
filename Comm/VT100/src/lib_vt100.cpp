@@ -191,7 +191,7 @@ void VT100_Terminal::Process(void)
 
                     for(Items = 0; Items < ItemsQts; Items++)
                     {
-                        pMenu = &m_Menu[m_FlushMenuID].pMenu[Items];
+ //                       pMenu = &m_Menu[m_FlushMenuID].pMenu[Items];
                         CallBack(pMenu->Callback, VT100_CALLBACK_FLUSH, Items);
                     }
                 }
@@ -208,7 +208,7 @@ void VT100_Terminal::Process(void)
                 m_ForceRefresh = false;
             }
 
-            pMenu = &m_Menu[m_MenuID].pMenu[m_Input];
+ //           pMenu = &m_Menu[m_MenuID].pMenu[m_Input];
 
             // An entry have been detected, do job accordingly
             if(m_ValidateInput == true)
@@ -350,7 +350,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
             for(Items = 0; Items < ItemsQts; Items++)
             {
                 pPreviousMenu = pMenu;
-                pMenu         = &m_Menu[MenuID].pMenu[Items];
+ //               pMenu         = &m_Menu[MenuID].pMenu[Items];
 
                 if(Items != 0)
                 {
@@ -384,7 +384,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
         }
 
         // There is nothing to draw if it has only one item ( it is a redirection menu )
-        CallBack(m_Menu[m_MenuID].pMenu[0].Callback, VT100_CALLBACK_INIT, 0);
+   //     CallBack(m_Menu[m_MenuID].pMenu[0].Callback, VT100_CALLBACK_INIT, 0);
 
         return 0;
     }

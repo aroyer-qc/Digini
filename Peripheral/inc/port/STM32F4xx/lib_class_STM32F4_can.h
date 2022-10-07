@@ -47,11 +47,6 @@
                            ((MODE) == CAN_Mode_Silent)  ||   \
                            ((MODE) == CAN_Mode_Silent_LoopBack))
 
-// CAN_operating_mode 
-#define CAN_OperatingMode_Initialization  ((uint8_t)0x00) // Initialization mode 
-#define CAN_OperatingMode_Normal          ((uint8_t)0x01) // Normal mode 
-#define CAN_OperatingMode_Sleep           ((uint8_t)0x02) // sleep mode 
-
 #define IS_CAN_OPERATING_MODE(MODE) (((MODE) == CAN_OperatingMode_Initialization) ||\
                                     ((MODE) == CAN_OperatingMode_Normal)|| \
 																		((MODE) == CAN_OperatingMode_Sleep))
@@ -61,7 +56,6 @@
 #define CAN_ModeStatus_Success   ((uint8_t)!CAN_ModeStatus_Failed)   // CAN entering the specific mode Succeed 
 
 // CAN_synchronisation_jump_width 
-   
 #define CAN_SJW_1tq                 ((uint8_t)0x00)  // 1 time quantum 
 #define CAN_SJW_2tq                 ((uint8_t)0x01)  // 2 time quantum 
 #define CAN_SJW_3tq                 ((uint8_t)0x02)  // 3 time quantum 
@@ -166,6 +160,7 @@
 #define CAN_TxStatus_Ok             ((uint8_t)0x01) // CAN transmission succeeded 
 #define CAN_TxStatus_Pending        ((uint8_t)0x02) // CAN transmission pending 
 #define CAN_TxStatus_NoMailBox      ((uint8_t)0x04) // CAN cell did not provide an empty mailbox 
+
 // Legacy defines 	
 #define CANTXFAILED                  CAN_TxStatus_Failed
 #define CANTXOK                      CAN_TxStatus_Ok
@@ -316,6 +311,13 @@ enum CAN_ID_e
     NB_OF_CAN_DRIVER,
 };
 
+enum CAN_OperationMode_e
+{
+    CAN_OperatingMode_Initialization  = 0,
+    CAN_OperatingMode_Normal
+    CAN_OperatingMode_Sleep
+};
+
 struct CAN_Info_t
 {
     I2C_ID_e            CAN_ID;
@@ -334,56 +336,53 @@ struct CAN_Info_t
 // CAN init structure definition
 struct CAN_Info
 {
-    uint16_t        CAN_Prescaler;   // Specifies the length of a time quantum.               It ranges from 1 to 1024. 
-    uint8_t         CAN_Mode;         // Specifies the CAN operating mode.                                 This Parameter can be a value of @ref CAN_operating_mode 
-    uint8_t         CAN_SJW;          // Specifies the maximum number of time quanta                                  the CAN hardware is allowed to lengthen or                                  shorten a bit to perform resynchronization.                                 This Parameter can be a value of @ref CAN_synchronisation_jump_width 
-    uint8_t         CAN_BS1;          // Specifies the number of time quanta in Bit                                  Segment 1. This Parameter can be a value of                                  @ref CAN_time_quantum_in_bit_segment_1 
-    uint8_t         CAN_BS2;          // Specifies the number of time quanta in Bit Segment 2.                                 This Parameter can be a value of @ref CAN_time_quantum_in_bit_segment_2 
-    FunctionalState CAN_TTCM; // Enable or disable the time triggered communication mode.                                This Parameter can be set either to ENABLE or DISABLE. 
-    FunctionalState CAN_ABOM;  // Enable or disable the automatic bus-off management.                                  This Parameter can be set either to ENABLE or DISABLE. 
-    FunctionalState CAN_AWUM;  // Enable or disable the automatic wake-up mode.                                   This Parameter can be set either to ENABLE or DISABLE. 
-    FunctionalState CAN_NART;  // Enable or disable the non-automatic retransmission mode.                                  This Parameter can be set either to ENABLE or DISABLE. 
-    FunctionalState CAN_RFLM;  // Enable or disable the Receive FIFO Locked mode.                                  This Parameter can be set either to ENABLE or DISABLE. 
-    FunctionalState CAN_TXFP;  // Enable or disable the transmit FIFO priority.                                  This Parameter can be set either to ENABLE or DISABLE. 
+    uint16_t        Prescaler;              // Specifies the length of a time quantum.               It ranges from 1 to 1024. 
+    uint8_t         Mode;                   // Specifies the CAN operating mode.                                 This Parameter can be a value of @ref CAN_operating_mode 
+    uint8_t         SJW;                    // Specifies the maximum number of time quanta                                  the CAN hardware is allowed to lengthen or                                  shorten a bit to perform resynchronization.                                 This Parameter can be a value of @ref CAN_synchronisation_jump_width 
+    uint8_t         BS1;                    // Specifies the number of time quanta in Bit                                  Segment 1. This Parameter can be a value of                                  @ref CAN_time_quantum_in_bit_segment_1 
+    uint8_t         BS2;                    // Specifies the number of time quanta in Bit Segment 2.                                 This Parameter can be a value of @ref CAN_time_quantum_in_bit_segment_2 
+    FunctionalState TTCM;                   // Enable or disable the time triggered communication mode.                                This Parameter can be set either to ENABLE or DISABLE. 
+    FunctionalState ABOM;                   // Enable or disable the automatic bus-off management.                                  This Parameter can be set either to ENABLE or DISABLE. 
+    FunctionalState AWUM;                   // Enable or disable the automatic wake-up mode.                                   This Parameter can be set either to ENABLE or DISABLE. 
+    FunctionalState NART;                   // Enable or disable the non-automatic retransmission mode.                                  This Parameter can be set either to ENABLE or DISABLE. 
+    FunctionalState RFLM;                   // Enable or disable the Receive FIFO Locked mode.                                  This Parameter can be set either to ENABLE or DISABLE. 
+    FunctionalState TXFP;                   // Enable or disable the transmit FIFO priority.                                  This Parameter can be set either to ENABLE or DISABLE. 
 };
 
 // CAN filter init structure definition
 struct CAN_FilterInfo_t
 {
-  uint16_t CAN_FilterIDHigh;         // Specifies the filter identification number (MSBs for a 32-bit                                              configuration, first one for a 16-bit configuration).                                              This Parameter can be a value between 0x0000 and 0xFFFF   uint16_t CAN_FilterIDLow;          // Specifies the filter identification number (LSBs for a 32-bit                                              configuration, second one for a 16-bit configuration).                                              This Parameter can be a value between 0x0000 and 0xFFFF 
-  uint16_t CAN_FilterMask_ID_High;     // Specifies the filter mask number or identification number,                                              according to the mode (MSBs for a 32-bit configuration,                                              first one for a 16-bit configuration).                                              This Parameter can be a value between 0x0000 and 0xFFFF 
-  uint16_t CAN_FilterMask_ID_Low;      // Specifies the filter mask number or identification number,                                              according to the mode (LSBs for a 32-bit configuration,                                              second one for a 16-bit configuration).                                              This Parameter can be a value between 0x0000 and 0xFFFF 
-  uint16_t CAN_FilterFIFOAssignment; // Specifies the FIFO (0 or 1) which will be assigned to the filter.                                              This Parameter can be a value of @ref CAN_filter_FIFO 
-  uint8_t CAN_FilterNumber;          // Specifies the filter which will be initialized. It ranges from 0 to 13. 
-  uint8_t CAN_FilterMode;            // Specifies the filter mode to be initialized.                                              This Parameter can be a value of @ref CAN_filter_mode 
-  uint8_t CAN_FilterScale;           // Specifies the filter scale.                                              This Parameter can be a value of @ref CAN_filter_scale 
-  FunctionalState CAN_FilterActivation; // Enable or disable the filter.                                              This Parameter can be set either to ENABLE or DISABLE. 
+    uint16_t        IDHigh;                 // Specifies the filter identification number (MSBs for a 32-bit                                              configuration, first one for a 16-bit configuration).                                              This Parameter can be a value between 0x0000 and 0xFFFF   uint16_t CAN_FilterIDLow;          // Specifies the filter identification number (LSBs for a 32-bit                                              configuration, second one for a 16-bit configuration).                                              This Parameter can be a value between 0x0000 and 0xFFFF 
+    uint16_t        Mask_ID_High;           // Specifies the filter mask number or identification number,                                              according to the mode (MSBs for a 32-bit configuration,                                              first one for a 16-bit configuration).                                              This Parameter can be a value between 0x0000 and 0xFFFF 
+    uint16_t        Mask_ID_Low;            // Specifies the filter mask number or identification number,                                              according to the mode (LSBs for a 32-bit configuration,                                              second one for a 16-bit configuration).                                              This Parameter can be a value between 0x0000 and 0xFFFF 
+    uint16_t        FIFO_Assignment;        // Specifies the FIFO (0 or 1) which will be assigned to the filter.                                              This Parameter can be a value of @ref CAN_filter_FIFO 
+    uint8_t         Number;                 // Specifies the filter which will be initialized. It ranges from 0 to 13. 
+    uint8_t         Mode;                   // Specifies the filter mode to be initialized.                                              This Parameter can be a value of @ref CAN_filter_mode 
+    uint8_t         Scale;                  // Specifies the filter scale.                                              This Parameter can be a value of @ref CAN_filter_scale 
+    FunctionalState FilterActivation;       // Enable or disable the filter.                                              This Parameter can be set either to ENABLE or DISABLE. 
 };
-
-
 
 // CAN Tx message structure definition  
 struct CAN_TX_Message_t
 {
-  uint32_t StdID;  // Specifies the standard identifier.                        This Parameter can be a value between 0 to 0x7FF. 
-  uint32_t ExtID;  // Specifies the extended identifier.                        This Parameter can be a value between 0 to 0x1FFFFFFF. 
-  uint8_t  IDE;     // Specifies the type of identifier for the message that                         will be transmitted. This Parameter can be a value                         of @ref CAN_identifier_type 
-  uint8_t  RTR;     // Specifies the type of frame for the message that will                        be transmitted. This Parameter can be a value of                         @ref CAN_remote_transmission_request 
-  uint8_t  DLC;     // Specifies the length of the frame that will be                         transmitted. This Parameter can be a value between                         0 to 8 
-  uint8_t  Data[8]; // Contains the data to be transmitted. It ranges from 0                         to 0xFF. 
+  uint32_t StdID;                           // Specifies the standard identifier.                        This Parameter can be a value between 0 to 0x7FF. 
+  uint32_t ExtID;                           // Specifies the extended identifier.                        This Parameter can be a value between 0 to 0x1FFFFFFF. 
+  uint8_t  IDE;                             // Specifies the type of identifier for the message that                         will be transmitted. This Parameter can be a value                         of @ref CAN_identifier_type 
+  uint8_t  RTR;                             // Specifies the type of frame for the message that will                        be transmitted. This Parameter can be a value of                         @ref CAN_remote_transmission_request 
+  uint8_t  DLC;                             // Specifies the length of the frame that will be                         transmitted. This Parameter can be a value between                         0 to 8 
+  uint8_t  Data[8];                         // Contains the data to be transmitted. It ranges from 0                         to 0xFF. 
 };
 
 // CAN Rx message structure definition  
-  
 struct CAN_RX_Message_t
 {
-  uint32_t StdID;   // Specifies the standard identifier.                        This Parameter can be a value between 0 to 0x7FF. 
-  uint32_t ExtID;   // Specifies the extended identifier.                        This Parameter can be a value between 0 to 0x1FFFFFFF. 
-  uint8_t  IDE;     // Specifies the type of identifier for the message that                         will be received. This Parameter can be a value of                         @ref CAN_identifier_type 
-  uint8_t  RTR;     // Specifies the type of frame for the received message.                        This Parameter can be a value of                         @ref CAN_remote_transmission_request 
-  uint8_t  DLC;     // Specifies the length of the frame that will be received.                        This Parameter can be a value between 0 to 8 
-  uint8_t  Data[8]; // Contains the data to be received. It ranges from 0 to                         0xFF. 
-  uint8_t  FMI;     // Specifies the index of the filter the message stored in                         the mailbox passes through. This Parameter can be a                         value between 0 to 0xFF 
+  uint32_t StdID;                           // Specifies the standard identifier.                        This Parameter can be a value between 0 to 0x7FF. 
+  uint32_t ExtID;                           // Specifies the extended identifier.                        This Parameter can be a value between 0 to 0x1FFFFFFF. 
+  uint8_t  IDE;                             // Specifies the type of identifier for the message that                         will be received. This Parameter can be a value of                         @ref CAN_identifier_type 
+  uint8_t  RTR;                             // Specifies the type of frame for the received message.                        This Parameter can be a value of                         @ref CAN_remote_transmission_request 
+  uint8_t  DLC;                             // Specifies the length of the frame that will be received.                        This Parameter can be a value between 0 to 8 
+  uint8_t  Data[8];                         // Contains the data to be received. It ranges from 0 to                         0xFF. 
+  uint8_t  FMI;                             // Specifies the index of the filter the message stored in                         the mailbox passes through. This Parameter can be a                         value between 0 to 0xFF 
 };
 
 
@@ -410,7 +409,7 @@ class CAN_Driver
         // Initialization and Configuration functions ******************************** 
         void            FilterInitInitialize        (CAN_FilterInfo_t* CAN_FilterInitStruct);
         void            StructInit                  (CAN_Info* CAN_InitStruct);
-        void            SlaveStartBank              (uint8_t CAN_BankNumber); 
+        void            SlaveStartBank              (uint8_t BankNumber); 
         void            DBGFreeze                   (FunctionalState NewState);
         void            TTComModeCmd                (FunctionalState NewState);
 
@@ -420,24 +419,24 @@ class CAN_Driver
         void            CancelTransmit              (uint8_t Mailbox);
 
         // CAN Frames Reception functions ********************************************
-        void            Receive                     (uint8_t FIFONumber, CAN_RX_Message_t* RxMessage);
-        void            FIFORelease                 (uint8_t FIFONumber);
-        uint8_t         MessagePending              (uint8_t FIFONumber);
+        void            Receive                     (uint8_t FIFO_Number, CAN_RX_Message_t* RxMessage);
+        void            FIFO_Release                (uint8_t FIFO_Number);
+        uint8_t         MessagePending              (uint8_t FIFO_Number);
 
         // Operation modes functions *************************************************
-        uint8_t         OperatingModeRequest        (uint8_t CAN_OperatingMode);
-        uint8_t         Sleep                       (void);
-        uint8_t         WakeUp                      (void);
+        SystemState_e   OperatingModeRequest        (CAN_OperationMode_e OperatingMode);
+        SystemState_e   Sleep                       (void);
+        SystemState_e   WakeUp                      (void);
 
         // CAN Bus Error management functions ****************************************
         uint8_t         GetLastErrorCode            (void);
         uint8_t         GetReceiveErrorCounter      (void);
-        uint8_t         GetLSBTransmitErrorCounter  (void);
+        uint8_t         GetLSB_TransmitErrorCounter (void);
 
         // Interrupts and flags management functions *********************************
         void            ITConfig                    (uint32_t CAN_IT, FunctionalState NewState);
-        FlagStatus      GetFlagStatus               (uint32_t CAN_FLAG);
-        void            ClearFlag                   (uint32_t CAN_FLAG);
+        FlagStatus      GetFlagStatus               (uint32_t Flag);
+        void            ClearFlag                   (uint32_t Flag);
         ITStatus        GetITStatus                 (uint32_t CAN_IT);
         void            ClearITPendingBit           (uint32_t CAN_IT);
 

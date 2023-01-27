@@ -40,20 +40,20 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define MCR_DBF                 ((uint32_t)0x00010000)      // CAN Master Control Register bits
-#define TMIDxR_TXRQ             ((uint32_t)0x00000001)      // CAN Mailbox Transmit Request
-#define FMR_FINIT               ((uint32_t)0x00000001)      // CAN Filter Master Register bits
-#define INAK_TIMEOUT            ((uint32_t)0x0000FFFF)      // Time out for INAK bit
-#define SLAK_TIMEOUT            ((uint32_t)0x0000FFFF)      // Time out for SLAK bit
-#define CAN_FLAGS_TSR           ((uint32_t)0x08000000)      // Flags in TSR register
-#define CAN_FLAGS_RF1R          ((uint32_t)0x04000000)      // Flags in RF1R register
-#define CAN_FLAGS_RF0R          ((uint32_t)0x02000000)      // Flags in RF0R register
-#define CAN_FLAGS_MSR           ((uint32_t)0x01000000)      // Flags in MSR register
-#define CAN_FLAGS_ESR           ((uint32_t)0x00F00000)      // Flags in ESR register
-#define CAN_TXMAILBOX_0         ((uint8_t)0x00)             // Mailboxes definition
-#define CAN_TXMAILBOX_1         ((uint8_t)0x01)
-#define CAN_TXMAILBOX_2         ((uint8_t)0x02) 
-#define CAN_MODE_MASK           ((uint32_t)0x00000003)
+#define MCR_DBF                 (uint32_t(0x00010000))      // CAN Master Control Register bits
+#define TMIDxR_TXRQ             (uint32_t(0x00000001))      // CAN Mailbox Transmit Request
+#define FMR_FINIT               (uint32_t(0x00000001))      // CAN Filter Master Register bits
+#define INAK_TIMEOUT            (uint32_t(0x0000FFFF))      // Time out for INAK bit
+#define SLAK_TIMEOUT            (uint32_t(0x0000FFFF))      // Time out for SLAK bit
+#define CAN_FLAGS_TSR           (uint32_t(0x08000000))      // Flags in TSR register
+#define CAN_FLAGS_RF1R          (uint32_t(0x04000000))      // Flags in RF1R register
+#define CAN_FLAGS_RF0R          (uint32_t(0x02000000))      // Flags in RF0R register
+#define CAN_FLAGS_MSR           (uint32_t(0x01000000))      // Flags in MSR register
+#define CAN_FLAGS_ESR           (uint32_t(0x00F00000))      // Flags in ESR register
+#define CAN_TXMAILBOX_0         (uint8_t(0x00))             // Mailboxes definition
+#define CAN_TXMAILBOX_1         (uint8_t(0x01))
+#define CAN_TXMAILBOX_2         (uint8_t(0x02)) 
+#define CAN_MODE_MASK           (uint32_t(0x00000003))
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -116,7 +116,7 @@ SystemState_e CAN_Driver::Initialize(void)
         VAR_UNUSED(Error);
     }
 
-    pCANx     = m_pInfo->pCANx;
+    pCANx = m_pInfo->pCANx;
     //m_Timeout = 0;
 
 //    NVIC_DisableIRQ(m_pInfo->EV_IRQn);
@@ -131,7 +131,7 @@ SystemState_e CAN_Driver::Initialize(void)
     IO_PinInit(m_pInfo->CANL);
     IO_PinInit(m_pInfo->CANH);
 
-    pCANx->MCR &= (~(uint32_t)CAN_MCR_SLEEP);       // Exit from sleep mode
+    pCANx->MCR &= ~uint32_t(CAN_MCR_SLEEP);         // Exit from sleep mode
     pCANx->MCR |= CAN_MCR_INRQ;                     // Request initialisation
 
     while(((pCANx->MSR & CAN_MSR_INAK) != CAN_MSR_INAK) && (WaitAck != INAK_TIMEOUT))  // Wait the acknowledge
@@ -147,7 +147,7 @@ SystemState_e CAN_Driver::Initialize(void)
         }
         else
         {
-            pCANx->MCR &= ~(uint32_t)CAN_MCR_TTCM;
+            pCANx->MCR &= ~uint32_t(CAN_MCR_TTCM);
         }
 
         if(m_pInfo->ABOM == DEF_ENABLE)             // Set the automatic bus-off management
@@ -156,7 +156,7 @@ SystemState_e CAN_Driver::Initialize(void)
         }
         else
         {
-            pCANx->MCR &= ~(uint32_t)CAN_MCR_ABOM;
+            pCANx->MCR &= ~uint32_t(CAN_MCR_ABOM);
         }
 
         if(m_pInfo->AWUM == DEF_ENABLE)             // Set the automatic bus-off management
@@ -165,7 +165,7 @@ SystemState_e CAN_Driver::Initialize(void)
         }
         else
         {
-            pCANx->MCR &= ~(uint32_t)CAN_MCR_AWUM;
+            pCANx->MCR &= ~uint32_t(CAN_MCR_AWUM);
         }
 
         if(m_pInfo->NART == DEF_ENABLE)             // Set the no automatic retransmission
@@ -174,7 +174,7 @@ SystemState_e CAN_Driver::Initialize(void)
         }
         else
         {
-            pCANx->MCR &= ~(uint32_t)CAN_MCR_NART;
+            pCANx->MCR &= ~uint32_t(CAN_MCR_NART);
         }
 
         if(m_pInfo->RFLM == DEF_ENABLE)
@@ -183,7 +183,7 @@ SystemState_e CAN_Driver::Initialize(void)
         }
         else
         {
-            pCANx->MCR &= ~(uint32_t)CAN_MCR_RFLM;
+            pCANx->MCR &= ~uint32_t(CAN_MCR_RFLM);
         }
 
         if(m_pInfo->TXFP == DEF_ENABLE)
@@ -192,17 +192,17 @@ SystemState_e CAN_Driver::Initialize(void)
         }
         else
         {
-            pCANx->MCR &= ~(uint32_t)CAN_MCR_TXFP;
+            pCANx->MCR &= ~uint32_t(CAN_MCR_TXFP);
         }
 
         // Set the bit timing register
-        pCANx->BTR = (uint32_t)((uint32_t)m_pInfo->Mode << 30) |
-                               ((uint32_t)m_pInfo->SJW << 24)  |
-                               ((uint32_t)m_pInfo->BS1 << 16)  |
-                               ((uint32_t)m_pInfo->BS2 << 20)  |
-                               ((uint32_t)m_pInfo->Prescaler - 1);
+        pCANx->BTR = uint32_t(m_pInfo->Mode << 30) |
+                     uint32_t(m_pInfo->SJW << 24)  |
+                     uint32_t(m_pInfo->BS1 << 16)  |
+                     uint32_t(m_pInfo->BS2 << 20)  |
+                     uint32_t(m_pInfo->Prescaler) - 1);
 
-        pCANx->MCR &= ~(uint32_t)CAN_MCR_INRQ;      // Request leave initialisation
+        pCANx->MCR &= ~uint32_t(CAN_MCR_INRQ);      // Request leave initialisation
 
         WaitAck = 0;                                // Wait the acknowledge
 
@@ -247,82 +247,56 @@ SystemState_e CAN_Driver::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 void CAN_Driver::FilterInitialize(CAN_FilterInfo_t* FilterInitStruct)
 {
-    uint32_t filter_number_bit_pos = 0;
+    uint32_t FilterNumberBitPos = 0;
 
-    filter_number_bit_pos = ((uint32_t)1) << FilterInitStruct->Number;
+    FilterNumberBitPos = uint32_t(1) << FilterInitStruct->Number;
 
-    /* Initialisation mode for the filter */
-    CAN1->FMR |= FMR_FINIT;
+    CAN1->FMR |= FMR_FINIT;                                             // Initialisation mode for the filter
+    CAN1->FA1R &= ~uint32_t(FilterNumberBitPos);                        // Filter Deactivation
 
-    /* Filter Deactivation */
-    CAN1->FA1R &= ~(uint32_t)filter_number_bit_pos;
-
-    /* Filter Scale */
-    if(FilterInitStruct->Scale == CAN_FilterScale_16bit)
+    if(FilterInitStruct->Scale == CAN_FilterScale_16bit)                // Filter Scale
     {
-        /* 16-bit scale for the filter */
-        CAN1->FS1R &= ~(uint32_t)filter_number_bit_pos;
+        CAN1->FS1R &= ~uint32_t(FilterNumberBitPos);                    // 16-bit scale for the filter
+    
+        // First 16-bit identifier and First 16-bit mask Or First 16-bit identifier and Second 16-bit identifier
+        CAN1->sFilterRegister[FilterInitStruct->Number].FR1 = (uint32_t(FilterInitStruct->Mask_ID_Low) << 16)  | uint32_t(FilterInitStruct->ID_Low);
 
-        /* First 16-bit identifier and First 16-bit mask */
-        /* Or First 16-bit identifier and Second 16-bit identifier */
-        CAN1->sFilterRegister[FilterInitStruct->Number].FR1 = 
-           ((0x0000FFFF & (uint32_t)FilterInitStruct->MaskIdLow) << 16) |
-            (0x0000FFFF & (uint32_t)FilterInitStruct->IdLow);
-
-        /* Second 16-bit identifier and Second 16-bit mask */
-        /* Or Third 16-bit identifier and Fourth 16-bit identifier */
-        CAN1->sFilterRegister[FilterInitStruct->Number].FR2 = 
-           ((0x0000FFFF & (uint32_t)FilterInitStruct->MaskIdHigh) << 16) |
-            (0x0000FFFF & (uint32_t)FilterInitStruct->IdHigh);
+        // Second 16-bit identifier and Second 16-bit mask Or Third 16-bit identifier and Fourth 16-bit identifier
+        CAN1->sFilterRegister[FilterInitStruct->Number].FR2 = (uint32_t(FilterInitStruct->Mask_ID_High) << 16) | uint32_t(FilterInitStruct->ID_High);
     }
 
     if(FilterInitStruct->Scale == CAN_FilterScale_32bit)
     {
-        /* 32-bit scale for the filter */
-        CAN1->FS1R |= filter_number_bit_pos;
-        /* 32-bit identifier or First 32-bit identifier */
-        CAN1->sFilterRegister[FilterInitStruct->Number].FR1 = 
-            ((0x0000FFFF & (uint32_t)FilterInitStruct->IdHigh) << 16) |
-             (0x0000FFFF & (uint32_t)FilterInitStruct->IdLow);
-        /* 32-bit mask or Second 32-bit identifier */
-        CAN1->sFilterRegister[FilterInitStruct->Number].FR2 = 
-            ((0x0000FFFF & (uint32_t)FilterInitStruct->MaskIdHigh) << 16) |
-             (0x0000FFFF & (uint32_t)FilterInitStruct->MaskIdLow);
+        CAN1->FS1R |= FilterNumberBitPos;                               // 32-bit scale for the filter
+        CAN1->sFilterRegister[FilterInitStruct->Number].FR1 = (uint32_t(FilterInitStruct->ID_High) << 16)      | uint32_t(FilterInitStruct->ID_Low);      // 32-bit identifier or First 32-bit identifier
+        CAN1->sFilterRegister[FilterInitStruct->Number].FR2 = (uint32_t(FilterInitStruct->Mask_ID_High) << 16) | uint32_t(FilterInitStruct->Mask_ID_Low); // 32-bit mask or Second 32-bit identifier
+    }
+        
+    if(FilterInitStruct->Mode == CAN_FilterMode_ID_Mask)                // Filter Mode
+    {
+        CAN1->FM1R &= ~uint32_t(FilterNumberBitPos);                    // Id/Mask mode for the filter
+    }
+    else // FilterInitStruct->Mode == CAN_FilterMode_ID_List
+    {
+        CAN1->FM1R |= uint32_t(FilterNumberBitPos);                     // Identifier list mode for the filter
     }
 
-    /* Filter Mode */
-    if(FilterInitStruct->Mode == CAN_FilterMode_IdMask)
+    if(FilterInitStruct->FIFO_Assignment == CAN_Filter_FIFO0)           // Filter FIFO assignment
     {
-        /*Id/Mask mode for the filter*/
-        CAN1->FM1R &= ~(uint32_t)filter_number_bit_pos;
-    }
-    else /* FilterInitStruct->Mode == CAN_FilterMode_IdList */
-    {
-        /*Identifier list mode for the filter*/
-        CAN1->FM1R |= (uint32_t)filter_number_bit_pos;
-    }
-
-    /* Filter FIFO assignment */
-    if(FilterInitStruct->FIFO_Assignment == CAN_Filter_FIFO0)
-    {
-        /* FIFO 0 assignation for the filter */
-        CAN1->FFA1R &= ~(uint32_t)filter_number_bit_pos;
+        CAN1->FFA1R &= ~uint32_t(FilterNumberBitPos);                   // FIFO 0 assignation for the filter
     }
 
     if(FilterInitStruct->FIFO_Assignment == CAN_Filter_FIFO1)
     {
-        /* FIFO 1 assignation for the filter */
-        CAN1->FFA1R |= (uint32_t)filter_number_bit_pos;
+        CAN1->FFA1R |= uint32_t(FilterNumberBitPos);                    // FIFO 1 assignation for the filter
     }
   
-    /* Filter activation */
-    if(FilterInitStruct->Activation == DEF_ENABLE)
+    if(FilterInitStruct->Activation == DEF_ENABLE)                      // Filter activation
     {
-        CAN1->FA1R |= filter_number_bit_pos;
+        CAN1->FA1R |= FilterNumberBitPos;
     }
 
-    /* Leave the initialisation mode for the filter */
-    CAN1->FMR &= ~FMR_FINIT;
+    CAN1->FMR &= ~FMR_FINIT;                                            // Leave the initialisation mode for the filter
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -340,8 +314,8 @@ void CAN_Driver::FilterInitialize(CAN_FilterInfo_t* FilterInitStruct)
 void CAN_Driver::SlaveStartBank(uint8_t CAN_BankNumber) 
 {
     CAN1->FMR |= FMR_FINIT;                         // Enter Initialisation mode for the filter
-    CAN1->FMR &= (uint32_t)0xFFFFC0F1;              // Select the start slave bank
-    CAN1->FMR |= (uint32_t)(CAN_BankNumber) << 8;
+    CAN1->FMR &= uint32_t(0xFFFFC0F1);              // Select the start slave bank
+    CAN1->FMR |= uint32_t(CAN_BankNumber) << 8;
     CAN1->FMR &= ~FMR_FINIT;                        // Leave Initialisation mode for the filter
 }
 
@@ -482,15 +456,15 @@ uint8_t CAN_Driver::Transmit(CanTxMsg* TxMessage)
     pCANx = m_pInfo->pCANx;
 
     // Select one empty transmit mailbox
-    if((pCANx->TSR&CAN_TSR_TME0) == CAN_TSR_TME0)
+    if((pCANx->TSR & CAN_TSR_TME0) == CAN_TSR_TME0)
     {
         TX_Mailbox = 0;
     }
-    else if((pCANx->TSR&CAN_TSR_TME1) == CAN_TSR_TME1)
+    else if((pCANx->TSR & CAN_TSR_TME1) == CAN_TSR_TME1)
     {
         TX_Mailbox = 1;
     }
-    else if((pCANx->TSR&CAN_TSR_TME2) == CAN_TSR_TME2)
+    else if((pCANx->TSR & CAN_TSR_TME2) == CAN_TSR_TME2)
     {
         TX_Mailbox = 2;
     }
@@ -514,19 +488,19 @@ uint8_t CAN_Driver::Transmit(CanTxMsg* TxMessage)
         }
     
         // Set up the DLC
-        TxMessage->DLC &= (uint8_t)0x0000000F;
-        pCANx->sTxMailBox[TX_Mailbox].TDTR &= (uint32_t)0xFFFFFFF0;
+        TxMessage->DLC &= uint8_t(0x0F);
+        pCANx->sTxMailBox[TX_Mailbox].TDTR &= uint32_t(0xFFFFFFF0);
         pCANx->sTxMailBox[TX_Mailbox].TDTR |= TxMessage->DLC;
 
         // Set up the data field
-        pCANx->sTxMailBox[TX_Mailbox].TDLR = (((uint32_t)TxMessage->Data[3] << 24) | 
-                                              ((uint32_t)TxMessage->Data[2] << 16) |
-                                              ((uint32_t)TxMessage->Data[1] << 8)  | 
-                                              ((uint32_t)TxMessage->Data[0]));
-        pCANx->sTxMailBox[TX_Mailbox].TDHR = (((uint32_t)TxMessage->Data[7] << 24) | 
-                                              ((uint32_t)TxMessage->Data[6] << 16) |
-                                              ((uint32_t)TxMessage->Data[5] << 8)  |
-                                              ((uint32_t)TxMessage->Data[4]));
+        pCANx->sTxMailBox[TX_Mailbox].TDLR = ((uint32_t(TxMessage->Data[3]) << 24) | 
+                                              (uint32_t(TxMessage->Data[2]) << 16) |
+                                              (uint32_t(TxMessage->Data[1]) << 8)  | 
+                                              (uint32_t(TxMessage->Data[0])));
+        pCANx->sTxMailBox[TX_Mailbox].TDHR = ((uint32_t(TxMessage->Data[7]) << 24) | 
+                                              (uint32_t(TxMessage->Data[6]) << 16) |
+                                              (uint32_t(TxMessage->Data[5]) << 8)  |
+                                              (uint32_t(TxMessage->Data[4])));
         // Request transmission
         pCANx->sTxMailBox[TX_Mailbox].TIR |= TMIDxR_TXRQ;
     }
@@ -633,34 +607,38 @@ void CAN_Driver::CancelTransmit(uint8_t Mailbox)
 //  Description:    Receives a correct CAN frame.
 //
 //-------------------------------------------------------------------------------------------------
+
+// fix the cast
+
+
 void CAN_Driver::Receive(uint8_t FIFONumber, CAN_RX_Message_t* RxMessage)
 {
     CAN_TypeDef* pCANx      = m_pInfo->pCANx;
     uint8_t      TX_Mailbox = 0;
 
     // Get the Id
-    RxMessage->IDE = (uint8_t)0x04 & pCANx->sFIFOMailBox[FIFONumber].RIR;
+    RxMessage->IDE = uint8_t(0x04 & pCANx->sFIFOMailBox[FIFONumber].RIR);
   
     if(RxMessage->IDE == CAN_Id_Standard)
     {
-        RxMessage->StdId = (uint32_t)0x000007FF & (pCANx->sFIFOMailBox[FIFONumber].RIR >> 21);
+        RxMessage->StdId = uint32_t(pCANx->sFIFOMailBox[FIFONumber].RIR >> 21) & 0x000007FF;
     }
     else
     {
-        RxMessage->ExtId = (uint32_t)0x1FFFFFFF & (pCANx->sFIFOMailBox[FIFONumber].RIR >> 3);
+        RxMessage->ExtId = (uint32_t(pCANx->sFIFOMailBox[FIFONumber].RIR >> 3) & 0x1FFFFFFF;
     }
   
-    RxMessage->RTR     = (uint8_t)0x02 & ( pCANx->sFIFOMailBox[FIFONumber].RIR);
-    RxMessage->DLC     = (uint8_t)0x0F & ( pCANx->sFIFOMailBox[FIFONumber].RDTR);           // Get the DLC
-    RxMessage->FMI     = (uint8_t)0xFF & ((pCANx->sFIFOMailBox[FIFONumber].RDTR >> 8));     // Get the FMI
-    RxMessage->Data[0] = (uint8_t)0xFF & ( pCANx->sFIFOMailBox[FIFONumber].RDLR);           // Get the data field
-    RxMessage->Data[1] = (uint8_t)0xFF & ((pCANx->sFIFOMailBox[FIFONumber].RDLR >> 8));
-    RxMessage->Data[2] = (uint8_t)0xFF & ((pCANx->sFIFOMailBox[FIFONumber].RDLR >> 16));
-    RxMessage->Data[3] = (uint8_t)0xFF & ((pCANx->sFIFOMailBox[FIFONumber].RDLR >> 24));
-    RxMessage->Data[4] = (uint8_t)0xFF & ( pCANx->sFIFOMailBox[FIFONumber].RDHR);                        // & is useless
-    RxMessage->Data[5] = (uint8_t)0xFF & ((pCANx->sFIFOMailBox[FIFONumber].RDHR >> 8));
-    RxMessage->Data[6] = (uint8_t)0xFF & ((pCANx->sFIFOMailBox[FIFONumber].RDHR >> 16));
-    RxMessage->Data[7] = (uint8_t)0xFF & ((pCANx->sFIFOMailBox[FIFONumber].RDHR >> 24));
+    RxMessage->RTR     = uint8_t(0x02 & pCANx->sFIFOMailBox[FIFONumber].RIR);
+    RxMessage->DLC     = uint8_t(0x0F & pCANx->sFIFOMailBox[FIFONumber].RDTR);              // Get the DLC
+    RxMessage->FMI     = uint8_t(pCANx->sFIFOMailBox[FIFONumber].RDTR >> 8);                // Get the FMI
+    RxMessage->Data[0] = uint8_t(pCANx->sFIFOMailBox[FIFONumber].RDLR);                     // Get the data field
+    RxMessage->Data[1] = uint8_t(pCANx->sFIFOMailBox[FIFONumber].RDLR >> 8);
+    RxMessage->Data[2] = uint8_t(pCANx->sFIFOMailBox[FIFONumber].RDLR >> 16);
+    RxMessage->Data[3] = uint8_t(pCANx->sFIFOMailBox[FIFONumber].RDLR >> 24);
+    RxMessage->Data[4] = uint8_t(pCANx->sFIFOMailBox[FIFONumber].RDHR);                     // & is useless
+    RxMessage->Data[5] = uint8_t(pCANx->sFIFOMailBox[FIFONumber].RDHR >> 8);
+    RxMessage->Data[6] = uint8_t(pCANx->sFIFOMailBox[FIFONumber].RDHR >> 16);
+    RxMessage->Data[7] = uint8_t(pCANx->sFIFOMailBox[FIFONumber].RDHR >> 24);
     
     // Release the FIFO
     if(FIFONumber == CAN_FIFO0)
@@ -715,16 +693,14 @@ uint8_t CAN_Driver::MessagePending(uint8_t FIFO_Number)
     
     if(FIFO_Number == CAN_FIFO0)
     {
-        MsgPending = (uint8_t)(m_pInfo->pCANx->RF0R&(uint32_t)0x03);
+        MsgPending = uint8_t(m_pInfo->pCANx->RF0R);
     }
     else if(FIFO_Number == CAN_FIFO1)
     {
-        MsgPending = (uint8_t)(m_pInfo->pCANx->RF1R&(uint32_t)0x03);
+        MsgPending = uint8_t(m_pInfo->pCANx->RF1R);
     }
-    else
-    {
-        MsgPending = 0;
-    }
+    
+    MsgPending &= 0x03;
     
     return MsgPending;
 }
@@ -881,7 +857,7 @@ SystemState_e CAN_Driver::WakeUp(void)
 //-------------------------------------------------------------------------------------------------
 uint8_t CAN_Driver::GetLastErrorCode(void)
 {
-    return ((uint8_t)CANx->ESR) & (uint8_t)CAN_ESR_LEC;
+    return uint8_t(CANx->ESR) & uint8_t(CAN_ESR_LEC);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -904,7 +880,7 @@ uint8_t CAN_Driver::GetLastErrorCode(void)
 //-------------------------------------------------------------------------------------------------
 uint8_t CAN_Driver::GetReceiveErrorCounter(void)
 {
-    return (uint8_t)((CANx->ESR & CAN_ESR_REC) >> 24);
+    return uint8_t((CANx->ESR & CAN_ESR_REC) >> 24);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -920,7 +896,7 @@ uint8_t CAN_Driver::GetReceiveErrorCounter(void)
 //-------------------------------------------------------------------------------------------------
 uint8_t CAN_Driver::GetLSB_TransmitErrorCounter(void)
 {
-    return (uint8_t)((m_pInfo->CANx->ESR & CAN_ESR_TEC) >> 16);
+    return uint8_t((m_pInfo->CANx->ESR & CAN_ESR_TEC) >> 16);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -949,9 +925,9 @@ uint8_t CAN_Driver::GetLSB_TransmitErrorCounter(void)
 //  Description:    Checks whether the specified CAN flag is set or not.
 //
 //-------------------------------------------------------------------------------------------------
-FlagStatus CAN_Driver::GetFlagStatus(uint32_t Flag)
+bool CAN_Driver::GetFlagStatus(uint32_t Flag)
 {
-    FlagStatus BitState;
+    bool BitState = 0;
  
     if((Flag & CAN_FLAGS_ESR) != 0)
     { 
@@ -971,11 +947,7 @@ FlagStatus CAN_Driver::GetFlagStatus(uint32_t Flag)
     }
     else if(Flag & CAN_FLAGS_RF1R != 0)
     { 
-        BitState = ((uint32_t)(CANx->RF1R & (Flag & 0x000FFFFF)) != 0) ? 1 : 0;
-    }
-    else
-    {
-        BitState = 0;
+        BitState = (uint32_t(CANx->RF1R & (Flag & 0x000FFFFF)) != 0) ? 1 : 0;
     }
     
     return  BitState;       // Return the Flag state
@@ -1005,158 +977,166 @@ FlagStatus CAN_Driver::GetFlagStatus(uint32_t Flag)
 //-------------------------------------------------------------------------------------------------
 void CAN_Driver::ClearFlag(uint32_t Flag)
 {
-    uint32_t flagtmp = 0;
+    uint32_t FlagToClear = 0;
 
-    if(Flag == CAN_FLAG_LEC)                                // ESR register
+    if(Flag == CAN_FLAG_LEC)                        // ESR register
     {
-        m_pInfo->pCANx->ESR = 0;                            // Clear the selected CAN flags
+        m_pInfo->pCANx->ESR = 0;                    // Clear the selected CAN flags
     }
     else // MSR or TSR or RF0R or RF1R
     {
-        flagtmp = Flag & 0x000FFFFF;
+        FlagToClear = Flag & 0x000FFFFF;
 
         if((Flag & CAN_FLAGS_RF0R) != 0)
         {
-            m_pInfo->pCANx->RF0R = (uint32_t)(flagtmp);     // Receive Flags
+            m_pInfo->pCANx->RF0R = FlagToClear;     // Receive Flags
         }
         else if((Flag & CAN_FLAGS_RF1R) != 0)
         {
-            m_pInfo->pCANx->RF1R = (uint32_t)(flagtmp);     // Receive Flags
+            m_pInfo->pCANx->RF1R = FlagToClear;     // Receive Flags
         }
         else if((Flag & CAN_FLAGS_TSR) != 0)
         {
-            m_pInfo->pCANx->TSR = (uint32_t)(flagtmp);      // Transmit Flags
+            m_pInfo->pCANx->TSR = FlagToClear;      // Transmit Flags
         }
         else // if((Flag & CAN_FLAGS_MSR) != 0)
         {
-            m_pInfo->pCANx->MSR = (uint32_t)(flagtmp);      // Operating mode Flags
+            m_pInfo->pCANx->MSR = FlagToClear;      // Operating mode Flags
         }
     }
 }
 
-/**
-  * @brief  Checks whether the specified CANx interrupt has occurred or not.
-  * @param  CAN_IT: specifies the CAN interrupt source to check.
-  *          This parameter can be one of the following values:
-  *            @arg CAN_IT_TME: Transmit mailbox empty Interrupt 
-  *            @arg CAN_IT_FMP0: FIFO 0 message pending Interrupt 
-  *            @arg CAN_IT_FF0: FIFO 0 full Interrupt
-  *            @arg CAN_IT_FOV0: FIFO 0 overrun Interrupt
-  *            @arg CAN_IT_FMP1: FIFO 1 message pending Interrupt 
-  *            @arg CAN_IT_FF1: FIFO 1 full Interrupt
-  *            @arg CAN_IT_FOV1: FIFO 1 overrun Interrupt
-  *            @arg CAN_IT_WKU: Wake-up Interrupt
-  *            @arg CAN_IT_SLK: Sleep acknowledge Interrupt  
-  *            @arg CAN_IT_EWG: Error warning Interrupt
-  *            @arg CAN_IT_EPV: Error passive Interrupt
-  *            @arg CAN_IT_BOF: Bus-off Interrupt  
-  *            @arg CAN_IT_LEC: Last error code Interrupt
-  *            @arg CAN_IT_ERR: Error Interrupt
-  * @retval The current state of CAN_IT (SET or RESET).
-  */
-ITStatus CAN_Driver::GetITStatus(uint32_t CAN_IT)
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           GetITStatus
+//
+//  Parameter(s):   CAN_IT: Specifies the CAN interrupt source to check.
+//                          This parameter can be one of the following values:
+//                              CAN_IT_TME: Transmit mailbox empty Interrupt 
+//                              CAN_IT_FMP0: FIFO 0 message pending Interrupt 
+//                              CAN_IT_FF0: FIFO 0 full Interrupt
+//                              CAN_IT_FOV0: FIFO 0 overrun Interrupt
+//                              CAN_IT_FMP1: FIFO 1 message pending Interrupt 
+//                              CAN_IT_FF1: FIFO 1 full Interrupt
+//                              CAN_IT_FOV1: FIFO 1 overrun Interrupt
+//                              CAN_IT_WKU: Wake-up Interrupt
+//                              CAN_IT_SLK: Sleep acknowledge Interrupt  
+//                              CAN_IT_EWG: Error warning Interrupt
+//                              CAN_IT_EPV: Error passive Interrupt
+//                              CAN_IT_BOF: Bus-off Interrupt  
+//                              CAN_IT_LEC: Last error code Interrupt
+//                              CAN_IT_ERR: Error Interrupt      
+//                  
+//  Return:         The current state of CAN_IT (1 or 0).
+//                  
+//  Description:    Checks whether the specified CANx interrupt has occurred or not.
+//
+//-------------------------------------------------------------------------------------------------
+bool CAN_Driver::GetITStatus(uint32_t CAN_IT)
 {
-    ITStatus itstatus = RESET;
+    bool IT_Status = 0;
   
-    if((CANx->IER & CAN_IT) != RESET)                                                           // Check the interrupt enable bit
+    if((CANx->IER & CAN_IT) != 0)                                                                   // Check the interrupt enable bit
     {
-        switch(CAN_IT)                                                                          // In case the Interrupt is enabled, ....
+        switch(CAN_IT)                                                                              // In case the Interrupt is enabled, ....
         {
             case CAN_IT_TME:
-                itstatus = CheckITStatus(CANx->TSR, CAN_TSR_RQCP0|CAN_TSR_RQCP1|CAN_TSR_RQCP2); // Check CAN_TSR_RQCPx bits
+                IT_Status = CheckITStatus(CANx->TSR, CAN_TSR_RQCP0 | CAN_TSR_RQCP1 | CAN_TSR_RQCP2);// Check CAN_TSR_RQCPx bits
             break;
             
             case CAN_IT_FMP0:
-                itstatus = CheckITStatus(CANx->RF0R, CAN_RF0R_FMP0);                            // Check CAN_RF0R_FMP0 bit
+                IT_Status = CheckITStatus(CANx->RF0R, CAN_RF0R_FMP0);                               // Check CAN_RF0R_FMP0 bit
             break;
             
             case CAN_IT_FF0:
-                itstatus = CheckITStatus(CANx->RF0R, CAN_RF0R_FULL0);                           // Check CAN_RF0R_FULL0 bit
+                IT_Status = CheckITStatus(CANx->RF0R, CAN_RF0R_FULL0);                              // Check CAN_RF0R_FULL0 bit
             break;
             
             case CAN_IT_FOV0:
-                itstatus = CheckITStatus(CANx->RF0R, CAN_RF0R_FOVR0);                           // Check CAN_RF0R_FOVR0 bit
+                IT_Status = CheckITStatus(CANx->RF0R, CAN_RF0R_FOVR0);                              // Check CAN_RF0R_FOVR0 bit
             break;
             
             case CAN_IT_FMP1:
-                itstatus = CheckITStatus(CANx->RF1R, CAN_RF1R_FMP1);                            // Check CAN_RF1R_FMP1 bit
+                IT_Status = CheckITStatus(CANx->RF1R, CAN_RF1R_FMP1);                               // Check CAN_RF1R_FMP1 bit
             break;
             
             case CAN_IT_FF1:
-                itstatus = CheckITStatus(CANx->RF1R, CAN_RF1R_FULL1);                           // Check CAN_RF1R_FULL1 bit
+                IT_Status = CheckITStatus(CANx->RF1R, CAN_RF1R_FULL1);                              // Check CAN_RF1R_FULL1 bit
             break;
             
             case CAN_IT_FOV1:
-                itstatus = CheckITStatus(CANx->RF1R, CAN_RF1R_FOVR1);                           // Check CAN_RF1R_FOVR1 bit
+                IT_Status = CheckITStatus(CANx->RF1R, CAN_RF1R_FOVR1);                              // Check CAN_RF1R_FOVR1 bit
             break;
             
             case CAN_IT_WKU:
-                itstatus = CheckITStatus(CANx->MSR, CAN_MSR_WKUI);                              // Check CAN_MSR_WKUI bit
+                IT_Status = CheckITStatus(CANx->MSR, CAN_MSR_WKUI);                                 // Check CAN_MSR_WKUI bit
             break;
             
             case CAN_IT_SLK:
-                itstatus = CheckITStatus(CANx->MSR, CAN_MSR_SLAKI);                             // Check CAN_MSR_SLAKI bit
+                IT_Status = CheckITStatus(CANx->MSR, CAN_MSR_SLAKI);                                // Check CAN_MSR_SLAKI bit
             break;
             
             case CAN_IT_EWG:
-                itstatus = CheckITStatus(CANx->ESR, CAN_ESR_EWGF);                              // Check CAN_ESR_EWGF bit
+                IT_Status = CheckITStatus(CANx->ESR, CAN_ESR_EWGF);                                 // Check CAN_ESR_EWGF bit
             break;
             
             case CAN_IT_EPV:
-                itstatus = CheckITStatus(CANx->ESR, CAN_ESR_EPVF);                              // Check CAN_ESR_EPVF bit
+                IT_Status = CheckITStatus(CANx->ESR, CAN_ESR_EPVF);                                 // Check CAN_ESR_EPVF bit
             break;
             
             case CAN_IT_BOF:
-                itstatus = CheckITStatus(CANx->ESR, CAN_ESR_BOFF);                              // Check CAN_ESR_BOFF bit
+                IT_Status = CheckITStatus(CANx->ESR, CAN_ESR_BOFF);                                 // Check CAN_ESR_BOFF bit
             break;
             
             case CAN_IT_LEC:
-                itstatus = CheckITStatus(CANx->ESR, CAN_ESR_LEC);                               // Check CAN_ESR_LEC bit
+                IT_Status = CheckITStatus(CANx->ESR, CAN_ESR_LEC);                                  // Check CAN_ESR_LEC bit
             break;
             
             case CAN_IT_ERR:
-                itstatus = CheckITStatus(CANx->MSR, CAN_MSR_ERRI);                              // Check CAN_MSR_ERRI bit 
+                IT_Status = CheckITStatus(CANx->MSR, CAN_MSR_ERRI);                                 // Check CAN_MSR_ERRI bit 
             break;
             
             default:
-                itstatus = RESET;                                                               // In case of error, return RESET
+                IT_Status = 0;                                                                      // In case of error, return RESET
             break;
         }
     }
-    else
-    {
-        itstatus  = RESET;          // In case the Interrupt is not enabled, return RESET
-    }
   
     // Return the CAN_IT status
-    return itstatus;
+    return IT_Status;
 }
 
-/**
-  * @brief  Clears the CANx's interrupt pending bits.
-  * @param  CAN_IT: specifies the interrupt pending bit to clear.
-  *          This parameter can be one of the following values:
-  *            @arg CAN_IT_TME: Transmit mailbox empty Interrupt
-  *            @arg CAN_IT_FF0: FIFO 0 full Interrupt
-  *            @arg CAN_IT_FOV0: FIFO 0 overrun Interrupt
-  *            @arg CAN_IT_FF1: FIFO 1 full Interrupt
-  *            @arg CAN_IT_FOV1: FIFO 1 overrun Interrupt
-  *            @arg CAN_IT_WKU: Wake-up Interrupt
-  *            @arg CAN_IT_SLK: Sleep acknowledge Interrupt  
-  *            @arg CAN_IT_EWG: Error warning Interrupt
-  *            @arg CAN_IT_EPV: Error passive Interrupt
-  *            @arg CAN_IT_BOF: Bus-off Interrupt  
-  *            @arg CAN_IT_LEC: Last error code Interrupt
-  *            @arg CAN_IT_ERR: Error Interrupt 
-  * @retval None
-  */
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ClearITPendingBit
+//
+//  Parameter(s):   CAN_IT: Specifies the interrupt pending bit to clear.
+//                          This parameter can be one of the following values:
+//                              CAN_IT_TME: Transmit mailbox empty Interrupt
+//                              CAN_IT_FF0: FIFO 0 full Interrupt
+//                              CAN_IT_FOV0: FIFO 0 overrun Interrupt
+//                              CAN_IT_FF1: FIFO 1 full Interrupt
+//                              CAN_IT_FOV1: FIFO 1 overrun Interrupt
+//                              CAN_IT_WKU: Wake-up Interrupt
+//                              CAN_IT_SLK: Sleep acknowledge Interrupt  
+//                              CAN_IT_EWG: Error warning Interrupt
+//                              CAN_IT_EPV: Error passive Interrupt
+//                              CAN_IT_BOF: Bus-off Interrupt  
+//                              CAN_IT_LEC: Last error code Interrupt
+//                              CAN_IT_ERR: Error Interrupt      
+//                  
+//  Return:         None
+//                  
+//  Description:    Clears the CANx's interrupt pending bits.
+//
+//-------------------------------------------------------------------------------------------------
 void CAN_Driver::ClearITPendingBit(uint32_t CAN_IT)
 {
     switch(CAN_IT)
     {
         case CAN_IT_TME:
         {
-            CANx->TSR = CAN_TSR_RQCP0|CAN_TSR_RQCP1|CAN_TSR_RQCP2;          // Clear CAN_TSR_RQCPx (rc_w1)
+            CANx->TSR = CAN_TSR_RQCP0 | CAN_TSR_RQCP1 | CAN_TSR_RQCP2;      // Clear CAN_TSR_RQCPx (rc_w1)
         }
         break;
         
@@ -1235,6 +1215,34 @@ void CAN_Driver::ClearITPendingBit(uint32_t CAN_IT)
         default:
         break;
    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CheckITStatus
+//
+//  Parameter(s):   CAN_Reg         Specifies the CAN interrupt register to check.
+//                  It_Bit          Specifies the interrupt source bit to check.
+//  Return:         The new state of the CAN Interrupt (SET or RESET).
+//
+//  Description:    Checks whether the CAN interrupt has occurred or not.
+//
+//-------------------------------------------------------------------------------------------------
+/**
+  * @param  CAN_Reg: specifies the CAN interrupt register to check.
+  * @param  It_Bit: specifies the interrupt source bit to check.
+  * @retval The new state of the CAN Interrupt (1 or 0).
+  */
+bool CAN_Driver::CheckITStatus(uint32_t CAN_Reg, uint32_t It_Bit)
+{
+    bool PendingBitStatus = 0;
+  
+    if((CAN_Reg & It_Bit) != 0)
+    {
+        PendingBitStatus = 1;             // CAN_IT is set
+    }
+    
+    return PendingBitStatus;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1369,351 +1377,3 @@ void CAN_Driver::yy_IRQHandler()
 //-------------------------------------------------------------------------------------------------
 
 #endif // (USE_CAN_DRIVER == DEF_ENABLED)
-
-/**
-  *          This file provides firmware functions to manage the following 
-  *          functionalities of the Controller area network (CAN) peripheral:           
-  *           + Initialization and Configuration 
-  *           + CAN Frames Transmission 
-  *           + CAN Frames Reception    
-  *           + Operation modes switch  
-  *           + Error management          
-  *           + Interrupts and flags        
-  *         
-                        ##### How to use this driver #####
-    [..]            
-      (#) Enable the CAN controller interface clock using 
-          RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE); for CAN1 
-          and RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN2, ENABLE); for CAN2
-      -@- In case you are using CAN2 only, you have to enable the CAN1 clock.
-       
-      (#) CAN pins configuration
-        (++) Enable the clock for the CAN GPIOs using the following function:
-             RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOx, ENABLE);   
-        (++) Connect the involved CAN pins to AF9 using the following function 
-             GPIO_PinAFConfig(GPIOx, GPIO_PinSourcex, GPIO_AF_CANx); 
-        (++) Configure these CAN pins in alternate function mode by calling
-             the function  GPIO_Init();
-      
-      (#) Initialise and configure the CAN using CAN_Init() and 
-          CAN_FilterInit() functions.   
-                 
-      (#) Transmit the desired CAN frame using CAN_Transmit() function.
-           
-      (#) Check the transmission of a CAN frame using CAN_TransmitStatus()
-          function.
-                 
-      (#) Cancel the transmission of a CAN frame using CAN_CancelTransmit()
-          function.  
-              
-      (#) Receive a CAN frame using CAN_Recieve() function.
-           
-      (#) Release the receive FIFOs using CAN_FIFORelease() function.
-                 
-      (#) Return the number of pending received frames using 
-          CAN_MessagePending() function.            
-                     
-      (#) To control CAN events you can use one of the following two methods:
-        (++) Check on CAN flags using the CAN_GetFlagStatus() function.  
-        (++) Use CAN interrupts through the function CAN_ITConfig() at 
-             initialization phase and CAN_GetITStatus() function into 
-             interrupt routines to check if the event has occurred or not.
-             After checking on a flag you should clear it using CAN_ClearFlag()
-             function. And after checking on an interrupt event you should 
-             clear it using CAN_ClearITPendingBit() function.            
-  */
-
-/** @defgroup CAN_Group1 Initialization and Configuration functions
- *  @brief    Initialization and Configuration functions 
- *
- ===============================================================================
-              ##### Initialization and Configuration functions #####
- ===============================================================================  
-    [..] This section provides functions allowing to 
-      (+) Initialize the CAN peripherals : Prescaler, operating mode, the maximum 
-          number of time quanta to perform resynchronization, the number of time 
-          quanta in Bit Segment 1 and 2 and many other modes. 
-          Refer to  @ref CAN_InitTypeDef  for more details.
-      (+) Configures the CAN reception filter.                                      
-      (+) Select the start bank filter for slave CAN.
-      (+) Enables or disables the Debug Freeze mode for CAN
-      (+)Enables or disables the CAN Time Trigger Operation communication mode
-   
-  */
-  
-
-
-/**
-  * @brief  Fills each CAN_InitStruct member with its default value.
-  * @param  CAN_InitStruct: pointer to a CAN_InitTypeDef structure which ill be initialized.
-  * @retval None
-  */
-void CAN_StructInit(CAN_Info* CAN_InitStruct)
-{
-    /* Reset CAN init structure parameters values */
-  
-    /* Initialize the time triggered communication mode */
-    CAN_InitStruct->CAN_TTCM = DISABLE;
-  
-    /* Initialize the automatic bus-off management */
-    CAN_InitStruct->CAN_ABOM = DISABLE;
-  
-    /* Initialize the automatic wake-up mode */
-    CAN_InitStruct->CAN_AWUM = DISABLE;
-  
-    /* Initialize the no automatic retransmission */
-    CAN_InitStruct->CAN_NART = DISABLE;
-  
-    /* Initialize the receive FIFO locked mode */
-    CAN_InitStruct->CAN_RFLM = DISABLE;
-  
-    /* Initialize the transmit FIFO priority */
-    CAN_InitStruct->CAN_TXFP = DISABLE;
-  
-    /* Initialize the CAN_Mode member */
-    CAN_InitStruct->CAN_Mode = CAN_Mode_Normal;
-  
-    /* Initialize the CAN_SJW member */
-    CAN_InitStruct->CAN_SJW = CAN_SJW_1tq;
-  
-    /* Initialize the CAN_BS1 member */
-    CAN_InitStruct->CAN_BS1 = CAN_BS1_4tq;
-  
-    /* Initialize the CAN_BS2 member */
-    CAN_InitStruct->CAN_BS2 = CAN_BS2_3tq;
-  
-    /* Initialize the CAN_Prescaler member */
-    CAN_InitStruct->CAN_Prescaler = 1;
-}
-
-
-/** @defgroup CAN_Group3 CAN Frames Reception functions
- *  @brief    CAN Frames Reception functions 
- *
- ===============================================================================
-                ##### CAN Frames Reception functions #####
- ===============================================================================  
-    [..] This section provides functions allowing to 
-      (+) Receive a correct CAN frame
-      (+) Release a specified receive FIFO (2 FIFOs are available)
-      (+) Return the number of the pending received CAN frames
-   
-  */
-
-
-
-/** @defgroup CAN_Group4 CAN Operation modes functions
- *  @brief    CAN Operation modes functions 
- *
-@verbatim    
- ===============================================================================
-                    ##### CAN Operation modes functions #####
- ===============================================================================  
-    [..] This section provides functions allowing to select the CAN Operation modes
-      (+) sleep mode
-      (+) normal mode 
-      (+) initialization mode
-   
-  */
-  
-
-/** @defgroup CAN_Group5 CAN Bus Error management functions
- *  @brief    CAN Bus Error management functions 
- *
-  
- ===============================================================================
-                ##### CAN Bus Error management functions #####
- ===============================================================================  
-    [..] This section provides functions allowing to 
-      (+) Return the CANx's last error code (LEC)
-      (+) Return the CANx Receive Error Counter (REC)
-      (+) Return the LSB of the 9-bit CANx Transmit Error Counter(TEC).
-   
-      -@- If TEC is greater than 255, The CAN is in bus-off state.
-      -@- if REC or TEC are greater than 96, an Error warning flag occurs.
-      -@- if REC or TEC are greater than 127, an Error Passive Flag occurs.
-                        
-  */
-  
-/**  *  @brief   Interrupts and flags management functions
- *
- ===============================================================================
-              ##### Interrupts and flags management functions #####
- ===============================================================================  
-
-     [..] This section provides functions allowing to configure the CAN Interrupts 
-          and to get the status and clear flags and Interrupts pending bits.
-  
-          The CAN provides 14 Interrupts sources and 15 Flags:
-
-   
-  *** Flags ***
-  =============
-    [..] The 15 flags can be divided on 4 groups: 
-
-      (+) Transmit Flags
-        (++) CAN_FLAG_RQCP0, 
-        (++) CAN_FLAG_RQCP1, 
-        (++) CAN_FLAG_RQCP2  : Request completed MailBoxes 0, 1 and 2  Flags
-                               Set when when the last request (transmit or abort)
-                               has been performed. 
-
-      (+) Receive Flags
-
-
-        (++) CAN_FLAG_FMP0,
-        (++) CAN_FLAG_FMP1   : FIFO 0 and 1 Message Pending Flags 
-                               set to signal that messages are pending in the receive 
-                               FIFO.
-                               These Flags are cleared only by hardware. 
-
-        (++) CAN_FLAG_FF0,
-        (++) CAN_FLAG_FF1    : FIFO 0 and 1 Full Flags
-                               set when three messages are stored in the selected 
-                               FIFO.                        
-
-        (++) CAN_FLAG_FOV0              
-        (++) CAN_FLAG_FOV1   : FIFO 0 and 1 Overrun Flags
-                               set when a new message has been received and passed 
-                               the filter while the FIFO was full.         
-
-      (+) Operating Mode Flags
-
-        (++) CAN_FLAG_WKU    : Wake up Flag
-                               set to signal that a SOF bit has been detected while 
-                               the CAN hardware was in Sleep mode. 
-        
-        (++) CAN_FLAG_SLAK   : Sleep acknowledge Flag
-                               Set to signal that the CAN has entered Sleep Mode. 
-    
-      (+) Error Flags
-
-        (++) CAN_FLAG_EWG    : Error Warning Flag
-                               Set when the warning limit has been reached (Receive 
-                               Error Counter or Transmit Error Counter greater than 96). 
-                               This Flag is cleared only by hardware.
-                            
-        (++) CAN_FLAG_EPV    : Error Passive Flag
-                               Set when the Error Passive limit has been reached 
-                               (Receive Error Counter or Transmit Error Counter 
-                               greater than 127).
-                               This Flag is cleared only by hardware.
-                             
-        (++) CAN_FLAG_BOF    : Bus-Off Flag
-                               set when CAN enters the bus-off state. The bus-off 
-                               state is entered on TEC overflow, greater than 255.
-                               This Flag is cleared only by hardware.
-                                   
-        (++) CAN_FLAG_LEC    : Last error code Flag
-                               set If a message has been transferred (reception or
-                               transmission) with error, and the error code is hold.              
-                           
-  *** Interrupts ***
-  ==================
-    [..] The 14 interrupts can be divided on 4 groups: 
-  
-      (+) Transmit interrupt
-  
-        (++) CAN_IT_TME   :  Transmit mailbox empty Interrupt
-                             if enabled, this interrupt source is pending when 
-                             no transmit request are pending for Tx mailboxes.      
-
-      (+) Receive Interrupts
-         
-        (++) CAN_IT_FMP0,
-        (++) CAN_IT_FMP1    :  FIFO 0 and FIFO1 message pending Interrupts
-                               if enabled, these interrupt sources are pending 
-                               when messages are pending in the receive FIFO.
-                               The corresponding interrupt pending bits are cleared 
-                               only by hardware.
-                
-        (++) CAN_IT_FF0,              
-        (++) CAN_IT_FF1     :  FIFO 0 and FIFO1 full Interrupts
-                               if enabled, these interrupt sources are pending 
-                               when three messages are stored in the selected FIFO.
-        
-        (++) CAN_IT_FOV0,        
-        (++) CAN_IT_FOV1    :  FIFO 0 and FIFO1 overrun Interrupts        
-                               if enabled, these interrupt sources are pending 
-                               when a new message has been received and passed 
-                               the filter while the FIFO was full.
-
-      (+) Operating Mode Interrupts
-         
-        (++) CAN_IT_WKU     :  Wake-up Interrupt
-                               if enabled, this interrupt source is pending when 
-                               a SOF bit has been detected while the CAN hardware 
-                               was in Sleep mode.
-                                  
-        (++) CAN_IT_SLK     :  Sleep acknowledge Interrupt
-                               if enabled, this interrupt source is pending when 
-                               the CAN has entered Sleep Mode.       
-
-      (+) Error Interrupts 
-        
-        (++) CAN_IT_EWG     :  Error warning Interrupt 
-                               if enabled, this interrupt source is pending when
-                               the warning limit has been reached (Receive Error 
-                               Counter or Transmit Error Counter=96). 
-                               
-        (++) CAN_IT_EPV     :  Error passive Interrupt        
-                               if enabled, this interrupt source is pending when
-                               the Error Passive limit has been reached (Receive 
-                               Error Counter or Transmit Error Counter>127).
-                          
-        (++) CAN_IT_BOF     :  Bus-off Interrupt
-                               if enabled, this interrupt source is pending when
-                               CAN enters the bus-off state. The bus-off state is 
-                               entered on TEC overflow, greater than 255.
-                               This Flag is cleared only by hardware.
-                                  
-        (++) CAN_IT_LEC     :  Last error code Interrupt        
-                               if enabled, this interrupt source is pending  when
-                               a message has been transferred (reception or
-                               transmission) with error, and the error code is hold.
-                          
-        (++) CAN_IT_ERR     :  Error Interrupt
-                               if enabled, this interrupt source is pending when 
-                               an error condition is pending.      
-                      
-    [..] Managing the CAN controller events :
- 
-         The user should identify which mode will be used in his application to 
-         manage the CAN controller events: Polling mode or Interrupt mode.
-  
-      (#) In the Polling Mode it is advised to use the following functions:
-        (++) CAN_GetFlagStatus() : to check if flags events occur. 
-        (++) CAN_ClearFlag()     : to clear the flags events.
-  
-
-  
-      (#) In the Interrupt Mode it is advised to use the following functions:
-        (++) CAN_ITConfig()       : to enable or disable the interrupt source.
-        (++) CAN_GetITStatus()    : to check if Interrupt occurs.
-        (++) CAN_ClearITPendingBit() : to clear the Interrupt pending Bit 
-            (corresponding Flag).
-        -@@-  This function has no impact on CAN_IT_FMP0 and CAN_IT_FMP1 Interrupts 
-             pending bits since there are cleared only by hardware. 
-  */ 
-
-/**
-  * @brief  Checks whether the CAN interrupt has occurred or not.
-  * @param  CAN_Reg: specifies the CAN interrupt register to check.
-  * @param  It_Bit: specifies the interrupt source bit to check.
-  * @retval The new state of the CAN Interrupt (SET or RESET).
-  */
-static ITStatus CheckITStatus(uint32_t CAN_Reg, uint32_t It_Bit)
-{
-    ITStatus pendingbitstatus = RESET;
-  
-    if((CAN_Reg & It_Bit) != (uint32_t)RESET)
-    {
-        pendingbitstatus = SET;             // CAN_IT is set
-    }
-    else
-    {
-        pendingbitstatus = RESET;           // CAN_IT is reset
-    }
-    
-    return pendingbitstatus;
-}

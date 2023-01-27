@@ -53,7 +53,7 @@ enum MAX4598_e
     MAX4598_SELECT_NO7_NO8 = 0x0B,
     MAX4598_SELECT_GND_GND = 0x0C,
     MAX4598_SELECT_VCC_GND = 0x0D,
-    MAX4598_SELECT_NO8_N08 = 0x0E,
+    MAX4598_SELECT_NO8_NO8 = 0x0E,
     MAX4598_SELECT_HIZ_HIZ = 0x0F,
 };
 
@@ -88,10 +88,10 @@ class MAX4598
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-extern class   MAX4598                     SWITCH_MAX4598;
+extern class   MAX4598                  MySwitchMAX4598;
 
 #ifdef LIB_DS3502_GLOBAL
- class   MAX4598                        SWITCH_MAX4598;
+ class   MAX4598                        mySwitchMAX4598;
 #endif
 
 //-------------------------------------------------------------------------------------------------

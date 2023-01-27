@@ -53,7 +53,7 @@ SystemState_e MAX4598::Initialize(void* pArg)
 {
     m_pPinStruct = (MAX4598_PinStruct_t*)pArg;
     MAX4598::Reset();
-    IO_Output(m_pPinStruct->GPIO_Enable, IO_SET);
+    IO_SetPinHigh(m_pPinStruct->IO_Enable);
     return SYS_READY;
 }
 
@@ -85,19 +85,19 @@ void MAX4598::Reset(void)
 //
 //  Return:         None
 //
-//  Description:    Select the analog switch channel 
+//  Description:    Select the analog switch channel
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void MAX4598::SetChannel(MAX4598_e Channel)
 {
-    IO_Output(m_pPinStruct->GPIO_A0, ((Channel & 0x01) != 0x00) ? IO_SET : IO_RESET);
-    IO_Output(m_pPinStruct->GPIO_A1, ((Channel & 0x02) != 0x00) ? IO_SET : IO_RESET);
-    IO_Output(m_pPinStruct->GPIO_A2, ((Channel & 0x04) != 0x00) ? IO_SET : IO_RESET);
-    IO_Output(m_pPinStruct->GPIO_A3, ((Channel & 0x08) != 0x00) ? IO_SET : IO_RESET);
-    IO_Output(m_pPinStruct->GPIO_Latch, IO_SET);
-    IO_Output(m_pPinStruct->GPIO_Latch, IO_RESET);
+    IO_SetPin(m_pPinStruct->IO_A0, ((Channel & 0x01) != 0x00) ? 1 : 0);
+    IO_SetPin(m_pPinStruct->IO_A1, ((Channel & 0x02) != 0x00) ? 1 : 0);
+    IO_SetPin(m_pPinStruct->IO_A2, ((Channel & 0x04) != 0x00) ? 1 : 0);
+    IO_SetPin(m_pPinStruct->IO_A3, ((Channel & 0x08) != 0x00) ? 1 : 0);
+    IO_SetPin(m_pPinStruct->IO_Latch, 1);
+    IO_SetPin(m_pPinStruct->IO_Latch, 0);
 }
 
 //-------------------------------------------------------------------------------------------------

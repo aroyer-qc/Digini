@@ -306,8 +306,7 @@ void IO_TogglePin(IO_ID_e IO_ID)
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       IO_SetPin
-//
-//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
+//                  iIO_ID          ID of the IO pin definition
 //                  Value           Value to put out on the pin        0 or 1
 //  Return:         None
 //
@@ -627,43 +626,3 @@ void IO_EnableClock(GPIO_TypeDef* pPort)
 }
 
 //-------------------------------------------------------------------------------------------------
-
-#if 0
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Function:       IO_ChangeInputActiveState
-//
-//  Parameter(s):   IO_Input_e       Input
-//                  ActiveState_e    ActiveState
-//  Return:         none
-//
-//  Description:    Change the active state for the selected pin
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void IO_ChangeInputActiveState(IO_Input_e Input, ActiveState_e ActiveState)
-{
-    IO_In[Input].ActiveState = ActiveState;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Function:       IO_ChangeOutputActiveState
-//
-//  Parameter(s):   IO_Output_e      Output
-//                  ActiveState_e    ActiveState
-//  Return:         none
-//
-//  Description:    Change the active state for the selected pin
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void IO_ChangeOutputActiveState(IO_Output_e Output, ActiveState_e ActiveState)
-{
-    IO_Out[Output].ActiveState = ActiveState;
-}
-
-#endif

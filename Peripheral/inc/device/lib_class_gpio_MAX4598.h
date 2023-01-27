@@ -24,14 +24,14 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_class_gpio.h"
+#include "lib_digini.h"
+#include "device_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -59,12 +59,12 @@ enum MAX4598_e
 
 struct MAX4598_PinStruct_t
 {
-    IO_Output_e            GPIO_A0;
-    IO_Output_e            GPIO_A1;
-    IO_Output_e            GPIO_A2;
-    IO_Output_e            GPIO_A3;
-    IO_Output_e            GPIO_Enable;
-    IO_Output_e            GPIO_Latch;
+    IO_ID_e     IO_A0;
+    IO_ID_e     IO_A1;
+    IO_ID_e     IO_A2;
+    IO_ID_e     IO_A3;
+    IO_ID_e     IO_Enable;
+    IO_ID_e     IO_Latch;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -90,8 +90,8 @@ class MAX4598
 
 extern class   MAX4598                  MySwitchMAX4598;
 
-#ifdef LIB_DS3502_GLOBAL
- class   MAX4598                        mySwitchMAX4598;
+#ifdef LIB_MAX4598_GLOBAL
+ class   MAX4598                        MySwitchMAX4598;
 #endif
 
 //-------------------------------------------------------------------------------------------------

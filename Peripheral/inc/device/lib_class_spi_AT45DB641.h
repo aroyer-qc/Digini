@@ -84,13 +84,13 @@
 
 #define SPI_FLASH_RETRY_TIMER                               (20 / SPI_FLASH_TICK_PERIOD)
 
-#define SPI_FLASH_PAGE_SIZE                                    256
+#define SPI_FLASH_PAGE_SIZE                                 256
 #define SPI_FLASH_PAGE_COUNT                                32768
 
-#define SPI_FLASH_PAGE_ERASE_SIZE                            (256)
-#define SPI_FLASH_BLOCK_ERASE_SIZE                            (2048)
+#define SPI_FLASH_PAGE_ERASE_SIZE                           (256)
+#define SPI_FLASH_BLOCK_ERASE_SIZE                          (2048)
 #define SPI_FLASH_PAGE_IN_BLOCK                             SPI_FLASH_BLOCK_ERASE_SIZE / SPI_FLASH_PAGE_ERASE_SIZE
-#define SPI_FLASH_CHIP_ERASE_SIZE                            ((64/8)*1024*1024)
+#define SPI_FLASH_CHIP_ERASE_SIZE                           ((64/8)*1024*1024)
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -99,8 +99,8 @@ class CSPI_FLash
 {
     public:
 
-                                    CSPI_FLash                   (CSPI* pSPI, eIO_Output ChipSelect, eIO_Output ChipReset, eIO_Output ChipWriteProtect);
-                                    ~CSPI_FLash                ();
+                                    CSPI_FLash              (CSPI* pSPI, eIO_Output ChipSelect, eIO_Output ChipReset, eIO_Output ChipWriteProtect);
+                                    ~CSPI_FLash             ();
 
         DSTATUS                     Initialize              ();
         DSTATUS                     Status                  ();

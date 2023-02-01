@@ -27,25 +27,14 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// device definition(s)
-//-------------------------------------------------------------------------------------------------
-
-#ifdef CFG_DEVICE_DEFINITION
-
-#define DS3502_DEFINITION X_I2C_DEVICE(I2C_DS3502, MUTEX, 0x28, sizeof(uint8_t), 100000)
-
-#else // CFG_DEVICE_DEFINITION
-
-//-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
-#include "lib_class_i2c.h"
+#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
+
+#if (USE_I2C_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -55,17 +44,18 @@ class DS3502
 {
     public:
 
-        SystemState_e   Initialize                      (void* pArg);
+        SystemState_e   Initialize                      (I2C_Driver* pI2C, uint8_t DeviceAddress);
         void            Reset                           (void);
         void            SetWiperIV                      (uint8_t InitialValue);
         void            SetWiper                        (uint8_t WiperValue);
-        void            Up                                (void);
+        void            Up                               (void);
         void            Down                            (void);
         void            SetMaxValue                     (uint8_t MaxValue);
 
     private:
 
-        I2C*            m_pI2C;
+        I2C_Driver*     m_pI2C;
+        uint8_t         m_DeviceAddress;
         uint8_t         m_WiperPos;
         uint8_t         m_WiperIV;
         uint8_t         m_MaxValue;
@@ -75,13 +65,18 @@ class DS3502
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-extern class   DS3502                      POT_DS3502;
+extern class   DS3502                      DS3502_Volume;
 
 #ifdef LIB_DS3502_GLOBAL
- class   DS3502                            POT_DS3502;
+ class   DS3502                            DS3502_Volume;
 #endif
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // CFG_DEVICE_DEFINITION
+#else // (USE_I2C_DRIVER == DEF_ENABLED)
+
+#pragma message("DIGINI driver for I2C must be enable and configure to use this device driver")
+
+#endif // (USE_I2C_DRIVER == DEF_ENABLED)
+
 

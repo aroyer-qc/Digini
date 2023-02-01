@@ -52,7 +52,7 @@
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   void* pArg          Pointer on the type of driver use by this class
+//  Parameter(s):   I2C_Driver* pI2C          Pointer on the driver use by this class
 //
 //  Return:         SystemState_e
 //
@@ -61,25 +61,25 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e DS3502::Initialize(void* pArg)
+SystemState_e DS3502::Initialize(I2C_Driver* pI2C, uint8_t DeviceAddress)
 {
     uint8_t WriteBuffer[2];
 
-    m_pI2C = (I2C*)pArg;
+    m_pI2C = pI2C;
+    m_DeviceAddress = DeviceAddress;
 
-   // Initialize I2C link
-   m_pI2C->Initialize();
+    // Initialize I2C link
+    m_pI2C->Initialize();
 
     // Read initial wiper position
-    m_pI2C->ReadRegister(DS3502_WR_IVR_REGISTER, m_WiperPos, sizeof(uint8_t), DS3502_I2C_SLAVE_ADDRESS);
+    m_pI2C->ReadRegister(DS3502_WR_IVR_REGISTER, m_WiperPos, m_DeviceAddress);
 
     // Always leave the DS3502 in mode 1
     WriteBuffer[0] = DS3502_CR_REGISTER;
     WriteBuffer[1] = DS3502_CR_MODE_1__WRITE_WR_ONLY;
-    m_pI2C->Transfer(&WriteBuffer[0], 2, nullptr, 0, DS3502_I2C_SLAVE_ADDRESS);
-
-     m_WiperIV = m_WiperPos;            // At power-up both value are equal
-     m_MaxValue = DS3502_MAX_VALUE;     // Set max value to chip max
+    m_pI2C->Write(&WriteBuffer[0], 2, m_DeviceAddress);
+    m_WiperIV = m_WiperPos;            // At power-up both value are equal
+    m_MaxValue = DS3502_MAX_VALUE;     // Set max value to chip max
 
     return SYS_READY;
 }
@@ -105,15 +105,15 @@ void DS3502::Reset(void)
 
     WriteBuffer[0] = DS3502_CR_REGISTER;
     WriteBuffer[1] = DS3502_CR_MODE_0__WRITE_BOTH_WR_IVR;
-    m_pI2C->Transfer(&WriteBuffer[0], 2, nullptr, 0, DS3502_I2C_SLAVE_ADDRESS);
+    m_pI2C->Write(&WriteBuffer[0], 2, m_DeviceAddress);
 
     WriteBuffer[0] = DS3502_WR_IVR_REGISTER;
     WriteBuffer[1] = m_WiperIV;
-    m_pI2C->Transfer(&WriteBuffer[0], 2, nullptr, 0, DS3502_I2C_SLAVE_ADDRESS);
+    m_pI2C->Write(&WriteBuffer[0], 2, m_DeviceAddress);
 
     WriteBuffer[0] = DS3502_CR_REGISTER;
     WriteBuffer[1] = DS3502_CR_MODE_1__WRITE_WR_ONLY;
-    m_pI2C->Transfer(&WriteBuffer[0], 2, nullptr, 0, DS3502_I2C_SLAVE_ADDRESS);
+    m_pI2C->Write(&WriteBuffer[0], 2, m_DeviceAddress);
 
     // Both value are equal
     m_WiperPos = m_WiperIV;
@@ -160,7 +160,7 @@ void DS3502::SetWiper(uint8_t WiperValue)
     // Set the wiper position
     WriteBuffer[0] = DS3502_WR_IVR_REGISTER;
     WriteBuffer[1] = WiperValue;
-    m_pI2C->Transfer(&WriteBuffer[0], 2, nullptr, 0, DS3502_I2C_SLAVE_ADDRESS);
+    m_pI2C->Write(&WriteBuffer[0], 2, m_DeviceAddress);
 }
 
 //-------------------------------------------------------------------------------------------------

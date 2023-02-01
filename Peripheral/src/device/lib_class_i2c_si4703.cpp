@@ -43,9 +43,7 @@
 
 #define SI4703_ADDRESS              0x20        // I2C address of Si4703
 
-
 #define SI4703_I2C_FAIL_MAX         10          // This is the number of attempts we will try connect to the device before returning error
-
 
 // Register 0x02 - POWER_CFG
 #define SI4703_DSMUTE_MASK          0x8000

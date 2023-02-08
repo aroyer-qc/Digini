@@ -102,11 +102,9 @@ class SI4703
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-extern class SI4703                     SI4703_Radio;
-
-#ifdef LIB_SI4703_GLOBAL
- class SI4703                           SI4703_Radio;
-#endif
+#define __CLASS_SI4703__
+#include "device_var.h"
+#undef  __CLASS_SI4703__
 
 //-------------------------------------------------------------------------------------------------
 

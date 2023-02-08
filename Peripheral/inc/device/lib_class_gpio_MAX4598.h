@@ -88,11 +88,9 @@ class MAX4598
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-extern class   MAX4598                  MySwitchMAX4598;
-
-#ifdef LIB_MAX4598_GLOBAL
- class   MAX4598                        MySwitchMAX4598;
-#endif
+#define __CLASS_MAX4598__
+#include "device_var.h"
+#undef  __CLASS_MAX4598__
 
 //-------------------------------------------------------------------------------------------------
 

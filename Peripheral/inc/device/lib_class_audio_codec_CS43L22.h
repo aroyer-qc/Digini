@@ -114,11 +114,9 @@ class CS43L22 : public AudioDriverInterface
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-extern class CS43L22                     CS43L22_AudioCodec;
-
-#ifdef LIB_CS43L22_GLOBAL
- class CS43L22                           CS43L22_AudioCodec;
-#endif
+#define __CLASS_CS43L22__
+#include "device_var.h"
+#undef  __CLASS_CS43L22__
 
 //-------------------------------------------------------------------------------------------------
 

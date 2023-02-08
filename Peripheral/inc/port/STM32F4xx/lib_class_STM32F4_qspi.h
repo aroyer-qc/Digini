@@ -203,15 +203,9 @@ class QSPI_Driver
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef QSPI_DRIVER_GLOBAL
-
-  QSPI_Driver           QSPI;
-
-#else // QSPI_DRIVER_GLOBAL
-
-  extern QSPI_Driver    QSPI;
-
-#endif // QSPI_DRIVER_GLOBAL
+#define __CLASS_QSPI_DRIVER__
+#include "device_var"
+#undef  __CLASS_QSPI_DRIVER__
 
 //-------------------------------------------------------------------------------------------------
 

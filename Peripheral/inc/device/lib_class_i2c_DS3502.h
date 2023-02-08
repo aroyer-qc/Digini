@@ -65,11 +65,9 @@ class DS3502
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-extern class   DS3502                      DS3502_Volume;
-
-#ifdef LIB_DS3502_GLOBAL
- class   DS3502                            DS3502_Volume;
-#endif
+#define __CLASS_DS3502__
+#include "device_var.h"
+#undef  __CLASS_DS3502__
 
 //-------------------------------------------------------------------------------------------------
 

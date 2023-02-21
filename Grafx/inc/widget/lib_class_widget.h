@@ -381,6 +381,30 @@ class CProgress : public CWidgetInterface
 };
 #endif
 
+#ifdef ROUND_METER_DEF
+class CRoundMeter : public CWidgetInterface
+{
+    public:
+                            CRoundMeter                 (RoundMeter_t* pPie);
+                           ~CRoundMeter                 (){};
+
+        Link_e              Create                      (PageWidget_t* pPageWidget);
+        Link_e              Refresh                     (MsgRefresh_t* pMsg);
+        void                Finalize                    (void);
+
+    private:
+
+        void                Draw                        (ServiceReturn_t* pService);
+        void                DrawOnce                    (ServiceReturn_t* pService);
+
+        Pie_t*              m_pPie;
+        ServiceEvent_e      m_ServiceState;
+        PageWidget_t*       m_pPageWidget;
+
+        uint16_t            m_Value;
+};
+#endif
+
 #ifdef SPECTRUM_DEF
 class CSpectrum : public CWidgetInterface
 {

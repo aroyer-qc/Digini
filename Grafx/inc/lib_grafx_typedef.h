@@ -424,6 +424,21 @@ struct Progress_t
     uint16_t       Options;
 };
 
+struct RoundMeter_t
+{
+    Service_t      Service;
+    Box_t          Box;
+    uint16_t       Radius;
+    uint16_t       StartAngle;
+    uint16_t       EndAngle;
+    uint16_t       Range;
+    Skin_e         Minimum;
+    Skin_e         Maximum;
+    Skin_e         Cursor;
+    Text_t         Text;
+    uint16_t       Options;
+};
+
 struct Spectrum_t
 {
     Service_t      Service;

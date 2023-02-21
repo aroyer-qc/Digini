@@ -213,6 +213,20 @@
         (uint16_t)OPTIONS,                                                              \
     },
 
+#define EXPAND_X_ROUND_METER_AS_STRUCT(ENUM_ID, SERVICE, SUB_SERVICE, TIMING, POS_X, POS_Y, SIZE_X, SIZE_Y, MINIMUM, MAXIMUM, CURSOR, CURSOR_RADIUS, START_ANGLE, END_ANGLE, RANGE, OPTIONS, POS_TEXT_X, POS_TEXT_Y, SIZE_TEXT_X, SIZE_TEXT_Y, TEXT_COLOR, TEXT_ALT_COLOR, FONT_ID, FONT_ALT_ID, TEXT_OPTION, TEXT_LABEL)\
+    {                                                                                                          \
+        {(uint32_t)SERVICE, (uint16_t)SUB_SERVICE, TIMING},                                                    \
+        {{(int16_t)POS_X, (int16_t)POS_Y}, {(uint16_t)SIZE_X, (uint16_t)SIZE_Y}},                              \
+        CURSOR_RADIUS, START_ANGLE, END_ANGLE, RANGE, MINIMUM, MAXIMUM, CURSOR,                                \
+        {{{(int16_t)(POS_TEXT_X + POS_X), (int16_t)(POS_TEXT_Y + POS_Y)},                                      \
+        {(uint16_t)SIZE_TEXT_X, (uint16_t)SIZE_TEXT_Y}},                                                       \
+        {GFX_ColorTable[TEXT_COLOR].u_32, GFX_ColorTable[TEXT_ALT_COLOR].u_32},                                \
+         {FONT_ID, FONT_ALT_ID},                                                                               \
+         ALPHA_BLEND,                                                                                          \
+         TEXT_LABEL,                                                                                           \
+         (uint8_t)TEXT_OPTION},                                                                                \
+        (uint16_t)OPTIONS,                                                                                     \
+    },
 
 #define EXPAND_X_SPECTRUM_AS_STRUCT(ENUM_ID, SERVICE, SUB_SERVICE, TIMING, POS_X, POS_Y, SIZE_X, SIZE_Y, RES_X, RES_Y, SPACING, BAR, OPTIONS)\
 {                                                                                   \
@@ -410,6 +424,17 @@ Progress_t Progress[APP_NB_PROGRESS_CONST] =
     PROGRESS_DEF(EXPAND_X_PROGRESS_AS_STRUCT)
 };
 #endif   // PROGRESS_DEF
+
+//-------------------------------------------------------------------------------------------------
+//  ROUND_METER Widget
+//-------------------------------------------------------------------------------------------------
+
+#ifdef ROUND_METER_DEF
+RoundMeter_t RoundMeter[APP_NB_ROUND_METER_CONST] =
+{
+    ROUND_METER_DEF(EXPAND_X_ROUND_METER_AS_STRUCT)
+};
+#endif   // ROUND_METER_DEF
 
 //-------------------------------------------------------------------------------------------------
 //  SPECTRUM Widget

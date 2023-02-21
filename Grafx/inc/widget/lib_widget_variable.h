@@ -113,7 +113,12 @@ extern "C" {
   extern Progress_t         Progress            [APP_NB_PROGRESS_CONST];
  #endif
 
- #ifdef SPECTRUM_DEF
+ #ifdef ROUND_METER_DEF
+  #define APP_NB_ROUND_METER_CONST          (APP_END_ROUND_METER_CONST      - APP_START_ROUND_METER_CONST)      - 1
+  extern RoundMeter_t       RoundMeter          [APP_NB_ROUND_METER_CONST];
+ #endif
+
+#ifdef SPECTRUM_DEF
   #define APP_NB_SPECTRUM_CONST             (APP_END_SPECTRUM_CONST         - APP_START_SPECTRUM_CONST)         - 1
   extern Spectrum_t         Spectrum            [APP_NB_SPECTRUM_CONST];
  #endif

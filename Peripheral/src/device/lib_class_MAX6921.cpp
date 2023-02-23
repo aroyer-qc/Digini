@@ -53,15 +53,21 @@
 //-------------------------------------------------------------------------------------------------
 SystemState_e MAX6921::Initialize(void* pArg, uint8_t NumberOfDeviceInChain)
 {
+    uint8_t* pData;
+    
     m_pPinStruct = (MAX6921_PinStruct_t*)pArg;
 
     IO_PinInit(m_pPinStruct->IO_DOut);
     IO_PinInit(m_pPinStruct->IO_Clk);
     IO_PinInit(m_pPinStruct->IO_Load);
-    IO_PinInit(m_pPinStruct->IO_Blank);
+    IO_PinInit(m_pPinStruct->IO_Blank);                     // Default value will blank the VFD
     // timer->RegisterCallBack(our callback);
     
     m_ChainSize = NumberOfDeviceInChain * MAX6921_BIT_STREAM_SIZE.
+
+    pData = pMemory->AllocAndClear((m_ChainSize / 8) + 1)   // Reserved x byte from the alloc mem library.
+    this->Send(pData);
+    IO_SetPinLow(m_pPinStruct->IO_Blank);
 
     return SYS_READY;
 }

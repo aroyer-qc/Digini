@@ -358,6 +358,14 @@ Link_e GUI_myClassTask::CreateAllWidget()
         }
        #endif
 
+       #ifdef ROUND_METER_DEF
+        else if((Widget > APP_START_ROUND_METER_CONST) && (Widget < APP_END_ROUND_METER_CONST))
+        {
+            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CRoundMeter));
+            *pWidgetListPointer = new(pWidget) CRoundMeter(&RoundMeter[Widget - (APP_START_ROUND_METER_CONST + 1)]);
+        }
+       #endif
+
        #ifdef SPECTRUM_DEF
         else if((Widget > APP_START_SPECTRUM_CONST) && (Widget < APP_END_SPECTRUM_CONST))
         {

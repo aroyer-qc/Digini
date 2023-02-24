@@ -36,6 +36,7 @@ Digini is a HAL and GUI library written in embedded C++. It is highly optimized 
 >    * Meter, (WIP).
 >    * Panel, can add touch zone with graphics under other widget.
 >    * Progress bar.
+>    * Round Meter, (WIP).
 >    * Spectrum analyser display (Use data from application, no processing).
 >    * Terminal basic terminal screen.
 >    * Virtual is a non grahical special widget to decide whart page to display according to application setting.
@@ -55,4 +56,4 @@ Digini is a HAL and GUI library written in embedded C++. It is highly optimized 
 >    * SERV_ID_TIME    Service to return the timeof the system into a formatted string (can handle all format defined by user).
 >    * SERV_ID_XCHG    Service to exchange data via structure between page. (title, min, max, value, edit type)
 
-
+# Please understand this library is a constant work in progress.

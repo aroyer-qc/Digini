@@ -175,7 +175,7 @@ enum Widget_e
       APP_END_PROGRESS_CONST,
   #endif
 
-  // ---------- Pie widget list ---------------------------
+  // ---------- RoundMeter widget list --------------------
 
   #ifdef ROUND_METER_DEF
       APP_START_ROUND_METER_CONST,

@@ -148,8 +148,8 @@
 
 #define keep                                        static volatile
 
-#define TIME_SECONDS_FROM_UNIX_EPOCH_TO_Y2K	        946684800UL
-#define TIME_SECONDS_PER_MINUTE			            60UL
-#define TIME_SECONDS_PER_HOUR				        3600UL
-#define TIME_SECONDS_PER_DAY	    	            86400UL
-#define TIME_SECONDS_PER_YEAR				        31536000UL
+#define TIME_SECONDS_FROM_UNIX_EPOCH_TO_Y2K         946684800UL
+#define TIME_SECONDS_PER_MINUTE                     60UL
+#define TIME_SECONDS_PER_HOUR                       3600UL
+#define TIME_SECONDS_PER_DAY                        86400UL
+#define TIME_SECONDS_PER_YEAR                       31536000UL

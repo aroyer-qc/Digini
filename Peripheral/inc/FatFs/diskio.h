@@ -64,6 +64,10 @@
 
 #define EXPAND_X_DRIVE_AS_ENUM(ENUM_ID, DRIVE_OBJ) ENUM_ID,
 
+// Status of Disk Functions
+// They are mapped in Digini errors systems.
+#define DSTATUS                         SystemState_e
+
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
@@ -78,9 +82,6 @@ typedef enum
     NUMBER_OF_DISK,
 } DiskMedia_e;
 
-// Status of Disk Functions
-//typedef enum SystemState_e    SystemState_e;
-typedef SystemState_e         DSTATUS;
 
 // Results of Disk Functions
 typedef enum
@@ -121,31 +122,49 @@ DWORD               ff_wtoupper             (DWORD wch);
 }
 #endif
 
-class DiskIO
+class DiskIO_DeviceInterface
 {
     public:
-        static DiskIO& getInstance()
+
+        virtual DSTATUS             Initialize           (void)                                  = 0;
+        virtual DSTATUS             Status               (void)                                  = 0;
+        virtual DRESULT             Read                 (uint8_t*, uint32_t, uint16_t)          = 0;
+      #if _USE_WRITE == 1
+        virtual DRESULT             Write                (const uint8_t*, uint32_t, uint16_t)    = 0;
+      #endif
+        virtual DRESULT             IO_Ctrl              (uint8_t, void*)                        = 0;
+
+        virtual void                Sync                 (void)                                  = 0;
+        virtual uint32_t            GetSectorCount       (void)                                  = 0;
+        virtual uint32_t            GetSectorSize        (void)                                  = 0;
+        virtual uint32_t            GetEraseBlockSize    (void)                                  = 0;
+};
+
+class DiskIO    // Singleton
+{
+    public:
+        static DiskIO& GetInstance()
         {
             static DiskIO instance; // Guaranteed to be destroyed.
-                                  // Instantiated on first use.
+                                    // Instantiated on first use.
             return instance;
         }
 
 
-        void                RegisterDrive       (DiskMedia_e Drive, void* pDrive);
+        void                RegisterDisk        (DiskMedia_e Disk, DiskIO_DeviceInterface* pDisk);
 
-        DSTATUS             Initialize          (DiskMedia_e Drive);
-        DSTATUS             Status              (DiskMedia_e Drive);
-        SystemState_e       Read                (DiskMedia_e Drive, uint8_t* pBuffer, uint32_t Sector, uint16_t Count);
+        DSTATUS             Initialize          (DiskMedia_e Disk);
+        DSTATUS             Status              (DiskMedia_e Disk);
+        DRESULT             Read                (DiskMedia_e Disk, uint8_t* pBuffer, uint32_t Sector, uint16_t Count);
       #if _USE_WRITE == 1
-        SystemState_e       Write               (DiskMedia_e Drive, const uint8_t* pBuffer, uint32_t Sector, uint16_t Count);
+        DRESULT             Write               (DiskMedia_e Disk, const uint8_t* pBuffer, uint32_t Sector, uint16_t Count);
       #endif
-        SystemState_e       IO_Ctrl             (DiskMedia_e Drive, uint8_t Command, void* pBuffer);
+        DRESULT             IO_Ctrl             (DiskMedia_e Disk, uint8_t Command, void* pBuffer);
 
-        void                Sync                (DiskMedia_e Drive);
-        uint32_t            GetSectorCount      (DiskMedia_e Drive);
-        uint32_t            GetSectorSize       (DiskMedia_e Drive);
-        uint32_t            GetEraseBlockSize   (DiskMedia_e Drive);
+        void                Sync                (DiskMedia_e Disk);
+        uint32_t            GetSectorCount      (DiskMedia_e Disk);
+        uint32_t            GetSectorSize       (DiskMedia_e Disk);
+        uint32_t            GetEraseBlockSize   (DiskMedia_e Disk);
 
     private:
 
@@ -163,26 +182,14 @@ class DiskIO
                             DiskIO(DiskIO const&)               = delete;
         void                operator=(DiskIO const&)            = delete;
 
-        void*               pDriveList          [NUMBER_OF_DISK];                                  // Number of Disk is define in the FatFs_cfg.h of the application config directory
+        DiskIO_DeviceInterface*    pDiskList          [NUMBER_OF_DISK];                                  // Number of Disk is define in the FatFs_cfg.h of the application config directory
 
 };
 
-class DiskIO_DeviceInterface
-{
-    public:
 
-        virtual SystemState_e       Initialize           (uint8_t)                                        = 0;
-        virtual SystemState_e       Status               (uint8_t)                                        = 0;
-        virtual SystemState_e       Read                 (uint8_t, uint8_t*, uint32_t, uint16_t)          = 0;
-      #if _USE_WRITE == 1
-        virtual SystemState_e       Write                (uint8_t, const uint8_t*, uint32_t, uint16_t)    = 0;
-      #endif
-        virtual SystemState_e       IO_Ctrl              (uint8_t, uint8_t, void*)                        = 0;
+#ifdef DIGINI_USE_FATFS
+   class DiskIO&     FatFS_DiskIO = DiskIO::GetInstance();
+#endif
 
-        virtual void                Sync                 (void)                                           = 0;
-        virtual uint32_t            GetSectorCount       (void)                                           = 0;
-        virtual uint32_t            GetSectorSize        (void)                                           = 0;
-        virtual uint32_t            GetEraseBlockSize    (void)                                           = 0;
-};
 
 //-------------------------------------------------------------------------------------------------

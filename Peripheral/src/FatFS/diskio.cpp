@@ -50,9 +50,9 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void DiskIO_Device::RegisterDrive(DiskMedia_e Drive, void* pDriveDevice)
+void DiskIO::RegisterDisk(DiskMedia_e Disk, DiskIO_DeviceInterface* pDisk)
 {
-    pDrivesList[Drive] = pDriveDevice;
+    pDiskList[Disk] = pDisk;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -68,9 +68,9 @@ void DiskIO_Device::RegisterDrive(DiskMedia_e Drive, void* pDriveDevice)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e DiskIO_Device::Initialize(DiskMedia_e Drive);
+DSTATUS DiskIO::Initialize(DiskMedia_e Disk)
 {
-    return pDrivesList[Drive]->Initialize();
+    return pDiskList[Disk]->Initialize();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -86,9 +86,9 @@ SystemState_e DiskIO_Device::Initialize(DiskMedia_e Drive);
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e DiskIO_Device::Status(uint8_t Drive);
+DSTATUS DiskIO::Status(DiskMedia_e Disk)
 {
-    return pDrivesList[Drive]->Status();
+    return pDiskList[Disk]->Status();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -104,9 +104,9 @@ SystemState_e DiskIO_Device::Status(uint8_t Drive);
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e DiskIO_Device::Read(uint8_t  Drive, uint8_t* pBuffer, uint32_t Sector, uint16_t Count);
+DRESULT DiskIO::Read(DiskMedia_e Disk, uint8_t* pBuffer, uint32_t Sector, uint16_t Count)
 {
-    return pDrivesList[Drive]->Read(pBuffer, Sector, Count);
+    return pDiskList[Disk]->Read(pBuffer, Sector, Count);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -123,9 +123,9 @@ SystemState_e DiskIO_Device::Read(uint8_t  Drive, uint8_t* pBuffer, uint32_t Sec
 //
 //-------------------------------------------------------------------------------------------------
 #if _USE_WRITE == 1
-SystemState_e DiskIO_Device::Write(uint8_t Drive, const uint8_t* pBuffer, uint32_t Sector, uint16_t Count);
+DRESULT DiskIO::Write(DiskMedia_e Disk, const uint8_t* pBuffer, uint32_t Sector, uint16_t Count)
 {
-   return pDrivesList[Drive]->Write(pBuffer, Sector, Count);
+    return pDiskList[Disk]->Write(pBuffer, Sector, Count);
 }
 #endif
 
@@ -142,9 +142,9 @@ SystemState_e DiskIO_Device::Write(uint8_t Drive, const uint8_t* pBuffer, uint32
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e DiskIO_Device::IO_Ctrl(uint8_t Drive, uint8_t Command, void* pBuffer);
+DRESULT DiskIO::IO_Ctrl(DiskMedia_e Disk, uint8_t Command, void* pBuffer)
 {
-    return pDrivesList[Drive]->IO_Ctrl(Command, pBuffer);
+    return pDiskList[Disk]->IO_Ctrl(Command, pBuffer);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -160,9 +160,9 @@ SystemState_e DiskIO_Device::IO_Ctrl(uint8_t Drive, uint8_t Command, void* pBuff
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void DiskIO_Device::Sync(uint8_t Drive);
+void DiskIO::Sync(DiskMedia_e Disk)
 {
-    return pDrivesList[Drive]->Sync(Drive);
+    return pDiskList[Disk]->Sync();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -178,9 +178,9 @@ void DiskIO_Device::Sync(uint8_t Drive);
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t DiskIO_Device::GetSectorCount(uint8_t Drive);
+uint32_t DiskIO::GetSectorCount(DiskMedia_e Disk)
 {
-    return pDrivesList[Drive]->GetSectorCount(Drive);
+    return pDiskList[Disk]->GetSectorCount();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -196,9 +196,9 @@ uint32_t DiskIO_Device::GetSectorCount(uint8_t Drive);
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t DiskIO_Device::GetSectorSize(uint8_t Drive);
+uint32_t DiskIO::GetSectorSize(DiskMedia_e Disk)
 {
-    return pDrivesList[Drive]->GetSectorSize(Drive);
+    return pDiskList[Disk]->GetSectorSize();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -214,9 +214,9 @@ uint32_t DiskIO_Device::GetSectorSize(uint8_t Drive);
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t DiskIO_Device::GetEraseBlockSize(uint8_t Drive);
+uint32_t DiskIO::GetEraseBlockSize(DiskMedia_e Disk)
 {
-    return pDrivesList[Drive]->GetEraseBlockSize(Drive);
+    return pDiskList[Disk]->GetEraseBlockSize();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -236,16 +236,16 @@ uint32_t DiskIO_Device::GetEraseBlockSize(uint8_t Drive);
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-extern "C" DSTATUS disk_initialize(uint8_t Drive)
+extern "C" DSTATUS disk_initialize(uint8_t Disk)
 {
-    return DiskIO_Device.getInstance().Initialize(Drive);
+    return FatFS_DiskIO.GetInstance().Initialize(DiskMedia_e(Disk));
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           disk_status
 //
-//  Parameter(s):   uint8_t        Device
+//  Parameter(s):   uint8_t        Disk
 //  Return:         DSTATUS
 //
 //  Description:    Return Status
@@ -254,16 +254,16 @@ extern "C" DSTATUS disk_initialize(uint8_t Drive)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-extern "C" DSTATUS disk_status(uint8_t Device)
+extern "C" DSTATUS disk_status(uint8_t Disk)
 {
-    return DiskIO_Device.getInstance().Status(Drive);
+    return FatFS_DiskIO.GetInstance().Status(DiskMedia_e(Disk));
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           disk_read
 //
-//  Parameter(s):   uint8_t        Drive   Physical device number (0..)
+//  Parameter(s):   uint8_t        Disk     Physical device number (0..)
 //                  uint8_t*       pBuffer  Data buffer to store read data
 //                  uint32_t       Sector   Sector number (LBA)
 //                  uint16_t       Count    Sector count (1..65535)
@@ -274,16 +274,16 @@ extern "C" DSTATUS disk_status(uint8_t Device)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-extern "C" DRESULT disk_read(uint8_t Drive, uint8_t* pBuffer, uint32_t Sector, uint16_t Count)
+extern "C" DRESULT disk_read(uint8_t Disk, uint8_t* pBuffer, uint32_t Sector, uint16_t Count)
 {
-   return DiskIO_Device.getInstance().Read(Drive, pBuffer, Sector, Count);
+   return FatFS_DiskIO.GetInstance().Read(DiskMedia_e(Disk), pBuffer, Sector, Count);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           disk_write
 //
-//  Parameter(s):   uint8_t        Drive       Physical drive number (0..)
+//  Parameter(s):   uint8_t        Disk        Physical drive number (0..)
 //                  uint8_t*       pBuffer     Data buffer to be written
 //                  uint32_t       Sector      Sector number (LBA)
 //                  uint16_t       Count       Sector count (1..65535)
@@ -295,9 +295,9 @@ extern "C" DRESULT disk_read(uint8_t Drive, uint8_t* pBuffer, uint32_t Sector, u
 //
 //-------------------------------------------------------------------------------------------------
 #if _USE_WRITE == 1
-extern "C" DRESULT disk_write(uint8_t Drive, const uint8_t* pBuffer, uint32_t Sector, uint16_t Count)
+extern "C" DRESULT disk_write(uint8_t Disk, const uint8_t* pBuffer, uint32_t Sector, uint16_t Count)
 {
-   return DiskIO_Device.getInstance().Write(Drive, pBuffer, Sector, Count);
+   return FatFS_DiskIO.GetInstance().Write(DiskMedia_e(Disk), pBuffer, Sector, Count);
 }
 #endif
 
@@ -305,7 +305,7 @@ extern "C" DRESULT disk_write(uint8_t Drive, const uint8_t* pBuffer, uint32_t Se
 //
 //  Name:           disk_ioctl
 //
-//  Parameter(s):   uint8_t        Drive       Physical drive number (0..)
+//  Parameter(s):   uint8_t        Disk        Physical drive number (0..)
 //                  uint8_t        Control     Control code
 //                  uint8_t*       pBuffer     Buffer to send/receive control data
 //  Return:         DRESULT
@@ -315,9 +315,9 @@ extern "C" DRESULT disk_write(uint8_t Drive, const uint8_t* pBuffer, uint32_t Se
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-extern "C" DRESULT disk_ioctl(uint8_t Drive, uint8_t Control, void* pBuffer)
+extern "C" DRESULT disk_ioctl(uint8_t Disk, uint8_t Control, void* pBuffer)
 {
-   return DiskIO_Device.getInstance().IO_Ctrl(Drive, pBuffer, Sector, Count);
+   return FatFS_DiskIO.GetInstance().IO_Ctrl(DiskMedia_e(Disk), Control, pBuffer);
 }
 
 
@@ -531,7 +531,7 @@ this is removed to be placed in their own class
       #endif // DIGINI_FATFS_USE_RAM_DRIVE
     }
     return STA_NOINIT;
-
+*/
 // Write
 
 /*
@@ -571,7 +571,7 @@ this is removed to be placed in their own class
       #endif // DIGINI_FATFS_USE_RAM_DRIVE
     }
     return RES_PARERR;
-
+*/
 // io_ctrl
 /*
 this is removed to be placed in their own class
@@ -610,3 +610,4 @@ this is removed to be placed in their own class
       #endif // DIGINI_FATFS_USE_RAM_DRIVE
     }
     return RES_PARERR;
+*/

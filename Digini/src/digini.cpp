@@ -150,7 +150,7 @@ SystemState_e DIGINI_PostInitialize(void)
   #endif // (USE_USB_DRIVER == DEF_ENABLED)
 
   #ifdef DIGINI_USE_FATFS
-    FatFS_Initialize();         // todo poutine use new method
+    //FatFS_DiskIO.Initialize();
   #endif
 
   #ifdef DIGINI_USE_GRAFX

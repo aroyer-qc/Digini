@@ -72,7 +72,7 @@ SystemState_e DS3502::Initialize(I2C_Driver* pI2C, uint8_t DeviceAddress)
     m_pI2C->Initialize();
 
     // Read initial wiper position
-    m_pI2C->ReadRegister(DS3502_WR_IVR_REGISTER, m_WiperPos, m_DeviceAddress);
+    m_pI2C->ReadRegister(DS3502_WR_IVR_REGISTER, &m_WiperPos, m_DeviceAddress);
 
     // Always leave the DS3502 in mode 1
     WriteBuffer[0] = DS3502_CR_REGISTER;

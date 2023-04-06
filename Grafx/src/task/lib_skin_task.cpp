@@ -142,7 +142,7 @@ nOS_Error SKIN_myClassTask::Initialize(void)
                                  SKIN_TASK_STACK_SIZE,
                                  SKIN_TASK_PRIO)) == NOS_OK)
     {
-        Error = nOS_FlagCreate(&this->m_SkinFlags, 0);
+        //Error = nOS_FlagCreate(&this->m_SkinFlags, 0,0);
     }
 
     return Error;

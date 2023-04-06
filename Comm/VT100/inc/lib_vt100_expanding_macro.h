@@ -56,9 +56,9 @@ enum CAT(NAME, Item_e)                                        \
 };
 
 
-//enum CAT(NAME, ItemFlag_e)                                  \
-//{                                                           \
-//    CON_MENU_DEF(EXPAND_VT100_MENU_ITEM_AS_FLAG_ENUM, NAME) \
+//enum CAT(NAME, ItemFlag_e)
+//{
+//    CON_MENU_DEF(EXPAND_VT100_MENU_ITEM_AS_FLAG_ENUM, NAME)
 //};
 
 #define EXPAND_VT100_AS_MENU_DATA(NAME)                     \

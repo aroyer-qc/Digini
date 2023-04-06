@@ -146,11 +146,11 @@ SystemState_e DIGINI_PostInitialize(void)
     //SystemState_e State;
 
   #if (USE_USB_DRIVER == DEF_ENABLED)
-    //USB.Initialize();
+    USB.Initialize();
   #endif // (USE_USB_DRIVER == DEF_ENABLED)
 
   #ifdef DIGINI_USE_FATFS
-    FatFS_Initialize();
+    FatFS_Initialize();         // todo poutine use new method
   #endif
 
   #ifdef DIGINI_USE_GRAFX

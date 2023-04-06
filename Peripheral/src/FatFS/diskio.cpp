@@ -39,12 +39,12 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           
+//  Name:
 //
-//  Parameter(s):   
-//  Return:         
+//  Parameter(s):
+//  Return:
 //
-//  Description:    
+//  Description:
 //
 //
 //  Note(s):
@@ -57,12 +57,12 @@ void DiskIO_Device::RegisterDrive(DiskMedia_e Drive, void* pDriveDevice)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           
+//  Name:
 //
-//  Parameter(s):   
-//  Return:         
+//  Parameter(s):
+//  Return:
 //
-//  Description:    
+//  Description:
 //
 //
 //  Note(s):
@@ -75,12 +75,12 @@ SystemState_e DiskIO_Device::Initialize(DiskMedia_e Drive);
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           
+//  Name:
 //
-//  Parameter(s):   
-//  Return:         
+//  Parameter(s):
+//  Return:
 //
-//  Description:    
+//  Description:
 //
 //
 //  Note(s):
@@ -93,12 +93,12 @@ SystemState_e DiskIO_Device::Status(uint8_t Drive);
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           
+//  Name:
 //
-//  Parameter(s):   
-//  Return:         
+//  Parameter(s):
+//  Return:
 //
-//  Description:    
+//  Description:
 //
 //
 //  Note(s):
@@ -111,12 +111,12 @@ SystemState_e DiskIO_Device::Read(uint8_t  Drive, uint8_t* pBuffer, uint32_t Sec
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           
+//  Name:
 //
-//  Parameter(s):   
-//  Return:         
+//  Parameter(s):
+//  Return:
 //
-//  Description:    
+//  Description:
 //
 //
 //  Note(s):
@@ -131,12 +131,12 @@ SystemState_e DiskIO_Device::Write(uint8_t Drive, const uint8_t* pBuffer, uint32
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           
+//  Name:
 //
-//  Parameter(s):   
-//  Return:         
+//  Parameter(s):
+//  Return:
 //
-//  Description:    
+//  Description:
 //
 //
 //  Note(s):
@@ -149,12 +149,12 @@ SystemState_e DiskIO_Device::IO_Ctrl(uint8_t Drive, uint8_t Command, void* pBuff
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           
+//  Name:
 //
-//  Parameter(s):   
-//  Return:         
+//  Parameter(s):
+//  Return:
 //
-//  Description:    
+//  Description:
 //
 //
 //  Note(s):
@@ -167,12 +167,12 @@ void DiskIO_Device::Sync(uint8_t Drive);
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           
+//  Name:
 //
-//  Parameter(s):   
-//  Return:         
+//  Parameter(s):
+//  Return:
 //
-//  Description:    
+//  Description:
 //
 //
 //  Note(s):
@@ -185,12 +185,12 @@ uint32_t DiskIO_Device::GetSectorCount(uint8_t Drive);
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           
+//  Name:
 //
-//  Parameter(s):   
-//  Return:         
+//  Parameter(s):
+//  Return:
 //
-//  Description:    
+//  Description:
 //
 //
 //  Note(s):
@@ -203,12 +203,12 @@ uint32_t DiskIO_Device::GetSectorSize(uint8_t Drive);
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           
+//  Name:
 //
-//  Parameter(s):   
-//  Return:         
+//  Parameter(s):
+//  Return:
 //
-//  Description:    
+//  Description:
 //
 //
 //  Note(s):
@@ -405,7 +405,7 @@ WCHAR ff_wtoupper(WCHAR wch)
   #ifdef DIGINI_FATFS_USE_RAM_DRIVE
     pRAM_Drive    = new CFatFS_RAM_Drive());
   #endif
-*/}
+*/
 /*
 this is removed to be placed in their own class
     DSTATUS Status;
@@ -456,7 +456,7 @@ this is removed to be placed in their own class
 
       default: break;
     }
-
+*/
 // disk read
 /*
 this is removed to be placed in their own class
@@ -492,7 +492,7 @@ this is removed to be placed in their own class
             return Result;
       #endif // DIGINI_FATFS_USE_RAM_DRIVE
     }
-
+*/
 // Status
 /*
 this is removed to be placed in their own class

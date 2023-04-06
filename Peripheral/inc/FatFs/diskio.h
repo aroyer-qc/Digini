@@ -43,6 +43,7 @@
 #include "integer.h"
 #include "stdint.h"
 #include "lib_typedef.h"
+#include "lib_advanced_macro.h"
 #include "FatFs_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
@@ -74,7 +75,7 @@ extern "C" {
 typedef enum
 {
     FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_ENUM)
-    NUMBER_OF_DISK
+    NUMBER_OF_DISK,
 } DiskMedia_e;
 
 // Status of Disk Functions
@@ -113,8 +114,8 @@ DRESULT             disk_write              (uint8_t Drive, const uint8_t*, uint
 DRESULT             disk_ioctl              (uint8_t Drive, uint8_t, void*);
 uint32_t            get_fattime             ();
 
-WCHAR               ff_convert              (WCHAR wch, UINT dir);
-WCHAR               ff_wtoupper             (WCHAR wch);
+DWORD               ff_convert              (DWORD wch, UINT dir);
+DWORD               ff_wtoupper             (DWORD wch);
 
 #ifdef __cplusplus
 }
@@ -125,14 +126,14 @@ class DiskIO
     public:
         static DiskIO& getInstance()
         {
-            static S    instance; // Guaranteed to be destroyed.
+            static DiskIO instance; // Guaranteed to be destroyed.
                                   // Instantiated on first use.
             return instance;
         }
 
-    
+
         void                RegisterDrive       (DiskMedia_e Drive, void* pDrive);
-        
+
         DSTATUS             Initialize          (DiskMedia_e Drive);
         DSTATUS             Status              (DiskMedia_e Drive);
         SystemState_e       Read                (DiskMedia_e Drive, uint8_t* pBuffer, uint32_t Sector, uint16_t Count);
@@ -140,14 +141,14 @@ class DiskIO
         SystemState_e       Write               (DiskMedia_e Drive, const uint8_t* pBuffer, uint32_t Sector, uint16_t Count);
       #endif
         SystemState_e       IO_Ctrl             (DiskMedia_e Drive, uint8_t Command, void* pBuffer);
-        
+
         void                Sync                (DiskMedia_e Drive);
         uint32_t            GetSectorCount      (DiskMedia_e Drive);
         uint32_t            GetSectorSize       (DiskMedia_e Drive);
         uint32_t            GetEraseBlockSize   (DiskMedia_e Drive);
-    
-    private:       
-                
+
+    private:
+
                             DiskIO              () {}                                              // Constructor? (the {} brackets) are needed here.
 
     public:
@@ -166,26 +167,10 @@ class DiskIO
 
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class DiskIO_DeviceInterface
 {
     public:
-    
+
         virtual SystemState_e       Initialize           (uint8_t)                                        = 0;
         virtual SystemState_e       Status               (uint8_t)                                        = 0;
         virtual SystemState_e       Read                 (uint8_t, uint8_t*, uint32_t, uint16_t)          = 0;
@@ -193,7 +178,7 @@ class DiskIO_DeviceInterface
         virtual SystemState_e       Write                (uint8_t, const uint8_t*, uint32_t, uint16_t)    = 0;
       #endif
         virtual SystemState_e       IO_Ctrl              (uint8_t, uint8_t, void*)                        = 0;
-        
+
         virtual void                Sync                 (void)                                           = 0;
         virtual uint32_t            GetSectorCount       (void)                                           = 0;
         virtual uint32_t            GetSectorSize        (void)                                           = 0;

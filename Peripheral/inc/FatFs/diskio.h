@@ -122,6 +122,7 @@ DWORD               ff_wtoupper             (DWORD wch);
 }
 #endif
 
+#ifdef __cplusplus
 class DiskIO_DeviceInterface
 {
     public:
@@ -185,10 +186,34 @@ class DiskIO    // Singleton
         DiskIO_DeviceInterface*    pDiskList          [NUMBER_OF_DISK];                                  // Number of Disk is define in the FatFs_cfg.h of the application config directory
 
 };
+#endif
 
+#ifdef  DISKIO_GLOBAL
 
 #ifdef DIGINI_USE_FATFS
    class DiskIO&     FatFS_DiskIO = DiskIO::GetInstance();
+#endif
+
+
+#ifdef DIGINI_FATFS_USE_SPI_FLASH_CHIP
+  class CFatFS_SPI_Flash*               pSPI_Flash    = nullptr;
+#endif
+
+#ifdef DIGINI_FATFS_USE_SPI_SD_CARD
+  class CFatFS_SD_Card*                 pSPI_SD_Card  = nullptr;
+#endif
+
+#ifdef DIGINI_FATFS_USE_SDIO_SD_CARD
+  class CFatFS_SDIO*                    pSDIO         = nullptr;
+#endif
+
+#ifdef DIGINI_FATFS_USE_USB_KEY
+  class CFatFS_USB*                     pUSB_Key      = nullptr;
+#endif
+
+#ifdef DIGINI_FATFS_USE_RAM_DRIVE
+  class CFatFS_RAM_Drive*               pRAM_Drive    = nullptr;
+#endif
 #endif
 
 

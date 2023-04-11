@@ -164,7 +164,7 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pDescription
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::Process(void)
 {
-    const VT100_MenuDef_t* pMenu;
+ // todo   const VT100_MenuDef_t* pMenu;
     uint8_t                Items;
     uint8_t                ItemsQts;
 
@@ -191,8 +191,8 @@ void VT100_Terminal::Process(void)
 
                     for(Items = 0; Items < ItemsQts; Items++)
                     {
- //                       pMenu = &m_Menu[m_FlushMenuID].pMenu[Items];
-                        CallBack(pMenu->Callback, VT100_CALLBACK_FLUSH, Items);
+  // todo                     // pMenu = &m_Menu[m_FlushMenuID].pMenu[Items];
+  // todo                     // CallBack(pMenu->Callback, VT100_CALLBACK_FLUSH, Items);
                     }
                 }
 
@@ -221,15 +221,16 @@ void VT100_Terminal::Process(void)
                     if(m_Input < m_ItemsQts)
                     {
                         // If new menu selection, draw this new menu
-                        if(m_MenuID != pMenu->NextMenu)
+/*
+  // todo                      if(m_MenuID != pMenu->NextMenu)
                         {
                             m_FlushMenuID = m_MenuID;
                             m_MenuID      = pMenu->NextMenu;
                             m_RefreshMenu = true;
                         }
-
+*/
                         // If selection has a callback, call it and react to it's configuration for key input
-                        m_InputType = CallBack(pMenu->Callback, VT100_CALLBACK_ON_INPUT, m_Input);
+      // todo                  m_InputType = CallBack(pMenu->Callback, VT100_CALLBACK_ON_INPUT, m_Input);
 
                         // Job is already done, so no refresh
                         if(m_InputType == VT100_INPUT_MENU_CHOICE)
@@ -250,7 +251,7 @@ void VT100_Terminal::Process(void)
                 // Still in a callback mode
                 if(m_MenuID != VT100_MENU_NONE)
                 {
-                    CallBack(pMenu->Callback, VT100_CALLBACK_REFRESH, 0);
+    // todo                CallBack(pMenu->Callback, VT100_CALLBACK_REFRESH, 0);
                 }
             }
         }
@@ -827,7 +828,7 @@ size_t VT100_Terminal::InMenuPrintf(int nSize, Label_e Label, ...)
 
     if((pBuffer = (char*)pMemory->Alloc(VT100_TERMINAL_SIZE)) == nullptr)
     {
-        va_start(vaArg, pFormat);
+        va_start(vaArg, Label);
         Size = STR_vsnprintf(pBuffer, ((nSize == VT100_SZ_NONE) ? VT100_TERMINAL_SIZE : nSize), pFormat, vaArg);
 
       #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)

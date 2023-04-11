@@ -47,9 +47,12 @@
 
 enum Language_e
 {
+    // TODO: include here a .cfg file to include any language a user want
+
     LANG_ENGLISH = 0,
     LANG_FRENCH,
     NB_LANGUAGE_CONST,
+    LANG_DEFAULT = 0,           // If no support for multi-language this will be the default value
 };
 
 enum Label_e

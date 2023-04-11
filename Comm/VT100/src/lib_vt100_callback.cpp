@@ -150,7 +150,7 @@ typedef enum
 
 static CON_DebugLevel_e         VT100_LastDebugLevel;
 //static nOS_Time                 VT100_LastUpTime;
-static uint8_t                  VT100_LastSecond;
+//static uint8_t                  VT100_LastSecond;
 //static bool                     VT100_DrawOnlyOnce;
 
 // scratch pad variable..
@@ -160,7 +160,7 @@ static uint8_t                  VT100_LastSecond;
 //static bool                     VT100_Generic_uint64_t_Updated;
 //static nOS_TickCounter          VT100_GenericTimeOut1;
 //static nOS_TickCounter          VT100_GenericTimeOut2;
-static uint64_t                 VT100_Generic_uint64;                                                 // uint64_t that can be used by any callback
+//static uint64_t                 VT100_Generic_uint64;                                                 // uint64_t that can be used by any callback
 
 //-------------------------------------------------------------------------------------------------
 // Private(s) function(s)

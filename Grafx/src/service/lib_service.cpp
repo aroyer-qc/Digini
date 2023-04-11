@@ -297,12 +297,13 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
         {
             if((pService = GetServiceStruct(SERVICE_RETURN_TYPE4)) != nullptr)
             {
-                Language_e  Language;
                 char*       pString;
+                Language_e  Language = LANG_DEFAULT;
 
-                // TODO (alain#1#) use language
-                Language = LANG_ENGLISH;//DB_Central.Get(&Language, SYSTEM_LANGUAGE, 0, 0);
-                DB_Central.Get(&pString, APPLICATION_LABEL, pCommon->Label, Language);
+              #if DIGINI_USE_MULTI_LANGUAGE_SUPPORT == DEF_ENABLE
+                DB_Central.Get(&Language, DIGINI_SYSTEM_LANGUAGE, 0, 0);
+              #endif
+                DB_Central.Get(&pString, APPLICATION_LABEL, pText->Label, Language);
                 ((ServiceType4_t*)pService)->pString[0] = pString;
                 *pServiceState = SERVICE_REFRESH;
             }
@@ -782,7 +783,7 @@ static ServiceReturn_t* SERV_XCHG(ServiceEvent_e* pServiceState, uint16_t SubSer
 {
     ServiceReturn_t* pService = nullptr;
     ExchangeType_e   ExchangeType;
-    Language_e       Language;
+    Language_e       Language = LANG_DEFAULT;
     char*            pString;
     Label_e          FormatLabel;
 
@@ -798,8 +799,9 @@ static ServiceReturn_t* SERV_XCHG(ServiceEvent_e* pServiceState, uint16_t SubSer
             else
             {
                 ExchangeType = pExchange[SubService]->ExType;
-
-                Language = LANG_ENGLISH;//DB_Central.Get(&Language, SYSTEM_LANGUAGE, 0, 0);
+              #if DIGINI_USE_MULTI_LANGUAGE_SUPPORT == DEF_ENABLE
+                DB_Central.Get(&Language, DIGINI_SYSTEM_LANGUAGE, 0, 0);
+              #endif
 
                 switch(ExchangeType)
                 {

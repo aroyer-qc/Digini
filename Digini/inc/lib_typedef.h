@@ -30,8 +30,12 @@
 // Type definition(s), enum(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //  ASCII Table
-enum ASCII_e
+typedef enum
 {
     ASCII_NULL                = 0,        // 0x00
     ASCII_START_OF_HEADING,
@@ -73,9 +77,9 @@ enum ASCII_e
     ASCII_COLOR_OVERRIDE        = ASCII_DEVICE_CTRL2,
     ASCII_SINGLE_FONT_OVERRIDE  = ASCII_DEVICE_CTRL3,
     ASCII_FONT_OVERRIDE         = ASCII_DEVICE_CTRL4,
-};
+} ASCII_e;
 
-enum SystemState_e
+typedef enum
 {
     SYS_READY                       = 0,                                      // READY is good for everything
 
@@ -169,7 +173,7 @@ enum SystemState_e
     SD_ERASE_RESET,
     SD_AKE_SEQ_ERROR,
     SD_ADDRESS_OUT_OF_RANGE,
-    
+
     // CLI state
     SYS_CMD_NO_READ_SUPPORT,
     SYS_CMD_NO_WRITE_SUPPORT,
@@ -178,36 +182,36 @@ enum SystemState_e
     SYS_OK_DENIED,
     SYS_TAG_FORMAT_INVALID,
     SYS_TAG_ERROR,
-};
+} SystemState_e;
 
-enum ChipSelect_e
+typedef enum
 {
     CS_DISABLE,
     CS_ENABLE,
     CS_PULSE_HIGH,
     CS_PULSE_LOW,
-};
+} ChipSelect_e;
 
 /*
-typedef enum __ChipReset_e
+typedef enum
 {
     CHIP_RESET,
     CHIP_RELEASE,
 } ChipReset_e;
 */
 
-enum Power_e
+typedef enum
 {
     POWER_OFF,
     POWER_UP,
     POWER_ON,
-};
+} Power_e;
 
-enum AccessRequest_e
+typedef enum
 {
     ACCESS_READ,
     ACCESS_WRITE,
-};
+} AccessRequest_e;
 
 /*
 typedef enum __WritePermission_e
@@ -217,17 +221,17 @@ typedef enum __WritePermission_e
 } WritePermission_e;
 */
 
-enum Range_e
+typedef enum
 {
     RANGE_MIN,
     RANGE_MAX,
     RANGE_AVERAGE,
     RANGE_MID_POINT,
-};
+} Range_e;
 
 // --------- General typedef ---------
 
-union s8_t
+typedef union
 {
     uint8_t         u_8;
     int8_t          n_8;
@@ -237,7 +241,7 @@ union s8_t
     {
         uint8_t     n0 :4;
         uint8_t     n1 :4;
-    }nibble;
+    } nibble;
 
     struct
     {
@@ -245,7 +249,7 @@ union s8_t
         uint8_t     p1 :2;
         uint8_t     p2 :2;
         uint8_t     p3 :2;
-    }pair;
+    } pair;
 
     struct
     {
@@ -257,15 +261,15 @@ union s8_t
         uint8_t     b5 :1;
         uint8_t     b6 :1;
         uint8_t     b7 :1;
-    }bit;
-};
+    } bit;
+} s8_t;
 
-union s16_t
+typedef union
 {
     uint16_t        u_16;
     int16_t         n_16;
    // wchar_t         wc;
-    union s8_t      s8_Array[2];
+    s8_t            s8_Array[2];
 
     uint8_t         u8_Array[2];
     int8_t          n8_Array[2];
@@ -276,7 +280,7 @@ union s16_t
     {
         uint8_t     u0;
         uint8_t     u1;
-    }u_8;
+    } u_8;
 
     struct
     {
@@ -318,22 +322,22 @@ union s16_t
         uint16_t    bF :1;
     }b;
 
-};
+} s16_t;
 
-union s32_t
+typedef union
 {
     uint32_t u_32;
     int32_t  n_32;
 
     uint16_t    u16_Array[2];
     int16_t     n16_Array[2];
-    union s16_t s16_Array[2];
+    s16_t       s16_Array[2];
    // wchar_t     wcArray[2];
 
 
     uint8_t     u8_Array[4];
     int8_t      n8_Array[4];
-    union s8_t  s8_Array[4];
+    s8_t        s8_Array[4];
     char        cArray[4];
     signed char nArray[4];
 
@@ -350,24 +354,24 @@ union s32_t
         uint16_t u0;
         uint16_t u1;
     } u_16;
-};
+} s32_t;
 
-union s64_t
+typedef union
 {
     uint64_t    u64;
     int64_t     n64;
 
     uint32_t    u32_Array[2];
     int32_t     n32_Array[2];
-    union s32_t s32_Array[2];
+    s32_t       s32_Array[2];
 
     uint16_t    u16_Array[4];
     int16_t     n16_Array[4];
-    union s16_t s16_Array[8];
+    s16_t       s16_Array[8];
 
     uint8_t     u8_Array[8];
     int8_t      n8_Array[8];
-    union s8_t  s8_Array[8];
+    s8_t        s8_Array[8];
 
     struct
     {
@@ -388,27 +392,25 @@ union s64_t
         uint16_t u2;
         uint16_t u3;
     } u_16;
-};
+} s64_t;
 
 // --------- Time and Date ---------
 
-#ifdef __cplusplus   // need to provide wrapper
-
-struct Time_t
+typedef struct
 {
     uint8_t     Second;
     uint8_t     Minute;
     uint8_t     Hour;
-};
+} Time_t;
 
-struct Date_t
+typedef struct
 {
     uint8_t     Day;
     uint8_t     Month;
     uint8_t     Year;
-};
+} Date_t;
 
-struct Clock_t
+typedef struct
 {
     Time_t      Time;
     Date_t      Date;
@@ -418,20 +420,23 @@ struct Clock_t
     uint8_t     Century;
     uint16_t    MinuteOfDay;
     uint32_t    SecondStamp;
-};
+} Clock_t;
 
-enum TimeFormat_e
+typedef enum
 {
     TIME_FORMAT_24_HOUR = 0,
     TIME_FORMAT_12_HOUR,
-};
-
-#endif
+} TimeFormat_e;
 
 // --------- Miscelleaneous ---------
 
-struct LinearEquation_t
+typedef struct
 {
     int16_t Slope;
     int16_t Y_Intercept;
-};
+} LinearEquation_t;
+
+#ifdef __cplusplus
+}
+#endif
+

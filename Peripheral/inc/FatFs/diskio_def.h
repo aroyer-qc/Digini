@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_fatfs_disk.h
+//  File : diskio_def.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,28 +24,53 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-
-// TODO evaluate if i keep it, at this time this is dead code.. not used!! don't remember the use case
-
-
-
-//-------------------------------------------------------------------------------------------------
-
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "diskio.h"
+#include "lib_typedef.h"
+#include "FatFs_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
-// Prototype(s)
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
-void    FATFS_DISK_Initialize   (void);
-bool    FATFS_DISK_CheckMedia   (DiskMedia_e Device);
-bool    FATFS_DISK_Mount        (DiskMedia_e Device);
-bool    FATFS_DISK_Unmount      (DiskMedia_e Device);
+// Command code for disk_ioctrl()
+// Generic command
+#define CTRL_SYNC                       0       // Mandatory for write functions
+#define GET_SECTOR_COUNT                1       // Mandatory for only f_mkfs()
+#define GET_SECTOR_SIZE                 2
+#define GET_BLOCK_SIZE                  3       // Mandatory for only f_mkfs()
+#define CTRL_ERASE_SECTOR               4        // Force erased a block of sectors (for only _USE_ERASE)
+
+#define DSTATUS SystemState_e
+
+//-------------------------------------------------------------------------------------------------
+// Type definition(s) and structure(s)
+//-------------------------------------------------------------------------------------------------
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Status of Disk Functions
+// They are mapped in Digini errors systems.
+//typedef SystemState_e DSTATUS;
+
+// Results of Disk Functions
+typedef enum
+{
+    RES_OK = 0,             // 0: Successful
+    RES_ERROR,              // 1: R/W Error
+    RES_WRPRT,              // 2: Write Protected
+    RES_NOTRDY,             // 3: Not Ready
+    RES_PARERR              // 4: Invalid Parameter
+} DRESULT;
+
+#ifdef __cplusplus
+}
+#endif
 
 //-------------------------------------------------------------------------------------------------

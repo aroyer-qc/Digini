@@ -162,8 +162,7 @@
 #include "device_cfg.h"
 
 #ifdef DIGINI_USE_FATFS
-#include "ff.h"
-#include "lib_fatfs_disk.h"
+#include "diskio.h"
 #endif
 
 #include "lib_grafx.h"

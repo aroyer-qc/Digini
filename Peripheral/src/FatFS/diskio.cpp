@@ -37,6 +37,11 @@
 // Local variable(s) or Classe(s)
 //-------------------------------------------------------------------------------------------------
 
+DiskIO_DeviceInterface* DiskIO::pDiskList[NUMBER_OF_DISK] =
+{
+    FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_OBJ_CONST_IN_DISK)
+};
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:
@@ -50,10 +55,10 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void DiskIO::RegisterDisk(DiskMedia_e Disk, DiskIO_DeviceInterface* pDisk)
-{
-    pDiskList[Disk] = pDisk;
-}
+//void DiskIO::RegisterDisk(DiskMedia_e Disk, DiskIO_DeviceInterface* pDisk)
+//{
+//    pDiskList[Disk] = pDisk;
+//}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -147,6 +152,8 @@ DRESULT DiskIO::IO_Ctrl(DiskMedia_e Disk, uint8_t Command, void* pBuffer)
     return pDiskList[Disk]->IO_Ctrl(Command, pBuffer);
 }
 
+
+#if 0
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:
@@ -218,7 +225,7 @@ uint32_t DiskIO::GetEraseBlockSize(DiskMedia_e Disk)
 {
     return pDiskList[Disk]->GetEraseBlockSize();
 }
-
+#endif
 //-------------------------------------------------------------------------------------------------
 // Global function(s)
 //-------------------------------------------------------------------------------------------------
@@ -381,233 +388,3 @@ WCHAR ff_wtoupper(WCHAR wch)
 //-------------------------------------------------------------------------------------------------
 
 #endif // DIGINI_USE_FATFS
-
-
-
-// Initialize
-/*
-  #ifdef DIGINI_FATFS_USE_SPI_FLASH_CHIP
-    pSPI_Flash    = new CFatFS_SPI_Flash();
-  #endif
-
-  #ifdef DIGINI_FATFS_USE_SDIO_SD_CARD
-    pSDIO         = new SDIO_Driver();
-  #endif
-
-  #ifdef DIGINI_FATFS_USE_SPI_SD_CARD
-    pSPI_SD_Card  = new CFatFS_SD_Card(&SPI);
-  #endif
-
-  #ifdef DIGINI_FATFS_USE_USB_KEY
-    pUSB_Key      = new CFatFS_USB();
-  #endif
-
-  #ifdef DIGINI_FATFS_USE_RAM_DRIVE
-    pRAM_Drive    = new CFatFS_RAM_Drive());
-  #endif
-*/
-/*
-this is removed to be placed in their own class
-    DSTATUS Status;
-
-    Status = STA_NOINIT;
-
-    switch((DiskMedia_e)Device)
-    {
-      #ifdef DIGINI_FATFS_USE_SPI_FLASH_CHIP
-        case DISK_FLASH:
-        {
-            Status = pSPI_Flash->Initialize();          // SPI Flash
-            break;
-        }
-      #endif // DIGINI_FATFS_USE_SPI_FLASH_CHIP
-
-      #ifdef DIGINI_FATFS_USE_SDIO_SD_CARD
-        case DISK_SDIO_SD_CARD:
-        {
-            Status = pSDIO->FatFS_Initialize();         // SDIO SD Card
-            break;
-        }
-      #endif // DIGINI_FATFS_USE_SDIO_SD_CARD
-
-      #ifdef DIGINI_FATFS_USE_SPI_SD_CARD
-        case DISK_SPI_SD_CARD:
-        {
-            Status = pSPI_SD_Card->Initialize();          // SPI SD Card
-            break;
-        }
-      #endif // DIGINI_FATFS_USE_SPI_SD_CARD
-
-      #ifdef DIGINI_FATFS_USE_USB_KEY
-        case DISK_USB_KEY:
-        {
-            Status = pUSB_Key->Initialize();              // USB Flash key
-            break;
-        }
-      #endif // DIGINI_FATFS_USE_USB_KEY
-
-      #ifdef DIGINI_FATFS_USE_RAM_DRIVE
-        case DISK_RAM:
-        {
-            Status = BSP_pRAM_Drive->Initialize();      // Ram Drive
-            break;
-        }
-      #endif // DIGINI_FATFS_USE_RAM_DRIVE
-
-      default: break;
-    }
-*/
-// disk read
-/*
-this is removed to be placed in their own class
-    switch(Drive)
-    {
-      #ifdef DIGINI_FATFS_USE_SPI_FLASH_CHIP
-        case DISK_FLASH:
-            Result = pSPI_Flash->Read(pBuffer, Sector, Count);
-            return Result;
-      #endif // DIGINI_FATFS_USE_SPI_FLASH_CHIP
-
-      #ifdef DIGINI_FATFS_USE_SDIO_SD_CARD
-        case DISK_SDIO_SD_CARD:
-            Result = pSDIO->FatFS_Read(pBuffer, Sector, Count);
-            return Result;
-      #endif // DIGINI_FATFS_USE_SDIO_SD_CARD
-
-      #ifdef DIGINI_FATFS_USE_SPI_SD_CARD
-        case DISK_SPI_SD_CARD:
-            Result = pSPI_SD_Card->Read(pBuffer, Sector, Count);
-            return Result;
-      #endif // DIGINI_FATFS_USE_SPI_SD_CARD
-
-      #ifdef DIGINI_FATFS_USE_USB_KEY
-        case DISK_USB_KEY:
-            Result = pUSB_Key->Read(pBuffer, Sector, Count);
-            return Result;
-      #endif // DIGINI_FATFS_USE_USB_KEY
-
-      #ifdef DIGINI_FATFS_USE_RAM_DRIVE
-        case DISK_RAM:
-            Result = BSP_pRAM_Drive->Read(pBuffer, Sector, Count);
-            return Result;
-      #endif // DIGINI_FATFS_USE_RAM_DRIVE
-    }
-*/
-// Status
-/*
-this is removed to be placed in their own class
-    DSTATUS Status;
-
-    switch(Device)
-    {
-      #ifdef DIGINI_FATFS_USE_SPI_FLASH_CHIP
-        case DISK_FLASH:
-            Status = pSPI_Flash->Status();
-            return Status;
-      #endif // DIGINI_FATFS_USE_SPI_FLASH_CHIP
-
-      #ifdef DIGINI_FATFS_USE_SDIO_SD_CARD
-        case DISK_SDIO_SD_CARD:
-            Status = pSDIO->FatFS_DiskStatus();
-            return Status;
-      #endif // DIGINI_FATFS_USE_SDIO_SD_CARD
-
-      #ifdef DIGINI_FATFS_USE_SPI_SD_CARD
-        case DISK_SPI_SD_CARD:
-            Status = pSPI_SD_Card->Status();
-            return Status;
-      #endif // DIGINI_FATFS_USE_SPI_SD_CARD
-
-      #ifdef DIGINI_FATFS_USE_USB_KEY
-        case DISK_USB_KEY:
-            Status = pUSB_Key->Status();
-            return Status;
-      #endif // DIGINI_FATFS_USE_USB_KEY
-
-      #ifdef DIGINI_FATFS_USE_RAM_DRIVE
-        case DISK_RAM:
-            Status = BSP_pRAM_Drive->Status();
-            return Status;
-      #endif // DIGINI_FATFS_USE_RAM_DRIVE
-    }
-    return STA_NOINIT;
-*/
-// Write
-
-/*
-this is removed to be placed in their own class
-    DRESULT Result;
-
-    switch(Device)
-    {
-      #ifdef DIGINI_FATFS_USE_SPI_FLASH_CHIP
-        case DISK_FLASH:
-            Result = pSPI_Flash->Write(pBuffer, Sector, Count);
-            return Result;
-      #endif // DIGINI_FATFS_USE_SPI_FLASH_CHIP
-
-      #ifdef DIGINI_FATFS_USE_SDIO_SD_CARD
-        case DISK_SDIO_SD_CARD:
-            Result = pSDIO->FatFS_Write(pBuffer, Sector, Count);
-            return Result;
-      #endif // DIGINI_FATFS_USE_SDIO_SD_CARD
-
-      #ifdef DIGINI_FATFS_USE_SPI_SD_CARD
-        case DISK_SPI_SD_CARD:
-            Result = pSPI_SD_Card->Write(pBuffer, Sector, Count);
-            return Result;
-      #endif // DIGINI_FATFS_USE_SPI_SD_CARD
-
-      #ifdef DIGINI_FATFS_USE_USB_KEY
-        case DISK_USB_KEY:
-            Result = pUSB_Key->Write(pBuffer, Sector, Count);
-            return Result;
-      #endif // DIGINI_FATFS_USE_USB_KEY
-
-      #ifdef DIGINI_FATFS_USE_RAM_DRIVE
-        case DISK_RAM:
-            Result = BSP_pRAM_Drive->Write(pBuffer, Sector, Count);
-            return Result;
-      #endif // DIGINI_FATFS_USE_RAM_DRIVE
-    }
-    return RES_PARERR;
-*/
-// io_ctrl
-/*
-this is removed to be placed in their own class
-    DRESULT Result;
-
-    switch(Device)
-    {
-      #ifdef DIGINI_FATFS_USE_SPI_FLASH_CHIP
-        case DISK_FLASH:
-            Result = pSPI_Flash->IO_Control(Control, pBuffer);
-            return Result;
-      #endif // DIGINI_FATFS_USE_SPI_FLASH_CHIP
-
-      #ifdef DIGINI_FATFS_USE_SDIO_SD_CARD
-        case DISK_SDIO_SD_CARD:
-            Result = pSDIO->FatFS_IO_Control(Control, pBuffer);
-            return Result;
-      #endif // DIGINI_FATFS_USE_SDIO_SD_CARD
-
-      #ifdef DIGINI_FATFS_USE_SPI_SD_CARD
-        case DISK_SPI_SD_CARD:
-            Result = pSPI_SD_Card->IO_Control(Control, pBuffer);
-            return Result;
-      #endif // DIGINI_FATFS_USE_SPI_SD_CARD
-
-      #ifdef DIGINI_FATFS_USE_USB_KEY
-        case DISK_USB_KEY:
-            Result = pUSB_Key->IO_Control(Control, pBuffer);
-            return Result;
-      #endif // DIGINI_FATFS_USE_USB_KEY
-
-      #ifdef DIGINI_FATFS_USE_RAM_DRIVE
-        case DISK_RAM:
-            Result = BSP_pRAM_Drive->IO_Control(Control, pBuffer);
-            return Result;
-      #endif // DIGINI_FATFS_USE_RAM_DRIVE
-    }
-    return RES_PARERR;
-*/

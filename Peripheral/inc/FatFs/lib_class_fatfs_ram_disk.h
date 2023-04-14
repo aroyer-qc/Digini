@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_fatfs_disk.h
+//  File : lib_class_fatfs_ram_disk.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,28 +24,50 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-
-// TODO evaluate if i keep it, at this time this is dead code.. not used!! don't remember the use case
-
-
-
-//-------------------------------------------------------------------------------------------------
-
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "diskio.h"
+#include "diskio_interface.h"
 
 //-------------------------------------------------------------------------------------------------
-// Prototype(s)
+// Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-void    FATFS_DISK_Initialize   (void);
-bool    FATFS_DISK_CheckMedia   (DiskMedia_e Device);
-bool    FATFS_DISK_Mount        (DiskMedia_e Device);
-bool    FATFS_DISK_Unmount      (DiskMedia_e Device);
+#ifdef __cplusplus
+
+class CFatFS_RAM_Disk : public DiskIO_DeviceInterface
+{
+    public:
+
+                        CFatFS_RAM_Disk     ();
+                       ~CFatFS_RAM_Disk     (){}
+
+        DSTATUS         Initialize          (void);
+        DSTATUS         Status              (void);
+        DRESULT         Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
+      #if _USE_WRITE == 1
+        DRESULT         Write               (const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
+      #endif
+      #if _USE_IOCTL == 1
+        DRESULT         IO_Ctrl             (uint8_t Control, void* pBuffer);
+      #endif
+
+        void            Configure           (uint8_t* pBuffer, size_t Size);
+
+    private:
+
+        DRESULT         CheckError          (uint32_t Sector, uint16_t NumberOfSectors);
+
+        bool                        m_IsItInitialize;
+        DSTATUS                     m_Status;
+        uint8_t*                    m_pBuffer;
+        size_t                      m_Size;                       // size of the disk, is a multiple of 512
+};
+
+#endif
 
 //-------------------------------------------------------------------------------------------------
+

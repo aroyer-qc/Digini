@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #if (USE_USB_DRIVER == DEF_ENABLED)
-#ifdef DIGINI_FATFS_USE_USB_KEY
+#if DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -151,7 +151,7 @@ extern class CUSB USB;
 
 */
 
-#endif // DIGINI_FATFS_USE_USB_KEY
+#endif // DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED
 
 #endif // USE_USB_DRIVER == DEF_ENABLED
 

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_fatfs_disk.h
+//  File : diskio_interface.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,28 +24,33 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-
-// TODO evaluate if i keep it, at this time this is dead code.. not used!! don't remember the use case
-
-
-
-//-------------------------------------------------------------------------------------------------
-
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
 
-#include "diskio.h"
+#ifdef __cplusplus
 
-//-------------------------------------------------------------------------------------------------
-// Prototype(s)
-//-------------------------------------------------------------------------------------------------
+class DiskIO_DeviceInterface
+{
+    public:
 
-void    FATFS_DISK_Initialize   (void);
-bool    FATFS_DISK_CheckMedia   (DiskMedia_e Device);
-bool    FATFS_DISK_Mount        (DiskMedia_e Device);
-bool    FATFS_DISK_Unmount      (DiskMedia_e Device);
+        virtual                     ~DiskIO_DeviceInterface (){}
 
-//-------------------------------------------------------------------------------------------------
+
+        virtual DSTATUS             Initialize              (void)                                  = 0;
+        virtual DSTATUS             Status                  (void)                                  = 0;
+        virtual DRESULT             Read                    (uint8_t*, uint32_t, uint16_t)          = 0;
+      #if _USE_WRITE == 1
+        virtual DRESULT             Write                   (const uint8_t*, uint32_t, uint16_t)    = 0;
+      #endif
+      #if _USE_IOCTL == 1
+        virtual DRESULT             IO_Ctrl                 (uint8_t, void*)                        = 0;
+      #endif
+
+        //virtual void                Sync                    (void)                                  = 0;
+        //virtual uint32_t            GetSectorCount          (void)                                  = 0;
+        //virtual uint32_t            GetSectorSize           (void)                                  = 0;
+        //virtual uint32_t            GetEraseBlockSize       (void)                                  = 0;
+};
+
+#endif

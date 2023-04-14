@@ -30,30 +30,61 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+#include "lib_typedef.h"
 #include "lib_advanced_macro.h"
 #include "ff.h"
-#include "diskio_def.h"
-#include "diskio_drv.h"
+#include "FatFs_cfg.h"
 #include "diskio_interface.h"
 
 //-------------------------------------------------------------------------------------------------
-// Expanding Macro(s)
+// Define(s)
 //-------------------------------------------------------------------------------------------------
+
+// Command code for disk_ioctrl()
+// Generic command
+#define CTRL_SYNC                       0       // Mandatory for write functions
+#define GET_SECTOR_COUNT                1       // Mandatory for only f_mkfs()
+#define GET_SECTOR_SIZE                 2
+#define GET_BLOCK_SIZE                  3       // Mandatory for only f_mkfs()
+#define CTRL_ERASE_SECTOR               4        // Force erased a block of sectors (for only _USE_ERASE)
 
 #define EXPAND_X_DRIVE_AS_ENUM(ENUM_ID, CLASS_, DISK_OBJ)              ENUM_ID,
 #define EXPAND_X_DRIVE_AS_OBJ_CREATION(ENUM_ID, CLASS_, DISK_OBJ)      class CLASS_ DISK_OBJ;
 #define EXPAND_X_DRIVE_AS_OBJ_DECLARATION(ENUM_ID, CLASS_, DISK_OBJ)   extern class CLASS_ DISK_OBJ;
-#define EXPAND_X_DRIVE_AS_OBJ_CONST_IN_DISK(ENUM_ID, CLASS_, DISK_OBJ) &DISK_OBJ
+#define EXPAND_X_DRIVE_AS_OBJ_CONST_IN_DISK(ENUM_ID, CLASS_, DISK_OBJ) dynamic_cast<DiskIO_DeviceInterface*>(&DISK_OBJ),
 
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Status of Disk Functions
+// They are mapped in Digini errors systems.
+typedef SystemState_e   DSTATUS;
 
 typedef enum
 {
     FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_ENUM)
     NUMBER_OF_DISK,
 } DiskMedia_e;
+
+
+// Results of Disk Functions
+typedef enum
+{
+    RES_OK = 0,             // 0: Successful
+    RES_ERROR,              // 1: R/W Error
+    RES_WRPRT,              // 2: Write Protected
+    RES_NOTRDY,             // 3: Not Ready
+    RES_PARERR              // 4: Invalid Parameter
+} DRESULT;
+
+#ifdef __cplusplus
+}
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
@@ -128,7 +159,7 @@ class DiskIO    // Singleton
                             DiskIO(DiskIO const&)               = delete;
         void                operator=(DiskIO const&)            = delete;
 
-        static DiskIO_DeviceInterface*    pDiskList          [NUMBER_OF_DISK];              // Number of Disk is define in the FatFs_cfg.h of the application config directory
+        static /*const*/ DiskIO_DeviceInterface*    pDiskList          [NUMBER_OF_DISK];              // Number of Disk is define in the FatFs_cfg.h of the application config directory
 
 };
 #endif
@@ -144,5 +175,4 @@ class DiskIO    // Singleton
   #endif
  #endif
 #endif
-
 //-------------------------------------------------------------------------------------------------

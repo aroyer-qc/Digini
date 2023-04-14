@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_fatfs_disk.h
+//  File : diskio_drv.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,28 +24,35 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-
-// TODO evaluate if i keep it, at this time this is dead code.. not used!! don't remember the use case
-
-
-
-//-------------------------------------------------------------------------------------------------
-
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "diskio.h"
+#include "diskio_drv_cfg.h"                     // This will add any custom driver
 
 //-------------------------------------------------------------------------------------------------
-// Prototype(s)
+
+#if DIGINI_FATFS_USE_RAM_DISK == DEF_ENABLED
+#include "lib_class_fatfs_ram_disk.h"
+#endif
+
+#if DIGINI_FATFS_USE_SDIO_SD_CARD == DEF_ENABLED
+//include "lib_class_fatfs_sdio_sd_card.h"
+#endif
+
+#if DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED
+//#include "lib_class_fatfs_spi_flash_chip.h"
+#endif
+
+#if DIGINI_FATFS_USE_SPI_SD_CARD == DEF_ENABLED
+//#include "lib_class_fatfs_spi_sd_card.h"
+#endif
+
+#if DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED
+//#include "lib_class_fatfs_usb_key.h"
+#endif
+
 //-------------------------------------------------------------------------------------------------
 
-void    FATFS_DISK_Initialize   (void);
-bool    FATFS_DISK_CheckMedia   (DiskMedia_e Device);
-bool    FATFS_DISK_Mount        (DiskMedia_e Device);
-bool    FATFS_DISK_Unmount      (DiskMedia_e Device);
-
-//-------------------------------------------------------------------------------------------------

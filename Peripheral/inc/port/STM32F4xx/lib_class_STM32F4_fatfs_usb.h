@@ -35,7 +35,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-class USB_FatFS
+class USB_FatFS : public DiskIO_DeviceInterface
 {
     public:
 
@@ -45,10 +45,12 @@ class USB_FatFS
 
         DSTATUS     Initialize          (void);
         DSTATUS     Status              (void);
-        DRESULT     Read                (uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks);
-        DRESULT     Write               (const uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks);
+        DRESULT     Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfBlocks);
+        #if _USE_WRITE == 1
+        DRESULT     Write               (const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfBlocks);
+        #endif
         #if _USE_IOCTL == 1
-        DRESULT     IO_Control          (uint8_t Control, void *pBuffer);
+        DRESULT     IO_Ctrl             (uint8_t Control, void *pBuffer);
         #endif
 
     private:

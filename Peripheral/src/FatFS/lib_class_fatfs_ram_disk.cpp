@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F4_fatfs_usb.cpp
+//  File : lib_class_fatfs_ram_disk.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -28,56 +28,73 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define USB_DRIVER_GLOBAL
 #include "lib_digini.h"
-#undef  USB_DRIVER_GLOBAL
-#include "lib_class_usb.h"
-#include "usb_hcd.h"
-#if DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED
+
+//-------------------------------------------------------------------------------------------------
+
+#if DIGINI_FATFS_USE_RAM_DISK == DEF_ENABLED
+
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+// User can overrides those value if bigger RAM Disk are required
+
+#ifndef RAM_DISK_SECTOR_SIZE
+#define RAM_DISK_SECTOR_SIZE         512                 // Sector size is fixed at 512
+#endif
+
+#ifndef RAM_DISK_BLOCK_SIZE
+#define RAM_DISK_BLOCK_SIZE          512                 // BlockSize size is fixed at 512
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: CFatFS_USB
+//   Class: CFatFS_RAM_Disk
 //
 //
-//   Description:   Class to handle FatFS for device connected to USB
+//   Description:   Class to handle FatFS for RAM Disk
 //
 //-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   CFatFS_USB
+//   Constructor:   CFatFS_RAM_Disk
 //
 //   Parameter(s):
 //   Return Value:
 //
-//   Description:   Initializes the USB Host peripheral
+//   Description:   Initializes the RAM Disk volatile peripheral
 //
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CFatFS_USB::CFatFS_USB(void)
+CFatFS_RAM_Disk::CFatFS_RAM_Disk()
 {
+    m_IsItInitialize = false;
+    m_Status         = STA_NODISK;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Destructor:   CFatFS_USB
+//   Function name: Configure
 //
-//   Parameter(s):
-//   Return Value:
+//   Parameter(s):  uint8_t*    pBuffer         Data buffer allocated for RAM Disk
+//                  size_t      Size            Size of the buffer
+//   Return value:  None
 //
-//  Description:    Deinitializes the USB_Host
+//   Description:   Initialize RAM Disk
 //
-//  Note(s):
+//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CFatFS_USB::~CFatFS_USB(void)
+void CFatFS_RAM_Disk::Configure(uint8_t* pBuffer, size_t Size)
 {
-    // Nothing to do at this point
+    m_pBuffer        = pBuffer;
+    m_Size           = Size;
+    m_Status         = STA_NOINIT;
+    m_IsItInitialize = true;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -86,16 +103,20 @@ CFatFS_USB::~CFatFS_USB(void)
 //   Parameter(s):  None
 //   Return value:  DSTATUS
 //
-//   Description:   Initialize USB Host
+//   Description:   Initialize RAM Disk
 //
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DSTATUS CFatFS_USB::Initialize(void)
+DSTATUS CFatFS_RAM_Disk::Initialize(void)
 {
-    return Status();
-}
+    if(m_IsItInitialize == true)
+    {
+        m_Status = STA_OK;
+    }
 
+    return m_Status;
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -104,27 +125,15 @@ DSTATUS CFatFS_USB::Initialize(void)
 //   Parameter(s):  None
 //   Return value:  DSTATUS
 //
-//   Description:   Get Status from USB Device
+//   Description:   Get Status from RAM Disk Device
 //
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DSTATUS CFatFS_USB::Status()
+DSTATUS CFatFS_RAM_Disk::Status()
 {
-
-
-    if(USB.GetStatus() == USB_MSC_DEV_CONNECTED)
-    {
-        m_Status = (DSTATUS)(m_Status & ~STA_NOINIT);
-    }
-    else
-    {
-        m_Status = (DSTATUS)(m_Status |  STA_NOINIT);
-    }
-
     return m_Status;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -132,51 +141,26 @@ DSTATUS CFatFS_USB::Status()
 //
 //   Parameter(s):  uint8_t*  pBuffer
 //                  uint32_t  Sector
-//                  uint8_t   Count
+//                  uint16_t   NumberOfSectors
 //   Return value:  DRESULT
 //
-//   Description:   Read From USB Device
+//   Description:   Read From RAM Disk Device
 //
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DRESULT CFatFS_USB::Read(uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks)
+DRESULT CFatFS_RAM_Disk::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {
-    uint8_t Status;
+    DRESULT Result;
 
-    if(NumberOfBlocks == 0)
+    if((Result = CheckError(Sector, NumberOfSectors)) == RES_OK)
     {
-        return RES_PARERR;
+        memcpy(pBuffer, m_pBuffer + (Sector * RAM_DISK_SECTOR_SIZE), NumberOfSectors * RAM_DISK_SECTOR_SIZE);
+        return RES_OK;
     }
 
-    if(m_Status & STA_NOINIT)
-    {
-        return RES_NOTRDY;
-    }
-
-    if(USB.GetStatus() == USB_MSC_DEV_CONNECTED)
-    {
-        do
-        {
-            Status = USBH_MSC_Read10(&USB.m_OTG_Core, pBuffer, Sector, 512 * NumberOfBlocks);
-            USBH_MSC_HandleBOTXfer(&USB.m_OTG_Core, &USB.m_Host);
-
-            if(HCD_IsDeviceConnected(&USB.m_OTG_Core) == 0)
-            {
-                return RES_ERROR;
-            }
-        }
-        while(Status == USBH_MSC_BUSY);
-
-        if(Status == USBH_MSC_OK)
-        {
-            return  RES_OK;
-        }
-    }
-
-    return RES_ERROR;
+    return Result;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -184,56 +168,28 @@ DRESULT CFatFS_USB::Read(uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBloc
 //
 //   Parameter(s):  const uint8_t*  pBuffer
 //                  uint32_t        Sector
-//                  uint8_t         NumberOfBlocks
+//                  uint16_t        NumberOfSectors
 //   Return value:  DRESULT
 //
-//   Description:   Write to the USB Device
+//   Description:   Write to the RAM Disk Device
 //
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DRESULT CFatFS_USB::Write(const uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks)
+#if _USE_WRITE == 1
+DRESULT CFatFS_RAM_Disk::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {
-    uint8_t Status = USBH_MSC_OK;
+    DRESULT Result;
 
-    if(NumberOfBlocks == 0)
+    if((Result = CheckError(Sector, NumberOfSectors)) == RES_OK)
     {
-        return RES_PARERR;
+        memcpy(m_pBuffer + (Sector * RAM_DISK_SECTOR_SIZE), pBuffer, NumberOfSectors * RAM_DISK_SECTOR_SIZE);
+        return RES_OK;
     }
 
-    if(m_Status & STA_NOINIT)
-    {
-        return RES_NOTRDY;
-    }
-
-    if(m_Status & STA_PROTECT)
-    {
-        return RES_WRPRT;
-    }
-
-    if(USB.GetStatus() == USB_MSC_DEV_CONNECTED)
-    {
-        do
-        {
-            Status = USBH_MSC_Write10(&USB.m_OTG_Core, (BYTE*)pBuffer, Sector, 512 * NumberOfBlocks);
-            USBH_MSC_HandleBOTXfer(&USB.m_OTG_Core, &USB.m_Host);
-
-            if(HCD_IsDeviceConnected(&USB.m_OTG_Core) == 0)
-            {
-                return RES_ERROR;
-            }
-        }
-        while(Status == USBH_MSC_BUSY);
-
-        if(Status == USBH_MSC_OK)
-        {
-            return RES_OK;
-        }
-    }
-
-    return RES_ERROR;
+    return Result;
 }
-
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -249,7 +205,7 @@ DRESULT CFatFS_USB::Write(const uint8_t* pBuffer, uint32_t Sector, uint8_t Numbe
 //
 //-------------------------------------------------------------------------------------------------
 #if _USE_IOCTL == 1
-DRESULT CFatFS_USB::IO_Control(uint8_t Control, void *pBuffer)
+DRESULT CFatFS_RAM_Disk::IO_Ctrl(uint8_t Control, void *pBuffer)
 {
     DRESULT res = RES_ERROR;
 
@@ -260,29 +216,29 @@ DRESULT CFatFS_USB::IO_Control(uint8_t Control, void *pBuffer)
 
     switch(Control)
     {
-        case CTRL_SYNC:                                            // Make sure that no pending write process
+        case CTRL_SYNC:                                                         // Make sure that no pending write process, Impossible in RAM :)
         {
             res = RES_OK;
             break;
         }
 
-        case GET_SECTOR_COUNT:                                    // Get number of sectors on the disk (unit32_t)
+        case GET_SECTOR_COUNT:                                                  // Get number of sectors on the disk (unit32_t)
         {
-            *(uint32_t*)pBuffer = (uint32_t)USBH_MSC_Param.MSCapacity;
+            *(uint32_t*)pBuffer = uint32_t(m_Size / RAM_DISK_SECTOR_SIZE);
             res = RES_OK;
             break;
         }
 
-        case GET_SECTOR_SIZE:                                    // Get R/W sector size (unit16_t)
+        case GET_SECTOR_SIZE:                                                   // Get R/W sector size (unit16_t)
         {
-            *(uint16_t*)pBuffer = 512;
+            *(uint16_t*)pBuffer = RAM_DISK_SECTOR_SIZE;
             res = RES_OK;
             break;
         }
 
-        case GET_BLOCK_SIZE:                                    // Get erase block size in unit of sector (unit32_t)
+        case GET_BLOCK_SIZE:                                                    // Get erase block size in unit of sector (unit32_t)
         {
-            *(uint32_t*)pBuffer = 512;
+            *(uint32_t*)pBuffer = RAM_DISK_BLOCK_SIZE / RAM_DISK_BLOCK_SIZE;
             break;
         }
 
@@ -298,7 +254,40 @@ DRESULT CFatFS_USB::IO_Control(uint8_t Control, void *pBuffer)
 #endif
 
 //-------------------------------------------------------------------------------------------------
+//
+//   Function name: CheckError
+//
+//   Parameter(s):  uint32_t        Sector
+//                  uint8_t         NumberOfBlocks
+//   Return value:  DRESULT
+//
+//   Description:   Check for parameter error and RAM boundary violation
+//
+//   Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+DRESULT CFatFS_RAM_Disk::CheckError(uint32_t Sector, uint16_t NumberOfSectors)
+{
+    if(m_Status & (STA_NOINIT | STA_NODISK))
+    {
+        return RES_NOTRDY;
+    }
 
-#endif // DIGINI_FATFS_USE_USB_KEY
+    if(NumberOfSectors == 0)
+    {
+       return RES_PARERR;
+    }
+
+    if((Sector + ((NumberOfSectors - 1) * RAM_DISK_SECTOR_SIZE)) >= (m_Size / RAM_DISK_SECTOR_SIZE))
+    {
+       return RES_PARERR;
+    }
+
+    return RES_OK;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // DIGINI_FATFS_USE_RAM_DISK
 
 

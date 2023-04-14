@@ -49,7 +49,7 @@ class CSPI_SD_Card : public CSPI
 {
     public:
 
-                                    CSPI_SD_Card               (SPI_PortInfo_t* pPort);
+                                    CSPI_SD_Card            (SPI_PortInfo_t* pPort);
                                     ~CSPI_SD_Card           ();
 
         DSTATUS                     Initialize              ();

@@ -25,7 +25,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #if defined STM32F4xx
- #include "fatfs\lib_class_STM32F4_sdio.h"
+ #include "lib_class_STM32F4_fatfs_sdio.h"
 #elif defined STM32F7xx
- #include "fatfs\lib_class_STM32F7_sdio.h"
+ #include "lib_class_STM32F7_fatfs_sdio.h"
 #endif

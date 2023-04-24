@@ -26,22 +26,29 @@
 
 #pragma once
 
+
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#ifdef __cplusplus
+
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "diskio.h"
+//#include "diskio.h"
 #include "lib_class_usbh.h"
+#include "diskio_interface.h"
 
 //-------------------------------------------------------------------------------------------------
 
-class USB_FatFS : public DiskIO_DeviceInterface
+class CFatFS_CUSB : public DiskIO_DeviceInterface
 {
     public:
 
-                    USB_FatFS           (USB_HostInterface* pUSB);
-
-// TODO might need to add function for the passing of instance to
+                    CFatFS_CUSB         (USB_HostInterface* pUSB);
+                   ~CFatFS_CUSB         (){}
 
         DSTATUS     Initialize          (void);
         DSTATUS     Status              (void);
@@ -53,7 +60,11 @@ class USB_FatFS : public DiskIO_DeviceInterface
         DRESULT     IO_Ctrl             (uint8_t Control, void *pBuffer);
       #endif
 
+        void        Configure           (uint8_t* pBuffer, size_t Size);
+
     private:
+
+        DRESULT     CheckError          (uint32_t Sector, uint16_t NumberOfSectors);
 
         bool                        m_Initialize;
         USB_HostInterface*          m_pUSB;
@@ -62,3 +73,4 @@ class USB_FatFS : public DiskIO_DeviceInterface
 
 //-------------------------------------------------------------------------------------------------
 
+#endif // __cplusplus

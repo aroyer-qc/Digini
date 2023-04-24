@@ -2,7 +2,6 @@
 //
 //  File : lib_class_STM32F7_sdio.h
 //
-// SDIO is not up to date to digini standard as of 24 april 2023
 //-------------------------------------------------------------------------------------------------
 //
 // Copyright(c) 2020 Alain Royer.
@@ -28,36 +27,53 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#ifdef __cplusplus
+
+//-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "ff.h"
-#include "diskio.h"
+//#include "ff.h"
+//#include "diskio.h"
+#include "diskio_interface.h"
 
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_FATFS_USE_SDIO_SD_CARD == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-// typedef Typedef(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class xxxx : public iiii
+class CFatFS_SDIO : public DiskIO_DeviceInterface
 {
-    public:
-                            xxxx                   ();
-                            ~xxxx                  ();
+
+                        CFatFS_SDIO         ();
+                       ~CFatFS_SDIO         (){}
+
+        DSTATUS         Initialize          (void);
+        DSTATUS         Status              (void);
+        DRESULT         Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
+      #if _USE_WRITE == 1
+        DRESULT         Write               (const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
+      #endif
+      #if _USE_IOCTL == 1
+        DRESULT         IO_Ctrl             (uint8_t Control, void* pBuffer);
+      #endif
+
+        void            Configure           (uint8_t* pBuffer, size_t Size);
 
     private:
 
+        DRESULT         CheckError          (uint32_t Sector, uint16_t NumberOfSectors);
+
+        bool                        m_IsItInitialize;
+        DSTATUS                     m_Status;
+        uint8_t*                    m_pBuffer;
+        size_t                      m_Size;                       // size of the disk, is a multiple of 512
 };
 
 //-------------------------------------------------------------------------------------------------

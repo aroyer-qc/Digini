@@ -28,11 +28,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define USB_DRIVER_GLOBAL
 #include "lib_digini.h"
-#undef  USB_DRIVER_GLOBAL
 #include "lib_class_usb.h"
 #include "usb_hcd.h"
+
 #if DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED
 
 //-------------------------------------------------------------------------------------------------

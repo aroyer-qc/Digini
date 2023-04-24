@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F4_usart.h
+//  File : lib_class_LPCxxx_uart.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -31,6 +31,8 @@
 
 #pragma once
 
+//-------------------------------------------------------------------------------------------------
+
 #ifdef STM32F4_USART_GLOBAL
     #define STM32F4_USART_EXTERN
 #else
@@ -41,11 +43,11 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "stm32f4xx.h"
+#include "LPCxx.h"
 #include "nOS.h"
 #include "lib_digini.h"
 //#include "PortState.h"
-#include "lib_class_STM32F4_gpio.h"
+#include "lib_class_LPCxxx_gpio.h"
 #include "lib_fifo.h"
 #include "lib_typedef.h"
 

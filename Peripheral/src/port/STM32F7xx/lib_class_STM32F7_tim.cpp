@@ -54,7 +54,7 @@
 //   Class: TIM_Driver
 //
 //
-//   Description:   Class to handle basic TIM functionnality
+//   Description:   Class to handle basic TIM functionality
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -71,9 +71,23 @@
 //-------------------------------------------------------------------------------------------------
 TIM_Driver::TIM_Driver(TIM_ID_e TimID)
 {
-    ISR_Prio_t ISR_Prio;
-
     m_pInfo = (TIM_Info_t*)&TIM_Info[TimID];
+    m_pTim  = m_pInfo->pTIMx;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Initialize
+//
+//  Parameter(s):   pCallBack       Callback for application.
+//  Return:         None
+//
+//  Description:    Configure the module
+//
+//-------------------------------------------------------------------------------------------------
+void TIM_Driver::Initialize(void)
+{
+    ISR_Prio_t ISR_Prio;
 
     // Reset and Enable clock module
     *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - TIM_BACK_OFFSET_RESET_REGISTER) |=  m_pInfo->RCC_APBxPeriph;
@@ -81,35 +95,13 @@ TIM_Driver::TIM_Driver(TIM_ID_e TimID)
     *(m_pInfo->RCC_APBxEN_Register) |= m_pInfo->RCC_APBxPeriph;
 
     // Set the prescaler value
-  #if (TIM_DRIVER_SUPPORT_LPTIM1_CFG == DEF_ENABLED)
-    if(m_pTim == LPTIM1)
-    {
-        // LPTIM1 has a different prescaler method
-
-        uint32_t Value = 0;
-
-        while(m_pInfo->Prescaler > 1)
-        {
-            Value++;
-            m_pInfo->Prescaler >>= 1;
-        };
-
-        Value <<= LPTIM_CFGR_PRESC_Pos;
-        MODIFY_REG(LPTIM1->CFGR, LPTIM_CFGR_PRESC_Msk, Value);
-    }
-    else
-  #endif
-    {
-      #if (TIM_DRIVER_SUPPORT_ANY_TIM1_TO_TIM14_CFG == DEF_ENABLED)
-        m_pTim->PSC = m_pInfo->Prescaler;
-      #endif
-    }
+    m_pTim->PSC = m_pInfo->Prescaler;
 
     // Set the auto reload register
   #if (TIM_DRIVER_SUPPORT_16_BITS_TIM_CFG == DEF_ENABLED)
     if((m_pTim != TIM2) && (m_pTim != TIM5))
     {
-        CLEAR_BIT(m_pInfo->Reload, TIM_16_BITS_MASK);
+        MODIFY_REG(m_pInfo->Reload, TIM_16_BITS_MASK, m_pInfo->Reload); // Keep only low 16 bits
     }
   #endif
 
@@ -122,6 +114,7 @@ TIM_Driver::TIM_Driver(TIM_ID_e TimID)
   #endif
     {
         m_pTim->ARR = m_pInfo->Reload;
+        m_pTim->CNT = m_pInfo->Reload - 1;      // Prevent PWM from been active on activation
     }
 
     // Set mode and Auto-reload preload enable
@@ -169,7 +162,6 @@ TIM_Driver::TIM_Driver(TIM_ID_e TimID)
         }
     }
 
-
     // Configure interrupt priority for TIM
     ISR_Prio.PriorityGroup     = NVIC_GetPriorityGrouping();
     ISR_Prio.PremptionPriority = m_pInfo->PreempPrio;
@@ -177,6 +169,7 @@ TIM_Driver::TIM_Driver(TIM_ID_e TimID)
     ISR_Init(m_pInfo->IRQn_Channel, &ISR_Prio);
 }
 
+#if 0 not in F4.. Does not mean we don't keep it
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           IsItRunning
@@ -191,6 +184,7 @@ bool TIM_Driver::IsItRunning(void)
 {
     return (LPTIM1->CR & LPTIM_CR_ENABLE) ? true : false;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -318,7 +312,7 @@ void TIM_Driver::Stop(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Reload
+//  Name:           SetReload
 //
 //  Parameter(s):   Value           New reload value
 //  Return:         void
@@ -326,7 +320,7 @@ void TIM_Driver::Stop(void)
 //  Description:    Reload a new period for timer and restart it
 //
 //-------------------------------------------------------------------------------------------------
-void TIM_Driver::Reload(uint32_t Value)
+void TIM_Driver::SetReload(uint32_t Value)
 {
   #if (TIM_DRIVER_SUPPORT_LPTIM1_CFG == DEF_ENABLED)
     if(((LPTIM_TypeDef*)m_pTim) == LPTIM1)
@@ -340,10 +334,36 @@ void TIM_Driver::Reload(uint32_t Value)
   #endif
     {
       #if (TIM_DRIVER_SUPPORT_ANY_TIM1_TO_TIM14_CFG == DEF_ENABLED)
-        CLEAR_BIT(m_pTim->CR1, TIM_CR1_CEN);                          // Stop the timer
-        m_pTim->ARR = Value;                                          // Reload a new value
-        m_pTim->CNT = 0;                                              // Reset counter
-        SET_BIT(m_pTim->CR1, TIM_CR1_CEN);                            // Start the timer
+        CLEAR_BIT(m_pTim->CR1, TIM_CR1_CEN);                            // Stop the timer
+        m_pTim->ARR = Value;                                            // Reload a new value
+        m_pTim->CNT = 0;                                                // Reset counter
+        SET_BIT(m_pTim->CR1, TIM_CR1_CEN);                              // Start the timer
+      #endif
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           GetReload
+//
+//  Parameter(s):   Value           New reload value
+//  Return:         void
+//
+//  Description:    Reload a new period for timer and restart it
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t TIM_Driver::GetReload(void)
+{
+  #if (TIM_DRIVER_SUPPORT_LPTIM1_CFG == DEF_ENABLED)
+    if(((LPTIM_TypeDef*)m_pTim) == LPTIM1)
+    {
+	return LPTIM1->ARR;                                             // Get Reload value
+    }
+    else
+  #endif
+    {
+      #if (TIM_DRIVER_SUPPORT_ANY_TIM1_TO_TIM14_CFG == DEF_ENABLED)
+        return m_pTim->ARR;                                                 // Get Reload value
       #endif
     }
 }
@@ -645,6 +665,20 @@ void TIM_Driver::CallBack(bool ProcessUpdate)
 }
 
 //-------------------------------------------------------------------------------------------------
+//
+//  Name:           GetTimerPointer
+//
+//  Parameter(s):   TimID           ID of the timer to get the pointer
+//  Return:         TIM_TypeDef*    \pointer on the timer module
+//
+//  Description:    Return the pointer on the timer use by this ID
+//
+//-------------------------------------------------------------------------------------------------
+TIM_TypeDef* TIM_Driver::GetTimerPointer(TIM_ID_e TimID)
+{
+    return TIM_Info[TimID].pTIMx;
+}
+
+//-------------------------------------------------------------------------------------------------
 
 #endif // (USE_TIM_DRIVER == DEF_ENABLED)
-

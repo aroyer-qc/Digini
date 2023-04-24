@@ -52,25 +52,25 @@ void DMA_ClearFlag(DMA_Stream_TypeDef* pDMA, uint32_t Flag)
 
     switch(intptr_t(pDMA))
     {
-        case DMA1_Stream0_BASE:
-        case DMA1_Stream1_BASE:
-        case DMA1_Stream2_BASE:
-        case DMA1_Stream3_BASE: pRegister = &DMA1->LIFCR; break;
+        case (uint32_t)DMA1_Stream0_BASE:
+        case (uint32_t)DMA1_Stream1_BASE:
+        case (uint32_t)DMA1_Stream2_BASE:
+        case (uint32_t)DMA1_Stream3_BASE: pRegister = &DMA1->LIFCR; break;
 
-        case DMA1_Stream4_BASE:
-        case DMA1_Stream5_BASE:
-        case DMA1_Stream6_BASE:
-        case DMA1_Stream7_BASE: pRegister = &DMA1->HIFCR; break;
+        case (uint32_t)DMA1_Stream4_BASE:
+        case (uint32_t)DMA1_Stream5_BASE:
+        case (uint32_t)DMA1_Stream6_BASE:
+        case (uint32_t)DMA1_Stream7_BASE: pRegister = &DMA1->HIFCR; break;
 
-        case DMA2_Stream0_BASE:
-        case DMA2_Stream1_BASE:
-        case DMA2_Stream2_BASE:
-        case DMA2_Stream3_BASE: pRegister = &DMA2->LIFCR; break;
+        case (uint32_t)DMA2_Stream0_BASE:
+        case (uint32_t)DMA2_Stream1_BASE:
+        case (uint32_t)DMA2_Stream2_BASE:
+        case (uint32_t)DMA2_Stream3_BASE: pRegister = &DMA2->LIFCR; break;
 
-        case DMA2_Stream4_BASE:
-        case DMA2_Stream5_BASE:
-        case DMA2_Stream6_BASE:
-        case DMA2_Stream7_BASE: pRegister = &DMA2->HIFCR; break;
+        case (uint32_t)DMA2_Stream4_BASE:
+        case (uint32_t)DMA2_Stream5_BASE:
+        case (uint32_t)DMA2_Stream6_BASE:
+        case (uint32_t)DMA2_Stream7_BASE: pRegister = &DMA2->HIFCR; break;
     }
 
     SET_BIT(*pRegister, Flag);
@@ -93,25 +93,25 @@ uint32_t DMA_CheckFlag(DMA_Stream_TypeDef* pDMA, uint32_t Flag)
 
     switch(intptr_t(pDMA))
     {
-        case DMA1_Stream0_BASE:
-        case DMA1_Stream1_BASE:
-        case DMA1_Stream2_BASE:
-        case DMA1_Stream3_BASE: Register = DMA1->LISR; break;
+        case (uint32_t)DMA1_Stream0_BASE:
+        case (uint32_t)DMA1_Stream1_BASE:
+        case (uint32_t)DMA1_Stream2_BASE:
+        case (uint32_t)DMA1_Stream3_BASE: Register = DMA1->LISR; break;
 
-        case DMA1_Stream4_BASE:
-        case DMA1_Stream5_BASE:
-        case DMA1_Stream6_BASE:
-        case DMA1_Stream7_BASE: Register = DMA1->HISR; break;
+        case (uint32_t)DMA1_Stream4_BASE:
+        case (uint32_t)DMA1_Stream5_BASE:
+        case (uint32_t)DMA1_Stream6_BASE:
+        case (uint32_t)DMA1_Stream7_BASE: Register = DMA1->HISR; break;
 
-        case DMA2_Stream0_BASE:
-        case DMA2_Stream1_BASE:
-        case DMA2_Stream2_BASE:
-        case DMA2_Stream3_BASE: Register = DMA2->LISR; break;
+        case (uint32_t)DMA2_Stream0_BASE:
+        case (uint32_t)DMA2_Stream1_BASE:
+        case (uint32_t)DMA2_Stream2_BASE:
+        case (uint32_t)DMA2_Stream3_BASE: Register = DMA2->LISR; break;
 
-        case DMA2_Stream4_BASE:
-        case DMA2_Stream5_BASE:
-        case DMA2_Stream6_BASE:
-        case DMA2_Stream7_BASE: Register = DMA2->HISR; break;
+        case (uint32_t)DMA2_Stream4_BASE:
+        case (uint32_t)DMA2_Stream5_BASE:
+        case (uint32_t)DMA2_Stream6_BASE:
+        case (uint32_t)DMA2_Stream7_BASE: Register = DMA2->HISR; break;
     }
 
     if((Register & Flag) != 0)
@@ -140,7 +140,7 @@ void DMA_Enable(DMA_Stream_TypeDef* pDMA)
 //
 //  Function:       DMA_Disable
 //
-//  Parameter(s):   pDMA        DMA stream to enable
+//  Parameter(s):   pDMA        DMA stream to disable
 //  Return:         None
 //
 //  Description:    Disable a specific DMA stream.
@@ -148,6 +148,36 @@ void DMA_Enable(DMA_Stream_TypeDef* pDMA)
 void DMA_Disable(DMA_Stream_TypeDef* pDMA)
 {
     CLEAR_BIT(pDMA->CR, DMA_SxCR_EN);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DMA_EnableInterrupt
+//
+//  Parameter(s):   pDMA        DMA stream
+//                  Interrupt   Interrupt tn enable
+//  Return:         None
+//
+//  Description:    Enable a group of interrupt for specific DMA stream.
+//-------------------------------------------------------------------------------------------------
+void DMA_EnableInterrupt(DMA_Stream_TypeDef* pDMA, uint32_t Interrupt)
+{
+    SET_BIT(pDMA->CR, Interrupt);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DMA_DisableInterrupt
+//
+//  Parameter(s):   pDMA        DMA stream
+//                  Interrupt   Interrupt tn enable
+//  Return:         None
+//
+//  Description:    Disable a group of interrupt for specific DMA stream.
+//-------------------------------------------------------------------------------------------------
+void DMA_DisableInterrupt(DMA_Stream_TypeDef* pDMA, uint32_t Interrupt)
+{
+    CLEAR_BIT(pDMA->CR, Interrupt);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -176,6 +206,34 @@ void DMA_EnableTransmitCompleteInterrupt(DMA_Stream_TypeDef* pDMA)
 void DMA_DisableTransmitCompleteInterrupt(DMA_Stream_TypeDef* pDMA)
 {
     CLEAR_BIT(pDMA->CR, DMA_SxCR_TCIE);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DMA_EnableTransmitHalfCompleteInterrupt
+//
+//  Parameter(s):   pDMA        DMA stream to enable
+//  Return:         None
+//
+//  Description:    Enable the transmit complete interrupt for a specific DMA stream.
+//-------------------------------------------------------------------------------------------------
+void DMA_EnableTransmitHalfCompleteInterrupt(DMA_Stream_TypeDef* pDMA)
+{
+    SET_BIT(pDMA->CR, DMA_SxCR_HTIE);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DMA_DisableTransmitHalfCompleteInterrupt
+//
+//  Parameter(s):   pDMA        DMA stream to enable
+//  Return:         None
+//
+//  Description:    Disable the transmit complete interrupt for a specific DMA stream.
+//-------------------------------------------------------------------------------------------------
+void DMA_DisableTransmitHalfCompleteInterrupt(DMA_Stream_TypeDef* pDMA)
+{
+    CLEAR_BIT(pDMA->CR, DMA_SxCR_HTIE);
 }
 
 //---------------------------------------------------------------------------------------------------------------------------------

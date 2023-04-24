@@ -306,7 +306,8 @@ void IO_TogglePin(IO_ID_e IO_ID)
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       IO_SetPin
-//                  iIO_ID          ID of the IO pin definition
+//
+//  Parameter(s):   IO_ID           ID of the IO pin definition
 //                  Value           Value to put out on the pin        0 or 1
 //  Return:         None
 //
@@ -367,7 +368,7 @@ uint32_t IO_GetInputPin(IO_ID_e IO_ID)
 uint32_t IO_GetOutputPin(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort     = IO_Properties[IO_ID].pPort;
-    uint32_t       PinNumber = IO_Properties[IO_ID].PinNumber;
+    uint32_t      PinNumber = IO_Properties[IO_ID].PinNumber;
 
     if((pPort->ODR & (1 << PinNumber)) == 0)
     {
@@ -441,7 +442,6 @@ void IO_InitIRQ(IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback)
     IO_PinChangeCallback[IO_IRQ_ID] = pCallback;
 
     // Configure interrupt priority for IO
-
     PriorityGroup = NVIC_GetPriorityGrouping();
     NVIC_SetPriority(pIRQ_Properties->IRQ_Channel, NVIC_EncodePriority(PriorityGroup,6, 0));
     NVIC_EnableIRQ(pIRQ_Properties->IRQ_Channel);

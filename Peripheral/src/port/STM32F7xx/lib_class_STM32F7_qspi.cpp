@@ -255,18 +255,18 @@ SystemState_e QSPI_Driver::Initialize(void)
     RCC->AHB3RSTR &= ~(RCC_AHB3RSTR_QSPIRST);
 
     // IO level initialization
-    for(uint32_t IO_Id = uint32_t(IO_QSPI_BK1_IO0); IO_Id <= uint32_t(IO_QSPI_BK1_IO3); IO_Id++)
+    for(uint32_t IO_ID = uint32_t(IO_QSPI_BK1_IO0); IO_ID <= uint32_t(IO_QSPI_BK1_IO3); IO_ID++)
     {
-        IO_PinInit(IO_ID_e(IO_Id));
+        IO_PinInit(IO_ID_e(IO_ID));
     }
 
     IO_PinInit(IO_QSPI_CLK);
     IO_PinInit(IO_QSPI_CS);
 
   #if (QSPI_SUPPORT_DUAL_FLASH_MODE == DEF_ENABLED)                             // Not tested (future use)
-    for(uint32_t IO_Id = uint32_t(IO_QSPI_BK2_IO0); IO_Id <= uint32_t(IO_QSPI_BK2_IO3); IO_Id++)
+    for(uint32_t IO_ID = uint32_t(IO_QSPI_BK2_IO0); IO_ID <= uint32_t(IO_QSPI_BK2_IO3); IO_ID++)
     {
-        IO_PinInit(IO_ID_e(IO_Id));
+        IO_PinInit(IO_ID_e(IO_ID));
     }
 
     IO_PinInit(IO_QSPI_CS2); // ??
@@ -1784,7 +1784,7 @@ void QSPI_Driver::DMA_AbortCplt(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (USE_QSPI_DRIVER == DEF_ENABLED)
+#endif // USE_QSPI_DRIVER == DEF_ENABLED
 
 
 

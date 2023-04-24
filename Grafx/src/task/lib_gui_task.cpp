@@ -76,7 +76,11 @@ nOS_Error GUI_myClassTask::Initialize(void)
                                  this,
                                  &this->m_Stack[0],
                                  GUI_TASK_STACK_SIZE,
-                                 GUI_TASK_PRIO);
+                                 GUI_TASK_PRIO
+                               #if(NOS_CONFIG_THREAD_MPU_REGION_ENABLE > 0)
+                                 , nullptr
+                               #endif
+                                );
     }
 
   #ifdef GRAFX_USE_SLIDING_PAGE

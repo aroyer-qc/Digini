@@ -102,7 +102,6 @@ void I2C_Driver::Initialize(void)
     uint32_t            PriorityGroup;
     I2C_TypeDef*        pI2Cx;
 
-
     if(m_IsItInitialize == false)
     {
         m_IsItInitialize = true;

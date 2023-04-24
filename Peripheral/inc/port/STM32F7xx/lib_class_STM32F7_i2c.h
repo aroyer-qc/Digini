@@ -31,24 +31,24 @@
 #if (USE_I2C_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// typedef Typedef(s)
+// Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
 enum I2C_ID_e
 {
-    #if (I2C_DRIVER_SUPPORT_I2C1 == DEF_ENABLED)
+    #if (I2C_DRIVER_SUPPORT_I2C1_CFG == DEF_ENABLED)
         DRIVER_I2C1_ID,
     #endif
 
-    #if (I2C_DRIVER_SUPPORT_I2C2 == DEF_ENABLED)
+    #if (I2C_DRIVER_SUPPORT_I2C2_CFG == DEF_ENABLED)
         DRIVER_I2C2_ID,
     #endif
 
-    #if (I2C_DRIVER_SUPPORT_I2C3 == DEF_ENABLED)
+    #if (I2C_DRIVER_SUPPORT_I2C3_CFG == DEF_ENABLED)
         DRIVER_I2C3_ID,
     #endif
 
-    #if (I2C_DRIVER_SUPPORT_I2C4 == DEF_ENABLED)
+    #if (I2C_DRIVER_SUPPORT_I2C4_CFG == DEF_ENABLED)
         DRIVER_I2C4_ID,
     #endif
 
@@ -62,7 +62,7 @@ struct I2C_Info_t
     IO_ID_e             SCL;
     IO_ID_e             SDA;
     uint32_t            RCC_APB1_En;
-    uint32_t            Timing;
+    uint32_t            Speed;
     uint8_t             PreempPrio;
     IRQn_Type           EV_IRQn;
     IRQn_Type           ER_IRQn;
@@ -88,6 +88,10 @@ class I2C_Driver
         SystemState_e   Write               (const void* pBuffer, size_t Size);
         SystemState_e   Read                (const void* pBuffer, size_t Size);
         SystemState_e   Read                (const void* pBuffer, size_t Size, uint8_t Device);
+        SystemState_e   ReadRegister        (uint8_t Register, uint8_t* pValue, uint8_t Device);
+        SystemState_e   ReadRegister        (uint8_t Register, uint8_t* pValue);
+        SystemState_e   WriteRegister       (uint8_t Register, uint8_t Value, uint8_t Device);
+        SystemState_e   WriteRegister       (uint8_t Register, uint8_t Value);
 
         void            Initialize          (void);
         void            ER_IRQHandler       (void);
@@ -95,8 +99,6 @@ class I2C_Driver
 
     private:
 
-        void            ClearBus            (void);
-        uint32_t        CalculateBitMask    (uint8_t Mask, uint16_t BitConfig);
         void            Lock                (void);
         void            Unlock              (void);
 
@@ -122,7 +124,7 @@ class I2C_Driver
 };
 
 //-------------------------------------------------------------------------------------------------
-// constant data
+// Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
 #include "i2c_var.h"

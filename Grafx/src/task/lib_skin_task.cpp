@@ -140,7 +140,11 @@ nOS_Error SKIN_myClassTask::Initialize(void)
                                  this,
                                  &this->m_Stack[0],
                                  SKIN_TASK_STACK_SIZE,
-                                 SKIN_TASK_PRIO)) == NOS_OK)
+                                 SKIN_TASK_PRIO
+                               #if(NOS_CONFIG_THREAD_MPU_REGION_ENABLE > 0)
+                                 , nullptr
+                               #endif
+                                )) == NOS_OK)
     {
         //Error = nOS_FlagCreate(&this->m_SkinFlags, 0,0);
     }

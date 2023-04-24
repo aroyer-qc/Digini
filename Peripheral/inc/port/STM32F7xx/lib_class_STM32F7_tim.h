@@ -34,6 +34,7 @@
 //                  - SetCompare
 //
 //-------------------------------------------------------------------------------------------------
+
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
@@ -46,8 +47,10 @@
 
 #define TIM_SR_UPDATE_AND_COMPARE_MASK              (TIM_SR_UIF | TIM_SR_CC1IF | TIM_SR_CC2IF | TIM_SR_CC3IF | TIM_SR_CC4IF)
 
-#define TIM_OP_MODE_SINGLE                          TIM_CR1_OPM
-#define TIM_OP_MODE_REPETITIVE                      0
+#define TIM_OP_MODE_SINGLE_UP_COUNT                 TIM_CR1_OPM
+#define TIM_OP_MODE_SINGLE_DOWN_COUNT               (TIM_CR1_OPM | TIM_CR1_DIR)
+#define TIM_OP_MODE_REPETITIVE_UP_COUNT             0
+#define TIM_OP_MODE_REPETITIVE_DOWN_COUNT           TIM_CR1_DIR
 
 #if (TIM_DRIVER_SUPPORT_TIM6_CFG == DEF_ENABLED) || (TIM_SUPPORT_TIM7_CFG == DEF_ENABLED)
   #define TIM_SUPPORT_BASIC_TIM_CFG                 DEF_ENABLED
@@ -208,8 +211,6 @@ struct TIM_Info_t
     uint32_t            Mode;
     uint32_t            Prescaler;
     uint32_t            Reload;
-//    UART_Config_e       Config;
-//    UART_Baud_e         BaudID;
 };
 
 typedef void (*TIM_CallBack_t)(TIM_TypeMatch_e TypeMatch);
@@ -222,24 +223,29 @@ class TIM_Driver
 {
     public:
 
-                        TIM_Driver              (TIM_ID_e TimerID);
-        void            RegisterCallBack        (TIM_CallBack_t pCallBack);
-        void            CallBack                (bool ProcessUpdate);
-        uint32_t        GetCounterValue         (void);
-        uint32_t        TimeBaseToPrescaler     (uint32_t TimeBase);
+                            TIM_Driver              (TIM_ID_e TimID);
 
-        void            Start                   (void);
-        void            ReStart                 (void);
-        void            Reload                  (uint32_t Value);
-        void            Stop                    (void);
-        bool            IsItRunning             (void);
+        void                Initialize              (void);
+        void                RegisterCallBack        (TIM_CallBack_t pCallBack);
+        void                CallBack                (bool ProcessUpdate);
+        uint32_t            GetCounterValue         (void);
+        uint32_t            TimeBaseToPrescaler     (uint32_t TimeBase);
+
+        void                Start                   (void);
+        void                ReStart                 (void);
+        void                Stop                    (void);
+
+        void                SetReload               (uint32_t Value);
+        uint32_t            GetReload               (void);
 
       #if (TIM_DRIVER_SUPPORT_PWM_FEATURE_CFG == DEF_ENABLED)
-        void            ConfigPWM_Channel       (TIM_Channel_e Channel);
+        void                ConfigPWM_Channel       (TIM_Channel_e Channel);
       #endif
       #if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
-        void            SetCompare              (TIM_Channel_e Channel, uint32_t Value);
+        void                SetCompare              (TIM_Channel_e Channel, uint32_t Value);
       #endif
+
+        static TIM_TypeDef* GetTimerPointer         (TIM_ID_e TimID);
 
         TIM_CallBack_t      m_pCallBack;
 
@@ -247,14 +253,10 @@ class TIM_Driver
 
         TIM_TypeDef*        m_pTim;
         TIM_Info_t*         m_pInfo;
-
-      #if (TIM_DRIVER_USE_LPTIM1_CFG == DEF_ENABLED)
-        bool                m_LPTIM1_ContinuousMode;
-      #endif
 };
 
 //-------------------------------------------------------------------------------------------------
-// constant data
+// Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
 #include "tim_var.h"         // Project variable

@@ -24,14 +24,15 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+//#include "ff.h"
 #include "lib_advanced_macro.h"
-#include "ff.h"
 #include "diskio_def.h"
 #include "diskio_drv.h"
 #include "diskio_interface.h"
@@ -49,10 +50,15 @@
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
 
+// Patch..
+typedef unsigned int	UINT;	/* int must be 16-bit or 32-bit */
+typedef uint32_t		DWORD;	/* 32-bit unsigned integer */
+
 typedef enum
 {
     FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_ENUM)
     NUMBER_OF_DISK,
+    FF_VOLUMES = NUMBER_OF_DISK,
 } DiskMedia_e;
 
 //-------------------------------------------------------------------------------------------------

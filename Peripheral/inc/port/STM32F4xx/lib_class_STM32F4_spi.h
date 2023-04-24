@@ -129,7 +129,7 @@ struct SPI_Info_t
     uint32_t            RX_IT_Flag;
     DMA_Stream_TypeDef* DMA_StreamRX;
     IRQn_Type           RX_IRQn;
-	uint32_t            DMA_ChannelTX;
+    uint32_t            DMA_ChannelTX;
     uint32_t            TX_IT_Flag;
     DMA_Stream_TypeDef* DMA_StreamTX;
     IRQn_Type           TX_IRQn;

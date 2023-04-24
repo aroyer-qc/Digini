@@ -99,7 +99,6 @@ const uint32_t UART_Driver::m_BaudRate[NB_OF_BAUD] =
 //   Constructor:   UART_Driver
 //
 //   Parameter(s):  UartID                  ID for the data to use for this class
-//   Return Value:
 //
 //   Description:   Initializes the UART_Driver class
 //

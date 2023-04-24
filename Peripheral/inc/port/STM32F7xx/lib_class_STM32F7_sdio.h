@@ -2,6 +2,7 @@
 //
 //  File : lib_class_STM32F7_sdio.h
 //
+// SDIO is not up to date to digini standard as of 24 april 2023
 //-------------------------------------------------------------------------------------------------
 //
 // Copyright(c) 2020 Alain Royer.

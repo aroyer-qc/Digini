@@ -40,30 +40,25 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-//#define SPI_USE_DMA_TRANSFERT       0
+#define SPI_DMA_TRANSFER_TIMEOUT            1000
 
-#define SPI_PORT_QTY                6
-#define SPI_TICK_HOOK_TIME	        portTICK_RATE_MS	        // in mSec
+#define SPI_DMA_SxCR_8_OR_16_BITS_MASK        DMA_SxCR_MSIZE | DMA_SxCR_PSIZE
+#define SPI_DMA_SxCR_8_BITS_CFG               0
+#define SPI_DMA_SxCR_16_BITS_CFG              DMA_SxCR_MSIZE_0 | DMA_SxCR_PSIZE_0
 
-#define SPI_CR1_DFF_8_BITS			0
-#define SPI_CR1_DFF_16_BITS		    SPI_CR1_DFF
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
 
-#define	SPI_CR1_CPOL_LOW    		0
-#define SPI_CR1_CPOL_HIGH			SPI_CR1_CPOL
-
-#define SPI_CR1_CPHA_1_EDGE			0
-#define SPI_CR1_CPHA_2_EDGE			SPI_CR1_CPHA
-
-#define SPI_CR1_SSM_DISABLE			0
-#define SPI_CR1_SSM_ENABLE 			SPI_CR1_SSM
-
-#define SPI_CR1_MSB_FIRST			0					//SPI_FirstBit_MSB
-#define SPI_CR1_LSB_FIRST			SPI_CR1_LSBFIRST	//SPI_FirstBit_LSB
-
-#define SPI_PRESCALER_MASK          0x0038
-
-#define SPI_TRANSFERT_TIME_OUT      2
-
+/*
+typedef struct HAL_SPI_DMA_Data_s
+{
+	volatile HAL_SPI_DMA_Status_te Status;
+    const HALISR_Prio_ts*          pIsrPrioTX;
+    const HALISR_Prio_ts*          pIsrPrioRX;
+    HAL_SPI_Speed_te               Speed;
+} HAL_SPI_DMA_Data_ts;
+*/
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -85,12 +80,12 @@
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SPI_Driver::SPI_Driver(SPI_PortInfo_t* pPort)
+SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
 {
-//    m_pPort   = pPort;
-    m_pDevice = nullptr;
-    m_pInfo   = &SPI_Info[SPI_ID];
-    m_State   = SYS_DEVICE_NOT_PRESENT;
+    m_pDevice        = nullptr;
+    m_pInfo          = &SPI_Info[SPI_ID];
+    m_Status         = SYS_DEVICE_NOT_PRESENT;
+    m_pInfo->pObject = this;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -107,7 +102,7 @@ SPI_Driver::SPI_Driver(SPI_PortInfo_t* pPort)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::GetStatus(void)
 {
-    return m_State;
+    return m_Status;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -124,10 +119,10 @@ SystemState_e SPI_Driver::GetStatus(void)
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::Initialize(void)
 {
-    ISR_Prio_t          ISR_Prio;
-    uint32_t            PriorityGroup;
+    ISR_Prio_t ISR_Prio;
+    uint32_t   PriorityGroup;
 
-  #if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     DMA_Stream_TypeDef* pDMA;
   #endif
 
@@ -138,99 +133,149 @@ void SPI_Driver::Initialize(void)
     IO_PinInit(m_pInfo->PinMISO);
     IO_PinInit(m_pInfo->PinNSS);
 
-    switch(m_pInfo->SPI_ID)
+    switch(uint32_t(m_pInfo->SPI_ID))
     {
-      #if (SPI_DRIVER_SUPPORT_SPI1 == DEF_ENABLE)
-        case DRIVER_SPI1_ID:
+      #if (SPI_DRIVER_SUPPORT_SPI1_CFG == DEF_ENABLED)
+        case uint32_t(DRIVER_SPI1_ID):
         {
             // ---- Reset peripheral and set clock ----
-            RCC->APB2RSTR |=  RCC_APB2RSTR_SPI1RST;                                                    // Enable SPI1 reset state
-            RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI1RST;                                                 // Release SPI1 from reset state
-            RCC->APB2ENR  |=  RCC_APB2ENR_SPI1EN;                                                    // Enable SPI_PORT clock
-            RCC->AHB1ENR  |=  RCC_AHB1ENR_DMA2EN;
-            break;
+            RCC->APB2RSTR |=  RCC_APB2RSTR_SPI1RST;             // Enable SPI1 reset state
+            RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI1RST;             // Release SPI1 from reset state
+            RCC->APB2ENR  |=  RCC_APB2ENR_SPI1EN;               // Enable SPI_PORT clock
         }
+        break;
       #endif
 
-      #if (SPI_DRIVER_SUPPORT_SPI2 == DEF_ENABLE)
-        case DRIVER_SPI2_ID:
+      #if (SPI_DRIVER_SUPPORT_SPI2_CFG == DEF_ENABLED)
+        case uint32_t(DRIVER_SPI2_ID):
         {
             // ---- Reset peripheral and set clock ----
-            RCC->APB1RSTR |=  RCC_APB1RSTR_SPI2RST;	            // Enable SPI2 reset state
+            RCC->APB1RSTR |=  RCC_APB1RSTR_SPI2RST;             // Enable SPI2 reset state
             RCC->APB1RSTR &= ~RCC_APB1RSTR_SPI2RST;             // Release SPI2 from reset state
             RCC->APB1ENR  |=  RCC_APB1ENR_SPI2EN;               // Enable SPI_PORT clock
-            RCC->AHB1ENR  |=  RCC_AHB1ENR_DMA1EN;
-            break;
         }
+        break;
       #endif
 
-      #if (SPI_DRIVER_SUPPORT_SPI3 == DEF_ENABLE)
-        case DRIVER_SPI3_ID:
+      #if (SPI_DRIVER_SUPPORT_SPI3_CFG == DEF_ENABLED)
+        case uint32_t(DRIVER_SPI3_ID):
         {
             // ---- Reset peripheral and set clock ----
-            RCC->APB1RSTR |=  RCC_APB1RSTR_SPI3RST;	            // Enable SPI3 reset state
-            RCC->APB1RSTR &= ~RCC_APB1RSTR_SPI3RST;             // Release SPI3 from reset state
-            RCC->APB1ENR  |=  RCC_APB1ENR_SPI3EN;	            // Enable SPI_PORT clock
-            RCC->AHB1ENR  |=  RCC_AHB1ENR_DMA1EN;
-            break;
+            RCC->APB1RSTR |=  (RCC_APB1RSTR_SPI3RST;            // Enable SPI3 reset state
+            RCC->APB1RSTR &= ~(RCC_APB1RSTR_SPI3RST;            // Release SPI3 from reset state
+            RCC->APB1ENR  |=  (RCC_APB1ENR_SPI3EN;              // Enable SPI_PORT clock
         }
+        break;
       #endif
+    }
 
-      #if (SPI_DRIVER_SUPPORT_SPI4 == DEF_ENABLE)
+      #if (SPI_DRIVER_SUPPORT_SPI4_CFG == DEF_ENABLED)
         case DRIVER_SPI4_ID:
         {
             // ---- Reset peripheral and set clock ----
-            RCC->APB2RSTR |=  RCC_APB2RSTR_SPI4RST;                                                    // Enable SPI4 reset state
-            RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI4RST;                                                 // Release SPI4 from reset state
-            RCC->APB2ENR  |=  RCC_APB2ENR_SPI4EN;                                                    // Enable SPI_PORT clock
-            RCC->AHB1ENR  |=  RCC_AHB1ENR_DMA2EN;
+            RCC->APB2RSTR |=  RCC_APB2RSTR_SPI4RST;             // Enable SPI4 reset state
+            RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI4RST;             // Release SPI4 from reset state
+            RCC->APB2ENR  |=  RCC_APB2ENR_SPI4EN;               // Enable SPI_PORT clock
             break;
         }
       #endif
 
-      #if (SPI_DRIVER_SUPPORT_SPI5 == DEF_ENABLE)
+      #if (SPI_DRIVER_SUPPORT_SPI5_CFG == DEF_ENABLED)
         case DRIVER_SPI5_ID:
         {
             // ---- Reset peripheral and set clock ----
-            RCC->APB2RSTR |=  RCC_APB2RSTR_SPI5RST;	            // Enable SPI5 reset state
+            RCC->APB2RSTR |=  RCC_APB2RSTR_SPI5RST;	        // Enable SPI5 reset state
             RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI5RST;             // Release SPI5 from reset state
-            RCC->APB2ENR  |=  RCC_APB2ENR_SPI5EN;	            // Enable SPI_PORT clock
-            RCC->AHB1ENR  |=  RCC_AHB1ENR_DMA2EN;
+            RCC->APB2ENR  |=  RCC_APB2ENR_SPI5EN;	        // Enable SPI_PORT clock
             break;
         }
       #endif
 
-      #if (SPI_DRIVER_SUPPORT_SPI6 == DEF_ENABLE)
+      #if (SPI_DRIVER_SUPPORT_SPI6_CFG == DEF_ENABLED)
         case DRIVER_SPI6_ID:
         {
             // ---- Reset peripheral and set clock ----
-            RCC->APB2RSTR |=  RCC_APB2RSTR_SPI5RST;	            // Enable SPI6 reset state
+            RCC->APB2RSTR |=  RCC_APB2RSTR_SPI5RST;	        // Enable SPI6 reset state
             RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI5RST;             // Release SPI6 from reset state
-            RCC->APB2ENR  |=  RCC_APB2ENR_SPI5EN;	            // Enable SPI_PORT clock
-            RCC->AHB1ENR  |=  RCC_AHB1ENR_DMA2EN;
+            RCC->APB2ENR  |=  RCC_APB2ENR_SPI5EN;	        // Enable SPI_PORT clock
             break;
         }
       #endif
     }
 
-    // ---- Configure and enable SPI interrupt ----
-    if(m_pInfo->CallBackISR != nullptr)
-    {
-        uint32_t Priority = NVIC_EncodePriority(NVIC_GetPriorityGrouping(), m_pInfo->PreempPrio, 0x00);
-        NVIC_SetPriority(m_pInfo->IRQn, Priority);
-        NVIC_EnableIRQ(m_pInfo->IRQn);
-    }
+    //---------------------------- SPIx CR2 Configuration ------------------------
+    // Change this in futur, so if the pin NSS is set as a function of the SPI..
+    // MODIFY_REG(pSPIx->CR2, SPI_CR2_SSOE, (SPI_NSS_HARD_INPUT >> 16U));   ??
 
-    m_pInfo->pSPIx->CR1      = m_pInfo->portConfig;                                                 // Configuration for SPIx Port
-    m_pInfo->pSPIx->I2SCFGR &= ~SPI_I2SCFGR_I2SMOD;                                                 // Activate the SPIx mode (Reset I2SMOD bit in I2SCFGR register)
+    // Activate the SPI mode (Reset I2SMOD bit in I2SCFGR register)
+    //CLEAR_BIT(pSPIx->I2SCFGR, SPI_I2SCFGR_I2SMOD);
+
+
+    //---------------------------- SPIx CR1 Configuration and enable module ------
+
+    Config(SPI_CFG_CR1_CLEAR_MASK, SPI_FULL_DUPLEX      |
+                                   SPI_MODE_MASTER      |
+                                   SPI_DATA_WIDTH_8_BIT |
+                                   SPI_POLARITY_LOW     |
+                                   SPI_PHASE_1_EDGE     |
+                                   SPI_NSS_SOFT         |
+                                   SPI_MSB_FIRST        |
+                                   m_pInfo->Speed);
+
+  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+    RCC->AHB1ENR |= m_pInfo->RCC_AHBxPeriph;            // Initialize DMA clock
+    m_DMA_Status  = SYS_IDLE;
+    m_NoMemoryIncrement = false;
+
+    // Preinit register that won't change
+    pDMA = m_pInfo->DMA_StreamTX;
+    pDMA->PAR = uint32_t(&m_pInfo->pSPIx->DR);          // Configure transmit data register
+    pDMA->CR = DMA_MEMORY_TO_PERIPH           |
+               DMA_MODE_NORMAL                |
+               DMA_PERIPH_NO_INCREMENT        |
+               DMA_MEMORY_INCREMENT           |
+               DMA_P_DATA_ALIGN_BYTE          |
+               DMA_M_DATA_ALIGN_BYTE          |
+               DMA_P_BURST_SINGLE             |
+               DMA_M_BURST_SINGLE             |
+               DMA_PRIORITY_LOW               |
+               DMA_SxCR_TCIE                  |
+               m_pInfo->DMA_ChannelTX;
+
+    pDMA = m_pInfo->DMA_StreamRX;
+    pDMA->PAR = uint32_t(&m_pInfo->pSPIx->DR);          // Configure receive data register
+    pDMA->CR = DMA_PERIPH_TO_MEMORY           |
+               DMA_MODE_NORMAL                |
+               DMA_PERIPH_NO_INCREMENT        |
+               DMA_MEMORY_INCREMENT           |
+               DMA_P_DATA_ALIGN_BYTE          |
+               DMA_M_DATA_ALIGN_BYTE          |
+               DMA_P_BURST_SINGLE             |
+               DMA_M_BURST_SINGLE             |
+               DMA_PRIORITY_LOW               |
+               DMA_SxCR_TCIE                  |
+               m_pInfo->DMA_ChannelRX;
+  #endif
+
+    PriorityGroup = NVIC_GetPriorityGrouping();
+    ISR_Prio.PriorityGroup = PriorityGroup;
+    ISR_Prio.SubPriority   = 0;
+
+    // NVIC Setup for TX DMA channels interrupt request
+    ISR_Prio.PremptionPriority = 6;
+    ISR_Init(m_pInfo->TX_IRQn, &ISR_Prio);
+
+    // NVIC Setup for RX DMA channels interrupt request
+    ISR_Prio.PremptionPriority = 6;
+    ISR_Init(m_pInfo->RX_IRQn, &ISR_Prio);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           LockToDevice
 //
-//  Parameter(s):   SPI_DeviceInfo_t*    pDevice
-//  Return:         SystemState_e        Status
+//  Parameter(s):   void*          pDevice
+//  Return:         SystemState_e  Status
 //
 //  Description:    This routine will configure the SPI port to work with a specific device and
 //                  lock it, so any other access to the port will be block until unlock
@@ -238,34 +283,24 @@ void SPI_Driver::Initialize(void)
 //  Note(s):        If a write without lock is executed then it will be done on the locked device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_Driver::LockToDevice(SPI_DeviceInfo_t* pDevice)
+SystemState_e SPI_Driver::LockToDevice(void* pDevice)
 {
-    SystemState_e State = SYS_NOT_LOCK_TO_DEVICE;
-    nOS_StatusReg sr;
-
-    nOS_EnterCritical(sr);
-
     if(m_pDevice == nullptr)
     {
-        m_pDevice       = pDevice;
-        this->Lock();
-        m_SlowSpeed     = GetPrescalerFromSpeed(m_pDevice->SlowSpeed);
-        m_FastSpeed     = GetPrescalerFromSpeed(m_pDevice->FastSpeed);
-        this->Config(LOW_SPEED);
-        State = SYS_READY;
-        m_State
+        while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
+        m_pDevice = pDevice;
+        m_Status  = SYS_READY;
     }
 
-    nOS_LeaveCritical(sr);
-    return State;
+    return m_Status;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           UnlockFromDevice
 //
-//  Parameter(s):   SPI_DeviceInfo_t*    pDevice
-//  Return:         SystemState_e        Status
+//  Parameter(s):   void*         pDevice
+//  Return:         SystemState_e Status
 //
 //  Description:    This routine will unlock SPI port from a specific device
 //
@@ -273,221 +308,20 @@ SystemState_e SPI_Driver::LockToDevice(SPI_DeviceInfo_t* pDevice)
 //                  if lock and no write at all if not lock to a device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_Driver::UnlockFromDevice(SPI_DeviceInfo_t* pDevice)
+SystemState_e SPI_Driver::UnlockFromDevice(void* pDevice)
 {
-    SystemState_e State = SYS_WRONG_DEVICE;
-    nOS_StatusReg sr;
-
-    nOS_EnterCritical(sr);
-
     if(pDevice == m_pDevice)
     {
-        this->Unlock();
+        nOS_MutexUnlock(&m_Mutex);
         m_pDevice = nullptr;
-        m_State   = SYS_DEVICE_NOT_PRESENT;
-        State     = SYS_READY
+        m_Status  = SYS_DEVICE_NOT_PRESENT;
     }
-    else if(m_pDevice == nullptr)
+    else
     {
-        State = SYS_NOT_LOCK_TO_DEVICE;
+        if(pDevice != m_pDevice) return SYS_WRONG_DEVICE;
+        else                     return SYS_NOT_LOCK_TO_DEVICE;
     }
-
-    nOS_LeaveCritical(sr);
-    return State;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Read
-//
-//  Parameter(s):   ?                   See overload
-//                  size_t  Size        Number of byte to read
-//
-//  Return:         SystemState_e        Error status SPI_PASS, SPI_PASS_NACK or SPI_FAIL
-//
-//  Description:    This routine perform read.
-//
-//  Note(s):        Multiple overload available
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e SPI_Driver::Read(uint8_t* pBuffer, size_t Size)
-{
-    if(m_State == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
-    return this->Request(ACCESS_READ, pBuffer, Size);
-}
-
-SystemState_e SPI_Driver::Read(uint8_t* pData)
-{
-    if(m_State == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
-    return this->Request(ACCESS_READ, (uint8_t*)pData, sizeof(uint8_t));
-}
-
-SystemState_e SPI_Driver::Read(uint16_t* pData)
-{
-    SystemState_e State;
-
-    if(m_State == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
-    State = this->Request(ACCESS_READ,  (uint8_t*)pData, sizeof(uint16_t));
-    LIB_uint16_t_Swap(pData);
-    return State;
-}
-
-SystemState_e SPI_Driver::Read(uint32_t* pData)
-{
-    SystemState_e State;
-
-    if(m_Status == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
-    State = this->Request(ACCESS_READ, (uint8_t*)pData, sizeof(uint32_t));
-    LIB_uint32_t_Swap(pData);
-    return State;
-}
-
-// Lock version
-SystemState_e SPI_Driver::Read(uint8_t* pBuffer, size_t Size, SPI_DeviceInfo_t* pDevice)
-{
-    SystemState_e PriorityState;
-    SystemState_e State;
-
-    if((State     = this->LockToDevice(pDevice)) != SYS_READY) return State;
-    PriorityState = this->Request(ACCESS_READ, pBuffer, Size);
-    State         = this->UnlockFromDevice(pDevice);
-    if(PriorityState != SYS_READY) State = PriorityState;
-
-    return State;
-}
-
-SystemState_e SPI_Driver::Read(uint8_t* pData, SPI_DeviceInfo_t* pDevice)
-{
-    SystemState_e PriorityState;
-    SystemState_e State;
-
-    if((State     = this->LockToDevice(pDevice)) != SYS_READY) return State;
-    PriorityState = this->Request(ACCESS_READ, (uint8_t*)pData, sizeof(uint8_t));
-    State         = this->UnlockFromDevice(pDevice);
-    if(PriorityState != SYS_READY) State = PriorityState;
-
-    return State;
-}
-
-SystemState_e SPI_Driver::Read(uint16_t* pData, SPI_DeviceInfo_t* pDevice)
-{
-    SystemState_e PriorityState;
-    SystemState_e State;
-
-    if((State     = this->LockToDevice(pDevice)) != SYS_READY) return State;
-    PriorityState = this->Request(ACCESS_READ, (uint8_t*)pData, sizeof(uint16_t));
-    LIB_uint16_t_Swap(pData);
-    State         = this->UnlockFromDevice(pDevice);
-    if(PriorityState != SYS_READY) State = PriorityState;
-
-    return State;
-}
-
-SystemState_e SPI_Driver::Read(uint32_t* pData, SPI_DeviceInfo_t* pDevice)
-{
-    SystemState_e PriorityState;
-    SystemState_e State;
-
-    if((State     = this->LockToDevice(pDevice)) != SYS_READY) return State;
-    PriorityState = this->Request(ACCESS_READ, (uint8_t*)pData, sizeof(uint32_t));
-    LIB_uint32_t_Swap(pData);
-    State         = this->UnlockFromDevice(pDevice);
-    if(PriorityState != SYS_READY) State = PriorityState;
-
-    return State;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Write
-//
-//  Parameter(s):   ?                   See overload
-//  Return:         SystemState_e        Status
-//
-//  Description:    This routine writes to the SPI bus.
-//
-//  Note(s):        Multiple overload available
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e SPI_Driver::Write(const uint8_t* pBuffer, size_t Size)
-{
-    if(m_State == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
-    return this->Request(ACCESS_WRITE, (uint8_t*)pBuffer, Size);
-}
-
-SystemState_e SPI_Driver::Write(uint8_t Data)
-{
-    if(m_State == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
-    return this->Request(ACCESS_WRITE, (uint8_t*)&Data, sizeof(uint8_t));
-}
-
-SystemState_e SPI_Driver::Write(uint16_t Data)
-{
-    LIB_uint16_t_Swap(&Data);
-    if(m_State == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
-    return this->Request(ACCESS_WRITE, (uint8_t*)&Data, sizeof(uint16_t));
-}
-
-SystemState_e SPI_Driver::Write(uint32_t Data)
-{
-    LIB_uint32_t_Swap(&Data);
-    if(m_State == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
-    return this->Request(ACCESS_WRITE, (uint8_t*)&Data, sizeof(uint32_t));
-}
-
-// Lock Version
-SystemState_e SPI_Driver::Write(const uint8_t* pBuffer, size_t Size, SPI_DeviceInfo_t* pDevice)
-{
-    SystemState_e PriorityState;
-    SystemState_e State;
-
-    if((State     = this->LockToDevice(pDevice)) != SYS_READY) return State;
-    PriorityState = this->Request(ACCESS_WRITE, (uint8_t*)pBuffer, Size);
-    State         = this->UnlockFromDevice(pDevice);
-    if(PriorityState != SYS_READY) State = PriorityState;
-
-    return State;
-}
-
-SystemState_e SPI_Driver::Write(uint8_t Data, SPI_DeviceInfo_t* pDevice)
-{
-    SystemState_e PriorityState;
-    SystemState_e State;
-
-    if((State     = this->LockToDevice(pDevice)) != SYS_READY) return State;
-    PriorityState = this->Request(ACCESS_WRITE, (uint8_t*)&Data, sizeof(uint8_t));
-    State         = this->UnlockFromDevice(pDevice);
-    if(PriorityState != SYS_READY) State = PriorityState;
-
-    return State;
-}
-
-SystemState_e SPI_Driver::Write(uint16_t Data, SPI_DeviceInfo_t* pDevice)
-{
-    SystemState_e PriorityState;
-    SystemState_e State;
-
-    LIB_uint16_t_Swap(&Data);
-    if((State     = this->LockToDevice(pDevice)) != SYS_READY) return State;
-    PriorityState = this->Request(ACCESS_WRITE, (uint8_t*)&Data, sizeof(uint16_t));
-    State         = this->UnlockFromDevice(pDevice);
-    if(PriorityState != SYS_READY) State = PriorityState;
-
-    return State;
-}
-
-SystemState_e SPI_Driver::Write(uint32_t Data, SPI_DeviceInfo_t* pDevice)
-{
-    SystemState_e PriorityState;
-    SystemState_e State;
-
-    LIB_uint32_t_Swap(&Data);
-    if((State     = this->LockToDevice(pDevice)) != SYS_READY) return State;
-    PriorityState = this->Request(ACCESS_WRITE, (uint8_t*)&Data, sizeof(uint32_t));
-    State         = this->UnlockFromDevice(pDevice);
-    if(PriorityState != SYS_READY) State = PriorityState;
-
-    return State;
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -502,6 +336,7 @@ SystemState_e SPI_Driver::Write(uint32_t Data, SPI_DeviceInfo_t* pDevice)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+/*
 uint16_t SPI_Driver::GetPrescalerFromSpeed(uint32_t Speed)
 {
     int i;
@@ -518,6 +353,7 @@ uint16_t SPI_Driver::GetPrescalerFromSpeed(uint32_t Speed)
     }
     return i;     // 'i' is at an invalid value
 }
+*/
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -557,7 +393,7 @@ void SPI_Driver::Unlock(void)
 //
 //  Name:           Config
 //
-//  Parameter(s):   DeviceSpeed_e  Speed
+//  Parameter(s):   SPI_Speed_e     Speed
 //  Return:         None
 //
 //  Description:    Set speed on the SPI port
@@ -565,13 +401,37 @@ void SPI_Driver::Unlock(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void SPI_Driver::Config(uint32_t Speed)
+void SPI_Driver::Config(uint32_t Mask, uint32_t Config)
 {
-    m_pInfo->pSPIx->CR1 &= ~SPI_CR1_SPE;                                                            // Disable SPIx
-    m_pInfo->pSPIx->CR1 &= ~SPI_PRESCALER_MASK;                                                     // Clear prescaler
-//i have remove enum... so create it locally
-//    m_pInfo->pSPIx->CR1 |= (Speed == FAST_SPEED) ? m_FastSpeed : m_SlowSpeed;                       // Apply prescaler
-    m_pInfo->pSPIx->CR1 |= SPI_CR1_SPE;                                                             // Enable SPIx
+    CLEAR_BIT(m_pInfo->pSPIx->CR1, SPI_CR1_SPE);                // Disable SPIx
+    MODIFY_REG(m_pInfo->pSPIx->CR1, Mask, Config);
+    SET_BIT(m_pInfo->pSPIx->CR1, SPI_CR1_SPE);                  // Enable SPIx
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Send a single byte
+//
+//  Parameter(s):   Data        Single byte to send
+//  Return:         None
+//
+//  Description:    Send a byte to SPI
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+uint8_t SPI_Driver::Send(uint8_t Data)
+{
+    SPI_TypeDef* pSPIx    = m_pInfo->pSPIx;
+    uint16_t     u16_Data = Data;
+
+    while((pSPIx->SR & SPI_SR_TXE) == 0);
+    pSPIx->DR = u16_Data;
+    while((pSPIx->SR & SPI_SR_RXNE) == 0);                  // Wait to receive a byte
+    u16_Data = pSPIx->DR;
+    Data = (uint8_t)u16_Data;
+
+    return Data;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -590,6 +450,7 @@ void SPI_Driver::Config(uint32_t Speed)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, void* pDevice)
 {
     SystemState_e State;
@@ -602,6 +463,7 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
 
     return State;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -618,7 +480,7 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size)
 {
 	SPI_TypeDef*              pSPIx;
@@ -628,20 +490,20 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
 
     if(m_pDevice != nullptr)
     {
-        if(((pTX_Data == NULL) || (TX_Size == 0)) &&
-           ((pRX_Data == NULL) || (RX_Size == 0)))
+        if(((pTX_Data == nullptr) || (TX_Size == 0)) &&
+           ((pRX_Data == nullptr) || (RX_Size == 0)))
         {
             return SYS_NULLPTR;
-    }
+        }
 
         if(m_Status == SYS_READY)
-    {
+        {
             CLEAR_BIT(m_pInfo->pSPIx->CR1, SPI_CR1_SPE);
 
             if(m_pInfo->PinNSS != IO_NOT_DEFINED)
             {
                 IO_SetPinLow(m_pInfo->PinNSS);                              // Select the NSS pin
-    }
+            }
 
             // ----------------------------------------------------------------------------------------
             // TX Setup
@@ -651,7 +513,7 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
             pSPIx = m_pInfo->pSPIx;
             Flag  = m_pInfo->TX_IT_Flag;
 
-            if((pTX_Data != NULL) && (TX_Size != 0))
+            if((pTX_Data != nullptr) && (TX_Size != 0))
             {
                 // TX DMA
                 m_DMA_Status = SYS_BUSY_TX;                                 // Set flag to busy in TX
@@ -665,7 +527,7 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
                 else
                 {
                     CLEAR_BIT(pDMA->CR, DMA_SxCR_MINC);
-                    m_NoMemoryIncrement == false;
+                    m_NoMemoryIncrement = false;
                 }
 
                 SET_BIT(pDMA->CR, DMA_SxCR_EN);                             // Enable the DMA module
@@ -675,7 +537,7 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
                 if(m_pInfo->Control == SPI_HALF_DUPLEX)
                 {
                     MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_TX);
-}
+                }
 
                 SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                           // Enable SPI
                 SET_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                       // Enable DMA TX
@@ -700,7 +562,7 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
             // ----------------------------------------------------------------------------------------
             // RX setup
 
-            if((pRX_Data != NULL) && (RX_Size != 0))
+            if((pRX_Data != nullptr) && (RX_Size != 0))
             {
 
                 while((pSPIx->SR & SPI_SR_RXNE) != 0)
@@ -775,144 +637,261 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
 
     return SYS_DEVICE_NOT_PRESENT;
 }
-#endif // (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Request
+//  Name:           Transfer
 //
-//  Parameter(s):   AccessRequest_e  Request
-//                  void*           pBuffer
-//                  size_t          Size
-//  Return:         SPI_eStatus     Status
+//  Parameter(s):   pTX_Data        Pointer on the data buffer (uint16_t*) to transfer.
+//                  TX_Size			Number of byte to send.
+//                  pRX_pData       Pointer on the data buffer (uint16_t*) where to put received data.
+//                  RX_Size			Number of byte to receive.
+//                  pDevice         Pointer of the device using SPI (it's a unique ID in the system)
+//  Return:         SystemState_e   State
 //
 //  Description:    Read or writes data to SPI device.
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_Driver::Request(AccessRequest_e Request, uint8_t* pBuffer, size_t Size)
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size, void* pDevice)
 {
+    SystemState_e State;
+
+    if((State = LockToDevice(pDevice)) == SYS_READY)
+    {
+        State = Transfer(pTX_Data, TX_Size, pRX_Data, RX_Size);
+        UnlockFromDevice(pDevice);
+    }
+
+    return State;
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Transfer
+//
+//  Parameter(s):   pTX_Data        Pointer on the data buffer (uint16_t*) to transfer.
+//                  TX_Size			Number of byte to send.
+//                  pRX_pData       Pointer on the data buffer (uint16_t*) where to put received data.
+//                  RX_Size			Number of byte to receive.
+//  Return:         SystemState_e   State
+//
+//  Description:    Read or writes data to SPI device.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size)
+{
+	SPI_TypeDef*        pSPIx;
+    DMA_Stream_TypeDef* pDMA;
+    uint32_t            Flag;
+    uint32_t            Dummy;
+
     if(m_pDevice != nullptr)
     {
-      #if (SPI_DRIVER_SUPPORT_DMA == DEF_DEFINED)
-
-        uint8_t    DummyTX = 0xFF;
-        bool    bTransmitCompleted;
-
-        this->Lock();
-
-        DMA_DeInit(m_pInfo->pDMA_RX);
-        m_pInfo->pDMA_RX->NDTR = Size;
-        m_pInfo->pDMA_RX->PAR  = (uint32_t)&(m_pInfo->pSPIx->DR);
-
-        DMA_DeInit(m_pInfo->pDMA_TX);
-        m_pInfo->pDMA_TX->NDTR = Size;
-        m_pInfo->pDMA_TX->PAR  = (uint32_t)&(m_pInfo->pSPIx->DR);
-
-        m_pInfo->pDMA_RX->CR = m_pInfo->IRQ_Source        | m_pInfo->DMA_ChannelRX |
-                               DMA_DIR_PeripheralToMemory | DMA_Mode_Normal        | DMA_FIFOMode_Disable        | DMA_Priority_VeryHigh    | DMA_PeripheralInc_Disable |
-                               DMA_PeripheralBurst_Single | DMA_MemoryBurst_Single | DMA_PeripheralDataSize_Byte | DMA_MemoryDataSize_Byte;
-
-        m_pInfo->pDMA_TX->CR = m_pInfo->IRQ_Source        | m_pInfo->DMA_ChannelTX |
-                               DMA_DIR_MemoryToPeripheral | DMA_Mode_Normal        | DMA_FIFOMode_Disable        | DMA_Priority_VeryHigh    | DMA_PeripheralInc_Disable |
-                               DMA_PeripheralBurst_Single | DMA_MemoryBurst_Single | DMA_PeripheralDataSize_Byte | DMA_MemoryDataSize_Byte;
-
-        switch(Request)
+        if(((pTX_Data == nullptr) || (TX_Size == 0)) &&
+           ((pRX_Data == nullptr) || (RX_Size == 0)))
         {
-            case ACCESS_READ:
-            {
-                // DMA Channel configuration SPIx RX
-                m_pInfo->pDMA_RX->CR   |= DMA_MemoryInc_Enable;
-                m_pInfo->pDMA_RX->M0AR  = (uint32_t)pBuffer;
+            return SYS_NULLPTR;
+        }
 
-                // DMA Channel configuration SPIx TX
-                m_pInfo->pDMA_TX->CR   |= DMA_MemoryInc_Disable;
-                m_pInfo->pDMA_TX->M0AR  = (uint32_t)&DummyTX;
-                break;
+        if(m_Status == SYS_READY)
+        {
+            CLEAR_BIT(m_pInfo->pSPIx->CR1, SPI_CR1_SPE);
+
+            if(m_pInfo->PinNSS != IO_NOT_DEFINED)
+            {
+                IO_SetPinLow(m_pInfo->PinNSS);                                                  // Select the NSS pin
             }
 
-            case ACCESS_WRITE:
+            // ----------------------------------------------------------------------------------------
+            // TX Setup
+
+            // Note(s) needed by both TX and RX
+            pDMA  = m_pInfo->DMA_StreamTX;                                                      // In all case the first DMA set is the TX
+            pSPIx = m_pInfo->pSPIx;
+            Flag  = m_pInfo->TX_IT_Flag;
+
+            if((pTX_Data != nullptr) && (TX_Size != 0))
             {
-                // DMA Channel configuration SPIx RX
-                m_pInfo->pDMA_RX->CR   |= DMA_MemoryInc_Disable;
-                m_pInfo->pDMA_RX->M0AR  = (uint32_t)&DummyTX;
-                // DMA Channel configuration SPIx TX
-                m_pInfo->pDMA_TX->CR   |= DMA_MemoryInc_Enable;
-                m_pInfo->pDMA_TX->M0AR  = (uint32_t)pBuffer;
-                break;
-            }
-        }
-        //dummy read to clear data register
-        void(m_pInfo->pSPIx->DR);
+                // TX DMA
+                m_DMA_Status = SYS_BUSY_TX;                                                     // Set flag to busy in TX
+                pDMA->M0AR = ((uint32_t)pTX_Data);                                              // Set DMA source
+                pDMA->NDTR = TX_Size;                                                           // Set size of the TX
+                MODIFY_REG(pDMA->CR, SPI_DMA_SxCR_8_OR_16_BITS_MASK, SPI_DMA_SxCR_16_BITS_CFG);
 
-        // Enable RX & TX Channel
-        m_pInfo->pDMA_RX->CR |= DMA_SxCR_EN;
-        m_pInfo->pDMA_TX->CR |= DMA_SxCR_EN;
-
-        // Enable SPI TX/RX request
-        m_Timeout = m_pDevice->TimeOut;
-        m_pInfo->pSPIx->CR2 |= (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN);
-
-        do
-        {
-            nOS_Yield();
-
-            if(m_pInfo->HardwarePort < 4) bTransmitCompleted = (m_pInfo->pDMA->LISR & m_pInfo->DMA_Flag_TC_RX) ? true : false;
-            else                          bTransmitCompleted = (m_pInfo->pDMA->HISR & m_pInfo->DMA_Flag_TC_RX) ? true : false;
-            m_Timeout--;
-        }
-        while((m_Timeout > 0) && (bTransmitCompleted == false));
-
-        // Disable DMA RX & TX Channel
-        m_pInfo->pDMA_RX->CR &= (uint16_t)(~DMA_SxCR_EN);
-        m_pInfo->pDMA_TX->CR &= (uint16_t)(~DMA_SxCR_EN);
-
-        // Disable SPIx RX/TX request
-        m_pInfo->pSPIx->CR2 &= (uint16_t)~(SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN);
-
-        this->Unlock();
-
-        if(bTransmitCompleted != true) return SYS_TIME_OUT;
-
-      #else // (SPI_DRIVER_SUPPORT_DMA == DEF_DEFINED)
-
-        this->Lock();
-
-        switch(Request)
-        {
-            case ACCESS_READ:
-            {
-                //dummy read to clear data register
-                ((uint8_t*)pBuffer)[0] = m_pInfo->pSPIx->DR;
-
-                for(size_t i = 0; i < Size; i++)
+                if(m_NoMemoryIncrement == false)
                 {
-                    m_pInfo->pSPIx->DR = 0xFF;
-                    if(WaitReady() == false) return SYS_HUNG;
-                    ((uint8_t*)pBuffer)[i] = m_pInfo->pSPIx->DR;
+                    SET_BIT(pDMA->CR, DMA_SxCR_MINC);                                           // Enable transfer complete and memory increment
                 }
-                break;
-            }
-            case ACCESS_WRITE:
-            {
-                for(size_t i = 0; i < Size; i++)
+                else
                 {
-                    m_pInfo->pSPIx->DR = ((uint8_t*)pBuffer)[i];
-                    WaitReady();
+                    CLEAR_BIT(pDMA->CR, DMA_SxCR_MINC);
+                    m_NoMemoryIncrement = false;
                 }
-                break;
+
+                SET_BIT(pDMA->CR, DMA_SxCR_EN);                                                 // Enable the DMA module
+                DMA_ClearFlag(pDMA, Flag);                                                      // Clear IRQ DMA flag
+
+                // SPI
+                if(m_pInfo->Control == SPI_HALF_DUPLEX)
+                {
+                    MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_TX);
+                }
+
+                SET_BIT(pSPIx->CR1, SPI_CR1_DFF | SPI_CR1_SPE);                                 // Enable SPI at 16 Bits
+                SET_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                                           // Enable DMA TX
+
+                if(WaitDMA() == SYS_ERROR)
+                {
+                    if(m_pInfo->PinNSS != IO_NOT_DEFINED)
+                    {
+                        IO_SetPinHigh(m_pInfo->PinNSS);
+                    }
+
+                    return SYS_TIME_OUT;
+                }
+
+                CLEAR_BIT(pSPIx->CR1, SPI_CR1_DFF | SPI_CR1_SPE);                               // Disable SPI and put back to 8 Bits default frame format
+
+                // Deactivate DMA
+                CLEAR_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);
+                CLEAR_BIT(pDMA->CR, DMA_SxCR_EN);                                               // Disable the DMA module
             }
+
+            // ----------------------------------------------------------------------------------------
+            // RX setup
+
+            if((pRX_Data != nullptr) && (RX_Size != 0))
+            {
+
+                while((pSPIx->SR & SPI_SR_RXNE) != 0)
+                {
+                    Dummy = pSPIx->DR;
+                }
+
+                m_DMA_Status = SYS_BUSY_RX;                                                     // Set flag to busy in TX
+
+                // TX DMA
+                Dummy = 0xFF;                                                                   // Value to dummy TX
+                pDMA->M0AR = (uint32_t)&Dummy;                                                  // Set DMA source for dummy TX
+                pDMA->NDTR = RX_Size;                                                           // Set size of the TX
+                MODIFY_REG(pDMA->CR, SPI_DMA_SxCR_8_OR_16_BITS_MASK, SPI_DMA_SxCR_16_BITS_CFG); // Set 16 Bits Transfer
+                CLEAR_BIT(pDMA->CR, DMA_SxCR_MINC);
+                SET_BIT(pDMA->CR, DMA_SxCR_EN);                                                 // Enable the DMA module
+                DMA_ClearFlag(pDMA, Flag);                                                      // Clear IRQ DMA flag
+
+                // RX DMA
+                pDMA = m_pInfo->DMA_StreamRX;                                                   // Now configure RX DMA
+                Flag = m_pInfo->RX_IT_Flag;
+                pDMA->M0AR = (uint32_t)pRX_Data;
+                pDMA->NDTR = RX_Size;
+                MODIFY_REG(pDMA->CR, SPI_DMA_SxCR_8_OR_16_BITS_MASK, SPI_DMA_SxCR_16_BITS_CFG); // Set 16 Bits Transfer
+                SET_BIT(pDMA->CR, DMA_SxCR_EN);                                                 // Enable the DMA module
+                DMA_ClearFlag(pDMA, Flag);
+
+                // SPI
+                if(m_pInfo->Control == SPI_HALF_DUPLEX)
+                {
+                    MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_RX);
+                }
+                SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                                               // Enable SPI
+                SET_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));                       // Start the process
+
+                if(WaitDMA() == SYS_ERROR)
+                {
+                    if(m_pInfo->PinNSS != IO_NOT_DEFINED)
+                    {
+                        IO_SetPinHigh(m_pInfo->PinNSS);                                         // There is an error then release NSS
+                    }
+
+                    return SYS_TIME_OUT;
+                }
+
+                // Deactivate DMA
+                CLEAR_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));
+                CLEAR_BIT(pDMA->CR, DMA_SxCR_EN);                                               // Disable the DMA RX module
+                MODIFY_REG(pDMA->CR, SPI_DMA_SxCR_8_OR_16_BITS_MASK, SPI_DMA_SxCR_8_BITS_CFG);  // Put back to 8 bits default
+                pDMA = m_pInfo->DMA_StreamTX;                                                   // In all case the first DMA set is the TX
+                CLEAR_BIT(pDMA->CR, DMA_SxCR_EN);                                               // Disable the DMA TX module
+            }
+
+            MODIFY_REG(pDMA->CR, SPI_DMA_SxCR_8_OR_16_BITS_MASK, SPI_DMA_SxCR_8_BITS_CFG);      // Put back to 8 bits default for TX ( also use on RX
+
+            // ----------------------------------------------------------------------------------------
+
+            CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                                                 // Disable SPI
+            if(m_pInfo->Control == SPI_HALF_DUPLEX)
+            {
+                MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_FULL_DUPLEX);
+            }
+
+
+            if(m_pInfo->PinNSS != IO_NOT_DEFINED)
+            {
+                IO_SetPinHigh(m_pInfo->PinNSS);                                                 // Select the NSS pin
+            }
+
+            m_DMA_Status = SYS_IDLE;
+            return SYS_READY;
         }
 
-        this->Unlock();
-
-      #endif //(SPI_DRIVER_SUPPORT_DMA == DEF_DEFINED)
-        return SYS_READY;
+        return SYS_BUSY;
     }
+
     return SYS_DEVICE_NOT_PRESENT;
 }
+#endif
 
+//-------------------------------------------------------------------------------------------------
+//  Name:           ChipSelect
+//
+//  Description:    This function verify if the SPI is ready
+//
+//  Parameter(s):   bool IsItActive
+//
+//  Return:         None
+//
+//-------------------------------------------------------------------------------------------------
+void SPI_Driver::ChipSelect(bool IsItActive)
+{
+    if(IsItActive == true)
+    {
+        IO_SetPinLow(m_pInfo->PinNSS);                      // Select the NSS pin
+    }
+    else
+    {
+        while((m_pInfo->pSPIx->SR & SPI_SR_BSY) != 0)                // Wait for busy to clear
+        {
+            nOS_Yield();
+        }
+
+        IO_SetPinHigh(m_pInfo->PinNSS);                     // De select the NSS pin
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//  Name:           OverrideMemoryIncrement
+//
+//  Description:    This set override memory increment for DMA transfer.
+//
+//  Parameter(s):   None
+//
+//  Return:         None
+//
+//  Note(s):        This is valid only for the next transaction
+//
+//-------------------------------------------------------------------------------------------------
+void SPI_Driver::OverrideMemoryIncrement(void)
+{
+    m_NoMemoryIncrement = true;
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -927,22 +906,22 @@ SystemState_e SPI_Driver::Request(AccessRequest_e Request, uint8_t* pBuffer, siz
 SystemState_e SPI_Driver::WaitReady(void)
 {
 
-    m_Timeout = m_pDevice->TimeOut;
-    while((m_pInfo->pSPIx->SR & SPI_I2S_FLAG_TXE)  == 0)                // Wait until transmit complete
+    m_Timeout = 100;
+    while((m_pInfo->pSPIx->SR & SPI_SR_TXE)  == 0)          // Wait until transmit complete
     {
         nOS_Yield();
         if(m_Timeout == 0) return SYS_HUNG;
     }
 
-    m_Timeout = m_pDevice->TimeOut;
-    while((m_pInfo->pSPIx->SR & SPI_I2S_FLAG_RXNE) == 0)                // Wait until receive complete
+    m_Timeout = 100;
+    while((m_pInfo->pSPIx->SR & SPI_SR_RXNE) == 0)          // Wait until receive complete
     {
         nOS_Yield();
         if(m_Timeout == 0) return SYS_HUNG;
     }
 
-    m_Timeout = m_pDevice->TimeOut;
-    while((m_pInfo->pSPIx->SR & SPI_I2S_FLAG_BSY)  != 0)                // wait until SPI is not busy anymore
+    m_Timeout = 100;
+    while((m_pInfo->pSPIx->SR & SPI_SR_BSY)  != 0)          // wait until SPI is not busy anymore
     {
         nOS_Yield();
         if(m_Timeout == 0) return SYS_HUNG;
@@ -950,7 +929,6 @@ SystemState_e SPI_Driver::WaitReady(void)
 
     return SYS_READY;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -963,11 +941,129 @@ SystemState_e SPI_Driver::WaitReady(void)
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::IRQHandler(void)
 {
-    if(m_pInfo->CallBackISR != nullptr)
-    {
-        m_pInfo->CallBackISR();
-    }
+    //if(m_pInfo->CallBackISR != nullptr)
+    //{
+    //    m_pInfo->CallBackISR();
+    //}
 }
+
+//-------------------------------------------------------------------------------------------------
+//  DDDDDD  MM     MM  AAAAA
+//  DD   DD MMMM MMMM AA   AA
+//  DD   DD MM MMM MM AAAAAAA
+//  DD   DD MM  M  MM AA   AA
+//  DDDDDD  MM     MM AA   AA
+//-------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Transfer
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e   State
+//
+//  Description:    Get status of the SPI DMA transfer
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e SPI_Driver::WaitDMA(void)
+{
+    TickCount_t  TickStart;
+    SPI_TypeDef* pSPIx;
+
+    pSPIx = m_pInfo->pSPIx;
+
+    // Wait for DMA to conclude
+    TickStart = GetTick();
+    while(m_DMA_Status != SYS_BUSY_B4_RELEASE)
+    {
+        if(TickHasTimeOut(TickStart, SPI_DMA_TRANSFER_TIMEOUT) == true)
+        {
+            return SYS_TIME_OUT;
+        }
+
+        nOS_Yield();
+    };
+
+    // Wait for SPI to conclude
+    TickStart = GetTick();
+    while((pSPIx->SR & SPI_SR_BSY) != 0)
+    {
+        if(TickHasTimeOut(TickStart, SPI_DMA_TRANSFER_TIMEOUT) == true)
+        {
+            return SYS_TIME_OUT;
+        }
+
+        nOS_Yield();
+    };
+
+    return SYS_IDLE;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Transfer
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e   State
+//
+//  Description:    Get status of the SPI DMA transfer
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+void SPI_Driver::DMA_TX_IRQ_Handler(SPI_ID_e SPI_ID)
+{
+    SPI_Info_t*         pInfo;
+    DMA_Stream_TypeDef* pDMA;
+    uint32_t            Flag;
+
+    pInfo = &SPI_Info[SPI_ID];
+    pInfo->pObject->m_DMA_Status = SYS_BUSY_B4_RELEASE;
+    pDMA = pInfo->DMA_StreamTX;
+    Flag = pInfo->TX_IT_Flag;
+    DMA_ClearFlag(pDMA, Flag);
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Transfer
+//
+//  Parameter(s):   None
+//  Return:         SystemState_e   State
+//
+//  Description:    Get status of the SPI DMA transfer
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+void SPI_Driver::DMA_RX_IRQ_Handler(SPI_ID_e SPI_ID)
+{
+    SPI_Info_t*         pInfo;
+    DMA_Stream_TypeDef* pDMA;
+    uint32_t            Flag;
+
+    pInfo = &SPI_Info[SPI_ID];
+    pInfo->pObject->m_DMA_Status = SYS_BUSY_B4_RELEASE;
+    pDMA = pInfo->DMA_StreamRX;
+    Flag = pInfo->RX_IT_Flag;
+    DMA_ClearFlag(pDMA, Flag);
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+
+/*
+uint32_t SPI_Driver::GetDMA_Status(void)
+{
+	return m_DMA_Status;
+}
+*/
+
 
 //-------------------------------------------------------------------------------------------------
 

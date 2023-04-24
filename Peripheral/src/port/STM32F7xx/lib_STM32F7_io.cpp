@@ -48,27 +48,11 @@
 IO_PinChangeCallback_t IO_PinChangeCallback[IO_IRQ_NUM] = {nullptr};
 #endif
 
-static const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
-{
-    GPIOA,
-    GPIOB,
-    GPIOC,
-    GPIOD,
-    GPIOE,
-    GPIOF,
-    GPIOG,
-    GPIOH,
-    GPIOI,
-    GPIOJ,
-    GPIOK,
-};
-
 //-------------------------------------------------------------------------------------------------
 // private prototype
 //-------------------------------------------------------------------------------------------------
 
-static void _IO_GetPinInfo   (IO_IrqID_e IO_Id, uint32_t* pPinNumber, uint32_t* pPinMask);
-static void _IO_EnableClock  (GPIO_TypeDef* pPort);
+static void _IO_GetPinInfo (IO_IrqID_e IO_ID, uint32_t* pPinNumber, uint32_t* pPinMask);
 
 //-------------------------------------------------------------------------------------------------
 // private function
@@ -78,7 +62,7 @@ static void _IO_EnableClock  (GPIO_TypeDef* pPort);
 //
 //  Function:       _IO_GetPinInfo
 //
-//  Parameter(s):   IO_IRQ_Id        ID of the IO "IRQ" pin definition
+//  Parameter(s):   IO_IRQ_ID        ID of the IO "IRQ" pin definition
 //                  pPinNumber       Pointer on variable to return pin number
 //                  pPinMask         Pointer on variable to return pin mask
 //  Return:         None
@@ -89,15 +73,15 @@ static void _IO_EnableClock  (GPIO_TypeDef* pPort);
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
-static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_Id, uint32_t* pPinNumber, uint32_t* pPinMask)
+static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_ID, uint32_t* pPinNumber, uint32_t* pPinMask)
 {
     const    IO_IRQ_Properties_t* pIRQ_Properties;
     const    IO_Properties_t*     pIO_Properties;
     uint32_t PinNumber;
     uint32_t PinMask;
 
-    pIRQ_Properties = &IO_IRQ_Properties[IO_IRQ_Id];
-    pIO_Properties  = &IO_Properties[pIRQ_Properties->IO_Id];
+    pIRQ_Properties = &IO_IRQ_Properties[IO_IRQ_ID];
+    pIO_Properties  = &IO_Properties[pIRQ_Properties->IO_ID];
     PinNumber       = pIO_Properties->PinNumber;
     PinMask         = 1 << PinNumber;
 
@@ -107,29 +91,6 @@ static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_Id, uint32_t* pPinNumber, uint32_t*
 #endif
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Function:       _IO_EnableClock
-//
-//  Parameter(s):   pPort            Address of the port
-//  Return:         None
-//
-//  Description:    Enable port clock.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-static void _IO_EnableClock(GPIO_TypeDef* pPort)
-{
-    uint32_t ClockEnable;
-
-    // GPIO clock enable
-    ClockEnable   = ((uint32_t)(pPort) & IO_PORT_MASK_FOR_CLOCK_ENABLE);          // Mask bit to keep only enableoffset
-    ClockEnable >>= IO_PORT_SHIFT_FOR_CLOCK_ENABLE;
-    ClockEnable   = 1 << ClockEnable;                                             // Set bit position
-    RCC->AHB1ENR |= ClockEnable;
-}
-
-//-------------------------------------------------------------------------------------------------
 // Public Function
 //-------------------------------------------------------------------------------------------------
 
@@ -137,37 +98,60 @@ static void _IO_EnableClock(GPIO_TypeDef* pPort)
 //
 //  Function:       IO_PinInit
 //
-//  Parameter(s):   IO_Id           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
 //  Return:         None
 //
-//  Description:    Basic pin initialization.
+//  Description:    Basic pin initialization Using ID.
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void IO_PinInit(IO_ID_e IO_Id)
+void IO_PinInit(IO_ID_e IO_ID)
 {
     const IO_Properties_t* pIO_Properties;
     GPIO_TypeDef* pPort;
     uint32_t       PinNumber;
-    uint32_t       Pin2BitShift;
     uint32_t       PinMode;
     uint32_t       PinType;
     uint32_t       PinSpeed;
     uint32_t       State;
 
-
-    pIO_Properties = &IO_Properties[IO_Id];
-
+    pIO_Properties = &IO_Properties[IO_ID];
     pPort        = pIO_Properties->pPort;
     PinNumber    = pIO_Properties->PinNumber;
-    Pin2BitShift = PinNumber << 1;
     PinMode      = pIO_Properties->PinMode;
     PinType      = pIO_Properties->PinType;
     PinSpeed     = pIO_Properties->PinSpeed;
     State        = pIO_Properties->State;
 
-    _IO_EnableClock(pPort);
+    IO_PinInit(pPort, PinNumber, PinMode, PinType, PinSpeed, State);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_PinInit
+//
+//  Parameter(s):   pPort
+//                  PinNumber
+//                  PinMode
+//                  PinType
+//                  PinSpeed
+//                  State                   Default state of the pin if output.
+//
+//
+//  Return:         None
+//
+//  Description:    Basic pin initialization using provided configuration.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint32_t PinType, uint32_t PinSpeed, uint32_t State)
+{
+    uint32_t Pin2BitShift;
+
+    IO_EnableClock(pPort);
+    Pin2BitShift = PinNumber << 1;
 
     // Set pin speed
     pPort->OSPEEDR &= ~(uint32_t)(IO_SPEED_PIN_MASK << Pin2BitShift);
@@ -178,8 +162,8 @@ void IO_PinInit(IO_ID_e IO_Id)
         case IO_MODE_OUTPUT:
         {
             // Preset initial state
-            if(State == 0) IO_SetPinLow(IO_Id);
-            else           IO_SetPinHigh(IO_Id);
+            if(State == 0) pPort->BSRRH = (1 << PinNumber);
+            else           pPort->BSRRL = (1 << PinNumber);
         }
         break;
 
@@ -209,7 +193,7 @@ void IO_PinInit(IO_ID_e IO_Id)
     pPort->PUPDR  &= ~(uint32_t)((IO_TYPE_PIN_PULL_MASK >> 1) << Pin2BitShift);                 // Reset bit for Pull Up
     pPort->PUPDR  |=  (uint32_t)(((PinType & IO_TYPE_PIN_PULL_MASK) >> 1) << Pin2BitShift);     // Set new pull setting
 
-    pPort->OTYPER &= ~(uint32_t)(IO_TYPE_PIN_DRIVE_MASK << PinNumber);                            // Reset bit for Drive type PP or OD
+    pPort->OTYPER &= ~(uint32_t)(IO_TYPE_PIN_DRIVE_MASK << PinNumber);                          // Reset bit for Drive type PP or OD
     pPort->OTYPER |=  (uint32_t)((PinType & IO_TYPE_PIN_DRIVE_MASK) << PinNumber);              // Set new type
 
     pPort->MODER  &= ~(uint32_t)(IO_MODE_PIN_MASK << Pin2BitShift);
@@ -220,7 +204,7 @@ void IO_PinInit(IO_ID_e IO_Id)
 //
 //  Function:       IO_PinInit
 //
-//  Parameter(s):   IO_Id           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
 //  Return:         None
 //
 //  Description:    ID of the IO pin.
@@ -228,13 +212,13 @@ void IO_PinInit(IO_ID_e IO_Id)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void IO_PinInitInput(IO_ID_e IO_Id)
+void IO_PinInitInput(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort;
     uint32_t       PinNumber;
 
-    pPort     = IO_Properties[IO_Id].pPort;
-    PinNumber = IO_Properties[IO_Id].PinNumber << 1;
+    pPort     = IO_Properties[IO_ID].pPort;
+    PinNumber = IO_Properties[IO_ID].PinNumber << 1;
     pPort->MODER &= ~(uint32_t)(IO_MODE_PIN_MASK << PinNumber);
 }
 
@@ -242,7 +226,7 @@ void IO_PinInitInput(IO_ID_e IO_Id)
 //
 //  Function:       IO_PinInitOutput
 //
-//  Parameter(s):   IO_Id           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
 //  Return:         None
 //
 //  Description:    Initialize the IO In output.
@@ -250,13 +234,13 @@ void IO_PinInitInput(IO_ID_e IO_Id)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void IO_PinInitOutput(IO_ID_e IO_Id)
+void IO_PinInitOutput(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort;
     uint32_t       PinNumber;
 
-    pPort     = IO_Properties[IO_Id].pPort;
-    PinNumber = IO_Properties[IO_Id].PinNumber << 1;
+    pPort     = IO_Properties[IO_ID].pPort;
+    PinNumber = IO_Properties[IO_ID].PinNumber << 1;
 
     pPort->MODER &= ~(uint32_t)(IO_MODE_PIN_MASK << PinNumber);
     pPort->MODER |=  (uint32_t)(IO_MODE_OUTPUT   << PinNumber);
@@ -266,7 +250,7 @@ void IO_PinInitOutput(IO_ID_e IO_Id)
 //
 //  Function:       IO_SetPinLow
 //
-//  Parameter(s):   IO_Id           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
 //  Return:         None
 //
 //  Description:    Sets pin(s) low.
@@ -274,18 +258,18 @@ void IO_PinInitOutput(IO_ID_e IO_Id)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void IO_SetPinLow(IO_ID_e IO_Id)
+void IO_SetPinLow(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort     = IO_Properties[IO_Id].pPort;
-    uint32_t       PinNumber = IO_Properties[IO_Id].PinNumber;
-    pPort->BSRR = ((1 << PinNumber) << 16);
+    GPIO_TypeDef* pPort     = IO_Properties[IO_ID].pPort;
+    uint32_t      PinNumber = IO_Properties[IO_ID].PinNumber;
+    pPort->BSRRH = (1 << PinNumber);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       IO_SetPinHigh
 //
-//  Parameter(s):   IO_Id           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
 //  Return:         None
 //
 //  Description:    Sets pin(s) high.
@@ -293,18 +277,18 @@ void IO_SetPinLow(IO_ID_e IO_Id)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void IO_SetPinHigh(IO_ID_e IO_Id)
+void IO_SetPinHigh(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort     = IO_Properties[IO_Id].pPort;
-    uint32_t       PinNumber = IO_Properties[IO_Id].PinNumber;
-    pPort->BSRR = (1 << PinNumber);
+    GPIO_TypeDef* pPort     = IO_Properties[IO_ID].pPort;
+    uint32_t      PinNumber = IO_Properties[IO_ID].PinNumber;
+    pPort->BSRRL = (1 << PinNumber);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       IO_TogglePin
 //
-//  Parameter(s):   IO_Id           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
 //  Return:         None
 //
 //  Description:    Toggles pin(s).
@@ -312,10 +296,10 @@ void IO_SetPinHigh(IO_ID_e IO_Id)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void IO_TogglePin(IO_ID_e IO_Id)
+void IO_TogglePin(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort     = IO_Properties[IO_Id].pPort;
-    uint32_t       PinNumber = IO_Properties[IO_Id].PinNumber;
+    GPIO_TypeDef* pPort     = IO_Properties[IO_ID].pPort;
+    uint32_t      PinNumber = IO_Properties[IO_ID].PinNumber;
     pPort->ODR ^= (1 << PinNumber);
 }
 
@@ -323,7 +307,7 @@ void IO_TogglePin(IO_ID_e IO_Id)
 //
 //  Function:       IO_SetPin
 //
-//  Parameter(s):   IO_Id           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition
 //                  Value           Value to put out on the pin        0 or 1
 //  Return:         None
 //
@@ -332,15 +316,15 @@ void IO_TogglePin(IO_ID_e IO_Id)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void IO_SetPin(IO_ID_e IO_Id, uint32_t Value)
+void IO_SetPin(IO_ID_e IO_ID, uint32_t Value)
 {
     if(Value == 0)
     {
-        IO_SetPinLow(IO_Id);
+        IO_SetPinLow(IO_ID);
     }
     else
     {
-        IO_SetPinHigh(IO_Id);
+        IO_SetPinHigh(IO_ID);
     }
 }
 
@@ -348,7 +332,7 @@ void IO_SetPin(IO_ID_e IO_Id, uint32_t Value)
 //
 //  Function:       IO_GetInputPin
 //
-//  Parameter(s):   IO_Id           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
 //  Return:         uint32_t        level on output pin 0 or 1
 //
 //  Description:    Gets input data bit.
@@ -356,10 +340,10 @@ void IO_SetPin(IO_ID_e IO_Id, uint32_t Value)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t IO_GetInputPin(IO_ID_e IO_Id)
+uint32_t IO_GetInputPin(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort     = IO_Properties[IO_Id].pPort;
-    uint32_t       PinNumber = IO_Properties[IO_Id].PinNumber;
+    GPIO_TypeDef* pPort     = IO_Properties[IO_ID].pPort;
+    uint32_t      PinNumber = IO_Properties[IO_ID].PinNumber;
 
     if((pPort->IDR & (1 << PinNumber)) == 0)
     {
@@ -373,7 +357,7 @@ uint32_t IO_GetInputPin(IO_ID_e IO_Id)
 //
 //  Function:       HALIO_GetOutputPin
 //
-//  Parameter(s):   IO_Id           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
 //  Return:         uint32_t        level on internal register output 0 or 1
 //
 //  Description:    Gets output data bit.
@@ -381,10 +365,10 @@ uint32_t IO_GetInputPin(IO_ID_e IO_Id)
 //  Note(s):        Get the value in register not actual output... use IO_GetInputPin for this
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t IO_GetOutputPin(IO_ID_e IO_Id)
+uint32_t IO_GetOutputPin(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort     = IO_Properties[IO_Id].pPort;
-    uint32_t       PinNumber = IO_Properties[IO_Id].PinNumber;
+    GPIO_TypeDef* pPort     = IO_Properties[IO_ID].pPort;
+    uint32_t      PinNumber = IO_Properties[IO_ID].PinNumber;
 
     if((pPort->ODR & (1 << PinNumber)) == 0)
     {
@@ -398,7 +382,7 @@ uint32_t IO_GetOutputPin(IO_ID_e IO_Id)
 //
 //  Function:       IO_InitIRQ
 //
-//  Parameter(s):   IO_IRQ_Id       ID of the IRQ to initialize
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to initialize
 //                  pCallback       Callback to call when condition of IRQ are met
 //  Return:         None
 //
@@ -408,7 +392,7 @@ uint32_t IO_GetOutputPin(IO_ID_e IO_Id)
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
-void IO_InitIRQ(IO_IrqID_e IO_IRQ_Id, IO_PinChangeCallback_t pCallback)
+void IO_InitIRQ(IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback)
 {
     const IO_IRQ_Properties_t* pIRQ_Properties;
     const IO_Properties_t*     pIO_Properties;
@@ -416,13 +400,13 @@ void IO_InitIRQ(IO_IrqID_e IO_IRQ_Id, IO_PinChangeCallback_t pCallback)
     uint32_t                   PinNumber;
     uint32_t                   PinMask;
 
-    pIRQ_Properties = &IO_IRQ_Properties[IO_IRQ_Id];
-    pIO_Properties  = &IO_Properties[pIRQ_Properties->IO_Id];
+    pIRQ_Properties = &IO_IRQ_Properties[IO_IRQ_ID];
+    pIO_Properties  = &IO_Properties[pIRQ_Properties->IO_ID];
     PinNumber       = pIO_Properties->PinNumber;
     PinMask         = 1 << PinNumber;
 
     // Init The IO for this pin
-    IO_PinInit(pIRQ_Properties->IO_Id);
+    IO_PinInit(pIRQ_Properties->IO_ID);
 
     // Enable EXT Line in SYSCFG
     SYSCFG->EXTICR[PinNumber >> 2] &= ~(((uint32_t)0x0F) << ((PinNumber & 3)) << 2);
@@ -455,10 +439,9 @@ void IO_InitIRQ(IO_IrqID_e IO_IRQ_Id, IO_PinChangeCallback_t pCallback)
         CLEAR_BIT(EXTI->FTSR, PinMask);
     }
 
-    IO_PinChangeCallback[IO_IRQ_Id] = pCallback;
+    IO_PinChangeCallback[IO_IRQ_ID] = pCallback;
 
     // Configure interrupt priority for IO
-
     PriorityGroup = NVIC_GetPriorityGrouping();
     NVIC_SetPriority(pIRQ_Properties->IRQ_Channel, NVIC_EncodePriority(PriorityGroup,6, 0));
     NVIC_EnableIRQ(pIRQ_Properties->IRQ_Channel);
@@ -470,7 +453,7 @@ void IO_InitIRQ(IO_IrqID_e IO_IRQ_Id, IO_PinChangeCallback_t pCallback)
 //
 //  Function:       IO_EnableIRQ
 //
-//  Parameter(s):   IO_IRQ_Id       ID of the IRQ to enable
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to enable
 //  Return:         None
 //
 //  Description:    Enable the IRQ for specify ID.
@@ -479,11 +462,11 @@ void IO_InitIRQ(IO_IrqID_e IO_IRQ_Id, IO_PinChangeCallback_t pCallback)
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
-void IO_EnableIRQ(IO_IrqID_e IO_IRQ_Id)
+void IO_EnableIRQ(IO_IrqID_e IO_IRQ_ID)
 {
     uint32_t PinMask;
 
-    _IO_GetPinInfo(IO_IRQ_Id, nullptr, &PinMask);
+    _IO_GetPinInfo(IO_IRQ_ID, nullptr, &PinMask);
     EXTI->PR = PinMask;
     SET_BIT(EXTI->IMR, PinMask);                    // Enable IT on provided Lines
 }
@@ -493,7 +476,7 @@ void IO_EnableIRQ(IO_IrqID_e IO_IRQ_Id)
 //
 //  Function:       IO_EnableIRQ
 //
-//  Parameter(s):   IO_IRQ_Id       ID of the IRQ to disable
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to disable
 //  Return:         None
 //
 //  Description:    Disable the IRQ for specify ID.
@@ -502,11 +485,11 @@ void IO_EnableIRQ(IO_IrqID_e IO_IRQ_Id)
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
-void IO_DisableIRQ(IO_IrqID_e IO_IRQ_Id)
+void IO_DisableIRQ(IO_IrqID_e IO_IRQ_ID)
 {
     uint32_t PinMask;
 
-    _IO_GetPinInfo(IO_IRQ_Id, nullptr, &PinMask);
+    _IO_GetPinInfo(IO_IRQ_ID, nullptr, &PinMask);
     CLEAR_BIT(EXTI->IMR, PinMask);                  // Disable IT on provided Lines
 }
 #endif
@@ -515,7 +498,25 @@ void IO_DisableIRQ(IO_IrqID_e IO_IRQ_Id)
 //
 //  Function:       IO_EnableIRQ
 //
-//  Parameter(s):   IO_IRQ_Id       ID of the IRQ to get the state
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to get the state
+//  Return:         IO_ID_e         ID of the IO used
+//
+//  Description:    Get the IO ID for this IO IRQ ID
+//
+//-------------------------------------------------------------------------------------------------
+#ifdef IO_IRQ_DEF
+IO_ID_e IO_GetIO_ID(IO_IrqID_e IO_IRQ_ID)
+{
+    const IO_IRQ_Properties_t* pIRQ_Properties = &IO_IRQ_Properties[IO_IRQ_ID];
+    return pIRQ_Properties->IO_ID;
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_EnableIRQ
+//
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to get the state
 //  Return:         bool            level on input pin 0 or 1
 //
 //  Description:    Get the state of the IRQ for specify ID.
@@ -524,11 +525,11 @@ void IO_DisableIRQ(IO_IrqID_e IO_IRQ_Id)
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
-bool IO_GetIRQ_State(IO_IrqID_e IO_IRQ_Id)
+bool IO_GetIRQ_State(IO_IrqID_e IO_IRQ_ID)
 {
     uint32_t PinMask;
 
-    _IO_GetPinInfo(IO_IRQ_Id, nullptr, &PinMask);
+    _IO_GetPinInfo(IO_IRQ_ID, nullptr, &PinMask);
 
     if((EXTI->IMR & PinMask) != 0)
     {
@@ -541,10 +542,10 @@ bool IO_GetIRQ_State(IO_IrqID_e IO_IRQ_Id)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       IO_callBak
+//  Function:       IO_callBack
 //
-//  Parameter(s):   IO_IRQ_Id       ID of the IRQ to get the state
-//  Return:         bool            level on input pin 0 or 1
+//  Parameter(s):   IO_IRQ_ID       ID of the IRQ to get the state
+//  Return:         None
 //
 //  Description:    Get the state of the IRQ for specify ID.
 //
@@ -552,11 +553,11 @@ bool IO_GetIRQ_State(IO_IrqID_e IO_IRQ_Id)
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
-void IO_CallBack(IO_IrqID_e IO_IRQ_Id)
+void IO_CallBack(IO_IrqID_e IO_IRQ_ID)
 {
-    if(IO_PinChangeCallback[IO_IRQ_Id] != nullptr)
+    if(IO_PinChangeCallback[IO_IRQ_ID] != nullptr)
     {
-        IO_PinChangeCallback[IO_IRQ_Id](nullptr);
+        IO_PinChangeCallback[IO_IRQ_ID](nullptr);
     }
 }
 #endif
@@ -565,7 +566,10 @@ void IO_CallBack(IO_IrqID_e IO_IRQ_Id)
 //
 //  Function:       IO_PinLowLevelAccess
 //
-//  Parameter(s):
+//  Parameter(s):   PortIO
+//                  PinNumber
+//                  Direction
+//                  State
 //  Return:         uint32_t
 //
 //  Description:    Get the state of the IRQ for specify ID.
@@ -582,13 +586,13 @@ uint32_t IO_PinLowLevelAccess(uint32_t PortIO, uint32_t PinNumber, uint32_t Dire
     Pin1BitMask      = 1 << PinNumber;
     Pin2BitShift     = PinNumber << 1;
 
-    _IO_EnableClock(pPort);
+    IO_EnableClock(pPort);
 
     if(Direction == IO_MODE_OUTPUT)
     {
         // Preset state
-        if(State == 0) pPort->BSRR = Pin1BitMask << 16;
-        else           pPort->BSRR = Pin1BitMask;
+        if(State == 0) pPort->BSRRH = Pin1BitMask;
+        else           pPort->BSRRL = Pin1BitMask;
     }
 
     MODIFY_REG(pPort->MODER,
@@ -599,27 +603,29 @@ uint32_t IO_PinLowLevelAccess(uint32_t PortIO, uint32_t PinNumber, uint32_t Dire
 }
 
 //-------------------------------------------------------------------------------------------------
-
-#if 0
-
-//-------------------------------------------------------------------------------------------------
 //
-//  Function:       IO_ChangeInputActiveState
+//  Function:       _IO_EnableClock
 //
-//  Parameter(s):   IO_Input_e       Input
-//                  ActiveState_e    ActiveState
-//  Return:         none
+//  Parameter(s):   pPort            Address of the port
+//  Return:         None
 //
-//  Description:    Change the active state for the selected pin
+//  Description:    Enable port clock.
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void IO_ChangeInputActiveState(IO_Input_e Input, ActiveState_e ActiveState)
+void IO_EnableClock(GPIO_TypeDef* pPort)
 {
-    IO_In[Input].ActiveState = ActiveState;
+    uint32_t ClockEnable;
+
+    // GPIO clock enable
+    ClockEnable   = ((uint32_t)(pPort) & IO_PORT_MASK_FOR_CLOCK_ENABLE);          // Mask bit to keep only enableoffset
+    ClockEnable >>= IO_PORT_SHIFT_FOR_CLOCK_ENABLE;
+    ClockEnable   = 1 << ClockEnable;                                             // Set bit position
+    RCC->AHB1ENR |= ClockEnable;
 }
 
+#if 0
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       IO_ChangeOutputActiveState
@@ -637,5 +643,8 @@ void IO_ChangeOutputActiveState(IO_Output_e Output, ActiveState_e ActiveState)
 {
     IO_Out[Output].ActiveState = ActiveState;
 }
+
+#endif
+
 
 #endif

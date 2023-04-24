@@ -143,7 +143,11 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pDescription
                                  this,
                                  &this->m_Stack[0],
                                  TASK_VT100_STACK_SIZE,
-                                 TASK_VT100_PRIO);
+                                 TASK_VT100_PRIO
+                               #if(NOS_CONFIG_THREAD_MPU_REGION_ENABLE > 0)
+                                 , nullptr
+                               #endif
+                                 );
     }
   #endif
 

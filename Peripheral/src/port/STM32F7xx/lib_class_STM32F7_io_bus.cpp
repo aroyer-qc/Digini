@@ -3,17 +3,40 @@
 //  File : lib_class_STM32F7_io_bus.cpp
 //
 //-------------------------------------------------------------------------------------------------
+//
+// Copyright(c) 2023 Alain Royer.
+// Email: aroyer.qc@gmail.com
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+// and associated documentation files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+// AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include "lib_class_STM32F7_io_bus.h"
+#define IO_BUS_DRIVER_GLOBAL
+#include "lib_digini.h"
+#undef  IO_BUS_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
-// Define(s) and macro(s)
-//-------------------------------------------------------------------------------------------------
+
+#if (USE_IO_BUS_DRIVER == DEF_ENABLED)
+
+#define CFG_CHIP_SELECT_LOW_TIME            3  // Chip select active time for 6800/8080 bus
 
 #define m_E         m_RD
 #define m_RW        m_WR
@@ -48,7 +71,7 @@ void IO_BusDriver::Initialize(IO_Bus_e Bus)
 
     IO_PinInit(m_pBus->u.Intel.RD);
     IO_PinInit(m_pBus->u.Intel.WR);
-    IO_PinInit(m_pBus->u.Intel.ChipSelect);
+    IO_PinInit(m_pBus->ChipSelect);
 
     if(m_pBus->Type == IO_BUS_MODE_MOTOROLA)
     {
@@ -76,6 +99,9 @@ uint32_t IO_BusDriver::Read(void)
     {
         IO_SetPinLow(m_pBus->u.Intel.RD);
         IO_SetPinLow(m_pBus->ChipSelect);
+        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }         // todo fix that!!
+        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }
+        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }
         Data = m_Port.Read();
         IO_SetPinHigh(m_pBus->ChipSelect);
         IO_SetPinHigh(m_pBus->u.Intel.RD);
@@ -83,8 +109,9 @@ uint32_t IO_BusDriver::Read(void)
     else // IO_BUS_MODE_MOTOROLA
     {
         IO_SetPinHigh(m_pBus->u.Motorola.RW);
-        IO_SetPinLow(m_pBus->ChipSelect;
+        IO_SetPinLow(m_pBus->ChipSelect);
         IO_SetPinHigh(m_pBus->u.Motorola.E);
+        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }         // todo fix that!!
         Data = m_Port.Read();
         IO_SetPinLow(m_pBus->u.Motorola.E);
         IO_SetPinHigh(m_pBus->ChipSelect);
@@ -114,16 +141,16 @@ void IO_BusDriver::Write(uint32_t Data)
     {
         IO_SetPinLow(m_pBus->u.Intel.WR);
         IO_SetPinLow(m_pBus->ChipSelect);
-        __asm("nop");
+        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }        // todo fix that!!
         IO_SetPinHigh(m_pBus->ChipSelect);
         IO_SetPinHigh(m_pBus->u.Intel.WR);
     }
     else // IO_BUS_MODE_MOTOROLA
     {
         IO_SetPinLow(m_pBus->u.Motorola.RW);
-        IO_SetPinLow(m_pBus->ChipSelect;
+        IO_SetPinLow(m_pBus->ChipSelect);
         IO_SetPinHigh(m_pBus->u.Motorola.E);
-        __asm("nop");
+        for(int i = 0; i < CFG_CHIP_SELECT_LOW_TIME; i++) { __asm("nop"); }        // todo fix that!!
         IO_SetPinLow(m_pBus->u.Motorola.E);
         IO_SetPinHigh(m_pBus->ChipSelect);
     }
@@ -133,3 +160,4 @@ void IO_BusDriver::Write(uint32_t Data)
 
 //-------------------------------------------------------------------------------------------------
 
+#endif // (USE_IO_BUS_DRIVER == DF_ENABLED)

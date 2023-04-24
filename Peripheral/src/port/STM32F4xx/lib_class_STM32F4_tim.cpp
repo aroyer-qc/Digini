@@ -232,7 +232,7 @@ void TIM_Driver::SetReload(uint32_t Value)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           SetReload
+//  Name:           GetReload
 //
 //  Parameter(s):   Value           New reload value
 //  Return:         void

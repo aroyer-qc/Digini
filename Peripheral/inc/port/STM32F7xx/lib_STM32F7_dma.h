@@ -82,12 +82,16 @@
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-void        DMA_ClearFlag                           (DMA_Stream_TypeDef* pDMA, uint32_t Flag);
-uint32_t    DMA_CheckFlag                           (DMA_Stream_TypeDef* pDMA, uint32_t Flag);
-void        DMA_EnableTransmitCompleteInterrupt     (DMA_Stream_TypeDef* pDMA);
-void        DMA_DisableTransmitCompleteInterrupt    (DMA_Stream_TypeDef* pDMA);
-void        DMA_Enable                              (DMA_Stream_TypeDef* pDMA);
-void        DMA_Disable                             (DMA_Stream_TypeDef* pDMA);
+void        DMA_ClearFlag                               (DMA_Stream_TypeDef* pDMA, uint32_t Flag);
+uint32_t    DMA_CheckFlag                               (DMA_Stream_TypeDef* pDMA, uint32_t Flag);
+void        DMA_EnableInterrupt                         (DMA_Stream_TypeDef* pDMA, uint32_t Interrupt);
+void        DMA_DisableInterrupt                        (DMA_Stream_TypeDef* pDMA, uint32_t Interrupt);
+void        DMA_EnableTransmitCompleteInterrupt         (DMA_Stream_TypeDef* pDMA);
+void        DMA_DisableTransmitCompleteInterrupt        (DMA_Stream_TypeDef* pDMA);
+void        DMA_EnableTransmitHalfCompleteInterrupt     (DMA_Stream_TypeDef* pDMA);
+void        DMA_DisableTransmitHalfCompleteInterrupt    (DMA_Stream_TypeDef* pDMA);
+void        DMA_Enable                                  (DMA_Stream_TypeDef* pDMA);
+void        DMA_Disable                                 (DMA_Stream_TypeDef* pDMA);
 
 //-------------------------------------------------------------------------------------------------
 

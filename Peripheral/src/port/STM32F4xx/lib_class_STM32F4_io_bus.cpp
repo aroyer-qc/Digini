@@ -66,7 +66,6 @@ void IO_BusDriver::Initialize(IO_Bus_e Bus)
 {
     m_pBus = &m_Bus[Bus];
 
-    m_Port.Initialize(SSD1779_PORT);
     IO_PinInit(m_pBus->u.Intel.RD);
     IO_PinInit(m_pBus->u.Intel.WR);
     IO_PinInit(m_pBus->ChipSelect);

@@ -1868,7 +1868,6 @@ SystemState_e QSPI_Driver::MemoryMapped(QSPI_CommandTypeDef* Command, QSPI_Memor
     return State;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:      Config
@@ -2179,4 +2178,3 @@ void QSPI_Driver::IRQHandler(void)
 #endif
 
 #endif // (USE_QSPI_DRIVER == DEF_ENABLED)
-

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F7_io_bus.h
+//  File : lib_class_STM32F74_io_port.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 20203 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,69 +27,64 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+// Include file(s)
+//-------------------------------------------------------------------------------------------------
 
-#ifdef (USE_IO_BUS_DRIVER == DEF_ENABLED)
+#include "stm32f7xx.h"
+#include "lib_stm32f7_io.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#ifdef IO_PORT_DEF
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-enum IO_Bus_e
+enum IO_Port_e
 {
-    IO_BUS_NOT_DEFINED          = -1,
-  #define X_IO_BUS(ENUM_ID, BUS_PORT, BUS_TYPE, RD_OR_E, WR_OR_RW, CHIP_SELECT) ENUM_ID,
-    IO_BUS_DEF
-  #undef X_IO_BUS
-    NB_BUS_CONST
+  #define X_IO_PORT(ENUM_ID, PORT, PORT_MASK, PORT_SHIFT, MODE_OUTPUT, MODE_INPUT, SPEED) ENUM_ID,
+    IO_PORT_DEF
+  #undef X_IO_PORT
+    NB_IO_PORT_CONST
 };
 
-enum IO_BusType_e
+enum IO_PortDir_e
 {
-    IO_BUS_MODE_INTEL,
-    IO_BUS_MODE_MOTOROLA,
+    IO_PORT_INPUT,
+    IO_PORT_OUTPUT,
 };
 
-struct IO_Bus_t
+struct IO_Port_t
 {
-    IO_Port_e      PortID;
-    IO_BusType_e   Type;
-
-    union
-    {
-        struct
-        {
-            IO_ID_e     RD;
-            IO_ID_e     WR;
-        } Intel;
-        struct
-        {
-            IO_ID_e     E;
-            IO_ID_e     RW;
-        } Motorola;
-    } u;
-
-    IO_ID_e             ChipSelect;
+    GPIO_TypeDef*       pPort;
+    uint16_t            Mask;
+    uint8_t             Shift;
+    uint32_t            TypeOutput;
+    uint32_t            TypeInput;
+    uint32_t            Speed;
 };
 
 //-------------------------------------------------------------------------------------------------
-// class definition(s)
+// Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-class IO_BusDriver
+class IO_PortDriver
 {
     public:
 
-        void                                Initialize              (IO_Bus_e Bus);
+        void                                Initialize              (IO_Port_e Port);
         uint32_t                            Read                    (void);
         void                                Write                   (uint32_t Data);
+        void                                SetDirection            (IO_PortDir_e Direction);
 
     private:
 
-        IO_Bus_t*                           m_pBus;
-        IO_PortDriver                       m_Port;
-        static IO_Bus_t                     m_Bus[NB_BUS_CONST];
+        IO_Port_t*                          m_pPort;
+        static const IO_Port_t              m_Port[NB_IO_PORT_CONST];
+        uint32_t                            m_2BitsMask;
 };
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (USE_IO_BUS_DRIVER == DEF_ENABLED)
+#endif // IO_PORT_DEF

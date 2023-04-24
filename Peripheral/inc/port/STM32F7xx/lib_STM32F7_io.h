@@ -30,6 +30,9 @@
 // Define(s) and macro(s)
 //-------------------------------------------------------------------------------------------------
 
+#define NUMBER_OF_IO_PORT               ((uint32_t)11)//   TODO   evaluate this value
+#define NUMBER_OF_PIN_PER_PORT          ((uint32_t)16)
+
 #define LED_Init(p)                     IO_PinInit(p)
 #define LED_Toggle(p)                   IO_TogglePin(p)
 
@@ -52,6 +55,7 @@
 #define IO_PIN_MASK_15                  ((uint16_t)0x8000)
 #define IO_PIN_MASK_All                 ((uint16_t)0xFFFF)
 
+//#define IO_SPEED_PIN_SHIFT            (5)
 #define IO_SPEED_PIN_MASK               ((uint32_t)0x00000003)
 #define IO_SPEED_FREQ_LOW               ((uint32_t)0x00000000)
 #define IO_SPEED_FREQ_MEDIUM            ((uint32_t)0x00000001)
@@ -64,10 +68,12 @@
 #define IO_MODE_ALTERNATE               ((uint32_t)0x00000002)
 #define IO_MODE_ANALOG                  ((uint32_t)0x00000003)
 
+//#define IO_TYPE_SHIFT                 (2)
 #define IO_TYPE_PIN_DRIVE_MASK          ((uint32_t)0x00000001)
 #define IO_TYPE_PIN_PP                  ((uint32_t)0x00000000)
 #define IO_TYPE_PIN_OD                  ((uint32_t)0x00000001)
 
+//#define IO_PULL_SHIFT                 (3)
 #define IO_TYPE_PIN_PULL_MASK           ((uint32_t)0x00000006)
 #define IO_TYPE_PIN_NO_PULL             ((uint32_t)0x00000000)
 #define IO_TYPE_PIN_PULL_UP             ((uint32_t)0x00000002)
@@ -80,10 +86,7 @@
 #define IO_EXTI_TRIGGER_FALLING         ((uint8_t)2) // Trigger Falling Mode
 #define IO_EXTI_TRIGGER_RISING_FALLING  ((uint8_t)3) // Trigger Rising & Falling Mode
 
-// TODO check if we change this!! for state
-#define IO_LEVEL_0                      0
-#define IO_LEVEL_1                      1
-
+//#define IO_AF_SHIFT                     (8)
 #define IO_AF_MASK                      ((uint32_t)0x0000000F)
 
 //  AF 0 selection
@@ -167,6 +170,7 @@
 //  AF 15 selection
 #define IO_AF15_EVENTOUT                ((uint8_t)0x0F)  // EVENTOUT Alternate Function mapping
 
+//#define IO_EXT_MODE_IT_SHIFT          (12)
 #define IO_EXT_MODE_IT_PIN_MASK         ((uint32_t)0x00000003)
 #define IO_EXT_MODE_IT_RISING           ((uint32_t)0x00000001)
 #define IO_EXT_MODE_IT_FALLING          ((uint32_t)0x00000002)
@@ -184,7 +188,7 @@
                                               { IO_ID, NUMBER, TRIGGER},
 
 //-------------------------------------------------------------------------------------------------
-// typedef Typedef(s)
+// Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
 enum IO_ID_e
@@ -204,24 +208,20 @@ enum IO_IrqID_e
 
 struct IO_Properties_t
 {
-    GPIO_TypeDef*   pPort;
-    uint32_t        PinNumber;
-    uint32_t        PinMode;
-    uint32_t        PinType;
-    uint32_t        PinSpeed;
-    uint32_t        State;
+    GPIO_TypeDef*    pPort;
+    uint32_t         PinNumber;
+    uint32_t         PinMode;
+    uint32_t         PinType;
+    uint32_t         PinSpeed;
+    uint32_t         State;
 };
 
 struct IO_IRQ_Properties_t
 {
-    IO_ID_e         IO_Id;
+    IO_ID_e         IO_ID;
     IRQn_Type       IRQ_Channel;
     uint32_t        Trigger;
 };
-
-//-------------------------------------------------------------------------------------------------
-// Typedef(s)
-//-------------------------------------------------------------------------------------------------
 
 typedef void (*IO_PinChangeCallback_t)(void* pArg);
 
@@ -230,6 +230,21 @@ typedef void (*IO_PinChangeCallback_t)(void* pArg);
 //-------------------------------------------------------------------------------------------------
 
 #ifdef IO_DRIVER_GLOBAL
+
+const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
+{
+    GPIOA,
+    GPIOB,
+    GPIOC,
+    GPIOD,
+    GPIOE,
+    GPIOF,
+    GPIOG,
+    GPIOH,
+    GPIOI,
+    GPIOJ,
+    GPIOK,
+};
 
 const IO_Properties_t IO_Properties[IO_NUM] =
 {
@@ -243,35 +258,39 @@ const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM] =
 };
 #endif
 
-#else // IO_DRIVER_GLOBAL
+#else
 
-extern const IO_Properties_t IO_Properties[IO_NUM];
+extern const GPIO_TypeDef*          IO_Port[NUMBER_OF_IO_PORT];
+extern const IO_Properties_t        IO_Properties[IO_NUM];
 
 #ifdef IO_IRQ_DEF
-extern const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM];
+extern const IO_IRQ_Properties_t  IO_IRQ_Properties[IO_IRQ_NUM];
 #endif
 
-#endif // IO_DRIVER_GLOBAL
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-void        IO_PinInit                  (IO_ID_e IO_Id);
-void        IO_PinInitInput             (IO_ID_e IO_Id);
-void        IO_PinInitOutput            (IO_ID_e IO_Id);
-void        IO_SetPinLow                (IO_ID_e IO_Id);
-void        IO_SetPinHigh               (IO_ID_e IO_Id);
-void        IO_TogglePin                (IO_ID_e IO_Id);
-void        IO_SetPin                   (IO_ID_e IO_Id);
-uint32_t    IO_GetInputPin              (IO_ID_e IO_Id);
-uint32_t    IO_GetOutputPin             (IO_ID_e IO_Id);
+void        IO_PinInit                  (IO_ID_e IO_ID);
+void        IO_PinInit                  (GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint32_t PinType, uint32_t PinSpeed, uint32_t State); // is it necessary?
+void        IO_PinInitInput             (IO_ID_e IO_ID);
+void        IO_PinInitOutput            (IO_ID_e IO_ID);
+void        IO_SetPinLow                (IO_ID_e IO_ID);
+void        IO_SetPinHigh               (IO_ID_e IO_ID);
+void        IO_TogglePin                (IO_ID_e IO_ID);
+void        IO_SetPin                   (IO_ID_e IO_ID, uint32_t Value);
+uint32_t    IO_GetInputPin              (IO_ID_e IO_ID);
+uint32_t    IO_GetOutputPin             (IO_ID_e IO_ID);
+void        IO_EnableClock              (GPIO_TypeDef* pPort);// is it necessary?
 #ifdef IO_IRQ_DEF
-void        IO_InitIRQ                  (IO_IrqID_e IO_IRQ_Id, IO_PinChangeCallback_t pCallback);
-void        IO_EnableIRQ                (IO_IrqID_e IO_IRQ_Id);
-void        IO_DisableIRQ               (IO_IrqID_e IO_IRQ_Id);
-bool        IO_GetIRQ_State             (IO_IrqID_e IO_IRQ_Id);
-void        IO_CallBack                 (IO_IrqID_e IO_IRQ_Id);
+void        IO_InitIRQ                  (IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback);
+void        IO_EnableIRQ                (IO_IrqID_e IO_IRQ_ID);
+void        IO_DisableIRQ               (IO_IrqID_e IO_IRQ_ID);
+IO_ID_e     IO_GetIO_ID                 (IO_IrqID_e IO_IRQ_ID);
+bool        IO_GetIRQ_State             (IO_IrqID_e IO_IRQ_ID);
+void        IO_CallBack                 (IO_IrqID_e IO_IRQ_ID);
 #endif
 
 uint32_t HALIO_PinLowLevelAccess   (uint32_t PortNumber, uint32_t PinNumber, uint32_t Direction, uint32_t State);

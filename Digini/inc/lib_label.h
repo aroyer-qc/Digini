@@ -87,6 +87,7 @@ class Label
                             Label                       ()                              { ActualLanguage = LANG_ENGLISH;            }
         Language_e          GetLanguage                 (void)                          { return ActualLanguage;                    }
         const char*         GetLabelPointer             (Label_e Label)                 { return LabelArray[Label][ActualLanguage]; }
+        const char*         GetArrayPointer             (void)                          { return LabelArray[0][0];                  }
         void                SetLanguage                 (Language_e Language)           { ActualLanguage = Language;                }
 
     private:
@@ -103,9 +104,9 @@ class Label
 
   const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
   {
-      { "%s",                           "%s"       },  // LBL_STRING
-      { "%c",                           "%c"       },  // LBL_CHAR
-      { "\r\n\r\n",                     "\r\n\r\n" },  // LBL_DOUBLE_LINEFEED
+      { "%s",                           nullptr     },  // LBL_STRING
+      { "%c",                           nullptr     },  // LBL_CHAR
+      { "\r\n\r\n",                     nullptr     },  // LBL_DOUBLE_LINEFEED
 
       LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
 

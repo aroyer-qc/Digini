@@ -556,6 +556,128 @@ void I2C_Driver::Unlock(void)
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           RegisterCallback
+//
+//  Parameter(s):   pCallback       Callback pointer
+//  Return:         None
+//
+//  Description:    Register callback for user code in ISR
+//
+//-------------------------------------------------------------------------------------------------
+void I2C_Driver::RegisterCallback(CallbackInterface* pCallback)
+{
+    m_pCallback = pCallback;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           EnableCallbackType
+//
+//  Parameter(s):   CallBackType    Type if the ISR callback
+//                  pContext        Context for ISR
+//  Return:         None
+//
+//  Description:    Enable the type of interrupt for the callback.
+//
+//-------------------------------------------------------------------------------------------------
+void I2C_Driver::EnableCallbackType(int CallBackType, void* pContext)
+{
+    switch(CallBackType)
+    {
+      #if (I2C_ISR_MASTER_TX_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_MASTER_TX_COMPLETED:
+        {
+            m_pContextMasterTX    = pContext;
+            m_CallBackType       |= CallBackType;
+        } 
+        break;
+      #endif
+
+      #if (I2C_ISR_MASTER_RX_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_MASTER_RX_COMPLETED:
+        {
+            m_pContextMasterRX    = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+    #if (I2C_ISR_SLAVE_TX_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_SLAVE_TX_COMPLETED:
+        {
+            m_pContextSlaveTX     = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_SLAVE_RX_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_SLAVE_RX_COMPLETED:
+        {
+            m_pContextSlaveRX     = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_ADRRESS_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_ADDRESS:
+        {
+            m_pContextAddress     = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_TX_LISTEN_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_LISTEN_COMPLETED:
+        {
+            m_pContextListen      = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_MEMORY_TX_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_MEMORY_TX_COMPLETED:
+        {
+            m_pContextMemoryTX    = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_MEMORY_RX_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_MEMORY_RX_COMPLETED:
+        {
+            m_pContextMemoryRX    = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_ERROR_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_ERROR:
+        {
+            m_pContextError       = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_ABORT:_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_ABORT:
+        {
+            m_pContextAbort       = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  IRQ Handler:    EV_IRQHandler
 //
 //  Description:    This function handles I2Cx Event interrupt request.

@@ -103,9 +103,9 @@ class Label
 
   const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
   {
-      { "%s",                           "%s"       },  // LBL_STRING
-      { "%c",                           "%c"       },  // LBL_CHAR
-      { "\r\n\r\n",                     "\r\n\r\n" },  // LBL_DOUBLE_LINEFEED
+      { "%s",                           nullptr     },  // LBL_STRING
+      { "%c",                           nullptr     },  // LBL_CHAR
+      { "\r\n\r\n",                     nullptr     },  // LBL_DOUBLE_LINEFEED
 
       LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
 

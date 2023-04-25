@@ -39,7 +39,7 @@
 //   Note(s):       AccessTime() does not use Number and SubNumber
 //
 //-------------------------------------------------------------------------------------------------
-void AccessTime(AccessRequest_e AccessRequest, void* pData, uint16_t Number, uint16_t SubNumber)
+void AccessTime(AccessRequest_e AccessRequest, const void* pData, uint16_t Number, uint16_t SubNumber)
 {
     VAR_UNUSED(Number);
     VAR_UNUSED(SubNumber);
@@ -60,7 +60,7 @@ void AccessTime(AccessRequest_e AccessRequest, void* pData, uint16_t Number, uin
 //   Description:   Request date
 //
 //-------------------------------------------------------------------------------------------------
-void AccessDate(AccessRequest_e AccessRequest, void* pData, uint16_t Number, uint16_t SubNumber)
+void AccessDate(AccessRequest_e AccessRequest, const void* pData, uint16_t Number, uint16_t SubNumber)
 {
     VAR_UNUSED(Number);
     VAR_UNUSED(SubNumber);
@@ -82,7 +82,7 @@ void AccessDate(AccessRequest_e AccessRequest, void* pData, uint16_t Number, uin
 //   Description:   Request date
 //
 //-------------------------------------------------------------------------------------------------
-void AccessTimeFormat(AccessRequest_e AccessRequest, void* pData, uint16_t Number, uint16_t SubNumber)
+void AccessTimeFormat(AccessRequest_e AccessRequest, const void* pData, uint16_t Number, uint16_t SubNumber)
 {
     VAR_UNUSED(Number);
     VAR_UNUSED(SubNumber);
@@ -103,7 +103,7 @@ void AccessTimeFormat(AccessRequest_e AccessRequest, void* pData, uint16_t Numbe
 //   Note(s):       GetLabel() does not use Number and SubNumber
 //
 //-------------------------------------------------------------------------------------------------
-void GetLabel(AccessRequest_e AccessRequest, void* pData, uint16_t Number, uint16_t SubNumber)
+void GetLabel(AccessRequest_e AccessRequest, const void* pData, uint16_t Number, uint16_t SubNumber)
 {
     VAR_UNUSED(SubNumber);
 
@@ -111,7 +111,7 @@ void GetLabel(AccessRequest_e AccessRequest, void* pData, uint16_t Number, uint1
     {
         if(Number < NB_LABEL_CONST)
         {
-            pData = static_cast<const char*>(myLabel.GetLabelPointer(Number));
+            pData = myLabel.GetLabelPointer(Label_e(Number));
         }
     }
 }

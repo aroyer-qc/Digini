@@ -43,5 +43,6 @@ typedef void(*Func_DatabaseCallBack)(AccessRequest_e, void*, uint16_t, uint16_t)
 void AccessTime             (AccessRequest_e AccessRequest, void* pData, uint16_t Number, uint16_t SubNumber);
 void AccessDate             (AccessRequest_e AccessRequest, void* pData, uint16_t Number, uint16_t SubNumber);
 void AccessTimeFormat       (AccessRequest_e AccessRequest, void* pData, uint16_t Number, uint16_t SubNumber);
+void GetLabel               (AccessRequest_e AccessRequest, void* pData, uint16_t Number, uint16_t SubNumber);
 
 //-------------------------------------------------------------------------------------------------

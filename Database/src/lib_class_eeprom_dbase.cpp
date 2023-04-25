@@ -32,6 +32,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
+#if (DIGINI_USE_EEPROM == DEF_ENABLED)
 #if defined(EEPROM_DBASE_DEF)
 
 //-------------------------------------------------------------------------------------------------
@@ -281,3 +282,4 @@ uint32_t CEEPROM_DataBase::GetAddress(uint16_t Record, uint16_t Number, uint16_t
 //-------------------------------------------------------------------------------------------------
 
 #endif // #if defined(EEPROM_DBASE_DEF)
+#endif //(DIGINI_USE_EEPROM == DEF_ENABLED)

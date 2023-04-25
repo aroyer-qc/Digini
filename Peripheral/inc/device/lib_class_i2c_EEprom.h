@@ -32,6 +32,8 @@
 
 #include "lib_digini.h"
 
+//-------------------------------------------------------------------------------------------------
+
 #if (DIGINI_USE_EEPROM == DEF_ENABLED)
 #if (USE_I2C_DRIVER == DEF_ENABLED)
 

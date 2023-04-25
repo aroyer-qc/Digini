@@ -34,23 +34,23 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if DIGINI_FATFS_USE_RAM_DISK == DEF_ENABLED
+#if (DIGINI_FATFS_USE_RAM_DISK == DEF_ENABLED)
 #include "lib_class_fatfs_ram_disk.h"
 #endif
 
-#if DIGINI_FATFS_USE_SDIO_SD_CARD == DEF_ENABLED
+#if (DIGINI_FATFS_USE_SDIO_SD_CARD == DEF_ENABLED)
 #include "lib_class_fatfs_sdio.h"
 #endif
 
-#if DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED
+#if (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
 #include "lib_class_fatfs_spi_flash_chip.h"
 #endif
 
-#if DIGINI_FATFS_USE_SPI_SD_CARD == DEF_ENABLED
+#if (DIGINI_FATFS_USE_SPI_SD_CARD == DEF_ENABLED)
 #include "lib_class_fatfs_spi_sd_card.h"
 #endif
 
-#if DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED
+#if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED)
 #include "lib_class_fatfs_usb.h"
 #endif
 

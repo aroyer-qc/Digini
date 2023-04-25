@@ -1784,7 +1784,7 @@ void QSPI_Driver::DMA_AbortCplt(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_QSPI_DRIVER == DEF_ENABLED
+#endif // (USE_QSPI_DRIVER == DEF_ENABLED)
 
 
 

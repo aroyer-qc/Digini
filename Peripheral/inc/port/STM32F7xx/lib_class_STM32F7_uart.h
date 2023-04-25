@@ -324,7 +324,7 @@ class UART_Driver
         static const uint32_t       m_BaudRate[NB_OF_BAUD];
         UART_Info_t*                m_pInfo;
         USART_TypeDef*              m_pUart;
-        uint32_t                    m_CopySR;
+        uint32_t                    m_CopyISR;
         UART_Variables_t            m_Variables;
         void*                       m_pContextRX;       // This is the global context if there is no individual context set
         void*                       m_pContextTX;       // This is the global context if there is no individual context set

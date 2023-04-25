@@ -169,7 +169,7 @@ void TIM_Driver::Initialize(void)
     ISR_Init(m_pInfo->IRQn_Channel, &ISR_Prio);
 }
 
-#if 0 not in F4.. Does not mean we don't keep it
+#if 0 //not in F4.. Does not mean we don't keep it
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           IsItRunning

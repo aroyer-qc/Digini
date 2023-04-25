@@ -303,7 +303,7 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
               #if DIGINI_USE_MULTI_LANGUAGE_SUPPORT == DEF_ENABLE
                 DB_Central.Get(&Language, DIGINI_SYSTEM_LANGUAGE, 0, 0);
               #endif
-                DB_Central.Get(&pString, APPLICATION_LABEL, pText->Label, Language);
+ //               DB_Central.Get(&pString, APPLICATION_LABEL, pText->Label, Language);
                 ((ServiceType4_t*)pService)->pString[0] = pString;
                 *pServiceState = SERVICE_REFRESH;
             }
@@ -811,7 +811,7 @@ static ServiceReturn_t* SERV_XCHG(ServiceEvent_e* pServiceState, uint16_t SubSer
                         FormatLabel = ((InputDecimal_t*)pExchange[SubService])->FormatLabel;
                         if(FormatLabel != INVALID_LABEL)
                         {
-                            DB_Central.Get(&pString, APPLICATION_LABEL, FormatLabel, Language);
+ //                           DB_Central.Get(&pString, APPLICATION_LABEL, FormatLabel, Language);
                             snprintf(&Buffer[0], 20, pString, *((uint32_t*)pExchange[SubService]->pValue));
                             ((ServiceType4_t*)pService)->pString[0] = &Buffer[0];
                         }
@@ -824,7 +824,7 @@ static ServiceReturn_t* SERV_XCHG(ServiceEvent_e* pServiceState, uint16_t SubSer
                         FormatLabel = ((InputFloat_t*)pExchange[SubService])->FormatLabel;
                         if(FormatLabel != INVALID_LABEL)
                         {
-                            DB_Central.Get(&pString, APPLICATION_LABEL, FormatLabel, Language);
+  //                          DB_Central.Get(&pString, APPLICATION_LABEL, FormatLabel, Language);
                             snprintf(&Buffer[0], 20, pString, *((float*)pExchange[SubService]->pValue));
                             ((ServiceType4_t*)pService)->pString[0] = &Buffer[0];
                         }

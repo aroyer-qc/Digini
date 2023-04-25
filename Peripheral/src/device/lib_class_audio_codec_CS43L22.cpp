@@ -470,8 +470,8 @@ SystemState_e CS43L22::Reset(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_I2S_DRIVER == DEF_ENABLED
-#endif // USE_I2C_DRIVER == DEF_ENABLED
+#endif // (USE_I2S_DRIVER == DEF_ENABLED)
+#endif // (USE_I2C_DRIVER == DEF_ENABLED)
 
 #if 0
 /*==============================================================================================================================

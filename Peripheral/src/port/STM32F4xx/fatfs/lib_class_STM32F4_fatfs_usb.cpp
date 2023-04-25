@@ -32,7 +32,7 @@
 #include "lib_class_usb.h"
 #include "usb_hcd.h"
 
-#if DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED
+#if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //

@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #if (USE_USB_DRIVER == DEF_ENABLED)
-#if DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED
+#if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -57,7 +57,6 @@ enum USB_MSC_HostStatus_e
     USB_MSC_OVER_CURRENT,      // overcurrent detected
     USB_MSC_DEV_CONNECTED      // device connected and ready
 };
-
 
 /*
 // Available port on STM32F42x-3x
@@ -151,7 +150,7 @@ extern class CUSB USB;
 
 */
 
-#endif // DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED
+#endif // (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED)
 
-#endif // USE_USB_DRIVER == DEF_ENABLED
+#endif // (USE_USB_DRIVER == DEF_ENABLED)
 

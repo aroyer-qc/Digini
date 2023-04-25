@@ -86,7 +86,7 @@ extern "C" void EXTI9_5_IRQHandler()
 
 
     // For SD Card Detect
-  #ifdef DIGINI_FATFS_USE_SD_CARD
+  #if (DIGINI_FATFS_USE_SD_CARD == DEF_ENABLED)
    #if SD_CARD_USE_DETECT_SIGNAL == 1
     if(EXTI_GetITStatus(EXTI_Line6) != RESET)
     {
@@ -121,7 +121,7 @@ extern "C" void EXTI9_5_IRQHandler()
 //  Note(s):        Wrapper for C++ for handler
 //
 //-------------------------------------------------------------------------------------------------
-#if USE_I2C_DRIVER == DEF_ENABLED
+#if (USE_I2C_DRIVER == DEF_ENABLED)
 
 extern "C" void I2C1_EV_IRQHandler()             // I2C1 Event
 {
@@ -221,7 +221,7 @@ void I2C3_ER_IRQHandler()             // I2C3 Error
 }
 */
 
-#endif // USE_I2C_DRIVER == DEF_ENABLED
+#endif // (USE_I2C_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -234,7 +234,7 @@ void I2C3_ER_IRQHandler()             // I2C3 Error
 //  Note(s):        Wrapper C++ for handler
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef DIGINI_FATFS_USE_SD_CARD
+#if (DIGINI_FATFS_USE_SD_CARD == DEF_ENABLED)
 /*
 extern "C" void SDIO_IRQHandler()
 {
@@ -266,7 +266,7 @@ extern "C" void DMA2_Stream6_IRQHandler()
 //  Note(s):        Wrapper C++ for handler
 //
 //-------------------------------------------------------------------------------------------------
-#if USE_RTC_DRIVER == DEF_ENABLED
+#if (USE_RTC_DRIVER == DEF_ENABLED)
 
 extern "C" void RTC_WKUP_IRQHandler()
 {
@@ -303,7 +303,7 @@ extern "C" void RTC_Alarm_IRQHandler()
 //  Note(s):        Wrapper C++ for handler
 //
 //-------------------------------------------------------------------------------------------------
-#if USE_UART_DRIVER == DEF_ENABLED
+#if (USE_UART_DRIVER == DEF_ENABLED)
 
 extern "C" void USART1_IRQHandler()
 {
@@ -321,7 +321,7 @@ extern "C" void USART1_IRQHandler()
 //  Note(s):        Wrapper C++ for handler
 //
 //-------------------------------------------------------------------------------------------------
-#if USE_USB_DRIVER == DEF_ENABLED
+#if (USE_USB_DRIVER == DEF_ENABLED)
 
 extern "C" void OTG_HS_IRQHandler()
 {

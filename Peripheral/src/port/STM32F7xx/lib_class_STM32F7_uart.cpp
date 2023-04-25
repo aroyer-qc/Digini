@@ -999,15 +999,15 @@ void UART_Driver::EnableRX_ISR(uint8_t Mask)
     if(m_pUart != nullptr)
     {
         // Not empty, Idle, Error flag (Overrun, Framing error, Parity eroor)
-        CLEAR_BIT(m_CopySR, (USART_SR_RXNE | USART_SR_IDLE | USART_SR_ORE | USART_SR_FE | USART_SR_PE));
+        CLEAR_BIT(m_CopyISR, (USART_ISR_RXNE | USART_ISR_IDLE | USART_ISR_ORE | USART_ISR_FE | USART_ISR_PE));
 
       #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_RX_IDLE_MASK) != 0)
         {
-            SET_BIT(m_CopySR, USART_SR_IDLE);
-            Register = m_pUart->SR;
+            SET_BIT(m_CopyISR, USART_ISR_IDLE);
+            Register = m_pUart->ISR;
             (void)Register;
-            Register = m_pUart->DR;
+            Register = m_pUart->RDR;
             (void)Register;
             SET_BIT(m_pUart->CR1, USART_CR1_IDLEIE);
         }
@@ -1016,7 +1016,7 @@ void UART_Driver::EnableRX_ISR(uint8_t Mask)
       #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_RX_ERROR_MASK) != 0)
         {
-            SET_BIT(m_CopySR, (USART_SR_ORE | USART_SR_FE | USART_SR_PE));
+            SET_BIT(m_CopyISR, (USART_ISR_ORE | USART_ISR_FE | USART_ISR_PE));
             this->ClearAutomaticFlag();
             SET_BIT(m_pUart->CR3, USART_CR3_EIE);
         }
@@ -1055,7 +1055,7 @@ void UART_Driver::DisableRX_ISR(uint8_t Mask)
       #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_RX_IDLE_MASK) != 0)
         {
-            CLEAR_BIT(m_CopySR, USART_SR_IDLE);
+            CLEAR_BIT(m_CopyISR, USART_ISR_IDLE);
             CLEAR_BIT(m_pUart->CR1, USART_CR1_IDLEIE);
         }
       #endif
@@ -1063,7 +1063,7 @@ void UART_Driver::DisableRX_ISR(uint8_t Mask)
       #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_RX_ERROR_MASK) != 0)
         {
-            CLEAR_BIT(m_CopySR, (USART_SR_ORE | USART_SR_FE | USART_SR_PE));
+            CLEAR_BIT(m_CopyISR, (USART_ISR_ORE | USART_ISR_FE | USART_ISR_PE));
             CLEAR_BIT(m_pUart->CR3, USART_CR3_EIE);
         }
       #endif
@@ -1099,12 +1099,12 @@ void UART_Driver::EnableTX_ISR(uint8_t Mask)
 {
     if(m_pUart != nullptr)
     {
-        CLEAR_BIT(m_CopySR, (USART_SR_TC | USART_SR_TXE));    // Clear transmit complete and transmit empty
+        CLEAR_BIT(m_CopyISR, (USART_ISR_TC | USART_ISR_TXE));    // Clear transmit complete and transmit empty
 
       #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_TX_EMPTY_MASK) != 0)
         {
-            SET_BIT(m_CopySR, USART_SR_TXE);
+            SET_BIT(m_CopyISR, USART_ISR_TXE);
             SET_BIT(m_pUart->CR1, USART_CR1_TXEIE);
         }
       #endif
@@ -1112,8 +1112,8 @@ void UART_Driver::EnableTX_ISR(uint8_t Mask)
       #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_TX_COMPLETED_MASK) != 0)
         {
-            SET_BIT(m_CopySR, USART_SR_TC);
-            m_pUart->SR= ~USART_SR_TC;
+            SET_BIT(m_CopyISR, USART_ISR_TC);
+            m_pUart->ISR= ~USART_ISR_TC;
             SET_BIT(m_pUart->CR1, USART_CR1_TCIE);
         }
       #endif
@@ -1149,7 +1149,7 @@ void UART_Driver::DisableTX_ISR(uint8_t Mask)
       #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_TX_COMPLETED_MASK) != 0)
         {
-            CLEAR_BIT(m_CopySR, USART_SR_TC);
+            CLEAR_BIT(m_CopyISR, USART_ISR_TC);
             CLEAR_BIT(m_pUart->CR1, USART_CR1_TCIE);
         }
       #endif
@@ -1256,8 +1256,8 @@ void UART_Driver::IRQ_Handler(void)
 
     if(m_pUart != nullptr)
     {
-        Status  = m_pUart->SR;
-        Status &= m_CopySR;
+        Status  = m_pUart->ISR;
+        Status &= m_CopyISR;
 
        #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
         if((Status & (USART_ISR_FE | USART_ISR_NE | USART_ISR_ORE)) != 0)
@@ -1290,7 +1290,7 @@ void UART_Driver::IRQ_Handler(void)
        #endif
 
         #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
-         if((Status & USART_SR_IDLE) != 0)
+         if((Status & USART_ISR_IDLE) != 0)
          {
            #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
              m_Variables.SizeRX -= m_pDMA_Info->DMA_StreamRX->NDTR; // Give actual position in the DMA Buffer
@@ -1326,9 +1326,9 @@ void UART_Driver::IRQ_Handler(void)
        #endif
 
        #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
-        if((Status & USART_SR_TC) != 0)
+        if((Status & USART_ISR_TC) != 0)
         {
-            WRITE_REG(m_pUart->SR, ~(USART_SR_TC));
+            WRITE_REG(m_pUart->ISR, ~(USART_ISR_TC));
 
             if(m_pCallback != nullptr)
             {

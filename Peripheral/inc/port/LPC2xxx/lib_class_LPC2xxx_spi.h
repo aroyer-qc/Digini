@@ -39,7 +39,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if USE_SPI_DRIVER == DEF_ENABLED
+#if (USE_SPI_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -273,7 +273,7 @@ class CSPI
 #endif
 
 
-#endif // USE_SPI_DRIVER == DEF_ENABLED
+#endif // (USE_SPI_DRIVER == DEF_ENABLED)
 
 
 

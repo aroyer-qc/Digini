@@ -124,16 +124,15 @@ void I2C_Driver::Initialize(void)
     IO_PinInit(m_pInfo->SCL);
     IO_PinInit(m_pInfo->SDA);
 
-    // ---- Peripheral software reset ----
-    pI2Cx->CR1  =  I2C_CR1_SWRST;                                                                   // Peripheral software reset
-    pI2Cx->CR1 &= ~I2C_CR1_SWRST;
-
+/* replaced by timing
     // ---- I2Cx CR2 Configuration ----
     FreqRange  = (uint16_t)(SYS_APB1_CLOCK_FREQUENCY / 1000000);
     Register   = pI2Cx->CR2;                                                                        // Get the I2Cx CR2 value
     Register  &= (uint16_t)~(I2C_CR2_FREQ);                                                         // Clear frequency FREQ[5:0] bits
     Register  |= FreqRange;
     pI2Cx->CR2  = Register;                                                                         // Write to I2Cx CR2
+*/
+
 
     // ---- I2Cx CCR Configuration ----
     Register = pI2Cx->CCR;
@@ -655,8 +654,8 @@ void I2C_Driver::EV_IRQHandler()
 
                 if(m_RxSize == 1)                                       // One more byte to go?
                 {
-                    pI2Cx->CR1 &= ~I2C_CR1_ACK;                         // Disable the acknowledgment
-                    pI2Cx->CR1 |=  I2C_CR1_STOP;                        // Generate a STOP condition
+                    pI2Cx->CR2 |= I2C_CR1_NACK;                         // Disable the acknowledgment
+                    pI2Cx->CR2 |=  I2C_CR2_STOP;                        // Generate a STOP condition
                 }
                 else if(m_RxSize == 0)                                  // last byte received?
                 {
@@ -702,10 +701,11 @@ void I2C_Driver::ER_IRQHandler()
 
     if((Status & I2C_NO_ACK) != 0)
     {
-        pI2Cx->CR1 |= I2C_CR1_STOP;
+        pI2Cx->CR2 |= I2C_CR2_STOP;
     }
 
-    Status     = pI2Cx->SR1 | pI2Cx->SR2 | pI2Cx->DR;       // Dummy read
+    Status     = pI2Cx->SR1 | pI2Cx->SR2 | pI2Cx->RDR;      // Dummy read
+
     pI2Cx->SR1 = 0;                                         // After a  NACK, transfer is done
     m_State    = SYS_READY;                                 // We're done!
 }

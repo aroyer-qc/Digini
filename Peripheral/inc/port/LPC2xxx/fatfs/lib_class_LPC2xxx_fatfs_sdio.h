@@ -38,7 +38,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if USE_SDIO_DRIVER == DEF_ENABLED
+#if (USE_SDIO_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -194,4 +194,4 @@ class CSDIO : public CSD_CardInterface
 
 #endif
 
-#endif // USE_SDIO_DRIVER == DEF_ENABLED
+#endif // (USE_SDIO_DRIVER == DEF_ENABLED)

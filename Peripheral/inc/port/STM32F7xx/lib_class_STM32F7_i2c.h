@@ -48,6 +48,14 @@
 #define I2C_CALLBACK_ERROR                 0x100
 #define I2C_CALLBACK_ABORT                 0x200
 
+#if (I2C_ISR_MASTER_TX_CFG == DEF_ENABLED) || (I2C_ISR_MASTER_RX_CFG == DEF_ENABLED)  || \
+    (I2C_ISR_SLAVE_TX_CFG == DEF_ENABLED)  || (I2C_ISR_SLAVE_RX_CFG == DEF_ENABLED)   || \
+    (I2C_ISR_MEMORY_TX_CFG == DEF_ENABLED) || (I2C_ISR_MEMORY_RX_CFG == DEF_ENABLED)  || \
+    (I2C_ISR_ADRRESS_CFG == DEF_ENABLED)   || (I2C_ISR_TX_LISTEN_CFG == DEF_ENABLED)  || \
+    (I2C_ISR_ERROR_CFG == DEF_ENABLED)     || (I2C_ISR_ABORT_CFG == DEF_ENABLED)
+    #define I2C_ISR_CFG                     DEF_ENABLED
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -72,9 +80,6 @@ enum I2C_ID_e
 
     NB_OF_I2C_DRIVER,
 };
-
-enum
-
 
 struct I2C_Info_t
 {
@@ -135,49 +140,9 @@ class I2C_Driver
 //        size_t              DMA_GetSizeRX                   (uint16_t SizeRX);
       #endif
 
-      #if (anyI2C == DEF_ENABLED)
+      #if (I2C_ISR_CFG == DEF_ENABLED)
         void                RegisterCallback                (CallbackInterface* pCallback);
         void                EnableCallbackType              (int CallbackType, void* pContext = nullptr);
-
-       #if (I2C_ISR_MASTER_TX_CFG == DEF_ENABLED)
-        void*               m_pContextMasterTX;
-       #endif
-
-       #if (I2C_ISR_MASTER_RX_CFG == DEF_ENABLED)
-        void*               m_pContextMasterRX;
-       #endif
-
-       #if (I2C_ISR_SLAVE_TX_CFG == DEF_ENABLED)
-        void*               m_pContextSlaveTX;
-       #endif
-
-       #if (I2C_ISR_SLAVE_RX_CFG == DEF_ENABLED)
-        void*               m_pContextSlaveRX;
-       #endif
-
-       #if (I2C_ISR_ADRRESS_CFG == DEF_ENABLED)
-        void*               m_pContextAddress;
-       #endif
-
-       #if (I2C_ISR_TX_LISTEN_CFG == DEF_ENABLED)
-        void*               m_pContextListen;
-       #endif
-
-       #if (I2C_ISR_MEMORY_TX_CFG == DEF_ENABLED)
-        void*               m_pContextMemoryTX;
-       #endif
-
-       #if (I2C_ISR_MEMORY_RX_CFG == DEF_ENABLED)
-        void*               m_pContextMemoryRX;
-       #endif
-
-       #if (I2C_ISR_ERROR_CFG == DEF_ENABLED)
-        void*               m_pContextError;
-       #endif
-
-       #if (I2C_ISR_ABORT:_CFG == DEF_ENABLED)
-        void*               m_pContextAbort;
-       #endif
       #endif
 
         void            Initialize          (void);
@@ -212,6 +177,48 @@ class I2C_Driver
 
         volatile SystemState_e              m_State;
         volatile uint8_t                    m_Timeout;
+
+      #if (I2C_ISR_CFG == DEF_ENABLED)
+       #if (I2C_ISR_MASTER_TX_CFG == DEF_ENABLED)
+        void*                               m_pContextMasterTX;
+       #endif
+
+       #if (I2C_ISR_MASTER_RX_CFG == DEF_ENABLED)
+        void*                               m_pContextMasterRX;
+       #endif
+
+       #if (I2C_ISR_SLAVE_TX_CFG == DEF_ENABLED)
+        void*                               m_pContextSlaveTX;
+       #endif
+
+       #if (I2C_ISR_SLAVE_RX_CFG == DEF_ENABLED)
+        void*                               m_pContextSlaveRX;
+       #endif
+
+       #if (I2C_ISR_ADRRESS_CFG == DEF_ENABLED)
+        void*                               m_pContextAddress;
+       #endif
+
+       #if (I2C_ISR_TX_LISTEN_CFG == DEF_ENABLED)
+        void*                               m_pContextListen;
+       #endif
+
+       #if (I2C_ISR_MEMORY_TX_CFG == DEF_ENABLED)
+        void*                               m_pContextMemoryTX;
+       #endif
+
+       #if (I2C_ISR_MEMORY_RX_CFG == DEF_ENABLED)
+        void*                               m_pContextMemoryRX;
+       #endif
+
+       #if (I2C_ISR_ERROR_CFG == DEF_ENABLED)
+        void*                               m_pContextError;
+       #endif
+
+       #if (I2C_ISR_ABORT_CFG == DEF_ENABLED)
+        void*                               m_pContextAbort;
+       #endif
+      #endif
 };
 
 //-------------------------------------------------------------------------------------------------

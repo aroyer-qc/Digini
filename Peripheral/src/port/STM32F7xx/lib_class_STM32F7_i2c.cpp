@@ -564,10 +564,12 @@ void I2C_Driver::Unlock(void)
 //  Description:    Register callback for user code in ISR
 //
 //-------------------------------------------------------------------------------------------------
+#if (I2C_ISR_CFG == DEF_ENABLED)
 void I2C_Driver::RegisterCallback(CallbackInterface* pCallback)
 {
     m_pCallback = pCallback;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -580,6 +582,7 @@ void I2C_Driver::RegisterCallback(CallbackInterface* pCallback)
 //  Description:    Enable the type of interrupt for the callback.
 //
 //-------------------------------------------------------------------------------------------------
+#if (I2C_ISR_CFG == DEF_ENABLED)
 void I2C_Driver::EnableCallbackType(int CallBackType, void* pContext)
 {
     switch(CallBackType)
@@ -589,7 +592,7 @@ void I2C_Driver::EnableCallbackType(int CallBackType, void* pContext)
         {
             m_pContextMasterTX    = pContext;
             m_CallBackType       |= CallBackType;
-        } 
+        }
         break;
       #endif
 
@@ -665,7 +668,7 @@ void I2C_Driver::EnableCallbackType(int CallBackType, void* pContext)
         break;
       #endif
 
-      #if (I2C_ISR_ABORT:_CFG == DEF_ENABLED)
+      #if (I2C_ISR_ABORT_CFG == DEF_ENABLED)
         case I2C_CALLBACK_ABORT:
         {
             m_pContextAbort       = pContext;
@@ -675,6 +678,7 @@ void I2C_Driver::EnableCallbackType(int CallBackType, void* pContext)
       #endif
     }
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //

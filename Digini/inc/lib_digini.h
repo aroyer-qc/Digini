@@ -45,13 +45,18 @@
 //-------------------------------------------------------------------------------------------------
 // Common configuration header
 //
-#include "clock_cfg.h"
+//#include "clock_cfg.h"
 #include "digini_cfg.h"
 #include "driver_cfg.h"
 #include "bsp_io_def.h"
 #include "app_cfg.h"
 #include "label_cfg.h"
 #include "project_def.h"
+
+//-------------------------------------------------------------------------------------------------
+// System Clock
+//
+#include "system_clock.h"
 
 //-------------------------------------------------------------------------------------------------
 // Digini library

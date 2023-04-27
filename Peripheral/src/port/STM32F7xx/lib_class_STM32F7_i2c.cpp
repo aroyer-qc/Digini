@@ -40,20 +40,20 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define I2C_ADDRESS_7_BITS                          ((uint16_t)0x4000)
-#define I2C_ADDRESS_10_BITS                         ((uint16_t)0xC000)
+//#define I2C_ADDRESS_7_BITS                          ((uint16_t)0x4000)
+//#define I2C_ADDRESS_10_BITS                         ((uint16_t)0xC000)
 
-#define CR1_CLEAR_MASK                              ((uint16_t)0xFBF5)          // I2C registers Masks
-#define FLAG_MASK                                   ((uint32_t)0x00FFFFFF)      // I2C FLAG mask
+//#define CR1_CLEAR_MASK                              ((uint16_t)0xFBF5)          // I2C registers Masks
+#define FLAG_MASK                                   ((uint32_t)0x00FFBFFF)      // I2C FLAG mask
 #define I2C_TIME_OUT                                100                         // 100 Milliseconds
-#define I2C_NO_ACK                                  ((uint32_t)0x00000400)
-#define I2C_EVENT_MASTER_MODE_SELECT                ((uint32_t)0x00030001)      // BUSY, MSL and SB flag
-#define I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED  ((uint32_t)0x00070082)      // BUSY, MSL, ADDR, TXE and TRA flags
-#define I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED     ((uint32_t)0x00030002)      // BUSY, MSL and ADDR flags
-#define I2C_EVENT_MASTER_BYTE_RECEIVED              ((uint32_t)0x00030040)      // BUSY, MSL and RXNE flags
-#define I2C_EVENT_MASTER_BYTE_TRANSMITTING          ((uint32_t)0x00070080)      // TRA, BUSY, MSL, TXE flags
-#define I2C_EVENT_MASTER_BYTE_TRANSMITTED           ((uint32_t)0x00070084)      // TRA, BUSY, MSL, TXE and BTF flags
-#define I2C_DEVICE_READ                             0x01
+//#define I2C_NACK                                    ((uint32_t)0x00001000)
+//#define I2C_EVENT_MASTER_MODE_SELECT                ((uint32_t)0x00030001)      // BUSY, MSL and SB flag
+//#define I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED  ((uint32_t)0x00070082)      // BUSY, MSL, ADDR, TXE and TRA flags
+//#define I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED     ((uint32_t)0x00030002)      // BUSY, MSL and ADDR flags
+//#define I2C_EVENT_MASTER_BYTE_RECEIVED              ((uint32_t)0x00030040)      // BUSY, MSL and RXNE flags
+//#define I2C_EVENT_MASTER_BYTE_TRANSMITTING          ((uint32_t)0x00070080)      // TRA, BUSY, MSL, TXE flags
+//#define I2C_EVENT_MASTER_BYTE_TRANSMITTED           ((uint32_t)0x00070084)      // TRA, BUSY, MSL, TXE and BTF flags
+//#define I2C_DEVICE_READ                             0x01
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -131,8 +131,6 @@ void I2C_Driver::Initialize(void)
     Register  &= (uint16_t)~(I2C_CR2_FREQ);                                                         // Clear frequency FREQ[5:0] bits
     Register  |= FreqRange;
     pI2Cx->CR2  = Register;                                                                         // Write to I2Cx CR2
-*/
-
 
     // ---- I2Cx CCR Configuration ----
     Register = pI2Cx->CCR;
@@ -158,6 +156,7 @@ void I2C_Driver::Initialize(void)
     }
 
     pI2Cx->CCR  = Register;                                                                         // Write to I2Cx CCR
+*/
 
     // ---- I2Cx CR1 Configuration ----
     pI2Cx->CR1 |= I2C_CR1_PE;                                                                       // Enable the selected I2C peripheral
@@ -303,7 +302,7 @@ SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const
 		pI2Cx->CR2 |= (I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);
 
 		// Generate a START condition
-		pI2Cx->CR1 |= I2C_CR1_START;
+		pI2Cx->CR2 |= I2C_CR2_START;
 
 		// Wait here until I2C transaction is completed or time out
 		TickStart = GetTick();
@@ -557,6 +556,132 @@ void I2C_Driver::Unlock(void)
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           RegisterCallback
+//
+//  Parameter(s):   pCallback       Callback pointer
+//  Return:         None
+//
+//  Description:    Register callback for user code in ISR
+//
+//-------------------------------------------------------------------------------------------------
+#if (I2C_ISR_CFG == DEF_ENABLED)
+void I2C_Driver::RegisterCallback(CallbackInterface* pCallback)
+{
+    m_pCallback = pCallback;
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           EnableCallbackType
+//
+//  Parameter(s):   CallBackType    Type if the ISR callback
+//                  pContext        Context for ISR
+//  Return:         None
+//
+//  Description:    Enable the type of interrupt for the callback.
+//
+//-------------------------------------------------------------------------------------------------
+#if (I2C_ISR_CFG == DEF_ENABLED)
+void I2C_Driver::EnableCallbackType(int CallBackType, void* pContext)
+{
+    switch(CallBackType)
+    {
+      #if (I2C_ISR_MASTER_TX_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_MASTER_TX_COMPLETED:
+        {
+            m_pContextMasterTX    = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_MASTER_RX_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_MASTER_RX_COMPLETED:
+        {
+            m_pContextMasterRX    = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+    #if (I2C_ISR_SLAVE_TX_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_SLAVE_TX_COMPLETED:
+        {
+            m_pContextSlaveTX     = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_SLAVE_RX_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_SLAVE_RX_COMPLETED:
+        {
+            m_pContextSlaveRX     = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_ADRRESS_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_ADDRESS:
+        {
+            m_pContextAddress     = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_TX_LISTEN_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_LISTEN_COMPLETED:
+        {
+            m_pContextListen      = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_MEMORY_TX_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_MEMORY_TX_COMPLETED:
+        {
+            m_pContextMemoryTX    = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_MEMORY_RX_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_MEMORY_RX_COMPLETED:
+        {
+            m_pContextMemoryRX    = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_ERROR_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_ERROR:
+        {
+            m_pContextError       = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+
+      #if (I2C_ISR_ABORT_CFG == DEF_ENABLED)
+        case I2C_CALLBACK_ABORT:
+        {
+            m_pContextAbort       = pContext;
+            m_CallBackType       |= CallBackType;
+        }
+        break;
+      #endif
+    }
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
 //  IRQ Handler:    EV_IRQHandler
 //
 //  Description:    This function handles I2Cx Event interrupt request.
@@ -570,7 +695,7 @@ void I2C_Driver::EV_IRQHandler()
     uint32_t     Status;
 
     pI2Cx  = m_pInfo->pI2Cx;
-    Status = ((uint32_t)pI2Cx->SR1 | ((uint32_t)pI2Cx->SR2 << 16)) & FLAG_MASK;
+    Status = uint32_t(pI2Cx->ISR) & FLAG_MASK;
 
     switch(Status)
     {
@@ -579,11 +704,11 @@ void I2C_Driver::EV_IRQHandler()
         {
             if((m_TxSize != 0) || (m_AddressSize != 0))
             {
-                pI2Cx->DR = m_Device;                                   // Send slave address for write
+                pI2Cx->TDR = m_Device;                                  // Send slave address for write
             }
             else
             {
-                pI2Cx->DR = m_Device | I2C_DEVICE_READ;                 // Send slave address for read
+                pI2Cx->TDR = m_Device | I2C_DEVICE_READ;                // Send slave address for read
             }
         }
         break;
@@ -599,12 +724,12 @@ void I2C_Driver::EV_IRQHandler()
         {
             if(m_AddressSize != 0)
             {
-                pI2Cx->DR = *(reinterpret_cast<uint8_t*>(m_Address) + (2 - m_AddressSize));
+                pI2Cx->TDR = *(reinterpret_cast<uint8_t*>(m_Address) + (2 - m_AddressSize));
                 m_AddressSize--;
             }
             else if(m_TxSize != 0)
             {
-                pI2Cx->DR = *m_pTxBuffer;                               // If TX data available transmit data and continue
+                pI2Cx->TDR = *m_pTxBuffer;                               // If TX data available transmit data and continue
                 m_pTxBuffer++;
                 m_TxSize--;
             }
@@ -619,11 +744,11 @@ void I2C_Driver::EV_IRQHandler()
         {
             if(m_RxSize != 0)                                           // If was transmitting address bytes before read
             {
-                pI2Cx->CR1 |= I2C_CR1_START;                            // Generate a START condition to read data
+                pI2Cx->CR2 |= I2C_CR2_START;                            // Generate a START condition to read data
             }
             else                                                        // If we are done transmitting\A0
             {
-                pI2Cx->CR1 |= I2C_CR1_STOP;                             // Generate a STOP condition
+                pI2Cx->CR2 |= I2C_CR2_STOP;                             // Generate a STOP condition
                 pI2Cx->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);     // Disable the selected I2C interrupts
                 m_State = SYS_READY;
             }
@@ -654,7 +779,7 @@ void I2C_Driver::EV_IRQHandler()
 
                 if(m_RxSize == 1)                                       // One more byte to go?
                 {
-                    pI2Cx->CR2 |= I2C_CR1_NACK;                         // Disable the acknowledgment
+                    pI2Cx->CR2 |= I2C_CR2_NACK;                         // Disable the acknowledgment
                     pI2Cx->CR2 |=  I2C_CR2_STOP;                        // Generate a STOP condition
                 }
                 else if(m_RxSize == 0)                                  // last byte received?

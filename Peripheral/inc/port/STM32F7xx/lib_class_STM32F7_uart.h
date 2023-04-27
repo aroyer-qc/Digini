@@ -50,6 +50,11 @@
 #define UART_CALLBACK_COMPLETED_TX          0x20
 #define UART_CALLBACK_DMA_RX                0x40
 
+#if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
+    (UART_ISR_CTS_CFG == DEF_ENABLED) || (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+    #define UART_ISR_CFG                    DEF_ENABLED
+#endif
+
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -290,8 +295,7 @@ class UART_Driver
         size_t              DMA_GetSizeRX                   (uint16_t SizeRX);
       #endif
 
-      #if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
-          (UART_ISR_CTS_CFG == DEF_ENABLED) || (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+      #if (UART_ISR_CFG == DEF_ENABLED)
         void                RegisterCallback                (CallbackInterface* pCallback);
         void                EnableCallbackType              (int CallbackType, void* pContext = nullptr);
       #endif
@@ -340,9 +344,7 @@ class UART_Driver
         bool                        m_VirtualUartBusyTX;
       #endif
 
-// we might use only one callback here
-      #if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
-          (UART_ISR_CTS_CFG == DEF_ENABLED) || (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+      #if (UART_ISR_CFG == DEF_ENABLED)
         CallbackInterface*          m_pCallback;
         int                         m_CallBackType;
 

@@ -43,13 +43,18 @@
 #include <string.h>
 
 //-------------------------------------------------------------------------------------------------
+// Real Time OS
+
+#include "nOS.h"
+
+//-------------------------------------------------------------------------------------------------
 // Common configuration header
 //
 //#include "clock_cfg.h"
 #include "digini_cfg.h"
 #include "driver_cfg.h"
 #include "bsp_io_def.h"
-#include "app_cfg.h"
+#include "memory_cfg.h"
 #include "label_cfg.h"
 #include "project_def.h"
 
@@ -78,11 +83,6 @@
 #include "lib_dma.h"
 #include "lib_fifo.h"
 #include "lib_cpu_specific.h"
-
-//-------------------------------------------------------------------------------------------------
-// Operating system
-//
-#include "nOS.h"
 
 //-------------------------------------------------------------------------------------------------
 // Driver

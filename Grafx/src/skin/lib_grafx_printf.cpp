@@ -58,7 +58,7 @@ size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService)
 {
     GPrintf     Printf;
     char*       pString  = nullptr;
-    Language_e  Language = LANG_DEFAULT;
+ //   Language_e  Language = LANG_DEFAULT;
     size_t      Size = 0;
 
     if(pText->Label != INVALID_LABEL)

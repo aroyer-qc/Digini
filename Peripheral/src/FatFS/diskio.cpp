@@ -34,7 +34,7 @@
 #ifdef DIGINI_USE_FATFS
 
 //-------------------------------------------------------------------------------------------------
-// Local variable(s) or Classe(s)
+// Local variable(s) or Class
 //-------------------------------------------------------------------------------------------------
 
 DiskIO_DeviceInterface* DiskIO::pDiskList[NUMBER_OF_DISK] =

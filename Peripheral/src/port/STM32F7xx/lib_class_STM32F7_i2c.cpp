@@ -963,11 +963,11 @@ void I2C_Driver::EV_IRQHandler()
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::ER_IRQHandler()
 {
-    uint32_t     Status;
+ //   uint32_t     Status;
     //uint32_t     Source;
 
     //Source = uint32_t(m_pI2Cx->CR1);
-    Status = uint32_t(m_pI2Cx->ISR) & ISR_FLAG_MASK;
+  //  Status = uint32_t(m_pI2Cx->ISR) & ISR_FLAG_MASK;
 
  //   if((Status & I2C_NO_ACK) != 0)
     {
@@ -1156,7 +1156,7 @@ void I2C_Driver::InterruptMasterComplete(uint32_t State)
     if (XferCount == 0)
     {
       if (I2C_GET_STOP_MODE() != I2C_AUTOEND_MODE)
-      {/* Generate a stop condition in case of no transfer option
+      {// Generate a stop condition in case of no transfer option
         if (XferOptions == I2C_NO_OPTION_FRAME)
         {
           // Generate Stop

@@ -35,7 +35,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define I2C_ADDRESSING_MODE_7_BIT                   ((uint32_t)0x00000001)
-#define I2C_ADDRESSING_MODE_1_0BIT                  ((uint32_t)0x00000002)
+#define I2C_ADDRESSING_MODE_10_BIT                  ((uint32_t)0x00000002)
 
 #define I2C_ADDRESS_7_BITS                          ((uint32_t)0x00000001)
 #define I2C_ADDRESS_10_BITS                         ((uint32_t)0x00000002)
@@ -48,6 +48,23 @@
 
 #define I2C_DUAL_ADDRESS_DISABLE                    ((uint32_t)0x00000000)
 #define I2C_DUAL_ADDRESS_ENABLE                     I2C_OAR2_OA2EN
+
+#define I2C1_SELECT_PLCK1                           ((uint32_t)0x00000000)
+#define I2C1_SELECT_SYS_CLK                         ((uint32_t)RCC_DCKCFGR2_I2C1SEL_0)
+#define I2C1_SELECT_HSI                             ((uint32_t)RCC_DCKCFGR2_I2C1SEL_1)
+
+#define I2C2_SELECT_PLCK1                           ((uint32_t)0x00000000)
+#define I2C2_SELECT_SYS_CLK                         ((uint32_t)RCC_DCKCFGR2_I2C2EL_0)
+#define I2C2_SELECT_HSI                             ((uint32_t)RCC_DCKCFGR2_I2C2SEL_1)
+
+#define I2C3_SELECT_PLCK1                           ((uint32_t)0x00000000)
+#define I2C3_SELECT_SYS_CLK                         ((uint32_t)RCC_DCKCFGR2_I2C3SEL_0)
+#define I2C3_SELECT_HSI                             ((uint32_t)RCC_DCKCFGR2_I2C3SEL_1)
+
+#define I2C4_SELECT_PLCK1                           ((uint32_t)0x00000000)
+#define I2C4_SELECT_SYS_CLK                         ((uint32_t)RCC_DCKCFGR2_I2C4SEL_0)
+#define I2C4_SELECT_HSI                             ((uint32_t)RCC_DCKCFGR2_I2C4SEL_1)
+
 
 
 //toDO !!
@@ -101,9 +118,10 @@ struct I2C_Info_t
     I2C_TypeDef*        pI2Cx;
     IO_ID_e             SCL;
     IO_ID_e             SDA;
+    uint32_t            ClockSelection;
     uint32_t            RCC_APB1_En;
     uint32_t            Timing;              // I2C_TIMINGR_register value. use STM32Cube to calculate this value or refer to I2C initialization section in Reference manual.
-  #if I2C_DRIVER_SUPPORT_ADVANCED_MODE_CFG == DEF_ENABLED
+  #if (I2C_DRIVER_SUPPORT_ADVANCED_MODE_CFG == DEF_ENABLED)
     uint32_t            AddressingMode;      // Select the address mode. This parameter can be I2C_ADDRESSING_MODE_7_BIT or I2C_ADDRESSING_MODE_10_BIT.
     uint32_t            DualAddressMode;     // dual addressing mode selection. This parameter can be I2C_DUAL_ADDRESS_ENABLE or I2C_DUAL_ADDRESS_DISABLE.
     uint32_t            OwnAddress_1;        // First device own address and it can be a 7-bit or 10-bit address.
@@ -177,6 +195,8 @@ class I2C_Driver
         SystemState_e   WriteRegister       (uint8_t Register, uint8_t Value, uint8_t Device);
         SystemState_e   WriteRegister       (uint8_t Register, uint8_t Value);
 
+ void InterruptMasterComplete(uint32_t State);
+
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
 // reference
 //        void                DMA_ConfigRX                    (uint8_t* pBufferRX, size_t SizeRX);
@@ -207,6 +227,7 @@ class I2C_Driver
         void            Unlock              (void);
 
         I2C_Info_t*                         m_pInfo;
+        I2C_TypeDef*                        m_pI2Cx;
         nOS_Mutex                           m_Mutex;
         int16_t                             m_Device;
 

@@ -300,7 +300,7 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
                 char*       pString;
                 Language_e  Language = LANG_DEFAULT;
 
-              #if DIGINI_USE_MULTI_LANGUAGE_SUPPORT == DEF_ENABLE
+              #if (DIGINI_USE_MULTI_LANGUAGE_SUPPORT == DEF_ENABLED)
                 DB_Central.Get(&Language, DIGINI_SYSTEM_LANGUAGE, 0, 0);
               #endif
  //               DB_Central.Get(&pString, APPLICATION_LABEL, pText->Label, Language);
@@ -799,7 +799,7 @@ static ServiceReturn_t* SERV_XCHG(ServiceEvent_e* pServiceState, uint16_t SubSer
             else
             {
                 ExchangeType = pExchange[SubService]->ExType;
-              #if DIGINI_USE_MULTI_LANGUAGE_SUPPORT == DEF_ENABLE
+              #if (DIGINI_USE_MULTI_LANGUAGE_SUPPORT == DEF_ENABLED)
                 DB_Central.Get(&Language, DIGINI_SYSTEM_LANGUAGE, 0, 0);
               #endif
 

@@ -102,6 +102,7 @@ typedef enum
 
     // General use status (SD Card, SPI, I2C etc...)
     SYS_ADDRESS_MISALIGNED,
+    SYS_ACKNOWLEDGE_ERROR,
     SYS_ALREADY_BLANK,
     SYS_ARBITRATION_LOST,
     SYS_AUDIO_CODEC_ERROR,

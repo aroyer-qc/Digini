@@ -66,7 +66,7 @@ size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService)
         CLayer::SetTextColor(pText->Color[pService->IndexState]);
         FontDefault.Set(pText->Font);
         SetXY_Justification(pText->Options);
-      #if DIGINI_USE_MULTI_LANGUAGE_SUPPORT == DEF_ENABLE
+      #if (DIGINI_USE_MULTI_LANGUAGE_SUPPORT == DEF_ENABLED)
         DB_Central.Get(&Language, DIGINI_SYSTEM_LANGUAGE, 0, 0);
       #endif
         //DB_Central.Get(&pString, APPLICATION_LABEL, pText->Label, Language);

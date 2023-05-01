@@ -43,7 +43,7 @@
 #define EXPAND_X_DRIVE_AS_ENUM(ENUM_ID, CLASS_, DISK_OBJ)              ENUM_ID,
 #define EXPAND_X_DRIVE_AS_OBJ_CREATION(ENUM_ID, CLASS_, DISK_OBJ)      class CLASS_ DISK_OBJ;
 #define EXPAND_X_DRIVE_AS_OBJ_DECLARATION(ENUM_ID, CLASS_, DISK_OBJ)   extern class CLASS_ DISK_OBJ;
-#define EXPAND_X_DRIVE_AS_OBJ_CONST_IN_DISK(ENUM_ID, CLASS_, DISK_OBJ) DISK_OBJ
+#define EXPAND_X_DRIVE_AS_OBJ_CONST_IN_DISK(ENUM_ID, CLASS_, DISK_OBJ) &DISK_OBJ
 
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)

@@ -34,6 +34,22 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+#define I2C_ADDRESSING_MODE_7_BIT                   ((uint32_t)0x00000001)
+#define I2C_ADDRESSING_MODE_1_0BIT                  ((uint32_t)0x00000002)
+
+#define I2C_ADDRESS_7_BITS                          ((uint32_t)0x00000001)
+#define I2C_ADDRESS_10_BITS                         ((uint32_t)0x00000002)
+
+#define I2C_GENERAL_CALL_DISABLE                    ((uint32_t)0x00000000)
+#define I2C_GENERAL_CALL_ENABLE                     I2C_CR1_GCEN
+
+#define I2C_NO_STRETCH_DISABLE                      ((uint32_t)0x00000000)
+#define I2C_NO_STRETCH_ENABLE                       I2C_CR1_NOSTRETCH
+
+#define I2C_DUAL_ADDRESS_DISABLE                    ((uint32_t)0x00000000)
+#define I2C_DUAL_ADDRESS_ENABLE                     I2C_OAR2_OA2EN
+
+
 //toDO !!
 // Callback type in bit position
 #define I2C_CALLBACK_NONE                  0x000
@@ -43,15 +59,12 @@
 #define I2C_CALLBACK_SLAVE_RX_COMPLETED    0x008
 #define I2C_CALLBACK_ADDRESS               0x010
 #define I2C_CALLBACK_LISTEN_COMPLETED      0x020
-#define I2C_CALLBACK_MEMORY_TX_COMPLETED   0x040
-#define I2C_CALLBACK_MEMORY_RX_COMPLETED   0x080
 #define I2C_CALLBACK_ERROR                 0x100
 #define I2C_CALLBACK_ABORT                 0x200
 
 #if (I2C_ISR_MASTER_TX_CFG == DEF_ENABLED) || (I2C_ISR_MASTER_RX_CFG == DEF_ENABLED)  || \
     (I2C_ISR_SLAVE_TX_CFG == DEF_ENABLED)  || (I2C_ISR_SLAVE_RX_CFG == DEF_ENABLED)   || \
-    (I2C_ISR_MEMORY_TX_CFG == DEF_ENABLED) || (I2C_ISR_MEMORY_RX_CFG == DEF_ENABLED)  || \
-    (I2C_ISR_ADRRESS_CFG == DEF_ENABLED)   || (I2C_ISR_TX_LISTEN_CFG == DEF_ENABLED)  || \
+   (I2C_ISR_ADRRESS_CFG == DEF_ENABLED)   || (I2C_ISR_TX_LISTEN_CFG == DEF_ENABLED)  || \
     (I2C_ISR_ERROR_CFG == DEF_ENABLED)     || (I2C_ISR_ABORT_CFG == DEF_ENABLED)
     #define I2C_ISR_CFG                     DEF_ENABLED
 #endif
@@ -81,6 +94,7 @@ enum I2C_ID_e
     NB_OF_I2C_DRIVER,
 };
 
+// new WIP
 struct I2C_Info_t
 {
     I2C_ID_e            I2C_ID;
@@ -88,11 +102,48 @@ struct I2C_Info_t
     IO_ID_e             SCL;
     IO_ID_e             SDA;
     uint32_t            RCC_APB1_En;
-    uint32_t            Speed;
+    uint32_t            Timing;              // I2C_TIMINGR_register value. use STM32Cube to calculate this value or refer to I2C initialization section in Reference manual.
+  #if I2C_DRIVER_SUPPORT_ADVANCED_MODE_CFG == DEF_ENABLED
+    uint32_t            AddressingMode;      // Select the address mode. This parameter can be I2C_ADDRESSING_MODE_7_BIT or I2C_ADDRESSING_MODE_10_BIT.
+    uint32_t            DualAddressMode;     // dual addressing mode selection. This parameter can be I2C_DUAL_ADDRESS_ENABLE or I2C_DUAL_ADDRESS_DISABLE.
+    uint32_t            OwnAddress_1;        // First device own address and it can be a 7-bit or 10-bit address.
+    uint32_t            OwnAddress_2;        // Second device own address. Dual addressing mode must be selected. It can 7-bit address.
+    uint32_t            OwnAddress2Masks;    // Acknowledge mask address second device own address if dual addressing mode is selected, this parameter can be a value of @ref I2C_OWN_ADDRESS2_MASKS
+    uint32_t            GeneralCallMode;     // General call mode selection. Can be I2C_GENERAL_CALL_ENABLE or I2C_GENERAL_CALL_DISABLE
+    uint32_t            NoStretchMode;       // no stretch mode selection. Can be I2C_NO_STRETCH_ENABLE or I2C_NO_STRETCH_DISABLE
+  #endif
     uint8_t             PreempPrio;
     IRQn_Type           EV_IRQn;
     IRQn_Type           ER_IRQn;
 };
+
+#if 0
+// transfert info... should be in class
+
+   I2C_InitTypeDef            Init;           /*!< I2C communication parameters              */
+    uint8_t                    *pBuffPtr;      /*!< Pointer to I2C transfer buffer            */
+    uint16_t                   XferSize;       /*!< I2C transfer size                         */
+    __IO uint16_t              XferCount;      /*!< I2C transfer counter                      */
+    __IO uint32_t              XferOptions;    /*!< I2C sequantial transfer options, this parameter can
+                                                  be a value of @ref I2C_XFEROPTIONS */
+
+    __IO uint32_t              PreviousState;  /*!< I2C communication Previous state          */
+    HAL_StatusTypeDef(*XferISR)(struct __I2C_HandleTypeDef *hi2c, uint32_t ITFlags, uint32_t ITSources);  /*!< I2C transfer IRQ handler function pointer */
+    DMA_HandleTypeDef          *hdmatx;        /*!< I2C Tx DMA handle parameters              */
+    DMA_HandleTypeDef          *hdmarx;        /*!< I2C Rx DMA handle parameters              */
+    HAL_LockTypeDef            Lock;           /*!< I2C locking object                        */
+    __IO HAL_I2C_StateTypeDef  State;          /*!< I2C communication state                   */
+    __IO HAL_I2C_ModeTypeDef   Mode;           /*!< I2C communication mode                    */
+    __IO uint32_t              ErrorCode;      /*!< I2C Error code                            */
+    __IO uint32_t              AddrEventCount; /*!< I2C Address Event counter                 */
+};
+#endif
+
+typedef struct
+{
+
+} I2C_InitTypeDef;
+
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -117,9 +168,6 @@ class I2C_Driver
         SystemState_e   SlaveTransfer       (uint32_t Address, uint32_t AddressSize, const void* pTxBuffer, size_t TxSize, const void* pRxBuffer, size_t RxSize, uint8_t Device);
 
         // Support memory IT and DMA
-        SystemState_e   MemoryTransfer       (uint32_t Address, uint32_t AddressSize, const void* pTxBuffer, size_t TxSize, const void* pRxBuffer, size_t RxSize);
-        SystemState_e   MemoryTransfer       (uint32_t Address, uint32_t AddressSize, const void* pTxBuffer, size_t TxSize, const void* pRxBuffer, size_t RxSize, uint8_t Device);
-
         SystemState_e   Write               (const void* pBuffer, size_t Size, uint8_t Device);
         SystemState_e   Write               (const void* pBuffer, size_t Size);
         SystemState_e   Read                (const void* pBuffer, size_t Size);
@@ -130,7 +178,7 @@ class I2C_Driver
         SystemState_e   WriteRegister       (uint8_t Register, uint8_t Value);
 
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-// refrence
+// reference
 //        void                DMA_ConfigRX                    (uint8_t* pBufferRX, size_t SizeRX);
 //        void                DMA_ConfigTX                    (uint8_t* pBufferTX, size_t SizeTX);
 //        void                DMA_EnableRX                    (void);
@@ -203,15 +251,7 @@ class I2C_Driver
         void*                               m_pContextListen;
        #endif
 
-       #if (I2C_ISR_MEMORY_TX_CFG == DEF_ENABLED)
-        void*                               m_pContextMemoryTX;
-       #endif
-
-       #if (I2C_ISR_MEMORY_RX_CFG == DEF_ENABLED)
-        void*                               m_pContextMemoryRX;
-       #endif
-
-       #if (I2C_ISR_ERROR_CFG == DEF_ENABLED)
+        #if (I2C_ISR_ERROR_CFG == DEF_ENABLED)
         void*                               m_pContextError;
        #endif
 

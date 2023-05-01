@@ -23,6 +23,61 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+//
+// Note(s):     Support only interrupt at this time
+//
+//
+//       Those timing setting are from the RM0385 manual from ST. You can use STM32CubeMX to
+//       calculate other values.
+//       _______________________________________________________________________
+//      |             |                         |             |                |
+//      |  Parameter  |      Standard mode      |  Fast mode  | Fast mode plus |
+//      |             |_________________________|_____________|________________|
+//      |  fI2CCLK =  |            |            |             |                |
+//      |    8 MHz    |  10 kHz    |  100 kHz   |   400 kHz   |      1 MHz     |
+//      |_____________|____________|____________|_____________|________________|
+//      |    PRESC    |    0x1     |   0x1      |    0x0      |      0x0       |
+//      |    SCLDEL   |    0x4     |   0x4      |    0x3      |      0x1       |
+//      |    SDADEL   |    0x2     |   0x2      |    0x1      |      0x0       |
+//      |    SCLH     |    0xC3    |   0x0F     |    0x03     |      0x03      |
+//      |    SCLL     |    0xC7    |   0x13     |    0x09     |      0x06      |
+//      |_____________|____________|____________|_____________|________________|
+//      |    TIMING   | 0x1042C7C3 | 0x1042130F | 0x00310309  |   0x00100306   | 
+//      |_____________|____________|____________|_____________|________________|
+//
+//       _______________________________________________________________________
+//      |             |                         |             |                |
+//      |  Parameter  |      Standard mode      |  Fast mode  | Fast mode plus |
+//      |             |_________________________|_____________|________________|
+//      |  fI2CCLK =  |            |            |             |                |
+//      |    16 Mhz   |  10 kHz    |  100 kHz   |   400 kHz   |      1 MHz     |
+//      |_____________|____________|____________|_____________|________________|
+//      |    PRESC    |    0x3     |    0x3     |    0x1      |      0x0       |
+//      |    SCLDEL   |    0x4     |    0x4     |    0x3      |      0x2       |
+//      |    SDADEL   |    0x2     |    0x2     |    0x2      |      0x0       |
+//      |    SCLH     |    0xC3    |    0x0F    |    0x03     |      0x03      |
+//      |    SCLL     |    0xC7    |    0x13    |    0x09     |      0x06      |
+//      |_____________|____________|____________|_____________|________________|
+//      |    TIMING   | 0x3042C3C7 | 0x30420F13 | 0x10320309  |   0x00200306   | 
+//      |_____________|____________|____________|_____________|________________|
+//
+//       _______________________________________________________________________
+//      |             |                         |             |                |
+//      |  Parameter  |      Standard mode      |  Fast mode  | Fast mode plus |
+//      |             |_________________________|_____________|________________|
+//      |  fI2CCLK =  |            |            |             |                |
+//      |    48 MHz   |  10 kHz    |  100 kHz   |   400 kHz   |      1 MHz     |
+//      |_____________|____________|____________|_____________|________________|
+//      |    PRESC    |    0xB     |   0xB      |    0x5      |      0x5       |
+//      |    SCLDEL   |    0x4     |   0x4      |    0x3      |      0x1       |
+//      |    SDADEL   |    0x2     |   0x2      |    0x3      |      0x0       |
+//      |    SCLH     |    0xC3    |   0x0F     |    0x03     |      0x01      |
+//      |    SCLL     |    0xC7    |   0x13     |    0x09     |      0x03      |
+//      |_____________|____________|____________|_____________|________________|
+//      |    TIMING   | 0xB042C3C7 | 0xB0420F13 | 0x50330309  |   0x50100103   | 
+//      |_____________|____________|____________|_____________|________________|
+//
+//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
@@ -40,8 +95,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-//#define I2C_ADDRESS_7_BITS                          ((uint16_t)0x4000)
-//#define I2C_ADDRESS_10_BITS                         ((uint16_t)0xC000)
+// uncommented is ok
 
 //#define CR1_CLEAR_MASK                              ((uint16_t)0xFBF5)          // I2C registers Masks
 #define FLAG_MASK                                   ((uint32_t)0x00FFBFFF)      // I2C FLAG mask
@@ -120,42 +174,96 @@ void I2C_Driver::Initialize(void)
     RCC->APB1RSTR &= ~m_pInfo->RCC_APB1_En;             // Release reset signal of I2C
     RCC->APB1ENR  |=  m_pInfo->RCC_APB1_En;
 
+    // Disable I2C and all options
+    pI2Cx->CR1 = 0;;
+
     // ---- GPIO configuration ----
     IO_PinInit(m_pInfo->SCL);
     IO_PinInit(m_pInfo->SDA);
 
-/* replaced by timing
-    // ---- I2Cx CR2 Configuration ----
-    FreqRange  = (uint16_t)(SYS_APB1_CLOCK_FREQUENCY / 1000000);
-    Register   = pI2Cx->CR2;                                                                        // Get the I2Cx CR2 value
-    Register  &= (uint16_t)~(I2C_CR2_FREQ);                                                         // Clear frequency FREQ[5:0] bits
-    Register  |= FreqRange;
-    pI2Cx->CR2  = Register;                                                                         // Write to I2Cx CR2
+    // ---- CR1 Configuration ----
+    // MODIFY_REG(pI2Cx->CR1, (I2C_CR1_ANFOFF | I2C_CR1_DNF), (AnalogFilter | (DigitalFilter << I2C_CR1_DNF_Pos)));   // Configure the analog and digital noise filters
 
-    // ---- I2Cx CCR Configuration ----
-    Register = pI2Cx->CCR;
+    // ---- TIMINGR Configuration ----
+    pI2Cx->TIMINGR = Timing;                                    // Configure the SDA setup, hold time, SCL high, low period, Frequency range
+
+    // ---- OAR1 Configuration ----
+   
+  #if I2C_DRIVER_SUPPORT_ADVANCED_MODE_CFG == DEF_ENABLED
+  
+    pI2Cx->OAR1 = (I2C_OAR1_OA1EN | m_pInfo->OwnAddress_1)      // Configure OwnAddress1 and ack mode
+
+    if(m_pInfo->AddressingMode == I2C_ADDRESSING_MODE_10_BIT)
+    {
+        pI2Cx->OAR1 |= I2C_OAR1_OA1MODE;
+    }
+  #else
+    pI2Cx->OAR1 = 0;                                            // Disable Own Address 1
+  #endif
+
+    // ---- CR2 Configuration ----
+  
+  if(m_pInfoAddressingMode == I2C_ADDRESSING_MODE_10_BIT)       // Addressing Master mode
+  {
+    pI2Cx->CR2 = (I2C_CR2_ADD10);
+  }
+  
+//  use tem variables before writing
+  // Enable the AUTOEND by default, and enable NACK (should be disable only during Slave process)
+  pI2Cx->CR2 |= (I2C_CR2_AUTOEND | I2C_CR2_NACK);
+
+
+    // ---- OAR2 Configuration
+    pI2Cx->OAR2 &= ~I2C_DUAL_ADDRESS_ENABLE;                    // Disable Own Address2 before set the Own Address2 configuration
+
+    pI2Cx->OAR2 = (m_pInfo->DualAddressMode | m_pInfo->OwnAddress2 | (m_pInfo->OwnAddress2Masks << 8));  // Configure I2Cx: Dual mode and Own Address2
+
+    // ---- I2Cx CR1 Configuration ----
+    pI2Cx->CR1 = (m_pInfo->GeneralCallMode | m_pInfo->NoStretchMode);   \\ GeneralCall and NoStretchMode
+
+
+// TODO in structure concatenate all definition that work on same register to save code size..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* replaced by timing
+    FreqRange  = (uint16_t)(SYS_APB1_CLOCK_FREQUENCY / 1000000);
+
 
     if(m_pInfo->Speed <= 100000)                                                                    // Configure speed in standard mode
     {
         Result = (uint16_t)(SYS_APB1_CLOCK_FREQUENCY / (m_pInfo->Speed << 1));                      // Standard mode speed calculate
         Result = AbsMin(Result, 4);                                                                 // Test if CCR value is under 0x04
         Register |= Result;                                                                         // Set speed value for standard mode
-        pI2Cx->TRISE = FreqRange + 1;                                                               // Set Maximum Rise Time for standard mode
     }
     else                                                                                            // (m_pInfo->Speed <= 400000) Configure speed in fast mode
     {                                                                                               // To use the I2C at 400 KHz (in fast mode), the PCLK1 frequency (I2C peripheral input clock) must be a multiple of 10 MHz
         Result = (uint16_t)(SYS_APB1_CLOCK_FREQUENCY / (m_pInfo->Speed * 3));                       // Fast mode speed calculate: Tlow/Thigh = 2
-
-        if((Result & I2C_CCR_CCR) == 0)                                                             // Test if CCR value is under 0x1
-        {
-            Result |= (uint16_t)0x0001;                                                             // Set minimum allowed value
-        }
-
-        Register |= (Result | I2C_CCR_FS);                                                          // Set speed value and set F/S bit for fast mode
         pI2Cx->TRISE = (((FreqRange * 300) / 1000) + 1);                                            // Set Maximum Rise Time for fast mode
     }
-
-    pI2Cx->CCR  = Register;                                                                         // Write to I2Cx CCR
 */
 
     // ---- I2Cx CR1 Configuration ----
@@ -636,24 +744,6 @@ void I2C_Driver::EnableCallbackType(int CallBackType, void* pContext)
         case I2C_CALLBACK_LISTEN_COMPLETED:
         {
             m_pContextListen      = pContext;
-            m_CallBackType       |= CallBackType;
-        }
-        break;
-      #endif
-
-      #if (I2C_ISR_MEMORY_TX_CFG == DEF_ENABLED)
-        case I2C_CALLBACK_MEMORY_TX_COMPLETED:
-        {
-            m_pContextMemoryTX    = pContext;
-            m_CallBackType       |= CallBackType;
-        }
-        break;
-      #endif
-
-      #if (I2C_ISR_MEMORY_RX_CFG == DEF_ENABLED)
-        case I2C_CALLBACK_MEMORY_RX_COMPLETED:
-        {
-            m_pContextMemoryRX    = pContext;
             m_CallBackType       |= CallBackType;
         }
         break;

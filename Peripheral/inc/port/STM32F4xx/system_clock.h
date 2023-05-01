@@ -79,7 +79,6 @@
 // Auto define configuration
 //-------------------------------------------------------------------------------------------------
 
-
 #define RCC_PLLCFGR_PLL_M_POS           0
 #define RCC_PLLCFGR_PLL_N_POS           6
 #define RCC_PLLCFGR_PLL_P_POS           16

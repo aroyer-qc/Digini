@@ -34,7 +34,7 @@
  extern "C" {
 #endif
 
-#ifdef DIGINI_USE_ASSERT
+#if (DIGINI_USE_ASSERT == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Macro(s)

@@ -122,7 +122,7 @@ void* CMem::Alloc(size_t SizeRequired, TickCount_t TimeOut)
 {
    void* MemPtr;
 
-  #if APP_RESTRICT_MEMORY_ALLOC_TO_BLOCK_SIZE == 0
+  #if (DIGINI_RESTRICT_MEMORY_ALLOC_TO_BLOCK_SIZE == DEF_DISABLED)
     // First loop will check for any block available, so we don't wait to be freed
     for(uint8_t i = 0; i < MEM_BLOCK_GROUP_SIZE; i++)
     {
@@ -285,7 +285,7 @@ bool CMem::IsAvailable(size_t SizeRequired)
                 return true;
             }
 
-          #if APP_RESTRICT_MEMORY_ALLOC_TO_BLOCK_SIZE > 0
+          #if (DIGINI_RESTRICT_MEMORY_ALLOC_TO_BLOCK_SIZE == DEF_ENABLED)
             return false;
           #endif
         }

@@ -31,6 +31,8 @@
 //-------------------------------------------------------------------------------------------------
 
 //#include "diskio.h"
+#if (USE_USB_DRIVER == DEF_ENABLED)
+
 #include "lib_class_usbh.h"
 #include "diskio_interface.h"
 
@@ -67,3 +69,4 @@ class CFatFS_CUSB : public DiskIO_DeviceInterface
 
 //-------------------------------------------------------------------------------------------------
 
+#endif // (USE_USB_DRIVER == DEF_ENABLED)

@@ -31,11 +31,10 @@
 #define USB_DRIVER_GLOBAL
 #include "lib_digini.h"
 #undef  USB_DRIVER_GLOBAL
-#include "usb_hcd_int.h"
-
-//-------------------------------------------------------------------------------------------------
 
 #if (USE_USB_DRIVER == DEF_ENABLED)
+
+#include "usb_hcd_int.h"
 
 //-------------------------------------------------------------------------------------------------
 //

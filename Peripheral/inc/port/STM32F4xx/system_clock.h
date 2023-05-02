@@ -27,11 +27,10 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
+// Include(s)
 //-------------------------------------------------------------------------------------------------
 
 #include "stm32f4xx.h"
-#include <stdint.h>
 #include <stdbool.h>
 #include "lib_macro.h"
 
@@ -301,7 +300,7 @@
 
 SYSTEM_EXTERN   uint32_t        SystemCoreClock;
 
-#if HSE_AND_HSI_MUST_BE_MATCHED == DEF_ENABLED
+#if (HSE_AND_HSI_MUST_BE_MATCHED == DEF_ENABLED)
 SYSTEM_EXTERN   bool            SystemHSE_ClockFailure;
 #endif
 

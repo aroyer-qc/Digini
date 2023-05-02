@@ -846,109 +846,72 @@ void I2C_Driver::EnableCallbackType(int CallBackType, void* pContext)
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::EV_IRQHandler()
 {
-    uint32_t State;
+    uint32_t     Status;
 
-   State = ((uint32_t(m_pI2Cx->ISR) & ISR_FLAG_MASK) | ((uint32_t(m_pI2Cx->CR1) & ISR_SOURCE_FLAG_MASK) << I2C_STATE_IE_SHIFT));
+    Status = m_pI2Cx->ISR;                                            // Get I2C Status
 
-    if((State & I2C_STATE_TX_EMPTY) == I2C_STATE_TX_EMPTY)
+    if(Status & I2C_ISR_ARLO)                                       // --- Master Lost Arbitration ---
     {
-        if(m_TxSize != 0)
-        {
-            m_pI2Cx->TXDR = *m_pTxBuffer;                           // If TX data available transmit data and continue
-            m_pTxBuffer++;
-            m_TxSize--;
-            // XferCount--;  ?? why they have a count
-        }
+        m_State  = SYS_ARBITRATION_LOST;                                // Set transfer status as Arbitration Lost
+        m_pI2Cx->ICR = I2C_ICR_ARLOCF;                                    // Clear Status Flags
     }
-    else if((State & I2C_STATE_RX_NOT_EMPTY) == I2C_STATE_TX_EMPTY)
+    else if(Status & I2C_ISR_BERR)                                  // --- Master Start Stop Error ---
     {
-        if(m_RxSize > 0)                                            // If waiting for bytes?
-        {
-            *m_pRxBuffer = (uint8_t)m_pI2Cx->RXDR;                  // Store the received data
-            m_pRxBuffer++;
-            m_RxSize--;
-            // XferCount--;
-
-            if(m_RxSize == 1)                                       // One more byte to go?
-            {
-                m_pI2Cx->CR2 |= I2C_CR2_NACK;                       // Disable the acknowledgment
-                m_pI2Cx->CR2 |=  I2C_CR2_STOP;                      // Generate a STOP condition
-            }
-            else if(m_RxSize == 0)                                  // last byte received?
-            {
-                m_pI2Cx->CR1 &= ~(I2C_CR1_NACKIE | I2C_CR1_RXIE);   // Disable the selected I2C interrupts
-                m_State = SYS_READY;                                // We're done!
-            }
-        }
-        else                                                        // Not waiting for bytes, not supposed to be here
-        {
-//            m_pI2Cx->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITERREN); // Disable the selected I2C interrupts
-            m_State = SYS_READY;                                    // We're done!
-        }
-    }
-    else if(((State & I2C_STATE_MASTER_RX_NACK) == I2C_STATE_MASTER_RX_NACK))
-    {
-        // Clear NACK Flag
-        //__HAL_I2C_CLEAR_FLAG(I2C_FLAG_AF);
-        m_State = SYS_ACKNOWLEDGE_ERROR;
-
-        // Flush TX
-        m_TxSize    = 0;
-        m_pI2Cx->TXDR = 0;        // Write a dummy data in TXDR to clear TXIS
-        /* Flush TX register if not empty */
-        //if(__HAL_I2C_GET_FLAG(I2C_FLAG_TXE) == RESET)
-        //{
-        //    __HAL_I2C_CLEAR_FLAG(I2C_FLAG_TXE); ???
-        //}
+        m_State  = SYS_BUS_ERROR;                                       // Set transfer status as Bus Error
+        m_pI2Cx->ICR = I2C_ICR_BERRCF;                                    // Clear Status Flags
     }
 
-
-
-
-/*
-        case I2C_EVENT_MASTER_BYTE_TRANSMITTED:
-        {
-            if(m_RxSize != 0)                                           // If was transmitting address bytes before read
-            {
-                m_pI2Cx->CR2 |= I2C_CR2_START;                            // Generate a START condition to read data
-            }
-            else                                                        // If we are done transmitting\A0
-            {
-                m_pI2Cx->CR2 |= I2C_CR2_STOP;                             // Generate a STOP condition
-                m_pI2Cx->CR2 &= ~(I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);     // Disable the selected I2C interrupts
-                m_State = SYS_READY;
-            }
-        }
-        break;
-
-
-        // Master Receiver -----------------------------------------------------
-
-        case I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED:
-        {
-            if(m_RxSize == 1)
-            {
-                m_pI2Cx->CR1 &= ~I2C_CR1_ACK;                             // Disable the acknowledgement
-                m_pI2Cx->CR1 |=  I2C_CR1_STOP;                            // Generate a STOP condition
-            }
-
-            m_pI2Cx->CR2 |= I2C_CR2_ITBUFEN;                              // Next we receive data buffer
-        }
-        break;
-*/
-    else                                                        // Not supposed to be here
+    if(m_pI2Cx->CR1 & I2C_CR1_TXIE)
     {
-        // Reset all flags : Do not modify configuration here
-        // Timeout will be generated
-        //State = m_pI2Cx->SR1 | m_pI2Cx->SR2 | m_pI2Cx->RXDR;               // Dummy read
-        //m_pI2Cx->SR1 = 0;
+        if(Status & I2C_ISR_TXE)                                    // ... Master Transmit available ...
+        {
+            if(m_AddressSize != 0)
+            {
+                m_pI2Cx->TXDR = uint8_t(m_Address >> ((m_AddressSize - 1) << 3));
+                m_AddressSize--;
+            }
+            else if(m_TxSize == 0)
+            {
+                m_pI2Cx->CR1  &= ~I2C_CR1_TXIE;
+                if(m_RxSize != 0)
+                {
+                    m_pI2Cx->CR2 &= ~I2C_CR2_NBYTES;                     // Flush the NBYTES
+                    m_pI2Cx->CR2 |= (I2C_CR2_START |
+                                  I2C_CR2_RD_WRN    |
+                                  (m_RxSize << 16));                   // Request a read
+                }
+                else
+                {
+                    m_pI2Cx->CR2 |= I2C_CR2_STOP;
+                }
+            }
+            else
+            {
+                m_pI2Cx->TXDR = *m_pTxBuffer;                            // If TX data available transmit data and continue
+                m_pTxBuffer++;
+                m_TxSize--;
+            }
+        }
     }
 
-
-    if((State & I2C_STATE_MASTER_STOP) == I2C_STATE_MASTER_STOP)
+    if(Status & I2C_ISR_TC)
     {
-        // Master complete process
-        //InterruptMasterComplete(State);
+        m_pI2Cx->CR2 |= I2C_CR2_AUTOEND;
+    }
+
+    if(m_pI2Cx->CR1 & I2C_CR1_RXIE)
+    {
+        if(Status & I2C_ISR_RXNE)                                   // ... Master Receive data available ...
+        {
+            *m_pRxBuffer++ = m_pI2Cx->RXDR;
+        }
+    }
+
+    if(Status & I2C_ISR_STOPF)                                      // ... STOP is sent
+    {
+        m_State     = SYS_READY;
+        m_pI2Cx->CR1 &= ~(uint32_t)I2C_CR1_STOPIE;
+        m_pI2Cx->ICR  =  I2C_ICR_STOPCF;
     }
 }
 
@@ -963,21 +926,10 @@ void I2C_Driver::EV_IRQHandler()
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::ER_IRQHandler()
 {
- //   uint32_t     Status;
-    //uint32_t     Source;
+    m_Timeout  = 0;
+    m_State    = SYS_READY;                                 // We're done!
 
-    //Source = uint32_t(m_pI2Cx->CR1);
-  //  Status = uint32_t(m_pI2Cx->ISR) & ISR_FLAG_MASK;
-
- //   if((Status & I2C_NO_ACK) != 0)
-    {
-        m_pI2Cx->CR2 |= I2C_CR2_STOP;
-    }
-
-    //Status     = m_pI2Cx->SR1 | m_pI2Cx->SR2 | m_pI2Cx->RXDR;      // Dummy read
-
-//    m_pI2Cx->SR1 = 0;                                         // After a  NACK, transfer is done
-    m_State      = SYS_READY;                                 // We're done!
+    m_pI2Cx->CR2 |= I2C_CR2_STOP;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -990,7 +942,7 @@ void I2C_Driver::ER_IRQHandler()
 
 
 
-
+#if 0
 
 //  I2C Master complete process.
 //  ITFlags Interrupt flags to handle.
@@ -1178,3 +1130,6 @@ void I2C_Driver::InterruptMasterComplete(uint32_t State)
   }
   return SYS_READY;
 */
+
+
+#endif

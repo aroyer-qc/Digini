@@ -30,6 +30,7 @@
 // Define(s) and macro(s)
 //-------------------------------------------------------------------------------------------------
 
+#define GPIO_x                          ((uint32_t)0x00000000)
 #define NUMBER_OF_IO_PORT               ((uint32_t)11)//   TODO   evaluate this value
 #define NUMBER_OF_PIN_PER_PORT          ((uint32_t)16)
 

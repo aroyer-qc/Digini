@@ -31,26 +31,23 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "lib_typedef.h"
+#include "util_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-//#define CRC_16_MODBUS_USE_TABLE
-#define CRC_16_MODBUS_USE_TABLE
-#define CRC_16_CCITT_USE_TABLE
-#define CRC_32_IEEE_USE_TABLE
-#define CRC_NORMAL_USE_TABLE
-
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
 
-enum CrcType_e
+enum CrcType_e                      // Poly         Init Value      XOR Value
 {
-    CRC_16_MODBUS,
-    CRC_16_CCITT,
-    CRC_32_IEEE,
+    CRC_8,
+    CRC_8_EBU,                      // 0x1D
+    CRC_16_MODBUS,                  // 0x8005       0xFFFF          0x0000
+    CRC_16_CCITT,                   // 0x1021       0xFFFF          0x0000
+    CRC_32_IEEE,                    // 0x04C11DB7	0xFFFFFFFF      0xFFFFFFFF
     CRC_NORMAL,
 };
 

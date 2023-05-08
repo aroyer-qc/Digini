@@ -117,12 +117,12 @@ void IO_PinInit(IO_ID_e IO_ID)
     uint32_t       State;
 
     pIO_Properties = &IO_Properties[IO_ID];
-    pPort        = pIO_Properties->pPort;
-    PinNumber    = pIO_Properties->PinNumber;
-    PinMode      = pIO_Properties->PinMode;
-    PinType      = pIO_Properties->PinType;
-    PinSpeed     = pIO_Properties->PinSpeed;
-    State        = pIO_Properties->State;
+    pPort          = pIO_Properties->pPort;
+    PinNumber      = pIO_Properties->PinNumber;
+    PinMode        = pIO_Properties->PinMode;
+    PinType        = pIO_Properties->PinType;
+    PinSpeed       = pIO_Properties->PinSpeed;
+    State          = pIO_Properties->State;
 
     IO_PinInit(pPort, PinNumber, PinMode, PinType, PinSpeed, State);
 }
@@ -150,54 +150,57 @@ void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint3
 {
     uint32_t Pin2BitShift;
 
-    IO_EnableClock(pPort);
-    Pin2BitShift = PinNumber << 1;
-
-    // Set pin speed
-    pPort->OSPEEDR &= ~(uint32_t)(IO_SPEED_PIN_MASK << Pin2BitShift);
-    pPort->OSPEEDR |=  (uint32_t)(PinSpeed          << Pin2BitShift);
-
-    switch(PinMode)
+    if(pPort != GPIOxx)
     {
-        case IO_MODE_OUTPUT:
-        {
-            // Preset initial state
-            if(State == 0) pPort->BSRRH = (1 << PinNumber);
-            else           pPort->BSRRL = (1 << PinNumber);
-        }
-        break;
+        IO_EnableClock(pPort);
+        Pin2BitShift = PinNumber << 1;
 
-        case IO_MODE_ALTERNATE:
-        {
-            if(PinNumber < 8)
-            {
-                pPort->AFR[0] &= ~(uint32_t)(IO_AF_MASK << (PinNumber << 2));
-                pPort->AFR[0] |=  (uint32_t)(State      << (PinNumber << 2));
-            }
-            else
-            {
-                pPort->AFR[1] &= ~(uint32_t)(IO_AF_MASK << ((PinNumber - 8) << 2));
-                pPort->AFR[1] |=  (uint32_t)(State      << ((PinNumber - 8) << 2));
-            }
-        }
-        break;
+        // Set pin speed
+        pPort->OSPEEDR &= ~(uint32_t)(IO_SPEED_PIN_MASK << Pin2BitShift);
+        pPort->OSPEEDR |=  (uint32_t)(PinSpeed          << Pin2BitShift);
 
-        // case IO_MODE_ANALOG:  // Nothing to do for analog
-        // case IO_MODE_INPUT:     // Nothing to do for input
-        default:
+        switch(PinMode)
         {
+            case IO_MODE_OUTPUT:
+            {
+                // Preset initial state
+                if(State == 0) pPort->BSRRH = (1 << PinNumber);
+                else           pPort->BSRRL = (1 << PinNumber);
+            }
+            break;
+
+            case IO_MODE_ALTERNATE:
+            {
+                if(PinNumber < 8)
+                {
+                    pPort->AFR[0] &= ~(uint32_t)(IO_AF_MASK << (PinNumber << 2));
+                    pPort->AFR[0] |=  (uint32_t)(State      << (PinNumber << 2));
+                }
+                else
+                {
+                    pPort->AFR[1] &= ~(uint32_t)(IO_AF_MASK << ((PinNumber - 8) << 2));
+                    pPort->AFR[1] |=  (uint32_t)(State      << ((PinNumber - 8) << 2));
+                }
+            }
+            break;
+
+            // case IO_MODE_ANALOG:  // Nothing to do for analog
+            // case IO_MODE_INPUT:     // Nothing to do for input
+            default:
+            {
+            }
+            break;
         }
-        break;
+
+        pPort->PUPDR  &= ~(uint32_t)((IO_TYPE_PIN_PULL_MASK >> 1) << Pin2BitShift);                 // Reset bit for Pull Up
+        pPort->PUPDR  |=  (uint32_t)(((PinType & IO_TYPE_PIN_PULL_MASK) >> 1) << Pin2BitShift);     // Set new pull setting
+
+        pPort->OTYPER &= ~(uint32_t)(IO_TYPE_PIN_DRIVE_MASK << PinNumber);                          // Reset bit for Drive type PP or OD
+        pPort->OTYPER |=  (uint32_t)((PinType & IO_TYPE_PIN_DRIVE_MASK) << PinNumber);              // Set new type
+
+        pPort->MODER  &= ~(uint32_t)(IO_MODE_PIN_MASK << Pin2BitShift);
+        pPort->MODER  |=  (uint32_t)(PinMode          << Pin2BitShift);
     }
-
-    pPort->PUPDR  &= ~(uint32_t)((IO_TYPE_PIN_PULL_MASK >> 1) << Pin2BitShift);                 // Reset bit for Pull Up
-    pPort->PUPDR  |=  (uint32_t)(((PinType & IO_TYPE_PIN_PULL_MASK) >> 1) << Pin2BitShift);     // Set new pull setting
-
-    pPort->OTYPER &= ~(uint32_t)(IO_TYPE_PIN_DRIVE_MASK << PinNumber);                          // Reset bit for Drive type PP or OD
-    pPort->OTYPER |=  (uint32_t)((PinType & IO_TYPE_PIN_DRIVE_MASK) << PinNumber);              // Set new type
-
-    pPort->MODER  &= ~(uint32_t)(IO_MODE_PIN_MASK << Pin2BitShift);
-    pPort->MODER  |=  (uint32_t)(PinMode          << Pin2BitShift);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -215,11 +218,15 @@ void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint3
 void IO_PinInitInput(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort;
-    uint32_t       PinNumber;
+    uint32_t      PinNumber;
 
-    pPort     = IO_Properties[IO_ID].pPort;
-    PinNumber = IO_Properties[IO_ID].PinNumber << 1;
-    pPort->MODER &= ~(uint32_t)(IO_MODE_PIN_MASK << PinNumber);
+    pPort = IO_Properties[IO_ID].pPort;
+
+    if(pPort != GPIOxx)
+    {
+        PinNumber = IO_Properties[IO_ID].PinNumber << 1;
+        pPort->MODER &= ~(uint32_t)(IO_MODE_PIN_MASK << PinNumber);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -237,13 +244,17 @@ void IO_PinInitInput(IO_ID_e IO_ID)
 void IO_PinInitOutput(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort;
-    uint32_t       PinNumber;
+    uint32_t      PinNumber;
 
-    pPort     = IO_Properties[IO_ID].pPort;
-    PinNumber = IO_Properties[IO_ID].PinNumber << 1;
+    pPort = IO_Properties[IO_ID].pPort;
 
-    pPort->MODER &= ~(uint32_t)(IO_MODE_PIN_MASK << PinNumber);
-    pPort->MODER |=  (uint32_t)(IO_MODE_OUTPUT   << PinNumber);
+    if(pPort != GPIOxx)
+    {
+        PinNumber = IO_Properties[IO_ID].PinNumber << 1;
+
+        pPort->MODER &= ~(uint32_t)(IO_MODE_PIN_MASK << PinNumber);
+        pPort->MODER |=  (uint32_t)(IO_MODE_OUTPUT   << PinNumber);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -260,9 +271,13 @@ void IO_PinInitOutput(IO_ID_e IO_ID)
 //-------------------------------------------------------------------------------------------------
 void IO_SetPinLow(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort     = IO_Properties[IO_ID].pPort;
-    uint32_t      PinNumber = IO_Properties[IO_ID].PinNumber;
-    pPort->BSRRH = (1 << PinNumber);
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+    if(pPort != GPIOxx)
+    {
+        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
+        pPort->BSRRH = (1 << PinNumber);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -279,9 +294,13 @@ void IO_SetPinLow(IO_ID_e IO_ID)
 //-------------------------------------------------------------------------------------------------
 void IO_SetPinHigh(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort     = IO_Properties[IO_ID].pPort;
-    uint32_t      PinNumber = IO_Properties[IO_ID].PinNumber;
-    pPort->BSRRL = (1 << PinNumber);
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+    if(pPort != GPIOxx)
+    {
+        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
+        pPort->BSRRL = (1 << PinNumber);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -298,9 +317,13 @@ void IO_SetPinHigh(IO_ID_e IO_ID)
 //-------------------------------------------------------------------------------------------------
 void IO_TogglePin(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort     = IO_Properties[IO_ID].pPort;
-    uint32_t      PinNumber = IO_Properties[IO_ID].PinNumber;
-    pPort->ODR ^= (1 << PinNumber);
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+    if(pPort != GPIOxx)
+    {
+        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
+        pPort->ODR ^= (1 << PinNumber);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -342,15 +365,20 @@ void IO_SetPin(IO_ID_e IO_ID, uint32_t Value)
 //-------------------------------------------------------------------------------------------------
 uint32_t IO_GetInputPin(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort     = IO_Properties[IO_ID].pPort;
-    uint32_t      PinNumber = IO_Properties[IO_ID].PinNumber;
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
 
-    if((pPort->IDR & (1 << PinNumber)) == 0)
+    if(pPort != GPIOxx)
     {
-        return 0;
+        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
+
+        if((pPort->IDR & (1 << PinNumber)) == 0)
+        {
+            return 0;
+        }
+        return 1;
     }
 
-    return 1;
+    return 0;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -367,15 +395,21 @@ uint32_t IO_GetInputPin(IO_ID_e IO_ID)
 //-------------------------------------------------------------------------------------------------
 uint32_t IO_GetOutputPin(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort     = IO_Properties[IO_ID].pPort;
-    uint32_t      PinNumber = IO_Properties[IO_ID].PinNumber;
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
 
-    if((pPort->ODR & (1 << PinNumber)) == 0)
+    if(pPort != GPIOxx)
     {
-        return 0;
+        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
+
+        if((pPort->ODR & (1 << PinNumber)) == 0)
+        {
+            return 0;
+        }
+
+        return 1;
     }
 
-    return 1;
+    return 0;
 }
 
 //-------------------------------------------------------------------------------------------------

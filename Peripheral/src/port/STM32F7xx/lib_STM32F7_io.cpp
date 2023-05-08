@@ -152,7 +152,7 @@ void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint3
 {
     uint32_t Pin2BitShift;
 
-    if(pPort != GPIO_x)
+    if(pPort != GPIOxx)
     {
         IO_EnableClock(pPort);
         Pin2BitShift = PinNumber << 1;
@@ -224,7 +224,7 @@ void IO_PinInitInput(IO_ID_e IO_ID)
 
     pPort = IO_Properties[IO_ID].pPort;
 
-    if(pPort != GPIO_x)
+    if(pPort != GPIOxx)
     {
         PinNumber = IO_Properties[IO_ID].PinNumber << 1;
         pPort->MODER &= ~(uint32_t)(IO_MODE_PIN_MASK << PinNumber);
@@ -250,7 +250,7 @@ void IO_PinInitOutput(IO_ID_e IO_ID)
 
     pPort = IO_Properties[IO_ID].pPort;
 
-    if(pPort != GPIO_x)
+    if(pPort != GPIOxx)
     {
         PinNumber = IO_Properties[IO_ID].PinNumber << 1;
 
@@ -275,7 +275,7 @@ void IO_SetPinLow(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
 
-    if(pPort != GPIO_x)
+    if(pPort != GPIOxx)
     {
         uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
         pPort->BSRR = (IO_PORT_RESET_MASK << PinNumber);
@@ -298,7 +298,7 @@ void IO_SetPinHigh(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
 
-    if(pPort != GPIO_x)
+    if(pPort != GPIOxx)
     {
         uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
         pPort->BSRR = (IO_PORT_SET_MASK << PinNumber);
@@ -321,7 +321,7 @@ void IO_TogglePin(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
 
-    if(pPort != GPIO_x)
+    if(pPort != GPIOxx)
     {
         uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
         pPort->ODR ^= (1 << PinNumber);
@@ -369,7 +369,7 @@ uint32_t IO_GetInputPin(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
 
-    if(pPort != GPIO_x)
+    if(pPort != GPIOxx)
     {
         uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
 
@@ -399,7 +399,7 @@ uint32_t IO_GetOutputPin(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
 
-    if(pPort != GPIO_x)
+    if(pPort != GPIOxx)
     {
         uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
 

@@ -47,7 +47,7 @@
 #ifdef CRC_16_MODBUS_USE_TABLE
 
 // CRC table for the CRC-16. The poly is 0x8005 (x^16 + x^15 + x^2 + 1)
-static const uint16_t crc16_modbus_table[256] =
+static const uint16_t CRC_16_MODBUS_table[256] =
 {
     0x0000, 0xC0C1, 0xC181, 0x0140, 0xC301, 0x03C0, 0x0280, 0xC241,
     0xC601, 0x06C0, 0x0780, 0xC741, 0x0500, 0xC5C1, 0xC481, 0x0440,
@@ -90,7 +90,7 @@ static const uint16_t crc16_modbus_table[256] =
 // computed using the standard bit-at-a-time methods. The polynomial can
 // be seen in entry 128, 0x8408. This corresponds to x^0 + x^5 + x^12.
 // Add the implicit x^16, and you have the standard CRC-CCITT.
-static const uint16_t crc_16_ccitt_table[256] =
+static const uint16_t CRC_16_CCITT_table[256] =
 {
     0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
     0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
@@ -130,7 +130,7 @@ static const uint16_t crc_16_ccitt_table[256] =
 
 // CRC 32 IEEE
 #ifdef CRC_32_IEEE_USE_TABLE
-static const uint32_t crc_32_ieee_table[256] =
+static const uint32_t CRC_32_IEEE_table[256] =
 {
     /* 0x00 */ 0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA,    /* 0x04 */ 0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
     /* 0x08 */ 0x0EDB8832, 0x79DCB8A4, 0xE0D5E91E, 0x97D2D988,    /* 0x0C */ 0x09B64C2B, 0x7EB17CBD, 0xE7B82D07, 0x90BF1D91,
@@ -183,12 +183,12 @@ static const uint32_t crc_32_ieee_table[256] =
 //-------------------------------------------------------------------------------------------------
 void CCRC::Init(CrcType_e CrcType, uint32_t Width, uint32_t Polynomial, uint32_t Xor)
 {
-    m_CrcType        = CrcType;
-    m_Polynomial    = Polynomial;
-    m_Xor            = Xor;
-    m_Width            = Width;
-    m_Mask            = 0xFFFFFFFF >> (32 - Width);
-    m_Remainder     = 0xFFFFFFFF;
+    m_CrcType    = CrcType;
+    m_Polynomial = Polynomial;
+    m_Xor        = Xor;
+    m_Width      = Width;
+    m_Mask       = 0xFFFFFFFF >> (32 - Width);
+    m_Remainder  = 0xFFFFFFFF;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -203,12 +203,12 @@ void CCRC::Init(CrcType_e CrcType, uint32_t Width, uint32_t Polynomial, uint32_t
 //-------------------------------------------------------------------------------------------------
 void CCRC::Init(CrcType_e CrcType)
 {
-    m_CrcType        = CrcType;
-    m_Polynomial    = 0;
-    m_Xor            = 0;
-    m_Width            = 0;
-    m_Mask            = 0;
-    m_Remainder     = 0xFFFFFFFF;
+    m_CrcType    = CrcType;
+    m_Polynomial = 0;
+    m_Xor        = 0;
+    m_Width      = 0;
+    m_Mask       = 0;
+    m_Remainder  = 0xFFFFFFFF;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -218,7 +218,7 @@ void CCRC::Init(CrcType_e CrcType)
 //  Parameter(s):   void
 //  Return:         uint32_t
 //
-//  Description:    This function return the crc value.
+//  Description:    This function return the CRC value.
 //
 //-------------------------------------------------------------------------------------------------
 uint32_t CCRC::Done(void)
@@ -228,6 +228,7 @@ uint32_t CCRC::Done(void)
         m_Remainder ^= m_Xor;
         m_Remainder &= m_Mask;
     }
+
     return m_Remainder;
 }
 
@@ -238,7 +239,7 @@ uint32_t CCRC::Done(void)
 //  Parameter(s):   uint8_t Byte
 //  Return:         void
 //
-//  Description:    Find the crc of a byte.
+//  Description:    Find the CRC of a byte.
 //
 //-------------------------------------------------------------------------------------------------
 void CCRC::Byte(const uint8_t Byte)
@@ -247,19 +248,37 @@ void CCRC::Byte(const uint8_t Byte)
 
     switch(m_CrcType)
     {
+        case CRC_8:
+        {
+            #ifdef CRC_16_MODBUS_USE_TABLE
+            m_Remainder = CRC_16_MODEBUS_table[(m_Remainder ^ Byte) & 0xFF] ^ (m_Remainder >> 8);
+            #else
+            m_Remainder = 0;
+            #endif
+            break;
+        }
+        case CRC_8_EBU:
+        {
+            #ifdef CRC_16_MODBUS_USE_TABLE
+            #else
+            m_Remainder = 0;
+            #endif
+            break;
+        }
         case CRC_16_MODBUS:
         {
             #ifdef CRC_16_MODBUS_USE_TABLE
-            m_Remainder = crc16_modbus_table[(m_Remainder ^ Byte) & 0xFF] ^ (m_Remainder >> 8);
-            #endif
+            m_Remainder = CRC_16_MODEBUS_table[(m_Remainder ^ Byte) & 0xFF] ^ (m_Remainder >> 8);
+            #else
             m_Remainder = 0;
+            #endif
             break;
         }
 
         case CRC_16_CCITT:
         {
             #ifdef CRC_16_CCITT_USE_TABLE
-            m_Remainder = crc_16_ccitt_table[(m_Remainder ^ Byte) & 0xFF] ^ (m_Remainder >> 8);
+            m_Remainder = CRC_16_CCITT_table[(m_Remainder ^ Byte) & 0xFF] ^ (m_Remainder >> 8);
             #endif
             m_Remainder = 0;
             break;
@@ -268,9 +287,10 @@ void CCRC::Byte(const uint8_t Byte)
         case CRC_32_IEEE:
         {
             #ifdef CRC_32_IEEE_USE_TABLE
-            m_Remainder = crc_32_ieee_table[(m_Remainder ^ Byte) & 0xFF] ^ (m_Remainder >> 8);
-            #endif
+            m_Remainder = CRC_32_IEEE_table[(m_Remainder ^ Byte) & 0xFF] ^ (m_Remainder >> 8);
+            #else
             m_Remainder = 0;
+            #endif
             break;
         }
 
@@ -304,7 +324,7 @@ void CCRC::Byte(const uint8_t Byte)
 //                    Len
 //  Return:         void
 //
-//  Description:    Find the crc of a buffer of byte.
+//  Description:    Find the CRC of a buffer of byte.
 //
 //-------------------------------------------------------------------------------------------------
 void CCRC::Buffer(const uint8_t *pBuffer, uint32_t Len )

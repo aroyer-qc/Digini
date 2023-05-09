@@ -812,7 +812,7 @@ SystemState_e SDIO_Driver::CheckOCR_Response(uint32_t Response_R1)
     if((Response_R1 & SD_OCR_WRITE_PROT_VIOLATION)  == SD_OCR_WRITE_PROT_VIOLATION) return SD_WRITE_PROT_VIOLATION;
     if((Response_R1 & SD_OCR_LOCK_UNLOCK_FAILED)    == SD_OCR_LOCK_UNLOCK_FAILED)   return SYS_LOCK_UNLOCK_FAILED;
     if((Response_R1 & SD_OCR_COM_CRC_FAILED)        == SD_OCR_COM_CRC_FAILED)       return SYS_CRC_FAIL;
-    if((Response_R1 & SD_OCR_ILLEGAL_CMD)           == SD_OCR_ILLEGAL_CMD)          return SYS_ILLEGAL_COMMAND;
+    if((Response_R1 & SD_OCR_ILLEGAL_CMD)           == SD_OCR_ILLEGAL_CMD)          return SYS_INVALID_COMMAND;
     if((Response_R1 & SD_OCR_CARD_ECC_FAILED)       == SD_OCR_CARD_ECC_FAILED)      return SD_CARD_ECC_FAILED;
     if((Response_R1 & SD_OCR_CC_ERROR)              == SD_OCR_CC_ERROR)             return SD_CC_ERROR;
     if((Response_R1 & SD_OCR_GENERAL_UNKNOWN_ERROR) == SD_OCR_GENERAL_UNKNOWN_ERROR)return SYS_GENERAL_UNKNOWN_ERROR;
@@ -873,7 +873,7 @@ SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
     }
     if((SDMMC1->STA & SDMMC_STA_CCRCFAIL) != 0)     return SYS_CRC_FAIL;
     if(ResponseType == 2)                           return SYS_READY;
-    if((uint8_t)SDMMC1->RESPCMD != Command)         return SYS_ILLEGAL_COMMAND;     // Check if response is of desired command
+    if((uint8_t)SDMMC1->RESPCMD != Command)         return SYS_INVALID_COMMAND;     // Check if response is of desired command
 
     Response_R1 = SDMMC1->RESP1;                                                    // We have received response, retrieve it for analysis
 
@@ -888,7 +888,7 @@ SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
             m_RCA = Response_R1;
         }
         if((Response_R1 & SD_R6_GENERAL_UNKNOWN_ERROR) == SD_R6_GENERAL_UNKNOWN_ERROR)      return SYS_GENERAL_UNKNOWN_ERROR;
-        if((Response_R1 & SD_R6_ILLEGAL_CMD)           == SD_R6_ILLEGAL_CMD)                return SYS_ILLEGAL_COMMAND;
+        if((Response_R1 & SD_R6_ILLEGAL_CMD)           == SD_R6_ILLEGAL_CMD)                return SYS_INVALID_COMMAND;
         if((Response_R1 & SD_R6_COM_CRC_FAILED)        == SD_R6_COM_CRC_FAILED)             return SYS_CRC_FAIL;
     }
 

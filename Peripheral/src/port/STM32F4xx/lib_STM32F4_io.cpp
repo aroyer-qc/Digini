@@ -52,7 +52,9 @@ IO_PinChangeCallback_t IO_PinChangeCallback[IO_IRQ_NUM] = {nullptr};
 // private prototype
 //-------------------------------------------------------------------------------------------------
 
+#ifdef IO_IRQ_DEF
 static void _IO_GetPinInfo (IO_IrqID_e IO_ID, uint32_t* pPinNumber, uint32_t* pPinMask);
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // private function

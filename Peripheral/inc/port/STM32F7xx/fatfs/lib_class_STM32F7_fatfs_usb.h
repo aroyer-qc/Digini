@@ -42,7 +42,8 @@ class CFatFS_CUSB : public DiskIO_DeviceInterface
 {
     public:
 
-                    CFatFS_CUSB           (USB_HostInterface* pUSB);
+                    CFatFS_CUSB         (USB_HostInterface* pUSB);
+                   ~CFatFS_CUSB         () {}
 
 // TODO might need to add function for the passing of instance to
 

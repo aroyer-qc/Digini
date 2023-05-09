@@ -37,7 +37,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: USB_FatFS
+//   Class: CFatFS_USB
 //
 //
 //   Description:   Class to handle FatFS for device connected to USB
@@ -46,7 +46,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   USB_FatFS
+//   Constructor:   CFatFS_USB
 //
 //   Parameter(s):
 //   Return Value:
@@ -56,7 +56,7 @@
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-USB_FatFS::USB_FatFS(USB_HostInterface* pUSB)
+CFatFS_USB::CFatFS_USB(USB_HostInterface* pUSB)
 {
     m_pUSB       = pUSB;
     m_Initialize = false;
@@ -75,7 +75,7 @@ USB_FatFS::USB_FatFS(USB_HostInterface* pUSB)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DSTATUS USB_FatFS::Initialize(void)
+DSTATUS CFatFS_USB::Initialize(void)
 {
     return Status();
 }
@@ -92,7 +92,7 @@ DSTATUS USB_FatFS::Initialize(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DSTATUS USB_FatFS::Status()
+DSTATUS CFatFS_USB::Status()
 {
    // if(USB.GetStatus() == USB_MSC_DEV_CONNECTED)
     {
@@ -121,7 +121,7 @@ DSTATUS USB_FatFS::Status()
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DRESULT USB_FatFS::Read(uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks)
+DRESULT CFatFS_USB::Read(uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks)
 {
     uint8_t Status;
 
@@ -173,7 +173,7 @@ DRESULT USB_FatFS::Read(uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlock
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DRESULT USB_FatFS::Write(const uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks)
+DRESULT CFatFS_USB::Write(const uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks)
 {
     //uint8_t Status = USBH_MSC_OK;
 
@@ -230,7 +230,7 @@ DRESULT USB_FatFS::Write(const uint8_t* pBuffer, uint32_t Sector, uint8_t Number
 //
 //-------------------------------------------------------------------------------------------------
 #if _USE_IOCTL == 1
-DRESULT USB_FatFS::IO_Control(uint8_t Control, void *pBuffer)
+DRESULT CFatFS_USB::IO_Control(uint8_t Control, void *pBuffer)
 {
     DRESULT res = RES_ERROR;
 

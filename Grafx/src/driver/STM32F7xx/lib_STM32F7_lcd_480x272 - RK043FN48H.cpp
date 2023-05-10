@@ -423,7 +423,7 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
     uint32_t           PixelFormatSrc;
     uint32_t           PixelFormatDst;
     uint32_t           Address;
-    s32_t              AreaConfig;
+    struct32_t         AreaConfig;
     CLayer*            pLayer;
     uint8_t            PixelSize;
 
@@ -476,7 +476,7 @@ void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelForm
     uint32_t           PixelFormatSrc;
     uint32_t           PixelFormatDst;
     uint32_t           Address;
-    s32_t              AreaConfig;
+    struct32_t         AreaConfig;
     CLayer*            pLayer;
     uint8_t            PixelSize;
 
@@ -534,7 +534,7 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
     uint32_t           PixelFormat;
     uint32_t           Address;
     uint32_t           Color;
-    s32_t              AreaConfig;
+    struct32_t         AreaConfig;
     CLayer*            pLayer;
     uint8_t            PixelSize;
 
@@ -711,7 +711,7 @@ void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16
     uint32_t      Address;
     uint32_t      Color;
     CLayer*       pLayer;
-    s32_t         AreaConfig;
+    struct32_t    AreaConfig;
 
     pLayer        = &LayerTable[CLayer::GetDrawing()];
     PixelFormat   = DRV_PixelFormatTable[pLayer->GetPixelFormat()];
@@ -757,7 +757,7 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     uint32_t           Address;
     CLayer*            pLayer;
     uint32_t           PixelFormat;
-    s32_t              AreaConfig;
+    struct32_t         AreaConfig;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
     PixelFormat        = DRV_PixelFormatTable[pLayer->GetPixelFormat()];

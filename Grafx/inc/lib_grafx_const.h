@@ -36,8 +36,8 @@
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
-extern const int8_t GFX_PixelSize[PIXEL_FORMAT_COUNT];
-extern const s32_t  GFX_ColorTable[COL_NB_COLOR_CONST];
+extern const int8_t      GFX_PixelSize[PIXEL_FORMAT_COUNT];
+extern const struct32_t  GFX_ColorTable[COL_NB_COLOR_CONST];
 
 #ifdef GFX_GLOBAL
 
@@ -85,7 +85,7 @@ const int8_t GFX_PixelSize[PIXEL_FORMAT_COUNT] =
     -1
 };
 
-const s32_t GFX_ColorTable[COL_NB_COLOR_CONST] =
+const struct32_t GFX_ColorTable[COL_NB_COLOR_CONST] =
 {
     COLOR_DEF(EXPAND_X_COLOR_AS_DATA)
     GRAY_DEF(EXPAND_X_COLOR_AS_DATA)

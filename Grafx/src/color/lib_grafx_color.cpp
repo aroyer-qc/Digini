@@ -59,8 +59,8 @@ enum __ColorChannel_e
 //-------------------------------------------------------------------------------------------------
 uint32_t GetFormatColor(PixelFormat_e PixelFormat, ColorTable_e Index)
 {
-    s32_t    Color;
-    s32_t    NewColor;
+    struct32_t Color;
+    struct32_t NewColor;
 
     Color = GFX_ColorTable[Index];
 
@@ -167,7 +167,7 @@ uint32_t GetFormatColor(PixelFormat_e PixelFormat, ColorTable_e Index)
 //-------------------------------------------------------------------------------------------------
 uint32_t GetUpConvertColor(PixelFormat_e PixelFormat, uint32_t Color)
 {
-    s32_t _Color;
+    struct32_t _Color;
 
     switch(PixelFormat)
     {

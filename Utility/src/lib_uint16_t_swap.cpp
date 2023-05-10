@@ -42,10 +42,10 @@
 //-------------------------------------------------------------------------------------------------
 void LIB_uint16_t_Swap(uint16_t* pSwap)
 {
-    s16_t Value;
+    struct16_t Value;
 
-    Value.u_8.u1 = ((s16_t*)pSwap)->u_8.u0;
-    Value.u_8.u0 = ((s16_t*)pSwap)->u_8.u1;
+    Value.u_8.u1 = ((struct16_t*)pSwap)->u_8.u0;
+    Value.u_8.u0 = ((struct16_t*)pSwap)->u_8.u1;
     *pSwap = Value.u_16;
 }
 

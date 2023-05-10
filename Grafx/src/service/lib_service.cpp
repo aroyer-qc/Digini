@@ -874,8 +874,8 @@ static ServiceReturn_t* SERV_XCHG(ServiceEvent_e* pServiceState, uint16_t SubSer
 ServiceReturn_t* ServiceCall(Service_t* pService, ServiceEvent_e* pServiceState)
 {
     ServiceReturn_t* pServiceReturn = nullptr;
-    s32_t           ServiceRange;
-    bool            ServiceWasProcessed = false;
+    struct32_t       ServiceRange;
+    bool             ServiceWasProcessed = false;
 
     if(pService->ID != 0xFFFFFFFF)
     {

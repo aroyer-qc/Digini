@@ -222,7 +222,7 @@ struct ServiceType2_t
 {
     ServiceType_e  ServiceType;
     uint16_t       IndexState;
-    s16_t          Data[SERVICE_TYPE2_SIZE_LIST];
+    struct16_t     Data[SERVICE_TYPE2_SIZE_LIST];
 };
 
 struct ServiceType3_t

@@ -269,14 +269,14 @@ typedef union
         uint8_t     b6 :1;
         uint8_t     b7 :1;
     } bit;
-} s8_t;
+} struct8_t;
 
 typedef union
 {
     uint16_t        u_16;
     int16_t         n_16;
    // wchar_t         wc;
-    s8_t            s8_Array[2];
+    struct8_t       s8_Array[2];
 
     uint8_t         u8_Array[2];
     int8_t          n8_Array[2];
@@ -329,7 +329,7 @@ typedef union
         uint16_t    bF :1;
     }b;
 
-} s16_t;
+} struct16_t;
 
 typedef union
 {
@@ -338,13 +338,13 @@ typedef union
 
     uint16_t    u16_Array[2];
     int16_t     n16_Array[2];
-    s16_t       s16_Array[2];
+    struct16_t  s16_Array[2];
    // wchar_t     wcArray[2];
 
 
     uint8_t     u8_Array[4];
     int8_t      n8_Array[4];
-    s8_t        s8_Array[4];
+    struct8_t   s8_Array[4];
     char        cArray[4];
     signed char nArray[4];
 
@@ -361,7 +361,7 @@ typedef union
         uint16_t u0;
         uint16_t u1;
     } u_16;
-} s32_t;
+} struct32_t;
 
 typedef union
 {
@@ -370,15 +370,15 @@ typedef union
 
     uint32_t    u32_Array[2];
     int32_t     n32_Array[2];
-    s32_t       s32_Array[2];
+    struct32_t  s32_Array[2];
 
     uint16_t    u16_Array[4];
     int16_t     n16_Array[4];
-    s16_t       s16_Array[8];
+    struct16_t  s16_Array[8];
 
     uint8_t     u8_Array[8];
     int8_t      n8_Array[8];
-    s8_t        s8_Array[8];
+    struct8_t   s8_Array[8];
 
     struct
     {
@@ -399,7 +399,7 @@ typedef union
         uint16_t u2;
         uint16_t u3;
     } u_16;
-} s64_t;
+} struct64_t;
 
 // --------- Time and Date ---------
 

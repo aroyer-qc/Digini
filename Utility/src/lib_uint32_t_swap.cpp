@@ -42,12 +42,12 @@
 //-------------------------------------------------------------------------------------------------
 void LIB_uint32_t_Swap(uint32_t* pSwap)
 {
-    s32_t Value;
+    struct32_t Value;
 
-    Value.u_8.u0 = ((s32_t*)pSwap)->u_8.u3;
-    Value.u_8.u1 = ((s32_t*)pSwap)->u_8.u2;
-    Value.u_8.u2 = ((s32_t*)pSwap)->u_8.u1;
-    Value.u_8.u3 = ((s32_t*)pSwap)->u_8.u0;
+    Value.u_8.u0 = ((struct32_t*)pSwap)->u_8.u3;
+    Value.u_8.u1 = ((struct32_t*)pSwap)->u_8.u2;
+    Value.u_8.u2 = ((struct32_t*)pSwap)->u_8.u1;
+    Value.u_8.u3 = ((struct32_t*)pSwap)->u_8.u0;
     *pSwap = Value.u_32;
 }
 

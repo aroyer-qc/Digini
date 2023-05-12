@@ -34,7 +34,7 @@ class DiskIO_DeviceInterface
 {
     public:
 
-        virtual                     ~DiskIO_DeviceInterface (){}
+        virtual                    ~DiskIO_DeviceInterface (){}
 
 
         virtual DSTATUS             Initialize              (void)                                  = 0;

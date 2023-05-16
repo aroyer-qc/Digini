@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : crc.cpp
+//  File : lib_class_STM32F4_crc.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -31,8 +31,6 @@
 #include <stdint.h>
 #include "crc.h"
 
-#if (DIGINI_USE_CRC == DEF_ENABLED)
-
 //-------------------------------------------------------------------------------------------------
 // reference(s)
 //-------------------------------------------------------------------------------------------------
@@ -44,12 +42,6 @@
 //-------------------------------------------------------------------------------------------------
 // const(s)
 //-------------------------------------------------------------------------------------------------
-
-const CRC_Info_t CRC::m_MethodList[NUMBER_OF_CRC_METHOD] =
-{
-    CRC_METHOD_DEF(EXPAND_X_CRC_CLASS_CONST)
-};
-
 
 // CRC 16 ANSI
 #ifdef CRC_16_MODBUS_USE_TABLE
@@ -189,7 +181,7 @@ static const uint32_t CRC_32_IEEE_table[256] =
 //  Description:    This function init the information for crc calculation.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC::Init(CrcType_e CrcType, uint32_t Width, uint32_t Polynomial, uint32_t Xor)
+void CCRC::Init(CrcType_e CrcType, uint32_t Width, uint32_t Polynomial, uint32_t Xor)
 {
     m_CrcType    = CrcType;
     m_Polynomial = Polynomial;
@@ -209,7 +201,7 @@ void CRC::Init(CrcType_e CrcType, uint32_t Width, uint32_t Polynomial, uint32_t 
 //  Description:    This function init the information for crc table.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC::Init(CrcType_e CrcType)
+void CCRC::Init(CrcType_e CrcType)
 {
     m_CrcType    = CrcType;
     m_Polynomial = 0;
@@ -250,7 +242,7 @@ uint32_t CCRC::Done(void)
 //  Description:    Find the CRC of a byte.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC::Byte(const uint8_t Byte)
+void CCRC::Byte(const uint8_t Byte)
 {
     uint32_t TopBit;
 
@@ -335,64 +327,12 @@ void CRC::Byte(const uint8_t Byte)
 //  Description:    Find the CRC of a buffer of byte.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC::Buffer(const uint8_t *pBuffer, uint32_t Len )
+void CCRC::Buffer(const uint8_t *pBuffer, uint32_t Len )
 {
     for(; Len > 0; Len--, pBuffer++)
     {
         Byte(*pBuffer);
     }
 }
-
-
-
-// TODO AR will use my own library instead of repeating stuff at the infinite
-/**
-  \fn          uint32_t crc32_8bit_rev (uint32_t crc32, uint8_t val)
-  \brief       Calculate 32-bit CRC (Polynomial: 0x04C11DB7, data bit-reversed).
-  \param[in]   crc32  CRC initial value
-  \param[in]   val    Input value
-  \return      Calculated CRC value
-*/
-static uint32_t crc32_8bit_rev (uint32_t crc32, uint8_t val)
-{
-    uint32_t n;
-
-    crc32 ^= __RBIT (val);
-
-    for (n = 8; n; n--)
-    {
-        if(crc32 & 0x80000000U)
-        {
-            crc32 <<= 1;
-            crc32  ^= 0x04C11DB7U;
-        }
-        else
-        {
-            crc32 <<= 1;
-        }
-    }
-    return(crc32);
-}
-
-/**
-  \fn          uint32_t crc32_data (const uint8_t *data, uint32_t len)
-  \brief       Calculate standard 32-bit Ethernet CRC.
-  \param[in]   data  Pointer to buffer containing the data
-  \param[in]   len   Data length in bytes
-  \return      Calculated CRC value
-*/
-static uint32_t crc32_data (const uint8_t *data, uint32_t len) {
-  uint32_t cnt, crc;
-
-  crc = 0xFFFFFFFFU;
-  for (cnt = len; cnt; cnt--) {
-    crc = crc32_8bit_rev (crc, *data++);
-  }
-  return (crc ^ 0xFFFFFFFFU);
-}
-
-//-------------------------------------------------------------------------------------------------
-
-#endif
 
 //-------------------------------------------------------------------------------------------------

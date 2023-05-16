@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : crc.cpp
+//  File : lib_class_STM32F7_crc.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -31,8 +31,6 @@
 #include <stdint.h>
 #include "crc.h"
 
-#if (DIGINI_USE_CRC == DEF_ENABLED)
-
 //-------------------------------------------------------------------------------------------------
 // reference(s)
 //-------------------------------------------------------------------------------------------------
@@ -44,12 +42,6 @@
 //-------------------------------------------------------------------------------------------------
 // const(s)
 //-------------------------------------------------------------------------------------------------
-
-const CRC_Info_t CRC::m_MethodList[NUMBER_OF_CRC_METHOD] =
-{
-    CRC_METHOD_DEF(EXPAND_X_CRC_CLASS_CONST)
-};
-
 
 // CRC 16 ANSI
 #ifdef CRC_16_MODBUS_USE_TABLE
@@ -189,7 +181,7 @@ static const uint32_t CRC_32_IEEE_table[256] =
 //  Description:    This function init the information for crc calculation.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC::Init(CrcType_e CrcType, uint32_t Width, uint32_t Polynomial, uint32_t Xor)
+void CCRC::Init(CrcType_e CrcType, uint32_t Width, uint32_t Polynomial, uint32_t Xor)
 {
     m_CrcType    = CrcType;
     m_Polynomial = Polynomial;
@@ -209,7 +201,7 @@ void CRC::Init(CrcType_e CrcType, uint32_t Width, uint32_t Polynomial, uint32_t 
 //  Description:    This function init the information for crc table.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC::Init(CrcType_e CrcType)
+void CCRC::Init(CrcType_e CrcType)
 {
     m_CrcType    = CrcType;
     m_Polynomial = 0;
@@ -250,7 +242,7 @@ uint32_t CCRC::Done(void)
 //  Description:    Find the CRC of a byte.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC::Byte(const uint8_t Byte)
+void CCRC::Byte(const uint8_t Byte)
 {
     uint32_t TopBit;
 
@@ -335,7 +327,7 @@ void CRC::Byte(const uint8_t Byte)
 //  Description:    Find the CRC of a buffer of byte.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC::Buffer(const uint8_t *pBuffer, uint32_t Len )
+void CCRC::Buffer(const uint8_t *pBuffer, uint32_t Len )
 {
     for(; Len > 0; Len--, pBuffer++)
     {
@@ -343,56 +335,131 @@ void CRC::Buffer(const uint8_t *pBuffer, uint32_t Len )
     }
 }
 
+//-------------------------------------------------------------------------------------------------
+
+// for C no CRC module
+
+# The CRC values are verified using: https://crccalc.com/
 
 
-// TODO AR will use my own library instead of repeating stuff at the infinite
-/**
-  \fn          uint32_t crc32_8bit_rev (uint32_t crc32, uint8_t val)
-  \brief       Calculate 32-bit CRC (Polynomial: 0x04C11DB7, data bit-reversed).
-  \param[in]   crc32  CRC initial value
-  \param[in]   val    Input value
-  \return      Calculated CRC value
-*/
-static uint32_t crc32_8bit_rev (uint32_t crc32, uint8_t val)
+void CCRC::ReflectData(uint8_t x, size_t width)
 {
-    uint32_t n;
+    x = ((x & 0x55) << 1) | ((x & 0xAA) >> 1);
+    x = ((x & 0x33) << 2) | ((x & 0xCC) >> 2);
+    x = ((x & 0x0F) << 4) | ((x & 0xF0) >> 4);
+    return x
+}
 
-    crc32 ^= __RBIT (val);
+void CCRC::ReflectData(uint16_t x, size_t width)
+{
+    x = ((x & 0x5555) << 1) | ((x & 0xAAAA) >> 1);
+    x = ((x & 0x3333) << 2) | ((x & 0xCCCC) >> 2);
+    x = ((x & 0x0F0F) << 4) | ((x & 0xF0F0) >> 4);
+    x = ((x & 0x00FF) << 8) | ((x & 0xFF00) >> 8);
+    return x
+}
 
-    for (n = 8; n; n--)
+void CCRC::ReflectData(uint32_t x, size_t width)
+{
+    x = ((x & 0x55555555) << 1)  | ((x & 0xAAAAAAAA) >> 1);
+    x = ((x & 0x33333333) << 2)  | ((x & 0xCCCCCCCC) >> 2);
+    x = ((x & 0x0F0F0F0F) << 4)  | ((x & 0xF0F0F0F0) >> 4);
+    x = ((x & 0x00FF00FF) << 8)  | ((x & 0xFF00FF00) >> 8);
+    x = ((x & 0x0000FFFF) << 16) | ((x & 0xFFFF0000) >> 16);
+    return x
+}
+
+// template?
+void CCRC::Poly(uintX_t data, n, poly, crc = 0, ref_in = False, ref_out = False, xor_out = 0)
+{
+    g = (1 << n) | poly;  // Generator polynomial
+
+    // Loop over the data
+    for (d in data)
     {
-        if(crc32 & 0x80000000U)
+        // Reverse the input byte if the flag is true
+        if(ref_in == true)
         {
-            crc32 <<= 1;
-            crc32  ^= 0x04C11DB7U;
+            d = reflect_data(d, 8);
         }
-        else
+
+        // XOR the top byte in the CRC with the input byte
+        crc ^= d << (n - 8);
+
+        // Loop over all the bits in the byte
+        for _ in range(8)
         {
-            crc32 <<= 1;
+            // Start by shifting the CRC, so we can check for the top bit
+            crc <<= 1;
+
+            // XOR the CRC if the top bit is 1
+            if(crc & (1 << n))
+            {
+                crc ^= g;
+            }
         }
+
+    // Reverse the output if the flag is true
+    if(ref_out == true)
+    {
+        crc = ReflectData(crc, n);
     }
-    return(crc32);
-}
 
-/**
-  \fn          uint32_t crc32_data (const uint8_t *data, uint32_t len)
-  \brief       Calculate standard 32-bit Ethernet CRC.
-  \param[in]   data  Pointer to buffer containing the data
-  \param[in]   len   Data length in bytes
-  \return      Calculated CRC value
-*/
-static uint32_t crc32_data (const uint8_t *data, uint32_t len) {
-  uint32_t cnt, crc;
+    // Return the CRC value
+    return (crc ^ xor_out);
 
-  crc = 0xFFFFFFFFU;
-  for (cnt = len; cnt; cnt--) {
-    crc = crc32_8bit_rev (crc, *data++);
-  }
-  return (crc ^ 0xFFFFFFFFU);
-}
 
-//-------------------------------------------------------------------------------------------------
 
+#if 0
+msg = b'Hi!'
+
+# CRC-8
+crc = crc_poly(msg, 8, 0x07)
+# print(hex(crc), '{0:08b}'.format(crc))
+assert crc == 0x78
+
+# CRC-8/ITU
+crc = crc_poly(msg, 8, 0x07, xor_out=0x55)
+# print(hex(crc), '{0:08b}'.format(crc))
+assert crc == 0x2D
+
+# CRC-8/DARC
+crc = crc_poly(msg, 8, 0x39, ref_in=True, ref_out=True)
+# print(hex(crc), '{0:08b}'.format(crc))
+assert crc == 0x94
+
+# CRC-16/XMODEM
+crc = crc_poly(msg, 16, 0x1021)
+# print(hex(crc), '{0:016b}'.format(crc))
+assert crc == 0x31FD
+
+# CRC-16/MAXIM
+crc = crc_poly(msg, 16, 0x8005, ref_in=True, ref_out=True, xor_out=0xFFFF)
+# print(hex(crc), '{0:016b}'.format(crc))
+assert crc == 0xA191
+
+# CRC-16/USB
+crc = crc_poly(msg, 16, 0x8005, crc=0xFFFF, ref_in=True, ref_out=True, xor_out=0xFFFF)
+# print(hex(crc), '{0:016b}'.format(crc))
+assert crc == 0x61E0
+
+# CRC-32/BZIP2
+crc = crc_poly(msg, 32, 0x04C11DB7, crc=0xFFFFFFFF, xor_out=0xFFFFFFFF)
+# print(hex(crc), '{0:032b}'.format(crc))
+assert crc == 0x9523B4B4
+
+# CRC-32C
+crc = crc_poly(msg, 32, 0x1EDC6F41, crc=0xFFFFFFFF, ref_in=True, ref_out=True, xor_out=0xFFFFFFFF)
+# print(hex(crc), '{0:032b}'.format(crc))
+assert crc == 0x43AC6E72
+
+# CRC-32/XFER
+crc = crc_poly(msg, 32, 0x000000AF)
+# print(hex(crc), '{0:032b}'.format(crc))
+assert crc == 0x2E83E24F
+
+# CRC-32/MPEG-2
+crc = crc_poly(msg, 32, 0x04C11DB7, crc=0xFFFFFFFF)
+# print(hex(crc), '{0:032b}'.format(crc))
+assert crc == 0x6ADC4B4B
 #endif
-
-//-------------------------------------------------------------------------------------------------

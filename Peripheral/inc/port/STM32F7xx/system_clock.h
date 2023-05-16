@@ -38,6 +38,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+#define ETH_MTU_SIZE                                1500
+
 // Own define for register bit value without cast (Do not change)
 #define CFG_RCC_CFGR_SW_HSI                         0x00000000U
 #define CFG_RCC_CFGR_SW_HSE                         0x00000001U

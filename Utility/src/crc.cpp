@@ -47,7 +47,7 @@
 
 const CRC_Info_t CRC::m_MethodList[NUMBER_OF_CRC_METHOD] =
 {
-    CRC_METHOD_DEF(EXPAND_X_CRC_CLASS_CONST)
+    CRC_METHOD_DEF(EXPAND_X_CRC_AS_CLASS_CONST)
 };
 
 
@@ -178,45 +178,56 @@ static const uint32_t CRC_32_IEEE_table[256] =
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Init
+//   Class: CRC
 //
-//  Parameter(s):   CrcType
-//                    Width
-//                    Polynomial
-//                    Xor
-//  Return:         void
-//
-//  Description:    This function init the information for crc calculation.
+//   Description:   Class to handle CRC Calculation
 //
 //-------------------------------------------------------------------------------------------------
-void CRC::Init(CrcType_e CrcType, uint32_t Width, uint32_t Polynomial, uint32_t Xor)
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Constructor:   CRC
+//
+//   Parameter(s):  CrcType_e
+//
+//   Description:   Initializes the CRC_ID that define the method for calculating the CRC
+//
+//-------------------------------------------------------------------------------------------------
+CRC::CRC(CRC_Type_e Type)
 {
-    m_CrcType    = CrcType;
-    m_Polynomial = Polynomial;
-    m_Xor        = Xor;
-    m_Width      = Width;
-    m_Mask       = 0xFFFFFFFF >> (32 - Width);
-    m_Remainder  = 0xFFFFFFFF;
+    m_Type    = Type;
+//    m_Polynomial = Polynomial;
+//    m_Xor        = Xor;
+//    m_Width      = Width;
+//    m_Mask       = 0xFFFFFFFF >> (32 - Width);
+//    m_Remainder  = 0xFFFFFFFF;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Init
+//   Destructor:    ~CRC
+//
+//   Parameter(s):  None
+//
+//   Description:   In some case there are resource to be freed
+//
+//-------------------------------------------------------------------------------------------------
+CRC::~CRC()
+{
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Start
 //
 //  Parameter(s):   CrcType
 //  Return:         void
 //
-//  Description:    This function init the information for crc table.
+//  Description:    This function init the conversion with the CRC type selected.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC::Init(CrcType_e CrcType)
+void CRC::Start(void)
 {
-    m_CrcType    = CrcType;
-    m_Polynomial = 0;
-    m_Xor        = 0;
-    m_Width      = 0;
-    m_Mask       = 0;
-    m_Remainder  = 0xFFFFFFFF;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -229,9 +240,9 @@ void CRC::Init(CrcType_e CrcType)
 //  Description:    This function return the CRC value.
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CCRC::Done(void)
+uint32_t CRC::Done(void)
 {
-    if(m_CrcType == CRC_NORMAL)
+    if(m_Type == CRC_NORMAL)
     {
         m_Remainder ^= m_Xor;
         m_Remainder &= m_Mask;
@@ -329,13 +340,13 @@ void CRC::Byte(const uint8_t Byte)
 //  Name:           Done
 //
 //  Parameter(s):   pBuffer
-//                    Len
+//                  Len
 //  Return:         void
 //
 //  Description:    Find the CRC of a buffer of byte.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC::Buffer(const uint8_t *pBuffer, uint32_t Len )
+void CRC::Buffer(const uint8_t *pBuffer, uint32_t Len)
 {
     for(; Len > 0; Len--, pBuffer++)
     {
@@ -357,21 +368,21 @@ static uint32_t crc32_8bit_rev (uint32_t crc32, uint8_t val)
 {
     uint32_t n;
 
-    crc32 ^= __RBIT (val);
+    crc32 ^= __RBIT(val);
 
-    for (n = 8; n; n--)
+    for(n = 8; n; n--)
     {
-        if(crc32 & 0x80000000U)
+        if(crc32 & 0x80000000)
         {
             crc32 <<= 1;
-            crc32  ^= 0x04C11DB7U;
+            crc32  ^= 0x04C11DB7;
         }
         else
         {
             crc32 <<= 1;
         }
     }
-    return(crc32);
+    return crc32;
 }
 
 /**
@@ -381,14 +392,19 @@ static uint32_t crc32_8bit_rev (uint32_t crc32, uint8_t val)
   \param[in]   len   Data length in bytes
   \return      Calculated CRC value
 */
-static uint32_t crc32_data (const uint8_t *data, uint32_t len) {
-  uint32_t cnt, crc;
+static uint32_t crc32_data(const uint8_t *data, uint32_t len)
+{
+    uint32_t cnt;
+    uint32_t crc;
 
-  crc = 0xFFFFFFFFU;
-  for (cnt = len; cnt; cnt--) {
-    crc = crc32_8bit_rev (crc, *data++);
-  }
-  return (crc ^ 0xFFFFFFFFU);
+    crc = 0xFFFFFFFF;
+
+    for(cnt = len; cnt > 0; cnt--)
+    {
+        crc = crc32_8bit_rev (crc, *data++);
+    }
+
+    return crc ^ 0xFFFFFFFF;
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -87,7 +87,6 @@
     IF_USE( DIGINI_USE_CRC_32_D,            X_CRC( CRC_32_D,            0xA833982B,    0xFFFFFFFF,  0xFFFFFFFF, true,   true     ) )\
     IF_USE( DIGINI_USE_CRC_32_Q,            X_CRC( CRC_32_Q,            0x814141AB,    0x00000000,  0x00000000, false,  false    ) )\
 
-
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
@@ -100,11 +99,11 @@ enum CRC_Type_e
 
 struct CRC_Info_t
 {
-    uint32_t    Poly,
-    uint32_t    Init,
-    uint32_t    XorOut,
-    bool        RefIn,
-    bool        RefOut,
+    uint32_t    Poly;
+    uint32_t    Init;
+    uint32_t    XorOut;
+    bool        RefIn;
+    bool        RefOut;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -117,8 +116,8 @@ class CRC
 
                     CRC         (CRC_Type_e Type);
                    ~CRC         ();                         // destructor does something only if hardware module exist
-        
-        
+
+
         void        Start       (void);
         uint32_t    Done        (void);
         void        Byte        (const uint8_t Byte);
@@ -126,9 +125,9 @@ class CRC
 
     private:
 
-        CrcType_e                   m_CrcType;
+        CRC_Type_e                  m_Type;
         //static mutex..  ?? for usage of the internal CRC module... will be use only if method is supported by the module.. if not soft method will be used
-        static const CRC_Info_t     m_MethodList[NUMBER_OF_CRC_METHOD]; 
+        static const CRC_Info_t     m_MethodList[NUMBER_OF_CRC_METHOD];
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -84,6 +84,10 @@
 #include "lib_fifo.h"
 #include "lib_cpu_specific.h"
 
+#if (DIGINI_USE_CRC == DEF_ENABLED)
+#include "lib_crc.h"
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // Driver
 //
@@ -166,12 +170,13 @@
 
 #include "device_cfg.h"
 
-#ifdef DIGINI_USE_FATFS
+#if (DIGINI_USE_FATFS == DEF_ENABLED)
 #include "diskio.h"
 #endif
 
+#if (DIGINI_USE_GRAFX == DEF_ENABLED)
 #include "lib_grafx.h"
-
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Functions prototypes

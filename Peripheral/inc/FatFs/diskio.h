@@ -139,7 +139,7 @@ class DiskIO    // Singleton
 #endif
 
 #ifdef __cplusplus
- #ifdef DIGINI_USE_FATFS
+ #if (DIGINI_USE_FATFS == DEF_ENABLED)
   #ifdef  DISKIO_GLOBAL
    class DiskIO&     FatFS_DiskIO = DiskIO::GetInstance();
    // Create all CFatFS_... object

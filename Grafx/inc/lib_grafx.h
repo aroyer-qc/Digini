@@ -34,7 +34,7 @@
 #include "color_cfg.h"
 #include "grafx_cfg.h"
 
-#ifdef DIGINI_USE_GRAFX
+#if (DIGINI_USE_GRAFX == DEF_ENABLED)
 #include "lib_compression.h"
 #include "lib_label.h"
 #include "lib_grafx_define.h"

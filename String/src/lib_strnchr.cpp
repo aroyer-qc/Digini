@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "lib_digini.h"
-#ifdef DIGINI_USE_GRAFX    // remove this and use more common define for DIGINI_MAX_PRINT_SIZE
+#if (DIGINI_USE_GRAFX == DEF_ENABLED)    // remove this and use more common define for DIGINI_MAX_PRINT_SIZE
 
 //-------------------------------------------------------------------------------------------------
 //

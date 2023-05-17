@@ -121,7 +121,7 @@ SystemState_e DIGINI_Initialize(void)
     DB_Central.RegisterDriver(pDB_Hardware);
    #endif
 
-  #ifdef DIGINI_USE_GRAFX
+  #if (DIGINI_USE_GRAFX == DEF_ENABLED)
     GRAFX_Initialize();
   #endif
 
@@ -149,11 +149,11 @@ SystemState_e DIGINI_PostInitialize(void)
     USB.Initialize();
   #endif // (USE_USB_DRIVER == DEF_ENABLED)
 
-  #ifdef DIGINI_USE_FATFS
+  #if (DIGINI_USE_FATFS == DEF_ENABLED)
     //FatFS_DiskIO.Initialize();
   #endif
 
-  #ifdef DIGINI_USE_GRAFX
+  #if (DIGINI_USE_GRAFX == DEF_ENABLED)
     GRAFX_PostInitialize();
   #endif
 

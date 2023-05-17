@@ -31,7 +31,7 @@
 #define DISKIO_GLOBAL
 #include "lib_digini.h"
 #undef  DISKIO_GLOBAL
-#ifdef DIGINI_USE_FATFS
+#if (DIGINI_USE_FATFS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Local variable(s) or Class

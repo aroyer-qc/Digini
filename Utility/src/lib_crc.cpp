@@ -135,7 +135,7 @@ uint32_t CRC_Calc::Done(void)
 
     if(m_MethodList[m_Type].RefOut == true)
     {
-        m_Remainder ^= (BitReversal(m_Remainder) >> (32 - m_Width));
+        m_Remainder = (BitReversal(m_Remainder) >> (32 - m_Width));
     }
 
     m_Remainder &= (0xFFFFFFFF >> (32 - m_Width));
@@ -153,18 +153,14 @@ uint32_t CRC_Calc::Done(void)
 //  Description:    Find the CRC of a byte.
 //
 //-------------------------------------------------------------------------------------------------
-
-void CRC_Calc::Calculate(const uint8_t Value)
+void CRC_Calc::Calculate( uint8_t Value)
 {
     if(m_RefIn == true)
     {
-        // m_Remainder ^= BitReversal(Value);            // probably need to shift the data 24 for CRC8, and 16 Bits for CRC16
-        m_Remainder ^= (BitReversal(uint32_t(Value)) >> (32 - m_Width));
+        Value = BitReversal(uint32_t(Value)) >> 24;
     }
-    else
-    {
-        m_Remainder ^= (uint32_t(Value) << (m_Width - 8));
-    }
+
+    m_Remainder ^= (uint32_t(Value) << (m_Width - 8));
 
     for(uint32_t i = 8; i > 0; i--)
     {

@@ -118,7 +118,7 @@ class CRC_Calc
 
         void        Start           (void);
         uint32_t    Done            (void);
-        void        Calculate       (const uint8_t Value);
+        void        Calculate       (uint8_t Value);
         void        CalculateBuffer (const uint8_t *pBuffer, size_t Length);
 
     private:

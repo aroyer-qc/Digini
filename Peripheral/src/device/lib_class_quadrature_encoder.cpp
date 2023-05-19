@@ -87,12 +87,12 @@ QUAD_Encoder::QUAD_Encoder(QUAD_EncoderID_e QuadID)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           GetPushButtonState
+//  Name:           Process
 //
 //  Parameter(s):   None
 //  Return:         None
 //
-//  Description:    Return the state od the push button
+//  Description:    Process for button of the encoder (debouncing)
 //
 //-------------------------------------------------------------------------------------------------
 void QUAD_Encoder::Process(void)

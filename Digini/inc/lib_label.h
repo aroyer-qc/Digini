@@ -87,7 +87,7 @@ class Label
                             Label                       ()                              { ActualLanguage = LANG_ENGLISH;               }
         Language_e          GetLanguage                 (void)                          { return ActualLanguage;                       }
         void                SetLanguage                 (Language_e Language)           { ActualLanguage = Language;                   }
-        const char*         GetLabelPointer             (Label_e Label_ID)              { return LabelArray[Label_ID][ActualLanguage]; }
+        const char*         GetPointer                  (Label_e Label_ID)              { return LabelArray[Label_ID][ActualLanguage]; }
 
     private:
 

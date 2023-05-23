@@ -89,14 +89,14 @@ extern "C" void VT100_TaskWrapper(void* pvParameters)
 //  Name:           Initialize
 //
 //  Parameter(s):   Console*    pConsole                   Pointer on the console class object
-//  Return:         const char* pDescription
+//  Return:         const char* pHeader
 //
 //  Description:    Initialize VT100_terminal
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pDescription)
+nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
 {
     nOS_Error Error = NOS_OK;
     TickCount_t Delay;
@@ -110,7 +110,7 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pDescription
     while(TickHasTimeOut(Delay, 100) == false){};
 
     m_pConsole                = pConsole;
-    m_pDescription            = (char*)pDescription;
+    m_pHeader                 = (char*)pHeader;
     m_RefreshMenu             = false;
     m_MenuID                  = VT100_MENU_NONE;
     m_FlushMenuID             = VT100_MENU_NONE;
@@ -344,7 +344,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
             SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
           #endif
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
-            InMenuPrintf(VT100_SZ_NONE, LBL_MENU_TITLE);
+            InMenuPrintf(VT100_SZ_NONE, LBL_VT100_MENU_TITLE); // TODO Fix
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
           #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
             SetColor(VT100_COLOR_YELLOW, VT100_COLOR_BLACK);
@@ -558,7 +558,7 @@ void VT100_Terminal::InputString(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           DisplayDescription
+//  Name:           DisplayHeader
 //
 //  Parameter(s):   None
 //  Return:         None
@@ -568,11 +568,11 @@ void VT100_Terminal::InputString(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void VT100_Terminal::DisplayDescription(void)
+void VT100_Terminal::DisplayHeader(void)
 {
     InMenuPrintf(VT100_SZ_NONE, VT100_LBL_CLEAR_SCREEN);
     SetCursorPosition(10, 1);
-    InMenuPrintf(VT100_SZ_NONE, LBL_STRING, m_pDescription);
+    InMenuPrintf(VT100_SZ_NONE, LBL_STRING, m_pHeader);
     InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "\r\n\r\n\r\n");
 }
 
@@ -763,7 +763,7 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
 
     // Copy string
     memcpy(m_String, pString, VT100_STRING_SZ);
-    STR_strnstrip(m_String, Maximum);
+ //   STR_strnstrip(m_String, Maximum);             // TODO Fix this
     m_InputPtr = strlen(m_String);                          // Get string end pointer
     m_RefreshInputPtr = m_InputPtr + 1;                     // To force a refresh
 
@@ -828,7 +828,7 @@ size_t VT100_Terminal::InMenuPrintf(int nSize, Label_e Label, ...)
     va_list     vaArg;
     char*       pBuffer;
     size_t      Size    = 0;
-    const char* pFormat = myLabel.GetLabelPointer(Label);
+    const char* pFormat = myLabel.GetPointer(Label);
 
     if((pBuffer = (char*)pMemory->Alloc(VT100_TERMINAL_SIZE)) == nullptr)
     {

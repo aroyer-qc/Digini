@@ -52,6 +52,8 @@
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
+uint32_t    LIB_BitReversal                 (uint32_t Value);
+
 uint8_t     LIB_1AscHex                     (const char* pSrc);
 uint8_t     LIB_1AscHex                     (const wchar_t* pSrc);
 uint8_t     LIB_2AscHex                     (const char* pSrc);

@@ -155,11 +155,11 @@ class VT100_Terminal
 {
     public:
 
-                            VT100_Terminal              ();
+                            VT100_Terminal              () {};
 
 
         void                Process                     (void);
-        nOS_Error           Initialize                  (Console* pConsole, const char* pDescription);
+        nOS_Error           Initialize                  (Console* pConsole, const char* pHeader);
         void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
         void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
         void                GoToMenu                    (VT100_Menu_e MenuID);
@@ -194,7 +194,7 @@ class VT100_Terminal
 //        void            CON_SetConsoleMuteLogs      (bool Mute);
         void                ForceMenuRefresh            (void);
 
-        void                DisplayDescription          (void);
+        void                DisplayHeader               (void);
 
 
 void RX_Callback(uint8_t Data);
@@ -240,7 +240,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         nOS_Timer                           m_EscapeTimer;
         bool                                m_IsDisplayLock;
         bool                                m_FlushNextEntry;
-        char*                               m_pDescription;
+        char*                               m_pHeader;
         bool                                m_ForceRefresh;
 
         // Input string or decimal service
@@ -272,18 +272,6 @@ bool                GetString                   (char* pBuffer, size_t Size);
 //-------------------------------------------------------------------------------------------------
 
 #include "vt100_var.h"        // Project variable
-
-#ifdef VT100_GLOBAL
-
-  class VT100_Terminal myVT100_Terminal();
-
-#else // VT100_GLOBAL
-
-  extern class VT100_Terminal myVT100_Terminal;
-
-#endif // VT100_GLOBAL
-
-//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 

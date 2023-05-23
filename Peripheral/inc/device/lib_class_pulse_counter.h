@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_database_wrapper.cpp
+//  File : lib_class_pulse_counter.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,98 +24,77 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+// Note(s)  When configuring a clock/data quadrature encoder only choose falling or rising for ISR.
+//          If encoder is not incrementing in the right direction, then change only clock polarity.
+//
+//-------------------------------------------------------------------------------------------------
+
+#pragma once
+
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
 #include "lib_digini.h"
+#include "device_cfg.h"
+
+#if 0
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
 
 //-------------------------------------------------------------------------------------------------
-//
-//   Function:      AccessTime
-//
-//   Description:   Request time
-//
-//   Note(s):       AccessTime() does not use Number and SubNumber
-//
+// Expand macro(s)
 //-------------------------------------------------------------------------------------------------
-void AccessTime(AccessRequest_e AccessRequest, const void* pData, uint16_t Number, uint16_t SubNumber)
+
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+struct PULSE_CounterInfo_t
 {
-    VAR_UNUSED(Number);
-    VAR_UNUSED(SubNumber);
+    uint32_t PulsePerOverflow;
+    // timer to use
+    // speed ??
+    // irq to use ??
+};
 
-  #if (USE_RTC_DRIVER == DEF_ENABLED)
-    if(AccessRequest == ACCESS_READ) BSP_pRTC->GetTime((Time_t*)pData);
-    else                             BSP_pRTC->SetTime((Time_t*)pData);
-  #else // User function
-    if(AccessRequest == ACCESS_READ) LIB_GetTime((Time_t*)pData);
-    else                             LIB_SetTime((Time_t*)pData);
-  #endif
-}
+typedef void (* QUAD_EncoderCallBack_t) (QUAD_EncoderChange_e Change);  // une callback interface??
 
 //-------------------------------------------------------------------------------------------------
-//
-//   Function:      AccessDate
-//
-//   Description:   Request date
-//
+// class definition(s)
 //-------------------------------------------------------------------------------------------------
-void AccessDate(AccessRequest_e AccessRequest, const void* pData, uint16_t Number, uint16_t SubNumber)
+
+class PULSE_Counter
 {
-    VAR_UNUSED(Number);
-    VAR_UNUSED(SubNumber);
+    public:
 
-  #if (USE_RTC_DRIVER == DEF_ENABLED)
-    if(AccessRequest == ACCESS_READ) BSP_pRTC->GetDate((Date_t*)pData);
-    else                             BSP_pRTC->SetDate((Date_t*)pData);
-  #else // User function
-    if(AccessRequest == ACCESS_READ) LIB_GetDate((Date_t*)pData);
-    else                             LIB_SetDate((Date_t*)pData);
-  #endif
-}
+                                PULSE_Counter           ();
+
+        void                    Reset                   (void);
+
+        // Getter/Setter
+        uint32_t                GetPulseCount           (void)              { return m_PulseCount;  }
+        void                    SetPulseCount           (uint32_t Count)    { m_PulseCount = Count; }
+
+        void                    RegistereCallback       (PULSE_CounterCallBack_t pCallback);  //?? use callback interface?
+
+        void                    PulseISR                (void);
+
+    private:
+
+        uint32_t                        m_Overflow;
+        uint32_t                        m_PulseCount;
 
 
-//-------------------------------------------------------------------------------------------------
-//
-//   Function:      AccessTimeFormat
-//
-//   Description:   Request date
-//
-//-------------------------------------------------------------------------------------------------
-void AccessTimeFormat(AccessRequest_e AccessRequest, const void* pData, uint16_t Number, uint16_t SubNumber)
-{
-    VAR_UNUSED(Number);
-    VAR_UNUSED(SubNumber);
-
-  #if (USE_RTC_DRIVER == DEF_ENABLED)
-    if(AccessRequest == ACCESS_READ) BSP_pRTC->GetTimeFormat((TimeFormat_e*)pData);
-    else                             BSP_pRTC->SetTimeFormat((TimeFormat_e*)pData);
-  #else // User function
-  #endif
-}
+        static  PULSE_CounterInfo_t     m_Info[NB_OF_PULSE_COUNTER];
+};
 
 //-------------------------------------------------------------------------------------------------
-//
-//   Function:      GetLabel
-//
-//   Description:   Request time
-//
-//   Note(s):       GetLabel() does not use Number and SubNumber
-//
-//-------------------------------------------------------------------------------------------------
-void GetLabel(AccessRequest_e AccessRequest, const void* pData, uint16_t Number, uint16_t SubNumber)
-{
-    VAR_UNUSED(SubNumber);
 
-    if(AccessRequest == ACCESS_READ)
-    {
-        if(Number < NB_LABEL_CONST)
-        {
-            pData = myLabel.GetPointer(Label_e(Number));
-        }
-    }
-}
+#endif
 
 
 
-//-------------------------------------------------------------------------------------------------

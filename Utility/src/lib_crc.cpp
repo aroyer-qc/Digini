@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : crc.cpp
+//  File : lib_crc.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -38,7 +38,7 @@
 
 const CRC_Info_t CRC_Calc::m_MethodList[NUMBER_OF_CRC_METHOD] =
 {
-    CRC_METHOD_DEF(EXPAND_X_CRC_AS_CLASS_CONST)
+    CRC_8_TO_32_METHOD_DEF(EXPAND_X_CRC_AS_CLASS_CONST)
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -95,50 +95,26 @@ void CRC_Calc::Start(void)
     m_Remainder = m_MethodList[m_Type].Init;
 }
 
-
-uint32_t BitReversal(uint32_t Value)
-{
-  uint32_t result;
-
-#if (__CORTEX_M >= 0x03U) || (__CORTEX_SC >= 300U)
-   __ASM volatile ("rbit %0, %1" : "=r" (result) : "r" (Value));
-#else
-  int32_t s = 4 /*sizeof(v)*/ * 8 - 1; /* extra shift needed at end */
-
-  result = Value;                      /* r will be reversed bits of v; first get LSB of v */
-  for(Value >>= 1U; Value; Value >>= 1U)
-  {
-    result <<= 1U;
-    result |= Value & 1U;
-    s--;
-  }
-  result <<= s;                        /* shift when v's highest bits are zero */
-#endif
-  return(result);
-}
-
-
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Done
 //
 //  Parameter(s):   void
-//  Return:         uint32_t
+//  Return:         CRC_uint_t
 //
 //  Description:    This function return the CRC value.
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CRC_Calc::Done(void)
+CRC_uint_t CRC_Calc::Done(void)
 {
     m_Remainder ^= m_MethodList[m_Type].XorOut;
 
     if(m_MethodList[m_Type].RefOut == true)
     {
-        m_Remainder = (BitReversal(m_Remainder) >> (32 - m_Width));
+        m_Remainder = (LIB_BitReversal(m_Remainder) >> (sizeof(CRC_uint_t) - m_Width));
     }
 
-    m_Remainder &= (0xFFFFFFFF >> (32 - m_Width));
+    m_Remainder &= (CRC_uint_t(-1) >> (sizeof(CRC_uint_t) - m_Width));
 
     return m_Remainder;
 }
@@ -157,12 +133,12 @@ void CRC_Calc::Calculate( uint8_t Value)
 {
     if(m_RefIn == true)
     {
-        Value = BitReversal(uint32_t(Value)) >> 24;
+        Value = LIB_BitReversal(uint32_t(Value)) >> 24;
     }
 
-    m_Remainder ^= (uint32_t(Value) << (m_Width - 8));
+    m_Remainder ^= (CRC_uint_t(Value) << (m_Width - 8));
 
-    for(uint32_t i = 8; i > 0; i--)
+    for(int i = 8; i > 0; i--)
     {
         if(m_Remainder & m_TopBit)
         {
@@ -206,7 +182,7 @@ void CRC_Calc::CalculateBuffer(const uint8_t *pBuffer, size_t Length)
 //  Description:    Start, Calculate the CRC from a byte buffer and return the CRC.
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CRC_Calc::CalculateFullBuffer(const uint8_t *pBuffer, size_t Length)
+CRC_uint_t CRC_Calc::CalculateFullBuffer(const uint8_t *pBuffer, size_t Length)
 {
     Start();
     CalculateBuffer(pBuffer, Length);

@@ -117,6 +117,7 @@ void Console::Initialize(UART_Driver* pUartDriver)
     m_ActiveProcessLevel    = CON_NOT_CONNECTED;
 
     m_pFifo = new FIFO_Buffer(CON_FIFO_PARSER_RX_SIZE);
+  // ??  pUartDriver->SetBaudRate((CallbackInterface*)this);
     pUartDriver->RegisterCallback((CallbackInterface*)this);
     pUartDriver->EnableCallbackType(UART_CALLBACK_EMPTY_TX, m_pRX_Transfert);
     pUartDriver->EnableCallbackType(UART_CALLBACK_EMPTY_TX);
@@ -132,7 +133,8 @@ void Console::Initialize(UART_Driver* pUartDriver)
 //
 //  Description:    Command line interface process
 //
-//  Note(s):        Preprocessing line of data to trap ERROR or OK or continue for data
+//  Note(s):        If there here active child process than give control to the child process.
+//                  Otherwise received data is lost because no handle to use it.
 //
 //-------------------------------------------------------------------------------------------------
 void Console::Process(void)

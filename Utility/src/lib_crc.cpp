@@ -45,7 +45,15 @@
 
 const CRC_Info_t CRC_Calc::m_MethodList[NUMBER_OF_CRC_METHOD] =
 {
+  #if (DIGINI_USE_CRC_LESS_THAN_8_BITS == DEF_ENABLED)
+    CRC_UP_TO_7_METHOD_DEF(EXPAND_X_CRC_AS_ENUM)
+  #endif
+  #if (DIGINI_USE_CRC_8_TO_32_BITS == DEF_ENABLED)
     CRC_8_TO_32_METHOD_DEF(EXPAND_X_CRC_AS_CLASS_CONST)
+  #endif
+  #if (DIGINI_USE_CRC_MORE_THAN_32_BITS == DEF_ENABLED)
+    CRC_33_AND_MORE_METHOD_DEF(EXPAND_X_CRC_AS_CLASS_CONST)
+  #endif
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -119,7 +127,22 @@ CRC_uint_t CRC_Calc::Done(void)
 
     if(m_MethodList[m_Type].RefOut == true)
     {
-        m_Remainder = (LIB_BitReversal(m_Remainder) >> (CRC_REVERSAL_BITSIZE - m_Width));
+      #if(DIGINI_USE_CRC_MORE_THAN_32_BITS == DEF_ENABLED)
+        if(m_Width <= CRC_REVERSAL_BITSIZE)
+      #endif
+        {
+            m_Remainder = (LIB_BitReversal(m_Remainder) >> (CRC_REVERSAL_BITSIZE - m_Width));
+        }
+      #if(DIGINI_USE_CRC_MORE_THAN_32_BITS == DEF_ENABLED)
+        else
+        {
+            uint32_t High  = uint32_t(m_Remainder);
+            uint32_t Low   = uint32_t(m_Remainder  >> CRC_REVERSAL_BITSIZE);
+            uint32_t Shift = m_Width - CRC_REVERSAL_BITSIZE;
+            m_Remainder    = CRC_uint_t(LIB_BitReversal(High)) << Shift;
+            m_Remainder   |= CRC_uint_t(LIB_BitReversal(Low)) >> (m_Width - Shift);
+        }
+      #endif
     }
 
     m_Remainder &= m_Mask;
@@ -141,10 +164,10 @@ void CRC_Calc::Calculate( uint8_t Value)
 {
     if(m_RefIn == true)
     {
-        Value = LIB_BitReversal(uint32_t(Value)) >> 24;
+        Value = uint8_t(LIB_BitReversal(uint32_t(Value)) >> 24);
     }
 
-    m_Remainder ^= (uint32_t(Value) << (m_Width - 8));
+    m_Remainder ^= (CRC_uint_t(Value) << (m_Width - 8));
 
     for(int i = 8; i > 0; i--)
     {

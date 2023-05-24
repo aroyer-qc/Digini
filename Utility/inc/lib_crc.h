@@ -44,31 +44,11 @@
 #define CRC_uint_t  uint64_t
 #elif (DIGINI_USE_CRC_8_TO_32_BITS == DEF_ENABLED)
 #define CRC_uint_t  uint32_t
-#else // (DIGINI_USE_CRC_LESS_THAN_8_BITS == DEF_ENABLED)
-#define CRC_uint_t  uint8_t
 #endif
 
 
 #define EXPAND_X_CRC_AS_ENUM(ENUM_ID, POLY, INIT, XOR_OUT, REF_IN, REF_OUT, WIDTH)          ENUM_ID,
 #define EXPAND_X_CRC_AS_CLASS_CONST(ENUM_ID, POLY, INIT, XOR_OUT, REF_IN, REF_OUT, WIDTH)   {POLY, INIT, XOR_OUT, REF_IN, REF_OUT, WIDTH},
-
-#define CRC_UP_TO_7_METHOD_DEF(X_CRC)   /* Check is base on string "123456789" */ \
-/*                                                Algorithm	          Poly                     Init	                    XorOut                   RefIn  RefOut Size      Check                   */ \
-    IF_USE( DIGINI_USE_CRC_3_GSM,          X_CRC( CRC_3_GSM,          0x3,                     0x0,                     0x7,                     false, false, 3  ) ) /* 0x4                     */ \
-    IF_USE( DIGINI_USE_CRC_3_ROHC,         X_CRC( CRC_3_ROHC,         0x3,                     0x7,                     0x0,                     true,  true,  3  ) ) /* 0x6                     */ \
-    IF_USE( DIGINI_USE_CRC_4_G_704,        X_CRC( CRC_4_G_704,        0x3,                     0x0,                     0x0,                     true,  true,  4  ) ) /* 0x7                     */ \
-    IF_USE( DIGINI_USE_CRC_4_INTERLAKEN,   X_CRC( CRC_4_INTERLAKEN,   0x3,                     0xF,                     0xF,                     false, false, 4  ) ) /* 0xB                     */ \
-    IF_USE( DIGINI_USE_CRC_5_EPC_C1G2,     X_CRC( CRC_5_EPC_C1G2,     0x09,                    0x09,                    0x00,                    false, false, 5  ) ) /* 0x00                    */ \
-    IF_USE( DIGINI_USE_CRC_5_G_704,        X_CRC( CRC_5_G_704,        0x15,                    0x00,                    0x00,                    true,  true,  5  ) ) /* 0x07                    */ \
-    IF_USE( DIGINI_USE_CRC_5_USB,          X_CRC( CRC_5_USB,          0x05,                    0x1F,                    0x1F,                    true,  true,  5  ) ) /* 0x19                    */ \
-    IF_USE( DIGINI_USE_CRC_6_CDMA2000_A,   X_CRC( CRC_6_CDMA2000_A,   0x27,                    0x3F,                    0x00,                    false, false, 6  ) ) /* 0x0D                    */ \
-    IF_USE( DIGINI_USE_CRC_6_CDMA2000_B,   X_CRC( CRC_6_CDMA2000_B,   0x07,                    0x3F,                    0x00,                    false, false, 6  ) ) /* 0x3B                    */ \
-    IF_USE( DIGINI_USE_CRC_6_DARC,         X_CRC( CRC_6_DARC,         0x19,                    0x00,                    0x00,                    true,  true,  6  ) ) /* 0x26                    */ \
-    IF_USE( DIGINI_USE_CRC_6_G_704,        X_CRC( CRC_6_G_704,        0x03,                    0x00,                    0x00,                    true,  true,  6  ) ) /* 0x06                    */ \
-    IF_USE( DIGINI_USE_CRC_6_GSM,          X_CRC( CRC_6_GSM,          0x2F,                    0x00,                    0x3F,                    false, false, 6  ) ) /* 0x13                    */ \
-    IF_USE( DIGINI_USE_CRC_7_MMC,          X_CRC( CRC_7_MMC,          0x09,                    0x00,                    0x00,                    false, false, 7  ) ) /* 0x75                    */ \
-    IF_USE( DIGINI_USE_CRC_7_ROHC,         X_CRC( CRC_7_ROHC,         0x4F,                    0x7F,                    0x00,                    true,  true,  7  ) ) /* 0x53                    */ \
-    IF_USE( DIGINI_USE_CRC_7_UMTS,         X_CRC( CRC_7_UMTS,         0x45,                    0x00,                    0x00,                    false, false, 7  ) ) /* 0x61                    */ \
 
 #define CRC_8_TO_32_METHOD_DEF(X_CRC)   /* Check is base on string "123456789" */ \
 /*                                                Algorithm	          Poly                     Init	                    XorOut                   RefIn  RefOut Size      Check                   */ \
@@ -169,6 +149,7 @@
     IF_USE( DIGINI_USE_CRC_64_WE,          X_CRC( CRC_64_WE,          0x42F0E1EBA9EA3693,      0xFFFFFFFFFFFFFFFF,      0xFFFFFFFFFFFFFFFF,      false, false, 64 ) ) /* 0x62EC59E3F1A4F00A      */ \
     IF_USE( DIGINI_USE_CRC_64_XZ,          X_CRC( CRC_64_XZ,          0x42F0E1EBA9EA3693,      0xFFFFFFFFFFFFFFFF,      0xFFFFFFFFFFFFFFFF,      true,  true,  64 ) ) /* 0x995DC9BBDF1939FA      */ \
 
+// Not yet implemented, not sure it will
 //    IF_USE( DIGINI_USE_CRC_82_DARC,        X_CRC( CRC_82_DARC,        0x0308C0111011401440411, 0x000000000000000000000, 0x000000000000000000000, true,  true,  82 ) ) /* 0x09EA83F625023801FD612 */
 
 //-------------------------------------------------------------------------------------------------
@@ -177,9 +158,6 @@
 
 enum CRC_Type_e
 {
-  #if (DIGINI_USE_CRC_LESS_THAN_8_BITS == DEF_ENABLED)
-    CRC_UP_TO_7_METHOD_DEF(EXPAND_X_CRC_AS_ENUM)
-  #endif
   #if (DIGINI_USE_CRC_8_TO_32_BITS == DEF_ENABLED)
     CRC_8_TO_32_METHOD_DEF(EXPAND_X_CRC_AS_ENUM)
   #endif

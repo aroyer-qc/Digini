@@ -37,7 +37,8 @@
 //-------------------------------------------------------------------------------------------------
 
 #define CRC_REVERSAL_BITSIZE                32
-#define CRC_UINT_BITSIZE                    (sizeof(CRC_uint_t) * CHAR_BIT)
+#define CRC_REVERSAL_CHAR_BITSIZE_SHIFT     24
+#define CRC_CHAR_BITSIZE                    8
 
 //-------------------------------------------------------------------------------------------------
 // const(s)
@@ -45,9 +46,6 @@
 
 const CRC_Info_t CRC_Calc::m_MethodList[NUMBER_OF_CRC_METHOD] =
 {
-  #if (DIGINI_USE_CRC_LESS_THAN_8_BITS == DEF_ENABLED)
-    CRC_UP_TO_7_METHOD_DEF(EXPAND_X_CRC_AS_ENUM)
-  #endif
   #if (DIGINI_USE_CRC_8_TO_32_BITS == DEF_ENABLED)
     CRC_8_TO_32_METHOD_DEF(EXPAND_X_CRC_AS_CLASS_CONST)
   #endif
@@ -164,12 +162,13 @@ void CRC_Calc::Calculate( uint8_t Value)
 {
     if(m_RefIn == true)
     {
-        Value = uint8_t(LIB_BitReversal(uint32_t(Value)) >> 24);
+        Value = uint8_t(LIB_BitReversal(uint32_t(Value)) >> CRC_REVERSAL_CHAR_BITSIZE_SHIFT);
     }
 
-    m_Remainder ^= (CRC_uint_t(Value) << (m_Width - 8));
+    m_Remainder ^= (CRC_uint_t(Value) << (m_Width - CRC_CHAR_BITSIZE));
 
-    for(int i = 8; i > 0; i--)
+
+    for(int i = CRC_CHAR_BITSIZE; i > 0; i--)
     {
         if(m_Remainder & m_TopBit)
         {

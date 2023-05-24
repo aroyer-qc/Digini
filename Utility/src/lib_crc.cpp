@@ -79,8 +79,8 @@ CRC_Calc::CRC_Calc(CRC_Type_e Type)
     m_Polynomial = m_MethodList[m_Type].Polynomial;
     m_RefIn      = m_MethodList[m_Type].RefIn;
     m_Width      = m_MethodList[m_Type].Width;
-    m_Mask       = (0x1 << m_Width) - 1;
-    m_TopBit     = 0x1 << (m_Width - 1);
+    m_Mask       = (CRC_uint_t(0x1) << m_Width) - 1;
+    m_TopBit     = CRC_uint_t(0x1) << (m_Width - 1);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -140,7 +140,7 @@ CRC_uint_t CRC_Calc::Done(void)
             uint32_t Low   = uint32_t(m_Remainder  >> CRC_REVERSAL_BITSIZE);
             uint32_t Shift = m_Width - CRC_REVERSAL_BITSIZE;
             m_Remainder    = CRC_uint_t(LIB_BitReversal(High)) << Shift;
-            m_Remainder   |= CRC_uint_t(LIB_BitReversal(Low)) >> (m_Width - Shift);
+            m_Remainder   |= CRC_uint_t(LIB_BitReversal(Low)) >> (CRC_REVERSAL_BITSIZE - Shift);
         }
       #endif
     }

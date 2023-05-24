@@ -40,7 +40,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#if   (DIGINI_USE_CRC_MORE_THAN_32_BITS == DEF_ENABLED)
+ #if   (DIGINI_USE_CRC_MORE_THAN_32_BITS == DEF_ENABLED)
 #define CRC_uint_t  uint64_t
 #elif (DIGINI_USE_CRC_8_TO_32_BITS == DEF_ENABLED)
 #define CRC_uint_t  uint32_t
@@ -166,8 +166,8 @@
     IF_USE( DIGINI_USE_CRC_64_ECMA_182,    X_CRC( CRC_64_ECMA_182,    0x42F0E1EBA9EA3693,      0x0000000000000000,      0x0000000000000000,      false, false, 64 ) ) /* 0x6C40DF5F0B497347      */ \
     IF_USE( DIGINI_USE_CRC_64_GO_ISO,      X_CRC( CRC_64_GO_ISO,      0x000000000000001B,      0xFFFFFFFFFFFFFFFF,      0xFFFFFFFFFFFFFFFF,      true,  true,  64 ) ) /* 0xB90956C775A41001      */ \
     IF_USE( DIGINI_USE_CRC_64_MS,          X_CRC( CRC_64_MS,          0x259c84CBA6426349,      0xFFFFFFFFFFFFFFFF,      0x0000000000000000,      true,  true,  64 ) ) /* 0x75D4B74F024ECEEA      */ \
-    IF_USE( DIGINI_USE_CRC_64_WE,          X_CRC( CRC_64_WE,          0x42f0E1EBA9EA3693,      0xFFFFFFFFFFFFFFFF,      0xFFFFFFFFFFFFFFFF,      false, false, 64 ) ) /* 0x62EC59E3F1A4F00A      */ \
-    IF_USE( DIGINI_USE_CRC_64_XZ,          X_CRC( CRC_64_XZ,          0x42T0E1EBA9EA3693,      0xFFFFFFFFFFFFFFFF,      0xFFFFFFFFFFFFFFFF,      true,  true,  64 ) ) /* 0x995DC9BBDF1939FA      */ \
+    IF_USE( DIGINI_USE_CRC_64_WE,          X_CRC( CRC_64_WE,          0x42F0E1EBA9EA3693,      0xFFFFFFFFFFFFFFFF,      0xFFFFFFFFFFFFFFFF,      false, false, 64 ) ) /* 0x62EC59E3F1A4F00A      */ \
+    IF_USE( DIGINI_USE_CRC_64_XZ,          X_CRC( CRC_64_XZ,          0x42F0E1EBA9EA3693,      0xFFFFFFFFFFFFFFFF,      0xFFFFFFFFFFFFFFFF,      true,  true,  64 ) ) /* 0x995DC9BBDF1939FA      */ \
 
 //    IF_USE( DIGINI_USE_CRC_82_DARC,        X_CRC( CRC_82_DARC,        0x0308C0111011401440411, 0x000000000000000000000, 0x000000000000000000000, true,  true,  82 ) ) /* 0x09EA83F625023801FD612 */
 

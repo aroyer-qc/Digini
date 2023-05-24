@@ -1,10 +1,10 @@
-//-------------------------------------------------------------------------------------------------
+ //-------------------------------------------------------------------------------------------------
 //
 //  File : lib_crc.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -33,12 +33,19 @@
 #if (DIGINI_USE_CRC == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define CRC_REVERSAL_BITSIZE                32
+#define CRC_UINT_BITSIZE                    (sizeof(CRC_uint_t) * CHAR_BIT)
+
+//-------------------------------------------------------------------------------------------------
 // const(s)
 //-------------------------------------------------------------------------------------------------
 
 const CRC_Info_t CRC_Calc::m_MethodList[NUMBER_OF_CRC_METHOD] =
 {
-    CRC_METHOD_DEF(EXPAND_X_CRC_AS_CLASS_CONST)
+    CRC_8_TO_32_METHOD_DEF(EXPAND_X_CRC_AS_CLASS_CONST)
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -101,22 +108,21 @@ void CRC_Calc::Start(void)
 //  Name:           Done
 //
 //  Parameter(s):   void
-//  Return:         uint32_t
+//  Return:         CRC_uint_t
 //
 //  Description:    This function return the CRC value.
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CRC_Calc::Done(void)
+CRC_uint_t CRC_Calc::Done(void)
 {
     m_Remainder ^= m_MethodList[m_Type].XorOut;
 
     if(m_MethodList[m_Type].RefOut == true)
     {
-        m_Remainder = (LIB_BitReversal(m_Remainder) >> (32 - m_Width));
+        m_Remainder = (LIB_BitReversal(m_Remainder) >> (CRC_REVERSAL_BITSIZE - m_Width));
     }
 
     m_Remainder &= m_Mask;
-;
 
     return m_Remainder;
 }
@@ -181,12 +187,12 @@ void CRC_Calc::CalculateBuffer(const uint8_t *pBuffer, size_t Length)
 //
 //  Parameter(s):   pBuffer
 //                  Length
-//  Return:         uint32_t
+//  Return:         CRC_uint_t
 //
 //  Description:    Start, Calculate the CRC from a byte buffer and return the CRC.
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CRC_Calc::CalculateFullBuffer(const uint8_t *pBuffer, size_t Length)
+CRC_uint_t CRC_Calc::CalculateFullBuffer(const uint8_t *pBuffer, size_t Length)
 {
     Start();
     CalculateBuffer(pBuffer, Length);

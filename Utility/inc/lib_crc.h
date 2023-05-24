@@ -177,7 +177,7 @@
 
 enum CRC_Type_e
 {
-    CRC_UP_TO_7_METHOD_DEF(EXPAND_X_CRC_AS_ENUM)
+    //CRC_UP_TO_7_METHOD_DEF(EXPAND_X_CRC_AS_ENUM)
     CRC_8_TO_32_METHOD_DEF(EXPAND_X_CRC_AS_ENUM)
     CRC_33_AND_MORE_METHOD_DEF(EXPAND_X_CRC_AS_ENUM)
     NUMBER_OF_CRC_METHOD,
@@ -216,6 +216,7 @@ class CRC_Calc
         CRC_Type_e                      m_Type;
         bool                            m_RefIn;
         uint8_t                         m_Width;
+        CRC_uint_t                      m_Mask;
         CRC_uint_t                      m_Polynomial;
         CRC_uint_t                      m_TopBit;
         CRC_uint_t                      m_Remainder;

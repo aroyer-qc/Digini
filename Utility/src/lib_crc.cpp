@@ -38,7 +38,7 @@
 
 const CRC_Info_t CRC_Calc::m_MethodList[NUMBER_OF_CRC_METHOD] =
 {
-    CRC_8_TO_32_METHOD_DEF(EXPAND_X_CRC_AS_CLASS_CONST)
+    CRC_METHOD_DEF(EXPAND_X_CRC_AS_CLASS_CONST)
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -64,6 +64,7 @@ CRC_Calc::CRC_Calc(CRC_Type_e Type)
     m_Polynomial = m_MethodList[m_Type].Polynomial;
     m_RefIn      = m_MethodList[m_Type].RefIn;
     m_Width      = m_MethodList[m_Type].Width;
+    m_Mask       = (0x1 << m_Width) - 1;
     m_TopBit     = 0x1 << (m_Width - 1);
 }
 
@@ -100,21 +101,22 @@ void CRC_Calc::Start(void)
 //  Name:           Done
 //
 //  Parameter(s):   void
-//  Return:         CRC_uint_t
+//  Return:         uint32_t
 //
 //  Description:    This function return the CRC value.
 //
 //-------------------------------------------------------------------------------------------------
-CRC_uint_t CRC_Calc::Done(void)
+uint32_t CRC_Calc::Done(void)
 {
     m_Remainder ^= m_MethodList[m_Type].XorOut;
 
     if(m_MethodList[m_Type].RefOut == true)
     {
-        m_Remainder = (LIB_BitReversal(m_Remainder) >> (sizeof(CRC_uint_t) - m_Width));
+        m_Remainder = (LIB_BitReversal(m_Remainder) >> (32 - m_Width));
     }
 
-    m_Remainder &= (CRC_uint_t(-1) >> (sizeof(CRC_uint_t) - m_Width));
+    m_Remainder &= m_Mask;
+;
 
     return m_Remainder;
 }
@@ -136,7 +138,7 @@ void CRC_Calc::Calculate( uint8_t Value)
         Value = LIB_BitReversal(uint32_t(Value)) >> 24;
     }
 
-    m_Remainder ^= (CRC_uint_t(Value) << (m_Width - 8));
+    m_Remainder ^= (uint32_t(Value) << (m_Width - 8));
 
     for(int i = 8; i > 0; i--)
     {
@@ -150,6 +152,8 @@ void CRC_Calc::Calculate( uint8_t Value)
             m_Remainder <<= 1;
         }
     }
+
+    m_Remainder &= m_Mask;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -177,12 +181,12 @@ void CRC_Calc::CalculateBuffer(const uint8_t *pBuffer, size_t Length)
 //
 //  Parameter(s):   pBuffer
 //                  Length
-//  Return:         void
+//  Return:         uint32_t
 //
 //  Description:    Start, Calculate the CRC from a byte buffer and return the CRC.
 //
 //-------------------------------------------------------------------------------------------------
-CRC_uint_t CRC_Calc::CalculateFullBuffer(const uint8_t *pBuffer, size_t Length)
+uint32_t CRC_Calc::CalculateFullBuffer(const uint8_t *pBuffer, size_t Length)
 {
     Start();
     CalculateBuffer(pBuffer, Length);

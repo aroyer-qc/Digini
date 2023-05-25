@@ -61,6 +61,8 @@
 //-------------------------------------------------------------------------------------------------
 void SystemInit(void)
 {
+    __asm volatile("cpsid i");                                              // Disable IRQ
+
     // Reset the RCC clock configuration to the default reset state
     RCC->CR |= RCC_CR_HSION;                                                // Set HSION bit
     RCC->CFGR = 0;                                                          // Reset CFGR register

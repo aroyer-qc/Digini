@@ -44,6 +44,8 @@ void SystemInit(void)
 {
     uint32_t Retry;
 
+    __asm volatile("cpsid i");                                              // Disable IRQ
+
     SET_BIT(RCC->APB2ENR, RCC_APB2ENR_SYSCFGEN);
     SET_BIT(RCC->APB1ENR, RCC_APB1ENR_PWREN);
     MODIFY_REG(PWR->CR, PWR_CR_VOS, POWER_REGULATOR_CFG);
@@ -128,3 +130,5 @@ void SystemInit(void)
     SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET;   // Vector Table Relocation in Internal FLASH
   #endif
 }
+
+//-------------------------------------------------------------------------------------------------

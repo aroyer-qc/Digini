@@ -68,6 +68,35 @@ RawArray::RawArray(void* pBuffer, size_t Size)
 
 RawArray::~RawArray(void)
 {
+    if(m_pAllocPtr != nullptr)
+    {
+        free(m_pAllocPtr);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Operator new and delete overload
+//
+//-------------------------------------------------------------------------------------------------
+
+void* RawArray::operator new(size_t Size)
+{
+    void* pBuffer;
+
+    pBuffer = malloc(Size);
+    static_cast<RawArray*>(pBuffer)->m_pAllocPtr = nullptr;
+
+    return pBuffer;
+}
+
+void RawArray::operator delete(void* pPtr)
+{
+    if((pPtr != nullptr) && (pPtr == static_cast<RawArray*>(pPtr)->m_pAllocPtr))
+    {
+        static_cast<RawArray*>(pPtr)->m_pAllocPtr = nullptr;
+        free(pPtr);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

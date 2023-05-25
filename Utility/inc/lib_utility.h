@@ -98,6 +98,9 @@ class RawArray
                     RawArray        (void* pBuffer, size_t Size);
                    ~RawArray        ();
 
+        void*       operator new    (size_t size);
+        void        operator delete (void*);
+
         void        append          (uint8_t data);
         void        append          (uint16_t data);
         void        append          (uint32_t data);
@@ -124,6 +127,7 @@ class RawArray
 
     private:
 
+        void*               m_pAllocPtr;
         uint8_t*            m_pBuffer;
         size_t              m_Size;
 };

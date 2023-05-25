@@ -224,11 +224,13 @@ uint16_t SKIN_myClassTask::PercentLoader(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+#include <malloc.h>
 void SKIN_myClassTask::Run(void)
 {
   //#ifdef GRAFX_USE_LOAD_SKIN
     uint8_t*  pFreePointer;
   //#endif
+
 
     for(;;)
     {
@@ -238,8 +240,13 @@ void SKIN_myClassTask::Run(void)
       #endif
         {
           #ifdef GRAFX_USE_LOAD_SKIN
-            m_pRawInputBuffer = (uint8_t*)GRAFX_RAW_INPUT_DATA_ADDRESS;
 
+          struct mallinfo mi;
+
+            mi = mallinfo();
+
+
+            m_pRawInputBuffer      = (uint8_t*)GRAFX_RAW_INPUT_DATA_ADDRESS;
             m_CompxWorkMem.pDecode = new RawArray((void*)(GRAFX_DECODE_ARRAY_ADDRESS));
             m_CompxWorkMem.pAppend = new RawArray((void*)(GRAFX_APPEND_ARRAY_ADDRESS));
             m_CompxWorkMem.pPrefix = new RawArray((void*)(GRAFX_PREFIX_ARRAY_ADDRESS));
@@ -271,7 +278,6 @@ void SKIN_myClassTask::Run(void)
             m_pFile     = (FIL*)     pMemory->AllocAndClear(sizeof(FIL));
             m_pFileInfo = (FILINFO*) pMemory->AllocAndClear(sizeof(FILINFO));
             this->Load();
-
             pMemory->Free((void**)&m_pFileInfo);
             pMemory->Free((void**)&m_pFile);
             pMemory->Free((void**)&m_pFS);
@@ -662,15 +668,16 @@ SystemState_e SKIN_myClassTask::GetFontInfo(void)
 void SKIN_myClassTask::StaticLoad(void)
 {
     ImageInfo_t ImageInfo;
-    RawArray*   pOutput;
-    RawArray*   pInput;
     uint8_t*    pFreePointer;
+    RawArray*   pInput;
+    RawArray*   pOutput;
 
     DB_Central.Get(&pFreePointer, GFX_FREE_RAM_POINTER, 0, 0);
 
     // load all static image, (Decompressed and store in RAM)
     for(int StaticImage = 1; StaticImage < NUMBER_OF_STATIC_IMAGE; StaticImage++)
     {
+
         ImageInfo.Size.Width  = SII_Array[StaticImage]->SizeX;
         ImageInfo.Size.Height = SII_Array[StaticImage]->SizeY;
         ImageInfo.PixelFormat = SII_Array[StaticImage]->PixelFormat;

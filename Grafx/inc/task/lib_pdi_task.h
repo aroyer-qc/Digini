@@ -53,7 +53,7 @@
 #define TOUCH_TYPEMATIC_PRECOUNT            30
 #define TOUCH_TYPEMATIC_COUNT               2
 
-#define PDI_TASK_STACK_SIZE                 1024
+#define PDI_TASK_STACK_SIZE                 512
 #define PDI_TASK_PRIO                       4
 
 #define PDI_SWAP_NONE                       ((uint8_t) 0x01)
@@ -95,12 +95,13 @@ class PDI_myClassTask
         Widget_e            GetZoneID           (void);
 
 
-        nOS_Thread                          m_Handle;
+        static nOS_Thread                   m_Handle;
+        static nOS_Stack                    m_Stack[PDI_TASK_STACK_SIZE];
+
       #ifdef GRAFX_PDI_INTERRUPT_IO
         nOS_Sem                             m_FlagTouchDetected;
       #endif
         PointingDeviceInterface*            m_pDriver;
-        nOS_Stack                           m_Stack[PDI_TASK_STACK_SIZE];
         Cartesian_t                         m_EventPosition;
         uint16_t                            m_ConfigSizeX;
         uint16_t                            m_ConfigSizeY;

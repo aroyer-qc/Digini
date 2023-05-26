@@ -219,8 +219,8 @@ bool                GetString                   (char* pBuffer, size_t Size);
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
 
       #if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
-        nOS_Thread                          m_Handle;
-        nOS_Stack                           m_Stack[TASK_VT100_STACK_SIZE];
+        static nOS_Thread                   m_Handle;
+        static nOS_Stack                    m_Stack[TASK_VT100_STACK_SIZE];
         nOS_Sem                             m_SemTaskRun;
       #endif
 

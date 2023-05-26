@@ -50,6 +50,26 @@ DeCompression::DeCompression(CompxWorkMem_t* pCompxWorkMem)
     memcpy(&m_WorkMem, pCompxWorkMem, sizeof(CompxWorkMem_t));
 }
 
+
+void* DeCompression::operator new(size_t Size)
+{
+    void* pBuffer;
+
+    pBuffer = malloc(Size);
+    static_cast<DeCompression*>(pBuffer)->m_pAllocPtr = nullptr;
+
+    return pBuffer;
+}
+
+void DeCompression::operator delete(void* pPtr)
+{
+    if((pPtr != nullptr) && (pPtr == static_cast<DeCompression*>(pPtr)->m_pAllocPtr))
+    {
+        static_cast<DeCompression*>(pPtr)->m_pAllocPtr = nullptr;
+        free(pPtr);
+    }
+}
+
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:

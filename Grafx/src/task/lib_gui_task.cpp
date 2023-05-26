@@ -39,6 +39,15 @@
 
 //-------------------------------------------------------------------------------------------------
 //
+//   Static Variables
+//
+//-------------------------------------------------------------------------------------------------
+
+nOS_Thread GUI_myClassTask::m_Handle;
+nOS_Stack  GUI_myClassTask::m_Stack[GUI_TASK_STACK_SIZE];
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           GUI_TaskWrapper
 //
 //  Parameter(s):   void* pvParameters
@@ -71,10 +80,10 @@ nOS_Error GUI_myClassTask::Initialize(void)
 
     if((Error = nOS_QueueCreate(&this->m_Q_Msg, &this->m_ArrayMsg[0], sizeof(MsgRefresh_t), GUI_NUMBER_OF_MSG)) == NOS_OK)
     {
-        Error = nOS_ThreadCreate(&this->m_Handle,
+        Error = nOS_ThreadCreate(&m_Handle,
                                  GUI_TaskWrapper,
                                  this,
-                                 &this->m_Stack[0],
+                                 &m_Stack[0],
                                  GUI_TASK_STACK_SIZE,
                                  GUI_TASK_PRIO
                                #if(NOS_CONFIG_THREAD_MPU_REGION_ENABLE > 0)

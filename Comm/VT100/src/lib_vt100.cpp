@@ -67,6 +67,15 @@ const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
 
 //-------------------------------------------------------------------------------------------------
 //
+//   Static Variables
+//
+//-------------------------------------------------------------------------------------------------
+
+nOS_Thread VT100_Terminal::m_Handle;
+nOS_Stack  VT100_Terminal::m_Stack[TASK_VT100_STACK_SIZE];
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           VT100_TaskWrapper
 //
 //  Parameter(s):   void* pvParameters
@@ -138,10 +147,10 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
   #if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
     if((Error = nOS_SemCreate(&this->m_SemTaskRun, 0, 1)) == NOS_OK)
     {
-        Error = nOS_ThreadCreate(&this->m_Handle,
+        Error = nOS_ThreadCreate(&m_Handle,
                                  VT100_TaskWrapper,
                                  this,
-                                 &this->m_Stack[0],
+                                 &m_Stack[0],
                                  TASK_VT100_STACK_SIZE,
                                  TASK_VT100_PRIO
                                #if(NOS_CONFIG_THREAD_MPU_REGION_ENABLE > 0)

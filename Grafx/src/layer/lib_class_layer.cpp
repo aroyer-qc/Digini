@@ -53,6 +53,12 @@ CLayer LayerTable[LAYER_COUNT] =
 };
 #endif
 
+//-------------------------------------------------------------------------------------------------
+//
+//   Static Variables
+//
+//-------------------------------------------------------------------------------------------------
+
 Layer_e      CLayer::m_ActiveDrawingLayer;
       //static CLayer*      m_pActiveDrawingLayer;
 

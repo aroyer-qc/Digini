@@ -41,7 +41,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define SKIN_TASK_STACK_SIZE                    1024
+#define SKIN_TASK_STACK_SIZE                    256
 #define SKIN_TASK_PRIO                          4
 
 //-------------------------------------------------------------------------------------------------
@@ -91,11 +91,11 @@ class SKIN_myClassTask
         void            StaticLoad                  (void);           // Initialize all static image
       #endif
 
-        SKIN_PostLoadCallBack_t                     m_pCallBack;
+        static nOS_Thread                           m_Handle;
+        static nOS_Stack                            m_Stack[SKIN_TASK_STACK_SIZE];
 
+        SKIN_PostLoadCallBack_t                     m_pCallBack;
         nOS_Flag                                    m_SkinFlags;
-        nOS_Thread                                  m_Handle;
-        nOS_Stack                                   m_Stack[SKIN_TASK_STACK_SIZE];
 
       #ifdef GRAFX_USE_LOAD_SKIN
         bool                                        m_IsSkinLoaded;

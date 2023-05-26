@@ -37,9 +37,8 @@
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
 #ifdef GRAFX_USE_POINTING_DEVICE
 
-//-------------------------------------------------------------------------------------------------
-// Local function
-//-------------------------------------------------------------------------------------------------
+nOS_Thread PDI_myClassTask::m_Handle;
+nOS_Stack  PDI_myClassTask::m_Stack[PDI_TASK_STACK_SIZE];
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -89,10 +88,10 @@ SystemState_e PDI_myClassTask::Initialize(PointingDeviceInterface* pDriver, uint
     State     = SYS_FAIL;
     m_pDriver = nullptr;
 
-    if((Error = nOS_ThreadCreate(&this->m_Handle,
+    if((Error = nOS_ThreadCreate(&m_Handle,
                                  PDI_TaskWrapper,
                                  this,
-                                 &this->m_Stack[0],
+                                 &m_Stack[0],
                                  PDI_TASK_STACK_SIZE,
                                  PDI_TASK_PRIO)) == NOS_OK)
     {

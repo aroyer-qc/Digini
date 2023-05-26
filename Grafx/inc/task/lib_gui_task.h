@@ -47,7 +47,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define GUI_TASK_STACK_SIZE                     4096
+#define GUI_TASK_STACK_SIZE                    1024
 #define GUI_TASK_PRIO                           6
 #define GUI_NUMBER_OF_MSG                       4
 
@@ -83,9 +83,10 @@ class GUI_myClassTask
         PageWidget_t*               m_pPage;
         uint8_t                     m_WidgetCount;
         class CWidgetInterface**    m_pWidgetList;
-        nOS_Thread                  m_Handle;
-        nOS_Stack                   m_Stack[GUI_TASK_STACK_SIZE];
         MsgRefresh_t                m_ArrayMsg[GUI_NUMBER_OF_MSG];
+
+        static nOS_Thread           m_Handle;
+        static nOS_Stack            m_Stack[GUI_TASK_STACK_SIZE];
 
       #ifdef GRAFX_USE_SLIDING_PAGE
         SlideDir_e                  m_SlidingDir;

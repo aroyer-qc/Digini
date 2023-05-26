@@ -67,9 +67,8 @@
 
 #endif
 
-//-------------------------------------------------------------------------------------------------
-// Public pointer for forward declaration
-//-------------------------------------------------------------------------------------------------
+nOS_Thread SKIN_myClassTask::m_Handle;
+nOS_Stack  SKIN_myClassTask::m_Stack[SKIN_TASK_STACK_SIZE];
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -132,13 +131,12 @@ nOS_Error SKIN_myClassTask::Initialize(void)
   #ifdef GRAFX_USE_LOAD_SKIN
     m_IsSkinLoaded   = false;
   #endif
-
     m_pCallBack      = nullptr;
 
-    if((Error = nOS_ThreadCreate(&this->m_Handle,
+    if((Error = nOS_ThreadCreate(&m_Handle,
                                  SKIN_TaskWrapper,
                                  this,
-                                 &this->m_Stack[0],
+                                 &m_Stack[0],
                                  SKIN_TASK_STACK_SIZE,
                                  SKIN_TASK_PRIO
                                #if(NOS_CONFIG_THREAD_MPU_REGION_ENABLE > 0)
@@ -224,7 +222,6 @@ uint16_t SKIN_myClassTask::PercentLoader(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#include <malloc.h>
 void SKIN_myClassTask::Run(void)
 {
   //#ifdef GRAFX_USE_LOAD_SKIN
@@ -240,11 +237,6 @@ void SKIN_myClassTask::Run(void)
       #endif
         {
           #ifdef GRAFX_USE_LOAD_SKIN
-
-          struct mallinfo mi;
-
-            mi = mallinfo();
-
 
             m_pRawInputBuffer      = (uint8_t*)GRAFX_RAW_INPUT_DATA_ADDRESS;
             m_CompxWorkMem.pDecode = new RawArray((void*)(GRAFX_DECODE_ARRAY_ADDRESS));

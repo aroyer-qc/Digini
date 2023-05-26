@@ -82,7 +82,8 @@ class CMem
 
 // ----- Memory allocation(s) ------
 #ifdef MEM_GLOBAL
-class CMem*                      pMemory;
+class CMem                       _Memory;
+class CMem*                      pMemory     = &_Memory;
 #else
 extern class CMem*               pMemory;
 #endif

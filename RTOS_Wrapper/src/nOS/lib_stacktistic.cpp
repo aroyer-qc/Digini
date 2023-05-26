@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_CQueue.cpp
+//  File : lib_stacktistic.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -30,29 +30,34 @@
 
 #include "lib_digini.h"
 
-#if (NOS_CONFIG_QUEUE_ENABLE > 0)
+//-------------------------------------------------------------------------------------------------
 
-CQueue::CQueue(void)
+size_t GetStackUsage(nOS_Stack* pStack, size_t Size)
 {
+    size_t UseSize = Size;
+
+    // Use -1 here, because if we reach -1 we now the stack was busted
+    while((UseSize > -1) && (pStack[UseSize] == 0xFFFFFFFFUL))
+    {
+        UseSize--;
+    }
+
+    return UseSize;
 }
 
-CQueue::~CQueue(void)
+int32_t GetStackPercent(nOS_Stack* pStack, size_t Size)
 {
-}
+    int32_t Percent;
 
-bool CQueue::CreateQueue(void* pBuffer, size_t Size, size_t ItemSize)
-{
-    return bool(nOS_QueueCreate(&m_Queue, pBuffer, Size, ItemSize) == NOS_OK);
-}
+    Percent = int32_t(GetStackUsage(pStack, Size));
 
-bool CQueue::Send(void* ptr, TickCount_t TicksToWait)
-{
-    return bool(nOS_QueueWrite(&m_Queue, ptr, TicksToWait) == NOS_OK);
-}
+    if(Percent == -1)
+    {
+        return Percent;
+    }
 
-bool CQueue::Receive(void* ptr, TickCount_t TicksToWait)
-{
-    return bool(nOS_QueueRead(&m_Queue, ptr, TicksToWait) == NOS_OK);
-}
+    Percent = Percent * 100;
+    Percent = (Percent / Size) + ((((Percent * 10) % Size) > 5) ? 1 : 0);      // Add 1 if .6% and more
 
-#endif
+    return Percent;
+}

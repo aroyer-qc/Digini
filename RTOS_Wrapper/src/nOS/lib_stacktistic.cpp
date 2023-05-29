@@ -32,24 +32,56 @@
 
 //-------------------------------------------------------------------------------------------------
 
-size_t GetStackUsage(nOS_Stack* pStack, size_t Size)
+#if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+
+extern const uint32_t _estack;
+extern const uint32_t _Min_Stack_Size;
+
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           STACK_GetUsage
+//
+// Parameter(s):   uint32_t*           pStack
+//                 size_t              Size
+// Return:         size_t              Used Size
+//
+// Description:    Return the use size of a specific stack.
+//
+//-------------------------------------------------------------------------------------------------
+size_t STACK_GetUsage(const uint32_t* pStack, size_t Size)
 {
-    size_t UseSize = Size;
+    size_t UseSize = 0;
+
+    pStack -= (Size / 4);
 
     // Use -1 here, because if we reach -1 we now the stack was busted
-    while((UseSize > -1) && (pStack[UseSize] == 0xFFFFFFFFUL))
+    while((UseSize < Size) && (*pStack == 0xFFFFFFFFUL))
     {
-        UseSize--;
+        UseSize += 4;
+        pStack  += 4;
     }
 
     return UseSize;
 }
 
-int32_t GetStackPercent(nOS_Stack* pStack, size_t Size)
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           STACK_GetPercent
+//
+// Parameter(s):   const  uint32_t*    pStack
+//                 size_t              Size
+// Return:         int32_t             Percentage of the specific stack.
+//
+// Description:    Return the use size of a specific stack
+//
+//-------------------------------------------------------------------------------------------------
+int32_t STACK_GetPercent(const uint32_t* pStack, size_t Size)
 {
     int32_t Percent;
 
-    Percent = int32_t(GetStackUsage(pStack, Size));
+    Percent = int32_t(STACK_GetUsage(pStack, Size));
 
     if(Percent == -1)
     {
@@ -61,3 +93,33 @@ int32_t GetStackPercent(nOS_Stack* pStack, size_t Size)
 
     return Percent;
 }
+
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           STACK_FillIdle
+//
+// Parameter(s):   void
+// Return:         None
+//
+// Description:    Fill the Idle stack with 0xFF
+//
+//-------------------------------------------------------------------------------------------------
+void STACK_FillIdle(void)
+{
+    int32_t Stack;
+    int32_t StackUsed;
+    int32_t StackLeft;
+
+    __asm(  "mov %[result], sp" : [result] "=r" (Stack));
+
+    StackUsed = uint32_t(&_estack) - Stack;
+    StackLeft = uint32_t(&_Min_Stack_Size) - StackUsed;
+
+    for(; StackLeft > 0; StackLeft -= 4)
+    {
+        Stack -= 4;
+        *((uint32_t*)Stack) = 0xFFFFFFFFUL;
+    }
+}
+
+#endif

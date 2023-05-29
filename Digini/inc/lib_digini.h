@@ -47,6 +47,7 @@
 // Real Time OS
 
 #include "nOS.h"
+#include "LIB_Stacktistic.h"
 
 //-------------------------------------------------------------------------------------------------
 // Common configuration header

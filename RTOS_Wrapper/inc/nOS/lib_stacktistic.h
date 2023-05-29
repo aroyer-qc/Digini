@@ -32,11 +32,19 @@
 
 #include "nOS.h"
 
+
+extern const uint32_t _estack;
+extern const uint32_t _Min_Stack_Size;
+
 //-------------------------------------------------------------------------------------------------
 // Prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-size_t  GetStackUsage       (nOS_Stack* pStack, size_t Size);
-int32_t GetStackPercent     (nOS_Stack* pStack, size_t Size);
+size_t          STACK_GetUsage       (const uint32_t* pStack, size_t Size);
+int32_t         STACK_GetPercent     (const uint32_t* pStack, size_t Size);
+
+void            STACK_FillIdle       (void);
+inline size_t   STACK_GetUsageIdle   (void) { return STACK_GetUsage  (&_estack, size_t(&_Min_Stack_Size)); }
+inline int32_t  STACK_GetPercentIdle (void) { return STACK_GetPercent(&_estack, size_t(&_Min_Stack_Size)); }
 
 //-------------------------------------------------------------------------------------------------

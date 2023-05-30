@@ -114,7 +114,7 @@ size_t DeCompression::Process(RawArray* pRawData, RawArray* pCompxData, size_t D
 
         case COMPX_JPEG:
         {
-            JPEG_Decode(pCompxData->data(), pRawData->data(), &DecompressedSize);
+            JPEG_Decode(pCompxData->Data(), pRawData->Data(), &DecompressedSize);
             break;
         }
 
@@ -122,8 +122,8 @@ size_t DeCompression::Process(RawArray* pRawData, RawArray* pCompxData, size_t D
         {
             PNG_Info_t Info = {0};
 
-            Info.pOut                = pRawData->data();
-            Info.pIn                 = pCompxData->data();
+            Info.pOut                = pRawData->Data();
+            Info.pIn                 = pCompxData->Data();
             Info.DataSize            = DataSize;
      //       Info.IDAT.data.u8        = m_WorkMem.pAppend->data();    // Append buffer from lzw for PNG chunk data
             Info.IDAT.allocsize      = 522240;
@@ -139,7 +139,7 @@ size_t DeCompression::Process(RawArray* pRawData, RawArray* pCompxData, size_t D
         {
             for(size_t i = 0; i < m_DataSize; i++)
             {
-                m_pRawData->append(m_pCompxData->at(i));
+                m_pRawData->Append(m_pCompxData->At(i));
             }
 
             DecompressedSize = m_DataSize;
@@ -180,20 +180,20 @@ size_t DeCompression::RLE_4_Method(void)
 
     while(m_DataSize > 0)
     {
-        ReadValue = m_pCompxData->at(DataOffset++);
+        ReadValue = m_pCompxData->At(DataOffset++);
 
         LenghtEncodeCount = (ReadValue >> 4) + 1;
         ReadValue        &= 0x0F;
 
         for(int i = 0; i < LenghtEncodeCount; i++)
         {
-            m_pRawData->append(ReadValue);
+            m_pRawData->Append(ReadValue);
         }
 
         m_DataSize--;
     }
 
-    return m_pRawData->size();
+    return m_pRawData->Size();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -218,18 +218,18 @@ size_t DeCompression::RLE_8_Method(void)
 
     while(m_DataSize > 0)
     {
-        LenghtEncodeCount = m_pCompxData->at(DataOffset++) + 1;
-        ReadValue         = m_pCompxData->at(DataOffset++);
+        LenghtEncodeCount = m_pCompxData->At(DataOffset++) + 1;
+        ReadValue         = m_pCompxData->At(DataOffset++);
 
         for(int i = 0; i < LenghtEncodeCount; i++)
         {
-            m_pRawData->append(ReadValue);
+            m_pRawData->Append(ReadValue);
         }
 
         m_DataSize--;
     }
 
-    return m_pRawData->size();
+    return m_pRawData->Size();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -254,19 +254,19 @@ size_t DeCompression::RLE_16_Method(void)
 
     while(m_DataSize > 0)
     {
-        LenghtEncodeCount = m_pCompxData->at(DataOffset++) + 1;
+        LenghtEncodeCount = m_pCompxData->At(DataOffset++) + 1;
         ReadValue         = m_pCompxData->uint16_At(DataOffset);
         DataOffset       += 2;
 
         for(int i = 0; i < LenghtEncodeCount; i++)
         {
-            m_pRawData->append(ReadValue);
+            m_pRawData->Append(ReadValue);
         }
 
         m_DataSize--;
     }
 
-    return m_pRawData->size();
+    return m_pRawData->Size();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -291,19 +291,19 @@ size_t DeCompression::RLE_32_Method(void)
 
     while(m_DataSize > 0)
     {
-        LenghtEncodeCount = m_pCompxData->at(DataOffset++) + 1;
+        LenghtEncodeCount = m_pCompxData->At(DataOffset++) + 1;
         ReadValue         = m_pCompxData->uint32_At(DataOffset);
         DataOffset       += 4;
 
         for(int i = 0; i < LenghtEncodeCount; i++)
         {
-            m_pRawData->append(ReadValue);
+            m_pRawData->Append(ReadValue);
         }
 
         m_DataSize--;
     }
 
-    return m_pRawData->size();
+    return m_pRawData->Size();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -327,27 +327,27 @@ size_t DeCompression::RLE_16_CLUT_Method(void)
     uint32_t DataOffset = 0;
 
     CLUT_Offset   = DataOffset + 1;                                         // Beginning of the CLUT
-    DataOffset   += ((((int)m_pCompxData->at(DataOffset) + 1) * 2) + 1);    // Beginning of the data
+    DataOffset   += ((((int)m_pCompxData->At(DataOffset) + 1) * 2) + 1);    // Beginning of the data
     m_DataSize--;
     m_DataSize   -= (DataOffset - CLUT_Offset);
     m_DataSize  >>= 1;
 
     while(m_DataSize > 0)
     {
-        LenghtEncodeCount = m_pCompxData->at(DataOffset++) + 1;
-        ReadIndex         = m_pCompxData->at(DataOffset++);
+        LenghtEncodeCount = m_pCompxData->At(DataOffset++) + 1;
+        ReadIndex         = m_pCompxData->At(DataOffset++);
 
         ReadValue = m_pCompxData->uint16_At(CLUT_Offset + (ReadIndex * 2));
 
         for(int i = 0; i < LenghtEncodeCount; i++)
         {
-            m_pRawData->append(ReadValue);
+            m_pRawData->Append(ReadValue);
         }
 
         m_DataSize--;
     }
 
-    return m_pRawData->size();
+    return m_pRawData->Size();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -371,27 +371,27 @@ size_t DeCompression::RLE_32_CLUT_Method(void)
     uint32_t DataOffset = 0;
 
     CLUT_Offset   = DataOffset + 1;                                         // Beginning of the CLUT
-    DataOffset   += ((((int)m_pCompxData->at(DataOffset) + 1) * 4) + 1);    // Beginning of the data
+    DataOffset   += ((((int)m_pCompxData->At(DataOffset) + 1) * 4) + 1);    // Beginning of the data
     m_DataSize--;
     m_DataSize   -= (DataOffset - CLUT_Offset);
     m_DataSize  >>= 1;
 
     while(m_DataSize > 0)
     {
-        LenghtEncodeCount = m_pCompxData->at(DataOffset++) + 1;
-        ReadIndex         = m_pCompxData->at(DataOffset++);
+        LenghtEncodeCount = m_pCompxData->At(DataOffset++) + 1;
+        ReadIndex         = m_pCompxData->At(DataOffset++);
 
         ReadValue = m_pCompxData->uint32_At(CLUT_Offset + (ReadIndex * 4));
 
         for(int i = 0; i < LenghtEncodeCount; i++)
         {
-            m_pRawData->append(ReadValue);
+            m_pRawData->Append(ReadValue);
         }
 
         m_DataSize--;
     }
 
-    return m_pRawData->size();
+    return m_pRawData->Size();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -425,7 +425,7 @@ size_t DeCompression::LZW_Method(void)
 
     OldCode = this->LZW_InputCode();                                // Read in the first code, initialize the
     Code    = OldCode;                                              // character variable, and send the first
-    m_pRawData->append(uint8_t(OldCode));                           // code to the output vector
+    m_pRawData->Append(uint8_t(OldCode));                           // code to the output vector
 
     // This is the main expansion loop.  It reads in characters from the LZW file
     // until it sees the special code used to inidicate the end of the data.
@@ -437,7 +437,7 @@ size_t DeCompression::LZW_Method(void)
         // the last code, and adding a single character to the end of the decode string.
         if(NewCode >= NextCode)
         {
-            m_WorkMem.pDecode->append(Code);
+            m_WorkMem.pDecode->Append(Code);
             this->LZW_DecodeArray(OldCode);
         }
         // Otherwise we do a straight decode of the new code.
@@ -449,25 +449,25 @@ size_t DeCompression::LZW_Method(void)
         // Now we output the decoded string in reverse order.
         Code = m_WorkMem.pDecode->uint32_Last();
 
-        while(m_WorkMem.pDecode->size() != 0)
+        while(m_WorkMem.pDecode->Size() != 0)
         {
 //            uint8_t Value = m_WorkMem.pDecode->uint32_TakeLast();
             uint8_t Value = m_WorkMem.pDecode->uint32_TakeLast();
-            m_pRawData->append(Value);
+            m_pRawData->Append(Value);
         }
 
         // Finally, if possible, add a new code to the string table.
         if(NextCode <= m_MaxCode)
         {
-            m_WorkMem.pPrefix->replace(NextCode * sizeof(uint32_t), OldCode);
-            m_WorkMem.pAppend->replace(NextCode * sizeof(uint32_t), Code);
+            m_WorkMem.pPrefix->Replace(NextCode * sizeof(uint32_t), OldCode);
+            m_WorkMem.pAppend->Replace(NextCode * sizeof(uint32_t), Code);
             NextCode++;
         }
 
         OldCode = NewCode;
     }
 
-    return m_pRawData->size();
+    return m_pRawData->Size();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -488,7 +488,7 @@ void DeCompression::LZW_DecodeArray(uint32_t Code)
 
     while(Code > 255)
     {
-        m_WorkMem.pDecode->append(m_WorkMem.pAppend->uint32_At(Code * sizeof(uint32_t)));
+        m_WorkMem.pDecode->Append(m_WorkMem.pAppend->uint32_At(Code * sizeof(uint32_t)));
         Code = m_WorkMem.pPrefix->uint32_At(Code * sizeof(uint32_t));
 
         if(i++ >= m_MaxCode)
@@ -498,7 +498,7 @@ void DeCompression::LZW_DecodeArray(uint32_t Code)
         }
     }
 
-    m_WorkMem.pDecode->append(Code);
+    m_WorkMem.pDecode->Append(Code);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -519,7 +519,7 @@ uint32_t DeCompression::LZW_InputCode(void)
 
     while( m_BitCount <= 24)
     {
-        m_BitBuffer |= ((uint32_t)m_pCompxData->at(m_DataOffset) << (24 -  m_BitCount));
+        m_BitBuffer |= ((uint32_t)m_pCompxData->At(m_DataOffset) << (24 -  m_BitCount));
         m_DataOffset++;
         m_BitCount += 8;
     }

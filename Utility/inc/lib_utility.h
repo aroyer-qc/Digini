@@ -93,31 +93,29 @@ class RawArray
 {
     public:
 
-                    //RawArray        ();
-                    //RawArray        (void* pBuffer);
+                    RawArray        (void* pBuffer);
                     RawArray        (void* pBuffer, size_t Size);
-                   //~RawArray        ();
 
         void*       operator new    (size_t size);
         void        operator delete (void*);
 
-        void        append          (uint8_t data);
-        void        append          (uint16_t data);
-        void        append          (uint32_t data);
-        uint8_t     at              (uint32_t Index);
-        void        clear           ();
-        uint8_t*    data            ();
-        void        fill            (uint8_t data);
-        void        insert          (uint32_t Index, uint8_t data);
-        uint8_t     last            ();
-        void        remove          (uint32_t Index);
-        bool        replace         (uint32_t Index, uint8_t data);
-        bool        replace         (uint32_t Index, uint16_t data);
-        bool        replace         (uint32_t Index, uint32_t data);
-        void        resize          (size_t Size);
-        void        setBuffer       (uint8_t* pBuffer);
-        size_t      size            ();
-        uint8_t     takeLast        ();
+        void        Append          (uint8_t data);
+        void        Append          (uint16_t data);
+        void        Append          (uint32_t data);
+        uint8_t     At              (uint32_t Index);
+        void        Clear           ();
+        uint8_t*    Data            ();
+        void        Fill            (uint8_t data);
+        void        Insert          (uint32_t Index, uint8_t data);
+        uint8_t     Last            ();
+        void        Remove          (uint32_t Index);
+        bool        Replace         (uint32_t Index, uint8_t data);
+        bool        Replace         (uint32_t Index, uint16_t data);
+        bool        Replace         (uint32_t Index, uint32_t data);
+        void        Resize          (size_t Size);
+        void        SetBuffer       (uint8_t* pBuffer);
+        size_t      Size            ();
+        uint8_t     TakeLast        ();
         uint16_t    uint16_At       (uint32_t Index);
         uint32_t    uint32_At       (uint32_t Index);
         uint16_t    uint16_Last     ();
@@ -127,7 +125,6 @@ class RawArray
 
     private:
 
-        //void*               m_pAllocPtr;
         uint8_t*            m_pBuffer;
         size_t              m_Size;
 };

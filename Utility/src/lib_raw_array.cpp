@@ -42,38 +42,17 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-//RawArray::RawArray(void)
-//{
-    //m_Size    = 0;
-    //m_pBuffer = nullptr;
-//}
-
-//too dangerous
-//RawArray::RawArray(void* pBuffer)
-//{
-//    m_Size    = 0;
-//    m_pBuffer = (uint8_t*)pBuffer;
-//}
+RawArray::RawArray(void* pBuffer)
+{
+    m_Size    = 0;
+    m_pBuffer = (uint8_t*)pBuffer;
+}
 
 RawArray::RawArray(void* pBuffer, size_t Size)
 {
     m_Size    = Size;
     m_pBuffer = (uint8_t*)pBuffer;
 }
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Destructor
-//
-//-------------------------------------------------------------------------------------------------
-
-//RawArray::~RawArray(void)
-//{
-//    if(m_pAllocPtr != nullptr)
-//    {
-//         //pMemoryPool->Free(&m_pAllocPtr);
-//    }
-//}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -86,7 +65,6 @@ void* RawArray::operator new(size_t Size)
     void* pBuffer;
 
     pBuffer = pMemoryPool->Alloc(Size);
-    //static_cast<RawArray*>(pBuffer)->m_pAllocPtr = nullptr;
 
     return pBuffer;
 }
@@ -95,7 +73,6 @@ void RawArray::operator delete(void* pBuffer)
 {
     if(pBuffer != nullptr)
     {
-        //static_cast<RawArray*>(pBuffer)->m_pAllocPtr = nullptr;
         pMemoryPool->Free(&pBuffer);
     }
 }
@@ -108,36 +85,36 @@ void RawArray::operator delete(void* pBuffer)
 //
 //-------------------------------------------------------------------------------------------------
 
-void RawArray::append(uint8_t data)
+void RawArray::Append(uint8_t data)
 {
     uint32_t Offset = m_Size;
     m_Size++;
-    this->replace(Offset, data);
+    Replace(Offset, data);
 }
 
-void RawArray::append(uint16_t data)
+void RawArray::Append(uint16_t data)
 {
     uint32_t Offset = m_Size;
     m_Size += 2;
-    this->replace(Offset, data);
+    Replace(Offset, data);
 }
 
-void RawArray::append(uint32_t data)
+void RawArray::Append(uint32_t data)
 {
     uint32_t Offset = m_Size;
     m_Size += 4;
-    this->replace(Offset, data);
+    Replace(Offset, data);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      at
+//   Function:      At
 //
 //   Description:   Get item in array from specified index.
 //
 //-------------------------------------------------------------------------------------------------
 
-uint8_t RawArray::at(uint32_t Index)
+uint8_t RawArray::At(uint32_t Index)
 {
     return *(m_pBuffer + Index);
 }
@@ -150,33 +127,33 @@ uint8_t RawArray::at(uint32_t Index)
 //
 //-------------------------------------------------------------------------------------------------
 
-void RawArray::clear(void)
+void RawArray::Clear(void)
 {
     m_Size = 0;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      data
+//   Function:      Data
 //
 //   Description:   Returns array's pointer.
 //
 //-------------------------------------------------------------------------------------------------
 
-uint8_t* RawArray::data(void)
+uint8_t* RawArray::Data(void)
 {
     return m_pBuffer;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      insert
+//   Function:      Insert
 //
 //   Description:   Insert an item in array at specified index.
 //
 //-------------------------------------------------------------------------------------------------
 
-void RawArray::insert(uint32_t Index, uint8_t data)
+void RawArray::Insert(uint32_t Index, uint8_t data)
 {
     m_Size++;
 
@@ -189,12 +166,12 @@ void RawArray::insert(uint32_t Index, uint8_t data)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      fill
+//   Function:      Fill
 //
 //   Description:   Fills array with specified data.
 //
 //-------------------------------------------------------------------------------------------------
-void RawArray::fill(uint8_t data)
+void RawArray::Fill(uint8_t data)
 {
     for(size_t i = 0; i < m_Size; i++)
     {
@@ -204,25 +181,25 @@ void RawArray::fill(uint8_t data)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      last
+//   Function:      Last
 //
 //   Description:   Gets array's last value from Array.
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t RawArray::last(void)
+uint8_t RawArray::Last(void)
 {
-    return this->at(m_Size - 1);
+    return At(m_Size - 1);
 }
 
 uint16_t RawArray::uint16_Last(void)
 {
 
-    return this->uint16_At(m_Size - 2);
+    return uint16_At(m_Size - 2);
 }
 
 uint32_t RawArray::uint32_Last(void)
 {
-    return this->uint32_At(m_Size - 4);
+    return uint32_At(m_Size - 4);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -233,7 +210,7 @@ uint32_t RawArray::uint32_Last(void)
 //
 //-------------------------------------------------------------------------------------------------
 
-void RawArray::remove(uint32_t Index)
+void RawArray::Remove(uint32_t Index)
 {
     for(uint32_t i = Index; i < (m_Size - 1); i++)
     {
@@ -245,12 +222,12 @@ void RawArray::remove(uint32_t Index)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      replace
+//   Function:      Replace
 //
 //   Description:   replace item in array at specified index.
 //
 //-------------------------------------------------------------------------------------------------
-bool RawArray::replace(uint32_t Index, uint8_t data)
+bool RawArray::Replace(uint32_t Index, uint8_t data)
 {
     bool bStatus = false;
 
@@ -262,28 +239,28 @@ bool RawArray::replace(uint32_t Index, uint8_t data)
     return bStatus;
 }
 
-bool RawArray::replace(uint32_t Index, uint16_t data)
+bool RawArray::Replace(uint32_t Index, uint16_t data)
 {
     bool bStatus = false;
 
     if((Index + 1) < m_Size)
     {
-        this->replace(Index++, (uint8_t)(data >> 8));
-        this->replace(Index++, (uint8_t)data);
+        Replace(Index++, (uint8_t)(data >> 8));
+        Replace(Index++, (uint8_t)data);
     }
     return bStatus;
 }
 
-bool RawArray::replace(uint32_t Index, uint32_t data)
+bool RawArray::Replace(uint32_t Index, uint32_t data)
 {
     bool bStatus = false;
 
     if((Index + 3) < m_Size)
     {
-        this->replace(Index++, (uint8_t)(data >> 24));
-        this->replace(Index++, (uint8_t)(data >> 16));
-        this->replace(Index++, (uint8_t)(data >> 8));
-        this->replace(Index++, (uint8_t)data);
+        Replace(Index++, (uint8_t)(data >> 24));
+        Replace(Index++, (uint8_t)(data >> 16));
+        Replace(Index++, (uint8_t)(data >> 8));
+        Replace(Index++, (uint8_t)data);
     }
     return bStatus;
 }
@@ -291,12 +268,12 @@ bool RawArray::replace(uint32_t Index, uint32_t data)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      resize
+//   Function:      Resize
 //
 //   Description:   Sets array's new size.
 //
 //-------------------------------------------------------------------------------------------------
-void RawArray::resize(size_t Size)
+void RawArray::Resize(size_t Size)
 {
     m_Size = Size;
 }
@@ -304,12 +281,12 @@ void RawArray::resize(size_t Size)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      setBuffer
+//   Function:      SetBuffer
 //
 //   Description:   Set the buffer pointer
 //
 //-------------------------------------------------------------------------------------------------
-void RawArray::setBuffer(uint8_t* pBuffer)
+void RawArray::SetBuffer(uint8_t* pBuffer)
 {
     m_pBuffer = pBuffer;
 }
@@ -317,12 +294,12 @@ void RawArray::setBuffer(uint8_t* pBuffer)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      size
+//   Function:      Size
 //
 //   Description:   Gets array's current size.
 //
 //-------------------------------------------------------------------------------------------------
-size_t RawArray::size(void)
+size_t RawArray::Size(void)
 {
     return m_Size;
 }
@@ -330,17 +307,17 @@ size_t RawArray::size(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      takeLast
+//   Function:      TakeLast
 //
 //   Description:   Gets array's last value and remove it from Array.
 //
 //-------------------------------------------------------------------------------------------------
 
-uint8_t RawArray::takeLast(void)
+uint8_t RawArray::TakeLast(void)
 {
     uint8_t data;
 
-    data = this->last();
+    data = Last();
     m_Size--;
 
     return data;
@@ -350,7 +327,7 @@ uint16_t RawArray::uint16_TakeLast(void)
 {
     uint16_t data;
 
-    data = this->uint16_Last();
+    data = uint16_Last();
     m_Size -= 2;
 
     return data;

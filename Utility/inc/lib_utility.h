@@ -93,10 +93,10 @@ class RawArray
 {
     public:
 
-                    RawArray        ();
-                    RawArray        (void* pBuffer);
+                    //RawArray        ();
+                    //RawArray        (void* pBuffer);
                     RawArray        (void* pBuffer, size_t Size);
-                   ~RawArray        ();
+                   //~RawArray        ();
 
         void*       operator new    (size_t size);
         void        operator delete (void*);
@@ -127,7 +127,7 @@ class RawArray
 
     private:
 
-        void*               m_pAllocPtr;
+        //void*               m_pAllocPtr;
         uint8_t*            m_pBuffer;
         size_t              m_Size;
 };

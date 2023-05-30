@@ -250,9 +250,9 @@ void SKIN_myClassTask::Run(void)
 
 
             m_pRawInputBuffer      = (uint8_t*)GRAFX_RAW_INPUT_DATA_ADDRESS;
-            m_CompxWorkMem.pDecode = new RawArray((void*)(GRAFX_DECODE_ARRAY_ADDRESS));
-            m_CompxWorkMem.pAppend = new RawArray((void*)(GRAFX_APPEND_ARRAY_ADDRESS));
-            m_CompxWorkMem.pPrefix = new RawArray((void*)(GRAFX_PREFIX_ARRAY_ADDRESS));
+            m_CompxWorkMem.pDecode = new RawArray((void*)(GRAFX_DECODE_ARRAY_ADDRESS), GRAFX_DECODE_ARRAY_SIZE);
+            m_CompxWorkMem.pAppend = new RawArray((void*)(GRAFX_APPEND_ARRAY_ADDRESS), GRAFX_APPEND_ARRAY_SIZE);
+            m_CompxWorkMem.pPrefix = new RawArray((void*)(GRAFX_PREFIX_ARRAY_ADDRESS), GRAFX_PREFIX_ARRAY_SIZE);
             m_pDecompress          = new DeCompression(&m_CompxWorkMem);
 
             // If we have to reload a new skin, then get the starting point of the previous skin
@@ -277,13 +277,13 @@ void SKIN_myClassTask::Run(void)
           #endif
 
           #ifdef GRAFX_USE_LOAD_SKIN
-            m_pFS       = (FATFS*)   pMemory->AllocAndClear(sizeof(FATFS));
-            m_pFile     = (FIL*)     pMemory->AllocAndClear(sizeof(FIL));
-            m_pFileInfo = (FILINFO*) pMemory->AllocAndClear(sizeof(FILINFO));
+            m_pFS       = (FATFS*)   pMemoryPool->AllocAndClear(sizeof(FATFS));
+            m_pFile     = (FIL*)     pMemoryPool->AllocAndClear(sizeof(FIL));
+            m_pFileInfo = (FILINFO*) pMemoryPool->AllocAndClear(sizeof(FILINFO));
             this->Load();
-            pMemory->Free((void**)&m_pFileInfo);
-            pMemory->Free((void**)&m_pFile);
-            pMemory->Free((void**)&m_pFS);
+            pMemoryPool->Free((void**)&m_pFileInfo);
+            pMemoryPool->Free((void**)&m_pFile);
+            pMemoryPool->Free((void**)&m_pFS);
           #endif
 
           #ifdef GRAFX_USE_LOAD_SKIN
@@ -467,7 +467,7 @@ SystemState_e SKIN_myClassTask::DeCompressAllImage(void)
         DB_Central.Set(&ImageInfo, GFX_IMAGE_INFO, i + (NUMBER_OF_STATIC_IMAGE + 1), 0);
 
 
-        pOutput    = new RawArray(pFreePointer);
+        pOutput    = new RawArray(pFreePointer, GRAFX_DATA_FREE_TOP_MEMORY - (uint32_t)pFreePointer);
         pInput     = new RawArray(m_pRawInputBuffer, m_pDataSize[i]);
 
         // Increment free pointer
@@ -533,7 +533,7 @@ SystemState_e SKIN_myClassTask::DeCompressAllFont(void)
             if(FontDescriptor.pAddress != 0)                                            // Only extract data for font if it exist
             {
                 RawArray* pInput  = new RawArray(m_pRawInputBuffer, FontDescriptor.TotalSize);
-                RawArray* pOutput = new RawArray(pFreePointer);
+/* to do alain */                RawArray* pOutput = new RawArray(pFreePointer, 1024);
 
                 // Read all data for this image in the raw input buffer
                 f_lseek(m_pFile, uint32_t(FontDescriptor.pAddress));
@@ -687,8 +687,8 @@ void SKIN_myClassTask::StaticLoad(void)
 
         if(SII_Array[StaticImage]->Compression != COMPX_COMPRESSION_NONE)
         {
-            pInput  = new RawArray(SII_Array[StaticImage]->pData);
-            pOutput = new RawArray(pFreePointer);
+/* todo alain */            pInput  = new RawArray(SII_Array[StaticImage]->pData, 1024);
+/* todo alain */              pOutput = new RawArray(pFreePointer, 1024);
             ImageInfo.pPointer = pFreePointer;
             pFreePointer += m_pDecompress->Process(pOutput,
                                                    pInput,

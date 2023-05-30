@@ -42,17 +42,18 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-RawArray::RawArray(void)
-{
-    m_Size    = 0;
-    m_pBuffer = nullptr;
-}
+//RawArray::RawArray(void)
+//{
+    //m_Size    = 0;
+    //m_pBuffer = nullptr;
+//}
 
-RawArray::RawArray(void* pBuffer)
-{
-    m_Size    = 0;
-    m_pBuffer = (uint8_t*)pBuffer;
-}
+//too dangerous
+//RawArray::RawArray(void* pBuffer)
+//{
+//    m_Size    = 0;
+//    m_pBuffer = (uint8_t*)pBuffer;
+//}
 
 RawArray::RawArray(void* pBuffer, size_t Size)
 {
@@ -66,13 +67,13 @@ RawArray::RawArray(void* pBuffer, size_t Size)
 //
 //-------------------------------------------------------------------------------------------------
 
-RawArray::~RawArray(void)
-{
-    if(m_pAllocPtr != nullptr)
-    {
-        free(m_pAllocPtr);
-    }
-}
+//RawArray::~RawArray(void)
+//{
+//    if(m_pAllocPtr != nullptr)
+//    {
+//         //pMemoryPool->Free(&m_pAllocPtr);
+//    }
+//}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -84,18 +85,18 @@ void* RawArray::operator new(size_t Size)
 {
     void* pBuffer;
 
-    pBuffer = malloc(Size);
-    static_cast<RawArray*>(pBuffer)->m_pAllocPtr = nullptr;
+    pBuffer = pMemoryPool->Alloc(Size);
+    //static_cast<RawArray*>(pBuffer)->m_pAllocPtr = nullptr;
 
     return pBuffer;
 }
 
-void RawArray::operator delete(void* pPtr)
+void RawArray::operator delete(void* pBuffer)
 {
-    if((pPtr != nullptr) && (pPtr == static_cast<RawArray*>(pPtr)->m_pAllocPtr))
+    if(pBuffer != nullptr)
     {
-        static_cast<RawArray*>(pPtr)->m_pAllocPtr = nullptr;
-        free(pPtr);
+        //static_cast<RawArray*>(pBuffer)->m_pAllocPtr = nullptr;
+        pMemoryPool->Free(&pBuffer);
     }
 }
 

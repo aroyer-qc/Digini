@@ -59,24 +59,23 @@ typedef enum BKPREG_DBaseItemList_e
 
 //-------------------------------------------------------------------------------------------------
 
-class CBKPREG_DataBase : public CDataBaseInterface
+class BKPREG_DataBase : public CDataBaseInterface
 {
     public:
 
-                        CBKPREG_DataBase    (class CRTC* pRTC);
-        SystemState_e   Initialize          (void* pConfig, size_t ObjectSize);
-        SystemState_e   Get                 (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        SystemState_e   Set                 (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        uint16_t        GetDriverIndex      (Range_e Range);
-        SystemState_e   GetSize             (uint32_t* pSize,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        SystemState_e   GetPointer          (void** pAddress,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        SystemState_e           Initialize          (void* pConfig, size_t ObjectSize);
+        SystemState_e           Get                 (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        SystemState_e           Set                 (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        uint16_t                GetDriverIndex      (Range_e Range);
+        SystemState_e           GetSize             (uint32_t* pSize,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        SystemState_e           GetPointer          (void** pAddress,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
 
     private:
 
-        SystemState_e   CheckRange          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        uint8_t         GetIndex            (uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        SystemState_e           CheckRange          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        uint8_t                 GetIndex            (uint16_t Record, uint16_t Number, uint16_t SubNumber);
 
-        class CRTC*             m_pRTC;
+        class RTC_Driver*             m_pRTC;
         uint8_t                 m_ItemsIndex        [NB_BKPREG_DBASE_ITEMS_CONST];
         static const uint8_t    m_ItemsQTY          [NB_BKPREG_DBASE_ITEMS_CONST];
         static const uint8_t    m_ItemsSubQTY       [NB_BKPREG_DBASE_ITEMS_CONST];

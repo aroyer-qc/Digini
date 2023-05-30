@@ -50,13 +50,11 @@
 
 // TO DO : Add alarm if needed
 
-class CRTC
+class RTC_Driver
 {
     public:
 
-                                CRTC                    (nOS_Mutex* pMutex, uint32_t Mode);
-                                ~CRTC                   ();
-
+        void                    Initialize              (uint32_t Mode);
         void                    GetDate                 (Date_t* pDate);
         void                    GetTime                 (Time_t* pTime);
         void                    SetDate                 (Date_t* pDate);
@@ -88,15 +86,23 @@ class CRTC
         void                    UpdateTimeFeature       (void);
         SystemState_e           WaitForSynchro          (void);
 
-        nOS_Mutex*              m_pMutex;
+        bool                    m_IsItInitialize;
+        nOS_Mutex               m_Mutex;
         uint32_t                m_TimeOut;
         TimeFormat_e            m_TimeFormat;
         Clock_t                 m_Clock;
         static const uint8_t    m_MonthSize[12];
         static const uint8_t    m_WeekDayTable[12];
         static const uint16_t   m_DaysSoFar[12];
-
 };
+
+//-------------------------------------------------------------------------------------------------
+
+#ifdef RTC_DRIVER_GLOBAL
+  class RTC_Driver                  myRTC;
+#else
+  extern class RTC_Driver           myRTC;
+#endif
 
 //-------------------------------------------------------------------------------------------------
 

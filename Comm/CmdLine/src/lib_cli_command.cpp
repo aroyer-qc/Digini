@@ -333,7 +333,7 @@ SystemState_e CommandLine::CmdTEST3(void)
             Test2 = m_ParamValue[1];
             Test3 = m_ParamValue[2];
             memcpy(&Test[0], m_pParamStr[3], CLI_STRING_SIZE);
-            pMemory->Free((void**)&m_pParamStr[3]);
+            pMemoryPool->Free((void**)&m_pParamStr[3]);
             Error = SYS_READY;
         }
     }

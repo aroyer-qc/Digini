@@ -38,23 +38,23 @@
 //-------------------------------------------------------------------------------------------------
 
 #if defined(EEPROM_DBASE_DEF)
-  class CDataBaseInterface*        pDB_EEPROM;
+  class EEPROM_DataBase             DB_Eeprom;
 #endif
 
 #if defined(ROM_DBASE_DEF)
-  class CDataBaseInterface*        pDB_ROM;
+  class ROM_DataBase                DB_Rom;
 #endif
 
 #if defined(RAM_DBASE_DEF) || defined(GFX_RAM_DBASE_DEF) || defined(NV_RAM_DBASE_DEF)
-  class CDataBaseInterface*        pDB_RAM;
+  class RAM_DataBase                DB_Ram;
 #endif
 
 #if defined(BACKUP_DBASE_DEF)
-  class CDataBaseInterface*        pDB_BackupRegister;
+  class BKPREG_DataBase             DB_BackupRegister;
 #endif
 
 #if defined(HARD_DBASE_DEF)
-   class CDataBaseInterface*       pDB_Hardware;               // Time, ADC, etc...
+  class HARD_DataBase               DB_Hardware;               // Time, ADC, etc...
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -72,19 +72,18 @@
 SystemState_e DIGINI_Initialize(void)
 {
   #if (USE_RTC_DRIVER == DEF_ENABLED)
-    BSP_pRTC = new CRTC(&Mutex.Handle.MutexRTC, RTC_CLOCK_MODE_LSI);            // RTC module object
-  #endif // (USE_RTC_DRIVER == DEF_ENABLED)
+    myRTC.Initialize(RTC_CLOCK_MODE_LSI);            // RTC module object
+  #endif
 
     // Register all database driver
 
   #if defined(EEPROM_DBASE_DEF)
-    pDB_EEPROM = new CEEPROM_DataBase();
-     DB_Central.RegisterDriver(pDB_EEPROM);
+     DB_Eeprom.Initialize(nullptr, 0);
+     DB_Central.RegisterDriver(&DB_Eeprom);
   #endif
 
   #if defined(ROM_DBASE_DEF)
-    pDB_ROM = new CROM_DataBase();                                              // ROM Database
-    DB_Central.RegisterDriver(pDB_ROM);
+    DB_Central.RegisterDriver(&DB_Rom);
   #endif
 
   #if defined(RAM_DBASE_DEF) || defined(GFX_RAM_DBASE_DEF) || defined(NV_RAM_DBASE_DEF)
@@ -102,23 +101,20 @@ SystemState_e DIGINI_Initialize(void)
     DBaseRegion.pNV_Ram = NV_RAM_DBASE_ADDRESS;
    #endif
 
-    pDB_RAM = new CRAM_DataBase();                                              // RAM Database
-    pDB_RAM->Initialize((void *)&DBaseRegion, sizeof(void*));
-    DB_Central.RegisterDriver(pDB_RAM);
+    DB_Ram.Initialize((void *)&DBaseRegion, sizeof(void*));
+    DB_Central.RegisterDriver(&DB_Ram);
   #endif
 
   #if defined(BACKUP_DBASE_DEF)
-    pDB_BackupRegister = new CBKPREG_DataBase(BSP_pRTC);                        // Backup register Database
-    if(pDB_BackupRegister->Init(nullptr, 0) != SYS_READY)
+    if(DB_BackupRegister.Inititialize(BSP_pRTC, 0) != SYS_READY)
     {
         assert_failed((const char*)__FILE__, __LINE__);
     }
-    DB_Central.RegisterDriver(pDB_BackupRegister);
+    DB_Central.RegisterDriver(&DB_BackupRegister);
   #endif
 
    #if defined(HARD_DBASE_DEF)
-    pDB_Hardware = new CHARD_DataBase();                                        // Hardware Database
-    DB_Central.RegisterDriver(pDB_Hardware);
+    DB_Central.RegisterDriver(&DB_Hardware);
    #endif
 
   #if (DIGINI_USE_GRAFX == DEF_ENABLED)

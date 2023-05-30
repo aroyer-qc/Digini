@@ -107,7 +107,7 @@ void        operator delete(void* pPtr);
         uint32_t            LZW_InputCode           (void);
         void                LZW_DecodeArray         (uint32_t Code);
 
-void*               m_pAllocPtr;
+//void*               m_pAllocPtr;
 
 
         size_t              m_DataSize;

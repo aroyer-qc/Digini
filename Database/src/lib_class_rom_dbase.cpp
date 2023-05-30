@@ -45,57 +45,36 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: CROM_DataBase
+//   Class: ROM_DataBase
 //
 //
-//   Description:   Class CROM_DataBase
+//   Description:   Class ROM_DataBase
 //
 //-------------------------------------------------------------------------------------------------
 
 // Create pointer list for each record item
-const uint8_t* CROM_DataBase::m_ItemsPointer[NB_ROM_DBASE_ITEMS_CONST] =                                   // &Array[0][0]
+const uint8_t* ROM_DataBase::m_ItemsPointer[NB_ROM_DBASE_ITEMS_CONST] =                                   // &Array[0][0]
 {
     ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEM_ADDRESS)
 };
 
 // Create Quantity list for each record item
-const uint16_t CROM_DataBase::m_ItemsQTY[NB_ROM_DBASE_ITEMS_CONST] =                                       // Array[THIS][]
+const uint16_t ROM_DataBase::m_ItemsQTY[NB_ROM_DBASE_ITEMS_CONST] =                                       // Array[THIS][]
 {
     ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEMS_QTY)
 };
 
 // Create SUB Quantity list for each record item
-const uint16_t CROM_DataBase::m_ItemsSubQTY[NB_ROM_DBASE_ITEMS_CONST] =                                    // Array[][THIS]
+const uint16_t ROM_DataBase::m_ItemsSubQTY[NB_ROM_DBASE_ITEMS_CONST] =                                    // Array[][THIS]
 {
     ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEMS_SUB_QTY)
 };
 
 // Create size list for each record item
-const size_t CROM_DataBase::m_ItemSize[NB_ROM_DBASE_ITEMS_CONST] =                                         // sizeof()
+const size_t ROM_DataBase::m_ItemSize[NB_ROM_DBASE_ITEMS_CONST] =                                         // sizeof()
 {
     ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEMS_SIZE)
 };
-
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: Initialize
-//
-//   Parameter(s):  void*           pConfig
-//                  size_t          ObjectSize
-//   Return:        SystemState_e   State
-//
-//   Description:   Initialize driver
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e CROM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
-{
-    // Nothing in this driver to init
-    VAR_UNUSED(pConfig);
-    VAR_UNUSED(ObjectSize);
-    return SYS_READY;
-}
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -110,7 +89,7 @@ SystemState_e CROM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
 //   Description:   Get the record for ROM type database
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CROM_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e ROM_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e    State;
     void*           pPointer;
@@ -140,7 +119,7 @@ SystemState_e CROM_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, 
 //   Description:   Set the record for ROM type database
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CROM_DataBase::Set(const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e ROM_DataBase::Set(const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e    State;
     void*           pPointer;
@@ -167,7 +146,7 @@ SystemState_e CROM_DataBase::Set(const void* pData, uint16_t Record, uint16_t Nu
 //   Description:   Return min or the maximum  for the range of index
 //
 //-------------------------------------------------------------------------------------------------
-uint16_t CROM_DataBase::GetDriverIndex(Range_e Range)
+uint16_t ROM_DataBase::GetDriverIndex(Range_e Range)
 {
     if(Range == RANGE_MIN) return START_ROM_DBASE + 1;
     return END_ROM_DBASE - 1;
@@ -187,7 +166,7 @@ uint16_t CROM_DataBase::GetDriverIndex(Range_e Range)
 //   Description:   Return the size of record
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CROM_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e ROM_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e    State;
 
@@ -215,7 +194,7 @@ SystemState_e CROM_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t 
 //   Description:   Return the memory address from item information
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CROM_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e ROM_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e State;
     size_t       Offset;
@@ -246,7 +225,7 @@ SystemState_e CROM_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16
 //   Description:   Check the range provided if not out of bound
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CROM_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e ROM_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     if(Number < m_ItemsQTY[Record])
     {

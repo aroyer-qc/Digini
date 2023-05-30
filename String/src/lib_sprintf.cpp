@@ -434,8 +434,8 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
     STR_Format_t* pFmt;
     size_t        PointerCounter = 0;
 
-    pFmt = (STR_Format_t*)pMemory->Alloc(sizeof(STR_Format_t));
-    pFmt->pFormat = (char*)pMemory->Alloc(DIGINI_MAX_PRINT_SIZE);                                  // Get memory to work this printf
+    pFmt = (STR_Format_t*)pMemoryPool->Alloc(sizeof(STR_Format_t));
+    pFmt->pFormat = (char*)pMemoryPool->Alloc(DIGINI_MAX_PRINT_SIZE);                                  // Get memory to work this printf
 
     strncpy(pFmt->pFormat, pFormat, DIGINI_MAX_PRINT_SIZE);                                        // Copy from possible const location to RAM
     pFmt->pFmtPtr = pFmt->pFormat;
@@ -671,8 +671,8 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
         pOut[PointerCounter] = '\0';
     }
 
-    pMemory->Free((void**)&pFmt->pFormat);
-    pMemory->Free((void**)&pFmt);
+    pMemoryPool->Free((void**)&pFmt->pFormat);
+    pMemoryPool->Free((void**)&pFmt);
 
     return PointerCounter;
 }

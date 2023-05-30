@@ -64,7 +64,7 @@ void Console::CallbackFunction(int Type, void* pContext)
         // TX from uart is completed then release memory.
         case UART_CALLBACK_COMPLETED_TX:
         {
-            pMemory->Free((void**)&pContext);
+            pMemoryPool->Free((void**)&pContext);
         }
         break;
 
@@ -116,7 +116,7 @@ void Console::Initialize(UART_Driver* pUartDriver)
 
     m_ActiveProcessLevel    = CON_NOT_CONNECTED;
 
-    m_pFifo = new FIFO_Buffer(CON_FIFO_PARSER_RX_SIZE);
+    m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
   // ??  pUartDriver->SetBaudRate((CallbackInterface*)this);
     pUartDriver->RegisterCallback((CallbackInterface*)this);
     pUartDriver->EnableCallbackType(UART_CALLBACK_EMPTY_TX, m_pRX_Transfert);
@@ -236,7 +236,7 @@ size_t Console::Printf(int MaxSize, const char* pFormat, ...)
     va_list vaArg;
     size_t  Size = 0;
 
-    if((pBuffer = (char*)pMemory->Alloc(CON_SERIAL_OUT_SIZE)) != nullptr)
+    if((pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE)) != nullptr)
     {
         Size = (MaxSize == CON_SIZE_NONE) ? CON_SERIAL_OUT_SIZE : MaxSize;
         va_start(vaArg, pFormat);
@@ -274,13 +274,13 @@ size_t Console::PrintSerialLog(CON_DebugLevel_e Level, const char* pFormat, ...)
     {
         if((m_DebugLevel & Level) != CON_DEBUG_LEVEL_0)
         {
-            if((pBuffer = (char*)pMemory->Alloc(CON_SERIAL_OUT_SIZE)) != nullptr)
+            if((pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE)) != nullptr)
             {
                 va_start(vaArg, pFormat);
                 Size = vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, vaArg);
                 m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size, nullptr);
                 va_end(vaArg);
-                pMemory->Free((void**)&pBuffer);
+                pMemoryPool->Free((void**)&pBuffer);
             }
         }
     }
@@ -393,13 +393,13 @@ bool Console::GetString(char* pBuffer, size_t Size)
     char Character;
     bool Result = false;
 
-    if(m_pFifo->At(0) == '"')
+    if(m_Fifo.At(0) == '"')
     {
-        m_pFifo->Flush(1);
+        m_Fifo.Flush(1);
 
         for(size_t i = 0; ((i <= Size) && (Result == false)); i++)
         {
-            if(m_pFifo->Read(&Character, 1) == 1)
+            if(m_Fifo.Read(&Character, 1) == 1)
             {
                 if(Character == '"')
                 {
@@ -440,9 +440,9 @@ bool Console::IsItA_Comma(void)
 {
     bool Result = false;
 
-    if(m_pFifo->At(0) == ',')
+    if(m_Fifo.At(0) == ',')
     {
-        m_pFifo->Flush(1);
+        m_Fifo.Flush(1);
         Result = true;
     }
 
@@ -473,7 +473,7 @@ bool Console::GetAtoi(int32_t* pValue, int32_t Min, int32_t Max, uint8_t Base)
     uint32_t Size;
     bool     Result = false;
 
-    Size = m_pFifo->Atoi(pValue, Base);
+    Size = m_Fifo.Atoi(pValue, Base);
 
     if(Size != 0)
     {
@@ -503,7 +503,7 @@ bool Console::IsItAnEOL(void)
 {
     bool Result = false;
 
-    if(m_pFifo->ReadyRead() == false)
+    if(m_Fifo.ReadyRead() == false)
     {
         Result = true;
     }

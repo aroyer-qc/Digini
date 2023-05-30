@@ -45,15 +45,15 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: CHARD_DataBase
+//   Class: HARD_DataBase
 //
 //
-//   Description:   Class CHARD_DataBase
+//   Description:   Class HARD_DataBase
 //
 //-------------------------------------------------------------------------------------------------
 
 // Create Quantity list for each record item
-const uint16_t CHARD_DataBase::m_ItemsQTY[NB_HARD_DBASE_ITEMS_CONST] =                                      // Array[THIS][]
+const uint16_t HARD_DataBase::m_ItemsQTY[NB_HARD_DBASE_ITEMS_CONST] =                                      // Array[THIS][]
 {
   #ifdef HARD_DBASE_DEF
       HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_ITEMS_QTY)
@@ -61,7 +61,7 @@ const uint16_t CHARD_DataBase::m_ItemsQTY[NB_HARD_DBASE_ITEMS_CONST] =          
 };
 
 // Create SUB Quantity list for each record item
-const uint16_t CHARD_DataBase::m_ItemsSubQTY[NB_HARD_DBASE_ITEMS_CONST] =                                   // Array[][THIS]
+const uint16_t HARD_DataBase::m_ItemsSubQTY[NB_HARD_DBASE_ITEMS_CONST] =                                   // Array[][THIS]
 {
   #ifdef HARD_DBASE_DEF
       HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_ITEMS_SUB_QTY)
@@ -69,7 +69,7 @@ const uint16_t CHARD_DataBase::m_ItemsSubQTY[NB_HARD_DBASE_ITEMS_CONST] =       
 };
 
 // Create size list for each record item
-const size_t CHARD_DataBase::m_ItemSize[NB_HARD_DBASE_ITEMS_CONST] =                                        // sizeof()
+const size_t HARD_DataBase::m_ItemSize[NB_HARD_DBASE_ITEMS_CONST] =                                        // sizeof()
 {
   #ifdef HARD_DBASE_DEF
       HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_ITEM_SIZE)
@@ -77,7 +77,7 @@ const size_t CHARD_DataBase::m_ItemSize[NB_HARD_DBASE_ITEMS_CONST] =            
 };
 
 // Create Get/Set function pointer list for each record item
-const Func_DatabaseCallBack CHARD_DataBase::m_CallBack[NB_HARD_DBASE_ITEMS_CONST] =
+const Func_DatabaseCallBack HARD_DataBase::m_CallBack[NB_HARD_DBASE_ITEMS_CONST] =
 {
   #ifdef HARD_DBASE_DEF
       HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_CALLBACK)
@@ -94,7 +94,7 @@ const Func_DatabaseCallBack CHARD_DataBase::m_CallBack[NB_HARD_DBASE_ITEMS_CONST
 //   Description:
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CHARD_DataBase::Initialize(void* pConfig, size_t ObjectSize)
+SystemState_e HARD_DataBase::Initialize(void* pConfig, size_t ObjectSize)
 {
     // Nothing in this driver to init
     VAR_UNUSED(pConfig);
@@ -113,7 +113,7 @@ SystemState_e CHARD_DataBase::Initialize(void* pConfig, size_t ObjectSize)
 //   Description:   Return min or the maximum  for the range of index
 //
 //-------------------------------------------------------------------------------------------------
-uint16_t CHARD_DataBase::GetDriverIndex(Range_e Range)
+uint16_t HARD_DataBase::GetDriverIndex(Range_e Range)
 {
     if(Range == RANGE_MIN) return START_HARD_DBASE + 1;
     return END_HARD_DBASE - 1;
@@ -133,7 +133,7 @@ uint16_t CHARD_DataBase::GetDriverIndex(Range_e Range)
 //   Description:   Get the record for HARD type database
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CHARD_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e HARD_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e    State;
 
@@ -161,7 +161,7 @@ SystemState_e CHARD_DataBase::Get(void* pData, uint16_t Record, uint16_t Number,
 //   Description:   Set the record for HARD type database
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CHARD_DataBase::Set(const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e HARD_DataBase::Set(const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e    State;
 
@@ -188,7 +188,7 @@ SystemState_e CHARD_DataBase::Set(const void* pData, uint16_t Record, uint16_t N
 //   Description:   Return the size of record
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CHARD_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e HARD_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e    State;
 
@@ -216,7 +216,7 @@ SystemState_e CHARD_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t
 //   Description:   Return the memory address from item information
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CHARD_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e HARD_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     *pPointer = nullptr;
     return SYS_READY;
@@ -235,7 +235,7 @@ SystemState_e CHARD_DataBase::GetPointer(void** pPointer, uint16_t Record, uint1
 //   Description:   Check the range provided if not out of bound
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CHARD_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e HARD_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     if(Number < m_ItemsQTY[Record])
     {

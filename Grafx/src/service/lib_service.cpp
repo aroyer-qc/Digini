@@ -226,7 +226,7 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
             if(pCommon->ExType == EXCHANGE_INPUT_TYPE_FLOAT)
             {
                 memcpy(&InputF, GUI_pMailBox, sizeof(InputFloat_t));    // Get the working data from mailbox
-                if((pStr = (char*)pMemory->Alloc(INPx_FLOAT_SIZE)) != nullptr)
+                if((pStr = (char*)pMemoryPool->Alloc(INPx_FLOAT_SIZE)) != nullptr)
                 {
                     LIB_ProcessFloatToString(pStr, (double)*((float*)InputF.Common.pValue), 5);
                     StrMaxLength = INPx_FLOAT_SIZE;
@@ -241,7 +241,7 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
                 memcpy(&Input, GUI_pMailBox, sizeof(InputDecimal_t));   // Get the working data from mailbox
                 size_t Size = (pCommon->ExType == EXCHANGE_INPUT_TYPE_DECIMAL) ? INPx_DECIMAL_SIZE : INPx_HEXADECIMAL_SIZE;
 
-                if((pStr = (char*)pMemory->Alloc(Size)) != nullptr)
+                if((pStr = (char*)pMemoryPool->Alloc(Size)) != nullptr)
                 {
                     snprintf(pStr, Size, "%ld", *((int32_t*)Input.Common.pValue)); // TODO what about hexa?
                     StrMaxLength = Size;
@@ -512,7 +512,7 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
                         }
                       #endif
 
-                        pMemory->Free((void**)&pStr);
+                        pMemoryPool->Free((void**)&pStr);
                         pStr = nullptr;
                     }
                     else
@@ -1113,7 +1113,7 @@ ServiceReturn_t* GetServiceStruct(ServiceType_e ServiceType)
 {
     ServiceReturn_t* pService = nullptr;
 
-    pService = (ServiceReturn_t*)pMemory->AllocAndClear(ServiceSizeType[ServiceType], 0);
+    pService = (ServiceReturn_t*)pMemoryPool->AllocAndClear(ServiceSizeType[ServiceType], 0);
 
     if(ServiceType == SERVICE_RETURN_TYPE3)
     {
@@ -1140,7 +1140,7 @@ void FreeServiceStruct(ServiceReturn_t** pService)
 {
     if(pService != nullptr)
     {
-        pMemory->Free((void**)pService);
+        pMemoryPool->Free((void**)pService);
     }
 }
 

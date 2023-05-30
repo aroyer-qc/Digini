@@ -56,12 +56,12 @@
 
 //-------------------------------------------------------------------------------------------------
 
-class CMem
+class MemPoolDriver
 {
     public:
 
-                    CMem                        ();
-                    ~CMem                       ();
+                    MemPoolDriver               ();
+                   ~MemPoolDriver               ();
 
         void*       Alloc                       (size_t SizeRequired, TickCount_t TimeOut = NOS_WAIT_INFINITE);
         void*       AllocAndClear               (size_t SizeRequired, TickCount_t TimeOut = NOS_WAIT_INFINITE);
@@ -82,10 +82,15 @@ class CMem
 
 // ----- Memory allocation(s) ------
 #ifdef MEM_GLOBAL
-class CMem                       _Memory;
-class CMem*                      pMemory     = &_Memory;
+class MemPoolDriver                       _MemoryPool;
+class MemPoolDriver*                      pMemoryPool     = &_MemoryPool;
 #else
-extern class CMem*               pMemory;
+extern class MemPoolDriver*               pMemoryPool;
 #endif
+
+//-------------------------------------------------------------------------------------------------
+#else
+
+#pragma message("DIGINI use memory pool instead of the malloc library. please define you memblock into memory_cfg.h")
 
 #endif  // MEM_BLOCK_DEF

@@ -52,15 +52,15 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: CRAM_DataBase
+//   Class: RAM_DataBase
 //
 //
-//   Description:   Class CRAM_DataBase
+//   Description:   Class RAM_DataBase
 //
 //-------------------------------------------------------------------------------------------------
 
 // Create Quantity list for each record item
-const uint16_t CRAM_DataBase::m_ItemsQTY[NB_RAM_DBASE_ITEMS_CONST]=                       // Array[THIS][]
+const uint16_t RAM_DataBase::m_ItemsQTY[NB_RAM_DBASE_ITEMS_CONST]=                       // Array[THIS][]
 {
   #ifdef RAM_DBASE_DEF
     RAM_DBASE_DEF(EXPAND_X_RAM_DBASE_AS_ITEMS_QTY)
@@ -76,7 +76,7 @@ const uint16_t CRAM_DataBase::m_ItemsQTY[NB_RAM_DBASE_ITEMS_CONST]=             
 };
 
 // Create SUB Quantity list for each record item
-const uint16_t CRAM_DataBase::m_ItemsSubQTY[NB_RAM_DBASE_ITEMS_CONST] =                    // Array[][THIS]
+const uint16_t RAM_DataBase::m_ItemsSubQTY[NB_RAM_DBASE_ITEMS_CONST] =                    // Array[][THIS]
 {
   #ifdef RAM_DBASE_DEF
     RAM_DBASE_DEF(EXPAND_X_RAM_DBASE_AS_ITEMS_SUB_QTY)
@@ -92,7 +92,7 @@ const uint16_t CRAM_DataBase::m_ItemsSubQTY[NB_RAM_DBASE_ITEMS_CONST] =         
 };
 
 // Create size list for each record item
-const size_t CRAM_DataBase::m_ItemSize[NB_RAM_DBASE_ITEMS_CONST] =                         // sizeof()
+const size_t RAM_DataBase::m_ItemSize[NB_RAM_DBASE_ITEMS_CONST] =                         // sizeof()
 {
   #ifdef RAM_DBASE_DEF
     RAM_DBASE_DEF(EXPAND_X_RAM_DBASE_AS_ITEM_SIZE)
@@ -118,7 +118,7 @@ const size_t CRAM_DataBase::m_ItemSize[NB_RAM_DBASE_ITEMS_CONST] =              
 //   Description:
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CRAM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
+SystemState_e RAM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
 {
     uint16_t    i;
     size_t      RecordTotalSize;
@@ -177,7 +177,7 @@ SystemState_e CRAM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
 //   Description:   Get the record for RAM type database
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CRAM_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e RAM_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e State;
     void*         pPointer;
@@ -206,7 +206,7 @@ SystemState_e CRAM_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, 
 //   Description:   Set the record for RAM type database
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CRAM_DataBase::Set(const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e RAM_DataBase::Set(const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e   State;
     void*           pPointer;
@@ -232,7 +232,7 @@ SystemState_e CRAM_DataBase::Set(const void* pData, uint16_t Record, uint16_t Nu
 //   Description:   Return min or the maximum  for the range of index
 //
 //-------------------------------------------------------------------------------------------------
-uint16_t CRAM_DataBase::GetDriverIndex(Range_e Range)
+uint16_t RAM_DataBase::GetDriverIndex(Range_e Range)
 {
     if(Range == RANGE_MIN) return  START_RAM_DBASE + 1;
     return END_RAM_DBASE - 1;
@@ -251,7 +251,7 @@ uint16_t CRAM_DataBase::GetDriverIndex(Range_e Range)
 //   Description:   Return the size of record
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CRAM_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e RAM_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e    State;
 
@@ -278,7 +278,7 @@ SystemState_e CRAM_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t 
 //   Description:   Return the memory address from item information
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CRAM_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e RAM_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e State;
     size_t       Offset;
@@ -307,7 +307,7 @@ SystemState_e CRAM_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16
 //   Description:   Set the memory address for this RAM database
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CRAM_DataBase::SetDB_Address(void** pAddress)
+SystemState_e RAM_DataBase::SetDB_Address(void** pAddress)
 {
   #ifdef RAM_DBASE_DEF
     uint16_t i;
@@ -345,7 +345,7 @@ SystemState_e CRAM_DataBase::SetDB_Address(void** pAddress)
 //   Description:   Check the range provided if it is not out of bound
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CRAM_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e RAM_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     if(Number < m_ItemsQTY[Record])
     {

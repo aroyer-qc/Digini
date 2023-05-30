@@ -63,11 +63,11 @@ typedef enum BKPREG_DBaseItemList_e
 
 //-------------------------------------------------------------------------------------------------
 
-class CBKPREG_DataBase : public CDataBaseInterface
+class BKPREG_DataBase : public CDataBaseInterface
 {
     public:
 
-                        CBKPREG_DataBase    (class CRTC* pRTC);
+                        BKPREG_DataBase    (class CRTC* pRTC);
         SystemState_e   Initialize          (void* pConfig, size_t ObjectSize);
         SystemState_e   Get                 (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
         SystemState_e   Set                 (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);

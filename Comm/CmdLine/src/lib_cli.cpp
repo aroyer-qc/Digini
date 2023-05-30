@@ -177,7 +177,7 @@ void CommandLine::CallbackFunction(int Type, void* pContext)
         // TX from UART is completed then release memory.
         case UART_CALLBACK_COMPLETED_TX:
         {
-            pMemory->Free((void**)&pContext);
+            pMemoryPool->Free((void**)&pContext);
         }
         break;
 
@@ -390,7 +390,7 @@ void CommandLine::ProcessParams(CLI_CmdName_e Command)
         }
         else
         {
-            m_pParamStr[i] = (char*)pMemory->Alloc(CLI_STRING_SIZE);
+            m_pParamStr[i] = (char*)pMemoryPool->Alloc(CLI_STRING_SIZE);
 
             if(m_pParamStr[i] != nullptr)
             {

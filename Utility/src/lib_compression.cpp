@@ -55,18 +55,18 @@ void* DeCompression::operator new(size_t Size)
 {
     void* pBuffer;
 
-    pBuffer = malloc(Size);
-    static_cast<DeCompression*>(pBuffer)->m_pAllocPtr = nullptr;
+    pBuffer = pMemoryPool->Alloc(Size);
+    //static_cast<DeCompression*>(pBuffer)->m_pAllocPtr = pBuffer;
 
     return pBuffer;
 }
 
 void DeCompression::operator delete(void* pPtr)
 {
-    if((pPtr != nullptr) && (pPtr == static_cast<DeCompression*>(pPtr)->m_pAllocPtr))
+    if(pPtr != nullptr)
     {
-        static_cast<DeCompression*>(pPtr)->m_pAllocPtr = nullptr;
-        free(pPtr);
+        //static_cast<DeCompression*>(pPtr)->m_pAllocPtr = nullptr;
+        pMemoryPool->Free(&pPtr);
     }
 }
 

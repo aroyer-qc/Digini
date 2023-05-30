@@ -58,7 +58,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-CMem::CMem()
+MemPoolDriver::MemPoolDriver()
 {
     uint8_t i;
 
@@ -82,7 +82,7 @@ CMem::CMem()
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CMem::~CMem()
+MemPoolDriver::~MemPoolDriver()
 {
   #if (NOS_CONFIG_MEM_DELETE_ENABLE > 0)
     for(i = 0; i < APP_NB_MEM_BLOCK_GROUP; i++)
@@ -118,7 +118,7 @@ CMem::~CMem()
 //   Note(s):       This class wrap the nOS Function
 //
 //-------------------------------------------------------------------------------------------------
-void* CMem::Alloc(size_t SizeRequired, TickCount_t TimeOut)
+void* MemPoolDriver::Alloc(size_t SizeRequired, TickCount_t TimeOut)
 {
    void* MemPtr;
 
@@ -176,7 +176,7 @@ void* CMem::Alloc(size_t SizeRequired, TickCount_t TimeOut)
 //   Note(s):       This class wrap the nOS Function
 //
 //-------------------------------------------------------------------------------------------------
-void* CMem::AllocAndClear(size_t SizeRequired, TickCount_t TimeOut)
+void* MemPoolDriver::AllocAndClear(size_t SizeRequired, TickCount_t TimeOut)
 {
     return AllocAndSet(SizeRequired, 0, TimeOut);
 }
@@ -207,7 +207,7 @@ void* CMem::AllocAndClear(size_t SizeRequired, TickCount_t TimeOut)
 //   Note(s):       This class wrap the nOS Function
 //
 //-------------------------------------------------------------------------------------------------
-void* CMem::AllocAndSet(size_t SizeRequired, uint8_t FillValue, TickCount_t TimeOut)
+void* MemPoolDriver::AllocAndSet(size_t SizeRequired, uint8_t FillValue, TickCount_t TimeOut)
 {
     void* MemPtr;
 
@@ -241,7 +241,7 @@ void* CMem::AllocAndSet(size_t SizeRequired, uint8_t FillValue, TickCount_t Time
 //   Note(s):       if exact result code is necessary, you can call GetLastError();
 //
 //-------------------------------------------------------------------------------------------------
-bool CMem::Free(void** pBlock)
+bool MemPoolDriver::Free(void** pBlock)
 {
     uint8_t GroupID;
 
@@ -253,6 +253,7 @@ bool CMem::Free(void** pBlock)
             m_LastError = nOS_MemFree(&m_nOS_MemArray[GroupID], *pBlock);
             if(m_LastError == NOS_OK)
             {
+                *pBlock = nullptr;
                 return true;
             }
             return false;
@@ -274,7 +275,7 @@ bool CMem::Free(void** pBlock)
 //   Description:   Check if at least one block of memory is available.
 //
 //-------------------------------------------------------------------------------------------------
-bool CMem::IsAvailable(size_t SizeRequired)
+bool MemPoolDriver::IsAvailable(size_t SizeRequired)
 {
     for(uint8_t i = 0; i < MEM_BLOCK_GROUP_SIZE; i++)
     {
@@ -303,7 +304,7 @@ bool CMem::IsAvailable(size_t SizeRequired)
 //   Description:   Return the last known error
 //
 //-------------------------------------------------------------------------------------------------
-nOS_Error CMem::GetLastError(void)
+nOS_Error MemPoolDriver::GetLastError(void)
 {
     return m_LastError;
 }

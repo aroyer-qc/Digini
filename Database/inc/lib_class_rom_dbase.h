@@ -57,11 +57,10 @@ enum ROM_DBaseItemList_e
 
 //-------------------------------------------------------------------------------------------------
 
-class CROM_DataBase : public CDataBaseInterface
+class ROM_DataBase : public CDataBaseInterface
 {
     public:
 
-        SystemState_e   Initialize          (void* pConfig, size_t ObjectSize);
         SystemState_e   Get                 (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
         SystemState_e   Set                 (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
         uint16_t        GetDriverIndex      (Range_e Range);

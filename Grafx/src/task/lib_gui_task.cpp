@@ -245,7 +245,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
     }
 
     // Reserve memory for CWidgetInterface pointer for the number of widget in the page
-    m_pWidgetList = (CWidgetInterface**)pMemory->Alloc(m_WidgetCount * sizeof(CWidgetInterface*));
+    m_pWidgetList = (CWidgetInterface**)pMemoryPool->Alloc(m_WidgetCount * sizeof(CWidgetInterface*));
 
     Count               = 0;
     pWidgetListPointer  = m_pWidgetList;
@@ -262,7 +262,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef BACK_DEF
         else if((Widget > APP_START_BACK_CONST) && (Widget < APP_END_BACK_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CBackground));                   // Get the memory block for the widget class object
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CBackground));                   // Get the memory block for the widget class object
             *pWidgetListPointer = new(pWidget) CBackground(&Background[Widget - (APP_START_BACK_CONST + 1)]);        // Get a class object of the widget
         }
        #endif
@@ -270,7 +270,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef BASIC_BOX_DEF
         else if((Widget > APP_START_BASIC_BOX_CONST) && (Widget < APP_END_BASIC_BOX_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CBasicBox));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CBasicBox));
             *pWidgetListPointer = new(pWidget) CBasicBox(&BasicBox[Widget - (APP_START_BASIC_BOX_CONST + 1)]);
         }
        #endif
@@ -278,7 +278,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef BASIC_BTN_DEF
         else if((Widget > APP_START_BASIC_BTN_CONST) && (Widget < APP_END_BASIC_BTN_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CBasicButton));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CBasicButton));
             *pWidgetListPointer = new(pWidget) CBasicButton(&BasicButton[Widget - (APP_START_BASIC_BTN_CONST + 1)]);
         }
        #endif
@@ -286,7 +286,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef BASIC_RECT_DEF
         else if((Widget > APP_START_BASIC_RECT_CONST) && (Widget < APP_END_BASIC_RECT_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CBasicRect));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CBasicRect));
             *pWidgetListPointer = new(pWidget) CBasicRect(&BasicRect[Widget - (APP_START_BASIC_RECT_CONST + 1)]);
         }
        #endif
@@ -294,7 +294,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef BTN_DEF
         else if((Widget > APP_START_BTN_CONST) && (Widget < APP_END_BTN_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CButton));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CButton));
             *pWidgetListPointer = new(pWidget) CButton(&Button[Widget - (APP_START_BTN_CONST + 1)]);
         }
        #endif
@@ -302,7 +302,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef GIF_DEF
         else if((Widget > APP_START_GIF_CONST) && (Widget < APP_END_GIF_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CGif));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CGif));
             *pWidgetListPointer = new(pWidget) CGif(&Gif[Widget - (APP_START_GIF_CONST + 1)]);
         }
        #endif
@@ -310,7 +310,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef GRAPH_DEF
         else if((Widget > APP_START_GRAPH_CONST) && (Widget < APP_END_GRAPH_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CGraph));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CGraph));
             *pWidgetListPointer = new(pWidget) CGraph(&Graph[Widget - (APP_START_GRAPH_CONST + 1)]);
         }
        #endif
@@ -318,7 +318,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef ICON_DEF
         else if((Widget > APP_START_ICON_CONST) && (Widget < APP_END_ICON_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CIcon));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CIcon));
             *pWidgetListPointer = new(pWidget) CIcon(&Icon[Widget - (APP_START_ICON_CONST + 1)]);
         }
        #endif
@@ -326,7 +326,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef LABEL_DEF
         else if((Widget > APP_START_LABEL_CONST) && (Widget < APP_END_LABEL_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CLabel));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CLabel));
             *pWidgetListPointer = new(pWidget) CLabel(&Label[Widget - (APP_START_LABEL_CONST + 1)]);
         }
        #endif
@@ -334,7 +334,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef LABEL_LIST_DEF
         else if((Widget > APP_START_LABEL_LIST_CONST)  && (Widget < APP_END_LABEL_LIST_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CLabelList));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CLabelList));
             *pWidgetListPointer = new(pWidget) CLabelList(&LabelList[Widget - (APP_START_LABEL_LIST_CONST + 1)]);
         }
        #endif
@@ -342,7 +342,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef METER_DEF
         else if((Widget > APP_START_METER_CONST) && (Widget < APP_END_METER_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CMeter));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CMeter));
             *pWidgetListPointer = new(pWidget) CMeter(&Meter[Widget - (APP_START_METER_CONST + 1)]);
         }
        #endif
@@ -350,7 +350,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef PAGE_SLIDE_DEF
         else if((Widget > APP_START_PAGE_SLIDE_CONST) && (Widget < APP_END_PAGE_SLIDE_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CPageSlide));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CPageSlide));
             *pWidgetListPointer = new(pWidget) CPageSlide(&PageSlide[Widget - (APP_START_PAGE_SLIDE_CONST + 1)]);
        }
        #endif
@@ -358,7 +358,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef PANEL_DEF
         else if((Widget > APP_START_PANEL_CONST) && (Widget < APP_END_PANEL_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CPanel));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CPanel));
             *pWidgetListPointer = new(pWidget) CPanel(&Panel[Widget - (APP_START_PANEL_CONST + 1)]);
         }
        #endif
@@ -366,7 +366,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef PROGRESS_DEF
         else if((Widget > APP_START_PROGRESS_CONST) && (Widget < APP_END_PROGRESS_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CProgress));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CProgress));
             *pWidgetListPointer = new(pWidget) CProgress(&Progress[Widget - (APP_START_PROGRESS_CONST + 1)]);
         }
        #endif
@@ -374,7 +374,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef ROUND_METER_DEF
         else if((Widget > APP_START_ROUND_METER_CONST) && (Widget < APP_END_ROUND_METER_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CRoundMeter));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CRoundMeter));
             *pWidgetListPointer = new(pWidget) CRoundMeter(&RoundMeter[Widget - (APP_START_ROUND_METER_CONST + 1)]);
         }
        #endif
@@ -382,7 +382,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef SPECTRUM_DEF
         else if((Widget > APP_START_SPECTRUM_CONST) && (Widget < APP_END_SPECTRUM_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CSpectrum));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CSpectrum));
             *pWidgetListPointer = new(pWidget) CSpectrum(&Spectrum[Widget - (APP_START_SPECTRUM_CONST + 1)]);
         }
        #endif
@@ -390,7 +390,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef SPRITE_DEF
         else if((Widget > APP_START_SPRITE_CONST) && (Widget < APP_END_SPRITE_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CSprite));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CSprite));
             *pWidgetListPointer = new(pWidget) CSprite(&Sprite[Widget - (APP_START_SPRITE_CONST + 1)]);
         }
        #endif
@@ -398,7 +398,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         #ifdef TERMINAL_DEF
         else if((Widget > APP_START_TERMINAL_CONST) && (Widget < APP_END_TERMINAL_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CTerminal));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CTerminal));
             *pWidgetListPointer = new(pWidget) CTerminal(&Terminal[Widget - (APP_START_TERMINAL_CONST + 1)]);
         }
        #endif
@@ -406,7 +406,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef VIRTUAL_HUB_DEF
         else if((Widget > APP_START_VIRTUAL_HUB_CONST) && (Widget < APP_END_VIRTUAL_HUB_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CVirtualHub));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CVirtualHub));
             *pWidgetListPointer = new(pWidget) CVirtualHub(&VirtualHub[Widget - (APP_START_VIRTUAL_HUB_CONST + 1)]);
         }
        #endif
@@ -414,7 +414,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef VIRTUAL_WINDOW_DEF
         else if((Widget > APP_START_VIRTUAL_WINDOW_CONST) && (Widget < APP_END_VIRTUAL_WINDOW_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CVirtualWindow));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CVirtualWindow));
             *pWidgetListPointer = new(pWidget) CVirtualWindow(&VirtualWindow[Widget - (APP_START_VIRTUAL_WINDOW_CONST + 1)]);
         }
        #endif
@@ -422,7 +422,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef XCHANGE_DEF
         else if((Widget > APP_START_XCHANGE_CONST) && (Widget < APP_END_XCHANGE_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemory->Alloc(sizeof(CExchange));
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CExchange));
             *pWidgetListPointer = new(pWidget) CExchange(&Exchange[Widget - (APP_START_XCHANGE_CONST + 1)]);
         }
        #endif
@@ -447,7 +447,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         if(NewLink == REMOVE_WIDGET)
         {
             // Free this widget
-            pMemory->Free ((void**)&(*pWidgetListPointer));
+            pMemoryPool->Free ((void**)&(*pWidgetListPointer));
 
             // Move all widget in the list up one position
             CountCopy = Count;
@@ -529,13 +529,13 @@ void GUI_myClassTask::FinalizeAllWidget()
     while(Count < m_WidgetCount)
     {
         (*pWidgetListPointer)->Finalize();
-        pMemory->Free ((void**)&(*pWidgetListPointer));
+        pMemoryPool->Free ((void**)&(*pWidgetListPointer));
         pWidgetListPointer++;
         Count++;
         nOS_Yield();
     }
 
-    pMemory->Free((void**)&m_pWidgetList);
+    pMemoryPool->Free((void**)&m_pWidgetList);
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -51,19 +51,19 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: CRTC
+//   Class: RTC_Driver
 //
-//   Description:   Class CRTC
+//   Description:   Class RTC_Driver
 //
 //-------------------------------------------------------------------------------------------------
 
-const uint8_t  CRTC::m_MonthSize[12]     = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-const uint8_t  CRTC::m_WeekDayTable[12]  = {4, 7, 7, 3, 5, 8, 3, 6, 9, 4, 7, 9};
-const uint16_t CRTC::m_DaysSoFar[12]     = {0, 31, 59, 90, 120, 151, 181, 212, 243, 274, 303, 334};
+const uint8_t  RTC_Driver::m_MonthSize[12]     = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+const uint8_t  RTC_Driver::m_WeekDayTable[12]  = {4, 7, 7, 3, 5, 8, 3, 6, 9, 4, 7, 9};
+const uint16_t RTC_Driver::m_DaysSoFar[12]     = {0, 31, 59, 90, 120, 151, 181, 212, 243, 274, 303, 334};
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   CRTC
+//   Constructor:   RTC_Driver
 //
 //   Parameter(s):  nOS_Mutex*          pMutex
 //                  uint32_t            Mode
@@ -74,9 +74,17 @@ const uint16_t CRTC::m_DaysSoFar[12]     = {0, 31, 59, 90, 120, 151, 181, 212, 2
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CRTC::CRTC(nOS_Mutex* pMutex, uint32_t Mode)
+void RTC_Driver::Initialize(uint32_t Mode)
 {
-    m_pMutex = pMutex;
+    nOS_Error Error;
+
+    if(m_IsItInitialize == false)
+    {
+        m_IsItInitialize = true;
+        Error = nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
+        VAR_UNUSED(Error);
+    }
+
     // Init power and clock for RTC
     RCC->APB1ENR |=  ( RCC_APB1ENR_PWREN);     // Backup interface & Power interface clock enable
     PWR->CR1   |= PWR_CR1_DBP;                                      // RTC register access allowed
@@ -117,20 +125,6 @@ CRTC::CRTC(nOS_Mutex* pMutex, uint32_t Mode)
     LockRegister();
 }
 
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Destructor:   CRTC
-//
-//   Parameter(s):
-//
-//   Description:    De-initializes the CRTC peripheral
-//
-//-------------------------------------------------------------------------------------------------
-CRTC::~CRTC(void)
-{
-}
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: GetBackupRegister
@@ -141,7 +135,7 @@ CRTC::~CRTC(void)
 //   Description:   Return value at requested backup register
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CRTC::GetBackupRegister(uint8_t Register)
+uint32_t RTC_Driver::GetBackupRegister(uint8_t Register)
 {
     return *(&RTC->BKP0R + Register);
 }
@@ -157,7 +151,7 @@ uint32_t CRTC::GetBackupRegister(uint8_t Register)
 //   Description:   Set value at a requested backup register
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::SetBackupRegister(uint8_t Register, uint32_t Value)
+void RTC_Driver::SetBackupRegister(uint8_t Register, uint32_t Value)
 {
     PWR->CR1  |= PWR_CR1_DBP;
     *(&RTC->BKP0R + Register) = Value;
@@ -174,7 +168,7 @@ void CRTC::SetBackupRegister(uint8_t Register, uint32_t Value)
 //   Description:   Return real date
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::GetDate(Date_t* pDate)
+void RTC_Driver::GetDate(Date_t* pDate)
 {
     Lock();
     UpdateTimeFeature();
@@ -192,7 +186,7 @@ void CRTC::GetDate(Date_t* pDate)
 //   Description:   Return real time
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::GetTime(Time_t* pTime)
+void RTC_Driver::GetTime(Time_t* pTime)
 {
     Lock();
     UpdateTimeFeature();
@@ -210,7 +204,7 @@ void CRTC::GetTime(Time_t* pTime)
 //   Description:
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::SetDate(Date_t* pDate)
+void RTC_Driver::SetDate(Date_t* pDate)
 {
     uint32_t Date;
     uint8_t  DayOfWeek;
@@ -230,7 +224,7 @@ void CRTC::SetDate(Date_t* pDate)
     Disable();
 }
 
-void CRTC::SetDate(uint8_t Day, uint8_t Month, uint16_t Year)
+void RTC_Driver::SetDate(uint8_t Day, uint8_t Month, uint16_t Year)
 {
     Date_t Date;
 
@@ -252,7 +246,7 @@ void CRTC::SetDate(uint8_t Day, uint8_t Month, uint16_t Year)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::SetTime(Time_t* pTime)
+void RTC_Driver::SetTime(Time_t* pTime)
 {
     uint32_t Time;
 
@@ -268,7 +262,7 @@ void CRTC::SetTime(Time_t* pTime)
 }
 
 
-void CRTC::SetTime(uint8_t Hour, uint8_t Minute, uint8_t Second)
+void RTC_Driver::SetTime(uint8_t Hour, uint8_t Minute, uint8_t Second)
 {
     Time_t Time;
 
@@ -290,7 +284,7 @@ void CRTC::SetTime(uint8_t Hour, uint8_t Minute, uint8_t Second)
 //   Note(s):       Do not put in OS tick hook
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::TickHook(void)
+void RTC_Driver::TickHook(void)
 {
     if(m_TimeOut > 0)
     {
@@ -308,7 +302,7 @@ void CRTC::TickHook(void)
 //   Description:   Allow time, date, etc.. to be set
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::Enable(void)
+void RTC_Driver::Enable(void)
 {
     Lock();
     UnlockRegister();
@@ -325,7 +319,7 @@ void CRTC::Enable(void)
 //   Description:   Disable all access to RTC
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::Disable(void)
+void RTC_Driver::Disable(void)
 {
     ExitInitMode();
     LockRegister();
@@ -344,7 +338,7 @@ void CRTC::Disable(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CRTC::EnterInitMode(void)
+SystemState_e RTC_Driver::EnterInitMode(void)
 {
     SystemState_e    State;
 
@@ -377,7 +371,7 @@ SystemState_e CRTC::EnterInitMode(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::ExitInitMode(void)
+void RTC_Driver::ExitInitMode(void)
 {
     // Exit initialization mode, and restart calendar counter
     RTC->ISR &= uint32_t(~RTC_ISR_INIT);
@@ -395,7 +389,7 @@ void CRTC::ExitInitMode(void)
 //   Note(s):       (0-6, Sunday-Saturday) to stay generic, even if ST RTC are 1-Monday 7-Sunday
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t CRTC::GetDayOfWeek(Date_t* pDate)
+uint8_t RTC_Driver::GetDayOfWeek(Date_t* pDate)
 {
     uint16_t Day;
 
@@ -427,9 +421,9 @@ uint8_t CRTC::GetDayOfWeek(Date_t* pDate)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::Lock(void)
+void RTC_Driver::Lock(void)
 {
-    while(nOS_MutexLock(m_pMutex, NOS_WAIT_INFINITE) != NOS_OK);
+    while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -444,9 +438,9 @@ void CRTC::Lock(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::Unlock(void)
+void RTC_Driver::Unlock(void)
 {
-    while(nOS_MutexUnlock(m_pMutex) != NOS_OK);
+    while(nOS_MutexUnlock(&m_Mutex) != NOS_OK);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -462,7 +456,7 @@ void CRTC::Unlock(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::LockRegister(void)
+void RTC_Driver::LockRegister(void)
 {
     // Write wrong key to relock "Write Protection Register"
     RTC->WPR  = 0x00;
@@ -470,7 +464,7 @@ void CRTC::LockRegister(void)
 }
 
 
-void CRTC::UnlockRegister(void)
+void RTC_Driver::UnlockRegister(void)
 {
     // Write unlock key to "Write Protection Register"
     PWR->CR1  |= PWR_CR1_DBP;
@@ -488,7 +482,7 @@ void CRTC::UnlockRegister(void)
 //   Description:   Update all feature unhandle by RTC
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::UpdateTimeFeature(void)
+void RTC_Driver::UpdateTimeFeature(void)
 {
     uint32_t Time;
     uint32_t Date;
@@ -541,7 +535,7 @@ void CRTC::UpdateTimeFeature(void)
 //   Description:   Waits until the RTC Time and Date registers are synchronized
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CRTC::WaitForSynchro(void)
+SystemState_e RTC_Driver::WaitForSynchro(void)
 {
     SystemState_e State;
 
@@ -575,17 +569,17 @@ SystemState_e CRTC::WaitForSynchro(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CRTC::WakeUp_IRQ_Handler(void)
+void RTC_Driver::WakeUp_IRQ_Handler(void)
 {
 
 }
 
-void CRTC::Stamp_IRQ_Handler(void)
+void RTC_Driver::Stamp_IRQ_Handler(void)
 {
 
 }
 
-void CRTC::Alarm_IRQ_Handler(void)
+void RTC_Driver::Alarm_IRQ_Handler(void)
 {
 
 }

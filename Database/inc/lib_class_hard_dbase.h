@@ -61,7 +61,7 @@ enum HARD_DBaseItemList_e
 
 //----------------------------------CALLBACK---------------------------------------------------------------
 
-class CHARD_DataBase : public CDataBaseInterface
+class HARD_DataBase : public CDataBaseInterface
 {
     public:
 

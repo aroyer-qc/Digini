@@ -95,23 +95,23 @@ class Console : public CallbackInterface
        // void           ProcessParams              (CLI_CmdName_e Command);
 
         // Passthru FIFO
-        inline void      TailForward                (uint32_t Size)                                 { m_pFifo->TailForward(Size);                    }
-        inline void      HeadForward                (uint32_t Size)                                 { m_pFifo->HeadForward(Size);                    }
-        inline void      HeadBackward               (uint32_t Size)                                 { m_pFifo->HeadBackward(Size);                   }
-        inline uint32_t  Read                       (void* pBuffer, uint32_t BytesToRead)           { return m_pFifo->Read(pBuffer, BytesToRead);    }
-        inline uint32_t  Write                      (const void *pBuffer, uint32_t BytesToWrite)    { return m_pFifo->Write(pBuffer, BytesToWrite);         }
-        inline int32_t   At                         (uint32_t Offset)                               { return m_pFifo->At(Offset);                    }
-        inline uint32_t  Flush                      (uint32_t BytesToFlush)                         { return m_pFifo->Flush(BytesToFlush);           }
-        inline uint8_t   Atoi                       (int32_t* Value, uint8_t Base)                  { return m_pFifo->Atoi(Value, Base);             }
-        inline uint8_t   AtoiAt                     (uint32_t Offset, int32_t* Value)               { return m_pFifo->AtoiAt(Offset, Value);         }
-        inline bool      Memncmp                    (const void* pMemPtr, uint32_t Length)          { return m_pFifo->Memncmp(pMemPtr, Length);      }
-        inline int32_t   Memnchr                    (char Character, uint32_t Length)               { return m_pFifo->Memnchr(Character, Length);    }
-        inline void      ToUpper                    (uint32_t Length)                               { return m_pFifo->ToUpper(Length);               }
-        inline bool      Move                       (FIFO_Buffer* pFifoDst, uint32_t Length)        { return m_pFifo->Move(pFifoDst, Length);        }
-        inline bool      ReadyRead                  (void)                                          { return m_pFifo->ReadyRead();                   }
-        inline bool      ReadyWrite                 (void)                                          { return m_pFifo->ReadyWrite();                  }
-        inline uint32_t  CheckFreeSpace             (void)                                          { return m_pFifo->CheckFreeSpace();              }
-        inline uint32_t  CheckUsedSpace             (void)                                          { return m_pFifo->CheckUsedSpace();              }
+        inline void      TailForward                (size_t Size)                                   { m_Fifo.TailForward(Size);                   }
+        inline void      HeadForward                (size_t Size)                                   { m_Fifo.HeadForward(Size);                   }
+        inline void      HeadBackward               (size_t Size)                                   { m_Fifo.HeadBackward(Size);                  }
+        inline size_t    Read                       (void* pBuffer, size_t BytesToRead)             { return m_Fifo.Read(pBuffer, BytesToRead);   }
+        inline size_t    Write                      (const void *pBuffer, size_t BytesToWrite)      { return m_Fifo.Write(pBuffer, BytesToWrite); }
+        inline int32_t   At                         (size_t Offset)                                 { return m_Fifo.At(Offset);                   }
+        inline size_t    Flush                      (size_t BytesToFlush)                           { return m_Fifo.Flush(BytesToFlush);          }
+        inline uint8_t   Atoi                       (int32_t* Value, uint8_t Base)                  { return m_Fifo.Atoi(Value, Base);            }
+        inline uint8_t   AtoiAt                     (size_t Offset, int32_t* Value)                 { return m_Fifo.AtoiAt(Offset, Value);        }
+        inline bool      Memncmp                    (const void* pMemPtr, size_t Length)            { return m_Fifo.Memncmp(pMemPtr, Length);     }
+        inline size_t    Memnchr                    (char Character, size_t Length)                 { return m_Fifo.Memnchr(Character, Length);   }
+        inline void      ToUpper                    (size_t Length)                                 { return m_Fifo.ToUpper(Length);              }
+        inline bool      Move                       (FIFO_Buffer* pFifoDst, size_t Length)          { return m_Fifo.Move(pFifoDst, Length);       }
+        inline bool      ReadyRead                  (void)                                          { return m_Fifo.ReadyRead();                  }
+        inline bool      ReadyWrite                 (void)                                          { return m_Fifo.ReadyWrite();                 }
+        inline size_t    CheckFreeSpace             (void)                                          { return m_Fifo.CheckFreeSpace();             }
+        inline size_t    CheckUsedSpace             (void)                                          { return m_Fifo.CheckUsedSpace();             }
 
         // Getter/ Setter
         CON_DebugLevel_e GetDebugLevel              (void)                                          { return m_DebugLevel;         }
@@ -119,10 +119,6 @@ class Console : public CallbackInterface
 
     private:
 
-        //volatile uint16_t                       m_PushIndex;
-        //volatile uint16_t                       m_PopIndex;
-        //volatile uint8_t*                       m_pBuffer;
-        //volatile uint16_t                       m_Size;
 
     // --------------------------------------------------------------------------------------------
 
@@ -136,7 +132,7 @@ class Console : public CallbackInterface
         TickCount_t                             m_StartupTick;
         bool                                    m_IsItOnStartup;
         char                                    m_BufferParserRX[CON_FIFO_PARSER_RX_SIZE];
-        FIFO_Buffer*                            m_pFifo;
+        FIFO_Buffer                             m_Fifo;
         bool                                    m_IsItOnHold;
         CON_DebugLevel_e                        m_DebugLevel;
         uint8_t                                 m_ActiveProcessLevel;

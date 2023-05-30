@@ -841,7 +841,7 @@ SystemState_e QSPI_Driver::WriteInSector(uint32_t Address, uint8_t* pBuffer, uin
 
     //---------------------------------------------------------------------------------------------
     // Get necessary memory to read sector
-    if((pSectorBuffer = (uint8_t*)pMemory->Alloc(QSPI_FLASH_SECTOR_SIZE)) == nullptr)
+    if((pSectorBuffer = (uint8_t*)pMemoryPool->Alloc(QSPI_FLASH_SECTOR_SIZE)) == nullptr)
     {
         return SYS_FAIL_MEMORY_ALLOCATION;
     }
@@ -859,7 +859,7 @@ SystemState_e QSPI_Driver::WriteInSector(uint32_t Address, uint8_t* pBuffer, uin
                                   QSPI_FLASH_SECTOR_SIZE,
                                   QSPI_TIMEOUT_DEFAULT_VALUE)) != SYS_READY)
     {
-        pMemory->Free((void**)&pSectorBuffer);
+        pMemoryPool->Free((void**)&pSectorBuffer);
         return State;
     }
 
@@ -887,7 +887,7 @@ SystemState_e QSPI_Driver::WriteInSector(uint32_t Address, uint8_t* pBuffer, uin
 
     if(ProcessThisSector == false)
     {
-        pMemory->Free((void**)&pSectorBuffer);
+        pMemoryPool->Free((void**)&pSectorBuffer);
         return SYS_READY;
     }
 
@@ -920,14 +920,14 @@ SystemState_e QSPI_Driver::WriteInSector(uint32_t Address, uint8_t* pBuffer, uin
         // Erase Sector
         if((State = this->InternalEraseSector(SectorAddress)) != SYS_READY)
         {
-            pMemory->Free((void**)&pSectorBuffer);
+            pMemoryPool->Free((void**)&pSectorBuffer);
             return State;
         }
 
         // Wait for erase to be completed
         if((State = this->WaitFlashReady(QSPI_SECTOR_ERASE_TIME)) != SYS_READY)
         {
-            pMemory->Free((void**)&pSectorBuffer);
+            pMemoryPool->Free((void**)&pSectorBuffer);
             return State;
         }
 
@@ -973,7 +973,7 @@ SystemState_e QSPI_Driver::WriteInSector(uint32_t Address, uint8_t* pBuffer, uin
     }
     while((NumberOfPage != 0) && (State == SYS_READY));
 
-    pMemory->Free((void**)&pSectorBuffer);
+    pMemoryPool->Free((void**)&pSectorBuffer);
     return State;
 }
 

@@ -103,7 +103,7 @@ struct RAM_DBaseRegionPointer_t
 
 //-------------------------------------------------------------------------------------------------
 
-class CRAM_DataBase : public CDataBaseInterface
+class RAM_DataBase : public CDataBaseInterface
 {
     public:
 
@@ -117,7 +117,6 @@ class CRAM_DataBase : public CDataBaseInterface
     private:
 
         SystemState_e   CheckRange          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
-
 
         uint8_t*                m_ItemsPointer      [NB_RAM_DBASE_ITEMS_CONST + 1];             // need one more for boundary top limit
         static const uint16_t   m_ItemsQTY          [NB_RAM_DBASE_ITEMS_CONST];

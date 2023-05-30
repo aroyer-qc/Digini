@@ -76,13 +76,13 @@ class CDataBaseInterface
     public:
 
                                 CDataBaseInterface       (){};
-        virtual SystemState_e   Initialize               (void* pConfig, size_t ObjectSize)                                          = 0;    // Initialize DataBase
-        virtual SystemState_e   Get                      (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)   = 0;    // Read a Record
-        virtual SystemState_e   Set                      (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)   = 0;    // Write a Record
+        virtual SystemState_e   Initialize               (void* pConfig, size_t ObjectSize) { VAR_UNUSED(pConfig); VAR_UNUSED(ObjectSize); return SYS_READY;};  // Initialize DataBase
+        virtual SystemState_e   Get                      (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)   = 0;                       // Read a Record
+        virtual SystemState_e   Set                      (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)   = 0;                       // Write a Record
         virtual uint16_t        GetDriverIndex           (Range_e Range)                                                             = 0;
-        virtual SystemState_e   GetSize                  (uint32_t* pSize,   uint16_t Record, uint16_t Number, uint16_t SubNumber)   = 0;    // Get Record Size
-        virtual SystemState_e   GetPointer               (void** pAddress,   uint16_t Record, uint16_t Number, uint16_t SubNumber)   = 0;    // Get Record address if it is memory location
-        virtual SystemState_e   SetDB_Address            (void** pAddress)                                                           = 0;    // Set database address if supported by module
+        virtual SystemState_e   GetSize                  (uint32_t* pSize,   uint16_t Record, uint16_t Number, uint16_t SubNumber)   = 0;                       // Get Record Size
+        virtual SystemState_e   GetPointer               (void** pAddress,   uint16_t Record, uint16_t Number, uint16_t SubNumber)   = 0;                       // Get Record address if it is memory location
+        virtual SystemState_e   SetDB_Address            (void** pAddress)                                                           = 0;                       // Set database address if supported by module
 };
 
 
@@ -92,14 +92,14 @@ class CDataBase
     public:
 
                                  CDataBase               ();
-        SystemState_e            RegisterDriver          (CDataBaseInterface* DataBaseInterface);                                           // Register a hardware access database
-        SystemState_e            Initialize              (void);                                                                            // Initialize DataBase
-        SystemState_e            Get                     (void*       pData, uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0); // Read a Record
-        SystemState_e            Set                     (const void* pData, uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0); // Write a Record
-        SystemState_e            GetSize                 (uint32_t* pSize,   uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0); // Get Record Size
-        SystemState_e            Fill                    (const void* pData, uint16_t Record);                                              // Fill all item of a record if supported by module
-        SystemState_e            GetPointer              (void** pAddress, uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0);   // Read a record pointer address
-        SystemState_e            SetDB_Address           (void** pAddress, uint16_t Record);                                                // Set database address if supported by module
+        SystemState_e            RegisterDriver          (CDataBaseInterface* DataBaseInterface);                                                               // Register a hardware access database
+        SystemState_e            Initialize              (void);                                                                                                // Initialize DataBase
+        SystemState_e            Get                     (void*       pData, uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0);                     // Read a Record
+        SystemState_e            Set                     (const void* pData, uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0);                     // Write a Record
+        SystemState_e            GetSize                 (uint32_t* pSize,   uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0);                     // Get Record Size
+        SystemState_e            Fill                    (const void* pData, uint16_t Record);                                                                  // Fill all item of a record if supported by module
+        SystemState_e            GetPointer              (void** pAddress, uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0);                       // Read a record pointer address
+        SystemState_e            SetDB_Address           (void** pAddress, uint16_t Record);                                                                    // Set database address if supported by module
        #ifdef DBASE_DEF
         SystemState_e            ForceUpdate             (uint16_t Record, uint16_t Number, uint16_t SubNumber);
        #endif
@@ -107,18 +107,18 @@ class CDataBase
 
     private:
 
-        CDataBaseInterface*     GetDriver                (uint16_t  Record);
+        CDataBaseInterface*      GetDriver               (uint16_t  Record);
 
-        uint8_t                 m_PoolCount;
-        CDataBaseInterface*     m_pDriver[DBASE_INTERFACE_POOL];
-        uint16_t                m_FreeIndexPointer;
+        uint8_t                  m_PoolCount;
+        CDataBaseInterface*      m_pDriver               [DBASE_INTERFACE_POOL];
+        uint16_t                 m_FreeIndexPointer;
 
        #ifdef DBASE_DEF
-        bool                   m_IsItInSync [NB_DBASE_ITEMS_CONST];
-        static const uint16_t  m_RamRecord  [NB_DBASE_ITEMS_CONST];
-        static const uint16_t  m_RomRecord  [NB_DBASE_ITEMS_CONST];
-        static const uint32_t  m_Interval   [NB_DBASE_ITEMS_CONST];
-        static const uint32_t  m_StartTime  [NB_DBASE_ITEMS_CONST];
+        bool                     m_IsItInSync            [NB_DBASE_ITEMS_CONST];
+        static const uint16_t    m_RamRecord             [NB_DBASE_ITEMS_CONST];
+        static const uint16_t    m_RomRecord             [NB_DBASE_ITEMS_CONST];
+        static const uint32_t    m_Interval              [NB_DBASE_ITEMS_CONST];
+        static const uint32_t    m_StartTime             [NB_DBASE_ITEMS_CONST];
        #endif
 };
 

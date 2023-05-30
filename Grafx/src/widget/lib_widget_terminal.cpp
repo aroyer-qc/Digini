@@ -73,7 +73,7 @@ CTerminal::CTerminal(Terminal_t* pTerminal)
 
     // Reserve virtual screen memory and clear it's space
     VirtualScreenSize = m_NumberOfLine * m_NbOfCharPerLine;
-    m_pScreen = (uint8_t*)pMemory->AllocAndClear(VirtualScreenSize);
+    m_pScreen = (uint8_t*)pMemoryPool->AllocAndClear(VirtualScreenSize);
 
     m_CurrentLine = 0;
 }
@@ -190,7 +190,7 @@ Link_e CTerminal::Refresh(MsgRefresh_t* pMsg)
 //-------------------------------------------------------------------------------------------------
 void CTerminal::Finalize()
 {
-    pMemory->Free((void**)&m_pScreen);
+    pMemoryPool->Free((void**)&m_pScreen);
     ServiceReturn_t* pService;
     m_ServiceState = SERVICE_FINALIZE;
 

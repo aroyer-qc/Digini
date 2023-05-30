@@ -181,8 +181,8 @@ static void _DrawPolygon(void*         pSrc,
     Size = (MaxY - MinY);
 
     // Fill a table with X start and X end for each line
-    //GRAFX_pMin = (uint16_t*)pMemory->AllocAndSet  (Size * sizeof(uint16_t) * 2, 0xFF);
-    //GRAFX_pMax = (uint16_t*)pMemory->AllocAndClear(Size * sizeof(uint16_t) * 2);
+    //GRAFX_pMin = (uint16_t*)pMemoryPool->AllocAndSet  (Size * sizeof(uint16_t) * 2, 0xFF);
+    //GRAFX_pMax = (uint16_t*)pMemoryPool->AllocAndClear(Size * sizeof(uint16_t) * 2);
 
     for(i = 0; i < 256; i++)
     {
@@ -228,8 +228,8 @@ static void _DrawPolygon(void*         pSrc,
         }
     }
 
-    //pMemory->Free(GRAFX_pMax);
-    //pMemory->Free(GRAFX_pMin);
+    //pMemoryPool->Free(GRAFX_pMax);
+    //pMemoryPool->Free(GRAFX_pMin);
 }
 
 //-------------------------------------------------------------------------------------------------

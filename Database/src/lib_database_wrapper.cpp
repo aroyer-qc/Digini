@@ -45,8 +45,8 @@ void AccessTime(AccessRequest_e AccessRequest, const void* pData, uint16_t Numbe
     VAR_UNUSED(SubNumber);
 
   #if (USE_RTC_DRIVER == DEF_ENABLED)
-    if(AccessRequest == ACCESS_READ) BSP_pRTC->GetTime((Time_t*)pData);
-    else                             BSP_pRTC->SetTime((Time_t*)pData);
+    if(AccessRequest == ACCESS_READ) myRTC.GetTime((Time_t*)pData);
+    else                             myRTC.SetTime((Time_t*)pData);
   #else // User function
     if(AccessRequest == ACCESS_READ) LIB_GetTime((Time_t*)pData);
     else                             LIB_SetTime((Time_t*)pData);
@@ -66,8 +66,8 @@ void AccessDate(AccessRequest_e AccessRequest, const void* pData, uint16_t Numbe
     VAR_UNUSED(SubNumber);
 
   #if (USE_RTC_DRIVER == DEF_ENABLED)
-    if(AccessRequest == ACCESS_READ) BSP_pRTC->GetDate((Date_t*)pData);
-    else                             BSP_pRTC->SetDate((Date_t*)pData);
+    if(AccessRequest == ACCESS_READ) myRTC.GetDate((Date_t*)pData);
+    else                             myRTC.SetDate((Date_t*)pData);
   #else // User function
     if(AccessRequest == ACCESS_READ) LIB_GetDate((Date_t*)pData);
     else                             LIB_SetDate((Date_t*)pData);
@@ -88,8 +88,8 @@ void AccessTimeFormat(AccessRequest_e AccessRequest, const void* pData, uint16_t
     VAR_UNUSED(SubNumber);
 
   #if (USE_RTC_DRIVER == DEF_ENABLED)
-    if(AccessRequest == ACCESS_READ) BSP_pRTC->GetTimeFormat((TimeFormat_e*)pData);
-    else                             BSP_pRTC->SetTimeFormat((TimeFormat_e*)pData);
+    if(AccessRequest == ACCESS_READ) myRTC.GetTimeFormat((TimeFormat_e*)pData);
+    else                             myRTC.SetTimeFormat((TimeFormat_e*)pData);
   #else // User function
   #endif
 }

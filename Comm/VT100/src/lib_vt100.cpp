@@ -839,7 +839,7 @@ size_t VT100_Terminal::InMenuPrintf(int nSize, Label_e Label, ...)
     size_t      Size    = 0;
     const char* pFormat = myLabel.GetPointer(Label);
 
-    if((pBuffer = (char*)pMemory->Alloc(VT100_TERMINAL_SIZE)) == nullptr)
+    if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE)) == nullptr)
     {
         va_start(vaArg, Label);
         Size = STR_vsnprintf(pBuffer, ((nSize == VT100_SZ_NONE) ? VT100_TERMINAL_SIZE : nSize), pFormat, vaArg);
@@ -852,7 +852,7 @@ size_t VT100_Terminal::InMenuPrintf(int nSize, Label_e Label, ...)
       #endif
 
         va_end(vaArg);
-        pMemory->Free((void**)&pBuffer);
+        pMemoryPool->Free((void**)&pBuffer);
     }
 
     return Size;
@@ -886,7 +886,7 @@ size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat
         //// SYS_Read(SYS_DEBUG_LEVEL, MAIN_ACU, 0, &DebugLevel, nullptr);
         if((DebugLevel & Level) != 0)
         {
-            if((pBuffer = (char*)pMemory->Alloc(VT100_TERMINAL_SIZE)) == nullptr)
+            if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE)) == nullptr)
             {
                 va_start(vaArg, (const char*)pFormat);
                 Size = STR_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, vaArg);
@@ -905,7 +905,7 @@ size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat
 
 
                 va_end(vaArg);
-                pMemory->Free((void**)&pBuffer);
+                pMemoryPool->Free((void**)&pBuffer);
             }
         }
     }

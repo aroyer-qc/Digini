@@ -143,8 +143,8 @@ size_t GPrintf::PutString(void)
 
     KeepDrawingColor = CLayer::GetColor();                                          // Push drawing color
 
-    m_pFontUsedInString  = (Font_e*) pMemory->Alloc(sizeof(Font_e) * m_Size);
-    m_pColorUsedInString = (uint32_t*)pMemory->Alloc(sizeof(uint32_t) * m_Size);
+    m_pFontUsedInString  = (Font_e*) pMemoryPool->Alloc(sizeof(Font_e) * m_Size);
+    m_pColorUsedInString = (uint32_t*)pMemoryPool->Alloc(sizeof(uint32_t) * m_Size);
 
     this->ParseFeature();                                                           // Parse for special feature (Color & Font change)
     this->ParseString();                                                            // Calculate all the Parameter of the printf
@@ -227,8 +227,8 @@ size_t GPrintf::PutString(void)
     }
 //#endif
 
-    pMemory->Free((void**)&m_pColorUsedInString);
-    pMemory->Free((void**)&m_pFontUsedInString);
+    pMemoryPool->Free((void**)&m_pColorUsedInString);
+    pMemoryPool->Free((void**)&m_pFontUsedInString);
 
     CLayer::SetColor(KeepDrawingColor);                                             // Pop drawing color
     return 0;

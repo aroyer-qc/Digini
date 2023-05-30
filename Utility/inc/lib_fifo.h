@@ -37,6 +37,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define FIFO_INDEX_OUT_OF_BOUNDS            -1
+#define FIFO_CHAR_NOT_FOUND                 -2
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -46,40 +47,39 @@ class FIFO_Buffer
 {
     public:
                         FIFO_Buffer             ();
-                        FIFO_Buffer             (uint16_t Size);
-                        ~FIFO_Buffer            ();
+                       ~FIFO_Buffer             ();
 
-        void            Initialize              (uint16_t Size);
-        int32_t         At                      (uint32_t Offset);
-        uint32_t        Flush                   (uint32_t BytesToFlush);
-        uint8_t         Atoi                    (int32_t* Value, uint8_t Base);
-        uint8_t         AtoiAt                  (uint32_t Offset, int32_t* Value);
-        bool            Memncmp                 (const void* pMemPtr, uint32_t Length);
-        int32_t         Memnchr                 (char Character, uint32_t Length);
-        void            ToUpper                 (uint32_t Length);
-        bool            Move                    (FIFO_Buffer* pFifoDst, uint32_t Length);
+        void            Initialize              (size_t Size);
+        int32_t         At                      (size_t Offset);
+        size_t          Flush                   (size_t BytesToFlush);
+        size_t          Atoi                    (int32_t* Value, uint8_t Base);
+        size_t          AtoiAt                  (size_t Offset, int32_t* Value);
+        bool            Memncmp                 (const void* pMemPtr, size_t Length);
+        size_t          Memnchr                 (char Character, size_t Length);
+        void            ToUpper                 (size_t Length);
+        bool            Move                    (FIFO_Buffer* pFifoDst, size_t Length);
 
         //bool            Read                    (uint8_t* pData);
-        uint32_t        Read                    (void* pBuffer, uint32_t BytesToRead);
+        size_t          Read                    (void* pBuffer, size_t BytesToRead);
         //bool            Write                   (uint8_t Data);
-        uint32_t        Write                   (const void *pBuffer, uint32_t BytesToWrite);
+        size_t          Write                   (const void *pBuffer, size_t BytesToWrite);
 
         bool            ReadyRead               (void);
         bool            ReadyWrite              (void);
 
-        uint32_t        CheckFreeSpace          (void);
-        uint32_t        CheckUsedSpace          (void);
+        size_t          CheckFreeSpace          (void);
+        size_t          CheckUsedSpace          (void);
 
-        void            TailForward             (uint32_t Size);
-        void            HeadForward             (uint32_t Size);
-        void            HeadBackward            (uint32_t Size);
+        void            TailForward             (size_t Size);
+        void            HeadForward             (size_t Size);
+        void            HeadBackward            (size_t Size);
 
     private:
 
-        volatile uint16_t                       m_PushIndex;
-        volatile uint16_t                       m_PopIndex;
+        volatile size_t                         m_PushIndex;
+        volatile size_t                         m_PopIndex;
         volatile uint8_t*                       m_pBuffer;
-        volatile uint16_t                       m_Size;
+        volatile size_t                         m_Size;
 };
 
 //-------------------------------------------------------------------------------------------------

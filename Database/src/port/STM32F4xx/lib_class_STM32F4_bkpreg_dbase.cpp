@@ -20,15 +20,15 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: CBKPREG_DataBase
+//   Class: BKPREG_DataBase
 //
 //
-//   Description:   Class CBKPREG_DataBase
+//   Description:   Class BKPREG_DataBase
 //
 //-------------------------------------------------------------------------------------------------
 
 // Create Quantity list for each record item
-const uint8_t CBKPREG_DataBase::m_ItemsQTY[NB_BKPREG_DBASE_ITEMS_CONST] =                                       // Array[THIS][]
+const uint8_t BKPREG_DataBase::m_ItemsQTY[NB_BKPREG_DBASE_ITEMS_CONST] =                                       // Array[THIS][]
 {
   #define X_BKPREG_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY) ITEMS_QTY,
     BKPREG_DBASE_DEF
@@ -36,7 +36,7 @@ const uint8_t CBKPREG_DataBase::m_ItemsQTY[NB_BKPREG_DBASE_ITEMS_CONST] =       
 };
 
 // Create SUB Quantity list for each record item
-const uint8_t CBKPREG_DataBase::m_ItemsSubQTY[NB_BKPREG_DBASE_ITEMS_CONST] =                                    // Array[][THIS]
+const uint8_t BKPREG_DataBase::m_ItemsSubQTY[NB_BKPREG_DBASE_ITEMS_CONST] =                                    // Array[][THIS]
 {
   #define X_BKPREG_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY) ITEMS_SubQTY,
     BKPREG_DBASE_DEF
@@ -45,7 +45,7 @@ const uint8_t CBKPREG_DataBase::m_ItemsSubQTY[NB_BKPREG_DBASE_ITEMS_CONST] =    
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   CBKPREG_DataBase
+//   Constructor:   BKPREG_DataBase
 //
 //   Parameter(s):  CRTC* pCRTC         Pointer on the CRTC class to access RTC Backup register
 //
@@ -54,7 +54,7 @@ const uint8_t CBKPREG_DataBase::m_ItemsSubQTY[NB_BKPREG_DBASE_ITEMS_CONST] =    
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CBKPREG_DataBase::CBKPREG_DataBase(CRTC* pRTC)
+BKPREG_DataBase::BKPREG_DataBase(CRTC* pRTC)
 {
     m_pRTC = pRTC;
 }
@@ -71,7 +71,7 @@ CBKPREG_DataBase::CBKPREG_DataBase(CRTC* pRTC)
 //   Description:   Initialize driver
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CBKPREG_DataBase::Initialize(void* pConfig, size_t ObjectSize)
+SystemState_e BKPREG_DataBase::Initialize(void* pConfig, size_t ObjectSize)
 {
     uint16_t    i;
     uint8_t     Index;
@@ -107,7 +107,7 @@ SystemState_e CBKPREG_DataBase::Initialize(void* pConfig, size_t ObjectSize)
 //   Description:   Get the record for backup register type database
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CBKPREG_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e BKPREG_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e State;
     uint8_t      Index;
@@ -138,7 +138,7 @@ SystemState_e CBKPREG_DataBase::Get(void* pData, uint16_t Record, uint16_t Numbe
 //   Description:   Set the record for backup register type database
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CBKPREG_DataBase::Set(const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e BKPREG_DataBase::Set(const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e State;
     uint8_t      Index;
@@ -166,7 +166,7 @@ SystemState_e CBKPREG_DataBase::Set(const void* pData, uint16_t Record, uint16_t
 //   Description:   Return min or the maximum  for the range of index
 //
 //-------------------------------------------------------------------------------------------------
-uint16_t CBKPREG_DataBase::GetDriverIndex(Range_e Range)
+uint16_t BKPREG_DataBase::GetDriverIndex(Range_e Range)
 {
     if(Range == RANGE_MIN) return START_BKPREG_INDEX + 1;
     return END_BKPREG_INDEX - 1;
@@ -186,7 +186,7 @@ uint16_t CBKPREG_DataBase::GetDriverIndex(Range_e Range)
 //   Description:   Return the size of record
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CBKPREG_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e BKPREG_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     *pSize = sizeof(uint32_t);
     return SYS_READY;
@@ -206,7 +206,7 @@ SystemState_e CBKPREG_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16
 //   Description:   Return the memory address from item information
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CBKPREG_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e BKPREG_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e State;
     size_t       Offset;
@@ -235,7 +235,7 @@ SystemState_e CBKPREG_DataBase::GetPointer(void** pPointer, uint16_t Record, uin
 //   Description:   Check the range provided if not out of bound
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CBKPREG_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e BKPREG_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     if(Number < m_ItemsQTY[Record])
     {
@@ -261,7 +261,7 @@ SystemState_e CBKPREG_DataBase::CheckRange(uint16_t Record, uint16_t Number, uin
 //   Description:   Return the index from item information
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t CBKPREG_DataBase::GetIndex(uint16_t Record, uint16_t Number, uint16_t SubNumber)
+uint8_t BKPREG_DataBase::GetIndex(uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     uint8_t Index;
 

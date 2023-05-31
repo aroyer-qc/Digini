@@ -36,7 +36,8 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "diskio_interface.h"
+//#include "lib_digini.h"
+//#include "diskio_interface.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -46,12 +47,12 @@
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class CFatFS_SDIO : public DiskIO_DeviceInterface
+class FatFS_SDIO : public DiskIO_DeviceInterface
 {
     public:
 
-                        CFatFS_SDIO         ();
-                       ~CFatFS_SDIO         (){}
+                        FatFS_SDIO          ();
+                       ~FatFS_SDIO          (){}
 
         DSTATUS         Initialize          (void);
         DSTATUS         Status              (void);
@@ -63,16 +64,18 @@ class CFatFS_SDIO : public DiskIO_DeviceInterface
         DRESULT         IO_Ctrl             (uint8_t Control, void* pBuffer);
       #endif
 
-        void            Configure           (uint8_t* pBuffer, size_t Size);
+        void            Configure           (SDIO_Driver* pDriver);     //uint8_t* pBuffer, size_t Size);
 
     private:
 
-        DRESULT         CheckError          (uint32_t Sector, uint16_t NumberOfSectors);
+        //DRESULT         CheckError          (uint32_t Sector, uint16_t NumberOfSectors);
 
-        bool                        m_IsItInitialize;
-        DSTATUS                     m_Status;
-        uint8_t*                    m_pBuffer;
-        size_t                      m_Size;                       // size of the disk, is a multiple of 512
+        SDIO_Driver*    m_pSDIO_Driver;
+
+        bool            m_IsItInitialize;
+        DSTATUS         m_Status;
+        //uint8_t*        m_pBuffer;
+        //size_t          m_Size;                       // size of the disk, is a multiple of 512
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -69,92 +69,11 @@
                                                          SDMMC_FLAG_CMDREND  | SDMMC_FLAG_CMDSENT  | SDMMC_FLAG_DATAEND  | \
                                                          SDMMC_FLAG_DBCKEND); }
 
-// ----- MMC/SDC command -----
-#define ACMD                            0x80
-#define CMD0                            (0)                             // GO_IDLE_STATE
-#define CMD1                            (1)                             // SEND_OP_COND (MMC)
-#define CMD2                            (2)                             // ALL_SEND_CID
-#define CMD3                            (3)                             // SEND_RELATIVE_ADDR
-#define CMD6                            (6)                             // SET_BUS_WIDTH (SDC)
-#define CMD7                            (7)                             // SELECT_CARD
-#define CMD8                            (8)                             // SEND_IF_COND
-#define CMD9                            (9)                             // SEND_CSD
-#define CMD10                           (10)                            // SEND_CID
-#define CMD12                           (12)                            // STOP_TRANSMISSION
-#define CMD13                           (13)                            // SEND_STATUS
-// #define ACMD13                       (55)(13)                        // SD_STATUS (SDC)
-#define CMD16                           (16)                            // SET_BLOCKLEN
-#define CMD17                           (17)                            // READ_SINGLE_BLOCK
-#define CMD18                           (18)                            // READ_MULTIPLE_BLOCK
-#define CMD23                           (23)                            // SET_BLK_COUNT (MMC)
-//#define ACMD23                        (55)(23)                        // SET_WR_BLK_ERASE_COUNT (SDC)
-#define CMD24                           (24)                            // WRITE_BLOCK
-#define CMD25                           (25)                            // WRITE_MULTIPLE_BLOCK
-#define CMD32                           (32)                            // ERASE_ER_BLK_START
-#define CMD33                           (33)                            // ERASE_ER_BLK_END
-#define CMD38                           (38)                            // ERASE
-#define CMD41                           (41)                            // SEND_OP_COND (SDC)
-//#define ACMD41                        (55)(41)                        // SEND_OP_COND (SDC)
-#define CMD51                           (51)                            // SEND_SCR
-//#define ACMD51                        (55)(51)                        // SEND_SCR
-#define CMD55                           (55)                            // APP_CMD
+//#define CLKCR_CLEAR_MASK                ((uint32_t)(SDMMC_CLKCR_CLKDIV  | SDMMC_CLKCR_PWRSAV |\
+                                                    SDMMC_CLKCR_BYPASS  | SDMMC_CLKCR_WIDBUS |\
+                                                    SDMMC_CLKCR_NEGEDGE | SDMMC_CLKCR_HWFC_EN))
 
 
-#define SD_OCR_ADDR_OUT_OF_RANGE        ((uint32_t)0x80000000)
-#define SD_OCR_ADDR_MISALIGNED          ((uint32_t)0x40000000)
-#define SD_OCR_BLOCK_LEN_ERR            ((uint32_t)0x20000000)
-#define SD_OCR_ERASE_SEQ_ERR            ((uint32_t)0x10000000)
-#define SD_OCR_BAD_ERASE_PARAM          ((uint32_t)0x08000000)
-#define SD_OCR_WRITE_PROT_VIOLATION     ((uint32_t)0x04000000)
-#define SD_OCR_LOCK_UNLOCK_FAILED       ((uint32_t)0x01000000)
-#define SD_OCR_COM_CRC_FAILED           ((uint32_t)0x00800000)
-#define SD_OCR_ILLEGAL_CMD              ((uint32_t)0x00400000)
-#define SD_OCR_CARD_ECC_FAILED          ((uint32_t)0x00200000)
-#define SD_OCR_CC_ERROR                 ((uint32_t)0x00100000)
-#define SD_OCR_GENERAL_UNKNOWN_ERROR    ((uint32_t)0x00080000)
-#define SD_OCR_STREAM_READ_UNDERRUN     ((uint32_t)0x00040000)
-#define SD_OCR_STREAM_WRITE_OVERRUN     ((uint32_t)0x00020000)
-#define SD_OCR_CID_CSD_OVERWRITE        ((uint32_t)0x00010000)
-#define SD_OCR_WP_ERASE_SKIP            ((uint32_t)0x00008000)
-#define SD_OCR_CARD_ECC_DISABLED        ((uint32_t)0x00004000)
-#define SD_OCR_ERASE_RESET              ((uint32_t)0x00002000)
-#define SD_OCR_AKE_SEQ_ERROR            ((uint32_t)0x00000008)
-#define SD_OCR_ERRORBITS                ((uint32_t)0xFDFFE008)
-#define SD_R6_GENERAL_UNKNOWN_ERROR     ((uint32_t)0x00002000)
-#define SD_R6_ILLEGAL_CMD               ((uint32_t)0x00004000)
-#define SD_R6_COM_CRC_FAILED            ((uint32_t)0x00008000)
-
-
-#define SD_SHORT_RESPONSE               SDMMC_CMD_WAITRESP_0
-#define SD_LONG_RESPONSE                SDMMC_CMD_WAITRESP
-
-
-#define SD_BUS_WIDE_1B                  ((uint32_t)0x00000000)
-#define SD_BUS_WIDE_4B                  SDMMC_CLKCR_WIDBUS_0
-#define SD_BUS_WIDE_8B                  SDMMC_CLKCR_WIDBUS_1
-
-
-
-#define SD_DETECT_GPIO_PORT             GPIOC
-#define SD_DETECT_GPIO_CLOCK            RCC_AHB1ENR_GPIOCEN
-#define SD_DETECT_PIN                     GPIO_PIN_MASK_13
-
-#define SD_WIDE_BUS_SUPPORT             ((uint32_t)0x00040000)
-#define SD_SINGLE_BUS_SUPPORT           ((uint32_t)0x00010000)
-#define SD_CARD_LOCKED                  ((uint32_t)0x02000000)
-#define SD_VOLTAGE_WINDOW               ((uint32_t)0x80100000)
-#define SD_RESP_HIGH_CAPACITY           ((uint32_t)0x40000000)
-#define SD_RESP_STD_CAPACITY            ((uint32_t)0x00000000)
-#define SD_MAX_VOLT_TRIAL               ((uint32_t)0x0000FFFF)
-#define SD_ALLZERO                      ((uint32_t)0x00000000)
-#define SD_CHECK_PATTERN                ((uint32_t)0x000001AA)
-
-
-#define SD_DATABLOCK_SIZE_8B            (SDMMC_DCTRL_DBLOCKSIZE_0|SDMMC_DCTRL_DBLOCKSIZE_1)
-#define SD_DATABLOCK_SIZE_64B           (SDMMC_DCTRL_DBLOCKSIZE_1|SDMMC_DCTRL_DBLOCKSIZE_2)
-#define SD_DATABLOCK_SIZE_512B          (SDMMC_DCTRL_DBLOCKSIZE_0|SDMMC_DCTRL_DBLOCKSIZE_3)
-
-#define BLOCK_SIZE                      512
 //#define DMA_CHANNEL_4                   ((uint32_t)0x08000000)                // already define
 //#define DMA_MEMORY_TO_PERIPH            ((uint32_t)DMA_SxCR_DIR_0)
 //#define DMA_MINC_ENABLE                 ((uint32_t)DMA_SxCR_MINC)
@@ -184,6 +103,21 @@ enum SD_CardState_t
     SD_CARD_ERROR                  = ((uint32_t)0x000000FF)   // Card is in error state
 };
 
+SystemState_e SDIO_Driver::SelectTheCard(void)
+{
+    SystemState_e State;
+
+    State = TransmitCommand((CMD7 | SD_SHORT_RESPONSE), m_RCA, 1);      // Select the Card
+    SDMMC1->CLKCR &= ~(uint32_t)CLKCR_CLEAR_MASK;
+
+    return State;
+}
+
+uint8_t SDIO_Driver::GetCardCapacity(void)
+{
+    return uint8_t(m_CardCapacity / BLOCK_SIZE);
+}
+
 //-------------------------------------------------------------------------------------------------
 //
 //   Constructor:   SDIO_Driver
@@ -195,12 +129,11 @@ enum SD_CardState_t
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SDIO_Driver::SDIO_Driver()
+void SDIO_Driver::Initialize(void)
 {
     uint32_t PriorityGroup;
 
     nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
-
 
     // Reset SDIO Module
     RCC->APB2RSTR |=  RCC_APB2RSTR_SDMMC1RST;
@@ -270,6 +203,10 @@ SDIO_Driver::SDIO_Driver()
 
     NVIC_SetPriority(DMA2_Stream6_IRQn, NVIC_EncodePriority(PriorityGroup, 6, 0));
     NVIC_EnableIRQ(DMA2_Stream6_IRQn);
+
+        // Initialize SDMMC peripheral interface with default configuration for SD card initialization
+    SDMMC1->CLKCR &= ~(uint32_t)CLKCR_CLEAR_MASK;
+    SDMMC1->CLKCR |=  (uint32_t)SDMMC_INIT_CLK_DIV;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -310,299 +247,6 @@ SystemState_e SDIO_Driver::GetStatus(void)
 
     return State;
 }
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: FatFS_Status
-//
-//   Parameter(s):  None
-//   Return value:  DSTATUS
-//
-//   Description:   Get Status from SD Card
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-DSTATUS SDIO_Driver::FatFS_DiskStatus(void)
-{
-    // Check SDCARD status
-    m_CardStatus = (this->GetStatus() == SYS_READY) ? SYS_READY : STA_NOINIT;
-    return (DSTATUS)m_CardStatus;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: FatFS_Initialize
-//
-//   Parameter(s):  None
-//   Return value:  DSTATUS
-//
-//   Description:   Initialize SD Card
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-DSTATUS SDIO_Driver::FatFS_Initialize(void)
-{
-    SystemState_e  State;
-
-    this->PowerOFF();
-
-    // Check if SD card is present
-    if(this->IsDetected() == SYS_DEVICE_NOT_PRESENT)
-    {
-        return STA_NOINIT;
-    }
-
-    // Initialize SDMMC peripheral interface with default configuration for SD card initialization
-    SDMMC1->CLKCR &= ~(uint32_t)CLKCR_CLEAR_MASK;
-    SDMMC1->CLKCR |=  (uint32_t)SDMMC_INIT_CLK_DIV;
-
-    if((State = this->PowerON()) == SYS_READY)                                              // Identify card operating voltage
-    {
-        if((State = this->InitializeCard()) == SYS_READY)                                   // Initialize the present card and put them in idle state
-        {
-            if((State = this->GetCardInfo()) == SYS_READY)                                  // Read CSD/CID MSD registers
-            {
-                State = this->TransmitCommand((CMD7 | SD_SHORT_RESPONSE), m_RCA, 1);        // Select the Card
-                SDMMC1->CLKCR &= ~(uint32_t)CLKCR_CLEAR_MASK;                               // Configure SDMMC peripheral interface
-            }
-        }
-    }
-
-    // Configure SD Bus width
-    if(State == SYS_READY)
-    {
-        // Enable wide operation
-        State = this->SetBusWidth(SD_BUS_WIDE_4B);
-    }
-
-    // Configure the SDCARD device
-    m_CardStatus = (State == SYS_READY) ? SYS_READY : STA_NOINIT;
-    return (DSTATUS)m_CardStatus;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function:       FatFS_Read
-//
-//   Parameter(s):  uint8_t*  pBuffer
-//                  uint32_t  Sector
-//                  uint8_t   NumberOfBlocks
-//   Return value:  DRESULT
-//
-//   Description:   Read From SD Card
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-DRESULT SDIO_Driver::FatFS_Read(uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks)
-{
-    // Prepare the DMA Transfer
-    this->StartBlockTransfert(DMA2_Stream3, (uint32_t *)pBuffer, BLOCK_SIZE, NumberOfBlocks);
-
-    // Read block(s) in DMA transfer mode
-    if(this->ReadBlocks((uint64_t)(Sector * BLOCK_SIZE), BLOCK_SIZE, NumberOfBlocks) == SYS_READY)
-    {
-        // Wait until transfer is complete
-        if(this->CheckOperation(SDMMC_STA_RXACT) == SYS_READY)
-        {
-            return RES_OK;
-        }
-    }
-
-    return RES_ERROR;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: FatFS_Write
-//
-//   Parameter(s):  const uint8_t*  pBuffer
-//                  uint32_t        Sector
-//                  uint8_t         NumberOfBlocks
-//   Return value:  DRESULT
-//
-//   Description:   Write to the SD Card
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-DRESULT SDIO_Driver::FatFS_Write(const uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks)
-{
-    // Prepare the DMA Transfer
-    this->StartBlockTransfert(DMA2_Stream6, (uint32_t *)pBuffer, BLOCK_SIZE, NumberOfBlocks);
-
-    // Write block(s) in DMA transfer mode
-    if(this->WriteBlocks((uint64_t)(Sector * BLOCK_SIZE), BLOCK_SIZE, NumberOfBlocks) == SYS_READY)
-    {
-        // Wait until transfer is complete
-        if(this->CheckOperation(SDMMC_STA_TXACT) == SYS_READY)
-        {
-            return RES_OK;
-        }
-    }
-
-    return RES_ERROR;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: FatFS_IO_Control
-//
-//   Parameter(s):  uint8_t    Control        Control code
-//                    void*      pBuffer        Buffer to send/receive control data
-//   Return value:  DRESULT
-//
-//   Description:   Control
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-#if _USE_IOCTL == 1
-DRESULT SDIO_Driver::FatFS_IO_Control(uint8_t Control, void *pBuffer)
-{
-    DRESULT     Result;
-//  uint8_t     b;
-    //uint8_t*    pPtr = (uint8_t*)pBuffer;
-    //uint32_t    Data;
-    //uint32_t*   dp;
-    //uint32_t    st;
-    //uint32_t    ed;
-
-
-    if(m_CardStatus == STA_NOINIT)
-    {
-        return RES_NOTRDY;
-    }
-
-    Result = RES_ERROR;
-
-    switch(Control)
-    {
-        // Make sure that all data has been written on the media
-        case CTRL_SYNC:
-        {
-            Result = RES_OK;
-            break;
-        }
-
-        // Get number of sectors on the disk (uint32_t)
-        case GET_SECTOR_COUNT:
-        {
-            this->GetCardInfo();
-            *(DWORD *)pBuffer = m_CardCapacity / BLOCK_SIZE;
-            Result = RES_OK;
-            break;
-        }
-
-        // Get sectors on the disk (uint16_t)
-        case GET_SECTOR_SIZE:
-        {
-            *(WORD *)pBuffer = BLOCK_SIZE;
-            Result = RES_OK;
-            break;
-        }
-
-        // Get erase block size in unit of sectors (uint32_t)
-        case GET_BLOCK_SIZE:
-        {
-            *(DWORD*)pBuffer = BLOCK_SIZE;
-            break;
-        }
-
-/*        // Erase a block of sectors
-        case CTRL_ERASE_SECTOR:
-        {
-
-            if(!(m_CardType & HIGH_CAPACITY_SD_CARD) || (((m_CardCSD[0].u_8.u0 >> 6) == 0) && ((m_CardCSD[2].u_8.u2 & 0x40) == 0)))
-            {
-                break;                                                              // Check if sector erase can be applied to the card
-            }
-
-            dp = (uint32_t*)pBuffer;
-            st = dp[0];
-            ed = dp[1];
-
-// TODO need to check this
-        //    if(!(m_CardType & CT_BLOCK))
-        //    {
-        //       st *= 512;
-        //       ed *= 512;
-        //    }
-
-            if((this->SendCommand((CMD32 | SD_SHORT_RESPONSE), st, R1_RESPONSE, &m_Response[0]) == SYS_READY) &&
-               (this->SendCommand((CMD33 | SD_SHORT_RESPONSE), ed, R1_RESPONSE, &m_Response[0]) == SYS_READY) &&
-               (this->SendCommand((CMD38 | SD_SHORT_RESPONSE), 0,  R1_RESPONSE, &m_Response[0]) == SYS_READY) &&
-               (WaitReady(30000) == SYS_READY))
-            {
-                Result = RES_OK;
-            }
-            break;
-        }
-
-        // Get card type flags (1 byte)
-        case MMC_GET_TYPE:
-        {
-            *pPtr = m_CardType;
-            Result = RES_OK;
-            break;
-        }
-
-        case GET_CSD:                                                               // Get CSD (16 bytes)
-        {
-            memcpy(pPtr, m_CardCSD, 16);
-            Result = RES_OK;
-            break;
-        }
-
-        case MMC_GET_CID:                                                           // Get CID (16 bytes)
-        {
-            memcpy(pPtr, m_CardCID, 16);
-            Result = RES_OK;
-            break;
-        }
-
-        case MMC_GET_OCR:                                                           // Get OCR (4 bytes)
-        {
-            memcpy(pPtr, &m_OCR, 4);
-            Result = RES_OK;
-            break;
-        }
-
-        // Receive SD status as a data block (64 bytes)
-
-        case MMC_GET_SDSTAT:
-            if(m_CardType & CT_SDC)                                                 // SDC
-            {
-                if(WaitReady(500))
-                {
-
-                    m_pDriver->ReadyReception(1, 64);                                          // Ready to receive data blocks
-                    if((This->SendCommand((ACMD13 | SD_SHORT_RESPONSE), 0, R1_RESPONSE, &m_Response[0]) == true) &&
-                       (m_Response[0] & 0xC0580000) == 0)                           // Start to read
-                    {
-                        while((MCI_dwXferWp == 0) && ((MCI_byXferStat & 0xC) == 0) && (m_Detect == DEVICE_PRESENT));
-
-                        if((MCI_byXferStat & 0xC) == 0)
-                        {
-                            LIB_memcpy(pBuffer, DmaBuff[0], 64);                   // Copy_al2un(buff, DmaBuff[0], 64);
-                            Result = RES_OK;
-                        }
-                    }
-
-                }
-                //StopTransfert();                                                // Close data path
-            }
-            break;
-*/
-        default:
-            Result = RES_PARERR;
-    }
-
-    return Result;
-}
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //

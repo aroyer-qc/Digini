@@ -42,8 +42,95 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define SD_CARD_USE_POWER_CONTROL                   0                           // No Power pin control
-#define SD_CARD_USE_DETECT_SIGNAL                   0                           // We are using a form of detect signal     TODO TODO TODO
+#define SD_CARD_USE_POWER_CONTROL       0                              // No Power pin control
+#define SD_CARD_USE_DETECT_SIGNAL       0                              // We are using a form of detect signal     TODO TODO TODO
+
+// ----- MMC/SDC command -----
+#define ACMD                            0x80
+#define CMD0                            (0)                             // GO_IDLE_STATE
+#define CMD1                            (1)                             // SEND_OP_COND (MMC)
+#define CMD2                            (2)                             // ALL_SEND_CID
+#define CMD3                            (3)                             // SEND_RELATIVE_ADDR
+#define CMD6                            (6)                             // SET_BUS_WIDTH (SDC)
+#define CMD7                            (7)                             // SELECT_CARD
+#define CMD8                            (8)                             // SEND_IF_COND
+#define CMD9                            (9)                             // SEND_CSD
+#define CMD10                           (10)                            // SEND_CID
+#define CMD12                           (12)                            // STOP_TRANSMISSION
+#define CMD13                           (13)                            // SEND_STATUS
+// #define ACMD13                       (55)(13)                        // SD_STATUS (SDC)
+#define CMD16                           (16)                            // SET_BLOCKLEN
+#define CMD17                           (17)                            // READ_SINGLE_BLOCK
+#define CMD18                           (18)                            // READ_MULTIPLE_BLOCK
+#define CMD23                           (23)                            // SET_BLK_COUNT (MMC)
+//#define ACMD23                        (55)(23)                        // SET_WR_BLK_ERASE_COUNT (SDC)
+#define CMD24                           (24)                            // WRITE_BLOCK
+#define CMD25                           (25)                            // WRITE_MULTIPLE_BLOCK
+#define CMD32                           (32)                            // ERASE_ER_BLK_START
+#define CMD33                           (33)                            // ERASE_ER_BLK_END
+#define CMD38                           (38)                            // ERASE
+#define CMD41                           (41)                            // SEND_OP_COND (SDC)
+//#define ACMD41                        (55)(41)                        // SEND_OP_COND (SDC)
+#define CMD51                           (51)                            // SEND_SCR
+//#define ACMD51                        (55)(51)                        // SEND_SCR
+#define CMD55                           (55)                            // APP_CMD
+
+
+#define SD_OCR_ADDR_OUT_OF_RANGE        ((uint32_t)0x80000000)
+#define SD_OCR_ADDR_MISALIGNED          ((uint32_t)0x40000000)
+#define SD_OCR_BLOCK_LEN_ERR            ((uint32_t)0x20000000)
+#define SD_OCR_ERASE_SEQ_ERR            ((uint32_t)0x10000000)
+#define SD_OCR_BAD_ERASE_PARAM          ((uint32_t)0x08000000)
+#define SD_OCR_WRITE_PROT_VIOLATION     ((uint32_t)0x04000000)
+#define SD_OCR_LOCK_UNLOCK_FAILED       ((uint32_t)0x01000000)
+#define SD_OCR_COM_CRC_FAILED           ((uint32_t)0x00800000)
+#define SD_OCR_ILLEGAL_CMD              ((uint32_t)0x00400000)
+#define SD_OCR_CARD_ECC_FAILED          ((uint32_t)0x00200000)
+#define SD_OCR_CC_ERROR                 ((uint32_t)0x00100000)
+#define SD_OCR_GENERAL_UNKNOWN_ERROR    ((uint32_t)0x00080000)
+#define SD_OCR_STREAM_READ_UNDERRUN     ((uint32_t)0x00040000)
+#define SD_OCR_STREAM_WRITE_OVERRUN     ((uint32_t)0x00020000)
+#define SD_OCR_CID_CSD_OVERWRITE        ((uint32_t)0x00010000)
+#define SD_OCR_WP_ERASE_SKIP            ((uint32_t)0x00008000)
+#define SD_OCR_CARD_ECC_DISABLED        ((uint32_t)0x00004000)
+#define SD_OCR_ERASE_RESET              ((uint32_t)0x00002000)
+#define SD_OCR_AKE_SEQ_ERROR            ((uint32_t)0x00000008)
+#define SD_OCR_ERRORBITS                ((uint32_t)0xFDFFE008)
+#define SD_R6_GENERAL_UNKNOWN_ERROR     ((uint32_t)0x00002000)
+#define SD_R6_ILLEGAL_CMD               ((uint32_t)0x00004000)
+#define SD_R6_COM_CRC_FAILED            ((uint32_t)0x00008000)
+
+
+#define SD_SHORT_RESPONSE               SDMMC_CMD_WAITRESP_0
+#define SD_LONG_RESPONSE                SDMMC_CMD_WAITRESP
+
+
+#define SD_BUS_WIDE_1B                  ((uint32_t)0x00000000)
+#define SD_BUS_WIDE_4B                  SDMMC_CLKCR_WIDBUS_0
+#define SD_BUS_WIDE_8B                  SDMMC_CLKCR_WIDBUS_1
+
+
+
+#define SD_DETECT_GPIO_PORT             GPIOC
+#define SD_DETECT_GPIO_CLOCK            RCC_AHB1ENR_GPIOCEN
+#define SD_DETECT_PIN                     GPIO_PIN_MASK_13
+
+#define SD_WIDE_BUS_SUPPORT             ((uint32_t)0x00040000)
+#define SD_SINGLE_BUS_SUPPORT           ((uint32_t)0x00010000)
+#define SD_CARD_LOCKED                  ((uint32_t)0x02000000)
+#define SD_VOLTAGE_WINDOW               ((uint32_t)0x80100000)
+#define SD_RESP_HIGH_CAPACITY           ((uint32_t)0x40000000)
+#define SD_RESP_STD_CAPACITY            ((uint32_t)0x00000000)
+#define SD_MAX_VOLT_TRIAL               ((uint32_t)0x0000FFFF)
+#define SD_ALLZERO                      ((uint32_t)0x00000000)
+#define SD_CHECK_PATTERN                ((uint32_t)0x000001AA)
+
+
+#define SD_DATABLOCK_SIZE_8B            (SDMMC_DCTRL_DBLOCKSIZE_0|SDMMC_DCTRL_DBLOCKSIZE_1)
+#define SD_DATABLOCK_SIZE_64B           (SDMMC_DCTRL_DBLOCKSIZE_1|SDMMC_DCTRL_DBLOCKSIZE_2)
+#define SD_DATABLOCK_SIZE_512B          (SDMMC_DCTRL_DBLOCKSIZE_0|SDMMC_DCTRL_DBLOCKSIZE_3)
+
+#define BLOCK_SIZE                      512
 
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
@@ -194,15 +281,21 @@ class SDIO_Driver
     public:
                             SDIO_Driver                ();
 
+
+        void                Initialize              (void);
+        SystemState_e       GetCardInfo             (void);
+        uint8_t             GetCardCapacity         (void);
+
+        SystemState_e       InitializeCard          (void);
+        void                PowerOFF                (void);
+        SystemState_e       PowerON                 (void);
+        SystemState_e       SetBusWidth             (uint32_t BusSize);
+        SystemState_e       TransmitCommand         (uint8_t Command, uint32_t Argument, int32_t Response);
+        SystemState_e       SelectTheCard           (void);
+
         DRESULT             Read                    (uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks);
         void                TickHook                (void);
 
-        // FatFS interface
-        DSTATUS             FatFS_Initialize        (void);
-        DSTATUS             FatFS_DiskStatus        (void);
-        DRESULT             FatFS_Read              (uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks);
-        DRESULT             FatFS_Write             (const uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks);
-        DRESULT             FatFS_IO_Control        (uint8_t Control, void *pBuffer);
         FRESULT             FatFS_GetDriveSize      (char* pDriveName, FatFS_Size_t* SizeStruct);
 
         // IRQ Handler
@@ -216,21 +309,14 @@ class SDIO_Driver
 
     private:
 
-
-        SystemState_e       InitializeCard          (void);
         SystemState_e       FindSCR                 (uint32_t* SCR);
-        SystemState_e       GetCardInfo             (void);
-        SystemState_e       PowerON                 (void);
-        void                PowerOFF                (void);
 
         SystemState_e       GetStatus               (void);
 
         void                DataInit                (uint32_t Size, uint32_t DataBlockSize, bool IsItReadFromCard);
-        SystemState_e       TransmitCommand          (uint8_t Command, uint32_t Argument, int32_t Response);
         SystemState_e       CmdResponse             (uint8_t Command, int32_t ResponseType);
         SystemState_e       GetResponse             (uint32_t* pResponse);
         SystemState_e       CheckOCR_Response       (uint32_t Response_R1);
-        SystemState_e       SetBusWidth             (uint32_t BusSize);
 
         void                StartBlockTransfert     (DMA_Stream_TypeDef* pDMA, uint32_t* pBuffer, uint32_t BlockSize, uint32_t NumberOfBlocks);
         SystemState_e       ReadBlocks              (uint64_t ReadAddress, uint32_t BlockSize, uint32_t NumberOfBlocks);

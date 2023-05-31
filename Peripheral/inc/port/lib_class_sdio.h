@@ -24,8 +24,6 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-//#include "sdio_cfg.h"
-
 #if defined STM32F4xx
  #include "lib_class_STM32F4_sdio.h"
 #elif defined STM32F7xx

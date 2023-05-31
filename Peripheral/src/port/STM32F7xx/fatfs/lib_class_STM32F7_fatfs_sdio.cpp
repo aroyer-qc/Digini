@@ -36,6 +36,22 @@
 
 //-------------------------------------------------------------------------------------------------
 //
+//   Constructor:   FatFS_SDIO
+//
+//   Parameter(s):  None
+//
+//   Description:   Initialize SDIO Driver
+//
+//   Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+FatFS_SDIO::FatFS_SDIO(void* pArg)
+{
+    m_pSDIO_Driver = (SDIO_Driver*)pArg;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //   Function name: Initialize
 //
 //   Parameter(s):  None
@@ -49,6 +65,8 @@
 DSTATUS FatFS_SDIO::Initialize(void)
 {
     SystemState_e  State;
+
+    m_pSDIO_Driver->Initialize();
 
     m_pSDIO_Driver->PowerOFF();
 
@@ -322,6 +340,35 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
 }
 #endif
 
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetDriveSize
+//
+//   Parameter(s):  char*           pDriveName
+//   Return value:  FATFS_Size_t*   SizeStruct
+//   Return value:  FRESULT
+//
+//   Description:   Get response from SD device
+//
+//   Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+FRESULT FatFS_SDIO::GetDriveSize(char* pDriveName, FatFS_Size_t* SizeStruct)
+{
+    FATFS*  pFS;
+    DWORD   FreeCluster;
+    FRESULT Result;
+
+    // Get volume information and free clusters of drive
+    if((Result = f_getfree(pDriveName, &FreeCluster, &pFS)) == FR_OK)
+    {
+        // Get total sectors and free sectors
+        SizeStruct->Total = (pFS->n_fatent - 2) * pFS->csize * 0.5;
+        SizeStruct->Free = FreeCluster * pFS->csize * 0.5;
+    }
+
+    return Result;
+}
 
 //-------------------------------------------------------------------------------------------------
 

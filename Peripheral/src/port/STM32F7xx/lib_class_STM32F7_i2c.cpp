@@ -115,8 +115,6 @@
 
 #define I2C_STATE_IE_SHIFT          23
 
-//#define CR1_CLEAR_MASK                              ((uint16_t)0xFBF5)          // I2C registers Masks
-
 #define ISR_FLAG_MASK               ((uint32_t)(I2C_ISR_OVR_Msk    | I2C_ISR_BERR_Msk  | I2C_ISR_TCR_Msk  | I2C_ISR_TC_Msk     | \
                                                 I2C_ISR_STOPF_Msk  | I2C_ISR_NACKF_Msk | I2C_ISR_ADDR_Msk | I2C_ISR_RXNE_Msk   | \
                                                 I2C_ISR_TXIS_Msk | I2C_ISR_TXE_Msk))
@@ -129,15 +127,6 @@
 #define I2C_STATE_RX_NOT_EMPTY      ((uint32_t)(I2C_ISR_RXNE_Msk  | ( I2C_CR1_RXIE_Msk   << I2C_STATE_IE_SHIFT)))
 #define I2C_STATE_MASTER_RX_NACK    ((uint32_t)(I2C_ISR_NACKF_Msk | ( I2C_CR1_NACKIE_Msk << I2C_STATE_IE_SHIFT)))
 #define I2C_STATE_MASTER_STOP       ((uint32_t)(I2C_ISR_STOPF_Msk | ( I2C_CR1_STOPIE_Msk << I2C_STATE_IE_SHIFT)))
-
-//#define I2C_NACK                                    ((uint32_t)0x00001000)
-//#define I2C_EVENT_MASTER_MODE_SELECT                ((uint32_t)0x00030001)      // BUSY, MSL and SB flag
-//#define I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED  ((uint32_t)0x00070082)      // BUSY, MSL, ADDR, TXE and TRA flags
-//#define I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED     ((uint32_t)0x00030002)      // BUSY, MSL and ADDR flags
-//#define I2C_EVENT_MASTER_BYTE_RECEIVED              ((uint32_t)0x00030040)      // BUSY, MSL and RXNE flags
-//#define I2C_EVENT_MASTER_BYTE_TRANSMITTING          ((uint32_t)0x00070080)      // TRA, BUSY, MSL, TXE flags
-//#define I2C_EVENT_MASTER_BYTE_TRANSMITTED           ((uint32_t)0x00070084)      // TRA, BUSY, MSL, TXE and BTF flags
-//#define I2C_DEVICE_READ                             0x01
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -178,7 +167,6 @@ I2C_Driver::I2C_Driver(I2C_ID_e I2C_ID)
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::Initialize(void)
 {
-    uint32_t            Register;
     nOS_Error           Error;
     ISR_Prio_t          ISR_Prio;
     uint32_t            PriorityGroup;
@@ -196,8 +184,8 @@ void I2C_Driver::Initialize(void)
     NVIC_DisableIRQ(m_pInfo->EV_IRQn);
     NVIC_DisableIRQ(m_pInfo->ER_IRQn);
 
-
-    Register = RCC->DCKCFGR2;
+  #if (I2C_DRIVER_SUPPORT_CLK_SELECTION_CFG == DEF_ENABLED)
+    uint32_t Register = RCC->DCKCFGR2;
 
     switch(uint32_t(m_pInfo->I2C_ID))
     {
@@ -218,6 +206,7 @@ void I2C_Driver::Initialize(void)
 
     Register      |= m_pInfo->ClockSelection;
     RCC->DCKCFGR2  = Register;
+  #endif
 
     // ---- Module configuration ----
     RCC->APB1RSTR |=  m_pInfo->RCC_APB1_En;             // Reset I2C
@@ -225,14 +214,11 @@ void I2C_Driver::Initialize(void)
     RCC->APB1ENR  |=  m_pInfo->RCC_APB1_En;
 
     // Disable I2C and all options
-    m_pI2Cx->CR1 = 0;;
+    m_pI2Cx->CR1 = 0;
 
     // ---- GPIO configuration ----
     IO_PinInit(m_pInfo->SCL);
     IO_PinInit(m_pInfo->SDA);
-
-    // ---- CR1 Configuration ----
-    // MODIFY_REG(m_pI2Cx->CR1, (I2C_CR1_ANFOFF | I2C_CR1_DNF), (AnalogFilter | (DigitalFilter << I2C_CR1_DNF_Pos)));   // Configure the analog and digital noise filters
 
     // ---- TIMINGR Configuration ----
     m_pI2Cx->TIMINGR = m_pInfo->Timing;                                    // Configure the SDA setup, hold time, SCL high, low period, Frequency range
@@ -273,48 +259,6 @@ void I2C_Driver::Initialize(void)
 
 
 // TODO in structure concatenate all definition that work on same register to save code size..
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* replaced by timing
-    FreqRange  = (uint16_t)(SYS_APB1_CLOCK_FREQUENCY / 1000000);
-
-
-    if(m_pInfo->Speed <= 100000)                                                                    // Configure speed in standard mode
-    {
-        Result = (uint16_t)(SYS_APB1_CLOCK_FREQUENCY / (m_pInfo->Speed << 1));                      // Standard mode speed calculate
-        Result = AbsMin(Result, 4);                                                                 // Test if CCR value is under 0x04
-        Register |= Result;                                                                         // Set speed value for standard mode
-    }
-    else                                                                                            // (m_pInfo->Speed <= 400000) Configure speed in fast mode
-    {                                                                                               // To use the I2C at 400 KHz (in fast mode), the PCLK1 frequency (I2C peripheral input clock) must be a multiple of 10 MHz
-        Result = (uint16_t)(SYS_APB1_CLOCK_FREQUENCY / (m_pInfo->Speed * 3));                       // Fast mode speed calculate: Tlow/Thigh = 2
-        m_pI2Cx->TRISE = (((FreqRange * 300) / 1000) + 1);                                            // Set Maximum Rise Time for fast mode
-    }
-*/
 
     // ---- I2Cx CR1 Configuration ----
     m_pI2Cx->CR1 |= I2C_CR1_PE;                                                                       // Enable the selected I2C peripheral
@@ -438,15 +382,17 @@ SystemState_e I2C_Driver::UnlockFromDevice(uint8_t Device)
 //-------------------------------------------------------------------------------------------------
 SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const void* pTxBuffer, size_t TxSize, const void* pRxBuffer, size_t RxSize)
 {
+    uint32_t     RegisterCR1;
+    uint32_t     RegisterCR2;
     TickCount_t  TickStart;
 
     if(m_Device != -1)
 	{
 		m_pI2Cx = m_pInfo->pI2Cx;
 		m_State = SYS_BUSY;
+        m_pI2Cx->CR1 = 0;                                    // Stop I2C module
 
 		// Setup I2C transfer record
-		//m_DeviceAddress = Device;
 		m_Address       = Address;
 		m_AddressSize   = AddressSize;
 		m_pTxBuffer     = (uint8_t*)pTxBuffer;
@@ -454,12 +400,40 @@ SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const
 		m_pRxBuffer     = (uint8_t*)pRxBuffer;
 		m_RxSize        = (pRxBuffer != nullptr) ? RxSize : 0;    // If RX buffer is null, this make sure size is 0
 
-		// Enable the selected I2C interrupts
-//		m_pI2Cx->CR2 &= ~I2C_CR2_ITBUFEN;
-//		m_pI2Cx->CR2 |= (I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);
+        if((m_TxSize != 0) || (m_AddressSize != 0))
+        {
+            RegisterCR1 = I2C_CR1_PE     |
+                          I2C_CR1_TXIE   |
+                          I2C_CR1_TCIE   |
+                          I2C_CR1_STOPIE;
 
-		// Generate a START condition
-		m_pI2Cx->CR2 |= I2C_CR2_START;
+            RegisterCR2 = ((m_TxSize + m_AddressSize) << 16)  | // Size of transfer in NBYTE
+                          ((uint32_t)m_Device << 1);            // Device slave address
+
+            if(m_RxSize == 0)                                   // if we have data to receive then IRQ on reload
+            {
+                RegisterCR2 |= I2C_CR2_AUTOEND;                 // STOP condition is automatically sent when NBYTES data are transferred.
+            }
+            else
+            {
+                RegisterCR1 |= I2C_CR1_RXIE;
+            }
+
+            m_pI2Cx->CR1  = RegisterCR1;
+            m_pI2Cx->CR2  = RegisterCR2;
+        }
+        else // RX Only
+        {
+            m_pI2Cx->CR1 = I2C_CR1_PE  |
+                        I2C_CR1_RXIE   |
+                        I2C_CR1_STOPIE;
+            m_pI2Cx->CR2 = I2C_CR2_AUTOEND |
+                        I2C_CR2_RD_WRN     |
+                        (m_RxSize << 16)   |
+                        ((uint32_t)m_Device << 1);    // Device slave address
+        }
+
+        m_pI2Cx->CR2 |= I2C_CR2_START;
 
 		// Wait here until I2C transaction is completed or time out
 		TickStart = GetTick();
@@ -476,7 +450,7 @@ SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const
 				return SYS_TIME_OUT;
 			}
 		}
-		while(m_State == SYS_BUSY);
+		while(((m_pI2Cx->ISR & I2C_ISR_TC) == false) && (m_State == SYS_BUSY));
 
 		return SYS_READY;
 	}
@@ -935,201 +909,3 @@ void I2C_Driver::ER_IRQHandler()
 //-------------------------------------------------------------------------------------------------
 
 #endif // (USE_I2C_DRIVER == DEF_ENABLED)
-
-
-
-
-
-
-
-#if 0
-
-//  I2C Master complete process.
-//  ITFlags Interrupt flags to handle.
-// None
-//
-void I2C_Driver::InterruptMasterComplete(uint32_t State)
-{
-    // Clear STOP Flag
-    //__HAL_I2C_CLEAR_FLAG(I2C_FLAG_STOPF);
-
-    // Clear Configuration Register 2
-    //I2C_RESET_CR2();
-/*
-    // Reset handle parameters
-    PreviousState = I2C_STATE_NONE;
-    XferISR       = NULL;
-    XferOptions   = I2C_NO_OPTION_FRAME;
-
-    if((ITFlags & I2C_FLAG_AF) != 0)
-    {
-        // Clear NACK Flag
-        //__HAL_I2C_CLEAR_FLAG(I2C_FLAG_AF);
-
-        // Set acknowledge error code
-        m_State = SYS_ACKNOWLEDGE_ERROR;
-    }
-
-    // Flush TX register
-         // Clear NACK Flag
-        //__HAL_I2C_CLEAR_FLAG(I2C_FLAG_AF);
-        m_State = SYS_ACKNOWLEDGE_ERROR;
-
-        // Flush TX
-        m_TxSize    = 0;
-        m_pI2Cx->TXDR = 0;        // Write a dummy data in TXDR to clear TXIS
-        // Flush TX register if not empty
-        //if(__HAL_I2C_GET_FLAG(I2C_FLAG_TXE) == RESET)
-        //{
-        //    __HAL_I2C_CLEAR_FLAG(I2C_FLAG_TXE); ???
-        //}
-
-
-        // Disable Interrupts
-        I2C_Disable_IRQ(I2C_XFER_TX_IT | I2C_XFER_RX_IT);
-
-        // Call the corresponding callback to inform upper layer of End of Transfer
-        if ((ErrorCode != HAL_I2C_ERROR_NONE) || (State == HAL_I2C_STATE_ABORT))
-
-            // Call the corresponding callback to inform upper layer of End of Transfer
-            I2C_ITError(ErrorCode);
-        }
-        // State == HAL_I2C_STATE_BUSY_TX
-        else if (State == HAL_I2C_STATE_BUSY_TX)
-        {
-            State = HAL_I2C_STATE_READY;
-
-            if (Mode == HAL_I2C_MODE_MEM)
-            {
-            Mode = HAL_I2C_MODE_NONE;
-
-       // Call the corresponding callback to inform upper layer of End of Transfer
-      HAL_I2C_MemTxCpltCallback();
-    }
-    else
-    {
-      Mode = HAL_I2C_MODE_NONE;
-
-      // Call the corresponding callback to inform upper layer of End of Transfer
-      HAL_I2C_MasterTxCpltCallback();
-    }
-  }
-  // State == HAL_I2C_STATE_BUSY_RX/
-  else if (State == HAL_I2C_STATE_BUSY_RX)
-  {
-    State = HAL_I2C_STATE_READY;
-
-    if (Mode == HAL_I2C_MODE_MEM)
-    {
-      Mode = HAL_I2C_MODE_NONE;
-
-       HAL_I2C_MemRxCpltCallback();
-    }
-    else
-    {
-      Mode = HAL_I2C_MODE_NONE;
-
-       HAL_I2C_MasterRxCpltCallback();
-    }
-  }
-  */
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-
-  else if (((ITFlags & I2C_FLAG_TCR) != 0) && ((ITSources & I2C_IT_TCI) != 0))
-  {
-    if ((XferSize == 0) && (XferCount != 0))
-    {
-      DeviceAddress = (CR2 & I2C_CR2_SADD);
-
-      if (XferCount > MAX_NBYTE_SIZE)
-      {
-        XferSize = MAX_NBYTE_SIZE;
-        I2C_TransferConfig(DeviceAddress, XferSize, I2C_RELOAD_MODE, I2C_NO_STARTSTOP);
-      }
-      else
-      {
-        XferSize = XferCount;
-        if (XferOptions != I2C_NO_OPTION_FRAME)
-        {
-          I2C_TransferConfig(DeviceAddress, XferSize, XferOptions, I2C_NO_STARTSTOP);
-        }
-        else
-        {
-          I2C_TransferConfig(DeviceAddress, XferSize, I2C_AUTOEND_MODE, I2C_NO_STARTSTOP);
-        }
-      }
-    }
-    else
-    {
-      // Call TxCpltCallback() if no stop mode is set
-      if (I2C_GET_STOP_MODE() != I2C_AUTOEND_MODE)
-      {
-        // Call I2C Master Sequential complete process
-        I2C_ITMasterSequentialCplt();
-      }
-      else
-      {
-        //Wrong size Status regarding TCR flag event
-        // Call the corresponding callback to inform upper layer of End of Transfer
-        I2C_ITError(HAL_I2C_ERROR_SIZE);
-      }
-    }
-  }
-  else if (((ITFlags & I2C_FLAG_TC) != 0) && ((ITSources & I2C_IT_TCI) != 0))
-  {
-    if (XferCount == 0)
-    {
-      if (I2C_GET_STOP_MODE() != I2C_AUTOEND_MODE)
-      {// Generate a stop condition in case of no transfer option
-        if (XferOptions == I2C_NO_OPTION_FRAME)
-        {
-          // Generate Stop
-          CR2 |= I2C_CR2_STOP;
-        }
-        else
-        {
-          // Call I2C Master Sequential complete process
-          I2C_ITMasterSequentialCplt();
-        }
-      }
-    }
-    else
-    {
-      // Wrong size Status regarding TC flag event
-      // Call the corresponding callback to inform upper layer of End of Transfer
-      I2C_ITError(HAL_I2C_ERROR_SIZE);
-    }
-  }
-  return SYS_READY;
-*/
-
-
-#endif

@@ -27,17 +27,12 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
+
+#include "ff.h"
+#include "diskio.h"
+
 
 #ifdef __cplusplus
-
-//-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-//#include "lib_digini.h"
-//#include "diskio_interface.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -51,8 +46,8 @@ class FatFS_SDIO : public DiskIO_DeviceInterface
 {
     public:
 
-                        FatFS_SDIO          ();
-                       ~FatFS_SDIO          (){}
+                        FatFS_SDIO          (void* pArg);
+                       ~FatFS_SDIO          (){};
 
         DSTATUS         Initialize          (void);
         DSTATUS         Status              (void);
@@ -65,6 +60,9 @@ class FatFS_SDIO : public DiskIO_DeviceInterface
       #endif
 
         void            Configure           (SDIO_Driver* pDriver);     //uint8_t* pBuffer, size_t Size);
+
+
+        FRESULT         GetDriveSize        (char* pDriveName, FatFS_Size_t* SizeStruct);
 
     private:
 

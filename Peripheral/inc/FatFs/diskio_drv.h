@@ -30,6 +30,8 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+#if 0
+
 #include "lib_define.h"
 #include "digini_cfg.h"
 #include "diskio_drv_cfg.h"                     // This will add any custom driver
@@ -56,5 +58,6 @@
 #include "lib_class_fatfs_usb.h"
 #endif
 
+#endif
 //-------------------------------------------------------------------------------------------------
 

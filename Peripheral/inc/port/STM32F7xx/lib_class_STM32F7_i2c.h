@@ -118,7 +118,9 @@ struct I2C_Info_t
     I2C_TypeDef*        pI2Cx;
     IO_ID_e             SCL;
     IO_ID_e             SDA;
+  #if (I2C_DRIVER_SUPPORT_CLK_SELECTION_CFG == DEF_ENABLED)
     uint32_t            ClockSelection;
+  #endif
     uint32_t            RCC_APB1_En;
     uint32_t            Timing;              // I2C_TIMINGR_register value. use STM32Cube to calculate this value or refer to I2C initialization section in Reference manual.
   #if (I2C_DRIVER_SUPPORT_ADVANCED_MODE_CFG == DEF_ENABLED)

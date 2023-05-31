@@ -30,11 +30,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//#include "diskio.h"
 #if (USE_USB_DRIVER == DEF_ENABLED)
 
 #include "lib_class_usbh.h"
-#include "diskio_interface.h"
+//#include "diskio_interface.h"
 
 //-------------------------------------------------------------------------------------------------
 

@@ -72,7 +72,7 @@ FIFO_Buffer::~FIFO_Buffer()
 {
     if(m_pBuffer != nullptr)
     {
-        pMemoryPool->Free(&m_pBuffer);
+        pMemoryPool->Free((void**)&m_pBuffer);
     }
 }
 

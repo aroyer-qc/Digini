@@ -69,9 +69,11 @@
                                                          SDMMC_FLAG_CMDREND  | SDMMC_FLAG_CMDSENT  | SDMMC_FLAG_DATAEND  | \
                                                          SDMMC_FLAG_DBCKEND); }
 
-//#define CLKCR_CLEAR_MASK                ((uint32_t)(SDMMC_CLKCR_CLKDIV  | SDMMC_CLKCR_PWRSAV |\
-                                                    SDMMC_CLKCR_BYPASS  | SDMMC_CLKCR_WIDBUS |\
-                                                    SDMMC_CLKCR_NEGEDGE | SDMMC_CLKCR_HWFC_EN))
+
+#define ClearClockRegister()            { SDMMC1->CLKCR = ~((uint32_t)(SDMMC_CLKCR_CLKDIV  | SDMMC_CLKCR_PWRSAV |\
+                                                                       SDMMC_CLKCR_BYPASS  | SDMMC_CLKCR_WIDBUS |\
+                                                                       SDMMC_CLKCR_NEGEDGE | SDMMC_CLKCR_HWFC_EN)); }
+
 
 
 //#define DMA_CHANNEL_4                   ((uint32_t)0x08000000)                // already define
@@ -108,7 +110,7 @@ SystemState_e SDIO_Driver::SelectTheCard(void)
     SystemState_e State;
 
     State = TransmitCommand((CMD7 | SD_SHORT_RESPONSE), m_RCA, 1);      // Select the Card
-    SDMMC1->CLKCR &= ~(uint32_t)CLKCR_CLEAR_MASK;
+    ClearClockRegister();
 
     return State;
 }
@@ -116,6 +118,11 @@ SystemState_e SDIO_Driver::SelectTheCard(void)
 uint8_t SDIO_Driver::GetCardCapacity(void)
 {
     return uint8_t(m_CardCapacity / BLOCK_SIZE);
+}
+
+SDIO_Driver::SDIO_Driver()
+{
+    m_IsItInitialize = false;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -133,80 +140,85 @@ void SDIO_Driver::Initialize(void)
 {
     uint32_t PriorityGroup;
 
-    nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
-
-    // Reset SDIO Module
-    RCC->APB2RSTR |=  RCC_APB2RSTR_SDMMC1RST;
-    RCC->APB2RSTR &= ~RCC_APB2RSTR_SDMMC1RST;
-
-    // Enable SDIO clock
-    RCC->APB2ENR |= RCC_APB2ENR_SDMMC1EN;
-
-    // Enable DMA2 clocks
-    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-
-
-    /// ---- GPIOs Configuration ----
-    for(uint32_t IO_Id = uint32_t(IO_SD_D0); IO_Id <= uint32_t(IO_SD_CMD); IO_Id++)
+    if(m_IsItInitialize == false)
     {
-        IO_PinInit(IO_ID_e(IO_Id));
+        nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
+
+        // Reset SDIO Module
+        RCC->APB2RSTR |=  RCC_APB2RSTR_SDMMC1RST;
+        RCC->APB2RSTR &= ~RCC_APB2RSTR_SDMMC1RST;
+
+        // Enable SDIO clock
+        RCC->APB2ENR |= RCC_APB2ENR_SDMMC1EN;
+
+        // Enable DMA2 clocks
+        RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+
+
+        /// ---- GPIOs Configuration ----
+        for(uint32_t IO_Id = uint32_t(IO_SD_D0); IO_Id <= uint32_t(IO_SD_CMD); IO_Id++)
+        {
+            IO_PinInit(IO_ID_e(IO_Id));
+        }
+
+      #if SD_CARD_USE_DETECT_SIGNAL == 1
+        IO_PinInit(IO_DETECT_SD_CARD);
+      #endif
+
+      #if SD_CARD_USE_POWER_CONTROL == 1
+        IO_OutputInit(IO_POWER_SD_CARD);
+      #endif
+
+
+        // Initialize DMA2 channel 3 for RX from SD CARD
+        DMA2_Stream3->CR   = 0;                                                 // Reset DMA Stream control register
+        DMA2_Stream3->PAR  = (uint32_t)&SDMMC1->FIFO;
+        DMA2->LIFCR        = IFCR_CLEAR_MASK_STREAM3;                           // Clear all interrupt flags
+        DMA2_Stream3->CR   = (DMA_CHANNEL_4         | DMA_SxCR_PFCTRL        |  // Prepare the DMA Stream configuration
+                              DMA_MEMORY_INCREMENT  | DMA_P_DATA_ALIGN_WORD  |  // And write to DMA Stream CR register
+                              DMA_M_DATA_ALIGN_WORD | DMA_PRIORITY_VERY_HIGH |
+                              DMA_M_BURST_INC4      | DMA_P_BURST_INC4);
+
+        DMA2_Stream3->FCR  = (DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                 // Configuration FIFO control register
+
+        // Initialize DMA2 channel 6 for TX to SD CARD
+        DMA2_Stream6->CR   = 0;                                                 // Reset DMA Stream control register
+        DMA2_Stream6->PAR  = (uint32_t)&SDMMC1->FIFO;
+        DMA2->HIFCR        = IFCR_CLEAR_MASK_STREAM6;                           // Clear all interrupt flags
+        DMA2_Stream6->CR   = (DMA_CHANNEL_4         | DMA_SxCR_PFCTRL        |  // Prepare the DMA Stream configuration
+                              DMA_MEMORY_INCREMENT  | DMA_P_DATA_ALIGN_WORD  |  // And write to DMA Stream CR register
+                              DMA_M_DATA_ALIGN_WORD | DMA_PRIORITY_VERY_HIGH |
+                              DMA_M_BURST_INC4      | DMA_P_BURST_INC4       |
+                              DMA_MEMORY_TO_PERIPH);
+        DMA2_Stream6->FCR  = (DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                 // Configuration FIFO control register
+
+        m_CardStatus       = STA_NOINIT;
+        m_TransferError    = SYS_READY;
+        m_DMA_XferComplete = false;
+        m_TransferComplete = false;
+
+        //m_SendStopTransfer = false;
+        // m_TickPeriod   = SD_CARD_TICK_PERIOD;
+
+        PriorityGroup = NVIC_GetPriorityGrouping();
+
+        // NVIC configuration for SDIO interrupts
+        NVIC_SetPriority(SDMMC1_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
+        NVIC_EnableIRQ(SDMMC1_IRQn);
+
+        // NVIC configuration for DMA transfer complete interrupt
+        NVIC_SetPriority(DMA2_Stream3_IRQn, NVIC_EncodePriority(PriorityGroup, 6, 0));
+        NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+
+        NVIC_SetPriority(DMA2_Stream6_IRQn, NVIC_EncodePriority(PriorityGroup, 6, 0));
+        NVIC_EnableIRQ(DMA2_Stream6_IRQn);
+
+            // Initialize SDMMC peripheral interface with default configuration for SD card initialization
+        ClearClockRegister();
+        SDMMC1->CLKCR |=  (uint32_t)SDMMC_INIT_CLK_DIV;
+
+        m_IsItInitialize = true;
     }
-
-  #if SD_CARD_USE_DETECT_SIGNAL == 1
-    IO_PinInit(IO_DETECT_SD_CARD);
-  #endif
-
-  #if SD_CARD_USE_POWER_CONTROL == 1
-    IO_OutputInit(IO_POWER_SD_CARD);
-  #endif
-
-
-    // Initialize DMA2 channel 3 for RX from SD CARD
-    DMA2_Stream3->CR   = 0;                                                 // Reset DMA Stream control register
-    DMA2_Stream3->PAR  = (uint32_t)&SDMMC1->FIFO;
-    DMA2->LIFCR        = IFCR_CLEAR_MASK_STREAM3;                           // Clear all interrupt flags
-    DMA2_Stream3->CR   = (DMA_CHANNEL_4         | DMA_SxCR_PFCTRL        |  // Prepare the DMA Stream configuration
-                          DMA_MEMORY_INCREMENT  | DMA_P_DATA_ALIGN_WORD  |  // And write to DMA Stream CR register
-                          DMA_M_DATA_ALIGN_WORD | DMA_PRIORITY_VERY_HIGH |
-                          DMA_M_BURST_INC4      | DMA_P_BURST_INC4);
-
-    DMA2_Stream3->FCR  = (DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                 // Configuration FIFO control register
-
-    // Initialize DMA2 channel 6 for TX to SD CARD
-    DMA2_Stream6->CR   = 0;                                                 // Reset DMA Stream control register
-    DMA2_Stream6->PAR  = (uint32_t)&SDMMC1->FIFO;
-    DMA2->HIFCR        = IFCR_CLEAR_MASK_STREAM6;                           // Clear all interrupt flags
-    DMA2_Stream6->CR   = (DMA_CHANNEL_4         | DMA_SxCR_PFCTRL        |  // Prepare the DMA Stream configuration
-                          DMA_MEMORY_INCREMENT  | DMA_P_DATA_ALIGN_WORD  |  // And write to DMA Stream CR register
-                          DMA_M_DATA_ALIGN_WORD | DMA_PRIORITY_VERY_HIGH |
-                          DMA_M_BURST_INC4      | DMA_P_BURST_INC4       |
-                          DMA_MEMORY_TO_PERIPH);
-    DMA2_Stream6->FCR  = (DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                 // Configuration FIFO control register
-
-    m_CardStatus       = STA_NOINIT;
-    m_TransferError    = SYS_READY;
-    m_DMA_XferComplete = false;
-    m_TransferComplete = false;
-
-    //m_SendStopTransfer = false;
-    // m_TickPeriod   = SD_CARD_TICK_PERIOD;
-
-    PriorityGroup = NVIC_GetPriorityGrouping();
-
-    // NVIC configuration for SDIO interrupts
-    NVIC_SetPriority(SDMMC1_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
-    NVIC_EnableIRQ(SDMMC1_IRQn);
-
-    // NVIC configuration for DMA transfer complete interrupt
-    NVIC_SetPriority(DMA2_Stream3_IRQn, NVIC_EncodePriority(PriorityGroup, 6, 0));
-    NVIC_EnableIRQ(DMA2_Stream3_IRQn);
-
-    NVIC_SetPriority(DMA2_Stream6_IRQn, NVIC_EncodePriority(PriorityGroup, 6, 0));
-    NVIC_EnableIRQ(DMA2_Stream6_IRQn);
-
-        // Initialize SDMMC peripheral interface with default configuration for SD card initialization
-    SDMMC1->CLKCR &= ~(uint32_t)CLKCR_CLEAR_MASK;
-    SDMMC1->CLKCR |=  (uint32_t)SDMMC_INIT_CLK_DIV;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -246,36 +258,6 @@ SystemState_e SDIO_Driver::GetStatus(void)
     }
 
     return State;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: FATFS_GetDriveSize
-//
-//   Parameter(s):  char*           pDriveName
-//   Return value:  FATFS_Size_t*   SizeStruct
-//   Return value:  FRESULT
-//
-//   Description:   Get response from SD device
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-FRESULT SDIO_Driver::FatFS_GetDriveSize(char* pDriveName, FatFS_Size_t* SizeStruct)
-{
-    FATFS*  pFS;
-    DWORD   FreeCluster;
-    FRESULT Result;
-
-    // Get volume information and free clusters of drive
-    if((Result = f_getfree(pDriveName, &FreeCluster, &pFS)) == FR_OK)
-    {
-        // Get total sectors and free sectors
-        SizeStruct->Total = (pFS->n_fatent - 2) * pFS->csize * 0.5;
-        SizeStruct->Free = FreeCluster * pFS->csize * 0.5;
-    }
-
-    return Result;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -391,7 +373,7 @@ SystemState_e SDIO_Driver::SetBusWidth(uint32_t WideMode)
         if(State == SYS_READY)
         {
             // Configure the SDMMC peripheral
-            SDMMC1->CLKCR &= ~(uint32_t)CLKCR_CLEAR_MASK;
+            ClearClockRegister();
             SDMMC1->CLKCR |=  (uint32_t)WideMode;
         }
     }
@@ -884,6 +866,8 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
 
     State = SYS_READY;
 
+// TODO change this as most of the data is not used... instead ask user to provide pointer on data structure to fill-up as necessary and keep only relevant information
+
     // Byte 0
     Temp = (m_CardCSD[0] & 0xFF000000) >> 24;
     m_CSD.CSDStruct      = (uint8_t)((Temp & 0xC0) >> 6);
@@ -1188,9 +1172,6 @@ SystemState_e SDIO_Driver::WriteBlocks(uint64_t WriteAddress, uint32_t BlockSize
         BlockSize    = 512;
         WriteAddress /= 512;
     }
-
-    // i think block size is missing
-
 
     // Check number of blocks command
     // Send CMD24 WRITE_SINGLE_BLOCK

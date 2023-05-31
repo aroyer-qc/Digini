@@ -2,10 +2,9 @@
 //
 //  File : lib_class_STM32F7_sdio.h
 //
-// SDIO is not up to date to digini standard as of 24 april 2023
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -26,13 +25,6 @@
 //-------------------------------------------------------------------------------------------------
 
 #pragma once
-
-//-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "ff.h"
-#include "diskio.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -151,14 +143,12 @@ struct SD_CardIO_t
 };
 #endif
 
-
 // FATFS size structure
 struct FatFS_Size_t
 {
     uint32_t Total; // Total size of memory
     uint32_t Free;  // Free size of memory
 };
-
 
 struct SD_CSD_t
 {
@@ -200,7 +190,6 @@ struct SD_CSD_t
     uint8_t  CSD_CRC;                   // CSD CRC
     uint8_t  Reserved4;                 // Always 1
 };
-
 
 struct SD_CID_t
 {
@@ -279,24 +268,28 @@ enum SD_Operation_e
 class SDIO_Driver
 {
     public:
-                            SDIO_Driver                ();
-
+                            SDIO_Driver             ();
 
         void                Initialize              (void);
+
+        SystemState_e       CheckOperation          (uint32_t Flag);
         SystemState_e       GetCardInfo             (void);
         uint8_t             GetCardCapacity         (void);
-
+        SystemState_e       GetStatus               (void);
         SystemState_e       InitializeCard          (void);
+        SystemState_e       IsDetected              (void);
         void                PowerOFF                (void);
         SystemState_e       PowerON                 (void);
-        SystemState_e       SetBusWidth             (uint32_t BusSize);
-        SystemState_e       TransmitCommand         (uint8_t Command, uint32_t Argument, int32_t Response);
         SystemState_e       SelectTheCard           (void);
+        SystemState_e       SetBusWidth             (uint32_t BusSize);
+        void                StartBlockTransfert     (DMA_Stream_TypeDef* pDMA, uint32_t* pBuffer, uint32_t BlockSize, uint32_t NumberOfBlocks);
+        SystemState_e       TransmitCommand         (uint8_t Command, uint32_t Argument, int32_t Response);
 
-        DRESULT             Read                    (uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks);
+        SystemState_e       ReadBlocks              (uint64_t ReadAddress, uint32_t BlockSize, uint32_t NumberOfBlocks);
+        SystemState_e       WriteBlocks             (uint64_t WriteAddress, uint32_t BlockSize, uint32_t NumberOfBlocks);
+
+        //DRESULT             Read                    (uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks);
         void                TickHook                (void);
-
-        FRESULT             FatFS_GetDriveSize      (char* pDriveName, FatFS_Size_t* SizeStruct);
 
         // IRQ Handler
         void                SDMMC1_IRQHandler       (void);
@@ -311,19 +304,13 @@ class SDIO_Driver
 
         SystemState_e       FindSCR                 (uint32_t* SCR);
 
-        SystemState_e       GetStatus               (void);
 
         void                DataInit                (uint32_t Size, uint32_t DataBlockSize, bool IsItReadFromCard);
         SystemState_e       CmdResponse             (uint8_t Command, int32_t ResponseType);
         SystemState_e       GetResponse             (uint32_t* pResponse);
         SystemState_e       CheckOCR_Response       (uint32_t Response_R1);
 
-        void                StartBlockTransfert     (DMA_Stream_TypeDef* pDMA, uint32_t* pBuffer, uint32_t BlockSize, uint32_t NumberOfBlocks);
-        SystemState_e       ReadBlocks              (uint64_t ReadAddress, uint32_t BlockSize, uint32_t NumberOfBlocks);
-        SystemState_e       WriteBlocks             (uint64_t WriteAddress, uint32_t BlockSize, uint32_t NumberOfBlocks);
-        SystemState_e       CheckOperation          (uint32_t Flag);
 
-        SystemState_e       IsDetected              (void);
         void                DMA_Complete            (DMA_Stream_TypeDef* pDMA_Stream);
 
        #if SD_CARD_USE_POWER_CONTROL == 1
@@ -334,6 +321,8 @@ class SDIO_Driver
 
         void                Lock                    (void);
         void                Unlock                  (void);
+
+        bool                    m_IsItInitialize;
 
         nOS_Mutex               m_Mutex;
         uint8_t                 m_LastCommand;
@@ -365,10 +354,12 @@ class SDIO_Driver
 };
 
 //-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
-//-------------------------------------------------------------------------------------------------
 
-extern class SDIO_Driver* pSDIO;
+#ifdef SDIO_DRIVER_GLOBAL
+  class SDIO_Driver                 mySDIO;
+#else
+  extern class SDIO_Driver          mySDIO;
+#endif
 
 //-------------------------------------------------------------------------------------------------
 

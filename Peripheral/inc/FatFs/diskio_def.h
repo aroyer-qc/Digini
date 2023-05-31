@@ -45,8 +45,6 @@
 #define GET_BLOCK_SIZE                  3       // Mandatory for only f_mkfs()
 #define CTRL_ERASE_SECTOR               4        // Force erased a block of sectors (for only _USE_ERASE)
 
-#define DSTATUS SystemState_e
-
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
@@ -68,6 +66,8 @@ typedef enum
     RES_NOTRDY,             // 3: Not Ready
     RES_PARERR              // 4: Invalid Parameter
 } DRESULT;
+
+typedef SystemState_e DSTATUS;
 
 #ifdef __cplusplus
 }

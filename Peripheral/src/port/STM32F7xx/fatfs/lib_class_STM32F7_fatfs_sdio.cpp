@@ -65,6 +65,8 @@ FatFS_SDIO::FatFS_SDIO(void* pArg)
 DSTATUS FatFS_SDIO::Initialize(void)
 {
     SystemState_e  State;
+    SD_CSD_t*      pCSD;
+    SD_CID_t*      pCID;
 
     m_pSDIO_Driver->Initialize();
 
@@ -76,20 +78,26 @@ DSTATUS FatFS_SDIO::Initialize(void)
         return STA_NOINIT;
     }
 
-    if((State = m_pSDIO_Driver->PowerON()) == SYS_READY)                // Identify card operating voltage
+    if((State = m_pSDIO_Driver->PowerON()) == SYS_READY)                                // Identify card operating voltage
     {
-        if((State = m_pSDIO_Driver->InitializeCard()) == SYS_READY)     // Initialize the present card and put them in idle state
+        if((State = m_pSDIO_Driver->InitializeCard()) == SYS_READY)                     // Initialize the present card and put them in idle state
         {
-            if((State = m_pSDIO_Driver->GetCardInfo()) == SYS_READY)    // Read CSD/CID MSD registers
+            pCSD = pMemoryPool->Alloc(sizeof(SD_CSD_t));
+            pCID = pMemoryPool->Alloc(sizeof(SD_CID_t));
+
+            if((State = m_pSDIO_Driver->GetCardInfo(pCSD, pCID)) == SYS_READY)    // Read CSD/CID MSD registers
             {
-                State = m_pSDIO_Driver->SelectTheCard();                // Select the Card
+                State = m_pSDIO_Driver->SelectTheCard();                                // Select the Card
             }
+
+            pMemoryPool->Free(&pCSD);
+            pMemoryPool->Free(&pCID);
         }
     }
 
-    if(State == SYS_READY)                                              // Configure SD Bus width
+    if(State == SYS_READY)                                                              // Configure SD Bus width
     {
-        State = m_pSDIO_Driver->SetBusWidth(SD_BUS_WIDE_4B);            // Enable wide operation
+        State = m_pSDIO_Driver->SetBusWidth(SD_BUS_WIDE_4B);                            // Enable wide operation
     }
 
     m_Status = (State == SYS_READY) ? SYS_READY : STA_NOINIT;
@@ -226,7 +234,6 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
         // Get number of sectors on the disk (uint32_t)
         case GET_SECTOR_COUNT:
         {
-            m_pSDIO_Driver->GetCardInfo();
             *(DWORD *)pBuffer = m_pSDIO_Driver->GetCardCapacity();
             Result = RES_OK;
             break;

@@ -273,7 +273,7 @@ class SDIO_Driver
         void                Initialize              (void);
 
         SystemState_e       CheckOperation          (uint32_t Flag);
-        SystemState_e       GetCardInfo             (void);
+        SystemState_e       GetCardInfo             (SD_CSD_t* pCSD, SD_CID_t* pCID);
         uint8_t             GetCardCapacity         (void);
         SystemState_e       GetStatus               (void);
         SystemState_e       InitializeCard          (void);
@@ -339,9 +339,9 @@ class SDIO_Driver
         uint8_t                 m_TickPeriod;
         uint32_t                m_OCR;
         uint32_t                m_CardCID[4];
-        SD_CID_t                m_CID;
+        //SD_CID_t                m_CID;
         uint32_t                m_CardCSD[4];
-        SD_CSD_t                m_CSD;
+        // SD_CSD_t                m_CSD;
         uint32_t                m_RCA;
         uint8_t                 m_Status[16];
         SD_CardType_e           m_CardType;

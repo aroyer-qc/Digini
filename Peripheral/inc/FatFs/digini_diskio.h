@@ -57,13 +57,12 @@
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
 
-// Patch..
-//typedef unsigned int	UINT;	/* int must be 16-bit or 32-bit */
-//typedef uint32_t		DWORD;	/* 32-bit unsigned integer */
-
 typedef enum
 {
     FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_ENUM)
+  #ifdef FAT_FS_CUSTOM_DRIVE_DEF 
+    FAT_FS_CUSTOM_DRIVE_DEF(EXPAND_X_DRIVE_AS_ENUM)
+  #endif  
     NUMBER_OF_DISK,
   //  FF_VOLUMES = NUMBER_OF_DISK,
 } DiskMedia_e;
@@ -124,15 +123,21 @@ class DiskIO    // Singleton
 #endif
 
 #ifdef __cplusplus
- #if (DIGINI_USE_FATFS == DEF_ENABLED)
-  #ifdef  DISKIO_GLOBAL
-   class DiskIO&     FatFS_DiskIO = DiskIO::GetInstance();
-   // Create all FatFS_... object
-   FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_OBJ_CREATION)
-  #else
-   FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_OBJ_DECLARATION)
+  #if (DIGINI_USE_FATFS == DEF_ENABLED)
+    #ifdef  DISKIO_GLOBAL
+      class DiskIO&     FatFS_DiskIO = DiskIO::GetInstance();
+      // Create all FatFS_... object
+      FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_OBJ_CREATION)
+     #ifdef FAT_FS_CUSTOM_DRIVE_DEF 
+      FAT_FS_CUSTOM_DRIVE_DEF(EXPAND_X_DRIVE_AS_OBJ_CREATION)
+     #endif  
+    #else
+      FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_OBJ_DECLARATION)
+     #ifdef FAT_FS_CUSTOM_DRIVE_DEF 
+      FAT_FS_CUSTOM_DRIVE_DEF(EXPAND_X_DRIVE_AS_OBJ_DECLARATION)
+     #endif  
+    #endif
   #endif
- #endif
 #endif
 
 //-------------------------------------------------------------------------------------------------

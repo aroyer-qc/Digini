@@ -100,7 +100,7 @@ void AccessTimeFormat(AccessRequest_e AccessRequest, const void* pData, uint16_t
 //
 //   Description:   Request time
 //
-//   Note(s):       GetLabel() does not use Number and SubNumber
+//   Note(s):       GetLabel() does not use SubNumber
 //
 //-------------------------------------------------------------------------------------------------
 void GetLabel(AccessRequest_e AccessRequest, const void* pData, uint16_t Number, uint16_t SubNumber)
@@ -111,7 +111,7 @@ void GetLabel(AccessRequest_e AccessRequest, const void* pData, uint16_t Number,
     {
         if(Number < NB_LABEL_CONST)
         {
-            pData = myLabel.GetPointer(Label_e(Number));
+            *(char*)pData = myLabel.GetPointer(Label_e(Number));
         }
     }
 }

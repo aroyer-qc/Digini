@@ -66,15 +66,11 @@ class FatFS_SDIO : public DiskIO_DeviceInterface
 
     private:
 
-        //DRESULT         CheckError          (uint32_t Sector, uint16_t NumberOfSectors);
-
-        SDIO_Driver*    m_pSDIO_Driver;
+       SDIO_Driver*    m_pSDIO_Driver;
 
         bool            m_IsItInitialize;
         DSTATUS         m_Status;
-        //uint8_t*        m_pBuffer;
-        //size_t          m_Size;                       // size of the disk, is a multiple of 512
-};
+ };
 
 //-------------------------------------------------------------------------------------------------
 

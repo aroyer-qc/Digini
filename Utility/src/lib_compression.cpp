@@ -214,11 +214,6 @@ size_t DeCompression::RLE_8_Method(void)
     uint8_t ReadValue;
     uint32_t DataOffset = 0;
 
-if(m_DataSize == 334)
-{
-    __asm("nop");
-}
-
     m_DataSize >>= 1;
 
     while(m_DataSize > 0)

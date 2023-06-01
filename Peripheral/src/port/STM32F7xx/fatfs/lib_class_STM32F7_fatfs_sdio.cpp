@@ -65,8 +65,6 @@ FatFS_SDIO::FatFS_SDIO(void* pArg)
 DSTATUS FatFS_SDIO::Initialize(void)
 {
     SystemState_e  State;
-    SD_CSD_t*      pCSD;
-    SD_CID_t*      pCID;
 
     m_pSDIO_Driver->Initialize();
 
@@ -82,16 +80,10 @@ DSTATUS FatFS_SDIO::Initialize(void)
     {
         if((State = m_pSDIO_Driver->InitializeCard()) == SYS_READY)                     // Initialize the present card and put them in idle state
         {
-            pCSD = pMemoryPool->Alloc(sizeof(SD_CSD_t));
-            pCID = pMemoryPool->Alloc(sizeof(SD_CID_t));
-
-            if((State = m_pSDIO_Driver->GetCardInfo(pCSD, pCID)) == SYS_READY)    // Read CSD/CID MSD registers
+            if((State = m_pSDIO_Driver->GetCardInfo()) == SYS_READY)    // Read CSD/CID MSD registers
             {
                 State = m_pSDIO_Driver->SelectTheCard();                                // Select the Card
             }
-
-            pMemoryPool->Free(&pCSD);
-            pMemoryPool->Free(&pCID);
         }
     }
 

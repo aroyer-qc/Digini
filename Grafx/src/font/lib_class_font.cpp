@@ -104,7 +104,7 @@ void FONT_Initialize(void)
     uint8_t                         Value;
     uint8_t                         BitCount;
     uint8_t                         BitValue;
-    uint8_t*                        pMemoryPool;
+    uint8_t*                        pMemory;
     const StaticFontDescriptor_t*   pDscFont;
     FontDescriptor_t                FontDescriptor;
     FontInfo_t                      FontInfo;
@@ -128,9 +128,9 @@ void FONT_Initialize(void)
 
         for(Character = 32; Character < 128; Character++)
         {
-            DB_Central.Get(&pMemoryPool, GFX_FREE_RAM_POINTER, 0, 0);
+            DB_Central.Get(&pMemory, GFX_FREE_RAM_POINTER, 0, 0);
             pDscFont                        = &StaticFontDescriptor[Font][Character - 32];
-            FontDescriptor.pAddress         = pMemoryPool;                                                          // Set address in memory
+            FontDescriptor.pAddress         = pMemory;                                                          // Set address in memory
             FontDescriptor.Size.Width       = pDscFont->Size >> 4;
             FontDescriptor.Size.Height      = pDscFont->Size & 0x0F;
             FontDescriptor.LeftBearing      = pDscFont->Offset >> 4;
@@ -154,7 +154,7 @@ void FONT_Initialize(void)
           #ifdef LCD_INVERT_SCREEN
             if(Font.Size > 0)
             {
-                pMemoryPool += (Font.Size - 1);
+                pMemory += (Font.Size - 1);
             }
           #endif
 
@@ -178,12 +178,12 @@ void FONT_Initialize(void)
 
                         while(BitCount--)
                         {
-                            *pMemoryPool = (BitValue != 0) ? 0xFF : 0x00;
+                            *pMemory = (BitValue != 0) ? 0xFF : 0x00;
                             SizeCount++;
                           #ifdef LCD_INVERT_SCREEN
-                            pMemoryPool--;
+                            pMemory--;
                           #else
-                            pMemoryPool++;
+                            pMemory++;
                           #endif
                         }
                     }
@@ -196,13 +196,13 @@ void FONT_Initialize(void)
 
                         while(BitCount--)
                         {
-                            if(BitValue)  *pMemoryPool = 0xFF;
-                            else          *pMemoryPool = 0x00;
+                            if(BitValue)  *pMemory = 0xFF;
+                            else          *pMemory = 0x00;
                             SizeCount++;
                             #ifdef LCD_INVERT_SCREEN
-                                pMemoryPool--;
+                                pMemory--;
                             #else
-                                pMemoryPool++;
+                                pMemory++;
                             #endif
                         }
                     }

@@ -224,9 +224,9 @@ uint16_t SKIN_myClassTask::PercentLoader(void)
 //-------------------------------------------------------------------------------------------------
 void SKIN_myClassTask::Run(void)
 {
-  //#ifdef GRAFX_USE_LOAD_SKIN
+  #if defined(GRAFX_USE_LOAD_SKIN) || defined(STATIC_SKIN_DEF)
     uint8_t*  pFreePointer;
-  //#endif
+  #endif
 
 
     for(;;)
@@ -244,10 +244,10 @@ void SKIN_myClassTask::Run(void)
             m_pDecompress          = new DeCompression(&m_CompxWorkMem);
 
             // If we have to reload a new skin, then get the starting point of the previous skin
-            //DB_Central.Get(&pFreePointer, GFX_FREE_RELOAD_POINTER, 0, 0);
+            DB_Central.Get(&pFreePointer, GFX_FREE_RELOAD_POINTER, 0, 0);
 
             // Set the pointer to reload skin information
-            //DB_Central.Set(&pFreePointer, GFX_FREE_SDRAM_POINTER,  0, 0);
+            DB_Central.Set(&pFreePointer, GFX_FREE_RAM_POINTER,  0, 0);
           #endif
 
           #ifdef STATIC_SKIN_DEF

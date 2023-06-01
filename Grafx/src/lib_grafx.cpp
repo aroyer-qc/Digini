@@ -49,12 +49,8 @@
 // Calculate the offset for the Free memory after the layers used by GRAFX
 #ifdef LAYER_DEF
 const uint32_t GFX_LoadingAddress =
-  #ifdef GRAFX_USE_RAM_DATA
-    GFX_RAM_ADDRESS;
-  #else
     LAYER_DEF(EXPAND_X_LAYER_AS_CALC)
     GFX_BASE_ADDRESS;
-  #endif
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -128,7 +124,7 @@ SystemState_e GRAFX_PostInitialize(void)
     nOS_Error     Error;
     uint32_t      FreePointer;
 
-    DB_Central.Set(&GFX_LoadingAddress, GFX_FREE_RAM_POINTER, 0, 0);   // Record the free SDRAM pointer in database at reload ID
+    DB_Central.Set(&GFX_LoadingAddress, GFX_FREE_RAM_POINTER, 0, 0);   // Record the free RAM pointer in database at reload ID
 
     FONT_Initialize();
 

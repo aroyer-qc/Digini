@@ -128,8 +128,8 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
     if(UartID < NB_OF_REAL_UART_DRIVER)
     {
         m_UartID = UartID;
-        m_pInfo = (UART_Info_t*)&UART_Info[UartID];
-        m_pUart = m_pInfo->pUARTx;
+        m_pInfo  = (UART_Info_t*)&UART_Info[UartID];
+        m_pUart  = m_pInfo->pUARTx;
 
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
         for(uint32_t i = 0; i < (uint32_t)NB_OF_UART_DMA_DRIVER; i++)
@@ -169,7 +169,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
                        DMA_M_BURST_SINGLE                 |
                        DMA_PRIORITY_HIGH;
             SET_BIT(pDMA->CR, m_pDMA_Info->DMA_ChannelTX);
-            pDMA->PAR  = (uint32_t)&m_pUart->TDR;
+            pDMA->PAR = (uint32_t)&m_pUart->TDR;
         }
       #endif
 
@@ -179,7 +179,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
         *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - UART_BACK_OFFSET_RESET_REGISTER) &= ~m_pInfo->RCC_APBxPeriph;
         *(m_pInfo->RCC_APBxEN_Register) |= m_pInfo->RCC_APBxPeriph;
 
-        this->SetConfig(m_pInfo->Config, m_pInfo->BaudID);
+        SetConfig(m_pInfo->Config, m_pInfo->BaudID);
 
         IO_PinInit(m_pInfo->PinRX);
         IO_PinInit(m_pInfo->PinTX);
@@ -216,7 +216,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
       #endif
 
         ISR_Init(m_pInfo->IRQn_Channel, &ISR_Prio);
-        this->ClearAutomaticFlag();
+        ClearAutomaticFlag();
 
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
         m_DMA_IsItBusyTX = false;
@@ -289,8 +289,8 @@ void UART_Driver::Disable(void)
       #endif
 
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-        this->DMA_DisableRX();
-        this->DMA_DisableTX();
+        DMA_DisableRX();
+        DMA_DisableTX();
       #endif
 
         CLEAR_BIT(m_pUart->CR1, USART_CR1_UE);    // Disable the UART
@@ -318,7 +318,7 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
 
     if(m_pUart != nullptr)
     {
-        this->Disable();
+        Disable();
 
         // Retrieve Clock frequency used for USART Peripheral
       #if (UART_DRIVER_SUPPORT_UART1_CFG == DEF_ENABLED)
@@ -384,7 +384,7 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
 
         m_pUart->BRR = uint16_t((PeriphClk + (m_BaudRate[BaudRate] >> 1)) / m_BaudRate[BaudRate]);
 
-        this->Enable();
+        Enable();
     }
 }
 
@@ -412,7 +412,7 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
 
     if(m_pUart != nullptr)
     {
-        this->Disable();
+        Disable();
 
         // Parity
         MaskedConfig = UART_Config_e(uint32_t(Config) & UART_PARITY_MASK);
@@ -484,7 +484,6 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
         }
 
         // Register modification
-
         MODIFY_REG(m_pUart->CR1, (USART_CR1_M_Msk | USART_CR1_PCE_Msk | USART_CR1_PS_Msk | USART_CR1_OVER8_Msk), CR1_Register);
         MODIFY_REG(m_pUart->CR2, (USART_CR2_STOP_Msk | USART_CR2_MSBFIRST_Msk),                                  CR2_Register);
         MODIFY_REG(m_pUart->CR3, (USART_CR3_CTSE_Msk | USART_CR3_CTSIE_Msk | USART_CR3_RTSE_Msk),                CR3_Register);

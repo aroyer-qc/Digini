@@ -111,7 +111,7 @@ void GetLabel(AccessRequest_e AccessRequest, const void* pData, uint16_t Number,
     {
         if(Number < NB_LABEL_CONST)
         {
-            *(char*)pData = myLabel.GetPointer(Label_e(Number));
+            *(char**)pData = (char*)myLabel.GetPointer(Label_e(Number));
         }
     }
 }

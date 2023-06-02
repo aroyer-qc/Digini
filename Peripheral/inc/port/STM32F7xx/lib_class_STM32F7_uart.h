@@ -34,6 +34,29 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+#if (UART_DRIVER_SUPPORT_UART1_DMA_CFG  == DEF_ENABLED) || \
+    (UART_DRIVER_SUPPORT_UART2_DMA_CFG  == DEF_ENABLED) || \
+    (UART_DRIVER_SUPPORT_UART3_DMA_CFG  == DEF_ENABLED) || \
+    (UART_DRIVER_SUPPORT_UART4_DMA_CFG  == DEF_ENABLED) || \
+    (UART_DRIVER_SUPPORT_UART5_DMA_CFG  == DEF_ENABLED) || \
+    (UART_DRIVER_SUPPORT_UART6_DMA_CFG  == DEF_ENABLED) || \
+    (UART_DRIVER_SUPPORT_UART7_DMA_CFG  == DEF_ENABLED) || \
+    (UART_DRIVER_SUPPORT_UART8_DMA_CFG  == DEF_ENABLED) || \
+    (UART_DRIVER_SUPPORT_UART9_DMA_CFG  == DEF_ENABLED) || \
+    (UART_DRIVER_SUPPORT_UART10_DMA_CFG == DEF_ENABLED)
+#define UART_DRIVER_DMA_CFG                        DEF_ENABLED
+#else
+#define UART_DRIVER_DMA_CFG                        DEF_DISABLED
+#endif
+
+#if (UART_DRIVER_DMA_CFG                  == DEF_ENABLED) || \
+    (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
+#define UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG     DEF_ENABLED
+#else
+#define UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG     DEF_DISABLED
+#endif
+
+
 #define UART_ISR_RX_ERROR_MASK              0x01
 #define UART_ISR_RX_MASK                    0x02
 #define UART_ISR_RX_IDLE_MASK               0x04

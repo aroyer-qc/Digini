@@ -199,7 +199,7 @@ class I2C_Driver
 
  void InterruptMasterComplete(uint32_t State);
 
-      #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
+      #if (I2C_DRIVER_DMA_CFG == DEF_ENABLED)
 // reference
 //        void                DMA_ConfigRX                    (uint8_t* pBufferRX, size_t SizeRX);
 //        void                DMA_ConfigTX                    (uint8_t* pBufferTX, size_t SizeTX);

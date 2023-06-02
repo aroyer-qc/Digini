@@ -865,8 +865,8 @@ void UART_Driver::DMA_EnableTX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            SET_BIT(m_pUart->CR3, USART_CR3_DMAT);
             this->EnableTX_ISR(UART_ISR_TX_COMPLETED_MASK);
+            SET_BIT(m_pUart->CR3, USART_CR3_DMAT);
         }
     }
 }
@@ -1296,6 +1296,7 @@ void UART_Driver::IRQ_Handler(void)
            #endif
 
              this->ClearAutomaticFlag();
+             m_pUart->ICR = USART_ICR_IDLECF;
 
              if(m_pCallback != nullptr)
              {
@@ -1327,7 +1328,7 @@ void UART_Driver::IRQ_Handler(void)
        #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
         if((Status & USART_ISR_TC) != 0)
         {
-            WRITE_REG(m_pUart->ISR, ~(USART_ISR_TC));
+            m_pUart->ICR = USART_ICR_TCCF;
 
             if(m_pCallback != nullptr)
             {

@@ -117,7 +117,6 @@ void Console::Initialize(UART_Driver* pUartDriver)
     m_ActiveProcessLevel    = CON_NOT_CONNECTED;
 
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
-  // ??  pUartDriver->SetBaudRate((CallbackInterface*)this);
     pUartDriver->RegisterCallback((CallbackInterface*)this);
     pUartDriver->EnableCallbackType(UART_CALLBACK_EMPTY_TX, m_pRX_Transfert);
     pUartDriver->EnableCallbackType(UART_CALLBACK_EMPTY_TX);

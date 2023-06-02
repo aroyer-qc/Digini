@@ -438,7 +438,8 @@ void CommandLine::Initialize(Console* pConsole)
     m_MuteSerialLogging = true;
     m_ChildProcess      = nullptr;
 
-    pConsole->Printf(CON_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
+    pConsole->Printf(CON_SIZE_NONE, "esti de calisse");
+//    pConsole->Printf(CON_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
     Delay = GetTick();
     while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
     m_StartupTick = GetTick();

@@ -64,6 +64,8 @@ void ISR_Initialize(void)
 //-------------------------------------------------------------------------------------------------
 void ISR_Init(IRQn_Type Channel, const ISR_Prio_t* pPrio)
 {
+    // TODO Add PRIVILEDGE Stuff if support for MPU is added
+
     // Enable interrupt
     if(pPrio != nullptr)
     {

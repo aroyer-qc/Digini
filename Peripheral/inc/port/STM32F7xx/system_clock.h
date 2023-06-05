@@ -286,7 +286,21 @@
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 210000000)
 #define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_6WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 216000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_7WS
+#FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_7WS
+#endif
+
+// --------------------------------------------------------------------------------------------------------------------------------
+
+#if   (SYS_CPU_CORE_CLOCK_FREQUENCY >= 150000000)
+#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div102
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY >= 100000000)
+#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div62
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY >= 60000000)
+#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div42
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY >= 35000000)
+#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div26
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY >= 25000000)
+#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div16
 #endif
 
 // Verification

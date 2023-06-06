@@ -107,6 +107,12 @@
 #include "lib_class_dac.h"
 #endif
 
+#if (USE_ETH_DRIVER == DEF_ENABLED)
+#include "lib_ethernet_typedef.h"
+#include "lib_class_eth.h"
+#include PHY_DRIVER_INCLUDE
+#endif
+
 #if (USE_I2C_DRIVER == DEF_ENABLED)
 #include "lib_class_i2c.h"
 #endif

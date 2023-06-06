@@ -27,82 +27,64 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
+
+#if (USE_ETH_DRIVER == DEF_ENABLED)
+
 //-------------------------------------------------------------------------------------------------
-
-#include <string.h>
-#include "nOS.h"
-#include "ethif_config.h"
-
 
 #define DIGINI_USE_ETH_TIME_STAMP       DEF_DISABLED        // put in cfg file
 #define DIGINI_USE_ETH_CHECKSUM_OFFLOAD DEF_DISABLED        // put in cfg file
 
-/****** Ethernet MAC Control Codes *****/
+#define NUM_TX_Buffer           32
+#define NUM_RX_Buffer           32
+#define ETH_BUF_SIZE            200
+#define DIGINI_ETH_INTERFACE_CFG        ETH_INTERFACE_RMII
+#define ETH_IRQ_PRIO            4
 
-#define ETH_MAC_CONFIGURE           (0x01UL)    // Configure MAC; arg = configuration
-#define ETH_MAC_CONTROL_TX          (0x02UL)    // Transmitter; arg: 0=disabled (default), 1=enabled
-#define ETH_MAC_CONTROL_RX          (0x03UL)    // Receiver; arg: 0=disabled (default), 1=enabled
-#define ETH_MAC_FLUSH               (0x04UL)    // Flush buffer; arg = ETH_MAC_FLUSH_...
-#define ETH_MAC_SLEEP               (0x05UL)    // Sleep mode; arg: 1=enter and wait for Magic packet, 0=exit
-#define ETH_MAC_VLAN_FILTER         (0x06UL)    // VLAN Filter for received frames; arg15..0: VLAN Tag; arg16: optional ETH_MAC_VLAN_FILTER_ID_ONLY; 0=disabled (default)
+//----- Ethernet MAC Configuration -----
+#define ETH_MAC_SPEED_POS            0
+#define ETH_MAC_SPEED_MASK          (3UL << ETH_MAC_SPEED_POS)
+#define ETH_MAC_SPEED_10M           (0UL << ETH_MAC_SPEED_POS)  // 10 Mbps  link speed
+#define ETH_MAC_SPEED_100M          (1UL << ETH_MAC_SPEED_POS)  // 100 Mbps link speed
+#define ETH_MAC_SPEED_1G            (2UL << ETH_MAC_SPEED_POS)  // 1 Gpbs   link speed
+#define ETH_MAC_DUPLEX_POS           2
+#define ETH_MAC_DUPLEX_MASK         (1UL << ETH_MAC_DUPLEX_POS)
+#define ETH_MAC_DUPLEX_HALF         (0UL << ETH_MAC_DUPLEX_POS) // Half Duplex Link
+#define ETH_MAC_DUPLEX_FULL         (1UL << ETH_MAC_DUPLEX_POS) // Full Duplex Link
+#define ETH_MAC_LOOPBACK            (1UL << 4)                  // Loop-Back Test Mode
+#define ETH_MAC_CHECKSUM_OFFLOAD_RX (1UL << 5)                  // Receiver Checksum offload
+#define ETH_MAC_CHECKSUM_OFFLOAD_TX (1UL << 6)                  // Transmitter Checksum offload
+#define ETH_MAC_ADDRESS_BROADCAST   (1UL << 7)                  // Accept Frames with Broadcast Address
+#define ETH_MAC_ADDRESS_MULTICAST   (1UL << 8)                  // Accept Frames with any Multicast Address
+#define ETH_MAC_ADDRESS_ALL         (1UL << 9)                  // Accept Frames with any Address (Promiscuous Mode)
 
-/*----- Ethernet MAC Configuration -----*/
-#define ETH_MAC_SPEED_Pos            0
-#define ETH_MAC_SPEED_Msk           (3UL             << ETH_MAC_SPEED_Pos)
-#define ETH_MAC_SPEED_10M           (ETH_SPEED_10M   << ETH_MAC_SPEED_Pos)  // 10 Mbps link speed
-#define ETH_MAC_SPEED_100M          (ETH_SPEED_100M  << ETH_MAC_SPEED_Pos)  // 100 Mbps link speed
-#define ETH_MAC_SPEED_1G            (ETH_SPEED_1G    << ETH_MAC_SPEED_Pos)  // 1 Gpbs link speed
-#define ETH_MAC_DUPLEX_Pos           2
-#define ETH_MAC_DUPLEX_Msk          (1UL                 << ETH_MAC_DUPLEX_Pos)
-#define ETH_MAC_DUPLEX_HALF         (ETH_DUPLEX_HALF << ETH_MAC_DUPLEX_Pos) // Half duplex link
-#define ETH_MAC_DUPLEX_FULL         (ETH_DUPLEX_FULL << ETH_MAC_DUPLEX_Pos) // Full duplex link
-#define ETH_MAC_LOOPBACK            (1UL << 4)  // Loop-back test mode
-#define ETH_MAC_CHECKSUM_OFFLOAD_RX (1UL << 5)  // Receiver Checksum offload
-#define ETH_MAC_CHECKSUM_OFFLOAD_TX (1UL << 6)  // Transmitter Checksum offload
-#define ETH_MAC_ADDRESS_BROADCAST   (1UL << 7)  // Accept frames with Broadcast address
-#define ETH_MAC_ADDRESS_MULTICAST   (1UL << 8)  // Accept frames with any Multicast address
-#define ETH_MAC_ADDRESS_ALL         (1UL << 9)  // Accept frames with any address (Promiscuous Mode)
+//----- Ethernet MAC Flush Flags -----
+#define ETH_MAC_FLUSH_RX            (1UL << 0)                  // Flush Receive buffer
+#define ETH_MAC_FLUSH_TX            (1UL << 1)                  // Flush Transmit buffer
 
-/*----- Ethernet MAC Flush Flags -----*/
-#define ETH_MAC_FLUSH_RX            (1UL << 0)  // Flush Receive buffer
-#define ETH_MAC_FLUSH_TX            (1UL << 1)  // Flush Transmit buffer
+//----- Ethernet MAC VLAN Filter Flag -----
+#define ETH_MAC_VLAN_FILTER_ID_ONLY (1UL << 16)                 // Compare only the VLAN Identifier (12-bit)
 
-/*----- Ethernet MAC VLAN Filter Flag -----*/
-#define ETH_MAC_VLAN_FILTER_ID_ONLY (1UL << 16) // Compare only the VLAN Identifier (12-bit)
-
-
-/****** Ethernet MAC Frame Transmit Flags *****/
+//----- Ethernet MAC Frame Transmit Flags -----
 #define ETH_MAC_TX_FRAME_FRAGMENT   (1UL << 0)  // Indicate frame fragment
 #define ETH_MAC_TX_FRAME_EVENT      (1UL << 1)  // Generate event when frame is transmitted
 #define ETH_MAC_TX_FRAME_TIMESTAMP  (1UL << 2)  // Capture frame time stamp
 
-
-/****** Ethernet MAC Timer Control Codes *****/
-#define ETH_MAC_TIMER_GET_TIME      (0x01UL)    // Get current time
-#define ETH_MAC_TIMER_SET_TIME      (0x02UL)    // Set new time
-#define ETH_MAC_TIMER_INC_TIME      (0x03UL)    // Increment current time
-#define ETH_MAC_TIMER_DEC_TIME      (0x04UL)    // Decrement current time
-#define ETH_MAC_TIMER_SET_ALARM     (0x05UL)    // Set alarm time
-#define ETH_MAC_TIMER_ADJUST_CLOCK  (0x06UL)    // Adjust clock frequency; time->ns: correction factor * 2^31
-
-
-/****** Ethernet MAC Event *****/
+//----- Ethernet MAC Event -----
+#define ETH_MAC_EVENT_NONE          (0UL << 0)  // No Event
 #define ETH_MAC_EVENT_RX_FRAME      (1UL << 0)  // Frame Received
 #define ETH_MAC_EVENT_TX_FRAME      (1UL << 1)  // Frame Transmitted
 #define ETH_MAC_EVENT_WAKEUP        (1UL << 2)  // Wake-up (on Magic Packet)
 #define ETH_MAC_EVENT_TIMER_ALARM   (1UL << 3)  // Timer Alarm
 
-// DMA configure not in Driver_ETH_MAC.h
-#define ETH_DMA_CONFIGURE           (0x07UL)    // Configure DMA; arg = configuration
 
 #define ETH_DMABMR_REG				(0x01UL << 28)
 #define ETH_DMAOMR_REG				(0x02UL << 28)
 
-// EMAC Driver state flags
-#define EMAC_FLAG_INIT      (1 << 0)    // Driver initialized
-#define EMAC_FLAG_POWER     (1 << 1)    // Driver power on
-#define EMAC_FLAG_DMA_INIT  (1 << 2)    // DMA Initialized
+//----- ETH_MAC Driver state flags -----
+#define ETH_MAC_FLAG_INIT      (1 << 0)    // Driver initialized
+#define ETH_MAC_FLAG_POWER     (1 << 1)    // Driver power on
+#define ETH_MAC_FLAG_DMA_INIT  (1 << 2)    // DMA Initialized
 
 // TDES0 - DMA Descriptor TX Packet Control/Status
 #define DMA_TX_OWN      0x80000000U     // Own bit 1=DMA,0=CPU
@@ -164,16 +146,9 @@
 #define DMA_RX_RCH      0x00004000U     // Second address chained
 #define DMA_RX_RBS1     0x00001FFFU     // Receive buffer 1 size
 
-enum ETH_PowerState_e
-{
-    ETH_POWER_OFF,
-    ETH_POWER_LOW,
-    ETH_POWER_FULL,
-};
+typedef void (*ETH_MAC_SignalEvent_t) (uint32_t event);  // Pointer to ETH_MAC_SignalEvent : Signal Ethernet Event. use Digini
 
-typedef void (*ETH_MAC_SignalEvent_t) (uint32_t event);  // Pointer to \ref ETH_MAC_SignalEvent : Signal Ethernet Event.
-
-struct ETH_MacCapabilities_t
+struct ETH_MAC_Capability_t
 {
     uint32_t checksum_offload_rx_ip4  : 1;        // 1 = IPv4 header checksum verified on receive
     uint32_t checksum_offload_rx_ip6  : 1;        // 1 = IPv6 checksum verification supported on receive
@@ -196,12 +171,12 @@ struct ETH_MacCapabilities_t
 
 struct  ETH_MacTime_t
 {
-    uint32_t ns;                          // Nano seconds
-    uint32_t sec;                         // Seconds
+    uint32_t naneSecond;                         // Nano seconds
+    uint32_t Second;                             // Seconds
 };
 
 // EMAC Driver Control Information
-struct ETH_MacControl_t
+struct ETH_MAC_Control_t
 {
     ETH_MAC_SignalEvent_t   CallbackEvent;          // Event callback
     uint8_t                 Flags;                  // Control and state flags
@@ -213,34 +188,68 @@ struct ETH_MacControl_t
   #if (DIGINI_USE_ETH_TIME_STAMP == DEF_ENABLED)
     uint8_t                 TX_TS_Index;            // Transmit Timestamp descriptor index
   #endif
-    uint8_t*                Frame_End;              // End of assembled frame fragments
+    uint8_t*                FrameEnd;               // End of assembled frame fragments
 };
+
+// DMA RX Descriptor
+struct RX_Descriptor_t
+{
+    uint32_t volatile       Stat;
+    uint32_t                Ctrl;
+    uint8_t const*          Addr;
+    struct RX_Descriptor_t* Next;
+#if ((DIGINI_USE_ETH_CHECKSUM_OFFLOAD == DEF_ENABLED) || (DIGINI_USE_ETH_TIME_STAMP == DEF_ENABLED))
+    uint32_t                ExtStat;
+    uint32_t                Reserved[1];
+    uint32_t                TimeLo;
+    uint32_t                TimeHi;
+#endif
+};
+
+// DMA TX Descriptor
+struct TX_Descriptor_t
+{
+    uint32_t volatile       Stat;
+    size_t                  Size;
+    uint8_t*                Addr;
+    struct TX_Descriptor_t* Next;
+#if ((DIGINI_USE_ETH_CHECKSUM_OFFLOAD == DEF_ENABLED) || (DIGINI_USE_ETH_TIME_STAMP == DEF_ENABLED))
+    uint32_t                Reserved[2];
+    uint32_t                TimeLo;
+    uint32_t                TimeHi;
+#endif
+};
+
+//-------------------------------------------------------------------------------------------------
+// Class definition(s)
+//-------------------------------------------------------------------------------------------------
 
 class ETH_Driver
 {
     public:
-    
-        ETH_MacCapabilities_t   GetCapabilities         (void);                                                         // Get driver capabilities.
-        int32_t                 Initialize              (ETH_MAC_SignalEvent_t cb_event);                               // Initialize Ethernet MAC Device.
-        
+
+      //  ETH_MAC_Capability_t    GetCapabilities         (void);                                                        // Get driver capabilities.
+        SystemState_e           Initialize              (ETH_MAC_SignalEvent_t CallbackEvent);                           // Initialize Ethernet MAC Device.
+
         // TODO will disappear if not used.. or not
-        int32_t                 Uninitialize            (void);                                                         // De-initialize Ethernet MAC Device.
-        int32_t                 PowerControl            (ETH_PowerState_e state);                                       // Control Ethernet MAC Device Power.
-        int32_t                 GetMacAddress           (      ETH_MacAddress_t* ptr_addr);                             // Get Ethernet MAC Address.
-        int32_t                 SetMacAddress           (const ETH_MacAddress_t* ptr_addr);                             // Set Ethernet MAC Address.
-        int32_t                 SetAddressFilter        (const ETH_MacAddress_t* ptr_addr, uint32_t num_addr);          // Configure Address Filter.
-        int32_t                 SendFrame               (const uint8_t* frame, uint32_t len, uint32_t flags);           // Send Ethernet frame.
-        SystemState_e           ReadFrame               (struct pbuf* p, uint32_t len);                                 // Read data of received Ethernet frame.
-        uint32_t                GetRX_FrameSize         (void);                                                         // Get size of received Ethernet frame.
+        SystemState_e           Uninitialize            (void);                                                          // De-initialize Ethernet MAC Device.
+        SystemState_e           PowerControl            (ETH_PowerState_e State);                                        // Control Ethernet MAC Device Power.
+        SystemState_e           GetMacAddress           (      ETH_MAC_Address_t* pMAC_Address);                         // Get Ethernet MAC Address.
+        SystemState_e           SetMacAddress           (const ETH_MAC_Address_t* pMAC_Address);                         // Set Ethernet MAC Address.
+        SystemState_e           SetAddressFilter        (const ETH_MAC_Address_t* pMAC_Address, uint32_t NbAddress);     // Configure Address Filter.
+        SystemState_e           SendFrame               (const uint8_t* frame, size_t Length, uint32_t flags);           // Send Ethernet frame.
+        SystemState_e           ReadFrame               (struct pbuf* ptrBuf, size_t Length);                            // Read data of received Ethernet frame.
+        uint32_t                GetRX_FrameSize         (void);                                                          // Get size of received Ethernet frame.
       #if (DIGINI_USE_ETH_TIME_STAMP == DEF_ENABLED)
-        int32_t                 GetRX_FrameTime         (ETH_MacTime_t* Time);                                          // Get time of received Ethernet frame.
-        int32_t                 GetTX_FrameTime         (ETH_MacTime_t* Time);                                          // Get time of transmitted Ethernet frame.
-        int32_t                 ControlTimer            (uint32_t control, ETH_MacTime_t* Time);                        // Control Precision Timer.
-      #endif  
-        int32_t                 Control                 (uint32_t control, uint32_t arg);                               // Control Ethernet Interface.
-        int32_t                 PHY_Read                (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* Data); // Read Ethernet PHY Register through Management Interface.
-        int32_t                 PHY_Write               (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t  Data); // Write Ethernet PHY Register through Management Interface.
-        
+        SystemState_e           GetRX_FrameTime         (ETH_MacTime_t* Time);                                           // Get time of received Ethernet frame.
+        SystemState_e           GetTX_FrameTime         (ETH_MacTime_t* Time);                                           // Get time of transmitted Ethernet frame.
+        SystemState_e           ControlTimer            (ETH_ControlTimer_e Control, ETH_MacTime_t* Time);               // Control Precision Timer.
+      #endif
+        SystemState_e           Control                 (ETH_ControlCode_e Control, uint32_t arg);                                // Control Ethernet Interface.
+        SystemState_e           PHY_Read                (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData); // Read Ethernet PHY Register through Management Interface.
+        SystemState_e           PHY_Write               (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data); // Write Ethernet PHY Register through Management Interface.
+
+        static void             ISR_CallBack             (uint32_t Event) { if(m_MAC_Control.CallbackEvent != nullptr) m_MAC_Control.CallbackEvent(Event); }
     private:
 
         void                    InitializeDMA           (void);
@@ -250,13 +259,18 @@ class ETH_Driver
         void                    DisableClock            (void);
         SystemState_e           PHY_Busy                (void);
 
-        const   ETH_MacCapabilities_t       m_Capability;
-                ETH_EmacControl             m_EMAC_Control;
-/*static ?? */     RX_Descriptor_t             RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((section(".dmaINIT"), aligned(4)));   // Ethernet RX & TX DMA Descriptors
-/*static ?? */     uint32_t                    RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((section(".dmaINIT"), aligned(4)));   // Ethernet Receive buffers
-/*static ?? */     TX_Descriptor_t             TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((section(".dmaINIT"), aligned(4)));
-/*static ?? */     uint32_t                    TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((section(".dmaINIT"), aligned(4)));   // Ethernet Transmit buffers
+        static     ETH_MAC_Capability_t        m_Capabilities;
+        static     ETH_MAC_Control_t           m_MAC_Control;
+        static     RX_Descriptor_t             RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet RX & TX DMA Descriptors
+/*static ?? */     uint32_t                    RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet Receive buffers
+        static     TX_Descriptor_t             TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((/*section(".dmaINIT"),*/ aligned(4)));
+/*static ?? */     uint32_t                    TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet Transmit buffers
 
 
 };
 
+//-------------------------------------------------------------------------------------------------
+
+#endif // (USE_ETH_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------

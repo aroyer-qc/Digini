@@ -286,7 +286,7 @@
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 210000000)
 #define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_6WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 216000000)
-#FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_7WS
+#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_7WS
 #endif
 
 // --------------------------------------------------------------------------------------------------------------------------------

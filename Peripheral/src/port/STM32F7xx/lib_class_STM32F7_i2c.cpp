@@ -168,8 +168,6 @@ I2C_Driver::I2C_Driver(I2C_ID_e I2C_ID)
 void I2C_Driver::Initialize(void)
 {
     nOS_Error           Error;
-    ISR_Prio_t          ISR_Prio;
-    uint32_t            PriorityGroup;
 
     if(m_IsItInitialize == false)
     {
@@ -264,16 +262,8 @@ void I2C_Driver::Initialize(void)
     m_pI2Cx->CR1 |= I2C_CR1_PE;                                                                       // Enable the selected I2C peripheral
 
     // ---- Enable I2C event interrupt ----
-    PriorityGroup = NVIC_GetPriorityGrouping();
-    ISR_Prio.PriorityGroup     = PriorityGroup;
-    ISR_Prio.SubPriority       = 0;
-    ISR_Prio.PremptionPriority = 5;
-
-    // NVIC Setup for TX DMA channels interrupt request
-    ISR_Init(m_pInfo->EV_IRQn, &ISR_Prio);
-
-    // NVIC Setup for RX DMA channels interrupt request
-    ISR_Init(m_pInfo->ER_IRQn, &ISR_Prio);
+    ISR_Init(m_pInfo->EV_IRQn, 0, 5);           // NVIC Setup for TX DMA channels interrupt request
+    ISR_Init(m_pInfo->ER_IRQn, 0, 5);           // NVIC Setup for RX DMA channels interrupt request
 }
 
 //-------------------------------------------------------------------------------------------------

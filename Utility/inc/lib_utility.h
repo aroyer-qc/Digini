@@ -85,7 +85,7 @@ void        LIB_SetTime                     (Time_t* pData);
 void        LIB_GetDate                     (Date_t* pData);
 void        LIB_SetDate                     (Date_t* pData);
 
-void        LIB_FastMemcpy                  (Const uint8_t* pSrc, uint8_t* pDst, size_t Length);
+void        LIB_FastMemcpy                  (const uint8_t* pSrc, uint8_t* pDst, size_t Length);
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)

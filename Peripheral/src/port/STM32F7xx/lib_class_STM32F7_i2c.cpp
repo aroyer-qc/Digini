@@ -167,7 +167,7 @@ I2C_Driver::I2C_Driver(I2C_ID_e I2C_ID)
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::Initialize(void)
 {
-    nOS_Error           Error;
+    nOS_Error Error;
 
     if(m_IsItInitialize == false)
     {

@@ -232,8 +232,6 @@ SystemState_e QSPI_Driver::Initialize(void)
     nOS_Error       Error;
     TickCount_t     TickStart;
     SystemState_e   State;
-    ISR_Prio_t      ISR_Prio;
-    uint32_t        PriorityGroup;
 
     if(m_IsItInitialize == false)
     {
@@ -359,16 +357,10 @@ SystemState_e QSPI_Driver::Initialize(void)
       #endif
 
         // Configure interrupt priority for QUADSPI
-        PriorityGroup = NVIC_GetPriorityGrouping();
-        ISR_Prio.PriorityGroup = PriorityGroup;
-        ISR_Prio.SubPriority   = 0;
-
         // NVIC configuration for QuadSPI interrupt
-        ISR_Prio.PremptionPriority = QSPI_ISR_PRIORITY_CFG;
-        ISR_Init(QUADSPI_IRQn, &ISR_Prio);
+        ISR_Init(QUADSPI_IRQn, 0, QSPI_ISR_PRIORITY_CFG);
         // NVIC configuration for DMA interrupt
-        ISR_Prio.PremptionPriority = QSPI_DMA_ISR_PRIORITY_CFG;
-        ISR_Init(DMA2_Stream7_IRQn, &ISR_Prio);
+        ISR_Init(DMA2_Stream7_IRQn, 0, QSPI_DMA_ISR_PRIORITY_CFG);
 
         m_State = QSPI_STATE_READY;
     }

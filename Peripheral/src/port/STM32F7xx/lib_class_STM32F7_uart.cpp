@@ -51,7 +51,7 @@
 #define UART_CR1_DATA_WIDTH_7B              USART_CR1_M1                        // 9 bits word length
 
 #define UART_CR1_OVERSAMPLING_16            0                                   // Oversampling by 16
-#define SART_CR1_OVERSAMPLING_8             USART_CR1_OVER8                     // Oversampling by 8
+#define UART_CR1_OVERSAMPLING_8             USART_CR1_OVER8                     // Oversampling by 8
 
 #define UART_CR1_OVER_16                    0
 #define UART_CR1_OVER_8                     USART_CR1_OVER8
@@ -626,7 +626,7 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX, v
 
                 m_pContextTX = pContext;
 
-                this->DMA_EnableTX();
+                DMA_EnableTX();
                 DMA_Enable(pDMA);                    // Transmission starts as soon as TXE is detected
             }
             else
@@ -865,8 +865,9 @@ void UART_Driver::DMA_EnableTX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            this->EnableTX_ISR(UART_ISR_TX_COMPLETED_MASK);
             SET_BIT(m_pUart->CR3, USART_CR3_DMAT);
+            //m_pUart->ICR |= USART_ICR_TCCF;
+            this->EnableTX_ISR(UART_ISR_TX_COMPLETED_MASK);
         }
     }
 }

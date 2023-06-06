@@ -87,8 +87,6 @@ TIM_Driver::TIM_Driver(TIM_ID_e TimID)
 //-------------------------------------------------------------------------------------------------
 void TIM_Driver::Initialize(void)
 {
-    ISR_Prio_t ISR_Prio;
-
     // Reset and Enable clock module
     *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - TIM_BACK_OFFSET_RESET_REGISTER) |=  m_pInfo->RCC_APBxPeriph;
     *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - TIM_BACK_OFFSET_RESET_REGISTER) &= ~m_pInfo->RCC_APBxPeriph;
@@ -163,10 +161,7 @@ void TIM_Driver::Initialize(void)
     }
 
     // Configure interrupt priority for TIM
-    ISR_Prio.PriorityGroup     = NVIC_GetPriorityGrouping();
-    ISR_Prio.PremptionPriority = m_pInfo->PreempPrio;
-    ISR_Prio.SubPriority       = 0;
-    ISR_Init(m_pInfo->IRQn_Channel, &ISR_Prio);
+    ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);
 }
 
 #if 0 //not in F4.. Does not mean we don't keep it

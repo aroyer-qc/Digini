@@ -119,9 +119,6 @@ SystemState_e SPI_Driver::GetStatus(void)
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::Initialize(void)
 {
-    ISR_Prio_t ISR_Prio;
-    uint32_t   PriorityGroup;
-
   #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     DMA_Stream_TypeDef* pDMA;
   #endif
@@ -257,17 +254,11 @@ void SPI_Driver::Initialize(void)
                m_pInfo->DMA_ChannelRX;
   #endif
 
-    PriorityGroup = NVIC_GetPriorityGrouping();
-    ISR_Prio.PriorityGroup = PriorityGroup;
-    ISR_Prio.SubPriority   = 0;
-
     // NVIC Setup for TX DMA channels interrupt request
-    ISR_Prio.PremptionPriority = 6;
-    ISR_Init(m_pInfo->TX_IRQn, &ISR_Prio);
+    ISR_Init(m_pInfo->TX_IRQn, 0, 6);
 
     // NVIC Setup for RX DMA channels interrupt request
-    ISR_Prio.PremptionPriority = 6;
-    ISR_Init(m_pInfo->RX_IRQn, &ISR_Prio);
+    ISR_Init(m_pInfo->RX_IRQn, 0, 6);
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -212,7 +212,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
       #endif
 
         ISR_Init(m_pInfo->IRQn_Channel, &ISR_Prio);
-        this->ClearAutomaticFlag();
+        ClearAutomaticFlag();
 
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
         m_DMA_IsItBusyTX = false;
@@ -285,8 +285,8 @@ void UART_Driver::Disable(void)
       #endif
 
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-        this->DMA_DisableRX();
-        this->DMA_DisableTX();
+        DMA_DisableRX();
+        DMA_DisableTX();
       #endif
 
         CLEAR_BIT(m_pUart->CR1, USART_CR1_UE);    // Disable the UART
@@ -314,7 +314,7 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
 
     if(m_pUart != nullptr)
     {
-        this->Disable();
+        Disable();
 
         // Retrieve Clock frequency used for USART Peripheral
       #if (UART_DRIVER_SUPPORT_UART1_CFG == DEF_ENABLED)
@@ -380,7 +380,7 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
 
         m_pUart->BRR = uint16_t((PeriphClk + (m_BaudRate[BaudRate] >> 1)) / m_BaudRate[BaudRate]);
 
-        this->Enable();
+        Enable();
     }
 }
 
@@ -408,7 +408,7 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
 
     if(m_pUart != nullptr)
     {
-        this->Disable();
+        Disable();
 
         // Parity
         MaskedConfig = UART_Config_e(uint32_t(Config) & UART_PARITY_MASK);
@@ -615,7 +615,7 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX, v
 
                 m_pContextTX = pContext;
 
-                this->DMA_EnableTX();
+                DMA_EnableTX();
                 DMA_Enable(pDMA);                    // Transmission starts as soon as TXE is detected
             }
             else

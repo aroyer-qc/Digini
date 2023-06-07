@@ -47,8 +47,12 @@
 
 //-------------------- Digini Error Systems includes ----------------------------------------------
 
-#include "lib_typedef.h"
-#include "lib_macro.h"
+#include "lib_digini.h"
+//#include "lib_typedef.h"
+//#include "lib_macro.h"
+
+
+extern "C" {
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -63,7 +67,7 @@ err_t sys_mbox_new(sys_mbox_t *pxMailBox, int iSize)
 {
     void* pBuffer;
 
-    pBuffer = (void*)pMemoryPool->Alloc(iSize * sizeof(void *);
+    pBuffer = (void*)pMemoryPool->Alloc(iSize * sizeof(void *));
 
     if(pBuffer !=  NULL)
     {
@@ -507,10 +511,10 @@ sys_thread_t sys_thread_new(const char* Name, void(*Thread)(void* Parameters), v
    #endif
 
 
-   pBuffer = (void*);
+   //pBuffer = (void*);
 
-    if(pBuffer !=  NULL)
-    {
+    //if(pBuffer != nullptr)
+   // {
 
 
     if((pThread = (nOS_Thread*)pMemoryPool->Alloc(sizeof(nOS_Thread)) != NULL)
@@ -530,7 +534,7 @@ sys_thread_t sys_thread_new(const char* Name, void(*Thread)(void* Parameters), v
         else
         {
             pMemoryPool-Free(&pThread);
-            
+
         }
     }
 
@@ -590,5 +594,10 @@ void sys_assert(const char *Message)
 	{
 	}
 }
+
+
+//-------------------------------------------------------------------------------------------------
+
+}   // extern "C"
 
 

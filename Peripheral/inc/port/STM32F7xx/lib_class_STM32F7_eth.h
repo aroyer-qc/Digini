@@ -32,6 +32,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
+// thing to move into eth_cfg.h file into the config directory
 #define DIGINI_USE_ETH_TIME_STAMP       DEF_DISABLED        // put in cfg file
 #define DIGINI_USE_ETH_CHECKSUM_OFFLOAD DEF_DISABLED        // put in cfg file
 
@@ -148,33 +149,6 @@
 
 typedef void (*ETH_MAC_SignalEvent_t) (uint32_t event);  // Pointer to ETH_MAC_SignalEvent : Signal Ethernet Event. use Digini
 
-struct ETH_MAC_Capability_t
-{
-    uint32_t checksum_offload_rx_ip4  : 1;        // 1 = IPv4 header checksum verified on receive
-    uint32_t checksum_offload_rx_ip6  : 1;        // 1 = IPv6 checksum verification supported on receive
-    uint32_t checksum_offload_rx_udp  : 1;        // 1 = UDP payload checksum verified on receive
-    uint32_t checksum_offload_rx_tcp  : 1;        // 1 = TCP payload checksum verified on receive
-    uint32_t checksum_offload_rx_icmp : 1;        // 1 = ICMP payload checksum verified on receive
-    uint32_t checksum_offload_tx_ip4  : 1;        // 1 = IPv4 header checksum generated on transmit
-    uint32_t checksum_offload_tx_ip6  : 1;        // 1 = IPv6 checksum generation supported on transmit
-    uint32_t checksum_offload_tx_udp  : 1;        // 1 = UDP payload checksum generated on transmit
-    uint32_t checksum_offload_tx_tcp  : 1;        // 1 = TCP payload checksum generated on transmit
-    uint32_t checksum_offload_tx_icmp : 1;        // 1 = ICMP payload checksum generated on transmit
-    uint32_t media_interface          : 2;        //     Ethernet Media Interface type (ETH_INTERFACE_MII or ETH_INTERFACE_RMII)
-    uint32_t mac_address              : 1;        // 1 = driver provides initial valid MAC address
-    uint32_t event_rx_frame           : 1;        // 1 = callback event \ref ETH_MAC_EVENT_RX_FRAME generated
-    uint32_t event_tx_frame           : 1;        // 1 = callback event \ref ETH_MAC_EVENT_TX_FRAME generated
-    uint32_t event_wakeup             : 1;        // 1 = wakeup event \ref ETH_MAC_EVENT_WAKEUP generated
-    uint32_t precision_timer          : 1;        // 1 = Precision Timer supported
-    uint32_t reserved                 : 15;       // Reserved (must be zero)
-};
-
-struct  ETH_MacTime_t
-{
-    uint32_t naneSecond;                         // Nano seconds
-    uint32_t Second;                             // Seconds
-};
-
 // EMAC Driver Control Information
 struct ETH_MAC_Control_t
 {
@@ -248,12 +222,12 @@ class ETH_Driver
         SystemState_e           Control                 (ETH_ControlCode_e Control, uint32_t arg);                                // Control Ethernet Interface.
         SystemState_e           PHY_Read                (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData); // Read Ethernet PHY Register through Management Interface.
         SystemState_e           PHY_Write               (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data); // Write Ethernet PHY Register through Management Interface.
+        ETH_MAC_Capability_t    GetCapabilities         (void);
 
         static void             ISR_CallBack             (uint32_t Event) { if(m_MAC_Control.CallbackEvent != nullptr) m_MAC_Control.CallbackEvent(Event); }
     private:
 
         void                    InitializeDMA           (void);
-        ETH_MAC_Capability_t    GetCapabilities         (void);
         void                    ResetMac                (void);
         void                    EnableClock             (void);
         void                    DisableClock            (void);
@@ -261,10 +235,10 @@ class ETH_Driver
 
         static     ETH_MAC_Capability_t        m_Capabilities;
         static     ETH_MAC_Control_t           m_MAC_Control;
-        static     RX_Descriptor_t             RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet RX & TX DMA Descriptors
-/*static ?? */     uint32_t                    RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet Receive buffers
-        static     TX_Descriptor_t             TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((/*section(".dmaINIT"),*/ aligned(4)));
-/*static ?? */     uint32_t                    TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet Transmit buffers
+        static     RX_Descriptor_t             m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet RX & TX DMA Descriptors
+        static     uint32_t                    m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet Receive buffers
+        static     TX_Descriptor_t             m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((/*section(".dmaINIT"),*/ aligned(4)));
+        static     uint32_t                    m_TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet Transmit buffers
 
 
 };

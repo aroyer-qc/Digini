@@ -97,6 +97,26 @@
 #define PSCS_DUPLEX         0x0010      // Duplex Status (1=Full duplex)
 #define PSCS_SPEED          0x0004      // Speed10 Status (1=10MBit/s)
 
+
+#define GEN_PHY_CR1         REG_PSCS
+// PHY Control 1 Register Bitmasks
+#define PHY_CR1_
+#define PHY_CR1_PAUSE_ENABLE        0x0200      // Enable Pause (Flow Control)
+#define PHY_CR1_LINK_STATUS         0x0100      // Link Status
+#define PHY_CR1_POLARITY_STATUS     0x0080      // Polarity Status
+#define PHY_CR1_MDI_STATE           0x0020      // MDI/MDI-X State
+#define PHY_CR1_ENERGY_DETECT       0x0010      // Energy Detect
+#define PHY_CR1_PHY_ISOLATE         0x0008      // PHY Isolate
+#define PHY_CR1_OPERATION_MODE      0x0007      // Operation Mode Indication
+#define PHY_CR1_MODE_100_BASE       0x0002      // 100Base-TX bitmask
+#define PHY_CR1_MODE_FULL_DUPLEX    0x0004      // Full-duplex bitmask
+
+
+
+#define GEN_PHY_CR2
+
+
+
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
@@ -107,20 +127,21 @@ class PHY_LAN8742A_Driver
 
                                     PHY_LAN8742A_Driver             (uint32_t PHY_Address);
 
-        SystemState_e               Initialize                      (ETH_PHY_Read_t FunctionRead, ETH_PHY_Write_t FunctionWrite);
+        SystemState_e               Initialize                      (ETH_Driver* pDriver);
         SystemState_e               Uninitialize                    (void);
         SystemState_e               PowerControl                    (ETH_PowerState_e state);
         SystemState_e               SetInterface                    (ETH_MediaInterface_e Interface);
         SystemState_e               SetMode                         (ETH_PHY_Mode_e Mode);
+        SystemState_e               SetLinkUpInterrupt              (bool State) { VAR_UNUSED(State); return SYS_READY; };         // No interrupt line to for link status
         ETH_LinkState_e             GetLinkState                    (void);
         ETH_LinkInfo_t              GetLinkInfo                     (void);
+        uint8_t                     GetPHY_Address                  (void)  { return m_PHY_Address; }
 
     private:
 
         // Ethernet PHY control structure
         uint32_t                    m_PHY_Address;
-        ETH_PHY_Read_t              m_PHY_Read;                     // PHY register read function
-        ETH_PHY_Write_t             m_PHY_Write;                    // PHY register write function
+        ETH_Driver*                 m_pETH_Driver;                  // Pointer on the class ETH_Driver
         uint16_t                    m_BCR_Register;                 // BCR register value
         ETH_State_e                 m_Flags;                        // Control flags
 };

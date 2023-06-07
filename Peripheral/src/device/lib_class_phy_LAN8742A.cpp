@@ -53,26 +53,24 @@ PHY_LAN8742A_Driver::PHY_LAN8742A_Driver(uint32_t PHY_Address)
 //
 //  Function:       Uninitialize
 //
-//  Parameter(s):   Pointer to PHY Read
-//                  Pointer to PHY Write
+//  Parameter(s):   Ethernet driver class pointer
 //  Return:         SystemState_e   State of function.
 //
 //  Description:    Initializee PHY Device.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e PHY_LAN8742A_Driver::Initialize(ETH_PHY_Read_t FunctionRead, ETH_PHY_Write_t FunctionWrite)
+SystemState_e PHY_LAN8742A_Driver::Initialize(ETH_Driver* pDriver)
 {
 
-    if((FunctionRead == nullptr) || (FunctionWrite == nullptr))
+    if(pDriver == nullptr)
     {
         return SYS_INVALID_PARAMETER;
     }
 
     if((m_Flags & ETH_INITIALIZED) == 0)
     {
-        // Register PHY read/write functions.
-        m_PHY_Read  = FunctionRead;
-        m_PHY_Write = FunctionWrite;
+        // Register ETH_Driver
+        m_pETH_Driver = pDriver;
 
         m_BCR_Register = 0;
         m_Flags        = ETH_INITIALIZED;
@@ -93,8 +91,7 @@ SystemState_e PHY_LAN8742A_Driver::Initialize(ETH_PHY_Read_t FunctionRead, ETH_P
 //-------------------------------------------------------------------------------------------------
 SystemState_e PHY_LAN8742A_Driver::Uninitialize(void)
 {
-    m_PHY_Read     = nullptr;
-    m_PHY_Write    = nullptr;
+    m_pETH_Driver  = nullptr;
     m_BCR_Register = 0;
     m_Flags        = ETH_STATE_UNKNOWN;
 
@@ -124,7 +121,7 @@ SystemState_e PHY_LAN8742A_Driver::PowerControl(ETH_PowerState_e PowerState)
             {
                 m_Flags        = ETH_INITIALIZED;
                 m_BCR_Register = BCR_POWER_DOWN;
-                State = m_PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register);
+                State = m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register);
             }
             else
             {
@@ -147,7 +144,7 @@ SystemState_e PHY_LAN8742A_Driver::PowerControl(ETH_PowerState_e PowerState)
             else
             {
                 // Check Device Identification.
-                m_PHY_Read(m_PHY_Address, REG_PHY_ID_1, &Value);
+                m_pETH_Driver->PHY_Read(m_PHY_Address, REG_PHY_ID_1, &Value);
 
                 if(Value != PHY_ID_1)
                 {
@@ -156,7 +153,7 @@ SystemState_e PHY_LAN8742A_Driver::PowerControl(ETH_PowerState_e PowerState)
                 }
                 else
                 {
-                    m_PHY_Read(m_PHY_Address, REG_PHY_ID_2, &Value);
+                    m_pETH_Driver->PHY_Read(m_PHY_Address, REG_PHY_ID_2, &Value);
 
                     if((Value & 0xFFF0) != PHY_ID_2)
                     {
@@ -166,7 +163,7 @@ SystemState_e PHY_LAN8742A_Driver::PowerControl(ETH_PowerState_e PowerState)
                     {
                         m_BCR_Register = 0;
 
-                        if((State = m_PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register)) == SYS_READY)
+                        if((State = m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register)) == SYS_READY)
                         {
                             m_Flags = ETH_INITIALIZED_AND_POWERED_ON;
                             State   = SYS_READY;
@@ -259,7 +256,7 @@ SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
 
     m_BCR_Register = Value;
 
-    return m_PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register);
+    return m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -279,7 +276,7 @@ ETH_LinkState_e PHY_LAN8742A_Driver::GetLinkState(void)
 
     if(m_Flags & ETH_POWERED_ON)
     {
-        m_PHY_Read(m_PHY_Address, REG_BSR, &Value);
+        m_pETH_Driver->PHY_Read(m_PHY_Address, REG_BSR, &Value);
     }
 
     State = (Value & BSR_LINK_STAT) ? ETH_LINK_UP : ETH_LINK_DOWN;
@@ -304,7 +301,7 @@ ETH_LinkInfo_t PHY_LAN8742A_Driver::GetLinkInfo(void)
 
     if(m_Flags & ETH_POWERED_ON)
     {
-        m_PHY_Read(m_PHY_Address, REG_PSCS, &Value);
+        m_pETH_Driver->PHY_Read(m_PHY_Address, REG_PSCS, &Value);
     }
 
     Info.Speed  = (Value & PSCS_SPEED)  ? ETH_PHY_SPEED_10M   : ETH_PHY_SPEED_100M;

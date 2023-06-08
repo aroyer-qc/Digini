@@ -510,16 +510,9 @@ sys_thread_t sys_thread_new(const char* Name, void(*Thread)(void* Parameters), v
      VAR_UNUSED(Name);
    #endif
 
-
-   //pBuffer = (void*);
-
-    //if(pBuffer != nullptr)
-   // {
-
-
-    if((pThread = (nOS_Thread*)pMemoryPool->Alloc(sizeof(nOS_Thread)) != NULL)
+    if((pThread = (nOS_Thread*)pMemoryPool->Alloc(sizeof(nOS_Thread))) != NULL)
     {
-        if((pBuffer = (nOS_Stack*)pMemoryPool->Alloc(StackSize) !=  NULL)
+        if((pBuffer = (nOS_Stack*)pMemoryPool->Alloc(StackSize)) !=  NULL)
         {
             if(nOS_ThreadCreate(pThread, Thread, Arg, pBuffer, StackSize, Priority
                               #if (NOS_CONFIG_THREAD_NAME_ENABLE > 0)
@@ -527,13 +520,13 @@ sys_thread_t sys_thread_new(const char* Name, void(*Thread)(void* Parameters), v
                               #endif
                                 ) != NOS_OK)
             {
-                pMemoryPool-Free(&pBuffer);
-                pMemoryPool-Free(&pThread);
+                pMemoryPool->Free((void**)&pBuffer);
+                pMemoryPool->Free((void**)&pThread);
             }
         }
         else
         {
-            pMemoryPool-Free(&pThread);
+            pMemoryPool->Free((void**)&pThread);
 
         }
     }

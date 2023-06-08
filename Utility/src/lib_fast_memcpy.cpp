@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : ethernetif.h
+//  File : lib_fast_memcpy.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -24,29 +24,46 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#pragma once
-
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lwip/err.h"
+#include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
-
-#if (USE_ETH_DRIVER == DEF_ENABLED)
+//
+//   Function Name: LIB_FastMemcpy
+//
+//   Parameter(s):  const uint8_t*    pSrc
+//                  uint8_t*          pDst
+//                  size_t            Length
+//   Return:        uint8_t                             4 Bit's value
+//
+//   Description:   Fast copy memory block to another location with a faster method.
+//
+//   Note(s):       Overloaded function
+//
+//-------------------------------------------------------------------------------------------------
+void LIB_FastMemcpy(const uint8_t* pSrc, uint8_t* pDst, size_t Length)
+{
+    // Fast-copy data fragments tobuffer
+    for(; Length > 7; pDst += 8, pSrc += 8, Length -= 8)
+    {
+        UNALIGNED_UINT32_WRITE(&pDst[0], UNALIGNED_UINT32_READ(&pSrc[0]));
+        UNALIGNED_UINT32_WRITE(&pDst[4], UNALIGNED_UINT32_READ(&pSrc[4]));
+    }
+    
+    // Copy remaining up to 6 bytes
+    for(; Length > 1; pDst += 2, pSrc += 2, Length -= 2)
+    {
+        UNALIGNED_UINT16_WRITE(&pDst[0], UNALIGNED_UINT16_READ(&pSrc[0]));
+    }
+    
+    // Copy remaining byte if any
+    if(Length > 0)
+    {
+        pDst++[0] = pSrc++[0];
+    }
+}
 
 //-------------------------------------------------------------------------------------------------
-
-#ifdef __cplusplus
- extern "C" {
-#endif
-err_t    ethernetif_init    (struct netif *netif);
-void     ethernetif_input   (void *param);
-#ifdef __cplusplus
- }
-#endif
-
-//-------------------------------------------------------------------------------------------------
-
-#endif

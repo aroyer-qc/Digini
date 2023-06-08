@@ -94,13 +94,13 @@ nOS_Sem RX_Sem;
 nOS_Mutex TX_Mutex;
 static struct ethernetif  ETH0;
 
-static nOS_Thread   TaskHandle;
-static nOS_Stack    Stack[TASK_ETHERNET_IF_STACK_SIZE];
+//static nOS_Thread   TaskHandle;
+//static nOS_Stack    Stack[TASK_ETHERNET_IF_STACK_SIZE];
 
 
 // Forward declarations.
 static err_t low_level_output(struct netif *netif, struct pbuf *p);
-static void ethernetif_input(void *param);
+/*static void ethernetif_input(void *param);*/
 static void arp_timer(void *arg);
 static void ethernetif_Callback(uint32_t event);
 //static err_t EthernetModeAndSpeed(void);
@@ -125,8 +125,7 @@ static void ethernetif_Callback(uint32_t event);
 err_t ethernetif_init(struct netif *netif)
 {
 	ETH_MAC_Capability_t cap;
-	uint16_t RegValue;
-    nOS_Error Error;
+    //nOS_Error Error;
 
     // Do whatever else is needed to initialize interface.
 	ETH0.Mac    = &EthMac;
@@ -164,7 +163,7 @@ err_t ethernetif_init(struct netif *netif)
 	if(ETH0.Phy->Initialize(ETH0.Mac) == SYS_READY)
 	{
 		ETH0.Phy->PowerControl(ETH_POWER_FULL);
-		ETH0.Phy->SetInterface(cap.media_interface);
+		ETH0.Phy->SetInterface(ETH_MediaInterface_e(cap.media_interface));
 		ETH0.Phy->SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
 		//EthernetModeAndSpeed();
 
@@ -211,13 +210,14 @@ err_t ethernetif_init(struct netif *netif)
         /*nOS_Error*/ nOS_SemCreate (&RX_Sem, 0, 20);
         /*nOS_Error*/ nOS_MutexCreate (&TX_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
 
+/*
         Error = nOS_ThreadCreate(&TaskHandle,
                                  ethernetif_input,
                                  (void*)netif,
                                  &Stack[0],
                                  TASK_ETHERNET_IF_STACK_SIZE,
                                  TASK_ETHERNET_IF_PRIO);
-
+*/
         // Enable MAC and DMA transmission and reception
         ETH0.Mac->Control(ETH_MAC_CONTROL_TX, 1);
         ETH0.Mac->Control(ETH_MAC_CONTROL_RX, 1);
@@ -259,7 +259,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         {
             // Send the data from the pbuf to the interface, one pbuf at a time. The size of the data in each pbuf is kept in the ->len variable.
                u32_t flags = (q->next) ? ETH_MAC_TX_FRAME_FRAGMENT : 0;
-               ETH0.Mac->SendFrame(q->payload, q->len, flags);
+               ETH0.Mac->SendFrame((uint8_t*)q->payload, q->len, flags);
         }
 
         nOS_MutexUnlock(&TX_Mutex);
@@ -287,7 +287,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 //                  function is called.
 //
 //-------------------------------------------------------------------------------------------------
-static void ethernetif_input(void *param)
+void ethernetif_input(void *param)
 {
    	struct pbuf* p;
     struct netif* s_pxNetIf = (struct netif *)param;

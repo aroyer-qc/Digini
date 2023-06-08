@@ -256,6 +256,7 @@ bool MemPoolDriver::Free(void** pBlock)
                 *pBlock = nullptr;
                 return true;
             }
+
             return false;
         }
     }

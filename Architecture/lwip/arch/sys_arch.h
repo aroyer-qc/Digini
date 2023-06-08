@@ -43,10 +43,10 @@ typedef nOS_Mutex           sys_mutex_t;
 typedef nOS_Queue           sys_mbox_t;
 typedef nOS_Thread          sys_thread_t;
 
-#define sys_mbox_valid( x ) ( ( ( x ) == NULL) ? false : true )
-#define sys_mbox_set_invalid( x ) ( ( x ) = NULL )
-#define sys_sem_valid( x ) ( ( ( x ) == NULL) ? false : true )
-#define sys_sem_set_invalid( x ) ( ( x ) = NULL )
+#define sys_mbox_valid( x )             (((x) == NULL) ? false : true )
+#define sys_mbox_set_invalid( x )
+#define sys_sem_valid( x )              (((x) == NULL) ? false : true )
+#define sys_sem_set_invalid( x )
 
 
 #endif /* __ARCH_SYS_ARCH_H__ */

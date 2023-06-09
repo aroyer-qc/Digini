@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : diskio_drv.h
+//  File : lib_class_ethernet_phy_interface.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -30,34 +30,26 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#if 0
-
-#include "lib_define.h"
-#include "digini_cfg.h"
-#include "diskio_drv_cfg.h"                     // This will add any custom driver
+#include "lib_typedef.h"
 
 //-------------------------------------------------------------------------------------------------
+// class definition(s)
+//-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_FATFS_USE_RAM_DISK == DEF_ENABLED)
-#include "lib_class_fatfs_ram_disk.h"
-#endif
+class PHY_DriverInterface
+{
+    public:
 
-#if (DIGINI_FATFS_USE_SDIO_SD_CARD == DEF_ENABLED)
-#include "lib_class_fatfs_sdio.h"
-#endif
+        virtual SystemState_e   Initialize         (ETH_Driver* pDriver)              = 0;
+        virtual SystemState_e   Uninitialize       (void)                             = 0;
+        virtual SystemState_e   PowerControl       (ETH_PowerState_e state)           = 0;
+        virtual SystemState_e   SetInterface       (ETH_MediaInterface_e Interface)   = 0;
+        virtual SystemState_e   SetMode            (ETH_PHY_Mode_e Mode)              = 0;
+        virtual SystemState_e   SetLinkUpInterrupt (bool State)                       = 0;
+        virtual ETH_LinkState_e GetLinkState       (void)                             = 0;
+        virtual ETH_LinkInfo_t  GetLinkInfo        (void)                             = 0;
+        virtual uint8_t         GetPHY_Address     (void)                             = 0;
+};
 
-#if (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
-#include "lib_class_fatfs_spi_flash_chip.h"
-#endif
-
-#if (DIGINI_FATFS_USE_SPI_SD_CARD == DEF_ENABLED)
-#include "lib_class_fatfs_spi_sd_card.h"
-#endif
-
-#if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED)
-#include "lib_class_fatfs_usb.h"
-#endif
-
-#endif
 //-------------------------------------------------------------------------------------------------
 

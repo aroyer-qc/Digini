@@ -5,6 +5,10 @@
 //-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
+
+#if (USE_RTC_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -13,10 +17,6 @@
 #include "lib_class_STM32F4_rtc.h"
 #include "lib_macro.h"
 #include "driver_cfg.h"
-
-//-------------------------------------------------------------------------------------------------
-
-#if (USE_RTC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -59,7 +59,6 @@ BKPREG_DataBase::BKPREG_DataBase(CRTC* pRTC)
     m_pRTC = pRTC;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: Initialize
@@ -93,7 +92,6 @@ SystemState_e BKPREG_DataBase::Initialize(void* pConfig, size_t ObjectSize)
     return SYS_READY;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: Get
@@ -123,7 +121,6 @@ SystemState_e BKPREG_DataBase::Get(void* pData, uint16_t Record, uint16_t Number
 
     return SYS_READY;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -155,7 +152,6 @@ SystemState_e BKPREG_DataBase::Set(const void* pData, uint16_t Record, uint16_t 
     return SYS_READY;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: GetDriverIndex
@@ -171,7 +167,6 @@ uint16_t BKPREG_DataBase::GetDriverIndex(Range_e Range)
     if(Range == RANGE_MIN) return START_BKPREG_INDEX + 1;
     return END_BKPREG_INDEX - 1;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -191,7 +186,6 @@ SystemState_e BKPREG_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_
     *pSize = sizeof(uint32_t);
     return SYS_READY;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -222,7 +216,6 @@ SystemState_e BKPREG_DataBase::GetPointer(void** pPointer, uint16_t Record, uint
     return SYS_READY;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: CheckRange
@@ -248,7 +241,6 @@ SystemState_e BKPREG_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint
     return SYS_OUT_OF_RANGE;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: GetIndex
@@ -270,7 +262,6 @@ uint8_t BKPREG_DataBase::GetIndex(uint16_t Record, uint16_t Number, uint16_t Sub
 
     return Index;
 }
-
 //-------------------------------------------------------------------------------------------------
 
 #endif // USE_RTC_DRIVER == DEF_ENABLED

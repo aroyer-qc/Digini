@@ -110,6 +110,7 @@
 #if (USE_ETH_DRIVER == DEF_ENABLED)
 #include "lib_ethernet_typedef.h"
 #include "lib_class_eth.h"
+#include "lib_class_ethernet_phy_interface.h"
 #include PHY_DRIVER_INCLUDE
 #endif
 

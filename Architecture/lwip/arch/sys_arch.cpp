@@ -6,7 +6,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -48,30 +48,34 @@
 //-------------------- Digini Error Systems includes ----------------------------------------------
 
 #include "lib_digini.h"
-//#include "lib_typedef.h"
-//#include "lib_macro.h"
 
+//-------------------------------------------------------------------------------------------------
 
 extern "C" {
 
 //-------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------
 //
 // Name:           sys_mbox_new
-// Parameter(s):   int size                -- Size of elements in the mailbox
-// Return:         sys_mbox_t              -- Handle to new mailbox
+//
+// Parameter(s):   sys_mbox_t* pMailBox         Handle of mailbox
+//                 int         Size             Size of elements in the mailbox
+//
+// Return:         err_t                        ERR_OK if mailbox is created, else ERR_MEM if not
 //
 // Description:    Creates a new mailbox
 //
 //-------------------------------------------------------------------------------------------------
-err_t sys_mbox_new(sys_mbox_t *pxMailBox, int iSize)
+err_t sys_mbox_new(sys_mbox_t* pMailBox, int Size)
 {
     void* pBuffer;
 
-    pBuffer = (void*)pMemoryPool->Alloc(iSize * sizeof(void *));
+    pBuffer = (void*)pMemoryPool->Alloc(Size * sizeof(void *));
 
     if(pBuffer !=  NULL)
     {
-        if(nOS_QueueCreate(pxMailBox, pBuffer, (uint8_t)sizeof(void *), iSize) != NOS_OK)
+        if(nOS_QueueCreate(pMailBox, pBuffer, (uint8_t)sizeof(void *), Size) != NOS_OK)
         {
             pMemoryPool->Free(&pBuffer);
             return ERR_MEM;
@@ -87,7 +91,8 @@ err_t sys_mbox_new(sys_mbox_t *pxMailBox, int iSize)
 //-------------------------------------------------------------------------------------------------
 //
 // Name:           sys_mbox_free
-// Parameter(s):   sys_mbox_t   mbox         -- Handle of mailbox
+//
+// Parameter(s):   sys_mbox_t*  mbox         Handle of mailbox
 // Return:         None
 //
 // Description:    Deallocates a mailbox. If there are messages still present in the mailbox when
@@ -95,13 +100,12 @@ err_t sys_mbox_new(sys_mbox_t *pxMailBox, int iSize)
 //                 and the developer should be notified.
 //
 //-------------------------------------------------------------------------------------------------
-void sys_mbox_free(sys_mbox_t *pxMailBox)
+void sys_mbox_free(sys_mbox_t* pMailBox)
 {
     nOS_StatusReg  sr;
     bool           MessagesWaiting;
 
-	MessagesWaiting = nOS_QueueIsEmpty(pxMailBox);
-	//configASSERT((MessagesWaiting == true));
+	MessagesWaiting = nOS_QueueIsEmpty(pMailBox);
 
 	#if SYS_STATS
 	{
@@ -115,40 +119,43 @@ void sys_mbox_free(sys_mbox_t *pxMailBox)
 	#endif // SYS_STATS
 
     nOS_EnterCritical(sr);
-    free(&pxMailBox->buffer);
-    nOS_QueueDelete(pxMailBox);
+    free(&pMailBox->buffer);
+    nOS_QueueDelete(pMailBox);
     nOS_LeaveCritical(sr);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 // Name:           sys_mbox_post
-// Parameter(s):   sys_mbox_t   mbox            -- Handle of mailbox
-//                 void*        data            -- Pointer to data to post
+//
+// Parameter(s):   sys_mbox_t*  pMailBox            Handle of mailbox
+//                 void*        pMessageToPost      Pointer to data to post
 // Return:         None
 //
 // Description:    Post the "msg" to the mailbox.
 //-------------------------------------------------------------------------------------------------
-void sys_mbox_post(sys_mbox_t *pxMailBox, void *pxMessageToPost)
+void sys_mbox_post(sys_mbox_t* pMailBox, void* pMessageToPost)
 {
-	while(nOS_QueueWrite(pxMailBox, &pxMessageToPost, NOS_WAIT_INFINITE) != NOS_OK);
+	while(nOS_QueueWrite(pMailBox, &pMessageToPost, NOS_WAIT_INFINITE) != NOS_OK);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 // Name:           sys_mbox_trypost
-// Parameter(s):   sys_mbox_t   mbox            -- Handle of mailbox
-//                 void *       data            -- Pointer to data to post
-// Return:         err_t                        -- ERR_OK if message posted, else ERR_MEM if not.
+//
+// Parameter(s):   sys_mbox_t*  pMailBox            Handle of mailbox
+//                 void *       pMessageToPost      Pointer to data to post
+// Return:         err_t                            ERR_OK if message posted, else ERR_MEM if not.
 //
 // Description:    Try to post the "msg" to the mailbox.  Returns immediately with error if cannot.
 //-------------------------------------------------------------------------------------------------
-err_t sys_mbox_trypost(sys_mbox_t *pxMailBox, void *pxMessageToPost)
+#define sys_mbox_trypost_fromisr sys_mbox_trypost
+err_t sys_mbox_trypost(sys_mbox_t* pMailBox, void* pMessageToPost)
 {
     err_t Error;
 
     // nOS can write in ISR. just wrap ISR with NOS_ISR() when using nOS function
-	if(nOS_QueueWrite(pxMailBox, pxMessageToPost, NOS_NO_WAIT) == NOS_OK)
+	if(nOS_QueueWrite(pMailBox, pMessageToPost, NOS_NO_WAIT) == NOS_OK)
 	{
 		Error = ERR_OK;
 	}
@@ -162,31 +169,27 @@ err_t sys_mbox_trypost(sys_mbox_t *pxMailBox, void *pxMessageToPost)
 	return Error;
 }
 
-err_t sys_mbox_trypost_fromisr(sys_mbox_t *q, void *msg)
-{
-    return sys_mbox_trypost(q, msg);
-}
-
 //-------------------------------------------------------------------------------------------------
 //
 // Name:           sys_arch_mbox_fetch
-// Parameter(s):   sys_mbox_t   mbox            -- Handle of mailbox
-//                 void**       msg             -- Pointer to pointer to msg received
-//                 u32_t        timeout         -- Number of milliseconds until timeout
-// Return:         u32_t                        -- SYS_ARCH_TIMEOUT if timeout, else number of
-//                                                 milliseconds until received.
 //
-// Description:    locks the thread until a message arrives in the mailbox, but does not block the
-//                 thread longer than "timeout" milliseconds (similar to the sys_arch_sem_wait()
-//                 function). The "msg" argument is a result parameter that is set by the function
-//                 (i.e., by doing "*msg = ptr"). The "msg" parameter maybe NULL to indicate that
-//                 the message should be dropped.
-//                 The return values are the same as for the sys_arch_sem_wait() function:
-//                 Number of milliseconds spent waiting or SYS_ARCH_TIMEOUT if there was a timeout.
-//                 Note that a function with a similar name, sys_mbox_fetch(), is implemented by
-//                 lwIP.
+// Parameter(s):   sys_mbox_t*  pMailBox         Handle of mailbox
+//                 void**       ppBuffer         Pointer to pointer to msg received
+//                 u32_t        TimeOut          Number of milliseconds until timeout
+// Return:         u32_t                         SYS_ARCH_TIMEOUT if timeout, else number of
+//                                               milliseconds until received.
+//
+// Description:    Locks the thread until a message arrives in the mailbox.
+//
+// Note(s):        Does not block the thread longer than "timeout" milliseconds (similar to the
+//                 sys_arch_sem_wait() function). The "msg" argument is a result parameter that is
+//                 set by the function (i.e., by doing "*msg = ptr"). The "msg" parameter maybe
+//                 NULL to indicate that the message should be dropped. The return values are the
+//                 same as for the sys_arch_sem_wait() function: Number of milliseconds spent
+//                 waiting or SYS_ARCH_TIMEOUT if there was a timeout. Note that a function with a
+//                 similar name, sys_mbox_fetch(), is implemented by lwIP.
 //-------------------------------------------------------------------------------------------------
-u32_t sys_arch_mbox_fetch(sys_mbox_t *pxMailBox, void **pBuffer, u32_t ulTimeOut)
+u32_t sys_arch_mbox_fetch(sys_mbox_t* pMailBox, void** ppBuffer, u32_t TimeOut)
 {
     void *Dummy;
     nOS_TickCounter TickStart;
@@ -196,14 +199,14 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t *pxMailBox, void **pBuffer, u32_t ulTimeOut
 
 	TickStart = GetTick();
 
-	if(NULL == pBuffer)
+	if(NULL == ppBuffer)
 	{
-		pBuffer = &Dummy;
+		ppBuffer = &Dummy;
 	}
 
-	if(ulTimeOut != 0)
+	if(TimeOut != 0)
 	{
-		if(nOS_QueueRead(pxMailBox, &(*pBuffer), ulTimeOut / NOS_CONFIG_TICKS_PER_SECOND) == NOS_OK)
+		if(nOS_QueueRead(pMailBox, &(*ppBuffer), TimeOut / NOS_CONFIG_TICKS_PER_SECOND) == NOS_OK)
 		{
 			TickEnd = GetTick();
 			TickElapse = (TickEnd - TickStart) * NOS_CONFIG_TICKS_PER_SECOND;
@@ -212,14 +215,144 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t *pxMailBox, void **pBuffer, u32_t ulTimeOut
 		}
 		else
 		{
-			/* Timed out. */
-			*pBuffer = NULL;
-			Return   = SYS_ARCH_TIMEOUT;
+			// Timed out.
+			*ppBuffer = nullptr;
+			Return    = SYS_ARCH_TIMEOUT;
 		}
 	}
 	else
 	{
-		while(nOS_QueueRead(pxMailBox, &(*pBuffer), NOS_WAIT_INFINITE) != NOS_OK);
+		while(nOS_QueueRead(pMailBox, &(*ppBuffer), NOS_WAIT_INFINITE) != NOS_OK);
+		TickEnd    = GetTick();
+		TickElapse = (TickEnd - TickStart) * NOS_CONFIG_TICKS_PER_SECOND;
+
+		if(TickElapse == 0)
+		{
+			TickElapse = 1;
+		}
+
+		Return = TickElapse;
+	}
+
+	return Return;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           sys_arch_mbox_tryfetch
+//
+// Parameter(s):   sys_mbox_t*  pMailBox      Handle of mailbox
+//                 void**       ppBuffer      Pointer to pointer to buffer received
+//
+// Return:         u32_t                   -  SYS_MBOX_EMPTY if no messages. Otherwise, ERR_OK.
+//
+// Description:    Similar to sys_arch_mbox_fetch, but if message is not ready immediately, will
+//                 return with SYS_MBOX_EMPTY.  On success, 0 is returned.
+//-------------------------------------------------------------------------------------------------
+u32_t sys_arch_mbox_tryfetch(sys_mbox_t* pMailBox, void** ppBuffer)
+{
+    void *Dummy;
+    u32_t Return;
+
+	if(ppBuffer== nullptr)
+	{
+		ppBuffer = &Dummy;
+	}
+
+    // nOS can read in ISR. just wrap ISR with NOS_ISR() when using nOS function
+    if(nOS_QueueRead(pMailBox, &(*ppBuffer), 0) == NOS_OK)
+	{
+		Return = ERR_OK;
+	}
+	else
+	{
+		Return = SYS_MBOX_EMPTY;
+	}
+
+	return Return;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           sys_sem_new
+//
+// Parameter(s):   sys_sem_t*  pSemaphore     Handle of semaphore
+//                  u8_t       Count         Initial Count of semaphore (1 or 0)
+//
+// Return:         err_t       ERR_OK if semaphore is created, else ERR_MEM if not
+//
+// Description:    Creates and returns a new semaphore.
+//
+// Note(s):        The "Count" argument specifies the initial state of the semaphore.
+//                 NOTE: Currently this routine only creates counts of 1 or 0
+//-------------------------------------------------------------------------------------------------
+err_t sys_sem_new(sys_sem_t* pSemaphore, u8_t Count)
+{
+    err_t Return = ERR_MEM;
+
+	if(nOS_SemCreate(pSemaphore, 0, 1) == NOS_OK)
+	{
+		if(Count == 0)
+		{
+			nOS_SemTake(pSemaphore, NOS_NO_WAIT);
+		}
+
+		Return = ERR_OK;
+		SYS_STATS_INC_USED(sem);
+	}
+	else
+	{
+		SYS_STATS_INC(sem.err);
+	}
+
+	return Return;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           sys_arch_sem_wait
+//
+// Parameter(s):   sys_sem_t*   pSemaphore     Semaphore to wait on
+//                 u32_t        TimeOut        Number of milliseconds until timeout
+//
+// Return:         u32_t                    Time elapsed or SYS_ARCH_TIMEOUT
+//
+// Description:    Blocks the thread while waiting for the semaphore to be signaled.
+//
+// Note(s):        If the "timeout" argument is non-zero, the thread should only be blocked for
+//                 the specified time (measured in milliseconds). If the timeout argument is
+//                 non-zero, the return value is the number of milliseconds spent waiting for the
+//                 semaphore to be signaled. If the semaphore was not signaled within the specified
+//                 time, the return value is SYS_ARCH_TIMEOUT. If the thread didn't have to wait for
+//                 the semaphore (i.e., it was already signaled), the function may return zero.
+//                 Notice that lwIP implements a function with a similar name, sys_sem_wait(),
+//                 that uses the sys_arch_sem_wait() function.
+//-------------------------------------------------------------------------------------------------
+u32_t sys_arch_sem_wait(sys_sem_t* pSemaphore, u32_t TimeOut)
+{
+    nOS_TickCounter TickStart;
+    nOS_TickCounter TickEnd;
+    nOS_TickCounter TickElapse;
+    u32_t           Return;
+
+	TickStart = GetTick();
+
+	if(TimeOut != 0)
+	{
+		if(nOS_SemTake(pSemaphore, TimeOut / NOS_CONFIG_TICKS_PER_SECOND) == NOS_OK)
+		{
+			TickEnd = GetTick();
+			TickElapse = (TickEnd - TickStart) * NOS_CONFIG_TICKS_PER_SECOND;
+			Return = TickElapse;
+		}
+		else
+		{
+			Return = SYS_ARCH_TIMEOUT;
+		}
+	}
+	else
+	{
+		while(nOS_SemTake(pSemaphore, NOS_WAIT_INFINITE) != NOS_OK);
 		TickEnd = GetTick();
 		TickElapse = (TickEnd - TickStart) * NOS_CONFIG_TICKS_PER_SECOND;
 
@@ -234,182 +367,52 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t *pxMailBox, void **pBuffer, u32_t ulTimeOut
 	return Return;
 }
 
-/*---------------------------------------------------------------------------*
- * Routine:  sys_arch_mbox_tryfetch
- *---------------------------------------------------------------------------*
- * Description:
- *      Similar to sys_arch_mbox_fetch, but if message is not ready
- *      immediately, we'll return with SYS_MBOX_EMPTY.  On success, 0 is
- *      returned.
- * Inputs:
- *      sys_mbox_t mbox         -- Handle of mailbox
- *      void **msg              -- Pointer to pointer to msg received
- * Outputs:
- *      u32_t                   -- SYS_MBOX_EMPTY if no messages.  Otherwise,
- *                                  return ERR_OK.
- *---------------------------------------------------------------------------*/
-u32_t sys_arch_mbox_tryfetch( sys_mbox_t *pxMailBox, void **ppvBuffer )
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           sys_sem_signal
+//
+// Parameter(s):   sys_sem_t*   pSemaphore
+//
+// Return:         None
+//
+// Description:    Signals (releases) a semaphore
+//-------------------------------------------------------------------------------------------------
+void sys_sem_signal(sys_sem_t* pSemaphore)
 {
-    void *Dummy;
-    u32_t Return;
-
-	if(ppvBuffer== NULL)
-	{
-		ppvBuffer = &Dummy;
-	}
-
-    // nOS can read in ISR. just wrap ISR with NOS_ISR() when using nOS function
-    if(nOS_QueueRead(pxMailBox, &( *ppvBuffer ), 0 ) == NOS_OK)
-	{
-		Return = ERR_OK;
-	}
-	else
-	{
-		Return = SYS_MBOX_EMPTY;
-	}
-
-	return Return;
+	nOS_SemGive(pSemaphore);
 }
 
-/*---------------------------------------------------------------------------*
- * Routine:  sys_sem_new
- *---------------------------------------------------------------------------*
- * Description:
- *      Creates and returns a new semaphore. The "ucCount" argument specifies
- *      the initial state of the semaphore.
- *      NOTE: Currently this routine only creates counts of 1 or 0
- * Inputs:
- *      sys_mbox_t mbox         -- Handle of mailbox
- *      u8_t ucCount            -- Initial ucCount of semaphore (1 or 0)
- * Outputs:
- *      sys_sem_t               -- Created semaphore or 0 if could not create.
- *---------------------------------------------------------------------------*/
-err_t sys_sem_new(sys_sem_t *pxSemaphore, u8_t ucCount)
-{
-    err_t xReturn = ERR_MEM;
-
-	if(nOS_SemCreate(pxSemaphore, 0, 1) == NOS_OK)
-	{
-		if(ucCount == 0)
-		{
-			nOS_SemTake(pxSemaphore, NOS_NO_WAIT);
-		}
-
-		xReturn = ERR_OK;
-		SYS_STATS_INC_USED( sem );
-	}
-	else
-	{
-		SYS_STATS_INC( sem.err );
-	}
-
-	return xReturn;
-}
-
-/*---------------------------------------------------------------------------*
- * Routine:  sys_arch_sem_wait
- *---------------------------------------------------------------------------*
- * Description:
- *      Blocks the thread while waiting for the semaphore to be
- *      signaled. If the "timeout" argument is non-zero, the thread should
- *      only be blocked for the specified time (measured in
- *      milliseconds).
- *
- *      If the timeout argument is non-zero, the return value is the number of
- *      milliseconds spent waiting for the semaphore to be signaled. If the
- *      semaphore wasn't signaled within the specified time, the return value is
- *      SYS_ARCH_TIMEOUT. If the thread didn't have to wait for the semaphore
- *      (i.e., it was already signaled), the function may return zero.
- *
- *      Notice that lwIP implements a function with a similar name,
- *      sys_sem_wait(), that uses the sys_arch_sem_wait() function.
- * Inputs:
- *      sys_sem_t sem           -- Semaphore to wait on
- *      u32_t timeout           -- Number of milliseconds until timeout
- * Outputs:
- *      u32_t                   -- Time elapsed or SYS_ARCH_TIMEOUT.
- *---------------------------------------------------------------------------*/
-u32_t sys_arch_sem_wait( sys_sem_t *pxSemaphore, u32_t ulTimeout)
-{
-    nOS_TickCounter TickStart;
-    nOS_TickCounter TickEnd;
-    nOS_TickCounter TickElapse;
-    unsigned long ulReturn;
-
-	TickStart = GetTick();
-
-	if(ulTimeout != 0)
-	{
-		if(nOS_SemTake(pxSemaphore, ulTimeout / NOS_CONFIG_TICKS_PER_SECOND ) == NOS_OK)
-		{
-			TickEnd = GetTick();
-			TickElapse = (TickEnd - TickStart) * NOS_CONFIG_TICKS_PER_SECOND;
-			ulReturn = TickElapse;
-		}
-		else
-		{
-			ulReturn = SYS_ARCH_TIMEOUT;
-		}
-	}
-	else
-	{
-		while(nOS_SemTake(pxSemaphore, NOS_WAIT_INFINITE) != NOS_OK);
-		TickEnd = GetTick();
-		TickElapse = (TickEnd - TickStart) * NOS_CONFIG_TICKS_PER_SECOND;
-
-		if(TickElapse == 0)
-		{
-			TickElapse = 1;
-		}
-
-		ulReturn = TickElapse;
-	}
-
-	return ulReturn;
-}
-
-/*---------------------------------------------------------------------------*
- * Routine:  sys_sem_signal
- *---------------------------------------------------------------------------*
- * Description:
- *      Signals (releases) a semaphore
- * Inputs:
- *      sys_sem_t sem           -- Semaphore to signal
- *---------------------------------------------------------------------------*/
-void sys_sem_signal( sys_sem_t *pxSemaphore )
-{
-	nOS_SemGive(pxSemaphore);
-}
-
-/*---------------------------------------------------------------------------*
- * Routine:  sys_sem_free
- *---------------------------------------------------------------------------*
- * Description:
- *      Deallocates a semaphore
- * Inputs:
- *      sys_sem_t sem           Semaphore to free
- *---------------------------------------------------------------------------*/
-void sys_sem_free(sys_sem_t *pxSemaphore)
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           sys_sem_free
+//
+// Parameter(s):   sys_sem_t*   pSemaphore
+//
+// Return:         None
+//
+// Description:    Deallocates a semaphore
+//-------------------------------------------------------------------------------------------------
+void sys_sem_free(sys_sem_t* pSemaphore)
 {
 	SYS_STATS_DEC(sem.used);
-	nOS_SemDelete(pxSemaphore);
+	nOS_SemDelete(pSemaphore);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
 // Name:           sys_mutex_new
-// Parameter(s):   sys_mutex_t   mbox           Handle of mutex
 //
-// Return:         err_t                        ERR_OK if mutex is created, else ERR_MEM if not.
+// Parameter(s):   sys_mutex_t*     pMutex         Handle of mutex
+//
+// Return:         err_t                           ERR_OK if mutex is created, else ERR_MEM if not.
 //
 // Description:    Create a new mutex
 //-------------------------------------------------------------------------------------------------
-err_t sys_mutex_new(sys_mutex_t *pxMutex)
+err_t sys_mutex_new(sys_mutex_t* pMutex)
 {
     err_t Error = ERR_MEM;
 
-	if(nOS_MutexCreate(pxMutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT) == NOS_OK)
+	if(nOS_MutexCreate(pMutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT) == NOS_OK)
 	{
 		Error = ERR_OK;
 		SYS_STATS_INC_USED(mutex);
@@ -425,46 +428,50 @@ err_t sys_mutex_new(sys_mutex_t *pxMutex)
 //-------------------------------------------------------------------------------------------------
 //
 // Name:           sys_mutex_lock
-// Parameter(s):   sys_mutex_t   Mutex            Handle of mutex
+//
+// Parameter(s):   sys_mutex_t*     pMutex              Handle of mutex
 // Return:         None
 //
 // Description:    Lock a mutex
 //-------------------------------------------------------------------------------------------------
-void sys_mutex_lock(sys_mutex_t* Mutex)
+void sys_mutex_lock(sys_mutex_t* pMutex)
 {
-    while(nOS_MutexLock(Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
+    while(nOS_MutexLock(pMutex, NOS_WAIT_INFINITE) != NOS_OK){};
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 // Name:           sys_mutex_unlock
-// Parameter(s):   sys_mutex_t   Mutex            Handle of mutex
+//
+// Parameter(s):   sys_mutex_t*     pMutex              Handle of mutex
 // Return:         None
 //
 // Description:    Unlock a mutex
 //-------------------------------------------------------------------------------------------------
-void sys_mutex_unlock(sys_mutex_t *Mutex)
+void sys_mutex_unlock(sys_mutex_t* pMutex)
 {
-    nOS_MutexUnlock(Mutex);
+    nOS_MutexUnlock(pMutex);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 // Name:           sys_mutex_free
-// Parameter(s):   sys_mutex_t   mbox            -- Handle of mutex
+//
+// Parameter(s):   sys_mutex_t*     pMutex              Handle of mutex
 // Return:         None
 //
 // Description:    Delete a mutex
 //-------------------------------------------------------------------------------------------------
-void sys_mutex_free(sys_mutex_t* Mutex)
+void sys_mutex_free(sys_mutex_t* pMutex)
 {
 	SYS_STATS_DEC(mutex.used);
-	nOS_MutexDelete(Mutex);
+	nOS_MutexDelete(pMutex);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 // Name:           sys_init
+//
 // Parameter(s):   None
 // Return:         None
 //
@@ -479,21 +486,23 @@ void sys_init(void)
 //-------------------------------------------------------------------------------------------------
 //
 // Name:           sys_now
+//
 // Parameter(s):   None
-// Return:         None
+// Return:         u32_t
 //
 // Description:    Return actual systick
 //-------------------------------------------------------------------------------------------------
 u32_t sys_now(void)
 {
-	return (u32_t)GetTick();
+	return u32_t(GetTick());
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 // Name:           sys_thread_new
-// Parameter(s):   char*    Name                    Name of the thread
-//                 void     (*Thread)(void* arg)    Thread-function.
+//
+// Parameter(s):   char*    pName                   Name of the thread
+//                 void     (*Thread)(void* pArg)   Thread-function.
 //                 void*    Arg                     parameter passed to 'thread'
 //                 int      StackSize               stack size in bytes for the new thread.
 //                 int      Priority                priority of the new thread
@@ -501,22 +510,22 @@ u32_t sys_now(void)
 //
 // Description:    Creates a new thread
 //-------------------------------------------------------------------------------------------------
-sys_thread_t sys_thread_new(const char* Name, void(*Thread)(void* Parameters), void* Arg, int StackSize, int Priority)
+sys_thread_t sys_thread_new(const char* pName, void(*Thread)(void* Parameters), void* pArg, int StackSize, int Priority)
 {
     nOS_Stack*    pBuffer;
     nOS_Thread*   pThread;
 
    #if (NOS_CONFIG_THREAD_NAME_ENABLE == 0)
-     VAR_UNUSED(Name);
+     VAR_UNUSED(pName);
    #endif
 
-    if((pThread = (nOS_Thread*)pMemoryPool->Alloc(sizeof(nOS_Thread))) != NULL)
+    if((pThread = (nOS_Thread*)pMemoryPool->Alloc(sizeof(nOS_Thread))) != nullptr)
     {
-        if((pBuffer = (nOS_Stack*)pMemoryPool->Alloc(StackSize)) !=  NULL)
+        if((pBuffer = (nOS_Stack*)pMemoryPool->Alloc(StackSize)) !=  nullptr)
         {
-            if(nOS_ThreadCreate(pThread, Thread, Arg, pBuffer, StackSize, Priority
+            if(nOS_ThreadCreate(pThread, Thread, pArg, pBuffer, StackSize, Priority
                               #if (NOS_CONFIG_THREAD_NAME_ENABLE > 0)
-                              , Name
+                              , pName
                               #endif
                                 ) != NOS_OK)
             {
@@ -527,70 +536,77 @@ sys_thread_t sys_thread_new(const char* Name, void(*Thread)(void* Parameters), v
         else
         {
             pMemoryPool->Free((void**)&pThread);
-
         }
     }
 
-            return *pThread;
-
+    return *pThread;
 }
 
-/*---------------------------------------------------------------------------*
- * Routine:  sys_arch_protect
- *---------------------------------------------------------------------------*
- * Description:
- *      This optional function does a "fast" critical region protection and
- *      returns the previous protection level. This function is only called
- *      during very short critical regions. An embedded system which supports
- *      ISR-based drivers might want to implement this function by disabling
- *      interrupts. Task-based systems might want to implement this by using
- *      a mutex or disabling tasking. This function should support recursive
- *      calls from the same task or interrupt. In other words,
- *      sys_arch_protect() could be called while already protected. In
- *      that case the return value indicates that it is already protected.
- *
- *      sys_arch_protect() is only required if your port is supporting an
- *      operating system.
- * Outputs:
- *      sys_prot_t              -- Previous protection level (not used here)
- *---------------------------------------------------------------------------*/
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           sys_arch_protect
+//
+// Parameter(s):   None
+//
+// Return:         sys_prot_t               Previous protection level (not used here)
+//
+// Description:    This optional function does a "fast" critical region protection and returns the
+//                 previous protection level. This function is only called during very short
+//                 critical regions. An embedded system which supports ISR-based drivers might want
+//                 to implement this function by disabling interrupts. Task-based systems might
+//                 want to implement this by using a mutex or disabling tasking. This function
+//                 should support recursive calls from the same task or interrupt. In other words,
+//                 sys_arch_protect() could be called while already protected. In that case the
+//                 return value indicates that it is already protected.
+//-------------------------------------------------------------------------------------------------
 sys_prot_t sys_arch_protect(void)
 {
     sys_mutex_lock(&sys_arch_mutex);
 	return 0;
 }
 
-/*---------------------------------------------------------------------------*
- * Routine:  sys_arch_unprotect
- *---------------------------------------------------------------------------*
- * Description:
- *      See the documentation for
- *      sys_arch_protect() for more information. This function is only
- *      required if your port is supporting an operating system.
- * Inputs:
- *      sys_prot_t
- *---------------------------------------------------------------------------*/
-void sys_arch_unprotect(sys_prot_t Value)
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           sys_arch_unprotect
+//
+// Parameter(s):   sys_prot_t   Prot        protection level (not used here)
+//
+// Return:         None
+//
+// Description:    See the documentation for sys_arch_protect() for more information. This function
+//                 is only required if your port is supporting an operating system.
+//-------------------------------------------------------------------------------------------------
+void sys_arch_unprotect(sys_prot_t Prot)
 {
-	VAR_UNUSED(Value);
+	VAR_UNUSED(Prot);
 	sys_mutex_unlock(&sys_arch_mutex);
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           sys_assert
+//
+// Parameter(s):   char*    pMessage
+//
+// Return:         None
+//
+// Description:    Prints an assertion messages and aborts execution. TODO
+//-------------------------------------------------------------------------------------------------
 /*
  * Prints an assertion messages and aborts execution.
  */
-void sys_assert(const char *Message)
+void sys_assert(const char* pMessage)
 {
-	(void) Message;
+	(void) pMessage;
 
 	for (;;)
 	{
 	}
 }
 
-
 //-------------------------------------------------------------------------------------------------
 
 }   // extern "C"
 
+//-------------------------------------------------------------------------------------------------
 

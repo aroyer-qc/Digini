@@ -147,6 +147,10 @@
 #define DMA_RX_RCH      0x00004000U     // Second address chained
 #define DMA_RX_RBS1     0x00001FFFU     // Receive buffer 1 size
 
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
 typedef void (*ETH_MAC_SignalEvent_t) (uint32_t event);  // Pointer to ETH_MAC_SignalEvent : Signal Ethernet Event. use Digini
 
 // EMAC Driver Control Information

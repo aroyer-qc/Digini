@@ -27,14 +27,16 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_GRAFX == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
 #include "widget_cfg.h"
 #include "color_cfg.h"
 #include "grafx_cfg.h"
-
-#if (DIGINI_USE_GRAFX == DEF_ENABLED)
 #include "lib_compression.h"
 #include "lib_label.h"
 #include "lib_grafx_define.h"

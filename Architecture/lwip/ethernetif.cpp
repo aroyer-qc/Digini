@@ -41,51 +41,22 @@
 #include "lwip/tcpip.h"
 #include <string.h>
 
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
 
-// All the stuff to move elsewhere
-
-// MAC address configuration.
-#define MAC_ADDR0	                            (((char *)0x1FFF7A10)[0])
-#define MAC_ADDR1	                            (((char *)0x1FFF7A10)[2])
-#define MAC_ADDR2	                            (((char *)0x1FFF7A10)[4])
-#define MAC_ADDR3	                            (((char *)0x1FFF7A10)[6])
-#define MAC_ADDR4	                            (((char *)0x1FFF7A10)[8])
-#define MAC_ADDR5	                            (((char *)0x1FFF7A10)[10])
-
-#define netifMTU                                1500
-#define netifGUARD_BLOCK_TIME			        250
-#define ETHERNET_FRAME_SIZE                     1514
-#define BLOCK_TIME_WAITING_FOR_INPUT            250 // mSec
-
-
-#define TASK_ETHERNET_IF_STACK_SIZE             512
-#define TASK_ETHERNET_IF_PRIO                   4
-
-ETH_Driver          EthMac;
-PHY_LAN8742A_Driver Phy(0);
-
-// Define those to better describe your network interface.
-#define IFNAME0 'e'
-#define IFNAME1 'n'
-//-----------------------------------------------------------------------------------------
-
-
-/**
- * Struct to hold private data used to operate your ethernet interface.
- * Keeping the ethernet address of the MAC in this struct is not necessary
- * as it is already kept in the struct netif.
- */
- // won't work like this!!
+// Struct to hold private data used to operate your ethernet interface.
 struct ethernetif
 {
     ETH_Driver*             Mac;              // Registered MAC driver
-//    DRIVER_PHY_Interface*   Phy;              // Registered PHY driver
-    PHY_LAN8742A_Driver*    Phy;              // Registered PHY driver
+    PHY_DriverInterface*    Phy;              // Registered PHY driver
     ETH_LinkState_e         Link;             // Ethernet Link State
     bool                    EventRX_Frame;    // Callback RX event generated
     bool                    PHY_Ok;           // PHY initialized successfully
 };
 
+ETH_Driver          EthMac;
+PHY_LAN8742A_Driver Phy(0);
 
 extern "C" {
 
@@ -97,10 +68,8 @@ static struct ethernetif  ETH0;
 //static nOS_Thread   TaskHandle;
 //static nOS_Stack    Stack[TASK_ETHERNET_IF_STACK_SIZE];
 
-
 // Forward declarations.
 static err_t low_level_output(struct netif *netif, struct pbuf *p);
-/*static void ethernetif_input(void *param);*/
 static void arp_timer(void *arg);
 static void ethernetif_Callback(uint32_t event);
 //static err_t EthernetModeAndSpeed(void);
@@ -138,7 +107,7 @@ err_t ethernetif_init(struct netif *netif)
     ETH0.Mac->Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
 
     ETH0.Mac->PowerControl(ETH_POWER_FULL);								// Enable Clock, Reset ETH, Init MAC, Enable ETH IRQ
-    ETH0.Mac->SetMacAddress((ETH_MAC_Address_t*)netif->hwaddr);
+        ETH0.Mac->SetMacAddress((ETH_MAC_Address_t*)netif->hwaddr);
     ETH0.Mac->Control(ETH_MAC_CONTROL_TX, 0);
     ETH0.Mac->Control(ETH_MAC_CONTROL_RX, 0);
 

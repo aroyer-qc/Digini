@@ -42,43 +42,39 @@
 #include <string.h>
 
 //-------------------------------------------------------------------------------------------------
-// Typedef(s)
+// Private variable(s)
 //-------------------------------------------------------------------------------------------------
-
-// Struct to hold private data used to operate your ethernet interface.
-struct ethernetif
-{
-    ETH_Driver*             Mac;              // Registered MAC driver
-    PHY_DriverInterface*    Phy;              // Registered PHY driver
-    ETH_LinkState_e         Link;             // Ethernet Link State
-    bool                    EventRX_Frame;    // Callback RX event generated
-    bool                    PHY_Ok;           // PHY initialized successfully
-};
-
-ETH_Driver          EthMac;
-PHY_LAN8742A_Driver Phy(0);
 
 extern "C" {
 
-
-nOS_Sem RX_Sem;
-nOS_Mutex TX_Mutex;
-static struct ethernetif  ETH0;
+static ETH_Driver                  ETH_Mac;
+static PHY_DRIVER_INTERFACE        ETH_Phy(0);
+ //  PHY_DriverInterface*    Phy;                           // Registered PHY driver
+static ETH_LinkState_e             ETH_Link;                // Ethernet Link State
+static nOS_Sem                     ETH_RX_Sem;
+//static bool                        EventRX_Frame;       // Callback RX event generated
+static nOS_Mutex                   ETH_TX_Mutex;
+//static struct ethernetif           ETH0;
 
 //static nOS_Thread   TaskHandle;
 //static nOS_Stack    Stack[TASK_ETHERNET_IF_STACK_SIZE];
 
 // Forward declarations.
-static err_t low_level_output(struct netif *netif, struct pbuf *p);
-static void arp_timer(void *arg);
-static void ethernetif_Callback(uint32_t event);
+static err_t    low_level_output        (struct netif *netif, struct pbuf *p);
+static void     arp_timer               (void *arg);
+static void     ethernetif_Callback     (uint32_t event);
 //static err_t EthernetModeAndSpeed(void);
+
+#if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
+static void     ethernetif_LinkCallBack (void* pArg);
+#endif
+
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       ethernetif_init
 //
-//  Parameter(s):   netif   The lwip network interface structure for this ethernetif
+//  Parameter(s):   netif*  The lwip network interface structure for this ethernetif
 //  Return:         err_t   ERR_OK  If the loopif is initialized
 //                          ERR_MEM If private data couldn't be allocated
 //                          Any other err_t on error
@@ -91,55 +87,52 @@ static void ethernetif_Callback(uint32_t event);
 //                  of the hardware.
 //
 //-------------------------------------------------------------------------------------------------
-err_t ethernetif_init(struct netif *netif)
+err_t ethernetif_init(struct netif* netif)
 {
 	ETH_MAC_Capability_t cap;
     //nOS_Error Error;
 
-    // Do whatever else is needed to initialize interface.
-	ETH0.Mac    = &EthMac;
-	ETH0.Phy    = &Phy;
-	ETH0.Link   = ETH_LINK_DOWN;
-	ETH0.PHY_Ok = false;
+	ETH_Link = ETH_LINK_DOWN;
 
-    cap = ETH0.Mac->GetCapabilities();
-    ETH0.EventRX_Frame = (cap.event_rx_frame) ? true : false;
-    ETH0.Mac->Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
+    cap = ETH_Mac.GetCapabilities();
+    //ETH0.EventRX_Frame = (cap.event_rx_frame) ? true : false;
+    ETH_Mac.Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
 
-    ETH0.Mac->PowerControl(ETH_POWER_FULL);								// Enable Clock, Reset ETH, Init MAC, Enable ETH IRQ
-        ETH0.Mac->SetMacAddress((ETH_MAC_Address_t*)netif->hwaddr);
-    ETH0.Mac->Control(ETH_MAC_CONTROL_TX, 0);
-    ETH0.Mac->Control(ETH_MAC_CONTROL_RX, 0);
+    ETH_Mac.PowerControl(ETH_POWER_FULL);								// Enable Clock, Reset ETH, Init MAC, Enable ETH IRQ
+    ETH_Mac.Control(ETH_MAC_CONTROL_TX, 0);
+    ETH_Mac.Control(ETH_MAC_CONTROL_RX, 0);
 
-    // this should more generic.. to too close to the mac driver of the STM32
-	ETH0.Mac->Control(ETH_MAC_CONFIGURE, ETH_MAC_CHECKSUM_OFFLOAD_RX |
-			                             ETH_MAC_CHECKSUM_OFFLOAD_TX |
-                                         ETH_MAC_DUPLEX_FULL         |
-										 ETH_MAC_SPEED_100M          |
-										 ETH_MAC_ADDRESS_BROADCAST);
-    ETH0.Mac->Control(ETH_DMA_CONFIGURE, ETH_DMAOMR_REG        |
-										 ETH_DMAOMR_OSF);           // Second Frame Operate
-    ETH0.Mac->Control(ETH_DMA_CONFIGURE, ETH_DMABMR_REG        |
-    		                             ETH_DMABMR_AAB        |    // Address Aligned Beats
-										 ETH_DMABMR_EDE        |    // Enhanced Descriptor format enable
-										 ETH_DMABMR_FB         |    // Fixed Burst
-										 ETH_DMABMR_RTPR_2_1   |    // Arbitration Round Robin RxTx 2 1
-										 ETH_DMABMR_RDP_32Beat |    // Rx DMA Burst Length 32 Beat
-										 ETH_DMABMR_PBL_32Beat |    // Tx DMA Burst Length 32 Beat
-										 ETH_DMABMR_USP);           // Enable use of separate PBL for Rx and Tx
+	ETH_Mac.Control(ETH_MAC_CONFIGURE, ETH_MAC_CHECKSUM_OFFLOAD_RX |
+			                           ETH_MAC_CHECKSUM_OFFLOAD_TX |
+                                       ETH_MAC_DUPLEX_FULL         |
+							   	       ETH_MAC_SPEED_100M          |
+								       ETH_MAC_ADDRESS_BROADCAST);
+
+// these two call are to close to the Chip model ST
+    ETH_Mac.Control(ETH_DMA_CONFIGURE, ETH_DMAOMR_REG        |
+									   ETH_DMAOMR_OSF);           // Second Frame Operate
+    ETH_Mac.Control(ETH_DMA_CONFIGURE, ETH_DMABMR_REG        |
+    		                           ETH_DMABMR_AAB        |    // Address Aligned Beats
+									   ETH_DMABMR_EDE        |    // Enhanced Descriptor format enable
+									   ETH_DMABMR_FB         |    // Fixed Burst
+									   ETH_DMABMR_RTPR_2_1   |    // Arbitration Round Robin RxTx 2 1
+									   ETH_DMABMR_RDP_32Beat |    // Rx DMA Burst Length 32 Beat
+									   ETH_DMABMR_PBL_32Beat |    // Tx DMA Burst Length 32 Beat
+									   ETH_DMABMR_USP);           // Enable use of separate PBL for Rx and Tx
 
 	// Initialize Physical Media Interface
-	if(ETH0.Phy->Initialize(ETH0.Mac) == SYS_READY)
+	if(ETH_Phy.Initialize(&ETH_Mac) == SYS_READY)
 	{
-		ETH0.Phy->PowerControl(ETH_POWER_FULL);
-		ETH0.Phy->SetInterface(ETH_MediaInterface_e(cap.media_interface));
-		ETH0.Phy->SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
+		ETH_Phy.PowerControl(ETH_POWER_FULL);
+		ETH_Phy.SetInterface(ETH_MediaInterface_e(cap.media_interface));
+		ETH_Phy.SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
 		//EthernetModeAndSpeed();
 
-		ETH0.PHY_Ok = true;
-
-      #if ETH_USE_LINK_IRQ // to rename with proper preprocessor
-        ETH0.Phy->SetLinkUpInterrupt();
+      #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
+        IO_PinInit(IO_ETH_PHY_LINK_IO);
+        IO_InitIRQ(ETH_PHY_LINK_IO_ISR, ethernetif_LinkCallcack);
+        ETH_Phy.SetLinkUpInterrupt();
+        IO_EnableIRQ(ETH_PHY_LINK_IO_ISR);
 	  #endif
 	}
 
@@ -168,6 +161,7 @@ err_t ethernetif_init(struct netif *netif)
         netif->hwaddr[3] =  MAC_ADDR3;
         netif->hwaddr[4] =  MAC_ADDR4;
         netif->hwaddr[5] =  MAC_ADDR5;
+        ETH_Mac.SetMacAddress((ETH_MAC_Address_t*)netif->hwaddr);
 
         // set netif maximum transfer unit
         netif->mtu = netifMTU;
@@ -176,8 +170,8 @@ err_t ethernetif_init(struct netif *netif)
         netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
 
         // create binary semaphore used for informing ethernetif of frame reception
-        /*nOS_Error*/ nOS_SemCreate (&RX_Sem, 0, 20);
-        /*nOS_Error*/ nOS_MutexCreate (&TX_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
+        /*nOS_Error*/ nOS_SemCreate (&ETH_RX_Sem, 0, 20);
+        /*nOS_Error*/ nOS_MutexCreate (&ETH_TX_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
 
 /*
         Error = nOS_ThreadCreate(&TaskHandle,
@@ -188,9 +182,9 @@ err_t ethernetif_init(struct netif *netif)
                                  TASK_ETHERNET_IF_PRIO);
 */
         // Enable MAC and DMA transmission and reception
-        ETH0.Mac->Control(ETH_MAC_CONTROL_TX, 1);
-        ETH0.Mac->Control(ETH_MAC_CONTROL_RX, 1);
-        ETH0.Mac->Control(ETH_MAC_FLUSH, ETH_MAC_FLUSH_TX);
+        ETH_Mac.Control(ETH_MAC_CONTROL_TX, 1);
+        ETH_Mac.Control(ETH_MAC_CONTROL_RX, 1);
+        ETH_Mac.Control(ETH_MAC_FLUSH, ETH_MAC_FLUSH_TX);
     }
 
 	sys_timeout(ARP_TMR_INTERVAL, arp_timer, nullptr);
@@ -217,26 +211,28 @@ err_t ethernetif_init(struct netif *netif)
 //                  memory failure (except for the TCP timers).
 //
 //-------------------------------------------------------------------------------------------------
-static err_t low_level_output(struct netif *netif, struct pbuf *p)
+static err_t low_level_output(struct netif* netif, struct pbuf* p)
 {
 	(void)netif;
     struct pbuf *q;
 
-    if(nOS_MutexLock(&TX_Mutex, netifGUARD_BLOCK_TIME))
+    if(nOS_MutexLock(&ETH_TX_Mutex, netifGUARD_BLOCK_TIME))
     {
         for(q = p; q != nullptr; q = q->next)
         {
             // Send the data from the pbuf to the interface, one pbuf at a time. The size of the data in each pbuf is kept in the ->len variable.
                u32_t flags = (q->next) ? ETH_MAC_TX_FRAME_FRAGMENT : 0;
-               ETH0.Mac->SendFrame((uint8_t*)q->payload, q->len, flags);
+               ETH_Mac.SendFrame((uint8_t*)q->payload, q->len, flags);
         }
 
-        nOS_MutexUnlock(&TX_Mutex);
+        nOS_MutexUnlock(&ETH_TX_Mutex);
     }
+    /*
     else
     {
-	   //DEBUG_Lwip("low_level_output: Sem TimeOut\n\r");
+	   DEBUG_Lwip("low_level_output: Sem TimeOut\n\r");
     }
+    */
 
     return ERR_OK;
 }
@@ -264,22 +260,22 @@ void ethernetif_input(void *param)
 
 	while(1)
 	{
-        if((nOS_SemTake(&RX_Sem, BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK) && (s_pxNetIf != nullptr))
+        if((nOS_SemTake(&ETH_RX_Sem, BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK) && (s_pxNetIf != nullptr))
 		{
 			do
 			{
-                Length = ETH0.Mac->GetRX_FrameSize();                        // Obtain the size of the packet and put it into the "len" variable.
+                Length = ETH_Mac.GetRX_FrameSize();                         // Obtain the size of the packet and put it into the "len" variable.
 
-                if(Length != 0)            // No packet available
+                if(Length != 0)                                             // No packet available
                 {
                     if(Length > ETHERNET_FRAME_SIZE)
                     {
-                        ETH0.Mac->ReadFrame(nullptr, 0);                    // Drop oversized packet
+                        ETH_Mac.ReadFrame(nullptr, 0);                      // Drop oversized packet
                     }
                     else
                     {
                         p = pbuf_alloc(PBUF_RAW, Length, PBUF_POOL);        // We allocate a pbuf chain of pbufs from the pool.
-                        ETH0.Mac->ReadFrame (p, Length);
+                        ETH_Mac.ReadFrame(p, Length);
 
                         if(s_pxNetIf->input(p, s_pxNetIf) != ERR_OK)
                         {
@@ -288,7 +284,7 @@ void ethernetif_input(void *param)
                         }
                         else
                         {
-                            nOS_SemTake(&RX_Sem, 0);
+                            nOS_SemTake(&ETH_RX_Sem, 0);
                         }
                     }
                 }
@@ -296,19 +292,6 @@ void ethernetif_input(void *param)
 			}
 			while(p != nullptr);
 		}
-
-        if(netif_find("en0"))
-        {
-            if(ETH0.Phy->GetLinkState() == ETH_LINK_UP)
-            {
-                //EthernetModeAndSpeed();
-                netif_set_link_up( netif_find("en0") );
-            }
-            else
-            {
-                netif_set_link_down( netif_find("en0") );
-            }
-        }
     }
 }
 
@@ -382,6 +365,7 @@ static err_t EthernetModeAndSpeed(void)
 	return ERR_OK;
 }
 */
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:
@@ -392,16 +376,63 @@ static err_t EthernetModeAndSpeed(void)
 //  Description:
 //
 //-------------------------------------------------------------------------------------------------
-// ISR activated when we receive a new message on the ethernet
-void ethernetif_Callback(uint32_t event)
+/*
+static err_t pollThePHY(void)
 {
-    /* Send notification on RX event */
-    if(event == ETH_MAC_EVENT_RX_FRAME)
+    if(netif_find("en0"))
     {
-		// Give the semaphore to wakeup LwIP task
-        nOS_SemGive(&RX_Sem);
+        if(ETH_Phy.GetLinkState() == ETH_LINK_UP)
+        {
+            //EthernetModeAndSpeed();
+            netif_set_link_up(netif_find("en0"));
+        }
+        else
+        {
+            netif_set_link_down(netif_find("en0"));
+        }
     }
 }
+*/
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ethernetif_Callback
+//
+//  Parameter(s):
+//  Return:
+//
+//  Description:    ISR activated when we receive a new message on the ethernet
+//
+//-------------------------------------------------------------------------------------------------
+void ethernetif_Callback(uint32_t Event)
+{
+    // Send notification on RX event
+    if(Event == ETH_MAC_EVENT_RX_FRAME)
+    {
+		// Give the semaphore to wakeup LwIP task
+        nOS_SemGive(&ETH_RX_Sem);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       ethernetif_LinkCallcack
+//
+//  Parameter(s):   pArg        N/U
+//  Return:
+//
+//  Description:    This ISR is called when the link status from PHY detect change.
+//
+//  Note(s)         The function IO_CallBack(ETH_PHY_LINK_IO_ISR); should be include in ISR
+//                  servicing the pin in the irq.cpp of the application
+//-------------------------------------------------------------------------------------------------
+#if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
+void ethernetif_LinkCallBack(void* pArg)
+{
+    VAR_UNUSED(pArg);
+    ETH_Link = ETH_Phy.GetLinkState();
+}
+#endif
 
 //-------------------------------------------------------------------------------------------------
 

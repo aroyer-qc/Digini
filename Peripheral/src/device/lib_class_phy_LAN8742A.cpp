@@ -69,9 +69,7 @@ SystemState_e PHY_LAN8742A_Driver::Initialize(ETH_Driver* pDriver)
 
     if((m_Flags & ETH_INITIALIZED) == 0)
     {
-        // Register ETH_Driver
-        m_pETH_Driver = pDriver;
-
+        m_pETH_Driver  = pDriver;               // Register ETH_Driver
         m_BCR_Register = 0;
         m_Flags        = ETH_INITIALIZED;
     }

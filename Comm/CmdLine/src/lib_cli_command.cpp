@@ -199,7 +199,7 @@ SystemState_e CommandLine::CmdMENU(void)
     {
         if(m_ReadCommand != true)
         {
-            GiveControlToChildProcess(nullptr);
+            //GiveControlToChildProcess(nullptr);
         }
     }
     else

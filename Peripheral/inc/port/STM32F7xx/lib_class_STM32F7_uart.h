@@ -371,7 +371,7 @@ class UART_Driver
         CallbackInterface*          m_pCallback;
         int                         m_CallBackType;
 
-       #if (UART_ISR_RX_CFG == DEF_ENABLED)
+       #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
         UART_Transfert_t*           m_pContextRX;
        #endif
        #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)

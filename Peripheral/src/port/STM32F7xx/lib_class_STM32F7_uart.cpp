@@ -111,19 +111,12 @@ const uint32_t UART_Driver::m_BaudRate[NB_OF_BAUD] =
 //-------------------------------------------------------------------------------------------------
 UART_Driver::UART_Driver(UART_ID_e UartID)
 {
-    ISR_Prio_t          ISR_Prio;
-    uint32_t            PriorityGroup;
     DMA_Stream_TypeDef* pDMA;
 
   #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
     m_pDMA_Info      = nullptr;
     m_DMA_IsItBusyTX = false;
   #endif
-
-    PriorityGroup = NVIC_GetPriorityGrouping();
-    ISR_Prio.PriorityGroup     = PriorityGroup;
-    ISR_Prio.SubPriority       = 0;
-    ISR_Prio.PremptionPriority = m_pInfo->PreempPrio;
 
     if(UartID < NB_OF_REAL_UART_DRIVER)
     {
@@ -215,7 +208,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
        #endif
       #endif
 
-        ISR_Init(m_pInfo->IRQn_Channel, &ISR_Prio);
+        ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);
         ClearAutomaticFlag();
 
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
@@ -228,8 +221,9 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
     {
         m_VirtualUartBusyRX = false;
         m_VirtualUartBusyTX = false;
-        ISR_Init(VirtualUartRX_IRQn, &ISR_Prio);
-        ISR_Init(VirtualUartTX_IRQn, &ISR_Prio);
+
+        ISR_Init(VirtualUartRX_IRQn, 0, m_pInfo->PreempPrio);
+        ISR_Init(VirtualUartTX_IRQn, 0, m_pInfo->PreempPrio);
     }
   #endif
     else
@@ -382,8 +376,7 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
             PeriphClk <<= 1;
         }
 
-        m_pUart->BRR = uint16_t((PeriphClk + (m_BaudRate[BaudRate] >> 1)) / m_BaudRate[BaudRate]);
-
+        m_pUart->BRR = uint16_t(PeriphClk / m_BaudRate[BaudRate]);
         Enable();
     }
 }
@@ -487,8 +480,6 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
         MODIFY_REG(m_pUart->CR1, (USART_CR1_M_Msk | USART_CR1_PCE_Msk | USART_CR1_PS_Msk | USART_CR1_OVER8_Msk), CR1_Register);
         MODIFY_REG(m_pUart->CR2, (USART_CR2_STOP_Msk | USART_CR2_MSBFIRST_Msk),                                  CR2_Register);
         MODIFY_REG(m_pUart->CR3, (USART_CR3_CTSE_Msk | USART_CR3_CTSIE_Msk | USART_CR3_RTSE_Msk),                CR3_Register);
-
-
         this->SetBaudRate(BaudID);
     }
 }
@@ -625,9 +616,8 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX, v
                 }
 
                 m_pContextTX = pContext;
-
-                DMA_EnableTX();
                 DMA_Enable(pDMA);                    // Transmission starts as soon as TXE is detected
+                DMA_EnableTX();
             }
             else
             {
@@ -866,8 +856,7 @@ void UART_Driver::DMA_EnableTX(void)
         if(m_pDMA_Info != nullptr)
         {
             SET_BIT(m_pUart->CR3, USART_CR3_DMAT);
-            //m_pUart->ICR |= USART_ICR_TCCF;
-            this->EnableTX_ISR(UART_ISR_TX_COMPLETED_MASK);
+           this->EnableTX_ISR(UART_ISR_TX_COMPLETED_MASK);
         }
     }
 }
@@ -1187,7 +1176,7 @@ void UART_Driver::EnableCallbackType(int CallBackType, void* pContext)
 {
     switch(CallBackType)
     {
-      #if (UART_ISR_RX_CFG == DEF_ENABLED)
+      #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
         case UART_CALLBACK_RX:
         {
             m_pContextRX    = (UART_Transfert_t*)pContext;
@@ -1245,7 +1234,7 @@ void UART_Driver::EnableCallbackType(int CallBackType, void* pContext)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  IRQ Handler:    IRQHandler
+//  IRQ Handler:    IRQ_Handler
 //
 //  Description:    This function handle UARTx/USARTx interrupt.
 //
@@ -1266,29 +1255,34 @@ void UART_Driver::IRQ_Handler(void)
 
             if(m_pCallback != nullptr)
             {
-                if(m_pContextERROR == nullptr) m_pCallback->CallbackFunction(UART_CB_RX,    m_pContextRX);
-                else                           m_pCallback->CallbackFunction(UART_CB_ERROR, m_pContextERROR);
+                if(m_pContextERROR == nullptr) m_pCallback->CallbackFunction(UART_CALLBACK_RX,    m_pContextRX);
+                else                           m_pCallback->CallbackFunction(UART_CALLBACK_ERROR, m_pContextERROR);
             }
 
             m_DMA_IsItBusyTX = false;
         }
        #endif
 
-       #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
+//not handle yet
+//#define UART_CALLBACK_CTS                   0x08
+//#define UART_CALLBACK_DMA_RX                0x40
+
+
+
+
+/*        received byte per byte need this method if needed
+
         if((Status & USART_ISR_RXNE) != 0)
         {
-            WRITE_REG(m_pUart->SR, ~(USART_SR_RXNE));
-
-            if(m_pCallbackRX != nullptr)
+           // if(m_pCallbackRX != nullptr)
             {
                 uint16_t* Data;
 
-                Data = READ_BIT(m_pUart->DR, USART_RDR_RDR_Msk);
-                m_pCallbackRX(READ_BIT(&Data);
+                Data = uint8_t(m_pUart->RDR);
+//                m_pCallbackRX(READ_BIT(&Data);
             }
         }
-       #endif
-
+*/
         #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
          if((Status & USART_ISR_IDLE) != 0)
          {
@@ -1301,9 +1295,9 @@ void UART_Driver::IRQ_Handler(void)
 
              if(m_pCallback != nullptr)
              {
-                if(m_pContextIDLE == nullptr) m_pCallback->CallbackFunction(UART_CALLBACK_RX,   m_pContextRX);
-                // TODO need to check all context. for nullptr
-                else                          m_pCallback->CallbackFunction(UART_CALLBACK_IDLE, m_pContextIDLE);
+                // RX context has priority over IDLE context
+                if     (m_pContextRX   != nullptr)  m_pCallback->CallbackFunction(UART_CALLBACK_RX,   m_pContextRX);
+                else if(m_pContextIDLE != nullptr)  m_pCallback->CallbackFunction(UART_CALLBACK_IDLE, m_pContextIDLE);
              }
              else
              {
@@ -1319,9 +1313,9 @@ void UART_Driver::IRQ_Handler(void)
         {
             if(m_pCallbackEmptyTX != nullptr)
             {
-                if(m_pContextEmptyTX == nullptr) m_pCallback->CallbackFunction(UART_CB_COMPLETED_TX, m_pContextTX);  //??
-                // TODO need to check all context. for nullptr
-                else                             m_pCallback->CallbackFunction(UART_CB_EMPTY_TX,     m_pContextEmptyTX);
+                // TX context has priority over EMPTY context
+                if     (m_pContextTX      != nullptr) m_pCallback->CallbackFunction(UART_CALLBACK_COMPLETED_TX, m_pContextTX);
+                else if(m_pContextEmptyTX != nullptr) m_pCallback->CallbackFunction(UART_CALLBACK_EMPTY_TX,     m_pContextEmptyTX);
             }
         }
        #endif
@@ -1332,11 +1326,10 @@ void UART_Driver::IRQ_Handler(void)
             m_pUart->ICR = USART_ICR_TCCF;
 
             if(m_pCallback != nullptr)
-            {
-                // TODO need to check all context. for nullptr
-                if(m_pContextCompletedTX == nullptr) m_pCallback->CallbackFunction(UART_CALLBACK_COMPLETED_TX, m_pContextTX);  //??
-                // TODO need to check all context. for nullptr
-                else                                 m_pCallback->CallbackFunction(UART_CALLBACK_COMPLETED_TX, m_pContextCompletedTX);
+            { // the same??
+               // if     (m_pContextTX          != nullptr) m_pCallback->CallbackFunction(UART_CALLBACK_COMPLETED_TX, m_pContextTX);
+              /*  else*/ if(m_pContextCompletedTX != nullptr) m_pCallback->CallbackFunction(UART_CALLBACK_COMPLETED_TX, m_pContextCompletedTX);
+
             }
 
             this->DMA_DisableTX();

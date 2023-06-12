@@ -171,7 +171,8 @@ ETH_MAC_Capability_t ETH_Driver::GetCapabilities(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e ETH_Driver::Initialize(ETH_MAC_SignalEvent_t CallbackEvent)
 {
-    SYSCFG->PMC |=  SYSCFG_PMC_MII_RMII_SEL;
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+    SYSCFG->PMC  |= SYSCFG_PMC_MII_RMII_SEL;
 
     IO_PinInit(IO_MX_ETH_MDC);
     IO_PinInit(IO_MX_ETH_MDIO);
@@ -270,20 +271,6 @@ SystemState_e ETH_Driver::PowerControl(ETH_PowerState_e State)
 
             EnableClock();
             ResetMac();
-            ETH->DMABMR = ETH_DMABMR_SR;                                    // Reset Ethernet MAC peripheral
-
-            // Wait for software reset
-            TickStart = GetTick();
-            do
-            {
-                if((ETH->DMABMR & ETH_DMABMR_SR) == 0)
-                {
-                    break;
-                }
-
-                nOS_Yield();
-            }
-            while(TickHasTimeOut(TickStart, RESET_TIMEOUT) == false);
 
             ETH->MACMIIAR = ETH_MACIIAR_CR_DIVIDER;                         // MDC clock range selection
             ETH->MACCR    = ETH_MACCR_RD | 0x00008000;                      // Initialize MAC configuration
@@ -325,6 +312,22 @@ SystemState_e ETH_Driver::PowerControl(ETH_PowerState_e State)
             // Disable MMC interrupts
             ETH->MMCTIMR = 0;
             ETH->MMCRIMR = 0;
+
+
+            ETH->DMABMR = ETH_DMABMR_SR;                                    // Reset Ethernet MAC peripheral
+
+            // Wait for software reset
+            TickStart = GetTick();
+            do
+            {
+                if((ETH->DMABMR & ETH_DMABMR_SR) == 0)
+                {
+                    break;
+                }
+
+                nOS_Yield();
+            }
+            while(TickHasTimeOut(TickStart, RESET_TIMEOUT) == false);
 
             // ---- Enable ETH interrupt ----
             NVIC_ClearPendingIRQ(ETH_IRQn);

@@ -148,13 +148,16 @@ typedef void (*CLI_ChildProcess_t)(uint8_t Data);
 // Function(s) Prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-class CommandLine : public CallbackInterface
+class CommandLine : public ChildProcessInterface
 {
     public:
 
+        void            IF_Process                  (void);
+        void            IF_CallbackFunction         (int Type, void* pContext);
+
         void            Initialize                  (Console* pConsole);
-        void            Process                     (void);
-        void            GiveControlToChildProcess   (void(*pProcess)(uint8_t Data));
+
+        //void            GiveControlToChildProcess   (void(*pProcess)(uint8_t Data));
         void            ReleaseControl              (void);
         void            LockDisplay                 (bool State);
         void            SendAnswer                  (CLI_CmdName_e CmdName, SystemState_e State, const char* Answer);
@@ -178,7 +181,6 @@ class CommandLine : public CallbackInterface
         SystemState_e   CLI_HandleCmdPassword       (void);
       #endif
 
-        void            CallbackFunction            (int Type, void* pContext);
         void            RX_Callback                 (uint8_t Data);
         void            ProcessParams               (CLI_CmdName_e Command);
 
@@ -188,7 +190,7 @@ class CommandLine : public CallbackInterface
         CLI_InputState_e                        m_InputState;
         int                                     m_ParserRX_Offset;
         CLI_Step_e                              m_Step;
-        CLI_ChildProcess_t                      m_ChildProcess;
+        ChildProcessInterface*                  m_pChildProcess;
         TickCount_t                             m_CommandTimeOut;
         int16_t                                 m_CommandNameSize;
         bool                                    m_MuteSerialLogging;

@@ -43,43 +43,6 @@
 #define CON_SERIAL_OUT_SIZE                         256
 
 //-------------------------------------------------------------------------------------------------
-// Private(s) Function(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CallbackFunction
-//
-//  Parameter(s):   void
-//
-//  Return:         None
-//
-//  Description:    Check if password is valid parsing the FIFO
-//
-//-------------------------------------------------------------------------------------------------
-void Console::CallbackFunction(int Type, void* pContext)
-{
-    switch(Type)
-    {
-        // TX from uart is completed then release memory.
-        case UART_CALLBACK_COMPLETED_TX:
-        {
-            pMemoryPool->Free((void**)&pContext);
-        }
-        break;
-
-        // RX data from uart then call RX_Callback.
-        case UART_CALLBACK_RX:
-        {
-            // We should copy the data here from the buffer... remember here it is call from an interrupt... no time to process stuff
-            // TODO handle the fifo
-// ???
-        }
-        break;
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
 // Public(s) Function(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -102,19 +65,13 @@ void Console::Initialize(UART_Driver* pUartDriver)
     m_IsItOnHold            = false;
     m_IsItOnStartup         = true;
     m_MuteSerialLogging     = true;
-    m_DebugLevel            = CON_DEBUG_LEVEL_0;
-  #if (CON_CHILD_PROCESS_PUSH_POP_LEVEL > 1)
+    m_DebugLevel            = CON_DEBUG_NONE;
+    m_ActiveProcessLevel    = CON_NOT_CONNECTED;
+
     for(int i = 0; i < CON_CHILD_PROCESS_PUSH_POP_LEVEL; i++)
     {
-        m_ChildProcess[i]   = nullptr;
-        m_pCallbackRX[i]    = nullptr;
+        m_pChildProcess[i]  = nullptr;
     }
-  #else
-    m_ChildProcess          = nullptr;
-    m_pCallbackRX           = nullptr;
-  #endif
-
-    m_ActiveProcessLevel    = CON_NOT_CONNECTED;
 
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     pUartDriver->RegisterCallback((CallbackInterface*)this);
@@ -138,25 +95,16 @@ void Console::Initialize(UART_Driver* pUartDriver)
 //-------------------------------------------------------------------------------------------------
 void Console::Process(void)
 {
-  #if (CON_CHILD_PROCESS_PUSH_POP_LEVEL > 1)
-    if(m_ChildProcess[m_ActiveProcessLevel] != nullptr)
+    if(m_pChildProcess[m_ActiveProcessLevel] != nullptr)
     {
-        m_ChildProcess[m_ActiveProcessLevel]();
+        m_pChildProcess[m_ActiveProcessLevel]->IF_Process();
     }
-  #else
-    if(m_ChildProcess != nullptr)
-    {
-        m_ChildProcess();
-    }
-  #endif
-
 }
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           GiveControlToChildProcess
 //
-//  Parameter(s):   pProcess          pointer to a function  void (*pProcess) (uint8_t Data)
-//                  pCallbackRX         CallbackInterface*  for RX data
+//  Parameter(s):   pChildProcess           pointer ChildProcessInterface
 //  Return:         None
 //
 //  Description:    Give control of the interface to a child process.
@@ -164,23 +112,13 @@ void Console::Process(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void Console::GiveControlToChildProcess(void(*pProcess)(void), CallbackInterface* pCallbackRX)
+void Console::GiveControlToChildProcess(ChildProcessInterface* pChildProcess)
 {
-  #if (CON_CHILD_PROCESS_PUSH_POP_LEVEL > 1)
-    if((pProcess != nullptr) && (m_ActiveProcessLevel < (CON_CHILD_PROCESS_PUSH_POP_LEVEL - 1)))
+    if((pChildProcess != nullptr) && (m_ActiveProcessLevel < (CON_CHILD_PROCESS_PUSH_POP_LEVEL - 1)))
     {
         m_ActiveProcessLevel++;
-        m_ChildProcess[m_ActiveProcessLevel] = pProcess;
-        m_pCallbackRX[m_ActiveProcessLevel]  = pCallbackRX;
+        m_pChildProcess[m_ActiveProcessLevel] = pChildProcess;
     }
-  #else
-    if(pProcess != nullptr)
-    {
-        m_ActiveProcessLevel++;
-        m_ChildProcess = pProcess;
-        m_pCallbackRX  = pCallbackRX;
-    }
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -197,21 +135,11 @@ void Console::GiveControlToChildProcess(void(*pProcess)(void), CallbackInterface
 //-------------------------------------------------------------------------------------------------
 void Console::ReleaseControl(void)
 {
-  #if (CON_CHILD_PROCESS_PUSH_POP_LEVEL > 1)
-    if((m_ChildProcess != nullptr) && (m_ActiveProcessLevel != CON_NOT_CONNECTED))
+    if((m_pChildProcess != nullptr) && (m_ActiveProcessLevel != CON_NOT_CONNECTED))
     {
-        m_ChildProcess[m_ActiveProcessLevel] = nullptr;
-        m_pCallbackRX[m_ActiveProcessLevel]  = nullptr;
+        m_pChildProcess[m_ActiveProcessLevel] = nullptr;
         m_ActiveProcessLevel--;
     }
-  #else
-    if(m_ChildProcess != nullptr)
-    {
-        m_ChildProcess       = nullptr;
-        m_pCallbackRX        = nullptr;
-        m_ActiveProcessLevel = CON_NOT_CONNECTED;
-    }
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -271,7 +199,7 @@ size_t Console::PrintSerialLog(CON_DebugLevel_e Level, const char* pFormat, ...)
 
     if(m_MuteSerialLogging == false)
     {
-        if((m_DebugLevel & Level) != CON_DEBUG_LEVEL_0)
+        if((m_DebugLevel & Level) != CON_DEBUG_NONE)
         {
             if((pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE)) != nullptr)
             {
@@ -508,6 +436,39 @@ bool Console::IsItAnEOL(void)
     }
 
     return Result;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CallbackFunction
+//
+//  Parameter(s):   void
+//
+//  Return:         None
+//
+//  Description:    Check if password is valid parsing the FIFO
+//
+//-------------------------------------------------------------------------------------------------
+void Console::CallbackFunction(int Type, void* pContext)
+{
+    switch(Type)
+    {
+        // TX from uart is completed then release memory.
+        case UART_CALLBACK_COMPLETED_TX:
+        {
+            pMemoryPool->Free((void**)&pContext);
+        }
+        break;
+
+        // RX data from uart then call RX_Callback.
+        case UART_CALLBACK_RX:
+        {
+            // We should copy the data here from the buffer... remember here it is call from an interrupt... no time to process stuff
+            // TODO handle the fifo
+// ???
+        }
+        break;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

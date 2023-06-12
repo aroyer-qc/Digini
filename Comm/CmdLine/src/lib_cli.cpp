@@ -102,8 +102,146 @@ const int CommandLine::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
 };
 
 //-------------------------------------------------------------------------------------------------
-// Private(s) Function(s)
+//
+//  Name:           Initialize
+//
+//  Parameter(s):  Console*    pConsole       Pointer on the console class object
+//  Return:         None
+//
+//  Description:    Initialize command line interface
+//
+//  Note(s):
+//
 //-------------------------------------------------------------------------------------------------
+void CommandLine::Initialize(Console* pConsole)
+{
+    TickCount_t Delay;
+
+    m_pConsole          = pConsole;
+    m_InputState        = CLI_CMD_LINE;       // Initial input type
+    m_Step              = CLI_STEP_IDLE;      // Initial step of the parser
+    m_ParserRX_Offset   = 0;
+    m_IsItOnHold        = false;
+    m_IsItOnStartup     = true;
+    m_MuteSerialLogging = true;
+    m_pChildProcess     = nullptr;
+    pConsole->Printf(CON_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
+    Delay = GetTick();
+    while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
+    m_StartupTick = GetTick();
+    pConsole->GiveControlToChildProcess(this);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           IF_Process
+//
+//  Parameter(s):   void
+//  Return:         None
+//
+//  Description:    Command line interface process
+//
+//  Note(s):        (1) This process is called in the Console process. do not call this process
+//                      directly.
+//                  (2) Preprocessing line of data to trap ERROR or OK or continue for data
+//
+//-------------------------------------------------------------------------------------------------
+void CommandLine::IF_Process(void)
+{
+    SystemState_e        State;
+    int16_t              CommandNameSize;
+    int                  Command;
+    CLI_CommandSupport_e Support;
+
+    if(m_IsItOnStartup == true)
+    {
+        if(TickHasTimeOut(m_StartupTick, CLI_NUMBER_OF_SECOND_FOR_STARTUP) == true)
+        {
+            m_IsItOnStartup = false;
+        }
+    }
+
+    // --------------------------------------------------------------------------------------------
+    // CLI Parser
+    //
+    if(m_pConsole->ReadyRead() == true)
+    {
+        switch(int(m_Step))
+        {
+            case CLI_STEP_CMD_VALID:
+            {
+                // Preprocessing line of data to trap ERROR or OK or continue for data
+                CommandNameSize = m_CommandNameSize;
+                m_pConsole->ToUpper(CommandNameSize);
+                State = SYS_INVALID_COMMAND;
+
+            // Process the valid input by iterating through valid command list
+                for(Command = int(FIRST_CLI_COMMAND); Command < int(NUMBER_OF_CLI_CMD); Command++)
+                {
+                    if(CommandNameSize == m_CmdStrSize[Command])                                            // First size must match
+                    {
+                        if(m_pConsole->Memncmp(m_pCmdStr[Command], CommandNameSize) == true)                // Compare command string
+                        {
+                            m_pConsole->Flush(CommandNameSize);                                             // Flush the command from the FIFO
+
+                            if((m_ReadCommand == false) && (m_PlainCommand == false))
+                            {
+                               ProcessParams(CLI_CmdName_e(Command));                                       // if its a write command, get all parameters.
+                            }
+
+                            Support = m_CmdInputInfo[Command].Support;
+
+                            if((((Support & CLI_CMD_H) != 0) && (m_IsItOnHold == true))         ||          // Hold specified command only on hold mode
+                               (((Support & CLI_CMD_S) != 0) && (m_IsItOnStartup == true))      ||          // Startup specified command only startup phase
+                               ((Support & (CLI_CMD_H | CLI_CMD_S)) == 0))                                  // All other command
+                            {
+                                State = (this->*CLI_Function[Command])();
+                                SendAnswer(CLI_CmdName_e(Command), State, nullptr);
+                            }
+                        }
+                    }
+                }
+
+                if(State == SYS_INVALID_COMMAND)
+                {
+                    m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Command invalid\r\n");
+                }
+
+                m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);                                                  // Flush completely the FIFO
+                m_Step = CLI_STEP_IDLE;
+            }
+            break;
+
+            case CLI_STEP_CMD_MALFORMED:
+            {
+                m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Malformed packet\r\n");
+                m_Step = CLI_STEP_IDLE;
+            }
+            break;
+
+            case CLI_STEP_CMD_BUFFER_OVERFLOW:
+            {
+                m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Buffer overflow\r\n");
+                m_Step = CLI_STEP_IDLE;
+            }
+            break;
+
+            default: /* Nothing to do */ break;
+        }
+    }
+
+    //---------------------------------------------------------------------------------------------
+
+    if(m_Step != CLI_STEP_IDLE)
+    {
+        if(TickHasTimeOut(m_CommandTimeOut, CLI_CMD_TIME_OUT) == true)
+        {
+            m_Step = CLI_STEP_IDLE;
+            m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Command timeout\r\n");
+            m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);
+        }
+    }
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -161,7 +299,7 @@ SystemState_e CommandLine::HandleCmdPassword(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CallbackFunction
+//  Name:           IF_CallbackFunction
 //
 //  Parameter(s):   void
 //
@@ -170,7 +308,7 @@ SystemState_e CommandLine::HandleCmdPassword(void)
 //  Description:
 //
 //-------------------------------------------------------------------------------------------------
-void CommandLine::CallbackFunction(int Type, void* pContext)
+void CommandLine::IF_CallbackFunction(int Type, void* pContext)
 {
     switch(Type)
     {
@@ -324,9 +462,9 @@ void CommandLine::RX_Callback(uint8_t Data)
 
         case CLI_USER_FUNCTION:
         {
-            if(m_ChildProcess != nullptr)
+            if(m_pChildProcess != nullptr)
             {
-                m_ChildProcess(Data);
+              //  m_pChildProcess(Data);
             }
             else
             {
@@ -410,153 +548,6 @@ void CommandLine::ProcessParams(CLI_CmdName_e Command)
 }
 
 //-------------------------------------------------------------------------------------------------
-// Public(s) Function(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Initialize
-//
-//  Parameter(s):  Console*    pConsole       Pointer on the console class object
-//  Return:         None
-//
-//  Description:    Initialize command line interface
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void CommandLine::Initialize(Console* pConsole)
-{
-    TickCount_t Delay;
-
-    m_pConsole          = pConsole;
-    m_InputState        = CLI_CMD_LINE;       // Initial input type
-    m_Step              = CLI_STEP_IDLE;      // Initial step of the parser
-    m_ParserRX_Offset   = 0;
-    m_IsItOnHold        = false;
-    m_IsItOnStartup     = true;
-    m_MuteSerialLogging = true;
-    m_ChildProcess      = nullptr;
-
-    pConsole->Printf(CON_SIZE_NONE, "esti de calisse");
-//    pConsole->Printf(CON_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
-    Delay = GetTick();
-    while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
-    m_StartupTick = GetTick();
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Process
-//
-//  Parameter(s):   void
-//  Return:         None
-//
-//  Description:    Command line interface process
-//
-//  Note(s):        (1) This process is called in the Console process. do not call this process
-//                      directly.
-//                  (2) Preprocessing line of data to trap ERROR or OK or continue for data
-//
-//-------------------------------------------------------------------------------------------------
-void CommandLine::Process(void)
-{
-    SystemState_e        State;
-    int16_t              CommandNameSize;
-    int                  Command;
-    CLI_CommandSupport_e Support;
-
-    if(m_IsItOnStartup == true)
-    {
-        if(TickHasTimeOut(m_StartupTick, CLI_NUMBER_OF_SECOND_FOR_STARTUP) == true)
-        {
-            m_IsItOnStartup = false;
-        }
-    }
-
-    // --------------------------------------------------------------------------------------------
-    // CLI Parser
-    //
-    if(m_pConsole->ReadyRead() == true)
-    {
-        switch(int(m_Step))
-        {
-            case CLI_STEP_CMD_VALID:
-            {
-                // Preprocessing line of data to trap ERROR or OK or continue for data
-                CommandNameSize = m_CommandNameSize;
-                m_pConsole->ToUpper(CommandNameSize);
-                State = SYS_INVALID_COMMAND;
-
-            // Process the valid input by iterating through valid command list
-                for(Command = int(FIRST_CLI_COMMAND); Command < int(NUMBER_OF_CLI_CMD); Command++)
-                {
-                    if(CommandNameSize == m_CmdStrSize[Command])                                            // First size must match
-                    {
-                        if(m_pConsole->Memncmp(m_pCmdStr[Command], CommandNameSize) == true)                // Compare command string
-                        {
-                            m_pConsole->Flush(CommandNameSize);                                             // Flush the command from the FIFO
-
-                            if((m_ReadCommand == false) && (m_PlainCommand == false))
-                            {
-                               ProcessParams(CLI_CmdName_e(Command));                                       // if its a write command, get all parameters.
-                            }
-
-                            Support = m_CmdInputInfo[Command].Support;
-
-                            if((((Support & CLI_CMD_H) != 0) && (m_IsItOnHold == true))         ||          // Hold specified command only on hold mode
-                               (((Support & CLI_CMD_S) != 0) && (m_IsItOnStartup == true))      ||          // Startup specified command only startup phase
-                               ((Support & (CLI_CMD_H | CLI_CMD_S)) == 0))                                  // All other command
-                            {
-                                State = (this->*CLI_Function[Command])();
-                                SendAnswer(CLI_CmdName_e(Command), State, nullptr);
-                            }
-                        }
-                    }
-                }
-
-                if(State == SYS_INVALID_COMMAND)
-                {
-                    m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Command invalid\r\n");
-                }
-
-                m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);                                                  // Flush completely the FIFO
-                m_Step = CLI_STEP_IDLE;
-            }
-            break;
-
-            case CLI_STEP_CMD_MALFORMED:
-            {
-                m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Malformed packet\r\n");
-                m_Step = CLI_STEP_IDLE;
-            }
-            break;
-
-            case CLI_STEP_CMD_BUFFER_OVERFLOW:
-            {
-                m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Buffer overflow\r\n");
-                m_Step = CLI_STEP_IDLE;
-            }
-            break;
-
-            default: /* Nothing to do */ break;
-        }
-    }
-
-    //---------------------------------------------------------------------------------------------
-
-    if(m_Step != CLI_STEP_IDLE)
-    {
-        if(TickHasTimeOut(m_CommandTimeOut, CLI_CMD_TIME_OUT) == true)
-        {
-            m_Step = CLI_STEP_IDLE;
-            m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Command timeout\r\n");
-            m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);
-        }
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
 //
 //  Name:           GiveControlToChildProcess
 //
@@ -568,15 +559,16 @@ void CommandLine::Process(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+/*
 void CommandLine::GiveControlToChildProcess(void(*pProcess)(uint8_t Data))
 {
     if(pProcess != nullptr)
     {
-        m_ChildProcess = pProcess;
-        m_InputState   = CLI_USER_FUNCTION;
+        m_pChildProcess = pProcess;
+        m_InputState    = CLI_USER_FUNCTION;
     }
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           ReleaseControl
@@ -591,10 +583,10 @@ void CommandLine::GiveControlToChildProcess(void(*pProcess)(uint8_t Data))
 //-------------------------------------------------------------------------------------------------
 void CommandLine::ReleaseControl(void)
 {
-    if(m_ChildProcess != nullptr)
+    if(m_pChildProcess != nullptr)
     {
-        m_ChildProcess = nullptr;
-        m_InputState   = CLI_CMD_LINE;
+        m_pChildProcess = nullptr;
+        m_InputState    = CLI_CMD_LINE;
     }
 }
 

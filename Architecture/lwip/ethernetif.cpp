@@ -349,15 +349,15 @@ static err_t EthernetModeAndSpeed(void)
 	// Configure the MAC with the Duplex Mode fixed by the auto-negotiation process
 	if((RegValue & PHYCR1_OM_FD) == PHYCR1_OM_FD)
 	{
-		// Set Ethernet duplex mode to Full-duplex following the auto-negotiation
-		Mode = ETH_PHY_MODE_SPEED_100M;
+        // Set Ethernet speed to 100M following the auto-negotiation
+		Mode = ETH_PHY_Mode_e(uint32_t(Mode) | uint32_t(ETH_PHY_FULL_DUPLEX));
 	}
 
 	// Configure the MAC with the speed fixed by the auto-negotiation process
 	if((RegValue & PHYCR1_OM_100B) == PHYCR1_OM_100B)
 	{
-        // Set Ethernet speed to 100M following the auto-negotiation
-		Mode = ETH_PHY_Mode_e(uint32_t(Mode) | uint32_t(ETH_PHY_FULL_DUPLEX));
+		// Set Ethernet duplex mode to Full-duplex following the auto-negotiation
+		Mode = ETH_PHY_MODE_SPEED_100M;
 	}
 
 	ETH0.Phy->SetMode(Mode);

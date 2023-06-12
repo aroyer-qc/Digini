@@ -56,30 +56,46 @@
 
 enum CON_DebugLevel_e
 {
-    CON_DEBUG_LEVEL_0    = 0x00,
-    CON_DEBUG_LEVEL_1    = 0x01,
-    CON_DEBUG_LEVEL_2    = 0x02,
-    CON_DEBUG_LEVEL_3    = 0x04,
-    CON_DEBUG_LEVEL_4    = 0x08,
-    CON_DEBUG_LEVEL_5    = 0x10,
-    CON_DEBUG_LEVEL_6    = 0x20,
-    CON_DEBUG_LEVEL_7    = 0x40,
-    CON_DEBUG_LEVEL_8    = 0x80,
+    CON_DEBUG_NONE       = 0x0000,
+    CON_DEBUG_LEVEL_1    = 0x0001,
+    CON_DEBUG_LEVEL_2    = 0x0002,
+    CON_DEBUG_LEVEL_3    = 0x0004,
+    CON_DEBUG_LEVEL_4    = 0x0008,
+    CON_DEBUG_LEVEL_5    = 0x0010,
+    CON_DEBUG_LEVEL_6    = 0x0020,
+    CON_DEBUG_LEVEL_7    = 0x0040,
+    CON_DEBUG_LEVEL_8    = 0x0080,
+    CON_DEBUG_LEVEL_9    = 0x0100,
+    CON_DEBUG_LEVEL_10   = 0x0200,
+    CON_DEBUG_LEVEL_11   = 0x0400,
+    CON_DEBUG_LEVEL_12   = 0x0800,
+    CON_DEBUG_LEVEL_13   = 0x1000,
+    CON_DEBUG_LEVEL_14   = 0x2000,
+    CON_DEBUG_LEVEL_15   = 0x4000,
+    CON_DEBUG_LEVEL_16   = 0x8000,
 };
 
-typedef void (*CON_ChildProcess_t)(void);
+//typedef void (*CON_ChildProcess_t)(void);
+
+class ChildProcessInterface
+{
+    public:
+
+        virtual void IF_Process             (void        )                     = 0;
+        virtual void IF_CallbackFunction    (int Type, void* pContext)         = 0;
+};
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class Console : public CallbackInterface
+class Console
 {
     public:
 
         void             Initialize                 (UART_Driver* pUartDriver);
         void             Process                    (void);
-        void             GiveControlToChildProcess  (void(*pProcess)(void), CallbackInterface* pCallbackRX);
+        void             GiveControlToChildProcess  (ChildProcessInterface* pChildProcess);
         void             ReleaseControl             (void);
         void             DisplayTimeDateStamp       (Date_t* pDate, Time_t* pTime);
         size_t           Printf                     (int nSize, const char* pFormat, ...);
@@ -136,14 +152,7 @@ class Console : public CallbackInterface
         bool                                    m_IsItOnHold;
         CON_DebugLevel_e                        m_DebugLevel;
         uint8_t                                 m_ActiveProcessLevel;
-
-      #if (CON_CHILD_PROCESS_PUSH_POP_LEVEL > 1)
-        CON_ChildProcess_t                      m_ChildProcess[CON_CHILD_PROCESS_PUSH_POP_LEVEL];
-        CallbackInterface*                      m_pCallbackRX[CON_CHILD_PROCESS_PUSH_POP_LEVEL];
-      #else
-        CON_ChildProcess_t                      m_ChildProcess;
-        CallbackInterface*                      m_pCallbackRX;
-      #endif
+        ChildProcessInterface*                  m_pChildProcess[CON_CHILD_PROCESS_PUSH_POP_LEVEL];
 };
 
 //-------------------------------------------------------------------------------------------------

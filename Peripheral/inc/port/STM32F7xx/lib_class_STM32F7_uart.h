@@ -57,11 +57,12 @@
 #endif
 
 
-#define UART_ISR_RX_ERROR_MASK              0x01
-#define UART_ISR_RX_MASK                    0x02
-#define UART_ISR_RX_IDLE_MASK               0x04
-#define UART_ISR_TX_EMPTY_MASK              0x01
-#define UART_ISR_TX_COMPLETED_MASK          0x02
+#define UART_ISR_RX_ERROR                   0x01
+#define UART_ISR_RX_BYTE                    0x02
+#define UART_ISR_RX_IDLE                    0x04
+#define UART_ISR_CTS                        0x08
+#define UART_ISR_TX_EMPTY                   0x10
+#define UART_ISR_TX_COMPLETED               0x20
 
 // Callback type in bit position
 #define UART_CALLBACK_NONE                  0x00
@@ -335,7 +336,7 @@ class UART_Driver
 
     private:
 
-        void                ClearAutomaticFlag              (void);
+        void                ClearFlag                       (void);
 
       #if (UART_ISR_RX_IDLE_CFG  == DEF_ENABLED) || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || (UART_ISR_RX_CFG == DEF_ENABLED)
         void                EnableRX_ISR                    (uint8_t Mask);
@@ -351,11 +352,11 @@ class UART_Driver
         static const uint32_t       m_BaudRate[NB_OF_BAUD];
         UART_Info_t*                m_pInfo;
         USART_TypeDef*              m_pUart;
-        uint32_t                    m_CopyISR;
         UART_Variables_t            m_Variables;
-        void*                       m_pContextRX;       // This is the global context if there is no individual context set
-        void*                       m_pContextTX;       // This is the global context if there is no individual context set
-
+        void*                       m_pContextRX;
+      #if (UART_CONTEXT_OVERRIDE_CFG == DEF_ENABLED)
+        void*                       m_pContextOverrideTX;
+      #endif
         // DMA Config
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
         UART_DMA_Info_t*            m_pDMA_Info;

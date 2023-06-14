@@ -139,7 +139,7 @@ class Console
     // --------------------------------------------------------------------------------------------
 
         UART_Driver*                            m_pUartDriver;
-        UART_Transfert_t*                       m_pRX_Transfert;
+        UART_Transfert_t**                      m_pRX_Transfer;
         int                                     m_ParserRX_Offset;
         TickCount_t                             m_CommandTimeOut;
         int16_t                                 m_CommandNameSize;

@@ -75,9 +75,8 @@ void Console::Initialize(UART_Driver* pUartDriver)
 
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     pUartDriver->RegisterCallback((CallbackInterface*)this);
-    pUartDriver->EnableCallbackType(UART_CALLBACK_EMPTY_TX, m_pRX_Transfert);
-    pUartDriver->EnableCallbackType(UART_CALLBACK_EMPTY_TX);
-    pUartDriver->EnableCallbackType(UART_CALLBACK_COMPLETED_TX);
+    pUartDriver->EnableCallbackType(UART_CALLBACK_IDLE, &m_pRX_Transfer);
+    pUartDriver->EnableCallbackType(UART_CALLBACK_COMPLETED_TX);                // No context for TX Completed
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -119,6 +118,7 @@ void Console::GiveControlToChildProcess(ChildProcessInterface* pChildProcess)
         m_ActiveProcessLevel++;
         m_pChildProcess[m_ActiveProcessLevel] = pChildProcess;
     }
+
 }
 
 //-------------------------------------------------------------------------------------------------

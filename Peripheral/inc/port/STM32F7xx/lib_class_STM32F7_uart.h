@@ -176,6 +176,7 @@ enum UART_Baud_e
     UART_BAUD_921600,
     UART_BAUD_1843200,
     NB_OF_BAUD,
+    UART_BAUD_IS_VIRTUAL
 };
 
 enum UART_Config_e
@@ -248,7 +249,7 @@ struct UART_Info_t
   #if (UART_ISR_CTS_CFG == DEF_ENABLED)
     IO_ID_e             PinCTS;
   #endif
-  #if (UART_ISR_RTS_CFG == DEF_ENABLED)
+  #if (UART_RTS_CFG == DEF_ENABLED)
     IO_ID_e             PinRTS;
   #endif
     uint32_t            RCC_APBxPeriph;
@@ -273,22 +274,19 @@ struct UART_DMA_Info_t
     uint32_t            RCC_AHBxPeriph;
 };
 
+struct UART_Transfer_t
+{
+    uint8_t*            pBuffer;
+    size_t              Size;
+    size_t              StaticSize;
+};
+
 struct UART_Variables_t
 {
-    uint8_t*            pBufferRX;
-    size_t              SizeRX;
-    size_t              StaticSizeRX;
-    uint8_t*            pBufferTX;
-    size_t              SizeTX;
-    size_t              StaticSizeTX;
+    UART_Transfer_t     RX_Transfer;
+    UART_Transfer_t     TX_Transfer;
 };
 #endif
-
-struct UART_Transfert_t
-{
-    void*   pBuffer;
-    size_t  Size;
-};
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -304,10 +302,9 @@ class UART_Driver
         void                SetBaudRate                     (UART_Baud_e BaudID);
         uint32_t            GetBaudRate                     (void);
 
-        SystemState_e       SendData                        (const uint8_t* p_BufferTX, size_t* pSizeTX, void* pContext = nullptr);
+        SystemState_e       SendData                        (const uint8_t* p_BufferTX, size_t* pSizeTX);
 
         bool                IsItBusy                        (void);
-        UART_Variables_t*   GetInfoRX                       (void);
 
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
         void                DMA_ConfigRX                    (uint8_t* pBufferRX, size_t SizeRX);
@@ -321,7 +318,12 @@ class UART_Driver
 
       #if (UART_ISR_CFG == DEF_ENABLED)
         void                RegisterCallback                (CallbackInterface* pCallback);
-        void                EnableCallbackType              (int CallbackType, void* pContext = nullptr);
+        void                EnableCallbackType              (int CallbackType);
+      #endif
+
+      #if (UART_RTS_CFG == DEF_ENABLED)
+        void                RTS_Enable                      (void) { IO_SetPinLow(m_pInfo->PinRTS);  }
+        void                RTS_Disable                     (void) { IO_SetPinHigh(m_pInfo->PinRTS); }
       #endif
 
         void                Enable                          (void);
@@ -329,7 +331,7 @@ class UART_Driver
 
         void                IRQ_Handler                     (void);
 
-       #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
         void                VirtualUartRX_IRQHandler        (void);
         void                VirtualUartTX_IRQHandler        (void);
       #endif
@@ -353,10 +355,11 @@ class UART_Driver
         UART_Info_t*                m_pInfo;
         USART_TypeDef*              m_pUart;
         UART_Variables_t            m_Variables;
-        void*                       m_pContextRX;
-      #if (UART_CONTEXT_OVERRIDE_CFG == DEF_ENABLED)
-        void*                       m_pContextOverrideTX;
+
+      #if (UART_ISR_CTS_CFG == DEF_ENABLED)
+        bool                        m_CTS_Flag;
       #endif
+
         // DMA Config
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
         UART_DMA_Info_t*            m_pDMA_Info;
@@ -371,25 +374,6 @@ class UART_Driver
       #if (UART_ISR_CFG == DEF_ENABLED)
         CallbackInterface*          m_pCallback;
         int                         m_CallBackType;
-
-       #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
-        UART_Transfert_t*           m_pContextRX;
-       #endif
-       #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
-        UART_Transfert_t*           m_pContextIDLE;
-       #endif
-       #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
-        void*                       m_pContextERROR;
-       #endif
-       #if (UART_ISR_CTS_CFG == DEF_ENABLED)
-        void*                       m_pContextCTS;
-       #endif
-       #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
-        void*                       m_pContextEmptyTX;
-       #endif
-       #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
-        void*                       m_pContextCompletedTX;
-       #endif
       #endif
 };
 

@@ -128,6 +128,7 @@ void CommandLine::Initialize(Console* pConsole)
     pConsole->Printf(CON_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
     Delay = GetTick();
     while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
+    pConsole->Printf(CON_SIZE_NONE, "Command Line Process Started");
     m_StartupTick = GetTick();
     pConsole->GiveControlToChildProcess(this);
 }

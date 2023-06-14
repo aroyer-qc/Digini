@@ -39,6 +39,13 @@
 #define ISR_Enable()            __asm volatile("cpsie i")
 #define ISR_Disable()           __asm volatile("cpsid i")
 
+// Get Pending Interrupt
+#define ISR_GetPendingIRQ(IRQ)   (((NVIC->ISPR[0] & (uint32_t(1) << uint32_t(int32_t(IRQ) & 0x1F))) != 0) ? true : false)
+// Set Pending Interrupt
+#define ISR_SetPendingIRQ(IRQ)   (NVIC->ISPR[0] = (uint32_t(1) << ((uint32_t)(int32_t(IRQ) & 0x1F))))
+// Clear Pending Interrupt      
+#define ISR_ClearPendingIRQ(IRQ) (NVIC->ICPR[0] = (uint32_t(1) << ((uint32_t)(int32_t(IRQ) & 0x1L))))
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------

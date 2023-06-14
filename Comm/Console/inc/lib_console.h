@@ -81,15 +81,15 @@ class ChildProcessInterface
 {
     public:
 
-        virtual void IF_Process             (void        )                     = 0;
-        virtual void IF_CallbackFunction    (int Type, void* pContext)         = 0;
+        virtual void IF_Process             (void)                     = 0;
+        virtual void IF_CallbackFunction    (int Type, void* pContext) = 0;
 };
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class Console
+class Console : public CallbackInterface
 {
     public:
 
@@ -108,7 +108,6 @@ class Console
         void             SetSerialLogging           (bool Mute);
         SystemState_e    SendData                   (const uint8_t* p_BufferTX, size_t* pSizeTX, void* pContext = nullptr);
         void             CallbackFunction           (int Type, void* pContext);
-       // void           ProcessParams              (CLI_CmdName_e Command);
 
         // Passthru FIFO
         inline void      TailForward                (size_t Size)                                   { m_Fifo.TailForward(Size);                   }
@@ -130,8 +129,8 @@ class Console
         inline size_t    CheckUsedSpace             (void)                                          { return m_Fifo.CheckUsedSpace();             }
 
         // Getter/ Setter
-        CON_DebugLevel_e GetDebugLevel              (void)                                          { return m_DebugLevel;         }
-        void             SetDebugLevel              (CON_DebugLevel_e DebugLevel)                   { m_DebugLevel = DebugLevel;   }
+        CON_DebugLevel_e GetDebugLevel              (void)                                          { return m_DebugLevel;       }
+        void             SetDebugLevel              (CON_DebugLevel_e DebugLevel)                   { m_DebugLevel = DebugLevel; }
 
     private:
 
@@ -139,7 +138,7 @@ class Console
     // --------------------------------------------------------------------------------------------
 
         UART_Driver*                            m_pUartDriver;
-        UART_Transfert_t**                      m_pRX_Transfer;
+        UART_Transfer_t**                      m_pRX_Transfer;
         int                                     m_ParserRX_Offset;
         TickCount_t                             m_CommandTimeOut;
         int16_t                                 m_CommandNameSize;

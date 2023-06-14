@@ -153,6 +153,7 @@ enum UART_Baud_e
     UART_BAUD_921600,
     UART_BAUD_1843200,
     NB_OF_BAUD,
+    UART_BAUD_IS_VIRTUAL,
 };
 
 enum UART_Config_e

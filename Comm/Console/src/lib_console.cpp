@@ -75,8 +75,12 @@ void Console::Initialize(UART_Driver* pUartDriver)
 
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     pUartDriver->RegisterCallback((CallbackInterface*)this);
-    pUartDriver->EnableCallbackType(UART_CALLBACK_IDLE, &m_pRX_Transfer);
-    pUartDriver->EnableCallbackType(UART_CALLBACK_COMPLETED_TX);                // No context for TX Completed
+  #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
+    pUartDriver->EnableCallbackType(UART_CALLBACK_RX | UART_CALLBACK_COMPLETED_TX | UART_CALLBACK_ERROR);
+  #endif
+  #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
+    pUartDriver->EnableCallbackType(UART_CALLBACK_IDLE | UART_CALLBACK_COMPLETED_TX | UART_CALLBACK_ERROR);
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -169,7 +173,7 @@ size_t Console::Printf(int MaxSize, const char* pFormat, ...)
         va_start(vaArg, pFormat);
         Size = vsnprintf(&pBuffer[0], Size, pFormat, vaArg);
         while(m_pUartDriver->IsItBusy() == true){};
-        m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);
+        m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size);
         va_end(vaArg);
     }
 
@@ -205,7 +209,7 @@ size_t Console::PrintSerialLog(CON_DebugLevel_e Level, const char* pFormat, ...)
             {
                 va_start(vaArg, pFormat);
                 Size = vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, vaArg);
-                m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size, nullptr);
+                m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size);
                 va_end(vaArg);
                 pMemoryPool->Free((void**)&pBuffer);
             }
@@ -460,14 +464,29 @@ void Console::CallbackFunction(int Type, void* pContext)
         }
         break;
 
-        // RX data from uart then call RX_Callback.
+      #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
         case UART_CALLBACK_RX:
         {
-            // We should copy the data here from the buffer... remember here it is call from an interrupt... no time to process stuff
-            // TODO handle the fifo
-// ???
+            uint8_t* pData = (uint8_t*)pContext;
+            m_Fifo.Write(pData, 1);
         }
         break;
+      #endif
+
+      #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
+        case UART_CALLBACK_IDLE:
+        {
+            UART_Transfer_t* pTransfer = (UART_Transfer_t*)&pContext;
+            m_Fifo.Write(pTransfer->pBuffer, pTransfer->Size);
+        }
+        break;
+      #endif
+
+        case UART_CALLBACK_ERROR:
+        {
+           UART_Transfer_t* pTransfer = (UART_Transfer_t*)&pContext;
+           pMemoryPool->Free((void**)&pContext);
+        }
     }
 }
 

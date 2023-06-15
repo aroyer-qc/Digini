@@ -176,15 +176,9 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
         IO_PinInit(m_pInfo->PinRX);
         IO_PinInit(m_pInfo->PinTX);
-      #if (UART_ISR_CTS_CFG == DEF_ENABLED)
-        IO_PinInit(m_pInfo->PinCTS);
-      #endif
-      #if (UART_RTS_CFG == DEF_ENABLED)
-        IO_PinInit(m_pInfo->PinRTS);
-      #endif
 
       #if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
-          (UART_ISR_CTS_CFG == DEF_ENABLED) || (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+          (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
         m_pCallback    = nullptr;
         m_CallBackType = UART_CALLBACK_NONE;
       #endif
@@ -448,17 +442,6 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
             default: break;
         }
 
-        // Flow control
-        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_FLOW_MASK);
-
-        switch(MaskedConfig)
-        {
-            case UART_FLOW_CTS_AND_ISR:  CR3_Register |= UART_CR3_FLOW_CTS_ISR;   // No break here, we enable the CTS also
-            case UART_FLOW_CTS:          CR3_Register |= UART_CR3_FLOW_CTS;     break;
-            case UART_FLOW_RTS:          CR3_Register |= UART_CR3_FLOW_RTS;     break;
-            default: break;
-        }
-
         // Register modification
         MODIFY_REG(m_pUart->CR1, (USART_CR1_M_Msk | USART_CR1_PCE_Msk | USART_CR1_PS_Msk | USART_CR1_OVER8_Msk), CR1_Register);
         MODIFY_REG(m_pUart->CR2, (USART_CR2_STOP_Msk | USART_CR2_MSBFIRST_Msk),                                  CR2_Register);
@@ -601,26 +584,14 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
                 }
 
                 ClearFlag();
-
-              #if (UART_ISR_CTS_CFG == DEF_ENABLED)
-                if(m_CTS_Flag == true)
-              #endif
-                {
-                    DMA_Enable(pDMA);                    // Transmission starts as soon as TXE is detected
-                    DMA_EnableTX();
-                }
-              #if (UART_ISR_CTS_CFG == DEF_ENABLED)
-                else
-                {
-                    State = SYS_BUSY;  // create a SYS for CTS
-                }
-              #endif
+                DMA_Enable(pDMA);                    // Transmission starts as soon as TXE is detected
+                DMA_EnableTX();
             }
             else
             {
                 State = SYS_BUSY;
             }
-          #elif (UART_ISR_CTS_CFG == DEF_ENABLED)
+          #elif
                 // Setup IRQ Transfer TODO
           #endif
         }
@@ -1193,19 +1164,11 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     }
   #endif
 
-  #if (UART_ISR_CTS_CFG == DEF_ENABLED)
-    if((CallBackType & UART_CALLBACK_CTS) != 0)
-    {
-        m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_CTS);
-    }
-  #endif
-
   #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_EMPTY_TX) != 0)
     {
         m_CallBackType   |= CallBackType;
-        //EnableRX_ISR(UART_ISR_TX_EMPTY);      // don't... only on send datra
+        //EnableRX_ISR(UART_ISR_TX_EMPTY);      // don't... only on send data
     }
   #endif
 
@@ -1245,13 +1208,6 @@ void UART_Driver::IRQ_Handler(void)
 
             m_DMA_IsItBusyTX = false;
             return;
-        }
-      #endif
-
-      #if (UART_ISR_CTS_CFG == DEF_ENABLED)
-        if((Status & USART_ISR_CTSIF) != 0)
-        {
-            m_CTS_Flag = (Status & USART_ISR_CTS) ? true : false;
         }
       #endif
 

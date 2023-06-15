@@ -179,15 +179,9 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
         IO_PinInit(m_pInfo->PinRX);
         IO_PinInit(m_pInfo->PinTX);
-      #if (UART_ISR_CTS_CFG == DEF_ENABLED)
-        IO_PinInit(m_pInfo->PinCTS);
-      #endif
-      #if (UART_ISR_RTS_CFG == DEF_ENABLED)
-        IO_PinInit(m_pInfo->PinRTS);
-      #endif
 
       #if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
-          (UART_ISR_CTS_CFG == DEF_ENABLED) || (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+          (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
         m_pCallback    = nullptr;
         m_CallBackType = UART_CALLBACK_NONE;
 
@@ -199,9 +193,6 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
        #endif
        #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
         m_pContextERROR = nullptr;
-       #endif
-       #if (UART_ISR_CTS_CFG == DEF_ENABLED)
-        m_pContextCTS = nullptr;
        #endif
        #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
         m_pContextEmptyTX = nullptr;
@@ -459,17 +450,6 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
             case UART_ENABLE_RX:    CR1_Register |= UART_CR1_RX;    break;
             case UART_ENABLE_TX:    CR1_Register |= UART_CR1_TX;    break;
             case UART_ENABLE_RX_TX: CR1_Register |= UART_CR1_RX_TX; break;
-            default: break;
-        }
-
-        // Flow control
-        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_FLOW_MASK);
-
-        switch(MaskedConfig)
-        {
-            case UART_FLOW_CTS_AND_ISR:  CR3_Register |= UART_CR3_FLOW_CTS_ISR;   // No break here, we enable the CTS also
-            case UART_FLOW_CTS:          CR3_Register |= UART_CR3_FLOW_CTS;     break;
-            case UART_FLOW_RTS:          CR3_Register |= UART_CR3_FLOW_RTS;     break;
             default: break;
         }
 
@@ -1197,15 +1177,6 @@ void UART_Driver::EnableCallbackType(int CallBackType, void* pContext)
         case UART_CALLBACK_ERROR:
         {
             m_pContextERROR = pContext;
-            m_CallBackType |= CallBackType;
-        }
-        break;
-      #endif
-
-      #if (UART_ISR_CTS_CFG == DEF_ENABLED)
-        case UART_CALLBACK_CTS:
-        {
-            m_pContextCTS   = pContext;
             m_CallBackType |= CallBackType;
         }
         break;

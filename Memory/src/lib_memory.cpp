@@ -220,10 +220,6 @@ void* MemPoolDriver::AllocAndSet(size_t SizeRequired, uint8_t FillValue, TickCou
             ((uint8_t*)MemPtr)[i] = FillValue;
         }
     }
-    else
-    {
-        __asm("nop");
-    }
 
     return MemPtr;
 }

@@ -138,10 +138,10 @@ static void _DrawSector(Skin_e Image, Circle_t* pCircle, uint16_t StartAngle, ui
 
     // Fix the corner point (This might change if start and end are both smaller or greater)
     if((SectorNumber == 0) || (SectorNumber == 1)) CornerPoint.X = Origin.X + pCircle->R;
-    else                                           CornerPoint.X = Origin.X - pCircle->R;
+    else                                           CornerPoint.X = pCircle->Pos.X;
 
     if((SectorNumber == 1) || (SectorNumber == 2)) CornerPoint.Y = Origin.Y + pCircle->R;
-    else                                           CornerPoint.Y = Origin.Y - pCircle->R;
+    else                                           CornerPoint.Y = pCircle->Pos.Y;
 
     if((StartAngle == 0) && (EndAngle == 90))               // We copy the entire sector (StartPoint and EndPoint position does not matter)
     {

@@ -82,7 +82,6 @@ class ChildProcessInterface
     public:
 
         virtual void IF_Process             (void)                     = 0;
-        virtual void IF_CallbackFunction    (int Type, void* pContext) = 0;
 };
 
 //-------------------------------------------------------------------------------------------------

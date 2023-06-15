@@ -60,6 +60,8 @@
 //-------------------------------------------------------------------------------------------------
 void Console::Initialize(UART_Driver* pUartDriver)
 {
+    uint8_t* pBuffer;
+
     m_pUartDriver           = pUartDriver;
     m_ParserRX_Offset       = 0;
     m_IsItOnHold            = false;
@@ -74,6 +76,11 @@ void Console::Initialize(UART_Driver* pUartDriver)
     }
 
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
+
+    // Reserve memory for UART internal DMA operation.
+    pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE);
+    pUartDriver->DMA_ConfigRX(pBuffer, CON_FIFO_PARSER_RX_SIZE);
+
     pUartDriver->RegisterCallback((CallbackInterface*)this);
   #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
     pUartDriver->EnableCallbackType(UART_CALLBACK_RX | UART_CALLBACK_COMPLETED_TX | UART_CALLBACK_ERROR);
@@ -476,7 +483,7 @@ void Console::CallbackFunction(int Type, void* pContext)
       #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
         case UART_CALLBACK_IDLE:
         {
-            UART_Transfer_t* pTransfer = (UART_Transfer_t*)&pContext;
+            UART_Transfer_t* pTransfer = (UART_Transfer_t*)pContext;
             m_Fifo.Write(pTransfer->pBuffer, pTransfer->Size);
         }
         break;
@@ -484,8 +491,7 @@ void Console::CallbackFunction(int Type, void* pContext)
 
         case UART_CALLBACK_ERROR:
         {
-           UART_Transfer_t* pTransfer = (UART_Transfer_t*)&pContext;
-           pMemoryPool->Free((void**)&pContext);
+            // nothing so far
         }
     }
 }

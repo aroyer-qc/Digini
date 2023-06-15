@@ -592,9 +592,6 @@ void sys_arch_unprotect(sys_prot_t Prot)
 //
 // Description:    Prints an assertion messages and aborts execution. TODO
 //-------------------------------------------------------------------------------------------------
-/*
- * Prints an assertion messages and aborts execution.
- */
 void sys_assert(const char* pMessage)
 {
 	(void) pMessage;

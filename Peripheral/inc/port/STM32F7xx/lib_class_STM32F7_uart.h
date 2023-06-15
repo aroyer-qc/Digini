@@ -269,11 +269,6 @@ struct UART_Transfer_t
     size_t              StaticSize;
 };
 
-struct UART_Variables_t
-{
-    UART_Transfer_t     RX_Transfer;
-    UART_Transfer_t     TX_Transfer;
-};
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -337,7 +332,8 @@ class UART_Driver
         static const uint32_t       m_BaudRate[NB_OF_BAUD];
         UART_Info_t*                m_pInfo;
         USART_TypeDef*              m_pUart;
-        UART_Variables_t            m_Variables;
+        UART_Transfer_t             m_RX_Transfer;
+        UART_Transfer_t             m_TX_Transfer;
 
         // DMA Config
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)

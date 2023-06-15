@@ -123,7 +123,7 @@ size_t FIFO_Buffer::Read(void* pBuffer, size_t BytesToRead)
     {
         for(; i < BytesToRead; i++)
         {
-            if(ReadyRead() == false)                         // See if any data is available
+            if(ReadyRead() == false)                    // See if any data is available
             {
                 return i;                               // Number of bytes read
             }

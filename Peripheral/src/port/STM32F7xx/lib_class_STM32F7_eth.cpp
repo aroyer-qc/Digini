@@ -185,7 +185,7 @@ SystemState_e ETH_Driver::Initialize(ETH_MAC_SignalEvent_t CallbackEvent)
     IO_PinInit(IO_MX_ETH_CRS_DV);
     IO_PinInit(IO_MX_ETH_REF_CLK);
 
-    // Clear cControl structure
+    // Clear Control Structure
     memset ((void *)&m_MAC_Control, 0, sizeof(ETH_MAC_Control_t));
 
     m_MAC_Control.CallbackEvent = CallbackEvent;
@@ -488,7 +488,7 @@ SystemState_e ETH_Driver::SetAddressFilter(const ETH_MAC_Address_t* pMAC_Address
 
     pMAC_Address++;
 
-    // Calculate 64-bit Hash table for remaining MAC addresses
+    // Calculate 64-bit hash table for remaining MAC addresses
     for(; NbAddress; pMAC_Address++, NbAddress--)
     {
         CRC_Value = myCrc.CalculateFullBuffer(&pMAC_Address->Byte[0], 6) >> 26;

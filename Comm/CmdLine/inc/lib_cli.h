@@ -153,7 +153,7 @@ class CommandLine : public ChildProcessInterface
     public:
 
         void            IF_Process                  (void);
-        void            IF_CallbackFunction         (int Type, void* pContext);
+        //void            IF_CallbackFunction         (int Type, void* pContext);
 
         void            Initialize                  (Console* pConsole);
 
@@ -181,7 +181,8 @@ class CommandLine : public ChildProcessInterface
         SystemState_e   CLI_HandleCmdPassword       (void);
       #endif
 
-        void            RX_Callback                 (uint8_t Data);
+        bool            ProcessRX                   (void);
+        //void            RX_Callback                 (uint8_t Data);
         void            ProcessParams               (CLI_CmdName_e Command);
 
     // --------------------------------------------------------------------------------------------

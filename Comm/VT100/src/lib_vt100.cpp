@@ -67,34 +67,6 @@ const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Static Variables
-//
-//-------------------------------------------------------------------------------------------------
-
-nOS_Thread VT100_Terminal::m_Handle;
-nOS_Stack  VT100_Terminal::m_Stack[TASK_VT100_STACK_SIZE];
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           VT100_TaskWrapper
-//
-//  Parameter(s):   void* pvParameters
-//  Return:         nOS_Error
-//
-//  Description:    main() for the task1
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-#if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
-extern "C" void VT100_TaskWrapper(void* pvParameters)
-{
-    (static_cast<VT100_Terminal*>(pvParameters))->Process();
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           Initialize
 //
 //  Parameter(s):   Console*    pConsole                   Pointer on the console class object
@@ -138,27 +110,11 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
     m_LogsAreMuted            = true;
     m_String[VT100_STRING_SZ] = '\0';
 
-    //nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, nullptr, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
+    nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, this, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
     CallbackInitialize();               // User callback specific initialization
     ClearConfigFLag();
     ClearGenericString();
-
-
-  #if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
-    if((Error = nOS_SemCreate(&this->m_SemTaskRun, 0, 1)) == NOS_OK)
-    {
-        Error = nOS_ThreadCreate(&m_Handle,
-                                 VT100_TaskWrapper,
-                                 this,
-                                 &m_Stack[0],
-                                 TASK_VT100_STACK_SIZE,
-                                 TASK_VT100_PRIO
-                               #if(NOS_CONFIG_THREAD_MPU_REGION_ENABLE > 0)
-                                 , nullptr
-                               #endif
-                                 );
-    }
-  #endif
+    //m_pConsole->
 
     return Error;
 }
@@ -175,18 +131,14 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void VT100_Terminal::Process(void)
+void VT100_Terminal::IF_Process(void)
 {
  // todo   const VT100_MenuDef_t* pMenu;
     uint8_t                Items;
     uint8_t                ItemsQts;
 
-  #if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
-    for(;;)
+    if(ProcessRX() == true)
     {
-        nOS_SemTake(&this->m_SemTaskRun, TASK_VT100_SLEEP_TIME);
-  #endif
-
         if((m_InputDecimalMode == false) && (m_InputStringMode == false))
         {
             // Display the menu
@@ -204,8 +156,8 @@ void VT100_Terminal::Process(void)
 
                     for(Items = 0; Items < ItemsQts; Items++)
                     {
-  // todo                     // pMenu = &m_Menu[m_FlushMenuID].pMenu[Items];
-  // todo                     // CallBack(pMenu->Callback, VT100_CALLBACK_FLUSH, Items);
+    // todo                     // pMenu = &m_Menu[m_FlushMenuID].pMenu[Items];
+    // todo                     // CallBack(pMenu->Callback, VT100_CALLBACK_FLUSH, Items);
                     }
                 }
 
@@ -221,7 +173,7 @@ void VT100_Terminal::Process(void)
                 m_ForceRefresh = false;
             }
 
- //           pMenu = &m_Menu[m_MenuID].pMenu[m_Input];
+    //           pMenu = &m_Menu[m_MenuID].pMenu[m_Input];
 
             // An entry have been detected, do job accordingly
             if(m_ValidateInput == true)
@@ -234,14 +186,14 @@ void VT100_Terminal::Process(void)
                     if(m_Input < m_ItemsQts)
                     {
                         // If new menu selection, draw this new menu
-/*
-  // todo                      if(m_MenuID != pMenu->NextMenu)
+    /*
+    // todo                      if(m_MenuID != pMenu->NextMenu)
                         {
                             m_FlushMenuID = m_MenuID;
                             m_MenuID      = pMenu->NextMenu;
                             m_RefreshMenu = true;
                         }
-*/
+    */
                         // If selection has a callback, call it and react to it's configuration for key input
       // todo                  m_InputType = CallBack(pMenu->Callback, VT100_CALLBACK_ON_INPUT, m_Input);
 
@@ -273,9 +225,188 @@ void VT100_Terminal::Process(void)
             if(m_InputDecimalMode == true)   { InputDecimal(); }
             if(m_InputStringMode  == true)   { InputString();  }
         }
-  #if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
     }
-  #endif
+}
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ProcessRX
+//
+//  Parameter(s):   None
+//
+//  Return:         bool
+//
+//  Description:    Here we read the character from the console.
+//
+//  Note(s):        This is a state machine to handle incoming character.
+//
+//-------------------------------------------------------------------------------------------------
+bool VT100_Terminal::ProcessRX(void)
+{
+    uint8_t Data;
+
+    if(m_pConsole->ReadyRead() == true)
+    {
+        m_pConsole->Read(&Data, 1);
+
+        if(m_FlushNextEntry == true)
+        {
+            m_FlushNextEntry = false;
+            return false;
+        }
+
+        if(m_InEscapeSequence == true)
+        {
+            m_InEscapeSequence = false;
+            nOS_TimerStop(&m_EscapeTimer, true);
+            m_ValidateInput  = false;
+            m_Input          = 0;
+            m_FlushNextEntry = true;
+        }
+
+        if(Data == ASCII_ESCAPE)
+        {
+            nOS_TimerRestart(&m_EscapeTimer, VT100_ESCAPE_TIME_OUT);
+            m_InEscapeSequence = true;
+            m_Value            = m_OldValue;
+            return false;
+        }
+
+        switch(m_InputType)
+        {
+            case VT100_INPUT_MENU_CHOICE:
+            {
+                m_InputCount++;
+                m_ValidateInput = true;
+
+                if((Data >= 'a') && (Data <= 'z'))
+                {
+                    Data = (Data - 'a') + 10;
+                }
+                else if((Data >= 'A') && (Data <= 'Z'))
+                {
+                    Data = (Data - 'A') + 10;
+                }
+                else if((Data >= '1') && (Data <= '9'))
+                {
+                    Data = Data - '0';
+                }
+                else if(Data != VT100_TRAP_REAL_ESCAPE)
+                {
+                    m_Input         = 0;
+                    m_InputCount    = 0;
+                    m_ValidateInput = false;
+                    return false;
+                }
+                if(Data == VT100_TRAP_REAL_ESCAPE)
+                {
+                    Data = 0;
+                }
+                m_Input = Data;
+            }
+            break;
+
+            case VT100_INPUT_DECIMAL:
+            {
+                if(Data == ASCII_CARRIAGE_RETURN)
+                {
+                    m_BackFromEdition  = true;
+                    m_InputDecimalMode = false;
+                    GoToMenu(m_MenuID);
+                }
+                else if(Data == ASCII_BACKSPACE)
+                {
+                    m_Value /= 10;
+                }
+                else if((Data >= '0') && (Data <= '9'))
+                {
+                    if(((abs(m_Value * 10)) + (Data - '0')) <= VT100_LIMIT_DECIMAL_EDIT)
+                    {
+                        m_InputCount++;
+                        m_Value *= 10;
+                        if(m_Value < 0) m_Value -= Data - '0';
+                        else              m_Value += Data - '0';
+                    }
+                }
+                else if(((Data == '-') && (m_Value > 0)) ||
+                        ((Data == '+') && (m_Value < 0)))
+                {
+                   m_Value = -m_Value;
+                }
+                else if(Data == VT100_TRAP_REAL_ESCAPE)
+                {
+                    m_ID = VT100_INPUT_INVALID_ID;
+                    GoToMenu(m_MenuID);
+                }
+            }
+            break;
+
+            case VT100_INPUT_STRING:
+            {
+                if(Data == ASCII_CARRIAGE_RETURN)
+                {
+                    m_BackFromEdition = true;
+                    m_InputStringMode = false;
+                    GoToMenu(m_MenuID);
+                }
+                else if(Data == ASCII_BACKSPACE)
+                {
+                    if((m_InputPtr >= 0) && (m_InputPtr <= m_Maximum))
+                    {
+                        if(m_InputPtr > 0)
+                        {
+                            m_InputPtr--;
+                            m_String[m_InputPtr] = '\0';
+                        }
+                    }
+                }
+                else if((Data >= ' ') && (Data <= '~'))
+                {
+                    if(m_InputPtr < m_Maximum)
+                    {
+                        m_String[m_InputPtr] = Data;
+                        m_InputPtr++;
+                    }
+                }
+                else if(Data == VT100_TRAP_REAL_ESCAPE)
+                {
+                    m_ID = VT100_INPUT_INVALID_ID;
+                    GoToMenu(m_MenuID);
+                }
+            }
+            break;
+
+            case VT100_INPUT_ESCAPE:
+            {
+                if(Data == VT100_TRAP_REAL_ESCAPE)
+                {
+                    GoToMenu(m_MenuID);
+                }
+            }
+            break;
+
+            case VT100_INPUT_CLI:
+            {
+                GoToMenu(VT100_MenuMain);
+            }
+            break;
+
+            case VT100_INPUT_ESCAPE_TO_CONTINUE:
+            {
+                if(Data == VT100_TRAP_REAL_ESCAPE)
+                {
+                    m_ValidateInput = true;
+                    m_InputType     = VT100_INPUT_MENU_CHOICE;
+                }
+            }
+            break;
+
+            default: break;
+        }
+    }
+
+    return true;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -485,16 +616,18 @@ VT100_InputType_e VT100_Terminal::CallBack(VT100_InputType_e (*CallBack)(uint8_t
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::EscapeCallback(nOS_Timer* pTimer, void* pArg)
 {
-    nOS_StatusReg sr;
+    nOS_StatusReg   sr;
+    VT100_Terminal* This;
 
     VAR_UNUSED(pTimer);
-    VAR_UNUSED(pArg);
+    This = (VT100_Terminal*)pArg;
 
     nOS_EnterCritical(sr);
-    m_InEscapeSequence = false;
-    m_InputDecimalMode = false;
-    m_InputStringMode  = false;
-    RX_Callback(VT100_TRAP_REAL_ESCAPE);
+    This->m_InEscapeSequence = false;
+    This->m_InputDecimalMode = false;
+    This->m_InputStringMode  = false;
+//    RX_Callback(VT100_TRAP_REAL_ESCAPE);  use of FIFO instead
+
     nOS_LeaveCritical(sr);
 }
 
@@ -1327,27 +1460,6 @@ void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, uint8_t Value, uint8_t
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CLI_CmdCONSOLE
-//
-//  Parameter(s):   None
-//
-//  Return:         CON_AT_Error_e
-//
-//  Description:    AT Command to enter menu mode.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-#ifdef CONSOLE_USE_VT100_MENU
-CON_AT_Error_eVT100_Terminal::CLI_CmdCONSOLE(void)
-{
-    GoToMenu((CON_MenuID == CON_NO_MENU) ? VT100_MenuMain : m_MenuID);
-    return CON_AT_OK_SILENT;
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           GetString
 //
 //  Parameter(s):   char*   pBuffer     Pointer on the buffer to put the string
@@ -1388,184 +1500,6 @@ bool VT100_Terminal::GetString(char* pBuffer, size_t Size)
     }
 
     return false;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           RX_Callback
-//
-//  Parameter(s):   uint8_t     Data        First byte received
-//
-//  Return:         None
-//
-//  Description:    Here we received the character from the terminal.
-//
-//  Note(s):        This is a state machine to handle incoming caracter, according to state on menu
-//                  or AT Sequence or input (string or decical/hexadecimal).
-//
-//-------------------------------------------------------------------------------------------------
-void VT100_Terminal::RX_Callback(uint8_t Data)
-{
-   /*
-    if(m_FlushNextEntry == true)
-    {
-        m_FlushNextEntry = false;
-        return;
-    }
-
-    if(m_InEscapeSequence == true)
-    {
-        m_InEscapeSequence = false;
-        nOS_TimerStop(&m_EscapeTimer, true);
-        m_ValidateInput  = false;
-        m_Input          = 0;
-        m_FlushNextEntry = true;
-    }
-
-    if(Data == CON_CHAR_ESCAPE)
-    {
-        nOS_TimerRestart(&m_EscapeTimer, CON_ESCAPE_TIME_OUT);
-        m_InEscapeSequence = true;
-        m_Value            = m_OldValue;
-        return;
-    }
-
-    switch(m_InputType)
-    {
-        case CON_INPUT_MENU_CHOICE:
-        {
-            m_InputCount++;
-            m_ValidateInput = true;
-
-            if((Data >= 'a') && (Data <= 'z'))
-            {
-                Data = (Data - 'a') + 10;
-            }
-            else if((Data >= 'A') && (Data <= 'Z'))
-            {
-                Data = (Data - 'A') + 10;
-            }
-            else if((Data >= '1') && (Data <= '9'))
-            {
-                Data = Data - '0';
-            }
-            else if(Data != TRAP_REAL_ESCAPE)
-            {
-                m_Input         = 0;
-                m_InputCount    = 0;
-                m_ValidateInput = false;
-                return;
-            }
-            if(Data == TRAP_REAL_ESCAPE)
-            {
-                Data = 0;
-            }
-            m_Input = Data;
-        }
-        break;
-
-        case CON_INPUT_DECIMAL:
-        {
-            if(Data == ASCII_CARRIAGE_RETURN)
-            {
-                m_BackFromEdition  = true;
-                m_InputDecimalMode = false;
-                GoToMenu(CON_MenuID);
-            }
-            else if(Data == ASCII_BACKSPACE)
-            {
-                m_Value /= 10;
-            }
-            else if((Data >= '0') && (Data <= '9'))
-            {
-                if(((abs(m_Value * 10)) + (Data - '0')) <= CON_LIMIT_DECIMAL_EDIT)
-                {
-                    m_InputCount++;
-                    m_Value *= 10;
-                    if(m_Value < 0) m_Value -= Data - '0';
-                    else              m_Value += Data - '0';
-                }
-            }
-            else if(((Data == '-') && (m_Value > 0)) ||
-                    ((Data == '+') && (m_Value < 0)))
-            {
-               m_Value = -m_Value;
-            }
-            else if(Data == TRAP_REAL_ESCAPE)
-            {
-                m_ID = CON_INPUT_INVALID_ID;
-                GoToMenu(CON_MenuID);
-            }
-        }
-        break;
-
-        case CON_INPUT_STRING:
-        {
-            if(Data == ASCII_CARRIAGE_RETURN)
-            {
-                m_BackFromEdition = true;
-                m_InputStringMode = false;
-                GoToMenu(CON_MenuID);
-            }
-            else if(Data == ASCII_BACKSPACE)
-            {
-                if((m_InputPtr >= 0) && (m_InputPtr <= m_Maximum))
-                {
-                    if(m_InputPtr > 0)
-                    {
-                        m_InputPtr--;
-                        m_String[CON_InputPtr] = '\0';
-                    }
-                }
-            }
-            else if((Data >= ' ') && (Data <= '~'))
-            {
-                if(m_InputPtr < m_Maximum)
-                {
-                    m_String[CON_InputPtr] = Data;
-                    m_InputPtr++;
-                }
-            }
-            else if(Data == TRAP_REAL_ESCAPE)
-            {
-                m_ID = CON_INPUT_INVALID_ID;
-                m_GoToMenu(CON_MenuID);
-            }
-        }
-        break;
-
-        case CON_INPUT_ESCAPE:
-        {
-            if(Data == TRAP_REAL_ESCAPE)
-            {
-                GoToMenu(CON_MenuID);
-            }
-        }
-        break;
-
-        case CON_INPUT_CLI:
-        {
-            ParseFIFO(Data);
-        }
-        break;
-
-        case CON_INPUT_ESCAPE_TO_CONTINUE:
-        {
-            if(Data == TRAP_REAL_ESCAPE)
-            {
-                m_ValidateInput = true;
-                m_InputType     = CON_INPUT_MENU_CHOICE;
-            }
-        }
-        break;
-
-        default: break;
-    }
-       */
-
-  #if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
-    nOS_SemGive(&m_SemTaskRun);
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------

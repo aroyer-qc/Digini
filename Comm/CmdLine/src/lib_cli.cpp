@@ -40,7 +40,7 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef SystemState_e (CommandLine::*const CLI_Function_t)(void);
+typedef SystemState_e (CommandLine::*const CLI_Function_t)(void*);
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -49,6 +49,7 @@ typedef SystemState_e (CommandLine::*const CLI_Function_t)(void);
 #define CLI_PASSWORD_SIZE                           16
 #define CLI_TERMINAL_RESET_DELAY                    100
 #define CLI_AT_STR_SIZE                             2
+#define CLI_FIFO_CMD_SIZE                           32
 
 #define CLI_STRING_CLEAR_SCREEN                     "\033[2J\e[H"
 #define CLI_STRING_RESET_TERMINAL                   "\033c\r\n"
@@ -70,7 +71,7 @@ const char*              CommandLine::m_ErrorLabel                       = "ERRO
 const CLI_CmdInputInfo_t CommandLine::m_CmdInputInfo[NUMBER_OF_CLI_CMD]  =
 {
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-    {CLI_CMD_R, 0, {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}} },
+    {CLI_CMD_CHILD, 1, {{CLI_BASE_POINTER, (int32_t)(VT100_Terminal*)&myVT100_Terminal, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}} },
   #endif
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_INPUT_INFO)
@@ -92,7 +93,7 @@ const char* CommandLine::m_pCmdStr[NUMBER_OF_CLI_CMD] =
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CMD_STRING)
 };
 
-const int CommandLine::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
+const size_t CommandLine::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
 {
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
     sizeof(CMD_MENU) - 1,
@@ -118,19 +119,19 @@ void CommandLine::Initialize(Console* pConsole)
     TickCount_t Delay;
 
     m_pConsole          = pConsole;
-    m_InputState        = CLI_CMD_LINE;       // Initial input type
-    m_Step              = CLI_STEP_IDLE;      // Initial step of the parser
-    m_ParserRX_Offset   = 0;
+    m_InputState        = CLI_CMD_LINE;                 // Initial input type
+    m_Step              = CLI_STEP_IDLE;                // Initial step of the parser
+    m_ParserRX_Size     = 0;
     m_IsItOnHold        = false;
     m_IsItOnStartup     = true;
     m_MuteSerialLogging = true;
     m_pChildProcess     = nullptr;
+    m_FifoCmd.Initialize(CLI_FIFO_CMD_SIZE);
     pConsole->Printf(CON_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
     Delay = GetTick();
     while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
-    pConsole->Printf(CON_SIZE_NONE, "Command Line Process Started");
+    pConsole->Printf(CON_SIZE_NONE, "Command Line Process Started\r>");
     m_StartupTick = GetTick();
-    pConsole->GiveControlToChildProcess(this);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -150,7 +151,6 @@ void CommandLine::Initialize(Console* pConsole)
 void CommandLine::IF_Process(void)
 {
     SystemState_e        State;
-    int16_t              CommandNameSize;
     int                  Command;
     CLI_CommandSupport_e Support;
 
@@ -172,18 +172,17 @@ void CommandLine::IF_Process(void)
             case CLI_STEP_CMD_VALID:
             {
                 // Preprocessing line of data to trap ERROR or OK or continue for data
-                CommandNameSize = m_CommandNameSize;
-                m_pConsole->ToUpper(CommandNameSize);
+                m_FifoCmd.ToUpper(m_CommandNameSize);
                 State = SYS_INVALID_COMMAND;
 
             // Process the valid input by iterating through valid command list
                 for(Command = int(FIRST_CLI_COMMAND); Command < int(NUMBER_OF_CLI_CMD); Command++)
                 {
-                    if(CommandNameSize == m_CmdStrSize[Command])                                            // First size must match
+                    if(m_CommandNameSize == m_CmdStrSize[Command])                                            // First size must match
                     {
-                        if(m_pConsole->Memncmp(m_pCmdStr[Command], CommandNameSize) == true)                // Compare command string
+                        if(m_FifoCmd.Memncmp(m_pCmdStr[Command], m_CommandNameSize) == true)                // Compare command string
                         {
-                            m_pConsole->Flush(CommandNameSize);                                             // Flush the command from the FIFO
+                            m_FifoCmd.Flush(m_CommandNameSize);                                             // Flush the command from the FIFO
 
                             if((m_ReadCommand == false) && (m_PlainCommand == false))
                             {
@@ -196,33 +195,43 @@ void CommandLine::IF_Process(void)
                                (((Support & CLI_CMD_S) != 0) && (m_IsItOnStartup == true))      ||          // Startup specified command only startup phase
                                ((Support & (CLI_CMD_H | CLI_CMD_S)) == 0))                                  // All other command
                             {
-                                State = (this->*CLI_Function[Command])();
+                                if((Support & CLI_CMD_CHILD) != 0)
+                                {
+                                    void* pArg = (void*)m_CmdInputInfo[Command].Param[0].Min;
+                                    State = (this->*CLI_Function[Command])(pArg);                           // Command leading to a child process
+                                }
+                                else
+                                {
+                                    State = (this->*CLI_Function[Command])(nullptr);                        // Standard command
+                                }
+
                                 SendAnswer(CLI_CmdName_e(Command), State, nullptr);
                             }
+                            break;
                         }
                     }
                 }
 
                 if(State == SYS_INVALID_COMMAND)
                 {
-                    m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Command invalid\r\n");
+                    m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "\rCommand invalid\r>");
                 }
 
-                m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);                                                  // Flush completely the FIFO
+                m_FifoCmd.Flush(CON_FIFO_PARSER_RX_SIZE);                                                  // Flush completely the FIFO
                 m_Step = CLI_STEP_IDLE;
             }
             break;
 
             case CLI_STEP_CMD_MALFORMED:
             {
-                m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Malformed packet\r\n");
+                m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "\rMalformed command\r>");
                 m_Step = CLI_STEP_IDLE;
             }
             break;
 
             case CLI_STEP_CMD_BUFFER_OVERFLOW:
             {
-                m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Buffer overflow\r\n");
+                m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "\rBuffer overflow\r>");
                 m_Step = CLI_STEP_IDLE;
             }
             break;
@@ -286,38 +295,7 @@ SystemState_e CommandLine::HandleCmdPassword(void)
 }
 #endif
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           IF_CallbackFunction
-//
-//  Parameter(s):   void
-//
-//  Return:         None
-//
-//  Description:
-//
-//-------------------------------------------------------------------------------------------------
-/*
-void CommandLine::IF_CallbackFunction(int Type, void* pContext)
-{
-    switch(Type)
-    {
-        // TX from UART is completed then release memory.
-        case UART_CALLBACK_COMPLETED_TX:
-        {
-            pMemoryPool->Free((void**)&pContext);
-        }
-        break;
 
-        // RX data from UART then call RX_Callback.
-        case UART_CALLBACK_RX:
-        {
-            RX_Callback(*((uint8_t*)pContext));
-        }
-        break;
-    }
-}
-*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           ProcessRX
@@ -356,11 +334,11 @@ bool CommandLine::ProcessRX(void)
                     if(m_Step != CLI_STEP_GETTING_DATA)
                     {
                         // Receive more data than AT header so, this accelerate process in IRQ
-                        if((((char)Data == 'a') || ((char)Data == 'A')) && (m_Step == CLI_STEP_WAITING_FOR_A))
+                        if(((Data == 'a') || (Data == 'A')) && (m_Step == CLI_STEP_WAITING_FOR_A))
                         {
                             m_Step = CLI_STEP_WAITING_FOR_T;
                         }
-                        else if((((char)Data == 't') || ((char)Data == 'T')) && (m_Step == CLI_STEP_WAITING_FOR_T))
+                        else if(((Data == 't') || (Data == 'T')) && (m_Step == CLI_STEP_WAITING_FOR_T))
                         {
                             m_Step            = CLI_STEP_GETTING_DATA;
                             m_ReadCommand     = false;
@@ -372,20 +350,20 @@ bool CommandLine::ProcessRX(void)
                             m_Step = CLI_STEP_IDLE;
                         }
 
-                        m_ParserRX_Offset = 0;
+                        m_ParserRX_Size = 0;
                     }
 
                     //---------------------------------------------------------------------------------
                     // Receiving an AT command. Basic parsing of the command
                     else
                     {
-                        if((char)Data == '=')
+                        if(Data == ASCII_EQUAL)
                         {
                             m_PlainCommand = false;
 
-                            if(m_ParserRX_Offset != 0)
+                            if(m_ParserRX_Size != 0)
                             {
-                                m_CommandNameSize = m_ParserRX_Offset;
+                                m_CommandNameSize = m_ParserRX_Size;
                             }
                             else
                             {
@@ -393,10 +371,10 @@ bool CommandLine::ProcessRX(void)
                                 State  = true;
                             }
                         }
-                        else if((char)Data == '?')
+                        else if(Data == ASCII_QUESTION_MARK)
                         {
                             // '?' must follow '='
-                            if(m_CommandNameSize == m_ParserRX_Offset)
+                            if(m_CommandNameSize == m_ParserRX_Size)
                             {
                                 m_ReadCommand = true;
                             }
@@ -406,50 +384,47 @@ bool CommandLine::ProcessRX(void)
                                 State  = true;
                             }
                         }
-                        else if((char)Data == '\r')
+                        else if(Data == ASCII_CARRIAGE_RETURN)
                         {
                             if(m_CommandNameSize == 0)    // if not "=" or "=?"
                             {
-                                m_CommandNameSize = m_ParserRX_Offset;
+                                m_CommandNameSize = m_ParserRX_Size;
                             }
 
                             m_Step     = CLI_STEP_CMD_VALID;
-                            //m_DataSize = m_ParserRX_Offset;
                             State      = true;
+                            m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);         // Flush console buffer
                         }
-                        else if((char)Data == '\b')
+                        else if((char)Data == ASCII_BACKSPACE)
                         {
-                            m_ParserRX_Offset--;
-
-                            if(m_CommandNameSize == m_ParserRX_Offset)
+                             if(m_CommandNameSize == m_ParserRX_Size)
                             {
                                 m_CommandNameSize = 0;
                             }
 
-                            m_pConsole->HeadBackward(1);
+                            m_ParserRX_Size--;
+                            m_FifoCmd.HeadBackward(1);
                         }
                         else
                         {
-                            // Write data into the Fifo buffer
-/* ?? WHY WHY WHY WHY
-                            // Check if we can write into the Fifo
-                            if(m_pConsole->Write((const void*)&Data, 1) != 1)
+                            // Write data into the Fifo command buffer
+                            if(m_FifoCmd.Write((const void*)&Data, 1) != 1)     // Check if we can write into the Fifo
                             {
                                 // We have overrun the Fifo buffer
                                 m_Step = CLI_STEP_CMD_BUFFER_OVERFLOW;
                                 State = true;
                             }
                             else
-*/
                             {
-                                m_ParserRX_Offset++;
+                                m_ParserRX_Size++;
                             }
                         }
 
-                        // Flush the FIFO an Error has occurred.
+                        // Flush both FIFO an Error has occurred.
                         if((m_Step != CLI_STEP_GETTING_DATA) && (m_Step != CLI_STEP_CMD_VALID))
                         {
                             m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);
+                            m_FifoCmd.Flush(CLI_FIFO_CMD_SIZE);
                             // Parser send Error and reset the state machine
                         }
                     }
@@ -485,7 +460,7 @@ bool CommandLine::ProcessRX(void)
         if(TickHasTimeOut(m_CommandTimeOut, CLI_CMD_TIME_OUT) == true)
         {
             m_Step = CLI_STEP_IDLE;
-            m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "Command timeout\r\n");
+            m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, " ... Command timeout\r>");
             m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);
         }
     }
@@ -520,7 +495,7 @@ void CommandLine::ProcessParams(CLI_CmdName_e Command)
         pParam = &m_CmdInputInfo[Command].Param[i];
         pValue = &m_ParamValue[i];
 
-        if(pParam->Base != DEF_STRING_BASE)
+        if(pParam->Base != CLI_BASE_STRING)
         {
             i++;                    // Must be incremented before comparison
 
@@ -703,6 +678,7 @@ void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char*
         case SYS_INVALID_PARAMETER:      { pMsg2 = "Invalid Parameter";        break; }
         case SYS_INVALID_PASSWORD:       { pMsg2 = "Password Invalid";         break; }
         case SYS_FAIL_MEMORY_ALLOCATION: { pMsg2 = "Memory allocation Error";  break; }
+        case SYS_CMD_PLAIN_ONLY:         { pMsg2 = "Plain Command Only";       break; }
       #else
         case SYS_OK_DENIED:
         case SYS_CMD_NO_READ_SUPPORT:
@@ -710,6 +686,7 @@ void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char*
         case SYS_INVALID_PARAMETER:
         case SYS_INVALID_PASSWORD:
         case SYS_FAIL_MEMORY_ALLOCATION:
+        case SYS_CMD_PLAIN_ONLY:
        #endif
 
         // SYS_OK_SILENT:                // We return nothing.. it is silent
@@ -719,7 +696,7 @@ void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char*
 
     if(State != SYS_OK_SILENT)
     {
-        m_pConsole->Printf(CON_SIZE_NONE, "AT%s=%s%s\r\n", m_pCmdStr[Cmd], pMsg1, pMsg2);
+        m_pConsole->Printf(CON_SIZE_NONE, "\rAT%s = %s%s\r>", m_pCmdStr[Cmd], pMsg1, pMsg2);
     }
 }
 

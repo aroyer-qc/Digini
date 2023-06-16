@@ -48,7 +48,7 @@
 #define CON_SIZE_NONE                   0
 #define CON_SERIAL_OUT_SIZE             256
 #define CON_TIME_DATE_STAMP             "%04u-%02u-%02u %2u:%02u:%02u: "
-#define CON_NOT_CONNECTED               0
+#define CON_NOT_CONNECTED               -1
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -137,11 +137,9 @@ class Console : public CallbackInterface
     // --------------------------------------------------------------------------------------------
 
         UART_Driver*                            m_pUartDriver;
-        UART_Transfer_t**                      m_pRX_Transfer;
-        int                                     m_ParserRX_Offset;
+        UART_Transfer_t**                       m_pRX_Transfer;
         TickCount_t                             m_CommandTimeOut;
         int16_t                                 m_CommandNameSize;
-        //int16_t                                 m_DataSize;
         bool                                    m_MuteSerialLogging;
         TickCount_t                             m_StartupTick;
         bool                                    m_IsItOnStartup;
@@ -149,7 +147,7 @@ class Console : public CallbackInterface
         FIFO_Buffer                             m_Fifo;
         bool                                    m_IsItOnHold;
         CON_DebugLevel_e                        m_DebugLevel;
-        uint8_t                                 m_ActiveProcessLevel;
+        int32_t                                 m_ActiveProcessLevel;
         ChildProcessInterface*                  m_pChildProcess[CON_CHILD_PROCESS_PUSH_POP_LEVEL];
 };
 

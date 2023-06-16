@@ -50,17 +50,11 @@
 #define CON_FIFO_PARSER_RX_SZ               64
 #define VT100_SZ_NONE                       0
 
-                                                                      #define CONFIG_FLAG_SIZE                  8  //???
+#define CONFIG_FLAG_SIZE                    8  //???
 
 #define VT100_STRING_QTS                    8
 #define VT100_ITEMS_QTS                     8
 #define VT100_STRING_SZ                     32
-
-// if VT100 is a task only
-#define TASK_VT100_STACK_SIZE               256
-#define TASK_VT100_PRIO                     4
-#define TASK_VT100_SLEEP_TIME               16   // Run the task 60 times per seconds,
-                                                 // so callback can refresh console
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -151,14 +145,13 @@ VT100_MENU_DEF(EXPAND_VT100_AS_MENU_ENUMS)
 // Function(s) Prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-class VT100_Terminal
+class VT100_Terminal : public ChildProcessInterface
 {
     public:
 
                             VT100_Terminal              () {};
 
-
-        void                Process                     (void);
+        void                IF_Process                  (void);
         nOS_Error           Initialize                  (Console* pConsole, const char* pHeader);
         void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
         void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
@@ -197,7 +190,7 @@ class VT100_Terminal
         void                DisplayHeader               (void);
 
 
-void RX_Callback(uint8_t Data);
+//void RX_Callback(uint8_t Data);
 
 // to check if needed in VT100
 //void                SeConsoleMuteLogs           (bool);  this should be in console... beacause when in VT100 we don't want any debug message going thru
@@ -207,22 +200,17 @@ bool                GetString                   (char* pBuffer, size_t Size);
 
     private:
 
+        bool                ProcessRX                   (void);
         uint8_t             DisplayMenu                 (VT100_Menu_e MenuID);
         void                MenuSelectItems             (char ItemsChar);
         void                CallbackInitialize          (void);
         VT100_InputType_e   CallBack                    (VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e), VT100_CallBackType_e Type, uint8_t Item);
-        void                EscapeCallback              (nOS_Timer* pTimer, void* pArg);
+        static void         EscapeCallback              (nOS_Timer* pTimer, void* pArg);
         void                InputString                 (void);
         void                InputDecimal                (void);
         void                ClearConfigFLag             (void);
         void                ClearGenericString          (void);
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
-
-      #if (DIGINI_VT100_IS_A_TASK == DEF_ENABLED)
-        static nOS_Thread                   m_Handle;
-        static nOS_Stack                    m_Stack[TASK_VT100_STACK_SIZE];
-        nOS_Sem                             m_SemTaskRun;
-      #endif
 
         Console*                            m_pConsole;
         bool                                m_IsItInStartup;
@@ -272,6 +260,16 @@ bool                GetString                   (char* pBuffer, size_t Size);
 //-------------------------------------------------------------------------------------------------
 
 #include "vt100_var.h"        // Project variable
+
+#ifdef VT100_GLOBAL
+
+class VT100_Terminal myVT100_Terminal;
+
+#else
+
+extern class VT100_Terminal myVT100_Terminal;
+
+#endif // VT100_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 

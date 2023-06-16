@@ -46,7 +46,7 @@
 //
 //  Name:           CmdHOLD
 //
-//  Parameter(s):   None
+//  Parameter(s):   pArg                Not used
 //  Return:         SystemState_e
 //
 //  Description:    AT Command to put system on hold
@@ -56,9 +56,11 @@
 //                  time.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::CmdHOLD(void)
+SystemState_e CommandLine::CmdHOLD(void* pArg)
 {
     SystemState_e Error;
+
+    VAR_UNUSED(pArg);
 
     if(m_PlainCommand == true)
     {
@@ -77,7 +79,7 @@ SystemState_e CommandLine::CmdHOLD(void)
 //
 //  Name:           CmdRELEASE
 //
-//  Parameter(s):   None
+//  Parameter(s):   pArg                Not used
 //  Return:         SystemState_e
 //
 //  Description:    AT Command to release hold on system
@@ -85,9 +87,11 @@ SystemState_e CommandLine::CmdHOLD(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::CmdRELEASE(void)
+SystemState_e CommandLine::CmdRELEASE(void* pArg)
 {
     SystemState_e Error;
+
+    VAR_UNUSED(pArg);
 
     if(m_IsItOnHold == true)
     {
@@ -113,15 +117,17 @@ SystemState_e CommandLine::CmdRELEASE(void)
 //
 //  Name:           CmdRESET
 //
-//  Parameter(s):   None
+//  Parameter(s):   pArg                Not used
 //  Return:         SystemState_e
 //
 //  Description:  	Command to reset and rebbot the system
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::CmdRESET(void)
+SystemState_e CommandLine::CmdRESET(void* pArg)
 {
     SystemState_e Error;
+
+    VAR_UNUSED(pArg);
 
     if(m_PlainCommand == true)
     {
@@ -142,7 +148,7 @@ SystemState_e CommandLine::CmdRESET(void)
 //
 //  Name:           CmdSTATUS
 //
-//  Parameter(s):   None
+//  Parameter(s):   pArg                Not used
 //  Return:         SystemState_e
 //
 //  Description:    Return system status
@@ -154,11 +160,13 @@ SystemState_e CommandLine::CmdRESET(void)
 //                    - Write is not supported in this example.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::CmdSTATUS(void)
+SystemState_e CommandLine::CmdSTATUS(void* pArg)
 {
     SystemState_e Error;
     char          Response[20];
     int           Status;
+
+    VAR_UNUSED(pArg);
 
     // Accept plain or read command
     if((m_ReadCommand == true) || (m_PlainCommand == true))
@@ -182,7 +190,7 @@ SystemState_e CommandLine::CmdSTATUS(void)
 //
 //  Name:           CmdMENU
 //
-//  Parameter(s):   None
+//  Parameter(s):   pArg                Call a child process. This is the pointer to interface.
 //  Return:         SystemState_e
 //
 //  Description:    Access the VT100 Menu
@@ -191,20 +199,18 @@ SystemState_e CommandLine::CmdSTATUS(void)
 //
 //-------------------------------------------------------------------------------------------------
 #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-SystemState_e CommandLine::CmdMENU(void)
+SystemState_e CommandLine::CmdMENU(void* pArg)
 {
     SystemState_e Error;
 
     if(m_PlainCommand == true)
     {
-        if(m_ReadCommand != true)
-        {
-            //GiveControlToChildProcess(nullptr);
-        }
+        m_pConsole->GiveControlToChildProcess((ChildProcessInterface*)pArg);
+        Error = SYS_OK_SILENT;
     }
     else
     {
-        Error = SYS_INVALID_PARAMETER;       // No parameter on this command
+        Error = SYS_CMD_PLAIN_ONLY;       // No parameter on this command
     }
 
     return Error;
@@ -216,7 +222,7 @@ SystemState_e CommandLine::CmdMENU(void)
 //
 //  Name:           CmdTEST1
 //
-//  Parameter(s):   None
+//  Parameter(s):   pArg                Not used
 //  Return:         SystemState_e
 //
 //  Description:    Example of a command
@@ -228,11 +234,13 @@ SystemState_e CommandLine::CmdMENU(void)
 //                    - Write is not supported in this example.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::CmdTEST1(void)
+SystemState_e CommandLine::CmdTEST1(void* pArg)
 {
     SystemState_e   Error;
     char            Response[11];
     static uint64_t Count = 1234;
+
+    VAR_UNUSED(pArg);
 
     if(m_ReadCommand == true)
     {
@@ -254,7 +262,7 @@ SystemState_e CommandLine::CmdTEST1(void)
 //
 //  Name:           CmdTEST2
 //
-//  Parameter(s):   None
+//  Parameter(s):   pArg                Not used
 //  Return:         SystemState_e
 //
 //  Description:    Example of a command
@@ -267,13 +275,15 @@ SystemState_e CommandLine::CmdTEST1(void)
 //                    - Write new value for application data or function.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::CmdTEST2(void)
+SystemState_e CommandLine::CmdTEST2(void* pArg)
 {
     SystemState_e       Error;
     char                Response[20];
     static uint8_t      State_1;                                // Here value are static because for the example, you can read them back
     static uint8_t      Value_1;
     static int16_t      Value_2;
+
+    VAR_UNUSED(pArg);
 
     if(m_IsItOnHold == true)                                  // This command will be allowed only if system is on hold
     {
@@ -304,13 +314,13 @@ SystemState_e CommandLine::CmdTEST2(void)
 //
 //  Name:           CmdTEST3
 //
-//  Parameter(s):   None
+//  Parameter(s):   pArg                Not used
 //  Return:         SystemState_e
 //
 //  Description:    Example of a command
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::CmdTEST3(void)
+SystemState_e CommandLine::CmdTEST3(void* pArg)
 {
     SystemState_e            Error;
     char                     Response[64];
@@ -318,6 +328,8 @@ SystemState_e CommandLine::CmdTEST3(void)
     static int16_t           Test1;
     static uint16_t          Test2;
     static int32_t           Test3;
+
+    VAR_UNUSED(pArg);
 
     if(m_IsItOnHold == true)
     {
@@ -349,16 +361,18 @@ SystemState_e CommandLine::CmdTEST3(void)
 //
 //  Name:           CmdINFO
 //
-//  Parameter(s):   None
+//  Parameter(s):   pArg                Not used
 //  Return:         SystemState_e
 //
 //  Description:    Return information
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::CmdINFO(void)
+SystemState_e CommandLine::CmdINFO(void* pArg)
 {
     SystemState_e Error;
     char          Response[100];
+
+    VAR_UNUSED(pArg);
 
     if(m_PlainCommand == true)
     {
@@ -381,15 +395,17 @@ SystemState_e CommandLine::CmdINFO(void)
 //
 //  Name:           CmdVERSION
 //
-//  Parameter(s):   None
+//  Parameter(s):   pArg                Not used
 //  Return:         SystemState_e
 //
 //  Description:    Return the version
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::CmdVERSION(void)
+SystemState_e CommandLine::CmdVERSION(void* pArg)
 {
     SystemState_e Error;
+
+    VAR_UNUSED(pArg);
 
     if(m_PlainCommand == true)
     {
@@ -408,30 +424,32 @@ SystemState_e CommandLine::CmdVERSION(void)
 //
 //  Name:           CmdDBG_LEVEL
 //
-//  Parameter(s):   None
+//  Parameter(s):   pArg                Not used
 //  Return:         SystemState_e
 //
 //  Description:    Set individual debug level (bit position)
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::CmdDBG_LEVEL(void)
+SystemState_e CommandLine::CmdDBG_LEVEL(void* pArg)
 {
-    SystemState_e       Error;
-    char                Response[64];
-    uint8_t             DebugLevel = (uint8_t)m_pConsole->GetDebugLevel();
+    SystemState_e Error;
+    char          Response[64];
+    uint16_t      DebugLevel = (uint16_t)m_pConsole->GetDebugLevel();
+
+    VAR_UNUSED(pArg);
 
     if((m_ReadCommand == true) || (m_PlainCommand == true))     // Process also a plain command has a read
     {
-        snprintf(&Response[0], 64, " 0x%02X ", DebugLevel);
+        snprintf(&Response[0], 64, "0x%04X ", DebugLevel);
 
-        for(int i = 6; i < 14; i++)
+        for(int i = 8; i < 23; i++)
         {
-            if((DebugLevel & 0x80) == 0) Response[i] = '.';
-            else                         Response[i] = '*';
+            if((DebugLevel & 0x8000) == 0) Response[i] = '.';
+            else                           Response[i] = '*';
             DebugLevel <<= 1;
         }
 
-        snprintf(&Response[14], 64, "\r\n          01234567\r\n");
+        snprintf(&Response[24], 64, "\r");
         SendAnswer(AT_DEBUG, SYS_OK_READ, Response);
         Error = SYS_OK_SILENT;
     }

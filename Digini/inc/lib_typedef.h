@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 //  ASCII Table
-typedef enum
+typedef enum _ASCII_e
 {
     ASCII_NULL                = 0,        // 0x00
     ASCII_START_OF_HEADING,
@@ -83,6 +83,9 @@ typedef enum
     ASCII_COLOR_OVERRIDE        = ASCII_DEVICE_CTRL2,
     ASCII_SINGLE_FONT_OVERRIDE  = ASCII_DEVICE_CTRL3,
     ASCII_FONT_OVERRIDE         = ASCII_DEVICE_CTRL4,
+    ASCII_COMMA                 = ',',
+    ASCII_EQUAL                 = '=',
+    ASCII_QUESTION_MARK         = '?',
 } ASCII_e;
 
 typedef enum
@@ -184,6 +187,7 @@ typedef enum
     // CLI state
     SYS_CMD_NO_READ_SUPPORT,
     SYS_CMD_NO_WRITE_SUPPORT,
+    SYS_CMD_PLAIN_ONLY,
     SYS_OK_READ,
     SYS_OK_SILENT,
     SYS_OK_DENIED,

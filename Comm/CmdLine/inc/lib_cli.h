@@ -72,6 +72,7 @@ enum CLI_CommandSupport_e
     CLI_CMD_P      = 0x04,                                          // PLAIN only   ( ATV\r\n is a plain command)
     CLI_CMD_R      = 0x08,                                          // READ cmd only
     CLI_CMD_W      = 0x10,                                          // WRITE cmd only
+    CLI_CMD_CHILD  = 0x20,                                          // This is a child process
     CLI_CMD_PR     = CLI_CMD_P | CLI_CMD_R,                         // PLAIN and READ cmd
     CLI_CMD_PW     = CLI_CMD_P | CLI_CMD_W,                         // PLAIN and WRITE cmd
     CLI_CMD_RW     = CLI_CMD_R | CLI_CMD_W,                         // READ and WRITE cmd
@@ -101,11 +102,21 @@ enum CLI_CommandSupport_e
     CLI_CMD_SHPRW  = CLI_CMD_H | CLI_CMD_S | CLI_CMD_PRW,           // PLAIN, READ and WRITE cmd and only at startup
 };
 
+enum CLI_ParamBase_e
+{
+    CLI_BASE_DECIMAL     = 10,
+    CLI_BASE_HEXADECIMAL = 16,
+    CLI_BASE_STRING      = 1,
+    CLI_BASE_POINTER     = 2,
+};
+
+
+
 struct CLI_CmdParam_t
 {
-    uint8_t  Base;
-    int32_t  Min;
-    int32_t  Max;
+    CLI_ParamBase_e  Base;
+    int32_t          Min;
+    int32_t          Max;
 };
 
 struct CLI_CmdInputInfo_t
@@ -153,11 +164,10 @@ class CommandLine : public ChildProcessInterface
     public:
 
         void            IF_Process                  (void);
-        //void            IF_CallbackFunction         (int Type, void* pContext);
 
         void            Initialize                  (Console* pConsole);
 
-        //void            GiveControlToChildProcess   (void(*pProcess)(uint8_t Data));
+        void            GiveControlToChildProcess   (ChildProcessInterface* pChildProcess);
         void            ReleaseControl              (void);
         void            LockDisplay                 (bool State);
         void            SendAnswer                  (CLI_CmdName_e CmdName, SystemState_e State, const char* Answer);
@@ -167,7 +177,7 @@ class CommandLine : public ChildProcessInterface
 
 
       #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-        SystemState_e   CmdMENU                     (void);
+        SystemState_e   CmdMENU                     (void* pArg);
       #endif
 
     // --------------------------------------------------------------------------------------------
@@ -182,18 +192,18 @@ class CommandLine : public ChildProcessInterface
       #endif
 
         bool            ProcessRX                   (void);
-        //void            RX_Callback                 (uint8_t Data);
         void            ProcessParams               (CLI_CmdName_e Command);
 
     // --------------------------------------------------------------------------------------------
 
         Console*                                m_pConsole;
         CLI_InputState_e                        m_InputState;
-        int                                     m_ParserRX_Offset;
+        size_t                                  m_ParserRX_Size;
         CLI_Step_e                              m_Step;
+        FIFO_Buffer                             m_FifoCmd;
         ChildProcessInterface*                  m_pChildProcess;
         TickCount_t                             m_CommandTimeOut;
-        int16_t                                 m_CommandNameSize;
+        size_t                                  m_CommandNameSize;
         bool                                    m_MuteSerialLogging;
         TickCount_t                             m_StartupTick;
         bool                                    m_IsItOnStartup;
@@ -206,7 +216,7 @@ class CommandLine : public ChildProcessInterface
         static const CLI_CmdInputInfo_t         m_CmdInputInfo[NUMBER_OF_CLI_CMD];
         static const char*                      m_ErrorLabel;
         static const char*                      m_pCmdStr[NUMBER_OF_CLI_CMD];
-        static const int                        m_CmdStrSize[NUMBER_OF_CLI_CMD];
+        static const size_t                     m_CmdStrSize[NUMBER_OF_CLI_CMD];
 
       #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
         static const char                       m_StrAT_MENU[sizeof(CMD_MENU)];

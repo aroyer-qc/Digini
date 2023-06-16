@@ -63,7 +63,6 @@ void Console::Initialize(UART_Driver* pUartDriver)
     uint8_t* pBuffer;
 
     m_pUartDriver           = pUartDriver;
-    m_ParserRX_Offset       = 0;
     m_IsItOnHold            = false;
     m_IsItOnStartup         = true;
     m_MuteSerialLogging     = true;
@@ -76,7 +75,6 @@ void Console::Initialize(UART_Driver* pUartDriver)
     }
 
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
-
     // Reserve memory for UART internal DMA operation.
     pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE);
     pUartDriver->DMA_ConfigRX(pBuffer, CON_FIFO_PARSER_RX_SIZE);
@@ -129,7 +127,6 @@ void Console::GiveControlToChildProcess(ChildProcessInterface* pChildProcess)
         m_ActiveProcessLevel++;
         m_pChildProcess[m_ActiveProcessLevel] = pChildProcess;
     }
-
 }
 
 //-------------------------------------------------------------------------------------------------

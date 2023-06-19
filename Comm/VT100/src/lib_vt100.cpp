@@ -58,12 +58,12 @@
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
-VT100_MENU_DEF(EXPAND_VT100_AS_MENU_DATA)
+VT100_MENU_DEF(EXPAND_VT100_AS_MENU_MEMBER_VARIABLE_DATA)
 
-const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
-{
-   // VT100_MENU_TREE_DEF(EXPAND_VT100_MENU_AS_MENU_DATA)
-};
+//const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
+//{
+ //   VT100_MENU_DEF(EXPAND_AS_MENU_DATA);
+//};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -139,7 +139,7 @@ void VT100_Terminal::IF_Process(void)
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
             Delay = GetTick();
             while(TickHasTimeOut(Delay, 100) == false){};
-            GoToMenu(VT100_MenuMain);
+            GoToMenu(VT100_STARTUP_MENU_CFG);
         }
 
         if((m_InputDecimalMode == false) && (m_InputStringMode == false))
@@ -155,7 +155,7 @@ void VT100_Terminal::IF_Process(void)
                     ClearConfigFLag();
                     ClearGenericString();
 
-                    ItemsQts = m_Menu[m_FlushMenuID].pMenuSize;
+                  //  ItemsQts = m_Menu[m_FlushMenuID].Size;
 
                     for(Items = 0; Items < ItemsQts; Items++)
                     {
@@ -199,6 +199,8 @@ void VT100_Terminal::IF_Process(void)
     */
                         // If selection has a callback, call it and react to it's configuration for key input
       // todo                  m_InputType = CallBack(pMenu->Callback, VT100_CALLBACK_ON_INPUT, m_Input);
+//const CON_MenuDef_t*  pMenu;
+      //CON_InputType = CON_CallBack(pMenu->Callback, CON_CALLBACK_ON_INPUT, CON_Input);
 
                         // Job is already done, so no refresh
                         if(m_InputType == VT100_INPUT_MENU_CHOICE)
@@ -219,7 +221,9 @@ void VT100_Terminal::IF_Process(void)
                 // Still in a callback mode
                 if(m_MenuID != VT100_MENU_NONE)
                 {
+                    // const CON_MenuDef_t*  pMenu;
     // todo                CallBack(pMenu->Callback, VT100_CALLBACK_REFRESH, 0);
+                           //CON_CallBack(pMenu->Callback, CON_CALLBACK_REFRESH, 0);
                 }
             }
         }
@@ -476,7 +480,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
 
     if(m_MenuID != VT100_MENU_NONE)
     {
-        ItemsQts = m_Menu[MenuID].pMenuSize;
+       // ItemsQts = m_Menu[MenuID].pMenuSize;
 
         if(ItemsQts > 1)
         {

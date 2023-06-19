@@ -60,13 +60,14 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-
 enum VT100_Menu_e
 {
-    VT100_MENU_DEF(EXPAND_VT100_MENU_AS_ENUMS)
+    VT100_MENU_DEF(EXPAND_VT100_MENU_AS_ENUM)
     NUMBER_OF_MENU,
     VT100_MENU_NONE,
 };
+
+VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
 
 enum VT100_Color_e
 {
@@ -137,9 +138,6 @@ struct VT100_MenuObject_t
     const VT100_MenuDef_t     Menu;
     size_t                    pMenuSize;
 };
-
-
-VT100_MENU_DEF(EXPAND_VT100_AS_MENU_ENUMS)
 
 //-------------------------------------------------------------------------------------------------
 // Function(s) Prototype(s)

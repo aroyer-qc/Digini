@@ -213,6 +213,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
 
         Console*                            m_pConsole;
+        bool                                m_IsItInitialized;
         bool                                m_IsItInStartup;
         bool                                m_BackFromEdition;
         bool                                m_RefreshMenu;

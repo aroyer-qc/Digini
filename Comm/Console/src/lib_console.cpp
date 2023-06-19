@@ -215,7 +215,6 @@ size_t Console::PrintSerialLog(CON_DebugLevel_e Level, const char* pFormat, ...)
                 Size = vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, vaArg);
                 m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size);
                 va_end(vaArg);
-                pMemoryPool->Free((void**)&pBuffer);
             }
         }
     }
@@ -227,7 +226,7 @@ size_t Console::PrintSerialLog(CON_DebugLevel_e Level, const char* pFormat, ...)
 //
 //  Name:           SendData
 //
-//  p_BufferTX  Ptr on buffer with data to send.
+//  p_BufferTX      p_BufferTX  Pointer on buffer with data to send.
 //                              if = nullptr, internal TX Buffer remains the one set previously
 //                  pSizeTX     Number of bytes to send, and on return, number of bytes sent
 //   Return Value:  SystemState_e
@@ -237,8 +236,9 @@ size_t Console::PrintSerialLog(CON_DebugLevel_e Level, const char* pFormat, ...)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e Console::SendData(const uint8_t* p_BufferTX, size_t* pSizeTX, void* pContext)
+SystemState_e Console::SendData(const uint8_t* p_BufferTX, size_t* pSizeTX)
 {
+    m_pUartDriver->SendData((const uint8_t*)p_BufferTX, pSizeTX);
     return SYS_READY;
 }
 

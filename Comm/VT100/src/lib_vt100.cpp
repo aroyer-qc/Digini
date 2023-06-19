@@ -80,16 +80,8 @@ const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
 nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
 {
     nOS_Error Error = NOS_OK;
-    TickCount_t Delay;
 
-    m_ForceRefresh = false;
     // Should read future configuration for muting
-    m_LogsAreMuted = false;
-
-    InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
-    Delay = GetTick();
-    while(TickHasTimeOut(Delay, 100) == false){};
-
     m_pConsole                = pConsole;
     m_pHeader                 = (char*)pHeader;
     m_RefreshMenu             = false;
@@ -98,6 +90,7 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
     m_InputType               = VT100_INPUT_CLI;
     m_Input                   = 0;
     m_InputCount              = 0;
+    m_IsItInitialized         = false;
     m_ValidateInput           = false;
     m_ItemsQts                = 0;
     m_BypassPrintf            = false;
@@ -107,14 +100,14 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
     m_IsDisplayLock           = false;
     m_BackFromEdition         = false;
     m_FlushNextEntry          = false;
+    m_ForceRefresh            = false;
     m_LogsAreMuted            = true;
     m_String[VT100_STRING_SZ] = '\0';
 
-    nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, this, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
+    Error = nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, this, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
     CallbackInitialize();               // User callback specific initialization
     ClearConfigFLag();
     ClearGenericString();
-    //m_pConsole->
 
     return Error;
 }
@@ -134,11 +127,21 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
 void VT100_Terminal::IF_Process(void)
 {
  // todo   const VT100_MenuDef_t* pMenu;
-    uint8_t                Items;
-    uint8_t                ItemsQts;
+    uint8_t     Items;
+    uint8_t     ItemsQts;
+    TickCount_t Delay;
 
-    if(ProcessRX() == true)
+    if((ProcessRX() == true) || (m_IsItInitialized == false))
     {
+        if(m_IsItInitialized == false)
+        {
+            m_IsItInitialized = true;
+            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
+            Delay = GetTick();
+            while(TickHasTimeOut(Delay, 100) == false){};
+            GoToMenu(VT100_MenuMain);
+        }
+
         if((m_InputDecimalMode == false) && (m_InputStringMode == false))
         {
             // Display the menu
@@ -388,7 +391,7 @@ bool VT100_Terminal::ProcessRX(void)
 
             case VT100_INPUT_CLI:
             {
-                GoToMenu(VT100_MenuMain);
+                //GoToMenu(VT100_MenuMain);
             }
             break;
 
@@ -404,9 +407,11 @@ bool VT100_Terminal::ProcessRX(void)
 
             default: break;
         }
+
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -972,20 +977,12 @@ size_t VT100_Terminal::InMenuPrintf(int nSize, Label_e Label, ...)
     size_t      Size    = 0;
     const char* pFormat = myLabel.GetPointer(Label);
 
-    if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE)) == nullptr)
+    if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE)) != nullptr)
     {
         va_start(vaArg, Label);
         Size = STR_vsnprintf(pBuffer, ((nSize == VT100_SZ_NONE) ? VT100_TERMINAL_SIZE : nSize), pFormat, vaArg);
-
-      #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)
-        while(m_pUartDriver->IsItBusy() == true){};
-        m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);
-      #else
-       // SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);   TODO
-      #endif
-
+        m_pConsole->SendData((const uint8_t*)&pBuffer[0], &Size);
         va_end(vaArg);
-        pMemoryPool->Free((void**)&pBuffer);
     }
 
     return Size;
@@ -1023,17 +1020,10 @@ size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat
             {
                 va_start(vaArg, (const char*)pFormat);
                 Size = STR_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, vaArg);
-
-              #if (VT100_IS_RUNNING_STAND_ALONE == DEF_ENABLED)
                 while(m_pUartDriver->IsItBusy() == true){};
                 m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);
                 UART_Write(UART_CONSOLE, pBuffer, Size);
                 m_pUartDriver->SendData("\r\n", &Size);
-              #else
-               // SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);   TODO
-                UART_Write(UART_CONSOLE, pBuffer, Size);
-                UART_Write(UART_CONSOLE, "\r\n", 2);
-              #endif
 
 
 

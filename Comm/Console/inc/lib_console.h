@@ -105,7 +105,7 @@ class Console : public CallbackInterface
         bool             IsItAnEOL                  (void);
         size_t           PrintSerialLog             (CON_DebugLevel_e Level, const char* pFormat, ...);
         void             SetSerialLogging           (bool Mute);
-        SystemState_e    SendData                   (const uint8_t* p_BufferTX, size_t* pSizeTX, void* pContext = nullptr);
+        SystemState_e    SendData                   (const uint8_t* p_BufferTX, size_t* pSizeTX);
         void             CallbackFunction           (int Type, void* pContext);
 
         // Passthru FIFO

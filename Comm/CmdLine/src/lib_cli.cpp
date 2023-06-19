@@ -696,7 +696,7 @@ void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char*
 
     if(State != SYS_OK_SILENT)
     {
-        m_pConsole->Printf(CON_SIZE_NONE, "\rAT%s = %s%s\r>", m_pCmdStr[Cmd], pMsg1, pMsg2);
+        m_pConsole->Printf(CON_SIZE_NONE, "AT%s = %s%s\r>", m_pCmdStr[Cmd], pMsg1, pMsg2);
     }
 }
 

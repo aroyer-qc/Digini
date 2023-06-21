@@ -209,11 +209,11 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MenuRedirection(uint8_t Input, VT100_
     {
         if(m_IsItInStartup == true)
         {
-            GoToMenu(VT100_MenuBoot);
+            GoToMenu(MenuBoot_ID);
         }
         else
         {
-            GoToMenu(VT100_MenuMain);
+            GoToMenu(MenuMain_ID);
         }
     }
 

@@ -65,7 +65,16 @@ enum VT100_Menu_e
     VT100_MENU_DEF(EXPAND_VT100_MENU_AS_ENUM)
     NUMBER_OF_MENU,
     VT100_MENU_NONE,
+    VT100_MENU_NONE_ID = VT100_MENU_NONE,
 };
+
+enum VT100_Callback_e
+{
+    VT100_CALLBACK(EXPAND_VT100_MENU_AS_ENUM)
+    NUMBER_OF_CALLBACK,
+};
+
+
 
 VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
 
@@ -139,6 +148,8 @@ struct VT100_MenuObject_t
     size_t                    pMenuSize;
 };
 
+typedef VT100_InputType_e (*CallbackMethod_t)(uint8_t, VT100_CallBackType_e);
+
 //-------------------------------------------------------------------------------------------------
 // Function(s) Prototype(s)
 //-------------------------------------------------------------------------------------------------
@@ -209,6 +220,9 @@ bool                GetString                   (char* pBuffer, size_t Size);
         void                ClearConfigFLag             (void);
         void                ClearGenericString          (void);
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
+
+        CallbackMethod_t*                   m_Callback[NUMBER_OF_CALLBACK];
+
 
         Console*                            m_pConsole;
         bool                                m_IsItInitialized;

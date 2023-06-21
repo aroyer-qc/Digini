@@ -54,6 +54,8 @@
 #define VT100_LIMIT_DECIMAL_EDIT                        100000000   // Edition of decimal value limited to 100 Millions
 #define VT100_TRAP_REAL_ESCAPE                          255
 
+#define VT100_STARTUP_MENU_ID_CFG                       CAT(VT100_STARTUP_MENU_CFG, _ID)
+
 //-------------------------------------------------------------------------------------------------
 // Const(s)
 //-------------------------------------------------------------------------------------------------
@@ -139,7 +141,7 @@ void VT100_Terminal::IF_Process(void)
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
             Delay = GetTick();
             while(TickHasTimeOut(Delay, 100) == false){};
-            GoToMenu(VT100_STARTUP_MENU_CFG);
+            GoToMenu(VT100_STARTUP_MENU_ID_CFG);
         }
 
         if((m_InputDecimalMode == false) && (m_InputStringMode == false))

@@ -62,10 +62,10 @@
 
 VT100_MENU_DEF(EXPAND_VT100_AS_MENU_MEMBER_VARIABLE_DATA)
 
-//const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
-//{
- //   VT100_MENU_DEF(EXPAND_AS_MENU_DATA);
-//};
+const VT100_MenuDef_t* VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
+{
+    VT100_MENU_DEF(EXPAND_VT100_MENU_AS_DATA)
+};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -128,10 +128,10 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::IF_Process(void)
 {
- // todo   const VT100_MenuDef_t* pMenu;
-    uint8_t     Items;
-    uint8_t     ItemsQts;
-    TickCount_t Delay;
+    const VT100_MenuDef_t* pMenu;
+    uint8_t                Items;
+    uint8_t                ItemsQts;
+    TickCount_t            Delay;
 
     if((ProcessRX() == true) || (m_IsItInitialized == false))
     {
@@ -157,7 +157,7 @@ void VT100_Terminal::IF_Process(void)
                     ClearConfigFLag();
                     ClearGenericString();
 
-                  //  ItemsQts = m_Menu[m_FlushMenuID].Size;
+                    ItemsQts = m_Menu[m_FlushMenuID].Size;
 
                     for(Items = 0; Items < ItemsQts; Items++)
                     {
@@ -482,7 +482,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
 
     if(m_MenuID != VT100_MENU_NONE)
     {
-       // ItemsQts = m_Menu[MenuID].pMenuSize;
+       // ItemsQts = m_Menu[MenuID].Size;
 
         if(ItemsQts > 1)
         {
@@ -506,7 +506,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
             for(Items = 0; Items < ItemsQts; Items++)
             {
                 pPreviousMenu = pMenu;
- //               pMenu         = &m_Menu[MenuID].pMenu[Items];
+                //pMenu         = &m_Menu[MenuID].pMenu[Items];
 
                 if(Items != 0)
                 {

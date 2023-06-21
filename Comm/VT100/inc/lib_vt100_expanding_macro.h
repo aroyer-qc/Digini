@@ -30,8 +30,14 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+/// This enum is a list of all menu page that exist in the VT100_MENU_DEF.
 #define EXPAND_VT100_MENU_AS_ENUM(MENU_ID)  CAT(MENU_ID, _ID),
 
+/// This create list of pointer on each menu (see Note 1)
+#define EXPAND_VT100_MENU_AS_DATA(NAME)     CAT(VT100_Terminal::m_, NAME),
+
+
+/// This will create a enum list of all sub menu items contains in each menu page.
 #define EXPAND_VT100_MENU_ITEM_AS_ENUM(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL)            WHEN(EQUAL(MENU, MEMBER_OF))(MEMBER_OF ## _ ## ITEM_ID,)
 #define EXPAND_AS_MENU_ENUMS_ITEM(NAME)			   			  \
 enum CAT(NAME, _ItemID_e)                                     \
@@ -49,17 +55,20 @@ enum CAT(NAME, _ItemFlag_e)                                        \
 };
 */
 
+/// This create the class member structure declaration containing sub item information for each menu.
 #define EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER(NAME)                                                  static const VT100_MenuDef_t CAT(m_, NAME)[CAT(NAME, _NB_OF_ITEMS)];
+
+/// (Note 1) This create the class member structure containing actual sub item information for each menu.
 #define EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL)  WHEN(EQUAL(MENU, MEMBER_OF))({LABEL, IF_THEN(EQUAL(nullptr, CALLBACK), nullptr, VT100_Terminal::CALLBACK), CAT(NAVIGATE_TO, _ID)},)
-
-
 #define EXPAND_VT100_AS_MENU_MEMBER_VARIABLE_DATA(NAME)                        \
 const VT100_MenuDef_t VT100_Terminal::CAT(m_, NAME)[CAT(NAME, _NB_OF_ITEMS)] = \
 {                                                                              \
     VT100_MENU_TREE_DEF(EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA, NAME)       \
 };
 
-#define EXPAND_VT100_MENU_CALLBACK_AS_ENUM(NAME)             CAT(NAME, _ID),
+//#define EXPAND_VT100_MENU_CALLBACK_AS_ENUM(NAME)             CAT(NAME, _ID),
+
+/// this automatically create all the method declaration in the class for each callback
 #define EXPAND_VT100_MENU_CALLBACK(NAME)                    VT100_InputType_e NAME(uint8_t Input, VT100_CallBackType_e Type);
 
 //-------------------------------------------------------------------------------------------------

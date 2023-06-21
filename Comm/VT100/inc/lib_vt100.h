@@ -74,10 +74,6 @@ enum VT100_Callback_e
     NUMBER_OF_CALLBACK,
 };
 
-
-
-VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
-
 enum VT100_Color_e
 {
 	VT100_COLOR_BLACK      = 0,
@@ -135,20 +131,22 @@ enum VT100_CallBackType_e
     VT100_CALLBACK_FLUSH,
 };
 
+typedef VT100_InputType_e (*CallbackMethod_t)(uint8_t, VT100_CallBackType_e);
+
 struct VT100_MenuDef_t
 {
     Label_e           Label;
-    VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e);
+    CallbackMethod_t* (*Callback)(uint8_t, VT100_CallBackType_e);
     VT100_Menu_e      NextMenu;
 };
 
 struct VT100_MenuObject_t
 {
-    const VT100_MenuDef_t     Menu;
-    size_t                    pMenuSize;
+    const VT100_MenuDef_t     Definition;
+    size_t                    Size;
 };
 
-typedef VT100_InputType_e (*CallbackMethod_t)(uint8_t, VT100_CallBackType_e);
+VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
 
 //-------------------------------------------------------------------------------------------------
 // Function(s) Prototype(s)
@@ -221,9 +219,6 @@ bool                GetString                   (char* pBuffer, size_t Size);
         void                ClearGenericString          (void);
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
 
-        CallbackMethod_t*                   m_Callback[NUMBER_OF_CALLBACK];
-
-
         Console*                            m_pConsole;
         bool                                m_IsItInitialized;
         bool                                m_IsItInStartup;
@@ -263,7 +258,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         bool                                m_IsItString;
         uint32_t                            m_NewConfigFlag[CONFIG_FLAG_SIZE];
         char                                m_GenericString[VT100_STRING_QTS][VT100_ITEMS_QTS][VT100_STRING_SZ];
-        static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
+        static const VT100_MenuDef_t*       m_Menu[NUMBER_OF_MENU];
 
         VT100_MENU_DEF(EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER)
 };

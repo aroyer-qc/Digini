@@ -1,0 +1,24 @@
+
+Same number of element as the enum ID represent the pointer and in the size of structure
+ __________________________________________                  ___________________________________________
+|  Enum list of Menu Page                  |                | Pointer on each Menu Page (class member)  |
+|                                          |                |                                           |
+|  VT100_Menu_e (3)                        |                | VT100_MenuObject_t  x [NUMBER_OF_MENU(4)] |
+|__________________________________________| Link as per ID |___________________________________________|
+| _ID                                      | <------------> | const VT100_MenuDef_t*  pMenuDef    (1)   |
+| ...                                      |                | size_t                  Size        (2)   |
+| NUMBER_OF_MENU(4)                        |                |                                           |
+|__________________________________________|                |___________________________________________|
+
+
+Each menu has a list containing a structure of data for each sub items in the menu
+
+ ___________________________________________________ 
+|  Array of struc data for sub items (class member) |
+|                                                   |
+|  VT100_MenuDef_t pMenuDef(1) [size (2)]           |
+|___________________________________________________|
+| { LABEL,  CALLBACK,   NEXT_MENU(3) },             |
+| ...                                               |
+| for up to size (2)                                |
+|___________________________________________________|

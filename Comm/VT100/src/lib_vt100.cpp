@@ -62,7 +62,7 @@
 
 VT100_MENU_DEF(EXPAND_VT100_AS_MENU_MEMBER_VARIABLE_DATA)
 
-const VT100_MenuDef_t* VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
+const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
 {
     VT100_MENU_DEF(EXPAND_VT100_MENU_AS_DATA)
 };
@@ -89,7 +89,6 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
     m_RefreshMenu             = false;
     m_MenuID                  = VT100_MENU_NONE;
     m_FlushMenuID             = VT100_MENU_NONE;
-    m_InputType               = VT100_INPUT_CLI;
     m_Input                   = 0;
     m_InputCount              = 0;
     m_IsItInitialized         = false;
@@ -161,8 +160,8 @@ void VT100_Terminal::IF_Process(void)
 
                     for(Items = 0; Items < ItemsQts; Items++)
                     {
-    // todo                     // pMenu = &m_Menu[m_FlushMenuID].pMenu[Items];
-    // todo                     // CallBack(pMenu->Callback, VT100_CALLBACK_FLUSH, Items);
+                        pMenu = &m_Menu[m_FlushMenuID].pDefinition[Items];
+                        CallBack(pMenu->pCallback, VT100_CALLBACK_FLUSH, Items);
                     }
                 }
 
@@ -178,7 +177,9 @@ void VT100_Terminal::IF_Process(void)
                 m_ForceRefresh = false;
             }
 
-    //           pMenu = &m_Menu[m_MenuID].pMenu[m_Input];
+// not sure this is good
+            pMenu = &m_Menu[m_MenuID].pDefinition[Items];
+            //  pMenu = &m_Menu[m_Menu[m_MenuID].pDefinition->NextMenu];  not compiling and not good
 
             // An entry have been detected, do job accordingly
             if(m_ValidateInput == true)
@@ -191,18 +192,15 @@ void VT100_Terminal::IF_Process(void)
                     if(m_Input < m_ItemsQts)
                     {
                         // If new menu selection, draw this new menu
-    /*
-    // todo                      if(m_MenuID != pMenu->NextMenu)
+                        if(m_MenuID != pMenu->NextMenu)
                         {
                             m_FlushMenuID = m_MenuID;
                             m_MenuID      = pMenu->NextMenu;
                             m_RefreshMenu = true;
                         }
-    */
+
                         // If selection has a callback, call it and react to it's configuration for key input
-      // todo                  m_InputType = CallBack(pMenu->Callback, VT100_CALLBACK_ON_INPUT, m_Input);
-//const CON_MenuDef_t*  pMenu;
-      //CON_InputType = CON_CallBack(pMenu->Callback, CON_CALLBACK_ON_INPUT, CON_Input);
+                        m_InputType = CallBack(pMenu->pCallback, VT100_CALLBACK_ON_INPUT, m_Input);
 
                         // Job is already done, so no refresh
                         if(m_InputType == VT100_INPUT_MENU_CHOICE)
@@ -223,9 +221,7 @@ void VT100_Terminal::IF_Process(void)
                 // Still in a callback mode
                 if(m_MenuID != VT100_MENU_NONE)
                 {
-                    // const CON_MenuDef_t*  pMenu;
-    // todo                CallBack(pMenu->Callback, VT100_CALLBACK_REFRESH, 0);
-                           //CON_CallBack(pMenu->Callback, CON_CALLBACK_REFRESH, 0);
+                    CallBack(pMenu->pCallback, VT100_CALLBACK_REFRESH, 0);
                 }
             }
         }
@@ -395,12 +391,6 @@ bool VT100_Terminal::ProcessRX(void)
             }
             break;
 
-            case VT100_INPUT_CLI:
-            {
-                //GoToMenu(VT100_MenuMain);
-            }
-            break;
-
             case VT100_INPUT_ESCAPE_TO_CONTINUE:
             {
                 if(Data == VT100_TRAP_REAL_ESCAPE)
@@ -482,7 +472,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
 
     if(m_MenuID != VT100_MENU_NONE)
     {
-       // ItemsQts = m_Menu[MenuID].Size;
+        ItemsQts = m_Menu[MenuID].Size;
 
         if(ItemsQts > 1)
         {
@@ -522,12 +512,12 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
                     InMenuPrintf(VT100_SZ_NONE, VT100_LBL_SELECT);
                     if(pMenu != pPreviousMenu)
                     {
-                        CallBack(pMenu->Callback, VT100_CALLBACK_INIT, 0);
+                        CallBack(pMenu->pCallback, VT100_CALLBACK_INIT, 0);
                     }
                 }
                 else
                 {
-                    CallBack(pMenu->Callback, VT100_CALLBACK_INIT, Items);
+                    CallBack(pMenu->pCallback, VT100_CALLBACK_INIT, Items);
                 }
             }
 
@@ -540,7 +530,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
         }
 
         // There is nothing to draw if it has only one item ( it is a redirection menu )
-   //     CallBack(m_Menu[m_MenuID].pMenu[0].Callback, VT100_CALLBACK_INIT, 0);
+        CallBack(m_Menu[m_MenuID].pDefinition[0].pCallback, VT100_CALLBACK_INIT, 0);
 
         return 0;
     }
@@ -549,7 +539,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
   #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_WHITE);
   #endif
-    m_InputType    = VT100_INPUT_CLI;
+    //m_InputType    = VT100_INPUT_CLI;
     m_BypassPrintf = false;
     return 0;
 }
@@ -595,19 +585,19 @@ void VT100_Terminal::MenuSelectItems(char ItemsChar)
 //  Note(s):        Push and restore the attribute
 //
 //-------------------------------------------------------------------------------------------------
-VT100_InputType_e VT100_Terminal::CallBack(VT100_InputType_e (*CallBack)(uint8_t, VT100_CallBackType_e), VT100_CallBackType_e Type, uint8_t Item)
+VT100_InputType_e VT100_Terminal::CallBack(CallbackMethod_t pCallback, VT100_CallBackType_e Type, uint8_t Item)
 {
     VT100_InputType_e InputType;
 
     InputType = VT100_INPUT_MENU_CHOICE;
 
-/*    if(Callback != nullptr)
+    if(pCallback != nullptr)
     {
         SaveAttribute();
-        InputType = Callback(Item, Type);
+        InputType = pCallback(Item, Type);
         RestoreAttribute();
     }
-*/
+
     return InputType;
 }
 

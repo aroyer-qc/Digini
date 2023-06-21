@@ -146,8 +146,20 @@ err_t ethernetif_init(struct netif* netif)
 	netif->name[0] = IFNAME0;
 	netif->name[1] = IFNAME1;
 
-	netif->output     = etharp_output;
+  #if LWIP_IPV4
+  #if LWIP_ARP || LWIP_ETHERNET
+  #if LWIP_ARP
+	netif->output = etharp_output;
+  #else
 	netif->linkoutput = low_level_output;
+  #endif // LWIP_ARP
+  #endif // LWIP_ARP || LWIP_ETHERNET
+  #endif // LWIP_IPV4
+
+  #if LWIP_IPV6
+    netif->output_ip6 = ethip6_output;
+  #endif /* LWIP_IPV6 */
+
 
 	// Initialize the hardware -> low_level_init(netif)
     {

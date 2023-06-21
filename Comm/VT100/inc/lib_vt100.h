@@ -120,7 +120,6 @@ enum VT100_InputType_e
     VT100_INPUT_STRING,
     VT100_INPUT_ESCAPE,
     VT100_INPUT_ESCAPE_TO_CONTINUE,
-    VT100_INPUT_CLI,
 };
 
 enum VT100_CallBackType_e
@@ -136,13 +135,13 @@ typedef VT100_InputType_e (*CallbackMethod_t)(uint8_t, VT100_CallBackType_e);
 struct VT100_MenuDef_t
 {
     Label_e           Label;
-    CallbackMethod_t* (*Callback)(uint8_t, VT100_CallBackType_e);
+    CallbackMethod_t  pCallback;
     VT100_Menu_e      NextMenu;
 };
 
 struct VT100_MenuObject_t
 {
-    const VT100_MenuDef_t     Definition;
+    const VT100_MenuDef_t*    pDefinition;
     size_t                    Size;
 };
 
@@ -211,7 +210,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         uint8_t             DisplayMenu                 (VT100_Menu_e MenuID);
         void                MenuSelectItems             (char ItemsChar);
         void                CallbackInitialize          (void);
-        VT100_InputType_e   CallBack                    (VT100_InputType_e (*Callback)(uint8_t, VT100_CallBackType_e), VT100_CallBackType_e Type, uint8_t Item);
+        VT100_InputType_e   CallBack                    (CallbackMethod_t pCallback, VT100_CallBackType_e Type, uint8_t Item);
         static void         EscapeCallback              (nOS_Timer* pTimer, void* pArg);
         void                InputString                 (void);
         void                InputDecimal                (void);
@@ -258,7 +257,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         bool                                m_IsItString;
         uint32_t                            m_NewConfigFlag[CONFIG_FLAG_SIZE];
         char                                m_GenericString[VT100_STRING_QTS][VT100_ITEMS_QTS][VT100_STRING_SZ];
-        static const VT100_MenuDef_t*       m_Menu[NUMBER_OF_MENU];
+        static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
 
         VT100_MENU_DEF(EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER)
 };

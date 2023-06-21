@@ -239,7 +239,7 @@ SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
     {
         case uint32_t(ETH_PHY_MODE_SPEED_10M):                                      break;
         case uint32_t(ETH_PHY_MODE_SPEED_100M):    Value |= BCR_SPEED_SEL;          break;
-        default:                                   return SYS_UNSUPPORTED_FEATURE;
+        //default:                                   return SYS_UNSUPPORTED_FEATURE;
   }
 
     switch(Mode & ETH_PHY_MODE_DUPLEX_MASK)

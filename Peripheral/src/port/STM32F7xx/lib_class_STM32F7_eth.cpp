@@ -281,7 +281,7 @@ SystemState_e ETH_Driver::PowerControl(ETH_PowerState_e State)
             ETH->MACVLANTR = 0;
 
             // Initialize Address registers
-            ETH->MACA0HR = 0x8; ETH->MACA0LR = 0;
+            ETH->MACA0HR = 0x80000000; ETH->MACA0LR = 0;
             //ETH->MACA1HR = 0; ETH->MACA1LR = 0;   // checkif it impair the behavior
             //ETH->MACA2HR = 0; ETH->MACA2LR = 0;
             //ETH->MACA3HR = 0; ETH->MACA3LR = 0;
@@ -1127,7 +1127,10 @@ SystemState_e ETH_Driver::PHY_Read(uint8_t PHY_Address, uint8_t RegisterAddress,
 
     RegisterValue = ETH->MACMIIAR & ETH_MACMIIAR_CR;
 
+    while((ETH->MACMIIAR & ETH_MACMIIAR_MB) != 0) {/* TODO Error management*/};
     ETH->MACMIIAR = RegisterValue | ETH_MACMIIAR_MB | (uint32_t(PHY_Address) << 11) | (uint32_t(RegisterAddress) <<  6);
+    while((ETH->MACMIIAR & ETH_MACMIIAR_MB) != 0) {/* TODO Error management*/};
+    *Data = ETH->MACMIIDR;
 
     return PHY_Busy();
 }
@@ -1153,9 +1156,11 @@ SystemState_e ETH_Driver::PHY_Write(uint8_t PHY_Address, uint8_t RegisterAddress
         return SYS_ERROR;
     }
 
+    while((ETH->MACMIIAR & ETH_MACMIIAR_MB) != 0) {/* TODO Error management*/};
     ETH->MACMIIDR = Data;
     RegisterValue = ETH->MACMIIAR & ETH_MACMIIAR_CR;
     ETH->MACMIIAR = RegisterValue | ETH_MACMIIAR_MB | ETH_MACMIIAR_MW | (uint32_t(PHY_Address) << 11) | (uint32_t(RegisterAddress) <<  6);
+    while((ETH->MACMIIAR & ETH_MACMIIAR_MB) != 0) {/* TDO Error management*/};
 
     return PHY_Busy();
 }

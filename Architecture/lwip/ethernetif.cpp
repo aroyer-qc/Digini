@@ -56,8 +56,8 @@ static nOS_Sem                     ETH_RX_Sem;
 static nOS_Mutex                   ETH_TX_Mutex;
 //static struct ethernetif           ETH0;
 
-//static nOS_Thread   TaskHandle;
-//static nOS_Stack    Stack[TASK_ETHERNET_IF_STACK_SIZE];
+static nOS_Thread   TaskHandle;
+static nOS_Stack    Stack[TASK_ETHERNET_IF_STACK_SIZE];
 
 // Forward declarations.
 static err_t    low_level_output        (struct netif *netif, struct pbuf *p);
@@ -173,14 +173,14 @@ err_t ethernetif_init(struct netif* netif)
         /*nOS_Error*/ nOS_SemCreate (&ETH_RX_Sem, 0, 20);
         /*nOS_Error*/ nOS_MutexCreate (&ETH_TX_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
 
-/*
-        Error = nOS_ThreadCreate(&TaskHandle,
+
+         nOS_ThreadCreate(&TaskHandle,
                                  ethernetif_input,
                                  (void*)netif,
                                  &Stack[0],
                                  TASK_ETHERNET_IF_STACK_SIZE,
                                  TASK_ETHERNET_IF_PRIO);
-*/
+
         // Enable MAC and DMA transmission and reception
         ETH_Mac.Control(ETH_MAC_CONTROL_TX, 1);
         ETH_Mac.Control(ETH_MAC_CONTROL_RX, 1);

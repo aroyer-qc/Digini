@@ -52,7 +52,7 @@ enum Language_e
     LANG_ENGLISH = 0,
     LANG_FRENCH,
     NB_LANGUAGE_CONST,
-    LANG_DEFAULT = 0,           // If no support for multi-language this will be the default value
+    LANG_DEFAULT = LANG_ENGLISH,           // If no support for multi-language this will be the default value
 };
 
 enum Label_e

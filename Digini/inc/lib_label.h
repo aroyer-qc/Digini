@@ -59,6 +59,7 @@ enum Label_e
 {
     LBL_STRING,
     LBL_CHAR,
+    LBL_LINEFEED,
     LBL_DOUBLE_LINEFEED,
 
     LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
@@ -105,7 +106,8 @@ class Label
   {
       { "%s",                           nullptr     },  // LBL_STRING
       { "%c",                           nullptr     },  // LBL_CHAR
-      { "\r\n\r\n",                     nullptr     },  // LBL_DOUBLE_LINEFEED
+      { "\r",                         nullptr     },  // LBL_LINEFEED
+      { "\r\r",                     nullptr     },  // LBL_DOUBLE_LINEFEED
 
       LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
 

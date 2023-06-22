@@ -69,7 +69,7 @@ enum CLI_CommandSupport_e
     CLI_CMD_S      = 0x01,                                          // Mask for Startup command only in CLI_CommandSupport_e typedef
     CLI_CMD_H      = 0x02,                                          // Mask for Hold command only in CLI_CommandSupport_e typedef
 
-    CLI_CMD_P      = 0x04,                                          // PLAIN only   ( ATV\r\n is a plain command)
+    CLI_CMD_P      = 0x04,                                          // PLAIN only   ( ATV\r is a plain command)
     CLI_CMD_R      = 0x08,                                          // READ cmd only
     CLI_CMD_W      = 0x10,                                          // WRITE cmd only
     CLI_CMD_CHILD  = 0x20,                                          // This is a child process
@@ -77,7 +77,7 @@ enum CLI_CommandSupport_e
     CLI_CMD_PW     = CLI_CMD_P | CLI_CMD_W,                         // PLAIN and WRITE cmd
     CLI_CMD_RW     = CLI_CMD_R | CLI_CMD_W,                         // READ and WRITE cmd
     CLI_CMD_PRW    = CLI_CMD_P | CLI_CMD_R | CLI_CMD_W,             // PLAIN, READ and WRITE cmd
-    CLI_CMD_SP     = CLI_CMD_S | CLI_CMD_P,                         // PLAIN and only at startup  ( ATH\r\n is a plain command)
+    CLI_CMD_SP     = CLI_CMD_S | CLI_CMD_P,                         // PLAIN and only at startup  ( ATH\r is a plain command)
     CLI_CMD_SR     = CLI_CMD_S | CLI_CMD_R,                         // READ cmd and only at startup
     CLI_CMD_SW     = CLI_CMD_S | CLI_CMD_W,                         // WRITE cmd and only at startup
     CLI_CMD_SPR    = CLI_CMD_S | CLI_CMD_PR,                        // PLAIN and READ cmd and only at startup
@@ -93,7 +93,7 @@ enum CLI_CommandSupport_e
     CLI_CMD_HPW    = CLI_CMD_H | CLI_CMD_P | CLI_CMD_W,             // PLAIN and WRITE cmd
     CLI_CMD_HRW    = CLI_CMD_H | CLI_CMD_R | CLI_CMD_W,             // READ and WRITE cmd
     CLI_CMD_HPRW   = CLI_CMD_H | CLI_CMD_P | CLI_CMD_R | CLI_CMD_W, // PLAIN, READ and WRITE cmd
-    CLI_CMD_SHP    = CLI_CMD_H | CLI_CMD_S | CLI_CMD_P,             // PLAIN and only at startup  ( ATH\r\n is a plain command)
+    CLI_CMD_SHP    = CLI_CMD_H | CLI_CMD_S | CLI_CMD_P,             // PLAIN and only at startup  ( ATH\r is a plain command)
     CLI_CMD_SHR    = CLI_CMD_H | CLI_CMD_S | CLI_CMD_R,             // READ cmd and only at startup
     CLI_CMD_SHW    = CLI_CMD_H | CLI_CMD_S | CLI_CMD_W,             // WRITE cmd and only at startup
     CLI_CMD_SHPR   = CLI_CMD_H | CLI_CMD_S | CLI_CMD_PR,            // PLAIN and READ cmd and only at startup

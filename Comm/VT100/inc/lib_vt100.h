@@ -154,7 +154,6 @@ VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
 class VT100_Terminal : public ChildProcessInterface
 {
     public:
-
                             VT100_Terminal              () {};
 
         void                IF_Process                  (void);
@@ -195,7 +194,6 @@ class VT100_Terminal : public ChildProcessInterface
 
         void                DisplayHeader               (void);
 
-
 //void RX_Callback(uint8_t Data);
 
 // to check if needed in VT100
@@ -208,6 +206,9 @@ bool                GetString                   (char* pBuffer, size_t Size);
 
         bool                ProcessRX                   (void);
         uint8_t             DisplayMenu                 (VT100_Menu_e MenuID);
+
+
+        void                RepeatChar                  (uint8_t Char, size_t Count);
         void                MenuSelectItems             (char ItemsChar);
         void                CallbackInitialize          (void);
         VT100_InputType_e   CallBack                    (CallbackMethod_t pCallback, VT100_CallBackType_e Type, uint8_t Item);
@@ -260,6 +261,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
 
         VT100_MENU_DEF(EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER)
+        //VT100_MENU_TREE_DEF(EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER)
 };
 
 //-------------------------------------------------------------------------------------------------

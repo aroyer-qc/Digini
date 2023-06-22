@@ -376,7 +376,7 @@ SystemState_e CommandLine::CmdINFO(void* pArg)
 
     if(m_PlainCommand == true)
     {
-        snprintf(Response, 100, "%s\r\n    %s\r\n    S/N: %s\r\n    Build: %s", OUR_FIRMWARE_NAME,
+        snprintf(Response, 100, "%s\r    %s\r    S/N: %s\r    Build: %s", OUR_FIRMWARE_NAME,
                                                                                 OUR_MODEL_NAME,
                                                                                 OUR_SERIAL_NUMBER,
                                                                                 OUR_BUILD_DATE);

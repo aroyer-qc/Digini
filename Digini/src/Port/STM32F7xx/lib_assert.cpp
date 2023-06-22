@@ -79,8 +79,8 @@ void assert_failed(const char* file, int line)
     Line  = line;
 
     // User can add his own implementation to report the file name and line number
-    // ex: printf("Wrong Parameters value: file %s on line %u\r\n", file, line)
-    // printf("Failed in file %s on line %lu\r\n", file, line);
+    // ex: printf("Wrong Parameters value: file %s on line %u\r", file, line)
+    // printf("Failed in file %s on line %lu\r", file, line);
 
     VAR_UNUSED(*pFile);
     VAR_UNUSED(Line);

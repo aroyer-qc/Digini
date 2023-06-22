@@ -132,7 +132,8 @@ void VT100_Terminal::IF_Process(void)
     uint8_t                ItemsQts;
     TickCount_t            Delay;
 
-    if((ProcessRX() == true) || (m_IsItInitialized == false))
+    //if((ProcessRX() == true) || (m_IsItInitialized == false))
+    ProcessRX();
     {
         if(m_IsItInitialized == false)
         {
@@ -177,9 +178,7 @@ void VT100_Terminal::IF_Process(void)
                 m_ForceRefresh = false;
             }
 
-// not sure this is good
-            pMenu = &m_Menu[m_MenuID].pDefinition[Items];
-            //  pMenu = &m_Menu[m_Menu[m_MenuID].pDefinition->NextMenu];  not compiling and not good
+            pMenu = &m_Menu[m_MenuID].pDefinition[m_Input];
 
             // An entry have been detected, do job accordingly
             if(m_ValidateInput == true)
@@ -200,7 +199,8 @@ void VT100_Terminal::IF_Process(void)
                         }
 
                         // If selection has a callback, call it and react to it's configuration for key input
-                        m_InputType = CallBack(pMenu->pCallback, VT100_CALLBACK_ON_INPUT, m_Input);
+                        CallbackMethod_t pCallback = m_Menu[m_MenuID].pDefinition[m_Input].pCallback;
+                        m_InputType = CallBack(pCallback, VT100_CALLBACK_ON_INPUT, m_Input);
 
                         // Job is already done, so no refresh
                         if(m_InputType == VT100_INPUT_MENU_CHOICE)
@@ -467,6 +467,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
     uint8_t                 ItemsQts;
     uint8_t                 Items;
     char                    ItemsChar;
+    const char*             pString;
 
     pMenu = nullptr;
 
@@ -485,7 +486,15 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
             SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
           #endif
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
-            InMenuPrintf(VT100_SZ_NONE, LBL_VT100_MENU_TITLE); // TODO Fix
+            pString = myLabel.GetPointer(VT100_LBL_LINE_SEPARATOR);
+            size_t SizeLine = strlen(pString) - 1;
+            pString = myLabel.GetPointer(LBL_VT100_MENU_TITLE);
+            size_t SizeTitle = strlen(pString);
+            SizeLine -= SizeTitle;
+            RepeatChar(' ', SizeLine / 2);
+            InMenuPrintf(VT100_SZ_NONE, LBL_VT100_MENU_TITLE);
+            RepeatChar(' ', (SizeLine / 2) + (SizeLine % 2));
+            InMenuPrintf(VT100_SZ_NONE, LBL_LINEFEED);
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
           #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
             SetColor(VT100_COLOR_YELLOW, VT100_COLOR_BLACK);
@@ -496,7 +505,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
             for(Items = 0; Items < ItemsQts; Items++)
             {
                 pPreviousMenu = pMenu;
-                //pMenu         = &m_Menu[MenuID].pMenu[Items];
+                pMenu         = &m_Menu[MenuID].pDefinition[Items];
 
                 if(Items != 0)
                 {
@@ -544,6 +553,17 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
     return 0;
 }
 
+void VT100_Terminal::RepeatChar(uint8_t Char, size_t Count)
+{
+    char* pBuffer;
+
+    if((pBuffer = (char*)pMemoryPool->AllocAndSet(Count + 1, Char)) != nullptr)
+    {
+        pBuffer[Count] = '\0';
+        m_pConsole->SendData((const uint8_t*)pBuffer, &Count);
+    }
+}
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           MenuSelectItems
@@ -558,7 +578,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::MenuSelectItems(char ItemsChar)
 {
-    InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "  (");
+    InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "\r  (");
   #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_CYAN);
   #endif
@@ -575,7 +595,7 @@ void VT100_Terminal::MenuSelectItems(char ItemsChar)
 //
 //  Name:           CallBack
 //
-//  Parameter(s):   CON_InputType_e (*Callback)(uint8_t, CON_CallBackType_e)    Item menu callback                                // todo used a typedef
+//  Parameter(s):   CallbackMethod_t                Item menu callback
 //                  CON_CallBackType_e              Type of callback (Tell callback what to do)
 //                  uint8_t                         Item selection in the menu
 //  Return:         CON_InputType_e
@@ -716,7 +736,7 @@ void VT100_Terminal::DisplayHeader(void)
     InMenuPrintf(VT100_SZ_NONE, VT100_LBL_CLEAR_SCREEN);
     SetCursorPosition(10, 1);
     InMenuPrintf(VT100_SZ_NONE, LBL_STRING, m_pHeader);
-    InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "\r\n\r\n\r\n");
+    InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "\r\r\r");
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1019,7 +1039,7 @@ size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat
                 while(m_pUartDriver->IsItBusy() == true){};
                 m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);
                 UART_Write(UART_CONSOLE, pBuffer, Size);
-                m_pUartDriver->SendData("\r\n", &Size);
+                m_pUartDriver->SendData("\r", &Size);
 
 
 

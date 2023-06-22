@@ -78,6 +78,9 @@
     #define UART_ISR_CFG                    DEF_ENABLED
 #endif
 
+#define UART_WAIT_ON_BUSY                    true
+#define UART_DONT_WAIT_ON_BUSY               false
+
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -246,6 +249,7 @@ struct UART_Info_t
     uint8_t             PreempPrio;
     UART_Config_e       Config;
     UART_Baud_e         BaudID;
+    bool                IsItBlockingOnBusy;
 };
 
 #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)

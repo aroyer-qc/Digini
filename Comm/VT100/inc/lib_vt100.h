@@ -130,6 +130,13 @@ enum VT100_CallBackType_e
     VT100_CALLBACK_FLUSH,
 };
 
+
+class VT100_CallbackInterface
+{
+    public:
+        VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)
+};
+
 typedef VT100_InputType_e (*CallbackMethod_t)(uint8_t, VT100_CallBackType_e);
 
 struct VT100_MenuDef_t
@@ -151,7 +158,7 @@ VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
 // Function(s) Prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-class VT100_Terminal : public ChildProcessInterface
+class VT100_Terminal : public ChildProcessInterface, public VT100_CallbackInterface
 {
     public:
                             VT100_Terminal              () {};
@@ -204,7 +211,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
 
     private:
 
-        bool                ProcessRX                   (void);
+        void                ProcessRX                   (void);
         uint8_t             DisplayMenu                 (VT100_Menu_e MenuID);
 
 
@@ -217,6 +224,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         void                InputDecimal                (void);
         void                ClearConfigFLag             (void);
         void                ClearGenericString          (void);
+
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
 
         Console*                            m_pConsole;
@@ -261,7 +269,6 @@ bool                GetString                   (char* pBuffer, size_t Size);
         static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
 
         VT100_MENU_DEF(EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER)
-        //VT100_MENU_TREE_DEF(EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER)
 };
 
 //-------------------------------------------------------------------------------------------------

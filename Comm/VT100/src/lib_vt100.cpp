@@ -132,103 +132,107 @@ void VT100_Terminal::IF_Process(void)
     uint8_t                ItemsQts;
     TickCount_t            Delay;
 
-    //if((ProcessRX() == true) || (m_IsItInitialized == false))
     ProcessRX();
+
+    // Send the reset terminal string
+    if(m_IsItInitialized == false)
     {
-        if(m_IsItInitialized == false)
+        m_IsItInitialized = true;
+        InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
+        Delay = GetTick();
+        while(TickHasTimeOut(Delay, 100) == false){};
+        GoToMenu(VT100_STARTUP_MENU_ID_CFG);
+    }
+
+    // Input decimal mode
+    if(m_InputDecimalMode == true)
+    {
+        InputDecimal();
+    }
+    // Input string mode
+    else if(m_InputStringMode  == true)
+    {
+        InputString();
+    }
+    // Display the menu and process callback
+    else
+    {
+        if(m_RefreshMenu == true)
         {
-            m_IsItInitialized = true;
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
-            Delay = GetTick();
-            while(TickHasTimeOut(Delay, 100) == false){};
-            GoToMenu(VT100_STARTUP_MENU_ID_CFG);
+            // Call the destructor for each callback, if any
+            if((m_FlushMenuID != VT100_MENU_NONE) &&
+               (m_FlushMenuID != m_MenuID))
+            {
+                m_BackFromEdition = false;
+                ClearConfigFLag();
+                ClearGenericString();
+
+                ItemsQts = m_Menu[m_FlushMenuID].Size;
+
+                for(Items = 0; Items < ItemsQts; Items++)
+                {
+                    pMenu = &m_Menu[m_FlushMenuID].pDefinition[Items];
+                    CallBack(pMenu->pCallback, VT100_CALLBACK_FLUSH, Items);
+                }
+            }
+
+            m_RefreshMenu = false;
+            m_ItemsQts    = DisplayMenu(m_MenuID);
+            m_Input       = 0;
         }
 
-        if((m_InputDecimalMode == false) && (m_InputStringMode == false))
+        if(m_ForceRefresh == true)
         {
-            // Display the menu
-            if(m_RefreshMenu == true)
+            m_ItemsQts     = DisplayMenu(m_MenuID);
+            m_Input        = 0;
+            m_ForceRefresh = false;
+        }
+
+        pMenu = &m_Menu[m_MenuID].pDefinition[m_Input];
+
+        // An entry have been detected, do job accordingly
+        if(m_ValidateInput == true)
+        {
+            m_ValidateInput = false;
+
+            if(m_InputType == VT100_INPUT_MENU_CHOICE)
             {
-                // Call the destructor for each callback, if any
-                if((m_FlushMenuID != VT100_MENU_NONE) &&
-                   (m_FlushMenuID != m_MenuID))
+                // Validate the range for the menu
+                if(m_Input < m_ItemsQts)
                 {
-                    m_BackFromEdition = false;
-                    ClearConfigFLag();
-                    ClearGenericString();
-
-                    ItemsQts = m_Menu[m_FlushMenuID].Size;
-
-                    for(Items = 0; Items < ItemsQts; Items++)
+                    // If new menu selection, draw this new menu
+                    if(m_MenuID != pMenu->NextMenu)
                     {
-                        pMenu = &m_Menu[m_FlushMenuID].pDefinition[Items];
-                        CallBack(pMenu->pCallback, VT100_CALLBACK_FLUSH, Items);
+                        m_FlushMenuID = m_MenuID;
+                        m_MenuID      = pMenu->NextMenu;
+                        m_RefreshMenu = true;
                     }
-                }
 
-                m_RefreshMenu = false;
-                m_ItemsQts    = DisplayMenu(m_MenuID);
-                m_Input       = 0;
-            }
+                    // If selection has a callback, call it and react to it's configuration for key input
+                    CallbackMethod_t pCallback = m_Menu[m_MenuID].pDefinition[m_Input].pCallback;
+                    m_InputType = CallBack(pCallback, VT100_CALLBACK_ON_INPUT, m_Input);
 
-            if(m_ForceRefresh == true)
-            {
-                m_ItemsQts     = DisplayMenu(m_MenuID);
-                m_Input        = 0;
-                m_ForceRefresh = false;
-            }
-
-            pMenu = &m_Menu[m_MenuID].pDefinition[m_Input];
-
-            // An entry have been detected, do job accordingly
-            if(m_ValidateInput == true)
-            {
-                m_ValidateInput = false;
-
-                if(m_InputType == VT100_INPUT_MENU_CHOICE)
-                {
-                    // Validate the range for the menu
-                    if(m_Input < m_ItemsQts)
-                    {
-                        // If new menu selection, draw this new menu
-                        if(m_MenuID != pMenu->NextMenu)
-                        {
-                            m_FlushMenuID = m_MenuID;
-                            m_MenuID      = pMenu->NextMenu;
-                            m_RefreshMenu = true;
-                        }
-
-                        // If selection has a callback, call it and react to it's configuration for key input
-                        CallbackMethod_t pCallback = m_Menu[m_MenuID].pDefinition[m_Input].pCallback;
-                        m_InputType = CallBack(pCallback, VT100_CALLBACK_ON_INPUT, m_Input);
-
-                        // Job is already done, so no refresh
-                        if(m_InputType == VT100_INPUT_MENU_CHOICE)
-                        {
-                            m_Input = 0;
-                        }
-                    }
-                    else
+                    // Job is already done, so no refresh
+                    if(m_InputType == VT100_INPUT_MENU_CHOICE)
                     {
                         m_Input = 0;
                     }
                 }
-
-                m_InputCount = 0;
-            }
-            else
-            {
-                // Still in a callback mode
-                if(m_MenuID != VT100_MENU_NONE)
+                else
                 {
-                    CallBack(pMenu->pCallback, VT100_CALLBACK_REFRESH, 0);
+                    m_Input = 0;
                 }
             }
+
+            m_InputCount = 0;
         }
-        else // Input decimal or string mode
+        else
         {
-            if(m_InputDecimalMode == true)   { InputDecimal(); }
-            if(m_InputStringMode  == true)   { InputString();  }
+            // Still in a callback mode
+            if(m_MenuID != VT100_MENU_NONE)
+            {
+                CallBack(pMenu->pCallback, VT100_CALLBACK_REFRESH, 0);
+            }
         }
     }
 }
@@ -240,14 +244,16 @@ void VT100_Terminal::IF_Process(void)
 //
 //  Parameter(s):   None
 //
-//  Return:         bool
+//  Return:         None
 //
 //  Description:    Here we read the character from the console.
 //
 //  Note(s):        This is a state machine to handle incoming character.
 //
+//
+//
 //-------------------------------------------------------------------------------------------------
-bool VT100_Terminal::ProcessRX(void)
+void VT100_Terminal::ProcessRX(void)
 {
     uint8_t Data;
 
@@ -258,7 +264,7 @@ bool VT100_Terminal::ProcessRX(void)
         if(m_FlushNextEntry == true)
         {
             m_FlushNextEntry = false;
-            return false;
+            return;
         }
 
         if(m_InEscapeSequence == true)
@@ -275,7 +281,7 @@ bool VT100_Terminal::ProcessRX(void)
             nOS_TimerRestart(&m_EscapeTimer, VT100_ESCAPE_TIME_OUT);
             m_InEscapeSequence = true;
             m_Value            = m_OldValue;
-            return false;
+            return;
         }
 
         switch(m_InputType)
@@ -302,8 +308,9 @@ bool VT100_Terminal::ProcessRX(void)
                     m_Input         = 0;
                     m_InputCount    = 0;
                     m_ValidateInput = false;
-                    return false;
+                    return;
                 }
+
                 if(Data == VT100_TRAP_REAL_ESCAPE)
                 {
                     Data = 0;
@@ -331,7 +338,7 @@ bool VT100_Terminal::ProcessRX(void)
                         m_InputCount++;
                         m_Value *= 10;
                         if(m_Value < 0) m_Value -= Data - '0';
-                        else              m_Value += Data - '0';
+                        else            m_Value += Data - '0';
                     }
                 }
                 else if(((Data == '-') && (m_Value > 0)) ||
@@ -342,7 +349,7 @@ bool VT100_Terminal::ProcessRX(void)
                 else if(Data == VT100_TRAP_REAL_ESCAPE)
                 {
                     m_ID = VT100_INPUT_INVALID_ID;
-                    GoToMenu(m_MenuID);
+                    GoToMenu(m_MenuID);  //?? pas sure
                 }
             }
             break;
@@ -403,11 +410,7 @@ bool VT100_Terminal::ProcessRX(void)
 
             default: break;
         }
-
-        return true;
     }
-
-    return false;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -639,6 +642,7 @@ void VT100_Terminal::EscapeCallback(nOS_Timer* pTimer, void* pArg)
 {
     nOS_StatusReg   sr;
     VT100_Terminal* This;
+    uint8_t         Escape;
 
     VAR_UNUSED(pTimer);
     This = (VT100_Terminal*)pArg;
@@ -647,8 +651,8 @@ void VT100_Terminal::EscapeCallback(nOS_Timer* pTimer, void* pArg)
     This->m_InEscapeSequence = false;
     This->m_InputDecimalMode = false;
     This->m_InputStringMode  = false;
-//    RX_Callback(VT100_TRAP_REAL_ESCAPE);  use of FIFO instead
-
+    Escape = VT100_TRAP_REAL_ESCAPE;
+    This->m_pConsole->Write(&Escape, 1);
     nOS_LeaveCritical(sr);
 }
 
@@ -926,7 +930,7 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
 
     // Copy string
     memcpy(m_String, pString, VT100_STRING_SZ);
- //   STR_strnstrip(m_String, Maximum);             // TODO Fix this
+ //   STR_strnstrip(m_String, Maximum);                 // TODO Fix this
     m_InputPtr = strlen(m_String);                          // Get string end pointer
     m_RefreshInputPtr = m_InputPtr + 1;                     // To force a refresh
 
@@ -1416,7 +1420,7 @@ void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100
 //
 //  Parameter(s):   uint8_t         PosX        X Position on screen.
 //                  uint8_t         PosY        Y Position On screen.
-//                  VT100_Color_e   Color       Color of the bargraph.
+//              **  VT100_Color_e   Color       Color of the bargraph.
 //                  uint8_t         Value       Actual value.
 //                  uint8_t         Max         Maximum value.
 //                  uint8_t         Size        Size in character.
@@ -1518,7 +1522,7 @@ bool VT100_Terminal::GetString(char* pBuffer, size_t Size)
 //
 //  Description:    This function force a refresh of the menu.
 //
-//  Note(s):
+//  Note(s):        TODO add F5 key detection for a refresh
 //
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::ForceMenuRefresh(void)

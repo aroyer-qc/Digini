@@ -50,6 +50,12 @@
 #define BITAND_0(y)                     0
 #define BITAND_1(y)                     y
 
+#define EVAL(...)                       EVAL1(EVAL1(EVAL1(__VA_ARGS__)))
+#define EVAL1(...)                      EVAL2(EVAL2(EVAL2(__VA_ARGS__)))
+#define EVAL2(...)                      EVAL3(EVAL3(EVAL3(__VA_ARGS__)))
+#define EVAL3(...)                      EVAL4(EVAL4(EVAL4(__VA_ARGS__)))
+#define EVAL4(...)                      EVAL5(EVAL5(EVAL5(__VA_ARGS__)))
+#define EVAL5(...)                      __VA_ARGS__
 
 #define CHECK_N(x, n, ...)              n
 #define CHECK(...)                      CHECK_N(__VA_ARGS__, 0,)
@@ -123,41 +129,48 @@
 //                                                                        services
 #define VT100_MENU_TREE_DEF(ENTRY, MENU) \
 \
-        ENTRY  (MENU,  MenuRedirection,   ID_REDIRECTION,          CALLBACK_MenuRedirection,                MenuEscape,                        INVALID_LABEL                                   ) \
+        ENTRY  (MENU,  MenuRedirection,   ID_REDIRECTION,          CALLBACK_MenuRedirection,                VT100_MENU_NONE,                  INVALID_LABEL                                   ) \
 \
         ENTRY  (MENU,  MenuMain,          ID_MAIN_TITLE,           nullptr,                                 MenuRedirection,                  LBL_VT100_MAIN_MENU                             ) \
         ENTRY  (MENU,  MenuMain,          ID_INFO_DISPLAY,         CALLBACK_ProductInformation,             MenuMain,                         LBL_VT100_SYSTEM_INFO                           ) \
         ENTRY  (MENU,  MenuMain,          ID_DEBUG_MENU,           nullptr,                                 MenuDebug,                        LBL_VT100_DEBUG                                 ) \
         ENTRY  (MENU,  MenuMain,          ID_SETTING_MENU,         nullptr,                                 MenuSetting,                      LBL_VT100_SYSTEM_SETTING                        ) \
-        ENTRY  (MENU,  MenuMain,          ID_TEST_MENU,            nullptr,                                 MenuTest1,                        LBL_VT100_TEST                                  ) \
-        ENTRY  (MENU,  MenuMain,          ID_STACK_DISPLAY,        CALLBACK_StackUsage,                     MenuRedirection,                  LBL_VT100_STACK_USAGE                           ) \
+        ENTRY  (MENU,  MenuMain,          ID_TEST_MENU,            nullptr,                                 MenuTest,                         LBL_VT100_TEST                                  ) \
+        ENTRY  (MENU,  MenuMain,          ID_STACK_DISPLAY,        CALLBACK_StackUsage,                     MenuRedirection,                  LBL_VT100_STACKTISTIC                           ) \
 \
 		ENTRY  (MENU,  MenuBoot,          ID_MAIN_TITLE,           nullptr,                                 MenuRedirection,                  LBL_VT100_MAIN_MENU                             ) \
         ENTRY  (MENU,  MenuBoot,          ID_INFO_DISPLAY,         CALLBACK_ProductInformation,             MenuMain,                         LBL_VT100_SYSTEM_INFO                           ) \
         ENTRY  (MENU,  MenuBoot,          ID_DEBUG_MENU,           nullptr,                                 MenuDebug,                        LBL_VT100_DEBUG                                 ) \
         ENTRY  (MENU,  MenuBoot,          ID_SETTING_MENU,         nullptr,                                 MenuSetting,                      LBL_VT100_SYSTEM_SETTING                        ) \
-        ENTRY  (MENU,  MenuBoot,          ID_TEST_MENU,            nullptr,                                 MenuTest1,                        LBL_VT100_TEST                                  ) \
-        ENTRY  (MENU,  MenuBoot,          ID_STACK_DISPLAY,        CALLBACK_StackUsage,                     MenuRedirection,                  LBL_VT100_STACK_USAGE                           ) \
+        ENTRY  (MENU,  MenuBoot,          ID_TEST_MENU,            nullptr,                                 MenuTest,                         LBL_VT100_TEST                                  ) \
+        ENTRY  (MENU,  MenuBoot,          ID_STACK_DISPLAY,        CALLBACK_StackUsage,                     MenuRedirection,                  LBL_VT100_STACKTISTIC                           ) \
 \
         ENTRY  (MENU,  MenuDebug,         ID_DEBUG_TITLE,          nullptr,                                 MenuRedirection,                  LBL_VT100_DEBUG_MENU                            ) \
-        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_1,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_1                         ) \
-        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_2,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_2                         ) \
-        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_3,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_3                         ) \
-        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_4,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_4                         ) \
-        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_5,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_5                         ) \
-        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_6,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_6                         ) \
-        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_7,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_7                         ) \
-        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_8,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_8                         ) \
-        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_9,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_9                         ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_0,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_1                         ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_1,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_2                         ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_2,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_3                         ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_3,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_4                         ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_4,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_5                         ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_5,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_6                         ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_6,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_7                         ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_7,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_8                         ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_8,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_9                         ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_9,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_10                        ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_A,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_11                        ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_B,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_12                        ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_C,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_13                        ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_D,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_14                        ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_E,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_15                        ) \
+        ENTRY  (MENU,  MenuDebug,         ID_DBG_LVL_F,            CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_VT100_DEBUG_LEVEL_16                        ) \
 \
         ENTRY  (MENU,  MenuSetting,       ID_SETTING_TITLE,        nullptr,                                 MenuRedirection,                  LBL_VT100_SYSTEM_SETTING_MENU                   ) \
         ENTRY  (MENU,  MenuSetting,       ID_MISC_MENU,            nullptr,                                 MenuSetMisc,                      LBL_VT100_MISCELLEANEOUS                        ) \
         ENTRY  (MENU,  MenuSetting,       ID_TIME_MENU,            nullptr,                                 MenuSettingTime,                  LBL_VT100_TIME_AND_DATE                         ) \
 \
-        ENTRY  (MENU,  MenuTest,          ID_DBG_STACK,            CALLBACK_DebugStack,                     MenuTest,                         LBL_VT100_STACKTISTIC                           ) \
+        ENTRY  (MENU,  MenuTest,          ID_DBG_STACK,            CALLBACK_StackUsage,                     MenuTest,                         LBL_VT100_STACKTISTIC                           ) \
         ENTRY  (MENU,  MenuTest,          ID_DBG_LVL_10,           nullptr,                                 MenuRedirection,                  LBL_VT100_TEST_1                                ) \
-        ENTRY  (MENU,  MenuTest,          ID_DBG_LVL_10,           nullptr,                                 MenuTest,                         LBL_VT100_POUTINE_1                             ) \
-        ENTRY  (MENU,  MenuTest,          ID_DBG_LVL_11,           nullptr,                                 MenuTest,                         LBL_VT100_POUTINE_2                             ) \
+        ENTRY  (MENU,  MenuTest,          ID_DBG_LVL_11,           nullptr,                                 MenuTest,                         LBL_VT100_POUTINE_1                             ) \
+        ENTRY  (MENU,  MenuTest,          ID_DBG_LVL_12,           nullptr,                                 MenuTest,                         LBL_VT100_POUTINE_2                             ) \
 \
 		ENTRY  (MENU,  MenuSettingTime,   ID_TIME_DATE_TITLE,      nullptr,                                 MenuSetting,                      LBL_VT100_TIME_AND_DATE_CONFIGURATION           ) \
         ENTRY  (MENU,  MenuSettingTime,   ID_HOUR,                 CALLBACK_TimeDateCfg,                    MenuSettingTime,                  LBL_VT100_HOUR                                  ) \
@@ -176,13 +189,21 @@
 
 
 
+
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_VT100_MENU_AS_ENUM(MENU_ID)  CAT(MENU_ID, _ID),
-#define EXPAND_VT100_MENU_AS_DATA(NAME)     CAT(VT100_Terminal::m_, NAME),
+#define VT100_TOKEN(x)   VT100_Terminal::x
 
+/// This enum is a list of all menu page that exist in the VT100_MENU_DEF.
+#define EXPAND_VT100_MENU_AS_ENUM(MENU_ID)  CAT(MENU_ID, _ID),
+
+/// This create list of pointer on each menu (see Note 1)
+#define EXPAND_VT100_MENU_AS_DATA(NAME)     {CAT(VT100_TOKEN(m_ ## NAME), CAT(NAME, _NB_OF_ITEMS)},
+
+
+/// This will create a enum list of all sub menu items contains in each menu page.
 #define EXPAND_VT100_MENU_ITEM_AS_ENUM(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL)            WHEN(EQUAL(MENU, MEMBER_OF))(MEMBER_OF ## _ ## ITEM_ID,)
 #define EXPAND_AS_MENU_ENUMS_ITEM(NAME)			   			  \
 enum CAT(NAME, _ItemID_e)                                     \
@@ -191,37 +212,30 @@ enum CAT(NAME, _ItemID_e)                                     \
     CAT(NAME, _NB_OF_ITEMS)                                   \
 };
 
-
-#define EXPAND_VT100_MENU_ITEM_AS_FLAG_ENUM(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL)     WHEN(EQUAL(MENU, MEMBER_OF))(ITEM_ID##_FLAG = (1 << ABS(CAT(MENU, ItemID_e)::ITEM_ID - 1)),)
-#define EXPAND_AS_MENU_ENUMS_FLAG(NAME)                            \
-enum CAT(NAME, _ItemFlag_e)                                        \
-{                                                                  \
-    VT100_MENU_TREE_DEF(EXPAND_VT100_MENU_ITEM_AS_FLAG_ENUM, NAME) \
-};
-
-
+/// This create the class member structure declaration containing sub item information for each menu.
 #define EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER(NAME)                                                  static const VT100_MenuDef_t CAT(m_, NAME)[CAT(NAME, _NB_OF_ITEMS)];
-#define EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL)  WHEN(EQUAL(MENU, MEMBER_OF))({LABEL, IF_THEN(EQUAL(nullptr, CALLBACK), nullptr, VT100_Terminal::CALLBACK), CAT(NAVIGATE_TO, _ID)},)
 
-
+/// (Note 1) This create the class member structure containing actual sub item information for each menu.
+#define EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL) WHEN(EQUAL(MENU, MEMBER_OF))({LABEL, IF_THEN(EVAL(EQUAL(nullptr, CALLBACK)), nullptr, VT100_TOKEN(CALLBACK)), CAT(NAVIGATE_TO, _ID)},)
+//#define EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL) EVAL(WHEN(EQUAL(MENU, MEMBER_OF))({LABEL, IF_THEN(EQUAL(nullptr, CALLBACK), nullptr, VT100_Terminal::CALLBACK), CAT(NAVIGATE_TO, _ID)},))
+//#define EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL)  WHEN(EQUAL(MENU, MEMBER_OF))({LABEL, CAT(VT100_Terminal::, CALLBACK), CAT(NAVIGATE_TO, _ID)},)
+//#define EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL)  WHEN(EQUAL(MENU, MEMBER_OF))({LABEL, (IF_THEN(EQUAL(nullptr, CALLBACK), nullptr, VT100_Terminal::CALLBACK)), CAT(NAVIGATE_TO, _ID)},)
+//#define EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL)  WHEN(EQUAL(MENU, MEMBER_OF))({LABEL, IF_THEN(EQUAL(nullptr, CALLBACK), nullptr, VT100_Terminal::CALLBACK), CAT(NAVIGATE_TO, _ID)},)
 #define EXPAND_VT100_AS_MENU_MEMBER_VARIABLE_DATA(NAME)                        \
-const VT100_MenuDef_t VT100_Terminal::CAT(m_, NAME)[CAT(NAME, _NB_OF_ITEMS)] = \
+onst VT100_MenuDef_t VT100_TOKEN(CAT(m_, NAME))[CAT(NAME, _NB_OF_ITEMS)]       \
 {                                                                              \
     VT100_MENU_TREE_DEF(EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA, NAME)       \
 };
 
-#define EXPAND_VT100_MENU_CALLBACK_AS_ENUM(NAME)             CAT(NAME, _ID),
+/// this automatically create all the method declaration in the class for each callback
 #define EXPAND_VT100_MENU_CALLBACK(NAME)                    VT100_InputType_e NAME(uint8_t Input, VT100_CallBackType_e Type);
 
-//-------------------------------------------------------------------------------------------------
 
-
+ VT100_TOKEN(poutine)
  VT100_MENU_DEF(EXPAND_VT100_MENU_AS_ENUM)
  VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
- VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_FLAG)
  VT100_MENU_DEF(EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER)
  VT100_MENU_DEF(EXPAND_VT100_AS_MENU_MEMBER_VARIABLE_DATA)
- VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK_AS_ENUM)
  VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)
 
  const VT100_MenuObject_t* VT100_Terminal::m_Menu[NUMBER_OF_MENU] =

@@ -30,6 +30,7 @@
 
 #include "lib_digini.h"
 #include "ethernetif.h"
+#include "lwipopts.h"
 #include "lwip/netif.h"
 #include "lwip/opt.h"
 #include "lwip/def.h"

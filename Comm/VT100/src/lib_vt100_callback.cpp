@@ -173,6 +173,12 @@ static void VT100_PrintVoltage(uint8_t xPos, uint8_t yPos, uint32_t Voltage)
 }
 */
 
+VT100_InputType_e VT100_Terminal::CALLBACK_nullptr(uint8_t Input, VT100_CallBackType_e Type)
+{
+    VAR_UNUSED(Input);
+    VAR_UNUSED(Input);
+}
+
 //-------------------------------------------------------------------------------------------------
 // Public(s) function(s)
 //-------------------------------------------------------------------------------------------------

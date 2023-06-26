@@ -90,6 +90,14 @@ typedef enum _ASCII_e
 
 typedef enum
 {
+    BASE_DECIMAL     = 10,
+    BASE_HEXADECIMAL = 16,
+    BASE_STRING      = 1,
+    BASE_POINTER     = 2,
+}  ParamBase_e;
+
+typedef enum
+{
     SYS_READY                       = 0,                                      // READY is good for everything
 
     // Fat FS section in bit position

@@ -102,21 +102,11 @@ enum CLI_CommandSupport_e
     CLI_CMD_SHPRW  = CLI_CMD_H | CLI_CMD_S | CLI_CMD_PRW,           // PLAIN, READ and WRITE cmd and only at startup
 };
 
-enum CLI_ParamBase_e
-{
-    CLI_BASE_DECIMAL     = 10,
-    CLI_BASE_HEXADECIMAL = 16,
-    CLI_BASE_STRING      = 1,
-    CLI_BASE_POINTER     = 2,
-};
-
-
-
 struct CLI_CmdParam_t
 {
-    CLI_ParamBase_e  Base;
-    int32_t          Min;
-    int32_t          Max;
+    ParamBase_e  Base;
+    int32_t      Min;
+    int32_t      Max;
 };
 
 struct CLI_CmdInputInfo_t
@@ -233,7 +223,15 @@ class CommandLine : public ChildProcessInterface
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "cli_var.h"        // Project variable
+#ifdef CLI_GLOBAL
+
+class CommandLine myCommandLine;
+
+#else
+
+extern class CommandLine myCommandLine;
+
+#endif // CLI_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 

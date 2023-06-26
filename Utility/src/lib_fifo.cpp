@@ -451,7 +451,7 @@ size_t FIFO_Buffer::Atoi(int32_t* pResult, uint8_t Base)
 
         Data = (uint8_t)nData;
 
-        if(Base == CLI_BASE_DECIMAL)
+        if(Base == uint8_t(BASE_DECIMAL))
         {
             if(((Data < '0') || (Data > '9')) && ((Count != 0) || (Data != '-')))
             {
@@ -466,7 +466,7 @@ size_t FIFO_Buffer::Atoi(int32_t* pResult, uint8_t Base)
             }
             else
             {
-                *pResult = (*pResult * CLI_BASE_DECIMAL) + (int)(Data - '0');
+                *pResult = (*pResult * uint8_t(BASE_DECIMAL)) + (int)(Data - '0');
             }
         }
         else // HEXADECIMAL_BASE
@@ -480,7 +480,7 @@ size_t FIFO_Buffer::Atoi(int32_t* pResult, uint8_t Base)
             }
 
             Read(&Data, 1);
-            *pResult  = (*pResult * CLI_BASE_HEXADECIMAL);
+            *pResult  = (*pResult * BASE_HEXADECIMAL);
 
             if     (Data <= '9')   Data =  Data - '0';
             else if(Data <= 'F')   Data = (Data - 'A') + 10;

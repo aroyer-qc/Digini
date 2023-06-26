@@ -176,7 +176,6 @@ size_t Console::Printf(int MaxSize, const char* pFormat, ...)
         Size = (MaxSize == CON_SIZE_NONE) ? CON_SERIAL_OUT_SIZE : MaxSize;
         va_start(vaArg, pFormat);
         Size = vsnprintf(&pBuffer[0], Size, pFormat, vaArg);
-        //while(m_pUartDriver->IsItBusy() == true){};
         m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size);
         va_end(vaArg);
     }

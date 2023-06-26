@@ -130,19 +130,13 @@ enum VT100_CallBackType_e
     VT100_CALLBACK_FLUSH,
 };
 
-
-class VT100_CallbackInterface
-{
-    public:
-        VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)
-};
-
 typedef VT100_InputType_e (*CallbackMethod_t)(uint8_t, VT100_CallBackType_e);
 
 struct VT100_MenuDef_t
 {
     Label_e           Label;
-    CallbackMethod_t  pCallback;
+    VT100_InputType_e (*pCallback)(uint8_t, VT100_CallBackType_e);
+    //CallbackMethod_t  pCallback;
     VT100_Menu_e      NextMenu;
 };
 
@@ -158,13 +152,16 @@ VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
 // Function(s) Prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-class VT100_Terminal : public ChildProcessInterface, public VT100_CallbackInterface
+class VT100_Terminal : public ChildProcessInterface
 {
     public:
                             VT100_Terminal              () {};
 
         void                IF_Process                  (void);
         nOS_Error           Initialize                  (Console* pConsole, const char* pHeader);
+      #if (VT100_USER_CALLBACK_INITIALIZE == DEF_DEFINED)
+        void                CallbackInitialize          (void);
+      #endif
         void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
         void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
         void                GoToMenu                    (VT100_Menu_e MenuID);
@@ -201,8 +198,6 @@ class VT100_Terminal : public ChildProcessInterface, public VT100_CallbackInterf
 
         void                DisplayHeader               (void);
 
-//void RX_Callback(uint8_t Data);
-
 // to check if needed in VT100
 //void                SeConsoleMuteLogs           (bool);  this should be in console... beacause when in VT100 we don't want any debug message going thru
 void                LockDisplay                 (bool);
@@ -211,27 +206,26 @@ bool                GetString                   (char* pBuffer, size_t Size);
 
     private:
 
-        void                ProcessRX                   (void);
-        uint8_t             DisplayMenu                 (VT100_Menu_e MenuID);
+        void                        ProcessRX                   (void);
+        uint8_t                     DisplayMenu                 (VT100_Menu_e MenuID);
 
 
-        void                RepeatChar                  (uint8_t Char, size_t Count);
-        void                MenuSelectItems             (char ItemsChar);
-        void                CallbackInitialize          (void);
-        VT100_InputType_e   CallBack                    (CallbackMethod_t pCallback, VT100_CallBackType_e Type, uint8_t Item);
-        static void         EscapeCallback              (nOS_Timer* pTimer, void* pArg);
-        void                InputString                 (void);
-        void                InputDecimal                (void);
-        void                ClearConfigFLag             (void);
-        void                ClearGenericString          (void);
+        void                        RepeatChar                  (uint8_t Char, size_t Count);
+        void                        MenuSelectItems             (char ItemsChar);
+        VT100_InputType_e           CallBack                    (VT100_InputType_e (*pCallback)(uint8_t, VT100_CallBackType_e), VT100_CallBackType_e Type, uint8_t Item);
+        static void                 EscapeCallback              (nOS_Timer* pTimer, void* pArg);
+        void                        InputString                 (void);
+        void                        InputDecimal                (void);
+        void                        ClearConfigFLag             (void);
+        void                        ClearGenericString          (void);
 
+        static VT100_InputType_e    CALLBACK_None               (uint8_t Input, VT100_CallBackType_e Type);
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
 
         Console*                            m_pConsole;
         bool                                m_IsItInitialized;
         bool                                m_IsItInStartup;
         bool                                m_BackFromEdition;
-        bool                                m_RefreshMenu;
         VT100_Menu_e                        m_MenuID;
         VT100_Menu_e                        m_FlushMenuID;
         VT100_InputType_e                   m_InputType;
@@ -275,15 +269,17 @@ bool                GetString                   (char* pBuffer, size_t Size);
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
+
 #include "vt100_var.h"        // Project variable
+
 
 #ifdef VT100_GLOBAL
 
-class VT100_Terminal myVT100_Terminal;
+class VT100_Terminal            myVT100;
 
 #else
 
-extern class VT100_Terminal myVT100_Terminal;
+extern class VT100_Terminal     myVT100;
 
 #endif // VT100_GLOBAL
 

@@ -69,7 +69,6 @@
 #define EAT(...)
 #define EXPAND(...)                     __VA_ARGS__
 #define WHEN(c)                         IF(c)(EXPAND, EAT)
-#define IF_THEN(c, x, y)                IF(c)(x, y)
 #define IF_USE(cond, ...)               WHEN(cond)(__VA_ARGS__)
 
 #define PRIMITIVE_COMPARE(x, y)         IS_PAREN                                \

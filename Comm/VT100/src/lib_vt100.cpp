@@ -86,13 +86,9 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
     // Should read future configuration for muting
     m_pConsole                = pConsole;
     m_pHeader                 = (char*)pHeader;
-    m_RefreshMenu             = false;
-    m_MenuID                  = VT100_MENU_NONE;
-    m_FlushMenuID             = VT100_MENU_NONE;
-    m_Input                   = 0;
-    m_InputCount              = 0;
     m_IsItInitialized         = false;
-    m_ValidateInput           = false;
+    m_InputCount              = 0;
+    m_MenuID                  = VT100_MENU_NONE;
     m_ItemsQts                = 0;
     m_BypassPrintf            = false;
     m_ID                      = -1;
@@ -101,15 +97,16 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
     m_IsDisplayLock           = false;
     m_BackFromEdition         = false;
     m_FlushNextEntry          = false;
+    m_ValidateInput           = false;
     m_ForceRefresh            = false;
     m_LogsAreMuted            = true;
     m_String[VT100_STRING_SZ] = '\0';
-
     Error = nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, this, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
-    CallbackInitialize();               // User callback specific initialization
+  #if (VT100_USER_CALLBACK_INITIALIZE == DEF_DEFINED)
+    CallbackInitialize();                       // User callback specific initialization
+  #endif
     ClearConfigFLag();
     ClearGenericString();
-
     return Error;
 }
 
@@ -140,8 +137,14 @@ void VT100_Terminal::IF_Process(void)
         m_IsItInitialized = true;
         InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
         Delay = GetTick();
-        while(TickHasTimeOut(Delay, 100) == false){};
+        while(TickHasTimeOut(Delay, 10) == false){};
         GoToMenu(VT100_STARTUP_MENU_ID_CFG);
+    }
+
+    if(m_ForceRefresh == true)
+    {
+        m_ForceRefresh = false;
+        DisplayMenu(m_MenuID);
     }
 
     // Input decimal mode
@@ -157,37 +160,6 @@ void VT100_Terminal::IF_Process(void)
     // Display the menu and process callback
     else
     {
-        if(m_RefreshMenu == true)
-        {
-            // Call the destructor for each callback, if any
-            if((m_FlushMenuID != VT100_MENU_NONE) &&
-               (m_FlushMenuID != m_MenuID))
-            {
-                m_BackFromEdition = false;
-                ClearConfigFLag();
-                ClearGenericString();
-
-                ItemsQts = m_Menu[m_FlushMenuID].Size;
-
-                for(Items = 0; Items < ItemsQts; Items++)
-                {
-                    pMenu = &m_Menu[m_FlushMenuID].pDefinition[Items];
-                    CallBack(pMenu->pCallback, VT100_CALLBACK_FLUSH, Items);
-                }
-            }
-
-            m_RefreshMenu = false;
-            m_ItemsQts    = DisplayMenu(m_MenuID);
-            m_Input       = 0;
-        }
-
-        if(m_ForceRefresh == true)
-        {
-            m_ItemsQts     = DisplayMenu(m_MenuID);
-            m_Input        = 0;
-            m_ForceRefresh = false;
-        }
-
         pMenu = &m_Menu[m_MenuID].pDefinition[m_Input];
 
         // An entry have been detected, do job accordingly
@@ -205,15 +177,33 @@ void VT100_Terminal::IF_Process(void)
                     {
                         m_FlushMenuID = m_MenuID;
                         m_MenuID      = pMenu->NextMenu;
-                        m_RefreshMenu = true;
+
+                        // Call the destructor for each callback, if any
+                        if((m_FlushMenuID != VT100_MENU_NONE) &&
+                           (m_FlushMenuID != m_MenuID))
+                        {
+                            m_BackFromEdition = false;
+
+                            for(Items = 0; Items < m_Menu[m_FlushMenuID].Size; Items++)
+                            {
+                                pMenu = &m_Menu[m_FlushMenuID].pDefinition[Items];
+                                CallBack(pMenu->pCallback, VT100_CALLBACK_FLUSH, Items);
+                            }
+
+                            ClearConfigFLag();
+                            ClearGenericString();
+                            GoToMenu(m_MenuID);
+                        }
+                    }
+                    else
+                    {
+                        // If selection has a callback, call it and react to it's configuration for key input
+                        CallbackMethod_t pCallback = m_Menu[m_MenuID].pDefinition[m_Input].pCallback;
+                        m_InputType = CallBack(pCallback, VT100_CALLBACK_ON_INPUT, m_Input);
                     }
 
-                    // If selection has a callback, call it and react to it's configuration for key input
-                    CallbackMethod_t pCallback = m_Menu[m_MenuID].pDefinition[m_Input].pCallback;
-                    m_InputType = CallBack(pCallback, VT100_CALLBACK_ON_INPUT, m_Input);
-
                     // Job is already done, so no refresh
-                    if(m_InputType == VT100_INPUT_MENU_CHOICE)
+                    //if(m_InputType == VT100_INPUT_MENU_CHOICE)
                     {
                         m_Input = 0;
                     }
@@ -415,6 +405,28 @@ void VT100_Terminal::ProcessRX(void)
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           GoToMenu
+//
+//  Parameter(s):   CON_Menu_e  MenuID              Menu to go to.
+//
+//  Return:         None
+//
+//  Description:    Select a new menu to go.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void VT100_Terminal::GoToMenu(VT100_Menu_e MenuID)
+{
+    m_FlushMenuID = m_MenuID;
+    m_MenuID      = MenuID;
+    m_InputType   = VT100_INPUT_MENU_CHOICE;
+    m_Input       = 0;
+    m_ItemsQts    = DisplayMenu(m_MenuID);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           ClearConfigFLag
 //
 //  Parameter(s):   None
@@ -455,8 +467,8 @@ void VT100_Terminal::ClearGenericString(void)
 //
 //  Name:           DisplayMenu
 //
-//  Parameter(s):   CON_Menu_e      ID of the MENU
-//  Return:         uint8_t         Number of items in the menu
+//  Parameter(s):   VT100_Menu_e    ID of the MENU
+//  Return:         None
 //
 //  Description:    Display selected menu
 //
@@ -551,7 +563,6 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
   #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_WHITE);
   #endif
-    //m_InputType    = VT100_INPUT_CLI;
     m_BypassPrintf = false;
     return 0;
 }
@@ -1056,28 +1067,6 @@ size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat
     return Size;
 }
 */
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           GoToMenu
-//
-//  Parameter(s):   CON_Menu_e  MenuID              Menu to go to.
-//
-//  Return:         None
-//
-//  Description:    Select a new menu to go.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void VT100_Terminal::GoToMenu(VT100_Menu_e MenuID)
-{
-    m_RefreshMenu = true;
-    m_FlushMenuID = m_MenuID;
-    m_MenuID      = MenuID;
-    m_InputType   = VT100_INPUT_MENU_CHOICE;
-    m_Input       = 0;
-}
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SetAttribute

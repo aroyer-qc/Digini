@@ -495,7 +495,7 @@ void CommandLine::ProcessParams(CLI_CmdName_e Command)
         pParam = &m_CmdInputInfo[Command].Param[i];
         pValue = &m_ParamValue[i];
 
-        if(pParam->Base != CLI_BASE_STRING)
+        if(pParam->Base != BASE_STRING)
         {
             i++;                    // Must be incremented before comparison
 

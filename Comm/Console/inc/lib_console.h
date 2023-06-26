@@ -155,8 +155,22 @@ class Console : public CallbackInterface
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "console_var.h"        // Project variable
+#ifdef CONSOLE_GLOBAL
+
+class Console myConsole;
+
+#else
+
+extern class Console myConsole;
+
+#endif // CONSOLE_GLOBAL
+
+#define DEBUG_PrintSerialLog           myConsole.PrintSerialLog
 
 //-------------------------------------------------------------------------------------------------
+
+#else // (DIGINI_USE_CONSOLE == DEF_ENABLED)
+
+#define DEBUG_PrintSerialLog(...)       // Prevent wrapping all log call with preprocessor
 
 #endif // (DIGINI_USE_CONSOLE == DEF_ENABLED)

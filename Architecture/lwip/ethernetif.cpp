@@ -50,12 +50,9 @@ extern "C" {
 
 static ETH_Driver                  ETH_Mac;
 static PHY_DRIVER_INTERFACE        ETH_Phy(0);
- //  PHY_DriverInterface*    Phy;                           // Registered PHY driver
 static ETH_LinkState_e             ETH_Link;                // Ethernet Link State
 static nOS_Sem                     ETH_RX_Sem;
-//static bool                        EventRX_Frame;       // Callback RX event generated
 static nOS_Mutex                   ETH_TX_Mutex;
-//static struct ethernetif           ETH0;
 
 static nOS_Thread   TaskHandle;
 static nOS_Stack    Stack[TASK_ETHERNET_IF_STACK_SIZE];
@@ -64,8 +61,7 @@ static nOS_Stack    Stack[TASK_ETHERNET_IF_STACK_SIZE];
 static err_t    low_level_output        (struct netif *netif, struct pbuf *p);
 static void     arp_timer               (void *arg);
 static void     ethernetif_Callback     (uint32_t event);
-//static err_t EthernetModeAndSpeed(void);
-
+static void     ethernetif_PollThePHY   (void);
 #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
 static void     ethernetif_LinkCallBack (void* pArg);
 #endif
@@ -102,24 +98,13 @@ err_t ethernetif_init(struct netif* netif)
     ETH_Mac.PowerControl(ETH_POWER_FULL);								// Enable Clock, Reset ETH, Init MAC, Enable ETH IRQ
     ETH_Mac.Control(ETH_MAC_CONTROL_TX, 0);
     ETH_Mac.Control(ETH_MAC_CONTROL_RX, 0);
-
 	ETH_Mac.Control(ETH_MAC_CONFIGURE, ETH_MAC_CHECKSUM_OFFLOAD_RX |
 			                           ETH_MAC_CHECKSUM_OFFLOAD_TX |
                                        ETH_MAC_DUPLEX_FULL         |
 							   	       ETH_MAC_SPEED_100M          |
 								       ETH_MAC_ADDRESS_BROADCAST);
 
-// these two call are to close to the Chip model ST
-    ETH_Mac.Control(ETH_DMA_CONFIGURE, ETH_DMAOMR_REG        |
-									   ETH_DMAOMR_OSF);           // Second Frame Operate
-    ETH_Mac.Control(ETH_DMA_CONFIGURE, ETH_DMABMR_REG        |
-    		                           ETH_DMABMR_AAB        |    // Address Aligned Beats
-									   ETH_DMABMR_EDE        |    // Enhanced Descriptor format enable
-									   ETH_DMABMR_FB         |    // Fixed Burst
-									   ETH_DMABMR_RTPR_2_1   |    // Arbitration Round Robin RxTx 2 1
-									   ETH_DMABMR_RDP_32Beat |    // Rx DMA Burst Length 32 Beat
-									   ETH_DMABMR_PBL_32Beat |    // Tx DMA Burst Length 32 Beat
-									   ETH_DMABMR_USP);           // Enable use of separate PBL for Rx and Tx
+	ETH_Mac.DMA_Configure();                                            // Configure DMA if Interface support it.
 
 	// Initialize Physical Media Interface
 	if(ETH_Phy.Initialize(&ETH_Mac) == SYS_READY)
@@ -127,7 +112,6 @@ err_t ethernetif_init(struct netif* netif)
 		ETH_Phy.PowerControl(ETH_POWER_FULL);
 		ETH_Phy.SetInterface(ETH_MediaInterface_e(cap.media_interface));
 		ETH_Phy.SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
-		//EthernetModeAndSpeed();
 
       #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
         IO_PinInit(IO_ETH_PHY_LINK_IO);
@@ -140,8 +124,7 @@ err_t ethernetif_init(struct netif* netif)
 	LWIP_ASSERT("netif != nullptr", (netif != nullptr));
 
   #if LWIP_NETIF_HOSTNAME
-	// Initialize interface hostname
-	netif->hostname = "lwip";
+	netif->hostname = "lwip";                                       // Initialize interface host name
   #endif
 
 	netif->name[0] = IFNAME0;
@@ -159,46 +142,42 @@ err_t ethernetif_init(struct netif* netif)
 
   #if LWIP_IPV6
     netif->output_ip6 = ethip6_output;
-  #endif /* LWIP_IPV6 */
+  #endif // LWIP_IPV6
+
+    // Set netif MAC hardware address length
+    netif->hwaddr_len = ETHARP_HWADDR_LEN;
+
+    // Set netif MAC hardware address
+    netif->hwaddr[0] =  MAC_ADDR0;
+    netif->hwaddr[1] =  MAC_ADDR1;
+    netif->hwaddr[2] =  MAC_ADDR2;
+    netif->hwaddr[3] =  MAC_ADDR3;
+    netif->hwaddr[4] =  MAC_ADDR4;
+    netif->hwaddr[5] =  MAC_ADDR5;
+    ETH_Mac.SetMacAddress((ETH_MAC_Address_t*)netif->hwaddr);
+
+    // Set netif maximum transfer unit
+    netif->mtu = netifMTU;
+
+    // Accept broadcast address and ARP traffic
+    netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
+
+    // Create binary semaphore used for informing ethernetif of frame reception
+    /*nOS_Error*/ nOS_SemCreate (&ETH_RX_Sem, 0, 20);
+    /*nOS_Error*/ nOS_MutexCreate (&ETH_TX_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
 
 
-	// Initialize the hardware -> low_level_init(netif)
-    {
-        // set netif MAC hardware address length
-        netif->hwaddr_len = ETHARP_HWADDR_LEN;
+     nOS_ThreadCreate(&TaskHandle,
+                             ethernetif_input,
+                             (void*)netif,
+                             &Stack[0],
+                             TASK_ETHERNET_IF_STACK_SIZE,
+                             TASK_ETHERNET_IF_PRIO);
 
-        // set netif MAC hardware address
-        netif->hwaddr[0] =  MAC_ADDR0;
-        netif->hwaddr[1] =  MAC_ADDR1;
-        netif->hwaddr[2] =  MAC_ADDR2;
-        netif->hwaddr[3] =  MAC_ADDR3;
-        netif->hwaddr[4] =  MAC_ADDR4;
-        netif->hwaddr[5] =  MAC_ADDR5;
-        ETH_Mac.SetMacAddress((ETH_MAC_Address_t*)netif->hwaddr);
-
-        // set netif maximum transfer unit
-        netif->mtu = netifMTU;
-
-        // Accept broadcast address and ARP traffic
-        netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
-
-        // create binary semaphore used for informing ethernetif of frame reception
-        /*nOS_Error*/ nOS_SemCreate (&ETH_RX_Sem, 0, 20);
-        /*nOS_Error*/ nOS_MutexCreate (&ETH_TX_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
-
-
-         nOS_ThreadCreate(&TaskHandle,
-                                 ethernetif_input,
-                                 (void*)netif,
-                                 &Stack[0],
-                                 TASK_ETHERNET_IF_STACK_SIZE,
-                                 TASK_ETHERNET_IF_PRIO);
-
-        // Enable MAC and DMA transmission and reception
-        ETH_Mac.Control(ETH_MAC_CONTROL_TX, 1);
-        ETH_Mac.Control(ETH_MAC_CONTROL_RX, 1);
-        ETH_Mac.Control(ETH_MAC_FLUSH, ETH_MAC_FLUSH_TX);
-    }
+    // Enable MAC and DMA transmission and reception
+    ETH_Mac.Control(ETH_MAC_CONTROL_TX, 1);
+    ETH_Mac.Control(ETH_MAC_CONTROL_RX, 1);
+    ETH_Mac.Control(ETH_MAC_FLUSH, ETH_MAC_FLUSH_TX);
 
 	sys_timeout(ARP_TMR_INTERVAL, arp_timer, nullptr);
 
@@ -234,18 +213,16 @@ static err_t low_level_output(struct netif* netif, struct pbuf* p)
         for(q = p; q != nullptr; q = q->next)
         {
             // Send the data from the pbuf to the interface, one pbuf at a time. The size of the data in each pbuf is kept in the ->len variable.
-               u32_t flags = (q->next) ? ETH_MAC_TX_FRAME_FRAGMENT : 0;
-               ETH_Mac.SendFrame((uint8_t*)q->payload, q->len, flags);
+            u32_t flags = (q->next) ? ETH_MAC_TX_FRAME_FRAGMENT : 0;
+            ETH_Mac.SendFrame((uint8_t*)q->payload, q->len, flags);
         }
 
         nOS_MutexUnlock(&ETH_TX_Mutex);
     }
-    /*
     else
     {
-	   DEBUG_Lwip("low_level_output: Sem TimeOut\n\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: low_level_output: Sem TimeOut\r");
     }
-    */
 
     return ERR_OK;
 }
@@ -271,6 +248,8 @@ void ethernetif_input(void *param)
     struct netif* s_pxNetIf = (struct netif *)param;
     size_t Length;
 
+    ethernetif_PollThePHY();        // Initial polling of the link
+
 	while(1)
 	{
         if((nOS_SemTake(&ETH_RX_Sem, BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK) && (s_pxNetIf != nullptr))
@@ -283,7 +262,7 @@ void ethernetif_input(void *param)
                 {
                     if(Length > ETHERNET_FRAME_SIZE)
                     {
-                        ETH_Mac.ReadFrame(nullptr, 0);                      // Drop oversized packet
+                        ETH_Mac.ReadFrame(nullptr, 0);                      // Drop over-sized packet
                     }
                     else
                     {
@@ -301,10 +280,20 @@ void ethernetif_input(void *param)
                         }
                     }
                 }
-
 			}
 			while(p != nullptr);
+
+		    // if for some reason we receive a message and the link is down then poll the PHY for the link
+		    if(ETH_Link == ETH_LINK_DOWN)
+            {
+                ethernetif_PollThePHY();
+            }
 		}
+		else
+        {
+            // If no message are received, pool the PHY for link periodically
+            ethernetif_PollThePHY();
+        }
     }
 }
 
@@ -325,59 +314,6 @@ static void arp_timer(void* pArg)
     sys_timeout(ARP_TMR_INTERVAL, arp_timer, nullptr);
 }
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Function:
-//
-//  Parameter(s):
-//  Return:
-//
-//  Description:
-//
-//-------------------------------------------------------------------------------------------------
-/*
-static err_t EthernetModeAndSpeed(void)
-{
-	uint16_t       RegValue;
-	ETH_PHY_Mode_e Mode    = ETH_PHY_MODE_NOT_DEFINED;
-	uint32_t       TimeOut = 0;
-
-	// Wait for auto negotiation completed
-	do
-	{
-		ETH0.Mac->PHY_Read(ETH0.Phy->GetPHY_Address(), REG_BMSR, &RegValue);
-	    TimeOut++;
-	}
-	while(((RegValue & BMSR_ANEG_COMPLETE) == 0) && (TimeOut < PHY_READ_TO));
-
-	// Return ERROR in case of TimeOut
-	if(TimeOut == PHY_READ_TO)
-	{
-	    return ERR_TimeOut;
-	}
-
-
-	ETH0.Mac->PHY_Read(ETH0.Phy->GetPHY_Address(), REG_PHYCR1, &RegValue);
-
-	// Configure the MAC with the Duplex Mode fixed by the auto-negotiation process
-	if((RegValue & PHYCR1_OM_FD) == PHYCR1_OM_FD)
-	{
-        // Set Ethernet speed to 100M following the auto-negotiation
-		Mode = ETH_PHY_Mode_e(uint32_t(Mode) | uint32_t(ETH_PHY_FULL_DUPLEX));
-	}
-
-	// Configure the MAC with the speed fixed by the auto-negotiation process
-	if((RegValue & PHYCR1_OM_100B) == PHYCR1_OM_100B)
-	{
-		// Set Ethernet duplex mode to Full-duplex following the auto-negotiation
-		Mode = ETH_PHY_MODE_SPEED_100M;
-	}
-
-	ETH0.Phy->SetMode(Mode);
-
-	return ERR_OK;
-}
-*/
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -389,23 +325,30 @@ static err_t EthernetModeAndSpeed(void)
 //  Description:
 //
 //-------------------------------------------------------------------------------------------------
-/*
-static err_t pollThePHY(void)
+void ethernetif_PollThePHY(void)
 {
+    ETH_LinkState_e ETH_LinkNow;
+
     if(netif_find("en0"))
     {
-        if(ETH_Phy.GetLinkState() == ETH_LINK_UP)
+        ETH_LinkNow = ETH_Phy.GetLinkState();
+
+        if(ETH_LinkNow != ETH_Link)
         {
-            //EthernetModeAndSpeed();
-            netif_set_link_up(netif_find("en0"));
-        }
-        else
-        {
-            netif_set_link_down(netif_find("en0"));
+            if(ETH_LinkNow == ETH_LINK_UP)
+            {
+                netif_set_link_up(netif_find("en0"));
+            }
+            else
+            {
+                netif_set_link_down(netif_find("en0"));
+            }
+
+            ETH_Link = ETH_LinkNow;
+            DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: LINK has change, now it is %s\r", (ETH_Link == ETH_LINK_UP) ? "UP" : "DOWN");
         }
     }
 }
-*/
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -419,11 +362,9 @@ static err_t pollThePHY(void)
 //-------------------------------------------------------------------------------------------------
 void ethernetif_Callback(uint32_t Event)
 {
-    // Send notification on RX event
-    if(Event == ETH_MAC_EVENT_RX_FRAME)
+    if(Event == ETH_MAC_EVENT_RX_FRAME)         // Send notification on RX event
     {
-		// Give the semaphore to wakeup LwIP task
-        nOS_SemGive(&ETH_RX_Sem);
+        nOS_SemGive(&ETH_RX_Sem);               // Give the semaphore to wakeup LwIP task
     }
 }
 

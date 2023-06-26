@@ -194,7 +194,7 @@ size_t Console::Printf(int MaxSize, const char* pFormat, ...)
 //
 //  Return:         size_t              Number of character printed.
 //
-//  Description:    Send formatted string to console if menu system is active.
+//  Description:    Send formatted string to console if logging is not muted.
 //
 //  Note(s):
 //

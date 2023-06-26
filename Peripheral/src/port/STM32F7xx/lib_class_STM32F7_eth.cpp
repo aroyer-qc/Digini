@@ -53,10 +53,10 @@
 void ETH_IRQHandler(void);
 
 
-RX_Descriptor_t ETH_Driver::m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet RX & TX DMA Descriptors
-uint32_t        ETH_Driver::m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet Receive buffers
-TX_Descriptor_t ETH_Driver::m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((/*section(".dmaINIT"),*/ aligned(4)));
-uint32_t        ETH_Driver::m_TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet Transmit buffers
+RX_Descriptor_t ETH_Driver::m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
+uint32_t        ETH_Driver::m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((aligned(4)));   // Ethernet Receive buffers
+TX_Descriptor_t ETH_Driver::m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((aligned(4)));
+uint32_t        ETH_Driver::m_TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((aligned(4)));   // Ethernet Transmit buffers
 
 ETH_MAC_Control_t ETH_Driver::m_MAC_Control;
 
@@ -912,7 +912,6 @@ SystemState_e ETH_Driver::Control(ETH_ControlCode_e Control, uint32_t Arg)
 {
     uint32_t maccr;
     uint32_t dmaomr;
-    uint32_t dmabmr;
     uint32_t macffr;
 
     if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
@@ -1025,31 +1024,6 @@ SystemState_e ETH_Driver::Control(ETH_ControlCode_e Control, uint32_t Arg)
         }
         break;
 
-        case uint32_t(ETH_DMA_CONFIGURE):
-        {
-            if(Arg & ETH_DMABMR_REG)
-            {
-                dmabmr = ETH->DMABMR & ~uint32_t(ETH_DMABMR_AAB  | ETH_DMABMR_FPM | ETH_DMABMR_USP |
-                                                 ETH_DMABMR_RDP  | ETH_DMABMR_FB  | ETH_DMABMR_FPM |
-                                                 ETH_DMABMR_RTPR | ETH_DMABMR_PBL | ETH_DMABMR_EDE |
-                                                 ETH_DMABMR_DSL  | ETH_DMABMR_DA);
-
-                dmabmr |= (Arg & ~ETH_DMABMR_REG);
-                ETH->DMABMR = dmabmr;
-            }
-
-            if(Arg & ETH_DMAOMR_REG)
-            {
-                dmaomr = ETH->DMAOMR & ~uint32_t(ETH_DMAOMR_DTCEFD | ETH_DMAOMR_DFRF | ETH_DMAOMR_FTF |
-                                                 ETH_DMAOMR_TTC    | ETH_DMAOMR_ST   | ETH_DMAOMR_FEF |
-                                                 ETH_DMAOMR_FUGF   | ETH_DMAOMR_RTC  | ETH_DMAOMR_OSF |
-                                                 ETH_DMAOMR_SR);
-                dmaomr |= (Arg & ~uint32_t(ETH_DMAOMR_REG));
-                ETH->DMAOMR = dmaomr;
-            }
-        }
-        break;
-
         case uint32_t(ETH_MAC_CONTROL_TX):
         {
             // Enable/disable MAC transmitter
@@ -1103,6 +1077,50 @@ SystemState_e ETH_Driver::Control(ETH_ControlCode_e Control, uint32_t Arg)
     }
 
     return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name:     DMA_Configure
+//
+//   Parameter(s):      None
+//   Return value:      None
+//
+//   Description:       Configure DMA non generic config
+//
+//-------------------------------------------------------------------------------------------------
+void ETH_Driver::DMA_Configure(void)
+{
+    uint32_t dmabmr;
+    uint32_t dmaomr;
+
+
+    #define  ETH_DMAOMR_CFG         ETH_DMAOMR_OSF             // Second Frame Operate  // do better init
+
+
+    #define  ETH_DMABMR_CFG         ETH_DMABMR_AAB        |    /* Address Aligned Beats                    */ \
+									ETH_DMABMR_EDE        |    /* Enhanced Descriptor format enable        */ \
+									ETH_DMABMR_FB         |    /* Fixed Burst                              */ \
+									ETH_DMABMR_RTPR_2_1   |    /* Arbitration Round Robin RxTx 2 1         */ \
+									ETH_DMABMR_RDP_32Beat |    /* Rx DMA Burst Length 32 Beat              */ \
+									ETH_DMABMR_PBL_32Beat |    /* Tx DMA Burst Length 32 Beat              */ \
+									ETH_DMABMR_USP             /* Enable use of separate PBL for Rx and Tx */
+
+
+    dmabmr = ETH->DMABMR & ~uint32_t(ETH_DMABMR_AAB  | ETH_DMABMR_FPM | ETH_DMABMR_USP |
+                                     ETH_DMABMR_RDP  | ETH_DMABMR_FB  | ETH_DMABMR_FPM |
+                                     ETH_DMABMR_RTPR | ETH_DMABMR_PBL | ETH_DMABMR_EDE |
+                                     ETH_DMABMR_DSL  | ETH_DMABMR_DA);
+
+    dmabmr |= ETH_DMABMR_CFG;
+    ETH->DMABMR = dmabmr;
+
+    dmaomr = ETH->DMAOMR & ~uint32_t(ETH_DMAOMR_DTCEFD | ETH_DMAOMR_DFRF | ETH_DMAOMR_FTF |
+                                     ETH_DMAOMR_TTC    | ETH_DMAOMR_ST   | ETH_DMAOMR_FEF |
+                                     ETH_DMAOMR_FUGF   | ETH_DMAOMR_RTC  | ETH_DMAOMR_OSF |
+                                     ETH_DMAOMR_SR);
+    dmaomr |= ETH_DMAOMR_CFG;
+    ETH->DMAOMR = dmaomr;
 }
 
 //-------------------------------------------------------------------------------------------------

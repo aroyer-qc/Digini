@@ -212,6 +212,8 @@ class ETH_Driver
         // TODO will disappear if not used.. or not
         SystemState_e           Uninitialize            (void);                                                          // De-initialize Ethernet MAC Device.
         SystemState_e           PowerControl            (ETH_PowerState_e State);                                        // Control Ethernet MAC Device Power.
+        SystemState_e           Control                 (ETH_ControlCode_e Control, uint32_t arg);                       // Control Ethernet Interface.
+        void                    DMA_Configure           (void);                                                          // Configure the DMA.
         SystemState_e           GetMacAddress           (      ETH_MAC_Address_t* pMAC_Address);                         // Get Ethernet MAC Address.
         SystemState_e           SetMacAddress           (const ETH_MAC_Address_t* pMAC_Address);                         // Set Ethernet MAC Address.
         SystemState_e           SetAddressFilter        (const ETH_MAC_Address_t* pMAC_Address, uint32_t NbAddress);     // Configure Address Filter.
@@ -223,7 +225,7 @@ class ETH_Driver
         SystemState_e           GetTX_FrameTime         (ETH_MacTime_t* Time);                                           // Get time of transmitted Ethernet frame.
         SystemState_e           ControlTimer            (ETH_ControlTimer_e Control, ETH_MacTime_t* Time);               // Control Precision Timer.
       #endif
-        SystemState_e           Control                 (ETH_ControlCode_e Control, uint32_t arg);                                // Control Ethernet Interface.
+
         SystemState_e           PHY_Read                (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData); // Read Ethernet PHY Register through Management Interface.
         SystemState_e           PHY_Write               (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data); // Write Ethernet PHY Register through Management Interface.
         ETH_MAC_Capability_t    GetCapabilities         (void);

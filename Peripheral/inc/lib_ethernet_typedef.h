@@ -33,13 +33,12 @@
 // Ethernet MAC and DMA Control Codes
 enum ETH_ControlCode_e
 {
-    ETH_MAC_CONFIGURE,                                  // Configure MAC; arg = configuration
-    ETH_MAC_CONTROL_TX,                                 // Transmitter; arg: 0=disabled (default), 1=enabled
-    ETH_MAC_CONTROL_RX,                                 // Receiver; arg: 0=disabled (default), 1=enabled
-    ETH_MAC_FLUSH,                                      // Flush buffer; arg = ETH_MAC_FLUSH_...
-    ETH_MAC_SLEEP,                                      // Sleep mode; arg: 1=enter and wait for Magic packet, 0=exit
-    ETH_MAC_VLAN_FILTER,                                // VLAN Filter for received frames; arg15..0: VLAN Tag; arg16: optional ETH_MAC_VLAN_FILTER_ID_ONLY; 0=disabled (default)
-    ETH_DMA_CONFIGURE,                                  // Configure DMA; arg = configuration
+    ETH_MAC_CONFIGURE,
+    ETH_MAC_CONTROL_TX,                                 // Transmitter        : arg: 0=disabled (default), 1=enabled
+    ETH_MAC_CONTROL_RX,                                 // Receiver           : arg: 0=disabled (default), 1=enabled
+    ETH_MAC_FLUSH,                                      // Flush buffer       : arg = ETH_MAC_FLUSH_...
+    ETH_MAC_SLEEP,                                      // Sleep mode         : arg 1=enter and wait for Magic packet, 0=exit
+    ETH_MAC_VLAN_FILTER,                                // VLAN Filter for received frames: arg15..0: VLAN Tag; arg16: optional ETH_MAC_VLAN_FILTER_ID_ONLY; 0=disabled (default)
 };
 
 // Ethernet MAC Timer Control Codes

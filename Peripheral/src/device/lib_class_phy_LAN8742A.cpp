@@ -239,7 +239,7 @@ SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
     {
         case uint32_t(ETH_PHY_MODE_SPEED_10M):                                      break;
         case uint32_t(ETH_PHY_MODE_SPEED_100M):    Value |= BCR_SPEED_SEL;          break;
-        //default:                                   return SYS_UNSUPPORTED_FEATURE;
+        default:                                   return SYS_UNSUPPORTED_FEATURE;
   }
 
     switch(Mode & ETH_PHY_MODE_DUPLEX_MASK)
@@ -278,6 +278,7 @@ ETH_LinkState_e PHY_LAN8742A_Driver::GetLinkState(void)
     }
 
     State = (Value & BSR_LINK_STAT) ? ETH_LINK_UP : ETH_LINK_DOWN;
+    DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: LINK has change, now it is %s\r", (State == ETH_LINK_UP) ? "UP" : "DOWN");
 
     return State;
 }

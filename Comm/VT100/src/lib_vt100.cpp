@@ -67,6 +67,30 @@ const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
     VT100_MENU_DEF(EXPAND_VT100_MENU_AS_DATA)
 };
 
+inline bool ConvertToValue(uint8_t* pData);
+
+bool ConvertToValue(uint8_t* pData)
+{
+    if((*Data >= 'a') && (*Data <= 'z'))
+    {
+        *Data = (*Data - 'a') + 10;
+    }
+    else if((Data >= 'A') && (Data <= 'Z'))
+    {
+        *Data = (*Data - 'A') + 10;
+    }
+    else if((*Data >= '1') && (*Data <= '9'))
+    {
+        *Data -= '0';
+    }
+    else
+    {
+        return false;
+    }
+    
+    return true;
+}
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
@@ -251,19 +275,11 @@ void VT100_Terminal::ProcessRX(void)
     {
         m_pConsole->Read(&Data, 1);
 
+        // We flush this entry as it follow escape sequence... don't know why !!!
         if(m_FlushNextEntry == true)
         {
             m_FlushNextEntry = false;
             return;
-        }
-
-        if(m_InEscapeSequence == true)
-        {
-            m_InEscapeSequence = false;
-            nOS_TimerStop(&m_EscapeTimer, true);
-            m_ValidateInput  = false;
-            m_Input          = 0;
-            m_FlushNextEntry = true;
         }
 
         if(Data == ASCII_ESCAPE)
@@ -274,6 +290,15 @@ void VT100_Terminal::ProcessRX(void)
             return;
         }
 
+        if(m_InEscapeSequence == true)
+        {
+            nOS_TimerStop(&m_EscapeTimer, true);
+            m_InEscapeSequence = false;
+            m_ValidateInput    = false;
+            m_Input            = 0;
+            m_FlushNextEntry   = true;
+        }
+
         switch(m_InputType)
         {
             case VT100_INPUT_MENU_CHOICE:
@@ -281,30 +306,21 @@ void VT100_Terminal::ProcessRX(void)
                 m_InputCount++;
                 m_ValidateInput = true;
 
-                if((Data >= 'a') && (Data <= 'z'))
+                if(ConvertToValue(&Data) != true)
                 {
-                    Data = (Data - 'a') + 10;
+                    if(Data == VT100_TRAP_REAL_ESCAPE)
+                    {
+                        Data = 0;
+                    }
+                    else
+                    {
+                        m_Input         = 0;
+                        m_InputCount    = 0;
+                        m_ValidateInput = false;
+                        return;
+                    }
                 }
-                else if((Data >= 'A') && (Data <= 'Z'))
-                {
-                    Data = (Data - 'A') + 10;
-                }
-                else if((Data >= '1') && (Data <= '9'))
-                {
-                    Data = Data - '0';
-                }
-                else if(Data != VT100_TRAP_REAL_ESCAPE)
-                {
-                    m_Input         = 0;
-                    m_InputCount    = 0;
-                    m_ValidateInput = false;
-                    return;
-                }
-
-                if(Data == VT100_TRAP_REAL_ESCAPE)
-                {
-                    Data = 0;
-                }
+                
                 m_Input = Data;
             }
             break;

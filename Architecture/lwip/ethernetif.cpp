@@ -92,8 +92,7 @@ err_t ethernetif_init(struct netif* netif)
 	ETH_Link = ETH_LINK_DOWN;
 
     cap = ETH_Mac.GetCapabilities();
-    //ETH0.EventRX_Frame = (cap.event_rx_frame) ? true : false;
-    ETH_Mac.Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
+   ETH_Mac.Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
 
     ETH_Mac.PowerControl(ETH_POWER_FULL);								// Enable Clock, Reset ETH, Init MAC, Enable ETH IRQ
     ETH_Mac.Control(ETH_MAC_CONTROL_TX, 0);
@@ -165,7 +164,6 @@ err_t ethernetif_init(struct netif* netif)
     // Create binary semaphore used for informing ethernetif of frame reception
     /*nOS_Error*/ nOS_SemCreate (&ETH_RX_Sem, 0, 20);
     /*nOS_Error*/ nOS_MutexCreate (&ETH_TX_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
-
 
      nOS_ThreadCreate(&TaskHandle,
                              ethernetif_input,
@@ -345,7 +343,6 @@ void ethernetif_PollThePHY(void)
             }
 
             ETH_Link = ETH_LinkNow;
-            DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: LINK has change, now it is %s\r", (ETH_Link == ETH_LINK_UP) ? "UP" : "DOWN");
         }
     }
 }

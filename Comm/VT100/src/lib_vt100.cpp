@@ -625,6 +625,7 @@ VT100_InputType_e VT100_Terminal::CallBack(CallbackMethod_t pCallback, VT100_Cal
 
     InputType = VT100_INPUT_MENU_CHOICE;
 
+
     if(pCallback != nullptr)
     {
         SaveAttribute();

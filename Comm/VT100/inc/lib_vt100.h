@@ -269,10 +269,6 @@ bool                GetString                   (char* pBuffer, size_t Size);
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-
-#include "vt100_var.h"        // Project variable
-
-
 #ifdef VT100_GLOBAL
 
 class VT100_Terminal            myVT100;

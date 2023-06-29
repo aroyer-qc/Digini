@@ -123,10 +123,10 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
     m_ValidateInput           = false;
     m_ForceRefresh            = false;
     m_LogsAreMuted            = true;
-    
+
     m_SetMenuCursorPosX       = 0;
     m_SetMenuCursorPosY       = 0;
-    
+
     Error = nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, this, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
   #if (VT100_USER_CALLBACK_INITIALIZE == DEF_ENABLED)
     CallbackInitialize();                       // User callback specific initialization
@@ -167,30 +167,21 @@ void VT100_Terminal::IF_Process(void)
       #if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED)
         PrintMenuStaticInfo();
       #endif
-      #if (VT100_USER_MENU_STATIC_INFO == DEF_ENABLED)
+      #if (VT100_USE_USER_MENU_STATIC_INFO == DEF_ENABLED)
         PrintUserMenuStaticInfo();
-      #endif    
+      #endif
         GoToMenu(VT100_STARTUP_MENU_ID_CFG);
     }
-    if(m_ForceRefresh == true)
+    else if(m_InputDecimalMode == true)     {  InputDecimal();  }
+    else if(m_InputStringMode  == true)     {  InputString();   }
+    else  // Display the menu and process callback
     {
-        m_ForceRefresh = false;
-        DisplayMenu(m_MenuID);
-    }
+        if(m_ForceRefresh == true)
+        {
+            m_ForceRefresh = false;
+            DisplayMenu(m_MenuID);
+        }
 
-    // Input decimal mode
-    if(m_InputDecimalMode == true)
-    {
-        InputDecimal();
-    }
-    // Input string mode
-    else if(m_InputStringMode  == true)
-    {
-        InputString();
-    }
-    // Display the menu and process callback
-    else
-    {
         pMenu = &m_Menu[m_MenuID].pDefinition[m_Input];
 
         // An entry have been detected, do job accordingly
@@ -257,7 +248,6 @@ void VT100_Terminal::IF_Process(void)
         }
     }
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -510,9 +500,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
 
     if(m_MenuID != VT100_MENU_NONE)
     {
-      #if (VT100_USE_STANDARD_MENU_HEADER == DEF_ENABLED)
         SetCursorPosition(m_SetMenuCursorPosX, m_SetMenuCursorPosY);
-      #endif
 
         ItemsQts = m_Menu[MenuID].Size;
 
@@ -575,7 +563,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           PrintMenuHeader
+//  Name:           PrintMenuStaticInfo
 //
 //  Parameter(s):   None
 //  Return:         None
@@ -583,8 +571,8 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
 //  Description:    Display standard Digini menu header
 //
 //-------------------------------------------------------------------------------------------------
-#if (VT100_USE_STANDARD_MENU_HEADER == DEF_ENABLED)
-void VT100_Terminal::PrintMenuHeader(void)
+#if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED)
+void VT100_Terminal::PrintMenuStaticInfo(void)
 {
     const char* pString;
     size_t      SizeLine;
@@ -1063,7 +1051,7 @@ void VT100_Terminal::GetStringInput(char* pString, uint8_t* pID)
             {
                 ID = m_ID;
                 memcpy(pString, m_pString, VT100_STRING_SZ);
-                pMemoryPool->Free((void*)&m_pString);
+                pMemoryPool->Free((void**)&m_pString);
             }
 
             m_InputStringMode = false;

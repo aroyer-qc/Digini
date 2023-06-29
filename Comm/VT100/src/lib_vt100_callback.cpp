@@ -316,7 +316,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
         {
             if(Type != VT100_CALLBACK_INIT)
             {
-                DebugLevel &= ~(1 << (Input - 1));
+                DebugLevel = CON_DebugLevel_e(int(DebugLevel & ~(1 << (Input - 1))));
                 myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_STRING, " ");
             }
             else
@@ -328,7 +328,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
         {
             if(Type != VT100_CALLBACK_INIT)
             {
-                DebugLevel = CON_DebugLevel_e(uint8_t(DebugLevel) | (uint8_t(1) << (Input - 1)));
+                DebugLevel = CON_DebugLevel_e(int(DebugLevel) | (int(1) << (Input - 1)));
                 myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "*");
             }
             else

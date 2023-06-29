@@ -42,6 +42,15 @@
 #include "lib_vt100_expanding_macro.h"
 
 //-------------------------------------------------------------------------------------------------
+// Configuration check
+//-------------------------------------------------------------------------------------------------
+
+#if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED) && (VT100_USE_USER_MENU_STATIC_INFO == DEF_ENABLED)
+  #pragma message "Cannot have both VT100_USE_STANDARD_MENU_STATIC_INFO and VT100_USE_USER_MENU_STATIC_INFO use at the same time"
+  #error DEF_ENABLED Error
+#endif
+
+//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -206,11 +215,8 @@ bool                GetString                   (char* pBuffer, size_t Size);
 
         void                        ProcessRX                   (void);
         uint8_t                     DisplayMenu                 (VT100_Menu_e MenuID);
-      #if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED)
+      #if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED) || (VT100_USER_MENU_STATIC_INFO == DEF_ENABLED)
         void                        PrintMenuStaticInfo         (void);
-      #endif
-      #if (VT100_USER_MENU_STATIC_INFO == DEF_ENABLED)
-        void                        PrintUserMenuStaticInfo     (void);
       #endif
         void                        ClearScreenWindow           (uint8_t PosX, uint8_t PosY, uint8_t SizeX, uint8_t SizeY);
         void                        ClearInputMenuSelection     (void);

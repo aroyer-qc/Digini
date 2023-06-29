@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2022 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -96,14 +96,14 @@ bool ConvertToValue(uint8_t* pData)
 //  Name:           Initialize
 //
 //  Parameter(s):   Console*    pConsole                   Pointer on the console class object
-//  Return:         const char* pHeader
+//  Return:         None
 //
 //  Description:    Initialize VT100_terminal
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
+nOS_Error VT100_Terminal::Initialize(Console* pConsole)
 {
     nOS_Error Error = NOS_OK;
 
@@ -164,11 +164,8 @@ void VT100_Terminal::IF_Process(void)
         InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
         Delay = GetTick();
         while(TickHasTimeOut(Delay, 10) == false){};
-      #if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED)
+      #if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED) || (VT100_USE_USER_MENU_STATIC_INFO == DEF_ENABLED)
         PrintMenuStaticInfo();
-      #endif
-      #if (VT100_USE_USER_MENU_STATIC_INFO == DEF_ENABLED)
-        PrintUserMenuStaticInfo();
       #endif
         GoToMenu(VT100_STARTUP_MENU_ID_CFG);
     }

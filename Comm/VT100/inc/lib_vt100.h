@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2022 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -167,7 +167,7 @@ class VT100_Terminal : public ChildProcessInterface
                             VT100_Terminal              () {};
 
         void                IF_Process                  (void);
-        nOS_Error           Initialize                  (Console* pConsole, const char* pHeader);
+        nOS_Error           Initialize                  (Console* pConsole);
       #if (VT100_USER_CALLBACK_INITIALIZE == DEF_ENABLED)
         void                CallbackInitialize          (void);
       #endif

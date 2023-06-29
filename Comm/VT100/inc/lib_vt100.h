@@ -159,7 +159,7 @@ class VT100_Terminal : public ChildProcessInterface
 
         void                IF_Process                  (void);
         nOS_Error           Initialize                  (Console* pConsole, const char* pHeader);
-      #if (VT100_USER_CALLBACK_INITIALIZE == DEF_DEFINED)
+      #if (VT100_USER_CALLBACK_INITIALIZE == DEF_ENABLED)
         void                CallbackInitialize          (void);
       #endif
         void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
@@ -172,7 +172,7 @@ class VT100_Terminal : public ChildProcessInterface
         void                SaveCursorPosition          (void);
         void                SetAttribute                (VT100_Attribute_e Attribute);
 
-      #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+      #if (VT100_USE_COLOR == DEF_ENABLED)
         void                SetColor                    (VT100_Color_e ForeColor, VT100_Color_e BackColor);
         inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute(VT100_Attribute_e(int(Color) + VT100_OFFSET_COLOR_FOREGROUND)); }
         inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute(VT100_Attribute_e(int(Color) + VT100_OFFSET_COLOR_BACKGROUND)); }
@@ -193,13 +193,11 @@ class VT100_Terminal : public ChildProcessInterface
         void                SetDecimalInput             (uint8_t PosX, uint8_t PosY, int32_t Minimum, int32_t Maximum, int32_t Value, uint16_t Divider, uint8_t ID, const char* pMsg);
         void                SetStringInput              (uint8_t PosX, uint8_t PosY, int32_t Maximum, uint8_t ID, const char* pMsg, const char* pString);
 
-//        void            CON_SetConsoleMuteLogs      (bool Mute);
         void                ForceMenuRefresh            (void);
 
-        void                DisplayHeader               (void);
+      //  void                DisplayHeader               (void);
 
 // to check if needed in VT100
-//void                SeConsoleMuteLogs           (bool);  this should be in console... beacause when in VT100 we don't want any debug message going thru
 void                LockDisplay                 (bool);
 void                DisplayTimeDateStamp        (nOS_TimeDate* pTimeDate);
 bool                GetString                   (char* pBuffer, size_t Size);
@@ -208,10 +206,17 @@ bool                GetString                   (char* pBuffer, size_t Size);
 
         void                        ProcessRX                   (void);
         uint8_t                     DisplayMenu                 (VT100_Menu_e MenuID);
-
-
+      #if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED)
+        void                        PrintMenuStaticInfo         (void);
+      #endif
+      #if (VT100_USER_MENU_STATIC_INFO == DEF_ENABLED)
+        void                        PrintUserMenuStaticInfo     (void);
+      #endif
+        void                        ClearScreenWindow           (uint8_t PosX, uint8_t PosY, uint8_t SizeX, uint8_t SizeY);
+        void                        ClearInputMenuSelection     (void);
         void                        RepeatChar                  (uint8_t Char, size_t Count);
         void                        MenuSelectItems             (char ItemsChar);
+
         VT100_InputType_e           CallBack                    (VT100_InputType_e (*pCallback)(uint8_t, VT100_CallBackType_e), VT100_CallBackType_e Type, uint8_t Item);
         static void                 EscapeCallback              (nOS_Timer* pTimer, void* pArg);
         void                        InputString                 (void);
@@ -222,12 +227,18 @@ bool                GetString                   (char* pBuffer, size_t Size);
         static VT100_InputType_e    CALLBACK_None               (uint8_t Input, VT100_CallBackType_e Type);
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
 
+
+
         Console*                            m_pConsole;
         bool                                m_IsItInitialized;
         bool                                m_IsItInStartup;
         bool                                m_BackFromEdition;
         VT100_Menu_e                        m_MenuID;
         VT100_Menu_e                        m_FlushMenuID;
+        uint8_t                             m_SetMenuCursorPosX;                // Set position to display the menu (after header)
+        uint8_t                             m_SetMenuCursorPosY;
+        uint8_t                             m_LastSetCursorPosX;                // Set position to input selection location on screen
+        uint8_t                             m_LastSetCursorPosY;
         VT100_InputType_e                   m_InputType;
         uint64_t                            m_Input;
         uint64_t                            m_InputCount;
@@ -238,7 +249,6 @@ bool                GetString                   (char* pBuffer, size_t Size);
         nOS_Timer                           m_EscapeTimer;
         bool                                m_IsDisplayLock;
         bool                                m_FlushNextEntry;
-        char*                               m_pHeader;
         bool                                m_ForceRefresh;
 
         // Input string or decimal service
@@ -255,11 +265,11 @@ bool                GetString                   (char* pBuffer, size_t Size);
         volatile bool                       m_InEscapeSequence;
         int32_t                             m_InputPtr;
         int32_t                             m_RefreshInputPtr;
-        char                                m_String[VT100_STRING_SZ + 1];
+        char*                               m_pString;
         bool                                m_InputStringMode;
         bool                                m_IsItString;
         uint32_t                            m_NewConfigFlag[CONFIG_FLAG_SIZE];
-        char                                m_GenericString[VT100_STRING_QTS][VT100_ITEMS_QTS][VT100_STRING_SZ];
+        char                                m_GenericString[VT100_STRING_QTS][VT100_ITEMS_QTS][VT100_STRING_SZ];  // TODO move this to memory pool
         static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
 
         VT100_MENU_DEF(EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER)
@@ -268,10 +278,6 @@ bool                GetString                   (char* pBuffer, size_t Size);
 //-------------------------------------------------------------------------------------------------
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
-
-
-#include "vt100_var.h"        // Project variable
-
 
 #ifdef VT100_GLOBAL
 

@@ -71,23 +71,23 @@ inline bool ConvertToValue(uint8_t* pData);
 
 bool ConvertToValue(uint8_t* pData)
 {
-    if((*Data >= 'a') && (*Data <= 'z'))
+    if((*pData >= 'a') && (*pData <= 'z'))
     {
-        *Data = (*Data - 'a') + 10;
+        *pData = (*pData - 'a') + 10;
     }
-    else if((Data >= 'A') && (Data <= 'Z'))
+    else if((*pData >= 'A') && (*pData <= 'Z'))
     {
-        *Data = (*Data - 'A') + 10;
+        *pData = (*pData - 'A') + 10;
     }
-    else if((*Data >= '1') && (*Data <= '9'))
+    else if((*pData >= '1') && (*pData <= '9'))
     {
-        *Data -= '0';
+        *pData -= '0';
     }
     else
     {
         return false;
     }
-    
+
     return true;
 }
 
@@ -109,7 +109,6 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
 
     // Should read future configuration for muting
     m_pConsole                = pConsole;
-    m_pHeader                 = (char*)pHeader;
     m_IsItInitialized         = false;
     m_InputCount              = 0;
     m_MenuID                  = VT100_MENU_NONE;
@@ -124,9 +123,12 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole, const char* pHeader)
     m_ValidateInput           = false;
     m_ForceRefresh            = false;
     m_LogsAreMuted            = true;
-    m_String[VT100_STRING_SZ] = '\0';
+    
+    m_SetMenuCursorPosX       = 0;
+    m_SetMenuCursorPosY       = 0;
+    
     Error = nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, this, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
-  #if (VT100_USER_CALLBACK_INITIALIZE == DEF_DEFINED)
+  #if (VT100_USER_CALLBACK_INITIALIZE == DEF_ENABLED)
     CallbackInitialize();                       // User callback specific initialization
   #endif
     ClearConfigFLag();
@@ -150,7 +152,7 @@ void VT100_Terminal::IF_Process(void)
 {
     const VT100_MenuDef_t* pMenu;
     uint8_t                Items;
-    uint8_t                ItemsQts;
+   // uint8_t                ItemsQts;
     TickCount_t            Delay;
 
     ProcessRX();
@@ -162,9 +164,14 @@ void VT100_Terminal::IF_Process(void)
         InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
         Delay = GetTick();
         while(TickHasTimeOut(Delay, 10) == false){};
+      #if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED)
+        PrintMenuStaticInfo();
+      #endif
+      #if (VT100_USER_MENU_STATIC_INFO == DEF_ENABLED)
+        PrintUserMenuStaticInfo();
+      #endif    
         GoToMenu(VT100_STARTUP_MENU_ID_CFG);
     }
-
     if(m_ForceRefresh == true)
     {
         m_ForceRefresh = false;
@@ -227,9 +234,9 @@ void VT100_Terminal::IF_Process(void)
                     }
 
                     // Job is already done, so no refresh
-                    //if(m_InputType == VT100_INPUT_MENU_CHOICE)
+                    if(m_InputType == VT100_INPUT_MENU_CHOICE)
                     {
-                        m_Input = 0;
+                        ClearInputMenuSelection();
                     }
                 }
                 else
@@ -320,7 +327,7 @@ void VT100_Terminal::ProcessRX(void)
                         return;
                     }
                 }
-                
+
                 m_Input = Data;
             }
             break;
@@ -375,7 +382,7 @@ void VT100_Terminal::ProcessRX(void)
                         if(m_InputPtr > 0)
                         {
                             m_InputPtr--;
-                            m_String[m_InputPtr] = '\0';
+                            m_pString[m_InputPtr] = '\0';
                         }
                     }
                 }
@@ -383,7 +390,7 @@ void VT100_Terminal::ProcessRX(void)
                 {
                     if(m_InputPtr < m_Maximum)
                     {
-                        m_String[m_InputPtr] = Data;
+                        m_pString[m_InputPtr] = Data;
                         m_InputPtr++;
                     }
                 }
@@ -498,40 +505,19 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
     uint8_t                 ItemsQts;
     uint8_t                 Items;
     char                    ItemsChar;
-    const char*             pString;
 
     pMenu = nullptr;
 
     if(m_MenuID != VT100_MENU_NONE)
     {
+      #if (VT100_USE_STANDARD_MENU_HEADER == DEF_ENABLED)
+        SetCursorPosition(m_SetMenuCursorPosX, m_SetMenuCursorPosY);
+      #endif
+
         ItemsQts = m_Menu[MenuID].Size;
 
         if(ItemsQts > 1)
         {
-            m_BypassPrintf = true;
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
-            nOS_Sleep(100);                                                 // Terminal need time to reset
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_HIDE_CURSOR);
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_CLEAR_SCREEN);
-          #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
-            SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
-          #endif
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
-            pString = myLabel.GetPointer(VT100_LBL_LINE_SEPARATOR);
-            size_t SizeLine = strlen(pString) - 1;
-            pString = myLabel.GetPointer(LBL_VT100_MENU_TITLE);
-            size_t SizeTitle = strlen(pString);
-            SizeLine -= SizeTitle;
-            RepeatChar(' ', SizeLine / 2);
-            InMenuPrintf(VT100_SZ_NONE, LBL_VT100_MENU_TITLE);
-            RepeatChar(' ', (SizeLine / 2) + (SizeLine % 2));
-            InMenuPrintf(VT100_SZ_NONE, LBL_LINEFEED);
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
-          #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
-            SetColor(VT100_COLOR_YELLOW, VT100_COLOR_BLACK);
-          #endif
-            InMenuPrintf(VT100_SZ_NONE, LBL_DOUBLE_LINEFEED);
-
             // Print all items in the menu list
             for(Items = 0; Items < ItemsQts; Items++)
             {
@@ -566,6 +552,10 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
             ItemsChar  = (char)(Items - 1);
             ItemsChar += (ItemsChar >= 10) ? ('a' - 10) : '0';
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_ENTER_SELECTION, ItemsChar);
+
+            // need to Calculated Actual X and Y position of cursor
+            //SetCursorPosition();
+
             return ItemsQts;
         }
 
@@ -576,13 +566,71 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
     }
 
     InMenuPrintf(VT100_SZ_NONE, VT100_LBL_CLEAR_SCREEN);
-  #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_WHITE);
   #endif
     m_BypassPrintf = false;
     return 0;
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           PrintMenuHeader
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Display standard Digini menu header
+//
+//-------------------------------------------------------------------------------------------------
+#if (VT100_USE_STANDARD_MENU_HEADER == DEF_ENABLED)
+void VT100_Terminal::PrintMenuHeader(void)
+{
+    const char* pString;
+    size_t      SizeLine;
+    size_t      SizeTitle;
+
+    m_BypassPrintf = true;
+    InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
+    nOS_Sleep(100);                                                 // Terminal need time to reset
+    InMenuPrintf(VT100_SZ_NONE, VT100_LBL_HIDE_CURSOR);
+    InMenuPrintf(VT100_SZ_NONE, VT100_LBL_CLEAR_SCREEN);
+  #if (VT100_USE_COLOR == DEF_ENABLED)
+    SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
+  #endif
+    InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
+    pString  = myLabel.GetPointer(VT100_LBL_LINE_SEPARATOR);
+    SizeLine = strlen(pString) - 1;
+    pString  = myLabel.GetPointer(LBL_VT100_MENU_TITLE);
+     SizeTitle = strlen(pString);
+    SizeLine -= SizeTitle;
+    RepeatChar(' ', SizeLine / 2);
+    InMenuPrintf(VT100_SZ_NONE, LBL_VT100_MENU_TITLE);
+    RepeatChar(' ', (SizeLine / 2) + (SizeLine % 2));
+    InMenuPrintf(VT100_SZ_NONE, LBL_LINEFEED);
+    InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
+  #if (VT100_USE_COLOR == DEF_ENABLED)
+    SetColor(VT100_COLOR_YELLOW, VT100_COLOR_BLACK);
+  #endif
+    InMenuPrintf(VT100_SZ_NONE, LBL_DOUBLE_LINEFEED);
+
+    m_SetMenuCursorPosY = 8;
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           RepeatChar
+//
+//  Parameter(s):   uint8_t             Char to print multiple time
+//                  size_t              How many time to repeat print of the char
+//  Return:         None
+//
+//  Description:    Print a char multiple time
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
 void VT100_Terminal::RepeatChar(uint8_t Char, size_t Count)
 {
     char* pBuffer;
@@ -591,6 +639,45 @@ void VT100_Terminal::RepeatChar(uint8_t Char, size_t Count)
     {
         pBuffer[Count] = '\0';
         m_pConsole->SendData((const uint8_t*)pBuffer, &Count);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ClearInputMenuSelection
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Flush Input line after selection and input was processed
+//
+//-------------------------------------------------------------------------------------------------
+void VT100_Terminal::ClearInputMenuSelection(void)
+{
+    SetCursorPosition(m_LastSetCursorPosX, m_LastSetCursorPosY);
+    InMenuPrintf(VT100_SZ_NONE, VT100_LBL_ERASE_FROM_CURSOR_N_CHAR, 2);
+    SetCursorPosition(m_LastSetCursorPosX, m_LastSetCursorPosY);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ClearScreenWindows
+//
+//  Parameter(s):   uint8_t PosX
+//                  uint8_t PosY
+//                  uint8_t SizeX
+//                  uint8_t SizeY
+//  Return:         None
+//
+//  Description:    Clear the portion of the screen specified by parameter
+//
+//-------------------------------------------------------------------------------------------------
+void VT100_Terminal::ClearScreenWindow(uint8_t PosX, uint8_t PosY, uint8_t SizeX, uint8_t SizeY)
+{
+    for(int y = PosY; y < (PosY + SizeY); y++)
+    {
+        SetCursorPosition(PosX, y);
+        InMenuPrintf(VT100_SZ_NONE, VT100_LBL_ERASE_FROM_CURSOR_N_CHAR, int(SizeX));
     }
 }
 
@@ -609,12 +696,12 @@ void VT100_Terminal::RepeatChar(uint8_t Char, size_t Count)
 void VT100_Terminal::MenuSelectItems(char ItemsChar)
 {
     InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "\r  (");
-  #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_CYAN);
   #endif
     if(ItemsChar == '0') InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "ESC");
     else                 InMenuPrintf(VT100_SZ_NONE, LBL_CHAR, ItemsChar);
-  #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_YELLOW);
   #endif
     if(ItemsChar == '0') InMenuPrintf(VT100_SZ_NONE, LBL_STRING, ") ");
@@ -701,7 +788,7 @@ void VT100_Terminal::InputDecimal(void)
     {
         m_RefreshValue = m_Value;
 
-      #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+      #if (VT100_USE_COLOR == DEF_ENABLED)
         if((m_Value >= m_Minimum) && (m_Value <= m_Maximum))
         {
             SetColor(VT100_COLOR_BLACK, VT100_COLOR_GREEN);
@@ -723,7 +810,7 @@ void VT100_Terminal::InputDecimal(void)
             default:   InMenuPrintf(VT100_SZ_NONE, VT100_LBL_INT_NO_DIVIDE,         m_Value);                                       break;
         }
 
-        InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "\033[40m \033[2D");
+        InMenuPrintf(VT100_SZ_NONE, VT100_LBL_WHITE_MOVE_CURSOR_2_TO_LEFT);
     }
 }
 
@@ -745,29 +832,9 @@ void VT100_Terminal::InputString(void)
     {
         SetCursorPosition(m_PosX + 2, m_PosY + 3);
         m_RefreshInputPtr = m_InputPtr;
-        InMenuPrintf(VT100_SZ_NONE, VT100_LBL_STRING_AND_ONE_SPACE, m_String);
+        InMenuPrintf(VT100_SZ_NONE, VT100_LBL_STRING_AND_ONE_SPACE, m_pString);
         InMenuPrintf(VT100_SZ_NONE, VT100_LBL_MOVE_LEFT_CURSOR);
     }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           DisplayHeader
-//
-//  Parameter(s):   None
-//  Return:         None
-//
-//  Description:     Clear the screen and Display the header line
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void VT100_Terminal::DisplayHeader(void)
-{
-    InMenuPrintf(VT100_SZ_NONE, VT100_LBL_CLEAR_SCREEN);
-    SetCursorPosition(10, 1);
-    InMenuPrintf(VT100_SZ_NONE, LBL_STRING, m_pHeader);
-    InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "\r\r\r");
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -784,13 +851,13 @@ void VT100_Terminal::DisplayHeader(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+#if (VT100_USE_COLOR == DEF_ENABLED)
 void VT100_Terminal::PrintSaveLabel(uint8_t PosX, uint8_t PosY, VT100_Color_e Color)
 #else
 void VT100_Terminal::PrintSaveLabel(uint8_t PosX, uint8_t PosY)
 #endif
 {
-  #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(Color);
   #endif
     SetCursorPosition(PosX, PosY);
@@ -835,7 +902,7 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
     DrawBox(PosX, PosY, 48, 8, VT100_COLOR_WHITE);
 
     // Write input information
-  #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_CYAN);
   #endif
     SetCursorPosition(PosX + 2,  PosY + 1);
@@ -864,7 +931,7 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
     }
 
     // Print type of input
-  #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_YELLOW);
   #endif
     SetCursorPosition(PosX + 2, PosY + 3);
@@ -945,7 +1012,7 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
     DrawBox(PosX, PosY, 46, 7, VT100_COLOR_WHITE);
 
     // Write input information
-  #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_CYAN);
   #endif
     SetCursorPosition(PosX + 2,  PosY + 1);
@@ -956,9 +1023,13 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
     InMenuPrintf(VT100_SZ_NONE, VT100_LBL_INPUT_VALIDATION);
 
     // Copy string
-    memcpy(m_String, pString, VT100_STRING_SZ);
- //   STR_strnstrip(m_String, Maximum);                 // TODO Fix this
-    m_InputPtr = strlen(m_String);                          // Get string end pointer
+    if((m_pString = (char*)pMemoryPool->AllocAndSet(VT100_STRING_SZ + 1, 0)) != nullptr)
+    {
+        memcpy(m_pString, pString, VT100_STRING_SZ);
+    }     // todo handle error....
+
+ //   STR_strnstrip(m_pString, Maximum);                 // TODO Fix this
+    m_InputPtr = strlen(m_pString);                          // Get string end pointer
     m_RefreshInputPtr = m_InputPtr + 1;                     // To force a refresh
 
     // And show cursor
@@ -988,10 +1059,11 @@ void VT100_Terminal::GetStringInput(char* pString, uint8_t* pID)
     {
         if(m_IsItString == true)
         {
-            if(strlen(m_String) <= size_t(m_Maximum))
+            if(strlen(m_pString) <= size_t(m_Maximum))
             {
                 ID = m_ID;
-                memcpy(pString, m_String, VT100_STRING_SZ);
+                memcpy(pString, m_pString, VT100_STRING_SZ);
+                pMemoryPool->Free((void*)&m_pString);
             }
 
             m_InputStringMode = false;
@@ -1166,6 +1238,8 @@ void VT100_Terminal::SetCursorPosition(uint8_t PosX, uint8_t PosY)
     if(m_IsDisplayLock == false)
     {
         InMenuPrintf(VT100_SZ_NONE, VT100_LBL_SET_CURSOR, PosY, PosX);
+        m_LastSetCursorPosX = PosX;
+        m_LastSetCursorPosY = PosY;
     }
 }
 
@@ -1248,7 +1322,7 @@ void VT100_Terminal::SetScrollZone(uint8_t FirstLine, uint8_t LastLine)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+#if (VT100_USE_COLOR == DEF_ENABLED)
 void VT100_Terminal::SetColor(VT100_Color_e ForeColor, VT100_Color_e BackColor)
 {
     if(m_IsDisplayLock == false)
@@ -1273,7 +1347,7 @@ void VT100_Terminal::SetColor(VT100_Color_e ForeColor, VT100_Color_e BackColor)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#ifndef DIGINI_VT100_USE_COLOR
+#ifndef VT100_USE_COLOR
 void VT100_Terminal::InvertMono(bool Invert)
 {
     if(Invert == true) InMenuPrintf(VT100_SZ_NONE, VT100_LBL_BACK_WHITE_FORE_BLACK);
@@ -1347,7 +1421,7 @@ void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t
 {
     if(m_IsDisplayLock == false)
     {
-      #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+      #if (VT100_USE_COLOR == DEF_ENABLED)
         SetForeColor(ForeColor);
       #endif
         SetCursorPosition(PosX, PosY++);
@@ -1407,7 +1481,7 @@ void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100
 {
     if(m_IsDisplayLock == false)
     {
-      #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+      #if (VT100_USE_COLOR == DEF_ENABLED)
         SetForeColor(ForeColor);
       #endif
 
@@ -1435,10 +1509,10 @@ void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100
 //
 //  Description:    Print the bargraph according to value and maximum at specified location.
 //
-//  Note(s):        ** This parameter exist only if DIGINI_VT100_USE_COLOR is defined
+//  Note(s):        ** This parameter exist only if VT100_USE_COLOR is defined
 //
 //-------------------------------------------------------------------------------------------------
-#if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+#if (VT100_USE_COLOR == DEF_ENABLED)
 void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size)
 #else
 void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, uint8_t Value, uint8_t Max, uint8_t Size)
@@ -1450,7 +1524,7 @@ void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, uint8_t Value, uint8_t
 
     for(i = 0; i < Size; i++)
     {
-      #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+      #if (VT100_USE_COLOR == DEF_ENABLED)
         if(i < ((Value / (Max / Size))))
         {
             SetBackColor(Color);
@@ -1466,7 +1540,7 @@ void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, uint8_t Value, uint8_t
         InMenuPrintf(VT100_SZ_NONE, LBL_CHAR, ' ');
     }
 
-  #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetAttribute(VT100_Attribute_e(VT100_COLOR_BLACK + VT100_OFFSET_COLOR_BACKGROUND));
   #else
     InvertMono(false);

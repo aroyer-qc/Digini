@@ -226,6 +226,8 @@ void VT100_Terminal::IF_Process(void)
                     {
                         ClearInputMenuSelection();
                     }
+
+                    InMenuPrintf(VT100_SZ_NONE, VT100_LBL_EOL_ERASE);
                 }
                 else
                 {

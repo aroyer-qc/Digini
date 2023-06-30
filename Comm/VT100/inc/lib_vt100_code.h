@@ -19,6 +19,7 @@
 #define ESC_CUP         "\33[%d;%dH"        //  y;x	Cursor Position	                *Cursor moves to <x>; <y> coordinate within the viewport, where <x> is the column of the <y> line
 #define ESC_HVP	        "\33[%d;%df"        //	y;x	Horizontal Vertical Position	*Cursor moves to <x>; <y> coordinate within the viewport, where <x> is the column of the <y> line
 
+/*
 #define ESC_CEB         "\33[ [ ? 12 h	ATT160	Text Cursor Enable Blinking	Start the cursor blinking
 #define ESC_CDB         "\33[ [ ? 12 l	ATT160	Text Cursor Enable Blinking	Stop blinking the cursor
 #define ESC_            "\33[ [ ? 25 h	DECTCEM	Text Cursor Enable Mode Show	Show the cursor
@@ -42,7 +43,9 @@ All commands in this section are generally equivalent to calling FillConsoleOutp
 
 Sequence	Code	Description	Behavior
 #define ESC_            "\33[ [ <n> @	ICH	Insert Character	Insert <n> spaces at the current cursor position, shifting all existing text to the right. Text exiting the screen to the right is removed.
-#define ESC_            "\33[ [ <n> P	DCH	Delete Character	Delete <n> characters at the current cursor position, shifting in space characters from the right edge of the screen.
+*/
+#define ESC_BACKSPACE   "\33[[1P" //	DCH	Delete Character	Delete <n> characters at the current cursor position, shifting in space characters from the right edge of the screen.
+/*
 #define ESC_            "\33[ [ <n> X	ECH	Erase Character	Erase <n> characters from the current cursor position by overwriting them with a space character.
 #define ESC_            "\33[ [ <n> L	IL	Insert Line	Inserts <n> lines into the buffer at the cursor position. The line the cursor is on, and lines below it, will be shifted downwards.
 #define ESC_            "\33[ [ <n> M	DL	Delete Line	Deletes <n> lines from the buffer, starting with the row the cursor is on.
@@ -285,3 +288,4 @@ Ctrl + Right Arrow	"\33[ [ 1 ; 5 C
 Ctrl + Left Arrow	"\33[ [ 1 ; 5 D
 Note [Left Ctrl + Right Alt] is treated as [AltGr]. When both are seen together, they will be stripped and the Unicode value of the character presented by the system will be passed into the target. The system will pre-translate [AltGr] values according to the current system input settings.
 
+*/

@@ -203,7 +203,7 @@ class GPrintf
         void                ParseString               (void);
         void                IncrementFeaturePointer   (void);
 
-        char                m_String[DIGINI_MAX_PRINT_SIZE];
+        char                m_String[DIGINI_MAX_PRINT_SIZE];        // TODO replace this by memorypool
         Font_e*             m_pMovingUsedFontPtr;                                     // Moving pointer in "font use" string
         Font_e*             m_pFontUsedInString;                                      // "Font use" by the character in string
         uint32_t*           m_pMovingUsedColorPtr;                                    // Moving pointer in "font use" string

@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2022 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -308,7 +308,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
         }
 
         myVT100.SetCursorPosition(41, 10 + Input);
-      #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+      #if (VT100_USE_COLOR == DEF_ENABLED)
         myVT100.SetForeColor(VT100_COLOR_MAGENTA);
       #endif
 
@@ -316,7 +316,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
         {
             if(Type != VT100_CALLBACK_INIT)
             {
-                DebugLevel &= ~(1 << (Input - 1));
+                DebugLevel = CON_DebugLevel_e(int(DebugLevel & ~(1 << (Input - 1))));
                 myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_STRING, " ");
             }
             else
@@ -328,7 +328,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
         {
             if(Type != VT100_CALLBACK_INIT)
             {
-                DebugLevel = CON_DebugLevel_e(uint8_t(DebugLevel) | (uint8_t(1) << (Input - 1)));
+                DebugLevel = CON_DebugLevel_e(int(DebugLevel) | (int(1) << (Input - 1)));
                 myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "*");
             }
             else
@@ -373,7 +373,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
         DrawBox(8, 23, 47, 4, VT100_COLOR_GREEN);
 
         /// Print the static info in the box
-      #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+      #if (VT100_USE_COLOR == DEF_ENABLED)
         SetForeColor(VT100_COLOR_YELLOW);
       #endif
         SetCursorPosition(13, 24);
@@ -489,7 +489,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
         // ***********************************************
         // Refresh label on the menu for what is available
 
-      #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+      #if (VT100_USE_COLOR == DEF_ENABLED)
         PrintSaveLabel(9, 16, (m_NewConfigFlag[0] == 1) ? VT100_COLOR_YELLOW : VT100_COLOR_BLUE);
       #else
         PrintSaveLabel(9, 16);
@@ -498,7 +498,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
         // ********************************************
         // Refresh information display on configuration
 
-      #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+      #if (VT100_USE_COLOR == DEF_ENABLED)
         SetForeColor(VT100_COLOR_CYAN);
       #endif
         SetCursorPosition(26, 24);

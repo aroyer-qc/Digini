@@ -73,6 +73,27 @@ Formatting modes are applied from left to right. Applying competing formatting o
 
 For options that specify colors, the colors will be used as defined in the console color table which can be modified using the SetConsoleScreenBufferInfoEx API. If the table is modified to make the “blue” position in the table display an RGB shade of red, then all calls to Foreground Blue will display that red color until otherwise changed.
 
+ ::: Foreground Colours :::
+#define ESC_FORE_Black      "\033[30m"
+#define ESC_FORE_Red        "\033[31m"
+#define ESC_FORE_Green      "\033[32m"
+#define ESC_FORE_Yellow     "\033[33m"
+#define ESC_FORE_Blue       "\033[34m"
+#define ESC_FORE_Magenta    "\033[35m"
+#define ESC_FORE_Cyan       "\033[36m"
+#define ESC_FORE_White      "\033[37m"
+#define ESC_FORE_Default    "\033[39m"
+ ::: Background Colours :::
+#define ESC_BACK_Black      "\033[40m"      
+#define ESC_BACK_Red        "\033[41m"      
+#define ESC_BACK_Green      "\033[42m"      
+#define ESC_BACK_Yellow     "\033[43m"      
+#define ESC_BACK_Blue       "\033[44m"      
+#define ESC_BACK_Magenta    "\033[45m"      
+#define ESC_BACK_Cyan       "\033[46m"      
+#define ESC_BACK_White      "\033[47m"      
+#define ESC_BACK_Default    "\033[49m"   
+
 Value	Description	Behavior
 0	Default	Returns all attributes to the default state prior to modification
 1	Bold/Bright	Applies brightness/intensity flag to foreground color
@@ -80,26 +101,8 @@ Value	Description	Behavior
 24	No underline	Removes underline
 7	Negative	Swaps foreground and background colors
 27	Positive (No negative)	Returns foreground/background to normal
-30	Foreground Black	Applies non-bold/bright black to foreground
-31	Foreground Red	Applies non-bold/bright red to foreground
-32	Foreground Green	Applies non-bold/bright green to foreground
-33	Foreground Yellow	Applies non-bold/bright yellow to foreground
-34	Foreground Blue	Applies non-bold/bright blue to foreground
-35	Foreground Magenta	Applies non-bold/bright magenta to foreground
-36	Foreground Cyan	Applies non-bold/bright cyan to foreground
-37	Foreground White	Applies non-bold/bright white to foreground
 38	Foreground Extended	Applies extended color value to the foreground (see details below)
-39	Foreground Default	Applies only the foreground portion of the defaults (see 0)
-40	Background Black	Applies non-bold/bright black to background
-41	Background Red	Applies non-bold/bright red to background
-42	Background Green	Applies non-bold/bright green to background
-43	Background Yellow	Applies non-bold/bright yellow to background
-44	Background Blue	Applies non-bold/bright blue to background
-45	Background Magenta	Applies non-bold/bright magenta to background
-46	Background Cyan	Applies non-bold/bright cyan to background
-47	Background White	Applies non-bold/bright white to background
 48	Background Extended	Applies extended color value to the background (see details below)
-49	Background Default	Applies only the background portion of the defaults (see 0)
 90	Bright Foreground Black	Applies bold/bright black to foreground
 91	Bright Foreground Red	Applies bold/bright red to foreground
 92	Bright Foreground Green	Applies bold/bright green to foreground

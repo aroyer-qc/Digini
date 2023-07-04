@@ -229,6 +229,8 @@ void VT100_Terminal::IF_Process(void)
                     {
                         ClearInputMenuSelection();
                     }
+
+                    InMenuPrintf(VT100_SZ_NONE, VT100_LBL_EOL_ERASE);
                 }
                 else
                 {
@@ -697,6 +699,7 @@ VT100_InputType_e VT100_Terminal::CallBack(CallbackMethod_t pCallback, VT100_Cal
     VT100_InputType_e InputType;
 
     InputType = VT100_INPUT_MENU_CHOICE;
+
 
     if(pCallback != nullptr)
     {

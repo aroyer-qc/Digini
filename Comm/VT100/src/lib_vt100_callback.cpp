@@ -200,13 +200,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
     switch(Type)
     {
         case VT100_CALLBACK_INIT:
-        case VT100_CALLBACK_FLUSH:
-        {
-            // Nothing to do
-            break;
-        }
-
-        case VT100_CALLBACK_ON_INPUT:
         {
             //VT100_DisplayMfg();
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VENDOR_NAME);
@@ -231,9 +224,9 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 
             VT100_LastSecond = 60;
             VT100_LastUpTime = 0;
-            break;
         }
-
+        break;
+        
         case VT100_CALLBACK_REFRESH:
         {
             UpTime = nOS_GetTickCount() / NOS_CONFIG_TICKS_PER_SECOND;
@@ -264,9 +257,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
                                                                          TimeDate.minute,
                                                                          TimeDate.second);
             }
-
-            break;
         }
+        break;
+
+        // case VT100_CALLBACK_ON_INPUT: Nothing to do
+        // case VT100_CALLBACK_FLUSH:    Nothing to do
+        default: break;
     }
 
     return VT100_INPUT_ESCAPE;
@@ -350,7 +346,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
 {
     static nOS_TimeDate TimeDate;
     uint32_t            Refresh;
-    uint32_t            EditedValue;        // if we come back from decimal input
+    uint32_t            EditedValue;        // if come back from decimal input
     uint8_t             InputID;            // contain the value from this input ID
 
     Refresh = VT100_CFG_NO_REFRESH;
@@ -412,7 +408,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
                 return VT100_INPUT_DECIMAL;
             }
 
-            case 7:  // Save the new configuration for the selected H-Bridge
+            case 7:
             {
                 if(myVT100.GetConfigFlag(0) != 0)
                 {
@@ -434,39 +430,20 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
     {
         myVT100.GetDecimalInputValue(&EditedValue, &InputID);
 
-        if(InputID == 1)
-        {
-            TimeDate.hour = (uint8_t)EditedValue;
-            myVT100.SetConfigFlag(0, 1);
-        }
-        else if(InputID == 2)
-        {
-            TimeDate.minute = (uint8_t)EditedValue;
-            myVT100.SetConfigFlag(0, 1);
-        }
-        else if(InputID == 3)
-        {
-            TimeDate.second = (uint8_t)EditedValue;
-            myVT100.SetConfigFlag(0, 1);
-        }
-        else if(InputID == 4)
-        {
-            TimeDate.day = (uint8_t)EditedValue;
-            myVT100.SetConfigFlag(0, 1);
-        }
-        else if(InputID == 5)
-        {
-            TimeDate.month = (uint8_t)EditedValue;
-            myVT100.SetConfigFlag(0, 1);
-        }
-        else if(InputID == 6)
-        {
-            TimeDate.year = (uint16_t)EditedValue;
-            myVT100.SetConfigFlag(0, 1);
-        }
+        if     (InputID == 1)   TimeDate.hour   = (uint8_t)EditedValue;
+        else if(InputID == 2)   TimeDate.minute = (uint8_t)EditedValue;
+        else if(InputID == 3)   TimeDate.second = (uint8_t)EditedValue;
+        else if(InputID == 4)   TimeDate.day    = (uint8_t)EditedValue;
+        else if(InputID == 5)   TimeDate.month  = (uint8_t)EditedValue;
+        else if(InputID == 6)   TimeDate.year   = (uint16_t)EditedValue;
         else if((InputID == 0) && (myVT100.GetConfigFlag(0) == 0))
         {
            //RTC_DateAndTime(&TimeDate, STATE_GET);
+        }
+        
+        if((InputID >= 1) && (InputID <= 6))
+        {
+            myVT100.SetConfigFlag(0, 1);
         }
     }
 
@@ -492,7 +469,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
         myVT100.SetCursorPosition(26, 24);
         myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_TIME, TimeDate.hour, TimeDate.minute, TimeDate.second);
         myVT100.SetCursorPosition(26, 25);
-        //myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_DATE, RTC_MonthName[TimeDate.month - 1], TimeDate.day, TimeDate.year);
+        myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_DATE, myLabel.GetPointer(Label_e((TimeDate.month - 1) + (int(LBL_FIRST_MONTH)))),
+                                                                 TimeDate.day,
+                                                                 TimeDate.year);
+
+
+
     }
 
     return VT100_INPUT_MENU_CHOICE;

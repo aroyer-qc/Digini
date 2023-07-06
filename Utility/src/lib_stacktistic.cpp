@@ -57,7 +57,7 @@ void StackCheck::Initialize(void)
     for(; StackLeft > 0; StackLeft -= 4)
     {
         Stack -= 4;
-        *((uint32_t*)Stack) = 0xFFFFFFFFUL;
+        *((uint32_t*)Stack) = DIGINI_STACKTISTIC_WATER_MARK_CODE;
     }
 
     // Assign stackID 0 to idle stack

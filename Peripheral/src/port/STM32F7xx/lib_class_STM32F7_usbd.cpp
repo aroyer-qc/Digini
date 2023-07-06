@@ -104,6 +104,11 @@ void DeviceUSB::Initialize(class USB_Application* pUSB)
                     USBD_STACK_SIZE,
                     USBD_PRIO);
 
+  #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+    myStacktistic::Register(&m_Stack[0], USBD_STACK_SIZE);
+  #endif    
+
+TASK_ETHERNET_IF_STACK_SIZE
     // todo
 
 }

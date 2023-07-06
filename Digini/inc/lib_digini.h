@@ -47,7 +47,6 @@
 // Real Time OS
 
 #include "nOS.h"
-#include "LIB_Stacktistic.h"
 
 //-------------------------------------------------------------------------------------------------
 // Common configuration header
@@ -59,6 +58,11 @@
 #include "memory_cfg.h"
 #include "label_cfg.h"
 #include "project_def.h"
+
+//-------------------------------------------------------------------------------------------------
+// Stack Check and statistic
+//
+#include "LIB_stacktistic.h"
 
 //-------------------------------------------------------------------------------------------------
 // System Clock

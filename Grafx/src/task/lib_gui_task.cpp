@@ -92,6 +92,10 @@ nOS_Error GUI_myClassTask::Initialize(void)
                                 );
     }
 
+      #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+        myStacktistic.Register(&m_Stack[0], GUI_TASK_STACK_SIZE);
+      #endif
+
   #ifdef GRAFX_USE_SLIDING_PAGE
     m_SlideRange.StartPos = -1;
     m_SlideRange.EndPos   = -1;

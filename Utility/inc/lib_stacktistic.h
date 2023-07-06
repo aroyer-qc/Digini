@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_stack_check.h
+//  File : lib_stacktistic.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -28,29 +28,21 @@
 
 //-------------------------------------------------------------------------------------------------
 
-// move this to some config file....
-#define STACKCHECK_NUMBER_OF_STACK                  4
-#define STACKCHECK_HIGH_WATER_MARK_CODE             0xFF            // This is for nOS. Depend on the value put in stack by OS. FreeRTOS it's 0xA5
-
-//-------------------------------------------------------------------------------------------------
-
 class StackCheck
 {
     public:
-    
-        void Initialize(void);
-        void RegisterStack(void* pStack, size_t STackSz);
-        void Process(void);
+
+        void        Initialize          (void);
+        int         Register            (const uint32_t* pStack, size_t STackSz);
+        size_t      GetUsage            (int StackID);
+        int32_t     GetPercent          (int StackID);
 
     private:
-    
-        void*   m_pStackTop    [STACKCHECK_NUMBER_OF_STACK];
-        void*   m_pStackBottom [STACKCHECK_NUMBER_OF_STACK];
-        void*   m_pMaxReach    [STACKCHECK_NUMBER_OF_STACK];
-        size_t  m_Size         [STACKCHECK_NUMBER_OF_STACK];
-        uint8_t m_Percent      [STACKCHECK_NUMBER_OF_STACK];
-        int     m_FreeSlot;
-}
+
+        const uint32_t*     m_pStackBottom [DIGINI_STACKTISTIC_NUMBER_OF_STACK];
+        size_t              m_Size         [DIGINI_STACKTISTIC_NUMBER_OF_STACK];
+        int                 m_FreeSlot;
+};
 
 //-------------------------------------------------------------------------------------------------
 // Global variable(s) and constant(s)
@@ -58,14 +50,12 @@ class StackCheck
 
 #ifdef STK_CHK_GLOBAL
 
-class StackCheck            myStackCheck;
+class StackCheck            myStacktistic;
 
 #else
 
-extern class StackCheck     myStackCheck;
+extern class StackCheck     myStacktistic;
 
 #endif // STK_CHK_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
-
-

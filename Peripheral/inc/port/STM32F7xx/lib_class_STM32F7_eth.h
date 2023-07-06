@@ -231,6 +231,7 @@ class ETH_Driver
         ETH_MAC_Capability_t    GetCapabilities         (void);
 
         static void             ISR_CallBack             (uint32_t Event) { if(m_MAC_Control.CallbackEvent != nullptr) m_MAC_Control.CallbackEvent(Event); }
+
     private:
 
         void                    InitializeDMA           (void);
@@ -245,8 +246,6 @@ class ETH_Driver
         static     uint32_t                    m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet Receive buffers
         static     TX_Descriptor_t             m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((/*section(".dmaINIT"),*/ aligned(4)));
         static     uint32_t                    m_TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet Transmit buffers
-
-
 };
 
 //-------------------------------------------------------------------------------------------------

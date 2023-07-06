@@ -172,6 +172,11 @@ err_t ethernetif_init(struct netif* netif)
                              TASK_ETHERNET_IF_STACK_SIZE,
                              TASK_ETHERNET_IF_PRIO);
 
+
+      #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+        myStacktistic.Register(&Stack[0], TASK_ETHERNET_IF_STACK_SIZE);
+      #endif
+
     // Enable MAC and DMA transmission and reception
     ETH_Mac.Control(ETH_MAC_CONTROL_TX, 1);
     ETH_Mac.Control(ETH_MAC_CONTROL_RX, 1);

@@ -127,6 +127,11 @@ void USB_Host::Initialize(class USB_Application* pUSB)
                     USBH_STACK_SIZE,
                     USBH_PRIO);
 
+  #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+    myStacktistic::Register(&m_Stack[0], USBH_STACK_SIZE);
+  #endif    
+
+
     // Initialize low level driver
     USB_OTG_CfgTypeDef OTG_Config;
     OTG_Config.Host_channels       = 11;

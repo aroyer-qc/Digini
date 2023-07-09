@@ -118,7 +118,7 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole)
     m_InputDecimalMode        = false;
     m_InEscapeSequence        = false;
     m_IsDisplayLock           = false;
-    m_BackFromEdition         = false;
+   // m_BackFromEdition         = false;
     m_FlushNextEntry          = false;
     m_ValidateInput           = false;
     m_ForceRefresh            = false;
@@ -132,7 +132,6 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole)
     CallbackInitialize();                       // User callback specific initialization
   #endif
     ClearConfigFLag();
-    ClearGenericString();
     return Error;
 }
 
@@ -168,11 +167,16 @@ void VT100_Terminal::IF_Process(void)
       #endif
         GoToMenu(VT100_STARTUP_MENU_ID_CFG);
     }
+
+    // Input mode: Decimal/hexadecimal and string input mode.
+    //      there is no need to execute further in those mode
     else if(m_InputDecimalMode == true)     {  InputDecimal();  }
     else if(m_InputStringMode  == true)     {  InputString();   }
-    else  // Display the menu and process callback
+
+    // Menu display mode and refreshDisplay the menu and process callback
+    else
     {
-        if(m_ForceRefresh == true)
+        if(m_ForceRefresh == true)          // This is unknown if it is necessary at least in this form
         {
             m_ForceRefresh = false;
             DisplayMenu(m_MenuID);
@@ -201,7 +205,7 @@ void VT100_Terminal::IF_Process(void)
                         if((m_FlushMenuID != VT100_MENU_NONE) &&
                            (m_FlushMenuID != m_MenuID))
                         {
-                            m_BackFromEdition = false;
+                            //m_BackFromEdition = false;
 
                             for(Items = 0; Items < m_Menu[m_FlushMenuID].Size; Items++)
                             {
@@ -210,7 +214,6 @@ void VT100_Terminal::IF_Process(void)
                             }
 
                             ClearConfigFLag();
-                            ClearGenericString();
                             GoToMenu(m_MenuID);
                         }
                     }
@@ -328,7 +331,7 @@ void VT100_Terminal::ProcessRX(void)
             {
                 if(Data == ASCII_CARRIAGE_RETURN)
                 {
-                    m_BackFromEdition  = true;
+                    //m_BackFromEdition  = true;
                     m_InputDecimalMode = false;
                     GoToMenu(m_MenuID);
                 }
@@ -363,7 +366,7 @@ void VT100_Terminal::ProcessRX(void)
             {
                 if(Data == ASCII_CARRIAGE_RETURN)
                 {
-                    m_BackFromEdition = true;
+                    //m_BackFromEdition = true;
                     m_InputStringMode = false;
                     GoToMenu(m_MenuID);
                 }
@@ -447,35 +450,17 @@ void VT100_Terminal::GoToMenu(VT100_Menu_e MenuID)
 //  Parameter(s):   None
 //  Return:         None
 //
-//  Description:    Clear the new configuration flag so the next new menu access get the fresh
-//                  'save configuration'
+//  Description:    Clear the new configuration flag
 //
-//  Note(s):
+//  Note(s):        The next new menu access will also get the fresh 'save configuration'
 //
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::ClearConfigFLag(void)
 {
     for(int i = 0; i < CONFIG_FLAG_SIZE; i++)
     {
-        m_NewConfigFlag[i] = 0;
+        m_ConfigFlag[i] = 0;
     }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           ClearGenericString
-//
-//  Parameter(s):   None
-//  Return:         None
-//
-//  Description:    Clear the generic string used in configuration menu
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void VT100_Terminal::ClearGenericString(void)
-{
-    memset(&m_GenericString, '\0', sizeof(m_GenericString));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -543,7 +528,7 @@ uint8_t VT100_Terminal::DisplayMenu(VT100_Menu_e MenuID)
             ItemsChar += (ItemsChar >= 10) ? ('a' - 10) : '0';
             InMenuPrintf(VT100_SZ_NONE, VT100_LBL_ENTER_SELECTION, ItemsChar);
 
-            // need to Calculated Actual X and Y position of cursor
+            // TODO need to Calculated Actual X and Y position of cursor
             //SetCursorPosition();
 
             return ItemsQts;
@@ -866,7 +851,7 @@ void VT100_Terminal::PrintSaveLabel(uint8_t PosX, uint8_t PosY)
 //                  int32_t      Value       Actual value.
 //                  uint8_t      Divider     Display fraction portion.
 //                  uint8_t      ID          ID of the caller.
-//                  const char*  pMsg        Message to print in the box.
+//                  Label_e      Label       ID of the label to print in the box.
 //  Return:         None
 //
 //  Description:    Prepare decimal Input value process with min/max value and an ID to tell user
@@ -875,7 +860,7 @@ void VT100_Terminal::PrintSaveLabel(uint8_t PosX, uint8_t PosY)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum, int32_t Maximum, int32_t Value, uint16_t Divider, uint8_t ID, const char* pMsg)
+void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum, int32_t Maximum, int32_t Value, uint16_t Divider, uint8_t ID, Label_e Label)
 {
     m_Minimum          = Minimum;
     m_Maximum          = Maximum;
@@ -926,7 +911,7 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
     SetForeColor(VT100_COLOR_YELLOW);
   #endif
     SetCursorPosition(PosX + 2, PosY + 3);
-    InMenuPrintf(VT100_SZ_NONE, LBL_STRING, pMsg);
+    //InMenuPrintf(VT100_SZ_NONE, LBL_STRING, pMsg);
 
     // Add 'how to' info
     SetCursorPosition(PosX + 2,  PosY + 5);
@@ -980,7 +965,7 @@ void VT100_Terminal::GetDecimalInputValue(uint32_t* pValue, uint8_t* pID)
 //                  uint8_t     PosY        Position Y for the edit box.
 //                  int32_t     Maximum     Maximum number of character in the string.
 //                  uint8_t     ID          ID of the caller.
-//                  const char* pMsg        Message to print in the box.
+//                  Label_e     Label       ID of the label to print in the box.
 //                  const char* pString     Actual string to edit.
 //  Return:         None
 //
@@ -990,7 +975,7 @@ void VT100_Terminal::GetDecimalInputValue(uint32_t* pValue, uint8_t* pID)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum, uint8_t ID, const char* pMsg, const char* pString)
+void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum, uint8_t ID, Label_e Label, const char* pString)
 {
     m_Maximum          = Maximum;
     m_PosX             = PosX;
@@ -1007,7 +992,7 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
     SetForeColor(VT100_COLOR_CYAN);
   #endif
     SetCursorPosition(PosX + 2,  PosY + 1);
-    InMenuPrintf(Maximum, LBL_STRING, pMsg);
+    //InMenuPrintf(Maximum, LBL_STRING, pMsg);
 
     // Add 'how to' info
     SetCursorPosition(PosX + 2,  PosY + 5);
@@ -1070,8 +1055,8 @@ void VT100_Terminal::GetStringInput(char* pString, uint8_t* pID)
 //  Name:           InMenuPrintf
 //
 //  Parameter(s):   int         nSize       Max size of the string to print.
-//                  const char* pFormat     Formatted string.
-//                  ...                     Parameter if any.
+//                  Label_e     Label       ID of the label to with optional formatting.
+//                  ...                     Parameter for formatting if any.
 //
 //  Return:         None
 //
@@ -1080,7 +1065,7 @@ void VT100_Terminal::GetStringInput(char* pString, uint8_t* pID)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-size_t VT100_Terminal::InMenuPrintf(int nSize, Label_e Label, ...)
+size_t VT100_Terminal::InMenuPrintf(int nSize,  Label_e Label, ...)
 {
     va_list     vaArg;
     char*       pBuffer;

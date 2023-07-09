@@ -199,8 +199,12 @@ class VT100_Terminal : public ChildProcessInterface
         // Use by user callback to request a decimal input
         void                GetDecimalInputValue        (uint32_t* pValue, uint8_t* pID);
         void                GetStringInput              (char* pString, uint8_t* pID);
-        void                SetDecimalInput             (uint8_t PosX, uint8_t PosY, int32_t Minimum, int32_t Maximum, int32_t Value, uint16_t Divider, uint8_t ID, const char* pMsg);
-        void                SetStringInput              (uint8_t PosX, uint8_t PosY, int32_t Maximum, uint8_t ID, const char* pMsg, const char* pString);
+        void                SetDecimalInput             (uint8_t PosX, uint8_t PosY, int32_t Minimum, int32_t Maximum, int32_t Value, uint16_t Divider, uint8_t ID, Label_e Label);
+        void                SetStringInput              (uint8_t PosX, uint8_t PosY, int32_t Maximum, uint8_t ID, Label_e Label, const char* pString);
+
+
+        uint32_t            GetConfigFlag               (int Flag)                      { return m_ConfigFlag[Flag];  }      // todo check range or change the method
+        void                SetConfigFlag               (int Flag, uint32_t Value)      { m_ConfigFlag[Flag] = Value; }      // todo check range or change the method
 
         void                ForceMenuRefresh            (void);
 
@@ -228,17 +232,12 @@ bool                GetString                   (char* pBuffer, size_t Size);
         void                        InputString                 (void);
         void                        InputDecimal                (void);
         void                        ClearConfigFLag             (void);
-        void                        ClearGenericString          (void);
-
         static VT100_InputType_e    CALLBACK_None               (uint8_t Input, VT100_CallBackType_e Type);
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
-
-
 
         Console*                            m_pConsole;
         bool                                m_IsItInitialized;
         bool                                m_IsItInStartup;
-        bool                                m_BackFromEdition;
         VT100_Menu_e                        m_MenuID;
         VT100_Menu_e                        m_FlushMenuID;
         uint8_t                             m_SetMenuCursorPosX;                // Set position to display the menu (after header)
@@ -274,8 +273,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         char*                               m_pString;
         bool                                m_InputStringMode;
         bool                                m_IsItString;
-        uint32_t                            m_NewConfigFlag[CONFIG_FLAG_SIZE];
-        char                                m_GenericString[VT100_STRING_QTS][VT100_ITEMS_QTS][VT100_STRING_SZ];  // TODO move this to memory pool
+        uint32_t                            m_ConfigFlag[CONFIG_FLAG_SIZE];
         static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
 
         VT100_MENU_DEF(EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER)

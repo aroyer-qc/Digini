@@ -62,6 +62,46 @@ enum Label_e
     LBL_LINEFEED,
     LBL_DOUBLE_LINEFEED,
 
+  #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
+    LBL_VENDOR_NAME,
+    LBL_MODEL_NAME,
+    LBL_FIRMWARE_NAME,
+    LBL_FIRMWARE_VERSION,
+    LBL_GUI_NAME,
+    LBL_GUI_VERSION,
+    LBL_SERIAL_NUMBER,
+    LBL_BUILT_DATE,
+  #endif
+  
+  #if (LABEL_USE_TIME_AND_DATE == DEF_ENABLED)
+    LBL_FIRST_MONTH,
+    LBL_JANUARY         = LBL_FIRST_MONTH,  
+    LBL_FEBRUARY, 
+    LBL_MARCH,    
+    LBL_APRIL,    
+    LBL_MAY,      
+    LBL_JUNE,     
+    LBL_JULY,     
+    LBL_AUGUST,   
+    LBL_SEPTEMBER,
+    LBL_OCTOBER,  
+    LBL_NOVEMBER, 
+    LBL_DECEMBER,       
+    LBL_SUNDAY,     
+    LBL_MONDAY,     
+    LBL_TUESDAY,    
+    LBL_WEDNESDAY,  
+    LBL_THURSDAY,   
+    LBL_FRIDAY,     
+    LBL_SATURDAY,
+    LBL_HOUR,
+    LBL_MINUTE,
+    LBL_SECOND,
+    LBL_YEAR,
+    LBL_MONTH,
+    LBL_DAY,
+  #endif    
+
     LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
 
     // Include VT100 label if VT100 is defined
@@ -106,8 +146,47 @@ class Label
   {
       { "%s",                           nullptr     },  // LBL_STRING
       { "%c",                           nullptr     },  // LBL_CHAR
-      { "\r",                         nullptr     },  // LBL_LINEFEED
-      { "\r\r",                     nullptr     },  // LBL_DOUBLE_LINEFEED
+      { "\r",                           nullptr     },  // LBL_LINEFEED
+      { "\r\r",                         nullptr     },  // LBL_DOUBLE_LINEFEED
+
+    #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
+      { OUR_VENDOR_NAME,                nullptr     },  // LBL_VENDOR_NAME
+      { OUR_MODEL_NAME,                 nullptr     },  // LBL_MODEL_NAME
+      { OUR_FIRMWARE_NAME,              nullptr     },  // LBL_FIRMWARE_NAME
+      { OUR_FIRMWARE_VERSION,           nullptr     },  // LBL_FIRMWARE_VERSION
+      { OUR_FIRMWARE_GUI_NAME,          nullptr     },  // LBL_GUI_NAME
+      { OUR_FIRMWARE_GUI_VERSION,       nullptr     },  // LBL_GUI_VERSION
+      { OUR_SERIAL_NUMBER,              nullptr     },  // LBL_SERIAL_NUMBER
+      { OUR_BUILD_DATE/*[]*/,           nullptr     },  // LBL_BUILT_DATE
+    #endif 
+
+    #if (LABEL_USE_TIME_AND_DATE == DEF_ENABLED)
+      { "January",                      "Janvier"   },
+      { "February",                     "Février"   },
+      { "March",                        "Mars"      },
+      { "April",                        "Avril"     },
+      { "May",                          "Mai"       },
+      { "June",                         "Juin"      },
+      { "July",                         "Juillet"   },
+      { "August",                       "Août"      },
+      { "September",                    "Septembre" },
+      { "October",                      "Octobre"   },
+      { "November",                     "Novembre"  },
+      { "December",                     "Décembre"  },
+      { "Sunday",                       "Dimanche"  },
+      { "Monday",                       "Lundi"     },
+      { "Tuesday",                      "Mardi"     },
+      { "Wednesday",                    "Mercredi"  },
+      { "Thursday",                     "Jeudi"     },
+      { "Friday",                       "Vendredi"  },
+      { "Saturday",                     "Samedi"    },
+      { "Hour",                         "Heure"     },
+      { "Minute",                       nullptr     },
+      { "Second",                       "Seconde"   },
+      { "Year",                         "Année"     },
+      { "Month",                        "Mois"      },
+      { "Day",                          "Jour"      },
+    #endif  
 
       LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
 

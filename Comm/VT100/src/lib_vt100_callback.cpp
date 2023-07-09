@@ -125,30 +125,20 @@
 // Variable(s)
 //-------------------------------------------------------------------------------------------------
 
-static CON_DebugLevel_e         VT100_LastDebugLevel;
-//static nOS_Time                 VT100_LastUpTime;
-//static uint8_t                  VT100_LastSecond;
-//static bool                     VT100_DrawOnlyOnce;
+static nOS_Time                 VT100_LastUpTime;
+static uint8_t                  VT100_LastSecond;
 
-// scratch pad variable..
-// static valid for the life of one menu iteration.. should not contain data that need to live longer.
-// Uncomment if needed
-//static bool                     m_GenericStringUpdated;
-//static bool                     VT100_Generic_uint64_t_Updated;
-//static nOS_TickCounter          VT100_GenericTimeOut1;
-//static nOS_TickCounter          VT100_GenericTimeOut2;
-//static uint64_t                 VT100_Generic_uint64;                                                 // uint64_t that can be used by any callback
+static CON_DebugLevel_e         VT100_LastDebugLevel;
 
 //-------------------------------------------------------------------------------------------------
 // Public(s) function(s)
 //-------------------------------------------------------------------------------------------------
 
-
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CALLBACK_StackUsage
+//  Name:           CALLBACK_None
 //
-//  Description:    Display page for stack usage
+//  Description:    Dummy Callback
 //
 //  Note(s):
 //
@@ -163,28 +153,30 @@ VT100_InputType_e VT100_Terminal::CALLBACK_None(uint8_t Input, VT100_CallBackTyp
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CALLBACK_MenuRedirection
+//  Name:           CALLBACK_StackUsage
 //
-//  Description:    This menu is not displayed, it only redirect a new menu
+//  Description:    Display page for stack usage
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-VT100_InputType_e VT100_Terminal::CALLBACK_MenuRedirection(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallBackType_e Type)
 {
     VAR_UNUSED(Input);
+    VAR_UNUSED(Type);
 
-    if(Type == VT100_CALLBACK_INIT)
-    {
-        if(myVT100.m_IsItInStartup == true)
-        {
-            myVT100.GoToMenu(MenuBoot_ID);
-        }
-        else
-        {
-            myVT100.GoToMenu(MenuMain_ID);
-        }
-    }
+    // At Init
+    //  Display box for all stack
+    //  Display all task name using the task..
+    //  Displa
+
+    // At refresh
+    //  Display historic graph usage of every stacks and percent on the right side
+    //  GREEN on allowed safe range, RED when over setpoint
+    // ascii 219 full block. half block is 220. underscore for 1 or 2 is 95
+
+    // At flush
+    //  Release memory if any reserved for building process
 
     return VT100_INPUT_MENU_CHOICE;
 }
@@ -200,7 +192,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MenuRedirection(uint8_t Input, VT100_
 //-------------------------------------------------------------------------------------------------
 VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT100_CallBackType_e Type)
 {
-    /*
     nOS_Time        UpTime;
     nOS_TimeDate    TimeDate;
 
@@ -209,41 +200,33 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
     switch(Type)
     {
         case VT100_CALLBACK_INIT:
-        case VT100_CALLBACK_FLUSH:
         {
-            // Nothing to do
-            break;
-        }
+            //VT100_DisplayMfg();
+            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VENDOR_NAME);
+            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_MODEL_NAME);
+            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FIRMWARE_NAME);
+            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FIRMWARE_VERSION);
+            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_NAME);
+            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_VERSION);
 
-        case VT100_CALLBACK_ON_INPUT:
-        {
-            VT100_DisplayMfg();
-            InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_PRODUCT_INFO]);
-            InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_PRODUCT_NAME],     PRODUCT_NAME);
-            InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_APP_VERSION],      SOFTWARE_REVISION);
-            InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_FW_RELEASE_DATE],  SOFTWARE_RELEASE_DATE, SOFTWARE_RELEASE_TIME);
-            InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_BOOT_VERSION],     "none");
-            InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_HARDWARE_VERSION], HW_REVISION);
+          #ifdef DEBUG
+            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_SERIAL_NUMBER);
+          #else // TODO use programmed serial number when not in debug
+            // DB_Central.Get(&m_GenericString[0][0][0], SYS_SERIAL_NUMBER);
+            // InMenuPrintf(SYS_GetSingleEntryTypeSize(SYS_SERIAL_NUMBER), &m_GenericString[0][0][0]);
+          #endif
 
-            //// SYS_Read(SYS_SERIAL_NUMBER, MAIN_ACU, 0, &m_GenericString[0][0][0], NULL);
-            InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_PRODUCT_SERIAL]);
-         // InMenuPrintf(SYS_GetSingleEntryTypeSize(SYS_SERIAL_NUMBER), &m_GenericString[0][0][0]);
+            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_BUILT_DATE);
 
-            InMenuPrintf(VT100_SZ_NONE, " REMOVE Ble");
-
-            //// SYS_Read(SYS_LOCATION, MAIN_ACU, 0, &m_GenericString[1][0][0], NULL);
-            InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_PRODUCT_LOCATION]);
-          // InMenuPrintf(SYS_GetSingleEntryTypeSize(SYS_LOCATION), &m_GenericString[1][0][0]);
-
-            InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_UPTIME]);
-            InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_GMT_TIME]);
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_ESCAPE);
+            //InMenuPrintf(VT100_SZ_NONE, LBL_UPTIME);
+            //InMenuPrintf(VT100_SZ_NONE, LBL_GMT_TIME);
+            myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_ESCAPE);
 
             VT100_LastSecond = 60;
             VT100_LastUpTime = 0;
-            break;
         }
-
+        break;
+        
         case VT100_CALLBACK_REFRESH:
         {
             UpTime = nOS_GetTickCount() / NOS_CONFIG_TICKS_PER_SECOND;
@@ -251,15 +234,14 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             if(UpTime != VT100_LastUpTime)
             {
                 VT100_LastUpTime = UpTime;
-                SetCursorPosition(26, 14);
-                InMenuPrintf(VT100_SZ_NONE, "%lu:",  (uint32_t)(UpTime / TIME_SECONDS_PER_DAY));
+                myVT100.SetCursorPosition(26, 14);
+                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LONG_UNSIGNED_SEMICOLON,    (uint32_t)(UpTime / TIME_SECONDS_PER_DAY));
                 UpTime %= TIME_SECONDS_PER_DAY;
-                InMenuPrintf(VT100_SZ_NONE, "%02u:", (uint16_t)(UpTime / TIME_SECONDS_PER_HOUR));
+                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_HOUR));
                 UpTime %= TIME_SECONDS_PER_HOUR;
-                InMenuPrintf(VT100_SZ_NONE, "%02u:", (uint16_t)(UpTime / TIME_SECONDS_PER_MINUTE));
+                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_MINUTE));
                 UpTime %= TIME_SECONDS_PER_MINUTE;
-                InMenuPrintf(VT100_SZ_NONE, "%02u",  (uint16_t)UpTime);
-                //BLE112_getMAC();
+                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)UpTime);
             }
 
            // RTC_DateAndTime(&TimeDate, STATE_GET);
@@ -267,19 +249,22 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             if(TimeDate.second != VT100_LastSecond)
             {
                 VT100_LastSecond = TimeDate.second;
-                SetCursorPosition(26, 15);
-                InMenuPrintf(VT100_SZ_NONE, "%s %u, %u,   %u:%02u:%02u ", RTC_MonthName[TimeDate.month - 1],
-                                                                          TimeDate.day,
-                                                                          TimeDate.year,
-                                                                          TimeDate.hour,
-                                                                          TimeDate.minute,
-                                                                          TimeDate.second);
+                myVT100.SetCursorPosition(26, 15);
+                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((TimeDate.month - 1) + (int(LBL_FIRST_MONTH)))),
+                                                                         TimeDate.day,
+                                                                         TimeDate.year,
+                                                                         TimeDate.hour,
+                                                                         TimeDate.minute,
+                                                                         TimeDate.second);
             }
-
-            break;
         }
+        break;
+
+        // case VT100_CALLBACK_ON_INPUT: Nothing to do
+        // case VT100_CALLBACK_FLUSH:    Nothing to do
+        default: break;
     }
-*/
+
     return VT100_INPUT_ESCAPE;
 }
 
@@ -298,12 +283,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
 
     if(Type != VT100_CALLBACK_FLUSH)
     {
-        // We update VT100_DebugLevel only on item 1 if it is VT100_CALLBACK_INIT type
+        // Update VT100_DebugLevel only on item 1 if it is VT100_CALLBACK_INIT type
         if(((Type == VT100_CALLBACK_INIT) && (Input == 1)) ||
-           // all the time if it is a VT100_CALLBACK_REFRESH
+           // All the time if it is a VT100_CALLBACK_REFRESH
            (Type == VT100_CALLBACK_REFRESH))
         {
-            //SYS_Read(SYS_DEBUG_LEVEL, MAIN_ACU, 0, &DebugLevel, NULL);
+            DB_Central.Get(&DebugLevel, SYS_DEBUG_LEVEL, 0, 0);
             VT100_LastDebugLevel = DebugLevel;
         }
 
@@ -341,7 +326,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
     {
         if(VT100_LastDebugLevel != DebugLevel)
         {
-            // SYS_Write(SYS_DEBUG_LEVEL, MAIN_ACU, 0, &DebugLevel, 0, SYS_NO_UUID_CALL);
+            DB_Central.Set(&DebugLevel, SYS_DEBUG_LEVEL);           // Write a Record in backup RAM
         }
     }
 
@@ -359,27 +344,26 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
 //-------------------------------------------------------------------------------------------------
 VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_CallBackType_e Type)
 {
-    /*
     static nOS_TimeDate TimeDate;
     uint32_t            Refresh;
-    uint32_t            EditedValue;        // if we come back from decimal input
+    uint32_t            EditedValue;        // if come back from decimal input
     uint8_t             InputID;            // contain the value from this input ID
 
     Refresh = VT100_CFG_NO_REFRESH;
 
-    if((Type == VT100_CALLBACK_INIT) && (Input == DOOR_CTRL_MENU_TITLE)) // Menu Redraw
+    if(Type == VT100_CALLBACK_INIT)         // Menu Redraw
     {
         /// Print the box
-        DrawBox(8, 23, 47, 4, VT100_COLOR_GREEN);
+        myVT100.DrawBox(8, 23, 47, 4, VT100_COLOR_GREEN);
 
         /// Print the static info in the box
       #if (VT100_USE_COLOR == DEF_ENABLED)
-        SetForeColor(VT100_COLOR_YELLOW);
+        myVT100.SetForeColor(VT100_COLOR_YELLOW);
       #endif
-        SetCursorPosition(13, 24);
-        InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_TIME]);
-        SetCursorPosition(13, 25);
-        InMenuPrintf(VT100_SZ_NONE, LABEL_pStr[LBL_DATE]);
+        myVT100.SetCursorPosition(13, 24);
+        myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_TIME);
+        myVT100.SetCursorPosition(13, 25);
+        myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_DATE);
         Refresh   = VT100_CFG_REFRESH_ALL;
     }
 
@@ -389,47 +373,47 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
         {
             case 1: // Input Hour
             {
-                SetDecimalInput(32, 12, 0, 23, TimeDate.hour, 1, Input, "Hour");
+                myVT100.SetDecimalInput(32, 12, 0, 23, TimeDate.hour, 1, Input, LBL_HOUR);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 2: // Edit Minute
             {
-                SetDecimalInput(32, 12, 0, 59, TimeDate.minute, 1, Input, "Minute");
+                myVT100.SetDecimalInput(32, 12, 0, 59, TimeDate.minute, 1, Input, LBL_MINUTE);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 3: // Edit Second
             {
-                SetDecimalInput(32, 12, 0, 59, TimeDate.second, 1, Input, "Second");
+                myVT100.SetDecimalInput(32, 12, 0, 59, TimeDate.second, 1, Input, LBL_SECOND);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 4: // Edit Day
             {
                 // TODO used Digini time date method
-                SetDecimalInput(32, 12, 1, nOS_TimeGetDaysPerMonth(TimeDate.month, TimeDate.year), TimeDate.day, 1, Input, "Day");
+                myVT100.SetDecimalInput(32, 12, 1, nOS_TimeGetDaysPerMonth(TimeDate.month, TimeDate.year), TimeDate.day, 1, Input, LBL_DAY);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 5: // Edit Month
             {
-                SetDecimalInput(32, 12, 1, 12, TimeDate.month, 1, Input, "Month");
+                myVT100.SetDecimalInput(32, 12, 1, 12, TimeDate.month, 1, Input, LBL_MONTH);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 6: // Edit Year
             {
-                SetDecimalInput(32, 12, 2000, 2255, TimeDate.year, 1, Input, "Year");
+                myVT100.SetDecimalInput(32, 12, 2000, 2255, TimeDate.year, 1, Input, LBL_YEAR);
                 return VT100_INPUT_DECIMAL;
             }
 
-            case 7:  // Save the new configuration for the selected H-Bridge
+            case 7:
             {
-                if(m_NewConfigFlag[0] != 0)
+                if(myVT100.GetConfigFlag(0) != 0)
                 {
-                    m_NewConfigFlag[0] = 0;
-                    RTC_DateAndTime(&TimeDate, STATE_SET);
+                    myVT100.SetConfigFlag(0, 0);
+                   // RTC_DateAndTime(&TimeDate, STATE_SET);
                 }
 
                 Refresh = VT100_CFG_REFRESH_INFO;
@@ -444,41 +428,22 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
 
     if(Type == VT100_CALLBACK_INIT)
     {
-        GetDecimalInputValue(&EditedValue, &InputID);
+        myVT100.GetDecimalInputValue(&EditedValue, &InputID);
 
-        if(InputID == 1)
+        if     (InputID == 1)   TimeDate.hour   = (uint8_t)EditedValue;
+        else if(InputID == 2)   TimeDate.minute = (uint8_t)EditedValue;
+        else if(InputID == 3)   TimeDate.second = (uint8_t)EditedValue;
+        else if(InputID == 4)   TimeDate.day    = (uint8_t)EditedValue;
+        else if(InputID == 5)   TimeDate.month  = (uint8_t)EditedValue;
+        else if(InputID == 6)   TimeDate.year   = (uint16_t)EditedValue;
+        else if((InputID == 0) && (myVT100.GetConfigFlag(0) == 0))
         {
-            TimeDate.hour      = (uint8_t)EditedValue;
-            m_NewConfigFlag[0] = 1;
+           //RTC_DateAndTime(&TimeDate, STATE_GET);
         }
-        else if(InputID == 2)
+        
+        if((InputID >= 1) && (InputID <= 6))
         {
-            TimeDate.minute    = (uint8_t)EditedValue;
-            m_NewConfigFlag[0] = 1;
-        }
-        else if(InputID == 3)
-        {
-            TimeDate.second    = (uint8_t)EditedValue;
-            m_NewConfigFlag[0] = 1;
-        }
-        else if(InputID == 4)
-        {
-            TimeDate.day       = (uint8_t)EditedValue;
-            m_NewConfigFlag[0] = 1;
-        }
-        else if(InputID == 5)
-        {
-            TimeDate.month     = (uint8_t)EditedValue;
-            m_NewConfigFlag[0] = 1;
-        }
-        else if(InputID == 6)
-        {
-            TimeDate.year      = (uint16_t)EditedValue;
-            m_NewConfigFlag[0] = 1;
-        }
-        else if((InputID == 0) && (Input == DOOR_CTRL_MENU_TITLE) &&(m_NewConfigFlag[0] == 0))
-        {
-            RTC_DateAndTime(&TimeDate, STATE_GET);
+            myVT100.SetConfigFlag(0, 1);
         }
     }
 
@@ -490,37 +455,28 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
         // Refresh label on the menu for what is available
 
       #if (VT100_USE_COLOR == DEF_ENABLED)
-        PrintSaveLabel(9, 16, (m_NewConfigFlag[0] == 1) ? VT100_COLOR_YELLOW : VT100_COLOR_BLUE);
+        myVT100.PrintSaveLabel(9, 16, (myVT100.GetConfigFlag(0) == 1) ? VT100_COLOR_YELLOW : VT100_COLOR_BLUE);
       #else
-        PrintSaveLabel(9, 16);
+        myVT100.PrintSaveLabel(9, 16);
       #endif
 
         // ********************************************
         // Refresh information display on configuration
 
       #if (VT100_USE_COLOR == DEF_ENABLED)
-        SetForeColor(VT100_COLOR_CYAN);
+        myVT100.SetForeColor(VT100_COLOR_CYAN);
       #endif
-        SetCursorPosition(26, 24);
-        InMenuPrintf(VT100_SZ_NONE, "%u:%02u:%02u ", TimeDate.hour, TimeDate.minute, TimeDate.second);
-        SetCursorPosition(26, 25);
-        InMenuPrintf(VT100_SZ_NONE, "%s %u, %u ", RTC_MonthName[TimeDate.month - 1], TimeDate.day, TimeDate.year);
-     }
-*/
-    return VT100_INPUT_MENU_CHOICE;
-}
+        myVT100.SetCursorPosition(26, 24);
+        myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_TIME, TimeDate.hour, TimeDate.minute, TimeDate.second);
+        myVT100.SetCursorPosition(26, 25);
+        myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_DATE, myLabel.GetPointer(Label_e((TimeDate.month - 1) + (int(LBL_FIRST_MONTH)))),
+                                                                 TimeDate.day,
+                                                                 TimeDate.year);
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CALLBACK_StackUsage
-//
-//  Description:    Display page for stack usage
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallBackType_e Type)
-{
+
+
+    }
+
     return VT100_INPUT_MENU_CHOICE;
 }
 

@@ -27,24 +27,35 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
+
+class StackCheck
+{
+    public:
+
+        void        Initialize          (void);
+        int         Register            (const uint32_t* pStack, size_t STackSz);
+        size_t      GetUsage            (int StackID);
+        int32_t     GetPercent          (int StackID);
+
+    private:
+
+        const uint32_t*     m_pStackBottom [DIGINI_STACKTISTIC_NUMBER_OF_STACK];
+        size_t              m_Size         [DIGINI_STACKTISTIC_NUMBER_OF_STACK];
+        int                 m_FreeSlot;
+};
+
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "nOS.h"
+#ifdef STK_CHK_GLOBAL
 
+class StackCheck            myStacktistic;
 
-extern const uint32_t _estack;
-extern const uint32_t _Min_Stack_Size;
+#else
 
-//-------------------------------------------------------------------------------------------------
-// Prototype(s)
-//-------------------------------------------------------------------------------------------------
+extern class StackCheck     myStacktistic;
 
-size_t          STACK_GetUsage       (const uint32_t* pStack, size_t Size);
-int32_t         STACK_GetPercent     (const uint32_t* pStack, size_t Size);
-
-void            STACK_FillIdle       (void);
-inline size_t   STACK_GetUsageIdle   (void) { return STACK_GetUsage  (&_estack, size_t(&_Min_Stack_Size)); }
-inline int32_t  STACK_GetPercentIdle (void) { return STACK_GetPercent(&_estack, size_t(&_Min_Stack_Size)); }
+#endif // STK_CHK_GLOBAL
 
 //-------------------------------------------------------------------------------------------------

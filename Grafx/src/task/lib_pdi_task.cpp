@@ -108,6 +108,10 @@ SystemState_e PDI_myClassTask::Initialize(PointingDeviceInterface* pDriver, uint
             m_Orientation = Orientation;
             State         = SYS_READY;
         }
+
+      #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+        myStacktistic.Register(&m_Stack[0], PDI_TASK_STACK_SIZE);
+      #endif
     }
 
     return State;

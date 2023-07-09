@@ -532,6 +532,12 @@ sys_thread_t sys_thread_new(const char* pName, void(*Thread)(void* Parameters), 
                 pMemoryPool->Free((void**)&pBuffer);
                 pMemoryPool->Free((void**)&pThread);
             }
+          #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+            else
+            {
+               myStacktistic.Register(pBuffer, StackSize);
+            }
+          #endif
         }
         else
         {

@@ -157,7 +157,6 @@ void VT100_Terminal::IF_Process(void)
 
     ProcessRX();
 
-    // Send the reset terminal string
     if(m_IsItInitialized == false)
     {
         m_IsItInitialized = true;
@@ -186,6 +185,7 @@ void VT100_Terminal::IF_Process(void)
         {
             m_ValidateInput = false;
 
+#if 0
             if(m_InputType == VT100_INPUT_MENU_CHOICE)
             {
                 // Validate the range for the menu
@@ -236,12 +236,15 @@ void VT100_Terminal::IF_Process(void)
             }
 
             m_InputCount = 0;
+    #endif
         }
         else
         {
             // Still in a callback mode
             if(m_MenuID != VT100_MENU_NONE)
             {
+
+// TODO found why this is causing strange behavior on the character displayed as selection
                 CallBack(pMenu->pCallback, VT100_CALLBACK_REFRESH, 0);
             }
         }

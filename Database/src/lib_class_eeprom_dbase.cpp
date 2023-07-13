@@ -45,27 +45,27 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: EEPROM_DataBase
+//   Class: E2_DataBase
 //
 //
-//   Description:   Class EEPROM_DataBase
+//   Description:   Class E2_DataBase
 //
 //-------------------------------------------------------------------------------------------------
 
 // Create Quantity list for each record item
-const uint16_t EEPROM_DataBase::m_ItemsQTY[NB_EEPROM_DBASE_ITEMS_CONST] =                       // Array[THIS][]
+const uint16_t E2_DataBase::m_ItemsQTY[NB_EEPROM_DBASE_ITEMS_CONST] =                       // Array[THIS][]
 {
     EEPROM_DBASE_DEF(EXPAND_X_EEPROM_DBASE_AS_ITEMS_QTY)
 };
 
 // Create SUB Quantity list for each record item
-const uint16_t EEPROM_DataBase::m_ItemsSubQTY[NB_EEPROM_DBASE_ITEMS_CONST] =                    // Array[][THIS]
+const uint16_t E2_DataBase::m_ItemsSubQTY[NB_EEPROM_DBASE_ITEMS_CONST] =                    // Array[][THIS]
 {
     EEPROM_DBASE_DEF(EXPAND_X_EEPROM_DBASE_AS_ITEMS_SUB_QTY)
 };
 
 // Create size list for each record item
-const size_t EEPROM_DataBase::m_ItemSize[NB_EEPROM_DBASE_ITEMS_CONST] =                         // sizeof()
+const size_t E2_DataBase::m_ItemSize[NB_EEPROM_DBASE_ITEMS_CONST] =                         // sizeof()
 {
     EEPROM_DBASE_DEF(EXPAND_X_EEPROM_DBASE_AS_ITEM_SIZE)
 };
@@ -81,7 +81,7 @@ const size_t EEPROM_DataBase::m_ItemSize[NB_EEPROM_DBASE_ITEMS_CONST] =         
 //   Description:
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e EEPROM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
+SystemState_e E2_DataBase::Initialize(void* pConfig, size_t ObjectSize)
 {
     uint16_t    i;
     size_t      RecordTotalSize;
@@ -89,8 +89,8 @@ SystemState_e EEPROM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
     if(ObjectSize > sizeof(size_t)) return SYS_WRONG_SIZE;
     if(ObjectSize < sizeof(size_t)) return SYS_WRONG_SIZE;
 
-    m_pE2             = ((EEpromDBaseInfo_t*)pConfig)->pE2;
-    m_ItemsAddress[0] = ((EEpromDBaseInfo_t*)pConfig)->Address;
+    m_pE2             = ((E2DBaseInfo_t*)pConfig)->pE2;
+    m_ItemsAddress[0] = ((E2DBaseInfo_t*)pConfig)->Address;
 
     for(i = 0; i < NB_EEPROM_DBASE_ITEMS_CONST; i++)
     {
@@ -116,7 +116,7 @@ SystemState_e EEPROM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
 //   Description:   Get the record for EEPROM type database
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e EEPROM_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e E2_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e    State;
     uint32_t        Address;
@@ -147,7 +147,7 @@ SystemState_e EEPROM_DataBase::Get(void* pData, uint16_t Record, uint16_t Number
 //   Description:   Set the record for EEPROM type database
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e EEPROM_DataBase::Set(const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e E2_DataBase::Set(const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e    State;
     uint32_t        Address;
@@ -175,7 +175,7 @@ SystemState_e EEPROM_DataBase::Set(const void* pData, uint16_t Record, uint16_t 
 //   Description:   Return min or the maximum for the range of index
 //
 //-------------------------------------------------------------------------------------------------
-uint16_t EEPROM_DataBase::GetDriverIndex(Range_e Range)
+uint16_t E2_DataBase::GetDriverIndex(Range_e Range)
 {
     if(Range == RANGE_MIN) return  START_EEPROM_DBASE + 1;
     return END_EEPROM_DBASE - 1;
@@ -195,7 +195,7 @@ uint16_t EEPROM_DataBase::GetDriverIndex(Range_e Range)
 //   Description:   Return the size of record
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e EEPROM_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e E2_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     SystemState_e    State;
 
@@ -223,7 +223,7 @@ SystemState_e EEPROM_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_
 //   Description:   Return the memory address from item information
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e EEPROM_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e E2_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     *pPointer = nullptr;
     return SYS_READY;
@@ -242,7 +242,7 @@ SystemState_e EEPROM_DataBase::GetPointer(void** pPointer, uint16_t Record, uint
 //   Description:   Check the range provided if it is not out of bound
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e EEPROM_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e E2_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     if(Number < m_ItemsQTY[Record])
     {
@@ -268,7 +268,7 @@ SystemState_e EEPROM_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint
 //   Description:   return the memory address from item information
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t EEPROM_DataBase::GetAddress(uint16_t Record, uint16_t Number, uint16_t SubNumber)
+uint32_t E2_DataBase::GetAddress(uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
     uint32_t Offset;
 

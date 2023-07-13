@@ -48,17 +48,17 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-enum EEPROM_DBaseItemList_e
+enum E2_DBaseItemList_e
 {
     START_EEPROM_DBASE = DBASE_INDEX_EEPROM_RANGE - 1,
     EEPROM_DBASE_DEF(EXPAND_X_EEPROM_DBASE_AS_ENUM)
     END_EEPROM_DBASE
 };
 
-struct EEpromDBaseInfo_t
+struct E2DBaseInfo_t
 {
-    class EEPROM_Driver*  pE2;
-    uint32_t              Address;
+    class E2_Driver*  pE2;
+    uint32_t          Address;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -67,7 +67,7 @@ struct EEpromDBaseInfo_t
 
 //-------------------------------------------------------------------------------------------------
 
-class EEPROM_DataBase : public CDataBaseInterface
+class E2_DataBase : public CDataBaseInterface
 {
     public:
 
@@ -84,7 +84,7 @@ class EEPROM_DataBase : public CDataBaseInterface
         SystemState_e   CheckRange          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
         uint32_t        GetAddress          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
 
-        EEpromDBaseInfo_t       m_Eeprom;
+        E2DBaseInfo_t           m_Eeprom;
         uint32_t                m_ItemsAddress  [NB_EEPROM_DBASE_ITEMS_CONST + 1];             // need one more for boundary top limit
         static const uint16_t   m_ItemsQTY      [NB_EEPROM_DBASE_ITEMS_CONST];
         static const uint16_t   m_ItemsSubQTY   [NB_EEPROM_DBASE_ITEMS_CONST];

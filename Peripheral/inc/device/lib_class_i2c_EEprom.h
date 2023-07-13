@@ -31,33 +31,68 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "lib_digini.h"
+#include "eeprom_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_EEPROM == DEF_ENABLED)
 #if (USE_I2C_DRIVER == DEF_ENABLED)
 
+#define E2_DEF(X_E2)  \
+/*                                       ID of E2               E2 Size     Number of page */    \
+    IF_USE( DIGINI_USE_E2_M24LC32A, X_E2(E2_M24LC32A_ID,        4096,       32               ) ) \
+    IF_USE( DIGINI_USE_E2_2464,     X_E2(E2_2464_ID,            8192,       32               ) ) \
+    IF_USE( DIGINI_USE_E2_24128,    X_E2(E2_24128_ID,           16384,      64               ) ) \
+    IF_USE( DIGINI_USE_E2_24256,    X_E2(E2_24256_ID,           32768,      64               ) ) \
+    IF_USE( DIGINI_USE_E2_24512,    X_E2(E2_24512_ID,           65535,      128              ) ) \
+    IF_USE( DIGINI_USE_E2_M24M01,   X_E2(E2_M24M01_ID,          131072,     256              ) ) \
+
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EEPROM_SIZE_LIMIT_64K                               0xFFFF
+
+#define EXPAND_X_E2_CFG_AS_ENUM(ENUM_ID, SIZE, NB_OF_PAGE)  ENUM_ID,
+#define EXPAND_X_E2_CFG_AS_DATA(ENUM_ID, SIZE, NB_OF_PAGE)  {SIZE, NB_OF_PAGE, (SIZE / NB_OF_PAGE), ((SIZE / NB_OF_PAGE) - 1), ((SIZE > EEPROM_SIZE_LIMIT_64K) ? 3 : 2)},
+
 //-------------------------------------------------------------------------------------------------
 // typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-struct EEPROM_Info_t
+enum E2_Device_e
 {
-    I2C_Driver* pI2C;
-    uint32_t    DeviceSize;
-    uint32_t    DeviceNbOfPage;
-    uint8_t     DeviceAddress;
+    E2_DEF(EXPAND_X_E2_CFG_AS_ENUM)
+
+    NUMBER_OF_DEVICE,
+};
+
+
+struct E2_DeviceInfo_t
+{
+    uint32_t    Size;
+    uint32_t    NbOfPage;
+    uint32_t    PageSize;
+    uint32_t    PageMask;
+    uint8_t     AddressingSize;
+};
+
+struct E2_Info_t
+{
+    E2_Device_e      E2_ID;
+    I2C_Driver*      pI2C;
+    uint8_t          DeviceAddress;
 };
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class EEPROM_Driver
+class E2_Driver
 {
     public:
 
-                                    EEPROM_Driver           (const EEPROM_Info_t* pInfo);
+                                    E2_Driver               (const E2_Info_t* pInfo);
 
         SystemState_e               Read                    (uint32_t Address, void* pDest,      size_t Size);
         SystemState_e               Write                   (uint32_t Address, const void* pSrc, size_t Size);
@@ -65,10 +100,9 @@ class EEPROM_Driver
 
     private:
 
-        const EEPROM_Info_t*        m_pInfo;
-        uint32_t                    m_PageMask;
-        uint32_t                    m_PageSize;
-        uint8_t                     m_DeviceAddressingSize;
+        const E2_Info_t*                m_pInfo;
+        E2_DeviceInfo_t*                m_pDevice;
+        static const E2_DeviceInfo_t    m_DeviceInfo[NUMBER_OF_DEVICE];
 };
 
 //-------------------------------------------------------------------------------------------------

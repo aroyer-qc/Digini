@@ -37,7 +37,7 @@
 #define Toggle(A)                           (A = (uint8_t)(1 - A))
 #define CheckOption(A,B)                    (((B) & (A)) > 0)
 #define sizearray(A)                        (sizeof(A) / sizeof(A[0]))
-#define ABS(X)                              ((X) > 0 ? (X) : -(X))
+#define ABS(X)                              ((X) >= 0 ? (X) : -(X))
 
 #define swap8(A)                            ((A << 4) | (A >> 4))
 #define swap16(A)                           ((A << 8) | (A >> 8))

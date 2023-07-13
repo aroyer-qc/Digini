@@ -170,7 +170,7 @@ struct VT100_MenuObject_t
 VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
 
 //-------------------------------------------------------------------------------------------------
-// Function(s) Prototype(s)
+// class
 //-------------------------------------------------------------------------------------------------
 
 class VT100_Terminal : public ChildProcessInterface

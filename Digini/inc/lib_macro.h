@@ -32,8 +32,8 @@
 
 #define VAR_UNUSED(v)                       ((void)(v))
 
-#define AbsMin(V,T)                         ((V < T) ? T : V)
-#define AbsMax(V,T)                         ((V > T) ? T : V)
+#define AbsMin(V,T)                         (((V) < (T)) ? (T) : (V))
+#define AbsMax(V,T)                         (((V) > (T)) ? (T) : (V))
 #define Toggle(A)                           (A = (uint8_t)(1 - A))
 #define CheckOption(A,B)                    (((B) & (A)) > 0)
 #define sizearray(A)                        (sizeof(A) / sizeof(A[0]))
@@ -64,7 +64,7 @@
 #define CVT_HOUR_TO_SECOND(H)               ((H) * 3600)
 
 #ifndef   PACKED_STRUCT
-  #define PACKED_STRUCT                        struct __attribute__((packed, aligned(1)))
+  #define PACKED_STRUCT                     struct __attribute__((packed, aligned(1)))
 #endif
 
 #ifndef UNALIGNED_UINT16_WRITE

@@ -50,10 +50,9 @@ enum ROM_DBaseItemList_e
 {
     START_ROM_DBASE = DBASE_INDEX_ROM_RANGE - 1,
     ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ENUM)
-    END_ROM_DBASE
+    END_ROM_DBASE,
+    NB_ROM_DBASE_ITEMS_CONST = ((END_ROM_DBASE - START_ROM_DBASE) - 1)
 };
-
-#define NB_ROM_DBASE_ITEMS_CONST        ((END_ROM_DBASE - START_ROM_DBASE) - 1)
 
 //-------------------------------------------------------------------------------------------------
 
@@ -64,8 +63,9 @@ class ROM_DataBase : public CDataBaseInterface
         SystemState_e   Get                 (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
         SystemState_e   Set                 (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
         uint16_t        GetDriverIndex      (Range_e Range);
-        SystemState_e   GetSize             (uint32_t* pSize,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        SystemState_e   GetPointer          (void** pAddress,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        SystemState_e   GetSize             (size_t* pSize,      uint16_t Record);
+        SystemState_e   GetInfo             (DBaseInfo_t* pInfo, uint16_t Record);
+        SystemState_e   GetPointer          (void** pAddress, uint16_t Record, uint16_t Number, uint16_t SubNumber);
         SystemState_e   SetDB_Address       (void** pAddress) {return SYS_UNSUPPORTED_FEATURE;};
 
     private:

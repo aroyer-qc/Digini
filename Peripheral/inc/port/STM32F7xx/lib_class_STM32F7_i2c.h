@@ -164,12 +164,11 @@ typedef struct
 
 } I2C_InitTypeDef;
 
-
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class I2C_Driver
+class I2C_Driver //: public DriverInterface
 {
     public:
 
@@ -190,8 +189,8 @@ class I2C_Driver
         // Support memory IT and DMA
         SystemState_e   Write               (const void* pBuffer, size_t Size, uint8_t Device);
         SystemState_e   Write               (const void* pBuffer, size_t Size);
-        SystemState_e   Read                (const void* pBuffer, size_t Size);
-        SystemState_e   Read                (const void* pBuffer, size_t Size, uint8_t Device);
+        SystemState_e   Read                (void* pBuffer, size_t Size);
+        SystemState_e   Read                (void* pBuffer, size_t Size, uint8_t Device);
         SystemState_e   ReadRegister        (uint8_t Register, uint8_t* pValue, uint8_t Device);
         SystemState_e   ReadRegister        (uint8_t Register, uint8_t* pValue);
         SystemState_e   WriteRegister       (uint8_t Register, uint8_t Value, uint8_t Device);

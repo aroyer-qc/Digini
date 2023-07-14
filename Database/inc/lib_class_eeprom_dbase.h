@@ -37,12 +37,13 @@
 
 #include "label_cfg.h"
 #include "lib_class_database.h"
+#include "lib_class_memory_driver_interface.h"
 
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_EEPROM_DBASE_AS_ENUM(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ENUM_ID,
+#define EXPAND_X_EEPROM_DBASE_AS_ENUM(ENUM_ID, DRIVER, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ENUM_ID,
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -52,18 +53,9 @@ enum E2_DBaseItemList_e
 {
     START_EEPROM_DBASE = DBASE_INDEX_EEPROM_RANGE - 1,
     EEPROM_DBASE_DEF(EXPAND_X_EEPROM_DBASE_AS_ENUM)
-    END_EEPROM_DBASE
+    END_EEPROM_DBASE,
+    NB_EEPROM_DBASE_ITEMS_CONST = ((END_EEPROM_DBASE - START_EEPROM_DBASE) - 1)
 };
-
-struct E2DBaseInfo_t
-{
-    class E2_Driver*  pE2;
-    uint32_t          Address;
-};
-
-//-------------------------------------------------------------------------------------------------
-
-#define NB_EEPROM_DBASE_ITEMS_CONST        ((END_EEPROM_DBASE - START_EEPROM_DBASE) - 1)
 
 //-------------------------------------------------------------------------------------------------
 
@@ -71,24 +63,26 @@ class E2_DataBase : public CDataBaseInterface
 {
     public:
 
-        SystemState_e   Initialize          (void* pConfig, size_t ObjectSize);
-        SystemState_e   Get                 (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        SystemState_e   Set                 (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        uint16_t        GetDriverIndex      (Range_e Range);
-        SystemState_e   GetSize             (uint32_t* pSize,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        SystemState_e   GetPointer          (void** pAddress,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        SystemState_e   SetDB_Address       (void** pAddress) {return SYS_UNSUPPORTED_FEATURE;};
+        SystemState_e                       Initialize          (void* pConfig, size_t ObjectSize);
+        SystemState_e                       Get                 (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        SystemState_e                       Set                 (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        uint16_t                            GetDriverIndex      (Range_e Range);
+        SystemState_e                       GetSize             (size_t* pSize,      uint16_t Record);
+        SystemState_e                       GetInfo             (DBaseInfo_t* pInfo, uint16_t Record);
+        SystemState_e                       GetPointer          (void** pAddress, uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        SystemState_e                       SetDB_Address       (void** pAddress) {return SYS_UNSUPPORTED_FEATURE;}
 
     private:
 
-        SystemState_e   CheckRange          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        uint32_t        GetAddress          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        SystemState_e                       CheckRange          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        uint32_t                            GetAddress          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        MemoryDriverInterface*              GetDriver           (uint16_t Record) { return m_Driver[Record];}
 
-        E2DBaseInfo_t           m_Eeprom;
-        uint32_t                m_ItemsAddress  [NB_EEPROM_DBASE_ITEMS_CONST + 1];             // need one more for boundary top limit
-        static const uint16_t   m_ItemsQTY      [NB_EEPROM_DBASE_ITEMS_CONST];
-        static const uint16_t   m_ItemsSubQTY   [NB_EEPROM_DBASE_ITEMS_CONST];
-        static const size_t     m_ItemSize      [NB_EEPROM_DBASE_ITEMS_CONST];
+        uint32_t                            m_ItemsAddress  [NB_EEPROM_DBASE_ITEMS_CONST + 1];             // need one more for boundary top limit
+        static MemoryDriverInterface*       m_Driver        [NB_EEPROM_DBASE_ITEMS_CONST];
+        static const uint16_t               m_ItemsQTY      [NB_EEPROM_DBASE_ITEMS_CONST];
+        static const uint16_t               m_ItemsSubQTY   [NB_EEPROM_DBASE_ITEMS_CONST];
+        static const size_t                 m_ItemSize      [NB_EEPROM_DBASE_ITEMS_CONST];
 
 };
 

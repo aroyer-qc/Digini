@@ -158,7 +158,7 @@ SystemState_e CDataBase::RegisterDriver(CDataBaseInterface* DataBaseInterface)
 //                  uint16_t        Record
 //                  uint16_t        Number
 //                  uint16_t        SubNumber
-//   Return:        SystemState_e    State
+//   Return:        SystemState_e   State
 //
 //   Description:   Get the database items
 //
@@ -187,6 +187,54 @@ SystemState_e CDataBase::Get(void* pData, uint16_t Record, uint16_t Number, uint
     return SYS_NO_DRIVER;
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetAll
+//
+//   Parameter(s):  void*           pData
+//                  uint16_t        Record
+//   Return:        SystemState_e   State
+//
+//   Description:   Get the full database record
+//
+//   Notes:         SYS_NO_DRIVER = No driver found for the record number, so it is a range check
+//                                  at the same time.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e CDataBase::GetAll(void* pData, uint16_t Record)
+{
+    CDataBaseInterface* pDriver;
+    DBaseInfo_t         Info;
+    size_t              fullSize;
+    uint8_t*            pPointer = (uint8_t*)pData;
+
+   #ifdef DBASE_DEF
+    // Translate for System database (RAM + ROM)
+    if(Record < END_DBASE_INDEX)
+    {
+        Record = m_RamRecord[Record];
+    }
+   #endif
+
+    pDriver = GetDriver(Record);
+    if(pDriver != nullptr)
+    {
+        pDriver->GetInfo(&Info, Record);
+
+        for(uint16_t Items = 0; Items < Info.ItemsQTY; Items++)
+        {
+            for(uint16_t SubItems = 0; SubItems < Info.SubItemsQTY; SubItems++)
+            {
+                pDriver->Get(pPointer, Record, Items, SubItems);
+                pPointer += Info.Size;
+            }
+        }
+
+        return SYS_READY;
+    }
+
+    return SYS_NO_DRIVER;
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -196,7 +244,7 @@ SystemState_e CDataBase::Get(void* pData, uint16_t Record, uint16_t Number, uint
 //                  uint16_t        Record
 //                  uint16_t        Number
 //                  uint16_t        SubNumber
-//   Return:        SystemState_e    State
+//   Return:        SystemState_e   State
 //
 //   Description:   Set the database items
 //
@@ -226,6 +274,55 @@ SystemState_e CDataBase::Set(const void* pData, uint16_t Record, uint16_t Number
     return SYS_NO_DRIVER;
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: SetAll
+//
+//   Parameter(s):  void*           pData
+//                  uint16_t        Record
+//   Return:        SystemState_e   State
+//
+//   Description:   Set the  full database record
+//
+//   Notes:         SYS_NO_DRIVER = No driver found for the record number, so it is a range check
+//                                  at the same time.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e CDataBase::SetAll(const void* pData, uint16_t Record)
+{
+    CDataBaseInterface* pDriver;
+    DBaseInfo_t         Info;
+    size_t              fullSize;
+    uint8_t*            pPointer = (uint8_t*)pData;
+
+   #ifdef DBASE_DEF
+    // Translate for System database (RAM + ROM)
+    if(Record < END_DBASE_INDEX)
+    {
+        Record = m_RamRecord[Record];
+    }
+   #endif
+
+    pDriver = GetDriver(Record);
+    if(pDriver != nullptr)
+    {
+        pDriver->GetInfo(&Info, Record);
+
+        for(uint16_t Items = 0; Items < Info.ItemsQTY; Items++)
+        {
+            for(uint16_t SubItems = 0; SubItems < Info.SubItemsQTY; SubItems++)
+            {
+                pDriver->Set(pPointer, Record, Items, SubItems);
+                pPointer += Info.Size;
+            }
+        }
+
+        return SYS_READY;
+    }
+
+    return SYS_NO_DRIVER;
+
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -252,29 +349,45 @@ CDataBaseInterface* CDataBase::GetDriver(uint16_t Record)
     return nullptr;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: GetSize
 //
-//   Parameter(s):  uint32_t*       pSize
+//   Parameter(s):  size_t*         pSize
 //                  uint16_t        Record
-//                  uint16_t        Number
-//                  uint16_t        SubNumber
 //   Return:        SystemState_e   State
 //
 //   Description:   Return the size of record
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CDataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e CDataBase::GetSize(size_t* pSize, uint16_t Record)
 {
     CDataBaseInterface* pDriver;
 
     pDriver = GetDriver(Record);
-    if(pDriver != nullptr) return pDriver->GetSize(pSize, Record, Number, SubNumber);
+    if(pDriver != nullptr) return pDriver->GetSize(pSize, Record);
     return SYS_NO_DRIVER;
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetInfo
+//
+//   Parameter(s):  uint32_t*       pSize
+//                  uint16_t        Record
+//   Return:        SystemState_e   State
+//
+//   Description:   Return the size of record
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e CDataBase::GetInfo(DBaseInfo_t* pInfo, uint16_t Record)
+{
+    CDataBaseInterface* pDriver;
+
+    pDriver = GetDriver(Record);
+    if(pDriver != nullptr) return pDriver->GetInfo(pInfo, Record);
+    return SYS_NO_DRIVER;
+}
 
 //-------------------------------------------------------------------------------------------------
 //

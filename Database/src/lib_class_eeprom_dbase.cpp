@@ -39,9 +39,10 @@
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_EEPROM_DBASE_AS_ITEMS_QTY(ENUM_ID, FLASH_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEMS_QTY,
-#define EXPAND_X_EEPROM_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, FLASH_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_SubQTY,
-#define EXPAND_X_EEPROM_DBASE_AS_ITEM_SIZE(ENUM_ID, FLASH_ID, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEM_SIZE,
+#define EXPAND_X_EEPROM_DBASE_AS_DRIVER(ENUM_ID, DRIVER, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)        &DRIVER,
+#define EXPAND_X_EEPROM_DBASE_AS_ITEMS_QTY(ENUM_ID, DRIVER, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEMS_QTY,
+#define EXPAND_X_EEPROM_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, DRIVER, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE) ITEMS_SubQTY,
+#define EXPAND_X_EEPROM_DBASE_AS_ITEM_SIZE(ENUM_ID, DRIVER, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEM_SIZE,
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -51,6 +52,12 @@
 //   Description:   Class E2_DataBase
 //
 //-------------------------------------------------------------------------------------------------
+
+// Create Driver list for each record item  // TODO create interface for database driver has the type may be from another driver type
+MemoryDriverInterface* E2_DataBase::m_Driver[NB_EEPROM_DBASE_ITEMS_CONST] =
+{
+    EEPROM_DBASE_DEF(EXPAND_X_EEPROM_DBASE_AS_DRIVER)
+};
 
 // Create Quantity list for each record item
 const uint16_t E2_DataBase::m_ItemsQTY[NB_EEPROM_DBASE_ITEMS_CONST] =                       // Array[THIS][]
@@ -70,7 +77,6 @@ const size_t E2_DataBase::m_ItemSize[NB_EEPROM_DBASE_ITEMS_CONST] =             
     EEPROM_DBASE_DEF(EXPAND_X_EEPROM_DBASE_AS_ITEM_SIZE)
 };
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: Initialize
@@ -78,7 +84,7 @@ const size_t E2_DataBase::m_ItemSize[NB_EEPROM_DBASE_ITEMS_CONST] =             
 //   Parameter(s):  size_t          ObjectSize
 //   Return:        SystemState_e   Always READY in this driver
 //
-//   Description:
+//   Description:   Initialize E2 database
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e E2_DataBase::Initialize(void* pConfig, size_t ObjectSize)
@@ -87,10 +93,11 @@ SystemState_e E2_DataBase::Initialize(void* pConfig, size_t ObjectSize)
     size_t      RecordTotalSize;
 
     if(ObjectSize > sizeof(size_t)) return SYS_WRONG_SIZE;
-    if(ObjectSize < sizeof(size_t)) return SYS_WRONG_SIZE;
 
-    m_pE2             = ((E2DBaseInfo_t*)pConfig)->pE2;
-    m_ItemsAddress[0] = ((E2DBaseInfo_t*)pConfig)->Address;
+// TODO ?? check this
+  //  m_pDriver
+//    m_pE2             = ((E2DBaseInfo_t*)pConfig)->pE2;
+//    m_ItemsAddress[0] = ((E2DBaseInfo_t*)pConfig)->Address;
 
     for(i = 0; i < NB_EEPROM_DBASE_ITEMS_CONST; i++)
     {
@@ -101,7 +108,6 @@ SystemState_e E2_DataBase::Initialize(void* pConfig, size_t ObjectSize)
 
     return SYS_READY;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -118,8 +124,9 @@ SystemState_e E2_DataBase::Initialize(void* pConfig, size_t ObjectSize)
 //-------------------------------------------------------------------------------------------------
 SystemState_e E2_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
-    SystemState_e    State;
-    uint32_t        Address;
+    SystemState_e            State;
+    uint32_t                 Address;
+    MemoryDriverInterface*   pDriver;
 
     Record -= DBASE_INDEX_EEPROM_RANGE;
     if((State = CheckRange(Record, Number, SubNumber)) != SYS_READY)
@@ -128,11 +135,11 @@ SystemState_e E2_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, ui
     }
 
     Address = GetAddress(Record, Number, SubNumber);
-    m_pE2->Read(Address, pData, m_ItemSize[Record]);
+    pDriver = GetDriver(Record);
+    pDriver->Read(Address, pData, m_ItemSize[Record]);
 
     return SYS_READY;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -142,15 +149,16 @@ SystemState_e E2_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, ui
 //                  uint16_t        Record
 //                  uint16_t        Number
 //                  uint16_t        SubNumber
-//   Return:        SystemState_e    State
+//   Return:        SystemState_e   State
 //
 //   Description:   Set the record for EEPROM type database
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e E2_DataBase::Set(const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber)
 {
-    SystemState_e    State;
-    uint32_t        Address;
+    SystemState_e          State;
+    uint32_t               Address;
+    MemoryDriverInterface* pDriver;
 
     Record -= DBASE_INDEX_EEPROM_RANGE;
     if((State = CheckRange(Record, Number, SubNumber)) != SYS_READY)
@@ -159,11 +167,11 @@ SystemState_e E2_DataBase::Set(const void* pData, uint16_t Record, uint16_t Numb
     }
 
     Address = GetAddress(Record, Number, SubNumber);
-    m_pE2->Write(Address, pData, m_ItemSize[Record]);
+    pDriver = GetDriver(Record);
+    pDriver->Write(Address, pData, m_ItemSize[Record]);
 
     return SYS_READY;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -181,34 +189,43 @@ uint16_t E2_DataBase::GetDriverIndex(Range_e Range)
     return END_EEPROM_DBASE - 1;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: GetSize
 //
-//   Parameter(s):  uint16_t        Record
-//                  uint32_t*       pSize
-//                  uint16_t        Number
-//                  uint16_t        SubNumber
-//   Return:        uint32_t*       SystemState_e
+//   Parameter(s):  size_t*     pSize
+//                  uint16_t    Record
+//   Return:        uint32_t*   SystemState_e
 //
 //   Description:   Return the size of record
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e E2_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e E2_DataBase::GetSize(size_t* pSize, uint16_t Record)
 {
-    SystemState_e    State;
-
     Record -= DBASE_INDEX_EEPROM_RANGE;
-    if((State = CheckRange(Record, Number, SubNumber)) != SYS_READY)
-    {
-        return State;
-    }
-
     *pSize = m_ItemSize[Record];
     return SYS_READY;
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetInfo
+//
+//   Parameter(s):  DBaseInfo_t* pInfo
+//                  uint16_t     Record
+//   Return:        uint32_t*    SystemState_e
+//
+//   Description:   Return the all info for this of record
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e E2_DataBase::GetInfo(DBaseInfo_t* pInfo, uint16_t Record)
+{
+    Record -= DBASE_INDEX_EEPROM_RANGE;
+    pInfo->ItemsQTY    = m_ItemsQTY[Record];
+    pInfo->SubItemsQTY = m_ItemsSubQTY[Record];
+    pInfo->Size        = m_ItemSize[Record];
+    return SYS_READY;
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -228,7 +245,6 @@ SystemState_e E2_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16_t
     *pPointer = nullptr;
     return SYS_READY;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -250,11 +266,10 @@ SystemState_e E2_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16_t
         {
             return SYS_READY;
         }
-
     }
+
     return SYS_OUT_OF_RANGE;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //

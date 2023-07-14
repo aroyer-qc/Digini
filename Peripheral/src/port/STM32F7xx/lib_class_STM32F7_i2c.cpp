@@ -535,7 +535,7 @@ SystemState_e I2C_Driver::Write(const void* pBuffer, size_t Size, uint8_t Device
 //                  Call to UnlockFromDevice() after multiple operation are done
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2C_Driver::Read(const void* pBuffer, size_t Size)
+SystemState_e I2C_Driver::Read(void* pBuffer, size_t Size)
 {
     return Transfer(0, 0, nullptr, 0, pBuffer, Size);
 }
@@ -557,7 +557,7 @@ SystemState_e I2C_Driver::Read(const void* pBuffer, size_t Size)
 //                  Call to UnlockFromDevice() after multiple operation are done
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2C_Driver::Read(const void* pBuffer, size_t Size, uint8_t Device)
+SystemState_e I2C_Driver::Read(void* pBuffer, size_t Size, uint8_t Device)
 {
     return Transfer(0, 0, nullptr, 0, pBuffer, Size, Device);
 }

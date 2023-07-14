@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define EEPROM_DRIVER_GLOBAL
-#include "lib_class_I2C_EEprom.h"
+#include "lib_digini.h"
 #undef  EEPROM_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -39,7 +39,6 @@
 
 //-------------------------------------------------------------------------------------------------
 
-// move to internal member
 const E2_DeviceInfo_t E2_Driver::m_DeviceInfo[NUMBER_OF_DEVICE] =
 {
     E2_DEF(EXPAND_X_E2_CFG_AS_DATA)

@@ -30,7 +30,8 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_digini.h"
+//#include "lib_digini.h"
+#include "lib_class_memory_driver_interface.h"
 #include "eeprom_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
@@ -88,20 +89,20 @@ struct E2_Info_t
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class E2_Driver
+class E2_Driver : public MemoryDriverInterface
 {
     public:
 
                                     E2_Driver               (const E2_Info_t* pInfo);
 
-        SystemState_e               Read                    (uint32_t Address, void* pDest,      size_t Size);
-        SystemState_e               Write                   (uint32_t Address, const void* pSrc, size_t Size);
+        SystemState_e               Read                    (uint32_t Address, void* pDest,      size_t Size = 1);
+        SystemState_e               Write                   (uint32_t Address, const void* pSrc, size_t Size = 1);
         //bool                        IsOperational           ();
 
     private:
 
         const E2_Info_t*                m_pInfo;
-        E2_DeviceInfo_t*                m_pDevice;
+        const E2_DeviceInfo_t*          m_pDevice;
         static const E2_DeviceInfo_t    m_DeviceInfo[NUMBER_OF_DEVICE];
 };
 

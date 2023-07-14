@@ -162,7 +162,7 @@ struct SPI_DeviceInfo_t
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class SPI_Driver
+class SPI_Driver : public DriverInterface
 {
     public:
                         SPI_Driver              (SPI_ID_e SPI_ID);

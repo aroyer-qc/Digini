@@ -66,7 +66,6 @@ enum DBaseItemList_e
   #endif
     END_DBASE_INDEX,
     NB_DBASE_ITEMS_CONST = ((END_DBASE_INDEX - START_DBASE_INDEX) - 1)
-
 };
 
 struct DBaseInfo_t
@@ -75,8 +74,6 @@ struct DBaseInfo_t
     uint16_t SubItemsQTY;
     uint32_t Size;
 };
-
-//#define NB_DBASE_ITEMS_CONST        ((END_DBASE_INDEX - START_DBASE_INDEX) - 1)
 
 //-------------------------------------------------------------------------------------------------
 
@@ -110,7 +107,6 @@ class CDataBase
         SystemState_e            SetAll                  (const void* pData,  uint16_t Record);                                                                 // Write a full set of the Record
         SystemState_e            GetSize                 (size_t* pSize,      uint16_t Record);                                                                 // Get Record Size
         SystemState_e            GetInfo                 (DBaseInfo_t* pInfo, uint16_t Record);                                                                 // Get Record Info
-       // SystemState_e            Fill                    (const void* pData, uint16_t Record);                                                                // Fill all item of a record if supported by module
         SystemState_e            GetPointer              (void** pAddress, uint16_t Record, uint16_t Number = 0, uint16_t SubNumber   = 0);                     // Read a record pointer address
         SystemState_e            SetDB_Address           (void** pAddress, uint16_t Record);                                                                    // Set database address if supported by module
        #ifdef DBASE_DEF

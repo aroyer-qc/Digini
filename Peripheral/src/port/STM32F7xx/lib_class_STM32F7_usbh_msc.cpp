@@ -518,7 +518,7 @@ bool USB_HostMassStorage::UnitIsReady(uint8_t lun)
 {
     if(m_pHost->State == HOST_CLASS)
     {
-        return(m_MSC_Handle.unit[lun].error == MSC_OK) ? true : false;
+        return (m_MSC_Handle.unit[lun].error == MSC_OK) ? true : false;
     }
     else
     {

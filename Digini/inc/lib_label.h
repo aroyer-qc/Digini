@@ -168,13 +168,13 @@ class Label
       { "Serial No.:   ",               "No. Série:      " },  // BL_SERIAL_INFO
       { "Built Date:   ",               "Date logiciel:  " },  // LBL_COMPILE_DATE_INFO
 
-      { OUR_VENDOR_NAME,                nullptr            },  // LBL_VENDOR_NAME
-      { OUR_MODEL_NAME,                 nullptr            },  // LBL_MODEL_NAME
+      { OEM_VENDOR_NAME,                nullptr            },  // LBL_VENDOR_NAME
+      { OEM_MODEL_NAME,                 nullptr            },  // LBL_MODEL_NAME
       { OUR_FIRMWARE_NAME,              nullptr            },  // LBL_FIRMWARE_NAME
       { OUR_FIRMWARE_VERSION,           nullptr            },  // LBL_FIRMWARE_VERSION
       { OUR_FIRMWARE_GUI_NAME,          nullptr            },  // LBL_GUI_NAME
       { OUR_FIRMWARE_GUI_VERSION,       nullptr            },  // LBL_GUI_VERSION
-      { OUR_SERIAL_NUMBER,              nullptr            },  // LBL_SERIAL_NUMBER
+      { OEM_SERIAL_NUMBER,              nullptr            },  // LBL_SERIAL_NUMBER
       { OUR_BUILD_DATE/*[]*/,           nullptr            },  // LBL_BUILT_DATE
     #endif
 

@@ -205,7 +205,6 @@ SystemState_e CDataBase::GetAll(void* pData, uint16_t Record)
 {
     CDataBaseInterface* pDriver;
     DBaseInfo_t         Info;
-    size_t              fullSize;
     uint8_t*            pPointer = (uint8_t*)pData;
 
    #ifdef DBASE_DEF
@@ -292,7 +291,6 @@ SystemState_e CDataBase::SetAll(const void* pData, uint16_t Record)
 {
     CDataBaseInterface* pDriver;
     DBaseInfo_t         Info;
-    size_t              fullSize;
     uint8_t*            pPointer = (uint8_t*)pData;
 
    #ifdef DBASE_DEF
@@ -321,7 +319,34 @@ SystemState_e CDataBase::SetAll(const void* pData, uint16_t Record)
     }
 
     return SYS_NO_DRIVER;
+}
 
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: Fill
+//
+//   Parameter(s):  uint8_t         Value
+//                  uint16_t        Record
+//                  uint16_t        Number
+//                  uint16_t        SubNumber
+//   Return:        SystemState_e   State
+//
+//   Description:   Fill a record with a specific value
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e  CDataBase::Fill(uint8_t Value, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+{
+    size_t          Size;
+    void*           pData;
+    SystemState_e   State;
+
+    if((State = GetSize(&Size, Record)) == SYS_READY)
+    {
+        pData = pMemoryPool->AllocAndSet(Size, Value);
+        State = Set(pData, Record, Number, SubNumber);
+    }
+
+    return State;
 }
 
 //-------------------------------------------------------------------------------------------------

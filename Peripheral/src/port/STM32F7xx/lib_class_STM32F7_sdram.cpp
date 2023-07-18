@@ -541,7 +541,7 @@ SystemState_e SDRAM::SetAutoRefreshNumber(uint32_t AutoRefreshNumber)
 //-------------------------------------------------------------------------------------------------
 uint32_t SDRAM::GetModeStatus(void)
 {
-    return(FMC_SDRAM_GetModeStatus(hsdram->Instance, hsdram->Init.SDBank));
+    return FMC_SDRAM_GetModeStatus(hsdram->Instance, hsdram->Init.SDBank);
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -105,6 +105,7 @@ class CDataBase
         SystemState_e            Set                     (const void* pData,  uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0);                    // Write a Record
         SystemState_e            GetAll                  (void*       pData,  uint16_t Record);                                                                 // Read a full set of the Record
         SystemState_e            SetAll                  (const void* pData,  uint16_t Record);                                                                 // Write a full set of the Record
+        SystemState_e            Fill                    (uint8_t Value,      uint16_t Record, uint16_t Number = 0, uint16_t SubNumber = 0);                    // Fill a record with specific value
         SystemState_e            GetSize                 (size_t* pSize,      uint16_t Record);                                                                 // Get Record Size
         SystemState_e            GetInfo                 (DBaseInfo_t* pInfo, uint16_t Record);                                                                 // Get Record Info
         SystemState_e            GetPointer              (void** pAddress, uint16_t Record, uint16_t Number = 0, uint16_t SubNumber   = 0);                     // Read a record pointer address

@@ -194,9 +194,9 @@
 #define FT5336_RADIAN_VALUE_REG                     ((uint8_t)0x91) // The value of the minimum allowed angle while Rotating gesture mode
 #define FT5336_OFFSET_LEFT_RIGHT_REG                ((uint8_t)0x92) // Maximum offset while Moving Left and Moving Right gesture
 #define FT5336_OFFSET_UP_DOWN_REG                   ((uint8_t)0x93) // Maximum offset while Moving Up and Moving Down gesture
-#define FT5336_DISTANCE_LEFT_RIGHT_REG              ((uint8_t)0x94) // Minimum distance while Moving Left and Moving Right gesture
-#define FT5336_DISTANCE_UP_DOWN_REG                 ((uint8_t)0x95) // Minimum distance while Moving Up and Moving Down gesture
-#define FT5336_DISTANCE_ZOOM_REG                    ((uint8_t)0x96) // Maximum distance while Zoom In and Zoom Out gesture
+#define FT5336_DISTANCE_LEFT_RIGHT_REG              ((uint8_t)0x94) // Minimum Distance while Moving Left and Moving Right gesture
+#define FT5336_DISTANCE_UP_DOWN_REG                 ((uint8_t)0x95) // Minimum Distance while Moving Up and Moving Down gesture
+#define FT5336_DISTANCE_ZOOM_REG                    ((uint8_t)0x96) // Maximum Distance while Zoom In and Zoom Out gesture
 #define FT5336_LIB_VER_H_REG                        ((uint8_t)0xA1) // High 8-bit of LIB Version info
 #define FT5336_LIB_VER_L_REG                        ((uint8_t)0xA2) // Low 8-bit of LIB Version info
 #define FT5336_CIPHER_REG                           ((uint8_t)0xA3) // Chip Selecting

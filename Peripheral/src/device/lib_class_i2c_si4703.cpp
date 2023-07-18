@@ -674,7 +674,7 @@ uint32_t SI4703::Seek(SI4703_Seek_e Seek)
 
     if(valueSFBL != 0)                                              // The bit was set indicating we hit a band limit or failed to find a station
     {
-        return(0);
+        return 0;
     }
 
     return GetChannel();

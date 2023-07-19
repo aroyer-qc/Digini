@@ -261,6 +261,8 @@ class TIM_Driver
 
 #include "tim_var.h"         // Project variable
 
+extern const TIM_Info_t TIM_Info[NB_OF_TIM_DRIVER];
+
 //-------------------------------------------------------------------------------------------------
 
 #endif // (USE_TIM_DRIVER == DEF_ENABLED)

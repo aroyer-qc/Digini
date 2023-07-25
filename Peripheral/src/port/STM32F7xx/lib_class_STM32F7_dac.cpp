@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -34,33 +34,11 @@
 
 #if (USE_DAC_DRIVER == DEF_ENABLED)
 
-//-------------------------------------------------------------------------------------------------
-/*
-
-static void                 SOUND_DAC_AndSoundInit(void);
-static void                 SOUND_DAC_ISR_Handler(void);
-
-// Sound variable
-static int16_t*               SOUND_pHighSoundAddress;                                              // original copy if loopback
-static int16_t*               SOUND_pLowSoundAddress;
-static volatile uint32_t       SOUND_dwHighSoundSample                       = 0;
-static volatile uint32_t       SOUND_dwLowSoundSample                        = 0;
-static uint32_t                SOUND_dwHighStatus;
-static uint32_t                SOUND_dwLowStatus;
-static int16_t*               SOUND_pHighInISR_Address;
-static int16_t*               SOUND_pLowInISR_Address;
-static uint32_t                SOUND_dwHighInISR_Sample                      = 0;
-static uint32_t                SOUND_dwLowInISR_Sample                       = 0;
-static int32_t                 SOUND_lVolumeHighPrio;
-static int32_t                 SOUND_lVolumeLowPrio;
-static uint8_t                 SOUND_byRaiseVolumeHighPrio;
-static uint8_t                 SOUND_byRaiseVolumeLowPrio;
-static volatile uint8_t        SOUND_byInPlayHigh                            = SOUND_PRIO_LOW;
-static volatile uint8_t        SOUND_byInPlayLow                             = SOUND_PRIO_LOW;
+#include "dac_var.h"
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           SOUND_Init
+//  Function name:  Initialize
 //
 //  Parameter(s):   none.
 //
@@ -71,55 +49,259 @@ static volatile uint8_t        SOUND_byInPlayLow                             = S
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CSound::Init()
+void DAC_Driver::Initialize(void)
 {
-    uint32_t  pclk_freq;
-    uint32_t  rld_cnts;
-
-  #ifdef NXP_LPC1788_TM50
-
-    IOCON_P0_30_bit.FUNC    = 0;                                            // shutdown
-    FIO0CLR_bit.P0_30       = 1;
-    FIO0DIR_bit.P0_30       = 1;
-
-    IOCON_P0_26_bit.FUNC    = 2;                                            // AOUT function on pin
-    IOCON_P0_26_bit.DACEN   = 1;                                            // DAC Enable
-    IOCON_P0_26_bit.MODE    = 0;                                            // No Pull-Up or Pull-Down on DAC pin
-
-    pclk_freq               = BSP_PC_OSC_FREQ;                              // Get the peripheral clock frequency.
-    rld_cnts                = pclk_freq / 22050;
-    DACCNTVAL               = rld_cnts;
-
-    DMACINTTCCLEAR_bit.INTTCCLEAR2 = 1;                                     // Clear interrupt flag
-    DMACINTERRCLR_bit.INTERRCLR2   = 1;
-    DMACC2CONFIGURATION_bit.E      = 1;
-
-    DACCTRL_bit.CNT_ENA     = 1;
-    DACCTRL_bit.DBLBUF_ENA  = 1;
-
-    PCONP_bit.PCTIM1        = 1;                                            // Enable power on module
-                                                                            // VIC timer #1 init.
-    T1TCR_bit.CR            = 1;                                            // Disable and reset ctr 0 and the prescale ctr 0.
-    T1TCR_bit.CR            = 0;                                            // Clear the reset bit.
-    T1PR                    = 0;                                            // Prescaler is set to no division.
-    pclk_freq               = BSP_PC_OSC_FREQ;                              // Get the peripheral clock frequency.
-    rld_cnts                = pclk_freq / 22050;                            // Calculate the nbr of cnts necessary
-    T1MR0                   = rld_cnts;
-
-    T1MCR_bit.MR0I          = 1;                                            // Interrupt on MR0 (reset TC), stop TC.
-    T1MCR_bit.MR0R          = 1;
-    T1CCR                   = 0;                                            // Capture is disabled.
-    T1EMR                   = 0;                                            // No external match output.
-    T1TCR_bit.CE            = 1;                                            // Enable timer 1.
-
-    BSP_RegisterISR(NVIC_TIMER1, BSP_ISR_Priority_DAC, SOUND_DAC_ISR_Handler);
-    BSP_EnableISR(NVIC_TIMER1);
+#if 0
+  /* Note: Hardware constraint (refer to description of this function)        */
+  /*       DAC instance must be disabled.                                     */
+    if (DAC_InitStruct->WaveAutoGeneration != LL_DAC_WAVE_AUTO_GENERATION_NONE)
+    {
+      MODIFY_REG(DAC->CR,
+                 (DAC_CR_TSEL1
+                  | DAC_CR_WAVE1
+                  | DAC_CR_MAMP1
+                  | DAC_CR_BOFF1
+                 ) << (DAC_Channel & DAC_CR_CHX_BITOFFSET_MASK)
+                 ,
+                 (DAC_InitStruct->TriggerSource
+                  | DAC_InitStruct->WaveAutoGeneration
+                  | DAC_InitStruct->WaveAutoGenerationConfig
+                  | DAC_InitStruct->OutputBuffer
+                 ) << (DAC_Channel & DAC_CR_CHX_BITOFFSET_MASK)
+                );
+    }
+    else
+    {
+      MODIFY_REG(DACx->CR,
+                 (DAC_CR_TSEL1
+                  | DAC_CR_WAVE1
+                  | DAC_CR_BOFF1
+                 ) << (DAC_Channel & DAC_CR_CHX_BITOFFSET_MASK)
+                 ,
+                 (DAC_InitStruct->TriggerSource
+                  | LL_DAC_WAVE_AUTO_GENERATION_NONE
+                  | DAC_InitStruct->OutputBuffer
+                 ) << (DAC_Channel & DAC_CR_CHX_BITOFFSET_MASK)
+                );
+    }
+  }
+ #endif
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           SOUND_DAC_ISR_Handler
+//   Function name: Start
+//
+//   Parameter(s):  uint8_t     Channel
+//   Return value:  none
+//
+//   Description:   Will start the DAC specified channel.
+//
+//   Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void DAC_Driver::Start(uint8_t Channel)
+{
+    DAC->CR |= DAC_CR_EN1 << Channel;
+
+  if(Channel == DAC_CHANNEL_1)
+  {
+        if((DAC->CR & (DAC_CR_TEN1 | DAC_CR_TSEL1)) == DAC_TRIGGER_SOFTWARE)                            // Check if software trigger enabled
+        {
+            SET_BIT(DAC->SWTRIGR, DAC_SWTRIGR_SWTRIG1);                                                 // Enable the selected DAC software conversion
+        }
+    }
+    else // (Channel == DAC_CHANNEL_2)
+    {
+        if((DAC->CR & (DAC_CR_TEN2 | DAC_CR_TSEL2)) == (DAC_TRIGGER_SOFTWARE << (Channel & 0x10UL)))    // Check if software trigger enabled
+        {
+            DAC->SWTRIGR != DAC_SWTRIGR_SWTRIG2;                                                        // Enable the selected DAC software conversion
+        }
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: Stop
+//
+//   Parameter(s):  uint8_t     Channel
+//
+//   Return value:  none
+//
+//   Description:   Will stop the DAC specified channel.
+//
+//-------------------------------------------------------------------------------------------------
+void DAC_Driver::Stop(uint8_t Channel)
+{
+    DAC->CR &=  ~(DAC_CR_EN1 << Channel);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: Stop
+//
+//   Parameter(s):  uint8_t     Channel         (DAC_CHANNEL_1 or DAC_CHANNEL_2)
+//                  uint16_t    Data            Data to be loaded in the channel.
+//                  uint32_t    Alignment
+//                                  Value are:
+//                                      DAC_ALIGN_8B_RIGHT    8 bits right data alignment
+//                                      DAC_ALIGN_12B_LEFT    12 bits left data alignment
+//                                      DAC_ALIGN_12B_RIGHT   12 bits right data alignment
+//
+//   Return value:  none
+//
+//   Description:    Set the specified value for DAC channel
+//
+//-------------------------------------------------------------------------------------------------
+void DAC_Driver::SetValue(uint8_t Channel, uint16_t Data, uint32_t Alignment)
+{
+    volatile uint32_t DAC_Register;
+
+
+    if(Channel == DAC_CHANNEL_1)
+    {
+        DAC_Register = (&DAC->DHR12R1) + Alignment;
+    }
+    else // (Channel == DAC_CHANNEL_2)
+    {
+        DAC_Register = (&DAC->DHR12R2) + Alignment;
+    }
+
+    *(uint32_t*)DAC_Register = Data;        // Set the DAC channel data
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: Start_DMA
+//
+//   Parameter(s):  uint8_t     Channel
+//
+//   Return value:  none
+//
+//   Description:
+//
+//-------------------------------------------------------------------------------------------------
+void DAC_Driver::Start_DMA(uint8_t Channel, uint16_t *pData, size_t Length, uint32_t Alignment)
+{
+    uint32_t tmpreg = 0U;
+
+    if(Channel == DAC_CHANNEL_1)
+    {
+        //hdac->DMA_Handle1->XferCpltCallback = DAC_DMAConvCpltCh1;               /* Set the DMA transfer complete callback for channel1 */
+        //hdac->DMA_Handle1->XferHalfCpltCallback = DAC_DMAHalfConvCpltCh1;       /* Set the DMA half transfer complete callback for channel1 */
+        //hdac->DMA_Handle1->XferErrorCallback = DAC_DMAErrorCh1;                 /* Set the DMA error callback for channel1 */
+
+        SET_BIT(DAC->CR, DAC_CR_DMAEN1);                             /* Enable the selected DAC channel1 DMA request */
+
+        //Case of use of channel 1
+        switch(Alignment)
+        {
+            case DAC_ALIGN_12B_RIGHT:
+                // Get DHR12R1 address
+                tmpreg = (uint32_t)&DAC->DHR12R1;
+            break;
+
+            case DAC_ALIGN_12B_LEFT:
+                // Get DHR12L1 address
+                tmpreg = (uint32_t)&DAC->DHR12L1;
+                break;
+
+            case DAC_ALIGN_8B_RIGHT:
+                // Get DHR8R1 address
+                tmpreg = (uint32_t)&DAC->DHR8R1;
+            break;
+
+            default:
+            break;
+        }
+    }
+    else
+    {
+       // hdac->DMA_Handle2->XferCpltCallback = DAC_DMAConvCpltCh2;                   // Set the DMA transfer complete callback for channel2
+       // hdac->DMA_Handle2->XferHalfCpltCallback = DAC_DMAHalfConvCpltCh2;    // Set the DMA half transfer complete callback for channel2
+       // hdac->DMA_Handle2->XferErrorCallback = DAC_DMAErrorCh2;    // Set the DMA error callback for channel2 */
+        SET_BIT(DAC->CR, DAC_CR_DMAEN2);    // Enable the selected DAC channel2 DMA request
+
+        // Case of use of channel 2
+        switch (Alignment)
+        {
+            case DAC_ALIGN_12B_RIGHT:
+                /* Get DHR12R2 address */
+                tmpreg = (uint32_t)&DAC->DHR12R2;
+            break;
+
+            case DAC_ALIGN_12B_LEFT:
+                /* Get DHR12L2 address */
+                tmpreg = (uint32_t)&DAC->DHR12L2;
+            break;
+
+            case DAC_ALIGN_8B_RIGHT:
+                /* Get DHR8R2 address */
+                tmpreg = (uint32_t)&DAC->DHR8R2;
+            break;
+
+            default:
+            break;
+        }
+    }
+
+    /* Enable the DMA Stream */
+    if(Channel == DAC_CHANNEL_1)
+    {
+        /* Enable the DAC DMA underrun interrupt */
+        //__HAL_DAC_ENABLE_IT(hdac, DAC_IT_DMAUDR1);
+
+        /* Enable the DMA Stream */
+        //status = HAL_DMA_Start_IT(hdac->DMA_Handle1, (uint32_t)pData, tmpreg, Length);
+    }
+    else
+    {
+        /* Enable the DAC DMA underrun interrupt */
+        //__HAL_DAC_ENABLE_IT(hdac, DAC_IT_DMAUDR2);
+
+        /* Enable the DMA Stream */
+        //status = HAL_DMA_Start_IT(hdac->DMA_Handle2, (uint32_t)pData, tmpreg, Length);
+    }
+
+   // if(status == HAL_OK)
+    {
+        /* Enable the Peripheral */
+        //__HAL_DAC_ENABLE(hdac, Channel);
+    }
+  //  else
+    {
+        //hdac->ErrorCode |= HAL_DAC_ERROR_DMA;
+    }
+
+    /* Return function status */
+    //return status;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: Stop_DMA
+//
+//   Parameter(s):  uint8_t     Channel
+//
+//   Return value:  none
+//
+//   Description:   Disables DAC and stop conversion of channel.
+//
+//-------------------------------------------------------------------------------------------------
+void DAC_Driver::Stop_DMA(uint8_t Channel)
+{
+    DMA_Stream_TypeDef* pDMAx;
+
+    DAC->CR &= ~((DAC_CR_DMAEN1 | DAC_CR_EN1 | DAC_CR_DMAUDRIE1) << Channel);      // Disable the selected DAC channel DMA request, DAC DMA underrun interrupt and peripheral
+   // TODO  pDMAx = (Channel == DAC_CHANNEL_1) ? 0 : 1;
+    DMA_DisableInterrupt(pDMAx, DMA_SxCR_TCIE | DMA_SxCR_HTIE | DMA_SxCR_TEIE);
+    DMA_Disable(pDMAx);
+    //DMA_ClearFlag(pDMAx, DMA_ISR_GIF1);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function name:
 //
 //  Parameter(s):   none.
 //
@@ -131,385 +313,159 @@ void CSound::Init()
 //
 //-------------------------------------------------------------------------------------------------
 
-void SOUND_DAC_ISR_Handler(void)
+/**
+  * @brief  Handles DAC interrupt request
+  *         This function uses the interruption of DMA
+  *         underrun.
+  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  *         the configuration information for the specified DAC.
+  * @retval None
+  */
+  #if 0
+void HAL_DAC_IRQHandler(DAC_HandleTypeDef *hdac)
 {
-    uint32_t        AdjustedValueLOW;
-    uint32_t        AdjustedValueHIGH;
-    uint32_t        NextAdjustedValue;
-    int16_t         Point1;
-    int16_t         Point2;
-    static int16_t  Pente              = 0;     // put as member
-    static uint8_t  Ratio             = 1;      // put as member
-    uint8_t         Shutdown          = 0;
-
-    T1IR  = 0xFF;                                                                   // Clear timer #1 interrupt.
-
-    AdjustedValueLOW.l = 0;
-
-    if(HighStatus > BSP_PLAY_STOP_STANDBY)
+  if (__HAL_DAC_GET_IT_SOURCE(hdac, DAC_IT_DMAUDR1))
+  {
+    /* Check underrun flag of DAC channel 1 */
+    if (__HAL_DAC_GET_FLAG(hdac, DAC_FLAG_DMAUDR1))
     {
-        if((HighSoundSample != 0) && (HighInISR_Sample == 0))           // Update pointer and counter if HIGH sound priority exist
-        {
-            HighInISR_Sample   = HighSoundSample;
-            pHighInISR_Address = pHighSoundAddress;
-        }
+      /* Change DAC state to error state */
+      hdac->State = HAL_DAC_STATE_ERROR;
+
+      /* Set DAC error code to channel1 DMA underrun error */
+      SET_BIT(hdac->ErrorCode, HAL_DAC_ERROR_DMAUNDERRUNCH1);
+
+      /* Clear the underrun flag */
+      __HAL_DAC_CLEAR_FLAG(hdac, DAC_FLAG_DMAUDR1);
+
+      /* Disable the selected DAC channel1 DMA request */
+      CLEAR_BIT(hdac->Instance->CR, DAC_CR_DMAEN1);
+
+      /* Error callback */
+#if (USE_HAL_DAC_REGISTER_CALLBACKS == 1)
+      hdac->DMAUnderrunCallbackCh1(hdac);
+#else
+      HAL_DAC_DMAUnderrunCallbackCh1(hdac);
+#endif /* USE_HAL_DAC_REGISTER_CALLBACKS */
     }
-    else
+  }
+
+#if defined(DAC_CHANNEL2_SUPPORT)
+  if (__HAL_DAC_GET_IT_SOURCE(hdac, DAC_IT_DMAUDR2))
+  {
+    /* Check underrun flag of DAC channel 2 */
+    if (__HAL_DAC_GET_FLAG(hdac, DAC_FLAG_DMAUDR2))
     {
-        if(HighStatus > BSP_PLAY_STOP)
-        {
-            Point1 = *pHighInISR_Address;
-            Point2 = *(pHighInISR_Address + 1);
+      /* Change DAC state to error state */
+      hdac->State = HAL_DAC_STATE_ERROR;
 
-            if(((Point1 <= 0) && (Point2 >= 0)) ||
-               ((Point1 >= 0) && (Point2 <= 0)))
-            {
-                HighStatus = SOUND_PLAY_STOP;
-            }
-        }
-        else   // Full stop
-        {
-            HighInISR_Sample = 0;
-            HighSoundSample  = 0;
-            Shutdown        |= 0x01;
-        }
+      /* Set DAC error code to channel2 DMA underrun error */
+      SET_BIT(hdac->ErrorCode, HAL_DAC_ERROR_DMAUNDERRUNCH2);
+
+      /* Clear the underrun flag */
+      __HAL_DAC_CLEAR_FLAG(hdac, DAC_FLAG_DMAUDR2);
+
+      /* Disable the selected DAC channel2 DMA request */
+      CLEAR_BIT(hdac->Instance->CR, DAC_CR_DMAEN2);
+
+      /* Error callback */
+#if (USE_HAL_DAC_REGISTER_CALLBACKS == 1)
+      hdac->DMAUnderrunCallbackCh2(hdac);
+#else
+      HAL_DACEx_DMAUnderrunCallbackCh2(hdac);
+#endif /* USE_HAL_DAC_REGISTER_CALLBACKS */
     }
-
-    if(LowStatus > SOUND_PLAY_STOP_STANDBY)
-    {
-        if((LowSoundSample != 0) && (LowInISR_Sample == 0))             // Update pointer and counter if LOW sound priority exist
-        {
-            LowInISR_Sample   = LowSoundSample;
-            pLowInISR_Address = pLowSoundAddress;
-        }
-    }
-    else
-    {
-        if(LowStatus > SOUND_PLAY_STOP)
-        {
-            Point1 = *pLowInISR_Address;
-            Point2 = *(pLowInISR_Address + 1);
-
-            if(((Point1 <= 0) && (Point2 >= 0)) ||
-               ((Point1 >= 0) && (Point2 <= 0)))
-            {
-                LowStatus = SOUND_PLAY_STOP;
-            }
-        }
-        else   // Full stop
-        {
-            LowInISR_Sample = 0;
-            LowSoundSample  = 0;
-            Shutdown       |= 0x02;
-        }
-    }
-
-    if((Shutdown & 0x03) == 0x03)
-    {
-        FIO0CLR_bit.P0_30   = 1;
-    }
-
-    if(LowInISR_Sample != 0)
-    {
-        AdjustedValueLOW.l = (VolumeLowPrio * (int32_t)(*pLowInISR_Address)) / 31;
-
-        if(HighInISR_Sample == 0)
-        {
-            if     (AdjustedValueLOW.l >  32767) AdjustedValueLOW.dw = 65535L;
-            else if(AdjustedValueLOW.l < -32768) AdjustedValueLOW.dw = 0;
-            else                                 AdjustedValueLOW.dw = (uint32_t)(AdjustedValueLOW.l + 32768);
-
-            FIO0SET_bit.P0_30 = 1;
-            DACR                = AdjustedValueLOW.dw | 0x00010000;                                                // Put low prio sound in DAC
-        }
-        else
-        {
-            if     (AdjustedValueLOW.l >  32767) AdjustedValueLOW.l =  32767;
-            else if(AdjustedValueLOW.l < -32768) AdjustedValueLOW.l = -32768;
-        }
-    }
-
-    if(HighInISR_Sample != 0)                                                                             // Do we have high priority sound to play
-    {
-        AdjustedValueHIGH.l = (VolumeHighPrio * (int32_t)(*pHighInISR_Address)) / 31;
-
-        if(LowInISR_Sample != 0)
-        {
-            if     (AdjustedValueHIGH.l >  32767) AdjustedValueHIGH.l =  32767;
-            else if(AdjustedValueHIGH.l < -32768) AdjustedValueHIGH.l = -32768;
-
-            AdjustedValueHIGH.l += AdjustedValueLOW.l;                                                            // Sum of the Low and High of the actual sample
-
-            if(Pente == 0)
-            {
-                if(LowInISR_Sample >= 2)                                                                  // Do we have high priority sound to play
-                {
-                    AdjustedValueLOW.l = (VolumeLowPrio * (int32_t)(*(LowInISR_Address + 1))) / 31;    // Next sample of adjust value LOW priority
-                    if     (AdjustedValueLOW.l >  32767) AdjustedValueLOW.l =  32767;
-                    else if(AdjustedValueLOW.l < -32768) AdjustedValueLOW.l = -32768;
-                }
-                else
-                {
-                    AdjustedValueLOW.l = 0;
-                }
-
-                if(HighInISR_Sample >= 2)                                                                 // Do we have high priority sound to play
-                {
-                    NextAdjustedValue.l = (VolumeHighPrio * (int32_t)(*(HighInISR_Address + 1))) / 31; // Next sample of adjust value HIGH priority
-                    if     (NextAdjustedValue.l >  32767) NextAdjustedValue.l =  32767;
-                    else if(NextAdjustedValue.l < -32768) NextAdjustedValue.l = -32768;
-                }
-                else
-                {
-                    NextAdjustedValue.l = 0;
-                }
-
-                NextAdjustedValue.l += AdjustedValueLOW.l;                                                        // Sum of the Low and High of the next sample
-
-                if(AdjustedValueHIGH.l >= 28086)                                                                  // 950/1024 on high part off waveform
-                {
-                    Pente = NextAdjustedValue.l - AdjustedValueHIGH.l;
-                }
-                else if(AdjustedValueHIGH.l <= -28032)                                                            // 74/1024 on low part off waveform
-                {
-                    Pente = AdjustedValueHIGH.l - NextAdjustedValue.l;
-                }
-
-                if(Pente < 0)
-                {
-                    Pente = 0;
-                }
-                Ratio = (uint8_t)((((int32_t)Pente << 3) / 5120) + 1);
-
-                if(Ratio > 8)
-                {
-                    Ratio = 8;
-                }
-            }
-            else if((AdjustedValueHIGH.l < 28086) && (AdjustedValueHIGH.l > -28032))
-            {
-                Pente  = 0;
-                Ratio = 1;
-            }
-
-            if(AdjustedValueHIGH.l >= 28086)
-            {
-                AdjustedValueHIGH.l = ((AdjustedValueHIGH.l - 28086) / Ratio) + 28086;
-            }
-            else if(AdjustedValueHIGH.l <= -28032)
-            {
-                AdjustedValueHIGH.l = ((AdjustedValueHIGH.l + 28032) / Ratio) - 28032;
-            }
-        }
-
-        if     (AdjustedValueHIGH.l >  32767) AdjustedValueHIGH.dw = 65535L;
-        else if(AdjustedValueHIGH.l < -32768) AdjustedValueHIGH.dw = 0;
-        else                                  AdjustedValueHIGH.dw = (uint32_t)(AdjustedValueHIGH.l + 32768);
-
-        FIO0SET_bit.P0_30 = 1;
-        DACR                = AdjustedValueHIGH.dw | 0x00010000;                                                  // Put high prio sound in DAC
-    }
-
-    if(LowInISR_Sample != 0)
-    {
-        pLowInISR_Address++;
-        LowInISR_Sample--;
-
-        if(LowInISR_Sample == 0)                                                                          // If loop is completed, check for loop play
-        {
-            if(LowStatus == SOUND_PLAY_SINGLE)                                                              // Reset original variable to stop playback
-            {
-                LowSoundSample = 0;
-                Stop(SOUND_PRIORITY_LOW);
-            }
-        }
-    }
-
-    if(HighInISR_Sample != 0)                                                                             // Do we have high priority sound to play
-    {
-        pHighInISR_Address++;
-        dwHighInISR_Sample--;
-
-        if(HighInISR_Sample == 0)                                                                         // If loop is completed, check for loop play
-        {
-            if(HighStatus == BSP_PLAY_SINGLE)                                                             // Reset original variable to stop playback
-            {
-                HighSoundSample = 0;
-                Stop(SOUND_PRIORITY_HIGH);
-            }
-        }
-    }
+  }
+#endif /* DAC_CHANNEL2_SUPPORT */
 }
+#endif
 
-//-------------------------------------------------------------------------------------------------
-//
-//   function name: Start
-//
-//   parameter(s):  uint8_t    Number    Number of the sound to play
-//                  uint8_t    Mode      Playback mode               BSP_PLAY_SINGLE
-//                                                                   BSP_PLAY_LOOP
-//                  uint8_t    Priority  Channel priority            SOUND_PRIORITY_HIGH
-//                                                                   SOUND_PRIORITY_LOW
-//                  uint8_t    Level     Sound priority level for application level
-//   return value:  none
-//
-//   description:
-//
-//   note:
-//
-//-------------------------------------------------------------------------------------------------
-// ARGO TEMPO
-uint8_t VolHighPrio;
-uint8_t VolLowPrio;
-
-uint8_t CSound::Start(uint8_t Number, uint8_t Mode, uint8_t Priority, uint8_t Level)
+void DAC_ISR_Handler(void)
 {
-    sWaveDescriptor     Wave;
-    OS_CPU_SR           cpu_sr;
-    uint8_t             Result = FALSE;
-
-SOUND_lVolumeHighPrio = VolHighPrio;
-SOUND_lVolumeLowPrio  = VolLowPrio;
-
-    if(Flag.b.SoundAreLoaded == YES)
-    {
-        if(GLCD_GetSoundInfo(&Wave, byNumber) == ERR_NONE)
-        {
-            if(Wave.dwNbSamples > 0)
-            {
-                if(Priority == SOUND_PRIORITY_HIGH)
-                {
-                    if(Level <= SOUND_InPlayHigh)
-                    {
-                        OS_ENTER_CRITICAL();
-                        HighStatus          = Mode;
-                        pHighSoundAddress   = (int16_t*)Wave.pAddress;
-                        HighSoundSample     = Wave.NbSamples;
-                        OS_EXIT_CRITICAL();
-                        InPlayHigh          = Level;
-                        RaiseVolumeHighPrio = VolumeHighPrio;
-                        Result              = TRUE;
-                    }
-                }
-                else
-                {
-                    if(Flag.b.MuteStatus == FALSE)
-                    {
-                        if(Level <= InPlayLow)
-                        {
-                            OS_ENTER_CRITICAL();
-                            LowStatus          = Mode;
-                            pLowSoundAddress   = (int16_t*)Wave.pAddress;
-                            LowSoundSample     = Wave.NbSamples;
-                            OS_EXIT_CRITICAL();
-                            InPlayLow          = Level;
-                            RaiseVolumeLowPrio = VolumeLowPrio;
-                            Result             = TRUE;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return Result;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   function name: Stop
-//
-//   parameter(s):  uint8_t  Priority
-//
-//   return value:  none
-//
-//   description:   will stop the sound in progress if it is running
-//
-//   note:          If a low priority sound was running prior to the start of a high priority,
-//                  it will be reenable unless it has ended.
-//
-//-------------------------------------------------------------------------------------------------
-void CSound::Stop(uint8_t Priority)
-{
-    if(Priority == SOUND_PRIORITY_HIGH)
-    {
-        RaiseVolumeHighPrio     = 0;
-        InPlayHigh              = SOUND_PRIO_LOW;
-        HighStatus              = BSP_PLAY_STOP;
-    }
-    else
-    {
-        RaiseVolumeLowPrio      = 0;
-        InPlayLow               = SOUND_PRIO_LOW;
-        LowStatus               = BSP_PLAY_STOP;
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   function name: RaiseVolumeTemporary
-//
-//   parameter(s):
-//
-//   return value:
-//
-//   description:   By calling this function you can raise volume of actual sound, this is useful
-//                  for example: Alarm clock -> they can increment if user is not waking up
-//
-//   note:
-//
-//-------------------------------------------------------------------------------------------------
-void CSound::RaiseVolumeTemporary(uint8_t Priority)
-{
-    if(Priority == SOUND_PRIORITY_HIGH)
-    {
-        if(RaiseVolumeHighPrio < SOUND_VOLUME_MASK)
-        {
-            RaiseVolumeHighPrio++;
-        }
-        VolumeHighPrio = SoundVolume[RaiseVolumeHighPrio & SOUND_VOLUME_MASK];
-    }
-    else
-    {
-        if(RaiseVolumeLowPrio < SOUND_VOLUME_MASK)
-        {
-            RaiseVolumeLowPrio++;
-        }
-        VolumeLowPrio = SoundVolume[RaiseVolumeLowPrio & SOUND_VOLUME_MASK];
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   function name: Volume
-//
-//   parameter(s):
-//
-//   return value:
-//
-//   description:
-//
-//   note:
-//
-//-------------------------------------------------------------------------------------------------
-void CSound::Volume(uint8_t Volume, uint8_t Priority)
-{
-    if(Volume < 11)
-    {
-        Volume = SoundVolume[Volume];
-
-        if(Priority == SOUND_PRIORITY_HIGH)
-        {
-            VolHighPrio = Volume;
-        }
-        else
-        {
-            VolLowPrio = Volume;
-        }
-    }
 }
 
 
-*/
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+  * @brief  Configures the selected DAC channel.
+  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  *         the configuration information for the specified DAC.
+  * @param  sConfig DAC configuration structure.
+  * @param  Channel The selected DAC channel.
+  *          This parameter can be one of the following values:
+  *            @arg DAC_CHANNEL_1: DAC Channel1 selected
+  *            @arg DAC_CHANNEL_2: DAC Channel2 selected
+  * @retval HAL status
+  */
+  #if 0
+HAL_StatusTypeDef HAL_DAC_ConfigChannel(DAC_HandleTypeDef *hdac, DAC_ChannelConfTypeDef *sConfig, uint32_t Channel)
+{
+  uint32_t tmpreg1;
+  uint32_t tmpreg2;
+
+  /* Check the DAC parameters */
+  assert_param(IS_DAC_TRIGGER(sConfig->DAC_Trigger));
+  assert_param(IS_DAC_OUTPUT_BUFFER_STATE(sConfig->DAC_OutputBuffer));
+  assert_param(IS_DAC_CHANNEL(Channel));
+
+  /* Process locked */
+  __HAL_LOCK(hdac);
+
+  /* Change DAC state */
+  hdac->State = HAL_DAC_STATE_BUSY;
+
+  /* Get the DAC CR value */
+  tmpreg1 = hdac->Instance->CR;
+  /* Clear BOFFx, TENx, TSELx, WAVEx and MAMPx bits */
+  tmpreg1 &= ~(((uint32_t)(DAC_CR_MAMP1 | DAC_CR_WAVE1 | DAC_CR_TSEL1 | DAC_CR_TEN1 | DAC_CR_BOFF1)) << (Channel & 0x10UL));
+  /* Configure for the selected DAC channel: buffer output, trigger */
+  /* Set TSELx and TENx bits according to DAC_Trigger value */
+  /* Set BOFFx bit according to DAC_OutputBuffer value */
+  tmpreg2 = (sConfig->DAC_Trigger | sConfig->DAC_OutputBuffer);
+  /* Calculate CR register value depending on DAC_Channel */
+  tmpreg1 |= tmpreg2 << (Channel & 0x10UL);
+  /* Write to DAC CR */
+  hdac->Instance->CR = tmpreg1;
+  /* Disable wave generation */
+  CLEAR_BIT(hdac->Instance->CR, (DAC_CR_WAVE1 << (Channel & 0x10UL)));
+
+  /* Change DAC state */
+  hdac->State = HAL_DAC_STATE_READY;
+
+  /* Process unlocked */
+  __HAL_UNLOCK(hdac);
+
+  /* Return function status */
+  return HAL_OK;
+}
+
+
+
+
+
+HAL_StatusTypeDef HAL_DAC_RegisterCallback(DAC_HandleTypeDef *hdac, HAL_DAC_CallbackIDTypeDef CallbackID,
+                                           pDAC_CallbackTypeDef pCallback)
+
+#endif
+
+
+//-------------------------------------------------------------------------------------------------
 
 #endif // (USE_DAC_DRIVER == DEF_ENABLED)
+

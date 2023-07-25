@@ -140,7 +140,7 @@ void IO_PinInit(IO_ID_e IO_ID)
 //                  PinMode
 //                  PinType
 //                  PinSpeed
-//                  State                   Default state of the pin if output.
+//                  State                   Default state of the pin if output or alternate function
 //
 //
 //  Return:         None
@@ -343,7 +343,7 @@ void IO_TogglePin(IO_ID_e IO_ID)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void IO_SetPin(IO_ID_e IO_ID, uint32_t Value)
+void IO_SetPin(IO_ID_e IO_ID, bool Value)
 {
     if(Value == 0)
     {

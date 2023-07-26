@@ -37,6 +37,14 @@
 #include "dac_var.h"
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define DMA_GLOBAL_ISR_FLAG_CH1     (DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5 | DMA_HIFCR_CTEIF5 |  DMA_HIFCR_CDMEIF5 | DMA_HIFCR_CFEIF5)
+#define DMA_GLOBAL_ISR_FLAG_CH2     (DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 |  DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6)
+
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Function name:  Initialize
 //
@@ -51,6 +59,8 @@
 //-------------------------------------------------------------------------------------------------
 void DAC_Driver::Initialize(void)
 {
+    IO_PinInit(IO_ANALOG_OUT_1);
+
 #if 0
   /* Note: Hardware constraint (refer to description of this function)        */
   /*       DAC instance must be disabled.                                     */
@@ -86,6 +96,17 @@ void DAC_Driver::Initialize(void)
     }
   }
  #endif
+
+
+/*  DMA2 is use
+	RCC_AHB1ENR_DMA2EN
+
+    DMA_LIFCR_CTCIF5,
+    DMA_LIFCR_CTCIF6,
+    DMA2_Stream5_IRQn,          // DAC1
+    DMA2_Stream6_IRQn,          // DAC2
+
+   */
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -104,20 +125,24 @@ void DAC_Driver::Start(uint8_t Channel)
 {
     DAC->CR |= DAC_CR_EN1 << Channel;
 
-  if(Channel == DAC_CHANNEL_1)
-  {
-        if((DAC->CR & (DAC_CR_TEN1 | DAC_CR_TSEL1)) == DAC_TRIGGER_SOFTWARE)                            // Check if software trigger enabled
-        {
-            SET_BIT(DAC->SWTRIGR, DAC_SWTRIGR_SWTRIG1);                                                 // Enable the selected DAC software conversion
-        }
-    }
-    else // (Channel == DAC_CHANNEL_2)
+  #if (DAC_DRIVER_CHANNEL_1_CFG == DEF_ENABLED)
+    if(Channel == DAC_CHANNEL_1)
     {
-        if((DAC->CR & (DAC_CR_TEN2 | DAC_CR_TSEL2)) == (DAC_TRIGGER_SOFTWARE << (Channel & 0x10UL)))    // Check if software trigger enabled
+        if((DAC->CR & (DAC_CR_TEN1 | DAC_CR_TSEL1)) == DAC_TRIGGER_SOFTWARE)                     // Check if software trigger enabled
         {
-            DAC->SWTRIGR != DAC_SWTRIGR_SWTRIG2;                                                        // Enable the selected DAC software conversion
+            DAC->SWTRIGR |= DAC_SWTRIGR_SWTRIG1;                                                 // Enable the selected DAC software conversion
         }
     }
+  #endif
+  #if (DAC_DRIVER_CHANNEL_2_CFG == DEF_ENABLED)
+    if(Channel == DAC_CHANNEL_2)
+    {
+        if((DAC->CR & (DAC_CR_TEN2 | DAC_CR_TSEL2)) == (DAC_TRIGGER_SOFTWARE << Channel))       // Check if software trigger enabled
+        {
+            DAC->SWTRIGR |= DAC_SWTRIGR_SWTRIG2;                                                // Enable the selected DAC software conversion
+        }
+    }
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -133,7 +158,7 @@ void DAC_Driver::Start(uint8_t Channel)
 //-------------------------------------------------------------------------------------------------
 void DAC_Driver::Stop(uint8_t Channel)
 {
-    DAC->CR &=  ~(DAC_CR_EN1 << Channel);
+    DAC->CR &= ~(DAC_CR_EN1 << Channel);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -157,15 +182,19 @@ void DAC_Driver::SetValue(uint8_t Channel, uint16_t Data, uint32_t Alignment)
 {
     volatile uint32_t DAC_Register;
 
-
+  #if (DAC_DRIVER_CHANNEL_1_CFG == DEF_ENABLED)
     if(Channel == DAC_CHANNEL_1)
     {
-        DAC_Register = (&DAC->DHR12R1) + Alignment;
+        DAC_Register = uint32_t(&DAC->DHR12R1) + Alignment;
     }
-    else // (Channel == DAC_CHANNEL_2)
+  #endif
+
+  #if (DAC_DRIVER_CHANNEL_2_CFG == DEF_ENABLED)
+    if(Channel == DAC_CHANNEL_1)
     {
-        DAC_Register = (&DAC->DHR12R2) + Alignment;
+        DAC_Register = uint32_t(&DAC->DHR12R2) + Alignment;
     }
+  #endif
 
     *(uint32_t*)DAC_Register = Data;        // Set the DAC channel data
 }
@@ -181,101 +210,76 @@ void DAC_Driver::SetValue(uint8_t Channel, uint16_t Data, uint32_t Alignment)
 //   Description:
 //
 //-------------------------------------------------------------------------------------------------
-void DAC_Driver::Start_DMA(uint8_t Channel, uint16_t *pData, size_t Length, uint32_t Alignment)
+#if (DAC_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+void DAC_Driver::Start_DMA(uint8_t Channel, uint16_t* pData, size_t Length, uint32_t Alignment)
 {
-    uint32_t tmpreg = 0U;
+    volatile void* pRegister;
 
+  #if (DAC_DRIVER_CHANNEL_1_CFG == DEF_ENABLED)
     if(Channel == DAC_CHANNEL_1)
     {
         //hdac->DMA_Handle1->XferCpltCallback = DAC_DMAConvCpltCh1;               /* Set the DMA transfer complete callback for channel1 */
         //hdac->DMA_Handle1->XferHalfCpltCallback = DAC_DMAHalfConvCpltCh1;       /* Set the DMA half transfer complete callback for channel1 */
         //hdac->DMA_Handle1->XferErrorCallback = DAC_DMAErrorCh1;                 /* Set the DMA error callback for channel1 */
 
-        SET_BIT(DAC->CR, DAC_CR_DMAEN1);                             /* Enable the selected DAC channel1 DMA request */
+        SET_BIT(DAC->CR, DAC_CR_DMAEN1);                                        // Enable DAC channel 1 DMA request.
 
-        //Case of use of channel 1
         switch(Alignment)
         {
-            case DAC_ALIGN_12B_RIGHT:
-                // Get DHR12R1 address
-                tmpreg = (uint32_t)&DAC->DHR12R1;
-            break;
-
-            case DAC_ALIGN_12B_LEFT:
-                // Get DHR12L1 address
-                tmpreg = (uint32_t)&DAC->DHR12L1;
-                break;
-
-            case DAC_ALIGN_8B_RIGHT:
-                // Get DHR8R1 address
-                tmpreg = (uint32_t)&DAC->DHR8R1;
-            break;
-
-            default:
-            break;
+            case DAC_ALIGN_12B_RIGHT:   pRegister = &DAC->DHR12R1;   break;     // Get DHR12R2 address
+            case DAC_ALIGN_12B_LEFT:    pRegister = &DAC->DHR12L1;   break;     // Get DHR12L2 address
+            case DAC_ALIGN_8B_RIGHT:    pRegister = &DAC->DHR8R1;    break;     // Get DHR8R2  address
+            default: break;
         }
     }
-    else
+  #endif
+
+  #if (DAC_DRIVER_CHANNEL_2_CFG == DEF_ENABLED)
+    if(Channel == DAC_CHANNEL_2)
     {
        // hdac->DMA_Handle2->XferCpltCallback = DAC_DMAConvCpltCh2;                   // Set the DMA transfer complete callback for channel2
        // hdac->DMA_Handle2->XferHalfCpltCallback = DAC_DMAHalfConvCpltCh2;    // Set the DMA half transfer complete callback for channel2
        // hdac->DMA_Handle2->XferErrorCallback = DAC_DMAErrorCh2;    // Set the DMA error callback for channel2 */
-        SET_BIT(DAC->CR, DAC_CR_DMAEN2);    // Enable the selected DAC channel2 DMA request
+        SET_BIT(DAC->CR, DAC_CR_DMAEN2);                                        // Enable DAC channel 2 DMA request.
 
-        // Case of use of channel 2
         switch (Alignment)
         {
-            case DAC_ALIGN_12B_RIGHT:
-                /* Get DHR12R2 address */
-                tmpreg = (uint32_t)&DAC->DHR12R2;
-            break;
-
-            case DAC_ALIGN_12B_LEFT:
-                /* Get DHR12L2 address */
-                tmpreg = (uint32_t)&DAC->DHR12L2;
-            break;
-
-            case DAC_ALIGN_8B_RIGHT:
-                /* Get DHR8R2 address */
-                tmpreg = (uint32_t)&DAC->DHR8R2;
-            break;
-
-            default:
-            break;
+            case DAC_ALIGN_12B_RIGHT:   pRegister = &DAC->DHR12R2;   break;     // Get DHR12R2 address
+            case DAC_ALIGN_12B_LEFT:    pRegister = &DAC->DHR12L2;   break;     // Get DHR12L2 address
+            case DAC_ALIGN_8B_RIGHT:    pRegister = &DAC->DHR8R2;    break;     // Get DHR8R2  address
+            default: break;
         }
     }
+  #endif
 
     /* Enable the DMA Stream */
+  #if (DAC_DRIVER_CHANNEL_1_CFG == DEF_ENABLED)
     if(Channel == DAC_CHANNEL_1)
     {
-        /* Enable the DAC DMA underrun interrupt */
+        // Enable the DAC DMA underrun interrupt
         //__HAL_DAC_ENABLE_IT(hdac, DAC_IT_DMAUDR1);
 
-        /* Enable the DMA Stream */
+        DMA_SetStreamTX(DMA2_Stream5, pData, (void*)pRegister, Length);
+        // TODO need to enable the wanted interrupt
         //status = HAL_DMA_Start_IT(hdac->DMA_Handle1, (uint32_t)pData, tmpreg, Length);
     }
-    else
+  #endif
+
+  #if (DAC_DRIVER_CHANNEL_2_CFG == DEF_ENABLED)
+    if(Channel == DAC_CHANNEL_2)
     {
-        /* Enable the DAC DMA underrun interrupt */
+        // Enable the DAC DMA underrun interrupt
         //__HAL_DAC_ENABLE_IT(hdac, DAC_IT_DMAUDR2);
 
-        /* Enable the DMA Stream */
+        DMA_SetStreamTX(DMA2_Stream6, pData, (void*)pRegister, Length);
+        // TODO need to enable the wanted interrupt
         //status = HAL_DMA_Start_IT(hdac->DMA_Handle2, (uint32_t)pData, tmpreg, Length);
     }
+  #endif
 
-   // if(status == HAL_OK)
-    {
-        /* Enable the Peripheral */
-        //__HAL_DAC_ENABLE(hdac, Channel);
-    }
-  //  else
-    {
-        //hdac->ErrorCode |= HAL_DAC_ERROR_DMA;
-    }
-
-    /* Return function status */
-    //return status;
+    DAC->CR |= DAC_CR_EN1 << Channel;       // Enable the Peripheral
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -288,16 +292,33 @@ void DAC_Driver::Start_DMA(uint8_t Channel, uint16_t *pData, size_t Length, uint
 //   Description:   Disables DAC and stop conversion of channel.
 //
 //-------------------------------------------------------------------------------------------------
+#if (DAC_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 void DAC_Driver::Stop_DMA(uint8_t Channel)
 {
     DMA_Stream_TypeDef* pDMAx;
+    uint32_t            FlagToClear;
 
     DAC->CR &= ~((DAC_CR_DMAEN1 | DAC_CR_EN1 | DAC_CR_DMAUDRIE1) << Channel);      // Disable the selected DAC channel DMA request, DAC DMA underrun interrupt and peripheral
-   // TODO  pDMAx = (Channel == DAC_CHANNEL_1) ? 0 : 1;
+
+  #if (DAC_DRIVER_CHANNEL_1_CFG == DEF_ENABLE)
+    if(Channel == DAC_CHANNEL_1)
+    {
+        pDMAx       = DMA1_Stream5;
+        FlagToClear = DMA_GLOBAL_ISR_FLAG_CH1;
+    }
+  #endif
+  #if (DAC_DRIVER_CHANNEL_2_CFG == DEF_ENABLE)
+    if(Channel == DAC_CHANNEL_2)
+    {
+        pDMAx = DMA1_Stream6;
+        FlagToClear = DMA_GLOBAL_ISR_FLAG_CH2;
+    }
+  #endif
     DMA_DisableInterrupt(pDMAx, DMA_SxCR_TCIE | DMA_SxCR_HTIE | DMA_SxCR_TEIE);
     DMA_Disable(pDMAx);
-    //DMA_ClearFlag(pDMAx, DMA_ISR_GIF1);
+    DMA_ClearFlag(pDMAx, FlagToClear);
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -401,6 +422,7 @@ void DAC_ISR_Handler(void)
 
 
 
+#if 0
 
 /**
   * @brief  Configures the selected DAC channel.
@@ -413,7 +435,6 @@ void DAC_ISR_Handler(void)
   *            @arg DAC_CHANNEL_2: DAC Channel2 selected
   * @retval HAL status
   */
-  #if 0
 HAL_StatusTypeDef HAL_DAC_ConfigChannel(DAC_HandleTypeDef *hdac, DAC_ChannelConfTypeDef *sConfig, uint32_t Channel)
 {
   uint32_t tmpreg1;

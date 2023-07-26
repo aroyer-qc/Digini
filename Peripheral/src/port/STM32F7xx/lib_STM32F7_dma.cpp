@@ -38,6 +38,44 @@
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Function:       DMA_StartStreamRX
+//
+//  Parameter(s):   pDMA        DMA stream to modify
+//                  Source
+//                  Destination
+//                  Length
+//  Return:         None
+//
+//  Description:    Setup receive data from peripheral for specific DMA stream.
+//-------------------------------------------------------------------------------------------------
+void DMA_SetStreamRX(DMA_Stream_TypeDef* pDMA, void* pSource, void* pDestination, size_t Length)
+{
+    pDMA->M0AR = uint32_t(pDestination);
+    pDMA->PAR  = uint32_t(pSource);
+    pDMA->NDTR = uint32_t(Length);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       DMA_StartStreamTX
+//
+//  Parameter(s):   pDMA        DMA stream to modify
+//                  Source
+//                  Destination
+//                  Length
+//  Return:         None
+//
+//  Description:    Setup transmit data to peripheral for specific DMA stream.
+//-------------------------------------------------------------------------------------------------
+void DMA_SetStreamTX(DMA_Stream_TypeDef* pDMA, void* pSource, void* pDestination, size_t Length)
+{
+    pDMA->M0AR = uint32_t(pSource);
+    pDMA->PAR  = uint32_t(pDestination);
+    pDMA->NDTR = uint32_t(Length);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Function:       DMA_ClearFlag
 //
 //  Parameter(s):   pDMA        DMA stream to modify

@@ -70,18 +70,21 @@ struct DAC_Info_t
     uint32_t            TriggerSource;
     uint32_t            OutputBuffer;
 
+  #if (DAC_DRIVER_CHANNEL_1_CFG == DEF_ENABLED)
+    IO_ID_e             IO_Channel1;
+  #endif
+  #if (DAC_DRIVER_CHANNEL_2_CFG == DEF_ENABLED)
+    IO_ID_e             IO_Channel2;
+  #endif
+
   #if (DAC_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-    DMA_TypeDef*        pDMA;
-
-    // DAC Channel 1
-    uint32_t            DMA_Channel_CH1;
+   #if (DAC_DRIVER_CHANNEL_1_CFG == DEF_ENABLED)
     uint32_t            DMA_Flag_CH1;
-    DMA_Stream_TypeDef* pDMA_Stream_CH1;
+   #endif
 
-    // DAC Channel 2
-    uint32_t            DMA_Channel_CH2;
+   #if (DAC_DRIVER_CHANNEL_2_CFG == DEF_ENABLED)
     uint32_t            DMA_Flag_CH2;
-    DMA_Stream_TypeDef* pDMA_Stream_CH2;
+   #endif
   #endif
 };
 

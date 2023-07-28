@@ -34,8 +34,8 @@ class DriverInterface
 {
     public:
 
-        virtual SystemState_e       Write                   (const void* pBuffer, size_t Size) = 0;
-        virtual SystemState_e       Read                    (void* pBuffer, size_t Size) = 0;
+        virtual SystemState_e       Write                   (const void* pBuffer, size_t Size)                     = 0;
+        virtual SystemState_e       Read                    (void* pBuffer, size_t Size)                           = 0;
 };
 
 //-------------------------------------------------------------------------------------------------

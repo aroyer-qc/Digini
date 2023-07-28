@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_i2c_EEprom.h
+//  File : lib_class_spi_flash.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -32,45 +32,48 @@
 
 //#include "lib_digini.h"
 #include "lib_class_memory_driver_interface.h"
-#include "eeprom_cfg.h"
+#include "flash_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_EEPROM == DEF_ENABLED)
-#if (USE_I2C_DRIVER == DEF_ENABLED)
+#if (DIGINI_USE_FLASH == DEF_ENABLED)
+#if (USE_SPI_DRIVER == DEF_ENABLED) || (USE_QSPI_DRIVER == DEF_ENABLED)
 
-#define E2_DEF(X_E2)  \
-/*                                       ID of E2               E2 Size     Number of page */    \
-    IF_USE( DIGINI_USE_E2_M24LC32A, X_E2(E2_M24LC32A_ID,        4096,       32               ) ) \
-    IF_USE( DIGINI_USE_E2_2464,     X_E2(E2_2464_ID,            8192,       32               ) ) \
-    IF_USE( DIGINI_USE_E2_24128,    X_E2(E2_24128_ID,           16384,      64               ) ) \
-    IF_USE( DIGINI_USE_E2_24256,    X_E2(E2_24256_ID,           32768,      64               ) ) \
-    IF_USE( DIGINI_USE_E2_24512,    X_E2(E2_24512_ID,           65535,      128              ) ) \
-    IF_USE( DIGINI_USE_E2_M24M01,   X_E2(E2_M24M01_ID,          131072,     256              ) ) \
+#define FLASH_DEF(X_FLASH)  \
+/*                                      ID of FLASH,                Device ID,          FLASH Size  Number of page    sector Size/Erase      Block Size/Erase,  PageSize*/    \
+/*                                                                                      in KBytes    redondant!!!                                                       */    \
+    IF_USE( DIGINI_USE_FLASH_W25Q80,    X_FLASH(E2_W25Q80_ID,       0x13,  0x4014,      1024,       4096                  4096                   32768/65536       256 ) ) \
+    IF_USE( DIGINI_USE_FLASH_W25Q16,    X_FLASH(E2_W25Q16_ID,       0x14,  0x4015,      2048,       8192                  4096                   32768/65536       256 ) ) \
+    IF_USE( DIGINI_USE_FLASH_W25Q32,    X_FLASH(E2_W25Q32_ID,       0x15,  0x4016,      4096,       16384                 4096                   32768/65536       256 ) ) \
+    IF_USE( DIGINI_USE_FLASH_W25Q64,    X_FLASH(E2_W25Q64_ID,       0x16,  0x4017, (QSPI = 0x6017), 8192,  32768          4096                   32768/65536       256 ) ) \
+    IF_USE( DIGINI_USE_FLASH_W25Q128,   X_FLASH(E2_W25Q128_ID,      0x17,  0x4018, (QSPI = 0x6018), 16384, 65536          4096                   32768/65536       256 ) ) \
+    IF_USE( DIGINI_USE_FLASH_W25Q256,   X_FLASH(E2_W25Q256_ID,      0x18,  0x4019, (QSPI = 0x6019 or 7019), 32768, 131072         4096                   32768/65536       256 ) ) \
+    IF_USE( DIGINI_USE_FLASH_W25Q512,   X_FLASH(E2_W25Q512_ID,      0x19,  0x4020,      65536,      262144,               4096                   32768/65536       256 ) ) \
+    IF_USE( DIGINI_USE_FLASH_W25Q01,    X_FLASH(E2_W25Q01_ID,       0x20,  0x4021,      131072,     1048576,              4096,                  32768/65536       256 ) ) \
+    IF_USE( DIGINI_USE_FLASH_W25Q02,    X_FLASH(E2_W25Q02_ID,       0x21,  0x7022,      262144,     256              ) ) \
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EEPROM_SIZE_LIMIT_64K                               0xFFFF
-
-#define EXPAND_X_E2_CFG_AS_ENUM(ENUM_ID, SIZE, NB_OF_PAGE)  ENUM_ID,
-#define EXPAND_X_E2_CFG_AS_DATA(ENUM_ID, SIZE, NB_OF_PAGE)  {SIZE, NB_OF_PAGE, (SIZE / NB_OF_PAGE), ((SIZE / NB_OF_PAGE) - 1), ((SIZE > EEPROM_SIZE_LIMIT_64K) ? 3 : 2)},
+#define EXPAND_X_FLASH_CFG_AS_ENUM(ENUM_ID, SIZE, NB_OF_PAGE)  ENUM_ID,
+#define EXPAND_X_FLASH_CFG_AS_DATA(ENUM_ID, SIZE, NB_OF_PAGE)  {SIZE, NB_OF_PAGE, (SIZE / NB_OF_PAGE), ((SIZE / NB_OF_PAGE) - 1), ((SIZE > EEPROM_SIZE_LIMIT_64K) ? 3 : 2)},
 
 //-------------------------------------------------------------------------------------------------
 // typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-enum E2_Device_e
+enum FLASH_Device_e
 {
-    E2_DEF(EXPAND_X_E2_CFG_AS_ENUM)
+    FLASH_DEF(EXPAND_X_FLASH_CFG_AS_ENUM)
 
-    NUMBER_OF_DEVICE,
+    NUMBER_OF_FLASH_DEVICE,
 };
 
 
-struct E2_DeviceInfo_t
+struct FLASH_DeviceInfo_t
 {
+    uint32_t    ChipID;
     uint32_t    Size;
     uint32_t    NbOfPage;
     uint32_t    PageSize;
@@ -78,22 +81,21 @@ struct E2_DeviceInfo_t
     uint8_t     AddressingSize;
 };
 
-struct E2_Info_t
+struct FLASH_Info_t
 {
-    E2_Device_e      E2_ID;
-    I2C_Driver*      pI2C;
-    uint8_t          DeviceAddress;
+    FLASH_Device_e   Flash_ID;
+    SPI_Driver*      pSPI;  // or QSPI Driver!!
 };
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class E2_Driver : public MemoryDriverInterface
+class FLASH_Driver : public MemoryDriverInterface
 {
     public:
 
-                                    E2_Driver               (const E2_Info_t* pInfo);
+                                    FLASH_Driver               (const FLASH_Info_t* pInfo);
 
         SystemState_e               Read                    (uint32_t Address, void* pDest,      size_t Size = 1);
         SystemState_e               Write                   (uint32_t Address, const void* pSrc, size_t Size = 1);
@@ -101,25 +103,25 @@ class E2_Driver : public MemoryDriverInterface
 
     private:
 
-        const E2_Info_t*                m_pInfo;
-        const E2_DeviceInfo_t*          m_pDevice;
-        static const E2_DeviceInfo_t    m_DeviceInfo[NUMBER_OF_DEVICE];
+        const FLASH_Info_t*                m_pInfo;
+        const FLASH_DeviceInfo_t*          m_pDevice;
+        static const FLASH_DeviceInfo_t    m_DeviceInfo[NUMBER_OF_FLASH_DEVICE];
 };
 
 //-------------------------------------------------------------------------------------------------
 // constant data
 //-------------------------------------------------------------------------------------------------
 
-#include "eeprom_var.h"         // Project variable
+#include "flash_var.h"         // Project variable
 
 //-------------------------------------------------------------------------------------------------
 
-#else // (USE_I2C_DRIVER == DEF_ENABLED)
+#else // (USE_SPI_DRIVER == DEF_ENABLED) || (USE_QSPI_DRIVER == DEF_ENABLED)
 
- #pragma message("DIGINI driver for I2C must be enable and configure to use this device driver")
+ #pragma message("DIGINI driver for SPI and/or QSPI must be enable and configure to use this device driver")
 
-#endif // (USE_I2C_DRIVER == DEF_ENABLED)
-#endif // (DIGINI_USE_EEPROM == DEF_ENABLED)
+#endif // (USE_SPI_DRIVER == DEF_ENABLED) || (USE_QSPI_DRIVER == DEF_ENABLED)
+#endif // (DIGINI_USE_FLASH == DEF_ENABLED)
 
 
 //-------------------------------------------------------------------------------------------------

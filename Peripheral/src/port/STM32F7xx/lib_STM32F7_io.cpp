@@ -114,11 +114,11 @@ void IO_PinInit(IO_ID_e IO_ID)
 {
     const IO_Properties_t* pIO_Properties;
     GPIO_TypeDef* pPort;
-    uint32_t       PinNumber;
-    uint32_t       PinMode;
-    uint32_t       PinType;
-    uint32_t       PinSpeed;
-    uint32_t       State;
+    uint32_t      PinNumber;
+    uint32_t      PinMode;
+    uint32_t      PinType;
+    uint32_t      PinSpeed;
+    uint32_t      State;
 
     pIO_Properties = &IO_Properties[IO_ID];
     pPort          = pIO_Properties->pPort;
@@ -188,7 +188,7 @@ void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint3
             }
             break;
 
-            // case IO_MODE_ANALOG:  // Nothing to do for analog
+            // case IO_MODE_ANALOG:    // Nothing to do for analog
             // case IO_MODE_INPUT:     // Nothing to do for input
             default:
             {
@@ -196,7 +196,7 @@ void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint3
             break;
         }
 
-        pPort->PUPDR  &= ~(uint32_t)((IO_TYPE_PIN_PULL_MASK >> 1) << Pin2BitShift);                 // Reset bit for Pull Up
+        pPort->PUPDR  &= ~(uint32_t)((IO_TYPE_PIN_PULL_MASK >> 1)             << Pin2BitShift);     // Reset bit for Pull Up
         pPort->PUPDR  |=  (uint32_t)(((PinType & IO_TYPE_PIN_PULL_MASK) >> 1) << Pin2BitShift);     // Set new pull setting
 
         pPort->OTYPER &= ~(uint32_t)(IO_TYPE_PIN_DRIVE_MASK << PinNumber);                          // Reset bit for Drive type PP or OD
@@ -379,6 +379,7 @@ bool IO_GetInputPin(IO_ID_e IO_ID)
         {
             return false;
         }
+
         return true;
     }
 

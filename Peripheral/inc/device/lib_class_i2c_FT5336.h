@@ -69,12 +69,12 @@ class FT5336 : public PointingDeviceInterface
         uint16_t        ReadID                          (void);
         uint32_t        Configure                       (void);
 
-        I2C_Driver*         m_pI2C;
-        uint16_t            m_IntX;
-        uint16_t            m_IntY;
-        bool                m_Rotate;
-        uint8_t             m_CurrentActiveEventNumber; // Field holding the current number of simultaneous active touches
-        uint8_t             m_CurrentActiveEventIndex;  // Field holding the touch index currently managed
+        I2C_Driver*     m_pI2C;
+        uint16_t        m_IntX;
+        uint16_t        m_IntY;
+        bool            m_Rotate;
+        uint8_t         m_CurrentActiveEventNumber; // Field holding the current number of simultaneous active touches
+        uint8_t         m_CurrentActiveEventIndex;  // Field holding the touch index currently managed
 };
 
 //-------------------------------------------------------------------------------------------------

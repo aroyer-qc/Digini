@@ -34,8 +34,8 @@ class MemoryDriverInterface
 {
     public:
 
-        virtual SystemState_e       Write                   (uint32_t Address, const void* pBuffer, size_t Size) = 0;
-        virtual SystemState_e       Read                    (uint32_t Address, void* pBuffer, size_t Size)       = 0;
+        virtual SystemState_e   Write   (uint32_t Address, const void* pBuffer, size_t Size) = 0;
+        virtual SystemState_e   Read    (uint32_t Address, void* pBuffer, size_t Size)       = 0;
 };
 
 //-------------------------------------------------------------------------------------------------

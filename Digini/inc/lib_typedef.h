@@ -169,6 +169,7 @@ typedef enum
     SYS_SECTOR_LOCK_FOUND,                          // SPi Flash
     SYS_SOURCE_ERROR,
     SYS_START_BIT_ERROR,
+    SYS_SUSPENDED,
     SYS_TIME_OUT,
     SYS_TRANSFER_ERROR,
     SYS_UNDERRUN,

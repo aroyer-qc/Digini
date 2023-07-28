@@ -44,8 +44,8 @@ uint16_t LIB_4BcdDec(uint16_t BCD_Value)
 {
     uint16_t Value;
 
-    Value  = LIB_2BcdDec(uint8_t(BCD_Value >> 8)) * 100;
-    Value += LIB_2BcdDec(uint8_t(BCD_Value));
+    Value  = uint16_t(LIB_2BcdDec(uint8_t(BCD_Value >> 8))) * 100;
+    Value += uint16_t(LIB_2BcdDec(uint8_t(BCD_Value)));
 
     return Value;
 }

@@ -79,9 +79,11 @@ X_VT100_LBL_CFG( VT100_LBL_INT_TO_DIVIDE_BY_1000,      "%ld.%03d",              
 X_VT100_LBL_CFG( VT100_LBL_INT_NO_DIVIDE,              "%ld",                                                                                                      nullptr                                                                                  ) \
 X_VT100_LBL_CFG( VT100_LBL_LONG_UNSIGNED_SEMICOLON,    "%lu:",                                                                                                     nullptr                                                                                  ) \
 X_VT100_LBL_CFG( VT100_LBL_UNSIGNED_2_DIGIT_SEMICOLON, "%02u:",                                                                                                    nullptr                                                                                  ) \
-X_VT100_LBL_CFG( VT100_LBL_UNSIGNED_2_DIGIT,           "%02u",                                                                                                    nullptr                                                                                  ) \
+X_VT100_LBL_CFG( VT100_LBL_UNSIGNED_2_DIGIT,           "%02u",                                                                                                     nullptr                                                                                  ) \
 X_VT100_LBL_CFG( VT100_LBL_STRING_AND_ONE_SPACE,       "%s ",                                                                                                      nullptr                                                                                  ) \
 X_VT100_LBL_CFG( VT100_LBL_FULL_DATE,                  "%s %u, %u,   %u:%02u:%02u ",                                                                               nullptr                                                                                  ) \
+X_VT100_LBL_CFG( VT100_LBL_NOW,                        "Now:",                                                                                                     "Maintenant:"                                                                            ) \
+X_VT100_LBL_CFG( VT100_LBL_UPTIME,                     "Up Time:",                                                                                                 "Temps Écoulé:"                                                                           ) \
 
 
 #define VT100_MONO_LABEL_LANGUAGE_DEF(X_VT100_LBL_CFG) \

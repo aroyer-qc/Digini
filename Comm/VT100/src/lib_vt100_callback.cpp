@@ -195,7 +195,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
 VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT100_CallBackType_e Type)
 {
     nOS_Time        UpTime;
-    nOS_TimeDate    TimeDate;
+    DateAndTime_t   TimeDate;
 
     VAR_UNUSED(Input);
 
@@ -215,47 +215,70 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
         case VT100_CALLBACK_REFRESH_ONCE:
         {
             myVT100.ClearScreenWindow(0, 8, 80, 30);
-            myVT100.SetCursorPosition(0, 8);
 
+            myVT100.SetCursorPosition(1, 8);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VENDOR_NAME_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VENDOR_NAME);
+            myVT100.SetCursorPosition(1, 9);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_HARDWARE_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_MODEL_NAME);
+            myVT100.SetCursorPosition(1, 10);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FW_NAME_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FIRMWARE_NAME);
+            myVT100.SetCursorPosition(1, 11);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FW_VERSION_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FIRMWARE_VERSION);
+            myVT100.SetCursorPosition(1, 12);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_NAME_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_NAME);
+            myVT100.SetCursorPosition(1, 13);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_VERSION_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_VERSION);
+            myVT100.SetCursorPosition(1, 14);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_SERIAL_INFO);
-
           #ifdef DEBUG
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_SERIAL_NUMBER);
           #else // TODO use programmed serial number when not in debug
             // DB_Central.Get(&m_GenericString[0][0][0], SYS_SERIAL_NUMBER);
             // InMenuPrintf(SYS_GetSingleEntryTypeSize(SYS_SERIAL_NUMBER), &m_GenericString[0][0][0]);
           #endif
-
+            myVT100.SetCursorPosition(1, 15);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_COMPILE_DATE_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_BUILT_DATE);
 
+            myVT100.SetCursorPosition(1, 16);
+            myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_NOW);
+
+            myVT100.SetCursorPosition(1, 17);
+            myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_UPTIME);
+
+            myVT100.SetCursorPosition(0, 19);
             myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_ESCAPE);
         }
         break;
 
         case VT100_CALLBACK_REFRESH:
         {
-            //InMenuPrintf(VT100_SZ_NONE, LBL_UPTIME);
-            //InMenuPrintf(VT100_SZ_NONE, LBL_GMT_TIME);
-
             UpTime = nOS_GetTickCount() / NOS_CONFIG_TICKS_PER_SECOND;
+
+            LIB_GetDateAndTime(&TimeDate);
+
+            if(TimeDate.Time.Second != VT100_LastSecond)
+            {
+                VT100_LastSecond = TimeDate.Time.Second;
+                myVT100.SetCursorPosition(19, 16);
+                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
+                                                                         TimeDate.Date.Day,
+                                                                         TimeDate.Date.Year,
+                                                                         TimeDate.Time.Hour,
+                                                                         TimeDate.Time.Minute,
+                                                                         TimeDate.Time.Second);
+            }
 
             if(UpTime != VT100_LastUpTime)
             {
                 VT100_LastUpTime = UpTime;
-                myVT100.SetCursorPosition(15, 15);
+                myVT100.SetCursorPosition(19, 17);
                 myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LONG_UNSIGNED_SEMICOLON,    (uint32_t)(UpTime / TIME_SECONDS_PER_DAY));
                 UpTime %= TIME_SECONDS_PER_DAY;
                 myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_HOUR));
@@ -263,20 +286,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
                 myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_MINUTE));
                 UpTime %= TIME_SECONDS_PER_MINUTE;
                 myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_UNSIGNED_2_DIGIT,           (uint16_t)UpTime);
-            }
-
-           // RTC_DateAndTime(&TimeDate, STATE_GET);
-
-            if(TimeDate.second != VT100_LastSecond)
-            {
-                VT100_LastSecond = TimeDate.second;
-                myVT100.SetCursorPosition(15, 16);
-                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((TimeDate.month - 1) + (int(LBL_FIRST_MONTH)))),
-                                                                         TimeDate.day,
-                                                                         TimeDate.year,
-                                                                         TimeDate.hour,
-                                                                         TimeDate.minute,
-                                                                         TimeDate.second);
             }
         }
         break;

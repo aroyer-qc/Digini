@@ -427,19 +427,25 @@ typedef struct
 {
     uint8_t     Day;
     uint8_t     Month;
-    uint8_t     Year;
+    uint16_t    Year;
 } Date_t;
+
 
 typedef struct
 {
-    Time_t      Time;
     Date_t      Date;
-    uint8_t     DayOfWeek;
-    uint16_t    DayOfYear;
-    uint8_t     WeekOfYear;
-    uint8_t     Century;
-    uint16_t    MinuteOfDay;
-    uint32_t    SecondStamp;
+    Time_t      Time;
+} DateAndTime_t;
+
+typedef struct
+{
+    DateAndTime_t DateTime;
+    uint8_t       DayOfWeek;
+    uint16_t      DayOfYear;
+    uint8_t       WeekOfYear;
+    uint8_t       Century;
+    uint16_t      MinuteOfDay;
+    uint32_t      SecondStamp;
 } Clock_t;
 
 typedef enum

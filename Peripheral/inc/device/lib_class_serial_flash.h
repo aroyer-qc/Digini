@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_spi_flash.h
+//  File : lib_class_serial_flash.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -83,19 +83,21 @@ struct FLASH_DeviceInfo_t
 
 struct FLASH_Info_t
 {
-    FLASH_Device_e   Flash_ID;
-    SPI_Driver*      pSPI;  // or QSPI Driver!!
+    FLASH_Device_e          Flash_ID;
+    DriverInterface*        pDriver;
 };
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class FLASH_Driver : public MemoryDriverInterface
+class SERIAL_FLASH_Driver : public MemoryDriverInterface
 {
     public:
 
-                                    FLASH_Driver               (const FLASH_Info_t* pInfo);
+                                    SERIAL_FLASH_Driver     (FLASH_Info_t* Flash_ID);
+
+        SystemState_e               Initialize              (void* pArg);
 
         SystemState_e               Read                    (uint32_t Address, void* pDest,      size_t Size = 1);
         SystemState_e               Write                   (uint32_t Address, const void* pSrc, size_t Size = 1);
@@ -103,10 +105,17 @@ class FLASH_Driver : public MemoryDriverInterface
 
     private:
 
-        const FLASH_Info_t*                m_pInfo;
+        FLASH_Info_t*                      m_pFlashInfo
         const FLASH_DeviceInfo_t*          m_pDevice;
         static const FLASH_DeviceInfo_t    m_DeviceInfo[NUMBER_OF_FLASH_DEVICE];
+        SystemState_e                      m_Status;
+        uint16_t                           m_ChipStatus;
 };
+
+
+
+
+
 
 //-------------------------------------------------------------------------------------------------
 // constant data

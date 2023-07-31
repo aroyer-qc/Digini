@@ -172,7 +172,7 @@ void RTC_Driver::GetDate(Date_t* pDate)
 {
     Lock();
     UpdateTimeFeature();
-    memcpy(pDate, &m_Clock.Date, sizeof(Date_t));
+    memcpy(pDate, &m_Clock.DateTime.Date, sizeof(Date_t));
     Unlock();
 }
 
@@ -190,7 +190,7 @@ void RTC_Driver::GetTime(Time_t* pTime)
 {
     Lock();
     UpdateTimeFeature();
-    memcpy(pTime, &m_Clock.Time, sizeof(Time_t));
+    memcpy(pTime, &m_Clock.DateTime.Time, sizeof(Time_t));
     Unlock();
 }
 
@@ -212,13 +212,13 @@ void RTC_Driver::SetDate(Date_t* pDate)
     DayOfWeek = GetDayOfWeek(pDate);
     if(DayOfWeek == 0) DayOfWeek = 7;
     Date  = (uint32_t(DayOfWeek) + 1) << 13;
-    Date |= uint32_t(LIB_2DecBcd(pDate->Year)) << 16;
+    Date |= uint32_t(LIB_4DecBcd(pDate->Year)) << 16;
     Date |= uint32_t(LIB_2DecBcd(pDate->Month)) << 8;
     Date |= uint32_t(LIB_2DecBcd(pDate->Day));
 
     Enable();
     RTC->DR = Date;
-    memcpy(&m_Clock.Date, pDate, sizeof(Date_t));
+    memcpy(&m_Clock.DateTime.Date, pDate, sizeof(Date_t));
     m_Clock.DayOfWeek = DayOfWeek;
     UpdateTimeFeature();
     Disable();
@@ -256,7 +256,7 @@ void RTC_Driver::SetTime(Time_t* pTime)
 
     Enable();
     RTC->TR = Time;
-    memcpy(&m_Clock.Time, pTime, sizeof(Time_t));
+    memcpy(&m_Clock.DateTime.Time, pTime, sizeof(Time_t));
     UpdateTimeFeature();
     Disable();
 }
@@ -266,9 +266,9 @@ void RTC_Driver::SetTime(uint8_t Hour, uint8_t Minute, uint8_t Second)
 {
     Time_t Time;
 
-    m_Clock.Time.Hour   = Hour;
-    m_Clock.Time.Minute = Minute;
-    m_Clock.Time.Second = Second;
+    m_Clock.DateTime.Time.Hour   = Hour;
+    m_Clock.DateTime.Time.Minute = Minute;
+    m_Clock.DateTime.Time.Second = Second;
     SetTime(&Time);
 }
 
@@ -392,12 +392,13 @@ void RTC_Driver::ExitInitMode(void)
 uint8_t RTC_Driver::GetDayOfWeek(Date_t* pDate)
 {
     uint16_t Day;
+    uint16_t Year =  pDate->Year - 2000;
 
     // Pre calculate the day of the week (0-6, SUNDAY-SATURDAY)
-    Day  = (pDate->Year >> 2) + 2;
-    Day += (pDate->Year + pDate->Day + m_WeekDayTable[pDate->Month - 1]);
+    Day  = (Year >> 2) + 2;
+    Day += (Year + pDate->Day + m_WeekDayTable[pDate->Month - 1]);
 
-    if((pDate->Year % 4) == 0)
+    if((Year % 4) == 0)
     {
         if(pDate->Month < 3)
         {
@@ -490,29 +491,29 @@ void RTC_Driver::UpdateTimeFeature(void)
     Time = RTC->TR;
     Date = RTC->DR;
 
-    m_Clock.Time.Hour   = LIB_2BcdDec(uint8_t(Time >> 16) & 0x3F);
-    if((Time & RTC_TR_PM) != 0) m_Clock.Time.Hour += 12;
-    m_Clock.Time.Minute = LIB_2BcdDec(uint8_t(Time >> 8) & 0x7F);
-    m_Clock.Time.Second = LIB_2BcdDec(uint8_t(Time) & 0x7F);
-    m_Clock.Date.Day    = LIB_2BcdDec(uint8_t(Date) & 0x3F);
-    m_Clock.Date.Month  = LIB_2BcdDec(uint8_t(Date >> 8) & 0x1F);
-    m_Clock.Date.Year   = LIB_2BcdDec(uint8_t(Date >> 16));
+    m_Clock.DateTime.Time.Hour   = LIB_2BcdDec(uint8_t(Time >> 16) & 0x3F);
+    if((Time & RTC_TR_PM) != 0) m_Clock.DateTime.Time.Hour += 12;
+    m_Clock.DateTime.Time.Minute = LIB_2BcdDec(uint8_t(Time >> 8) & 0x7F);
+    m_Clock.DateTime.Time.Second = LIB_2BcdDec(uint8_t(Time) & 0x7F);
+    m_Clock.DateTime.Date.Day    = LIB_2BcdDec(uint8_t(Date) & 0x3F);
+    m_Clock.DateTime.Date.Month  = LIB_2BcdDec(uint8_t(Date >> 8) & 0x1F);
+    m_Clock.DateTime.Date.Year   = LIB_4BcdDec(uint16_t(Date >> 16));
     m_Clock.DayOfWeek   = uint8_t(Date >> 13);
     if(m_Clock.DayOfWeek == 7)  m_Clock.DayOfWeek = 0;
 
     // ---------- Minute of the day ------------------------------------------
 
-    m_Clock.MinuteOfDay = (uint16_t(m_Clock.Time.Hour) * 60) + uint16_t(m_Clock.Time.Minute);
+    m_Clock.MinuteOfDay = (uint16_t(m_Clock.DateTime.Time.Hour) * 60) + uint16_t(m_Clock.DateTime.Time.Minute);
 
     // ---------- Day of the year --------------------------------------------
 
     // Set the day number in the year(1 - 365/366)
-    m_Clock.DayOfYear = m_DaysSoFar[m_Clock.Date.Month - 1] + m_Clock.Date.Day;
+    m_Clock.DayOfYear = m_DaysSoFar[m_Clock.DateTime.Date.Month - 1] + m_Clock.DateTime.Date.Day;
 
     // ---------- Leap year --------------------------------------------------
 
     // Add one day for any month after february on a leap year
-    if(((m_Clock.Date.Year & 0x03) == 0) && (m_Clock.Date.Month > 2))
+    if(((m_Clock.DateTime.Date.Year & 0x03) == 0) && (m_Clock.DateTime.Date.Month > 2))
     {
         // Add a day
         m_Clock.DayOfYear++;

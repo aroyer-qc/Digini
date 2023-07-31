@@ -54,6 +54,9 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+#define VT100_X_SIZE        100
+#define VT100_Y_SIZE        50
+
 #define VT100_OFFSET_COLOR_FOREGROUND       30
 #define VT100_OFFSET_COLOR_BACKGROUND       40
 #define CON_FIFO_PARSER_RX_SZ               64
@@ -128,15 +131,24 @@ enum VT100_InputType_e
     VT100_INPUT_DECIMAL,
     VT100_INPUT_STRING,
     VT100_INPUT_ESCAPE,
-    VT100_INPUT_ESCAPE_TO_CONTINUE,
+  //  VT100_INPUT_ESCAPE_TO_CONTINUE,
 };
 
 enum VT100_CallBackType_e
 {
+    // For page that contain no menu selection and has only dynamic widget
     VT100_CALLBACK_INIT,
-    VT100_CALLBACK_ON_INPUT,
+    VT100_CALLBACK_REFRESH_ONCE,
     VT100_CALLBACK_REFRESH,
     VT100_CALLBACK_FLUSH,
+
+    // Dynamic item in selection menu
+    VT100_CALLBACK_ON_MENU_INIT,            // For Initializing items when they are listed in the menu (dynamic info on the menu page)
+    VT100_CALLBACK_ON_MENU_INPUT,           // Selection input of items in thje menu.
+    VT100_CALLBACK_ON_MENU_REFRESH,         // For Refreshing items when they are listed in the menu (dynamic info on the menu page)
+    VT100_CALLBACK_ON_MENU_FLUSH,           // When escaping or going through another menu (EX. release memory)
+
+
 };
 
 typedef VT100_InputType_e (*CallbackMethod_t)(uint8_t, VT100_CallBackType_e);
@@ -158,7 +170,7 @@ struct VT100_MenuObject_t
 VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
 
 //-------------------------------------------------------------------------------------------------
-// Function(s) Prototype(s)
+// class
 //-------------------------------------------------------------------------------------------------
 
 class VT100_Terminal : public ChildProcessInterface
@@ -206,10 +218,6 @@ class VT100_Terminal : public ChildProcessInterface
         uint32_t            GetConfigFlag               (int Flag)                      { return m_ConfigFlag[Flag];  }      // todo check range or change the method
         void                SetConfigFlag               (int Flag, uint32_t Value)      { m_ConfigFlag[Flag] = Value; }      // todo check range or change the method
 
-        void                ForceMenuRefresh            (void);
-
-      //  void                DisplayHeader               (void);
-
 // to check if needed in VT100
 void                LockDisplay                 (bool);
 void                DisplayTimeDateStamp        (nOS_TimeDate* pTimeDate);
@@ -218,7 +226,8 @@ bool                GetString                   (char* pBuffer, size_t Size);
     private:
 
         void                        ProcessRX                   (void);
-        uint8_t                     DisplayMenu                 (VT100_Menu_e MenuID);
+        void                        DisplayMenu                 (void);
+        void                        FinalizeAllItems            (void);
       #if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED) || (VT100_USER_MENU_STATIC_INFO == DEF_ENABLED)
         void                        PrintMenuStaticInfo         (void);
       #endif
@@ -239,7 +248,6 @@ bool                GetString                   (char* pBuffer, size_t Size);
         bool                                m_IsItInitialized;
         bool                                m_IsItInStartup;
         VT100_Menu_e                        m_MenuID;
-        VT100_Menu_e                        m_FlushMenuID;
         uint8_t                             m_SetMenuCursorPosX;                // Set position to display the menu (after header)
         uint8_t                             m_SetMenuCursorPosY;
         uint8_t                             m_LastSetCursorPosX;                // Set position to input selection location on screen
@@ -255,6 +263,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         bool                                m_IsDisplayLock;
         bool                                m_FlushNextEntry;
         bool                                m_ForceRefresh;
+        bool                                m_RefreshOnce;
 
         // Input string or decimal service
         int32_t                             m_Minimum;

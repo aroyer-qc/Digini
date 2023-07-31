@@ -38,7 +38,6 @@
 #include "lib_digini.h"
 #include "device_cfg.h"
 
-#if 0
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
@@ -53,15 +52,7 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-struct PULSE_CounterInfo_t
-{
-    uint32_t PulsePerOverflow;
-    // timer to use
-    // speed ??
-    // irq to use ??
-};
-
-typedef void (* QUAD_EncoderCallBack_t) (QUAD_EncoderChange_e Change);  // une callback interface??
+typedef void (* PULSE_CounterCallBack_t)(uint32_t Count);  // use callback interface??
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -71,15 +62,16 @@ class PULSE_Counter
 {
     public:
 
-                                PULSE_Counter           ();
+                                PULSE_Counter           (TIM_Driver* pTimer);
 
+        void                    Initialize              (void);
         void                    Reset                   (void);
 
         // Getter/Setter
         uint32_t                GetPulseCount           (void)              { return m_PulseCount;  }
         void                    SetPulseCount           (uint32_t Count)    { m_PulseCount = Count; }
 
-        void                    RegistereCallback       (PULSE_CounterCallBack_t pCallback);  //?? use callback interface?
+        void                    RegisterCallback        (PULSE_CounterCallBack_t pCallback);  //?? use callback interface?
 
         void                    PulseISR                (void);
 
@@ -87,14 +79,21 @@ class PULSE_Counter
 
         uint32_t                        m_Overflow;
         uint32_t                        m_PulseCount;
+        PULSE_CounterCallBack_t         m_pCallback;
+        TIM_Driver*                     m_pTimer;
 
-
-        static  PULSE_CounterInfo_t     m_Info[NB_OF_PULSE_COUNTER];
+      //  static  PULSE_CounterInfo_t     m_Info[NB_OF_PULSE_COUNTER];
 };
 
 //-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
 
-#endif
+#define __CLASS_PULSE_COUNTER__
+#include "device_var.h"
+#undef  __CLASS_PULSE_COUNTER__
+
+//-------------------------------------------------------------------------------------------------
 
 
 

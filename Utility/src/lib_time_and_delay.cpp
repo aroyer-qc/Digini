@@ -82,11 +82,15 @@ void LIB_Delay_mSec(uint32_t Delay)
 //-------------------------------------------------------------------------------------------------
 void LIB_GetTime(Time_t* pData)
 {
+  #if (USE_RTC_DRIVER == DEF_ENABLED)
+    myRTC.GetTime((Time_t*)pData);
+  #else
     nOS_TimeDate TimeDate = nOS_TimeDateGet();
 
     pData->Hour   = TimeDate.hour;
     pData->Minute = TimeDate.minute;
     pData->Second = TimeDate.second;
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -102,6 +106,9 @@ void LIB_GetTime(Time_t* pData)
 //-------------------------------------------------------------------------------------------------
 void LIB_SetTime(Time_t* pData)
 {
+  #if (USE_RTC_DRIVER == DEF_ENABLED)
+    myRTC.SetTime((Time_t*)pData);
+  #else
     nOS_TimeDate TimeDate;
 
     TimeDate = nOS_TimeDateGet();
@@ -109,6 +116,7 @@ void LIB_SetTime(Time_t* pData)
     TimeDate.minute = pData->Minute;
     TimeDate.second = pData->Second;
     nOS_TimeDateSet(TimeDate);
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -124,11 +132,15 @@ void LIB_SetTime(Time_t* pData)
 //-------------------------------------------------------------------------------------------------
 void LIB_GetDate(Date_t* pData)
 {
+  #if (USE_RTC_DRIVER == DEF_ENABLED)
+    myRTC.GetDate((Date_t*)pData);
+  #else
     nOS_TimeDate TimeDate = nOS_TimeDateGet();
 
     pData->Day   = TimeDate.day;
     pData->Month = TimeDate.month;
-    pData->Year  = TimeDate.year - 2000;
+    pData->Year  = TimeDate.year;
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -144,14 +156,78 @@ void LIB_GetDate(Date_t* pData)
 //-------------------------------------------------------------------------------------------------
 void LIB_SetDate(Date_t* pData)
 {
+  #if (USE_RTC_DRIVER == DEF_ENABLED)
+    myRTC.SetDate(pData);
+  #else
     nOS_TimeDate TimeDate;
 
     TimeDate = nOS_TimeDateGet();
     TimeDate.day   = pData->Day;
     TimeDate.month = pData->Month;
-    TimeDate.year  = (uint16_t)pData->Year + 2000;
+    TimeDate.year  = pData->Year;
     nOS_TimeDateSet(TimeDate);
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
+//
+//  Name:           LIB_GetDateAndTime
+//
+//  Parameter(s):   DateAndTime_t*       Pointer on Date And Time data
+//  Return:         none
+//
+//  Description:    Get date and time into data
+//
+//
+//-------------------------------------------------------------------------------------------------
+void LIB_GetDateAndTime(DateAndTime_t* pTimeDate)
+{
+    Time_t SyncTime;
 
+    do
+    {
+      #if (USE_RTC_DRIVER == DEF_ENABLED)
+        myRTC.GetTime(&pTimeDate->Time);
+        myRTC.GetDate(&pTimeDate->Date);
+        myRTC.GetTime(&SyncTime);
+      #else
+        LIB_GetTime(&pTimeDate->Time);
+        LIB_GetDate(&pTimeDate->Date);
+        LIB_GetTime(&SyncTime);
+      #endif
+    }
+    while(memcmp((uint8_t*)&pTimeDate->Time, (uint8_t*)&SyncTime, sizeof(Time_t)) == 0);
+}
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           LIB_SetDateAndTime
+//
+//  Parameter(s):   DateAndTime_t*       Pointer on Date And Time data
+//  Return:         none
+//
+//  Description:    Set date and time from data
+//
+//
+//-------------------------------------------------------------------------------------------------
+void LIB_SetDateAndTime(DateAndTime_t* pTimeDate)
+{
+    Time_t SyncTime;
+
+    do
+    {
+      #if (USE_RTC_DRIVER == DEF_ENABLED)
+        myRTC.SetTime(&pTimeDate->Time);
+        myRTC.SetDate(&pTimeDate->Date);
+        myRTC.GetTime(&SyncTime);
+      #else
+        LIB_SetTime(&pTimeDate->Time);
+        LIB_SetDate(&pTimeDate->Date);
+        LIB_GetTime(&SyncTime);
+      #endif
+    }
+    while(memcmp((uint8_t*)&pTimeDate->Time, (uint8_t*)&SyncTime, sizeof(Time_t)) == 0);
+}
+
+//-------------------------------------------------------------------------------------------------

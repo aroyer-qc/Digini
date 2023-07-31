@@ -162,15 +162,15 @@ struct SPI_DeviceInfo_t
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class SPI_Driver
+class SPI_Driver : public DriverInterface
 {
     public:
                         SPI_Driver              (SPI_ID_e SPI_ID);
 
         void            Initialize              (void);
         SystemState_e   GetStatus               (void);
-        SystemState_e   LockToDevice            (SPI_DeviceInfo_t* pDevice);                                             // Set SPI to this device and lock
-        SystemState_e   UnlockFromDevice        (SPI_DeviceInfo_t* pDevice);                                             // Unlock SPI from device
+        SystemState_e   LockToDevice            (SPI_DeviceInfo_t* pDevice);                                                // Set SPI to this device and lock
+        SystemState_e   UnlockFromDevice        (SPI_DeviceInfo_t* pDevice);                                                // Unlock SPI from device
 
         // Read function (overloaded)
         SystemState_e   Read                    (uint8_t* pBuffer, size_t Size);

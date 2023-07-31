@@ -49,15 +49,11 @@
 enum HARD_DBaseItemList_e
 {
     START_HARD_DBASE = DBASE_INDEX_HARD_RANGE - 1,
-
-  #ifdef HARD_DBASE_DEF
-      HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_ENUM)
-  #endif
-
-    END_HARD_DBASE
+    HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_ENUM)
+    END_HARD_DBASE,
+    NB_HARD_DBASE_ITEMS_CONST = ((END_HARD_DBASE - START_HARD_DBASE) - 1)
 };
 
-#define NB_HARD_DBASE_ITEMS_CONST        ((END_HARD_DBASE - START_HARD_DBASE) - 1)
 
 //----------------------------------CALLBACK---------------------------------------------------------------
 
@@ -69,7 +65,8 @@ class HARD_DataBase : public CDataBaseInterface
         SystemState_e   Get                 (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
         SystemState_e   Set                 (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
         uint16_t        GetDriverIndex      (Range_e Range);
-        SystemState_e   GetSize             (uint32_t* pSize,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
+        SystemState_e   GetSize             (size_t* pSize,      uint16_t Record);
+        SystemState_e   GetInfo             (DBaseInfo_t* pInfo, uint16_t Record);
         SystemState_e   GetPointer          (void** pAddress,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
         SystemState_e   SetDB_Address       (void** pAddress) {return SYS_UNSUPPORTED_FEATURE;};
 

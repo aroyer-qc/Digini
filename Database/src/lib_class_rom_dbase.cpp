@@ -105,7 +105,6 @@ SystemState_e ROM_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, u
     return SYS_READY;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: Set
@@ -135,7 +134,6 @@ SystemState_e ROM_DataBase::Set(const void* pData, uint16_t Record, uint16_t Num
     return SYS_READY;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: GetDriverIndex
@@ -152,34 +150,43 @@ uint16_t ROM_DataBase::GetDriverIndex(Range_e Range)
     return END_ROM_DBASE - 1;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: GetSize
 //
-//   Parameter(s):  uint16_t        Record
-//                  uint32_t*       pSize
-//                  uint16_t        Number
-//                  uint16_t        SubNumber
+//   Parameter(s):  size_t*         pSize
+//                  uint16_t        Record
 //   Return:        uint32_t*       SystemState_e
 //
 //   Description:   Return the size of record
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ROM_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e ROM_DataBase::GetSize(size_t* pSize, uint16_t Record)
 {
-    SystemState_e    State;
-
     Record -= DBASE_INDEX_ROM_RANGE;
-    if((State = CheckRange(Record, Number, SubNumber)) != SYS_READY)
-    {
-        return State;
-    }
-
     *pSize = m_ItemSize[Record];
     return SYS_READY;
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetInfo
+//
+//   Parameter(s):  DBaseInfo_t*    pInfo
+//                  uint16_t        Record
+//   Return:        uint32_t*       SystemState_e
+//
+//   Description:   Return the all info for this of record
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e ROM_DataBase::GetInfo(DBaseInfo_t* pInfo, uint16_t Record)
+{
+    Record -= DBASE_INDEX_ROM_RANGE;
+    pInfo->ItemsQTY    = m_ItemsQTY[Record];
+    pInfo->SubItemsQTY = m_ItemsSubQTY[Record];
+    pInfo->Size        = m_ItemSize[Record];
+    return SYS_READY;
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -212,7 +219,6 @@ SystemState_e ROM_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16_
     return SYS_READY;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: CheckRange
@@ -233,8 +239,8 @@ SystemState_e ROM_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16_
         {
             return SYS_READY;
         }
-
     }
+
     return SYS_OUT_OF_RANGE;
 }
 

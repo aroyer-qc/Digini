@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define EEPROM_DRIVER_GLOBAL
-#include "lib_class_I2C_EEprom.h"
+#include "lib_digini.h"
 #undef  EEPROM_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -38,23 +38,15 @@
 #if (USE_I2C_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
 
-#define EEPROM_SIZE_LIMIT_64K          0xFFFF
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Class: EEPROM_Driver
-//
-//
-//   Description:    Class to handle eeprom 24xxx memory
-//
-//-------------------------------------------------------------------------------------------------
+const E2_DeviceInfo_t E2_Driver::m_DeviceInfo[NUMBER_OF_DEVICE] =
+{
+    E2_DEF(EXPAND_X_E2_CFG_AS_DATA)
+};
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   EEPROM_Driver
+//   Constructor:   E2_Driver
 //
 //   Parameter(s):
 //
@@ -63,12 +55,10 @@
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-EEPROM_Driver::EEPROM_Driver(const EEPROM_Info_t* pInfo)
+E2_Driver::E2_Driver(const E2_Info_t* pInfo)
 {
-    m_pInfo                 = pInfo;
-    m_PageSize              = (pInfo->DeviceSize / pInfo->DeviceNbOfPage);
-    m_PageMask              = m_PageSize - 1;
-    m_DeviceAddressingSize  = (pInfo->DeviceSize > EEPROM_SIZE_LIMIT_64K) ? 3 : 2;
+    m_pInfo   = pInfo;
+    m_pDevice = &m_DeviceInfo[pInfo->E2_ID];
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -85,10 +75,10 @@ EEPROM_Driver::EEPROM_Driver(const EEPROM_Info_t* pInfo)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e EEPROM_Driver::Read(uint32_t Address, void* pDest, size_t Size)
+SystemState_e E2_Driver::Read(uint32_t Address, void* pDest, size_t Size)
 {
     return m_pInfo->pI2C->Transfer(Address,
-                                   m_DeviceAddressingSize,
+                                   m_pDevice->AddressingSize,
                                    0,
                                    0,
                                    pDest,
@@ -110,7 +100,7 @@ SystemState_e EEPROM_Driver::Read(uint32_t Address, void* pDest, size_t Size)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e EEPROM_Driver::Write(uint32_t Address, const void* pSrc, size_t Size)
+SystemState_e E2_Driver::Write(uint32_t Address, const void* pSrc, size_t Size)
 {
     SystemState_e State;
     uint8_t*      pBuffer;
@@ -122,7 +112,7 @@ SystemState_e EEPROM_Driver::Write(uint32_t Address, const void* pSrc, size_t Si
     {
         while((Size != 0) && (State == SYS_READY))                                  // Loop for the number of page we need to write
         {
-            BytesToWrite = m_PageSize - (Address & m_PageMask);                     // Get the number of byte to write in this pass
+            BytesToWrite = m_pDevice->PageSize - (Address & m_pDevice->PageMask);   // Get the number of byte to write in this pass
 
             if(Size < BytesToWrite)
             {
@@ -130,7 +120,7 @@ SystemState_e EEPROM_Driver::Write(uint32_t Address, const void* pSrc, size_t Si
             }
 
             State =  m_pInfo->pI2C->Transfer(Address,
-                                             m_DeviceAddressingSize,
+                                             m_pDevice->AddressingSize,
                                              pSrc,
                                              Size,
                                              0,
@@ -152,7 +142,7 @@ SystemState_e EEPROM_Driver::Write(uint32_t Address, const void* pSrc, size_t Si
             pBuffer += BytesToWrite;                                                // Update source buffer pointer for the next pass
         }
 
-        m_pInfo->pI2C->UnlockFromDevice(m_pInfo->DeviceAddress);                             // No State check, we know we have the lock
+        m_pInfo->pI2C->UnlockFromDevice(m_pInfo->DeviceAddress);                    // No State check, we know we have the lock
     }
 
     return State;

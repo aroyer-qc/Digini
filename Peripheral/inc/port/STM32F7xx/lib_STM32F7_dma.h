@@ -82,6 +82,8 @@
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
+void        DMA_SetStreamRX                             (DMA_Stream_TypeDef* pDMA, void* pSource, void* pDestination, size_t Length);
+void        DMA_SetStreamTX                             (DMA_Stream_TypeDef* pDMA, void* pSource, void* pDestination, size_t Length);
 void        DMA_ClearFlag                               (DMA_Stream_TypeDef* pDMA, uint32_t Flag);
 uint32_t    DMA_CheckFlag                               (DMA_Stream_TypeDef* pDMA, uint32_t Flag);
 void        DMA_EnableInterrupt                         (DMA_Stream_TypeDef* pDMA, uint32_t Interrupt);

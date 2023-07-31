@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_qspi_N25Qxxx.h
+//  File : lib_class_memory_driver_interface.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,38 +27,16 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-
-#ifdef QSPI_FLASH_GLOBAL
-    #define QSPI_FLASH_EXTERN
-#else
-    #define QSPI_FLASH_EXTERN extern
-#endif
-
-//-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class N25Qxx
+class MemoryDriverInterface
 {
     public:
 
-                                    N25Qxx                  ();
-                                    ~N25Qxx                 ();
-
-        SystemState_e               Initialize              (void* pArg);
-        SystemState_e               Read                    (uint8_t* pData, uint32_t ReadAddress, uint32_t Size);
-        SystemState_e               Write                   (uint8_t* pData, uint32_t WriteAddress, uint32_t Size);
-
-    private:
-
-        QSPI_Driver*                m_pQSPI;
-        SPI_sDeviceInfo*            m_pDevice;
-        eSystemState                m_Status;
-        uint16_t                    m_ChipStatus;
+        virtual SystemState_e   Write   (uint32_t Address, const void* pBuffer, size_t Size) = 0;
+        virtual SystemState_e   Read    (uint32_t Address, void* pBuffer, size_t Size)       = 0;
 };
 
 //-------------------------------------------------------------------------------------------------
-
-
-
 

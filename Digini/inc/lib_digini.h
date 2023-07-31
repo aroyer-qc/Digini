@@ -86,6 +86,7 @@
 #include "lib_class_timer.h"
 #include "lib_stacktistic.h"
 #include "lib_utility.h"
+#include "lib_pid.h"
 #include "lib_io.h"
 #include "lib_isr.h"
 #include "lib_dma.h"
@@ -99,6 +100,9 @@
 //-------------------------------------------------------------------------------------------------
 // Driver
 //
+
+//#include "lib_class_driver_interface.h"
+
 #if (USE_ADC_DRIVER == DEF_ENABLED)
 #include "lib_class_adc.h"
 #endif

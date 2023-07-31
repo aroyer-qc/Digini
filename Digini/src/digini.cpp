@@ -38,7 +38,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #if defined(EEPROM_DBASE_DEF)
-  class EEPROM_DataBase             DB_Eeprom;
+  class E2_DataBase                 DB_Eeprom;
 #endif
 
 #if defined(ROM_DBASE_DEF)

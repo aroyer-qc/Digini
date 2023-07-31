@@ -175,7 +175,7 @@ static ServiceReturn_t* SERV_DATE(ServiceEvent_e* pServiceState)
             {
                 ((ServiceType2_t*)pService)->Data[0].u_16 = Date.Day;
                 ((ServiceType2_t*)pService)->Data[1].u_16 = Date.Month;
-                ((ServiceType2_t*)pService)->Data[2].u_16 = 2000 + Date.Year;
+                ((ServiceType2_t*)pService)->Data[2].u_16 = Date.Year;
                 *pServiceState = SERVICE_REFRESH;
                 OldDate = Date;
             }

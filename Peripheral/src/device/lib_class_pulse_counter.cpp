@@ -28,11 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+#define LIB_PULSE_COUNTER_GLOBAL
 #include "lib_class_pulse_counter.h"
-
-//-------------------------------------------------------------------------------------------------
-
-#ifdef PULSE_COUNTER_DEF
+#undef  LIB_PULSE_COUNTER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
@@ -45,7 +43,7 @@
 //   Class: PULSE_Counter
 //
 //
-//   Description:   Class to handle Pulse counter
+//   Description:   Class to handle pulse counting
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -53,10 +51,10 @@
 // static variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-PULSE_CounterInfo_t PULSE_Counter::m_Info[NB_OF_PULSE_COUNTER] =
-{
+//PULSE_CounterInfo_t PULSE_Counter::m_Info[NB_OF_PULSE_COUNTER] =  // i think i don't need this
+//{
     //QUAD_ENCODER_DEF(EXPAND_X_QUAD_ENCODER_AS_STRUCT_DATA)
-};
+//};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -67,9 +65,24 @@ PULSE_CounterInfo_t PULSE_Counter::m_Info[NB_OF_PULSE_COUNTER] =
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-PULSE_Counter::PULSE_Counter()
+PULSE_Counter::PULSE_Counter(TIM_Driver* pTimer)
 {
-    // using structure with timer.. timer init here
+    m_pTimer = pTimer;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Reset
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Reset state of the counter
+//
+//-------------------------------------------------------------------------------------------------
+void PULSE_Counter::Initialize()
+{
+    Reset();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -117,9 +130,7 @@ void PULSE_Counter::PulseISR(void)
 {
     //??value
 
-    m_pCallback(Change);
+    //m_pCallback(Change);
 }
 
 //-------------------------------------------------------------------------------------------------
-
-#endif // PULSE_COUNTER_DEF

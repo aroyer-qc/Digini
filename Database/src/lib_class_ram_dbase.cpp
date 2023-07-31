@@ -115,7 +115,7 @@ const size_t RAM_DataBase::m_ItemSize[NB_RAM_DBASE_ITEMS_CONST] =               
 //                  size_t          ObjectSize
 //   Return:        SystemState_e   Always SYS_READY in this driver
 //
-//   Description:
+//   Description:   Initialize the RAM database
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e RAM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
@@ -242,26 +242,37 @@ uint16_t RAM_DataBase::GetDriverIndex(Range_e Range)
 //
 //   Function name: GetSize
 //
-//   Parameter(s):  uint16_t        Record
-//                  uint32_t*       pSize
-//                  uint16_t        Number
-//                  uint16_t        SubNumber
+//   Parameter(s):  size_t*         pSize
+//                  uint16_t        Record
 //   Return:        uint32_t*       SystemState_e
 //
 //   Description:   Return the size of record
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e RAM_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e RAM_DataBase::GetSize(size_t* pSize, uint16_t Record)
 {
-    SystemState_e    State;
-
     Record -= DBASE_INDEX_RAM_RANGE;
-    if((State = CheckRange(Record, Number, SubNumber)) != SYS_READY)
-    {
-        return State;
-    }
-
     *pSize = m_ItemSize[Record];
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetInfo
+//
+//   Parameter(s):  DBaseInfo_t*    pInfo
+//                  uint16_t        Record
+//   Return:        uint32_t*       SystemState_e
+//
+//   Description:   Return the all info for this of record
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e RAM_DataBase::GetInfo(DBaseInfo_t* pInfo, uint16_t Record)
+{
+    Record -= DBASE_INDEX_RAM_RANGE;
+    pInfo->ItemsQTY    = m_ItemsQTY[Record];
+    pInfo->SubItemsQTY = m_ItemsSubQTY[Record];
+    pInfo->Size        = m_ItemSize[Record];
     return SYS_READY;
 }
 

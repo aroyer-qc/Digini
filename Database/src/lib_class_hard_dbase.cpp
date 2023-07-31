@@ -88,10 +88,11 @@ const Func_DatabaseCallBack HARD_DataBase::m_CallBack[NB_HARD_DBASE_ITEMS_CONST]
 //
 //   Function name: Initialize
 //
-//   Parameter(s):
-//   Return:
+//   Parameter(s):  void*       pConfig
+//                  size_t      ObjectSize
+//   Return:        SystemState_e
 //
-//   Description:
+//   Description:   Initialize Hardware database
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e HARD_DataBase::Initialize(void* pConfig, size_t ObjectSize)
@@ -101,7 +102,6 @@ SystemState_e HARD_DataBase::Initialize(void* pConfig, size_t ObjectSize)
     VAR_UNUSED(ObjectSize);
     return SYS_READY;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -118,7 +118,6 @@ uint16_t HARD_DataBase::GetDriverIndex(Range_e Range)
     if(Range == RANGE_MIN) return START_HARD_DBASE + 1;
     return END_HARD_DBASE - 1;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -146,7 +145,6 @@ SystemState_e HARD_DataBase::Get(void* pData, uint16_t Record, uint16_t Number, 
     m_CallBack[Record](ACCESS_READ, pData, Number, SubNumber);
     return SYS_READY;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -179,29 +177,40 @@ SystemState_e HARD_DataBase::Set(const void* pData, uint16_t Record, uint16_t Nu
 //
 //   Function name: GetSize
 //
-//   Parameter(s):  uint16_t        Record
-//                  uint32_t*       pSize
-//                  uint16_t        Number
-//                  uint16_t        SubNumber
-//   Return:        uint32_t*       SystemState_e
+//   Parameter(s):  size_t*     pSize
+//                  uint16_t    Record
+//
+//   Return:        SystemState_e
 //
 //   Description:   Return the size of record
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e HARD_DataBase::GetSize(uint32_t* pSize, uint16_t Record, uint16_t Number, uint16_t SubNumber)
+SystemState_e HARD_DataBase::GetSize(size_t* pSize, uint16_t Record)
 {
-    SystemState_e    State;
-
     Record -= DBASE_INDEX_HARD_RANGE;
-    if((State = CheckRange(Record, Number, SubNumber)) != SYS_READY)
-    {
-        return State;
-    }
-
     *pSize = m_ItemSize[Record];
     return SYS_READY;
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetInfo
+//
+//   Parameter(s):  DBaseInfo_t*    pInfo
+//                  uint16_t        Record
+//   Return:        uint32_t*       SystemState_e
+//
+//   Description:   Return the all info for this of record
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e HARD_DataBase::GetInfo(DBaseInfo_t* pInfo, uint16_t Record)
+{
+    Record -= DBASE_INDEX_HARD_RANGE;
+    pInfo->ItemsQTY    = m_ItemsQTY[Record];
+    pInfo->SubItemsQTY = m_ItemsSubQTY[Record];
+    pInfo->Size        = m_ItemSize[Record];
+    return SYS_READY;
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -221,7 +230,6 @@ SystemState_e HARD_DataBase::GetPointer(void** pPointer, uint16_t Record, uint16
     *pPointer = nullptr;
     return SYS_READY;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -243,8 +251,8 @@ SystemState_e HARD_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16
         {
             return SYS_READY;
         }
-
     }
+
     return SYS_OUT_OF_RANGE;
 }
 

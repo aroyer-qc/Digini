@@ -275,15 +275,15 @@ extern const IO_IRQ_Properties_t  IO_IRQ_Properties[IO_IRQ_NUM];
 //-------------------------------------------------------------------------------------------------
 
 void        IO_PinInit                  (IO_ID_e IO_ID);
-void        IO_PinInit                  (GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint32_t PinType, uint32_t PinSpeed, uint32_t State); // is it necessary?
+void        IO_PinInit                  (GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint32_t PinType, uint32_t PinSpeed, uint32_t State);
 void        IO_PinInitInput             (IO_ID_e IO_ID);
 void        IO_PinInitOutput            (IO_ID_e IO_ID);
 void        IO_SetPinLow                (IO_ID_e IO_ID);
 void        IO_SetPinHigh               (IO_ID_e IO_ID);
 void        IO_TogglePin                (IO_ID_e IO_ID);
-void        IO_SetPin                   (IO_ID_e IO_ID, uint32_t Value);
-uint32_t    IO_GetInputPin              (IO_ID_e IO_ID);
-uint32_t    IO_GetOutputPin             (IO_ID_e IO_ID);
+void        IO_SetPin                   (IO_ID_e IO_ID, bool Value);
+bool        IO_GetInputPin              (IO_ID_e IO_ID);
+bool        IO_GetOutputPin             (IO_ID_e IO_ID);
 void        IO_EnableClock              (GPIO_TypeDef* pPort);// is it necessary?
 #ifdef IO_IRQ_DEF
 void        IO_InitIRQ                  (IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback);

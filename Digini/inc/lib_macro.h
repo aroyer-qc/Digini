@@ -32,26 +32,37 @@
 
 #define VAR_UNUSED(v)                       ((void)(v))
 
-#define AbsMin(V,T)                         ((V < T) ? T : V)
-#define AbsMax(V,T)                         ((V > T) ? T : V)
+#define AbsMin(V,T)                         (((V) < (T)) ? (T) : (V))
+#define AbsMax(V,T)                         (((V) > (T)) ? (T) : (V))
 #define Toggle(A)                           (A = (uint8_t)(1 - A))
 #define CheckOption(A,B)                    (((B) & (A)) > 0)
 #define sizearray(A)                        (sizeof(A) / sizeof(A[0]))
-#define ABS(X)                              ((X) > 0 ? (X) : -(X))
+#define ABS(X)                              ((X) >= 0 ? (X) : -(X))
 
 #define swap8(A)                            ((A << 4) | (A >> 4))
 #define swap16(A)                           ((A << 8) | (A >> 8))
 #define swap32(A)                           ((A << 16) | (A >> 16))
 
-// Macro to convert 2 ascii character that represent a Byte in text to a real HEX value
-#define Asc2Hex(A,B)                        (((((A-=48)>9?(A-=7):A)>15)?(A-=32):A)<<4)+((((B-=48)>9?(B-=7):B)>15)?(B-=32):B)
-
-// Macro to convert 1 ascii character that represent a Byte in text to a real HEX value
+// Macro to convert 1 ASCII character that represent a Byte in text to a real HEX value
 #define AscHex(A)                           ((((A-=48)>9?(A-=7):A)>15)?(A-=32):A)
+// Macro to convert 2 ASCII character that represent a Byte in text to a real HEX value
+#define Asc2Hex(A,B)                        (AscHex(A)<<4)+AscHex(B)
 
 // Bit operation on uint8_t
-#define CheckBit(DATA, BIT)                 (DATA &   (0x01 << BIT))
-#define ToggleBit(DATA, BIT)                (DATA ^=  (0x01 << BIT))
+#define CheckBit(DATA, BT)                  (DATA &   (0x01 << BT))
+#define ToggleBit(DATA, BT)                 (DATA ^=  (0x01 << BT))
+#define BIT(n)                              (1 << n)
+#define BIT_TRUE(x, mask)                   (x) |= (mask)
+#define BIT_FALSE(x, mask)                  (x) &= ~(mask)
+#define BIT_IS_TRUE(x, mask)                ((x & mask) != 0)
+#define BIT_IS_FALSE(x, mask)               ((x & mask) == 0)
+//#define BIT_TRUE_ATOMIC(x, mask)            BIT_TRUE(x,mask)
+//#define BIT_FALSE_ATOMIC(x, mask)           BIT_FALSE(x,mask)
+//#define BIT_TOGGLE_ATOMIC(x, mask)          (x) ^= (mask)
+
+
+
+
 
 // Create uint32_t value fron 4 uint8_t value ou ascii char
 #define U32MACRO(A,B,C,D)                   ((uint32_t(D) << 24) + (uint32_t(C) << 16) + (uint32_t(B) << 8) + uint32_t(A))
@@ -63,8 +74,15 @@
 
 #define CVT_HOUR_TO_SECOND(H)               ((H) * 3600)
 
+#ifndef M_PI
+ #define M_PI                               3.14159265358979323846
+#endif // M_PI
+
+#define MM_PER_INCH                         (25.40)
+#define INCH_PER_MM                         (0.0393701)
+
 #ifndef   PACKED_STRUCT
-  #define PACKED_STRUCT                        struct __attribute__((packed, aligned(1)))
+  #define PACKED_STRUCT                     struct __attribute__((packed, aligned(1)))
 #endif
 
 #ifndef UNALIGNED_UINT16_WRITE

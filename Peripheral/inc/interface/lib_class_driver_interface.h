@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_4bcddec.cpp
+//  File : lib_class_driver_interface.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,30 +24,19 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "lib_digini.h"
+#pragma once
 
 //-------------------------------------------------------------------------------------------------
-//
-//   Function Name: LIB_4BcdDec
-//
-//   Parameter(s):  uint16_t     BCD_Value       BCD Value
-//   Return:        uint16_t                     0 - 9999 decimal value
-//
-//   Description:   Extract from 4 BCD to decimal value uint16_t
-//
+// class definition(s)
 //-------------------------------------------------------------------------------------------------
-uint16_t LIB_4BcdDec(uint16_t BCD_Value)
+
+class DriverInterface
 {
-    uint16_t Value;
+    public:
 
-    Value  = uint16_t(LIB_2BcdDec(uint8_t(BCD_Value >> 8))) * 100;
-    Value += uint16_t(LIB_2BcdDec(uint8_t(BCD_Value)));
-
-    return Value;
-}
+        virtual SystemState_e       Write       (const void* pBuffer, size_t Size)      = 0;
+        virtual SystemState_e       Read        (void* pBuffer, size_t Size)            = 0;
+};
 
 //-------------------------------------------------------------------------------------------------
+

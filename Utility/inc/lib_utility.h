@@ -84,6 +84,8 @@ void        LIB_GetTime                     (Time_t* pData);
 void        LIB_SetTime                     (Time_t* pData);
 void        LIB_GetDate                     (Date_t* pData);
 void        LIB_SetDate                     (Date_t* pData);
+void        LIB_GetDateAndTime              (DateAndTime_t* pTimeDate);
+void        LIB_SetDateAndTime              (DateAndTime_t* pTimeDate);
 
 void        LIB_FastMemcpy                  (const uint8_t* pSrc, uint8_t* pDst, size_t Length);
 

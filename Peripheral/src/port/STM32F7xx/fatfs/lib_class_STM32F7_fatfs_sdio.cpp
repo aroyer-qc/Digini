@@ -80,7 +80,7 @@ DSTATUS FatFS_SDIO::Initialize(void)
     {
         if((State = m_pSDIO_Driver->InitializeCard()) == SYS_READY)                     // Initialize the present card and put them in idle state
         {
-            if((State = m_pSDIO_Driver->GetCardInfo()) == SYS_READY)    // Read CSD/CID MSD registers
+            if((State = m_pSDIO_Driver->GetCardInfo()) == SYS_READY)                    // Read CSD/CID MSD registers
             {
                 State = m_pSDIO_Driver->SelectTheCard();                                // Select the Card
             }

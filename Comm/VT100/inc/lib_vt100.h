@@ -54,8 +54,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define VT100_X_SIZE        100
-#define VT100_Y_SIZE        50
+#define VT100_X_SIZE                        100
+#define VT100_Y_SIZE                        50
 
 #define VT100_OFFSET_COLOR_FOREGROUND       30
 #define VT100_OFFSET_COLOR_BACKGROUND       40
@@ -82,7 +82,7 @@ enum VT100_Menu_e
 
 enum VT100_Callback_e
 {
-    VT100_CALLBACK(EXPAND_VT100_MENU_AS_ENUM)
+    VT100_CALLBACK(EXPAND_VT100_MENU_AS_ENUM)               // Strange... this should be identical to the previous expand
     NUMBER_OF_CALLBACK,
 };
 

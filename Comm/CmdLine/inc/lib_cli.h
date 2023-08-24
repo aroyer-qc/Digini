@@ -116,12 +116,6 @@ struct CLI_CmdInputInfo_t
     CLI_CmdParam_t          Param[CLI_NUMBER_OF_SUPPORTED_PARAM];
 };
 
-enum CLI_InputState_e
-{
-    CLI_CMD_LINE,
-    CLI_USER_FUNCTION,
-};
-
 enum CLI_Step_e
 {
     CLI_STEP_IDLE                 = 0,
@@ -143,8 +137,6 @@ enum CLI_StrCmdSize_e
 
 };
 
-typedef void (*CLI_ChildProcess_t)(uint8_t Data);
-
 //-------------------------------------------------------------------------------------------------
 // Function(s) Prototype(s)
 //-------------------------------------------------------------------------------------------------
@@ -156,14 +148,8 @@ class CommandLine : public ChildProcessInterface
         void            IF_Process                  (void);
 
         void            Initialize                  (Console* pConsole);
-
-        void            GiveControlToChildProcess   (ChildProcessInterface* pChildProcess);
-        void            ReleaseControl              (void);
         void            LockDisplay                 (bool State);
         void            SendAnswer                  (CLI_CmdName_e CmdName, SystemState_e State, const char* Answer);
-
-        // For child process to send data
-        SystemState_e   SendData                    (const uint8_t* p_BufferTX, size_t* pSizeTX, void* pContext = nullptr);
 
 
       #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
@@ -187,17 +173,16 @@ class CommandLine : public ChildProcessInterface
     // --------------------------------------------------------------------------------------------
 
         Console*                                m_pConsole;
-        CLI_InputState_e                        m_InputState;
         size_t                                  m_ParserRX_Size;
         CLI_Step_e                              m_Step;
         FIFO_Buffer                             m_FifoCmd;
-        ChildProcessInterface*                  m_pChildProcess;
         TickCount_t                             m_CommandTimeOut;
         size_t                                  m_CommandNameSize;
         bool                                    m_MuteSerialLogging;
         TickCount_t                             m_StartupTick;
         bool                                    m_IsItOnStartup;
         bool                                    m_IsItOnHold;
+        bool                                    m_IsItInitialize;
         bool                                    m_ReadCommand;
         bool                                    m_PlainCommand;
         int32_t                                 m_ParamValue[CLI_NUMBER_OF_SUPPORTED_PARAM];

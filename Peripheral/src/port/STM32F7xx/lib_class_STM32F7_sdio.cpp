@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -354,7 +354,7 @@ SystemState_e SDIO_Driver::SetBusWidth(uint32_t WideMode)
 //
 //   Parameter(s):  uint8_t         Command
 //                  uint32_t        Argument
-//                  ResponseType_e  ResponseType
+//                  int32_t         ResponseType
 //   Return value:  SystemState_e
 //
 //   Description:   Send command to the SD Card
@@ -443,7 +443,7 @@ SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
     uint32_t      Flag;
 
     if(ResponseType == -1) Flag = SDMMC_STA_CMDSENT;
-    else                   Flag = SDMMC_STA_CCRCFAIL | SDMMC_STA_CMDREND | SDMMC_STA_CTIMEOUT;
+    else                        Flag = SDMMC_STA_CCRCFAIL | SDMMC_STA_CMDREND | SDMMC_STA_CTIMEOUT;
 
     TimeOut = SD_SOFTWARE_COMMAND_TIMEOUT;
     do
@@ -459,27 +459,30 @@ SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
     }
 
     if((SDMMC1->STA & SDMMC_STA_CTIMEOUT) != 0)     return SYS_COMMAND_TIME_OUT;
+
     if(ResponseType == 3)
     {
         if(TimeOut == 0)                            return SYS_COMMAND_TIME_OUT;    // Card is not V2.0 compliant or card does not support the set voltage range
         else                                        return SYS_READY;               // Card is SD V2.0 compliant
-        }
+    }
+
     if((SDMMC1->STA & SDMMC_STA_CCRCFAIL) != 0)     return SYS_CRC_FAIL;
     if(ResponseType == 2)                           return SYS_READY;
     if((uint8_t)SDMMC1->RESPCMD != Command)         return SYS_INVALID_COMMAND;     // Check if response is of desired command
 
-                            Response_R1 = SDMMC1->RESP1;                                                    // We have received response, retrieve it for analysis
+    Response_R1 = SDMMC1->RESP1;                                                    // We have received response, retrieve it for analysis
 
-                            if(ResponseType == 1)
-                            {
+    if(ResponseType == 1)
+    {
         return this->CheckOCR_Response(Response_R1);
-                            }
-                            else if(ResponseType == 6)
-                            {
-                                if((Response_R1 & (SD_R6_GENERAL_UNKNOWN_ERROR | SD_R6_ILLEGAL_CMD | SD_R6_COM_CRC_FAILED)) == SD_ALLZERO)
-                                {
-                                    m_RCA = Response_R1;
-                                }
+    }
+    else if(ResponseType == 6)
+    {
+        if((Response_R1 & (SD_R6_GENERAL_UNKNOWN_ERROR | SD_R6_ILLEGAL_CMD | SD_R6_COM_CRC_FAILED)) == SD_ALLZERO)
+        {
+            m_RCA = Response_R1;
+        }
+
         if((Response_R1 & SD_R6_GENERAL_UNKNOWN_ERROR) == SD_R6_GENERAL_UNKNOWN_ERROR)      return SYS_GENERAL_UNKNOWN_ERROR;
         if((Response_R1 & SD_R6_ILLEGAL_CMD)           == SD_R6_ILLEGAL_CMD)                return SYS_INVALID_COMMAND;
         if((Response_R1 & SD_R6_COM_CRC_FAILED)        == SD_R6_COM_CRC_FAILED)             return SYS_CRC_FAIL;
@@ -488,6 +491,7 @@ SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
     return SYS_READY;
 }
 
+//-------------------------------------------------------------------------------------------------
 //
 //   Function:      IsDetected
 //

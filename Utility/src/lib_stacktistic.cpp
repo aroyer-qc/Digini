@@ -41,7 +41,15 @@ extern const uint32_t _estack;
 extern const uint32_t _Min_Stack_Size;
 
 //-------------------------------------------------------------------------------------------------
-
+//
+// Name:           Initialize
+//
+// Parameter(s):   None
+// Return:         None
+//
+// Description:    Initialize the Stack monitoring tool.
+//
+//-------------------------------------------------------------------------------------------------
 void StackCheck::Initialize(void)
 {
     int32_t Stack;
@@ -49,7 +57,7 @@ void StackCheck::Initialize(void)
     int32_t StackLeft;
 
     // Start by filling the idle stack (main stack)
-    __asm(  "mov %[result], sp" : [result] "=r" (Stack));
+    __asm( "mov %[result], sp" : [result] "=r" (Stack));
 
     StackUsed = uint32_t(&_estack) - Stack;
     StackLeft = uint32_t(&_Min_Stack_Size) - StackUsed;
@@ -78,26 +86,43 @@ void StackCheck::Initialize(void)
 //
 // Name:           Register
 //
-// Parameter(s):   pStack               Pointer on the stack to register
-//                 STackSz              Stack Size in multiple of 4 bytes
+// Parameter(s):   pStack               Pointer on the stack to register.
+//                 STackSz              Stack Size in multiple of 4 bytes.
+//                 pStackName           Pointer on the stack name.
 // Return:         StackID              Return the stackID of the registration.
 //                                      -1 mean it was not register.
 //
-// Description:    Return the use size of a specific stack.
+// Description:    Register a stack to be monitored by this utility
 //
 //-------------------------------------------------------------------------------------------------
-int StackCheck::Register(const uint32_t* pStack, size_t STackSz)
+int StackCheck::Register(const uint32_t* pStack, size_t STackSz, const char* pStackName)
 {
     if(m_NumberOfStack < DIGINI_STACKTISTIC_NUMBER_OF_STACK)
     {
         STackSz--;
         m_pStackBottom[m_NumberOfStack] = pStack;
-        m_Size[m_NumberOfStack] = STackSz;
+        m_Size[m_NumberOfStack]         = STackSz;
+        m_pStackName[m_NumberOfStack]   = pStackName;
         m_NumberOfStack++;
         return m_NumberOfStack - 1;
     }
 
     return -1;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           GetStackName
+//
+// Parameter(s):   pStack               Number attributed to stack when it was register
+// Return:         onst char*           Pointer on the name of the stack
+//
+// Description:    Return the pointer on the stack names.
+//
+//-------------------------------------------------------------------------------------------------
+const char* StackCheck::GetStackName(int StackID)
+{
+    return m_pStackName[StackID];
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -110,7 +110,7 @@ SystemState_e PDI_myClassTask::Initialize(PointingDeviceInterface* pDriver, uint
         }
 
       #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-        myStacktistic.Register(&m_Stack[0], PDI_TASK_STACK_SIZE);
+        myStacktistic.Register(&m_Stack[0], PDI_TASK_STACK_SIZE, "Stack PDI");
       #endif
     }
 

@@ -147,7 +147,7 @@ nOS_Error SKIN_myClassTask::Initialize(void)
         //Error = nOS_FlagCreate(&this->m_SkinFlags, 0,0);
 
       #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-        myStacktistic.Register(&m_Stack[0], SKIN_TASK_STACK_SIZE);
+        myStacktistic.Register(&m_Stack[0], SKIN_TASK_STACK_SIZE, "Task Skin");
       #endif
     }
 

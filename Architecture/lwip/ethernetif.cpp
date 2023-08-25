@@ -174,7 +174,7 @@ err_t ethernetif_init(struct netif* netif)
 
 
       #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-        myStacktistic.Register(&Stack[0], TASK_ETHERNET_IF_STACK_SIZE);
+        myStacktistic.Register(&Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Task Ethernet");
       #endif
 
     // Enable MAC and DMA transmission and reception

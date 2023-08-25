@@ -84,6 +84,11 @@ X_VT100_LBL_CFG( VT100_LBL_STRING_AND_ONE_SPACE,       "%s ",                   
 X_VT100_LBL_CFG( VT100_LBL_FULL_DATE,                  "%s, %s %u, %u, %u:%02u:%02u ",                                                                             nullptr                                                                                  ) \
 X_VT100_LBL_CFG( VT100_LBL_NOW,                        "Now:",                                                                                                     "Maintenant:"                                                                            ) \
 X_VT100_LBL_CFG( VT100_LBL_UPTIME,                     "Up Time:",                                                                                                 "Temps Écoulé:"                                                                          ) \
+X_VT100_LBL_CFG( LBL_VT100_LBL_PERCENT_VALUE,          "Percent %ld",                                                                                              "Pourcent %ld"                                                                           ) \
+X_VT100_LBL_CFG( VT100_LBL_BAR_BOX_20_LINE_1,          "┌────────────────────┐",                                                                                   nullptr                                                                                  ) \
+X_VT100_LBL_CFG( VT100_LBL_BAR_BOX_20_LINE_2,          "│                    │",                                                                                   nullptr                                                                                  ) \
+X_VT100_LBL_CFG( VT100_LBL_BAR_BOX_20_LINE_3,          "└────────────────────┘",                                                                                   nullptr                                                                                  ) \
+
 
 
 #define VT100_MONO_LABEL_LANGUAGE_DEF(X_VT100_LBL_CFG) \

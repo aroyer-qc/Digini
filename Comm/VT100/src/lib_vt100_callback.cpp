@@ -164,7 +164,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_None(uint8_t Input, VT100_CallBackTyp
 //-------------------------------------------------------------------------------------------------
 VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallBackType_e Type)
 {
-    static int NbOfStack = 0;
+    static int  NbOfStack = 0;
+    int32_t     Percent;
 
     VAR_UNUSED(Input);
 
@@ -179,12 +180,18 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
 
             for(int i = 0; i < NbOfStack; i++)
             {
-                myVT100.Bargraph(10, (i * 3) + 10, VT100_COLOR_GREEN, uint8_t(myStacktistic.GetPercent(i)), 100, 20);
+              #if (VT100_USE_COLOR == DEF_ENABLED)
+                myVT100.SetForeColor(VT100_COLOR_WHITE);
+              #endif
+                myVT100.SetCursorPosition(11, (i * 3) + 9);
+                myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_STRING, myStacktistic.GetStackName(i));
+                myVT100.SetCursorPosition(10, (i * 3) + 9);
+                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_1);
+                myVT100.SetCursorPosition(10, (i * 3) + 10);
+                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_2);
+                myVT100.SetCursorPosition(10, (i * 3) + 11);
+                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_3);
             }
-
-    //  Display box for all stack
-            //  Display all task name using the task..
-            //  Displa ???
         }
         break;
 
@@ -193,12 +200,14 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
         {
             for(int i = 0; i < NbOfStack; i++)
             {
-                myVT100.Bargraph(10, (i * 3) + 10, VT100_COLOR_GREEN,  myStacktistic.GetPercent(i), 100, 20);
+                Percent = myStacktistic.GetPercent(i);
+                myVT100.Bargraph(10, (i * 3) + 10, VT100_COLOR_GREEN, Percent, 100, 20);
+              #if (VT100_USE_COLOR == DEF_ENABLED)
+                myVT100.SetForeColor(VT100_COLOR_WHITE);
+              #endif
+                myVT100.SetCursorPosition(11, 23);
+                myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VT100_LBL_PERCENT_VALUE, Percent);
             }
-            // At refresh
-            //  Display historic graph usage of every stacks and percent on the right side
-            //  GREEN on allowed safe range, RED when over setpoint
-            // ascii 219 full block. half block is 220. underscore for 1 or 2 is 95
         }
         break;
 

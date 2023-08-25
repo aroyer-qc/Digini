@@ -116,21 +116,9 @@ const size_t CommandLine::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
 //-------------------------------------------------------------------------------------------------
 void CommandLine::Initialize(Console* pConsole)
 {
-    TickCount_t Delay;
+    m_pConsole       = pConsole;
+    m_IsItInitialize = false;
 
-    m_pConsole          = pConsole;
-    m_InputState        = CLI_CMD_LINE;                 // Initial input type
-    m_Step              = CLI_STEP_IDLE;                // Initial step of the parser
-    m_ParserRX_Size     = 0;
-    m_IsItOnHold        = false;
-    m_IsItOnStartup     = true;
-    m_MuteSerialLogging = true;
-    m_pChildProcess     = nullptr;
-    m_FifoCmd.Initialize(CLI_FIFO_CMD_SIZE);
-    pConsole->Printf(CON_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
-    Delay = GetTick();
-    while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
-    pConsole->Printf(CON_SIZE_NONE, "Command Line Process Started\r>");
     m_StartupTick = GetTick();
 }
 
@@ -153,6 +141,23 @@ void CommandLine::IF_Process(void)
     SystemState_e        State;
     int                  Command;
     CLI_CommandSupport_e Support;
+
+
+    if(m_IsItInitialize == false)
+    {
+        m_IsItInitialize    = true;
+        m_Step              = CLI_STEP_IDLE;                // Initial step of the parser
+        m_ParserRX_Size     = 0;
+        m_IsItOnHold        = false;
+        m_IsItOnStartup     = true;
+        m_MuteSerialLogging = true;
+        //m_pChildProcess     = nullptr;
+        m_FifoCmd.Initialize(CLI_FIFO_CMD_SIZE);
+        m_pConsole->Printf(CON_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
+        TickCount_t Delay = GetTick();
+        while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
+        m_pConsole->Printf(CON_SIZE_NONE, "Command Line Process Started\r>");
+    }
 
     if(m_IsItOnStartup == true)
     {
@@ -319,137 +324,116 @@ bool CommandLine::ProcessRX(void)
     {
         m_pConsole->Read(&Data, 1);
 
-        switch(int(m_InputState))
+        //-------------------------------------------------------------------------------------
+        // Parse FIFO
+        //
+        if(m_Step != CLI_STEP_CMD_VALID)
         {
-            case CLI_CMD_LINE:
+            //---------------------------------------------------------------------------------
+            // Waiting to process incoming command
+            //
+            if(m_Step != CLI_STEP_GETTING_DATA)
             {
-                //-------------------------------------------------------------------------------------
-                // Parse FIFO
-                //
-                if(m_Step != CLI_STEP_CMD_VALID)
+                // Receive more data than AT header so, this accelerate process in IRQ
+                if(((Data == 'a') || (Data == 'A')) && (m_Step == CLI_STEP_WAITING_FOR_A))
                 {
-                    //---------------------------------------------------------------------------------
-                    // Waiting to process incoming command
-                    //
-                    if(m_Step != CLI_STEP_GETTING_DATA)
-                    {
-                        // Receive more data than AT header so, this accelerate process in IRQ
-                        if(((Data == 'a') || (Data == 'A')) && (m_Step == CLI_STEP_WAITING_FOR_A))
-                        {
-                            m_Step = CLI_STEP_WAITING_FOR_T;
-                        }
-                        else if(((Data == 't') || (Data == 'T')) && (m_Step == CLI_STEP_WAITING_FOR_T))
-                        {
-                            m_Step            = CLI_STEP_GETTING_DATA;
-                            m_ReadCommand     = false;
-                            m_PlainCommand    = true;
-                            m_CommandNameSize = 0;
-                        }
-                        else
-                        {
-                            m_Step = CLI_STEP_IDLE;
-                        }
-
-                        m_ParserRX_Size = 0;
-                    }
-
-                    //---------------------------------------------------------------------------------
-                    // Receiving an AT command. Basic parsing of the command
-                    else
-                    {
-                        if(Data == ASCII_EQUAL)
-                        {
-                            m_PlainCommand = false;
-
-                            if(m_ParserRX_Size != 0)
-                            {
-                                m_CommandNameSize = m_ParserRX_Size;
-                            }
-                            else
-                            {
-                                m_Step = CLI_STEP_CMD_MALFORMED;
-                                State  = true;
-                            }
-                        }
-                        else if(Data == ASCII_QUESTION_MARK)
-                        {
-                            // '?' must follow '='
-                            if(m_CommandNameSize == m_ParserRX_Size)
-                            {
-                                m_ReadCommand = true;
-                            }
-                            else // Malformed packet
-                            {
-                                m_Step = CLI_STEP_CMD_MALFORMED;
-                                State  = true;
-                            }
-                        }
-                        else if(Data == ASCII_CARRIAGE_RETURN)
-                        {
-                            if(m_CommandNameSize == 0)    // if not "=" or "=?"
-                            {
-                                m_CommandNameSize = m_ParserRX_Size;
-                            }
-
-                            m_Step     = CLI_STEP_CMD_VALID;
-                            State      = true;
-                            m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);         // Flush console buffer
-                        }
-                        else if((char)Data == ASCII_BACKSPACE)
-                        {
-                             if(m_CommandNameSize == m_ParserRX_Size)
-                            {
-                                m_CommandNameSize = 0;
-                            }
-
-                            m_ParserRX_Size--;
-                            m_FifoCmd.HeadBackward(1);
-                        }
-                        else
-                        {
-                            // Write data into the Fifo command buffer
-                            if(m_FifoCmd.Write((const void*)&Data, 1) != 1)     // Check if we can write into the Fifo
-                            {
-                                // We have overrun the Fifo buffer
-                                m_Step = CLI_STEP_CMD_BUFFER_OVERFLOW;
-                                State = true;
-                            }
-                            else
-                            {
-                                m_ParserRX_Size++;
-                            }
-                        }
-
-                        // Flush both FIFO an Error has occurred.
-                        if((m_Step != CLI_STEP_GETTING_DATA) && (m_Step != CLI_STEP_CMD_VALID))
-                        {
-                            m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);
-                            m_FifoCmd.Flush(CLI_FIFO_CMD_SIZE);
-                            // Parser send Error and reset the state machine
-                        }
-                    }
+                    m_Step = CLI_STEP_WAITING_FOR_T;
                 }
-
-                if(m_Step != CLI_STEP_IDLE)
+                else if(((Data == 't') || (Data == 'T')) && (m_Step == CLI_STEP_WAITING_FOR_T))
                 {
-                    m_CommandTimeOut = GetTick();
-                }
-            }
-            break;
-
-            case CLI_USER_FUNCTION:
-            {
-                if(m_pChildProcess != nullptr)
-                {
-                  //  m_pChildProcess(Data);
+                    m_Step            = CLI_STEP_GETTING_DATA;
+                    m_ReadCommand     = false;
+                    m_PlainCommand    = true;
+                    m_CommandNameSize = 0;
                 }
                 else
                 {
-                    // Return to command line since no child process exist.
                     m_Step = CLI_STEP_IDLE;
                 }
+
+                m_ParserRX_Size = 0;
             }
-            break;
+
+            //---------------------------------------------------------------------------------
+            // Receiving an AT command. Basic parsing of the command
+            else
+            {
+                if(Data == ASCII_EQUAL)
+                {
+                    m_PlainCommand = false;
+
+                    if(m_ParserRX_Size != 0)
+                    {
+                        m_CommandNameSize = m_ParserRX_Size;
+                    }
+                    else
+                    {
+                        m_Step = CLI_STEP_CMD_MALFORMED;
+                        State  = true;
+                    }
+                }
+                else if(Data == ASCII_QUESTION_MARK)
+                {
+                    // '?' must follow '='
+                    if(m_CommandNameSize == m_ParserRX_Size)
+                    {
+                        m_ReadCommand = true;
+                    }
+                    else // Malformed packet
+                    {
+                        m_Step = CLI_STEP_CMD_MALFORMED;
+                        State  = true;
+                    }
+                }
+                else if(Data == ASCII_CARRIAGE_RETURN)
+                {
+                    if(m_CommandNameSize == 0)    // if not "=" or "=?"
+                    {
+                        m_CommandNameSize = m_ParserRX_Size;
+                    }
+
+                    m_Step     = CLI_STEP_CMD_VALID;
+                    State      = true;
+                    m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);         // Flush console buffer
+                }
+                else if((char)Data == ASCII_BACKSPACE)
+                {
+                     if(m_CommandNameSize == m_ParserRX_Size)
+                    {
+                        m_CommandNameSize = 0;
+                    }
+
+                    m_ParserRX_Size--;
+                    m_FifoCmd.HeadBackward(1);
+                }
+                else
+                {
+                    // Write data into the Fifo command buffer
+                    if(m_FifoCmd.Write((const void*)&Data, 1) != 1)     // Check if we can write into the Fifo
+                    {
+                        // We have overrun the Fifo buffer
+                        m_Step = CLI_STEP_CMD_BUFFER_OVERFLOW;
+                        State = true;
+                    }
+                    else
+                    {
+                        m_ParserRX_Size++;
+                    }
+                }
+
+                // Flush both FIFO an Error has occurred.
+                if((m_Step != CLI_STEP_GETTING_DATA) && (m_Step != CLI_STEP_CMD_VALID))
+                {
+                    m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);
+                    m_FifoCmd.Flush(CLI_FIFO_CMD_SIZE);
+                    // Parser send Error and reset the state machine
+                }
+            }
+        }
+
+        if(m_Step != CLI_STEP_IDLE)
+        {
+            m_CommandTimeOut = GetTick();
         }
     }
 
@@ -537,68 +521,6 @@ void CommandLine::ProcessParams(CLI_CmdName_e Command)
             i++;                    // Must be incremented after variable offset use
         }
     }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           GiveControlToChildProcess
-//
-//  Parameter(s):   pProcess          pointer to a function  void (*pProcess) (uint8_t Data)
-//  Return:         None
-//
-//  Description:    Give control of the interface to a child process.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-/*
-void CommandLine::GiveControlToChildProcess(void(*pProcess)(uint8_t Data))
-{
-    if(pProcess != nullptr)
-    {
-        m_pChildProcess = pProcess;
-        m_InputState    = CLI_USER_FUNCTION;
-    }
-}
-*/
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           ReleaseControl
-//
-//  Parameter(s):   void
-//  Return:         None
-//
-//  Description:    Release control back to the command line
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void CommandLine::ReleaseControl(void)
-{
-    if(m_pChildProcess != nullptr)
-    {
-        m_pChildProcess = nullptr;
-        m_InputState    = CLI_CMD_LINE;
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           SendData
-//
-//  p_BufferTX  Ptr on buffer with data to send.
-//                              if = nullptr, internal TX Buffer remains the one set previously
-//                  pSizeTX     Number of bytes to send, and on return, number of bytes sent
-//   Return Value:  SystemState_e
-//
-//  Description:    This allow child process to send data to the UART.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::SendData(const uint8_t* p_BufferTX, size_t* pSizeTX, void* pContext)
-{
-    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------

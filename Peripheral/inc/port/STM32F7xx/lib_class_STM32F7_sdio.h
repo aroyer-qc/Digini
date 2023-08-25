@@ -122,7 +122,7 @@
 #define SD_DATABLOCK_SIZE_64B           (SDMMC_DCTRL_DBLOCKSIZE_1|SDMMC_DCTRL_DBLOCKSIZE_2)
 #define SD_DATABLOCK_SIZE_512B          (SDMMC_DCTRL_DBLOCKSIZE_0|SDMMC_DCTRL_DBLOCKSIZE_3)
 
-#define BLOCK_SIZE                      512
+#define BLOCK_SIZE                      512         // represent 512KB
 
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
@@ -154,7 +154,7 @@ struct SD_CSD_t
 {
     uint8_t  CSDStruct;                 // CSD structure
     uint8_t  SysSpecVersion;            // System specification version
-    uint8_t  Reserved1;                 // Reserved
+    //uint8_t  Reserved1;               // Reserved
     uint8_t  TAAC;                      // Data read access time 1
     uint8_t  NSAC;                      // Data read access time 2 in CLK cycles
     uint8_t  MaxBusClkFrec;             // Max. bus clock frequency
@@ -164,7 +164,7 @@ struct SD_CSD_t
     uint8_t  WrBlockMisalign;           // Write block misalignment
     uint8_t  RdBlockMisalign;           // Read block misalignment
     uint8_t  DSRImpl;                   // DSR implemented
-    uint8_t  Reserved2;                 // Reserved
+    //uint8_t  Reserved2;               // Reserved
     uint32_t DeviceSize;                // Device Size
     uint8_t  MaxRdCurrentVDDMin;        // Max. read current @ VDD min
     uint8_t  MaxRdCurrentVDDMax;        // Max. read current @ VDD max
@@ -179,16 +179,16 @@ struct SD_CSD_t
     uint8_t  WrSpeedFact;               // Write speed factor
     uint8_t  MaxWrBlockLen;             // Max. write data block length
     uint8_t  WriteBlockPaPartial;       // Partial blocks for write allowed
-    uint8_t  Reserved3;                 // Reserved
+    //uint8_t  Reserved3;               // Reserved
     uint8_t  ContentProtectAppli;       // Content protection application
-    uint8_t  FileFormatGrouop;          // File format group
+    uint8_t  FileFormatGroup;           // File format group
     uint8_t  CopyFlag;                  // Copy flag (OTP)
     uint8_t  PermWrProtect;             // Permanent write protection
     uint8_t  TempWrProtect;             // Temporary write protection
     uint8_t  FileFormat;                // File format
     uint8_t  ECC;                       // ECC code
-    uint8_t  CSD_CRC;                   // CSD CRC
-    uint8_t  Reserved4;                 // Always 1
+    uint8_t  _CRC;                      // CSD CRC
+    //uint8_t  Reserved4;               // Always 1
 };
 
 struct SD_CID_t
@@ -199,10 +199,10 @@ struct SD_CID_t
     uint8_t  ProdName2;                 // Product Name part2
     uint8_t  ProdRev;                   // Product Revision
     uint32_t ProdSN;                    // Product Serial Number
-    uint8_t  Reserved1;                 // Reserved1
+    //uint8_t  Reserved1;               // Reserved1
     uint16_t ManufactDate;              // Manufacturing Date
-    uint8_t  CID_CRC;                   // CID CRC
-    uint8_t  Reserved2;                 // Always 1
+    uint8_t  _CRC;                      // CID CRC
+    //uint8_t  Reserved2;               // Always 1
 };
 
 enum SD_ResponseType_e
@@ -274,7 +274,7 @@ class SDIO_Driver
 
         SystemState_e       CheckOperation          (uint32_t Flag);
         SystemState_e       GetCardInfo             (void);
-        uint8_t             GetCardCapacity         (void);
+        uint32_t            GetCardCapacity         (void);
         SystemState_e       GetStatus               (void);
         SystemState_e       InitializeCard          (void);
         SystemState_e       IsDetected              (void);
@@ -342,7 +342,7 @@ class SDIO_Driver
         uint32_t                m_RCA;
         uint8_t                 m_Status[16];
         SD_CardType_e           m_CardType;
-        uint8_t                 m_CardCapacity;
+        uint32_t                m_CardCapacity;             // this capacity is in 1K granularity
         uint32_t                m_CardBlockSize;
         SystemState_e           m_CardStatus;
        #if SD_CARD_USE_DETECT_SIGNAL == 1

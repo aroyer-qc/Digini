@@ -102,6 +102,18 @@ void PID_Control::Reset(void)
     m_Output             = 0;
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Tune
+//
+//  Parameter(s):   float   kp
+//                  float   ki
+//                  float   kd
+//  Return:         None
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
 void PID_Control::Tune(float kp, float ki, float kd)
 {
 	// Check for validity

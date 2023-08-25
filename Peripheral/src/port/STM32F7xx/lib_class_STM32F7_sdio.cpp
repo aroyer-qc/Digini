@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -37,8 +37,6 @@
 //          DMA : either  DMA2_STREAM3_CHANNEL4
 //                   or   DMA2_STREAM6_CHANNEL4
 //
-//-------------------------------------------------------------------------------------------------
-
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
@@ -74,17 +72,6 @@
                                                                        SDMMC_CLKCR_BYPASS  | SDMMC_CLKCR_WIDBUS |\
                                                                        SDMMC_CLKCR_NEGEDGE | SDMMC_CLKCR_HWFC_EN)); }
 
-
-
-//#define DMA_CHANNEL_4                   ((uint32_t)0x08000000)                // already define
-//#define DMA_MEMORY_TO_PERIPH            ((uint32_t)DMA_SxCR_DIR_0)
-//#define DMA_MINC_ENABLE                 ((uint32_t)DMA_SxCR_MINC)
-//#define DMA_MDATAALIGN_WORD             ((uint32_t)DMA_SxCR_MSIZE_1)
-//#define DMA_PDATAALIGN_WORD             ((uint32_t)DMA_SxCR_PSIZE_1)
-//#define DMA_PRIORITY_VERY_HIGH          ((uint32_t)DMA_SxCR_PL)
-//#define DMA_MBURST_INC4                 ((uint32_t)DMA_SxCR_MBURST_0)
-//#define DMA_PBURST_INC4                 ((uint32_t)DMA_SxCR_PBURST_0)
-
 #define IFCR_CLEAR_MASK_STREAM3         (DMA_LIFCR_CTCIF3 | DMA_LIFCR_CHTIF3 | DMA_LIFCR_CTEIF3 | DMA_LIFCR_CDMEIF3 | DMA_LIFCR_CFEIF3)
 #define IFCR_CLEAR_MASK_STREAM6         (DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6)
 
@@ -115,9 +102,9 @@ SystemState_e SDIO_Driver::SelectTheCard(void)
     return State;
 }
 
-uint8_t SDIO_Driver::GetCardCapacity(void)
+uint32_t SDIO_Driver::GetCardCapacity(void)
 {
-    return uint8_t(m_CardCapacity / BLOCK_SIZE);
+   return (m_CardCapacity / BLOCK_SIZE);
 }
 
 SDIO_Driver::SDIO_Driver()
@@ -367,7 +354,7 @@ SystemState_e SDIO_Driver::SetBusWidth(uint32_t WideMode)
 //
 //   Parameter(s):  uint8_t         Command
 //                  uint32_t        Argument
-//                  ResponseType_e  ResponseType
+//                  int32_t         ResponseType
 //   Return value:  SystemState_e
 //
 //   Description:   Send command to the SD Card
@@ -451,12 +438,12 @@ SystemState_e SDIO_Driver::CheckOCR_Response(uint32_t Response_R1)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
 {
-    uint32_t Response_R1;
-    uint32_t TimeOut;
-    uint32_t Flag;
+    uint32_t      Response_R1;
+    uint32_t      TimeOut;
+    uint32_t      Flag;
 
     if(ResponseType == -1) Flag = SDMMC_STA_CMDSENT;
-    else                   Flag = SDMMC_STA_CCRCFAIL | SDMMC_STA_CMDREND | SDMMC_STA_CTIMEOUT;
+    else                        Flag = SDMMC_STA_CCRCFAIL | SDMMC_STA_CMDREND | SDMMC_STA_CTIMEOUT;
 
     TimeOut = SD_SOFTWARE_COMMAND_TIMEOUT;
     do
@@ -472,11 +459,13 @@ SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
     }
 
     if((SDMMC1->STA & SDMMC_STA_CTIMEOUT) != 0)     return SYS_COMMAND_TIME_OUT;
+
     if(ResponseType == 3)
     {
         if(TimeOut == 0)                            return SYS_COMMAND_TIME_OUT;    // Card is not V2.0 compliant or card does not support the set voltage range
         else                                        return SYS_READY;               // Card is SD V2.0 compliant
     }
+
     if((SDMMC1->STA & SDMMC_STA_CCRCFAIL) != 0)     return SYS_CRC_FAIL;
     if(ResponseType == 2)                           return SYS_READY;
     if((uint8_t)SDMMC1->RESPCMD != Command)         return SYS_INVALID_COMMAND;     // Check if response is of desired command
@@ -493,6 +482,7 @@ SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
         {
             m_RCA = Response_R1;
         }
+
         if((Response_R1 & SD_R6_GENERAL_UNKNOWN_ERROR) == SD_R6_GENERAL_UNKNOWN_ERROR)      return SYS_GENERAL_UNKNOWN_ERROR;
         if((Response_R1 & SD_R6_ILLEGAL_CMD)           == SD_R6_ILLEGAL_CMD)                return SYS_INVALID_COMMAND;
         if((Response_R1 & SD_R6_COM_CRC_FAILED)        == SD_R6_COM_CRC_FAILED)             return SYS_CRC_FAIL;
@@ -501,6 +491,7 @@ SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
     return SYS_READY;
 }
 
+//-------------------------------------------------------------------------------------------------
 //
 //   Function:      IsDetected
 //
@@ -539,8 +530,8 @@ SystemState_e SDIO_Driver::PowerON(void)
     SystemState_e   State;
     uint32_t        Response;
     uint32_t        Count        = 0;
-    uint32_t        ValidVoltage = 0;
-    uint32_t        SD_Type       = SD_RESP_STD_CAPACITY;
+    bool            ValidVoltage = false;
+    uint32_t        SD_Type      = SD_RESP_STD_CAPACITY;
     nOS_TickCounter TickStart;
 
     // Power ON Sequence -------------------------------------------------------
@@ -596,8 +587,8 @@ SystemState_e SDIO_Driver::PowerON(void)
                 return State;
             }
 
-            Response = SDMMC1->RESP1;                               // Get command response
-            ValidVoltage = (((Response >> 31) == 1) ? 1 : 0);       // Get operating voltage
+            Response = SDMMC1->RESP1;                                   // Get command response
+            ValidVoltage = (((Response >> 31) == 1) ? true : false);    // Get operating voltage
             Count++;
         }
 
@@ -752,20 +743,31 @@ SystemState_e SDIO_Driver::FindSCR(uint32_t* pSCR)
             if((State = this->TransmitCommand((CMD51 | SD_SHORT_RESPONSE), 0, 1)) == SYS_READY)
             {
                 Index = 0;
-                while(((SDMMC1->STA & (SDMMC_STA_RXOVERR | SDMMC_STA_DCRCFAIL | SDMMC_STA_DTIMEOUT | SDMMC_STA_DBCKEND)) == 0) &&
-                      (Index < 2))
+                while(((SDMMC1->STA & (SDMMC_STA_RXOVERR | SDMMC_STA_DCRCFAIL | SDMMC_STA_DTIMEOUT | SDMMC_STA_DBCKEND)) == 0) && (Index < 2))
                 {
                     if((SDMMC1->STA & SDMMC_STA_RXDAVL) != 0)
                     {
-                      *(SCR + Index) = SDMMC1->FIFO;
-                      Index++;
+                        *(SCR + Index) = SDMMC1->FIFO;
+                        Index++;
                     }
                 }
 
-                if     ((SDMMC1->STA & SDMMC_STA_DTIMEOUT) != 0) State = SYS_DATA_TIME_OUT;
-                else if((SDMMC1->STA & SDMMC_STA_DCRCFAIL) != 0) State = SYS_CRC_FAIL;
-                else if((SDMMC1->STA & SDMMC_STA_RXOVERR)  != 0) State = SYS_OVERRUN;
-                else if((SDMMC1->STA & SDMMC_STA_RXDAVL)   != 0) State = SYS_OUT_OF_BOUND;
+                if((SDMMC1->STA & SDMMC_STA_DTIMEOUT) != 0)
+                {
+                    State = SYS_DATA_TIME_OUT;
+                }
+                else if((SDMMC1->STA & SDMMC_STA_DCRCFAIL) != 0)
+                {
+                    State = SYS_CRC_FAIL;
+                }
+                else if((SDMMC1->STA & SDMMC_STA_RXOVERR)  != 0)
+                {
+                    State = SYS_OVERRUN;
+                }
+                else if((SDMMC1->STA & SDMMC_STA_RXDAVL)   != 0)
+                {
+                    State = SYS_OUT_OF_BOUND;
+                }
                 else
                 {
                     *(pSCR + 1) = ((SCR[0] & 0x000000FF) << 24) | ((SCR[0] & 0x0000FF00) << 8) |
@@ -796,72 +798,71 @@ SystemState_e SDIO_Driver::FindSCR(uint32_t* pSCR)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::GetCardInfo(void)
 {
+    uint8_t       Temp;
     SystemState_e State;
-    uint32_t      Temp;
 
     State = SYS_READY;
 
+  #if (SDIO_USE_MINIMAL_INFORMATION != DEF_ENABLED)
     // Byte 0
-    Temp = (m_CardCSD[0] & 0xFF000000) >> 24;
-    m_CSD.CSDStruct      = (uint8_t)((Temp & 0xC0) >> 6);
-    m_CSD.SysSpecVersion = (uint8_t)((Temp & 0x3C) >> 2);
-    m_CSD.Reserved1      = Temp & 0x03;
+    Temp = uint8_t(m_CardCSD[0] >> 24);
+    m_CSD.CSDStruct      = Temp >> 6;
+    m_CSD.SysSpecVersion = (Temp & 0x3C) >> 2;              // Only for MMC
 
     // Byte 1
-    Temp = (m_CardCSD[0] & 0x00FF0000) >> 16;
-    m_CSD.TAAC = (uint8_t)Temp;
+    m_CSD.TAAC = uint8_t(m_CardCSD[0] >> 16);
 
     // Byte 2
-    Temp = (m_CardCSD[0] & 0x0000FF00) >> 8;
-    m_CSD.NSAC = (uint8_t)Temp;
+    m_CSD.NSAC = uint8_t(m_CardCSD[0] >> 8);
 
     // Byte 3
-    Temp = m_CardCSD[0] & 0x000000FF;
-    m_CSD.MaxBusClkFrec = (uint8_t)Temp;
+    m_CSD.MaxBusClkFrec = uint8_t(m_CardCSD[0]);
 
     // Byte 4
-    Temp = (m_CardCSD[1] & 0xFF000000) >> 24;
-    m_CSD.CardComdClasses = (uint16_t)(Temp << 4);
+    m_CSD.CardComdClasses = uint16_t(uint8_t(m_CardCSD[1] >> 24)) << 4;
 
     // Byte 5
-    Temp = (m_CardCSD[1] & 0x00FF0000) >> 16;
-    m_CSD.CardComdClasses |= (uint16_t)((Temp & 0xF0) >> 4);
-    m_CSD.RdBlockLen       = (uint8_t)(Temp & 0x0F);
+    Temp = uint8_t(m_CardCSD[1] >> 16);
+    m_CSD.CardComdClasses |= uint16_t(Temp >> 4);
+    m_CSD.RdBlockLen       = Temp & 0x0F;
+  #endif
 
     // Byte 6
-    Temp = (m_CardCSD[1] & 0x0000FF00) >> 8;
-    m_CSD.PartBlockRead   = (uint8_t)((Temp & 0x80) >> 7);
-    m_CSD.WrBlockMisalign = (uint8_t)((Temp & 0x40) >> 6);
-    m_CSD.RdBlockMisalign = (uint8_t)((Temp & 0x20) >> 5);
-    m_CSD.DSRImpl         = (uint8_t)((Temp & 0x10) >> 4);
-    m_CSD.Reserved2       = 0;
+    Temp = uint8_t(m_CardCSD[1] >> 8);
+  #if (SDIO_USE_MINIMAL_INFORMATION != DEF_ENABLED)
+    m_CSD.PartBlockRead   = Temp >> 7;
+    m_CSD.WrBlockMisalign = (Temp & 0x40) >> 6;
+    m_CSD.RdBlockMisalign = (Temp & 0x20) >> 5;
+    m_CSD.DSRImpl         = (Temp & 0x10) >> 4;
+  #endif
 
     if((m_CardType == SD_STD_CAPACITY_V1_1) || (m_CardType == SD_STD_CAPACITY_V2_0))
     {
-        m_CSD.DeviceSize = (Temp & 0x03) << 10;
+        m_CSD.DeviceSize = uint32_t(uint8_t(Temp & 0x03)) << 10;
 
         // Byte 7
-        Temp = (uint8_t)(m_CardCSD[1] & 0x000000FF);
-        m_CSD.DeviceSize |= (Temp) << 2;
+        m_CSD.DeviceSize |= uint32_t(uint8_t(m_CardCSD[1])) << 2;
 
         // Byte 8
-        Temp = (uint8_t)((m_CardCSD[2] & 0xFF000000) >> 24);
-        m_CSD.DeviceSize |= (Temp & 0xC0) >> 6;
+        Temp = uint8_t(m_CardCSD[2] >> 24);
+        m_CSD.DeviceSize |= uint32_t(Temp >> 6);
 
+      #if (SDIO_USE_MINIMAL_INFORMATION != DEF_ENABLED)
         m_CSD.MaxRdCurrentVDDMin = (Temp & 0x38) >> 3;
-        m_CSD.MaxRdCurrentVDDMax = (Temp & 0x07);
-
+        m_CSD.MaxRdCurrentVDDMax = Temp & 0x07;
+      #endif
         // Byte 9
-        Temp = (uint8_t)((m_CardCSD[2] & 0x00FF0000) >> 16);
-        m_CSD.MaxWrCurrentVDDMin = (Temp & 0xE0) >> 5;
+        Temp = uint8_t(m_CardCSD[2] >> 16);
+      #if (SDIO_USE_MINIMAL_INFORMATION != DEF_ENABLED)
+        m_CSD.MaxWrCurrentVDDMin = Temp >> 5;
         m_CSD.MaxWrCurrentVDDMax = (Temp & 0x1C) >> 2;
-        m_CSD.DeviceSizeMul      = (Temp & 0x03) << 1;
+      #endif
+        m_CSD.DeviceSizeMul = (Temp & 0x03) << 1;
 
         // Byte 10
-        Temp = (uint8_t)((m_CardCSD[2] & 0x0000FF00) >> 8);
-        m_CSD.DeviceSizeMul |= (Temp & 0x80) >> 7;
+        m_CSD.DeviceSizeMul |= uint8_t(m_CardCSD[2] >> 8) >> 7;
 
-        m_CardCapacity  = (m_CSD.DeviceSize + 1) ;
+        m_CardCapacity  = m_CSD.DeviceSize + 1;
         m_CardCapacity *= (1 << (m_CSD.DeviceSizeMul + 2));
         m_CardBlockSize = 1 << (m_CSD.RdBlockLen);
         m_CardCapacity *= m_CardBlockSize;
@@ -869,24 +870,16 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
     else if(m_CardType == SD_HIGH_CAPACITY)
     {
         // Byte 7
-        Temp = (uint8_t)(m_CardCSD[1] & 0x000000FF);
-        m_CSD.DeviceSize = (Temp & 0x3F) << 16;
+        m_CSD.DeviceSize = (uint32_t(uint8_t(m_CardCSD[1]) & 0x3F) << 16);
 
         // Byte 8
-        Temp = (uint8_t)((m_CardCSD[2] & 0xFF000000) >> 24);
-
-        m_CSD.DeviceSize |= (Temp << 8);
+        m_CSD.DeviceSize |= (uint32_t(uint8_t(m_CardCSD[2] >> 24)) << 8);
 
         // Byte 9
-        Temp = (uint8_t)((m_CardCSD[2] & 0x00FF0000) >> 16);
+        m_CSD.DeviceSize |= uint32_t(uint8_t(m_CardCSD[2] >> 16));
 
-        m_CSD.DeviceSize |= (Temp);
-
-        // Byte 10
-        Temp = (uint8_t)((m_CardCSD[2] & 0x0000FF00) >> 8);
-
-        m_CardCapacity  = ((m_CSD.DeviceSize + 1)) * 512 * 1024;
-        m_CardBlockSize = 512;
+        m_CardCapacity  = (m_CSD.DeviceSize + 1) * BLOCK_SIZE;
+        m_CardBlockSize = BLOCK_SIZE;
     }
     else
     {
@@ -894,107 +887,62 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
         State = SYS_ERROR;
     }
 
+  #if (SDIO_USE_MINIMAL_INFORMATION != DEF_ENABLED)
+
+    // Byte 10
+    Temp = uint8_t(m_CardCSD[2] >> 8);
     m_CSD.EraseGrSize = (Temp & 0x40) >> 6;
     m_CSD.EraseGrMul  = (Temp & 0x3F) << 1;
 
     // Byte 11
-    Temp = (uint8_t)(m_CardCSD[2] & 0x000000FF);
-    m_CSD.EraseGrMul     |= (Temp & 0x80) >> 7;
+    Temp = uint8_t(m_CardCSD[2]);
+    m_CSD.EraseGrMul     |= Temp >> 7;
     m_CSD.WrProtectGrSize = (Temp & 0x7F);
 
     // Byte 12
-    Temp = (uint8_t)((m_CardCSD[3] & 0xFF000000) >> 24);
-    m_CSD.WrProtectGrEnable = (Temp & 0x80) >> 7;
+    Temp = uint8_t(m_CardCSD[3] >> 24);
+    m_CSD.WrProtectGrEnable = Tem) >> 7;
     m_CSD.ManDeflECC        = (Temp & 0x60) >> 5;
     m_CSD.WrSpeedFact       = (Temp & 0x1C) >> 2;
     m_CSD.MaxWrBlockLen     = (Temp & 0x03) << 2;
 
     // Byte 13
-    Temp = (uint8_t)((m_CardCSD[3] & 0x00FF0000) >> 16);
-    m_CSD.MaxWrBlockLen      |= (Temp & 0xC0) >> 6;
+    Temp = uint8_t(m_CardCSD[3] >> 16);
+    m_CSD.MaxWrBlockLen      |= (Temp >> 6);
     m_CSD.WriteBlockPaPartial = (Temp & 0x20) >> 5;
-    m_CSD.Reserved3           = 0;
     m_CSD.ContentProtectAppli = (Temp & 0x01);
 
     // Byte 14
-    Temp = (uint8_t)((m_CardCSD[3] & 0x0000FF00) >> 8);
-    m_CSD.FileFormatGrouop = (Temp & 0x80) >> 7;
-    m_CSD.CopyFlag         = (Temp & 0x40) >> 6;
-    m_CSD.PermWrProtect    = (Temp & 0x20) >> 5;
-    m_CSD.TempWrProtect    = (Temp & 0x10) >> 4;
-    m_CSD.FileFormat       = (Temp & 0x0C) >> 2;
-    m_CSD.ECC              = (Temp & 0x03);
+    Temp = uint8_t(m_CardCSD[3] >> 8);
+    m_CSD.FileFormatGroup = Temp >> 7;
+    m_CSD.CopyFlag        = (Temp & 0x40) >> 6;
+    m_CSD.PermWrProtect   = (Temp & 0x20) >> 5;
+    m_CSD.TempWrProtect   = (Temp & 0x10) >> 4;
+    m_CSD.FileFormat      = (Temp & 0x0C) >> 2;
+    m_CSD.ECC             = (Temp & 0x03);
 
     // Byte 15
-    Temp = (uint8_t)(m_CardCSD[3] & 0x000000FF);
-    m_CSD.CSD_CRC   = (Temp & 0xFE) >> 1;
-    m_CSD.Reserved4 = 1;
+    m_CSD._CRC = uint8_t(m_CardCSD[3]) >> 1;
 
-    // Byte 0
-    Temp = (uint8_t)((m_CardCID[0] & 0xFF000000) >> 24);
-    m_CID.ManufacturerID = Temp;
+    // CID Section
 
-    // Byte 1
-    Temp = (uint8_t)((m_CardCID[0] & 0x00FF0000) >> 16);
-    m_CID.OEM_AppliID = Temp << 8;
-
-    // Byte 2
-    Temp = (uint8_t)((m_CardCID[0] & 0x000000FF00) >> 8);
-    m_CID.OEM_AppliID |= Temp;
-
-    // Byte 3
-    Temp = (uint8_t)(m_CardCID[0] & 0x000000FF);
-    m_CID.ProdName1 = Temp << 24;
-
-    // Byte 4
-    Temp = (uint8_t)((m_CardCID[1] & 0xFF000000) >> 24);
-    m_CID.ProdName1 |= Temp << 16;
-
-    // Byte 5
-    Temp = (uint8_t)((m_CardCID[1] & 0x00FF0000) >> 16);
-    m_CID.ProdName1 |= Temp << 8;
-
-    // Byte 6
-    Temp = (uint8_t)((m_CardCID[1] & 0x0000FF00) >> 8);
-    m_CID.ProdName1 |= Temp;
-
-    // Byte 7
-    Temp = (uint8_t)(m_CardCID[1] & 0x000000FF);
-    m_CID.ProdName2 = Temp;
-
-    // Byte 8
-    Temp = (uint8_t)((m_CardCID[2] & 0xFF000000) >> 24);
-    m_CID.ProdRev = Temp;
-
-    // Byte 9
-    Temp = (uint8_t)((m_CardCID[2] & 0x00FF0000) >> 16);
-    m_CID.ProdSN = Temp << 24;
-
-    // Byte 10
-    Temp = (uint8_t)((m_CardCID[2] & 0x0000FF00) >> 8);
-    m_CID.ProdSN |= Temp << 16;
-
-    // Byte 11
-    Temp = (uint8_t)(m_CardCID[2] & 0x000000FF);
-    m_CID.ProdSN |= Temp << 8;
-
-    // Byte 12
-    Temp = (uint8_t)((m_CardCID[3] & 0xFF000000) >> 24);
-    m_CID.ProdSN |= Temp;
-
-    // Byte 13
-    Temp = (uint8_t)((m_CardCID[3] & 0x00FF0000) >> 16);
-    m_CID.Reserved1   |= (Temp & 0xF0) >> 4;
-    m_CID.ManufactDate = (Temp & 0x0F) << 8;
-
-    // Byte 14
-    Temp = (uint8_t)((m_CardCID[3] & 0x0000FF00) >> 8);
-    m_CID.ManufactDate |= Temp;
-
-    // Byte 15
-    Temp = (uint8_t)(m_CardCID[3] & 0x000000FF);
-    m_CID.CID_CRC   = (Temp & 0xFE) >> 1;
-    m_CID.Reserved2 = 1;
+    m_CID.ManufacturerID =          uint8_t(m_CardCID[0]   >> 24);                  // Byte 0
+    m_CID.OEM_AppliID    = uint16_t(uint8_t(m_CardCID[0]   >> 16))        << 8;     // Byte 1
+    m_CID.OEM_AppliID   |= uint16_t(uint8_t(m_CardCID[0]   >> 8));                  // Byte 2
+    m_CID.ProdName1      =                  m_CardCID[0]   << 24;                   // Byte 3
+    m_CID.ProdName1     |= uint32_t(uint8_t(m_CardCID[1]   >> 24))        << 16;    // Byte 4
+    m_CID.ProdName1     |= uint32_t(uint8_t(m_CardCID[1]   >> 16))        << 8;     // Byte 5
+    m_CID.ProdName1     |= uint32_t(uint8_t(m_CardCID[1]   >> 8));                  // Byte 6
+    m_CID.ProdName2      =          uint8_t(m_CardCID[1]);                          // Byte 7
+    m_CID.ProdRev        =          uint8_t(m_CardCID[2]   >> 24);                  // Byte 8
+    m_CID.ProdSN         = uint32_t(uint8_t(m_CardCID[2]   >> 16))        << 24;    // Byte 9
+    m_CID.ProdSN        |= uint32_t(uint8_t(m_CardCID[2]   >> 8))         << 16;    // Byte 10
+    m_CID.ProdSN        |= uint32_t(uint8_t(m_CardCID[2]))                << 8;     // Byte 11
+    m_CID.ProdSN        |= uint32_t(uint8_t(m_CardCID[3]   >> 24));                 // Byte 12
+    m_CID.ManufactDate   = uint16_t(uint8_t(m_CardCID[3]   >> 16) & 0x0F) << 8;     // Byte 13
+    m_CID.ManufactDate  |= uint16_t(uint8_t(m_CardCID[3]   >> 8));                  // Byte 14
+    m_CID._CRC           =          uint8_t(m_CardCID[3])  >> 1;                    // Byte 15
+  #endif
 
     return State;
 }
@@ -1480,7 +1428,7 @@ void SDIO_Driver::DMA_Stream6IRQHandler(void)
             {
                 if((DMA2_Stream6->CR & DMA_SxCR_CIRC) == 0)
                 {
-                    DMA2_Stream6->CR   &= ~DMA_SxCR_TCIE;               // Disable the transfer complete interrupt
+                    DMA2_Stream6->CR &= ~DMA_SxCR_TCIE;               // Disable the transfer complete interrupt
                 }
 
                 DMA2->HIFCR = DMA_HIFCR_CTCIF6;                         // Clear the transfer complete flag

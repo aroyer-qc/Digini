@@ -1,0 +1,477 @@
+SD/MMC Protocol: CSD Register (128bit Card-Specific Data)
+
+CMD9 - SD/MMC - SPI - GET_CSD (type=ac)
+Parameter bits:
+  31-16 RCA (SPI Mode: stuff bits)
+  15-0  stuff bits
+SD Mode Response: R2:
+  135     Start Bit (0)                                 ;\
+  134     Transmission To Host (0)                      ; 1st byte
+  133-128 Reserved (111111) (instead of Command value)  ;/
+  127-8   CSD (120bit) (15 bytes)     ;\aka 128bit      ;-2nd..16th byte
+  7-1     CRC7                        ; when including  ;\17th byte
+  0       End Bit (1)                 ;/CRC7+EndBit     ;/
+SPI Mode Response: R1, plus DATA line,
+SPI Mode Additional Data Transfer (from card):
+  127-0   CID (128bit) ... or 120bit ?
+Addressed card sends its card-specific data (CSD).
+
+CMD27 - SD/MMC - SPI - PROGRAM_CSD (type=adtc)
+  31-0  stuff bits
+Response: R1
+Additional Data Transfer (to card):
+  128-0  CSD register (whole 128bit) (read-only bits must be unchanged)
+Programming of the programmable bits of the CSD, ie. the "R/W" bits, the "R" bits must be kept unchanged (read via CMD9, and write-back same values via CMD27).
+The writable once "R/W(1)" bits can be changed only from 0-to-1, or vice-versa, they can be really written only ONCE, by the manufacturer?
+Most of the "R/W(1)" bits are probably set by the manufacturer at time when pre-formatting the card, so they aren't actually user-writeable.
+
+CSD Register
+The types of the entries in the table below are coded as follows: R=readable, W(1)=writable once, W=multiple writable.
+  Bit    Siz Type   Name                             Field             Value
+  127-126 2  R      CSD structure version            CSD_STRUCTURE     00b
+  125-122 4  R      MMC: System spec version         SPEC_VERS         ..
+  125-122 4  R      SD: reserved                     -                 0000b
+  121-120 2  R      reserved                         -                 00b
+  119-112 8  R      data read access-time-1          TAAC              xxh
+  111-104 8  R      data read access-time-2          NSAC              xxh
+  103-96  8  R      max data transfer rate           TRAN_SPEED   32h or 5Ah
+  95-84  12  R      card command classes             CCC          01x110110101b
+  83-80   4  R      max read data block len          READ_BL_LEN          xh
+  79      1  R      partial blocks for read allowed  READ_BL_PARTIAL      1b
+  78      1  R      write block misalignment         WRITE_BLK_MISALIGN   xb
+  77      1  R      read block misalignment          READ_BLK_MISALIGN    xb
+  76      1  R      DSR implemented                  DSR_IMP              xb
+  75-74   2  R      reserved                              -               00b
+  73-70   4  R      SDHC/SDXC: reserved                   -               0000b
+  69-48  22  R      SDHC/SDXC: device size                C_SIZE          ...
+  47      1  R      SDHC/SDXC: reserved                   -               0
+  73-62  12  R      MMC/SDSC: device size                 C_SIZE          xxxh
+  61-59   3  R      MMC/SDSC: max read current @VDD min   VDD_R_CURR_MIN  xxxb
+  58-56   3  R      MMC/SDSC: max read current @VDD max   VDD_R_CURR_MAX  xxxb
+  55-53   3  R      MMC/SDSC: max write current @VDD min  VDD_W_CURR_MIN  xxxb
+  52-50   3  R      MMC/SDSC: max write current @VDD max  VDD_W_CURR_MAX  xxxb
+  49-47   3  R      MMC/SDSC: device size multiplier      C_SIZE_MULT     xxxb
+  46-42   5  R      MMC: Erase Group Size             ERASE_GRP_SIZE   ..
+  41-37   5  R      MMC: Erase Group Multiplier       ERASE_GRP_MULT   ..
+  36-32   5  R      MMC: Write Protect Grp Size       WP_GRP_SIZE      ..
+  46      1  R      SD: erase single block enable     ERASE_BLK_EN     xb
+  45-39   7  R      SD: erase sector size             SECTOR_SIZE      xxxxxxxb
+  38-32   7  R      SD: write protect group size      WP_GRP_SIZE      xxxxxxxb
+  31      1  R      write protect group enable        WP_GRP_ENABLE    xb
+  30-29   2  R      MMC: Manufacturer default ECC     DEFAULT_ECC      ..
+  30-29   2  R      SD: reserved (do not use)         -                00b
+  28-26   3  R      write speed factor                R2W_FACTOR       xxxb
+  25-22   4  R      max write data block len          WRITE_BL_LEN     xxxxb
+  21      1  R      partial blocks for write allowed  WRITE_BL_PARTIAL xb
+  20-17   4  R      reserved                          -                0000b
+  16      1  R      SD: reserved                      -                0
+  16      1  R      MMC: Content Protection Applicat. CONTENT_PROP_APP ..
+  15      1  R/W(1) File format group                 FILE_FORMAT_GRP  xb
+  15      1  R      SDHC/SDXC: reserved               (FILE_FORMAT_GRP)0
+  14      1  R/W(1) copy flag                         COPY             xb
+  13      1  R/W(1) permanent write protection     PERM_WRITE_PROTECT  xb
+  12      1  R/W    temporary write protection     TMP_WRITE_PROTECT   xb
+  11-10   2  R/W(1) File format                    FILE_FORMAT         xxb
+  11-10   2  R      SDHC/SDXC: reserved            (FILE_FORMAT)       00b
+  9-8     2  R/W    MMC: ECC Code                  ECC                 ..
+  9-8     2  R/W    SDSC: reserved, R/W            -                   00b
+  9-8     2  R      SDHC/SDXC: reserved, R         -                   00b
+  7-1     7  R/W    CRC                            CRC                 xxxxxxxb
+  0       1  -      not used, always '1'           -                   1b
+
+Known CSD's for DSi eMMC chips (excluding CRC in LSB, padded 00 in MSB)
+  8  16 24 32 40 48 56 64 72 80 88 96 104112120pad ;<--bit numbers
+  40 40 96 E9 7F DB F6 DF 01 59 0F 2A 01 26 90 00  ;DSi Samsung KMAPF0000M-S998
+  40 40 8E FF 03 DB F6 DF 01 59 0F 32 01 27 90 00  ;DSi Samsung KLM5617EFW-B301
+  00 40 8A E0 BF FF 7F F5 80 59 0F 32 01 2F 90 00  ;DSi ST NAND02GAH0LZC5 rev30
+  00 40 8A E0 BF FF 7F F5 80 59 0F 32 01 2F 90 00  ;DSi ST NAND02GAH0LZC5 rev31
+  ?                                            00  ;3DS whatever chiptype?
+  40 40 8A E7 FF DB F6 6B 02 5A 0F 32 01 27 D0 00  ;3DS Samsung KLM4G1YE0C-B301
+That is, differences are:
+  bit     name            KMAPF0000M  KLM5617EFW NAND02GAH0LZC5 KLM4G1YE0C
+  126-127 CSD_STRUCTURE   2=v1.2      2=v1.2     2=v1.2         3=SeeEXT_CSD
+  112-119 TAAC            26h=1.5ms   27h=15ms   2Fh=20ms       27h=15ms
+  96-103  TRAN_SPEED      2Ah=20MHz   32h=25MHz  32h=25MHz      32h=25MHz
+  80-83   READ_BL_LEN     9=512       9=512      9=512          0Ah=1024
+  79      READ_BL_PARTIAL 0=No(?)     0=No(?)    1=Yes          0=No(?)
+  62-73   C_SIZE          77Fh=240MB  77Fh=240MB 3D5h=245.5MB   9AFh=1240MB
+  59-61   VDD_R_CURR_MIN  6=60mA      6=60mA     7=100mA        6=60mA
+  56-58   VDD_R_CURR_MAX  6=80mA      6=80mA     7=200mA        6=80mA
+  53-55   VDD_W_CURR_MIN  6=60mA      6=60mA     7=100mA        6=60mA
+  50-52   VDD_W_CURR_MAX  6=80mA      6=80mA     7=200mA        6=80mA
+  47-49   C_SIZE_MULT     6=256       6=256      7=512          7=512
+  42-46   ERASE_GRP_SIZE  1Fh=32x32   00h=1x32   1Fh=32x32      1Fh=32x32
+  32-36   WP_GRP_SIZE     09h=10      1Fh=32     00h=1          07h=8
+  26-28   R2W_FACTOR      05h=32x     03h=8x     02h=4x         02h=4x
+  14      COPY            1=Copy      1=Copy     0=Original     1=Copy
+Not sure if that values are really correct, or if the manufacturer has screwed up some bits. TAAC being 10x slower in newer chips looks weird, 20MHz would be for 1bit MCC (whilst 4bit MMCplus/MMCmobile should support 26MHz), erase group 32x32x512 bytes would somewhat require 512Kbyte clusters, write protect group size 10 decimal looks a bit odd (though it could be true), and, well, faster writing in newer chips looks plausible.
+
+CSD_STRUCTURE (upper 2bit of CSD register)
+Field structures of the CSD register are different depend on the Physical Layer Specification Version and Card Capacity.
+The CSD_STRUCTURE field in the CSD register indicates its structure version.
+For MMC:
+  00h      CSD version No. 1.0    MMC Version 1.0 - 1.2
+  01h      CSD version No. 1.1    MMC Version 1.4 - 2.2
+  02h      CSD version No. 1.2    MMC Version 3.1 - 3.2 - 3.31 - 4.0 - 4.1- 4.2
+  03h      Version is coded in the CSD_STRUCTURE byte in the EXT_CSD register
+For SD:
+  00h      CSD Version 1.0   SDSC (Standard Capacity)
+  01h      CSD Version 2.0   SDHC/SDXC (High Capacity and Extended Capacity)
+  02h-03h  Reserved
+SDHC/SDXC applies major changes to CSD register (C_SIZE is expanded, and many other fields are removed or set to dummy values),
+
+For details see next section:
+SD/MMC Protocol: CSD Register (128bit Card-Specific Data) Version 2.0
+
+SPEC_VERS (MMC only)
+  00h       MMC System Specification Version 1.0 - 1.2
+  01h       MMC System Specification Version 1.4
+  02h       MMC System Specification Version 2.0 - 2.2
+  03h       MMC System Specification Version 3.1 - 3.2 - 3.31
+  04h       MMC System Specification Version 4.0 - 4.1 - 4.2
+  05h-0Fh   Reserved
+
+TAAC
+Defines the asynchronous part of the data access time.
+  7    Reserved
+  6-3  Time value
+         0=reserved, 1=1.0, 2=1.2, 3=1.3, 4=1.5, 5=2.0, 6=2.5, 7=3.0,
+         8=3.5, 9=4.0, A=4.5, B=5.0, C=5.5, D=6.0, E=7.0, F=8.0
+  2-0  Time unit
+         0=1ns, 1=10ns, 2=100ns, 3=1us, 4=10us, 5=100us, 6=1ms, 7=10ms
+
+NSAC
+Defines the worst case for the clock-dependent factor of the data access time. The unit for NSAC is 100 clock cycles. Therefore, the maximal value for the clock-dependent part of the data access time is 25500 clock cycles.
+The total access time NAC is the sum of TAAC and NSAC. It should be computed by the host for the actual clock rate. The read access time should be interpreted as a typical delay for the first data bit of a data block or stream.
+
+TRAN_SPEED
+The following table defines the maximum data transfer rate PER ONE data line:
+  7    Reserved
+  6-3  Time value
+         0=reserved, 1=1.0, 2=1.2, 3=1.3, 4=1.5, 5=2.0, 6=2.5, 7=3.0,
+         8=3.5, 9=4.0, A=4.5, B=5.0, C=5.5, D=6.0, E=7.0, F=8.0
+  2-0  Transfer rate unit
+         0=100kbit/s, 1=1Mbit/s, 2=10Mbit/s, 3=100Mbit/s, 4..7=reserved
+         MMC: same as above, but specified in <Hz> instead of <bits/s>
+Note that for current SD Memory Cards, this field shall be always 32h which is equal to 25 MHz - the mandatory maximum operating frequency of SD Memory Card.
+In High-Speed mode, this field shall be always 5Ah which is equal to 50 MHz, and when the timing mode returns to the default by CMD6 or CMD0 command, its value will be 32h.
+
+CCC (Card Command Class)
+The SD Memory Card command set is divided into subsets (command classes). A value of 1 in a CCC bit means that the corresponding command class is supported. For command class definitions, refer to Table 4-21.
+  11   Supports Command Class 11 - Function Extension Commands (SD)
+  10   Supports Command Class 10 - Switch Function Commands (SD)
+  9    Supports Command Class 9 - I/O Mode Commands (SDIO/MMCIO)
+  8    Supports Command Class 8 - Application-Specific Commands
+  7    Supports Command Class 7 - Password Lock Commands
+  6    Supports Command Class 6 - Block-Oriented Write Protection Commands
+  5    Supports Command Class 5 - Erase Commands
+  4    Supports Command Class 4 - Block-Oriented Write Commands
+  3    Supports Command Class 3 - WRITE_DAT_UNTIL_STOP (MMC)
+  2    Supports Command Class 2 - Block-Oriented Read Commands
+  1    Supports Command Class 1 - READ_DAT_UNTIL_STOP (MMC)
+  0    Supports Command Class 0 - Basic Commands
+Same for MMC (though on MMC the classes may have different meaning?)
+
+READ_BL_LEN
+The maximum read data block length is computed as 2^READ_BL_LEN. The maximum block length might therefore be in the range 512...2048 bytes (Refer to 4.3.3 for details). Note that in an SD Memory Card the WRITE_BL_LEN is always equal to READ_BL_LEN.
+  3-0  Setting
+Values:
+  00h..08h  Reserved
+  09h       Block length 512 Bytes (2^9)
+  0Ah       Block length 1024 Bytes (2^10)
+  0Bh       Block length 2048 Bytes (2^11)
+  0Ch..0Fh  Reserved
+MMC allows any values from 2^0 to 2^14, and uses 0Fh for Extension (see TBD field in EXT_CSD) (uh, but "TBD" isn't yet defined in KMCEN0000M datasheet, maybe TBD means to-be-defined?).
+
+READ_BL_PARTIAL (always = 1 in SDSC Memory Card)
+Partial Block Read is always allowed in an SDSC Memory Card. It means that smaller blocks can be used as well. The minimum block size will be one byte.
+
+WRITE_BLK_MISALIGN
+Defines if the data block to be written by one command can be spread over more than one physical block of the memory device. The size of the memory block is defined in WRITE_BL_LEN.
+  WRITE_BLK_MISALIGN=0   crossing physical block boundaries is invalid
+  WRITE_BLK_MISALIGN=1   crossing physical block boundaries is allowed
+
+READ_BLK_MISALIGN
+Defines if the data block to be read by one command can be spread over more than one physical block of the memory device. The size of the memory block is defined in READ_BL_LEN.
+  READ_BLK_MISALIGN=0    crossing physical block boundaries is invalid
+  READ_BLK_MISALIGN=1    crossing physical block boundaries is allowed
+
+DSR_IMP
+Defines if the configurable driver stage is integrated on the card. If set, a driver stage register (DSR) shall be implemented (also see Chapter 5.5).
+  DSR_IMP=0    no DSR implemented
+  DSR_IMP=1    DSR implemented
+
+C_SIZE (for max 2GB)
+This parameter is used to compute the user's data card capacity (not include the security protected area). The memory capacity of the card is computed from the entries C_SIZE, C_SIZE_MULT and READ_BL_LEN as follows:
+  memory capacity = BLOCKNR * BLOCK_LEN
+Whereas,
+  BLOCKNR = (C_SIZE+1) * MULT
+  MULT = 2^(C_SIZE_MULT+2)    ;(C_SIZE_MULT < 8)
+  BLOCK_LEN = 2^READ_BL_LEN   ;(READ_BL_LEN < 12)
+To indicate 2 GByte card, BLOCK_LEN shall be 1024 bytes.
+Therefore, the maximal capacity that can be coded is 4096*512*1024 = 2 G bytes.
+Example: A 32 Mbyte card with BLOCK_LEN = 512 can be coded by C_SIZE_MULT = 3 and C_SIZE = 2000.
+The Maximum Data Area size of SDSC Standard Capacity Card is 4,153,344 sectors (2028MB).
+
+C_SIZE (for MMC above 2GB)
+The 12bit C_SIZE field should be set 0FFFh. Use "SEC_COUNT" in EXT_CSD to specify actual size.
+
+VDD_R_CURR_MIN, VDD_W_CURR_MIN
+Maximum values for read and write currents at the MINIMAL power supply VDD:
+  2-0   0=0.5mA, 1=1mA, 2=5mA, 3=10mA, 4=25mA, 5=35mA, 6=60mA, 7=100mA
+
+VDD_R_CURR_MAX, VDD_W_CURR_MAX
+Maximum values for read and write currents at the MAXIMAL power supply VDD:
+  2-0   0=1mA, 1=5mA, 2=10mA, 3=25mA, 4=35mA, 5=45mA, 6=80mA, 7=200mA
+
+C_SIZE_MULT
+This parameter is used for coding a factor MULT for computing the total device size (see 'C_SIZE'). Defined as "MULT = 2^(C_SIZE_MULT+2)".
+  2-0   Device Size Factor (0..7 = Factor 4,8,16,32,64,128,256,512)
+
+SD: ERASE_BLK_EN
+The ERASE_BLK_EN defines the granularity of the unit size of the data to be erased. The erase operation can erase either one or multiple units of 512 bytes or one or multiple units (or sectors) of SECTOR_SIZE (see definition below).
+If ERASE_BLK_EN=0, the host can erase one or multiple units of SECTOR_SIZE. The erase will start from the beginning of the sector that contains the start address to the end of the sector that contains the end address. For example, if SECTOR_SIZE=31 and the host sets the Erase Start Address to 5 and the Erase End Address to 40, the physical blocks from 0 to 63 will be erased as shown in Figure 5-1.
+  Figure 5-1: ERASE_BLK_EN = 0 Example
+  Physical Block (per CSD)
+  0          1          2          3          4          5          6
+  0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789
+       <----- Host Erase Address Range ------->
+  <---------- Erase Area ---------------------------------------------->
+  <---------- Erase Unit Size ------><------- Erase Unit Size --------->
+If ERASE_BLK_EN=1 the host can erase one or multiple units of 512 bytes. All blocks that contain data from start address to end address are erased. For example, if the host sets the Erase Start Address to 5 and the Erase End Address to 40, the physical blocks from 5 to 40 will be erased as shown in Figure 5-2.
+  Figure 5-2: ERASE_BLK_EN = 1 Example
+  Physical Block (per CSD)
+  0          1          2          3          4          5          6
+  0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789
+       <----- Host Erase Address Range ------->
+       <----- Erase Area --------------------->
+
+SD: SECTOR_SIZE
+The size of an erasable sector. The content of this register is a 7-bit binary coded value, defining the number of write blocks (see WRITE_BL_LEN). The actual size is computed by increasing this number by one. A value of zero means one write block, 127 means 128 write blocks.
+
+MMC: ERASE_GRP_SIZE
+The contents of this register is a 5 bit binary coded value, used to calculate the size of the erasable unit of the moviNAND. The size of the erase unit (also referred to as erase group) is determined by the ERASE_GRP_SIZE and the ERASE_GRP_MULT entries of the CSD, using the following equation:
+  size of erasable unit = (ERASE_GRP_SIZE + 1) * (ERASE_GRP_MULT + 1)
+This size is given as minimum number of write blocks that can be erased in a single erase command.
+
+MMC: ERASE_GRP_MULT
+A 5 bit binary coded value used for calculating the size of the erasable unit of the moviNAND. See ERASE_GRP_SIZE section for detailed description.
+
+MMC: DEFAULT_ECC
+Set by the moviNAND manufacturer. It defines the ECC code which is recommended for use. The field definition is the same as for the ECC field described later.
+
+MMC: CONTENT_PROT_APP
+This field in the CSD indicates whether the content protection application is supported. MultiMediaCards which implement the content protection application will have this bit set to '1'.
+
+MMC: ECC
+Defines the ECC code that was used for storing data on the moviNAND. This field is used by the host (or application) to decode the user data. The following table defines the field format:
+  ECC      ECC type         Maximum number of correctable bits per block
+  00h      None (default)   Mone
+  01h      BCH (542,512)    3
+  02h-03h  Reserved         -
+
+MMC: WP_GRP_SIZE (5bit)
+The size of a write protected group. The contents of this register is a 5 bit binary coded value, defining the number of erase groups which can be write protected.
+The actual size is computed by increasing this number by one. A value of zero means 1 erase group, 31 means 32 erase groups. (Refer to the chapter 4.11.1 on page 48)
+
+SD: WP_GRP_SIZE (7bit)
+The size of a write protected group. The content of this register is a 7-bit binary coded value, defining the number of erase sectors (see SECTOR_SIZE). The actual size is computed by increasing this number by one. A value of zero means one erase sector, 127 means 128 erase sectors.
+
+WP_GRP_ENABLE
+A value of 0 means no group write protection possible.
+
+R2W_FACTOR
+Defines the typical block program time as a multiple of the read access time.
+  2-0   Multiples of read access time (0..5=Mul 1,2,4,8,16,32, 6..7=Reserved)
+For example, value 5 means that writing is 32 times slower than reading.
+
+WRITE_BL_LEN
+The maximum write data block length is computed as 2^WRITE_BL_LEN. The maximum block length might therefore be in the range from 512 to 2048 bytes. Write Block Length of 512 bytes is always supported.
+Note that in the SD Memory Card, the WRITE_BL_LEN is always equal to READ_BL_LEN.
+  3-0    Block Length
+Values:
+  00h..08h  Reserved
+  09h       512 bytes (2^9)
+  0Ah       1024 Bytes (2^10)
+  0Bh       2048 Bytes (2^11)
+  0Ch..0Fh  Reserved
+MMC: See READ_BL_LEN
+
+WRITE_BL_PARTIAL
+Defines whether partial block sizes can be used in block write commands.
+WRITE_BL_PARTIAL=0 means that only the WRITE_BL_LEN block size and its partial derivatives, in resolution of units of 512 bytes, can be used for block oriented data write.
+WRITE_BL_PARTIAL=1 means that smaller blocks can be used as well. The minimum block size is one byte.
+
+COPY
+Defines whether the contents is original (=0) or has been copied (=1). Setting this bit to 1 indicates that the card content is a copy. The COPY bit is a one time programmable bit except ROM card.
+
+PERM_WRITE_PROTECT
+TMP_WRITE_PROTECT
+Permanently/temporarily write-protects the entire card (by disabling all write and erase commands). The default values are 0, ie. not write protected.
+
+FILE_FORMAT
+FILE_FORMAT_GRP
+Indicates the file format on the card. These fields are read-only for ROM. The following formats are defined:
+  FILE_FORMAT_GRP  FILE_FORMAT  Type
+  0                0            Hard disk-like file system with partition table
+  0                1            DOS FAT (floppy-like) with boot sector only
+                                  (no partition table)
+  0                2            Universal File Format
+  0                3            Others/Unknown
+  1                0, 1, 2, 3   Reserved
+A more detailed description is given in the Filesystem Specification.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+SD/MMC Protocol: CSD Register (128bit Card-Specific Data) Version 2.0
+
+
+CSD Register (CSD Version 2.0) (SDHC/SDXC)
+The field name in parenthesis is set to fixed value and indicates that the host is not necessary to refer these fields. The fixed values enables host, which refers to these fields, to keep compatibility to CSD Version 1.0.
+The Cell Type field is coded as follows: R=readable, W(1)=writable once, W=multiple writable.
+  Bit   Siz Type   Name                        Field          Value
+  127-126 2 R      CSD structure               CSD_STRUCTURE  01b
+  125-120 6 R      reserved                    -              000000b
+  119-112 8 R      data read access-time-1     (TAAC)         0Eh
+  111-104 8 R      data read access-time-2     (NSAC)         00h
+  103-96  8 R      max data transfer rate      (TRAN_SPEED)   32h,5Ah,0Bh,2Bh
+  95-84  12 R      card command classes        CCC            x1x110110101b
+  83-80   4 R      max read data block length       (READ_BL_LEN)        9
+  79      1 R      partial blocks for read allowed  (READ_BL_PARTIAL)    0
+  78      1 R      write block misalignment         (WRITE_BLK_MISALIGN) 0
+  77      1 R      read block misalignment          (READ_BLK_MISALIGN)  0
+  76      1 R      DSR implemented                  DSR_IMP              x
+  75-70   6 R      reserved                         -                   000000b
+  69-48  22 R      device size                      C_SIZE              xxxxxxh
+  47      1 R      reserved                         -                    0
+  46      1 R      erase single block enable        (ERASE_BLK_EN)       1
+  45-39   7 R      erase sector size                (SECTOR_SIZE)        7Fh
+  38-32   7 R      write protect group size         (WP_GRP_SIZE)        00h
+  31      1 R      write protect group enable       (WP_GRP_ENABLE)      0
+  30-29   2 R      reserved                         -                    00b
+  28-26   3 R      write speed factor               (R2W_FACTOR)         010b
+  25-22   4 R      max write data block length      (WRITE_BL_LEN)       9
+  21      1 R      partial blocks for write allowed (WRITE_BL_PARTIAL)   0
+  20-16   5 R      reserved                         -                    00000b
+  15      1 R      File format group                (FILE_FORMAT_GRP)    0
+  14      1 R/W(1) copy flag                        COPY                 x
+  13      1 R/W(1) permanent write protection       PERM_WRITE_PROTECT   x
+  12      1 R/W    temporary write protection       TMP_WRITE_PROTECT    x
+  11-10   2 R      File format                      (FILE_FORMAT)        00b
+  9-8     2 R      reserved                         -                    00b
+  7-1     7 R/W    CRC                              CRC                  xxh
+  0       1 -      not used, always '1'             -                    1
+
+C_SIZE
+This field is expanded to 22 bits and can indicate up to 2 TBytes (that is the same as the maximum memory space specified by a 32-bit block address.)
+This parameter is used to calculate the user data area capacity in the SD memory card (not include the protected area). The user data area capacity is calculated from C_SIZE as follows:
+  memory capacity = (C_SIZE+1) * 512KByte
+The Minimum user area size of SDHC Card is 4,211,712 sectors (2GB + 8.5MB).
+The Minimum value of C_SIZE for SDHC in CSD Version 2.0 is 001010h (4112).
+The Maximum user area size of SDHC Card is (32GB - 80MB).
+The Maximum value of C_SIZE for SDHC in CSD Version 2.0 is 00FF5Fh (65375).
+The Minimum user area size of SDXC Card is 67,108,864 sectors (32GB).
+The Minimum value of C_SIZE for SDXC in CSD Version 2.0 is 00FFFFh (65535).
+
+TRAN_SPEED
+TRAN_SPEED is variable depends on bus speed mode of SD Interface.
+When CMD0 is received, this field is reset to 32h.
+On SDSC (but not SDHC/SDXC), CMD6 does the same reset stuff?
+  32h   SDSC/SDHC/SDXC in Default Speed mode (25MHz)
+  5Ah   SDSC/SDHC/SDXC in High Speed mode    (50MHz)
+  0Bh   SDHC/SDXC in SDR50 or DDR50 mode     (100Mbit/sec)
+  2Bh   SDHC/SDXC in SDR104 mode             (200Mbit/sec)
+UHS-II mode is not related to this field.
+
+CCC, DSR_IMP, COPY, PERM_WRITE_PROTECT, TMP_WRITE_PROTECT
+Definition of these fields is same as in CSD Version 1.0.
+
+TAAC, NSAC, R2W_FACTOR
+In SDHC/SDXC, these fields should be fixed to TAAC=0Eh (1 ms), NSAC=00h, and R2W_FACTOR=02h (mul4).
+The host should not use TAAC, NSAC, and R2W_FACTOR to calculate timeout and should uses fixed timeout values for read and write operations (See 4.6.2).
+
+READ_BL_LEN, WRITE_BL_LEN
+These two fields are fixed to 9h (which indicates 512 Bytes).
+
+READ_BL_PARTIAL, WRITE_BL_PARTIAL, READ_BLK_MISALIGN, WRITE_BLK_MISALIGN
+These four fields are fixed to 0 (partial block read and physical page crossing prohibited for block read/write).
+
+SECTOR_SIZE
+This field is fixed to 7Fh, which indicates 64 KBytes. This value is not related to erase operation. SDHC and SDXC Cards indicate memory boundary by AU size and this field should not be used.
+
+ERASE_BLK_EN
+This field is fixed to 1, which means the host can erase one or multiple units of 512 bytes.
+
+WP_GRP_SIZE, WP_GRP_ENABLE
+These field are fixed to WP_GRP_SIZE=00h, and WP_GRP_ENABLE=0.
+SDHC and SDXC Cards do not support write protected groups.
+
+FILE_FORMAT_GRP
+FILE_FORMAT
+These fields are set to 0. Host should not use these fields.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+SD/MMC Protocol: CID Register (128bit Card Identification)
+
+CMD2 - SD/MMC - ALL_GET_CID (type=bcr)
+CMD2 is/was intended for multiple MMC cards on the same SD/MMC bus, the connected card(s) should compare the CMD2 response bits seen on the bus, and the card with the smallest CID number is switched to "ident" state (and any other cards stay in "ready" state until sending further CMD2's).
+CMD2 is still required for both SD and MMC during initialization, although actually sharing the same bus for multiple cards is rather uncommon/depracted (and might envolve various problems: Like conflicting OCR responses, conflicting pull-ups on DAT3 pin, signal noise/spikes on insertion/removal of a second card while accessing another card, problems with (shared) Write Protect and Card Detect switches, and so on).
+Parameter bits:
+  31-0  stuff bits
+SD Mode Response: R2 (same 136bit response as for CMD10, see there)
+Asks any card to send the CID numbers on the CMD line (any card that is connected to the host will respond - until it sees a "0" bit from another card while itself outputting a "1" bit).
+Observe that CMD2 (and other card detection/initialization commands) should be done at lower CLK rate than usually (MMC specifies max 400kHz - this is actually required - the DSi's onboard Samsung KMAPF0000M-S998 eMMC chip won't respond to ALL_GET_CID when trying to use 16MHz CLK), higher CLK can be used once when detecting max speed (TRAN_SPEED in CSD register).
+
+CMD10 - SD/MMC - SPI - GET_CID (type=ac)
+This command should be used for actually READING the CID (as opposed to ALL_GET_CID which is primarily intended for the connected card(s) to COMPARE their CIDs with each other).
+Parameter bits:
+  31-16 RCA (SPI Mode: stuff bits)
+  15-0  stuff bits
+SD Mode Response: R2:
+  135     Start Bit (0)                                 ;\
+  134     Transmission To Host (0)                      ; 1st byte
+  133-128 Reserved (111111) (instead of Command value)  ;/
+  127-8   CID (120bit) (15 bytes)     ;\aka 128bit      ;-2nd..16th byte
+  7-1     CRC7                        ; when including  ;\17th byte
+  0       End Bit (1)                 ;/CRC7+EndBit     ;/
+SPI Mode Response: R1, plus DATA line,
+SPI Mode Additional Data Transfer (from card):
+  127-0   CID (128bit) ... or 120bit ?
+Addressed card sends its card identification (CID).
+
+CID register
+The Card IDentification (CID) register is 128 bits wide. It contains the card identification information used during the card identification phase. Every individual Read/Write (RW) card shall have a unique identification number.
+For SD Cards (short product name, but bigger date field, 2000..2255?):
+  Bit     Siz  Field  Name
+  127-120   8  MID    Manufacturer ID    (binary) ;\assigned by SD-3C, LLC
+  119-104  16  OID    OEM/Application ID (ASCII)  ;/
+  103-64   40  PNM    Product name       (ASCII)
+  63-56     8  PRV    Product revision   (BCD, 00h-99h) (eg 62h = rev 6.2)
+  55-24    32  PSN    Product serial number (32bit)
+  23-20     4  -      Reserved (zero)
+  19-8     12  MDT    Manufacturing date (yymh) (m=1..12, yy=0..255?; +2000)
+  7-1       7  CRC    CRC7 checksum
+  0         1  1      Stop bit (always 1)
+For MMC Cards (smaller date field, range 1997..2012 only):
+  Bit     Siz  Field  Name
+  127-120   8  MID    Manufacturer ID    (binary)   ;\assigned by MMCA
+  119-104  16  OID    OEM/Application ID (binary)   ;/  ... or ...
+  127-120   8  MID    Manufacturer ID    (binary)   ;\assigned by MMCA/JEDEC
+  119-114   6  -      Reserved (0)                  ;
+  113-112   2  CBX    Device (0=Card, 1=BGA, 2=POP) ;
+  119-104   8  OID    OEM/Application ID (binary)   ;/
+  103-56   48  PNM    Product name       (ASCII)
+  55-48     8  PRV    Product revision   (BCD, 00h-99h) (eg 62h = rev 6.2)
+  47-16    32  PSN    Product serial number (32bit)
+  15-8      8  MDT    Manufacturing date (myh) (m=1..12, y=0..15; +1997)
+  7-1       7  CRC    CRC7 checksum
+  0         1  1      Stop bit (always 1)
+
+Known CID's for DSi eMMC chips (excluding CRC in LSB, padded 00 in MSB)
+  MY ss ss ss ss 03 4D 30 30 46 50 41 00 00 15 00  ;DSi Samsung KMAPF0000M-S998
+  MY ss ss ss ss 32 57 37 31 36 35 4D 00 01 15 00  ;DSi Samsung KLM5617EFW-B301
+  MY ss ss ss ss 30 36 35 32 43 4D 4D 4E 01 FE 00  ;DSi ST NAND02GAH0LZC5 rev30
+  MY ss ss ss ss 31 36 35 32 43 4D 4D 4E 01 FE 00  ;DSi ST NAND02GAH0LZC5 rev31
+  MY ss ss ss ss 03 47 31 30 43 4D 4D 00 01 11 00  ;3DS whatever chiptype?
+  MY ss ss ss ss 07 43 59 31 47 34 4D 00 01 15 00  ;3DS Samsung KLM4G1YE0C-B301

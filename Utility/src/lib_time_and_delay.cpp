@@ -31,6 +31,12 @@
 #include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
+// Const(s)
+//-------------------------------------------------------------------------------------------------
+
+const uint8_t WeekDayTable[12]  = {4, 7, 7, 3, 5, 8, 3, 6, 9, 4, 7, 9};
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Name:           LIB_Delay_uSec
 //
@@ -228,6 +234,42 @@ void LIB_SetDateAndTime(DateAndTime_t* pTimeDate)
       #endif
     }
     while(memcmp((uint8_t*)&pTimeDate->Time, (uint8_t*)&SyncTime, sizeof(Time_t)) == 0);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: LIB_GetDayOfWeek
+//
+//   Parameter(s):  Date_t*  pDate
+//   Return value:  uint8_t DayOfWeek
+//
+//   Description:   Get the day of the week from the date
+//
+//   Note(s):       (0-6, Sunday-Saturday) to stay generic, even if ST RTC are 1-Monday 7-Sunday
+//
+//-------------------------------------------------------------------------------------------------
+uint8_t  LIB_GetDayOfWeek(Date_t* pDate)
+{
+    uint16_t Day;
+
+    uint16_t Year = pDate->Year - 2000;
+
+    // Pre calculate the day of the week (0-6, SUNDAY-SATURDAY)
+    Day  = (Year >> 2) + 2;
+    Day += (Year + pDate->Day + WeekDayTable[pDate->Month - 1]);
+
+    if((Year % 4) == 0)
+    {
+        if(pDate->Month < 3)
+        {
+            if(Day == 0) Day = 6;
+            else         Day--;
+        }
+    }
+
+    Day %= 7;
+
+    return uint8_t(Day);
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -267,7 +267,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             {
                 VT100_LastSecond = TimeDate.Time.Second;
                 myVT100.SetCursorPosition(19, 16);
-                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
+                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&TimeDate.Date)) + (int(LBL_FIRST_WEEK_DAY)))),
+                                                                         myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
                                                                          TimeDate.Date.Day,
                                                                          TimeDate.Date.Year,
                                                                          TimeDate.Time.Hour,

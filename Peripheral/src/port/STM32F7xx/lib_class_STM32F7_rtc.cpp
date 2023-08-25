@@ -58,7 +58,6 @@
 //-------------------------------------------------------------------------------------------------
 
 const uint8_t  RTC_Driver::m_MonthSize[12]     = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-const uint8_t  RTC_Driver::m_WeekDayTable[12]  = {4, 7, 7, 3, 5, 8, 3, 6, 9, 4, 7, 9};
 const uint16_t RTC_Driver::m_DaysSoFar[12]     = {0, 31, 59, 90, 120, 151, 181, 212, 243, 274, 303, 334};
 
 //-------------------------------------------------------------------------------------------------
@@ -198,10 +197,10 @@ void RTC_Driver::GetTime(Time_t* pTime)
 //
 //   Function name: SetDate
 //
-//   Parameter(s):
-//   Return value:
+//   Parameter(s):  Date_t Pointer on Date_t structure
+//   Return value:  None
 //
-//   Description:
+//   Description:   Set date in the RTC register
 //
 //-------------------------------------------------------------------------------------------------
 void RTC_Driver::SetDate(Date_t* pDate)
@@ -209,7 +208,7 @@ void RTC_Driver::SetDate(Date_t* pDate)
     uint32_t Date;
     uint8_t  DayOfWeek;
 
-    DayOfWeek = GetDayOfWeek(pDate);
+    DayOfWeek = LIB_GetDayOfWeek(pDate);
     if(DayOfWeek == 0) DayOfWeek = 7;
     Date  = (uint32_t(DayOfWeek) + 1) << 13;
     Date |= uint32_t(LIB_4DecBcd(pDate->Year)) << 16;
@@ -379,39 +378,6 @@ void RTC_Driver::ExitInitMode(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name: GetDayOfWeek
-//
-//   Parameter(s):  Date_t*  pDate
-//   Return value:  uint8_t DayOfWeek
-//
-//   Description:   Get the day of the week from the date
-//
-//   Note(s):       (0-6, Sunday-Saturday) to stay generic, even if ST RTC are 1-Monday 7-Sunday
-//
-//-------------------------------------------------------------------------------------------------
-uint8_t RTC_Driver::GetDayOfWeek(Date_t* pDate)
-{
-    uint16_t Day;
-    uint16_t Year =  pDate->Year - 2000;
-
-    // Pre calculate the day of the week (0-6, SUNDAY-SATURDAY)
-    Day  = (Year >> 2) + 2;
-    Day += (Year + pDate->Day + m_WeekDayTable[pDate->Month - 1]);
-
-    if((Year % 4) == 0)
-    {
-        if(pDate->Month < 3)
-        {
-            if(Day == 0) Day = 6;
-            else         Day--;
-        }
-    }
-
-    return uint8_t(Day % 7);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
 //   Function:      Lock
 //
 //   Parameter(s):
@@ -497,7 +463,7 @@ void RTC_Driver::UpdateTimeFeature(void)
     m_Clock.DateTime.Time.Second = LIB_2BcdDec(uint8_t(Time) & 0x7F);
     m_Clock.DateTime.Date.Day    = LIB_2BcdDec(uint8_t(Date) & 0x3F);
     m_Clock.DateTime.Date.Month  = LIB_2BcdDec(uint8_t(Date >> 8) & 0x1F);
-    m_Clock.DateTime.Date.Year   = LIB_4BcdDec(uint16_t(Date >> 16));
+    m_Clock.DateTime.Date.Year   = LIB_4BcdDec(uint16_t(Date >> 16)) + 2000;
     m_Clock.DayOfWeek   = uint8_t(Date >> 13);
     if(m_Clock.DayOfWeek == 7)  m_Clock.DayOfWeek = 0;
 

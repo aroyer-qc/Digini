@@ -76,7 +76,6 @@ class RTC_Driver
         void                    Enable                  (void);
         SystemState_e           EnterInitMode           (void);
         void                    ExitInitMode            (void);
-        uint8_t                 GetDayOfWeek            (Date_t* pDate);
         void                    Lock                    (void);
         void                    Unlock                  (void);
         void                    LockRegister            (void);
@@ -91,7 +90,6 @@ class RTC_Driver
         TimeFormat_e            m_TimeFormat;
         Clock_t                 m_Clock;
         static const uint8_t    m_MonthSize[12];
-        static const uint8_t    m_WeekDayTable[12];
         static const uint16_t   m_DaysSoFar[12];
 };
 

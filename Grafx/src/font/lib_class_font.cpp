@@ -196,8 +196,7 @@ void FONT_Initialize(void)
 
                         while(BitCount--)
                         {
-                            if(BitValue)  *pMemory = 0xFF;
-                            else          *pMemory = 0x00;
+                            *pMemory = (BitValue != 0) ? 0xFF : 0x00;
                             SizeCount++;
                             #ifdef LCD_INVERT_SCREEN
                                 pMemory--;

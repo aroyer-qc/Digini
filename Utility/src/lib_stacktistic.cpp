@@ -71,7 +71,7 @@ void StackCheck::Initialize(void)
         m_pStackBottom[i] = nullptr;
     }
 
-    m_FreeSlot = 0;
+    m_NumberOfStack = 1;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -88,12 +88,13 @@ void StackCheck::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 int StackCheck::Register(const uint32_t* pStack, size_t STackSz)
 {
-    if(m_FreeSlot < DIGINI_STACKTISTIC_NUMBER_OF_STACK)
+    if(m_NumberOfStack < DIGINI_STACKTISTIC_NUMBER_OF_STACK)
     {
         STackSz--;
-        m_pStackBottom[m_FreeSlot] = pStack;
-        m_FreeSlot++;
-        return m_FreeSlot - 1;
+        m_pStackBottom[m_NumberOfStack] = pStack;
+        m_Size[m_NumberOfStack] = STackSz;
+        m_NumberOfStack++;
+        return m_NumberOfStack - 1;
     }
 
     return -1;
@@ -116,6 +117,7 @@ size_t StackCheck::GetUsage(int StackID)
 
     if(StackID != -1)
     {
+        UseSize = 0;
         pStack = (uint32_t*)m_pStackBottom[StackID];
 
         // Use -1 here, because if we reach -1 we now know we busted the stack.
@@ -152,6 +154,21 @@ int32_t StackCheck::GetPercent(int StackID)
     }
 
     return Percent;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           GetNumberOfRegisterStack
+//
+// Parameter(s):   None
+// Return:         int          Return the number of Stack that has been registered
+//
+// Description:    Return the use size of a specific stack
+//
+//-------------------------------------------------------------------------------------------------
+int StackCheck::GetNumberOfRegisterStack(void)
+{
+    return m_NumberOfStack;
 }
 
 //-------------------------------------------------------------------------------------------------

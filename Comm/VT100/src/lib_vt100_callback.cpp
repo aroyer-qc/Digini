@@ -164,23 +164,50 @@ VT100_InputType_e VT100_Terminal::CALLBACK_None(uint8_t Input, VT100_CallBackTyp
 //-------------------------------------------------------------------------------------------------
 VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallBackType_e Type)
 {
+    static int NbOfStack = 0;
+
     VAR_UNUSED(Input);
-    VAR_UNUSED(Type);
 
-    // At Init
+    switch(Type)
+    {
+        // TODO callback init is called when menu is displayed, why
+        // Maybe create a enum for VT100_CALLBACK_IN_MENU ???
+
+        case VT100_CALLBACK_INIT:
+        {
+            NbOfStack = myStacktistic.GetNumberOfRegisterStack();
+
+            for(int i = 0; i < NbOfStack; i++)
+            {
+                myVT100.Bargraph(10, (i * 3) + 10, VT100_COLOR_GREEN, uint8_t(myStacktistic.GetPercent(i)), 100, 20);
+            }
+
     //  Display box for all stack
-    //  Display all task name using the task..
-    //  Displa
+            //  Display all task name using the task..
+            //  Displa ???
+        }
+        break;
 
-    // At refresh
-    //  Display historic graph usage of every stacks and percent on the right side
-    //  GREEN on allowed safe range, RED when over setpoint
-    // ascii 219 full block. half block is 220. underscore for 1 or 2 is 95
+        case VT100_CALLBACK_REFRESH_ONCE:
+        case VT100_CALLBACK_REFRESH:
+        {
+            for(int i = 0; i < NbOfStack; i++)
+            {
+                myVT100.Bargraph(10, (i * 3) + 10, VT100_COLOR_GREEN,  myStacktistic.GetPercent(i), 100, 20);
+            }
+            // At refresh
+            //  Display historic graph usage of every stacks and percent on the right side
+            //  GREEN on allowed safe range, RED when over setpoint
+            // ascii 219 full block. half block is 220. underscore for 1 or 2 is 95
+        }
+        break;
 
-    // At flush
-    //  Release memory if any reserved for building process
+        // case VT100_CALLBACK_ON_INPUT: Nothing to do
+        // case VT100_CALLBACK_FLUSH:    Nothing to do
+        default: break;
+    }
 
-    return VT100_INPUT_MENU_CHOICE;
+    return VT100_INPUT_ESCAPE;
 }
 
 //-------------------------------------------------------------------------------------------------

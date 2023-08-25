@@ -32,16 +32,17 @@ class StackCheck
 {
     public:
 
-        void        Initialize          (void);
-        int         Register            (const uint32_t* pStack, size_t STackSz);
-        size_t      GetUsage            (int StackID);
-        int32_t     GetPercent          (int StackID);
+        void        Initialize                  (void);
+        int         Register                    (const uint32_t* pStack, size_t STackSz);
+        size_t      GetUsage                    (int StackID);
+        int32_t     GetPercent                  (int StackID);
+        int         GetNumberOfRegisterStack    (void);
 
     private:
 
         const uint32_t*     m_pStackBottom [DIGINI_STACKTISTIC_NUMBER_OF_STACK];
         size_t              m_Size         [DIGINI_STACKTISTIC_NUMBER_OF_STACK];
-        int                 m_FreeSlot;
+        int                 m_NumberOfStack;
 };
 
 //-------------------------------------------------------------------------------------------------

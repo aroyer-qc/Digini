@@ -42,14 +42,14 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
     { "\r",                           nullptr                },  // LBL_LINEFEED
     { "\r\r",                         nullptr                },  // LBL_DOUBLE_LINEFEED
 
-  #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
+#if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
     { "Vendor:           ",           "Vendeur:            " },  // LBL_FW_NAME_INFO
     { "Name:             ",           "Nom:                " },  // LBL_FW_NAME_INFO
     { "Version:          ",           nullptr                },  // LBL_FW_VERSION_INFO
     { "GUI Name:         ",           "Nom GUI:            " },  // LBL_GUI_NAME_INFO
     { "GUI Version:      ",           "Version GUI:        " },  // LBL_GUI_VERSION_INFO
-    { "Hardware:         ",           "MatÃ©riel:           " },  // LBL_HARDWARE_INFO
-    { "Serial No.:       ",           "No. SÃ©rie:          " },  // BL_SERIAL_INFO
+    { "Hardware:         ",           "Matériel:           " },  // LBL_HARDWARE_INFO
+    { "Serial No.:       ",           "No. Série""         " },  // BL_SERIAL_INFO
     { "Built Date:       ",           "Date logiciel:      " },  // LBL_COMPILE_DATE_INFO
 
     { OEM_VENDOR_NAME,                nullptr                },  // LBL_VENDOR_NAME
@@ -60,21 +60,21 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
     { OUR_FIRMWARE_GUI_VERSION,       nullptr                },  // LBL_GUI_VERSION
     { OEM_SERIAL_NUMBER,              nullptr                },  // LBL_SERIAL_NUMBER
     { OUR_BUILD_DATE/*[]*/,           nullptr                },  // LBL_BUILT_DATE
-  #endif
+#endif
 
-  #if (LABEL_USE_TIME_AND_DATE == DEF_ENABLED)
+#if (LABEL_USE_TIME_AND_DATE == DEF_ENABLED)
     { "January",                      "Janvier"              },
-    { "February",                     "FÃ©vrier"              },
+    { "February",                     "Février"              },
     { "March",                        "Mars"                 },
     { "April",                        "Avril"                },
     { "May",                          "Mai"                  },
     { "June",                         "Juin"                 },
     { "July",                         "Juillet"              },
-    { "August",                       "AoÃ»t"                 },
-    { "September",                    "Septembre  "          },
+    { "August",                       "Août"                 },
+    { "September",                    "Septembre"            },
     { "October",                      "Octobre"              },
     { "November",                     "Novembre"             },
-    { "December",                     "DÃ©cembre"             },
+    { "December",                     "Décembre"             },
     { "Sunday",                       "Dimanche"             },
     { "Monday",                       "Lundi"                },
     { "Tuesday",                      "Mardi"                },
@@ -85,21 +85,21 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
     { "Hour",                         "Heure"                },
     { "Minute",                       nullptr                },
     { "Second",                       "Seconde"              },
-    { "Year",                         "AnnÃ©e"                },
+    { "Year",                         "Année"                },
     { "Month",                        "Mois"                 },
     { "Day",                          "Jour"                 },
-  #endif
+#endif
 
     LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
 
-  // Include VT100 label if VT100 is defined
- #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+    // Include VT100 label if VT100 is defined
+#if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
     VT100_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
     VT100_USER_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
-   #if (VT100_USE_COLOR != DEF_ENABLED)
+#if (VT100_USE_COLOR != DEF_ENABLED)
     VT100_MONO_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
-   #endif
- #endif
+#endif
+#endif
 };
 
 Label::Label()

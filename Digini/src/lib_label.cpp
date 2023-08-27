@@ -43,14 +43,14 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
     { "\r\r",                         nullptr                },  // LBL_DOUBLE_LINEFEED
 
 #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
-    { "Vendor:           ",           "Vendeur:            " },  // LBL_FW_NAME_INFO
-    { "Name:             ",           "Nom:                " },  // LBL_FW_NAME_INFO
+    { "Vendor:           ",           "Vendeur:          "   },  // LBL_FW_NAME_INFO
+    { "Name:             ",           "Nom:              "   },  // LBL_FW_NAME_INFO
     { "Version:          ",           nullptr                },  // LBL_FW_VERSION_INFO
-    { "GUI Name:         ",           "Nom GUI:            " },  // LBL_GUI_NAME_INFO
-    { "GUI Version:      ",           "Version GUI:        " },  // LBL_GUI_VERSION_INFO
-    { "Hardware:         ",           "Matériel:           " },  // LBL_HARDWARE_INFO
-    { "Serial No.:       ",           "No. Série""         " },  // BL_SERIAL_INFO
-    { "Built Date:       ",           "Date logiciel:      " },  // LBL_COMPILE_DATE_INFO
+    { "GUI Name:         ",           "Nom GUI:          "   },  // LBL_GUI_NAME_INFO
+    { "GUI Version:      ",           "Version GUI:      "   },  // LBL_GUI_VERSION_INFO
+    { "Hardware:         ",           "Matériel:         "   },  // LBL_HARDWARE_INFO
+    { "Serial No.:       ",           "No. Série:        "   },  // BL_SERIAL_INFO
+    { "Built Date:       ",           "Date logiciel:    "   },  // LBL_COMPILE_DATE_INFO
 
     { OEM_VENDOR_NAME,                nullptr                },  // LBL_VENDOR_NAME
     { OEM_MODEL_NAME,                 nullptr                },  // LBL_MODEL_NAME

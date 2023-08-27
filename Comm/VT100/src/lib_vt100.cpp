@@ -471,8 +471,8 @@ void VT100_Terminal::DisplayMenu(void)
     char                    ItemsChar;
 
     pMenu = nullptr;
-    ClearScreenWindow(m_SetMenuCursorPosX, m_SetMenuCursorPosY, VT100_X_SIZE - m_SetMenuCursorPosX, VT100_Y_SIZE - m_SetMenuCursorPosY);    // Clear screen bellow header
-    SetCursorPosition(m_SetMenuCursorPosX, m_SetMenuCursorPosY);                                // reposition cursor to print menu
+    ClearScreenWindow(0, 4, VT100_X_SIZE - m_SetMenuCursorPosX, VT100_Y_SIZE - m_SetMenuCursorPosY);    // Clear screen bellow header
+    SetCursorPosition(m_SetMenuCursorPosX, m_SetMenuCursorPosY);                                        // Reposition cursor to print menu
 
     m_ItemsQts = m_Menu[m_MenuID].Size;
 

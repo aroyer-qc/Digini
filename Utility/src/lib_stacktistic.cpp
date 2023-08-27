@@ -62,7 +62,7 @@ void StackCheck::Initialize(void)
     StackUsed = uint32_t(&_estack) - Stack;
     StackLeft = uint32_t(&_Min_Stack_Size) - StackUsed;
 
-    for(; StackLeft > 0; StackLeft -= 4)
+    for(; StackLeft >= 0; StackLeft -= 4)
     {
         Stack -= 4;
         *((uint32_t*)Stack) = DIGINI_STACKTISTIC_WATER_MARK_CODE;
@@ -71,6 +71,7 @@ void StackCheck::Initialize(void)
     // Assign stackID 0 to idle stack
     m_Size[0]         = uint32_t(&_Min_Stack_Size);
     m_pStackBottom[0] = &_estack - m_Size[0];
+    m_pStackName[0]   = "TaskIdle";
 
     // Fill empty stack information
     for(int i = 1; i < DIGINI_STACKTISTIC_NUMBER_OF_STACK; i++)

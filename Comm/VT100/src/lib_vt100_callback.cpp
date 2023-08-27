@@ -177,35 +177,55 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
         case VT100_CALLBACK_INIT:
         {
             NbOfStack = myStacktistic.GetNumberOfRegisterStack();
-
-            for(int i = 0; i < NbOfStack; i++)
-            {
-              #if (VT100_USE_COLOR == DEF_ENABLED)
-                myVT100.SetForeColor(VT100_COLOR_WHITE);
-              #endif
-                myVT100.SetCursorPosition(11, (i * 3) + 9);
-                myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_STRING, myStacktistic.GetStackName(i));
-                myVT100.SetCursorPosition(10, (i * 3) + 9);
-                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_1);
-                myVT100.SetCursorPosition(10, (i * 3) + 10);
-                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_2);
-                myVT100.SetCursorPosition(10, (i * 3) + 11);
-                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_3);
-            }
         }
         break;
 
         case VT100_CALLBACK_REFRESH_ONCE:
+        {
+            uint8_t OffsetMultiplierY;
+
+          #if (VT100_USE_COLOR == DEF_ENABLED)
+            myVT100.SetForeColor(VT100_COLOR_WHITE);
+          #endif
+
+            myVT100.SetCursorPosition(1, 5);
+            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VT100_STACKTISTIC);
+
+            for(int i = 0; i < NbOfStack; i++)
+            {
+                uint8_t OffsetMultiplierX = uint8_t(((i % 4) * 25) + 2);
+                OffsetMultiplierY         = uint8_t(((i / 4) * 6) + 7);
+
+                myVT100.SetCursorPosition(OffsetMultiplierX--, OffsetMultiplierY++);
+                myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_STRING, myStacktistic.GetStackName(i));
+                myVT100.SetCursorPosition(OffsetMultiplierX, OffsetMultiplierY++);
+                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_1);
+                myVT100.SetCursorPosition(OffsetMultiplierX, OffsetMultiplierY++);
+                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_2);
+                myVT100.SetCursorPosition(OffsetMultiplierX, OffsetMultiplierY++);
+                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_3);
+            }
+
+            myVT100.SetCursorPosition(0, OffsetMultiplierY + 1);
+            myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_ESCAPE);
+        }
+        break;
+
         case VT100_CALLBACK_REFRESH:
         {
             for(int i = 0; i < NbOfStack; i++)
             {
+                uint8_t OffsetMultiplierX =  uint8_t(((i % 4) * 25) + 2);
+                uint8_t OffsetMultiplierY = uint8_t((i / 4) * 6);
+
                 Percent = myStacktistic.GetPercent(i);
-                myVT100.Bargraph(10, (i * 3) + 10, VT100_COLOR_GREEN, Percent, 100, 20);
               #if (VT100_USE_COLOR == DEF_ENABLED)
+                myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY + 9, (Percent >= 90) ? VT100_COLOR_RED : VT100_COLOR_GREEN, Percent, 100, 20);
                 myVT100.SetForeColor(VT100_COLOR_WHITE);
+              #else
+                myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY + 9, Percent, 100, 20);
               #endif
-                myVT100.SetCursorPosition(11, 23);
+                myVT100.SetCursorPosition(OffsetMultiplierX, OffsetMultiplierY + 11);
                 myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VT100_LBL_PERCENT_VALUE, Percent);
             }
         }
@@ -250,27 +270,29 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 
         case VT100_CALLBACK_REFRESH_ONCE:
         {
-            myVT100.ClearScreenWindow(0, 8, 80, 30);
+            myVT100.ClearScreenWindow(0, 4, 80, 30);
 
             myVT100.SetCursorPosition(1, 8);
+            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VT100_SYSTEM_INFO);
+            myVT100.SetCursorPosition(1, 10);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VENDOR_NAME_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VENDOR_NAME);
-            myVT100.SetCursorPosition(1, 9);
+            myVT100.SetCursorPosition(1, 11);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_HARDWARE_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_MODEL_NAME);
-            myVT100.SetCursorPosition(1, 10);
+            myVT100.SetCursorPosition(1, 12);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FW_NAME_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FIRMWARE_NAME);
-            myVT100.SetCursorPosition(1, 11);
+            myVT100.SetCursorPosition(1, 13);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FW_VERSION_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FIRMWARE_VERSION);
-            myVT100.SetCursorPosition(1, 12);
+            myVT100.SetCursorPosition(1, 14);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_NAME_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_NAME);
-            myVT100.SetCursorPosition(1, 13);
+            myVT100.SetCursorPosition(1, 15);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_VERSION_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_VERSION);
-            myVT100.SetCursorPosition(1, 14);
+            myVT100.SetCursorPosition(1, 16);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_SERIAL_INFO);
           #ifdef DEBUG
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_SERIAL_NUMBER);
@@ -278,17 +300,17 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             // DB_Central.Get(&m_GenericString[0][0][0], SYS_SERIAL_NUMBER);
             // InMenuPrintf(SYS_GetSingleEntryTypeSize(SYS_SERIAL_NUMBER), &m_GenericString[0][0][0]);
           #endif
-            myVT100.SetCursorPosition(1, 15);
+            myVT100.SetCursorPosition(1, 17);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_COMPILE_DATE_INFO);
             myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_BUILT_DATE);
 
-            myVT100.SetCursorPosition(1, 16);
+            myVT100.SetCursorPosition(1, 18);
             myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_NOW);
 
-            myVT100.SetCursorPosition(1, 17);
+            myVT100.SetCursorPosition(1, 19);
             myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_UPTIME);
 
-            myVT100.SetCursorPosition(0, 19);
+            myVT100.SetCursorPosition(0, 21);
             myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_ESCAPE);
         }
         break;
@@ -302,7 +324,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             if(TimeDate.Time.Second != VT100_LastSecond)
             {
                 VT100_LastSecond = TimeDate.Time.Second;
-                myVT100.SetCursorPosition(19, 16);
+                myVT100.SetCursorPosition(21, 16);
                 myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&TimeDate.Date)) + (int(LBL_FIRST_WEEK_DAY)))),
                                                                          myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
                                                                          TimeDate.Date.Day,
@@ -315,7 +337,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             if(UpTime != VT100_LastUpTime)
             {
                 VT100_LastUpTime = UpTime;
-                myVT100.SetCursorPosition(19, 17);
+                myVT100.SetCursorPosition(21, 17);
                 myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LONG_UNSIGNED_SEMICOLON,    (uint32_t)(UpTime / TIME_SECONDS_PER_DAY));
                 UpTime %= TIME_SECONDS_PER_DAY;
                 myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_HOUR));

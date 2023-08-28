@@ -49,6 +49,7 @@
 #define CON_SERIAL_OUT_SIZE             256
 #define CON_TIME_DATE_STAMP             "%04u-%02u-%02u %2u:%02u:%02u: "
 #define CON_NOT_CONNECTED               -1
+#define CON_NUMBER_OF_DEBUG_LEVEL       16
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -56,23 +57,23 @@
 
 enum CON_DebugLevel_e
 {
-    CON_DEBUG_NONE       = 0x0000,
-    CON_DEBUG_LEVEL_1    = 0x0001,
-    CON_DEBUG_LEVEL_2    = 0x0002,
-    CON_DEBUG_LEVEL_3    = 0x0004,
-    CON_DEBUG_LEVEL_4    = 0x0008,
-    CON_DEBUG_LEVEL_5    = 0x0010,
-    CON_DEBUG_LEVEL_6    = 0x0020,
-    CON_DEBUG_LEVEL_7    = 0x0040,
-    CON_DEBUG_LEVEL_8    = 0x0080,
-    CON_DEBUG_LEVEL_9    = 0x0100,
-    CON_DEBUG_LEVEL_10   = 0x0200,
-    CON_DEBUG_LEVEL_11   = 0x0400,
-    CON_DEBUG_LEVEL_12   = 0x0800,
-    CON_DEBUG_LEVEL_13   = 0x1000,
-    CON_DEBUG_LEVEL_14   = 0x2000,
-    CON_DEBUG_LEVEL_15   = 0x4000,
-    CON_DEBUG_LEVEL_16   = 0x8000,
+    CON_DEBUG_NONE          = 0x0000,
+    CON_DEBUG_LEVEL_1       = 0x0001,
+    CON_DEBUG_LEVEL_2       = 0x0002,
+    CON_DEBUG_LEVEL_3       = 0x0004,
+    CON_DEBUG_LEVEL_4       = 0x0008,
+    CON_DEBUG_LEVEL_5       = 0x0010,
+    CON_DEBUG_LEVEL_6       = 0x0020,
+    CON_DEBUG_LEVEL_7       = 0x0040,
+    CON_DEBUG_LEVEL_8       = 0x0080,
+    CON_DEBUG_LEVEL_9       = 0x0100,
+    CON_DEBUG_LEVEL_10        = 0x0200,
+    CON_DEBUG_LEVEL_11        = 0x0400,
+    CON_DEBUG_LEVEL_12        = 0x0800,
+    CON_DEBUG_LEVEL_13        = 0x1000,
+    CON_DEBUG_LEVEL_14        = 0x2000,
+    CON_DEBUG_LEVEL_15        = 0x4000,
+    CON_DEBUG_LEVEL_16        = 0x8000,
 };
 
 //typedef void (*CON_ChildProcess_t)(void);
@@ -136,6 +137,7 @@ class Console : public CallbackInterface
 
     // --------------------------------------------------------------------------------------------
 
+    // need to add echo on or off for child process.. Console need it, but menu don't need it!
         UART_Driver*                            m_pUartDriver;
         UART_Transfer_t**                       m_pRX_Transfer;
         TickCount_t                             m_CommandTimeOut;

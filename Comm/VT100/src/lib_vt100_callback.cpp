@@ -188,26 +188,20 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
             myVT100.SetForeColor(VT100_COLOR_WHITE);
           #endif
 
-            myVT100.SetCursorPosition(1, 5);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VT100_STACKTISTIC);
+            myVT100.InMenuPrintf(1, 5, VT100_SZ_NONE, LBL_VT100_STACKTISTIC);
 
             for(int i = 0; i < NbOfStack; i++)
             {
-                uint8_t OffsetMultiplierX = uint8_t(((i % 4) * 25) + 2);
+                uint8_t OffsetMultiplierX = uint8_t(((i % 4) * 26) + 2);
                 OffsetMultiplierY         = uint8_t(((i / 4) * 6) + 7);
 
-                myVT100.SetCursorPosition(OffsetMultiplierX--, OffsetMultiplierY++);
-                myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_STRING, myStacktistic.GetStackName(i));
-                myVT100.SetCursorPosition(OffsetMultiplierX, OffsetMultiplierY++);
-                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_1);
-                myVT100.SetCursorPosition(OffsetMultiplierX, OffsetMultiplierY++);
-                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_2);
-                myVT100.SetCursorPosition(OffsetMultiplierX, OffsetMultiplierY++);
-                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_3);
+                myVT100.InMenuPrintf(OffsetMultiplierX--, OffsetMultiplierY++, VT100_SZ_NONE, LBL_STRING, myStacktistic.GetStackName(i));
+                myVT100.InMenuPrintf(OffsetMultiplierX,   OffsetMultiplierY++, VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_1);
+                myVT100.InMenuPrintf(OffsetMultiplierX,   OffsetMultiplierY++, VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_2);
+                myVT100.InMenuPrintf(OffsetMultiplierX,   OffsetMultiplierY++, VT100_SZ_NONE, VT100_LBL_BAR_BOX_20_LINE_3);
             }
 
-            myVT100.SetCursorPosition(0, OffsetMultiplierY + 1);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_ESCAPE);
+            myVT100.InMenuPrintf(0, OffsetMultiplierY + 1, VT100_SZ_NONE, VT100_LBL_ESCAPE);
         }
         break;
 
@@ -215,7 +209,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
         {
             for(int i = 0; i < NbOfStack; i++)
             {
-                uint8_t OffsetMultiplierX =  uint8_t(((i % 4) * 25) + 2);
+                uint8_t OffsetMultiplierX =  uint8_t(((i % 4) * 26) + 2);
                 uint8_t OffsetMultiplierY = uint8_t((i / 4) * 6);
 
                 Percent = myStacktistic.GetPercent(i);
@@ -225,8 +219,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
               #else
                 myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY + 9, Percent, 100, 20);
               #endif
-                myVT100.SetCursorPosition(OffsetMultiplierX, OffsetMultiplierY + 11);
-                myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VT100_LBL_PERCENT_VALUE, Percent);
+                myVT100.InMenuPrintf(OffsetMultiplierX, OffsetMultiplierY + 11, VT100_SZ_NONE, LBL_VT100_LBL_PERCENT_VALUE, Percent);
             }
         }
         break;
@@ -272,46 +265,31 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
         {
             myVT100.ClearScreenWindow(0, 4, 80, 30);
 
-            myVT100.SetCursorPosition(1, 8);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VT100_SYSTEM_INFO);
-            myVT100.SetCursorPosition(1, 10);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VENDOR_NAME_INFO);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_VENDOR_NAME);
-            myVT100.SetCursorPosition(1, 11);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_HARDWARE_INFO);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_MODEL_NAME);
-            myVT100.SetCursorPosition(1, 12);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FW_NAME_INFO);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FIRMWARE_NAME);
-            myVT100.SetCursorPosition(1, 13);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FW_VERSION_INFO);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_FIRMWARE_VERSION);
-            myVT100.SetCursorPosition(1, 14);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_NAME_INFO);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_NAME);
-            myVT100.SetCursorPosition(1, 15);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_VERSION_INFO);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_GUI_VERSION);
-            myVT100.SetCursorPosition(1, 16);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_SERIAL_INFO);
+            myVT100.InMenuPrintf(1, 6,  VT100_SZ_NONE, LBL_VT100_SYSTEM_INFO);
+            myVT100.InMenuPrintf(1, 8,  VT100_SZ_NONE, LBL_VENDOR_NAME_INFO);
+            myVT100.InMenuPrintf(       VT100_SZ_NONE, LBL_VENDOR_NAME);
+            myVT100.InMenuPrintf(1, 9,  VT100_SZ_NONE, LBL_HARDWARE_INFO);
+            myVT100.InMenuPrintf(       VT100_SZ_NONE, LBL_MODEL_NAME);
+            myVT100.InMenuPrintf(1, 10, VT100_SZ_NONE, LBL_FW_NAME_INFO);
+            myVT100.InMenuPrintf(       VT100_SZ_NONE, LBL_FIRMWARE_NAME);
+            myVT100.InMenuPrintf(1, 11, VT100_SZ_NONE, LBL_FW_VERSION_INFO);
+            myVT100.InMenuPrintf(       VT100_SZ_NONE, LBL_FIRMWARE_VERSION);
+            myVT100.InMenuPrintf(1, 12, VT100_SZ_NONE, LBL_GUI_NAME_INFO);
+            myVT100.InMenuPrintf(       VT100_SZ_NONE, LBL_GUI_NAME);
+            myVT100.InMenuPrintf(1, 13, VT100_SZ_NONE, LBL_GUI_VERSION_INFO);
+            myVT100.InMenuPrintf(       VT100_SZ_NONE, LBL_GUI_VERSION);
+            myVT100.InMenuPrintf(1, 14, VT100_SZ_NONE, LBL_SERIAL_INFO);
           #ifdef DEBUG
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_SERIAL_NUMBER);
+            myVT100.InMenuPrintf(       VT100_SZ_NONE, LBL_SERIAL_NUMBER);
           #else // TODO use programmed serial number when not in debug
             // DB_Central.Get(&m_GenericString[0][0][0], SYS_SERIAL_NUMBER);
             // InMenuPrintf(SYS_GetSingleEntryTypeSize(SYS_SERIAL_NUMBER), &m_GenericString[0][0][0]);
           #endif
-            myVT100.SetCursorPosition(1, 17);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_COMPILE_DATE_INFO);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_BUILT_DATE);
-
-            myVT100.SetCursorPosition(1, 18);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_NOW);
-
-            myVT100.SetCursorPosition(1, 19);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_UPTIME);
-
-            myVT100.SetCursorPosition(0, 21);
-            myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_ESCAPE);
+            myVT100.InMenuPrintf(1, 15, VT100_SZ_NONE, LBL_COMPILE_DATE_INFO);
+            myVT100.InMenuPrintf(       VT100_SZ_NONE, LBL_BUILT_DATE);
+            myVT100.InMenuPrintf(1, 16, VT100_SZ_NONE, VT100_LBL_NOW);
+            myVT100.InMenuPrintf(1, 17, VT100_SZ_NONE, VT100_LBL_UPTIME);
+            myVT100.InMenuPrintf(0, 19, VT100_SZ_NONE, VT100_LBL_ESCAPE);
         }
         break;
 
@@ -324,27 +302,25 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             if(TimeDate.Time.Second != VT100_LastSecond)
             {
                 VT100_LastSecond = TimeDate.Time.Second;
-                myVT100.SetCursorPosition(21, 16);
-                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&TimeDate.Date)) + (int(LBL_FIRST_WEEK_DAY)))),
-                                                                         myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
-                                                                         TimeDate.Date.Day,
-                                                                         TimeDate.Date.Year,
-                                                                         TimeDate.Time.Hour,
-                                                                         TimeDate.Time.Minute,
-                                                                         TimeDate.Time.Second);
+                myVT100.InMenuPrintf(19, 16, VT100_SZ_NONE, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&TimeDate.Date)) + (int(LBL_FIRST_WEEK_DAY)))),
+                                                                                 myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
+                                                                                 TimeDate.Date.Day,
+                                                                                 TimeDate.Date.Year,
+                                                                                 TimeDate.Time.Hour,
+                                                                                 TimeDate.Time.Minute,
+                                                                                 TimeDate.Time.Second);
             }
 
             if(UpTime != VT100_LastUpTime)
             {
                 VT100_LastUpTime = UpTime;
-                myVT100.SetCursorPosition(21, 17);
-                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LONG_UNSIGNED_SEMICOLON,    (uint32_t)(UpTime / TIME_SECONDS_PER_DAY));
+                myVT100.InMenuPrintf(19, 17, VT100_SZ_NONE, VT100_LBL_LONG_UNSIGNED_SEMICOLON,    (uint32_t)(UpTime / TIME_SECONDS_PER_DAY));
                 UpTime %= TIME_SECONDS_PER_DAY;
-                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_HOUR));
+                myVT100.InMenuPrintf(        VT100_SZ_NONE, VT100_LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_HOUR));
                 UpTime %= TIME_SECONDS_PER_HOUR;
-                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_MINUTE));
+                myVT100.InMenuPrintf(        VT100_SZ_NONE, VT100_LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_MINUTE));
                 UpTime %= TIME_SECONDS_PER_MINUTE;
-                myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_UNSIGNED_2_DIGIT,           (uint16_t)UpTime);
+                myVT100.InMenuPrintf(        VT100_SZ_NONE, VT100_LBL_UNSIGNED_2_DIGIT,           (uint16_t)UpTime);
             }
         }
         break;
@@ -370,53 +346,57 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
 {
     static CON_DebugLevel_e DebugLevel = CON_DEBUG_NONE;
 
-    if(Type != VT100_CALLBACK_FLUSH)
-    {
-        // Update VT100_DebugLevel only on item 1 if it is VT100_CALLBACK_INIT type
-        if(((Type == VT100_CALLBACK_INIT) && (Input == 1)) ||
-           // All the time if it is a VT100_CALLBACK_REFRESH
-           (Type == VT100_CALLBACK_REFRESH))
-        {
-            DB_Central.Get(&DebugLevel, SYS_DEBUG_LEVEL, 0, 0);
-            VT100_LastDebugLevel = DebugLevel;
-        }
+    // Update VT100_DebugLevel only on item 0 if it is VT100_CALLBACK_REFRESH type
 
-        myVT100.SetCursorPosition(41, 10 + Input);
+    if(Type == VT100_CALLBACK_REFRESH)
+    {
+        DB_Central.Get(&DebugLevel, SYS_DEBUG_LEVEL, 0, 0);
+        VT100_LastDebugLevel = DebugLevel;
+
       #if (VT100_USE_COLOR == DEF_ENABLED)
+        myVT100.SaveAttribute();
         myVT100.SetForeColor(VT100_COLOR_MAGENTA);
       #endif
 
-        if(((uint8_t(1) << (Input - 1)) & DebugLevel) != 0)
+        myVT100.SaveCursorPosition();
+
+        for(uint16_t i = 0; i < CON_NUMBER_OF_DEBUG_LEVEL; i++)
         {
-            if(Type != VT100_CALLBACK_INIT)
+            myVT100.SetCursorPosition(41, 14 + i);
+
+            if(((1 << i) & uint16_t(DebugLevel)) != 0)
             {
-                DebugLevel = CON_DebugLevel_e(int(DebugLevel & ~(1 << (Input - 1))));
                 myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_STRING, " ");
             }
             else
             {
                 myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "*");
             }
+        }
+
+      #if (VT100_USE_COLOR == DEF_ENABLED)
+        myVT100.RestoreAttribute();
+      #endif
+        myVT100.RestoreCursorPosition();
+    }
+
+    if(Type == VT100_CALLBACK_ON_INPUT)
+    {
+        uint16_t DebugValue = (1 << uint16_t(Input - 1));
+
+        if((DebugLevel & DebugValue) == 0)
+        {
+            DebugLevel |= DebugValue;
         }
         else
         {
-            if(Type != VT100_CALLBACK_INIT)
-            {
-                DebugLevel = CON_DebugLevel_e(int(DebugLevel) | (int(1) << (Input - 1)));
-                myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_STRING, "*");
-            }
-            else
-            {
-                myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_STRING, " ");
-            }
+            DebugLevel &= ~(DebugValue);
         }
     }
-    else
+
+    if(VT100_LastDebugLevel != DebugLevel)
     {
-        if(VT100_LastDebugLevel != DebugLevel)
-        {
-            DB_Central.Set(&DebugLevel, SYS_DEBUG_LEVEL);           // Write a Record in backup RAM
-        }
+        DB_Central.Set(&DebugLevel, SYS_DEBUG_LEVEL);           // Write a Record in backup RAM
     }
 
     return VT100_INPUT_MENU_CHOICE;
@@ -449,14 +429,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
       #if (VT100_USE_COLOR == DEF_ENABLED)
         myVT100.SetForeColor(VT100_COLOR_YELLOW);
       #endif
-        myVT100.SetCursorPosition(13, 24);
-        myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_TIME);
-        myVT100.SetCursorPosition(13, 25);
-        myVT100.InMenuPrintf(VT100_SZ_NONE, LBL_DATE);
+        myVT100.InMenuPrintf(13, 24, VT100_SZ_NONE, LBL_TIME);
+        myVT100.InMenuPrintf(13, 25, VT100_SZ_NONE, LBL_DATE);
         Refresh   = VT100_CFG_REFRESH_ALL;
     }
 
-    if(Type == VT100_CALLBACK_ON_MENU_INPUT)
+    if(Type == VT100_CALLBACK_ON_INPUT)
     {
         switch(Input)
         {
@@ -555,12 +533,10 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
       #if (VT100_USE_COLOR == DEF_ENABLED)
         myVT100.SetForeColor(VT100_COLOR_CYAN);
       #endif
-        myVT100.SetCursorPosition(26, 24);
-        myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_TIME, TimeDate.hour, TimeDate.minute, TimeDate.second);
-        myVT100.SetCursorPosition(26, 25);
-        myVT100.InMenuPrintf(VT100_SZ_NONE, VT100_LBL_DATE, myLabel.GetPointer(Label_e((TimeDate.month - 1) + (int(LBL_FIRST_MONTH)))),
-                                                                 TimeDate.day,
-                                                                 TimeDate.year);
+        myVT100.InMenuPrintf(26, 24, VT100_SZ_NONE, VT100_LBL_TIME, TimeDate.hour, TimeDate.minute, TimeDate.second);
+        myVT100.InMenuPrintf(26, 25, VT100_SZ_NONE, VT100_LBL_DATE, myLabel.GetPointer(Label_e((TimeDate.month - 1) + (int(LBL_FIRST_MONTH)))),
+                                                                                       TimeDate.day,
+                                                                                       TimeDate.year);
 
 
 

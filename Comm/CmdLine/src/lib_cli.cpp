@@ -323,6 +323,8 @@ bool CommandLine::ProcessRX(void)
     if(m_pConsole->ReadyRead() == true)
     {
         m_pConsole->Read(&Data, 1);
+        // Echo all character on the CLI
+       // m_pConsole->Write(&Data, 1);
 
         //-------------------------------------------------------------------------------------
         // Parse FIFO

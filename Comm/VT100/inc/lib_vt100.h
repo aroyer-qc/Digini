@@ -55,7 +55,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define VT100_X_SIZE                        100
-#define VT100_Y_SIZE                        50
+#define VT100_Y_SIZE                        60
 
 #define VT100_OFFSET_COLOR_FOREGROUND       30
 #define VT100_OFFSET_COLOR_BACKGROUND       40
@@ -142,13 +142,12 @@ enum VT100_CallBackType_e
     VT100_CALLBACK_REFRESH,
     VT100_CALLBACK_FLUSH,
 
+    VT100_CALLBACK_ON_INPUT,           // Selection input of items in thjs menu.
+
     // Dynamic item in selection menu
-    VT100_CALLBACK_ON_MENU_INIT,            // For Initializing items when they are listed in the menu (dynamic info on the menu page)
-    VT100_CALLBACK_ON_MENU_INPUT,           // Selection input of items in thje menu.
-    VT100_CALLBACK_ON_MENU_REFRESH,         // For Refreshing items when they are listed in the menu (dynamic info on the menu page)
-    VT100_CALLBACK_ON_MENU_FLUSH,           // When escaping or going through another menu (EX. release memory)
-
-
+  // VT100_CALLBACK_ON_INIT,            // For Initializing items when they are listed in the menu (dynamic info on the menu page)
+//    VT100_CALLBACK_ON_MENU_REFRESH,         // For Refreshing items when they are listed in the menu (dynamic info on the menu page)
+    VT100_CALLBACK_ON_FLUSH,           // When escaping or going through another menu (EX. release memory)
 };
 
 typedef VT100_InputType_e (*CallbackMethod_t)(uint8_t, VT100_CallBackType_e);
@@ -187,6 +186,7 @@ class VT100_Terminal : public ChildProcessInterface
         void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
         void                GoToMenu                    (VT100_Menu_e MenuID);
         size_t              InMenuPrintf                (int nSize, Label_e Label, ...);
+        size_t              InMenuPrintf                (uint8_t PosX, uint8_t PosY, int nSize, Label_e Label, ...);
         void                RestoreAttribute            (void);
         void                RestoreCursorPosition       (void);
         void                SaveAttribute               (void);

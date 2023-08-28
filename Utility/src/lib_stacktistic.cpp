@@ -52,28 +52,18 @@ extern const uint32_t _Min_Stack_Size;
 //-------------------------------------------------------------------------------------------------
 void StackCheck::Initialize(void)
 {
-    int32_t Stack;
-    int32_t StackUsed;
-    int32_t StackLeft;
+    //uint32_t  Stack;
+    uint32_t*           pStackBottom;
+    //uint32_t*  pStackNow        = 0;
+    //uint32_t   FillValue       = 0xFFFFFFFFUL;
+    //int32_t   StackUsed;
+    //int32_t   StackLeft;
 
-    // Start by filling the idle stack (main stack)
-    __asm( "mov %[result], sp" : [result] "=r" (Stack));
-
-    StackUsed = uint32_t(&_estack) - Stack;
-    StackLeft = uint32_t(&_Min_Stack_Size) - StackUsed;
-
-    for(; StackLeft >= 0; StackLeft -= 4)
-    {
-        Stack -= 4;
-        *((uint32_t*)Stack) = DIGINI_STACKTISTIC_WATER_MARK_CODE;
-    }
-
-    // Assign stackID 0 to idle stack
     m_Size[0]         = uint32_t(&_Min_Stack_Size);
-    m_pStackBottom[0] = &_estack - m_Size[0];
+    pStackBottom      = (uint32_t*)&_estack - m_Size[0];
+    m_pStackBottom[0] = (uint32_t*)pStackBottom;
     m_pStackName[0]   = "TaskIdle";
 
-    // Fill empty stack information
     for(int i = 1; i < DIGINI_STACKTISTIC_NUMBER_OF_STACK; i++)
     {
         m_Size[i]         = 0;
@@ -81,6 +71,20 @@ void StackCheck::Initialize(void)
     }
 
     m_NumberOfStack = 1;
+
+    // TODO replace this by an include of code according to platform use
+
+    // Start by filling the idle stack (main stack)
+    __asm( "mov     r3,     %0"     :: "r" (pStackBottom));
+
+    __asm( "mov     r2,     sp                                                  \n"
+           "movs    r4,     " STRINGIFY(DIGINI_STACKTISTIC_WATER_MARK_CODE) "   \n"
+           "b       LoopFillStack                                               \n"
+           "FillStack:                                                          \n"
+           "str     r4,     [r3],   #4                                          \n"
+           "LoopFillStack:                                                      \n"
+           "cmp     r2,     r3                                                  \n"
+           "bne     FillStack                                                   \n" );
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -138,23 +142,23 @@ const char* StackCheck::GetStackName(int StackID)
 //-------------------------------------------------------------------------------------------------
 size_t StackCheck::GetUsage(int StackID)
 {
-    size_t    UseSize = - 1;
+    size_t    FreeSize = - 1;
     uint32_t* pStack;
 
     if(StackID != -1)
     {
-        UseSize = 0;
+        FreeSize = 0;
         pStack = (uint32_t*)m_pStackBottom[StackID];
 
         // Use -1 here, because if we reach -1 we now know we busted the stack.
-        while((UseSize < m_Size[StackID]) && (*pStack == DIGINI_STACKTISTIC_WATER_MARK_CODE))
+        while((FreeSize < m_Size[StackID]) && (*pStack == DIGINI_STACKTISTIC_WATER_MARK_CODE))
         {
-            UseSize += 4;
+            FreeSize += 4;
             pStack  += 4;
         }
     }
 
-    return UseSize;
+    return m_Size[StackID] - FreeSize;
 }
 
 //-------------------------------------------------------------------------------------------------

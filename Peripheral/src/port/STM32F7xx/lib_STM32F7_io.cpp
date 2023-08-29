@@ -390,7 +390,7 @@ bool IO_GetInputPin(IO_ID_e IO_ID)
 //
 //  Function:       HALIO_GetOutputPin
 //
-//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID       ID of the IO pin definition in HALIO_Properties_t structure
 //  Return:         bool        level on internal register output 0 or 1
 //
 //  Description:    Gets output data bit.
@@ -411,6 +411,30 @@ bool IO_GetOutputPin(IO_ID_e IO_ID)
             return false;
         }
 
+        return true;
+    }
+
+    return false;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_IsItValid
+//
+//  Parameter(s):   IO_ID       ID of the IO pin definition in HALIO_Properties_t structure
+//  Return:         bool        true if valid, false if not
+//
+//  Description:    Return if this pin is a valid one.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+bool IO_IsItValid(IO_ID_e IO_ID)
+{
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+    if(pPort != GPIOxx)
+    {
         return true;
     }
 

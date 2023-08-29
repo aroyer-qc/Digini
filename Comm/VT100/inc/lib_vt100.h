@@ -60,13 +60,18 @@
 #define VT100_OFFSET_COLOR_FOREGROUND       30
 #define VT100_OFFSET_COLOR_BACKGROUND       40
 #define CON_FIFO_PARSER_RX_SZ               64
-#define VT100_SZ_NONE                       0
 
 #define CONFIG_FLAG_SIZE                    8  //???
 
 #define VT100_STRING_QTS                    8
 #define VT100_ITEMS_QTS                     8
-#define VT100_STRING_SZ                     32
+#define VT100_STRING_SZ                     64
+
+#if (VT100_USE_COLOR != DEF_ENABLED)
+#define myVT100.SetColor(...)
+#define myVT100.SetForeColor(...)
+#define myVT100.SetBackColor(...)
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -185,8 +190,8 @@ class VT100_Terminal : public ChildProcessInterface
         void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
         void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
         void                GoToMenu                    (VT100_Menu_e MenuID);
-        size_t              InMenuPrintf                (int nSize, Label_e Label, ...);
-        size_t              InMenuPrintf                (uint8_t PosX, uint8_t PosY, int nSize, Label_e Label, ...);
+        size_t              InMenuPrintf                (Label_e Label, ...);
+        size_t              InMenuPrintf                (uint8_t PosX, uint8_t PosY, Label_e Label, ...);       // TODO this should use part of the code from the prior function
         void                RestoreAttribute            (void);
         void                RestoreCursorPosition       (void);
         void                SaveAttribute               (void);

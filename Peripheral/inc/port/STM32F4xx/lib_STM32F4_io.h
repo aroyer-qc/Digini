@@ -272,9 +272,10 @@ void        IO_SetPinLow                (IO_ID_e IO_ID);
 void        IO_SetPinHigh               (IO_ID_e IO_ID);
 void        IO_TogglePin                (IO_ID_e IO_ID);
 void        IO_SetPin                   (IO_ID_e IO_ID, uint32_t Value);
-uint32_t    IO_GetInputPin              (IO_ID_e IO_ID);
-uint32_t    IO_GetOutputPin             (IO_ID_e IO_ID);
+bool        IO_GetInputPin              (IO_ID_e IO_ID);
+bool        IO_GetOutputPin             (IO_ID_e IO_ID);
 void        IO_EnableClock              (GPIO_TypeDef* pPort);// is it necessary?
+bool        IO_IsItValid                (IO_ID_e IO_ID);
 #ifdef IO_IRQ_DEF
 void        IO_InitIRQ                  (IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback);
 void        IO_EnableIRQ                (IO_IrqID_e IO_IRQ_ID);

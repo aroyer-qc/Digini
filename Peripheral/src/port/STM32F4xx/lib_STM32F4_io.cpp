@@ -358,16 +358,18 @@ void IO_SetPin(IO_ID_e IO_ID, uint32_t Value)
 //  Function:       IO_GetInputPin
 //
 //  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
-//  Return:         uint32_t        level on output pin 0 or 1
+//  Return:         bool            level on output pin 0 or 1
 //
 //  Description:    Gets input data bit.
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t IO_GetInputPin(IO_ID_e IO_ID)
+bool IO_GetInputPin(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+// TODO use IO_IsItValid
 
     if(pPort != GPIOxx)
     {
@@ -375,12 +377,12 @@ uint32_t IO_GetInputPin(IO_ID_e IO_ID)
 
         if((pPort->IDR & (1 << PinNumber)) == 0)
         {
-            return 0;
+            return false;
         }
-        return 1;
+        return true;
     }
-
-    return 0;
+    
+    return false;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -388,16 +390,18 @@ uint32_t IO_GetInputPin(IO_ID_e IO_ID)
 //  Function:       HALIO_GetOutputPin
 //
 //  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
-//  Return:         uint32_t        level on internal register output 0 or 1
+//  Return:         bool            level on internal register output 0 or 1
 //
 //  Description:    Gets output data bit.
 //
 //  Note(s):        Get the value in register not actual output... use IO_GetInputPin for this
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t IO_GetOutputPin(IO_ID_e IO_ID)
+bool IO_GetOutputPin(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+// TODO use IO_IsItValid... do the same in F4
 
     if(pPort != GPIOxx)
     {
@@ -405,13 +409,35 @@ uint32_t IO_GetOutputPin(IO_ID_e IO_ID)
 
         if((pPort->ODR & (1 << PinNumber)) == 0)
         {
-            return 0;
+            return false;
         }
 
-        return 1;
+        return true;
     }
 
-    return 0;
+    return false;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_IsItValid
+//
+//  Parameter(s):   IO_ID       ID of the IO pin definition in HALIO_Properties_t structure
+//  Return:         bool        true if valid, false if not
+//
+//  Description:    Return if this pin is a valid one.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+bool IO_IsItValid(IO_ID_e IO_ID)
+{
+    if(pPort != GPIOxx)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 //-------------------------------------------------------------------------------------------------

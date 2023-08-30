@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_stacktistic_STM32F7.cpp
+//  File : lib_stacktistic_LPC2xxx.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -24,6 +24,8 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+#error This code is not validated yet
+
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
@@ -34,8 +36,8 @@
 
 #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
 
-extern const uint32_t _estack;
-extern const uint32_t _Min_Stack_Size;
+extern const uint32_t __StackTop;       // maybe use standard embitz way's _estack 
+extern const uint32_t Stack_Size;       // _Min_Stack_Size
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -51,24 +53,23 @@ void StackCheck::InitializePort(void)
 {
     uint32_t*           pStackBottom;
 
-    m_Size[0]         = uint32_t(&_Min_Stack_Size);
-    pStackBottom      = (uint32_t*)&_estack - m_Size[0];
+    m_Size[0]         = uint32_t(&Stack_Size);
+    pStackBottom      = (uint32_t*)&__StackTop - m_Size[0];
     m_pStackBottom[0] = (uint32_t*)pStackBottom;
     m_pStackName[0]   = "TaskIdle";
 
     m_NumberOfStack = 1;
 
     // Start by filling the idle stack (main stack)
-    __asm( "mov     r3,     %0"     :: "r" (pStackBottom));
-
+    __asm( "mov     r1,     %0"     :: "r" (pStackBottom));
     __asm( "mov     r2,     sp                                                  \n"
-           "movs    r4,     " STRINGIFY(DIGINI_STACKTISTIC_WATER_MARK_CODE) "   \n"
+           "movs    r0,     " STRINGIFY(DIGINI_STACKTISTIC_WATER_MARK_CODE) "   \n"
            "b       LoopFillStack                                               \n"
            "FillStack:                                                          \n"
-           "str     r4,     [r3],   #4                                          \n"
+           "strlo   r0,     [r1],   #4                                          \n"
            "LoopFillStack:                                                      \n"
-           "cmp     r2,     r3                                                  \n"
-           "bne     FillStack                                                   \n" );
+           "cmp     r1,     r2                                                  \n"
+           "blo     FillStack                                                   \n" );
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_stacktistic_STM32F7.cpp
+//  File : lib_stacktistic_STM32F4.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -57,6 +57,8 @@ void StackCheck::InitializePort(void)
     m_pStackName[0]   = "TaskIdle";
 
     m_NumberOfStack = 1;
+
+    // TODO replace this by an include of code according to platform use
 
     // Start by filling the idle stack (main stack)
     __asm( "mov     r3,     %0"     :: "r" (pStackBottom));

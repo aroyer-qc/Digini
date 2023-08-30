@@ -64,3 +64,6 @@ Digini is a HAL and GUI library written in embedded C++. It is highly optimized 
 >    * SERV_ID_XCHG    Service to exchange data via structure between page. (title, min, max, value, edit type)
 
 # Please understand this library is a constant work in progress.
+
+As of August 30, 2023, the following project is use for development of Digini:
+[Project: GRBL_Digini_STM32Fx](https://github.com/aroyer-qc/GRBL_Digini_STM32Fx)

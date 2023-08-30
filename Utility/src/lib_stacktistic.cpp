@@ -1,4 +1,4 @@
-///-------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
 //
 //  File : lib_stacktistic.cpp
 //
@@ -30,15 +30,11 @@
 
 #define STK_CHK_GLOBAL
 #include "lib_digini.h"
+#undef  STK_CHK_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-
-extern const uint32_t _estack;
-extern const uint32_t _Min_Stack_Size;
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -47,44 +43,18 @@ extern const uint32_t _Min_Stack_Size;
 // Parameter(s):   None
 // Return:         None
 //
-// Description:    Initialize the Stack monitoring tool.
+// Description:    Initialize the stack monitoring tool.
 //
 //-------------------------------------------------------------------------------------------------
 void StackCheck::Initialize(void)
 {
-    //uint32_t  Stack;
-    uint32_t*           pStackBottom;
-    //uint32_t*  pStackNow        = 0;
-    //uint32_t   FillValue       = 0xFFFFFFFFUL;
-    //int32_t   StackUsed;
-    //int32_t   StackLeft;
-
-    m_Size[0]         = uint32_t(&_Min_Stack_Size);
-    pStackBottom      = (uint32_t*)&_estack - m_Size[0];
-    m_pStackBottom[0] = (uint32_t*)pStackBottom;
-    m_pStackName[0]   = "TaskIdle";
-
     for(int i = 1; i < DIGINI_STACKTISTIC_NUMBER_OF_STACK; i++)
     {
         m_Size[i]         = 0;
         m_pStackBottom[i] = nullptr;
     }
 
-    m_NumberOfStack = 1;
-
-    // TODO replace this by an include of code according to platform use
-
-    // Start by filling the idle stack (main stack)
-    __asm( "mov     r3,     %0"     :: "r" (pStackBottom));
-
-    __asm( "mov     r2,     sp                                                  \n"
-           "movs    r4,     " STRINGIFY(DIGINI_STACKTISTIC_WATER_MARK_CODE) "   \n"
-           "b       LoopFillStack                                               \n"
-           "FillStack:                                                          \n"
-           "str     r4,     [r3],   #4                                          \n"
-           "LoopFillStack:                                                      \n"
-           "cmp     r2,     r3                                                  \n"
-           "bne     FillStack                                                   \n" );
+    InitializePort();
 }
 
 //-------------------------------------------------------------------------------------------------

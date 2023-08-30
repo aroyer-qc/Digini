@@ -33,6 +33,8 @@ class StackCheck
     public:
 
         void        Initialize                  (void);
+        void        InitializePort              (void);
+
         int         Register                    (const uint32_t* pStack, size_t STackSz, const char* pStackName);
         size_t      GetUsage                    (int StackID);
         int32_t     GetPercent                  (int StackID);

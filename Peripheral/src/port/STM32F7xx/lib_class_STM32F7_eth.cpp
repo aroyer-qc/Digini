@@ -50,7 +50,7 @@
 #define RESET_TIMEOUT       10
 
 // Interrupt Handler Prototype
-void ETH_IRQHandler(void);
+extern "C" void ETH_IRQHandler(void);
 
 
 RX_Descriptor_t ETH_Driver::m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
@@ -642,7 +642,6 @@ SystemState_e ETH_Driver::ReadFrame(struct pbuf* ptrBuf, size_t Length)
     size_t Granularity   = size_t(ptrBuf->len);
     uint8_t* pFrame      = static_cast<uint8_t*>(ptrBuf->payload);
 
-
     if((ptrBuf == nullptr) && (Length != 0))
     {
         State = SYS_INVALID_PARAMETER;
@@ -653,27 +652,22 @@ SystemState_e ETH_Driver::ReadFrame(struct pbuf* ptrBuf, size_t Length)
     }
     else
     {
-        do
+        while(Length > 0)
         {
-            LIB_FastMemcpy(pSrc, pFrame, Granularity);
             Length -= int32_t(ptrBuf->len);
+            LIB_FastMemcpy(pSrc, pFrame, Granularity);
+            ptrBuf = ptrBuf->next;
 
-            if(Length > 0)
+            if(ptrBuf != nullptr)
             {
-                ptrBuf = ptrBuf->next;
-
-                if(ptrBuf != nullptr)
-                {
-                    Granularity = size_t(ptrBuf->len);
-                    pFrame      = static_cast<uint8_t*>(ptrBuf->payload);
-                }
-                else
-                {
-                    Length = 0;
-                }
+                Granularity = size_t(ptrBuf->len);
+                pFrame      = static_cast<uint8_t*>(ptrBuf->payload);
+            }
+            else
+            {
+                Length = 0;
             }
         }
-        while(Length > 0);
     }
 
     // Return this block back to ETH-DMA
@@ -1282,50 +1276,54 @@ void ETH_Driver::DisableClock(void)
 //   Description:       Ethernet IRQ Handler.
 //
 //-------------------------------------------------------------------------------------------------
-NOS_ISR(ETH_IRQHandler)
+
+extern "C"
 {
-    uint32_t dmasr, macsr;
-    uint32_t Event = ETH_MAC_EVENT_NONE;
-
-    dmasr = ETH->DMASR;
-    ETH->DMASR = dmasr & (ETH_DMASR_NIS | ETH_DMASR_RS | ETH_DMASR_TS);
-
-    if(dmasr & ETH_DMASR_TS)
+    NOS_ISR(ETH_IRQHandler)
     {
-        // Frame sent
-        Event |= ETH_MAC_EVENT_TX_FRAME;
-    }
+        uint32_t dmasr, macsr;
+        uint32_t Event = ETH_MAC_EVENT_NONE;
 
-    if(dmasr & ETH_DMASR_RS)
-    {
-        // Frame received
-        Event |= ETH_MAC_EVENT_RX_FRAME;
-    }
-    macsr = ETH->MACSR;
+        dmasr = ETH->DMASR;
+        ETH->DMASR = dmasr & (ETH_DMASR_NIS | ETH_DMASR_RS | ETH_DMASR_TS);
 
-  #if (DIGINI_USE_ETH_TIME_STAMP == DEF_ENABLED)
-    if(macsr & ETH_MACSR_TSTS)
-    {
-        // Timestamp interrupt
-        if(ETH->PTPTSSR & 2 /*ETH_PTPTSSR_TSTTR*/)
+        if(dmasr & ETH_DMASR_TS)
         {
-            // Time stamp target time reached
-            Event |= ETH_MAC_EVENT_TIMER_ALARM;
+            // Frame sent
+            Event |= ETH_MAC_EVENT_TX_FRAME;
         }
-    }
-  #endif
 
-    if(macsr & ETH_MACSR_PMTS)
-    {
-        ETH->MACPMTCSR;
-        Event |= ETH_MAC_EVENT_WAKEUP;
-    }
+        if(dmasr & ETH_DMASR_RS)
+        {
+            // Frame received
+            Event |= ETH_MAC_EVENT_RX_FRAME;
+        }
+        macsr = ETH->MACSR;
+
+      #if (DIGINI_USE_ETH_TIME_STAMP == DEF_ENABLED)
+        if(macsr & ETH_MACSR_TSTS)
+        {
+            // Timestamp interrupt
+            if(ETH->PTPTSSR & 2 /*ETH_PTPTSSR_TSTTR*/)
+            {
+                // Time stamp target time reached
+                Event |= ETH_MAC_EVENT_TIMER_ALARM;
+            }
+        }
+      #endif
+
+        if(macsr & ETH_MACSR_PMTS)
+        {
+            ETH->MACPMTCSR;
+            Event |= ETH_MAC_EVENT_WAKEUP;
+        }
 
 
-    // Callback event notification
-    if(Event != ETH_MAC_EVENT_NONE)
-    {
-        ETH_Driver::ISR_CallBack(Event);
+        // Callback event notification
+        if(Event != ETH_MAC_EVENT_NONE)
+        {
+            ETH_Driver::ISR_CallBack(Event);
+        }
     }
 }
 

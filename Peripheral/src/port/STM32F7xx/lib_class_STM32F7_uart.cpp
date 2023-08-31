@@ -167,7 +167,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
                        DMA_M_BURST_SINGLE                 |
                        DMA_PRIORITY_HIGH;
             SET_BIT(pDMA->CR, m_pDMA_Info->DMA_ChannelRX);
-            pDMA->PAR = (uint32_t)&m_pUart->RDR;
+            pDMA->PAR = uint32_t(&m_pUart->RDR);
             pDMA->NDTR = UART_DRIVER_INTERNAL_RX_BUFFER_SIZE;
 
             pDMA = m_pDMA_Info->DMA_StreamTX;                                   // Write config that will never change
@@ -181,16 +181,14 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
                        DMA_M_BURST_SINGLE                 |
                        DMA_PRIORITY_HIGH;
             SET_BIT(pDMA->CR, m_pDMA_Info->DMA_ChannelTX);
-            pDMA->PAR = (uint32_t)&m_pUart->TDR;
+            pDMA->PAR = uint32_t(&m_pUart->TDR);
         }
 
         m_DMA_IsItBusyTX = false;
-
         memset(&m_RX_Transfer, 0x00, sizeof(UART_Transfer_t));
       #endif
 
         memset(&m_TX_Transfer, 0x00, sizeof(UART_Transfer_t));
-
     }
   #if (SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
     else if(m_UartID == UART_DRIVER_VIRTUAL)
@@ -683,7 +681,7 @@ void UART_Driver::DMA_ConfigRX(uint8_t* pBufferRX, size_t SizeRX)
         }
         else
         {
-            pDMA->M0AR = (uint32_t)pTransferRX->pBuffer;
+            pDMA->M0AR = uint32_t(pTransferRX->pBuffer);
             pDMA->NDTR = pTransferRX->StaticSize;
             pTransferRX->Size = pTransferRX->StaticSize;
         }
@@ -736,7 +734,7 @@ void UART_Driver::DMA_ConfigTX(uint8_t* pBufferTX, size_t SizeTX)
 
         if(pBufferTX != nullptr)
         {
-            pDMA->M0AR = (uint32_t)pBufferTX;
+            pDMA->M0AR = uint32_t(pBufferTX);
             pDMA->NDTR = SizeTX;
             pTransferTX->pBuffer    = pBufferTX;
             pTransferTX->Size       = SizeTX;

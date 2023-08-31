@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -38,14 +38,17 @@
 
 #define CFG_CHIP_SELECT_LOW_TIME            3  // Chip select active time for 6800/8080 bus
 
+#define m_E         m_RD
+#define m_RW        m_WR
+
 //-------------------------------------------------------------------------------------------------
 // Static variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
 IO_Bus_t IO_BusDriver::m_Bus[NB_BUS_CONST] =
 {
-  #define X_IO_BUS(ENUM_ID, BUS_PORT, BUS_TYPE,  RD_OR_E, WR_OR_RW,  CHIP_SELECT) \
-                           {BUS_PORT, BUS_TYPE, {RD_OR_E, WR_OR_RW}, CHIP_SELECT},
+  #define X_IO_BUS(ENUM_ID, BUS_TYPE,  RD_OR_E, WR_OR_RW,  CHIP_SELECT) \
+                           {BUS_TYPE, {RD_OR_E, WR_OR_RW}, CHIP_SELECT},
       IO_BUS_DEF
   #undef X_IO_BUS
 };

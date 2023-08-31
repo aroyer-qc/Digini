@@ -47,23 +47,31 @@
 void LIB_FastMemcpy(const uint8_t* pSrc, uint8_t* pDst, size_t Length)
 {
     // Fast-copy data fragments tobuffer
+
+    for(; Length > 0; pDst++, pSrc++, Length--)
+    {
+        *pDst = *pSrc;
+    }
+
+/*
     for(; Length > 7; pDst += 8, pSrc += 8, Length -= 8)
     {
         UNALIGNED_UINT32_WRITE(&pDst[0], UNALIGNED_UINT32_READ(&pSrc[0]));
         UNALIGNED_UINT32_WRITE(&pDst[4], UNALIGNED_UINT32_READ(&pSrc[4]));
     }
-    
+
     // Copy remaining up to 6 bytes
     for(; Length > 1; pDst += 2, pSrc += 2, Length -= 2)
     {
         UNALIGNED_UINT16_WRITE(&pDst[0], UNALIGNED_UINT16_READ(&pSrc[0]));
     }
-    
+
     // Copy remaining byte if any
     if(Length > 0)
     {
         pDst++[0] = pSrc++[0];
     }
+*/
 }
 
 //-------------------------------------------------------------------------------------------------

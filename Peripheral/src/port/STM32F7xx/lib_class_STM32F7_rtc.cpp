@@ -58,14 +58,14 @@
 //-------------------------------------------------------------------------------------------------
 
 const uint8_t  RTC_Driver::m_MonthSize[12]     = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+//const uint8_t  RTC_Driver::m_WeekDayTable[12]  = {4, 7, 7, 3, 5, 8, 3, 6, 9, 4, 7, 9};
 const uint16_t RTC_Driver::m_DaysSoFar[12]     = {0, 31, 59, 90, 120, 151, 181, 212, 243, 274, 303, 334};
 
 //-------------------------------------------------------------------------------------------------
 //
 //   Constructor:   RTC_Driver
 //
-//   Parameter(s):  nOS_Mutex*          pMutex
-//                  uint32_t            Mode
+//   Parameter(s):  uint32_t            Mode
 //
 //
 //   Description:   Initializes the RTC peripheral according to the specified Parameters

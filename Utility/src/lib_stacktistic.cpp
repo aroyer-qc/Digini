@@ -173,40 +173,4 @@ int StackCheck::GetNumberOfRegisterStack(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif
-
-
-
-
-
-
-
-#if 0
-void StackCheck::Process(void)
-{
-    void* pScan;
-    void  IsItFound;
-
-    for(int i = 0; i < DIGINI_STACKTISTIC_NUMBER_OF_STACK; i++)
-    {
-        if(i < DIGINI_STACKTISTIC_NUMBER_OF_STACK)
-        {
-            IsItFound = false;
-
-            for(pScan = m_pStackBottom; ((pScan <= m_pStackTop[i]) && (IsItFound == false)); pScan++)
-            {
-                if(*pScan != DIGINI_STACKTISTIC_WATER_MARK_CODE)
-                {
-                    if(pScan < m_pMaxReach)
-                    {
-                        IsItFound   = true;
-                        m_pMaxReach = pScan;
-                        m_Percent   = uint8_t((uint32_t((m_pStackTop) - uint32_t(pScan)) * 100) / m_Size[i]);
-                    }
-                }
-            }
-        }
-    }
-}
-#endif
-
+#endif //  (DIGINI_USE_STACKTISTIC == DEF_ENABLED)

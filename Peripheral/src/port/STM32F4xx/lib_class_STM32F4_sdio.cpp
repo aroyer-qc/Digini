@@ -23,8 +23,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
-
-//------ Note(s) ----------------------------------------------------------------------------------
+//
+// Notes:
 //
 //  MMCv4.2/SDv2 (in native mode via SDIO) control module
 //
@@ -62,7 +62,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   CSDIO
+//   Constructor:   SDIO_Driver
 //
 //   Parameter(s):  sSDIO* pSDIO_Info
 //
@@ -71,14 +71,14 @@
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CSDIO::CSDIO(sSDIO* pSDIO)
+SDIO_Driver::SDIO_Driver(sSDIO* pSDIO)
 {
     m_pSDIO = pSDIO;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Destructor:   CSDIO
+//   Destructor:   SDIO_Driver
 //
 //   Parameter(s):
 //
@@ -87,7 +87,7 @@ CSDIO::CSDIO(sSDIO* pSDIO)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CSDIO::~CSDIO()
+SDIO_Driver::~SDIO_Driver()
 {
 }
 
@@ -104,7 +104,7 @@ CSDIO::~CSDIO()
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CSDIO::Initialize(void)
+void SDIO_Driver::Initialize(void)
 {
     GPIO_InitTypeDef    GPIO_InitStructure;
     uint32_t            Priority;
@@ -206,7 +206,7 @@ void CSDIO::Initialize(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CSDIO::GetResponse(uint32_t* pResponse)
+SystemState_e SDIO_Driver::GetResponse(uint32_t* pResponse)
 {
     pResponse[0] = SDIO_GetResponse(SDIO_RESP1);
     pResponse[1] = SDIO_GetResponse(SDIO_RESP2);
@@ -228,7 +228,7 @@ SystemState_e CSDIO::GetResponse(uint32_t* pResponse)
 //  Note(s):        STM32F4 status match definition of the library, so no translation necessary
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CSDIO::GetTransfertStatus(void)
+uint32_t SDIO_Driver::GetTransfertStatus(void)
 {
     uint32_t Status;
 
@@ -258,7 +258,7 @@ uint32_t CSDIO::GetTransfertStatus(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-bool CSDIO::IsFlagSet(uint32_t Status, SD_StatusFlag Flag_e)
+bool SDIO_Driver::IsFlagSet(uint32_t Status, SD_StatusFlag Flag_e)
 {
     /*
     0x00000001,     // SD_FLAG_COMMAND_CRC_FAIL
@@ -290,7 +290,7 @@ bool CSDIO::IsFlagSet(uint32_t Status, SD_StatusFlag Flag_e)
 //   Note(s):       Do not put in OS tick hook
 //
 //-------------------------------------------------------------------------------------------------
-void CSDIO::TickHook(void)
+void SDIO_Driver::TickHook(void)
 {
     if(m_TimeOut > 0)
     {
@@ -311,7 +311,7 @@ void CSDIO::TickHook(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CSDIO::TransmitCommand(uint8_t Command, uint32_t Argument, ResponseType_e ResponseType)
+void SDIO_Driver::TransmitCommand(uint8_t Command, uint32_t Argument, ResponseType_e ResponseType)
 {
     uint32_t            PortResponse;
     SDIO_CmdInitTypeDef SDIO_CmdInitStructure;
@@ -361,7 +361,7 @@ void CSDIO::TransmitCommand(uint8_t Command, uint32_t Argument, ResponseType_e R
 //  Note(s):        this driver use DMA
 //
 //-------------------------------------------------------------------------------------------------
-void CSDIO::StartBlockTransfert(const uint8_t *pBuffer, uint32_t Count, uint32_t TransfertDir)
+void SDIO_Driver::StartBlockTransfert(const uint8_t *pBuffer, uint32_t Count, uint32_t TransfertDir)
 {
     m_TransfertError    = BUSY;
     m_DMA_EndOfTransfer = false;
@@ -388,7 +388,7 @@ void CSDIO::StartBlockTransfert(const uint8_t *pBuffer, uint32_t Count, uint32_t
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CSDIO::WaitBlockTransfertEnd(void)
+SystemState_e SDIO_Driver::WaitBlockTransfertEnd(void)
 {
     m_TimeOut = SDIO_DATA_TIMEOUT;
 
@@ -430,7 +430,7 @@ SystemState_e CSDIO::WaitBlockTransfertEnd(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CSDIO::Config(DeviceSpeed_e DeviceSpeed)
+void SDIO_Driver::Config(DeviceSpeed_e DeviceSpeed)
 {
     SDIO_InitTypeDef    SDIO_InitStructure;
 
@@ -470,7 +470,7 @@ void CSDIO::Config(DeviceSpeed_e DeviceSpeed)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CSDIO::Lock(void)
+void SDIO_Driver::Lock(void)
 {
     while(xSemaphoreTakeRecursive(*m_pSDIO->pMutex, portMAX_DELAY) != true){};
 }
@@ -487,7 +487,7 @@ void CSDIO::Lock(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CSDIO::Unlock(void)
+void SDIO_Driver::Unlock(void)
 {
     xSemaphoreGiveRecursive(*m_pSDIO->pMutex);
 }
@@ -505,7 +505,7 @@ void CSDIO::Unlock(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CSDIO::SDIO_DataInit(uint32_t TransfertDir, size_t Size)
+void SDIO_Driver::SDIO_DataInit(uint32_t TransfertDir, size_t Size)
 {
     SDIO_DataInitTypeDef SDIO_DataInitStructure;
 
@@ -532,7 +532,7 @@ void CSDIO::SDIO_DataInit(uint32_t TransfertDir, size_t Size)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CSDIO::DMA_Config(uint32_t* pBuffer, uint32_t BufferSize, uint32_t Direction)
+void SDIO_Driver::DMA_Config(uint32_t* pBuffer, uint32_t BufferSize, uint32_t Direction)
 {
     DMA_InitTypeDef SDDMA_InitStructure;
 
@@ -579,7 +579,7 @@ void CSDIO::DMA_Config(uint32_t* pBuffer, uint32_t BufferSize, uint32_t Directio
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CSDIO::DMA_StreamIRQHandler(void)
+void SDIO_Driver::DMA_StreamIRQHandler(void)
 {
     if(DMA2->LISR & DMA_FLAG_TCIF3_7)
     {
@@ -600,7 +600,7 @@ void CSDIO::DMA_StreamIRQHandler(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CSDIO::SDIO_IRQHandler(void)
+void SDIO_Driver::SDIO_IRQHandler(void)
 {
     // Check for SDMMC interrupt flags
     if((SDMMC1->STA & SDMMC_IT_DATAEND) != RESET)

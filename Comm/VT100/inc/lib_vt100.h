@@ -246,6 +246,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         void                        InputString                 (void);
         void                        InputDecimal                (void);
         void                        ClearConfigFLag             (void);
+        size_t                      MenuPrintfCommon            (Label_e Label, va_list* p_vaArg);
         static VT100_InputType_e    CALLBACK_None               (uint8_t Input, VT100_CallBackType_e Type);
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
 

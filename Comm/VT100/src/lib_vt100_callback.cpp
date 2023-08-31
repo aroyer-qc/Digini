@@ -33,9 +33,6 @@
 //
 // Parameter Type
 //
-//  TODO refresh this as new type exist
-//
-//
 //         VT100_CALLBACK_INIT     -> Initialize part of the display in the menu, or variables in use
 //                                  while in menu.
 //
@@ -171,9 +168,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
 
     switch(Type)
     {
-        // TODO callback init is called when menu is displayed, why
-        // Maybe create a enum for VT100_CALLBACK_IN_MENU ???
-
         case VT100_CALLBACK_INIT:
         {
             NbOfStack = myStacktistic.GetNumberOfRegisterStack();
@@ -247,12 +241,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 
     switch(Type)
     {
-        // TODO callback init is called when menu is displayed, why
-        // Maybe create a enum for VT100_CALLBACK_IN_MENU ???
-
         case VT100_CALLBACK_INIT:
         {
-            //VT100_DisplayMfg();
             VT100_LastSecond = 60;
             VT100_LastUpTime = 0;
         }
@@ -278,9 +268,10 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(1, 14, LBL_SERIAL_INFO);
           #ifdef DEBUG
             myVT100.InMenuPrintf(       LBL_SERIAL_NUMBER);
-          #else // TODO use programmed serial number when not in debug
-            // DB_Central.Get(&m_GenericString[0][0][0], SYS_SERIAL_NUMBER);
-            // InMenuPrintf(SYS_GetSingleEntryTypeSize(SYS_SERIAL_NUMBER), &m_GenericString[0][0][0]);
+          #else
+            char* pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE);
+             DB_Central.Get(pBuffer, SYS_SERIAL_NUMBER);
+             InMenuPrintf(LBL_STRING, pBuffer);
           #endif
             myVT100.InMenuPrintf(1, 15, LBL_COMPILE_DATE_INFO);
             myVT100.InMenuPrintf(       LBL_BUILT_DATE);

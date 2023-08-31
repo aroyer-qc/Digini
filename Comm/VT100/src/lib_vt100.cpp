@@ -476,11 +476,7 @@ void VT100_Terminal::DisplayMenu(void)
     pMenu = nullptr;
     ClearScreenWindow(0, 4, VT100_X_SIZE - m_SetMenuCursorPosX, VT100_Y_SIZE - m_SetMenuCursorPosY);    // Clear screen bellow header
     SetCursorPosition(m_SetMenuCursorPosX, m_SetMenuCursorPosY);                                        // Reposition cursor to print menu
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_YELLOW);
-  #endif
-
-
     m_ItemsQts = m_Menu[m_MenuID].Size;
 
     if(m_ItemsQts > 1)
@@ -547,9 +543,7 @@ void VT100_Terminal::PrintMenuStaticInfo(void)
     nOS_Sleep(100);                                                 // Terminal need time to reset
     InMenuPrintf(VT100_LBL_HIDE_CURSOR);
     InMenuPrintf(VT100_LBL_CLEAR_SCREEN);
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
-  #endif
     InMenuPrintf(VT100_LBL_LINE_SEPARATOR);
     pString  = myLabel.GetPointer(VT100_LBL_LINE_SEPARATOR);
     SizeLine = VT100_X_SIZE;
@@ -561,9 +555,7 @@ void VT100_Terminal::PrintMenuStaticInfo(void)
     RepeatChar(' ', (SizeLine / 2) + (SizeLine % 2));
     InMenuPrintf(LBL_LINEFEED);
     InMenuPrintf(VT100_LBL_LINE_SEPARATOR);
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetColor(VT100_COLOR_YELLOW, VT100_COLOR_BLACK);
-  #endif
     InMenuPrintf(LBL_DOUBLE_LINEFEED);
 
     m_SetMenuCursorPosY = 8;
@@ -628,8 +620,7 @@ void VT100_Terminal::ClearScreenWindow(uint8_t PosX, uint8_t PosY, uint8_t SizeX
 {
     for(int y = PosY; y < (PosY + SizeY); y++)
     {
-        SetCursorPosition(PosX, y);
-        InMenuPrintf(VT100_LBL_ERASE_FROM_CURSOR_N_CHAR, int(SizeX));
+        InMenuPrintf(PosX, y, VT100_LBL_ERASE_FROM_CURSOR_N_CHAR, int(SizeX));
     }
 }
 
@@ -648,14 +639,13 @@ void VT100_Terminal::ClearScreenWindow(uint8_t PosX, uint8_t PosY, uint8_t SizeX
 void VT100_Terminal::MenuSelectItems(char ItemsChar)
 {
     InMenuPrintf(LBL_STRING, "\r  (");
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_CYAN);
-  #endif
+
     if(ItemsChar == '0') InMenuPrintf(LBL_STRING, "ESC");
     else                 InMenuPrintf(LBL_CHAR, ItemsChar);
-  #if (VT100_USE_COLOR == DEF_ENABLED)
+
     SetForeColor(VT100_COLOR_YELLOW);
-  #endif
+
     if(ItemsChar == '0') InMenuPrintf(LBL_STRING, ") ");
     else                 InMenuPrintf(LBL_STRING, ")   ");
 }
@@ -739,20 +729,9 @@ void VT100_Terminal::InputDecimal(void)
     if(m_RefreshValue != m_Value)
     {
         m_RefreshValue = m_Value;
+        SetColor(VT100_COLOR_BLACK, ((m_Value >= m_Minimum) && (m_Value <= m_Maximum)) ? VT100_COLOR_GREEN : VT100_COLOR_RED);
 
-      #if (VT100_USE_COLOR == DEF_ENABLED)
-        if((m_Value >= m_Minimum) && (m_Value <= m_Maximum))
-        {
-            SetColor(VT100_COLOR_BLACK, VT100_COLOR_GREEN);
-        }
-        else
-        {
-            SetColor(VT100_COLOR_BLACK, VT100_COLOR_RED);
-        }
-      #endif
-
-        SetCursorPosition(m_PosX + 36, m_PosY + 3);
-        InMenuPrintf(LBL_CHAR, ' ');
+        InMenuPrintf(m_PosX + 36, m_PosY + 3, LBL_CHAR, ' ');
 
         switch(m_Divider)
         {
@@ -808,9 +787,7 @@ void VT100_Terminal::PrintSaveLabel(uint8_t PosX, uint8_t PosY, VT100_Color_e Co
 void VT100_Terminal::PrintSaveLabel(uint8_t PosX, uint8_t PosY)
 #endif
 {
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(Color);
-  #endif
     InMenuPrintf(PosX, PosY, VT100_LBL_SAVE_CONFIGURATION);
 }
 
@@ -852,9 +829,7 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
     DrawBox(PosX, PosY, 48, 8, VT100_COLOR_WHITE);
 
     // Write input information
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_CYAN);
-  #endif
     InMenuPrintf(PosX + 2,  PosY + 1, VT100_LBL_MINIMUM);
     InMenuPrintf(LBL_STRING, " : ");
 
@@ -879,11 +854,8 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
     }
 
     // Print type of input
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_YELLOW);
-  #endif
-    SetCursorPosition(PosX + 2, PosY + 3);
-    //InMenuPrintf(LBL_STRING, pMsg);
+    //InMenuPrintf(PosX + 2, PosY + 3, LBL_STRING, pMsg);
 
     // Add 'how to' info
     InMenuPrintf(PosX + 2,  PosY + 5, VT100_LBL_INPUT_VALIDATION);
@@ -959,9 +931,7 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
     DrawBox(PosX, PosY, 46, 7, VT100_COLOR_WHITE);
 
     // Write input information
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_CYAN);
-  #endif
     //InMenuPrintf(PosX + 2,  PosY + 1, Maximum, LBL_STRING, pMsg);
 
     // Add 'how to' info
@@ -1035,19 +1005,12 @@ void VT100_Terminal::GetStringInput(char* pString, uint8_t* pID)
 //-------------------------------------------------------------------------------------------------
 size_t VT100_Terminal::InMenuPrintf(Label_e Label, ...)
 {
-    va_list     vaArg;
-    char*       pBuffer;
-    size_t      Size    = 0;
-    const char* pFormat = myLabel.GetPointer(Label);
+    size_t  Size;
+    va_list vaArg;
 
-    if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE)) != nullptr)
-    {
-        va_start(vaArg, Label);
-        Size = STR_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, vaArg);
-        m_pConsole->SendData((const uint8_t*)&pBuffer[0], &Size);
-        va_end(vaArg);
-    }
-
+    va_start(vaArg, Label);
+    Size = MenuPrintfCommon(Label, &vaArg);
+    va_end(vaArg);
     return Size;
 }
 
@@ -1067,23 +1030,46 @@ size_t VT100_Terminal::InMenuPrintf(Label_e Label, ...)
 //-------------------------------------------------------------------------------------------------
 size_t VT100_Terminal::InMenuPrintf(uint8_t PosX, uint8_t PosY, Label_e Label, ...)
 {
-    SetCursorPosition(PosX, PosY);
+    size_t  Size;
+    va_list vaArg;
 
-    va_list     vaArg;
-    char*       pBuffer;
-    size_t      Size    = 0;
-    const char* pFormat = myLabel.GetPointer(Label);
+    SetCursorPosition(PosX, PosY);
+    va_start(vaArg, Label);
+    Size = MenuPrintfCommon(Label, &vaArg);
+    va_end(vaArg);
+    return Size;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           MenuPrintfCommon
+//
+//  Parameter(s):   Label_e     Label       ID of the label to with optional formatting.
+//                  va_list*    p_vaArg     Parameter from va_list.
+//
+//  Return:         None
+//
+//  Description:    Common function to format string and send it to console.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+size_t VT100_Terminal::MenuPrintfCommon(Label_e Label, va_list* p_vaArg)
+{
+    char*  pBuffer;
+    size_t Size    = 0;
 
     if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE)) != nullptr)
     {
-        va_start(vaArg, Label);
-        Size = STR_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, vaArg);
+        const char* pFormat = myLabel.GetPointer(Label);
+
+        Size = STR_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, *p_vaArg);
         m_pConsole->SendData((const uint8_t*)&pBuffer[0], &Size);
-        va_end(vaArg);
     }
 
     return Size;
 }
+
 
 //-------------------------------------------------------------------------------------------------
 //

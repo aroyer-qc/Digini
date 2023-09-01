@@ -96,7 +96,7 @@
 // PHY Special Control/Status Register
 #define PSCS_AUTODONE       0x1000      // Auto-negotiation is done
 #define PSCS_DUPLEX         0x0010      // Duplex Status (1=Full duplex)
-#define PSCS_SPEED          0x0004      // Speed10 Status (1=10MBit/s)
+#define PSCS_SPEED          0x0008      // Speed10 Status (1=10MBit/s)
 
 
 #define GEN_PHY_CR1         REG_PSCS
@@ -109,8 +109,8 @@
 #define PHY_CR1_ENERGY_DETECT       0x0010      // Energy Detect
 #define PHY_CR1_PHY_ISOLATE         0x0008      // PHY Isolate
 #define PHY_CR1_OPERATION_MODE      0x0007      // Operation Mode Indication
-#define PHY_CR1_MODE_100_BASE       0x0002      // 100Base-TX bitmask
-#define PHY_CR1_MODE_FULL_DUPLEX    0x0004      // Full-duplex bitmask
+#define PHY_CR1_MODE_100_BASE       0x0008      // 100Base-TX bitmask
+#define PHY_CR1_MODE_FULL_DUPLEX    0x0010      // Full-duplex bitmask
 
 #define GEN_PHY_CR2
 

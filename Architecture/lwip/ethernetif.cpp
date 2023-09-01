@@ -29,7 +29,9 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "lib_digini.h"
+#define ETHERNET_DRIVER_GLOBAL
 #include "ethernetif.h"
+#undef  ETHERNET_DRIVER_GLOBAL
 #include "lwipopts.h"
 #include "lwip/netif.h"
 #include "lwip/opt.h"
@@ -43,14 +45,13 @@
 #include <string.h>
 
 //-------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------
 // Private variable(s)
 //-------------------------------------------------------------------------------------------------
 
 extern "C" {
 
-static ETH_Driver                  ETH_Mac;
-static PHY_DRIVER_INTERFACE        ETH_Phy(0);
-static ETH_LinkState_e             ETH_Link;                // Ethernet Link State
 static nOS_Sem                     ETH_RX_Sem;
 static nOS_Mutex                   ETH_TX_Mutex;
 
@@ -92,7 +93,7 @@ err_t ethernetif_init(struct netif* netif)
 	ETH_Link = ETH_LINK_DOWN;
 
     cap = ETH_Mac.GetCapabilities();
-   ETH_Mac.Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
+    ETH_Mac.Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
 
     ETH_Mac.PowerControl(ETH_POWER_FULL);								// Enable Clock, Reset ETH, Init MAC, Enable ETH IRQ
     ETH_Mac.Control(ETH_MAC_CONTROL_TX, 0);
@@ -129,15 +130,8 @@ err_t ethernetif_init(struct netif* netif)
 	netif->name[0] = IFNAME0;
 	netif->name[1] = IFNAME1;
 
-  #if LWIP_IPV4
-  #if LWIP_ARP || LWIP_ETHERNET
-  #if LWIP_ARP
 	netif->output = etharp_output;
-  #else
 	netif->linkoutput = low_level_output;
-  #endif // LWIP_ARP
-  #endif // LWIP_ARP || LWIP_ETHERNET
-  #endif // LWIP_IPV4
 
   #if LWIP_IPV6
     netif->output_ip6 = ethip6_output;
@@ -332,7 +326,7 @@ void ethernetif_PollThePHY(void)
 {
     ETH_LinkState_e ETH_LinkNow;
 
-    if(netif_find("en0"))
+    if(netif_find(IF_NAME))
     {
         ETH_LinkNow = ETH_Phy.GetLinkState();
 
@@ -340,11 +334,11 @@ void ethernetif_PollThePHY(void)
         {
             if(ETH_LinkNow == ETH_LINK_UP)
             {
-                netif_set_link_up(netif_find("en0"));
+                netif_set_link_up(netif_find(IF_NAME));
             }
             else
             {
-                netif_set_link_down(netif_find("en0"));
+                netif_set_link_down(netif_find(IF_NAME));
             }
 
             ETH_Link = ETH_LinkNow;

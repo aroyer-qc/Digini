@@ -303,7 +303,7 @@ ETH_LinkInfo_t PHY_LAN8742A_Driver::GetLinkInfo(void)
         m_pETH_Driver->PHY_Read(m_PHY_Address, REG_PSCS, &Value);
     }
 
-    Info.Speed  = (Value & PSCS_SPEED)  ? ETH_PHY_SPEED_10M   : ETH_PHY_SPEED_100M;
+    Info.Speed  = (Value & PSCS_SPEED)  ? ETH_PHY_SPEED_100M  : ETH_PHY_SPEED_10M;
     Info.Duplex = (Value & PSCS_DUPLEX) ? ETH_PHY_FULL_DUPLEX : ETH_PHY_HALF_DUPLEX;
 
     return Info;

@@ -803,7 +803,7 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
 
     State = SYS_READY;
 
-  #if (SDIO_USE_MINIMAL_INFORMATION != DEF_ENABLED)
+  #if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
     // Byte 0
     Temp = uint8_t(m_CardCSD[0] >> 24);
     m_CSD.CSDStruct      = Temp >> 6;
@@ -829,7 +829,7 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
 
     // Byte 6
     Temp = uint8_t(m_CardCSD[1] >> 8);
-  #if (SDIO_USE_MINIMAL_INFORMATION != DEF_ENABLED)
+  #if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
     m_CSD.PartBlockRead   = Temp >> 7;
     m_CSD.WrBlockMisalign = (Temp & 0x40) >> 6;
     m_CSD.RdBlockMisalign = (Temp & 0x20) >> 5;
@@ -847,13 +847,13 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
         Temp = uint8_t(m_CardCSD[2] >> 24);
         m_CSD.DeviceSize |= uint32_t(Temp >> 6);
 
-      #if (SDIO_USE_MINIMAL_INFORMATION != DEF_ENABLED)
+      #if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
         m_CSD.MaxRdCurrentVDDMin = (Temp & 0x38) >> 3;
         m_CSD.MaxRdCurrentVDDMax = Temp & 0x07;
       #endif
         // Byte 9
         Temp = uint8_t(m_CardCSD[2] >> 16);
-      #if (SDIO_USE_MINIMAL_INFORMATION != DEF_ENABLED)
+      #if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
         m_CSD.MaxWrCurrentVDDMin = Temp >> 5;
         m_CSD.MaxWrCurrentVDDMax = (Temp & 0x1C) >> 2;
       #endif
@@ -887,7 +887,7 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
         State = SYS_ERROR;
     }
 
-  #if (SDIO_USE_MINIMAL_INFORMATION != DEF_ENABLED)
+  #if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
 
     // Byte 10
     Temp = uint8_t(m_CardCSD[2] >> 8);
@@ -901,7 +901,7 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
 
     // Byte 12
     Temp = uint8_t(m_CardCSD[3] >> 24);
-    m_CSD.WrProtectGrEnable = Tem) >> 7;
+    m_CSD.WrProtectGrEnable =  Temp >> 7;
     m_CSD.ManDeflECC        = (Temp & 0x60) >> 5;
     m_CSD.WrSpeedFact       = (Temp & 0x1C) >> 2;
     m_CSD.MaxWrBlockLen     = (Temp & 0x03) << 2;
@@ -926,22 +926,22 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
 
     // CID Section
 
-    m_CID.ManufacturerID =          uint8_t(m_CardCID[0]   >> 24);                  // Byte 0
-    m_CID.OEM_AppliID    = uint16_t(uint8_t(m_CardCID[0]   >> 16))        << 8;     // Byte 1
-    m_CID.OEM_AppliID   |= uint16_t(uint8_t(m_CardCID[0]   >> 8));                  // Byte 2
-    m_CID.ProdName1      =                  m_CardCID[0]   << 24;                   // Byte 3
-    m_CID.ProdName1     |= uint32_t(uint8_t(m_CardCID[1]   >> 24))        << 16;    // Byte 4
-    m_CID.ProdName1     |= uint32_t(uint8_t(m_CardCID[1]   >> 16))        << 8;     // Byte 5
-    m_CID.ProdName1     |= uint32_t(uint8_t(m_CardCID[1]   >> 8));                  // Byte 6
-    m_CID.ProdName2      =          uint8_t(m_CardCID[1]);                          // Byte 7
-    m_CID.ProdRev        =          uint8_t(m_CardCID[2]   >> 24);                  // Byte 8
-    m_CID.ProdSN         = uint32_t(uint8_t(m_CardCID[2]   >> 16))        << 24;    // Byte 9
-    m_CID.ProdSN        |= uint32_t(uint8_t(m_CardCID[2]   >> 8))         << 16;    // Byte 10
-    m_CID.ProdSN        |= uint32_t(uint8_t(m_CardCID[2]))                << 8;     // Byte 11
-    m_CID.ProdSN        |= uint32_t(uint8_t(m_CardCID[3]   >> 24));                 // Byte 12
-    m_CID.ManufactDate   = uint16_t(uint8_t(m_CardCID[3]   >> 16) & 0x0F) << 8;     // Byte 13
-    m_CID.ManufactDate  |= uint16_t(uint8_t(m_CardCID[3]   >> 8));                  // Byte 14
-    m_CID._CRC           =          uint8_t(m_CardCID[3])  >> 1;                    // Byte 15
+    m_CID.ManufacturerID      =          uint8_t(m_CardCID[0]   >> 24);                  // Byte 0
+    m_CID.OEM_AppliID         = uint16_t(uint8_t(m_CardCID[0]   >> 16))        << 8;     // Byte 1
+    m_CID.OEM_AppliID        |= uint16_t(uint8_t(m_CardCID[0]   >> 8));                  // Byte 2
+    m_CID.ProdName1           =                  m_CardCID[0]   << 24;                   // Byte 3
+    m_CID.ProdName1          |= uint32_t(uint8_t(m_CardCID[1]   >> 24))        << 16;    // Byte 4
+    m_CID.ProdName1          |= uint32_t(uint8_t(m_CardCID[1]   >> 16))        << 8;     // Byte 5
+    m_CID.ProdName1          |= uint32_t(uint8_t(m_CardCID[1]   >> 8));                  // Byte 6
+    m_CID.ProdName2           =          uint8_t(m_CardCID[1]);                          // Byte 7
+    m_CID.ProductRev          =          uint8_t(m_CardCID[2]   >> 24);                  // Byte 8
+    m_CID.ProductSN           = uint32_t(uint8_t(m_CardCID[2]   >> 16))        << 24;    // Byte 9
+    m_CID.ProductSN          |= uint32_t(uint8_t(m_CardCID[2]   >> 8))         << 16;    // Byte 10
+    m_CID.ProductSN          |= uint32_t(uint8_t(m_CardCID[2]))                << 8;     // Byte 11
+    m_CID.ProductSN          |= uint32_t(uint8_t(m_CardCID[3]   >> 24));                 // Byte 12
+    m_CID.ManufacturingDate   = uint16_t(uint8_t(m_CardCID[3]   >> 16) & 0x0F) << 8;     // Byte 13
+    m_CID.ManufacturingDate  |= uint16_t(uint8_t(m_CardCID[3]   >> 8));                  // Byte 14
+    m_CID._CRC           =          uint8_t(m_CardCID[3])  >> 1;                         // Byte 15
   #endif
 
     return State;

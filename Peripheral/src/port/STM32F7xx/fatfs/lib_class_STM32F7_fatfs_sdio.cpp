@@ -200,12 +200,11 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
 {
     DRESULT     Result;
 //  uint8_t     b;
-    //uint8_t*    pPtr = (uint8_t*)pBuffer;
+    uint8_t*    pPtr = (uint8_t*)pBuffer;
     //uint32_t    Data;
     //uint32_t*   dp;
     //uint32_t    st;
     //uint32_t    ed;
-
 
     if(m_Status == STA_NOINIT)
     {
@@ -220,31 +219,31 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
         case CTRL_SYNC:
         {
             Result = RES_OK;
-            break;
         }
+        break;
 
         // Get number of sectors on the disk (uint32_t)
         case GET_SECTOR_COUNT:
         {
             *(DWORD *)pBuffer = m_pSDIO_Driver->GetCardCapacity();
             Result = RES_OK;
-            break;
         }
+        break;
 
         // Get sectors on the disk (uint16_t)
         case GET_SECTOR_SIZE:
         {
             *(WORD *)pBuffer = BLOCK_SIZE;
             Result = RES_OK;
-            break;
         }
+        break;
 
         // Get erase block size in unit of sectors (uint32_t)
         case GET_BLOCK_SIZE:
         {
             *(DWORD*)pBuffer = BLOCK_SIZE;
-            break;
         }
+        break;
 
 /*        // Erase a block of sectors
         case CTRL_ERASE_SECTOR:
@@ -275,39 +274,48 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
             }
             break;
         }
-
+*/
         // Get card type flags (1 byte)
         case MMC_GET_TYPE:
         {
-            *pPtr = m_CardType;
+            *pPtr = m_pSDIO_Driver->GetCardType();
             Result = RES_OK;
-            break;
         }
+        break;
 
-        case GET_CSD:                                                               // Get CSD (16 bytes)
+        case MMC_GET_CSD:                                                               // Get CSD (16 bytes)
         {
-            memcpy(pPtr, m_CardCSD, 16);
+            *((const SD_CSD_t**)pBuffer) = m_pSDIO_Driver->GetCard_CSD();
             Result = RES_OK;
-            break;
         }
+        break;
 
         case MMC_GET_CID:                                                           // Get CID (16 bytes)
         {
-            memcpy(pPtr, m_CardCID, 16);
+            *((const SD_CID_t**)pBuffer) = m_pSDIO_Driver->GetCard_CID();
             Result = RES_OK;
-            break;
         }
+        break;
 
         case MMC_GET_OCR:                                                           // Get OCR (4 bytes)
         {
-            memcpy(pPtr, &m_OCR, 4);
+            *((uint32_t*)pBuffer) = m_pSDIO_Driver->GetCard_OCR();
             Result = RES_OK;
-            break;
         }
+        break;
+
+
+/*
+        SD_CardType_e       GetCardType             (void)              { return m_CardType; }
+        SD_CardType_e       GetCard_OCR             (void)              { return m_OCR; }
+        SD_CardType_e       GetCard_CID             (void)              { return m_CID; }
+        SD_CardType_e       GetCard_CSD             (void)              { return m_CSD; }
+
 
         // Receive SD status as a data block (64 bytes)
 
         case MMC_GET_SDSTAT:
+        {
             if(m_CardType & CT_SDC)                                                 // SDC
             {
                 if(WaitReady(500))
@@ -329,10 +337,14 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
                 }
                 //StopTransfert();                                                // Close data path
             }
-            break;
+        }
+        break;
 */
         default:
+        {
             Result = RES_PARERR;
+        }
+        break;
     }
 
     return Result;

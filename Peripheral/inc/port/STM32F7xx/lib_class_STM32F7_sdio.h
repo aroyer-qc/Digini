@@ -150,6 +150,9 @@ struct FatFS_Size_t
     uint32_t Free;  // Free size of memory
 };
 
+// TODO TODO part of those struct are not use if SDIO_USE_MAXIMUM_INFORMATION == disabled... fix this
+
+
 struct SD_CSD_t
 {
     uint8_t  CSDStruct;                 // CSD structure
@@ -197,10 +200,10 @@ struct SD_CID_t
     uint16_t OEM_AppliID;               // OEM/Application ID
     uint32_t ProdName1;                 // Product Name part1
     uint8_t  ProdName2;                 // Product Name part2
-    uint8_t  ProdRev;                   // Product Revision
-    uint32_t ProdSN;                    // Product Serial Number
+    uint8_t  ProductRev;                // Product Revision
+    uint32_t ProductSN;                 // Product Serial Number
     //uint8_t  Reserved1;               // Reserved1
-    uint16_t ManufactDate;              // Manufacturing Date
+    uint16_t ManufacturingDate;         // Manufacturing Date
     uint8_t  _CRC;                      // CID CRC
     //uint8_t  Reserved2;               // Always 1
 };
@@ -273,9 +276,6 @@ class SDIO_Driver
         void                Initialize              (void);
 
         SystemState_e       CheckOperation          (uint32_t Flag);
-        SystemState_e       GetCardInfo             (void);
-        uint32_t            GetCardCapacity         (void);
-        SystemState_e       GetStatus               (void);
         SystemState_e       InitializeCard          (void);
         SystemState_e       IsDetected              (void);
         void                PowerOFF                (void);
@@ -287,6 +287,16 @@ class SDIO_Driver
 
         SystemState_e       ReadBlocks              (uint64_t ReadAddress, uint32_t BlockSize, uint32_t NumberOfBlocks);
         SystemState_e       WriteBlocks             (uint64_t WriteAddress, uint32_t BlockSize, uint32_t NumberOfBlocks);
+
+        // Getter
+        SystemState_e       GetCardInfo             (void);
+        uint32_t            GetCardCapacity         (void);
+        SystemState_e       GetStatus               (void);
+        SD_CardType_e       GetCardType             (void)              { return m_CardType; }
+        uint32_t            GetCard_OCR             (void)              { return m_OCR;      }
+        const SD_CID_t*     GetCard_CID             (void)              { return &m_CID;     }
+        const SD_CSD_t*     GetCard_CSD             (void)              { return &m_CSD;     }
+
 
         // IRQ Handler
         void                SDMMC1_IRQHandler       (void);
@@ -338,7 +348,7 @@ class SDIO_Driver
         uint32_t                m_CardCID[4];
         SD_CID_t                m_CID;
         uint32_t                m_CardCSD[4];
-         SD_CSD_t                m_CSD;
+        SD_CSD_t                m_CSD;
         uint32_t                m_RCA;
         uint8_t                 m_Status[16];
         SD_CardType_e           m_CardType;

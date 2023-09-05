@@ -42,8 +42,15 @@
 #define CTRL_SYNC                       0       // Mandatory for write functions
 #define GET_SECTOR_COUNT                1       // Mandatory for only f_mkfs()
 #define GET_SECTOR_SIZE                 2
-#define GET_BLOCK_SIZE                  3       // Mandatory for only f_mkfs()
+#define GET_BLOCK_SIZE                  3        // Mandatory for only f_mkfs()
 #define CTRL_ERASE_SECTOR               4        // Force erased a block of sectors (for only _USE_ERASE)
+#define MMC_GET_TYPE                    5        // Force erased a block of sectors (for only _USE_ERASE)
+#define MMC_GET_CSD                     6        // Force erased a block of sectors (for only _USE_ERASE)
+#define MMC_GET_CID                     7        // Force erased a block of sectors (for only _USE_ERASE)
+#define MMC_GET_OCR                     8        // Force erased a block of sectors (for only _USE_ERASE)
+#define ATA_GET_REV                     9        // Force erased a block of sectors (for only _USE_ERASE)
+#define ATA_GET_MODEL                   10       // Force erased a block of sectors (for only _USE_ERASE)
+#define ATA_GET_SN                      11       // Force erased a block of sectors (for only _USE_ERASE)
 
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)

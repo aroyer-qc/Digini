@@ -370,11 +370,11 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
 
         if((DebugLevel & DebugValue) == 0)
         {
-            DebugLevel |= DebugValue;
+            DebugLevel = CON_DebugLevel_e(int(DebugLevel) | DebugValue);
         }
         else
         {
-            DebugLevel &= ~(DebugValue);
+            DebugLevel = CON_DebugLevel_e(int(DebugLevel) & ~(DebugValue));
         }
     }
 
@@ -543,29 +543,39 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
     {
         case VT100_CALLBACK_REFRESH_ONCE:
         {
-            FRESULT Result;
-            char str[80];
-            FATFS *fs;
-            uint32_t fre_clust;
-            uint32_t fre_byte;
-            uint32_t tot_byte;
+            FRESULT   Result;
+            char      str[80];
+            FATFS*    FatFs;
+            uint32_t  FreeCluster;
+            uint32_t  FreeBytes;
+            uint32_t  TotalBytes;
+            uint8_t   MMC_Type;
+            SD_CID_t* pCID;
+            SD_CSD_t* pCSD;
+            uint32_t  CardCapacity;
 
-            fs = (FATFS*)pMemoryPool->AllocAndClear(sizeof(FATFS)); /* Get work area for the volume */
+            FatFs = (FATFS*)pMemoryPool->AllocAndClear(sizeof(FATFS));      // Get work area for the volume
 
             do
             {
-                Result = f_mount(fs, "", 0);
+                Result = f_mount(FatFs, "", 0);
                 nOS_Sleep(10);
             }
             while(Result != FR_OK);
 
+            // Get information of SD Card
+            f_getfree("", &FreeCluster, &FatFs);
 
-            /* Get volume information and free clusters of drive 1 */
-            f_getfree("", &fre_clust, &fs);
+            // Get total bytes and free  bytes
+            TotalBytes = ((FatFs->n_fatent - 2) * FatFs->csize) /2;
+            FreeBytes = (FreeCluster * FatFs->csize) / 2;
 
-            /* Get total bytes and free  bytes */
-            tot_byte = ((fs->n_fatent - 2) * fs->csize) /2;
-            fre_byte = (fre_clust * fs->csize) / 2;
+            disk_initialize(FatFs->pdrv);
+            disk_ioctl(FatFs->pdrv, MMC_GET_TYPE, &MMC_Type);
+            disk_ioctl(FatFs->pdrv, GET_CID_STRUCT, &pCID);
+            disk_ioctl(FatFs->pdrv, GET_CSD_STRUCT, &pCSD);
+            disk_ioctl(FatFs->pdrv, GET_CARD_CAPACITY, &CardCapacity);
+
 
             myVT100.ClearScreenWindow(0, 4, 80, 30);
 
@@ -573,7 +583,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(1,  8,  LBL_STRING, "Card Type:");
             myVT100.InMenuPrintf(50, 8,  LBL_STRING, "Sd Spec Version:");
             myVT100.InMenuPrintf(1,  9,  LBL_STRING, "High Speed Type??:");
-//            myVT100.InMenuPrintf(50, 9,  LBL_STRING, ":");
+            myVT100.InMenuPrintf(50, 9,  LBL_STRING, "Max Speed:");
+            myVT100.InMenuPrintf(1,  10, LBL_STRING, "Speed Class:");
             myVT100.InMenuPrintf(1,  11, LBL_STRING, "Manufacturer ID:");
             myVT100.InMenuPrintf(50, 11, LBL_STRING, "OEM ID:");
             myVT100.InMenuPrintf(1,  12, LBL_STRING, "Product:");
@@ -604,30 +615,83 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
 
             myVT100.SetForeColor(VT100_COLOR_WHITE);
 
-            disk_initialize(fs->pdrv);
+            switch(MMC_Type)
+            {
+                case SD_STD_CAPACITY_V1_1:  memcpy(str, "Standard Capacity V1.1", 23);   break;
+                case SD_STD_CAPACITY_V2_0:  memcpy(str, "Standard Capacity V2.0", 23);   break;
+                case SD_HIGH_CAPACITY:      memcpy(str, "High Capacity", 14);            break;
+                default:                    snprintf(str, 80, "Undefined %d", MMC_Type); break;
+            }
+            myVT100.InMenuPrintf(25, 8,  LBL_STRING, str);
 
-            static uint8_t MMC_Type;
-            disk_ioctl(fs->pdrv, MMC_GET_TYPE, &MMC_Type);
+            snprintf(str, 80, "%d", int(pCSD->SysSpecVersion));
+            myVT100.InMenuPrintf(75, 8,  LBL_STRING, str);
 
 
-            static SD_CID_t* pCID;
-            disk_ioctl(fs->pdrv, MMC_GET_CID, &pCID);
+            switch(pCSD->MaxBusClkFrec)
+            {
+                case 0x32:  memcpy(str, "25 MHz", 7);         break;
+                case 0x5A:  memcpy(str, "50 MHz", 7);         break;
+                case 0x0B:  memcpy(str, "100 Mbits/sec", 14); break;
+                case 0x2B:  memcpy(str, "200 Mbits/sec", 14); break;
+                default:    snprintf(str, 80, "Undefined %2X", pCSD->MaxBusClkFrec); break;
+            }
+            myVT100.InMenuPrintf(75, 9,  LBL_STRING, str);                                                  // Max Speed
 
+            snprintf(str, 80, "%d", pCSD->WrSpeedFact);
+            myVT100.InMenuPrintf(1,  10, LBL_STRING, str);                                                  // Speed Class
 
+            snprintf(str, 80, "0x%02X", pCID->ManufacturerID);
+            myVT100.InMenuPrintf(25,  11, LBL_STRING, str);                                                 // Manufacturer ID
 
+            snprintf(str, 80, "0x%04X", pCID->OEM_AppliID);
+            myVT100.InMenuPrintf(75, 11, LBL_STRING, str);                                                  // OEM ID
 
-            /* Get volume label of the default drive */
-            f_getlabel("", str, 0);                                                 // Drive name
-            myVT100.InMenuPrintf(68, 21, LBL_STRING, str);
+            snprintf(str, 80, "%c%c%c%c%c", pCID->OEM_AppliID);
+            myVT100.InMenuPrintf(25,  12, LBL_STRING, pCID->ProductName);                                   // Product
 
-            snprintf(str, 80, "%10lu KB Total", tot_byte);                          // Capacity
-            myVT100.InMenuPrintf(18, 22, LBL_STRING, str);
+            snprintf(str, 80, "%d.%d", pCID->ProductRev >> 4, pCID->ProductRev & 0x0F);
+            myVT100.InMenuPrintf(75, 12, LBL_STRING, str);                                                  // Revision
 
-            snprintf(str, 80, "%10lu KB Used", tot_byte - fre_byte);                // Used Sector
-            myVT100.InMenuPrintf(18, 23, LBL_STRING, str);
+            snprintf(str, 80, "0x%06lX", pCID->ProductSN);
+            myVT100.InMenuPrintf(25, 13, LBL_STRING, str);
 
-            snprintf(str, 80, "%10lu KB Available", fre_byte);                      // Free Sector
-            myVT100.InMenuPrintf(68, 23, LBL_STRING, str);
+            snprintf(str, 80, "%u/20%2u", pCID->ManufacturingDate & 0x000F, pCID->ManufacturingDate >> 4);  // Manufacturing Date
+            myVT100.InMenuPrintf(75, 13, LBL_STRING, str);
+
+            if(CardCapacity >= 1000000)
+            {
+                snprintf(str, 80, "%u.%02u GBytes", uint16_t(CardCapacity / 1000000), uint16_t((CardCapacity % 1000000) / 1000));
+            }
+            else
+            {
+                snprintf(str, 80, "%u.%02 MBytes", uint16_t(CardCapacity / 1000), uint16_t(CardCapacity % 1000));
+            }
+            myVT100.InMenuPrintf(25, 15, LBL_STRING, str);                                                  // Card Capacity
+
+            // Fat information
+
+            switch(FatFs->fs_type)
+            {
+                case FS_FAT12:  memcpy(str, "FAT12", 6); break;
+                case FS_FAT16:  memcpy(str, "FAT16", 6); break;
+                case FS_FAT32:  memcpy(str, "FAT32", 6); break;
+                case FS_EXFAT:  memcpy(str, "exFAT", 6); break;
+            }
+            myVT100.InMenuPrintf(25,  21, LBL_STRING, str);                                                 // Fat type
+
+            f_getlabel("", str, 0);                                                                         // Drive name
+            myVT100.InMenuPrintf(75, 21, LBL_STRING, str);
+
+            snprintf(str, 80, "%lu KB Total", TotalBytes);                                                  // FAT Capacity
+            myVT100.InMenuPrintf(25, 22, LBL_STRING, str);
+
+            snprintf(str, 80, "%lu KB Used", TotalBytes - FreeBytes);                                       // Used Sector
+            myVT100.InMenuPrintf(25, 23, LBL_STRING, str);
+
+            snprintf(str, 80, "%lu KB Available", FreeBytes);                                               // Free Sector
+            myVT100.InMenuPrintf(75, 23, LBL_STRING, str);
+
 
 
             f_mount(nullptr, "", 0);

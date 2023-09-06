@@ -44,13 +44,18 @@
 #define GET_SECTOR_SIZE                 2
 #define GET_BLOCK_SIZE                  3        // Mandatory for only f_mkfs()
 #define CTRL_ERASE_SECTOR               4        // Force erased a block of sectors (for only _USE_ERASE)
-#define MMC_GET_TYPE                    5        // Force erased a block of sectors (for only _USE_ERASE)
-#define MMC_GET_CSD                     6        // Force erased a block of sectors (for only _USE_ERASE)
-#define MMC_GET_CID                     7        // Force erased a block of sectors (for only _USE_ERASE)
-#define MMC_GET_OCR                     8        // Force erased a block of sectors (for only _USE_ERASE)
-#define ATA_GET_REV                     9        // Force erased a block of sectors (for only _USE_ERASE)
-#define ATA_GET_MODEL                   10       // Force erased a block of sectors (for only _USE_ERASE)
-#define ATA_GET_SN                      11       // Force erased a block of sectors (for only _USE_ERASE)
+#define MMC_GET_TYPE                    5        // FatFS definition N/U
+#define MMC_GET_CSD                     6        // FatFS definition N/U... use Formatted struct version GET_CSD_STRUCT
+#define MMC_GET_CID                     7        // FatFS definition N/U... use Formatted struct version GET_CID_STRUCT
+#define MMC_GET_OCR                     8
+#define ATA_GET_REV                     9        // FatFS definition N/U
+#define ATA_GET_MODEL                   10       // FatFS definition N/U
+#define ATA_GET_SN                      11       // FatFS definition N/U .. we use CID
+
+// Custom definition
+#define GET_CSD_STRUCT                  20
+#define GET_CID_STRUCT                  21
+#define GET_CARD_CAPACITY               22
 
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)

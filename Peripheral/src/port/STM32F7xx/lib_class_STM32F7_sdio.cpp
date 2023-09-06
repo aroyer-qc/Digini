@@ -102,11 +102,6 @@ SystemState_e SDIO_Driver::SelectTheCard(void)
     return State;
 }
 
-uint32_t SDIO_Driver::GetCardCapacity(void)
-{
-   return (m_CardCapacity / BLOCK_SIZE);
-}
-
 SDIO_Driver::SDIO_Driver()
 {
     m_IsItInitialize = false;
@@ -926,14 +921,17 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
 
     // CID Section
 
-    m_CID.ManufacturerID      =          uint8_t(m_CardCID[0]   >> 24);                  // Byte 0
-    m_CID.OEM_AppliID         = uint16_t(uint8_t(m_CardCID[0]   >> 16))        << 8;     // Byte 1
-    m_CID.OEM_AppliID        |= uint16_t(uint8_t(m_CardCID[0]   >> 8));                  // Byte 2
-    m_CID.ProdName1           =                  m_CardCID[0]   << 24;                   // Byte 3
-    m_CID.ProdName1          |= uint32_t(uint8_t(m_CardCID[1]   >> 24))        << 16;    // Byte 4
-    m_CID.ProdName1          |= uint32_t(uint8_t(m_CardCID[1]   >> 16))        << 8;     // Byte 5
-    m_CID.ProdName1          |= uint32_t(uint8_t(m_CardCID[1]   >> 8));                  // Byte 6
-    m_CID.ProdName2           =          uint8_t(m_CardCID[1]);                          // Byte 7
+    m_CID.ManufacturerID      =          uint8_t(m_CardCID[0]   >> 24);                 // Byte 0
+    m_CID.OEM_AppliID         = uint16_t(uint8_t(m_CardCID[0]   >> 16))        << 8;    // Byte 1
+    m_CID.OEM_AppliID        |= uint16_t(uint8_t(m_CardCID[0]   >> 8));                 // Byte 2
+    
+    m_CID.ProductName[0]      = char(m_CardCID[0]);                                     // Byte 3
+    m_CID.ProductName[1]      = char(m_CardCID[1] >> 24);                               // Byte 4
+    m_CID.ProductName[2]      = char(m_CardCID[1] >> 16);                               // Byte 4
+    m_CID.ProductName[3]      = char(m_CardCID[1] >> 8);                                // Byte 4
+    m_CID.ProductName[4]      = char(m_CardCID[1]);                                     // Byte 4    
+    m_CID.ProductName[5]      = '\0';    
+    
     m_CID.ProductRev          =          uint8_t(m_CardCID[2]   >> 24);                  // Byte 8
     m_CID.ProductSN           = uint32_t(uint8_t(m_CardCID[2]   >> 16))        << 24;    // Byte 9
     m_CID.ProductSN          |= uint32_t(uint8_t(m_CardCID[2]   >> 8))         << 16;    // Byte 10
@@ -941,7 +939,7 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
     m_CID.ProductSN          |= uint32_t(uint8_t(m_CardCID[3]   >> 24));                 // Byte 12
     m_CID.ManufacturingDate   = uint16_t(uint8_t(m_CardCID[3]   >> 16) & 0x0F) << 8;     // Byte 13
     m_CID.ManufacturingDate  |= uint16_t(uint8_t(m_CardCID[3]   >> 8));                  // Byte 14
-    m_CID._CRC           =          uint8_t(m_CardCID[3])  >> 1;                         // Byte 15
+    m_CID._CRC                =          uint8_t(m_CardCID[3])  >> 1;                    // Byte 15
   #endif
 
     return State;

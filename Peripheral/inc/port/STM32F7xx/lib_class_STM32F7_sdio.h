@@ -34,8 +34,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define SD_CARD_USE_POWER_CONTROL       0                              // No Power pin control
-#define SD_CARD_USE_DETECT_SIGNAL       0                              // We are using a form of detect signal     TODO TODO TODO
+#define SD_CARD_USE_POWER_CONTROL       DEF_DISABLED                    // No Power pin control
+#define SD_CARD_USE_DETECT_SIGNAL       DEF_DISABLED                    // We are using a form of detect signal     TODO TODO TODO   move to config
 
 // ----- MMC/SDC command -----
 #define ACMD                            0x80
@@ -128,16 +128,16 @@
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-#if SD_CARD_USE_POWER_CONTROL == 1
+#if (SD_CARD_USE_POWER_CONTROL == DEF_ENABLED)
 struct SD_CardIO_t
 {
-  #if SD_CARD_USE_DETECT_SIGNAL == 1
+  #if (SD_CARD_USE_DETECT_SIGNAL == DEF_ENABLED)
     GPIO_TypeDef*         pDetectPort;
     uint16_t              DetectPin;
     uint8_t               DetectPinSource;
     uint32_t              DetectClock;
   #endif
-  #if SD_CARD_USE_POWER_CONTROL == 1
+  #if (SD_CARD_USE_POWER_CONTROL == DEF_ENABLED)
     IO_Output_t*           pPower;
   #endif
 };
@@ -155,9 +155,11 @@ struct FatFS_Size_t
 
 struct SD_CSD_t
 {
+    uint32_t DeviceSize;                // Device Size
+    uint8_t  DeviceSizeMul;             // Device size multiplier
+  #if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
     uint8_t  CSDStruct;                 // CSD structure
     uint8_t  SysSpecVersion;            // System specification version
-    //uint8_t  Reserved1;               // Reserved
     uint8_t  TAAC;                      // Data read access time 1
     uint8_t  NSAC;                      // Data read access time 2 in CLK cycles
     uint8_t  MaxBusClkFrec;             // Max. bus clock frequency
@@ -167,13 +169,10 @@ struct SD_CSD_t
     uint8_t  WrBlockMisalign;           // Write block misalignment
     uint8_t  RdBlockMisalign;           // Read block misalignment
     uint8_t  DSRImpl;                   // DSR implemented
-    //uint8_t  Reserved2;               // Reserved
-    uint32_t DeviceSize;                // Device Size
     uint8_t  MaxRdCurrentVDDMin;        // Max. read current @ VDD min
     uint8_t  MaxRdCurrentVDDMax;        // Max. read current @ VDD max
     uint8_t  MaxWrCurrentVDDMin;        // Max. write current @ VDD min
     uint8_t  MaxWrCurrentVDDMax;        // Max. write current @ VDD max
-    uint8_t  DeviceSizeMul;             // Device size multiplier
     uint8_t  EraseGrSize;               // Erase group size
     uint8_t  EraseGrMul;                // Erase group size multiplier
     uint8_t  WrProtectGrSize;           // Write protect group size
@@ -182,7 +181,6 @@ struct SD_CSD_t
     uint8_t  WrSpeedFact;               // Write speed factor
     uint8_t  MaxWrBlockLen;             // Max. write data block length
     uint8_t  WriteBlockPaPartial;       // Partial blocks for write allowed
-    //uint8_t  Reserved3;               // Reserved
     uint8_t  ContentProtectAppli;       // Content protection application
     uint8_t  FileFormatGroup;           // File format group
     uint8_t  CopyFlag;                  // Copy flag (OTP)
@@ -191,22 +189,21 @@ struct SD_CSD_t
     uint8_t  FileFormat;                // File format
     uint8_t  ECC;                       // ECC code
     uint8_t  _CRC;                      // CSD CRC
-    //uint8_t  Reserved4;               // Always 1
+  #endif
 };
 
+#if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
 struct SD_CID_t
 {
     uint8_t  ManufacturerID;            // Manufacturer ID
     uint16_t OEM_AppliID;               // OEM/Application ID
-    uint32_t ProdName1;                 // Product Name part1
-    uint8_t  ProdName2;                 // Product Name part2
+    char     ProductName[6];            // Product Name
     uint8_t  ProductRev;                // Product Revision
     uint32_t ProductSN;                 // Product Serial Number
-    //uint8_t  Reserved1;               // Reserved1
     uint16_t ManufacturingDate;         // Manufacturing Date
     uint8_t  _CRC;                      // CID CRC
-    //uint8_t  Reserved2;               // Always 1
 };
+#endif
 
 enum SD_ResponseType_e
 {
@@ -290,19 +287,22 @@ class SDIO_Driver
 
         // Getter
         SystemState_e       GetCardInfo             (void);
-        uint32_t            GetCardCapacity         (void);
         SystemState_e       GetStatus               (void);
-        SD_CardType_e       GetCardType             (void)              { return m_CardType; }
-        uint32_t            GetCard_OCR             (void)              { return m_OCR;      }
-        const SD_CID_t*     GetCard_CID             (void)              { return &m_CID;     }
-        const SD_CSD_t*     GetCard_CSD             (void)              { return &m_CSD;     }
+        uint32_t            GetCardCapacity         (void)              { return m_CardCapacity; }
+        SD_CardType_e       GetCardType             (void)              { return m_CardType;     }
+        uint32_t            GetCard_OCR             (void)              { return m_OCR;          }
+        const SD_CSD_t*     GetCard_CSD             (void)              { return &m_CSD;         }
+      #if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
+        const SD_CID_t*     GetCard_CID             (void)              { return &m_CID;         }
+      #endif
+
 
 
         // IRQ Handler
         void                SDMMC1_IRQHandler       (void);
         void                DMA_Stream3IRQHandler   (void);
         void                DMA_Stream6IRQHandler   (void);
-       #if (SD_CARD_USE_DETECT_SIGNAL == 1)
+       #if (SD_CARD_USE_DETECT_SIGNAL == DEF_ENABLED)
         void                CardDetectIRQ_Handler   (void);
        #endif
 
@@ -320,7 +320,7 @@ class SDIO_Driver
 
         void                DMA_Complete            (DMA_Stream_TypeDef* pDMA_Stream);
 
-       #if SD_CARD_USE_POWER_CONTROL == 1
+       #if (SD_CARD_USE_POWER_CONTROL == DEF_ENABLED)
         void                Power                   (Power_e Pwr)           { IO_Output(pPower, (Pwr == POWER_ON) ? IO_SET : IO_RESET); }
        #else
         void                Power                   (Power_e Pwr)           { VAR_UNUSED(Pwr); }
@@ -339,7 +339,7 @@ class SDIO_Driver
         volatile SD_Operation_e m_Operation;            // SD transfer operation (read/write)
 
 
-       #if (SD_CARD_USE_DETECT_SIGNAL == 1) || (SD_CARD_USE_POWER_CONTROL == 1)
+       #if (SD_CARD_USE_DETECT_SIGNAL == DEF_ENABLED) || (SD_CARD_USE_POWER_CONTROL == DEF_ENABLED)
         sSD_CardIO*             m_pSD_CardIO;
        #endif
 
@@ -355,7 +355,7 @@ class SDIO_Driver
         uint32_t                m_CardCapacity;             // this capacity is in 1K granularity
         uint32_t                m_CardBlockSize;
         SystemState_e           m_CardStatus;
-       #if SD_CARD_USE_DETECT_SIGNAL == 1
+       #if (SD_CARD_USE_DETECT_SIGNAL == DEF_ENABLED)
         volatile SystemState_e  m_Detect;
        #endif
 };

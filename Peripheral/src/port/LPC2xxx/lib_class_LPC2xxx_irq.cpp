@@ -87,12 +87,12 @@ extern "C" void EXTI9_5_IRQHandler()
 
     // For SD Card Detect
   #if (DIGINI_FATFS_USE_SD_CARD == DEF_ENABLED)
-   #if SD_CARD_USE_DETECT_SIGNAL == 1
+   #if (SD_CARD_USE_DETECT_SIGNAL == DEF_ENABLED)
     if(EXTI_GetITStatus(EXTI_Line6) != RESET)
     {
         EXTI_ClearITPendingBit(EXTI_Line6);
 
-      #if (SD_CARD_USE_DETECT_SIGNAL == 1) && (SD_CARD_USE_POLLING_DETECT_SIGNAL == 0)
+      #if (SD_CARD_USE_DETECT_SIGNAL == DEF_ENABLED) && (SD_CARD_USE_POLLING_DETECT_SIGNAL == DEF_DISABLED)
 //        if(BSP_pSD_Card != nullptr)
 //        {
 //            BSP_pSD_Card->CardDetectIRQ_Handler();

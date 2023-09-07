@@ -225,7 +225,7 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
         // Get number of sectors on the disk (uint32_t)
         case GET_SECTOR_COUNT:
         {
-            *(DWORD *)pBuffer = m_pSDIO_Driver->GetCardCapacity();
+            *(DWORD *)pBuffer = 64/*FatFS->csize*/ * BLOCK_SIZE * 1 ;
             Result = RES_OK;
         }
         break;
@@ -233,7 +233,7 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
         // Get sectors on the disk (uint16_t)
         case GET_SECTOR_SIZE:
         {
-            *(WORD *)pBuffer = BLOCK_SIZE;
+            *(WORD *)pBuffer = 64/*FatFS->csize*/ * BLOCK_SIZE;
             Result = RES_OK;
         }
         break;
@@ -283,13 +283,6 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
         }
         break;
 
-        case GET_CSD_STRUCT:
-        {
-            *((const SD_CSD_t**)pBuffer) = m_pSDIO_Driver->GetCard_CSD();
-            Result = RES_OK;
-        }
-        break;
-
       #if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
         case GET_CID_STRUCT:
         {
@@ -299,9 +292,23 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
         break;
       #endif
 
+        case GET_CSD_STRUCT:
+        {
+            *((const SD_CSD_t**)pBuffer) = m_pSDIO_Driver->GetCard_CSD();
+            Result = RES_OK;
+        }
+        break;
+
         case MMC_GET_OCR:                                                           // Get OCR (4 bytes)
         {
             *((uint32_t*)pBuffer) = m_pSDIO_Driver->GetCard_OCR();
+            Result = RES_OK;
+        }
+        break;
+
+        case GET_SCR_STRUCT:
+        {
+            *((const SD_SCR_t**)pBuffer) = m_pSDIO_Driver->GetCard_SCR();
             Result = RES_OK;
         }
         break;

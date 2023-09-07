@@ -107,14 +107,17 @@
 #define SD_DETECT_GPIO_CLOCK            RCC_AHB1ENR_GPIOCEN
 #define SD_DETECT_PIN                     GPIO_PIN_MASK_13
 
-#define SD_WIDE_BUS_SUPPORT             ((uint32_t)0x00040000)
-#define SD_SINGLE_BUS_SUPPORT           ((uint32_t)0x00010000)
+// SCR register
+#define SD_VALUE_AFTER_ERASE            ((uint32_t)0x00800000)
+#define SD_WIDE_BUS_SUPPORT             ((uint32_t)0x00000400)
+#define SD_SINGLE_BUS_SUPPORT           ((uint32_t)0x00000100)
+
+// Misc
 #define SD_CARD_LOCKED                  ((uint32_t)0x02000000)
 #define SD_VOLTAGE_WINDOW               ((uint32_t)0x80100000)
 #define SD_RESP_HIGH_CAPACITY           ((uint32_t)0x40000000)
 #define SD_RESP_STD_CAPACITY            ((uint32_t)0x00000000)
 #define SD_MAX_VOLT_TRIAL               ((uint32_t)0x0000FFFF)
-#define SD_ALLZERO                      ((uint32_t)0x00000000)
 #define SD_CHECK_PATTERN                ((uint32_t)0x000001AA)
 
 
@@ -160,25 +163,25 @@ struct SD_CSD_t
   #if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
     uint8_t  CSDStruct;                 // CSD structure
     uint8_t  SysSpecVersion;            // System specification version
-    uint8_t  TAAC;                      // Data read access time 1
-    uint8_t  NSAC;                      // Data read access time 2 in CLK cycles
+  //uint8_t  TAAC;                      // Data read access time 1
+  //uint8_t  NSAC;                      // Data read access time 2 in CLK cycles
     uint8_t  MaxBusClkFrec;             // Max. bus clock frequency
-    uint16_t CardComdClasses;           // Card command classes
+  //uint16_t CardComdClasses;           // Card command classes
     uint8_t  RdBlockLen;                // Max. read data block length
     uint8_t  PartBlockRead;             // Partial blocks for read allowed
     uint8_t  WrBlockMisalign;           // Write block misalignment
     uint8_t  RdBlockMisalign;           // Read block misalignment
     uint8_t  DSRImpl;                   // DSR implemented
-    uint8_t  MaxRdCurrentVDDMin;        // Max. read current @ VDD min
-    uint8_t  MaxRdCurrentVDDMax;        // Max. read current @ VDD max
-    uint8_t  MaxWrCurrentVDDMin;        // Max. write current @ VDD min
-    uint8_t  MaxWrCurrentVDDMax;        // Max. write current @ VDD max
+  //uint8_t  MaxRdCurrentVDDMin;        // Max. read current @ VDD min
+  //uint8_t  MaxRdCurrentVDDMax;        // Max. read current @ VDD max
+  //uint8_t  MaxWrCurrentVDDMin;        // Max. write current @ VDD min
+  //uint8_t  MaxWrCurrentVDDMax;        // Max. write current @ VDD max
     uint8_t  EraseGrSize;               // Erase group size
     uint8_t  EraseGrMul;                // Erase group size multiplier
     uint8_t  WrProtectGrSize;           // Write protect group size
     uint8_t  WrProtectGrEnable;         // Write protect group enable
     uint8_t  ManDeflECC;                // Manufacturer default ECC
-    uint8_t  WrSpeedFact;               // Write speed factor
+  //uint8_t  WrSpeedFact;               // Write speed factor
     uint8_t  MaxWrBlockLen;             // Max. write data block length
     uint8_t  WriteBlockPaPartial;       // Partial blocks for write allowed
     uint8_t  ContentProtectAppli;       // Content protection application
@@ -204,6 +207,11 @@ struct SD_CID_t
     uint8_t  _CRC;                      // CID CRC
 };
 #endif
+
+struct SD_SCR_t
+{
+    uint32_t Array[2];
+};
 
 enum SD_ResponseType_e
 {
@@ -291,6 +299,7 @@ class SDIO_Driver
         uint32_t            GetCardCapacity         (void)              { return m_CardCapacity; }
         SD_CardType_e       GetCardType             (void)              { return m_CardType;     }
         uint32_t            GetCard_OCR             (void)              { return m_OCR;          }
+        const SD_SCR_t*     GetCard_SCR             (void)              { return &m_SCR;         }
         const SD_CSD_t*     GetCard_CSD             (void)              { return &m_CSD;         }
       #if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
         const SD_CID_t*     GetCard_CID             (void)              { return &m_CID;         }
@@ -309,7 +318,7 @@ class SDIO_Driver
 
     private:
 
-        SystemState_e       FindSCR                 (uint32_t* SCR);
+        SystemState_e       FindSCR                 (void);
 
 
         void                DataInit                (uint32_t Size, uint32_t DataBlockSize, bool IsItReadFromCard);
@@ -345,6 +354,7 @@ class SDIO_Driver
 
         uint8_t                 m_TickPeriod;
         uint32_t                m_OCR;
+        SD_SCR_t                m_SCR;
         uint32_t                m_CardCID[4];
         SD_CID_t                m_CID;
         uint32_t                m_CardCSD[4];

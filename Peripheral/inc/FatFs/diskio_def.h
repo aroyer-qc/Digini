@@ -53,9 +53,10 @@
 #define ATA_GET_SN                      11       // FatFS definition N/U .. we use CID
 
 // Custom definition
-#define GET_CSD_STRUCT                  20
-#define GET_CID_STRUCT                  21
-#define GET_CARD_CAPACITY               22
+#define GET_CID_STRUCT                  20
+#define GET_CSD_STRUCT                  21
+#define GET_SCR_STRUCT                  22
+#define GET_CARD_CAPACITY               23
 
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)

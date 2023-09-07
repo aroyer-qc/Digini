@@ -280,7 +280,6 @@ SystemState_e SDIO_Driver::SetBusWidth(uint32_t WideMode)
 {
     SystemState_e State;
     uint32_t      Temp;
-    uint32_t      SCR[2] = {0, 0};
 
     // MMC Card does not support this feature
     if(m_CardType == SD_MULTIMEDIA)
@@ -300,12 +299,12 @@ SystemState_e SDIO_Driver::SetBusWidth(uint32_t WideMode)
             if((SDMMC1->RESP1 & SD_CARD_LOCKED) != SD_CARD_LOCKED)
             {
                 // Get SCR Register
-                if((State = this->FindSCR(SCR)) == SYS_READY)
+                if((State = this->FindSCR()) == SYS_READY)
                 {
                     Temp = (WideMode == SD_BUS_WIDE_4B) ? SD_WIDE_BUS_SUPPORT : SD_SINGLE_BUS_SUPPORT;
 
                     // If requested card supports wide bus operation
-                    if((SCR[1] & Temp) != SD_ALLZERO)
+                    if((m_SCR.Array[0] & Temp) != 0)
                     {
                         // Send CMD55 APP_CMD with argument as card's RCA.
                         if((State = this->TransmitCommand((CMD55 | SD_SHORT_RESPONSE), m_RCA, 1)) == SYS_READY)
@@ -391,7 +390,7 @@ SystemState_e SDIO_Driver::TransmitCommand(uint8_t Command, uint32_t Argument, i
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::CheckOCR_Response(uint32_t Response_R1)
 {
-    if((Response_R1 & SD_OCR_ERRORBITS)             == SD_ALLZERO)                  return SYS_READY;
+    if((Response_R1 & SD_OCR_ERRORBITS)             == 0)                           return SYS_READY;
     if((Response_R1 & SD_OCR_ADDR_OUT_OF_RANGE)     == SD_OCR_ADDR_OUT_OF_RANGE)    return SYS_OUT_OF_RANGE;
     if((Response_R1 & SD_OCR_ADDR_MISALIGNED)       == SD_OCR_ADDR_MISALIGNED)      return SYS_ADDRESS_MISALIGNED;
     if((Response_R1 & SD_OCR_BLOCK_LEN_ERR)         == SD_OCR_BLOCK_LEN_ERR)        return SYS_BLOCK_LENGTH_ERROR;
@@ -473,7 +472,7 @@ SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
     }
     else if(ResponseType == 6)
     {
-        if((Response_R1 & (SD_R6_GENERAL_UNKNOWN_ERROR | SD_R6_ILLEGAL_CMD | SD_R6_COM_CRC_FAILED)) == SD_ALLZERO)
+        if((Response_R1 & (SD_R6_GENERAL_UNKNOWN_ERROR | SD_R6_ILLEGAL_CMD | SD_R6_COM_CRC_FAILED)) == 0)
         {
             m_RCA = Response_R1;
         }
@@ -719,11 +718,10 @@ void SDIO_Driver::DataInit(uint32_t Size, uint32_t DataBlockSize, bool IsItReadF
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SDIO_Driver::FindSCR(uint32_t* pSCR)
+SystemState_e SDIO_Driver::FindSCR(void)
 {
     SystemState_e State;
     int           Index;
-    uint32_t      SCR[2];
 
     // Set Block Size To 8 Bytes
     // Send CMD16 Set Block length
@@ -742,7 +740,7 @@ SystemState_e SDIO_Driver::FindSCR(uint32_t* pSCR)
                 {
                     if((SDMMC1->STA & SDMMC_STA_RXDAVL) != 0)
                     {
-                        *(SCR + Index) = SDMMC1->FIFO;
+                        m_SCR.Array[Index] = SDMMC1->FIFO;
                         Index++;
                     }
                 }
@@ -762,14 +760,6 @@ SystemState_e SDIO_Driver::FindSCR(uint32_t* pSCR)
                 else if((SDMMC1->STA & SDMMC_STA_RXDAVL)   != 0)
                 {
                     State = SYS_OUT_OF_BOUND;
-                }
-                else
-                {
-                    *(pSCR + 1) = ((SCR[0] & 0x000000FF) << 24) | ((SCR[0] & 0x0000FF00) << 8) |
-                                  ((SCR[0] & 0x00FF0000) >> 8)  | ((SCR[0] & 0xFF000000) >> 24);
-
-                    *(pSCR)     = ((SCR[1] & 0x000000FF) << 24) | ((SCR[1] & 0x0000FF00) << 8) |
-                                  ((SCR[1] & 0x00FF0000) >> 8)  | ((SCR[1] & 0xFF000000) >> 24);
                 }
             }
         }
@@ -802,23 +792,23 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
     // Byte 0
     Temp = uint8_t(m_CardCSD[0] >> 24);
     m_CSD.CSDStruct      = Temp >> 6;
-    m_CSD.SysSpecVersion = (Temp & 0x3C) >> 2;              // Only for MMC
+    m_CSD.SysSpecVersion = (Temp & 0x3C) >> 2;                                      // Only for MMC
 
     // Byte 1
-    m_CSD.TAAC = uint8_t(m_CardCSD[0] >> 16);
+    //m_CSD.TAAC = uint8_t(m_CardCSD[0] >> 16);                                     // Information not to be used as per standard
 
     // Byte 2
-    m_CSD.NSAC = uint8_t(m_CardCSD[0] >> 8);
+    //m_CSD.NSAC = uint8_t(m_CardCSD[0] >> 8);                                      // Information not to be used as per standard
 
     // Byte 3
     m_CSD.MaxBusClkFrec = uint8_t(m_CardCSD[0]);
 
     // Byte 4
-    m_CSD.CardComdClasses = uint16_t(uint8_t(m_CardCSD[1] >> 24)) << 4;
+    //m_CSD.CardComdClasses = uint16_t(uint8_t(m_CardCSD[1] >> 24)) << 4;           // Not useful information
 
     // Byte 5
     Temp = uint8_t(m_CardCSD[1] >> 16);
-    m_CSD.CardComdClasses |= uint16_t(Temp >> 4);
+    //m_CSD.CardComdClasses |= uint16_t(Temp >> 4);         // not useful information
     m_CSD.RdBlockLen       = Temp & 0x0F;
   #endif
 
@@ -843,14 +833,14 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
         m_CSD.DeviceSize |= uint32_t(Temp >> 6);
 
       #if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
-        m_CSD.MaxRdCurrentVDDMin = (Temp & 0x38) >> 3;
-        m_CSD.MaxRdCurrentVDDMax = Temp & 0x07;
+        //m_CSD.MaxRdCurrentVDDMin = (Temp & 0x38) >> 3;        // Not useful information
+        //m_CSD.MaxRdCurrentVDDMax = Temp & 0x07;               // Not useful information
       #endif
         // Byte 9
         Temp = uint8_t(m_CardCSD[2] >> 16);
       #if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
-        m_CSD.MaxWrCurrentVDDMin = Temp >> 5;
-        m_CSD.MaxWrCurrentVDDMax = (Temp & 0x1C) >> 2;
+        //m_CSD.MaxWrCurrentVDDMin = Temp >> 5;                 // Not useful information
+        //m_CSD.MaxWrCurrentVDDMax = (Temp & 0x1C) >> 2;        // Not useful information
       #endif
         m_CSD.DeviceSizeMul = (Temp & 0x03) << 1;
 
@@ -860,7 +850,6 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
         m_CardCapacity  = m_CSD.DeviceSize + 1;
         m_CardCapacity *= (1 << (m_CSD.DeviceSizeMul + 2));
         m_CardBlockSize = 1 << (m_CSD.RdBlockLen);
-        m_CardCapacity *= m_CardBlockSize;
     }
     else if(m_CardType == SD_HIGH_CAPACITY)
     {
@@ -898,7 +887,7 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
     Temp = uint8_t(m_CardCSD[3] >> 24);
     m_CSD.WrProtectGrEnable =  Temp >> 7;
     m_CSD.ManDeflECC        = (Temp & 0x60) >> 5;
-    m_CSD.WrSpeedFact       = (Temp & 0x1C) >> 2;
+    //m_CSD.WrSpeedFact       = (Temp & 0x1C) >> 2;         // Information not to be used as per standard
     m_CSD.MaxWrBlockLen     = (Temp & 0x03) << 2;
 
     // Byte 13
@@ -924,14 +913,14 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
     m_CID.ManufacturerID      =          uint8_t(m_CardCID[0]   >> 24);                 // Byte 0
     m_CID.OEM_AppliID         = uint16_t(uint8_t(m_CardCID[0]   >> 16))        << 8;    // Byte 1
     m_CID.OEM_AppliID        |= uint16_t(uint8_t(m_CardCID[0]   >> 8));                 // Byte 2
-    
+
     m_CID.ProductName[0]      = char(m_CardCID[0]);                                     // Byte 3
     m_CID.ProductName[1]      = char(m_CardCID[1] >> 24);                               // Byte 4
     m_CID.ProductName[2]      = char(m_CardCID[1] >> 16);                               // Byte 4
     m_CID.ProductName[3]      = char(m_CardCID[1] >> 8);                                // Byte 4
-    m_CID.ProductName[4]      = char(m_CardCID[1]);                                     // Byte 4    
-    m_CID.ProductName[5]      = '\0';    
-    
+    m_CID.ProductName[4]      = char(m_CardCID[1]);                                     // Byte 4
+    m_CID.ProductName[5]      = '\0';
+
     m_CID.ProductRev          =          uint8_t(m_CardCID[2]   >> 24);                  // Byte 8
     m_CID.ProductSN           = uint32_t(uint8_t(m_CardCID[2]   >> 16))        << 24;    // Byte 9
     m_CID.ProductSN          |= uint32_t(uint8_t(m_CardCID[2]   >> 8))         << 16;    // Byte 10

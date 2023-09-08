@@ -98,8 +98,7 @@ size_t GPrintf::Draw(Box_t* pBox, const char* pFormat, va_list vaArg)
         return 0;
     }
 
-    if(*pFormat == ASCII_SUBSTITUTION) m_Size = STR_vsnformat(&m_String[0], DIGINI_MAX_PRINT_SIZE, pFormat + 1, vaArg);
-    else                               m_Size = STR_vsnprintf(&m_String[0], DIGINI_MAX_PRINT_SIZE, pFormat,     vaArg);
+    m_Size = STR_vsnformat(&m_String[0], DIGINI_MAX_PRINT_SIZE, pFormat, vaArg);
 
     if(m_Size != 0)
     {

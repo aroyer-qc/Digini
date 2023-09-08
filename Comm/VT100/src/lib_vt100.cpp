@@ -1087,8 +1087,7 @@ size_t VT100_Terminal::MenuPrintfCommon(Label_e Label, va_list* p_vaArg)
     if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE)) != nullptr)
     {
         const char* pFormat = myLabel.GetPointer(Label);
-
-        Size = STR_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, *p_vaArg);
+        Size = STR_vsnformat(pBuffer, VT100_TERMINAL_SIZE, pFormat, *p_vaArg);
         m_pConsole->SendData((const uint8_t*)&pBuffer[0], &Size);
     }
 

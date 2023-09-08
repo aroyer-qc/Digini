@@ -35,24 +35,13 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-/*
-#define LIB_PAD_ZERO                        (uint8_t)1
-#define LIB_PAD_LEFT                        (uint8_t)16
-#define LIB_MAX_PRINT_VALUE                 (uint8_t)12
-
-#define LIB_VAR_INT                         (uint8_t)1
-#define LIB_VAR_LONG                        (uint8_t)2
-*/
-
 #define STR_OPT_PAD_ZERO            128        // value in bit Position for padding with zero
 #define STR_OPT_PAD_LEFT            64         // value in bit Position for Padding flag
 #define STR_OPT_LOWERCASE           32       // value in bit Position for base
 #define STR_OPT_SIGN_NEGATIVE       16         // value in bit Position for sign
 #define STR_OPT_BASE_HEXA           8       // value in bit Position for base
 
-
 #define STR_putchar(s,c)                      {*((char*)s) = (char)(c);}
-
 
 //-------------------------------------------------------------------------------------------------
 // enum(s)
@@ -434,8 +423,13 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
     STR_Format_t* pFmt;
     size_t        PointerCounter = 0;
 
+    if(*pFormat != ASCII_SUBSTITUTION)
+    {
+       return STR_vsnprintf(pOut, Size, pFormat, va);
+    }
+
     pFmt = (STR_Format_t*)pMemoryPool->Alloc(sizeof(STR_Format_t));
-    pFmt->pFormat = (char*)pMemoryPool->Alloc(DIGINI_MAX_PRINT_SIZE);                                  // Get memory to work this printf
+    pFmt->pFormat = (char*)pMemoryPool->Alloc(DIGINI_MAX_PRINT_SIZE);                              // Get memory to work this printf
 
     strncpy(pFmt->pFormat, pFormat, DIGINI_MAX_PRINT_SIZE);                                        // Copy from possible const location to RAM
     pFmt->pFmtPtr = pFmt->pFormat;

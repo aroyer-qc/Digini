@@ -202,11 +202,10 @@ class VT100_Terminal : public ChildProcessInterface
         void                SetColor                    (VT100_Color_e ForeColor, VT100_Color_e BackColor);
         inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute(VT100_Attribute_e(int(Color) + VT100_OFFSET_COLOR_FOREGROUND)); }
         inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute(VT100_Attribute_e(int(Color) + VT100_OFFSET_COLOR_BACKGROUND)); }
-        void                PrintSaveLabel              (uint8_t PosX, uint8_t PosY, VT100_Color_e Color);
+        void                UpdateSaveLabel             (VT100_Color_e Color);
         void                Bargraph                    (uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size);
       #else
         void                InvertMono                  (bool Invert);
-        void                PrintSaveLabel              (uint8_t PosX, uint8_t PosY);
         void                Bargraph                    (uint8_t PosX, uint8_t PosY, uint8_t Value, uint8_t Max, uint8_t Size);
       #endif
 
@@ -223,9 +222,10 @@ class VT100_Terminal : public ChildProcessInterface
         uint32_t            GetConfigFlag               (int Flag)                      { return m_ConfigFlag[Flag];  }      // todo check range or change the method
         void                SetConfigFlag               (int Flag, uint32_t Value)      { m_ConfigFlag[Flag] = Value; }      // todo check range or change the method
 
+        void                DisplayTimeDateStamp        (uint8_t PosX, uint8_t PosY, DateAndTime_t* pTimeDate);
+
 // to check if needed in VT100
 void                LockDisplay                 (bool);
-void                DisplayTimeDateStamp        (nOS_TimeDate* pTimeDate);
 bool                GetString                   (char* pBuffer, size_t Size);
 
     private:
@@ -254,8 +254,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         bool                                m_IsItInitialized;
         bool                                m_IsItInStartup;
         VT100_Menu_e                        m_MenuID;
-        uint8_t                             m_SetMenuCursorPosX;                // Set position to display the menu (after header)
-        uint8_t                             m_SetMenuCursorPosY;
+        uint8_t                             m_PosY_SaveLabel;
         uint8_t                             m_LastSetCursorPosX;                // Set position to input selection location on screen
         uint8_t                             m_LastSetCursorPosY;
         VT100_InputType_e                   m_InputType;

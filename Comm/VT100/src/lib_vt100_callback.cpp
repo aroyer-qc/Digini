@@ -179,7 +179,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
             uint8_t OffsetMultiplierY;
 
             myVT100.SetForeColor(VT100_COLOR_WHITE);
-            myVT100.InMenuPrintf(1, 5, LBL_VT100_STACKTISTIC);
+            myVT100.InMenuPrintf(1, 5, VT100_LBL_STACKTISTIC);
 
             for(int i = 0; i < NbOfStack; i++)
             {
@@ -187,12 +187,10 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
                 OffsetMultiplierY         = uint8_t(((i / 4) * 6) + 7);
 
                 myVT100.InMenuPrintf(OffsetMultiplierX--, OffsetMultiplierY++, LBL_STRING, myStacktistic.GetStackName(i));
-                myVT100.InMenuPrintf(OffsetMultiplierX,   OffsetMultiplierY++, VT100_LBL_BAR_BOX_20_LINE_1);
-                myVT100.InMenuPrintf(OffsetMultiplierX,   OffsetMultiplierY++, VT100_LBL_BAR_BOX_20_LINE_2);
-                myVT100.InMenuPrintf(OffsetMultiplierX,   OffsetMultiplierY++, VT100_LBL_BAR_BOX_20_LINE_3);
+                myVT100.DrawBox(OffsetMultiplierX, OffsetMultiplierY, 22, 3, VT100_COLOR_WHITE);
             }
 
-            myVT100.InMenuPrintf(0, OffsetMultiplierY + 1, VT100_LBL_ESCAPE);
+            myVT100.InMenuPrintf(VT100_LBL_ESCAPE);
         }
         break;
 
@@ -210,7 +208,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
                 myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY + 9, Percent, 100, 20);
               #endif
                 myVT100.SetForeColor(VT100_COLOR_WHITE);
-                myVT100.InMenuPrintf(OffsetMultiplierX, OffsetMultiplierY + 11, LBL_VT100_LBL_PERCENT_VALUE, Percent);
+                myVT100.InMenuPrintf(OffsetMultiplierX, OffsetMultiplierY + 11, VT100_LBL_PERCENT_VALUE, Percent);
             }
         }
         break;
@@ -252,7 +250,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
         {
             myVT100.ClearScreenWindow(0, 4, 80, 30);
 
-            myVT100.InMenuPrintf(1, 6,  LBL_VT100_SYSTEM_INFO);
+            myVT100.InMenuPrintf(1, 6,  VT100_LBL_SYSTEM_INFO);
             myVT100.InMenuPrintf(1, 8,  LBL_VENDOR_NAME_INFO);
             myVT100.InMenuPrintf(       LBL_VENDOR_NAME);
             myVT100.InMenuPrintf(1, 9,  LBL_HARDWARE_INFO);
@@ -277,7 +275,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(       LBL_BUILT_DATE);
             myVT100.InMenuPrintf(1, 16, VT100_LBL_NOW);
             myVT100.InMenuPrintf(1, 17, VT100_LBL_UPTIME);
-            myVT100.InMenuPrintf(0, 19, VT100_LBL_ESCAPE);
+            myVT100.InMenuPrintf(       VT100_LBL_ESCAPE);
         }
         break;
 
@@ -290,13 +288,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             if(TimeDate.Time.Second != VT100_LastSecond)
             {
                 VT100_LastSecond = TimeDate.Time.Second;
-                myVT100.InMenuPrintf(19, 16, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&TimeDate.Date)) + (int(LBL_FIRST_WEEK_DAY)))),
-                                                                  myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
-                                                                  TimeDate.Date.Day,
-                                                                  TimeDate.Date.Year,
-                                                                  TimeDate.Time.Hour,
-                                                                  TimeDate.Time.Minute,
-                                                                  TimeDate.Time.Second);
+                myVT100.DisplayTimeDateStamp(19, 16, &TimeDate);
             }
 
             if(UpTime != VT100_LastUpTime)
@@ -348,7 +340,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
 
         for(uint16_t i = 0; i < CON_NUMBER_OF_DEBUG_LEVEL; i++)
         {
-            myVT100.SetCursorPosition(41, 14 + i);
+            myVT100.SetCursorPosition(41, 10 + i);
 
             if(((1 << i) & uint16_t(DebugLevel)) != 0)
             {
@@ -397,10 +389,10 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
 //-------------------------------------------------------------------------------------------------
 VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_CallBackType_e Type)
 {
-    static nOS_TimeDate TimeDate;
-    uint32_t            Refresh;
-    uint32_t            EditedValue;        // if come back from decimal input
-    uint8_t             InputID;            // contain the value from this input ID
+    static DateAndTime_t TimeDate;
+    uint32_t             Refresh;
+    uint32_t             EditedValue;        // if come back from decimal input
+    uint8_t              InputID;            // contain the value from this input ID
 
     Refresh = VT100_CFG_NO_REFRESH;
 
@@ -411,8 +403,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
 
         /// Print the static info in the box
         myVT100.SetForeColor(VT100_COLOR_YELLOW);
-        myVT100.InMenuPrintf(13, 24, LBL_TIME);
-        myVT100.InMenuPrintf(13, 25, LBL_DATE);
+        myVT100.InMenuPrintf(13, 40, LBL_TIME);
+        myVT100.InMenuPrintf(13, 41, LBL_DATE);
         Refresh   = VT100_CFG_REFRESH_ALL;
     }
 
@@ -422,38 +414,38 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
         {
             case 1: // Input Hour
             {
-                myVT100.SetDecimalInput(32, 12, 0, 23, TimeDate.hour, 1, Input, LBL_HOUR);
+                myVT100.SetDecimalInput(32, 12, 0, 23, TimeDate.Time.Hour, 1, Input, LBL_HOUR);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 2: // Edit Minute
             {
-                myVT100.SetDecimalInput(32, 12, 0, 59, TimeDate.minute, 1, Input, LBL_MINUTE);
+                myVT100.SetDecimalInput(32, 12, 0, 59, TimeDate.Time.Minute, 1, Input, LBL_MINUTE);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 3: // Edit Second
             {
-                myVT100.SetDecimalInput(32, 12, 0, 59, TimeDate.second, 1, Input, LBL_SECOND);
+                myVT100.SetDecimalInput(32, 12, 0, 59, TimeDate.Time.Second, 1, Input, LBL_SECOND);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 4: // Edit Day
             {
                 // TODO used Digini time date method
-                myVT100.SetDecimalInput(32, 12, 1, nOS_TimeGetDaysPerMonth(TimeDate.month, TimeDate.year), TimeDate.day, 1, Input, LBL_DAY);
+                myVT100.SetDecimalInput(32, 12, 1, nOS_TimeGetDaysPerMonth(TimeDate.Date.Month, TimeDate.Date.Year), TimeDate.Date.Day, 1, Input, LBL_DAY);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 5: // Edit Month
             {
-                myVT100.SetDecimalInput(32, 12, 1, 12, TimeDate.month, 1, Input, LBL_MONTH);
+                myVT100.SetDecimalInput(32, 12, 1, 12, TimeDate.Date.Month, 1, Input, LBL_MONTH);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 6: // Edit Year
             {
-                myVT100.SetDecimalInput(32, 12, 2000, 2255, TimeDate.year, 1, Input, LBL_YEAR);
+                myVT100.SetDecimalInput(32, 12, 2000, 2255, TimeDate.Date.Year, 1, Input, LBL_YEAR);
                 return VT100_INPUT_DECIMAL;
             }
 
@@ -462,7 +454,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
                 if(myVT100.GetConfigFlag(0) != 0)
                 {
                     myVT100.SetConfigFlag(0, 0);
-                   // RTC_DateAndTime(&TimeDate, STATE_SET);
+                    LIB_SetDateAndTime(&TimeDate);
                 }
 
                 Refresh = VT100_CFG_REFRESH_INFO;
@@ -479,15 +471,15 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
     {
         myVT100.GetDecimalInputValue(&EditedValue, &InputID);
 
-        if     (InputID == 1)   TimeDate.hour   = (uint8_t)EditedValue;
-        else if(InputID == 2)   TimeDate.minute = (uint8_t)EditedValue;
-        else if(InputID == 3)   TimeDate.second = (uint8_t)EditedValue;
-        else if(InputID == 4)   TimeDate.day    = (uint8_t)EditedValue;
-        else if(InputID == 5)   TimeDate.month  = (uint8_t)EditedValue;
-        else if(InputID == 6)   TimeDate.year   = (uint16_t)EditedValue;
+        if     (InputID == 1)   TimeDate.Time.Hour   = (uint8_t)EditedValue;
+        else if(InputID == 2)   TimeDate.Time.Minute = (uint8_t)EditedValue;
+        else if(InputID == 3)   TimeDate.Time.Second = (uint8_t)EditedValue;
+        else if(InputID == 4)   TimeDate.Date.Day    = (uint8_t)EditedValue;
+        else if(InputID == 5)   TimeDate.Date.Month  = (uint8_t)EditedValue;
+        else if(InputID == 6)   TimeDate.Date.Year   = (uint16_t)EditedValue;
         else if((InputID == 0) && (myVT100.GetConfigFlag(0) == 0))
         {
-           //RTC_DateAndTime(&TimeDate, STATE_GET);
+            LIB_GetDateAndTime(&TimeDate);
         }
 
         if((InputID >= 1) && (InputID <= 6))
@@ -498,28 +490,24 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
 
     ///--------------------------------------------------------------------------------------------
 
-    if(Refresh & VT100_CFG_REFRESH_INFO)
+   // if(Refresh & VT100_CFG_REFRESH_INFO)
     {
         // ***********************************************
         // Refresh label on the menu for what is available
 
       #if (VT100_USE_COLOR == DEF_ENABLED)
-        myVT100.PrintSaveLabel(9, 16, (myVT100.GetConfigFlag(0) == 1) ? VT100_COLOR_YELLOW : VT100_COLOR_BLUE);
-      #else
-        myVT100.PrintSaveLabel(9, 16);
+   //     if(myVT100.GetConfigFlag(0) == 1)
+        {
+            myVT100.UpdateSaveLabel(VT100_COLOR_YELLOW);
+        }
       #endif
 
         // ********************************************
         // Refresh information display on configuration
 
         myVT100.SetForeColor(VT100_COLOR_CYAN);
-        myVT100.InMenuPrintf(26, 24, VT100_LBL_TIME, TimeDate.hour, TimeDate.minute, TimeDate.second);
-        myVT100.InMenuPrintf(26, 25, VT100_LBL_DATE, myLabel.GetPointer(Label_e((TimeDate.month - 1) + (int(LBL_FIRST_MONTH)))),
-                                                                                       TimeDate.day,
-                                                                                       TimeDate.year);
-
-
-
+        myVT100.InMenuPrintf(26, 40, VT100_LBL_TIME, TimeDate.Time.Hour, TimeDate.Time.Minute, TimeDate.Time.Second);
+        myVT100.InMenuPrintf(26, 41, VT100_LBL_DATE, myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))), TimeDate.Date.Day, TimeDate.Date.Year);
     }
 
     return VT100_INPUT_MENU_CHOICE;
@@ -608,14 +596,13 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(50, 23, LBL_STRING, "Free Cluster Count:");
             myVT100.InMenuPrintf(1,  24, LBL_STRING, "Fat Start Sector:");
             myVT100.InMenuPrintf(50, 24, LBL_STRING, "Data Start Sector:");
+            myVT100.InMenuPrintf(        VT100_LBL_ESCAPE);
 
 //            myVT100.InMenuPrintf(50, 22, LBL_STRING, "Number Of Files:");
 
 
-            myVT100.InMenuPrintf(0,  26, VT100_LBL_ESCAPE);
-
             myVT100.SetForeColor(VT100_COLOR_GREEN);
-            myVT100.InMenuPrintf(1,  6,  LBL_VT100_SD_CARD_INFORMATION);
+            myVT100.InMenuPrintf(1,  6,  VT100_LBL_SD_CARD_INFORMATION);
             myVT100.InMenuPrintf(1,  17, LBL_STRING, "Fat Information");
 
             myVT100.SetForeColor(VT100_COLOR_WHITE);
@@ -715,17 +702,54 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             snprintf(str, 80, "%lu KB Available", FreeBytes);                                               // Free Sector
             myVT100.InMenuPrintf(75, 21, LBL_STRING, str);
 
-            snprintf(str, 80, "%lu Bytes", FatFs->csize * BLOCK_SIZE);
+            snprintf(str, 80, "%d Bytes", FatFs->csize * BLOCK_SIZE);
             myVT100.InMenuPrintf(25, 22, LBL_STRING, str);                                                  // Cluster Size
 
-            snprintf(str, 80, "%lu Sectors", FatFs->csize);
+            snprintf(str, 80, "%d Sectors", FatFs->csize);
             myVT100.InMenuPrintf(75, 22, LBL_STRING, str);                                                  // Sector Per Cluster
 
             snprintf(str, 80, "%lu Sectors", (TotalBytes * 1024) / (FatFs->csize * BLOCK_SIZE));
             myVT100.InMenuPrintf(75, 23, LBL_STRING, str);                                                  // Cluster Count
 
             snprintf(str, 80, "%lu Sectors", (FreeBytes * 1024) / (FatFs->csize * BLOCK_SIZE));
-            myVT100.InMenuPrintf(25,  23, LBL_STRING, str);                                                 // Free Cluster Count
+            myVT100.InMenuPrintf(25, 23, LBL_STRING, str);                                                  // Free Cluster Count
+
+
+
+
+{
+    // TODO good example to use scrolling windows here and cursor .... development... more development
+
+
+    FRESULT res;
+    DIR dir;
+    char string[300];
+
+    myVT100.SetCursorPosition(1, 28);
+
+    res = f_opendir(&dir, "");
+
+    if (res == FR_OK)
+    {
+        while(1)
+        {
+            FILINFO fno;
+
+            res = f_readdir(&dir, &fno);
+
+            if ((res != FR_OK) || (fno.fname[0] == 0))  break;
+
+            sprintf(string, "%c%c%c%c %10d %s/%s\r", ((fno.fattrib & AM_DIR) ? 'D' : '-'),
+                                                     ((fno.fattrib & AM_RDO) ? 'R' : '-'),
+                                                     ((fno.fattrib & AM_SYS) ? 'S' : '-'),
+                                                     ((fno.fattrib & AM_HID) ? 'H' : '-'),
+                                                     (int)fno.fsize, "", fno.fname);
+
+            myVT100.InMenuPrintf(LBL_STRING, string);
+        }
+    }
+}
+
 
             f_mount(nullptr, "", 0);
         }

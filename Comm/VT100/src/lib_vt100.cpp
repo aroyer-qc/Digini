@@ -123,9 +123,6 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole)
     m_ValidateInput           = false;
     m_LogsAreMuted            = true;
 
-    m_SetMenuCursorPosX       = 0;
-    m_SetMenuCursorPosY       = 0;
-
     Error = nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, this, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
   #if (VT100_USER_CALLBACK_INITIALIZE == DEF_ENABLED)
     CallbackInitialize();                       // User callback specific initialization
@@ -192,7 +189,7 @@ void VT100_Terminal::IF_Process(void)
         {
             m_ValidateInput = false;
 
-        // Validate the range for the menu
+            // Validate the range for the menu
             if(m_InputType == VT100_INPUT_MENU_CHOICE)
             {
                 if(pMenu->NextMenu == VT100_MENU_NONE)
@@ -474,9 +471,12 @@ void VT100_Terminal::DisplayMenu(void)
     char                    ItemsChar;
 
     pMenu = nullptr;
-    ClearScreenWindow(0, 4, VT100_X_SIZE - m_SetMenuCursorPosX, VT100_Y_SIZE - m_SetMenuCursorPosY);    // Clear screen bellow header
-    SetCursorPosition(m_SetMenuCursorPosX, m_SetMenuCursorPosY);                                        // Reposition cursor to print menu
+    ClearScreenWindow(0, 4, VT100_X_SIZE, VT100_Y_SIZE);     // Clear screen bellow header
+    m_PosY_SaveLabel = 9;
+   SetCursorPosition(0, 6);                              // Reposition cursor to print menu
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_YELLOW);
+  #endif
     m_ItemsQts = m_Menu[m_MenuID].Size;
 
     if(m_ItemsQts > 1)
@@ -492,17 +492,26 @@ void VT100_Terminal::DisplayMenu(void)
                 ItemsChar  = (char)Items;
                 ItemsChar += (ItemsChar >= 10) ? ('a' - 10) : '0';
                 MenuSelectItems(ItemsChar);
+                if(pMenu->Label == VT100_LBL_SAVE_CONFIGURATION)
+                {
+                  #if (VT100_USE_COLOR == DEF_ENABLED)
+                    SetForeColor(VT100_COLOR_BLUE);
+                  #endif
+                }
+
+                InMenuPrintf(pMenu->Label);
+                m_PosY_SaveLabel++;
+
+              #if (VT100_USE_COLOR == DEF_ENABLED)
+                SetForeColor(VT100_COLOR_YELLOW);
+              #endif
             }
-
-            InMenuPrintf(pMenu->Label);
-
-
-            if(Items == 0)
+            else
             {
-                InMenuPrintf(m_SetMenuCursorPosX, m_SetMenuCursorPosY + 2, VT100_LBL_SELECT);
+                InMenuPrintf(1, 6, pMenu->Label);
+                InMenuPrintf(2, 8, VT100_LBL_SELECT);
             }
-
-           // CallBack(pMenu->pCallback, VT100_CALLBACK_ON_INIT, Items);
+            // CallBack(pMenu->pCallback, VT100_CALLBACK_ON_INIT, Items);
         }
 
         MenuSelectItems('0');
@@ -510,9 +519,6 @@ void VT100_Terminal::DisplayMenu(void)
         ItemsChar  = (char)(Items - 1);
         ItemsChar += (ItemsChar >= 10) ? ('a' - 10) : '0';
         InMenuPrintf(VT100_LBL_ENTER_SELECTION, ItemsChar);
-
-        // TODO need to Calculated Actual X and Y position of cursor
-        //SetCursorPosition();
     }
     else
     {
@@ -543,22 +549,24 @@ void VT100_Terminal::PrintMenuStaticInfo(void)
     nOS_Sleep(100);                                                 // Terminal need time to reset
     InMenuPrintf(VT100_LBL_HIDE_CURSOR);
     InMenuPrintf(VT100_LBL_CLEAR_SCREEN);
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
+  #endif
     InMenuPrintf(VT100_LBL_LINE_SEPARATOR);
     pString  = myLabel.GetPointer(VT100_LBL_LINE_SEPARATOR);
     SizeLine = VT100_X_SIZE;
-    pString  = myLabel.GetPointer(LBL_VT100_MENU_TITLE);
+    pString  = myLabel.GetPointer(VT100_LBL_MENU_TITLE);
     SizeTitle = strlen(pString);
     SizeLine -= SizeTitle;
     RepeatChar(' ', SizeLine / 2);
-    InMenuPrintf(LBL_VT100_MENU_TITLE);
+    InMenuPrintf(VT100_LBL_MENU_TITLE);
     RepeatChar(' ', (SizeLine / 2) + (SizeLine % 2));
     InMenuPrintf(LBL_LINEFEED);
     InMenuPrintf(VT100_LBL_LINE_SEPARATOR);
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetColor(VT100_COLOR_YELLOW, VT100_COLOR_BLACK);
+  #endif
     InMenuPrintf(LBL_DOUBLE_LINEFEED);
-
-    m_SetMenuCursorPosY = 8;
 }
 #endif
 
@@ -639,12 +647,17 @@ void VT100_Terminal::ClearScreenWindow(uint8_t PosX, uint8_t PosY, uint8_t SizeX
 void VT100_Terminal::MenuSelectItems(char ItemsChar)
 {
     InMenuPrintf(LBL_STRING, "\r  (");
+
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_CYAN);
+  #endif
 
     if(ItemsChar == '0') InMenuPrintf(LBL_STRING, "ESC");
     else                 InMenuPrintf(LBL_CHAR, ItemsChar);
 
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_YELLOW);
+  #endif
 
     if(ItemsChar == '0') InMenuPrintf(LBL_STRING, ") ");
     else                 InMenuPrintf(LBL_STRING, ")   ");
@@ -729,7 +742,9 @@ void VT100_Terminal::InputDecimal(void)
     if(m_RefreshValue != m_Value)
     {
         m_RefreshValue = m_Value;
+      #if (VT100_USE_COLOR == DEF_ENABLED)
         SetColor(VT100_COLOR_BLACK, ((m_Value >= m_Minimum) && (m_Value <= m_Maximum)) ? VT100_COLOR_GREEN : VT100_COLOR_RED);
+      #endif
 
         InMenuPrintf(m_PosX + 36, m_PosY + 3, LBL_CHAR, ' ');
 
@@ -782,13 +797,11 @@ void VT100_Terminal::InputString(void)
 //
 //-------------------------------------------------------------------------------------------------
 #if (VT100_USE_COLOR == DEF_ENABLED)
-void VT100_Terminal::PrintSaveLabel(uint8_t PosX, uint8_t PosY, VT100_Color_e Color)
-#else
-void VT100_Terminal::PrintSaveLabel(uint8_t PosX, uint8_t PosY)
+void VT100_Terminal::UpdateSaveLabel(VT100_Color_e Color)
 #endif
 {
     SetForeColor(Color);
-    InMenuPrintf(PosX, PosY, VT100_LBL_SAVE_CONFIGURATION);
+    InMenuPrintf(9, m_PosY_SaveLabel, VT100_LBL_SAVE_CONFIGURATION);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -826,7 +839,11 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
     m_IsItString       = false;
 
     // Draw the Box
-    DrawBox(PosX, PosY, 48, 8, VT100_COLOR_WHITE);
+  #if (VT100_USE_COLOR == DEF_ENABLED)
+    DrawBox(PosX, PosY, 56, 8, VT100_COLOR_WHITE);
+  #else
+    DrawBox(PosX, PosY, 56, 8);
+  #endif
 
     // Write input information
     SetForeColor(VT100_COLOR_CYAN);
@@ -854,7 +871,9 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
     }
 
     // Print type of input
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_YELLOW);
+  #endif
     //InMenuPrintf(PosX + 2, PosY + 3, LBL_STRING, pMsg);
 
     // Add 'how to' info
@@ -928,10 +947,16 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
     m_IsItString       = true;
 
     // Draw the Box
-    DrawBox(PosX, PosY, 46, 7, VT100_COLOR_WHITE);
+  #if (VT100_USE_COLOR == DEF_ENABLED)
+    DrawBox(PosX, PosY, 56, 8, VT100_COLOR_WHITE);
+  #else
+    DrawBox(PosX, PosY, 56, 8);
+  #endif
 
     // Write input information
+  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_CYAN);
+  #endif
     //InMenuPrintf(PosX + 2,  PosY + 1, Maximum, LBL_STRING, pMsg);
 
     // Add 'how to' info
@@ -943,8 +968,8 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
         memcpy(m_pString, pString, VT100_STRING_SZ);
     }     // todo handle error....
 
- //   STR_strnstrip(m_pString, Maximum);                 // TODO Fix this
-    m_InputPtr = strlen(m_pString);                          // Get string end pointer
+    STR_strnstrip(m_pString, Maximum);                      // TODO Fix this
+    m_InputPtr = strlen(m_pString);                         // Get string end pointer
     m_RefreshInputPtr = m_InputPtr + 1;                     // To force a refresh
 
     // And show cursor
@@ -1207,7 +1232,6 @@ void VT100_Terminal::SetCursorPosition(uint8_t PosX, uint8_t PosY)
     }
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SaveCursorPosition
@@ -1354,14 +1378,25 @@ void VT100_Terminal::LockDisplay(bool State)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void VT100_Terminal::DisplayTimeDateStamp(nOS_TimeDate* pTimeDate)
+void VT100_Terminal::DisplayTimeDateStamp(uint8_t PosX, uint8_t PosY, DateAndTime_t* pTimeDate)
 {
-    InMenuPrintf(VT100_LBL_TIME_DATE_STAMP, pTimeDate->year,
-                                                           pTimeDate->month,
-                                                           pTimeDate->day,
-                                                           pTimeDate->hour,
-                                                           pTimeDate->minute,
-                                                           pTimeDate->second);
+    // TODO Should use register date time printing method..
+
+   myVT100.InMenuPrintf(PosX, PosY, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&pTimeDate->Date)) + (int(LBL_FIRST_WEEK_DAY)))),
+                                                         myLabel.GetPointer(Label_e((pTimeDate->Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
+                                                         pTimeDate->Date.Day,
+                                                         pTimeDate->Date.Year,
+                                                         pTimeDate->Time.Hour,
+                                                         pTimeDate->Time.Minute,
+                                                         pTimeDate->Time.Second);
+/*
+    InMenuPrintf(VT100_LBL_TIME_DATE_STAMP, pTimeDate->Date.Year,
+                                            pTimeDate->Date.Month,
+                                            pTimeDate->Date.Day,
+                                            pTimeDate->Time.Hour,
+                                            pTimeDate->Time.Minute,
+                                            pTimeDate->Time.Second);
+*/
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1388,18 +1423,18 @@ void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t
       #if (VT100_USE_COLOR == DEF_ENABLED)
         SetForeColor(ForeColor);
       #endif
-        InMenuPrintf(PosX, PosY++, LBL_STRING, "╔");
+        InMenuPrintf(PosX, PosY++, LBL_STRING, "┌");
 
         for(uint8_t i = 0; i < (H_Size - 2); i++)
         {
-            InMenuPrintf(LBL_STRING, "�?");
+            InMenuPrintf(LBL_STRING, "─");
         }
 
-        InMenuPrintf(LBL_STRING, "╗");
+        InMenuPrintf(LBL_STRING, "┐");
 
         for(uint8_t i = 0; i < (V_Size - 2); i++)
         {
-            InMenuPrintf(PosX, PosY, LBL_STRING, "║");
+            InMenuPrintf(PosX, PosY, LBL_STRING, "│");
 
             // Erase inside
             for(uint8_t j = 0; j < (H_Size - 2); j++)
@@ -1407,17 +1442,17 @@ void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t
                 InMenuPrintf(LBL_CHAR, ' ');
             }
 
-            InMenuPrintf(PosX + (H_Size - 1), PosY++, LBL_STRING, "║");
+            InMenuPrintf(PosX + (H_Size - 1), PosY++, LBL_STRING, "│");
         }
 
-        InMenuPrintf(PosX, PosY, LBL_STRING, "╚");
+        InMenuPrintf(PosX, PosY, LBL_STRING, "└");
 
         for(uint8_t i = 0; i < (H_Size - 2); i++)
         {
-            InMenuPrintf(LBL_STRING, "�?");
+            InMenuPrintf(LBL_STRING, "─");
         }
 
-        InMenuPrintf(LBL_STRING, "�?");
+        InMenuPrintf(LBL_STRING, "┘");
     }
 }
 
@@ -1447,7 +1482,7 @@ void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100
 
         for(uint8_t i = 0; i < V_Size; i++)
         {
-            InMenuPrintf(PosX, PosY++, LBL_STRING, "║");
+            InMenuPrintf(PosX, PosY++, LBL_STRING, "│");
         }
     }
 }

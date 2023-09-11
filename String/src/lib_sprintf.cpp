@@ -35,11 +35,11 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define STR_OPT_PAD_ZERO            128        // value in bit Position for padding with zero
-#define STR_OPT_PAD_LEFT            64         // value in bit Position for Padding flag
-#define STR_OPT_LOWERCASE           32       // value in bit Position for base
-#define STR_OPT_SIGN_NEGATIVE       16         // value in bit Position for sign
-#define STR_OPT_BASE_HEXA           8       // value in bit Position for base
+#define STR_OPT_PAD_ZERO            128         // value in bit Position for padding with zero
+#define STR_OPT_PAD_LEFT            64          // value in bit Position for Padding flag
+#define STR_OPT_LOWERCASE           32          // value in bit Position for base
+#define STR_OPT_SIGN_NEGATIVE       16          // value in bit Position for sign
+#define STR_OPT_BASE_HEXA           8           // value in bit Position for base
 
 #define STR_putchar(s,c)                      {*((char*)s) = (char)(c);}
 
@@ -62,7 +62,7 @@ static size_t STR_prints     (char* pOut, char* pString, size_t Width, uint8_t O
 static size_t STR_str2str    (char* pOut, const char* pString);
 
 //-------------------------------------------------------------------------------------------------
-// Private function(s)
+// Private const(s)
 //-------------------------------------------------------------------------------------------------
 
 static const char StrNULL[7] = "(null)";
@@ -428,17 +428,17 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
        return STR_vsnprintf(pOut, Size, pFormat, va);
     }
 
-    pFmt = (STR_Format_t*)pMemoryPool->Alloc(sizeof(STR_Format_t));
-    pFmt->pFormat = (char*)pMemoryPool->Alloc(DIGINI_MAX_PRINT_SIZE);                              // Get memory to work this printf
+    pFmt = (STR_Format_t*)pMemoryPool->AllocAndSet(sizeof(STR_Format_t), 0xFF);
+    pFmt->pFormat = (char*)pMemoryPool->AllocAndClear(DIGINI_MAX_PRINT_SIZE);                              // Get memory to work this printf
 
     strncpy(pFmt->pFormat, pFormat, DIGINI_MAX_PRINT_SIZE);                                        // Copy from possible const location to RAM
     pFmt->pFmtPtr = pFmt->pFormat;
     pFmt->Counter = 0;
-
-    memset(&pFmt->Position[0], 0xFF, STR_NUMBER_OF_VA_LIST_ITEMS);
+// why we don't scrap the first ASCII substitution...
+//    memset(&pFmt->Position[0], 0xFF, STR_NUMBER_OF_VA_LIST_ITEMS);
 
     // This first loop is to capture each position
-    for(; *pFmt->pFmtPtr != 0; pFmt->pFmtPtr++)
+    for(; *pFmt->pFmtPtr != '\0'; pFmt->pFmtPtr++)
     {
         if(*pFmt->pFmtPtr == '$')                                                                   // Process each position override
         {
@@ -447,7 +447,7 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
 
             if(*pFmt->pFmtPtr != '$')
             {
-                *(pFmt->pFmtPtr - 1) = (uint8_t)ASCII_SUBSTITUTION;
+                *(pFmt->pFmtPtr - 1) = (uint8_t)ASCII_SUBSTITUTION;     // why??
 
                 if((*pFmt->pFmtPtr >= '0') && (*pFmt->pFmtPtr <= '9'))                              // Get position from 0 to 9
                 {
@@ -479,7 +479,7 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
     pFmt->pFormatPtr = (char*)pFormat;
     pFmt->Counter  = 0;
 
-    memset(&pFmt->pSwitchArg[0], 0x00, STR_NUMBER_OF_VA_LIST_ITEMS);
+    //memset(&pFmt->pSwitchArg[0], 0x00, STR_NUMBER_OF_VA_LIST_ITEMS);
 
 
     // This second loop will strip any formatting info from the copy string and get pointer on each formatting info in original string

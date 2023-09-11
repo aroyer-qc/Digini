@@ -717,10 +717,10 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
 
 
 
+//test
+myVT100.InMenuPrintf(25, 23, VT100_LBL_SCROLL_ZONE, 30, 40);
+
 {
-    // TODO good example to use scrolling windows here and cursor .... development... more development
-
-
     FRESULT res;
     DIR dir;
     char string[300];
@@ -759,6 +759,11 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
         {
         }
         break;
+
+        case VT100_CALLBACK_FLUSH:
+        {
+            myVT100.InMenuPrintf(25, 23, VT100_LBL_SCROLL_ZONE, 1, 100);
+        }
 
         // case VT100_CALLBACK_INIT:     Nothing to do
         // case VT100_CALLBACK_ON_INPUT: Nothing to do

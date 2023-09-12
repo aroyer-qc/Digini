@@ -59,12 +59,13 @@ static nOS_Thread   TaskHandle;
 static nOS_Stack    Stack[TASK_ETHERNET_IF_STACK_SIZE];
 
 // Forward declarations.
-static err_t    low_level_output        (struct netif *netif, struct pbuf *p);
-static void     arp_timer               (void *arg);
-static void     ethernetif_Callback     (uint32_t event);
-static void     ethernetif_PollThePHY   (void);
+static inline struct pbuf*  low_level_input         (void);
+static err_t                low_level_output        (struct netif *netif, struct pbuf *p);
+static void                 arp_timer               (void *arg);
+static void                 ethernetif_Callback     (uint32_t event);
+static void                 ethernetif_PollThePHY   (void);
 #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
-static void     ethernetif_LinkCallBack (void* pArg);
+static void                 ethernetif_LinkCallBack (void* pArg);
 #endif
 
 
@@ -88,7 +89,7 @@ static void     ethernetif_LinkCallBack (void* pArg);
 err_t ethernetif_init(struct netif* netif)
 {
 	ETH_MAC_Capability_t cap;
-    //nOS_Error Error;
+    static nOS_Error Error;
 
 	ETH_Link = ETH_LINK_DOWN;
 
@@ -156,19 +157,20 @@ err_t ethernetif_init(struct netif* netif)
     netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
 
     // Create binary semaphore used for informing ethernetif of frame reception
-    /*nOS_Error*/ nOS_SemCreate (&ETH_RX_Sem, 0, 20);
-    /*nOS_Error*/ nOS_MutexCreate (&ETH_TX_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
+    Error = nOS_SemCreate (&ETH_RX_Sem, 0, 20);
+    Error = nOS_MutexCreate (&ETH_TX_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
+    VAR_UNUSED(Error);
 
      nOS_ThreadCreate(&TaskHandle,
-                             ethernetif_input,
-                             (void*)netif,
-                             &Stack[0],
-                             TASK_ETHERNET_IF_STACK_SIZE,
-                             TASK_ETHERNET_IF_PRIO);
+                      ethernetif_input,
+                      (void*)netif,
+                      &Stack[0],
+                      TASK_ETHERNET_IF_STACK_SIZE,
+                      TASK_ETHERNET_IF_PRIO);
 
 
       #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-        myStacktistic.Register(&Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Ethernet");
+        myStacktistic.Register(&Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Ethernet Input");
       #endif
 
     // Enable MAC and DMA transmission and reception
@@ -200,18 +202,17 @@ err_t ethernetif_init(struct netif* netif)
 //                  memory failure (except for the TCP timers).
 //
 //-------------------------------------------------------------------------------------------------
-static err_t low_level_output(struct netif* netif, struct pbuf* p)
+static err_t low_level_output(struct netif* netif, struct pbuf* pPacket)
 {
-	(void)netif;
-    struct pbuf *q;
+	VAR_UNUSED(netif);
 
     if(nOS_MutexLock(&ETH_TX_Mutex, netifGUARD_BLOCK_TIME))
     {
-        for(q = p; q != nullptr; q = q->next)
+        for(; pPacket != nullptr; pPacket = pPacket->next)
         {
             // Send the data from the pbuf to the interface, one pbuf at a time. The size of the data in each pbuf is kept in the ->len variable.
-            u32_t flags = (q->next) ? ETH_MAC_TX_FRAME_FRAGMENT : 0;
-            ETH_Mac.SendFrame((uint8_t*)q->payload, q->len, flags);
+            uint32_t flags = (pPacket->next) ? ETH_MAC_TX_FRAME_FRAGMENT : 0;
+            ETH_Mac.SendFrame((uint8_t*)pPacket->payload, pPacket->len, flags);
         }
 
         nOS_MutexUnlock(&ETH_TX_Mutex);
@@ -222,6 +223,49 @@ static err_t low_level_output(struct netif* netif, struct pbuf* p)
     }
 
     return ERR_OK;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       low_level_input
+//
+//  Parameter(s):   None
+//  Return:         Pointer on buffer 'struct pBuf' or 'nullptr' on memory error
+//
+//  Description:    This function return a buffer filled with the received packet.
+//                  (including MAC header)
+//
+//-------------------------------------------------------------------------------------------------
+static inline struct pbuf* low_level_input(void)
+{
+   	struct pbuf* pPacket;
+    size_t       Length;
+
+    Length = ETH_Mac.GetRX_FrameSize();                         // Obtain the size of the packet and put it into the "len" variable.
+
+    if(Length == 0)
+    {
+        return nullptr;                                         // No packet available
+    }
+
+    if(Length > ETHERNET_FRAME_SIZE)
+    {
+        ETH_Mac.ReadFrame(nullptr, 0);                          // Drop over-sized packet
+        return nullptr;                                         // No packet available
+    }
+
+    pPacket = pbuf_alloc(PBUF_RAW, Length, PBUF_POOL);          // We allocate a pbuf chain of pbufs from the pool.
+
+    if(pPacket != nullptr)
+    {
+        ETH_Mac.ReadFrame(pPacket, Length);
+    }
+    else
+    {
+        ETH_Mac.ReadFrame(nullptr, 0);                          // Drop packet we cannot allocated memory yo it
+    }
+
+    return pPacket;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -239,11 +283,10 @@ static err_t low_level_output(struct netif* netif, struct pbuf* p)
 //                  function is called.
 //
 //-------------------------------------------------------------------------------------------------
-void ethernetif_input(void *param)
+void ethernetif_input(void* pParam)
 {
-   	struct pbuf* p;
-    struct netif* s_pxNetIf = (struct netif *)param;
-    size_t Length;
+   	struct pbuf * pPacket;
+    struct netif* s_pxNetIf = (struct netif *)pParam;
 
     ethernetif_PollThePHY();        // Initial polling of the link
 
@@ -251,40 +294,27 @@ void ethernetif_input(void *param)
 	{
         if((nOS_SemTake(&ETH_RX_Sem, BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK) && (s_pxNetIf != nullptr))
 		{
-			do
-			{
-                Length = ETH_Mac.GetRX_FrameSize();                         // Obtain the size of the packet and put it into the "len" variable.
-
-                if(Length != 0)                                             // No packet available
-                {
-                    if(Length > ETHERNET_FRAME_SIZE)
-                    {
-                        ETH_Mac.ReadFrame(nullptr, 0);                      // Drop over-sized packet
-                    }
-                    else
-                    {
-                        p = pbuf_alloc(PBUF_RAW, Length, PBUF_POOL);        // We allocate a pbuf chain of pbufs from the pool.
-                        ETH_Mac.ReadFrame(p, Length);
-
-                        if(s_pxNetIf->input(p, s_pxNetIf) != ERR_OK)
-                        {
-                            pbuf_free(p);
-                            p = nullptr;
-                        }
-                        else
-                        {
-                            nOS_SemTake(&ETH_RX_Sem, 0);
-                        }
-                    }
-                }
-			}
-			while(p != nullptr);
-
 		    // if for some reason we receive a message and the link is down then poll the PHY for the link
 		    if(ETH_Link == ETH_LINK_DOWN)
             {
                 ethernetif_PollThePHY();
             }
+
+			do
+			{
+                pPacket = low_level_input();
+
+                if(s_pxNetIf->input(pPacket, s_pxNetIf) != ERR_OK)
+                {
+                    pbuf_free(pPacket);
+                    pPacket = nullptr;
+                }
+                else
+                {
+                    nOS_SemTake(&ETH_RX_Sem, 0);
+                }
+			}
+			while(pPacket != nullptr);
 		}
 		else
         {

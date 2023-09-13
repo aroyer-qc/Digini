@@ -23,10 +23,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
-//
-//  Note: User CLI Command Function: This is the user space for the user CLI command set.
-//
-//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
@@ -44,12 +40,70 @@
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           CmdMUTE
+//
+//  Parameter(s):   pArg                Not used
+//  Return:         SystemState_e
+//
+//  Description:    Command to put serial logging in mute mode
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e CommandLine::CmdMUTE(void* pArg)
+{
+    SystemState_e Error;
+
+    VAR_UNUSED(pArg);
+
+    if(m_PlainCommand == true)
+    {
+        myConsole.SetSerialLogging(true);
+        Error = SYS_READY;
+    }
+    else
+    {
+        Error = SYS_INVALID_PARAMETER;       // No parameter write or read on this command
+    }
+
+    return Error;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CmdUNMUTE
+//
+//  Parameter(s):   pArg                Not used
+//  Return:         SystemState_e
+//
+//  Description:    Command to put serial logging in mute mode
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e CommandLine::CmdUNMUTE(void* pArg)
+{
+    SystemState_e Error;
+
+    VAR_UNUSED(pArg);
+
+    if(m_PlainCommand == true)
+    {
+        myConsole.SetSerialLogging(false);
+        Error = SYS_READY;
+    }
+    else
+    {
+        Error = SYS_INVALID_PARAMETER;       // No parameter write or read on this command
+    }
+
+    return Error;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           CmdHOLD
 //
 //  Parameter(s):   pArg                Not used
 //  Return:         SystemState_e
 //
-//  Description:    AT Command to put system on hold
+//  Description:    Command to put system on hold
 //
 //  Note(s):        This command for EXAMPLE can be use to put system on hold at boot up.
 //                  allowing more command to be perform. command that are not avalaible at run
@@ -82,7 +136,7 @@ SystemState_e CommandLine::CmdHOLD(void* pArg)
 //  Parameter(s):   pArg                Not used
 //  Return:         SystemState_e
 //
-//  Description:    AT Command to release hold on system
+//  Description:    Command to release hold on system
 //
 //  Note(s):
 //
@@ -120,7 +174,7 @@ SystemState_e CommandLine::CmdRELEASE(void* pArg)
 //  Parameter(s):   pArg                Not used
 //  Return:         SystemState_e
 //
-//  Description:  	Command to reset and rebbot the system
+//  Description:  	Command to reset and reboot the system
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e CommandLine::CmdRESET(void* pArg)
@@ -174,7 +228,7 @@ SystemState_e CommandLine::CmdSTATUS(void* pArg)
          // In this example we only return the state of the CLI
         Status = (m_IsItOnHold == true) ? 0 : 1;
         snprintf(Response, 20, "%d", Status);
-        SendAnswer(AT_STATUS, SYS_OK_READ, Response);
+        SendAnswer(CLI_STATUS, SYS_OK_READ, Response);
         Error = SYS_OK_SILENT;
     }
     else
@@ -218,146 +272,6 @@ SystemState_e CommandLine::CmdMENU(void* pArg)
 }
 #endif
 
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CmdTEST1
-//
-//  Parameter(s):   pArg                Not used
-//  Return:         SystemState_e
-//
-//  Description:    Example of a command
-//
-//  Note(s):        For this command examples.
-//
-//                    - This command is enable at all time (no check of flag CLI_IsItOnHold).
-//                    - Read return a specific user information.
-//                    - Write is not supported in this example.
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::CmdTEST1(void* pArg)
-{
-    SystemState_e   Error;
-    char            Response[11];
-    static uint64_t Count = 1234;
-
-    VAR_UNUSED(pArg);
-
-    if(m_ReadCommand == true)
-    {
-        Count++;
-        snprintf(Response, 11, "0x%08llX", Count);
-        SendAnswer(AT_TEST1,  SYS_OK_READ, Response);
-        Error = SYS_OK_SILENT;
-    }
-    else
-    {
-        Error = SYS_CMD_NO_WRITE_SUPPORT;       // No write on this command
-    }
-
-    return Error;
-}
-
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CmdTEST2
-//
-//  Parameter(s):   pArg                Not used
-//  Return:         SystemState_e
-//
-//  Description:    Example of a command
-//
-//  Note(s):        For this command examples, you can write 3 news parameters, on read the
-//                  parameter. It show how to check for parameter validity.
-//
-//                    - This command are enable only when on hold (check of flag CLI_IsItOnHold).
-//                    - Read return application data or application information.
-//                    - Write new value for application data or function.
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::CmdTEST2(void* pArg)
-{
-    SystemState_e       Error;
-    char                Response[20];
-    static uint8_t      State_1;                                // Here value are static because for the example, you can read them back
-    static uint8_t      Value_1;
-    static int16_t      Value_2;
-
-    VAR_UNUSED(pArg);
-
-    if(m_IsItOnHold == true)                                  // This command will be allowed only if system is on hold
-    {
-        if((m_ReadCommand == true) || (m_PlainCommand == true)) // Process also a plain command has a read
-        {
-            snprintf(Response, 20, "%d,%d,%d", State_1, Value_1, Value_2);
-
-            SendAnswer(AT_TEST2, SYS_OK_READ, Response);
-            Error = SYS_OK_SILENT;
-        }
-        else
-        {
-            State_1 = m_ParamValue[0];
-            Value_1 = m_ParamValue[1];
-            Value_2 = m_ParamValue[2];
-            Error   = SYS_READY;
-        }
-    }
-    else
-    {
-        Error = SYS_OK_DENIED;               // Access to this command is forbidden in run mode
-    }
-
-    return Error;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CmdTEST3
-//
-//  Parameter(s):   pArg                Not used
-//  Return:         SystemState_e
-//
-//  Description:    Example of a command
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e CommandLine::CmdTEST3(void* pArg)
-{
-    SystemState_e            Error;
-    char                     Response[64];
-    static char              Test[CLI_STRING_SIZE];
-    static int16_t           Test1;
-    static uint16_t          Test2;
-    static int32_t           Test3;
-
-    VAR_UNUSED(pArg);
-
-    if(m_IsItOnHold == true)
-    {
-        if(m_ReadCommand == true)
-        {
-            snprintf(Response, 64, "%d,%d,0x%04lX,\"%s\"", Test1, Test2, Test3, Test);
-            SendAnswer(AT_TEST3,  SYS_OK_READ, Response);
-            Error = SYS_OK_SILENT;
-        }
-        else
-        {
-            Test1 = m_ParamValue[0];
-            Test2 = m_ParamValue[1];
-            Test3 = m_ParamValue[2];
-            memcpy(&Test[0], m_pParamStr[3], CLI_STRING_SIZE);
-            pMemoryPool->Free((void**)&m_pParamStr[3]);
-            Error = SYS_READY;
-        }
-    }
-    else
-    {
-        Error = SYS_OK_DENIED;               // Access to this command is forbidden in run mode
-    }
-
-    return Error;
-}
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           CmdINFO
@@ -381,7 +295,7 @@ SystemState_e CommandLine::CmdINFO(void* pArg)
                                                                           OEM_MODEL_NAME,
                                                                           OEM_SERIAL_NUMBER,
                                                                           OUR_BUILD_DATE);
-        SendAnswer(AT_INFO, SYS_OK_READ, Response);
+        SendAnswer(CLI_INFO, SYS_OK_READ, Response);
         Error = SYS_OK_SILENT;
     }
     else
@@ -410,7 +324,7 @@ SystemState_e CommandLine::CmdVERSION(void* pArg)
 
     if(m_PlainCommand == true)
     {
-        SendAnswer(AT_VERSION, SYS_OK_READ, OUR_FIRMWARE_VERSION);
+        SendAnswer(CLI_VERSION, SYS_OK_READ, OUR_FIRMWARE_VERSION);
         Error = SYS_OK_SILENT;
     }
     else
@@ -451,7 +365,7 @@ SystemState_e CommandLine::CmdDBG_LEVEL(void* pArg)
         }
 
         snprintf(&Response[24], 64, "\r");
-        SendAnswer(AT_DEBUG, SYS_OK_READ, Response);
+        SendAnswer(CLI_DEBUG, SYS_OK_READ, Response);
         Error = SYS_OK_SILENT;
     }
     else

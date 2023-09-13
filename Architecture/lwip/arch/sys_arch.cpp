@@ -71,25 +71,18 @@ err_t sys_mbox_new(sys_mbox_t* pMailBox, int Size)
 {
     void*       pBuffer;
 
-    pMailBox = (sys_mbox_t*)pMemoryPool->Alloc(sizeof(sys_mbox_t));
+    pBuffer = (void*)pMemoryPool->Alloc(Size * sizeof(void *));
 
-    if(pMailBox != nullptr)
+    if(pBuffer != nullptr)
     {
-        pBuffer = (void*)pMemoryPool->Alloc(Size * sizeof(void *));
-
-        if(pBuffer != nullptr)
+        if(nOS_QueueCreate(pMailBox, pBuffer, (uint8_t)sizeof(void *), Size) == NOS_OK)
         {
-            if(nOS_QueueCreate(pMailBox, pBuffer, (uint8_t)sizeof(void *), Size) == NOS_OK)
-            {
-                SYS_STATS_INC_USED(mbox);
-                return ERR_OK;
-            }
-
-            pMemoryPool->Free((void**)&pBuffer);
-
+            SYS_STATS_INC_USED(mbox);
+            return ERR_OK;
         }
 
-        pMemoryPool->Free((void**)&pMailBox);
+        pMemoryPool->Free((void**)&pBuffer);
+
     }
 
     return ERR_MEM;
@@ -128,7 +121,6 @@ void sys_mbox_free(sys_mbox_t* pMailBox)
     nOS_EnterCritical(sr);
     pMemoryPool->Free((void**)&pMailBox->buffer);
     nOS_QueueDelete(pMailBox);
-    pMemoryPool->Free((void**)&pMailBox);
     nOS_LeaveCritical(sr);
 }
 
@@ -288,25 +280,18 @@ u32_t sys_arch_mbox_tryfetch(sys_mbox_t* pMailBox, void** ppBuffer)
 //-------------------------------------------------------------------------------------------------
 err_t sys_sem_new(sys_sem_t* pSemaphore, u8_t Count)
 {
-    pSemaphore = (sys_sem_t*)pMemoryPool->Alloc(sizeof(sys_sem_t));
-
-    if(pSemaphore != nullptr)
+    if(nOS_SemCreate(pSemaphore, 0, 1) == NOS_OK)
     {
-        if(nOS_SemCreate(pSemaphore, 0, 1) == NOS_OK)
+        if(Count == 0)
         {
-            if(Count == 0)
-            {
-                nOS_SemTake(pSemaphore, NOS_NO_WAIT);
-            }
-
-            SYS_STATS_INC_USED(sem);
-            return ERR_OK;
+            nOS_SemTake(pSemaphore, NOS_NO_WAIT);
         }
 
-        SYS_STATS_INC(sem.err);
-        pMemoryPool->Free((void**)&pSemaphore);
+        SYS_STATS_INC_USED(sem);
+        return ERR_OK;
     }
 
+    SYS_STATS_INC(sem.err);
 	return ERR_MEM;
 }
 
@@ -398,7 +383,6 @@ void sys_sem_free(sys_sem_t* pSemaphore)
 {
 	SYS_STATS_DEC(sem.used);
 	nOS_SemDelete(pSemaphore);
-	pMemoryPool->Free((void**)&pSemaphore);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -413,8 +397,6 @@ void sys_sem_free(sys_sem_t* pSemaphore)
 //-------------------------------------------------------------------------------------------------
 err_t sys_mutex_new(sys_mutex_t* pMutex)
 {
-    pMutex = (sys_mutex_t*)pMemoryPool->Alloc(sizeof(sys_mutex_t));
-
 	if(nOS_MutexCreate(pMutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT) == NOS_OK)
 	{
         SYS_STATS_INC_USED(mutex);
@@ -422,7 +404,6 @@ err_t sys_mutex_new(sys_mutex_t* pMutex)
 	}
 
     SYS_STATS_INC(mutex.err);
-    pMemoryPool->Free((void**)&pMutex);
 
 	return ERR_MEM;
 }
@@ -468,7 +449,6 @@ void sys_mutex_free(sys_mutex_t* pMutex)
 {
 	SYS_STATS_DEC(mutex.used);
 	nOS_MutexDelete(pMutex);
-    pMemoryPool->Free((void**)&pMutex);
 }
 
 //-------------------------------------------------------------------------------------------------

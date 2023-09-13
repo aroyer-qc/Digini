@@ -1268,6 +1268,24 @@ void ETH_Driver::DisableClock(void)
 
 //-------------------------------------------------------------------------------------------------
 //
+//   Function name:     ISR_CallBack
+//
+//   Parameter(s):      Event           ETh=H type of event
+//   Return value:      None
+//
+//   Description:       Ethernet ISR Callback.
+//
+//-------------------------------------------------------------------------------------------------
+void ETH_Driver::ISR_CallBack(uint32_t Event)
+{
+    if(m_MAC_Control.CallbackEvent != nullptr)
+    {
+        m_MAC_Control.CallbackEvent(Event);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //   Function name:     ETH_IRQHandler
 //
 //   Parameter(s):      None
@@ -1276,7 +1294,6 @@ void ETH_Driver::DisableClock(void)
 //   Description:       Ethernet IRQ Handler.
 //
 //-------------------------------------------------------------------------------------------------
-
 extern "C"
 {
     NOS_ISR(ETH_IRQHandler)
@@ -1298,6 +1315,7 @@ extern "C"
             // Frame received
             Event |= ETH_MAC_EVENT_RX_FRAME;
         }
+
         macsr = ETH->MACSR;
 
       #if (DIGINI_USE_ETH_TIME_STAMP == DEF_ENABLED)

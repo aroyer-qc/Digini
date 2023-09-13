@@ -64,7 +64,10 @@ const CLI_Function_t CLI_Function[NUMBER_OF_CLI_CMD] =
     &CommandLine::CmdMENU,
   #endif
 
-    X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION_POINTER)   // Generation of the function pointer array
+    X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION_POINTER)       // Generation of the function pointer array
+  #ifdef X_CLI_USER_CMD_DEF
+    X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION_POINTER)  // Generation of the function pointer array (user)
+  #endif      
 };
 
 const char*              CommandLine::m_ErrorLabel                       = "ERROR, %s";
@@ -75,22 +78,31 @@ const CLI_CmdInputInfo_t CommandLine::m_CmdInputInfo[NUMBER_OF_CLI_CMD]  =
   #endif
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_INPUT_INFO)
+  #ifdef X_CLI_USER_CMD_DEF
+    X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_INPUT_INFO) 
+  #endif      
 };
 
 #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-  const char CommandLine::m_StrAT_MENU[sizeof(CMD_MENU)] = CMD_MENU;
+  const char CommandLine::m_StrCMD_MENU[sizeof(CMD_MENU)] = CMD_MENU;
 #endif
 
 X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CONST_STRING)           // Generation of all the string
+#ifdef X_CLI_USER_CMD_DEF
+X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_CONST_STRING)      // Generation of all the string from user
+#endif      
 
 
 const char* CommandLine::m_pCmdStr[NUMBER_OF_CLI_CMD] =
 {
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-    &m_StrAT_MENU[0],
+    &m_StrCMD_MENU[0],
   #endif
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CMD_STRING)
+#ifdef X_CLI_USER_CMD_DEF
+X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_CMD_STRING)
+#endif      
 };
 
 const size_t CommandLine::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
@@ -100,6 +112,9 @@ const size_t CommandLine::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
   #endif
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_STRING_SIZE)
+#ifdef X_CLI_USER_CMD_DEF
+X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_STRING_SIZE)
+#endif      
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -150,7 +165,6 @@ void CommandLine::IF_Process(void)
         m_ParserRX_Size     = 0;
         m_IsItOnHold        = false;
         m_IsItOnStartup     = true;
-        m_MuteSerialLogging = true;
         //m_pChildProcess     = nullptr;
         m_FifoCmd.Initialize(CLI_FIFO_CMD_SIZE);
         m_pConsole->Printf(CON_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
@@ -312,7 +326,7 @@ SystemState_e CommandLine::HandleCmdPassword(void)
 //  Description:    Here we read the character from the console.
 //
 //  Note(s):        This is a state machine to handle incoming character, according to state on menu
-//                  or AT Sequence or input (string or decimal/hexadecimal).
+//                  or CLI Sequence or input (string or decimal/hexadecimal).
 //
 //-------------------------------------------------------------------------------------------------
 bool CommandLine::ProcessRX(void)
@@ -336,6 +350,7 @@ bool CommandLine::ProcessRX(void)
             //
             if(m_Step != CLI_STEP_GETTING_DATA)
             {
+              #if (CLI_USE_AT_PREFIX_ON_COMMAND == DEF_ENABLED)
                 // Receive more data than AT header so, this accelerate process in IRQ
                 if(((Data == 'a') || (Data == 'A')) && (m_Step == CLI_STEP_WAITING_FOR_A))
                 {
@@ -352,12 +367,19 @@ bool CommandLine::ProcessRX(void)
                 {
                     m_Step = CLI_STEP_IDLE;
                 }
+              #else
+                m_Step            = CLI_STEP_GETTING_DATA;
+                m_ReadCommand     = false;
+                m_PlainCommand    = true;
+                m_CommandNameSize = 0;
+              #endif
 
                 m_ParserRX_Size = 0;
+
             }
 
             //---------------------------------------------------------------------------------
-            // Receiving an AT command. Basic parsing of the command
+            // Receiving a command. Basic parsing of the command
             else
             {
                 if(Data == ASCII_EQUAL)
@@ -527,25 +549,6 @@ void CommandLine::ProcessParams(CLI_CmdName_e Command)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           SetSerialLogging
-//
-//  Parameter(s):   bool        Mute        - if true, serial logging is muted
-//                                          - if false, serial logging unmuted
-//
-//  Return:         None
-//
-//  Description:    Set the mute flag for the serial logging.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-//void CommandLine::SetSerialLogging(bool Mute)
-//{
-    //m_MuteSerialLogging = Mute;
-//}
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           LockDisplay
 //
 //  Parameter(s):   bool       State        if true, Display is loccked.
@@ -579,7 +582,7 @@ void CommandLine::LockDisplay(bool State)
 //
 //  Description:    Send state line to terminal.
 //
-//  Note(s):
+//  Note(s):        TODO  use language define here with label!!!
 //
 //-------------------------------------------------------------------------------------------------
 void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char* Answer)
@@ -620,7 +623,12 @@ void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char*
 
     if(State != SYS_OK_SILENT)
     {
+      #if (CLI_USE_AT_PREFIX_ON_COMMAND == DEF_ENABLED)
         m_pConsole->Printf(CON_SIZE_NONE, "AT%s = %s%s\r>", m_pCmdStr[Cmd], pMsg1, pMsg2);
+      #else
+        m_pConsole->Printf(CON_SIZE_NONE, "%s = %s%s\r>", m_pCmdStr[Cmd], pMsg1, pMsg2);
+      #endif
+
     }
 }
 

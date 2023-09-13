@@ -47,6 +47,21 @@
 
 #define CMD_MENU            "MENU"
 
+// Number of parameter can be expanded, as needed
+#define X_CLI_CMD_DEF(X_CLI_CMD)   \
+/*              ENUM_ID,        String,       Function,     Cmd Type,    Number,    Param1 -             Min1,    max1   Param2 -          Min2,   max2,     Param3 -              Min3,   max3,     Param4 -          Min4,   max4  */\
+    X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,         0,                    0,       0,     0,                0,      0,        0,                    0,      0,        0,                0,      0)     \
+    X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP,  0,         0,                    0,       0,     0,                0,      0,        0,                    0,      0,        0,                0,      0)     \
+    X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP,  0,         0,                    0,       0,     0,                0,      0,        0,                    0,      0,        0,                0,      0)     \
+    X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP,  0,         0,                    0,       0,     0,                0,      0,        0,                    0,      0,        0,                0,      0)     \
+    X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P,   0,         0,                    0,       0,     0,                0,      0,        0,                    0,      0,        0,                0,      0)     \
+    X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  1,         BASE_HEXADECIMAL,     0x00,    0xFF,  0,                0,      0,        0,                    0,      0,        0,                0,      0)     \
+/* TODO generic command should be in the library and be enable by define */\
+\
+    X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,         0,                    0,       0,     0,                0,      0,        0,                    0,      0,        0,                0,      0)     \
+    X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,         0,                    0,       0,     0,                0,      0,        0,                    0,      0,        0,                0,      0)     \
+    X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,         0,                    0,       0,     0,                0,      0,        0,                    0,      0,        0,                0,      0)     \
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -54,10 +69,13 @@
 enum CLI_CmdName_e
 {
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-    AT_MENU,
+    MENU,
   #endif
 
-	X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_ENUM)
+	X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_ENUM)                // Create the enum item
+  #ifdef X_CLI_USER_CMD_DEF
+    X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_ENUM)           // Create the enum item from user
+  #endif      
     NUMBER_OF_CLI_CMD,
     CLI_NO_CMD,
     FIRST_CLI_COMMAND = 0,
@@ -119,22 +137,26 @@ struct CLI_CmdInputInfo_t
 enum CLI_Step_e
 {
     CLI_STEP_IDLE                 = 0,
+ #if (CLI_USE_AT_PREFIX_ON_COMMAND == DEF_ENABLED)
     CLI_STEP_WAITING_FOR_A        = CLI_STEP_IDLE,
-    CLI_STEP_WAITING_FOR_T        = 1,
-    CLI_STEP_GETTING_DATA         = 2,
-    CLI_STEP_CMD_VALID            = 3,
-    CLI_STEP_CMD_MALFORMED        = 4,
-    CLI_STEP_CMD_BUFFER_OVERFLOW  = 5,
+    CLI_STEP_WAITING_FOR_T,
+ #endif
+    CLI_STEP_GETTING_DATA,
+    CLI_STEP_CMD_VALID,
+    CLI_STEP_CMD_MALFORMED,
+    CLI_STEP_CMD_BUFFER_OVERFLOW,
 };
 
 enum CLI_StrCmdSize_e
 {
     #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-      SZ_OF_AT_MENU = sizeof(CMD_MENU) - 1,
+      SZ_OF_CMD_MENU = sizeof(CMD_MENU) - 1,
     #endif
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_SIZE_OF)                // Create the sizeof() for each string
-
+  #ifdef X_CLI_USER_CMD_DEF
+    X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_SIZE_OF)           // Create the sizeof() for each string (user)
+  #endif      
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -159,7 +181,10 @@ class CommandLine : public ChildProcessInterface
     // --------------------------------------------------------------------------------------------
     // Expansion of all user CLI function
 
-        X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION)   // Generation of all prototype
+        X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION)       // Generation of all prototype
+      #ifdef X_CLI_USER_CMD_DEF
+        X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION)  // Generation of all prototype from user
+      #endif      
 
     private:
 
@@ -178,7 +203,6 @@ class CommandLine : public ChildProcessInterface
         FIFO_Buffer                             m_FifoCmd;
         TickCount_t                             m_CommandTimeOut;
         size_t                                  m_CommandNameSize;
-        bool                                    m_MuteSerialLogging;
         TickCount_t                             m_StartupTick;
         bool                                    m_IsItOnStartup;
         bool                                    m_IsItOnHold;
@@ -194,10 +218,13 @@ class CommandLine : public ChildProcessInterface
         static const size_t                     m_CmdStrSize[NUMBER_OF_CLI_CMD];
 
       #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-        static const char                       m_StrAT_MENU[sizeof(CMD_MENU)];
+        static const char                       m_StrCMD_MENU[sizeof(CMD_MENU)];
       #endif
 
         X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CLASS_CONST_STRING)           // Generation of all the string
+      #ifdef X_CLI_USER_CMD_DEF
+        X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_CLASS_CONST_STRING)      // Generation of all the string from user
+      #endif      
 
       #if (CLI_USE_PASSWORD == DEF_ENABLED)
         static char                             m_CMD_Password[CLI_PASSWORD_SIZE];

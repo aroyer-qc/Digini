@@ -61,13 +61,12 @@ static nOS_Stack    Stack[TASK_ETHERNET_IF_STACK_SIZE];
 // Forward declarations.
 static inline struct pbuf*  low_level_input         (void);
 static err_t                low_level_output        (struct netif *netif, struct pbuf *p);
-static void                 arp_timer               (void *arg);
+static void                 ArpTimer               (void *arg);
 static void                 ethernetif_Callback     (uint32_t event);
 static void                 ethernetif_PollThePHY   (void);
 #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
 static void                 ethernetif_LinkCallBack (void* pArg);
 #endif
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -157,8 +156,8 @@ err_t ethernetif_init(struct netif* netif)
     netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
 
     // Create binary semaphore used for informing ethernetif of frame reception
-    Error = nOS_SemCreate (&ETH_RX_Sem, 0, 20);
-    Error = nOS_MutexCreate (&ETH_TX_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
+    Error = nOS_SemCreate(&ETH_RX_Sem, 0, 20);
+    Error = nOS_MutexCreate(&ETH_TX_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
     VAR_UNUSED(Error);
 
      nOS_ThreadCreate(&TaskHandle,
@@ -178,7 +177,7 @@ err_t ethernetif_init(struct netif* netif)
     ETH_Mac.Control(ETH_MAC_CONTROL_RX, 1);
     ETH_Mac.Control(ETH_MAC_FLUSH, ETH_MAC_FLUSH_TX);
 
-	sys_timeout(ARP_TMR_INTERVAL, arp_timer, nullptr);
+	sys_timeout(ARP_TMR_INTERVAL, ArpTimer, nullptr);
 
 	return ERR_OK;
 }
@@ -238,32 +237,17 @@ static err_t low_level_output(struct netif* netif, struct pbuf* pPacket)
 //-------------------------------------------------------------------------------------------------
 static inline struct pbuf* low_level_input(void)
 {
-   	struct pbuf* pPacket;
+   	struct pbuf* pPacket = nullptr;
     size_t       Length;
 
-    Length = ETH_Mac.GetRX_FrameSize();                         // Obtain the size of the packet and put it into the "len" variable.
+    Length = ETH_Mac.GetRX_FrameSize();                             // Obtain the size of the packet and put it into the "len" variable.
 
-    if(Length == 0)
+    if((Length != 0) && (Length <= ETHERNET_FRAME_SIZE))
     {
-        return nullptr;                                         // No packet available
+        pPacket = pbuf_alloc(PBUF_RAW, Length, PBUF_POOL);          // We allocate a pbuf chain of pbufs from the pool.
     }
 
-    if(Length > ETHERNET_FRAME_SIZE)
-    {
-        ETH_Mac.ReadFrame(nullptr, 0);                          // Drop over-sized packet
-        return nullptr;                                         // No packet available
-    }
-
-    pPacket = pbuf_alloc(PBUF_RAW, Length, PBUF_POOL);          // We allocate a pbuf chain of pbufs from the pool.
-
-    if(pPacket != nullptr)
-    {
-        ETH_Mac.ReadFrame(pPacket, Length);
-    }
-    else
-    {
-        ETH_Mac.ReadFrame(nullptr, 0);                          // Drop packet we cannot allocated memory yo it
-    }
+    ETH_Mac.ReadFrame(pPacket, (pPacket != nullptr) ? Length : 0);  // Read or drop the packet (Length <= 0 OR > ETHERNET_FRAME_SIZE)  OR we cannot allocated memory for it
 
     return pPacket;
 }
@@ -326,30 +310,29 @@ void ethernetif_input(void* pParam)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:
+//  Function:       ArpTimer
 //
-//  Parameter(s):
-//  Return:
+//  Parameter(s):   pArg                none required
+//  Return:         None
 //
-//  Description:
+//  Description:    Call lwIP function etharp_tmr each time the configure timeout has ended
 //
 //-------------------------------------------------------------------------------------------------
-static void arp_timer(void* pArg)
+static void ArpTimer(void* pArg)
 {
 	VAR_UNUSED(pArg);
 	etharp_tmr();
-    sys_timeout(ARP_TMR_INTERVAL, arp_timer, nullptr);
+    sys_timeout(ARP_TMR_INTERVAL, ArpTimer, nullptr);           // Restart a new timer
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:
+//  Function:       ethernetif_PollThePHY
 //
-//  Parameter(s):
-//  Return:
+//  Parameter(s):   None
+//  Return:         None
 //
-//  Description:
+//  Description:    Polling the PHY for link status, inform lwIP of it.
 //
 //-------------------------------------------------------------------------------------------------
 void ethernetif_PollThePHY(void)
@@ -380,8 +363,8 @@ void ethernetif_PollThePHY(void)
 //
 //  Function:       ethernetif_Callback
 //
-//  Parameter(s):
-//  Return:
+//  Parameter(s):   Event           Event type received
+//  Return:         None
 //
 //  Description:    ISR activated when we receive a new message on the ethernet
 //
@@ -399,7 +382,7 @@ void ethernetif_Callback(uint32_t Event)
 //  Function:       ethernetif_LinkCallcack
 //
 //  Parameter(s):   pArg        N/U
-//  Return:
+//  Return:         None
 //
 //  Description:    This ISR is called when the link status from PHY detect change.
 //

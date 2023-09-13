@@ -230,7 +230,7 @@ class ETH_Driver
         SystemState_e           PHY_Write               (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data); // Write Ethernet PHY Register through Management Interface.
         ETH_MAC_Capability_t    GetCapabilities         (void);
 
-        static void             ISR_CallBack             (uint32_t Event) { if(m_MAC_Control.CallbackEvent != nullptr) m_MAC_Control.CallbackEvent(Event); }
+        static void             ISR_CallBack             (uint32_t Event);
 
     private:
 

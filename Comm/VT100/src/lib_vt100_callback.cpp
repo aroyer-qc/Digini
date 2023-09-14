@@ -272,6 +272,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(1, 16, VT100_LBL_NOW);
             myVT100.InMenuPrintf(1, 17, VT100_LBL_UPTIME);
             myVT100.InMenuPrintf(       VT100_LBL_ESCAPE);
+
+
+myVT100.SetCursorPosition(1,30);
+for(int i=128; i<256; i++)
+            myVT100.InMenuPrintf(       LBL_CHAR, i);
+
         }
         break;
 
@@ -515,7 +521,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
 //
 //  Description:    Product Information
 //
-//  Note(s):
+//  Note(s):        TODO Alain Royer use language !!!!!
 //
 //-------------------------------------------------------------------------------------------------
 #if (DIGINI_DEBUG_SDCARD_INFO_ON_VT100 == DEF_ENABLED)

@@ -48,8 +48,8 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
     { "Version:          ",           nullptr                },  // LBL_FW_VERSION_INFO
     { "GUI Name:         ",           "Nom GUI:          "   },  // LBL_GUI_NAME_INFO
     { "GUI Version:      ",           "Version GUI:      "   },  // LBL_GUI_VERSION_INFO
-    { "Hardware:         ",           "Matériel:         "   },  // LBL_HARDWARE_INFO
-    { "Serial No.:       ",           "No. Série:        "   },  // BL_SERIAL_INFO
+    { "Hardware:         ",           "Mat\x82riel:         "},  // LBL_HARDWARE_INFO
+    { "Serial No.:       ",           "No. S\x82rie:        "},  // BL_SERIAL_INFO
     { "Built Date:       ",           "Date logiciel:    "   },  // LBL_COMPILE_DATE_INFO
 
     { OEM_VENDOR_NAME,                nullptr                },  // LBL_VENDOR_NAME
@@ -64,17 +64,17 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
 
 #if (LABEL_USE_TIME_AND_DATE == DEF_ENABLED)
     { "January",                      "Janvier"              },
-    { "February",                     "Février"              },
+    { "February",                     "F\x82vrier"           },
     { "March",                        "Mars"                 },
     { "April",                        "Avril"                },
     { "May",                          "Mai"                  },
     { "June",                         "Juin"                 },
     { "July",                         "Juillet"              },
-    { "August",                       "Août"                 },
+    { "August",                       "Ao\x93t"              },
     { "September",                    "Septembre"            },
     { "October",                      "Octobre"              },
     { "November",                     "Novembre"             },
-    { "December",                     "Décembre"             },
+    { "December",                     "D\x82" "cembre"       },
     { "Sunday",                       "Dimanche"             },
     { "Monday",                       "Lundi"                },
     { "Tuesday",                      "Mardi"                },
@@ -85,7 +85,7 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
     { "Hour",                         "Heure"                },
     { "Minute",                       nullptr                },
     { "Second",                       "Seconde"              },
-    { "Year",                         "Année"                },
+    { "Year",                         "Ann\x82" "e"          },
     { "Month",                        "Mois"                 },
     { "Day",                          "Jour"                 },
 #endif

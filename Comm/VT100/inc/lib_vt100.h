@@ -67,12 +67,6 @@
 #define VT100_ITEMS_QTS                     8
 #define VT100_STRING_SZ                     64
 
-#if (VT100_USE_COLOR != DEF_ENABLED)
-#define myVT100.SetColor(...)
-#define myVT100.SetForeColor(...)
-#define myVT100.SetBackColor(...)
-#endif
-
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -187,10 +181,8 @@ class VT100_Terminal : public ChildProcessInterface
       #if (VT100_USER_CALLBACK_INITIALIZE == DEF_ENABLED)
         void                CallbackInitialize          (void);
       #endif
-        void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
-        void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
         void                GoToMenu                    (VT100_Menu_e MenuID);
-        size_t              InMenuPrintf                (Label_e Label, ...);
+        size_t              InMenuPrintf                (Label_e Label, ...);                                   // TODO they should also be a generic to CLI and other serial printing methos that need language
         size_t              InMenuPrintf                (uint8_t PosX, uint8_t PosY, Label_e Label, ...);       // TODO this should use part of the code from the prior function
         void                RestoreAttribute            (void);
         void                RestoreCursorPosition       (void);
@@ -198,15 +190,21 @@ class VT100_Terminal : public ChildProcessInterface
         void                SaveCursorPosition          (void);
         void                SetAttribute                (VT100_Attribute_e Attribute);
 
+        void                Bargraph                    (uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size);
+        void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
+        void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
+        void                DrawHline                   (uint8_t PosX, uint8_t PosY, uint8_t H_Size, VT100_Color_e ForeColor);
+
       #if (VT100_USE_COLOR == DEF_ENABLED)
         void                SetColor                    (VT100_Color_e ForeColor, VT100_Color_e BackColor);
         inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute(VT100_Attribute_e(int(Color) + VT100_OFFSET_COLOR_FOREGROUND)); }
         inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute(VT100_Attribute_e(int(Color) + VT100_OFFSET_COLOR_BACKGROUND)); }
         void                UpdateSaveLabel             (VT100_Color_e Color);
-        void                Bargraph                    (uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size);
       #else
+        void                SetColor                    (...) {}
+        inline void         SetForeColor                (...) {}
+        inline void         SetBackColor                (...) {}
         void                InvertMono                  (bool Invert);
-        void                Bargraph                    (uint8_t PosX, uint8_t PosY, uint8_t Value, uint8_t Max, uint8_t Size);
       #endif
 
         void                SetCursorPosition           (uint8_t PosX, uint8_t PosY);

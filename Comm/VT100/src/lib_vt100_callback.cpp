@@ -202,11 +202,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
                 uint8_t OffsetMultiplierY = uint8_t((i / 4) * 6);
 
                 Percent = myStacktistic.GetPercent(i);
-              #if (VT100_USE_COLOR == DEF_ENABLED)
                 myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY + 9, (Percent >= 90) ? VT100_COLOR_RED : VT100_COLOR_GREEN, Percent, 100, 20);
-              #else
-                myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY + 9, Percent, 100, 20);
-              #endif
                 myVT100.SetForeColor(VT100_COLOR_WHITE);
                 myVT100.InMenuPrintf(OffsetMultiplierX, OffsetMultiplierY + 11, VT100_LBL_PERCENT_VALUE, Percent);
             }

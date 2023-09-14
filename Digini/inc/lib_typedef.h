@@ -86,6 +86,13 @@ typedef enum _ASCII_e
     ASCII_COMMA                 = ',',
     ASCII_EQUAL                 = '=',
     ASCII_QUESTION_MARK         = '?',
+    ASCII_DEL                   = '\x7F',
+    ASCII_EXT_TL_CORNER_CHAR    = '\xDA',
+    ASCII_EXT_HORIZONTAL_CHAR   = '\xC4',
+    ASCII_EXT_TR_CORNER_CHAR    = '\xBF',
+    ASCII_EXT_VERTICAL_CHAR     = '\xB3',
+    ASCII_EXT_BL_CORNER_CHAR    = '\xC0',
+    ASCII_EXT_BR_CORNER_CHAR    = '\xD9',
 } ASCII_e;
 
 typedef enum

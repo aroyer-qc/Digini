@@ -67,7 +67,7 @@ const CLI_Function_t CLI_Function[NUMBER_OF_CLI_CMD] =
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION_POINTER)       // Generation of the function pointer array
   #ifdef X_CLI_USER_CMD_DEF
     X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION_POINTER)  // Generation of the function pointer array (user)
-  #endif      
+  #endif
 };
 
 const char*              CommandLine::m_ErrorLabel                       = "ERROR, %s";
@@ -79,8 +79,8 @@ const CLI_CmdInputInfo_t CommandLine::m_CmdInputInfo[NUMBER_OF_CLI_CMD]  =
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_INPUT_INFO)
   #ifdef X_CLI_USER_CMD_DEF
-    X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_INPUT_INFO) 
-  #endif      
+    X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_INPUT_INFO)
+  #endif
 };
 
 #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
@@ -90,7 +90,7 @@ const CLI_CmdInputInfo_t CommandLine::m_CmdInputInfo[NUMBER_OF_CLI_CMD]  =
 X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CONST_STRING)           // Generation of all the string
 #ifdef X_CLI_USER_CMD_DEF
 X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_CONST_STRING)      // Generation of all the string from user
-#endif      
+#endif
 
 
 const char* CommandLine::m_pCmdStr[NUMBER_OF_CLI_CMD] =
@@ -102,7 +102,7 @@ const char* CommandLine::m_pCmdStr[NUMBER_OF_CLI_CMD] =
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CMD_STRING)
 #ifdef X_CLI_USER_CMD_DEF
 X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_CMD_STRING)
-#endif      
+#endif
 };
 
 const size_t CommandLine::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
@@ -114,7 +114,7 @@ const size_t CommandLine::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_STRING_SIZE)
 #ifdef X_CLI_USER_CMD_DEF
 X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_STRING_SIZE)
-#endif      
+#endif
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -372,16 +372,15 @@ bool CommandLine::ProcessRX(void)
                 m_ReadCommand     = false;
                 m_PlainCommand    = true;
                 m_CommandNameSize = 0;
+                m_ParserRX_Size   = 0;
               #endif
-
-                m_ParserRX_Size = 0;
-
             }
-
-            //---------------------------------------------------------------------------------
-            // Receiving a command. Basic parsing of the command
+           #if (CLI_USE_AT_PREFIX_ON_COMMAND == DEF_ENABLED)
             else
+           #endif
             {
+                //---------------------------------------------------------------------------------
+                // Receiving a command. Basic parsing of the command
                 if(Data == ASCII_EQUAL)
                 {
                     m_PlainCommand = false;
@@ -420,7 +419,7 @@ bool CommandLine::ProcessRX(void)
                     State      = true;
                     m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);         // Flush console buffer
                 }
-                else if((char)Data == ASCII_BACKSPACE)
+                else if(((char)Data == ASCII_BACKSPACE) || ((char)Data == ASCII_DEL))
                 {
                      if(m_CommandNameSize == m_ParserRX_Size)
                     {

@@ -300,10 +300,7 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
             //    char*       pString;
             //    Language_e  Language = LANG_DEFAULT;
 
-
-              #if (DIGINI_USE_MULTI_LANGUAGE_SUPPORT == DEF_ENABLED)
-           //     DB_Central.Get(&Language, DIGINI_SYSTEM_LANGUAGE, 0, 0);
-              #endif
+            //    DB_Central.Get(&Language, DIGINI_SYSTEM_LANGUAGE, 0, 0);
 
 
               // Don't know why it is not working .. don't what is suppose to be pText->Label
@@ -787,9 +784,7 @@ static ServiceReturn_t* SERV_XCHG(ServiceEvent_e* pServiceState, uint16_t SubSer
 {
     ServiceReturn_t* pService = nullptr;
     ExchangeType_e   ExchangeType;
-  #if (DIGINI_USE_MULTI_LANGUAGE_SUPPORT == DEF_ENABLED)
     Language_e       Language = LANG_DEFAULT;
-  #endif
  //   char*            pString;
     Label_e          FormatLabel;
 
@@ -805,9 +800,7 @@ static ServiceReturn_t* SERV_XCHG(ServiceEvent_e* pServiceState, uint16_t SubSer
             else
             {
                 ExchangeType = pExchange[SubService]->ExType;
-              #if (DIGINI_USE_MULTI_LANGUAGE_SUPPORT == DEF_ENABLED)
-                DB_Central.Get(&Language, DIGINI_SYSTEM_LANGUAGE, 0, 0);
-              #endif
+                DB_Central.Get(&Language, SYSTEM_LANGUAGE, 0, 0);
 
                 switch(ExchangeType)
                 {

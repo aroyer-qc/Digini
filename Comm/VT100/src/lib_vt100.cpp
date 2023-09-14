@@ -471,12 +471,10 @@ void VT100_Terminal::DisplayMenu(void)
     char                    ItemsChar;
 
     pMenu = nullptr;
-    ClearScreenWindow(0, 4, VT100_X_SIZE, VT100_Y_SIZE);     // Clear screen bellow header
+    ClearScreenWindow(0, 4, VT100_X_SIZE, VT100_Y_SIZE);    // Clear screen bellow header
     m_PosY_SaveLabel = 9;
-   SetCursorPosition(0, 6);                              // Reposition cursor to print menu
-  #if (VT100_USE_COLOR == DEF_ENABLED)
+    SetCursorPosition(0, 6);                                // Reposition cursor to print menu
     SetForeColor(VT100_COLOR_YELLOW);
-  #endif
     m_ItemsQts = m_Menu[m_MenuID].Size;
 
     if(m_ItemsQts > 1)
@@ -492,19 +490,16 @@ void VT100_Terminal::DisplayMenu(void)
                 ItemsChar  = (char)Items;
                 ItemsChar += (ItemsChar >= 10) ? ('a' - 10) : '0';
                 MenuSelectItems(ItemsChar);
+              #if (VT100_USE_COLOR == DEF_ENABLED)
                 if(pMenu->Label == VT100_LBL_SAVE_CONFIGURATION)
                 {
-                  #if (VT100_USE_COLOR == DEF_ENABLED)
                     SetForeColor(VT100_COLOR_BLUE);
-                  #endif
                 }
+              #endif
 
                 InMenuPrintf(pMenu->Label);
                 m_PosY_SaveLabel++;
-
-              #if (VT100_USE_COLOR == DEF_ENABLED)
                 SetForeColor(VT100_COLOR_YELLOW);
-              #endif
             }
             else
             {
@@ -549,9 +544,7 @@ void VT100_Terminal::PrintMenuStaticInfo(void)
     nOS_Sleep(100);                                                 // Terminal need time to reset
     InMenuPrintf(VT100_LBL_HIDE_CURSOR);
     InMenuPrintf(VT100_LBL_CLEAR_SCREEN);
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
-  #endif
     InMenuPrintf(VT100_LBL_LINE_SEPARATOR);
     pString  = myLabel.GetPointer(VT100_LBL_LINE_SEPARATOR);
     SizeLine = VT100_X_SIZE;
@@ -563,9 +556,7 @@ void VT100_Terminal::PrintMenuStaticInfo(void)
     RepeatChar(' ', (SizeLine / 2) + (SizeLine % 2));
     InMenuPrintf(LBL_LINEFEED);
     InMenuPrintf(VT100_LBL_LINE_SEPARATOR);
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetColor(VT100_COLOR_YELLOW, VT100_COLOR_BLACK);
-  #endif
     InMenuPrintf(LBL_DOUBLE_LINEFEED);
 }
 #endif
@@ -647,17 +638,12 @@ void VT100_Terminal::ClearScreenWindow(uint8_t PosX, uint8_t PosY, uint8_t SizeX
 void VT100_Terminal::MenuSelectItems(char ItemsChar)
 {
     InMenuPrintf(LBL_STRING, "\r  (");
-
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_CYAN);
-  #endif
 
     if(ItemsChar == '0') InMenuPrintf(LBL_STRING, "ESC");
     else                 InMenuPrintf(LBL_CHAR, ItemsChar);
 
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_YELLOW);
-  #endif
 
     if(ItemsChar == '0') InMenuPrintf(LBL_STRING, ") ");
     else                 InMenuPrintf(LBL_STRING, ")   ");
@@ -742,10 +728,7 @@ void VT100_Terminal::InputDecimal(void)
     if(m_RefreshValue != m_Value)
     {
         m_RefreshValue = m_Value;
-      #if (VT100_USE_COLOR == DEF_ENABLED)
         SetColor(VT100_COLOR_BLACK, ((m_Value >= m_Minimum) && (m_Value <= m_Maximum)) ? VT100_COLOR_GREEN : VT100_COLOR_RED);
-      #endif
-
         InMenuPrintf(m_PosX + 36, m_PosY + 3, LBL_CHAR, ' ');
 
         switch(m_Divider)
@@ -798,11 +781,11 @@ void VT100_Terminal::InputString(void)
 //-------------------------------------------------------------------------------------------------
 #if (VT100_USE_COLOR == DEF_ENABLED)
 void VT100_Terminal::UpdateSaveLabel(VT100_Color_e Color)
-#endif
 {
     SetForeColor(Color);
     InMenuPrintf(9, m_PosY_SaveLabel, VT100_LBL_SAVE_CONFIGURATION);
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -839,11 +822,7 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
     m_IsItString       = false;
 
     // Draw the Box
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     DrawBox(PosX, PosY, 56, 8, VT100_COLOR_WHITE);
-  #else
-    DrawBox(PosX, PosY, 56, 8);
-  #endif
 
     // Write input information
     SetForeColor(VT100_COLOR_CYAN);
@@ -871,9 +850,7 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
     }
 
     // Print type of input
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_YELLOW);
-  #endif
     //InMenuPrintf(PosX + 2, PosY + 3, LBL_STRING, pMsg);
 
     // Add 'how to' info
@@ -947,16 +924,10 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
     m_IsItString       = true;
 
     // Draw the Box
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     DrawBox(PosX, PosY, 56, 8, VT100_COLOR_WHITE);
-  #else
-    DrawBox(PosX, PosY, 56, 8);
-  #endif
 
     // Write input information
-  #if (VT100_USE_COLOR == DEF_ENABLED)
     SetForeColor(VT100_COLOR_CYAN);
-  #endif
     //InMenuPrintf(PosX + 2,  PosY + 1, Maximum, LBL_STRING, pMsg);
 
     // Add 'how to' info
@@ -1334,7 +1305,7 @@ void VT100_Terminal::SetColor(VT100_Color_e ForeColor, VT100_Color_e BackColor)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#ifndef VT100_USE_COLOR
+#if (VT100_USE_COLOR == DEF_DISABLED)
 void VT100_Terminal::InvertMono(bool Invert)
 {
     if(Invert == true) InMenuPrintf(VT100_LBL_BACK_WHITE_FORE_BLACK);
@@ -1388,14 +1359,6 @@ void VT100_Terminal::DisplayTimeDateStamp(uint8_t PosX, uint8_t PosY, DateAndTim
                                                          pTimeDate->Time.Hour,
                                                          pTimeDate->Time.Minute,
                                                          pTimeDate->Time.Second);
-/*
-    InMenuPrintf(VT100_LBL_TIME_DATE_STAMP, pTimeDate->Date.Year,
-                                            pTimeDate->Date.Month,
-                                            pTimeDate->Date.Day,
-                                            pTimeDate->Time.Hour,
-                                            pTimeDate->Time.Minute,
-                                            pTimeDate->Time.Second);
-*/
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1419,39 +1382,59 @@ void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t
 {
     if(m_IsDisplayLock == false)
     {
-      #if (VT100_USE_COLOR == DEF_ENABLED)
         SetForeColor(ForeColor);
-      #endif
-        InMenuPrintf(PosX, PosY++, LBL_STRING, "┌");
+        InMenuPrintf(PosX, PosY, LBL_CHAR, ASCII_EXT_TL_CORNER_CHAR);
+        DrawHline(PosX + 1, PosY, H_Size - 2, ForeColor);
+        InMenuPrintf(LBL_CHAR, ASCII_EXT_TR_CORNER_CHAR);
+        //SetCursorPosition(PosX, ++PosY;)
 
-        for(uint8_t i = 0; i < (H_Size - 2); i++)
-        {
-            InMenuPrintf(LBL_STRING, "─");
-        }
-
-        InMenuPrintf(LBL_STRING, "┐");
-
+        // We draw  vertical line and also clear indise the box
         for(uint8_t i = 0; i < (V_Size - 2); i++)
         {
-            InMenuPrintf(PosX, PosY, LBL_STRING, "│");
+            InMenuPrintf(PosX, ++PosY, LBL_CHAR, ASCII_EXT_VERTICAL_CHAR);
 
             // Erase inside
             for(uint8_t j = 0; j < (H_Size - 2); j++)
             {
-                InMenuPrintf(LBL_CHAR, ' ');
+                InMenuPrintf(LBL_CHAR, ASCII_SPACE);
             }
 
-            InMenuPrintf(PosX + (H_Size - 1), PosY++, LBL_STRING, "│");
+            InMenuPrintf(LBL_CHAR, ASCII_EXT_VERTICAL_CHAR);
         }
 
-        InMenuPrintf(PosX, PosY, LBL_STRING, "└");
+        InMenuPrintf(PosX, ++PosY, LBL_CHAR, ASCII_EXT_BL_CORNER_CHAR);
+        DrawHline(PosX + 1, PosY, H_Size - 2, ForeColor);
+        InMenuPrintf(LBL_CHAR, ASCII_EXT_BR_CORNER_CHAR);
+    }
+}
 
-        for(uint8_t i = 0; i < (H_Size - 2); i++)
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           DrawVline
+//
+//  Parameter(s):   uint8_t         PosX                Position X on screen.
+//                  uint8_t         PosY                Position Y on screen.
+//                  uint8_t         V_Size              vertical size of line.
+//                  VT100_Color_e   ForeColor           Color of the box.
+//
+//  Return:         None
+//
+//  Description:    Draw a line at specified attribute.
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void VT100_Terminal::DrawHline(uint8_t PosX, uint8_t PosY, uint8_t H_Size, VT100_Color_e ForeColor)
+{
+    if(m_IsDisplayLock == false)
+    {
+        SetForeColor(ForeColor);
+        SetCursorPosition(PosX, PosY);
+
+        for(uint8_t i = 0; i < H_Size; i++)
         {
-            InMenuPrintf(LBL_STRING, "─");
+            InMenuPrintf(LBL_CHAR, ASCII_EXT_HORIZONTAL_CHAR);
         }
-
-        InMenuPrintf(LBL_STRING, "┘");
     }
 }
 
@@ -1475,13 +1458,11 @@ void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100
 {
     if(m_IsDisplayLock == false)
     {
-      #if (VT100_USE_COLOR == DEF_ENABLED)
         SetForeColor(ForeColor);
-      #endif
 
         for(uint8_t i = 0; i < V_Size; i++)
         {
-            InMenuPrintf(PosX, PosY++, LBL_STRING, "│");
+            InMenuPrintf(PosX, PosY++, LBL_CHAR, ASCII_EXT_VERTICAL_CHAR);
         }
     }
 }
@@ -1505,11 +1486,7 @@ void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100
 //  Note(s):        ** This parameter exist only if VT100_USE_COLOR is defined
 //
 //-------------------------------------------------------------------------------------------------
-#if (VT100_USE_COLOR == DEF_ENABLED)
 void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size)
-#else
-void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, uint8_t Value, uint8_t Max, uint8_t Size)
-#endif
 {
     int i;
 
@@ -1530,7 +1507,7 @@ void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, uint8_t Value, uint8_t
         InvertMono((i < ((Value / (Max / Size)))));
       #endif
 
-        InMenuPrintf(LBL_CHAR, ' ');
+        InMenuPrintf(LBL_CHAR, ASCII_SPACE);
     }
 
   #if (VT100_USE_COLOR == DEF_ENABLED)

@@ -1270,7 +1270,7 @@ void ETH_Driver::DisableClock(void)
 //
 //   Function name:     ISR_CallBack
 //
-//   Parameter(s):      Event           ETh=H type of event
+//   Parameter(s):      Event           ETh type of event
 //   Return value:      None
 //
 //   Description:       Ethernet ISR Callback.

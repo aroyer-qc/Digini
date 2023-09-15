@@ -246,7 +246,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
         {
             myVT100.ClearScreenWindow(0, 4, 80, 30);
 
-            myVT100.InMenuPrintf(1, 6,  VT100_LBL_SYSTEM_INFO);
+            myVT100.InMenuPrintf(1, 6,  LBL_SYSTEM_INFO);
             myVT100.InMenuPrintf(1, 8,  LBL_VENDOR_NAME_INFO);
             myVT100.InMenuPrintf(       LBL_VENDOR_NAME);
             myVT100.InMenuPrintf(1, 9,  LBL_HARDWARE_INFO);

@@ -939,7 +939,7 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
         memcpy(m_pString, pString, VT100_STRING_SZ);
     }     // todo handle error....
 
-    STR_strnstrip(m_pString, Maximum);                      // TODO Fix this
+    STR_strnstrip(m_pString, Maximum);
     m_InputPtr = strlen(m_pString);                         // Get string end pointer
     m_RefreshInputPtr = m_InputPtr + 1;                     // To force a refresh
 
@@ -1339,7 +1339,9 @@ void VT100_Terminal::LockDisplay(bool State)
 //
 //  Name:           CON_DisplayTimeDateStamp
 //
-//  Parameter(s):   pTimeDate       Pointer on the TimeDate Structure
+//  Parameter(s):   PosX            Position X on Screen
+//                  PosY            Position X on Screen
+//                  pTimeDate       Pointer on the TimeDate Structure
 //
 //  Return:         None
 //

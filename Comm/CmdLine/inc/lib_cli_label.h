@@ -53,9 +53,9 @@ X_CLI_LBL_CFG( LBL_RESET_TERMINAL,          "\033c\r",                          
 X_CLI_LBL_CFG( LBL_ERROR,                   "ERROR, %s",                                "ERREUR, %s"                                ) \
 X_CLI_LBL_CFG( LBL_CMD_LINE_PROC_STARTED,   "Command Line Process Started\r>",          "Procédé Ligne de Commande, Démarré\r>"     ) \
 X_CLI_LBL_CFG( LBL_COMMAND_IS_INVALID,      "\rCommand is Invalid\r>",                  "\rCommande Invalide\r>"                    ) \
-X_CLI_LBL_CFG( LBL_MALFORMED_PACKED,        "\rMalformed command\r>",                   "\rCommande Mal Formé\r>"                   ) \
-X_CLI_LBL_CFG( LBL_BUFFER_OVERFLOW,         "\rBuffer overflow\r>",                     "\rDébordement du Tampon\r"                 ) \
-X_CLI_LBL_CFG( LBL_CMD_TIME_OUT,            " ... Command timeout\r>",                  " ... Expireation du Délai de Commande\r>"  ) \
+X_CLI_LBL_CFG( LBL_MALFORMED_PACKED,        "\rMalformed Command\r>",                   "\rCommande Mal Formé\r>"                   ) \
+X_CLI_LBL_CFG( LBL_BUFFER_OVERFLOW,         "\rBuffer Overflow\r>",                     "\rDébordement du Tampon\r"                 ) \
+X_CLI_LBL_CFG( LBL_CMD_TIME_OUT,            " ... Command Timeout\r>",                  " ... Expiration du Délai de Commande\r>"   ) \
 X_CLI_LBL_CFG( LBL_OK,                      "OK",                                       nullptr                                     ) \
 X_CLI_LBL_CFG( LBL_CLI_RESPONSE,            CLI_RESPONSE_FOR_LABEL,                     nullptr                                     ) \
 
@@ -68,7 +68,7 @@ X_CLI_LBL_CFG( LBL_NO_WRITE_SUPPORT         "No Write Support",                 
 X_CLI_LBL_CFG( LBL_INVALID_PARAMETER,       "Invalid Parameter",                        "Paramêtre non valide"                      ) \
 X_CLI_LBL_CFG( LBL_PASSWORD_INVALID         "Password Invalid",                         "Mot de Passe invalide"                     ) \
 X_CLI_LBL_CFG( LBL_MEM_ALLOC_ERROR,         "Memory allocation Error",                  "Erreur d'Allocation Mémoire"               ) \
-X_CLI_LBL_CFG( LBL_PLAIN_CMD_ONLY,          "Plain Command Only",                       "Commande simple uniquement"                ) \
+X_CLI_LBL_CFG( LBL_PLAIN_CMD_ONLY,          "Plain Command Only",                       "Commande Simple Uniquement"                ) \
 
 
 

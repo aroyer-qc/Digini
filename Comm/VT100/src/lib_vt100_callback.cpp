@@ -527,6 +527,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
 #if (DIGINI_DEBUG_SDCARD_INFO_ON_VT100 == DEF_ENABLED)
 VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT100_CallBackType_e Type)
 {
+    // TODO in future we should use input as menu choice.. so if we have more than one SD.. we can select which one to displayed.
     VAR_UNUSED(Input);
 
     switch(Type)
@@ -571,33 +572,33 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
 
             myVT100.ClearScreenWindow(0, 4, 80, 30);
 
-            myVT100.InMenuPrintf(1,  8,  LBL_STRING, "Card Type:");
-            myVT100.InMenuPrintf(50, 8,  LBL_STRING, "Sd Spec Version:");
-            myVT100.InMenuPrintf(1,  9,  LBL_STRING, "High Speed Type??:");
-            myVT100.InMenuPrintf(50, 9,  LBL_STRING, "Max Speed:");
-            myVT100.InMenuPrintf(1,  10, LBL_STRING, "Manufacturer ID:");
-            myVT100.InMenuPrintf(50, 10, LBL_STRING, "OEM ID:");
-            myVT100.InMenuPrintf(1,  11, LBL_STRING, "Product:");
-            myVT100.InMenuPrintf(50, 11, LBL_STRING, "Revision:");
-            myVT100.InMenuPrintf(1,  12, LBL_STRING, "Serial Number:");
-            myVT100.InMenuPrintf(50, 12, LBL_STRING, "Manufacturing date:");
-            myVT100.InMenuPrintf(1,  13, LBL_STRING, "Card Size:");
-            myVT100.InMenuPrintf(50, 13, LBL_STRING, "Flash Erase Size:");
-            myVT100.InMenuPrintf(1,  14, LBL_STRING, "Erase Single Block:");
-            myVT100.InMenuPrintf(50, 14, LBL_STRING, "Data After Erase:");
+            myVT100.InMenuPrintf(1,  8,  LBL_SD_CARD_TYPE);
+            myVT100.InMenuPrintf(50, 8,  LBL_SD_SPEC_VER);
+            //myVT100.InMenuPrintf(1,  9,  LBL_STRING, "High Speed Type??:");
+            myVT100.InMenuPrintf(50, 9,  LBL_SD_MAX_SPEED);
+            myVT100.InMenuPrintf(1,  10, LBL_SD_MANUFACTURER_ID);
+            myVT100.InMenuPrintf(50, 10, LBL_SD_OEM_ID);
+            myVT100.InMenuPrintf(1,  11, LBL_SD_PRODUCT_NAME);
+            myVT100.InMenuPrintf(50, 11, LBL_SD_PRODUCT_REVISION);
+            myVT100.InMenuPrintf(1,  12, LBL_SD_SERIAL_NUMBER);
+            myVT100.InMenuPrintf(50, 12, LBL_SD_MANUFACTURING_DATE);
+            myVT100.InMenuPrintf(1,  13, LBL_SD_CARD_SIZE);
+            myVT100.InMenuPrintf(50, 13, LBL_SD_FLASH_ERASE_SIZE);
+            myVT100.InMenuPrintf(1,  14, LBL_SD_ERASE_SINGLE_BLOCK);
+            myVT100.InMenuPrintf(50, 14, LBL_SD_DATA_AFTER_ERASE);
 
-            myVT100.InMenuPrintf(1,  19, LBL_STRING, "Volume Name:");
-            myVT100.InMenuPrintf(50, 19, LBL_STRING, "Volume Serial Number:");
-            myVT100.InMenuPrintf(1,  20, LBL_STRING, "Volume Type:");
-            myVT100.InMenuPrintf(50, 20, LBL_STRING, "Capacity:");
-            myVT100.InMenuPrintf(1,  21, LBL_STRING, "Used Space:");
-            myVT100.InMenuPrintf(50, 21, LBL_STRING, "Free Space:");
-            myVT100.InMenuPrintf(1,  22, LBL_STRING, "Cluster Size:");
-            myVT100.InMenuPrintf(50, 22, LBL_STRING, "Sector Per Cluster:");
-            myVT100.InMenuPrintf(1,  23, LBL_STRING, "Cluster Count:");
-            myVT100.InMenuPrintf(50, 23, LBL_STRING, "Free Cluster Count:");
-            myVT100.InMenuPrintf(1,  24, LBL_STRING, "Fat Start Sector:");
-            myVT100.InMenuPrintf(50, 24, LBL_STRING, "Data Start Sector:");
+            myVT100.InMenuPrintf(1,  19, LBL_SD_VOLUME_NAME);
+            myVT100.InMenuPrintf(50, 19, LBL_SD_VOLUME_SN);
+            myVT100.InMenuPrintf(1,  20, LBL_SD_VOLUME_TYPE);
+            myVT100.InMenuPrintf(50, 20, LBL_SD_CAPACITY);
+            myVT100.InMenuPrintf(1,  21, LBL_SD_USED_SPACE);
+            myVT100.InMenuPrintf(50, 21, LBL_SD_FREE_SPACE);
+            myVT100.InMenuPrintf(1,  22, LBL_SD_CLUSTER_SIZE);
+            myVT100.InMenuPrintf(50, 22, LBL_SD_SECTOR_PER_CLUSTER);
+            myVT100.InMenuPrintf(1,  23, LBL_SD_CLUSTER_COUNT);
+            myVT100.InMenuPrintf(50, 23, LBL_SD_FREE_CLUSTER_COUNT);
+            myVT100.InMenuPrintf(1,  24, LBL_SD_FAT_START_SECTOR);
+            myVT100.InMenuPrintf(50, 24, LBL_SD_DATA_START_SECTOR);
             myVT100.InMenuPrintf(        VT100_LBL_ESCAPE);
 
 //            myVT100.InMenuPrintf(50, 22, LBL_STRING, "Number Of Files:");
@@ -614,12 +615,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
                 case SD_STD_CAPACITY_V1_1:  memcpy(str, "Standard Capacity V1.1", 23);   break;
                 case SD_STD_CAPACITY_V2_0:  memcpy(str, "Standard Capacity V2.0", 23);   break;
                 case SD_HIGH_CAPACITY:      memcpy(str, "High Capacity", 14);            break;
-                default:                    snprintf(str, 80, "Undefined %d", MMC_Type); break;
+                default:                    snprintf(str, 86, "Undefined %d", MMC_Type); break;
             }
             myVT100.InMenuPrintf(25, 8,  LBL_STRING, str);
 
             snprintf(str, 80, "%d", int(pCSD->SysSpecVersion));
-            myVT100.InMenuPrintf(75, 8,  LBL_STRING, str);
+            myVT100.InMenuPrintf(80, 8,  LBL_STRING, str);
 
             switch(pCSD->MaxBusClkFrec)
             {
@@ -629,24 +630,24 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
                 case 0x2B:  memcpy(str, "200 Mbits/sec", 14); break;
                 default:    snprintf(str, 80, "Undefined %2X", pCSD->MaxBusClkFrec); break;
             }
-            myVT100.InMenuPrintf(75, 9,  LBL_STRING, str);                                                  // Max Speed
+            myVT100.InMenuPrintf(80, 9,  LBL_STRING, str);                                                  // Max Speed
 
             snprintf(str, 80, "0x%02X", pCID->ManufacturerID);
             myVT100.InMenuPrintf(25, 10, LBL_STRING, str);                                                  // Manufacturer ID
 
             snprintf(str, 80, "0x%04X", pCID->OEM_AppliID);
-            myVT100.InMenuPrintf(75, 10, LBL_STRING, str);                                                  // OEM ID
+            myVT100.InMenuPrintf(80, 10, LBL_STRING, str);                                                  // OEM ID
 
             myVT100.InMenuPrintf(25, 11, LBL_STRING, pCID->ProductName);                                    // Product
 
             snprintf(str, 80, "%d.%d", pCID->ProductRev >> 4, pCID->ProductRev & 0x0F);
-            myVT100.InMenuPrintf(75, 11, LBL_STRING, str);                                                  // Revision
+            myVT100.InMenuPrintf(80, 11, LBL_STRING, str);                                                  // Revision
 
             snprintf(str, 80, "0x%08lX", pCID->ProductSN);
             myVT100.InMenuPrintf(25, 12, LBL_STRING, str);
 
             snprintf(str, 80, "%u/20%2u", pCID->ManufacturingDate & 0x000F, pCID->ManufacturingDate >> 4);  // Manufacturing Date
-            myVT100.InMenuPrintf(75, 12, LBL_STRING, str);
+            myVT100.InMenuPrintf(80, 12, LBL_STRING, str);
 
             if(CardCapacity >= 1000000)
             {
@@ -660,12 +661,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
 
 
             snprintf(str, 80, "%u KBytes", ((pCSD->EraseGrMul + 1) * BLOCK_SIZE) / 1024);
-            myVT100.InMenuPrintf(75, 13, LBL_STRING, str);                                                  // Flash Erase Size
+            myVT100.InMenuPrintf(80, 13, LBL_STRING, str);                                                  // Flash Erase Size
 
             myVT100.InMenuPrintf(25, 14, LBL_STRING, pCSD->EraseGrSize ? "Yes" : "No");                     // Erase Single Block
 
             snprintf(str, 80, "0x%02X", ((pSCR->Array[0] & SD_VALUE_AFTER_ERASE) ? 0xFF : 0x00));
-            myVT100.InMenuPrintf(75, 14, LBL_STRING, str);                                                  // Data After Erase
+            myVT100.InMenuPrintf(80, 14, LBL_STRING, str);                                                  // Data After Erase
 
             // Fat information
 
@@ -683,7 +684,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             }
 
             snprintf(str, 80, "%04X-%04X", uint16_t(VolumeSN >> 16), uint16_t(VolumeSN));                   // Volume Serial Number
-            myVT100.InMenuPrintf(75, 19, LBL_STRING, str);
+            myVT100.InMenuPrintf(80, 19, LBL_STRING, str);
 
 
             switch(FatFs->fs_type)
@@ -696,22 +697,22 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(25, 20, LBL_STRING, str);                                                  // Volume Type
 
             snprintf(str, 80, "%lu KB Total", TotalBytes);                                                  // FAT Capacity
-            myVT100.InMenuPrintf(75, 20, LBL_STRING, str);
+            myVT100.InMenuPrintf(80, 20, LBL_STRING, str);
 
             snprintf(str, 80, "%lu KB Used", TotalBytes - FreeBytes);                                       // Used Sector
             myVT100.InMenuPrintf(25, 21, LBL_STRING, str);
 
             snprintf(str, 80, "%lu KB Available", FreeBytes);                                               // Free Sector
-            myVT100.InMenuPrintf(75, 21, LBL_STRING, str);
+            myVT100.InMenuPrintf(80, 21, LBL_STRING, str);
 
             snprintf(str, 80, "%d Bytes", FatFs->csize * BLOCK_SIZE);
             myVT100.InMenuPrintf(25, 22, LBL_STRING, str);                                                  // Cluster Size
 
             snprintf(str, 80, "%d Sectors", FatFs->csize);
-            myVT100.InMenuPrintf(75, 22, LBL_STRING, str);                                                  // Sector Per Cluster
+            myVT100.InMenuPrintf(80, 22, LBL_STRING, str);                                                  // Sector Per Cluster
 
             snprintf(str, 80, "%lu Sectors", (TotalBytes * 1024) / (FatFs->csize * BLOCK_SIZE));
-            myVT100.InMenuPrintf(75, 23, LBL_STRING, str);                                                  // Cluster Count
+            myVT100.InMenuPrintf(80, 23, LBL_STRING, str);                                                  // Cluster Count
 
             snprintf(str, 80, "%lu Sectors", (FreeBytes * 1024) / (FatFs->csize * BLOCK_SIZE));
             myVT100.InMenuPrintf(25, 23, LBL_STRING, str);                                                  // Free Cluster Count

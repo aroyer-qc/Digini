@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2021 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -138,7 +138,7 @@
         ENTRY  (MENU,  MenuMain,          ID_TEST_MENU,            nullptr,                                 MenuTest,                         LBL_VT100_TEST                                  ) \
         ENTRY  (MENU,  MenuMain,          ID_STACK_DISPLAY,        CALLBACK_StackUsage,                     MenuRedirection,                  LBL_VT100_STACKTISTIC                           ) \
 \
-		ENTRY  (MENU,  MenuBoot,          ID_MAIN_TITLE,           nullptr,                                 MenuRedirection,                  LBL_VT100_MAIN_MENU                             ) \
+        ENTRY  (MENU,  MenuBoot,          ID_MAIN_TITLE,           nullptr,                                 MenuRedirection,                  LBL_VT100_MAIN_MENU                             ) \
         ENTRY  (MENU,  MenuBoot,          ID_INFO_DISPLAY,         CALLBACK_ProductInformation,             MenuMain,                         LBL_VT100_SYSTEM_INFO                           ) \
         ENTRY  (MENU,  MenuBoot,          ID_DEBUG_MENU,           nullptr,                                 MenuDebug,                        LBL_VT100_DEBUG                                 ) \
         ENTRY  (MENU,  MenuBoot,          ID_SETTING_MENU,         nullptr,                                 MenuSetting,                      LBL_VT100_SYSTEM_SETTING                        ) \
@@ -172,7 +172,7 @@
         ENTRY  (MENU,  MenuTest,          ID_DBG_LVL_11,           nullptr,                                 MenuTest,                         LBL_VT100_POUTINE_1                             ) \
         ENTRY  (MENU,  MenuTest,          ID_DBG_LVL_12,           nullptr,                                 MenuTest,                         LBL_VT100_POUTINE_2                             ) \
 \
-		ENTRY  (MENU,  MenuSettingTime,   ID_TIME_DATE_TITLE,      nullptr,                                 MenuSetting,                      LBL_VT100_TIME_AND_DATE_CONFIGURATION           ) \
+        ENTRY  (MENU,  MenuSettingTime,   ID_TIME_DATE_TITLE,      nullptr,                                 MenuSetting,                      LBL_VT100_TIME_AND_DATE_CONFIGURATION           ) \
         ENTRY  (MENU,  MenuSettingTime,   ID_HOUR,                 CALLBACK_TimeDateCfg,                    MenuSettingTime,                  LBL_VT100_HOUR                                  ) \
         ENTRY  (MENU,  MenuSettingTime,   ID_MINUTE,               CALLBACK_TimeDateCfg,                    MenuSettingTime,                  LBL_VT100_MINUTE                                ) \
         ENTRY  (MENU,  MenuSettingTime,   ID_SECOND,               CALLBACK_TimeDateCfg,                    MenuSettingTime,                  LBL_VT100_SECOND                                ) \

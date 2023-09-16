@@ -72,7 +72,7 @@ Link_e CButton::Create(PageWidget_t* pPageWidget)
     m_ServiceState = SERVICE_START;
     if((pService = ServiceCall(&m_pButton->Service, &m_ServiceState)) != nullptr)
     {
-      #ifdef GRAFX_USE_POINTING_DEVICE
+      #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
         PDI_pTask->CreateZone(&m_pButton->EventArea, m_pButton->Options, pPageWidget->ID);         // Create the zone on the touch sense virtual screen
       #endif
         this->Draw(pService);

@@ -32,7 +32,7 @@
 #include "lib_digini.h"
 #undef  LIB_FT5336_GLOBAL
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
-#ifdef GRAFX_USE_POINTING_DEVICE
+#if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)

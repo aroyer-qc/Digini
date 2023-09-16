@@ -118,7 +118,7 @@ SystemState_e GRAFX_Initialize(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e GRAFX_PostInitialize(void)
 {
-  #ifdef GRAFX_USE_POINTING_DEVICE
+  #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
     SystemState_e State;
   #endif
     nOS_Error     Error;
@@ -144,7 +144,7 @@ SystemState_e GRAFX_PostInitialize(void)
         return SYS_FAIL;
     }
 
-  #ifdef GRAFX_USE_POINTING_DEVICE
+  #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
     if((State = PDI_pDriver->Initialize(GRAFX_PostInitSubDriverPtr.PDI_pHardInterface)) != SYS_READY)
     {
         return State;

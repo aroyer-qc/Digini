@@ -159,7 +159,7 @@ void GUI_myClassTask::Run()
                 {
                     FinalizeAllWidget();
                 }
-              #ifdef GRAFX_USE_POINTING_DEVICE
+              #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
                 PDI_pTask->ClearAllZone();
               #endif
                 GUI_ClearWidgetLayer();
@@ -170,7 +170,7 @@ void GUI_myClassTask::Run()
                 NewLink = CreateAllWidget();
 
               #ifdef GRAFX_USE_SLIDING_PAGE
-               #ifdef GRAFX_USE_LOAD_SKIN
+               #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
                 if(SKIN_pTask->IsSkinLoaded() == true)
                #endif
                 {
@@ -193,7 +193,7 @@ void GUI_myClassTask::Run()
 
          #ifndef GRAFX_DEBUG_GUI
           #ifdef GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER
-           #ifdef GRAFX_USE_LOAD_SKIN
+           #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
             if(SKIN_pTask->IsSkinLoaded() == true)
            #endif
             {

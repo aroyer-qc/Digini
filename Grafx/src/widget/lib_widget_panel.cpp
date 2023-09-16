@@ -74,7 +74,7 @@ Link_e CPanel::Create(PageWidget_t* pPageWidget)
     {
         if(pService->IndexState < SERVICE_ID_STATE_SIZE)                                                // Protect array boundary
         {
-          #ifdef GRAFX_USE_POINTING_DEVICE
+          #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
             PDI_pTask->CreateZone((EventArea_t*)&m_pPanel->Box, OPTION_TOUCH_RECTANGLE, pPageWidget->ID);  // Create the zone on the touch sense virtual screen
           #endif
             Draw(pService);

@@ -97,7 +97,7 @@ extern "C" void SKIN_TaskWrapper(void* pvParameters)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_LOAD_SKIN
+#if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
 SKIN_myClassTask::SKIN_myClassTask(const char* pDrive, const char* pFileName)
 {
     m_pDrive = pDrive;
@@ -128,7 +128,7 @@ nOS_Error SKIN_myClassTask::Initialize(void)
   #ifdef STATIC_SKIN_DEF
     m_IsStaticLoaded = false;
   #endif
-  #ifdef GRAFX_USE_LOAD_SKIN
+  #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
     m_IsSkinLoaded   = false;
   #endif
     m_pCallBack      = nullptr;
@@ -183,7 +183,7 @@ bool SKIN_myClassTask::IsStaticSkinLoaded(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_LOAD_SKIN
+#if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
 bool SKIN_myClassTask::IsSkinLoaded(void)
 {
     return m_IsSkinLoaded;
@@ -201,7 +201,7 @@ bool SKIN_myClassTask::IsSkinLoaded(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_LOAD_SKIN
+#if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
 uint16_t SKIN_myClassTask::PercentLoader(void)
 {
     if(m_TotalToLoad != 0)
@@ -228,19 +228,19 @@ uint16_t SKIN_myClassTask::PercentLoader(void)
 //-------------------------------------------------------------------------------------------------
 void SKIN_myClassTask::Run(void)
 {
-  #if defined(GRAFX_USE_LOAD_SKIN) || defined(STATIC_SKIN_DEF)
+  #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED) || defined(STATIC_SKIN_DEF)
     uint8_t*  pFreePointer;
   #endif
 
 
     for(;;)
     {
-      #ifdef GRAFX_USE_LOAD_SKIN
+      #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
         // Should wait here for signal for a new skin to load
         if(m_IsSkinLoaded == false)
       #endif
         {
-          #ifdef GRAFX_USE_LOAD_SKIN
+          #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
             m_pRawInputBuffer      = (uint8_t*)GRAFX_RAW_INPUT_DATA_ADDRESS;
             m_CompxWorkMem.pDecode = new RawArray((void*)(GRAFX_DECODE_ARRAY_ADDRESS));
             m_CompxWorkMem.pAppend = new RawArray((void*)(GRAFX_APPEND_ARRAY_ADDRESS));
@@ -268,7 +268,7 @@ void SKIN_myClassTask::Run(void)
             }
           #endif
 
-          #ifdef GRAFX_USE_LOAD_SKIN
+          #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
             m_pFS       = (FATFS*)   pMemoryPool->AllocAndClear(sizeof(FATFS));
             m_pFile     = (FIL*)     pMemoryPool->AllocAndClear(sizeof(FIL));
             m_pFileInfo = (FILINFO*) pMemoryPool->AllocAndClear(sizeof(FILINFO));
@@ -278,7 +278,7 @@ void SKIN_myClassTask::Run(void)
             pMemoryPool->Free((void**)&m_pFS);
           #endif
 
-          #ifdef GRAFX_USE_LOAD_SKIN
+          #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
             delete m_pDecompress;
             delete m_CompxWorkMem.pPrefix;
             delete m_CompxWorkMem.pDecode;
@@ -290,12 +290,12 @@ void SKIN_myClassTask::Run(void)
                 this->m_pCallBack();
             }
 
-          #ifdef GRAFX_USE_LOAD_SKIN
+          #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
             m_IsSkinLoaded = true;
           #endif
         }
 
-      #ifdef GRAFX_USE_LOAD_SKIN
+      #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
         nOS_Sleep(500);
       #else
         nOS_ThreadDelete(&this->m_Handle);
@@ -315,7 +315,7 @@ void SKIN_myClassTask::Run(void)
 //  Note(s):        TO DO: add error management
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_LOAD_SKIN
+#if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
 SystemState_e SKIN_myClassTask::Load(void)
 {
     SystemState_e    State;
@@ -408,7 +408,7 @@ SystemState_e SKIN_myClassTask::Load(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_LOAD_SKIN
+#if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
 SystemState_e SKIN_myClassTask::DeCompressAllImage(void)
 {
     ImageInfo_t     ImageInfo;
@@ -703,7 +703,7 @@ void SKIN_myClassTask::StaticLoad(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#ifdef GRAFX_USE_LOAD_SKIN
+#if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
 SystemState_e SKIN_myClassTask::Get_uint8_t(uint8_t* pValue)
 {
     uint32_t ReadCount;
@@ -719,7 +719,7 @@ SystemState_e SKIN_myClassTask::Get_uint8_t(uint8_t* pValue)
 
 //-------------------------------------------------------------------------------------------------
 
-#ifdef GRAFX_USE_LOAD_SKIN
+#if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
 SystemState_e SKIN_myClassTask::Get_uint16_t(uint16_t* pValue)
 {
     uint32_t ReadCount;
@@ -736,7 +736,7 @@ SystemState_e SKIN_myClassTask::Get_uint16_t(uint16_t* pValue)
 
 //-------------------------------------------------------------------------------------------------
 
-#ifdef GRAFX_USE_LOAD_SKIN
+#if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
 SystemState_e SKIN_myClassTask::Get_uint32_t(uint32_t* pValue)
 {
     uint32_t ReadCount;

@@ -92,13 +92,13 @@ CTerminal::CTerminal(Terminal_t* pTerminal)
 //-------------------------------------------------------------------------------------------------
 Link_e CTerminal::Create(PageWidget_t* pPageWidget)
 {
-  #ifdef GRAFX_USE_POINTING_DEVICE
+  #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
     EventArea_t      EventArea;
   #endif
 
     m_pPageWidget  = pPageWidget;
     m_ServiceState = SERVICE_START;
-  #ifdef GRAFX_USE_POINTING_DEVICE
+  #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
     EventArea.Rectangle.Box = m_pTerminal->Box;
     PDI_pTask->CreateZone(&EventArea, m_pTerminal->Options, pPageWidget->ID);       // Create the zone on the touch sense virtual screen
   #endif

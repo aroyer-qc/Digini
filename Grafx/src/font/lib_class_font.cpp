@@ -96,7 +96,7 @@ CFont FontDefault;
 
 void FONT_Initialize(void)
 {
-  #if defined(GRAFX_USE_FONT_SIZE_8) || defined (GRAFX_USE_FONT_SIZE_12) || defined(GRAFX_USE_FONT_SIZE_16)
+  #if (GRAFX_USE_FONT_SIZE_8 == DEF_ENABLED) || (GRAFX_USE_FONT_SIZE_12 == DEF_ENABLED) || (GRAFX_USE_FONT_SIZE_16 == DEF_ENABLED)
     uint16_t                        Counter;
     uint16_t                        SizeCount;
     uint8_t                         Font;
@@ -137,7 +137,7 @@ void FONT_Initialize(void)
             FontDescriptor.RightBearing     = pDscFont->Padding >> 4;
             FontDescriptor.OffsetY          = pDscFont->Offset & 0x0F;
 
-          #ifdef GRAFX_USE_FONT_SIZE_16
+          #if (GRAFX_USE_FONT_SIZE_16 == DEF_ENABLED)
             if(Font == SYS_FT_16)    // Only for 16x16
             {
                 if(Character > 34)         // 32,33,34 hold special value code

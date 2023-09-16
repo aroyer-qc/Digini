@@ -35,7 +35,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
-#ifdef GRAFX_USE_POINTING_DEVICE
+#if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
 
 nOS_Thread PDI_myClassTask::m_Handle;
 nOS_Stack  PDI_myClassTask::m_Stack[PDI_TASK_STACK_SIZE];

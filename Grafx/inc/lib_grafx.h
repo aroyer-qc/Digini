@@ -62,7 +62,7 @@
 #include "lib_grafx_driver.h"
 #include GRAFX_DRIVER_INCLUDE
 
-#ifdef GRAFX_USE_POINTING_DEVICE
+#if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
   #include "lib_class_pointing_device_interface.h"
   #include PDI_DRIVER_INCLUDE
   #include "lib_pdi_task.h"
@@ -92,7 +92,7 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-//#if defined(GRAFX_USE_POINTING_DEVICE) /* || defined(DIGINI_USE_XXX) */
+//#if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED) /* || defined(DIGINI_USE_XXX) */
 struct GRAFX_PostInitSubDriverPtr_t
 {
 /*
@@ -101,9 +101,9 @@ struct GRAFX_PostInitSubDriverPtr_t
     #endif // DIGINI_USE_XXX
 */
 
-  #ifdef GRAFX_USE_POINTING_DEVICE
+  #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
     void*  PDI_pHardInterface;                  // Communication interface for "Pointing Device Interface" ( I2C, SPI, etc...)
-  #endif // GRAFX_USE_POINTING_DEVICE
+  #endif
 
 };
 //#endif
@@ -140,7 +140,7 @@ extern const uint32_t __gfx_qspi_data_base__;           // Pointer to database f
 #endif
 
 
-#if defined(GRAFX_USE_POINTING_DEVICE) /* || defined(DIGINI_USE_XXX) */
+#if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED) /* || defined(DIGINI_USE_XXX) */
     extern GRAFX_PostInitSubDriverPtr_t GRAFX_PostInitSubDriverPtr;
 
  #ifdef GFX_GLOBAL
@@ -152,7 +152,7 @@ extern const uint32_t __gfx_qspi_data_base__;           // Pointer to database f
       #endif // DIGINI_USE_XXX
         */
 
-      #ifdef GRAFX_USE_POINTING_DEVICE
+      #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
         GRAFX_PDI_HARD_INTERFACE,
       #endif
     };

@@ -103,7 +103,7 @@ Link_e CBasicBox::Create(PageWidget_t* pPageWidget)
     if((pService = ServiceCall(&m_pBasicBox->Service, &m_ServiceState)) != nullptr)
     {
         EventArea.Rectangle.Box = m_pBasicBox->Box;
-      #ifdef GRAFX_USE_POINTING_DEVICE
+      #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
         PDI_pTask->CreateZone(&EventArea, m_pBasicBox->Options, pPageWidget->ID);       // Create the zone on the touch sense virtual screen
       #endif
         Draw(pService);

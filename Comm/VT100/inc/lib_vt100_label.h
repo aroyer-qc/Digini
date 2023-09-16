@@ -110,7 +110,7 @@ X_VT100_LBL( LBL_SD_MANUFACTURING_DATE,     "Manufacturing date:",      "Date de
 X_VT100_LBL( LBL_SD_CARD_SIZE,              "Card Size:",               "Taille de la Carte:"                       ) \
 X_VT100_LBL( LBL_SD_FLASH_ERASE_SIZE,       "Flash Erase Size:",        "Taille d'effacement du flash:"             ) \
 X_VT100_LBL( LBL_SD_ERASE_SINGLE_BLOCK,     "Erase Single Block:",      "effacer un seul bloc:"                     ) \
-X_VT100_LBL( LBL_SD_DATA_AFTER_ERASE,       "Data After Erase:",        "Data Apr\x8as Effacement:"                 ) \
+X_VT100_LBL( LBL_SD_DATA_AFTER_ERASE,       "Data After Erase:",        "Donn\x82" "e Apr\x8as Effacement:"         ) \
 X_VT100_LBL( LBL_SD_VOLUME_NAME,            "Volume Name:",             "Nom du Volume:"                            ) \
 X_VT100_LBL( LBL_SD_VOLUME_SN,              "Volume Serial Number:",    "Num\x82ro de S\x82rie du Volume:"          ) \
 X_VT100_LBL( LBL_SD_VOLUME_TYPE,            "Volume Type:",             "Type du Volume:"                           ) \
@@ -118,11 +118,11 @@ X_VT100_LBL( LBL_SD_CAPACITY,               "Capacity:",                "Capacit
 X_VT100_LBL( LBL_SD_USED_SPACE,             "Used Space:",              "Espace Utilis\x82:"                        ) \
 X_VT100_LBL( LBL_SD_FREE_SPACE,             "Free Space:",              "Espace Disponible:"                        ) \
 X_VT100_LBL( LBL_SD_CLUSTER_SIZE,           "Cluster Size:",            "Taille d'un Cluster:"                      ) \
-X_VT100_LBL( LBL_SD_SECTOR_PER_CLUSTER,     "Sector Per Cluster:",      "Secteur Par Cluster:"                      ) \
-X_VT100_LBL( LBL_SD_CLUSTER_COUNT,          "Cluster Count:",           "Nombre de Cluster:"                        ) \
-X_VT100_LBL( LBL_SD_FREE_CLUSTER_COUNT,     "Free Cluster Count:",      "Nombre de Cluster Disponible:"             ) \
-X_VT100_LBL( LBL_SD_FAT_START_SECTOR,       "FAT Start Sector:",        "Secteur de d\x82" "but de la FAT:"         ) \
-X_VT100_LBL( LBL_SD_DATA_START_SECTOR,      "Data Start Sector:",       "Secteur de d\x82" "but des donn\x82" "e:"  ) \
+X_VT100_LBL( LBL_SD_SECTOR_PER_CLUSTER,     "Sector Per Cluster:",      "Secteurs Par Cluster:"                     ) \
+X_VT100_LBL( LBL_SD_CLUSTER_COUNT,          "Cluster Count:",           "Nombre de Clusters:"                       ) \
+X_VT100_LBL( LBL_SD_FREE_CLUSTER_COUNT,     "Free Cluster Count:",      "Nombre de Clusters Disponibles:"           ) \
+X_VT100_LBL( LBL_SD_FAT_START_SECTOR,       "FAT Start Sector:",        "Secteur d\x82" "but de la FAT:"            ) \
+X_VT100_LBL( LBL_SD_DATA_START_SECTOR,      "Data Start Sector:",       "Secteur d\x82" "but des donn\x82" "es:"    ) \
 
 //X_VT100_LBL( LBL_, "High Speed Type??:");
 

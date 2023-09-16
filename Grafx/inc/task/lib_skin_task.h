@@ -57,7 +57,7 @@ typedef void (* SKIN_PostLoadCallBack_t)           (void);
 class SKIN_myClassTask
 {
     public:
-      #ifdef GRAFX_USE_LOAD_SKIN
+      #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
                         SKIN_myClassTask            (const char* pDrive, const char* pFileName);
       #else
                         SKIN_myClassTask            ();
@@ -65,7 +65,7 @@ class SKIN_myClassTask
 
         void            Run                         (void);
         nOS_Error       Initialize                  (void);
-      #ifdef GRAFX_USE_LOAD_SKIN
+      #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
         bool            IsSkinLoaded                (void);
         uint16_t        PercentLoader               (void);
       #endif
@@ -77,7 +77,7 @@ class SKIN_myClassTask
 
     private:
 
-      #ifdef GRAFX_USE_LOAD_SKIN
+      #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
         SystemState_e   Load                        (void);
         SystemState_e   GetImageInfo                (void);
         SystemState_e   DeCompressAllImage          (void);
@@ -97,7 +97,7 @@ class SKIN_myClassTask
         SKIN_PostLoadCallBack_t                     m_pCallBack;
         nOS_Flag                                    m_SkinFlags;
 
-      #ifdef GRAFX_USE_LOAD_SKIN
+      #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
         bool                                        m_IsSkinLoaded;
         uint32_t                                    m_TotalToLoad;
         uint32_t                                    m_ReadCount;
@@ -124,7 +124,7 @@ class SKIN_myClassTask
 //-------------------------------------------------------------------------------------------------
 
 #ifdef LIB_SKIN_TASK_GLOBAL
-  #ifdef GRAFX_USE_LOAD_SKIN
+  #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
                      class   SKIN_myClassTask       SKIN_Task("0:", GRAFX_SKIN_FILENAME);
   #else
                      class   SKIN_myClassTask       SKIN_Task;

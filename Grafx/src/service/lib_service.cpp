@@ -601,7 +601,7 @@ static ServiceReturn_t* SERV_RFSH(ServiceEvent_e* pServiceState)
 //  Description:    This service is used for to get status on the dynamic skin loading
 //
 //-------------------------------------------------------------------------------------------------
-#if defined GRAFX_USE_LOAD_SKIN
+#if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
 static ServiceReturn_t* SERV_SKLD(ServiceEvent_e* pServiceState, uint16_t SubService)
 {
     ServiceReturn_t* pService = nullptr;
@@ -1000,7 +1000,7 @@ ServiceReturn_t* ServiceCall(Service_t* pService, ServiceEvent_e* pServiceState)
             {
                 switch(pService->ID)
                 {
-                  #if defined(GRAFX_USE_LOAD_SKIN)
+                  #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
                     case SERV_ID_SKLD: pServiceReturn = SERV_SKLD(pServiceState, pService->SubID); ServiceWasProcessed = true; break;
                   #endif
                 }

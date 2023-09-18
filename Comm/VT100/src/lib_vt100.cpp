@@ -939,7 +939,7 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
         memcpy(m_pString, pString, VT100_STRING_SZ);
     }     // todo handle error....
 
-    STR_strnstrip(m_pString, Maximum);
+    LIB_strnstrip(m_pString, Maximum);
     m_InputPtr = strlen(m_pString);                         // Get string end pointer
     m_RefreshInputPtr = m_InputPtr + 1;                     // To force a refresh
 
@@ -1053,12 +1053,12 @@ size_t VT100_Terminal::InMenuPrintf(uint8_t PosX, uint8_t PosY, Label_e Label, .
 size_t VT100_Terminal::MenuPrintfCommon(Label_e Label, va_list* p_vaArg)
 {
     char*  pBuffer;
-    size_t Size    = 0;
+    size_t Size = 0;
 
     if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE)) != nullptr)
     {
         const char* pFormat = myLabel.GetPointer(Label);
-        Size = STR_vsnformat(pBuffer, VT100_TERMINAL_SIZE, pFormat, *p_vaArg);
+        Size = LIB_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, *p_vaArg);
         m_pConsole->SendData((const uint8_t*)&pBuffer[0], &Size);
     }
 
@@ -1097,7 +1097,7 @@ size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat
             if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE)) == nullptr)
             {
                 va_start(vaArg, (const char*)pFormat);
-                Size = STR_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, vaArg);
+                Size = LIB_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, vaArg);
                 while(m_pUartDriver->IsItBusy() == true){};
                 m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);
                 UART_Write(UART_CONSOLE, pBuffer, Size);

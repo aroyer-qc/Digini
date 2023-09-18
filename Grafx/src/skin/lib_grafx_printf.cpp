@@ -58,7 +58,6 @@ size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService)
 {
     GPrintf     Printf;
     char*       pString = nullptr;
-    Language_e  Language = LANG_DEFAULT;
     size_t      Size = 0;
 
     if(pText->Label != INVALID_LABEL)
@@ -66,8 +65,7 @@ size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService)
         CLayer::SetTextColor(pText->Color[pService->IndexState]);
         FontDefault.Set(pText->Font);
         SetXY_Justification(pText->Options);
-        DB_Central.Get(&Language, SYSTEM_LANGUAGE, 0, 0);
-        DB_Central.Get(&pString, APPLICATION_LABEL, pText->Label, Language);
+        DB_Central.Get(&pString, APPLICATION_LABEL, pText->Label);
 
         if(pText->Blend == CLEAR_BLEND)
         {

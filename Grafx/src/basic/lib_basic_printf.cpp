@@ -98,7 +98,7 @@ size_t GPrintf::Draw(Box_t* pBox, const char* pFormat, va_list vaArg)
         return 0;
     }
 
-    m_Size = STR_vsnformat(&m_String[0], DIGINI_MAX_PRINT_SIZE, pFormat, vaArg);
+    m_Size = LIB_vsnprintf(&m_String[0], DIGINI_MAX_PRINT_SIZE, pFormat, vaArg);
 
     if(m_Size != 0)
     {
@@ -265,7 +265,7 @@ void GPrintf::ParseString(void)
 
     for(i = 1; i < DIGINI_MAX_PRINT_NUMBER_OF_LINE; i++)
     {
-        m_pSubLineString[i] = STR_strnchr(&m_String[k], m_Size, '\n');
+        m_pSubLineString[i] = LIB_strnchr(&m_String[k], m_Size, '\n');
 
         if(m_pSubLineString[i] == nullptr)
         {

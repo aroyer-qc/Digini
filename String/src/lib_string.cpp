@@ -34,13 +34,13 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define STR_OPT_PAD_ZERO            128         // value in bit Position for padding with zero
-#define STR_OPT_PAD_LEFT            64          // value in bit Position for Padding flag
-#define STR_OPT_LOWERCASE           32          // value in bit Position for base
-#define STR_OPT_SIGN_NEGATIVE       16          // value in bit Position for sign
-#define STR_OPT_BASE_HEXA           8           // value in bit Position for base
+#define LIB_OPT_PAD_ZERO            128         // value in bit Position for padding with zero
+#define LIB_OPT_PAD_LEFT            64          // value in bit Position for Padding flag
+#define LIB_OPT_LOWERCASE           32          // value in bit Position for base
+#define LIB_OPT_SIGN_NEGATIVE       16          // value in bit Position for sign
+#define LIB_OPT_BASE_HEXA           8           // value in bit Position for base
 
-#define STR_putchar(s,c)                      {*((char*)s) = (char)(c);}
+#define LIB_putchar(s,c)                      {*((char*)s) = (char)(c);}
 
 //-------------------------------------------------------------------------------------------------
 // enum(s)
@@ -48,23 +48,25 @@
 
 enum VarLength_e
 {
-    STR_VAR_16,
-    STR_VAR_32,
-    STR_VAR_64,
+    LIB_VAR_16,
+    LIB_VAR_32,
+    LIB_VAR_64,
 };
 
 //-------------------------------------------------------------------------------------------------
 // Forward declaration
 //-------------------------------------------------------------------------------------------------
-static size_t STR_printi     (char* pOut, int64_t Value, size_t Width, uint8_t Option);
-static size_t STR_prints     (char* pOut, char* pString, size_t Width, uint8_t Option);
-static size_t STR_str2str    (char* pOut, const char* pString);
+
+static size_t LIB_vsnformat  (char* pOut, size_t Size, const char* pFormat, va_list Arg);
+static size_t LIB_printi     (char* pOut, int64_t Value, size_t Width, uint8_t Option);
+static size_t LIB_prints     (char* pOut, char* pString, size_t Width, uint8_t Option);
+static size_t LIB_str2str    (char* pOut, const char* pString);
 
 //-------------------------------------------------------------------------------------------------
 // Private const(s)
 //-------------------------------------------------------------------------------------------------
 
-static const char StrNULL[7] = "(null)";
+static const char StrNULL[7] = "{null}";
 
 //-------------------------------------------------------------------------------------------------
 // Private function(s)
@@ -72,7 +74,7 @@ static const char StrNULL[7] = "(null)";
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function Name: STR_prints
+//   Function Name: LIB_prints
 //
 //   Parameter(s):  char*   pOut        Output string pointer
 //                  char*   pString     String to print
@@ -83,7 +85,7 @@ static const char StrNULL[7] = "(null)";
 //   Description:   Service function to print string for printf and sprintf
 //
 //-------------------------------------------------------------------------------------------------
-static size_t STR_prints(char* pOut, char* pString, size_t Width, uint8_t Option)
+static size_t LIB_prints(char* pOut, char* pString, size_t Width, uint8_t Option)
 {
     size_t  Counter;
     size_t  Len;
@@ -99,23 +101,23 @@ static size_t STR_prints(char* pOut, char* pString, size_t Width, uint8_t Option
         // Check if length of the string is bigger or equal than the width of padding
         if(Len >= Width)               Width   = 0;         // No padding necessary, the number is bigger than the padding space
         else                           Width  -= Len;       // Remove unnecessary padding because of the length of the number
-        if(Option & STR_OPT_PAD_ZERO)  PadChar = '0';       // If padding is zero, than set the variable
+        if(Option & LIB_OPT_PAD_ZERO)  PadChar = '0';       // If padding is zero, than set the variable
 
-        if(Option & STR_OPT_PAD_LEFT)
+        if(Option & LIB_OPT_PAD_LEFT)
         {
             for(; Width > 0; Width--)
             {
-                STR_putchar(&pOut[Counter], PadChar);
+                LIB_putchar(&pOut[Counter], PadChar);
                 Counter++;
             }
         }
     }
 
-    Counter += STR_str2str(&pOut[Counter], pString);        // Print character until EOL
+    Counter += LIB_str2str(&pOut[Counter], pString);        // Print character until EOL
 
     for(; Width > 0; Width--)                               // Print padding character if any
     {
-        STR_putchar(&pOut[Counter], PadChar);
+        LIB_putchar(&pOut[Counter], PadChar);
         Counter++;
     }
 
@@ -124,7 +126,7 @@ static size_t STR_prints(char* pOut, char* pString, size_t Width, uint8_t Option
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function Name: STR_printi
+//   Function Name: LIB_printi
 //
 //   Parameter(s):  char*       pOut            Output string pointer
 //                  int32_t     Value           Value to print
@@ -135,7 +137,7 @@ static size_t STR_prints(char* pOut, char* pString, size_t Width, uint8_t Option
 //   Description:   Service function to print integer for printf and sprintf
 //
 //-------------------------------------------------------------------------------------------------
-static size_t STR_printi(char* pOut, int64_t Value, size_t Width, uint8_t Option)
+static size_t LIB_printi(char* pOut, int64_t Value, size_t Width, uint8_t Option)
 {
     size_t      Counter;
     uint64_t    _Value;
@@ -153,21 +155,21 @@ static size_t STR_printi(char* pOut, int64_t Value, size_t Width, uint8_t Option
     _Value     = Value;
 
   #ifdef STR_USE_HEX_SUPPORT
-    LetterBase = 'A' + (Option & STR_OPT_LOWERCASE);
-    Base       = (Option & STR_OPT_BASE_HEXA) ? 16 : 10;
+    LetterBase = 'A' + (Option & LIB_OPT_LOWERCASE);
+    Base       = (Option & LIB_OPT_BASE_HEXA) ? 16 : 10;
   #endif
 
     if(Value == 0)
     {
         PrintBuffer[0] = '0';
         PrintBuffer[1] = '\0';
-        return STR_prints(pOut, PrintBuffer, Width, Option);
+        return LIB_prints(pOut, PrintBuffer, Width, Option);
     }
 
   #ifdef STR_USE_HEX_SUPPORT
-    if((Option & STR_OPT_SIGN_NEGATIVE) && (Base == 10) && (Value < 0))
+    if((Option & LIB_OPT_SIGN_NEGATIVE) && (Base == 10) && (Value < 0))
   #else
-    if((Option & STR_OPT_SIGN_NEGATIVE) && (Value < 0))
+    if((Option & LIB_OPT_SIGN_NEGATIVE) && (Value < 0))
   #endif
     {
         Negative = true;
@@ -202,9 +204,9 @@ static size_t STR_printi(char* pOut, int64_t Value, size_t Width, uint8_t Option
 
     if(Negative == true)
     {
-        if((Width != 0) && (Option & STR_OPT_PAD_ZERO))
+        if((Width != 0) && (Option & LIB_OPT_PAD_ZERO))
         {
-            STR_putchar(pOut, '-');
+            LIB_putchar(pOut, '-');
             Counter++;
             Width--;
         }
@@ -214,13 +216,13 @@ static size_t STR_printi(char* pOut, int64_t Value, size_t Width, uint8_t Option
         }
     }
 
-    return Counter + STR_prints(pOut, pString, Width, Option);
+    return Counter + LIB_prints(pOut, pString, Width, Option);
 }
 
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function Name: STR_str2str
+//   Function Name: LIB_str2str
 //
 //   Parameter(s):  char*       pOut        Output string pointer
 //                  const char* pFormat     Formatted string
@@ -230,16 +232,16 @@ static size_t STR_printi(char* pOut, int64_t Value, size_t Width, uint8_t Option
 //
 //-------------------------------------------------------------------------------------------------
 
-static size_t STR_str2str(char* pOut, const char* pString)
+static size_t LIB_str2str(char* pOut, const char* pString)
 {
     size_t Counter = 0;
 
     for(; *pString; pString++)                                  // Print caracter until EOL
     {
-        STR_putchar(&pOut[Counter], (wchar_t)*pString);
+        LIB_putchar(&pOut[Counter], (wchar_t)*pString);
         Counter++;
     }
-    STR_putchar(&pOut[Counter], '\0');
+    LIB_putchar(&pOut[Counter], '\0');
 
     return Counter;
 }
@@ -247,7 +249,7 @@ static size_t STR_str2str(char* pOut, const char* pString)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function Name: STR_vsnprintf
+//   Function Name: LIB_vsnprintf
 //
 //   Parameter(s):  char*           pOut        Output string pointer
 //                  size_t          Size        Maximum character to print
@@ -286,7 +288,7 @@ static size_t STR_str2str(char* pOut, const char* pString)
 //                                it is a decimal value
 //
 //-------------------------------------------------------------------------------------------------
-size_t STR_vsnprintf(char* pOut, size_t Size, const char* pFormat, va_list va)
+size_t LIB_vsnprintf(char* pOut, size_t Size, const char* pFormat, va_list va)
 {
 
     uint32_t    Counter;
@@ -297,6 +299,11 @@ size_t STR_vsnprintf(char* pOut, size_t Size, const char* pFormat, va_list va)
     char*       s;
     char        scr[2];
 
+    if(*pFormat == ASCII_SUBSTITUTION)
+    {
+       return LIB_vsnformat(pOut, Size, pFormat, va);
+    }
+
     Counter = 0;
 
     for(; (*pFormat != '\0') && (Counter < Size); pFormat++)
@@ -305,19 +312,19 @@ size_t STR_vsnprintf(char* pOut, size_t Size, const char* pFormat, va_list va)
         {
             pFormat++;
             Width   = 0;
-            Option  = STR_OPT_PAD_LEFT;
-            SizeVar = STR_VAR_16;
+            Option  = LIB_OPT_PAD_LEFT;
+            SizeVar = LIB_VAR_16;
 
             if(*pFormat == '%')
             {
-                STR_putchar(&pOut[Counter], *(char*)pFormat);
+                LIB_putchar(&pOut[Counter], *(char*)pFormat);
                 Counter++;
             }
 
             if(*pFormat == 's')
             {
                 s = va_arg(va, char *);
-                Counter += STR_prints(&pOut[Counter], s ? s : (char*)"(null)", Width, Option);
+                Counter += LIB_prints(&pOut[Counter], s ? s : (char*)"(null)", Width, Option);
                 continue;
             }
 
@@ -325,14 +332,14 @@ size_t STR_vsnprintf(char* pOut, size_t Size, const char* pFormat, va_list va)
             {
                 scr[0] = (uint8_t)va_arg(va, int);
                 scr[1] = '\0';
-                Counter += STR_prints(&pOut[Counter], scr, Width, Option);
+                Counter += LIB_prints(&pOut[Counter], scr, Width, Option);
                 continue;
             }
 
             while(*pFormat == '0')
             {
                 pFormat++;
-                Option |= STR_OPT_PAD_ZERO;
+                Option |= LIB_OPT_PAD_ZERO;
             }
 
             for(; (*pFormat >= '0') && (*pFormat <= '9'); pFormat++)
@@ -343,11 +350,11 @@ size_t STR_vsnprintf(char* pOut, size_t Size, const char* pFormat, va_list va)
 
             if(*pFormat == 'l')
             {
-                SizeVar = STR_VAR_32;
+                SizeVar = LIB_VAR_32;
                 pFormat++;
                 if(*pFormat == 'l')
                 {
-                    SizeVar = STR_VAR_64;
+                    SizeVar = LIB_VAR_64;
                     pFormat++;
                 }
             }
@@ -356,56 +363,56 @@ size_t STR_vsnprintf(char* pOut, size_t Size, const char* pFormat, va_list va)
             {
                 switch(SizeVar)
                 {
-                    case STR_VAR_16: n = (int16_t)va_arg(va, int32_t);    break;
-                    case STR_VAR_32: n = (int32_t)va_arg(va, int32_t);    break;
-                    case STR_VAR_64: n = (int64_t)va_arg(va, int64_t);    break;
+                    case LIB_VAR_16: n = (int16_t)va_arg(va, int32_t);    break;
+                    case LIB_VAR_32: n = (int32_t)va_arg(va, int32_t);    break;
+                    case LIB_VAR_64: n = (int64_t)va_arg(va, int64_t);    break;
                 }
-                Counter += STR_printi(&pOut[Counter], n, Width, Option | STR_OPT_SIGN_NEGATIVE | STR_OPT_LOWERCASE);
+                Counter += LIB_printi(&pOut[Counter], n, Width, Option | LIB_OPT_SIGN_NEGATIVE | LIB_OPT_LOWERCASE);
                 continue;
             }
 
             switch(SizeVar)
             {
-                case STR_VAR_16: n = (uint16_t)va_arg(va, uint32_t);    break;
-                case STR_VAR_32: n = (uint32_t)va_arg(va, uint32_t);    break;
-                case STR_VAR_64: n = (uint64_t)va_arg(va, uint64_t);    break;
+                case LIB_VAR_16: n = (uint16_t)va_arg(va, uint32_t);    break;
+                case LIB_VAR_32: n = (uint32_t)va_arg(va, uint32_t);    break;
+                case LIB_VAR_64: n = (uint64_t)va_arg(va, uint64_t);    break;
             }
 
           #ifdef STR_USE_HEX_SUPPORT
             if(*pFormat == 'x')
             {
-                Counter += STR_printi(&pOut[Counter], n, Width, Option | STR_OPT_BASE_HEXA | STR_OPT_LOWERCASE);
+                Counter += LIB_printi(&pOut[Counter], n, Width, Option | LIB_OPT_BASE_HEXA | LIB_OPT_LOWERCASE);
                 continue;
             }
 
             if(*pFormat == 'X')
             {
-                Counter += STR_printi(&pOut[Counter], n, Width, Option | STR_OPT_BASE_HEXA);
+                Counter += LIB_printi(&pOut[Counter], n, Width, Option | LIB_OPT_BASE_HEXA);
                 continue;
             }
           #endif
 
             if(*pFormat == 'u')
             {
-                Counter += STR_printi(&pOut[Counter], n, Width, Option | STR_OPT_LOWERCASE);
+                Counter += LIB_printi(&pOut[Counter], n, Width, Option | LIB_OPT_LOWERCASE);
                 continue;
             }
         }
         else
         {
-            STR_putchar(&pOut[Counter], *pFormat);
+            LIB_putchar(&pOut[Counter], *pFormat);
             Counter++;
         }
     }
 
-    STR_putchar(&pOut[Counter], '\0');
+    LIB_putchar(&pOut[Counter], '\0');
 
     return Counter;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function Name: STR_vsnformat
+//   Function Name: LIB_vsnformat
 //
 //   Parameter(s):  char*       pOut        Pointer on output string
 //                  size_t      Size        Maximum character to print
@@ -417,29 +424,32 @@ size_t STR_vsnprintf(char* pOut, size_t Size, const char* pFormat, va_list va)
 //                  to the position override
 //
 //-------------------------------------------------------------------------------------------------
-size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
+size_t LIB_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
 {
     STR_Format_t* pFmt;
     size_t        PointerCounter = 0;
 
-    if(*pFormat != ASCII_SUBSTITUTION)
+    if((pFmt = (STR_Format_t*)pMemoryPool->Alloc/*AndSet*/(sizeof(STR_Format_t), 0xFF)) == nullptr)
     {
-       return STR_vsnprintf(pOut, Size, pFormat, va);
+        return PointerCounter;
     }
 
-    pFmt = (STR_Format_t*)pMemoryPool->AllocAndSet(sizeof(STR_Format_t), 0xFF);
-    pFmt->pFormat = (char*)pMemoryPool->AllocAndClear(DIGINI_MAX_PRINT_SIZE);                              // Get memory to work this printf
+    if((pFmt->pFormat = (char*)pMemoryPool->Alloc/*AndClear*/(DIGINI_MAX_PRINT_SIZE)) == nullptr)   // Get memory to work this printf
+    {
+        pMemoryPool->Free((void**)&pFmt);
+        return PointerCounter;
+    }
 
-    strncpy(pFmt->pFormat, pFormat, DIGINI_MAX_PRINT_SIZE);                                        // Copy from possible const location to RAM
+    strncpy(pFmt->pFormat, pFormat /* + 1*/, DIGINI_MAX_PRINT_SIZE);                                     // Copy from possible const location to RAM
     pFmt->pFmtPtr = pFmt->pFormat;
     pFmt->Counter = 0;
-// why we don't scrap the first ASCII substitution...
-//    memset(&pFmt->Position[0], 0xFF, STR_NUMBER_OF_VA_LIST_ITEMS);
+
+memset(&pFmt->Position[0], 0xFF, STR_NUMBER_OF_VA_LIST_ITEMS);
 
     // This first loop is to capture each position
     for(; *pFmt->pFmtPtr != '\0'; pFmt->pFmtPtr++)
     {
-        if(*pFmt->pFmtPtr == '$')                                                                   // Process each position override
+        if(*pFmt->pFmtPtr == '$')                                                               // Process each position override
         {
             pFmt->pFmtPtr++;
             pFmt->pDestination = pFmt->pFmtPtr;
@@ -462,13 +472,13 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
                 {
                     pFmt->pDestination--;
                 }
-                strncpy(pFmt->pDestination, pFmt->pFmtPtr, DIGINI_MAX_PRINT_SIZE);                 // Strip '$' and position override from string
+                memcpy(pFmt->pDestination, pFmt->pFmtPtr, strlen(pFmt->pFmtPtr) + 1);                  // Strip '$' and position override from string
                 pFmt->pFmtPtr = pFmt->pDestination - 1;
             }
             else
             {
                 pFmt->pFmtPtr++;
-                strncpy(pFmt->pDestination, pFmt->pFmtPtr, DIGINI_MAX_PRINT_SIZE);                 // Strip '$' and position override from string
+                memcpy(pFmt->pDestination, pFmt->pFmtPtr, strlen(pFmt->pFmtPtr) + 1);                  // Strip '$' and position override from string
                 pFmt->pFmtPtr = pFmt->pDestination;
             }
         }
@@ -478,7 +488,7 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
     pFmt->pFormatPtr = (char*)pFormat;
     pFmt->Counter  = 0;
 
-    //memset(&pFmt->pSwitchArg[0], 0x00, STR_NUMBER_OF_VA_LIST_ITEMS);
+memset(&pFmt->pSwitchArg[0], 0x00, STR_NUMBER_OF_VA_LIST_ITEMS);
 
 
     // This second loop will strip any formatting info from the copy string and get pointer on each formatting info in original string
@@ -537,31 +547,31 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
 
                     if(*pFmt->pFmtPtr == 'l')
                     {
-                        pFmt->SizeVar = STR_VAR_32;
+                        pFmt->SizeVar = LIB_VAR_32;
                         pFmt->pFmtPtr++;
                         pFmt->pFormatPtr++;
                     }
                     else
                     {
-                        pFmt->SizeVar  = STR_VAR_16;
+                        pFmt->SizeVar  = LIB_VAR_16;
                     }
 
                     if(*pFmt->pFmtPtr == 'd')
                     {
-                        (pFmt->SizeVar == STR_VAR_16) ? va_arg(va, int/*int16_t*/) : va_arg(va, long);
+                        (pFmt->SizeVar == LIB_VAR_16) ? va_arg(va, int/*int16_t*/) : va_arg(va, long);
                         pFmt->pFmtPtr++;
                         pFmt->pFormatPtr++;
                     }
                     else if((*pFmt->pFmtPtr == 'X') || (*pFmt->pFmtPtr == 'u'))
                     {
-                        (pFmt->SizeVar == STR_VAR_16) ? va_arg(va, int/*uint16_t*/) : va_arg(va, uint32_t);
+                        (pFmt->SizeVar == LIB_VAR_16) ? va_arg(va, int/*uint16_t*/) : va_arg(va, uint32_t);
                         pFmt->pFmtPtr++;
                         pFmt->pFormatPtr++;
                     }
                 }
             }
 
-            strcpy(pFmt->pDestination, pFmt->pFmtPtr);                                    // Strip any formatting information
+            memcpy(pFmt->pDestination, pFmt->pFmtPtr, strlen(pFmt->pFmtPtr) + 1);                                    // Strip any formatting information
             pFmt->pFmtPtr = pFmt->pDestination - 1;
             pFmt->pFormatPtr--;
         }
@@ -576,8 +586,8 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
         if(*pFmt->pFmtPtr == (uint8_t)ASCII_SUBSTITUTION)
         {
             pFmt->Width    = 0;
-            pFmt->Option   = STR_OPT_PAD_LEFT;
-            pFmt->SizeVar  = STR_VAR_16;
+            pFmt->Option   = LIB_OPT_PAD_LEFT;
+            pFmt->SizeVar  = LIB_VAR_16;
             pFmt->pFormatPtr = pFmt->pSwitchArg[pFmt->Counter];
 
             if(pFmt->pFormatPtr != nullptr)
@@ -586,7 +596,7 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
                 {
                     pFmt->s = va_arg(pFmt->pListArg[pFmt->Counter], char*);
                     pFmt->Counter++;
-                    PointerCounter += STR_prints(&pOut[PointerCounter], pFmt->s ? pFmt->s : (char*)StrNULL, pFmt->Width, pFmt->Option);
+                    PointerCounter += LIB_prints(&pOut[PointerCounter], pFmt->s ? pFmt->s : (char*)StrNULL, pFmt->Width, pFmt->Option);
                     pFmt->pFormatPtr++;
                     continue;
                 }
@@ -596,14 +606,14 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
                     pFmt->scr[0] = va_arg(pFmt->pListArg[pFmt->Counter], int/*char*/);
                     pFmt->scr[1] = '\0';
                     pFmt->Counter++;
-                    PointerCounter += STR_prints(&pOut[PointerCounter], pFmt->scr, pFmt->Width, pFmt->Option);
+                    PointerCounter += LIB_prints(&pOut[PointerCounter], pFmt->scr, pFmt->Width, pFmt->Option);
                     pFmt->pFormatPtr++;
                     continue;
                 }
 
                 while(*pFmt->pFormatPtr == '0')
                 {
-                    pFmt->Option |= STR_OPT_PAD_ZERO;
+                    pFmt->Option |= LIB_OPT_PAD_ZERO;
                     pFmt->pFormatPtr++;
                 }
 
@@ -615,39 +625,39 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
 
                 if(*pFmt->pFormatPtr == 'l')
                 {
-                    pFmt->SizeVar = STR_VAR_32;
+                    pFmt->SizeVar = LIB_VAR_32;
                     pFmt->pFormatPtr++;
                 }
 
                 if(*pFmt->pFormatPtr == 'd')
                 {
-                    if(pFmt->SizeVar == STR_VAR_16)   pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], int/*int16_t*/);
+                    if(pFmt->SizeVar == LIB_VAR_16)   pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], int/*int16_t*/);
                     else                              pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], long);
 
                     pFmt->Counter++;
-                    PointerCounter += STR_printi(&pOut[PointerCounter], pFmt->n, pFmt->Width, pFmt->Option | STR_OPT_SIGN_NEGATIVE | STR_OPT_LOWERCASE);
+                    PointerCounter += LIB_printi(&pOut[PointerCounter], pFmt->n, pFmt->Width, pFmt->Option | LIB_OPT_SIGN_NEGATIVE | LIB_OPT_LOWERCASE);
                     pFmt->pFormatPtr++;
                     continue;
                 }
 
                 if(*pFmt->pFormatPtr == 'X')
                 {
-                    if(pFmt->SizeVar == STR_VAR_16)  pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], int/*uint16_t*/);
+                    if(pFmt->SizeVar == LIB_VAR_16)  pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], int/*uint16_t*/);
                     else                             pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], uint32_t);
 
                     pFmt->Counter++;
-                    PointerCounter += STR_printi(&pOut[PointerCounter], pFmt->n, pFmt->Width, pFmt->Option | STR_OPT_BASE_HEXA);
+                    PointerCounter += LIB_printi(&pOut[PointerCounter], pFmt->n, pFmt->Width, pFmt->Option | LIB_OPT_BASE_HEXA);
                     pFmt->pFormatPtr++;
                     continue;
                 }
 
                 if(*pFmt->pFormatPtr == 'u')
                 {
-                    if(pFmt->SizeVar == STR_VAR_16)   pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], int/*uint16_t*/);
+                    if(pFmt->SizeVar == LIB_VAR_16)   pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], int/*uint16_t*/);
                     else                              pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], uint32_t);
 
                     pFmt->Counter++;
-                    PointerCounter += STR_printi(&pOut[PointerCounter], pFmt->n, pFmt->Width, pFmt->Option | STR_OPT_LOWERCASE);
+                    PointerCounter += LIB_printi(&pOut[PointerCounter], pFmt->n, pFmt->Width, pFmt->Option | LIB_OPT_LOWERCASE);
                     pFmt->pFormatPtr++;
                     continue;
                 }
@@ -655,7 +665,7 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
         }
         else
         {
-            STR_putchar(&pOut[PointerCounter++], *pFmt->pFmtPtr);
+            LIB_putchar(&pOut[PointerCounter++], *pFmt->pFmtPtr);
         }
     }
 
@@ -668,6 +678,72 @@ size_t STR_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
     pMemoryPool->Free((void**)&pFmt);
 
     return PointerCounter;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function Name: LIB_strnstrip
+//
+//   Parameter(s):  char*   pString
+//                  size_t  nSize
+//   Return Value:  None
+//
+//   Description:   Strip the trailing space starting at nSize
+//
+//-------------------------------------------------------------------------------------------------
+void LIB_strnstrip(char* pString, size_t nSize)
+{
+    char* End;
+
+    End = pString + (nSize - 1);
+    while((End >= pString))
+    {
+        if(*End == ' ')
+        {
+            *End = '\0';
+        }
+        else
+        {
+            return;
+        }
+        End--;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function Name: LIB_strnchr
+//
+//   Parameter(s):  const char*      pStr        Destination buffer
+//                  size_t           Size        Size max to scan
+//                  char             Chr         Character to found
+//   Return Value:  const char*      pPtr        Pointer if found or nullptr
+//
+//   Description:   Locate first occurence of caracter in a string up to the EOL
+//                  EOL is part of the string and can be use to find the end of string
+//
+//-------------------------------------------------------------------------------------------------
+char* LIB_strnchr(char* pStr, size_t Size, char Chr)
+{
+    size_t Count = 0;
+
+
+    if(Size > DIGINI_MAX_PRINT_SIZE)
+    {
+        Size = DIGINI_MAX_PRINT_SIZE;
+    }
+
+    while((*pStr != '\0') && (*pStr != Chr) && (Count < Size))
+    {
+        pStr++;
+        Count++;
+    }
+
+    if((*pStr == '\0') && (Chr != '\0'))
+    {
+        pStr = nullptr;
+    }
+    return pStr;
 }
 
 //-------------------------------------------------------------------------------------------------

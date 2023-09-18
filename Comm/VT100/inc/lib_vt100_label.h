@@ -89,6 +89,8 @@ X_VT100_LBL( VT100_LBL_FULL_DATE,                  "%s, %s %u, %u, %u:%02u:%02u 
 X_VT100_LBL( VT100_LBL_NOW,                        "Now:",                                                                                                     "Maintenant:"                                                                            ) \
 X_VT100_LBL( VT100_LBL_UPTIME,                     "Up Time:",                                                                                                 "Temps " "\x82" "coul\x82:"                                                              ) \
 X_VT100_LBL( VT100_LBL_PERCENT_VALUE,              "%ld %%",                                                                                                   nullptr                                                                                  ) \
+X_VT100_LBL( VT100_LBL_FONT_TERMINAL,              "Extended ASCII Font From This Terminal:",                                                                  "Police de Caract\x8are ASCII \x90tendue Provenant de ce Terminal:"                      ) \
+X_VT100_LBL( VT100_LBL_BIG_TEST,                   "%s, %s %u, %u, %u:%02u:%02u ",                                                                             "\x1A$0%s $2%u  $$ %% $1%s $3%u, $4%u:$5%02u:$6%02lu "                                           ) \
 
 
 

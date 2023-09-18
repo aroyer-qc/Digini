@@ -271,13 +271,22 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(       LBL_BUILT_DATE);
             myVT100.InMenuPrintf(1, 16, VT100_LBL_NOW);
             myVT100.InMenuPrintf(1, 17, VT100_LBL_UPTIME);
-            myVT100.InMenuPrintf(       VT100_LBL_ESCAPE);
+            myVT100.InMenuPrintf(1, 19, VT100_LBL_FONT_TERMINAL);
 
+            myVT100.SetCursorPosition(1,20);
 
-myVT100.SetCursorPosition(1,30);
-for(int i=128; i<256; i++)
-            myVT100.InMenuPrintf(       LBL_CHAR, i);
+            int y = 20;
+            for(int i = 128; i < 256; i++)
+            {
+                if((i % 32) == 0)
+                {
+                    myVT100.InMenuPrintf(8, y++, LBL_CHAR, ASCII_LINE_FEED);
+                }
 
+                myVT100.InMenuPrintf(LBL_CHAR, i);
+            }
+
+            myVT100.InMenuPrintf(1, 23, VT100_LBL_ESCAPE);
         }
         break;
 
@@ -287,11 +296,24 @@ for(int i=128; i<256; i++)
 
             LIB_GetDateAndTime(&TimeDate);
 
+
+// test vnsformat
+myVT100.InMenuPrintf(1, 34, VT100_LBL_BIG_TEST, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&TimeDate.Date)) + (int(LBL_FIRST_WEEK_DAY)))),
+                                                         myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
+                                                         TimeDate.Date.Day,
+                                                         TimeDate.Date.Year,
+                                                         TimeDate.Time.Hour,
+                                                         TimeDate.Time.Minute,
+                                                         uint32_t(TimeDate.Time.Second));
+
             if(TimeDate.Time.Second != VT100_LastSecond)
             {
                 VT100_LastSecond = TimeDate.Time.Second;
                 myVT100.DisplayTimeDateStamp(19, 16, &TimeDate);
             }
+
+
+
 
             if(UpTime != VT100_LastUpTime)
             {

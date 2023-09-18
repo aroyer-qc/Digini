@@ -51,7 +51,6 @@ struct STR_Format_t
     uint8_t  SizeVar;
     uint8_t  Counter;
 
-    uint8_t  i;
     uint8_t  p;
     int32_t  n;
     char*    s;

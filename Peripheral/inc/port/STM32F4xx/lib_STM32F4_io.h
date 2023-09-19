@@ -273,6 +273,7 @@ void        IO_SetPinHigh               (IO_ID_e IO_ID);
 void        IO_TogglePin                (IO_ID_e IO_ID);
 void        IO_SetPin                   (IO_ID_e IO_ID, uint32_t Value);
 bool        IO_GetInputPin              (IO_ID_e IO_ID);
+uint32_t    IO_GetInputPinValue         (IO_ID_e IO_ID);
 bool        IO_GetOutputPin             (IO_ID_e IO_ID);
 void        IO_EnableClock              (GPIO_TypeDef* pPort);// is it necessary?
 bool        IO_IsItValid                (IO_ID_e IO_ID);

@@ -102,7 +102,7 @@ static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_ID, uint32_t* pPinNumber, uint32_t*
 //
 //  Function:       IO_PinInit
 //
-//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
 //  Return:         None
 //
 //  Description:    Basic pin initialization Using ID.
@@ -211,7 +211,7 @@ void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint3
 //
 //  Function:       IO_PinInit
 //
-//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
 //  Return:         None
 //
 //  Description:    ID of the IO pin.
@@ -237,7 +237,7 @@ void IO_PinInitInput(IO_ID_e IO_ID)
 //
 //  Function:       IO_PinInitOutput
 //
-//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
 //  Return:         None
 //
 //  Description:    Initialize the IO In output.
@@ -265,7 +265,7 @@ void IO_PinInitOutput(IO_ID_e IO_ID)
 //
 //  Function:       IO_SetPinLow
 //
-//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
 //  Return:         None
 //
 //  Description:    Sets pin(s) low.
@@ -288,7 +288,7 @@ void IO_SetPinLow(IO_ID_e IO_ID)
 //
 //  Function:       IO_SetPinHigh
 //
-//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
 //  Return:         None
 //
 //  Description:    Sets pin(s) high.
@@ -311,7 +311,7 @@ void IO_SetPinHigh(IO_ID_e IO_ID)
 //
 //  Function:       IO_TogglePin
 //
-//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
 //  Return:         None
 //
 //  Description:    Toggles pin(s).
@@ -357,40 +357,47 @@ void IO_SetPin(IO_ID_e IO_ID, bool Value)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       IO_GetInputPin
+//  Function:       IO_GetInputPinValue
 //
-//  Parameter(s):   IO_ID           ID of the IO pin definition in HALIO_Properties_t structure
-//  Return:         bool            level on output pin 0 or 1
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Return:         uint32_t        Actual bit value for this input pin on the port
 //
-//  Description:    Gets input data bit.
-//
-//  Note(s):
+//  Description:    Gets input data bit value.
 //
 //-------------------------------------------------------------------------------------------------
-bool IO_GetInputPin(IO_ID_e IO_ID)
+uint32_t IO_GetInputPinValue(IO_ID_e IO_ID)
 {
     GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+    uint32_t      PinValue = 0;
 
     if(pPort != GPIOxx)
     {
-        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
-
-        if((pPort->IDR & (1 << PinNumber)) == 0)
-        {
-            return false;
-        }
-
-        return true;
+        PinValue = pPort->IDR & (1 << IO_Properties[IO_ID].PinNumber);
     }
 
-    return false;
+    return PinValue;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       HALIO_GetOutputPin
+//  Function:       IO_GetInputPin
 //
-//  Parameter(s):   IO_ID       ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Return:         bool            level on input pin is 0 or 1
+//
+//  Description:    Gets input data bit.
+//
+//-------------------------------------------------------------------------------------------------
+bool IO_GetInputPin(IO_ID_e IO_ID)
+{
+    return (IO_GetInputPinValue(IO_ID) != 0) ? true : false;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_GetOutputPin
+//
+//  Parameter(s):   IO_ID       ID of the IO pin definition in IO_Properties_t structure
 //  Return:         bool        level on internal register output 0 or 1
 //
 //  Description:    Gets output data bit.
@@ -421,7 +428,7 @@ bool IO_GetOutputPin(IO_ID_e IO_ID)
 //
 //  Function:       IO_IsItValid
 //
-//  Parameter(s):   IO_ID       ID of the IO pin definition in HALIO_Properties_t structure
+//  Parameter(s):   IO_ID       ID of the IO pin definition in IO_Properties_t structure
 //  Return:         bool        true if valid, false if not
 //
 //  Description:    Return if this pin is a valid one.

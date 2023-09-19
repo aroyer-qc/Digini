@@ -64,11 +64,52 @@
     nullptr,
     STATIC_SKIN_DEF(EXPAND_X_STATIC_SKIN_AS_CONST_PTR)
  };
-
 #endif
 
-nOS_Thread SKIN_myClassTask::m_Handle;
-nOS_Stack  SKIN_myClassTask::m_Stack[SKIN_TASK_STACK_SIZE];
+// Remapping from GUI_Builder capture of Windows::Western to CP437 if available
+/*
+{                                                       //  CP437      Western
+                                                        // 0x80 check!!
+                                                        // 0x88 check!!
+                                                        // 0x90 check!!
+                                                        // 0x98 check!!
+                                                        // 0xA0 check!!
+                                                        // 0xA8 check!!
+                                  0xC1, 0xC2, 0xC0,     // 0xB0 "░▒▓│┤ÁÂÀ" "     ÁÂÀ"
+    0xA9, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,     // 0xB8 "©╣║╗╝¢¥┐" "©       "
+    0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0xE3, 0xC3,     // 0xC0 "└┴┬├─┼ãÃ" "      ãÃ"
+    0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,     // 0xC8 "╚╔╩╦╠═╬¤" "        "
+    0xF5, 0xD0, 0xCA, 0xCB, 0xC8, 0x80, 0xCD, 0xCE,     // 0xD0 "ðÐÊËÈıÍÎ" "ðÐÊËÈ ÍÎ"
+    0xCF, 0x80, 0x80, 0x80, 0x80, 0x80, 0xCC, 0x80,     // 0xD8 "Ï┘┌█▄¦Ì▀" "Ï     Ì "
+    0xF3, 0x80, 0xF4, 0xF2, 0xF5, 0xD5, 0x80, 0xFE,     // 0xE0 "ÓßÔÒõÕµþ" "Ó ÔÒõÕ þ"
+    0x80, 0xDA, 0xDB, 0xD9, 0xFD, 0xDD, 0x80, 0x80,     // 0xE8 "ÞÚÛÙýÝ¯´" " ÚÛÙýÝ  "
+    0x80, 0xB1, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,     // 0xF0 "­±‗¾¶§÷¸" " ±      "
+    0xBA, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,     // 0xF8 "°¨·¹³²■ " "°       "
+};
+*/
+
+static const uint8_t  m_Remapping[128] =                // Windows Western equivalent
+{                                                       //  CP437    
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0x80 "........"
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0x88 "........"
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0x90 "........"
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0x99 "........"
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0xA0 "........"
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA9, 0x00,     // 0xA8 "......®."
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0xB0 "........"
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0xB8 "........"
+    0x00, 0xB1, 0x00, 0x00, 0x8E, 0x8F, 0x92, 0x80,     // 0xC0 "....ÄÅÆÇ"
+    0x00, 0x90, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0xC8 ".É......"
+    0x00, 0xA5, 0x00, 0x00, 0x00, 0x00, 0x99, 0x00,     // 0xD0 ".Ñ....Ö."
+    0x9D, 0x00, 0x00, 0x00, 0x9A, 0x00, 0x00, 0x00,     // 0xD8 "Ø...Ü..."
+    0x85, 0xA0, 0x83, 0x00, 0x84, 0x86, 0x91, 0x87,     // 0xE0 "çáà.åêæë"
+    0x8A, 0x82, 0x88, 0x89, 0x8D, 0xA1, 0x8C, 0x8B,     // 0xE8 "èéëïìíÄï"
+    0x00, 0xA4, 0x95, 0xA2, 0x93, 0x00, 0x94, 0x00,     // 0xF0 ".ñòó.ô.ö."
+    0x9B, 0x97, 0xA3, 0x96, 0x81, 0x00, 0x00, 0x98,     // 0xF8 "øùúûü..ÿ"
+};
+
+nOS_Thread     SKIN_myClassTask::m_Handle;
+nOS_Stack      SKIN_myClassTask::m_Stack[SKIN_TASK_STACK_SIZE];
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -520,7 +561,11 @@ SystemState_e SKIN_myClassTask::DeCompressAllFont(void)
     {
         for(uint16_t Character = 0; Character < 256; Character++)
         {
-            DB_Central.Get(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, Character);
+            uint16_t RemapCharacter;
+            if(Character < 128) RemapCharacter = Character;
+            else                RemapCharacter = m_Remapping[Character - 128];
+
+            DB_Central.Get(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, RemapCharacter);
 
             if(FontDescriptor.pAddress != 0)                                            // Only extract data for font if it exist
             {
@@ -549,7 +594,7 @@ SystemState_e SKIN_myClassTask::DeCompressAllFont(void)
                 }
 
                 // Increment free pointer and decompressed data
-                OffsetCompression = (i * 256) + Character;
+                OffsetCompression = (i * 256) + RemapCharacter;
                 if(FontDescriptor.TotalSize != 0)
                 {
                     // Save memory pointer
@@ -558,26 +603,8 @@ SystemState_e SKIN_myClassTask::DeCompressAllFont(void)
                     pFreePointer += m_pDecompress->Process(pOutput, pInput, FontDescriptor.TotalSize, m_pCompressionMethod[OffsetCompression]);
                     // Save total size for this font
                     FontDescriptor.TotalSize = uint16_t(FontDescriptor.Size.Width) * uint16_t(FontDescriptor.Size.Height);
-                    DB_Central.Set(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, Character);
-/*
-CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
-CLayer::SetTextColor(0x00FFFFFF);
-
-CLayer::SetColor(TRANSPARENT);
-Box_t Box;
-Box.Pos.X = 0;
-Box.Pos.Y = 0;
-Box.Size.Width = 130;
-Box.Size.Height = 130;
-DrawRectangle(&Box);
-Cartesian_t Pos;
-Pos.X = 0;
-Pos.Y = 0;
-
-DRV_PrintFont(&FontDescriptor, &Pos);
-*/
+                    DB_Central.Set(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, RemapCharacter);
                 }
-
 
                 delete pOutput;
                 delete pInput;
@@ -641,7 +668,13 @@ SystemState_e SKIN_myClassTask::GetFontInfo(void)
             uint16_t OffsetCompression = (i * 256) + Character;
             if((State = Get_uint8_t(&m_pCompressionMethod[OffsetCompression]))      != SYS_READY) return State;
             if((State = Get_uint32_t((uint32_t*)&FontDescriptor.pAddress))          != SYS_READY) return State;  // Use memory address pointer as temporary storage for in file index
-            DB_Central.Set(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, Character);
+
+
+            uint16_t RemapCharacter;
+            if(Character < 128) RemapCharacter = Character;
+            else                RemapCharacter = m_Remapping[Character - 128];
+
+            DB_Central.Set(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, RemapCharacter);
 
             if(FontDescriptor.Width > MaxWidth)
             {

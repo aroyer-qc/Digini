@@ -64,9 +64,9 @@
 
 
 
-// Create uint32_t value fron 4 uint8_t value ou ascii char
+// Create uint32_t value from 4 uint8_t value or ascii char
 #define U32MACRO(A,B,C,D)                   ((uint32_t(D) << 24) + (uint32_t(C) << 16) + (uint32_t(B) << 8) + uint32_t(A))
-// Create uint32_t value fron 4 uint8_t value ou ascii char
+// Create uint32_t value from 4 uint8_t value or ascii char
 #define U16MACRO(A,B)                       ((uint16_t(B) << 8) + uint16_t(A))
 
 #define GetTick()                           nOS_GetTickCount()

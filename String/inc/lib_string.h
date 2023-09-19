@@ -41,15 +41,10 @@
 // Struct use exclusively in STR_Format
 struct STR_Format_t
 {
-    char*    pDestination;
-    char*    pFormat;
-    char*    pFmtPtr;
-    char*    pFormatPtr;
-
     uint8_t  Option;
     uint8_t  Width;
     uint8_t  SizeVar;
-    uint8_t  Counter;
+    //uint8_t  Counter;
 
     uint8_t  p;
     int32_t  n;

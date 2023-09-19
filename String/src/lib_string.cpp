@@ -423,335 +423,246 @@ size_t LIB_vsnprintf(char* pOut, size_t Size, const char* pFormat, va_list va)
 //   Description:   Special printf that allow argument to be located anywhere in string according
 //                  to the position override
 //
+//   Note(s):       Not for 16 bits CPU, need to do different variables for va_arg()
+//                  ex. #define VAR_CHAR ..., VAR_UINT16_T ..., etc..
 //-------------------------------------------------------------------------------------------------
 size_t LIB_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
 {
     STR_Format_t* pFmt;
     size_t        PointerCounter = 0;
+    char*         pFmtPtr;
+    char*         pDestination;
+    char*         pWorkFormat;              // Copy of the format to work on
+    char*         pFormatPtr;
+    uint32_t      Counter;
+
 
     if((pFmt = (STR_Format_t*)pMemoryPool->AllocAndSet(sizeof(STR_Format_t), 0xFF)) == nullptr)
     {
         return PointerCounter;
     }
 
-    if((pFmt->pFormat = (char*)pMemoryPool->AllocAndClear(DIGINI_MAX_PRINT_SIZE)) == nullptr)       // Get memory to work this printf
+    if((pWorkFormat = (char*)pMemoryPool->AllocAndClear(DIGINI_MAX_PRINT_SIZE)) == nullptr)         // Get memory to work this printf
     {
         pMemoryPool->Free((void**)&pFmt);
         return PointerCounter;
     }
 
-    strncpy(pFmt->pFormat, pFormat + 1, DIGINI_MAX_PRINT_SIZE);                                 // Copy from possible const location to RAM
-    pFmt->pFmtPtr   = pFmt->pFormat;
-    pFmt->Counter = 0;
+    pFormatPtr = (char*)pFormat + 1;
+    strncpy(pWorkFormat, pFormatPtr, DIGINI_MAX_PRINT_SIZE);                                        // Copy from possible const location to RAM
+    pFmtPtr    = pWorkFormat;
+    Counter    = 0;
 
     // This first loop is to capture each position
-    for(; *pFmt->pFmtPtr != '\0';)
+    for(; *pFmtPtr != '\0';)
     {
         // ************************************************************************************************************************
         // Process Position Override
 
-        pFmt->pFormatPtr = pFmt->pFmtPtr;
-
-        if(*pFmt->pFmtPtr == '$')                                                               // Process each position override
+        if(*pFmtPtr == '$')                                                                         // Process each position override
         {
-            if(*(pFmt->pFmtPtr + 1) != '$')
+            if(*(pFmtPtr + 1) != '$')
             {
-                *pFmt->pFmtPtr = (uint8_t)ASCII_SUBSTITUTION;
-                pFmt->pFmtPtr++;
-                pFmt->pDestination = pFmt->pFmtPtr;
+                *pFmtPtr = (uint8_t)ASCII_SUBSTITUTION;
+                pFmtPtr++;
+                pFormatPtr++;
+                pDestination = pFmtPtr;
 
-                if((*pFmt->pFmtPtr >= '0') && (*pFmt->pFmtPtr <= '9'))                          // Get position from 0 to 9
+                if((*pFmtPtr >= '0') && (*pFmtPtr <= '9'))                                          // Get position from 0 to 9
                 {
-                    pFmt->Position[pFmt->Counter] = (uint8_t)(*pFmt->pFmtPtr - '0');
-                    pFmt->pFmtPtr++;
+                    pFmt->Position[Counter] = (uint8_t)(*pFmtPtr - '0');
+                    pFmtPtr++;
+                    pFormatPtr++;
                 }
-                else if((*pFmt->pFmtPtr >= 'A') && (*pFmt->pFmtPtr <= 'F'))                     // Get position from A to F
+                else if((*pFmtPtr >= 'A') && (*pFmtPtr <= 'F'))                                     // Get position from A to F
                 {
-                    pFmt->Position[pFmt->Counter] = (uint8_t)(*pFmt->pFmtPtr - ('A' - 10));
-                    pFmt->pFmtPtr++;
+                    pFmt->Position[Counter] = (uint8_t)(*pFmtPtr - ('A' - 10));
+                    pFmtPtr++;
+                    pFormatPtr++;
                 }
-                else
+                else // so no value.. just print it
                 {
-                    pFmt->pDestination--;
+                    pDestination--;
                 }
 
-                memcpy(pFmt->pDestination, pFmt->pFmtPtr, strlen(pFmt->pFmtPtr) + 1);           // Strip '$' and position override from string
-                pFmt->pFmtPtr = pFmt->pDestination;
+                memcpy(pDestination, pFmtPtr, strlen(pFmtPtr) + 1);                                 // Strip '$' and position override from string
+                pFmtPtr = pDestination;
 
                 // ****************************************************************************************************************
                 // Organize Formatting Information
 
-                pFmt->pFormatPtr += (pFmt->pFmtPtr - pFmt->pFormatPtr);                         // Increase pointer to over already processed data
-
-                if(*pFmt->pFmtPtr == '%')
+                if(*pFmtPtr == '%')
                 {
-                    pFmt->pSwitchArg[pFmt->Position[pFmt->Counter]] = pFmt->pFormatPtr;
-                    pFmt->pListArg[pFmt->Position[pFmt->Counter]]   = va;
-                    pFmt->Counter++;
-                    pFmt->pFmtPtr++;
+                    pFormatPtr++;
+                    pFmt->pSwitchArg[pFmt->Position[Counter]] = pFormatPtr;
+                    pFmt->pListArg[pFmt->Position[Counter]]   = va;
+                    Counter++;
+                    pFmtPtr++;
 
-                    if(*pFmt->pFmtPtr == 's')
+                    if(*pFmtPtr == 's')
                     {
                         va_arg(va, char*);
-                        pFmt->pFmtPtr++;
+                        pFmtPtr++;
+                        pFormatPtr++;
                     }
-                    else if(*pFmt->pFmtPtr == 'c')
+                    else if(*pFmtPtr == 'c')
                     {
                         va_arg(va, int);
-                        pFmt->pFmtPtr++;
+                        pFmtPtr++;
+                        pFormatPtr++;
                     }
                     else
                     {
-                        while(*pFmt->pFmtPtr == '0')
+                        while(*pFmtPtr == '0')
                         {
-                            pFmt->pFmtPtr++;
+                            pFmtPtr++;
+                            pFormatPtr++;
                         }
 
-                        if((*pFmt->pFmtPtr >= '0') && (*pFmt->pFmtPtr <= '9'))
+                        if((*pFmtPtr >= '1') && (*pFmtPtr <= '9'))
                         {
-                            pFmt->pFmtPtr++;
+                            pFmtPtr++;
+                            pFormatPtr++;
                         }
 
-                        if(*pFmt->pFmtPtr == 'l')
+                        if(*pFmtPtr == 'l')
                         {
                             pFmt->SizeVar = LIB_VAR_32;
-                            pFmt->pFmtPtr++;
+                            pFmtPtr++;
+                            pFormatPtr++;
                         }
                         else
                         {
                             pFmt->SizeVar  = LIB_VAR_16;
                         }
 
-                        if(*pFmt->pFmtPtr == 'd')
+                        if(*pFmtPtr == 'd')
                         {
                             (pFmt->SizeVar == LIB_VAR_16) ? va_arg(va, int) : va_arg(va, long);
-                            pFmt->pFmtPtr++;
+                            pFmtPtr++;
+                            pFormatPtr++;
                         }
-                        else if((*pFmt->pFmtPtr == 'X') || (*pFmt->pFmtPtr == 'u'))
+                        else if((*pFmtPtr == 'X') || (*pFmtPtr == 'u'))
                         {
                             (pFmt->SizeVar == LIB_VAR_16) ? va_arg(va, int) : va_arg(va, uint32_t);
-                            pFmt->pFmtPtr++;
+                            pFmtPtr++;
+                            pFormatPtr++;
                         }
                     }
                 }
 
-                memcpy(pFmt->pDestination, pFmt->pFmtPtr, strlen(pFmt->pFmtPtr) + 1);                                   // Strip any formatting information
-                pFmt->pFmtPtr = pFmt->pDestination;
+                memcpy(pDestination, pFmtPtr, strlen(pFmtPtr) + 1);                                 // Strip any formatting information
+                pFmtPtr = pDestination;
             }
             else //  Strip '$' and position override from string and skip good one
             {
-                pFmt->pFmtPtr++;
-                memcpy(pFmt->pDestination, pFmt->pFmtPtr, strlen(pFmt->pFmtPtr) + 1);
-                pFmt->pFmtPtr = pFmt->pDestination + 1;
+                pFmtPtr++;
+                memcpy(pDestination, pFmtPtr, strlen(pFmtPtr) + 1);
+                pFmtPtr = pDestination + 1;
+                pFormatPtr += 2;
             }
         }
         else
         {
-            if(*pFmt->pFmtPtr == '%')
+            if(*pFmtPtr == '%')
             {
-                if(*(pFmt->pFmtPtr + 1) == '%') // if 2 consecutives % are found one is stripped... only one will also work
+                if(*(pFmtPtr + 1) == '%') // if 2 consecutives % are found one is stripped... only one will also work
                 {
-                    memcpy(pFmt->pFmtPtr, pFmt->pFmtPtr + 1, strlen(pFmt->pFmtPtr) + 1);
+                    memcpy(pFmtPtr, pFmtPtr + 1, strlen(pFmtPtr) + 1);
+                    pFormatPtr++;
                 }
             }
 
-            pFmt->pFmtPtr++;        // Skip to next normal character to print
+            pFmtPtr++;        // Skip to next normal character to print
+            pFormatPtr++;
         }
-
-
-
-
     }
 
-/*
-    pFmt->pFmtPtr    = pFmt->pFormat;
-    pFmt->pFormatPtr = (char*)pFormat;
-    pFmt->Counter  = 0;
-
-    // This second loop will strip any formatting info from the copy string and get pointer on each formatting info in original string
-    for(; *pFmt->pFmtPtr != '\0';)
-    {
-        if(*pFmt->pFmtPtr == '%')
-        {
-            pFmt->pDestination = pFmt->pFmtPtr;
-
-            if(*(pFmt->pFmtPtr + 1) != '%')
-            {
-                pFmt->pFormatPtr = 2;
-
-                for(int i = 0; i < STR_NUMBER_OF_VA_LIST_ITEMS; i++)
-                {
-                    if(pFmt->Position[i] == pFmt->Counter)
-                    {
-                        pFmt->pSwitchArg[i] = pFmt->pFormatPtr;
-                        pFmt->pListArg[i]   = va;
-                        break;
-                    }
-                }
-
-                pFmt->Counter++;
-                pFmt->pFmtPtr++;
-
-                if(*pFmt->pFmtPtr == 's')
-                {
-                    va_arg(va, char*);
-                    pFmt->pFmtPtr++;
-                    //pFmt->pFormatPtr++;
-                }
-                else if(*pFmt->pFmtPtr == 'c')
-                {
-                    va_arg(va, int);//va_arg(va, uint8_t);
-                    pFmt->pFmtPtr++;
-                    //pFmt->pFormatPtr++;
-                }
-                else
-                {
-                    while(*pFmt->pFmtPtr == '0')
-                    {
-                        pFmt->pFmtPtr++;
-                        //pFmt->pFormatPtr++;
-                    }
-
-                    if((*pFmt->pFmtPtr >= '0') && (*pFmt->pFmtPtr <= '9'))
-                    {
-                        pFmt->pFmtPtr++;
-                        //pFmt->pFormatPtr++;
-                    }
-
-                    if(*pFmt->pFmtPtr == 'l')
-                    {
-                        pFmt->SizeVar = LIB_VAR_32;
-                        pFmt->pFmtPtr++;
-                        //pFmt->pFormatPtr++;
-                    }
-                    else
-                    {
-                        pFmt->SizeVar  = LIB_VAR_16;
-                    }
-
-                    if(*pFmt->pFmtPtr == 'd')
-                    {
-                        (pFmt->SizeVar == LIB_VAR_16) ? va_arg(va, int) : va_arg(va, long);
-                        pFmt->pFmtPtr++;
-                        //pFmt->pFormatPtr++;
-                    }
-                    else if((*pFmt->pFmtPtr == 'X') || (*pFmt->pFmtPtr == 'u'))
-                    {
-                        (pFmt->SizeVar == LIB_VAR_16) ? va_arg(va, int) : va_arg(va, uint32_t);
-                        pFmt->pFmtPtr++;
-                        //pFmt->pFormatPtr++;
-                    }
-                }
-            }
-            else // Skip this % (it need to be printed)
-            {
-                pFmt->pDestination++;
-                pFmt->pFmtPtr++;
-                //pFmt->pFormatPtr++;
-            }
-
-            memcpy(pFmt->pDestination, pFmt->pFmtPtr, strlen(pFmt->pFmtPtr) + 1);                                    // Strip any formatting information
-            pFmt->pFmtPtr = pFmt->pDestination;
-            //pFmt->pFormatPtr++;
-        }
-        else
-        {
-            pFmt->pFmtPtr++;
-            //pFmt->pFormatPtr++;
-        }
-
-        //pFmt->pFormatPtr++;
-    }
-*/
-    pFmt->pFormatPtr = (char*)pFormat;
-    pFmt->Counter    = 0;
-
+    // ****************************************************************************************************************************
     // Do the actual formatting according to correct argument placement
-    for(; (*pFmt->pFormat != '\0') && (PointerCounter < Size); pFmt->pFormat++)
+
+    Counter = 0;
+
+    for(; (*pWorkFormat != '\0') && (PointerCounter < Size); pWorkFormat++)
     {
-        if(*pFmt->pFormat == (uint8_t)ASCII_SUBSTITUTION)
+        if(*pWorkFormat == (uint8_t)ASCII_SUBSTITUTION)
         {
-            pFmt->Width    = 0;
-            pFmt->Option   = LIB_OPT_PAD_LEFT;
-            pFmt->SizeVar  = LIB_VAR_16;
-            pFmt->pFormatPtr = pFmt->pSwitchArg[pFmt->Counter];
+            pFmt->Width   = 0;
+            pFmt->Option  = LIB_OPT_PAD_LEFT;
+            pFmt->SizeVar = LIB_VAR_16;
+            pFormatPtr    = pFmt->pSwitchArg[Counter];
 
-            if(pFmt->pFormatPtr != nullptr)
+            if(pFormatPtr != nullptr)
             {
-                if(*pFmt->pFormatPtr == 's')
+                if(*pFormatPtr == 's')
                 {
-                    pFmt->s = va_arg(pFmt->pListArg[pFmt->Counter], char*);
-                    pFmt->Counter++;
+                    pFmt->s = va_arg(pFmt->pListArg[Counter], char*);
+                    Counter++;
                     PointerCounter += LIB_prints(&pOut[PointerCounter], pFmt->s ? pFmt->s : (char*)StrNULL, pFmt->Width, pFmt->Option);
-                    pFmt->pFormatPtr++;
                     continue;
                 }
 
-                if(*pFmt->pFormatPtr == 'c')
+                if(*pFormatPtr == 'c')
                 {
-                    pFmt->scr[0] = va_arg(pFmt->pListArg[pFmt->Counter], int/*char*/);
+                    pFmt->scr[0] = va_arg(pFmt->pListArg[Counter], int);
                     pFmt->scr[1] = '\0';
-                    pFmt->Counter++;
+                    Counter++;
                     PointerCounter += LIB_prints(&pOut[PointerCounter], pFmt->scr, pFmt->Width, pFmt->Option);
-                    pFmt->pFormatPtr++;
                     continue;
                 }
 
-                while(*pFmt->pFormatPtr == '0')
+                while(*pFormatPtr == '0')
                 {
                     pFmt->Option |= LIB_OPT_PAD_ZERO;
-                    pFmt->pFormatPtr++;
+                    pFormatPtr++;
                 }
 
-                for(; *pFmt->pFormatPtr >= '0' && *pFmt->pFormatPtr <= '9'; pFmt->pFormatPtr++)
+                for(; ((*pFormatPtr >= '0') && (*pFormatPtr <= '9')); pFormatPtr++)
                 {
                     pFmt->Width *= 10;
-                    pFmt->Width += *pFmt->pFormatPtr - '0';
+                    pFmt->Width += *pFormatPtr - '0';
                 }
 
-                if(*pFmt->pFormatPtr == 'l')
+                if(*pFormatPtr == 'l')
                 {
                     pFmt->SizeVar = LIB_VAR_32;
-                    pFmt->pFormatPtr++;
+                    pFormatPtr++;
                 }
 
-                if(*pFmt->pFormatPtr == 'd')
+                if(*pFormatPtr == 'd')
                 {
-                    if(pFmt->SizeVar == LIB_VAR_16)   pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], int/*int16_t*/);
-                    else                              pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], long);
+                    if(pFmt->SizeVar == LIB_VAR_16)   pFmt->n = va_arg(pFmt->pListArg[Counter], int);
+                    else                              pFmt->n = va_arg(pFmt->pListArg[Counter], long);
 
-                    pFmt->Counter++;
+                    Counter++;
                     PointerCounter += LIB_printi(&pOut[PointerCounter], pFmt->n, pFmt->Width, pFmt->Option | LIB_OPT_SIGN_NEGATIVE | LIB_OPT_LOWERCASE);
-                    pFmt->pFormatPtr++;
                     continue;
                 }
 
-                if(*pFmt->pFormatPtr == 'X')
+                if(*pFormatPtr == 'X')
                 {
-                    if(pFmt->SizeVar == LIB_VAR_16)  pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], int/*uint16_t*/);
-                    else                             pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], uint32_t);
+                    if(pFmt->SizeVar == LIB_VAR_16)  pFmt->n = va_arg(pFmt->pListArg[Counter], int);
+                    else                             pFmt->n = va_arg(pFmt->pListArg[Counter], uint32_t);
 
-                    pFmt->Counter++;
+                    Counter++;
                     PointerCounter += LIB_printi(&pOut[PointerCounter], pFmt->n, pFmt->Width, pFmt->Option | LIB_OPT_BASE_HEXA);
-                    pFmt->pFormatPtr++;
                     continue;
                 }
 
-                if(*pFmt->pFormatPtr == 'u')
+                if(*pFormatPtr == 'u')
                 {
-                    if(pFmt->SizeVar == LIB_VAR_16)   pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], int/*uint16_t*/);
-                    else                              pFmt->n = va_arg(pFmt->pListArg[pFmt->Counter], uint32_t);
+                    if(pFmt->SizeVar == LIB_VAR_16)   pFmt->n = va_arg(pFmt->pListArg[Counter], int);
+                    else                              pFmt->n = va_arg(pFmt->pListArg[Counter], uint32_t);
 
-                    pFmt->Counter++;
+                    Counter++;
                     PointerCounter += LIB_printi(&pOut[PointerCounter], pFmt->n, pFmt->Width, pFmt->Option | LIB_OPT_LOWERCASE);
-                    pFmt->pFormatPtr++;
                     continue;
                 }
             }
         }
         else
         {
-            LIB_putchar(&pOut[PointerCounter++], *pFmt->pFormat);
+            LIB_putchar(&pOut[PointerCounter++], *pWorkFormat);
         }
     }
 
@@ -760,7 +671,7 @@ size_t LIB_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
         pOut[PointerCounter] = '\0';
     }
 
-    pMemoryPool->Free((void**)&pFmt->pFormat);
+    pMemoryPool->Free((void**)&pWorkFormat);
     pMemoryPool->Free((void**)&pFmt);
 
     return PointerCounter;

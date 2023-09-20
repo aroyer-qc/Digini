@@ -435,6 +435,7 @@ size_t LIB_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
     char*         pWorkFormat;              // Copy of the format to work on
     char*         pFormatPtr;
     uint32_t      Counter;
+    uint32_t      Position;
 
 
     if((pFmt = (STR_Format_t*)pMemoryPool->AllocAndSet(sizeof(STR_Format_t), 0xFF)) == nullptr)
@@ -494,8 +495,9 @@ size_t LIB_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
                 if(*pFmtPtr == '%')
                 {
                     pFormatPtr++;
-                    pFmt->pSwitchArg[pFmt->Position[Counter]] = pFormatPtr;
-                    pFmt->pListArg[pFmt->Position[Counter]]   = va;
+                    Position = pFmt->Position[Counter];
+                    pFmt->pSwitchArg[Position] = pFormatPtr;
+                    pFmt->pListArg[Position]   = va;
                     Counter++;
                     pFmtPtr++;
 
@@ -590,23 +592,21 @@ size_t LIB_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
             pFmt->Width   = 0;
             pFmt->Option  = LIB_OPT_PAD_LEFT;
             pFmt->SizeVar = LIB_VAR_16;
-            pFormatPtr    = pFmt->pSwitchArg[Counter];
+            pFormatPtr    = pFmt->pSwitchArg[pFmt->Position[Counter]];
 
             if(pFormatPtr != nullptr)
             {
                 if(*pFormatPtr == 's')
                 {
-                    pFmt->s = va_arg(pFmt->pListArg[Counter], char*);
-                    Counter++;
+                    pFmt->s = va_arg(pFmt->pListArg[Counter++], char*);
                     PointerCounter += LIB_prints(&pOut[PointerCounter], pFmt->s ? pFmt->s : (char*)StrNULL, pFmt->Width, pFmt->Option);
                     continue;
                 }
 
                 if(*pFormatPtr == 'c')
                 {
-                    pFmt->scr[0] = va_arg(pFmt->pListArg[Counter], int);
+                    pFmt->scr[0] = va_arg(pFmt->pListArg[Counter++], int);
                     pFmt->scr[1] = '\0';
-                    Counter++;
                     PointerCounter += LIB_prints(&pOut[PointerCounter], pFmt->scr, pFmt->Width, pFmt->Option);
                     continue;
                 }
@@ -631,30 +631,27 @@ size_t LIB_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
 
                 if(*pFormatPtr == 'd')
                 {
-                    if(pFmt->SizeVar == LIB_VAR_16)   pFmt->n = va_arg(pFmt->pListArg[Counter], int);
-                    else                              pFmt->n = va_arg(pFmt->pListArg[Counter], long);
+                    if(pFmt->SizeVar == LIB_VAR_16)   pFmt->n = va_arg(pFmt->pListArg[Counter++], int);
+                    else                              pFmt->n = va_arg(pFmt->pListArg[Counter++], long);
 
-                    Counter++;
                     PointerCounter += LIB_printi(&pOut[PointerCounter], pFmt->n, pFmt->Width, pFmt->Option | LIB_OPT_SIGN_NEGATIVE | LIB_OPT_LOWERCASE);
                     continue;
                 }
 
                 if(*pFormatPtr == 'X')
                 {
-                    if(pFmt->SizeVar == LIB_VAR_16)  pFmt->n = va_arg(pFmt->pListArg[Counter], int);
-                    else                             pFmt->n = va_arg(pFmt->pListArg[Counter], uint32_t);
+                    if(pFmt->SizeVar == LIB_VAR_16)  pFmt->n = va_arg(pFmt->pListArg[Counter++], int);
+                    else                             pFmt->n = va_arg(pFmt->pListArg[Counter++], uint32_t);
 
-                    Counter++;
                     PointerCounter += LIB_printi(&pOut[PointerCounter], pFmt->n, pFmt->Width, pFmt->Option | LIB_OPT_BASE_HEXA);
                     continue;
                 }
 
                 if(*pFormatPtr == 'u')
                 {
-                    if(pFmt->SizeVar == LIB_VAR_16)   pFmt->n = va_arg(pFmt->pListArg[Counter], int);
-                    else                              pFmt->n = va_arg(pFmt->pListArg[Counter], uint32_t);
+                    if(pFmt->SizeVar == LIB_VAR_16)   pFmt->n = va_arg(pFmt->pListArg[Counter++], int);
+                    else                              pFmt->n = va_arg(pFmt->pListArg[Counter++], uint32_t);
 
-                    Counter++;
                     PointerCounter += LIB_printi(&pOut[PointerCounter], pFmt->n, pFmt->Width, pFmt->Option | LIB_OPT_LOWERCASE);
                     continue;
                 }

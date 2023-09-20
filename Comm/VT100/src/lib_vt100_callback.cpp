@@ -299,12 +299,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 
 // test vnsformat
 myVT100.InMenuPrintf(1, 34, VT100_LBL_BIG_TEST, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&TimeDate.Date)) + (int(LBL_FIRST_WEEK_DAY)))),
-                                                         myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
-                                                         TimeDate.Date.Day,
-                                                         TimeDate.Date.Year,
-                                                         TimeDate.Time.Hour,
-                                                         TimeDate.Time.Minute,
-                                                         uint32_t(TimeDate.Time.Second));
+                                                myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
+                                                TimeDate.Date.Day,
+                                                TimeDate.Date.Year,
+                                                TimeDate.Time.Hour,
+                                                TimeDate.Time.Minute,
+                                                uint32_t(TimeDate.Time.Second));
 
             if(TimeDate.Time.Second != VT100_LastSecond)
             {

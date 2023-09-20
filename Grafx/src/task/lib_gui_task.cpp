@@ -146,10 +146,6 @@ void GUI_myClassTask::Run()
             Msg.WidgetID = INVALID_WIDGET;
             Error        = NOS_OK;
         }
-        else
-        {
-            __asm("nop");
-        }
 
         if(Error == NOS_OK)
         {
@@ -266,8 +262,8 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef BACK_DEF
         else if((Widget > APP_START_BACK_CONST) && (Widget < APP_END_BACK_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CBackground));                   // Get the memory block for the widget class object
-            *pWidgetListPointer = new(pWidget) CBackground(&Background[Widget - (APP_START_BACK_CONST + 1)]);        // Get a class object of the widget
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CBackground));                       // Get the memory block for the widget class object
+            *pWidgetListPointer = new(pWidget) CBackground(&Background[Widget - (APP_START_BACK_CONST + 1)]);       // Get a class object of the widget
         }
        #endif
 
@@ -431,6 +427,7 @@ Link_e GUI_myClassTask::CreateAllWidget()
         }
        #endif
 */
+
         Count++;
         pPage++;
         pWidgetListPointer++;
@@ -500,7 +497,6 @@ Link_e GUI_myClassTask::RefreshAllWidget(MsgRefresh_t* pMsg)
 
     while((Count < m_WidgetCount) && (NewLink == INVALID_LINK))
     {
-        // TO DO  Check widget timer in the page to see if it need to be refreshed
         NewLink = (*pWidgetListPointer)->Refresh(pMsg);
         Count++;
         pWidgetListPointer++;
@@ -533,7 +529,7 @@ void GUI_myClassTask::FinalizeAllWidget()
     while(Count < m_WidgetCount)
     {
         (*pWidgetListPointer)->Finalize();
-        pMemoryPool->Free ((void**)&(*pWidgetListPointer));
+        pMemoryPool->Free((void**)&(*pWidgetListPointer));
         pWidgetListPointer++;
         Count++;
         nOS_Yield();

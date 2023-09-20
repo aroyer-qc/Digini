@@ -169,8 +169,6 @@ SERVICE_FORCED                      =  0x00400000,            // this will be ca
 enum MessageType_e
 {
     MESSAGE_TYPE_PDI_EVENT_INFO       = 0,
-    MESSAGE_TYPE_PAGE_LOADED,
-    MESSAGE_TYPE_LOAD_PAGE,
     MESSAGE_TYPE_REFRESH_PAGE,
 };
 

@@ -68,9 +68,9 @@ struct Circle_t
 
 struct Pie_t
 {
-   Circle_t           Circle;
-   uint16_t           StartAngle;
-   uint16_t           EndAngle;
+   Circle_t        Circle;
+   uint16_t        StartAngle;
+   uint16_t        EndAngle;
 };
 
 struct Polygon_t
@@ -196,7 +196,6 @@ struct Service_t
 {
     uint32_t       ID;
     uint16_t       SubID;
-    uint16_t       Timing;
 };
 
 struct ServiceReturn_t                                      // Basic service return

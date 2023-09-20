@@ -44,6 +44,9 @@
 #define SKIN_FLAG_SKIN_IS_LOADED              0x02
 #define SKIN_FLAG_SKIN_STATIC_IS_LOADED       0x04
 
+#define SKIN_REMAPPING_OFFSET                 0xA0
+#define SKIN_REMAPPING_SIZE                   (256 - SKIN_REMAPPING_OFFSET)
+
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
@@ -66,45 +69,20 @@
  };
 #endif
 
-// Remapping from GUI_Builder capture of Windows::Western to CP437 if available
-/*
-{                                                       //  CP437      Western
-                                                        // 0x80 check!!
-                                                        // 0x88 check!!
-                                                        // 0x90 check!!
-                                                        // 0x98 check!!
-                                                        // 0xA0 check!!
-                                                        // 0xA8 check!!
-                                                        // 0xB0 check!!
-                                                        // 0xB8 check!!
-                                                        // 0xC0 check!!
-                                                        // 0xC8 check!!
-                                                        // 0xD0 check!!
-                                                        // 0xD8 check!!
-                                                        // 0xE0 check!!
-          0xDA, 0xDB, 0xD9, 0xFD, 0xDD,                 // 0xE8 " ÚÛÙýÝ  "
-                                                        // 0xF0 check!!
-                                                        // 0xF8 check!!
-};
-*/
-
-static const uint8_t  m_Remapping[128] =                // Windows Western equivalent
-{                                                       //  CP437
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0x80 "........"
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0x88 "........"
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0x90 "........"
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0x99 "........"
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0xA0 "........"
-    0x00, 0xB8, 0x00, 0x00, 0x00, 0x00, 0xA9, 0x00,     // 0xA8 ".©....®."
-    0xF8, 0xF1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0xB0 "°±......"
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // 0xB8 "........"
+// Remapping from GUI_Builder capture of Windows::Western to ~ CP437 if available
+static const uint8_t m_Remapping[SKIN_REMAPPING_SIZE] = // Windows Western equivalent
+{                                                       //  ~ CP437
+    0x9F, 0xAD, 0xBD, 0x9C, 0xCF, 0xBE, 0xDD, 0xF5,     // 0xA0 "ƒ¡¢£¤¥¦§"  0x9F just filling
+    0xF9, 0xB8, 0xA6, 0xAE, 0xAA, 0xB3, 0xA9, 0xEE,     // 0xA8 "¨©ª«¬│®¯"  0xB3 just filling
+    0xF8, 0xF1, 0xFD, 0xFC, 0xEF, 0xE6, 0xF4, 0xFA,     // 0xB0 "°±²³´µ¶·"
+    0xF7, 0xFB, 0xA7, 0xAF, 0xAC, 0xAB, 0xF3, 0xA8,     // 0xB8 "¸¹º»¼½¾¿"
     0xB7, 0xB5, 0xB6, 0xC7, 0x8E, 0x8F, 0x92, 0x80,     // 0xC0 "ÀÁÂÃÄÅÆÇ"
     0xD4, 0x90, 0xD2, 0xD3, 0xCC, 0xD6, 0xD7, 0xD8,     // 0xC8 "ÈÉÊËÌÍÎÏ"
-    0xD1, 0xA5, 0xE3, 0xE0, 0xE2, 0xE5, 0x99, 0x00,     // 0xD0 "ÐÑÒÓÔÕÖ."
-    0x9D, 0x00, 0xE9, 0xEA, 0x9A, 0xED, 0xE8, 0x00,     // 0xD8 "Ø.ÚÛÜÝþ."
+    0xD1, 0xA5, 0xE3, 0xE0, 0xE2, 0xE5, 0x99, 0x9E,     // 0xD0 "ÐÑÒÓÔÕÖ×"
+    0x9D, 0xEB, 0xE9, 0xEA, 0x9A, 0xED, 0xE8, 0xE1,     // 0xD8 "ØÙÚÛÜÝþß"
     0x85, 0xA0, 0x83, 0xC6, 0x84, 0x86, 0x91, 0x87,     // 0xE0 "çáàãåêæë"
     0x8A, 0x82, 0x88, 0x89, 0x8D, 0xA1, 0x8C, 0x8B,     // 0xE8 "èéëïìíÄï"
-    0x00, 0xA4, 0x95, 0xA2, 0x93, 0xE4, 0x94, 0x00,     // 0xF0 ".ñòóõô.ö."
+    0xD0, 0xA4, 0x95, 0xA2, 0x93, 0xE4, 0x94, 0xF6,     // 0xF0 "ðñòóôõö÷"
     0x9B, 0x97, 0xA3, 0x96, 0x81, 0xEC, 0xE7, 0x98,     // 0xF8 "øùúûüýþÿ"
 };
 
@@ -561,11 +539,11 @@ SystemState_e SKIN_myClassTask::DeCompressAllFont(void)
     {
         for(uint16_t Character = 0; Character < 256; Character++)
         {
-            uint16_t RemapCharacter;
-            if(Character < 128) RemapCharacter = Character;
-            else                RemapCharacter = m_Remapping[Character - 128];
+            //uint16_t RemapCharacter;
+            //if(Character < SKIN_REMAPPING_OFFSET) RemapCharacter = Character;
+            //else                                  RemapCharacter = m_Remapping[Character - SKIN_REMAPPING_OFFSET];
 
-            DB_Central.Get(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, RemapCharacter);
+            DB_Central.Get(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, Character);
 
             if(FontDescriptor.pAddress != 0)                                            // Only extract data for font if it exist
             {
@@ -594,7 +572,7 @@ SystemState_e SKIN_myClassTask::DeCompressAllFont(void)
                 }
 
                 // Increment free pointer and decompressed data
-                OffsetCompression = (i * 256) + RemapCharacter;
+                OffsetCompression = (i * 256) + Character;
                 if(FontDescriptor.TotalSize != 0)
                 {
                     // Save memory pointer
@@ -603,7 +581,7 @@ SystemState_e SKIN_myClassTask::DeCompressAllFont(void)
                     pFreePointer += m_pDecompress->Process(pOutput, pInput, FontDescriptor.TotalSize, m_pCompressionMethod[OffsetCompression]);
                     // Save total size for this font
                     FontDescriptor.TotalSize = uint16_t(FontDescriptor.Size.Width) * uint16_t(FontDescriptor.Size.Height);
-                    DB_Central.Set(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, RemapCharacter);
+                    DB_Central.Set(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, Character);
                 }
 
                 delete pOutput;
@@ -669,10 +647,9 @@ SystemState_e SKIN_myClassTask::GetFontInfo(void)
             if((State = Get_uint8_t(&m_pCompressionMethod[OffsetCompression]))      != SYS_READY) return State;
             if((State = Get_uint32_t((uint32_t*)&FontDescriptor.pAddress))          != SYS_READY) return State;  // Use memory address pointer as temporary storage for in file index
 
-
             uint16_t RemapCharacter;
-            if(Character < 128) RemapCharacter = Character;
-            else                RemapCharacter = m_Remapping[Character - 128];
+            if(Character < SKIN_REMAPPING_OFFSET) RemapCharacter = Character;
+            else                                  RemapCharacter = m_Remapping[Character - SKIN_REMAPPING_OFFSET];
 
             DB_Central.Set(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, RemapCharacter);
 

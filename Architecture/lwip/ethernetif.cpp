@@ -348,10 +348,12 @@ void ethernetif_PollThePHY(void)
             if(ETH_LinkNow == ETH_LINK_UP)
             {
                 netif_set_link_up(netif_find(IF_NAME));
+                DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Link UP\r");
             }
             else
             {
                 netif_set_link_down(netif_find(IF_NAME));
+                DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Link DOWN\r");
             }
 
             ETH_Link = ETH_LinkNow;
@@ -379,7 +381,7 @@ void ethernetif_Callback(uint32_t Event)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       ethernetif_LinkCallcack
+//  Function:       ethernetif_LinkCallBack
 //
 //  Parameter(s):   pArg        N/U
 //  Return:         None

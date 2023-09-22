@@ -218,7 +218,7 @@ static err_t low_level_output(struct netif* netif, struct pbuf* pPacket)
     }
     else
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: low_level_output: Sem TimeOut\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: low_level_output: Sem TimeOut\n");
     }
 
     return ERR_OK;
@@ -348,12 +348,12 @@ void ethernetif_PollThePHY(void)
             if(ETH_LinkNow == ETH_LINK_UP)
             {
                 netif_set_link_up(netif_find(IF_NAME));
-                DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Link UP\r");
+                DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Link UP\n");
             }
             else
             {
                 netif_set_link_down(netif_find(IF_NAME));
-                DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Link DOWN\r");
+                DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Link DOWN\n");
             }
 
             ETH_Link = ETH_LinkNow;

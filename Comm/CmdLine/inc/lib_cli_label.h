@@ -41,21 +41,21 @@
 //-------------------------------------------------------------------------------------------------
 
 #if (CLI_USE_AT_PREFIX_ON_COMMAND == DEF_ENABLED)
-#define CLI_RESPONSE_FOR_LABEL,            "AT%s = %s%s\r>"
+#define CLI_RESPONSE_FOR_LABEL,            "AT%s = %s%s\n>"
 #else
-#define CLI_RESPONSE_FOR_LABEL,            "%s = %s%s\r>"
+#define CLI_RESPONSE_FOR_LABEL,            "%s = %s%s\n>"
 #endif
 
 // Console Generic Label
 #define CLI_LABEL_LANGUAGE_DEF(X_CLI_LBL_CFG) \
 X_CLI_LBL_CFG( LBL_CLEAR_SCREEN,            "\033[2J\033[H",                            nullptr                                     ) \
-X_CLI_LBL_CFG( LBL_RESET_TERMINAL,          "\033c\r",                                  nullptr                                     ) \
+X_CLI_LBL_CFG( LBL_RESET_TERMINAL,          "\033c\n",                                  nullptr                                     ) \
 X_CLI_LBL_CFG( LBL_ERROR,                   "ERROR, %s",                                "ERREUR, %s"                                ) \
-X_CLI_LBL_CFG( LBL_CMD_LINE_PROC_STARTED,   "Command Line Process Started\r>",          "Procédé Ligne de Commande, Démarré\r>"     ) \
-X_CLI_LBL_CFG( LBL_COMMAND_IS_INVALID,      "\rCommand is Invalid\r>",                  "\rCommande Invalide\r>"                    ) \
-X_CLI_LBL_CFG( LBL_MALFORMED_PACKED,        "\rMalformed Command\r>",                   "\rCommande Mal Formé\r>"                   ) \
-X_CLI_LBL_CFG( LBL_BUFFER_OVERFLOW,         "\rBuffer Overflow\r>",                     "\rDébordement du Tampon\r"                 ) \
-X_CLI_LBL_CFG( LBL_CMD_TIME_OUT,            " ... Command Timeout\r>",                  " ... Expiration du Délai de Commande\r>"   ) \
+X_CLI_LBL_CFG( LBL_CMD_LINE_PROC_STARTED,   "Command Line Process Started\n>",          "Procédé Ligne de Commande, Démarré\n>"     ) \
+X_CLI_LBL_CFG( LBL_COMMAND_IS_INVALID,      "\rCommand is Invalid\n>",                  "\rCommande Invalide\n>"                    ) \
+X_CLI_LBL_CFG( LBL_MALFORMED_PACKED,        "\rMalformed Command\n>",                   "\rCommande Mal Formé\n>"                   ) \
+X_CLI_LBL_CFG( LBL_BUFFER_OVERFLOW,         "\rBuffer Overflow\n>",                     "\rDébordement du Tampon\n"                 ) \
+X_CLI_LBL_CFG( LBL_CMD_TIME_OUT,            " ... Command Timeout\n>",                  " ... Expiration du Délai de Commande\n>"   ) \
 X_CLI_LBL_CFG( LBL_OK,                      "OK",                                       nullptr                                     ) \
 X_CLI_LBL_CFG( LBL_CLI_RESPONSE,            CLI_RESPONSE_FOR_LABEL,                     nullptr                                     ) \
 

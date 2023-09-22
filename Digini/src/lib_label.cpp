@@ -37,10 +37,10 @@
 const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
 {
     { "%s",                           nullptr                },  // LBL_STRING
-    { "%s\r",                         nullptr                },  // LBL_STRING_LINEFEED
+    { "%s\n",                         nullptr                },  // LBL_STRING_LINEFEED
     { "%c",                           nullptr                },  // LBL_CHAR
-    { "\r",                           nullptr                },  // LBL_LINEFEED
-    { "\r\r",                         nullptr                },  // LBL_DOUBLE_LINEFEED
+    { "\n",                           nullptr                },  // LBL_LINEFEED
+    { "\n\n",                         nullptr                },  // LBL_DOUBLE_LINEFEED
 
 #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
     { "Vendor:           ",           "Vendeur:          "   },  // LBL_FW_NAME_INFO

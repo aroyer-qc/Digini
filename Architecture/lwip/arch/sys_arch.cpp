@@ -486,7 +486,7 @@ u32_t sys_now(void)
 //
 // Parameter(s):   char*    pName                   Name of the thread
 //                 void     (*Thread)(void* pArg)   Thread-function.
-//                 void*    Arg                     parameter passed to 'thread'
+//                 void*    pArg                    parameter passed to 'thread'
 //                 int      StackSize               stack size in bytes for the new thread.
 //                 int      Priority                priority of the new thread
 // Return:         sys_thread_t
@@ -506,7 +506,7 @@ sys_thread_t sys_thread_new(const char* pName, void(*Thread)(void* Parameters), 
     {
         if((pBuffer = (nOS_Stack*)pMemoryPool->Alloc(StackSize)) !=  nullptr)
         {
-            if(nOS_ThreadCreate(pThread, Thread, pArg, pBuffer, StackSize, Priority
+            if(nOS_ThreadCreate(pThread, Thread, pArg, pBuffer, StackSize / sizeof(nOS_Stack), Priority
                               #if (NOS_CONFIG_THREAD_NAME_ENABLE > 0)
                               , pName
                               #endif

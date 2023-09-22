@@ -364,7 +364,7 @@ SystemState_e CommandLine::CmdDBG_LEVEL(void* pArg)
             DebugLevel <<= 1;
         }
 
-        snprintf(&Response[24], 64, "\r");
+        snprintf(&Response[24], 64, "\n");
         SendAnswer(CLI_DEBUG, SYS_OK_READ, Response);
         Error = SYS_OK_SILENT;
     }

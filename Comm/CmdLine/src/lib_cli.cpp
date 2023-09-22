@@ -52,7 +52,7 @@ typedef SystemState_e (CommandLine::*const CLI_Function_t)(void*);
 #define CLI_FIFO_CMD_SIZE                           32
 
 #define CLI_STRING_CLEAR_SCREEN                     "\033[2J\e[H"
-#define CLI_STRING_RESET_TERMINAL                   "\033c\r"
+#define CLI_STRING_RESET_TERMINAL                   "\033c\n"
 
 //-------------------------------------------------------------------------------------------------
 // Const(s)

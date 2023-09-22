@@ -261,13 +261,13 @@ SystemState_e ETH_Driver::PowerControl(ETH_PowerState_e State)
 
             if((m_MAC_Control.Flags & ETH_MAC_FLAG_INIT) == 0)
             {
-                DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Driver not initialized\r");
+                DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Driver not initialized\n");
                 return SYS_ERROR;                                           // Driver not initialized
             }
 
             if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) != 0)
             {
-                DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Driver already powered\r");
+                DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Driver already powered\n");
                 break;                                                      // Driver already powered
             }
 
@@ -360,13 +360,13 @@ SystemState_e ETH_Driver::GetMacAddress(ETH_MAC_Address_t* pMAC_Address)
 
     if(pMAC_Address == nullptr)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetMacAddress - Invalid Parameter\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetMacAddress - Invalid Parameter\n");
         return SYS_INVALID_PARAMETER;
     }
 
     if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetMacAddress - Driver not powered\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetMacAddress - Driver not powered\n");
         return SYS_ERROR;
     }
 
@@ -396,13 +396,13 @@ SystemState_e ETH_Driver::SetMacAddress(const ETH_MAC_Address_t* pMAC_Address)
 {
     if(pMAC_Address == nullptr)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SetMacAddress - Invalid Parameter\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SetMacAddress - Invalid Parameter\n");
         return SYS_INVALID_PARAMETER;
     }
 
     if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SetMacAddress - Driver not powered\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SetMacAddress - Driver not powered\n");
         return SYS_ERROR;
     }
 
@@ -436,13 +436,13 @@ SystemState_e ETH_Driver::SetAddressFilter(const ETH_MAC_Address_t* pMAC_Address
 
     if((pMAC_Address == nullptr) && (NbAddress != 0))
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SetAddressFilter - Invalid Parameter\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SetAddressFilter - Invalid Parameter\n");
         return SYS_INVALID_PARAMETER;
     }
 
     if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SetAddressFilter - Driver not powered\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SetAddressFilter - Driver not powered\n");
         return SYS_ERROR;
     }
 
@@ -534,13 +534,13 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
 
     if((pFrame == nullptr) || (Length == 0))
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - Invalid Parameter\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - Invalid Parameter\n");
         return SYS_INVALID_PARAMETER;
     }
 
     if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - Driver not powered\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - Driver not powered\n");
         return SYS_ERROR;
     }
 
@@ -550,7 +550,7 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
         if(m_TX_Descriptor[m_MAC_Control.TX_Index].Stat & DMA_TX_OWN)
         {
             // Transmitter is busy, wait
-            DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - TX Busy\r");
+            DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - TX Busy\n");
             return SYS_BUSY;
         }
 
@@ -659,12 +659,12 @@ SystemState_e ETH_Driver::ReadFrame(struct pbuf* ptrBuf, size_t Length)
 
     if((ptrBuf == nullptr) && (Length != 0))
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: ReadFrame - Invalid Parameter\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: ReadFrame - Invalid Parameter\n");
         State = SYS_INVALID_PARAMETER;
     }
     else if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: ReadFrame - Driver not powered\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: ReadFrame - Driver not powered\n");
         State = SYS_ERROR;
     }
     else
@@ -722,19 +722,19 @@ uint32_t ETH_Driver::GetRX_FrameSize(void)
 
     if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - Invalid Parameter\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - Invalid Parameter\n");
         return  0;
     }
 
     if(Stat & DMA_RX_OWN)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - Driver not powered\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - Driver not powered\n");
         return 0;                       // Owned by DMA
     }
 
     if(((Stat & DMA_RX_ES) != 0) || ((Stat & DMA_RX_FS) == 0) || ((Stat & DMA_RX_LS) == 0))
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - This block is invalid\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - This block is invalid\n");
         return (0xFFFFFFFF);            // Error, this block is invalid
     }
 
@@ -758,13 +758,13 @@ SystemState_e ETH_Driver::GetRX_FrameTime(ETH_MAC_Time_t* Time)
 
     if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameTime - Driver not powered\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameTime - Driver not powered\n");
         return SYS_ERROR;
     }
 
     if(RX_Desc->Stat & DMA_RX_OWN)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameTime - Owned by DMA\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameTime - Owned by DMA\n");
         return SYS_BUSY;                        // Owned by DMA
     }
 
@@ -792,21 +792,21 @@ SystemState_e ETH_Driver::GetTX_FrameTime(ETH_MAC_Time_t* Time)
 
     if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetTX_FrameTime - Driver not powered\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetTX_FrameTime - Driver not powered\n");
         return SYS_ERROR;
     }
 
     if(TX_Desc->Stat & DMA_RX_OWN)
     {
         // Owned by DMA
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetTX_FrameTime - Owned by DMA\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetTX_FrameTime - Owned by DMA\n");
         return SYS_BUSY;
     }
 
     if((TX_Desc->Stat & DMA_TX_TTSS) == 0)
     {
         // No transmit time stamp available
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetTX_FrameTime - No TX time Stamp Available\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetTX_FrameTime - No TX time Stamp Available\n");
         return SYS_ERROR;
     }
 
@@ -833,7 +833,7 @@ SystemState_e ETH_Driver::ControlTimer(ETH_ControlTimer_e Control, ETH_MAC_Time_
 {
     if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: ControlTimer - Driver not powered\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: ControlTimer - Driver not powered\n");
         return SYS_ERROR;
     }
 
@@ -936,7 +936,7 @@ SystemState_e ETH_Driver::Control(ETH_ControlCode_e Control, uint32_t Arg)
 
     if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Control - Driver not powered\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Control - Driver not powered\n");
         return SYS_ERROR;
     }
 
@@ -964,7 +964,7 @@ SystemState_e ETH_Driver::Control(ETH_ControlCode_e Control, uint32_t Arg)
 
                 default:
                 {
-                    DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Control - Unsupported speed\r");
+                    DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Control - Unsupported speed\n");
                     return SYS_UNSUPPORTED_FEATURE;
                 }
             }
@@ -982,7 +982,7 @@ SystemState_e ETH_Driver::Control(ETH_ControlCode_e Control, uint32_t Arg)
                 break;
 
                 default:
-                    DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Control - Unsupported duplex config\r");
+                    DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Control - Unsupported duplex config\n");
                     return SYS_ERROR;
             }
 
@@ -1016,7 +1016,7 @@ SystemState_e ETH_Driver::Control(ETH_ControlCode_e Control, uint32_t Arg)
             if((Arg & ETH_MAC_CHECKSUM_OFFLOAD_RX) ||  (Arg & ETH_MAC_CHECKSUM_OFFLOAD_TX))
             {
                 // Checksum offload is disabled in the driver
-                DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Control - Checksum offload is disabled\r");
+                DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Control - Checksum offload is disabled\n");
                 return SYS_ERROR;
             }
           #endif
@@ -1164,7 +1164,7 @@ SystemState_e ETH_Driver::PHY_Read(uint8_t PHY_Address, uint8_t RegisterAddress,
 
     if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: PHY_Read - Driver not powered\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: PHY_Read - Driver not powered\n");
         return SYS_ERROR;
     }
 
@@ -1196,7 +1196,7 @@ SystemState_e ETH_Driver::PHY_Write(uint8_t PHY_Address, uint8_t RegisterAddress
 
     if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: PHY_Write - Driver not powered\r");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: PHY_Write - Driver not powered\n");
         return SYS_ERROR;
     }
 
@@ -1241,7 +1241,7 @@ SystemState_e ETH_Driver::PHY_Busy(void)
         return SYS_READY;
     }
 
-    DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: PHY_Busy - It's busy\r");
+    DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: PHY_Busy - It's busy\n");
     return SYS_TIME_OUT;
 }
 

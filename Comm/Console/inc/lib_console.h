@@ -105,6 +105,7 @@ class Console : public CallbackInterface
         bool             IsItA_Comma                (void);
         bool             IsItAnEOL                  (void);
         size_t           PrintSerialLog             (CON_DebugLevel_e Level, const char* pFormat, ...);
+        size_t           PrintSerialLog             (CON_DebugLevel_e Level, const char* pFormat, va_list va);
         void             SetSerialLogging           (bool Mute);
         SystemState_e    SendData                   (const uint8_t* p_BufferTX, size_t* pSizeTX);
         void             CallbackFunction           (int Type, void* pContext);

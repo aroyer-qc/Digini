@@ -1101,7 +1101,7 @@ size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat
                 while(m_pUartDriver->IsItBusy() == true){};
                 m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);
                 UART_Write(UART_CONSOLE, pBuffer, Size);
-                m_pUartDriver->SendData("\r", &Size);
+                m_pUartDriver->SendData("\n", &Size);
 
 
 

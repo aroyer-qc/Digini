@@ -764,7 +764,7 @@ myVT100.InMenuPrintf(1, 23, VT100_LBL_SCROLL_ZONE, 30, 40);
 
             if ((res != FR_OK) || (fno.fname[0] == 0))  break;
 
-            sprintf(string, "%c%c%c%c %10d %s/%s\r", ((fno.fattrib & AM_DIR) ? 'D' : '-'),
+            sprintf(string, "%c%c%c%c %10d %s/%s\n", ((fno.fattrib & AM_DIR) ? 'D' : '-'),
                                                      ((fno.fattrib & AM_RDO) ? 'R' : '-'),
                                                      ((fno.fattrib & AM_SYS) ? 'S' : '-'),
                                                      ((fno.fattrib & AM_HID) ? 'H' : '-'),

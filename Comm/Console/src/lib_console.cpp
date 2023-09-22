@@ -65,7 +65,7 @@ void Console::Initialize(UART_Driver* pUartDriver)
     m_pUartDriver           = pUartDriver;
     m_IsItOnHold            = false;
     m_IsItOnStartup         = true;
-    m_MuteSerialLogging     = true;
+    m_MuteSerialLogging     = false;
     m_DebugLevel            = CON_DEBUG_NONE;
     m_ActiveProcessLevel    = CON_NOT_CONNECTED;
 
@@ -189,7 +189,7 @@ size_t Console::Printf(int MaxSize, const char* pFormat, ...)
 //
 //  Parameter(s):   CON_DebugLevel_e    Level       Level of printf logging.
 //                  const char*         pFormat     Formatted string.
-//                  ...                             Parameter if any.
+//                  ... or va_list      Parameter if any.
 //
 //  Return:         size_t              Number of character printed.
 //
@@ -200,20 +200,29 @@ size_t Console::Printf(int MaxSize, const char* pFormat, ...)
 //-------------------------------------------------------------------------------------------------
 size_t Console::PrintSerialLog(CON_DebugLevel_e Level, const char* pFormat, ...)
 {
-    va_list          vaArg;
+    size_t  Size;
+    va_list vaArg;
+
+    va_start(vaArg, pFormat);
+    Size = PrintSerialLog(Level, pFormat, vaArg);
+    va_end(vaArg);
+
+    return Size;
+}
+
+size_t Console::PrintSerialLog(CON_DebugLevel_e Level, const char* pFormat, va_list vaArg)
+{
     char*            pBuffer;
     size_t           Size = 0;
 
     if(m_MuteSerialLogging == false)
     {
-        if((m_DebugLevel & Level) != CON_DEBUG_NONE)
+        //if((m_DebugLevel & Level) != CON_DEBUG_NONE)      TODO fix this finish support for it
         {
             if((pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE)) != nullptr)
             {
-                va_start(vaArg, pFormat);
                 Size = vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, vaArg);
                 m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size);
-                va_end(vaArg);
             }
         }
     }

@@ -205,7 +205,7 @@ static err_t low_level_output(struct netif* netif, struct pbuf* pPacket)
 {
 	VAR_UNUSED(netif);
 
-    if(nOS_MutexLock(&ETH_TX_Mutex, netifGUARD_BLOCK_TIME))
+    if(nOS_MutexLock(&ETH_TX_Mutex, netifGUARD_BLOCK_TIME) == NOS_OK)
     {
         for(; pPacket != nullptr; pPacket = pPacket->next)
         {
@@ -240,15 +240,21 @@ static inline struct pbuf* low_level_input(void)
    	struct pbuf* pPacket = nullptr;
     size_t       Length;
 
-    Length = ETH_Mac.GetRX_FrameSize();                             // Obtain the size of the packet and put it into the "len" variable.
+    Length = ETH_Mac.GetRX_FrameSize();                                             // Obtain the size of the packet and put it into the "len" variable.
 
-    if((Length != 0) && (Length <= ETHERNET_FRAME_SIZE))
+    if(Length != 0)
     {
-        pPacket = pbuf_alloc(PBUF_RAW, Length, PBUF_POOL);          // We allocate a pbuf chain of pbufs from the pool.
+        if(Length <= ETHERNET_FRAME_SIZE)
+        {
+            if((pPacket = pbuf_alloc(PBUF_RAW, Length, PBUF_POOL)) == nullptr)      // We allocate a pbuf chain of pbufs from the pool.
+            {
+                Length = 0;                                                         // we cannot allocated memory so this will force the packet to be dropped
+            }
+        }
+
+        ETH_Mac.ReadFrame(pPacket, Length);                                         // Read or drop the packet
     }
-
-    ETH_Mac.ReadFrame(pPacket, (pPacket != nullptr) ? Length : 0);  // Read or drop the packet (Length <= 0 OR > ETHERNET_FRAME_SIZE)  OR we cannot allocated memory for it
-
+    
     return pPacket;
 }
 
@@ -286,16 +292,17 @@ void ethernetif_input(void* pParam)
 
 			do
 			{
-                pPacket = low_level_input();
-
-                if(s_pxNetIf->input(pPacket, s_pxNetIf) != ERR_OK)
+                if((pPacket = low_level_input()) != nullptr)
                 {
-                    pbuf_free(pPacket);
-                    pPacket = nullptr;
-                }
-                else
-                {
-                    nOS_SemTake(&ETH_RX_Sem, 0);
+                    if(s_pxNetIf->input(pPacket, s_pxNetIf) != ERR_OK)
+                    {
+                        pbuf_free(pPacket);
+                        pPacket = nullptr;
+                    }
+                    else
+                    {
+                        nOS_SemTake(&ETH_RX_Sem, 0);
+                    }
                 }
 			}
 			while(pPacket != nullptr);

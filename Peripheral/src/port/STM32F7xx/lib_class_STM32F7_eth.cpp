@@ -722,13 +722,13 @@ uint32_t ETH_Driver::GetRX_FrameSize(void)
 
     if((m_MAC_Control.Flags & ETH_MAC_FLAG_POWER) == 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - Invalid Parameter\n");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - Driver not powered\n");
         return  0;
     }
 
     if(Stat & DMA_RX_OWN)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - Driver not powered\n");
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - Owned by DMA\n");
         return 0;                       // Owned by DMA
     }
 
@@ -1122,13 +1122,13 @@ void ETH_Driver::DMA_Configure(void)
     #define  ETH_DMAOMR_CFG         ETH_DMAOMR_OSF             // Second Frame Operate  // do better init
 
 
-    #define  ETH_DMABMR_CFG         ETH_DMABMR_AAB        |    /* Address Aligned Beats                    */ \
-									ETH_DMABMR_EDE        |    /* Enhanced Descriptor format enable        */ \
-									ETH_DMABMR_FB         |    /* Fixed Burst                              */ \
-									ETH_DMABMR_RTPR_2_1   |    /* Arbitration Round Robin RxTx 2 1         */ \
-									ETH_DMABMR_RDP_32Beat |    /* Rx DMA Burst Length 32 Beat              */ \
-									ETH_DMABMR_PBL_32Beat |    /* Tx DMA Burst Length 32 Beat              */ \
-									ETH_DMABMR_USP             /* Enable use of separate PBL for Rx and Tx */
+    #define  ETH_DMABMR_CFG         ETH_DMABMR_AAB        |    // Address Aligned Beats
+									ETH_DMABMR_EDE        |    // Enhanced Descriptor format enable
+									ETH_DMABMR_FB         |    // Fixed Burst
+									ETH_DMABMR_RTPR_2_1   |    // Arbitration Round Robin RxTx 2 1
+									ETH_DMABMR_RDP_32Beat |    // Rx DMA Burst Length 32 Beats
+									ETH_DMABMR_PBL_32Beat |    // Tx DMA Burst Length 32 Beats
+									ETH_DMABMR_USP             // Enable use of separate PBL for Rx and Tx
 
 
     dmabmr = ETH->DMABMR & ~uint32_t(ETH_DMABMR_AAB  | ETH_DMABMR_FPM | ETH_DMABMR_USP |

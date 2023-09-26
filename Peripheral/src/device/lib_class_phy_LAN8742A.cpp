@@ -269,8 +269,9 @@ SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
 //-------------------------------------------------------------------------------------------------
 ETH_LinkState_e PHY_LAN8742A_Driver::GetLinkState(void)
 {
-    ETH_LinkState_e State;
-    uint16_t        Value = 0;
+    ETH_LinkState_e         State;
+    static ETH_LinkState_e  StateNow = ETH_LINK_UNKNOWN;
+    uint16_t                Value = 0;
 
     if(m_Flags & ETH_POWERED_ON)
     {
@@ -278,7 +279,11 @@ ETH_LinkState_e PHY_LAN8742A_Driver::GetLinkState(void)
     }
 
     State = (Value & BSR_LINK_STAT) ? ETH_LINK_UP : ETH_LINK_DOWN;
-    DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: LINK has change, now it is %s\n", (State == ETH_LINK_UP) ? "UP" : "DOWN");
+    if(StateNow != State)
+    {
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: LINK has change, now it is %s\n", (State == ETH_LINK_UP) ? "UP" : "DOWN");
+        StateNow = State;
+    }
 
     return State;
 }

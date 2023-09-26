@@ -117,7 +117,8 @@ enum ETH_PHY_Mode_e
 enum ETH_LinkState_e
 {
     ETH_LINK_DOWN,                                  // Link is Down
-    ETH_LINK_UP                                     // Link is Up
+    ETH_LINK_UP,                                    // Link is Up
+    ETH_LINK_UNKNOWN,
 };
 
 // Ethernet Link Info

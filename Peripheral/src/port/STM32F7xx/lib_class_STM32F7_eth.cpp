@@ -158,7 +158,6 @@ ETH_MAC_Capability_t ETH_Driver::GetCapabilities(void)
     return m_Capabilities;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name:     Initialize

@@ -397,7 +397,7 @@ void sys_sem_free(sys_sem_t* pSemaphore)
 //-------------------------------------------------------------------------------------------------
 err_t sys_mutex_new(sys_mutex_t* pMutex)
 {
-	if(nOS_MutexCreate(pMutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT) == NOS_OK)
+	if(nOS_MutexCreate(pMutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT) == NOS_OK)
 	{
         SYS_STATS_INC_USED(mutex);
         return ERR_OK;

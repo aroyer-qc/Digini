@@ -43,15 +43,37 @@
 
 #if (USE_ETH_DRIVER == DEF_ENABLED)
 
+
+//-------------------------------------------------------------------------------------------------
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
 // Timeouts
 #define PHY_TIMEOUT         2               // PHY Register access timeout in ms
 #define RESET_TIMEOUT       10
 
+
+#define  ETH_DMAOMR_CFG     ETH_DMAOMR_OSF             // Second Frame Operate  // do better init
+
+
+#define  ETH_DMABMR_CFG     ETH_DMABMR_AAB        |    /* Address Aligned Beats                    */\
+                            ETH_DMABMR_EDE        |    /* Enhanced Descriptor format enable        */\
+                            ETH_DMABMR_FB         |    /* Fixed Burst                              */\
+                            ETH_DMABMR_RTPR_2_1   |    /* Arbitration Round Robin RxTx 2 1         */\
+                            ETH_DMABMR_RDP_32Beat |    /* Rx DMA Burst Length 32 Beats             */\
+                            ETH_DMABMR_PBL_32Beat |    /* Tx DMA Burst Length 32 Beats             */\
+                            ETH_DMABMR_USP             /* Enable use of separate PBL for Rx and Tx */
+
+//-------------------------------------------------------------------------------------------------
+// Function prototype(s)
+//-------------------------------------------------------------------------------------------------
+
 // Interrupt Handler Prototype
 extern "C" void ETH_IRQHandler(void);
 
+//-------------------------------------------------------------------------------------------------
+// Variables(s)
+//-------------------------------------------------------------------------------------------------
 
 RX_Descriptor_t ETH_Driver::m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
 uint32_t        ETH_Driver::m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((aligned(4)));   // Ethernet Receive buffers
@@ -1116,19 +1138,6 @@ void ETH_Driver::DMA_Configure(void)
 {
     uint32_t dmabmr;
     uint32_t dmaomr;
-
-
-    #define  ETH_DMAOMR_CFG         ETH_DMAOMR_OSF             // Second Frame Operate  // do better init
-
-
-    #define  ETH_DMABMR_CFG         ETH_DMABMR_AAB        |    // Address Aligned Beats
-									ETH_DMABMR_EDE        |    // Enhanced Descriptor format enable
-									ETH_DMABMR_FB         |    // Fixed Burst
-									ETH_DMABMR_RTPR_2_1   |    // Arbitration Round Robin RxTx 2 1
-									ETH_DMABMR_RDP_32Beat |    // Rx DMA Burst Length 32 Beats
-									ETH_DMABMR_PBL_32Beat |    // Tx DMA Burst Length 32 Beats
-									ETH_DMABMR_USP             // Enable use of separate PBL for Rx and Tx
-
 
     dmabmr = ETH->DMABMR & ~uint32_t(ETH_DMABMR_AAB  | ETH_DMABMR_FPM | ETH_DMABMR_USP |
                                      ETH_DMABMR_RDP  | ETH_DMABMR_FB  | ETH_DMABMR_FPM |

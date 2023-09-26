@@ -91,6 +91,7 @@
 #include "lib_isr.h"
 #include "lib_dma.h"
 #include "lib_fifo.h"
+#include "lib_rng.h"
 #include "lib_cpu_specific.h"
 
 #if (DIGINI_USE_CRC == DEF_ENABLED)

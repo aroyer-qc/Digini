@@ -69,7 +69,7 @@ extern "C" {
 //-------------------------------------------------------------------------------------------------
 err_t sys_mbox_new(sys_mbox_t* pMailBox, int Size)
 {
-    void*       pBuffer;
+    void* pBuffer;
 
     pBuffer = (void*)pMemoryPool->Alloc(Size * sizeof(void *));
 
@@ -82,7 +82,6 @@ err_t sys_mbox_new(sys_mbox_t* pMailBox, int Size)
         }
 
         pMemoryPool->Free((void**)&pBuffer);
-
     }
 
     return ERR_MEM;
@@ -187,7 +186,7 @@ err_t sys_mbox_trypost(sys_mbox_t* pMailBox, void* pMessageToPost)
 //-------------------------------------------------------------------------------------------------
 u32_t sys_arch_mbox_fetch(sys_mbox_t* pMailBox, void** ppBuffer, u32_t TimeOut)
 {
-    void *Dummy;
+    void*           Dummy;
     nOS_TickCounter TickStart;
     nOS_TickCounter TickEnd;
     nOS_TickCounter TickElapse;
@@ -243,7 +242,7 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t* pMailBox, void** ppBuffer, u32_t TimeOut)
 // Return:         u32_t                   -  SYS_MBOX_EMPTY if no messages. Otherwise, ERR_OK.
 //
 // Description:    Similar to sys_arch_mbox_fetch, but if message is not ready immediately, will
-//                 return with SYS_MBOX_EMPTY.  On success, 0 is returned.
+//                 return with SYS_MBOX_EMPTY.  On success, ERR_OK is returned.
 //-------------------------------------------------------------------------------------------------
 u32_t sys_arch_mbox_tryfetch(sys_mbox_t* pMailBox, void** ppBuffer)
 {
@@ -404,7 +403,6 @@ err_t sys_mutex_new(sys_mutex_t* pMutex)
 	}
 
     SYS_STATS_INC(mutex.err);
-
 	return ERR_MEM;
 }
 
@@ -579,13 +577,13 @@ void sys_arch_unprotect(sys_prot_t Prot)
 //
 // Return:         None
 //
-// Description:    Prints an assertion messages and aborts execution. TODO
+// Description:    Prints an assertion messages and aborts execution.
 //-------------------------------------------------------------------------------------------------
 void sys_assert(const char* pMessage)
 {
-	(void) pMessage;
+    DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, pMessage);
 
-	for (;;)
+	for(;;)
 	{
 	}
 }

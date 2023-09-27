@@ -40,8 +40,11 @@
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_MEM_BLOCK_AS_ENUM(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE) ENUM_ID,
+#define EXPAND_X_MEM_BLOCK_AS_ENUM(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)        ENUM_ID,
 #define EXPAND_X_MEM_BLOCK_AS_ARRAY_DECL(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)  uint8_t m_##GROUP_NAME[BLOCK_MAX][BLOCK_SIZE] __attribute__ ((aligned (4)));
+#define EXPAND_X_MEM_BLOCK_AS_TOTAL(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)       BLOCK_MAX + BLOCK_SIZE +
+
+#define MEM_BLOCK_TOTAL_RESERVED            (MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_TOTAL) + 0)
 
 //-------------------------------------------------------------------------------------------------
 // MEM_BLOCK list declaration section

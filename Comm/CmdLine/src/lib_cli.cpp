@@ -170,7 +170,7 @@ void CommandLine::IF_Process(void)
         m_pConsole->Printf(CON_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
         TickCount_t Delay = GetTick();
         while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
-        m_pConsole->Printf(CON_SIZE_NONE, "Command Line Process Started\r>");
+        m_pConsole->Printf(CON_SIZE_NONE, "Command Line Process Started\n>");
     }
 
     if(m_IsItOnStartup == true)

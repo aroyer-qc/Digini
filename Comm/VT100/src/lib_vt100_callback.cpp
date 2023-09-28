@@ -263,9 +263,11 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
           #ifdef DEBUG
             myVT100.InMenuPrintf(       LBL_SERIAL_NUMBER);
           #else
-            char* pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE);
+             char* pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE);
              DB_Central.Get(pBuffer, SYS_SERIAL_NUMBER);
              InMenuPrintf(LBL_STRING, pBuffer);
+             pMemoryPool->Free(&pBuffer);
+
           #endif
             myVT100.InMenuPrintf(1, 15, LBL_COMPILE_DATE_INFO);
             myVT100.InMenuPrintf(       LBL_BUILT_DATE);
@@ -286,7 +288,14 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
                 myVT100.InMenuPrintf(LBL_CHAR, i);
             }
 
-            myVT100.InMenuPrintf(1, 23, VT100_LBL_ESCAPE);
+             char* pBuffer = (char*)pMemoryPool->Alloc(80);
+             snprintf(pBuffer, 80, "Total reserved bytes for the memory pool :%lu Bytes", pMemoryPool->GetTotalSizeReserved());
+             myVT100.InMenuPrintf(1, 25, LBL_STRING, pBuffer);
+             snprintf(pBuffer, 80, "Total used bytes from the memory pool :%lu Bytes", pMemoryPool->GetUsedMemory());   // todo should refresh this
+             myVT100.InMenuPrintf(1, 26, LBL_STRING, pBuffer);
+             pMemoryPool->Free(&pBuffer);
+
+            myVT100.InMenuPrintf(1, 26, VT100_LBL_ESCAPE);
         }
         break;
 
@@ -297,14 +306,25 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             LIB_GetDateAndTime(&TimeDate);
 
 
-// test vnsformat
-myVT100.InMenuPrintf(1, 34, VT100_LBL_BIG_TEST, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&TimeDate.Date)) + (int(LBL_FIRST_WEEK_DAY)))),
-                                                myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
-                                                TimeDate.Date.Day,
-                                                TimeDate.Date.Year,
-                                                TimeDate.Time.Hour,
-                                                TimeDate.Time.Minute,
-                                                uint32_t(TimeDate.Time.Second));
+myVT100.InMenuPrintf(1, 34, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&TimeDate.Date)) + (int(LBL_FIRST_WEEK_DAY)))),
+                                                 myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
+                                                 TimeDate.Date.Day,
+                                                 TimeDate.Date.Year,
+                                                 TimeDate.Time.Hour,
+                                                 TimeDate.Time.Minute,
+                                                 uint32_t(TimeDate.Time.Second));
+
+myLabel.SetLanguage(LANG_ENGLISH);
+
+myVT100.InMenuPrintf(1, 35, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&TimeDate.Date)) + (int(LBL_FIRST_WEEK_DAY)))),
+                                                 myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
+                                                 TimeDate.Date.Day,
+                                                 TimeDate.Date.Year,
+                                                 TimeDate.Time.Hour,
+                                                 TimeDate.Time.Minute,
+                                                 uint32_t(TimeDate.Time.Second));
+
+myLabel.SetLanguage(LANG_FRENCH);
 
             if(TimeDate.Time.Second != VT100_LastSecond)
             {

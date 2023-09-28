@@ -42,20 +42,18 @@
 
 #define EXPAND_X_MEM_BLOCK_AS_ENUM(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)        ENUM_ID,
 #define EXPAND_X_MEM_BLOCK_AS_ARRAY_DECL(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)  uint8_t m_##GROUP_NAME[BLOCK_MAX][BLOCK_SIZE] __attribute__ ((aligned (4)));
-#define EXPAND_X_MEM_BLOCK_AS_TOTAL(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)       BLOCK_MAX + BLOCK_SIZE +
-
-#define MEM_BLOCK_TOTAL_RESERVED            (MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_TOTAL) + 0)
+#define EXPAND_X_MEM_BLOCK_AS_TOTAL(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)       (BLOCK_MAX * BLOCK_SIZE) +
 
 //-------------------------------------------------------------------------------------------------
 // MEM_BLOCK list declaration section
 //-------------------------------------------------------------------------------------------------
 
 // To found how many block type there is
-    enum MEM_BlockList_e
-    {
-        MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_ENUM)
-        MEM_BLOCK_GROUP_SIZE
-    };
+enum MEM_BlockList_e
+{
+    MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_ENUM)
+    MEM_BLOCK_GROUP_SIZE
+};
 
 //-------------------------------------------------------------------------------------------------
 
@@ -72,12 +70,19 @@ class MemPoolDriver
         bool        Free                        (void** pBlock);
         bool        IsAvailable                 (size_t SizeRequired);
         nOS_Error   GetLastError                (void);
+      #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+        uint32_t    GetTotalSizeReserved        (void);
+        uint32_t    GetUsedMemory               (void);
+      #endif
 
     private:
 
         nOS_Mem                     m_nOS_MemArray      [MEM_BLOCK_GROUP_SIZE];                  // handler to give to nOS_Mem... function
         void*                       m_pBufferArray      [MEM_BLOCK_GROUP_SIZE];                  // pointer array of the memory block
         nOS_Error                   m_LastError;
+      #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+        uint32_t                    m_UsedMemory;
+      #endif
 
         MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_ARRAY_DECL)
 };

@@ -65,7 +65,7 @@ void Console::Initialize(UART_Driver* pUartDriver)
     m_pUartDriver           = pUartDriver;
     m_IsItOnHold            = false;
     m_IsItOnStartup         = true;
-    m_MuteSerialLogging     = false;
+    m_MuteSerialLogging     = true;
     m_DebugLevel            = CON_DEBUG_NONE;
     m_ActiveProcessLevel    = CON_NOT_CONNECTED;
 
@@ -189,7 +189,7 @@ size_t Console::Printf(int MaxSize, const char* pFormat, ...)
 //
 //  Parameter(s):   CON_DebugLevel_e    Level       Level of printf logging.
 //                  const char*         pFormat     Formatted string.
-//                  ... or va_list      Parameter if any.
+//                  ... or va_list                  Parameter if any.
 //
 //  Return:         size_t              Number of character printed.
 //

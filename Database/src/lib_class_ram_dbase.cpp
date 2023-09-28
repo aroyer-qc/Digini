@@ -121,7 +121,9 @@ const size_t RAM_DataBase::m_ItemSize[NB_RAM_DBASE_ITEMS_CONST] =               
 SystemState_e RAM_DataBase::Initialize(void* pConfig, size_t ObjectSize)
 {
     uint16_t    i;
+  #ifdef GFX_RAM_DBASE_DEF
     size_t      RecordTotalSize;
+  #endif
 
     if(ObjectSize > sizeof(RAM_DBaseRegionPointer_t*)) return SYS_WRONG_SIZE;
     if(ObjectSize < sizeof(RAM_DBaseRegionPointer_t*)) return SYS_WRONG_SIZE;

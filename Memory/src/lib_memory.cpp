@@ -65,6 +65,11 @@ MemPoolDriver::MemPoolDriver()
     i = 0;
     // Get the address of each group in pointer array
 
+  #if MEMORY_POOL_USE_STAT == DEF_ENABLED
+    m_UsedMemory = 0;
+  #endif
+
+
      MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_ARRAY)
 
     //Initialize nOS Memory array structure
@@ -120,17 +125,23 @@ MemPoolDriver::~MemPoolDriver()
 //-------------------------------------------------------------------------------------------------
 void* MemPoolDriver::Alloc(size_t SizeRequired, TickCount_t TimeOut)
 {
-   void* MemPtr;
+   void*    MemPtr;
+   size_t   SizeBlock;
 
-  #if (DIGINI_RESTRICT_MEMORY_ALLOC_TO_BLOCK_SIZE == DEF_DISABLED)
+  #if (MEMORY_POOL_RESTRICT_ALLOC_TO_BLOCK_SIZE == DEF_DISABLED)
     // First loop will check for any block available, so we don't wait to be freed
     for(uint8_t i = 0; i < MEM_BLOCK_GROUP_SIZE; i++)
     {
-        if(m_nOS_MemArray[i].bsize >= SizeRequired)
+        SizeBlock = m_nOS_MemArray[i].bsize;
+        
+        if(SizeBlock >= SizeRequired)
         {
             MemPtr = nOS_MemAlloc(&m_nOS_MemArray[i], NOS_NO_WAIT);
             if(MemPtr != nullptr)
             {
+              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+                m_UsedMemory += SizeBlock;
+              #endif            
                 return MemPtr;
             }
         }
@@ -140,9 +151,19 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, TickCount_t TimeOut)
     // If we reach here then we did not succeed to get a block, so we will wait
     for(uint8_t i = 0; i < MEM_BLOCK_GROUP_SIZE; i++)
     {
-        if(m_nOS_MemArray[i].bsize >= SizeRequired)
+        SizeBlock = m_nOS_MemArray[i].bsize;
+        
+        if(SizeBlock >= SizeRequired)
         {
             MemPtr = nOS_MemAlloc(&m_nOS_MemArray[i], TimeOut);
+
+              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+                if(MemPtr != nullptr)
+                {
+                    m_UsedMemory += SizeBlock;
+                }
+              #endif            
+
             return MemPtr;
         }
     }
@@ -249,6 +270,10 @@ bool MemPoolDriver::Free(void** pBlock)
             m_LastError = nOS_MemFree(&m_nOS_MemArray[GroupID], *pBlock);
             if(m_LastError == NOS_OK)
             {
+              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+                m_UsedMemory -= m_nOS_MemArray[GroupID].bsize;
+              #endif            
+                
                 *pBlock = nullptr;
                 return true;
             }
@@ -305,6 +330,40 @@ nOS_Error MemPoolDriver::GetLastError(void)
 {
     return m_LastError;
 }
+
+#if MEMORY_POOL_USE_STAT == DEF_ENABLED
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetTotalSizeReserved
+//
+//   Parameter(s):  None
+//   Return::       nOS_Error
+//
+//   Description:   Return the last known error
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t MemPoolDriver::GetUsedMemory(void)
+{
+    return m_UsedMemory;
+
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetTotalSizeReserved
+//
+//   Parameter(s):  None
+//   Return::       nOS_Error
+//
+//   Description:   Return the last known error
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t MemPoolDriver::GetTotalSizeReserved(void)
+{
+    return MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_TOTAL) + 0;
+}
+
+#endif
 
 //-------------------------------------------------------------------------------------------------
 

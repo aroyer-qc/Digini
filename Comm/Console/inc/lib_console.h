@@ -140,7 +140,7 @@ class Console : public CallbackInterface
 
     // need to add echo on or off for child process.. Console need it, but menu don't need it!
         UART_Driver*                            m_pUartDriver;
-        UART_Transfer_t**                       m_pRX_Transfer;
+        //UART_Transfer_t**                       m_pRX_Transfer;
         TickCount_t                             m_CommandTimeOut;
         int16_t                                 m_CommandNameSize;
         bool                                    m_MuteSerialLogging;

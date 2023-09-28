@@ -66,6 +66,8 @@ struct STR_Format_t
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
+
+// TODO need provide LIB_snprintf
 size_t      LIB_vsnprintf           (char* pOut, size_t Size, const char* pFormat, va_list Arg);
 char*       LIB_strnchr             (char* pStr, size_t Size, char Chr);
 void        LIB_strnstrip           (char* pString, size_t nSize);

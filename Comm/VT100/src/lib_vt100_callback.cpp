@@ -266,7 +266,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
              char* pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE);
              DB_Central.Get(pBuffer, SYS_SERIAL_NUMBER);
              InMenuPrintf(LBL_STRING, pBuffer);
-             pMemoryPool->Free(&pBuffer);
+             pMemoryPool->Free((void**)&pBuffer);
 
           #endif
             myVT100.InMenuPrintf(1, 15, LBL_COMPILE_DATE_INFO);
@@ -288,13 +288,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
                 myVT100.InMenuPrintf(LBL_CHAR, i);
             }
 
-             char* pBuffer = (char*)pMemoryPool->Alloc(80);
-             snprintf(pBuffer, 80, "Total reserved bytes for the memory pool :%lu Bytes", pMemoryPool->GetTotalSizeReserved());
-             myVT100.InMenuPrintf(1, 25, LBL_STRING, pBuffer);
-             snprintf(pBuffer, 80, "Total used bytes from the memory pool :%lu Bytes", pMemoryPool->GetUsedMemory());   // todo should refresh this
-             myVT100.InMenuPrintf(1, 26, LBL_STRING, pBuffer);
-             pMemoryPool->Free(&pBuffer);
-
             myVT100.InMenuPrintf(1, 26, VT100_LBL_ESCAPE);
         }
         break;
@@ -304,6 +297,13 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             UpTime = nOS_GetTickCount() / NOS_CONFIG_TICKS_PER_SECOND;
 
             LIB_GetDateAndTime(&TimeDate);
+
+             char pBuffer[80];// = (char*)pMemoryPool->Alloc(80);
+             snprintf(pBuffer, 80, "Total reserved bytes for the memory pool :%lu Bytes", pMemoryPool->GetTotalSizeReserved());
+             myVT100.InMenuPrintf(1, 25, LBL_STRING, pBuffer);
+             snprintf(pBuffer, 80, "Total used bytes from the memory pool :%lu Bytes", pMemoryPool->GetUsedMemory());   // todo should refresh this
+             myVT100.InMenuPrintf(1, 26, LBL_STRING, pBuffer);
+             //pMemoryPool->Free((void**)&pBuffer);
 
 
 myVT100.InMenuPrintf(1, 34, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&TimeDate.Date)) + (int(LBL_FIRST_WEEK_DAY)))),

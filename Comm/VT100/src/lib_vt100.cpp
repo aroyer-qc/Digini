@@ -1060,6 +1060,7 @@ size_t VT100_Terminal::MenuPrintfCommon(Label_e Label, va_list* p_vaArg)
         const char* pFormat = myLabel.GetPointer(Label);
         Size = LIB_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, *p_vaArg);
         m_pConsole->SendData((const uint8_t*)&pBuffer[0], &Size);
+        // Memory are freed in the callback of DMA transfer.
     }
 
     return Size;

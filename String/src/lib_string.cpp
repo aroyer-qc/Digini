@@ -428,11 +428,12 @@ size_t LIB_vsnprintf(char* pOut, size_t Size, const char* pFormat, va_list va)
 //-------------------------------------------------------------------------------------------------
 size_t LIB_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
 {
+    char*         pWorkFormat;              // Original pointer for allocation
+//    char*         pWorkFmt;                 // Copy of the pWorkFormat to work on
     STR_Format_t* pFmt;
     size_t        PointerCounter = 0;
     char*         pFmtPtr;
     char*         pDestination;
-    char*         pWorkFormat;              // Copy of the format to work on
     char*         pFormatPtr;
     uint32_t      Counter;
     uint32_t      Position;
@@ -584,10 +585,11 @@ size_t LIB_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
     // Do the actual formatting according to correct argument placement
 
     Counter = 0;
+    pFmtPtr = pWorkFormat;
 
-    for(; (*pWorkFormat != '\0') && (PointerCounter < Size); pWorkFormat++)
+    for(; (*pFmtPtr != '\0') && (PointerCounter < Size); pFmtPtr++)
     {
-        if(*pWorkFormat == (uint8_t)ASCII_SUBSTITUTION)
+        if(*pFmtPtr == (uint8_t)ASCII_SUBSTITUTION)
         {
             pFmt->Width   = 0;
             pFmt->Option  = LIB_OPT_PAD_LEFT;
@@ -659,7 +661,7 @@ size_t LIB_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
         }
         else
         {
-            LIB_putchar(&pOut[PointerCounter++], *pWorkFormat);
+            LIB_putchar(&pOut[PointerCounter++], *pFmtPtr);
         }
     }
 

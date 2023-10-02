@@ -429,7 +429,6 @@ size_t LIB_vsnprintf(char* pOut, size_t Size, const char* pFormat, va_list va)
 size_t LIB_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
 {
     char*         pWorkFormat;              // Original pointer for allocation
-//    char*         pWorkFmt;                 // Copy of the pWorkFormat to work on
     STR_Format_t* pFmt;
     size_t        PointerCounter = 0;
     char*         pFmtPtr;

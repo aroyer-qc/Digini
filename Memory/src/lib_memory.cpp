@@ -62,19 +62,23 @@ MemPoolDriver::MemPoolDriver()
 {
     uint8_t i;
 
-    i = 0;
-    // Get the address of each group in pointer array
 
   #if MEMORY_POOL_USE_STAT == DEF_ENABLED
     m_UsedMemory = 0;
+
+    for(i = 0; i < MEM_BLOCK_GROUP_SIZE; i++)
+    {
+        m_BlockUsed[i]    = 0;
+        m_BlockHighest[i] = 0;
+    }
   #endif
 
-
-     MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_ARRAY)
+    // Get the address of each group in pointer array
+    i = 0;
+    MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_ARRAY)
 
     //Initialize nOS Memory array structure
-     i = 0;
-
+    i = 0;
     MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_INITIALIZE_ARRAY)
 }
 
@@ -130,18 +134,25 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, TickCount_t TimeOut)
 
   #if (MEMORY_POOL_RESTRICT_ALLOC_TO_BLOCK_SIZE == DEF_DISABLED)
     // First loop will check for any block available, so we don't wait to be freed
-    for(uint8_t i = 0; i < MEM_BLOCK_GROUP_SIZE; i++)
+    for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_SIZE; GroupID++)
     {
-        SizeBlock = m_nOS_MemArray[i].bsize;
-        
+        SizeBlock = m_nOS_MemArray[GroupID].bsize;
+
         if(SizeBlock >= SizeRequired)
         {
-            MemPtr = nOS_MemAlloc(&m_nOS_MemArray[i], NOS_NO_WAIT);
+            MemPtr = nOS_MemAlloc(&m_nOS_MemArray[GroupID], NOS_NO_WAIT);
             if(MemPtr != nullptr)
             {
               #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
                 m_UsedMemory += SizeBlock;
-              #endif            
+                m_BlockUsed[GroupID]++;
+
+                if(m_BlockUsed[GroupID] > m_BlockHighest[GroupID])
+                {
+                    m_BlockHighest[GroupID] = m_BlockUsed[GroupID];
+                }
+
+              #endif
                 return MemPtr;
             }
         }
@@ -149,20 +160,26 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, TickCount_t TimeOut)
   #endif
 
     // If we reach here then we did not succeed to get a block, so we will wait
-    for(uint8_t i = 0; i < MEM_BLOCK_GROUP_SIZE; i++)
+    for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_SIZE; GroupID++)
     {
-        SizeBlock = m_nOS_MemArray[i].bsize;
-        
+        SizeBlock = m_nOS_MemArray[GroupID].bsize;
+
         if(SizeBlock >= SizeRequired)
         {
-            MemPtr = nOS_MemAlloc(&m_nOS_MemArray[i], TimeOut);
+            MemPtr = nOS_MemAlloc(&m_nOS_MemArray[GroupID], TimeOut);
 
               #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
                 if(MemPtr != nullptr)
                 {
                     m_UsedMemory += SizeBlock;
+                    m_BlockUsed[GroupID]++;
+
+                    if(m_BlockUsed[GroupID] > m_BlockHighest[GroupID])
+                    {
+                        m_BlockHighest[GroupID] = m_BlockUsed[GroupID];
+                    }
                 }
-              #endif            
+              #endif
 
             return MemPtr;
         }
@@ -272,8 +289,9 @@ bool MemPoolDriver::Free(void** pBlock)
             {
               #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
                 m_UsedMemory -= m_nOS_MemArray[GroupID].bsize;
-              #endif            
-                
+                m_BlockUsed[GroupID]--;
+              #endif
+
                 *pBlock = nullptr;
                 return true;
             }
@@ -299,11 +317,11 @@ bool MemPoolDriver::Free(void** pBlock)
 //-------------------------------------------------------------------------------------------------
 bool MemPoolDriver::IsAvailable(size_t SizeRequired)
 {
-    for(uint8_t i = 0; i < MEM_BLOCK_GROUP_SIZE; i++)
+    for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_SIZE; GroupID++)
     {
-        if(m_nOS_MemArray[i].bsize <= SizeRequired)
+        if(m_nOS_MemArray[GroupID].bsize <= SizeRequired)
         {
-            if(nOS_MemIsAvailable(&m_nOS_MemArray[i]) == true)
+            if(nOS_MemIsAvailable(&m_nOS_MemArray[GroupID]) == true)
             {
                 return true;
             }
@@ -337,9 +355,9 @@ nOS_Error MemPoolDriver::GetLastError(void)
 //   Function name: GetTotalSizeReserved
 //
 //   Parameter(s):  None
-//   Return::       nOS_Error
+//   Return::       uint32_t        Used memory in bytes
 //
-//   Description:   Return the last known error
+//   Description:   Return the total used memory in pool
 //
 //-------------------------------------------------------------------------------------------------
 uint32_t MemPoolDriver::GetUsedMemory(void)
@@ -353,7 +371,7 @@ uint32_t MemPoolDriver::GetUsedMemory(void)
 //   Function name: GetTotalSizeReserved
 //
 //   Parameter(s):  None
-//   Return::       nOS_Error
+//   Return::       uint32_t        Total size of pool
 //
 //   Description:   Return the last known error
 //
@@ -361,6 +379,101 @@ uint32_t MemPoolDriver::GetUsedMemory(void)
 uint32_t MemPoolDriver::GetTotalSizeReserved(void)
 {
     return MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_TOTAL) + 0;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetNumberOfPool
+//
+//   Parameter(s):  None
+//   Return::       uint32_t        Number of pool
+//
+//   Description:   Return the number of different pool size
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t MemPoolDriver::GetNumberOfPool(void)
+{
+    return MEM_BLOCK_GROUP_SIZE;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetPoolBlockSize
+//
+//   Parameter(s):  int             GroupID
+//   Return::       uint32_t        Pool Size
+//
+//   Description:   Return the pool block size
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t MemPoolDriver::GetPoolBlockSize(uint32_t GroupID)
+{
+    if(GroupID < MEM_BLOCK_GROUP_SIZE)
+    {
+        return m_nOS_MemArray[GroupID].bsize;
+    }
+
+    return 0;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetPoolNumberOfBlock
+//
+//   Parameter(s):  int             GroupID
+//   Return::       uint32_t        Pool Size
+//
+//   Description:   Return the pool size
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t MemPoolDriver::GetPoolNumberOfBlock(uint32_t GroupID)
+{
+    if(GroupID < MEM_BLOCK_GROUP_SIZE)
+    {
+        return m_nOS_MemArray[GroupID].bmax;
+    }
+
+    return 0;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetPoolBlockUsed
+//
+//   Parameter(s):  int             GroupID
+//   Return::       uint32_t        Number of block used
+//
+//   Description:   Return the number of block actually used in a pool
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t MemPoolDriver::GetPoolBlockUsed(uint32_t GroupID)
+{
+    if(GroupID < MEM_BLOCK_GROUP_SIZE)
+    {
+        return uint32_t(m_BlockUsed[GroupID]);
+    }
+
+    return 0;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetPoolBlockHighPoint
+//
+//   Parameter(s):  int             GroupID
+//   Return::       uint32_t        Highest number of block used
+//
+//   Description:   Return the highest number of block used in a pool
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t MemPoolDriver::GetPoolBlockHighPoint(uint32_t GroupID)
+{
+    if(GroupID < MEM_BLOCK_GROUP_SIZE)
+    {
+        return uint32_t(m_BlockHighest[GroupID]);
+    }
+
+    return 0;
 }
 
 #endif

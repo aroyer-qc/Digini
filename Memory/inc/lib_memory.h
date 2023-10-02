@@ -73,6 +73,11 @@ class MemPoolDriver
       #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
         uint32_t    GetTotalSizeReserved        (void);
         uint32_t    GetUsedMemory               (void);
+        uint32_t    GetNumberOfPool             (void);
+        uint32_t    GetPoolNumberOfBlock        (uint32_t PoolNumber);
+        uint32_t    GetPoolBlockSize            (uint32_t PoolNumber);
+        uint32_t    GetPoolBlockUsed            (uint32_t PoolNumber);
+        uint32_t    GetPoolBlockHighPoint       (uint32_t PoolNumber);
       #endif
 
     private:
@@ -81,6 +86,8 @@ class MemPoolDriver
         void*                       m_pBufferArray      [MEM_BLOCK_GROUP_SIZE];                  // pointer array of the memory block
         nOS_Error                   m_LastError;
       #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+        nOS_MemCounter              m_BlockUsed         [MEM_BLOCK_GROUP_SIZE];
+        nOS_MemCounter              m_BlockHighest      [MEM_BLOCK_GROUP_SIZE];
         uint32_t                    m_UsedMemory;
       #endif
 

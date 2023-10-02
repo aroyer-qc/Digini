@@ -733,10 +733,10 @@ void VT100_Terminal::InputDecimal(void)
 
         switch(m_Divider)
         {
-            case 10:   InMenuPrintf(VT100_LBL_INT_TO_DIVIDE_BY_10,   m_Value / m_Divider, abs(m_Value % m_Divider)); break;
-            case 100:  InMenuPrintf(VT100_LBL_INT_TO_DIVIDE_BY_100,  m_Value / m_Divider, abs(m_Value % m_Divider)); break;
-            case 1000: InMenuPrintf(VT100_LBL_INT_TO_DIVIDE_BY_1000, m_Value / m_Divider, abs(m_Value % m_Divider)); break;
-            default:   InMenuPrintf(VT100_LBL_INT_NO_DIVIDE,         m_Value);                                       break;
+            case 10:   InMenuPrintf(LBL_INT_TO_DIVIDE_BY_10,   m_Value / m_Divider, abs(m_Value % m_Divider)); break;
+            case 100:  InMenuPrintf(LBL_INT_TO_DIVIDE_BY_100,  m_Value / m_Divider, abs(m_Value % m_Divider)); break;
+            case 1000: InMenuPrintf(LBL_INT_TO_DIVIDE_BY_1000, m_Value / m_Divider, abs(m_Value % m_Divider)); break;
+            default:   InMenuPrintf(LBL_INT_NO_DIVIDE,         m_Value);                                       break;
         }
 
         InMenuPrintf(VT100_LBL_WHITE_MOVE_CURSOR_2_TO_LEFT);
@@ -760,7 +760,7 @@ void VT100_Terminal::InputString(void)
     if(m_RefreshInputPtr != m_InputPtr)
     {
         m_RefreshInputPtr = m_InputPtr;
-        InMenuPrintf(m_PosX + 2, m_PosY + 3, VT100_LBL_STRING_AND_ONE_SPACE, m_pString);
+        InMenuPrintf(m_PosX + 2, m_PosY + 3, LBL_STRING_AND_ONE_SPACE, m_pString);
         InMenuPrintf(VT100_LBL_MOVE_LEFT_CURSOR);
     }
 }
@@ -831,10 +831,10 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
 
     switch(Divider)
     {
-        case 10:  InMenuPrintf(VT100_LBL_INT_TO_DIVIDE_BY_10,   Minimum / Divider,  abs(Minimum % Divider)); break;
-        case 100: InMenuPrintf(VT100_LBL_INT_TO_DIVIDE_BY_100,  Minimum / Divider,  abs(Minimum % Divider)); break;
-        case 1000:InMenuPrintf(VT100_LBL_INT_TO_DIVIDE_BY_1000, Minimum / Divider,  abs(Minimum % Divider)); break;
-        default:  InMenuPrintf(VT100_LBL_INT_NO_DIVIDE,         Minimum);                                    break;
+        case 10:  InMenuPrintf(LBL_INT_TO_DIVIDE_BY_10,   Minimum / Divider,  abs(Minimum % Divider)); break;
+        case 100: InMenuPrintf(LBL_INT_TO_DIVIDE_BY_100,  Minimum / Divider,  abs(Minimum % Divider)); break;
+        case 1000:InMenuPrintf(LBL_INT_TO_DIVIDE_BY_1000, Minimum / Divider,  abs(Minimum % Divider)); break;
+        default:  InMenuPrintf(LBL_INT_NO_DIVIDE,         Minimum);                                    break;
     }
 
 
@@ -843,10 +843,10 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
 
     switch(Divider)
     {
-        case 10:  InMenuPrintf(VT100_LBL_INT_TO_DIVIDE_BY_10,   Maximum / Divider,  abs(Maximum % Divider)); break;
-        case 100: InMenuPrintf(VT100_LBL_INT_TO_DIVIDE_BY_100,  Maximum / Divider,  abs(Maximum % Divider)); break;
-        case 1000:InMenuPrintf(VT100_LBL_INT_TO_DIVIDE_BY_1000, Maximum / Divider,  abs(Maximum % Divider)); break;
-        default:  InMenuPrintf(VT100_LBL_INT_NO_DIVIDE,         Maximum);                                    break;
+        case 10:  InMenuPrintf(LBL_INT_TO_DIVIDE_BY_10,   Maximum / Divider,  abs(Maximum % Divider)); break;
+        case 100: InMenuPrintf(LBL_INT_TO_DIVIDE_BY_100,  Maximum / Divider,  abs(Maximum % Divider)); break;
+        case 1000:InMenuPrintf(LBL_INT_TO_DIVIDE_BY_1000, Maximum / Divider,  abs(Maximum % Divider)); break;
+        default:  InMenuPrintf(LBL_INT_NO_DIVIDE,         Maximum);                                    break;
     }
 
     // Print type of input
@@ -1355,13 +1355,13 @@ void VT100_Terminal::DisplayTimeDateStamp(uint8_t PosX, uint8_t PosY, DateAndTim
 {
     // TODO Should use register date time printing method..
 
-   myVT100.InMenuPrintf(PosX, PosY, VT100_LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&pTimeDate->Date)) + (int(LBL_FIRST_WEEK_DAY)))),
-                                                         myLabel.GetPointer(Label_e((pTimeDate->Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
-                                                         pTimeDate->Date.Day,
-                                                         pTimeDate->Date.Year,
-                                                         pTimeDate->Time.Hour,
-                                                         pTimeDate->Time.Minute,
-                                                         pTimeDate->Time.Second);
+   myVT100.InMenuPrintf(PosX, PosY, LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&pTimeDate->Date)) + (int(LBL_FIRST_WEEK_DAY)))),
+                                                   myLabel.GetPointer(Label_e((pTimeDate->Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
+                                                   pTimeDate->Date.Day,
+                                                   pTimeDate->Date.Year,
+                                                   pTimeDate->Time.Hour,
+                                                   pTimeDate->Time.Minute,
+                                                   pTimeDate->Time.Second);
 }
 
 //-------------------------------------------------------------------------------------------------

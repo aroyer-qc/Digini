@@ -36,11 +36,27 @@
 
 const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
 {
-    { "%s",                           nullptr                },  // LBL_STRING
-    { "%s\n",                         nullptr                },  // LBL_STRING_LINEFEED
-    { "%c",                           nullptr                },  // LBL_CHAR
-    { "\n",                           nullptr                },  // LBL_LINEFEED
-    { "\n\n",                         nullptr                },  // LBL_DOUBLE_LINEFEED
+    { "%s",                             nullptr                                         },  // LBL_STRING
+    { "%s\n",                           nullptr                                         },  // LBL_STRING_LINEFEED
+    { "%c",                             nullptr                                         },  // LBL_CHAR
+    { "\n",                             nullptr                                         },  // LBL_LINEFEED
+    { "\n\n",                           nullptr                                         },  // LBL_DOUBLE_LINEFEED
+    { "%2u:%02u:%02u ",                 nullptr                                         },  // LBL_TIME
+    { "%s %u, %u ",                     nullptr                                         },  // LBL_DATE
+    { "%04u-%02u-%02u %2u:%02u:%02u: ", nullptr                                         },  // LBL_TIME_DATE_STAMP
+    { "%ld.%d ",                        nullptr                                         },  // LBL_INT_TO_DIVIDE_BY_10
+    { "%ld.%02d ",                      nullptr                                         },  // LBL_INT_TO_DIVIDE_BY_100
+    { "%ld.%03d ",                      nullptr                                         },  // LBL_INT_TO_DIVIDE_BY_1000
+    { "%ld ",                           nullptr                                         },  // LBL_INT_NO_DIVIDE
+    { "%lu ",                           nullptr                                         },  // LBL_LONG_UNSIGNED
+    { "%lu: ",                          nullptr                                         },  // LBL_LONG_UNSIGNED_SEMICOLON
+    { "%02u:",                          nullptr                                         },  // LBL_UNSIGNED_2_DIGIT_SEMICOLON
+    { "%02u",                           nullptr                                         },  // LBL_UNSIGNED_2_DIGIT
+    { "%s ",                            nullptr                                         },  // LBL_STRING_AND_ONE_SPACE
+    { "%lu Bytes  ",                    "%lu Octets  "                                  },  // LBL_SIZE_BYTES
+    { "%s, %s %u, %u, %u:%02u:%02u ",   "\x1A$0%s $2%u $1%s $3%u, $4%u:$5%02u:$6%02u "  },  // LBL_FULL_DATE
+
+
 
 #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
     { "Vendor:           ",           "Vendeur:          "   },  // LBL_FW_NAME_INFO
@@ -98,7 +114,7 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
     VT100_USER_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
    #if (DIGINI_DEBUG_SDCARD_INFO_ON_VT100 == DEF_ENABLED)
       VT100_SDCARD_INFO_DEF(EXPAND_X_LBL_CFG_AS_DATA)
-   #endif 
+   #endif
    #if (VT100_USE_COLOR != DEF_ENABLED)
     VT100_MONO_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
    #endif

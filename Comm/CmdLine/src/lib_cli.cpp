@@ -70,7 +70,6 @@ const CLI_Function_t CLI_Function[NUMBER_OF_CLI_CMD] =
   #endif
 };
 
-const char*              CommandLine::m_ErrorLabel                       = "ERROR, %s";
 const CLI_CmdInputInfo_t CommandLine::m_CmdInputInfo[NUMBER_OF_CLI_CMD]  =
 {
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
@@ -167,10 +166,10 @@ void CommandLine::IF_Process(void)
         m_IsItOnStartup     = true;
         //m_pChildProcess     = nullptr;
         m_FifoCmd.Initialize(CLI_FIFO_CMD_SIZE);
-        m_pConsole->Printf(CON_SIZE_NONE, CLI_STRING_RESET_TERMINAL);
+        m_pConsole->Printf(CLI_STRING_RESET_TERMINAL);
         TickCount_t Delay = GetTick();
         while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
-        m_pConsole->Printf(CON_SIZE_NONE, "Command Line Process Started\n>");
+        m_pConsole->Printf(LBL_CMD_LINE_PROC_STARTED);
     }
 
     if(m_IsItOnStartup == true)
@@ -233,7 +232,7 @@ void CommandLine::IF_Process(void)
 
                 if(State == SYS_INVALID_COMMAND)
                 {
-                    m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "\rCommand invalid\r>");
+                    m_pConsole->Printf(LBL_ERROR, myLabel.GetPointer(LBL_COMMAND_IS_INVALID));
                 }
 
                 m_FifoCmd.Flush(CON_FIFO_PARSER_RX_SIZE);                                                  // Flush completely the FIFO
@@ -243,14 +242,14 @@ void CommandLine::IF_Process(void)
 
             case CLI_STEP_CMD_MALFORMED:
             {
-                m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "\rMalformed command\r>");
+                m_pConsole->Printf(LBL_ERROR, myLabel.GetPointer(LBL_MALFORMED_PACKED));
                 m_Step = CLI_STEP_IDLE;
             }
             break;
 
             case CLI_STEP_CMD_BUFFER_OVERFLOW:
             {
-                m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, "\rBuffer overflow\r>");
+                m_pConsole->Printf(LBL_ERROR, myLabel.GetPointer(LBL_BUFFER_OVERFLOW));
                 m_Step = CLI_STEP_IDLE;
             }
             break;
@@ -467,7 +466,7 @@ bool CommandLine::ProcessRX(void)
         if(TickHasTimeOut(m_CommandTimeOut, CLI_CMD_TIME_OUT) == true)
         {
             m_Step = CLI_STEP_IDLE;
-            m_pConsole->Printf(CON_SIZE_NONE, m_ErrorLabel, " ... Command timeout\r>");
+            m_pConsole->Printf(LBL_ERROR, myLabel.GetPointer(LBL_CMD_TIME_OUT));
             m_pConsole->Flush(CON_FIFO_PARSER_RX_SIZE);
         }
     }
@@ -575,7 +574,7 @@ void CommandLine::LockDisplay(bool State)
 //
 //  Parameter(s):   CLI_CmdName_e   CommandID           Command identification.
 //                  SystemState_e   State               State code.
-//                  const char*     Answer              Specific error string if not nullptr.
+//                  const char*     pAnswer             Specific error string if not nullptr.
 //
 //  Return:         None
 //
@@ -584,27 +583,28 @@ void CommandLine::LockDisplay(bool State)
 //  Note(s):        TODO  use language define here with label!!!
 //
 //-------------------------------------------------------------------------------------------------
-void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char* Answer)
+void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char* pAnswer)
 {
-    const char* pMsg1 = "NACK, ";
-    const char* pMsg2 = "";
+    Label_e Label    = LBL_NACK;
+    Label_e LabelMsg = LBL_NULL;
+    const char* pMsg = nullptr;
 
     switch(State)   // Response message to command
     {
-        case SYS_READY:                  { pMsg1 = "OK";                break; }
-        case SYS_OK_READ:                { pMsg1 = "";
-                                           pMsg2 = Answer;
+        case SYS_READY:                  { Label = LBL_OK;                      break; }
+        case SYS_OK_READ:                { Label = LBL_NULL;
+                                           pMsg  = pAnswer;
                                            break;
                                          }
 
       #ifdef CLI_USE_EXTENDED_ERROR
-        case SYS_OK_DENIED:              { pMsg2 = "Denied";                   break; }
-        case SYS_CMD_NO_READ_SUPPORT:    { pMsg2 = "No Read Support";          break; }
-        case SYS_CMD_NO_WRITE_SUPPORT:   { pMsg2 = "No Write Support";         break; }
-        case SYS_INVALID_PARAMETER:      { pMsg2 = "Invalid Parameter";        break; }
-        case SYS_INVALID_PASSWORD:       { pMsg2 = "Password Invalid";         break; }
-        case SYS_FAIL_MEMORY_ALLOCATION: { pMsg2 = "Memory allocation Error";  break; }
-        case SYS_CMD_PLAIN_ONLY:         { pMsg2 = "Plain Command Only";       break; }
+        case SYS_OK_DENIED:              { LabelMsg = LBL_DENIED;               break; }
+        case SYS_CMD_NO_READ_SUPPORT:    { LabelMsg = LBL_NO_READ_SUPPORT;      break; }
+        case SYS_CMD_NO_WRITE_SUPPORT:   { LabelMsg = LBL_NO_WRITE_SUPPORT;     break; }
+        case SYS_INVALID_PARAMETER:      { LabelMsg = LBL_INVALID_PARAMETER;    break; }
+        case SYS_INVALID_PASSWORD:       { LabelMsg = LBL_PASSWORD_INVALID;     break; }
+        case SYS_FAIL_MEMORY_ALLOCATION: { LabelMsg = LBL_MEM_ALLOC_ERROR;      break; }
+        case SYS_CMD_PLAIN_ONLY:         { LabelMsg = LBL_PLAIN_CMD_ONLY;       break; }
       #else
         case SYS_OK_DENIED:
         case SYS_CMD_NO_READ_SUPPORT:
@@ -617,17 +617,17 @@ void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char*
 
         // SYS_OK_SILENT:                // We return nothing.. it is silent
         // SYS_INVALID_COMMAND:          // This case is not supposed to happened
-        default:                         { pMsg1 = "";                  break; }
+        default:                         { Label = LBL_NULL;                    break; }
+    }
+
+    if(pMsg == nullptr)
+    {
+        pMsg = myLabel.GetPointer(LabelMsg);
     }
 
     if(State != SYS_OK_SILENT)
     {
-      #if (CLI_USE_AT_PREFIX_ON_COMMAND == DEF_ENABLED)
-        m_pConsole->Printf(CON_SIZE_NONE, "AT%s = %s%s\r>", m_pCmdStr[Cmd], pMsg1, pMsg2);
-      #else
-        m_pConsole->Printf(CON_SIZE_NONE, "%s = %s%s\r>", m_pCmdStr[Cmd], pMsg1, pMsg2);
-      #endif
-
+        m_pConsole->Printf(LBL_CLI_RESPONSE, m_pCmdStr[Cmd], myLabel.GetPointer(Label), pMsg);
     }
 }
 

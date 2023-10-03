@@ -30,6 +30,10 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+#if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
+#include "lib_cli_label.h"
+#endif
+
 #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
 #include "lib_vt100_label.h"
 #endif
@@ -57,13 +61,16 @@ enum Language_e
 
 enum Label_e
 {
+    LBL_NULL,
     LBL_STRING,
     LBL_STRING_LINEFEED,
     LBL_CHAR,
+    LBL_INT,
     LBL_LINEFEED,
     LBL_DOUBLE_LINEFEED,
     LBL_TIME,
     LBL_DATE,
+    LBL_FULL_DATE,
     LBL_TIME_DATE_STAMP,
     LBL_INT_TO_DIVIDE_BY_10,
     LBL_INT_TO_DIVIDE_BY_100,
@@ -74,8 +81,14 @@ enum Label_e
     LBL_UNSIGNED_2_DIGIT_SEMICOLON,
     LBL_UNSIGNED_2_DIGIT,
     LBL_STRING_AND_ONE_SPACE,
+    LBL_SIZE_GIGABYTES,
+    LBL_SIZE_MEGABYTES,
+    LBL_SIZE_KILOBYTES,
     LBL_SIZE_BYTES,
-    LBL_FULL_DATE,
+    LBL_YES,
+    LBL_NO,
+
+
 
   #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)           // TODO sync with usage VT100 or GRAFX
     LBL_VENDOR_NAME_INFO,
@@ -128,6 +141,13 @@ enum Label_e
   #endif
 
     LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+
+  #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
+    CLI_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #if (CLI_USE_EXTENDED_ERROR == DEF_ENABLED)
+    CLI_LABEL_EXT_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #endif
+  #endif
 
     // Include VT100 label if VT100 is defined
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)

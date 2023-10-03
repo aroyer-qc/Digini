@@ -171,7 +171,7 @@ class CommandLine : public ChildProcessInterface
 
         void            Initialize                  (Console* pConsole);
         void            LockDisplay                 (bool State);
-        void            SendAnswer                  (CLI_CmdName_e CmdName, SystemState_e State, const char* Answer);
+        void            SendAnswer                  (CLI_CmdName_e CmdName, SystemState_e State, const char* pAnswer);
 
 
       #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
@@ -213,7 +213,6 @@ class CommandLine : public ChildProcessInterface
         char*                                   m_pParamStr[CLI_NUMBER_OF_SUPPORTED_PARAM];
 
         static const CLI_CmdInputInfo_t         m_CmdInputInfo[NUMBER_OF_CLI_CMD];
-        static const char*                      m_ErrorLabel;
         static const char*                      m_pCmdStr[NUMBER_OF_CLI_CMD];
         static const size_t                     m_CmdStrSize[NUMBER_OF_CLI_CMD];
 

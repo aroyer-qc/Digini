@@ -388,11 +388,11 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
 VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_CallBackType_e Type)
 {
     static DateAndTime_t TimeDate;
-    uint32_t             Refresh;
+   // uint32_t             Refresh;
     uint32_t             EditedValue;        // if come back from decimal input
     uint8_t              InputID;            // contain the value from this input ID
 
-    Refresh = VT100_CFG_NO_REFRESH;
+   // Refresh = VT100_CFG_NO_REFRESH;
 
     if(Type == VT100_CALLBACK_INIT)         // Menu Redraw
     {
@@ -403,7 +403,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
         myVT100.SetForeColor(VT100_COLOR_YELLOW);
         myVT100.InMenuPrintf(13, 40, LBL_TIME);
         myVT100.InMenuPrintf(13, 41, LBL_DATE);
-        Refresh   = VT100_CFG_REFRESH_ALL;
+    //    Refresh   = VT100_CFG_REFRESH_ALL;
     }
 
     if(Type == VT100_CALLBACK_ON_INPUT)
@@ -455,7 +455,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
                     LIB_SetDateAndTime(&TimeDate);
                 }
 
-                Refresh = VT100_CFG_REFRESH_INFO;
+               // Refresh = VT100_CFG_REFRESH_INFO;
                 break;
             }
         }
@@ -532,6 +532,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
         {
             FRESULT   Result;
             char*     pBuffer;
+            Label_e   Label;
             FATFS*    FatFs;
             uint32_t  FreeCluster;
             uint32_t  FreeBytes;
@@ -603,31 +604,30 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
 
             myVT100.SetForeColor(VT100_COLOR_GREEN);
             myVT100.InMenuPrintf(1,  6,  VT100_LBL_SD_CARD_INFORMATION);
-            myVT100.InMenuPrintf(1,  17, LBL_STRING, "FAT Information");
+            myVT100.InMenuPrintf(1,  17, LBL_FAT_INFORMATION);
 
             myVT100.SetForeColor(VT100_COLOR_WHITE);
 
             switch(MMC_Type)
             {
-                case SD_STD_CAPACITY_V1_1:  memcpy(pBuffer, "Standard Capacity V1.1", 23);   break;
-                case SD_STD_CAPACITY_V2_0:  memcpy(pBuffer, "Standard Capacity V2.0", 23);   break;
-                case SD_HIGH_CAPACITY:      memcpy(pBuffer, "High Capacity", 14);            break;
-                default:                    snprintf(pBuffer, VT100_STRING_SIZE, "Undefined %d", MMC_Type); break;
+                case SD_STD_CAPACITY_V1_1:  Label = LBL_SD_STD_CAPACITY_V1_1;   break;
+                case SD_STD_CAPACITY_V2_0:  Label = LBL_SD_STD_CAPACITY_V2_0;   break;
+                case SD_HIGH_CAPACITY:      Label = LBL_SD_HIGH_CAPACITY;       break;
+                default:                    Label = LBL_SD_UNDEFINED_D;         break;
             }
-            myVT100.InMenuPrintf(26, 8,  LBL_STRING, pBuffer);
+            myVT100.InMenuPrintf(26, 8, Label, MMC_Type);
 
-            snprintf(pBuffer, 80, "%d", int(pCSD->SysSpecVersion));
-            myVT100.InMenuPrintf(80, 8,  LBL_STRING, pBuffer);
+            myVT100.InMenuPrintf(80, 8, LBL_INT, int(pCSD->SysSpecVersion));
 
             switch(pCSD->MaxBusClkFrec)
             {
-                case 0x32:  memcpy(pBuffer, "25 MHz", 7);         break;
-                case 0x5A:  memcpy(pBuffer, "50 MHz", 7);         break;
-                case 0x0B:  memcpy(pBuffer, "100 Mbits/sec", 14); break;
-                case 0x2B:  memcpy(pBuffer, "200 Mbits/sec", 14); break;
-                default:    snprintf(pBuffer, VT100_STRING_SIZE, "Undefined %2X", pCSD->MaxBusClkFrec); break;
+                case 0x32:  Label = LBL_SD_25MHZ;        break;
+                case 0x5A:  Label = LBL_SD_50MHZ;        break;
+                case 0x0B:  Label = LBL_SD_100MBITS;     break;
+                case 0x2B:  Label = LBL_SD_100MBITS;     break;
+                default:    Label = LBL_SD_UNDEFINED_2X; break;
             }
-            myVT100.InMenuPrintf(80, 9,  LBL_STRING, pBuffer);                                                                  // Max Speed
+            myVT100.InMenuPrintf(80, 9,  Label, pCSD->MaxBusClkFrec);                                                           // Max Speed
 
             snprintf(pBuffer, VT100_STRING_SIZE, "0x%02X", pCID->ManufacturerID);
             myVT100.InMenuPrintf(26, 10, LBL_STRING, pBuffer);                                                                  // Manufacturer ID
@@ -646,21 +646,19 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             snprintf(pBuffer, VT100_STRING_SIZE, "%u/20%2u", pCID->ManufacturingDate & 0x000F, pCID->ManufacturingDate >> 4);   // Manufacturing Date
             myVT100.InMenuPrintf(80, 12, LBL_STRING, pBuffer);
 
+            // Card Capacity
             if(CardCapacity >= 1000000)
             {
-                snprintf(pBuffer, VT100_STRING_SIZE, "%u.%02u GBytes", uint16_t(CardCapacity / 1000000), uint16_t((CardCapacity % 1000000) / 1000));
+                myVT100.InMenuPrintf(26, 13, LBL_SIZE_GIGABYTES, uint16_t(CardCapacity / 1000000), uint16_t((CardCapacity % 1000000) / 1000));                                                                  // Card Capacity
             }
             else
             {
-                snprintf(pBuffer, VT100_STRING_SIZE, "%u.%02u MBytes", uint16_t(CardCapacity / 1000), uint16_t(CardCapacity % 1000));
+                myVT100.InMenuPrintf(26, 13, LBL_SIZE_MEGABYTES, uint16_t(CardCapacity / 1000), uint16_t(CardCapacity % 1000));
             }
-            myVT100.InMenuPrintf(26, 13, LBL_STRING, pBuffer);                                                                  // Card Capacity
 
-
-            snprintf(pBuffer, VT100_STRING_SIZE, "%u KBytes", ((pCSD->EraseGrMul + 1) * BLOCK_SIZE) / 1024);
-            myVT100.InMenuPrintf(80, 13, LBL_STRING, pBuffer);                                                                  // Flash Erase Size
-
-            myVT100.InMenuPrintf(26, 14, LBL_STRING, pCSD->EraseGrSize ? "Yes" : "No");                                         // Erase Single Block
+            myVT100.InMenuPrintf(80, 13, LBL_SIZE_KILOBYTES, ((pCSD->EraseGrMul + 1) * BLOCK_SIZE) / 1024);                       // Flash Erase Size
+            Label = pCSD->EraseGrSize ? LBL_YES : LBL_NO;
+            myVT100.InMenuPrintf(26, 14, Label);                                                                                // Erase Single Block
 
             snprintf(pBuffer, VT100_STRING_SIZE, "0x%02X", ((pSCR->Array[0] & SD_VALUE_AFTER_ERASE) ? 0xFF : 0x00));
             myVT100.InMenuPrintf(80, 14, LBL_STRING, pBuffer);                                                                  // Data After Erase
@@ -672,7 +670,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             if(strlen(pBuffer) == 0)
             {
                 myVT100.SetForeColor(VT100_COLOR_RED);
-                myVT100.InMenuPrintf(26, 19, LBL_STRING, "<EMPTY>");
+                myVT100.InMenuPrintf(26, 19, LBL_SD_EMPTY);
                 myVT100.SetForeColor(VT100_COLOR_WHITE);
             }
             else
@@ -692,18 +690,11 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
                 case FS_EXFAT:  memcpy(pBuffer, "exFAT", 6); break;
             }
             myVT100.InMenuPrintf(26, 20, LBL_STRING, pBuffer);                                                                  // Volume Type
+            myVT100.InMenuPrintf(80, 20, LBL_SD_KB_TOTAL, TotalBytes);                                                          // FAT Capacity
+            myVT100.InMenuPrintf(26, 21, LBL_SD_KB_USED, TotalBytes - FreeBytes);                                               // Used Sector
+            myVT100.InMenuPrintf(80, 21, LBL_SD_KB_AVAILABLE, FreeBytes);                                                       // Free Sector
 
-            snprintf(pBuffer, VT100_STRING_SIZE, "%lu KB Total", TotalBytes);                                                   // FAT Capacity
-            myVT100.InMenuPrintf(80, 20, LBL_STRING, pBuffer);
-
-            snprintf(pBuffer, VT100_STRING_SIZE, "%lu KB Used", TotalBytes - FreeBytes);                                        // Used Sector
-            myVT100.InMenuPrintf(26, 21, LBL_STRING, pBuffer);
-
-            snprintf(pBuffer, VT100_STRING_SIZE, "%lu KB Available", FreeBytes);                                                // Free Sector
-            myVT100.InMenuPrintf(80, 21, LBL_STRING, pBuffer);
-
-            snprintf(pBuffer, VT100_STRING_SIZE, "%d Bytes", FatFs->csize * BLOCK_SIZE);
-            myVT100.InMenuPrintf(26, 22, LBL_STRING, pBuffer);                                                                  // Cluster Size
+            myVT100.InMenuPrintf(26, 22, LBL_SIZE_BYTES, uint32_t(FatFs->csize * BLOCK_SIZE));                                  // Cluster Size
 
             snprintf(pBuffer, VT100_STRING_SIZE, "%d Sectors", FatFs->csize);
             myVT100.InMenuPrintf(80, 22, LBL_STRING, pBuffer);                                                                  // Sector Per Cluster
@@ -797,25 +788,26 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MiscStatistic(uint8_t Input, VT100_Ca
             myVT100.SetForeColor(VT100_COLOR_WHITE);
             myVT100.InMenuPrintf(1, 5, VT100_LBL_MISC_STAT);
 
-            myVT100.InMenuPrintf(1, 8, VT100_LBL_MEMORY_POOL);
-            myVT100.InMenuPrintf(4, 9, VT100_LBL_MEMORY_POOL_TOTAL);
-            myVT100.InMenuPrintf(24, 9, LBL_SIZE_BYTES, pMemoryPool->GetTotalSizeReserved());
-            myVT100.InMenuPrintf(50, 9, VT100_LBL_MEMORY_POOL_USED);
-            myVT100.InMenuPrintf(4, 10, VT100_LBL_MEMORY_POOL_NB_OF_POOL, Max);
+            myVT100.InMenuPrintf(1,  8,  VT100_LBL_MEMORY_POOL);
+            myVT100.InMenuPrintf(4,  10, VT100_LBL_MEMORY_POOL_TOTAL);
+            myVT100.InMenuPrintf(24, 10, LBL_SIZE_BYTES, pMemoryPool->GetTotalSizeReserved());
+            myVT100.InMenuPrintf(50, 10, VT100_LBL_MEMORY_POOL_USED);
+            myVT100.InMenuPrintf(4,  11, VT100_LBL_MEMORY_POOL_NB_OF_POOL, Max);
 
-            for(int i = 0; i < Max; i++)
+            for(uint32_t i = 0; i < Max; i++)
             {
                 OffsetMultiplierX = uint8_t(((i % 3) * 33) + 2);
-                OffsetMultiplierY = uint8_t(((i / 3) * 6) + 13);
+                OffsetMultiplierY = uint8_t(((i / 3) * 6) + 14);
 
                 myVT100.DrawBox(OffsetMultiplierX, OffsetMultiplierY, 32, 3, VT100_COLOR_WHITE);
                 myVT100.InMenuPrintf(OffsetMultiplierX--, OffsetMultiplierY - 1, VT100_LBL_MEM_POOL_GROUP, i, pMemoryPool->GetPoolNumberOfBlock(i), pMemoryPool->GetPoolBlockSize(i));
             }
 
-            myVT100.InMenuPrintf(1, 25, VT100_LBL_FONT_TERMINAL);
-            int y = 27;
+            myVT100.InMenuPrintf(1, 25, VT100_LBL_LINE_SEPARATOR);
+            myVT100.InMenuPrintf(1, 27, VT100_LBL_FONT_TERMINAL);
+            uint8_t y = 29;
 
-            for(int i = 128; i < 256; i++)
+            for(uint32_t i = 128; i < 256; i++)
             {
                 if((i % 32) == 0)
                 {
@@ -830,12 +822,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MiscStatistic(uint8_t Input, VT100_Ca
 
         case VT100_CALLBACK_REFRESH:
         {
-            myVT100.InMenuPrintf(68, 9, LBL_SIZE_BYTES, pMemoryPool->GetUsedMemory());
+            myVT100.InMenuPrintf(68, 10, LBL_SIZE_BYTES, pMemoryPool->GetUsedMemory());
 
-           for(int i = 0; i < Max; i++)
+           for(uint32_t i = 0; i < Max; i++)
             {
                 OffsetMultiplierX = uint8_t(((i % 3) * 33) + 3);
-                OffsetMultiplierY = uint8_t(((i / 3) * 6) + 14);
+                OffsetMultiplierY = uint8_t(((i / 3) * 6) + 15);
 
                 myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY, (pMemoryPool->GetPoolBlockUsed(i) >= pMemoryPool->GetPoolNumberOfBlock(i) * .8) ? VT100_COLOR_RED : VT100_COLOR_GREEN, pMemoryPool->GetPoolBlockUsed(i), pMemoryPool->GetPoolNumberOfBlock(i), 30);
                 myVT100.SetForeColor(VT100_COLOR_WHITE);

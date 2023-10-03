@@ -154,8 +154,29 @@ void Console::ReleaseControl(void)
 //
 //  Name:           Printf
 //
-//  Parameter(s):   size_t              MaxSize     Number of byte max to print
-//                  const char*         pFormat     Formatted string.
+//  Parameter(s):   Label_e     Label       ID of the label to with optional formatting.
+//                  ...                             Parameter if any.
+//
+//  Return:         None
+//
+//  Description:    Common function to format string and send it to console.
+//
+//-------------------------------------------------------------------------------------------------
+size_t Console::Printf(Label_e Label, ...)
+{
+    va_list     vaArg;
+    const char* pFormat;
+
+    pFormat = myLabel.GetPointer(Label);
+    va_start(vaArg, pFormat);
+    return Printf(pFormat, &vaArg);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Printf
+//
+//  Parameter(s):   const char*         pFormat     Formatted string.
 //                  ...                             Parameter if any.
 //
 //  Return:         size_t              Number of character printed.
@@ -165,19 +186,36 @@ void Console::ReleaseControl(void)
 //  Note(s):        Memory block will be freed by DMA TC
 //
 //-------------------------------------------------------------------------------------------------
-size_t Console::Printf(int MaxSize, const char* pFormat, ...)
+size_t Console::Printf(const char* pFormat, ...)
 {
-    char*   pBuffer;
     va_list vaArg;
-    size_t  Size = 0;
+
+    va_start(vaArg, pFormat);
+    return Printf(pFormat, &vaArg);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Printf
+//
+//  Parameter(s):   const char* pFormat     Formatted string.
+//                  va_list*    p_vaArg     Parameter from va_list.
+//
+//  Return:         size_t
+//
+//  Description:    Common function to format string and send it.
+//
+//-------------------------------------------------------------------------------------------------
+size_t Console::Printf(const char* pFormat, va_list* p_vaArg)
+{
+    char*  pBuffer;
+    size_t Size = 0;
 
     if((pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE)) != nullptr)
     {
-        Size = (MaxSize == CON_SIZE_NONE) ? CON_SERIAL_OUT_SIZE : MaxSize;
-        va_start(vaArg, pFormat);
-        Size = vsnprintf(&pBuffer[0], Size, pFormat, vaArg);
-        m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size);
-        va_end(vaArg);
+        Size = LIB_vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, *p_vaArg);
+        SendData((const uint8_t*)&pBuffer[0], &Size);
+        // Memory are freed in the callback of DMA transfer.
     }
 
     return Size;

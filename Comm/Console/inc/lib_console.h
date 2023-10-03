@@ -67,13 +67,13 @@ enum CON_DebugLevel_e
     CON_DEBUG_LEVEL_7       = 0x0040,
     CON_DEBUG_LEVEL_8       = 0x0080,
     CON_DEBUG_LEVEL_9       = 0x0100,
-    CON_DEBUG_LEVEL_10        = 0x0200,
-    CON_DEBUG_LEVEL_11        = 0x0400,
-    CON_DEBUG_LEVEL_12        = 0x0800,
-    CON_DEBUG_LEVEL_13        = 0x1000,
-    CON_DEBUG_LEVEL_14        = 0x2000,
-    CON_DEBUG_LEVEL_15        = 0x4000,
-    CON_DEBUG_LEVEL_16        = 0x8000,
+    CON_DEBUG_LEVEL_10      = 0x0200,
+    CON_DEBUG_LEVEL_11      = 0x0400,
+    CON_DEBUG_LEVEL_12      = 0x0800,
+    CON_DEBUG_LEVEL_13      = 0x1000,
+    CON_DEBUG_LEVEL_14      = 0x2000,
+    CON_DEBUG_LEVEL_15      = 0x4000,
+    CON_DEBUG_LEVEL_16      = 0x8000,
 };
 
 //typedef void (*CON_ChildProcess_t)(void);
@@ -98,12 +98,14 @@ class Console : public CallbackInterface
         void             GiveControlToChildProcess  (ChildProcessInterface* pChildProcess);
         void             ReleaseControl             (void);
         void             DisplayTimeDateStamp       (Date_t* pDate, Time_t* pTime);
-        size_t           Printf                     (int nSize, const char* pFormat, ...);
         void             LockDisplay                (bool State);
         bool             GetString                  (char* pBuffer, size_t Size);
         bool             GetAtoi                    (int32_t* pValue, int32_t Min, int32_t Max, uint8_t Base);
         bool             IsItA_Comma                (void);
         bool             IsItAnEOL                  (void);
+        size_t           Printf                     (Label_e Label, ...);
+        size_t           Printf                     (const char* pFormat, ...);
+        size_t           Printf                     (const char* pFormat, va_list* p_vaArg);
         size_t           PrintSerialLog             (CON_DebugLevel_e Level, const char* pFormat, ...);
         size_t           PrintSerialLog             (CON_DebugLevel_e Level, const char* pFormat, va_list va);
         void             SetSerialLogging           (bool Mute);
@@ -134,7 +136,6 @@ class Console : public CallbackInterface
         void             SetDebugLevel              (CON_DebugLevel_e DebugLevel)                   { m_DebugLevel = DebugLevel; }
 
     private:
-
 
     // --------------------------------------------------------------------------------------------
 

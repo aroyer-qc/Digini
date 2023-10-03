@@ -79,14 +79,15 @@ X_VT100_LBL( VT100_LBL_UPTIME,                     "Up Time:",                  
 X_VT100_LBL( VT100_LBL_PERCENT_VALUE,              "%ld %%",                                                                                                   nullptr                                                                                  ) \
 X_VT100_LBL( VT100_LBL_FONT_TERMINAL,              "Extended ASCII Font From This Terminal:",                                                                  "Police de Caract\x8are ASCII \x90tendue Provenant de ce Terminal:"                      ) \
 X_VT100_LBL( VT100_LBL_MEMORY_POOL,                "Memory Pool",                                                                                              "Bassin de m\x82moire"                                                                   ) \
-X_VT100_LBL( VT100_LBL_MEMORY_POOL_TOTAL,          "Total size :",                                                                                             "Taille totale   :"                                                                      ) \
+X_VT100_LBL( VT100_LBL_MEMORY_POOL_TOTAL,          "Total size     :",                                                                                         "Taille totale     :"                                                                    ) \
 X_VT100_LBL( VT100_LBL_MEMORY_POOL_USED,           "Used size :",                                                                                              "Taille Utilis\x82" "e :"                                                                ) \
 X_VT100_LBL( VT100_LBL_MEMORY_POOL_NB_OF_POOL,     "Number of Pool :    %u",                                                                                   "Nombre de bassins : %u"                                                                 ) \
+X_VT100_LBL( VT100_LBL_MEM_POOL_GROUP,             "Group %d: %u X %u Bytes",                                                                                  "Groupe %d: %u X %u Octets"                                                              ) \
+X_VT100_LBL( VT100_LBL_MEM_BLOCK_USED,             "Used Blocks : %u  Highest : %u  ",                                                                         "Blocks Utilis\x82s: %u  Haut : %u  "                                                    ) \
 
 #define VT100_MONO_LABEL_LANGUAGE_DEF(X_VT100_LBL) \
 X_VT100_LBL( VT100_LBL_BACK_WHITE_FORE_BLACK,      "\033[30m\033[47m",                                                                                         nullptr                                                                                  ) \
 X_VT100_LBL( VT100_LBL_BACK_BLACK_FORE_WHITE,      "\033[37m\033[40m",                                                                                         nullptr                                                                                  ) \
-
 
 #define VT100_SDCARD_INFO_DEF(X_VT100_LBL) \
 X_VT100_LBL( LBL_SD_CARD_TYPE,              "Card Type:",               "Type de Carte:"                            ) \
@@ -114,8 +115,21 @@ X_VT100_LBL( LBL_SD_CLUSTER_COUNT,          "Cluster Count:",           "Nombre 
 X_VT100_LBL( LBL_SD_FREE_CLUSTER_COUNT,     "Free Cluster Count:",      "Nombre de Clusters Disponibles:"           ) \
 X_VT100_LBL( LBL_SD_FAT_START_SECTOR,       "FAT Start Sector:",        "Secteur d\x82" "but de la FAT:"            ) \
 X_VT100_LBL( LBL_SD_DATA_START_SECTOR,      "Data Start Sector:",       "Secteur d\x82" "but des donn\x82" "es:"    ) \
-
-//X_VT100_LBL( LBL_, "High Speed Type??:");
+X_VT100_LBL( LBL_FAT_INFORMATION,           "FAT Information",          "Information sur la FAT"                    ) \
+X_VT100_LBL( LBL_SD_STD_CAPACITY_V1_1,      "Standard Capacity V1.1",   "Capacit\x82 Standard V1.1"                 ) \
+X_VT100_LBL( LBL_SD_STD_CAPACITY_V2_0,      "Standard Capacity V2.0",   "Capacit\x82 Standard V2.0"                 ) \
+X_VT100_LBL( LBL_SD_HIGH_CAPACITY,          "High Capacity",            "Haute Capacit\x82"                         ) \
+X_VT100_LBL( LBL_SD_UNDEFINED_D,            "Undefined %d",             "Non d\x82" "fini %d"                       ) \
+X_VT100_LBL( LBL_SD_UNDEFINED_2X,           "Undefined %2x",            "Non d\x82" "fini %2x"                      ) \
+X_VT100_LBL( LBL_SD_25MHZ,                  "25 MHz",                   nullptr                                     ) \
+X_VT100_LBL( LBL_SD_50MHZ,                  "50 MHz",                   nullptr                                     ) \
+X_VT100_LBL( LBL_SD_100MBITS,               "100 Mbits/sec",            nullptr                                     ) \
+X_VT100_LBL( LBL_SD_200MBITS,               "200 Mbits/sec",            nullptr                                     ) \
+X_VT100_LBL( LBL_SD_EMPTY,                  "<EMPTY>",                  "<VIDE>"                                    ) \
+X_VT100_LBL( LBL_SD_KB_TOTAL,               "%lu KB Total",             "%lu KB Totale"                             ) \
+X_VT100_LBL( LBL_SD_KB_USED,                "%lu KB Used",              "%lu KB Utilis\x82"                         ) \
+X_VT100_LBL( LBL_SD_KB_AVAILABLE,           "%lu KB Available",         "%lu KB Disponible"                         ) \
+X_VT100_LBL( LBL_SD_SECTORS,                "%lu Sectors",              "%lu Secteurs"                              ) \
 
 
 

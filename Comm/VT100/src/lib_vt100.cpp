@@ -637,7 +637,7 @@ void VT100_Terminal::ClearScreenWindow(uint8_t PosX, uint8_t PosY, uint8_t SizeX
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::MenuSelectItems(char ItemsChar)
 {
-    InMenuPrintf(LBL_STRING, "\r  (");
+    InMenuPrintf(LBL_STRING, "\n  (");
     SetForeColor(VT100_COLOR_CYAN);
 
     if(ItemsChar == '0') InMenuPrintf(LBL_STRING, "ESC");
@@ -1001,11 +1001,13 @@ void VT100_Terminal::GetStringInput(char* pString, uint8_t* pID)
 //-------------------------------------------------------------------------------------------------
 size_t VT100_Terminal::InMenuPrintf(Label_e Label, ...)
 {
-    size_t  Size;
-    va_list vaArg;
+    size_t      Size;
+    va_list     vaArg;
+    const char* pFormat;
 
-    va_start(vaArg, Label);
-    Size = MenuPrintfCommon(Label, &vaArg);
+    pFormat = myLabel.GetPointer(Label);
+    va_start(vaArg, pFormat);
+    Size = m_pConsole->Printf(pFormat, &vaArg);
     va_end(vaArg);
     return Size;
 }
@@ -1026,46 +1028,17 @@ size_t VT100_Terminal::InMenuPrintf(Label_e Label, ...)
 //-------------------------------------------------------------------------------------------------
 size_t VT100_Terminal::InMenuPrintf(uint8_t PosX, uint8_t PosY, Label_e Label, ...)
 {
-    size_t  Size;
-    va_list vaArg;
+    size_t      Size;
+    va_list     vaArg;
+    const char* pFormat;
 
     SetCursorPosition(PosX, PosY);
-    va_start(vaArg, Label);
-    Size = MenuPrintfCommon(Label, &vaArg);
+    pFormat = myLabel.GetPointer(Label);
+    va_start(vaArg, pFormat);
+    Size = m_pConsole->Printf(pFormat, &vaArg);
     va_end(vaArg);
     return Size;
 }
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           MenuPrintfCommon
-//
-//  Parameter(s):   Label_e     Label       ID of the label to with optional formatting.
-//                  va_list*    p_vaArg     Parameter from va_list.
-//
-//  Return:         None
-//
-//  Description:    Common function to format string and send it to console.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-size_t VT100_Terminal::MenuPrintfCommon(Label_e Label, va_list* p_vaArg)
-{
-    char*  pBuffer;
-    size_t Size = 0;
-
-    if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE)) != nullptr)
-    {
-        const char* pFormat = myLabel.GetPointer(Label);
-        Size = LIB_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, *p_vaArg);
-        m_pConsole->SendData((const uint8_t*)&pBuffer[0], &Size);
-        // Memory are freed in the callback of DMA transfer.
-    }
-
-    return Size;
-}
-
 
 //-------------------------------------------------------------------------------------------------
 //

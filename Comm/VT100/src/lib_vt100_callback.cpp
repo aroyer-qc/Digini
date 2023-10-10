@@ -116,6 +116,9 @@
 
 #define VT100_STRING_SIZE                                     80
 
+#define VT100_NEW_LANGUAGE                                    0
+#define VT100_ACTUAL_LANGUAGE                                 1
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -681,7 +684,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             snprintf(pBuffer, VT100_STRING_SIZE, "%04X-%04X", uint16_t(VolumeSN >> 16), uint16_t(VolumeSN));                    // Volume Serial Number
             myVT100.InMenuPrintf(80, 19, LBL_STRING, pBuffer);
 
-
             switch(FatFs->fs_type)
             {
                 case FS_FAT12:  memcpy(pBuffer, "FAT12", 6); break;
@@ -693,17 +695,10 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(80, 20, LBL_SD_KB_TOTAL, TotalBytes);                                                          // FAT Capacity
             myVT100.InMenuPrintf(26, 21, LBL_SD_KB_USED, TotalBytes - FreeBytes);                                               // Used Sector
             myVT100.InMenuPrintf(80, 21, LBL_SD_KB_AVAILABLE, FreeBytes);                                                       // Free Sector
-
             myVT100.InMenuPrintf(26, 22, LBL_SIZE_BYTES, uint32_t(FatFs->csize * BLOCK_SIZE));                                  // Cluster Size
-
-            snprintf(pBuffer, VT100_STRING_SIZE, "%d Sectors", FatFs->csize);
-            myVT100.InMenuPrintf(80, 22, LBL_STRING, pBuffer);                                                                  // Sector Per Cluster
-
-            snprintf(pBuffer, VT100_STRING_SIZE, "%lu Sectors", (TotalBytes * 1024) / (FatFs->csize * BLOCK_SIZE));
-            myVT100.InMenuPrintf(80, 23, LBL_STRING, pBuffer);                                                                  // Cluster Count
-
-            snprintf(pBuffer, VT100_STRING_SIZE, "%lu Sectors", (FreeBytes * 1024) / (FatFs->csize * BLOCK_SIZE));
-            myVT100.InMenuPrintf(26, 23, LBL_STRING, pBuffer);                                                                  // Free Cluster Count
+            myVT100.InMenuPrintf(80, 22, LBL_SD_SECTORS, FatFs->csize);                                                                  // Sector Per Cluster
+            myVT100.InMenuPrintf(80, 23, LBL_SD_SECTORS, (TotalBytes * 1024) / (FatFs->csize * BLOCK_SIZE));                                                                  // Cluster Count
+            myVT100.InMenuPrintf(26, 23, LBL_SD_SECTORS, (FreeBytes * 1024) / (FatFs->csize * BLOCK_SIZE));                                                                  // Free Cluster Count
 
 //test
 myVT100.InMenuPrintf(1, 23, VT100_LBL_SCROLL_ZONE, 30, 40);
@@ -832,6 +827,119 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MiscStatistic(uint8_t Input, VT100_Ca
                 myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY, (pMemoryPool->GetPoolBlockUsed(i) >= pMemoryPool->GetPoolNumberOfBlock(i) * .8) ? VT100_COLOR_RED : VT100_COLOR_GREEN, pMemoryPool->GetPoolBlockUsed(i), pMemoryPool->GetPoolNumberOfBlock(i), 30);
                 myVT100.SetForeColor(VT100_COLOR_WHITE);
                 myVT100.InMenuPrintf(OffsetMultiplierX - 1,  OffsetMultiplierY + 2, VT100_LBL_MEM_BLOCK_USED,    pMemoryPool->GetPoolBlockUsed(i), pMemoryPool->GetPoolBlockHighPoint(i));
+            }
+        }
+        break;
+
+        default: break;
+    }
+
+    return VT100_INPUT_ESCAPE;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CALLBACK_SystemSetting
+//
+//  Description:    System Setting
+//
+//-------------------------------------------------------------------------------------------------
+VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_CallBackType_e Type)
+{
+    uint8_t*    pBuffer;
+    Language_e* pLanguage;
+
+    switch(Type)
+    {
+        case VT100_CALLBACK_INIT:
+        {
+            pLanguage = (Language_e*)pMemoryPool->Alloc(sizeof(Language_e) * 2);
+            if(pLanguage != nullptr)
+            {
+                DB_Central.Get(&Language[VT100_ACTUAL_LANGUAGE], SYSTEM_LANGUAGE);
+                Language[VT100_NEW_LANGUAGE] = Language[VT100_ACTUAL_LANGUAGE];
+            }
+            
+            pBuffer   = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER));
+            if(pBuffer != nullptr)
+            {
+                DB_Central.Get(&pBuffer, SYSTEM_SERIAL_NUMBER);    
+            }
+
+        }
+
+        case VT100_CALLBACK_FLUSH:
+        {
+            pMemoryPool->Free((void**)&pBuffer);
+            pMemoryPool->Free((void**)&pLanguage);
+        }
+
+        case VT100_CALLBACK_REFRESH_ONCE:
+        {
+            myVT100.SetForeColor(VT100_COLOR_WHITE);
+            myVT100.InMenuPrintf(1, 5, VT100_LBL_SYSTEM_SETTING);
+            myVT100.InMenuPrintf(22, 7, VT100_LBL_LANGUAGE_SELECTION);
+        }
+        break;
+
+        case VT100_CALLBACK_ON_INPUT:
+        {
+            if(MenuSystemSetting_ItemID_e(Input) == MenuSystemSetting_ID_SYSTEM_LANGUAGE)               // Language selection
+            {
+                myVT100.SaveAttribute();
+                myVT100.SaveCursorPosition();
+
+
+            if(pLanguage != nullptr)
+            {
+                // Do toggle according to language
+                myVT100.SetForeColor(VT100_COLOR_MAGENTA);
+
+                if(pLanguage[VT100_NEW_LANGUAGE] == LANG_ENGLISH)
+                {
+                    pLanguage[VT100_NEW_LANGUAGE] = LANG_FRENCH;
+                    myVT100.InMenuPrintf(33, 10, LBL_STRING, " ");
+                    myVT100.InMenuPrintf(48, 10, LBL_STRING, "*");
+                }
+                else
+                {
+                    pLanguage[VT100_NEW_LANGUAGE] = LANG_ENGLISH;
+                    myVT100.InMenuPrintf(33, 10, LBL_STRING, "*");
+                    myVT100.InMenuPrintf(48, 10, LBL_STRING, " ");
+                }
+            }
+
+//not to be place here!!
+/*
+if(pLanguage[VT100_NEW_LANGUAGE] != pLanguage[VT100_ACTUAL_LANGUAGE])
+{
+    myVT100.SetForeColor(VT100_COLOR_RED);
+}
+else
+{
+    myVT100.SetForeColor(VT100_COLOR_BLACK);  // Erase
+}
+
+myVT100.InMenuPrintf(22, 7, VT100_LBL_SAVE_CONFIGURATION);
+*/
+                myVT100.RestoreAttribute();
+                myVT100.RestoreCursorPosition();
+            }
+            else if(MenuSystemSetting_ItemID_e(Input) == MenuSystemSetting_ID_MISC_SERIAL_NUMBER)               // Language selection
+            {
+                return VT100_INPUT_STRING;
+            }
+            else if(MenuSystemSetting_ItemID_e(Input) == MenuSystemSetting_ID_MISC_SAVE)
+            {
+                if(pLanguage[VT100_NEW_LANGUAGE] != pLanguage[VT100_ACTUAL_LANGUAGE])
+                {
+                    DB_Central.Set(&pLanguage[VT100_NEW_LANGUAGE], SYSTEM_LANGUAGE, 0, 0);
+                    myLabel.SetLanguage(pLanguage[VT100_NEW_LANGUAGE]);
+                }
+
+                if(1 /*do serial number */)
+                {
+                }
             }
         }
         break;

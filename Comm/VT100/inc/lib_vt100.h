@@ -165,6 +165,7 @@ struct VT100_MenuObject_t
     size_t                    Size;
 };
 
+// Example MenuSystemSetting_ItemID_e it will have all ID for the Menu item 1 is ID_SYSTEM_LANGUAGE (to be used in callback)
 VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
 
 //-------------------------------------------------------------------------------------------------

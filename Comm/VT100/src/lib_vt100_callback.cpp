@@ -856,16 +856,15 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
             pLanguage = (Language_e*)pMemoryPool->Alloc(sizeof(Language_e) * 2);
             if(pLanguage != nullptr)
             {
-                DB_Central.Get(&Language[VT100_ACTUAL_LANGUAGE], SYSTEM_LANGUAGE);
-                Language[VT100_NEW_LANGUAGE] = Language[VT100_ACTUAL_LANGUAGE];
-            }
-            
-            pBuffer   = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER));
-            if(pBuffer != nullptr)
-            {
-                DB_Central.Get(&pBuffer, SYSTEM_SERIAL_NUMBER);    
+                DB_Central.Get(&pLanguage[VT100_ACTUAL_LANGUAGE], SYSTEM_LANGUAGE);
+                pLanguage[VT100_NEW_LANGUAGE] = pLanguage[VT100_ACTUAL_LANGUAGE];
             }
 
+            pBuffer = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER));
+            if(pBuffer != nullptr)
+            {
+                DB_Central.Get(&pBuffer, SYSTEM_SERIAL_NUMBER);
+            }
         }
 
         case VT100_CALLBACK_FLUSH:

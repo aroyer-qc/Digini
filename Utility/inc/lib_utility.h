@@ -90,6 +90,10 @@ uint8_t     LIB_GetDayOfWeek                (Date_t* pDate);
 
 void        LIB_FastMemcpy                  (const uint8_t* pSrc, uint8_t* pDst, size_t Length);
 
+char*       LIB_EncodeBase64                (const uint8_t* pSource);
+uint8_t*    LIB_DecodeBase64                (const char* pSource);
+
+
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------

@@ -46,6 +46,95 @@
 #define EXPAND_X_LBL_CFG_AS_DATA(ENUM_ID, LBL1, LBL2) {LBL1, LBL2},
 
 //-------------------------------------------------------------------------------------------------
+// X macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define COMMON_LANGUAGE_DEF(X_LABEL)  /* Common label */ \
+X_LABEL( LBL_NULL,                       "",                               nullptr                                         ) \
+X_LABEL( LBL_STRING,                     "%s",                             nullptr                                         ) \
+X_LABEL( LBL_STRING_LINEFEED,            "%s\n",                           nullptr                                         ) \
+X_LABEL( LBL_CHAR,                       "%c",                             nullptr                                         ) \
+X_LABEL( LBL_INT,                        "%d",                             nullptr                                         ) \
+X_LABEL( LBL_LINEFEED,                   "\n",                             nullptr                                         ) \
+X_LABEL( LBL_DOUBLE_LINEFEED,            "\n\n",                           nullptr                                         ) \
+X_LABEL( LBL_TIME,                       "%2u:%02u:%02u ",                 nullptr                                         ) \
+X_LABEL( LBL_DATE,                       "%s %u, %u ",                     nullptr                                         ) \
+X_LABEL( LBL_FULL_DATE,                  "%s, %s %u, %u, %u:%02u:%02u ",   "\x1A$0%s $2%u $1%s $3%u, $4%u:$5%02u:$6%02u "  ) \
+X_LABEL( LBL_TIME_DATE_STAMP,            "%04u-%02u-%02u %2u:%02u:%02u: ", nullptr                                         ) \
+X_LABEL( LBL_INT_TO_DIVIDE_BY_10,        "%ld.%d ",                        nullptr                                         ) \
+X_LABEL( LBL_INT_TO_DIVIDE_BY_100,       "%ld.%02d ",                      nullptr                                         ) \
+X_LABEL( LBL_INT_TO_DIVIDE_BY_1000,      "%ld.%03d ",                      nullptr                                         ) \
+X_LABEL( LBL_INT_NO_DIVIDE,              "%ld ",                           nullptr                                         ) \
+X_LABEL( LBL_LONG_UNSIGNED,              "%lu ",                           nullptr                                         ) \
+X_LABEL( LBL_LONG_UNSIGNED_SEMICOLON,    "%lu: ",                          nullptr                                         ) \
+X_LABEL( LBL_UNSIGNED_2_DIGIT_SEMICOLON, "%02u: ",                         nullptr                                         ) \
+X_LABEL( LBL_UNSIGNED_2_DIGIT,           "%02u ",                          nullptr                                         ) \
+X_LABEL( LBL_STRING_AND_ONE_SPACE,       "%s ",                            nullptr                                         ) \
+X_LABEL( LBL_SIZE_GIGABYTES,             "%u.%02u GBytes",                 "%u.%02u GOctets"                               ) \
+X_LABEL( LBL_SIZE_MEGABYTES,             "%u.%02u MBytes",                 "%u.%02u MOctets"                               ) \
+X_LABEL( LBL_SIZE_KILOBYTES,             "%u KBytes",                      "%u KOctets"                                    ) \
+X_LABEL( LBL_SIZE_BYTES,                 "%lu Bytes  ",                    "%lu Octets  "                                  ) \
+X_LABEL( LBL_YES,                        "Yes",                            "Oui"                                           ) \
+X_LABEL( LBL_NO,                         "No ",                            "Non"                                           ) \
+
+#define NET_LANGUAGE_DEF(X_LABEL)  /* Network label */ \
+X_LABEL( LBL_NETWORK_INFO,               "Network Information",            "Information R\x82seau"                         ) \
+X_LABEL( LBL_IP_ADDR,                    "IPV4 Address . . . :",           "Addresse IPV4  . . :"                          ) \
+X_LABEL( LBL_IP_MASK,                    "Subnet Masks . . . :",           "Masque Sous-R\x82seau :"                       ) \
+X_LABEL( LBL_IP_GATEWAY,                 "Default Gateway  . :",           "Passerelle D\x82" "faut  :"                    ) \
+X_LABEL( LBL_IP_DNS,                     "DNS Servers  . . . :",           "Serveurs DNS . . . :"                          ) \
+X_LABEL( LBL_IP_DHCP_STATE,              "DHCP State . . . . :",           "Status DHCP  . . . :"                          ) \
+X_LABEL( LBL_IP_LINK_STATE,              "Link State . . . . :",           "Status Lien  . . . :"                          ) \
+X_LABEL( LBL_IP_LINK_SPEED,              "Link Speed . . . . :",           "Vitesse du Lien  . :"                          ) \
+X_LABEL( LBL_MAC_ADDRESS,                "MAC Address  . . . :",           "Addresse MAC . . . :"                          ) \
+X_LABEL( LBL_MAC_ADDRESS_VALUE,          "%02X:%02X:%02X:%02X:%02X:%02X",  nullptr                                         ) \
+
+#define TIMDAT_LABEL_LANGUAGE_DEF(X_LABEL) \
+X_LABEL( LBL_JANUARY,                    "January",                        "Janvier"                                       ) \
+X_LABEL( LBL_FEBRUARY,                   "February",                       "F\x82vrier"                                    ) \
+X_LABEL( LBL_MARCH,                      "March",                          "Mars"                                          ) \
+X_LABEL( LBL_APRIL,                      "April",                          "Avril"                                         ) \
+X_LABEL( LBL_MAY,                        "May",                            "Mai"                                           ) \
+X_LABEL( LBL_JUNE,                       "June",                           "Juin"                                          ) \
+X_LABEL( LBL_JULY,                       "July",                           "Juillet"                                       ) \
+X_LABEL( LBL_AUGUST,                     "August",                         "Ao\x93t"                                       ) \
+X_LABEL( LBL_SEPTEMBER,                  "September",                      "Septembre"                                     ) \
+X_LABEL( LBL_OCTOBER,                    "October",                        "Octobre"                                       ) \
+X_LABEL( LBL_NOVEMBER,                   "November",                       "Novembre"                                      ) \
+X_LABEL( LBL_DECEMBER,                   "December",                       "D\x82" "cembre"                                ) \
+X_LABEL( LBL_SUNDAY,                     "Sunday",                         "Dimanche"                                      ) \
+X_LABEL( LBL_MONDAY,                     "Monday",                         "Lundi"                                         ) \
+X_LABEL( LBL_TUESDAY,                    "Tuesday",                        "Mardi"                                         ) \
+X_LABEL( LBL_WEDNESDAY,                  "Wednesday",                      "Mercredi"                                      ) \
+X_LABEL( LBL_THURSDAY,                   "Thursday",                       "Jeudi"                                         ) \
+X_LABEL( LBL_FRIDAY,                     "Friday",                         "Vendredi"                                      ) \
+X_LABEL( LBL_SATURDAY,                   "Saturday",                       "Samedi"                                        ) \
+X_LABEL( LBL_HOUR,                       "Hour",                           "Heure"                                         ) \
+X_LABEL( LBL_MINUTE,                     "Minute",                         nullptr                                         ) \
+X_LABEL( LBL_SECOND,                     "Second",                         "Seconde"                                       ) \
+X_LABEL( LBL_YEAR,                       "Year",                           "Ann\x82" "e"                                   ) \
+X_LABEL( LBL_MONTH,                      "Month",                          "Mois"                                          ) \
+X_LABEL( LBL_DAY,                        "Day",                            "Jour"                                          ) \
+
+#define PRODUCT_LABEL_LANGUAGE_DEF(X_LABEL) \
+X_LABEL( LBL_VENDOR_NAME_INFO,           "Vendor:           ",             "Vendeur:          "                            ) \
+X_LABEL( LBL_FW_NAME_INFO,               "Name:             ",             "Nom:              "                            ) \
+X_LABEL( LBL_FW_VERSION_INFO,            "Version:          ",             nullptr                                         ) \
+X_LABEL( LBL_GUI_NAME_INFO,              "GUI Name:         ",             "Nom GUI:          "                            ) \
+X_LABEL( LBL_GUI_VERSION_INFO,           "GUI Version:      ",             "Version GUI:      "                            ) \
+X_LABEL( LBL_HARDWARE_INFO,              "Hardware:         ",             "Mat\x82riel:         "                         ) \
+X_LABEL( LBL_SERIAL_INFO,                "Serial No.:       ",             "No. S\x82rie:        "                         ) \
+X_LABEL( LBL_COMPILE_DATE_INFO,          "Built Date:       ",             "Date logiciel:    "                            ) \
+X_LABEL( LBL_VENDOR_NAME,                OEM_VENDOR_NAME,                  nullptr                                         ) \
+X_LABEL( LBL_MODEL_NAME,                 OEM_MODEL_NAME,                   nullptr                                         ) \
+X_LABEL( LBL_FIRMWARE_NAME,              OUR_FIRMWARE_NAME,                nullptr                                         ) \
+X_LABEL( LBL_FIRMWARE_VERSION,           OUR_FIRMWARE_VERSION,             nullptr                                         ) \
+X_LABEL( LBL_GUI_NAME,                   OUR_FIRMWARE_GUI_NAME,            nullptr                                         ) \
+X_LABEL( LBL_GUI_VERSION,                OUR_FIRMWARE_GUI_VERSION,         nullptr                                         ) \
+X_LABEL( LBL_SERIAL_NUMBER,              OEM_SERIAL_NUMBER,                nullptr                                         ) \
+X_LABEL( LBL_BUILT_DATE,                 OUR_BUILD_DATE/*[]*/,             nullptr                                         ) \
+
+//-------------------------------------------------------------------------------------------------
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -61,83 +150,14 @@ enum Language_e
 
 enum Label_e
 {
-    LBL_NULL,
-    LBL_STRING,
-    LBL_STRING_LINEFEED,
-    LBL_CHAR,
-    LBL_INT,
-    LBL_LINEFEED,
-    LBL_DOUBLE_LINEFEED,
-    LBL_TIME,
-    LBL_DATE,
-    LBL_FULL_DATE,
-    LBL_TIME_DATE_STAMP,
-    LBL_INT_TO_DIVIDE_BY_10,
-    LBL_INT_TO_DIVIDE_BY_100,
-    LBL_INT_TO_DIVIDE_BY_1000,
-    LBL_INT_NO_DIVIDE,
-    LBL_LONG_UNSIGNED,
-    LBL_LONG_UNSIGNED_SEMICOLON,
-    LBL_UNSIGNED_2_DIGIT_SEMICOLON,
-    LBL_UNSIGNED_2_DIGIT,
-    LBL_STRING_AND_ONE_SPACE,
-    LBL_SIZE_GIGABYTES,
-    LBL_SIZE_MEGABYTES,
-    LBL_SIZE_KILOBYTES,
-    LBL_SIZE_BYTES,
-    LBL_YES,
-    LBL_NO,
+    COMMON_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
 
-
-
-  #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)           // TODO sync with usage VT100 or GRAFX
-    LBL_VENDOR_NAME_INFO,
-    LBL_FW_NAME_INFO,
-    LBL_FW_VERSION_INFO,
-    LBL_GUI_NAME_INFO,
-    LBL_GUI_VERSION_INFO,
-    LBL_HARDWARE_INFO,
-    LBL_SERIAL_INFO,
-    LBL_COMPILE_DATE_INFO,
-
-    LBL_VENDOR_NAME,
-    LBL_MODEL_NAME,
-    LBL_FIRMWARE_NAME,
-    LBL_FIRMWARE_VERSION,
-    LBL_GUI_NAME,
-    LBL_GUI_VERSION,
-    LBL_SERIAL_NUMBER,
-    LBL_BUILT_DATE,
+  #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
+    PRODUCT_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
   #endif
 
-  #if (LABEL_USE_TIME_AND_DATE == DEF_ENABLED)           // TODO sync with usage VT100 or GRAFX
-    LBL_FIRST_MONTH,
-    LBL_JANUARY         = LBL_FIRST_MONTH,
-    LBL_FEBRUARY,
-    LBL_MARCH,
-    LBL_APRIL,
-    LBL_MAY,
-    LBL_JUNE,
-    LBL_JULY,
-    LBL_AUGUST,
-    LBL_SEPTEMBER,
-    LBL_OCTOBER,
-    LBL_NOVEMBER,
-    LBL_DECEMBER,
-    LBL_FIRST_WEEK_DAY,
-    LBL_SUNDAY         = LBL_FIRST_WEEK_DAY,
-    LBL_MONDAY,
-    LBL_TUESDAY,
-    LBL_WEDNESDAY,
-    LBL_THURSDAY,
-    LBL_FRIDAY,
-    LBL_SATURDAY,
-    LBL_HOUR,
-    LBL_MINUTE,
-    LBL_SECOND,
-    LBL_YEAR,
-    LBL_MONTH,
-    LBL_DAY,
+  #if (LABEL_USE_TIME_AND_DATE == DEF_ENABLED)
+    TIMDAT_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
   #endif
 
     LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
@@ -159,6 +179,10 @@ enum Label_e
    #if (VT100_USE_COLOR != DEF_ENABLED)
     VT100_MONO_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
    #endif
+  #endif
+
+  #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
+    NET_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
   #endif
 
     NB_LABEL_CONST,

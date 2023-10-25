@@ -1328,8 +1328,8 @@ void VT100_Terminal::DisplayTimeDateStamp(uint8_t PosX, uint8_t PosY, DateAndTim
 {
     // TODO Should use register date time printing method..
 
-   myVT100.InMenuPrintf(PosX, PosY, LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&pTimeDate->Date)) + (int(LBL_FIRST_WEEK_DAY)))),
-                                                   myLabel.GetPointer(Label_e((pTimeDate->Date.Month - 1) + (int(LBL_FIRST_MONTH)))),
+   myVT100.InMenuPrintf(PosX, PosY, LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&pTimeDate->Date)) + (int(LBL_SUNDAY)))),
+                                                   myLabel.GetPointer(Label_e((pTimeDate->Date.Month - 1) + (int(LBL_JANUARY)))),
                                                    pTimeDate->Date.Day,
                                                    pTimeDate->Date.Year,
                                                    pTimeDate->Time.Hour,

@@ -508,7 +508,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
 
         myVT100.SetForeColor(VT100_COLOR_CYAN);
         myVT100.InMenuPrintf(26, 40, LBL_TIME, TimeDate.Time.Hour, TimeDate.Time.Minute, TimeDate.Time.Second);
-        myVT100.InMenuPrintf(26, 41, LBL_DATE, myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_FIRST_MONTH)))), TimeDate.Date.Day, TimeDate.Date.Year);
+        myVT100.InMenuPrintf(26, 41, LBL_DATE, myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_JANUARY)))), TimeDate.Date.Day, TimeDate.Date.Year);
     }
 
     return VT100_INPUT_MENU_CHOICE;

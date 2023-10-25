@@ -34,7 +34,7 @@
 // const(s)
 //-------------------------------------------------------------------------------------------------
 
-const char Base64[65] = {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
+const char Base64[] = {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -123,7 +123,7 @@ char* LIB_EncodeBase64(const uint8_t* pSource)
 //   Parameter(s):  const char*         Base 64 encoded string
 //   Return:        uint8_t*            Pointer on decoded data stream
 //
-//   Description:   Decode base64 int data stream
+//   Description:   Decode base64 into data stream
 //
 //   Note:          Caller must free the memory of the returned pointer
 //

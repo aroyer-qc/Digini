@@ -200,7 +200,7 @@ class VT100_Terminal : public ChildProcessInterface
         void                SetColor                    (VT100_Color_e ForeColor, VT100_Color_e BackColor);
         inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute(VT100_Attribute_e(int(Color) + VT100_OFFSET_COLOR_FOREGROUND)); }
         inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute(VT100_Attribute_e(int(Color) + VT100_OFFSET_COLOR_BACKGROUND)); }
-        void                UpdateSaveLabel             (VT100_Color_e Color);
+        void                UpdateSaveLabel             (VT100_Color_e Color = VT100_COLOR_WHITE);
       #else
         void                SetColor                    (...) {}
         inline void         SetForeColor                (...) {}
@@ -267,6 +267,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         bool                                m_FlushNextEntry;
         bool                                m_ForceRefresh;
         bool                                m_RefreshOnce;
+        bool                                m_NeedToSave;
 
         // Input string or decimal service
         int32_t                             m_Minimum;

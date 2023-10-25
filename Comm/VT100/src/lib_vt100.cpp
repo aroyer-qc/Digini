@@ -122,6 +122,7 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole)
     m_FlushNextEntry          = false;
     m_ValidateInput           = false;
     m_LogsAreMuted            = true;
+    m_NeedToSave              = false;
 
     Error = nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, this, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
   #if (VT100_USER_CALLBACK_INITIALIZE == DEF_ENABLED)
@@ -494,6 +495,8 @@ void VT100_Terminal::DisplayMenu(void)
                 if(pMenu->Label == VT100_LBL_SAVE_CONFIGURATION)
                 {
                     SetForeColor(VT100_COLOR_BLUE);
+                    
+                    // need to get the label position on screen
                 }
               #endif
 
@@ -767,11 +770,9 @@ void VT100_Terminal::InputString(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           PrintSaveLabel
+//  Name:           UpdateSaveLabel
 //
-//  Parameter(s):   uint8_t      PosX           Horizontal position on terminal
-//                  uint8_t      PosY           Vertical position on terminal
-//                  VT100_Color_e  Color          Color of the 'Save Configuration'
+//  Parameter(s):   VT100_Color_e  Color        Color of the 'Save Configuration'
 //  Return:         None
 //
 //  Description:    Change the color for the save configuration label
@@ -779,13 +780,12 @@ void VT100_Terminal::InputString(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (VT100_USE_COLOR == DEF_ENABLED)
 void VT100_Terminal::UpdateSaveLabel(VT100_Color_e Color)
 {
     SetForeColor(Color);
     InMenuPrintf(9, m_PosY_SaveLabel, VT100_LBL_SAVE_CONFIGURATION);
+    m_NeedToSave = true;
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1088,6 +1088,7 @@ size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat
     return Size;
 }
 */
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SetAttribute

@@ -120,12 +120,6 @@
 #define VT100_ACTUAL_LANGUAGE                                 1
 
 //-------------------------------------------------------------------------------------------------
-// Typedef(s)
-//-------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------
-// Prototype(s)
-//-------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------
 // Variable(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -888,39 +882,26 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                 myVT100.SaveAttribute();
                 myVT100.SaveCursorPosition();
 
-
-            if(pLanguage != nullptr)
-            {
-                // Do toggle according to language
-                myVT100.SetForeColor(VT100_COLOR_MAGENTA);
-
-                if(pLanguage[VT100_NEW_LANGUAGE] == LANG_ENGLISH)
+                if(pLanguage != nullptr)
                 {
-                    pLanguage[VT100_NEW_LANGUAGE] = LANG_FRENCH;
-                    myVT100.InMenuPrintf(33, 10, LBL_STRING, " ");
-                    myVT100.InMenuPrintf(48, 10, LBL_STRING, "*");
-                }
-                else
-                {
-                    pLanguage[VT100_NEW_LANGUAGE] = LANG_ENGLISH;
-                    myVT100.InMenuPrintf(33, 10, LBL_STRING, "*");
-                    myVT100.InMenuPrintf(48, 10, LBL_STRING, " ");
-                }
-            }
+                    // Do toggle according to language
+                    myVT100.SetForeColor(VT100_COLOR_MAGENTA);
 
-//not to be place here!!
-/*
-if(pLanguage[VT100_NEW_LANGUAGE] != pLanguage[VT100_ACTUAL_LANGUAGE])
-{
-    myVT100.SetForeColor(VT100_COLOR_RED);
-}
-else
-{
-    myVT100.SetForeColor(VT100_COLOR_BLACK);  // Erase
-}
-
-myVT100.InMenuPrintf(22, 7, VT100_LBL_SAVE_CONFIGURATION);
-*/
+                    if(pLanguage[VT100_NEW_LANGUAGE] == LANG_ENGLISH)
+                    {
+                        pLanguage[VT100_NEW_LANGUAGE] = LANG_FRENCH;
+                        myVT100.InMenuPrintf(33, 10, LBL_STRING, " ");
+                        myVT100.InMenuPrintf(48, 10, LBL_STRING, "*");
+                    }
+                    else
+                    {
+                        pLanguage[VT100_NEW_LANGUAGE] = LANG_ENGLISH;
+                        myVT100.InMenuPrintf(33, 10, LBL_STRING, "*");
+                        myVT100.InMenuPrintf(48, 10, LBL_STRING, " ");
+                    }
+                    
+                    myVT100.SetSaveStatus(true);
+                }
                 myVT100.RestoreAttribute();
                 myVT100.RestoreCursorPosition();
             }

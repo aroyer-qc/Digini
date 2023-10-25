@@ -132,7 +132,7 @@ X_LABEL( LBL_FIRMWARE_VERSION,           OUR_FIRMWARE_VERSION,             nullp
 X_LABEL( LBL_GUI_NAME,                   OUR_FIRMWARE_GUI_NAME,            nullptr                                         ) \
 X_LABEL( LBL_GUI_VERSION,                OUR_FIRMWARE_GUI_VERSION,         nullptr                                         ) \
 X_LABEL( LBL_SERIAL_NUMBER,              OEM_SERIAL_NUMBER,                nullptr                                         ) \
-X_LABEL( LBL_BUILT_DATE,                 OUR_BUILD_DATE/*[]*/,             nullptr                                         ) \
+X_LABEL( LBL_BUILT_DATE,                 OUR_BUILD_DATE,                   nullptr                                         ) \
 
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)

@@ -438,7 +438,8 @@ size_t LIB_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
     uint32_t      Position;
 
 
-    if((pFmt = (STR_Format_t*)pMemoryPool->AllocAndSet(sizeof(STR_Format_t), 0xFF)) == nullptr)
+//    if((pFmt = (STR_Format_t*)pMemoryPool->AllocAndSet(sizeof(STR_Format_t), 0xFF)) == nullptr)
+    if((pFmt = (STR_Format_t*)pMemoryPool->AllocAndClear(sizeof(STR_Format_t))) == nullptr)
     {
         return PointerCounter;
     }

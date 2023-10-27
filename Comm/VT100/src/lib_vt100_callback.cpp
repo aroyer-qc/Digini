@@ -33,13 +33,13 @@
 //
 // Parameter Type
 //
-//         VT100_CALLBACK_INIT     -> Initialize part of the display in the menu, or variables in use
+//       VT100_CALLBACK_INIT     -> Initialize part of the display in the menu, or variables in use
 //                                  while in menu.
 //
 //                                  It is called only once when then menu is being draw item by
 //                                  item.
 //
-//         VT100_CALLBACK_ON_INPUT -> This call is made when a key that select an item in the menu is
+//       VT100_CALLBACK_ON_INPUT -> This call is made when a key that select an item in the menu is
 //                                  pressed.
 //
 //                                  If it is used for a display page with static or dynamic
@@ -49,13 +49,13 @@
 //                                  perform the action and then return with the VT100_INPUT_MENU_CHOICE
 //                                  to wait for a new input.
 //
-//         VT100_CALLBACK_REFRESH  -> Called while waiting for any key to be pressed. Use this to
+//       VT100_CALLBACK_REFRESH  -> Called while waiting for any key to be pressed. Use this to
 //                                  refresh displayed information.
 //                                  NOTE: There is no VT100_CALLBACK_REFRESH called if
 //                                        VT100_INPUT_MENU_CHOICE is returned. UNLESS: you put a
 //                                        callback in Option 0 of the menu list
 //
-//         VT100_CALLBACK_FLUSH    -> If variables need to be reset or function need to be called to
+//       VT100_CALLBACK_FLUSH    -> If variables need to be reset or function need to be called to
 //                                  reset some app state. each existing callback will be called
 //                                  leaving a menu.
 //                                  Do not use any malloc function in the process of
@@ -65,19 +65,21 @@
 // return VT100_InputType_e     Kind of input management for this page
 //
 //
-//         VT100_INPUT_ESCAPE      -> It is not a menu is this a page with information updated on
-//                                  screen, this kind of is not waiting any key other than
+//       VT100_INPUT_ESCAPE      -> It is not a menu, it his a page with information updated on
+//                                  screen, this kind of page is not waiting any key other than
 //                                  <ESCAPE> to exit
 //
-//         VT100_INPUT_MENU_CHOICE -> It tell the console it is a menu and waiting for an input.
+//       VT100_INPUT_SAVE_DATA   -> This value inform the myVT100 of the save has being processed.
 //
-//         VT100_INPUT_DECIMAL     -> If the callback make call for an VT100_SetDecimalInput(), then
+//       VT100_INPUT_MENU_CHOICE -> It tell the console it is a menu and waiting for an input.
+//
+//       VT100_INPUT_DECIMAL     -> If the callback make call for an VT100_SetDecimalInput(), then
 //                                  it must return with this enum value to tell the console what
 //                                  to do. It will comeback to the callback only when the input
 //                                  decimal mode will be escaped by <ESCAPE> or value validated by
 //                                  <ENTER>.
 //
-//         VT100_INPUT_STRING      -> If the callback make call for an VT100_SetStringInput(), then it
+//       VT100_INPUT_STRING      -> If the callback make call for an VT100_SetStringInput(), then it
 //                                  must return with this enum value to tell the console what to
 //                                  do. We will comeback to the callback only when the input
 //                                  decimal mode will be escaped by <ESCAPE> or value validated
@@ -127,6 +129,42 @@ static nOS_Time                 VT100_LastUpTime;
 static uint8_t                  VT100_LastSecond;
 
 static CON_DebugLevel_e         VT100_LastDebugLevel;
+
+static uint8_t*                 pBuffer   = nullptr;
+
+//-------------------------------------------------------------------------------------------------
+// Private(s) function(s)
+//-------------------------------------------------------------------------------------------------
+
+Language_e VT100_DisplayLanguageSelection(Language_e Language, bool StateInit = false);
+
+
+Language_e VT100_DisplayLanguageSelection(Language_e Language, bool StateInit)
+{
+    //myVT100.SaveAttribute();
+    //myVT100.SaveCursorPosition();
+    myVT100.SetForeColor(VT100_COLOR_CYAN);
+
+    if(StateInit == false)
+    {
+        Language = (Language == LANG_ENGLISH) ? LANG_FRENCH : LANG_ENGLISH;
+    }
+
+    if(Language == LANG_ENGLISH)
+    {
+        myVT100.InMenuPrintf(36, 10, LBL_STRING, "*");
+        myVT100.InMenuPrintf(50, 10, LBL_STRING, " ");
+    }
+    else
+    {
+        myVT100.InMenuPrintf(36, 10, LBL_STRING, " ");
+        myVT100.InMenuPrintf(50, 10, LBL_STRING, "*");
+    }
+
+    //myVT100.RestoreAttribute();
+    //myVT100.RestoreCursorPosition();
+    return Language;
+}
 
 //-------------------------------------------------------------------------------------------------
 // Public(s) function(s)
@@ -453,8 +491,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
                 }
 
                // Refresh = VT100_CFG_REFRESH_INFO;
-                break;
             }
+            break;
         }
     }
 
@@ -769,7 +807,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MiscStatistic(uint8_t Input, VT100_Ca
     VAR_UNUSED(Input);
     Max = pMemoryPool->GetNumberOfPool();
 
-
     switch(Type)
     {
         case VT100_CALLBACK_REFRESH_ONCE:
@@ -840,8 +877,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MiscStatistic(uint8_t Input, VT100_Ca
 //-------------------------------------------------------------------------------------------------
 VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_CallBackType_e Type)
 {
-    uint8_t*    pBuffer;
-    Language_e* pLanguage;
+    static Language_e* pLanguage = nullptr;
 
     switch(Type)
     {
@@ -852,6 +888,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
             {
                 DB_Central.Get(&pLanguage[VT100_ACTUAL_LANGUAGE], SYSTEM_LANGUAGE);
                 pLanguage[VT100_NEW_LANGUAGE] = pLanguage[VT100_ACTUAL_LANGUAGE];
+                VT100_DisplayLanguageSelection(pLanguage[VT100_ACTUAL_LANGUAGE], true);
             }
 
             pBuffer = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER));
@@ -860,66 +897,55 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                 DB_Central.Get(&pBuffer, SYSTEM_SERIAL_NUMBER);
             }
         }
+        break;
 
         case VT100_CALLBACK_FLUSH:
         {
             pMemoryPool->Free((void**)&pBuffer);
             pMemoryPool->Free((void**)&pLanguage);
         }
-
-        case VT100_CALLBACK_REFRESH_ONCE:
-        {
-            myVT100.SetForeColor(VT100_COLOR_WHITE);
-            myVT100.InMenuPrintf(1, 5, VT100_LBL_SYSTEM_SETTING);
-            myVT100.InMenuPrintf(22, 7, VT100_LBL_LANGUAGE_SELECTION);
-        }
         break;
+
+        //case VT100_CALLBACK_REFRESH_ONCE:
+        //{
+  //          myVT100.SetForeColor(VT100_COLOR_WHITE);
+ //           myVT100.InMenuPrintf(1, 5, VT100_LBL_SYSTEM_SETTING);
+//            myVT100.InMenuPrintf(22, 7, VT100_LBL_LANGUAGE_SELECTION);
+        //}
+        //break;
 
         case VT100_CALLBACK_ON_INPUT:
         {
-            if(MenuSystemSetting_ItemID_e(Input) == MenuSystemSetting_ID_SYSTEM_LANGUAGE)               // Language selection
+            if(MenuSystemSetting_ItemID_e(Input) == MenuSystemSetting_ID_SYSTEM_LANGUAGE)                   // Language selection
             {
-                myVT100.SaveAttribute();
-                myVT100.SaveCursorPosition();
-
                 if(pLanguage != nullptr)
                 {
                     // Do toggle according to language
-                    myVT100.SetForeColor(VT100_COLOR_MAGENTA);
-
-                    if(pLanguage[VT100_NEW_LANGUAGE] == LANG_ENGLISH)
-                    {
-                        pLanguage[VT100_NEW_LANGUAGE] = LANG_FRENCH;
-                        myVT100.InMenuPrintf(33, 10, LBL_STRING, " ");
-                        myVT100.InMenuPrintf(48, 10, LBL_STRING, "*");
-                    }
-                    else
-                    {
-                        pLanguage[VT100_NEW_LANGUAGE] = LANG_ENGLISH;
-                        myVT100.InMenuPrintf(33, 10, LBL_STRING, "*");
-                        myVT100.InMenuPrintf(48, 10, LBL_STRING, " ");
-                    }
-                    
-                    myVT100.SetSaveStatus(true);
+                    pLanguage[VT100_NEW_LANGUAGE] = VT100_DisplayLanguageSelection(pLanguage[VT100_NEW_LANGUAGE]);
+                    myVT100.UpdateSaveLabel(VT100_COLOR_YELLOW);
                 }
-                myVT100.RestoreAttribute();
-                myVT100.RestoreCursorPosition();
             }
-            else if(MenuSystemSetting_ItemID_e(Input) == MenuSystemSetting_ID_MISC_SERIAL_NUMBER)               // Language selection
+            else if(MenuSystemSetting_ItemID_e(Input) == MenuSystemSetting_ID_MISC_SERIAL_NUMBER)           // Language selection
             {
                 return VT100_INPUT_STRING;
             }
             else if(MenuSystemSetting_ItemID_e(Input) == MenuSystemSetting_ID_MISC_SAVE)
             {
-                if(pLanguage[VT100_NEW_LANGUAGE] != pLanguage[VT100_ACTUAL_LANGUAGE])
+                if(pLanguage != nullptr)
                 {
-                    DB_Central.Set(&pLanguage[VT100_NEW_LANGUAGE], SYSTEM_LANGUAGE, 0, 0);
-                    myLabel.SetLanguage(pLanguage[VT100_NEW_LANGUAGE]);
+                    if(pLanguage[VT100_NEW_LANGUAGE] != pLanguage[VT100_ACTUAL_LANGUAGE])
+                    {
+                        DB_Central.Set(&pLanguage[VT100_NEW_LANGUAGE], SYSTEM_LANGUAGE, 0, 0);
+                        myLabel.SetLanguage(pLanguage[VT100_NEW_LANGUAGE]);
+                        myVT100.SetRefreshFullPage();
+                    }
                 }
 
                 if(1 /*do serial number */)
                 {
                 }
+
+                return VT100_INPUT_SAVE_DATA;
             }
         }
         break;

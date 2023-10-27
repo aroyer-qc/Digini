@@ -127,6 +127,7 @@ enum VT100_Attribute_e
 enum VT100_InputType_e
 {
     VT100_INPUT_MENU_CHOICE,
+    VT100_INPUT_SAVE_DATA,
     VT100_INPUT_DECIMAL,
     VT100_INPUT_STRING,
     VT100_INPUT_ESCAPE,
@@ -200,14 +201,14 @@ class VT100_Terminal : public ChildProcessInterface
         void                SetColor                    (VT100_Color_e ForeColor, VT100_Color_e BackColor);
         inline void         SetForeColor                (VT100_Color_e Color)		{ SetAttribute(VT100_Attribute_e(int(Color) + VT100_OFFSET_COLOR_FOREGROUND)); }
         inline void         SetBackColor                (VT100_Color_e Color)       { SetAttribute(VT100_Attribute_e(int(Color) + VT100_OFFSET_COLOR_BACKGROUND)); }
-        void                UpdateSaveLabel             (VT100_Color_e Color = VT100_COLOR_WHITE);
       #else
         void                SetColor                    (...) {}
         inline void         SetForeColor                (...) {}
         inline void         SetBackColor                (...) {}
         void                InvertMono                  (bool Invert);
       #endif
-
+        void                UpdateSaveLabel             (VT100_Color_e Color = VT100_COLOR_WHITE, bool State = true);
+        void                SetRefreshFullPage          (void)                          { m_RefreshFullPage = true; }
         void                SetCursorPosition           (uint8_t PosX, uint8_t PosY);
         void                SetScrollZone               (uint8_t FirstLine, uint8_t LastLine);
 
@@ -268,6 +269,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         bool                                m_ForceRefresh;
         bool                                m_RefreshOnce;
         bool                                m_NeedToSave;
+        bool                                m_RefreshFullPage;
 
         // Input string or decimal service
         int32_t                             m_Minimum;

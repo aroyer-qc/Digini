@@ -123,6 +123,7 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole)
     m_ValidateInput           = false;
     m_LogsAreMuted            = true;
     m_NeedToSave              = false;
+    m_RefreshFullPage         = false;
 
     Error = nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, this, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
   #if (VT100_USER_CALLBACK_INITIALIZE == DEF_ENABLED)
@@ -495,7 +496,7 @@ void VT100_Terminal::DisplayMenu(void)
                 if(pMenu->Label == VT100_LBL_SAVE_CONFIGURATION)
                 {
                     SetForeColor(VT100_COLOR_BLUE);
-                    
+
                     // need to get the label position on screen
                 }
               #endif
@@ -518,7 +519,7 @@ void VT100_Terminal::DisplayMenu(void)
         ItemsChar += (ItemsChar >= 10) ? ('a' - 10) : '0';
         InMenuPrintf(VT100_LBL_ENTER_SELECTION, ItemsChar);
     }
-    else
+    //else
     {
         // There is nothing to draw if it has only one item ( it is a redirection menu )
         CallBack(m_Menu[m_MenuID].pDefinition[0].pCallback, VT100_CALLBACK_INIT, 0);
@@ -677,6 +678,21 @@ VT100_InputType_e VT100_Terminal::CallBack(CallbackMethod_t pCallback, VT100_Cal
         SaveAttribute();
         InputType = pCallback(Item, Type);
         RestoreAttribute();
+
+        if(InputType == VT100_INPUT_SAVE_DATA)
+        {
+            UpdateSaveLabel(VT100_COLOR_BLUE, false);
+            
+            // Refresh page when language are change  
+          #if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED) || (VT100_USE_USER_MENU_STATIC_INFO == DEF_ENABLED)
+            if(m_RefreshFullPage == true)
+            {
+                m_RefreshFullPage = false;
+                PrintMenuStaticInfo();
+            }
+          #endif
+            
+        }
     }
 
     return InputType;
@@ -772,7 +788,8 @@ void VT100_Terminal::InputString(void)
 //
 //  Name:           UpdateSaveLabel
 //
-//  Parameter(s):   VT100_Color_e  Color        Color of the 'Save Configuration'
+//  Parameter(s):   VT100_Color_e  Color   Color of the 'Save Configuration'
+//                  bool           State   In callback do not use this parameter, default = true
 //  Return:         None
 //
 //  Description:    Change the color for the save configuration label
@@ -780,11 +797,11 @@ void VT100_Terminal::InputString(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void VT100_Terminal::UpdateSaveLabel(VT100_Color_e Color)
+void VT100_Terminal::UpdateSaveLabel(VT100_Color_e Color, bool State)
 {
     SetForeColor(Color);
     InMenuPrintf(9, m_PosY_SaveLabel, VT100_LBL_SAVE_CONFIGURATION);
-    m_NeedToSave = true;
+    m_NeedToSave = State;
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -66,8 +66,8 @@ X_LABEL( LBL_INT_TO_DIVIDE_BY_100,       "%ld.%02d ",                      nullp
 X_LABEL( LBL_INT_TO_DIVIDE_BY_1000,      "%ld.%03d ",                      nullptr                                         ) \
 X_LABEL( LBL_INT_NO_DIVIDE,              "%ld ",                           nullptr                                         ) \
 X_LABEL( LBL_LONG_UNSIGNED,              "%lu ",                           nullptr                                         ) \
-X_LABEL( LBL_LONG_UNSIGNED_SEMICOLON,    "%lu: ",                          nullptr                                         ) \
-X_LABEL( LBL_UNSIGNED_2_DIGIT_SEMICOLON, "%02u: ",                         nullptr                                         ) \
+X_LABEL( LBL_LONG_UNSIGNED_SEMICOLON,    "%lu:",                           nullptr                                         ) \
+X_LABEL( LBL_UNSIGNED_2_DIGIT_SEMICOLON, "%02u:",                          nullptr                                         ) \
 X_LABEL( LBL_UNSIGNED_2_DIGIT,           "%02u ",                          nullptr                                         ) \
 X_LABEL( LBL_STRING_AND_ONE_SPACE,       "%s ",                            nullptr                                         ) \
 X_LABEL( LBL_SIZE_GIGABYTES,             "%u.%02u GBytes",                 "%u.%02u GOctets"                               ) \

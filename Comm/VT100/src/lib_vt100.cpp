@@ -684,13 +684,14 @@ VT100_InputType_e VT100_Terminal::CallBack(CallbackMethod_t pCallback, VT100_Cal
             UpdateSaveLabel(VT100_COLOR_BLUE, false);
             
             // Refresh page when language are change  
-          #if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED) || (VT100_USE_USER_MENU_STATIC_INFO == DEF_ENABLED)
             if(m_RefreshFullPage == true)
             {
                 m_RefreshFullPage = false;
-                PrintMenuStaticInfo();
+              #if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED) || (VT100_USE_USER_MENU_STATIC_INFO == DEF_ENABLED)
+                PrintMenuStaticInfo();                      // Refresh the header
+              #endif
+              DisplayMenu();                                // Redraw the menu.
             }
-          #endif
             
         }
     }

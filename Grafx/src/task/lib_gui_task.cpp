@@ -127,6 +127,9 @@ void GUI_myClassTask::Run()
     m_Link    = INVALID_LINK;
     NewLink   = LINK_MAIN_LOADING;
 
+    // There is no force refresh. (Use for example to refresh page on language change)
+    m_ForceRefresh = false;
+
   #if defined(STATIC_SKIN_DEF)
     // Static skin must be loaded
     while(SKIN_pTask->IsStaticSkinLoaded() != true)
@@ -134,35 +137,42 @@ void GUI_myClassTask::Run()
         nOS_Sleep(10);
     };
 
-    nOS_Sleep(10); // Allow other task to run   TODO: (Alain#1#) maybe delay is not the best option
+    nOS_Sleep(10); // Allow other task to run   TODO: (Alain#1#) maybe sleep is not the best option
   #endif
 
     for(;;)
     {
-        if((Error = nOS_QueueRead(&this->m_Q_Msg, &Msg, GRAFX_TICK_WAIT_BETWEEN_REFRESH_LOOP)) == NOS_E_TIMEOUT)
+        if(m_ForceRefresh == false)
         {
-            Msg.Type     = MESSAGE_TYPE_PDI_EVENT_INFO;
-            Msg.Touch    = SERVICE_IDLE;
-            Msg.WidgetID = INVALID_WIDGET;
-            Error        = NOS_OK;
+            if((Error = nOS_QueueRead(&this->m_Q_Msg, &Msg, GRAFX_TICK_WAIT_BETWEEN_REFRESH_LOOP)) == NOS_E_TIMEOUT)
+            {
+                Msg.Type     = MESSAGE_TYPE_PDI_EVENT_INFO;
+                Msg.Touch    = SERVICE_IDLE;
+                Msg.WidgetID = INVALID_WIDGET;
+                Error        = NOS_OK;
+            }
         }
 
         if(Error == NOS_OK)
         {
-            if(NewLink != INVALID_LINK)                                             // If we have a new link (switch to new page)
+            if((NewLink != INVALID_LINK) || (m_ForceRefresh == true))               // If we have a new link (switch to new page)
             {                                                                       // Finalize old page then create new page
-                if(m_Link != INVALID_LINK)                                          // finalize the actual page if it exist
+                if((m_Link != INVALID_LINK)  || (m_ForceRefresh == true))           // finalize the actual page if it exist
                 {
                     FinalizeAllWidget();
                 }
+
               #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
                 PDI_pTask->ClearAllZone();
               #endif
                 GUI_ClearWidgetLayer();
 
                 // TODO (Alain#2#) maybe do a stack of previous link... now only one level is active
-                PreviousLink = m_Link;
-                m_Link  = NewLink;
+                if(m_ForceRefresh == false)
+                {
+                    PreviousLink = m_Link;
+                    m_Link       = NewLink;
+                }
                 NewLink = CreateAllWidget();
 
               #ifdef GRAFX_USE_SLIDING_PAGE
@@ -176,6 +186,8 @@ void GUI_myClassTask::Run()
                     }
                 }
               #endif
+
+                m_ForceRefresh = false;
             }
             else
             {

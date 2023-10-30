@@ -63,9 +63,11 @@ class GUI_myClassTask
         nOS_Error                   Initialize          (void);
 
       #ifdef GRAFX_USE_SLIDING_PAGE
-        void                        SetSlidingDirection (SlideDir_e SlidingDirection) {m_SlidingDir = SlidingDirection;};
+        void                        SetSlidingDirection (SlideDir_e SlidingDirection)               { m_SlidingDir = SlidingDirection; };
         void                        SetSlidingRange     (PageSlideRange_t* pPageSlideOverride);
       #endif
+    
+        void                        SetForceRefresh     (void)                                      { m_ForceRefresh = true; };
 
         nOS_Queue                   m_Q_Msg;
 
@@ -82,6 +84,7 @@ class GUI_myClassTask
         Link_e                      m_Link;
         PageWidget_t*               m_pPage;
         uint8_t                     m_WidgetCount;
+        bool                        m_ForceRefresh;
         class CWidgetInterface**    m_pWidgetList;
         MsgRefresh_t                m_ArrayMsg[GUI_NUMBER_OF_MSG];
 

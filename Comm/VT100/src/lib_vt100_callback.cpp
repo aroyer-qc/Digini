@@ -938,6 +938,9 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                         DB_Central.Set(&pLanguage[VT100_NEW_LANGUAGE], SYSTEM_LANGUAGE, 0, 0);
                         myLabel.SetLanguage(pLanguage[VT100_NEW_LANGUAGE]);
                         myVT100.SetRefreshFullPage();
+                      #if (DIGINI_USE_GRAFX == DEF_ENABLED)  
+                        GUI_pTask->SetForceRefresh();                                                       // Force the graphic page to also be refresh to new language 
+                      #endif
                     }
                 }
 

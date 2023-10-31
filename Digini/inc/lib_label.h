@@ -76,6 +76,8 @@ X_LABEL( LBL_SIZE_KILOBYTES,             "%u KBytes",                      "%u K
 X_LABEL( LBL_SIZE_BYTES,                 "%lu Bytes  ",                    "%lu Octets  "                                  ) \
 X_LABEL( LBL_YES,                        "Yes",                            "Oui"                                           ) \
 X_LABEL( LBL_NO,                         "No ",                            "Non"                                           ) \
+X_LABEL( LBL_DEGREE_CELSIUS,             "\xF8" "C",                       nullptr                                         ) \
+X_LABEL( LBL_DEGREE_FAHRENHEIT,          "\xF8" "F",                       nullptr                                         ) \
 
 #define NET_LANGUAGE_DEF(X_LABEL)  /* Network label */ \
 X_LABEL( LBL_NETWORK_INFO,               "Network Information",            "Information R\x82seau"                         ) \
@@ -133,6 +135,8 @@ X_LABEL( LBL_GUI_NAME,                   OUR_FIRMWARE_GUI_NAME,            nullp
 X_LABEL( LBL_GUI_VERSION,                OUR_FIRMWARE_GUI_VERSION,         nullptr                                         ) \
 X_LABEL( LBL_SERIAL_NUMBER,              OEM_SERIAL_NUMBER,                nullptr                                         ) \
 X_LABEL( LBL_BUILT_DATE,                 OUR_BUILD_DATE,                   nullptr                                         ) \
+X_LABEL( LBL_CPU_VOLTAGE,                "Voltages:",                      nullptr                                         ) \
+X_LABEL( LBL_CPU_TEMPERATURE,            "CPU Temp:   \xF8" "C",           nullptr                                        ) \
 
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)

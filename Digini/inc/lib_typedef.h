@@ -257,6 +257,12 @@ typedef enum
     RANGE_MID_POINT,
 } Range_e;
 
+typedef enum
+{
+    TEMP_CELSIUS,
+    TEMP_FAHRENHEIT,
+} TempUnit_e;
+
 // --------- General typedef ---------
 
 typedef union

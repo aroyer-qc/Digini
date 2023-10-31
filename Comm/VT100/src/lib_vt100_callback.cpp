@@ -127,22 +127,23 @@
 
 static nOS_Time                 VT100_LastUpTime;
 static uint8_t                  VT100_LastSecond;
-
 static CON_DebugLevel_e         VT100_LastDebugLevel;
+static uint8_t*                 pBuffer1 = nullptr;
+static uint8_t*                 pBuffer2 = nullptr;
 
-static uint8_t*                 pBuffer   = nullptr;
+//-------------------------------------------------------------------------------------------------
+// Private(s) prototype(s)
+//-------------------------------------------------------------------------------------------------
+
+Language_e VT100_DisplayLanguageSelection(Language_e Language, bool StateInit = false);
 
 //-------------------------------------------------------------------------------------------------
 // Private(s) function(s)
 //-------------------------------------------------------------------------------------------------
 
-Language_e VT100_DisplayLanguageSelection(Language_e Language, bool StateInit = false);
-
 
 Language_e VT100_DisplayLanguageSelection(Language_e Language, bool StateInit)
 {
-    //myVT100.SaveAttribute();
-    //myVT100.SaveCursorPosition();
     myVT100.SetForeColor(VT100_COLOR_CYAN);
 
     if(StateInit == false)
@@ -161,8 +162,6 @@ Language_e VT100_DisplayLanguageSelection(Language_e Language, bool StateInit)
         myVT100.InMenuPrintf(50, 10, LBL_STRING, "*");
     }
 
-    //myVT100.RestoreAttribute();
-    //myVT100.RestoreCursorPosition();
     return Language;
 }
 
@@ -246,8 +245,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
         }
         break;
 
-        // case VT100_CALLBACK_ON_INPUT: Nothing to do
-        // case VT100_CALLBACK_FLUSH:    Nothing to do
         default: break;
     }
 
@@ -267,6 +264,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 {
     nOS_Time        UpTime;
     DateAndTime_t   TimeDate;
+    TempUnit_e      Unit;
+    // type         Temperature;
 
     VAR_UNUSED(Input);
 
@@ -306,11 +305,17 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
              pMemoryPool->Free((void**)&pBuffer);
 
           #endif
+
+
             myVT100.InMenuPrintf(1, 15, LBL_COMPILE_DATE_INFO);
             myVT100.InMenuPrintf(       LBL_BUILT_DATE);
             myVT100.InMenuPrintf(1, 16, VT100_LBL_NOW);
             myVT100.InMenuPrintf(1, 17, VT100_LBL_UPTIME);
             myVT100.InMenuPrintf(1, 19, VT100_LBL_ESCAPE);
+            myVT100.InMenuPrintf(1, 20, LBL_CPU_VOLTAGE);
+            myVT100.InMenuPrintf(1, 21, LBL_CPU_TEMPERATURE);
+            DB_Central.Get(&Unit, SYSTEM_TEMPERATURE_UNIT);
+            myVT100.InMenuPrintf(20, 21, (Unit == TEMP_CELSIUS) ? LBL_DEGREE_CELSIUS : LBL_DEGREE_FAHRENHEIT);
         }
         break;
 
@@ -323,6 +328,15 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
                 VT100_LastSecond = TimeDate.Time.Second;
                 myVT100.DisplayTimeDateStamp(19, 16, &TimeDate);
             }
+
+            // Get the temperature of the CPU form the ADC class
+            DB_Central.Get(&Unit, SYSTEM_TEMPERATURE_UNIT);
+
+            if(Unit == TEMP_CELSIUS) ; // Temperature = Read ADC in Celsius
+            else ;                     // Temperature = Read ADC in Fahrenheit
+
+            myVT100.InMenuPrintf(21, 14, LBL_STRING, "25.5");       // TODO replace by the right method
+
 
             if(UpTime != VT100_LastUpTime)
             {
@@ -338,8 +352,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
         }
         break;
 
-        // case VT100_CALLBACK_ON_INPUT: Nothing to do
-        // case VT100_CALLBACK_FLUSH:    Nothing to do
         default: break;
     }
 
@@ -891,64 +903,76 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                 VT100_DisplayLanguageSelection(pLanguage[VT100_ACTUAL_LANGUAGE], true);
             }
 
-            pBuffer = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER));
-            if(pBuffer != nullptr)
+            pBuffer1 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER));         // To get a new serial number
+            pBuffer2 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER));         // use to compare Serial number
+            if((pBuffer1 != nullptr) && (pBuffer2 != nullptr))
             {
-                DB_Central.Get(&pBuffer, SYSTEM_SERIAL_NUMBER);
+                DB_Central.Get(&pBuffer1, SYSTEM_SERIAL_NUMBER);
+                DB_Central.Get(&pBuffer2, SYSTEM_SERIAL_NUMBER);
             }
+
         }
         break;
 
         case VT100_CALLBACK_FLUSH:
         {
-            pMemoryPool->Free((void**)&pBuffer);
+            pMemoryPool->Free((void**)&pBuffer1);
+            pMemoryPool->Free((void**)&pBuffer2);
             pMemoryPool->Free((void**)&pLanguage);
         }
         break;
 
-        //case VT100_CALLBACK_REFRESH_ONCE:
-        //{
-  //          myVT100.SetForeColor(VT100_COLOR_WHITE);
- //           myVT100.InMenuPrintf(1, 5, VT100_LBL_SYSTEM_SETTING);
-//            myVT100.InMenuPrintf(22, 7, VT100_LBL_LANGUAGE_SELECTION);
-        //}
-        //break;
-
         case VT100_CALLBACK_ON_INPUT:
         {
-            if(MenuSystemSetting_ItemID_e(Input) == MenuSystemSetting_ID_SYSTEM_LANGUAGE)                   // Language selection
+            switch(int(MenuSystemSetting_ItemID_e(Input)))
             {
-                if(pLanguage != nullptr)
+                case int(MenuSystemSetting_ID_SYSTEM_LANGUAGE):          // Language selection
                 {
-                    // Do toggle according to language
-                    pLanguage[VT100_NEW_LANGUAGE] = VT100_DisplayLanguageSelection(pLanguage[VT100_NEW_LANGUAGE]);
-                    myVT100.UpdateSaveLabel(VT100_COLOR_YELLOW);
-                }
-            }
-            else if(MenuSystemSetting_ItemID_e(Input) == MenuSystemSetting_ID_MISC_SERIAL_NUMBER)           // Language selection
-            {
-                return VT100_INPUT_STRING;
-            }
-            else if(MenuSystemSetting_ItemID_e(Input) == MenuSystemSetting_ID_MISC_SAVE)
-            {
-                if(pLanguage != nullptr)
-                {
-                    if(pLanguage[VT100_NEW_LANGUAGE] != pLanguage[VT100_ACTUAL_LANGUAGE])
+                    if(pLanguage != nullptr)
                     {
-                        DB_Central.Set(&pLanguage[VT100_NEW_LANGUAGE], SYSTEM_LANGUAGE, 0, 0);
-                        myLabel.SetLanguage(pLanguage[VT100_NEW_LANGUAGE]);
-                        myVT100.SetRefreshFullPage();
-                      #if (DIGINI_USE_GRAFX == DEF_ENABLED)  
-                        GUI_pTask->SetForceRefresh();                                                       // Force the graphic page to also be refresh to new language 
-                      #endif
+                        // Do toggle according to language
+                        pLanguage[VT100_NEW_LANGUAGE] = VT100_DisplayLanguageSelection(pLanguage[VT100_NEW_LANGUAGE]);
+                        myVT100.UpdateSaveLabel(VT100_COLOR_YELLOW);
                     }
                 }
+                break;
 
-                if(1 /*do serial number */)
+                case int(MenuSystemSetting_ID_MISC_SERIAL_NUMBER):       // Entering NEW Serial number (will be disable if a valid serial numer exist)
                 {
+                    if(pBuffer1 != nullptr)
+                    {
+                        myVT100.SetStringInput(32, 16, sizeof(OEM_SERIAL_NUMBER), Input, LBL_SERIAL_NUMBER, (const char*)pBuffer1);
+                        return VT100_INPUT_STRING;
+                    }
                 }
+                break;
 
-                return VT100_INPUT_SAVE_DATA;
+                case int(MenuSystemSetting_ID_MISC_SAVE):
+                {
+                    if(pLanguage != nullptr)
+                    {
+                        if(pLanguage[VT100_NEW_LANGUAGE] != pLanguage[VT100_ACTUAL_LANGUAGE])
+                        {
+                            DB_Central.Set(&pLanguage[VT100_NEW_LANGUAGE], SYSTEM_LANGUAGE);
+                            myLabel.SetLanguage(pLanguage[VT100_NEW_LANGUAGE]);
+                            myVT100.SetRefreshFullPage();
+                          #if (DIGINI_USE_GRAFX == DEF_ENABLED)
+                            GUI_pTask->SetForceRefresh();                                                       // Force the graphic page to also be refresh to new language
+                          #endif
+                        }
+                    }
+
+                    if((pBuffer1 != nullptr) && (pBuffer2 != nullptr))
+                    {
+                        if(memcmp(pBuffer1, pBuffer2, sizeof(OEM_SERIAL_NUMBER)) != 0)
+                        {
+                            DB_Central.Set(&pBuffer1, SYSTEM_SERIAL_NUMBER);
+                        }
+                    }
+
+                    return VT100_INPUT_SAVE_DATA;
+                }
+                break;
             }
         }
         break;

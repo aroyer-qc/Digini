@@ -2,7 +2,6 @@
 //
 //  File : lib_class_STM32F7_adc.h
 //
-// imported from F4... might not even be compatible
 //-------------------------------------------------------------------------------------------------
 //
 // Copyright(c) 2023 Alain Royer.
@@ -275,6 +274,7 @@ enum ADC_Channel_e
     ADC_CHANNEL_16      = ((uint32_t)ADC_CR1_AWDCH_4),
     ADC_CHANNEL_17      = ((uint32_t)(ADC_CR1_AWDCH_4 | ADC_CR1_AWDCH_0)),
     ADC_CHANNEL_18      = ((uint32_t)(ADC_CR1_AWDCH_4 | ADC_CR1_AWDCH_1)),
+    ADC_CHANNEL_VREFINT = ((uint32_t)ADC_CHANNEL_17),
     ADC_CHANNEL_VREFINT = ((uint32_t)ADC_CHANNEL_17),
     ADC_CHANNEL_VBAT    = ((uint32_t)ADC_CHANNEL_18),
 };

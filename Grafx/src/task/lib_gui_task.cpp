@@ -452,8 +452,6 @@ Link_e GUI_myClassTask::CreateAllWidget()
 
     while((Count < m_WidgetCount) && (NewLink == INVALID_LINK))
     {
-        // TO DO init a timer for each widget contained in the page and refresh according to his configuration rate
-
         NewLink = (*pWidgetListPointer)->Create(pPage);
 
         // If a widget is a draw only once

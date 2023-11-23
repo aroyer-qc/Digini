@@ -120,7 +120,7 @@ X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_STRING_SIZE)
 //
 //  Name:           Initialize
 //
-//  Parameter(s):  Console*    pConsole       Pointer on the console class object
+//  Parameter(s):   Console*    pConsole       Pointer on the console class object
 //  Return:         None
 //
 //  Description:    Initialize command line interface

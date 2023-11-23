@@ -146,6 +146,7 @@ typedef enum
     SYS_ERROR,
     SYS_RESET,
     SYS_FAIL_MEMORY_ALLOCATION,
+    SYS_FAIL_MEMORY_DEALLOCATION,
     SYS_GENERAL_UNKNOWN_ERROR,
     SYS_HUNG,
     SYS_IDLE,
@@ -187,6 +188,8 @@ typedef enum
     SYS_WRONG_DEVICE,
     SYS_WRONG_SIZE,
     SYS_WRONG_VALUE,
+    SYS_ID_DOES_NOT_EXIST,                          // Use by ChainList
+    SYS_ID_ALREADY_EXIST,                           // Use by ChainList
 
     // SD state
     SD_CC_ERROR,

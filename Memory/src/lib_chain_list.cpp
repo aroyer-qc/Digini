@@ -77,13 +77,13 @@ ChainList::~ChainList()
 //
 //   Function name: GetNodeDataAddress
 //
-//   Parameter(s):  ChainList* pNode        Address of the node
+//   Parameter(s):  ChainList_t* pNode      Address of the node
 //   Return:        void*                   Address of data for the node
 //
 //   Description:   Private function to return the data address pointer
 //
 //-------------------------------------------------------------------------------------------------
-void* ChainList::GetNodeDataAddress(ChainList* pNode)
+void* ChainList::GetNodeDataAddress(ChainList_t* pNode)
 {
     uint32_t AddressData;
     void*    pData;
@@ -121,7 +121,7 @@ SystemState_e ChainList::AddNode(uint16_t ChainID, void** pData)
     {
         // Important to clear the allocation, to get 'nullptr' everywhere
         pNode = static_cast<ChainList_t*>(pMemoryPool->AllocAndClear(m_NodeDataSize));
-        
+
         if(pNode != nullptr)
         {
             pNode->ChainID = ChainID;
@@ -175,7 +175,7 @@ SystemState_e ChainList::RemoveNode(uint16_t ChainID)
 
     if((State = GetNodePointer(ChainID, &pNode)) == SYS_READY)
     {
-        // Put the next node pointer into the previous node 
+        // Put the next node pointer into the previous node
         if(pNode->pPreviousNode != nullptr)
         {
             (pNode->pPreviousNode)->pNextNode = pNode->pNextNode;
@@ -220,7 +220,7 @@ SystemState_e ChainList::RemoveNode(uint16_t ChainID)
 //
 //   Return:        SystemState_e               If node exist than it returned a pointer and
 //                                              State = SYS_READY
-//                                              If not pointer is null and 
+//                                              If not pointer is null and
 //                                              State = SYS_ID_DOES_NOT_EXIST
 //
 //   Description:   Get the node pointer from the client ID
@@ -311,14 +311,14 @@ uint16_t ChainList::GetNumberOfNode(void)
 SystemState_e ChainList::ResetScanNode(void)
 {
     SystemState_e State = SYS_READY;
-    
+
     m_pScanNode = m_pFirstNode;
-    
+
     if(m_pScanNode == nullptr)
     {
         State = SYS_CHAIN_LIST_IS_EMPTY;
     }
-    
+
     return State;
 }
 
@@ -339,12 +339,12 @@ SystemState_e ChainList::ResetScanNode(void)
 SystemState_e ChainList::GetNextNode(uint16_t* pChainID, void** pData)
 {
     SystemState_e State = SYS_READY;
-    
+
     if(m_pScanNode != nullptr)
     {
-        *pData   = GetNodeDataAddress(ChainList* m_pScanNode);      // Get data pointer
-        *ChainID = m_pScanNode->ChainID;                            // Get ChainID
-        m_pScanNode = m_pScanNode->pNextNode;                       // Get Pointer of next node
+        *pData      = GetNodeDataAddress(m_pScanNode);      // Get data pointer
+        *pChainID   = m_pScanNode->ChainID;                 // Get ChainID
+        m_pScanNode = m_pScanNode->pNextNode;               // Get Pointer of next node
     }
     else
     {
@@ -357,7 +357,7 @@ SystemState_e ChainList::GetNextNode(uint16_t* pChainID, void** pData)
             State = SYS_REACH_END_OF_LIST;
         }
     }
-    
+
     return State;
 }
 

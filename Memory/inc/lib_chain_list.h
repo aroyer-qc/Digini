@@ -86,8 +86,8 @@ class ChainList
 
     private:
 
-        SystemState_e   GetNodePointer      (uint16_t ChainID, ChainList_t** pData);    // Get the node pointer from the client ID
-        void*           GetNodeDataAddress  (ChainList* pNode);
+        SystemState_e   GetNodePointer      (uint16_t ChainID, ChainList_t** pNode);    // Get the node pointer from the client ID
+        void*           GetNodeDataAddress  (ChainList_t* pNode);
 
         ChainList_t*    m_pFirstNode;
         ChainList_t*    m_pLastNode;

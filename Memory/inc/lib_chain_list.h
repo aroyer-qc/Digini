@@ -80,15 +80,21 @@ class ChainList
         SystemState_e   GetNodeDataPointer  (uint16_t ChainID, void** pData);           // Get the node data from the client ID
         uint16_t        GetNumberOfNode     (void);
 
+        // Special method to scan all node
+        SystemState_e   ResetScanNode       (void);                                     // Reset the ScanNode pointer to beginning
+        SystemState_e   GetNextNode         (uint16_t* ChainID, void** pData);          // Get the Next node pointer and chainID
+
     private:
 
         SystemState_e   GetNodePointer      (uint16_t ChainID, ChainList_t** pData);    // Get the node pointer from the client ID
-
+        void*           GetNodeDataAddress  (ChainList* pNode);
 
         ChainList_t*    m_pFirstNode;
         ChainList_t*    m_pLastNode;
+        ChainList_t*    m_pScanNode;
         uint8_t         m_NumberOfNode;
         size_t          m_NodeDataSize;
+       
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -190,6 +190,8 @@ typedef enum
     SYS_WRONG_VALUE,
     SYS_ID_DOES_NOT_EXIST,                          // Use by ChainList
     SYS_ID_ALREADY_EXIST,                           // Use by ChainList
+    SYS_REACH_END_OF_LIST,                          // Use by ChainList
+    SYS_CHAIN_LIST_IS_EMPTY,                        // Use by ChainList
 
     // SD state
     SD_CC_ERROR,

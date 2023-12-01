@@ -72,7 +72,7 @@ class ChainList
 {
     public:
 
-                        ChainList           (size_t NodeDataSize);
+                        ChainList           (size_t NodeDataSize);                      // All node data size will be created with this size + node overhead
                        ~ChainList           ();
 
         SystemState_e   AddNode             (uint16_t ChainID, void** pData);           // This reserve the memory for the node and insert it into the chain
@@ -94,8 +94,12 @@ class ChainList
         ChainList_t*    m_pScanNode;
         uint8_t         m_NumberOfNode;
         size_t          m_NodeDataSize;
-       
+
 };
+
+
+// Add sorting of the chainlist using ID, need to create a class using bubble sort
+// Add search with successive approximation using ID;
 
 //-------------------------------------------------------------------------------------------------
 

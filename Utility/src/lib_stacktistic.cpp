@@ -74,7 +74,7 @@ int StackCheck::Register(const uint32_t* pStack, size_t STackSz, const char* pSt
 {
     if(m_NumberOfStack < DIGINI_STACKTISTIC_NUMBER_OF_STACK)
     {
-        STackSz--;
+        //STackSz--;
         m_pStackBottom[m_NumberOfStack] = pStack;
         m_Size[m_NumberOfStack]         = STackSz;
         m_pStackName[m_NumberOfStack]   = pStackName;
@@ -112,7 +112,7 @@ const char* StackCheck::GetStackName(int StackID)
 //-------------------------------------------------------------------------------------------------
 size_t StackCheck::GetUsage(int StackID)
 {
-    size_t    FreeSize = - 1;
+    size_t    FreeSize = -1;
     uint32_t* pStack;
 
     if(StackID != -1)
@@ -124,7 +124,7 @@ size_t StackCheck::GetUsage(int StackID)
         while((FreeSize < m_Size[StackID]) && (*pStack == DIGINI_STACKTISTIC_WATER_MARK_CODE))
         {
             FreeSize += 4;
-            pStack  += 4;
+            pStack   += 4;
         }
     }
 

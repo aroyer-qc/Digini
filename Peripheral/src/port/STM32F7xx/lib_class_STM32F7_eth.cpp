@@ -1034,7 +1034,7 @@ SystemState_e ETH_Driver::Control(ETH_ControlCode_e Control, uint32_t Arg)
                 m_MAC_Control.TX_ChecksumsOffload = false;
             }
           #else
-            if((Arg & ETH_MAC_CHECKSUM_OFFLOAD_RX) ||  (Arg & ETH_MAC_CHECKSUM_OFFLOAD_TX))
+            if((Arg & ETH_MAC_CHECKSUM_OFFLOAD_RX) || (Arg & ETH_MAC_CHECKSUM_OFFLOAD_TX))
             {
                 // Checksum offload is disabled in the driver
                 DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: Control - Checksum offload is disabled\n");

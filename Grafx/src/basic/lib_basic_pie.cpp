@@ -161,13 +161,13 @@ static void _DrawSector(Skin_e Image, Circle_t* pCircle, uint16_t StartAngle, ui
 
             if(SectorNumber == 0)
             {
-                StartPoint.X = Origin.X + LIB_TriAngleToOppositeCoord(StartAngle, pCircle->R);
-                EndPoint.Y   = Origin.Y - LIB_TriAngleToOppositeCoord(EndAngle, pCircle->R);
+                StartPoint.X = Origin.X + LIB_TriangleToOppositeCoord(StartAngle, pCircle->R);
+                EndPoint.Y   = Origin.Y - LIB_TriangleToOppositeCoord(EndAngle, pCircle->R);
             }
             else
             {
-                StartPoint.X = Origin.X - LIB_TriAngleToOppositeCoord(StartAngle, pCircle->R);
-                EndPoint.Y   = Origin.Y + LIB_TriAngleToOppositeCoord(EndAngle, pCircle->R);
+                StartPoint.X = Origin.X - LIB_TriangleToOppositeCoord(StartAngle, pCircle->R);
+                EndPoint.Y   = Origin.Y + LIB_TriangleToOppositeCoord(EndAngle, pCircle->R);
             }
         }
         else
@@ -177,13 +177,13 @@ static void _DrawSector(Skin_e Image, Circle_t* pCircle, uint16_t StartAngle, ui
 
             if(SectorNumber == 1)
             {
-                StartPoint.Y = Origin.Y + LIB_TriAngleToOppositeCoord(StartAngle, pCircle->R);
-                EndPoint.X   = Origin.X + LIB_TriAngleToOppositeCoord(EndAngle, pCircle->R);
+                StartPoint.Y = Origin.Y + LIB_TriangleToOppositeCoord(StartAngle, pCircle->R);
+                EndPoint.X   = Origin.X + LIB_TriangleToOppositeCoord(EndAngle, pCircle->R);
             }
             else
             {
-                StartPoint.Y = Origin.Y - LIB_TriAngleToOppositeCoord(StartAngle, pCircle->R);
-                EndPoint.X   = Origin.X - LIB_TriAngleToOppositeCoord(EndAngle, pCircle->R);
+                StartPoint.Y = Origin.Y - LIB_TriangleToOppositeCoord(StartAngle, pCircle->R);
+                EndPoint.X   = Origin.X - LIB_TriangleToOppositeCoord(EndAngle, pCircle->R);
             }
         }
     }
@@ -195,13 +195,13 @@ static void _DrawSector(Skin_e Image, Circle_t* pCircle, uint16_t StartAngle, ui
             {
                 if(SectorNumber == 0)
                 {
-                    StartPoint.X = Origin.X + LIB_TriAngleToOppositeCoord(StartAngle, pCircle->R);
-                    EndPoint.X   = Origin.X + LIB_TriAngleToOppositeCoord(EndAngle, pCircle->R);
+                    StartPoint.X = Origin.X + LIB_TriangleToOppositeCoord(StartAngle, pCircle->R);
+                    EndPoint.X   = Origin.X + LIB_TriangleToOppositeCoord(EndAngle, pCircle->R);
                 }
                 else
                 {
-                    StartPoint.X = Origin.X - LIB_TriAngleToOppositeCoord(StartAngle, pCircle->R);
-                    EndPoint.X   = Origin.X - LIB_TriAngleToOppositeCoord(EndAngle, pCircle->R);
+                    StartPoint.X = Origin.X - LIB_TriangleToOppositeCoord(StartAngle, pCircle->R);
+                    EndPoint.X   = Origin.X - LIB_TriangleToOppositeCoord(EndAngle, pCircle->R);
                 }
 
                 CornerPoint.X = StartPoint.X;
@@ -212,13 +212,13 @@ static void _DrawSector(Skin_e Image, Circle_t* pCircle, uint16_t StartAngle, ui
             {
                 if(SectorNumber == 1)
                 {
-                    StartPoint.Y = Origin.Y + LIB_TriAngleToOppositeCoord(StartAngle, pCircle->R);
-                    EndPoint.Y   = Origin.Y + LIB_TriAngleToOppositeCoord(EndAngle, pCircle->R);
+                    StartPoint.Y = Origin.Y + LIB_TriangleToOppositeCoord(StartAngle, pCircle->R);
+                    EndPoint.Y   = Origin.Y + LIB_TriangleToOppositeCoord(EndAngle, pCircle->R);
                 }
                 else
                 {
-                    StartPoint.Y = Origin.Y - LIB_TriAngleToOppositeCoord(StartAngle, pCircle->R);
-                    EndPoint.Y   = Origin.Y - LIB_TriAngleToOppositeCoord(EndAngle, pCircle->R);
+                    StartPoint.Y = Origin.Y - LIB_TriangleToOppositeCoord(StartAngle, pCircle->R);
+                    EndPoint.Y   = Origin.Y - LIB_TriangleToOppositeCoord(EndAngle, pCircle->R);
                 }
 
                 CornerPoint.Y = StartPoint.Y;
@@ -235,13 +235,13 @@ static void _DrawSector(Skin_e Image, Circle_t* pCircle, uint16_t StartAngle, ui
             {
                 if(SectorNumber == 0)
                 {
-                    StartPoint.Y = Origin.Y - LIB_TriAngleToOppositeCoord(StartAngle, pCircle->R);
-                    EndPoint.Y   = Origin.Y - LIB_TriAngleToOppositeCoord(EndAngle, pCircle->R);
+                    StartPoint.Y = Origin.Y - LIB_TriangleToOppositeCoord(StartAngle, pCircle->R);
+                    EndPoint.Y   = Origin.Y - LIB_TriangleToOppositeCoord(EndAngle, pCircle->R);
                 }
                 else
                 {
-                    StartPoint.Y = Origin.Y + LIB_TriAngleToOppositeCoord(StartAngle, pCircle->R);
-                    EndPoint.Y   = Origin.Y + LIB_TriAngleToOppositeCoord(EndAngle, pCircle->R);
+                    StartPoint.Y = Origin.Y + LIB_TriangleToOppositeCoord(StartAngle, pCircle->R);
+                    EndPoint.Y   = Origin.Y + LIB_TriangleToOppositeCoord(EndAngle, pCircle->R);
                 }
 
                 CornerPoint.Y = StartPoint.Y;
@@ -252,13 +252,13 @@ static void _DrawSector(Skin_e Image, Circle_t* pCircle, uint16_t StartAngle, ui
             {
                 if(SectorNumber == 1)
                 {
-                    StartPoint.X = Origin.X + LIB_TriAngleToOppositeCoord(StartAngle, pCircle->R);
-                    EndPoint.X   = Origin.X + LIB_TriAngleToOppositeCoord(EndAngle, pCircle->R);
+                    StartPoint.X = Origin.X + LIB_TriangleToOppositeCoord(StartAngle, pCircle->R);
+                    EndPoint.X   = Origin.X + LIB_TriangleToOppositeCoord(EndAngle, pCircle->R);
                 }
                 else
                 {
-                    StartPoint.X = Origin.X - LIB_TriAngleToOppositeCoord(StartAngle, pCircle->R);
-                    EndPoint.X   = Origin.X - LIB_TriAngleToOppositeCoord(EndAngle, pCircle->R);
+                    StartPoint.X = Origin.X - LIB_TriangleToOppositeCoord(StartAngle, pCircle->R);
+                    EndPoint.X   = Origin.X - LIB_TriangleToOppositeCoord(EndAngle, pCircle->R);
                 }
 
                 CornerPoint.X = StartPoint.X;

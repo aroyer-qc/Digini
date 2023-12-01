@@ -57,11 +57,24 @@ void     ethernetif_input   (void *param);
   PHY_DRIVER_INTERFACE        ETH_Phy(0);
   PHY_DriverInterface*        myETH_PHY = &ETH_Phy;
   ETH_LinkState_e             ETH_Link;                // Ethernet Link State
+
+uint32_t DBG_RX_Count;
+uint32_t DBG_TX_Count;
+uint32_t DBG_RX_Drop;
+uint32_t DBG_TX_Drop;
+
+
  #else
   extern ETH_Driver           ETH_Mac;
   extern PHY_DRIVER_INTERFACE ETH_Phy;
   extern PHY_DriverInterface* myETH_PHY;
   extern ETH_LinkState_e      ETH_Link;                // Ethernet Link State
+
+extern uint32_t DBG_RX_Count;
+extern uint32_t DBG_TX_Count;
+extern uint32_t DBG_RX_Drop;
+extern uint32_t DBG_TX_Drop;
+
  #endif
 #ifdef __cplusplus
  }

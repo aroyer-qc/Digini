@@ -81,15 +81,18 @@ X_LABEL( LBL_DEGREE_FAHRENHEIT,          "\xF8" "F",                       nullp
 
 #define NET_LANGUAGE_DEF(X_LABEL)  /* Network label */ \
 X_LABEL( LBL_NETWORK_INFO,               "Network Information",            "Information R\x82seau"                         ) \
-X_LABEL( LBL_IP_ADDR,                    "IPV4 Address . . . :",           "Addresse IPV4  . . :"                          ) \
-X_LABEL( LBL_IP_MASK,                    "Subnet Masks . . . :",           "Masque Sous-R\x82seau :"                       ) \
-X_LABEL( LBL_IP_GATEWAY,                 "Default Gateway  . :",           "Passerelle D\x82" "faut  :"                    ) \
-X_LABEL( LBL_IP_DNS,                     "DNS Servers  . . . :",           "Serveurs DNS . . . :"                          ) \
-X_LABEL( LBL_IP_DHCP_STATE,              "DHCP State . . . . :",           "Status DHCP  . . . :"                          ) \
-X_LABEL( LBL_IP_LINK_STATE,              "Link State . . . . :",           "Status Lien  . . . :"                          ) \
-X_LABEL( LBL_IP_LINK_SPEED,              "Link Speed . . . . :",           "Vitesse du Lien  . :"                          ) \
-X_LABEL( LBL_MAC_ADDRESS,                "MAC Address  . . . :",           "Addresse MAC . . . :"                          ) \
+X_LABEL( LBL_IP_ADDR,                    "IPV4 Address . . . . . :",       "Addresse IPV4  . . . . :"                      ) \
+X_LABEL( LBL_IP_MASK,                    "Subnet Masks . . . . . :",       "Masque Sous-R\x82seau . . :"                   ) \
+X_LABEL( LBL_IP_GATEWAY,                 "Default Gateway  . . . :",       "Passerelle D\x82" "faut  . . :"                ) \
+X_LABEL( LBL_IP_DNS,                     "DNS Servers  . . . . . :",       "Serveurs DNS . . . . . :"                      ) \
+X_LABEL( LBL_IP_DHCP_STATE,              "DHCP State . . . . . . :",       "Status DHCP  . . . . . :"                      ) \
+X_LABEL( LBL_IP_LINK_STATE,              "Link State . . . . . . :",       "Status Lien  . . . . . :"                      ) \
+X_LABEL( LBL_IP_LINK_SPEED,              "Link Speed . . . . . . :",       "Vitesse du Lien  . . . :"                      ) \
+X_LABEL( LBL_MAC_ADDRESS,                "MAC Address  . . . . . :",       "Addresse MAC . . . . . :"                      ) \
 X_LABEL( LBL_MAC_ADDRESS_VALUE,          "%02X:%02X:%02X:%02X:%02X:%02X",  nullptr                                         ) \
+X_LABEL( LBL_ETH_RX_COUNT,               "RX Packet Count  . . . :",       "Nb de Paquets Re\x87" "es  . :"                ) \
+X_LABEL( LBL_ETH_TX_COUNT,               "TX Packet Count  . . . :",       "Nb de Paquets Transmis :"                      ) \
+X_LABEL( LBL_ETH_DROP,                   "Dropped  . . :",                 "Non Trait\x82" "es :"                          ) \
 
 #define TIMDAT_LABEL_LANGUAGE_DEF(X_LABEL) \
 X_LABEL( LBL_JANUARY,                    "January",                        "Janvier"                                       ) \

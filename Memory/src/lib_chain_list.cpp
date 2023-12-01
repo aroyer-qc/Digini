@@ -90,7 +90,7 @@ void* ChainList::GetNodeDataAddress(ChainList_t* pNode)
 
     AddressData  = sizeof(ChainList_t);
     AddressData += uint32_t(reinterpret_cast<uint8_t*>(pNode));
-    pData       = reinterpret_cast<void*>(AddressData);
+    pData        = reinterpret_cast<void*>(AddressData);
 
     return pData;
 }
@@ -231,7 +231,7 @@ SystemState_e ChainList::GetNodePointer(uint16_t ChainID, ChainList_t** pNode)
     SystemState_e State = SYS_ID_DOES_NOT_EXIST;
     ChainList_t*  pScanNode;
 
-    *pNode    = nullptr;
+    *pNode = nullptr;
 
     if(m_NumberOfNode != 0)
     {
@@ -348,6 +348,9 @@ SystemState_e ChainList::GetNextNode(uint16_t* pChainID, void** pData)
     }
     else
     {
+        *pData   = nullptr;
+        *pChainID = 0;
+
         if(m_pFirstNode == nullptr)
         {
             State =  SYS_CHAIN_LIST_IS_EMPTY;

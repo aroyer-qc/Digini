@@ -98,8 +98,8 @@ err_t ethernetif_init(struct netif* netif)
     ETH_Mac.PowerControl(ETH_POWER_FULL);								// Enable Clock, Reset ETH, Init MAC, Enable ETH IRQ
     ETH_Mac.Control(ETH_MAC_CONTROL_TX, 0);
     ETH_Mac.Control(ETH_MAC_CONTROL_RX, 0);
-	ETH_Mac.Control(ETH_MAC_CONFIGURE, ETH_MAC_CHECKSUM_OFFLOAD_RX |
-			                           ETH_MAC_CHECKSUM_OFFLOAD_TX |
+	ETH_Mac.Control(ETH_MAC_CONFIGURE, /*ETH_MAC_CHECKSUM_OFFLOAD_RX |      // AR 1/12/2023 cause to return error and no configuration occurred
+			                           ETH_MAC_CHECKSUM_OFFLOAD_TX |*/
                                        ETH_MAC_DUPLEX_FULL         |
 							   	       ETH_MAC_SPEED_100M          |
 								       ETH_MAC_ADDRESS_BROADCAST);
@@ -212,6 +212,7 @@ static err_t low_level_output(struct netif* netif, struct pbuf* pPacket)
             // Send the data from the pbuf to the interface, one pbuf at a time. The size of the data in each pbuf is kept in the ->len variable.
             uint32_t flags = (pPacket->next) ? ETH_MAC_TX_FRAME_FRAGMENT : 0;
             ETH_Mac.SendFrame((uint8_t*)pPacket->payload, pPacket->len, flags);
+            DBG_TX_Count++;
         }
 
         nOS_MutexUnlock(&ETH_TX_Mutex);
@@ -244,17 +245,24 @@ static inline struct pbuf* low_level_input(void)
 
     if(Length != 0)
     {
+        DBG_RX_Count++;
+
         if(Length <= ETHERNET_FRAME_SIZE)
         {
             if((pPacket = pbuf_alloc(PBUF_RAW, Length, PBUF_POOL)) == nullptr)      // We allocate a pbuf chain of pbufs from the pool.
             {
                 Length = 0;                                                         // we cannot allocated memory so this will force the packet to be dropped
+                DBG_RX_Drop++;
             }
+        }
+        else
+        {
+            DBG_RX_Drop++;
         }
 
         ETH_Mac.ReadFrame(pPacket, Length);                                         // Read or drop the packet
     }
-    
+
     return pPacket;
 }
 
@@ -296,8 +304,10 @@ void ethernetif_input(void* pParam)
                 {
                     if(s_pxNetIf->input(pPacket, s_pxNetIf) != ERR_OK)
                     {
+
                         pbuf_free(pPacket);
                         pPacket = nullptr;
+                        DBG_RX_Drop++;
                     }
                     else
                     {
@@ -346,7 +356,7 @@ void ethernetif_PollThePHY(void)
 {
     ETH_LinkState_e ETH_LinkNow;
 
-    if(netif_find(IF_NAME))
+    if(netif_find(IF_NAME))       // TODO temporary to debug reception of packet
     {
         ETH_LinkNow = ETH_Phy.GetLinkState();
 

@@ -72,7 +72,7 @@ uint16_t    LIB_4DecBcd                     (uint16_t DecimalValue);
 void        LIB_uint16_t_Swap               (uint16_t* pSwap);
 void        LIB_uint32_t_Swap               (uint32_t* pSwap);
 
-uint16_t    LIB_TriAngleToOppositeCoord     (uint16_t Angle, uint16_t AdjacentSize);        // For 0 - 45 degree
+uint16_t    LIB_TriangleToOppositeCoord     (uint16_t Angle, uint16_t AdjacentSize);        // For 0 - 45 degree
 uint16_t    LIB_SinCos                      (uint16_t Angle, uint16_t Radius);              // For 0 - 45 degree
 
 void        LIB_ProcessFloatToString        (char* pStr, double Value, int NumberOfDecimal);

@@ -30,30 +30,11 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <stdio.h>
-
-//------------------------- System architecture includes ------------------------------------------
-
-#include "arch/sys_arch.h"
-
-//------------------------- lwIP includes ---------------------------------------------------------
-
-#include "lwip/opt.h"
-#include "lwip/debug.h"
-#include "lwip/def.h"
-#include "lwip/sys.h"
-#include "lwip/mem.h"
-#include "lwip/stats.h"
-
-//-------------------- Digini Error Systems includes ----------------------------------------------
-
 #include "lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 
 extern "C" {
-
-//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -201,10 +182,10 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t* pMailBox, void** ppBuffer, u32_t TimeOut)
 
 	if(TimeOut != 0)
 	{
-		if(nOS_QueueRead(pMailBox, &(*ppBuffer), TimeOut / NOS_CONFIG_TICKS_PER_SECOND) == NOS_OK)
+        if(nOS_QueueRead(pMailBox, &(*ppBuffer), TimeOut) == NOS_OK)
 		{
 			TickEnd = GetTick();
-			TickElapse = (TickEnd - TickStart) * NOS_CONFIG_TICKS_PER_SECOND;
+			TickElapse = (TickEnd - TickStart);
 
 			Return = TickElapse;
 		}
@@ -219,7 +200,7 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t* pMailBox, void** ppBuffer, u32_t TimeOut)
 	{
 		while(nOS_QueueRead(pMailBox, &(*ppBuffer), NOS_WAIT_INFINITE) != NOS_OK){};
 		TickEnd    = GetTick();
-		TickElapse = (TickEnd - TickStart) * NOS_CONFIG_TICKS_PER_SECOND;
+		TickElapse = (TickEnd - TickStart);
 
 		if(TickElapse == 0)
 		{
@@ -255,7 +236,7 @@ u32_t sys_arch_mbox_tryfetch(sys_mbox_t* pMailBox, void** ppBuffer)
 	}
 
     // nOS can read in ISR. just wrap ISR with NOS_ISR() when using nOS function
-    if(nOS_QueueRead(pMailBox, &(*ppBuffer), 0) != NOS_OK)
+    if(nOS_QueueRead(pMailBox, &(*ppBuffer), NOS_NO_WAIT) != NOS_OK)
 	{
 		Return = SYS_MBOX_EMPTY;
 	}
@@ -325,10 +306,10 @@ u32_t sys_arch_sem_wait(sys_sem_t* pSemaphore, u32_t TimeOut)
 
 	if(TimeOut != 0)
 	{
-		if(nOS_SemTake(pSemaphore, TimeOut / NOS_CONFIG_TICKS_PER_SECOND) == NOS_OK)
+		if(nOS_SemTake(pSemaphore, TimeOut) == NOS_OK)
 		{
 			TickEnd = GetTick();
-			TickElapse = (TickEnd - TickStart) * NOS_CONFIG_TICKS_PER_SECOND;
+			TickElapse = (TickEnd - TickStart);
 			Return = TickElapse;
 		}
 		else
@@ -340,7 +321,7 @@ u32_t sys_arch_sem_wait(sys_sem_t* pSemaphore, u32_t TimeOut)
 	{
 		while(nOS_SemTake(pSemaphore, NOS_WAIT_INFINITE) != NOS_OK);
 		TickEnd = GetTick();
-		TickElapse = (TickEnd - TickStart) * NOS_CONFIG_TICKS_PER_SECOND;
+		TickElapse = (TickEnd - TickStart);
 
 		if(TickElapse == 0)
 		{

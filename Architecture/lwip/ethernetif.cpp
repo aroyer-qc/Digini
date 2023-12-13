@@ -28,28 +28,13 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_digini.h"
 #define ETHERNET_DRIVER_GLOBAL
-#include "ethernetif.h"
+#include "lib_digini.h"
 #undef  ETHERNET_DRIVER_GLOBAL
-#include "lwipopts.h"
-#include "lwip/netif.h"
-#include "lwip/opt.h"
-#include "lwip/def.h"
-#include "lwip/mem.h"
-#include "lwip/pbuf.h"
-#include "lwip/sys.h"
-#include "lwip/TimeOuts.h"
-#include "netif/etharp.h"
-#include "lwip/tcpip.h"
-#include <string.h>
-
-//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 // Private variable(s)
 //-------------------------------------------------------------------------------------------------
-
 extern "C" {
 
 static nOS_Sem                     ETH_RX_Sem;
@@ -87,30 +72,16 @@ static void                 ethernetif_LinkCallBack (void* pArg);
 //-------------------------------------------------------------------------------------------------
 err_t ethernetif_init(struct netif* netif)
 {
-	ETH_MAC_Capability_t cap;
     static nOS_Error Error;
 
 	ETH_Link = ETH_LINK_DOWN;
-
-    cap = ETH_Mac.GetCapabilities();
     ETH_Mac.Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
-
-    ETH_Mac.PowerControl(ETH_POWER_FULL);								// Enable Clock, Reset ETH, Init MAC, Enable ETH IRQ
-    ETH_Mac.Control(ETH_MAC_CONTROL_TX, 0);
-    ETH_Mac.Control(ETH_MAC_CONTROL_RX, 0);
-	ETH_Mac.Control(ETH_MAC_CONFIGURE, /*ETH_MAC_CHECKSUM_OFFLOAD_RX |      // AR 1/12/2023 cause to return error and no configuration occurred
-			                           ETH_MAC_CHECKSUM_OFFLOAD_TX |*/
-                                       ETH_MAC_DUPLEX_FULL         |
-							   	       ETH_MAC_SPEED_100M          |
-								       ETH_MAC_ADDRESS_BROADCAST);
-
-	ETH_Mac.DMA_Configure();                                            // Configure DMA if Interface support it.
 
 	// Initialize Physical Media Interface
 	if(ETH_Phy.Initialize(&ETH_Mac) == SYS_READY)
 	{
 		ETH_Phy.PowerControl(ETH_POWER_FULL);
-		ETH_Phy.SetInterface(ETH_MediaInterface_e(cap.media_interface));
+		ETH_Phy.SetInterface(ETH_USED_INTERFACE);
 		ETH_Phy.SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
 
       #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
@@ -126,10 +97,6 @@ err_t ethernetif_init(struct netif* netif)
   #if LWIP_NETIF_HOSTNAME
 	netif->hostname = "lwip";                                       // Initialize interface host name
   #endif
-
-	netif->name[0] = IFNAME0;
-	netif->name[1] = IFNAME1;
-
 	netif->output = etharp_output;
 	netif->linkoutput = low_level_output;
 
@@ -172,10 +139,7 @@ err_t ethernetif_init(struct netif* netif)
         myStacktistic.Register(&Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Ethernet Input");
       #endif
 
-    // Enable MAC and DMA transmission and reception
-    ETH_Mac.Control(ETH_MAC_CONTROL_TX, 1);
-    ETH_Mac.Control(ETH_MAC_CONTROL_RX, 1);
-    ETH_Mac.Control(ETH_MAC_FLUSH, ETH_MAC_FLUSH_TX);
+    ETH_Mac.Start();        // Enable MAC and DMA transmission and reception
 
 	sys_timeout(ARP_TMR_INTERVAL, ArpTimer, nullptr);
 

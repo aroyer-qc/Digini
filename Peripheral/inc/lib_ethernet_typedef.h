@@ -30,17 +30,6 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-// Ethernet MAC and DMA Control Codes
-enum ETH_ControlCode_e
-{
-    ETH_MAC_CONFIGURE,
-    ETH_MAC_CONTROL_TX,                                 // Transmitter        : arg: 0=disabled (default), 1=enabled
-    ETH_MAC_CONTROL_RX,                                 // Receiver           : arg: 0=disabled (default), 1=enabled
-    ETH_MAC_FLUSH,                                      // Flush buffer       : arg = ETH_MAC_FLUSH_...
-    ETH_MAC_SLEEP,                                      // Sleep mode         : arg 1=enter and wait for Magic packet, 0=exit
-    ETH_MAC_VLAN_FILTER,                                // VLAN Filter for received frames: arg15..0: VLAN Tag; arg16: optional ETH_MAC_VLAN_FILTER_ID_ONLY; 0=disabled (default)
-};
-
 // Ethernet MAC Timer Control Codes
 enum ETH_ControlTimer_e
 {
@@ -134,6 +123,7 @@ struct ETH_MAC_Address_t
   uint8_t Byte[6];                                  // MAC Address (6 bytes), MSB first
 };
 
+/*
 struct ETH_MAC_Capability_t
 {
     uint32_t checksum_offload_rx_ip4  : 1;          // 1 = IPv4 header checksum verified on receive
@@ -146,14 +136,15 @@ struct ETH_MAC_Capability_t
     uint32_t checksum_offload_tx_udp  : 1;          // 1 = UDP payload checksum generated on transmit
     uint32_t checksum_offload_tx_tcp  : 1;          // 1 = TCP payload checksum generated on transmit
     uint32_t checksum_offload_tx_icmp : 1;          // 1 = ICMP payload checksum generated on transmit
-    uint32_t media_interface          : 2;          //     Ethernet Media Interface type (ETH_INTERFACE_MII or ETH_INTERFACE_RMII or ETH_INTERFACE_SMII)
-    uint32_t mac_address              : 1;          // 1 = driver provides initial valid MAC address
-    uint32_t event_rx_frame           : 1;          // 1 = callback event \ref ETH_MAC_EVENT_RX_FRAME generated
-    uint32_t event_tx_frame           : 1;          // 1 = callback event \ref ETH_MAC_EVENT_TX_FRAME generated
-    uint32_t event_wakeup             : 1;          // 1 = wakeup event \ref ETH_MAC_EVENT_WAKEUP generated
-    uint32_t precision_timer          : 1;          // 1 = Precision Timer supported
-    uint32_t reserved                 : 15;         // Reserved (must be zero)
+    //uint32_t media_interface          : 2;          //     Ethernet Media Interface type (ETH_INTERFACE_MII or ETH_INTERFACE_RMII or ETH_INTERFACE_SMII)
+    //uint32_t mac_address              : 1;          // 1 = driver provides initial valid MAC address
+    //uint32_t event_rx_frame           : 1;          // 1 = callback event \ref ETH_MAC_EVENT_RX_FRAME generated
+    //uint32_t event_tx_frame           : 1;          // 1 = callback event \ref ETH_MAC_EVENT_TX_FRAME generated
+    //uint32_t event_wakeup             : 1;          // 1 = wakeup event \ref ETH_MAC_EVENT_WAKEUP generated
+    //uint32_t precision_timer          : 1;          // 1 = Precision Timer supported
+    //uint32_t reserved                 : 15;         // Reserved (must be zero)
 };
+*/
 
 struct  ETH_MacTime_t
 {

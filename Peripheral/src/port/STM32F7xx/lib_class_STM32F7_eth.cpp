@@ -290,12 +290,7 @@ void ETH_Driver::InitializeDMA_Buffer(void)
         m_TX_Descriptor[i].Stat = DMA_TX_TCH | DMA_TX_LS | DMA_TX_FS;
         m_TX_Descriptor[i].Addr = (uint8_t *)&m_TX_Buffer[i];
         Next = i + 1;
-
-        if(Next == NUM_TX_Buffer)
-        {
-            Next = 0;
-        }
-
+        Next = (Next == NUM_TX_Buffer) ? 0 : Next;
         m_TX_Descriptor[i].Next = &m_TX_Descriptor[Next];
     }
 
@@ -305,12 +300,7 @@ void ETH_Driver::InitializeDMA_Buffer(void)
         m_RX_Descriptor[i].Ctrl = DMA_RX_RCH | ETH_BUF_SIZE;
         m_RX_Descriptor[i].Addr = (uint8_t *)&m_RX_Buffer[i];
         Next = i + 1;
-
-        if(Next == NUM_RX_Buffer)
-        {
-            Next = 0;
-        }
-
+        Next = (Next == NUM_RX_Buffer) ? 0 : Next;
         m_RX_Descriptor[i].Next = &m_RX_Descriptor[Next];
     }
 

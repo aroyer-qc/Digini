@@ -23,6 +23,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+//
+//  Note:  The m_RX_Descriptor and m_TX_Descriptor must be declared in a device non cacheable
+//         memory region.
+//         In this code they are declared at the beginning or the SRAM2 memory. This memory region
+//         must be configured by MPU as a device memory.
+//
+//         In this code the ETH buffers are located in the SRAM2 with MPU configured as normal
+//         not cacheable memory.
+//
+//         SRAM2 size is 16K
+//
+//         Please refer to MPU_Config() in main.c file.
+//
+//-------------------------------------------------------------------------------------------------
 
 #pragma once
 
@@ -33,8 +47,8 @@
 //-------------------------------------------------------------------------------------------------
 
 #define NUM_TX_Buffer               4
-#define NUM_RX_Buffer               4
-#define ETH_BUF_SIZE                252
+#define NUM_RX_Buffer               6
+#define ETH_BUF_SIZE                1534
 #define ETH_IRQ_PRIO                4
 
 //----- Ethernet MAC Frame Transmit Flags -----
@@ -86,7 +100,7 @@ struct RX_Descriptor_t
 struct TX_Descriptor_t
 {
     uint32_t volatile       Stat;
-    size_t                  Size;
+    uint32_t                Size;
     uint8_t*                Addr;
     struct TX_Descriptor_t* Next;
 #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
@@ -97,6 +111,29 @@ struct TX_Descriptor_t
 };
 
 //-------------------------------------------------------------------------------------------------
+// Validate Memory footprint(s)
+//-------------------------------------------------------------------------------------------------
+
+#define ETH_MAX_DESC_MEMORY         1024
+#define ETH_MAX_BUF_MEMORY          15 * 1024
+
+#if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
+#define SIZEOF_RX_Desc              32
+#define SIZEOF_TX_Desc              32
+#else
+#define SIZEOF_RX_Desc              16
+#define SIZEOF_TX_Desc              16
+#endif
+
+#if ((NUM_RX_Buffer * SIZEOF_RX_Desc) + (NUM_TX_Buffer * SIZEOF_TX_Desc)) > ETH_MAX_DESC_MEMORY
+    #error "SRAM2 Descriptor overflow"
+#endif
+
+#if (((NUM_RX_Buffer + NUM_TX_Buffer) * ETH_BUF_SIZE)) > ETH_MAX_BUF_MEMORY
+    #error "SRAM2 Buffer overflow"
+#endif
+
+//-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -104,7 +141,6 @@ class ETH_Driver
 {
     public:
 
-      //  ETH_MAC_Capability_t    GetCapabilities         (void);                                                        // Get driver capabilities.
         SystemState_e           Initialize              (ETH_MAC_SignalEvent_t CallbackEvent);                           // Initialize Ethernet MAC Device.
 
         void                    Start                   (void);                                                          // Start ETH module
@@ -132,10 +168,10 @@ class ETH_Driver
         SystemState_e           PHY_Busy                (void);
 
         static     ETH_MAC_Control_t           m_MAC_Control;
-        static     RX_Descriptor_t             m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet RX & TX DMA Descriptors
-        static     uint32_t                    m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet Receive buffers
-        static     TX_Descriptor_t             m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((/*section(".dmaINIT"),*/ aligned(4)));
-        static     uint32_t                    m_TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((/*section(".dmaINIT"),*/ aligned(4)));   // Ethernet Transmit buffers
+        static     RX_Descriptor_t             m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((section(".RX_DescriptorSection"), aligned(4)));   // Ethernet RX & TX DMA Descriptors
+        static     TX_Descriptor_t             m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((section(".TX_DescriptorSection"), aligned(4)));
+        static     uint32_t                    m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((section(".RX_ArraySection"),      aligned(4)));   // Ethernet Receive buffers
+        static     uint32_t                    m_TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((section(".TX_ArraySection"),      aligned(4)));   // Ethernet Transmit buffers
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -143,3 +179,18 @@ class ETH_Driver
 #endif // (USE_ETH_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+
+
+#if 0
+
+
+
+ETH_DMADescTypeDef  DMARxDscrTab[ETH_RXBUFNB] __attribute__((section(".RX_DescriptorSection")));    /* Ethernet Rx DMA Descriptors */
+
+ETH_DMADescTypeDef  DMATxDscrTab[ETH_TXBUFNB] __attribute__((section(".TX_DescriptorSection")));/* Ethernet Tx DMA Descriptors */
+
+uint8_t Rx_Buff[ETH_RXBUFNB][ETH_RX_BUF_SIZE] __attribute__((section(".RX_ArraySection"))); /* Ethernet Receive Buffers */
+
+uint8_t Tx_Buff[ETH_TXBUFNB][ETH_TX_BUF_SIZE] __attribute__((section(".TX_ArraySection"))); /* Ethernet Transmit Buffers */
+
+#endif

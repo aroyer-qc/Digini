@@ -36,6 +36,7 @@
 
 #include "lwip/err.h"
 #include "lwip/dhcp.h"
+#include "lwip/dns.h"
 #include "lwip/opt.h"
 #include "lwip/init.h"
 #include "lwip/netif.h"

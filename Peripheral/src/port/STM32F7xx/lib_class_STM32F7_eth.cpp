@@ -611,14 +611,14 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
 //   Description:       Read data of received Ethernet frame.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::ReadFrame(struct pbuf* ptrBuf, size_t Length)
+SystemState_e ETH_Driver::ReadFrame(struct pbuf* pBuf, size_t Length)
 {
     SystemState_e State  = SYS_READY;
     uint8_t const* pSrc  = m_RX_Descriptor[m_MAC_Control.RX_Index].Addr;
-    size_t Granularity   = size_t(ptrBuf->len);
-    uint8_t* pFrame      = static_cast<uint8_t*>(ptrBuf->payload);
+    size_t Granularity   = size_t(pBuf->len);
+    uint8_t* pFrame      = static_cast<uint8_t*>(pBuf->payload);
 
-    if((ptrBuf == nullptr) && (Length != 0))
+    if((pBuf == nullptr) && (Length != 0))
     {
         DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: ReadFrame - Invalid Parameter\n");
         State = SYS_INVALID_PARAMETER;
@@ -627,14 +627,15 @@ SystemState_e ETH_Driver::ReadFrame(struct pbuf* ptrBuf, size_t Length)
     {
         while(Length > 0)
         {
-            Length -= int32_t(ptrBuf->len);
-            LIB_FastMemcpy(pSrc, pFrame, Granularity);
-            ptrBuf = ptrBuf->next;
+            Length -= size_t(pBuf->len);
+            memcpy(pFrame, pSrc, Granularity);
+            //LIB_FastMemcpy(pSrc, pFrame, Granularity);
+            pBuf = pBuf->next;
 
-            if(ptrBuf != nullptr)
+            if(pBuf != nullptr)
             {
-                Granularity = size_t(ptrBuf->len);
-                pFrame      = static_cast<uint8_t*>(ptrBuf->payload);
+                Granularity = size_t(pBuf->len);
+                pFrame      = static_cast<uint8_t*>(pBuf->payload);
             }
             else
             {

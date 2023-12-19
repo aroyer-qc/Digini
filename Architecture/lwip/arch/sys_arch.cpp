@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :sys_arch.c
+//  File :sys_arch.cpp
 //
 // This file is custom file, part for the lwIP TCP/IP stack.
 //
@@ -218,7 +218,7 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t* pMailBox, void** ppBuffer, u32_t TimeOut)
 // Name:           sys_arch_mbox_tryfetch
 //
 // Parameter(s):   sys_mbox_t*  pMailBox      Handle of mailbox
-//                 void**       ppBuffer      Pointer to pointer to buffer received
+//                 void**       ppBuffer      Pointer to buffer received
 //
 // Return:         u32_t                   -  SYS_MBOX_EMPTY if no messages. Otherwise, ERR_OK.
 //

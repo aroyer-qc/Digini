@@ -99,6 +99,11 @@
 #include "lib_crc.h"
 #endif
 
+#if (DIGINI_MPU_DRIVER == DEF_ENABLED)
+#include "lib_mpu.h"
+#endif
+
+
 //-------------------------------------------------------------------------------------------------
 // Driver
 //

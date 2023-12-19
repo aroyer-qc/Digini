@@ -43,7 +43,6 @@ extern "C"
     // Variable(s)
     extern sys_mbox_t   tcpip_mbox;
 
-
     // Function(s)
     extern void         tcpip_thread_handle_msg(struct tcpip_msg* pMsg);
 }
@@ -116,7 +115,7 @@ nOS_Error LWIP_Application::Initialize(void)
 
 void LWIP_Application::Process(void)
 {
-    struct tcpip_msg*   pMsg;
+    struct tcpip_msg*   pMsg = nullptr;
     uint32_t            Result;
 
     // Wait for a message with timers disabled
@@ -124,6 +123,11 @@ void LWIP_Application::Process(void)
 
     if(Result != SYS_MBOX_EMPTY)
     {
+        if(pMsg == nullptr)
+        {
+            __asm("nop");
+        }
+
         tcpip_thread_handle_msg(pMsg);
     }
 

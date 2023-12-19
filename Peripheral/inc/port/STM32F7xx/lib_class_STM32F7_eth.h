@@ -26,7 +26,7 @@
 //
 //  Note:  The m_RX_Descriptor and m_TX_Descriptor must be declared in a device non cacheable
 //         memory region.
-//         In this code they are declared at the beginning or the SRAM2 memory. This memory region
+//         In this code they are declared at the end of the SRAM1 memory. This memory region
 //         must be configured by MPU as a device memory.
 //
 //         In this code the ETH buffers are located in the SRAM2 with MPU configured as normal
@@ -44,6 +44,8 @@
 
 #if (USE_ETH_DRIVER == DEF_ENABLED)
 
+//-------------------------------------------------------------------------------------------------
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
 #define NUM_TX_Buffer               4
@@ -179,18 +181,3 @@ class ETH_Driver
 #endif // (USE_ETH_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-
-
-#if 0
-
-
-
-ETH_DMADescTypeDef  DMARxDscrTab[ETH_RXBUFNB] __attribute__((section(".RX_DescriptorSection")));    /* Ethernet Rx DMA Descriptors */
-
-ETH_DMADescTypeDef  DMATxDscrTab[ETH_TXBUFNB] __attribute__((section(".TX_DescriptorSection")));/* Ethernet Tx DMA Descriptors */
-
-uint8_t Rx_Buff[ETH_RXBUFNB][ETH_RX_BUF_SIZE] __attribute__((section(".RX_ArraySection"))); /* Ethernet Receive Buffers */
-
-uint8_t Tx_Buff[ETH_TXBUFNB][ETH_TX_BUF_SIZE] __attribute__((section(".TX_ArraySection"))); /* Ethernet Transmit Buffers */
-
-#endif

@@ -45,6 +45,8 @@ extern "C"
 
     // Function(s)
     extern void         tcpip_thread_handle_msg(struct tcpip_msg* pMsg);
+
+    extern void         tcpip_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -93,20 +95,20 @@ nOS_Error LWIP_Application::Initialize(void)
     // Add the network interface
     netif_add(&m_NetIf, &m_IP_Address, &m_SubnetMask, &m_GatewayIP, nullptr, &ethernetif_init, &tcpip_input);  //?? for tcp_input  in example it is netif_input
 
+    if(netif_is_link_up(&m_NetIf))  netif_set_up(&m_NetIf);          // When the netif is fully configured this function must be called
+    else                            netif_set_down(&m_NetIf);        // When the netif link is down this function must be called
+
 
     //ethernet_link_status_updated(&m_NetIf);
 
   #if LWIP_NETIF_LINK_CALLBACK
-    netif_set_link_callback(&m_NetIf, ethernet_link_status_updated);
+    netif_set_link_callback(&m_NetIf, ethernet_set_link_updated);
   #endif
 
   #if LWIP_DHCP
     dhcp_start(&m_NetIf);
   #endif
 
-
-    if(netif_is_link_up(&m_NetIf))  netif_set_up(&m_NetIf);          // When the netif is fully configured this function must be called
-    else                            netif_set_down(&m_NetIf);        // When the netif link is down this function must be called
 
     return Error;
 }
@@ -119,16 +121,11 @@ void LWIP_Application::Process(void)
     uint32_t            Result;
 
     // Wait for a message with timers disabled
-    Result = sys_arch_mbox_tryfetch(&tcpip_mbox, (void **)&pMsg);
+    tcpip_timeouts_mbox_fetch(&tcpip_mbox, (void **)&pMsg);
 
-    if(Result != SYS_MBOX_EMPTY)
+    //if(Result != SYS_MBOX_EMPTY)
     {
-        if(pMsg == nullptr)
-        {
-            __asm("nop");
-        }
-
-        tcpip_thread_handle_msg(pMsg);
+         tcpip_thread_handle_msg(pMsg);
     }
 
     sys_check_timeouts();

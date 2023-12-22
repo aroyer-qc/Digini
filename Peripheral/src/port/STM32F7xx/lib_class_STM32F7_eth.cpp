@@ -50,64 +50,65 @@
 #define RESET_TIMEOUT           10
 
 //----- TDES0 - DMA Descriptor TX Packet Control/Status -----
-#define DMA_TX_OWN              0x80000000U     // Own bit 1=DMA,0=CPU
-#define DMA_TX_IC               0x40000000U     // Interrupt on completion
-#define DMA_TX_LS               0x20000000U     // Last segment
-#define DMA_TX_FS               0x10000000U     // First segment
-#define DMA_TX_DC               0x08000000U     // Disable CRC
-#define DMA_TX_DP               0x04000000U     // Disable pad
-#define DMA_TX_TTSE             0x02000000U     // Transmit time stamp enable
-#define DMA_TX_CIC              0x00C00000U     // Checksum insertion control
-#define DMA_TX_CIC_IP           0x00400000U     // Checksum insertion for IP header only
-#define DMA_TX_TER              0x00200000U     // Transmit end of ring
-#define DMA_TX_TCH              0x00100000U     // Second address chained
-#define DMA_TX_TTSS             0x00020000U     // Transmit time stamp status
-#define DMA_TX_IHE              0x00010000U     // IP header error status
-#define DMA_TX_ES               0x00008000U     // Error summary
-#define DMA_TX_JT               0x00004000U     // Jabber timeout
-#define DMA_TX_FF               0x00002000U     // Frame flushed
-#define DMA_TX_IPE              0x00001000U     // IP payload error
-#define DMA_TX_LC               0x00000800U     // Loss of carrier
-#define DMA_TX_NC               0x00000400U     // No carrier
-#define DMA_TX_LCOL             0x00000200U     // Late collision
-#define DMA_TX_EC               0x00000100U     // Excessive collision
-#define DMA_TX_VF               0x00000080U     // VLAN frame
-#define DMA_TX_CC               0x00000078U     // Collision count
-#define DMA_TX_ED               0x00000004U     // Excessive deferral
-#define DMA_TX_UF               0x00000002U     // Underflow error
-#define DMA_TX_DB               0x00000001U     // Deferred bit
+#define DMA_TX_OWN              0x80000000      // Own bit 1=DMA,0=CPU
+#define DMA_TX_IC               0x40000000      // Interrupt on completion
+#define DMA_TX_LS               0x20000000      // Last segment
+#define DMA_TX_FS               0x10000000      // First segment
+#define DMA_TX_DC               0x08000000      // Disable CRC
+#define DMA_TX_DP               0x04000000      // Disable pad
+#define DMA_TX_TTSE             0x02000000      // Transmit time stamp enable
+#define DMA_TX_CIC              0x00C00000      // Checksum insertion control
+#define DMA_TX_CIC_IP           0x00400000      // Checksum insertion for IP header only
+#define DMA_TX_TER              0x00200000      // Transmit end of ring
+#define DMA_TX_TCH              0x00100000      // Second address chained
+#define DMA_TX_TTSS             0x00020000      // Transmit time stamp status
+#define DMA_TX_IHE              0x00010000      // IP header error status
+#define DMA_TX_ES               0x00008000      // Error summary
+#define DMA_TX_JT               0x00004000      // Jabber timeout
+#define DMA_TX_FF               0x00002000      // Frame flushed
+#define DMA_TX_IPE              0x00001000      // IP payload error
+#define DMA_TX_LC               0x00000800      // Loss of carrier
+#define DMA_TX_NC               0x00000400      // No carrier
+#define DMA_TX_LCOL             0x00000200      // Late collision
+#define DMA_TX_EC               0x00000100      // Excessive collision
+#define DMA_TX_VF               0x00000080      // VLAN frame
+#define DMA_TX_CC               0x00000078      // Collision count
+#define DMA_TX_ED               0x00000004      // Excessive deferral
+#define DMA_TX_UF               0x00000002      // Underflow error
+#define DMA_TX_DB               0x00000001      // Deferred bit
 
 //----- TDES1 - DMA Descriptor TX Packet Control -----
-#define DMA_RX_TBS2             0x1FFF0000U     // Transmit buffer 2 size
-#define DMA_RX_TBS1             0x00001FFFU     // Transmit buffer 1 size
+#define DMA_RX_TBS2             0x1FFF0000      // Transmit buffer 2 size
+#define DMA_RX_TBS1             0x00001FFF      // Transmit buffer 1 size
 
 //----- RDES0 - DMA Descriptor RX Packet Status -----
-#define DMA_RX_OWN              0x80000000U     // Own bit 1=DMA,0=CPU
-#define DMA_RX_AFM              0x40000000U     // Destination address filter fail
-#define DMA_RX_FL               0x3FFF0000U     // Frame length mask
-#define DMA_RX_ES               0x00008000U     // Error summary
-#define DMA_RX_DE               0x00004000U     // Descriptor error
-#define DMA_RX_SAF              0x00002000U     // Source address filter fail
-#define DMA_RX_LE               0x00001000U     // Length error
-#define DMA_RX_OE               0x00000800U     // Overflow error
-#define DMA_RX_VLAN             0x00000400U     // VLAN tag
-#define DMA_RX_FS               0x00000200U     // First descriptor
-#define DMA_RX_LS               0x00000100U     // Last descriptor
-#define DMA_RX_IPHCE            0x00000080U     // IPv4 header checksum error
-#define DMA_RX_LC               0x00000040U     // late collision
-#define DMA_RX_FT               0x00000020U     // Frame type
-#define DMA_RX_RWT              0x00000010U     // Receive watchdog timeout
-#define DMA_RX_RE               0x00000008U     // Receive error
-#define DMA_RX_DRE              0x00000004U     // Dribble bit error
-#define DMA_RX_CE               0x00000002U     // CRC error
-#define DMA_RX_RMAM             0x00000001U     // Rx MAC adr.match/payload cks.error
+#define DMA_RX_OWN              0x80000000      // Own bit 1=DMA,0=CPU
+#define DMA_RX_AFM              0x40000000      // Destination address filter fail
+#define DMA_RX_FL               0x3FFF0000      // Frame length mask
+  #define DMA_RX_FL_OFFSET      16
+#define DMA_RX_ES               0x00008000      // Error summary
+#define DMA_RX_DE               0x00004000      // Descriptor error
+#define DMA_RX_SAF              0x00002000      // Source address filter fail
+#define DMA_RX_LE               0x00001000      // Length error
+#define DMA_RX_OE               0x00000800      // Overflow error
+#define DMA_RX_VLAN             0x00000400      // VLAN tag
+#define DMA_RX_FS               0x00000200      // First descriptor
+#define DMA_RX_LS               0x00000100      // Last descriptor
+#define DMA_RX_IPHCE            0x00000080      // IPv4 header checksum error
+#define DMA_RX_LC               0x00000040      // late collision
+#define DMA_RX_FT               0x00000020      // Frame type
+#define DMA_RX_RWT              0x00000010      // Receive watchdog timeout
+#define DMA_RX_RE               0x00000008      // Receive error
+#define DMA_RX_DRE              0x00000004      // Dribble bit error
+#define DMA_RX_CE               0x00000002      // CRC error
+#define DMA_RX_RMAM             0x00000001      // Rx MAC adr.match/payload cks.error
 
 //----- RDES1 - DMA Descriptor RX Packet Control -----
-#define DMA_RX_DIC              0x80000000U     // Disable interrupt on completion
-#define DMA_RX_RBS2             0x1FFF0000U     // Receive buffer 2 size
-#define DMA_RX_RER              0x00008000U     // Receive end of ring
-#define DMA_RX_RCH              0x00004000U     // Second address chained
-#define DMA_RX_RBS1             0x00001FFFU     // Receive buffer 1 size
+#define DMA_RX_DIC              0x80000000      // Disable interrupt on completion
+#define DMA_RX_RBS2             0x1FFF0000      // Receive buffer 2 size
+#define DMA_RX_RER              0x00008000      // Receive end of ring
+#define DMA_RX_RCH              0x00004000      // Second address chained
+#define DMA_RX_RBS1             0x00001FFF      // Receive buffer 1 size
 
 //----- Ethernet Reset register value -----
 #define ETH_MACCR_RESET_VALUE   0x00008000
@@ -383,13 +384,13 @@ SystemState_e ETH_Driver::SetMacAddress(const ETH_MAC_Address_t* pMAC_Address)
 
     // Set Ethernet MAC Address registers
     ETH->MACA0LR = (uint32_t(pMAC_Address->Byte[0])       |
-                    uint32_t(pMAC_Address->Byte[1] << 8)  |
-                    uint32_t(pMAC_Address->Byte[2] << 16) |
-                    uint32_t(pMAC_Address->Byte[3] << 24));
+                    uint32_t(pMAC_Address->Byte[1]) << 8  |
+                    uint32_t(pMAC_Address->Byte[2]) << 16 |
+                    uint32_t(pMAC_Address->Byte[3]) << 24);
 
     ETH->MACA0HR = (0x1UL << 31)                          |
                    (uint32_t(pMAC_Address->Byte[4])       |
-                    uint32_t(pMAC_Address->Byte[5] << 8));
+                    uint32_t(pMAC_Address->Byte[5]) << 8);
 
     return SYS_READY;
 }
@@ -610,6 +611,10 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
 //
 //   Description:       Read data of received Ethernet frame.
 //
+//   Note(s):           It is assume that:
+//                          1 - Length is not 0, so 'length' lower or equal to ETHERNET_FRAME_SIZE.
+//                          2 - No pBuf was allocated if packet is invalid.
+//
 //-------------------------------------------------------------------------------------------------
 SystemState_e ETH_Driver::ReadFrame(struct pbuf* pBuf, size_t Length)
 {
@@ -618,7 +623,7 @@ SystemState_e ETH_Driver::ReadFrame(struct pbuf* pBuf, size_t Length)
     size_t Granularity   = size_t(pBuf->len);
     uint8_t* pFrame      = static_cast<uint8_t*>(pBuf->payload);
 
-    if((pBuf == nullptr) && (Length != 0))
+    if(pBuf == nullptr)
     {
         DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: ReadFrame - Invalid Parameter\n");
         State = SYS_INVALID_PARAMETER;
@@ -677,19 +682,21 @@ uint32_t ETH_Driver::GetRX_FrameSize(void)
 {
     uint32_t Stat = m_RX_Descriptor[m_MAC_Control.RX_Index].Stat;
 
-    if(Stat & DMA_RX_OWN)
+    if((Stat & DMA_RX_OWN) != 0)
     {
         DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - Owned by DMA\n");
-        return 0;                       // Owned by DMA
+        return ETH_OWNED_BY_DMA;                       // Owned by DMA
     }
 
-    if(((Stat & DMA_RX_ES) != 0) || ((Stat & DMA_RX_FS) == 0) || ((Stat & DMA_RX_LS) == 0))
+    if(((Stat & DMA_RX_ES) != 0) ||
+       ((Stat & DMA_RX_FS) == 0) ||
+       ((Stat & DMA_RX_LS) == 0))
     {
         DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - This block is invalid\n");
-        return (0xFFFFFFFF);            // Error, this block is invalid
+        return ETH_INVALID_BLOCK;                       // Error, this block is invalid
     }
 
-    return ((Stat & DMA_RX_FL) >> 16) - 4;
+    return ((Stat & DMA_RX_FL) >> DMA_RX_FL_OFFSET) - 4;
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -83,7 +83,7 @@ sys_mutex_t lock_tcpip_core;
  * @param mbox the mbox to fetch the message from
  * @param msg the place to store the message
  */
-static void
+void
 tcpip_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
 {
   u32_t sleeptime, res;
@@ -105,6 +105,7 @@ again:
 
   UNLOCK_TCPIP_CORE();
   res = sys_arch_mbox_fetch(mbox, msg, sleeptime);
+  nOS_Yield();
   LOCK_TCPIP_CORE();
   if (res == SYS_ARCH_TIMEOUT) {
     /* If a SYS_ARCH_TIMEOUT value is returned, a timeout occurred
@@ -181,9 +182,19 @@ tcpip_thread_handle_msg(struct tcpip_msg *msg)
 #if !LWIP_TCPIP_CORE_LOCKING_INPUT
     case TCPIP_MSG_INPKT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
+
+if(msg->msg.inp.p != NULL)
+{
       if (msg->msg.inp.input_fn(msg->msg.inp.p, msg->msg.inp.netif) != ERR_OK) {
         pbuf_free(msg->msg.inp.p);
       }
+}
+else
+{
+    __asm("nop");
+}
+
+
       memp_free(MEMP_TCPIP_MSG_INPKT, msg);
       break;
 #endif /* !LWIP_TCPIP_CORE_LOCKING_INPUT */

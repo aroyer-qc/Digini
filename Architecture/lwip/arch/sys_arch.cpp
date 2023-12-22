@@ -240,6 +240,10 @@ u32_t sys_arch_mbox_tryfetch(sys_mbox_t* pMailBox, void** ppBuffer)
 	{
 		Return = SYS_MBOX_EMPTY;
 	}
+	else
+    {
+        __asm("nop");
+    }
 
 	return Return;
 }
@@ -260,7 +264,7 @@ u32_t sys_arch_mbox_tryfetch(sys_mbox_t* pMailBox, void** ppBuffer)
 //-------------------------------------------------------------------------------------------------
 err_t sys_sem_new(sys_sem_t* pSemaphore, u8_t Count)
 {
-    if(nOS_SemCreate(pSemaphore, 0, 1) == NOS_OK)
+    if(nOS_SemCreate(pSemaphore, 0, Count) == NOS_OK)
     {
         if(Count == 0)
         {

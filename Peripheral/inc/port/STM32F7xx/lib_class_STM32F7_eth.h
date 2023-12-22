@@ -65,11 +65,14 @@
 #define ETH_MAC_EVENT_WAKEUP        (1UL << 2)      // Wake-up (on Magic Packet)
 #define ETH_MAC_EVENT_TIMER_ALARM   (1UL << 3)      // Timer alarm
 
+#define ETH_OWNED_BY_DMA            0x00000000
+#define ETH_INVALID_BLOCK           0xFFFFFFFF
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef void (*ETH_MAC_SignalEvent_t) (uint32_t event);  // Pointer to ETH_MAC_SignalEvent : Signal Ethernet Event. use Digini
+typedef void (*ETH_MAC_SignalEvent_t) (uint32_t Event);  // Pointer to ETH_MAC_SignalEvent fucntion
 
 // EMAC Driver Control Information
 struct ETH_MAC_Control_t

@@ -1013,10 +1013,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
             myVT100.InMenuPrintf(2,  14, LBL_IP_LINK_STATE);
             myVT100.InMenuPrintf(2,  15, LBL_IP_LINK_SPEED);
             myVT100.InMenuPrintf(2,  16, LBL_MAC_ADDRESS);
+          #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
             myVT100.InMenuPrintf(2,  18, LBL_ETH_RX_COUNT);
             myVT100.InMenuPrintf(40, 18, LBL_ETH_DROP);
             myVT100.InMenuPrintf(2,  19, LBL_ETH_TX_COUNT);
             myVT100.InMenuPrintf(40, 19, LBL_ETH_DROP);
+          #endif
             myVT100.InMenuPrintf(        VT100_LBL_ESCAPE);
 
             // Add Lease obtain and expire???
@@ -1054,11 +1056,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
             myVT100.InMenuPrintf(28, 16, LBL_MAC_ADDRESS_VALUE, pNetif->hwaddr[0], pNetif->hwaddr[1], pNetif->hwaddr[2],
                                                                 pNetif->hwaddr[3], pNetif->hwaddr[4], pNetif->hwaddr[5]);
 
-
+          #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
             myVT100.InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, DBG_RX_Count);
             myVT100.InMenuPrintf(56, 18, LBL_LONG_UNSIGNED, DBG_RX_Drop);
             myVT100.InMenuPrintf(28, 19, LBL_LONG_UNSIGNED, DBG_TX_Count);
             myVT100.InMenuPrintf(56, 19, LBL_LONG_UNSIGNED, DBG_TX_Drop);
+          #endif
         }
         break;
 

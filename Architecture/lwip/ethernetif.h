@@ -76,17 +76,18 @@ void     ethernetif_input   (void *param);
  }
 #endif
 
-
-#ifdef ETHERNET_DRIVER_GLOBAL
+#if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+  #ifdef ETHERNET_DRIVER_GLOBAL
     uint32_t DBG_RX_Count;
     uint32_t DBG_TX_Count;
     uint32_t DBG_RX_Drop;
     uint32_t DBG_TX_Drop;
-#else
+  #else
     extern uint32_t DBG_RX_Count;
     extern uint32_t DBG_TX_Count;
     extern uint32_t DBG_RX_Drop;
     extern uint32_t DBG_TX_Drop;
+  #endif
 #endif
 
 //-------------------------------------------------------------------------------------------------

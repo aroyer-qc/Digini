@@ -33,9 +33,12 @@
 #undef  ETHERNET_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
+
+extern "C" {
+
+//-------------------------------------------------------------------------------------------------
 // Private variable(s)
 //-------------------------------------------------------------------------------------------------
-extern "C" {
 
 static nOS_Sem                     ETH_RX_Sem;
 static nOS_Mutex                   ETH_TX_Mutex;
@@ -45,9 +48,9 @@ static nOS_Stack    Stack[TASK_ETHERNET_IF_STACK_SIZE];
 
 // Forward declarations.
 static inline struct pbuf*  low_level_input         (void);
-static err_t                low_level_output        (struct netif *netif, struct pbuf *p);
-static void                 ArpTimer               (void *arg);
-static void                 ethernetif_Callback     (uint32_t event);
+static err_t                low_level_output        (struct netif* pNetIf, struct pbuf* pPacket);
+static void                 ArpTimer                (void* pArg);
+static void                 ethernetif_Callback     (uint32_t Event);
 static void                 ethernetif_PollThePHY   (void);
 #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
 static void                 ethernetif_LinkCallBack (void* pArg);
@@ -70,7 +73,7 @@ static void                 ethernetif_LinkCallBack (void* pArg);
 //                  of the hardware.
 //
 //-------------------------------------------------------------------------------------------------
-err_t ethernetif_init(struct netif* netif)
+err_t ethernetif_init(struct netif* pNetIf)
 {
     static nOS_Error Error;
 
@@ -92,44 +95,47 @@ err_t ethernetif_init(struct netif* netif)
 	  #endif
 	}
 
-	LWIP_ASSERT("netif != nullptr", (netif != nullptr));
+	LWIP_ASSERT("pNetIf != nullptr", (pNetIf != nullptr));
 
   #if LWIP_NETIF_HOSTNAME
-	netif->hostname = "lwip";                                       // Initialize interface host name
+	pNetIf->hostname = "lwip";                                       // Initialize interface host name
   #endif
-	netif->output = etharp_output;
-	netif->linkoutput = low_level_output;
+	pNetIf->output = etharp_output;
+	pNetIf->linkoutput = low_level_output;
 
   #if LWIP_IPV6
-    netif->output_ip6 = ethip6_output;
+    pNetIf->output_ip6 = ethip6_output;
   #endif // LWIP_IPV6
 
     // Set netif MAC hardware address length
-    netif->hwaddr_len = ETHARP_HWADDR_LEN;
+    pNetIf->hwaddr_len = ETH_HWADDR_LEN;
 
     // Set netif MAC hardware address
-    netif->hwaddr[0] =  MAC_ADDR0;
-    netif->hwaddr[1] =  MAC_ADDR1;
-    netif->hwaddr[2] =  MAC_ADDR2;
-    netif->hwaddr[3] =  MAC_ADDR3;
-    netif->hwaddr[4] =  MAC_ADDR4;
-    netif->hwaddr[5] =  MAC_ADDR5;
-    ETH_Mac.SetMacAddress((ETH_MAC_Address_t*)netif->hwaddr);
+    pNetIf->hwaddr[0] =  MAC_ADDR0;
+    pNetIf->hwaddr[1] =  MAC_ADDR1;
+    pNetIf->hwaddr[2] =  MAC_ADDR2;
+    pNetIf->hwaddr[3] =  MAC_ADDR3;
+    pNetIf->hwaddr[4] =  MAC_ADDR4;
+    pNetIf->hwaddr[5] =  MAC_ADDR5;
+    ETH_Mac.SetMacAddress((ETH_MAC_Address_t*)pNetIf->hwaddr);
 
     // Set netif maximum transfer unit
-    netif->mtu = netifMTU;
+    pNetIf->mtu = netifMTU;
 
-    // Accept broadcast address and ARP traffic
-    netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
+  #if LWIP_ARP
+    pNetIf->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
+  #else
+    pNetIf->flags = NETIF_FLAG_BROADCAST;
+  #endif // LWIP_ARP
 
     // Create binary semaphore used for informing ethernetif of frame reception
     Error = nOS_SemCreate(&ETH_RX_Sem, 0, 20);
-    Error = nOS_MutexCreate(&ETH_TX_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
+    Error = nOS_MutexCreate(&ETH_TX_Mutex, NOS_MUTEX_NORMAL, 1);
     VAR_UNUSED(Error);
 
      nOS_ThreadCreate(&TaskHandle,
                       ethernetif_input,
-                      (void*)netif,
+                      (void*)pNetIf,
                       &Stack[0],
                       TASK_ETHERNET_IF_STACK_SIZE,
                       TASK_ETHERNET_IF_PRIO);
@@ -165,9 +171,9 @@ err_t ethernetif_init(struct netif* netif)
 //                  memory failure (except for the TCP timers).
 //
 //-------------------------------------------------------------------------------------------------
-static err_t low_level_output(struct netif* netif, struct pbuf* pPacket)
+static err_t low_level_output(struct netif* pNetIf, struct pbuf* pPacket)
 {
-	VAR_UNUSED(netif);
+	VAR_UNUSED(pNetIf);
 
     if(nOS_MutexLock(&ETH_TX_Mutex, netifGUARD_BLOCK_TIME) == NOS_OK)
     {
@@ -176,7 +182,10 @@ static err_t low_level_output(struct netif* netif, struct pbuf* pPacket)
             // Send the data from the pbuf to the interface, one pbuf at a time. The size of the data in each pbuf is kept in the ->len variable.
             uint32_t flags = (pPacket->next) ? ETH_MAC_TX_FRAME_FRAGMENT : 0;
             ETH_Mac.SendFrame((uint8_t*)pPacket->payload, pPacket->len, flags);
+
+          #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
             DBG_TX_Count++;
+          #endif
         }
 
         nOS_MutexUnlock(&ETH_TX_Mutex);
@@ -209,19 +218,26 @@ static inline struct pbuf* low_level_input(void)
 
     if(Length != 0)
     {
+      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
         DBG_RX_Count++;
+      #endif
 
         if(Length <= ETHERNET_FRAME_SIZE)
         {
             if((pPacket = pbuf_alloc(PBUF_RAW, Length, PBUF_POOL)) == nullptr)      // We allocate a pbuf chain of pbufs from the pool.
             {
                 Length = 0;                                                         // we cannot allocated memory so this will force the packet to be dropped
+              #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
                 DBG_RX_Drop++;
+              #endif
             }
         }
         else
         {
+            Length = 0;
+          #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
             DBG_RX_Drop++;
+          #endif
         }
 
         ETH_Mac.ReadFrame(pPacket, Length);                                         // Read or drop the packet
@@ -264,6 +280,8 @@ void ethernetif_input(void* pParam)
 
 			do
 			{
+	            LOCK_TCPIP_CORE();
+
                 if((pPacket = low_level_input()) != nullptr)
                 {
                     if(s_pxNetIf->input(pPacket, s_pxNetIf) != ERR_OK)
@@ -271,13 +289,18 @@ void ethernetif_input(void* pParam)
 
                         pbuf_free(pPacket);
                         pPacket = nullptr;
+                      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
                         DBG_RX_Drop++;
+                      #endif
                     }
                     else
                     {
                         nOS_SemTake(&ETH_RX_Sem, 0);
                     }
                 }
+
+                UNLOCK_TCPIP_CORE();
+                nOS_Yield();
 			}
 			while(pPacket != nullptr);
 		}
@@ -382,4 +405,4 @@ void ethernetif_LinkCallBack(void* pArg)
 
 //-------------------------------------------------------------------------------------------------
 
-}   // extern "C"
+} // extern "C"

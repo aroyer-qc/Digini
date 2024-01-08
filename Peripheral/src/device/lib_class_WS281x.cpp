@@ -41,12 +41,9 @@
 #define WS281x_LOGICAL_0                7
 #define WS281x_LOGICAL_1                14
 
+#define WS281x_DUMMY_LEDS               2
 
-
-// for .h file
-uint16_t            m_LedChainSize;
-WS281x_LedColor_t*  m_pLedColor;
-uint8_t*            m_pDMA_Buffer;
+#define WS281x_RESET_CYCLE_COUNT        240         // Give 300 uSec reset time
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -92,54 +89,71 @@ uint8_t*            m_pDMA_Buffer;
 //                  700 nSec    = 14 Counts
 //                  550 nSec    = 11 Counts
 //                  Auto Reload = 25 Counts
+//                  _______________________________________________________________________________
+//
+//                  There two more entry in the m_pLedChain array. Last value is set to zero.
+//                  when those LED entry are reach, DMA continue as nothing happened, but value is
+//                  set to zero, so this emulate a reset, until StartTransfer is call again.
 //
 //-------------------------------------------------------------------------------------------------
 void WS281x::Initialize(void* pArg, uint16_t NumberOfLED, uint16_t ResetTime)
 {
-    m_pPinStruct = (WS281x_PinStruct_t*)pArg;
+//    m_pPinStruct = (WS281x_PinStruct_t*)pArg;
 
 // maybe CPU should provide frequency in multiple of 20Mhz example F103.. other CPU may have better frequency input
 // USE DMA to change Compare value in register of the timer
 // use 2 x 24 bits leds. So take advantage of the HT and TC of the DMA in a circular mode...
 // so we can use those to have time to prepare next set of 24 bit colors for next led
 
-
-    IO_PinInit(m_pPinStruct->IO_DOut);
-    // timer->RegisterCallBack(our callback);
+//    IO_PinInit(m_pPinStruct->IO_DOut);
     
-    m_LedChainSize = NumberOfLED;
+    m_ChainSize   = NumberOfLED + WS281x_DUMMY_LEDS;                                                // Chain LEDs Size.
+    m_NumberOfLED = NumberOfLED;                                                                    // Number of real LEDs.
     
 // Maybe we should not use allocation, since this is for duration of running apps.    
-    m_pLedColor    = (WS281x_LedColor_t*)pMemory->AllocAndClear(m_ChainSize);          // Reserved x bytes from the alloc mem library.
-    m_pDMA_Buffer  = pMemory->AllocAndClear(WS281x_DMA_FULL_BUFFER_SIZE);              // Reserved 48 bytes DMA transfert to Compare register.
+    m_pLedChain    = (WS281x_Color_t*)pMemory->AllocAndClear(m_ChainSize + WS281x_DUMMY_LEDS);      // Reserved x bytes from the alloc mem library.
+    m_pDMA_Buffer  = pMemory->AllocAndClear(WS281x_DMA_FULL_BUFFER_SIZE);                           // Reserved 48 bytes DMA transfert to Compare register.
 
-
-    m_NumberOfLED = NumberOfLED;    // Initialize LED chain size.
     m_LedPointer  = 0;              // Start at Led 0
     m_NeedRefresh = true;
+
+    // Configure timer
+        // configure prescaler
+        // Set compare channel value at zero... not started
+        // configure auto-reload                800 Khz
+        // Enable output of the compare channel
+        // Enable timer and compare channel
+        
+    // Configure DMA
+        // Configure Source 8 Bits memory, Destination 16 Bits compare register ...  checkif it works.
+        // Configure burst at 1
+        // Configure Circulat buffer size 48 bytes (WS281x_DMA_FULL_BUFFER_SIZE).
+        // Configure DMA into HT and TC interrupt.
+        // configure the trigger to be the compare channel..
 
     StartTransfer();
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           StartTransfer
+//  Name:           Process
 //
 //  Parameter(s):   None
 //
 //  Return:         None
 //
-//  Description:    Start the DMA transfer of the serialize stream of data
+//  Description:    Start the DMA transfer of the serialize stream of data if required
 //
 //-------------------------------------------------------------------------------------------------
-void WS281x::StartTransfer(void)
+void WS281x::Process(void)
 {
-   // Configure DMA with destination into compare register.
-   // Configure DMA into HT and TC interrupt.
-   // Configure DMA for WS281x_DMA_FULL_BUFFER_SIZE.
-   // configure the trigger to be the compare channel..
-   
-    m_NeedRefresh = false;
+    if((m_NeedRefresh == true) && (m_ResetCount == 0))
+    {
+        m_LedPointer  = 0;
+        m_NeedRefresh = false;
+        m_ResetCount = WS281x_RESET_CYCLE_COUNT;        // This make sure no restart is done before
+                                                        // is done properly.
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -158,13 +172,12 @@ void WS281x::SetLed(uint16_t Offset, WS281x_Color_t Color)
 {
     if(Offset < m_LedChainSize)
     {
-        if(m_pLedColor[Offset] != Color)
+        if(m_pLedChain[Offset] != Color)
         {
-            m_pLedColor[Offset] = Color;
+            m_pLedChain[Offset] = Color;
             m_NeedRefresh       = true;
         }
     }
-    
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -184,30 +197,31 @@ void WS281x::FillUp_24_Bits(uint8_t* pBuffer)
 {
     uint8_t* pColorData;
     uint8_t  Color;
-
-    if(m_LedPointer >= m_NumberOfLED)
+    
+    if(m_LedPointer > m_NumberOfLED)
     {
-        stop DMA after next interrupt
+        m_ResetCount--;     // Reset State until it reach 0
     }
-    
-
-    
-    pColorData = &m_pLedColor[m_LedPointer];
-    
-    for(int i = 0; i < WS281x_RGB_SIZE, i++)
-    {        
-        Color = *pColorData;
-
-        for(int j = 0x80; j >= 0; j >>= 1)
-        {
-            *pBuffer = ((Color & j) == 0) ? WS281x_LOGICAL_0 : WS281x_LOGICAL_1;
-        }
+    else
+    {
+        pColorData = &m_pLedChain[m_LedPointer];
         
-        pBuffer++;
-        pColorData++;
-    }
+        for(int i = 0; i < WS281x_RGB_SIZE, i++)
+        {        
+            Color = *pColorData;
 
-    m_LedPointer++;
+            for(int j = 0x80; j >= 0; j >>= 1)
+            {
+                *pBuffer = ((Color & j) == 0) ? WS281x_LOGICAL_0 : WS281x_LOGICAL_1;
+            }
+            
+            pBuffer++;
+            pColorData++;
+        }
+
+        m_LedPointer++;
+    }
+    else
 }
 
 //-------------------------------------------------------------------------------------------------

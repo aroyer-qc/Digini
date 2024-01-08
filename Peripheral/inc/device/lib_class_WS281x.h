@@ -55,14 +55,17 @@ class WS281x
 
         void    Initialize          (void* pArg, uint16_t NumberOfLED, uint16_t ResetTime);
         void    SetLed              (uint16_t Offset, WS281x_Color_t Color);
-        void    StartTransfer       (void);   
+        void    Process             (void);   
         void    FillUp_24_Bits      (uint8_t* pBuffer);
 
     private:
 
-        uint16_t                m_LedChainSize;
-        WS281x_Color_t*         m_pColor;
-        uint8_t*                m_pDMA_Buffer;
-        bool                    m_IsThereA_Change;
-}
+        uint16_t                    m_LedChainSize;
+        volatile uint16_t           m_LedPointer;
+        WS281x_Color_t*             m_pLedChain;
+        uint8_t*                    m_pDMA_Buffer;
+        bool                        m_NeedRefresh;
+        uint8_t                     m_ResetCount;
+};
+
 //-------------------------------------------------------------------------------------------------

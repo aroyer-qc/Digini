@@ -118,17 +118,19 @@ nOS_Error LWIP_Application::Initialize(void)
 void LWIP_Application::Process(void)
 {
     struct tcpip_msg*   pMsg = nullptr;
-    uint32_t            Result;
+  //  uint32_t            Result;
 
     // Wait for a message with timers disabled
     tcpip_timeouts_mbox_fetch(&tcpip_mbox, (void **)&pMsg);
 
     //if(Result != SYS_MBOX_EMPTY)
+    if(pMsg != nullptr)
     {
          tcpip_thread_handle_msg(pMsg);
     }
 
     sys_check_timeouts();
+
 }
 
 //-------------------------------------------------------------------------------------------------

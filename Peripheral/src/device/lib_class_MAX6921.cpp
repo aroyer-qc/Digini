@@ -42,7 +42,8 @@
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   void* pArg
+//  Parameter(s):   void*       pArg
+//                  uint8_t     NumberOfDeviceInChain
 //
 //  Return:         SystemState_e
 //

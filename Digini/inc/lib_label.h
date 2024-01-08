@@ -78,6 +78,8 @@ X_LABEL( LBL_YES,                        "Yes",                            "Oui"
 X_LABEL( LBL_NO,                         "No ",                            "Non"                                           ) \
 X_LABEL( LBL_DEGREE_CELSIUS,             "\xF8" "C",                       nullptr                                         ) \
 X_LABEL( LBL_DEGREE_FAHRENHEIT,          "\xF8" "F",                       nullptr                                         ) \
+X_LABEL( LBL_ENABLED,                    "Enabled ",                       "Activ\x82 "                                    ) \
+X_LABEL( LBL_DISABLED,                   "Disabled",                       "D\x82" "activ\x82"                             ) \
 
 #define NET_LANGUAGE_DEF(X_LABEL)  /* Network label */ \
 X_LABEL( LBL_NETWORK_INFO,               "Network Information",            "Information R\x82seau"                         ) \

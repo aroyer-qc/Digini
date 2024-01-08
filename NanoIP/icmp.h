@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : ethernetif.h
+//  File :  icmp.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2023 Alain Royer.
+// Copyright(c) 2010-2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -30,70 +30,42 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_digini.h"
-
-#if (USE_ETH_DRIVER == DEF_ENABLED)
-
-#include "lwip/err.h"
-#include "lwip/dhcp.h"
-#include "lwip/dns.h"
-#include "lwip/opt.h"
-#include "lwip/init.h"
-#include "lwip/netif.h"
-#include "lwip/tcpip.h"
-#include "lwip/timeouts.h"
-#include "netif/etharp.h"
-#include "lwip/api.h"
-
-//-------------------------------------------------------------------------------------------------
-
-#ifdef __cplusplus
- extern "C" {
-#endif
-err_t    ethernetif_init    (struct netif *netif);
-void     ethernetif_input   (void *param);
-#ifdef __cplusplus
- }
+#ifdef ICMP_GLOBAL
+	#define	ICMP_EXTERN
+	#define	ICMP_PRIVATE
+#else	
+	#define	ICMP_EXTERN extern
 #endif
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
 
-#ifdef __cplusplus
- extern "C" {
-#endif
-  #ifdef ETHERNET_DRIVER_GLOBAL
-  ETH_Driver                  ETH_Mac;
-  PHY_DRIVER_INTERFACE        ETH_Phy(0);
-  PHY_DriverInterface*        myETH_PHY = &ETH_Phy;
-  ETH_LinkState_e             ETH_Link;                // Ethernet Link State
-  bool                        ETH_DHCP_IsUsed = true;  // default for DHCP
- #else
-  extern ETH_Driver           ETH_Mac;
-  extern PHY_DRIVER_INTERFACE ETH_Phy;
-  extern PHY_DriverInterface* myETH_PHY;
-  extern ETH_LinkState_e      ETH_Link;                // Ethernet Link State
+#define 	ICMP_TYPE_PING_REPLY			0
+#define 	ICMP_TYPE_PING_REQUEST			8
 
-  extern bool                 ETH_DHCP_IsUsed;
+//-------------------------------------------------------------------------------------------------
+// macro(s)
+//-------------------------------------------------------------------------------------------------
 
- #endif
-#ifdef __cplusplus
- }
-#endif
+//-------------------------------------------------------------------------------------------------
+// Enum(s)
+//-------------------------------------------------------------------------------------------------
+	
+//-------------------------------------------------------------------------------------------------
+// Type definition(s) and structure(s)
+//-------------------------------------------------------------------------------------------------
 
-#if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-  #ifdef ETHERNET_DRIVER_GLOBAL
-    uint32_t DBG_RX_Count;
-    uint32_t DBG_TX_Count;
-    uint32_t DBG_RX_Drop;
-    uint32_t DBG_TX_Drop;
-  #else
-    extern uint32_t DBG_RX_Count;
-    extern uint32_t DBG_TX_Count;
-    extern uint32_t DBG_RX_Drop;
-    extern uint32_t DBG_TX_Drop;
-  #endif
-#endif
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------
+// Function prototype(s)
+//-------------------------------------------------------------------------------------------------
+ 
+void 				ICMP_Init					(void);
+IP_PacketMsg_t* 	ICMP_Process				(IP_PacketMsg_t* pMsg);
 
 //-------------------------------------------------------------------------------------------------
 
-#endif

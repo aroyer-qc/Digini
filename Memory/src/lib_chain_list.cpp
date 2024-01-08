@@ -97,7 +97,7 @@ void* ChainList::GetNodeDataAddress(ChainList_t* pNode)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name:
+//   Function name: AddNode
 //
 //   Parameter(s):  uint16_t    ChainID         Client ID for this node
 //                  void**      pData           Pointer on data for the node

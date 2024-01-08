@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : ethernetif.h
+//  File :  ip.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2023 Alain Royer.
+// Copyright(c) 2011-2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -30,70 +30,62 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_digini.h"
-
-#if (USE_ETH_DRIVER == DEF_ENABLED)
-
-#include "lwip/err.h"
-#include "lwip/dhcp.h"
-#include "lwip/dns.h"
-#include "lwip/opt.h"
-#include "lwip/init.h"
-#include "lwip/netif.h"
-#include "lwip/tcpip.h"
-#include "lwip/timeouts.h"
-#include "netif/etharp.h"
-#include "lwip/api.h"
-
+//-------------------------------------------------------------------------------------------------
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef __cplusplus
- extern "C" {
-#endif
-err_t    ethernetif_init    (struct netif *netif);
-void     ethernetif_input   (void *param);
-#ifdef __cplusplus
- }
-#endif
-
+//-------------------------------------------------------------------------------------------------
+// Include(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef __cplusplus
- extern "C" {
-#endif
-  #ifdef ETHERNET_DRIVER_GLOBAL
-  ETH_Driver                  ETH_Mac;
-  PHY_DRIVER_INTERFACE        ETH_Phy(0);
-  PHY_DriverInterface*        myETH_PHY = &ETH_Phy;
-  ETH_LinkState_e             ETH_Link;                // Ethernet Link State
-  bool                        ETH_DHCP_IsUsed = true;  // default for DHCP
- #else
-  extern ETH_Driver           ETH_Mac;
-  extern PHY_DRIVER_INTERFACE ETH_Phy;
-  extern PHY_DriverInterface* myETH_PHY;
-  extern ETH_LinkState_e      ETH_Link;                // Ethernet Link State
+#include 	<ip_debug.h>
+#include 	<ip_cfg.h>
+#include 	<task_IP.h>
 
-  extern bool                 ETH_DHCP_IsUsed;
-
- #endif
-#ifdef __cplusplus
- }
+#if NIC_IN_USE == NIC_W5100
+#include	<w5100.h>
+#define 	IP_ARP 					DEF_DISABLED
+#define 	IP_UDP 					DEF_DISABLED
+#define 	IP_TCP 					DEF_DISABLED
+#define 	IP_ICMP					DEF_DISABLED
+#define 	IP_HARDWARE_SOCKET		DEF_ENABLED
 #endif
 
-#if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-  #ifdef ETHERNET_DRIVER_GLOBAL
-    uint32_t DBG_RX_Count;
-    uint32_t DBG_TX_Count;
-    uint32_t DBG_RX_Drop;
-    uint32_t DBG_TX_Drop;
-  #else
-    extern uint32_t DBG_RX_Count;
-    extern uint32_t DBG_TX_Count;
-    extern uint32_t DBG_RX_Drop;
-    extern uint32_t DBG_TX_Drop;
-  #endif
+#if NIC_IN_USE == NIC_CS8900A
+#include	<cs8900a.h>
+#define 	IP_ARP 					DEF_ENABLED
+#define 	IP_UDP 					DEF_ENABLED
+#define 	IP_TCP 					DEF_ENABLED
+#define 	IP_ICMP					DEF_ENABLED
+#define 	IP_HARDWARE_SOCKET		DEF_DISABLED
+#endif
+
+#if (IP_UDP == DEF_ENABLED) & (IP_APP_USE_UDP == DEF_ENABLED)
+#include <udp.h>
+#endif
+
+#if (IP_TCP == DEF_ENABLED) & (IP_APP_USE_TCP == DEF_ENABLED)
+#include <tcp.h>
+#endif
+
+#if (IP_ICMP == DEF_ENABLED) & (IP_APP_USE_TCP == DEF_ENABLED)
+#include <icmp.h>
+#endif
+
+#if (IP_APP_USE_ARP == DEF_ENABLED)
+#include <arp.h>
+#endif
+
+#if (IP_APP_USE_DHCP == DEF_ENABLED)
+#include <dhcp.h>
+#endif
+
+#if (IP_APP_USE_DNS == DEF_ENABLED)
+#include <dns.h>
+#endif
+
+#if (IP_APP_USE_SNTP == DEF_ENABLED)
+#include <sntp.h>
 #endif
 
 //-------------------------------------------------------------------------------------------------
-
-#endif

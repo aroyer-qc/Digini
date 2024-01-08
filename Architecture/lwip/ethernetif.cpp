@@ -34,6 +34,11 @@
 
 //-------------------------------------------------------------------------------------------------
 
+#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
+#if (DIGINI_USE_LWIP == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+
 extern "C" {
 
 //-------------------------------------------------------------------------------------------------
@@ -264,13 +269,14 @@ static inline struct pbuf* low_level_input(void)
 void ethernetif_input(void* pParam)
 {
    	struct pbuf * pPacket;
-    struct netif* s_pxNetIf = (struct netif *)pParam;
+    struct netif* pNetIf = (struct netif *)pParam;
+    err_t         Error;
 
     ethernetif_PollThePHY();        // Initial polling of the link
 
 	while(1)
 	{
-        if((nOS_SemTake(&ETH_RX_Sem, BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK) && (s_pxNetIf != nullptr))
+        if((nOS_SemTake(&ETH_RX_Sem, BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK) && (pNetIf != nullptr))
 		{
 		    // if for some reason we receive a message and the link is down then poll the PHY for the link
 		    if(ETH_Link == ETH_LINK_DOWN)
@@ -284,9 +290,9 @@ void ethernetif_input(void* pParam)
 
                 if((pPacket = low_level_input()) != nullptr)
                 {
-                    if(s_pxNetIf->input(pPacket, s_pxNetIf) != ERR_OK)
+                    if((Error = pNetIf->input(pPacket, pNetIf)) != ERR_OK)
                     {
-
+                        VAR_UNUSED(Error);
                         pbuf_free(pPacket);
                         pPacket = nullptr;
                       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
@@ -406,3 +412,8 @@ void ethernetif_LinkCallBack(void* pArg)
 //-------------------------------------------------------------------------------------------------
 
 } // extern "C"
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // (DIGINI_USE_LWIP == DEF_ENABLED)
+#endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)

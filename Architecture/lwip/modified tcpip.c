@@ -100,19 +100,20 @@ again:
   } else if (sleeptime == 0) {
     sys_check_timeouts();
     /* We try again to fetch a message from the mbox. */
-    goto again;
+  //  goto again;
+  return;
   }
 
   UNLOCK_TCPIP_CORE();
   res = sys_arch_mbox_fetch(mbox, msg, sleeptime);
-  nOS_Yield();
   LOCK_TCPIP_CORE();
+  //nOS_Sleep(1);
   if (res == SYS_ARCH_TIMEOUT) {
     /* If a SYS_ARCH_TIMEOUT value is returned, a timeout occurred
        before a message could be fetched. */
     sys_check_timeouts();
     /* We try again to fetch a message from the mbox. */
-    goto again;
+   // goto again;
   }
 }
 #endif /* !LWIP_TIMERS */

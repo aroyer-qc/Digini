@@ -129,8 +129,11 @@ MemPoolDriver::~MemPoolDriver()
 //-------------------------------------------------------------------------------------------------
 void* MemPoolDriver::Alloc(size_t SizeRequired, TickCount_t TimeOut)
 {
-   void*    MemPtr;
-   size_t   SizeBlock;
+    void*           MemPtr;
+    size_t          SizeBlock;
+  #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+    nOS_StatusReg   sr;
+  #endif
 
   #if (MEMORY_POOL_RESTRICT_ALLOC_TO_BLOCK_SIZE == DEF_DISABLED)
     // First loop will check for any block available, so we don't wait to be freed
@@ -141,9 +144,11 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, TickCount_t TimeOut)
         if(SizeBlock >= SizeRequired)
         {
             MemPtr = nOS_MemAlloc(&m_nOS_MemArray[GroupID], NOS_NO_WAIT);
+
             if(MemPtr != nullptr)
             {
               #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+                nOS_EnterCritical(sr);
                 m_UsedMemory += SizeBlock;
                 m_BlockUsed[GroupID]++;
 
@@ -152,7 +157,9 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, TickCount_t TimeOut)
                     m_BlockHighest[GroupID] = m_BlockUsed[GroupID];
                 }
 
+                nOS_LeaveCritical(sr);
               #endif
+
                 return MemPtr;
             }
         }
@@ -168,18 +175,21 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, TickCount_t TimeOut)
         {
             MemPtr = nOS_MemAlloc(&m_nOS_MemArray[GroupID], TimeOut);
 
-              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
-                if(MemPtr != nullptr)
-                {
-                    m_UsedMemory += SizeBlock;
-                    m_BlockUsed[GroupID]++;
+          #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+            if(MemPtr != nullptr)
+            {
+                nOS_EnterCritical(sr);
+                m_UsedMemory += SizeBlock;
+                m_BlockUsed[GroupID]++;
 
-                    if(m_BlockUsed[GroupID] > m_BlockHighest[GroupID])
-                    {
-                        m_BlockHighest[GroupID] = m_BlockUsed[GroupID];
-                    }
+                if(m_BlockUsed[GroupID] > m_BlockHighest[GroupID])
+                {
+                    m_BlockHighest[GroupID] = m_BlockUsed[GroupID];
                 }
-              #endif
+
+                nOS_LeaveCritical(sr);
+            }
+          #endif
 
             return MemPtr;
         }
@@ -277,7 +287,10 @@ void* MemPoolDriver::AllocAndSet(size_t SizeRequired, uint8_t FillValue, TickCou
 //-------------------------------------------------------------------------------------------------
 bool MemPoolDriver::Free(void** pBlock)
 {
-    uint8_t GroupID;
+    uint8_t         GroupID;
+  #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+    nOS_StatusReg   sr;
+  #endif
 
     for(GroupID = 0; GroupID < MEM_BLOCK_GROUP_SIZE; GroupID++)
     {
@@ -285,11 +298,14 @@ bool MemPoolDriver::Free(void** pBlock)
            (*pBlock < ((void*)((uint8_t*)m_nOS_MemArray[GroupID].buffer + (m_nOS_MemArray[GroupID].bsize * m_nOS_MemArray[GroupID].bmax)))))
         {
             m_LastError = nOS_MemFree(&m_nOS_MemArray[GroupID], *pBlock);
+
             if(m_LastError == NOS_OK)
             {
               #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+                nOS_EnterCritical(sr);
                 m_UsedMemory -= m_nOS_MemArray[GroupID].bsize;
                 m_BlockUsed[GroupID]--;
+                nOS_LeaveCritical(sr);
               #endif
 
                 *pBlock = nullptr;

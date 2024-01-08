@@ -862,14 +862,17 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MiscStatistic(uint8_t Input, VT100_Ca
         {
             myVT100.InMenuPrintf(68, 10, LBL_SIZE_BYTES, pMemoryPool->GetUsedMemory());
 
-           for(uint32_t i = 0; i < Max; i++)
+            for(uint32_t i = 0; i < Max; i++)
             {
+                uint8_t NumberOfBlock = pMemoryPool->GetPoolNumberOfBlock(i);
+                uint8_t UsedBlock     = pMemoryPool->GetPoolBlockUsed(i);
+
                 OffsetMultiplierX = uint8_t(((i % 3) * 33) + 3);
                 OffsetMultiplierY = uint8_t(((i / 3) * 6) + 15);
 
-                myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY, (pMemoryPool->GetPoolBlockUsed(i) >= pMemoryPool->GetPoolNumberOfBlock(i) * .8) ? VT100_COLOR_RED : VT100_COLOR_GREEN, pMemoryPool->GetPoolBlockUsed(i), pMemoryPool->GetPoolNumberOfBlock(i), 30);
+                myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY, ((UsedBlock >= NumberOfBlock * 8) / 10) ? VT100_COLOR_RED : VT100_COLOR_GREEN, UsedBlock, NumberOfBlock, 30);
                 myVT100.SetForeColor(VT100_COLOR_WHITE);
-                myVT100.InMenuPrintf(OffsetMultiplierX - 1,  OffsetMultiplierY + 2, VT100_LBL_MEM_BLOCK_USED,    pMemoryPool->GetPoolBlockUsed(i), pMemoryPool->GetPoolBlockHighPoint(i));
+                myVT100.InMenuPrintf(OffsetMultiplierX - 1,  OffsetMultiplierY + 2, VT100_LBL_MEM_BLOCK_USED,  UsedBlock, pMemoryPool->GetPoolBlockHighPoint(i));
             }
         }
         break;
@@ -1038,7 +1041,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
             myVT100.InMenuPrintf(28, 10, LBL_STRING, ip_ntoa(&pNetif->gw));
             myVT100.InMenuPrintf(28, 11, LBL_STRING, ip_ntoa(dns_getserver(0)));
             myVT100.InMenuPrintf(28, 12, LBL_STRING, ip_ntoa(dns_getserver(1)));
-            myVT100.InMenuPrintf(28, 13, LBL_STRING, "DHCP N/A");
+            myVT100.InMenuPrintf(28, 13, (ETH_DHCP_IsUsed == true) != 0 ? LBL_ENABLED : LBL_DISABLED);
             LinkState = myETH_PHY->GetLinkState();
             myVT100.InMenuPrintf(28, 14, LBL_STRING, (LinkState == ETH_LINK_UP) != 0 ? "Up  " : "Down");
 
@@ -1049,7 +1052,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
                 case ETH_PHY_SPEED_10M:     pSpeed = "10  Mb/Sec";  break;
                 case ETH_PHY_SPEED_100M:    pSpeed = "100 Mb/Sec";  break;
                 case ETH_PHY_SPEED_1G:      pSpeed = "1   Gb/Sec";  break;
-
             }
 
             myVT100.InMenuPrintf(28, 15, LBL_STRING, pSpeed);

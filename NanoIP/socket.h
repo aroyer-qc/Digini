@@ -57,23 +57,23 @@ typedef uint8_t       SOCKET;
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-use size_t  for any length value
+//use size_t  for any length value
 
-bool    SOCK_Socket         	(SOCKET SocketNumber, uint8_t Protocol, uint16_t SourcePort, uint8_t Flag);                  // Opens a socket(TCP or UDP or IP_RAW mode)
-void    SOCK_Close          	(SOCKET SocketNumber);                                                                  // Close socket
-bool    SOCK_Listen         	(SOCKET SocketNumber);                                                                  // Establish TCP connection (Passive connection)
-bool    SOCK_Connect        	(SOCKET SocketNumber, uint32_t DstAddr, uint16_t DstPort);                                  // Establish TCP connection (Active connection)
-void    SOCK_Disconnect     	(SOCKET SocketNumber);                                                                  // disconnect the connection
-uint16_t    SOCK_Send           	(SOCKET SocketNumber, const uint8_t* pData, uint16_t Len);                                    // Send data (TCP)
-uint16_t    SOCK_Received       	(SOCKET SocketNumber, uint8_t* pData, uint16_t Len);                                          // Receive data (TCP)
-uint16_t    SOCK_SendTo         	(SOCKET SocketNumber, const uint8_t* pData, uint16_t Len, uint32_t PeerAddr, uint16_t PeerPort);  // Send data (UDP/IP RAW)
-uint16_t    SOCK_ReceivedFrom   	(SOCKET SocketNumber, uint8_t* pData, uint16_t Len, uint32_t* pPeerAddr, uint16_t* pPeerPort);       // Receive data (UDP/IP RAW)
+bool        SOCK_Socket         	(SOCKET SocketNumber, uint8_t Protocol, uint16_t SourcePort, uint8_t Flag);                         // Opens a socket(TCP or UDP or IP_RAW mode)
+void        SOCK_Close          	(SOCKET SocketNumber);                                                                              // Close socket
+bool        SOCK_Listen         	(SOCKET SocketNumber);                                                                              // Establish TCP connection (Passive connection)
+bool        SOCK_Connect        	(SOCKET SocketNumber, uint32_t DstAddr, uint16_t DstPort);                                          // Establish TCP connection (Active connection)
+void        SOCK_Disconnect     	(SOCKET SocketNumber);                                                                              // Disconnect the connection
+uint16_t    SOCK_Send           	(SOCKET SocketNumber, const uint8_t* pData, size_t Len);                                            // Send data (TCP)
+uint16_t    SOCK_Received       	(SOCKET SocketNumber, uint8_t* pData, size_t Len);                                                  // Receive data (TCP)
+uint16_t    SOCK_SendTo         	(SOCKET SocketNumber, const uint8_t* pData, size_t Len, uint32_t PeerAddr, uint16_t PeerPort);      // Send data (UDP/IP RAW)
+uint16_t    SOCK_ReceivedFrom   	(SOCKET SocketNumber, uint8_t* pData, size_t Len, uint32_t* pPeerAddr, uint16_t* pPeerPort);        // Receive data (UDP/IP RAW)
 uint16_t    SOCK_GetTX_BufferSize	(SOCKET SocketNumber);
 uint16_t    SOCK_GetRX_BufferSize  	(SOCKET SocketNumber);
 
 #ifdef SOCKET_PRIVATE
-void 	SOCK_SetSocket	    	(SOCKET	SocketNumber, uint8_t Protocol, uint8_t Flag);
-void 	SOCK_Open				(SOCKET SocketNumber);
+void 	    SOCK_SetSocket	    	(SOCKET	SocketNumber, uint8_t Protocol, uint8_t Flag);
+void 	    SOCK_Open				(SOCKET SocketNumber);
 
 #endif
 

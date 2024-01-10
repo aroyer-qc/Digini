@@ -38,7 +38,7 @@
 // Private function(s), do not put in header file (.h)
 //-------------------------------------------------------------------------------------------------
 
-void ARP_UpdateEntry				(int32_t IP_Addr, IP_EthernetAddress_t* pEthAdr);
+void ARP_UpdateEntry				(uint32_t IP_Addr, IP_EthernetAddress_t* pEthAdr);
 void ARP_TimerCallBack				(OS_TMR* pTmr, void* pArg);
 
 //-------------------------------------------------------------------------------------------------
@@ -50,19 +50,16 @@ void ARP_TimerCallBack				(OS_TMR* pTmr, void* pArg);
 //
 //  Description:    Clear ARP table of any entry
 // 					Setup OS timer for ARP table entry
-//	
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void ARP_Init(void)
 {
 	uint8_t Error;
-	uint8_t i;
 
 	// Clear the ARP cache table
-	for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
+	for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
 	{
-		ARP_TableEntry[i].IP_Addr.dw = 0;
+		ARP_TableEntry[i].IP_Addr = 0;
 	}
 
 	// Initialize an OS timer for the ARP timer
@@ -95,9 +92,9 @@ void ARP_Init(void)
 //-------------------------------------------------------------------------------------------------
 void ARP_ProcessIP(IP_PacketMsg_t* pRX)
 {
-	if((pRX->Packet.u.IP_Frame.Header.SrcIP_Addr.dw & IP_SubnetMaskAddr.dw) == (IP_HostAddr.dw & IP_SubnetMaskAddr.dw))
+	if((pRX->Packet.u.IP_Frame.Header.SrcIP_Addr & IP_SubnetMaskAddr) == (IP_HostAddr & IP_SubnetMaskAddr))
 	{
-		ARP_UpdateEntry(pRX->Packet.u.IP_Frame.Header.SrcIP_Addr.dw, &pRX->Packet.u.ETH_Header.Src);
+		ARP_UpdateEntry(pRX->Packet.u.IP_Frame.Header.SrcIP_Addr, &pRX->Packet.u.ETH_Header.Src);
 	}
 }
 
@@ -113,12 +110,12 @@ void ARP_ProcessIP(IP_PacketMsg_t* pRX)
 //-------------------------------------------------------------------------------------------------
 void ARP_ProcessARP(IP_PacketMsg_t* pRX)
 {
-	uint8_t 		  	Error;
+	uint8_t 		Error;
 	IP_ARP_Frame_t*	pRX_ARP;
 	IP_PacketMsg_t* pTX = nullptr;
 	IP_ARP_Frame_t*	pTX_ARP = nullptr;
 
-	if(pRX->wPacketSize < (sizeof(IP_ARP_Frame_t) - sizeof(IP_EthernetHeader_t)))
+	if(pRX->PacketSize < (sizeof(IP_ARP_Frame_t) - sizeof(IP_EthernetHeader_t)))
 	{
 		return;
 	}
@@ -130,26 +127,26 @@ void ARP_ProcessARP(IP_PacketMsg_t* pRX)
 		case ARP_REQUEST:
 		{
             // ARP request. If it asked for our address, we send out a reply.
-			if(pRX_ARP->DstIP_Addr.dw == IP_HostAddr.dw)
+			if(pRX_ARP->DstIP_Addr == IP_HostAddr)
 			{
 				pTX = (IP_PacketMsg_t*)MemGetAndClear(pRX->wPacketSize + 2, &Error);			// Get memory for TX packet + Size 
-				pTX->wPacketSize = pRX->wPacketSize;											// Get the packet size from request packet (PING)
+				pTX->PacketSize = pRX->PacketSize;											    // Get the packet size from request packet (PING)
                 pTX_ARP = &pTX->Packet.u.ARP_Frame;
 
-				pTX_ARP->wOpcode = ARP_REPLY;
-                LIB_memcpy(pTX_ARP->Dst.baAddr, pRX_ARP->Src.baAddr, 6);
-				LIB_memcpy(pTX_ARP->ETH_Header.Dst.baAddr, pRX_ARP->Src.baAddr, 6);
-				LIB_memcpy(pTX_ARP->Src.baAddr, IP_MAC.baAddr, 6);
-				LIB_memcpy(pTX_ARP->ETH_Header.Src.baAddr, IP_MAC.baAddr, 6);
+				pTX_ARP->Opcode = ARP_REPLY;
+                LIB_memcpy(pTX_ARP->Dst.Addr, pRX_ARP->Src.Addr, 6);
+				LIB_memcpy(pTX_ARP->ETH_Header.Dst.Addr, pRX_ARP->Src.Addr, 6);
+				LIB_memcpy(pTX_ARP->Src.Addr, IP_MAC.Addr, 6);
+				LIB_memcpy(pTX_ARP->ETH_Header.Src.Addr, IP_MAC.Addr, 6);
 	  
-				pTX_ARP->DstIP_Addr.dw = pRX_ARP->SrcIP_Addr.dw;
-				pTX_ARP->SrcIP_Addr.dw = IP_HostAddr.dw;
+				pTX_ARP->DstIP_Addr = pRX_ARP->SrcIP_Addr;
+				pTX_ARP->SrcIP_Addr = IP_HostAddr;
 
-				pTX_ARP->wHardwareType        = ARP_HARDWARE_TYPE_ETHERNET;
-				pTX_ARP->wProtocol            = IP_ETHERNET_TYPE_IP;
-				pTX_ARP->ByHardwareAddrLenght = 6;
-				pTX_ARP->byProtocolLenght     = 4;
-				pTX_ARP->ETH_Header.wType     = IP_ETHERNET_TYPE_ARP;
+				pTX_ARP->HardwareType        = ARP_HARDWARE_TYPE_ETHERNET;
+				pTX_ARP->Protocol            = IP_ETHERNET_TYPE_IP;
+				pTX_ARP->HardwareAddrLenght  = 6;
+				pTX_ARP->ProtocolLenght      = 4;
+				pTX_ARP->ETH_Header.Type     = IP_ETHERNET_TYPE_ARP;
 			}      
 			break;
 		}
@@ -157,9 +154,9 @@ void ARP_ProcessARP(IP_PacketMsg_t* pRX)
 		case ARP_REPLY:
 		{
 			// ARP reply. We insert or update the ARP table if it was for us.
-			if((pRX_ARP->DstIP_Addr.dw == IP_HostAddr.dw))
+			if((pRX_ARP->DstIP_Addr == IP_HostAddr))
 			{
-				ARP_UpdateEntry(pRX_ARP->SrcIP_Addr.dw, &pRX_ARP->Src);
+				ARP_UpdateEntry(pRX_ARP->SrcIP_Addr, &pRX_ARP->Src);
 			}
 		}
 		break;
@@ -183,10 +180,10 @@ void ARP_ProcessARP(IP_PacketMsg_t* pRX)
 //-------------------------------------------------------------------------------------------------
 void ARP_UpdateEntry(int32_t IP_dwAddr, IP_EthernetAddress_t* pEthernet)
 {
-	uint8_t 				i;
-	uint8_t 				byOldestEntry;
-	uint8_t 				byTimePage;
-	ARP_TableEntry_t* 	pTable 			= nullptr;
+	uint8_t           i;
+	uint8_t           OldestEntry;
+	uint8_t           TimePage;
+	ARP_TableEntry_t* pTable	= nullptr;
 
 	// Walk through the ARP mapping table and try to find an entry to
     // update. If none is found, the IP -> MAC address mapping is
@@ -195,15 +192,15 @@ void ARP_UpdateEntry(int32_t IP_dwAddr, IP_EthernetAddress_t* pEthernet)
 	{
 		pTable = &ARP_TableEntry[i];
 		// Only check those entries that are actually in use.
-		if(pTable->IP_Addr.dw != 0)
+		if(pTable->IP_Addr != 0)
 		{
             // Check if the source IP address of the incoming packet matches
 			// the IP address in this ARP table entry.
-			if(IP_dwAddr == pTable->IP_Addr.dw)
+			if(IP_dwAddr == pTable->IP_Addr)
 			{
 				// An old entry found, update this and return.
-				LIB_memcpy(pTable->Ethernet.baAddr, pEthernet->baAddr, 6);
-				pTable->byTime = ARP_byTime;
+				LIB_memcpy(pTable->Ethernet.Addr, pEthernet->Addr, 6);
+				pTable->Time = ARP_Time;
    		      #if (IP_DBG_ARP == DEF_ENABLED)
                 DBG_Printf("ARP Cache - (%d.%d.%d.%d) Update an existing entry %d\n", pTable->IP_Addr.by.by0,
 				                                                                      pTable->IP_Addr.by.by1,
@@ -221,7 +218,7 @@ void ARP_UpdateEntry(int32_t IP_dwAddr, IP_EthernetAddress_t* pEthernet)
 	for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
 	{
 		pTable = &ARP_TableEntry[i];
-		if(pTable->IP_Addr.dw == 0)
+		if(pTable->IP_Addr == 0)
 		{
    		  #if (IP_DBG_ARP == DEF_ENABLED)
 			DBG_Printf("ARP Cache - Found a free entry %d\n", i);
@@ -233,20 +230,21 @@ void ARP_UpdateEntry(int32_t IP_dwAddr, IP_EthernetAddress_t* pEthernet)
 	// If no unused entry is found, we try to find the oldest entry and throw it away.
 	if(i == IP_ARP_TABLE_SIZE)
 	{
-		byTimePage = 0;
-		byOldestEntry = 0;
-		for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
+		TimePage = 0;
+		OldestEntry = 0;
+		
+        for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
 		{
 			pTable = &ARP_TableEntry[i];
-			if((ARP_byTime - pTable->byTime) > TimePage)
+			if((ARP_Time - pTable->Time) > TimePage)
 			{
-				byTimePage = ARP_byTime - pTable->byTime;
-				byOldestEntry = i;
+				TimePage = ARP_Time - pTable->Time;
+				OldestEntry = i;
 			}
 		}
 		i = OldestEntry; // for debug only
 
-		pTable = &ARP_TableEntry[byOldestEntry];
+		pTable = &ARP_TableEntry[OldestEntry];
    	  #if (IP_DBG_ARP == DEF_ENABLED)
 		DBG_Printf("ARP Cache - (%d.%d.%d.%d) Flush an old entry %d\n", pTable->IP_Addr.by.by0,
 		                                                                pTable->IP_Addr.by.by1,
@@ -257,7 +255,7 @@ void ARP_UpdateEntry(int32_t IP_dwAddr, IP_EthernetAddress_t* pEthernet)
 	}
 
 	// Now, pTable pointer is on ARP table entry which we will fill with the new information.
-	pTable->IP_Addr.dw = IP_dwAddr;
+	pTable->IP_Addr = IP_Addr;
   #if (IP_DBG_ARP == DEF_ENABLED)
 	DBG_Printf("ARP Cache - (%d.%d.%d.%d) Added a new entry %d\n", pTable->IP_Addr.by.by0,
 	                                                               pTable->IP_Addr.by.by1,
@@ -265,8 +263,8 @@ void ARP_UpdateEntry(int32_t IP_dwAddr, IP_EthernetAddress_t* pEthernet)
 																   pTable->IP_Addr.by.by3,
 																   i);
   #endif
-	LIB_memcpy(pTable->Ethernet.baAddr, pEthernet->baAddr, 6);
-    pTable->byTime = ARP_byTime;
+	LIB_memcpy(pTable->Ethernet.Addr, pEthernet->Addr, 6);
+    pTable->Time = ARP_Time;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -295,10 +293,10 @@ void ARP_UpdateEntry(int32_t IP_dwAddr, IP_EthernetAddress_t* pEthernet)
 //-------------------------------------------------------------------------------------------------
 void ARP_ProcessOut(IP_PacketMsg_t* pTX)
 {
-	uint8_t 						i;
-	ARP_TableEntry_t* 			pTable   	= nullptr;
-	IP_ARP_Frame_t* 		 	pARP;
-	IP_EthernetPacket_t* 		pFrame;
+	uint8_t              i;
+	ARP_TableEntry_t*    pTable   	= nullptr;
+	IP_ARP_Frame_t*      pARP;
+	IP_EthernetPacket_t* pFrame;
 
 	if(pTX != nullptr)                        		// If data are to be sent back, then send the data
 	{                       
@@ -307,21 +305,21 @@ void ARP_ProcessOut(IP_PacketMsg_t* pTX)
 		pFrame  = &pTX->Packet;
 		
         // Check if the destination address is on the local network.
-		if((pFrame->u.IP_Frame.Header.DstIP_Addr.dw & IP_SubnetMaskAddr.dw) != (IP_HostAddr.dw & IP_SubnetMaskAddr.dw))
+		if((pFrame->u.IP_Frame.Header.DstIP_Addr & IP_SubnetMaskAddr) != (IP_HostAddr & IP_SubnetMaskAddr))
 		{
 			// Use the default router's IP address instead of the destination
-			//IP_Addr.dw = IP_DefaultGatewayAddr.dw;
+			//IP_Addr = IP_DefaultGatewayAddr;
 		}
 		else
 		{
 			// Else, we use the destination IP address.
-			//IP_Addr.dw = pFrame->u.IP_Frame.Header.DstIP_Addr.dw;
+			//IP_Addr = pFrame->u.IP_Frame.Header.DstIP_Addr;
 		}
 		  
 		for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
 		{
 			pTable = &ARP_TableEntry[i];
-			if(IP_Addr.dw == pTable->IP_Addr.dw)
+			if(IP_Addr == pTable->IP_Addr)
 			{
 				break;
 			}
@@ -332,13 +330,13 @@ void ARP_ProcessOut(IP_PacketMsg_t* pTX)
 			// The destination address is not in our ARP table
 			// Send a ARP request instead
 		
-			//LIB_memset(pARP->ETH_Header.Dst.baAddr, 0xFF, 6);
-			//LIB_memset(pARP->Dst.baAddr, 0x00, 6);
-			//LIB_memcpy(pARP->ETH_Header.Src.baAddr, MAC.baAddr, 6);
-			//LIB_memcpy(pARP->Src.baAddr, MAC.baAddr, 6);
+			//LIB_memset(pARP->ETH_Header.Dst.Addr, 0xFF, 6);
+			//LIB_memset(pARP->Dst.Addr, 0x00, 6);
+			//LIB_memcpy(pARP->ETH_Header.Src.Addr, MAC.Addr, 6);
+			//LIB_memcpy(pARP->Src.Addr, MAC.Addr, 6);
 		
-			//pARP->DstIP_Addr.dw        = IP_Addr.dw;
-			//pARP->SrcIP_Addr.dw        = IP_HostAddr.dw;
+			//pARP->DstIP_Addr           = IP_Addr;
+			//pARP->SrcIP_Addr           = IP_HostAddr;
 			//pARP->wOpcode              = ARP_REQUEST;
 			//pARP->wHardwareType        = ARP_HARDWARE_TYPE_ETHERNET;
 			//pARP->wProtocol            = IP_ETHERNET_TYPE_IP;
@@ -351,8 +349,8 @@ void ARP_ProcessOut(IP_PacketMsg_t* pTX)
 		}
 
 		//// Build an ethernet header.
-		//LIB_memcpy(pFrame->u.ETH_Header.Dst.baAddr, pTable->Ethernet.baAddr, 6);
-		//LIB_memcpy(pFrame->u.ETH_Header.Src.baAddr, MAC.baAddr, 6);
+		//LIB_memcpy(pFrame->u.ETH_Header.Dst.Addr, pTable->Ethernet.Addr, 6);
+		//LIB_memcpy(pFrame->u.ETH_Header.Src.Addr, MAC.Addr, 6);
 		//
 		//pFrame->u.ETH_Header.wType = IP_ETHERNET_TYPE_IP;
 	
@@ -398,36 +396,37 @@ void ARP_Resolve(void)
 //-------------------------------------------------------------------------------------------------
 void ARP_TimerCallBack(OS_TMR *pTmr, void* pArg)
 {
-	uint8_t 				i;
-	int16_t				wTime;
-	ARP_TableEntry_t* 	pTable;
+	uint16_t          Time;
+	ARP_TableEntry_t* pTable;
 
-	if(pTmr) pTmr = nullptr;
-	if(pArg) pArg = nullptr;
+    VAR_UNUSED(pTmr):
+	VAR_UNUSED(pArg);
 
-	ARP_byTime++;
+	ARP_Time++;
 
-	for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
+	for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
 	{
 		pTable = &ARP_TableEntry[i];
-		if(pTable->IP_Addr.dw != 0)
+		
+        if(pTable->IP_Addr != 0)
 		{
-			wTime = (int16_t)ARP_byTime;
-			if(ARP_byTime < pTable->byTime)
+			Time = uint16_t(ARP_Time);
+			
+            if(ARP_Time < pTable->Time)
 			{
-				wTime += (int16_t)IP_ARP_TIME_OUT;
+				Time += uint16_t(IP_ARP_TIME_OUT);
 			}
 
-			if((wTime - pTable->byTime) >= IP_ARP_TIME_OUT)
+			if((Time - pTable->Time) >= IP_ARP_TIME_OUT)
 			{
    		      #if (IP_DBG_ARP == DEF_ENABLED)
-   		      	DBG_Printf("ARP Cache - (%d.%d.%d.%d) Remove entry number %d\n", pTable->IP_Addr.by.by0,
-                                                                 				 pTable->IP_Addr.by.by1,
-																				 pTable->IP_Addr.by.by2,
-																				 pTable->IP_Addr.by.by3,
+   		      	DBG_Printf("ARP Cache - (%d.%d.%d.%d) Remove entry number %d\n", uint8_t(pTable->IP_Addr >> 24),
+                                                                 				 uint8_t(pTable->IP_Addr >> 16),
+																				 uint8_t(pTable->IP_Addr >> 8),
+																				 uint8_t(pTable->IP_Addr),
 																				 i);
 		      #endif
-				pTable->IP_Addr.dw = 0;
+				pTable->IP_Addr = IP_ADDR(0,0,0,0);
 			}
 		}
 	}

@@ -54,17 +54,6 @@
 
 #define SNTP_MSG_ACTION_TIME_OUT            0
 
-#define SNTP_SECONDS_PER_DAY                86400UL
-#define SNTP_SECONDS_PER_HOUR               3600UL
-
-//-------------------------------------------------------------------------------------------------
-// macro(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-// Enum(s)
-//-------------------------------------------------------------------------------------------------
-
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
@@ -107,11 +96,11 @@ typedef struct
 move private to c or cpp file
 
 #ifdef SNTP_PRIVATE
-static      uint32_t       SNTP_Seconds;
-static      OS_EVENT*   SNTP_pQ;
+static      uint32_t        SNTP_Seconds;
+static      OS_EVENT*       SNTP_pQ;
 #endif
 
-SNTP_EXTERN uint8_t        SNTP_byOST_Resync;
+SNTP_EXTERN uint8_t         SNTP_byOST_Resync;
 
 //-------------------------------------------------------------------------------------------------
 // Private Function prototype(s)
@@ -127,8 +116,8 @@ void   SNTP_Reply    (SOCKET SocketNumber);
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-void    SNTP_Init       (void* pQ);
-uint32_t   SNTP_Request    (SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError);
+void        SNTP_Init       (void* pQ);
+uint32_t   SNTP_Request     (SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError);
 
 //-------------------------------------------------------------------------------------------------
 

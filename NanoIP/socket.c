@@ -39,28 +39,26 @@
 //
 //  Name:           SOCK_Socket
 //
-//  Parameter(s):   SOCKET  SocketNumber            Socket to open
-//                  uint8_t    Protocol              Protocol to use
-//                  int16_t    wSourcePort             Source port
-//                  uint8_t    Flag                  Flag
-//  Return:         bool    bStatus                 true or false
+//  Parameter(s):   SOCKET      SocketNumber            Socket to open
+//                  uint8_t     Protocol                Protocol to use
+//                  uint16_t    SourcePort              Source port
+//                  uint8_t     Flag                    Flag
+//  Return:         bool        bStatus                 true or false
 //
 //  Description:    This function initialize the socket channel in particular mode,
 //                  set the port and wait for W5100 to do it.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 bool SOCK_Socket(SOCKET SocketNumber, uint8_t Protocol, uint16_t SourcePort, uint8_t Flag)
 {
-    bool bStatus = false;
+    bool Status = false;
 
 
-    if((byProtocol == SOCK_MODE_TCP) || (byProtocol == SOCK_MODE_UDP))
+    if((Protocol == SOCK_MODE_TCP) || (Protocol == SOCK_MODE_UDP))
     {
         SOCK_Close(SocketNumber);
 
-        if(wSourcePort != 0)
+        if(SourcePort != 0)
         {
           #if (IP_HARDWARE_SOCKET == DEF_DISABLED)
 			//SOCK_SetSocket(SocketNumber, Protocol, Flag); 
@@ -70,21 +68,21 @@ bool SOCK_Socket(SOCKET SocketNumber, uint8_t Protocol, uint16_t SourcePort, uin
 
 			if(pSocket != nullptr)
 			{
-				pSocket->wPort 				= wPort;
-				pSocket->byProtocol 		= Protocol;
-				pSocket->wBindSocketCount 	= 0;
+				pSocket->Port 				= Port;
+				pSocket->Protocol 		    = Protocol;
+				pSocket->BindSocketCount 	= 0;
 				pSocket->pFunction        	= pFunction;
 			}
 	      #else
 		  	NIC_SocketMode(SocketNumber, Protocol, Flag);
-			NIC_SourcePort(SocketNumber, wSourcePort);
+			NIC_SourcePort(SocketNumber, SourcePort);
 			NIC_ProcessCommandAndWait(SocketNumber, NIC_SOCKET_OPEN)                    // Wait to process the command...
 		  #endif
-            bStatus = true;
+            Status = true;
         }
     }
 
-    return(bStatus);
+    return Status;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -95,8 +93,6 @@ bool SOCK_Socket(SOCKET SocketNumber, uint8_t Protocol, uint16_t SourcePort, uin
 //  Return:         void
 //
 //  Description:    This function close the socket
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SOCK_Close(SOCKET SocketNumber)
@@ -111,7 +107,7 @@ void SOCK_Close(SOCKET SocketNumber)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:
+//  Name:           SOCK_Listen
 //
 //  Parameter(s):   SOCKET  SocketNumber            Socket to listen
 //  Return:         bool    bStatus                 true or false
@@ -119,51 +115,47 @@ void SOCK_Close(SOCKET SocketNumber)
 //  Description:    This function established the connection for the channel in passive
 //                  (server) mode. This function waits for the request from the peer.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 bool SOCK_Listen(SOCKET SocketNumber)
 {
-    bool bStatus = false;
+    bool Status = false;
 
   #if (IP_HARDWARE_SOCKET == DEF_DISABLED)
 	if(SOCK_Status() == SOCK_INIT)
 	{
 		// Set socket in listen mode
-		bStatus = true;
+		Status = true;
 	}
   #else
     if(sock_cr_read(SocketNumber) == SOCK_INIT)
 	{
 		NIC_ProcessCommandAndWait(SocketNumber, NIC_SOCKET_LISTEN)
-        bStatus = true;
+        Status = true;
     }
   #endif
 
-    return(bStatus);
+    return bStatus;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SOCK_Connect
 //
-//  Parameter(s):   SOCKET  SocketNumber            Socket to connect to
-//                  int32_t   dwDstAddr               Destination IP Address
-//                  int16_t    wDstPort                Destination Port
-//  Return:         bool    bStatus                 true or false
+//  Parameter(s):   SOCKET      SocketNumber            Socket to connect to
+//                  uint32_t    DstAddr                 Destination IP Address
+//                  uint16_t    DstPort                 Destination Port
+//  Return:         bool        Status                  true or false
 //
 //  Description:    This function established the connection for the channel in active
 //                  (client) mode. It wait until the connection is established.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-bool SOCK_Connect(SOCKET SocketNumber, int32_t dwDstAddr, int16_t wDstPort)
+bool SOCK_Connect(SOCKET SocketNumber, uint32_t DstAddr, uint16_t DstPort)
 {
-    bool bStatus    =   true;
+    bool    bStatus    =   true;
     uint8_t Status;
 
-    if((dwDstAddr == 0xFFFFFFFF) || (dwDstAddr == 0x00000000) || (wDstPort == 0x00))
+    if((DstAddr == IP_ADDR(255,255,255,255) || (DstAddr == IP_ADDR(0,0,0,0) || (DstPort == 0))
     {
         bStatus = false;
     }
@@ -194,7 +186,7 @@ bool SOCK_Connect(SOCKET SocketNumber, int32_t dwDstAddr, int16_t wDstPort)
         }
     }
 
-    return(bStatus);
+    return bStatus;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -205,8 +197,6 @@ bool SOCK_Connect(SOCKET SocketNumber, int32_t dwDstAddr, int16_t wDstPort)
 //  Return:         void
 //
 //  Description:    This function is used to disconnect the socket
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SOCK_Disconnect(SOCKET SocketNumber)
@@ -222,49 +212,47 @@ void SOCK_Disconnect(SOCKET SocketNumber)
 //
 //  Name:           SOCK_Send
 //
-//  Parameter(s):   SOCKET      SocketNumber            Socket to send data to
-//                  const uint8_t* pData                   Buffer containing the data
-//                  int16_t        wLen                    Size of the data
-//  Return:         int16_t
+//  Parameter(s):   SOCKET          SocketNumber            Socket to send data to
+//                  const uint8_t*  pData                   Buffer containing the data
+//                  size_t          Len                     Size of the data
+//  Return:         size_t
 //
 //  Description:    This function is an application I/F function to send the data in TCP mode
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-int16_t SOCK_Send(SOCKET SocketNumber, const uint8_t* pData, int16_t wLen)
+size_t SOCK_Send(SOCKET SocketNumber, const uint8_t* pData, size_t Len)
 {
     uint8_t    Status    = 0;
-    int16_t    wReturn     = 0;
-    int16_t    wFreeSize   = 0;
+    size_t     Return    = 0;
+    size_t     FreeSize  = 0;
 
   #if (IP_HARDWARE_SOCKET == DEF_DISABLED)
   #else
-    if(wLen > W5100_wTX_Size[SocketNumber])               // Check size not to exceed MAX size.
+    if(Len > W5100_wTX_Size[SocketNumber])               // Check size not to exceed MAX size.
     {
-        wReturn = W5100_wTX_Size[SocketNumber];
+        Return = W5100_wTX_Size[SocketNumber];
     }
     else
     {
-        wReturn = wLen;
+        Return = Len;
     }
 
     // Start if freebuffer is available
     do
     {
-        wFreeSize = SOCK_GetTX_FSR(SocketNumber);
+        FreeSize = SOCK_GetTX_FSR(SocketNumber);
         Status  = sock_sr_read(SocketNumber);
 
         if((byStatus != SOCK_ESTABLISHED) && (byStatus != SOCK_CLOSE_WAIT))
         {
-            wReturn = 0;
+            Return = 0;
             break;
         }
     }
-    while(wFreeSize < wReturn);
+    while(FreeSize < Return);
 
     // Copy data
-    W5100_ProcessTX_Data(SocketNumber, (uint8_t *)pData, wReturn);
+    W5100_ProcessTX_Data(SocketNumber, (uint8_t *)pData, Return);
 
     OSTimeDly(200);
 
@@ -275,88 +263,86 @@ int16_t SOCK_Send(SOCKET SocketNumber, const uint8_t* pData, int16_t wLen)
         if(sock_sr_read(SocketNumber) == SOCK_CLOSED)
         {
             SOCK_Close(SocketNumber);
-            return(0);
+            return 0;
         }
     }
 
     sock_ir_write(SocketNumber, Sn_IR_SEND_OK);
   #endif
 
-    return(wReturn);
+    return Return;
 }
 //
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SOCK_received
 //
-//  Parameter(s):   SOCKET      SocketNumber            Socket to send data to
-//                  const uint8_t* pData                   Buffer to put the data in
-//  Return:         void
+//  Parameter(s):   SOCKET          SocketNumber            Socket to send data to
+//                  const uint8_t*  pData                   Buffer to put the data in
+//                  size_t          Len
+//  Return:         size_t
 //
 //  Description:    This function is an application I/F function which is used to receive the data
 //                  in TCP mode. It continues to wait for data as needed  the application
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-int16_t SOCK_Received(SOCKET SocketNumber, uint8_t *pData, int16_t wLen)
+size_t SOCK_Received(SOCKET SocketNumber, uint8_t *pData, size_t Len)
 {
-    int16_t wReturn = 0;
+    uint16_t Return = 0;
 
-    if(wLen > 0)
+    if(Len > 0)
     {
-        W5100_ProcessRX_Data(SocketNumber, pData, wLen);
+        W5100_ProcessRX_Data(SocketNumber, pData, Len);
         W5100_ProcessCmdAndWait(SocketNumber, Sn_CR_RECV);     // Wait to process the command...
-        wReturn = wLen;
+        Return = Len;
     }
-    return(wReturn);
+    
+    return Return;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SOCK_SendTo
 //
-//  Parameter(s):   SOCKET      SocketNumber            Socket to send data to
-//                  const uint8_t* pData                   Buffer containing the data
-//                  int16_t        wLen                    lenght of the packet to send
-//                  int32_t       dwDstAddr               Destination IP Address
-//                  int16_t        wDstPort                Destination Port
+//  Parameter(s):   SOCKET          SocketNumber            Socket to send data to
+//                  const uint8_t*  pData                   Buffer containing the data
+//                  size_t          Len                     lenght of the packet to send
+//                  uint32_t        DstAddr                 Destination IP Address
+//                  uint16_t        DstPort                 Destination Port
 //  Return:         void
 //
 //  Description:    This function is an application I/F function which is used to send the data for
 //                  other protcol then TCP mode. Unlike TCP transmission, The peer's destination
 //                  address and the port is needed.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-int16_t SOCK_SendTo(SOCKET SocketNumber, const uint8_t* pData, int16_t wLen, int32_t dwPeerAddr, int16_t wPeerPort)
+uint16_t SOCK_SendTo(SOCKET SocketNumber, const uint8_t* pData, size_t Len, uint32_t PeerAddr, uint16_t PeerPort)
 {
-    int16_t wReturn = 0;
+    uint16_t Return = 0;
 
 
-    if(wLen > W5100_wTX_Size[SocketNumber])               // Check size not to exceed MAX size.
+    if(Len > W5100_wTX_Size[SocketNumber])               // Check size not to exceed MAX size.
     {
-        wReturn = W5100_wTX_Size[SocketNumber];
+        Return = W5100_wTX_Size[SocketNumber];
     }
     else
     {
-        wReturn = wLen;
+        Return = Len;
     }
 
-    if((dwPeerAddr == 0x00000000) || (wPeerPort == 0x00) || (wReturn == 0))
+    if((PeerAddr == IP_ADDR(0,0,0,0)) || (PeerPort == 0) || (Return == 0))
     {
-        wReturn = 0;
+        Return = 0;
     }
     else
     {
-        sock_dipr_write(SocketNumber, dwPeerAddr);
-        sock_dportr_write(SocketNumber, wPeerPort);
+        sock_dipr_write(SocketNumber, PeerAddr);
+        sock_dportr_write(SocketNumber, PeerPort);
 
 OSTimeDly(200);     // why i need so much delay tabarnak???
 
         // copy data
-        W5100_ProcessTX_Data(SocketNumber, (uint8_t*)pData, wReturn);
+        W5100_ProcessTX_Data(SocketNumber, (uint8_t*)pData, Return);
         W5100_ProcessCmdAndWait(SocketNumber, Sn_CR_SEND);     // Wait to process the command...
 
         while((sock_ir_read(SocketNumber) & Sn_IR_SEND_OK) != Sn_IR_SEND_OK)
@@ -364,18 +350,18 @@ OSTimeDly(200);     // why i need so much delay tabarnak???
             if((sock_ir_read(SocketNumber) & Sn_IR_TIMEOUT) != 0)
             {
                 sock_ir_write(SocketNumber, (Sn_IR_SEND_OK | Sn_IR_TIMEOUT)); // clear SEND_OK & TIMEOUT
-                return(0);
+                return 0;
             }
         }
         sock_ir_write(SocketNumber, Sn_IR_SEND_OK);
     }
 
-    return(wReturn);
+    return Return;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:
+//  Name:           SOCK_ReceivedFrom
 //
 //  Parameter(s):   
 //  Return:         
@@ -384,16 +370,14 @@ OSTimeDly(200);     // why i need so much delay tabarnak???
 //                  in other protcol then TCP mode. This function is used to receive UDP, IP_RAW
 //                  and MAC_RAW mode, it handle the header as well.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-uint16_t SOCK_ReceivedFrom(SOCKET SocketNumber, uint8_t* pData, uint16_t Len, uint32_t* pPeerAddr, uint16_t* pPeerPort)
+uint16_t SOCK_ReceivedFrom(SOCKET SocketNumber, uint8_t* pData, size_t Len, uint32_t* pPeerAddr, uint16_t* pPeerPort)
 {
-    uint8_t    baHead[8];
+    uint8_t    Head[8];
     uint16_t   DataLenght     = 0;
     uint16_t   Ptr            = 0;
 
-    if(wLen > 0)
+    if(Len > 0)
     {
         wPtr = sock_rx_rpr_read(SocketNumber);
 
@@ -401,44 +385,44 @@ uint16_t SOCK_ReceivedFrom(SOCKET SocketNumber, uint8_t* pData, uint16_t Len, ui
         {
             case Sn_MR_UDP:
             {
-                W5100_ReadData(SocketNumber, wPtr, baHead, 8);
+                W5100_ReadData(SocketNumber, wPtr, Head, 8);
                 wPtr += 8;
 
                 // Read peer's IP address, port number, and get data lenght
-                *pPeerAddr  = ntohl(*((int32_t*)&baHead[0]));
-                *pPeerPort  = ntohs(*((int16_t*)&baHead[4]));
-                wDataLenght = ntohs(*((int16_t*)&baHead[6]));
+                *pPeerAddr  = ntohl(*((int32_t*)&Head[0]));
+                *pPeerPort  = ntohs(*((int16_t*)&Head[4]));
+                DataLenght  = ntohs(*((int16_t*)&Head[6]));
 
-                W5100_ReadData(SocketNumber, wPtr, pData, wDataLenght);         // data copy.
-                wPtr += wDataLenght;
-                sock_rx_rpr_write(SocketNumber, wPtr);
+                W5100_ReadData(SocketNumber, Ptr, pData, DataLenght);         // data copy.
+                Ptr += DataLenght;
+                sock_rx_rpr_write(SocketNumber, Ptr);
                 break;
             }
 
             case Sn_MR_IPRAW:
             {
-                W5100_ReadData(SocketNumber, wPtr, baHead, 6);
-                wPtr += 6;
+                W5100_ReadData(SocketNumber, Ptr, Head, 6);
+                Ptr += 6;
 
                 // Read peer's IP address, port number, and get data lenght
-                *pPeerAddr  = *((int32_t*)&baHead[0]);
-                wDataLenght = *((int16_t*)&baHead[4]);
+                *pPeerAddr  = *((int32_t*)&Head[0]);
+                DataLenght = *((int16_t*)&Head[4]);
 
-                W5100_ReadData(SocketNumber, wPtr, pData, wDataLenght);         // data copy.
-                wPtr += wDataLenght;
-                sock_rx_rpr_write(SocketNumber, wPtr);
+                W5100_ReadData(SocketNumber, Ptr, pData, DataLenght);         // data copy.
+                Ptr += DataLenght;
+                sock_rx_rpr_write(SocketNumber, Ptr);
                 break;
             }
 
             case Sn_MR_MACRAW:
             {
-                W5100_ReadData(SocketNumber, wPtr, baHead, 2);
-                wPtr += 2;
-                wDataLenght = *((int16_t*)&baHead[0]);
+                W5100_ReadData(SocketNumber, Ptr, Head, 2);
+                Ptr += 2;
+                DataLenght = *((int16_t*)&Head[0]);
 
-                W5100_ReadData(SocketNumber, wPtr, pData, wDataLenght);
-                wPtr += wDataLenght;
-                sock_rx_rpr_write(SocketNumber, wPtr);
+                W5100_ReadData(SocketNumber, Ptr, pData, DataLenght);
+                Ptr += DataLenght;
+                sock_rx_rpr_write(SocketNumber, Ptr);
                 break;
             }
 
@@ -451,7 +435,7 @@ uint16_t SOCK_ReceivedFrom(SOCKET SocketNumber, uint8_t* pData, uint16_t Len, ui
         W5100_ProcessCmdAndWait(SocketNumber, Sn_CR_RECV);     // Wait to process the command...
     }
 
-    return(wDataLenght);
+    return DataLenght;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -463,15 +447,13 @@ uint16_t SOCK_ReceivedFrom(SOCKET SocketNumber, uint8_t* pData, uint16_t Len, ui
 //
 //  Description:    Get the free size in the nic TX Buffer
 //
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
+/-------------------------------------------------------------------------------------------------
 uint16_t SOCK_GetTX_BufferSize(SOCKET SocketNumber)
 {
   #if (IP_HARDWARE_SOCKET == DEF_DISABLED)
 	//Get Buffer size for TX
   #else
-	return(SOCK_GetTX_BufferSize(SocketNumber));
+	return SOCK_GetTX_BufferSize(SocketNumber);
   #endif
 }
 
@@ -483,8 +465,6 @@ uint16_t SOCK_GetTX_BufferSize(SOCKET SocketNumber)
 //  Return:         int16_t
 //
 //  Description:    Get the size of the received data size
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 uint16_t SOCK_GetRX_BufferSize(SOCKET SocketNumber)
@@ -508,8 +488,6 @@ uint16_t SOCK_GetRX_BufferSize(SOCKET SocketNumber)
 //
 //  Description:    Set the Socket mode
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 #if (IP_HARDWARE_SOCKET == DEF_DISABLED)
 void SOCK_SetSocket(SOCKET	SocketNumber, uint8_t Protocol, uint8_t Flag)
@@ -526,8 +504,6 @@ void SOCK_SetSocket(SOCKET	SocketNumber, uint8_t Protocol, uint8_t Flag)
 //  Return:         void
 //
 //  Description:    Open Socket with the data in structure
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 #if (IP_HARDWARE_SOCKET == DEF_DISABLED)

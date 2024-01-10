@@ -37,48 +37,32 @@
 #define TCP_SYN_ACK_PACKET_SIZE         24
 #define TCP_SYN_ACK_IP_PACKET_SIZE      44
 
-#define TCP_ACK_PACKET_SIZE         	24
-#define TCP_ACK_IP_PACKET_SIZE      	44
+#define TCP_ACK_PACKET_SIZE             24
+#define TCP_ACK_IP_PACKET_SIZE          44
 
 
-#define TCP_WINDOW_SIZE					1396
+#define TCP_WINDOW_SIZE                 1396
 
-#define TCP_FLAG_FIN     				0x01				// FIN Flag
-#define TCP_FLAG_SYN     				0x02				// SYN Flag
-#define TCP_FLAG_RST     				0x04				// Reset Flag
-#define TCP_FLAG_PSH     				0x08				// Push Flag
-#define TCP_FLAG_ACK     				0x10				// Acknowledge
-#define TCP_FLAG_SYN_ACK  				0x12				// SYN Flag
-#define TCP_FLAG_URG     				0x20				// Urgent Flag
+#define TCP_FLAG_FIN                    0x01                // FIN Flag
+#define TCP_FLAG_SYN                    0x02                // SYN Flag
+#define TCP_FLAG_RST                    0x04                // Reset Flag
+#define TCP_FLAG_PSH                    0x08                // Push Flag
+#define TCP_FLAG_ACK                    0x10                // Acknowledge
+#define TCP_FLAG_SYN_ACK                0x12                // SYN Flag
+#define TCP_FLAG_URG                    0x20                // Urgent Flag
 
-#define TCP_FLAG_SYN_FIN    			0x03				// Illegal flag combination
-#define TCP_FLAG_nullptr    				0x00
+#define TCP_FLAG_SYN_FIN                0x03                // Illegal flag combination
+#define TCP_FLAG_nullptr                0x00
 
 
-#define TCP_HTTP_PORT					htons(80)
-
-//-------------------------------------------------------------------------------------------------
-// macro(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-// Enum(s)
-//-------------------------------------------------------------------------------------------------
-	
-//-------------------------------------------------------------------------------------------------
-// Type definition(s) and structure(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
-//-------------------------------------------------------------------------------------------------
+#define TCP_HTTP_PORT                   htons(80)
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
- 
-void			 	TCP_Init						(void);
-IP_PacketMsg_t* 	TCP_Process						(IP_PacketMsg_t* pRX);
+
+void                TCP_Init                        (void);
+IP_PacketMsg_t*     TCP_Process                     (IP_PacketMsg_t* pRX);
 
 //-------------------------------------------------------------------------------------------------
 

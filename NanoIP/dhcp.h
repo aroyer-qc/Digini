@@ -114,33 +114,33 @@
 
 typedef struct
 {
-    uint8_t    Type;
-    int32_t   dwGatewayIP;
-    int32_t   dwSubnetMaskIP;
-    int32_t   dwDNS_ServerIP;
-    int32_t   dwClientIP;
-    int32_t   dwServerIP;
-    int32_t   dwLeaseTime;
+    uint8_t      Type;
+    IP_Address_t GatewayIP;
+    IP_Address_t SubnetMaskIP;
+    IP_Address_t DNS_ServerIP;
+    IP_Address_t ClientIP;
+    IP_Address_t ServerIP;
+    uint32_t     LeaseTime;
 } DHCP_Options_t;
 
 typedef struct
 {
-    uint8_t    Op;
-    uint8_t    Htype;
-    uint8_t    Hlen;
-    uint8_t    Hops;
-    int32_t   dwX_ID;
-    int16_t    wSecs;
-    int16_t    wFlags;
-    int32_t   dwClientIP_Addr;
-    int32_t   dwYourIP_Addr;
-    int32_t   dwServerIP_Addr;
-    int32_t   dwRelayAgentIP_Addr;
-    uint8_t    baClientHardware[16];
-    uint8_t    baSname[64];
-    uint8_t    baFile[128];
-    uint32_t  MagicCookie;
-    uint8_t    baOptions[DHCP_OPTION_IN_PACKET_SIZE];
+    uint8_t      Op;
+    uint8_t      Htype;
+    uint8_t      Hlen;
+    uint8_t      Hops;
+    uint32_t     X_ID;
+    uint16_t     Secs;
+    uint16_t     Flags;
+    IP_Address_t ClientIP_Addr;
+    IP_Address_t YourIP_Addr;
+    IP_Address_t ServerIP_Addr;
+    IP_Address_t RelayAgentIP_Addr;
+    uint8_t      ClientHardware[16];
+    uint8_t      Sname[64];
+    uint8_t      File[128];
+    uint32_t     MagicCookie;
+    uint8_t      Options[DHCP_OPTION_IN_PACKET_SIZE];
 } DHCP_Msg_t;
 
 //-------------------------------------------------------------------------------------------------
@@ -148,16 +148,16 @@ typedef struct
 //-------------------------------------------------------------------------------------------------
 
 #ifdef DHCP_GLOBAL
-    const uint8_t DHCP_baOPL_Discover[8] = {55,        // Parameter list
-                                         6,         // Size
-                                         1,         // Subnet Mask
-                                         3,         // Gateway
-                                         6,         // DNS Server
-                                         15,        // Domain Name
-                                         58,        // DHCP T1 Value
-                                         59};       // DHCP T2 Value
+    const uint8_t DHCP_OPL_Discover[8] = {55,        // Parameter list
+                                          6,         // Size
+                                          1,         // Subnet Mask
+                                          3,         // Gateway
+                                          6,         // DNS Server
+                                          15,        // Domain Name
+                                          58,        // DHCP T1 Value
+                                          59};       // DHCP T2 Value
 
-    const uint8_t DHCP_baOPL_Request[10] = {55,        // Parameter list
+    const uint8_t DHCP_OPL_Request[10] = {55,        // Parameter list
                                           8,        // Size
                                           1,        // Subnet Mask
                                           3,        // Gateway
@@ -168,8 +168,8 @@ typedef struct
                                           31,       // Perform Router Discovery
                                           33};      // Static Route
 #else
-    extern const uint8_t DHCP_baOPL_Discover[8];
-    extern const uint8_t DHCP_baOPL_Request[10];
+    extern const uint8_t DHCP_OPL_Discover[8];
+    extern const uint8_t DHCP_OPL_Request[10];
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -181,14 +181,16 @@ move private into c or cpp file
 
 static      uint32_t               DHCP_Xid;
 static      DHCP_Options_t         DHCP_Options;
-static      uint8_t                DHCP_byOST_Discover    = TIME_TIMER_nullptr;
-static      uint8_t                DHCP_byOST_T1_Lease    = TIME_TIMER_nullptr;
-static      uint8_t                DHCP_byOST_T2_Rebind   = TIME_TIMER_nullptr;
+static      uint8_t                DHCP_OST_Discover    = TIME_TIMER_nullptr;
+static      uint8_t                DHCP_OST_T1_Lease    = TIME_TIMER_nullptr;
+static      uint8_t                DHCP_OST_T2_Rebind   = TIME_TIMER_nullptr;
 static      OS_EVENT*              DHCP_pQ;
+
+static      bool                   DHCP_Mode;
 
 #endif
 
-DHCP_EXTERN uint8_t                DHCP_byState;
+DHCP_EXTERN uint8_t                DHCP_State;
 
 //-------------------------------------------------------------------------------------------------
 // Private Function prototype(s)
@@ -200,7 +202,7 @@ bool     DHCP_Start          (void);
 void     DHCP_ParseOffer     (DHCP_Msg_t* pRX);
 void     DHCP_IsBound        (void);
 void     DHCP_ParseOption    (DHCP_Msg_t* pRX);
-uint16_t DHCP_PutOption      (uint8_t* baArray, uint8_t Option, uint8_t Message);
+size_t   DHCP_PutOption      (uint8_t* Array, uint8_t Option, uint8_t Message);
 void     DHCP_PutHeader      (DHCP_Msg_t* pTX);
 bool     DHCP_Discover       (void);
 bool     DHCP_Request        (void);
@@ -213,6 +215,7 @@ bool     DHCP_Request        (void);
 
 void    DHCP_Init           (void* pQ);
 bool    DHCP_Process        (MSG_t* pMsg);
+bool    DHCP_GetMode        ()                    {  return DHCP_Mode};
 
 //-------------------------------------------------------------------------------------------------
 

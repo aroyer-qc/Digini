@@ -74,8 +74,6 @@
 //  Return:         void
 //
 //  Description:    
-//	
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void UDP_Init(void)
@@ -90,8 +88,6 @@ void UDP_Init(void)
 //  Return:         void 
 //
 //  Description:    
-//	
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 IP_PacketMsg_t* UDP_Process(IP_PacketMsg_t* pRX)
@@ -99,22 +95,22 @@ IP_PacketMsg_t* UDP_Process(IP_PacketMsg_t* pRX)
 	IP_PacketMsg_t* 		pTX = nullptr;
 	PortInfo_t* 			pPort;
 
-	if(pRX->Packet.u.UDP_Frame.Header.wSrcPort == UDP_PORT_BOOT_P_SERVER)
+	if(pRX->Packet.u.UDP_Frame.Header.SrcPort == UDP_PORT_BOOT_P_SERVER)
 	{
 		DHCP_Process(pRX); 																				// No TX already process in DHCP
 	}
 	else
 	{
-		if((pPort = SOCK_ValidPort(pRX->Packet.u.UDP_Frame.Header.wDstPort, IP_PROTOCOL_UDP)) != nullptr)	// Check first if the port is in our allowed port list
+		if((pPort = SOCK_ValidPort(pRX->Packet.u.UDP_Frame.Header.DstPort, IP_PROTOCOL_UDP)) != nullptr)	// Check first if the port is in our allowed port list
 		{
 			pPort->pFunction(nullptr, nullptr, 0);		// TO DO define UDP payload in frame so we can pass the address of the data easily or maybe copy data and post message
 		}
 	}
-	return(pTX);
+	return pTX;
 
 // reference
 	// use this if other case need a valid IP
-	//if(IP_Status.b.IP_IsValid == YES)
+	//if(IP_Status.b.IP_IsValid == true)
 
 }
 

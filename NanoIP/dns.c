@@ -68,77 +68,74 @@
 //                      uint8_t*   pDomainName     Domain Name to get the IP
 //                      uint8_t*   pError          Pointer to return an error code
 //
-//  Return:             int32_t   dwIP
+//  Return:             uint32_t   dwIP
 //
 //  Description:    Send the DNS Query to DNS Server
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-int32_t DNS_Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pError)
+uint32_t DNS_Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pError)
 {
-    int16_t            wLen;
-    int16_t            wPort;
-    DNS_Msg_t*      pTX;
-    uint8_t*           pQuery;
-    uint8_t*           pStr;
-    uint8_t            Error     = ERR_NONE;
-    int32_t           dwIP        = DNS_NO_IP;
+    size_t       Len;
+    uint16_t     Port;
+    DNS_Msg_t*   pTX;
+    uint8_t*     pQuery;
+    uint8_t*     pStr;
+    IP_Address_t IP_Address = DNS_NO_IP;
 
     if(LIB_strlen(pDomainName) <= DNS_MAX_DOMAIN_NAME_LENGHT)               // Check if domain name string is to long
     {
-        pTX = MemGetAndClear(sizeof(DHCP_Msg_t), &Error);
+        pTX = pMemory->AllocAndClear(DHCP_Msg_t);
 
         if(pTX != nullptr)
         {
-            pQuery = (uint8_t*)&pTX->baData[0];
+            pQuery = (uint8_t*)&pTX->Data[0];
+            Port = uint16_t(RNG_GetRandomFromRange(32768, 65535));               // Get a random source port for the query from 32768 to 65535
 
-            TIME_Randomize();
-            wPort = (int16_t)TIME_Random(32768) + (int16_t)32768;                 // Get a random source port for the query from 32768 to 65535
-
-            if(SOCK_Socket(SocketNumber, Sn_MR_UDP, wPort, 0) != 0)
+            if(SOCK_Socket(SocketNumber, Sn_MR_UDP, Port, 0) != 0)
             {
 
                 // Fill up standard info for DNS query Packet
                 TIME_Randomize();
-                DNS_wID                 =(int16_t)TIME_Random(65536);              // Get a random ID
-                pTX->wID                = DNS_wID;                              // Keep copy for verification in answers
+                DNS_ID                  =uint16_t(RNG_GetRandom());             // Get a random ID
+                pTX->ID                 = DNS_ID;                               // Keep copy for verification in answers
                 pTX->Flags_1.s.QR       = DNS_QR_QUERY;                         // This is a DNS query
                 pTX->Flags_1.s.OPCODE   = DNS_OPCODE_STANDARD_QUERY;
                 pTX->Flags_1.s.RD       = DNS_RD_RECURSION;
-                pTX->wQD_Count          = htons(1);                             // we always only ask one question
+                pTX->QD_Count           = htons(1);                             // we always only ask one question
 
                 // Extract each string segment from the Domain Name
                 do
                 {
                     pStr = LIB_strchr(pDomainName, '.');                        // find the first '.'
 
-                    if(pStr != nullptr)                                            // Get size of the segment
+                    if(pStr != nullptr)                                         // Get size of the segment
                     {
-                        wLen = (int16_t)(pStr - pDomainName);
+                        Len = (size_t)(pStr - pDomainName);
                     }
                     else
                     {
-                        wLen = (int16_t)LIB_strlen(pDomainName);
+                        Len = (size_t)LIB_strlen(pDomainName);
                     }
-                    *pQuery = wLen;                                             // Put size of this segment in DNS message
+                    
+                    *pQuery = Len;                                              // Put size of this segment in DNS message
                     pQuery++;
-                    LIB_memcpy(pQuery, pDomainName, wLen);                      // Copy segment in DNS message
-                    pDomainName += (wLen + 1);
-                    pQuery += (int32_t)wLen;
+                    LIB_memcpy(pQuery, pDomainName, Len);                      // Copy segment in DNS message
+                    pDomainName += (Len + 1);
+                    pQuery += (uint32_t)Len;
                 }
                 while(pStr != nullptr);
 
                 pQuery++;                                                       // End of this name
-                *((int16_t*)pQuery) = htons(0x0001);                               // QTYPE
+                *((uint16_t*)pQuery) = htons(0x0001);                            // QTYPE
                 pQuery += 2;
-                *((int16_t*)pQuery) = htons(0x0001);                               // QCLASS
+                *((uint16_t*)pQuery) = htons(0x0001);                            // QCLASS
                 pQuery += 2;
 
-                wLen = (int16_t)(pQuery - &pTX->baData[0]);
-                if(SOCK_SendTo(SocketNumber, (uint8_t*)pTX, (int16_t)(sizeof(DNS_Msg_t) - (500 - wLen)), IP_GetDNS_IP(), DNS_PORT) != 0)
+                Len = (uint16_t)(pQuery - &pTX->Data[0]);
+                
+                if(SOCK_SendTo(SocketNumber, (uint8_t*)pTX, (uint16_t)(sizeof(DNS_Msg_t) - (500 - Len)), IP_GetDNS_IP(), DNS_PORT) != 0)
                 {
-                    dwIP = DNS_Response(SocketNumber);
+                    IP_Address = DNS_Response(SocketNumber);
                 }
                 else
                 {
@@ -162,7 +159,7 @@ int32_t DNS_Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pError)
         *pError = ERR_STRING_TO_LONG;
     }
 
-    return(dwIP);
+    return IP_Address;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -170,49 +167,51 @@ int32_t DNS_Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pError)
 //  Name:           DNS_Response
 //
 //  Parameter(s):   void
-//  Return:         int32_t   dwIP        Resolve IP
+//  Return:         uint32_t   IP           Resolve IP
 //
 //  Description:    This Function process the answer to the DNS Request
 //
 //  Note(s):        No special treatment here, get the first IP and get out
 //
 //-------------------------------------------------------------------------------------------------
-int32_t DNS_Response(SOCKET SocketNumber)
+uint32_t DNS_Response(SOCKET SocketNumber)
 {
-    DNS_Msg_t*      pRX             = nullptr;
-    uint8_t*           pAnswer;
-    uint32_t          ServerAddr;
-    int16_t            wServerPort;
-    uint8_t            Error;
-    int32_t           dwIP            = DNS_NO_IP;
-    int16_t            wLen;
+    DNS_Msg_t*   pRX             = nullptr;
+    uint8_t*     pAnswer;
+    IP_Address_t ServerAddr;
+    uint16_t     ServerPort;
+    uint8_t      Error;
+    IP_Address_t IP_Address = DNS_NO_IP;
+    size_t     Len;
 
 
-    OSTimeDly(200);
+    OSTimeDly(200); // why?
+    
     do
     {
         if(SOCK_GetRX_RSR(SocketNumber) > 0)
         {
             pRX = MemGetAndClear(sizeof(DNS_Msg_t), &Error);
+            
             if(pRX != nullptr)
             {
-                pAnswer = (uint8_t*)&pRX->baData[0];
-                SOCK_ReceivedFrom(SocketNumber, (uint8_t*)pRX, sizeof(DNS_Msg_t), &ServerAddr.dw, &wServerPort);
+                pAnswer = (uint8_t*)&pRX->Data[0];
+                SOCK_ReceivedFrom(SocketNumber, (uint8_t*)pRX, sizeof(DNS_Msg_t), &ServerAddr, &ServerPort);
 
 //                if(DNS_wID == pRX->wID)
                 {
-                    pRX->wQD_Count = ntohs(pRX->wQD_Count);         // bring count to host endian
+                    pRX->QD_Count = ntohs(pRX->QD_Count);           // bring count to host endian
                     do                                              // Skip 'Question' block
                     {
-                        wLen = LIB_strlen(pAnswer);                 // skip domain name
-                        pAnswer += (wLen + 5);                      // skip 'end of this name' + QTYPE + QCLASS
-                        pRX->wQD_Count--;                           // decrement the query count
+                        Len = LIB_strlen(pAnswer);                  // skip domain name
+                        pAnswer += (Len + 5);                       // skip 'end of this name' + QTYPE + QCLASS
+                        pRX->QD_Count--;                            // decrement the query count
                     }
-                    while(pRX->wQD_Count != 0);
+                    while(pRX->QD_Count != 0);
 
                     IP_Status.b.DNS_IP_Found = NO;
 
-                    pRX->wAN_Count = ntohs(pRX->wAN_Count);         // bring count to host endian
+                    pRX->AN_Count = ntohs(pRX->AN_Count);           // bring count to host endian
                     do                                              // Now parse the 'Answer' block for the first IP (type A,  class IN)
                     {
                         // Skip Domain Name
@@ -220,8 +219,8 @@ int32_t DNS_Response(SOCKET SocketNumber)
                         {
                             if(*pAnswer != 0xC0)
                             {
-                                wLen     = *pAnswer;                // Get Size of the string segment
-                                pAnswer += (wLen + 1);              // Skip to next segment, if any
+                                Len      = *pAnswer;                // Get Size of the string segment
+                                pAnswer += (Len + 1);               // Skip to next segment, if any
                             }
                         }
                         while((*pAnswer != 0x00) && (*pAnswer != 0xC0));
@@ -232,10 +231,10 @@ int32_t DNS_Response(SOCKET SocketNumber)
                         }
 
                         // Check if it is the right type
-                        if(*((int16_t*)pAnswer) == ntohs(DNS_TYPE_A))
+                        if(*((uint16_t*)pAnswer) == ntohs(DNS_TYPE_A))
                         {
                             pAnswer += 2;
-                            if(*((int16_t*)pAnswer) == ntohs(DNS_CLASS_IN))
+                            if(*((uint16_t*)pAnswer) == ntohs(DNS_CLASS_IN))
                             {
                                 IP_Status.b.DNS_IP_Found = YES;
                             }
@@ -246,23 +245,23 @@ int32_t DNS_Response(SOCKET SocketNumber)
                             pAnswer += 4;
                         }
 
-                        pAnswer += 4;                               // Skip the TTL field
-                        wLen     = ntohs(*((int16_t*)pAnswer));        // get the lenght of the data field
+                        pAnswer += 4;                                   // Skip the TTL field
+                        Len      = ntohs(*((uint16_t*)pAnswer));        // get the lenght of the data field
                         pAnswer += 2;
 
-                        if((wLen == 4) && (IP_Status.b.DNS_IP_Found == YES))
+                        if((Len == 4) && (IP_Status.b.DNS_IP_Found == true))
                         {
-                            dwIP = ntohl(*((int32_t*)pAnswer));
+                            IP = ntohl(*((uint32_t*)pAnswer));
                         }
                         else
                         {
-                            pAnswer += wLen;                            // Skip RDATA field
-                            pRX->wAN_Count--;                           // decrement the answer count
+                            pAnswer += Len;                             // Skip RDATA field
+                            pRX->AN_Count--;                            // decrement the answer count
                         }
                     }
-                    while((pRX->wAN_Count != 0) && (IP_Status.b.DNS_IP_Found == NO));
+                    while((pRX->AN_Count != 0) && (IP_Status.b.DNS_IP_Found == false));
 
-                    // we dont use the 'Authority nameservers' or 'Additional records'
+                    // Dont use the 'Authority nameservers' or 'Additional records'
                 }
             }
         }
@@ -270,7 +269,7 @@ int32_t DNS_Response(SOCKET SocketNumber)
 
     MemPut(&pRX);
 
-    return(dwIP);
+    return IP;
 }
 
 //-------------------------------------------------------------------------------------------------

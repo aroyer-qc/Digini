@@ -141,14 +141,12 @@
 //
 //  Description:    Initialize the DHCP Client
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void DHCP_Init(void* pQ)
 {
 
-    DHCP_byState = DHCP_STATE_INITIAL;
-    DHCP_pQ      = pQ;
+    DHCP_State = DHCP_STATE_INITIAL;
+    DHCP_pQ    = pQ;
 }
 //-------------------------------------------------------------------------------------------------
 //
@@ -159,39 +157,32 @@ void DHCP_Init(void* pQ)
 //
 //  Description:    Start the DHCP Client
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 bool DHCP_Start(void)
 {
-    bool bStatus;
+    bool Status = false;
 
+    DHCP_State = DHCP_STATE_INITIAL;
 
-    DHCP_byState                    = DHCP_STATE_INITIAL;
+    if(DHCP_OST_Discover  != TIME_TIMER_NULL) TIMER_Stop(&DHCP_OST_Discover);
+    if(DHCP_OST_T1_Lease  != TIME_TIMER_NULL) TIMER_Stop(&DHCP_OST_T1_Lease);
+    if(DHCP_OST_T2_Rebind != TIME_TIMER_NULL) TIMER_Stop(&DHCP_OST_T2_Rebind);
 
-    if(DHCP_byOST_Discover  != TIME_TIMER_nullptr) TIMER_Stop(&DHCP_byOST_Discover);
-    if(DHCP_byOST_T1_Lease  != TIME_TIMER_nullptr) TIMER_Stop(&DHCP_byOST_T1_Lease);
-    if(DHCP_byOST_T2_Rebind != TIME_TIMER_nullptr) TIMER_Stop(&DHCP_byOST_T2_Rebind);
+    IP_Status.b.IP_IsValid        = false;
+    IP_DHCP_GatewayIP             = IP_ADDR(0,0,0,0);
+    IP_DHCP_SubnetMask            = IP_ADDR(0,0,0,0);
+    IP_DHCP_IP                    = IP_ADDR(0,0,0,0);
+    IP_DHCP_DNS_IP                = IP_ADDR(0,0,0,0);
+    DHCP_Xid                      = GET_Random();
 
-    IP_Status.b.IP_IsValid           = NO;
-    IP_DHCP_GatewayIP.dw             = 0x00000000;
-    IP_DHCP_SubnetMask.dw            = 0x00000000;
-    IP_DHCP_IP.dw                    = 0x00000000;
-    IP_DHCP_DNS_IP.dw                = 0x00000000;
-    DHCP_Xid.dw                      = TIME_Random(0xFFFFFFFF);
-
-    sipr(IP_DHCP_IP.dw);
+    sipr(IP_DHCP_IP);
 
     if(SOCK_Socket(IP_SOCKET_DHCP, Sn_MR_UDP, DHCP_CLIENT_PORT, 0x00) == true)
     {
-        bStatus = true;
-    }
-    else
-    {
-        bStatus = false;
+        Status = true;
     }
 
-    return(bStatus);
+    return Status;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -203,24 +194,21 @@ bool DHCP_Start(void)
 //
 //  Description:    Process the DHCP function
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 bool DHCP_Process(MSG_t* pMsg)
 {
-    uint8_t        Error;
-    uint32_t      ServerAddr;
-    int16_t        wServerPort;
-    DHCP_Msg_t* pRX             = nullptr;
-    bool        bStatus         = true;
+    IP_Address_t ServerAddr;
+    uint16_t     ServerPort;
+    DHCP_Msg_t*  pRX             = nullptr;
+    bool         Status          = false;
 
     if(pMsg != nullptr)
     {
-        switch(pMsg->byAction)
+        switch(pMsg->Action)
         {
             case DHCP_MSG_ACTION_TIME_OUT:
             {
-                    DHCP_byState = DHCP_STATE_INITIAL;
+                    DHCP_State = DHCP_STATE_INITIAL;
                     SOCK_Close(IP_SOCKET_DHCP);
 
                     // Should close all socket.
@@ -250,47 +238,48 @@ bool DHCP_Process(MSG_t* pMsg)
         MemPut(&pMsg);
     }
 
-    if(IP_Flag.b.DHCP_Mode == YES)
+    if(DHCP_Mode == true)
     {
-        if(DHCP_byState == DHCP_STATE_INITIAL)
+        if(DHCP_State == DHCP_STATE_INITIAL)
         {
-            bStatus = DHCP_Discover();
+            Status = DHCP_Discover();
         }
         else
         {
             if(sock_sr_read(DHCP_SOCKET) == SOCK_CLOSED)
             {
-               if(DHCP_byState != DHCP_STATE_BOUND)
+               if(DHCP_State != DHCP_STATE_BOUND)
                {
-                   DHCP_byState = DHCP_STATE_INITIAL;                          // reset DHCP state machine
+                   DHCP_State = DHCP_STATE_INITIAL;                          // reset DHCP state machine
                }
             }
             else
             {
                 if(SOCK_GetRX_RSR(DHCP_SOCKET) > 0)
                 {
-                    pRX = MemGetAndClear(sizeof(DHCP_Msg_t), &Error);
+                    pRX = (DHCP_Msg_t*)pMemory->AllocAndClear(sizeof(DHCP_Msg_t));
+                    
                     if(pRX != nullptr)
                     {
-                        SOCK_ReceivedFrom(DHCP_SOCKET, (uint8_t*)pRX, sizeof(DHCP_Msg_t), &ServerAddr.dw, &wServerPort);
+                        SOCK_ReceivedFrom(DHCP_SOCKET, (uint8_t*)pRX, sizeof(DHCP_Msg_t), &ServerAddr, &ServerPort);
 
-                        if((pRX->byOp           == DHCP_BOOT_REPLY) &&
-                           (pRX->MagicCookie.dw == DHCP_MAGIC_COOKIE) &&
-                           (pRX->dwX_ID         == htonl(DHCP_Xid.dw)))
+                        if((pRX->Op          == DHCP_BOOT_REPLY) &&
+                           (pRX->MagicCookie == DHCP_MAGIC_COOKIE) &&
+                           (pRX->X_ID        == htonl(DHCP_Xid)))
                         {
                             DHCP_ParseOption(pRX);
 
-                            switch(DHCP_Options.byType)
+                            switch(DHCP_Options.Type)
                             {
                                 case DHCP_OFFER:
                                 {
-                                    if(DHCP_byState == DHCP_STATE_DISCOVER)
+                                    if(DHCP_State == DHCP_STATE_DISCOVER)
                                     {
-                                        if(TIMER_Restart(&DHCP_byOST_Discover) == TIME_TIMER_IS_RETRIGGED)
+                                        if(TIMER_Restart(&DHCP_OST_Discover) == TIME_TIMER_IS_RETRIGGED)
                                         {
                                             DHCP_ParseOffer(pRX);
                                             DHCP_Request();
-                                            DHCP_byState = DHCP_STATE_OFFER_RECEIVED;
+                                            DHCP_State = DHCP_STATE_OFFER_RECEIVED;
                                           #if (IP_DBG_DHCP == DEF_ENABLED)
                                             DBG_Printf("DHCP offer received and Request is sent\n");
                                           #endif
@@ -301,22 +290,22 @@ bool DHCP_Process(MSG_t* pMsg)
 
                                 case DHCP_ACK:
                                 {
-                                    if(DHCP_byState == DHCP_STATE_OFFER_RECEIVED)
+                                    if(DHCP_State == DHCP_STATE_OFFER_RECEIVED)
                                     {
-                                        if(TIMER_Stop(&DHCP_byOST_Discover) == TIME_TIMER_IS_RELEASED)
+                                        if(TIMER_Stop(&DHCP_OST_Discover) == TIME_TIMER_IS_RELEASED)
                                         {
                                             DHCP_IsBound();
                                             SOCK_Close(DHCP_SOCKET);
 
                                           #if (IP_DBG_DHCP == DEF_ENABLED)
                                             DBG_Printf("DHCP ACK received and interface is bound\n");
-                                            DBG_Printf("Host IP           %d.%d.%d.%d\n", IP_HostAddr.by.by0, IP_HostAddr.by.by1, IP_HostAddr.by.by2, IP_HostAddr.by.by3);
-                                            DBG_Printf("SubNet mask IP    %d.%d.%d.%d\n", IP_SubnetMaskAddr.by.by0, IP_SubnetMaskAddr.by.by1, IP_SubnetMaskAddr.by.by2, IP_SubnetMaskAddr.by.by3);
-                                            DBG_Printf("Default router IP %d.%d.%d.%d\n\n", IP_DefaultGatewayAddr.by.by0, IP_DefaultGatewayAddr.by.by1, IP_DefaultGatewayAddr.by.by2, IP_DefaultGatewayAddr.by.by3);
+                                            DBG_Printf("Host IP           %d.%d.%d.%d\n",   uint8_t(IP_HostAddr           >> 24), uint8_t(IP_HostAddr           >> 16), uint8_t(IP_HostAddr           >> 8), uint8_t(IP_HostAddr));
+                                            DBG_Printf("SubNet mask IP    %d.%d.%d.%d\n",   uint8_t(IP_SubnetMaskAddr     >> 24), uint8_t(IP_SubnetMaskAddr     >> 16), uint8_t(IP_SubnetMaskAddr     >> 8), uint8_t(IP_SubnetMaskAddr));
+                                            DBG_Printf("Default router IP %d.%d.%d.%d\n\n", uint8_t(IP_DefaultGatewayAddr >> 24), uint8_t(IP_DefaultGatewayAddr >> 16), uint8_t(IP_DefaultGatewayAddr >> 8), uint8_t(IP_DefaultGatewayAddr));
                                           #endif
                                         }
                                     }
-                                    else if(DHCP_byState == DHCP_STATE_BOUND)
+                                    else if(DHCP_State == DHCP_STATE_BOUND)
                                     {
                                         // check if in the ACK there is possibility of new value!
                                         DHCP_IsBound();
@@ -331,9 +320,9 @@ bool DHCP_Process(MSG_t* pMsg)
 
                                 case DHCP_NACK:
                                 {
-                                    DHCP_byState = DHCP_STATE_INITIAL;                          // reset DHCP state machine
-                                    TIMER_Stop(&DHCP_byOST_T1_Lease);                           // stop T1 & T2
-                                    TIMER_Stop(&DHCP_byOST_T2_Rebind);
+                                    DHCP_State = DHCP_STATE_INITIAL;                          // reset DHCP state machine
+                                    TIMER_Stop(&DHCP_OST_T1_Lease);                           // stop T1 & T2
+                                    TIMER_Stop(&DHCP_OST_T2_Rebind);
                                     SOCK_Close(DHCP_SOCKET);
 
                                   #if (IP_DBG_DHCP == DEF_ENABLED)
@@ -349,17 +338,13 @@ bool DHCP_Process(MSG_t* pMsg)
             }
         }
 
-        if(DHCP_byState == DHCP_STATE_BOUND)
+        if(DHCP_State == DHCP_STATE_BOUND)
         {
-            bStatus = true;
-        }
-        else
-        {
-            bStatus = false;
+            Status = true;
         }
     }
 
-    return(bStatus);       // Static IP mode
+    return Status;       // Static IP mode
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -380,38 +365,37 @@ bool DHCP_Process(MSG_t* pMsg)
 //-------------------------------------------------------------------------------------------------
 bool DHCP_Discover(void)
 {
-    uint8_t                    Options;
-    uint8_t                    Error;
-    DHCP_Msg_t*             pTX         = nullptr;
-    int32_t                   dwIP;
-    int16_t                    wLen;
-    bool                    bStatus;
+    uint8_t      Options;
+    DHCP_Msg_t*  pTX         = nullptr;
+    IP_Address_t IP_Address;
+    size_t       Len;
+    bool         Status;
 
     W5100_Init();               // This will start fresh
-    bStatus = DHCP_Start();
+    Status = DHCP_Start();
 
-    if(bStatus == true)
+    if(Status == true)
     {
-        pTX = MemGetAndClear(sizeof(DHCP_Msg_t), &Error);
+        pTX = (DHCP_Msg_t*)pMemory->AllocAndClear(sizeof(DHCP_Msg_t));
 
         if(pTX != nullptr)
         {
             //Setup Options
             Options = (DHCP_PUT_OPTION_CLIENT_IDENTIFIER | DHCP_PUT_OPTION_HOST_NAME | DHCP_PUT_OPTION_PL_DISCOVER);
-            wLen      = DHCP_PutOption(&pTX->baOptions[0], Options, DHCP_DISCOVER);
+            Len     = DHCP_PutOption(&pTX->Options[0], Options, DHCP_DISCOVER);
             DHCP_PutHeader(pTX);
 
             // Send broadcasting packet
-            dwIP = 0xFFFFFFFF;
+            IP_Address = IP_ADDR(255,255,255,255);
 
-            wLen = SOCK_SendTo(DHCP_SOCKET,
-                               (uint8_t*)pTX,
-                               (int16_t)((sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + wLen),
-                               dwIP,
-                               DHCP_SERVER_PORT);
-            if(wLen == 0)
+            Len = SOCK_SendTo(DHCP_SOCKET,
+                              (uint8_t*)pTX,
+                              uint16_t((sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + wLen),
+                              IP_Address,
+                              DHCP_SERVER_PORT);
+            if(Len == 0)
             {
-              bStatus = false;
+              Status = false;
               #if (IP_DBG_DHCP == DEF_ENABLED)
                 DBG_Printf("DHCP : Fatal Error(0).");
               #endif
@@ -423,10 +407,10 @@ bool DHCP_Discover(void)
                 DBG_Printf("DHCP Discover sent\n");
               #endif
 
-                DHCP_byState = DHCP_STATE_DISCOVER;
+                DHCP_State = DHCP_STATE_DISCOVER;
 
-                TIMER_Start(&DHCP_byOST_Discover,
-                            (int32_t)DHCP_OST_TIMEOUT,
+                TIMER_Start(&DHCP_OST_Discover,
+                            uint32_t(DHCP_OST_TIMEOUT),
                             DHCP_pQ,
                             IP_MSG_TYPE_DHCP_MANAGEMENT,
                             DHCP_MSG_ACTION_TIME_OUT);
@@ -436,11 +420,11 @@ bool DHCP_Discover(void)
         }
         else
         {
-            bStatus = false;
+            Status = false;
         }
     }
 
-    return(bStatus);
+    return Status;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -457,21 +441,20 @@ bool DHCP_Discover(void)
 //-------------------------------------------------------------------------------------------------
 bool DHCP_Request(void)
 {
-    uint8_t            Options;
-    uint8_t            Error;
+    uint8_t         Options;
     DHCP_Msg_t*     pTX         = nullptr;
-    uint32_t          IP;
-    int16_t            wLen;
-    bool            bStatus     = true;
+    IP_Address_t    IP_Address;
+    size_t          Len;
+    bool            Status     = true;
 
-    pTX = MemGetAndClear(sizeof(DHCP_Msg_t), &Error);
+    pTX = (DHCP_Msg_t*)pMemory->AllocAndClear(sizeof(DHCP_Msg_t));
 
     if(pTX != nullptr)
     {
         //Setup Options and dynamic part of DHCP
         Options = (DHCP_PUT_OPTION_CLIENT_IDENTIFIER | DHCP_PUT_OPTION_HOST_NAME | DHCP_PUT_OPTION_PL_REQUEST);
 
-        if(DHCP_byState < DHCP_STATE_BOUND)
+        if(DHCP_State < DHCP_STATE_BOUND)
         {
             Options |= DHCP_PUT_OPTION_REQUESTED_CLIENT_IP;
         }
@@ -480,27 +463,28 @@ bool DHCP_Request(void)
             Options |= DHCP_PUT_OPTION_SERVER_IP;
         }
 
-        wLen = DHCP_PutOption(&pTX->baOptions[0], Options, DHCP_REQUEST);
+        Len = DHCP_PutOption(&pTX->Options[0], Options, DHCP_REQUEST);
         DHCP_PutHeader(pTX);
 
         // Send broadcasting packet
-        if(DHCP_byState < DHCP_STATE_BOUND)
+        if(DHCP_State < DHCP_STATE_BOUND)
         {
-            IP.dw = 0xFFFFFFFF;
+        // this is the global one i think check previous version
+            IP_Address = IP_ADDRESS(255,255,255,255);
         }
         else
         {
-            IP.dw = IP_DHCP_IP.dw;
+            IP_Address = IP_DHCP_IP;
         }
 
-        wLen = SOCK_SendTo(DHCP_SOCKET,
+        Len = SOCK_SendTo(DHCP_SOCKET,
                            (uint8_t*)pTX,
-                           (int16_t)((sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + wLen),
-                           IP.dw,
+                           uint16_t((sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + Len),
+                           IP_Address,
                            DHCP_SERVER_PORT);
-        if(wLen == 0)
+        if(Len == 0)
         {
-          bStatus = false;
+          Status = false;
           #if (IP_DBG_DHCP == DEF_ENABLED)
             DBG_Printf("DHCP : Fatal Error(0).");
           #endif
@@ -510,10 +494,10 @@ bool DHCP_Request(void)
     }
     else
     {
-       bStatus = false;
+       Status = false;
     }
 
-    return(bStatus);
+    return Status;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -525,13 +509,11 @@ bool DHCP_Request(void)
 //
 //  Description:    Get info from the first offer
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void DHCP_ParseOffer(DHCP_Msg_t* pRX)
 {
-    DHCP_Options.dwClientIP = ntohl(pRX->dwYourIP_Addr);
-    DHCP_Options.dwServerIP = ntohl(pRX->dwServerIP_Addr);
+    DHCP_Options.ClientIP = ntohl(pRX->YourIP_Addr);
+    DHCP_Options.ServerIP = ntohl(pRX->ServerIP_Addr);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -543,34 +525,32 @@ void DHCP_ParseOffer(DHCP_Msg_t* pRX)
 //
 //  Description:    Process ACK or NACK
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void DHCP_IsBound(void)
 {
-    IP_DHCP_IP.dw               = DHCP_Options.dwClientIP;
-    IP_DHCP_SubnetMask.dw       = DHCP_Options.dwSubnetMaskIP;
-    IP_DHCP_GatewayIP.dw        = DHCP_Options.dwGatewayIP;
-    IP_DHCP_DNS_IP.dw           = DHCP_Options.dwDNS_ServerIP;
+    IP_DHCP_IP         = DHCP_Options.ClientIP;
+    IP_DHCP_SubnetMask = DHCP_Options.SubnetMaskIP;
+    IP_DHCP_GatewayIP  = DHCP_Options.GatewayIP;
+    IP_DHCP_DNS_IP     = DHCP_Options.DNS_ServerIP;
 
-    gar(IP_DHCP_GatewayIP.dw);
-    subr(IP_DHCP_SubnetMask.dw);
-    sipr(IP_DHCP_IP.dw);
+    gar(IP_DHCP_GatewayIP);
+    subr(IP_DHCP_SubnetMask);
+    sipr(IP_DHCP_IP);
 
-    DHCP_byState                = DHCP_STATE_BOUND;
-    IP_Status.b.IP_IsValid      = YES;
+    DHCP_State             = DHCP_STATE_BOUND;
+    IP_Status.b.IP_IsValid = true;
 
-    TIMER_Stop(&DHCP_byOST_T1_Lease);                               // make sure timer T1 & T2 are stop
-    TIMER_Stop(&DHCP_byOST_T2_Rebind);
+    TIMER_Stop(&DHCP_OST_T1_Lease);                               // make sure timer T1 & T2 are stop
+    TIMER_Stop(&DHCP_OST_T2_Rebind);
 
-    TIMER_Start(&DHCP_byOST_T1_Lease,
-                DHCP_Options.dwLeaseTime >> 1,
+    TIMER_Start(&DHCP_OST_T1_Lease,
+                DHCP_Options.LeaseTime >> 1,
                 DHCP_pQ,
                 IP_MSG_TYPE_DHCP_MANAGEMENT,
                 DHCP_MSG_ACTION_LEASE_RENEWAL);                     // Start the renewal timer for 50% of the total lease
 
-    TIMER_Start(&DHCP_byOST_T2_Rebind,
-                (DHCP_Options.dwLeaseTime >> 1) + (DHCP_Options.dwLeaseTime >> 2) + (DHCP_Options.dwLeaseTime >> 4),
+    TIMER_Start(&DHCP_OST_T2_Rebind,
+                (DHCP_Options.LeaseTime >> 1) + (DHCP_Options.LeaseTime >> 2) + (DHCP_Options.LeaseTime >> 4),
                 DHCP_pQ,
                 IP_MSG_TYPE_DHCP_MANAGEMENT,
                 DHCP_MSG_ACTION_REBIND);                            // Start the rebind timer for 87% of the total lease
@@ -590,9 +570,9 @@ void DHCP_IsBound(void)
 //-------------------------------------------------------------------------------------------------
 void DHCP_ParseOption(DHCP_Msg_t* pRX)
 {
-    uint8_t*   pPtr;
+    uint8_t* pPtr;
 
-    pPtr = (uint8_t*)&pRX->baOptions;
+    pPtr = (uint8_t*)&pRX->Options;
 
 
     while((*pPtr != DHCP_OPTION_END_OF_FIELD) && (*pPtr != DHCP_OPTION_PADDING))
@@ -600,31 +580,31 @@ void DHCP_ParseOption(DHCP_Msg_t* pRX)
         switch(*pPtr)
         {
             case DHCP_OPTION_SUBNET_MASK:
-                DHCP_Options.dwSubnetMaskIP = ntohl(*(int32_t*)(pPtr + 2));
+                DHCP_Options.SubnetMaskIP = ntohl(*(uint32_t*)(pPtr + 2));
                 break;
 
             case DHCP_OPTION_GATEWAY:
-                DHCP_Options.dwGatewayIP = ntohl(*(int32_t*)(pPtr + 2));
+                DHCP_Options.GatewayIP = ntohl(*(uint32_t*)(pPtr + 2));
                 break;
 
             case DHCP_OPTION_DNS_SERVER:
-                DHCP_Options.dwDNS_ServerIP = ntohl(*(int32_t*)(pPtr + 2));
+                DHCP_Options.DNS_ServerIP = ntohl(*(uint32_t*)(pPtr + 2));
                 break;
 
             case DHCP_OPTION_CLIENT_IP:
-                DHCP_Options.dwClientIP = ntohl(*(int32_t*)(pPtr + 2));
+                DHCP_Options.ClientIP = ntohl(*(uint32_t*)(pPtr + 2));
                 break;
 
             case DHCP_OPTION_LEASE_TIME:
-                DHCP_Options.dwLeaseTime = ntohl(*(int32_t*)(pPtr + 2));
+                DHCP_Options.LeaseTime = ntohl(*(uint32_t*)(pPtr + 2));
                 break;
 
             case DHCP_OPTION_MESSAGE_TYPE:
-                DHCP_Options.byType = *(pPtr + 2);
+                DHCP_Options.Type = *(pPtr + 2);
                 break;
 
             case DHCP_OPTION_SERVER_IP:
-                DHCP_Options.dwServerIP = ntohl(*(int32_t*)(pPtr + 2));
+                DHCP_Options.ServerIP = ntohl(*(uint32_t*)(pPtr + 2));
                 break;
         }
 
@@ -643,18 +623,19 @@ void DHCP_ParseOption(DHCP_Msg_t* pRX)
 //
 //  Name:           DHCP_PutOption
 //
-//  Parameter(s):   uint8_t*   pPtr        Pointer on option field in packet
-//                  uint8_t    Options   Option(s) in Bit position to put in packet
-//  Return:         int16_t    wLen        Lenght of the option(s)
+//  Parameter(s):   uint8_t*   pPtr         Pointer on option field in packet
+//                  uint8_t    Options      Option(s) in Bit position to put in packet
+//                  uint8_t    Message
+//  Return:         size_t     Len          Lenght of the option(s)
 //
-//  Description:    Put option specify  the flag
+//  Description:    Put option specify the flag
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-int16_t DHCP_PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
+size_t DHCP_PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
 {
-    int16_t    wLen;
+    size_t     Len;
     uint8_t*   pStart;
 
     pStart = pPtr;
@@ -663,7 +644,7 @@ int16_t DHCP_PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
     *pPtr++ = 1;
     *pPtr++ = Message;
 
-    if(byOptions & DHCP_PUT_OPTION_CLIENT_IDENTIFIER)
+    if(Options & DHCP_PUT_OPTION_CLIENT_IDENTIFIER)
     {
         *pPtr++ = DHCP_OPTION_CLIENT_IDENTIFIER;
         *pPtr++ = 7;
@@ -672,23 +653,23 @@ int16_t DHCP_PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
         pPtr += 6;
     }
 
-    if(byOptions & DHCP_PUT_OPTION_PL_DISCOVER)
+    if(Options & DHCP_PUT_OPTION_PL_DISCOVER)
     {
-        LIB_memcpy(pPtr, DHCP_baOPL_Discover, sizeof(DHCP_baOPL_Discover));
-        pPtr += sizeof(DHCP_baOPL_Discover);
+        LIB_memcpy(pPtr, DHCP_OPL_Discover, sizeof(DHCP_OPL_Discover));
+        pPtr += sizeof(DHCP_OPL_Discover);
     }
 
     if(byOptions & DHCP_PUT_OPTION_PL_REQUEST)
     {
-        LIB_memcpy(pPtr, DHCP_baOPL_Request, sizeof(DHCP_baOPL_Request));
-        pPtr += sizeof(DHCP_baOPL_Request);
+        LIB_memcpy(pPtr, DHCP_OPL_Request, sizeof(DHCP_OPL_Request));
+        pPtr += sizeof(DHCP_OPL_Request);
     }
 
-    if(byOptions & DHCP_PUT_OPTION_REQUESTED_CLIENT_IP)
+    if(Options & DHCP_PUT_OPTION_REQUESTED_CLIENT_IP)
     {
         *pPtr++ = DHCP_OPTION_CLIENT_IP;
         *pPtr++ = 4;
-        *((int32_t*)pPtr) = htonl(DHCP_Options.dwClientIP);
+        *((int32_t*)pPtr) = htonl(DHCP_Options.ClientIP);
         pPtr += 4;
     }
 
@@ -705,26 +686,26 @@ int16_t DHCP_PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
         for(i = 3; i < 6; i++)                              // Add last 3 uint8_t of the MAC in HEXA -> Ascii at the end of label
         {
             *pPtr++  = '_';
-            *pPtr    = (uint8_t)((IP_MAC.ba[i] >> 4) + 0x30);
+            *pPtr    = (uint8_t)((IP_MAC.[i] >> 4) + 0x30);
             *pPtr   += (uint8_t)((*pPtr > 0x39) ? 7 : 0);
             pPtr++;
-            *pPtr    = (uint8_t)((IP_MAC.ba[i] & 0x0F) + 0x30);
+            *pPtr    = (uint8_t)((IP_MAC.[i] & 0x0F) + 0x30);
             *pPtr   += (uint8_t)((*pPtr > 0x39) ? 7 : 0);
             pPtr++;
         }
     }
 
-    if(byOptions & DHCP_PUT_OPTION_SERVER_IP)
+    if(Options & DHCP_PUT_OPTION_SERVER_IP)
     {
         *pPtr++ = DHCP_OPTION_SERVER_IP;
         *pPtr++ = 4;
-        *((int32_t*)pPtr) = htonl(DHCP_Options.dwServerIP);
+        *((uint32_t*)pPtr) = htonl(DHCP_Options.ServerIP);
         pPtr += 4;
     }
 
     *pPtr++ = DHCP_OPTION_END_OF_FIELD;
 
-    return((int16_t)(pPtr - pStart));
+    return uint16_t(pPtr - pStart);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -742,23 +723,23 @@ int16_t DHCP_PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
 void DHCP_PutHeader(DHCP_Msg_t* pTX)
 {
     // Setup DHCP header
-    pTX->byOp            = DHCP_BOOT_REQUEST;
-    pTX->byHtype         = DHCP_HARWARE_TYPE_ETHERNET_100;
-    pTX->byHlen          = DHCP_HARWARE_ADDRESS_LENGHT;
-    pTX->dwX_ID          = htonl(DHCP_Xid.dw);
-    pTX->MagicCookie.dw  = DHCP_MAGIC_COOKIE;
+    pTX->Op             = DHCP_BOOT_REQUEST;
+    pTX->Htype          = DHCP_HARWARE_TYPE_ETHERNET_100;
+    pTX->Hlen           = DHCP_HARWARE_ADDRESS_LENGHT;
+    pTX->X_ID           = htonl(DHCP_Xid);
+    pTX->MagicCookie = DHCP_MAGIC_COOKIE;
 
-    if(DHCP_byState < DHCP_STATE_BOUND)
+    if(DHCP_State < DHCP_STATE_BOUND)
     {
-        pTX->wFlags  = htons(DHCP_FLAGS_BROADCAST);
+        pTX->Flags  = htons(DHCP_FLAGS_BROADCAST);
     }
     else
     {
-        pTX->wFlags = 0;     // For Unicast
-        pTX->dwClientIP_Addr = htonl(IP_DHCP_IP.dw);
+        pTX->Flags = 0;     // For Unicast
+        pTX->ClientIP_Addr = htonl(IP_DHCP_IP);
     }
 
-    LIB_memcpy(pTX->baClientHardware, IP_MAC.ba, 6);
+    LIB_memcpy(pTX->ClientHardware, IP_MAC., 6);
 }
 
 //-------------------------------------------------------------------------------------------------

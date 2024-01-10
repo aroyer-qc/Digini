@@ -30,21 +30,7 @@
 
 #include <stddef.h>
 
-#define IP_GLOBAL
 #include <ip.h>
-#include <argo_ip.h>
-#include <debug.h>
-#include <E2_record.h>
-#include <library.h>
-#include <iom16c62p.h>
-
-//-------------------------------------------------------------------------------------------------
-// Private macro(s), do not put in header file (.h)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-// Private function(s), do not put in header file (.h)
-//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -55,30 +41,29 @@
 //
 //  Description:    Initialize the Stack IP
 //	
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void IP_Init(void)
 {
-	int16_t wPort;
+	uint16_t Port;
 
 	// Setup the Ethernet MAC
 	//IP_SetEthernetAddress(IP_ETH_ADDR1, IP_ETH_ADDR2, IP_ETH_ADDR3, IP_ETH_ADDR4, IP_ETH_ADDR5, IP_ETH_ADDR6);
-	//E2_WriteRecord(&IP_MAC.baAddr[0], E2_ETHERNET_MAC_ADDRESS, 0, 0);
+	//E2_WriteRecord(&IP_MAC.Addr[0], E2_ETHERNET_MAC_ADDRESS, 0, 0);
 
    //while(1)
    //{
-      E2_ReadRecord(&IP_MAC.baAddr[0], E2_ETHERNET_MAC_ADDRESS, 0, 0);
+        DB_Central.Get(&IP_MAC.Addr[0], ETHERNET_MAC_ADDRESS, 0, 0);
    //   OSTimeDly(50);
    //}
 
-	crcin = IP_MAC.baAddr[5] ^ IP_MAC.baAddr[4];	// Incremental Sequence ID put in each packet
-	crcin = IP_MAC.baAddr[4];                       // we start according to a value generated 
-	IP_wSequenceID = crcd;					        // CRC from MAC address
+	crcin = IP_MAC.Addr[5] ^ IP_MAC.Addr[4];	// Incremental Sequence ID put in each packet
+	crcin = IP_MAC.Addr[4];                       // we start according to a value generated 
+	IP_SequenceID = crcd;					        // CRC from MAC address
 												
     //IP_Config.bUseDHCP     = YES;
-	//E2_WriteRecord(&IP_Config, E2_CONFIGURATION_IP, 0, 0);	// Load IP configuration
-	E2_ReadRecord(&IP_Config, E2_CONFIGURATION_IP, 0, 0);		// Load IP configuration
+	//DB_Central.Set(&IP_Config, E2_CONFIGURATION_IP);	// Save IP configuration
+    DB_Central.Get(&IP_Config, E2_CONFIGURATION_IP);
+	//E2_ReadRecord(&IP_Config, E2_CONFIGURATION_IP);		// Load IP configuration
 
 	ARP_Init();
 	DHCP_Init();
@@ -93,21 +78,21 @@ void IP_Init(void)
 	{
 		//IP_SetHostAddress(0,0,0,0);
 		//IP_SetHostAddress(192,168,1,120);
-		//E2_WriteRecord(&IP_HostAddr.dw, E2_STATIC_HOST_IP, 0, 0);
-		E2_ReadRecord(&IP_HostAddr.dw, E2_STATIC_HOST_IP, 0, 0);
+		//E2_WriteRecord(&IP_HostAddr, E2_STATIC_HOST_IP, 0, 0);
+		DB_Central.Get(&IP_HostAddr, E2_STATIC_HOST_IP, 0, 0);
 	}
 
 	// Setup the IP subnet mask
 	//IP_SetNetMaskAddress(0,0,0,0);
 	//IP_SetNetMaskAddress(255,255,255,0);
-	//E2_WriteRecord(&IP_SubnetMaskAddr.dw, E2_SUBNET_MASK_IP, 0, 0);
-	E2_ReadRecord(&IP_SubnetMaskAddr.dw, E2_SUBNET_MASK_IP, 0, 0);
+	//E2_WriteRecord(&IP_SubnetMaskAddr, E2_SUBNET_MASK_IP, 0, 0);
+	DB_Central.Get(&IP_SubnetMaskAddr, E2_SUBNET_MASK_IP, 0, 0);
 
 	// Setup the IP default gateway
 	//IP_SetDefaultGatewayAddress(0,0,0,0);
 	//IP_SetDefaultGatewayAddress(192,168,1,1);
-	//E2_WriteRecord(&IP_DefaultGatewayAddr.dw, E2_DEFAULT_GATEWAY_IP, 0, 0);
-	E2_ReadRecord(&IP_DefaultGatewayAddr.dw, E2_DEFAULT_GATEWAY_IP, 0, 0);
+	//E2_WriteRecord(&IP_DefaultGatewayAddr, E2_DEFAULT_GATEWAY_IP, 0, 0);
+	DB_Central.Get(&IP_DefaultGatewayAddr, E2_GATEWAY_IP, 0, 0);
 
 	//E2_ReadRecord(&wPort, E2_HTTP_PORT, 0, 0);
 	//SOCK_OpenPort(wPort);
@@ -119,13 +104,13 @@ void IP_Init(void)
 
     
   #if (IP_DBG_STACK_IP == DEF_ENABLED)
-    DBG_Printf("Ethernet MAC      %02X %02X %02X %02X %02X %02X\n", IP_MAC.baAddr[0], IP_MAC.baAddr[1], IP_MAC.baAddr[2], IP_MAC.baAddr[3], IP_MAC.baAddr[4], IP_MAC.baAddr[5]);
-	DBG_Printf("Host IP           %d.%d.%d.%d\n", IP_HostAddr.by.by0, IP_HostAddr.by.by1, IP_HostAddr.by.by2, IP_HostAddr.by.by3);
-	DBG_Printf("SubNet Mask IP    %d.%d.%d.%d\n", IP_SubnetMaskAddr.by.by0, IP_SubnetMaskAddr.by.by1, IP_SubnetMaskAddr.by.by2, IP_SubnetMaskAddr.by.by3);
-	DBG_Printf("Default router IP %d.%d.%d.%d\n\n", IP_DefaultGatewayAddr.by.by0, IP_DefaultGatewayAddr.by.by1, IP_DefaultGatewayAddr.by.by2, IP_DefaultGatewayAddr.by.by3);
+    DBG_Printf("Ethernet MAC      %02X %02X %02X %02X %02X %02X\n", IP_MAC.Addr[0], IP_MAC.Addr[1], IP_MAC.Addr[2], IP_MAC.Addr[3], IP_MAC.Addr[4], IP_MAC.Addr[5]);
+	DBG_Printf("Host IP           %d.%d.%d.%d\n", uint8_t(IP_HostAddr >> 24), uint8_t(IP_HostAddr >> 16), uint8_t(IP_HostAddr >> 8), uint8_t(IP_HostAddr));
+	DBG_Printf("SubNet Mask IP    %d.%d.%d.%d\n", uint8_t(IP_SubnetMaskAddr >> 24), uint8_t(IP_SubnetMaskAddr >> 16), uint8_t(IP_SubnetMaskAddr >> 8), uint8_t(IP_SubnetMaskAddr));
+	DBG_Printf("Default router IP %d.%d.%d.%d\n\n", uint8_t(IP_DefaultGatewayAddr >> 24), uint8_t(IP_DefaultGatewayAddr >> 16), uint8_t(IP_DefaultGatewayAddr >> 8), uint8_t(IP_DefaultGatewayAddr));
   #endif
 	
-	OSTimeDly(400);
+	OSTimeDly(400); // why
 
 
 	// Initialize the HTTP server.
@@ -140,15 +125,13 @@ void IP_Init(void)
 //  Return:         void 
 //
 //  Description:    
-//	
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 IP_PacketMsg_t* IP_Process(IP_PacketMsg_t* pRX)
 {
 	IP_PacketMsg_t* pTX = nullptr;
 
-	switch(pRX->Packet.u.IP_Frame.Header.byProtocol)
+	switch(pRX->Packet.u.IP_Frame.Header.Protocol)
 	{
 		case IP_PROTOCOL_ICMP:
 		{
@@ -174,8 +157,8 @@ IP_PacketMsg_t* IP_Process(IP_PacketMsg_t* pRX)
 //
 //  Name:           IP_PutHeader	
 // 
-//  Parameter(s):   void* 	pBuffer
-// 				    int16_t 	wCount 
+//  Parameter(s):   void* 	    pBuffer
+// 				    uint16_t 	Count 
 //  Return:         void 
 //
 //  Description:    Put in header everything static
@@ -193,24 +176,24 @@ void IP_PutHeader(IP_PacketMsg_t* pTX)
 	pIP_TX = &pTX->Packet.u.IP_Frame.Header;
 
 	// Setup Ethernet header
-	LIB_memcpy(pTX->Packet.u.ETH_Header.Src.baAddr, IP_MAC.baAddr, 6);		// Put our MAC in it
-	pTX->Packet.u.ETH_Header.wType = IP_ETHERNET_TYPE_IP;
+	LIB_memcpy(pTX->Packet.u.ETH_Header.Src.Addr, IP_MAC.Addr, 6);		// Put our MAC in it
+	pTX->Packet.u.ETH_Header.Type = IP_ETHERNET_TYPE_IP;
 
 	// Setup IP header
-	pIP_TX->wID			    = htons(IP_wSequenceID++);
-	pIP_TX->byVersionIHL 	= IP_VERSION4_IHL20;
-    pIP_TX->byTimeToLive 	= IP_TIME_TO_LIVE;
+	pIP_TX->ID		    = htons(IP_SequenceID++);
+	pIP_TX->VersionIHL 	= IP_VERSION4_IHL20;
+    pIP_TX->TimeToLive 	= IP_TIME_TO_LIVE;
 
-	pIP_TX->wChecksum 		= 0;
-	pIP_TX->wChecksum 		= IP_CalculateChecksum(pIP_TX, (int16_t)sizeof(IP_IP_Header_t));
+	pIP_TX->Checksum 		= 0;  // use lib checksum.. or make one
+	pIP_TX->Checksum 		= IP_CalculateChecksum(pIP_TX, uint16_t(sizeof(IP_IP_Header_t)));
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           IP_CalculateChecksum	
 // 
-//  Parameter(s):   void* 	pBuffer
-// 				    int16_t 	wCount 
+//  Parameter(s):   void* 	    pBuffer
+// 				    uint16_t 	Count 
 //  Return:         void 
 //
 //  Description:    Calculate the checksum of the IP header 
@@ -218,36 +201,36 @@ void IP_PutHeader(IP_PacketMsg_t* pTX)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-int16_t IP_CalculateChecksum(void* pBuffer, int16_t wCount)
+int16_t IP_CalculateChecksum(void* pBuffer, uint16_t Count)
 {
 	int16_t 	i;
-	int16_t*	Value;
-	uint32_t 	Checksum = {0x00000000ul};
+	uint16_t*	Value;
+	uint32_t 	Checksum = 0;
 
-	i = wCount >> 1;
-    Value = (int16_t*)pBuffer;
+	i = Count >> 1;
+    Value = (uint16_t*)pBuffer;
 
 	// Calculate the sum of all words
 	while(i--)
 	{
-		Checksum.dw += (int32_t)*Value++;
+		Checksum += (uint32_t)*Value++;
 	}
 
 	// Add in the sum of the remaining te, if present
-	if(((Uint16_t*)&wCount)->b.b0)
+	if(((uint16_t*)&Count)->b.b0)
 	{
-		Checksum.dw += (int32_t)*(uint8_t*)Value;
+		Checksum += (uint32_t)*(uint8_t*)Value;
 	}
 
 	// Do an end-around carry (one's complement arithmatic)
-	Checksum.dw = (int32_t)Checksum.wArray[0] + (int32_t)Checksum.wArray[1];
+	Checksum = (uint32_t)Checksum.Array[0] + (int32_t)Checksum.Array[1];
 
 	// Do another end-around carry in case if the prior add 
 	// caused a carry out
-	Checksum.wArray[0] += Checksum.wArray[1];
+	Checksum.Array[0] += Checksum.Array[1];
 
 	// Return the resulting checksum
-	return(~Checksum.wArray[0]);
+	return ~Checksum.Array[0];
 }
 
 //-------------------------------------------------------------------------------------------------

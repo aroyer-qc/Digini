@@ -32,12 +32,10 @@
 #include <ip.h>
 
 //-------------------------------------------------------------------------------------------------
-// Private variable(s) and constant(s), do not put in header file (.h)
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------
-// Private function(s), do not put in header file (.h)
-//-------------------------------------------------------------------------------------------------
+#define IP_ASCII_IP_ADDRESS_SIZE            16
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -52,26 +50,13 @@
 //  Note(s):        Will initialize the stack
 //                  this task is also the task start point
 //
-//
-//
 //-------------------------------------------------------------------------------------------------
-void TaskIP(void* pArg)
+void IP_Manager::Run(void)
 {
     uint32_t            Addr;
     uint8_t             Error;
     MSG_t*              pMsg        = nullptr;
     uint32_t            dwIP;
-
-    if(pArg) pArg = nullptr;
-
-    AppTaskStart();
-
-    // Initialize the TCP/IP stack.
-    IP_Init();
-	ARP_Init(Queue.Names.pTaskIP);				// is there a call back for ARP ???
-	DHCP_Init(Queue.Names.pTaskIP);
-    SNTP_Init(Queue.Names.pTaskIP);
-    NIC_Init();
 
     for(;;)
     {
@@ -145,42 +130,34 @@ void TaskIP(void* pArg)
 //
 //  Description:    Return DNS server IP address according to configuration
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 uint32_t IP_GetDNS_IP(void)
 {
-    if(IP_Flag.b.DHCP_Mode == true)
+    if(DHCP_GetMode() == true)
     {
-        return(IP_DHCP_DNS_IP.dw);
+        return(IP_DHCP_DNS_IP);
     }
-    return(IP_StaticDNS_IP.dw);
+    return(IP_StaticDNS_IP);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           IP_GetHost_IP()
+//  Name:           IP_GetHost_IP
 //
 //  Parameter(s):   void
 //  Return:         uint32_t   dwIP
 //
 //  Description:    Return host IP address according to configuration
 //
-//  Note(s):
-//
-//  Date            Author              Description
-//  -------------   ----------------    -----------------------------------------------------------
-//  Nov 17,  2008   Alain Royer
-//
 //-------------------------------------------------------------------------------------------------
 uint32_t IP_GetHost_IP(void)
 {
-    if(IP_Flag.b.DHCP_Mode == true)
+    if(DHCP_GetMode() == true)
     {
-        return(IP_DHCP_IP.dw);
+        return(IP_DHCP_IP);
     }
     
-    return(IP_StaticIP.dw);
+    return(IP_StaticIP);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -190,19 +167,22 @@ uint32_t IP_GetHost_IP(void)
 //  Parameter(s):   void
 //  Return:         void
 //
-//  Description:    Initialize IP Stack
-//
-//  Note(s):
-//
-//  Date            Author              Description
-//  -------------   ----------------    -----------------------------------------------------------
-//  Nov 17,  2008   Alain Royer
+//  Description:    Initialize IP Task and stack
 //
 //-------------------------------------------------------------------------------------------------
 void IP_Init(void)
 {
     IP_Status.b.IP_IsValid      = false;
     IP_Status.b.DNS_IP_Found    = false;
+    
+    AppTaskStart();
+
+    // Initialize the TCP/IP stack.
+    IP_Init();
+	ARP_Init(Queue.Names.pTaskIP);				// is there a call back for ARP ???
+	DHCP_Init(Queue.Names.pTaskIP);
+    SNTP_Init(Queue.Names.pTaskIP);
+    NIC_Init();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -219,10 +199,10 @@ void IP_Init(void)
 //-------------------------------------------------------------------------------------------------
 uint8_t* IP_ToAscii(uint32_t IP)
 {
-    uint8_t    Error;
     uint8_t*   pBuffer;
 
-    pBuffer = MemGetAndClear(16, &Error);
+    pBuffer = pMemoryPool->AllocAndClear(IP_ASCII_IP_ADDRESS_SIZE); 
+
     if(pBuffer != nullptr)
     {
         LIB_sprintf(pBuffer, "%d.%d.%d.%d", ((uint32_t*)(uint32_t)&IP)->by.by0,
@@ -230,28 +210,28 @@ uint8_t* IP_ToAscii(uint32_t IP)
                                             ((uint32_t*)(uint32_t)&IP)->by.by2,
                                             ((uint32_t*)(uint32_t)&IP)->by.by3);
     }
-    return(pBuffer);
+    return pBuffer;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           IP_AsciiToIP
 //
-//  Parameter(s):   uint8_t* pBuffer
-//  Return:         uint32_t
+//  Parameter(s):   uint8_t*        pBuffer
+//  Return:         IP_Address_t
 //
 //  Description:    Extract the IP form a string
 //
 //  Note(s):        lenght is check and also number of dot, to confirm it is an IP
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t IP_AsciiToIP(uint8_t* pBuffer)
+IP_Address_t IP_AsciiToIP(uint8_t* pBuffer)
 {
-    uint32_t  IP;
-    uint8_t   Count;
-    uint8_t   DotCount;
+    IP_Address_t IP_Address;
+    uint8_t      Count;
+    uint8_t      DotCount;
 
-    IP.dw              = 0x00000000;
+    IP_Address         = IP_ADDR(0,0,0,0);
     IP_Status.b.Status = true;
     Count            = 0;
 
@@ -267,7 +247,7 @@ uint32_t IP_AsciiToIP(uint8_t* pBuffer)
 
     if(IP_Status.b.Status == true)                                                  // Yes it contain only number and dot
     {
-        if((byCount >= 7) && (byCount <= 15))                                       // Check lenght
+        if((Count >= 7) && (Count <= 15))                                       // Check lenght
         {
             Count    = 4;
             DotCount = 0;
@@ -282,9 +262,9 @@ uint32_t IP_AsciiToIP(uint8_t* pBuffer)
                     if((*pBuffer >= '0') && (*pBuffer <= '9'))
                     {
                         if(IP_Status.b.Status == false) IP_Status.b.Status = true; // Trap first occurence
-                        else                            IP.byArray[byCount] *= 10; // Other Must be multiply 10
+                        else                            IP.Array[Count] *= 10; // Other Must be multiply 10
 
-                        IP.byArray[byCount] += (*pBuffer - '0');
+                        IP.Array[Count] += (*pBuffer - '0');
                         pBuffer++;
                     }
                     else
@@ -304,22 +284,22 @@ uint32_t IP_AsciiToIP(uint8_t* pBuffer)
 
             if((byCount != 0) && ( DotCount != 3))                                // Check if format was valid
             {
-                IP.dw  = 0x00000000;
+               IP_Address = IP_ADDR(0,0,0,0);
             }
         }
     }
 
-    return(IP.dw);
+    return IP;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           IP_ProcessURL
 //
-//  Parameter(s):   uint8_t*    pBuffer
-//                  uint32_t*   pIP
-//                  uint16_t*   pPort
-//  Return:         uint8_t *   pURI
+//  Parameter(s):   uint8_t*      pBuffer
+//                  IP_Address_t* pIP
+//                  uint16_t*     pPort
+//  Return:         uint8_t *     pURI
 //
 //  Description:    This function will process an URL
 //                      -   Extract Port number if any ( return 80 otherwise )
@@ -328,12 +308,8 @@ uint32_t IP_AsciiToIP(uint8_t* pBuffer)
 //
 //  Note(s):        It is assume that "http://" is always lowercase
 //
-//  Date            Author              Description
-//  -------------   ----------------    -----------------------------------------------------------
-//  Nov 17,  2008   Alain Royer
-//
 //-------------------------------------------------------------------------------------------------
-uint8_t* IP_ProcessURL(uint8_t* pBuffer, uint32_t* pIP, uint16_t* pPort)
+uint8_t* IP_ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, uint16_t* pPort)
 {
     uint8_t*   pDomainName;
     uint8_t*   pSearch1        = nullptr;
@@ -418,11 +394,12 @@ uint8_t* IP_ProcessURL(uint8_t* pBuffer, uint32_t* pIP, uint16_t* pPort)
 
     *pIP = IP_AsciiToIP(pDomainName);
 
-    if(*pIP == 0x00000000)
+    if(*pIP == IP_ADDR(0,0,0,0))
     {
         *pIP = DNS_Query(IP_DNS_SOCKET, pDomainName, &Error);
     }
 
-    return(pSearch1);
+    return pSearch1;
 }
 
+//-------------------------------------------------------------------------------------------------

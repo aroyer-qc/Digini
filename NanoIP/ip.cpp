@@ -176,7 +176,7 @@ void IP_PutHeader(IP_PacketMsg_t* pTX)
 	pIP_TX = &pTX->Packet.u.IP_Frame.Header;
 
 	// Setup Ethernet header
-	LIB_memcpy(pTX->Packet.u.ETH_Header.Src.Addr, IP_MAC.Addr, 6);		// Put our MAC in it
+	memcpy(pTX->Packet.u.ETH_Header.Src.Addr, IP_MAC.Addr, 6);		// Put our MAC in it
 	pTX->Packet.u.ETH_Header.Type = IP_ETHERNET_TYPE_IP;
 
 	// Setup IP header

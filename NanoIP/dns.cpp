@@ -82,14 +82,14 @@ uint32_t DNS_Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pError)
     uint8_t*     pStr;
     IP_Address_t IP_Address = DNS_NO_IP;
 
-    if(LIB_strlen(pDomainName) <= DNS_MAX_DOMAIN_NAME_LENGHT)               // Check if domain name string is to long
+    if(strlen(pDomainName) <= DNS_MAX_DOMAIN_NAME_LENGHT)                       // Check if domain name string is to long
     {
         pTX = pMemory->AllocAndClear(DHCP_Msg_t);
 
         if(pTX != nullptr)
         {
             pQuery = (uint8_t*)&pTX->Data[0];
-            Port = uint16_t(RNG_GetRandomFromRange(32768, 65535));               // Get a random source port for the query from 32768 to 65535
+            Port = uint16_t(RNG_GetRandomFromRange(32768, 65535));              // Get a random source port for the query from 32768 to 65535
 
             if(SOCK_Socket(SocketNumber, Sn_MR_UDP, Port, 0) != 0)
             {
@@ -119,16 +119,16 @@ uint32_t DNS_Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pError)
                     
                     *pQuery = Len;                                              // Put size of this segment in DNS message
                     pQuery++;
-                    LIB_memcpy(pQuery, pDomainName, Len);                      // Copy segment in DNS message
+                    memcpy(pQuery, pDomainName, Len);                           // Copy segment in DNS message
                     pDomainName += (Len + 1);
                     pQuery += (uint32_t)Len;
                 }
                 while(pStr != nullptr);
 
                 pQuery++;                                                       // End of this name
-                *((uint16_t*)pQuery) = htons(0x0001);                            // QTYPE
+                *((uint16_t*)pQuery) = htons(0x0001);                           // QTYPE
                 pQuery += 2;
-                *((uint16_t*)pQuery) = htons(0x0001);                            // QCLASS
+                *((uint16_t*)pQuery) = htons(0x0001);                           // QCLASS
                 pQuery += 2;
 
                 Len = (uint16_t)(pQuery - &pTX->Data[0]);

@@ -73,24 +73,24 @@ typedef struct
 // Private variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef ARP_PRIVATE
-
-uint32_t                        IP_Addr;
-ARP_TableEntry_t                ARP_TableEntry[IP_ARP_TABLE_SIZE];
-uint8_t                         ARP_byTime;
-OS_TMR*                         pARP_Timer;                    // Pointer on the OS timer
-
-#endif
 // ...
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
  
-void            ARP_Init                    (void);
-void            ARP_ProcessIP               (IP_PacketMsg_t* pRX);
-void            ARP_ProcessARP              (IP_PacketMsg_t* pRX);
-void            ARP_ProcessOut              (IP_PacketMsg_t* pTX);
-void            ARP_Resolve                 (void);
+class NetARP
+{
+    public:
+    
+        void            Inititialize            (void);
+        void            ProcessIP               (IP_PacketMsg_t* pRX);
+        void            ProcessARP              (IP_PacketMsg_t* pRX);
+        void            ProcessOut              (IP_PacketMsg_t* pTX);
+        void            Resolve                 (void);
+        
+    private:
+    
+};
 
 //-------------------------------------------------------------------------------------------------

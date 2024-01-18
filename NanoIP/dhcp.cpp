@@ -649,19 +649,19 @@ size_t DHCP_PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
         *pPtr++ = DHCP_OPTION_CLIENT_IDENTIFIER;
         *pPtr++ = 7;
         *pPtr++ = 1;
-        LIB_memcpy(pPtr, &IP_MAC, 6);
+        memcpy(pPtr, &IP_MAC, 6);
         pPtr += 6;
     }
 
     if(Options & DHCP_PUT_OPTION_PL_DISCOVER)
     {
-        LIB_memcpy(pPtr, DHCP_OPL_Discover, sizeof(DHCP_OPL_Discover));
+        memcpy(pPtr, DHCP_OPL_Discover, sizeof(DHCP_OPL_Discover));
         pPtr += sizeof(DHCP_OPL_Discover);
     }
 
     if(byOptions & DHCP_PUT_OPTION_PL_REQUEST)
     {
-        LIB_memcpy(pPtr, DHCP_OPL_Request, sizeof(DHCP_OPL_Request));
+        memcpy(pPtr, DHCP_OPL_Request, sizeof(DHCP_OPL_Request));
         pPtr += sizeof(DHCP_OPL_Request);
     }
 
@@ -739,7 +739,7 @@ void DHCP_PutHeader(DHCP_Msg_t* pTX)
         pTX->ClientIP_Addr = htonl(IP_DHCP_IP);
     }
 
-    LIB_memcpy(pTX->ClientHardware, IP_MAC., 6);
+    memcpy(pTX->ClientHardware, IP_MAC., 6);
 }
 
 //-------------------------------------------------------------------------------------------------

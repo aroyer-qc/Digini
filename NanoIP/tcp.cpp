@@ -319,7 +319,7 @@ IP_PacketMsg_t* TCP_Send(SocketInfo_t* pSocket, uint8_t* pBuffer, uint16_t Size)
 	if(pTX != nullptr)
 	{
 		Size = LIB_strlen(Buffer);
-		LIB_memcpy(((uint8_t*)&pTX->Packet.u.TCP_Frame.Header.OptionData + 4), Buffer, Size);
+		memcpy(((uint8_t*)&pTX->Packet.u.TCP_Frame.Header.OptionData + 4), Buffer, Size);
         
 		pTX->wPacketSize = (int16_t)(Size + sizeof(IP_EthernetHeader_t) + TCP_ACK_IP_PACKET_SIZE);
 		pTCP_TX          = &pTX->Packet.u.TCP_Frame.Header;
@@ -327,7 +327,7 @@ IP_PacketMsg_t* TCP_Send(SocketInfo_t* pSocket, uint8_t* pBuffer, uint16_t Size)
 		TCP_PutHeader(pSocket, pTX, TCP_ACK_PACKET_SIZE + Size);
 
 		// Setup MAC & IP header
-		LIB_memcpy(&pTX->Packet.u.ETH_Header.Dst.Addr, &pSocket->MAC[0], 6);
+		memcpy(&pTX->Packet.u.ETH_Header.Dst.Addr, &pSocket->MAC[0], 6);
 		pTX->Packet.u.IP_Frame.Header.Lenght	 = htons(Size + TCP_ACK_IP_PACKET_SIZE);
 		pTX->Packet.u.IP_Frame.Header.Protocol = IP_PROTOCOL_TCP;
 		IP_PutHeader(pTX);
@@ -364,7 +364,7 @@ IP_PacketMsg_t* TCP_Ack(SocketInfo_t* pSocket, uint8_t Flag, uint16_t Size)
 		TCP_PutHeader(pSocket, pTX, TCP_ACK_PACKET_SIZE);
 
 		// Setup MAC & IP header
-		LIB_memcpy(&pTX->Packet.u.ETH_Header.Dst.Addr, &pSocket->MAC[0], 6);
+		memcpy(&pTX->Packet.u.ETH_Header.Dst.Addr, &pSocket->MAC[0], 6);
 		pTX->Packet.u.IP_Frame.Header.Lenght	 = htons(Size + TCP_ACK_IP_PACKET_SIZE);
 		pTX->Packet.u.IP_Frame.Header.Protocol = IP_PROTOCOL_TCP;
 		IP_PutHeader(pTX);

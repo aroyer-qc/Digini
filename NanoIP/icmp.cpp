@@ -97,7 +97,7 @@ IP_PacketMsg_t* ICMP_Process(IP_PacketMsg_t* pRX)
 		{
 			case ICMP_TYPE_PING_REQUEST:
 	
-				pTX = IP_GetPacketMemory(pRX->PacketSize, &Error);					// Get memory for TX packet
+				pTX = IP_GetPacketMemory(pRX->PacketSize, &Error);					    // Get memory for TX packet
 				pICMP = &pTX->Packet.u.ICMP_Frame;
 				pETH  = &pTX->Packet.u.ETH_Header;
 				IP_CopyPacketMessage(pTX, pRX);											// copy the entire IP payload From RX to TX buffer
@@ -107,7 +107,7 @@ IP_PacketMsg_t* ICMP_Process(IP_PacketMsg_t* pRX)
 				pICMP->Header.Checksum       = 0;
 				pICMP->Header.Checksum	   = IP_CalculateChecksum(&pICMP->Header, Count);
 	
-				LIB_memcpy(pETH->Dst.Addr, pETH->Src.Addr, 6);						// Put Mac header
+				memcpy(pETH->Dst.Addr, pETH->Src.Addr, 6);						        // Put Mac header
 				pICMP->IP_Header.TimeToLive  = IP_TIME_TO_LIVE;
 				pICMP->IP_Header.DstIP_Addr = pICMP->IP_Header.SrcIP_Addr;
 				pICMP->IP_Header.SrcIP_Addr = IP_HostAddr;

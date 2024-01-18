@@ -30,12 +30,6 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef ARP_GLOBAL
-    #define ARP_EXTERN
-    #define ARP_PRIVATE
-#else   
-    #define ARP_EXTERN      extern
-#endif
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -47,33 +41,15 @@
 #define ARP_HARDWARE_TYPE_ETHERNET      htons(1)        // 1
 
 //-------------------------------------------------------------------------------------------------
-// macro(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-// Enum(s)
-//-------------------------------------------------------------------------------------------------
-    
-//-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef struct
+struct  ARP_TableEntry_t
 {
     uint32_t                IP_Addr;
     IP_EthernetAddress_t    Ethernet;
     uint8_t                 Time;
-} ARP_TableEntry_t;
-
-//-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-// Private variable(s) and constant(s)
-//-------------------------------------------------------------------------------------------------
-
-// ...
+};
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
@@ -83,14 +59,23 @@ class NetARP
 {
     public:
     
-        void            Inititialize            (void);
-        void            ProcessIP               (IP_PacketMsg_t* pRX);
-        void            ProcessARP              (IP_PacketMsg_t* pRX);
-        void            ProcessOut              (IP_PacketMsg_t* pTX);
-        void            Resolve                 (void);
+        SystemState_e       Initialize              (void);
+        void                ProcessIP               (IP_PacketMsg_t* pRX);
+        void                ProcessARP              (IP_PacketMsg_t* pRX);
+        void                ProcessOut              (IP_PacketMsg_t* pTX);
+        void                Resolve                 (void);
         
     private:
     
+        void                UpdateEntry				(uint32_t IP_Addr, IP_EthernetAddress_t* pEthAdr);
+        void                TimerCallBack	    	(nOS_Timer * pTimer, void* pArg);           // typedef void(*nOS_TimerCallback)(nOS_Timer*,void*);
+
+
+        uint32_t            m_IP_Addr;
+        ARP_TableEntry_t    m_TableEntry[IP_ARP_TABLE_SIZE];
+        uint8_t             m_Time;
+        nOS_Timer*          m_pTimer;                               // Pointer on the OS timer
 };
 
 //-------------------------------------------------------------------------------------------------
+ 

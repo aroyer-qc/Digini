@@ -68,8 +68,8 @@ uint16_t    SOCK_Send           	(SOCKET SocketNumber, const uint8_t* pData, siz
 uint16_t    SOCK_Received       	(SOCKET SocketNumber, uint8_t* pData, size_t Len);                                                  // Receive data (TCP)
 uint16_t    SOCK_SendTo         	(SOCKET SocketNumber, const uint8_t* pData, size_t Len, uint32_t PeerAddr, uint16_t PeerPort);      // Send data (UDP/IP RAW)
 uint16_t    SOCK_ReceivedFrom   	(SOCKET SocketNumber, uint8_t* pData, size_t Len, uint32_t* pPeerAddr, uint16_t* pPeerPort);        // Receive data (UDP/IP RAW)
-uint16_t    SOCK_GetTX_BufferSize	(SOCKET SocketNumber);
-uint16_t    SOCK_GetRX_BufferSize  	(SOCKET SocketNumber);
+size_t      SOCK_GetTX_BufferSize	(SOCKET SocketNumber);
+size_t      SOCK_GetRX_BufferSize  	(SOCKET SocketNumber);
 
 #ifdef SOCKET_PRIVATE
 void 	    SOCK_SetSocket	    	(SOCKET	SocketNumber, uint8_t Protocol, uint8_t Flag);

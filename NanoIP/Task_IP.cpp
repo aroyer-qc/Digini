@@ -39,11 +39,11 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           TaskIP
+//  Name:           Run
 //
-//  Parameter(s):   void* pArg          Not used
+//  Parameter(s):   None
 //
-//  Return:         none
+//  Return:         void
 //
 //  Description:    This function will poll the IP stack and dispatch message to service
 //
@@ -53,16 +53,16 @@
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::Run(void)
 {
-    uint32_t            Addr;
+    IP_Address_t        Addr;
     uint8_t             Error;
     MSG_t*              pMsg        = nullptr;
-    uint32_t            dwIP;
+    IP_Address_t        IP;
 
     for(;;)
     {
-        if(DHCP_Process(nullptr) == true)                           // If enable, an IP must be valid to continue.
+        if(pDHCP->Process(nullptr) == true)                           // If enable, an IP must be valid to continue.
         {                                                           // If not enable it continue anyway
-            OSTimeDly(1);
+            nOS_Yield();
 
 			pRX = CS8900_Poll();									// Network driver read an entire IP packet into the RX Buffer
 
@@ -72,29 +72,29 @@ void IP_Manager::Run(void)
 				{
 					case IP_ETHERNET_TYPE_IP:
 					{
-						ARP_ProcessIP(pRX);
+						pARP->ProcessIP(pRX);
 						pTX = IP_Process(pRX);
-						ARP_ProcessOut(pTX);               			// If data are to be sent back, then send the data
+						pARP->ProcessOut(pTX);               			// If data are to be sent back, then send the data
 						break;
 					}
 
 					case IP_ETHERNET_TYPE_ARP:
 					{
-						ARP_ProcessARP(pRX);
+						pARP->ProcessARP(pRX);
 						break;
 					}
 				}
 
-				MemPut(&pRX);
+				pMemory->Free((void**)&pRX);
 			}
 
-			if((pMsg = OSQAccept(Queue.Names.pTaskIP, &Error)) != nullptr)
+			if((pMsg = OSQAccept(Queue.Names.pTaskIP, &Error)) != nullptr)// nOS Q
             {
                 switch(pMsg->byType)
                 {
 					case IP_MSG_TYPE_DHCP_MANAGEMENT:
 					{
-						IP_Status.b.Status = DHCP_Process(pMsg);
+						IP_Status.b.Status = pDHCP->Process(pMsg);
 						if(IP_Status.b.Status == false)
 						{
 							for(int i = 0; i < IP_STACK_NUMBER_OF_SOCKET; i++)
@@ -107,15 +107,15 @@ void IP_Manager::Run(void)
 
                     case IP_MSG_TYPE_SNTP_MANAGEMENT:
                     {
-                        dwIP = SNTP_Request(IP_SNTP_SOCKET, IP_DEFAULT_NTP_SERVER_1, IP_DEFAULT_NTP_SERVER_2, &Error);
-                        IP_Status.b.SNTP_Fail = (bool)((dwIP == 0x00000000) ? false : true);
+                        IP = pSNTP->Request(IP_SNTP_SOCKET, IP_DEFAULT_NTP_SERVER_1, IP_DEFAULT_NTP_SERVER_2, &Error);
+                        IP_Status.b.SNTP_Fail = (IP == IP_ADDR(0,0,0,0) ) ? false : true;
                         break;
                     }
 					
 					// put other management here
                 }
 
-                MemPut(&pMsg);
+                pMemory->Free((void**)&pMsg);
             }
         }
     }
@@ -123,7 +123,7 @@ void IP_Manager::Run(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           IP_GetDNS_IP()
+//  Name:           GetDNS_IP()
 //
 //  Parameter(s):   void
 //  Return:         uint32_t   dwIP
@@ -131,18 +131,19 @@ void IP_Manager::Run(void)
 //  Description:    Return DNS server IP address according to configuration
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t IP_GetDNS_IP(void)
+uint32_t IP_Manager::GetDNS_IP(void)
 {
-    if(DHCP_GetMode() == true)
+    if(pDHCP->GetMode() == true)
     {
-        return(IP_DHCP_DNS_IP);
+        return IP_DHCP_DNS_IP;
     }
-    return(IP_StaticDNS_IP);
+    
+    return IP_StaticDNS_IP;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           IP_GetHost_IP
+//  Name:           GetHost_IP
 //
 //  Parameter(s):   void
 //  Return:         uint32_t   dwIP
@@ -150,19 +151,19 @@ uint32_t IP_GetDNS_IP(void)
 //  Description:    Return host IP address according to configuration
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t IP_GetHost_IP(void)
+uint32_t IP_Manager::GetHost_IP(void)
 {
-    if(DHCP_GetMode() == true)
+    if(pDHCP->GetMode() == true)
     {
-        return(IP_DHCP_IP);
+        return IP_DHCP_IP;
     }
     
-    return(IP_StaticIP);
+    return IP_StaticIP;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           IP_Init
+//  Name:           Initialize
 //
 //  Parameter(s):   void
 //  Return:         void
@@ -170,24 +171,27 @@ uint32_t IP_GetHost_IP(void)
 //  Description:    Initialize IP Task and stack
 //
 //-------------------------------------------------------------------------------------------------
-void IP_Init(void)
+void IP_Manager::Initialize(void)
 {
     IP_Status.b.IP_IsValid      = false;
     IP_Status.b.DNS_IP_Found    = false;
     
-    AppTaskStart();
+    //AppTaskStart();
+
+
+// replace everything by class object.. static or dynamic.. 
 
     // Initialize the TCP/IP stack.
-    IP_Init();
-	ARP_Init(Queue.Names.pTaskIP);				// is there a call back for ARP ???
-	DHCP_Init(Queue.Names.pTaskIP);
-    SNTP_Init(Queue.Names.pTaskIP);
-    NIC_Init();
+    pIP->Initialize();
+	pARP->Initialize(Queue.Names.pTaskIP);
+	pDHCP->Initialize(Queue.Names.pTaskIP);
+    pSNTP->Initialize(Queue.Names.pTaskIP);
+    pNIC->Initialize();
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           IP_ToAscii
+//  Name:           ToAscii
 //
 //  Parameter(s):   uint32_t
 //  Return:         uint8_t*
@@ -197,7 +201,7 @@ void IP_Init(void)
 //  Note(s):        Don't forget to MemPut the pointer after use
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t* IP_ToAscii(uint32_t IP)
+uint8_t* IP_Manager::ToAscii(uint32_t IP)
 {
     uint8_t*   pBuffer;
 
@@ -215,7 +219,7 @@ uint8_t* IP_ToAscii(uint32_t IP)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           IP_AsciiToIP
+//  Name:           AsciiToIP
 //
 //  Parameter(s):   uint8_t*        pBuffer
 //  Return:         IP_Address_t
@@ -225,7 +229,7 @@ uint8_t* IP_ToAscii(uint32_t IP)
 //  Note(s):        lenght is check and also number of dot, to confirm it is an IP
 //
 //-------------------------------------------------------------------------------------------------
-IP_Address_t IP_AsciiToIP(uint8_t* pBuffer)
+IP_Address_t IP_Manager::AsciiToIP(uint8_t* pBuffer)
 {
     IP_Address_t IP_Address;
     uint8_t      Count;
@@ -233,7 +237,7 @@ IP_Address_t IP_AsciiToIP(uint8_t* pBuffer)
 
     IP_Address         = IP_ADDR(0,0,0,0);
     IP_Status.b.Status = true;
-    Count            = 0;
+    Count              = 0;
 
     while((*(pBuffer + Count) != nullptr) && (IP_Status.b.Status == true))           // Scan to see if it contain only number and dot
     {
@@ -294,7 +298,7 @@ IP_Address_t IP_AsciiToIP(uint8_t* pBuffer)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           IP_ProcessURL
+//  Name:           ProcessURL
 //
 //  Parameter(s):   uint8_t*      pBuffer
 //                  IP_Address_t* pIP
@@ -309,7 +313,7 @@ IP_Address_t IP_AsciiToIP(uint8_t* pBuffer)
 //  Note(s):        It is assume that "http://" is always lowercase
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t* IP_ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, uint16_t* pPort)
+uint8_t* IP_Manager::ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, uint16_t* pPort)
 {
     uint8_t*   pDomainName;
     uint8_t*   pSearch1        = nullptr;
@@ -321,22 +325,22 @@ uint8_t* IP_ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, uint16_t* pPort)
 
     // Get Domain Name or IP ......................................................................
 
-    pSearch1 = LIB_strstr(pBuffer, "http://");          // Remove the unused "http://"
+    pSearch1 = strstr(pBuffer, "http://");              // Remove the unused "http://"
 
     if(pSearch1 == pBuffer)
     {
-        LIB_strcpy(pBuffer, pBuffer + 7);               // Make the correction in the buffer
+        strcpy(pBuffer, pBuffer + 7);                   // Make the correction in the buffer
     }
 
     pDomainName = pBuffer;                              // Found the beginning of the domain name or IP
 
     // Get port number if any .....................................................................
 
-    pSearch1     = LIB_strchr(pBuffer, ':');            // Search for a port number  looking at the semicolon :
+    pSearch1 = strchr(pBuffer, ':');                    // Search for a port number  looking at the semicolon :
 
-    if(pSearch1 != nullptr)                                // not nullptr then extract port number
+    if(pSearch1 != nullptr)                             // not nullptr then extract port number
     {
-        *pSearch1 = nullptr;                               // Put nullptr at the : position for nullptr terminated string
+        *pSearch1 = nullptr;                            // Put nullptr at the : position for nullptr terminated string
         pSearch1++;
 
         IP_Status.b.Status = false;
@@ -373,10 +377,10 @@ uint8_t* IP_ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, uint16_t* pPort)
 
     pSearch2 = pSearch1;
 
-    pSearch1 = LIB_strchr(pSearch1, '/');               // Search for separator beginning of URI
+    pSearch1 = strchr(pSearch1, '/');                   // Search for separator beginning of URI
     if(pSearch1 != nullptr)
     {
-        *pSearch1 = nullptr;                               // Put nullptr at the / position for nullptr terminated 'Domain Name' string
+        *pSearch1 = nullptr;                            // Put nullptr at the / position for nullptr terminated 'Domain Name' string
         pSearch1++;                                     // Place pointer where URI start minus first '/'
 
         pSearch2 = pSearch1;
@@ -384,7 +388,7 @@ uint8_t* IP_ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, uint16_t* pPort)
 
     // Get the space at the end ..................................................................
 
-    pSearch2 = LIB_strchr(pSearch2, ' ');
+    pSearch2 = strchr(pSearch2, ' ');
     if(pSearch2 != nullptr)
     {
         *pSearch2 = nullptr;                               // Put nullptr at the 'SPACE' for a nullptr terminated string
@@ -396,7 +400,7 @@ uint8_t* IP_ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, uint16_t* pPort)
 
     if(*pIP == IP_ADDR(0,0,0,0))
     {
-        *pIP = DNS_Query(IP_DNS_SOCKET, pDomainName, &Error);
+        *pIP = pDNS->Query(IP_DNS_SOCKET, pDomainName, &Error);
     }
 
     return pSearch1;

@@ -65,10 +65,10 @@ void IP_Init(void)
     DB_Central.Get(&IP_Config, E2_CONFIGURATION_IP);
 	//E2_ReadRecord(&IP_Config, E2_CONFIGURATION_IP);		// Load IP configuration
 
-	ARP_Init();
-	DHCP_Init();
-	SOCK_Init();
-	TCP_Init();
+	pARP->Initialize();
+	pDHCP->Initialize();
+	pSOCK->Initialize();
+	pTCP->Initialize();
 
 	// Initialize the device driver.
 	NIC_Init();
@@ -114,12 +114,12 @@ void IP_Init(void)
 
 
 	// Initialize the HTTP server.
-	//HTTPD_Init();
+	//pHTTPD->Initialize();
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           IP_Process	
+//  Name:           Process	
 // 
 //  Parameter(s):   IP_PacketMsg_t* pMsg 
 //  Return:         void 
@@ -127,7 +127,7 @@ void IP_Init(void)
 //  Description:    
 //
 //-------------------------------------------------------------------------------------------------
-IP_PacketMsg_t* IP_Process(IP_PacketMsg_t* pRX)
+IP_PacketMsg_t* NetIP:Process(IP_PacketMsg_t* pRX)
 {
 	IP_PacketMsg_t* pTX = nullptr;
 
@@ -135,27 +135,27 @@ IP_PacketMsg_t* IP_Process(IP_PacketMsg_t* pRX)
 	{
 		case IP_PROTOCOL_ICMP:
 		{
-			pTX = ICMP_Process(pRX);
+			pTX = pICMP->Process(pRX);
 			break;
 		}
 		case IP_PROTOCOL_UDP:
 		{
-			pTX = UDP_Process(pRX);
+			pTX = pUDP->Process(pRX);
 			break;
 		}
 		case IP_PROTOCOL_TCP:
 		{
-			pTX = TCP_Process(pRX);
+			pTX = pTCP->Process(pRX);
 			break;
 		}
 	}
 
-	return(pTX);
+	return pTX;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           IP_PutHeader	
+//  Name:          PutHeader	
 // 
 //  Parameter(s):   void* 	    pBuffer
 // 				    uint16_t 	Count 
@@ -169,7 +169,7 @@ IP_PacketMsg_t* IP_Process(IP_PacketMsg_t* pRX)
 // 					calculate it's own checksum from pseudo header + UDP datagram
 //
 //-------------------------------------------------------------------------------------------------
-void IP_PutHeader(IP_PacketMsg_t* pTX)
+void NetIP::PutHeader(IP_PacketMsg_t* pTX)
 {
 	IP_IP_Header_t* 	pIP_TX;
 
@@ -190,7 +190,7 @@ void IP_PutHeader(IP_PacketMsg_t* pTX)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           IP_CalculateChecksum	
+//  Name:           CalculateChecksum	
 // 
 //  Parameter(s):   void* 	    pBuffer
 // 				    uint16_t 	Count 
@@ -201,7 +201,7 @@ void IP_PutHeader(IP_PacketMsg_t* pTX)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-int16_t IP_CalculateChecksum(void* pBuffer, uint16_t Count)
+int16_t NetIP:CalculateChecksum(void* pBuffer, uint16_t Count)
 {
 	int16_t 	i;
 	uint16_t*	Value;

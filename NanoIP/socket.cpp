@@ -228,9 +228,9 @@ size_t SOCK_Send(SOCKET SocketNumber, const uint8_t* pData, size_t Len)
 
   #if (IP_HARDWARE_SOCKET == DEF_DISABLED)
   #else
-    if(Len > W5100_wTX_Size[SocketNumber])               // Check size not to exceed MAX size.
+    if(Len > W5100_TX_Size[SocketNumber])               // Check size not to exceed MAX size.
     {
-        Return = W5100_wTX_Size[SocketNumber];
+        Return = W5100_TX_Size[SocketNumber];
     }
     else
     {
@@ -254,7 +254,7 @@ size_t SOCK_Send(SOCKET SocketNumber, const uint8_t* pData, size_t Len)
     // Copy data
     W5100_ProcessTX_Data(SocketNumber, (uint8_t *)pData, Return);
 
-    OSTimeDly(200);
+    nOS_Yield(200); // Why !!!! OSTimeDly(200);
 
     W5100_ProcessCmdAndWait(SocketNumber, Sn_CR_SEND);     // Wait to process the command...
 
@@ -321,9 +321,9 @@ uint16_t SOCK_SendTo(SOCKET SocketNumber, const uint8_t* pData, size_t Len, uint
     uint16_t Return = 0;
 
 
-    if(Len > W5100_wTX_Size[SocketNumber])               // Check size not to exceed MAX size.
+    if(Len > W5100_TX_Size[SocketNumber])               // Check size not to exceed MAX size.
     {
-        Return = W5100_wTX_Size[SocketNumber];
+        Return = W5100_TX_Size[SocketNumber];
     }
     else
     {
@@ -443,12 +443,12 @@ uint16_t SOCK_ReceivedFrom(SOCKET SocketNumber, uint8_t* pData, size_t Len, uint
 //  Name:           SOCK_GetTX_FSR
 //
 //  Parameter(s):   SOCKET  SocketNumber
-//  Return:         int16_t    Free Size
+//  Return:         size_t  Free Size
 //
 //  Description:    Get the free size in the nic TX Buffer
 //
 /-------------------------------------------------------------------------------------------------
-uint16_t SOCK_GetTX_BufferSize(SOCKET SocketNumber)
+size_t SOCK_GetTX_BufferSize(SOCKET SocketNumber)
 {
   #if (IP_HARDWARE_SOCKET == DEF_DISABLED)
 	//Get Buffer size for TX
@@ -462,17 +462,17 @@ uint16_t SOCK_GetTX_BufferSize(SOCKET SocketNumber)
 //  Name:           SOCK_GetRX_RSR
 //
 //  Parameter(s):   SOCKET  SocketNumber
-//  Return:         int16_t
+//  Return:         size_t                      Buffer size.
 //
 //  Description:    Get the size of the received data size
 //
 //-------------------------------------------------------------------------------------------------
-uint16_t SOCK_GetRX_BufferSize(SOCKET SocketNumber)
+size_t SOCK_GetRX_BufferSize(SOCKET SocketNumber)
 {
   #if (IP_HARDWARE_SOCKET == DEF_DISABLED)
 	//Get Buffer size for TX
   #else
-	return(SOCK_GetTX_BufferSize(SocketNumber));
+	return SOCK_GetTX_BufferSize(SocketNumber);
   #endif
 }
 
@@ -490,7 +490,7 @@ uint16_t SOCK_GetRX_BufferSize(SOCKET SocketNumber)
 //
 //-------------------------------------------------------------------------------------------------
 #if (IP_HARDWARE_SOCKET == DEF_DISABLED)
-void SOCK_SetSocket(SOCKET	SocketNumber, uint8_t Protocol, uint8_t Flag)
+void SOCK_SetSocket(SOCKET SocketNumber, uint8_t Protocol, uint8_t Flag)
 {
 }
 #endif

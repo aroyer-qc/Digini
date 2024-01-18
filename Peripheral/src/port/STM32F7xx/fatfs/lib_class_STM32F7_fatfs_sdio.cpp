@@ -338,7 +338,7 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
 
                         if((MCI_byXferStat & 0xC) == 0)
                         {
-                            LIB_memcpy(pBuffer, DmaBuff[0], 64);                   // Copy_al2un(buff, DmaBuff[0], 64);
+                            memcpy(pBuffer, DmaBuff[0], 64);                   // Copy_al2un(buff, DmaBuff[0], 64);
                             Result = RES_OK;
                         }
                     }

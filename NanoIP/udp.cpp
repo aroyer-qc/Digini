@@ -26,6 +26,8 @@
 
 //------ Note(s) ----------------------------------------------------------------------------------
 //          
+//  UDP - User Datagram Protocol
+//          
 // 	PSEUDO HEADER to calculate Checksum
 //
 //	_____________________________________________________________
@@ -55,20 +57,11 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define UDP_GLOBAL
 #include <ip.h>
 
 //-------------------------------------------------------------------------------------------------
-// Private macro(s), do not put in header file (.h)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-// Private function(s), do not put in header file (.h)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
 //
-//  Name:         	UDP_Init
+//  Name:         	Initialize
 // 
 //  Parameter(s):   none
 //  Return:         void
@@ -76,7 +69,7 @@
 //  Description:    
 //
 //-------------------------------------------------------------------------------------------------
-void UDP_Init(void)
+void NetUDP::Initialize(void)
 {
 }
 
@@ -90,14 +83,14 @@ void UDP_Init(void)
 //  Description:    
 //
 //-------------------------------------------------------------------------------------------------
-IP_PacketMsg_t* UDP_Process(IP_PacketMsg_t* pRX)
+IP_PacketMsg_t* NetUDP::Process(IP_PacketMsg_t* pRX)
 {
 	IP_PacketMsg_t* 		pTX = nullptr;
 	PortInfo_t* 			pPort;
 
 	if(pRX->Packet.u.UDP_Frame.Header.SrcPort == UDP_PORT_BOOT_P_SERVER)
 	{
-		DHCP_Process(pRX); 																				// No TX already process in DHCP
+		pDHCP->Process(pRX); 																				    // No TX already process in DHCP
 	}
 	else
 	{

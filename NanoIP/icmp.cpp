@@ -26,7 +26,8 @@
 
 //------ Note(s) ----------------------------------------------------------------------------------
 //          
-// Internet Control Message Protocol (ICMP)  
+//  ICMP - Internet Control Message Protocol
+//
 //  -Provides "ping" support only
 //
 //*************************************************************************************************
@@ -35,24 +36,11 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define ICMP_GLOBAL
 #include <ip.h>
 
 //-------------------------------------------------------------------------------------------------
-// Private variable(s) and constant(s), do not put in header file (.h)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-// Private macro(s), do not put in header file (.h)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-// Private function(s), do not put in header file (.h)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
 //
-//  Name:         	ICMP_Init
+//  Name:         	ICMP_Initialize
 // 
 //  Parameter(s):   None
 //  Return:         void
@@ -62,7 +50,7 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void ICMP_Init(void)
+void ICMP_Initialize(void)
 {
 }
 
@@ -97,7 +85,7 @@ IP_PacketMsg_t* ICMP_Process(IP_PacketMsg_t* pRX)
 		{
 			case ICMP_TYPE_PING_REQUEST:
 	
-				pTX = IP_GetPacketMemory(pRX->PacketSize, &Error);					    // Get memory for TX packet
+				pTX = (IP_PacketMsg_t*)pMemory->AllocAndClear(pRX->PacketSize);					    // Get memory for TX packet
 				pICMP = &pTX->Packet.u.ICMP_Frame;
 				pETH  = &pTX->Packet.u.ETH_Header;
 				IP_CopyPacketMessage(pTX, pRX);											// copy the entire IP payload From RX to TX buffer

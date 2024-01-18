@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_IP.cpp
+//  File : tcp.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -26,22 +26,24 @@
 
 //------ Note(s) ----------------------------------------------------------------------------------
 //
-// 	 	Client                                  Server
-//                            Flag's
-//        	
-//         	>---------------- SYN ----------------->	Request connection
-//         	<-------------- SYN,ACK ---------------<
-//         	>---------------- ACK ----------------->    note: request possible in ack for connection
-//         
-//        	>------------ ACK + data -------------->	Request (if more than one segment)
-//          >---------- PSH,ACK + data ------------>    Request (last data segment of request)
-//        	<---------------- ACK -----------------<
-// 
-//          <------------ ACK + data --------------<	Answers (if more than one segment)
-//          <---------- PSH,ACK + data ------------<    Request (last data segment of Answers)
-// 			>---------------- ACK ----------------->
+//  TCP - Transport Control Protocol
 //
-// 			<---------------- FIN -----------------<
+//      Client                                  Server
+//                            Flag's
+//          
+//          >---------------- SYN ----------------->    Request connection
+//          <-------------- SYN,ACK ---------------<
+//          >---------------- ACK ----------------->    note: request possible in ack for connection
+//         
+//          >------------ ACK + data -------------->    Request (if more than one segment)
+//          >---------- PSH,ACK + data ------------>    Request (last data segment of request)
+//          <---------------- ACK -----------------<
+// 
+//          <------------ ACK + data --------------<    Answers (if more than one segment)
+//          <---------- PSH,ACK + data ------------<    Request (last data segment of Answers)
+//          >---------------- ACK ----------------->
+//
+//          <---------------- FIN -----------------<
 //          >------------- ACK (FIN) -------------->
 //
 //          Notes ... Packet are not necessarily in sequence
@@ -60,229 +62,229 @@
 // Private function(s)
 //-------------------------------------------------------------------------------------------------
 
-IP_PacketMsg_t* 	TCP_Ack			(SocketInfo_t* pSocket, uint8_t Flag, int16_t wSize);
-void				TCP_Push		(SocketInfo_t* pSocket, IP_PacketMsg_t* pRX);
-void				TCP_PutHeader	(SocketInfo_t* pSocket, IP_PacketMsg_t* pTX, int16_t wPacketSize);
-IP_PacketMsg_t* 	TCP_Send		(SocketInfo_t* pSocket, uint8_t* pBuffer, int16_t wSize);
+IP_PacketMsg_t*     TCP_Ack         (SocketInfo_t* pSocket, uint8_t Flag, size_t Size);
+void                TCP_Push        (SocketInfo_t* pSocket, IP_PacketMsg_t* pRX);
+void                TCP_PutHeader   (SocketInfo_t* pSocket, IP_PacketMsg_t* pTX, size_t PacketSize);
+IP_PacketMsg_t*     TCP_Send        (SocketInfo_t* pSocket, uint8_t* pBuffer, size_t Size);
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:			TCP_Init
+//  Name:           Initialize
 // 
 //  Parameter(s):   void
 //  Return:         void
 //
 //  Description:    Initialize data structure for TCP and tiner for SOCKET
-//	
+//  
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void TCP_Init(void)
+void NetTCP::Initialize(void)
 {
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           TCP_Process	
+//  Name:           Process 
 // 
 //  Parameter(s):   IP_PacketMsg_t* pRX 
 //  Return:         IP_PacketMsg_t* 
 //
 //  Description:    Process any incoming packet. First we check if the port is open, If it is,
-// 					Basic negotiation is done here. request is then passed to the application
-// 					using the listen() function with the right port pass as argument.
-//	
+//                  Basic negotiation is done here. request is then passed to the application
+//                  using the listen() function with the right port pass as argument.
+//  
 //  Note(s):
 //
-//  client	>------- SYN ------->  Server
-//  	 	<-- SYN (ACK SYN) --<
-//  	 	>---- ACK (SYN) ---->
-//       	
-//  	 	>----- REQUEST ----->
-//  	 	>------- FIN ------->
-//       	<- ACK (Req + FIN) -<
-//       	
-//  	 	<----- ANSWER ------<
-//  	 	<------- FIN -------<
-//  	 	>---- ACK (FIN) ---->
+//  client  >------- SYN ------->  Server
+//          <-- SYN (ACK SYN) --<
+//          >---- ACK (SYN) ---->
+//          
+//          >----- REQUEST ----->
+//          >------- FIN ------->
+//          <- ACK (Req + FIN) -<
+//          
+//          <----- ANSWER ------<
+//          <------- FIN -------<
+//          >---- ACK (FIN) ---->
 //
 //
-//		Normal TCP Flag combination
+//      Normal TCP Flag combination
 // 
-//			Except for the initial SYN packet, every packet in a connection must have the ACK bit set. 
-//			
-//          	handshake which establishes a TCP connection.
-// 					SYN
-//					SYN-ACK
-//					ACK
+//          Except for the initial SYN packet, every packet in a connection must have the ACK bit set. 
+//          
+//              handshake which establishes a TCP connection.
+//                  SYN
+//                  SYN-ACK
+//                  ACK
 //
 //              Graceful teardown of an existing connection. 
-//					FIN ACK
-// 					ACK
+//                  FIN ACK
+//                  ACK
 //
 //              Used to immediately terminate an existing connection. 
-//					RST ACK 
+//                  RST ACK 
 //
-// 				Packets during the "conversation" portion of the connection (after the three-way
+//              Packets during the "conversation" portion of the connection (after the three-way
 //              handshake but before the teardown or termination) contain just an ACK  default. 
-//				Optionally, they may also contain PSH and/or URG.
+//              Optionally, they may also contain PSH and/or URG.
 // 
 // 
 //      Abnormal TCP Flag combination
-//				
-// 				SYN FIN 				Packets with SYN FIN are malicious. in all forms 
-//				SYN FIN PSH
-//				SYN FIN RST
+//              
+//              SYN FIN                 Packets with SYN FIN are malicious. in all forms 
+//              SYN FIN PSH
+//              SYN FIN RST
 //              SYN FIN RST PSH
 //              etc...
 //     
-// 				FIN 					Packets should never contain just a FIN flag
-//              nullptr 		      		It is illegal to have a packet with no flags set. 
+//              FIN                     Packets should never contain just a FIN flag
+//              nullptr                     It is illegal to have a packet with no flags set. 
 //
 //      Some other strange condition are trap  the code
-// 				SYN RST                 SYN must be alone for connection process to start
-// 				FIN RST					RST is done in priority, so no packet is sent.
+//              SYN RST                 SYN must be alone for connection process to start
+//              FIN RST                 RST is done in priority, so no packet is sent.
 //
 //-------------------------------------------------------------------------------------------------
-IP_PacketMsg_t* TCP_Process(IP_PacketMsg_t* pRX)
+IP_PacketMsg_t*NetTCP::Process(IP_PacketMsg_t* pRX)
 {
-	IP_TCP_Header_t*		pTCP_RX;
-	SocketInfo_t*			pSocket;
-    PortInfo_t* 			pPort;
-	uint8_t					Error;
-	uint8_t					byFlag    = TCP_FLAG_nullptr;
+    IP_TCP_Header_t*        pTCP_RX;
+    SocketInfo_t*           pSocket;
+    PortInfo_t*             pPort;
+    uint8_t                 Error;
+    uint8_t                 Flag    = TCP_FLAG_nullptr;
 
-	pTCP_RX = &pRX->Packet.u.TCP_Frame.Header;
+    pTCP_RX = &pRX->Packet.u.TCP_Frame.Header;
     
-	if((pPort = SOCK_ValidPort(pTCP_RX->wDstPort, IP_PROTOCOL_TCP)) != nullptr)	// Check first if the port is in our allowed port list
-	{
-		if((pTCP_RX->byFlags == TCP_FLAG_SYN) ||                                // Is it a SYN packet
-		   ((pTCP_RX->byFlags & TCP_FLAG_ACK) == TCP_FLAG_ACK))          		// Packet other than SYN should alway have ACK bit set
-		{
-			pTCP_RX->byFlags &= ~(TCP_FLAG_ACK | TCP_FLAG_URG);            		// Remove ACK bit & URG bit ( don't care )
+    if((pPort = SOCK_ValidPort(pTCP_RX->DstPort, IP_PROTOCOL_TCP)) != nullptr)  // Check first if the port is in our allowed port list
+    {
+        if((pTCP_RX->Flags == TCP_FLAG_SYN) ||                                  // Is it a SYN packet
+           ((pTCP_RX->Flags & TCP_FLAG_ACK) == TCP_FLAG_ACK))                   // Packet other than SYN should alway have ACK bit set
+        {
+            pTCP_RX->byFlags &= ~(TCP_FLAG_ACK | TCP_FLAG_URG);                 // Remove ACK bit & URG bit ( don't care )
 
-			if(pTCP_RX->byFlags == TCP_FLAG_SYN)								// Initiate a connection and create the socket
-			{
-				pSocket = SOCK_OpenSocket(pPort, pRX, &Error);
-				byFlag = TCP_FLAG_SYN;
-			}
-        	else                                                                // Or get the already open socket
-			{
-				pSocket = SOCK_LookupSocket(pRX, &Error);
-			}
+            if(pTCP_RX->byFlags == TCP_FLAG_SYN)                                // Initiate a connection and create the socket
+            {
+                pSocket = SOCK_OpenSocket(pPort, pRX, &Error);
+                Flag = TCP_FLAG_SYN;
+            }
+            else                                                                // Or get the already open socket
+            {
+                pSocket = SOCK_LookupSocket(pRX, &Error);
+            }
 
             if(pSocket != nullptr)
-			{
-				pSocket->byTimer = SOCK_TIME_OUT;								// We received a packet than reset timeout
+            {
+                pSocket->Timer = SOCK_TIME_OUT;                                 // We received a packet than reset timeout
 
-				switch(pTCP_RX->byFlags)
-				{
-					case TCP_FLAG_SYN:											// Close a connection
-						pSocket->Send.wNext++;
-						break;
+                switch(pTCP_RX->Flags)
+                {
+                    case TCP_FLAG_SYN:                                          // Close a connection
+                        pSocket->Send.Next++;
+                        break;
 
-					case TCP_FLAG_RST:                                     		// Force close of a connection
-						// TO DO verify the sequence number for real Reset
-						Error = SOCK_CloseSocket(pSocket);
-						return(nullptr);
-						break;
+                    case TCP_FLAG_RST:                                          // Force close of a connection
+                        // TO DO verify the sequence number for real Reset
+                        Error = SOCK_CloseSocket(pSocket);
+                        return nullptr;
+                        break;
 
-					case TCP_FLAG_PSH:                               			// Send Data to app
-						// TO DO verify the sequence number
-						TCP_Push(pSocket, pRX);
-						break;
+                    case TCP_FLAG_PSH:                                          // Send Data to app
+                        // TO DO verify the sequence number
+                        TCP_Push(pSocket, pRX);
+                        break;
 
-					case TCP_FLAG_FIN:											// Close a connection
-						pSocket->Send.wNext++;
-					//	pSocket->Receive.wNext   =  ntohl(pRX->Packet.u.TCP_Frame.Header.AcknowledgeNumber - pSocket->AckNumber); //??
-						break;
+                    case TCP_FLAG_FIN:                                          // Close a connection
+                        pSocket->Send.Next++;
+                    //  pSocket->Receive.Next   =  ntohl(pRX->Packet.u.TCP_Frame.Header.AcknowledgeNumber - pSocket->AckNumber); //??
+                        break;
 
 
-					default:													// Here will end up any malicious bit combination
-						return(nullptr);
-						break;
-				}
+                    default:                                                    // Here will end up any malicious bit combination
+                        return nullptr;
+                        break;
+                }
 
                 // We reach this point we need to ACK!
-				//	switch(pSocket->byConnectionState)
-				//	{
-				//		case TCP_SOCKET_SYN_RECEIVE:                            // Client has ack connection
-				//			pSocket->byConnectionState 	= TCP_SOCKET_LISTENING;
-				//			break;
+                //  switch(pSocket->byConnectionState)
+                //  {
+                //      case TCP_SOCKET_SYN_RECEIVE:                            // Client has ack connection
+                //          pSocket->byConnectionState  = TCP_SOCKET_LISTENING;
+                //          break;
                 //
-				//		case TCP_SOCKET_LISTENING:  break;
-				//		case TCP_SOCKET_CLOSE_WAIT:	break;
-				//	}
+                //      case TCP_SOCKET_LISTENING:  break;
+                //      case TCP_SOCKET_CLOSE_WAIT: break;
+                //  }
                 //
 {
-	IP_PacketMsg_t* pTX;
-	if(pTCP_RX->byFlags != TCP_FLAG_PSH)
-	
-					return(TCP_Ack(pSocket, Flag, 0));
-	else
-	{
-		pTX = TCP_Ack(pSocket, Flag, 0);
-		CS8900_Send(pTX);
-		MemPut(&pTX);
-		return(TCP_Send(pSocket, nullptr, 0));
-	}
+    IP_PacketMsg_t* pTX;
+    if(pTCP_RX->byFlags != TCP_FLAG_PSH)
+    
+                    return TCP_Ack(pSocket, Flag, 0);
+    else
+    {
+        pTX = TCP_Ack(pSocket, Flag, 0);
+        CS8900_Send(pTX);
+        MemPut(&pTX);
+        return TCP_Send(pSocket, nullptr, 0);
+    }
 }
 
 
-			}
-		}
-	}
+            }
+        }
+    }
 
-	return(nullptr);
+    return nullptr;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           TCP_PutHeader	
+//  Name:           PutHeader   
 // 
-//  Parameter(s):   Socket_t* 			pSocket
-//                  IP_PacketMsg_t* 	    pTX
-// 					uint16_t                PacketSize
+//  Parameter(s):   Socket_t*           pSocket
+//                  IP_PacketMsg_t*     pTX
+//                  size_t              PacketSize
 //  Return:         void 
 //
 //  Description:    Put in header everything static
-//	
-//  Requirement:	All other data must be already in the header
+//  
+//  Requirement:    All other data must be already in the header
 // 
 //-------------------------------------------------------------------------------------------------
-void TCP_PutHeader(SocketInfo_t* pSocket, IP_PacketMsg_t* pTX, uint16_t PacketSize)
+void NetTCP::PutHeader(SocketInfo_t* pSocket, IP_PacketMsg_t* pTX, size_t PacketSize)
 {
-	IP_TCP_Header_t*	pTCP_TX;
-	IP_PseudoHeader_t* 	pPseudo_TX;
+    IP_TCP_Header_t*    pTCP_TX;
+    IP_PseudoHeader_t*  pPseudo_TX;
 
-	pTX->Packet.u.IP_Frame.Header.DstIP_Addr = pSocket->ClientIP;
-	pTX->Packet.u.IP_Frame.Header.SrcIP_Addr = IP_HostAddr;
+    pTX->Packet.u.IP_Frame.Header.DstIP_Addr = pSocket->ClientIP;
+    pTX->Packet.u.IP_Frame.Header.SrcIP_Addr = IP_HostAddr;
 
-    pTCP_TX 						= &pTX->Packet.u.TCP_Frame.Header;
-	pTCP_TX->SrcPort				= pSocket->pPortInfo->Number;
-	pTCP_TX->DstPort				= pSocket->wClientPort;
-	pTCP_TX->SequenceNumber 		= htonl(pSocket->SequenceNumber + (int32_t)pSocket->Receive.Next);
-	pTCP_TX->AcknowledgeNumber	= htonl(pSocket->AckNumber + (int32_t)pSocket->Send.Next);
-	pTCP_TX->Flags 			       |= TCP_FLAG_ACK;
-	pTCP_TX->Offset				    = 0x60;								// to do process this criss
-	pTCP_TX->Window				    = htons(TCP_WINDOW_SIZE);
-	pTCP_TX->OptionData.by.by0		= 2;
-	pTCP_TX->OptionData.by.by1		= 4;
-	pTCP_TX->OptionData.by.by2		= 4;
-	pTCP_TX->OptionData.by.by3		= 0xB0;
+    pTCP_TX                         = &pTX->Packet.u.TCP_Frame.Header;
+    pTCP_TX->SrcPort                = pSocket->pPortInfo->Number;
+    pTCP_TX->DstPort                = pSocket->wClientPort;
+    pTCP_TX->SequenceNumber         = htonl(pSocket->SequenceNumber + (int32_t)pSocket->Receive.Next);
+    pTCP_TX->AcknowledgeNumber  = htonl(pSocket->AckNumber + (int32_t)pSocket->Send.Next);
+    pTCP_TX->Flags                 |= TCP_FLAG_ACK;
+    pTCP_TX->Offset                 = 0x60;                             // to do process this criss
+    pTCP_TX->Window                 = htons(TCP_WINDOW_SIZE);
+    pTCP_TX->OptionData.by.by0      = 2;
+    pTCP_TX->OptionData.by.by1      = 4;
+    pTCP_TX->OptionData.by.by2      = 4;
+    pTCP_TX->OptionData.by.by3      = 0xB0;
 
-	// Setup pseudo header for checksum calculation
-	pPseudo_TX                      = &pTX->Packet.u.TCP_PseudoFrame.Header;
-	pPseudo_TX->Protocol 			= IP_PROTOCOL_TCP;
-	pPseudo_TX->Lenght 			    = htons(PacketSize);
+    // Setup pseudo header for checksum calculation
+    pPseudo_TX                      = &pTX->Packet.u.TCP_PseudoFrame.Header;
+    pPseudo_TX->Protocol            = IP_PROTOCOL_TCP;
+    pPseudo_TX->Lenght              = htons(PacketSize);
 
-	pTCP_TX->Checksum 				= 0;
-	pTCP_TX->Checksum 				= IP_CalculateChecksum(pPseudo_TX, PacketSize + (int16_t)sizeof(IP_PseudoHeader_t));
+    pTCP_TX->Checksum               = 0;
+    pTCP_TX->Checksum               = IP_CalculateChecksum(pPseudo_TX, PacketSize + (int16_t)sizeof(IP_PseudoHeader_t));
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           TCP_Send
+//  Name:           Send
 // 
 //  Parameter(s):   void
 //  Return:         IP_PacketMsg_t* pTX
@@ -290,122 +292,125 @@ void TCP_PutHeader(SocketInfo_t* pSocket, IP_PacketMsg_t* pTX, uint16_t PacketSi
 //  Description:    
 //
 //-------------------------------------------------------------------------------------------------
-IP_PacketMsg_t* TCP_Send(SocketInfo_t* pSocket, uint8_t* pBuffer, uint16_t Size)
+IP_PacketMsg_t* NetTCP::Send(SocketInfo_t* pSocket, uint8_t* pBuffer, size_t Size)
 {
-	IP_PacketMsg_t* 	pTX			= nullptr;
-	IP_TCP_Header_t*	pTCP_TX;
-	uint8_t 			Error;
+    IP_PacketMsg_t*     pTX         = nullptr;
+    IP_TCP_Header_t*    pTCP_TX;
+    uint8_t             Error;
 
-	uint8_t Temp[100];
-	uint8_t Buffer[1000];
+// use memory allocation
+    uint8_t Temp[100];
+    uint8_t Buffer[1000];
 
-	LIB_sprintf(Temp, "HTTP/1.1 404 Not Found\r\n");
-	LIB_strcat(Buffer, Temp);
-	LIB_sprintf(Temp, "Content-type: text/html\r\n");
-	LIB_strcat(Buffer, Temp);
-	LIB_sprintf(Temp, "Content-length: 114\r\n");
-	LIB_strcat(Buffer, Temp);
-	LIB_sprintf(Temp, "\r\n");
-	LIB_strcat(Buffer, Temp);
-	LIB_sprintf(Temp, "<html><head><title>Not Found</title></head><body>\r\n");
-	LIB_strcat(Buffer, Temp);
-	LIB_sprintf(Temp, "Sorry, the object you requested was not found.\r\n");
-	LIB_strcat(Buffer, Temp);
-	LIB_sprintf(Temp, "</body><html>\r\n");
-	LIB_strcat(Buffer, Temp);
+    LIB_sprintf(Temp, "HTTP/1.1 404 Not Found\r\n");
+    LIB_strcat(Buffer, Temp);
+    LIB_sprintf(Temp, "Content-type: text/html\r\n");
+    LIB_strcat(Buffer, Temp);
+    LIB_sprintf(Temp, "Content-length: 114\r\n");
+    LIB_strcat(Buffer, Temp);
+    LIB_sprintf(Temp, "\r\n");
+    LIB_strcat(Buffer, Temp);
+    LIB_sprintf(Temp, "<html><head><title>Not Found</title></head><body>\r\n");
+    LIB_strcat(Buffer, Temp);
+    LIB_sprintf(Temp, "Sorry, the object you requested was not found.\r\n");
+    LIB_strcat(Buffer, Temp);
+    LIB_sprintf(Temp, "</body><html>\r\n");
+    LIB_strcat(Buffer, Temp);
 
 
-	pTX = IP_GetPacketMemory((int16_t)(Size + sizeof(IP_EthernetHeader_t) + TCP_ACK_IP_PACKET_SIZE), &Error);
-	if(pTX != nullptr)
-	{
-		Size = LIB_strlen(Buffer);
-		memcpy(((uint8_t*)&pTX->Packet.u.TCP_Frame.Header.OptionData + 4), Buffer, Size);
+    pTX = (IP_PacketMsg_t*)pMemory->AllocAndClear(Size + sizeof(IP_EthernetHeader_t) + TCP_ACK_IP_PACKET_SIZE);					    // Get memory for TX packet
+    
+    if(pTX != nullptr)
+    {
+        Size = strlen(Buffer);
+        memcpy(((uint8_t*)&pTX->Packet.u.TCP_Frame.Header.OptionData + 4), Buffer, Size);
         
-		pTX->wPacketSize = (int16_t)(Size + sizeof(IP_EthernetHeader_t) + TCP_ACK_IP_PACKET_SIZE);
-		pTCP_TX          = &pTX->Packet.u.TCP_Frame.Header;
-		pTCP_TX->Flags = TCP_FLAG_PSH;
-		TCP_PutHeader(pSocket, pTX, TCP_ACK_PACKET_SIZE + Size);
+        pTX->PacketSize = (Size + sizeof(IP_EthernetHeader_t) + TCP_ACK_IP_PACKET_SIZE);
+        pTCP_TX          = &pTX->Packet.u.TCP_Frame.Header;
+        pTCP_TX->Flags = TCP_FLAG_PSH;
+        TCP_PutHeader(pSocket, pTX, TCP_ACK_PACKET_SIZE + Size);
 
-		// Setup MAC & IP header
-		memcpy(&pTX->Packet.u.ETH_Header.Dst.Addr, &pSocket->MAC[0], 6);
-		pTX->Packet.u.IP_Frame.Header.Lenght	 = htons(Size + TCP_ACK_IP_PACKET_SIZE);
-		pTX->Packet.u.IP_Frame.Header.Protocol = IP_PROTOCOL_TCP;
-		IP_PutHeader(pTX);
-	}
+        // Setup MAC & IP header
+        memcpy(&pTX->Packet.u.ETH_Header.Dst.Addr, &pSocket->MAC[0], 6);
+        pTX->Packet.u.IP_Frame.Header.Lenght     = htons(Size + TCP_ACK_IP_PACKET_SIZE);
+        pTX->Packet.u.IP_Frame.Header.Protocol = IP_PROTOCOL_TCP;
+        IP_PutHeader(pTX);
+    }
 
-	return pTX;
+    return pTX;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           TCP_Ack
+//  Name:           Ack
 // 
-//  Parameter(s):   SocketInfo_t* 		pSocket
-// 					uint8_t				Flag
-// 					uint16_t 			Size
-//  Return:         IP_PacketMsg_t* 	pTX
+//  Parameter(s):   SocketInfo_t*       pSocket
+//                  uint8_t             Flag
+//                  size_t              Size
+//  Return:         IP_PacketMsg_t*     pTX
 //
 //  Description:    
 //
 //-------------------------------------------------------------------------------------------------
-IP_PacketMsg_t* TCP_Ack(SocketInfo_t* pSocket, uint8_t Flag, uint16_t Size)
+IP_PacketMsg_t* NetTCP::Ack(SocketInfo_t* pSocket, uint8_t Flag, size_t Size)
 {
-	IP_PacketMsg_t* 	pTX			= nullptr;
-	IP_TCP_Header_t*	pTCP_TX;
-	uint8_t 			Error;
+    IP_PacketMsg_t*     pTX         = nullptr;
+    IP_TCP_Header_t*    pTCP_TX;
+    uint8_t             Error;
+    size_t              PacketSize;
 
-	pTX = IP_GetPacketMemory((int16_t)(Size + sizeof(IP_EthernetHeader_t) + TCP_ACK_IP_PACKET_SIZE), &Error);
-	
+    
+    PacketSize = Size + sizeof(IP_EthernetHeader_t) + TCP_ACK_IP_PACKET_SIZE;
+
+    pTX = (IP_PacketMsg_t*)pMemory->AllocAndClear(PacketSize);					    // Get memory for TX packet
+    
     if(pTX != nullptr)
-	{
-		pTX->PacketSize = uint16_t(Size + sizeof(IP_EthernetHeader_t) + TCP_ACK_IP_PACKET_SIZE);
-		pTCP_TX         = &pTX->Packet.u.TCP_Frame.Header;
-		pTCP_TX->Flags  = Flag;
-		TCP_PutHeader(pSocket, pTX, TCP_ACK_PACKET_SIZE);
+    {
+        pTX->PacketSize = PacketSize;
+        pTCP_TX         = &pTX->Packet.u.TCP_Frame.Header;
+        pTCP_TX->Flags  = Flag;
+        TCP_PutHeader(pSocket, pTX, TCP_ACK_PACKET_SIZE);
 
-		// Setup MAC & IP header
-		memcpy(&pTX->Packet.u.ETH_Header.Dst.Addr, &pSocket->MAC[0], 6);
-		pTX->Packet.u.IP_Frame.Header.Lenght	 = htons(Size + TCP_ACK_IP_PACKET_SIZE);
-		pTX->Packet.u.IP_Frame.Header.Protocol = IP_PROTOCOL_TCP;
-		IP_PutHeader(pTX);
-	}
+        // Setup MAC & IP header
+        memcpy(&pTX->Packet.u.ETH_Header.Dst.Addr, &pSocket->MAC[0], 6);
+        pTX->Packet.u.IP_Frame.Header.Lenght     = htons(Size + TCP_ACK_IP_PACKET_SIZE);
+        pTX->Packet.u.IP_Frame.Header.Protocol = IP_PROTOCOL_TCP;
+        IP_PutHeader(pTX);
+    }
 
-	return pTX;
+    return pTX;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           TCP_Push
+//  Name:           Push
 // 
-//  Parameter(s):   SocketInfo_t* 		pSocket
-// 					IP_PacketMsg_t*		pRX
-// 					
+//  Parameter(s):   SocketInfo_t*       pSocket
+//                  IP_PacketMsg_t*     pRX
+//                  
 //  Return:         void
 //
 //  Description:    
-//	
+//  
 //-------------------------------------------------------------------------------------------------
-void TCP_Push(SocketInfo_t* pSocket, IP_PacketMsg_t* pRX)
+void NetTCP::Push(SocketInfo_t* pSocket, IP_PacketMsg_t* pRX)
 {
-	uint8_t DataOffset;
-	int16_t Size;
-	uint8_t Error;
+    uint8_t DataOffset;
+    size_t  Size;
+    uint8_t Error;
 
-	DataOffset = (uint8_t)((pRX->Packet.u.TCP_Frame.Header.Offset & 0xF0) >> 2) + (uint8_t)sizeof(IP_IP_Frame_t);
-	Size       = (uint16_t)(pRX->PacketSize - DataOffset);
+    DataOffset = (uint8_t)((pRX->Packet.u.TCP_Frame.Header.Offset & 0xF0) >> 2) + (uint8_t)sizeof(IP_IP_Frame_t);
+    Size       = pRX->PacketSize - size_t(DataOffset);
 
+    // Pass pointer of data to service function to get data
+    if(pSocket->pPortInfo->pFunction != nullptr)  // temporary
+    {
+        pSocket->pPortInfo->pFunction(pSocket, &pRX->Packet.u.RawData[DataOffset], Size); 
+    }
 
-
-
-	// Pass pointer of data to service function to get data
-	if(pSocket->pPortInfo->pFunction != nullptr)  // temporary
-	{
-		pSocket->pPortInfo->pFunction(pSocket, &pRX->Packet.u.RawData[DataOffset], Size); 
-	}
-
-	pSocket->ConnectionState  = TCP_SOCKET_LISTENING;
-	pSocket->Send.Next       += Size;
-	pSocket->Receive.Next     = (uint16_t)(ntohl(pRX->Packet.u.TCP_Frame.Header.AcknowledgeNumber) - pSocket->SequenceNumber);
+    pSocket->ConnectionState  = TCP_SOCKET_LISTENING;
+    pSocket->Send.Next       += Size;
+    pSocket->Receive.Next     = (uint16_t)(ntohl(pRX->Packet.u.TCP_Frame.Header.AcknowledgeNumber) - pSocket->SequenceNumber);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -430,24 +435,24 @@ void TCP_Push(SocketInfo_t* pSocket, IP_PacketMsg_t* pRX)
 
 
 /*
-								DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d listening state\n", pSocket->ClientIP.by.by0,
-																										 pSocket->ClientIP.by.by1,
-																										 pSocket->ClientIP.by.by2,
-																										 pSocket->ClientIP.by.by3,
-																										 ntohs(pSocket->wClientPort),
-																										 ntohs(pPort->wNumber));
+                                DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d listening state\n", pSocket->ClientIP.by.by0,
+                                                                                                         pSocket->ClientIP.by.by1,
+                                                                                                         pSocket->ClientIP.by.by2,
+                                                                                                         pSocket->ClientIP.by.by3,
+                                                                                                         ntohs(pSocket->wClientPort),
+                                                                                                         ntohs(pPort->wNumber));
 
-		DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d Negotiating state\n", pSocket->ClientIP.by.by0,
-																				   pSocket->ClientIP.by.by1,
-																				   pSocket->ClientIP.by.by2,
-																				   pSocket->ClientIP.by.by3,
-																				   ntohs(pSocket->wClientPort),
-																				   ntohs(pPort->wNumber));
+        DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d Negotiating state\n", pSocket->ClientIP.by.by0,
+                                                                                   pSocket->ClientIP.by.by1,
+                                                                                   pSocket->ClientIP.by.by2,
+                                                                                   pSocket->ClientIP.by.by3,
+                                                                                   ntohs(pSocket->wClientPort),
+                                                                                   ntohs(pPort->wNumber));
 
-//					DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d Receiving request state\n", pSocket->ClientIP.by.by0,
-//																											 pSocket->ClientIP.by.by1,
-//																											 pSocket->ClientIP.by.by2,
-//																											 pSocket->ClientIP.by.by3,
-//																											 ntohs(pSocket->wClientPort),
-//																											 ntohs(pPort->wNumber));
+//                  DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d Receiving request state\n", pSocket->ClientIP.by.by0,
+//                                                                                                           pSocket->ClientIP.by.by1,
+//                                                                                                           pSocket->ClientIP.by.by2,
+//                                                                                                           pSocket->ClientIP.by.by3,
+//                                                                                                           ntohs(pSocket->wClientPort),
+//                                                                                                           ntohs(pPort->wNumber));
 */

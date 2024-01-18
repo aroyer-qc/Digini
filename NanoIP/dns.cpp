@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : dns.c
+//  File : dns.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -25,6 +25,9 @@
 //-------------------------------------------------------------------------------------------------
 
 //------ Note(s) ----------------------------------------------------------------------------------
+//
+//
+//    DNS - Domain Name System  
 //
 //       <Message Format>
 //
@@ -51,20 +54,20 @@
 //    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 //    |                     QCLASS                    |
 //    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+//
 //*************************************************************************************************
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define DNS_GLOBAL
 #include <include.h>
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           DNS_Query
+//  Name:           Query
 //
-//  Parameter(s):       SOCKET  SocketNumber
+//  Parameter(s):       SOCKET     SocketNumber
 //                      uint8_t*   pDomainName     Domain Name to get the IP
 //                      uint8_t*   pError          Pointer to return an error code
 //
@@ -73,7 +76,7 @@
 //  Description:    Send the DNS Query to DNS Server
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t DNS_Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pError)
+uint32_t NetDNS::Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pError)
 {
     size_t       Len;
     uint16_t     Port;
@@ -96,17 +99,17 @@ uint32_t DNS_Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pError)
 
                 // Fill up standard info for DNS query Packet
                 TIME_Randomize();
-                DNS_ID                  =uint16_t(RNG_GetRandom());             // Get a random ID
-                pTX->ID                 = DNS_ID;                               // Keep copy for verification in answers
-                pTX->Flags_1.s.QR       = DNS_QR_QUERY;                         // This is a DNS query
-                pTX->Flags_1.s.OPCODE   = DNS_OPCODE_STANDARD_QUERY;
-                pTX->Flags_1.s.RD       = DNS_RD_RECURSION;
-                pTX->QD_Count           = htons(1);                             // we always only ask one question
+                m_ID                  =uint16_t(RNG_GetRandom());               // Get a random ID
+                pTX->ID               = m_ID;                                   // Keep copy for verification in answers
+                pTX->Flags_1.s.QR     = DNS_QR_QUERY;                           // This is a DNS query
+                pTX->Flags_1.s.OPCODE = DNS_OPCODE_STANDARD_QUERY;
+                pTX->Flags_1.s.RD     = DNS_RD_RECURSION;
+                pTX->QD_Count         = htons(1);                               // We always only ask one question
 
                 // Extract each string segment from the Domain Name
                 do
                 {
-                    pStr = LIB_strchr(pDomainName, '.');                        // find the first '.'
+                    pStr = LIB_strchr(pDomainName, '.');                        // Find the first '.'
 
                     if(pStr != nullptr)                                         // Get size of the segment
                     {
@@ -164,7 +167,7 @@ uint32_t DNS_Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pError)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           DNS_Response
+//  Name:           Response
 //
 //  Parameter(s):   void
 //  Return:         uint32_t   IP           Resolve IP
@@ -174,7 +177,7 @@ uint32_t DNS_Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pError)
 //  Note(s):        No special treatment here, get the first IP and get out
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t DNS_Response(SOCKET SocketNumber)
+uint32_t NetDNS::Response(SOCKET SocketNumber)
 {
     DNS_Msg_t*   pRX             = nullptr;
     uint8_t*     pAnswer;
@@ -185,13 +188,11 @@ uint32_t DNS_Response(SOCKET SocketNumber)
     size_t     Len;
 
 
-    OSTimeDly(200); // why?
-    
     do
     {
         if(SOCK_GetRX_RSR(SocketNumber) > 0)
         {
-            pRX = MemGetAndClear(sizeof(DNS_Msg_t), &Error);
+            pRX = (DNS_Msg_t*)pMemory->MemGetAndClear(sizeof(DNS_Msg_t));
             
             if(pRX != nullptr)
             {
@@ -267,7 +268,7 @@ uint32_t DNS_Response(SOCKET SocketNumber)
         }
     } while(pRX == nullptr);
 
-    MemPut(&pRX);
+    pMemory->Free((void**)&pRX);
 
     return IP;
 }

@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : arp.c
+//  File : arp.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -22,64 +22,60 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+//------ Note(s) ----------------------------------------------------------------------------------
+//          
+//  ARP - Address Resolution Protocol
+//
 //-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
-#define ARP_GLOBAL
+
 #include <ip.h>
 
 //-------------------------------------------------------------------------------------------------
-// Private macro(s), do not put in header file (.h)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-// Private function(s), do not put in header file (.h)
-//-------------------------------------------------------------------------------------------------
-
-void ARP_UpdateEntry				(uint32_t IP_Addr, IP_EthernetAddress_t* pEthAdr);
-void ARP_TimerCallBack				(nOS_Timer * pTimer, void* pArg);
-
-//-------------------------------------------------------------------------------------------------
 //
-//  Name:         	ARP_Init
+//  Name:         	Initialize
 // 
-//  Parameter(s):   None
+//  Parameter(s):   SystemState_e
 //  Return:         void
 //
 //  Description:    Clear ARP table of any entry
 // 					Setup OS timer for ARP table entry
 //
 //-------------------------------------------------------------------------------------------------
-void ARP_Init(void)
+SystemState_e NetARP::Initialize(void)
 {
-	uint8_t Error;
+    nOS_Error Error;
 
 	// Clear the ARP cache table
 	for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
 	{
-		ARP_TableEntry[i].IP_Addr = 0;
+		m_TableEntry[i].IP_Addr =IP_ADDR(0,0,0,0);
 	}
 
-	// Initialize an OS timer for the ARP timer
-	pARP_Timer = OSTmrCreate((int32_t)OS_TMR_CFG_TICKS_PER_SEC * 10,
-							 (int32_t)OS_TMR_CFG_TICKS_PER_SEC * 10,	// Period is define in ip_cfg.h
-							 OS_TMR_OPT_PERIODIC,					// it will repeat indefinitely
-							 (OS_TMR_CALLBACK)ARP_TimerCallBack,	// this timer callback function
-							 nullptr,	 								// no argument
-							 nullptr,									// no names assign for debug
-							 &Error);
+        // Initialize an OS timer for the ARP timer
+        Error = nOS_TimerCreate(m_pTimer,
+                                &TimerCallBack,                         // Timer callback function
+                                nullptr,                                // No Parameter needed for callback
+                                OS_TMR_CFG_TICKS_PER_SEC * 10,	        // Period is define in ip_cfg.h
+                                NOS_TIMER_FREE_RUNNING                  // It will repeat indefinitely
+                              #if (NOS_CONFIG_TIMER_HIGHEST_PRIO > 0)
+                               , nu // N/U
+                              #endif
 
-	if(Error == ERR_NONE)	
+	if(Error == SYS_OK)	
 	{
-		OSTmrStart(pARP_Timer, &Error);
+		Error = nOS_TimerStart(m_pTimer);
 	}
+    
+    return Error;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:         	ARP_ProcessIP	
+//  Name:         	ProcessIP	
 // 
 //  Parameter(s):   
 //  Return:         
@@ -90,17 +86,17 @@ void ARP_Init(void)
 // 					packet comes from a host on the local network.
 //
 //-------------------------------------------------------------------------------------------------
-void ARP_ProcessIP(IP_PacketMsg_t* pRX)
+void NetARP::ProcessIP(IP_PacketMsg_t* pRX)
 {
 	if((pRX->Packet.u.IP_Frame.Header.SrcIP_Addr & IP_SubnetMaskAddr) == (IP_HostAddr & IP_SubnetMaskAddr))
 	{
-		ARP_UpdateEntry(pRX->Packet.u.IP_Frame.Header.SrcIP_Addr, &pRX->Packet.u.ETH_Header.Src);
+		UpdateEntry(pRX->Packet.u.IP_Frame.Header.SrcIP_Addr, &pRX->Packet.u.ETH_Header.Src);
 	}
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:         	ARP_ProcessARP	
+//  Name:         	ProcessARP	
 // 
 //  Parameter(s):   IP_PacketMsg_t* 	pRX
 //  Return:         void
@@ -108,7 +104,7 @@ void ARP_ProcessIP(IP_PacketMsg_t* pRX)
 //  Description:    
 //	
 //-------------------------------------------------------------------------------------------------
-void ARP_ProcessARP(IP_PacketMsg_t* pRX)
+void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 {
 	uint8_t 		Error;
 	IP_ARP_Frame_t*	pRX_ARP;
@@ -129,8 +125,8 @@ void ARP_ProcessARP(IP_PacketMsg_t* pRX)
             // ARP request. If it asked for our address, we send out a reply.
 			if(pRX_ARP->DstIP_Addr == IP_HostAddr)
 			{
-				pTX = (IP_PacketMsg_t*)MemGetAndClear(pRX->wPacketSize + 2, &Error);			// Get memory for TX packet + Size 
-				pTX->PacketSize = pRX->PacketSize;											    // Get the packet size from request packet (PING)
+                pTX = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(pRX->PacketSize + 2);    // Get memory for TX packet + Size 
+				pTX->PacketSize = pRX->PacketSize;											// Get the packet size from request packet (PING)
                 pTX_ARP = &pTX->Packet.u.ARP_Frame;
 
 				pTX_ARP->Opcode = ARP_REPLY;
@@ -170,7 +166,7 @@ void ARP_ProcessARP(IP_PacketMsg_t* pRX)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:         	ARP_UpdateEntry	
+//  Name:         	UpdateEntry	
 // 
 //  Parameter(s):   
 //  Return:         
@@ -178,7 +174,7 @@ void ARP_ProcessARP(IP_PacketMsg_t* pRX)
 //  Description:    
 //	
 //-------------------------------------------------------------------------------------------------
-void ARP_UpdateEntry(int32_t IP_dwAddr, IP_EthernetAddress_t* pEthernet)
+void NetARP::UpdateEntry(int32_t IP_dwAddr, IP_EthernetAddress_t* pEthernet)
 {
 	uint8_t           i;
 	uint8_t           OldestEntry;
@@ -244,7 +240,7 @@ void ARP_UpdateEntry(int32_t IP_dwAddr, IP_EthernetAddress_t* pEthernet)
 		}
 		i = OldestEntry; // for debug only
 
-		pTable = &ARP_TableEntry[OldestEntry];
+		pTable = &m_TableEntry[OldestEntry];
    	  #if (IP_DBG_ARP == DEF_ENABLED)
 		DBG_Printf("ARP Cache - (%d.%d.%d.%d) Flush an old entry %d\n", pTable->IP_Addr.by.by0,
 		                                                                pTable->IP_Addr.by.by1,
@@ -291,7 +287,7 @@ void ARP_UpdateEntry(int32_t IP_dwAddr, IP_EthernetAddress_t* pEthernet)
 //                  the default router is used instead. 
 //  
 //-------------------------------------------------------------------------------------------------
-void ARP_ProcessOut(IP_PacketMsg_t* pTX)
+void NetARP::ProcessOut(IP_PacketMsg_t* pTX)
 {
 	uint8_t              i;
 	ARP_TableEntry_t*    pTable   	= nullptr;
@@ -318,7 +314,7 @@ void ARP_ProcessOut(IP_PacketMsg_t* pTX)
 		  
 		for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
 		{
-			pTable = &ARP_TableEntry[i];
+			pTable = &m_TableEntry[i];
 			if(IP_Addr == pTable->IP_Addr)
 			{
 				break;
@@ -344,7 +340,7 @@ void ARP_ProcessOut(IP_PacketMsg_t* pTX)
 			//pARP->byProtocolLenght     = 4;
 			//pARP->ETH_Header.wType     = IP_ETHERNET_TYPE_IP;
 		
-			//pTX->wPacketSize = (int16_t)sizeof(IP_ARP_Frame_t);
+			//pTX->PacketSize = sizeof(IP_ARP_Frame_t);
 			//return;
 		}
 
@@ -354,7 +350,7 @@ void ARP_ProcessOut(IP_PacketMsg_t* pTX)
 		//
 		//pFrame->u.ETH_Header.wType = IP_ETHERNET_TYPE_IP;
 	
-		//pTX->wPacketSize += sizeof(IP_EthernetHeader_t);
+		//pTX->PacketSize += sizeof(IP_EthernetHeader_t);
 	
 		NIC_Send(pTX);
 	}
@@ -378,7 +374,7 @@ void ARP_ProcessOut(IP_PacketMsg_t* pTX)
 //                  To retrieve the ARP query result, call the ARPIsResolved() function.
 //
 //-------------------------------------------------------------------------------------------------
-void ARP_Resolve(void)
+void NetARP::Resolve(void)
 {
 }
 
@@ -386,21 +382,27 @@ void ARP_Resolve(void)
 //
 //  Name:         	ARP_TimerCallBack
 // 
-//  Parameter(s):  	None
+//  Parameter(s):  	nOS_Timer* pTimer       n/u
+//                  void*      pArg         n/u
 // 					
 //  Return:         void
 //
 //  Description:    
 // 
 //-------------------------------------------------------------------------------------------------
-void ARP_TimerCallBack(void)
+void NetARP::TimerCallBack(nOS_Timer * pTimer, void* pArg)
 {
 	uint16_t          Time;
 	ARP_TableEntry_t* pTable;
 
+    VAR_UNUSED(pTimer);
+    VAR_UNUSED(pArg);
+
+
 	ARP_Time++;
 
-	for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
+
+	for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)                      // Scan Table for the entry
 	{
 		pTable = &ARP_TableEntry[i];
 		
@@ -413,7 +415,7 @@ void ARP_TimerCallBack(void)
 				Time += uint16_t(IP_ARP_TIME_OUT);
 			}
 
-			if((Time - pTable->Time) >= IP_ARP_TIME_OUT)
+			if((Time - pTable->Time) >= IP_ARP_TIME_OUT)            // Remove entry from table
 			{
    		      #if (IP_DBG_ARP == DEF_ENABLED)
    		      	DBG_Printf("ARP Cache - (%d.%d.%d.%d) Remove entry number %d\n", uint8_t(pTable->IP_Addr >> 24),

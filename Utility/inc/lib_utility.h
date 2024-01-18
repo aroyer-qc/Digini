@@ -30,22 +30,6 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define     LIB_MASK_CCITT                  0x1021
-#define     LIB_MASK_CRC                    0xA005
-
-#define     LIB_memchr                      memchr
-#define     LIB_memcmp                      memcmp
-#define     LIB_MemCopyOdd                  memcpy
-#define     LIB_MemCopyEven                 memcpy
-#define     LIB_memcpy                      memcpy
-#define     LIB_MemSetBYTE                  memset
-#define     LIB_MemSetWORD(d,v,c)           memset((d),(v),(c)<<1)
-#define     LIB_MemSetDWORD(d,v,c)          memset((d),v,(c)<<2)
-#define     LIB_MemClrBYTE(d,c)             memset((d),0,c)
-#define     LIB_MemClrWORD(d,c)             memset((d),0,(c)<<1)
-#define     LIB_MemClrDWORD(d,c)            memset((d),0,(c)<<2)
-#define     LIB_BackMemCopyOdd              memmove
-#define     LIB_BackMemCopyEven             memmove
 #define     LIB_AlignPointer(Ptr)           {Ptr += ((4 - (uint32_t(Ptr) % 4) ) % 4);}
 
 //-------------------------------------------------------------------------------------------------

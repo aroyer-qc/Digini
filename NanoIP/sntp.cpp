@@ -26,6 +26,8 @@
 
 //------ Note(s) ----------------------------------------------------------------------------------
 //
+//  SNTP - Simple Network Transport Protocol
+//
 //       <Message Format>
 //
 //                                 1  1  1  1  1  1  1  1  1  1  2  2  2  2  2  2  2  2  2  2  3  3
@@ -152,7 +154,7 @@ int32_t SNTP_Request(SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pDomai
             *pError = ERR_MEMORY_ALLOCATION;
         }
     }
-    return(IP);
+    return IP;
 }
 
 //-------------------------------------------------------------------------------------------------

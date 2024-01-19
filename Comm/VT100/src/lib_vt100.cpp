@@ -105,7 +105,7 @@ bool ConvertToValue(uint8_t* pData)
 //-------------------------------------------------------------------------------------------------
 nOS_Error VT100_Terminal::Initialize(Console* pConsole)
 {
-    nOS_Error Error = NOS_OK;
+    nOS_Error Error;
 
     // Should read future configuration for muting
     m_pConsole                = pConsole;

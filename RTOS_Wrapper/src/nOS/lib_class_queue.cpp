@@ -32,25 +32,25 @@
 
 #if (NOS_CONFIG_QUEUE_ENABLE > 0)
 
-CQueue::CQueue(void)
+Queue::Queue(void)
 {
 }
 
-CQueue::~CQueue(void)
+Queue::~Queue(void)
 {
 }
 
-bool CQueue::CreateQueue(void* pBuffer, size_t Size, size_t ItemSize)
+bool Queue::CreateQueue(void* pBuffer, size_t Size, size_t ItemSize)
 {
     return bool(nOS_QueueCreate(&m_Queue, pBuffer, Size, ItemSize) == NOS_OK);
 }
 
-bool CQueue::Send(void* ptr, TickCount_t TicksToWait)
+bool Queue::Send(void* ptr, TickCount_t TicksToWait)
 {
     return bool(nOS_QueueWrite(&m_Queue, ptr, TicksToWait) == NOS_OK);
 }
 
-bool CQueue::Receive(void* ptr, TickCount_t TicksToWait)
+bool Queue::Receive(void* ptr, TickCount_t TicksToWait)
 {
     return bool(nOS_QueueRead(&m_Queue, ptr, TicksToWait) == NOS_OK);
 }

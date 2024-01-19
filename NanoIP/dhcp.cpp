@@ -170,8 +170,15 @@
 //-------------------------------------------------------------------------------------------------
 void NetDHCP::Initialize(void* pQ)
 {
+    nOS_Error;
+
     m_State = DHCP_STATE_INITIAL;
     m_pQ    = pQ;
+
+
+    Error = nOS_TimerCreate(&m_TimerDiscover,  nullptr, nullptr, DHCP_MSG_ACTION_TIME_OUT, NOS_TIMER_ONE_SHOT);
+    Error = nOS_TimerCreate(&m_TimerT1_Lease,  nullptr, nullptr, 0, NOS_TIMER_ONE_SHOT);
+    Error = nOS_TimerCreate(&m_TimerT2_Rebind, nullptr, nullptr, 0, NOS_TIMER_ONE_SHOT);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -190,16 +197,16 @@ bool NetDHCP::Start(void)
 
     m_State = DHCP_STATE_INITIAL;
 
-    if(m_OST_Discover  != TIME_TIMER_NULL) TIMER_Stop(&m_OST_Discover);
-    if(m_OST_T1_Lease  != TIME_TIMER_NULL) TIMER_Stop(&m_OST_T1_Lease);
-    if(m_OST_T2_Rebind != TIME_TIMER_NULL) TIMER_Stop(&m_OST_T2_Rebind);
+    if(nOS_TimerIsRunning(m_TimerDiscover)  == true) nOS_TimerStop(&m_TimerDiscover,  true);
+    if(nOS_TimerIsRunning(m_TimerT1_Lease)  == true) nOS_TimerStop(&m_TimerT1_Lease,  true);
+    if(nOS_TimerIsRunning(m_TimerT2_Rebind) == true) nOS_TimerStop(&m_TimerT2_Rebind, true);
 
-    IP_Status.b.IP_IsValid        = false;
-    IP_DHCP_GatewayIP             = IP_ADDR(0,0,0,0);
-    IP_DHCP_SubnetMask            = IP_ADDR(0,0,0,0);
-    IP_DHCP_IP                    = IP_ADDR(0,0,0,0);
-    IP_DHCP_DNS_IP                = IP_ADDR(0,0,0,0);
-    DHCP_Xid                      = GET_Random();
+    IpIP->SetIP_Valid(false);
+    IP_DHCP_GatewayIP   = IP_ADDR(0,0,0,0);
+    IP_DHCP_SubnetMask  = IP_ADDR(0,0,0,0);
+    IP_DHCP_IP          = IP_ADDR(0,0,0,0);
+    IP_DHCP_DNS_IP      = IP_ADDR(0,0,0,0);
+    m_Xid               = GET_Random();
 
     sipr(IP_DHCP_IP);
 
@@ -261,7 +268,8 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
                 break;
             }
         }
-        MemPut(&pMsg);
+        
+        pMemory->Free((void**)&pMsg);
     }
 
     if(m_Mode == true)
@@ -301,7 +309,7 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
                                 {
                                     if(m_State == DHCP_STATE_DISCOVER)
                                     {
-                                        if(TIMER_Restart(&m_OST_Discover) == TIME_TIMER_IS_RETRIGGED)
+                                        if(nOS_TimerIsRunning(&m_TimerDiscover) == true)
                                         {
                                             ParseOffer(pRX);
                                             Request();
@@ -310,6 +318,8 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
                                             DBG_Printf("DHCP offer received and Request is sent\n");
                                           #endif
                                         }
+
+                                        nOS_TimerRestart(&m_TimerDiscover, DHCP_MSG_ACTION_TIME_OUT);
                                     }
                                     break;
                                 }
@@ -318,18 +328,16 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
                                 {
                                     if(m_State == DHCP_STATE_OFFER_RECEIVED)
                                     {
-                                        if(TIMER_Stop(&m_OST_Discover) == TIME_TIMER_IS_RELEASED)
-                                        {
-                                            IsBound();
-                                            SOCK_Close(DHCP_SOCKET);
+                                        nOS_TimerStop(&m_TimerDiscover, true);
+                                        IsBound();
+                                        SOCK_Close(DHCP_SOCKET);
 
-                                          #if (IP_DBG_DHCP == DEF_ENABLED)
-                                            DBG_Printf("DHCP ACK received and interface is bound\n");
-                                            DBG_Printf("Host IP           %d.%d.%d.%d\n",   uint8_t(IP_HostAddr           >> 24), uint8_t(IP_HostAddr           >> 16), uint8_t(IP_HostAddr           >> 8), uint8_t(IP_HostAddr));
-                                            DBG_Printf("SubNet mask IP    %d.%d.%d.%d\n",   uint8_t(IP_SubnetMaskAddr     >> 24), uint8_t(IP_SubnetMaskAddr     >> 16), uint8_t(IP_SubnetMaskAddr     >> 8), uint8_t(IP_SubnetMaskAddr));
-                                            DBG_Printf("Default router IP %d.%d.%d.%d\n\n", uint8_t(IP_DefaultGatewayAddr >> 24), uint8_t(IP_DefaultGatewayAddr >> 16), uint8_t(IP_DefaultGatewayAddr >> 8), uint8_t(IP_DefaultGatewayAddr));
-                                          #endif
-                                        }
+                                      #if (IP_DBG_DHCP == DEF_ENABLED)
+                                        DBG_Printf("DHCP ACK received and interface is bound\n");
+                                        DBG_Printf("Host IP           %d.%d.%d.%d\n",   uint8_t(IP_HostAddr           >> 24), uint8_t(IP_HostAddr           >> 16), uint8_t(IP_HostAddr           >> 8), uint8_t(IP_HostAddr));
+                                        DBG_Printf("SubNet mask IP    %d.%d.%d.%d\n",   uint8_t(IP_SubnetMaskAddr     >> 24), uint8_t(IP_SubnetMaskAddr     >> 16), uint8_t(IP_SubnetMaskAddr     >> 8), uint8_t(IP_SubnetMaskAddr));
+                                        DBG_Printf("Default router IP %d.%d.%d.%d\n\n", uint8_t(IP_DefaultGatewayAddr >> 24), uint8_t(IP_DefaultGatewayAddr >> 16), uint8_t(IP_DefaultGatewayAddr >> 8), uint8_t(IP_DefaultGatewayAddr));
+                                      #endif
                                     }
                                     else if(m_State == DHCP_STATE_BOUND)
                                     {
@@ -347,8 +355,8 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
                                 case DHCP_OPTION_NACK:
                                 {
                                     m_State = DHCP_STATE_INITIAL;                          // reset DHCP state machine
-                                    TIMER_Stop(&m_OST_T1_Lease);                           // stop T1 & T2
-                                    TIMER_Stop(&m_OST_T2_Rebind);
+                                    nOS_TimerStop(&m_TimerT1_Lease,  true);                // stop T1 & T2
+                                    nOS_TimerStop(&m_TimerT2_Rebind, true);
                                     SOCK_Close(DHCP_SOCKET);
 
                                   #if (IP_DBG_DHCP == DEF_ENABLED)
@@ -395,7 +403,7 @@ bool NetDHCP::Discover(void)
     uint8_t      Options;
     DHCP_Msg_t*  pTX         = nullptr;
     IP_Address_t IP_Address;
-    size_t       Len;
+    size_t       Length;
     bool         Status;
 
     W5100_Init();               // This will start fresh
@@ -409,18 +417,18 @@ bool NetDHCP::Discover(void)
         {
             //Setup Options
             Options = (DHCP_PUT_OPTION_CLIENT_IDENTIFIER | DHCP_PUT_OPTION_HOST_NAME | DHCP_PUT_OPTION_PL_DISCOVER);
-            Len     = PutOption(&pTX->Options[0], Options, DHCP_OPTION_DISCOVER);
+            Length     = PutOption(&pTX->Options[0], Options, DHCP_OPTION_DISCOVER);
             PutHeader(pTX);
 
             // Send broadcasting packet
             IP_Address = IP_ADDR(255,255,255,255);
 
-            Len = SOCK_SendTo(DHCP_SOCKET,
+            Length = SOCK_SendTo(DHCP_SOCKET,
                               (uint8_t*)pTX,
-                              uint16_t((sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + Len),
+                              uint16_t((sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + Length),
                               IP_Address,
                               DHCP_SERVER_PORT);
-            if(Len == 0)
+            if(Length == 0)
             {
               Status = false;
               #if (IP_DBG_DHCP == DEF_ENABLED)
@@ -436,11 +444,14 @@ bool NetDHCP::Discover(void)
 
                 m_State = DHCP_STATE_DISCOVER;
 
-                TIMER_Start(&m_OST_Discover,
+                nOS_TimerStart(&m_TimerDiscover);
+                /*
+                TIMER_Start(,
                             uint32_t(m_OST_TIMEOUT),
                             m_pQ,
                             IP_MSG_TYPE_DHCP_MANAGEMENT,
                             DHCP_MSG_ACTION_TIME_OUT);
+                            */
             }
 
             pMemory->Free((void**)&pTX);
@@ -471,7 +482,7 @@ bool NetDHCP::Request(void)
     uint8_t         Options;
     DHCP_Msg_t*     pTX         = nullptr;
     IP_Address_t    IP_Address;
-    size_t          Len;
+    size_t          Length;
     bool            Status     = true;
 
     pTX = (DHCP_Msg_t*)pMemory->AllocAndClear(sizeof(DHCP_Msg_t));
@@ -490,7 +501,7 @@ bool NetDHCP::Request(void)
             Options |= DHCP_PUT_OPTION_SERVER_IP;
         }
 
-        Len = PutOption(&pTX->Options[0], Options, DHCP_OPTION_REQUEST);
+        Length = PutOption(&pTX->Options[0], Options, DHCP_OPTION_REQUEST);
         PutHeader(pTX);
 
         // Send broadcasting packet
@@ -504,12 +515,12 @@ bool NetDHCP::Request(void)
             IP_Address = IP_DHCP_IP;
         }
 
-        Len = SOCK_SendTo(DHCP_SOCKET,
+        Length = SOCK_SendTo(DHCP_SOCKET,
                            (uint8_t*)pTX,
-                           sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + Len,
+                           sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + Length,
                            IP_Address,
                            DHCP_SERVER_PORT);
-        if(Len == 0)
+        if(Length == 0)
         {
           Status = false;
           #if (IP_DBG_DHCP == DEF_ENABLED)
@@ -564,23 +575,28 @@ void NetDHCP::IsBound(void)
     subr(IP_DHCP_SubnetMask);
     sipr(IP_DHCP_IP);
 
-    m_State             = DHCP_STATE_BOUND;
-    IP_Status.b.IP_IsValid = true;
+    m_State    = DHCP_STATE_BOUND;
+    pIP->SetIP_Valid(true);
 
-    TIMER_Stop(&m_OST_T1_Lease);                               // make sure timer T1 & T2 are stop
-    TIMER_Stop(&m_OST_T2_Rebind);
+    nOS_TimerStop(&m_TimerT1_Lease,  true);                               // make sure timer T1 & T2 are stop
+    nOS_TimerStop(&m_TimerT2_Rebind, true);
 
-    TIMER_Start(&m_OST_T1_Lease,
+    nOS_TimerStart(&m_TimerT1_Lease);  // maybe i need restart
+    /*
+    TIMER_Start(&m_TimerT1_Lease,
                 m_Options.LeaseTime >> 1,
                 m_pQ,
                 IP_MSG_TYPE_DHCP_MANAGEMENT,
                 DHCP_MSG_ACTION_LEASE_RENEWAL);                     // Start the renewal timer for 50% of the total lease
-
-    TIMER_Start(&m_OST_T2_Rebind,
+*/
+    nOS_TimerStart(&m_TimerT2_Rebind);  // maybe i need restart
+  /*
+    TIMER_Start(&m_TimerT2_Rebind,
                 (m_Options.LeaseTime >> 1) + (m_Options.LeaseTime >> 2) + (m_Options.LeaseTime >> 4),
                 m_pQ,
                 IP_MSG_TYPE_DHCP_MANAGEMENT,
                 DHCP_MSG_ACTION_REBIND);                            // Start the rebind timer for 87% of the total lease
+*/
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -653,7 +669,7 @@ void NetDHCP::ParseOption(DHCP_Msg_t* pRX)
 //  Parameter(s):   uint8_t*   pPtr         Pointer on option field in packet
 //                  uint8_t    Options      Option(s) in Bit position to put in packet
 //                  uint8_t    Message
-//  Return:         size_t     Len          Lenght of the option(s)
+//  Return:         size_t     Length          Lengthght of the option(s)
 //
 //  Description:    Put option specify the flag
 //
@@ -662,7 +678,7 @@ void NetDHCP::ParseOption(DHCP_Msg_t* pRX)
 //-------------------------------------------------------------------------------------------------
 size_t NetDHCP::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
 {
-    size_t     Len;
+    size_t     Length;
     uint8_t*   pStart;
 
     pStart = pPtr;

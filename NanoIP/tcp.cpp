@@ -55,17 +55,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define TCP_GLOBAL
 #include <ip.h>
-
-//-------------------------------------------------------------------------------------------------
-// Private function(s)
-//-------------------------------------------------------------------------------------------------
-
-IP_PacketMsg_t*     TCP_Ack         (SocketInfo_t* pSocket, uint8_t Flag, size_t Size);
-void                TCP_Push        (SocketInfo_t* pSocket, IP_PacketMsg_t* pRX);
-void                TCP_PutHeader   (SocketInfo_t* pSocket, IP_PacketMsg_t* pTX, size_t PacketSize);
-IP_PacketMsg_t*     TCP_Send        (SocketInfo_t* pSocket, uint8_t* pBuffer, size_t Size);
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -146,7 +136,7 @@ void NetTCP::Initialize(void)
 //              FIN RST                 RST is done in priority, so no packet is sent.
 //
 //-------------------------------------------------------------------------------------------------
-IP_PacketMsg_t*NetTCP::Process(IP_PacketMsg_t* pRX)
+IP_PacketMsg_t* NetTCP::Process(IP_PacketMsg_t* pRX)
 {
     IP_TCP_Header_t*        pTCP_RX;
     SocketInfo_t*           pSocket;
@@ -191,7 +181,7 @@ IP_PacketMsg_t*NetTCP::Process(IP_PacketMsg_t* pRX)
 
                     case TCP_FLAG_PSH:                                          // Send Data to app
                         // TO DO verify the sequence number
-                        TCP_Push(pSocket, pRX);
+                        Push();
                         break;
 
                     case TCP_FLAG_FIN:                                          // Close a connection
@@ -216,19 +206,22 @@ IP_PacketMsg_t*NetTCP::Process(IP_PacketMsg_t* pRX)
                 //      case TCP_SOCKET_CLOSE_WAIT: break;
                 //  }
                 //
-{
-    IP_PacketMsg_t* pTX;
-    if(pTCP_RX->byFlags != TCP_FLAG_PSH)
-    
-                    return TCP_Ack(pSocket, Flag, 0);
-    else
-    {
-        pTX = TCP_Ack(pSocket, Flag, 0);
-        CS8900_Send(pTX);
-        MemPut(&pTX);
-        return TCP_Send(pSocket, nullptr, 0);
-    }
-}
+                // test ?? 
+                {
+                    IP_PacketMsg_t* pTX;
+                    if(pTCP_RX->Flags != TCP_FLAG_PSH)
+                    {
+                        return Ack(Flag, 0);
+                    }
+                    else
+                    {
+                        pTX = TCP_Ack(pSocket, Flag, 0);
+                        
+                        CS8900_Send(pTX);
+                        pMemory->Free((void**)&pTX);
+                        return Send(nullptr, 0);
+                    }
+                }
 
 
             }
@@ -257,29 +250,29 @@ void NetTCP::PutHeader(SocketInfo_t* pSocket, IP_PacketMsg_t* pTX, size_t Packet
     IP_TCP_Header_t*    pTCP_TX;
     IP_PseudoHeader_t*  pPseudo_TX;
 
-    pTX->Packet.u.IP_Frame.Header.DstIP_Addr = pSocket->ClientIP;
-    pTX->Packet.u.IP_Frame.Header.SrcIP_Addr = IP_HostAddr;
+    pTX->Packet.u.IP_Frame.Header.DstIP_Address = pSocket->ClientIP;
+    pTX->Packet.u.IP_Frame.Header.SrcIP_Address = IP_HostAddr;
 
-    pTCP_TX                         = &pTX->Packet.u.TCP_Frame.Header;
-    pTCP_TX->SrcPort                = pSocket->pPortInfo->Number;
-    pTCP_TX->DstPort                = pSocket->wClientPort;
-    pTCP_TX->SequenceNumber         = htonl(pSocket->SequenceNumber + (int32_t)pSocket->Receive.Next);
+    pTCP_TX                     = &pTX->Packet.u.TCP_Frame.Header;
+    pTCP_TX->SrcPort            = pSocket->pPortInfo->Number;
+    pTCP_TX->DstPort            = pSocket->ClientPort;
+    pTCP_TX->SequenceNumber     = htonl(pSocket->SequenceNumber + (int32_t)pSocket->Receive.Next);
     pTCP_TX->AcknowledgeNumber  = htonl(pSocket->AckNumber + (int32_t)pSocket->Send.Next);
-    pTCP_TX->Flags                 |= TCP_FLAG_ACK;
-    pTCP_TX->Offset                 = 0x60;                             // to do process this criss
-    pTCP_TX->Window                 = htons(TCP_WINDOW_SIZE);
-    pTCP_TX->OptionData.by.by0      = 2;
-    pTCP_TX->OptionData.by.by1      = 4;
-    pTCP_TX->OptionData.by.by2      = 4;
-    pTCP_TX->OptionData.by.by3      = 0xB0;
+    pTCP_TX->Flags             |= TCP_FLAG_ACK;
+    pTCP_TX->Offset             = 0x60;                             // to do process this criss
+    pTCP_TX->Window             = htons(TCP_WINDOW_SIZE);
+    pTCP_TX->OptionData.by.by0  = 2;
+    pTCP_TX->OptionData.by.by1  = 4;
+    pTCP_TX->OptionData.by.by2  = 4;
+    pTCP_TX->OptionData.by.by3  = 0xB0;
 
     // Setup pseudo header for checksum calculation
-    pPseudo_TX                      = &pTX->Packet.u.TCP_PseudoFrame.Header;
-    pPseudo_TX->Protocol            = IP_PROTOCOL_TCP;
-    pPseudo_TX->Lenght              = htons(PacketSize);
+    pPseudo_TX                  = &pTX->Packet.u.TCP_PseudoFrame.Header;
+    pPseudo_TX->Protocol        = IP_PROTOCOL_TCP;
+    pPseudo_TX->Lengthght          = htons(PacketSize);
 
-    pTCP_TX->Checksum               = 0;
-    pTCP_TX->Checksum               = IP_CalculateChecksum(pPseudo_TX, PacketSize + (int16_t)sizeof(IP_PseudoHeader_t));
+    pTCP_TX->Checksum           = 0;  //??? next is = also
+    pTCP_TX->Checksum           = IP_CalculateChecksum(pPseudo_TX, PacketSize + (int16_t)sizeof(IP_PseudoHeader_t));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -296,7 +289,6 @@ IP_PacketMsg_t* NetTCP::Send(SocketInfo_t* pSocket, uint8_t* pBuffer, size_t Siz
 {
     IP_PacketMsg_t*     pTX         = nullptr;
     IP_TCP_Header_t*    pTCP_TX;
-    uint8_t             Error;
 
 // use memory allocation
     uint8_t Temp[100];
@@ -326,13 +318,13 @@ IP_PacketMsg_t* NetTCP::Send(SocketInfo_t* pSocket, uint8_t* pBuffer, size_t Siz
         memcpy(((uint8_t*)&pTX->Packet.u.TCP_Frame.Header.OptionData + 4), Buffer, Size);
         
         pTX->PacketSize = (Size + sizeof(IP_EthernetHeader_t) + TCP_ACK_IP_PACKET_SIZE);
-        pTCP_TX          = &pTX->Packet.u.TCP_Frame.Header;
-        pTCP_TX->Flags = TCP_FLAG_PSH;
-        TCP_PutHeader(pSocket, pTX, TCP_ACK_PACKET_SIZE + Size);
+        pTCP_TX         = &pTX->Packet.u.TCP_Frame.Header;
+        pTCP_TX->Flags  = TCP_FLAG_PSH;
+        PutHeader(pTX, TCP_ACK_PACKET_SIZE + Size);
 
         // Setup MAC & IP header
         memcpy(&pTX->Packet.u.ETH_Header.Dst.Addr, &pSocket->MAC[0], 6);
-        pTX->Packet.u.IP_Frame.Header.Lenght     = htons(Size + TCP_ACK_IP_PACKET_SIZE);
+        pTX->Packet.u.IP_Frame.Header.Lengthght     = htons(Size + TCP_ACK_IP_PACKET_SIZE);
         pTX->Packet.u.IP_Frame.Header.Protocol = IP_PROTOCOL_TCP;
         IP_PutHeader(pTX);
     }
@@ -356,7 +348,6 @@ IP_PacketMsg_t* NetTCP::Ack(SocketInfo_t* pSocket, uint8_t Flag, size_t Size)
 {
     IP_PacketMsg_t*     pTX         = nullptr;
     IP_TCP_Header_t*    pTCP_TX;
-    uint8_t             Error;
     size_t              PacketSize;
 
     
@@ -369,11 +360,11 @@ IP_PacketMsg_t* NetTCP::Ack(SocketInfo_t* pSocket, uint8_t Flag, size_t Size)
         pTX->PacketSize = PacketSize;
         pTCP_TX         = &pTX->Packet.u.TCP_Frame.Header;
         pTCP_TX->Flags  = Flag;
-        TCP_PutHeader(pSocket, pTX, TCP_ACK_PACKET_SIZE);
+        PutHeader(pTX, TCP_ACK_PACKET_SIZE);
 
         // Setup MAC & IP header
         memcpy(&pTX->Packet.u.ETH_Header.Dst.Addr, &pSocket->MAC[0], 6);
-        pTX->Packet.u.IP_Frame.Header.Lenght     = htons(Size + TCP_ACK_IP_PACKET_SIZE);
+        pTX->Packet.u.IP_Frame.Header.Lengthght   = htons(Size + TCP_ACK_IP_PACKET_SIZE);
         pTX->Packet.u.IP_Frame.Header.Protocol = IP_PROTOCOL_TCP;
         IP_PutHeader(pTX);
     }
@@ -397,7 +388,6 @@ void NetTCP::Push(SocketInfo_t* pSocket, IP_PacketMsg_t* pRX)
 {
     uint8_t DataOffset;
     size_t  Size;
-    uint8_t Error;
 
     DataOffset = (uint8_t)((pRX->Packet.u.TCP_Frame.Header.Offset & 0xF0) >> 2) + (uint8_t)sizeof(IP_IP_Frame_t);
     Size       = pRX->PacketSize - size_t(DataOffset);
@@ -435,24 +425,24 @@ void NetTCP::Push(SocketInfo_t* pSocket, IP_PacketMsg_t* pRX)
 
 
 /*
-                                DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d listening state\n", pSocket->ClientIP.by.by0,
-                                                                                                         pSocket->ClientIP.by.by1,
-                                                                                                         pSocket->ClientIP.by.by2,
-                                                                                                         pSocket->ClientIP.by.by3,
-                                                                                                         ntohs(pSocket->wClientPort),
-                                                                                                         ntohs(pPort->wNumber));
+                                DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d listening state\n", uint8_t(pSocket->ClientIP >> 24),
+                                                                                                         uint8_t(pSocket->ClientIP >> 16),
+                                                                                                         uint8_t(pSocket->ClientIP >> 8),
+                                                                                                         uint8_t(pSocket->ClientIP),
+                                                                                                         ntohs(pSocket->ClientPort),
+                                                                                                         ntohs(pPort->Number));
 
-        DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d Negotiating state\n", pSocket->ClientIP.by.by0,
-                                                                                   pSocket->ClientIP.by.by1,
-                                                                                   pSocket->ClientIP.by.by2,
-                                                                                   pSocket->ClientIP.by.by3,
-                                                                                   ntohs(pSocket->wClientPort),
-                                                                                   ntohs(pPort->wNumber));
+        DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d Negotiating state\n", uint8_t(pSocket->ClientIP >> 24),
+                                                                                   uint8_t(pSocket->ClientIP >> 16),
+                                                                                   uint8_t(pSocket->ClientIP >> 8),
+                                                                                   uint8_t(pSocket->ClientIP),
+                                                                                   ntohs(pSocket->ClientPort),,
+                                                                                   ntohs(pPort->Number));
 
-//                  DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d Receiving request state\n", pSocket->ClientIP.by.by0,
-//                                                                                                           pSocket->ClientIP.by.by1,
-//                                                                                                           pSocket->ClientIP.by.by2,
-//                                                                                                           pSocket->ClientIP.by.by3,
-//                                                                                                           ntohs(pSocket->wClientPort),
-//                                                                                                           ntohs(pPort->wNumber));
+//                  DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d Receiving request state\n", uint8_t(pSocket->ClientIP >> 24),
+//                                                                                                   uint8_t(pSocket->ClientIP >> 16),
+//                                                                                                   uint8_t(pSocket->ClientIP >> 8),
+//                                                                                                   uint8_t(pSocket->ClientIP),
+//                                                                                                   ntohs(pSocket->wClientPort),
+//                                                                                                   ntohs(pPort->wNumber));
 */

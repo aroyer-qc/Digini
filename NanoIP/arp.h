@@ -46,7 +46,7 @@
 
 struct  ARP_TableEntry_t
 {
-    uint32_t                IP_Addr;
+    IP_Address_t            IP_Address;
     IP_EthernetAddress_t    Ethernet;
     uint8_t                 Time;
 };
@@ -67,11 +67,11 @@ class NetARP
         
     private:
     
-        void                UpdateEntry				(uint32_t IP_Addr, IP_EthernetAddress_t* pEthAdr);
+        void                UpdateEntry				(IP_Address_t IP_Address, IP_EthernetAddress_t* pEthAdress);
         void                TimerCallBack	    	(nOS_Timer * pTimer, void* pArg);           // typedef void(*nOS_TimerCallback)(nOS_Timer*,void*);
 
 
-        uint32_t            m_IP_Addr;
+        IP_Address_t        m_IP_Address;
         ARP_TableEntry_t    m_TableEntry[IP_ARP_TABLE_SIZE];
         uint8_t             m_Time;
         nOS_Timer*          m_pTimer;                               // Pointer on the OS timer

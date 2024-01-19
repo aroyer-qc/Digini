@@ -37,18 +37,18 @@
 //  |_______|____________________________________________________|      Pseudo Header
 // 	|  32   |    			Destination Address                  |
 //  |_______|____________________________________________________| 
-// 	|  64   | Zero's   	| Protocol 11h |      UDP Lenght         |
+// 	|  64   | Zero's   	| Protocol 11h |      UDP Lengthght         |
 //  |_______|___________|______________|_________________________| __________________________
 // 	|  96   |        Source Port       |    Destination Port     |
 //  |_______|__________________________|_________________________|       Real Header
-// 	|  128  |          Lenght          |       Checksum          |
+// 	|  128  |          Lengthght          |       Checksum          |
 //  |_______|__________________________|_________________________|___________________________ 
 // 	|       |                                                    |
 // 	|  160  |                       Data                         |           Data
 //  |_______|____________________________________________________| 
 // 
 // 
-//  The UDP Lenght field is the lenght of the Pseudo UDP header and Real Header + data
+//  The UDP Lengthght field is the lenght of the Pseudo UDP header and Real Header + data
 // 
 //
 //*************************************************************************************************

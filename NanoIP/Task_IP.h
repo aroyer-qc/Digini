@@ -68,13 +68,12 @@ typedef     IP_Address_t       uint32_t
 typedef union
 {
     uint8_t  ba[6];
-} MAC_t;
+} MAC_Address_t;
 
 typedef union
 {
     struct
     {
-        int16_t   IP_IsValid       :1;
         int16_t   DNS_IP_Found     :1;
         int16_t   SNTP_Fail        :1;
         int16_t   bFree03          :1;
@@ -96,42 +95,8 @@ typedef union
 } IP_StatusFlag_t;
 
 //-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
+// Class
 //-------------------------------------------------------------------------------------------------
-
-/*
-TASK_IP_EXTERN  IP_Flag_t               IP_Flag;                                // Configuration of IP Stack
-TASK_IP_EXTERN  IP_StatusFlag_t         IP_Status;                              // Dynamic Flag od IP Stack
-TASK_IP_EXTERN  MAC_t                   IP_MAC;                                 // MAC Address of the module
-TASK_IP_EXTERN  uint32_t                IP_StaticGatewayIP;                     // Gateway IP Address
-TASK_IP_EXTERN  uint32_t                IP_StaticSubnetMask;                    // Subnet Mask
-TASK_IP_EXTERN  uint32_t                IP_StaticIP;                            // Static IP Address
-TASK_IP_EXTERN  uint32_t                IP_StaticDNS_IP;                        // Static DNS Server IP Address
-TASK_IP_EXTERN  uint32_t                IP_DHCP_GatewayIP;                      // Gateway IP Address from server
-TASK_IP_EXTERN  uint32_t                IP_DHCP_SubnetMask;                     // Subnet Mask from server
-TASK_IP_EXTERN  uint32_t                IP_DHCP_IP;                             // IP Address from server
-TASK_IP_EXTERN  uint32_t                IP_DHCP_DNS_IP;                         // DNS Server IP Address from server
-TASK_IP_EXTERN  uint8_t                 IP_TX_SocketMemorySize;               // TX Socket Memory Configuration for all 3 Sockets
-TASK_IP_EXTERN  uint8_t                 IP_RX_SocketMemorySize;               // RX Socket Memory Configuration for all 3 Sockets
-TASK_IP_EXTERN  uint8_t                 IP_NTP_Server_1[IP_MAX_URL_SIZE];
-TASK_IP_EXTERN  uint8_t                 IP_NTP_Server_2[IP_MAX_URL_SIZE];
-TASK_IP_EXTERN  uint8_t                 IP_SOAP_Server_1[IP_MAX_URL_SIZE];
-TASK_IP_EXTERN  uint8_t                 IP_SOAP_Server_2[IP_MAX_URL_SIZE];
-*/
-
-//-------------------------------------------------------------------------------------------------
-// Function prototype(s)
-//-------------------------------------------------------------------------------------------------
-
-/*
-void       IP_Init          (void);
-uint32_t   IP_GetDNS_IP     (void);
-uint32_t   IP_GetHost_IP    (void);
-void       TaskIP           (void* pArg);
-uint8_t*   IP_ToAscii       (uint32_t IP);
-int32_t    IP_AsciiToIP     (uint8_t* pBuffer);
-uint8_t*   IP_ProcessURL    (uint8_t* pBuffer, uint32_t* pIP, uint16_t* pPort);
-*/
 
 class IP_Manager
 {
@@ -148,9 +113,13 @@ class IP_Manager
         
     private:    
  
+    
+        nOS_Queue           m_MsgQueue;
+        uint8_t             m_GetQueueArray[1024];                  // need to define this it was lost somewhere
+            
         IP_Flag_t           m_Flag;                                 // Configuration of IP Stack
         IP_StatusFlag_t     m_Status;                               // Dynamic Flag od IP Stack
-        MAC_t               m_MAC;                                  // MAC Address of the module
+        MAC_Address_t       m_MAC;                                  // MAC Address of the module
         IP_Address_t        m_StaticGatewayIP;                      // Gateway IP Address
         IP_Address_t        m_StaticSubnetMask;                     // Subnet Mask
         IP_Address_t        m_StaticIP;                             // Static IP Address
@@ -165,6 +134,9 @@ class IP_Manager
         uint8_t             m_NTP_Server_2[IP_MAX_URL_SIZE];
         uint8_t             m_SOAP_Server_1[IP_MAX_URL_SIZE];       // (Simple Object Access Protocol) Messaging protocol specification for exchanging structured information.
         uint8_t             m_SOAP_Server_2[IP_MAX_URL_SIZE];
+        
+        
+        bool               m_IP_IsValid;        // maybe this should be move to DHCP
 };
 
 //-------------------------------------------------------------------------------------------------

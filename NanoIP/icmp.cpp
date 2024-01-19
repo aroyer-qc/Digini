@@ -68,13 +68,12 @@ void ICMP_Initialize(void)
 //-------------------------------------------------------------------------------------------------
 IP_PacketMsg_t* ICMP_Process(IP_PacketMsg_t* pRX)
 {
-	uint8_t 		  	 	Error;
 	IP_PacketMsg_t*  		pTX  		= nullptr;
 	IP_ICMP_Frame_t* 		pICMP;
 	IP_EthernetHeader_t* 	pETH;
 	uint16_t                Count;
 
-	if(IP_Status.b.IP_IsValid == true)
+	if(pIP->GetIP_isItValid() == true)
 	{
 		if(pRX->PacketSize < sizeof(IP_ICMP_Frame_t))
 		{
@@ -89,16 +88,16 @@ IP_PacketMsg_t* ICMP_Process(IP_PacketMsg_t* pRX)
 				pICMP = &pTX->Packet.u.ICMP_Frame;
 				pETH  = &pTX->Packet.u.ETH_Header;
 				IP_CopyPacketMessage(pTX, pRX);											// copy the entire IP payload From RX to TX buffer
-				Count  = htons(pICMP->IP_Header.Lenght);
+				Count  = htons(pICMP->IP_Header.Lengthght);
 				Count -= (int16_t)sizeof(IP_IP_Header_t);
-				pICMP->Header.Type           = ICMP_TYPE_PING_REPLY;
-				pICMP->Header.Checksum       = 0;
+				pICMP->Header.Type         = ICMP_TYPE_PING_REPLY;
+				pICMP->Header.Checksum     = 0;// TOD fix this
 				pICMP->Header.Checksum	   = IP_CalculateChecksum(&pICMP->Header, Count);
 	
 				memcpy(pETH->Dst.Addr, pETH->Src.Addr, 6);						        // Put Mac header
-				pICMP->IP_Header.TimeToLive  = IP_TIME_TO_LIVE;
-				pICMP->IP_Header.DstIP_Addr = pICMP->IP_Header.SrcIP_Addr;
-				pICMP->IP_Header.SrcIP_Addr = IP_HostAddr;
+				pICMP->IP_Header.TimeToLive    = IP_TIME_TO_LIVE;
+				pICMP->IP_Header.DstIP_Address = pICMP->IP_Header.SrcIP_Address;
+				pICMP->IP_Header.SrcIP_Address = IP_HostAddr;
 				IP_PutHeader(pTX);
 				break;
 		}
@@ -107,4 +106,3 @@ IP_PacketMsg_t* ICMP_Process(IP_PacketMsg_t* pRX)
 }
 
 //-------------------------------------------------------------------------------------------------
-

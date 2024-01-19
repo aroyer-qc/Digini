@@ -55,10 +55,10 @@
 #define SNTP_MSG_ACTION_TIME_OUT            0
 
 //-------------------------------------------------------------------------------------------------
-// Type definition(s) and structure(s)
+// Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef struct
+struct SNTP_Msg_t
 {
     union
     {
@@ -87,37 +87,30 @@ typedef struct
     uint32_t   TxmTimeStampSecond;
     uint32_t   TxmTimeStampFraction;
     uint8_t    Data[SNTP_OPTIONS_IN_PACKET_SIZE];
-} SNTP_Msg_t;
+};
 
 //-------------------------------------------------------------------------------------------------
-// Global variable(s), constant(s) and Private(s)
+// class
 //-------------------------------------------------------------------------------------------------
 
-move private to c or cpp file
+class NetSNTP
+{
+    public:
+   
+        void            Initialize      (void* pQ);
+        uint32_t        Request         (SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError);
+    
+    private:
 
-#ifdef SNTP_PRIVATE
-static      uint32_t        SNTP_Seconds;
-static      OS_EVENT*       SNTP_pQ;
-#endif
+        void            Reply           (SOCKET SocketNumber);
 
-SNTP_EXTERN uint8_t         SNTP_byOST_Resync;
 
-//-------------------------------------------------------------------------------------------------
-// Private Function prototype(s)
-//-------------------------------------------------------------------------------------------------
+    nOS_Timer           m_pResync;
+    TickCount_t         m_Seconds;
+    OS_EVENT*           m_pQ;
 
-#ifdef SNTP_PRIVATE
-
-void   SNTP_Reply    (SOCKET SocketNumber);
-
-#endif
-
-//-------------------------------------------------------------------------------------------------
-// Function prototype(s)
-//-------------------------------------------------------------------------------------------------
-
-void        SNTP_Init       (void* pQ);
-uint32_t   SNTP_Request     (SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError);
+    
+}
 
 //-------------------------------------------------------------------------------------------------
 

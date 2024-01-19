@@ -60,21 +60,21 @@ void IP_Manager::Run(void)
 
     for(;;)
     {
-        if(pDHCP->Process(nullptr) == true)                           // If enable, an IP must be valid to continue.
-        {                                                           // If not enable it continue anyway
-            nOS_Yield();
+        nOS_Yield();
 
+        if(pDHCP->Process(nullptr) == true)                         // If enable, an IP must be valid to continue.
+        {                                                           // If not enable it continue anyway
 			pRX = CS8900_Poll();									// Network driver read an entire IP packet into the RX Buffer
 
 			if(pRX != nullptr)										// Check if a packet is present
 			{
-				switch(pRX->Packet.u.ETH_Header.wType)				// Process depending on what kind of packet we have received.
+				switch(pRX->Packet.u.ETH_Header.Type)				// Process depending on what kind of packet we have received.
 				{
 					case IP_ETHERNET_TYPE_IP:
 					{
 						pARP->ProcessIP(pRX);
 						pTX = IP_Process(pRX);
-						pARP->ProcessOut(pTX);               			// If data are to be sent back, then send the data
+						pARP->ProcessOut(pTX);               		// If data are to be sent back, then send the data
 						break;
 					}
 
@@ -88,7 +88,8 @@ void IP_Manager::Run(void)
 				pMemory->Free((void**)&pRX);
 			}
 
-			if((pMsg = OSQAccept(Queue.Names.pTaskIP, &Error)) != nullptr)// nOS Q
+			/* if((pMsg = OSQAccept(Queue.Names.pTaskIP, &Error)) != nullptr)// nOS Q */
+            if(nOS_QueueRead(&m_MsgQueue, pMsg, NOS_WAIT_INFINITE) == NOS_OK);
             {
                 switch(pMsg->byType)
                 {
@@ -173,9 +174,13 @@ uint32_t IP_Manager::GetHost_IP(void)
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::Initialize(void)
 {
-    IP_Status.b.IP_IsValid      = false;
-    IP_Status.b.DNS_IP_Found    = false;
+    nOS_Error = Error;
     
+    m_IP_IsValid = false;
+    IP_Status.b.DNS_IP_Found    = false;
+ 
+    Error = nOS_QueueCreate(&m_MsgQueue, &m_GetQueueArray[0], 128, 1024 / 128);     // to be revise to reality... need real number
+ 
     //AppTaskStart();
 
 
@@ -193,15 +198,15 @@ void IP_Manager::Initialize(void)
 //
 //  Name:           ToAscii
 //
-//  Parameter(s):   uint32_t
+//  Parameter(s):   IP_Address_t        IP_Address       
 //  Return:         uint8_t*
 //
 //  Description:    Put IP in a string following standard format EX. 192.168.1.100
 //
-//  Note(s):        Don't forget to MemPut the pointer after use
+//  Note(s):        Don't forget to pMemory->Free() the pointer after use
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t* IP_Manager::ToAscii(uint32_t IP)
+uint8_t* IP_Manager::ToAscii(IP_Address_t IP_Address)
 {
     uint8_t*   pBuffer;
 
@@ -209,10 +214,10 @@ uint8_t* IP_Manager::ToAscii(uint32_t IP)
 
     if(pBuffer != nullptr)
     {
-        LIB_sprintf(pBuffer, "%d.%d.%d.%d", ((uint32_t*)(uint32_t)&IP)->by.by0,
-                                            ((uint32_t*)(uint32_t)&IP)->by.by1,
-                                            ((uint32_t*)(uint32_t)&IP)->by.by2,
-                                            ((uint32_t*)(uint32_t)&IP)->by.by3);
+        snprintf(pBuffer, IP_ASCII_IP_ADDRESS_SIZE, "%d.%d.%d.%d", uint8_t(IP_Address >> 24),
+                                                                   uint8_t(IP_Address >> 16),
+                                                                   uint8_t(IP_Address >> 8),
+                                                                   uint8_t(IP_Address);
     }
     return pBuffer;
 }
@@ -251,7 +256,7 @@ IP_Address_t IP_Manager::AsciiToIP(uint8_t* pBuffer)
 
     if(IP_Status.b.Status == true)                                                  // Yes it contain only number and dot
     {
-        if((Count >= 7) && (Count <= 15))                                       // Check lenght
+        if((Count >= 7) && (Count <= 15))                                           // Check lenght
         {
             Count    = 4;
             DotCount = 0;

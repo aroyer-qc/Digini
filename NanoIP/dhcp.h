@@ -80,7 +80,7 @@
 #define DHCP_PUT_OPTION_REQUESTED_CLIENT_IP     (uint8_t)0x10
 #define DHCP_PUT_OPTION_SERVER_IP               (uint8_t)0x20
 
-#define DHCP_OST_TIMEOUT                        10              // 10 second before a retry at DHCP
+#define DHCP_TIMEOUT                            10              // 10 second before a retry at DHCP
 
 // Action Type for struct MSG_t for MSG_TYPE_DHCP_MANAGEMENT
 #define DHCP_MSG_ACTION_LEASE_RENEWAL           1
@@ -167,10 +167,13 @@ class NetDHCP
 
         uint32_t                m_Xid;
         DHCP_Options_t          m_Options;
-        uint8_t                 m_OST_Discover    = TIME_TIMER_nullptr;
-        uint8_t                 m_OST_T1_Lease    = TIME_TIMER_nullptr;
-        uint8_t                 m_OST_T2_Rebind   = TIME_TIMER_nullptr;
-        OS_EVENT*               m_pQ;
+        
+        // One shot timer for DHCP transaction time out
+        nOS_Timer               m_TimerDiscover;
+        nOS_Timer               m_TimerT1_Lease;
+        nOS_Timer               m_TimerT2_Rebind;
+        
+        nOS_Queue               m_pQ; ??
         bool                    m_Mode;
         DHCP_State_e            m_State;
 

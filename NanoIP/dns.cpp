@@ -78,7 +78,7 @@
 //-------------------------------------------------------------------------------------------------
 uint32_t NetDNS::Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pError)
 {
-    size_t       Len;
+    size_t       Length;
     uint16_t     Port;
     DNS_Msg_t*   pTX;
     uint8_t*     pQuery;
@@ -113,18 +113,18 @@ uint32_t NetDNS::Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pErro
 
                     if(pStr != nullptr)                                         // Get size of the segment
                     {
-                        Len = (size_t)(pStr - pDomainName);
+                        Length = (size_t)(pStr - pDomainName);
                     }
                     else
                     {
-                        Len = (size_t)LIB_strlen(pDomainName);
+                        Length = (size_t)LIB_strlen(pDomainName);
                     }
                     
-                    *pQuery = Len;                                              // Put size of this segment in DNS message
+                    *pQuery = Length;                                              // Put size of this segment in DNS message
                     pQuery++;
-                    memcpy(pQuery, pDomainName, Len);                           // Copy segment in DNS message
-                    pDomainName += (Len + 1);
-                    pQuery += (uint32_t)Len;
+                    memcpy(pQuery, pDomainName, Length);                           // Copy segment in DNS message
+                    pDomainName += (Length + 1);
+                    pQuery += (uint32_t)Length;
                 }
                 while(pStr != nullptr);
 
@@ -134,9 +134,9 @@ uint32_t NetDNS::Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pErro
                 *((uint16_t*)pQuery) = htons(0x0001);                           // QCLASS
                 pQuery += 2;
 
-                Len = (uint16_t)(pQuery - &pTX->Data[0]);
+                Length = (uint16_t)(pQuery - &pTX->Data[0]);
                 
-                if(SOCK_SendTo(SocketNumber, (uint8_t*)pTX, (uint16_t)(sizeof(DNS_Msg_t) - (500 - Len)), IP_GetDNS_IP(), DNS_PORT) != 0)
+                if(SOCK_SendTo(SocketNumber, (uint8_t*)pTX, (uint16_t)(sizeof(DNS_Msg_t) - (500 - Length)), IP_GetDNS_IP(), DNS_PORT) != 0)
                 {
                     IP_Address = DNS_Response(SocketNumber);
                 }
@@ -144,7 +144,8 @@ uint32_t NetDNS::Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pErro
                 {
                     *pError = ERR_CANNOT_SEND_TO_SOCKET;
                 }
-                MemPut(&pTX);
+                
+                pMemory->Free((void**)&pTX);
                 SOCK_Close(SocketNumber);
             }
             else
@@ -181,52 +182,52 @@ uint32_t NetDNS::Response(SOCKET SocketNumber)
 {
     DNS_Msg_t*   pRX             = nullptr;
     uint8_t*     pAnswer;
-    IP_Address_t ServerAddr;
+    IP_Address_t ServerAddress;
     uint16_t     ServerPort;
     uint8_t      Error;
     IP_Address_t IP_Address = DNS_NO_IP;
-    size_t     Len;
+    size_t       Length;
 
 
     do
     {
         if(SOCK_GetRX_RSR(SocketNumber) > 0)
         {
-            pRX = (DNS_Msg_t*)pMemory->MemGetAndClear(sizeof(DNS_Msg_t));
+            pRX = (DNS_Msg_t*)pMemory->AllocAndClear(sizeof(DNS_Msg_t));
             
             if(pRX != nullptr)
             {
                 pAnswer = (uint8_t*)&pRX->Data[0];
-                SOCK_ReceivedFrom(SocketNumber, (uint8_t*)pRX, sizeof(DNS_Msg_t), &ServerAddr, &ServerPort);
+                SOCK_ReceivedFrom(SocketNumber, (uint8_t*)pRX, sizeof(DNS_Msg_t), &ServerAddress, &ServerPort);
 
 //                if(DNS_wID == pRX->wID)
                 {
-                    pRX->QD_Count = ntohs(pRX->QD_Count);           // bring count to host endian
-                    do                                              // Skip 'Question' block
+                    pRX->QD_Count = ntohs(pRX->QD_Count);               // bring count to host endian
+                    do                                                  // Skip 'Question' block
                     {
-                        Len = LIB_strlen(pAnswer);                  // skip domain name
-                        pAnswer += (Len + 5);                       // skip 'end of this name' + QTYPE + QCLASS
-                        pRX->QD_Count--;                            // decrement the query count
+                        Length = LIB_strlen(pAnswer);                   // skip domain name
+                        pAnswer += (Length + 5);                        // skip 'end of this name' + QTYPE + QCLASS
+                        pRX->QD_Count--;                                // decrement the query count
                     }
                     while(pRX->QD_Count != 0);
 
                     IP_Status.b.DNS_IP_Found = NO;
-
-                    pRX->AN_Count = ntohs(pRX->AN_Count);           // bring count to host endian
-                    do                                              // Now parse the 'Answer' block for the first IP (type A,  class IN)
+                    pRX->AN_Count = ntohs(pRX->AN_Count);               // bring count to host endian
+                    
+                    do                                                  // Now parse the 'Answer' block for the first IP (type A,  class IN)
                     {
                         // Skip Domain Name
                         do
                         {
                             if(*pAnswer != 0xC0)
                             {
-                                Len      = *pAnswer;                // Get Size of the string segment
-                                pAnswer += (Len + 1);               // Skip to next segment, if any
+                                Length      = *pAnswer;                // Get Size of the string segment
+                                pAnswer += (Length + 1);               // Skip to next segment, if any
                             }
                         }
                         while((*pAnswer != 0x00) && (*pAnswer != 0xC0));
 
-                        if((*pAnswer & 0xC0) == 0xC0)               // pointer is used, so skip 2
+                        if((*pAnswer & 0xC0) == 0xC0)                   // Pointer is used, so skip 2
                         {
                             pAnswer += 2;
                         }
@@ -246,18 +247,18 @@ uint32_t NetDNS::Response(SOCKET SocketNumber)
                             pAnswer += 4;
                         }
 
-                        pAnswer += 4;                                   // Skip the TTL field
-                        Len      = ntohs(*((uint16_t*)pAnswer));        // get the lenght of the data field
+                        pAnswer += 4;                                       // Skip the TTL field
+                        Length      = ntohs(*((uint16_t*)pAnswer));         // Get the lenght of the data field
                         pAnswer += 2;
 
-                        if((Len == 4) && (IP_Status.b.DNS_IP_Found == true))
+                        if((Length == 4) && (IP_Status.b.DNS_IP_Found == true))
                         {
                             IP = ntohl(*((uint32_t*)pAnswer));
                         }
                         else
                         {
-                            pAnswer += Len;                             // Skip RDATA field
-                            pRX->AN_Count--;                            // decrement the answer count
+                            pAnswer += Length;                              // Skip RDATA field
+                            pRX->AN_Count--;                                // Decrement the answer count
                         }
                     }
                     while((pRX->AN_Count != 0) && (IP_Status.b.DNS_IP_Found == false));

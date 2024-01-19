@@ -64,10 +64,10 @@ void        SOCK_Close          	(SOCKET SocketNumber);                         
 bool        SOCK_Listen         	(SOCKET SocketNumber);                                                                              // Establish TCP connection (Passive connection)
 bool        SOCK_Connect        	(SOCKET SocketNumber, uint32_t DstAddr, uint16_t DstPort);                                          // Establish TCP connection (Active connection)
 void        SOCK_Disconnect     	(SOCKET SocketNumber);                                                                              // Disconnect the connection
-uint16_t    SOCK_Send           	(SOCKET SocketNumber, const uint8_t* pData, size_t Len);                                            // Send data (TCP)
-uint16_t    SOCK_Received       	(SOCKET SocketNumber, uint8_t* pData, size_t Len);                                                  // Receive data (TCP)
-uint16_t    SOCK_SendTo         	(SOCKET SocketNumber, const uint8_t* pData, size_t Len, uint32_t PeerAddr, uint16_t PeerPort);      // Send data (UDP/IP RAW)
-uint16_t    SOCK_ReceivedFrom   	(SOCKET SocketNumber, uint8_t* pData, size_t Len, uint32_t* pPeerAddr, uint16_t* pPeerPort);        // Receive data (UDP/IP RAW)
+uint16_t    SOCK_Send           	(SOCKET SocketNumber, const uint8_t* pData, size_t Length);                                            // Send data (TCP)
+uint16_t    SOCK_Received       	(SOCKET SocketNumber, uint8_t* pData, size_t Length);                                                  // Receive data (TCP)
+uint16_t    SOCK_SendTo         	(SOCKET SocketNumber, const uint8_t* pData, size_t Length, uint32_t PeerAddr, uint16_t PeerPort);      // Send data (UDP/IP RAW)
+uint16_t    SOCK_ReceivedFrom   	(SOCKET SocketNumber, uint8_t* pData, size_t Length, uint32_t* pPeerAddr, uint16_t* pPeerPort);        // Receive data (UDP/IP RAW)
 size_t      SOCK_GetTX_BufferSize	(SOCKET SocketNumber);
 size_t      SOCK_GetRX_BufferSize  	(SOCKET SocketNumber);
 

@@ -26,7 +26,7 @@
 
 //------ Note(s) ----------------------------------------------------------------------------------
 //
-//  SNTP - Simple Network Transport Protocol
+//  SNTP - Simple Network Time Protocol
 //
 //       <Message Format>
 //
@@ -63,35 +63,46 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define SNTP_GLOBAL
 #include <ip.h>
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           SNTP_Init
+//  Name:          Initialize
 //
-//  Parameter(s):   OS_EVENT* pQ
+//  Parameter(s):   OS_EVENT*   pQ
 //  Return:         void
 //
 //  Description:    Initialize a timer for resync with server
 //
 //-------------------------------------------------------------------------------------------------
-void SNTP_Init(void* pQ)
+void NetSNTP::Initialize(void* pQ)
 {
-    SNTP_pQ           = (OS_EVENT*)pQ;
+    nOS_Error Error;
+
+    m_pQ           = (OS_EVENT*)pQ;
     SNTP_byOST_Resync = TIME_TIMER_nullptr;
 
+    
+    Error = nOS_TimerCreate(&m_Resync,
+                            nullptr,
+                            nullptr,
+                            (int32_t)1,                               // first timeout at 1 second
+                            NOS_TIMER_ONE_SHOT);
+
 // need to implement a timer Class or use OS one
-    TIMER_Start(&SNTP_byOST_Resync,
-                (int32_t)1,                               // first timeout at 1 second
-                SNTP_pQ,
+/*
+    TIMER_Start(&m_OST_Resync,
+                
+                m_pQ,
                 IP_MSG_TYPE_SNTP_MANAGEMENT,
                 SNTP_MSG_ACTION_TIME_OUT);
+*/
 }
+
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           SNTP_Request
+//  Name:           Request
 //
 //  Parameter(s):       SOCKET  SocketNumber
 //                      uint8_t*   pDomainName1    Domain Name of the NTP Server 1
@@ -102,24 +113,24 @@ void SNTP_Init(void* pQ)
 //  Description:    Send the SNTP request
 //
 //-------------------------------------------------------------------------------------------------
-int32_t SNTP_Request(SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError)
+int32_t NetSNTP::Request(SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError)
 {
-    uint16_t    Port;
-    SNTP_Msg_t* pTX;
-    uint8_t     Error     = ERR_NONE;
-    uint32_t    IP        = DNS_NO_IP;
+    uint16_t     Port;
+    SNTP_Msg_t*  pTX;
+    uint8_t      Error     = ERR_NONE;
+    IP_Address_t IP        = DNS_NO_IP;
 
 
-    IP = DNS_Query(SocketNumber, pDomainName1, &Error);                         // Try NTP Server 1
+    IP = pDNS->Query(SocketNumber, pDomainName1, &Error);                         // Try NTP Server 1
     
     if(IP == DNS_NO_IP)
     {
-        IP = DNS_Query(SocketNumber, pDomainName2, &Error);                     // if no IP Try NTP Server 2
+        IP = pDNS->Query(SocketNumber, pDomainName2, &Error);                     // if no IP Try NTP Server 2
     }
 
     if(IP != DNS_NO_IP)                                                         // Continue if we have an IP
     {
-        pTX = MemGetAndClear(sizeof(DHCP_Msg_t), &Error);
+        pTX = (SNTP_Msg_t*)pMemory->AllocAndClear(sizeof(DHCP_Msg_t));
 
         if(pTX != nullptr)
         {
@@ -128,20 +139,21 @@ int32_t SNTP_Request(SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pDomai
             if(SOCK_Socket(SocketNumber, Sn_MR_UDP, Port, 0) != 0)
             {
                 // Fill up standard info for SNTP Packet
-                pTX->Flags_1.s.MODE        = SNTP_MODE_CLIENT;
-                pTX->Flags_1.s.VN          = SNTP_VERSION_4;
-                pTX->dwTxmTimeStampSecond  = htonl(SNTP_TIME_START);
+                pTX->Flags_1.s.MODE      = SNTP_MODE_CLIENT;
+                pTX->Flags_1.s.VN        = SNTP_VERSION_4;
+                pTX->TxmTimeStampSecond  = htonl(SNTP_TIME_START);
+                m_Seconds                = TIME_GetSecondTicks();
 
-                SNTP_Seconds             = TIME_GetSecondTicks();
-                if(SOCK_SendTo(SocketNumber, (uint8_t*)pTX, (int16_t)(sizeof(SNTP_Msg_t) - SNTP_OPTIONS_IN_PACKET_SIZE), IP, SNTP_PORT) != 0)
+                if(SOCK_SendTo(SocketNumber, (uint8_t*)pTX, sizeof(SNTP_Msg_t) - SNTP_OPTIONS_IN_PACKET_SIZE, IP, SNTP_PORT) != 0)
                 {
-                    SNTP_Reply(SocketNumber);
+                    Reply(SocketNumber);
                 }
                 else
                 {
                     *pError = ERR_CANNOT_SEND_TO_SOCKET;
                 }
-                MemPut(&pTX);
+                
+                pMemory->Free((void**)&pTX);
                 SOCK_Close(SocketNumber);
             }
             else
@@ -159,10 +171,10 @@ int32_t SNTP_Request(SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pDomai
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           SNTP_Reply
+//  Name:           Reply
 //
-//  Parameter(s):   void
-//  Return:         uint32_t   IP           Resolve IP
+//  Parameter(s):   SOCKET     SocketNumbe
+//  Return:         void
 //
 //  Description:    This Function process the answer to the DNS Request
 //
@@ -172,19 +184,17 @@ int32_t SNTP_Request(SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pDomai
 void SNTP_Reply(SOCKET SocketNumber)
 {
     SNTP_Msg_t*     pRX             = nullptr;
-    uint32_t        ServerAddr;
+    IP_Address_t    ServerAddr;
     uint16_t        ServerPort;
-    uint8_t         Error;
-    size_t          Len;
-    uint32_t        Second;
+    size_t          Length;
+    TickCount_t     Second;
+    nOS_Error       Error;
 
-    OSTimeDly(300);  // why
-    
     do
     {
         if(SOCK_GetRX_RSR(SocketNumber) > 0)
         {
-            pRX = MemGetAndClear(sizeof(SNTP_Msg_t), &Error);
+            pRX = pMemory->AllocAndClear(sizeof(SNTP_Msg_t));
             if(pRX != nullptr)
             {
                 SOCK_ReceivedFrom(SocketNumber, (uint8_t*)pRX, sizeof(DNS_Msg_t), &ServerAddr, &ServerPort);
@@ -192,8 +202,8 @@ void SNTP_Reply(SOCKET SocketNumber)
                 pRX->OriTimeStampSecond  = ntohl(pRX->OriTimeStampSecond);
                 pRX->RcvTimeStampSecond  = ntohl(pRX->RcvTimeStampSecond);
                 pRX->TxmTimeStampSecond  = ntohl(pRX->TxmTimeStampSecond);
-                SNTP_Seconds             = TIME_GetSecondTicks() - SNTP_Seconds;
-                pRX->TxmTimeStampSecond += (SNTP_Seconds / 2);
+                m_Seconds                = GeTick() - m_Seconds;
+                pRX->TxmTimeStampSecond += (m_Seconds / 2);
                 TIME_LocalTime(pRX->RcvTimeStampSecond - SNTP_UNIX_START);
 
                 // Initialize timer resync a 1:00:00 every morning night
@@ -201,17 +211,26 @@ void SNTP_Reply(SOCKET SocketNumber)
                 Second  = TIME_SECONDS_PER_DAY - Second;    // Remove this elapse time from number of second in a day
                 Second += TIME_SECONDS_PER_HOUR;            // Add to it one hour
 
-                TIMER_Start(&SNTP_OST_Resync,
+                
+                Error = nOS_TimerCreate(&m_TimerResync,
+                            EscapeCallback,
+                            this,
+                            SNTP_MSG_ACTION_TIME_OUT,
+                            NOS_TIMER_ONE_SHOT);  //??
+
+                /*
+                TIMER_Start(&m_TimerResync,
                             Second,
-                            SNTP_pQ,
+                            m_pQ,
                             IP_MSG_TYPE_SNTP_MANAGEMENT,
                             SNTP_MSG_ACTION_TIME_OUT);
+                            */
             }
         }
     }
     while(pRX == nullptr);
 
-    MemPut(&pRX);
+    pMemory->Free((void**)&pRX);
 }
 
 //-------------------------------------------------------------------------------------------------

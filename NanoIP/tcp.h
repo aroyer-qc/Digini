@@ -61,8 +61,23 @@
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-void                TCP_Init                        (void);
-IP_PacketMsg_t*     TCP_Process                     (IP_PacketMsg_t* pRX);
+class NetTCP
+{
+    public:
+
+        void                Initialize          (void);
+        IP_PacketMsg_t*     Process             (IP_PacketMsg_t* pRX);
+
+    private:
+
+        IP_PacketMsg_t*     Ack                 (uint8_t Flag, size_t Size);
+        void                Push                (IP_PacketMsg_t* pRX);
+        void                PutHeader           (IP_PacketMsg_t* pTX, size_t PacketSize);
+        IP_PacketMsg_t*     Send                (uint8_t* pBuffer, size_t Size);
+        
+        
+        SocketInfo_t*       m_pSocketInfo;
+};
 
 //-------------------------------------------------------------------------------------------------
 

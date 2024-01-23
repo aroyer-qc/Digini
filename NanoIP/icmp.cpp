@@ -83,23 +83,26 @@ IP_PacketMsg_t* ICMP_Process(IP_PacketMsg_t* pRX)
 		switch(pRX->Packet.u.ICMP_Frame.Header.byType)
 		{
 			case ICMP_TYPE_PING_REQUEST:
-	
-				pTX = (IP_PacketMsg_t*)pMemory->AllocAndClear(pRX->PacketSize);					    // Get memory for TX packet
+            {
+				pTX   = (IP_PacketMsg_t*)pMemory->AllocAndClear(pRX->PacketSize);					    // Get memory for TX packet
 				pICMP = &pTX->Packet.u.ICMP_Frame;
 				pETH  = &pTX->Packet.u.ETH_Header;
-				IP_CopyPacketMessage(pTX, pRX);											// copy the entire IP payload From RX to TX buffer
-				Count  = htons(pICMP->IP_Header.Lengthght);
+				IP_CopyPacketMessage(pTX, pRX);											                // Copy the entire IP payload From RX to TX buffer
+				Count  = htons(pICMP->IP_Header.Length);
 				Count -= (int16_t)sizeof(IP_IP_Header_t);
-				pICMP->Header.Type         = ICMP_TYPE_PING_REPLY;
-				pICMP->Header.Checksum     = 0;// TOD fix this
-				pICMP->Header.Checksum	   = IP_CalculateChecksum(&pICMP->Header, Count);
+				pICMP->Header.Type     = ICMP_TYPE_PING_REPLY;
+				pICMP->Header.Checksum = 0;                                 // TODO fix this
+				pICMP->Header.Checksum= IP_CalculateChecksum(&pICMP->Header, Count);
 	
-				memcpy(pETH->Dst.Addr, pETH->Src.Addr, 6);						        // Put Mac header
+				memcpy(pETH->Dst.Address, pETH->Src.Address, 6);						                // Put Mac header
 				pICMP->IP_Header.TimeToLive    = IP_TIME_TO_LIVE;
 				pICMP->IP_Header.DstIP_Address = pICMP->IP_Header.SrcIP_Address;
-				pICMP->IP_Header.SrcIP_Address = IP_HostAddr;
+				pICMP->IP_Header.SrcIP_Address = IP_HostAddress;
 				IP_PutHeader(pTX);
-				break;
+            }
+            break;
+            
+            default: break; // No support for other ICMP command
 		}
 	}
 	return pTX;

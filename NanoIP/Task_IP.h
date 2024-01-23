@@ -56,7 +56,7 @@
 // Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define IP_ADDR                                U32MACRO    // usage: IP_ADDR(192,168,0,0);
+#define IP_Address                                U32MACRO    // usage: IP_ADDRESS(192,168,0,0);
 #define IP_IP_PRINTF(IP)                       
 
 //-------------------------------------------------------------------------------------------------
@@ -64,6 +64,7 @@
 //-------------------------------------------------------------------------------------------------
 
 typedef     IP_Address_t       uint32_t
+typedef     IP_Port_t          uint16_t
 
 typedef union
 {
@@ -109,7 +110,7 @@ class IP_Manager
         IP_Address_t        GetHost                     (void);
         uint8_t*            IP_ToAscii                  (IP_Address_t IP_Address);
         IP_Address_t        AsciiToIP                   (uint8_t* pBuffer);
-        uint8_t*            ProcessURL                  (uint8_t* pBuffer, IP_Address_t* pIP_Address, uint16_t* pPort);
+        uint8_t*            ProcessURL                  (uint8_t* pBuffer, IP_Address_t* pIP_Address, IP_Port_t* pPort);
         
     private:    
  
@@ -134,7 +135,6 @@ class IP_Manager
         uint8_t             m_NTP_Server_2[IP_MAX_URL_SIZE];
         uint8_t             m_SOAP_Server_1[IP_MAX_URL_SIZE];       // (Simple Object Access Protocol) Messaging protocol specification for exchanging structured information.
         uint8_t             m_SOAP_Server_2[IP_MAX_URL_SIZE];
-        
         
         bool               m_IP_IsValid;        // maybe this should be move to DHCP
 };

@@ -61,10 +61,10 @@
 //
 //  Name:           Initialize
 // 
-//  Parameter(s):   void
+//  Parameter(s):   None
 //  Return:         void
 //
-//  Description:    Initialize data structure for TCP and tiner for SOCKET
+//  Description:    Initialize data structure for TCP and tiner for Socket_t
 //  
 //  Note(s):
 //
@@ -170,40 +170,51 @@ IP_PacketMsg_t* NetTCP::Process(IP_PacketMsg_t* pRX)
                 switch(pTCP_RX->Flags)
                 {
                     case TCP_FLAG_SYN:                                          // Close a connection
+                    {
                         pSocket->Send.Next++;
-                        break;
+                    }
+                    break;
 
                     case TCP_FLAG_RST:                                          // Force close of a connection
+                    {
                         // TO DO verify the sequence number for real Reset
                         Error = SOCK_CloseSocket(pSocket);
                         return nullptr;
-                        break;
+                    }
+                    break;
 
                     case TCP_FLAG_PSH:                                          // Send Data to app
+                    {
                         // TO DO verify the sequence number
                         Push();
-                        break;
+                    }
+                    break;
 
                     case TCP_FLAG_FIN:                                          // Close a connection
+                    {
                         pSocket->Send.Next++;
                     //  pSocket->Receive.Next   =  ntohl(pRX->Packet.u.TCP_Frame.Header.AcknowledgeNumber - pSocket->AckNumber); //??
-                        break;
-
+                    }
+                    break;
 
                     default:                                                    // Here will end up any malicious bit combination
+                    {
                         return nullptr;
-                        break;
+                    }
+                    break;
                 }
 
                 // We reach this point we need to ACK!
-                //  switch(pSocket->byConnectionState)
+                //  switch(pSocket->ConnectionState)
                 //  {
                 //      case TCP_SOCKET_SYN_RECEIVE:                            // Client has ack connection
-                //          pSocket->byConnectionState  = TCP_SOCKET_LISTENING;
-                //          break;
+                //      {
+                //          pSocket->ConnectionState  = TCP_SOCKET_LISTENING;
+                //      }    
+                //      break;
                 //
-                //      case TCP_SOCKET_LISTENING:  break;
-                //      case TCP_SOCKET_CLOSE_WAIT: break;
+                //      case TCP_SOCKET_LISTENING:  {} break;
+                //      case TCP_SOCKET_CLOSE_WAIT: {} break;
                 //  }
                 //
                 // test ?? 
@@ -216,14 +227,11 @@ IP_PacketMsg_t* NetTCP::Process(IP_PacketMsg_t* pRX)
                     else
                     {
                         pTX = TCP_Ack(pSocket, Flag, 0);
-                        
-                        CS8900_Send(pTX);
+                        NIC_Send(pTX);
                         pMemory->Free((void**)&pTX);
                         return Send(nullptr, 0);
                     }
                 }
-
-
             }
         }
     }
@@ -251,7 +259,7 @@ void NetTCP::PutHeader(SocketInfo_t* pSocket, IP_PacketMsg_t* pTX, size_t Packet
     IP_PseudoHeader_t*  pPseudo_TX;
 
     pTX->Packet.u.IP_Frame.Header.DstIP_Address = pSocket->ClientIP;
-    pTX->Packet.u.IP_Frame.Header.SrcIP_Address = IP_HostAddr;
+    pTX->Packet.u.IP_Frame.Header.SrcIP_Address = IP_HostAddress;
 
     pTCP_TX                     = &pTX->Packet.u.TCP_Frame.Header;
     pTCP_TX->SrcPort            = pSocket->pPortInfo->Number;
@@ -269,7 +277,7 @@ void NetTCP::PutHeader(SocketInfo_t* pSocket, IP_PacketMsg_t* pTX, size_t Packet
     // Setup pseudo header for checksum calculation
     pPseudo_TX                  = &pTX->Packet.u.TCP_PseudoFrame.Header;
     pPseudo_TX->Protocol        = IP_PROTOCOL_TCP;
-    pPseudo_TX->Lengthght          = htons(PacketSize);
+    pPseudo_TX->Length          = htons(PacketSize);
 
     pTCP_TX->Checksum           = 0;  //??? next is = also
     pTCP_TX->Checksum           = IP_CalculateChecksum(pPseudo_TX, PacketSize + (int16_t)sizeof(IP_PseudoHeader_t));
@@ -323,8 +331,8 @@ IP_PacketMsg_t* NetTCP::Send(SocketInfo_t* pSocket, uint8_t* pBuffer, size_t Siz
         PutHeader(pTX, TCP_ACK_PACKET_SIZE + Size);
 
         // Setup MAC & IP header
-        memcpy(&pTX->Packet.u.ETH_Header.Dst.Addr, &pSocket->MAC[0], 6);
-        pTX->Packet.u.IP_Frame.Header.Lengthght     = htons(Size + TCP_ACK_IP_PACKET_SIZE);
+        memcpy(&pTX->Packet.u.ETH_Header.Dst.Address, &pSocket->MAC[0], 6);
+        pTX->Packet.u.IP_Frame.Header.Length     = htons(Size + TCP_ACK_IP_PACKET_SIZE);
         pTX->Packet.u.IP_Frame.Header.Protocol = IP_PROTOCOL_TCP;
         IP_PutHeader(pTX);
     }
@@ -363,8 +371,8 @@ IP_PacketMsg_t* NetTCP::Ack(SocketInfo_t* pSocket, uint8_t Flag, size_t Size)
         PutHeader(pTX, TCP_ACK_PACKET_SIZE);
 
         // Setup MAC & IP header
-        memcpy(&pTX->Packet.u.ETH_Header.Dst.Addr, &pSocket->MAC[0], 6);
-        pTX->Packet.u.IP_Frame.Header.Lengthght   = htons(Size + TCP_ACK_IP_PACKET_SIZE);
+        memcpy(&pTX->Packet.u.ETH_Header.Dst.Address, &pSocket->MAC[0], 6);
+        pTX->Packet.u.IP_Frame.Header.Length   = htons(Size + TCP_ACK_IP_PACKET_SIZE);
         pTX->Packet.u.IP_Frame.Header.Protocol = IP_PROTOCOL_TCP;
         IP_PutHeader(pTX);
     }

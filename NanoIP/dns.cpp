@@ -47,8 +47,8 @@
 //    |                    ARCOUNT                    |
 //    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+           <QUESTION FORMAT >
 //    |                                               |
-//    /                     QNAME                     /
-//    /                                               /
+//    |                     QNAME                     |
+//    |                                               |
 //    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 //    |                     QTYPE                     |
 //    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
@@ -67,19 +67,19 @@
 //
 //  Name:           Query
 //
-//  Parameter(s):       SOCKET     SocketNumber
+//  Parameter(s):       Socket_t     SocketNumber
 //                      uint8_t*   pDomainName     Domain Name to get the IP
-//                      uint8_t*   pError          Pointer to return an error code
+//                      uint8_t*   pError          Pointer to return an error code TODO change error coding to Digini system coding
 //
 //  Return:             uint32_t   dwIP
 //
 //  Description:    Send the DNS Query to DNS Server
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t NetDNS::Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pError)
+uint32_t NetDNS::Query(Socket_t SocketNumber, uint8_t* pDomainName, uint8_t* pError)
 {
     size_t       Length;
-    uint16_t     Port;
+    IP_Port_t    Port;
     DNS_Msg_t*   pTX;
     uint8_t*     pQuery;
     uint8_t*     pStr;
@@ -92,7 +92,7 @@ uint32_t NetDNS::Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pErro
         if(pTX != nullptr)
         {
             pQuery = (uint8_t*)&pTX->Data[0];
-            Port = uint16_t(RNG_GetRandomFromRange(32768, 65535));              // Get a random source port for the query from 32768 to 65535
+            Port = IP_Port_t(RNG_GetRandomFromRange(32768, 65535));             // Get a random source port for the query from 32768 to 65535
 
             if(SOCK_Socket(SocketNumber, Sn_MR_UDP, Port, 0) != 0)
             {
@@ -109,7 +109,7 @@ uint32_t NetDNS::Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pErro
                 // Extract each string segment from the Domain Name
                 do
                 {
-                    pStr = LIB_strchr(pDomainName, '.');                        // Find the first '.'
+                    pStr = strchr(pDomainName, '.');                        // Find the first '.'
 
                     if(pStr != nullptr)                                         // Get size of the segment
                     {
@@ -117,7 +117,7 @@ uint32_t NetDNS::Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pErro
                     }
                     else
                     {
-                        Length = (size_t)LIB_strlen(pDomainName);
+                        Length = strlen(pDomainName);
                     }
                     
                     *pQuery = Length;                                              // Put size of this segment in DNS message
@@ -171,19 +171,19 @@ uint32_t NetDNS::Query(SOCKET SocketNumber, uint8_t* pDomainName, uint8_t* pErro
 //  Name:           Response
 //
 //  Parameter(s):   void
-//  Return:         uint32_t   IP           Resolve IP
+//  Return:         IP_Address_t       IP           Resolve IP
 //
 //  Description:    This Function process the answer to the DNS Request
 //
 //  Note(s):        No special treatment here, get the first IP and get out
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t NetDNS::Response(SOCKET SocketNumber)
+IP_Address_t NetDNS::Response(Socket_t SocketNumber)
 {
     DNS_Msg_t*   pRX             = nullptr;
     uint8_t*     pAnswer;
     IP_Address_t ServerAddress;
-    uint16_t     ServerPort;
+    IP_Port_t    ServerPort;
     uint8_t      Error;
     IP_Address_t IP_Address = DNS_NO_IP;
     size_t       Length;
@@ -219,7 +219,7 @@ uint32_t NetDNS::Response(SOCKET SocketNumber)
                         // Skip Domain Name
                         do
                         {
-                            if(*pAnswer != 0xC0)
+                            if(*pAnswer != 0xC0)            // TODO remove all magic number
                             {
                                 Length      = *pAnswer;                // Get Size of the string segment
                                 pAnswer += (Length + 1);               // Skip to next segment, if any
@@ -248,7 +248,7 @@ uint32_t NetDNS::Response(SOCKET SocketNumber)
                         }
 
                         pAnswer += 4;                                       // Skip the TTL field
-                        Length      = ntohs(*((uint16_t*)pAnswer));         // Get the lenght of the data field
+                        Length   = ntohs(*((uint16_t*)pAnswer));         // Get the lenght of the data field
                         pAnswer += 2;
 
                         if((Length == 4) && (IP_Status.b.DNS_IP_Found == true))

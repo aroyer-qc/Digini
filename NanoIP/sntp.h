@@ -98,11 +98,11 @@ class NetSNTP
     public:
    
         void            Initialize      (void* pQ);
-        uint32_t        Request         (SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError);
+        uint32_t        Request         (Socket_t SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError);
     
     private:
 
-        void            Reply           (SOCKET SocketNumber);
+        void            Reply           (Socket_t SocketNumber);
 
 
     nOS_Timer           m_pResync;

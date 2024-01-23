@@ -60,10 +60,10 @@
   #define   IP_MAC6                                 0x4E
 #endif
 
-#define     IP_DEFAULT_STATIC_ADDR1                 192                         // if use static HOST
-#define     IP_DEFAULT_STATIC_ADDR2                 168
-#define     IP_DEFAULT_STATIC_ADDR3                 1
-#define     IP_DEFAULT_STATIC_ADDR4                 254
+#define     IP_DEFAULT_STATIC_Address1                 192                         // if use static HOST
+#define     IP_DEFAULT_STATIC_Address2                 168
+#define     IP_DEFAULT_STATIC_Address3                 1
+#define     IP_DEFAULT_STATIC_Address4                 254
 
 #define     IP_DEFAULT_GATEWAY1                     192                         // if use static DEFAULT GATEWAY
 #define     IP_DEFAULT_GATEWAY2                     168
@@ -75,10 +75,10 @@
 #define     IP_SUBNET_MASK3                         255
 #define     IP_SUBNET_MASK4                         0
 
-#define     IP_DEFAULT_STATIC_DNS_ADDR1             192                         // if use static HOST
-#define     IP_DEFAULT_STATIC_DNS_ADDR2             168
-#define     IP_DEFAULT_STATIC_DNS_ADDR3             1
-#define     IP_DEFAULT_STATIC_DNS_ADDR4             1
+#define     IP_DEFAULT_STATIC_DNS_Address1             192                         // if use static HOST
+#define     IP_DEFAULT_STATIC_DNS_Address2             168
+#define     IP_DEFAULT_STATIC_DNS_Address3             1
+#define     IP_DEFAULT_STATIC_DNS_Address4             1
 
 #define     IP_DEFAULT_NTP_SERVER_1                 "0.ca.pool.ntp.org"
 #define     IP_DEFAULT_NTP_SERVER_2                 "1.ca.pool.ntp.org"
@@ -102,7 +102,7 @@
 
 need to add to database_cfg.h :
 
-    X_EEPROM_DBASE( ETHERNET_MAC_ADDRESS,        myE2_Setting, 1, 1, sizeof(MAC_t)) \
+    X_EEPROM_DBASE( ETHERNET_MAC_Address,        myE2_Setting, 1, 1, sizeof(MAC_t)) \
     X_EEPROM_DBASE( CONFIGURATION_IP,            myE2_Setting, 1, 1, sizeof(struct of configuration size)) \
     X_EEPROM_DBASE( ETHERNET_STATIC_HOST_IP,     myE2_Setting, 1, 1, sizeof(IP_Address_t));
     X_EEPROM_DBASE( ETHERNET_SUBNET_MASK_IP,     myE2_Setting, 1, 1, sizeof(IP_Address_t));

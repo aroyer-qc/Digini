@@ -66,8 +66,8 @@
 #define DHCP_CLIENT_PORT                        htons(68)
 
 #define DHCP_HARWARE_TYPE_ETHERNET_10           0x01
-#define DHCP_HARWARE_TYPE_ETHERNET_100          0x02
-#define DHCP_HARWARE_ADDRESS_LENGHT             0x06
+#define DHCP_HARDWARE_TYPE_ETHERNET_100         0x02
+#define DHCP_HARDWARE_ADDRESS_LENGHT            0x06
 
 #define DHCP_MAGIC_COOKIE                       0x63538263      // 0x63825363 in Big Endian
 #define DHCP_FLAGS_BROADCAST                    0x8000
@@ -125,16 +125,16 @@ struct DHCP_Options_t
 struct DHCP_Msg_t
 {
     uint8_t      Op;
-    uint8_t      Htype;
-    uint8_t      Hlen;
+    uint8_t      H_Type;
+    uint8_t      H_Length;
     uint8_t      Hops;
     uint32_t     X_ID;
     uint16_t     Secs;
     uint16_t     Flags;
-    IP_Address_t ClientIP_Addr;
-    IP_Address_t YourIP_Addr;
-    IP_Address_t ServerIP_Addr;
-    IP_Address_t RelayAgentIP_Addr;
+    IP_Address_t ClientIP_Address;
+    IP_Address_t YourIP_Address;
+    IP_Address_t ServerIP_Address;
+    IP_Address_t RelayAgentIP_Address;
     uint8_t      ClientHardware[16];
     uint8_t      Sname[64];
     uint8_t      File[128];

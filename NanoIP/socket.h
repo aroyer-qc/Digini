@@ -40,42 +40,41 @@
 #define     SOCK_MODE_UDP                   0x02                                // < UDP
 
 //-------------------------------------------------------------------------------------------------
-// macro(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-// Enum(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef uint8_t       SOCKET;
+//      typedef uint8_t       SOCKET;  this will be in the API interface
+
+    typedef uint8_t       Socket_t;
 
 //-------------------------------------------------------------------------------------------------
-// Function prototype(s)
+// Class
 //-------------------------------------------------------------------------------------------------
 
 //use size_t  for any length value
+// TODO make interface for C to C++ to keep socket API call standard..
 
-bool        SOCK_Socket         	(SOCKET SocketNumber, uint8_t Protocol, uint16_t SourcePort, uint8_t Flag);                         // Opens a socket(TCP or UDP or IP_RAW mode)
-void        SOCK_Close          	(SOCKET SocketNumber);                                                                              // Close socket
-bool        SOCK_Listen         	(SOCKET SocketNumber);                                                                              // Establish TCP connection (Passive connection)
-bool        SOCK_Connect        	(SOCKET SocketNumber, uint32_t DstAddr, uint16_t DstPort);                                          // Establish TCP connection (Active connection)
-void        SOCK_Disconnect     	(SOCKET SocketNumber);                                                                              // Disconnect the connection
-uint16_t    SOCK_Send           	(SOCKET SocketNumber, const uint8_t* pData, size_t Length);                                            // Send data (TCP)
-uint16_t    SOCK_Received       	(SOCKET SocketNumber, uint8_t* pData, size_t Length);                                                  // Receive data (TCP)
-uint16_t    SOCK_SendTo         	(SOCKET SocketNumber, const uint8_t* pData, size_t Length, uint32_t PeerAddr, uint16_t PeerPort);      // Send data (UDP/IP RAW)
-uint16_t    SOCK_ReceivedFrom   	(SOCKET SocketNumber, uint8_t* pData, size_t Length, uint32_t* pPeerAddr, uint16_t* pPeerPort);        // Receive data (UDP/IP RAW)
-size_t      SOCK_GetTX_BufferSize	(SOCKET SocketNumber);
-size_t      SOCK_GetRX_BufferSize  	(SOCKET SocketNumber);
+class NetSOCK
+{
+    public:
+        
+        bool        Socket         	    (Socket_t SocketNumber, uint8_t Protocol, IP_Port_t SourcePort, uint8_t Flag);                                // Opens a socket(TCP or UDP or IP_RAW mode)
+        void        Close          	    (Socket_t SocketNumber);                                                                                      // Close socket
+        bool        Listen         	    (Socket_t SocketNumber);                                                                                      // Establish TCP connection (Passive connection)
+        bool        Connect        	    (Socket_t SocketNumber, IP_Address_t DstAddress, IP_Port_t DstPort);                                          // Establish TCP connection (Active connection)
+        void        Disconnect     	    (Socket_t SocketNumber);                                                                                      // Disconnect the connection
+        size_t      Send           	    (Socket_t SocketNumber, const uint8_t* pData, size_t Length);                                                 // Send data (TCP)
+        size_t      Received       	    (Socket_t SocketNumber, uint8_t* pData, size_t Length);                                                       // Receive data (TCP)
+        size_t      SendTo         	    (Socket_t SocketNumber, const uint8_t* pData, size_t Length, IP_Address_t PeerAddress, IP_Port_t PeerPort);   // Send data (UDP/IP RAW)
+        size_t      ReceivedFrom   	    (Socket_t SocketNumber, uint8_t* pData, size_t Length, IP_Address_t* pPeerAddress, IP_Port_t* pPeerPort);     // Receive data (UDP/IP RAW)
+        size_t      GetTX_BufferSize	(Socket_t SocketNumber);
+        size_t      GetRX_BufferSize  	(Socket_t SocketNumber);
 
-#ifdef SOCKET_PRIVATE
-void 	    SOCK_SetSocket	    	(SOCKET	SocketNumber, uint8_t Protocol, uint8_t Flag);
-void 	    SOCK_Open				(SOCKET SocketNumber);
+    private:
 
-#endif
+        void 	    SetSocket	    	(Socket_t SocketNumber, uint8_t Protocol, uint8_t Flag);
+        void 	    Open				(Socket_t SocketNumber);
+};
 
 //-------------------------------------------------------------------------------------------------
 

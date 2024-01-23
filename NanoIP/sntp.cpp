@@ -81,7 +81,6 @@ void NetSNTP::Initialize(void* pQ)
 
     m_pQ           = (OS_EVENT*)pQ;
     SNTP_byOST_Resync = TIME_TIMER_nullptr;
-
     
     Error = nOS_TimerCreate(&m_Resync,
                             nullptr,
@@ -104,7 +103,7 @@ void NetSNTP::Initialize(void* pQ)
 //
 //  Name:           Request
 //
-//  Parameter(s):       SOCKET  SocketNumber
+//  Parameter(s):       Socket_t  SocketNumber
 //                      uint8_t*   pDomainName1    Domain Name of the NTP Server 1
 //                      uint8_t*   pDomainName2    Domain Name of the NTP_Server 2
 //                      uint8_t*   pError          Pointer to return an error code
@@ -113,9 +112,9 @@ void NetSNTP::Initialize(void* pQ)
 //  Description:    Send the SNTP request
 //
 //-------------------------------------------------------------------------------------------------
-int32_t NetSNTP::Request(SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError)
+int32_t NetSNTP::Request(Socket_t SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError)
 {
-    uint16_t     Port;
+    IP_Port_t    Port;
     SNTP_Msg_t*  pTX;
     uint8_t      Error     = ERR_NONE;
     IP_Address_t IP        = DNS_NO_IP;
@@ -139,10 +138,10 @@ int32_t NetSNTP::Request(SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pD
             if(SOCK_Socket(SocketNumber, Sn_MR_UDP, Port, 0) != 0)
             {
                 // Fill up standard info for SNTP Packet
-                pTX->Flags_1.s.MODE      = SNTP_MODE_CLIENT;
-                pTX->Flags_1.s.VN        = SNTP_VERSION_4;
-                pTX->TxmTimeStampSecond  = htonl(SNTP_TIME_START);
-                m_Seconds                = TIME_GetSecondTicks();
+                pTX->Flags_1.s.MODE     = SNTP_MODE_CLIENT;
+                pTX->Flags_1.s.VN       = SNTP_VERSION_4;
+                pTX->TxmTimeStampSecond = htonl(SNTP_TIME_START);
+                m_Seconds               = TIME_GetSecondTicks();
 
                 if(SOCK_SendTo(SocketNumber, (uint8_t*)pTX, sizeof(SNTP_Msg_t) - SNTP_OPTIONS_IN_PACKET_SIZE, IP, SNTP_PORT) != 0)
                 {
@@ -173,7 +172,7 @@ int32_t NetSNTP::Request(SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pD
 //
 //  Name:           Reply
 //
-//  Parameter(s):   SOCKET     SocketNumbe
+//  Parameter(s):   Socket_t     SocketNumber
 //  Return:         void
 //
 //  Description:    This Function process the answer to the DNS Request
@@ -181,11 +180,11 @@ int32_t NetSNTP::Request(SOCKET SocketNumber, uint8_t* pDomainName1, uint8_t* pD
 //  Note(s):        No special treatment here, get the first IP and get out
 //
 //-------------------------------------------------------------------------------------------------
-void SNTP_Reply(SOCKET SocketNumber)
+void SNTP_Reply(Socket_t SocketNumber)
 {
     SNTP_Msg_t*     pRX             = nullptr;
     IP_Address_t    ServerAddr;
-    uint16_t        ServerPort;
+    IP_Port_t       ServerPort;
     size_t          Length;
     TickCount_t     Second;
     nOS_Error       Error;
@@ -195,6 +194,7 @@ void SNTP_Reply(SOCKET SocketNumber)
         if(SOCK_GetRX_RSR(SocketNumber) > 0)
         {
             pRX = pMemory->AllocAndClear(sizeof(SNTP_Msg_t));
+            
             if(pRX != nullptr)
             {
                 SOCK_ReceivedFrom(SocketNumber, (uint8_t*)pRX, sizeof(DNS_Msg_t), &ServerAddr, &ServerPort);

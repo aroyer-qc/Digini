@@ -52,7 +52,7 @@ SystemState_e NetARP::Initialize(void)
 	// Clear the ARP cache table
 	for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
 	{
-		m_TableEntry[i].IP_Address =IP_ADDR(0,0,0,0);
+		m_TableEntry[i].IP_Address =IP_ADDRESS(0,0,0,0);
 	}
 
         // Initialize an OS timer for the ARP timer
@@ -85,7 +85,7 @@ SystemState_e NetARP::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 void NetARP::ProcessIP(IP_PacketMsg_t* pRX)
 {
-	if((pRX->Packet.u.IP_Frame.Header.SrcIP_Address & IP_SubnetMaskAddr) == (IP_HostAddress & IP_SubnetMaskAddress))
+	if((pRX->Packet.u.IP_Frame.Header.SrcIP_Address & IP_SubnetMaskAddress) == (IP_HostAddress & IP_SubnetMaskAddressess))
 	{
 		UpdateEntry(pRX->Packet.u.IP_Frame.Header.SrcIP_Address, &pRX->Packet.u.ETH_Header.Src);
 	}
@@ -105,7 +105,7 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 {
 	uint8_t 		Error;
 	IP_ARP_Frame_t*	pRX_ARP;
-	IP_PacketMsg_t* pTX = nullptr;
+	IP_PacketMsg_t* pTX     = nullptr;
 	IP_ARP_Frame_t*	pTX_ARP = nullptr;
 
 	if(pRX->PacketSize < (sizeof(IP_ARP_Frame_t) - sizeof(IP_EthernetHeader_t)))
@@ -120,36 +120,36 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 		case ARP_REQUEST:
 		{
             // ARP request. If it asked for our address, we send out a reply.
-			if(pRX_ARP->DstIP_Addr == IP_HostAddr)
+			if(pRX_ARP->DstIP_Address == IP_HostAddress)
 			{
-                pTX = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(pRX->PacketSize + 2);    // Get memory for TX packet + Size 
+                pTX = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(pRX->PacketSize + 2);     // Get memory for TX packet + Size 
 				pTX->PacketSize = pRX->PacketSize;											// Get the packet size from request packet (PING)
                 pTX_ARP = &pTX->Packet.u.ARP_Frame;
 
 				pTX_ARP->Opcode = ARP_REPLY;
-                memcpy(pTX_ARP->Dst.Addr, pRX_ARP->Src.Addr, 6);
-				memcpy(pTX_ARP->ETH_Header.Dst.Addr, pRX_ARP->Src.Addr, 6);
-				memcpy(pTX_ARP->Src.Addr, IP_MAC.Addr, 6);
-				memcpy(pTX_ARP->ETH_Header.Src.Addr, IP_MAC.Addr, 6);
+                memcpy(pTX_ARP->Dst.Address, pRX_ARP->Src.Address, 6);
+				memcpy(pTX_ARP->ETH_Header.Dst.Address, pRX_ARP->Src.Address, 6);
+				memcpy(pTX_ARP->Src.Address, IP_MACAddress, 6);
+				memcpy(pTX_ARP->ETH_Header.Src.Address, IP_MACAddress, 6);
 	  
-				pTX_ARP->DstIP_Addr = pRX_ARP->SrcIP_Addr;
-				pTX_ARP->SrcIP_Addr = IP_HostAddr;
+				pTX_ARP->DstIP_Address = pRX_ARP->SrcIP_Address;
+				pTX_ARP->SrcIP_Address = IP_HostAddress;
 
-				pTX_ARP->HardwareType        = ARP_HARDWARE_TYPE_ETHERNET;
-				pTX_ARP->Protocol            = IP_ETHERNET_TYPE_IP;
-				pTX_ARP->HardwareAddrLengthght  = 6;
-				pTX_ARP->ProtocolLengthght      = 4;
-				pTX_ARP->ETH_Header.Type     = IP_ETHERNET_TYPE_ARP;
+				pTX_ARP->HardwareType          = ARP_HARDWARE_TYPE_ETHERNET;
+				pTX_ARP->Protocol              = IP_ETHERNET_TYPE_IP;
+				pTX_ARP->HardwareAddressLength = 6;
+				pTX_ARP->ProtocolLength        = 4;
+				pTX_ARP->ETH_Header.Type       = IP_ETHERNET_TYPE_ARP;
 			}      
-			break;
 		}
+        break;
 
 		case ARP_REPLY:
 		{
 			// ARP reply. We insert or update the ARP table if it was for us.
-			if((pRX_ARP->DstIP_Addr == IP_HostAddr))
+			if((pRX_ARP->DstIP_Address == IP_HostAddress))
 			{
-				ARP_UpdateEntry(pRX_ARP->SrcIP_Addr, &pRX_ARP->Src);
+				ARP_UpdateEntry(pRX_ARP->SrcIP_Address, &pRX_ARP->Src);
 			}
 		}
 		break;
@@ -213,7 +213,8 @@ void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_EthernetAddress_t* pEtherne
 	for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
 	{
 		pTable = &ARP_TableEntry[i];
-		if(pTable->IP_Address == 0)
+		
+        if(pTable->IP_Address == 0)
 		{
    		  #if (IP_DBG_ARP == DEF_ENABLED)
 			DBG_Printf("ARP Cache - Found a free entry %d\n", i);
@@ -231,12 +232,14 @@ void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_EthernetAddress_t* pEtherne
         for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
 		{
 			pTable = &ARP_TableEntry[i];
-			if((ARP_Time - pTable->Time) > TimePage)
+			
+            if((ARP_Time - pTable->Time) > TimePage)
 			{
 				TimePage = ARP_Time - pTable->Time;
 				OldestEntry = i;
 			}
 		}
+        
 		i = OldestEntry; // for debug only
 
 		pTable = &m_TableEntry[OldestEntry];
@@ -300,21 +303,22 @@ void NetARP::ProcessOut(IP_PacketMsg_t* pTX)
 		pFrame  = &pTX->Packet;
 		
         // Check if the destination address is on the local network.
-		if((pFrame->u.IP_Frame.Header.DstIP_Address & IP_SubnetMaskAddress) != (IP_HostAddress & IP_SubnetMaskAddress))
+		if((pFrame->u.IP_Frame.Header.DstIP_Address & IP_SubnetMaskAddressess) != (IP_HostAddress & IP_SubnetMaskAddressess))
 		{
 			// Use the default router's IP address instead of the destination
-			//IP_Address = IP_DefaultGatewayAddr;
+			//IP_Address = IP_DefaultGatewayAddress;
 		}
 		else
 		{
 			// Else, we use the destination IP address.
-			//IP_Address = pFrame->u.IP_Frame.Header.DstIP_Addr;
+			//IP_Address = pFrame->u.IP_Frame.Header.DstIP_Address;
 		}
 		  
 		for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
 		{
 			pTable = &m_TableEntry[i];
-			if(IP_Address == pTable->IP_Address)
+			
+            if(IP_Address == pTable->IP_Address)
 			{
 				break;
 			}
@@ -325,10 +329,10 @@ void NetARP::ProcessOut(IP_PacketMsg_t* pTX)
 			// The destination address is not in our ARP table
 			// Send a ARP request instead
 		
-			//memset(pARP->ETH_Header.Dst.Addr, 0xFF, 6);
-			//memset(pARP->Dst.Addr, 0x00, 6);
-			//memcpy(pARP->ETH_Header.Src.Addr, MAC.Addr, 6);
-			//memcpy(pARP->Src.Addr, MAC.Addr, 6);
+			//memset(pARP->ETH_Header.Dst.Address, 0xFF, 6);
+			//memset(pARP->Dst.Address, 0x00, 6);
+			//memcpy(pARP->ETH_Header.Src.Address, MAC.Address, 6);
+			//memcpy(pARP->Src.Address, MAC.Address, 6);
 		
 			//pARP->DstIP_Address      = IP_Address;
 			//pARP->SrcIP_Address      = IP_HostAddress;
@@ -396,10 +400,7 @@ void NetARP::TimerCallBack(nOS_Timer * pTimer, void* pArg)
 
     VAR_UNUSED(pTimer);
     VAR_UNUSED(pArg);
-
-
 	ARP_Time++;
-
 
 	for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)                      // Scan Table for the entry
 	{
@@ -423,7 +424,7 @@ void NetARP::TimerCallBack(nOS_Timer * pTimer, void* pArg)
 																				 uint8_t(pTable->IP_Address),
 																				 i);
 		      #endif
-				pTable->IP_Address = IP_ADDR(0,0,0,0);
+				pTable->IP_Address = IP_ADDRESS(0,0,0,0);
 			}
 		}
 	}

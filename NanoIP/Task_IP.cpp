@@ -28,7 +28,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define TASK_IP_GLOBAL
+
 #include <ip.h>
 
 //-------------------------------------------------------------------------------------------------
@@ -53,10 +53,10 @@
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::Run(void)
 {
-    IP_Address_t        Addr;
-    uint8_t             Error;
-    MSG_t*              pMsg        = nullptr;
-    IP_Address_t        IP;
+    IP_Address_t   Address;
+    uint8_t        Error;
+    MSG_t*         pMsg        = nullptr;
+    IP_Address_t   IP;
 
     for(;;)
     {
@@ -109,7 +109,7 @@ void IP_Manager::Run(void)
                     case IP_MSG_TYPE_SNTP_MANAGEMENT:
                     {
                         IP = pSNTP->Request(IP_SNTP_SOCKET, IP_DEFAULT_NTP_SERVER_1, IP_DEFAULT_NTP_SERVER_2, &Error);
-                        IP_Status.b.SNTP_Fail = (IP == IP_ADDR(0,0,0,0) ) ? false : true;
+                        IP_Status.b.SNTP_Fail = (IP == IP_ADDRESS(0,0,0,0)) ? false : true;
                         break;
                     }
 					
@@ -240,7 +240,7 @@ IP_Address_t IP_Manager::AsciiToIP(uint8_t* pBuffer)
     uint8_t      Count;
     uint8_t      DotCount;
 
-    IP_Address         = IP_ADDR(0,0,0,0);
+    IP_Address         = IP_ADDRESS(0,0,0,0);
     IP_Status.b.Status = true;
     Count              = 0;
 
@@ -293,7 +293,7 @@ IP_Address_t IP_Manager::AsciiToIP(uint8_t* pBuffer)
 
             if((byCount != 0) && ( DotCount != 3))                                // Check if format was valid
             {
-               IP_Address = IP_ADDR(0,0,0,0);
+               IP_Address = IP_ADDRESS(0,0,0,0);
             }
         }
     }
@@ -403,7 +403,7 @@ uint8_t* IP_Manager::ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, uint16_t* p
 
     *pIP = IP_AsciiToIP(pDomainName);
 
-    if(*pIP == IP_ADDR(0,0,0,0))
+    if(*pIP == IP_ADDRESS(0,0,0,0))
     {
         *pIP = pDNS->Query(IP_DNS_SOCKET, pDomainName, &Error);
     }

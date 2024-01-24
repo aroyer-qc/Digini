@@ -99,7 +99,7 @@ void* ChainList::GetNodeDataAddress(ChainList_t* pNode)
 //
 //   Function name: Alloc
 //
-//   Parameter(s):  size_t      Size            Total size to create all necessary node
+//   Parameter(s):  size_t          Size        Total size to create all necessary node
 //   Return:        SystemState_e               SYS_READY if all node are added
 //                                              SYS_POOL_NOT_ALLOCATED_ERROR If no memory allocated
 //

@@ -75,7 +75,7 @@ class ChainList
                         ChainList           (size_t NodeDataSize);                      // All node data size will be created with this size + node overhead
                        ~ChainList           ();
 
-        SystemState_e   Alloc               (size_t Size);                              // Thos will create as many node as necessary to hold the provided size
+        SystemState_e   Alloc               (size_t Size);                              // Will create as many node as necessary to hold the provided size
         
         SystemState_e   AddNode             (uint16_t ChainID, void** pData);           // This reserve the memory for the node and insert it into the chain
         SystemState_e   RemoveNode          (uint16_t ChainID);                         // This will also free the memory of the node

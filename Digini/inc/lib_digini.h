@@ -189,8 +189,8 @@
 #include "device_cfg.h"
 
 #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
-#include "ethernetif.h"
-#include "lib_class_process_lwip.h"
+//#include "ethernetif.h"
+//#include "lib_class_process_lwip.h"
 #endif
 
 #if (DIGINI_USE_FATFS == DEF_ENABLED)

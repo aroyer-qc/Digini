@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : task_IP.h
+//  File : lib_Class_IP_Manager.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -29,12 +29,6 @@
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
-
-#ifdef  TASK_IP_GLOBAL
-    #define TASK_IP_EXTERN
-#else
-    #define TASK_IP_EXTERN extern
-#endif
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -121,22 +115,58 @@ class IP_Manager
         IP_Flag_t           m_Flag;                                 // Configuration of IP Stack
         IP_StatusFlag_t     m_Status;                               // Dynamic Flag od IP Stack
         MAC_Address_t       m_MAC;                                  // MAC Address of the module
+        
         IP_Address_t        m_StaticGatewayIP;                      // Gateway IP Address
         IP_Address_t        m_StaticSubnetMask;                     // Subnet Mask
         IP_Address_t        m_StaticIP;                             // Static IP Address
         IP_Address_t        m_StaticDNS_IP;                         // Static DNS Server IP Address
+        
+        uint8_t             m_TX_SocketMemorySize;                  // TX Socket Memory Configuration for all 3 Sockets
+        uint8_t             m_RX_SocketMemorySize;                  // RX Socket Memory Configuration for all 3 Sockets
+
+#define 	IP_USE_TCP 							DEF_ENABLED
+#define 	
+
+
+      #if (IP_USE_DHCP == DEF_ENABLED)
+        NetDHCP         m_DHCP;            // Need UDP
+
+        // Move this to DHCP    use getter!!
         IP_Address_t        m_DHCP_GatewayIP;                       // Gateway IP Address from server
         IP_Address_t        m_DHCP_SubnetMask;                      // Subnet Mask from server
         IP_Address_t        m_DHCP_IP;                              // IP Address from server
         IP_Address_t        m_DHCP_DNS_IP;                          // DNS Server IP Address from server
-        uint8_t             m_TX_SocketMemorySize;                  // TX Socket Memory Configuration for all 3 Sockets
-        uint8_t             m_RX_SocketMemorySize;                  // RX Socket Memory Configuration for all 3 Sockets
+        bool               m_IP_IsValid;        // maybe this should be move to DHCP
+
+
+      #endif
+
+      #if (IP_USE_UDP == DEF_ENABLED)
+        NetUDP          m_UDP;
+      #endif
+
+      #if (IP_USE_ICMP == DEF_ENABLED)
+        NetICMP         m_ICMP;
+      #endif
+
+      #if (IP_USE_TCP == DEF_ENABLED)
+        NetTCP          m_TCP;
+      #endif
+
+      #if (IP_USE_SNTP == DEF_ENABLED)
+        NetSNTP         m_SNTP;
+      #endif
+
+      #if (IP_USE_NTP == DEF_ENABLED)
         uint8_t             m_NTP_Server_1[IP_MAX_URL_SIZE];        // (Network Time Protocol)
         uint8_t             m_NTP_Server_2[IP_MAX_URL_SIZE];
+      #endif
+
+      #if (IP_USE_SOAP == DEF_ENABLED)
         uint8_t             m_SOAP_Server_1[IP_MAX_URL_SIZE];       // (Simple Object Access Protocol) Messaging protocol specification for exchanging structured information.
         uint8_t             m_SOAP_Server_2[IP_MAX_URL_SIZE];
+      #endif
         
-        bool               m_IP_IsValid;        // maybe this should be move to DHCP
 };
 
 //-------------------------------------------------------------------------------------------------

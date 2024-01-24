@@ -32,17 +32,13 @@
 //-------------------------------------------------------------------------------------------------
 
 //----- PROTOCOL -----
-
-#define 	IP_APP_USE_DHCP							DEF_ENABLED
-#define 	IP_APP_USE_TCP 							DEF_ENABLED
-#define 	IP_APP_USE_UDP 							DEF_ENABLED
-#define 	IP_APP_USE_ICMP							DEF_ENABLED
-
-//----- NIC driver list -----
-
-//#define 	NIC_W5100								0
-//#define 	NIC_CS8900A								1
-//#define 	NIC_IN_USE								NIC_CS8900A         // this will be in driver
+#define 	IP_USE_DHCP							DEF_ENABLED
+#define 	IP_USE_TCP 							DEF_ENABLED
+#define 	IP_USE_UDP 							DEF_ENABLED
+#define 	IP_USE_ICMP							DEF_ENABLED
+#define 	IP_USE_SNTP							DEF_ENABLED
+#define  	IP_USE_NTP							DEF_ENABLED
+#define  	IP_USE_SOAP 						DEF_ENABLED
 
 // If CPU has GUID serial number like some STM32, and want to use this as MAC
 #define IP_USE_PART_OF_CPU_GUID_AS_MAC              DEF_ENABLED

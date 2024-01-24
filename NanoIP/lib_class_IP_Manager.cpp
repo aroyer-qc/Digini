@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_IP.cpp
+//  File : lib_class_IP_Manager.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -39,6 +39,64 @@
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           Initialize
+//
+//  Parameter(s):   None
+//  Return:         void
+//
+//  Description:    Initialize IP Task and stack
+//
+//-------------------------------------------------------------------------------------------------
+void IP_Manager::Initialize(void)
+{
+    nOS_Error = Error;
+    
+    m_IP_IsValid = false;
+    IP_Status.b.DNS_IP_Found    = false;
+ 
+    Error = nOS_QueueCreate(&m_MsgQueue, &m_GetQueueArray[0], 128, 1024 / 128);     // to be revise to reality... need real number
+ 
+    //AppTaskStart();
+
+    // Initialize the TCP/IP stack.
+
+    mIP->Initialize();
+
+  #if (IP_USE_ARP == DEF_ENABLED)
+    m_ARP.Initialize();
+//	pARP->Initialize(Queue.Names.pTaskIP);
+  #endif
+
+  #if (IP_USE_UDP == DEF_ENABLED)
+    m_UDP.Initialize();
+  #endif
+
+  #if (IP_USE_DHCP == DEF_ENABLED)
+    m_DHCP.Initialize();
+//	pDHCP->Initialize(Queue.Names.pTaskIP);
+  #endif
+  
+  #if (IP_USE_ICMP == DEF_ENABLED)
+    m_ICMP.Initialize();
+  #endif
+
+  #if (IP_USE_SNTP == DEF_ENABLED)
+    m_SNTP.Initialize();
+  #endif
+
+  #if (IP_USE_TCP == DEF_ENABLED)
+    m_TCP.Initialize();
+  #endif
+
+//    pSNTP->Initialize(Queue.Names.pTaskIP);
+//    pNIC->Initialize();
+    
+    
+    
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           Run
 //
 //  Parameter(s):   None
@@ -72,17 +130,25 @@ void IP_Manager::Run(void)
 				{
 					case IP_ETHERNET_TYPE_IP:
 					{
-						pARP->ProcessIP(pRX);
-						pTX = IP_Process(pRX);
-						pARP->ProcessOut(pTX);               		// If data are to be sent back, then send the data
+                      #if (IP_USE_ARP == DEF_ENABLED)
+						m_pARP->ProcessIP(pRX);
+                      #endif 
+						
+                        pTX = IP_Process(pRX);
+                      
+                      #if (IP_USE_ARP == DEF_ENABLED)
+						m_pARP->ProcessOut(pTX);               		// If data are to be sent back, then send the data
+                      #endif 
 					}
                     break;
 
+                  #if (IP_USE_ARP == DEF_ENABLED)
 					case IP_ETHERNET_TYPE_ARP:
 					{
-						pARP->ProcessARP(pRX);
+						m_pARP->ProcessARP(pRX);
 					}
                     break;
+                  #endif  
 				}
 
 				pMemory->Free((void**)&pRX);
@@ -93,9 +159,10 @@ void IP_Manager::Run(void)
             {
                 switch(pMsg->Type)
                 {
+                  #if (IP_USE_DHCP == DEF_ENABLED)
 					case IP_MSG_TYPE_DHCP_MANAGEMENT:
 					{
-						IP_Status.b.Status = pDHCP->Process(pMsg);
+						IP_Status.b.Status = m_pDHCP->Process(pMsg);
 						if(IP_Status.b.Status == false)
 						{
 							for(int i = 0; i < IP_STACK_NUMBER_OF_SOCKET; i++)
@@ -105,14 +172,17 @@ void IP_Manager::Run(void)
 						}
 					}
                     break;
+                  #endif
 
+                  #if (IP_USE_SNTP == DEF_ENABLED)
                     case IP_MSG_TYPE_SNTP_MANAGEMENT:
                     {
                         IP = pSNTP->Request(IP_SNTP_SOCKET, IP_DEFAULT_NTP_SERVER_1, IP_DEFAULT_NTP_SERVER_2, &Error);
                         IP_Status.b.SNTP_Fail = (IP == IP_ADDRESS(0,0,0,0)) ? false : true;
                     }
                     break;
-					
+                  #endif 				
+                
 					// put other management here
                 }
 
@@ -134,10 +204,12 @@ void IP_Manager::Run(void)
 //-------------------------------------------------------------------------------------------------
 IP_Address_t IP_Manager::GetDNS_IP(void)
 {
+  #if (IP_USE_DHCP == DEF_ENABLED)
     if(pDHCP->GetMode() == true)
     {
         return IP_DHCP_DNS_IP;
     }
+  #endif 
     
     return IP_StaticDNS_IP;
 }
@@ -154,43 +226,14 @@ IP_Address_t IP_Manager::GetDNS_IP(void)
 //-------------------------------------------------------------------------------------------------
 IP_Address_t IP_Manager::GetHost_IP(void)
 {
+  #if (IP_USE_DHCP == DEF_ENABLED)
     if(pDHCP->GetMode() == true)
     {
         return IP_DHCP_IP;
     }
+  #endif
     
     return IP_StaticIP;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Initialize
-//
-//  Parameter(s):   None
-//  Return:         void
-//
-//  Description:    Initialize IP Task and stack
-//
-//-------------------------------------------------------------------------------------------------
-void IP_Manager::Initialize(void)
-{
-    nOS_Error = Error;
-    
-    m_IP_IsValid = false;
-    IP_Status.b.DNS_IP_Found    = false;
- 
-    Error = nOS_QueueCreate(&m_MsgQueue, &m_GetQueueArray[0], 128, 1024 / 128);     // to be revise to reality... need real number
- 
-    //AppTaskStart();
-
-// replace everything by class object.. static or dynamic.. 
-
-    // Initialize the TCP/IP stack.
-    pIP->Initialize();
-	pARP->Initialize(Queue.Names.pTaskIP);
-	pDHCP->Initialize(Queue.Names.pTaskIP);
-    pSNTP->Initialize(Queue.Names.pTaskIP);
-    pNIC->Initialize();
 }
 
 //-------------------------------------------------------------------------------------------------

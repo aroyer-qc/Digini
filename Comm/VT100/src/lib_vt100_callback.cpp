@@ -1030,22 +1030,22 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
 
         case VT100_CALLBACK_REFRESH:
         {
-            struct netif*    pNetif = netif_find(IF_NAME);
+   //         struct netif*    pNetif = netif_find(IF_NAME);
             ETH_LinkInfo_t   LinkInfo;
             ETH_LinkState_e  LinkState;
             const char*      pSpeed;
 
             myVT100.SetForeColor(VT100_COLOR_WHITE);
-            myVT100.InMenuPrintf(28, 8,  LBL_STRING, ip_ntoa(&pNetif->ip_addr));
-            myVT100.InMenuPrintf(28, 9,  LBL_STRING, ip_ntoa(&pNetif->netmask));
-            myVT100.InMenuPrintf(28, 10, LBL_STRING, ip_ntoa(&pNetif->gw));
-            myVT100.InMenuPrintf(28, 11, LBL_STRING, ip_ntoa(dns_getserver(0)));
-            myVT100.InMenuPrintf(28, 12, LBL_STRING, ip_ntoa(dns_getserver(1)));
-            myVT100.InMenuPrintf(28, 13, (ETH_DHCP_IsUsed == true) != 0 ? LBL_ENABLED : LBL_DISABLED);
-            LinkState = myETH_PHY->GetLinkState();
+//            myVT100.InMenuPrintf(28, 8,  LBL_STRING, ip_ntoa(&pNetif->ip_addr));
+            //myVT100.InMenuPrintf(28, 9,  LBL_STRING, ip_ntoa(&pNetif->netmask));
+            //myVT100.InMenuPrintf(28, 10, LBL_STRING, ip_ntoa(&pNetif->gw));
+            //myVT100.InMenuPrintf(28, 11, LBL_STRING, ip_ntoa(dns_getserver(0)));
+            //myVT100.InMenuPrintf(28, 12, LBL_STRING, ip_ntoa(dns_getserver(1)));
+            //myVT100.InMenuPrintf(28, 13, (ETH_DHCP_IsUsed == true) != 0 ? LBL_ENABLED : LBL_DISABLED);
+        //    LinkState = myETH_PHY->GetLinkState();
             myVT100.InMenuPrintf(28, 14, LBL_STRING, (LinkState == ETH_LINK_UP) != 0 ? "Up  " : "Down");
 
-            LinkInfo = myETH_PHY->GetLinkInfo();
+        //    LinkInfo = myETH_PHY->GetLinkInfo();
 
             switch(LinkInfo.Speed)
             {
@@ -1055,14 +1055,14 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
             }
 
             myVT100.InMenuPrintf(28, 15, LBL_STRING, pSpeed);
-            myVT100.InMenuPrintf(28, 16, LBL_MAC_ADDRESS_VALUE, pNetif->hwaddr[0], pNetif->hwaddr[1], pNetif->hwaddr[2],
-                                                                pNetif->hwaddr[3], pNetif->hwaddr[4], pNetif->hwaddr[5]);
+//            myVT100.InMenuPrintf(28, 16, LBL_MAC_ADDRESS_VALUE, pNetif->hwaddr[0], pNetif->hwaddr[1], pNetif->hwaddr[2],
+//                                                                pNetif->hwaddr[3], pNetif->hwaddr[4], pNetif->hwaddr[5]);
 
           #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-            myVT100.InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, DBG_RX_Count);
-            myVT100.InMenuPrintf(56, 18, LBL_LONG_UNSIGNED, DBG_RX_Drop);
-            myVT100.InMenuPrintf(28, 19, LBL_LONG_UNSIGNED, DBG_TX_Count);
-            myVT100.InMenuPrintf(56, 19, LBL_LONG_UNSIGNED, DBG_TX_Drop);
+  //          myVT100.InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, DBG_RX_Count);
+  //          myVT100.InMenuPrintf(56, 18, LBL_LONG_UNSIGNED, DBG_RX_Drop);
+  //          myVT100.InMenuPrintf(28, 19, LBL_LONG_UNSIGNED, DBG_TX_Count);
+  //          myVT100.InMenuPrintf(56, 19, LBL_LONG_UNSIGNED, DBG_TX_Drop);
           #endif
         }
         break;

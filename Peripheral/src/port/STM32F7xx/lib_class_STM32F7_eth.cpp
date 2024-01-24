@@ -606,7 +606,7 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
 //
 //   Function name:     ReadFrame
 //
-//   Parameter(s):      ptrBuf          Pointer to on pbuf LWIP data.
+//   Parameter(s):      ptrBuf          Pointer to on pbuf lWIP data.
 //                      Length          Frame buffer length in bytes.
 //   Return value:      SystemState_e   State of function.
 //
@@ -621,7 +621,7 @@ SystemState_e ETH_Driver::ReadFrame(struct pbuf* pBuf, size_t Length)
 {
     SystemState_e State  = SYS_READY;
     uint8_t const* pSrc  = m_RX_Descriptor[m_MAC_Control.RX_Index].Addr;
-    size_t Granularity   = size_t(pBuf->len);
+ //  size_t Granularity   = size_t(pBuf->len);
     uint8_t* pFrame      = static_cast<uint8_t*>(pBuf->payload);
 
     if(pBuf == nullptr)

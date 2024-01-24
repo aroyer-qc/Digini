@@ -75,14 +75,14 @@ void IP_Manager::Run(void)
 						pARP->ProcessIP(pRX);
 						pTX = IP_Process(pRX);
 						pARP->ProcessOut(pTX);               		// If data are to be sent back, then send the data
-						break;
 					}
+                    break;
 
 					case IP_ETHERNET_TYPE_ARP:
 					{
 						pARP->ProcessARP(pRX);
-						break;
 					}
+                    break;
 				}
 
 				pMemory->Free((void**)&pRX);
@@ -91,7 +91,7 @@ void IP_Manager::Run(void)
 			/* if((pMsg = OSQAccept(Queue.Names.pTaskIP, &Error)) != nullptr)// nOS Q */
             if(nOS_QueueRead(&m_MsgQueue, pMsg, NOS_WAIT_INFINITE) == NOS_OK);
             {
-                switch(pMsg->byType)
+                switch(pMsg->Type)
                 {
 					case IP_MSG_TYPE_DHCP_MANAGEMENT:
 					{
@@ -103,15 +103,15 @@ void IP_Manager::Run(void)
 								SOCK_Close(i);
 							}
 						}
-						break;
 					}
+                    break;
 
                     case IP_MSG_TYPE_SNTP_MANAGEMENT:
                     {
                         IP = pSNTP->Request(IP_SNTP_SOCKET, IP_DEFAULT_NTP_SERVER_1, IP_DEFAULT_NTP_SERVER_2, &Error);
                         IP_Status.b.SNTP_Fail = (IP == IP_ADDRESS(0,0,0,0)) ? false : true;
-                        break;
                     }
+                    break;
 					
 					// put other management here
                 }
@@ -127,12 +127,12 @@ void IP_Manager::Run(void)
 //  Name:           GetDNS_IP()
 //
 //  Parameter(s):   void
-//  Return:         uint32_t   dwIP
+//  Return:         IP_Address_t   dwIP
 //
 //  Description:    Return DNS server IP address according to configuration
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t IP_Manager::GetDNS_IP(void)
+IP_Address_t IP_Manager::GetDNS_IP(void)
 {
     if(pDHCP->GetMode() == true)
     {
@@ -147,12 +147,12 @@ uint32_t IP_Manager::GetDNS_IP(void)
 //  Name:           GetHost_IP
 //
 //  Parameter(s):   void
-//  Return:         uint32_t   dwIP
+//  Return:         IP_Address_t   dwIP
 //
 //  Description:    Return host IP address according to configuration
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t IP_Manager::GetHost_IP(void)
+IP_Address_t IP_Manager::GetHost_IP(void)
 {
     if(pDHCP->GetMode() == true)
     {
@@ -166,7 +166,7 @@ uint32_t IP_Manager::GetHost_IP(void)
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   void
+//  Parameter(s):   None
 //  Return:         void
 //
 //  Description:    Initialize IP Task and stack
@@ -182,7 +182,6 @@ void IP_Manager::Initialize(void)
     Error = nOS_QueueCreate(&m_MsgQueue, &m_GetQueueArray[0], 128, 1024 / 128);     // to be revise to reality... need real number
  
     //AppTaskStart();
-
 
 // replace everything by class object.. static or dynamic.. 
 
@@ -307,7 +306,7 @@ IP_Address_t IP_Manager::AsciiToIP(uint8_t* pBuffer)
 //
 //  Parameter(s):   uint8_t*      pBuffer
 //                  IP_Address_t* pIP
-//                  uint16_t*     pPort
+//                  IP_Port_t     pPort
 //  Return:         uint8_t *     pURI
 //
 //  Description:    This function will process an URL
@@ -318,13 +317,12 @@ IP_Address_t IP_Manager::AsciiToIP(uint8_t* pBuffer)
 //  Note(s):        It is assume that "http://" is always lowercase
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t* IP_Manager::ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, uint16_t* pPort)
+uint8_t* IP_Manager::ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
 {
     uint8_t*   pDomainName;
     uint8_t*   pSearch1        = nullptr;
     uint8_t*   pSearch2        = nullptr;
     uint8_t    Error;
-
 
     *pPort = 80;                                        // Set to default port if none are found
 

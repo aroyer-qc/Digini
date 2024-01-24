@@ -52,7 +52,7 @@ SystemState_e NetARP::Initialize(void)
 	// Clear the ARP cache table
 	for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
 	{
-		m_TableEntry[i].IP_Address =IP_ADDRESS(0,0,0,0);
+		m_TableEntry[i].IP_Address = IP_ADDRESS(0,0,0,0);
 	}
 
         // Initialize an OS timer for the ARP timer
@@ -245,8 +245,8 @@ void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_EthernetAddress_t* pEtherne
 		pTable = &m_TableEntry[OldestEntry];
    	  #if (IP_DBG_ARP == DEF_ENABLED)
 		DBG_Printf("ARP Cache - (%d.%d.%d.%d) Flush an old entry %d\n", uint8_t(pTable->IP_Address >> 24),
-		                                                                uint8_t(pTable->IP_Address >> 24),
-																		uint8_t(pTable->IP_Address >> 24),
+		                                                                uint8_t(pTable->IP_Address >> 16),
+																		uint8_t(pTable->IP_Address >> 8),
 																		uint8_t(pTable->IP_Address),
 																		i);
       #endif
@@ -282,7 +282,7 @@ void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_EthernetAddress_t* pEtherne
 //                  ARP cache if an entry for this IP address is found. If so, the packet is filled
 //                  with the missing destination MAC and the packet is sent. If no ARP cache entry
 //                  is found for the destination IP address, the packet is sent back in the Queue
-//                  of the TaskIP and it is replace  an ARP request packet for the IP destination
+//                  of the TaskIP and it is replace by an ARP request packet for the IP destination
 //                  address. The IP packet will be retransmitted later (After ARP process).
 //
 // 					If the destination IP address is not on the local network, the IP address of

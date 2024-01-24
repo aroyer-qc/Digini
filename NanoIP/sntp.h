@@ -98,7 +98,7 @@ class NetSNTP
     public:
    
         void            Initialize      (void* pQ);
-        uint32_t        Request         (Socket_t SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError);
+        IP_Address_t    Request         (Socket_t SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError);
     
     private:
 

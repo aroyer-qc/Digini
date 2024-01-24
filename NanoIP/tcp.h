@@ -52,7 +52,7 @@
 #define TCP_FLAG_URG                    0x20                // Urgent Flag
 
 #define TCP_FLAG_SYN_FIN                0x03                // Illegal flag combination
-#define TCP_FLAG_nullptr                0x00
+#define TCP_FLAG_NULL                   0x00
 
 
 #define TCP_HTTP_PORT                   htons(80)

@@ -241,7 +241,7 @@ size_t NetSOCK::Send(Socket_t SocketNumber, const uint8_t* pData, size_t Length)
     do
     {
         FreeSize = SOCK_GetTX_FSR(SocketNumber);
-        Status  = sock_sr_read(SocketNumber);
+        Status  = sock_sr_read(SocketNumber);           // w5100 stuff
 
         if((byStatus != SOCK_ESTABLISHED) && (byStatus != SOCK_CLOSE_WAIT))
         {
@@ -264,7 +264,7 @@ size_t NetSOCK::Send(Socket_t SocketNumber, const uint8_t* pData, size_t Length)
         }
     }
 
-    sock_ir_write(SocketNumber, Sn_IR_SEND_OK);
+    sock_ir_write(SocketNumber, Sn_IR_SEND_OK);           // w5100 stuff
   #endif
 
     return Return;
@@ -280,7 +280,7 @@ size_t NetSOCK::Send(Socket_t SocketNumber, const uint8_t* pData, size_t Length)
 //  Return:         size_t
 //
 //  Description:    This function is an application I/F function which is used to receive the data
-//                  in TCP mode. It continues to wait for data as needed  the application
+//                  in TCP mode. It continues to wait for data as needed by the application
 //
 //-------------------------------------------------------------------------------------------------
 size_t NetSOCK::Received(Socket_t SocketNumber, uint8_t *pData, size_t Length)
@@ -333,22 +333,22 @@ size_t NetSOCK::SendTo(Socket_t SocketNumber, const uint8_t* pData, size_t Lengt
     }
     else
     {
-        sock_dipr_write(SocketNumber, PeerAddressess);
-        sock_dportr_write(SocketNumber, PeerPort);
+        sock_dipr_write(SocketNumber, PeerAddressess);           // w5100 stuff
+        sock_dportr_write(SocketNumber, PeerPort);           // w5100 stuff
 
         // copy data
         W5100_ProcessTX_Data(SocketNumber, (uint8_t*)pData, Return);
         W5100_ProcessCmdAndWait(SocketNumber, Sn_CR_SEND);     // Wait to process the command...
 
-        while((sock_ir_read(SocketNumber) & Sn_IR_SEND_OK) != Sn_IR_SEND_OK)
+        while((sock_ir_read(SocketNumber) & Sn_IR_SEND_OK) != Sn_IR_SEND_OK)           // w5100 stuff
         {
-            if((sock_ir_read(SocketNumber) & Sn_IR_TIMEOUT) != 0)
+            if((sock_ir_read(SocketNumber) & Sn_IR_TIMEOUT) != 0)           // w5100 stuff
             {
-                sock_ir_write(SocketNumber, (Sn_IR_SEND_OK | Sn_IR_TIMEOUT)); // clear SEND_OK & TIMEOUT
+                sock_ir_write(SocketNumber, (Sn_IR_SEND_OK | Sn_IR_TIMEOUT)); // clear SEND_OK & TIMEOUT           // w5100 stuff
                 return 0;
             }
         }
-        sock_ir_write(SocketNumber, Sn_IR_SEND_OK);
+        sock_ir_write(SocketNumber, Sn_IR_SEND_OK);           // w5100 stuff
     }
 
     return Return;
@@ -378,9 +378,9 @@ size_t SOCK_ReceivedFrom(Socket_t SocketNumber, uint8_t* pData, size_t Length, I
 
     if(Length > 0)
     {
-        wPtr = sock_rx_rpr_read(SocketNumber);
+        wPtr = sock_rx_rpr_read(SocketNumber);           // w5100 stuff
 
-        switch(sock_mr_read(SocketNumber) & 0x07)
+        switch(sock_mr_read(SocketNumber) & 0x07)           // w5100 stuff
         {
             case Sn_MR_UDP:
             {
@@ -394,7 +394,7 @@ size_t SOCK_ReceivedFrom(Socket_t SocketNumber, uint8_t* pData, size_t Length, I
 
                 W5100_ReadData(SocketNumber, Ptr, pData, DataLength);         // data copy.
                 Ptr += DataLength;
-                sock_rx_rpr_write(SocketNumber, Ptr);
+                sock_rx_rpr_write(SocketNumber, Ptr);           // w5100 stuff
             }
             break;
 
@@ -409,7 +409,7 @@ size_t SOCK_ReceivedFrom(Socket_t SocketNumber, uint8_t* pData, size_t Length, I
 
                 W5100_ReadData(SocketNumber, Ptr, pData, DataLength);         // data copy.
                 Ptr += DataLength;
-                sock_rx_rpr_write(SocketNumber, Ptr);
+                sock_rx_rpr_write(SocketNumber, Ptr);           // w5100 stuff
             }
             break;
 
@@ -421,7 +421,7 @@ size_t SOCK_ReceivedFrom(Socket_t SocketNumber, uint8_t* pData, size_t Length, I
 
                 W5100_ReadData(SocketNumber, Ptr, pData, DataLength);
                 Ptr += DataLength;
-                sock_rx_rpr_write(SocketNumber, Ptr);
+                sock_rx_rpr_write(SocketNumber, Ptr);           // w5100 stuff
             }
             break;
 

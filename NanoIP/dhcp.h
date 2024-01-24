@@ -119,7 +119,7 @@ struct DHCP_Options_t
     IP_Address_t        DNS_ServerIP;
     IP_Address_t        ClientIP;
     IP_Address_t        ServerIP;
-    uint32_t            LeaseTime;
+    /* TickCount ? */uint32_t            LeaseTime;
 };
 
 struct DHCP_Msg_t

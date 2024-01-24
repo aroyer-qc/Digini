@@ -132,13 +132,13 @@ class NetDNS
 {
     public:
 
-        uint32_t    Query           (Socket_t SocketNumber, uint8_t* pDomainName, uint8_t* pError);
+        IP_Address_t    Query           (Socket_t SocketNumber, uint8_t* pDomainName, uint8_t* pError);
 
     private:
 
-        uint32_t    DNS_Response    (Socket_t SocketNumber);
+        IP_Address_t    DNS_Response    (Socket_t SocketNumber);
 
-        uint16_t    m_ID;
+        uint16_t        m_ID;
 };
 
 

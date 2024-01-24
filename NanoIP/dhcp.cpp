@@ -37,7 +37,7 @@
 //          Typically this traffic is related to normal DHCP operation.
 //          DHCP (Dynamic Host Configuration Protocol) is how your computer gets its unique
 //          IP address. When a system starts up on a network it must first request an IP address
-//          (assume it is not using a static IP address), and it does this  broadcasting a
+//          (assume it is not using a static IP address), and it does this by broadcasting a
 //          request to the DHCP server:
 //
 //          UDP 0.0.0.0:68 -> 255.255.255.255:67
@@ -60,7 +60,7 @@
 //
 //          UDP 192.168.1.101:67 -> 192.168.1.1:68
 //
-//          as a request, followed  a reply
+//          as a request, followed by a reply
 //
 //          UDP 192.168.1.1:68 -> 192.168.1.101:67
 //
@@ -211,7 +211,7 @@ bool NetDHCP::Start(void)
     IP_DHCP_DNS_IP      = IP_ADDRESS(0,0,0,0);
     m_Xid               = GET_Random();
 
-    sipr(IP_DHCP_IP);
+    sipr(IP_DHCP_IP);           // w5100 stuff
 
     if(SOCK_Socket(IP_SOCKET_DHCP, Sn_MR_UDP, DHCP_CLIENT_PORT, 0x00) == true)
     {
@@ -327,7 +327,7 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
                                 }
                                 break;
 
-                                case DHC_OPTION_PACK:
+                                case DHCP_OPTION_ACK:
                                 {
                                     if(m_State == DHCP_STATE_OFFER_RECEIVED)
                                     {
@@ -428,7 +428,7 @@ bool NetDHCP::Discover(void)
 
             Length = SOCK_SendTo(DHCP_SOCKET,
                               (uint8_t*)pTX,
-                              uint16_t((sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + Length),
+                              (sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + Length),
                               IP_Address,
                               DHCP_SERVER_PORT);
             if(Length == 0)
@@ -574,9 +574,9 @@ void NetDHCP::IsBound(void)
     IP_DHCP_GatewayIP  = m_Options.GatewayIP;
     IP_DHCP_DNS_IP     = m_Options.DNS_ServerIP;
 
-    gar(IP_DHCP_GatewayIP);
-    subr(IP_DHCP_SubnetMask);
-    sipr(IP_DHCP_IP);
+    gar(IP_DHCP_GatewayIP);           // w5100 stuff
+    subr(IP_DHCP_SubnetMask);           // w5100 stuff
+    sipr(IP_DHCP_IP);           // w5100 stuff
 
     m_State    = DHCP_STATE_BOUND;
     pIP->SetIP_Valid(true);

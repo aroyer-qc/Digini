@@ -103,16 +103,16 @@ void NetSNTP::Initialize(void* pQ)
 //
 //  Name:           Request
 //
-//  Parameter(s):       Socket_t  SocketNumber
-//                      uint8_t*   pDomainName1    Domain Name of the NTP Server 1
-//                      uint8_t*   pDomainName2    Domain Name of the NTP_Server 2
-//                      uint8_t*   pError          Pointer to return an error code
-//  Return:             uint32_t   IP              IP of the NTP server
+//  Parameter(s):       Socket_t     SocketNumber
+//                      uint8_t*     pDomainName1    Domain Name of the NTP Server 1
+//                      uint8_t*     pDomainName2    Domain Name of the NTP_Server 2
+//                      uint8_t*     pError          Pointer to return an error code
+//  Return:             IP_Address_t IP              IP of the NTP server
 //
 //  Description:    Send the SNTP request
 //
 //-------------------------------------------------------------------------------------------------
-int32_t NetSNTP::Request(Socket_t SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError)
+IP_Address_t NetSNTP::Request(Socket_t SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError)
 {
     IP_Port_t    Port;
     SNTP_Msg_t*  pTX;
@@ -133,7 +133,7 @@ int32_t NetSNTP::Request(Socket_t SocketNumber, uint8_t* pDomainName1, uint8_t* 
 
         if(pTX != nullptr)
         {
-            Port = uint16_t(RNG_GetRandomFromRange(32768, 65535));               // Get a random source port for the query from 32768 to 65535
+            Port = IP_Port_t(RNG_GetRandomFromRange(32768, 65535));               // Get a random source port for the query from 32768 to 65535
 
             if(SOCK_Socket(SocketNumber, Sn_MR_UDP, Port, 0) != 0)
             {

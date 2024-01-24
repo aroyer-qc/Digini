@@ -80,7 +80,7 @@ IP_PacketMsg_t* ICMP_Process(IP_PacketMsg_t* pRX)
 			return nullptr;
 		}
 	
-		switch(pRX->Packet.u.ICMP_Frame.Header.byType)
+		switch(pRX->Packet.u.ICMP_Frame.Header.Type)
 		{
 			case ICMP_TYPE_PING_REQUEST:
             {
@@ -91,8 +91,7 @@ IP_PacketMsg_t* ICMP_Process(IP_PacketMsg_t* pRX)
 				Count  = htons(pICMP->IP_Header.Length);
 				Count -= (int16_t)sizeof(IP_IP_Header_t);
 				pICMP->Header.Type     = ICMP_TYPE_PING_REPLY;
-				pICMP->Header.Checksum = 0;                                 // TODO fix this
-				pICMP->Header.Checksum= IP_CalculateChecksum(&pICMP->Header, Count);
+				pICMP->Header.Checksum = IP_CalculateChecksum(&pICMP->Header, Count);
 	
 				memcpy(pETH->Dst.Address, pETH->Src.Address, 6);						                // Put Mac header
 				pICMP->IP_Header.TimeToLive    = IP_TIME_TO_LIVE;

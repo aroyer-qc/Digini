@@ -142,7 +142,7 @@ IP_PacketMsg_t* NetTCP::Process(IP_PacketMsg_t* pRX)
     SocketInfo_t*           pSocket;
     PortInfo_t*             pPort;
     uint8_t                 Error;
-    uint8_t                 Flag    = TCP_FLAG_nullptr;
+    uint8_t                 Flag    = TCP_FLAG_NULL;
 
     pTCP_RX = &pRX->Packet.u.TCP_Frame.Header;
     

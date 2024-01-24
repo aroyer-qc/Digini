@@ -68,15 +68,15 @@
 //  Name:           Query
 //
 //  Parameter(s):       Socket_t     SocketNumber
-//                      uint8_t*   pDomainName     Domain Name to get the IP
-//                      uint8_t*   pError          Pointer to return an error code TODO change error coding to Digini system coding
+//                      uint8_t*     pDomainName     Domain Name to get the IP
+//                      uint8_t*     pError          Pointer to return an error code TODO change error coding to Digini system coding
 //
-//  Return:             uint32_t   dwIP
+//  Return:             IP_Address_t IP
 //
 //  Description:    Send the DNS Query to DNS Server
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t NetDNS::Query(Socket_t SocketNumber, uint8_t* pDomainName, uint8_t* pError)
+IP_Address_t NetDNS::Query(Socket_t SocketNumber, uint8_t* pDomainName, uint8_t* pError)
 {
     size_t       Length;
     IP_Port_t    Port;

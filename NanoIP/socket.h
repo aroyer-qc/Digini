@@ -59,12 +59,21 @@ class NetSOCK
     public:
         
         bool        Socket         	    (Socket_t SocketNumber, uint8_t Protocol, IP_Port_t SourcePort, uint8_t Flag);                                // Opens a socket(TCP or UDP or IP_RAW mode)
-        void        Close          	    (Socket_t SocketNumber);                                                                                      // Close socket
+
+Bind missing ??
+        int         Bind                (int sockfd, const struct sockaddr *addr, size_t Length);
+
         bool        Listen         	    (Socket_t SocketNumber);                                                                                      // Establish TCP connection (Passive connection)
+
+Accept missing ??
+        int         Accept              (int sockfd, struct sockaddr *addr, size_t Length);   ???
+
         bool        Connect        	    (Socket_t SocketNumber, IP_Address_t DstAddress, IP_Port_t DstPort);                                          // Establish TCP connection (Active connection)
-        void        Disconnect     	    (Socket_t SocketNumber);                                                                                      // Disconnect the connection
         size_t      Send           	    (Socket_t SocketNumber, const uint8_t* pData, size_t Length);                                                 // Send data (TCP)
         size_t      Received       	    (Socket_t SocketNumber, uint8_t* pData, size_t Length);                                                       // Receive data (TCP)
+        void        Close          	    (Socket_t SocketNumber);                                                                                      // Close socket
+
+        void        Disconnect     	    (Socket_t SocketNumber);                                                                                      // Disconnect the connection
         size_t      SendTo         	    (Socket_t SocketNumber, const uint8_t* pData, size_t Length, IP_Address_t PeerAddress, IP_Port_t PeerPort);   // Send data (UDP/IP RAW)
         size_t      ReceivedFrom   	    (Socket_t SocketNumber, uint8_t* pData, size_t Length, IP_Address_t* pPeerAddress, IP_Port_t* pPeerPort);     // Receive data (UDP/IP RAW)
         size_t      GetTX_BufferSize	(Socket_t SocketNumber);

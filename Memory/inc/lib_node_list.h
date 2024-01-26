@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_chain_list.h
+//  File : lib_node_list.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -24,12 +24,12 @@
 //
 //------ Note(s) ----------------------------------------------------------------------------------
 //
-//      Special class to handle chain list.
+//      Special class to handle node list.
 //
 //          This class will reserved the memory for the node to be used by the client and also
 //          handle the memory release.
 //          This class used the static memory block allocation 'lib_memory.h'
-//          Node chain list information is integrated into the allocated memory block, but the
+//          Node list information is integrated into the allocated memory block, but the
 //          pointer it return is offseted for client data only.
 //
 //-------------------------------------------------------------------------------------------------
@@ -56,51 +56,53 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-struct ChainList_t
+struct NodeList_t
 {
-    uint16_t        ChainID;                    // Use to identified the node by external client
-    void*           pClientData;                // Can be function, Data Struct, Class object etc...
-    ChainList_t*    pPreviousNode;
-    ChainList_t*    pNextNode;
+    uint16_t        NodeID;                 // Use to identified the node by external client
+    void*           pClientData;            // Can be function, Data Struct, Class object etc...
+    NodeList_t*     pPreviousNode;
+    NodeList_t*     pNextNode;
 };
 
 //-------------------------------------------------------------------------------------------------
 // Class
 //-------------------------------------------------------------------------------------------------
 
-class ChainList
+class NodeList
 {
     public:
 
-                        ChainList           (size_t NodeDataSize);                      // All node data size will be created with this size + node overhead
-                       ~ChainList           ();
+                        NodeList            (size_t NodeDataSize);                      // All node data size will be created with this size + node overhead
 
         SystemState_e   Alloc               (size_t Size);                              // Will create as many node as necessary to hold the provided size
-        
-        SystemState_e   AddNode             (uint16_t ChainID, void** pData);           // This reserve the memory for the node and insert it into the chain
-        SystemState_e   RemoveNode          (uint16_t ChainID);                         // This will also free the memory of the node
-        SystemState_e   GetNodeDataPointer  (uint16_t ChainID, void** pData);           // Get the node data from the client ID
+
+        SystemState_e   AddNode             (uint16_t NodeID, void** pData);            // This reserve the memory for the node and insert it into the chain
+        SystemState_e   RemoveNode          (uint16_t NodeID);                          // This will also free the memory of the node
+        SystemState_e   RemoveAllNode       (void);
+        SystemState_e   GetNodeDataPointer  (uint16_t NodeID, void** pData);            // Get the node data from the client ID
         uint16_t        GetNumberOfNode     (void);
+
+        void            SetNodeSize         (size_t NodeDataSize);
+        size_t          GetNodeSize         (void);                                     // Get Node data pointer and increment node pointer
 
         // Special method to scan all node
         SystemState_e   ResetScanNode       (void);                                     // Reset the ScanNode pointer to beginning
-        SystemState_e   GetNextNode         (uint16_t* ChainID, void** pData);          // Get the Next node pointer and chainID
+        SystemState_e   GetNextNode         (uint16_t* NodeID, void** pData);           // Get the Next node pointer and chainID
 
     private:
 
-        SystemState_e   GetNodePointer      (uint16_t ChainID, ChainList_t** pNode);    // Get the node pointer from the client ID
-        void*           GetNodeDataAddress  (ChainList_t* pNode);
+        SystemState_e   GetNodePointer      (uint16_t NodeID, NodeList_t** pNode);     // Get the node pointer from the client ID
+        void*           GetNodeDataAddress  (NodeList_t* pNode);
 
-        ChainList_t*    m_pFirstNode;
-        ChainList_t*    m_pLastNode;
-        ChainList_t*    m_pScanNode;
-        uint8_t         m_NumberOfNode;
-        size_t          m_NodeDataSize;
-
+        NodeList_t*     m_pFirstNode;
+        NodeList_t*     m_pLastNode;
+        NodeList_t*     m_pScanNode;
+        uint16_t        m_NumberOfNode;
+        size_t          m_NodeSize;
 };
 
-
-// Add sorting of the chainlist using ID, need to create a class using bubble sort
+// upgrade?
+// Add sorting of the NodeList using ID, need to create a class using bubble sort
 // Add search with successive approximation using ID;
 
 //-------------------------------------------------------------------------------------------------

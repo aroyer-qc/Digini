@@ -51,8 +51,8 @@ void IP_Manager::Initialize(void)
 {
     nOS_Error = Error;
     
-    m_IP_IsValid = false;
-    IP_Status.b.DNS_IP_Found    = false;
+    m_IP_IsValid             = false;
+    IP_Status.b.DNS_IP_Found = false;
  
     Error = nOS_QueueCreate(&m_MsgQueue, &m_GetQueueArray[0], 128, 1024 / 128);     // to be revise to reality... need real number
  
@@ -163,7 +163,8 @@ void IP_Manager::Run(void)
 					case IP_MSG_TYPE_DHCP_MANAGEMENT:
 					{
 						IP_Status.b.Status = m_pDHCP->Process(pMsg);
-						if(IP_Status.b.Status == false)
+						
+                        if(IP_Status.b.Status == false)
 						{
 							for(int i = 0; i < IP_STACK_NUMBER_OF_SOCKET; i++)
 							{
@@ -194,10 +195,10 @@ void IP_Manager::Run(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           GetDNS_IP()
+//  Name:           GetDNS_IP
 //
 //  Parameter(s):   void
-//  Return:         IP_Address_t   dwIP
+//  Return:         IP_Address_t   IP
 //
 //  Description:    Return DNS server IP address according to configuration
 //
@@ -205,7 +206,7 @@ void IP_Manager::Run(void)
 IP_Address_t IP_Manager::GetDNS_IP(void)
 {
   #if (IP_USE_DHCP == DEF_ENABLED)
-    if(pDHCP->GetMode() == true)
+    if(pDHCP->GetMode() == DHCP_IS_ON)
     {
         return IP_DHCP_DNS_IP;
     }
@@ -227,7 +228,7 @@ IP_Address_t IP_Manager::GetDNS_IP(void)
 IP_Address_t IP_Manager::GetHost_IP(void)
 {
   #if (IP_USE_DHCP == DEF_ENABLED)
-    if(pDHCP->GetMode() == true)
+    if(pDHCP->GetMode() == DHCP_IS_ON)
     {
         return IP_DHCP_IP;
     }

@@ -176,6 +176,7 @@ void NetDHCP::Initialize(void* pQ)
 {
     nOS_Error;
 
+    m_Mode  = DHCP_IS_ON;            // This is the default value for DHCP
     m_State = DHCP_STATE_INITIAL;
     m_pQ    = pQ;
 

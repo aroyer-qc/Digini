@@ -32,13 +32,14 @@
 //-------------------------------------------------------------------------------------------------
 
 //----- PROTOCOL -----
+#define 	IP_USE_ARP 							DEF_ENABLED
 #define 	IP_USE_DHCP							DEF_ENABLED
+#define 	IP_USE_ICMP							DEF_ENABLED
+#define  	IP_USE_NTP							DEF_ENABLED
+#define 	IP_USE_SNTP							DEF_ENABLED
+#define  	IP_USE_SOAP 						DEF_ENABLED
 #define 	IP_USE_TCP 							DEF_ENABLED
 #define 	IP_USE_UDP 							DEF_ENABLED
-#define 	IP_USE_ICMP							DEF_ENABLED
-#define 	IP_USE_SNTP							DEF_ENABLED
-#define  	IP_USE_NTP							DEF_ENABLED
-#define  	IP_USE_SOAP 						DEF_ENABLED
 
 // If CPU has GUID serial number like some STM32, and want to use this as MAC
 #define IP_USE_PART_OF_CPU_GUID_AS_MAC              DEF_ENABLED
@@ -94,6 +95,9 @@
 
 //-------------------------------------------------------------------------------------------------
 
+#define     ETH_DEBUG_PACKET_COUNT
+
+
 /*
 
 need to add to database_cfg.h :
@@ -103,3 +107,4 @@ need to add to database_cfg.h :
     X_EEPROM_DBASE( ETHERNET_STATIC_HOST_IP,     myE2_Setting, 1, 1, sizeof(IP_Address_t));
     X_EEPROM_DBASE( ETHERNET_SUBNET_MASK_IP,     myE2_Setting, 1, 1, sizeof(IP_Address_t));
     X_EEPROM_DBASE( ETHERNET_GATEWAY_IP,         myE2_Setting, 1, 1, sizeof(IP_Address_t));
+

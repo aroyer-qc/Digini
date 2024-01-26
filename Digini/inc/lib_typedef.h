@@ -188,10 +188,11 @@ typedef enum
     SYS_WRONG_DEVICE,
     SYS_WRONG_SIZE,
     SYS_WRONG_VALUE,
-    SYS_ID_DOES_NOT_EXIST,                          // Use by ChainList
-    SYS_ID_ALREADY_EXIST,                           // Use by ChainList
-    SYS_REACH_END_OF_LIST,                          // Use by ChainList
-    SYS_CHAIN_LIST_IS_EMPTY,                        // Use by ChainList
+    SYS_ID_DOES_NOT_EXIST,                          // Use by NodeList
+    SYS_ID_ALREADY_EXIST,                           // Use by NodeList
+    SYS_REACH_END_OF_LIST,                          // Use by NodeList
+    SYS_NODE_LIST_IS_EMPTY,                         // Use by NodeList
+    SYS_NODE_UNKNOWN_ERROR,                         // Use by NodeList (maybe improve on this)
 
     // SD state
     SD_CC_ERROR,

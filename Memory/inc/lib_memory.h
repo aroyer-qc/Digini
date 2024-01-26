@@ -104,6 +104,7 @@ extern class MemPoolDriver*               pMemoryPool;
 #endif
 
 //-------------------------------------------------------------------------------------------------
+
 #else
 
 #pragma message("DIGINI use memory pool instead of the malloc library. please define you memblock into memory_cfg.h")

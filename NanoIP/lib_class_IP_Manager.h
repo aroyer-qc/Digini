@@ -105,6 +105,7 @@ class IP_Manager
         uint8_t*            IP_ToAscii                  (IP_Address_t IP_Address);
         IP_Address_t        AsciiToIP                   (uint8_t* pBuffer);
         uint8_t*            ProcessURL                  (uint8_t* pBuffer, IP_Address_t* pIP_Address, IP_Port_t* pPort);
+
         
     private:    
  
@@ -121,51 +122,54 @@ class IP_Manager
         IP_Address_t        m_StaticIP;                             // Static IP Address
         IP_Address_t        m_StaticDNS_IP;                         // Static DNS Server IP Address
         
-        uint8_t             m_TX_SocketMemorySize;                  // TX Socket Memory Configuration for all 3 Sockets
-        uint8_t             m_RX_SocketMemorySize;                  // RX Socket Memory Configuration for all 3 Sockets
+        uint8_t             m_TX_SocketMemorySize;                  // TX Socket Memory Configuration for all x Sockets
+        uint8_t             m_RX_SocketMemorySize;                  // RX Socket Memory Configuration for all x Sockets
 
-#define 	IP_USE_TCP 							DEF_ENABLED
-#define 	
-
+      #if (IP_USE_ARP == DEF_ENABLED)
+        NetARP              m_ARP;                                  // Address Resolution Protocol
+      #endif
 
       #if (IP_USE_DHCP == DEF_ENABLED)
-        NetDHCP         m_DHCP;            // Need UDP
+        NetDHCP             m_DHCP;                                 // Dynamic Host Control Protocol. Need UDP
 
         // Move this to DHCP    use getter!!
         IP_Address_t        m_DHCP_GatewayIP;                       // Gateway IP Address from server
         IP_Address_t        m_DHCP_SubnetMask;                      // Subnet Mask from server
         IP_Address_t        m_DHCP_IP;                              // IP Address from server
         IP_Address_t        m_DHCP_DNS_IP;                          // DNS Server IP Address from server
-        bool               m_IP_IsValid;        // maybe this should be move to DHCP
-
-
-      #endif
-
-      #if (IP_USE_UDP == DEF_ENABLED)
-        NetUDP          m_UDP;
+        bool                m_IP_IsValid;
       #endif
 
       #if (IP_USE_ICMP == DEF_ENABLED)
-        NetICMP         m_ICMP;
-      #endif
-
-      #if (IP_USE_TCP == DEF_ENABLED)
-        NetTCP          m_TCP;
-      #endif
-
-      #if (IP_USE_SNTP == DEF_ENABLED)
-        NetSNTP         m_SNTP;
+        NetICMP             m_ICMP;                                 // Internet Control Message Protocol
       #endif
 
       #if (IP_USE_NTP == DEF_ENABLED)
-        uint8_t             m_NTP_Server_1[IP_MAX_URL_SIZE];        // (Network Time Protocol)
+        NetNTP              m_NTP;                                  // Network Time Protocol
+    
+        uint8_t             m_NTP_Server_1[IP_MAX_URL_SIZE];// move this to NTP
         uint8_t             m_NTP_Server_2[IP_MAX_URL_SIZE];
       #endif
 
+      #if (IP_USE_SNTP == DEF_ENABLED)
+        NetSNTP             m_SNTP;                                 // Simple Network Transport Protocol
+      #endif
+
       #if (IP_USE_SOAP == DEF_ENABLED)
-        uint8_t             m_SOAP_Server_1[IP_MAX_URL_SIZE];       // (Simple Object Access Protocol) Messaging protocol specification for exchanging structured information.
+        NetSOAP             m_pSOAP                                 // Simple Object Access Protocol
+      
+        uint8_t             m_SOAP_Server_1[IP_MAX_URL_SIZE];       // Messaging protocol specification for exchanging structured information.
         uint8_t             m_SOAP_Server_2[IP_MAX_URL_SIZE];
       #endif
+
+      #if (IP_USE_TCP == DEF_ENABLED)
+        NetTCP          m_TCP;                                      // Transport Control Protocol
+      #endif
+
+      #if (IP_USE_UDP == DEF_ENABLED)
+        NetUDP          m_UDP;                                      // User Datagram Protocol
+      #endif
+
         
 };
 

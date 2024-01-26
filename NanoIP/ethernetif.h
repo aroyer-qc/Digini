@@ -36,6 +36,8 @@
 
 //-------------------------------------------------------------------------------------------------
 
+void FreePacket(MemoryNode* pPacket);
+
 //-------------------------------------------------------------------------------------------------
 
 class ETH_IF_Driver
@@ -59,8 +61,8 @@ class ETH_IF_Driver
         void             Input                          (void* pParam);
 
 
-        inline struct pbuf*  LowLevelInput              (void);
-        SystemState_e        LowLevelOutput             (uint8_t* pPacket);               // TODO Should use may chainlist buffer allocation
+        inline MemoryNode*   LowLevelInput              (void);
+        SystemState_e        LowLevelOutput             (MemoryNode* pPacket);               // TODO Should use may chainlist buffer allocation
         void                 ArpTimer                   (void* pArg);
         void                 Callback                   (uint32_t Event);
         void                 PollTheNetworkInterface    (void);                                                 // This might be a PHY, MAC, HEC ( hardwired ethernet controller Ex. W5100, ESP32 etc...)
@@ -82,10 +84,12 @@ class ETH_IF_Driver
         ETH_Driver                  m_Mac;
         PHY_DRIVER_INTERFACE        m_Phy;
         PHY_DriverInterface         m_ETH_Phy;
-        ETH_LinkState_e             m_ETH_Link;                // Ethernet Link State
-        //bool                        m_DHCP_IsUsed;      // this goes to DHCP.. not driver
+        ETH_LinkState_e             m_Link;                // Ethernet Link State
 };
 
 //-------------------------------------------------------------------------------------------------
+
+void FreePacket        (MemoryNode* pPacket);
+
 
 #endif

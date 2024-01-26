@@ -606,48 +606,47 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
 //
 //   Function name:     ReadFrame
 //
-//   Parameter(s):      ptrBuf          Pointer to on pbuf lWIP data.
-//                      Length          Frame buffer length in bytes.
-//   Return value:      SystemState_e   State of function.
+//   Parameter(s):      MemoryNode*     pPacket         Pointer to on MemoryNode NanoIP data.
+//                      size_t          Length          Frame buffer length in bytes.
+//   Return value:      SystemState_e                   State of function.
 //
 //   Description:       Read data of received Ethernet frame.
 //
 //   Note(s):           It is assume that:
 //                          1 - Length is not 0, so 'length' lower or equal to ETHERNET_FRAME_SIZE.
-//                          2 - No pBuf was allocated if packet is invalid.
+//                          2 - No MemoryNode was allocated if packet is invalid.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::ReadFrame(struct pbuf* pBuf, size_t Length)
+SystemState_e ETH_Driver::ReadFrame(MemoryNode* pPacket, size_t Length)
 {
-    SystemState_e State  = SYS_READY;
-    uint8_t const* pSrc  = m_RX_Descriptor[m_MAC_Control.RX_Index].Addr;
- //  size_t Granularity   = size_t(pBuf->len);
-    uint8_t* pFrame      = static_cast<uint8_t*>(pBuf->payload);
+    SystemState_e State = SYS_READY;
+    uint8_t const* pSrc = m_RX_Descriptor[m_MAC_Control.RX_Index].Addr;
+    size_t NodeSize;
+    uint8_t* pNodeData;
 
-    if(pBuf == nullptr)
+    if(pPacket == nullptr)
     {
         DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: ReadFrame - Invalid Parameter\n");
         State = SYS_INVALID_PARAMETER;
     }
     else
     {
-        while(Length > 0)
+        NodeSize = pPacket->GetNodeSize();
+        pPacket->Begin();
+        
+        do
         {
-            Length -= size_t(pBuf->len);
-            memcpy(pFrame, pSrc, Granularity);
-            //LIB_FastMemcpy(pSrc, pFrame, Granularity);
-            pBuf = pBuf->next;
+            if(Lenght < NodeSize)
+            {
+                NodeSize = Length;
+            }
+            
+            Lenght -= NodeSize;
 
-            if(pBuf != nullptr)
-            {
-                Granularity = size_t(pBuf->len);
-                pFrame      = static_cast<uint8_t*>(pBuf->payload);
-            }
-            else
-            {
-                Length = 0;
-            }
+            pNodeData = static_cast<uint8_t*>(pPacket->GetNext());
+            memcpy(pNodeData, pSrc, NodeSize);                         // LIB_FastMemcpy(pSrc, pFrame, NodeSize);
         }
+        while(Length > 0)
     }
 
     // Return this block back to ETH-DMA

@@ -72,7 +72,6 @@
 #define DHCP_MAGIC_COOKIE                       0x63538263      // 0x63825363 in Big Endian
 #define DHCP_FLAGS_BROADCAST                    0x8000
 
-
 #define DHCP_PUT_OPTION_CLIENT_IDENTIFIER       (uint8_t)0x01
 #define DHCP_PUT_OPTION_HOST_NAME               (uint8_t)0x02
 #define DHCP_PUT_OPTION_PL_DISCOVER             (uint8_t)0x04
@@ -86,6 +85,10 @@
 #define DHCP_MSG_ACTION_LEASE_RENEWAL           1
 #define DHCP_MSG_ACTION_REBIND                  2
 #define DHCP_MSG_ACTION_TIME_OUT                3
+
+#define DHCP_IS_ON                              true
+#define DHCP_IS_OFF                             false
+
 
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
@@ -152,9 +155,12 @@ class NetDHCP
     
         void            Initialize      (void* pQ);
         bool            Process         (DHCP_Msg_t* pMsg);
-        bool            GetMode         (void)                    {return m_Mode};
+
+        void            SetMode         (bool Mode)                 { m_Mode = Mode; }         
+        bool            GetMode         (void)                      { return m_Mode; }
         
     private:    
+
 
         bool            Start           (void);
         void            ParseOffer      (DHCP_Msg_t* pRX);
@@ -174,8 +180,9 @@ class NetDHCP
         nOS_Timer               m_TimerT2_Rebind;
         
         nOS_Queue               m_pQ; ??
-        bool                    m_Mode;
+        bool                    m_Mode;                      // External configuration can tell this class the DHCP is OFF or ON
         DHCP_State_e            m_State;
+
 
         static const uint8_t    m_OPL_Discover[8];
         static const uint8_t    m_OPL_Request[10];

@@ -38,21 +38,42 @@
 #define IP_ASCII_IP_ADDRESS_SIZE            16
 
 //-------------------------------------------------------------------------------------------------
+// Const(s)
+//-------------------------------------------------------------------------------------------------
+
+const IP_Manager::IP_ETH_Config_t m_EthernetIF[NUMBER_OF_ETH_IF];
+{
+    X_ETH_IF_DEF(EXPAND_X_ETH_IF_AS_STRUCT_DATA)
+};
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   None
+//  Parameter(s):   IP_Configuration_t      IP_Configuration
 //  Return:         void
 //
 //  Description:    Initialize IP Task and stack
 //
 //-------------------------------------------------------------------------------------------------
-void IP_Manager::Initialize(void)
+void IP_Manager::Initialize(IP_Configuration_t IP_Configuration)
 {
     nOS_Error = Error;
     
     m_IP_IsValid             = false;
     IP_Status.b.DNS_IP_Found = false;
+ 
+  #if (IP_CUSTOM_CALLBACK_FOR_MAC_ATTRIBUTION == DEF_ENABLED)
+    // Created a callback to custom mac creation
+    m_pCallbackFctSetMAC(m_MAC);
+  #else
+   #if (IP_USE_PART_OF_CPU_GUID_AS_MAC == DEF_ENABLED)
+    // call ETH_MAC driver to generate the GUID MAC Address
+   #else    
+    // Copy mac address from struct x macro ip_cfg
+   #endif
+  #endif
+                                                                     
  
     Error = nOS_QueueCreate(&m_MsgQueue, &m_GetQueueArray[0], 128, 1024 / 128);     // to be revise to reality... need real number
  

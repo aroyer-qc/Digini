@@ -67,11 +67,13 @@ SystemState_e ETH_IF_Driver::Initialize(struct EthernetIF_t* pNetIf)
 
 	m_Link = ETH_LINK_DOWN;
   
-    
+  
+  #if (IP_INTERFACE_SUPPORT_PHY == DEF_ENABLED) || (IP_INTERFACE_SUPPORT_MAC == DEF_ENABLED)
     //PHY CONFIG should be out of here...
     ETH_Mac.Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
-
-    // if(m_IF_Type == ETH_PHY_IF)
+ 
+    // if(m_IF_Type == ETH_PHY_IF) 
+        // if(m_IF_Type == ETH_MAC_IF)
     // {
 	// Initialize Physical Media Interface
 	if(ETH_Phy.Initialize(&ETH_Mac) == SYS_READY)
@@ -87,12 +89,15 @@ SystemState_e ETH_IF_Driver::Initialize(struct EthernetIF_t* pNetIf)
         IO_EnableIRQ(ETH_PHY_LINK_IO_ISR);
 	  #endif
 	}
-    // }
+  // }
+  #endif
 
+  #if (IP_INTERFACE_SUPPORT_HEC == DEF_ENABLED)
     // if(m_IF_Type == ETH_HEC_IF)
     // {
             // This is for chip containing the everything  in them Example Microchip WS5100
     // }
+  #endif
 
     // if(m_IF_Type == ETH_MAC_IF)
     // {
@@ -101,22 +106,12 @@ SystemState_e ETH_IF_Driver::Initialize(struct EthernetIF_t* pNetIf)
 
 	// ASSERT("pNetIf != nullptr", (pNetIf != nullptr));
 
-  #if USE_NETIF_HOSTNAME
-	pNetIf->hostname = "lwip";               //    not here!!!                        // Initialize interface host name
-  #endif
 	//pNetIf->output     = EtharpOutput;        not here!!!
 	//pNetIf->linkoutput = LowLevelOutput;
 
     // Set netif MAC hardware address length
     pNetIf->hwaddr_len = ETH_HWADDR_LEN;     //  not here!!!
 
-    // Set netif MAC hardware address                               no needed here.. should be initialize via the IP_Manager.. ( it is the IP manager that know it's interface!!
-                                                                    pNetIf->hwaddr[0] =  MAC_ADDR0;
-                                                                    pNetIf->hwaddr[1] =  MAC_ADDR1;
-                                                                    pNetIf->hwaddr[2] =  MAC_ADDR2;
-                                                                    pNetIf->hwaddr[3] =  MAC_ADDR3;
-                                                                    pNetIf->hwaddr[4] =  MAC_ADDR4;
-                                                                    pNetIf->hwaddr[5] =  MAC_ADDR5;
     
     // YES HERE
     ETH_Mac.SetMacAddress((ETH_MAC_Address_t*)pNetIf->hwaddr);
@@ -287,8 +282,10 @@ myTestChainList.RemoveNode(2);
 //  Description:    This function return a node list buffer filled with the received packet.
 //                  (including MAC header)
 //
+//  Note(s)         This is inline, break into 2 part to simplify reading
+//
 //-------------------------------------------------------------------------------------------------
-MemoryNode* ETH_IF_Driver::LowLevelInput(void)
+inline MemoryNode* ETH_IF_Driver::LowLevelInput(void)
 {
     size_t Length;
 
@@ -302,8 +299,6 @@ MemoryNode* ETH_IF_Driver::LowLevelInput(void)
 
         if(Length <= ETHERNET_FRAME_SIZE)
         {
-            
-            
             MemoryNode* pPacket = pMemoryPool->AllocAndClear(sizeof(MemoryNode*));
 
             if(pPacket->Alloc(Length) == SYS_READY)                                 // We allocate a MemoryNode of node from the pool.
@@ -333,7 +328,7 @@ MemoryNode* ETH_IF_Driver::LowLevelInput(void)
 //
 //  Function:       Input
 //
-//  Parameter(s):   netif   The lwip network interface structure for this ethernetif
+//  Parameter(s):   pParam       The network interface structure for this ethernetif
 //  Return:         None
 //
 //  Description:    This function is the ethernetif_input task
@@ -347,14 +342,15 @@ MemoryNode* ETH_IF_Driver::LowLevelInput(void)
 void ETH_IF_Driver::Input(void* pParam)
 {
    	MemoryNode*   pPacket;
-    EthernetIF_t* pNetIf = (EthernetIF_t*)pParam;
+    EthernetIF_t* pNetIf = (EthernetIF_t*)pParam;  // this will be member since the IP_Manager is the interface obtaining the netif equvalent of lwip
     err_t         Error;
+    bool          Exit;
 
     PollTheNetworkInterface();        // Initial polling of the link
 
 	while(1)
 	{
-        if((nOS_SemTake(&ETH_RX_Sem, BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK) && (pNetIf != nullptr))
+        if(nOS_SemTake(&ETH_RX_Sem, BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK)
 		{
 		    // if for some reason we receive a message and the link is down then poll the PHY for the link
 		    if(ETH_Link == ETH_LINK_DOWN)
@@ -362,11 +358,13 @@ void ETH_IF_Driver::Input(void* pParam)
                 PollTheNetworkInterface();
             }
 
+            Exit = false;
+
 			do
 			{
                 if((pPacket = LowLevelInput()) != nullptr)
                 {
-                    if((Error = pNetIf->input(pPacket, pNetIf)) != ERR_OK)
+                    if((Error = pNetIf->input(pPacket)) != ERR_OK)
                     {
                         VAR_UNUSED(Error);
                         FreePacket(pPacket);
@@ -374,17 +372,22 @@ void ETH_IF_Driver::Input(void* pParam)
                       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
                         m_DBG_RX_Drop++;
                       #endif
+                      Exit = true;
                     }
                     else
                     {
-                        nOS_SemTake(&m_RX_Sem, 0);
+                        nOS_SemTake(&m_RX_Sem, 0); // why this one
                     }
+                }
+                
+                if(pPacket->GetNext() == nullptr)
+                {
+                    Exit = true;
                 }
 
                 nOS_Yield();
 			}
-            wrong... i might have already free the packet
-			while(pPacket->GetNext() != nullptr);
+			while(Exit == false);
 		}
 		else
         {

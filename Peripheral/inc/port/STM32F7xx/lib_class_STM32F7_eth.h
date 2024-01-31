@@ -142,7 +142,7 @@ struct TX_Descriptor_t
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class ETH_Driver
+class ETH_Driver : public MAC_DriverInterface
 {
     public:
 
@@ -156,9 +156,9 @@ class ETH_Driver
         SystemState_e           ReadFrame               (MemoryNode* pPacket, size_t Length);                            // Read data of received Ethernet frame.
         uint32_t                GetRX_FrameSize         (void);                                                          // Get size of received Ethernet frame.
       #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-        SystemState_e           GetRX_FrameTime         (ETH_MacTime_t* Time);                                           // Get time of received Ethernet frame.
-        SystemState_e           GetTX_FrameTime         (ETH_MacTime_t* Time);                                           // Get time of transmitted Ethernet frame.
-        SystemState_e           ControlTimer            (ETH_ControlTimer_e Control, ETH_MacTime_t* Time);               // Control Precision Timer.
+        SystemState_e           GetRX_FrameTime         (ETH_MacTime_t* pTime);                                          // Get time of received Ethernet frame.
+        SystemState_e           GetTX_FrameTime         (ETH_MacTime_t* pTime);                                          // Get time of transmitted Ethernet frame.
+        SystemState_e           ControlTimer            (ETH_ControlTimer_e Control, ETH_MacTime_t* pTime);              // Control Precision Timer.
       #endif
 
         SystemState_e           PHY_Read                (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData); // Read Ethernet PHY Register through Management Interface.

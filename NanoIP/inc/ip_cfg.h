@@ -1,4 +1,3 @@
-//=================================================================================================
 //-------------------------------------------------------------------------------------------------
 //
 //  File : ip_cfg.h
@@ -31,9 +30,32 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-//----- PROTOCOL -----
+//-------------------------------------------------------------------------------------------------
+// Driver
+
+// Include file for the ETH PHY Driver
+#define PHY_DRIVER_INCLUDE                      "lib_class_PHY_LAN8742A.h"
+
+// Name of the driver class
+#define PHY_DRIVER_INTERFACE                    PHY_LAN8742A_Driver
+
+//-------------------------------------------------------------------------------------------------
+// Driver configuration  (may vary according to driver)
+
+// for PHY_LAN8742A_Driver
+
+#define ETH_USED_INTERFACE                      ETH_INTERFACE_RMII
+#define ETH_USE_TIME_STAMP                      DEF_DISABLED
+#define ETH_USE_CHECKSUM_OFFLOAD                DEF_DISABLED
+#define ETH_DEBUG_PACKET_COUNT                  DEF_ENABLED
+#define ETH_USE_PHY_LINK_IRQ                    DEF_DISABLED
+#define ETH_PHY_LINK_IO                         IO_NOT_DEFINED  // Put herethe IO ID if supported
+
+//-------------------------------------------------------------------------------------------------
+// Protocol supported by the application
+
 #define IP_USE_ARP 							    DEF_ENABLED
-#define IP_USE_DHCP							    DEF_ENABLED
+#define IP_USE_DHCP							    DEF_ENABLED     // Need UDP
 #define IP_USE_ICMP							    DEF_ENABLED
 #define IP_USE_NTP							    DEF_ENABLED
 #define IP_USE_SNTP							    DEF_ENABLED
@@ -42,38 +64,13 @@
 #define IP_USE_UDP 							    DEF_ENABLED
 
 //---------------------------------------------------------
+// External server URL
 
 #define IP_DEFAULT_NTP_SERVER_1                 "0.ca.pool.ntp.org"
 #define IP_DEFAULT_NTP_SERVER_2                 "1.ca.pool.ntp.org"
 
-//--- Socket allocation -----------------------------------
-// in this stack socket can be allocated statically.
-// It is useful for NIC with hardwired IP Stack like
-// Wiznet W5100S with limited number of socket and 
-// configurable socket memory size
-
-#define IP_USE_STATIC_SOCKET					DEF_DISABLED
-
-#if (IP_USE_STATIC_SOCKET == DEF_ENABLED)
-
-// Socket use on for DHCP business
-#define IP_SOCKET_DHCP                     		3
-
 //-------------------------------------------------------------------------------------------------
-
-#define ETH_DEBUG_PACKET_COUNT
-
-//-------------------------------------------------------------------------------------------------
-
-#define IP_NET_IF_MTU                           1500                // not sure it is used in my stack
-
-
-
-//-------------------------------------------------------------------------------------------------
-//
 // Interface configuration
-//
-//-------------------------------------------------------------------------------------------------
 
 #define IP_NUMBER_OF_INTERFACE                  1
 
@@ -111,17 +108,6 @@
 // Interface List
 #define ETH_IF_CONFIG_LIST  ETH_IF_GRBL_CONFIG ## ETH_IF_TEST_CONFIG
 
-// TODO need to add ETH_DRIVER
-// TODO Find a better method to attribute the MAC !!
-
-
-
-
-
-
-
-
-
 
 
 
@@ -129,6 +115,61 @@
 
 
 /*
+
+// MAC address configuration using GUID of the CPU.
+#define MAC_ADDR0	                            (((char *)0x1FF0F420)[0])
+#define MAC_ADDR1	                            (((char *)0x1FF0F420)[2])
+#define MAC_ADDR2	                            (((char *)0x1FF0F420)[4])
+#define MAC_ADDR3	                            (((char *)0x1FF0F420)[6])
+#define MAC_ADDR4	                            (((char *)0x1FF0F420)[8])
+#define MAC_ADDR5	                            (((char *)0x1FF0F420)[10])
+
+#define netifGUARD_BLOCK_TIME			        250
+#define ETHERNET_FRAME_SIZE                     1514
+#define BLOCK_TIME_WAITING_FOR_INPUT            250             // mSec
+
+#define TASK_ETHERNET_IF_STACK_SIZE             512
+#define TASK_ETHERNET_IF_PRIO                   4
+
+// Define those to better describe your network interface.
+#define IFNAME0 'd'
+#define IFNAME1 'g'
+#define IF_NAME "dg0"
+
+//-------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+//--- Socket allocation -----------------------------------
+// in this stack socket can be allocated statically.
+// It is useful for NIC with hardwired IP Stack like
+// Wiznet W5100S with limited number of socket and 
+// configurable socket memory size
+
+#define IP_USE_STATIC_SOCKET					DEF_DISABLED
+
+#if (IP_USE_STATIC_SOCKET == DEF_ENABLED)
+
+// Socket use on for DHCP business
+#define IP_SOCKET_DHCP                     		3
+
+//-------------------------------------------------------------------------------------------------
+
+#define ETH_DEBUG_PACKET_COUNT
+
+//-------------------------------------------------------------------------------------------------
+
+#define IP_NET_IF_MTU                           1500                // not sure it is used in my stack
+
+
 
 need to add to database_cfg.h :
 
@@ -143,3 +184,4 @@ need to add to database_cfg.h :
 
 
 
+*/

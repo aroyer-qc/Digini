@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_ethernet_phy_interface.h
+//  File : lib_class_ethernet_mac_interface.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2023 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -36,21 +36,25 @@
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class PHY_DriverInterface
+class MAC_DriverInterface
 {
     public:
 
-        virtual SystemState_e   Initialize         (ETH_Driver* pDriver)              = 0;
-        virtual SystemState_e   Uninitialize       (void)                             = 0;
-        virtual SystemState_e   PowerControl       (ETH_PowerState_e state)           = 0;
-        virtual SystemState_e   SetInterface       (ETH_MediaInterface_e Interface)   = 0;
-        virtual SystemState_e   SetMode            (ETH_PHY_Mode_e Mode)              = 0;
-        virtual ETH_LinkState_e GetLinkState       (void)                             = 0;
-        virtual ETH_LinkInfo_t  GetLinkInfo        (void)                             = 0;
-        virtual uint8_t         GetPHY_Address     (void)                             = 0;
-      #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
-        virtual SystemState_e   SetLinkUpInterrupt (bool State)                       = 0;     // do i need this for ISR???
+        virtual SystemState_e           Initialize              (ETH_MAC_SignalEvent_t CallbackEvent)                               = 0;
+        virtual void                    Start                   (void)                                                              = 0;
+        virtual SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address)                              = 0;
+        virtual SystemState_e           SetMacAddress           (const IP_MAC_Address_t* pMAC_Address)                              = 0;
+        virtual SystemState_e           SetAddressFilter        (const IP_MAC_Address_t* pMAC_Address, uint32_t NbAddress)          = 0;
+        virtual SystemState_e           SendFrame               (const uint8_t* frame, size_t Length, uint32_t flags)               = 0;
+        virtual SystemState_e           ReadFrame               (MemoryNode* pPacket, size_t Length)                                = 0;
+        virtual uint32_t                GetRX_FrameSize         (void)                                                              = 0;
+      #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
+        virtual SystemState_e           GetRX_FrameTime         (ETH_MacTime_t* pTime)                                              = 0;
+        virtual SystemState_e           GetTX_FrameTime         (ETH_MacTime_t* pTime)                                              = 0;
+        virtual SystemState_e           ControlTimer            (ETH_ControlTimer_e Control, ETH_MacTime_t* pTime)                  = 0;
       #endif
+        virtual SystemState_e           PHY_Read                (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData)     = 0;
+        virtual SystemState_e           PHY_Write               (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data)     = 0;
 };
 
 //-------------------------------------------------------------------------------------------------

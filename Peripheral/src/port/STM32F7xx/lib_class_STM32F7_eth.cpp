@@ -710,7 +710,7 @@ uint32_t ETH_Driver::GetRX_FrameSize(void)
 //
 //-------------------------------------------------------------------------------------------------
 #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-SystemState_e ETH_Driver::GetRX_FrameTime(ETH_MAC_Time_t* Time)
+SystemState_e ETH_Driver::GetRX_FrameTime(ETH_MAC_Time_t* pTime)
 {
     RX_Descriptor* RX_Desc = &RX_Descriptor[m_MAC_Control.RX_Index];
 
@@ -720,8 +720,8 @@ SystemState_e ETH_Driver::GetRX_FrameTime(ETH_MAC_Time_t* Time)
         return SYS_BUSY;                        // Owned by DMA
     }
 
-    Time->ns  = RX_Desc->TimeLo;
-    Time->sec = RX_Desc->TimeHi;
+    pTime->ns  = RX_Desc->TimeLo;
+    pTime->sec = RX_Desc->TimeHi;
 
     return SYS_READY;
 }
@@ -738,7 +738,7 @@ SystemState_e ETH_Driver::GetRX_FrameTime(ETH_MAC_Time_t* Time)
 //
 //-------------------------------------------------------------------------------------------------
 #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-SystemState_e ETH_Driver::GetTX_FrameTime(ETH_MAC_Time_t* Time)
+SystemState_e ETH_Driver::GetTX_FrameTime(ETH_MAC_Time_t* pTime)
 {
     TX_Descriptor *TX_Desc = &TX_Descriptor[m_MAC_Control.TX_TS_Index];
 
@@ -756,8 +756,8 @@ SystemState_e ETH_Driver::GetTX_FrameTime(ETH_MAC_Time_t* Time)
         return SYS_ERROR;
     }
 
-    Time->ns  = TX_Desc->TimeLo;
-    Time->sec = TX_Desc->TimeHi;
+    pTime->ns  = TX_Desc->TimeLo;
+    pTime->sec = TX_Desc->TimeHi;
 
     return SYS_READY;
 }
@@ -775,23 +775,23 @@ SystemState_e ETH_Driver::GetTX_FrameTime(ETH_MAC_Time_t* Time)
 //
 //-------------------------------------------------------------------------------------------------
 #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-SystemState_e ETH_Driver::ControlTimer(ETH_ControlTimer_e Control, ETH_MAC_Time_t* Time)
+SystemState_e ETH_Driver::ControlTimer(ETH_ControlTimer_e Control, ETH_MAC_Time_t* pTime)
 {
     switch(uint32_t(Control))
     {
         case uint32_t(ETH_MAC_TIMER_GET_TIME):
         {
             // Get current time
-            Time->Second     = ETH->PTPTSHR;
-            Time->NanoSecond = ETH->PTPTSLR;
+            pTime->Second     = ETH->PTPTSHR;
+            pTime->NanoSecond = ETH->PTPTSLR;
         }
         break;
 
         case uint32_t(ETH_MAC_TIMER_SET_TIME):
         {
             // Set new time
-            ETH->PTPTSHUR = Time->Second;
-            ETH->PTPTSLUR = Time->NanoSecond;
+            ETH->PTPTSHUR = pTime->Second;
+            ETH->PTPTSLUR = pTime->NanoSecond;
             // Initialize TS time
             ETH->PTPTSCR |= ETH_PTPTSCR_TSSTI;
         }
@@ -800,8 +800,8 @@ SystemState_e ETH_Driver::ControlTimer(ETH_ControlTimer_e Control, ETH_MAC_Time_
         case uint32_t(ETH_MAC_TIMER_INC_TIME):
         {
             // Increment current time
-            ETH->PTPTSHUR = Time->Second;
-            ETH->PTPTSLUR = Time->NanoSecond;
+            ETH->PTPTSHUR = pTime->Second;
+            ETH->PTPTSLUR = pTime->NanoSecond;
 
             // Time stamp system time update
             ETH->PTPTSCR |=  ETH_PTPTSCR_TSSTU;
@@ -811,8 +811,8 @@ SystemState_e ETH_Driver::ControlTimer(ETH_ControlTimer_e Control, ETH_MAC_Time_
         case uint32_t(ETH_MAC_TIMER_DEC_TIME):
         {
             // Decrement current time
-            ETH->PTPTSHUR = Time->Second;
-            ETH->PTPTSLUR = Time->NanoSecond | 0x80000000;
+            ETH->PTPTSHUR = pTime->Second;
+            ETH->PTPTSLUR = pTime->NanoSecond | 0x80000000;
 
             // Time stamp system time update
             ETH->PTPTSCR |=  ETH_PTPTSCR_TSSTU;
@@ -822,8 +822,8 @@ SystemState_e ETH_Driver::ControlTimer(ETH_ControlTimer_e Control, ETH_MAC_Time_
         case uint32_t(ETH_MAC_TIMER_SET_ALARM):
         {
             // Set alarm time
-            ETH->PTPTTHR  = Time->Second;
-            ETH->PTPTTLR  = Time->NanoSecond;
+            ETH->PTPTTHR  = pTime->Second;
+            ETH->PTPTTLR  = pTime->NanoSecond;
 
             // Enable timestamp interrupt in PTP Control
             ETH->PTPTSCR |= ETH_PTPTSCR_TSITE;
@@ -845,7 +845,7 @@ SystemState_e ETH_Driver::ControlTimer(ETH_ControlTimer_e Control, ETH_MAC_Time_
         {
             // Adjust current time, fine correction
             // Correction factor is Q31 (0x80000000 = 1.000000000)
-            ETH->PTPTSAR = (uint32_t)(((uint64_t)Time->NanoSecond * ETH->PTPTSAR) >> 31);
+            ETH->PTPTSAR = (uint32_t)(((uint64_t)pTime->NanoSecond * ETH->PTPTSAR) >> 31);
             // Fine TS clock correction
             ETH->PTPTSCR |= ETH_PTPTSCR_TSARU;
         }
@@ -862,12 +862,12 @@ SystemState_e ETH_Driver::ControlTimer(ETH_ControlTimer_e Control, ETH_MAC_Time_
 //
 //   Parameter(s):      PHY_Address         5-bit  Device address
 //                      RegisterAddress     5-bit  Register address.
-//                      Data                16-bit Data pointer for read.
+//                      pData               16-bit Data pointer for read.
 //   Return value:      SystemState_e       State of function.
 //
 //   Description:       Read Ethernet PHY Register through Management Interface.
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::PHY_Read(uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* Data)
+SystemState_e ETH_Driver::PHY_Read(uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData)
 {
     uint32_t RegisterValue;
 
@@ -876,7 +876,7 @@ SystemState_e ETH_Driver::PHY_Read(uint8_t PHY_Address, uint8_t RegisterAddress,
     while((ETH->MACMIIAR & ETH_MACMIIAR_MB) != 0) {/* TODO Error management*/};
     ETH->MACMIIAR = RegisterValue | ETH_MACMIIAR_MB | (uint32_t(PHY_Address) << 11) | (uint32_t(RegisterAddress) <<  6);
     while((ETH->MACMIIAR & ETH_MACMIIAR_MB) != 0) {/* TODO Error management*/};
-    *Data = ETH->MACMIIDR;
+    *pData = ETH->MACMIIDR;
 
     return PHY_Busy();
 }

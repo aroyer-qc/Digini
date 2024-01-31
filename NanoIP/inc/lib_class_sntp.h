@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :  udp.h
+//  File :  lib_class_sntp.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -30,27 +30,87 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+
+#ifdef SNTP_GLOBAL
+    #define SNTP_EXTERN
+    #define SNTP_PRIVATE
+#else
+    #define SNTP_EXTERN extern
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define UDP_PORT_BOOT_P_SERVER				htons(67)			 	    // Port 67
-#define UDP_PORT_BOOT_P_CLIENT				htons(68)           		// Port 68 
+#define SNTP_MODE_CLIENT                    3
+#define SNTP_VERSION_4                      4
+
+#define SNTP_PORT                           htons(123)
+
+#define SNTP_UNIX_START                     2208988800UL                // January 1, 1970
+#define SNTP_TIME_START                     3471292800UL                // January 1, 2010
+
+#define SNTP_OPTIONS_IN_PACKET_SIZE         160
+
+#define SNTP_MSG_ACTION_TIME_OUT            0
 
 //-------------------------------------------------------------------------------------------------
-// Function prototype(s)
+// Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-// not sure i need a class!!
+struct SNTP_Msg_t
+{
+    union
+    {
+        struct
+        {
+            uint8_t    MODE    :3;
+            uint8_t    VN      :3;
+            uint8_t    LI      :2;
+        } s;
+        uint8_t by;
+    } Flags_1;
 
-class NetUDP
+    uint8_t    Stratus;
+    uint8_t    Poll;
+    uint8_t    Precision;
+
+    uint32_t   RootDelay;
+    uint32_t   RootDispersion;
+    uint32_t   ReferenceID;
+    uint32_t   RefTimeStampSecond;
+    uint32_t   RefTimeStampFraction;
+    uint32_t   OriTimeStampSecond;
+    uint32_t   OriTimeStampFraction;
+    uint32_t   RcvTimeStampSecond;
+    uint32_t   RcvTimeStampFraction;
+    uint32_t   TxmTimeStampSecond;
+    uint32_t   TxmTimeStampFraction;
+    uint8_t    Data[SNTP_OPTIONS_IN_PACKET_SIZE];
+};
+
+//-------------------------------------------------------------------------------------------------
+// class
+//-------------------------------------------------------------------------------------------------
+
+class NetSNTP
 {
     public:
-        
-        void 				    Initialize  		(void);
-        IP_PacketMsg_t* 	    Process				(IP_PacketMsg_t* pMsg);
+   
+        void            Initialize      (void* pQ);
+        IP_Address_t    Request         (Socket_t SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError);
+    
+    private:
+
+        void            Reply           (Socket_t SocketNumber);
+
+
+    nOS_Timer           m_pResync;
+    TickCount_t         m_Seconds;
+    OS_EVENT*           m_pQ;
+
+    
 }
 
 //-------------------------------------------------------------------------------------------------
-
 

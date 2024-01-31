@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : icmp.c
+//  File :  lib_class_arp.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2009-2024 Alain Royer.
+// Copyright(c) 2010-2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,87 +24,58 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-//------ Note(s) ----------------------------------------------------------------------------------
-//          
-//  ICMP - Internet Control Message Protocol
-//
-//  -Provides "ping" support only
-//
-//*************************************************************************************************
+#pragma once
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <ip.h>
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:         	ICMP_Initialize
-// 
-//  Parameter(s):   None
-//  Return:         void
-//
-//  Description:
-//	
-//  Note(s):
-//
+// Define(s)
 //-------------------------------------------------------------------------------------------------
-void ICMP_Initialize(void)
+
+#define ARP_REQUEST                     htons(1)        // 1
+#define ARP_REPLY                       htons(2)        // 2
+
+#define ARP_HARDWARE_TYPE_ETHERNET      htons(1)        // 1
+
+//-------------------------------------------------------------------------------------------------
+// Type definition(s) and structure(s)
+//-------------------------------------------------------------------------------------------------
+
+struct  ARP_TableEntry_t
 {
-}
+    IP_Address_t            IP_Address;
+    IP_EthernetAddress_t    Ethernet;
+    uint8_t                 Time;
+};
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:          ICMP_Process
-// 
-//  Parameter(s):  IP_PacketMsg_t* 		RX packet 
-//  Return:        IP_PacketMsg_t*      TX packet
-//
-//  Description:    
-//	
-//  Note(s):
-//
+// Function prototype(s)
 //-------------------------------------------------------------------------------------------------
-IP_PacketMsg_t* ICMP_Process(IP_PacketMsg_t* pRX)
+ 
+class NetARP
 {
-	IP_PacketMsg_t*  		pTX  		= nullptr;
-	IP_ICMP_Frame_t* 		pICMP;
-	IP_EthernetHeader_t* 	pETH;
-	uint16_t                Count;
+    public:
+    
+        SystemState_e       Initialize              (void);
+        void                ProcessIP               (IP_PacketMsg_t* pRX);
+        void                ProcessARP              (IP_PacketMsg_t* pRX);
+        void                ProcessOut              (IP_PacketMsg_t* pTX);
+        void                Resolve                 (void);
+        
+    private:
+    
+        void                UpdateEntry				(IP_Address_t IP_Address, IP_EthernetAddress_t* pEthAdress);
+        void                TimerCallBack	    	(nOS_Timer * pTimer, void* pArg);           // typedef void(*nOS_TimerCallback)(nOS_Timer*,void*);
 
-	if(pIP->GetIP_isItValid() == true)
-	{
-		if(pRX->PacketSize < sizeof(IP_ICMP_Frame_t))
-		{
-			return nullptr;
-		}
-	
-		switch(pRX->Packet.u.ICMP_Frame.Header.Type)
-		{
-			case ICMP_TYPE_PING_REQUEST:
-            {
-				pTX   = (IP_PacketMsg_t*)pMemory->AllocAndClear(pRX->PacketSize);					    // Get memory for TX packet
-				pICMP = &pTX->Packet.u.ICMP_Frame;
-				pETH  = &pTX->Packet.u.ETH_Header;
-				IP_CopyPacketMessage(pTX, pRX);											                // Copy the entire IP payload From RX to TX buffer
-				Count  = htons(pICMP->IP_Header.Length);
-				Count -= (int16_t)sizeof(IP_IP_Header_t);
-				pICMP->Header.Type     = ICMP_TYPE_PING_REPLY;
-				pICMP->Header.Checksum = IP_CalculateChecksum(&pICMP->Header, Count);
-	
-				memcpy(pETH->Dst.Address, pETH->Src.Address, 6);						                // Put Mac header
-				pICMP->IP_Header.TimeToLive    = IP_TIME_TO_LIVE;
-				pICMP->IP_Header.DstIP_Address = pICMP->IP_Header.SrcIP_Address;
-				pICMP->IP_Header.SrcIP_Address = IP_HostAddress;
-				IP_PutHeader(pTX);
-            }
-            break;
-            
-            default: break; // No support for other ICMP command
-		}
-	}
-	return pTX;
-}
+
+        IP_Address_t        m_IP_Address;
+        ARP_TableEntry_t    m_TableEntry[IP_ARP_TABLE_SIZE];
+        uint8_t             m_Time;
+        nOS_Timer*          m_pTimer;                               // Pointer on the OS timer
+};
 
 //-------------------------------------------------------------------------------------------------
+ 

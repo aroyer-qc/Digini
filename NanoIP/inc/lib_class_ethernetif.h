@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :  arp.h
+//  File : lib_class_ethernetif.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2010-2024 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -30,52 +30,66 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+#include "lib_digini.h"
+
+#if (USE_ETH_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
 
-#define ARP_REQUEST                     htons(1)        // 1
-#define ARP_REPLY                       htons(2)        // 2
-
-#define ARP_HARDWARE_TYPE_ETHERNET      htons(1)        // 1
+void FreePacket(MemoryNode* pPacket);
 
 //-------------------------------------------------------------------------------------------------
-// Type definition(s) and structure(s)
-//-------------------------------------------------------------------------------------------------
 
-struct  ARP_TableEntry_t
-{
-    IP_Address_t            IP_Address;
-    IP_EthernetAddress_t    Ethernet;
-    uint8_t                 Time;
-};
-
-//-------------------------------------------------------------------------------------------------
-// Function prototype(s)
-//-------------------------------------------------------------------------------------------------
- 
-class NetARP
+class ETH_IF_Driver
 {
     public:
-    
-        SystemState_e       Initialize              (void);
-        void                ProcessIP               (IP_PacketMsg_t* pRX);
-        void                ProcessARP              (IP_PacketMsg_t* pRX);
-        void                ProcessOut              (IP_PacketMsg_t* pTX);
-        void                Resolve                 (void);
-        
+
+        SystemState_e    Initialize                     (EthernetIF_t* pNetIf);
+
+
+
+      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+        uint32_t    m_DBG_RX_Count;
+        uint32_t    m_DBG_TX_Count;
+        uint32_t    m_DBG_RX_Drop;
+        uint32_t    m_DBG_TX_Drop;
+      #endif
+
+
     private:
-    
-        void                UpdateEntry				(IP_Address_t IP_Address, IP_EthernetAddress_t* pEthAdress);
-        void                TimerCallBack	    	(nOS_Timer * pTimer, void* pArg);           // typedef void(*nOS_TimerCallback)(nOS_Timer*,void*);
+
+        void             Input                          (void* pParam);
 
 
-        IP_Address_t        m_IP_Address;
-        ARP_TableEntry_t    m_TableEntry[IP_ARP_TABLE_SIZE];
-        uint8_t             m_Time;
-        nOS_Timer*          m_pTimer;                               // Pointer on the OS timer
+        inline MemoryNode*   LowLevelInput              (void);
+        SystemState_e        LowLevelOutput             (MemoryNode* pPacket);               // TODO Should use may chainlist buffer allocation
+        void                 ArpTimer                   (void* pArg);
+        void                 Callback                   (uint32_t Event);
+        void                 PollTheNetworkInterface    (void);                                                 // This might be a PHY, MAC, HEC ( hardwired ethernet controller Ex. W5100, ESP32 etc...)
+      #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
+        void                 LinkCallBack               (void* pArg);
+      #endif
+
+
+
+
+
+        nOS_Sem                     m_RX_Sem;
+        nOS_Mutex                   m_TX_Mutex;
+        nOS_Thread                  m_TaskHandle;
+        nOS_Stack                   m_Stack[TASK_ETHERNET_IF_STACK_SIZE];
+
+        EthernetIF_t*               m_pNefIf;
+
+        ETH_Driver                  m_Mac;
+        PHY_DRIVER_INTERFACE        m_Phy;
+        PHY_DriverInterface         m_ETH_Phy;
+        ETH_LinkState_e             m_Link;                // Ethernet Link State
 };
 
 //-------------------------------------------------------------------------------------------------
- 
+
+void FreePacket        (MemoryNode* pPacket);
+
+
+#endif

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : ethernetif.h
+//  File :  lib_class_ip.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2023 Alain Royer.
+// Copyright(c) 2011-2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -30,66 +30,62 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_digini.h"
-
-#if (USE_ETH_DRIVER == DEF_ENABLED)
-
+//-------------------------------------------------------------------------------------------------
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
-void FreePacket(MemoryNode* pPacket);
-
+//-------------------------------------------------------------------------------------------------
+// Include(s)
 //-------------------------------------------------------------------------------------------------
 
-class ETH_IF_Driver
-{
-    public:
+#include 	<ip_debug.h>
+#include 	<ip_cfg.h>
+#include 	<task_IP.h>
 
-        SystemState_e    Initialize                     (EthernetIF_t* pNetIf);
-
-
-
-      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-        uint32_t    m_DBG_RX_Count;
-        uint32_t    m_DBG_TX_Count;
-        uint32_t    m_DBG_RX_Drop;
-        uint32_t    m_DBG_TX_Drop;
-      #endif
-
-
-    private:
-
-        void             Input                          (void* pParam);
-
-
-        inline MemoryNode*   LowLevelInput              (void);
-        SystemState_e        LowLevelOutput             (MemoryNode* pPacket);               // TODO Should use may chainlist buffer allocation
-        void                 ArpTimer                   (void* pArg);
-        void                 Callback                   (uint32_t Event);
-        void                 PollTheNetworkInterface    (void);                                                 // This might be a PHY, MAC, HEC ( hardwired ethernet controller Ex. W5100, ESP32 etc...)
-      #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
-        void                 LinkCallBack               (void* pArg);
-      #endif
-
-
-
-
-
-        nOS_Sem                     m_RX_Sem;
-        nOS_Mutex                   m_TX_Mutex;
-        nOS_Thread                  m_TaskHandle;
-        nOS_Stack                   m_Stack[TASK_ETHERNET_IF_STACK_SIZE];
-
-        EthernetIF_t*               m_pNefIf;
-
-        ETH_Driver                  m_Mac;
-        PHY_DRIVER_INTERFACE        m_Phy;
-        PHY_DriverInterface         m_ETH_Phy;
-        ETH_LinkState_e             m_Link;                // Ethernet Link State
-};
-
-//-------------------------------------------------------------------------------------------------
-
-void FreePacket        (MemoryNode* pPacket);
-
-
+#if NIC_IN_USE == NIC_W5100
+#include	<w5100.h>
+#define 	IP_ARP 					DEF_DISABLED
+#define 	IP_UDP 					DEF_DISABLED
+#define 	IP_TCP 					DEF_DISABLED
+#define 	IP_ICMP					DEF_DISABLED
+#define 	IP_HARDWARE_SOCKET		DEF_ENABLED
 #endif
+
+#if NIC_IN_USE == NIC_CS8900A
+#include	<cs8900a.h>
+#define 	IP_ARP 					DEF_ENABLED
+#define 	IP_UDP 					DEF_ENABLED
+#define 	IP_TCP 					DEF_ENABLED
+#define 	IP_ICMP					DEF_ENABLED
+#define 	IP_HARDWARE_SOCKET		DEF_DISABLED
+#endif
+
+#if (IP_UDP == DEF_ENABLED) & (IP_APP_USE_UDP == DEF_ENABLED)
+#include <udp.h>
+#endif
+
+#if (IP_TCP == DEF_ENABLED) & (IP_APP_USE_TCP == DEF_ENABLED)
+#include <tcp.h>
+#endif
+
+#if (IP_ICMP == DEF_ENABLED) & (IP_APP_USE_TCP == DEF_ENABLED)
+#include <icmp.h>
+#endif
+
+#if (IP_APP_USE_ARP == DEF_ENABLED)
+#include <arp.h>
+#endif
+
+#if (IP_APP_USE_DHCP == DEF_ENABLED)
+#include <dhcp.h>
+#endif
+
+#if (IP_APP_USE_DNS == DEF_ENABLED)
+#include <dns.h>
+#endif
+
+#if (IP_APP_USE_SNTP == DEF_ENABLED)
+#include <sntp.h>
+#endif
+
+//-------------------------------------------------------------------------------------------------

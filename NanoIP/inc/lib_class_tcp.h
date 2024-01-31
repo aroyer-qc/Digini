@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :  sntp.h
+//  File :  lib_class_tcp.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -30,87 +30,54 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-
-#ifdef SNTP_GLOBAL
-    #define SNTP_EXTERN
-    #define SNTP_PRIVATE
-#else
-    #define SNTP_EXTERN extern
-#endif
-
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define SNTP_MODE_CLIENT                    3
-#define SNTP_VERSION_4                      4
+#define TCP_SYN_ACK_PACKET_SIZE         24
+#define TCP_SYN_ACK_IP_PACKET_SIZE      44
 
-#define SNTP_PORT                           htons(123)
+#define TCP_ACK_PACKET_SIZE             24
+#define TCP_ACK_IP_PACKET_SIZE          44
 
-#define SNTP_UNIX_START                     2208988800UL                // January 1, 1970
-#define SNTP_TIME_START                     3471292800UL                // January 1, 2010
 
-#define SNTP_OPTIONS_IN_PACKET_SIZE         160
+#define TCP_WINDOW_SIZE                 1396
 
-#define SNTP_MSG_ACTION_TIME_OUT            0
+#define TCP_FLAG_FIN                    0x01                // FIN Flag
+#define TCP_FLAG_SYN                    0x02                // SYN Flag
+#define TCP_FLAG_RST                    0x04                // Reset Flag
+#define TCP_FLAG_PSH                    0x08                // Push Flag
+#define TCP_FLAG_ACK                    0x10                // Acknowledge
+#define TCP_FLAG_SYN_ACK                0x12                // SYN Flag
+#define TCP_FLAG_URG                    0x20                // Urgent Flag
 
-//-------------------------------------------------------------------------------------------------
-// Typedef(s)
-//-------------------------------------------------------------------------------------------------
+#define TCP_FLAG_SYN_FIN                0x03                // Illegal flag combination
+#define TCP_FLAG_NULL                   0x00
 
-struct SNTP_Msg_t
-{
-    union
-    {
-        struct
-        {
-            uint8_t    MODE    :3;
-            uint8_t    VN      :3;
-            uint8_t    LI      :2;
-        } s;
-        uint8_t by;
-    } Flags_1;
 
-    uint8_t    Stratus;
-    uint8_t    Poll;
-    uint8_t    Precision;
-
-    uint32_t   RootDelay;
-    uint32_t   RootDispersion;
-    uint32_t   ReferenceID;
-    uint32_t   RefTimeStampSecond;
-    uint32_t   RefTimeStampFraction;
-    uint32_t   OriTimeStampSecond;
-    uint32_t   OriTimeStampFraction;
-    uint32_t   RcvTimeStampSecond;
-    uint32_t   RcvTimeStampFraction;
-    uint32_t   TxmTimeStampSecond;
-    uint32_t   TxmTimeStampFraction;
-    uint8_t    Data[SNTP_OPTIONS_IN_PACKET_SIZE];
-};
+#define TCP_HTTP_PORT                   htons(80)
 
 //-------------------------------------------------------------------------------------------------
-// class
+// Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-class NetSNTP
+class NetTCP
 {
     public:
-   
-        void            Initialize      (void* pQ);
-        IP_Address_t    Request         (Socket_t SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError);
-    
+
+        void                Initialize          (void);
+        IP_PacketMsg_t*     Process             (IP_PacketMsg_t* pRX);
+
     private:
 
-        void            Reply           (Socket_t SocketNumber);
-
-
-    nOS_Timer           m_pResync;
-    TickCount_t         m_Seconds;
-    OS_EVENT*           m_pQ;
-
-    
-}
+        IP_PacketMsg_t*     Ack                 (uint8_t Flag, size_t Size);
+        void                Push                (IP_PacketMsg_t* pRX);
+        void                PutHeader           (IP_PacketMsg_t* pTX, size_t PacketSize);
+        IP_PacketMsg_t*     Send                (uint8_t* pBuffer, size_t Size);
+        
+        
+        SocketInfo_t*       m_pSocketInfo;
+};
 
 //-------------------------------------------------------------------------------------------------
 

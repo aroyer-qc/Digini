@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :  tcp.h
+//  File :  lib_class_icmp.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -30,54 +30,26 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+#ifdef ICMP_GLOBAL
+	#define	ICMP_EXTERN
+	#define	ICMP_PRIVATE
+#else	
+	#define	ICMP_EXTERN extern
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define TCP_SYN_ACK_PACKET_SIZE         24
-#define TCP_SYN_ACK_IP_PACKET_SIZE      44
-
-#define TCP_ACK_PACKET_SIZE             24
-#define TCP_ACK_IP_PACKET_SIZE          44
-
-
-#define TCP_WINDOW_SIZE                 1396
-
-#define TCP_FLAG_FIN                    0x01                // FIN Flag
-#define TCP_FLAG_SYN                    0x02                // SYN Flag
-#define TCP_FLAG_RST                    0x04                // Reset Flag
-#define TCP_FLAG_PSH                    0x08                // Push Flag
-#define TCP_FLAG_ACK                    0x10                // Acknowledge
-#define TCP_FLAG_SYN_ACK                0x12                // SYN Flag
-#define TCP_FLAG_URG                    0x20                // Urgent Flag
-
-#define TCP_FLAG_SYN_FIN                0x03                // Illegal flag combination
-#define TCP_FLAG_NULL                   0x00
-
-
-#define TCP_HTTP_PORT                   htons(80)
+#define 	ICMP_TYPE_PING_REPLY			0
+#define 	ICMP_TYPE_PING_REQUEST			8
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
-
-class NetTCP
-{
-    public:
-
-        void                Initialize          (void);
-        IP_PacketMsg_t*     Process             (IP_PacketMsg_t* pRX);
-
-    private:
-
-        IP_PacketMsg_t*     Ack                 (uint8_t Flag, size_t Size);
-        void                Push                (IP_PacketMsg_t* pRX);
-        void                PutHeader           (IP_PacketMsg_t* pTX, size_t PacketSize);
-        IP_PacketMsg_t*     Send                (uint8_t* pBuffer, size_t Size);
-        
-        
-        SocketInfo_t*       m_pSocketInfo;
-};
+ 
+void 				ICMP_Init					(void);
+IP_PacketMsg_t* 	ICMP_Process				(IP_PacketMsg_t* pMsg);
 
 //-------------------------------------------------------------------------------------------------
 

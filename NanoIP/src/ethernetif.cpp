@@ -67,7 +67,10 @@ SystemState_e ETH_IF_Driver::Initialize(struct EthernetIF_t* pNetIf)
 
 	m_Link = ETH_LINK_DOWN;
   
+    BSP_EthernetIF_Initialize();
   
+void BSP_EthernetIF_Initialize(void)
+{
   #if (IP_INTERFACE_SUPPORT_PHY == DEF_ENABLED) || (IP_INTERFACE_SUPPORT_MAC == DEF_ENABLED)
     //PHY CONFIG should be out of here...
     ETH_Mac.Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
@@ -78,7 +81,7 @@ SystemState_e ETH_IF_Driver::Initialize(struct EthernetIF_t* pNetIf)
 	// Initialize Physical Media Interface
 	if(ETH_Phy.Initialize(&ETH_Mac) == SYS_READY)
 	{
-		ETH_Phy.PowerControl(ETH_POWER_FULL);
+		ETH_Phy.PowerControl(ETH_POWER_FULL);                   // configuration into the driver itself????  with config ??
 		ETH_Phy.SetInterface(ETH_USED_INTERFACE);
 		ETH_Phy.SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
 
@@ -108,17 +111,6 @@ SystemState_e ETH_IF_Driver::Initialize(struct EthernetIF_t* pNetIf)
 
 	//pNetIf->output     = EtharpOutput;        not here!!!
 	//pNetIf->linkoutput = LowLevelOutput;
-
-    // Set netif MAC hardware address length
-    pNetIf->hwaddr_len = ETH_HWADDR_LEN;     //  not here!!!
-
-    
-    // YES HERE
-    ETH_Mac.SetMacAddress((ETH_MAC_Address_t*)pNetIf->hwaddr);
-
-    // Set netif maximum transfer unit
-    // NOT HERE
-    pNetIf->mtu = netifMTU;
 
   #if IP_USE_ARP
     pNetIf->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
@@ -193,7 +185,6 @@ SystemState_e ETH_IF_Driver::LowLevelOutput(MemoryNode* pPacket)
             // Send the data from the pPacket to the interface, one pNodeData at a time.
             uint32_t flags = (pNodeData != nullptr) ? ETH_MAC_TX_FRAME_FRAGMENT : 0;
             ETH_Mac.SendFrame(pNodeData, NodeSize, flags);     //  standard call from an interface class ...  call this function  SendFrame
-
         }
         while((pPacket->GetNext() != nullptr) && (Length > 0));
 

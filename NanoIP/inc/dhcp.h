@@ -186,6 +186,12 @@ class NetDHCP
 
         static const uint8_t    m_OPL_Discover[8];
         static const uint8_t    m_OPL_Request[10];
+        
+        IP_Address_t            m_DHCP_GatewayIP;                       // Gateway IP Address from server
+        IP_Address_t            m_DHCP_SubnetMask;                      // Subnet Mask from server
+        IP_Address_t            m_DHCP_IP;                              // IP Address from server
+        IP_Address_t            m_DHCP_DNS_IP;                          // DNS Server IP Address from server
+        bool                    m_IP_IsValid;
 };
 
 //-------------------------------------------------------------------------------------------------

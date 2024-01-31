@@ -117,11 +117,6 @@ struct ETH_LinkInfo_t
     ETH_Duplex_e        Duplex;                     // Duplex mode: 0 = Half, 1 = Full
 };
 
-// Ethernet MAC Address
-struct ETH_MAC_Address_t
-{
-  uint8_t Byte[6];                                  // MAC Address (6 bytes), MSB first
-};
 
 /*
 struct ETH_MAC_Capability_t

@@ -35,6 +35,20 @@
 //-------------------------------------------------------------------------------------------------
 
 #define IP_MAX_URL_SIZE                         128
+#define IP_MAC_ADDRESS_SIZE                     6
+#define IP_MAC_V6_ADDRESS_SIZE                  8
+
+
+
+#define IP_FLAG_USE_ARP                         0x0001
+#define IP_FLAG_USE_DHCP                        0x0002
+#define IP_FLAG_USE_ICMP                        0x0004
+#define IP_FLAG_USE_NTP                         0x0008
+#define IP_FLAG_USE_SNTP                        0x0010
+#define IP_FLAG_USE_SOAP                        0x0020
+#define IP_FLAG_USE_TCP                         0x0040
+#define IP_FLAG_USE_UDP                         0x0080
+// etc...
 
 #define IP_STREAM_SOCKET                        0
 #define IP_DNS_SOCKET                           2
@@ -53,55 +67,26 @@
 #define IP_ADDRESS                              U32MACRO    // usage: IP_ADDRESS(192,168,0,0);
 #define IP_IP_PRINTF(IP)                       
 
-#define EXPAND_X_ETH_IF_AS_ENUM(ENUM_ID, HOST_NAME, MAC_ADDR, STATIC_ADDRESS, GATEWAY, SUBNET_MASK, STATIC_DNS)         ENUM_ID,
-#define EXPAND_X_ETH_IF_AS_STRUCT_DATA(ENUM_ID, HOST_NAME, MAC_ADDR, STATIC_ADDRESS, GATEWAY, SUBNET_MASK, STATIC_DNS) {HOST_NAME, MAC_ADDR, STATIC_ADDRESS, GATEWAY, SUBNET_MASK, STATIC_DNS },
-
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
 
-enum IP_EthernetIF_e
-{
-    X_ETH_IF_DEF(EXPAND_X_ETH_IF_AS_ENUM)
-    NUMBER_OF_ETH_IF,
-};
+typedef IP_Address_t       uint32_t
+typedef IP_Port_t          uint16_t
 
-typedef     IP_Address_t       uint32_t
-typedef     IP_Port_t          uint16_t
+enum IP_EthernetIF_e 
+{ 
+    ETH_INTERFACE_ENUM
+};
 
 struct IP_MAC_Address_t
 {
-    uint8_t  Address[6];
+    uint8_t  Address[IP_MAC_ADDRESS_SIZE];
     
   #if (IP_USE_IP_V6 == DEF_ENABLED)             // Future :)
-    uint16_t  AddressV6[8];
+    uint16_t  AddressV6[IP_MAC_V6_ADDRESS_SIZE];
   #endif 
     
-};
-
-// this must go!!
-union IP_StatusFlag_t
-{
-    struct
-    {
-        int16_t   DNS_IP_Found     :1;
-        int16_t   SNTP_Fail        :1;
-        int16_t   bFree03          :1;
-        int16_t   bFree04          :1;
-        int16_t   bFree05          :1;
-        int16_t   bFree06          :1;
-        int16_t   bFree07          :1;
-
-        int16_t   bFree08          :1;
-        int16_t   bFree09          :1;
-        int16_t   bFree10          :1;
-        int16_t   bFree11          :1;
-        int16_t   bFree12          :1;
-        int16_t   bFree13          :1;
-        int16_t   bFree14          :1;
-        int16_t   Status           :1;                     // Do not use globally
-    }b;
-    int16_t w;
 };
 
 struct IP_ETH_Config_t
@@ -110,22 +95,24 @@ struct IP_ETH_Config_t
     char*               HostName;
   #endif
 
-    IP_MAC_Address_t    MAC_Address;
+    uint16_t            ProtocolFlag;
+
     IP_Address_t        DefaultStatic_IP;
     IP_Address_t        DefaultGateway;
     IP_Address_t        DefaultSubnetMask;
     IP_Address_t        DefaultStaticDNS;
     
   #if IP_INTERFACE_SUPPORT_PHY == DEF_ENABLED
-     Interface driver for phy// driver pointer 
+    PHY_Driver*         pPHY_Driver;                                    // Driver for PHY
+    ETH_Driver*         pETH_Driver;                                    // Driver for embedded MAC controller
   #endif
 
   #if IP_INTERFACE_SUPPORT_HEC == DEF_ENABLED
-     Interface driver for hec// driver pointer 
+     HEC_Driver         pHEC_Driver;                                    // Driver for HEC (Hardwired Embedded Controller)
   #endif
 
   #if IP_INTERFACE_SUPPORT_MAC == DEF_ENABLED
-     Interface driver for mac// driver pointer 
+    MAC_Driver*         pMAC_Driver;                                    // Driver for ethernal MAC and PHY chip
   #endif
 };
 
@@ -137,11 +124,12 @@ class IP_Manager
 {
     public:
     
-        void                Initialize                  (IP_EthernetIF_e IP_EthernetIF);
+        void                Initialize                  (IP_EthernetIF_e IP_EthernetIF, IP_MAC_Address_t* pMAC_Address);
         void                Run                         (void);
 
         IP_Address_t        GetDNS                      (void);
         IP_Address_t        GetHost                     (void);
+        
         uint8_t*            IP_ToAscii                  (IP_Address_t IP_Address);
         IP_Address_t        AsciiToIP                   (uint8_t* pBuffer);
         uint8_t*            ProcessURL                  (uint8_t* pBuffer, IP_Address_t* pIP_Address, IP_Port_t* pPort);
@@ -150,14 +138,10 @@ class IP_Manager
     private:    
  
     
-        nOS_Queue                       m_MsgQueue;
-        uint8_t                         m_GetQueueArray[1024];                  // need to define this it was lost somewhere
-            
-        IP_Flag_t                       m_Flag;                                 // Configuration of IP Stack
+        //IP_Flag_t                       m_Flag;                                 // Configuration of IP Stack
         IP_StatusFlag_t                 m_Status;                               // Dynamic Flag od IP Stack
  
-        IP_ETH_Config_t                 m_EthCfg;                               // Ethernet Configuration
-        
+        IP_MAC_Address_t                m_MAC_Address;
         IP_Address_t                    m_StaticGatewayIP;                      // Gateway IP Address
         IP_Address_t                    m_StaticSubnetMask;                     // Subnet Mask
         IP_Address_t                    m_StaticIP;                             // Static IP Address
@@ -166,54 +150,48 @@ class IP_Manager
         uint8_t                         m_TX_SocketMemorySize;                  // TX Socket Memory Configuration for all x Sockets
         uint8_t                         m_RX_SocketMemorySize;                  // RX Socket Memory Configuration for all x Sockets
 
+        uint16_t                        m_MTU;
+
       #if (IP_USE_ARP == DEF_ENABLED)
-        NetARP                          m_ARP;                                  // Address Resolution Protocol
+        NetARP*                         m_pARP;                                 // Address Resolution Protocol
       #endif
 
       #if (IP_USE_DHCP == DEF_ENABLED)
-        NetDHCP                         m_DHCP;                                 // Dynamic Host Control Protocol. Need UDP
-
-        // Move this to DHCP    use getter!!
-        IP_Address_t                    m_DHCP_GatewayIP;                       // Gateway IP Address from server
-        IP_Address_t                    m_DHCP_SubnetMask;                      // Subnet Mask from server
-        IP_Address_t                    m_DHCP_IP;                              // IP Address from server
-        IP_Address_t                    m_DHCP_DNS_IP;                          // DNS Server IP Address from server
-        bool                            m_IP_IsValid;
+        NetDHCP*                        m_pDHCP;                                // Dynamic Host Control Protocol. Need UDP
       #endif
 
       #if (IP_USE_ICMP == DEF_ENABLED)
-        NetICMP                         m_ICMP;                                 // Internet Control Message Protocol
+        NetICMP*                        m_pICMP;                                // Internet Control Message Protocol
       #endif
 
       #if (IP_USE_NTP == DEF_ENABLED)
-        NetNTP                          m_NTP;                                  // Network Time Protocol
+        NetNTP*                         m_pNTP;                                 // Network Time Protocol
     
         uint8_t                         m_NTP_Server_1[IP_MAX_URL_SIZE];// move this to NTP
         uint8_t                         m_NTP_Server_2[IP_MAX_URL_SIZE];
       #endif
 
       #if (IP_USE_SNTP == DEF_ENABLED)
-        NetSNTP                         m_SNTP;                                 // Simple Network Transport Protocol
+        NetSNTP*                        m_pSNTP;                                // Simple Network Transport Protocol
       #endif
 
       #if (IP_USE_SOAP == DEF_ENABLED)
-        NetSOAP                         m_pSOAP                                 // Simple Object Access Protocol
+        NetSOAP*                        m_pSOAP                                 // Simple Object Access Protocol
       
         uint8_t                         m_SOAP_Server_1[IP_MAX_URL_SIZE];       // Messaging protocol specification for exchanging structured information.
         uint8_t                         m_SOAP_Server_2[IP_MAX_URL_SIZE];
       #endif
 
       #if (IP_USE_TCP == DEF_ENABLED)
-        NetTCP                          m_TCP;                                      // Transport Control Protocol
+        NetTCP*                         m_pTCP;                                 // Transport Control Protocol
       #endif
 
       #if (IP_USE_UDP == DEF_ENABLED)
-        NetUDP                          m_UDP;                                      // User Datagram Protocol
+        NetUDP*                         m_pUDP;                                 // User Datagram Protocol
       #endif
 
-        IP_ETH_Config_t*                m_pEthernetIF;
-
-        static const IP_ETH_Config_t    m_EthernetIF[NUMBER_OF_ETH_IF];
+        IP_ETH_Config_t*                m_pEthernetIF;                          // Ethernet Configuration
+        static const IP_ETH_Config_t    m_EthernetIF[IP_NUMBER_OF_INTERFACE];
 };
 
 //-------------------------------------------------------------------------------------------------

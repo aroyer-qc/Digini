@@ -343,7 +343,7 @@ void ETH_Driver::Start(void)
 //   Description:       Get Ethernet MAC Address.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::GetMacAddress(ETH_MAC_Address_t* pMAC_Address)
+SystemState_e ETH_Driver::GetMacAddress(IP_MAC_Address_t* pMAC_Address)
 {
     uint32_t RegisterValue;
 
@@ -375,7 +375,7 @@ SystemState_e ETH_Driver::GetMacAddress(ETH_MAC_Address_t* pMAC_Address)
 //   Description:       Set Ethernet MAC Address.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::SetMacAddress(const ETH_MAC_Address_t* pMAC_Address)
+SystemState_e ETH_Driver::SetMacAddress(const IP_MAC_Address_t* pMAC_Address)
 {
     if(pMAC_Address == nullptr)
     {
@@ -407,7 +407,7 @@ SystemState_e ETH_Driver::SetMacAddress(const ETH_MAC_Address_t* pMAC_Address)
 //   Description:       Configure Address Filter.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::SetAddressFilter(const ETH_MAC_Address_t* pMAC_Address, uint32_t NbAddress)
+SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address, uint32_t NbAddress)
 {
     uint32_t CRC_Value;
     CRC_Calc myCrc(CRC_32);

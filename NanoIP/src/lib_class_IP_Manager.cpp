@@ -41,14 +41,134 @@
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
-const IP_Manager::IP_ETH_Config_t m_EthernetIF[NUMBER_OF_ETH_IF];
+const IP_Manager::IP_ETH_Config_t m_EthernetIF[IP_NUMBER_OF_INTERFACE];
 {
-    X_ETH_IF_DEF(EXPAND_X_ETH_IF_AS_STRUCT_DATA)
+    ETH_IF_CONFIG_LIST
 };
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
+//
+//  Parameter(s):   IP_Configuration_t      IP_Configuration        Struct for IF configuration
+//                  IP_MAC_Address_t*       pMAC_Address            MAC Address
+//  Return:         void
+//
+//  Description:    Initialize IP Task and stack
+//
+//-------------------------------------------------------------------------------------------------
+void IP_Manager::Initialize(IP_Configuration_t IP_Configuration, IP_MAC_Address_t* pMAC_Address)
+{
+    nOS_Error = Error;
+    
+       // Initialize Variables
+    m_IP_IsValid             = false;
+    IP_Status.b.DNS_IP_Found = false;
+ 
+    // Initialize the MAC Address
+    memcpy(&m_MAC_Address, pMAC_Address, sizeof(IP_MAC_Address_t));
+ 
+    m_pEthernetIF->pETH_Driver.SetMacAddress()
+    
+    ETH_Mac.SetMacAddress((IP_MAC_Address_t*)&m_MAC_Address);   maybe use a reverse call to IP_Manager in the initialize phase of the driver???
+
+    // Set netif maximum transfer unit
+    m_MTU = IP_NET_IF_MTU;
+ 
+
+//    pNIC->Initialize();
+
+
+    //mIP->Initialize();
+
+    // All protocol support are created dynamically if interface is set to use it, and if configuration is enable for that protocol
+
+
+  #if (IP_USE_UDP == DEF_ENABLED)
+   #if (IP_NUMBER_OF_INTERFACE > 1)
+    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_UDP) != 0)
+   #endif     
+    {
+        m_pUDP = new NetUDP();
+        m_pUDP->Initialize();
+    }
+  #endif
+
+  #if (IP_USE_DHCP == DEF_ENABLED)
+   #if (IP_NUMBER_OF_INTERFACE > 1)
+    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
+   #endif     
+    {
+        m_pDHCP = new NetDHCP();
+        m_pDHCP->Initialize();
+    }
+  #endif
+
+
+  #if (IP_USE_ARP == DEF_ENABLED)
+   #if (IP_NUMBER_OF_INTERFACE > 1)
+    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
+   #endif     
+    {
+        m_pARP = new NetARP();
+        m_pARP->Initialize();
+    }
+  #endif
+  
+  #if (IP_USE_ICMP == DEF_ENABLED)
+   #if (IP_NUMBER_OF_INTERFACE > 1)
+    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ICMP) != 0)
+   #endif     
+    {
+        m_pICMP = new NetICMP();
+        m_pICMP->Initialize();
+    }
+  #endif
+
+  #if (IP_USE_TCP == DEF_ENABLED)
+   #if (IP_NUMBER_OF_INTERFACE > 1)
+    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_TCP) != 0)
+   #endif     
+    {
+        m_pTCP = new NetTCP();
+        m_pTCP->Initialize();
+    }
+  #endif
+
+  #if (IP_USE_NTP == DEF_ENABLED)
+   #if (IP_NUMBER_OF_INTERFACE > 1)
+    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_NTP) != 0)
+   #endif     
+    {
+        m_pNTP = new NetNTP();
+        m_pNTP->Initialize();
+    }
+  #endif
+
+  #if (IP_USE_SNTP == DEF_ENABLED)
+   #if (IP_NUMBER_OF_INTERFACE > 1)
+   #endif     
+    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_SNTP) != 0)
+    {
+        m_pSNTP = new NetSNTP();
+        m_pSNTP->Initialize();
+    }
+  #endif
+
+  #if (IP_USE_SOAP == DEF_ENABLED)
+   #if (IP_NUMBER_OF_INTERFACE > 1)
+    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_SOAP) != 0)
+   #endif     
+    {
+        m_pSOAP = new NetSOAP();
+        m_pSOAP->Initialize();
+    }
+  #endif
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SetMAC
 //
 //  Parameter(s):   IP_Configuration_t      IP_Configuration
 //  Return:         void
@@ -57,65 +177,6 @@ const IP_Manager::IP_ETH_Config_t m_EthernetIF[NUMBER_OF_ETH_IF];
 //
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::Initialize(IP_Configuration_t IP_Configuration)
-{
-    nOS_Error = Error;
-    
-    m_IP_IsValid             = false;
-    IP_Status.b.DNS_IP_Found = false;
- 
-  #if (IP_CUSTOM_CALLBACK_FOR_MAC_ATTRIBUTION == DEF_ENABLED)
-    // Created a callback to custom mac creation
-    m_pCallbackFctSetMAC(m_MAC);
-  #else
-   #if (IP_USE_PART_OF_CPU_GUID_AS_MAC == DEF_ENABLED)
-    // call ETH_MAC driver to generate the GUID MAC Address
-   #else    
-    // Copy mac address from struct x macro ip_cfg
-   #endif
-  #endif
-                                                                     
- 
-    Error = nOS_QueueCreate(&m_MsgQueue, &m_GetQueueArray[0], 128, 1024 / 128);     // to be revise to reality... need real number
- 
-    //AppTaskStart();
-
-    // Initialize the TCP/IP stack.
-
-    mIP->Initialize();
-
-  #if (IP_USE_ARP == DEF_ENABLED)
-    m_ARP.Initialize();
-//	pARP->Initialize(Queue.Names.pTaskIP);
-  #endif
-
-  #if (IP_USE_UDP == DEF_ENABLED)
-    m_UDP.Initialize();
-  #endif
-
-  #if (IP_USE_DHCP == DEF_ENABLED)
-    m_DHCP.Initialize();
-//	pDHCP->Initialize(Queue.Names.pTaskIP);
-  #endif
-  
-  #if (IP_USE_ICMP == DEF_ENABLED)
-    m_ICMP.Initialize();
-  #endif
-
-  #if (IP_USE_SNTP == DEF_ENABLED)
-    m_SNTP.Initialize();
-  #endif
-
-  #if (IP_USE_TCP == DEF_ENABLED)
-    m_TCP.Initialize();
-  #endif
-
-//    pSNTP->Initialize(Queue.Names.pTaskIP);
-//    pNIC->Initialize();
-    
-    
-    
-}
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Run
@@ -152,13 +213,23 @@ void IP_Manager::Run(void)
 					case IP_ETHERNET_TYPE_IP:
 					{
                       #if (IP_USE_ARP == DEF_ENABLED)
-						m_pARP->ProcessIP(pRX);
+                       #if (IP_NUMBER_OF_INTERFACE > 1)
+                        if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
+                       #endif     
+                        {
+                           m_pARP->ProcessIP(pRX);
+                        }
                       #endif 
 						
                         pTX = IP_Process(pRX);
                       
                       #if (IP_USE_ARP == DEF_ENABLED)
-						m_pARP->ProcessOut(pTX);               		// If data are to be sent back, then send the data
+                       #if (IP_NUMBER_OF_INTERFACE > 1)
+                        if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
+                       #endif     
+                        {
+                            m_pARP->ProcessOut(pTX);               		// If data are to be sent back, then send the data
+                        }
                       #endif 
 					}
                     break;
@@ -166,7 +237,12 @@ void IP_Manager::Run(void)
                   #if (IP_USE_ARP == DEF_ENABLED)
 					case IP_ETHERNET_TYPE_ARP:
 					{
-						m_pARP->ProcessARP(pRX);
+                      #if (IP_NUMBER_OF_INTERFACE > 1)
+                        if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
+                      #endif      
+						{
+                            m_pARP->ProcessARP(pRX);
+                        }
 					}
                     break;
                   #endif  
@@ -183,15 +259,20 @@ void IP_Manager::Run(void)
                   #if (IP_USE_DHCP == DEF_ENABLED)
 					case IP_MSG_TYPE_DHCP_MANAGEMENT:
 					{
-						IP_Status.b.Status = m_pDHCP->Process(pMsg);
+                      #if (IP_NUMBER_OF_INTERFACE > 1)
+                        if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
+                      #endif  
+                        {
+                            IP_Status.b.Status = m_pDHCP->Process(pMsg);
 						
-                        if(IP_Status.b.Status == false)
-						{
-							for(int i = 0; i < IP_STACK_NUMBER_OF_SOCKET; i++)
-							{
-								SOCK_Close(i);
-							}
-						}
+                            if(IP_Status.b.Status == false)
+                            {
+                                for(int i = 0; i < IP_STACK_NUMBER_OF_SOCKET; i++)
+                                {
+                                    SOCK_Close(i);
+                                }
+                            }
+                        }
 					}
                     break;
                   #endif
@@ -199,8 +280,13 @@ void IP_Manager::Run(void)
                   #if (IP_USE_SNTP == DEF_ENABLED)
                     case IP_MSG_TYPE_SNTP_MANAGEMENT:
                     {
-                        IP = pSNTP->Request(IP_SNTP_SOCKET, IP_DEFAULT_NTP_SERVER_1, IP_DEFAULT_NTP_SERVER_2, &Error);
-                        IP_Status.b.SNTP_Fail = (IP == IP_ADDRESS(0,0,0,0)) ? false : true;
+                      #if (IP_NUMBER_OF_INTERFACE > 1)
+                        if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_SNTP) != 0)
+                      #endif  
+                        {
+                            IP = pSNTP->Request(IP_SNTP_SOCKET, IP_DEFAULT_NTP_SERVER_1, IP_DEFAULT_NTP_SERVER_2, &Error);
+                            IP_Status.b.SNTP_Fail = (IP == IP_ADDRESS(0,0,0,0)) ? false : true;
+                        }
                     }
                     break;
                   #endif 				
@@ -227,11 +313,18 @@ void IP_Manager::Run(void)
 IP_Address_t IP_Manager::GetDNS_IP(void)
 {
   #if (IP_USE_DHCP == DEF_ENABLED)
-    if(pDHCP->GetMode() == DHCP_IS_ON)
+   #if (IP_NUMBER_OF_INTERFACE > 1)
+    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
+   #endif  
     {
-        return IP_DHCP_DNS_IP;
+       if(pDHCP->GetMode() == DHCP_IS_ON)
+        {
+            return IP_DHCP_DNS_IP;
+        }
     }
   #endif 
+    
+    // TODO there might be a case where HEC have built-in DHCP.. need to handle that case
     
     return IP_StaticDNS_IP;
 }
@@ -249,11 +342,20 @@ IP_Address_t IP_Manager::GetDNS_IP(void)
 IP_Address_t IP_Manager::GetHost_IP(void)
 {
   #if (IP_USE_DHCP == DEF_ENABLED)
-    if(pDHCP->GetMode() == DHCP_IS_ON)
+   #if (IP_NUMBER_OF_INTERFACE > 1)
+    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
+   #endif
     {
-        return IP_DHCP_IP;
+        if(pDHCP->GetMode() == DHCP_IS_ON)
+        {
+            return IP_DHCP_IP;
+        }
     }
   #endif
+
+    // TODO there might be a case where HEC have built-in DHCP.. need to handle that case
+    // maybe ass a define for external call to get IP Address..  
+
     
     return IP_StaticIP;
 }

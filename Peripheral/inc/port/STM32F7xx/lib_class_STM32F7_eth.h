@@ -149,9 +149,9 @@ class ETH_Driver
         SystemState_e           Initialize              (ETH_MAC_SignalEvent_t CallbackEvent);                           // Initialize Ethernet MAC Device.
 
         void                    Start                   (void);                                                          // Start ETH module
-        SystemState_e           GetMacAddress           (      ETH_MAC_Address_t* pMAC_Address);                         // Get Ethernet MAC Address.
-        SystemState_e           SetMacAddress           (const ETH_MAC_Address_t* pMAC_Address);                         // Set Ethernet MAC Address.
-        SystemState_e           SetAddressFilter        (const ETH_MAC_Address_t* pMAC_Address, uint32_t NbAddress);     // Configure Address Filter.
+        SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address);                          // Get Ethernet MAC Address.
+        SystemState_e           SetMacAddress           (const IP_MAC_Address_t* pMAC_Address);                          // Set Ethernet MAC Address.
+        SystemState_e           SetAddressFilter        (const IP_MAC_Address_t* pMAC_Address, uint32_t NbAddress);      // Configure Address Filter.
         SystemState_e           SendFrame               (const uint8_t* frame, size_t Length, uint32_t flags);           // Send Ethernet frame.
         SystemState_e           ReadFrame               (MemoryNode* pPacket, size_t Length);                            // Read data of received Ethernet frame.
         uint32_t                GetRX_FrameSize         (void);                                                          // Get size of received Ethernet frame.

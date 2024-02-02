@@ -27,8 +27,46 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Typedef(s)
+// Define(s)
 //-------------------------------------------------------------------------------------------------
+
+
+#define IP_MAX_URL_SIZE                         128
+#define IP_MAC_ADDRESS_SIZE                     6
+#define IP_MAC_V6_ADDRESS_SIZE                  8
+
+#define IP_FLAG_USE_ARP                         0x0001
+#define IP_FLAG_USE_DHCP                        0x0002
+#define IP_FLAG_USE_ICMP                        0x0004
+#define IP_FLAG_USE_NTP                         0x0008
+#define IP_FLAG_USE_SNTP                        0x0010
+#define IP_FLAG_USE_SOAP                        0x0020
+#define IP_FLAG_USE_TCP                         0x0040
+#define IP_FLAG_USE_UDP                         0x0080
+
+//-------------------------------------------------------------------------------------------------
+// Macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define IP_ADDRESS                              U32MACRO    // usage: IP_ADDRESS(192,168,0,0);
+
+//-------------------------------------------------------------------------------------------------
+// Enum(s)
+//-------------------------------------------------------------------------------------------------
+
+// TODO find where it was used
+// Message type for struct IP_Message_t
+enum IP_MsgType_e
+{
+    IP_MSG_TYPE_IP_MANAGEMENT       = 0,
+    IP_MSG_TYPE_DHCP_MANAGEMENT     = 1,
+    IP_MSG_TYPE_SNTP_MANAGEMENT     = 2,
+};
+
+enum IP_EthernetIF_e 
+{ 
+    ETH_INTERFACE_ENUM
+};
 
 // Ethernet MAC Timer Control Codes
 enum ETH_ControlTimer_e
@@ -110,6 +148,54 @@ enum ETH_LinkState_e
     ETH_LINK_UNKNOWN,
 };
 
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+typedef IP_Address_t       uint32_t
+typedef IP_Port_t          uint16_t
+
+struct IP_MAC_Address_t
+{
+    uint8_t  Address[IP_MAC_ADDRESS_SIZE];
+    
+  #if (IP_USE_IP_V6 == DEF_ENABLED)             // Future :)
+    uint16_t  AddressV6[IP_MAC_V6_ADDRESS_SIZE];
+  #endif 
+};
+
+struct IP_ETH_Config_t
+{
+  #if (IP_USE_HOSTNAME == DEF_ENABLED)
+    char*               HostName;
+  #endif
+
+    uint16_t            ProtocolFlag;
+
+    IP_Address_t        DefaultStatic_IP;
+    IP_Address_t        DefaultGateway;
+    IP_Address_t        DefaultSubnetMask;
+    IP_Address_t        DefaultStaticDNS;
+    
+  #if IP_INTERFACE_SUPPORT_PHY == DEF_ENABLED
+    PHY_Driver*         pPHY_Driver;                                    // Driver for PHY
+    ETH_Driver*         pETH_Driver;                                    // Driver for embedded MAC controller
+  #endif
+
+  #if IP_INTERFACE_SUPPORT_HEC == DEF_ENABLED
+     HEC_Driver         pHEC_Driver;                                    // Driver for HEC (Hardwired Embedded Controller)
+  #endif
+
+  #if IP_INTERFACE_SUPPORT_MAC == DEF_ENABLED
+    MAC_Driver*         pMAC_Driver;                                    // Driver for ethernal MAC and PHY chip
+  #endif
+};
+
+struct IP_Message_t
+{
+    // TODO missing stuff
+};
+
 // Ethernet Link Info
 struct ETH_LinkInfo_t
 {
@@ -117,38 +203,14 @@ struct ETH_LinkInfo_t
     ETH_Duplex_e        Duplex;                     // Duplex mode: 0 = Half, 1 = Full
 };
 
-
-/*
-struct ETH_MAC_Capability_t
-{
-    uint32_t checksum_offload_rx_ip4  : 1;          // 1 = IPv4 header checksum verified on receive
-    uint32_t checksum_offload_rx_ip6  : 1;          // 1 = IPv6 checksum verification supported on receive
-    uint32_t checksum_offload_rx_udp  : 1;          // 1 = UDP payload checksum verified on receive
-    uint32_t checksum_offload_rx_tcp  : 1;          // 1 = TCP payload checksum verified on receive
-    uint32_t checksum_offload_rx_icmp : 1;          // 1 = ICMP payload checksum verified on receive
-    uint32_t checksum_offload_tx_ip4  : 1;          // 1 = IPv4 header checksum generated on transmit
-    uint32_t checksum_offload_tx_ip6  : 1;          // 1 = IPv6 checksum generation supported on transmit
-    uint32_t checksum_offload_tx_udp  : 1;          // 1 = UDP payload checksum generated on transmit
-    uint32_t checksum_offload_tx_tcp  : 1;          // 1 = TCP payload checksum generated on transmit
-    uint32_t checksum_offload_tx_icmp : 1;          // 1 = ICMP payload checksum generated on transmit
-    //uint32_t media_interface          : 2;          //     Ethernet Media Interface type (ETH_INTERFACE_MII or ETH_INTERFACE_RMII or ETH_INTERFACE_SMII)
-    //uint32_t mac_address              : 1;          // 1 = driver provides initial valid MAC address
-    //uint32_t event_rx_frame           : 1;          // 1 = callback event \ref ETH_MAC_EVENT_RX_FRAME generated
-    //uint32_t event_tx_frame           : 1;          // 1 = callback event \ref ETH_MAC_EVENT_TX_FRAME generated
-    //uint32_t event_wakeup             : 1;          // 1 = wakeup event \ref ETH_MAC_EVENT_WAKEUP generated
-    //uint32_t precision_timer          : 1;          // 1 = Precision Timer supported
-    //uint32_t reserved                 : 15;         // Reserved (must be zero)
-};
-*/
-
 struct  ETH_MacTime_t
 {
     uint32_t naneSecond;                         // Nano seconds
     uint32_t Second;                             // Seconds
 };
 
-typedef SystemState_e (*ETH_PHY_Read_t)  (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData);   // Read Ethernet PHY Register.
-typedef SystemState_e (*ETH_PHY_Write_t) (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data);   // Write Ethernet PHY Register.
+//typedef SystemState_e (*ETH_PHY_Read_t)  (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData);   // Read Ethernet PHY Register.   not sure it is still good
+//typedef SystemState_e (*ETH_PHY_Write_t) (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data);   // Write Ethernet PHY Register.
 
 //-------------------------------------------------------------------------------------------------
 

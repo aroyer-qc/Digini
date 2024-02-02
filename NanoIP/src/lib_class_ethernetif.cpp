@@ -68,55 +68,9 @@ SystemState_e ETH_IF_Driver::Initialize(struct EthernetIF_t* pNetIf)
 	m_Link = ETH_LINK_DOWN;
   
     BSP_EthernetIF_Initialize();
-  
-void BSP_EthernetIF_Initialize(void)
-{
-  #if (IP_INTERFACE_SUPPORT_PHY == DEF_ENABLED) || (IP_INTERFACE_SUPPORT_MAC == DEF_ENABLED)
-    //PHY CONFIG should be out of here...
-    ETH_Mac.Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
- 
-    // if(m_IF_Type == ETH_PHY_IF) 
-        // if(m_IF_Type == ETH_MAC_IF)
-    // {
-	// Initialize Physical Media Interface
-	if(ETH_Phy.Initialize(&ETH_Mac) == SYS_READY)
-	{
-		ETH_Phy.PowerControl(ETH_POWER_FULL);                   // configuration into the driver itself????  with config ??
-		ETH_Phy.SetInterface(ETH_USED_INTERFACE);
-		ETH_Phy.SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
-
-      #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
-        IO_PinInit(IO_ETH_PHY_LINK_IO);
-        IO_InitIRQ(ETH_PHY_LINK_IO_ISR, ethernetif_LinkCallcack);
-        ETH_Phy.SetLinkUpInterrupt();
-        IO_EnableIRQ(ETH_PHY_LINK_IO_ISR);
-	  #endif
-	}
-  // }
-  #endif
-
-  #if (IP_INTERFACE_SUPPORT_HEC == DEF_ENABLED)
-    // if(m_IF_Type == ETH_HEC_IF)
-    // {
-            // This is for chip containing the everything  in them Example Microchip WS5100
-    // }
-  #endif
-
-    // if(m_IF_Type == ETH_MAC_IF)
-    // {
-            // This is for chip containing the MAC controler in them Example Microchip LAN8650/1
-    // }
-
-	// ASSERT("pNetIf != nullptr", (pNetIf != nullptr));
 
 	//pNetIf->output     = EtharpOutput;        not here!!!
 	//pNetIf->linkoutput = LowLevelOutput;
-
-  #if IP_USE_ARP
-    pNetIf->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
-  #else
-    pNetIf->flags = NETIF_FLAG_BROADCAST;
-  #endif // IP_USE_ARP
 
     // Create binary semaphore used for informing ethernetif of frame reception
     Error = nOS_SemCreate(&m_RX_Sem, 0, 20);
@@ -125,14 +79,14 @@ void BSP_EthernetIF_Initialize(void)
 
      nOS_ThreadCreate(&TaskHandle,
                       Input,
-                      (void*)pNetIf,
+                      nullptr,
                       &m_Stack[0],
                       TASK_ETHERNET_IF_STACK_SIZE,
                       TASK_ETHERNET_IF_PRIO);
 
 
       #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-        myStacktistic.Register(&Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Ethernet Input");
+        myStacktistic.Register(&m_Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Ethernet Input");
       #endif
 
     ETH_Mac.Start();        // Enable MAC and DMA transmission and reception
@@ -168,7 +122,7 @@ SystemState_e ETH_IF_Driver::LowLevelOutput(MemoryNode* pPacket)
     
     if(nOS_MutexLock(&m_TX_Mutex, netifGUARD_BLOCK_TIME) == NOS_OK)
     {
-        pPacket->Begin();       // Reset Node pointer to the begining
+        pPacket->Begin();       // Reset Node pointer to the beginning
         Length   = pPacket->GetTotalSize();
         NodeSize = pPacket->GetNodeSize();
         
@@ -206,62 +160,6 @@ SystemState_e ETH_IF_Driver::LowLevelOutput(MemoryNode* pPacket)
 
     return SYS_READY;
 }
-
-
-/*
-how to use the Nodelist
-
-Create a chainlist pointer
-Create an object for that nodelist with the size of one element.
-use add to insert more element
-Free the nodelist object when done
-
-struct testNode
-{
-    uint8_t Poutine;
-    uint32_t Poutine2;
-    uint16_t Poutine3;
-    uint8_t Poutine4;
-};
-
-NodeList myTestChainList(sizeof(testNode));
-
-void* pDummy;
-
-myTestChainList.AddNode(1, &pDummy);
-myTestChainList.AddNode(2, &pDummy);
-myTestChainList.AddNode(3, &pDummy);
-myTestChainList.AddNode(4, &pDummy);
-myTestChainList.AddNode(5, &pDummy);
-myTestChainList.AddNode(6, &pDummy);
-myTestChainList.AddNode(7, &pDummy);
-myTestChainList.AddNode(8, &pDummy);
-myTestChainList.AddNode(9, &pDummy);
-
-static uint16_t number = myTestChainList.GetNumberOfNode();
-
-myTestChainList.GetNodeDataPointer(5, &pDummy);
-myTestChainList.GetNodeDataPointer(1, &pDummy);
-myTestChainList.GetNodeDataPointer(4, &pDummy);
-myTestChainList.GetNodeDataPointer(2, &pDummy);
-myTestChainList.GetNodeDataPointer(3, &pDummy);
-myTestChainList.GetNodeDataPointer(6, &pDummy);
-myTestChainList.GetNodeDataPointer(7, &pDummy);
-myTestChainList.GetNodeDataPointer(9, &pDummy);
-myTestChainList.GetNodeDataPointer(8, &pDummy);
-
-myTestChainList.RemoveNode(5);
-myTestChainList.RemoveNode(7);
-myTestChainList.RemoveNode(6);
-myTestChainList.RemoveNode(3);
-myTestChainList.RemoveNode(4);
-myTestChainList.RemoveNode(8);
-myTestChainList.RemoveNode(9);
-myTestChainList.RemoveNode(1);
-myTestChainList.RemoveNode(2);
-
-
-*/
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -482,3 +380,68 @@ void ETH_IF_Driver::LinkCallBack(void* pArg)
 //-------------------------------------------------------------------------------------------------
 
 #endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// need to put this in BSP or BSP supported section 
+
+
+  
+void BSP_EthernetIF_Initialize(void)
+{
+  #if (IP_INTERFACE_SUPPORT_PHY == DEF_ENABLED) || (IP_INTERFACE_SUPPORT_MAC == DEF_ENABLED)
+    //PHY CONFIG should be out of here...
+    ETH_Mac.Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
+ 
+    // if(m_IF_Type == ETH_PHY_IF) 
+        // if(m_IF_Type == ETH_MAC_IF)
+    // {
+	// Initialize Physical Media Interface
+	if(ETH_Phy.Initialize(&ETH_Mac) == SYS_READY)
+	{
+		ETH_Phy.PowerControl(ETH_POWER_FULL);                   // configuration into the driver itself????  with config ??
+		ETH_Phy.SetInterface(ETH_USED_INTERFACE);
+		ETH_Phy.SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
+
+      #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
+        IO_PinInit(IO_ETH_PHY_LINK_IO);
+        IO_InitIRQ(ETH_PHY_LINK_IO_ISR, ethernetif_LinkCallcack);
+        ETH_Phy.SetLinkUpInterrupt();
+        IO_EnableIRQ(ETH_PHY_LINK_IO_ISR);
+	  #endif
+	}
+  // }
+  #endif
+
+  #if (IP_INTERFACE_SUPPORT_HEC == DEF_ENABLED)
+    // if(m_IF_Type == ETH_HEC_IF)
+    // {
+            // This is for chip containing the everything  in them Example Microchip WS5100
+    // }
+  #endif
+
+    // if(m_IF_Type == ETH_MAC_IF)
+    // {
+            // This is for chip containing the MAC controler in them Example Microchip LAN8650/1
+    // }
+}

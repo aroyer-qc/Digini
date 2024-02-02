@@ -66,11 +66,10 @@ void IP_Manager::Initialize(IP_Configuration_t IP_Configuration, IP_MAC_Address_
     IP_Status.b.DNS_IP_Found = false;
  
     // Initialize the MAC Address
-    memcpy(&m_MAC_Address, pMAC_Address, sizeof(IP_MAC_Address_t));
- 
-    m_pEthernetIF->pETH_Driver.SetMacAddress()
+    m_pEthernetIF->pETH_Driver.SetMacAddress(pMAC_Address);
     
-    ETH_Mac.SetMacAddress((IP_MAC_Address_t*)&m_MAC_Address);   maybe use a reverse call to IP_Manager in the initialize phase of the driver???
+//    m_pEthernetIF->pETH_Driver.Initialize(pMAC_Address);
+
 
     // Set netif maximum transfer unit
     m_MTU = IP_NET_IF_MTU;

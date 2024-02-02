@@ -44,35 +44,28 @@ class ETH_IF_Driver
 {
     public:
 
-        SystemState_e    Initialize                     (EthernetIF_t* pNetIf);
-
-
+        SystemState_e   Initialize                      (EthernetIF_t* pNetIf);
 
       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-        uint32_t    m_DBG_RX_Count;
-        uint32_t    m_DBG_TX_Count;
-        uint32_t    m_DBG_RX_Drop;
-        uint32_t    m_DBG_TX_Drop;
+        uint32_t        GetDBG_RX_Count      { return m_DBG_RX_Count; }
+        uint32_t        GetDBG_TX_Count      { return m_DBG_TX_Count; }
+        uint32_t        GetDBG_RX_Drop       { return m_DBG_RX_Drop;  }
+        uint32_t        GetDBG_TX_Drop       { return m_DBG_TX_Drop;  }
       #endif
-
 
     private:
 
-        void             Input                          (void* pParam);
+        void                Input                       (void* pParam);
 
 
-        inline MemoryNode*   LowLevelInput              (void);
-        SystemState_e        LowLevelOutput             (MemoryNode* pPacket);               // TODO Should use may chainlist buffer allocation
-        void                 ArpTimer                   (void* pArg);
-        void                 Callback                   (uint32_t Event);
-        void                 PollTheNetworkInterface    (void);                                                 // This might be a PHY, MAC, HEC ( hardwired ethernet controller Ex. W5100, ESP32 etc...)
+        inline MemoryNode*  LowLevelInput               (void);
+        SystemState_e       LowLevelOutput              (MemoryNode* pPacket);               // TODO Should use may chainlist buffer allocation
+        void                ArpTimer                    (void* pArg);
+        void                Callback                    (uint32_t Event);
+        void                PollTheNetworkInterface     (void);                                                 // This might be a PHY, MAC, HEC ( hardwired ethernet controller Ex. W5100, ESP32 etc...)
       #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
-        void                 LinkCallBack               (void* pArg);
+        void                LinkCallBack                (void* pArg);
       #endif
-
-
-
-
 
         nOS_Sem                     m_RX_Sem;
         nOS_Mutex                   m_TX_Mutex;
@@ -85,11 +78,15 @@ class ETH_IF_Driver
         PHY_DRIVER_INTERFACE        m_Phy;
         PHY_DriverInterface         m_ETH_Phy;
         ETH_LinkState_e             m_Link;                // Ethernet Link State
+        
+      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+        uint32_t                    m_DBG_RX_Count;
+        uint32_t                    m_DBG_TX_Count;
+        uint32_t                    m_DBG_RX_Drop;
+        uint32_t                    m_DBG_TX_Drop;
+      #endif
 };
 
 //-------------------------------------------------------------------------------------------------
-
-void FreePacket        (MemoryNode* pPacket);
-
 
 #endif

@@ -27,22 +27,33 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
+// Note(s)
 //-------------------------------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
+// To use this library you need to add a line like this into the 
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
+enum WS281xID_e
+{
+
+    NUMBER_OF_WS281x_STREAM,
+}
+
+struct WS281x_Info_t
+{
+    uint16_t    NumberOfLED;
+    uint16_t    ResetTime;
+    DMA_ID_e    DMA_ID;
+};
+
 struct WS281x_Color_t
 {
-    uint8_t Red;
-    uint8_t Green;
-    uint8_t Blue;
+    uint8_t     Red;
+    uint8_t     Green;
+    uint8_t     Blue;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -53,19 +64,22 @@ class WS281x
 {
     public:
 
-        void    Initialize          (void* pArg, uint16_t NumberOfLED, uint16_t ResetTime);
+        void    Initialize          (WS281xID_e WS281cID); //void* pArg, uint16_t NumberOfLED, uint16_t ResetTime);
         void    SetLed              (uint16_t Offset, WS281x_Color_t Color);
         void    Process             (void);   
         void    FillUp_24_Bits      (uint8_t* pBuffer);
 
     private:
 
+        DMA_Driver                  m_DMA_Driver;
         uint16_t                    m_LedChainSize;
         volatile uint16_t           m_LedPointer;
         WS281x_Color_t*             m_pLedChain;
         uint8_t*                    m_pDMA_Buffer;
         bool                        m_NeedRefresh;
         uint8_t                     m_ResetCount;
+        
+        static const WS281x_Info_t  m_WS281x_Info[NUMBER_OF_WS281x_STREAM];
 };
 
 //-------------------------------------------------------------------------------------------------

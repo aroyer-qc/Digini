@@ -28,7 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+#define LIB_WS281x_GLOBAL
 #include "lib_class_WS281x.h"
+#undef  LIB_WS281x_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -51,7 +53,7 @@
 //
 //  Parameter(s):   void*       pArg
 //                  uint16_t    NumberOfLED             Number of LED in the chain
-//                   uint16_t   ResetTime               Reset time in uSec, as per datasheet
+//                  uint16_t   ResetTime                Reset time in uSec, as per datasheet
 //
 //  Return:         void
 //
@@ -98,6 +100,9 @@
 //-------------------------------------------------------------------------------------------------
 void WS281x::Initialize(void* pArg, uint16_t NumberOfLED, uint16_t ResetTime)
 {
+    //DMA_Stream_TypeDef* pDMA;
+
+    
 //    m_pPinStruct = (WS281x_PinStruct_t*)pArg;
 
 // maybe CPU should provide frequency in multiple of 20Mhz example F103.. other CPU may have better frequency input
@@ -124,7 +129,28 @@ void WS281x::Initialize(void* pArg, uint16_t NumberOfLED, uint16_t ResetTime)
         // Enable output of the compare channel
         // Enable timer and compare channel
         
-    // Configure DMA
+    // Configure DMA ( for other CPU then STM32 create ifdef definition)
+    
+    
+    m_DMA_Driver.
+    
+    
+    pDMA = m_pInfo->DMA_Stream;
+    pDMA->PAR = uint32_t(&m_pInfo->pTIMx->DR);          // Configure transmit data register
+    pDMA->CR = DMA_MEMORY_TO_PERIPH           |
+               DMA_MODE_NORMAL                |
+               DMA_PERIPH_NO_INCREMENT        |
+               DMA_MEMORY_INCREMENT           |
+               DMA_P_DATA_ALIGN_BYTE          |
+               DMA_M_DATA_ALIGN_BYTE          |
+               DMA_P_BURST_SINGLE             |
+               DMA_M_BURST_SINGLE             |
+               DMA_PRIORITY_LOW               |
+               DMA_SxCR_TCIE                  |
+               m_pInfo->DMA_ChannelStream;
+
+
+    
         // Configure Source 8 Bits memory, Destination 16 Bits compare register ...  checkif it works.
         // Configure burst at 1
         // Configure Circulat buffer size 48 bytes (WS281x_DMA_FULL_BUFFER_SIZE).
@@ -152,7 +178,7 @@ void WS281x::Process(void)
         m_LedPointer  = 0;
         m_NeedRefresh = false;
         m_ResetCount = WS281x_RESET_CYCLE_COUNT;        // This make sure no restart is done before
-                                                        // is done properly.
+                                                        // it is done properly.
     }
 }
 
@@ -192,6 +218,8 @@ void WS281x::SetLed(uint16_t Offset, WS281x_Color_t Color)
 //  Description:    DMA interrupt, to fill up next 24 Bits value into DMA buffer for compare timer
 //                  register.
 //
+//  Note(s):        Each bit, is a uint8_t value into a 24 bytes buffer, for DMA to process.
+//
 //-------------------------------------------------------------------------------------------------
 void WS281x::FillUp_24_Bits(uint8_t* pBuffer)
 {
@@ -213,9 +241,9 @@ void WS281x::FillUp_24_Bits(uint8_t* pBuffer)
             for(int j = 0x80; j >= 0; j >>= 1)
             {
                 *pBuffer = ((Color & j) == 0) ? WS281x_LOGICAL_0 : WS281x_LOGICAL_1;
+                pBuffer++;
             }
             
-            pBuffer++;
             pColorData++;
         }
 
@@ -225,3 +253,26 @@ void WS281x::FillUp_24_Bits(uint8_t* pBuffer)
 }
 
 //-------------------------------------------------------------------------------------------------
+
+// We double buffer with half transfert IRQ. so prepare next 24 bit while sending first one
+
+
+void WS281x::DMA_Stream_IRQ_Handler(TIM_ID_e TIM_ID)
+{
+    TIM_Info_t*         pInfo;
+    DMA_Stream_TypeDef* pDMA;
+    uint32_t            Flag;
+
+    pInfo = &TIM_Info[TIM_ID];
+    pInfo->pObject->m_DMA_Status = SYS_BUSY_B4_RELEASE;
+    pDMA = pInfo->DMA_Stream;
+    Flag = pInfo->TX_IT_Flag;
+    DMA_ClearFlag(pDMA, Flag);
+    
+    
+    
+    // call the fill_up function for output.. or integrate directly here (or inline)
+}
+
+//-------------------------------------------------------------------------------------------------
+

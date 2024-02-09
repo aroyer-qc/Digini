@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_STM32F7_dma.cpp
+//  File : lib_class_STM32F4_dma.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -32,65 +32,74 @@
 #include "lib_digini.h"
 #undef  DMA_DRIVER_GLOBAL
 
-// Beed to do a class for this
-
 //-------------------------------------------------------------------------------------------------
-// Public Function
+//
+//  Function:       Initialize
+//
+//  Parameter(s):   DMA_ID_e        DMA_ID
+//  Return:         None
+//
+//  Description:    Initialize the DMA pointer 
+//
 //-------------------------------------------------------------------------------------------------
+void DMA_Driver::Initialize(DMA_ID_e DMA_ID)
+{
+    // link to physical device;
+}
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       DMA_SetStreamRX
+//  Function:       SetStreamRX
 //
-//  Parameter(s):   pDMA        DMA stream to modify
-//                  Source
+//  Parameter(s):   Source
 //                  Destination
 //                  Length
 //  Return:         None
 //
 //  Description:    Setup receive data from peripheral for specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
-void DMA_SetStreamRX(DMA_Stream_TypeDef* pDMA, void* pSource, void* pDestination, size_t Length)
+void DMA_Driver::SetStreamRX(void* pSource, void* pDestination, size_t Length)
 {
-    pDMA->M0AR = uint32_t(pDestination);
-    pDMA->PAR  = uint32_t(pSource);
-    pDMA->NDTR = uint32_t(Length);
+    m_pDMA->M0AR = uint32_t(pDestination);
+    m_pDMA->PAR  = uint32_t(pSource);
+    m_pDMA->NDTR = uint32_t(Length);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       DMA_SetStreamTX
+//  Function:       SetStreamTX
 //
-//  Parameter(s):   pDMA        DMA stream to modify
-//                  Source
+//  Parameter(s):   Source
 //                  Destination
 //                  Length
 //  Return:         None
 //
 //  Description:    Setup transmit data to peripheral for specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
-void DMA_SetStreamTX(DMA_Stream_TypeDef* pDMA, void* pSource, void* pDestination, size_t Length)
+void DMA_Driver::SetStreamTX(void* pSource, void* pDestination, size_t Length)
 {
-    pDMA->M0AR = uint32_t(pSource);
-    pDMA->PAR  = uint32_t(pDestination);
-    pDMA->NDTR = uint32_t(Length);
+    m_pDMA->M0AR = uint32_t(pSource);
+    m_pDMA->PAR  = uint32_t(pDestination);
+    m_pDMA->NDTR = uint32_t(Length);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       DMA_ClearFlag
+//  Function:       ClearFlag
 //
-//  Parameter(s):   pDMA        DMA stream to modify
-//                  Flag        to clear
+//  Parameter(s):   Flag        to clear
 //  Return:         None
 //
 //  Description:    Clear flag for specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
-void DMA_ClearFlag(DMA_Stream_TypeDef* pDMA, uint32_t Flag)
+void DMA_Driver::ClearFlag(uint32_t Flag)
 {
     volatile uint32_t* pRegister;
 
-    switch(intptr_t(pDMA))
+    switch(intptr_t(m_pDMA))
     {
         case (uint32_t)DMA1_Stream0_BASE:
         case (uint32_t)DMA1_Stream1_BASE:
@@ -118,20 +127,20 @@ void DMA_ClearFlag(DMA_Stream_TypeDef* pDMA, uint32_t Flag)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       DMA_CheckFlag
+//  Function:       CheckFlag
 //
-//  Parameter(s):   pDMA        DMA stream to modify
-//                  Flag        To check
+//  Parameter(s):   Flag        To check
 //  Return:         None
 //
 //  Description:    Check flag for specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
-uint32_t DMA_CheckFlag(DMA_Stream_TypeDef* pDMA, uint32_t Flag)
+uint32_t DMA_Driver::CheckFlag(uint32_t Flag)
 {
     volatile uint32_t Register;
     uint32_t          Result     = 0;
 
-    switch(intptr_t(pDMA))
+    switch(intptr_t(m_pDMA))
     {
         case (uint32_t)DMA1_Stream0_BASE:
         case (uint32_t)DMA1_Stream1_BASE:
@@ -164,116 +173,122 @@ uint32_t DMA_CheckFlag(DMA_Stream_TypeDef* pDMA, uint32_t Flag)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       DMA_Enable
+//  Function:       Enable
 //
-//  Parameter(s):   pDMA        DMA stream to enable
+//  Parameter(s):   None
 //  Return:         None
 //
 //  Description:    Enable a specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
-void DMA_Enable(DMA_Stream_TypeDef* pDMA)
+void DMA_Driver::Enable(void)
 {
-    SET_BIT(pDMA->CR, DMA_SxCR_EN);
+    SET_BIT(m_pDMA->CR, DMA_SxCR_EN);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       DMA_Disable
+//  Function:       Disable
 //
-//  Parameter(s):   pDMA        DMA stream to disable
+//  Parameter(s):   None
 //  Return:         None
 //
 //  Description:    Disable a specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
-void DMA_Disable(DMA_Stream_TypeDef* pDMA)
+void DMA_Driver::Disable(void)
 {
     CLEAR_BIT(pDMA->CR, DMA_SxCR_EN);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       DMA_EnableInterrupt
+//  Function:       EnableInterrupt
 //
-//  Parameter(s):   pDMA        DMA stream
-//                  Interrupt   Interrupt tn enable
+//  Parameter(s):   Interrupt   Interrupt to enable
 //  Return:         None
 //
 //  Description:    Enable a group of interrupt for specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
-void DMA_EnableInterrupt(DMA_Stream_TypeDef* pDMA, uint32_t Interrupt)
+void DMA_Driver::EnableInterrupt(uint32_t Interrupt)
 {
-    SET_BIT(pDMA->CR, Interrupt);
+    SET_BIT(m_pDMA->CR, Interrupt);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       DMA_DisableInterrupt
+//  Function:       DisableInterrupt
 //
-//  Parameter(s):   pDMA        DMA stream
-//                  Interrupt   Interrupt tn enable
+//  Parameter(s):   Interrupt   Interrupt to enable
 //  Return:         None
 //
 //  Description:    Disable a group of interrupt for specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
-void DMA_DisableInterrupt(DMA_Stream_TypeDef* pDMA, uint32_t Interrupt)
+void DMA_Driver::DisableInterrupt(uint32_t Interrupt)
 {
-    CLEAR_BIT(pDMA->CR, Interrupt);
+    CLEAR_BIT(m_pDMA->CR, Interrupt);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       DMA_EnableTransmitCompleteInterrupt
+//  Function:       EnableTransmitCompleteInterrupt
 //
-//  Parameter(s):   pDMA        DMA stream to enable
+//  Parameter(s):   None
 //  Return:         None
 //
 //  Description:    Enable the transmit complete interrupt for a specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
-void DMA_EnableTransmitCompleteInterrupt(DMA_Stream_TypeDef* pDMA)
+void DMA_Driver::EnableTransmitCompleteInterrupt((void)
 {
-    SET_BIT(pDMA->CR, DMA_SxCR_TCIE);
+    SET_BIT(m_pDMA->CR, DMA_SxCR_TCIE);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       DMA_DisableTransmitCompleteInterrupt
+//  Function:       DisableTransmitCompleteInterrupt
 //
-//  Parameter(s):   pDMA        DMA stream to enable
+//  Parameter(s):   None
 //  Return:         None
 //
 //  Description:    Disable the transmit complete interrupt for a specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
-void DMA_DisableTransmitCompleteInterrupt(DMA_Stream_TypeDef* pDMA)
+void DMA_Driver::DisableTransmitCompleteInterrupt(void)
 {
-    CLEAR_BIT(pDMA->CR, DMA_SxCR_TCIE);
+    CLEAR_BIT(m_pDMA->CR, DMA_SxCR_TCIE);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       DMA_EnableTransmitHalfCompleteInterrupt
+//  Function:       EnableTransmitHalfCompleteInterrupt
 //
-//  Parameter(s):   pDMA        DMA stream to enable
+//  Parameter(s):   None
 //  Return:         None
 //
 //  Description:    Enable the transmit complete interrupt for a specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
-void DMA_EnableTransmitHalfCompleteInterrupt(DMA_Stream_TypeDef* pDMA)
+void DMA_Driver::EnableTransmitHalfCompleteInterrupt(void)
 {
-    SET_BIT(pDMA->CR, DMA_SxCR_HTIE);
+    SET_BIT(m_pDMA->CR, DMA_SxCR_HTIE);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       DMA_DisableTransmitHalfCompleteInterrupt
+//  Function:       DisableTransmitHalfCompleteInterrupt
 //
-//  Parameter(s):   pDMA        DMA stream to enable
+//  Parameter(s):   None
 //  Return:         None
 //
 //  Description:    Disable the transmit complete interrupt for a specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
-void DMA_DisableTransmitHalfCompleteInterrupt(DMA_Stream_TypeDef* pDMA)
+void DMA_Driver::DisableTransmitHalfCompleteInterrupt(void)
 {
-    CLEAR_BIT(pDMA->CR, DMA_SxCR_HTIE);
+    CLEAR_BIT(m_pDMA->CR, DMA_SxCR_HTIE);
 }
 
-//---------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------

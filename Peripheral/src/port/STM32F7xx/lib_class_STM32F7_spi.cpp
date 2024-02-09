@@ -77,8 +77,6 @@ typedef struct HAL_SPI_DMA_Data_s
 //
 //   Description:   Initializes the SPIx peripheral according to the specified Parameters
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
 {
@@ -97,8 +95,6 @@ SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
 //
 //   Description:    SystemState_e  Return general status of the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::GetStatus(void)
 {
@@ -113,8 +109,6 @@ SystemState_e SPI_Driver::GetStatus(void)
 //   Return Value:  None
 //
 //   Description:   Initialize this SPI port
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::Initialize(void)
@@ -324,8 +318,6 @@ SystemState_e SPI_Driver::UnlockFromDevice(void* pDevice)
 //
 //  Description:    Calculate the prescaler value for requested speed
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 /*
 uint16_t SPI_Driver::GetPrescalerFromSpeed(uint32_t Speed)
@@ -350,12 +342,10 @@ uint16_t SPI_Driver::GetPrescalerFromSpeed(uint32_t Speed)
 //
 //   Function:      Lock
 //
-//   Parameter(s):
-//   Return Value:
+//   Parameter(s):  None
+//   Return Value:  None
 //
 //   Description:   Lock the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::Lock(void)
@@ -367,12 +357,10 @@ void SPI_Driver::Lock(void)
 //
 //   Function:      Unlock
 //
-//   Parameter(s):
-//   Return Value:
+//   Parameter(s):  None
+//   Return Value:  None
 //
 //   Description:   Unlock the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::Unlock(void)
@@ -388,8 +376,6 @@ void SPI_Driver::Unlock(void)
 //  Return:         None
 //
 //  Description:    Set speed on the SPI port
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::Config(uint32_t Mask, uint32_t Config)
@@ -407,8 +393,6 @@ void SPI_Driver::Config(uint32_t Mask, uint32_t Config)
 //  Return:         None
 //
 //  Description:    Send a byte to SPI
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 uint8_t SPI_Driver::Send(uint8_t Data)
@@ -438,8 +422,6 @@ uint8_t SPI_Driver::Send(uint8_t Data)
 //
 //  Description:    Read or writes data to SPI device.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, void* pDevice)
@@ -467,8 +449,6 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
 //  Return:         SystemState_e   State
 //
 //  Description:    Read or writes data to SPI device.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
@@ -643,8 +623,6 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
 //
 //  Description:    Read or writes data to SPI device.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size, void* pDevice)
@@ -672,8 +650,6 @@ SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, u
 //  Return:         SystemState_e   State
 //
 //  Description:    Read or writes data to SPI device.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
@@ -847,8 +823,6 @@ SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, u
 //
 //  Parameter(s):   bool IsItActive
 //
-//  Return:         None
-//
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::ChipSelect(bool IsItActive)
 {
@@ -927,8 +901,6 @@ SystemState_e SPI_Driver::WaitReady(void)
 //
 //  Description:    This function handles SPIx interrupt request.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::IRQHandler(void)
 {
@@ -948,14 +920,12 @@ void SPI_Driver::IRQHandler(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Transfer
+//  Name:           WaitDMA
 //
 //  Parameter(s):   None
 //  Return:         SystemState_e   State
 //
-//  Description:    Get status of the SPI DMA transfer
-//
-//  Note(s):
+//  Description:    Wait for DMA to conclude
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::WaitDMA(void)
@@ -994,14 +964,12 @@ SystemState_e SPI_Driver::WaitDMA(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Transfer
+//  Name:           DMA_TX_IRQ_Handler
 //
 //  Parameter(s):   None
 //  Return:         SystemState_e   State
 //
 //  Description:    Get status of the SPI DMA transfer
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
@@ -1021,14 +989,12 @@ void SPI_Driver::DMA_TX_IRQ_Handler(SPI_ID_e SPI_ID)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Transfer
+//  Name:           DMA_RX_IRQ_Handler
 //
 //  Parameter(s):   None
 //  Return:         SystemState_e   State
 //
 //  Description:    Get status of the SPI DMA transfer
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)

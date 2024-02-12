@@ -62,7 +62,7 @@ CLayer LayerTable[LAYER_COUNT] =
 Layer_e      CLayer::m_ActiveDrawingLayer;
       //static CLayer*      m_pActiveDrawingLayer;
 
-#ifdef GRAFX_USE_BACKGROUND_LAYER
+#if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
 CLayer*      CLayer::m_pActiveBG_Layer;
 CLayer*      CLayer::m_pConstructBG_Layer;
 #endif
@@ -468,7 +468,7 @@ void CLayer::SetActiveLayer(LayerType_e LayerType, CLayer* pLayer)
     switch(LayerType)
     {
 
-      #ifdef GRAFX_USE_BACKGROUND_LAYER
+      #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
         case LAYER_BACKGROUND:
         {
             // Deactivate physical access from previous owner of the active layer

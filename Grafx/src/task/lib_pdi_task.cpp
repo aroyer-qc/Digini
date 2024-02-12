@@ -344,7 +344,7 @@ void PDI_myClassTask::CreateZone(EventArea_t* pEventArea, uint16_t Options, Widg
 //-------------------------------------------------------------------------------------------------
 void PDI_myClassTask::ResetEventData(void)
 {
-  #ifdef GRAFX_USE_PDI_MULTI_EVENT
+  #if (GRAFX_USE_PDI_MULTI_EVENT == DEF_ENABLED)
     m_GestureID = SERVICE_NO_STATE;
 
     for(int Index = 0; Index < PDI_NUMBER_OF_EVENT; Index++)
@@ -373,7 +373,7 @@ void PDI_myClassTask::ResetEventData(void)
 //  Description:    Get the gesture ID from the device
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_PDI_MULTI_EVENT
+#if (GRAFX_USE_PDI_MULTI_EVENT == DEF_ENABLED)
 ServiceEvent_e PDI_myClassTask::GetGestureID(void)
 {
     return m_pDriver->GetGestureID();
@@ -510,7 +510,7 @@ SystemState_e PDI_myClassTask::ClearIT(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e PDI_myClassTask::GetState(void)
 {
-  #ifdef GRAFX_USE_PDI_MULTI_EVENT
+  #if (GRAFX_USE_PDI_MULTI_EVENT == DEF_ENABLED)
     uint32_t weight = 0;
     uint32_t area = 0;
     uint32_t event = 0;
@@ -529,7 +529,7 @@ SystemState_e PDI_myClassTask::GetState(void)
     SystemState_e State;
     uint16_t x_diff;
     uint16_t y_diff;
-  #ifdef GRAFX_USE_PDI_MULTI_EVENT
+  #if (GRAFX_USE_PDI_MULTI_EVENT == DEF_ENABLED)
     uint32_t index;
   #endif
 
@@ -540,7 +540,7 @@ SystemState_e PDI_myClassTask::GetState(void)
 
     if(m_EventDetected)
     {
-      #ifdef GRAFX_USE_PDI_MULTI_EVENT
+      #if (GRAFX_USE_PDI_MULTI_EVENT == DEF_ENABLED)
         for(index = 0; index < m_EventDetected; index++)
         {
             // Get each touch coordinates

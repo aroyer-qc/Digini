@@ -305,8 +305,8 @@ void CTouch::ProcessTouch()
     Y = (DataXYZ >>  8) & 0x00000FFF;
 
     // First correction
-    X =  (X * GRAFX_SIZE_X) >> 12;
-    Y = (Y * GRAFX_SIZE_Y) >> 12;
+    X =  (X * GRAFX_DRIVER_SIZE_X) >> 12;
+    Y = (Y * GRAFX_DRIVER_SIZE_Y) >> 12;
 
     // Second correction
     if(m_IsCorrectionEnable)
@@ -315,8 +315,8 @@ void CTouch::ProcessTouch()
         Y = (Y *  m_Y_Correction.Slope +  m_Y_Correction.Y_Intercept)/1000;
     }
 
-    if(Y >= GRAFX_SIZE_Y)  Y = GRAFX_SIZE_Y - 1;
-    if(X >= GRAFX_SIZE_X)  X = GRAFX_SIZE_X - 1;
+    if(Y >= GRAFX_DRIVER_SIZE_Y)  Y = GRAFX_DRIVER_SIZE_Y - 1;
+    if(X >= GRAFX_DRIVER_SIZE_X)  X = GRAFX_DRIVER_SIZE_X - 1;
 
     X_Diff = X > m_IntX ? (X - m_IntX): (m_IntX - X);
     Y_Diff = Y > m_IntY ? (Y - m_IntY): (m_IntY - Y);
@@ -328,7 +328,7 @@ void CTouch::ProcessTouch()
     }
 
     m_X = m_IntX;                                                   // Update the X position
-    m_Y = GRAFX_SIZE_Y - m_IntY;                                    // Update the Y position
+    m_Y = GRAFX_DRIVER_SIZE_Y - m_IntY;                                    // Update the Y position
 
     this->FifoReset();
     this->ClearIRQ_Status(IRQ_FLAG_FTH | IRQ_FLAG_TOUCH);

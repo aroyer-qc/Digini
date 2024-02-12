@@ -167,17 +167,18 @@ void CLabelList::Draw(ServiceReturn_t* pService)
     CLayer::SetDrawing(((m_pLabelList->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
   #else
 
-   #ifdef GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER
+   #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
     ForeLayerToDraw = CONSTRUCTION_FOREGROUND_LAYER;
    #else
     ForeLayerToDraw = FOREGROUND_DISPLAY_LAYER_0;
    #endif
 
-   #ifdef GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER
+   #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
+    #ifdef GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER
     BackLayerToDraw = CONSTRUCTION_BACKGROUND_LAYER;
-   #else
+    #else
     BackLayerToDraw = BACKEGROUND_DISPLAY_LAYER_0;
-   #endif
+    #endif
 
     if(SKIN_pTask->IsSkinLoaded() != true)
     {
@@ -187,7 +188,7 @@ void CLabelList::Draw(ServiceReturn_t* pService)
     {
         CLayer::SetDrawing(((m_pLabelList->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BackLayerToDraw : ForeLayerToDraw);
     }
-  #endif
+   #endif
 
     m_pLabelList->Text.Label = m_pLabelList->Label[((ServiceType1_t*)pService)->Data];
     WidgetPrint(&m_pLabelList->Text, pService);

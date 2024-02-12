@@ -41,7 +41,7 @@
 
 #define GRAFX_NUMBER_OF_ACTIVE_LAYER              2
 
-#define GRAFX_DRIVER_USE_V_SYNC                          DEF_ENABLED   // We use this driver hardware support V Sync
+#define GRAFX_DRIVER_USE_V_SYNC                   DEF_ENABLED   // We use this driver hardware support V Sync
 
 //#define GRAFX_USE_SOFT_PIXEL                                  // We use this driver DMA for this function
 //#define GRAFX_USE_SOFT_BOX                                    // We use this driver function
@@ -56,8 +56,8 @@
 
 
 // Display size
-#define GRAFX_SIZE_X                              240
-#define GRAFX_SIZE_Y                              320
+#define GRAFX_DRIVER_SIZE_X                       240
+#define GRAFX_DRIVER_SIZE_Y                       320
 
 //-------------------------------------------------------------------------------------------------
 // struct(s)

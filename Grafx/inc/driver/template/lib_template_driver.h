@@ -44,7 +44,7 @@
 #define GRAFX_NUMBER_OF_ACTIVE_LAYER              1 - x         // How many layer the LCD or virtual screen support
 #define GRAFX_PIXEL_FORMAT_COUNT                  11            // how many colour format are supported
 
-#define GRAFX_DRIVER_USE_V_SYNC                          DEF_ENABLED   // We use this driver hardware support V Sync
+#define GRAFX_DRIVER_USE_V_SYNC                   DEF_ENABLED   // We use this driver hardware support V Sync
 
 //#define GRAFX_USE_SOFT_PIXEL                                  // If commented, we use this driver DMA for this function
 //#define GRAFX_USE_SOFT_BOX                                    // If commented, we use this driver function to draw a box (rectangle)
@@ -64,8 +64,8 @@
 // -
 
 // Display size
-#define GRAFX_SIZE_X                            480             // example
-#define GRAFX_SIZE_Y                            272             // example
+#define GRAFX_DRIVER_SIZE_X                     480             // example
+#define GRAFX_DRIVER_SIZE_Y                     272             // example
 
 //-------------------------------------------------------------------------------------------------
 // -

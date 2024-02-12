@@ -854,7 +854,7 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     pLayer             = &LayerTable[CLayer::GetDrawing()];
     PixelFormat        = DRV_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
-    Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
+    Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
     AreaConfig.u_16.u1 = pDescriptor->Size.Width;
     AreaConfig.u_16.u0 = pDescriptor->Size.Height;
 
@@ -867,12 +867,12 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     DMA2D->FGPFCCR = LTDC_PIXEL_FORMAT_A8;                                      // Defines the number of pixels to be transfered
 
     DMA2D->BGMAR   = Address;                                                   // Source address 2
-    DMA2D->BGOR    = (uint32_t)GRAFX_SIZE_X - (uint32_t)AreaConfig.u_16.u1;     // Font source line offset - none as we are linear
+    DMA2D->BGOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)AreaConfig.u_16.u1;     // Font source line offset - none as we are linear
     DMA2D->BGPFCCR = PixelFormat;                                               // Defines the number of pixels to be transfered
 
     // Output Layer
     DMA2D->OMAR    = Address;
-    DMA2D->OOR     = (uint32_t)GRAFX_SIZE_X - (uint32_t)AreaConfig.u_16.u1;     // Destination line offset
+    DMA2D->OOR     = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)AreaConfig.u_16.u1;     // Destination line offset
     DMA2D->OPFCCR  = PixelFormat;
 
     // Area
@@ -930,7 +930,7 @@ void GrafxDriver::DisplayOff(void)
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::Clear(void)
 {
-	SetWindow(0, 0, GRAFX_SIZE_X, GRAFX_SIZE_Y);    // Use the whole LCD
+	SetWindow(0, 0, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y);    // Use the whole LCD
 	PutColor(RED, GRAFX_RAM_SIZE_X * GRAFX_RAM_SIZE_Y); 	    // Draw individual pixels
 }
 

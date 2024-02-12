@@ -453,7 +453,7 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
     PixelFormatSrc     = DRV_PixelFormatTable[SrcPixelFormat_e];
     PixelFormatDst     = DRV_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
-    Address            = pLayer->GetAddress() + (((pDstPos->Y * GRAFX_SIZE_X) + pDstPos->X) * (uint32_t)PixelSize);
+    Address            = pLayer->GetAddress() + (((pDstPos->Y * GRAFX_DRIVER_SIZE_X) + pDstPos->X) * (uint32_t)PixelSize);
 
     AreaConfig.u_16.u1 = pBox->Size.Width;
     AreaConfig.u_16.u0 = pBox->Size.Height;
@@ -463,18 +463,18 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
     DMA2D->CR         |= (1 << 9);
 
     //Source
-    DMA2D->FGMAR       = (uint32_t)(pSrc) +(((pBox->Pos.Y * GRAFX_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);    // Source address
-    DMA2D->FGOR        = (uint32_t)GRAFX_SIZE_X - (uint32_t)pBox->Size.Width;                                       // Source line offset none as we are linear
+    DMA2D->FGMAR       = (uint32_t)(pSrc) +(((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);    // Source address
+    DMA2D->FGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                       // Source line offset none as we are linear
     DMA2D->FGPFCCR     = PixelFormatSrc;                                                                            // Defines the size of pixel
 
     // Source
     DMA2D->BGMAR       = Address;                                                                                   // Source address
-    DMA2D->BGOR        = (uint32_t)GRAFX_SIZE_X - (uint32_t)pBox->Size.Width;                                       // Source line offset
+    DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                       // Source line offset
     DMA2D->BGPFCCR     = PixelFormatDst;                                                                            // Defines the size of pixel
 
     //Destination
     DMA2D->OMAR        = Address;                                                                                   // Destination address
-    DMA2D->OOR         = (uint32_t)GRAFX_SIZE_X - (uint32_t)pBox->Size.Width;                                       // Destination line offset none as we are linear
+    DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                       // Destination line offset none as we are linear
     DMA2D->OPFCCR      = PixelFormatDst;                                                                            // Defines the size of pixel
 
     DMA2D->NLR         = AreaConfig.u_32;                                                                           // Size configuration of area to be transfered
@@ -846,7 +846,7 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 0;                                                         // Font source line offset - none as we are linear
 pLayer->GetTextColor();
 
-//??    Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
+//??    Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
 
 //must be all the info needed
 */
@@ -907,8 +907,8 @@ void GrafxDriver::Clear(void)
     WriteCommand(SSD1779_CLEAR_WINDOW);
     WriteData(uint8_t(0x00));                                // X1
     WriteData(uint8_t(0x00));                                // Y1
-    WriteData(uint8_t(GRAFX_SIZE_X - 1));                    // X2
-    WriteData(uint8_t(GRAFX_SIZE_Y - 1));                    // Y2
+    WriteData(uint8_t(GRAFX_DRIVER_SIZE_X - 1));                    // X2
+    WriteData(uint8_t(GRAFX_DRIVER_SIZE_Y - 1));                    // Y2
 }
 
 //-------------------------------------------------------------------------------------------------

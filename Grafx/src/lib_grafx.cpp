@@ -97,7 +97,7 @@ SystemState_e GRAFX_Initialize(void)
 
     CLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_DISPLAY_LAYER_0);
 
-  #ifdef GRAFX_USE_BACKGROUND_LAYER
+  #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
     CLayer::SetActiveLayer(LAYER_BACKGROUND, BACKGROUND_DISPLAY_LAYER_0);
     CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
   #else
@@ -150,7 +150,7 @@ SystemState_e GRAFX_PostInitialize(void)
         return State;
     }
 
-    if((State = PDI_pTask->Initialize(PDI_pDriver, GRAFX_SIZE_X, GRAFX_SIZE_Y, PDI_SWAP_NONE)) != SYS_READY)
+    if((State = PDI_pTask->Initialize(PDI_pDriver, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y, PDI_SWAP_NONE)) != SYS_READY)
     {
         return State;
     }

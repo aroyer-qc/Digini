@@ -805,18 +805,18 @@ void DRV_PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     //PixFmt             = pLayer->GetPixelFormat();
     //PixelFormat        = DRV_PixelFormatTable[PixFmt];
     //PixelSize          = pLayer->GetPixelSize();
-    //Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
+    //Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
     //AreaConfig.u_16.u1 = pDescriptor->Size.Width;
     //AreaConfig.u_16.u0 = pDescriptor->Size.Height;
 
 //    DMA2D->FGMAR       = (uint32_t)pDescriptor->pAddress;                           // Source address 1
 //    DMA2D->FGCOLR      = pLayer->GetTextColor();
-//    DMA2D->BGOR        = (uint32_t)GRAFX_SIZE_X - (uint32_t)AreaConfig.u_16.u1;     // Font source line offset - none as we are linear
+//    DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)AreaConfig.u_16.u1;     // Font source line offset - none as we are linear
     //DMA2D->BGPFCCR     = PixelFormat;                                               // Defines the number of pixels to be transfered
 
     // Output Layer
 //    DMA2D->OMAR        = Address;
-    //DMA2D->OOR         = (uint32_t)GRAFX_SIZE_X - (uint32_t)AreaConfig.u_16.u1;     // Destination line offset
+    //DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)AreaConfig.u_16.u1;     // Destination line offset
     //DMA2D->OPFCCR      = PixelFormat;
 
     // Area

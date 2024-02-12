@@ -52,8 +52,8 @@
 //#define GRAFX_USE_SOFT_FILL                       // We use this driver DMA for this function
 
 // Display size
-#define GRAFX_SIZE_X                                480
-#define GRAFX_SIZE_Y                                272
+#define GRAFX_DRIVER_SIZE_X                         480
+#define GRAFX_DRIVER_SIZE_Y                         272
 
 //-------------------------------------------------------------------------------------------------
 // Class

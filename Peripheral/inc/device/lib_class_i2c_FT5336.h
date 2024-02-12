@@ -59,7 +59,7 @@ class FT5336 : public PointingDeviceInterface
         SystemState_e   DisableIT                       (void);
         SystemState_e   ITStatus                        (void);
         SystemState_e   ClearIT                         (void);
-      #ifdef GRAFX_USE_PDI_MULTI_EVENT
+      #if (GRAFX_USE_PDI_MULTI_EVENT == DEF_ENABLED)
         ServiceEvent_e  GetGestureID                    (void);
         void            GetEventInfo                    (uint32_t EventIdx, uint32_t* pWeight, uint32_t* pArea, uint32_t* pEvent);
       #endif

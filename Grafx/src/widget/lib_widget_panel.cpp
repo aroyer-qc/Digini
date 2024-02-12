@@ -170,7 +170,7 @@ void CPanel::Draw(ServiceReturn_t* pService)
   #ifdef GRAFX_DEBUG_GUI
     CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #else
-   #ifdef GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER
+   #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
     CLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
    #else
     CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);

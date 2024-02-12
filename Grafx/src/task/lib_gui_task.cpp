@@ -200,7 +200,7 @@ void GUI_myClassTask::Run()
             }
 
          #ifndef GRAFX_DEBUG_GUI
-          #ifdef GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER
+          #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
            #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
             if(SKIN_pTask->IsSkinLoaded() == true)
            #endif
@@ -210,7 +210,7 @@ void GUI_myClassTask::Run()
                   #if (GRAFX_DRIVER_USE_V_SYNC == DEF_DEFINED)
                     myGrafx->WaitFor_V_Sync();
                   #endif
-                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_SIZE_X, GRAFX_SIZE_Y);
+                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y);
 
                   #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
                     if(IsPageWasSliding == true)
@@ -577,8 +577,8 @@ bool GUI_myClassTask::SlidingPage(void)
 
     Box.Pos.X = 0;
     Box.Pos.Y = 0;
-    Box.Size.Width  = GRAFX_SIZE_X;
-    Box.Size.Height = GRAFX_SIZE_Y;
+    Box.Size.Width  = GRAFX_DRIVER_SIZE_X;
+    Box.Size.Height = GRAFX_DRIVER_SIZE_Y;
     IsPageWasSliding = true;
 
     IsItOverlapped   = ((m_SlidingDir & SLIDING_OVERLAP_MASK)    != 0) ? true : false;
@@ -591,11 +591,11 @@ bool GUI_myClassTask::SlidingPage(void)
         //-------------------------------------------------------------------------------------------------------------------------
         case SLIDING_LEFT:
         {
-            SlidePosNewPage    = GRAFX_SIZE_X;
+            SlidePosNewPage    = GRAFX_DRIVER_SIZE_X;
             SlidePosActualPage = 0;
             myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, &Box);      // copy actual foreground to sliding layer
             CLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_SLIDING_LAYER);
-            Size = (m_SlideRange.EndPos == -1) ? GRAFX_SIZE_Y : m_SlideRange.EndPos - Start;
+            Size = (m_SlideRange.EndPos == -1) ? GRAFX_DRIVER_SIZE_Y : m_SlideRange.EndPos - Start;
 
             do
             {
@@ -605,16 +605,16 @@ bool GUI_myClassTask::SlidingPage(void)
 
                 if(IsItOverlapped == false)
                 {
-                    myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, SlidePosActualPage, Start, 0, Start, GRAFX_SIZE_X - SlidePosActualPage, Size);
+                    myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, SlidePosActualPage, Start, 0, Start, GRAFX_DRIVER_SIZE_X - SlidePosActualPage, Size);
                 }
 
                 if(IsItDeOverlapped == true)
                 {
-                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, SlidePosNewPage, Start, SlidePosNewPage, Start, GRAFX_SIZE_X - SlidePosNewPage, Size);
+                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, SlidePosNewPage, Start, SlidePosNewPage, Start, GRAFX_DRIVER_SIZE_X - SlidePosNewPage, Size);
                 }
                 else
                 {
-                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, 0, Start, SlidePosNewPage, Start, GRAFX_SIZE_X - SlidePosNewPage, Size);
+                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, 0, Start, SlidePosNewPage, Start, GRAFX_DRIVER_SIZE_X - SlidePosNewPage, Size);
                 }
 
                 do
@@ -633,11 +633,11 @@ bool GUI_myClassTask::SlidingPage(void)
         //-------------------------------------------------------------------------------------------------------------------------
         case SLIDING_RIGHT:
         {
-            SlidePosNewPage    = GRAFX_SIZE_X;
+            SlidePosNewPage    = GRAFX_DRIVER_SIZE_X;
             SlidePosActualPage = 0;
             myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, &Box);      // copy actual foreground to sliding layer
             CLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_SLIDING_LAYER);
-            Size = (m_SlideRange.EndPos == -1) ? GRAFX_SIZE_Y : m_SlideRange.EndPos - Start;
+            Size = (m_SlideRange.EndPos == -1) ? GRAFX_DRIVER_SIZE_Y : m_SlideRange.EndPos - Start;
 
             do
             {
@@ -647,16 +647,16 @@ bool GUI_myClassTask::SlidingPage(void)
 
                 if(IsItOverlapped == false)
                 {
-                    myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, Start, 0, SlidePosActualPage, Start, GRAFX_SIZE_X - SlidePosActualPage, Size);
+                    myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, Start, 0, SlidePosActualPage, Start, GRAFX_DRIVER_SIZE_X - SlidePosActualPage, Size);
                 }
 
                 if(IsItDeOverlapped == true)
                 {
-                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, 0, Start, 0, Start, GRAFX_SIZE_X - SlidePosNewPage, Size);
+                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, 0, Start, 0, Start, GRAFX_DRIVER_SIZE_X - SlidePosNewPage, Size);
                 }
                 else
                 {
-                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, SlidePosNewPage, Start, 0, Start, GRAFX_SIZE_X - SlidePosNewPage, Size);
+                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, SlidePosNewPage, Start, 0, Start, GRAFX_DRIVER_SIZE_X - SlidePosNewPage, Size);
                 }
 
                 do
@@ -665,7 +665,7 @@ bool GUI_myClassTask::SlidingPage(void)
                 }
                 while(TickHasTimeOut(Wait, GRAFX_TICK_WAIT_BETWEEN_SLIDE_IN_LOOP) != true);
             }
-            while(SlidePosActualPage < GRAFX_SIZE_X);
+            while(SlidePosActualPage < GRAFX_DRIVER_SIZE_X);
 
             m_SlidingDir = SLIDING_NONE;
         }
@@ -674,11 +674,11 @@ bool GUI_myClassTask::SlidingPage(void)
         //-------------------------------------------------------------------------------------------------------------------------
         case SLIDING_UP:
         {
-            SlidePosNewPage    = GRAFX_SIZE_Y;
+            SlidePosNewPage    = GRAFX_DRIVER_SIZE_Y;
             SlidePosActualPage = 0;
             myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, &Box);      // copy actual foreground to sliding layer
             CLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_SLIDING_LAYER);
-            Size = (m_SlideRange.EndPos == -1) ? GRAFX_SIZE_X : m_SlideRange.EndPos - Start;
+            Size = (m_SlideRange.EndPos == -1) ? GRAFX_DRIVER_SIZE_X : m_SlideRange.EndPos - Start;
 
             do
             {
@@ -688,16 +688,16 @@ bool GUI_myClassTask::SlidingPage(void)
 
                 if(IsItOverlapped == false)
                 {
-                    myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, Start, SlidePosActualPage, Start, 0, Size, GRAFX_SIZE_Y - SlidePosActualPage);
+                    myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, Start, SlidePosActualPage, Start, 0, Size, GRAFX_DRIVER_SIZE_Y - SlidePosActualPage);
                 }
 
                 if(IsItDeOverlapped == true)
                 {
-                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, Start, SlidePosNewPage, Start, SlidePosNewPage, Size, GRAFX_SIZE_Y - SlidePosNewPage);
+                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, Start, SlidePosNewPage, Start, SlidePosNewPage, Size, GRAFX_DRIVER_SIZE_Y - SlidePosNewPage);
                 }
                 else
                 {
-                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, Start, 0, Start, SlidePosNewPage, Size, GRAFX_SIZE_Y - SlidePosNewPage);
+                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, Start, 0, Start, SlidePosNewPage, Size, GRAFX_DRIVER_SIZE_Y - SlidePosNewPage);
                 }
 
                 do
@@ -715,11 +715,11 @@ bool GUI_myClassTask::SlidingPage(void)
         //-------------------------------------------------------------------------------------------------------------------------
         case SLIDING_DOWN:
         {
-            SlidePosNewPage    = GRAFX_SIZE_Y;
+            SlidePosNewPage    = GRAFX_DRIVER_SIZE_Y;
             SlidePosActualPage = 0;
             myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, &Box);      // copy actual foreground to sliding layer
             CLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_SLIDING_LAYER);
-            Size = (m_SlideRange.EndPos == -1) ? GRAFX_SIZE_X : m_SlideRange.EndPos - Start;
+            Size = (m_SlideRange.EndPos == -1) ? GRAFX_DRIVER_SIZE_X : m_SlideRange.EndPos - Start;
 
             do
             {
@@ -729,16 +729,16 @@ bool GUI_myClassTask::SlidingPage(void)
 
                 if(IsItOverlapped == false)
                 {
-                    myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, Start, 0, Start, SlidePosActualPage, Size, GRAFX_SIZE_Y - SlidePosActualPage);
+                    myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, Start, 0, Start, SlidePosActualPage, Size, GRAFX_DRIVER_SIZE_Y - SlidePosActualPage);
                 }
 
                 if(IsItDeOverlapped == true)
                 {
-                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, Start, 0, Start, 0, Size, GRAFX_SIZE_Y - SlidePosNewPage);
+                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, Start, 0, Start, 0, Size, GRAFX_DRIVER_SIZE_Y - SlidePosNewPage);
                 }
                 else
                 {
-                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, Start, SlidePosNewPage, Start, 0, Size, GRAFX_SIZE_Y - SlidePosNewPage);
+                    myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_SLIDING_LAYER, Start, SlidePosNewPage, Start, 0, Size, GRAFX_DRIVER_SIZE_Y - SlidePosNewPage);
                 }
 
                 do
@@ -747,7 +747,7 @@ bool GUI_myClassTask::SlidingPage(void)
                 }
                 while(TickHasTimeOut(Wait, GRAFX_TICK_WAIT_BETWEEN_SLIDE_IN_LOOP) != true);
             }
-            while(SlidePosActualPage < GRAFX_SIZE_Y);
+            while(SlidePosActualPage < GRAFX_DRIVER_SIZE_Y);
 
             m_SlidingDir = SLIDING_NONE;
         }
@@ -838,13 +838,13 @@ void GUI_FilterServiceState(ServiceEvent_e* pServiceState, MsgRefresh_t* pMsg, W
 // TODO (Alain#1#): it might already be handle by the class
 void GUI_ClearWidgetLayer()
 {
-    Box_t Box = {{0, 0},{GRAFX_SIZE_X, GRAFX_SIZE_Y}};
+    Box_t Box = {{0, 0},{GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y}};
     CLayer::PushDrawing();
 
   #ifdef GRAFX_DEBUG_GUI
     CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #else
-   #ifdef GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER
+   #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
     CLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
    #else
     CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);

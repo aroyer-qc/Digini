@@ -149,7 +149,7 @@ void CIcon::Finalize()
 void CIcon::Draw(ServiceReturn_t* pService)
 {
   #ifndef GRAFX_DEBUG_GUI
-   #ifdef GRAFX_USE_BACKGROUND_LAYER
+   #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
     Layer_e BackLayerToDraw;
    #endif
     Layer_e ForeLayerToDraw;
@@ -161,7 +161,7 @@ void CIcon::Draw(ServiceReturn_t* pService)
   #ifdef GRAFX_DEBUG_GUI
     CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #else
-   #ifdef GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER
+   #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
     CLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
    #else
     CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
@@ -172,14 +172,14 @@ void CIcon::Draw(ServiceReturn_t* pService)
   #ifdef GRAFX_DEBUG_GUI
     CLayer::SetDrawing(((m_pIcon->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
   #else
-   #ifdef GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER
+   #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
     ForeLayerToDraw = CONSTRUCTION_FOREGROUND_LAYER;
    #else
     ForeLayerToDraw = FOREGROUND_DISPLAY_LAYER_0;
    #endif
 
-   #ifdef GRAFX_USE_BACKGROUND_LAYER
-    #ifdef GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER
+   #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
+   #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
      BackLayerToDraw = CONSTRUCTION_BACKGROUND_LAYER;
     #else
      BackLayerToDraw = BACKGROUND_DISPLAY_LAYER_0;

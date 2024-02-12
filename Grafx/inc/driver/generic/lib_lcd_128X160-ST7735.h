@@ -38,7 +38,7 @@
 
 #define GRAFX_NUMBER_OF_ACTIVE_LAYER                2
 
-//#define GRAFX_DRIVER_USE_V_SYNC
+#define GRAFX_DRIVER_USE_V_SYNC                     DEF_DISABLED
 #define GRAFX_USE_SOFT_COPY_LINEAR
 #define GRAFX_USE_SOFT_COPY_LAYER_TO_LAYER
 //#define GRAFX_USE_SOFT_PIXEL
@@ -55,8 +55,8 @@
 //#define GRAFX_USE_SOFT_FILL
 
 // Display size
-#define GRAFX_SIZE_X                                128
-#define GRAFX_SIZE_Y                                160
+#define GRAFX_DRIVER_SIZE_X                         128
+#define GRAFX_DRIVER_SIZE_Y                         160
 
 #define GRAFX_RAM_SIZE_X                            132
 #define GRAFX_RAM_SIZE_Y                            162

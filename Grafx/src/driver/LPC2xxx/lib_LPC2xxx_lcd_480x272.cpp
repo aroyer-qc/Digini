@@ -93,17 +93,17 @@ void GRAFX_DRV_Config()
     LCD_POL_bit.IHS             = 1; // LCDLP pin is active LOW and inactive HIGH
     LCD_POL_bit.IPC             = 1; // data is driven out into the LCD on the falling edge
     LCD_POL_bit.IOE             = 0; // active high
-    LCD_POL_bit.CPL             = GRAFX_SIZE_X-1;// init Horizontal Timing
+    LCD_POL_bit.CPL             = GRAFX_DRIVER_SIZE_X-1;// init Horizontal Timing
     LCD_TIMH_bit.HBP            = GRAFX_HBP - 1;
     LCD_TIMH_bit.HFP            = GRAFX_HFP - 1;
     LCD_TIMH_bit.HSW            = C_GLCD_H_PULSE - 1;
-    LCD_TIMH_bit.PPL            = (GRAFX_SIZE_X / 16) - 1;
+    LCD_TIMH_bit.PPL            = (GRAFX_DRIVER_SIZE_X / 16) - 1;
 
     // init Vertical Timing
     LCD_TIMV_bit.VBP            = GRAFX_VBP;
     LCD_TIMV_bit.VFP            = GRAFX_VFP;
     LCD_TIMV_bit.VSW            = C_GLCD_V_PULSE;
-    LCD_TIMV_bit.LPP            = GRAFX_SIZE_Y - 1;
+    LCD_TIMV_bit.LPP            = GRAFX_DRIVER_SIZE_Y - 1;
 }
 
 

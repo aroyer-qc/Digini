@@ -576,7 +576,7 @@ SystemState_e FT5336::ClearIT(void)
 
 /**** NEW FEATURES enabled when Multi-touch support is enabled ****/
 
-#ifdef GRAFX_USE_PDI_MULTI_EVENT
+#if (GRAFX_USE_PDI_MULTI_EVENT == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //

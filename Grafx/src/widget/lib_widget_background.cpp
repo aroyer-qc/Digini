@@ -186,7 +186,7 @@ void CBackground::Draw(ServiceReturn_t* pService)
       #if (GRAFX_DRIVER_USE_V_SYNC == DEF_DEFINED)
         myGrafx->WaitFor_V_Sync();
       #endif
-        myGrafx->CopyLayerToLayer(CONSTRUCTION_BACKGROUND_LAYER, BACKGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_SIZE_X, GRAFX_SIZE_Y);
+        myGrafx->CopyLayerToLayer(CONSTRUCTION_BACKGROUND_LAYER, BACKGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y);
     }
   #endif
 

@@ -74,7 +74,7 @@ class PDI_myClassTask
         SystemState_e       Initialize          (PointingDeviceInterface* pDriver, uint16_t SizeX, uint16_t SizeY, uint8_t Orientation);
         SystemState_e       GetState            (void);
 
-      #ifdef GRAFX_USE_PDI_MULTI_EVENT
+      #if (GRAFX_USE_PDI_MULTI_EVENT == DEF_ENABLED)
         ServiceEvent_e      GetGestureID        (void);
       #endif
 
@@ -109,7 +109,7 @@ class PDI_myClassTask
         uint8_t                             m_Orientation;
         uint8_t                             m_EventDetected;                        // Total number of active events detected at last scan
 
-      #ifdef GRAFX_USE_PDI_MULTI_EVENT
+      #if (GRAFX_USE_PDI_MULTI_EVENT == DEF_ENABLED)
         ServiceEvent_e                      m_EventX      [PDI_NUMBER_OF_EVENT];
         ServiceEvent_e                      m_EventY      [PDI_NUMBER_OF_EVENT];
         uint8_t                             m_EventWeight [PDI_NUMBER_OF_EVENT];    // Weight property of events

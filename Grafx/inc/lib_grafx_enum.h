@@ -174,7 +174,7 @@ enum MessageType_e
 
 enum LayerType_e
 {
-  #ifdef GRAFX_USE_BACKGROUND_LAYER
+  #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
     LAYER_BACKGROUND,
   #endif
     LAYER_FOREGROUND,

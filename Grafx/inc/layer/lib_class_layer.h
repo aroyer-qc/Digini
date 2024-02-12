@@ -109,7 +109,7 @@ class CLayer
         // Static variables
         static Layer_e          m_ActiveDrawingLayer;
 
-      #ifdef GRAFX_USE_BACKGROUND_LAYER
+      #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
         static CLayer*          m_pActiveBG_Layer;
         static CLayer*          m_pConstructBG_Layer;
       #endif

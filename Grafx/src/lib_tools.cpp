@@ -75,11 +75,11 @@ bool BoxValid(Box_t* pBox)
 {
     bool Valid = false;
 
-    if((pBox->Pos.X < GRAFX_SIZE_X) && (pBox->Pos.Y < GRAFX_SIZE_Y))
+    if((pBox->Pos.X < GRAFX_DRIVER_SIZE_X) && (pBox->Pos.Y < GRAFX_DRIVER_SIZE_Y))
     {
         if((pBox->Size.Width > 0) && (pBox->Size.Height > 0))
         {
-            if(((pBox->Pos.X + pBox->Size.Width - 1) < GRAFX_SIZE_X) && ((pBox->Pos.Y + pBox->Size.Height - 1) < GRAFX_SIZE_Y))
+            if(((pBox->Pos.X + pBox->Size.Width - 1) < GRAFX_DRIVER_SIZE_X) && ((pBox->Pos.Y + pBox->Size.Height - 1) < GRAFX_DRIVER_SIZE_Y))
             {
                 Valid = true;
             }

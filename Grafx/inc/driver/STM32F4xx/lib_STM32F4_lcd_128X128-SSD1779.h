@@ -42,9 +42,9 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define GRAFX_NUMBER_OF_ACTIVE_LAYER              2
+#define GRAFX_NUMBER_OF_ACTIVE_LAYER                2
 
-//#define GRAFX_DRIVER_USE_V_SYNC
+#define GRAFX_DRIVER_USE_V_SYNC                     DEF_DISABLED
 //#define GRAFX_USE_SOFT_PIXEL
 //#define GRAFX_USE_SOFT_BOX
 //#define GRAFX_USE_SOFT_VLINE
@@ -58,8 +58,8 @@
 //#define GRAFX_USE_SOFT_FILL
 
 // Display size
-#define GRAFX_SIZE_X            128
-#define GRAFX_SIZE_Y            128
+#define GRAFX_DRIVER_SIZE_X     128
+#define GRAFX_DRIVER_SIZE_Y     128
 
 //#define GRAFX_DRIVER_USE_OWN_COPY_LAYER_TO_LAYER
 
@@ -91,7 +91,7 @@ class GrafxDriver : public GRAFX_Interface
         void            DrawCircle            (uint8_t X, uint8_t Y, uint8_t Radius, uint8_t Mode);
         void            Copy                  (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode);
 
-        #ifdef GRAFX_DRIVER_USE_V_SYNC
+        #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
         void            WaitFor_V_Sync        (void) {};
         #endif
 

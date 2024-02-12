@@ -121,7 +121,7 @@ static ServiceReturn_t* SERV_BDEF(ServiceEvent_e* pServiceState, uint16_t SubSer
 {
     ServiceReturn_t* pService = nullptr;
 
-  #ifdef GRAFX_USE_SLIDING_PAGE
+  #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
     if(*pServiceState == SERVICE_RELEASED)
     {
         GUI_Task.SetSlidingDirection(SlideDir_e(SubService));

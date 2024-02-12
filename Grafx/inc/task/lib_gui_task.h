@@ -62,11 +62,11 @@ class GUI_myClassTask
         void                        Run                 (void);
         nOS_Error                   Initialize          (void);
 
-      #ifdef GRAFX_USE_SLIDING_PAGE
+      #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
         void                        SetSlidingDirection (SlideDir_e SlidingDirection)               { m_SlidingDir = SlidingDirection; };
         void                        SetSlidingRange     (PageSlideRange_t* pPageSlideOverride);
       #endif
-    
+
         void                        SetForceRefresh     (void)                                      { m_ForceRefresh = true; };
 
         nOS_Queue                   m_Q_Msg;
@@ -77,7 +77,7 @@ class GUI_myClassTask
         Link_e                      RefreshAllWidget    (MsgRefresh_t* pMsg);
         void                        FinalizeAllWidget   (void);
 
-      #ifdef GRAFX_USE_SLIDING_PAGE
+      #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
         bool                        SlidingPage         (void);
       #endif
 
@@ -91,7 +91,7 @@ class GUI_myClassTask
         static nOS_Thread           m_Handle;
         static nOS_Stack            m_Stack[GUI_TASK_STACK_SIZE];
 
-      #ifdef GRAFX_USE_SLIDING_PAGE
+      #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
         SlideDir_e                  m_SlidingDir;
         PageSlideRange_t            m_SlideRange;
       #endif

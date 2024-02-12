@@ -96,7 +96,7 @@ nOS_Error GUI_myClassTask::Initialize(void)
         myStacktistic.Register(&m_Stack[0], GUI_TASK_STACK_SIZE, "Digini GUI");
       #endif
 
-  #ifdef GRAFX_USE_SLIDING_PAGE
+  #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
     m_SlideRange.StartPos = -1;
     m_SlideRange.EndPos   = -1;
   #endif
@@ -119,7 +119,7 @@ void GUI_myClassTask::Run()
     Link_e          NewLink;
     Link_e          PreviousLink;
 
-  #ifdef GRAFX_USE_SLIDING_PAGE
+  #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
     bool IsPageWasSliding;
   #endif
 
@@ -175,7 +175,7 @@ void GUI_myClassTask::Run()
                 }
                 NewLink = CreateAllWidget();
 
-              #ifdef GRAFX_USE_SLIDING_PAGE
+              #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
                #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
                 if(SKIN_pTask->IsSkinLoaded() == true)
                #endif
@@ -212,7 +212,7 @@ void GUI_myClassTask::Run()
                   #endif
                     myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_SIZE_X, GRAFX_SIZE_Y);
 
-                  #ifdef GRAFX_USE_SLIDING_PAGE
+                  #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
                     if(IsPageWasSliding == true)
                     {
                         CLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_DISPLAY_LAYER_0);
@@ -561,7 +561,7 @@ void GUI_myClassTask::FinalizeAllWidget()
 //                                    screen can be fixed
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_SLIDING_PAGE
+#if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
 bool GUI_myClassTask::SlidingPage(void)
 {
     int16_t         SlidePosActualPage;
@@ -785,7 +785,7 @@ bool GUI_myClassTask::SlidingPage(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_SLIDING_PAGE
+#if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
 void GUI_myClassTask::SetSlidingRange(PageSlideRange_t* pPageSlideRange)
 {
     memcpy(&this->m_SlideRange, pPageSlideRange, sizeof(PageSlideRange_t));

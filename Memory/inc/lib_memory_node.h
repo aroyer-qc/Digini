@@ -64,7 +64,7 @@ class MemoryNode
         void            SetNodeSize         (size_t NodeDataSize);
         size_t          GetNodeSize         (void);                                     // Get Node data pointer and increment node pointer
 
-        size_t          GetTotalSize        (void) { m_NodePtr = 0; }                   // Get memory size requested in Alloc
+        size_t          GetTotalSize        (void) { return m_TotalSize; }              // Get memory size requested in Alloc
 
         void            Begin               (void) { m_NodePtr = 0; }                   // Set Node pointer to first node
         void*           GetNext             (void);                                     // Get Node data pointer and increment node pointer

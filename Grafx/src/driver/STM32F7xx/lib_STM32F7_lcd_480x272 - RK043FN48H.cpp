@@ -802,7 +802,7 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 //  Note(s):        this will prevent glitching on screen while changing display
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_V_SYNC
+#if (GRAFX_DRIVER_USE_V_SYNC == DEF_DEFINED)
 void GrafxDriver::WaitFor_V_Sync(void)
 {
     // Wait for Vertical sync to occur

@@ -48,18 +48,18 @@
 
 #define GRAFX_NUMBER_OF_ACTIVE_LAYER              2
 
-#define GRAFX_USE_V_SYNC                          // We use this driver hardware support V Sync
+#define GRAFX_DRIVER_USE_V_SYNC                          DEF_ENABLED   // We use this driver hardware support V Sync
 
-//#define GRAFX_USE_SOFT_PIXEL                    // We use this driver DMA for this function
-//#define GRAFX_USE_SOFT_BOX                      // We use this driver function
+//#define GRAFX_USE_SOFT_PIXEL                                  // We use this driver DMA for this function
+//#define GRAFX_USE_SOFT_BOX                                    // We use this driver function
 //#define GRAFX_USE_SOFT_VLINE
 //#define GRAFX_USE_SOFT_HLINE
 #define GRAFX_USE_SOFT_DLINE
 #define GRAFX_USE_SOFT_CIRCLE
 
-//#define GRAFX_USE_SOFT_PRINT_FONT               // we use this driver to print FONT using DMA2D
-//#define GRAFX_USE_SOFT_ALPHA                    // We use this uP + LCD controller has alpha acceleration
-//#define GRAFX_USE_SOFT_FILL                     // We use this driver DMA for this function
+//#define GRAFX_USE_SOFT_PRINT_FONT                             // we use this driver to print FONT using DMA2D
+//#define GRAFX_USE_SOFT_ALPHA                                  // We use this uP + LCD controller has alpha acceleration
+//#define GRAFX_USE_SOFT_FILL                                   // We use this driver DMA for this function
 
 //-------------------------------------------------------------------------------------------------
 // -

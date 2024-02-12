@@ -1095,7 +1095,7 @@ void DRV_DisplayOff(void)
 //  Note(s):        this will prevent glitching on screen while changing display
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_V_SYNC
+#if (GRAFX_DRIVER_USE_V_SYNC == DEF_DEFINED)
 void DRV_WaitFor_V_Sync(void)
 {
     // Wait for Vertical sync to occur

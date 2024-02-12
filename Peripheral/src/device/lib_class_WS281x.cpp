@@ -134,7 +134,6 @@ void WS281x::Initialize(void* pArg, uint16_t NumberOfLED, uint16_t ResetTime)
     
     m_DMA_Driver.
     
-    
     pDMA = m_pInfo->DMA_Stream;
     pDMA->PAR = uint32_t(&m_pInfo->pTIMx->DR);          // Configure transmit data register
     pDMA->CR = DMA_MEMORY_TO_PERIPH           |

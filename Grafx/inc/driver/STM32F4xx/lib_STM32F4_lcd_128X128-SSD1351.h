@@ -44,7 +44,7 @@
 
 #define GRAFX_NUMBER_OF_ACTIVE_LAYER              2
 
-//#define GRAFX_USE_V_SYNC
+//#define GRAFX_DRIVER_USE_V_SYNC
 //#define GRAFX_USE_SOFT_PIXEL
 //#define GRAFX_USE_SOFT_BOX
 //#define GRAFX_USE_SOFT_VLINE
@@ -91,7 +91,7 @@ class GrafxDriver : public GRAFX_Interface
         void            DrawCircle            (uint8_t X, uint8_t Y, uint8_t Radius, uint8_t Mode);
         void            Copy                  (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode);
 
-        #ifdef GRAFX_USE_V_SYNC
+        #ifdef GRAFX_DRIVER_USE_V_SYNC
         void            WaitFor_V_Sync        (void) {};
         #endif
 

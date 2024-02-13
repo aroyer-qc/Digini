@@ -967,7 +967,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
 
                     if((pBuffer1 != nullptr) && (pBuffer2 != nullptr))
                     {
-                        if(memcmp(pBuffer1, pBuffer2, sizeof(OEM_SERIAL_NUMBER)) != 0)
+                        if(memcmp(pBuffer1, pBuffer2, sizeof(OEM_FIRMWARE_SERIAL_NUMBER)) != 0)
                         {
                             DB_Central.Set(&pBuffer1, SYSTEM_SERIAL_NUMBER);
                         }

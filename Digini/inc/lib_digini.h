@@ -129,7 +129,7 @@
 #include "lib_class_dac.h"
 #endif
 
-#if (USE_ETH_DRIVER == DEF_ENABLED)
+#if (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
 #include "lib_ethernet_typedef.h"
 #include "lib_class_eth.h"
 #include "lib_class_ethernet_phy_interface.h"

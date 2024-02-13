@@ -39,8 +39,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
-#if (USE_ETH_DRIVER == DEF_ENABLED)
+#if (DIGINI_USE_ETHERNET == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -633,14 +632,14 @@ SystemState_e ETH_Driver::ReadFrame(MemoryNode* pPacket, size_t Length)
     {
         NodeSize = pPacket->GetNodeSize();
         pPacket->Begin();
-        
+
         do
         {
             if(Lenght < NodeSize)
             {
                 NodeSize = Length;
             }
-            
+
             Lenght -= NodeSize;
 
             pNodeData = static_cast<uint8_t*>(pPacket->GetNext());
@@ -1021,5 +1020,5 @@ extern "C"
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (USE_ETH_DRIVER == DEF_ENABLED)
-#endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)
+#endif // (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
+

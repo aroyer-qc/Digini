@@ -291,10 +291,10 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(       LBL_FIRMWARE_NAME);
             myVT100.InMenuPrintf(1, 11, LBL_FW_VERSION_INFO);
             myVT100.InMenuPrintf(       LBL_FIRMWARE_VERSION);
-            myVT100.InMenuPrintf(1, 12, LBL_GUI_NAME_INFO);
-            myVT100.InMenuPrintf(       LBL_GUI_NAME);
-            myVT100.InMenuPrintf(1, 13, LBL_GUI_VERSION_INFO);
-            myVT100.InMenuPrintf(       LBL_GUI_VERSION);
+           // myVT100.InMenuPrintf(1, 12, LBL_DIGINI_NAME_INFO);
+            myVT100.InMenuPrintf(       LBL_DIGINI_NAME);
+           // myVT100.InMenuPrintf(1, 13, LBL_GUI_VERSION_INFO);
+            myVT100.InMenuPrintf(       LBL_DIGINI_VERSION);
             myVT100.InMenuPrintf(1, 14, LBL_SERIAL_INFO);
           #ifdef DEBUG
             myVT100.InMenuPrintf(       LBL_SERIAL_NUMBER);
@@ -967,7 +967,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
 
                     if((pBuffer1 != nullptr) && (pBuffer2 != nullptr))
                     {
-                        if(memcmp(pBuffer1, pBuffer2, sizeof(OEM_FIRMWARE_SERIAL_NUMBER)) != 0)
+                        if(memcmp(pBuffer1, pBuffer2, sizeof(OEM_SERIAL_NUMBER)) != 0)
                         {
                             DB_Central.Set(&pBuffer1, SYSTEM_SERIAL_NUMBER);
                         }

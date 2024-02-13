@@ -173,8 +173,7 @@ void CLabelList::Draw(ServiceReturn_t* pService)
     ForeLayerToDraw = FOREGROUND_DISPLAY_LAYER_0;
    #endif
 
-   #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
-    #ifdef GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER
+    #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
     BackLayerToDraw = CONSTRUCTION_BACKGROUND_LAYER;
     #else
     BackLayerToDraw = BACKEGROUND_DISPLAY_LAYER_0;
@@ -194,7 +193,6 @@ void CLabelList::Draw(ServiceReturn_t* pService)
     WidgetPrint(&m_pLabelList->Text, pService);
     CLayer::PopDrawing();
 }
-
 
 //-------------------------------------------------------------------------------------------------
 

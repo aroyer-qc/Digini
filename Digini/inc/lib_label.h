@@ -136,8 +136,8 @@ X_LABEL( LBL_VENDOR_NAME,                OEM_VENDOR_NAME,                  nullp
 X_LABEL( LBL_MODEL_NAME,                 OEM_MODEL_NAME,                   nullptr                                         ) \
 X_LABEL( LBL_FIRMWARE_NAME,              OUR_FIRMWARE_NAME,                nullptr                                         ) \
 X_LABEL( LBL_FIRMWARE_VERSION,           OUR_FIRMWARE_VERSION,             nullptr                                         ) \
-X_LABEL( LBL_GUI_NAME,                   OUR_FIRMWARE_GUI_NAME,            nullptr                                         ) \
-X_LABEL( LBL_GUI_VERSION,                OUR_FIRMWARE_GUI_VERSION,         nullptr                                         ) \
+X_LABEL( LBL_DIGINI_NAME,                OUR_FIRMWARE_DIGINI_NAME,         nullptr                                         ) \
+X_LABEL( LBL_DIGINI_VERSION,             OUR_FIRMWARE_DIGINI_VERSION,      nullptr                                         ) \
 X_LABEL( LBL_SERIAL_NUMBER,              OEM_SERIAL_NUMBER,                nullptr                                         ) \
 X_LABEL( LBL_BUILT_DATE,                 OUR_FIRMWARE_BUILD_DATE,          nullptr                                         ) \
 X_LABEL( LBL_CPU_VOLTAGE,                "Voltages:",                      nullptr                                         ) \

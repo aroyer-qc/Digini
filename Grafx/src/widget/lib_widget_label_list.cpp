@@ -156,14 +156,14 @@ void CLabelList::Finalize()
 //-------------------------------------------------------------------------------------------------
 void CLabelList::Draw(ServiceReturn_t* pService)
 {
-  #ifndef GRAFX_DEBUG_GUI
+  #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
     Layer_e BackLayerToDraw;
     Layer_e ForeLayerToDraw;
   #endif
 
     CLayer::PushDrawing();
 
-  #ifdef GRAFX_DEBUG_GUI
+  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
     CLayer::SetDrawing(((m_pLabelList->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
   #else
 

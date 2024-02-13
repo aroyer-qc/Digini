@@ -155,7 +155,7 @@ size_t GPrintf::PutString(void)
     DB_Central.Get(&FontInfo, GFX_FONT_INFO, *m_pFontUsedInString, 0);
 
     // Print each individual line according to justification
-  //#ifdef GRAFX_USE_MULTI_LINE
+  #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
     for(i = 0; i < m_Line; i++)
     {
         // Justify each line inside the print box
@@ -179,7 +179,7 @@ size_t GPrintf::PutString(void)
                 PrintFont(&m_FontDescriptor, &m_CorrectedPos);
             }
 
-          #ifdef GRAFX_PAINT_BOX_DEBUG
+          #if (GRAFX_PAINT_BOX_DEBUG == DEF_ENABLED)
             if((m_FontDescriptor.Size.Width != 0) && (m_FontDescriptor.Size.Height != 0))
             {
                 uint32_t Color = CLayer::GetColor();
@@ -224,7 +224,7 @@ size_t GPrintf::PutString(void)
         m_Position.Y += (FontInfo.Height + FontInfo.Interline);                     // update Y position for the next line
         this->IncrementFeaturePointer();
     }
-//#endif
+  #endif
 
     pMemoryPool->Free((void**)&m_pColorUsedInString);
     pMemoryPool->Free((void**)&m_pFontUsedInString);

@@ -128,43 +128,43 @@
 
 static const int32_t DRV_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 {
-  #ifdef GRAFX_COLOR_ARGB8888
+  #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
     LTDC_PIXEL_FORMAT_ARGB8888,
   #endif
-  #ifdef GRAFX_COLOR_RGB888
+  #if (GRAFX_COLOR_RGB888 == DEF_ENABLED)
     -1,
   #endif
-  #ifdef GRAFX_COLOR_RGB565
+  #if (GRAFX_COLOR_RGB565 == DEF_ENABLED)
     LTDC_PIXEL_FORMAT_RGB565,
   #endif
-  #ifdef GRAFX_COLOR_ARGB1555
+  #if (GRAFX_COLOR_ARGB1555 == DEF_ENABLED)
     -1,
   #endif
-  #ifdef GRAFX_COLOR_ARGB4444
+  #if (GRAFX_COLOR_ARGB4444 == DEF_ENABLED)
     -1,
   #endif
-  #ifdef GRAFX_COLOR_L8
+  #if (GRAFX_COLOR_L8 == DEF_ENABLED)
     -1,
   #endif
-  #ifdef GRAFX_COLOR_AL44
+  #if (GRAFX_COLOR_AL44 == DEF_ENABLED)
     -1,
   #endif
-  #ifdef GRAFX_COLOR_AL88
+  #if (GRAFX_COLOR_AL88 == DEF_ENABLED)
     -1,
   #endif
-  #ifdef GRAFX_COLOR_L4
+  #if (GRAFX_COLOR_L4 == DEF_ENABLED)
     -1,
   #endif
-  #ifdef GRAFX_COLOR_A8
+  #if (GRAFX_COLOR_A8 == DEF_ENABLED)
     LTDC_PIXEL_FORMAT_A8,
   #endif
-  #ifdef GRAFX_COLOR_A4
+  #if (GRAFX_COLOR_A4 == DEF_ENABLED)
     -1,
   #endif
-  #ifdef GRAFX_COLOR_RGB332
+  #if (GRAFX_COLOR_RGB332 == DEF_ENABLED)
     -1,
   #endif
-  #ifdef GRAFX_COLOR_RGB444
+  #if (GRAFX_COLOR_RGB444 == DEF_ENABLED)
     -1,
   #endif
     -1

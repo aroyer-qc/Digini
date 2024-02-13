@@ -38,7 +38,7 @@ class PointingDeviceInterface
         virtual void            Reset                           (void)                      = 0;
         virtual uint8_t         DetectEvent                     (void)                      = 0;
         virtual void            GetXY                           (Cartesian_t* pCartesian)   = 0;
-      #ifdef GRAFX_PDI_INTERRUPT_IO
+      #if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
         virtual SystemState_e   EnableIT                        (void)                      = 0;
         virtual SystemState_e   DisableIT                       (void)                      = 0;
         virtual SystemState_e   ITStatus                        (void)                      = 0;

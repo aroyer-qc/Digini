@@ -38,12 +38,13 @@
 // Check(s)
 //-------------------------------------------------------------------------------------------------
 
-#if defined(USE_SERV_INPD) || \
-    defined(USE_SERV_INPF) || \
-    defined(USE_SERV_INPH) || \
-    defined(USE_SERV_INPS)
-  #ifndef USE_SERV_XCHG
-    #define USE_SERV_XCHG                    // Must be define if input service are used
+#if (USE_SERV_INPD == DEF_ENABLED) || \
+    (USE_SERV_INPF == DEF_ENABLED) || \
+    (USE_SERV_INPH == DEF_ENABLED) || \
+    (USE_SERV_INPS == DEF_ENABLED)
+  #if (USE_SERV_XCHG == DEF_DISABLED)
+    #undef  USE_SERV_XCHG
+    #define USE_SERV_XCHG  DEF_ENABLED               // Must be enabled if input service are used
   #endif
 #endif
 
@@ -153,7 +154,7 @@ static ServiceReturn_t* SERV_BDEF(ServiceEvent_e* pServiceState, uint16_t SubSer
 //  Description:    This function return the current date in service
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef USE_SERV_DATE
+#if (USE_SERV_DATE == DEF_ENABLED)
 static ServiceReturn_t* SERV_DATE(ServiceEvent_e* pServiceState)
 {
     ServiceReturn_t* pService = nullptr;
@@ -200,16 +201,16 @@ static ServiceReturn_t* SERV_DATE(ServiceEvent_e* pServiceState)
 //  Note(s():       Only one instance per page with the SubService = SUB_SERVICE_CFG
 //
 //-------------------------------------------------------------------------------------------------
-#if defined(USE_SERV_INPD) || defined(USE_SERV_INPF) || defined(USE_SERV_INPH)
+#if (USE_SERV_INPD == DEF_ENABLED) || (USE_SERV_INPF == DEF_ENABLED) || (USE_SERV_INPH == DEF_ENABLED)
 static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubService)
 {
     static char*          pStr = nullptr;
     ServiceReturn_t*      pService;
 
-  #if defined (USE_SERV_INPD) || defined(USE_SERV_INPH)
+  #if (USE_SERV_INPD == DEF_ENABLED) || (USE_SERV_INPH == DEF_ENABLED)
     static InputDecimal_t Input;
   #endif
-  #if defined (USE_SERV_INPF)
+  #if (USE_SERV_INPF == DEF_ENABLED)
     static InputFloat_t   InputF;
   #endif
     static uint8_t        StrMaxLength;
@@ -222,7 +223,7 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
     {
         if(pStr == nullptr)     // Configuration phase of the service
         {
-          #if defined(USE_SERV_INPF)
+          #if (USE_SERV_INPF == DEF_ENABLED)
             if(pCommon->ExType == EXCHANGE_INPUT_TYPE_FLOAT)
             {
                 memcpy(&InputF, GUI_pMailBox, sizeof(InputFloat_t));    // Get the working data from mailbox
@@ -233,10 +234,10 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
                 }
             }
           #endif
-          #if defined(USE_SERV_INPF) && (defined(USE_SERV_INPD) || defined(USE_SERV_INPH))
+          #if (USE_SERV_INPF == DEF_ENABLED) && ((USE_SERV_INPD == DEF_ENABLED) || (USE_SERV_INPH == DEF_ENABLED))
             else
           #endif
-          #if defined(USE_SERV_INPD) || defined(USE_SERV_INPH)
+          #if (USE_SERV_INPD == DEF_ENABLED) || (USE_SERV_INPH == DEF_ENABLED)
             {
                 memcpy(&Input, GUI_pMailBox, sizeof(InputDecimal_t));   // Get the working data from mailbox
                 size_t Size = (pCommon->ExType == EXCHANGE_INPUT_TYPE_DECIMAL) ? INPx_DECIMAL_SIZE : INPx_HEXADECIMAL_SIZE;
@@ -261,21 +262,21 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
             {
                 if((pService = GetServiceStruct(SERVICE_RETURN_TYPE4)) != nullptr)
                 {
-                  #if defined(USE_SERV_INPF)
+                  #if (USE_SERV_INPF == DEF_ENABLED)
                     if(pCommon->ExType == EXCHANGE_INPUT_TYPE_FLOAT)
                     {
                       float Value = atof(pStr);
                       pService->IndexState = ((Value >= InputF.Min) && (Value <= InputF.Max)) ? 0 : 1;    // Change color if value is out of range
                     }
                   #endif
-                  #if defined(USE_SERV_INPD)
+                  #if (USE_SERV_INPD == DEF_ENABLED)
                     if(pCommon->ExType == EXCHANGE_INPUT_TYPE_DECIMAL)
                     {
                         int32_t Value = atol(pStr);
                         pService->IndexState = ((Value >= Input.Min) && (Value <= Input.Max)) ? 0 : 1;      // Change color if value is out of range
                     }
                   #endif
-                  #if defined(USE_SERV_INPH)
+                  #if (USE_SERV_INPH == DEF_ENABLED)
                     if(pCommon->ExType == EXCHANGE_INPUT_TYPE_HEXA)
                     {
                         uint32_t Value;
@@ -336,7 +337,7 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
                     }
                 }
             }
-          #if defined(USE_SERV_INPH)
+          #if (USE_SERV_INPH == DEF_ENABLED)
             else if((toupper(SubService) >= 'A') && (toupper(SubService) <= 'F'))
             {
                 if(pCommon->ExType != EXCHANGE_INPUT_TYPE_HEXA)
@@ -363,7 +364,7 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
           #endif
             else if(SubService == '±')
             {
-              #if defined(USE_SERV_INPF)
+              #if (USE_SERV_INPF == DEF_ENABLED)
                 if(pCommon->ExType == EXCHANGE_INPUT_TYPE_FLOAT)
                 {
                     if((InputF.Min >= 0) || ((atof(pStr) == 0) && (Length <= 1)))
@@ -372,7 +373,7 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
                     }
                 }
               #endif
-              #if defined(USE_SERV_INPD)
+              #if (USE_SERV_INPD == DEF_ENABLED)
                 if(pCommon->ExType == EXCHANGE_INPUT_TYPE_DECIMAL)
                 {
                     if((Input.Min >= 0) || ((atol(pStr) == 0) && (Length <= 1)))
@@ -381,7 +382,7 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
                     }
                 }
               #endif
-              #if defined(USE_SERV_INPH)
+              #if (USE_SERV_INPH == DEF_ENABLED)
                 if(pCommon->ExType == EXCHANGE_INPUT_TYPE_HEXA)
                 {
                     pService->IndexState = 3;           // Do not draw the button
@@ -464,21 +465,21 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
             else if(SubService == '@')  // Ok
             {
               // Invalidate button if value is out of range
-              #if defined(USE_SERV_INPF)
+              #if (USE_SERV_INPF == DEF_ENABLED)
                 if(pCommon->ExType == EXCHANGE_INPUT_TYPE_FLOAT)
                 {
                   float Value = atof(pStr);
                   pService->IndexState = ((Value >= InputF.Min) && (Value <= InputF.Max)) ? 0 : 2;
                 }
               #endif
-              #if defined(USE_SERV_INPD)
+              #if (USE_SERV_INPD == DEF_ENABLED)
                 if(pCommon->ExType == EXCHANGE_INPUT_TYPE_DECIMAL)
                 {
                     int32_t Value = atol(pStr);
                     pService->IndexState = ((Value >= Input.Min) && (Value <= Input.Max)) ? 0 : 2;
                 }
               #endif
-              #if defined(USE_SERV_INPH)
+              #if (USE_SERV_INPH == DEF_ENABLED)
                 if(pCommon->ExType == EXCHANGE_INPUT_TYPE_HEXA)
                 {
                     uint32_t Value;
@@ -492,17 +493,17 @@ static ServiceReturn_t* SERV_INPT(ServiceEvent_e* pServiceState, uint16_t SubSer
                 {
                     if(*pServiceState == SERVICE_RELEASED)
                     {
-                      #if defined(USE_SERV_INPF)
+                      #if (USE_SERV_INPF == DEF_ENABLED)
                         if(pCommon->ExType == EXCHANGE_INPUT_TYPE_FLOAT)
                         {
                             *((float*)(InputF.Common.pValue)) = atof(pStr);
                             memcpy(GUI_pMailBox, &Input, sizeof(InputFloat_t));     // return value to mailbox
                         }
                       #endif
-                      #if defined(USE_SERV_INPF) && (defined(USE_SERV_INPD) || defined(USE_SERV_INPH))
+                      #if (USE_SERV_INPF == DEF_ENABLED) && ((USE_SERV_INPD== DEF_ENABLED) || (USE_SERV_INPH == DEF_ENABLED))
                         else
                       #endif
-                      #if defined(USE_SERV_INPD) || defined(USE_SERV_INPH)
+                      #if (USE_SERV_INPD == DEF_ENABLED) || (USE_SERV_INPH == DEF_ENABLED)
                         {
                             *((uint32_t*)Input.Common.pValue) = atoll(pStr);
                             memcpy(GUI_pMailBox, &Input, sizeof(InputDecimal_t));   // return value to mailbox
@@ -734,7 +735,7 @@ static ServiceReturn_t* SERV_TCHD(ServiceEvent_e* pServiceState, uint16_t SubSer
 //  Description:    This function return the current time in service
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef USE_SERV_TIME
+#if (USE_SERV_TIME == DEF_ENABLED)
 static ServiceReturn_t* SERV_TIME(ServiceEvent_e* pServiceState)
 {
     ServiceReturn_t* pService = nullptr;
@@ -779,7 +780,7 @@ static ServiceReturn_t* SERV_TIME(ServiceEvent_e* pServiceState)
 //                  a configuration set GUI_pMailBox to the struct pointer specified by SubService
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef USE_SERV_XCHG
+#if (USE_SERV_XCHG == DEF_ENABLED)
 static ServiceReturn_t* SERV_XCHG(ServiceEvent_e* pServiceState, uint16_t SubService)
 {
     ServiceReturn_t* pService = nullptr;
@@ -908,7 +909,7 @@ ServiceReturn_t* ServiceCall(Service_t* pService, ServiceEvent_e* pServiceState)
             {
                 switch(pService->ID)
                 {
-                  #ifdef USE_SERV_DATE
+                  #if (USE_SERV_DATE == DEF_ENABLED)
                     case SERV_ID_DATE: pServiceReturn = SERV_DATE(pServiceState); ServiceWasProcessed = true; break;
                   #endif
                 }
@@ -952,10 +953,10 @@ ServiceReturn_t* ServiceCall(Service_t* pService, ServiceEvent_e* pServiceState)
             {
                 switch(pService->ID)
                 {
-                  #if defined(USE_SERV_INPD) || defined(USE_SERV_INPF) || defined(USE_SERV_INPH)
+                  #if (USE_SERV_INPD == DEF_ENABLED) || (USE_SERV_INPF == DEF_ENABLED) || (USE_SERV_INPH == DEF_ENABLED)
                     case SERV_ID_INPT: pServiceReturn = SERV_INPT(pServiceState, pService->SubID); ServiceWasProcessed = true; break;
                   #endif
-                  #ifdef USE_SERV_INPS
+                  #if (USE_SERV_INPS == DEF_ENABLED)
                     case SERV_ID_INPS: pServiceReturn = SERV_INPS(pServiceState, pService->SubID); ServiceWasProcessed = true; break;
                   #endif
                 }
@@ -1020,7 +1021,7 @@ ServiceReturn_t* ServiceCall(Service_t* pService, ServiceEvent_e* pServiceState)
             {
                 switch(pService->ID)
                 {
-                  #if defined USE_SERV_TIME
+                  #if (USE_SERV_TIME == DEF_ENABLED)
                     case SERV_ID_TIME: pServiceReturn = SERV_TIME(pServiceState);                  ServiceWasProcessed = true; break;
                   #endif
                 }
@@ -1055,7 +1056,7 @@ ServiceReturn_t* ServiceCall(Service_t* pService, ServiceEvent_e* pServiceState)
             {
                 switch(pService->ID)
                 {
-                  #ifdef USE_SERV_XCHG
+                  #if (USE_SERV_XCHG == DEF_ENABLED)
                     case SERV_ID_XCHG: pServiceReturn = SERV_XCHG(pServiceState, pService->SubID); ServiceWasProcessed = true; break;
                   #endif
                 }

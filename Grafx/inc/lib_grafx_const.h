@@ -43,43 +43,43 @@ extern const struct32_t  GFX_ColorTable[COL_NB_COLOR_CONST];
 
 const int8_t GFX_PixelSize[PIXEL_FORMAT_COUNT] =
 {
-  #ifdef GRAFX_COLOR_ARGB8888
+  #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
     4,
   #endif
-  #ifdef GRAFX_COLOR_RGB888
+  #if (GRAFX_COLOR_RGB888 == DEF_ENABLED)
     3,
   #endif
-  #ifdef GRAFX_COLOR_RGB565
+  #if (GRAFX_COLOR_RGB565 == DEF_ENABLED)
     2,
   #endif
-  #ifdef GRAFX_COLOR_ARGB1555
+  #if (GRAFX_COLOR_ARGB1555 == DEF_ENABLED)
     2,
   #endif
-  #ifdef GRAFX_COLOR_ARGB4444
+  #if (GRAFX_COLOR_ARGB4444 == DEF_ENABLED)
     2,
   #endif
-  #ifdef GRAFX_COLOR_L8
+  #if (GRAFX_COLOR_L8 == DEF_ENABLED)
     1,
   #endif
-  #ifdef GRAFX_COLOR_AL44
+  #if (GRAFX_COLOR_AL44 == DEF_ENABLED)
     1,
   #endif
-  #ifdef GRAFX_COLOR_AL88
+  #if (GRAFX_COLOR_AL88 == DEF_ENABLED)
     1,
   #endif
-  #ifdef GRAFX_COLOR_L4
+  #if (GRAFX_COLOR_L4 == DEF_ENABLED)
     1,
   #endif
-  #ifdef GRAFX_COLOR_A8
+  #if (GRAFX_COLOR_A8 == DEF_ENABLED)
     1,
   #endif
-  #ifdef GRAFX_COLOR_A4
+  #if (GRAFX_COLOR_A4 == DEF_ENABLED)
     1,
   #endif
-  #ifdef GRAFX_COLOR_RGB332
+  #if (GRAFX_COLOR_RGB332 == DEF_ENABLED)
     1,
   #endif
-  #ifdef GRAFX_COLOR_RGB444
+  #if (GRAFX_COLOR_RGB444 == DEF_ENABLED)
     2,
   #endif
     -1

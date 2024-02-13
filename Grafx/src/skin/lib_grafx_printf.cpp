@@ -73,7 +73,7 @@ size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService)
             myGrafx->DrawRectangle(&pText->Box);
         }
 
-      #ifdef GRAFX_PAINT_BOX_DEBUG
+      #if (GRAFX_PAINT_BOX_DEBUG == DEF_ENABLED)
         if((pText->Box.Size.Width != 0) && (pText->Box.Size.Height != 0))
         {
             CLayer::SetColor(GRAFX_PAINT_BOX_DEBUG_COLOR);

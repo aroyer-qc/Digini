@@ -148,7 +148,7 @@ void CIcon::Finalize()
 //-------------------------------------------------------------------------------------------------
 void CIcon::Draw(ServiceReturn_t* pService)
 {
-  #ifndef GRAFX_DEBUG_GUI
+  #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
    #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
     Layer_e BackLayerToDraw;
    #endif
@@ -158,7 +158,7 @@ void CIcon::Draw(ServiceReturn_t* pService)
     CLayer::PushDrawing();
 
 /*
-  #ifdef GRAFX_DEBUG_GUI
+  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
     CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
@@ -169,7 +169,7 @@ void CIcon::Draw(ServiceReturn_t* pService)
   #endif
 */
 
-  #ifdef GRAFX_DEBUG_GUI
+  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
     CLayer::SetDrawing(((m_pIcon->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)

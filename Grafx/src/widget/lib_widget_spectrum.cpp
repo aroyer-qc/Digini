@@ -148,7 +148,7 @@ void CSpectrum::Draw(ServiceReturn_t* pService)
         pData = (uint8_t*)((ServiceType7_t*)pService)->pData;
     }
 
-  #ifdef GRAFX_DEBUG_GUI
+  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
     CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)

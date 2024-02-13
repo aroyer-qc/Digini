@@ -153,7 +153,7 @@ void CPageSlide::Draw(ServiceReturn_t* pService)
 
     CLayer::PushDrawing();
 
-  #ifdef GRAFX_DEBUG_GUI
+  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
         CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
         pLayer = &LayerTable[BACKGROUND_DISPLAY_LAYER_0];
   #else
@@ -181,7 +181,7 @@ void CPageSlide::Draw(ServiceReturn_t* pService)
                        CLEAR_BLEND);
 */
 
-  #ifndef GRAFX_DEBUG_GUI
+  #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
     if(SKIN_pTask->IsSkinLoaded() == true)
     {
         myGrafx->WaitFor_V_Sync();

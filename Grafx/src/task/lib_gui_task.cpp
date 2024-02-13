@@ -199,7 +199,7 @@ void GUI_myClassTask::Run()
                 NewLink = PreviousLink;
             }
 
-         #ifndef GRAFX_DEBUG_GUI
+         #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
           #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
            #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
             if(SKIN_pTask->IsSkinLoaded() == true)
@@ -841,7 +841,7 @@ void GUI_ClearWidgetLayer()
     Box_t Box = {{0, 0},{GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y}};
     CLayer::PushDrawing();
 
-  #ifdef GRAFX_DEBUG_GUI
+  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
     CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)

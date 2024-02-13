@@ -82,7 +82,7 @@ class PDI_myClassTask
         void                CreateZone          (EventArea_t* pEventArea, uint16_t Options, Widget_e Widget);
 
 
-      #ifdef GRAFX_PDI_INTERRUPT_IO
+      #if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
         void                IRQ_Handler         (void);
         SystemState_e       EnableIT            (void);
         SystemState_e       DisableIT           (void);
@@ -99,7 +99,7 @@ class PDI_myClassTask
         static nOS_Thread                   m_Handle;
         static nOS_Stack                    m_Stack[PDI_TASK_STACK_SIZE];
 
-      #ifdef GRAFX_PDI_INTERRUPT_IO
+      #if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
         nOS_Sem                             m_FlagTouchDetected;
       #endif
         PointingDeviceInterface*            m_pDriver;

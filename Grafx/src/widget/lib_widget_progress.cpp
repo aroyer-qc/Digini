@@ -154,7 +154,7 @@ void CProgress::Finalize()
 //-------------------------------------------------------------------------------------------------
 void CProgress::Draw(ServiceReturn_t* pService)
 {
-  #ifndef GRAFX_DEBUG_GUI
+  #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
     Layer_e BackLayerToDraw;
     Layer_e ForeLayerToDraw;
   #endif
@@ -168,7 +168,7 @@ void CProgress::Draw(ServiceReturn_t* pService)
 // TODO can i put this into a support function
     CLayer::PushDrawing();
 
-  #ifdef GRAFX_DEBUG_GUI
+  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
     CLayer::SetDrawing(((m_pProgress->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
   #else
 
@@ -199,7 +199,7 @@ void CProgress::Draw(ServiceReturn_t* pService)
     // this erase the old bar...  do we put a option for redraw full widget?
     // DrawRectangle(&m_pProgress->Box);                          // Erase previous draw
 
-  #ifdef GRAFX_DEBUG_GUI
+  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
     CLayer::SetColor(LIGHT_RED);
     DrawDebugBox(&m_pProgress->Box);
   #endif
@@ -250,7 +250,7 @@ void CProgress::Draw(ServiceReturn_t* pService)
 
     WidgetPrint(&m_pProgress->Text, pService);
 
-    #ifdef GRAFX_PAINT_BOX_DEBUG
+    #if (GRAFX_PAINT_BOX_DEBUG == DEF_ENABLED)
       if((m_pProgress->Box.Size.Width != 0) && (m_pProgress->Box.Size.Height != 0))
       {
           CLayer::SetColor(GRAFX_PAINT_BOX_DEBUG_COLOR);

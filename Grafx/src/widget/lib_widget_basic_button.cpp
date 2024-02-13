@@ -175,7 +175,7 @@ void CBasicButton::Draw(ServiceReturn_t* pService)
 
     CLayer::PushDrawing();
 
-  #ifdef GRAFX_DEBUG_GUI
+  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
     CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
   #else
     CLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);

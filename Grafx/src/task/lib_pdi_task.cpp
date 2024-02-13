@@ -95,12 +95,12 @@ SystemState_e PDI_myClassTask::Initialize(PointingDeviceInterface* pDriver, uint
                                  PDI_TASK_STACK_SIZE,
                                  PDI_TASK_PRIO)) == NOS_OK)
     {
-      #ifdef GRAFX_PDI_INTERRUPT_IO
+      #if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
         if((Error = nOS_SemCreate(&this->m_FlagTouchDetected, 0, 1)) == NOS_OK)
       #endif
         {
             m_pDriver = pDriver;
-          #ifdef GRAFX_PDI_INTERRUPT_IO
+         #if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
             this->EnableIT();
          #endif
             m_ConfigSizeX = SizeX;
@@ -157,7 +157,7 @@ void PDI_myClassTask::Run()
         nOS_Sleep(10);
     };
 
-  #ifdef GRAFX_PDI_INTERRUPT_IO
+  #if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
     // Flush touch
     while(nOS_SemTake(&m_FlagTouchDetected, TOUCH_LOOP_DELAY) != NOS_OK)
     {
@@ -167,7 +167,7 @@ void PDI_myClassTask::Run()
 
     for(;;)
     {
-      #ifdef GRAFX_PDI_INTERRUPT_IO
+      #if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
         if(nOS_SemTake(&m_FlagTouchDetected, TOUCH_LOOP_DELAY) == NOS_OK)
       #else
         nOS_Sleep(TOUCH_LOOP_DELAY);
@@ -435,7 +435,7 @@ Widget_e PDI_myClassTask::GetZoneID(void)
 //  Description:    Configures and enables the touch screen interrupts.
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_PDI_INTERRUPT_IO
+#if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
 SystemState_e PDI_myClassTask::EnableIT(void)
 {
     IO_IRQ_Init(GRAFX_PDI_INTERRUPT_IO);
@@ -454,7 +454,7 @@ SystemState_e PDI_myClassTask::EnableIT(void)
 //  Description:    Disable the pointing event interrupts.
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_PDI_INTERRUPT_IO
+#if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
 SystemState_e PDI_myClassTask::DisableIT(void)
 {
     return m_pDriver->DisableIT();
@@ -472,7 +472,7 @@ SystemState_e PDI_myClassTask::DisableIT(void)
 //  Description:    Gets the pointing device interrupt status.
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_PDI_INTERRUPT_IO
+#if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
 SystemState_e PDI_myClassTask::GetIT_Status(void)
 {
     return SYS_READY;
@@ -490,7 +490,7 @@ SystemState_e PDI_myClassTask::GetIT_Status(void)
 //  Description:    Clears all pointing device interrupts.
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_PDI_INTERRUPT_IO
+#if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
 SystemState_e PDI_myClassTask::ClearIT(void)
 {
     return SYS_READY;
@@ -604,7 +604,7 @@ SystemState_e PDI_myClassTask::GetState(void)
 //  Description:    This function handles USARTx interrupt.
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_PDI_INTERRUPT_IO
+#if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
 void PDI_myClassTask::IRQ_Handler(void)
 {
     // Signal main task to process the event

@@ -75,43 +75,43 @@ Layer_e      CLayer::m_LayerStack[CLAYER_STACK_LEVEL];
 // This table must match the enum PixelFormat_e (lib_grafx_enum.h)
 const uint8_t CLayer::m_LayerPixelSize[PIXEL_FORMAT_COUNT] =
 {
-  #ifdef GRAFX_COLOR_ARGB8888
+  #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
     4,
   #endif
-  #ifdef GRAFX_COLOR_RGB888
+  #if (GRAFX_COLOR_RGB888 == DEF_ENABLED)
     4,
   #endif
-  #ifdef GRAFX_COLOR_RGB565
+  #if (GRAFX_COLOR_RGB565 == DEF_ENABLED)
     2,
   #endif
-  #ifdef GRAFX_COLOR_ARGB1555
+  #if (GRAFX_COLOR_ARGB1555 == DEF_ENABLED)
     2,
   #endif
-  #ifdef GRAFX_COLOR_ARGB4444
+  #if (GRAFX_COLOR_ARGB4444 == DEF_ENABLED)
     4,
   #endif
-  #ifdef GRAFX_COLOR_L8
+  #if (GRAFX_COLOR_L8 == DEF_ENABLED)
     1,
   #endif
-  #ifdef GRAFX_COLOR_AL44
+  #if (GRAFX_COLOR_AL44 == DEF_ENABLED)
     1,
   #endif
-  #ifdef GRAFX_COLOR_AL88
+  #if (GRAFX_COLOR_AL88 == DEF_ENABLED)
     2,
   #endif
-  #ifdef GRAFX_COLOR_L4
+  #if (GRAFX_COLOR_L4 == DEF_ENABLED)
     1,
   #endif
-  #ifdef GRAFX_COLOR_A8
+  #if (GRAFX_COLOR_A8 == DEF_ENABLED)
     1,
   #endif
-  #ifdef GRAFX_COLOR_A4
+  #if (GRAFX_COLOR_A4 == DEF_ENABLED)
     1,
   #endif
-  #ifdef GRAFX_COLOR_RGB332
+  #if (GRAFX_COLOR_RGB332 == DEF_ENABLED)
     1,
   #endif
-  #ifdef GRAFX_COLOR_RGB444
+  #if (GRAFX_COLOR_RGB444 == DEF_ENABLED)
     2,
   #endif
     0,    // Dummy

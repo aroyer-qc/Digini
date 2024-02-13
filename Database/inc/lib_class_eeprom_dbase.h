@@ -88,7 +88,7 @@ class E2_DataBase : public CDataBaseInterface
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // #if defined(EEPROM_DBASE_DEF)
+#endif // EEPROM_DBASE_DEF
 #endif // (DIGINI_USE_EEPROM == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

@@ -232,6 +232,7 @@ struct UART_DMA_Info_t
     IRQn_Type           Tx_IRQn;
     uint32_t            RCC_AHBxPeriph;
 };
+#endif
 
 struct UART_Variables_t
 {
@@ -242,9 +243,8 @@ struct UART_Variables_t
     size_t              SizeTX;
     size_t              StaticSizeTX;
 };
-#endif
 
-struct UART_Transfert_t
+struct UART_Transfer_t
 {
     void*   pBuffer;
     size_t  Size;
@@ -336,10 +336,10 @@ class UART_Driver
         int                         m_CallBackType;
 
        #if (UART_ISR_RX_CFG == DEF_ENABLED)
-        UART_Transfert_t*           m_pContextRX;
+        UART_Transfer_t*            m_pContextRX;
        #endif
        #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
-        UART_Transfert_t*           m_pContextIDLE;
+        UART_Transfer_t*            m_pContextIDLE;
        #endif
        #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
         void*                       m_pContextERROR;

@@ -141,7 +141,7 @@ X_LABEL( LBL_GUI_VERSION,                OUR_FIRMWARE_GUI_VERSION,         nullp
 X_LABEL( LBL_SERIAL_NUMBER,              OEM_SERIAL_NUMBER,                nullptr                                         ) \
 X_LABEL( LBL_BUILT_DATE,                 OUR_BUILD_DATE,                   nullptr                                         ) \
 X_LABEL( LBL_CPU_VOLTAGE,                "Voltages:",                      nullptr                                         ) \
-X_LABEL( LBL_CPU_TEMPERATURE,            "CPU Temp:   \xF8" "C",           nullptr                                        ) \
+X_LABEL( LBL_CPU_TEMPERATURE,            "CPU Temp:   \xF8" "C",           nullptr                                         ) \
 
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)

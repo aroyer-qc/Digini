@@ -77,7 +77,10 @@ void Console::Initialize(UART_Driver* pUartDriver)
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     // Reserve memory for UART internal DMA operation.
     pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE);
+
+  #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)                              // not sure it can work without DMA
     pUartDriver->DMA_ConfigRX(pBuffer, CON_FIFO_PARSER_RX_SIZE);
+  #endif
 
     pUartDriver->RegisterCallback((CallbackInterface*)this);
   #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)

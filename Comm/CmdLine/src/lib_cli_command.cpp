@@ -294,7 +294,7 @@ SystemState_e CommandLine::CmdINFO(void* pArg)
         snprintf(Response, 100, "%s\r    %s\r    S/N: %s\r    Build: %s", OUR_FIRMWARE_NAME,
                                                                           OEM_MODEL_NAME,
                                                                           OEM_SERIAL_NUMBER,
-                                                                          OUR_BUILD_DATE);
+                                                                          OUR_FIRMWARE_BUILD_DATE);
         SendAnswer(CLI_INFO, SYS_OK_READ, Response);
         Error = SYS_OK_SILENT;
     }

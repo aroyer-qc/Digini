@@ -141,9 +141,6 @@ ADC_Driver::ADC_Driver(ADC_ID_e ADC_ID)
 
 void ADC_Driver::Initialize(void)
 {
-    ISR_Prio_t    ISR_Prio;
-    uint32_t      PriorityGroup;
-
     if(m_IsItInitialize == false)
     {
         m_IsItInitialize = true;
@@ -176,11 +173,7 @@ void ADC_Driver::Initialize(void)
         m_CommonIsItInitialize = true;
 
         // ADC interrupt are common to all module
-        PriorityGroup              = NVIC_GetPriorityGrouping();
-        ISR_Prio.PriorityGroup     = PriorityGroup;
-        ISR_Prio.SubPriority       = 0;
-        ISR_Prio.PremptionPriority = 0;
-        ISR_Init(ADC_IRQn, &ISR_Prio);
+        ISR_Init(ADC_IRQn, 0, 0);
     }
 
     // m_State = SYS_READY;                   // Initialize ADC error code

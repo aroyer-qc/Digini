@@ -57,11 +57,11 @@
 #endif
 
 
-#define UART_ISR_RX_ERROR                   0x01
-#define UART_ISR_RX_BYTE                    0x02
-#define UART_ISR_RX_IDLE                    0x04
-#define UART_ISR_TX_EMPTY                   0x10
-#define UART_ISR_TX_COMPLETED               0x20
+#define UART_ISR_RX_ERROR_MASK              0x01
+#define UART_ISR_RX_BYTE_MASK               0x02
+#define UART_ISR_RX_IDLE_MASK               0x04
+#define UART_ISR_TX_EMPTY_MASK              0x10
+#define UART_ISR_TX_COMPLETED_MASK          0x20
 
 // Callback type in bit position
 #define UART_CALLBACK_NONE                  0x00

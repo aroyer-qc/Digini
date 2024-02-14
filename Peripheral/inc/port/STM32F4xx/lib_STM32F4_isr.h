@@ -39,6 +39,14 @@
 #define ISR_Enable()            __asm volatile("cpsie i")
 #define ISR_Disable()           __asm volatile("cpsid i")
 
+// TO DO come from F7, I don't know yet if it is relevant
+// Get Pending Interrupt
+#define ISR_GetPendingIRQ(IRQ)   (((NVIC->ISPR[0] & (uint32_t(1) << uint32_t(int32_t(IRQ) & 0x1F))) != 0) ? true : false)
+// Set Pending Interrupt
+#define ISR_SetPendingIRQ(IRQ)   (NVIC->ISPR[0] = (uint32_t(1) << ((uint32_t)(int32_t(IRQ) & 0x1F))))
+// Clear Pending Interrupt      
+#define ISR_ClearPendingIRQ(IRQ) (NVIC->ICPR[0] = (uint32_t(1) << ((uint32_t)(int32_t(IRQ) & 0x1L))))
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -56,5 +64,6 @@ struct ISR_Prio_t
 
 void ISR_Initialize     (void);
 void ISR_Init           (IRQn_Type Channel, const ISR_Prio_t* pPrio);
+void ISR_Init           (IRQn_Type Channel, uint8_t SubPriority, uint8_t PremptionPriority);
 
 //-------------------------------------------------------------------------------------------------

@@ -138,7 +138,7 @@ void IO_PinInit(IO_ID_e IO_ID)
 //                  PinMode
 //                  PinType
 //                  PinSpeed
-//                  State                   Default state of the pin if output.
+//                  State                   Default state of the pin if output or alternate function
 //
 //
 //  Return:         None
@@ -341,7 +341,7 @@ void IO_TogglePin(IO_ID_e IO_ID)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void IO_SetPin(IO_ID_e IO_ID, uint32_t Value)
+void IO_SetPin(IO_ID_e IO_ID, bool Value)
 {
     if(Value == 0)
     {
@@ -436,6 +436,8 @@ bool IO_GetOutputPin(IO_ID_e IO_ID)
 //-------------------------------------------------------------------------------------------------
 bool IO_IsItValid(IO_ID_e IO_ID)
 {
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
     if(pPort != GPIOxx)
     {
         return true;
@@ -661,9 +663,7 @@ uint32_t IO_PinLowLevelAccess(uint32_t PortIO, uint32_t PinNumber, uint32_t Dire
         else           pPort->BSRRL = Pin1BitMask;
     }
 
-    MODIFY_REG(pPort->MODER,
-               (IO_MODE_PIN_MASK << Pin2BitShift),
-               (Direction << Pin2BitShift));
+    MODIFY_REG(pPort->MODER, (IO_MODE_PIN_MASK << Pin2BitShift), (Direction << Pin2BitShift));
 
     return (pPort->IDR >> PinNumber) & 0x01;
 }

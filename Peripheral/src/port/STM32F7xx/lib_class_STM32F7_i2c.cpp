@@ -111,8 +111,6 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-// uncommented is ok
-
 #define I2C_STATE_IE_SHIFT          23
 
 #define ISR_FLAG_MASK               ((uint32_t)(I2C_ISR_OVR_Msk    | I2C_ISR_BERR_Msk  | I2C_ISR_TCR_Msk  | I2C_ISR_TC_Msk     | \

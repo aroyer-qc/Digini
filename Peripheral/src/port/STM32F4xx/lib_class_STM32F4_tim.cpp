@@ -266,16 +266,6 @@ void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
 {
     uint32_t     BitMask;
 
-  #if ((TIM_DRIVER_SUPPORT_TIM1_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG == DEF_ENABLED)) || \
-      ((TIM_DRIVER_SUPPORT_TIM8_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG == DEF_ENABLED))
-    ISR_Prio_t  ISR_Prio;
-
-    // Configure interrupt priority for TIM
-    ISR_Prio.PriorityGroup     = NVIC_GetPriorityGrouping();
-    ISR_Prio.PremptionPriority = 6;
-    ISR_Prio.SubPriority       = 0;
-  #endif
-
     switch(int(m_pTim))
     {
 
@@ -283,7 +273,7 @@ void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
         case int(TIM1):
         {
             // Init compare IRQ for TIM1 Compare
-            ISR_Init(TIM1_CC_IRQn, &ISR_Prio);
+            ISR_Init(TIM1_CC_IRQn, 0, 6);
         }
         break;
       #endif
@@ -304,7 +294,7 @@ void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
         case int(TIM8):
         {
             // Init compare IRQ for TIM8 Compare
-            ISR_Init(TIM8_CC_IRQn, &ISR_Prio);
+            ISR_Init(TIM8_CC_IRQn, 0, 6);
         }
         break;
       #endif

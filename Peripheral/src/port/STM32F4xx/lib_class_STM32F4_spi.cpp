@@ -214,11 +214,8 @@ void SPI_Driver::Initialize(void)
                m_pInfo->DMA_ChannelRX;
   #endif
 
-    // NVIC Setup for TX DMA channels interrupt request
-    ISR_Init(m_pInfo->TX_IRQn, 0, 6);
-
-    // NVIC Setup for RX DMA channels interrupt request
-    ISR_Init(m_pInfo->RX_IRQn, 0, 6);
+    ISR_Init(m_pInfo->TX_IRQn, 0, 6);                   // NVIC Setup for TX DMA channels interrupt request
+    ISR_Init(m_pInfo->RX_IRQn, 0, 6);                   // NVIC Setup for RX DMA channels interrupt request
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -788,8 +785,6 @@ SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, u
 //  Description:    This function verify if the SPI is ready
 //
 //  Parameter(s):   bool IsItActive
-//
-//  Return:         None
 //
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::ChipSelect(bool IsItActive)

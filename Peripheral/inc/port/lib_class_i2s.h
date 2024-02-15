@@ -26,7 +26,9 @@
 
 #include "i2s_cfg.h"
 
-#if defined STM32F4xx
+#if defined STM32F1xx
+ #include "lib_class_STM32F1_i2s.h"
+#elif defined STM32F4xx
  #include "lib_class_STM32F4_i2s.h"
 #elif defined STM32F7xx
  #include "lib_class_STM32F7_i2s.h"

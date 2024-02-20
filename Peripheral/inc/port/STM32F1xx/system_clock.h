@@ -78,13 +78,14 @@
 // Auto define configuration
 //-------------------------------------------------------------------------------------------------
 
-#define RCC_PLLCFGR_PLL_M_POS           0
-#define RCC_PLLCFGR_PLL_N_POS           6
-#define RCC_PLLCFGR_PLL_P_POS           16
-#define RCC_PLLCFGR_PLL_Q_POS           24
+//#define RCC_PLLCFGR_PLL_M_POS           0
+//#define RCC_PLLCFGR_PLL_N_POS           6
+//#define RCC_PLLCFGR_PLL_P_POS           16
+//#define RCC_PLLCFGR_PLL_Q_POS           24
 
 //-------------------------------------------------------------------------------------------------
 // Auto configuration value for PLL
+
 #if (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
   // ---------
   // HSI Check
@@ -105,30 +106,12 @@
     #define RCC_PLL_CFGR_HSI_PLL_N_CFG              (HSI_PLL_N_MULTIPLIER << RCC_PLLCFGR_PLL_N_POS)
   #endif
 
-  #if ((HSI_PLL_P_DIVIDER / 2) < 1) || ((HSI_PLL_P_DIVIDER / 2) > 4)   // (tested for 2,4,6,8)
-    #pragma message "XSTR(HSI_PLL_P_DIVIDER)"
-    #error PLL_P for HSI is out of range
-  #else
-    #define RCC_PLL_CFGR_HSI_PLL_P_CFG              (((HSI_PLL_P_DIVIDER / 2) - 1) << RCC_PLLCFGR_PLL_P_POS)
-  #endif
-
-  #if (HSI_PLL_Q_DIVIDER < 2) || (HSI_PLL_Q_DIVIDER > 15)
-    #pragma message "XSTR(HSI_PLL_Q_DIVIDER)"
-    #error PLL_Q for HSI is out of range
-  #else
-    #define RCC_PLL_CFGR_HSI_PLL_Q_CFG              (HSI_PLL_Q_DIVIDER << RCC_PLLCFGR_PLL_Q_POS)
-  #endif
-
   #define RCC_HSI_PLL_CFGR_CFG                      (RCC_PLL_CFGR_HSI_PLL_M_CFG |   \
                                                      RCC_PLL_CFGR_HSI_PLL_N_CFG |   \
-                                                     RCC_PLL_CFGR_HSI_PLL_P_CFG |   \
-                                                     RCC_PLL_CFGR_HSI_PLL_Q_CFG |   \
                                                      CFG_RCC_PLLCFGR_PLLSRC_HSI)
 
   // ---------
   // HSE Check
-  #define SYS_HSE_PLL_CLK_FREQUENCY                 (((HSE_PLL_SOURCE / HSE_PLL_M_DIVIDER) * HSE_PLL_N_MULTIPLIER) / HSE_PLL_P_DIVIDER)
-  #define SYS_HSE_PLL_Q_FREQUENCY                   (((HSE_PLL_SOURCE / HSE_PLL_M_DIVIDER) * HSE_PLL_N_MULTIPLIER) / HSE_PLL_Q_DIVIDER)
 
   #if (HSE_PLL_M_DIVIDER < 2) || (HSE_PLL_M_DIVIDER > 63)
     #pragma message "XSTR(HSE_PLL_M_DIVIDER)"
@@ -144,24 +127,8 @@
     #define RCC_PLL_CFGR_HSE_PLL_N_CFG              (HSE_PLL_N_MULTIPLIER << RCC_PLLCFGR_PLL_N_POS)
   #endif
 
-  #if ((HSE_PLL_P_DIVIDER / 2) < 1) || ((HSE_PLL_P_DIVIDER / 2) > 4)   // (tested for 2,4,6,8)
-    #pragma message "XSTR(HSE_PLL_P_DIVIDER)"
-    #error PLL_P for HSE is out of range
-  #else
-    #define RCC_PLL_CFGR_HSE_PLL_P_CFG              (((HSE_PLL_P_DIVIDER / 2) - 1) << RCC_PLLCFGR_PLL_P_POS)
-  #endif
-
-  #if (HSE_PLL_Q_DIVIDER < 2) || (HSE_PLL_Q_DIVIDER > 15)
-    #pragma message "XSTR(HSE_PLL_Q_DIVIDER)"
-    #error PLL_Q for HSE is out of range
-  #else
-    #define RCC_PLL_CFGR_HSE_PLL_Q_CFG              (HSE_PLL_Q_DIVIDER << RCC_PLLCFGR_PLL_Q_POS)
-  #endif
-
   #define RCC_HSE_PLL_CFGR_CFG                      (RCC_PLL_CFGR_HSE_PLL_M_CFG |   \
                                                      RCC_PLL_CFGR_HSE_PLL_N_CFG |   \
-                                                     RCC_PLL_CFGR_HSE_PLL_P_CFG |   \
-                                                     RCC_PLL_CFGR_HSE_PLL_Q_CFG |   \
                                                      CFG_RCC_PLLCFGR_PLLSRC_HSE)
 // --------------------
 // HSI versus HSE Check
@@ -245,41 +212,29 @@
 #define SYS_APB2_CFG                                APB2_CLK_DIVIDER
 #define SYS_APB2_TIMER_CLOCK_FREQUENCY              SYS_APB2_CLOCK_FREQUENCY * 2
 
-
-// Power scaling according to speed
-#if (SYS_CPU_CORE_CLOCK_FREQUENCY <= 144000000)
-#define POWER_REGULATOR_CFG                         0
-#else // (SYS_CPU_CORE_CLOCK_FREQUENCY <= 168000000)
-#define POWER_REGULATOR_CFG                         PWR_CR_VOS_0
-#endif
-
+//  F1 OK
 // Flash Latency configuration for Voltage from 2.7V to 3.6V
-#if   (SYS_CPU_CORE_CLOCK_FREQUENCY <= 30000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_0WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 60000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_1WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 90000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_2WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 120000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_3WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 150000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_4WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 168000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_5WS
+#if   (SYS_CPU_CORE_CLOCK_FREQUENCY <= 24000000)
+#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_0
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 48000000)
+#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_1
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 72000000)
+#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_2
 #endif
 
+//  F1 OK
 // Verification
-#if SYS_HCLK_CLOCK_FREQUENCY > 168000000
+#if SYS_HCLK_CLOCK_FREQUENCY > 72000000
  #pragma message "XSTR(SYS_HCLK_CLOCK_FREQUENCY)"
  #error CPU Core frequency exceed maximum allowed!
 #endif
 
-#if SYS_APB1_CLOCK_FREQUENCY > 42000000
+#if SYS_APB1_CLOCK_FREQUENCY > 36000000
  #pragma message "XSTR(SYS_APB1_CLOCK_FREQUENCY)"
  #error APB1 frequency exceed maximum allowed!
 #endif
 
-#if SYS_APB2_CLOCK_FREQUENCY > 84000000
+#if SYS_APB2_CLOCK_FREQUENCY > 72000000
  #pragma message "XSTR(SYS_APB2_CLOCK_FREQUENCY)"
  #error APB2 frequency exceed maximum allowed!
 #endif

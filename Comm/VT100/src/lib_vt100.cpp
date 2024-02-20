@@ -135,7 +135,7 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Process
+//  Name:           IF_Process
 //
 //  Parameter(s):   void
 //  Return:         None

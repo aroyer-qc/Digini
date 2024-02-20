@@ -63,8 +63,8 @@ void Console::Initialize(UART_Driver* pUartDriver)
     uint8_t* pBuffer;
 
     m_pUartDriver           = pUartDriver;
-    m_IsItOnHold            = false;
-    m_IsItOnStartup         = true;
+    //m_IsItOnHold            = false;
+    //m_IsItOnStartup         = true;
     m_MuteSerialLogging     = true;
     m_DebugLevel            = CON_DEBUG_NONE;
     m_ActiveProcessLevel    = CON_NOT_CONNECTED;
@@ -89,6 +89,11 @@ void Console::Initialize(UART_Driver* pUartDriver)
   #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
     pUartDriver->EnableCallbackType(UART_CALLBACK_IDLE | UART_CALLBACK_COMPLETED_TX | UART_CALLBACK_ERROR);
   #endif
+  
+  #if (CON_TRAP_INCOMING_COMMENT_LINE == DEF_ENABLED)
+    m_InTrapForCommentLine = false;
+    m_IsItIdle             = true;
+  #endif  
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -106,6 +111,41 @@ void Console::Initialize(UART_Driver* pUartDriver)
 //-------------------------------------------------------------------------------------------------
 void Console::Process(void)
 {
+    #if CON_TRAP_INCOMING_COMMENT_LINE == DEF_ENABLED)
+    if(ReadyRead() == true)
+    {
+        if((m_Fifo.At(0) == CON_TRAP_COMMENT_CHARACTER) && (m_IsItIdle == true))        // Need to be idle and first char is comment.
+        {
+            m_Fifo.Flush(1);                                                            // Flush it
+            m_InTrapForCommentLine = true;                                              // This is a comment line
+            m_TrapTimeOut = GetTick();                                                  // Get tick for time out of line
+        }
+        else
+        {
+            if(m_InTrapForCommentLine == true)                                          // Need to trap all character code in the line                                        
+            {
+                if(m_Fifo.At(0) == CON_END_OF_LINE_MARKER)                              // Until end of line marker is detected
+                {
+                    m_InTrapForCommentLine = false;                                     // No longer in comment line
+                    m_IsItIdle = true;                                                  // Idle                                     
+                }
+
+                m_Fifo.Flush(1);                                                        // Flush the comment line character from fifo.
+            }
+        }
+        
+        m_IsItIdle = false;                                                             // no longer on idle... prevent detecting CON_TRAP_COMMENT_CHARACTER in middle of reception
+    }
+    else
+    {
+        if(TickHasTimeOut(m_TrapTimeOut, CON_TRAP_COMMENT_TIME_OUT) == true)            // Check if not idle for too much time without receiving CON_END_OF_LINE_MARKER
+        {
+            m_InTrapForCommentLine = false;                                             // Exit Trap
+            m_IsItIdle = true;                                                          // Idle
+        }
+    }
+  #endif
+    
     if(m_pChildProcess[m_ActiveProcessLevel] != nullptr)
     {
         m_pChildProcess[m_ActiveProcessLevel]->IF_Process();
@@ -480,7 +520,7 @@ bool Console::GetAtoi(int32_t* pValue, int32_t Min, int32_t Max, uint8_t Base)
 //
 //  Description:    Check to be sure there no more parameter on the command line.
 //
-//  Note(s):
+//  Note(s):        TODO is it not to simplistic????
 //
 //-------------------------------------------------------------------------------------------------
 bool Console::IsItAnEOL(void)

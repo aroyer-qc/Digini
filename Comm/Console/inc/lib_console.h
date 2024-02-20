@@ -142,17 +142,23 @@ class Console : public CallbackInterface
     // need to add echo on or off for child process.. Console need it, but menu don't need it!
         UART_Driver*                            m_pUartDriver;
         //UART_Transfer_t**                       m_pRX_Transfer;
-        TickCount_t                             m_CommandTimeOut;
-        int16_t                                 m_CommandNameSize;
+        //TickCount_t                             m_CommandTimeOut;
+        //int16_t                                 m_CommandNameSize;
         bool                                    m_MuteSerialLogging;
-        TickCount_t                             m_StartupTick;
-        bool                                    m_IsItOnStartup;
-        char                                    m_BufferParserRX[CON_FIFO_PARSER_RX_SIZE];
+        //TickCount_t                             m_StartupTick;
+        //bool                                    m_IsItOnStartup;
+        //char                                    m_BufferParserRX[CON_FIFO_PARSER_RX_SIZE];
         FIFO_Buffer                             m_Fifo;
-        bool                                    m_IsItOnHold;
+        //bool                                    m_IsItOnHold;
         CON_DebugLevel_e                        m_DebugLevel;
         int32_t                                 m_ActiveProcessLevel;
         ChildProcessInterface*                  m_pChildProcess[CON_CHILD_PROCESS_PUSH_POP_LEVEL];
+        
+      #if (CON_TRAP_INCOMING_COMMENT_LINE == DEF_ENABLED)
+        bool                                    m_InTrapForCommentLine;
+        TickCount_t                             m_TrapTimeOut;
+        bool                                    m_IsItIdle;
+      #endif  
 };
 
 //-------------------------------------------------------------------------------------------------

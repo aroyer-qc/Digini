@@ -62,86 +62,83 @@
 //-------------------------------------------------------------------------------------------------
 void SystemInit(void)
 {
-    uint32_t Retry;
+    //uint32_t Retry;
 
-    __asm volatile("cpsid i");                                              // Disable IRQ
+    //__asm volatile("cpsid i");                                              // Disable IRQ
 
-    SET_BIT(RCC->APB2ENR, RCC_APB2ENR_SYSCFGEN);
+    //SET_BIT(RCC->APB2ENR, RCC_APB2ENR_SYSCFGEN);
     SET_BIT(RCC->APB1ENR, RCC_APB1ENR_PWREN);
-    MODIFY_REG(PWR->CR, PWR_CR_VOS, POWER_REGULATOR_CFG);
-
-    // FPU settings
-  #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
-    SET_BIT(SCB->CPACR, ((3UL << 10 * 2) | (3UL << 11 * 2)));   // Set CP10 and CP11 Full Access
-  #endif
 
     // Reset the RCC clock configuration to the default reset state ------------
     // Set HSION bit
     SET_BIT(RCC->CR, RCC_CR_HSION);
 
     // Set CFGR register
-	RCC->CFGR = (SYS_HCLK_CFG | SYS_APB1_CFG | SYS_APB2_CFG);
+	//RCC->CFGR = (SYS_HCLK_CFG | SYS_APB1_CFG | SYS_APB2_CFG);
 
     // Reset HSEBYP, CSSON and PLLON bits
-	CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));
+	//CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));
 
   #if (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
 
     SET_BIT(RCC->CR, RCC_CR_HSEON);
 
     // Wait for HSE to be ready B4 enabling PLL
-    Retry = 0;
-    while((READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0) && (Retry < SYSTEM_CLOCK_NUMBER_OF_RETRY))
-    {
-        Retry++;
-    };
+    //Retry = 0;
+    //while((READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0) && (Retry < SYSTEM_CLOCK_NUMBER_OF_RETRY))
+    //{
+    //    Retry++;
+    //};
 
     // If HSE not ready, will will switch to HSI
-    if(READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0)
-    {
-        CLEAR_BIT(RCC->CR, RCC_CR_HSEON);
+    //if(READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0)
+    //{
+    //    CLEAR_BIT(RCC->CR, RCC_CR_HSEON);
 
         // Wait for HSI to be ready B4 enabling PLL
-        while(READ_BIT(RCC->CR, RCC_CR_HSIRDY) == 0) {};
+    //    while(READ_BIT(RCC->CR, RCC_CR_HSIRDY) == 0) {};
 
         // Set PLLCFGR register
-        RCC->PLLCFGR = RCC_HSI_PLL_CFGR_CFG;
+    //    RCC->PLLCFGR = RCC_HSI_PLL_CFGR_CFG;
 
-      #if (HSE_AND_HSI_MUST_BE_MATCHED == DEF_ENABLED)
+    //  #if (HSE_AND_HSI_MUST_BE_MATCHED == DEF_ENABLED)
         // Set a flag for main loop to signal HSE clock failure!
-        SystemHSE_ClockFailure = true;
-      #endif
-    }
-    else
-    {
+    //    SystemHSE_ClockFailure = true;
+    //  #endif
+    //}
+    //else
+    //{
         // Set PLLCFGR register
-        RCC->PLLCFGR = RCC_HSE_PLL_CFGR_CFG;
+    //    RCC->PLLCFGR = RCC_HSE_PLL_CFGR_CFG;
 
         // Reset HSION bit to reduce consumption
-        CLEAR_BIT(RCC->CR, RCC_CR_HSION);
+    //    CLEAR_BIT(RCC->CR, RCC_CR_HSION);
 
-      #if (HSE_AND_HSI_MUST_BE_MATCHED == DEF_ENABLED)
+    //  #if (HSE_AND_HSI_MUST_BE_MATCHED == DEF_ENABLED)
         // Set a flag for main loop signal HSE is OK!
-        SystemHSE_ClockFailure = false;
-      #endif
-    }
+    //    SystemHSE_ClockFailure = false;
+    //  #endif
+    //}
+
+    // Enable Prefetch Buffer
+    FLASH->ACR |= FLASH_ACR_PRFTBE;
 
     // Set flash latency
     MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, FLASH_LATENCY_CFG);
 
     // Enable PLL
-    SET_BIT(RCC->CR, RCC_CR_PLLON);
+    //SET_BIT(RCC->CR, RCC_CR_PLLON);
 
     // Wait for PLL to be ready B4 enabling PLL
-    while(READ_BIT(RCC->CR, RCC_CR_PLLRDY) == 0) {};
+    //while(READ_BIT(RCC->CR, RCC_CR_PLLRDY) == 0) {};
 
     // Switch to PLL
-    SET_BIT(RCC->CFGR, RCC_CFGR_SW_PLL);
+    //SET_BIT(RCC->CFGR, RCC_CFGR_SW_PLL);
 
   #endif // (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
 
-    // Disable all interrupts
-    RCC->CIR = 0;
+    // Disable and clear all interrupts
+    //RCC->CIR = 0;
 
     // Configure the Vector Table location add offset address ------------------
   #ifdef VECT_TAB_SRAM
@@ -152,3 +149,51 @@ void SystemInit(void)
 }
 
 //-------------------------------------------------------------------------------------------------
+
+
+{
+    // Set CFGR register
+  #ifndef STM32F10X_CL
+	RCC->CFGR = (SYS_HCLK_CFG | SYS_APB1_CFG | SYS_APB2_CFG);
+    RCC->CFGR &= (uint32_t)0xF8FF0000;
+  #else
+    RCC->CFGR &= (uint32_t)0xF0FF0000;
+	RCC->CFGR = (SYS_HCLK_CFG | SYS_APB1_CFG | SYS_APB2_CFG);
+  #endif
+  
+  /* Reset HSEON, CSSON and PLLON bits */
+  RCC->CR &= (uint32_t)0xFEF6FFFF;
+
+  /* Reset HSEBYP bit */
+  RCC->CR &= (uint32_t)0xFFFBFFFF;
+
+  /* Reset PLLSRC, PLLXTPRE, PLLMUL and USBPRE/OTGFSPRE bits */
+  RCC->CFGR &= (uint32_t)0xFF80FFFF;
+
+  /* Reset PLL2ON and PLL3ON bits */
+#ifdef STM32F10X_CL
+  RCC->CR &= (uint32_t)0xEBFFFFFF;
+#endif /* STM32F10X_CL */
+
+
+  /* Disable all interrupts and clear pending bits  */
+#ifdef STM32F10X_CL
+  RCC->CIR = 0x00FF0000;
+#else
+  RCC->CIR = 0x009F0000;
+#endif /* STM32F10X_CL */
+
+
+  /* Reset CFGR2 register */
+#if defined (STM32F10X_CL) || defined (STM32F10X_LD_VL) || defined (STM32F10X_MD_VL) || (defined STM32F10X_HD_VL)
+  RCC->CFGR2 = 0x00000000;      
+#else
+#endif /* STM32F10X_CL */
+    
+
+  /* Configure the System clock frequency, HCLK, PCLK2 and PCLK1 prescalers */
+  /* Configure the Flash Latency cycles and enable prefetch buffer */
+  SetSysClock();
+}
+
+

@@ -42,7 +42,7 @@
 //-------------------------------------------------------------------------------------------------
 // Variables(s)
 //-------------------------------------------------------------------------------------------------
-
+SYS_PLL_SOURCE_MUX
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SystemInit
@@ -74,12 +74,12 @@ void SystemInit(void)
     SET_BIT(RCC->CR, RCC_CR_HSION);
 
     // Set CFGR register
-	RCC->CFGR = (SYS_HCLK_CFG | SYS_APB1_CFG | SYS_APB2_CFG | MCO_OUTPUT_SELECT);
+	RCC->CFGR = (SYS_HCLK_CFG | SYS_APB1_CFG | SYS_APB2_CFG | MCO_OUTPUT_SELECT | );
 
     // Reset HSEBYP, CSSON and PLLON bits
 	CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));
 
-  #if (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
+  #if (SYS_CLOCK_MUX == RCC_CFGR_SW_PLL)
 
     SET_BIT(RCC->CR, RCC_CR_HSEON);
 
@@ -98,18 +98,13 @@ void SystemInit(void)
         // Wait for HSI to be ready B4 enabling PLL
         while(READ_BIT(RCC->CR, RCC_CR_HSIRDY) == 0) {};
 
-        // Set PLLCFGR register
-        RCC->PLLCFGR = RCC_HSI_PLL_CFGR_CFG;
-
-      #if (HSE_AND_HSI_MUST_BE_MATCHED == DEF_ENABLED)
-        // Set a flag for main loop to signal HSE clock failure!
-        SystemHSE_ClockFailure = true;
-      #endif
+        // Set PLL src in CFGR register
+        MODIFY_REG(RCC->CFGR, RCC_CFGR_PLL_SRC_MASK, SYS_PLL_SOURCE_MUX);
     }
     else
     {
-        // Set PLLCFGR register
-        RCC->PLLCFGR = RCC_HSE_PLL_CFGR_CFG;
+        // Set PLL src in CFGR register
+        MODIFY_REG(RCC->CFGR, RCC_CFGR_PLL_SRC_MASK, SYS_PLL_SOURCE_MUX);
 
         // Reset HSION bit to reduce consumption
         CLEAR_BIT(RCC->CR, RCC_CR_HSION);

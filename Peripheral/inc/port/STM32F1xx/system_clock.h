@@ -165,20 +165,11 @@
                                                      CFG_RCC_PLLCFGR_PLLSRC_HSE)
 // --------------------
 // HSI versus HSE Check
-#ifdef HSE_AND_HSI_MUST_BE_MATCHED
-  #if SYS_HSI_PLL_CLK_FREQUENCY == SYS_HSE_PLL_CLK_FREQUENCY
-    #define SYS_PLL_CLK_FREQUENCY                  SYS_HSE_PLL_CLK_FREQUENCY
-  #else
-    #pragma message "XSTR(SYS_HSI_PLL_CLK_FREQUENCY != SYS_HSE_PLL_CLK_FREQUENCY)"
-    #error Both HSI anf HSE configuration must give in the same system frequency
-  #endif
-#else
   #if SYS_PLL_MUX == RCC_PLLCFGR_PLLSRC_HSE
     #define SYS_PLL_CLK_FREQUENCY = SYS_HSE_PLL_CLK_FREQUENCY
   #else
     #define SYS_PLL_CLK_FREQUENCY = SYS_HSI_PLL_CLK_FREQUENCY
   #endif
-#endif
 
 
 #endif // SYS_CLOCK_MUX == RCC_CFGR_SW_PLL
@@ -299,10 +290,6 @@
 //-------------------------------------------------------------------------------------------------
 
 SYSTEM_EXTERN   uint32_t        SystemCoreClock;
-
-#if (HSE_AND_HSI_MUST_BE_MATCHED == DEF_ENABLED)
-SYSTEM_EXTERN   bool            SystemHSE_ClockFailure;
-#endif
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)

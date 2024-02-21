@@ -106,11 +106,6 @@ void SystemInit(void)
 
         // Set PLLCFGR register
         RCC->PLLCFGR = RCC_HSI_PLL_CFGR_CFG;
-
-      #if (HSE_AND_HSI_MUST_BE_MATCHED == DEF_ENABLED)
-        // Set a flag for main loop to signal HSE clock failure!
-        SystemHSE_ClockFailure = true;
-      #endif
     }
     else
     {
@@ -119,11 +114,6 @@ void SystemInit(void)
 
         // Reset HSION bit to reduce consumption
         CLEAR_BIT(RCC->CR, RCC_CR_HSION);
-
-      #if (HSE_AND_HSI_MUST_BE_MATCHED == DEF_ENABLED)
-        // Set a flag for main loop signal HSE is OK!
-        SystemHSE_ClockFailure = false;
-      #endif
     }
 
     // Set flash latency

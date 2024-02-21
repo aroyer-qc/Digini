@@ -124,18 +124,17 @@
   #define CFG_RCC_PLL_CFGR                                  (CFG_RCC_CFGR_PLL_DIVIDER    | \
                                                              CFG_RCC_CFGR_PLL_MULTIPLIER | \
                                                              CFG_PLL_SOURCE_MUX)
-  #endif
 
   #define SYS_CPU_CORE_CLOCK_FREQUENCY                      CFG_PLL_CLK_FREQUENCY
 
 #elif (CFG_SYS_CLOCK_MUX == RCC_CFGR_SW_HSE)
-    
+
   #define SYS_CPU_CORE_CLOCK_FREQUENCY                      HSE_VALUE
-  
+
 #else //(CFG_SYS_CLOCK_MUX == RCC_CFGR_SW_HSI)
 
   #define SYS_CPU_CORE_CLOCK_FREQUENCY                      HSI_VALUE
-  
+
 #endif
 
 

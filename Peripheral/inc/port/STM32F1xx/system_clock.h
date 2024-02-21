@@ -128,14 +128,14 @@
 
   #define SYS_CPU_CORE_CLOCK_FREQUENCY                      CFG_PLL_CLK_FREQUENCY
 
-#if (CFG_SYS_CLOCK_MUX == RCC_CFGR_SW_HSE)
-
+#elif (CFG_SYS_CLOCK_MUX == RCC_CFGR_SW_HSE)
+    
   #define SYS_CPU_CORE_CLOCK_FREQUENCY                      HSE_VALUE
-
+  
 #else //(CFG_SYS_CLOCK_MUX == RCC_CFGR_SW_HSI)
 
   #define SYS_CPU_CORE_CLOCK_FREQUENCY                      HSI_VALUE
-
+  
 #endif
 
 

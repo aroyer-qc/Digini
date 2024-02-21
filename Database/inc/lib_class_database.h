@@ -35,7 +35,9 @@
 #include "project_def.h"
 #include "lib_label.h"
 #include "database_cfg.h"
-#include "lib_grafx_dbase.h"
+#if (DIGINI_USE_GRAFX == DEF_ENABLED)
+  #include "lib_grafx_dbase.h"
+#endif
 #include <string.h>
 
 //-------------------------------------------------------------------------------------------------

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_STM32F4_rng.cpp
+//  File : lib_generic_rng.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2023 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -31,6 +31,7 @@
 #define RNG_DRIVER_GLOBAL
 #include "lib_digini.h"
 #undef  RNG_DRIVER_GLOBAL
+#include <stdlib.h>         // srand, rand
 
 //-------------------------------------------------------------------------------------------------
 
@@ -44,6 +45,12 @@ extern "C"
 #endif
 
 //-------------------------------------------------------------------------------------------------
+// Global Variable(s)
+//-------------------------------------------------------------------------------------------------
+
+static uint32_t RNG_LastRandomValue = 0x4FA8E34C;               // no signification to this number
+
+//-------------------------------------------------------------------------------------------------
 //
 //   Function name: Initialize
 //
@@ -55,8 +62,7 @@ extern "C"
 //-------------------------------------------------------------------------------------------------
 void RNG_Initialize(void)
 {
-    RCC->AHB2ENR |= RCC_AHB2ENR;        // Enable clock to module
-    RNG->CR      |= RNG_CR_RNGEN;       // Enable the RNG Peripheral
+    srand(GetTick());
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -68,12 +74,18 @@ void RNG_Initialize(void)
 //
 //   Description:   Return a ramdom value from 0x00000000 to 0xFFFFFFFF
 //
+//   Note(s):       This is not a truly random generator, but close enough for most of the case
+//
 //-------------------------------------------------------------------------------------------------
 uint32_t RNG_GetRandom(void)
 {
-    while((RNG->SR & RNG_SR_DRDY) == 0){};      // Should never jam;
+    uint32_t RandomValue;
+
+    srand(GetTick());
+    RandomValue =  (uint32_t(rand()) || ((uint32_t(rand())) << 16)) ^ RNG_LastRandomValue;
+    RNG_LastRandomValue = RandomValue;
     
-    return RNG->DR;
+    return RandomValue;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -93,8 +105,8 @@ uint32_t RNG_GetRandomFromRange(uint32_t Min, uint32_t Max)
     uint32_t RandomValue;
     
     CalculatedRandom = (Max - Min) + 1;             // This is the range
-    while((RNG->SR & RNG_SR_DRDY) == 0){};          // Should never jam;
-    RandomValue = RNG->DR;
+    RandomValue = RNG_GetRandom();
+    RNG->DR;
     
     return uint32_t((uint64_t(RandomValue) * uint64_t(CalculatedRandom)) >> sizeof(uint32_t)) + Min;
 }

@@ -43,9 +43,7 @@
 //   Parameter(s):  None
 //   Return value:  None
 //
-//   Description:   Initializes the RTC peripheral according to the specified Parameters
-//
-//   Note(s):
+//   Description:   Initializes the random number generator
 //
 //-------------------------------------------------------------------------------------------------
 void RNG_Initialize(void)

@@ -159,11 +159,7 @@
 #elif CFG_AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV512
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 512)
 #endif
-<<<<<<< Updated upstream
 #define CFG_SYS_HCLK                                CFG_AHB_CLK_DIVIDER
-=======
-#define CFG_SYS_HCLK                                AHB_CLK_DIVIDER
->>>>>>> Stashed changes
 
 #define SYSTEM_CORE_CLOCK                           SYS_CPU_CORE_CLOCK_FREQUENCY
 
@@ -173,7 +169,7 @@
     #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 2)
 #elif CFG_APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV4
     #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 4)
-#elif CFG_APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV8
+#elif APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV8
     #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 8)
 #elif CFG_APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV16
     #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 16)

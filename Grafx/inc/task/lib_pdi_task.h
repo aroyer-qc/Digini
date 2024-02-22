@@ -48,7 +48,7 @@
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
-#define TOUCH_LOOP_DELAY                    10 //SYSTICK_RATE / 100
+#define TOUCH_LOOP_DELAY                    10 //CFG_SYSTICK_RATE / 100
 #define TOUCH_PRESS_COUNT                   1
 #define TOUCH_SUPERKEY_COUNT                30
 #define TOUCH_TYPEMATIC_PRECOUNT            30

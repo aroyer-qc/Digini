@@ -78,7 +78,7 @@ void SystemInit(void)
 
     //----------------------------- HSE Configuration --------------------------
 
-  #if (SYS_PLL_SOURCE_MUX == RCC_PLLCFGR_PLLSRC_HSE) || (SYS_CLOCK_MUX == RCC_CFGR_SW_HSE)
+  #if (CFG_SYS_PLL_MUX == CFG_RCC_PLLCFGR_PLLSRC_HSE) || (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_HSE)
     RCC->CR|=  RCC_CR_HSEON;                                                // Enable the External High Speed oscillator (HSE).
     while((RCC->CR & RCC_CR_HSERDY) == 0);                                  // Wait till HSE is ready
   #endif
@@ -101,30 +101,22 @@ void SystemInit(void)
 
     //-------------------------------- PLL Configuration -----------------------
 
-  #if (SYS_CLOCK_MUX == RCC_CFGR_SW_PLL)
+  #if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
     // Disable the main PLL.
     RCC->CR &= ~RCC_CR_PLLON;
 
-   #if (SYS_PLL_SOURCE_MUX == RCC_PLLCFGR_PLLSRC_HSE)
     // Configure the main PLL clock source, multiplication and division factors.
-    RCC->PLLCFGR = HSE_PLLM_DIVIDER                                            |
-                   (HSE_PLLM_N_MULTIPLIER << RCC_PLLCFGR_PLL_N_POS)            |
-                   (((HSE_PLLM_P_DIVIDER >> 1) - 1) << RCC_PLLCFGR_PLL_P_POS)  |
-                   (SYS_PLL_SOURCE_MUX)                                        |
-                    (HSE_PLLM_Q_DIVIDER << RCC_PLLCFGR_PLL_Q_POS);
-   #else
-    RCC->PLLCFGR = HSI_PLLM_DIVIDER                                            |
-                   (HSI_PLLM_N_MULTIPLIER << RCC_PLLCFGR_PLL_N_POS)            |
-                   (((HSI_PLLM_P_DIVIDER >> 1) - 1) << RCC_PLLCFGR_PLL_P_POS)  |
-                   (SYS_PLL_SOURCE_MUX)                                        |
-                    (HSI_PLLM_Q_DIVIDER << RCC_PLLCFGR_PLL_Q_POS);
-   #endif
+    RCC->PLLCFGR = CFG_PLLM_DIVIDER                                            |
+                   (CFG_PLLM_N_MULTIPLIER << RCC_PLLCFGR_PLL_N_POS)            |
+                   (((CFG_PLLM_P_DIVIDER >> 1) - 1) << RCC_PLLCFGR_PLL_P_POS)  |
+                   (CFG_SYS_PLL_MUX)                                        |
+                    (CFG_PLLM_Q_DIVIDER << RCC_PLLCFGR_PLL_Q_POS);
 
-    RCC->CR |= RCC_CR_PLLON;                                        // Enable the main PLL.
-    while((RCC->CR & RCC_CR_PLLRDY) == 0);                          // Wait till PLL is ready
-    FLASH->ACR = FLASH_ACR_PRFTEN | CFG_FLASH_LATENCY;              // Configure Flash prefetch and wait state
-    RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW_Msk) | RCC_CFGR_SW_PLL;   // Select the main PLL as system clock source
-    while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);          // Wait till the main PLL is used as system clock source
+    RCC->CR |= RCC_CR_PLLON;                                            // Enable the main PLL.
+    while((RCC->CR & RCC_CR_PLLRDY) == 0);                              // Wait till PLL is ready
+    FLASH->ACR = FLASH_ACR_PRFTEN | CFG_FLASH_LATENCY;                  // Configure Flash prefetch and wait state
+    RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW_Msk) | CFG_RCC_CFGR_SW_PLL;   // Select the main PLL as system clock source
+    while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);              // Wait till the main PLL is used as system clock source
   #endif
 
     RCC->DCKCFGR2 |= RCC_DCKCFGR2_CK48MSEL;

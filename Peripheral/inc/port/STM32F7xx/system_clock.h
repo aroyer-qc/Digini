@@ -199,7 +199,7 @@
 
 // --------------------------------------------------------------------------------------------------------------------------------
 
-#define SYS_HCLK_CFG                                HCLK_DIVIDER
+#define CFG_SYS_HCLK                                HCLK_DIVIDER
 
 #if   HCLK_DIVIDER == RCC_CFGR_HPRE_DIV1
     #define SYS_HCLK_CLOCK_FREQUENCY                SYS_CPU_CORE_CLOCK_FREQUENCY
@@ -225,7 +225,7 @@
 
 // --------------------------------------------------------------------------------------------------------------------------------
 
-#define SYS_APB1_CFG                                APB1_CLK_DIVIDER
+#define CFG_SYS_APB1                                APB1_CLK_DIVIDER
 
 #if   APB1_CLK_DIVIDER == RCC_CFGR_PPRE1_DIV1
     #define SYS_APB1_CLOCK_FREQUENCY                SYS_HCLK_CLOCK_FREQUENCY
@@ -243,7 +243,7 @@
 
 // --------------------------------------------------------------------------------------------------------------------------------
 
-#define SYS_APB2_CFG                                APB2_CLK_DIVIDER
+#define CFG_SYS_APB2                                APB2_CLK_DIVIDER
 
 #if   APB2_CLK_DIVIDER == RCC_CFGR_PPRE2_DIV1
     #define SYS_APB2_CLOCK_FREQUENCY                SYS_HCLK_CLOCK_FREQUENCY
@@ -272,21 +272,21 @@
 
 // Flash Latency configuration for Voltage from 2.7V to 3.6V
 #if   (SYS_CPU_CORE_CLOCK_FREQUENCY <= 30000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_0WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_0WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 60000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_1WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_1WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 90000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_2WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_2WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 120000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_3WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_3WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 150000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_4WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_4WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 180000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_5WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_5WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 210000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_6WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_6WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 216000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_7WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_7WS
 #endif
 
 // --------------------------------------------------------------------------------------------------------------------------------

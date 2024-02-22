@@ -55,7 +55,7 @@ void LIB_Delay_uSec(uint32_t Delay)
 
     for(i = 0; i < Delay; i++)
     {
-        for(j = 0; j <= LIB_TIMING_CFG_DELAY_LOOP_VALUE_FOR_1_USEC; j++);
+        for(j = 0; j <= CFG_DELAY_TIMING_LOOP_VALUE_FOR_1_USEC; j++);
     }
 }
 

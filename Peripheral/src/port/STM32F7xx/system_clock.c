@@ -122,7 +122,7 @@ void SystemInit(void)
 
     RCC->CR |= RCC_CR_PLLON;                                        // Enable the main PLL.
     while((RCC->CR & RCC_CR_PLLRDY) == 0);                          // Wait till PLL is ready
-    FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_LATENCY_CFG;              // Configure Flash prefetch and wait state
+    FLASH->ACR = FLASH_ACR_PRFTEN | CFG_FLASH_LATENCY;              // Configure Flash prefetch and wait state
     RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW_Msk) | RCC_CFGR_SW_PLL;   // Select the main PLL as system clock source
     while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);          // Wait till the main PLL is used as system clock source
   #endif
@@ -130,7 +130,7 @@ void SystemInit(void)
     RCC->DCKCFGR2 |= RCC_DCKCFGR2_CK48MSEL;
 
     // AHB,APB1,APB2 CLOCK
-    RCC->CFGR |= (SYS_HCLK_CFG | SYS_APB1_CFG | SYS_APB2_CFG);
+    RCC->CFGR |= (CFG_SYS_HCLK | CFG_SYS_APB1 | CFG_SYS_APB2);
 
     // Configure the Vector Table location add offset address
   #ifdef VECT_TAB_SRAM

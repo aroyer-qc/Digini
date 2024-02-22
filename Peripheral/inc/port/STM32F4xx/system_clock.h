@@ -78,162 +78,117 @@
 // Auto define configuration
 //-------------------------------------------------------------------------------------------------
 
-#define RCC_PLLCFGR_PLL_M_POS           0
-#define RCC_PLLCFGR_PLL_N_POS           6
-#define RCC_PLLCFGR_PLL_P_POS           16
-#define RCC_PLLCFGR_PLL_Q_POS           24
+#define CFG_RCC_PLLCFGR_PLL_M_POS               0
+#define CFG_RCC_PLLCFGR_PLL_N_POS               6
+#define CFG_RCC_PLLCFGR_PLL_P_POS               16
+#define CFG_RCC_PLLCFGR_PLL_Q_POS               24
 
 //-------------------------------------------------------------------------------------------------
 // Auto configuration value for PLL
-#if (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
-  // ---------
-  // HSI Check
-  #define SYS_HSI_PLL_CLK_FREQUENCY                 (((HSI_PLL_SOURCE / HSI_PLL_M_DIVIDER) * HSI_PLL_N_MULTIPLIER) / HSI_PLL_P_DIVIDER)
-  #define SYS_HSI_PLL_Q_FREQUENCY                   (((HSI_PLL_SOURCE / HSI_PLL_M_DIVIDER) * HSI_PLL_N_MULTIPLIER) / HSI_PLL_Q_DIVIDER)
+#if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
 
-  #if (HSI_PLL_M_DIVIDER < 2) || (HSI_PLL_M_DIVIDER > 63)
-    #pragma message "XSTR(HSI_PLL_M_DIVIDER)"
-    #error PLL_M for HSI is out of range
+  #define CFG_PLL_CLK_FREQUENCY                     (((CFG_PLL_SOURCE / CFG_PLL_M_DIVIDER) * CFG_PLL_N_MULTIPLIER) / CFG_PLL_P_DIVIDER)
+  #define CFG_PLL_Q_FREQUENCY                       (((CFG_PLL_SOURCE / CFG_PLL_M_DIVIDER) * CFG_PLL_N_MULTIPLIER) / CFG_PLL_Q_DIVIDER)
+
+  #if (CFG_PLL_M_DIVIDER < 2) || (CFG_PLL_M_DIVIDER > 63)
+    #pragma message "XSTR(CFG_PLL_M_DIVIDER)"
+    #error PLL_M is out of range
   #else
-    #define RCC_PLL_CFGR_HSI_PLL_M_CFG              (HSI_PLL_M_DIVIDER << RCC_PLLCFGR_PLL_M_POS)
+    #define CFG_RCC_PLL_CFGR_PLL_M                  (CFG_PLL_M_DIVIDER << CFG_RCC_PLLCFGR_PLL_M_POS)
   #endif
 
-  #if (HSI_PLL_N_MULTIPLIER < 50) || (HSI_PLL_N_MULTIPLIER > 432)
-    #pragma message "XSTR(HSI_PLL_N_MULTIPLIER)"
-    #error PLL_N for HSI is out of range
+  #if (CFG_PLL_N_MULTIPLIER < 50) || (CFG_PLL_N_MULTIPLIER > 432)
+    #pragma message "XSTR(CFG_PLL_N_MULTIPLIER)"
+    #error PLL_N is out of range
   #else
-    #define RCC_PLL_CFGR_HSI_PLL_N_CFG              (HSI_PLL_N_MULTIPLIER << RCC_PLLCFGR_PLL_N_POS)
+    #define CFG_RCC_PLL_CFGR_PLL_N                  (CFG_PLL_N_MULTIPLIER << CFG_RCC_PLLCFGR_PLL_N_POS)
   #endif
 
-  #if ((HSI_PLL_P_DIVIDER / 2) < 1) || ((HSI_PLL_P_DIVIDER / 2) > 4)   // (tested for 2,4,6,8)
-    #pragma message "XSTR(HSI_PLL_P_DIVIDER)"
-    #error PLL_P for HSI is out of range
+  #if ((CFG_PLL_P_DIVIDER / 2) < 1) || ((CFG_PLL_P_DIVIDER / 2) > 4)   // (tested for 2,4,6,8)
+    #pragma message "XSTR(CFG_PLL_P_DIVIDER)"
+    #error PLL_P is out of range
   #else
-    #define RCC_PLL_CFGR_HSI_PLL_P_CFG              (((HSI_PLL_P_DIVIDER / 2) - 1) << RCC_PLLCFGR_PLL_P_POS)
+    #define CFG_RCC_PLL_CFGR_PLL_P                  (((CFG_PLL_P_DIVIDER / 2) - 1) << CFG_RCC_PLLCFGR_PLL_P_POS)
   #endif
 
-  #if (HSI_PLL_Q_DIVIDER < 2) || (HSI_PLL_Q_DIVIDER > 15)
-    #pragma message "XSTR(HSI_PLL_Q_DIVIDER)"
-    #error PLL_Q for HSI is out of range
+  #if (CFG_PLL_Q_DIVIDER < 2) || (CFG_PLL_Q_DIVIDER > 15)
+    #pragma message "XSTR(CFG_PLL_Q_DIVIDER)"
+    #error PLL_Q is out of range
   #else
-    #define RCC_PLL_CFGR_HSI_PLL_Q_CFG              (HSI_PLL_Q_DIVIDER << RCC_PLLCFGR_PLL_Q_POS)
+    #define CFG_RCC_PLL_CFGR_PLL_Q                  (CFG_PLL_Q_DIVIDER << CFG_RCC_PLLCFGR_PLL_Q_POS)
   #endif
 
-  #define RCC_HSI_PLL_CFGR_CFG                      (RCC_PLL_CFGR_HSI_PLL_M_CFG |   \
-                                                     RCC_PLL_CFGR_HSI_PLL_N_CFG |   \
-                                                     RCC_PLL_CFGR_HSI_PLL_P_CFG |   \
-                                                     RCC_PLL_CFGR_HSI_PLL_Q_CFG |   \
-                                                     CFG_RCC_PLLCFGR_PLLSRC_HSI)
+  #define CFG_RCC_PLL_CFGR_CFG                      (CFG_RCC_PLL_CFGR_HSI_PLL_M |   \
+                                                     CFG_RCC_PLL_CFGR_HSI_PLL_N |   \
+                                                     CFG_RCC_PLL_CFGR_HSI_PLL_P |   \
+                                                     CFG_RCC_PLL_CFGR_HSI_PLL_Q |   \
+                                                     CFG_RCC_PLLCFGR_PLLSRC)
 
-  // ---------
-  // HSE Check
-  #define SYS_HSE_PLL_CLK_FREQUENCY                 (((HSE_PLL_SOURCE / HSE_PLL_M_DIVIDER) * HSE_PLL_N_MULTIPLIER) / HSE_PLL_P_DIVIDER)
-  #define SYS_HSE_PLL_Q_FREQUENCY                   (((HSE_PLL_SOURCE / HSE_PLL_M_DIVIDER) * HSE_PLL_N_MULTIPLIER) / HSE_PLL_Q_DIVIDER)
-
-  #if (HSE_PLL_M_DIVIDER < 2) || (HSE_PLL_M_DIVIDER > 63)
-    #pragma message "XSTR(HSE_PLL_M_DIVIDER)"
-    #error PLL_M for HSE is out of range
-  #else
-    #define RCC_PLL_CFGR_HSE_PLL_M_CFG              (HSE_PLL_M_DIVIDER << RCC_PLLCFGR_PLL_M_POS)
-  #endif
-
-  #if (HSE_PLL_N_MULTIPLIER < 50) || (HSE_PLL_N_MULTIPLIER > 432)
-    #pragma message "XSTR(HSE_PLL_N_MULTIPLIER)"
-    #error PLL_N for HSE is out of range
-  #else
-    #define RCC_PLL_CFGR_HSE_PLL_N_CFG              (HSE_PLL_N_MULTIPLIER << RCC_PLLCFGR_PLL_N_POS)
-  #endif
-
-  #if ((HSE_PLL_P_DIVIDER / 2) < 1) || ((HSE_PLL_P_DIVIDER / 2) > 4)   // (tested for 2,4,6,8)
-    #pragma message "XSTR(HSE_PLL_P_DIVIDER)"
-    #error PLL_P for HSE is out of range
-  #else
-    #define RCC_PLL_CFGR_HSE_PLL_P_CFG              (((HSE_PLL_P_DIVIDER / 2) - 1) << RCC_PLLCFGR_PLL_P_POS)
-  #endif
-
-  #if (HSE_PLL_Q_DIVIDER < 2) || (HSE_PLL_Q_DIVIDER > 15)
-    #pragma message "XSTR(HSE_PLL_Q_DIVIDER)"
-    #error PLL_Q for HSE is out of range
-  #else
-    #define RCC_PLL_CFGR_HSE_PLL_Q_CFG              (HSE_PLL_Q_DIVIDER << RCC_PLLCFGR_PLL_Q_POS)
-  #endif
-
-  #define RCC_HSE_PLL_CFGR_CFG                      (RCC_PLL_CFGR_HSE_PLL_M_CFG |   \
-                                                     RCC_PLL_CFGR_HSE_PLL_N_CFG |   \
-                                                     RCC_PLL_CFGR_HSE_PLL_P_CFG |   \
-                                                     RCC_PLL_CFGR_HSE_PLL_Q_CFG |   \
-                                                     CFG_RCC_PLLCFGR_PLLSRC_HSE)
-// --------------------
-// HSI versus HSE Check
-  #if SYS_PLL_MUX == RCC_PLLCFGR_PLLSRC_HSE
-    #define SYS_PLL_CLK_FREQUENCY = SYS_HSE_PLL_CLK_FREQUENCY
-  #else
-    #define SYS_PLL_CLK_FREQUENCY = SYS_HSI_PLL_CLK_FREQUENCY
-  #endif
+  #define CFG_SYS_PLL_CLK_FREQUENCY                 CFG_PLL_CLK_FREQUENCY
 
 
-#endif // SYS_CLOCK_MUX == RCC_CFGR_SW_PLL
+#endif // CFG_SYS_CLOCK_MUX == RCC_CFGR_SW_PLL
 
 // --------------------------------------------------------------------------------------------------------------------------------
 
-#if (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
-  #define SYS_CPU_CORE_CLOCK_FREQUENCY              SYS_PLL_CLK_FREQUENCY
-#elif (SYS_CLOCK_MUX == RCC_CFGR_SW_HSE)
-  #define SYS_CPU_CORE_CLOCK_FREQUENCY              HSE_VALUE
-#else //(SYS_CLOCK_MUX == RCC_CFGR_SW_HSI)
-  #define SYS_CPU_CORE_CLOCK_FREQUENCY              HSI_VALUE
+#if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
+  #define SYS_CPU_CORE_CLOCK_FREQUENCY              CFG_SYS_PLL_CLK_FREQUENCY
+#elif (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_HSE)
+  #define SYS_CPU_CORE_CLOCK_FREQUENCY              CFG_HSE_VALUE
+#else //(CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_HSI)
+  #define SYS_CPU_CORE_CLOCK_FREQUENCY              CFG_HSI_VALUE
 #endif
 
 
-#if   AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV1
+#if   CFG_AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV1
     #define SYS_HCLK_CLOCK_FREQUENCY                SYS_CPU_CORE_CLOCK_FREQUENCY
-#elif AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV2
+#elif CFG_AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV2
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 2)
-#elif AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV4
+#elif CFG_AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV4
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 4)
-#elif AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV8
+#elif CFG_AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV8
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 8)
-#elif AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV16
+#elif CFG_AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV16
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 16)
-#elif AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV64
+#elif CFG_AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV64
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 64)
-#elif AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV128
+#elif CFG_AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV128
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 128)
-#elif AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV256
+#elif CFG_AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV256
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 256)
-#elif AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV512
+#elif CFG_AHB_CLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV512
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 512)
 #endif
-#define SYS_HCLK_CFG                                AHB_CLK_DIVIDER
+#define CFG_SYS_HCLK                                CFG_AHB_CLK_DIVIDER
 
 #define SYSTEM_CORE_CLOCK                           SYS_CPU_CORE_CLOCK_FREQUENCY
 
-#if   APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV1
+#if   CFG_APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV1
     #define SYS_APB1_CLOCK_FREQUENCY                SYS_HCLK_CLOCK_FREQUENCY
-#elif APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV2
+#elif CFG_APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV2
     #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 2)
-#elif APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV4
+#elif CFG_APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV4
     #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 4)
-#elif APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV8
+#elif CFG_APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV8
     #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 8)
-#elif APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV16
+#elif CFG_APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV16
     #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 16)
 #endif
-#define SYS_APB1_CFG                                APB1_CLK_DIVIDER
+#define CFG_SYS_APB1                                CFG_APB1_CLK_DIVIDER
 #define SYS_APB1_TIMER_CLOCK_FREQUENCY              (SYS_APB1_CLOCK_FREQUENCY * 2)
 
-#if   APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV1
+#if   CFG_APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV1
     #define SYS_APB2_CLOCK_FREQUENCY                SYS_HCLK_CLOCK_FREQUENCY
-#elif APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV2
+#elif CFG_APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV2
     #define SYS_APB2_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 2)
-#elif APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV4
+#elif CFG_APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV4
     #define SYS_APB2_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 4)
-#elif APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV8
+#elif CFG_APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV8
     #define SYS_APB2_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 8)
-#elif APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV16
+#elif CFG_APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV16
     #define SYS_APB2_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 16)
 #endif
-#define SYS_APB2_CFG                                APB2_CLK_DIVIDER
+#define CFG_SYS_APB2                                CFG_APB2_CLK_DIVIDER
 #define SYS_APB2_TIMER_CLOCK_FREQUENCY              SYS_APB2_CLOCK_FREQUENCY * 2
 
 
@@ -246,17 +201,17 @@
 
 // Flash Latency configuration for Voltage from 2.7V to 3.6V
 #if   (SYS_CPU_CORE_CLOCK_FREQUENCY <= 30000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_0WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_0WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 60000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_1WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_1WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 90000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_2WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_2WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 120000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_3WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_3WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 150000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_4WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_4WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 168000000)
-#define FLASH_LATENCY_CFG                           FLASH_ACR_LATENCY_5WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_5WS
 #endif
 
 // Verification

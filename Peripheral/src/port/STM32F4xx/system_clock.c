@@ -80,7 +80,7 @@ void SystemInit(void)
     SET_BIT(RCC->CR, RCC_CR_HSION);
 
     // Set CFGR register
-	RCC->CFGR = (SYS_HCLK_CFG | SYS_APB1_CFG | SYS_APB2_CFG);
+	RCC->CFGR = (CFG_SYS_HCLK | CFG_SYS_APB1 | CFG_SYS_APB2);
 
     // Reset HSEBYP, CSSON and PLLON bits
 	CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));
@@ -117,7 +117,7 @@ void SystemInit(void)
     }
 
     // Set flash latency
-    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, FLASH_LATENCY_CFG);
+    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, CFG_FLASH_LATENCY);
 
     // Enable PLL
     SET_BIT(RCC->CR, RCC_CR_PLLON);

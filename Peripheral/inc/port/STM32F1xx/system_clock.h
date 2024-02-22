@@ -157,7 +157,7 @@
 #elif CFG_AHB_CLK_DIVIDER == CFG_CLOCK_AHB_DIV512
     #define SYS_HCLK_CLOCK_FREQUENCY                        (SYS_CPU_CORE_CLOCK_FREQUENCY / 512)
 #endif
-#define SYS_HCLK_CFG                                        CFG_AHB_CLK_DIVIDER
+#define CFG_SYS_HCLK                                        CFG_AHB_CLK_DIVIDER
 
 #define SYSTEM_CORE_CLOCK                                   SYS_CPU_CORE_CLOCK_FREQUENCY
 
@@ -172,7 +172,7 @@
 #elif CFG_APB1_CLK_DIVIDER == CFG_CLOCK_APB1_DIV16
     #define SYS_APB1_CLOCK_FREQUENCY                        (SYS_HCLK_CLOCK_FREQUENCY / 16)
 #endif
-#define SYS_APB1_CFG                                        CFG_APB1_CLK_DIVIDER
+#define CFG_SYS_APB1                                        CFG_APB1_CLK_DIVIDER
 #define SYS_APB1_TIMER_CLOCK_FREQUENCY                      (SYS_APB1_CLOCK_FREQUENCY * 2)
 
 #if   CFG_APB2_CLK_DIVIDER == CFG_CLOCK_APB2_DIV1
@@ -186,16 +186,16 @@
 #elif CFG_APB2_CLK_DIVIDER == CFG_CLOCK_APB2_DIV16
     #define SYS_APB2_CLOCK_FREQUENCY                        (SYS_HCLK_CLOCK_FREQUENCY / 16)
 #endif
-#define SYS_APB2_CFG                                        CFG_APB2_CLK_DIVIDER
+#define CFG_SYS_APB2                                        CFG_APB2_CLK_DIVIDER
 #define SYS_APB2_TIMER_CLOCK_FREQUENCY                      SYS_APB2_CLOCK_FREQUENCY
 
 // Flash Latency configuration for Voltage from 2.7V to 3.6V
 #if   (SYS_CPU_CORE_CLOCK_FREQUENCY <= 24000000)
-#define FLASH_LATENCY_CFG                                   FLASH_ACR_LATENCY_0
+#define CFG_FLASH_LATENCY                                   FLASH_ACR_LATENCY_0
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 48000000)
-#define FLASH_LATENCY_CFG                                   FLASH_ACR_LATENCY_1
+#define CFG_FLASH_LATENCY                                   FLASH_ACR_LATENCY_1
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 72000000)
-#define FLASH_LATENCY_CFG                                   FLASH_ACR_LATENCY_2
+#define CFG_FLASH_LATENCY                                   FLASH_ACR_LATENCY_2
 #endif
 
 // Verification

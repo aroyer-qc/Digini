@@ -271,7 +271,7 @@ void        IO_PinInitOutput            (IO_ID_e IO_ID);
 void        IO_SetPinLow                (IO_ID_e IO_ID);
 void        IO_SetPinHigh               (IO_ID_e IO_ID);
 void        IO_TogglePin                (IO_ID_e IO_ID);
-void        IO_SetPin                   (IO_ID_e IO_ID, uint32_t Value);
+void        IO_SetPin                   (IO_ID_e IO_ID, bool Value);
 bool        IO_GetInputPin              (IO_ID_e IO_ID);
 uint32_t    IO_GetInputPinValue         (IO_ID_e IO_ID);
 bool        IO_GetOutputPin             (IO_ID_e IO_ID);

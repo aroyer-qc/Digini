@@ -80,39 +80,4 @@
 #define MM_PER_INCH                         (25.40)
 #define INCH_PER_MM                         (0.0393701)
 
-#ifndef   PACKED_STRUCT
-  #define PACKED_STRUCT                     struct __attribute__((packed, aligned(1)))
-#endif
-
-#ifndef UNALIGNED_UINT16_WRITE
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wpacked"
-  #pragma GCC diagnostic ignored "-Wattributes"
-  PACKED_STRUCT T_UINT16_WRITE { uint16_t v; };
-  #pragma GCC diagnostic pop
-  #define UNALIGNED_UINT16_WRITE(addr, val)    (void)((((struct T_UINT16_WRITE *)(void *)(addr))->v) = (val))
-#endif
-#ifndef   UNALIGNED_UINT16_READ
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wpacked"
-  #pragma GCC diagnostic ignored "-Wattributes"
-  PACKED_STRUCT T_UINT16_READ { uint16_t v; };
-  #pragma GCC diagnostic pop
-  #define UNALIGNED_UINT16_READ(addr)          (((const struct T_UINT16_READ *)(const void *)(addr))->v)
-#endif
-#ifndef   UNALIGNED_UINT32_WRITE
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wpacked"
-  #pragma GCC diagnostic ignored "-Wattributes"
-  PACKED_STRUCT T_UINT32_WRITE { uint32_t v; };
-  #pragma GCC diagnostic pop
-  #define UNALIGNED_UINT32_WRITE(addr, val)    (void)((((struct T_UINT32_WRITE *)(void *)(addr))->v) = (val))
-#endif
-#ifndef   UNALIGNED_UINT32_READ
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wpacked"
-  #pragma GCC diagnostic ignored "-Wattributes"
-  PACKED_STRUCT T_UINT32_READ { uint32_t v; };
-  #pragma GCC diagnostic pop
-  #define UNALIGNED_UINT32_READ(addr)          (((const struct T_UINT32_READ *)(const void *)(addr))->v)
-#endif
+//-------------------------------------------------------------------------------------------------

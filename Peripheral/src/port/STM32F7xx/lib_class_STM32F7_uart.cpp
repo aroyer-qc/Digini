@@ -1140,7 +1140,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_IDLE) != 0)
     {
         m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_IDLE);
+        EnableRX_ISR(UART_ISR_RX_IDLE_CFG);
     }
   #endif
 
@@ -1148,7 +1148,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_ERROR) != 0)
     {
         m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_ERROR);
+        EnableRX_ISR(UART_ISR_RX_ERROR_CFG);
     }
   #endif
 
@@ -1164,7 +1164,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_COMPLETED_TX) != 0)
     {
         m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_TX_COMPLETED);
+        EnableRX_ISR(UART_ISR_TX_COMPLETED_CFG);
     }
   #endif
 }

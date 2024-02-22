@@ -89,11 +89,11 @@ void Console::Initialize(UART_Driver* pUartDriver)
   #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
     pUartDriver->EnableCallbackType(UART_CALLBACK_IDLE | UART_CALLBACK_COMPLETED_TX | UART_CALLBACK_ERROR);
   #endif
-  
+
   #if (CON_TRAP_INCOMING_COMMENT_LINE == DEF_ENABLED)
     m_InTrapForCommentLine = false;
     m_IsItIdle             = true;
-  #endif  
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -111,7 +111,7 @@ void Console::Initialize(UART_Driver* pUartDriver)
 //-------------------------------------------------------------------------------------------------
 void Console::Process(void)
 {
-    #if CON_TRAP_INCOMING_COMMENT_LINE == DEF_ENABLED)
+    #if (CON_TRAP_INCOMING_COMMENT_LINE == DEF_ENABLED)
     if(ReadyRead() == true)
     {
         if((m_Fifo.At(0) == CON_TRAP_COMMENT_CHARACTER) && (m_IsItIdle == true))        // Need to be idle and first char is comment.
@@ -122,18 +122,18 @@ void Console::Process(void)
         }
         else
         {
-            if(m_InTrapForCommentLine == true)                                          // Need to trap all character code in the line                                        
+            if(m_InTrapForCommentLine == true)                                          // Need to trap all character code in the line
             {
                 if(m_Fifo.At(0) == CON_END_OF_LINE_MARKER)                              // Until end of line marker is detected
                 {
                     m_InTrapForCommentLine = false;                                     // No longer in comment line
-                    m_IsItIdle = true;                                                  // Idle                                     
+                    m_IsItIdle = true;                                                  // Idle
                 }
 
                 m_Fifo.Flush(1);                                                        // Flush the comment line character from fifo.
             }
         }
-        
+
         m_IsItIdle = false;                                                             // no longer on idle... prevent detecting CON_TRAP_COMMENT_CHARACTER in middle of reception
     }
     else
@@ -145,7 +145,7 @@ void Console::Process(void)
         }
     }
   #endif
-    
+
     if(m_pChildProcess[m_ActiveProcessLevel] != nullptr)
     {
         m_pChildProcess[m_ActiveProcessLevel]->IF_Process();

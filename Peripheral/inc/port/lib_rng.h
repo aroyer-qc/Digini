@@ -32,7 +32,7 @@ extern "C"
 //-------------------------------------------------------------------------------------------------
 
 #if defined STM32F1xx
- #include "lib_generic_rng.h
+ #include "lib_generic_rng.h"
 #elif defined STM32F4xx
  #include "lib_STM32F4_rng.h"
 #elif defined STM32F7xx

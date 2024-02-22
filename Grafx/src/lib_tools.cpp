@@ -131,7 +131,8 @@ uint8_t GetXY_Justification(void)
 //   Description:   set
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_DRIVER_USE_V_SYNC#if (GRAFX_DRIVER_USE_V_SYNC == DEF_DEFINED)void WaitFor_V_Sync(void)
+#if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
+void WaitFor_V_Sync(void)
 {
     myGrafx->WaitFor_V_Sync();
 }

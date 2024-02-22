@@ -207,7 +207,7 @@ void GUI_myClassTask::Run()
             {
                 if(NewLink == INVALID_LINK)         // Only make the copy if it's not an immediate redirection
                 {
-                  #if (GRAFX_DRIVER_USE_V_SYNC == DEF_DEFINED)
+                  #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
                     myGrafx->WaitFor_V_Sync();
                   #endif
                     myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y);

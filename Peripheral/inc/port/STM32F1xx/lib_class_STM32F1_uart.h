@@ -247,15 +247,13 @@ struct UART_Info_t
 #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
 struct UART_DMA_Info_t
 {
-    UART_ID_e           UartID;
-    uint32_t            DMA_ChannelRX;
-    uint32_t            FlagRX;
-    DMA_Stream_TypeDef* DMA_StreamRX;
-    uint32_t            DMA_ChannelTX;
-    uint32_t            FlagTX;
-    DMA_Stream_TypeDef* DMA_StreamTX;
-    IRQn_Type           Tx_IRQn;
-    uint32_t            RCC_AHBxPeriph;
+    UART_ID_e            UartID;
+    uint32_t             FlagRX;
+    DMA_Channel_TypeDef* DMA_ChannelRX;
+    uint32_t             FlagTX;
+    DMA_Channel_TypeDef* DMA_ChannelTX;
+    IRQn_Type            Tx_IRQn;
+    uint32_t             RCC_AHBxPeriph;
 };
 
 struct UART_Transfer_t

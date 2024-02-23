@@ -107,7 +107,7 @@ const uint32_t UART_Driver::m_BaudRate[NB_OF_BAUD] =
 //-------------------------------------------------------------------------------------------------
 UART_Driver::UART_Driver(UART_ID_e UartID)
 {
-    DMA_Stream_TypeDef* pDMA;
+    DMA_Channel_TypeDef* pDMA;
 
   #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
     m_pDMA_Info      = nullptr;
@@ -150,32 +150,28 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
         if(m_pDMA_Info != nullptr)
         {
-            SET_BIT(RCC->AHB1ENR, m_pDMA_Info->RCC_AHBxPeriph);                 // Initialize DMA clock
+            SET_BIT(RCC->AHBENR, m_pDMA_Info->RCC_AHBxPeriph);                  // Initialize DMA clock
 
-            pDMA = m_pDMA_Info->DMA_StreamRX;                                   // Write config that will never change
-            pDMA->CR = DMA_MODE_NORMAL                    |
-                       DMA_PERIPH_TO_MEMORY               |
-                       DMA_PERIPH_NO_INCREMENT            |
+            pDMA = m_pDMA_Info->DMA_ChannelRX;                                  // Write config that will never change
+            pDMA->CR = DMA_NORMAL_MODE                    |
+                       DMA_PERIPHERAL_TO_MEMORY           |
+                       DMA_PERIPHERAL_NO_INCREMENT        |
                        DMA_MEMORY_INCREMENT               |
-                       DMA_P_DATA_ALIGN_BYTE              |
-                       DMA_M_DATA_ALIGN_BYTE              |
-                       DMA_P_BURST_SINGLE                 |
-                       DMA_M_BURST_SINGLE                 |
-                       DMA_PRIORITY_HIGH;
+                       DMA_PERIPHERAL_SIZE_8_BITS         |
+                       DMA_MEMORY_SIZE_8_BITS             |
+                       DMA_PRIORITY_LEVEL_HIGH;
             SET_BIT(pDMA->CR, m_pDMA_Info->DMA_ChannelRX);
             pDMA->PAR = uint32_t(&m_pUart->DR);
             pDMA->NDTR = UART_DRIVER_INTERNAL_RX_BUFFER_SIZE;
 
-            pDMA = m_pDMA_Info->DMA_StreamTX;                                   // Write config that will never change
-            pDMA->CR = DMA_MODE_NORMAL                    |
-                       DMA_MEMORY_TO_PERIPH               |
-                       DMA_PERIPH_NO_INCREMENT            |
+            pDMA = m_pDMA_Info->DMA_ChannelTX;                                  // Write config that will never change
+            pDMA->CR = DMA_NORMAL_MODE                    |
+                       DMA_MEMORY_TO_PERIPHERAL           |
+                       DMA_PERIPHERAL_NO_INCREMENT        |
                        DMA_MEMORY_INCREMENT               |
-                       DMA_P_DATA_ALIGN_BYTE              |
-                       DMA_M_DATA_ALIGN_BYTE              |
-                       DMA_P_BURST_SINGLE                 |
-                       DMA_M_BURST_SINGLE                 |
-                       DMA_PRIORITY_HIGH;
+                       DMA_PERIPHERAL_SIZE_8_BITS         |
+                       DMA_MEMORY_SIZE_8_BITS             |
+                       DMA_PRIORITY_LEVEL_HIGH;
             SET_BIT(pDMA->CR, m_pDMA_Info->DMA_ChannelTX);
             pDMA->PAR  = uint32_t(&m_pUart->DR);
         }

@@ -31,7 +31,6 @@
 //-------------------------------------------------------------------------------------------------
 
 #define GPIOxx                          ((uint32_t)0x00000000)
-#define NUMBER_OF_IO_PORT               ((uint32_t)11)
 #define NUMBER_OF_PIN_PER_PORT          ((uint32_t)16)
 
 #define LED_Init(p)                     IO_PinInit(p)
@@ -229,12 +228,10 @@ const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
     GPIOC,
     GPIOD,
     GPIOE,
+  #if (NUMBER_OF_IO_PORT == 8)
     GPIOF,
     GPIOG,
-    GPIOH,
-    GPIOI,
-    GPIOJ,
-    GPIOK,
+  #endif
 };
 
 const IO_Properties_t IO_Properties[IO_NUM] =

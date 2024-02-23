@@ -30,68 +30,75 @@
 // Define(s) and macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define DMA_MODE_NORMAL                0x00000000        // Normal Mode
-#define DMA_MODE_CIRCULAR              DMA_SxCR_CIRC     // Circular Mode
-#define DMA_MODE_PFCTRL                DMA_SxCR_PFCTRL   // Peripheral flow control mode
+#define DMA_MEMORY_TO_MEMORY           0x4000           // Memory to memory mode
 
-#define DMA_PERIPH_NO_INCREMENT        0x00000000        // Peripheral increment mode Disable
-#define DMA_PERIPH_INCREMENT           DMA_SxCR_PINC     // Peripheral increment mode Enable
+#define DMA_PRIORITY_LEVEL_LOW         0x0000           // Priority low
+#define DMA_PRIORITY_LEVEL_MEDIUM      0x1000           // Priority medium
+#define DMA_PRIORITY_LEVEL_HIGH        0x2000           // Priority high
+#define DMA_PRIORITY_LEVEL_VERY_HIGH   0x3000           // Priority very high
 
-#define DMA_MEMORY_NO_INCREMENT        0x00000000        // Memory increment mode Disable
-#define DMA_MEMORY_INCREMENT           DMA_SxCR_MINC     // Memory increment mode Enable
+#define DMA_MEMORY_SIZE_8_BITS         0x0000           // 8 bits
+#define DMA_MEMORY_SIZE_16_BITS        0x0400           // 16 bits
+#define DMA_MEMORY_SIZE_32_BITS        0x0800           // 32 Bits
 
-#define DMA_P_DATA_ALIGN_BYTE          0x00000000        // Peripheral data alignment : Byte
-#define DMA_P_DATA_ALIGN_HALF_WORD     DMA_SxCR_PSIZE_0  // Peripheral data alignment : Half Word
-#define DMA_P_DATA_ALIGN_WORD          DMA_SxCR_PSIZE_1  // Peripheral data alignment : Word
+#define DMA_PERIPHERAL_SIZE_8_BITS     0x0000           // 8 bits
+#define DMA_PERIPHERAL_SIZE_816_BITS   0x0100           // 16 bits
+#define DMA_PERIPHERAL_SIZE_832_BITS   0x0200           // 32 Bits
 
-#define DMA_M_DATA_ALIGN_BYTE          0x00000000        // Memory data alignment : Byte
-#define DMA_M_DATA_ALIGN_HALF_WORD     DMA_SxCR_MSIZE_0  // Memory data alignment : Half Word
-#define DMA_M_DATA_ALIGN_WORD          DMA_SxCR_MSIZE_1  // Memory data alignment : Word
+#define DMA_MEMORY_NO_INCREMENT        0x0000           // Memory increment mode Disable
+#define DMA_MEMORY_INCREMENT           0x0080           // Memory increment mode Enable
 
-#define DMA_P_BURST_SINGLE             0x00000000                              // Peripheral burst single transfer configuration
-#define DMA_P_BURST_INC4               DMA_SxCR_PBURST_0                       // Peripheral burst of 4 beats transfer configuration
-#define DMA_P_BURST_INC8               DMA_SxCR_PBURST_1                       // Peripheral burst of 8 beats transfer configuration
-#define DMA_P_BURST_INC16              (DMA_SxCR_PBURST_0 | DMA_SxCR_PBURST_1) // Peripheral burst of 16 beats transfer configuration
+#define DMA_PERIPH_NO_INCREMENT        0x0000           // Peripheral increment mode Disable
+#define DMA_PERIPH_INCREMENT           0x0040           // Peripheral increment mode Enable
 
-#define DMA_M_BURST_SINGLE             0x00000000                              // Memory burst single transfer configuration
-#define DMA_M_BURST_INC4               DMA_SxCR_MBURST_0                       // Memory burst of 4 beats transfer configuration
-#define DMA_M_BURST_INC8               DMA_SxCR_MBURST_1                       // Memory burst of 8 beats transfer configuration
-#define DMA_M_BURST_INC16              (DMA_SxCR_MBURST_0 | DMA_SxCR_MBURST_1) // Memory burst of 16 beats transfer configuration
+#define DMA_NORMAL_MODE                0x0000           // Normal mode
+#define DMA_CIRCULAR_MODE              0x0020           // Circular mode
 
-#define DMA_CHANNEL_0                  0x00000000
-#define DMA_CHANNEL_1                  DMA_SxCR_CHSEL_0
-#define DMA_CHANNEL_2                  DMA_SxCR_CHSEL_1
-#define DMA_CHANNEL_3                  (DMA_SxCR_CHSEL_0 | DMA_SxCR_CHSEL_1)
-#define DMA_CHANNEL_4                  DMA_SxCR_CHSEL_2
-#define DMA_CHANNEL_5                  (DMA_SxCR_CHSEL_2 | DMA_SxCR_CHSEL_0)
-#define DMA_CHANNEL_6                  (DMA_SxCR_CHSEL_2 | DMA_SxCR_CHSEL_1)
-#define DMA_CHANNEL_7                  (DMA_SxCR_CHSEL_2 | DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0)
-#define DMA_CHANNEL_8                  DMA_SxCR_CHSEL_3
-#define DMA_CHANNEL_9                  (DMA_SxCR_CHSEL_3 | DMA_SxCR_CHSEL_0)
+#define DMA_READ_FROM_PERIPH           0x0000           // Peripheral to memory direction
+#define DMA_READ_FROM_MEMORY           0x0010           // Memory to peripheral or memory direction
 
-#define DMA_PRIORITY_LOW               0x00000000           // Priority level : Low
-#define DMA_PRIORITY_MEDIUM            DMA_SxCR_PL_0        // Priority level : Medium
-#define DMA_PRIORITY_HIGH              DMA_SxCR_PL_1        // Priority level : High
-#define DMA_PRIORITY_VERY_HIGH         DMA_SxCR_PL          // Priority level : Very_High
+/*
+#define DMA_CHANNEL_1                  0x00000001U
+#define DMA_CHANNEL_2                  0x00000002U
+#define DMA_CHANNEL_3                  0x00000003U
+#define DMA_CHANNEL_4                  0x00000004U
+#define DMA_CHANNEL_5                  0x00000005U
+#define DMA_CHANNEL_6                  0x00000006U
+#define DMA_CHANNEL_7                  0x00000007U
 
-#define DMA_PERIPH_TO_MEMORY           0x00000000           // Peripheral to memory direction
-#define DMA_MEMORY_TO_PERIPH           DMA_SxCR_DIR_0       // Memory to peripheral direction
-#define DMA_MEMORY_TO_MEMORY           DMA_SxCR_DIR_1       // Memory to memory direction
+
+#define DMA1                ((DMA_TypeDef *)DMA1_BASE)
+#define DMA2                ((DMA_TypeDef *)DMA2_BASE)
+#define DMA1_Channel1       ((DMA_Channel_TypeDef *)DMA1_Channel1_BASE)
+#define DMA1_Channel2       ((DMA_Channel_TypeDef *)DMA1_Channel2_BASE)
+#define DMA1_Channel3       ((DMA_Channel_TypeDef *)DMA1_Channel3_BASE)
+#define DMA1_Channel4       ((DMA_Channel_TypeDef *)DMA1_Channel4_BASE)
+#define DMA1_Channel5       ((DMA_Channel_TypeDef *)DMA1_Channel5_BASE)
+#define DMA1_Channel6       ((DMA_Channel_TypeDef *)DMA1_Channel6_BASE)
+#define DMA1_Channel7       ((DMA_Channel_TypeDef *)DMA1_Channel7_BASE)
+#define DMA2_Channel1       ((DMA_Channel_TypeDef *)DMA2_Channel1_BASE)
+#define DMA2_Channel2       ((DMA_Channel_TypeDef *)DMA2_Channel2_BASE)
+#define DMA2_Channel3       ((DMA_Channel_TypeDef *)DMA2_Channel3_BASE)
+#define DMA2_Channel4       ((DMA_Channel_TypeDef *)DMA2_Channel4_BASE)
+#define DMA2_Channel5       ((DMA_Channel_TypeDef *)DMA2_Channel5_BASE)
+*/
+
+
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-void        DMA_ClearFlag                               (DMA_Stream_TypeDef* pDMA, uint32_t Flag);
-uint32_t    DMA_CheckFlag                               (DMA_Stream_TypeDef* pDMA, uint32_t Flag);
-void        DMA_EnableInterrupt                         (DMA_Stream_TypeDef* pDMA, uint32_t Interrupt);
-void        DMA_DisableInterrupt                        (DMA_Stream_TypeDef* pDMA, uint32_t Interrupt);
-void        DMA_EnableTransmitCompleteInterrupt         (DMA_Stream_TypeDef* pDMA);
-void        DMA_DisableTransmitCompleteInterrupt        (DMA_Stream_TypeDef* pDMA);
-void        DMA_EnableTransmitHalfCompleteInterrupt     (DMA_Stream_TypeDef* pDMA);
-void        DMA_DisableTransmitHalfCompleteInterrupt    (DMA_Stream_TypeDef* pDMA);
-void        DMA_Enable                                  (DMA_Stream_TypeDef* pDMA);
-void        DMA_Disable                                 (DMA_Stream_TypeDef* pDMA);
+void        DMA_ClearFlag                               (DMA_Channel_TypeDef* pDMA, uint32_t Flag);
+uint32_t    DMA_CheckFlag                               (DMA_Channel_TypeDef* pDMA, uint32_t Flag);
+void        DMA_EnableInterrupt                         (DMA_Channel_TypeDef* pDMA, uint32_t Interrupt);
+void        DMA_DisableInterrupt                        (DMA_Channel_TypeDef* pDMA, uint32_t Interrupt);
+void        DMA_EnableTransmitCompleteInterrupt         (DMA_Channel_TypeDef* pDMA);
+void        DMA_DisableTransmitCompleteInterrupt        (DMA_Channel_TypeDef* pDMA);
+void        DMA_EnableTransmitHalfCompleteInterrupt     (DMA_Channel_TypeDef* pDMA);
+void        DMA_DisableTransmitHalfCompleteInterrupt    (DMA_Channel_TypeDef* pDMA);
+void        DMA_Enable                                  (DMA_Channel_TypeDef* pDMA);
+void        DMA_Disable                                 (DMA_Channel_TypeDef* pDMA);
 
 //-------------------------------------------------------------------------------------------------
 

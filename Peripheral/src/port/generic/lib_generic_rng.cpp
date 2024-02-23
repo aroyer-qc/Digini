@@ -84,7 +84,7 @@ uint32_t RNG_GetRandom(void)
     srand(GetTick());
     RandomValue =  (uint32_t(rand()) || ((uint32_t(rand())) << 16)) ^ RNG_LastRandomValue;
     RNG_LastRandomValue = RandomValue;
-    
+
     return RandomValue;
 }
 
@@ -103,11 +103,10 @@ uint32_t RNG_GetRandomFromRange(uint32_t Min, uint32_t Max)
 {
     uint32_t CalculatedRandom;
     uint32_t RandomValue;
-    
+
     CalculatedRandom = (Max - Min) + 1;             // This is the range
     RandomValue = RNG_GetRandom();
-    RNG->DR;
-    
+
     return uint32_t((uint64_t(RandomValue) * uint64_t(CalculatedRandom)) >> sizeof(uint32_t)) + Min;
 }
 

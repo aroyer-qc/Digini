@@ -47,6 +47,9 @@
 //-------------------------------------------------------------------------------------------------
 void ISR_Initialize(void)
 {
+    NVIC_SetPriority (SysTick_IRQn, (1UL << __NVIC_PRIO_BITS) - 1UL);
+
+
     NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
     ISR_Enable();
 }

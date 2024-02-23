@@ -42,7 +42,7 @@
 //-------------------------------------------------------------------------------------------------
 // Variables(s)
 //-------------------------------------------------------------------------------------------------
-SYS_PLL_SOURCE_MUX
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SystemInit
@@ -74,7 +74,7 @@ void SystemInit(void)
     SET_BIT(RCC->CR, RCC_CR_HSION);
 
     // Set CFGR register
-	RCC->CFGR = (CFG_SYS_HCLK | SYS_APB1_CFG | SYS_APB2_CFG | MCO_OUTPUT_SELECT);
+	RCC->CFGR = (CFG_SYS_HCLK | CFG_SYS_APB1 | CFG_SYS_APB2 | CFG_MCO_OUTPUT_SELECT);
 
     // Reset HSEBYP, CSSON and PLLON bits
 	CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));

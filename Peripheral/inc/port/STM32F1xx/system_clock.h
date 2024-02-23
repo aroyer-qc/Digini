@@ -86,6 +86,17 @@
 #define CFG_CLOCK_ADC_DIV6                          0x00008000U
 #define CFG_CLOCK_ADC_DIV8                          0x0000C000U
 
+
+#define CFG_MCO_NO_CLOCK                            0x00000000U
+#define CFG_MCO_SYSCLK                              0x04000000U     // System clock (SYSCLK) selected
+#define CFG_MCO_HSI                                 0x05000000U     // HSI clock selected
+#define CFG_MCO_HSE                                 0x06000000U     // HSE clock selected
+#define CFG_MCO_PLL_CLK_DIV_2                       0x07000000U     // PLL clock divided by 2 selected
+#define CFG_MCO_PLL2                                0x08000000U     // PLL2 clock selected
+#define CFG_MCO_PLL3                                0x09000000U     // PLL3 clock divided by 2 selected
+#define CFG_MCO_XT1_EXT                             0x0A000000U     // XT1 external 3-25 MHz oscillator clock selected (for Ethernet)
+
+
 //-------------------------------------------------------------------------------------------------
 // Configuration file(s)
 //-------------------------------------------------------------------------------------------------

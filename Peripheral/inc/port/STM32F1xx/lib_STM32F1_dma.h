@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F7_dma.h
+//  File : lib_STM32F1_dma.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -79,32 +79,19 @@
 #define DMA_MEMORY_TO_MEMORY           DMA_SxCR_DIR_1       // Memory to memory direction
 
 //-------------------------------------------------------------------------------------------------
-// Class
+// Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-class DMA_Driver
-{
-    public:
-        
-        void        initialize                              (DMA_Stream_TypeDef* pDMA);
-        
-        void        SetStreamRX                             (void* pSource, void* pDestination, size_t Length);
-        void        SetStreamTX                             (void* pSource, void* pDestination, size_t Length);
-        void        ClearFlag                               (uint32_t Flag);
-        uint32_t    CheckFlag                               (uint32_t Flag);
-        void        EnableInterrupt                         (uint32_t Interrupt);
-        void        DisableInterrupt                        (uint32_t Interrupt);
-        void        EnableTransmitCompleteInterrupt         (void);
-        void        DisableTransmitCompleteInterrupt        (void);
-        void        EnableTransmitHalfCompleteInterrupt     (void);
-        void        DisableTransmitHalfCompleteInterrupt    (void);
-        void        Enable                                  (void);
-        void        Disable                                 (void);
-        
-    private:    
-        
-        DMA_Stream_TypeDef*     m_pDMA;
-};
+void        DMA_ClearFlag                               (DMA_Stream_TypeDef* pDMA, uint32_t Flag);
+uint32_t    DMA_CheckFlag                               (DMA_Stream_TypeDef* pDMA, uint32_t Flag);
+void        DMA_EnableInterrupt                         (DMA_Stream_TypeDef* pDMA, uint32_t Interrupt);
+void        DMA_DisableInterrupt                        (DMA_Stream_TypeDef* pDMA, uint32_t Interrupt);
+void        DMA_EnableTransmitCompleteInterrupt         (DMA_Stream_TypeDef* pDMA);
+void        DMA_DisableTransmitCompleteInterrupt        (DMA_Stream_TypeDef* pDMA);
+void        DMA_EnableTransmitHalfCompleteInterrupt     (DMA_Stream_TypeDef* pDMA);
+void        DMA_DisableTransmitHalfCompleteInterrupt    (DMA_Stream_TypeDef* pDMA);
+void        DMA_Enable                                  (DMA_Stream_TypeDef* pDMA);
+void        DMA_Disable                                 (DMA_Stream_TypeDef* pDMA);
 
 //-------------------------------------------------------------------------------------------------
 

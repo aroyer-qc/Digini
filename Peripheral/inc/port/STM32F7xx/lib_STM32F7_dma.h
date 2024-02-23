@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F4_dma.h
+//  File : lib_STM32F7_dma.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2024 Alain Royer.
+// Copyright(c) 2020 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -79,35 +79,21 @@
 #define DMA_MEMORY_TO_MEMORY           DMA_SxCR_DIR_1       // Memory to memory direction
 
 //-------------------------------------------------------------------------------------------------
-// Class
+// Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-class DMA_Driver
-{
-    public:
-        
-        void        initialize                              (DMA_ID_e DMA_ID);
-        
-        void        SetStreamRX                             (void* pSource, void* pDestination, size_t Length);
-        void        SetStreamTX                             (void* pSource, void* pDestination, size_t Length);
-        void        ClearFlag                               (uint32_t Flag);
-        uint32_t    CheckFlag                               (uint32_t Flag);
-        void        EnableInterrupt                         (uint32_t Interrupt);
-        void        DisableInterrupt                        (uint32_t Interrupt);
-        void        EnableTransmitCompleteInterrupt         (void);
-        void        DisableTransmitCompleteInterrupt        (void);
-        void        EnableTransmitHalfCompleteInterrupt     (void);
-        void        DisableTransmitHalfCompleteInterrupt    (void);
-        void        Enable                                  (void);
-        void        Disable                                 (void);
-        
-    private:    
-        
-        DMA_ID_e                m_DMA_ID;       // maybe useless.
-        
-        
-        DMA_Stream_TypeDef*     m_pDMA;
-};
+void        DMA_SetStreamRX                             (DMA_Stream_TypeDef* pDMA, void* pSource, void* pDestination, size_t Length);
+void        DMA_SetStreamTX                             (DMA_Stream_TypeDef* pDMA, void* pSource, void* pDestination, size_t Length);
+void        DMA_ClearFlag                               (DMA_Stream_TypeDef* pDMA, uint32_t Flag);
+uint32_t    DMA_CheckFlag                               (DMA_Stream_TypeDef* pDMA, uint32_t Flag);
+void        DMA_EnableInterrupt                         (DMA_Stream_TypeDef* pDMA, uint32_t Interrupt);
+void        DMA_DisableInterrupt                        (DMA_Stream_TypeDef* pDMA, uint32_t Interrupt);
+void        DMA_EnableTransmitCompleteInterrupt         (DMA_Stream_TypeDef* pDMA);
+void        DMA_DisableTransmitCompleteInterrupt        (DMA_Stream_TypeDef* pDMA);
+void        DMA_EnableTransmitHalfCompleteInterrupt     (DMA_Stream_TypeDef* pDMA);
+void        DMA_DisableTransmitHalfCompleteInterrupt    (DMA_Stream_TypeDef* pDMA);
+void        DMA_Enable                                  (DMA_Stream_TypeDef* pDMA);
+void        DMA_Disable                                 (DMA_Stream_TypeDef* pDMA);
 
 //-------------------------------------------------------------------------------------------------
 

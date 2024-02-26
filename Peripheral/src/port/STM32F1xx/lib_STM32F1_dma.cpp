@@ -60,13 +60,13 @@ void DMA_ClearFlag(DMA_Channel_TypeDef* pDMA, uint32_t Flag)
         case (uint32_t)DMA1_Channel5_BASE:
         case (uint32_t)DMA1_Channel6_BASE:
         case (uint32_t)DMA1_Channel7_BASE: pRegister = &DMA1->HIFCR; break;
-
+      #if (DMA2_SUPPORT == DEF_ENABLED)
         case (uint32_t)DMA2_Channel1_BASE:
         case (uint32_t)DMA2_Channel2_BASE:
         case (uint32_t)DMA2_Channel3_BASE:
         case (uint32_t)DMA2_Channel4_BASE: pRegister = &DMA2->LIFCR; break;
-
         case (uint32_t)DMA2_Channel5_BASE: pRegister = &DMA2->HIFCR; break;
+      #endif
     }
 
     SET_BIT(*pRegister, Flag);
@@ -89,25 +89,24 @@ uint32_t DMA_CheckFlag(DMA_Channel_TypeDef* pDMA, uint32_t Flag)
 
     switch(intptr_t(pDMA))
     {
-        case (uint32_t)DMA1_Stream0_BASE:
-        case (uint32_t)DMA1_Stream1_BASE:
-        case (uint32_t)DMA1_Stream2_BASE:
-        case (uint32_t)DMA1_Stream3_BASE: Register = DMA1->ISR; break;
+        case (uint32_t)DMA1_Channel1_BASE:
+        case (uint32_t)DMA1_Channel2_BASE:
+        case (uint32_t)DMA1_Channel3_BASE:
+        case (uint32_t)DMA1_Channel4_BASE: Register = DMA1->ISR; break;
 
-        case (uint32_t)DMA1_Stream4_BASE:
-        case (uint32_t)DMA1_Stream5_BASE:
-        case (uint32_t)DMA1_Stream6_BASE:
-        case (uint32_t)DMA1_Stream7_BASE: Register = DMA1->ISR; break;
+        case (uint32_t)DMA1_Channel5_BASE:
+        case (uint32_t)DMA1_Channel6_BASE:
+        case (uint32_t)DMA1_Channel7_BASE: Register = DMA1->ISR; break;
 
-        case (uint32_t)DMA2_Stream0_BASE:
-        case (uint32_t)DMA2_Stream1_BASE:
-        case (uint32_t)DMA2_Stream2_BASE:
-        case (uint32_t)DMA2_Stream3_BASE: Register = DMA2->ISR; break;
+      #if (DMA2_SUPPORT == DEF_ENABLED)
+        case (uint32_t)DMA2_Channel0_BASE:
+        case (uint32_t)DMA2_Channel1_BASE:
+        case (uint32_t)DMA2_Channel2_BASE:
+        case (uint32_t)DMA2_Channel3_BASE: Register = DMA2->ISR; break;
 
-        case (uint32_t)DMA2_Stream4_BASE:
-        case (uint32_t)DMA2_Stream5_BASE:
-        case (uint32_t)DMA2_Stream6_BASE:
-        case (uint32_t)DMA2_Stream7_BASE: Register = DMA2->HISR; break;
+        case (uint32_t)DMA2_Channel4_BASE:
+        case (uint32_t)DMA2_Channel5_BASE: Register = DMA2->HISR; break;
+      #endif
     }
 
     if((Register & Flag) != 0)
@@ -237,7 +236,7 @@ void DMA_DisableTransmitHalfCompleteInterrupt(DMA_Channel_TypeDef* pDMA)
 
 
 
-
+#if 0
     /* ADC1 DMA Init */
     /* ADC1 Init */
     hdma_adc1.Instance = DMA1_Channel1;
@@ -271,8 +270,8 @@ void DMA_DisableTransmitHalfCompleteInterrupt(DMA_Channel_TypeDef* pDMA)
     hdma->ChannelIndex = (((uint32_t)hdma->Instance - (uint32_t)DMA1_Channel1) / ((uint32_t)DMA1_Channel2 - (uint32_t)DMA1_Channel1)) << 2;
     hdma->DmaBaseAddress = DMA1;
   }
-  
-  else 
+
+  else
   { /* DMA2 */
     hdma->ChannelIndex = (((uint32_t)hdma->Instance - (uint32_t)DMA2_Channel1) / ((uint32_t)DMA2_Channel2 - (uint32_t)DMA2_Channel1)) << 2;
     hdma->DmaBaseAddress = DMA2;
@@ -318,7 +317,7 @@ HAL_DMA_Start_IT(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t DstAddre
 {
     __HAL_DMA_DISABLE(hdma);        /* Disable the peripheral */
     DMA_SetConfig(hdma, SrcAddress, DstAddress, DataLength);        /* Configure the source, destination address and the data length & clear flags*/
-    
+
     /* Enable the transfer complete interrupt */
     /* Enable the transfer Error interrupt */
     if(NULL != hdma->XferHalfCpltCallback)
@@ -337,14 +336,14 @@ HAL_DMA_Start_IT(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t DstAddre
 /**
   * @brief  Handles DMA interrupt request.
   * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
-  *               the configuration information for the specified DMA Channel.  
+  *               the configuration information for the specified DMA Channel.
   * @retval None
   */
 void HAL_DMA_IRQHandler(DMA_HandleTypeDef *hdma)
 {
   uint32_t flag_it = hdma->DmaBaseAddress->ISR;
   uint32_t source_it = hdma->Instance->CCR;
-  
+
   /* Half Transfer Complete Interrupt management ******************************/
   if (((flag_it & (DMA_FLAG_HT1 << hdma->ChannelIndex)) != RESET) && ((source_it & DMA_IT_HT) != RESET))
   {
@@ -373,7 +372,7 @@ void HAL_DMA_IRQHandler(DMA_HandleTypeDef *hdma)
     if((hdma->Instance->CCR & DMA_CCR_CIRC) == 0U)
     {
       /* Disable the transfer complete and error interrupt */
-      __HAL_DMA_DISABLE_IT(hdma, DMA_IT_TE | DMA_IT_TC);  
+      __HAL_DMA_DISABLE_IT(hdma, DMA_IT_TE | DMA_IT_TC);
 
       /* Change the DMA state */
       hdma->State = HAL_DMA_STATE_READY;
@@ -448,3 +447,4 @@ static void DMA_SetConfig(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t
 }
 
 
+#endif

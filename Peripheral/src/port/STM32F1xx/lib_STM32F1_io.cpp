@@ -35,9 +35,17 @@
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
+// to be checked
+#define IO_PORT_MASK_FOR_CLOCK_ENABLE   0x00003C00          // Keep only offset for each port
+#define IO_PORT_SHIFT_FOR_CLOCK_ENABLE  10                  // Need to shift 10 bits to set value from 0 - 7
 
-#define IO_PORT_MASK_FOR_CLOCK_ENABLE   0x00003C00                  // Keep only offset for each port
-#define IO_PORT_SHIFT_FOR_CLOCK_ENABLE  10                          // Need to shift 10 bits to set value from 0 - 7
+#define IO_INPUT_PULL_MASK              0x00000008          // All IO in output has this bit reset
+#define IO_OUTPUT_MASK                  0x00000004          // All IO in output has this bit reset
+#define IO_OUTPUT_TYPE_MASK             0x00000003          // All IO in output must at least has one bit set
+#define IO_CONFIG_MASK                  0x0000000F
+
+#define IO_LOCK_KEY                     0x00010000          // Lock key
+#define IO_OFFSET_BIT_RESET             8
 
 //-------------------------------------------------------------------------------------------------
 //  private variable(s)
@@ -110,33 +118,27 @@ static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_ID, uint32_t* pPinNumber, uint32_t*
 void IO_PinInit(IO_ID_e IO_ID)
 {
     const IO_Properties_t* pIO_Properties;
-    GPIO_TypeDef* pPort;
+    GPIO_TypeDef*  pPort;
     uint32_t       PinNumber;
     uint32_t       PinMode;
-    uint32_t       PinType;
-    uint32_t       PinSpeed;
     uint32_t       State;
 
     pIO_Properties = &IO_Properties[IO_ID];
     pPort          = pIO_Properties->pPort;
     PinNumber      = pIO_Properties->PinNumber;
     PinMode        = pIO_Properties->PinMode;
-    PinType        = pIO_Properties->PinType;
-    PinSpeed       = pIO_Properties->PinSpeed;
     State          = pIO_Properties->State;
 
-    IO_PinInit(pPort, PinNumber, PinMode, PinType, PinSpeed, State);
+    IO_PinInit(pPort, PinNumber, PinMode, State);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       IO_PinInit
 //
-//  Parameter(s):   pPort
-//                  PinNumber
-//                  PinMode
-//                  PinType
-//                  PinSpeed
+//  Parameter(s):   pPort                   Port for the pin
+//                  PinNumber               Pin number
+//                  PinMode                 Configuration of the pin
 //                  State                   Default state of the pin if output or alternate function
 //
 //
@@ -147,114 +149,41 @@ void IO_PinInit(IO_ID_e IO_ID)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint32_t PinType, uint32_t PinSpeed, uint32_t State)
+
+
+void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint32_t State)
 {
-    uint32_t Pin2BitShift;
+    uint32_t OffsetPin;
 
     if(pPort != GPIOxx)
     {
         IO_EnableClock(pPort);
-        Pin2BitShift = PinNumber << 1;
 
-        // Set pin speed
-        pPort->OSPEEDR &= ~(uint32_t)(IO_SPEED_PIN_MASK << Pin2BitShift);
-        pPort->OSPEEDR |=  (uint32_t)(PinSpeed          << Pin2BitShift);
-
-        switch(PinMode)
+        // Default are for Output only
+        if(((PinMode & IO_OUTPUT_MASK) == 0) && ((PinMode & IO_OUTPUT_TYPE_MASK) != 0))
         {
-            case IO_MODE_OUTPUT:
-            {
-                // Preset initial state
-                if(State == 0) pPort->BSRRH = (1 << PinNumber);
-                else           pPort->BSRRL = (1 << PinNumber);
-            }
-            break;
-
-            case IO_MODE_ALTERNATE:
-            {
-                if(PinNumber < 8)
-                {
-                    pPort->AFR[0] &= ~(uint32_t)(IO_AF_MASK << (PinNumber << 2));
-                    pPort->AFR[0] |=  (uint32_t)(State      << (PinNumber << 2));
-                }
-                else
-                {
-                    pPort->AFR[1] &= ~(uint32_t)(IO_AF_MASK << ((PinNumber - 8) << 2));
-                    pPort->AFR[1] |=  (uint32_t)(State      << ((PinNumber - 8) << 2));
-                }
-            }
-            break;
-
-            // case IO_MODE_ANALOG:  // Nothing to do for analog
-            // case IO_MODE_INPUT:     // Nothing to do for input
-            default:
-            {
-            }
-            break;
+            OffsetPin   = PinNumber + ((State == IO_DEFAULT_OUTPUT_LOW) ? 8 : 0);
+            pPort->BSRR = 1 << OffsetPin;
         }
 
-        pPort->PUPDR  &= ~(uint32_t)((IO_TYPE_PIN_PULL_MASK >> 1) << Pin2BitShift);                 // Reset bit for Pull Up
-        pPort->PUPDR  |=  (uint32_t)(((PinType & IO_TYPE_PIN_PULL_MASK) >> 1) << Pin2BitShift);     // Set new pull setting
+        // Config for the Pin
+        if(PinNumber < 8)
+        {
+            pPort->CRL &= ~(IO_CONFIG_MASK << (PinNumber << 2));
+            pPort->CRL |=  (State          << (PinNumber << 2));
+        }
+        else
+        {
+            pPort->CRH &= ~(IO_CONFIG_MASK << ((PinNumber - 8) << 2));
+            pPort->CRH |=  (State          << ((PinNumber - 8) << 2));
+        }
 
-        pPort->OTYPER &= ~(uint32_t)(IO_TYPE_PIN_DRIVE_MASK << PinNumber);                          // Reset bit for Drive type PP or OD
-        pPort->OTYPER |=  (uint32_t)((PinType & IO_TYPE_PIN_DRIVE_MASK) << PinNumber);              // Set new type
-
-        pPort->MODER  &= ~(uint32_t)(IO_MODE_PIN_MASK << Pin2BitShift);
-        pPort->MODER  |=  (uint32_t)(PinMode          << Pin2BitShift);
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Function:       IO_PinInit
-//
-//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
-//  Return:         None
-//
-//  Description:    ID of the IO pin.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void IO_PinInitInput(IO_ID_e IO_ID)
-{
-    GPIO_TypeDef* pPort;
-    uint32_t      PinNumber;
-
-    pPort = IO_Properties[IO_ID].pPort;
-
-    if(pPort != GPIOxx)
-    {
-        PinNumber = IO_Properties[IO_ID].PinNumber << 1;
-        pPort->MODER &= ~(uint32_t)(IO_MODE_PIN_MASK << PinNumber);
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Function:       IO_PinInitOutput
-//
-//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
-//  Return:         None
-//
-//  Description:    Initialize the IO In output.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void IO_PinInitOutput(IO_ID_e IO_ID)
-{
-    GPIO_TypeDef* pPort;
-    uint32_t      PinNumber;
-
-    pPort = IO_Properties[IO_ID].pPort;
-
-    if(pPort != GPIOxx)
-    {
-        PinNumber = IO_Properties[IO_ID].PinNumber << 1;
-
-        pPort->MODER &= ~(uint32_t)(IO_MODE_PIN_MASK << PinNumber);
-        pPort->MODER |=  (uint32_t)(IO_MODE_OUTPUT   << PinNumber);
+        // Set Pull Up/Down
+        if(((PinMode & IO_INPUT_PULL_MASK) != 0) && ((PinMode & IO_OUTPUT_TYPE_MASK) == 0))
+        {
+            //MODIFY_REG(pPort->ODR, (1 << PinNumber), (State << PinNumber));
+            pPort->ODR = (pPort->ODR & (~uint32_t(1) << PinNumber)) | (State << PinNumber);
+        }
     }
 }
 
@@ -276,8 +205,8 @@ void IO_SetPinLow(IO_ID_e IO_ID)
 
     if(pPort != GPIOxx)
     {
-        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
-        pPort->BSRRH = (1 << PinNumber);
+        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber + IO_OFFSET_BIT_RESET;
+        pPort->BSRR = (1 << PinNumber);
     }
 }
 
@@ -300,7 +229,7 @@ void IO_SetPinHigh(IO_ID_e IO_ID)
     if(pPort != GPIOxx)
     {
         uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
-        pPort->BSRRL = (1 << PinNumber);
+        pPort->BSRR = (1 << PinNumber);
     }
 }
 
@@ -371,7 +300,7 @@ uint32_t IO_GetInputPinValue(IO_ID_e IO_ID)
     {
         PinValue = pPort->IDR & (1 << IO_Properties[IO_ID].PinNumber);
     }
-    
+
     return PinValue;
 }
 
@@ -443,6 +372,34 @@ bool IO_IsItValid(IO_ID_e IO_ID)
     }
 
     return false;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       IO_LockPin
+//
+//  Parameter(s):   IO_ID       ID of the IO pin definition in IO_Properties_t structure
+//  Return:         None
+//
+//  Description:    Lock a pin configuration.
+//
+//-------------------------------------------------------------------------------------------------
+void IO_LockPin(IO_ID_e IO_ID)
+{
+    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+    if(pPort != GPIOxx)
+    {
+        uint32_t Register  = IO_LOCK_KEY;
+        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
+
+        Register |= (1 << PinNumber);   // Apply lock key write sequence
+        pPort->LCKR = Register;         // Set LCKx bit(s): LCKK='1' + LCK[15-0]
+        pPort->LCKR = (1 << PinNumber); // Reset LCKx bit(s): LCKK='0' + LCK[15-0]
+        pPort->LCKR = Register;         // Set LCKx bit(s): LCKK='1' + LCK[15-0]
+        Register    = pPort->LCKR;      // Read LCKK register. This read is mandatory to complete key lock sequence
+        (void)Register;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -631,44 +588,6 @@ void IO_CallBack(IO_IrqID_e IO_IRQ_ID)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       IO_PinLowLevelAccess
-//
-//  Parameter(s):   PortIO
-//                  PinNumber
-//                  Direction
-//                  State
-//  Return:         uint32_t
-//
-//  Description:    Get the state of the IRQ for specify ID.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-uint32_t IO_PinLowLevelAccess(uint32_t PortIO, uint32_t PinNumber, uint32_t Direction, uint32_t State)
-{
-    GPIO_TypeDef* pPort = (GPIO_TypeDef*)IO_Port[PortIO];
-    uint32_t      Pin1BitMask;
-    uint32_t      Pin2BitShift;
-
-    Pin1BitMask      = 1 << PinNumber;
-    Pin2BitShift     = PinNumber << 1;
-
-    IO_EnableClock(pPort);
-
-    if(Direction == IO_MODE_OUTPUT)
-    {
-        // Preset state
-        if(State == 0) pPort->BSRRH = Pin1BitMask;
-        else           pPort->BSRRL = Pin1BitMask;
-    }
-
-    MODIFY_REG(pPort->MODER, (IO_MODE_PIN_MASK << Pin2BitShift), (Direction << Pin2BitShift));
-
-    return (pPort->IDR >> PinNumber) & 0x01;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Function:       _IO_EnableClock
 //
 //  Parameter(s):   pPort            Address of the port
@@ -687,7 +606,9 @@ void IO_EnableClock(GPIO_TypeDef* pPort)
     ClockEnable   = ((uint32_t)(pPort) & IO_PORT_MASK_FOR_CLOCK_ENABLE);          // Mask bit to keep only enableoffset
     ClockEnable >>= IO_PORT_SHIFT_FOR_CLOCK_ENABLE;
     ClockEnable   = 1 << ClockEnable;                                             // Set bit position
-    RCC->AHB1ENR |= ClockEnable;
+    RCC->AHBENR  |= ClockEnable;
 }
 
 //-------------------------------------------------------------------------------------------------
+
+

@@ -30,7 +30,7 @@
 // Include(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "stm32f746xx.h"
+#include "stm32f7xx.h"
 #include <stdbool.h>
 #include "lib_macro.h"
 

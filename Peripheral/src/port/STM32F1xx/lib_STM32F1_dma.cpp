@@ -33,81 +33,64 @@
 #undef  DMA_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
-// Public Function
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
 //
 //  Function:       DMA_ClearFlag
 //
-//  Parameter(s):   pDMA        DMA stream to modify
+//  Parameter(s):   pDMA        DMA channel to modify flag
 //                  Flag        to clear
 //  Return:         None
 //
-//  Description:    Clear flag for specific DMA stream.
+//  Description:    Clear flag for specific DMA channel.
 //-------------------------------------------------------------------------------------------------
 void DMA_ClearFlag(DMA_Channel_TypeDef* pDMA, uint32_t Flag)
 {
-    volatile uint32_t* pRegister;
+    volatile uint32_t* pRegister = nullptr;
 
-    switch(intptr_t(pDMA))
+    if((intptr_t(pDMA) & DMA1_BASE) == DMA1_BASE)
     {
-        case (uint32_t)DMA1_Channel1_BASE:
-        case (uint32_t)DMA1_Channel2_BASE:
-        case (uint32_t)DMA1_Channel3_BASE:
-        case (uint32_t)DMA1_Channel4_BASE: pRegister = &DMA1->LIFCR; break;
-
-        case (uint32_t)DMA1_Channel5_BASE:
-        case (uint32_t)DMA1_Channel6_BASE:
-        case (uint32_t)DMA1_Channel7_BASE: pRegister = &DMA1->HIFCR; break;
-      #if (DMA2_SUPPORT == DEF_ENABLED)
-        case (uint32_t)DMA2_Channel1_BASE:
-        case (uint32_t)DMA2_Channel2_BASE:
-        case (uint32_t)DMA2_Channel3_BASE:
-        case (uint32_t)DMA2_Channel4_BASE: pRegister = &DMA2->LIFCR; break;
-        case (uint32_t)DMA2_Channel5_BASE: pRegister = &DMA2->HIFCR; break;
-      #endif
+        pRegister = reinterpret_cast<volatile uint32_t*>(&DMA1->IFCR);
     }
 
-    SET_BIT(*pRegister, Flag);
+  #if (DMA2_SUPPORT == DEF_ENABLED)
+    else if((intptr_t(pDMA) & DMA2_BASE) == DMA2_BASE)
+    {
+        pRegister = reinterpret_cast<volatile uint32_t*>(&DMA2->IFCR);
+    }
+  #endif
+
+    if(pRegister != nullptr)
+    {
+        *pRegister |= Flag;
+//        SET_BIT(*pRegister, Flag);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       DMA_CheckFlag
 //
-//  Parameter(s):   pDMA        DMA stream to modify
+//  Parameter(s):   pDMA        DMA channel to check flag
 //                  Flag        To check
 //  Return:         None
 //
-//  Description:    Check flag for specific DMA stream.
+//  Description:    Check flag for specific DMA channel.
 //-------------------------------------------------------------------------------------------------
 uint32_t DMA_CheckFlag(DMA_Channel_TypeDef* pDMA, uint32_t Flag)
 {
-    volatile uint32_t Register;
-    uint32_t          Result     = 0;
+    uint32_t Register = 0;
+    uint32_t Result   = 0;
 
-    switch(intptr_t(pDMA))
+    if((intptr_t(pDMA) & DMA1_BASE) == DMA1_BASE)
     {
-        case (uint32_t)DMA1_Channel1_BASE:
-        case (uint32_t)DMA1_Channel2_BASE:
-        case (uint32_t)DMA1_Channel3_BASE:
-        case (uint32_t)DMA1_Channel4_BASE: Register = DMA1->ISR; break;
-
-        case (uint32_t)DMA1_Channel5_BASE:
-        case (uint32_t)DMA1_Channel6_BASE:
-        case (uint32_t)DMA1_Channel7_BASE: Register = DMA1->ISR; break;
-
-      #if (DMA2_SUPPORT == DEF_ENABLED)
-        case (uint32_t)DMA2_Channel0_BASE:
-        case (uint32_t)DMA2_Channel1_BASE:
-        case (uint32_t)DMA2_Channel2_BASE:
-        case (uint32_t)DMA2_Channel3_BASE: Register = DMA2->ISR; break;
-
-        case (uint32_t)DMA2_Channel4_BASE:
-        case (uint32_t)DMA2_Channel5_BASE: Register = DMA2->HISR; break;
-      #endif
+        Register = DMA1->ISR;
     }
+
+  #if (DMA2_SUPPORT == DEF_ENABLED)
+    else if((pDMA & DMA2_BASE) == DMA2_BASE)
+    {
+        Register = DMA2->ISR;
+    }
+  #endif
 
     if((Register & Flag) != 0)
     {
@@ -121,86 +104,86 @@ uint32_t DMA_CheckFlag(DMA_Channel_TypeDef* pDMA, uint32_t Flag)
 //
 //  Function:       DMA_Enable
 //
-//  Parameter(s):   pDMA        DMA stream to enable
+//  Parameter(s):   pDMA        DMA channel to enable
 //  Return:         None
 //
-//  Description:    Enable a specific DMA stream.
+//  Description:    Enable a specific DMA channel.
 //-------------------------------------------------------------------------------------------------
 void DMA_Enable(DMA_Channel_TypeDef* pDMA)
 {
-    SET_BIT(pDMA->CR, DMA_SxCR_EN);
+    SET_BIT(pDMA->CCR, DMA_CCR_EN);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       DMA_Disable
 //
-//  Parameter(s):   pDMA        DMA stream to disable
+//  Parameter(s):   pDMA        DMA channel to disable
 //  Return:         None
 //
-//  Description:    Disable a specific DMA stream.
+//  Description:    Disable a specific DMA channel.
 //-------------------------------------------------------------------------------------------------
 void DMA_Disable(DMA_Channel_TypeDef* pDMA)
 {
-    CLEAR_BIT(pDMA->CR, DMA_SxCR_EN);
+    CLEAR_BIT(pDMA->CCR, DMA_CCR_EN);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       DMA_EnableInterrupt
 //
-//  Parameter(s):   pDMA        DMA stream
+//  Parameter(s):   pDMA        DMA channel
 //                  Interrupt   Interrupt tn enable
 //  Return:         None
 //
-//  Description:    Enable a group of interrupt for specific DMA stream.
+//  Description:    Enable a group of interrupt for specific DMA channel.
 //-------------------------------------------------------------------------------------------------
 void DMA_EnableInterrupt(DMA_Channel_TypeDef* pDMA, uint32_t Interrupt)
 {
-    SET_BIT(pDMA->CR, Interrupt);
+    SET_BIT(pDMA->CCR, Interrupt);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       DMA_DisableInterrupt
 //
-//  Parameter(s):   pDMA        DMA stream
+//  Parameter(s):   pDMA        DMA channel
 //                  Interrupt   Interrupt tn enable
 //  Return:         None
 //
-//  Description:    Disable a group of interrupt for specific DMA stream.
+//  Description:    Disable a group of interrupt for specific DMA channel.
 //-------------------------------------------------------------------------------------------------
 void DMA_DisableInterrupt(DMA_Channel_TypeDef* pDMA, uint32_t Interrupt)
 {
-    CLEAR_BIT(pDMA->CR, Interrupt);
+    CLEAR_BIT(pDMA->CCR, Interrupt);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       DMA_EnableTransmitCompleteInterrupt
 //
-//  Parameter(s):   pDMA        DMA stream to enable
+//  Parameter(s):   pDMA        DMA channel to enable
 //  Return:         None
 //
-//  Description:    Enable the transmit complete interrupt for a specific DMA stream.
+//  Description:    Enable the transmit complete interrupt for a specific DMA channel.
 //-------------------------------------------------------------------------------------------------
 void DMA_EnableTransmitCompleteInterrupt(DMA_Channel_TypeDef* pDMA)
 {
-    SET_BIT(pDMA->CR, DMA_SxCR_TCIE);
+    SET_BIT(pDMA->CCR, DMA_CCR_TCIE);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       DMA_DisableTransmitCompleteInterrupt
 //
-//  Parameter(s):   pDMA        DMA stream to enable
+//  Parameter(s):   pDMA        DMA channel to enable
 //  Return:         None
 //
-//  Description:    Disable the transmit complete interrupt for a specific DMA stream.
+//  Description:    Disable the transmit complete interrupt for a specific DMA channel.
 //-------------------------------------------------------------------------------------------------
 void DMA_DisableTransmitCompleteInterrupt(DMA_Channel_TypeDef* pDMA)
 {
-    CLEAR_BIT(pDMA->CR, DMA_SxCR_TCIE);
+    CLEAR_BIT(pDMA->CCR, DMA_CCR_TCIE);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -214,7 +197,7 @@ void DMA_DisableTransmitCompleteInterrupt(DMA_Channel_TypeDef* pDMA)
 //-------------------------------------------------------------------------------------------------
 void DMA_EnableTransmitHalfCompleteInterrupt(DMA_Channel_TypeDef* pDMA)
 {
-    SET_BIT(pDMA->CR, DMA_SxCR_HTIE);
+    SET_BIT(pDMA->CCR, DMA_CCR_HTIE);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -228,7 +211,7 @@ void DMA_EnableTransmitHalfCompleteInterrupt(DMA_Channel_TypeDef* pDMA)
 //-------------------------------------------------------------------------------------------------
 void DMA_DisableTransmitHalfCompleteInterrupt(DMA_Channel_TypeDef* pDMA)
 {
-    CLEAR_BIT(pDMA->CR, DMA_SxCR_HTIE);
+    CLEAR_BIT(pDMA->CCR, DMA_CR_HTIE);
 }
 
 //---------------------------------------------------------------------------------------------------------------------------------
@@ -303,35 +286,6 @@ void DMA_DisableTransmitHalfCompleteInterrupt(DMA_Channel_TypeDef* pDMA)
     DMA_SetConfig(hdma, SrcAddress, DstAddress, DataLength);    /* Configure the source, destination address and the data length & clear flags*/
     __HAL_DMA_ENABLE(hdma);         /* Enable the Peripheral */
  }
-
-/**
-  * @brief  Start the DMA Transfer with interrupt enabled.
-  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
-  *               the configuration information for the specified DMA Channel.
-  * @param  SrcAddress: The source memory Buffer address
-  * @param  DstAddress: The destination memory Buffer address
-  * @param  DataLength: The length of data to be transferred from source to destination
-  * @retval HAL status
-  */
-HAL_DMA_Start_IT(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t DstAddress, uint32_t DataLength)
-{
-    __HAL_DMA_DISABLE(hdma);        /* Disable the peripheral */
-    DMA_SetConfig(hdma, SrcAddress, DstAddress, DataLength);        /* Configure the source, destination address and the data length & clear flags*/
-
-    /* Enable the transfer complete interrupt */
-    /* Enable the transfer Error interrupt */
-    if(NULL != hdma->XferHalfCpltCallback)
-    {
-      __HAL_DMA_ENABLE_IT(hdma, (DMA_IT_TC | DMA_IT_HT | DMA_IT_TE));         /* Enable the Half transfer complete interrupt as well */
-    }
-    else
-    {
-      __HAL_DMA_DISABLE_IT(hdma, DMA_IT_HT);
-      __HAL_DMA_ENABLE_IT(hdma, (DMA_IT_TC | DMA_IT_TE));
-    }
-    __HAL_DMA_ENABLE(hdma);     /* Enable the Peripheral */
-  }
-}
 
 /**
   * @brief  Handles DMA interrupt request.

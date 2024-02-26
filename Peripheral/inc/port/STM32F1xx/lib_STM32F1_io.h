@@ -32,10 +32,10 @@
 
 #define GPIOxx                              ((uint32_t)0x00000000)
 #define NUMBER_OF_PIN_PER_PORT              ((uint32_t)16)
-
+                                            
 #define LED_Init(p)                         IO_PinInit(p)
 #define LED_Toggle(p)                       IO_TogglePin(p)
-
+                                       
 //#define IO_NULL                           ((IO_TypeDef *)nullptr)
 #define IO_PIN_MASK_0                       ((uint16_t)0x0001)
 #define IO_PIN_MASK_1                       ((uint16_t)0x0002)
@@ -82,7 +82,7 @@
 
 // When pin mode IO_MODE_ALTERNATE_xxx or IO_MODE_INPUT_NO_PULL
 #define IO_DEFAULT_DONT_CARE                0
-
+                                       
 
 
 // TODO need to be validated
@@ -196,6 +196,8 @@ extern const IO_IRQ_Properties_t  IO_IRQ_Properties[IO_IRQ_NUM];
 
 void        IO_PinInit                  (IO_ID_e IO_ID);
 void        IO_PinInit                  (GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint32_t State);
+void        IO_PinInitInput             (IO_ID_e IO_ID);
+void        IO_PinInitOutput            (IO_ID_e IO_ID);
 void        IO_SetPinLow                (IO_ID_e IO_ID);
 void        IO_SetPinHigh               (IO_ID_e IO_ID);
 void        IO_TogglePin                (IO_ID_e IO_ID);
@@ -205,8 +207,6 @@ uint32_t    IO_GetInputPinValue         (IO_ID_e IO_ID);
 bool        IO_GetOutputPin             (IO_ID_e IO_ID);
 void        IO_EnableClock              (GPIO_TypeDef* pPort);
 bool        IO_IsItValid                (IO_ID_e IO_ID);
-bool        IO_LockPin                  (uint32_t PortNumber);
-
 #ifdef IO_IRQ_DEF
 void        IO_InitIRQ                  (IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback);
 void        IO_EnableIRQ                (IO_IrqID_e IO_IRQ_ID);
@@ -215,5 +215,7 @@ IO_ID_e     IO_GetIO_ID                 (IO_IrqID_e IO_IRQ_ID);
 bool        IO_GetIRQ_State             (IO_IrqID_e IO_IRQ_ID);
 void        IO_CallBack                 (IO_IrqID_e IO_IRQ_ID);
 #endif
+
+uint32_t HALIO_PinLowLevelAccess   (uint32_t PortNumber, uint32_t PinNumber, uint32_t Direction, uint32_t State);
 
 //-------------------------------------------------------------------------------------------------

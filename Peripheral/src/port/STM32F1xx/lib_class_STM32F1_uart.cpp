@@ -545,7 +545,7 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
         if(*pSizeTX != 0)
         {
           #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-            DMA_Stream_TypeDef* pDMA;
+            DMA_Channel_TypeDef* pDMA;
 
             if(m_pInfo->IsItBlockingOnBusy == true)
             {

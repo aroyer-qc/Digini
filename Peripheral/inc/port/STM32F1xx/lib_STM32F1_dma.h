@@ -42,8 +42,8 @@
 #define DMA_MEMORY_SIZE_32_BITS        0x0800           // 32 Bits
 
 #define DMA_PERIPHERAL_SIZE_8_BITS     0x0000           // 8 bits
-#define DMA_PERIPHERAL_SIZE_816_BITS   0x0100           // 16 bits
-#define DMA_PERIPHERAL_SIZE_832_BITS   0x0200           // 32 Bits
+#define DMA_PERIPHERAL_SIZE_16_BITS    0x0100           // 16 bits
+#define DMA_PERIPHERAL_SIZE_32_BITS    0x0200           // 32 Bits
 
 #define DMA_MEMORY_NO_INCREMENT        0x0000           // Memory increment mode Disable
 #define DMA_MEMORY_INCREMENT           0x0080           // Memory increment mode Enable
@@ -56,34 +56,6 @@
 
 #define DMA_READ_FROM_PERIPH           0x0000           // Peripheral to memory direction
 #define DMA_READ_FROM_MEMORY           0x0010           // Memory to peripheral or memory direction
-
-/*
-#define DMA_CHANNEL_1                  0x00000001U
-#define DMA_CHANNEL_2                  0x00000002U
-#define DMA_CHANNEL_3                  0x00000003U
-#define DMA_CHANNEL_4                  0x00000004U
-#define DMA_CHANNEL_5                  0x00000005U
-#define DMA_CHANNEL_6                  0x00000006U
-#define DMA_CHANNEL_7                  0x00000007U
-
-
-#define DMA1                ((DMA_TypeDef *)DMA1_BASE)
-#define DMA2                ((DMA_TypeDef *)DMA2_BASE)
-#define DMA1_Channel1       ((DMA_Channel_TypeDef *)DMA1_Channel1_BASE)
-#define DMA1_Channel2       ((DMA_Channel_TypeDef *)DMA1_Channel2_BASE)
-#define DMA1_Channel3       ((DMA_Channel_TypeDef *)DMA1_Channel3_BASE)
-#define DMA1_Channel4       ((DMA_Channel_TypeDef *)DMA1_Channel4_BASE)
-#define DMA1_Channel5       ((DMA_Channel_TypeDef *)DMA1_Channel5_BASE)
-#define DMA1_Channel6       ((DMA_Channel_TypeDef *)DMA1_Channel6_BASE)
-#define DMA1_Channel7       ((DMA_Channel_TypeDef *)DMA1_Channel7_BASE)
-#define DMA2_Channel1       ((DMA_Channel_TypeDef *)DMA2_Channel1_BASE)
-#define DMA2_Channel2       ((DMA_Channel_TypeDef *)DMA2_Channel2_BASE)
-#define DMA2_Channel3       ((DMA_Channel_TypeDef *)DMA2_Channel3_BASE)
-#define DMA2_Channel4       ((DMA_Channel_TypeDef *)DMA2_Channel4_BASE)
-#define DMA2_Channel5       ((DMA_Channel_TypeDef *)DMA2_Channel5_BASE)
-*/
-
-
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)

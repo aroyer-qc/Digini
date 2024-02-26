@@ -78,8 +78,6 @@ static void _IO_GetPinInfo (IO_IrqID_e IO_ID, uint32_t* pPinNumber, uint32_t* pP
 //
 //  Description:    Get pin number and mask from struct.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
 static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_ID, uint32_t* pPinNumber, uint32_t* pPinMask)
@@ -111,8 +109,6 @@ static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_ID, uint32_t* pPinNumber, uint32_t*
 //  Return:         None
 //
 //  Description:    Basic pin initialization Using ID.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void IO_PinInit(IO_ID_e IO_ID)
@@ -146,11 +142,7 @@ void IO_PinInit(IO_ID_e IO_ID)
 //
 //  Description:    Basic pin initialization using provided configuration.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-
-
 void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint32_t State)
 {
     uint32_t OffsetPin;
@@ -196,8 +188,6 @@ void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint3
 //
 //  Description:    Sets pin(s) low.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void IO_SetPinLow(IO_ID_e IO_ID)
 {
@@ -218,8 +208,6 @@ void IO_SetPinLow(IO_ID_e IO_ID)
 //  Return:         None
 //
 //  Description:    Sets pin(s) high.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void IO_SetPinHigh(IO_ID_e IO_ID)
@@ -242,8 +230,6 @@ void IO_SetPinHigh(IO_ID_e IO_ID)
 //
 //  Description:    Toggles pin(s).
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void IO_TogglePin(IO_ID_e IO_ID)
 {
@@ -265,8 +251,6 @@ void IO_TogglePin(IO_ID_e IO_ID)
 //  Return:         None
 //
 //  Description:    Sets pin(s) value.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void IO_SetPin(IO_ID_e IO_ID, bool Value)
@@ -359,8 +343,6 @@ bool IO_GetOutputPin(IO_ID_e IO_ID)
 //
 //  Description:    Return if this pin is a valid one.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 bool IO_IsItValid(IO_ID_e IO_ID)
 {
@@ -411,8 +393,6 @@ void IO_LockPin(IO_ID_e IO_ID)
 //  Return:         None
 //
 //  Description:    Pin initialization for pin using IRQ.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
@@ -482,8 +462,6 @@ void IO_InitIRQ(IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback)
 //
 //  Description:    Enable the IRQ for specify ID.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
 void IO_EnableIRQ(IO_IrqID_e IO_IRQ_ID)
@@ -545,8 +523,6 @@ IO_ID_e IO_GetIO_ID(IO_IrqID_e IO_IRQ_ID)
 //
 //  Description:    Get the state of the IRQ for specify ID.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
 bool IO_GetIRQ_State(IO_IrqID_e IO_IRQ_ID)
@@ -573,8 +549,6 @@ bool IO_GetIRQ_State(IO_IrqID_e IO_IRQ_ID)
 //
 //  Description:    Get the state of the IRQ for specify ID.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
 void IO_CallBack(IO_IrqID_e IO_IRQ_ID)
@@ -595,8 +569,6 @@ void IO_CallBack(IO_IrqID_e IO_IRQ_ID)
 //
 //  Description:    Enable port clock.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void IO_EnableClock(GPIO_TypeDef* pPort)
 {
@@ -610,5 +582,3 @@ void IO_EnableClock(GPIO_TypeDef* pPort)
 }
 
 //-------------------------------------------------------------------------------------------------
-
-

@@ -101,6 +101,7 @@ typedef enum
     BASE_HEXADECIMAL = 16,
     BASE_STRING      = 1,
     BASE_POINTER     = 2,
+    BASE_FLOAT       = 3,       // TODO add support for Float
 }  ParamBase_e;
 
 typedef enum

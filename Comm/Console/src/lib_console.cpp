@@ -111,7 +111,7 @@ void Console::Initialize(UART_Driver* pUartDriver)
 //-------------------------------------------------------------------------------------------------
 void Console::Process(void)
 {
-    #if (CON_TRAP_INCOMING_COMMENT_LINE == DEF_ENABLED)
+  #if (CON_TRAP_INCOMING_COMMENT_LINE == DEF_ENABLED)
     if(ReadyRead() == true)
     {
         if((m_Fifo.At(0) == CON_TRAP_COMMENT_CHARACTER) && (m_IsItIdle == true))        // Need to be idle and first char is comment.

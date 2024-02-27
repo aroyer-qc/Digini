@@ -78,7 +78,7 @@
 //-------------------------------------------------------------------------------------------------
 // Digini library
 //
-#include "lib_device.h"
+#include "lib_cpu_specific.h"
 #include "lib_assert.h"
 #include "lib_memory.h"
 #include "lib_node_list.h"
@@ -95,13 +95,12 @@
 #include "lib_class_timer.h"
 #include "lib_stacktistic.h"
 #include "lib_utility.h"
+#include "lib_isr.h"
 #include "lib_pid.h"
 #include "lib_io.h"
-#include "lib_isr.h"
 #include "lib_fifo.h"
 #include "lib_dma.h"
 #include "lib_rng.h"
-#include "lib_cpu_specific.h"
 
 #if (DIGINI_USE_CRC == DEF_ENABLED)
 #include "lib_crc.h"

@@ -51,6 +51,20 @@
 #endif
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define     DBASE_INTERFACE_POOL                7      // Size of the interface pool (must fit next define)
+
+#define     DBASE_INDEX_BKPREG_RANGE            0
+#define     DBASE_INDEX_EEPROM_RANGE            1000
+#define     DBASE_INDEX_HARD_RANGE              2000
+#define     DBASE_INDEX_RAM_RANGE               3000
+#define     DBASE_INDEX_ROM_RANGE               4000
+#define     DBASE_INDEX_SYSTEM_RANGE            5000
+#define     DBASE_INDEX_QSPI_RANGE              6000
+
+//-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -78,6 +92,8 @@ struct DBaseInfo_t
 };
 
 //-------------------------------------------------------------------------------------------------
+//  class
+//-------------------------------------------------------------------------------------------------
 
 class CDataBaseInterface
 {
@@ -93,8 +109,6 @@ class CDataBaseInterface
         virtual SystemState_e   GetPointer               (void** pAddress,    uint16_t Record, uint16_t Number, uint16_t SubNumber)  = 0;                           // Get Record address if it is memory location
         virtual SystemState_e   SetDB_Address            (void** pAddress)                                                           = 0;                           // Set database address if supported by module
 };
-
-
 
 class CDataBase
 {
@@ -134,7 +148,6 @@ class CDataBase
        #endif
 };
 
-
 //-------------------------------------------------------------------------------------------------
 // Global Variable(s)
 //-------------------------------------------------------------------------------------------------
@@ -152,9 +165,5 @@ EXTERN_LIB_CLASS_DATABASE class CDataBase DB_Central;
 #include "lib_class_rom_dbase.h"
 #include "lib_class_bkpreg_dbase.h"
 #include "lib_database_wrapper.h"
-
-//#define __DATABASE_POST_INCLUDE__
-//#include "database_cfg.h"
-//#undef  __DATABASE_POST_INCLUDE__
 
 //-------------------------------------------------------------------------------------------------

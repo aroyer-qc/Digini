@@ -211,7 +211,7 @@ void DMA_EnableTransmitHalfCompleteInterrupt(DMA_Channel_TypeDef* pDMA)
 //-------------------------------------------------------------------------------------------------
 void DMA_DisableTransmitHalfCompleteInterrupt(DMA_Channel_TypeDef* pDMA)
 {
-    CLEAR_BIT(pDMA->CCR, DMA_CR_HTIE);
+    CLEAR_BIT(pDMA->CCR, DMA_CCR_HTIE);
 }
 
 //---------------------------------------------------------------------------------------------------------------------------------

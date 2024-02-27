@@ -62,7 +62,9 @@
 //-------------------------------------------------------------------------------------------------
 void SystemInit(void)
 {
+  #if (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
     uint32_t Retry;
+  #endif
 
     __asm volatile("cpsid i");                                              // Disable IRQ
 

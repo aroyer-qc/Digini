@@ -24,12 +24,6 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#if defined STM32F1xx
- #include "lib_class_STM32F1_io_port.h"
-#elif defined STM32F4xx
- #include "lib_class_STM32F4_io_port.h"
-#elif defined STM32F7xx
- #include "lib_class_STM32F7_io_port.h"
-#endif
+ #include "lib_class_generic_io_port.h"
 
 //-------------------------------------------------------------------------------------------------

@@ -63,6 +63,7 @@
 #define UART_CR3_FLOW_RTS                   USART_CR3_RTSE
 
 #define UART_CR2_CONFIG_OFFSET              16
+#define UART_BRR_MANTISSA_MASK              0xFF0
 
 //-------------------------------------------------------------------------------------------------
 //  private variable(s)
@@ -281,54 +282,33 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
       #if (UART_DRIVER_SUPPORT_UART1_CFG == DEF_ENABLED)
         if(m_pUart == USART1)
         {
-          PeriphClk = SYS_APB2_CLOCK_FREQUENCY;    // TODO TODO TODO 108000000;
+          PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
         }
       #endif
 
       #if (UART_DRIVER_SUPPORT_UART2_CFG == DEF_ENABLED)
         if(m_pUart == USART2)
         {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY; // 54000000;
+          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
         }
       #endif
 
       #if (UART_DRIVER_SUPPORT_UART3_CFG == DEF_ENABLED)
         if(m_pUart == USART3)
         {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY; // 54000000;
+          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
         }
       #endif
 
       #if (UART_DRIVER_SUPPORT_UART4_CFG == DEF_ENABLED)
         if(m_pUart == UART4)
         {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY; // 54000000;
+          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
         }
       #endif
 
       #if (UART_DRIVER_SUPPORT_UART5_CFG == DEF_ENABLED)
         if(m_pUart == UART5)
-        {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-        }
-      #endif
-
-      #if (UART_DRIVER_SUPPORT_UART6_CFG == DEF_ENABLED)
-        if(m_pUART == USART6)
-        {
-          PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
-        }
-      #endif
-
-      #if (UART_DRIVER_SUPPORT_UART7_CFG == DEF_ENABLED)
-        if(m_pUart == UART7)
-        {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-        }
-      #endif
-
-      #if (UART_DRIVER_SUPPORT_UART8_CFG == DEF_ENABLED)
-        if(m_pUart == UART8)
         {
           PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
         }

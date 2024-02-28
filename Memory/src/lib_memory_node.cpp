@@ -45,7 +45,7 @@
 //-------------------------------------------------------------------------------------------------
 MemoryNode::MemoryNode()
 {
-    m_pNodeList = pMemoryPool->AllocAndClear(sizeof(NodeList));
+    m_pNodeList = (NodeList*)pMemoryPool->AllocAndClear(sizeof(NodeList));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -170,6 +170,8 @@ void* MemoryNode::GetNext(void)
     {
         m_NodePtr++;
     }
+
+    return pData;
 }
 
 

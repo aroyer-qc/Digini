@@ -298,48 +298,6 @@ void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
         }
         break;
       #endif
-
-      #if ((TIM_DRIVER_SUPPORT_TIM9_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM9_OR_TIM12_COMPARE_CFG == DEF_ENABLED))
-        case int(TIM9):
-      #endif
-      #if ((TIM_DRIVER_SUPPORT_TIM12_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM9_OR_TIM12_COMPARE_CFG == DEF_ENABLED))
-        case int(TIM12):
-      #endif
-      #if (((TIM_DRIVER_SUPPORT_TIM9_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM12_CFG == DEF_ENABLED)) && \
-      (TIM_DRIVER_SUPPORT_TIM9_OR_TIM12_COMPARE_CFG  == DEF_ENABLED))
-        {
-            if(Channel > TIM_COMPARE_CH2)
-            {
-                return;
-            }
-        }
-        break;
-      #endif
-
-      #if ((TIM_DRIVER_SUPPORT_TIM10_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM10_COMPARE_CFG == DEF_ENABLED))
-        case int(TIM10):
-      #endif
-      #if ((TIM_DRIVER_SUPPORT_TIM11_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM11_COMPARE_CFG == DEF_ENABLED))
-        case int(TIM11):
-      #endif
-      #if ((TIM_DRIVER_SUPPORT_TIM13_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM13_COMPARE_CFG == DEF_ENABLED))
-        case int(TIM13):
-      #endif
-      #if ((TIM_DRIVER_SUPPORT_TIM14_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM14_COMPARE_CFG == DEF_ENABLED))
-        case int(TIM14):
-      #endif
-      #if (((TIM_DRIVER_SUPPORT_TIM10_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM10_COMPARE_CFG == DEF_ENABLED)) || \
-           ((TIM_DRIVER_SUPPORT_TIM11_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM11_COMPARE_CFG == DEF_ENABLED)) || \
-           ((TIM_DRIVER_SUPPORT_TIM13_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM13_COMPARE_CFG == DEF_ENABLED)) || \
-           ((TIM_DRIVER_SUPPORT_TIM14_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM14_COMPARE_CFG == DEF_ENABLED)))
-        {
-            if(Channel > TIM_COMPARE_CH1)
-            {
-                return;
-            }
-        }
-        break;
-      #endif
     }
 
     switch(Channel)

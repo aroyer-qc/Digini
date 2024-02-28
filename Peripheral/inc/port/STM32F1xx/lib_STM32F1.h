@@ -27,38 +27,236 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+// Note(s)
+//-------------------------------------------------------------------------------------------------
+
+// No support yet for TIM9 to TIM17 add as necessary
+// Not all CPU are define, add has necessary
+
+//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#if (defined (STM32F100xB) || \
-     defined (STM32F101x6) || defined (STM32F101xB) || \
-     defined (STM32F102x6) || defined (STM32F102xB) || \
-     defined (STM32F103x6) || defined (STM32F103xB))
+#if defined (STM32F100xB)
+    #define NUMBER_OF_IO_PORT   
+    #define DMA2_SUPPORT        DEF_DISABLED
 
-#define DMA2_SUPPORT        DEF_DISABLED
-
+    #define TIM1_SUPPORT        DEF_ENABLED
+    #define TIM2_SUPPORT        DEF_ENABLED
+    #define TIM3_SUPPORT        DEF_ENABLED
+    #define TIM4_SUPPORT        DEF_ENABLED
+    #define TIM5_SUPPORT        DEF_DISABLED
+    #define TIM6_SUPPORT        DEF_ENABLED
+    #define TIM7_SUPPORT        DEF_ENABLED
+    #define TIM8_SUPPORT        DEF_DISABLED
 #endif
 
-#if (defined (STM32F100xE) || \
-     defined (STM32F101xE) || defined (STM32F101xG) || \
-     defined (STM32F103xE) || defined (STM32F103xG) || \
-     defined (STM32F105xC) || defined (STM32F107xC))
+//-------------------------------------------------------------------------------------------------
 
-#define DMA2_SUPPORT        DEF_ENABLED
+#if defined (STM32F100xE)
+    #define NUMBER_OF_IO_PORT   
+    #define DMA2_SUPPORT        DEF_ENABLED
 
+    #define TIM1_SUPPORT        DEF_ENABLED
+    #define TIM2_SUPPORT        DEF_ENABLED
+    #define TIM3_SUPPORT        DEF_ENABLED
+    #define TIM4_SUPPORT        DEF_ENABLED
+    #define TIM5_SUPPORT        DEF_ENABLED
+    #define TIM6_SUPPORT        DEF_ENABLED
+    #define TIM7_SUPPORT        DEF_ENABLED
+    #define TIM8_SUPPORT        DEF_DISABLED
 #endif
 
-// Add CPU spec as project need then
+//-------------------------------------------------------------------------------------------------
+
+#if defined (STM32F101x6)
+    #define NUMBER_OF_IO_PORT   
+    #define DMA2_SUPPORT        DEF_DISABLED
+
+    #define TIM1_SUPPORT        DEF_DISABLED
+    #define TIM2_SUPPORT        DEF_ENABLED
+    #define TIM3_SUPPORT        DEF_ENABLED
+    #define TIM4_SUPPORT        DEF_DISABLED
+    #define TIM5_SUPPORT        DEF_DISABLED
+    #define TIM6_SUPPORT        DEF_DISABLED
+    #define TIM7_SUPPORT        DEF_DISABLED
+    #define TIM8_SUPPORT        DEF_DISABLED
+#endif
+
+//-------------------------------------------------------------------------------------------------
+
+#if defined (STM32F101xB)
+    #define NUMBER_OF_IO_PORT   
+    #define DMA2_SUPPORT        DEF_DISABLED
+
+    #define TIM1_SUPPORT        DEF_DISABLED
+    #define TIM2_SUPPORT        DEF_ENABLED
+    #define TIM3_SUPPORT        DEF_ENABLED
+    #define TIM4_SUPPORT        DEF_ENABLED
+    #define TIM5_SUPPORT        DEF_DISABLED
+    #define TIM6_SUPPORT        DEF_DISABLED
+    #define TIM7_SUPPORT        DEF_DISABLED
+    #define TIM8_SUPPORT        DEF_DISABLED
+#endif
+
+//-------------------------------------------------------------------------------------------------
+
+#if defined (STM32F101xE)
+    #define NUMBER_OF_IO_PORT   
+    #define DMA2_SUPPORT        DEF_ENABLED
+
+    #define TIM1_SUPPORT        DEF_DISABLED
+    #define TIM2_SUPPORT        DEF_ENABLED
+    #define TIM3_SUPPORT        DEF_ENABLED
+    #define TIM4_SUPPORT        DEF_ENABLED
+    #define TIM5_SUPPORT        DEF_ENABLED
+    #define TIM6_SUPPORT        DEF_ENABLED
+    #define TIM7_SUPPORT        DEF_ENABLED
+    #define TIM8_SUPPORT        DEF_DISABLED
+ #endif
+
+//-------------------------------------------------------------------------------------------------
+
+#if defined (STM32F101xG)
+    #define NUMBER_OF_IO_PORT   
+    #define DMA2_SUPPORT        DEF_ENABLED
+
+    #define TIM1_SUPPORT        DEF_DISABLED
+    #define TIM2_SUPPORT        DEF_DISABLED
+    #define TIM3_SUPPORT        DEF_DISABLED
+    #define TIM4_SUPPORT        DEF_DISABLED
+    #define TIM5_SUPPORT        DEF_ENABLED
+    #define TIM6_SUPPORT        DEF_ENABLED
+    #define TIM7_SUPPORT        DEF_ENABLED
+    #define TIM8_SUPPORT        DEF_DISABLED
+#endif
+
+//-------------------------------------------------------------------------------------------------
+
+#if defined (STM32F102x6)
+    #define NUMBER_OF_IO_PORT   
+    #define DMA2_SUPPORT        DEF_DISABLED
+
+    #define TIM1_SUPPORT        DEF_DISABLED
+    #define TIM2_SUPPORT        DEF_ENABLED
+    #define TIM3_SUPPORT        DEF_ENABLED
+    #define TIM4_SUPPORT        DEF_DISABLED
+    #define TIM5_SUPPORT        DEF_DISABLED
+    #define TIM6_SUPPORT        DEF_DISABLED
+    #define TIM7_SUPPORT        DEF_DISABLED
+    #define TIM8_SUPPORT        DEF_DISABLED
+#endif
+
+//-------------------------------------------------------------------------------------------------
+
+#if defined (STM32F102xB)
+    #define NUMBER_OF_IO_PORT   
+    #define DMA2_SUPPORT        DEF_DISABLED
+
+    #define TIM1_SUPPORT        DEF_DISABLED
+    #define TIM2_SUPPORT        DEF_ENABLED
+    #define TIM3_SUPPORT        DEF_ENABLED
+    #define TIM4_SUPPORT        DEF_ENABLED
+    #define TIM5_SUPPORT        DEF_DISABLED
+    #define TIM6_SUPPORT        DEF_DISABLED
+    #define TIM7_SUPPORT        DEF_DISABLED
+    #define TIM8_SUPPORT        DEF_DISABLED
+#endif
+
+//-------------------------------------------------------------------------------------------------
+
+#if defined (STM32F103x6)
+    #define NUMBER_OF_IO_PORT   
+    #define DMA2_SUPPORT        DEF_DISABLED
+
+    #define TIM1_SUPPORT        DEF_ENABLED
+    #define TIM2_SUPPORT        DEF_ENABLED
+    #define TIM3_SUPPORT        DEF_ENABLED
+    #define TIM4_SUPPORT        DEF_DISABLED
+    #define TIM5_SUPPORT        DEF_DISABLED
+    #define TIM6_SUPPORT        DEF_DISABLED
+    #define TIM7_SUPPORT        DEF_DISABLED
+    #define TIM8_SUPPORT        DEF_DISABLED
+#endif
+
+//-------------------------------------------------------------------------------------------------
 
 #if defined (STM32F103xB)
-
-#define NUMBER_OF_IO_PORT               6
-
+    #define NUMBER_OF_IO_PORT   6
+    #define DMA2_SUPPORT        DEF_DISABLED
+    
+    #define TIM1_SUPPORT        DEF_ENABLED
+    #define TIM2_SUPPORT        DEF_ENABLED
+    #define TIM3_SUPPORT        DEF_ENABLED
+    #define TIM4_SUPPORT        DEF_ENABLED
+    #define TIM5_SUPPORT        DEF_DISABLED
+    #define TIM6_SUPPORT        DEF_DISABLED
+    #define TIM7_SUPPORT        DEF_DISABLED
+    #define TIM8_SUPPORT        DEF_DISABLED
 #endif
 
-#if (defined (STM32F103xE) || defined (STM32F103xG))
+//-------------------------------------------------------------------------------------------------
 
-#define NUMBER_OF_IO_PORT               8
+#if defined (STM32F103xE)
+    #define NUMBER_OF_IO_PORT   8
+    #define DMA2_SUPPORT        DEF_ENABLED
 
+    #define TIM1_SUPPORT        DEF_ENABLED
+    #define TIM2_SUPPORT        DEF_ENABLED
+    #define TIM3_SUPPORT        DEF_ENABLED
+    #define TIM4_SUPPORT        DEF_ENABLED
+    #define TIM5_SUPPORT        DEF_ENABLED
+    #define TIM6_SUPPORT        DEF_ENABLED
+    #define TIM7_SUPPORT        DEF_ENABLED
+    #define TIM8_SUPPORT        DEF_ENABLED
 #endif
+
+//-------------------------------------------------------------------------------------------------
+
+#if defined (STM32F103xG)
+    #define NUMBER_OF_IO_PORT   8
+    #define DMA2_SUPPORT        DEF_ENABLED
+
+    #define TIM1_SUPPORT        DEF_ENABLED
+    #define TIM2_SUPPORT        DEF_ENABLED
+    #define TIM3_SUPPORT        DEF_ENABLED
+    #define TIM4_SUPPORT        DEF_ENABLED
+    #define TIM5_SUPPORT        DEF_ENABLED
+    #define TIM6_SUPPORT        DEF_ENABLED
+    #define TIM7_SUPPORT        DEF_ENABLED
+    #define TIM8_SUPPORT        DEF_ENABLED
+#endif
+
+//-------------------------------------------------------------------------------------------------
+
+#if defined (STM32F105xC)
+    #define NUMBER_OF_IO_PORT   
+    #define DMA2_SUPPORT        DEF_ENABLED
+
+    #define TIM1_SUPPORT        DEF_ENABLED
+    #define TIM2_SUPPORT        DEF_ENABLED
+    #define TIM3_SUPPORT        DEF_ENABLED
+    #define TIM4_SUPPORT        DEF_ENABLED
+    #define TIM5_SUPPORT        DEF_ENABLED
+    #define TIM6_SUPPORT        DEF_ENABLED
+    #define TIM7_SUPPORT        DEF_ENABLED
+    #define TIM8_SUPPORT        DEF_DISABLED
+#endif
+
+//-------------------------------------------------------------------------------------------------
+
+#if defined (STM32F107xC)
+    #define NUMBER_OF_IO_PORT   
+    #define DMA2_SUPPORT        DEF_ENABLED
+
+    #define TIM1_SUPPORT        DEF_ENABLED
+    #define TIM2_SUPPORT        DEF_ENABLED
+    #define TIM3_SUPPORT        DEF_ENABLED
+    #define TIM4_SUPPORT        DEF_ENABLED
+    #define TIM5_SUPPORT        DEF_ENABLED
+    #define TIM6_SUPPORT        DEF_ENABLED
+    #define TIM7_SUPPORT        DEF_ENABLED
+    #define TIM8_SUPPORT        DEF_DISABLED
+#endif
+
 //-------------------------------------------------------------------------------------------------

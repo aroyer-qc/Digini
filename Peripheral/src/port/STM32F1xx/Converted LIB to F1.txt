@@ -6,7 +6,8 @@ lib_STM32F1_dma                 Converted, not tested
 system_clock                    Converted, not tested
 lib_STM32F1_isr                 Converted, not tested
 lib_STM32F1_io                  Converted, not tested
-lib_class_STM32F1_tim           In progress
+lib_class_STM32F1_tim           In progress                     // no support yet for timer 9 to 17
+lib_class_STM32F1_pwm           In progress
 
 
 lib_class_STM32F1_adc           TODO
@@ -14,11 +15,8 @@ lib_class_STM32F1_can           TODO
 lib_class_STM32F1_crc           TODO
 lib_class_STM32F1_i2c           TODO
 lib_class_STM32F1_i2s           TODO
-lib_class_STM32F1_pwm           TODO
 lib_class_STM32F1_rtc           TODO
 lib_class_STM32F1_spi           TODO
 lib_class_STM32F1_tim           TODO
-lib_class_STM32F1_usb           TODO           
-
-lib_class_STM32F1_io_bus        maybe this is a generic class
-lib_class_STM32F1_io_port       maybe this is a generic class
+lib_class_STM32F1_usb           TODO
+lib_class_STM32F1_io_port       TODO

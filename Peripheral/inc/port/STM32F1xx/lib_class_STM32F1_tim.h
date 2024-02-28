@@ -52,23 +52,24 @@
 #define TIM_OP_MODE_REPETITIVE_UP_COUNT             0
 #define TIM_OP_MODE_REPETITIVE_DOWN_COUNT           TIM_CR1_DIR
 
-#if (TIM_DRIVER_SUPPORT_TIM6_CFG == DEF_ENABLED) || (TIM_SUPPORT_TIM7_CFG == DEF_ENABLED)
-  #define TIM_SUPPORT_BASIC_TIM_CFG                 DEF_ENABLED
+//-------------------------------------------------------------------------------------------------
+
+#if (TIM_DRIVER_SUPPORT_TIM1_DMA_CFG  == DEF_ENABLED) || \
+    (TIM_DRIVER_SUPPORT_TIM2_DMA_CFG  == DEF_ENABLED) || \
+    (TIM_DRIVER_SUPPORT_TIM3_DMA_CFG  == DEF_ENABLED) || \
+    (TIM_DRIVER_SUPPORT_TIM4_DMA_CFG  == DEF_ENABLED) || \
+    (TIM_DRIVER_SUPPORT_TIM5_DMA_CFG  == DEF_ENABLED) || \
+    (TIM_DRIVER_SUPPORT_TIM6_DMA_CFG  == DEF_ENABLED) || \
+    (TIM_DRIVER_SUPPORT_TIM7_DMA_CFG  == DEF_ENABLED) || \
+    (TIM_DRIVER_SUPPORT_TIM8_DMA_CFG  == DEF_ENABLED)
+  #define TIM_DRIVER_DMA_CFG                        DEF_ENABLED
 #else
-  #define TIM_SUPPORT_BASIC_TIM_CFG                 DEF_DISABLED
+  #define TIM_DRIVER_DMA_CFG                        DEF_DISABLED
 #endif
 
-#if (TIM_DRIVER_SUPPORT_TIM2_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM5_CFG == DEF_ENABLED)
-  #define TIM_DRIVER_SUPPORT_32_BITS_TIM_CFG        DEF_ENABLED
-#else
-  #define TIM_DRIVER_SUPPORT_32_BITS_TIM_CFG        DEF_DISABLED
-#endif
-
-#if (TIM_DRIVER_SUPPORT_TIM1_CFG  == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM3_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM4_CFG  == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM8_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM9_CFG  == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM10_CFG == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM11_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM12_CFG == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM13_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM14_CFG == DEF_ENABLED)
+#if (TIM_DRIVER_SUPPORT_TIM1_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM2_CFG == DEF_ENABLED) || \
+    (TIM_DRIVER_SUPPORT_TIM3_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM4_CFG == DEF_ENABLED) || \
+    (TIM_DRIVER_SUPPORT_TIM5_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM8_CFG == DEF_ENABLED)
   #define TIM_DRIVER_SUPPORT_16_BITS_TIM_CFG        DEF_ENABLED
 #else
   #define TIM_DRIVER_SUPPORT_16_BITS_TIM_CFG        DEF_DISABLED
@@ -80,34 +81,21 @@
   #define TIM_DRIVER_SUPPORT_BASIC_TIM_CFG          DEF_DISABLED
 #endif
 
-#if (TIM_DRIVER_SUPPORT_TIM2_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM5_CFG == DEF_ENABLED)
-  #define TIM_DRIVER_SUPPORT_32_BITS_TIM_CFG        DEF_ENABLED
-#else
-  #define TIM_DRIVER_SUPPORT_32_BITS_TIM_CFG        DEF_DISABLED
-#endif
+//-------------------------------------------------------------------------------------------------
 
 #if (TIM_DRIVER_SUPPORT_TIM1_CFG  == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM2_CFG  == DEF_ENABLED) || \
     (TIM_DRIVER_SUPPORT_TIM3_CFG  == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM4_CFG  == DEF_ENABLED) || \
     (TIM_DRIVER_SUPPORT_TIM5_CFG  == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM6_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM7_CFG  == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM8_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM9_CFG  == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM10_CFG == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM11_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM12_CFG == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM13_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM14_CFG == DEF_ENABLED)
+    (TIM_DRIVER_SUPPORT_TIM7_CFG  == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM8_CFG  == DEF_ENABLED)
 
-  #define TIM_DRIVER_SUPPORT_ANY_TIM1_TO_TIM14_CFG  DEF_ENABLED
+  #define TIM_DRIVER_SUPPORT_ANY_TIM1_TO_TIM8_CFG  DEF_ENABLED
 #else
-  #define TIM_DRIVER_SUPPORT_ANY_TIM1_TO_TIM14_CFG  DEF_DISABLED
+  #define TIM_DRIVER_SUPPORT_ANY_TIM1_TO_TIM8_CFG  DEF_DISABLED
 #endif
 
 #if (TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG          == DEF_ENABLED) || \
     (TIM_DRIVER_SUPPORT_TIM2_TO_TIM5_COMPARE_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG          == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM9_OR_TIM12_COMPARE_CFG == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM10_COMPARE_CFG         == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM11_COMPARE_CFG         == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM13_COMPARE_CFG         == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM14_COMPARE_CFG         == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_LPTIM1_COMPARE_CFG        == DEF_ENABLED)
+    (TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG          == DEF_ENABLED)
   #define TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG    DEF_ENABLED
 #else
   #define TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG    DEF_DISABLED
@@ -151,31 +139,46 @@ enum TIM_ID_e
         TIM_DRIVER_ID_8,
     #endif
 
-    #if (TIM_DRIVER_SUPPORT_TIM9_CFG == DEF_ENABLED)
-        TIM_DRIVER_ID_9,
-    #endif
-
-    #if (TIM_DRIVER_SUPPORT_TIM10_CFG == DEF_ENABLED)
-        TIM_DRIVER_ID_10,
-    #endif
-
-    #if (TIM_DRIVER_SUPPORT_TIM11_CFG == DEF_ENABLED)
-        TIM_DRIVER_ID_11,
-    #endif
-
-    #if (TIM_DRIVER_SUPPORT_TIM12_CFG == DEF_ENABLED)
-        TIM_DRIVER_ID_12,
-    #endif
-
-    #if (TIM_DRIVER_SUPPORT_TIM13_CFG == DEF_ENABLED)
-        TIM_DRIVER_ID_13,
-    #endif
-
-    #if (TIM_DRIVER_SUPPORT_TIM14_CFG == DEF_ENABLED)
-        TIM_DRIVER_ID_14,
-    #endif
-
      NB_OF_TIM_DRIVER,
+};
+
+enum TIM_DMA_ID_e
+{
+    #if (TIM_DRIVER_SUPPORT_TIM1_DMA_CFG == DEF_ENABLED)
+        TIM_DMA_DRIVER_ID_1,
+    #endif
+
+    #if (TIM_DRIVER_SUPPORT_TIM2_DMA_CFG == DEF_ENABLED)
+        TIM_DMA_DRIVER_ID_2,
+    #endif
+
+    #if (TIM_DRIVER_SUPPORT_TIM3_DMA_CFG == DEF_ENABLED)
+        TIM_DMA_DRIVER_ID_3,
+    #endif
+
+    #if (TIM_DRIVER_SUPPORT_TIM4_DMA_CFG == DEF_ENABLED)
+        TIM_DMA_DRIVER_ID_4,
+    #endif
+
+    #if (TIM_DRIVER_SUPPORT_TIM5_DMA_CFG == DEF_ENABLED)
+        TIM_DMA_DRIVER_ID_5,
+    #endif
+
+    #if (TIM_DRIVER_SUPPORT_TIM6_DMA_CFG == DEF_ENABLED)
+        TIM_DMA_DRIVER_ID_6,
+    #endif
+
+
+    #if (TIM_DRIVER_SUPPORT_TIM7_DMA_CFG == DEF_ENABLED)
+        TIM_DMA_DRIVER_ID_7,
+    #endif
+
+
+    #if (TIM_DRIVER_SUPPORT_TIM8_DMA_CFG == DEF_ENABLED)
+        TIM_DMA_DRIVER_ID_8,
+    #endif
+
+     NB_OF_TIM_DMA_DRIVER,
 };
 
 enum TIM_Channel_e
@@ -209,6 +212,18 @@ struct TIM_Info_t
     uint32_t            Reload;
 };
 
+#if (TIM_DRIVER_DMA_CFG == DEF_ENABLED)
+struct TIM_DMA_Info_t
+{
+    TIM_ID_e             TimID;
+    uint32_t             Flag;
+    DMA_Channel_TypeDef* DMA_Channel;
+    IRQn_Type            IRQn;
+    uint32_t             RCC_AHBxPeriph;
+};
+#endif
+
+
 typedef void (*TIM_CallBack_t)(TIM_TypeMatch_e TypeMatch);
 
 //-------------------------------------------------------------------------------------------------
@@ -240,6 +255,13 @@ class TIM_Driver
       #if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
         void                SetCompare              (TIM_Channel_e Channel, uint32_t Value);
       #endif
+
+      #if (TIM_DRIVER_DMA_CFG == DEF_ENABLED)
+        void                DMA_Config              (uint8_t* pBuffer, size_t Size);
+        void                DMA_Enable              (void);
+        void                DMA_Disable             (void);
+      #endif
+
 
         static TIM_TypeDef* GetTimerPointer         (TIM_ID_e TimID);
 

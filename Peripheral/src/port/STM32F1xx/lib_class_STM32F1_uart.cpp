@@ -350,7 +350,7 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
         MaskedConfig = (uint32_t(Config) >> UART_CR2_CONFIG_OFFSET) & UART_CR2_CONFIG_MASK;
         MODIFY_REG(m_pUart->CR2, UART_CR2_CONFIG_MASK, MaskedConfig);
 
-        // CR3 left to default.
+        // CR3 left to default. 
         
         SetBaudRate(BaudID);        // Will re-enable the UART
     }

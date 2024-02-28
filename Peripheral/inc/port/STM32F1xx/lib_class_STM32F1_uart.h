@@ -44,16 +44,16 @@
     (UART_DRIVER_SUPPORT_UART8_DMA_CFG  == DEF_ENABLED) || \
     (UART_DRIVER_SUPPORT_UART9_DMA_CFG  == DEF_ENABLED) || \
     (UART_DRIVER_SUPPORT_UART10_DMA_CFG == DEF_ENABLED)
-#define UART_DRIVER_DMA_CFG                        DEF_ENABLED
+#define UART_DRIVER_DMA_CFG                 DEF_ENABLED
 #else
-#define UART_DRIVER_DMA_CFG                        DEF_DISABLED
+#define UART_DRIVER_DMA_CFG                 DEF_DISABLED
 #endif
 
 #if (UART_DRIVER_DMA_CFG                  == DEF_ENABLED) || \
     (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-#define UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG     DEF_ENABLED
+#define UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG  DEF_ENABLED
 #else
-#define UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG     DEF_DISABLED
+#define UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG  DEF_DISABLED
 #endif
 
 #define UART_ISR_RX_ERROR_MASK              0x01
@@ -180,37 +180,26 @@ enum UART_Baud_e
     UART_BAUD_IS_VIRTUAL,
 };
 
+//to do
 enum UART_Config_e
 {
-    UART_NO_PARITY          =   0x0000,
-    UART_EVEN_PARITY        =   0x0001,
-    UART_ODD_PARITY         =   0x0002,
-    UART_PARITY_MASK        =   0x0003,
+    UART_ENABLE_RX_TX       =   0x0000000C,
+    UART_ENABLE_RX          =   0x00000004,
+    UART_ENABLE_TX          =   0x00000008,
 
-    UART_8_LEN_BITS         =   0x0000,
-    UART_9_LEN_BITS         =   0x0004,
-    UART_LENGTH_MASK        =   0x0004,
+    UART_NO_PARITY          =   0x00000000,
+    UART_EVEN_PARITY        =   0x00000400,
+    UART_ODD_PARITY         =   0x00000600,
 
-    UART_1_STOP_BIT         =   0x0008,
-    UART_0_5_STOP_BIT       =   0x0008,
-    UART_1_5_STOP_BIT       =   0x0010,
-    UART_2_STOP_BITS        =   0x0018,
-    UART_STOP_MASK          =   0x0018,
+    UART_8_LEN_BITS         =   0x00000000,
+    UART_9_LEN_BITS         =   0x00001000,
 
-    UART_DATA_ORDER_LSB     =   0x0000,
-    UART_DATA_ORDER_MSB     =   0x0020,
-    UART_DATA_ORDER_MASK    =   0x0020,
+    UART_1_STOP_BIT         =   0x00000000,
+    UART_0_5_STOP_BIT       =   0x10000000,
+    UART_1_5_STOP_BIT       =   0x30000000,
+    UART_2_STOP_BITS        =   0x30000000,
 
-    UART_OVER_16            =   0x0000,
-    UART_OVER_8             =   0x0040,
-    UART_OVER_MASK          =   0x0040,
-
-    UART_ENABLE_RX_TX       =   0x0000,
-    UART_ENABLE_RX          =   0x0080,
-    UART_ENABLE_TX          =   0x0100,
-    UART_ENABLE_MASK        =   0x0180,
-
-    // Some more common config (all LSB with oversampling at 16, with RX and TX)
+    // Some more common config
     UART_CONFIG_N_8_1    =   (UART_NO_PARITY   | UART_8_LEN_BITS | UART_1_STOP_BIT),
     UART_CONFIG_N_9_1    =   (UART_NO_PARITY   | UART_9_LEN_BITS | UART_1_STOP_BIT),
 
@@ -228,6 +217,9 @@ enum UART_Config_e
 
     UART_CONFIG_O_8_2    =   (UART_ODD_PARITY  | UART_8_LEN_BITS | UART_2_STOP_BITS),
     UART_CONFIG_O_9_2    =   (UART_ODD_PARITY  | UART_9_LEN_BITS | UART_2_STOP_BITS),
+
+    UART_CR1_CONFIG_MASK = 0x0000160C,        // TX RX Enable, Length (8 or 9 Bits), Parity (DISABLE, ODD, EVEN)
+    UART_CR2_CONFIG_MASK = 0x00003000,        // STOP Bits,
 };
 
 struct UART_Info_t

@@ -49,12 +49,6 @@
 #define UART_CR1_DATA_WIDTH_8B              0                                   // 8 bits word length
 #define UART_CR1_DATA_WIDTH_9B              USART_CR1_M                         // 9 bits word length
 
-#define UART_CR1_OVERSAMPLING_16            0                                   // Oversampling by 16
-#define UART_CR1_OVERSAMPLING_8             USART_CR1_OVER8                     // Oversampling by 8
-
-#define UART_CR1_OVER_16                    0
-#define UART_CR1_OVER_8                     USART_CR1_OVER8
-
 #define UART_CR1_RX                         USART_CR1_RE
 #define UART_CR1_TX                         USART_CR1_TE
 #define UART_CR1_RX_TX                      USART_CR1_RE | USART_CR1_TE
@@ -67,6 +61,8 @@
 #define UART_CR3_FLOW_CTS                   USART_CR3_CTSE
 #define UART_CR3_FLOW_CTS_ISR               USART_CR3_CTSIE
 #define UART_CR3_FLOW_RTS                   USART_CR3_RTSE
+
+#define UART_CR2_CONFIG_OFFSET              16
 
 //-------------------------------------------------------------------------------------------------
 //  private variable(s)
@@ -153,27 +149,25 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
             SET_BIT(RCC->AHBENR, m_pDMA_Info->RCC_AHBxPeriph);                  // Initialize DMA clock
 
             pDMA = m_pDMA_Info->DMA_ChannelRX;                                  // Write config that will never change
-            pDMA->CR = DMA_NORMAL_MODE                    |
-                       DMA_PERIPHERAL_TO_MEMORY           |
-                       DMA_PERIPHERAL_NO_INCREMENT        |
-                       DMA_MEMORY_INCREMENT               |
-                       DMA_PERIPHERAL_SIZE_8_BITS         |
-                       DMA_MEMORY_SIZE_8_BITS             |
-                       DMA_PRIORITY_LEVEL_HIGH;
-            SET_BIT(pDMA->CR, m_pDMA_Info->DMA_ChannelRX);
-            pDMA->PAR = uint32_t(&m_pUart->DR);
-            pDMA->NDTR = UART_DRIVER_INTERNAL_RX_BUFFER_SIZE;
+            pDMA->CCR = DMA_NORMAL_MODE                    |
+                        DMA_PERIPHERAL_TO_MEMORY           |
+                        DMA_PERIPHERAL_NO_INCREMENT        |
+                        DMA_MEMORY_INCREMENT               |
+                        DMA_PERIPHERAL_SIZE_8_BITS         |
+                        DMA_MEMORY_SIZE_8_BITS             |
+                        DMA_PRIORITY_LEVEL_HIGH;
+            pDMA->CPAR = uint32_t(&m_pUart->DR);
+            pDMA->CNDTR = UART_DRIVER_INTERNAL_RX_BUFFER_SIZE;
 
             pDMA = m_pDMA_Info->DMA_ChannelTX;                                  // Write config that will never change
-            pDMA->CR = DMA_NORMAL_MODE                    |
-                       DMA_MEMORY_TO_PERIPHERAL           |
-                       DMA_PERIPHERAL_NO_INCREMENT        |
-                       DMA_MEMORY_INCREMENT               |
-                       DMA_PERIPHERAL_SIZE_8_BITS         |
-                       DMA_MEMORY_SIZE_8_BITS             |
-                       DMA_PRIORITY_LEVEL_HIGH;
-            SET_BIT(pDMA->CR, m_pDMA_Info->DMA_ChannelTX);
-            pDMA->PAR  = uint32_t(&m_pUart->DR);
+            pDMA->CCR = DMA_NORMAL_MODE                    |
+                        DMA_MEMORY_TO_PERIPHERAL           |
+                        DMA_PERIPHERAL_NO_INCREMENT        |
+                        DMA_MEMORY_INCREMENT               |
+                        DMA_PERIPHERAL_SIZE_8_BITS         |
+                        DMA_MEMORY_SIZE_8_BITS             |
+                        DMA_PRIORITY_LEVEL_HIGH;
+            pDMA->CPAR  = uint32_t(&m_pUart->DR);
         }
 
         m_DMA_IsItBusyTX = false;
@@ -340,11 +334,6 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
         }
       #endif
 
-        if((m_pUart->CR1 & UART_CR1_OVERSAMPLING_8) == UART_CR1_OVERSAMPLING_8)
-        {
-            PeriphClk <<= 1;
-        }
-
         m_pUart->BRR = uint16_t((PeriphClk + (m_BaudRate[BaudRate] >> 1)) / m_BaudRate[BaudRate]);
         SET_BIT(m_pUart->CR1, USART_CR1_UE);                                // Enable the UART
     }
@@ -369,69 +358,20 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
 {
     if(m_pUart != nullptr)
     {
-        uint32_t       CR1_Register = 0;
-        uint32_t       CR2_Register = 0;
-        uint32_t       CR3_Register = 0;
-        UART_Config_e  MaskedConfig;
+        uint32_t MaskedConfig;
 
         CLEAR_BIT(m_pUart->CR1, USART_CR1_UE);                      // Disable the UART
 
-        // Parity
-        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_PARITY_MASK);
+        // CR1 RX and TX enable, Length, Parity
+        MaskedConfig = uint32_t(Config) & UART_CR1_CONFIG_MASK;
+        MODIFY_REG(m_pUart->CR1, UART_CR1_CONFIG_MASK, MaskedConfig);
 
-        if(MaskedConfig == UART_EVEN_PARITY)
-        {
-            CR1_Register |= UART_CR1_PARITY_EVEN;
-        }
-        else if(MaskedConfig == UART_ODD_PARITY)
-        {
-            CR1_Register |= UART_CR1_PARITY_ODD;
-        }
+        // CR2 Stop Bits RX and TX enable, Length, Parity
+        MaskedConfig = (uint32_t(Config) >> UART_CR2_CONFIG_OFFSET) & UART_CR2_CONFIG_MASK;
+        MODIFY_REG(m_pUart->CR2, UART_CR2_CONFIG_MASK, MaskedConfig);
 
-        // Length
-        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_LENGTH_MASK);
-
-        if(MaskedConfig == UART_8_LEN_BITS)
-        {
-            CR1_Register |= UART_CR1_DATA_WIDTH_8B;
-        }
-        else if(MaskedConfig == UART_9_LEN_BITS)
-        {
-            CR1_Register |= UART_CR1_DATA_WIDTH_9B;
-        }
-
-        // Stop Bits
-        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_STOP_MASK);
-
-        switch(MaskedConfig)
-        {
-            case UART_0_5_STOP_BIT: CR2_Register |= UART_CR2_STOP_0_5B; break;
-            case UART_1_5_STOP_BIT: CR2_Register |= UART_CR2_STOP_1_5B; break;
-            case UART_2_STOP_BITS:  CR2_Register |= UART_CR2_STOP_2_B;  break;
-            default: break;
-        }
-
-        // OverSampling 8 or 16
-        if((Config & UART_OVER_MASK) == UART_OVER_8)
-        {
-            CR1_Register |= UART_CR1_OVER_8;
-        }
-
-        // RX and TX enable
-        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_ENABLE_MASK);
-
-        switch(MaskedConfig)
-        {
-            case UART_ENABLE_RX:    CR1_Register |= UART_CR1_RX;    break;
-            case UART_ENABLE_TX:    CR1_Register |= UART_CR1_TX;    break;
-            case UART_ENABLE_RX_TX: CR1_Register |= UART_CR1_RX_TX; break;
-            default: break;
-        }
-
-        // Register modification
-        MODIFY_REG(m_pUart->CR1, (USART_CR1_M | USART_CR1_PCE | USART_CR1_PS | USART_CR1_OVER8), CR1_Register);
-        MODIFY_REG(m_pUart->CR2, (USART_CR2_STOP),                                               CR2_Register);
-        MODIFY_REG(m_pUart->CR3, (USART_CR3_CTSE | USART_CR3_CTSIE | USART_CR3_RTSE),            CR3_Register);
+        // CR3 left to default.
+        
         SetBaudRate(BaudID);        // Will re-enable the UART
     }
 }
@@ -558,7 +498,7 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             if(m_DMA_IsItBusyTX == false)
             {
                 m_DMA_IsItBusyTX = true;
-                pDMA             = m_pDMA_Info->DMA_StreamTX;
+                pDMA             = m_pDMA_Info->DMA_ChannelTX;
                 Flag             = m_pDMA_Info->FlagTX;
 
                 DMA_Disable(pDMA);
@@ -566,15 +506,15 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
 
                 if(pBufferTX != nullptr)
                 {
-                    pDMA->M0AR = (uint32_t)pBufferTX;
-                    pDMA->NDTR = *pSizeTX;
+                    pDMA->CMAR  = (uint32_t)pBufferTX;
+                    pDMA->CNDTR = *pSizeTX;
                     m_TX_Transfer.Size    = *pSizeTX;
                     m_TX_Transfer.pBuffer = (uint8_t*)pBufferTX;
                 }
                 else
                 {
-                    pDMA->M0AR = (uint32_t)m_TX_Transfer.pBuffer;
-                    pDMA->NDTR = m_TX_Transfer.Size;
+                    pDMA->CMAR  = (uint32_t)m_TX_Transfer.pBuffer;
+                    pDMA->CNDTR = m_TX_Transfer.Size;
                 }
 
                 ClearFlag();
@@ -652,22 +592,22 @@ void UART_Driver::DMA_ConfigRX(uint8_t* pBufferRX, size_t SizeRX)
 
     if(m_pUart != nullptr)
     {
-        DMA_Stream_TypeDef* pDMA;
+        DMA_Channel_TypeDef* pDMA;
         DMA_DisableRX();
-        pDMA = m_pDMA_Info->DMA_StreamRX;
+        pDMA = m_pDMA_Info->DMA_ChannelRX;
 
         if(pBufferRX != nullptr)
         {
-            pDMA->M0AR = (uint32_t)pBufferRX;
-            pDMA->NDTR = SizeRX;
+            pDMA->CMAR  = (uint32_t)pBufferRX;
+            pDMA->CNDTR = SizeRX;
             pTransferRX->pBuffer    = pBufferRX;
             pTransferRX->Size       = SizeRX;
             pTransferRX->StaticSize = SizeRX;
         }
         else
         {
-            pDMA->M0AR = uint32_t(pTransferRX->pBuffer);
-            pDMA->NDTR = pTransferRX->StaticSize;
+            pDMA->CMAR  = uint32_t(pTransferRX->pBuffer);
+            pDMA->CNDTR = pTransferRX->StaticSize;
             pTransferRX->Size = pTransferRX->StaticSize;
         }
 
@@ -712,23 +652,23 @@ void UART_Driver::DMA_ConfigTX(uint8_t* pBufferTX, size_t SizeTX)
 
     if(m_pUart != nullptr)
     {
-        DMA_Stream_TypeDef* pDMA;
+        DMA_Channel_TypeDef* pDMA;
 
         DMA_DisableTX();
-        pDMA = m_pDMA_Info->DMA_StreamTX;
+        pDMA = m_pDMA_Info->DMA_ChannelTX;
 
         if(pBufferTX != nullptr)
         {
-            pDMA->M0AR = uint32_t(pBufferTX);
-            pDMA->NDTR = SizeTX;
+            pDMA->CMAR  = uint32_t(pBufferTX);
+            pDMA->CNDTR = SizeTX;
             pTransferTX->pBuffer    = pBufferTX;
             pTransferTX->Size       = SizeTX;
             pTransferTX->StaticSize = SizeTX;
         }
         else
         {
-            pDMA->M0AR = (uint32_t)pTransferTX->pBuffer;
-            pDMA->NDTR = pTransferTX->StaticSize;
+            pDMA->CMAR  = (uint32_t)pTransferTX->pBuffer;
+            pDMA->CNDTR = pTransferTX->StaticSize;
             pTransferTX->Size = pTransferTX->StaticSize;
         }
 
@@ -768,9 +708,9 @@ void UART_Driver::DMA_EnableRX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            DMA_Stream_TypeDef* pDMA;
+            DMA_Channel_TypeDef* pDMA;
 
-            pDMA = m_pDMA_Info->DMA_StreamRX;
+            pDMA = m_pDMA_Info->DMA_ChannelRX;
             m_pUart->CR3 |= USART_CR3_DMAR;         // Enable the DMA transfer
             (void)m_pUart->DR;
             DMA_ClearFlag(pDMA, m_pDMA_Info->FlagRX);
@@ -796,9 +736,9 @@ void UART_Driver::DMA_DisableRX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            DMA_Stream_TypeDef* pDMA;
+            DMA_Channel_TypeDef* pDMA;
 
-            pDMA = m_pDMA_Info->DMA_StreamRX;
+            pDMA = m_pDMA_Info->DMA_ChannelRX;
             DMA_Disable(pDMA);
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAR);
             DisableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
@@ -845,9 +785,9 @@ void UART_Driver::DMA_DisableTX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            DMA_Stream_TypeDef* pDMA;
+            DMA_Channel_TypeDef* pDMA;
 
-            pDMA = m_pDMA_Info->DMA_StreamTX;
+            pDMA = m_pDMA_Info->DMA_ChannelTX;
             DMA_Disable(pDMA);
             DMA_ClearFlag(pDMA, m_pDMA_Info->FlagTX);
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAT);
@@ -871,13 +811,13 @@ size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
 
     if(m_pUart != nullptr)
     {
-        DMA_Stream_TypeDef* pDMA;
+        DMA_Channel_TypeDef* pDMA;
 
-        pDMA           = m_pDMA_Info->DMA_StreamRX;
+        pDMA           = m_pDMA_Info->DMA_ChannelRX;
 
         DMA_Disable(pDMA);
         DMA_ClearFlag(pDMA, m_pDMA_Info->FlagRX);
-        SizeDataRX = pDMA->NDTR;                     // Number of byte available in p_RxBuf
+        SizeDataRX = pDMA->CNDTR;                     // Number of byte available in p_RxBuf
 
         if(SizeDataRX <= SizeRX)
         {
@@ -956,7 +896,7 @@ void UART_Driver::EnableRX_ISR(uint8_t Mask)
         if((Mask & UART_ISR_RX_ERROR_MASK) != 0)
         {
             SET_BIT(m_CopySR, (USART_SR_ORE | USART_SR_FE | USART_SR_PE));
-            this->ClearAutomaticFlag();
+            this->ClearFlag();
             m_pUart->CR3 |= USART_CR3_EIE;
         }
       #endif
@@ -1127,7 +1067,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_RX) != 0)
     {
         m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_BYTE);
+        EnableRX_ISR(UART_ISR_RX_BYTE_CFG);
     }
   #endif
 
@@ -1135,7 +1075,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_IDLE) != 0)
     {
         m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_IDLE);
+        EnableRX_ISR(UART_ISR_RX_IDLE_CFG);
     }
   #endif
 
@@ -1143,7 +1083,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_ERROR) != 0)
     {
         m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_ERROR);
+        EnableRX_ISR(UART_ISR_RX_ERROR_CFG);
     }
   #endif
 
@@ -1151,7 +1091,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_EMPTY_TX) != 0)
     {
         m_CallBackType |= CallBackType;
-        //EnableRX_ISR(UART_ISR_TX_EMPTY);      // don't... only on send data
+        //EnableRX_ISR(UART_ISR_TX_EMPTY_CFG);      // don't... only on send data
     }
   #endif
 
@@ -1159,7 +1099,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_COMPLETED_TX) != 0)
     {
         m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_TX_COMPLETED);
+        EnableRX_ISR(UART_ISR_TX_COMPLETED_CFG);
     }
   #endif
 }
@@ -1181,7 +1121,7 @@ void UART_Driver::IRQ_Handler(void)
         Status &= m_CopySR;
 
        #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
-        if((Status & (USART_ISR_FE | USART_ISR_NE | USART_ISR_ORE)) != 0)
+        if((Status & (USART_SR_FE | USART_SR_NE | USART_SR_ORE)) != 0)
         {
             ClearFlag();
 
@@ -1196,7 +1136,7 @@ void UART_Driver::IRQ_Handler(void)
        #endif
 
        #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
-        if((Status & USART_ISR_RXNE) != 0)
+        if((Status & USART_SR_RXNE) != 0)
         {
             WRITE_REG(m_pUart->SR, ~(USART_SR_RXNE));
 
@@ -1215,7 +1155,7 @@ void UART_Driver::IRQ_Handler(void)
          if((Status & USART_SR_IDLE) != 0)
          {
            #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-              m_RX_Transfer.Size -= m_pDMA_Info->DMA_StreamRX->NDTR; // Give actual position in the DMA Buffer
+              m_RX_Transfer.Size -= m_pDMA_Info->DMA_ChannelRX->CNDTR; // Give actual position in the DMA Buffer
            #endif
 
              ClearFlag();

@@ -48,14 +48,14 @@
 #define DMA_MEMORY_NO_INCREMENT        0x0000           // Memory increment mode Disable
 #define DMA_MEMORY_INCREMENT           0x0080           // Memory increment mode Enable
 
-#define DMA_PERIPH_NO_INCREMENT        0x0000           // Peripheral increment mode Disable
-#define DMA_PERIPH_INCREMENT           0x0040           // Peripheral increment mode Enable
+#define DMA_PERIPHERAL_NO_INCREMENT    0x0000           // Peripheral increment mode Disable
+#define DMA_PERIPHERAL_INCREMENT       0x0040           // Peripheral increment mode Enable
 
 #define DMA_NORMAL_MODE                0x0000           // Normal mode
 #define DMA_CIRCULAR_MODE              0x0020           // Circular mode
 
-#define DMA_READ_FROM_PERIPH           0x0000           // Peripheral to memory direction
-#define DMA_READ_FROM_MEMORY           0x0010           // Memory to peripheral or memory direction
+#define DMA_PERIPHERAL_TO_MEMORY       0x0000           // Peripheral to memory direction
+#define DMA_MEMORY_TO_PERIPHERAL       0x0010           // Memory to peripheral or memory direction
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)

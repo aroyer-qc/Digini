@@ -205,7 +205,7 @@ enum UART_Config_e
     UART_OVER_8             =   0x0040,
     UART_OVER_MASK          =   0x0040,
 
-    UART_ENABLE_RX_TX       =   0x0000,
+    UART_ENABLE_RX_TX       =   0x0180,
     UART_ENABLE_RX          =   0x0080,
     UART_ENABLE_TX          =   0x0100,
     UART_ENABLE_MASK        =   0x0180,

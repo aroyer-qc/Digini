@@ -53,9 +53,6 @@
 #define UART_CR1_OVERSAMPLING_16            0                                   // Oversampling by 16
 #define UART_CR1_OVERSAMPLING_8             USART_CR1_OVER8                     // Oversampling by 8
 
-#define UART_CR1_OVER_16                    0
-#define UART_CR1_OVER_8                     USART_CR1_OVER8
-
 #define UART_CR1_RX                         USART_CR1_RE
 #define UART_CR1_TX                         USART_CR1_TE
 #define UART_CR1_RX_TX                      USART_CR1_RE | USART_CR1_TE
@@ -348,7 +345,7 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
         }
       #endif
 
-        if((m_pUart->CR1 & USART_CR1_OVER8_Msk) == UART_CR1_OVER_8)
+        if((m_pUart->CR1 & USART_CR1_OVER8_Msk) == UART_CR1_OVERSAMPLING_8)
         {
             PeriphClk <<= 1;
         }
@@ -428,7 +425,7 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
         // OverSampling 8 or 16
         if((Config & UART_OVER_MASK) == UART_OVER_8)
         {
-            CR1_Register |= UART_CR1_OVER_8;
+            CR1_Register |= UART_CR1_OVERSAMPLING_8;
         }
 
         // RX and TX enable

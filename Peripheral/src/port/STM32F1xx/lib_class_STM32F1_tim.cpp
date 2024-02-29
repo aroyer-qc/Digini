@@ -37,6 +37,13 @@
 #if (USE_TIM_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define TIM_GLOBAL
+#define TIM_BACK_OFFSET_RESET_REGISTER             0x20
+
+//-------------------------------------------------------------------------------------------------
 //
 //   Class: TIM_Driver
 //
@@ -227,23 +234,23 @@ uint32_t TIM_Driver::GetReload(void)
 //
 //-------------------------------------------------------------------------------------------------
 #if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
-void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
+void TIM_Driver::SetCompare(TIM_Compare_e Channel, uint32_t Value)
 {
     uint32_t BitMask;
 
-    switch(int(m_pTim))
+    switch(uintptr_t(m_pTim))
     {
         // Add other case for TIMx with compare IRQ as needed.
-        
+
       #if ((TIM_DRIVER_SUPPORT_TIM1_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG == DEF_ENABLED))
-        case int(TIM1):
+        case TIM1_BASE:
         {
           #if ( defined (STM32F100xB) || defined (STM32F100xE) ||                                                   \
                 defined (STM32F103x6) || defined (STM32F103xB) || defined (STM32F103xE) || defined (STM32F103xG) || \
-                defined (STM32F105xC) || defined (STM32F107xC) )                        
+                defined (STM32F105xC) || defined (STM32F107xC) )
             // Init compare IRQ for TIM1 Compare
             ISR_Init(TIM1_CC_IRQn, 0, 6);
-          #endif  
+          #endif
 
           // Fill this for other CPU as needed
         }
@@ -251,9 +258,9 @@ void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
       #endif
 
       #if ((TIM_DRIVER_SUPPORT_TIM8_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG == DEF_ENABLED))
-        case int(TIM8):
+        case TIM8_BASE:
         {
-          #if ( defined (STM32F103xE) || defined (STM32F103xG) )                        
+          #if ( defined (STM32F103xE) || defined (STM32F103xG) )
             // Init compare IRQ for TIM8 Compare
             ISR_Init(TIM8_CC_IRQn, 0, 6);
           #endif
@@ -262,7 +269,7 @@ void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
         }
         break;
       #endif
-      
+
         default:
         {
             return;
@@ -333,7 +340,7 @@ uint32_t TIM_Driver::GetCounterValue(void)
 //
 //-------------------------------------------------------------------------------------------------
 #if (TIM_DRIVER_SUPPORT_PWM_FEATURE_CFG == DEF_ENABLED)
-void TIM_Driver::ConfigPWM_Channel(TIM_Channel_e Channel)
+void TIM_Driver::ConfigPWM_Channel(TIM_Compare_e Channel)
 {
     int IntegerChannel;
 

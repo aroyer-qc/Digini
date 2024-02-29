@@ -38,7 +38,7 @@ struct PWM_Info_t
 {
     IO_ID_e         PinID;
     TIM_ID_e        TimID;
-    TIM_Channel_e   Channel;
+    TIM_Compare_e   Channel;
     uint16_t        InitialDuty;
 };
 

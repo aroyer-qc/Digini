@@ -372,7 +372,7 @@ uint32_t TIM_Driver::GetReload(void)
 //
 //-------------------------------------------------------------------------------------------------
 #if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
-void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
+void TIM_Driver::SetCompare(TIM_Compare_e Channel, uint32_t Value)
 {
     uint32_t     BitMask;
 
@@ -556,7 +556,7 @@ uint32_t TIM_Driver::GetCounterValue(void)
 //
 //-------------------------------------------------------------------------------------------------
 #if (TIM_DRIVER_SUPPORT_PWM_FEATURE_CFG == DEF_ENABLED)
-void TIM_Driver::ConfigPWM_Channel(TIM_Channel_e Channel)
+void TIM_Driver::ConfigPWM_Channel(TIM_Compare_e Channel)
 {
     int IntegerChannel;
 

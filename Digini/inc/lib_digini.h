@@ -125,6 +125,10 @@
 #include "lib_class_can.h"
 #endif
 
+#if (USE_CRC_DRIVER == DEF_ENABLED)
+#include "lib_hardware_crc.h"
+#endif
+
 #if (USE_DAC_DRIVER == DEF_ENABLED)
 #include "lib_class_dac.h"
 #endif

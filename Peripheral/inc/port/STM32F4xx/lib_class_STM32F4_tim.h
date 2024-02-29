@@ -166,7 +166,7 @@ enum TIM_ID_e
      NB_OF_TIM_DRIVER,
 };
 
-enum TIM_Channel_e
+enum TIM_Compare_e
 {
     TIM_CHANNEL_NONE,
     TIM_CHANNEL_1,
@@ -223,10 +223,10 @@ class TIM_Driver
         uint32_t            GetReload               (void);
 
       #if (TIM_DRIVER_SUPPORT_PWM_FEATURE_CFG == DEF_ENABLED)
-        void                ConfigPWM_Channel       (TIM_Channel_e Channel);
+        void                ConfigPWM_Channel       (TIM_Compare_e Channel);
       #endif
       #if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
-        void                SetCompare              (TIM_Channel_e Channel, uint32_t Value);
+        void                SetCompare              (TIM_Compare_e Channel, uint32_t Value);
       #endif
 
         static TIM_TypeDef* GetTimerPointer         (TIM_ID_e TimID);

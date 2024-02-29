@@ -92,25 +92,25 @@ void DMA_ClearFlag(DMA_Stream_TypeDef* pDMA, uint32_t Flag)
 
     switch(intptr_t(pDMA))
     {
-        case (uint32_t)DMA1_Stream0_BASE:
-        case (uint32_t)DMA1_Stream1_BASE:
-        case (uint32_t)DMA1_Stream2_BASE:
-        case (uint32_t)DMA1_Stream3_BASE: pRegister = &DMA1->LIFCR; break;
+        case DMA1_Stream0_BASE:
+        case DMA1_Stream1_BASE:
+        case DMA1_Stream2_BASE:
+        case DMA1_Stream3_BASE: pRegister = &DMA1->LIFCR; break;
 
-        case (uint32_t)DMA1_Stream4_BASE:
-        case (uint32_t)DMA1_Stream5_BASE:
-        case (uint32_t)DMA1_Stream6_BASE:
-        case (uint32_t)DMA1_Stream7_BASE: pRegister = &DMA1->HIFCR; break;
+        case DMA1_Stream4_BASE:
+        case DMA1_Stream5_BASE:
+        case DMA1_Stream6_BASE:
+        case DMA1_Stream7_BASE: pRegister = &DMA1->HIFCR; break;
 
-        case (uint32_t)DMA2_Stream0_BASE:
-        case (uint32_t)DMA2_Stream1_BASE:
-        case (uint32_t)DMA2_Stream2_BASE:
-        case (uint32_t)DMA2_Stream3_BASE: pRegister = &DMA2->LIFCR; break;
+        case DMA2_Stream0_BASE:
+        case DMA2_Stream1_BASE:
+        case DMA2_Stream2_BASE:
+        case DMA2_Stream3_BASE: pRegister = &DMA2->LIFCR; break;
 
-        case (uint32_t)DMA2_Stream4_BASE:
-        case (uint32_t)DMA2_Stream5_BASE:
-        case (uint32_t)DMA2_Stream6_BASE:
-        case (uint32_t)DMA2_Stream7_BASE: pRegister = &DMA2->HIFCR; break;
+        case DMA2_Stream4_BASE:
+        case DMA2_Stream5_BASE:
+        case DMA2_Stream6_BASE:
+        case DMA2_Stream7_BASE: pRegister = &DMA2->HIFCR; break;
     }
 
     SET_BIT(*pRegister, Flag);
@@ -133,25 +133,25 @@ uint32_t DMA_CheckFlag(DMA_Stream_TypeDef* pDMA, uint32_t Flag)
 
     switch(intptr_t(pDMA))
     {
-        case (uint32_t)DMA1_Stream0_BASE:
-        case (uint32_t)DMA1_Stream1_BASE:
-        case (uint32_t)DMA1_Stream2_BASE:
-        case (uint32_t)DMA1_Stream3_BASE: Register = DMA1->LISR; break;
+        case DMA1_Stream0_BASE:
+        case DMA1_Stream1_BASE:
+        case DMA1_Stream2_BASE:
+        case DMA1_Stream3_BASE: Register = DMA1->LISR; break;
 
-        case (uint32_t)DMA1_Stream4_BASE:
-        case (uint32_t)DMA1_Stream5_BASE:
-        case (uint32_t)DMA1_Stream6_BASE:
-        case (uint32_t)DMA1_Stream7_BASE: Register = DMA1->HISR; break;
+        case DMA1_Stream4_BASE:
+        case DMA1_Stream5_BASE:
+        case DMA1_Stream6_BASE:
+        case DMA1_Stream7_BASE: Register = DMA1->HISR; break;
 
-        case (uint32_t)DMA2_Stream0_BASE:
-        case (uint32_t)DMA2_Stream1_BASE:
-        case (uint32_t)DMA2_Stream2_BASE:
-        case (uint32_t)DMA2_Stream3_BASE: Register = DMA2->LISR; break;
+        case DMA2_Stream0_BASE:
+        case DMA2_Stream1_BASE:
+        case DMA2_Stream2_BASE:
+        case DMA2_Stream3_BASE: Register = DMA2->LISR; break;
 
-        case (uint32_t)DMA2_Stream4_BASE:
-        case (uint32_t)DMA2_Stream5_BASE:
-        case (uint32_t)DMA2_Stream6_BASE:
-        case (uint32_t)DMA2_Stream7_BASE: Register = DMA2->HISR; break;
+        case DMA2_Stream4_BASE:
+        case DMA2_Stream5_BASE:
+        case DMA2_Stream6_BASE:
+        case DMA2_Stream7_BASE: Register = DMA2->HISR; break;
     }
 
     if((Register & Flag) != 0)

@@ -157,13 +157,13 @@ enum TIM_DMA_ID_e
      NB_OF_TIM_DMA_DRIVER,
 };
 
-enum TIM_Channel_e
+enum TIM_Compare_e
 {
-    TIM_CHANNEL_NONE,
-    TIM_CHANNEL_1,
-    TIM_CHANNEL_2,
-    TIM_CHANNEL_3,
-    TIM_CHANNEL_4,
+    TIM_COMPARE_NONE,
+    TIM_COMPARE_CH1,
+    TIM_COMPARE_CH2,
+    TIM_COMPARE_CH3,
+    TIM_COMPARE_CH4,
 };
 
 enum TIM_TypeMatch_e
@@ -226,10 +226,10 @@ class TIM_Driver
         uint32_t            GetReload               (void);
 
       #if (TIM_DRIVER_SUPPORT_PWM_FEATURE_CFG == DEF_ENABLED)
-        void                ConfigPWM_Channel       (TIM_Channel_e Channel);
+        void                ConfigPWM_Channel       (TIM_Compare_e Channel);
       #endif
       #if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
-        void                SetCompare              (TIM_Channel_e Channel, uint32_t Value);
+        void                SetCompare              (TIM_Compare_e Channel, uint32_t Value);
       #endif
 
       #if (TIM_DRIVER_DMA_CFG == DEF_ENABLED)

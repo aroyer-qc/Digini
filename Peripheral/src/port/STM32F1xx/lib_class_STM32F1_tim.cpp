@@ -37,19 +37,6 @@
 #if (USE_TIM_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
-
-#define TIM_GLOBAL
-#define TIM_BACK_OFFSET_RESET_REGISTER             0x20
-#define TIM_16_BITS_MASK                           0xFFFF
-#define TIM_16_BITS_MAX_COMPARE                    0xFFFF
-#define TIM_32_BITS_MAX_COMPARE                    0xFFFFFFFF
-#define TIM_CCER_OUTPUT_ENABLE_SPACING_SHIFT       4
-#define TIM_CCMRx_MODE_SHIFT                       8
-#define TIM_CCMRx_MODE_PWM_MASK                    0x0060
-
-//-------------------------------------------------------------------------------------------------
 //
 //   Class: TIM_Driver
 //
@@ -65,8 +52,6 @@
 //   Parameter(s):  TimID                  ID for the data to use for this class
 //
 //   Description:   Initializes the TIM_Driver class
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 TIM_Driver::TIM_Driver(TIM_ID_e TimID)
@@ -92,29 +77,10 @@ void TIM_Driver::Initialize(void)
     *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - TIM_BACK_OFFSET_RESET_REGISTER) &= ~m_pInfo->RCC_APBxPeriph;
     *(m_pInfo->RCC_APBxEN_Register) |= m_pInfo->RCC_APBxPeriph;
 
-    // Set the prescaler value
-    m_pTim->PSC = m_pInfo->Prescaler;
-
-    // Set the auto reload register
-  #if (TIM_DRIVER_SUPPORT_16_BITS_TIM_CFG == DEF_ENABLED)
-    if((m_pTim != TIM2) && (m_pTim != TIM5))
-    {
-        MODIFY_REG(m_pInfo->Reload, TIM_16_BITS_MASK, m_pInfo->Reload); // Keep only low 16 bits
-    }
-  #endif
-
-    m_pTim->ARR = m_pInfo->Reload;
-    m_pTim->CNT = m_pInfo->Reload - 1;      // Prevent PWM from been active on activation
-
-    // Set mode and Auto-reload preload enable
-  #if (TIM_DRIVER_SUPPORT_BASIC_TIM_CFG == DEF_ENABLED)
-    if((m_pTim == TIM6) || (m_pTim == TIM7))
-    {
-        Mode = 0;
-    }
-  #endif
-
-    ((TIM_TypeDef*)m_pTim)->CR1 = m_pInfo->Mode | TIM_CR1_ARPE;
+    m_pTim->PSC = m_pInfo->Prescaler;                           // Set the prescaler value
+    m_pTim->ARR = m_pInfo->Reload;                              // Set the auto reload register
+    m_pTim->CNT = m_pInfo->Reload - 1;                          // Prevent PWM from been active on activation
+    m_pTim->CR1 = m_pInfo->Mode | TIM_CR1_ARPE;
 
     // Set the update interrupt enable
     if(m_pInfo->EnableUpdateIRQ == true)
@@ -123,8 +89,7 @@ void TIM_Driver::Initialize(void)
         ((TIM_TypeDef*)m_pTim)->DIER = TIM_DIER_UIE;
     }
 
-    // Configure interrupt priority for TIM
-    ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);
+    ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);    // Configure interrupt priority for TIM
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -244,7 +209,7 @@ uint32_t TIM_Driver::GetReload(void)
 //
 //  Name:           SetCompare
 //
-//  Parameter(s):   Channel         STM32F4: Compare 1 to 4
+//  Parameter(s):   Channel         STM32F1: Compare 1 to 4
 //                                        - TIM_COMPARE_CH1
 //                                        - TIM_COMPARE_CH2
 //                                        - TIM_COMPARE_CH3
@@ -256,48 +221,52 @@ uint32_t TIM_Driver::GetReload(void)
 //
 //  Note(s):        Callback for this channel will be enabled
 //                  Compare 1 to 4 exist for TIM1 to TIM5, TIM8
-//                  Compare 1 and 2 exist for TIM9, TIM12
+//                  Compare 1 and 2 exist for TIM9, TIM12                       NO support yet
 //                  No compare on TIM6 and TIM7
-//                  Only ONE compare on timer TIM10, TIM11, TIM13, TIM14
+//                  Only ONE compare on timer TIM10, TIM11, TIM13, TIM14        NO support yet
 //
 //-------------------------------------------------------------------------------------------------
 #if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
 void TIM_Driver::SetCompare(TIM_Channel_e Channel, uint32_t Value)
 {
-    uint32_t     BitMask;
+    uint32_t BitMask;
 
     switch(int(m_pTim))
     {
-
+        // Add other case for TIMx with compare IRQ as needed.
+        
       #if ((TIM_DRIVER_SUPPORT_TIM1_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG == DEF_ENABLED))
         case int(TIM1):
         {
+          #if ( defined (STM32F100xB) || defined (STM32F100xE) ||                                                   \
+                defined (STM32F103x6) || defined (STM32F103xB) || defined (STM32F103xE) || defined (STM32F103xG) || \
+                defined (STM32F105xC) || defined (STM32F107xC) )                        
             // Init compare IRQ for TIM1 Compare
             ISR_Init(TIM1_CC_IRQn, 0, 6);
+          #endif  
+
+          // Fill this for other CPU as needed
         }
         break;
-      #endif
-
-      #if (TIM_DRIVER_SUPPORT_TIM6_CFG == DEF_ENABLED)
-        case int(TIM6):
-      #endif
-      #if (TIM_DRIVER_SUPPORT_TIM7_CFG == DEF_ENABLED)
-        case int(TIM7):
-      #endif
-      #if ((TIM_DRIVER_SUPPORT_TIM6_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM7_CFG == DEF_ENABLED))
-        {
-            return;  // no compare for TIM6 and TIM7
-        }
       #endif
 
       #if ((TIM_DRIVER_SUPPORT_TIM8_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG == DEF_ENABLED))
         case int(TIM8):
         {
+          #if ( defined (STM32F103xE) || defined (STM32F103xG) )                        
             // Init compare IRQ for TIM8 Compare
             ISR_Init(TIM8_CC_IRQn, 0, 6);
+          #endif
+
+          // Fill this for other CPU as needed
         }
         break;
       #endif
+      
+        default:
+        {
+            return;
+        }
     }
 
     switch(Channel)

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F4_crc.h
+//  File : lib_STM32F4_crc.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,55 +24,69 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#pragma once
-
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
+//
+//  Name:           CRC_Reset
+//
+//  Parameter(s):   None
+//  Return:         void
+//
+//  Description:    This function init the hardware for crc calculation.
+//
 //-------------------------------------------------------------------------------------------------
-
-#include "lib_typedef.h"
-#include "util_cfg.h"
-
-//-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-// Type definition(s) and structure(s)
-//-------------------------------------------------------------------------------------------------
-
-enum CrcType_e                      // Poly         Init Value      XOR Value
+void CRC_Reset(void)
 {
-    CRC_8,
-    CRC_8_EBU,                      // 0x1D
-    CRC_16_MODBUS,                  // 0x8005       0xFFFF          0x0000
-    CRC_16_CCITT,                   // 0x1021       0xFFFF          0x0000
-    CRC_32_IEEE,                    // 0x04C11DB7	0xFFFFFFFF      0xFFFFFFFF
-    CRC_NORMAL,
-};
+    CRC->CR = 1;
+}
 
 //-------------------------------------------------------------------------------------------------
-// class definition(s)
+//
+//  Name:           CRC_Done
+//
+//  Parameter(s):   void
+//  Return:         uint32_t
+//
+//  Description:    This function return the 32 bits CRC value.
+//
 //-------------------------------------------------------------------------------------------------
-
-class CCRC
+uint32_t CRC_Value(void)
 {
-    public:
+    return CRC->DR;
+}
 
-        void        Init        (CrcType_e CrcType, uint32_t Width, uint32_t Polynomial, uint32_t Xor);
-        void        Init        (CrcType_e CrcType);
-        uint32_t    Done        (void);
-        void        Byte        (const uint8_t Byte);
-        void        Buffer      (const uint8_t *pBuffer, uint32_t Len);
-
-    private:
-
-        CrcType_e  m_CrcType;
-        uint32_t  m_Polynomial;
-        uint32_t  m_Xor;
-        uint32_t  m_Width;
-        uint32_t  m_Mask;
-        uint32_t  m_Remainder;
-};
 //-------------------------------------------------------------------------------------------------
+//
+//  Name:           CRC_AddByte
+//
+//  Parameter(s):   uint8_t Byte
+//  Return:         void
+//
+//  Description:    Add a byte to calculation of on going CRC sequence.
+//
+//-------------------------------------------------------------------------------------------------
+void CRC_AddByte(const uint8_t Byte)
+{
+    CRC->DR = Byte;
+}
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CRC_AddBuffer
+//
+//  Parameter(s):   pBuffer             Calculate CRC on this buffer
+//                  Length              Length of the buffer
+//  Return:         void
+//
+//  Description:    Add buffer to calculation of on going CRC sequence.
+//
+//-------------------------------------------------------------------------------------------------
+void CRC_AddBuffer(const uint8_t *pBuffer, size_t Length)
+{
+    // Enter Data to the CRC calculator
+    for(size_t i = 0; i < Length; i++)
+    {
+        CRC->DR = pBuffer[i];
+    }
+}
+
+//-------------------------------------------------------------------------------------------------

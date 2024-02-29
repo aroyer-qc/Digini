@@ -37,19 +37,6 @@
 #if (USE_TIM_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
-
-#define TIM_GLOBAL
-#define TIM_BACK_OFFSET_RESET_REGISTER             0x20
-#define TIM_16_BITS_MASK                           0xFFFF
-#define TIM_16_BITS_MAX_COMPARE                    0xFFFF
-#define TIM_32_BITS_MAX_COMPARE                    0xFFFFFFFF
-#define TIM_CCER_OUTPUT_ENABLE_SPACING_SHIFT       4
-#define TIM_CCMRx_MODE_SHIFT                       8
-#define TIM_CCMRx_MODE_PWM_MASK                    0x0060
-
-//-------------------------------------------------------------------------------------------------
 //
 //   Class: TIM_Driver
 //

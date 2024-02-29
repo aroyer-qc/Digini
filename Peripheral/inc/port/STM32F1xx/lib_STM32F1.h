@@ -41,6 +41,9 @@
     #define NUMBER_OF_IO_PORT   
     #define DMA2_SUPPORT        DEF_DISABLED
 
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_ENABLED
+
     #define TIM1_SUPPORT        DEF_ENABLED
     #define TIM2_SUPPORT        DEF_ENABLED
     #define TIM3_SUPPORT        DEF_ENABLED
@@ -56,6 +59,9 @@
 #if defined (STM32F100xE)
     #define NUMBER_OF_IO_PORT   
     #define DMA2_SUPPORT        DEF_ENABLED
+
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_ENABLED
 
     #define TIM1_SUPPORT        DEF_ENABLED
     #define TIM2_SUPPORT        DEF_ENABLED
@@ -73,6 +79,9 @@
     #define NUMBER_OF_IO_PORT   
     #define DMA2_SUPPORT        DEF_DISABLED
 
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_DISABLED
+
     #define TIM1_SUPPORT        DEF_DISABLED
     #define TIM2_SUPPORT        DEF_ENABLED
     #define TIM3_SUPPORT        DEF_ENABLED
@@ -88,6 +97,9 @@
 #if defined (STM32F101xB)
     #define NUMBER_OF_IO_PORT   
     #define DMA2_SUPPORT        DEF_DISABLED
+
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_ENABLED
 
     #define TIM1_SUPPORT        DEF_DISABLED
     #define TIM2_SUPPORT        DEF_ENABLED
@@ -105,6 +117,9 @@
     #define NUMBER_OF_IO_PORT   
     #define DMA2_SUPPORT        DEF_ENABLED
 
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_ENABLED
+
     #define TIM1_SUPPORT        DEF_DISABLED
     #define TIM2_SUPPORT        DEF_ENABLED
     #define TIM3_SUPPORT        DEF_ENABLED
@@ -120,6 +135,9 @@
 #if defined (STM32F101xG)
     #define NUMBER_OF_IO_PORT   
     #define DMA2_SUPPORT        DEF_ENABLED
+
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_ENABLED
 
     #define TIM1_SUPPORT        DEF_DISABLED
     #define TIM2_SUPPORT        DEF_DISABLED
@@ -137,6 +155,9 @@
     #define NUMBER_OF_IO_PORT   
     #define DMA2_SUPPORT        DEF_DISABLED
 
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_DISABLED
+
     #define TIM1_SUPPORT        DEF_DISABLED
     #define TIM2_SUPPORT        DEF_ENABLED
     #define TIM3_SUPPORT        DEF_ENABLED
@@ -152,6 +173,9 @@
 #if defined (STM32F102xB)
     #define NUMBER_OF_IO_PORT   
     #define DMA2_SUPPORT        DEF_DISABLED
+
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_ENABLED
 
     #define TIM1_SUPPORT        DEF_DISABLED
     #define TIM2_SUPPORT        DEF_ENABLED
@@ -169,6 +193,9 @@
     #define NUMBER_OF_IO_PORT   
     #define DMA2_SUPPORT        DEF_DISABLED
 
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_DISABLED
+
     #define TIM1_SUPPORT        DEF_ENABLED
     #define TIM2_SUPPORT        DEF_ENABLED
     #define TIM3_SUPPORT        DEF_ENABLED
@@ -185,6 +212,9 @@
     #define NUMBER_OF_IO_PORT   6
     #define DMA2_SUPPORT        DEF_DISABLED
     
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_ENABLED
+
     #define TIM1_SUPPORT        DEF_ENABLED
     #define TIM2_SUPPORT        DEF_ENABLED
     #define TIM3_SUPPORT        DEF_ENABLED
@@ -200,6 +230,9 @@
 #if defined (STM32F103xE)
     #define NUMBER_OF_IO_PORT   8
     #define DMA2_SUPPORT        DEF_ENABLED
+
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_ENABLED
 
     #define TIM1_SUPPORT        DEF_ENABLED
     #define TIM2_SUPPORT        DEF_ENABLED
@@ -217,6 +250,9 @@
     #define NUMBER_OF_IO_PORT   8
     #define DMA2_SUPPORT        DEF_ENABLED
 
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_ENABLED
+
     #define TIM1_SUPPORT        DEF_ENABLED
     #define TIM2_SUPPORT        DEF_ENABLED
     #define TIM3_SUPPORT        DEF_ENABLED
@@ -233,6 +269,9 @@
     #define NUMBER_OF_IO_PORT   
     #define DMA2_SUPPORT        DEF_ENABLED
 
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_ENABLED
+
     #define TIM1_SUPPORT        DEF_ENABLED
     #define TIM2_SUPPORT        DEF_ENABLED
     #define TIM3_SUPPORT        DEF_ENABLED
@@ -248,6 +287,9 @@
 #if defined (STM32F107xC)
     #define NUMBER_OF_IO_PORT   
     #define DMA2_SUPPORT        DEF_ENABLED
+
+    #define I2C1_SUPPORT        DEF_ENABLED
+    #define I2C2_SUPPORT        DEF_ENABLED
 
     #define TIM1_SUPPORT        DEF_ENABLED
     #define TIM2_SUPPORT        DEF_ENABLED

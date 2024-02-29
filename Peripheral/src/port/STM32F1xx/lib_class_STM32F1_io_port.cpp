@@ -82,7 +82,7 @@ void IO_PortDriver::Initialize(IO_Port_e Port)
                        IO_MODE_INPUT,
                        (m_pPort->TypeOutput | m_pPort->TypeInput),
                        m_pPort->Speed,
-                       0);                  // Don't care for state
+                       0);                          // Don't care for state
             m_2BitsMask |= (IO_PORT_2_BITS_MASK << (Pin << 1));
         }
     }

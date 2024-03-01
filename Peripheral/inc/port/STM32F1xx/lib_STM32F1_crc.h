@@ -37,9 +37,9 @@
 //-------------------------------------------------------------------------------------------------
 
 void        CRC_Reset       (void);
-uint32_t    CRC_Value       (void);
+uint32_t    CRC_GetValue    (void);
 void        CRC_AddByte     (const uint8_t Byte);
-void        CRC_AddBuffer   (const uint8_t *pBuffer, Length Length);
+void        CRC_AddBuffer   (const uint8_t *pBuffer, size_t Length);
 
 //-------------------------------------------------------------------------------------------------
 

@@ -456,7 +456,7 @@ SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const
 //                  size_t          TxSize
 //                  void*           pRxBuffer
 //                  size_t          RxSize
-//                  uint8_t         DeviceAddress
+//                  uint8_t         Device
 //
 //  Return:         SystemState_e   State
 //

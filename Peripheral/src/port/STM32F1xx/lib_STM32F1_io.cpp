@@ -40,12 +40,12 @@
 #define IO_PORT_SHIFT_FOR_CLOCK_ENABLE  10                  // Need to shift 10 bits to set value from 0 - 7
 
 #define IO_INPUT_PULL_MASK              0x00000008          // All IO in output has this bit reset
-#define IO_OUTPUT_MASK                  0x00000004          // All IO in output has this bit reset
-#define IO_OUTPUT_TYPE_MASK             0x00000003          // All IO in output must at least has one bit set
+#define IO_GPIO_OUTPUT_MASK             0x00000008          // All IO in output has this bit reset
+#define IO_OUTPUT_MODE_MASK             0x00000003          // All IO in output must at least has one bit set
 #define IO_CONFIG_MASK                  0x0000000F
 
 #define IO_LOCK_KEY                     0x00010000          // Lock key
-#define IO_OFFSET_BIT_RESET             8
+#define IO_OFFSET_BIT_RESET             16
 
 //-------------------------------------------------------------------------------------------------
 //  private variable(s)
@@ -152,7 +152,7 @@ void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint3
         IO_EnableClock(pPort);
 
         // Default are for Output only
-        if(((PinMode & IO_OUTPUT_MASK) == 0) && ((PinMode & IO_OUTPUT_TYPE_MASK) != 0))
+        if(((PinMode & IO_GPIO_OUTPUT_MASK) == 0) && ((PinMode & IO_OUTPUT_MODE_MASK) != 0))
         {
             OffsetPin   = PinNumber + ((State == IO_DEFAULT_OUTPUT_LOW) ? 8 : 0);
             pPort->BSRR = 1 << OffsetPin;
@@ -162,16 +162,16 @@ void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint3
         if(PinNumber < 8)
         {
             pPort->CRL &= ~(IO_CONFIG_MASK << (PinNumber << 2));
-            pPort->CRL |=  (State          << (PinNumber << 2));
+            pPort->CRL |=  (PinMode        << (PinNumber << 2));
         }
         else
         {
             pPort->CRH &= ~(IO_CONFIG_MASK << ((PinNumber - 8) << 2));
-            pPort->CRH |=  (State          << ((PinNumber - 8) << 2));
+            pPort->CRH |=  (PinMode        << ((PinNumber - 8) << 2));
         }
 
         // Set Pull Up/Down
-        if(((PinMode & IO_INPUT_PULL_MASK) != 0) && ((PinMode & IO_OUTPUT_TYPE_MASK) == 0))
+        if(((PinMode & IO_INPUT_PULL_MASK) != 0) && ((PinMode & IO_OUTPUT_MODE_MASK) == 0))
         {
             //MODIFY_REG(pPort->ODR, (1 << PinNumber), (State << PinNumber));
             pPort->ODR = (pPort->ODR & (~uint32_t(1) << PinNumber)) | (State << PinNumber);
@@ -195,8 +195,8 @@ void IO_SetPinLow(IO_ID_e IO_ID)
 
     if(pPort != GPIOxx)
     {
-        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber + IO_OFFSET_BIT_RESET;
-        pPort->BSRR = (1 << PinNumber);
+        uint32_t PinBitReset = 1 << (IO_Properties[IO_ID].PinNumber + IO_OFFSET_BIT_RESET);
+        pPort->BSRR = PinBitReset;
     }
 }
 
@@ -216,8 +216,8 @@ void IO_SetPinHigh(IO_ID_e IO_ID)
 
     if(pPort != GPIOxx)
     {
-        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
-        pPort->BSRR = (1 << PinNumber);
+        uint32_t PinBitSet = 1 << IO_Properties[IO_ID].PinNumber;
+        pPort->BSRR = PinBitSet;
     }
 }
 
@@ -578,7 +578,7 @@ void IO_EnableClock(GPIO_TypeDef* pPort)
     ClockEnable   = ((uint32_t)(pPort) & IO_PORT_MASK_FOR_CLOCK_ENABLE);          // Mask bit to keep only enableoffset
     ClockEnable >>= IO_PORT_SHIFT_FOR_CLOCK_ENABLE;
     ClockEnable   = 1 << ClockEnable;                                             // Set bit position
-    RCC->AHBENR  |= ClockEnable;
+    RCC->APB2ENR  |= ClockEnable;
 }
 
 //-------------------------------------------------------------------------------------------------

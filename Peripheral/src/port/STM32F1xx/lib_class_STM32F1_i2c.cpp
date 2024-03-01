@@ -43,7 +43,7 @@
 #define I2C_ADDRESS_7_BITS                          ((uint16_t)0x4000)
 #define I2C_ADDRESS_10_BITS                         ((uint16_t)0xC000)
 
-#define CR1_CLEAR_MASK                              ((uint16_t)0xFBF5)          // I2C registers Masks
+#define CR1_CLEAR_MASK                              ((uint16_t)0xFBF5)          // I2C registers Masks                              wrong
 #define FLAG_MASK                                   ((uint32_t)0x00FFFFFF)      // I2C FLAG mask
 #define I2C_TIME_OUT                                100                         // 100 Milliseconds
 #define I2C_NO_ACK                                  ((uint32_t)0x00000400)
@@ -329,7 +329,7 @@ SystemState_e I2C_Driver::Transfer(uint32_t Address, uint32_t AddressSize, const
 //                  size_t          TxSize
 //                  void*           pRxBuffer
 //                  size_t          RxSize
-//                  uint8_t         DeviceAddress
+//                  uint8_t         Device
 //
 //  Return:         SystemState_e   State
 //

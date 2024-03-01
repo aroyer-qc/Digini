@@ -102,7 +102,7 @@
 #include "lib_dma.h"
 #include "lib_rng.h"
 
-#if (DIGINI_USE_CRC == DEF_ENABLED)
+#if (DIGINI_USE_CRC == DEF_ENABLED)     // This is for software CRC calculation support
 #include "lib_crc.h"
 #endif
 
@@ -125,7 +125,7 @@
 #include "lib_class_can.h"
 #endif
 
-#if (USE_CRC_DRIVER == DEF_ENABLED)
+#if (USE_CRC_DRIVER == DEF_ENABLED)     // This is for hardware CRC calculation support
 #include "lib_hardware_crc.h"
 #endif
 

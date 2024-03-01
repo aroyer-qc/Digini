@@ -65,8 +65,6 @@ class CRTC
         void                    SetTime                 (uint8_t Hour, uint8_t Minute, uint8_t Second);
         void                    GetTimeFormat           (TimeFormat_e* pTimeFormat)                            {*pTimeFormat = m_TimeFormat;};
         void                    SetTimeFormat           (TimeFormat_e* pTimeFormat)                            {m_TimeFormat = *pTimeFormat;};
-        uint32_t                GetBackupRegister       (uint8_t Register);
-        void                    SetBackupRegister       (uint8_t Register, uint32_t);
         void                    TickHook                (void);
 
         void                    WakeUp_IRQ_Handler      (void);
@@ -77,13 +75,9 @@ class CRTC
 
         void                    Disable                 (void);
         void                    Enable                  (void);
-        SystemState_e           EnterInitMode           (void);
-        void                    ExitInitMode            (void);
         uint8_t                 GetDayOfWeek            (Date_t* pDate);
         void                    Lock                    (void);
         void                    Unlock                  (void);
-        void                    LockRegister            (void);
-        void                    UnlockRegister          (void);
         void                    SetRTC                  (void);
         void                    UpdateTimeFeature       (void);
         SystemState_e           WaitForSynchro          (void);

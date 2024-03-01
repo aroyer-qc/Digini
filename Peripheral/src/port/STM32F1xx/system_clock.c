@@ -65,8 +65,8 @@ void SystemInit(void)
 {
     __asm volatile("cpsid i");                                              // Disable IRQ
 
-    //SET_BIT(RCC->APB2ENR, RCC_APB2ENR_SYSCFGEN);
     SET_BIT(RCC->APB1ENR, RCC_APB1ENR_PWREN);
+    SET_BIT(RCC->APB2ENR, RCC_APB2ENR_AFIOEN);                              // Enable alternate function I/O clock
 
     // Reset the RCC clock configuration to the default reset state ------------
     // Set HSION bit
@@ -96,17 +96,11 @@ void SystemInit(void)
 
         // Wait for HSI to be ready B4 enabling PLL
         while(READ_BIT(RCC->CR, RCC_CR_HSIRDY) == 0) {};
-
-        // Set PLL src in CFGR register
-        MODIFY_REG(RCC->CFGR, RCC_CFGR_PLL_SRC_MASK, CFG_RCC_PLL_CFGR);
     }
     else
     {
         // Set PLL src in CFGR register
         MODIFY_REG(RCC->CFGR, RCC_CFGR_PLL_SRC_MASK, CFG_RCC_PLL_CFGR);
-
-        // Reset HSION bit to reduce consumption
-        //CLEAR_BIT(RCC->CR, RCC_CR_HSION); not at the right place... it kill the board
     }
 
     // Enable Prefetch Buffer
@@ -123,6 +117,12 @@ void SystemInit(void)
 
     // Switch to PLL
     SET_BIT(RCC->CFGR, RCC_CFGR_SW_PLL);
+
+    if(READ_BIT(RCC->CR, RCC_CR_HSERDY) != 0)
+    {
+        // Reset HSION bit to reduce consumption
+        CLEAR_BIT(RCC->CR, RCC_CR_HSION);
+    }
 
   #endif // (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
 

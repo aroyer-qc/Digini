@@ -36,12 +36,13 @@
 //-------------------------------------------------------------------------------------------------
 void CRC_Reset(void)
 {
+    // TODO init the clock
     CRC->CR = 1;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CRC_Done
+//  Name:           CRC_GetValue
 //
 //  Parameter(s):   void
 //  Return:         uint32_t
@@ -49,7 +50,7 @@ void CRC_Reset(void)
 //  Description:    This function return the 32 bits CRC value.
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CRC_Value(void)
+uint32_t CRC_GetValue(void)
 {
     return CRC->DR;
 }

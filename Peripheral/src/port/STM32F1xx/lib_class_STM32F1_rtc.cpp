@@ -85,76 +85,45 @@ void RTC_Driver::Initialize(uint32_t Mode)
     }
 
     // Init power and clock for RTC
-    RCC->APB1ENR |=  ( RCC_APB1ENR_PWREN);     // Backup interface & Power interface clock enable
-    PWR->CR   |= PWR_CR_DBP;                                        // RTC register access allowed
+    RCC->APB1ENR |=  ( RCC_APB1ENR_PWREN);      // Backup interface & Power interface clock enable
+    PWR->CR   |= PWR_CR_DBP;                    // RTC register access allowed
+    while((RCC->CRL & RTC_CRL_RTOFF) == 0) {};  // Wait for RTOFF to go to 1
+    RCC->CRL  |= RTC_CRL_CNF;                   // Enter configuration mode by setting bit CNF in RTC->CRL
+
+
     RCC->BDCR &= uint32_t(~RCC_BDCR_RTCSEL);                        // Clear clock selection
     RCC->BDCR |= Mode;                                              // Set it with argument
     RCC->BDCR |= RCC_BDCR_RTCEN;                                    // RTC clock enable
     if(Mode == RTC_CLOCK_MODE_LSE) RCC->BDCR |= RCC_BDCR_LSEON;     // External 32.768 kHz oscillator ON
     if(Mode == RTC_CLOCK_MODE_LSI) RCC->CSR  |= RCC_CSR_LSION;      // Internal 32 kHz oscillator ON
     PWR->CR   &= uint32_t(~PWR_CR_DBP);                             // RTC register access blocked
-    UnlockRegister();
-    EnterInitMode();
+
     switch(Mode)
     {
         case RTC_CLOCK_MODE_LSE:
         {
-            RTC->PRER = 0x000000FF;                                 // As per data sheet to separate write are necessary (value from data sheet)
-            RTC->PRER = 0x007F00FF;                                 // First is the synchronous prescaler then the asynchronous prescaler factor
+            //RTC->PRER = 0x000000FF;                               // As per data sheet to separate write are necessary (value from data sheet)
+            //RTC->PRER = 0x007F00FF;                               // First is the synchronous prescaler then the asynchronous prescaler factor
             break;
         }
 
         case RTC_CLOCK_MODE_LSI:
         {
-            RTC->PRER = 0x000000FA;
-            RTC->PRER = 0x007F00FA;
+            //RTC->PRER = 0x000000FA;
+            //RTC->PRER = 0x007F00FA;
             break;
         }
        #ifdef USE_RTC_HSE_CLOCK
         case RTC_CLOCK_MODE_HSE:
         {
-            RTC->PRER = RTC_CLOCK_SYNC_PRESCALER;
-            RTC->PRER = RTC_CLOCK_SYNC_PRESCALER | RTC_CLOCK_ASYNC_PRESCALER;
+            //RTC->PRER = RTC_CLOCK_SYNC_PRESCALER;
+            //RTC->PRER = RTC_CLOCK_SYNC_PRESCALER | RTC_CLOCK_ASYNC_PRESCALER;
         }
        #endif
     }
 
-    RTC->CR &= uint32_t(~RTC_CR_FMT);                           // 12/24 Time format mode set default to 24 hours
-    ExitInitMode();
-    LockRegister();
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: GetBackupRegister
-//
-//   Parameter(s):  uint8_t     Register
-//   Return value:  uint32_t    Value
-//
-//   Description:   Return value at requested backup register
-//
-//-------------------------------------------------------------------------------------------------
-uint32_t RTC_Driver::GetBackupRegister(uint8_t Register)
-{
-    return *(&RTC->BKP0R + Register);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: SetBackupRegister
-//
-//   Parameter(s):  uint8_t     Register
-//                  uint32_t    Value
-//   Return value:  None
-//
-//   Description:   Set value at a requested backup register
-//
-//-------------------------------------------------------------------------------------------------
-void RTC_Driver::SetBackupRegister(uint8_t Register, uint32_t Value)
-{
-    PWR->CR  |= PWR_CR_DBP;
-    *(&RTC->BKP0R + Register) = Value;
-    PWR->CR  &= uint32_t(~PWR_CR_DBP);
+    RCC->CRL &= ~RTC_CRL_CNF;                       // Exit configuration mode
+    while((RCC->CRL & RTC_CRL_RTOFF) == 0) {};      // Wait for RTOFF to go to 1
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -278,7 +247,7 @@ void RTC_Driver::SetTime(uint8_t Hour, uint8_t Minute, uint8_t Second)
 //   Parameter(s):  None
 //   Return Value:  None
 //
-//   Description:   Call by the high level SD Card class
+//   Description:   Call by the high level SD Card class  ???
 //
 //   Note(s):       Do not put in OS tick hook
 //
@@ -327,57 +296,6 @@ void RTC_Driver::Disable(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name: EnterInitMode
-//
-//   Parameter(s):  None
-//   Return value:  SystemState_e    State
-//
-//   Description:   Stop calendar and enter initialization mode
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e RTC_Driver::EnterInitMode(void)
-{
-    SystemState_e    State;
-
-    // Enter initialization mode, and stop calendar counter (INIT)
-    RTC->ISR |= RTC_ISR_INIT;
-
-    // Wait until RTC is ready or time out has expired
-    m_TimeOut = 10;
-    do
-    {
-        nOS_Yield();
-    }
-    while(((RTC->ISR & RTC_ISR_INITF) == 0) && (m_TimeOut != 0));
-
-    if(m_TimeOut == 0) State = SYS_TIME_OUT;
-    else               State = SYS_READY;
-
-    return State;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: ExitInitMode
-//
-//   Parameter(s):  None
-//   Return value:  None
-//
-//   Description:   Stop calendar and enter initialization mode
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void RTC_Driver::ExitInitMode(void)
-{
-    // Exit initialization mode, and restart calendar counter
-    RTC->ISR &= uint32_t(~RTC_ISR_INIT);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
 //   Function:      Lock
 //
 //   Parameter(s):
@@ -408,35 +326,6 @@ void RTC_Driver::Lock(void)
 void RTC_Driver::Unlock(void)
 {
     while(nOS_MutexUnlock(&m_Mutex) != NOS_OK);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: UnlockRegister
-//                  lockRegister
-//
-//   Parameter(s):  None
-//   Return value:  None
-//
-//   Description:   Lock or unlock access to the RTC register
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void RTC_Driver::LockRegister(void)
-{
-    // Write wrong key to relock "Write Protection Register"
-    RTC->WPR  = 0x00;
-    PWR->CR  &= uint32_t(~PWR_CR_DBP);
-}
-
-
-void RTC_Driver::UnlockRegister(void)
-{
-    // Write unlock key to "Write Protection Register"
-    PWR->CR  |= PWR_CR_DBP;
-    RTC->WPR  = 0xCA;
-    RTC->WPR  = 0x53;
 }
 
 //-------------------------------------------------------------------------------------------------

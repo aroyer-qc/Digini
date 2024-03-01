@@ -37,7 +37,8 @@
 //-------------------------------------------------------------------------------------------------
 
 // Vector Table base offset field. This value must be a multiple of 0x200.
-#define VECT_TAB_OFFSET     0x00
+#define VECT_TAB_OFFSET                 0x00
+#define SYSTEM_CLOCK_NUMBER_OF_RETRY    10000
 
 //-------------------------------------------------------------------------------------------------
 // Variables(s)
@@ -62,8 +63,6 @@
 //-------------------------------------------------------------------------------------------------
 void SystemInit(void)
 {
-    //uint32_t Retry;
-
     __asm volatile("cpsid i");                                              // Disable IRQ
 
     //SET_BIT(RCC->APB2ENR, RCC_APB2ENR_SYSCFGEN);
@@ -79,12 +78,12 @@ void SystemInit(void)
     // Reset HSEBYP, CSSON and PLLON bits
 	CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));
 
-  #if (SYS_CLOCK_MUX == RCC_CFGR_SW_PLL)
+  #if (CFG_SYS_CLOCK_MUX == CFG_CLOCK_SRC_PLL)
 
     SET_BIT(RCC->CR, RCC_CR_HSEON);
 
     // Wait for HSE to be ready B4 enabling PLL
-    Retry = 0;
+    uint32_t  Retry = 0;
     while((READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0) && (Retry < SYSTEM_CLOCK_NUMBER_OF_RETRY))
     {
         Retry++;
@@ -99,15 +98,15 @@ void SystemInit(void)
         while(READ_BIT(RCC->CR, RCC_CR_HSIRDY) == 0) {};
 
         // Set PLL src in CFGR register
-        MODIFY_REG(RCC->CFGR, RCC_CFGR_PLL_SRC_MASK, SYS_PLL_SOURCE_MUX);
+        MODIFY_REG(RCC->CFGR, RCC_CFGR_PLL_SRC_MASK, CFG_RCC_PLL_CFGR);
     }
     else
     {
         // Set PLL src in CFGR register
-        MODIFY_REG(RCC->CFGR, RCC_CFGR_PLL_SRC_MASK, SYS_PLL_SOURCE_MUX);
+        MODIFY_REG(RCC->CFGR, RCC_CFGR_PLL_SRC_MASK, CFG_RCC_PLL_CFGR);
 
         // Reset HSION bit to reduce consumption
-        CLEAR_BIT(RCC->CR, RCC_CR_HSION);
+        //CLEAR_BIT(RCC->CR, RCC_CR_HSION); not at the right place... it kill the board
     }
 
     // Enable Prefetch Buffer

@@ -980,8 +980,8 @@ void UART_Driver::EnableRX_ISR(uint8_t Mask)
 //   Function:      DisableRX_ISR
 //
 //   Parameter(s):  Mask        TX ISR request
-//                                  UART_ISR_RX_BYTE_MASK
-//                                  UART_ISR_RX_TIMEOUT_MASK
+//                                  UART_ISR_RX_BYTE
+//                                  UART_ISR_RX_TIMEOUT
 //   Return Value:  None
 //
 //   Description:   Enable specific receive interrupt
@@ -1029,8 +1029,8 @@ void UART_Driver::DisableRX_ISR(uint8_t Mask)
 //   Function:      EnableTX_ISR
 //
 //   Parameter(s):  Mask        TX ISR request
-//                                  UART_ISR_TX_EMPTY_MASK
-//                                  UART_ISR_TX_COMPLETE_MASK
+//                                  UART_ISR_TX_EMPTY
+//                                  UART_ISR_TX_COMPLETE
 //   Return Value:  None
 //
 //   Description:   Enable specific transmit interrupt
@@ -1065,8 +1065,8 @@ void UART_Driver::EnableTX_ISR(uint8_t Mask)
 //   Function:      DisableTX_ISR
 //
 //   Parameter(s):  Mask        TX ISR request
-//                                  UART_ISR_TX_EMPTY_MASK
-//                                  UART_ISR_TX_COMPLETE_MASK
+//                                  UART_ISR_TX_EMPTY
+//                                  UART_ISR_TX_COMPLETE
 //   Return Value:  None
 //
 //   Description:   Disable specific transmit interrupt

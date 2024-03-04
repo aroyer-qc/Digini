@@ -24,7 +24,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-//  Notes:   This is incomplete driver, and evolution is as the need arise
+//  Notes:   This is incomplete driver, and evolution is as the need arise. Timer are very complex.
 //
 //              In this file -> basic timer with callback when specify time has elapse
 //                  - Start
@@ -32,6 +32,9 @@
 //                  - Stop
 //                  - Reload
 //                  - SetCompare
+//
+//              This help with basic initialization. In you project, you can access the device
+//              register and improve functionnality.
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -210,7 +213,7 @@ class TIM_Driver
 {
     public:
 
-                            TIM_Driver              (TIM_ID_e TimID);
+                            TIM_Driver              (TIM_ID_e TimID, );
 
         void                Initialize              (void);
         void                RegisterCallBack        (TIM_CallBack_t pCallBack);

@@ -439,7 +439,7 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
             case UART_ENABLE_RX_TX: CR1_Register |= UART_CR1_RX_TX; break;
             default: break;
         }
-*/ // not used
+// not used */
 
         // Register modification
         MODIFY_REG(m_pUart->CR1, (USART_CR1_M_Msk | USART_CR1_PCE_Msk | USART_CR1_PS_Msk | USART_CR1_OVER8_Msk), CR1_Register);
@@ -788,7 +788,7 @@ void UART_Driver::DMA_EnableRX(void)
             (void)m_pUart->RDR;
             DMA_ClearFlag(pDMA, m_pDMA_Info->FlagRX);
             DMA_Enable(pDMA);
-            EnableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
+            EnableRX_ISR(UART_ISR_RX_ERROR_CFG | UART_ISR_RX_IDLE_CFG);
         }
     }
 }
@@ -814,7 +814,7 @@ void UART_Driver::DMA_DisableRX(void)
             pDMA = m_pDMA_Info->DMA_StreamRX;
             DMA_Disable(pDMA);
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAR);
-            DisableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
+            DisableRX_ISR(UART_ISR_RX_ERROR_CFG | UART_ISR_RX_IDLE_CFG);
             DMA_ClearFlag(pDMA, m_pDMA_Info->FlagRX);
         }
     }
@@ -836,7 +836,7 @@ void UART_Driver::DMA_EnableTX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            EnableTX_ISR(UART_ISR_TX_COMPLETED_MASK);
+            EnableTX_ISR(UART_ISR_TX_COMPLETED_CFG);
             m_pUart->CR3 |= USART_CR3_DMAT;
         }
     }
@@ -1131,7 +1131,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_RX) != 0)
     {
         m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_BYTE);
+        EnableRX_ISR(UART_ISR_RX_BYTE_CFG);
     }
   #endif
 
@@ -1155,7 +1155,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_EMPTY_TX) != 0)
     {
         m_CallBackType |= CallBackType;
-        //EnableRX_ISR(UART_ISR_TX_EMPTY);      // don't... only on send data
+        //EnableRX_ISR(UART_ISR_TX_EMPTY_CFG);      // don't... only on send data
     }
   #endif
 

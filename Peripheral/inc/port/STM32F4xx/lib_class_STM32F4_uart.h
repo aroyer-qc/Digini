@@ -205,10 +205,10 @@ enum UART_Config_e
     UART_OVER_8             =   0x0040,
     UART_OVER_MASK          =   0x0040,
 
-    UART_ENABLE_RX_TX       =   0x0180,
-    UART_ENABLE_RX          =   0x0080,
-    UART_ENABLE_TX          =   0x0100,
-    UART_ENABLE_MASK        =   0x0180,
+//    UART_ENABLE_RX_TX       =   0x0180,
+//    UART_ENABLE_RX          =   0x0080,
+//    UART_ENABLE_TX          =   0x0100,
+//    UART_ENABLE_MASK        =   0x0180,
 
     // Some more common config (all LSB with oversampling at 16, with RX and TX)
     UART_CONFIG_N_8_1    =   (UART_NO_PARITY   | UART_8_LEN_BITS | UART_1_STOP_BIT),

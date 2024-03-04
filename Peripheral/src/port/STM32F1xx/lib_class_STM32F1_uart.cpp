@@ -351,7 +351,7 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
 
         // CR3 left to default.
 
-// todo use this
+/*
         // RX and TX enable
         MaskedConfig = UART_Config_e(uint32_t(Config) & UART_ENABLE_MASK);
 
@@ -362,8 +362,11 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
             case UART_ENABLE_RX_TX: CR1_Register |= UART_CR1_RX_TX; break;
             default: break;
         }
+*/
+
         SetBaudRate(BaudID);        // Will re-enable the UART
     }
+    #endif
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -40,7 +40,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define UART_BACK_OFFSET_RESET_REGISTER     0x20
+#define UART_BACK_OFFSET_RESET_REGISTER     0x0C
 
 #define UART_CR1_PARITY_NONE                0                                   // Parity control disabled
 #define UART_CR1_PARITY_EVEN                USART_CR1_PCE                       // Parity control enabled and Even Parity is selected
@@ -63,7 +63,6 @@
 #define UART_CR3_FLOW_RTS                   USART_CR3_RTSE
 
 #define UART_CR2_CONFIG_OFFSET              16
-#define UART_BRR_MANTISSA_MASK              0xFF0
 
 //-------------------------------------------------------------------------------------------------
 //  private variable(s)
@@ -350,8 +349,19 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
         MaskedConfig = (uint32_t(Config) >> UART_CR2_CONFIG_OFFSET) & UART_CR2_CONFIG_MASK;
         MODIFY_REG(m_pUart->CR2, UART_CR2_CONFIG_MASK, MaskedConfig);
 
-        // CR3 left to default. 
-        
+        // CR3 left to default.
+
+// todo use this
+        // RX and TX enable
+        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_ENABLE_MASK);
+
+        switch(MaskedConfig)
+        {
+            case UART_ENABLE_RX:    CR1_Register |= UART_CR1_RX;    break;
+            case UART_ENABLE_TX:    CR1_Register |= UART_CR1_TX;    break;
+            case UART_ENABLE_RX_TX: CR1_Register |= UART_CR1_RX_TX; break;
+            default: break;
+        }
         SetBaudRate(BaudID);        // Will re-enable the UART
     }
 }

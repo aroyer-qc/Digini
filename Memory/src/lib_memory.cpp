@@ -30,7 +30,7 @@
 
 #define MEM_GLOBAL
 #include "lib_digini.h"
-#undef MEM_GLOBAL
+#undef  MEM_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 

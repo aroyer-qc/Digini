@@ -44,8 +44,10 @@
 #define ISR_GetPendingIRQ(IRQ)   (((NVIC->ISPR[0] & (uint32_t(1) << uint32_t(int32_t(IRQ) & 0x1F))) != 0) ? true : false)
 // Set Pending Interrupt
 #define ISR_SetPendingIRQ(IRQ)   (NVIC->ISPR[0] = (uint32_t(1) << ((uint32_t)(int32_t(IRQ) & 0x1F))))
-// Clear Pending Interrupt      
+// Clear Pending Interrupt
 #define ISR_ClearPendingIRQ(IRQ) (NVIC->ICPR[0] = (uint32_t(1) << ((uint32_t)(int32_t(IRQ) & 0x1L))))
+
+#define ISR_IRQn_NONE               IRQn_Type(0x7F)
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)

@@ -30,8 +30,8 @@
 // Note(s)
 //-------------------------------------------------------------------------------------------------
 //
-// This library is specific to F1, it use to complex feature of timer to be generic.
-// although it might be easy to convert to another timer from other family.
+// This library is specific to F1, it use too complex feature of timer to be generic or use timer
+// Library. Although it might be easy to convert to another timer from other CPU family.
 //
 //  Note(s):        The Frequency for the smart LED are 800 kHz.
 //
@@ -99,7 +99,7 @@ class WS281x
 {
     public:
 
-        void    Initialize          (uint16_t NumberOfLED, WS281x_ResetType_e ResetType, IO_ID_e NeoDataPin);
+        void    Initialize          (TIM_ID_e TimID, uint16_t NumberOfLED, WS281x_ResetType_e ResetType, IO_ID_e NeoDataPin);
         void    SetLed              (uint16_t Offset, WS281x_Color_t Color);
         void    Process             (void);   
         void    FillUp_24_Bits      (uint8_t* pBuffer);

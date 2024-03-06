@@ -76,7 +76,7 @@ void WS281x::Initialize(uint16_t NumberOfLED, WS281x_ResetType_e ResetType, IO_I
     m_ChainSize   = NumberOfLED + WS281x_DUMMY_LEDS;                                           // Chain LEDs Size.
     m_NumberOfLED = NumberOfLED;                                                               // Number of real LEDs.
     m_pLedChain   = (WS281x_Color_t*)pMemory->AllocAndClear(m_ChainSize + WS281x_DUMMY_LEDS);  // Reserved x bytes from the alloc mem library.
-    m_pDMA_Buffer = pMemory->AllocAndClear(WS281x_DMA_FULL_BUFFER_SIZE);                       // Reserved 48 bytes DMA transfert to Compare register.
+    m_pDMA_Buffer = pMemory->AllocAndClear(WS281x_DMA_FULL_BUFFER_SIZE);                       // Reserved 48 bytes DMA transfert to compare register.
     m_LedPointer  = 0;                                                                         // Start at Led 0
     m_NeedRefresh = true;
 

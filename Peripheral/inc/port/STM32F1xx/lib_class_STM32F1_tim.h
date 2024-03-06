@@ -36,6 +36,8 @@
 //              This help with basic initialization. In you project, you can access the device
 //              register and improve functionnality.
 //
+//
+//   THINKING of just doing service function to configure a specific timer... 
 //-------------------------------------------------------------------------------------------------
 
 #pragma once

@@ -37,7 +37,7 @@
 //              register and improve functionnality.
 //
 //
-//   THINKING of just doing service function to configure a specific timer... 
+//   THINKING of just doing service function to configure a specific timer...
 //-------------------------------------------------------------------------------------------------
 
 #pragma once
@@ -56,6 +56,24 @@
 #define TIM_OP_MODE_SINGLE_DOWN_COUNT               (TIM_CR1_OPM | TIM_CR1_DIR)
 #define TIM_OP_MODE_REPETITIVE_UP_COUNT             0
 #define TIM_OP_MODE_REPETITIVE_DOWN_COUNT           TIM_CR1_DIR
+
+// Timer DMA/IRQ source (check for timer some don't support all feature)
+#define TIM_IRQ_DMA_NO_SOURCE                       0x0000
+#define TIM_IRQ_UPDATE                              0x0001
+#define TIM_IRQ_CAPTURE_COMPARE_1                   0x0002
+#define TIM_IRQ_CAPTURE_COMPARE_2                   0x0004
+#define TIM_IRQ_CAPTURE_COMPARE_3                   0x0008
+#define TIM_IRQ_CAPTURE_COMPARE_4                   0x0010
+#define TIM_IRQ_COM                                 0x0020
+#define TIM_IRQ_TRIGGER                             0x0040
+#define TIM_IRQ_BREAK                               0x0080
+#define TIM_DMA_UPDATE                              0x0100
+#define TIM_DMA_CAPTURE_COMPARE_1                   0x0200
+#define TIM_DMA_CAPTURE_COMPARE_2                   0x0400
+#define TIM_DMA_CAPTURE_COMPARE_3                   0x0800
+#define TIM_DMA_CAPTURE_COMPARE_4                   0x1000
+#define TIM_DMA_COM                                 0x2000
+#define TIM_DMA_TRIGGER                             0x4000
 
 //-------------------------------------------------------------------------------------------------
 
@@ -186,11 +204,11 @@ struct TIM_Info_t
     uint32_t            RCC_APBxPeriph;
     volatile uint32_t*  RCC_APBxEN_Register;
     IRQn_Type           IRQn_Channel;
-    bool                EnableUpdateIRQ;
     uint8_t             PreempPrio;
     uint32_t            Mode;
     uint32_t            Prescaler;
     uint32_t            Reload;
+    uint32_t            IRQ_DMA_SourceEnable;
 };
 
 #if (TIM_DRIVER_DMA_CFG == DEF_ENABLED)
@@ -204,9 +222,6 @@ struct TIM_DMA_Info_t
 };
 #endif
 
-
-typedef void (*TIM_CallBack_t)(TIM_TypeMatch_e TypeMatch);
-
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
@@ -215,13 +230,13 @@ class TIM_Driver
 {
     public:
 
-                            TIM_Driver              (TIM_ID_e TimID, );
+                            TIM_Driver              (TIM_ID_e TimID);
 
         void                Initialize              (void);
-        void                RegisterCallBack        (TIM_CallBack_t pCallBack);
-        void                CallBack                (bool ProcessUpdate);
+//        void                RegisterCallBack        (TIM_CallBack_t pCallBack);
+//        void                CallBack                (bool ProcessUpdate);
         uint32_t            GetCounterValue         (void);
-        uint32_t            TimeBaseToPrescaler     (uint32_t TimeBase);
+//        uint32_t            TimeBaseToPrescaler     (uint32_t TimeBase);
 
         void                Start                   (void);
         void                ReStart                 (void);
@@ -231,7 +246,7 @@ class TIM_Driver
         uint32_t            GetReload               (void);
 
       #if (TIM_DRIVER_SUPPORT_PWM_FEATURE_CFG == DEF_ENABLED)
-        void                ConfigPWM_Channel       (TIM_Compare_e Channel);
+//        void                ConfigPWM_Channel       (TIM_Compare_e Channel);
       #endif
       #if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
         void                SetCompare              (TIM_Compare_e Channel, uint32_t Value);
@@ -246,7 +261,7 @@ class TIM_Driver
 
         static TIM_TypeDef* GetTimerPointer         (TIM_ID_e TimID);
 
-        TIM_CallBack_t      m_pCallBack;
+        //TIM_CallBack_t      m_pCallBack;
 
     private:
 

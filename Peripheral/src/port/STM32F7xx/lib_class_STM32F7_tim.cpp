@@ -138,7 +138,8 @@ void TIM_Driver::Initialize(void)
     }
 
     // Set the update interrupt enable
-    if(m_pInfo->EnableUpdateIRQ == true)
+    if(m_pInfo->IRQ_DMA_SourceEnable & (TIM_IRQ_UPDATE | TIM_DMA_UPDATE) != 0)
+//    if(m_pInfo->EnableUpdateIRQ == true)
     {
       #if (TIM_DRIVER_SUPPORT_LPTIM1_CFG == DEF_ENABLED)
         if(m_pTim == LPTIM1)
@@ -155,7 +156,10 @@ void TIM_Driver::Initialize(void)
     }
 
     // Configure interrupt priority for TIM
-    ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);
+    if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
+    {
+        ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);
+    }
 }
 
 #if 0 //not in F4.. Does not mean we don't keep it

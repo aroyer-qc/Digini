@@ -131,7 +131,11 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
         m_CallBackType = UART_CALLBACK_NONE;
       #endif
 
-        ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);
+        if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
+        {
+            ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);
+        }
+        
         ClearFlag();
 
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)

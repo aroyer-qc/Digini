@@ -89,28 +89,16 @@ void TIM_Driver::Initialize(void)
     m_pTim->CR1 = m_pInfo->Mode | TIM_CR1_ARPE;
 
     // Set the update interrupt enable
-    if(m_pInfo->EnableUpdateIRQ == true)
+    if((m_pInfo->IRQ_DMA_SourceEnable & (TIM_IRQ_UPDATE | TIM_DMA_UPDATE)) != 0)
     {
          CLEAR_BIT(((TIM_TypeDef*)m_pTim)->SR, TIM_SR_UIF);
         ((TIM_TypeDef*)m_pTim)->DIER = TIM_DIER_UIE;
     }
 
-    ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);    // Configure interrupt priority for TIM
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           RegisterCallBack
-//
-//  Parameter(s):   pCallBack       Callback for application.
-//  Return:         None
-//
-//  Description:    Set callback for application.
-//
-//-------------------------------------------------------------------------------------------------
-void TIM_Driver::RegisterCallBack(TIM_CallBack_t pCallBack)
-{
-    m_pCallBack = pCallBack;
+    if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
+    {
+        ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);    // Configure interrupt priority for TIM
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -123,6 +111,7 @@ void TIM_Driver::RegisterCallBack(TIM_CallBack_t pCallBack)
 //  Description:    Calculate prescaler for the specified time base
 //
 //-------------------------------------------------------------------------------------------------
+/*
 uint32_t TIM_Driver::TimeBaseToPrescaler(uint32_t TimeBase)
 {
     VAR_UNUSED(TimeBase);
@@ -130,7 +119,7 @@ uint32_t TIM_Driver::TimeBaseToPrescaler(uint32_t TimeBase)
     // TODO (Alain#2#) a function to calculate right value for a requested time period
     return 0;
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Start
@@ -328,6 +317,7 @@ uint32_t TIM_Driver::GetCounterValue(void)
     return m_pTim->CNT;
 }
 
+/*
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           GetCounterValue
@@ -366,68 +356,7 @@ void TIM_Driver::ConfigPWM_Channel(TIM_Compare_e Channel)
     }
 }
 #endif
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CallBack
-//
-//  Parameter(s):   ProcessUpdate   Do we process the update flag (special case for TIM1 and TIM8)
-//  Return:         void
-//
-//  Description:    Call each compare IRQ for each interrupt flag set
-//
-//-------------------------------------------------------------------------------------------------
-void TIM_Driver::CallBack(bool ProcessUpdate)
-{
-    uint32_t Status = m_pTim->SR;
-    uint32_t Enable = m_pTim->DIER;
-
-  #if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG != DEF_ENABLED)
-    VAR_UNUSED(ProcessUpdate);
-  #endif
-
-    if(m_pCallBack != nullptr)
-    {
-        Status &= Enable;
-
-      #if (TIM_USE_COMPARE_FEATURE_CFG == DEF_ENABLED)
-        if(((Status & TIM_SR_CC1IF) && (m_pTim->DIER & TIM_DIER_CC1IE)) != 0)
-        {
-            m_pCallBack(TIM_MATCH_CH1);
-            MODIFY_REG(m_pTim->SR, TIM_SR_CC1IF, 0);
-        }
-
-        if(((Status & TIM_SR_CC2IF) && (m_pTim->DIER & TIM_DIER_CC2IE)) != 0)
-        {
-            m_pCallBack(TIM_MATCH_CH2);
-            MODIFY_REG(m_pTim->SR, TIM_SR_CC2IF, 0);
-        }
-
-        if(((Status & TIM_SR_CC3IF) && (m_pTim->DIER & TIM_DIER_CC3IE)) != 0)
-        {
-            m_pCallBack(TIM_MATCH_CH3);
-            MODIFY_REG(m_pTim->SR, TIM_SR_CC3IF, 0);
-        }
-
-        if(((Status & TIM_SR_CC4IF) && (m_pTim->DIER & TIM_DIER_CC4IE)) != 0)
-        {
-            m_pCallBack(TIM_MATCH_CH4);
-            MODIFY_REG(m_pTim->SR, TIM_SR_CC4IF, 0);
-        }
-      #endif
-
-        if((Status & TIM_SR_UIF) != 0)
-        {
-          #if (TIM_USE_COMPARE_FEATURE_CFG == DEF_ENABLED)
-            if(ProcessUpdate == true)
-          #endif
-            {
-                m_pCallBack(TIM_MATCH_UPDATE);
-                MODIFY_REG(m_pTim->SR, TIM_SR_UIF, 0);
-            }
-        }
-    }
-}
+*/
 
 //-------------------------------------------------------------------------------------------------
 //

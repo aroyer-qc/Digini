@@ -27,11 +27,23 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+// Include(s)
+//-------------------------------------------------------------------------------------------------
+
+#include "lib_digini.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#if (USE_TIM_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
 // Note(s)
 //-------------------------------------------------------------------------------------------------
 //
 // This library is specific to F1, it use too complex feature of timer to be generic or use timer
 // Library. Although it might be easy to convert to another timer from other CPU family.
+//
+// It need a timer with DMA and compare register.
 //
 //  Note(s):        The Frequency for the smart LED are 800 kHz.
 //
@@ -64,7 +76,7 @@
 //                  900 nSec    = 18 Counts
 //                  700 nSec    = 14 Counts
 //                  550 nSec    = 11 Counts
-//                  Auto Reload = 25 Counts
+//                  Auto Reload = 25 Counts         Range for 1.25 uSec
 //                  _______________________________________________________________________________
 //
 //                  There two more entry in the m_pLedChain array. Last value is set to zero.
@@ -74,14 +86,16 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-struct WS281x_ResetType_e
+enum WS281x_ResetType_e
 {
-    WS2812B_RESET,
-    WS2811_RESET,
+    WS2812B_RESET       = 1000,  // TODO is it right??
+    WS2811_RESET        = 5600,
 };
 
 struct WS281x_Color_t
@@ -92,7 +106,7 @@ struct WS281x_Color_t
 };
 
 //-------------------------------------------------------------------------------------------------
-// 
+//
 //-------------------------------------------------------------------------------------------------
 
 class WS281x
@@ -101,21 +115,42 @@ class WS281x
 
         void    Initialize          (TIM_ID_e TimID, uint16_t NumberOfLED, WS281x_ResetType_e ResetType, IO_ID_e NeoDataPin);
         void    SetLed              (uint16_t Offset, WS281x_Color_t Color);
-        void    Process             (void);   
+        void    Process             (void);
+        void    Start               (void);
+        void    Stop                (void);
         void    FillUp_24_Bits      (uint8_t* pBuffer);
+
+        void    DMA_Channel_IRQ_Handler(TIM_ID_e TIM_ID);
 
     private:
 
-        DMA_Driver                  m_DMA_Driver;
-        PWM_Driver                  m_PWM_Driver;
-        
+ //       PWM_Driver                  m_PWM_Driver;
+
+        TIM_Driver*                 m_pTimer;
         uint16_t                    m_LedChainSize;
-        uint16_t                    m_ResetTime;
+        uint16_t                    m_NumberOfLED;
         volatile uint16_t           m_LedPointer;
         WS281x_Color_t*             m_pLedChain;
         uint8_t*                    m_pDMA_Buffer;
         bool                        m_NeedRefresh;
+        uint8_t                     m_SetCountReset;
         uint8_t                     m_ResetCount;
 };
+
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+#define __CLASS_WS281x__
+#include "device_var.h"
+#undef  __CLASS_WS281x__
+
+//-------------------------------------------------------------------------------------------------
+
+#else // (USE_TIM_DRIVER == DEF_ENABLED)
+
+#pragma message("DIGINI driver for TIM must be enable and configure to use this device driver")
+
+#endif // (USE_TIM_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

@@ -83,9 +83,9 @@ void TIM_Driver::Initialize(void)
     *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - TIM_BACK_OFFSET_RESET_REGISTER) &= ~m_pInfo->RCC_APBxPeriph;
     *(m_pInfo->RCC_APBxEN_Register) |= m_pInfo->RCC_APBxPeriph;
 
-    m_pTim->PSC = m_pInfo->Prescaler;                           // Set the prescaler value
-    m_pTim->ARR = m_pInfo->Reload;                              // Set the auto reload register
-    m_pTim->CNT = m_pInfo->Reload - 1;                          // Prevent PWM from been active on activation
+    m_pTim->PSC = m_pInfo->Prescaler;                               // Set the prescaler value
+    m_pTim->ARR = m_pInfo->Reload;                                  // Set the auto reload register
+    m_pTim->CNT = m_pInfo->Reload - 1;                              // Prevent PWM from been active on activation
     m_pTim->CR1 = m_pInfo->Mode | TIM_CR1_ARPE;
 
     // Set the update interrupt enable
@@ -94,6 +94,8 @@ void TIM_Driver::Initialize(void)
          CLEAR_BIT(((TIM_TypeDef*)m_pTim)->SR, TIM_SR_UIF);
         ((TIM_TypeDef*)m_pTim)->DIER = TIM_DIER_UIE;
     }
+
+    ((TIM_TypeDef*)m_pTim)->DIER |= m_pInfo->IRQ_DMA_SourceEnable;  // Enable all source according to configuration
 
     if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
     {
@@ -299,6 +301,36 @@ void TIM_Driver::SetCompare(TIM_Compare_e Channel, uint32_t Value)
 
     MODIFY_REG(m_pTim->SR, BitMask, 0);
     SET_BIT(m_pTim->DIER, BitMask);
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           GetPointerCompareRegister
+//
+//  Parameter(s):   Channel         STM32F1: Compare 1 to 4
+//                                        - TIM_COMPARE_CH1
+//                                        - TIM_COMPARE_CH2
+//                                        - TIM_COMPARE_CH3
+//                                        - TIM_COMPARE_CH4
+//  Return:         uint32_t*
+//
+//  Description:    Return the address pointer of the compare register
+//
+//  Note(s):        Useful for DMA configuration
+//
+//-------------------------------------------------------------------------------------------------
+#if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
+uint32_t* TIM_Driver::GetPointerCompareRegister(TIM_Compare_e Channel)
+{
+    switch(Channel)
+    {
+        case TIM_COMPARE_CH1: return &m_pTim->CCR1;
+        case TIM_COMPARE_CH2: return &m_pTim->CCR2;
+        case TIM_COMPARE_CH3: return &m_pTim->CCR3;
+        case TIM_COMPARE_CH4: return &m_pTim->CCR4;
+        default:              return nullptr;
+    }
 }
 #endif
 

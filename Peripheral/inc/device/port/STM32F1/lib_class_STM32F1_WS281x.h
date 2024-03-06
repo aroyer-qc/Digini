@@ -105,15 +105,30 @@ struct WS281x_Color_t
     uint8_t     Blue;
 };
 
+struct WS281x_Config_t
+{
+    // Led Chain info
+    uint16_t                NumberOfLED;
+    WS281x_ResetType_e      ResetType;
+    IO_ID_e                 NeoDataPin;
+    // Timer info
+    TIM_ID_e                TimID;
+    TIM_Compare_e           CompareChannel;
+    // DMA info
+    DMA_Channel_TypeDef*    DMA_Channel;
+    uint32_t                DMA_Flag;
+    IRQn_Type               IRQn;
+};
+
 //-------------------------------------------------------------------------------------------------
-//
+// class(s)
 //-------------------------------------------------------------------------------------------------
 
 class WS281x
 {
     public:
 
-        void    Initialize          (TIM_ID_e TimID, uint16_t NumberOfLED, WS281x_ResetType_e ResetType, IO_ID_e NeoDataPin);
+        void    Initialize          (const WS281x_Config_t* pConfig);
         void    SetLed              (uint16_t Offset, WS281x_Color_t Color);
         void    Process             (void);
         void    Start               (void);
@@ -135,6 +150,9 @@ class WS281x
         bool                        m_NeedRefresh;
         uint8_t                     m_SetCountReset;
         uint8_t                     m_ResetCount;
+        TIM_Compare_e               m_Channel;
+        DMA_Channel_TypeDef*        m_pDMA;
+        uint32_t                    m_DMA_Flag;
 };
 
 //-------------------------------------------------------------------------------------------------

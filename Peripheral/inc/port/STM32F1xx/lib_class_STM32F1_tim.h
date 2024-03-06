@@ -77,21 +77,6 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (TIM_DRIVER_SUPPORT_TIM1_DMA_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM2_DMA_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM3_DMA_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM4_DMA_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM5_DMA_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM6_DMA_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM7_DMA_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM8_DMA_CFG  == DEF_ENABLED)
-  #define TIM_DRIVER_DMA_CFG                        DEF_ENABLED
-#else
-  #define TIM_DRIVER_DMA_CFG                        DEF_DISABLED
-#endif
-
-//-------------------------------------------------------------------------------------------------
-
 #if (TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG          == DEF_ENABLED) || \
     (TIM_DRIVER_SUPPORT_TIM2_TO_TIM5_COMPARE_CFG  == DEF_ENABLED) || \
     (TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG          == DEF_ENABLED)
@@ -141,45 +126,6 @@ enum TIM_ID_e
      NB_OF_TIM_DRIVER,
 };
 
-enum TIM_DMA_ID_e
-{
-    #if (TIM_DRIVER_SUPPORT_TIM1_DMA_CFG == DEF_ENABLED)
-        TIM_DMA_DRIVER_ID_1,
-    #endif
-
-    #if (TIM_DRIVER_SUPPORT_TIM2_DMA_CFG == DEF_ENABLED)
-        TIM_DMA_DRIVER_ID_2,
-    #endif
-
-    #if (TIM_DRIVER_SUPPORT_TIM3_DMA_CFG == DEF_ENABLED)
-        TIM_DMA_DRIVER_ID_3,
-    #endif
-
-    #if (TIM_DRIVER_SUPPORT_TIM4_DMA_CFG == DEF_ENABLED)
-        TIM_DMA_DRIVER_ID_4,
-    #endif
-
-    #if (TIM_DRIVER_SUPPORT_TIM5_DMA_CFG == DEF_ENABLED)
-        TIM_DMA_DRIVER_ID_5,
-    #endif
-
-    #if (TIM_DRIVER_SUPPORT_TIM6_DMA_CFG == DEF_ENABLED)
-        TIM_DMA_DRIVER_ID_6,
-    #endif
-
-
-    #if (TIM_DRIVER_SUPPORT_TIM7_DMA_CFG == DEF_ENABLED)
-        TIM_DMA_DRIVER_ID_7,
-    #endif
-
-
-    #if (TIM_DRIVER_SUPPORT_TIM8_DMA_CFG == DEF_ENABLED)
-        TIM_DMA_DRIVER_ID_8,
-    #endif
-
-     NB_OF_TIM_DMA_DRIVER,
-};
-
 enum TIM_Compare_e
 {
     TIM_COMPARE_NONE,
@@ -208,19 +154,8 @@ struct TIM_Info_t
     uint32_t            Mode;
     uint32_t            Prescaler;
     uint32_t            Reload;
-    uint32_t            IRQ_DMA_SourceEnable;
+    uint16_t            IRQ_DMA_SourceEnable;
 };
-
-#if (TIM_DRIVER_DMA_CFG == DEF_ENABLED)
-struct TIM_DMA_Info_t
-{
-    TIM_ID_e             TimID;
-    uint32_t             Flag;
-    DMA_Channel_TypeDef* DMA_Channel;
-    IRQn_Type            IRQn;
-    uint32_t             RCC_AHBxPeriph;
-};
-#endif
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -230,38 +165,27 @@ class TIM_Driver
 {
     public:
 
-                            TIM_Driver              (TIM_ID_e TimID);
+                            TIM_Driver                  (TIM_ID_e TimID);
 
-        void                Initialize              (void);
-//        void                RegisterCallBack        (TIM_CallBack_t pCallBack);
-//        void                CallBack                (bool ProcessUpdate);
-        uint32_t            GetCounterValue         (void);
-//        uint32_t            TimeBaseToPrescaler     (uint32_t TimeBase);
+        void                Initialize                  (void);
+        uint32_t            GetCounterValue             (void);
 
-        void                Start                   (void);
-        void                ReStart                 (void);
-        void                Stop                    (void);
+        void                Start                       (void);
+        void                ReStart                     (void);
+        void                Stop                        (void);
 
-        void                SetReload               (uint32_t Value);
-        uint32_t            GetReload               (void);
+        void                SetReload                   (uint32_t Value);
+        uint32_t            GetReload                   (void);
+
+        static TIM_TypeDef* GetTimerPointer         (TIM_ID_e TimID);
 
       #if (TIM_DRIVER_SUPPORT_PWM_FEATURE_CFG == DEF_ENABLED)
 //        void                ConfigPWM_Channel       (TIM_Compare_e Channel);
       #endif
       #if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
-        void                SetCompare              (TIM_Compare_e Channel, uint32_t Value);
+        void                SetCompare                  (TIM_Compare_e Channel, uint32_t Value);
+        uint32_t*           GetPointerCompareRegister   (TIM_Compare_e Channel);
       #endif
-
-      #if (TIM_DRIVER_DMA_CFG == DEF_ENABLED)
-        void                DMA_Config              (uint8_t* pBuffer, size_t Size);
-        void                DMA_Enable              (void);
-        void                DMA_Disable             (void);
-      #endif
-
-
-        static TIM_TypeDef* GetTimerPointer         (TIM_ID_e TimID);
-
-        //TIM_CallBack_t      m_pCallBack;
 
     private:
 

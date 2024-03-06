@@ -57,6 +57,9 @@
 #define DMA_PERIPHERAL_TO_MEMORY       0x0000           // Peripheral to memory direction
 #define DMA_MEMORY_TO_PERIPHERAL       0x0010           // Memory to peripheral or memory direction
 
+#define DMA_HALF_TRANSFERT_IRQ         0x0004           // Half transfer interrupt enable
+#define DMA_TRANSFER_COMPLETE_IRQ      0x0002           // Transfer complete enable
+
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------

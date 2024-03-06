@@ -121,6 +121,7 @@ void TIM_Driver::Initialize(void)
     ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);
 }
 
+/*
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           RegisterCallBack
@@ -135,6 +136,7 @@ void TIM_Driver::RegisterCallBack(TIM_CallBack_t pCallBack)
 {
     m_pCallBack = pCallBack;
 }
+*/
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -389,9 +391,11 @@ uint32_t TIM_Driver::GetCounterValue(void)
     return m_pTim->CNT;
 }
 
+
+/* is it not suppose tobe in PWM class???
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           GetCounterValue
+//  Name:           ConfigPWM_Channel
 //
 //  Parameter(s):   TimeBase        Timebase precision required in 1 uSec.
 //  Return:         void
@@ -427,7 +431,7 @@ void TIM_Driver::ConfigPWM_Channel(TIM_Compare_e Channel)
     }
 }
 #endif
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           CallBack
@@ -438,6 +442,7 @@ void TIM_Driver::ConfigPWM_Channel(TIM_Compare_e Channel)
 //  Description:    Call each compare IRQ for each interrupt flag set
 //
 //-------------------------------------------------------------------------------------------------
+/*
 void TIM_Driver::CallBack(bool ProcessUpdate)
 {
     uint32_t Status = m_pTim->SR;
@@ -489,7 +494,7 @@ void TIM_Driver::CallBack(bool ProcessUpdate)
         }
     }
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           GetTimerPointer

@@ -210,8 +210,8 @@ class TIM_Driver
                             TIM_Driver              (TIM_ID_e TimID);
 
         void                Initialize              (void);
-        void                RegisterCallBack        (TIM_CallBack_t pCallBack);
-        void                CallBack                (bool ProcessUpdate);
+        //void                RegisterCallBack        (TIM_CallBack_t pCallBack);
+        //void                CallBack                (bool ProcessUpdate);
         uint32_t            GetCounterValue         (void);
         uint32_t            TimeBaseToPrescaler     (uint32_t TimeBase);
 
@@ -222,8 +222,8 @@ class TIM_Driver
         void                SetReload               (uint32_t Value);
         uint32_t            GetReload               (void);
 
-      #if (TIM_DRIVER_SUPPORT_PWM_FEATURE_CFG == DEF_ENABLED)
-        void                ConfigPWM_Channel       (TIM_Compare_e Channel);
+      #if (TIM_DRIVER_SUPPORT_PWM_FEATURE_CFG == DEF_ENABLED)  // in PWM class???
+       // void                ConfigPWM_Channel       (TIM_Compare_e Channel);
       #endif
       #if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
         void                SetCompare              (TIM_Compare_e Channel, uint32_t Value);
@@ -231,7 +231,7 @@ class TIM_Driver
 
         static TIM_TypeDef* GetTimerPointer         (TIM_ID_e TimID);
 
-        TIM_CallBack_t      m_pCallBack;
+        //TIM_CallBack_t      m_pCallBack;
 
     private:
 

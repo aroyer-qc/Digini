@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_WS281x_GLOBAL
-#include "lib_class_WS281x.h"
+#include "lib_class_STM32F1_WS281x.h"
 #undef  LIB_WS281x_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -51,75 +51,33 @@
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   void*       pArg
-//                  uint16_t    NumberOfLED             Number of LED in the chain
-//                  uint16_t   ResetTime                Reset time in uSec, as per datasheet
+//  Parameter(s):   uint16_t            NumberOfLED         Number of LED in the chain
+//                  WS281x_ResetType_e  ResetType           Reset LED chip ID
+//                  IO_ID_e             NeoDataPin          Pin ID of the IO
 //
 //  Return:         void
 //
 //  Description:    Initialize the WS281x interface
 //
-//  Note(s):        The Frequency for the smart LED are 800 kHz.
-//
-//                  Logical 0        ___________                       __
-//                             ...__|           \_____________________|  ...
-//                                  <- 350 nS -><------ 900 nS ------>
-//
-//                  Logical 1        ___________________               __
-//                             ...__|                   \_____________|  ...
-//                                  <----- 700 nS -----><-- 550 nS -->
-//
-//                                  <---------- 1.25uSec ------------>
-//                  _______________________________________________________________________________
-//
-//                  Reset         __                                   __
-//                             ...  \_________________________________|  ...
-//                                  <--------- ResetTime (1) -------->
-//
-//                  (1) Minimum reset pulse length depends on WS281x device. Check datasheet for
-//                      your particular unit.
-//
-//                          WS2812B: > 50  uSec
-//                          WS2811:  > 280 uSec
-//
-//                  _______________________________________________________________________________
-//
-//                  The Best granularity here will be 50 nSec, for a frequency of 20 MHz.
-//
-//                  350 nSec    = 7  Counts
-//                  900 nSec    = 18 Counts
-//                  700 nSec    = 14 Counts
-//                  550 nSec    = 11 Counts
-//                  Auto Reload = 25 Counts
-//                  _______________________________________________________________________________
-//
-//                  There two more entry in the m_pLedChain array. Last value is set to zero.
-//                  when those LED entry are reach, DMA continue as nothing happened, but value is
-//                  set to zero, so this emulate a reset, until StartTransfer is call again.
-//
 //-------------------------------------------------------------------------------------------------
-void WS281x::Initialize(void* pArg, uint16_t NumberOfLED, uint16_t ResetTime)
+void WS281x::Initialize(uint16_t NumberOfLED, WS281x_ResetType_e ResetType, IO_ID_e NeoDataPin)
 {
-    //DMA_Stream_TypeDef* pDMA;
+    DMA_Channel_TypeDef* DMA_Channel;
 
+    m_PWM_Driver
     
-//    m_pPinStruct = (WS281x_PinStruct_t*)pArg;
-
-// maybe CPU should provide frequency in multiple of 20Mhz example F103.. other CPU may have better frequency input
-// USE DMA to change Compare value in register of the timer
-// use 2 x 24 bits leds. So take advantage of the HT and TC of the DMA in a circular mode...
-// so we can use those to have time to prepare next set of 24 bit colors for next led
-
-//    IO_PinInit(m_pPinStruct->IO_DOut);
     
-    m_ChainSize   = NumberOfLED + WS281x_DUMMY_LEDS;                                                // Chain LEDs Size.
-    m_NumberOfLED = NumberOfLED;                                                                    // Number of real LEDs.
-    
-// Maybe we should not use allocation, since this is for duration of running apps.    
-    m_pLedChain    = (WS281x_Color_t*)pMemory->AllocAndClear(m_ChainSize + WS281x_DUMMY_LEDS);      // Reserved x bytes from the alloc mem library.
-    m_pDMA_Buffer  = pMemory->AllocAndClear(WS281x_DMA_FULL_BUFFER_SIZE);                           // Reserved 48 bytes DMA transfert to Compare register.
+    // USE DMA to change Compare value in register of the timer
+    // use 2 x 24 bits leds. So take advantage of the HT and TC of the DMA in a circular mode...
+    // so we can use those to have time to prepare next set of 24 bit colors for next led
 
-    m_LedPointer  = 0;              // Start at Led 0
+    IO_PinInit(NeoDataPin);
+    
+    m_ChainSize   = NumberOfLED + WS281x_DUMMY_LEDS;                                           // Chain LEDs Size.
+    m_NumberOfLED = NumberOfLED;                                                               // Number of real LEDs.
+    m_pLedChain   = (WS281x_Color_t*)pMemory->AllocAndClear(m_ChainSize + WS281x_DUMMY_LEDS);  // Reserved x bytes from the alloc mem library.
+    m_pDMA_Buffer = pMemory->AllocAndClear(WS281x_DMA_FULL_BUFFER_SIZE);                       // Reserved 48 bytes DMA transfert to Compare register.
+    m_LedPointer  = 0;                                                                         // Start at Led 0
     m_NeedRefresh = true;
 
     // Configure timer
@@ -129,25 +87,19 @@ void WS281x::Initialize(void* pArg, uint16_t NumberOfLED, uint16_t ResetTime)
         // Enable output of the compare channel
         // Enable timer and compare channel
         
-    // Configure DMA ( for other CPU then STM32 create ifdef definition)
-    
-    
-    m_DMA_Driver.
-    
-    pDMA = m_pInfo->DMA_Stream;
-    pDMA->PAR = uint32_t(&m_pInfo->pTIMx->DR);          // Configure transmit data register
-    pDMA->CR = DMA_MEMORY_TO_PERIPH           |
-               DMA_MODE_NORMAL                |
-               DMA_PERIPH_NO_INCREMENT        |
-               DMA_MEMORY_INCREMENT           |
-               DMA_P_DATA_ALIGN_BYTE          |
-               DMA_M_DATA_ALIGN_BYTE          |
-               DMA_P_BURST_SINGLE             |
-               DMA_M_BURST_SINGLE             |
-               DMA_PRIORITY_LOW               |
-               DMA_SxCR_TCIE                  |
-               m_pInfo->DMA_ChannelStream;
+            SET_BIT(RCC->AHBENR, m_pDMA_Info->RCC_AHBxPeriph);                  // Initialize DMA clock
 
+            pDMA = m_pDMA_Info->DMA_ChannelRX;                                  // Write config that will never change
+            pDMA->CCR = DMA_NORMAL_MODE                    |
+                        DMA_MEMORY_TO_PERIPHERAL           |
+                        DMA_PERIPHERAL_NO_INCREMENT        |
+                        DMA_MEMORY_INCREMENT               |
+                        DMA_PERIPHERAL_SIZE_16_BITS        |
+                        DMA_MEMORY_SIZE_8_BITS             |
+                        DMA_PRIORITY_LEVEL_HIGH;
+            pDMA->CPAR = uint32_t(&m_pUart->DR);
+            pDMA->CNDTR = UART_DRIVER_INTERNAL_RX_BUFFER_SIZE;
+    
 
     
         // Configure Source 8 Bits memory, Destination 16 Bits compare register ...  checkif it works.

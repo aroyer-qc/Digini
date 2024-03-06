@@ -51,11 +51,11 @@
   #define UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG  DEF_DISABLED
 #endif
 
-#define UART_ISR_RX_ERROR_MASK              0x01
-#define UART_ISR_RX_BYTE_MASK               0x02
-#define UART_ISR_RX_IDLE_MASK               0x04
-#define UART_ISR_TX_EMPTY_MASK              0x01
-#define UART_ISR_TX_COMPLETED_MASK          0x02
+#define UART_ISR_RX_ERROR                   0x01
+#define UART_ISR_RX_BYTE                    0x02
+#define UART_ISR_RX_IDLE                    0x04
+#define UART_ISR_TX_EMPTY                   0x01
+#define UART_ISR_TX_COMPLETED               0x02
 
 // Callback type in bit position
 #define UART_CALLBACK_NONE                  0x00
@@ -157,18 +157,22 @@ enum UART_Config_e
     UART_ENABLE_RX_TX       =   0x0000000C,
     UART_ENABLE_RX          =   0x00000004,
     UART_ENABLE_TX          =   0x00000008,
+    UART_ENABLE_RX_TX_MASK  =   0x0000000C,
 
     UART_NO_PARITY          =   0x00000000,
     UART_EVEN_PARITY        =   0x00000400,
     UART_ODD_PARITY         =   0x00000600,
+    UART_PARITY_MASK        =   0x00000600,
 
     UART_8_LEN_BITS         =   0x00000000,
     UART_9_LEN_BITS         =   0x00001000,
+    UART_LENGTH_MASK        =   0x00001000,
 
     UART_1_STOP_BIT         =   0x00000000,
     UART_0_5_STOP_BIT       =   0x10000000,
     UART_1_5_STOP_BIT       =   0x30000000,
-    UART_2_STOP_BITS        =   0x30000000,
+    UART_2_STOP_BITS        =   0x20000000,
+    UART_STOP_MASK          =   0x30000000,
 
     // Some more common config
     UART_CONFIG_N_8_1    =   (UART_NO_PARITY   | UART_8_LEN_BITS | UART_1_STOP_BIT),

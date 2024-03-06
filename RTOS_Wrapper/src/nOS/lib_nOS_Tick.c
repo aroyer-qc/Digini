@@ -33,6 +33,7 @@
 //-------------------------------------------------------------------------------------------------
 // Tick handler for nOS
 //-------------------------------------------------------------------------------------------------
+// TODO this will need to be per processor as not all CPU wil have that SysTick_handler name.. ( OK for ST)
 NOS_ISR(SysTick_Handler)
 {
     nOS_Tick(1);

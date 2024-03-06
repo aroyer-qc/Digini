@@ -57,11 +57,11 @@
 #endif
 
 
-#define UART_ISR_RX_ERROR_MASK              0x01
-#define UART_ISR_RX_BYTE_MASK               0x02
-#define UART_ISR_RX_IDLE_MASK               0x04
-#define UART_ISR_TX_EMPTY_MASK              0x10
-#define UART_ISR_TX_COMPLETED_MASK          0x20
+#define UART_ISR_RX_ERROR                   0x01
+#define UART_ISR_RX_BYTE                    0x02
+#define UART_ISR_RX_IDLE                    0x04
+#define UART_ISR_TX_EMPTY                   0x10
+#define UART_ISR_TX_COMPLETED               0x20
 
 // Callback type in bit position
 #define UART_CALLBACK_NONE                  0x00
@@ -73,8 +73,8 @@
 #define UART_CALLBACK_COMPLETED_TX          0x20
 #define UART_CALLBACK_DMA_RX                0x40
 
-#if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
-   (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+#if (UART_ISR_RX_CFG == DEF_ENABLED)       || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)      || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
+    (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
     #define UART_ISR_CFG                    DEF_ENABLED
 #endif
 
@@ -207,7 +207,7 @@ enum UART_Config_e
     UART_OVER_8             =   0x0080,
     UART_OVER_MASK          =   0x0080,
 
-    UART_ENABLE_RX_TX       =   0x0180,
+    UART_ENABLE_RX_TX       =   0x0300,
     UART_ENABLE_RX          =   0x0100,
     UART_ENABLE_TX          =   0x0200,
     UART_ENABLE_MASK        =   0x0300,

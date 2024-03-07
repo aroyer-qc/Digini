@@ -60,8 +60,7 @@ void DMA_ClearFlag(DMA_Channel_TypeDef* pDMA, uint32_t Flag)
 
     if(pRegister != nullptr)
     {
-        *pRegister |= Flag;
-//        SET_BIT(*pRegister, Flag);
+        SET_BIT(*pRegister, Flag);
     }
 }
 

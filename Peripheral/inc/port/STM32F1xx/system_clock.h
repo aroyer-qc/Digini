@@ -52,7 +52,7 @@
 #define CFG_CLOCK_SRC_HSE                           0x00000001U
 #define CFG_CLOCK_SRC_PLL                           0x00000002U
 
-#define CFG_CLOCK_PLL_SRC_HSE                       0x00400000U
+#define CFG_CLOCK_PLL_SRC_HSE                       0x00010000U
 #define CFG_CLOCK_PLL_SRC_HSI                       0x00000000U
 
 // RCC_CFGR_HPRE -> AHB prescaler
@@ -68,17 +68,17 @@
 
 // RCC_CFGR_PPRE1 -> APB1 prescaler
 #define CFG_CLOCK_APB1_DIV1                         0x00000000U
-#define CFG_CLOCK_APB1_DIV2                         0x00001000U
-#define CFG_CLOCK_APB1_DIV4                         0x00001400U
-#define CFG_CLOCK_APB1_DIV8                         0x00001800U
-#define CFG_CLOCK_APB1_DIV16                        0x00001C00U
+#define CFG_CLOCK_APB1_DIV2                         0x00000400U
+#define CFG_CLOCK_APB1_DIV4                         0x00000500U
+#define CFG_CLOCK_APB1_DIV8                         0x00000600U
+#define CFG_CLOCK_APB1_DIV16                        0x00000700U
 
 // RCC_CFGR_PPRE2 -> APB2 prescaler
 #define CFG_CLOCK_APB2_DIV1                         0x00000000U
-#define CFG_CLOCK_APB2_DIV2                         0x00008000U
-#define CFG_CLOCK_APB2_DIV4                         0x0000A000U
-#define CFG_CLOCK_APB2_DIV8                         0x0000C000U
-#define CFG_CLOCK_APB2_DIV16                        0x0000E000U
+#define CFG_CLOCK_APB2_DIV2                         0x00002000U
+#define CFG_CLOCK_APB2_DIV4                         0x00002800U
+#define CFG_CLOCK_APB2_DIV8                         0x00003000U
+#define CFG_CLOCK_APB2_DIV16                        0x00003800U
 
 //RCC_CFGR_ADCPRE -> ADC prescaler
 #define CFG_CLOCK_ADC_DIV2                          0x00000000U
@@ -112,14 +112,14 @@
     #pragma message "XSTR(CFG_PLL_DIVIDER)"
     #error PLL divider is out of range
   #else
-    #define CFG_RCC_CFGR_PLL_DIVIDER                        (CFG_PLL_DIVIDER << RCC_CFGR_PLL_DIVIDER_POS)
+    #define CFG_RCC_CFGR_PLL_DIVIDER                      0//  ((CFG_PLL_DIVIDER - 1) << RCC_CFGR_PLL_DIVIDER_POS)
   #endif
 
   #if (CFG_PLL_MULTIPLIER < 2) || (CFG_PLL_MULTIPLIER > 16)
     #pragma message "XSTR(CFG_PLL_MULTIPLIER)"
     #error PLL multiplier is out of range
   #else
-    #define CFG_RCC_CFGR_PLL_MULTIPLIER                     (CFG_PLL_MULTIPLIER << (RCC_CFGR_PLL_MULTIPLIER_POS >> 1))
+    #define CFG_RCC_CFGR_PLL_MULTIPLIER                     ((CFG_PLL_MULTIPLIER - 2) << RCC_CFGR_PLL_MULTIPLIER_POS)
   #endif
 
   #if (CFG_PLL_SOURCE_MUX == CFG_CLOCK_PLL_SRC_HSI)

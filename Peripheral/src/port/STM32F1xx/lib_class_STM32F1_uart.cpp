@@ -133,7 +133,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
         if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
         {
-            ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);
+            ISR_Init(m_pInfo->IRQn_Channel, m_pInfo->PreempPrio);
         }
         
         ClearFlag();
@@ -186,8 +186,8 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
         m_VirtualUartBusyRX = false;
         m_VirtualUartBusyTX = false;
 
-        ISR_Init(VirtualUartRX_IRQn, 0, m_pInfo->PreempPrio);
-        ISR_Init(VirtualUartTX_IRQn, 0, m_pInfo->PreempPrio);
+        ISR_Init(VirtualUartRX_IRQn, m_pInfo->PreempPrio);
+        ISR_Init(VirtualUartTX_IRQn, m_pInfo->PreempPrio);
     }
   #endif
     else

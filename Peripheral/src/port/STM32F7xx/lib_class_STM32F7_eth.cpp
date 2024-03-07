@@ -265,7 +265,7 @@ SystemState_e ETH_Driver::Initialize(ETH_MAC_SignalEvent_t CallbackEvent)
 
     // ---- Enable ETH interrupt ----
     NVIC_ClearPendingIRQ(ETH_IRQn);
-    ISR_Init(ETH_IRQn, 0, ETH_IRQ_PRIO);
+    ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);
 
     m_MAC_Control.FrameEnd = nullptr;
     return SYS_READY;

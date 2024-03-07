@@ -40,7 +40,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define TIM_BACK_OFFSET_RESET_REGISTER             0x20
+#define TIM_BACK_OFFSET_RESET_REGISTER             0x0C
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -83,7 +83,7 @@ void TIM_Driver::Initialize(void)
     *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - TIM_BACK_OFFSET_RESET_REGISTER) &= ~m_pInfo->RCC_APBxPeriph;
     *(m_pInfo->RCC_APBxEN_Register) |= m_pInfo->RCC_APBxPeriph;
 
-    m_pTim->PSC = m_pInfo->Prescaler;                               // Set the prescaler value
+    m_pTim->PSC = m_pInfo->Prescaler - 1;                           // Set the prescaler value
     m_pTim->ARR = m_pInfo->Reload;                                  // Set the auto reload register
     m_pTim->CNT = m_pInfo->Reload - 1;                              // Prevent PWM from been active on activation
     m_pTim->CR1 = m_pInfo->Mode | TIM_CR1_ARPE;
@@ -99,7 +99,7 @@ void TIM_Driver::Initialize(void)
 
     if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
     {
-        ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);    // Configure interrupt priority for TIM
+        ISR_Init(m_pInfo->IRQn_Channel, m_pInfo->PreempPrio);    // Configure interrupt priority for TIM
     }
 }
 
@@ -204,138 +204,6 @@ uint32_t TIM_Driver::GetReload(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           SetCompare
-//
-//  Parameter(s):   Channel         STM32F1: Compare 1 to 4
-//                                        - TIM_COMPARE_CH1
-//                                        - TIM_COMPARE_CH2
-//                                        - TIM_COMPARE_CH3
-//                                        - TIM_COMPARE_CH4
-//                  Value           Compare value (must be lower than reload value)
-//  Return:         void
-//
-//  Description:    Configure one of the compare register (Give more time slice option)
-//
-//  Note(s):        Callback for this channel will be enabled
-//                  Compare 1 to 4 exist for TIM1 to TIM5, TIM8
-//                  Compare 1 and 2 exist for TIM9, TIM12                       NO support yet
-//                  No compare on TIM6 and TIM7
-//                  Only ONE compare on timer TIM10, TIM11, TIM13, TIM14        NO support yet
-//
-//-------------------------------------------------------------------------------------------------
-#if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
-void TIM_Driver::SetCompare(TIM_Compare_e Channel, uint32_t Value)
-{
-    uint32_t BitMask;
-
-    switch(uintptr_t(m_pTim))
-    {
-        // Add other case for TIMx with compare IRQ as needed.
-
-      #if ((TIM_DRIVER_SUPPORT_TIM1_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG == DEF_ENABLED))
-        case TIM1_BASE:
-        {
-          #if ( defined (STM32F100xB) || defined (STM32F100xE) ||                                                   \
-                defined (STM32F103x6) || defined (STM32F103xB) || defined (STM32F103xE) || defined (STM32F103xG) || \
-                defined (STM32F105xC) || defined (STM32F107xC) )
-            // Init compare IRQ for TIM1 Compare
-            ISR_Init(TIM1_CC_IRQn, 0, 6);
-          #endif
-
-          // Fill this for other CPU as needed
-        }
-        break;
-      #endif
-
-      #if ((TIM_DRIVER_SUPPORT_TIM8_CFG == DEF_ENABLED) && (TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG == DEF_ENABLED))
-        case TIM8_BASE:
-        {
-          #if ( defined (STM32F103xE) || defined (STM32F103xG) )
-            // Init compare IRQ for TIM8 Compare
-            ISR_Init(TIM8_CC_IRQn, 0, 6);
-          #endif
-
-          // Fill this for other CPU as needed
-        }
-        break;
-      #endif
-
-        default:
-        {
-            return;
-        }
-    }
-
-    switch(Channel)
-    {
-        case TIM_COMPARE_CH1:
-        {
-            BitMask = TIM_DIER_CC1IE;
-            m_pTim->CCR1 = Value;
-        }
-        break;
-
-        case TIM_COMPARE_CH2:
-        {
-            BitMask = TIM_DIER_CC2IE;
-            m_pTim->CCR2 = Value;
-        }
-        break;
-
-        case TIM_COMPARE_CH3:
-        {
-            BitMask = TIM_DIER_CC3IE;
-            m_pTim->CCR3 = Value;
-        }
-        break;
-
-        case TIM_COMPARE_CH4:
-        {
-            BitMask = TIM_DIER_CC4IE;
-            m_pTim->CCR4 = Value;
-        }
-        break;
-
-        default: break;
-    }
-
-    MODIFY_REG(m_pTim->SR, BitMask, 0);
-    SET_BIT(m_pTim->DIER, BitMask);
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           GetPointerCompareRegister
-//
-//  Parameter(s):   Channel         STM32F1: Compare 1 to 4
-//                                        - TIM_COMPARE_CH1
-//                                        - TIM_COMPARE_CH2
-//                                        - TIM_COMPARE_CH3
-//                                        - TIM_COMPARE_CH4
-//  Return:         uint32_t*
-//
-//  Description:    Return the address pointer of the compare register
-//
-//  Note(s):        Useful for DMA configuration
-//
-//-------------------------------------------------------------------------------------------------
-#if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
-uint32_t* TIM_Driver::GetPointerCompareRegister(TIM_Compare_e Channel)
-{
-    switch(Channel)
-    {
-        case TIM_COMPARE_CH1: return &m_pTim->CCR1;
-        case TIM_COMPARE_CH2: return &m_pTim->CCR2;
-        case TIM_COMPARE_CH3: return &m_pTim->CCR3;
-        case TIM_COMPARE_CH4: return &m_pTim->CCR4;
-        default:              return nullptr;
-    }
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           GetCounterValue
 //
 //  Parameter(s):   None
@@ -349,60 +217,19 @@ uint32_t TIM_Driver::GetCounterValue(void)
     return m_pTim->CNT;
 }
 
-/*
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           GetCounterValue
-//
-//  Parameter(s):   TimeBase        Timebase precision required in 1 uSec.
-//  Return:         void
-//
-//  Description:    Configure a PWM channel
-//
-//-------------------------------------------------------------------------------------------------
-#if (TIM_DRIVER_SUPPORT_PWM_FEATURE_CFG == DEF_ENABLED)
-void TIM_Driver::ConfigPWM_Channel(TIM_Compare_e Channel)
-{
-    int IntegerChannel;
-
-    IntegerChannel = ((int)Channel - 1);
-    m_pTim->CCER |= (1 << (IntegerChannel * TMR_CCER_OUTPUT_ENABLE_SPACING_SHIFT));
-
-    switch(Channel)
-    {
-        case TIM_COMPARE_CH1:
-        case TIM_COMPARE_CH2:
-        {
-            IntegerChannel = Channel - TIM_COMPARE_CH1;
-            m_pTim->CCMR1 |= (TMR_CCMRx_MODE_PWM_MASK << (IntegerChannel * TMR_CCMRx_MODE_SHIFT));
-        }
-        break;
-
-        case TIM_COMPARE_CH3:
-        case TIM_COMPARE_CH4:
-        {
-            IntegerChannel = Channel - TIM_COMPARE_CH3;
-            m_pTim->CCMR2 |= (TMR_CCMRx_MODE_PWM_MASK << (IntegerChannel * TMR_CCMRx_MODE_SHIFT));
-        }
-        break;
-    }
-}
-#endif
-*/
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           GetTimerPointer
 //
-//  Parameter(s):   TimID           ID of the timer to get the pointer
-//  Return:         TIM_TypeDef*    \pointer on the timer module
+//  Parameter(s):   None
+//  Return:         TIM_TypeDef*    Pointer on the timer module
 //
-//  Description:    Return the pointer on the timer use by this ID
+//  Description:    Return the pointer on the timer
 //
 //-------------------------------------------------------------------------------------------------
-TIM_TypeDef* TIM_Driver::GetTimerPointer(TIM_ID_e TimID)
+TIM_TypeDef* TIM_Driver::GetTimerPointer(void)
 {
-    return TIM_Info[TimID].pTIMx;
+    return m_pTim;
 }
 
 //-------------------------------------------------------------------------------------------------

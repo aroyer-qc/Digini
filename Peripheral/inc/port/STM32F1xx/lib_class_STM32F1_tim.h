@@ -76,16 +76,6 @@
 #define TIM_DMA_TRIGGER                             0x4000
 
 //-------------------------------------------------------------------------------------------------
-
-#if (TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG          == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM2_TO_TIM5_COMPARE_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG          == DEF_ENABLED)
-  #define TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG    DEF_ENABLED
-#else
-  #define TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG    DEF_DISABLED
-#endif
-
-//-------------------------------------------------------------------------------------------------
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -126,24 +116,6 @@ enum TIM_ID_e
      NB_OF_TIM_DRIVER,
 };
 
-enum TIM_Compare_e
-{
-    TIM_COMPARE_NONE,
-    TIM_COMPARE_CH1,
-    TIM_COMPARE_CH2,
-    TIM_COMPARE_CH3,
-    TIM_COMPARE_CH4,
-};
-
-enum TIM_TypeMatch_e
-{
-    TIM_MATCH_CH1,
-    TIM_MATCH_CH2,
-    TIM_MATCH_CH3,
-    TIM_MATCH_CH4,
-    TIM_MATCH_UPDATE,
-};
-
 struct TIM_Info_t
 {
     TIM_TypeDef*        pTIMx;
@@ -169,23 +141,12 @@ class TIM_Driver
 
         void                Initialize                  (void);
         uint32_t            GetCounterValue             (void);
-
         void                Start                       (void);
         void                ReStart                     (void);
         void                Stop                        (void);
-
         void                SetReload                   (uint32_t Value);
         uint32_t            GetReload                   (void);
-
-        static TIM_TypeDef* GetTimerPointer         (TIM_ID_e TimID);
-
-      #if (TIM_DRIVER_SUPPORT_PWM_FEATURE_CFG == DEF_ENABLED)
-//        void                ConfigPWM_Channel       (TIM_Compare_e Channel);
-      #endif
-      #if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
-        void                SetCompare                  (TIM_Compare_e Channel, uint32_t Value);
-        uint32_t*           GetPointerCompareRegister   (TIM_Compare_e Channel);
-      #endif
+        TIM_TypeDef*        GetTimerPointer             (void);
 
     private:
 

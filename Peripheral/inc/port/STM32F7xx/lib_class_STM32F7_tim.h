@@ -87,20 +87,6 @@
   #define TIM_DRIVER_SUPPORT_ANY_TIM1_TO_TIM14_CFG  DEF_DISABLED
 #endif
 
-#if (TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG          == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM2_TO_TIM5_COMPARE_CFG  == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG          == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM9_OR_TIM12_COMPARE_CFG == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM10_COMPARE_CFG         == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM11_COMPARE_CFG         == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM13_COMPARE_CFG         == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_TIM14_COMPARE_CFG         == DEF_ENABLED) || \
-    (TIM_DRIVER_SUPPORT_LPTIM1_COMPARE_CFG        == DEF_ENABLED)
-  #define TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG    DEF_ENABLED
-#else
-  #define TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG    DEF_DISABLED
-#endif
-
 // Timer DMA/IRQ source (check for timer some don't support all feature)                    // TODO need to adjust to F7 if necessary
 #define TIM_IRQ_DMA_NO_SOURCE                       0x0000
 #define TIM_IRQ_UPDATE                              0x0001
@@ -236,21 +222,11 @@ class TIM_Driver
         void                CallBack                (bool ProcessUpdate);
         uint32_t            GetCounterValue         (void);
         uint32_t            TimeBaseToPrescaler     (uint32_t TimeBase);
-
         void                Start                   (void);
         void                ReStart                 (void);
         void                Stop                    (void);
-
         void                SetReload               (uint32_t Value);
         uint32_t            GetReload               (void);
-
-      #if (TIM_DRIVER_SUPPORT_PWM_FEATURE_CFG == DEF_ENABLED)
-        void                ConfigPWM_Channel       (TIM_Compare_e Channel);
-      #endif
-      #if (TIM_DRIVER_SUPPORT_COMPARE_FEATURE_CFG == DEF_ENABLED)
-        void                SetCompare              (TIM_Compare_e Channel, uint32_t Value);
-      #endif
-
         static TIM_TypeDef* GetTimerPointer         (TIM_ID_e TimID);
 
         TIM_CallBack_t      m_pCallBack;

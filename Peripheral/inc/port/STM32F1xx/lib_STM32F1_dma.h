@@ -60,6 +60,8 @@
 #define DMA_HALF_TRANSFERT_IRQ         0x0004           // Half transfer interrupt enable
 #define DMA_TRANSFER_COMPLETE_IRQ      0x0002           // Transfer complete enable
 
+#define DMA_START_TRANSFERT            0x0001
+
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------

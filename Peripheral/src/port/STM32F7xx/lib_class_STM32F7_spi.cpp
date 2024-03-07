@@ -248,8 +248,8 @@ void SPI_Driver::Initialize(void)
                m_pInfo->DMA_ChannelRX;
   #endif
 
-    ISR_Init(m_pInfo->TX_IRQn, 0, 6);                   // NVIC Setup for TX DMA channels interrupt request
-    ISR_Init(m_pInfo->RX_IRQn, 0, 6);                   // NVIC Setup for RX DMA channels interrupt request
+    ISR_Init(m_pInfo->TX_IRQn, 6);                   // NVIC Setup for TX DMA channels interrupt request
+    ISR_Init(m_pInfo->RX_IRQn, 6);                   // NVIC Setup for RX DMA channels interrupt request
 }
 
 //-------------------------------------------------------------------------------------------------

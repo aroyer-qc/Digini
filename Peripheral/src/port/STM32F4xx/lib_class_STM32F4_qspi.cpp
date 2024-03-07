@@ -358,9 +358,9 @@ SystemState_e QSPI_Driver::Initialize(void)
 
         // Configure interrupt priority for QUADSPI
         // NVIC configuration for QuadSPI interrupt
-        ISR_Init(QUADSPI_IRQn, 0, QSPI_ISR_PRIORITY_CFG);
+        ISR_Init(QUADSPI_IRQ<Block.html>, QSPI_ISR_PRIORITY_CFG);
         // NVIC configuration for DMA interrupt
-        ISR_Init(DMA2_Stream7_IRQn, 0, QSPI_DMA_ISR_PRIORITY_CFG);
+        ISR_Init(DMA2_Stream7_IRQ<Block.html>, QSPI_DMA_ISR_PRIORITY_CFG);
 
         m_State = QSPI_STATE_READY;
     }

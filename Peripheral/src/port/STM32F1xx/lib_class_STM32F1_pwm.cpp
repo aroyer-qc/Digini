@@ -44,6 +44,17 @@
 #define TIM_CCMR1_OC2_MODE_PWM                 ((uint16_t)0x6000)
 #define TIM_CCMR2_OC3_MODE_PWM                 ((uint16_t)0x0060)
 #define TIM_CCMR2_OC4_MODE_PWM                 ((uint16_t)0x6000)
+
+// TODO simplify mode setting and also allow configuration into tim_var.h
+#define TIM_CCMR1_OC1_MODE_1_PWM                 ((uint16_t)0x0060)
+#define TIM_CCMR1_OC1_MODE_2_PWM                 ((uint16_t)0x0060)
+#define TIM_CCMR1_OC2_MODE_1_PWM                 ((uint16_t)0x6000)
+#define TIM_CCMR1_OC2_MODE_2_PWM                 ((uint16_t)0x6000)
+#define TIM_CCMR2_OC3_MODE_1_PWM                 ((uint16_t)0x0060)
+#define TIM_CCMR2_OC3_MODE_2_PWM                 ((uint16_t)0x0060)
+#define TIM_CCMR2_OC4_MODE_1_PWM                 ((uint16_t)0x6000)
+#define TIM_CCMR2_OC4_MODE_2_PWM                 ((uint16_t)0x6000)
+
 #define TIM_CCER_OC1_MASK                      ((uint16_t)0x000F)
 #define TIM_CCER_OC2_MASK                      ((uint16_t)0x00F0)
 #define TIM_CCER_OC3_MASK                      ((uint16_t)0x0F00)
@@ -87,49 +98,48 @@ PWM_Driver::PWM_Driver(PWM_ChannelID_e PWM_ID)
 //-------------------------------------------------------------------------------------------------
 void PWM_Driver::Initialize(void)
 {
-    m_pTimer = TIM_Driver::GetTimerPointer(m_pInfo->TimID);
+    m_pTimer = new TIM_Driver(m_pInfo->TimID);
+    m_pTimer->Initialize();
+    m_pTim   = m_pTimer->GetTimerPointer();
     IO_PinInit(m_pInfo->PinID);
 
     switch(m_pInfo->Channel)
     {
-        case TIM_CHANNEL_1:
+        case PWM_CHANNEL_1:
         {
-            m_pTimer->CCER  &= ~TIM_CCER_OC1_MASK;                            // Clear config for OC1
-            m_pTimer->CCMR1 |=  (TIM_CCMR1_OC1_MODE_PWM | TIM_CCMR1_OC1PE);   // Set PWM mode and enable output
-            m_pTimer->CCR1   =  m_pInfo->InitialDuty;                         // Set the Capture Compare Register value
-            m_pTimer->CCER  |=  TIM_CCER_CC1E;                                // Set the Output State
+            m_pTim->CCER  &= ~TIM_CCER_OC1_MASK;            // Clear config for OC1
+            m_pTim->CCMR1 |= (TIM_CCMR1_OC1_MODE_PWM);      // Set PWM mode
+            m_pTim->CCR1   = m_pInfo->InitialDuty;          // Set the Capture Compare Register value
         }
         break;
 
-        case TIM_CHANNEL_2:
+        case PWM_CHANNEL_2:
         {
-            m_pTimer->CCER  &= ~TIM_CCER_OC2_MASK;                            // Clear config for OC2
-            m_pTimer->CCMR1 |=  (TIM_CCMR1_OC2_MODE_PWM | TIM_CCMR1_OC2PE);   // Set PWM mode and enable output
-            m_pTimer->CCR2   =  m_pInfo->InitialDuty;                         // Set the Capture Compare Register value
-            m_pTimer->CCER  |=  TIM_CCER_CC2E;                                // Set the Output State
+            m_pTim->CCER  &= ~TIM_CCER_OC2_MASK;            // Clear config for OC2
+            m_pTim->CCMR1 |= (TIM_CCMR1_OC2_MODE_PWM);      // Set PWM mode
+            m_pTim->CCR2   = m_pInfo->InitialDuty;          // Set the Capture Compare Register value
         }
         break;
 
-        case TIM_CHANNEL_3:
+        case PWM_CHANNEL_3:
         {
-            m_pTimer->CCER  &= ~TIM_CCER_OC3_MASK;                            // Clear config for OC3
-            m_pTimer->CCMR2 |=  (TIM_CCMR2_OC3_MODE_PWM | TIM_CCMR2_OC3PE);   // Set PWM mode and enable output
-            m_pTimer->CCR3   =  m_pInfo->InitialDuty;                         // Set the Capture Compare Register value
-            m_pTimer->CCER  |=  TIM_CCER_CC3E;                                // Set the Output State
+            m_pTim->CCER  &= ~TIM_CCER_OC3_MASK;            // Clear config for OC3
+            m_pTim->CCMR2 |= (TIM_CCMR2_OC3_MODE_PWM);      // Set PWM mode
+            m_pTim->CCR3   = m_pInfo->InitialDuty;          // Set the Capture Compare Register value
         }
         break;
 
-        case TIM_CHANNEL_4:
+        case PWM_CHANNEL_4:
         {
-            m_pTimer->CCER  &= ~TIM_CCER_OC4_MASK;                            // Clear config for OC4
-            m_pTimer->CCMR2 |=  (TIM_CCMR2_OC4_MODE_PWM | TIM_CCMR2_OC4PE);   // Set PWM mode and enable output
-            m_pTimer->CCR4   =  m_pInfo->InitialDuty;                         // Set the Capture Compare Register value
-            m_pTimer->CCER  |=  TIM_CCER_CC4E;                                // Set the Output State
+            m_pTim->CCER  &= ~TIM_CCER_OC4_MASK;             // Clear config for OC4
+            m_pTim->CCMR2 |= (TIM_CCMR2_OC4_MODE_PWM);       // Set PWM mode
+            m_pTim->CCR4   = m_pInfo->InitialDuty;           // Set the Capture Compare Register value
         }
         break;
-
-        default: break;
     }
+
+    m_pTim->CCER |=  m_pInfo->Output;                        // Set the Output
+    m_pTim->BDTR |= TIM_BDTR_MOE; 
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -145,13 +155,12 @@ void PWM_Driver::Initialize(void)
 void PWM_Driver::SetDuty(uint16_t Duty)
 {
     //uint32_t     Period = m_pTimer->ARR; ?? should calculate it from ARR
-
     switch(m_pInfo->Channel)
     {
-        case TIM_CHANNEL_1: { m_pTimer->CCR1 = Duty; } break;
-        case TIM_CHANNEL_2: { m_pTimer->CCR2 = Duty; } break;
-        case TIM_CHANNEL_3: { m_pTimer->CCR3 = Duty; } break;
-        case TIM_CHANNEL_4: { m_pTimer->CCR4 = Duty; } break;
+        case PWM_CHANNEL_1: { m_pTim->CCR1 = Duty; } break;
+        case PWM_CHANNEL_2: { m_pTim->CCR2 = Duty; } break;
+        case PWM_CHANNEL_3: { m_pTim->CCR3 = Duty; } break;
+        case PWM_CHANNEL_4: { m_pTim->CCR4 = Duty; } break;
         default: break;
     }
 }
@@ -168,14 +177,7 @@ void PWM_Driver::SetDuty(uint16_t Duty)
 //-------------------------------------------------------------------------------------------------
 void PWM_Driver::Start(void)
 {
-    switch(m_pInfo->Channel)
-    {
-        case TIM_CHANNEL_1: { m_pTimer->CCER |= TIM_CCER_CC1E; } break;
-        case TIM_CHANNEL_2: { m_pTimer->CCER |= TIM_CCER_CC2E; } break;
-        case TIM_CHANNEL_3: { m_pTimer->CCER |= TIM_CCER_CC3E; } break;
-        case TIM_CHANNEL_4: { m_pTimer->CCER |= TIM_CCER_CC4E; } break;
-        default: break;
-    }
+    m_pTimer->Start();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -190,13 +192,29 @@ void PWM_Driver::Start(void)
 //-------------------------------------------------------------------------------------------------
 void PWM_Driver::Stop(void)
 {
+    m_pTimer->Stop();
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           GetCompareRegisterPointer
+//
+//  Parameter(s):   uint32_t*
+//
+//  Description:    Return the address pointer of the compare register
+//
+//  Note(s):        Useful for DMA configuration
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t* PWM_Driver::GetCompareRegisterPointer(void)
+{
     switch(m_pInfo->Channel)
     {
-        case TIM_CHANNEL_1: { m_pTimer->CCER &= ~TIM_CCER_CC1E; } break;
-        case TIM_CHANNEL_2: { m_pTimer->CCER &= ~TIM_CCER_CC2E; } break;
-        case TIM_CHANNEL_3: { m_pTimer->CCER &= ~TIM_CCER_CC3E; } break;
-        case TIM_CHANNEL_4: { m_pTimer->CCER &= ~TIM_CCER_CC4E; } break;
-        default: break;
+        case (PWM_CHANNEL_1): return &m_pTim->CCR1;
+        case (PWM_CHANNEL_2): return &m_pTim->CCR2;
+        case (PWM_CHANNEL_3): return &m_pTim->CCR3;
+        case (PWM_CHANNEL_4): return &m_pTim->CCR4;
+        default:              return nullptr;
     }
 }
 

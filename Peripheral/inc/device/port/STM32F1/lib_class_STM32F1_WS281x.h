@@ -83,7 +83,6 @@
 //                  when those LED entry are reach, DMA continue as nothing happened, but value is
 //                  set to zero, so this emulate a reset, until StartTransfer is call again.
 //
-//
 //-------------------------------------------------------------------------------------------------
 
 
@@ -110,14 +109,14 @@ struct WS281x_Config_t
     // Led Chain info
     uint16_t                NumberOfLED;
     WS281x_ResetType_e      ResetType;
-    IO_ID_e                 NeoDataPin;
-    // Timer info
-    TIM_ID_e                TimID;
-    TIM_Compare_e           CompareChannel;
+    // PWM info (include timer and IO)
+    PWM_ChannelID_e         PWM_ChannelID;
     // DMA info
     DMA_Channel_TypeDef*    DMA_Channel;
     uint32_t                DMA_Flag;
-    IRQn_Type               IRQn;
+    IRQn_Type               IRQn_Channel;
+    uint8_t                 PreempPrio;
+    
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -128,20 +127,18 @@ class WS281x
 {
     public:
 
-        void    Initialize          (const WS281x_Config_t* pConfig);
-        void    SetLed              (uint16_t Offset, WS281x_Color_t Color);
-        void    Process             (void);
-        void    Start               (void);
-        void    Stop                (void);
-        void    FillUp_24_Bits      (uint8_t* pBuffer);
+        void    Initialize              (const WS281x_Config_t* pConfig);
+        void    SetLed                  (uint16_t Offset, WS281x_Color_t Color);
+        void    Process                 (void);
+        void    Start                   (void);
+        void    Stop                    (void);
+        void    FillUp_24_Bits          (uint8_t* pBuffer);
 
-        void    DMA_Channel_IRQ_Handler(TIM_ID_e TIM_ID);
+        void    DMA_Channel_IRQ_Handler (void);
 
     private:
 
- //       PWM_Driver                  m_PWM_Driver;
-
-        TIM_Driver*                 m_pTimer;
+        PWM_Driver*                 m_pPWM;
         uint16_t                    m_LedChainSize;
         uint16_t                    m_NumberOfLED;
         volatile uint16_t           m_LedPointer;
@@ -150,7 +147,6 @@ class WS281x
         bool                        m_NeedRefresh;
         uint8_t                     m_SetCountReset;
         uint8_t                     m_ResetCount;
-        TIM_Compare_e               m_Channel;
         DMA_Channel_TypeDef*        m_pDMA;
         uint32_t                    m_DMA_Flag;
 };

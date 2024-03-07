@@ -162,8 +162,8 @@ void I2C_Driver::Initialize(void)
     pI2Cx->CR1 |= I2C_CR1_PE;                                                                       // Enable the selected I2C peripheral
 
     // ---- Enable I2C event interrupt ----
-    ISR_Init(m_pInfo->EV_IRQn, 0, 5);                                                               // NVIC Setup for TX DMA channels interrupt request
-    ISR_Init(m_pInfo->ER_IRQn, 0, 5);                                                               // NVIC Setup for RX DMA channels interrupt request
+    ISR_Init(m_pInfo->EV_IRQn, 5);                                                                  // NVIC Setup for TX DMA channels interrupt request
+    ISR_Init(m_pInfo->ER_IRQn, 5);                                                                  // NVIC Setup for RX DMA channels interrupt request
 }
 
 //-------------------------------------------------------------------------------------------------

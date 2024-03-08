@@ -300,7 +300,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(       LBL_SERIAL_NUMBER);
           #else
              char* pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE);
-             DB_Central.Get(pBuffer, OEM_SERIAL_NUMBER);
+             DB_Central.Get(pBuffer, SERIAL_NUMBER_TEXT);
              myVT100.InMenuPrintf(LBL_STRING, pBuffer);
              pMemoryPool->Free((void**)&pBuffer);
 

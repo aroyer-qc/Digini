@@ -134,9 +134,9 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
         if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
         {
-            ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);
+            ISR_Init(m_pInfo->IRQn_Channel, m_pInfo->PreempPrio);
         }
-        
+
         ClearFlag();
 
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)

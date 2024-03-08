@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,7 +24,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-//  Notes:   This is incomplete driver, and evolution is as the need arise
+//  Notes:   This is incomplete driver, and evolution is as the need arise. Timer are very complex.
 //
 //              In this file -> basic timer with callback when specify time has elapse
 //                  - Start
@@ -32,6 +32,10 @@
 //                  - Stop
 //                  - Reload
 //                  - SetCompare
+//
+//              This help with basic initialization. In you project, you can access the device
+//              register and improve functionnality.
+//
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -194,13 +198,12 @@ class TIM_Driver
 
         void                Initialize              (void);
         uint32_t            GetCounterValue         (void);
-        uint32_t            TimeBaseToPrescaler     (uint32_t TimeBase);
         void                Start                   (void);
         void                ReStart                 (void);
         void                Stop                    (void);
         void                SetReload               (uint32_t Value);
         uint32_t            GetReload               (void);
-        static TIM_TypeDef* GetTimerPointer         (TIM_ID_e TimID);
+        TIM_TypeDef*        GetTimerPointer             (void);
 
     private:
 

@@ -1024,7 +1024,7 @@ size_t VT100_Terminal::InMenuPrintf(Label_e Label, ...)
     const char* pFormat;
 
     pFormat = myLabel.GetPointer(Label);
-    va_start(vaArg, pFormat);
+    va_start(vaArg, Label);
     Size = m_pConsole->Printf(pFormat, &vaArg);
     va_end(vaArg);
     return Size;
@@ -1052,7 +1052,7 @@ size_t VT100_Terminal::InMenuPrintf(uint8_t PosX, uint8_t PosY, Label_e Label, .
 
     SetCursorPosition(PosX, PosY);
     pFormat = myLabel.GetPointer(Label);
-    va_start(vaArg, pFormat);
+    va_start(vaArg, Label);
     Size = m_pConsole->Printf(pFormat, &vaArg);
     va_end(vaArg);
     return Size;

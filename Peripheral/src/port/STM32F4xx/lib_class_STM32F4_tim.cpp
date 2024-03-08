@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -60,8 +60,6 @@
 //
 //   Description:   Initializes the TIM_Driver class
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 TIM_Driver::TIM_Driver(TIM_ID_e TimID)
 {
@@ -87,7 +85,7 @@ void TIM_Driver::Initialize(void)
     *(m_pInfo->RCC_APBxEN_Register) |= m_pInfo->RCC_APBxPeriph;
 
     // Set the prescaler value
-    m_pTim->PSC = m_pInfo->Prescaler;
+    m_pTim->PSC = m_pInfo->Prescaler - 1;
 
     // Set the auto reload register
   #if (TIM_DRIVER_SUPPORT_16_BITS_TIM_CFG == DEF_ENABLED)
@@ -111,36 +109,21 @@ void TIM_Driver::Initialize(void)
     ((TIM_TypeDef*)m_pTim)->CR1 = m_pInfo->Mode | TIM_CR1_ARPE;
 
     // Set the update interrupt enable
-    if(m_pInfo->IRQ_DMA_SourceEnable & (TIM_IRQ_UPDATE | TIM_DMA_UPDATE) != 0)
+    if((m_pInfo->IRQ_DMA_SourceEnable & (TIM_IRQ_UPDATE | TIM_DMA_UPDATE)) != 0)
 //    if(m_pInfo->EnableUpdateIRQ == true)
     {
          CLEAR_BIT(((TIM_TypeDef*)m_pTim)->SR, TIM_SR_UIF);
         ((TIM_TypeDef*)m_pTim)->DIER = TIM_DIER_UIE;
     }
 
+    ((TIM_TypeDef*)m_pTim)->DIER |= m_pInfo->IRQ_DMA_SourceEnable;  // Enable all source according to configuration
+
     // Configure interrupt priority for TIM
     if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
     {
-        ISR_Init(m_pInfo->IRQn_Channel, 0, m_pInfo->PreempPrio);
+        ISR_Init(m_pInfo->IRQn_Channel, m_pInfo->PreempPrio);
     }
 }
-
-/*
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           RegisterCallBack
-//
-//  Parameter(s):   pCallBack       Callback for application.
-//  Return:         None
-//
-//  Description:    Set callback for application.
-//
-//-------------------------------------------------------------------------------------------------
-void TIM_Driver::RegisterCallBack(TIM_CallBack_t pCallBack)
-{
-    m_pCallBack = pCallBack;
-}
-*/
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -152,6 +135,7 @@ void TIM_Driver::RegisterCallBack(TIM_CallBack_t pCallBack)
 //  Description:    Calculate prescaler for the specified time base
 //
 //-------------------------------------------------------------------------------------------------
+/*
 uint32_t TIM_Driver::TimeBaseToPrescaler(uint32_t TimeBase)
 {
     VAR_UNUSED(TimeBase);
@@ -159,7 +143,7 @@ uint32_t TIM_Driver::TimeBaseToPrescaler(uint32_t TimeBase)
     // TODO (Alain#2#) a function to calculate right value for a requested time period
     return 0;
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Start
@@ -259,15 +243,15 @@ uint32_t TIM_Driver::GetCounterValue(void)
 //
 //  Name:           GetTimerPointer
 //
-//  Parameter(s):   TimID           ID of the timer to get the pointer
-//  Return:         TIM_TypeDef*    \pointer on the timer module
+//  Parameter(s):   None
+//  Return:         TIM_TypeDef*    Pointer on the timer module
 //
-//  Description:    Return the pointer on the timer use by this ID
+//  Description:    Return the pointer on the timer
 //
 //-------------------------------------------------------------------------------------------------
-TIM_TypeDef* TIM_Driver::GetTimerPointer(TIM_ID_e TimID)
+TIM_TypeDef* TIM_Driver::GetTimerPointer(void)
 {
-    return TIM_Info[TimID].pTIMx;
+    return m_pTim;
 }
 
 //-------------------------------------------------------------------------------------------------

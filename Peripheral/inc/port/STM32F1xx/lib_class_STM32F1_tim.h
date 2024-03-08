@@ -37,7 +37,6 @@
 //              register and improve functionnality.
 //
 //
-//   THINKING of just doing service function to configure a specific timer...
 //-------------------------------------------------------------------------------------------------
 
 #pragma once

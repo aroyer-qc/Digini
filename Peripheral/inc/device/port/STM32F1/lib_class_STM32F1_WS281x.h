@@ -79,13 +79,39 @@
 //                  Auto Reload = 25 Counts         Range for 1.25 uSec
 //                  _______________________________________________________________________________
 //
-//                  There two more entry in the m_pLedChain array. Last value is set to zero.
+//                  There two more entry in the m_pLedChain array and there value are set to zero.
 //                  when those LED entry are reach, DMA continue as nothing happened, but value is
-//                  set to zero, so this emulate a reset, until StartTransfer is call again.
+//                  set to zero, so this emulate a reset.
+//
+//                  Maybe offer 2 mode, continuous scanning (animated led stream) and single scan
+//                  for refresh on change only.
+//
+//  Example of IRQ call for DMA to put into irq.cpp of the append
+//
+//     NOS_ISR(DMA1_Channel5_IRQHandler)
+//     {
+//         WS281x_LedStream.DMA_Channel_IRQ_Handler((DMA_CheckFlag(DMA1_Channel5, DMA_IFCR_CTCIF5))
+//                                                  ? true: false);
+//     }
+//
+//
 //
 //-------------------------------------------------------------------------------------------------
 
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
 
+// This enable the continuous scan of the LED stream. No refresh needed.
+#ifndef WS281x_CONTINUOUS_SCAN
+  #define WS281x_CONTINUOUS_SCAN            DEF_DISABLED
+#endif
+
+// If a LED change is done, it will trigger a refresh automatically is it is DEF_ENABLED.
+// If has no effect if WS281x_CONTINUOUS_SCAN is DEF_ENABLED.
+#ifndef WS281x_SET_LED_TRIGGER_REFRESH
+  #define WS281x_SET_LED_TRIGGER_REFRESH    DEF_DISABLED
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -93,7 +119,7 @@
 
 enum WS281x_ResetType_e
 {
-    WS2812B_RESET       = 1000,  // TODO is it right??
+    WS2812B_RESET       = 1000,  // TODO is it right??  just check timing when it will work
     WS2811_RESET        = 5600,
 };
 
@@ -116,7 +142,7 @@ struct WS281x_Config_t
     uint32_t                DMA_Flag;
     IRQn_Type               IRQn_Channel;
     uint8_t                 PreempPrio;
-    
+
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -128,27 +154,36 @@ class WS281x
     public:
 
         void    Initialize              (const WS281x_Config_t* pConfig);
-        void    SetLed                  (uint16_t Offset, WS281x_Color_t Color);
-        void    Process                 (void);
+        void    SetLed                  (uint32_t Offset, WS281x_Color_t Color);
         void    Start                   (void);
         void    Stop                    (void);
-        void    FillUp_24_Bits          (uint8_t* pBuffer);
 
-        void    DMA_Channel_IRQ_Handler (void);
+      #if (WS281x_CONTINUOUS_SCAN == DEF_DISABLED)
+        void    Refresh                 (void);
+      #endif
+
+        void    DMA_Channel_IRQ_Handler (bool IsItTransferComplete);
 
     private:
 
         PWM_Driver*                 m_pPWM;
-        uint16_t                    m_LedChainSize;
-        uint16_t                    m_NumberOfLED;
+        uint32_t                    m_LedChainSize;
+        uint32_t                    m_NumberOfLED;
         volatile uint16_t           m_LedPointer;
         WS281x_Color_t*             m_pLedChain;
         uint8_t*                    m_pDMA_Buffer;
+        uint8_t*                    m_pDMA_HalfBuffer;      // to reduce DMA interrupt time
+      #if (WS281x_CONTINUOUS_SCAN == DEF_DISABLED)
         bool                        m_NeedRefresh;
-        uint8_t                     m_SetCountReset;
-        uint8_t                     m_ResetCount;
+      #endif
+        uint32_t                    m_SetCountReset;
+        uint32_t                    m_ResetCount;
         DMA_Channel_TypeDef*        m_pDMA;
         uint32_t                    m_DMA_Flag;
+
+      #if (WS281x_CONTINUOUS_SCAN == DEF_DISABLED)
+      #endif
+
 };
 
 //-------------------------------------------------------------------------------------------------

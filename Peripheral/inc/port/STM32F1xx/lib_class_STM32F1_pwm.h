@@ -66,7 +66,7 @@ class PWM_Driver
         void                            SetDuty                     (uint16_t Duty);
         void                            Start                       (void);
         void                            Stop                        (void);
-        uint32_t*                       GetCompareRegisterPointer   (void);
+        volatile uint32_t*              GetCompareRegisterPointer   (void);
 
     private:
 

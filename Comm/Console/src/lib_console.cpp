@@ -211,7 +211,7 @@ size_t Console::Printf(Label_e Label, ...)
     const char* pFormat;
 
     pFormat = myLabel.GetPointer(Label);
-    va_start(vaArg, pFormat);
+    va_start(vaArg, Label);
     return Printf(pFormat, &vaArg);
 }
 

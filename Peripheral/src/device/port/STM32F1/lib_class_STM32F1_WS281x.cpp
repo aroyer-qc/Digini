@@ -45,10 +45,8 @@
 #define WS281x_RGB_SIZE                 3
 #define WS281x_LED_BUFFER_SIZE          24                                  // One led need 24 Bits for the color.
 #define WS281x_DMA_FULL_BUFFER_SIZE     2 * WS281x_LED_BUFFER_SIZE          // DMA need 2 leds.
-
 #define WS281x_LOGICAL_0                7
 #define WS281x_LOGICAL_1                14
-
 #define WS281x_DUMMY_LEDS               2
 
 //-------------------------------------------------------------------------------------------------
@@ -67,16 +65,21 @@ void WS281x::Initialize(const WS281x_Config_t* pConfig)
     m_pPWM = new PWM_Driver(pConfig->PWM_ChannelID);
     m_pPWM->Initialize();
 
-    m_SetCountReset = uint8_t((uint16_t(pConfig->ResetType) / WS281x_TIMER_RANGE));
-    m_ResetCount    = m_SetCountReset;
-    m_NumberOfLED   = pConfig->NumberOfLED;                                                                                 // Number of real LEDs.
-    m_LedChainSize  = m_NumberOfLED + WS281x_DUMMY_LEDS;                                                                    // Chain LEDs Size.
-    m_pLedChain     = (WS281x_Color_t*)pMemoryPool->AllocAndClear((m_LedChainSize + WS281x_DUMMY_LEDS) * WS281x_RGB_SIZE);  // Reserved x bytes  from the alloc mem library.
-    m_pDMA_Buffer   = (uint8_t*)pMemoryPool->AllocAndClear(WS281x_DMA_FULL_BUFFER_SIZE);                                    // Reserved 48 bytes DMA transfert to compare register.
+    m_SetCountReset   = uint8_t((uint16_t(pConfig->ResetType) / WS281x_TIMER_RANGE));
+    m_ResetCount      = m_SetCountReset;
+    m_NumberOfLED     = pConfig->NumberOfLED;                                                                                 // Number of real LEDs.
+    m_LedChainSize    = m_NumberOfLED + WS281x_DUMMY_LEDS;                                                                    // Chain LEDs Size.
+    m_pLedChain       = (WS281x_Color_t*)pMemoryPool->AllocAndClear((m_LedChainSize + WS281x_DUMMY_LEDS) * WS281x_RGB_SIZE);  // Reserved x bytes  from the alloc mem library.
+    m_pDMA_Buffer     = (uint8_t*)pMemoryPool->AllocAndSet(WS281x_DMA_FULL_BUFFER_SIZE, WS281x_LOGICAL_0);                                    // Reserved 48 bytes DMA transfert to compare register.
+    m_pDMA_HalfBuffer = m_pDMA_Buffer + WS281x_LED_BUFFER_SIZE;
     m_LedPointer    = 0;                                                                                                    // Start at Led 0
-    m_NeedRefresh   = true;
     m_pDMA          = pConfig->DMA_Channel;
     m_DMA_Flag      = pConfig->DMA_Flag;
+
+  #if (WS281x_CONTINUOUS_SCAN == DEF_DISABLED)
+    m_NeedRefresh   = true;
+  #endif
+
 
   #if (DMA2_SUPPORT == DEF_ENABLED)
     SET_BIT(RCC->AHBENR, int(pConfig->TimID) <= int(TIM_DRIVER_ID_4) ? RCC_AHBENR_DMA1EN : \
@@ -89,7 +92,7 @@ void WS281x::Initialize(const WS281x_Config_t* pConfig)
     // use 2 x 24 bits leds. So take advantage of the HT and TC of the DMA in a circular mode...
     // So we can use those to have time to prepare next set of 24 bit colors for next led
     m_pDMA->CPAR  = uint32_t(m_pPWM->GetCompareRegisterPointer());
-    m_pDMA->CMAR  = m_pDMA_Buffer;
+    m_pDMA->CMAR  = uint32_t(m_pDMA_Buffer);
     m_pDMA->CNDTR = WS281x_DMA_FULL_BUFFER_SIZE;
     m_pDMA->CCR   = DMA_CIRCULAR_MODE                |      // loop continously the 48 bytes compare value buffer
                     DMA_MEMORY_TO_PERIPHERAL         |
@@ -102,7 +105,6 @@ void WS281x::Initialize(const WS281x_Config_t* pConfig)
                     DMA_TRANSFER_COMPLETE_IRQ        |
                     DMA_START_TRANSFERT;
 
-    FillUp_24_Bits((uint8_t*)&m_pLedChain);                                        // First buffer fill-up
     ISR_Init(pConfig->IRQn_Channel, pConfig->PreempPrio);
     Start();
 }
@@ -141,7 +143,7 @@ void WS281x::Stop(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Process
+//  Name:           Refresh
 //
 //  Parameter(s):   None
 //
@@ -150,9 +152,9 @@ void WS281x::Stop(void)
 //  Description:    Running process to update LED chain if necessary
 //
 //-------------------------------------------------------------------------------------------------
-void WS281x::Process(void)
+#if (WS281x_CONTINUOUS_SCAN == DEF_DISABLED)
+void WS281x::Refresh(void)
 {
-    /*  maybe it is not needed
     if((m_NeedRefresh == true) && (m_ResetCount == 0))
     {
         m_LedPointer  = 0;
@@ -160,14 +162,14 @@ void WS281x::Process(void)
         m_ResetCount  = m_SetCountReset;                 // This make sure no restart is done before it is done properly.
         Start();
     }
-    */
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SetLed
 //
-//  Parameter(s):   uint16_t         Offset                  Led to change color
+//  Parameter(s):   uint32_t         Offset                  Led to change color
 //                  WS281x_Color_t   Color                   Color of the LED in RGB888
 //
 //  Return:         None
@@ -175,47 +177,56 @@ void WS281x::Process(void)
 //  Description:    Set the Color of a LED
 //
 //-------------------------------------------------------------------------------------------------
-void WS281x::SetLed(uint16_t Offset, WS281x_Color_t Color)
+void WS281x::SetLed(uint32_t Offset, WS281x_Color_t Color)
 {
     if(Offset < m_LedChainSize)                                                 // Offset must inside length of chain
     {
         if(memcmp(&m_pLedChain[Offset], &Color, sizeof(WS281x_Color_t)) != 0)   // Only refresh if color is different
         {
             m_pLedChain[Offset] = Color;
-            m_NeedRefresh       = true;
+
+          #if ((WS281x_SET_LED_TRIGGER_REFRESH == DEF_DISABLED) || (WS281x_CONTINUOUS_SCAN == DEF_DISABLED))
+            m_NeedRefresh = true;
+          #endif
         }
     }
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           FillUp_24_Bits
+//  Name:           DMA_Channel_IRQ_Handler
 //
-//  Parameter(s):   uint8_t* pBuffer            24 Bytes buffer to fill-up
-//
-//
-//  Return:         None
+//  Parameter(s):   None
+//  Return:         void
 //
 //  Description:    DMA interrupt, to fill up next 24 Bits value into DMA buffer for compare timer
 //                  register.
 //
 //  Note(s):        Each bit, is a uint8_t value into a 24 bytes buffer, for DMA to process.
+//                  Double buffer with half transfert IRQ. so prepare next 24 bit while sending
 //
 //-------------------------------------------------------------------------------------------------
-void WS281x::FillUp_24_Bits(uint8_t* pBuffer)
+
+void WS281x::DMA_Channel_IRQ_Handler(bool IsItTransferComplete)
 {
-    uint8_t* pColorData;
-    uint8_t  Color;
+    register uint8_t* pBuffer;
+    register uint8_t* pColorData;
+    register uint8_t  Color;
+
+    if(IsItTransferComplete == true) pBuffer = m_pDMA_Buffer;
+    else                             pBuffer = m_pDMA_HalfBuffer;
 
     if(m_LedPointer > m_NumberOfLED)
     {
         m_ResetCount--;     // Reset state until it reach 0
 
-        if(m_ResetCount == 0)
+      #if (WS281x_CONTINUOUS_SCAN == DEF_ENABLED)
+        if(m_ResetCount == 0)                           // Restart the scan in continuous scan mode
         {
             m_ResetCount = m_SetCountReset;
             m_LedPointer = 0;
         }
+      #endif
     }
     else
     {
@@ -236,17 +247,8 @@ void WS281x::FillUp_24_Bits(uint8_t* pBuffer)
 
         m_LedPointer++;
     }
-}
 
-//-------------------------------------------------------------------------------------------------
 
-// We double buffer with half transfert IRQ. so prepare next 24 bit while sending first one
-void WS281x::DMA_Channel_IRQ_Handler(void)
-{
-    uint8_t* pBuffer;
-
-    DMA_ClearFlag(m_pDMA, m_DMA_Flag);
-    FillUp_24_Bits(pBuffer);
 }
 
 //-------------------------------------------------------------------------------------------------

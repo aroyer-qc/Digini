@@ -682,8 +682,8 @@ VT100_InputType_e VT100_Terminal::CallBack(CallbackMethod_t pCallback, VT100_Cal
         if(InputType == VT100_INPUT_SAVE_DATA)
         {
             UpdateSaveLabel(VT100_COLOR_BLUE, false);
-            
-            // Refresh page when language are change  
+
+            // Refresh page when language are change
             if(m_RefreshFullPage == true)
             {
                 m_RefreshFullPage = false;
@@ -692,7 +692,7 @@ VT100_InputType_e VT100_Terminal::CallBack(CallbackMethod_t pCallback, VT100_Cal
               #endif
               DisplayMenu();                                // Redraw the menu.
             }
-            
+
         }
     }
 
@@ -1088,7 +1088,7 @@ size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat
         {
             if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE)) == nullptr)
             {
-                va_start(vaArg, (const char*)pFormat);
+                va_start(vaArg, pFormat);
                 Size = LIB_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, vaArg);
                 while(m_pUartDriver->IsItBusy() == true){};
                 m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);

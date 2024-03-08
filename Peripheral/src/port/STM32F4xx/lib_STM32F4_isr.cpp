@@ -79,21 +79,20 @@ void ISR_Init(IRQn_Type Channel, const ISR_Prio_t* pPrio)
 //  Function:       ISR_Init
 //
 //  Parameter(s):   Channel             ISR Channel to init
-//                  Subpriority
 //                  PremptionPriority
 //  Return:         none
 //
 //  Description:    Initialization of ISR vector
 //
 //-------------------------------------------------------------------------------------------------
-void ISR_Init(IRQn_Type Channel, uint8_t SubPriority, uint8_t PremptionPriority)
+void ISR_Init(IRQn_Type Channel, uint8_t PremptionPriority)
 {
     ISR_Prio_t          ISR_Prio;
     uint32_t            PriorityGroup;
 
     PriorityGroup = NVIC_GetPriorityGrouping();
     ISR_Prio.PriorityGroup     = PriorityGroup;
-    ISR_Prio.SubPriority       = SubPriority;
+    ISR_Prio.SubPriority       = 0;
     ISR_Prio.PremptionPriority = PremptionPriority;
 
     ISR_Init(Channel, &ISR_Prio);

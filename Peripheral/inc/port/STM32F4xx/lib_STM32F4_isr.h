@@ -66,6 +66,6 @@ struct ISR_Prio_t
 
 void ISR_Initialize     (void);
 void ISR_Init           (IRQn_Type Channel, const ISR_Prio_t* pPrio);
-void ISR_Init           (IRQn_Type Channel, uint8_t SubPriority, uint8_t PremptionPriority);
+void ISR_Init           (IRQn_Type Channel, int8_t PremptionPriority);
 
 //-------------------------------------------------------------------------------------------------

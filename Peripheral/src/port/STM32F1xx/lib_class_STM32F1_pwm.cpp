@@ -136,10 +136,12 @@ void PWM_Driver::Initialize(void)
             m_pTim->CCR4   = m_pInfo->InitialDuty;           // Set the Capture Compare Register value
         }
         break;
+
+        default: return;
     }
 
     m_pTim->CCER |=  m_pInfo->Output;                        // Set the Output
-    m_pTim->BDTR |= TIM_BDTR_MOE; 
+    m_pTim->BDTR |= TIM_BDTR_MOE;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -206,7 +208,7 @@ void PWM_Driver::Stop(void)
 //  Note(s):        Useful for DMA configuration
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t* PWM_Driver::GetCompareRegisterPointer(void)
+volatile uint32_t* PWM_Driver::GetCompareRegisterPointer(void)
 {
     switch(m_pInfo->Channel)
     {

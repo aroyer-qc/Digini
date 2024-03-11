@@ -198,6 +198,8 @@ class SPI_Driver
 
 #include "spi_var.h"
 
+extern SPI_Info_t SPI_Info[NB_OF_SPI_DRIVER];
+
 //-------------------------------------------------------------------------------------------------
 
 #endif // (USE_SPI_DRIVER == DEF_ENABLED)

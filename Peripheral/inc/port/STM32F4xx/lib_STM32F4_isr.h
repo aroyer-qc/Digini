@@ -47,7 +47,7 @@
 // Clear Pending Interrupt
 #define ISR_ClearPendingIRQ(IRQ) (NVIC->ICPR[0] = (uint32_t(1) << ((uint32_t)(int32_t(IRQ) & 0x1L))))
 
-#define ISR_IRQn_NONE               IRQn_Type(0x7F)
+#define ISR_IRQn_NONE            IRQn_Type(0x7F)
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -66,6 +66,6 @@ struct ISR_Prio_t
 
 void ISR_Initialize     (void);
 void ISR_Init           (IRQn_Type Channel, const ISR_Prio_t* pPrio);
-void ISR_Init           (IRQn_Type Channel, int8_t PremptionPriority);
+void ISR_Init           (IRQn_Type Channel, uint8_t PremptionPriority);
 
 //-------------------------------------------------------------------------------------------------

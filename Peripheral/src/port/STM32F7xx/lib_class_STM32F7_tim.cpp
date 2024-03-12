@@ -138,7 +138,7 @@ void TIM_Driver::Initialize(void)
     }
 
     // Set the update interrupt enable
-    if(m_pInfo->IRQ_DMA_SourceEnable & (TIM_IRQ_UPDATE | TIM_DMA_UPDATE) != 0)
+    if((m_pInfo->IRQ_DMA_SourceEnable & (TIM_IRQ_UPDATE | TIM_DMA_UPDATE)) != 0)
 //    if(m_pInfo->EnableUpdateIRQ == true)
     {
       #if (TIM_DRIVER_SUPPORT_LPTIM1_CFG == DEF_ENABLED)

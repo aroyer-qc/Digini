@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -21,10 +21,6 @@
 // AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-//
-//-------------------------------------------------------------------------------------------------
-//
-//  Only support DMA transfer as it is not making sense otherwise.
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -138,37 +134,66 @@ struct SPI_Info_t
     class SPI_Driver*   pObject;
 };
 
+struct SPI_DeviceInfo_t
+{
+    uint32_t            SlowSpeed;
+    uint32_t            FastSpeed;
+    uint8_t             TimeOut;
+    uint32_t            ChipSelectClock;
+    GPIO_TypeDef*       pChipSelect;
+    uint16_t            ChipSelectPin;
+};
+
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-// TODO work in progress!
-
-class SPI_Driver
+class SPI_Driver : public DriverInterface
 {
     public:
-                                SPI_Driver              (SPI_ID_e SPI_ID);
+                        SPI_Driver              (SPI_ID_e SPI_ID);
 
-        uint8_t                 Send                    (uint8_t Data);
+        void            Initialize              (void);
 
-        SystemState_e           GetStatus               (void);
-        void                    Initialize              (void);
-        SystemState_e           LockToDevice            (void* pDevice);                     // Set SPI to this device and lock (Use any pointer to describe device)
-        SystemState_e           UnlockFromDevice        (void* pDevice);                     // Unlock SPI from device
-        void                    ChipSelect              (bool IsItActive);
-        void                    IRQHandler              (void);
-        void                    Config                  (uint32_t Mask, uint32_t Config);
-        SystemState_e           WaitReady               (void);
+        SystemState_e   GetStatus               (void);
+        SystemState_e   LockToDevice            (SPI_DeviceInfo_t* pDevice);                     // Set SPI to this device and lock
+        SystemState_e   UnlockFromDevice        (SPI_DeviceInfo_t* pDevice);                     // Unlock SPI from device
+        
+        uint8_t         Send                    (uint8_t Data);
+        
+        // Read function (overloaded)
+        SystemState_e   Read                    (uint8_t* pBuffer, size_t Size);
+        SystemState_e   Read                    (uint8_t*  Data);
+        SystemState_e   Read                    (uint16_t* Data);
+        SystemState_e   Read                    (uint32_t* Data);
+        SystemState_e   Read                    (uint8_t* pBuffer, size_t Size, SPI_DeviceInfo_t* pDevice);
+        SystemState_e   Read                    (uint8_t*  pData, SPI_DeviceInfo_t* pDevice);
+        SystemState_e   Read                    (uint16_t* pData, SPI_DeviceInfo_t* pDevice);
+        SystemState_e   Read                    (uint32_t* pData, SPI_DeviceInfo_t* pDevice);
 
+        // Write function (overloaded)
+        SystemState_e   Write                   (const uint8_t* pBuffer, size_t Size);
+        SystemState_e   Write                   (uint8_t  Data);
+        SystemState_e   Write                   (uint16_t Data);
+        SystemState_e   Write                   (uint32_t Data);
+        SystemState_e   Write                   (const uint8_t* pBuffer, size_t Size, SPI_DeviceInfo_t* pDevice);
+        SystemState_e   Write                   (uint8_t  Data, SPI_DeviceInfo_t* pDevice);
+        SystemState_e   Write                   (uint16_t Data, SPI_DeviceInfo_t* pDevice);
+        SystemState_e   Write                   (uint32_t Data, SPI_DeviceInfo_t* pDevice);
+
+        void            ChipSelect              (bool IsItActive);
+        void            IRQHandler              (void);
+        void            Config                  (uint32_t Mask, uint32_t Config);
+        SystemState_e   WaitReady               (void);
 
       #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-        SystemState_e           Transfer                (const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size);
-        SystemState_e           Transfer                (const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, void* pDevice);
-        SystemState_e           Transfer                (const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size);
-        SystemState_e           Transfer                (const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size, void* pDevice);
-        void                    OverrideMemoryIncrement (void);
-        static void             DMA_RX_IRQ_Handler      (SPI_ID_e SPI_ID);
-        static void             DMA_TX_IRQ_Handler      (SPI_ID_e SPI_ID);
+        SystemState_e   Transfer                (const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size);
+        SystemState_e   Transfer                (const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, void* pDevice);
+        SystemState_e   Transfer                (const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size);
+        SystemState_e   Transfer                (const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size, void* pDevice);
+        void            OverrideMemoryIncrement (void);
+        static void     DMA_RX_IRQ_Handler      (SPI_ID_e SPI_ID);
+        static void     DMA_TX_IRQ_Handler      (SPI_ID_e SPI_ID);
       #endif
 
     private:
@@ -197,6 +222,8 @@ class SPI_Driver
 //-------------------------------------------------------------------------------------------------
 
 #include "spi_var.h"
+
+extern SPI_Info_t SPI_Info[NB_OF_SPI_DRIVER];
 
 //-------------------------------------------------------------------------------------------------
 

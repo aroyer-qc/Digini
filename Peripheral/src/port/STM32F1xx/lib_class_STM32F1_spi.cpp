@@ -93,7 +93,7 @@ void SPI_Driver::Initialize(void)
     DMA_Channel_TypeDef* pDMA;
   #endif
 
-    nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
+    static nOS_Error Error = nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
 
     IO_PinInit(m_pInfo->PinCLK);
     IO_PinInit(m_pInfo->PinMOSI);
@@ -146,14 +146,14 @@ void SPI_Driver::Initialize(void)
 
     //---------------------------- SPIx CR1 Configuration and enable module ------
 
-    Config(SPI_CFG_CR1_CLEAR_MASK, SPI_FULL_DUPLEX      |
-                                   SPI_MODE_MASTER      |
+    Config(SPI_CFG_CR1_CLEAR_MASK, SPI_MODE_MASTER      |
                                    SPI_DATA_WIDTH_8_BIT |
                                    SPI_POLARITY_LOW     |
                                    SPI_PHASE_1_EDGE     |
                                    SPI_NSS_SOFT         |
-                                   SPI_MSB_FIRST   );//     |
-                                   //m_pInfo->Speed);
+                                   SPI_MSB_FIRST        |
+                                   m_pInfo->Control     |
+                                   m_pInfo->Speed);
 
   #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     RCC->AHBENR |= m_pInfo->RCC_AHBxPeriph;            // Initialize DMA clock
@@ -203,16 +203,16 @@ void SPI_Driver::Initialize(void)
 //
 //  Name:           LockToDevice
 //
-//  Parameter(s):   void*          pDevice
-//  Return:         SystemState_e  Status
+//  Parameter(s):   SPI_DeviceInfo_t*       pDevice
+//  Return:         SystemState_e           Status
 //
-//  Description:    This routine will configure the SPI port to work with a specific device and
-//                  lock it, so any other access to the port will be block until unlock
+//  Description:    Lock the driver to a specific device, so any other access to the port will be block
+//                  until unlock.
 //
 //  Note(s):        If a write without lock is executed then it will be done on the locked device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_Driver::LockToDevice(void* pDevice)
+SystemState_e SPI_Driver::LockToDevice(SPI_DeviceInfo_t* pDevice)
 {
     if(m_pDevice == nullptr)
     {
@@ -228,16 +228,15 @@ SystemState_e SPI_Driver::LockToDevice(void* pDevice)
 //
 //  Name:           UnlockFromDevice
 //
-//  Parameter(s):   void*         pDevice
-//  Return:         SystemState_e Status
+//  Parameter(s):   SPI_DeviceInfo_t*           pDevice
+//  Return:         SystemState_e               Status
 //
-//  Description:    This routine will unlock SPI port from a specific device
+//  Description:    Unlock SPI port from a specific device
 //
-//  Note(s):        If a write without lock is executed then it will be done on the locked device
-//                  if lock and no write at all if not lock to a device
+//  Note(s):        Only proper pointer will unlock the device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_Driver::UnlockFromDevice(void* pDevice)
+SystemState_e SPI_Driver::UnlockFromDevice(SPI_DeviceInfo_t* pDevice)
 {
     if(pDevice == m_pDevice)
     {
@@ -368,7 +367,7 @@ uint8_t SPI_Driver::Send(uint8_t Data)
 //
 //-------------------------------------------------------------------------------------------------
 #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, void* pDevice)
+SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, SPI_DeviceInfo_t* pDevice)
 {
     SystemState_e State;
 
@@ -449,10 +448,10 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
                 DMA_ClearFlag(pDMA, Flag);                                  // Clear IRQ DMA flag
 
                 // SPI
-              //  if(m_pInfo->Control == SPI_HALF_DUPLEX)
-              //  {
-              //      MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_TX);
-              //  }
+                if(m_pInfo->Control == SPI_HALF_DUPLEX)
+                {
+                    MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_TX);
+                }
 
                 SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                           // Enable SPI
                 SET_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                       // Enable DMA TX
@@ -503,10 +502,10 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
                 DMA_ClearFlag(pDMA, Flag);
 
                 // SPI
-         //       if(m_pInfo->Control == SPI_HALF_DUPLEX)
-         //       {
-         //           MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_RX);
-          //      }
+                if(m_pInfo->Control == SPI_HALF_DUPLEX)
+                {
+                    MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_RX);
+                }
 
                 SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                           // Enable SPI
                 SET_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));   // Start the process
@@ -533,10 +532,10 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
 
             CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                             // Disable SPI
 
-          //  if(m_pInfo->Control == SPI_HALF_DUPLEX)
-          //  {
-          //      MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_FULL_DUPLEX);
-          //  }
+            if(m_pInfo->Control == SPI_HALF_DUPLEX)
+            {
+                MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_FULL_DUPLEX);
+            }
 
 
             if(m_pInfo->PinNSS != IO_NOT_DEFINED)
@@ -570,7 +569,7 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
 //
 //-------------------------------------------------------------------------------------------------
 #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size, void* pDevice)
+SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size, SPI_DeviceInfo_t* pDevice)
 {
     SystemState_e State;
 
@@ -652,10 +651,10 @@ SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, u
                 DMA_ClearFlag(pDMA, Flag);                                                      // Clear IRQ DMA flag
 
                 // SPI
-      //          if(m_pInfo->Control == SPI_HALF_DUPLEX)
-      //          {
-      //              MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_TX);
-      //          }
+                if(m_pInfo->Control == SPI_HALF_DUPLEX)
+                {
+                    MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_TX);
+                }
 
                 SET_BIT(pSPIx->CR1, SPI_CR1_DFF | SPI_CR1_SPE);                                 // Enable SPI at 16 Bits
                 SET_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                                           // Enable DMA TX
@@ -709,10 +708,10 @@ SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, u
                 DMA_ClearFlag(pDMA, Flag);
 
                 // SPI
-          //      if(m_pInfo->Control == SPI_HALF_DUPLEX)
-          //      {
-          //          MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_RX);
-          //      }
+                if(m_pInfo->Control == SPI_HALF_DUPLEX)
+                {
+                    MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_RX);
+                }
                 SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                                               // Enable SPI
                 SET_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));                       // Start the process
 
@@ -740,10 +739,10 @@ SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, u
 
             CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                                                 // Disable SPI
 
-      //      if(m_pInfo->Control == SPI_HALF_DUPLEX)
-       //     {
-      //          MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_FULL_DUPLEX);
-      //     }
+            if(m_pInfo->Control == SPI_HALF_DUPLEX)
+            {
+                MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_FULL_DUPLEX);
+           }
 
 
             if(m_pInfo->PinNSS != IO_NOT_DEFINED)

@@ -77,12 +77,27 @@ class IV_11_DigitDriver
 
     private:
 
-        IV_11_Config_t*             m_pConfig;
+        const IV_11_Config_t*       m_pConfig;
+        SPI_Driver*                 m_pSPI;
         uint8_t*                    m_pDigitStream;
         uint16_t                    m_Padding;
         static const uint8_t        m_EncodedValue[DIGIT_NUMBER_OF_STANDARD_ENCODED_VALUE];
 };
 
 //-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+#define __CLASS_DIGIT_IV_11__
+#include "device_var.h"
+#undef  __CLASS_DIGIT_IV_11__
+
+//-------------------------------------------------------------------------------------------------
+
+#else // (USE_SPI_DRIVER == DEF_ENABLED)
+
+#pragma message("DIGINI driver for SPI must be enable and configure to use this device driver")
 
 #endif // (USE_SPI_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------

@@ -113,8 +113,8 @@ struct SPI_Info_t
     IO_ID_e              PinMOSI;
     IO_ID_e              PinMISO;
     IO_ID_e              PinNSS;
-//    uint32_t             Control;
-    //nt32_t             Speed;
+    uint32_t             Control;
+    uint32_t             Speed;
     IRQn_Type            IRQn_Channel;
 
   #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
@@ -127,7 +127,6 @@ struct SPI_Info_t
     IRQn_Type            TX_IRQn;
     uint32_t             RCC_AHBxPeriph;
   #endif
-  //  class SPI_Driver*    pObject;
 };
 
 struct SPI_DeviceInfo_t
@@ -188,9 +187,9 @@ class SPI_Driver //: public DriverInterface
 
       #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
         SystemState_e   Transfer                (const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size);
-        SystemState_e   Transfer                (const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, void* pDevice);
+        SystemState_e   Transfer                (const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, SPI_DeviceInfo_t* pDevice);
         SystemState_e   Transfer                (const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size);
-        SystemState_e   Transfer                (const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size, void* pDevice);
+        SystemState_e   Transfer                (const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size, SPI_DeviceInfo_t* pDevice);
         void            OverrideMemoryIncrement (void);
         void            DMA_RX_IRQ_Handler      (void);
         void            DMA_TX_IRQ_Handler      (void);
@@ -204,7 +203,7 @@ class SPI_Driver //: public DriverInterface
 
         nOS_Mutex               m_Mutex;
         SPI_Info_t*             m_pInfo;
-        void*                   m_pDevice;
+        SPI_DeviceInfo_t*       m_pDevice;
         bool                    m_NoMemoryIncrement;            // use for dummy TX or RX
 
         volatile SystemState_e  m_Status;

@@ -107,7 +107,8 @@ void IV_11_DigitDriver::Initialize(const IV_11_Config_t* pConfig)
 
     IO_PinInit(m_pConfig->LoadPin);
 
-   // pConfig->pSPI; // configure the SPI....
+    m_pSPI = new SPI_Driver(pConfig->SPI_ID);
+    m_pSPI->Initialize();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -160,6 +161,16 @@ void IV_11_DigitDriver::Write(const char* pBuffer)
             return;
         }
     }
+
+
+    m_pSPI->Transfer(m_pDigitStream, 7, nullptr, 0, (SPI_DeviceInfo_t*)this);
+
+
+
+
+
+
+
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -183,7 +194,7 @@ void IV_11_DigitDriver::Write(uint8_t Value, uint8_t Offset, bool Dot)
     {
         Value -='0';                                // Remove Offset
     }
-    else if (Value == '°')
+    else if (Value == '\xBA')
     {
         Value = 10;
     }

@@ -35,19 +35,18 @@
 //-------------------------------------------------------------------------------------------------
 
 #if (USE_TIM_DRIVER == DEF_ENABLED)
+#if (USE_PWM_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
 #define WS281x_TIMER_RANGE              25
-#define WS281x_TIMER_RANGE              25
 #define WS281x_RGB_SIZE                 3
 #define WS281x_LED_BUFFER_SIZE          24                                  // One led need 24 Bits for the color.
 #define WS281x_DMA_FULL_BUFFER_SIZE     2 * WS281x_LED_BUFFER_SIZE          // DMA need 2 leds.
 #define WS281x_LOGICAL_0                7
 #define WS281x_LOGICAL_1                14
-#define WS281x_DUMMY_LEDS               2
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -65,27 +64,25 @@ void WS281x::Initialize(const WS281x_Config_t* pConfig)
     m_pPWM = new PWM_Driver(pConfig->PWM_ChannelID);
     m_pPWM->Initialize();
 
-    m_SetCountReset   = uint8_t((uint16_t(pConfig->ResetType) / WS281x_TIMER_RANGE));
+    m_SetCountReset   = 32000;//uint8_t((uint16_t(pConfig->ResetType) / WS281x_TIMER_RANGE));
     m_ResetCount      = m_SetCountReset;
-    m_NumberOfLED     = pConfig->NumberOfLED;                                                                                 // Number of real LEDs.
-    m_LedChainSize    = m_NumberOfLED + WS281x_DUMMY_LEDS;                                                                    // Chain LEDs Size.
-    m_pLedChain       = (WS281x_Color_t*)pMemoryPool->AllocAndClear((m_LedChainSize + WS281x_DUMMY_LEDS) * WS281x_RGB_SIZE);  // Reserved x bytes  from the alloc mem library.
-    m_pDMA_Buffer     = (uint8_t*)pMemoryPool->AllocAndSet(WS281x_DMA_FULL_BUFFER_SIZE, WS281x_LOGICAL_0);                                    // Reserved 48 bytes DMA transfert to compare register.
+    m_NumberOfLED     = pConfig->NumberOfLED;                                                                // Number of real LEDs.
+    m_pLedChain       = (WS281x_Color_t*)pMemoryPool->AllocAndClear(m_NumberOfLED * WS281x_RGB_SIZE);        // Reserved x bytes  from the alloc mem library.
+    m_pDMA_Buffer     = (uint8_t*)pMemoryPool->AllocAndSet(WS281x_DMA_FULL_BUFFER_SIZE, WS281x_LOGICAL_0);   // Reserved 48 bytes DMA transfert to compare register.
     m_pDMA_HalfBuffer = m_pDMA_Buffer + WS281x_LED_BUFFER_SIZE;
-    m_LedPointer    = 0;                                                                                                    // Start at Led 0
-    m_pDMA          = pConfig->DMA_Channel;
-    m_DMA_Flag      = pConfig->DMA_Flag;
+    m_LedPointer      = 0;                                                                                   // Start at Led 0
+    m_pDMA            = pConfig->DMA_Channel;
+    m_DMA_Flag        = pConfig->DMA_Flag;
 
   #if (WS281x_CONTINUOUS_SCAN == DEF_DISABLED)
-    m_NeedRefresh   = true;
+    m_NeedRefresh = true;
   #endif
-
 
   #if (DMA2_SUPPORT == DEF_ENABLED)
     SET_BIT(RCC->AHBENR, int(pConfig->TimID) <= int(TIM_DRIVER_ID_4) ? RCC_AHBENR_DMA1EN : \
-                                                                       RCC_AHBENR_DMA2EN);                                  // Initialize DMA clock
+                                                                       RCC_AHBENR_DMA2EN);                  // Initialize DMA clock
   #else
-    SET_BIT(RCC->AHBENR, RCC_AHBENR_DMA1EN);                                                                                // Initialize DMA clock
+    SET_BIT(RCC->AHBENR, RCC_AHBENR_DMA1EN);                                                                // Initialize DMA clock
   #endif
 
     // USE DMA to change compare value in register of the timer
@@ -98,7 +95,7 @@ void WS281x::Initialize(const WS281x_Config_t* pConfig)
                     DMA_MEMORY_TO_PERIPHERAL         |
                     DMA_PERIPHERAL_NO_INCREMENT      |
                     DMA_MEMORY_INCREMENT             |
-                    DMA_PERIPHERAL_SIZE_16_BITS      |      // ??? check if it works.
+                    DMA_PERIPHERAL_SIZE_16_BITS      |
                     DMA_MEMORY_SIZE_8_BITS           |
                     DMA_PRIORITY_LEVEL_HIGH          |
                     DMA_HALF_TRANSFERT_IRQ           |
@@ -106,7 +103,7 @@ void WS281x::Initialize(const WS281x_Config_t* pConfig)
                     DMA_START_TRANSFERT;
 
     ISR_Init(pConfig->IRQn_Channel, pConfig->PreempPrio);
-    Start();
+   // Start();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -179,13 +176,13 @@ void WS281x::Refresh(void)
 //-------------------------------------------------------------------------------------------------
 void WS281x::SetLed(uint32_t Offset, WS281x_Color_t Color)
 {
-    if(Offset < m_LedChainSize)                                                 // Offset must inside length of chain
+    if(Offset < m_NumberOfLED)                                                 // Offset must inside length of chain
     {
         if(memcmp(&m_pLedChain[Offset], &Color, sizeof(WS281x_Color_t)) != 0)   // Only refresh if color is different
         {
             m_pLedChain[Offset] = Color;
 
-          #if ((WS281x_SET_LED_TRIGGER_REFRESH == DEF_DISABLED) || (WS281x_CONTINUOUS_SCAN == DEF_DISABLED))
+          #if ((WS281x_SET_LED_TRIGGER_REFRESH == DEF_ENABLED) && (WS281x_CONTINUOUS_SCAN == DEF_DISABLED))
             m_NeedRefresh = true;
           #endif
         }
@@ -213,15 +210,32 @@ void WS281x::DMA_Channel_IRQ_Handler(bool IsItTransferComplete)
     register uint8_t* pColorData;
     register uint8_t  Color;
 
-    if(IsItTransferComplete == true) pBuffer = m_pDMA_Buffer;
-    else                             pBuffer = m_pDMA_HalfBuffer;
-
-    if(m_LedPointer > m_NumberOfLED)
+    if(IsItTransferComplete == true)
     {
-        m_ResetCount--;     // Reset state until it reach 0
+        pBuffer = m_pDMA_HalfBuffer;
+    }
+    else
+    {
+        pBuffer = m_pDMA_Buffer;
+    }
+
+    if(m_LedPointer >= m_NumberOfLED)
+    {
+      #if (WS281x_CONTINUOUS_SCAN == DEF_DISABLED)
+        Stop();
+      #endif
+
+//        if(m_LedPointer == m_NumberOfLED)
+//        {
+//            m_LedPointer++;
+//            memset(pBuffer, 0xFF, WS281x_LED_BUFFER_SIZE);      // Reset for this stream.
+//        }
+
 
       #if (WS281x_CONTINUOUS_SCAN == DEF_ENABLED)
-        if(m_ResetCount == 0)                           // Restart the scan in continuous scan mode
+        m_ResetCount--;                                         // Reset state until it reach 0
+
+        if(m_ResetCount == 0)                                   // Restart the scan in continuous scan mode
         {
             m_ResetCount = m_SetCountReset;
             m_LedPointer = 0;
@@ -247,11 +261,10 @@ void WS281x::DMA_Channel_IRQ_Handler(bool IsItTransferComplete)
 
         m_LedPointer++;
     }
-
-
 }
 
 //-------------------------------------------------------------------------------------------------
 
+#endif // (USE_PWM_DRIVER == DEF_ENABLED)
 #endif // (USE_TIM_DRIVER == DEF_ENABLED)
 

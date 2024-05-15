@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_spi_serial_shift_digit.h
+//  File : lib_class_spi_IV_11.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -24,13 +24,13 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#pragma once
-
 //-------------------------------------------------------------------------------------------------
-// Include(s)
+// Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_digini.h"
+#define LIB_IV_11_GLOBAL
+#include "lib_class_spi_IV_11.h"
+#undef  LIB_IV_11_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -40,58 +40,11 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define DIGIT_NUMBER_OF_STANDARD_ENCODED_VALUE          13
-#define DIGIT_SERIAL_SHIFT_PADDING                      4
-#define DIGIT_LOW_NIBBLE_MASK                           0x0F
-#define DIGIT_HIGH_NIBBLE_MASK                          0xF0
-
-//-------------------------------------------------------------------------------------------------
-// Typedef(s)
-//-------------------------------------------------------------------------------------------------
-
-struct IV_11Config_t
-{
-    SPI_ID_e    SPI_ID
-    IO_ID_e     LoadPin;
-    IO_ID_e     BlankPin;
-    uint8_t     NumberOfDigit;
-};
-
-//-------------------------------------------------------------------------------------------------
-// class definition(s)
-//-------------------------------------------------------------------------------------------------
-class IV_11_DigitDriver
-{
-    public:
-
-                    IV_11_DigitDriver       ();
-
-        void        Initialize              (const IV_11Config_t* pConfig);
-        
-        void        Write                   (const char* pBuffer);                                  // Update all digit from string. Supporting dot and send load command
-        void        Write                   (uint8_t Value, uint8_t Offset, bool Dot = false);      // Change value at offset 
-        void        WriteEncodedValue       (uint8_t Value, uint8_t Offset);                        // Change encoded value at offset.. Control raw digit
-        void        Load                    (void);
-        void        Blank                   (bool IsItEnabled);
-        void        Dim                     (uint8_t Percent);
-
-    private:
-
-        IV_11Config_t*              m_pConfig;
-        uint8_t*                    m_pDigitStream;
-        const uint8_t               m_EncodedValue[DIGIT_NUMBER_OF_STANDARD_ENCODED_VALUE];
-        uint16_t                    m_Padding;
-};
-
-//-------------------------------------------------------------------------------------------------
-
-#endif // (USE_SPI_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
-
 #define DIGIT_DOT_VALUE             0x80
+
+//-------------------------------------------------------------------------------------------------
+// Const(s)
+//-------------------------------------------------------------------------------------------------
 
 const uint8_t IV_11_DigitDriver::m_EncodedValue[DIGIT_NUMBER_OF_STANDARD_ENCODED_VALUE] =
 {
@@ -108,10 +61,17 @@ const uint8_t IV_11_DigitDriver::m_EncodedValue[DIGIT_NUMBER_OF_STANDARD_ENCODED
     0xC6,   // ° Degree
     0x9C,   // C Celsius
     0x8E,   // F fahrenheit
-}
+};
 
-
-
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Constructor
+//
+//  Parameter(s):   None
+//
+//  Description:    Preinit pointer
+//
+//-------------------------------------------------------------------------------------------------
 IV_11_DigitDriver::IV_11_DigitDriver()
 {
     m_pDigitStream = nullptr;
@@ -121,20 +81,19 @@ IV_11_DigitDriver::IV_11_DigitDriver()
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   DigitConfig_t*       Configuration located in device_var.h
+//  Parameter(s):   IV_11_Config_t*     Configuration located in device_var.h
 //
 //  Return:         void
 //
 //  Description:    Initialize the Serial shift for Digit using SPI interface
 //
 //-------------------------------------------------------------------------------------------------
-void IV_11_DigitDriver::Initialize(const DigitConfig_t* pConfig)
+void IV_11_DigitDriver::Initialize(const IV_11_Config_t* pConfig)
 {
     size_t RequiredBytes;
-    
+
     m_pConfig = pConfig;
-    
-    
+
     // IV-11 need 20 Bits for each pair of IV-11.
     // There is 4 dummy bits for each pair, but for the last pair those bits do not need to be sent.
     // There is padding bits to add in the beginning of the stream if not multiple of 8 bits
@@ -142,14 +101,14 @@ void IV_11_DigitDriver::Initialize(const DigitConfig_t* pConfig)
     RequiredBytes += (((RequiredBytes / 2) - 1) / 2);                           // Remove one pair size, than add 4 bits for all remain pair.
     m_pDigitStream = (uint8_t*) pMemoryPool->AllocAndClear(RequiredBytes);      // No digit ON
 
-    
     // If number of bit per pair is divisible by 8, then we need padding so all bit needed are fetch.
     // If not divisible by 8, the no need for padding since all bit will be fetch
     m_Padding = (((pConfig->NumberOfDigit / 2) % 8) == 0) ? 4 : 0;
 
     IO_PinInit(m_pConfig->LoadPin);
-    
-    pConfig->pSPI // configure the SPI....
+
+    m_pSPI = new SPI_Driver(pConfig->SPI_ID);
+    m_pSPI->Initialize();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -172,7 +131,7 @@ void IV_11_DigitDriver::Write(const char* pBuffer)
     uint8_t Value;
     size_t  Length;
     bool    Dot;
-    
+
     EncodedOffset = 0;
     Length = strlen(pBuffer);
 
@@ -180,7 +139,7 @@ void IV_11_DigitDriver::Write(const char* pBuffer)
     {
         Value = pBuffer[i];
         Dot = false;
-        
+
         if((i + 1) != Length)   // Do not check dot past the length of the string.
         {
             if(pBuffer[i + 1] == '.')
@@ -191,17 +150,27 @@ void IV_11_DigitDriver::Write(const char* pBuffer)
 
         Write(Value, EncodedOffset, Dot);
         EncodedOffset++;
-       
+
         if(Dot == true)
         {
             i++;
         }
-       
+
         if(EncodedOffset >= m_pConfig->NumberOfDigit)
         {
             return;
         }
     }
+
+
+    m_pSPI->Transfer(m_pDigitStream, 7, nullptr, 0, (SPI_DeviceInfo_t*)this);
+
+
+
+
+
+
+
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -225,7 +194,7 @@ void IV_11_DigitDriver::Write(uint8_t Value, uint8_t Offset, bool Dot)
     {
         Value -='0';                                // Remove Offset
     }
-    else if (Value == '°')
+    else if (Value == '\xBA')
     {
         Value = 10;
     }
@@ -241,7 +210,7 @@ void IV_11_DigitDriver::Write(uint8_t Value, uint8_t Offset, bool Dot)
     {
         return;
     }
-    
+
     WriteEncodedValue(m_EncodedValue[Value] | (Dot == true ) ? DIGIT_DOT_VALUE : 0, Offset);
 }
 
@@ -263,7 +232,7 @@ void IV_11_DigitDriver::Write(uint8_t Value, uint8_t Offset, bool Dot)
 void IV_11_DigitDriver::WriteEncodedValue(uint8_t EncodedValue, uint8_t Offset)
 {
     uint16_t BitOffset;
-    
+
     if(m_pDigitStream != nullptr)
     {
         if(Offset < m_pConfig->NumberOfDigit)
@@ -282,30 +251,66 @@ void IV_11_DigitDriver::WriteEncodedValue(uint8_t EncodedValue, uint8_t Offset)
             else
             {
                 CLEAR_BIT(m_pDigitStream[Offset], DIGIT_LOW_NIBBLE_MASK);
-                SET_BITm_pDigitStream[Offset], EncodedValue >> 4);  
+                SET_BIT(m_pDigitStream[Offset], EncodedValue >> 4);
 
                 CLEAR_BIT(m_pDigitStream[Offset + 1], DIGIT_HIGH_NIBBLE_MASK);
-                SET_BITm_pDigitStream[Offset + 1], EncodedValue << 4);  
+                SET_BIT(m_pDigitStream[Offset + 1], EncodedValue << 4);
             }
         }
     }
 }
 
-// Toggle the loading of the Encoded value
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Load
+//
+//  Parameter(s):   None
+//
+//  Return:         void
+//
+//  Description:    Toggle the loading of the encoded value
+//
+//-------------------------------------------------------------------------------------------------
 void IV_11_DigitDriver::Load(void)
 {
     IO_SetPinHigh(m_pConfig->LoadPin);
     IO_SetPinLow(m_pConfig->LoadPin);
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Blank
+//
+//  Parameter(s):   None
+//
+//  Return:         void
+//
+//  Description:    Blank the tube
+//
+//-------------------------------------------------------------------------------------------------
 void IV_11_DigitDriver::Blank(bool IsItEnabled)
 {
     // Stop PWM
-    // or 
+    // or
     // Start
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Dim
+//
+//  Parameter(s):   None
+//
+//  Return:         void
+//
+//  Description:    control the brightness on the tube
+//
+//-------------------------------------------------------------------------------------------------
 void IV_11_DigitDriver::Dim(uint8_t Percent)
 {
     // use Timer PWM channel
 }
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // (USE_SPI_DRIVER == DEF_ENABLED)

@@ -180,7 +180,7 @@ void PWM_Driver::SetDuty(uint16_t Duty)
 //  Function:       Start
 //
 //  Parameter(s):   none
-//  Return:         none
+//  Return:         void
 //
 //  Description:    Start the PWM
 //
@@ -195,7 +195,7 @@ void PWM_Driver::Start(void)
 //  Function:       Stop
 //
 //  Parameter(s):   none
-//  Return:         none
+//  Return:         void
 //
 //  Description:    Stop the PWM
 //

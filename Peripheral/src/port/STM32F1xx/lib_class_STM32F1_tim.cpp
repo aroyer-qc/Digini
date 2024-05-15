@@ -85,7 +85,7 @@ void TIM_Driver::Initialize(void)
 
     m_pTim->PSC = m_pInfo->Prescaler - 1;                           // Set the prescaler value
     m_pTim->ARR = m_pInfo->Reload;                                  // Set the auto reload register
-    m_pTim->CNT = m_pInfo->Reload - 1;                              // Prevent PWM from been active on activation
+    m_pTim->CNT = 0;//m_pInfo->Reload - 1;                              // Prevent PWM from been active on activation
     m_pTim->CR1 = m_pInfo->Mode | TIM_CR1_ARPE;
 
     // Set the update interrupt enable

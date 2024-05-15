@@ -119,14 +119,14 @@
 
 enum WS281x_ResetType_e
 {
-    WS2812B_RESET       = 1000,  // TODO is it right??  just check timing when it will work
+    WS2812B_RESET       = 32000,  // TODO is it right??  just check timing when it will work
     WS2811_RESET        = 5600,
 };
 
 struct WS281x_Color_t
 {
-    uint8_t     Red;
     uint8_t     Green;
+    uint8_t     Red;
     uint8_t     Blue;
 };
 
@@ -167,7 +167,6 @@ class WS281x
     private:
 
         PWM_Driver*                 m_pPWM;
-        uint32_t                    m_LedChainSize;
         uint32_t                    m_NumberOfLED;
         volatile uint16_t           m_LedPointer;
         WS281x_Color_t*             m_pLedChain;
@@ -176,14 +175,10 @@ class WS281x
       #if (WS281x_CONTINUOUS_SCAN == DEF_DISABLED)
         bool                        m_NeedRefresh;
       #endif
-        uint32_t                    m_SetCountReset;
-        uint32_t                    m_ResetCount;
+        volatile uint32_t           m_SetCountReset;
+        volatile uint32_t           m_ResetCount;
         DMA_Channel_TypeDef*        m_pDMA;
         uint32_t                    m_DMA_Flag;
-
-      #if (WS281x_CONTINUOUS_SCAN == DEF_DISABLED)
-      #endif
-
 };
 
 //-------------------------------------------------------------------------------------------------

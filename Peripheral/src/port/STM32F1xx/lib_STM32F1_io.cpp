@@ -119,13 +119,15 @@ void IO_PinInit(IO_ID_e IO_ID)
     uint32_t       PinMode;
     uint32_t       State;
 
-    pIO_Properties = &IO_Properties[IO_ID];
-    pPort          = pIO_Properties->pPort;
-    PinNumber      = pIO_Properties->PinNumber;
-    PinMode        = pIO_Properties->PinMode;
-    State          = pIO_Properties->State;
-
-    IO_PinInit(pPort, PinNumber, PinMode, State);
+    if(IO_ID != IO_NOT_DEFINED)
+    {
+        pIO_Properties = &IO_Properties[IO_ID];
+        pPort          = pIO_Properties->pPort;
+        PinNumber      = pIO_Properties->PinNumber;
+        PinMode        = pIO_Properties->PinMode;
+        State          = pIO_Properties->State;
+        IO_PinInit(pPort, PinNumber, PinMode, State);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -191,12 +193,15 @@ void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint3
 //-------------------------------------------------------------------------------------------------
 void IO_SetPinLow(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
-
-    if(pPort != GPIOxx)
+    if(IO_ID != IO_NOT_DEFINED)
     {
-        uint32_t PinBitReset = 1 << (IO_Properties[IO_ID].PinNumber + IO_OFFSET_BIT_RESET);
-        pPort->BSRR = PinBitReset;
+        GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+        if(pPort != GPIOxx)
+        {
+            uint32_t PinBitReset = 1 << (IO_Properties[IO_ID].PinNumber + IO_OFFSET_BIT_RESET);
+            pPort->BSRR = PinBitReset;
+        }
     }
 }
 
@@ -212,12 +217,15 @@ void IO_SetPinLow(IO_ID_e IO_ID)
 //-------------------------------------------------------------------------------------------------
 void IO_SetPinHigh(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
-
-    if(pPort != GPIOxx)
+    if(IO_ID != IO_NOT_DEFINED)
     {
-        uint32_t PinBitSet = 1 << IO_Properties[IO_ID].PinNumber;
-        pPort->BSRR = PinBitSet;
+        GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+        if(pPort != GPIOxx)
+        {
+            uint32_t PinBitSet = 1 << IO_Properties[IO_ID].PinNumber;
+            pPort->BSRR = PinBitSet;
+        }
     }
 }
 
@@ -233,12 +241,15 @@ void IO_SetPinHigh(IO_ID_e IO_ID)
 //-------------------------------------------------------------------------------------------------
 void IO_TogglePin(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
-
-    if(pPort != GPIOxx)
+    if(IO_ID != IO_NOT_DEFINED)
     {
-        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
-        pPort->ODR ^= (1 << PinNumber);
+        GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+        if(pPort != GPIOxx)
+        {
+            uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
+            pPort->ODR ^= (1 << PinNumber);
+        }
     }
 }
 
@@ -277,12 +288,16 @@ void IO_SetPin(IO_ID_e IO_ID, bool Value)
 //-------------------------------------------------------------------------------------------------
 uint32_t IO_GetInputPinValue(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
-    uint32_t      PinValue = 0;
+    uint32_t PinValue = 0;
 
-    if(pPort != GPIOxx)
+    if(IO_ID != IO_NOT_DEFINED)
     {
-        PinValue = pPort->IDR & (1 << IO_Properties[IO_ID].PinNumber);
+        GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+        if(pPort != GPIOxx)
+        {
+            PinValue = pPort->IDR & (1 << IO_Properties[IO_ID].PinNumber);
+        }
     }
 
     return PinValue;
@@ -317,18 +332,21 @@ bool IO_GetInputPin(IO_ID_e IO_ID)
 //-------------------------------------------------------------------------------------------------
 bool IO_GetOutputPin(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
-
-    if(pPort != GPIOxx)
+    if(IO_ID != IO_NOT_DEFINED)
     {
-        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
+        GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
 
-        if((pPort->ODR & (1 << PinNumber)) == 0)
+        if(pPort != GPIOxx)
         {
-            return false;
-        }
+            uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
 
-        return true;
+            if((pPort->ODR & (1 << PinNumber)) == 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 
     return false;
@@ -346,11 +364,14 @@ bool IO_GetOutputPin(IO_ID_e IO_ID)
 //-------------------------------------------------------------------------------------------------
 bool IO_IsItValid(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
-
-    if(pPort != GPIOxx)
+    if(IO_ID != IO_NOT_DEFINED)
     {
-        return true;
+        GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
+
+        if(pPort != GPIOxx)
+        {
+            return true;
+        }
     }
 
     return false;
@@ -368,19 +389,22 @@ bool IO_IsItValid(IO_ID_e IO_ID)
 //-------------------------------------------------------------------------------------------------
 void IO_LockPin(IO_ID_e IO_ID)
 {
-    GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
-
-    if(pPort != GPIOxx)
+    if(IO_ID != IO_NOT_DEFINED)
     {
-        uint32_t Register  = IO_LOCK_KEY;
-        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
+        GPIO_TypeDef* pPort = IO_Properties[IO_ID].pPort;
 
-        Register |= (1 << PinNumber);   // Apply lock key write sequence
-        pPort->LCKR = Register;         // Set LCKx bit(s): LCKK='1' + LCK[15-0]
-        pPort->LCKR = (1 << PinNumber); // Reset LCKx bit(s): LCKK='0' + LCK[15-0]
-        pPort->LCKR = Register;         // Set LCKx bit(s): LCKK='1' + LCK[15-0]
-        Register    = pPort->LCKR;      // Read LCKK register. This read is mandatory to complete key lock sequence
-        (void)Register;
+        if(pPort != GPIOxx)
+        {
+            uint32_t Register  = IO_LOCK_KEY;
+            uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
+
+            Register |= (1 << PinNumber);   // Apply lock key write sequence
+            pPort->LCKR = Register;         // Set LCKx bit(s): LCKK='1' + LCK[15-0]
+            pPort->LCKR = (1 << PinNumber); // Reset LCKx bit(s): LCKK='0' + LCK[15-0]
+            pPort->LCKR = Register;         // Set LCKx bit(s): LCKK='1' + LCK[15-0]
+            Register    = pPort->LCKR;      // Read LCKK register. This read is mandatory to complete key lock sequence
+            (void)Register;
+        }
     }
 }
 

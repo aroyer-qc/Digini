@@ -34,22 +34,12 @@
 // typedef Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-enum PWM_Compare_e
-{
-    PWM_CHANNEL_NONE,
-    PWM_CHANNEL_1,
-    PWM_CHANNEL_2,
-    PWM_CHANNEL_3,
-    PWM_CHANNEL_4,
-};
-
 struct PWM_Info_t
 {
     IO_ID_e         PinID;
     TIM_ID_e        TimID;
-    PWM_Compare_e   Channel;
+    TIM_Compare_e   Channel;
     uint16_t        InitialDuty;
-    uint16_t        Output;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -66,13 +56,13 @@ class PWM_Driver
         void                            SetDuty                 (uint16_t Duty);
         void                            Start                   (void);
         void                            Stop                    (void);
-        volatile uint32_t*              GetCompareRegisterPointer   (void);
 
     private:
 
         const PWM_Info_t*               m_pInfo;
         TIM_Driver*                     m_pTimer;
         TIM_TypeDef*                    m_pTim;
+        IO_ID_e                         m_IO_Pin;
         uint16_t                        m_Duty;
 };
 

@@ -87,6 +87,7 @@ typedef enum _ASCII_e
     ASCII_EQUAL                 = '=',
     ASCII_QUESTION_MARK         = '?',
     ASCII_DEL                   = '\x7F',
+    ASCII_EXTENDED_BEGIN        = '\x80',
     ASCII_EXT_TL_CORNER_CHAR    = '\xDA',
     ASCII_EXT_HORIZONTAL_CHAR   = '\xC4',
     ASCII_EXT_TR_CORNER_CHAR    = '\xBF',

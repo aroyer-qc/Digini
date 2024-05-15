@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -60,7 +60,8 @@ class PWM_Driver
     private:
 
         const PWM_Info_t*               m_pInfo;
-        TIM_TypeDef*                    m_pTimer;
+        TIM_Driver*                     m_pTimer;
+        TIM_TypeDef*                    m_pTim;
         IO_ID_e                         m_IO_Pin;
         uint16_t                        m_Duty;
 };

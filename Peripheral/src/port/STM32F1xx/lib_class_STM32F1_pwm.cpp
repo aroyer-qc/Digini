@@ -24,6 +24,9 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+// TODO compare to last F4 and F7 to sync methodology
+
+
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
@@ -46,19 +49,24 @@
 #define TIM_CCMR2_OC4_MODE_PWM                 ((uint16_t)0x6000)
 
 // TODO simplify mode setting and also allow configuration into tim_var.h
-#define TIM_CCMR1_OC1_MODE_1_PWM                 ((uint16_t)0x0060)
-#define TIM_CCMR1_OC1_MODE_2_PWM                 ((uint16_t)0x0060)
-#define TIM_CCMR1_OC2_MODE_1_PWM                 ((uint16_t)0x6000)
-#define TIM_CCMR1_OC2_MODE_2_PWM                 ((uint16_t)0x6000)
-#define TIM_CCMR2_OC3_MODE_1_PWM                 ((uint16_t)0x0060)
-#define TIM_CCMR2_OC3_MODE_2_PWM                 ((uint16_t)0x0060)
-#define TIM_CCMR2_OC4_MODE_1_PWM                 ((uint16_t)0x6000)
-#define TIM_CCMR2_OC4_MODE_2_PWM                 ((uint16_t)0x6000)
+#define TIM_CCMR1_OC1_MODE_1_PWM               ((uint16_t)0x0060)
+#define TIM_CCMR1_OC1_MODE_2_PWM               ((uint16_t)0x0060)
+#define TIM_CCMR1_OC2_MODE_1_PWM               ((uint16_t)0x6000)
+#define TIM_CCMR1_OC2_MODE_2_PWM               ((uint16_t)0x6000)
+#define TIM_CCMR2_OC3_MODE_1_PWM               ((uint16_t)0x0060)
+#define TIM_CCMR2_OC3_MODE_2_PWM               ((uint16_t)0x0060)
+#define TIM_CCMR2_OC4_MODE_1_PWM               ((uint16_t)0x6000)
+#define TIM_CCMR2_OC4_MODE_2_PWM               ((uint16_t)0x6000)
 
 #define TIM_CCER_OC1_MASK                      ((uint16_t)0x000F)
 #define TIM_CCER_OC2_MASK                      ((uint16_t)0x00F0)
 #define TIM_CCER_OC3_MASK                      ((uint16_t)0x0F00)
 #define TIM_CCER_OC4_MASK                      ((uint16_t)0xF000)
+
+#define TIM_CCMR1_OC1_MASK                     ((uint16_t)0x00FF)
+#define TIM_CCMR1_OC2_MASK                     ((uint16_t)0xFF00)
+#define TIM_CCMR2_OC3_MASK                     ((uint16_t)0x00FF)
+#define TIM_CCMR2_OC4_MASK                     ((uint16_t)0xFF00)
 
 //-------------------------------------------------------------------------------------------------
 //

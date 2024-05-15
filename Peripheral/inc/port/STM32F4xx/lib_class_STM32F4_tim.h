@@ -91,6 +91,22 @@
   #define TIM_DRIVER_SUPPORT_ANY_TIM1_TO_TIM14_CFG  DEF_DISABLED
 #endif
 
+#if (TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG  == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM2_TO_TIM5_COMPARE_CFG  == DEF_ENABLED) || \
+    (TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG  == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM9_OR_TIM12_COMPARE_CFG == DEF_ENABLED) || \
+    (TIM_DRIVER_SUPPORT_TIM10_COMPARE_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM11_COMPARE_CFG         == DEF_ENABLED) || \
+    (TIM_DRIVER_SUPPORT_TIM13_COMPARE_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_TIM14_COMPARE_CFG         == DEF_ENABLED)
+
+  #define TIM_DRIVER_SUPPORT_COMPARE_ANY_TIM1_TO_TIM14_CFG  DEF_ENABLED
+#else
+  #define TIM_DRIVER_SUPPORT_COMPARE_ANY_TIM1_TO_TIM14_CFG  DEF_DISABLED
+#endif
+
+#if (TIM_DRIVER_SUPPORT_COMPARE_ANY_TIM1_TO_TIM14_CFG == DEF_ENABLED) || (TIM_DRIVER_SUPPORT_LPTIM1_COMPARE_CFG == DEF_ENABLED)
+  #define TIM_DRIVER_SUPPORT_COMPARE_CFG                    DEF_ENABLED
+#else
+  #define TIM_DRIVER_SUPPORT_COMPARE_CFG                    DEF_DISABLED
+#endif
+
 #define TIM_IRQ_DMA_NO_SOURCE                       0x0000
 #define TIM_IRQ_UPDATE                              0x0001
 #define TIM_IRQ_CAPTURE_COMPARE_1                   0x0002
@@ -107,6 +123,15 @@
 #define TIM_DMA_CAPTURE_COMPARE_4                   0x1000
 #define TIM_DMA_COM                                 0x2000
 #define TIM_DMA_TRIGGER                             0x4000
+
+#define TIM_CCER_OC1_MASK                           ((uint16_t)0x000F)
+#define TIM_CCER_OC2_MASK                           ((uint16_t)0x00F0)
+#define TIM_CCER_OC3_MASK                           ((uint16_t)0x0F00)
+#define TIM_CCER_OC4_MASK                           ((uint16_t)0xF000)
+#define TIM_CCMR1_OC1_MASK                          ((uint16_t)0x00FF)
+#define TIM_CCMR1_OC2_MASK                          ((uint16_t)0xFF00)
+#define TIM_CCMR2_OC3_MASK                          ((uint16_t)0x00FF)
+#define TIM_CCMR2_OC4_MASK                          ((uint16_t)0xFF00)
 
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
@@ -173,6 +198,24 @@ enum TIM_ID_e
      NB_OF_TIM_DRIVER,
 };
 
+enum TIM_Compare_e
+{
+    TIM_CHANNEL_NONE,
+    TIM_CHANNEL_1,
+    TIM_CHANNEL_2,
+    TIM_CHANNEL_3,
+    TIM_CHANNEL_4,
+};
+
+enum TIM_TypeMatch_e
+{
+    TIM_MATCH_CH1,
+    TIM_MATCH_CH2,
+    TIM_MATCH_CH3,
+    TIM_MATCH_CH4,
+    TIM_MATCH_UPDATE,
+};
+
 struct TIM_Info_t
 {
     TIM_TypeDef*        pTIMx;
@@ -186,6 +229,8 @@ struct TIM_Info_t
     uint32_t            IRQ_DMA_SourceEnable;
 };
 
+typedef void (*TIM_CallBack_t)(TIM_TypeMatch_e TypeMatch);
+
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
@@ -194,16 +239,31 @@ class TIM_Driver
 {
     public:
 
-                            TIM_Driver              (TIM_ID_e TimID);
+                            TIM_Driver                  (TIM_ID_e TimID);
 
-        void                Initialize              (void);
-        uint32_t            GetCounterValue         (void);
-        void                Start                   (void);
-        void                ReStart                 (void);
-        void                Stop                    (void);
-        void                SetReload               (uint32_t Value);
-        uint32_t            GetReload               (void);
-        TIM_TypeDef*        GetTimerPointer             (void);
+        void                Initialize                  (void);
+        void                RegisterCallBack            (TIM_CallBack_t pCallBack);
+        void                CallBack                    (bool ProcessUpdate);
+        uint32_t            GetCounterValue             (void);
+        uint32_t            TimeBaseToPrescaler         (uint32_t TimeBase);
+        void                Start                       (void);
+        void                ReStart                     (void);
+        void                Stop                        (void);
+        void                SetReload                   (uint32_t Value);
+        uint32_t            GetReload                   (void);
+
+      #if (TIM_DRIVER_SUPPORT_COMPARE_CFG == DEF_ENABLED)
+        void                ClearConfigCompareChannel   (TIM_Compare_e Channel);
+        void                SetCompareChannel           (TIM_Compare_e Channel, uint32_t Value);
+        volatile uint32_t*  GetCompareRegisterPointer   (void);
+        void                EnableCompareChannel        (TIM_Compare_e Channel);
+        void                DisableCompareChannel       (TIM_Compare_e Channel);
+        void                GetComparePointer           (TIM_Compare_e Channel);
+      #endif
+
+        static TIM_TypeDef* GetTimerPointer         (TIM_ID_e TimID);
+
+        TIM_CallBack_t      m_pCallBack;
 
     private:
 

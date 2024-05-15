@@ -208,7 +208,7 @@ void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint3
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       IO_PinInit
+//  Function:       IO_PinInitInput
 //
 //  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
 //  Return:         None

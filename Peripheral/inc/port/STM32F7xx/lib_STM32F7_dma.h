@@ -97,5 +97,56 @@ void        DMA_DisableTransmitHalfCompleteInterrupt    (DMA_Stream_TypeDef* pDM
 void        DMA_Enable                                  (DMA_Stream_TypeDef* pDMA);
 void        DMA_Disable                                 (DMA_Stream_TypeDef* pDMA);
 
+#if 0
+
+struct DMA_Info_t
+{
+    uint16_t            Configuration;
+    void*               pSource;
+    void*               pDestination;
+    size_t              Length;
+    DMA_Stream_TypeDef* pDMA;
+};
+
+// I think a need this..
+class DMA_Driver
+{
+    public:
+    
+        void        Initialize                              (DMA_Info_t* pInfo);
+
+        void        Enable                                  (void);
+        void        Disable                                 (void);
+    
+        void        Configuration                           (void* pSource, void* pDestination, size_t Length);
+        void        RegisterCallback                        (CallbackInterface* pCallback);
+        void        EnableCallbackType                      (int CallbackType);
+
+        void        ClearFlag                               (uint32_t Flag);
+        uint32_t    CheckFlag                               (uint32_t Flag);
+        void        EnableInterrupt                         (uint32_t Interrupt);
+        void        DisableInterrupt                        (uint32_t Interrupt);
+        void        EnableTransmitCompleteInterrupt         (void);
+        void        DisableTransmitCompleteInterrupt        (void);
+        void        EnableTransmitHalfCompleteInterrupt     (void);
+        void        DisableTransmitHalfCompleteInterrupt    (void);
+    
+    private:
+    
+        DMA_Info_t                  m_pInfo;
+        DMA_Stream_TypeDef*         m_pDMA;
+};
+
+
+void DMA_Driver::Initialize(DMA_Info_t* pInfo)
+{
+    m_pDMA = pInfo->pDMA;
+    
+    other are use to configure only!!!
+}
+
+
+#endif
+
 //-------------------------------------------------------------------------------------------------
 

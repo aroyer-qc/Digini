@@ -49,7 +49,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: CI2C
+//   Class: I2C_Driver
 //
 //
 //   Description:   Class to handle I2C
@@ -58,7 +58,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   CI2C
+//   Constructor:   I2C_Driver
 //
 //   Parameter(s):
 //   Return Value:
@@ -73,7 +73,7 @@
 //                  the configuration information for the specified I2C peripheral.
 //
 //-------------------------------------------------------------------------------------------------
-CI2C::CI2C(I2C_PortInfo_t* pPort)
+I2C_Driver::I2C_Driver(I2C_PortInfo_t* pPort)
 {
     m_pPort   = pPort;
     m_pDevice = nullptr;
@@ -83,7 +83,7 @@ CI2C::CI2C(I2C_PortInfo_t* pPort)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Destructor:   CI2C
+//   Destructor:   I2C_Driver
 //
 //   Parameter(s):
 //   Return Value:
@@ -93,7 +93,7 @@ CI2C::CI2C(I2C_PortInfo_t* pPort)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CI2C::~CI2C()
+I2C_Driver::~I2C_Driver()
 {
 }
 
@@ -110,7 +110,7 @@ CI2C::~CI2C()
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CI2C::Init()
+void I2C_Driver::Init()
 {
     uint16_t                Result;
     uint16_t                Register;
@@ -227,7 +227,7 @@ void CI2C::Init()
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CI2C::GetStatus()
+SystemState_e I2C_Driver::GetStatus()
 {
     return m_Status;
 }
@@ -245,7 +245,7 @@ SystemState_e CI2C::GetStatus()
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CI2C::Lock()
+void I2C_Driver::Lock()
 {
     while(nOS_MutexLock(m_pPort->pMutex, NOS_WAIT_INFINITE) != NOS_OK){};
 }
@@ -263,7 +263,7 @@ void CI2C::Lock()
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CI2C::Unlock()
+void I2C_Driver::Unlock()
 {
     nOS_MutexUnlock(m_pPort->pMutex);
 }
@@ -281,7 +281,7 @@ void CI2C::Unlock()
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CI2C::GetLastEvent()
+uint32_t I2C_Driver::GetLastEvent()
 {
   uint32_t lastevent = 0;
   uint32_t flag1     = 0;
@@ -316,7 +316,7 @@ uint32_t CI2C::GetLastEvent()
 //  Note(s):        If a write without lock is executed then it will be done on the locked device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CI2C::LockToDevice(I2C_DeviceInfo_t* pDevice)
+SystemState_e I2C_Driver::LockToDevice(I2C_DeviceInfo_t* pDevice)
 {
     while(nOS_MutexLock(pDevice->pMutex, NOS_WAIT_INFINITE) != NOS_OK){};
 
@@ -341,7 +341,7 @@ SystemState_e CI2C::LockToDevice(I2C_DeviceInfo_t* pDevice)
 //                  if lock and no write at all if not lock to a device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CI2C::UnlockFromDevice(I2C_DeviceInfo_t* pDevice)
+SystemState_e I2C_Driver::UnlockFromDevice(I2C_DeviceInfo_t* pDevice)
 {
     if(pDevice == m_pDevice)
     {
@@ -370,32 +370,32 @@ SystemState_e CI2C::UnlockFromDevice(I2C_DeviceInfo_t* pDevice)
 //  Note(s):        Multiple overload available
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CI2C::Write(uint32_t AddressInDevice, void* pDataAddress, size_t Size)
+SystemState_e I2C_Driver::Write(uint32_t AddressInDevice, void* pDataAddress, size_t Size)
 {
     if(m_Status == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
     return this->Request(ACCESS_WRITE, AddressInDevice, pDataAddress, Size);
 }
 
-SystemState_e CI2C::Write(uint32_t AddressInDevice, uint8_t Data)
+SystemState_e I2C_Driver::Write(uint32_t AddressInDevice, uint8_t Data)
 {
     if(m_Status == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
     return this->Request(ACCESS_WRITE, AddressInDevice, (void*)&Data, sizeof(uint8_t));
 }
 
-SystemState_e CI2C::Write(uint32_t AddressInDevice, uint16_t Data)
+SystemState_e I2C_Driver::Write(uint32_t AddressInDevice, uint16_t Data)
 {
     if(m_Status == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
     return this->Request(ACCESS_WRITE, AddressInDevice, (void*)&Data, sizeof(uint16_t));
 }
 
-SystemState_e CI2C::Write(uint32_t AddressInDevice, uint32_t Data)
+SystemState_e I2C_Driver::Write(uint32_t AddressInDevice, uint32_t Data)
 {
     if(m_Status ==SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
     return this->Request(ACCESS_WRITE, AddressInDevice, (void*)&Data, sizeof(uint32_t));
 }
 
 // Lock Version
-SystemState_e CI2C::Write(uint32_t AddressInDevice, void* pDataAddress, size_t Size, I2C_DeviceInfo_t* pDevice)
+SystemState_e I2C_Driver::Write(uint32_t AddressInDevice, void* pDataAddress, size_t Size, I2C_DeviceInfo_t* pDevice)
 {
     SystemState_e Status;
 
@@ -406,7 +406,7 @@ SystemState_e CI2C::Write(uint32_t AddressInDevice, void* pDataAddress, size_t S
     return Status;
 }
 
-SystemState_e CI2C::Write(uint32_t AddressInDevice, uint8_t Data, I2C_DeviceInfo_t* pDevice)
+SystemState_e I2C_Driver::Write(uint32_t AddressInDevice, uint8_t Data, I2C_DeviceInfo_t* pDevice)
 {
     SystemState_e Status;
 
@@ -417,7 +417,7 @@ SystemState_e CI2C::Write(uint32_t AddressInDevice, uint8_t Data, I2C_DeviceInfo
     return Status;
 }
 
-SystemState_e CI2C::Write(uint32_t AddressInDevice, uint16_t Data, I2C_DeviceInfo_t* pDevice)
+SystemState_e I2C_Driver::Write(uint32_t AddressInDevice, uint16_t Data, I2C_DeviceInfo_t* pDevice)
 {
     SystemState_e Status;
 
@@ -428,7 +428,7 @@ SystemState_e CI2C::Write(uint32_t AddressInDevice, uint16_t Data, I2C_DeviceInf
     return Status;
 }
 
-SystemState_e CI2C::Write(uint32_t AddressInDevice, uint32_t Data, I2C_DeviceInfo_t* pDevice)
+SystemState_e I2C_Driver::Write(uint32_t AddressInDevice, uint32_t Data, I2C_DeviceInfo_t* pDevice)
 {
     SystemState_e Status;
 
@@ -453,32 +453,32 @@ SystemState_e CI2C::Write(uint32_t AddressInDevice, uint32_t Data, I2C_DeviceInf
 //  Note(s):        Multiple overload available
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CI2C::Read(uint32_t AddressInDevice, void* pDataAddress, size_t Size)
+SystemState_e I2C_Driver::Read(uint32_t AddressInDevice, void* pDataAddress, size_t Size)
 {
     if(m_Status == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
     return this->Request(ACCESS_READ, AddressInDevice, pDataAddress, Size);
 }
 
-SystemState_e CI2C::Read(uint32_t AddressInDevice, uint8_t* pData)
+SystemState_e I2C_Driver::Read(uint32_t AddressInDevice, uint8_t* pData)
 {
     if(m_Status == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
     return this->Request(ACCESS_READ, AddressInDevice, (void*)pData, sizeof(uint8_t));
 }
 
-SystemState_e CI2C::Read(uint32_t AddressInDevice, uint16_t* pData)
+SystemState_e I2C_Driver::Read(uint32_t AddressInDevice, uint16_t* pData)
 {
     if(m_Status == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
     return this->Request(ACCESS_READ, AddressInDevice, (void*)pData, sizeof(uint16_t));
 }
 
-SystemState_e CI2C::Read(uint32_t AddressInDevice, uint32_t* pData)
+SystemState_e I2C_Driver::Read(uint32_t AddressInDevice, uint32_t* pData)
 {
     if(m_Status == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
     return this->Request(ACCESS_READ, AddressInDevice, (void*)pData, sizeof(uint32_t));
 }
 
 // Lock version
-SystemState_e CI2C::Read(uint32_t AddressInDevice, void* pDataAddress, size_t Size, I2C_DeviceInfo_t* pDevice)
+SystemState_e I2C_Driver::Read(uint32_t AddressInDevice, void* pDataAddress, size_t Size, I2C_DeviceInfo_t* pDevice)
 {
     SystemState_e Status;
 
@@ -489,7 +489,7 @@ SystemState_e CI2C::Read(uint32_t AddressInDevice, void* pDataAddress, size_t Si
     return Status;
 }
 
-SystemState_e CI2C::Read(uint32_t AddressInDevice, uint8_t* pData, I2C_DeviceInfo_t* pDevice)
+SystemState_e I2C_Driver::Read(uint32_t AddressInDevice, uint8_t* pData, I2C_DeviceInfo_t* pDevice)
 {
     SystemState_e Status;
 
@@ -500,7 +500,7 @@ SystemState_e CI2C::Read(uint32_t AddressInDevice, uint8_t* pData, I2C_DeviceInf
     return Status;
 }
 
-SystemState_e CI2C::Read(uint32_t AddressInDevice, uint16_t* pData, I2C_DeviceInfo_t* pDevice)
+SystemState_e I2C_Driver::Read(uint32_t AddressInDevice, uint16_t* pData, I2C_DeviceInfo_t* pDevice)
 {
     SystemState_e Status;
 
@@ -511,7 +511,7 @@ SystemState_e CI2C::Read(uint32_t AddressInDevice, uint16_t* pData, I2C_DeviceIn
     return Status;
 }
 
-SystemState_e CI2C::Read(uint32_t AddressInDevice, uint32_t* pData, I2C_DeviceInfo_t* pDevice)
+SystemState_e I2C_Driver::Read(uint32_t AddressInDevice, uint32_t* pData, I2C_DeviceInfo_t* pDevice)
 {
     SystemState_e Status;
 
@@ -533,7 +533,7 @@ SystemState_e CI2C::Read(uint32_t AddressInDevice, uint32_t* pData, I2C_DeviceIn
 //  Description:    1ms state machine timeout tick hook
 //
 //-------------------------------------------------------------------------------------------------
-void CI2C::TickHook()
+void I2C_Driver::TickHook()
 {
     if(m_Timeout > 0)
     {
@@ -559,7 +559,7 @@ void CI2C::TickHook()
 //  Note(s):        Will get out a after a few try
 //
 //-------------------------------------------------------------------------------------------------
-void CI2C::ClearBus()
+void I2C_Driver::ClearBus()
 {
     uint8_t Count = 0;
 
@@ -610,7 +610,7 @@ void CI2C::ClearBus()
 //  Note(s):        this function serve ClearBus
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CI2C::CalculateBitMask(uint8_t Mask, uint16_t BitConfig)
+uint32_t I2C_Driver::CalculateBitMask(uint8_t Mask, uint16_t BitConfig)
 {
     uint32_t NewMask = (uint32_t)Mask;
 
@@ -637,7 +637,7 @@ uint32_t CI2C::CalculateBitMask(uint8_t Mask, uint16_t BitConfig)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CI2C::Request(AccessRequest_e Request, uint32_t AddressInDevice, void* pDataAddress, size_t Size)
+SystemState_e I2C_Driver::Request(AccessRequest_e Request, uint32_t AddressInDevice, void* pDataAddress, size_t Size)
 {
     if(m_pDevice != nullptr)
     {
@@ -690,7 +690,7 @@ SystemState_e CI2C::Request(AccessRequest_e Request, uint32_t AddressInDevice, v
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CI2C::EV_IRQHandler()
+void I2C_Driver::EV_IRQHandler()
 {
     uint32_t I2C_ISR_Ev;
 
@@ -824,7 +824,7 @@ void CI2C::EV_IRQHandler()
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CI2C::ER_IRQHandler()
+void I2C_Driver::ER_IRQHandler()
 {
     this->GetLastEvent();
     m_pPort->pI2Cx->SR1    = 0;                                                    // After a  NACK, transfert is done

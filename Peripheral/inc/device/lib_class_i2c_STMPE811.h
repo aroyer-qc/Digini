@@ -56,13 +56,15 @@
 // typedef struct(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef struct TOUCH_State_s
+/* NOT USED???
+struct TOUCH_State_t
 {
   uint16_t  X;
   uint16_t  Y;
   uint16_t  Z;
   uint8_t   TouchDetected;
-} TOUCH_sState;
+}
+*/
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -74,7 +76,7 @@ class CTouch
 {
     public:
 
-                            CTouch                  (CI2C* pI2C);
+                            CTouch                  (I2C_Driver* pI2C);
                             ~CTouch                 ();
 
         bool                Initialize              ();
@@ -91,7 +93,7 @@ class CTouch
 
     private:
 
-        CI2C*               m_pI2C;
+        I2C_Driver*         m_pI2C;
         I2C_DeviceInfo_t*   m_pDevice;
         uint16_t            m_IntX;
         uint16_t            m_IntY;

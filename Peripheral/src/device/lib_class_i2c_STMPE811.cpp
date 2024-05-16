@@ -142,7 +142,7 @@
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CTouch::CTouch(CI2C* pI2C)
+CTouch::CTouch(I2C_Driver* pI2C)
 {
     m_pI2C               = pI2C;
     m_pDevice            = &I2C_DeviceInfo[I2C_DEVICE_STMPE811];

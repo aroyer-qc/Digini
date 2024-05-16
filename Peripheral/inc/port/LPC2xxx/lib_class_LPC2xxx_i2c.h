@@ -108,15 +108,15 @@ struct I2C_DeviceInfo_t
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class CI2C
+class I2C_Driver
 {
     public:
 
-                        CI2C                (I2C_PortInfo_t* pPort);
-                        ~CI2C                ();
+                        I2C_Driver          (I2C_PortInfo_t* pPort);
+                        ~I2C_Driver         ();
 
-        SystemState_e   LockToDevice           (I2C_DeviceInfo_t* pDevice);                                             // Set I2C to this device and lock
-        SystemState_e   UnlockFromDevice     (I2C_DeviceInfo_t* pDevice);                                             // Unlock I2C from device
+        SystemState_e   LockToDevice        (I2C_DeviceInfo_t* pDevice);                                             // Set I2C to this device and lock
+        SystemState_e   UnlockFromDevice    (I2C_DeviceInfo_t* pDevice);                                             // Unlock I2C from device
         SystemState_e   GetStatus           ();
 
         // Read function (overloaded)
@@ -188,17 +188,17 @@ class CI2C
     #undef X_I2C_DEVICE
   };
 
-  CI2C I2C_Port1(&I2C_PortInfo[I2C1_PORT]);
-  //CI2C I2C_Port2(&I2C_PortInfo[I2C2_PORT]);
-  //CI2C I2C_Port3(&I2C_PortInfo[I2C3_PORT]);
+  I2C_Driver I2C_Port1(&I2C_PortInfo[I2C1_PORT]);
+  //I2C_Driver I2C_Port2(&I2C_PortInfo[I2C2_PORT]);
+  //I2C_Driver I2C_Port3(&I2C_PortInfo[I2C3_PORT]);
 
 #else
 
   extern I2C_PortInfo_t     I2C_PortInfo[I2C_NB_PORT_CONST];
   extern I2C_DeviceInfo_t   I2C_DeviceInfo[I2C_NB_DEVICE_CONST];
-  extern CI2C I2C_Port1;
-  //extern CI2C I2C_Port2;
-  //extern CI2C I2C_Port3;
+  extern I2C_Driver I2C_Port1;
+  //extern I2C_Driver I2C_Port2;
+  //extern I2C_Driver I2C_Port3;
 
 #endif
 

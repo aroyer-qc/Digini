@@ -38,23 +38,6 @@
 #define LED_Toggle(p)                   IO_TogglePin(p)
 
 //#define IO_NULL                       ((IO_TypeDef *)nullptr)
-#define IO_PIN_MASK_0                   ((uint16_t)0x0001)
-#define IO_PIN_MASK_1                   ((uint16_t)0x0002)
-#define IO_PIN_MASK_2                   ((uint16_t)0x0004)
-#define IO_PIN_MASK_3                   ((uint16_t)0x0008)
-#define IO_PIN_MASK_4                   ((uint16_t)0x0010)
-#define IO_PIN_MASK_5                   ((uint16_t)0x0020)
-#define IO_PIN_MASK_6                   ((uint16_t)0x0040)
-#define IO_PIN_MASK_7                   ((uint16_t)0x0080)
-#define IO_PIN_MASK_8                   ((uint16_t)0x0100)
-#define IO_PIN_MASK_9                   ((uint16_t)0x0200)
-#define IO_PIN_MASK_10                  ((uint16_t)0x0400)
-#define IO_PIN_MASK_11                  ((uint16_t)0x0800)
-#define IO_PIN_MASK_12                  ((uint16_t)0x1000)
-#define IO_PIN_MASK_13                  ((uint16_t)0x2000)
-#define IO_PIN_MASK_14                  ((uint16_t)0x4000)
-#define IO_PIN_MASK_15                  ((uint16_t)0x8000)
-#define IO_PIN_MASK_All                 ((uint16_t)0xFFFF)
 
 //#define IO_SPEED_PIN_SHIFT            (5)
 #define IO_SPEED_PIN_MASK               ((uint32_t)0x00000003)
@@ -275,7 +258,7 @@ void        IO_SetPin                   (IO_ID_e IO_ID, bool Value);
 bool        IO_GetInputPin              (IO_ID_e IO_ID);
 uint32_t    IO_GetInputPinValue         (IO_ID_e IO_ID);
 bool        IO_GetOutputPin             (IO_ID_e IO_ID);
-void        IO_EnableClock              (GPIO_TypeDef* pPort);// is it necessary?
+void        IO_EnableClock              (GPIO_TypeDef* pPort);
 bool        IO_IsItValid                (IO_ID_e IO_ID);
 #ifdef IO_IRQ_DEF
 void        IO_InitIRQ                  (IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback);

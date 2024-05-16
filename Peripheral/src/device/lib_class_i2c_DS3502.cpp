@@ -53,7 +53,7 @@
 //  Name:           Initialize
 //
 //  Parameter(s):   I2C_Driver* pI2C          Pointer on the driver use by this class
-//
+//                  uint8_t                   Device Address of the I2C peripheral
 //  Return:         SystemState_e
 //
 //  Description:    Initialize the DS3502 Digital pot

@@ -40,6 +40,21 @@
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Function:       
+//
+//  Parameter(s):   pDMA        DMA stream to enable
+//                  
+//  Return:         None
+//
+//  Description:    Enable a specific DMA stream.
+//-------------------------------------------------------------------------------------------------
+void DMA_ConfigStreamRX(DMA_Stream_TypeDef* pDMA, uint16_t Config)
+{
+    pDMA->CR Config;
+
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Function:       DMA_SetStreamRX
 //
 //  Parameter(s):   pDMA        DMA stream to modify

@@ -83,6 +83,8 @@ PWM_Driver::PWM_Driver(PWM_ChannelID_e PWM_ID)
 //-------------------------------------------------------------------------------------------------
 void PWM_Driver::Initialize(void)
 {
+    TIM_Compare_e Channel = m_pInfo->Channel;
+    
     m_pTimer = TIM_Driver::GetTimerPointer(m_pInfo->TimID);
     m_pTimer->Initialize();
     IO_PinInit(m_pInfo->PinID);
@@ -130,7 +132,7 @@ void PWM_Driver::SetDuty(uint16_t Duty)
 //-------------------------------------------------------------------------------------------------
 void PWM_Driver::Start(void)
 {
-    m_pTimer->Start();
+    m_pTimer->EnableCompareChannel(m_pInfo->Channel);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -145,7 +147,7 @@ void PWM_Driver::Start(void)
 //-------------------------------------------------------------------------------------------------
 void PWM_Driver::Stop(void)
 {
-    m_pTimer->Stop();
+    m_pTimer->DisableCompareChannel(m_pInfo->Channel);
 }
 
 //-------------------------------------------------------------------------------------------------

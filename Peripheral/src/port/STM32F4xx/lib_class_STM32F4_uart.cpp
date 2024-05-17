@@ -811,11 +811,8 @@ void UART_Driver::DMA_DisableTX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            DMA_Stream_TypeDef* pDMA;
-
-            pDMA = m_pDMA_Info->DMA_StreamTX;
-            DMA_Disable(pDMA);
-            DMA_ClearFlag(pDMA, m_pDMA_Info->FlagTX);
+            m_DMA_TX.Disable();
+            m_DMA_TX.ClearFlag(m_pDMA_Info->DMA_TX.DMA_Flag);
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAT);
         }
     }
@@ -837,13 +834,9 @@ size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
 
     if(m_pUart != nullptr)
     {
-        DMA_Stream_TypeDef* pDMA;
-
-        pDMA           = m_pDMA_Info->DMA_StreamRX;
-
-        DMA_Disable(pDMA);
-        DMA_ClearFlag(pDMA, m_pDMA_Info->FlagRX);
-        SizeDataRX = pDMA->NDTR;                     // Number of byte available in p_RxBuf
+        m_DMA_RX.Disable();
+        m_DMA_RX.ClearFlag(m_pDMA_Info->DMA_RX.DMA_Flag);
+        SizeDataRX = m_DMA_RX.GetLength();                   // Number of byte available in p_RxBuf
 
         if(SizeDataRX <= SizeRX)
         {
@@ -854,7 +847,7 @@ size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
             SizeDataRX = SizeRX;
         }
 
-        DMA_Enable(pDMA);
+        m_DMA_RX.Enable();
     }
   #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
     else if(m_UartID == UART_DRIVER_VIRTUAL)

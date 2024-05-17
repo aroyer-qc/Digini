@@ -34,7 +34,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (USE_TIM_DRIVER == DEF_ENABLED)
+#if (USE_TIM_DRIVER == DEF_ENABLED) && (USE_PWM_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Note(s)
@@ -138,11 +138,7 @@ struct WS281x_Config_t
     // PWM info (include timer and IO)
     PWM_ChannelID_e         PWM_ChannelID;
     // DMA info
-    DMA_Channel_TypeDef*    DMA_Channel;
-    uint32_t                DMA_Flag;
-    IRQn_Type               IRQn_Channel;
-    uint8_t                 PreempPrio;
-
+    DMA_Info_t              pDMA_Info;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -166,7 +162,8 @@ class WS281x
 
     private:
 
-        PWM_Driver*                 m_pPWM;
+        PWM_Driver*                 m_pPWM;             // Not sure about this!!!
+        DMA_Driver                  m_DMA;
         uint32_t                    m_NumberOfLED;
         volatile uint16_t           m_LedPointer;
         WS281x_Color_t*             m_pLedChain;
@@ -177,8 +174,7 @@ class WS281x
       #endif
         volatile uint32_t           m_SetCountReset;
         volatile uint32_t           m_ResetCount;
-        DMA_Channel_TypeDef*        m_pDMA;
-        uint32_t                    m_DMA_Flag;
+
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -190,11 +186,10 @@ class WS281x
 #undef  __CLASS_WS281x__
 
 //-------------------------------------------------------------------------------------------------
+#else // (USE_TIM_DRIVER == DEF_ENABLED) && (USE_PWM_DRIVER == DEF_ENABLED)
 
-#else // (USE_TIM_DRIVER == DEF_ENABLED)
+#pragma message("DIGINI driver for TIM and PWM must be enable and configure to use this device driver")
 
-#pragma message("DIGINI driver for TIM must be enable and configure to use this device driver")
-
-#endif // (USE_TIM_DRIVER == DEF_ENABLED)
+#endif // (USE_TIM_DRIVER == DEF_ENABLED) && (USE_PWM_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

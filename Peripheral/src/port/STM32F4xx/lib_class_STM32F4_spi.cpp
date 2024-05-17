@@ -113,10 +113,6 @@ SystemState_e SPI_Driver::GetStatus(void)
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::Initialize(void)
 {
-  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-    DMA_Stream_TypeDef* pDMA;
-  #endif
-
     nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
 
     IO_PinInit(m_pInfo->PinCLK);
@@ -185,33 +181,11 @@ void SPI_Driver::Initialize(void)
     m_NoMemoryIncrement = false;
 
     // Preinit register that won't change
-    pDMA = m_pInfo->DMA_StreamTX;
-    pDMA->PAR = uint32_t(&m_pInfo->pSPIx->DR);          // Configure transmit data register
-    pDMA->CR = DMA_MEMORY_TO_PERIPH           |
-               DMA_MODE_NORMAL                |
-               DMA_PERIPH_NO_INCREMENT        |
-               DMA_MEMORY_INCREMENT           |
-               DMA_P_DATA_ALIGN_BYTE          |
-               DMA_M_DATA_ALIGN_BYTE          |
-               DMA_P_BURST_SINGLE             |
-               DMA_M_BURST_SINGLE             |
-               DMA_PRIORITY_LOW               |
-               DMA_SxCR_TCIE                  |
-               m_pInfo->DMA_ChannelTX;
+    m_DMA_TX.Initialize(m_pInfo->DMA_TX);
+    m_DMA_TX.SetDestination(void*)&m_pInfo->pSPIx->DR);          // Configure transmit data register
 
-    pDMA = m_pInfo->DMA_StreamRX;
-    pDMA->PAR = uint32_t(&m_pInfo->pSPIx->DR);          // Configure receive data register
-    pDMA->CR = DMA_PERIPH_TO_MEMORY           |
-               DMA_MODE_NORMAL                |
-               DMA_PERIPH_NO_INCREMENT        |
-               DMA_MEMORY_INCREMENT           |
-               DMA_P_DATA_ALIGN_BYTE          |
-               DMA_M_DATA_ALIGN_BYTE          |
-               DMA_P_BURST_SINGLE             |
-               DMA_M_BURST_SINGLE             |
-               DMA_PRIORITY_LOW               |
-               DMA_SxCR_TCIE                  |
-               m_pInfo->DMA_ChannelRX;
+    m_DMA_RX.Initialize(m_pInfo->DMA_RX);
+    m_DMA_RX.SetSource((void*)&m_pInfo->pSPIx->DR);          // Configure transmit data register
   #endif
 
     ISR_Init(m_pInfo->TX_IRQn, 6);                   // NVIC Setup for TX DMA channels interrupt request

@@ -104,10 +104,7 @@ const uint32_t UART_Driver::m_BaudRate[NB_OF_BAUD] =
 //-------------------------------------------------------------------------------------------------
 UART_Driver::UART_Driver(UART_ID_e UartID)
 {
-    DMA_Stream_TypeDef* pDMA;
-
   #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-    m_pDMA_Info      = nullptr;
     m_DMA_IsItBusyTX = false;
   #endif
 
@@ -129,7 +126,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
       #if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
           (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
         m_pCallback    = nullptr;
-        m_CallBackType = UART_CALLBACK_NONE;
+        //m_CallBackType = UART_CALLBACK_NONE;
       #endif
 
         if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
@@ -151,34 +148,12 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
         if(m_pDMA_Info != nullptr)
         {
-            SET_BIT(RCC->AHB1ENR, m_pDMA_Info->RCC_AHBxPeriph);                 // Initialize DMA clock
+            m_DMA_RX.Initialize(&m_pDMA_Info->DMA_RX); // Write config that will never change
+            m_DMA_RX.SetSource((void*)&m_pUart->DR);
+            m_DMA_RX.SetLength(UART_DRIVER_INTERNAL_RX_BUFFER_SIZE);
 
-            pDMA = m_pDMA_Info->DMA_StreamRX;                                   // Write config that will never change
-            pDMA->CR = DMA_MODE_NORMAL                    |
-                       DMA_PERIPH_TO_MEMORY               |
-                       DMA_PERIPH_NO_INCREMENT            |
-                       DMA_MEMORY_INCREMENT               |
-                       DMA_P_DATA_ALIGN_BYTE              |
-                       DMA_M_DATA_ALIGN_BYTE              |
-                       DMA_P_BURST_SINGLE                 |
-                       DMA_M_BURST_SINGLE                 |
-                       DMA_PRIORITY_HIGH;
-            SET_BIT(pDMA->CR, m_pDMA_Info->DMA_ChannelRX);
-            pDMA->PAR = uint32_t(&m_pUart->DR);
-            pDMA->NDTR = UART_DRIVER_INTERNAL_RX_BUFFER_SIZE;
-
-            pDMA = m_pDMA_Info->DMA_StreamTX;                                   // Write config that will never change
-            pDMA->CR = DMA_MODE_NORMAL                    |
-                       DMA_MEMORY_TO_PERIPH               |
-                       DMA_PERIPH_NO_INCREMENT            |
-                       DMA_MEMORY_INCREMENT               |
-                       DMA_P_DATA_ALIGN_BYTE              |
-                       DMA_M_DATA_ALIGN_BYTE              |
-                       DMA_P_BURST_SINGLE                 |
-                       DMA_M_BURST_SINGLE                 |
-                       DMA_PRIORITY_HIGH;
-            SET_BIT(pDMA->CR, m_pDMA_Info->DMA_ChannelTX);
-            pDMA->PAR  = uint32_t(&m_pUart->DR);
+            m_DMA_TX.Initialize(&m_pDMA_Info->DMA_TX);
+            m_DMA_TX.SetDestination((void*)&m_pUart->DR);
         }
 
         m_DMA_IsItBusyTX = false;
@@ -292,28 +267,28 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
       #if (UART_DRIVER_SUPPORT_UART1_CFG == DEF_ENABLED)
         if(m_pUart == USART1)
         {
-          PeriphClk = SYS_APB2_CLOCK_FREQUENCY;    // TODO TODO TODO 108000000;
+          PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
         }
       #endif
 
       #if (UART_DRIVER_SUPPORT_UART2_CFG == DEF_ENABLED)
         if(m_pUart == USART2)
         {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY; // 54000000;
+          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
         }
       #endif
 
       #if (UART_DRIVER_SUPPORT_UART3_CFG == DEF_ENABLED)
         if(m_pUart == USART3)
         {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY; // 54000000;
+          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
         }
       #endif
 
       #if (UART_DRIVER_SUPPORT_UART4_CFG == DEF_ENABLED)
         if(m_pUart == UART4)
         {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY; // 54000000;
+          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
         }
       #endif
 
@@ -350,7 +325,7 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
             PeriphClk <<= 1;
         }
 
-        m_pUart->BRR = uint16_t((PeriphClk + (m_BaudRate[BaudRate] >> 1)) / m_BaudRate[BaudRate]);
+        m_pUart->BRR = uint16_t(PeriphClk / m_BaudRate[BaudRate]);
         SET_BIT(m_pUart->CR1, USART_CR1_UE);                                // Enable the UART
     }
 }
@@ -545,15 +520,12 @@ void UART_Driver::VirtualSendData(const uint8_t* pBuffer, uint16_t Size)
 SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
 {
     SystemState_e       State = SYS_READY;
-    uint32_t            Flag;
 
     if(m_pUart != nullptr)
     {
         if(*pSizeTX != 0)
         {
           #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-            DMA_Stream_TypeDef* pDMA;
-
             if(m_pInfo->IsItBlockingOnBusy == true)
             {
                 while(m_DMA_IsItBusyTX ==true)
@@ -565,27 +537,25 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             if(m_DMA_IsItBusyTX == false)
             {
                 m_DMA_IsItBusyTX = true;
-                pDMA             = m_pDMA_Info->DMA_StreamTX;
-                Flag             = m_pDMA_Info->FlagTX;
 
-                DMA_Disable(pDMA);
-                DMA_ClearFlag(pDMA, Flag);
+                m_DMA_TX.Disable();
+                m_DMA_TX.ClearFlag(m_pDMA_Info->DMA_TX.DMA_Flag);
 
                 if(pBufferTX != nullptr)
                 {
-                    pDMA->M0AR = (uint32_t)pBufferTX;
-                    pDMA->NDTR = *pSizeTX;
+                    m_DMA_TX.SetSource((void*)pBufferTX);
+                    m_DMA_TX.SetLength(*pSizeTX);
                     m_TX_Transfer.Size    = *pSizeTX;
                     m_TX_Transfer.pBuffer = (uint8_t*)pBufferTX;
                 }
                 else
                 {
-                    pDMA->M0AR = (uint32_t)m_TX_Transfer.pBuffer;
-                    pDMA->NDTR = m_TX_Transfer.Size;
+                    m_DMA_TX.SetSource(m_TX_Transfer.pBuffer);
+                    m_DMA_TX.SetLength(m_TX_Transfer.Size);
                 }
 
                 ClearFlag();
-                DMA_Enable(pDMA);                    // Transmission starts as soon as TXE is detected
+                m_DMA_TX.Enable();                    // Transmission starts as soon as TXE is detected
                 DMA_EnableTX();
             }
             else
@@ -659,22 +629,20 @@ void UART_Driver::DMA_ConfigRX(uint8_t* pBufferRX, size_t SizeRX)
 
     if(m_pUart != nullptr)
     {
-        DMA_Stream_TypeDef* pDMA;
         DMA_DisableRX();
-        pDMA = m_pDMA_Info->DMA_StreamRX;
 
         if(pBufferRX != nullptr)
         {
-            pDMA->M0AR = (uint32_t)pBufferRX;
-            pDMA->NDTR = SizeRX;
+            m_DMA_RX.SetDestination((void*)pBufferRX);
+            m_DMA_RX.SetLength(SizeRX);
             pTransferRX->pBuffer    = pBufferRX;
             pTransferRX->Size       = SizeRX;
             pTransferRX->StaticSize = SizeRX;
         }
         else
         {
-            pDMA->M0AR = uint32_t(pTransferRX->pBuffer);
-            pDMA->NDTR = pTransferRX->StaticSize;
+            m_DMA_RX.SetDestination(pTransferRX->pBuffer);
+            m_DMA_RX.SetLength(pTransferRX->StaticSize);
             pTransferRX->Size = pTransferRX->StaticSize;
         }
 
@@ -719,23 +687,20 @@ void UART_Driver::DMA_ConfigTX(uint8_t* pBufferTX, size_t SizeTX)
 
     if(m_pUart != nullptr)
     {
-        DMA_Stream_TypeDef* pDMA;
-
         DMA_DisableTX();
-        pDMA = m_pDMA_Info->DMA_StreamTX;
 
         if(pBufferTX != nullptr)
         {
-            pDMA->M0AR = uint32_t(pBufferTX);
-            pDMA->NDTR = SizeTX;
+            m_DMA_TX.SetSource(pBufferTX);
+            m_DMA_TX.SetLength(SizeTX);
             pTransferTX->pBuffer    = pBufferTX;
             pTransferTX->Size       = SizeTX;
             pTransferTX->StaticSize = SizeTX;
         }
         else
         {
-            pDMA->M0AR = (uint32_t)pTransferTX->pBuffer;
-            pDMA->NDTR = pTransferTX->StaticSize;
+            m_DMA_TX.SetSource((void*)pTransferTX->pBuffer);
+            m_DMA_TX.SetLength(pTransferTX->StaticSize);
             pTransferTX->Size = pTransferTX->StaticSize;
         }
 
@@ -775,13 +740,10 @@ void UART_Driver::DMA_EnableRX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            DMA_Stream_TypeDef* pDMA;
-
-            pDMA = m_pDMA_Info->DMA_StreamRX;
             m_pUart->CR3 |= USART_CR3_DMAR;         // Enable the DMA transfer
             (void)m_pUart->DR;
-            DMA_ClearFlag(pDMA, m_pDMA_Info->FlagRX);
-            DMA_Enable(pDMA);
+            m_DMA_RX.ClearFlag(m_pDMA_Info->DMA_RX.DMA_Flag);
+            m_DMA_RX.Enable();
             EnableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
         }
     }
@@ -803,13 +765,10 @@ void UART_Driver::DMA_DisableRX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            DMA_Stream_TypeDef* pDMA;
-
-            pDMA = m_pDMA_Info->DMA_StreamRX;
-            DMA_Disable(pDMA);
+            m_DMA_RX.Disable();
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAR);
             DisableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
-            DMA_ClearFlag(pDMA, m_pDMA_Info->FlagRX);
+            m_DMA_RX.ClearFlag(m_pDMA_Info->DMA_RX.DMA_Flag);
         }
     }
 }

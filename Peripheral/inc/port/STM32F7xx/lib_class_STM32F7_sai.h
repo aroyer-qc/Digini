@@ -221,7 +221,7 @@ typedef struct
     SAI_TypeDef*            pSAIx;
     SAI_Block_TypeDef*      pSAI_BlockOut;
 //    SAI_Block_TypeDef*      pSAI_BlockIn;
-    DMA_Stream_TypeDef*     pDMA;
+    DMA_Stream_TypeDef*     pDMA;  use 
    // uint32_t                Clock;
 } SAI_PortInfo_t;
 

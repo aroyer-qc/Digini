@@ -133,10 +133,13 @@ struct I2S_Info_t
     I2S_MCLK_Output_e   CLK_Output;     // Specifies whether the I2S MCLK output is enabled or not.
     I2S_CPOL_Level_e    CPOL_Level;     // Specifies the idle state of the I2S clock.
     // DMA
-    uint32_t            DMA_Channel;
-    DMA_Stream_TypeDef* pDMA_Stream;
-    IRQn_Type           I2S_DMA_IRQn;
-    uint32_t            IT_Flag;
+    
+    DMA_Info_t          DMA_I2S;
+
+    //uint32_t            DMA_Channel;
+    //DMA_Stream_TypeDef* pDMA_Stream;
+    //IRQn_Type           I2S_DMA_IRQn;
+    //uint32_t            IT_Flag;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -168,6 +171,7 @@ class I2S_Driver
         static const uint32_t                   m_PLLN[NB_OF_I2S_FREQUENCY];
         static const uint32_t                   m_PLLR[NB_OF_I2S_FREQUENCY];
 
+        DMA_Driver                              m_DMA;
         CallbackInterface*                      m_pCallback;
         int                                     m_CallBackType;
         void*                                   m_pContextHalf;

@@ -256,14 +256,8 @@ struct UART_Info_t
 struct UART_DMA_Info_t
 {
     UART_ID_e           UartID;
-    uint32_t            DMA_ChannelRX;
-    uint32_t            FlagRX;
-    DMA_Stream_TypeDef* DMA_StreamRX;
-    uint32_t            DMA_ChannelTX;
-    uint32_t            FlagTX;
-    DMA_Stream_TypeDef* DMA_StreamTX;
-    IRQn_Type           Tx_IRQn;
-    uint32_t            RCC_AHBxPeriph;
+    DMA_Info_t          DMA_RX;
+    DMA_Info_t          DMA_TX;
 };
 
 struct UART_Transfer_t
@@ -341,6 +335,8 @@ class UART_Driver
 
         // DMA Config
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
+        DMA_Driver                  m_DMA_RX;
+        DMA_Driver                  m_DMA_TX;
         UART_DMA_Info_t*            m_pDMA_Info;
         bool                        m_DMA_IsItBusyTX;
       #endif
@@ -352,7 +348,7 @@ class UART_Driver
 
       #if (UART_ISR_CFG == DEF_ENABLED)
         CallbackInterface*          m_pCallback;
-        int                         m_CallBackType;
+        //int                         m_CallBackType;  variables is not used at this time..
       #endif
 };
 

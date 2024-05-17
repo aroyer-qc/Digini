@@ -136,16 +136,10 @@ struct SPI_Info_t
     uint16_t            IRQ_Source;
     void                (*CallBackISR)();
 
-  #if (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
-    DMA_TypeDef*        pDMA;
-    uint32_t            DMA_ChannelRX;
-    uint32_t            DMA_Flag_TC_RX;
-    DMA_Stream_TypeDef* pDMA_RX;
-
-    uint32_t            DMA_ChannelTX;
-    uint32_t            DMA_Flag_TC_TX;
-    DMA_Stream_TypeDef* pDMA_TX;
-  #endif // (SPI_DRIVER_SUPPORT_DMA == DEF_ENABLED)
+  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+    DMA_Info_t          DMA_RX_Info;
+    DMA_Info_t          DMA_TX_Info;
+  #endif // (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 };
 
 struct SPI_DeviceInfo_t
@@ -162,7 +156,7 @@ struct SPI_DeviceInfo_t
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class SPI_Driver : public DriverInterface
+class SPI_Driver// : public DriverInterface
 {
     public:
                         SPI_Driver              (SPI_ID_e SPI_ID);
@@ -207,6 +201,12 @@ class SPI_Driver : public DriverInterface
 
         SPI_Info_t*                             m_pInfo;
         SPI_DeviceInfo_t*                       m_pDevice;
+
+      #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+        DMA_Driver                              m_DMA_RX;
+        DMA_Driver                              m_DMA_TX;
+      #endif
+
         nOS_Mutex                               m_Mutex;
         AccessRequest_e                         m_Request;
         uint32_t                                m_SlowSpeed;

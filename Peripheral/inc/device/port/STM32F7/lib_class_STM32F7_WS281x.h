@@ -138,11 +138,7 @@ struct WS281x_Config_t
     // PWM info (include timer and IO)
     PWM_ChannelID_e         PWM_ChannelID;
     // DMA info
-    DMA_Stream_TypeDef*     DMA_Stream;
-    uint32_t                DMA_Flag;
-    IRQn_Type               IRQn_Channel;
-    uint8_t                 PreempPrio;
-
+    DMA_Info_t              pDMA_Info;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -166,7 +162,8 @@ class WS281x
 
     private:
 
-        PWM_Driver*                 m_pPWM;
+        PWM_Driver*                 m_pPWM;             // Not sure about this!!!
+        DMA_Driver                  m_DMA;
         uint32_t                    m_NumberOfLED;
         volatile uint16_t           m_LedPointer;
         WS281x_Color_t*             m_pLedChain;
@@ -177,8 +174,7 @@ class WS281x
       #endif
         volatile uint32_t           m_SetCountReset;
         volatile uint32_t           m_ResetCount;
-        DMA_Stream_TypeDef*         m_pDMA;
-        uint32_t                    m_DMA_Flag;
+
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_dma.h
+//  File : lib_class_dma.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -25,11 +25,11 @@
 //-------------------------------------------------------------------------------------------------
 
 #if defined STM32F1xx
- #include "lib_STM32F1_dma.h"
+ #include "lib_class_STM32F1_dma.h" // todo
 #elif defined STM32F4xx
- #include "lib_STM32F4_dma.h"
+ #include "lib_class_STM32F4_dma.h" // todo
+#elif defined STM32F7xx
+ #include "lib_class_STM32F7_dma.h"
 #endif
-
-// F7 now use class
 
 //-------------------------------------------------------------------------------------------------

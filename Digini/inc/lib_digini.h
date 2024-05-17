@@ -99,7 +99,8 @@
 #include "lib_pid.h"
 #include "lib_io.h"
 #include "lib_fifo.h"
-#include "lib_dma.h"
+#include "lib_class_dma.h"
+#include "lib_dma.h"            // todo remove when DMA porting is done
 #include "lib_rng.h"
 
 #if (DIGINI_USE_CRC == DEF_ENABLED)     // This is for software CRC calculation support

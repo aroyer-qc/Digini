@@ -23,6 +23,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+//
+//  Only support DMA transfer as it is not making sense otherwise.
+//
+//-------------------------------------------------------------------------------------------------
 
 #pragma once
 
@@ -120,18 +124,9 @@ struct SPI_Info_t
     IRQn_Type           IRQn_Channel;
 
   #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-    DMA_TypeDef*        pDMAx;
-    uint32_t            DMA_ChannelRX;
-    uint32_t            RX_IT_Flag;
-    DMA_Stream_TypeDef* DMA_StreamRX;
-    IRQn_Type           RX_IRQn;
-    uint32_t            DMA_ChannelTX;
-    uint32_t            TX_IT_Flag;
-    DMA_Stream_TypeDef* DMA_StreamTX;
-    IRQn_Type           TX_IRQn;
-    uint32_t            RCC_AHBxPeriph;
-  #endif
-    class SPI_Driver*   pObject;
+    DMA_Info_t          DMA_RX_Info;
+    DMA_Info_t          DMA_TX_Info;
+  #endif // (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)    class SPI_Driver*   pObject;
 };
 
 struct SPI_DeviceInfo_t
@@ -206,6 +201,11 @@ class SPI_Driver// : public DriverInterface
         SPI_Info_t*             m_pInfo;
         void*                   m_pDevice;
         bool                    m_NoMemoryIncrement;
+      #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+        DMA_Driver                              m_DMA_RX;
+        DMA_Driver                              m_DMA_TX;
+      #endif
+
 
         volatile SystemState_e  m_Status;
         volatile uint8_t        m_Timeout;

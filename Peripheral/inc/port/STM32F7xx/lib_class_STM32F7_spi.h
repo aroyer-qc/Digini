@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -118,7 +118,7 @@ enum SPI_ID_e
 		DRIVER_SPI6_ID,
 	#endif
 
-    NB_OF_SPI_DRIVER,
+    NB_OF_SPI_DRIVER
 };
 
 struct SPI_Info_t
@@ -189,8 +189,6 @@ class SPI_Driver// : public DriverInterface
         void            IRQHandler              (void);
         SystemState_e   Request                 (AccessRequest_e Request, uint8_t *pBuffer, size_t Size);
         void            Config                  (uint32_t Speed);
-        //void            TickHook                (void);
-        // void            RegisterDriverTick      (void (*CallBackTick)());
         SystemState_e   WaitReady               (void);
 
     private:

@@ -124,8 +124,8 @@ struct SPI_Info_t
     IRQn_Type           IRQn_Channel;
 
   #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-    DMA_Info_t          DMA_RX_Info;
-    DMA_Info_t          DMA_TX_Info;
+    DMA_Info_t          DMA_RX;
+    DMA_Info_t          DMA_TX;
   #endif // (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)    class SPI_Driver*   pObject;
 };
 

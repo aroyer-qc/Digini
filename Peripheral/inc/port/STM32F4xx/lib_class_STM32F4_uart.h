@@ -324,6 +324,7 @@ class UART_Driver
         USART_TypeDef*              m_pUart;
         UART_Transfer_t             m_RX_Transfer;
         UART_Transfer_t             m_TX_Transfer;
+        uint32_t*                   m_CopySR;
 
         // DMA Config
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)

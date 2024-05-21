@@ -397,7 +397,7 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
             CR1_Register |= UART_CR1_OVERSAMPLING_8;
         }
 
-/*
+/*  not commented on F7
         // RX and TX enable
         MaskedConfig = UART_Config_e(uint32_t(Config) & UART_ENABLE_MASK);
 
@@ -1074,7 +1074,7 @@ void UART_Driver::RegisterCallback(CallbackInterface* pCallback)
 //
 //  Name:           EnableCallbackType
 //
-//  Parameter(s):   CallBackType    Type if the ISR callback
+//  Parameter(s):   CallBackType    Type of the ISR callback
 //  Return:         None
 //
 //  Description:    Enable the type of interrupt for the callback.
@@ -1085,7 +1085,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
   #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_RX) != 0)
     {
-        m_CallBackType |= CallBackType;
+        //m_CallBackType |= CallBackType;
         EnableRX_ISR(UART_ISR_RX_BYTE);
     }
   #endif
@@ -1093,7 +1093,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
   #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_IDLE) != 0)
     {
-        m_CallBackType |= CallBackType;
+        //m_CallBackType |= CallBackType;
         EnableRX_ISR(UART_ISR_RX_IDLE_CFG);
     }
   #endif
@@ -1101,7 +1101,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
 #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_ERROR) != 0)
     {
-        m_CallBackType |= CallBackType;
+        //m_CallBackType |= CallBackType;
         EnableRX_ISR(UART_ISR_RX_ERROR_CFG);
     }
   #endif
@@ -1109,15 +1109,15 @@ void UART_Driver::EnableCallbackType(int CallBackType)
   #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_EMPTY_TX_CFG) != 0)
     {
-        m_CallBackType |= CallBackType;
-        //EnableRX_ISR(UART_ISR_TX_EMPTY);      // don't... only on send data
+        //m_CallBackType |= CallBackType;
+        //EnableRX_ISR(UART_ISR_TX_EMPTY_CFG);      // don't... only on send data
     }
   #endif
 
   #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_COMPLETED_TX) != 0)
     {
-        m_CallBackType |= CallBackType;
+        //m_CallBackType |= CallBackType;
         EnableRX_ISR(UART_ISR_TX_COMPLETED_CFG);
     }
   #endif

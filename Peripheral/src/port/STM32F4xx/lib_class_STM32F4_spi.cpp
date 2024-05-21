@@ -82,8 +82,8 @@ SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
 {
     m_pDevice        = nullptr;
     m_pInfo          = &SPI_Info[SPI_ID];
-    m_Status         = SYS_DEVICE_NOT_PRESENT;
-    m_pInfo->pObject = this;
+    //m_Status         = SYS_DEVICE_NOT_PRESENT;
+    //m_pInfo->pObject = this;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -98,7 +98,7 @@ SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::GetStatus(void)
 {
-    return m_Status;
+   // return m_Status;
 }
 
 //-------------------------------------------------------------------------------------------------

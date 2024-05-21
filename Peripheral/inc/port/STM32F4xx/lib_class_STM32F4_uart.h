@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -59,8 +59,8 @@
 #define UART_ISR_RX_ERROR_MASK              0x01
 #define UART_ISR_RX_BYTE_MASK               0x02
 #define UART_ISR_RX_IDLE_MASK               0x04
-#define UART_ISR_TX_EMPTY_MASK              0x01
-#define UART_ISR_TX_COMPLETED_MASK          0x02
+#define UART_ISR_TX_EMPTY_MASK              0x01  // maybe it should be 0x10
+#define UART_ISR_TX_COMPLETED_MASK          0x02  // maybe it should be 0x20
 
 // Callback type in bit position
 #define UART_CALLBACK_NONE                  0x00
@@ -248,14 +248,8 @@ struct UART_Info_t
 struct UART_DMA_Info_t
 {
     UART_ID_e           UartID;
-    uint32_t            DMA_ChannelRX;
-    uint32_t            FlagRX;
-    DMA_Stream_TypeDef* DMA_StreamRX;
-    uint32_t            DMA_ChannelTX;
-    uint32_t            FlagTX;
-    DMA_Stream_TypeDef* DMA_StreamTX;
-    IRQn_Type           Tx_IRQn;
-    uint32_t            RCC_AHBxPeriph;
+    DMA_Info_t          DMA_RX;
+    DMA_Info_t          DMA_TX;
 };
 
 struct UART_Transfer_t
@@ -331,15 +325,10 @@ class UART_Driver
         UART_Transfer_t             m_RX_Transfer;
         UART_Transfer_t             m_TX_Transfer;
 
-        uint32_t                    m_CopySR;
-
-//from old stuff
-//UART_Variables_t            m_Variables;
-//void*                       m_pContextRX;       // This is the global context if there is no individual context set
-//void*                       m_pContextTX;       // This is the global context if there is no individual context set
-
         // DMA Config
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
+        DMA_Driver                  m_DMA_RX;
+        DMA_Driver                  m_DMA_TX;
         UART_DMA_Info_t*            m_pDMA_Info;
         bool                        m_DMA_IsItBusyTX;
       #endif
@@ -351,7 +340,7 @@ class UART_Driver
 
       #if (UART_ISR_CFG == DEF_ENABLED)
         CallbackInterface*          m_pCallback;
-        int                         m_CallBackType;
+        //int                         m_CallBackType;  variables is not used at this time..
       #endif
 };
 

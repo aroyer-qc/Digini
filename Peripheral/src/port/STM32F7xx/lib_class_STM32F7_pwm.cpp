@@ -65,9 +65,10 @@
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-PWM_Driver::PWM_Driver(PWM_ChannelID_e PWM_ID)
+PWM_Driver::PWM_Driver(PWM_ChannelID_e PWM_ID, TIM_Driver* pTimer)
 {
     m_pInfo = &PWM_Info[PWM_ID];
+    m_pTimer = pTimer;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -85,10 +86,10 @@ void PWM_Driver::Initialize(void)
 {
     TIM_Compare_e Channel = m_pInfo->Channel;
     
-    m_pTimer = TIM_Driver::GetTimerPointer(m_pInfo->TimID);
+    m_pTim = TIM_Driver::GetTimerPointer(m_pInfo->TimID);
     m_pTimer->Initialize();
     IO_PinInit(m_pInfo->PinID);
-    ClearConfigCompareChannel(Channel);
+    m_pTimer->ClearConfigCompareChannel(Channel);
 
     // Set PWM mode and enable output
     switch(Channel)

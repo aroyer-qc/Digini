@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -85,7 +85,7 @@ void TIM_Driver::Initialize(void)
     *(m_pInfo->RCC_APBxEN_Register) |= m_pInfo->RCC_APBxPeriph;
 
     // Set the prescaler value
-    m_pTim->PSC = m_pInfo->Prescaler;
+    m_pTim->PSC = m_pInfo->Prescaler - 1;
 
     // Set the auto reload register
   #if (TIM_DRIVER_SUPPORT_16_BITS_TIM_CFG == DEF_ENABLED)
@@ -564,7 +564,7 @@ void TIM_Driver::DisableCompareChannel(TIM_Compare_e Channel)
 //  Name:           GetTimerPointer
 //
 //  Parameter(s):   TimID           ID of the timer to get the pointer
-//  Return:         TIM_TypeDef*    \pointer on the timer module
+//  Return:         TIM_TypeDef*    Pointer on the timer module
 //
 //  Description:    Return the pointer on the timer use by this ID
 //

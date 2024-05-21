@@ -60,8 +60,6 @@
 //
 //   Description:   Initializes the TIM_Driver class
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 TIM_Driver::TIM_Driver(TIM_ID_e TimID)
 {

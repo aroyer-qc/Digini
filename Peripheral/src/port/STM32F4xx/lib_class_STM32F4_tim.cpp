@@ -355,15 +355,15 @@ void TIM_Driver::DisableCompareChannel(TIM_Compare_e Channel)
 //
 //  Name:           GetTimerPointer
 //
-//  Parameter(s):   None
+//  Parameter(s):   TimID           ID of the timer to get the pointer
 //  Return:         TIM_TypeDef*    Pointer on the timer module
 //
 //  Description:    Return the pointer on the timer
 //
 //-------------------------------------------------------------------------------------------------
-TIM_TypeDef* TIM_Driver::GetTimerPointer(void)
+TIM_TypeDef* TIM_Driver::GetTimerPointer(TIM_ID_e TimID)
 {
-    return m_pTim;
+    return TIM_Info[TimID].pTIMx;
 }
 
 //-------------------------------------------------------------------------------------------------

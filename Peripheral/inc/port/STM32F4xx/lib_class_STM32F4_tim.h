@@ -24,7 +24,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-//  Notes:   This is incomplete driver, and evolution is as the need arise. Timer are very complex.
+//  Notes:   This is incomplete driver, and evolution is as the need arise
 //
 //              In this file -> basic timer with callback when specify time has elapse
 //                  - Start
@@ -32,10 +32,6 @@
 //                  - Stop
 //                  - Reload
 //                  - SetCompare
-//
-//              This help with basic initialization. In you project, you can access the device
-//              register and improve functionnality.
-//
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -107,6 +103,7 @@
   #define TIM_DRIVER_SUPPORT_COMPARE_CFG                    DEF_DISABLED
 #endif
 
+// Timer DMA/IRQ source (check for timer some don't support all feature)                    // TODO need to adjust to F7 if necessary
 #define TIM_IRQ_DMA_NO_SOURCE                       0x0000
 #define TIM_IRQ_UPDATE                              0x0001
 #define TIM_IRQ_CAPTURE_COMPARE_1                   0x0002

@@ -153,11 +153,11 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
         if(m_pDMA_Info != nullptr)
         {
             m_DMA_RX.Initialize(&m_pDMA_Info->DMA_RX); // Write config that will never change
-            m_DMA_RX.SetSource((void*)&m_pUart->DR);
+            m_DMA_RX.SetSource((void*)&m_pUart->RDR);
             m_DMA_RX.SetLength(UART_DRIVER_INTERNAL_RX_BUFFER_SIZE);
 
             m_DMA_TX.Initialize(&m_pDMA_Info->DMA_TX);
-            m_DMA_TX.SetDestination((void*)&m_pUart->DR);
+            m_DMA_TX.SetDestination((void*)&m_pUart->TDR);
         }
 
         m_DMA_IsItBusyTX = false;

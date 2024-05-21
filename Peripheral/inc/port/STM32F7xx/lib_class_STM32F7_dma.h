@@ -32,7 +32,7 @@
 
 #define DMA_MODE_NORMAL                0x00000000        // Normal Mode
 #define DMA_MODE_CIRCULAR              DMA_SxCR_CIRC     // Circular Mode
-#define DMA_MODE_PFCTRL                DMA_SxCR_PFCTRL   // Peripheral flow control mode
+#define DMA_MODE_PERIPHERAL_FLOW_CTRL  DMA_SxCR_PFCTRL   // Peripheral flow control mode
 
 #define DMA_PERIPHERAL_NO_INCREMENT    0x00000000        // Peripheral increment mode Disable
 #define DMA_PERIPHERAL_INCREMENT       DMA_SxCR_PINC     // Peripheral increment mode Enable

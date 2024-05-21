@@ -131,21 +131,6 @@
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-#if (SD_CARD_USE_POWER_CONTROL == DEF_ENABLED)
-struct SD_CardIO_t
-{
-  #if (SD_CARD_USE_DETECT_SIGNAL == DEF_ENABLED)
-    GPIO_TypeDef*         pDetectPort;
-    uint16_t              DetectPin;
-    uint8_t               DetectPinSource;
-    uint32_t              DetectClock;
-  #endif
-  #if (SD_CARD_USE_POWER_CONTROL == DEF_ENABLED)
-    IO_Output_t*           pPower;
-  #endif
-};
-#endif
-
 // FATFS size structure
 struct FatFS_Size_t
 {
@@ -267,7 +252,34 @@ enum SD_Operation_e
     SD_MULTIPLE_BLOCK  = 1,       // Multiple blocks operation
 };
 
-//-------------------------------------------------------------------------------------------------
+#if (SD_CARD_USE_POWER_CONTROL == DEF_ENABLED)
+struct SD_CardIO_t
+{
+  #if (SD_CARD_USE_DETECT_SIGNAL == DEF_ENABLED)
+    GPIO_TypeDef*         pDetectPort;
+    uint16_t              DetectPin;
+    uint8_t               DetectPinSource;
+    uint32_t              DetectClock;
+  #endif
+  #if (SD_CARD_USE_POWER_CONTROL == DEF_ENABLED)
+    IO_Output_t*           pPower;
+  #endif
+};
+#endif
+
+
+struct SDIO_Info_t
+{
+    IO_ID_e             Pin_D0;                 // SDIO Data 0 to 3
+    IO_ID_e             Pin_D1;
+    IO_ID_e             Pin_D2;
+    IO_ID_e             Pin_D3;
+    IO_ID_e             Pin_CLK;                // SDIO CLK
+    IO_ID_e             Pin_CMD;				// Command line to SDIO
+    IO_ID_e             Pin_Detect;             // Card detect line
+    DMA_Info_t          DMA_RX;
+    DMA_Info_t          DMA_TX;
+};
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -276,7 +288,7 @@ enum SD_Operation_e
 class SDIO_Driver
 {
     public:
-                            SDIO_Driver             ();
+                            SDIO_Driver             (SDIO_Info_t* pInfo);
 
         void                Initialize              (void);
 
@@ -347,6 +359,10 @@ class SDIO_Driver
         volatile int            m_DMA_XferComplete;
         volatile SD_Operation_e m_Operation;            // SD transfer operation (read/write)
 
+        SDIO_Info_t*            m_pInfo;
+        DMA_Driver              m_DMA_RX;
+        DMA_Driver              m_DMA_TX;
+
 
        #if (SD_CARD_USE_DETECT_SIGNAL == DEF_ENABLED) || (SD_CARD_USE_POWER_CONTROL == DEF_ENABLED)
         sSD_CardIO*             m_pSD_CardIO;
@@ -371,12 +387,10 @@ class SDIO_Driver
 };
 
 //-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
 
-#ifdef SDIO_DRIVER_GLOBAL
-  class SDIO_Driver                 mySDIO;
-#else
-  extern class SDIO_Driver          mySDIO;
-#endif
+#include "sdio_var.h"
 
 //-------------------------------------------------------------------------------------------------
 

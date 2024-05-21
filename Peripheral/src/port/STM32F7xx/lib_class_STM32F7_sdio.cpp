@@ -44,7 +44,7 @@
 #define SDIO_DRIVER_GLOBAL
 #include "lib_digini.h"
 #undef  SDIO_DRIVER_GLOBAL
-#include "stm32f7xx_ll_sdmmc.h"   // to replace this my my stuff
+#include "stm32f7xx_ll_sdmmc.h"   // to replace this with my stuff
 
 //-------------------------------------------------------------------------------------------------
 
@@ -92,30 +92,31 @@ enum SD_CardState_t
     SD_CARD_ERROR                  = ((uint32_t)0x000000FF)   // Card is in error state
 };
 
-SystemState_e SDIO_Driver::SelectTheCard(void)
+//-------------------------------------------------------------------------------------------------
+//
+//   Constructor:   SDIO_Driver
+//
+//   Parameter(s):  DMA_Info_t* pDMA_RX
+//                  DMA_Info_t* pDMA_TX
+//
+//   Description:   Initializes the IO and the peripheral
+//
+//   Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+SDIO_Driver::SDIO_Driver(SDIO_Info_t* pInfo)
 {
-    SystemState_e State;
-
-    State = TransmitCommand((CMD7 | SD_SHORT_RESPONSE), m_RCA, 1);      // Select the Card
-    ClearClockRegister();
-
-    return State;
-}
-
-SDIO_Driver::SDIO_Driver()
-{
+    m_pInfo = pInfo;
     m_IsItInitialize = false;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   SDIO_Driver
+//   Function name: Initialize
 //
 //   Parameter(s):  None
 //
 //   Description:   Initializes the IO and the peripheral
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::Initialize(void)
@@ -151,28 +152,18 @@ void SDIO_Driver::Initialize(void)
         IO_OutputInit(IO_POWER_SD_CARD);
       #endif
 
-
         // Initialize DMA2 channel 3 for RX from SD CARD
-        DMA2_Stream3->CR   = 0;                                                 // Reset DMA Stream control register
-        DMA2_Stream3->PAR  = (uint32_t)&SDMMC1->FIFO;
-        DMA2->LIFCR        = IFCR_CLEAR_MASK_STREAM3;                           // Clear all interrupt flags
-        DMA2_Stream3->CR   = (DMA_CHANNEL_4         | DMA_SxCR_PFCTRL        |  // Prepare the DMA Stream configuration
-                              DMA_MEMORY_INCREMENT  | DMA_P_DATA_ALIGN_WORD  |  // And write to DMA Stream CR register
-                              DMA_M_DATA_ALIGN_WORD | DMA_PRIORITY_VERY_HIGH |
-                              DMA_M_BURST_INC4      | DMA_P_BURST_INC4);
+        m_DMA_RX.Initialize(&m_pInfo->DMA_RX); // Write config that will never change
+        m_DMA_RX.SetSource((void*)&SDMMC1->FIFO);
+        m_DMA_RX.ClearFlag(IFCR_CLEAR_MASK_STREAM3);
+//??        DMA2_Stream3->FCR  = (DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                 // Configuration FIFO control register
 
-        DMA2_Stream3->FCR  = (DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                 // Configuration FIFO control register
 
         // Initialize DMA2 channel 6 for TX to SD CARD
-        DMA2_Stream6->CR   = 0;                                                 // Reset DMA Stream control register
-        DMA2_Stream6->PAR  = (uint32_t)&SDMMC1->FIFO;
-        DMA2->HIFCR        = IFCR_CLEAR_MASK_STREAM6;                           // Clear all interrupt flags
-        DMA2_Stream6->CR   = (DMA_CHANNEL_4         | DMA_SxCR_PFCTRL        |  // Prepare the DMA Stream configuration
-                              DMA_MEMORY_INCREMENT  | DMA_P_DATA_ALIGN_WORD  |  // And write to DMA Stream CR register
-                              DMA_M_DATA_ALIGN_WORD | DMA_PRIORITY_VERY_HIGH |
-                              DMA_M_BURST_INC4      | DMA_P_BURST_INC4       |
-                              DMA_MEMORY_TO_PERIPH);
-        DMA2_Stream6->FCR  = (DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                 // Configuration FIFO control register
+        m_DMA_RX.Initialize(&m_pInfo->DMA_TX); // Write config that will never change
+        m_DMA_RX.SetDestination((void*)&SDMMC1->FIFO);
+        m_DMA_RX.ClearFlag(IFCR_CLEAR_MASK_STREAM6);
+//??        DMA2_Stream6->FCR  = (DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                 // Configuration FIFO control register
 
         m_CardStatus       = STA_NOINIT;
         m_TransferError    = SYS_READY;
@@ -1158,6 +1149,27 @@ SystemState_e SDIO_Driver::CheckOperation(uint32_t Flag)
 
     return State;
 }
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: SelectTheCard
+//
+//   Parameter(s):  None
+//   Return value:  SystemState_e
+//
+//   Description:   Select the card
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e SDIO_Driver::SelectTheCard(void)
+{
+    SystemState_e State;
+
+    State = TransmitCommand((CMD7 | SD_SHORT_RESPONSE), m_RCA, 1);      // Select the Card
+    ClearClockRegister();
+
+    return State;
+}
+
 
 /*
 //-------------------------------------------------------------------------------------------------

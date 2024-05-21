@@ -258,7 +258,7 @@ class TIM_Driver
         void                GetComparePointer           (TIM_Compare_e Channel);
       #endif
 
-        static TIM_TypeDef* GetTimerPointer         (TIM_ID_e TimID);
+        static TIM_TypeDef* GetTimerPointer             (TIM_ID_e TimID);
 
         TIM_CallBack_t      m_pCallBack;
 

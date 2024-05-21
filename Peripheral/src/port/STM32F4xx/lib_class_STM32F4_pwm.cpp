@@ -65,9 +65,10 @@
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-PWM_Driver::PWM_Driver(PWM_ChannelID_e PWM_ID)
+PWM_Driver::PWM_Driver(PWM_ChannelID_e PWM_ID, TIM_Driver* pTimer)
 {
     m_pInfo = &PWM_Info[PWM_ID];
+    m_pTimer = pTimer;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -84,11 +85,11 @@ PWM_Driver::PWM_Driver(PWM_ChannelID_e PWM_ID)
 void PWM_Driver::Initialize(void)
 {
     TIM_Compare_e Channel = m_pInfo->Channel;
-    
-    m_pTimer = TIM_Driver::GetTimerPointer(m_pInfo->TimID);
+
+    m_pTim = TIM_Driver::GetTimerPointer(m_pInfo->TimID);
     m_pTimer->Initialize();
     IO_PinInit(m_pInfo->PinID);
-    ClearConfigCompareChannel(Channel);
+    m_pTimer->ClearConfigCompareChannel(Channel);
 
     // Set PWM mode and enable output
     switch(Channel)
@@ -99,7 +100,7 @@ void PWM_Driver::Initialize(void)
         case TIM_CHANNEL_4: { m_pTim->CCMR2 |= (TIM_CCMR2_OC4_MODE_PWM | TIM_CCMR2_OC4PE); } break;
         default: break;
     }
-    
+
     m_pTimer->SetCompareChannel(Channel, m_pInfo->InitialDuty);
     m_pTimer->EnableCompareChannel(Channel);
     m_pTim->BDTR |= TIM_BDTR_MOE;

@@ -102,7 +102,7 @@ enum SPI_ID_e
 		DRIVER_SPI3_ID,
 	#endif
 
-    NB_OF_SPI_DRIVER,
+    NB_OF_SPI_DRIVER
 };
 
 struct SPI_Info_t
@@ -148,7 +148,7 @@ struct SPI_DeviceInfo_t
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class SPI_Driver : public DriverInterface
+class SPI_Driver// : public DriverInterface
 {
     public:
                         SPI_Driver              (SPI_ID_e SPI_ID);
@@ -158,9 +158,9 @@ class SPI_Driver : public DriverInterface
         SystemState_e   GetStatus               (void);
         SystemState_e   LockToDevice            (SPI_DeviceInfo_t* pDevice);                     // Set SPI to this device and lock
         SystemState_e   UnlockFromDevice        (SPI_DeviceInfo_t* pDevice);                     // Unlock SPI from device
-        
+
         uint8_t         Send                    (uint8_t Data);
-        
+
         // Read function (overloaded)
         SystemState_e   Read                    (uint8_t* pBuffer, size_t Size);
         SystemState_e   Read                    (uint8_t*  Data);

@@ -317,7 +317,7 @@ void TIM_Driver::SetCompareChannel(TIM_Compare_e Channel, uint32_t Value)
 //-------------------------------------------------------------------------------------------------
 #if (TIM_DRIVER_SUPPORT_COMPARE_CFG == DEF_ENABLED)
 void TIM_Driver::EnableCompareChannel(TIM_Compare_e Channel)
-{    
+{
     switch(Channel)
     {
         case TIM_CHANNEL_1: { m_pTim->CCER |= TIM_CCER_CC1E; } break;

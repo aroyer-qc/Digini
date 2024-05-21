@@ -50,7 +50,7 @@ class PWM_Driver
 {
     public:
 
-                                        PWM_Driver              (PWM_ChannelID_e PWM_ID);
+                                        PWM_Driver              (PWM_ChannelID_e PWM_ID, TIM_Driver* pTimer);
 
         void                            Initialize              (void);
         void                            SetDuty                 (uint16_t Duty);

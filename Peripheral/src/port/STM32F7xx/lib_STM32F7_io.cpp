@@ -36,8 +36,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define IO_PORT_MASK_FOR_CLOCK_ENABLE   0x00003C00                  // Keep only offset for each port
-#define IO_PORT_SHIFT_FOR_CLOCK_ENABLE  10                          // Need to shift 10 bits to set value from 0 - 7
+#define IO_PORT_MASK_FOR_CLOCK_ENABLE   0x00003C00 // Keep only offset for each port
+#define IO_PORT_SHIFT_FOR_CLOCK_ENABLE  10         // Need to shift 10 bits to set value from 0 - 7
 #define IO_PORT_SET_MASK                0x00001
 #define IO_PORT_RESET_MASK              0x10000
 

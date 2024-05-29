@@ -321,8 +321,8 @@ class SDIO_Driver
 
         // IRQ Handler
         void                SDMMC1_IRQHandler       (void);
-        void                DMA_Stream3IRQHandler   (void);
-        void                DMA_Stream6IRQHandler   (void);
+        void                RX_IRQHandler           (void);
+        void                TX_IRQHandler           (void);
        #if (SD_CARD_USE_DETECT_SIGNAL == DEF_ENABLED)
         void                CardDetectIRQ_Handler   (void);
        #endif
@@ -351,12 +351,11 @@ class SDIO_Driver
         void                Unlock                  (void);
 
         bool                    m_IsItInitialize;
-
         nOS_Mutex               m_Mutex;
         uint8_t                 m_LastCommand;
         volatile SystemState_e  m_TransferError;
-        volatile int            m_TransferComplete;
-        volatile int            m_DMA_XferComplete;
+        volatile bool           m_TransferComplete;
+//        volatile bool           m_DMA_XferComplete;
         volatile SD_Operation_e m_Operation;            // SD transfer operation (read/write)
 
         SDIO_Info_t*            m_pInfo;

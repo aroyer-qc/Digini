@@ -26,6 +26,8 @@
 //
 //  Only support DMA transfer as it is not making sense otherwise.
 //
+//  We used the IO_ID_e as Device to lock the SPI as this IO ID is unique. (29/5/2024)
+//
 //-------------------------------------------------------------------------------------------------
 
 #pragma once
@@ -142,6 +144,7 @@ struct SPI_Info_t
   #endif // (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 };
 
+/*
 struct SPI_DeviceInfo_t
 {
     uint32_t            SlowSpeed;
@@ -151,6 +154,7 @@ struct SPI_DeviceInfo_t
     GPIO_TypeDef*       pChipSelect;
     uint16_t            ChipSelectPin;
 };
+*/
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -163,28 +167,28 @@ class SPI_Driver// : public DriverInterface
 
         void            Initialize              (void);
         SystemState_e   GetStatus               (void);
-        SystemState_e   LockToDevice            (SPI_DeviceInfo_t* pDevice);                                                // Set SPI to this device and lock
-        SystemState_e   UnlockFromDevice        (SPI_DeviceInfo_t* pDevice);                                                // Unlock SPI from device
+        SystemState_e   LockToDevice            (IO_ID_e Device);                                                // Set SPI to this device and lock
+        SystemState_e   UnlockFromDevice        (IO_ID_e Device);                                                // Unlock SPI from device
 
         // Read function (overloaded)
         SystemState_e   Read                    (uint8_t* pBuffer, size_t Size);
         SystemState_e   Read                    (uint8_t*  Data);
         SystemState_e   Read                    (uint16_t* Data);
         SystemState_e   Read                    (uint32_t* Data);
-        SystemState_e   Read                    (uint8_t* pBuffer, size_t Size, SPI_DeviceInfo_t* pDevice);
-        SystemState_e   Read                    (uint8_t*  pData, SPI_DeviceInfo_t* pDevice);
-        SystemState_e   Read                    (uint16_t* pData, SPI_DeviceInfo_t* pDevice);
-        SystemState_e   Read                    (uint32_t* pData, SPI_DeviceInfo_t* pDevice);
+        SystemState_e   Read                    (uint8_t* pBuffer, size_t Size, IO_ID_e Device);
+        SystemState_e   Read                    (uint8_t*  pData, IO_ID_e Device);
+        SystemState_e   Read                    (uint16_t* pData, IO_ID_e Device);
+        SystemState_e   Read                    (uint32_t* pData, IO_ID_e Device);
 
         // Write function (overloaded)
         SystemState_e   Write                   (const uint8_t* pBuffer, size_t Size);
         SystemState_e   Write                   (uint8_t  Data);
         SystemState_e   Write                   (uint16_t Data);
         SystemState_e   Write                   (uint32_t Data);
-        SystemState_e   Write                   (const uint8_t* pBuffer, size_t Size, SPI_DeviceInfo_t* pDevice);
-        SystemState_e   Write                   (uint8_t  Data, SPI_DeviceInfo_t* pDevice);
-        SystemState_e   Write                   (uint16_t Data, SPI_DeviceInfo_t* pDevice);
-        SystemState_e   Write                   (uint32_t Data, SPI_DeviceInfo_t* pDevice);
+        SystemState_e   Write                   (const uint8_t* pBuffer, size_t Size, IO_ID_e Device);
+        SystemState_e   Write                   (uint8_t  Data, IO_ID_e Device);
+        SystemState_e   Write                   (uint16_t Data, IO_ID_e Device);
+        SystemState_e   Write                   (uint32_t Data, IO_ID_e Device);
 
         void            IRQHandler              (void);
         SystemState_e   Request                 (AccessRequest_e Request, uint8_t *pBuffer, size_t Size);
@@ -194,11 +198,11 @@ class SPI_Driver// : public DriverInterface
     private:
 
 //        uint16_t              GetPrescalerFromSpeed   (uint32_t speed);
-        void                    Lock                    (void);
-        void                    Unlock                  (void);
+        void            Lock                    (void);
+        void            Unlock                  (void);
 
         SPI_Info_t*                             m_pInfo;
-        SPI_DeviceInfo_t*                       m_pDevice;
+        IO_ID_e*                                m_Device;
 
       #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
         DMA_Driver                              m_DMA_RX;
@@ -207,9 +211,9 @@ class SPI_Driver// : public DriverInterface
 
         nOS_Mutex                               m_Mutex;
         AccessRequest_e                         m_Request;
-        uint32_t                                m_SlowSpeed;
-        uint32_t                                m_FastSpeed;
-        volatile size_t                         m_Size;
+        //uint32_t                                m_SlowSpeed;
+        //uint32_t                                m_FastSpeed;
+        //volatile size_t                         m_Size;
         volatile SystemState_e		            m_State;
         volatile uint8_t                        m_Timeout;
         void                                    (*m_pCallBackTick)();

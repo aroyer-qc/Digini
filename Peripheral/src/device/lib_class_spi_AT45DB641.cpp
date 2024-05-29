@@ -42,7 +42,7 @@
 //   Class: CSPI_FLash
 //
 //
-//   Description:   Class to handle SD_Card
+//   Description:   Class to handle SPI Flash
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -50,17 +50,17 @@
 //
 //   Constructor:   CSPI_FLash
 //
-//   Parameter(s):  CSPI*       pSPI
-//                  eIO_Output  ChipSelect
-//                  eIO_Output  ChipReset
-//                  eIO_Output  ChipWriteProtect
+//   Parameter(s):  SPI_Driver* pSPI
+//                  IO_ID_e     ChipSelect
+//                  IO_ID_e     ChipReset
+//                  IO_ID_e     ChipWriteProtect
 //
 //   Description:   Get the pointer for the init structure
 //
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CSPI_FLash::CSPI_FLash(CSPI* pSPI, eIO_Output ChipSelect, eIO_Output ChipReset, eIO_Output ChipWriteProtect)
+CSPI_FLash::CSPI_FLash(SPI_Driver* pSPI, IO_ID_e ChipSelect, IO_ID_e ChipReset, IO_ID_e ChipWriteProtect)
 {
     m_pSPI             = pSPI;
     m_pDevice          = &SPI_DeviceInfo[SPI_DEVICE_FLASH_AT45DB64];

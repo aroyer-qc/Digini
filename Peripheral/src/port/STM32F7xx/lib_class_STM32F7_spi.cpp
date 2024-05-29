@@ -82,7 +82,7 @@ SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
 {
     m_pDevice        = nullptr;
     m_pInfo          = &SPI_Info[SPI_ID];
-    //m_Status         = SYS_DEVICE_NOT_PRESENT;
+    m_Status         = SYS_DEVICE_NOT_PRESENT;
     //m_pInfo->pObject = this;
 }
 
@@ -230,22 +230,22 @@ void SPI_Driver::Initialize(void)
 //
 //  Name:           LockToDevice
 //
-//  Parameter(s):   void*          pDevice
+//  Parameter(s):   IO_ID_e        Device
 //  Return:         SystemState_e  Status
 //
-//  Description:    This routine will configure the SPI port to work with a specific device and
-//                  lock it, so any other access to the port will be block until unlock
+//  Description:    This routine will lock it to a specific device so any other access to the port
+//                  will be block until unlock
 //
 //  Note(s):        If a write without lock is executed then it will be done on the locked device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_Driver::LockToDevice(void* pDevice)
+SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
 {
-    if(m_pDevice == nullptr)
+    if(Device == IO_NOT_DEFINED)
     {
         while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
-        m_pDevice = pDevice;
-        m_Status  = SYS_READY;
+        m_Device = Device;
+        m_Status = SYS_READY;
     }
 
     return m_Status;
@@ -255,8 +255,8 @@ SystemState_e SPI_Driver::LockToDevice(void* pDevice)
 //
 //  Name:           UnlockFromDevice
 //
-//  Parameter(s):   void*         pDevice
-//  Return:         SystemState_e Status
+//  Parameter(s):   IO_ID_e          Device
+//  Return:         SystemState_e    Status
 //
 //  Description:    This routine will unlock SPI port from a specific device
 //
@@ -264,18 +264,18 @@ SystemState_e SPI_Driver::LockToDevice(void* pDevice)
 //                  if lock and no write at all if not lock to a device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_Driver::UnlockFromDevice(void* pDevice)
+SystemState_e SPI_Driver::UnlockFromDevice(IO_ID_e Device)
 {
-    if(pDevice == m_pDevice)
+    if(Device == m_Device)
     {
         nOS_MutexUnlock(&m_Mutex);
-        m_pDevice = nullptr;
-        m_Status  = SYS_DEVICE_NOT_PRESENT;
+        m_Device = IO_NOT_DEFINED;
+        m_Status = SYS_DEVICE_NOT_PRESENT;
     }
     else
     {
-        if(pDevice != m_pDevice) return SYS_WRONG_DEVICE;
-        else                     return SYS_NOT_LOCK_TO_DEVICE;
+        if(Device != m_Device) return SYS_WRONG_DEVICE;
+        else                   return SYS_NOT_LOCK_TO_DEVICE;
     }
     return SYS_READY;
 }
@@ -388,21 +388,21 @@ uint8_t SPI_Driver::Send(uint8_t Data)
 //                  TX_Size			Number of byte to send.
 //                  pRX_pData       Pointer on the data buffer where to put received data.
 //                  RX_Size			Number of byte to receive.
-//                  pDevice         Pointer of the device using SPI (it's a unique ID in the system)
+//                  Device          IO_ID_e (it's a unique ID in the system)
 //  Return:         SystemState_e   State
 //
 //  Description:    Read or writes data to SPI device.
 //
 //-------------------------------------------------------------------------------------------------
 #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, void* pDevice)
+SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, IO_ID_e Device)
 {
     SystemState_e State;
 
-    if((State = LockToDevice(pDevice)) == SYS_READY)
+    if((State = LockToDevice(Device)) == SYS_READY)
     {
         State = Transfer(pTX_Data, TX_Size, pRX_Data, RX_Size);
-        UnlockFromDevice(pDevice);
+        UnlockFromDevice(Device);
     }
 
     return State;
@@ -589,21 +589,21 @@ SystemState_e SPI_Driver::Transfer(const uint8_t* pTX_Data, uint32_t TX_Size, ui
 //                  TX_Size			Number of byte to send.
 //                  pRX_pData       Pointer on the data buffer (uint16_t*) where to put received data.
 //                  RX_Size			Number of byte to receive.
-//                  pDevice         Pointer of the device using SPI (it's a unique ID in the system)
+//                  Device          IO_ID_e (it's a unique ID in the system)
 //  Return:         SystemState_e   State
 //
 //  Description:    Read or writes data to SPI device.
 //
 //-------------------------------------------------------------------------------------------------
 #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size, void* pDevice)
+SystemState_e SPI_Driver::Transfer(const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size, IO_ID_e Device)
 {
     SystemState_e State;
 
-    if((State = LockToDevice(pDevice)) == SYS_READY)
+    if((State = LockToDevice(Device)) == SYS_READY)
     {
         State = Transfer(pTX_Data, TX_Size, pRX_Data, RX_Size);
-        UnlockFromDevice(pDevice);
+        UnlockFromDevice(Device);
     }
 
     return State;

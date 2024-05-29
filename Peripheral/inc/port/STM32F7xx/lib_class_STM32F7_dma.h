@@ -113,7 +113,6 @@ class DMA_Driver
         void        ClearFlag                               (uint32_t Flag);
         bool        CheckFlag                               (uint32_t Flag);
         //void        EnableCallbackType                      (int CallbackType);
-        void        IRQ_Handler                             (void);
 
         // Inline method
         void        Enable                                  (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_EN);     }

@@ -134,10 +134,6 @@ void SDIO_Driver::Initialize(void)
         // Enable SDIO clock
         RCC->APB2ENR |= RCC_APB2ENR_SDMMC1EN;
 
-        // Enable DMA2 clocks
-        RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-
-
         /// ---- GPIOs Configuration ----
         for(uint32_t IO_Id = uint32_t(IO_SD_D0); IO_Id <= uint32_t(IO_SD_CMD); IO_Id++)
         {
@@ -167,7 +163,7 @@ void SDIO_Driver::Initialize(void)
 
         m_CardStatus       = STA_NOINIT;
         m_TransferError    = SYS_READY;
-        m_DMA_XferComplete = false;
+ //       m_DMA_XferComplete = false;
         m_TransferComplete = false;
 
         //m_SendStopTransfer = false;
@@ -990,7 +986,7 @@ void SDIO_Driver::StartBlockTransfert(DMA_Stream_TypeDef* pDMA, uint32_t* pBuffe
 {
     SDMMC1->DCTRL      = 0;                                                                 // Initialize data control register
     m_TransferComplete = false;                                                                 // Initialize handle flags
-    m_DMA_XferComplete = false;
+//    m_DMA_XferComplete = false;
     m_TransferError    = SYS_READY;
     m_Operation        = (NumberOfBlocks > 1) ? SD_MULTIPLE_BLOCK : SD_SINGLE_BLOCK;        // Initialize SD Read operation
     SDMMC1->MASK      |= (SDMMC_MASK_DCRCFAILIE | SDMMC_MASK_DTIMEOUTIE |                   // Enable transfer interrupts
@@ -1115,7 +1111,7 @@ SystemState_e SDIO_Driver::CheckOperation(uint32_t Flag)
 
     // Wait for DMA/SD transfer end or SD error variables
     TimeOut = SD_DATA_TIMEOUT;
-    while((m_DMA_XferComplete == false)     &&
+    while(/*(m_DMA_XferComplete == false)     &&*/
           (m_TransferComplete == false)     &&
           (m_TransferError    == SYS_READY) &&
           (TimeOut > 0))
@@ -1223,9 +1219,10 @@ SystemState_e SDIO_Driver::WaitReady(uint32_t Timer)
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::DMA_Complete(DMA_Stream_TypeDef* pDMA_Stream)
 {
-    m_DMA_XferComplete = 1;             // DMA transfer is complete
-    while(m_TransferComplete == 0){}    // Wait until SD transfer is complete
-    pDMA_Stream->CR &= ~DMA_SxCR_EN;    // Disable the stream
+    //m_DMA_XferComplete = true;              // DMA transfer is complete          m_TransferComplete is probably enough
+    while(m_TransferComplete == false){}    // Wait until SD transfer is complete
+    //Disable
+    pDMA_Stream->CR &= ~DMA_SxCR_EN;        // Disable the stream
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1263,7 +1260,7 @@ void SDIO_Driver::SDMMC1_IRQHandler(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name: DMA_Stream3IRQHandler
+//   Function name: RX_IRQHandler
 //
 //   Parameter(s):  None
 //   Return value:  None
@@ -1273,7 +1270,7 @@ void SDIO_Driver::SDMMC1_IRQHandler(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void SDIO_Driver::DMA_Stream3IRQHandler(void)
+void SDIO_Driver::RX_IRQHandler(void)
 {
     // Transfer Error Interrupt management
     if((DMA2->LISR & DMA_LISR_TEIF3) != 0)
@@ -1351,7 +1348,7 @@ void SDIO_Driver::DMA_Stream3IRQHandler(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name: DMA_Stream6IRQHandler
+//   Function name: TX_IRQHandler
 //
 //   Parameter(s):  None
 //   Return value:  None
@@ -1361,7 +1358,7 @@ void SDIO_Driver::DMA_Stream3IRQHandler(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void SDIO_Driver::DMA_Stream6IRQHandler(void)
+void SDIO_Driver::TX_IRQHandler(void)
 {
     // Transfer Error Interrupt management
     if((DMA2->HISR & DMA_HISR_TEIF6) != 0)

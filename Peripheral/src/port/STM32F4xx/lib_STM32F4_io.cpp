@@ -36,8 +36,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define IO_PORT_MASK_FOR_CLOCK_ENABLE   0x00003C00                  // Keep only offset for each port
-#define IO_PORT_SHIFT_FOR_CLOCK_ENABLE  10                          // Need to shift 10 bits to set value from 0 - 7
+#define IO_PORT_MASK_FOR_CLOCK_ENABLE   0x00003C00 // Keep only offset for each port
+#define IO_PORT_SHIFT_FOR_CLOCK_ENABLE  10         // Need to shift 10 bits to set value from 0 - 7
 
 //-------------------------------------------------------------------------------------------------
 //  private variable(s)
@@ -110,12 +110,12 @@ static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_ID, uint32_t* pPinNumber, uint32_t*
 void IO_PinInit(IO_ID_e IO_ID)
 {
     const IO_Properties_t* pIO_Properties;
-    GPIO_TypeDef* pPort;
-    uint32_t       PinNumber;
-    uint32_t       PinMode;
-    uint32_t       PinType;
-    uint32_t       PinSpeed;
-    uint32_t       State;
+    GPIO_TypeDef*          pPort;
+    uint32_t               PinNumber;
+    uint32_t               PinMode;
+    uint32_t               PinType;
+    uint32_t               PinSpeed;
+    uint32_t               State;
 
     pIO_Properties = &IO_Properties[IO_ID];
     pPort          = pIO_Properties->pPort;

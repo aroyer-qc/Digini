@@ -72,13 +72,13 @@ CSPI_FLash::CSPI_FLash(SPI_Driver* pSPI, IO_ID_e ChipSelect, IO_ID_e ChipReset, 
     m_ChipStatus       = 0;
 
 
-    IO_OutputInit(m_ChipSelect);
-    IO_OutputInit(m_ChipReset);
-    IO_OutputInit(m_ChipWriteProtect);
+    IO_Initialize(m_ChipSelect);
+    IO_Initialize(m_ChipReset);
+    IO_Initialize(m_ChipWriteProtect);
 
     if(m_pSPI->LockToDevice(m_pDevice) != READY)                                    return;
-    this->WriteProtect(WRITE_ALLOWED);
-    this->ChipSelect(CS_ENABLE);
+    WriteProtect(WRITE_ALLOWED);
+    ChipSelect(CS_ENABLE);
 
     if(m_pSPI->Write(SPI_FLASH_AT45DB641_SOFTWARE_RESET) != READY)                  goto ExitSPI_Constructor;
     if(this->WaitReadyAndChipSelect(CS_ENABLE) != READY)                            goto ExitSPI_Constructor;
@@ -102,8 +102,8 @@ CSPI_FLash::CSPI_FLash(SPI_Driver* pSPI, IO_ID_e ChipSelect, IO_ID_e ChipReset, 
 
     ExitSPI_Constructor:
 
-    this->ChipSelect(CS_DISABLE);
-    this->WriteProtect(WRITE_PROTECTED);
+    ChipSelect(CS_DISABLE);
+    WriteProtect(WRITE_PROTECTED);
     m_pSPI->UnlockFromDevice(m_pDevice);
 }
 

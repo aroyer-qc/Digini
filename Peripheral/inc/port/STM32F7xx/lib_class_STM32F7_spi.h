@@ -202,7 +202,7 @@ class SPI_Driver// : public DriverInterface
         void            Unlock                  (void);
 
         SPI_Info_t*                             m_pInfo;
-        IO_ID_e*                                m_Device;
+        IO_ID_e                                 m_Device;
 
       #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
         DMA_Driver                              m_DMA_RX;
@@ -216,7 +216,6 @@ class SPI_Driver// : public DriverInterface
         //volatile size_t                         m_Size;
         volatile SystemState_e		            m_State;
         volatile uint8_t                        m_Timeout;
-        void                                    (*m_pCallBackTick)();
 
 };
 
@@ -225,6 +224,8 @@ class SPI_Driver// : public DriverInterface
 //-------------------------------------------------------------------------------------------------
 
 #include "spi_var.h"
+
+extern SPI_Info_t SPI_Info[NB_OF_SPI_DRIVER];
 
 //-------------------------------------------------------------------------------------------------
 

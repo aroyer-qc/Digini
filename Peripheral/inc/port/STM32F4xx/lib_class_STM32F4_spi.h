@@ -31,6 +31,7 @@
 //          - The SPI Driver is not handling the NSS pin, it's the driver using the SPI that know
 //            it's IO for the CS
 //
+//  We used the IO_ID_e as Device to lock the SPI as this IO ID is unique.
 //
 //-------------------------------------------------------------------------------------------------
 

@@ -30,7 +30,6 @@
 
 #define SPI_DRIVER_GLOBAL
 #include "lib_digini.h"
-#include "lib_class_STM32F4_spi.h"
 #undef  SPI_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -204,7 +203,7 @@ SystemState_e SPI_Driver::UnlockFromDevice(IO_ID_e Device)
     {
         nOS_MutexUnlock(&m_Mutex);
         m_Device = IO_NOT_DEFINED;
-        m_Status  = SYS_DEVICE_NOT_PRESENT;
+        m_Status = SYS_DEVICE_NOT_PRESENT;
     }
     else
     {
@@ -339,7 +338,7 @@ SystemState_e SPI_Driver::Write(uint8_t  Data, IO_ID_e Device)
 //
 //  Return:         None
 //
-//  Description:    Write singke data of data buffer to SPI
+//  Description:    Write single data of data buffer to SPI
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::Read(uint8_t* pBuffer, size_t Size)
@@ -404,8 +403,8 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size)
 {
-	SPI_TypeDef*              pSPIx;
-    uint32_t                  Dummy;
+	SPI_TypeDef* pSPIx;
+    uint32_t     Dummy;
 
     if(((pTX_Data == nullptr) || (TX_Size == 0)) &&
        ((pRX_Data == nullptr) || (RX_Size == 0)))
@@ -505,7 +504,6 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
                 return SYS_TIME_OUT;
             }
 
-
             // Deactivate DMA
             CLEAR_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));
             m_DMA_RX.Disable();                                         // Disable the DMA RX module
@@ -515,11 +513,11 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
         // ----------------------------------------------------------------------------------------
 
         CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                             // Disable SPI
+
         if(m_pInfo->Control == SPI_HALF_DUPLEX)
         {
             MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_FULL_DUPLEX);
         }
-
 
         m_DMA_Status = SYS_IDLE;
         return SYS_READY;
@@ -654,7 +652,7 @@ SystemState_e SPI_Driver::WaitDMA(void)
 //  Name:           DMA_TX_IRQ_Handler
 //
 //  Parameter(s):   None
-//  Return:         SystemState_e   State
+//  Return:         void
 //
 //  Description:    Get status of the SPI DMA transfer
 //
@@ -673,7 +671,7 @@ void SPI_Driver::DMA_TX_IRQ_Handler(SPI_ID_e SPI_ID)
 //  Name:           DMA_RX_IRQ_Handler
 //
 //  Parameter(s):   None
-//  Return:         SystemState_e   State
+//  Return:         void
 //
 //  Description:    Get status of the SPI DMA transfer
 //
@@ -886,6 +884,7 @@ SystemState_e SPI_Driver::Transfer(uint16_t* pTX_Data, uint32_t TX_Size, uint16_
         // ----------------------------------------------------------------------------------------
 
         CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                                                 // Disable SPI
+
         if(m_pInfo->Control == SPI_HALF_DUPLEX)
         {
             MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_FULL_DUPLEX);

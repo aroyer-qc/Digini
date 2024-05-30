@@ -91,7 +91,7 @@
 struct DMA_Info_t
 {
     uint32_t            ConfigAndChannel;
-    uint32_t            DMA_Flag;
+    uint32_t            Flag;
     DMA_Stream_TypeDef* pDMA;
     IRQn_Type           IRQn_Channel;
     uint8_t             PreempPrio;
@@ -118,8 +118,11 @@ class DMA_Driver
         // Inline method
         void        Enable                                  (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_EN);     }
         void        Disable                                 (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_EN);   }
+        void        ClearFlag                               (void)                              { ClearFlag(m_Flag);                    }
         size_t      GetLength                               (void)                              { return size_t(m_pDMA->NDTR);          }
         void        SetLength                               (size_t Length)                     { m_pDMA->NDTR = uint32_t(Length);      }
+        void        SetMemoryIncrement                      (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_MINC);   }
+        void        SetNoMemoryIncrement                    (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_MINC); }
         void        RegisterCallback                        (CallbackInterface* pCallback)      { m_pCallback = pCallback;              }
         void        EnableInterrupt                         (uint32_t Interrupt)                { SET_BIT(m_pDMA->CR, Interrupt);       }
         void        DisableInterrupt                        (uint32_t Interrupt)                { CLEAR_BIT(m_pDMA->CR, Interrupt);     }
@@ -134,6 +137,7 @@ class DMA_Driver
 
 
         DMA_Stream_TypeDef*         m_pDMA;
+        uint32_t                    m_Flag;
         uint32_t                    m_Direction;
         CallbackInterface*          m_pCallback;
         //int                         m_CallBackType;       // variables is not used at this time.

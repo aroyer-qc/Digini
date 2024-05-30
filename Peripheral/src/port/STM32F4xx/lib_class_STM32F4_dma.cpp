@@ -56,6 +56,7 @@
 void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 {
     m_pDMA         = pInfo->pDMA;
+    m_Flag         = pInfo->Flag;
     EnableClock();
     m_pDMA->CR     = pInfo->ConfigAndChannel;
     m_Direction    = pInfo->ConfigAndChannel & DMA_DIRECTION_MASK;

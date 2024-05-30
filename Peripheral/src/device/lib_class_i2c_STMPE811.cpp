@@ -24,17 +24,21 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+// TODO switch to SystemState_e
+
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
+#include "lib_digini.h"
+
+//#include "digini_cfg.h"
 #ifdef DIGINI_USE_GRAFX
 #ifdef DIGINI_USE_POINTING_DEVICE
-#include "lib_class_i2c_STMPE811.h"
-#include "lib_STM32F4_lcd_quarter_vga.h"
-#include "lib_macro.h"
-#include "lib_define.h"
+//#include "lib_class_i2c_STMPE811.h"
+//#include "lib_STM32F4_lcd_quarter_vga.h"
+//#include "lib_macro.h"
+//#include "lib_define.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -126,7 +130,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: CTouch
+//   Class: TouchDriver
 //
 //
 //   Description:   Class to handle Touch panel with I2C chip
@@ -135,14 +139,14 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   CTouch
+//   Constructor:   TouchDriver
 //
 //   Description:   Initializes the Touch panel
 //
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CTouch::CTouch(I2C_Driver* pI2C)
+TouchDriver::TouchDriver(I2C_Driver* pI2C)
 {
     m_pI2C               = pI2C;
     m_pDevice            = &I2C_DeviceInfo[I2C_DEVICE_STMPE811];
@@ -164,7 +168,7 @@ CTouch::CTouch(I2C_Driver* pI2C)
 //  Note(s):        I2C and interrupt pin on processor are initialize in BSP
 //
 //-------------------------------------------------------------------------------------------------
-bool CTouch::Initialize()
+bool TouchDriver::Initialize()
 {
     if(this->IsOperational() == false)                                          // Read IO Expander ID
     {
@@ -209,7 +213,6 @@ bool CTouch::Initialize()
     return true;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:            GetXY
@@ -224,7 +227,7 @@ bool CTouch::Initialize()
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CTouch::TS_GetXY(uint16_t *X, uint16_t *Y)
+void TouchDriver::TS_GetXY(uint16_t *X, uint16_t *Y)
 {
     *X = m_X;
     *Y = m_Y;
@@ -243,7 +246,7 @@ void CTouch::TS_GetXY(uint16_t *X, uint16_t *Y)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CTouch::SetTouchCorrection(sLinearEquation X_Correction, sLinearEquation Y_Correction)
+void TouchDriver::SetTouchCorrection(sLinearEquation X_Correction, sLinearEquation Y_Correction)
 {
     m_X_Correction = X_Correction;
     m_Y_Correction = Y_Correction;
@@ -262,7 +265,7 @@ void CTouch::SetTouchCorrection(sLinearEquation X_Correction, sLinearEquation Y_
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CTouch::EnableTouchCorrection(bool Enable)
+void TouchDriver::EnableTouchCorrection(bool Enable)
 {
     m_IsCorrectionEnable = m_IsCalibrated && Enable;
 }
@@ -279,7 +282,7 @@ void CTouch::EnableTouchCorrection(bool Enable)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CTouch::ProcessTouch()
+void TouchDriver::ProcessTouch()
 
 {
     uint8_t     FifoSize;
@@ -334,7 +337,6 @@ void CTouch::ProcessTouch()
     this->ClearIRQ_Status(IRQ_FLAG_FTH | IRQ_FLAG_TOUCH);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           FifoReset
@@ -347,7 +349,7 @@ void CTouch::ProcessTouch()
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CTouch::FifoReset()
+void TouchDriver::FifoReset()
 {
     m_pI2C->LockToDevice(m_pDevice);
     m_pI2C->Write(FIFO_STA, (uint8_t)0x01);                         // Clear the interrupt pending bit and enable the FIFO again
@@ -367,7 +369,7 @@ void CTouch::FifoReset()
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-bool CTouch::IsOperational()
+bool TouchDriver::IsOperational()
 {
     uint16_t ID;
 
@@ -397,7 +399,7 @@ bool CTouch::IsOperational()
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CTouch::SetIRQ_Enable(bool State)
+void TouchDriver::SetIRQ_Enable(bool State)
 {
     uint8_t Register;
 
@@ -433,7 +435,7 @@ void CTouch::SetIRQ_Enable(bool State)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-bool CTouch::GetIRQ_Status(uint8_t IRQ_Flag)
+bool TouchDriver::GetIRQ_Status(uint8_t IRQ_Flag)
 {
     uint8_t Register;
 
@@ -445,7 +447,6 @@ bool CTouch::GetIRQ_Status(uint8_t IRQ_Flag)
 
   return false;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -469,7 +470,7 @@ bool CTouch::GetIRQ_Status(uint8_t IRQ_Flag)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CTouch::ClearIRQ_Status(uint8_t IRQ_Flag)
+void TouchDriver::ClearIRQ_Status(uint8_t IRQ_Flag)
 {
     m_pI2C->Write(INT_STA, IRQ_Flag, m_pDevice);                    // Write 1 to the bits that have to be cleared
 }

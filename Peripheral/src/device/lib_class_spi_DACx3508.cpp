@@ -28,9 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//#define LIB_DAC_x3508_GLOBAL
+#define LIB_DAC_x3508_GLOBAL
 #include "lib_digini.h"
-//#undef  LIB_DAC_x3508_GLOBAL
+#undef  LIB_DAC_x3508_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -39,6 +39,8 @@
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
+
+#define DAC_NUMBER_OF_BYTES_PER_COMMAND         size_t(3)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -126,24 +128,22 @@ SystemState_e DAC_X3508_Driver::WriteDAC(int Channel, uint16_t Value)
 //
 //   Parameter(s):  DAC_X3508_Cmd_e     Command
 //                  uint16_t            Data
-//   Return Value:  None
+//   Return Value:  SystemState_e
 //
 //   Description:   Send the command to the DAC with data
 //
 //-------------------------------------------------------------------------------------------------
-void DAC_X3508_Driver::Send3Bytes(DAC_X3508_Cmd_e Command, uint16_t Data)
+SystemState_e DAC_X3508_Driver::Send3Bytes(DAC_X3508_Cmd_e Command, uint16_t Data)
 {
-	uint8_t ByteBuffer[3];
+	SystemState_e State;
+	uint8_t       ByteBuffer[3];
 
 	ByteBuffer[0] = Command;
 	ByteBuffer[1] = (uint8_t)(Data >> 8);
 	ByteBuffer[2] = (uint8_t)Data;
+	State = m_pSPI->Write(&ByteBuffer[0], DAC_NUMBER_OF_BYTES_PER_COMMAND, m_ChipSelectIO);
 
-
-    m_pSPI->LockToDevice(m_ChipSelectIO);
-    IO_SetPinLow(m_ChipSelectIO);
-	m_pSPI->Transfer(&ByteBuffer, nullptr, 3);
-    IO_SetPinHigh(m_ChipSelectIO);
+	return State;
 }
 
 //-------------------------------------------------------------------------------------------------

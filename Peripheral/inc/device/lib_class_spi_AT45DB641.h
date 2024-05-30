@@ -26,21 +26,9 @@
 
 #pragma once
 
-#ifdef SPI_FLASH_GLOBAL
-    #define SPI_FLASH_EXTERN
-#else
-    #define SPI_FLASH_EXTERN extern
-#endif
-
-//-------------------------------------------------------------------------------------------------
-// Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_class_STM32F4_gpio.h"
-#include "lib_class_STM32F4_spi.h"
-#include "diskio.h"
-#include "lib_define.h"
-#include "lib_typedef.h"
+#if (USE_SPI_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -95,7 +83,8 @@
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
-class CSPI_FLash
+
+class CSPI_FLash  // todo change name
 {
     public:
 
@@ -140,6 +129,22 @@ class CSPI_FLash
         uint16_t                    m_ChipStatus;
         volatile uint32_t           m_TimeOut;
 };
+
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+#define __CLASS_AT45DB641__
+#include "device_var.h"
+#undef  __CLASS_AT45DB641__
+
+---------------------------------------------------
+
+#else // (USE_SPI_DRIVER == DEF_ENABLED)
+
+#pragma message("DIGINI driver for SPI must be enable and configure to use this device driver")
+
+#endif // (USE_SPI_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 

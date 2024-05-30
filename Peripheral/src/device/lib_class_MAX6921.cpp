@@ -52,7 +52,7 @@
 //  Note(s):        Call this init when the OS is started
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e MAX6921::Initialize(void* pArg, uint8_t NumberOfDeviceInChain)
+SystemState_e MAX6921_Driver::Initialize(void* pArg, uint8_t NumberOfDeviceInChain)
 {
     uint8_t* pData;
     
@@ -86,7 +86,7 @@ SystemState_e MAX6921::Initialize(void* pArg, uint8_t NumberOfDeviceInChain)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void MAX6921::Send(uint8_t* pArray)
+void MAX6921_Driver::Send(uint8_t* pArray)
 {
     m_BitCounter  = 0;
     m_BitMask     = 0x80;
@@ -107,7 +107,7 @@ void MAX6921::Send(uint8_t* pArray)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void MAX6921::Callback(void)
+void MAX6921_Driver::Callback(void)
 {
     if((*m_pDataToSend & m_BitMask) != 0)   IO_SetPinHigh(m_pPinStruct->IO_DOut);
     else                                    IO_SetPinLow (m_pPinStruct->IO_DOut);

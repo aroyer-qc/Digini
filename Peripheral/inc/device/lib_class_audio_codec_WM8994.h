@@ -73,35 +73,35 @@ class WM8994 : public AudioDriverInterface
     public:
 
 
-        SystemState_e         Initialize                    (void* pArgControl, void* pArgData, uint16_t Device, uint8_t InitialVolume);
-        //SystemState_e     DeInitialize                (void);
-        uint16_t            ReadID                        (void);
-        SystemState_e        Reset                        (void);
+        SystemState_e       Initialize                  (void* pArgControl, void* pArgData, uint16_t Device, uint8_t InitialVolume);
+        uint16_t            ReadID                      (void);
+        SystemState_e       Reset                       (void);
 
-        SystemState_e         Play                        (uint16_t* pBuffer, uint16_t Size);
-        SystemState_e         Stop                        (uint32_t CodecPdwnMode);
-        SystemState_e         Pause                        (void);
-        SystemState_e         Resume                        (void);
+        SystemState_e       Play                        (uint16_t* pBuffer, uint16_t Size);
+        SystemState_e       Stop                        (uint32_t CodecPdwnMode);
+        SystemState_e       Pause                       (void);
+        SystemState_e       Resume                      (void);
 
-        SystemState_e         SetVolume                    (uint8_t Volume);
-        SystemState_e         SetFrequency                (uint32_t AudioFrequency);
-        SystemState_e         SetMute                        (uint32_t Command);
-        SystemState_e         SetOutputMode                (uint8_t Mode);
-        void                 DataPortAccessFunction        (int Function, void* pData);
+        SystemState_e       SetVolume                   (uint8_t Volume);
+        SystemState_e       SetFrequency                (uint32_t AudioFrequency);
+        SystemState_e       SetMute                     (uint32_t Command);
+        SystemState_e       SetOutputMode               (uint8_t Mode);
+        void                DataPortAccessFunction      (int Function, void* pData);
 
     private:
 
         SystemState_e       Read                        (uint16_t Register, uint16_t* pData);
-        SystemState_e        Write                        (uint16_t Register, uint16_t Data);
+        SystemState_e       Write                       (uint16_t Register, uint16_t Data);
 
-        uint8_t                m_DeviceAddress;
-        //uint8_t             m_OutputConfig;
+        uint8_t             m_DeviceAddress;
+        //uint8_t           m_OutputConfig;
         uint16_t            m_OutputMode;
         uint16_t            m_InputMode;
-        bool                 m_IsOutputStopped;
-        bool                 m_IsInputStopped;
-        SAI_Driver*            m_pSAI;
-        I2C_Driver*            m_pI2C;
+        bool                m_IsOutputStopped;
+        bool                m_IsInputStopped;
+        SAI_Driver*         m_pSAI;
+        I2C_Driver*         m_pI2C;
 };
 
 //-------------------------------------------------------------------------------------------------
+ // need to floow standard for driver... see FT5336

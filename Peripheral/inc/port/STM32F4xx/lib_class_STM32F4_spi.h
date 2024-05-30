@@ -24,9 +24,13 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-//  Only support DMA transfer as it is not making sense otherwise.
+//  Note(s):
+//          - Only support DMA transfer as it is not making sense otherwise.
 //
-//  We used the IO_ID_e as Device to lock the SPI as this IO ID is unique. (29/5/2024)
+//          - It used the IO_ID_e for CS as device to lock the SPI as this IO ID is unique.
+//          - The SPI Driver is not handling the NSS pin, it's the driver using the SPI that know
+//            it's IO for the CS
+//
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -118,31 +122,12 @@ struct SPI_Info_t
     IO_ID_e             PinCLK;
     IO_ID_e             PinMOSI;
     IO_ID_e             PinMISO;
-    IO_ID_e             PinNSS;
     uint32_t            Control;
     uint32_t            Speed;
-    uint32_t            RCC_APBxPeriph;
-    volatile uint32_t*  RCC_APBxEN_Register;
     IRQn_Type           IRQn_Channel;
-
-  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;
-  #endif // (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-  //    class SPI_Driver*   pObject;
 };
-
-/*
-struct SPI_DeviceInfo_t
-{
-    uint32_t            SlowSpeed;
-    uint32_t            FastSpeed;
-    uint8_t             TimeOut;
-    uint32_t            ChipSelectClock;
-    GPIO_TypeDef*       pChipSelect;
-    uint16_t            ChipSelectPin;
-};
-*/
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -155,69 +140,56 @@ class SPI_Driver// : public DriverInterface
 
         void            Initialize              (void);
 
-        SystemState_e   GetStatus               (void);
+        SystemState_e   GetStatus               (void)                        { return m_Status;     }
+        SystemState_e   GetDMA_Status           (void)                        {	return m_DMA_Status; }
+
         SystemState_e   LockToDevice            (IO_ID_e Device);                                                // Set SPI to this device and lock
         SystemState_e   UnlockFromDevice        (IO_ID_e Device);                                                // Unlock SPI from device
 
         // Read function (overloaded)
         SystemState_e   Read                    (uint8_t* pBuffer, size_t Size);
-        SystemState_e   Read                    (uint8_t*  Data);
-        SystemState_e   Read                    (uint16_t* Data);
-        SystemState_e   Read                    (uint32_t* Data);
         SystemState_e   Read                    (uint8_t* pBuffer, size_t Size, IO_ID_e Device);
-        SystemState_e   Read                    (uint8_t*  pData, IO_ID_e Device);
-        SystemState_e   Read                    (uint16_t* pData, IO_ID_e Device);
-        SystemState_e   Read                    (uint32_t* pData, IO_ID_e Device);
+        SystemState_e   Read                    (uint8_t* pData);
+        SystemState_e   Read                    (uint8_t* pData, IO_ID_e Device);
 
         // Write function (overloaded)
-        SystemState_e   Write                   (const uint8_t* pBuffer, size_t Size);
+        SystemState_e   Write                   (uint8_t* pBuffer, size_t Size);
+        SystemState_e   Write                   (uint8_t* pBuffer, size_t Size, IO_ID_e Device);
         SystemState_e   Write                   (uint8_t  Data);
-        SystemState_e   Write                   (uint16_t Data);
-        SystemState_e   Write                   (uint32_t Data);
-        SystemState_e   Write                   (const uint8_t* pBuffer, size_t Size, IO_ID_e Device);
         SystemState_e   Write                   (uint8_t  Data, IO_ID_e Device);
-        SystemState_e   Write                   (uint16_t Data, IO_ID_e Device);
-        SystemState_e   Write                   (uint32_t Data, IO_ID_e Device);
 
-        void            ChipSelect              (bool IsItActive);
+        SystemState_e   Transfer                (uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size);
+        SystemState_e   Transfer                (uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, IO_ID_e Device);
+
         void            IRQHandler              (void);
         void            Config                  (uint32_t Mask, uint32_t Config);
         SystemState_e   WaitReady               (void);
 
-      #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-        SystemState_e   Transfer                (const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size);
-        SystemState_e   Transfer                (const uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, void* pDevice);
-        SystemState_e   Transfer                (const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size);
-        SystemState_e   Transfer                (const uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size, void* pDevice);
         void            OverrideMemoryIncrement (void);
         static void     DMA_RX_IRQ_Handler      (SPI_ID_e SPI_ID);
         static void     DMA_TX_IRQ_Handler      (SPI_ID_e SPI_ID);
-      #endif
 
     private:
 
 //        uint16_t              GetPrescalerFromSpeed   (uint32_t speed);
-        void                    Lock                    (void);
-        void                    Unlock                  (void);
+        void                    Lock            (void);
+        void                    Unlock          (void);
+        SystemState_e           WaitDMA         (void);
 
         nOS_Mutex               m_Mutex;
         SPI_Info_t*             m_pInfo;
-        IO_ID_e                                 m_Device;
+        IO_ID_e                 m_Device;
+
         bool                    m_NoMemoryIncrement;
-      #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-        DMA_Driver                              m_DMA_RX;
-        DMA_Driver                              m_DMA_TX;
-      #endif
+        DMA_Driver              m_DMA_RX;
+        DMA_Driver              m_DMA_TX;
 
 
         volatile SystemState_e  m_Status;
+        volatile SystemState_e  m_DMA_Status;
         volatile uint8_t        m_Timeout;
 
-      #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-        SystemState_e           WaitDMA                 (void);
-
-        volatile SystemState_e  m_DMA_Status;
-      #endif
+        static SPI_Driver*      m_pDriver[NB_OF_SPI_DRIVER];
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -1,1 +1,1 @@
-Dirver for embedded ethernet MAC/PHY is located in the  ".\Digini\Peripheral\xxx\Port" directory. Choose the specific CPU Port
+Driver for embedded ethernet MAC/PHY is located in the  ".\Digini\Peripheral\xxx\Port" directory. Choose the specific CPU Port

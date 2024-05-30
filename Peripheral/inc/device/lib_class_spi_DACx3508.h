@@ -77,14 +77,14 @@ class DAC_X3508_Driver
 {
     public:
 
-                        DAC_X3508_Driver();
+                        DAC_X3508_Driver        ();
 
         SystemState_e   Initialize              (SPI_Driver* pSPI, IO_ID_e ChipSelectIO);
         SystemState_e   WriteDAC                (int Channel, uint16_t Value);
 
     private:
 
-        void            Send3Bytes              (DAC_X3508_Cmd_e Command, uint16_t Data);
+        SystemState_e   Send3Bytes              (DAC_X3508_Cmd_e Command, uint16_t Data);
 
         bool            isItInitialized;
         SPI_Driver*     m_pSPI;
@@ -95,11 +95,9 @@ class DAC_X3508_Driver
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-
 #define __CLASS_DAC_X3508__
 #include "device_var.h"
 #undef  __CLASS_DAC_X3508__
-
 
 //-------------------------------------------------------------------------------------------------
 

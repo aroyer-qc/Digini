@@ -66,7 +66,7 @@
 #include "project_def.h"
 
 //-------------------------------------------------------------------------------------------------
-// Stack Check and statistic
+// Stack check and statistic
 //
 #include "./Utility/inc/LIB_stacktistic.h"
 

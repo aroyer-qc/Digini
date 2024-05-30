@@ -27,14 +27,8 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
 
-#include "lib_typedef.h"
-#include "lib_class_i2c.h"
-//#include "app.h"
-//#include "stm32f4xx.h"
-//#include "RTOS.h"
+#if (USE_I2C_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -72,12 +66,12 @@ struct TOUCH_State_t
 
 // TODO: Mutex is not yet integrated ( do i need to? )
 
-class CTouch
+class TouchDriver
 {
     public:
 
-                            CTouch                  (I2C_Driver* pI2C);
-                            ~CTouch                 ();
+                            TouchDriver             (I2C_Driver* pI2C);  // use ID
+                            ~TouchDriver            ();
 
         bool                Initialize              ();
         void                ProcessTouch            ();
@@ -106,3 +100,18 @@ class CTouch
 };
 
 //-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+#define __CLASS_STMP811__
+#include "device_var.h"
+#undef  __CLASS_STMP811__
+
+//-------------------------------------------------------------------------------------------------
+
+#else // (USE_I2C_DRIVER == DEF_ENABLED)
+
+#pragma message("DIGINI driver for I2C must be enable and configure to use this device driver")
+
+#endif // (USE_I2C_DRIVER == DEF_ENABLED)
+

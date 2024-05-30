@@ -57,16 +57,16 @@
 enum DAC_X3508_Cmd_e
 {
     DACX3508_DEVICE_CONFIG_REG     = 0x01,
-    DAC43508_STATUS_TRIGGER_REG    = 0x02,
-    DAC43508_BROADCAST_REG         = 0x03,    	    // Writing to the BRDCAST register forces the DAC channel to update the active register data to BRDCAST_DATA
-    DAC43508_DACA_DATA_REG         = 0x08,
-    DAC43508_DACA_DATB_REG         = 0x09,
-    DAC43508_DACA_DATC_REG         = 0x0A,
-    DAC43508_DACA_DATD_REG         = 0x0B,
-    DAC43508_DACA_DATE_REG         = 0x0C,
-    DAC43508_DACA_DATF_REG         = 0x0D,
-    DAC43508_DACA_DATG_REG         = 0x0E,
-    DAC43508_DACA_DATH_REG         = 0x0F,
+    DACX3508_STATUS_TRIGGER_REG    = 0x02,
+    DACX3508_BROADCAST_REG         = 0x03,    	    // Writing to the BRDCAST register forces the DAC channel to update the active register data to BRDCAST_DATA
+    DACX3508_DACA_DATA_REG         = 0x08,
+    DACX3508_DACA_DATB_REG         = 0x09,
+    DACX3508_DACA_DATC_REG         = 0x0A,
+    DACX3508_DACA_DATD_REG         = 0x0B,
+    DACX3508_DACA_DATE_REG         = 0x0C,
+    DACX3508_DACA_DATF_REG         = 0x0D,
+    DACX3508_DACA_DATG_REG         = 0x0E,
+    DACX3508_DACA_DATH_REG         = 0x0F,
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -76,6 +76,9 @@ enum DAC_X3508_Cmd_e
 class DAC_X3508_Driver
 {
     public:
+
+                        DAC_X3508_Driver();
+
         SystemState_e   Initialize              (SPI_Driver* pSPI, IO_ID_e ChipSelectIO);
         SystemState_e   WriteDAC                (int Channel, uint16_t Value);
 
@@ -91,6 +94,11 @@ class DAC_X3508_Driver
 //-------------------------------------------------------------------------------------------------
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
+
+
+#define __CLASS_DAC_X3508__
+#include "device_var.h"
+#undef  __CLASS_DAC_X3508__
 
 
 //-------------------------------------------------------------------------------------------------

@@ -27,9 +27,9 @@
 #include "qspi_cfg.h"
 
 #if defined STM32F4xx
- #include "lib_class_STM32F4_qspi.h"
+ #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_qspi.h"
 #elif defined STM32F7xx
- #include "lib_class_STM32F7_qspi.h"
+ #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_qspi.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

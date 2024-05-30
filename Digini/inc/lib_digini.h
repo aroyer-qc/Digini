@@ -68,47 +68,48 @@
 //-------------------------------------------------------------------------------------------------
 // Stack Check and statistic
 //
-#include "LIB_stacktistic.h"
+#include "./Utility/inc/LIB_stacktistic.h"
 
 //-------------------------------------------------------------------------------------------------
 // System Clock
 //
-#include "system_clock.h"
+#include "./Peripheral/inc/port/lib_system_clock.h"       // No relative PATH here because it depend on CPU and project
 
 //-------------------------------------------------------------------------------------------------
 // Digini library
 //
-#include "lib_cpu_specific.h"
-#include "lib_assert.h"
-#include "lib_memory.h"
-#include "lib_node_list.h"
-#include "lib_memory_node.h"
-#include "lib_class_database.h"
-#include "lib_class_cbi.h"                      // Callback interface
-#include "lib_label.h"
-#include "lib_macro.h"
-#include "lib_advanced_macro.h"
-#include "lib_define.h"
-#include "lib_typedef.h"
-#include "lib_string.h"
-#include "lib_class_queue.h"
-#include "lib_class_timer.h"
-#include "lib_stacktistic.h"
-#include "lib_utility.h"
-#include "lib_isr.h"
-#include "lib_pid.h"
-#include "lib_io.h"
-#include "lib_fifo.h"
-#include "lib_class_dma.h"
-#include "lib_dma.h"            // todo remove when DMA porting is done
-#include "lib_rng.h"
+#include "./Peripheral/inc/port/lib_cpu_specific.h"
+#include "./Digini/inc/lib_assert.h"
+#include "./Memory/inc/lib_memory.h"
+#include "./Memory/inc/lib_node_list.h"
+#include "./Memory/inc/lib_memory_node.h"
+#include "./Database/inc/lib_class_database.h"
+#include "./Digini/inc/lib_class_cbi.h"                      // Callback interface
+#include "./Digini/inc/lib_label.h"
+#include "./Digini/inc/lib_macro.h"
+#include "./Digini/inc/lib_advanced_macro.h"
+#include "./Digini/inc/lib_define.h"
+#include "./Digini/inc/lib_typedef.h"
+#include "./String/inc/lib_string.h"
+#include "./RTOS_Wrapper/inc/nOS/lib_class_queue.h"
+#include "./RTOS_Wrapper/inc/nOS/lib_class_timer.h"
+#include "./lib_stacktistic.h"
+#include "./Utility/inc/lib_utility.h"
+#include "./Peripheral/inc/port/lib_isr.h"
+#include "./Utility/inc/lib_pid.h"
+#include "./Utility/inc/lib_sunset.h"
+#include "./Peripheral/inc/port/lib_io.h"
+#include "./Utility/inc/lib_fifo.h"
+#include "./Peripheral/inc/port/lib_class_dma.h"
+#include "./Peripheral/inc/port/lib_dma.h"                  // todo remove when DMA porting is done
+#include "./Peripheral/inc/port/lib_rng.h"
 
 #if (DIGINI_USE_CRC == DEF_ENABLED)     // This is for software CRC calculation support
-#include "lib_crc.h"
+#include "./Utility/inc/lib_crc.h"
 #endif
 
 #if (DIGINI_MPU_DRIVER == DEF_ENABLED)
-#include "lib_mpu.h"
+#include "./Peripheral/inc/port/lib_mpu.h"
 #endif
 
 
@@ -119,79 +120,79 @@
 //#include "lib_class_driver_interface.h"
 
 #if (USE_ADC_DRIVER == DEF_ENABLED)
-#include "lib_class_adc.h"
+#include "./Peripheral/inc/port/lib_class_adc.h"
 #endif
 
 #if (USE_CAN_DRIVER == DEF_ENABLED)
-#include "lib_class_can.h"
+#include "./Peripheral/inc/port/lib_class_can.h"
 #endif
 
 #if (USE_CRC_DRIVER == DEF_ENABLED)     // This is for hardware CRC calculation support
-#include "lib_hardware_crc.h"
+#include "./Peripheral/inc/port/lib_hardware_crc.h"
 #endif
 
 #if (USE_DAC_DRIVER == DEF_ENABLED)
-#include "lib_class_dac.h"
+#include "./Peripheral/inc/port/lib_class_dac.h"
 #endif
 
 #if (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
-#include "lib_ethernet_typedef.h"
-#include "lib_class_eth.h"
-#include "lib_class_ethernet_phy_interface.h"
+#include "./lib_ethernet_typedef.h"
+#include "./Peripheral/inc/port/lib_class_eth.h"
+#include "./lib_class_ethernet_phy_interface.h"
 #include PHY_DRIVER_INCLUDE
 #endif
 
 #if (USE_I2C_DRIVER == DEF_ENABLED)
-#include "lib_class_i2c.h"
+#include "./Peripheral/inc/port/lib_class_i2c.h"
 #endif
 
 #if (USE_I2S_DRIVER == DEF_ENABLED)
-#include "lib_class_i2s.h"
+#include "./Peripheral/inc/port/lib_class_i2s.h"
 #endif
 
 #if (USE_QSPI_DRIVER == DEF_ENABLED)
-#include "lib_class_qspi.h"
+#include "./Peripheral/inc/port/lib_class_qspi.h"
 #endif
 
 #if (USE_RTC_DRIVER == DEF_ENABLED)
-#include "lib_class_rtc.h"
+#include "./Peripheral/inc/port/lib_class_rtc.h"
 #endif
 
 #if (USE_SAI_DRIVER == DEF_ENABLED)
-#include "lib_class_sai.h"
+#include "./Peripheral/inc/port/lib_class_sai.h"
 #endif
 
 #if (USE_SDIO_DRIVER == DEF_ENABLED)
-#include "lib_class_sdio.h"
+#include "./Peripheral/inc/port/lib_class_sdio.h"
 #endif
 
 #if (USE_SPI_DRIVER == DEF_ENABLED)
-#include "lib_class_spi.h"
+#include "./Peripheral/inc/port/lib_class_spi.h"
 #endif
 
 #if (USE_TIM_DRIVER == DEF_ENABLED)
-#include "lib_class_tim.h"
+#include "./Peripheral/inc/port/lib_class_tim.h"
 #endif
 
 #if (USE_PWM_DRIVER == DEF_ENABLED)
-#include "lib_class_pwm.h"
+#include "./Peripheral/inc/port/lib_class_pwm.h"
 #endif
 
 #if (USE_UART_DRIVER == DEF_ENABLED)
-#include "lib_class_uart.h"
+#include "./Peripheral/inc/port/lib_class_uart.h"
 #endif
 
 #if (USE_USB_DRIVER == DEF_ENABLED)
-#include "lib_class_usb.h"
+#include "./Peripheral/inc/port/lib_class_usb.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------
 // Digini included functionality
 //
 
-#include "lib_console.h"
-#include "lib_cli.h"
-#include "lib_vt100.h"
+#include "./Comm/Console/inc/lib_console.h"
+#include "./Comm/CmdLine/inc/lib_cli.h"
+#include "./Comm/VT100/inc/lib_vt100.h"
 
 //-------------------------------------------------------------------------------------------------
 // High level Peripheral
@@ -211,23 +212,23 @@
 #include "diskio_interface.h"
 
 #if (DIGINI_FATFS_USE_RAM_DISK == DEF_ENABLED)
-#include "lib_class_fatfs_ram_disk.h"
+#include "./Peripheral/inc/FatFs/lib_class_fatfs_ram_disk.h"
 #endif
 
 #if (DIGINI_FATFS_USE_SDIO_SD_CARD == DEF_ENABLED)
-#include "lib_class_fatfs_sdio.h"
+#include "./Peripheral/inc/FatFs/lib_class_fatfs_sdio.h"     // TODO
 #endif
 
 #if (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
-#include "lib_class_fatfs_spi_flash_chip.h"
+#include "./Peripheral/inc/FatFs/lib_class_fatfs_spi_flash_chip.h"     // TODO
 #endif
 
 #if (DIGINI_FATFS_USE_SPI_SD_CARD == DEF_ENABLED)
-#include "lib_class_fatfs_spi_sd_card.h"
+#include "./Peripheral/inc/FatFs/lib_class_fatfs_spi_sd_card.h"     // TODO
 #endif
 
 #if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED)
-#include "lib_class_fatfs_usb.h"
+#include "./Peripheral/inc/FatFs/lib_class_fatfs_usb.h"     // TODO
 #endif
 
 #include "digini_diskio.h"
@@ -236,7 +237,7 @@
 #endif
 
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
-#include "lib_grafx.h"
+#include "./Grafx/inc/lib_grafx.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

@@ -28,9 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//#define DAC_x3508_GLOBAL
+//#define LIB_DAC_x3508_GLOBAL
 #include "lib_digini.h"
-//#undef  DAC_x3508_GLOBAL
+//#undef  LIB_DAC_x3508_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -53,9 +53,9 @@
 //
 //   Constructor:   DAC_X3508_Driver
 //
-//   Parameter(s):  
+//   Parameter(s):
 //
-//   Description:   Initializes the 
+//   Description:   Initializes the
 //
 //-------------------------------------------------------------------------------------------------
 DAC_X3508_Driver::DAC_X3508_Driver()
@@ -75,25 +75,27 @@ DAC_X3508_Driver::DAC_X3508_Driver()
 //-------------------------------------------------------------------------------------------------
 SystemState_e DAC_X3508_Driver::Initialize(SPI_Driver* pSPI, IO_ID_e ChipSelectIO)
 {
-    if(DAC43508_isInitialized != true)
+    if(isItInitialized != true)
 	{
         m_pSPI         = pSPI;
         m_ChipSelectIO = ChipSelectIO;
-        
-        IO_PinInitialize(m_pConfig->ChipSelectIO);
+
+        IO_PinInit(ChipSelectIO);
 
         // Initialize SPI Driver
         m_pSPI->Initialize();
 
-        Send3Bytes(DAC43508_STATUS_TRIGGER_REG, DAC43508_STA_TRG_SW_RESET_VALUE);	    // Reset the DAC
+        Send3Bytes(DACX3508_STATUS_TRIGGER_REG, DAC43508_STA_TRG_SW_RESET_VALUE);	    // Reset the DAC
         //    need a delay here Minimum 5 mSec!!
         nOS_Sleep(10);
 
         // Put default value into DAC output.
-        Send3Bytes(DAC43508_DEVICE_CONFIG_REG, 0);		                                // The broadcast will affect all DAC
-        Send3Bytes(DAC43508_BRDCAST_REG, 0);								            // The default value on all DAC
+        Send3Bytes(DACX3508_DEVICE_CONFIG_REG, 0);		                                // The broadcast will affect all DAC
+        Send3Bytes(DACX3508_BROADCAST_REG, 0);								            // The default value on all DAC
         isItInitialized = true;
 	}
+
+	return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -107,13 +109,15 @@ SystemState_e DAC_X3508_Driver::Initialize(SPI_Driver* pSPI, IO_ID_e ChipSelectI
 //   Description:   Write value into specific channel
 //
 //-------------------------------------------------------------------------------------------------
-void DAC_X3508_Driver::WriteDAC(int Channel, uint16_t Value)
+SystemState_e DAC_X3508_Driver::WriteDAC(int Channel, uint16_t Value)
 {
 	if(isItInitialized == true)
 	{
         // Write data to the register for specific channel
-        Send3Bytes(Channel + DAC43508_DACA_DATA_REG, Value);
+        Send3Bytes(DAC_X3508_Cmd_e(Channel + uint32_t(DACX3508_DACA_DATA_REG)), Value);
 	}
+
+	return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -129,16 +133,19 @@ void DAC_X3508_Driver::WriteDAC(int Channel, uint16_t Value)
 //-------------------------------------------------------------------------------------------------
 void DAC_X3508_Driver::Send3Bytes(DAC_X3508_Cmd_e Command, uint16_t Data)
 {
-	bool doBusyWait = true;
 	uint8_t ByteBuffer[3];
 
-	ByteBuffer[0] = CMD;
+	ByteBuffer[0] = Command;
 	ByteBuffer[1] = (uint8_t)(Data >> 8);
 	ByteBuffer[2] = (uint8_t)Data;
 
 
-    m_pSPI->LockToDevice(m_ChipSelectIO)
-    IO_ResetPinHigh(m_pConfig->ChipSelect);
-	m_pSPI->Transfer(&byteBuffer, NULL, 3);
-    IO_SetPinHigh(m_pConfig->ChipSelect);
+    m_pSPI->LockToDevice(m_ChipSelectIO);
+    IO_SetPinLow(m_ChipSelectIO);
+	m_pSPI->Transfer(&ByteBuffer, nullptr, 3);
+    IO_SetPinHigh(m_ChipSelectIO);
 }
+
+//-------------------------------------------------------------------------------------------------
+
+#endif

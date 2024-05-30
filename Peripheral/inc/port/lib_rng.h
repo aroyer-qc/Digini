@@ -32,11 +32,11 @@ extern "C"
 //-------------------------------------------------------------------------------------------------
 
 #if defined STM32F1xx
- #include "lib_generic_rng.h"
+ #include "./Peripheral/inc/port/STM32F1xx/lib_generic_rng.h"
 #elif defined STM32F4xx
- #include "lib_STM32F4_rng.h"
+ #include "./Peripheral/inc/port/STM32F4xx/lib_STM32F4_rng.h"
 #elif defined STM32F7xx
- #include "lib_STM32F7_rng.h"
+ #include "./Peripheral/inc/port/STM32F7xx/lib_STM32F7_rng.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

@@ -27,11 +27,11 @@
 #include "ethernet_cfg.h"
 
 #if defined STM32F4xx
- #include "lib_class_STM32F4_eth.h"
+ #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_eth.h"
 #elif defined STM32F7xx
- #include "lib_class_STM32F7_eth.h"
-#elif definedL PC2xxx
- #include "lib_class_LPC2xxx_eth.h"
+ #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_eth.h"
+#elif defined LPC2xxx
+ #include "./Peripheral/inc/port/LPC2xxx/lib_class_LPC2xxx_eth.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

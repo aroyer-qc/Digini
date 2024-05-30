@@ -27,11 +27,11 @@
 #include "uart_cfg.h"
 
 #if defined STM32F1xx
- #include "lib_class_STM32F1_uart.h"
+ #include "./Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_uart.h"
 #elif defined STM32F4xx
- #include "lib_class_STM32F4_uart.h"
+ #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_uart.h"
 #elif defined STM32F7xx
- #include "lib_class_STM32F7_uart.h"
+ #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_uart.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

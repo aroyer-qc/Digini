@@ -32,9 +32,9 @@ extern "C"
 //-------------------------------------------------------------------------------------------------
 
 #if defined STM32F4xx
- #include "lib_STM32F4_mpu.h"
+ #include "./Peripheral/inc/port/STM32F4xx/lib_STM32F4_mpu.h"
 #elif defined STM32F7xx
- #include "lib_STM32F7_mpu.h"
+ #include "./Peripheral/inc/port/STM32F7xx/lib_STM32F7_mpu.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

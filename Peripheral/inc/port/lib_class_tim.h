@@ -27,11 +27,11 @@
 #include "tim_cfg.h"
 
 #if defined STM32F1xx
- #include "lib_class_STM32F1_tim.h"
+ #include "./Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_tim.h"
 #elif defined STM32F4xx
- #include "lib_class_STM32F4_tim.h"
+ #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_tim.h"
 #elif defined STM32F7xx
- #include "lib_class_STM32F7_tim.h"
+ #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_tim.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

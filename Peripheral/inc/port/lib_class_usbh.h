@@ -31,9 +31,9 @@
 //-------------------------------------------------------------------------------------------------
 
 #if defined STM32F4xx
- #include "lib_class_STM32F4_usbh.h"
+ #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_usbh.h"
 #elif defined STM32F7xx
- #include "lib_class_STM32F7_usbh.h"
+ #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_usbh.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

@@ -216,19 +216,19 @@
 #endif
 
 #if (DIGINI_FATFS_USE_SDIO_SD_CARD == DEF_ENABLED)
-#include "./Peripheral/inc/FatFs/lib_class_fatfs_sdio.h"     // TODO
+#include "./Peripheral/inc/port/FatFs/lib_class_fatfs_sdio.h"
 #endif
 
 #if (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
-#include "./Peripheral/inc/FatFs/lib_class_fatfs_spi_flash_chip.h"     // TODO
+#include "./Peripheral/inc/port/FatFs/lib_class_fatfs_spi_flash_chip.h"     // TODO
 #endif
 
 #if (DIGINI_FATFS_USE_SPI_SD_CARD == DEF_ENABLED)
-#include "./Peripheral/inc/FatFs/lib_class_fatfs_spi_sd_card.h"     // TODO
+#include "./Peripheral/inc/port/FatFs/lib_class_fatfs_spi_sd_card.h"     // TODO
 #endif
 
 #if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED)
-#include "./Peripheral/inc/FatFs/lib_class_fatfs_usb.h"     // TODO
+#include "./Peripheral/inc/port/FatFs/lib_class_fatfs_usb.h"
 #endif
 
 #include "digini_diskio.h"

@@ -63,6 +63,10 @@
 //
 //#include "clock_cfg.h"
 #include "digini_cfg.h"
+
+// Need to integrate a dependency check for all DEF_ENABLED
+
+
 #include "driver_cfg.h"
 #include "bsp_io_def.h"
 

@@ -113,12 +113,16 @@ class DMA_Driver
         void        ClearFlag                               (uint32_t Flag);
         bool        CheckFlag                               (uint32_t Flag);
         //void        EnableCallbackType                      (int CallbackType);
+        void        EnableIRQ                               (uint8_t PremptionPriority);
 
         // Inline method
         void        Enable                                  (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_EN);     }
         void        Disable                                 (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_EN);   }
+        void        ClearFlag                               (void)                              { ClearFlag(m_Flag);                    }
         size_t      GetLength                               (void)                              { return size_t(m_pDMA->NDTR);          }
         void        SetLength                               (size_t Length)                     { m_pDMA->NDTR = uint32_t(Length);      }
+        void        SetMemoryIncrement                      (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_MINC);   }
+        void        SetNoMemoryIncrement                    (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_MINC); }
         void        SetFifoControl                          (uint32_t Control)                  { m_pDMA->FCR = Control;                }
         void        RegisterCallback                        (CallbackInterface* pCallback)      { m_pCallback = pCallback;              }
         void        EnableInterrupt                         (uint32_t Interrupt)                { SET_BIT(m_pDMA->CR, Interrupt);       }
@@ -134,6 +138,8 @@ class DMA_Driver
 
 
         DMA_Stream_TypeDef*         m_pDMA;
+        uint32_t                    m_Flag;
+        IRQn_Type                   m_IRQn_Channel;
         uint32_t                    m_Direction;
         CallbackInterface*          m_pCallback;
         //int                         m_CallBackType;       // variables is not used at this time.

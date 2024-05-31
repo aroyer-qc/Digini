@@ -68,6 +68,7 @@ SPI_Driver* SPI_Driver::m_pDriver[NB_OF_SPI_DRIVER] = {nullptr};
 //-------------------------------------------------------------------------------------------------
 SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
 {
+    m_SPI_ID     = SPI_ID;
     m_Device     = IO_NOT_DEFINED;
     m_pInfo      = &SPI_Info[SPI_ID];
     m_Status     = SYS_UNKNOWN;
@@ -93,7 +94,7 @@ void SPI_Driver::Initialize(void)
     IO_PinInit(m_pInfo->PinMOSI);
     IO_PinInit(m_pInfo->PinMISO);
 
-    switch(uint32_t(m_pInfo->SPI_ID))
+    switch(uint32_t(m_SPI_ID))
     {
       #if (SPI_DRIVER_SUPPORT_SPI1_CFG == DEF_ENABLED)
         case uint32_t(DRIVER_SPI1_ID):

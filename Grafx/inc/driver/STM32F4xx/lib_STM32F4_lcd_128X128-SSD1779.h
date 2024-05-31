@@ -32,10 +32,10 @@
 
 #include "digini_cfg.h"
 #ifdef DIGINI_USE_GRAFX
-#include "lib_grafx.h"
+#include "./Digini/Grafx/inc/lib_grafx.h"
 #include "lib_lcd_driver.h"
-#include "lib_io.h"
-#include "lib_class_io_bus.h"
+#include "./Digini/Peripheral/inc/Port/lib_io.h"
+#include "./Digini/Peripheral/inc/Port/lib_class_io_bus.h"
 #include "stm32f4xx.h"
 
 //-------------------------------------------------------------------------------------------------

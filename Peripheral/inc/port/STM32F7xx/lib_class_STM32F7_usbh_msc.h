@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 #include "stm32f7xx.h"
-#include "lib_typedef.h"
+#include "./Digini/Digini/inc/lib_typedef.h"
 #include "lib_class_usbh_interface.h"
 
 //#include "usbh_core.h"

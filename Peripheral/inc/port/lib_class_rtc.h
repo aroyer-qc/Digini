@@ -25,11 +25,11 @@
 //-------------------------------------------------------------------------------------------------
 
 #if defined STM32F1xx
- #include "./Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_rtc.h"
+ #include "./Digini/Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_rtc.h"
 #elif defined STM32F4xx
- #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_rtc.h"
+ #include "./Digini/Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_rtc.h"
 #elif defined STM32F7xx
- #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_rtc.h"
+ #include "./Digini/Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_rtc.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

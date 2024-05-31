@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_WS281x_GLOBAL
-#include "lib_class_STM32F7_WS281x.h"
+#include "./Digini/Peripheral/inc/device/port/STM32F7/lib_class_STM32F7_WS281x.h"
 #undef  LIB_WS281x_GLOBAL
 
 //-------------------------------------------------------------------------------------------------

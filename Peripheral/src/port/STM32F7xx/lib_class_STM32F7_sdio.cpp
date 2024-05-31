@@ -42,7 +42,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define SDIO_DRIVER_GLOBAL
-#include "lib_digini.h"
+#include "./Digini/lib_digini.h"
 #undef  SDIO_DRIVER_GLOBAL
 #include "stm32f7xx_ll_sdmmc.h"   // to replace this with my stuff
 
@@ -168,11 +168,11 @@ void SDIO_Driver::Initialize(void)
         // m_TickPeriod   = SD_CARD_TICK_PERIOD;
 
         // NVIC configuration for SDIO interrupts
-        ISR_Init(SDMMC1_IRQn, 5); 
+        ISR_Init(SDMMC1_IRQn, 5);
 
         // NVIC configuration for DMA transfer complete interrupt
-        ISR_Init(DMA2_Stream3_IRQn, 6); 
-        ISR_Init(DMA2_Stream6_IRQn, 6); 
+        ISR_Init(DMA2_Stream3_IRQn, 6);
+        ISR_Init(DMA2_Stream6_IRQn, 6);
 
         // Initialize SDMMC peripheral interface with default configuration for SD card initialization
         ClearClockRegister();

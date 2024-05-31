@@ -29,8 +29,8 @@
 //-------------------------------------------------------------------------------------------------
 
 //#include <stdint.h>
-#include "lib_class_STM32F7_sdram.h"
-//#include "lib_macro.h"
+#include "./Digini/Peripheral/inc/port/lib_class_sdram.h"
+//#include "./Digini/Digini/inc/lib_macro.h"
 
 //-------------------------------------------------------------------------------------------------
 //

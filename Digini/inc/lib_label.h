@@ -31,11 +31,11 @@
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
-#include "./Comm/CmdLine/inc/lib_cli_label.h"
+#include "./Digini/Comm/CmdLine/inc/lib_cli_label.h"
 #endif
 
 #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-#include "./Comm/VT100/inc/lib_vt100_label.h"
+#include "./Digini/Comm/VT100/inc/lib_vt100_label.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

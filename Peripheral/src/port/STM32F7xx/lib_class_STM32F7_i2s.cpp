@@ -33,10 +33,10 @@
 #include "digini_cfg.h"
 #include <stdint.h>
 #define STM32F7_I2S_GLOBAL
-#include "lib_class_STM32F7_i2s.h"
+#include "./Digini/Peripheral/inc/port/lib_class_i2s.h"
 #undef  STM32F7_I2S_GLOBAL
 #include "lib_STM32F7_gpio.h"
-#include "lib_macro.h"
+#include "./Digini/Digini/inc/lib_macro.h"
 #include "bsp.h"
 #include "assert.h"
 

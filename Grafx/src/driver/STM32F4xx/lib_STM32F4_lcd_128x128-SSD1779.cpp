@@ -31,9 +31,9 @@
 #include "digini_cfg.h"
 #ifdef DIGINI_USE_GRAFX
 #define LIB_SSD1779_GLOBAL
-#include "lib_STM32F4_lcd_128x128-SSD1779.h"
+#include "./Digini/Grafx/inc/driver/STM32F4xx/lib_STM32F4_lcd_128x128-SSD1779.h"
 #undef  LIB_SSD1779_GLOBAL
-#include "lib_macro.h"
+#include "./Digini/Digini/inc/lib_macro.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)

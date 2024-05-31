@@ -34,11 +34,11 @@
 #include "digini_cfg.h"
 #include <stdint.h>
 #include "stm32f7xx.h"
-#include "lib_typedef.h"
+#include "./Digini/Digini/inc/lib_typedef.h"
 #include "nOS.h"
 #include "lib_class_usb_interface.h"
-//#include "diskio.h"
-//#include "lib_class_gpio.h"
+//#include "./Digini/Peripheral/inc/FatFs/diskio.h"
+//#include "./Digini/Peripheral/inc/port/lib_class_gpio.h"
 
 ///////////// TODO
 

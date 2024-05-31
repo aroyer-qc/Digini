@@ -30,7 +30,7 @@
 
 #include <stdint.h>
 #define STM32F4_GPIO_GLOBAL
-#include "lib_class_STM32F4_gpio.h"
+#include "./Digini/Peripheral/inc/port/lib_class_gpio.h"
 #undef  STM32F4_GPIO_GLOBAL
 
 //-------------------------------------------------------------------------------------------------

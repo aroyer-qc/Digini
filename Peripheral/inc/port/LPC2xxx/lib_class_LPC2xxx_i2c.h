@@ -33,11 +33,11 @@
 #include "bsp_cfg.h"
 #include "stm32f4xx.h"
 #include "nOS.h"
-#include "lib_typedef.h"
+#include "./Digini/Digini/inc/lib_typedef.h"
 
 //#include "app.h"
 //#include "PortState.h"
-//#include "lib_digini.h"
+//#include "./Digini/lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)

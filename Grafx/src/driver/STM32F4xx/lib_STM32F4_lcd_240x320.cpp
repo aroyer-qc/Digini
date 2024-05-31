@@ -34,8 +34,8 @@
 #include "digini_cfg.h"
 #ifdef DIGINI_USE_GRAFX
 #include "stm32f4xx.h"
-#include "lib_class_STM32F4_spi.h"
-#include "lib_grafx.h"
+#include "./Digini/Peripheral/inc/port/lib_class_spi.h"
+#include "./Digini/Grafx/inc/lib_grafx.h"
 #include "bsp.h"
 
 //-------------------------------------------------------------------------------------------------

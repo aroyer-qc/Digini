@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "digini_cfg.h"
-#include "lib_class_STM32F7_usbd.h"
+#include "./Digini/Peripheral/inc/port/lib_class_usbd.h"
 //#include "usb_hcd_int.h"
 #include "stm32f7xx_ll_usb.h"
 

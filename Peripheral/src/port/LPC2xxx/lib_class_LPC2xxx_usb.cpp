@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define STM32F4_USB_GLOBAL
-#include "lib_class_STM32F4_usb.h"
+#include "./Digini/Peripheral/inc/port/lib_class_usb.h"
 #undef  STM32F4_USB_GLOBAL
 #include "usb_hcd_int.h"
 

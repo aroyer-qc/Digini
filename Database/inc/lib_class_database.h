@@ -30,13 +30,13 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_database_wrapper.h"
-#include "lib_typedef.h"
+#include "./Digini/Database/inc/lib_database_wrapper.h"
+#include "./Digini/Digini/inc/lib_typedef.h"
 #include "project_def.h"
-#include "lib_label.h"
+#include "./Digini/Digini/inc/lib_label.h"
 #include "database_cfg.h"
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
-  #include "lib_grafx_dbase.h"
+  #include "./Digini/Grafx/inc/lib_grafx_dbase.h"
 #endif
 #include <string.h>
 
@@ -158,12 +158,12 @@ EXTERN_LIB_CLASS_DATABASE class CDataBase DB_Central;
 // Post Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_class_eeprom_dbase.h"
-#include "lib_class_qspi_dbase.h"
-#include "lib_class_hard_dbase.h"
-#include "lib_class_ram_dbase.h"
-#include "lib_class_rom_dbase.h"
-#include "./Database/inc/port/lib_class_bkpreg_dbase.h"
-#include "lib_database_wrapper.h"
+#include "./Digini/Database/inc/lib_class_eeprom_dbase.h"
+#include "./Digini/Database/inc/lib_class_qspi_dbase.h"
+#include "./Digini/Database/inc/lib_class_hard_dbase.h"
+#include "./Digini/Database/inc/lib_class_ram_dbase.h"
+#include "./Digini/Database/inc/lib_class_rom_dbase.h"
+#include "./Digini/Database/inc/port/lib_class_bkpreg_dbase.h"
+#include "./Digini/Database/inc/lib_database_wrapper.h"
 
 //-------------------------------------------------------------------------------------------------

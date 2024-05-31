@@ -31,9 +31,9 @@
 //-------------------------------------------------------------------------------------------------
 
 #if defined STM32F4xx
- #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_usbd.h"
+ #include "./Digini/Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_usbd.h"
 #elif defined STM32F7xx
- #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_usbd.h"
+ #include "./Digini/Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_usbd.h"
 #endif
 
 #include "usb.h"

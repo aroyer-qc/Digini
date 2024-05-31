@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define PWM_DRIVER_GLOBAL
-#include "lib_digini.h"
+#include "./Digini/lib_digini.h"
 #undef  PWM_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ PWM_Driver::PWM_Driver(PWM_ChannelID_e PWM_ID, TIM_Driver* pTimer)
 void PWM_Driver::Initialize(void)
 {
     TIM_Compare_e Channel = m_pInfo->Channel;
-    
+
     m_pTim = TIM_Driver::GetTimerPointer(m_pInfo->TimID);
     m_pTimer->Initialize();
     IO_PinInit(m_pInfo->PinID);
@@ -100,7 +100,7 @@ void PWM_Driver::Initialize(void)
         case TIM_CHANNEL_4: { m_pTim->CCMR2 |= (TIM_CCMR2_OC4_MODE_PWM | TIM_CCMR2_OC4PE); } break;
         default: break;
     }
-    
+
     m_pTimer->SetCompareChannel(Channel, m_pInfo->InitialDuty);
     m_pTimer->EnableCompareChannel(Channel);
     m_pTim->BDTR |= TIM_BDTR_MOE;

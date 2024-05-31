@@ -31,9 +31,9 @@
 #include <stdint.h>
 #include "digini_cfg.h"
 #ifdef DIGINI_USE_GRAFX
-#include "lib_grafx.h"
+#include "./Digini/Grafx/inc/lib_grafx.h"
 #include "stm32f4xx.h"
-#include "lib_class_STM32F4_i2c.h"
+#include "./Digini/Peripheral/inc/port/lib_class_i2c.h"
 #include "bsp.h"
 
 //-------------------------------------------------------------------------------------------------

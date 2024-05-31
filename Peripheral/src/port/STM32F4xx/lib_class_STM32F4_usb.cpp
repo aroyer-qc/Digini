@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define USB_DRIVER_GLOBAL
-#include "lib_digini.h"
+#include "./Digini/lib_digini.h"
 #undef  USB_DRIVER_GLOBAL
 
 #if (USE_USB_DRIVER == DEF_ENABLED)

@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "ff.h"
-#include "diskio.h"
+#include "./Digini/Peripheral/inc/FatFs/diskio.h"
 
 
 #ifdef __cplusplus

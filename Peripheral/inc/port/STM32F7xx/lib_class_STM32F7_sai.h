@@ -32,8 +32,8 @@
 
 #include "stm32f7xx.h"
 #include "nOS.h"
-#include "lib_typedef.h"
-#include "lib_io.h"
+#include "./Digini/Digini/inc/lib_typedef.h"
+#include "./Digini/Peripheral/inc/Port/lib_io.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)

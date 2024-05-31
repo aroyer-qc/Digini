@@ -28,7 +28,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_digini.h"
+#include "./Digini/lib_digini.h"
 
 #if (NOS_CONFIG_QUEUE_ENABLE > 0)
 

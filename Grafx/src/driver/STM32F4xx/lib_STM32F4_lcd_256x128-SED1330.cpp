@@ -31,7 +31,7 @@
 #include "digini_cfg.h"
 #ifdef DIGINI_USE_GRAFX
 #include "stm32f4xx.h"
-#include "lib_grafx.h"
+#include "./Digini/Grafx/inc/lib_grafx.h"
 #include "bsp.h"
 
 uint8_t g_LayerDefinition;

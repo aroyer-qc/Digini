@@ -30,8 +30,8 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//#include "lib_digini.h"
-#include "lib_class_memory_driver_interface.h"
+//#include "./Digini/lib_digini.h"
+#include "./Digini/Peripheral/inc/interface/lib_class_memory_driver_interface.h"
 #include "eeprom_cfg.h"
 
 //-------------------------------------------------------------------------------------------------

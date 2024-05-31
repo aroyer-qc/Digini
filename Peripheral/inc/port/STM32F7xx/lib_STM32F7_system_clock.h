@@ -32,7 +32,7 @@
 
 #include "stm32f7xx.h"
 #include <stdbool.h>
-#include "lib_macro.h"
+#include "./Digini/Digini/inc/lib_macro.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)

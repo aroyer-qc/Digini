@@ -40,7 +40,7 @@
 #ifdef DIGINI_FATFS_USE_USB_KEY
 #include <stdint.h>
 //#include "nOS.h"
-//#include "lib_typedef.h"
+//#include "./Digini/Digini/inc/lib_typedef.h"
 //#include "diskio.h"
 //#include "usbh_core.h"
 //#include "lib_class_STM32F4_gpio.h"

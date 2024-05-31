@@ -32,10 +32,10 @@
 #ifdef DIGINI_USE_SAI
 #include <stdint.h>
 #define STM32F7_SAI_GLOBAL
-#include "lib_class_STM32F7_sai.h"
+#include "./Digini/Peripheral/inc/port/lib_class_sai.h"
 #undef  STM32F7_SAI_GLOBAL
 #include "lib_STM32F7_gpio.h"
-#include "lib_macro.h"
+#include "./Digini/Digini/inc/lib_macro.h"
 #include "bsp.h"
 #include "assert.h"
 
@@ -652,7 +652,7 @@ from branch antique radio F4
 #include "lib_class_sai.h"
 #undef  STM32F7_SAI_GLOBAL
 #include "lib_class_gpio.h"
-#include "lib_macro.h"
+#include "./Digini/Digini/inc/lib_macro.h"
 #include "bsp.h"
 #include "assert.h"
 

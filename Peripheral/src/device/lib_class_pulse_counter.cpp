@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_PULSE_COUNTER_GLOBAL
-#include "lib_class_pulse_counter.h"
+#include "./Digini/Peripheral/inc/device/lib_class_pulse_counter.h"
 #undef  LIB_PULSE_COUNTER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------

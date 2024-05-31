@@ -34,7 +34,7 @@
 //#include "digini_cfg.h"
 #include <stdint.h>
 #include "stm32f7xx.h"
-#include "lib_typedef.h"
+#include "./Digini/Digini/inc/lib_typedef.h"
 #include "nOS.h"
 #include "lib_class_usbh_def.h"
 #include "lib_class_usbh_interface.h"

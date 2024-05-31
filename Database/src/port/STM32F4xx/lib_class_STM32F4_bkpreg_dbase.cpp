@@ -7,7 +7,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_digini.h"
+#include "./Digini/lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -18,9 +18,9 @@
 //-------------------------------------------------------------------------------------------------
 
 #include <stdint.h>
-#include "lib_class_STM32F4_bkpreg_dbase.h"
-#include "lib_class_STM32F4_rtc.h"
-#include "lib_macro.h"
+#include "./Digini/Database/inc/port/lib_class_bkpreg_dbase.h"
+#include "./Digini/Peripheral/inc/port/lib_class_rtc.h"
+#include "./Digini/Digini/inc/lib_macro.h"
 #include "driver_cfg.h"
 
 //-------------------------------------------------------------------------------------------------

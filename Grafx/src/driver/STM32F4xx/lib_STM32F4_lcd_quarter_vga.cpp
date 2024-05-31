@@ -13,10 +13,10 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "stm32f4xx.h"
-#include "lib_STM32F4_lcd_quarter_vga.h"
+#include "./Digini/Grafx/inc/driver/STM32F4xx/lib_STM32F4_lcd_quarter_vga.h"
 // TO DO use an lib_Port for this
-#include "lib_class_STM32F4_gpio.h"
-#include "lib_class_STM32F4_spi.h"
+#include "./Digini/Peripheral/inc/port/lib_class_gpio.h"
+#include "./Digini/Peripheral/inc/port/lib_class_spi.h"
 
 //-------------------------------------------------------------------------------------------------
 // Prototype(s)

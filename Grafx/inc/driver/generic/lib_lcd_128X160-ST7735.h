@@ -70,7 +70,7 @@ class GrafxDriver : public GRAFX_Interface
     public:
 
         // This include all required prototype for a driver.
-        #include "lib_grafx_driver_common.h"
+        #include "./Digini/Grafx/inc/driver/lib_grafx_driver_common.h"
 
     private:
 

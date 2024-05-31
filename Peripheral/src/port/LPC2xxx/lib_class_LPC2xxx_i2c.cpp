@@ -30,9 +30,9 @@
 
 #include <stdint.h>
 #define LPC2_I2C_GLOBAL
-#include "lib_class_STM32F4_i2c.h"
+#include "./Digini/Peripheral/inc/port/lib_class_i2c.h"
 #undef  LPC2_I2C_GLOBAL
-#include "lib_macro.h"
+#include "./Digini/Digini/inc/lib_macro.h"
 #include "bsp.h"
 #include "assert.h"
 

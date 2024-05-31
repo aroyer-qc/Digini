@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_QUAD_ENCODER_GLOBAL
-#include "lib_class_quadrature_encoder.h"
+#include "./Digini/Peripheral/inc/device/lib_class_quadrature_encoder.h"
 #undef  LIB_QUAD_ENCODER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------

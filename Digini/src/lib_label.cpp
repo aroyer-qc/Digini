@@ -28,7 +28,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_digini.h"
+#include "./Digini/lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 // class
@@ -41,7 +41,7 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
   #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
     PRODUCT_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
   #endif
-  
+
   #if (LABEL_USE_TIME_AND_DATE == DEF_ENABLED)
     TIMDAT_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
   #endif
@@ -66,11 +66,11 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
     VT100_MONO_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
    #endif
   #endif
-  
+
   #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
     NET_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
   #endif
-  
+
 };
 
 Label::Label()

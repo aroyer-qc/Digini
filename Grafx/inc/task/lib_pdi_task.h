@@ -30,7 +30,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "lib_digini.h"
+#include "./Digini/lib_digini.h"
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
 #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
 

@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_MCP230XX_GLOBAL
-#include "lib_class_i2c_MCP230xx.h"
+#include "./Digini/Peripheral/inc/device/lib_class_i2c_MCP230xx.h"
 #undef  LIB_MCP230XX_GLOBAL
 
 //-------------------------------------------------------------------------------------------------

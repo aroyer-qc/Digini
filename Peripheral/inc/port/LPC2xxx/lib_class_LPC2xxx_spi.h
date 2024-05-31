@@ -33,8 +33,8 @@
 #include <stdint.h>
 #include "stm32f4xx.h"
 #include "nOS.h"
-#include "lib_class_STM32F4_gpio.h"
-#include "lib_typedef.h"
+#include "./Digini/Peripheral/inc/port/lib_class_gpio.h"
+#include "./Digini/Digini/inc/lib_typedef.h"
 #include "driver_cfg.h"
 
 //-------------------------------------------------------------------------------------------------

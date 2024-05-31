@@ -27,11 +27,11 @@
 #include "can_cfg.h"
 
 #if defined STM32F1xx
- #include "./Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_can.h"
+ #include "./Digini/Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_can.h"
 #elif defined STM32F4xx
- #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_can.h"
+ #include "./Digini/Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_can.h"
 #elif defined STM32F7xx
- #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_can.h"
+ #include "./Digini/Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_can.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define RNG_DRIVER_GLOBAL
-#include "lib_digini.h"
+#include "./Digini/lib_digini.h"
 #undef  RNG_DRIVER_GLOBAL
 #include <stdlib.h>         // srand, rand
 

@@ -33,7 +33,7 @@
 #include "digini_cfg.h"
 #ifdef DIGINI_USE_GRAFX
 #include "lpc2xxx.h"
-#include "lib_class_LPC2xxx_spi.h"
+#include "./Digini/Peripheral/inc/port/lib_class_spi.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)

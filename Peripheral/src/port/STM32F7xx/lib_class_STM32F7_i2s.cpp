@@ -113,8 +113,7 @@ I2S::~I2S()
 //-------------------------------------------------------------------------------------------------
 void I2S::Initialize(void)
 {
-    nOS_Error               Error;
-    uint32_t                PriorityGroup;
+    nOS_Error Error;
 
     // TODO put an initialization flag
     Error = nOS_MutexCreate(&this->m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
@@ -136,12 +135,8 @@ void I2S::Initialize(void)
     // Configure I2C module Frequency
     m_pPort->pI2Cx->TIMINGR = m_pPort->Timing;
 
-    PriorityGroup = NVIC_GetPriorityGrouping();
-    NVIC_SetPriority(m_pPort->EV_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
-    NVIC_EnableIRQ(m_pPort->EV_IRQn);
-    NVIC_SetPriority(m_pPort->ER_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
-    NVIC_EnableIRQ(m_pPort->ER_IRQn);
-
+    ISR_Init(m_pPort->EV_IRQn, 5);
+    ISR_Init(m_pPort->ER_IRQn, 5);
 
     ///  ___________________________________________________________________
 

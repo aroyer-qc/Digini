@@ -66,16 +66,12 @@ void ISR_Init(IRQn_Type Channel, const ISR_Prio_t* pPrio)
 {
     // TODO Add PRIVILEDGE Stuff if support for MPU is added
 
-    if(m_pInfo->RX_IRQn != ISR_IRQn_NONE)
+    if(pPrio != nullptr)
     {
-        // Enable interrupt
-        if(pPrio != nullptr)
-        {
-            NVIC_SetPriority(Channel, NVIC_EncodePriority(pPrio->PriorityGroup,
-                                      pPrio->PremptionPriority,
-                                      pPrio->SubPriority));
-           NVIC_EnableIRQ(Channel);
-        }
+        NVIC_SetPriority(Channel, NVIC_EncodePriority(pPrio->PriorityGroup,
+                                  pPrio->PremptionPriority,
+                                  pPrio->SubPriority));
+       NVIC_EnableIRQ(Channel);
     }
 }
 

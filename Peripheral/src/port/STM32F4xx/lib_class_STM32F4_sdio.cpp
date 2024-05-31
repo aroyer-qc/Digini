@@ -107,7 +107,6 @@ SDIO_Driver::~SDIO_Driver()
 void SDIO_Driver::Initialize(void)
 {
     GPIO_InitTypeDef    GPIO_InitStructure;
-    uint32_t            Priority;
 
     this->Lock();
 
@@ -135,12 +134,8 @@ void SDIO_Driver::Initialize(void)
         m_DMA_FlagTCIF  = DMA_FLAG_TCIF6;
     }
 
-    Priority = NVIC_EncodePriority(NVIC_GetPriorityGrouping(), m_pSDIO->PreempPrio, 0x00);
-    NVIC_SetPriority(SDIO_IRQn, Priority);
-    NVIC_EnableIRQ(SDIO_IRQn);
-    Priority = NVIC_EncodePriority(NVIC_GetPriorityGrouping(), m_pSDIO->DMA_PreempPrio, 0x00);
-    NVIC_SetPriority(m_DMA_IRQn, Priority);
-    NVIC_EnableIRQ(m_DMA_IRQn);
+    ISR_Init(SDIO_IRQn, m_pSDIO->PreempPrio); 
+    ISR_Init(m_DMA_IRQn, m_pSDIO->DMA_PreempPrio); 
 
     // GPIO Periph clock enable
     RCC_AHB1PeriphClockCmd(m_pSDIO->CLK_Clock |

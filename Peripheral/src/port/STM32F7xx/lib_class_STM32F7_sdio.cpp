@@ -121,8 +121,6 @@ SDIO_Driver::SDIO_Driver(SDIO_Info_t* pInfo)
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::Initialize(void)
 {
-    uint32_t PriorityGroup;
-
     if(m_IsItInitialize == false)
     {
         nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
@@ -149,17 +147,17 @@ void SDIO_Driver::Initialize(void)
       #endif
 
         // Initialize DMA2 channel 3 for RX from SD CARD
-        m_DMA_RX.Initialize(&m_pInfo->DMA_RX); // Write config that will never change
+        m_DMA_RX.Initialize(&m_pInfo->DMA_RX);                                      // Write config that will never change
         m_DMA_RX.SetSource((void*)&SDMMC1->FIFO);
         m_DMA_RX.ClearFlag(IFCR_CLEAR_MASK_STREAM3);
-//??        DMA2_Stream3->FCR  = (DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                 // Configuration FIFO control register
+        m_DMA_RX.SetFifoControl(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                   // Configuration FIFO control register
 
 
         // Initialize DMA2 channel 6 for TX to SD CARD
-        m_DMA_RX.Initialize(&m_pInfo->DMA_TX); // Write config that will never change
-        m_DMA_RX.SetDestination((void*)&SDMMC1->FIFO);
-        m_DMA_RX.ClearFlag(IFCR_CLEAR_MASK_STREAM6);
-//??        DMA2_Stream6->FCR  = (DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                 // Configuration FIFO control register
+        m_DMA_TX.Initialize(&m_pInfo->DMA_TX);                                      // Write config that will never change
+        m_DMA_TX.SetDestination((void*)&SDMMC1->FIFO);
+        m_DMA_TX.ClearFlag(IFCR_CLEAR_MASK_STREAM6);
+        m_DMA_TX.SetFifoControl(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                   // Configuration FIFO control register
 
         m_CardStatus       = STA_NOINIT;
         m_TransferError    = SYS_READY;
@@ -169,20 +167,14 @@ void SDIO_Driver::Initialize(void)
         //m_SendStopTransfer = false;
         // m_TickPeriod   = SD_CARD_TICK_PERIOD;
 
-        PriorityGroup = NVIC_GetPriorityGrouping();
-
         // NVIC configuration for SDIO interrupts
-        NVIC_SetPriority(SDMMC1_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
-        NVIC_EnableIRQ(SDMMC1_IRQn);
+        ISR_Init(SDMMC1_IRQn, 5); 
 
         // NVIC configuration for DMA transfer complete interrupt
-        NVIC_SetPriority(DMA2_Stream3_IRQn, NVIC_EncodePriority(PriorityGroup, 6, 0));
-        NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+        ISR_Init(DMA2_Stream3_IRQn, 6); 
+        ISR_Init(DMA2_Stream6_IRQn, 6); 
 
-        NVIC_SetPriority(DMA2_Stream6_IRQn, NVIC_EncodePriority(PriorityGroup, 6, 0));
-        NVIC_EnableIRQ(DMA2_Stream6_IRQn);
-
-            // Initialize SDMMC peripheral interface with default configuration for SD card initialization
+        // Initialize SDMMC peripheral interface with default configuration for SD card initialization
         ClearClockRegister();
         SDMMC1->CLKCR |=  (uint32_t)SDMMC_INIT_CLK_DIV;
 

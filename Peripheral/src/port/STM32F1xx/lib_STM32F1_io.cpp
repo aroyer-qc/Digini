@@ -424,7 +424,6 @@ void IO_InitIRQ(IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback)
 {
     const IO_IRQ_Properties_t* pIRQ_Properties;
     const IO_Properties_t*     pIO_Properties;
-    uint32_t                    PriorityGroup;
     uint32_t                   PinNumber;
     uint32_t                   PinMask;
 
@@ -470,10 +469,7 @@ void IO_InitIRQ(IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback)
     IO_PinChangeCallback[IO_IRQ_ID] = pCallback;
 
     // Configure interrupt priority for IO
-    PriorityGroup = NVIC_GetPriorityGrouping();
-    NVIC_SetPriority(pIRQ_Properties->IRQ_Channel, NVIC_EncodePriority(PriorityGroup,6, 0));
-    NVIC_EnableIRQ(pIRQ_Properties->IRQ_Channel);
-
+    ISR_Init(pIRQ_Properties->IRQ_Channel, 6);  // maybe should add priority to config???
 }
 #endif
 

@@ -545,7 +545,6 @@ void SAI::Initialize(void)
 
 #if 0
     nOS_Error               Error;
-    uint32_t                PriorityGroup;
 
     // TODO put an initialization flag
     Error = nOS_MutexCreate(&this->m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
@@ -559,23 +558,17 @@ void SAI::Initialize(void)
     // Configure SAI module Frequency
     m_pPort->pSAIx->TIMINGR = m_pPort->Timing;
 
-    PriorityGroup = NVIC_GetPriorityGrouping();
-    NVIC_SetPriority(m_pPort->EV_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
-    NVIC_EnableIRQ(m_pPort->EV_IRQn);
-    NVIC_SetPriority(m_pPort->ER_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
-    NVIC_EnableIRQ(m_pPort->ER_IRQn);
+    ISR_Init(m_pPort->EV_IRQn, 5); 
+    ISR_Init(m_pPort->ER_IRQn, 5); 
 
-
-
-
-    /* wm8994 codec initialization */
+    // wm8994 codec initialization
     deviceid = wm8994_drv.ReadID(AUDIO_SAI_ADDRESS);
 
     if((deviceid) == WM8994_ID)
     {
-      /* Reset the Codec Registers */
+      // Reset the Codec Registers
       wm8994_drv.Reset(AUDIO_SAI_ADDRESS);
-      /* Initialize the audio driver structure */
+      // Initialize the audio driver structure
       audio_drv = &wm8994_drv;
       ret = AUDIO_OK;
     }

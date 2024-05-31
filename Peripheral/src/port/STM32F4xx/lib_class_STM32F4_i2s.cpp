@@ -159,7 +159,6 @@ I2S_Driver::I2S_Driver(I2S_ID_e I2S_ID)
 //-------------------------------------------------------------------------------------------------
 void I2S_Driver::Initialize(void)
 {
-    uint32_t            PriorityGroup;
     DMA_Stream_TypeDef* pDMA;
 
     m_Timeout = 0;
@@ -315,30 +314,8 @@ void I2S_Driver::Initialize(void)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // I2S DMA IRQ Channel configuration
-    PriorityGroup = NVIC_GetPriorityGrouping();
-    NVIC_SetPriority(m_pInfo->I2S_DMA_IRQn, NVIC_EncodePriority(PriorityGroup, 5, 0));
-    NVIC_EnableIRQ(m_pInfo->I2S_DMA_IRQn);
+    ISR_Init(m_pInfo->I2S_DMA_IRQn, 5);    
 }
 
 //-------------------------------------------------------------------------------------------------

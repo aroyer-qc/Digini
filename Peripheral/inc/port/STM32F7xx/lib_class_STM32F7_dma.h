@@ -119,6 +119,7 @@ class DMA_Driver
         void        Disable                                 (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_EN);   }
         size_t      GetLength                               (void)                              { return size_t(m_pDMA->NDTR);          }
         void        SetLength                               (size_t Length)                     { m_pDMA->NDTR = uint32_t(Length);      }
+        void        SetFifoControl                          (uint32_t Control)                  { m_pDMA->FCR = Control;                }
         void        RegisterCallback                        (CallbackInterface* pCallback)      { m_pCallback = pCallback;              }
         void        EnableInterrupt                         (uint32_t Interrupt)                { SET_BIT(m_pDMA->CR, Interrupt);       }
         void        DisableInterrupt                        (uint32_t Interrupt)                { CLEAR_BIT(m_pDMA->CR, Interrupt);     }

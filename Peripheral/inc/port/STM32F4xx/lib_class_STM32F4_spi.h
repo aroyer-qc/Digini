@@ -172,8 +172,8 @@ class SPI_Driver// : public DriverInterface
     private:
 
 //        uint16_t              GetPrescalerFromSpeed   (uint32_t speed);
-        void            Lock                    (void);
-        void            Unlock                  (void);
+        //void            Lock                    (void);
+        //void            Unlock                  (void);
         SystemState_e   WaitDMA                 (void);
 
         nOS_Mutex               m_Mutex;

@@ -186,22 +186,22 @@ static const int32_t DRV_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::PutColor(uint16_t Color, uint16_t Count)
 {
-    IO_SetPinLow(IO_ST7735_CS);
-    this->WriteCommand(ST7735_RAM_WRITE);                         // Access to RAM
+    m_pSPI->LockToDevice(IO_ST7735_CS);
+    WriteCommand(ST7735_RAM_WRITE);                         // Access to RAM
     IO_SetPinHigh(IO_ST7735_DC);                            // Set memory to data
     m_pSPI->OverrideMemoryIncrement();
-    m_pSPI->Transfer(&Color, Count, nullptr, 0, this);       // write color
+    m_pSPI->Write((uint8_t*)&Color, Count);                 // Write color
 
 #if 0
     // Counter
     while(Count--)
     {
         // Write color
-        m_pSPI->Transfer(&Color, 1, nullptr, 0, this);
+        m_pSPI->Write(Color);
     }
 #endif
 
-    IO_SetPinHigh(IO_ST7735_CS);
+    m_pSPI->UnlockFromDevice(IO_ST7735_CS);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -213,13 +213,14 @@ void GrafxDriver::PutColor(uint16_t Color, uint16_t Count)
 //
 //  Description:    Send a command to LCD
 //
-//  Note(s):        any sub data will be sent using LCD_WriteByte
+//  Note(s):        Any sub data will be sent using LCD_WriteByte
+//                  This function does not handle the CS
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::WriteCommand(uint8_t Command)
 {
     IO_SetPinLow(IO_ST7735_DC);
-    m_pSPI->Transfer(&Command, 1, nullptr, 0, this);
+    m_pSPI->Write(Command);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -237,7 +238,7 @@ uint8_t GrafxDriver::ReadCommand(uint8_t Command)
     uint8_t Data[2];
 
     IO_SetPinLow(IO_ST7735_DC);         // Command (active low)
-    m_pSPI->Transfer(&Command, 1, &Data[0], 2, this);
+    m_pSPI->Transfer(&Command, 1, &Data[0], 2, IO_ST7735_CS);
     return Data[1];
 }
 
@@ -256,7 +257,7 @@ uint8_t GrafxDriver::ReadData(void)
     uint8_t Data;
 
     IO_SetPinLow(IO_ST7735_DC);         // Data (active high)
-    m_pSPI->Transfer(nullptr, 0, &Data, 1, this);
+    m_pSPI->Transfer(nullptr, 0, &Data, 1, IO_ST7735_CS);
     return Data;
 }
 
@@ -281,10 +282,10 @@ void GrafxDriver::SetWindow(uint8_t PosX1, uint8_t PosY1, uint8_t PosX2, uint8_t
 
     Data[1] = PosX1;                // X start
     Data[3] = PosX2;                // X end
-    this->SendCommand(ST7735_CASET, &Data[0], 4, 1);
+    SendCommand(ST7735_CASET, &Data[0], 4, 1);
     Data[1] = PosY1;                // Y start
     Data[3] = PosY2;                // Y end
-    this->SendCommand(ST7735_RASET, &Data[0], 4, 1);
+    SendCommand(ST7735_RASET, &Data[0], 4, 1);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -302,7 +303,7 @@ void GrafxDriver::SetWindow(uint8_t PosX1, uint8_t PosY1, uint8_t PosX2, uint8_t
 void GrafxDriver::WriteData(uint8_t Data)
 {
     IO_SetPinHigh(IO_ST7735_DC);				// Data (active high)
-    m_pSPI->Transfer(&Data, 1, nullptr, 0, this);
+    m_pSPI->Write(&Data, 1);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -320,7 +321,7 @@ void GrafxDriver::WriteData(uint8_t Data)
 void GrafxDriver::WriteData(uint16_t Data)
 {
     IO_SetPinHigh(IO_ST7735_DC);			            // Data (active high)
-    m_pSPI->Transfer((uint8_t*)&Data, 2, nullptr, 0, this);
+    m_pSPI->Write((uint8_t*)&Data, 2);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -338,7 +339,7 @@ void GrafxDriver::WriteData(uint16_t Data)
 void GrafxDriver::WriteData(uint32_t Data)
 {
     IO_SetPinHigh(IO_ST7735_DC);			            // Data (active high)
-    m_pSPI->Transfer((uint8_t*)&Data, 4, nullptr, 0, this);
+    m_pSPI->Write((uint8_t*)&Data, 4);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -358,7 +359,7 @@ void GrafxDriver::WriteData(uint32_t Data)
 void GrafxDriver::WriteData(uint8_t* pData, uint32_t Size)
 {
     IO_SetPinHigh(IO_ST7735_DC);        			    // Data (active high)
-    m_pSPI->Transfer(pData, Size, nullptr, 0, this);
+    m_pSPI->Write(pData, Size);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -376,7 +377,7 @@ void GrafxDriver::WriteData(uint8_t* pData, uint32_t Size)
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::SendCommand(uint8_t Register, uint8_t Data, uint32_t Delay)
 {
-    this->SendCommand(Register, &Data, 1, Delay);
+    SendCommand(Register, &Data, 1, Delay);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -395,15 +396,15 @@ void GrafxDriver::SendCommand(uint8_t Register, uint8_t Data, uint32_t Delay)
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::SendCommand(uint8_t Register, uint8_t* pData, uint32_t Size, uint32_t Delay)
 {
-    IO_SetPinLow(IO_ST7735_CS);
-    this->WriteCommand(Register);             // Send register
+    m_pSPI->LockToDevice(IO_ST7735_CS);
+    WriteCommand(Register);             // Send register
 
     if(Size > 0)
     {
-        this->WriteData(pData, Size);
+        WriteData(pData, Size);
     }
 
-    IO_SetPinHigh(IO_ST7735_CS);
+    m_pSPI->UnlockFromDevice(IO_ST7735_CS);
 
     if(Delay > 0)
     {
@@ -443,18 +444,18 @@ void GrafxDriver::Initialize(void* pArg)
     IO_SetPinHigh(IO_ST7735_RESET);
     LIB_Delay_mSec(50);
 
-    this->SendCommand(ST7735_SWRESET, nullptr, 0, 50);            // Software reset
+    SendCommand(ST7735_SWRESET, nullptr, 0, 50);            // Software reset
 
     //------------------------------------ST7735S Frame Rate-----------------------------------------//
 
     const uint8_t Data_FRMCTR[6] = {0x05, 0x3C, 0x3C,0x05, 0x3C, 0x3C};
-    this->SendCommand(ST7735_FRMCTR1, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 1
-    this->SendCommand(ST7735_FRMCTR2, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 2
-    this->SendCommand(ST7735_FRMCTR3, (uint8_t*)&Data_FRMCTR[0], 6, 1);    // Frame control 2
+    SendCommand(ST7735_FRMCTR1, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 1
+    SendCommand(ST7735_FRMCTR2, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 2
+    SendCommand(ST7735_FRMCTR3, (uint8_t*)&Data_FRMCTR[0], 6, 1);    // Frame control 2
 
 	//------------------------------------End ST7735S Frame Rate-----------------------------------------//
 
-    this->SendCommand(ST7735_INVCTR, 0x03, 1);                   // Dot inversion
+    SendCommand(ST7735_INVCTR, 0x03, 1);                   // Dot inversion
 
 	//------------------------------------ST7735S Power Sequence-----------------------------------------//
 
@@ -463,16 +464,16 @@ void GrafxDriver::Initialize(void* pArg)
     const uint8_t Data_PWR_CTRL4[2] = {0x8D, 0x2A};
     const uint8_t Data_PWR_CTRL5[2] = {0x8D, 0xEE};
 
-    this->SendCommand(ST7735_POWER_CTRL_1, (uint8_t*)&Data_PWR_CTRL1[0], 3, 1);
-    this->SendCommand(ST7735_POWER_CTRL_2, 0xC0, 1);
-    this->SendCommand(ST7735_POWER_CTRL_3, (uint8_t*)&Data_PWR_CTRL3[0], 2, 1);
-    this->SendCommand(ST7735_POWER_CTRL_4, (uint8_t*)&Data_PWR_CTRL4[0], 2, 1);
-    this->SendCommand(ST7735_POWER_CTRL_5, (uint8_t*)&Data_PWR_CTRL5[0], 2, 1);
+    SendCommand(ST7735_POWER_CTRL_1, (uint8_t*)&Data_PWR_CTRL1[0], 3, 1);
+    SendCommand(ST7735_POWER_CTRL_2, 0xC0, 1);
+    SendCommand(ST7735_POWER_CTRL_3, (uint8_t*)&Data_PWR_CTRL3[0], 2, 1);
+    SendCommand(ST7735_POWER_CTRL_4, (uint8_t*)&Data_PWR_CTRL4[0], 2, 1);
+    SendCommand(ST7735_POWER_CTRL_5, (uint8_t*)&Data_PWR_CTRL5[0], 2, 1);
 
     //---------------------------------End ST7735S Power Sequence-------------------------------------//
 
-    this->SendCommand(ST7735_VMCTR1, 0x10, 1);                        // VCOM
-    this->SendCommand(ST7735_MADCTL, 0xC0, 1);                        // MX, MY, RGB mode
+    SendCommand(ST7735_VMCTR1, 0x10, 1);                        // VCOM
+    SendCommand(ST7735_MADCTL, 0xC0, 1);                        // MX, MY, RGB mode
 
 	//------------------------------------ST7735S Gamma Sequence-----------------------------------------//
 
@@ -481,15 +482,15 @@ void GrafxDriver::Initialize(void* pArg)
     const uint8_t Data_GMCTRN1[16] = {0x04, 0x16, 0x06, 0x0D, 0x2D, 0x26, 0x23, 0x27,
                                       0x27, 0x25, 0x2D, 0x3B, 0x00, 0x01, 0x04, 0x13};
 
-    this->SendCommand(ST7735_GMCTRP1, (uint8_t*)&Data_GMCTRP1[0], 16, 1);
-    this->SendCommand(ST7735_GMCTRN1, (uint8_t*)&Data_GMCTRN1[0], 16, 1);
+    SendCommand(ST7735_GMCTRP1, (uint8_t*)&Data_GMCTRP1[0], 16, 1);
+    SendCommand(ST7735_GMCTRN1, (uint8_t*)&Data_GMCTRN1[0], 16, 1);
 
 	//------------------------------------End ST7735S Gamma Sequence-----------------------------------------//
 
-    this->SendCommand(ST7735_COLMOD, 0x05, 1);                        // 65K mode
-    this->SendCommand(ST7735_SLPOUT, nullptr, 0, 120);                // Exit Sleep
-    this->DisplayOn();
-    this->Clear();
+    SendCommand(ST7735_COLMOD, 0x05, 1);                        // 65K mode
+    SendCommand(ST7735_SLPOUT, nullptr, 0, 120);                // Exit Sleep
+    DisplayOn();
+    Clear();
     IO_SetPinHigh(IO_ST7735_BACKLIGHT);
 }
 
@@ -760,10 +761,10 @@ void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t
         uint16_t X2 = PosX + Width;
         uint16_t Y2 = PosY + Height;
 
-        this->DrawVLine(PosX,           PosY, Y2, Thickness);
-        this->DrawVLine(X2 - Thickness, PosY, Y2, Thickness);
-        this->DrawHLine(PosY,           PosX, X2, Thickness);
-        this->DrawHLine(Y2 - Thickness, PosX, X2, Thickness);
+        DrawVLine(PosX,           PosY, Y2, Thickness);
+        DrawVLine(X2 - Thickness, PosY, Y2, Thickness);
+        DrawHLine(PosY,           PosX, X2, Thickness);
+        DrawHLine(Y2 - Thickness, PosX, X2, Thickness);
     }
     else
     {

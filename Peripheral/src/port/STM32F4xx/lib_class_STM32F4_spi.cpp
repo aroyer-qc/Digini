@@ -179,6 +179,7 @@ SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
         while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
         m_Device = Device;
         m_Status = SYS_READY;
+        IO_SetPinLow(Device);
     }
 
     return m_Status;
@@ -204,6 +205,7 @@ SystemState_e SPI_Driver::UnlockFromDevice(IO_ID_e Device)
         nOS_MutexUnlock(&m_Mutex);
         m_Device = IO_NOT_DEFINED;
         m_Status = SYS_DEVICE_NOT_PRESENT;
+        IO_SetPinHigh(Device);
     }
     else
     {
@@ -252,10 +254,10 @@ uint16_t SPI_Driver::GetPrescalerFromSpeed(uint32_t Speed)
 //   Description:   Lock the driver
 //
 //-------------------------------------------------------------------------------------------------
-void SPI_Driver::Lock(void)
-{
-    while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK) {};
-}
+//void SPI_Driver::Lock(void)
+//{
+//    while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK) {};
+//}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -267,10 +269,10 @@ void SPI_Driver::Lock(void)
 //   Description:   Unlock the driver
 //
 //-------------------------------------------------------------------------------------------------
-void SPI_Driver::Unlock(void)
-{
-    nOS_MutexUnlock(&m_Mutex);
-}
+//void SPI_Driver::Unlock(void)
+//{
+    //nOS_MutexUnlock(&m_Mutex);
+//}
 
 //-------------------------------------------------------------------------------------------------
 //

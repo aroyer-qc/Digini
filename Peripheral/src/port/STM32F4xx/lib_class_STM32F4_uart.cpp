@@ -539,7 +539,7 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
                 m_DMA_IsItBusyTX = true;
 
                 m_DMA_TX.Disable();
-                m_DMA_TX.ClearFlag(m_pDMA_Info->DMA_TX.DMA_Flag);
+                m_DMA_TX.ClearFlag();
 
                 if(pBufferTX != nullptr)
                 {
@@ -742,7 +742,7 @@ void UART_Driver::DMA_EnableRX(void)
         {
             m_pUart->CR3 |= USART_CR3_DMAR;         // Enable the DMA transfer
             (void)m_pUart->DR;
-            m_DMA_RX.ClearFlag(m_pDMA_Info->DMA_RX.DMA_Flag);
+            m_DMA_RX.ClearFlag();
             m_DMA_RX.Enable();
             EnableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
         }
@@ -768,7 +768,7 @@ void UART_Driver::DMA_DisableRX(void)
             m_DMA_RX.Disable();
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAR);
             DisableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
-            m_DMA_RX.ClearFlag(m_pDMA_Info->DMA_RX.DMA_Flag);
+            m_DMA_RX.ClearFlag();
         }
     }
 }
@@ -812,7 +812,7 @@ void UART_Driver::DMA_DisableTX(void)
         if(m_pDMA_Info != nullptr)
         {
             m_DMA_TX.Disable();
-            m_DMA_TX.ClearFlag(m_pDMA_Info->DMA_TX.DMA_Flag);
+            m_DMA_TX.ClearFlag();
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAT);
         }
     }
@@ -835,7 +835,7 @@ size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
     if(m_pUart != nullptr)
     {
         m_DMA_RX.Disable();
-        m_DMA_RX.ClearFlag(m_pDMA_Info->DMA_RX.DMA_Flag);
+        m_DMA_RX.ClearFlag();
         SizeDataRX = m_DMA_RX.GetLength();                   // Number of byte available in p_RxBuf
 
         if(SizeDataRX <= SizeRX)
@@ -1174,7 +1174,7 @@ void UART_Driver::IRQ_Handler(void)
          if((Status & USART_SR_IDLE) != 0)
          {
            #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-              m_RX_Transfer.Size -= m_pDMA_Info->DMA_StreamRX->NDTR; // Give actual position in the DMA Buffer
+              m_RX_Transfer.Size -= m_DMA_RX.GetLength(); // Give actual position in the DMA Buffer
            #endif
 
              ClearFlag();

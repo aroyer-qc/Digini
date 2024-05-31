@@ -57,6 +57,7 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 {
     m_pDMA         = pInfo->pDMA;
     m_Flag         = pInfo->Flag;
+    m_IRQn_Channel = pInfo->IRQn_Channel;
     EnableClock();
     m_pDMA->CR     = pInfo->ConfigAndChannel;
     m_Direction    = pInfo->ConfigAndChannel & DMA_DIRECTION_MASK;
@@ -271,6 +272,21 @@ void DMA_Driver::EnableCallbackType(int CallBackType)
     }
 }
 */
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           EnableIRQ
+//
+//  Parameter(s):   uint8_t    PremptionPriority
+//  Return:         None
+//
+//  Description:    Enable the IRQ DMA for the Channel and Stream
+//
+//-------------------------------------------------------------------------------------------------
+void DMA_Driver::EnableIRQ(uint8_t PremptionPriority)
+{
+    ISR_Init(m_IRQn_Channel, PremptionPriority);
+}
 
 //-------------------------------------------------------------------------------------------------
 //

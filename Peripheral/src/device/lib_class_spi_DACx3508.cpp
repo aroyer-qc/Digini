@@ -77,7 +77,7 @@ DAC_X3508_Driver::DAC_X3508_Driver()
 //-------------------------------------------------------------------------------------------------
 SystemState_e DAC_X3508_Driver::Initialize(SPI_Driver* pSPI, IO_ID_e ChipSelectIO)
 {
-    if(isItInitialized != true)
+   if(isItInitialized != true)
 	{
         m_pSPI         = pSPI;
         m_ChipSelectIO = ChipSelectIO;

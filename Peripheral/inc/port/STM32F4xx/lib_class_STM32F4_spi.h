@@ -118,14 +118,13 @@ enum SPI_ID_e
 
 struct SPI_Info_t
 {
-    SPI_ID_e            SPI_ID;
     SPI_TypeDef*        pSPIx;
     IO_ID_e             PinCLK;
     IO_ID_e             PinMOSI;
     IO_ID_e             PinMISO;
     uint32_t            Control;
     uint32_t            Speed;
-    IRQn_Type           IRQn_Channel;
+    IRQn_Type           IRQn;
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;
 };
@@ -179,6 +178,7 @@ class SPI_Driver// : public DriverInterface
 
         nOS_Mutex               m_Mutex;
         SPI_Info_t*             m_pInfo;
+        SPI_ID_e                m_SPI_ID;
         IO_ID_e                 m_Device;
 
         bool                    m_NoMemoryIncrement;

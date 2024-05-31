@@ -68,6 +68,7 @@ SPI_Driver* SPI_Driver::m_pDriver[NB_OF_SPI_DRIVER] = {nullptr};
 //-------------------------------------------------------------------------------------------------
 SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
 {
+    m_SPI_ID     = SPI_ID;
     m_Device     = IO_NOT_DEFINED;
     m_pInfo      = &SPI_Info[SPI_ID];
     m_Status     = SYS_UNKNOWN;
@@ -93,7 +94,7 @@ void SPI_Driver::Initialize(void)
     IO_PinInit(m_pInfo->PinMOSI);
     IO_PinInit(m_pInfo->PinMISO);
 
-    switch(uint32_t(m_pInfo->SPI_ID))
+    switch(uint32_t(m_SPI_ID))
     {
       #if (SPI_DRIVER_SUPPORT_SPI1_CFG == DEF_ENABLED)
         case uint32_t(DRIVER_SPI1_ID):
@@ -148,15 +149,14 @@ void SPI_Driver::Initialize(void)
     m_DMA_Status = SYS_IDLE;
     m_NoMemoryIncrement = false;
 
-    // Pre inititialize register that won't change
+    // Pre initialize register that won't change
     m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
-    m_DMA_TX.SetDestination((void*)&m_pInfo->pSPIx->DR);          // Configure transmit data register
+    m_DMA_TX.SetDestination((void*)&m_pInfo->pSPIx->DR);    // Configure transmit data register
+    m_DMA_TX.EnableIRQ(6);                                  // NVIC Setup for TX DMA channels interrupt request
 
     m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
-    m_DMA_RX.SetSource((void*)&m_pInfo->pSPIx->DR);          // Configure transmit data register
-
-    //ISR_Init(m_pInfo->TX_IRQn, 6);                   // NVIC Setup for TX DMA channels interrupt request
-    //ISR_Init(m_pInfo->RX_IRQn, 6);                   // NVIC Setup for RX DMA channels interrupt request
+    m_DMA_RX.SetSource((void*)&m_pInfo->pSPIx->DR);         // Configure transmit data register
+    m_DMA_RX.EnableIRQ(6);                                  // NVIC Setup for RX DMA channels interrupt request
 }
 
 //-------------------------------------------------------------------------------------------------

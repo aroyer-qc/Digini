@@ -61,8 +61,15 @@
 #include "digini_cfg.h"
 #include "driver_cfg.h"
 #include "bsp_io_def.h"
-#include "memory_cfg.h"
-#include "label_cfg.h"
+
+#if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
+//#include "memory_cfg.h"
+#endif
+
+#if (DIGINI_USE_LABEL == DEF_ENABLED)
+//#include "label_cfg.h"
+#endif
+
 #include "project_def.h"
 
 //-------------------------------------------------------------------------------------------------
@@ -80,12 +87,23 @@
 //
 #include "./Peripheral/inc/port/lib_cpu_specific.h"
 #include "./Digini/inc/lib_assert.h"
+
+#if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
 #include "./Memory/inc/lib_memory.h"
 #include "./Memory/inc/lib_node_list.h"
 #include "./Memory/inc/lib_memory_node.h"
+#endif
+
+#if (DIGINI_USE_DATABASE == DEF_ENABLED)
 #include "./Database/inc/lib_class_database.h"
+#endif
+
 #include "./Digini/inc/lib_class_cbi.h"                      // Callback interface
+
+#if (DIGINI_USE_LABEL == DEF_ENABLED)
 #include "./Digini/inc/lib_label.h"
+#endif
+
 #include "./Digini/inc/lib_macro.h"
 #include "./Digini/inc/lib_advanced_macro.h"
 #include "./Digini/inc/lib_define.h"
@@ -93,7 +111,6 @@
 #include "./String/inc/lib_string.h"
 #include "./RTOS_Wrapper/inc/nOS/lib_class_queue.h"
 #include "./RTOS_Wrapper/inc/nOS/lib_class_timer.h"
-#include "./lib_stacktistic.h"
 #include "./Utility/inc/lib_utility.h"
 #include "./Peripheral/inc/port/lib_isr.h"
 #include "./Utility/inc/lib_pid.h"

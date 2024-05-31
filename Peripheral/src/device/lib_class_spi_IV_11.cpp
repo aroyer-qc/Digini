@@ -29,7 +29,8 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_IV_11_GLOBAL
-#include "./Digini/Peripheral/inc/device/lib_class_spi_IV_11.h"
+#include "./Digini/lib_digini.h"
+//#include "./Digini/Peripheral/inc/device/lib_class_spi_IV_11.h"
 #undef  LIB_IV_11_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -88,7 +89,7 @@ IV_11_DigitDriver::IV_11_DigitDriver()
 //  Description:    Initialize the Serial shift for Digit using SPI interface
 //
 //-------------------------------------------------------------------------------------------------
-void IV_11_DigitDriver::Initialize(const IV_11_Config_t* pConfig)
+void IV_11_DigitDriver::Initialize(SPI_Driver* pSPI, const IV_11_Config_t* pConfig)
 {
     size_t RequiredBytes;
 
@@ -107,7 +108,6 @@ void IV_11_DigitDriver::Initialize(const IV_11_Config_t* pConfig)
 
     IO_PinInit(m_pConfig->LoadPin);
 
-    m_pSPI = new SPI_Driver(pConfig->SPI_ID);
     m_pSPI->Initialize();
 }
 
@@ -163,14 +163,7 @@ void IV_11_DigitDriver::Write(const char* pBuffer)
     }
 
 
-    m_pSPI->Transfer(m_pDigitStream, 7, nullptr, 0, (SPI_DeviceInfo_t*)this);
-
-
-
-
-
-
-
+    m_pSPI->Write(m_pDigitStream, 7);
 }
 
 //-------------------------------------------------------------------------------------------------

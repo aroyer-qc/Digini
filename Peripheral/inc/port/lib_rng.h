@@ -32,7 +32,7 @@ extern "C"
 //-------------------------------------------------------------------------------------------------
 
 #if defined STM32F1xx
- #include "./Digini/Peripheral/inc/port/STM32F1xx/lib_generic_rng.h"
+ #include "./Digini/Peripheral/inc/port/generic/lib_generic_rng.h"
 #elif defined STM32F4xx
  #include "./Digini/Peripheral/inc/port/STM32F4xx/lib_STM32F4_rng.h"
 #elif defined STM32F7xx

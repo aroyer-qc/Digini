@@ -45,7 +45,6 @@
 
 struct IV_11_Config_t
 {
-    SPI_ID_e    SPI_ID;
     IO_ID_e     LoadPin;
     IO_ID_e     BlankPin;
     uint8_t     NumberOfDigit;
@@ -60,7 +59,7 @@ class IV_11_DigitDriver
 
                     IV_11_DigitDriver       ();
 
-        void        Initialize              (const IV_11_Config_t* pConfig);
+        void        Initialize              (SPI_Driver* pSPI, const IV_11_Config_t* pConfig);
 
         void        Write                   (const char* pBuffer);                                  // Update all digit from string. Supporting dot and send load command
         void        Write                   (uint8_t Value, uint8_t Offset, bool Dot = false);      // Change value at offset

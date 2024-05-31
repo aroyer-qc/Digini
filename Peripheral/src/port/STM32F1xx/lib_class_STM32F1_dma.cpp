@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F7_dma.cpp
+//  File : lib_class_STM32F1_dma.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -36,7 +36,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define DMA_DIRECTION_MASK             (DMA_SxCR_DIR_0 | DMA_SxCR_DIR_1)
+#define DMA_DIRECTION_MASK             (DMA_CCR_DIR_Msk | DMA_CCR_MEM2MEM_Msk)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -55,10 +55,11 @@
 
 void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 {
-    m_pDMA         = pInfo->pDMA;
+    m_pDMA              = pInfo->pDMA;
+    m_pDMA_Channel      = pInfo->pDMA_Channel;
     EnableClock();
-    m_pDMA->CR     = pInfo->ConfigAndChannel;
-    m_Direction    = pInfo->ConfigAndChannel & DMA_DIRECTION_MASK;
+    m_pDMA_Channel->CCR = pInfo->Config;
+    m_Direction         = pInfo->Config & DMA_DIRECTION_MASK;
     //m_CallBackType = DMA_CALLBACK_NONE;
 }
 
@@ -80,15 +81,15 @@ void DMA_Driver::SetTransfer(void* pSource, void* pDestination, size_t Length)
 {
     if(m_Direction == DMA_MEMORY_TO_PERIPHERAL)
     {
-        m_pDMA->M0AR = uint32_t(pSource);
-        m_pDMA->PAR  = uint32_t(pDestination);
+        m_pDMA_Channel->CMAR = uint32_t(pSource);
+        m_pDMA_Channel->CPAR = uint32_t(pDestination);
     }
     else
     {
-        m_pDMA->M0AR = uint32_t(pDestination);
-        m_pDMA->PAR  = uint32_t(pSource);
+        m_pDMA_Channel->CMAR = uint32_t(pDestination);
+        m_pDMA_Channel->CPAR = uint32_t(pSource);
     }
-    m_pDMA->NDTR = uint32_t(Length);
+    m_pDMA_Channel->CNDTR = uint32_t(Length);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -108,11 +109,11 @@ void DMA_Driver::SetSource(void* pSource)
 {
     if(m_Direction == DMA_MEMORY_TO_PERIPHERAL)
     {
-        m_pDMA->M0AR = uint32_t(pSource);
+        m_pDMA_Channel->CMAR = uint32_t(pSource);
     }
     else
     {
-        m_pDMA->PAR  = uint32_t(pSource);
+        m_pDMA_Channel->CPAR = uint32_t(pSource);
     }
 }
 
@@ -133,11 +134,11 @@ void DMA_Driver::SetDestination(void* Destination)
 {
     if(m_Direction == DMA_MEMORY_TO_PERIPHERAL)
     {
-        m_pDMA->PAR  = uint32_t(Destination);
+        m_pDMA_Channel->CPAR = uint32_t(Destination);
     }
     else
     {
-        m_pDMA->M0AR = uint32_t(Destination);
+        m_pDMA_Channel->CMAR = uint32_t(Destination);
     }
 }
 
@@ -154,28 +155,17 @@ void DMA_Driver::ClearFlag(uint32_t Flag)
 {
     volatile uint32_t* pRegister = nullptr;
 
-    switch(uintptr_t(m_pDMA))
+    if(intptr_t(m_pDMA) == DMA1_BASE)
     {
-        case DMA1_Stream0_BASE:
-        case DMA1_Stream1_BASE:
-        case DMA1_Stream2_BASE:
-        case DMA1_Stream3_BASE: pRegister = &DMA1->LIFCR; break;
-
-        case DMA1_Stream4_BASE:
-        case DMA1_Stream5_BASE:
-        case DMA1_Stream6_BASE:
-        case DMA1_Stream7_BASE: pRegister = &DMA1->HIFCR; break;
-
-        case DMA2_Stream0_BASE:
-        case DMA2_Stream1_BASE:
-        case DMA2_Stream2_BASE:
-        case DMA2_Stream3_BASE: pRegister = &DMA2->LIFCR; break;
-
-        case DMA2_Stream4_BASE:
-        case DMA2_Stream5_BASE:
-        case DMA2_Stream6_BASE:
-        case DMA2_Stream7_BASE: pRegister = &DMA2->HIFCR; break;
+        pRegister = reinterpret_cast<volatile uint32_t*>(&DMA1->IFCR);
     }
+
+  #if (DMA2_SUPPORT == DEF_ENABLED)
+    else if(intptr_t(m_pDMA) == DMA2_BASE)
+    {
+        pRegister = reinterpret_cast<volatile uint32_t*>(&DMA2->IFCR);
+    }
+  #endif
 
     if(pRegister != nullptr)
     {
@@ -194,35 +184,24 @@ void DMA_Driver::ClearFlag(uint32_t Flag)
 //-------------------------------------------------------------------------------------------------
 bool DMA_Driver::CheckFlag(uint32_t Flag)
 {
-    volatile uint32_t Register = 0;
-    bool              Result   = false;
+    uint32_t Register = 0;
+    uint32_t Result   = 0;
 
-    switch(uintptr_t(m_pDMA))
+    if(intptr_t(m_pDMA) == DMA1_BASE)
     {
-        case DMA1_Stream0_BASE:
-        case DMA1_Stream1_BASE:
-        case DMA1_Stream2_BASE:
-        case DMA1_Stream3_BASE: Register = DMA1->LISR; break;
-
-        case DMA1_Stream4_BASE:
-        case DMA1_Stream5_BASE:
-        case DMA1_Stream6_BASE:
-        case DMA1_Stream7_BASE: Register = DMA1->HISR; break;
-
-        case DMA2_Stream0_BASE:
-        case DMA2_Stream1_BASE:
-        case DMA2_Stream2_BASE:
-        case DMA2_Stream3_BASE: Register = DMA2->LISR; break;
-
-        case DMA2_Stream4_BASE:
-        case DMA2_Stream5_BASE:
-        case DMA2_Stream6_BASE:
-        case DMA2_Stream7_BASE: Register = DMA2->HISR; break;
+        Register = DMA1->ISR;
     }
+
+  #if (DMA2_SUPPORT == DEF_ENABLED)
+    else if(intptr_t(m_pDMA) == DMA2_BASE)
+    {
+        Register = DMA2->ISR;
+    }
+  #endif
 
     if((Register & Flag) != 0)
     {
-        Result = true;
+        Result = 1;
     }
 
     return Result;
@@ -239,14 +218,16 @@ bool DMA_Driver::CheckFlag(uint32_t Flag)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::EnableClock(void)
 {
-    if(uintptr_t(m_pDMA) < DMA2_Stream0_BASE)
+    if((intptr_t(m_pDMA) & DMA1_BASE) == DMA1_BASE)
     {
-        SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA1EN);
+        SET_BIT(RCC->AHBENR, RCC_AHBENR_DMA1EN);
     }
+  #if (DMA2_SUPPORT == DEF_ENABLED)
     else
     {
-        SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA2EN);
+        SET_BIT(RCC->AHBENR, RCC_AHBENR_DMA2EN);
     }
+  #endif
 }
 
 /*   i don't know if it is needed, so far it's not

@@ -50,6 +50,10 @@
 #include <string.h>
 
 //-------------------------------------------------------------------------------------------------
+
+#include "./Digini/inc/lib_define.h"
+
+//-------------------------------------------------------------------------------------------------
 // Real Time OS
 
 #include "nOS.h"
@@ -63,11 +67,11 @@
 #include "bsp_io_def.h"
 
 #if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
-//#include "memory_cfg.h"
+#include "memory_cfg.h"
 #endif
 
 #if (DIGINI_USE_LABEL == DEF_ENABLED)
-//#include "label_cfg.h"
+#include "label_cfg.h"
 #endif
 
 #include "project_def.h"
@@ -106,7 +110,6 @@
 
 #include "./Digini/inc/lib_macro.h"
 #include "./Digini/inc/lib_advanced_macro.h"
-#include "./Digini/inc/lib_define.h"
 #include "./Digini/inc/lib_typedef.h"
 #include "./String/inc/lib_string.h"
 #include "./RTOS_Wrapper/inc/nOS/lib_class_queue.h"

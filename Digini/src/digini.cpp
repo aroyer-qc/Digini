@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define DIGINI_GLOBAL
-#include "lib_digini.h"
+#include "./Digini/lib_digini.h"
 #undef  DIGINI_GLOBAL
 #include "bsp.h"
 

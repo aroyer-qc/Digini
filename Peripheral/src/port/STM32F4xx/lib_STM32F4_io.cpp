@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define IO_DRIVER_GLOBAL
-#include "lib_digini.h"
+#include "./Digini/lib_digini.h"
 #undef  IO_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -371,7 +371,7 @@ uint32_t IO_GetInputPinValue(IO_ID_e IO_ID)
     {
         PinValue = pPort->IDR & (1 << IO_Properties[IO_ID].PinNumber);
     }
-    
+
     return PinValue;
 }
 
@@ -508,7 +508,7 @@ void IO_InitIRQ(IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback)
     IO_PinChangeCallback[IO_IRQ_ID] = pCallback;
 
     // Configure interrupt priority for IO
-    ISR_Init(pIRQ_Properties->IRQ_Channel, 6); 
+    ISR_Init(pIRQ_Properties->IRQ_Channel, 6);
 }
 #endif
 

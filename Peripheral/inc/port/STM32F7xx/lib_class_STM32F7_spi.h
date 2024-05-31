@@ -130,16 +130,15 @@ enum SPI_ID_e
 
 struct SPI_Info_t
 {
-    SPI_ID_e            SPI_ID;
-    SPI_TypeDef*        pSPIx;
-    IO_ID_e             PinCLK;
-    IO_ID_e             PinMOSI;
-    IO_ID_e             PinMISO;
-    uint32_t            Control;  // Check code... it might not be used anymore....
-    uint32_t            Speed;
-    IRQn_Type           IRQn_Channel;
-    DMA_Info_t          DMA_RX;
-    DMA_Info_t          DMA_TX;
+    SPI_TypeDef* pSPIx;
+    IO_ID_e      PinCLK;
+    IO_ID_e      PinMOSI;
+    IO_ID_e      PinMISO;
+    uint32_t     Control;  // Check code... it might not be used anymore....
+    uint32_t     Speed;
+    IRQn_Type    IRQn_Channel;
+    DMA_Info_t   DMA_RX;
+    DMA_Info_t   DMA_TX;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -187,21 +186,18 @@ class SPI_Driver// : public DriverInterface
 //        uint16_t              GetPrescalerFromSpeed   (uint32_t speed);
         void            Lock                    (void);
         void            Unlock                  (void);
-        SystemState_e           WaitDMA         (void);
+        SystemState_e   WaitDMA                 (void);
 
         nOS_Mutex               m_Mutex;
-        SPI_Info_t*                             m_pInfo;
-        IO_ID_e                                 m_Device;
-
+        SPI_Info_t*             m_pInfo;
+        SPI_ID_e                m_SPI_ID;
+        IO_ID_e                 m_Device;
         bool                    m_NoMemoryIncrement;
-        DMA_Driver                              m_DMA_RX;
-        DMA_Driver                              m_DMA_TX;
-
-
+        DMA_Driver              m_DMA_RX;
+        DMA_Driver              m_DMA_TX;
         volatile SystemState_e  m_Status;
         volatile SystemState_e  m_DMA_Status;
-        volatile uint8_t                        m_Timeout;
-
+        volatile uint8_t        m_Timeout;
         static SPI_Driver*      m_pDriver[NB_OF_SPI_DRIVER];
 };
 

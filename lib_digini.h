@@ -59,15 +59,19 @@
 //
 //#include "clock_cfg.h"
 #include "digini_cfg.h"
+
+// Need to integrate a dependency check for all DEF_ENABLED
+
+
 #include "driver_cfg.h"
 #include "bsp_io_def.h"
 
 #if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
-//#include "memory_cfg.h"
+#include "memory_cfg.h"
 #endif
 
 #if (DIGINI_USE_LABEL == DEF_ENABLED)
-//#include "label_cfg.h"
+#include "label_cfg.h"
 #endif
 
 #include "project_def.h"

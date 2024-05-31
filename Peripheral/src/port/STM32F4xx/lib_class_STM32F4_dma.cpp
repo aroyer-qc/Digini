@@ -288,18 +288,4 @@ void DMA_Driver::EnableIRQ(uint8_t PremptionPriority)
     ISR_Init(m_IRQn_Channel, PremptionPriority);
 }
 
-//-------------------------------------------------------------------------------------------------
-//
-//  IRQ Handler:    IRQ_Handler
-//
-//  Description:    This function handle DMA interrupt.
-//
-//-------------------------------------------------------------------------------------------------
-void DMA_Driver::IRQ_Handler(void)
-{
-    if(m_pDMA != nullptr)
-    {
-    }
-}
-
 //---------------------------------------------------------------------------------------------------------------------------------

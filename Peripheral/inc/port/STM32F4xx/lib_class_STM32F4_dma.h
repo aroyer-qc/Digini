@@ -114,7 +114,6 @@ class DMA_Driver
         bool        CheckFlag                               (uint32_t Flag);
         //void        EnableCallbackType                      (int CallbackType);
         void        EnableIRQ                               (uint8_t PremptionPriority);
-        void        IRQ_Handler                             (void);
 
         // Inline method
         void        Enable                                  (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_EN);     }
@@ -124,6 +123,7 @@ class DMA_Driver
         void        SetLength                               (size_t Length)                     { m_pDMA->NDTR = uint32_t(Length);      }
         void        SetMemoryIncrement                      (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_MINC);   }
         void        SetNoMemoryIncrement                    (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_MINC); }
+        void        SetFifoControl                          (uint32_t Control)                  { m_pDMA->FCR = Control;                }
         void        RegisterCallback                        (CallbackInterface* pCallback)      { m_pCallback = pCallback;              }
         void        EnableInterrupt                         (uint32_t Interrupt)                { SET_BIT(m_pDMA->CR, Interrupt);       }
         void        DisableInterrupt                        (uint32_t Interrupt)                { CLEAR_BIT(m_pDMA->CR, Interrupt);     }

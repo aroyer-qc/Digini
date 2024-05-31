@@ -50,6 +50,10 @@
 #include <string.h>
 
 //-------------------------------------------------------------------------------------------------
+
+#include "./Digini/inc/lib_define.h"
+
+//-------------------------------------------------------------------------------------------------
 // Real Time OS
 
 #include "nOS.h"
@@ -110,7 +114,6 @@
 
 #include "./Digini/inc/lib_macro.h"
 #include "./Digini/inc/lib_advanced_macro.h"
-#include "./Digini/inc/lib_define.h"
 #include "./Digini/inc/lib_typedef.h"
 #include "./String/inc/lib_string.h"
 #include "./RTOS_Wrapper/inc/nOS/lib_class_queue.h"

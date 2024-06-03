@@ -25,9 +25,9 @@
 //-------------------------------------------------------------------------------------------------
 
 #if defined STM32F1xx
- #include "./Digini/Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_dma.h" // todo
+ #include "./Digini/Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_dma.h"
 #elif defined STM32F4xx
- #include "./Digini/Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_dma.h" // todo
+ #include "./Digini/Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_dma.h"
 #elif defined STM32F7xx
  #include "./Digini/Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_dma.h"
 #endif

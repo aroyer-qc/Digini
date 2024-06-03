@@ -154,7 +154,7 @@ void DMA_Driver::SetDestination(void* Destination)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::ClearFlag(uint32_t Flag)
 {
-    volatile uint32_t* pRegister;
+    volatile uint32_t* pRegister = nullptr;
 
     switch(uintptr_t(m_pDMA))
     {
@@ -179,7 +179,10 @@ void DMA_Driver::ClearFlag(uint32_t Flag)
         case DMA2_Stream7_BASE: pRegister = &DMA2->HIFCR; break;
     }
 
-    SET_BIT(*pRegister, Flag);
+    if(pRegister != nullptr)
+    {
+        SET_BIT(*pRegister, Flag);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -193,8 +196,8 @@ void DMA_Driver::ClearFlag(uint32_t Flag)
 //-------------------------------------------------------------------------------------------------
 bool DMA_Driver::CheckFlag(uint32_t Flag)
 {
-    volatile uint32_t Register;
-    bool              Result     = false;
+    volatile uint32_t Register = 0;
+    bool              Result   = false;
 
     switch(uintptr_t(m_pDMA))
     {

@@ -171,27 +171,28 @@ void SPI_Driver::Initialize(void)
 
     //---------------------------- SPIx CR1 Configuration and enable module ------
 
-    Config(SPI_CFG_CR1_CLEAR_MASK, SPI_FULL_DUPLEX      |
-                                   SPI_MODE_MASTER      |
+    Config(SPI_CFG_CR1_CLEAR_MASK, SPI_MODE_MASTER      |
                                    SPI_DATA_WIDTH_8_BIT |
                                    SPI_POLARITY_LOW     |
                                    SPI_PHASE_1_EDGE     |
                                    SPI_NSS_SOFT         |   // This driver doesn't use NSS function of the module
                                    SPI_MSB_FIRST        |
+                                   m_pInfo->Control     |   // TODO should use DMA method to merge all settings.
                                    m_pInfo->Speed);
 
     m_DMA_Status = SYS_IDLE;
     m_NoMemoryIncrement = false;
 
-    // Pre inititialize register that won't change
+    // Pre initialize register that won't change
     m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
-    m_DMA_TX.SetDestination((void*)&m_pInfo->pSPIx->DR);          // Configure transmit data register
+    m_DMA_TX.SetDestination((void*)&m_pInfo->pSPIx->DR);    // Configure transmit data register
+    m_DMA_TX.EnableTransmitCompleteInterrupt();
+    m_DMA_TX.EnableIRQ(6);                                  // NVIC Setup for TX DMA channels interrupt request
 
     m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
-    m_DMA_RX.SetSource((void*)&m_pInfo->pSPIx->DR);          // Configure transmit data register
-
-    //ISR_Init(m_pInfo->TX_IRQn, 6);                   // NVIC Setup for TX DMA channels interrupt request
-    //ISR_Init(m_pInfo->RX_IRQn, 6);                   // NVIC Setup for RX DMA channels interrupt request
+    m_DMA_RX.SetSource((void*)&m_pInfo->pSPIx->DR);         // Configure transmit data register
+    m_DMA_RX.EnableTransmitCompleteInterrupt();
+    m_DMA_RX.EnableIRQ(6);                                  // NVIC Setup for RX DMA channels interrupt request
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -209,11 +210,12 @@ void SPI_Driver::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
 {
-    if(Device == IO_NOT_DEFINED)
+    if(m_Device == IO_NOT_DEFINED)
     {
         while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
         m_Device = Device;
         m_Status = SYS_READY;
+        IO_SetPinLow(Device);
     }
 
     return m_Status;
@@ -234,11 +236,12 @@ SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::UnlockFromDevice(IO_ID_e Device)
 {
-    if(Device == m_Device)
+    if(m_Device == Device)
     {
         nOS_MutexUnlock(&m_Mutex);
         m_Device = IO_NOT_DEFINED;
         m_Status = SYS_DEVICE_NOT_PRESENT;
+        IO_SetPinHigh(Device);
     }
     else
     {
@@ -276,36 +279,6 @@ uint16_t SPI_Driver::GetPrescalerFromSpeed(uint32_t Speed)
     return i;     // 'i' is at an invalid value
 }
 */
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function:      Lock
-//
-//   Parameter(s):  None
-//   Return Value:  None
-//
-//   Description:   Lock the driver
-//
-//-------------------------------------------------------------------------------------------------
-void SPI_Driver::Lock(void)
-{
-    while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK) {};
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function:      Unlock
-//
-//   Parameter(s):  None
-//   Return Value:  None
-//
-//   Description:   Unlock the driver
-//
-//-------------------------------------------------------------------------------------------------
-void SPI_Driver::Unlock(void)
-{
-    nOS_MutexUnlock(&m_Mutex);
-}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -438,8 +411,9 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size)
 {
-	SPI_TypeDef* pSPIx;
-    uint32_t     Dummy;
+	SPI_TypeDef*  pSPIx;
+    uint32_t      Dummy;
+    SystemState_e State = SYS_READY;
 
     if(((pTX_Data == nullptr) || (TX_Size == 0)) &&
        ((pRX_Data == nullptr) || (RX_Size == 0)))
@@ -485,13 +459,7 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
 
             SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                           // Enable SPI
             SET_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                       // Enable DMA TX
-
-            if(WaitDMA() == SYS_ERROR)
-            {
-                UnlockFromDevice(m_Device);
-                return SYS_TIME_OUT;
-            }
-
+            State = WaitDMA();
             CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                         // Disable SPI
 
             // Deactivate DMA
@@ -501,48 +469,46 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
 
         // ----------------------------------------------------------------------------------------
         // RX setup
-
-        if((pRX_Data != nullptr) && (RX_Size != 0))
+        if(State == SYS_READY)
         {
-            while((pSPIx->SR & SPI_SR_RXNE) != 0)
+            if((pRX_Data != nullptr) && (RX_Size != 0))
             {
-                Dummy = pSPIx->DR;
+                while((pSPIx->SR & SPI_SR_RXNE) != 0)
+                {
+                    Dummy = pSPIx->DR;
+                }
+
+                m_DMA_Status = SYS_BUSY_RX;                                 // Set flag to busy in TX
+
+                // TX DMA
+                Dummy = 0xFF;                                               // Value to dummy TX
+                m_DMA_TX.SetSource(&Dummy);                                 // Set DMA source for dummy TX
+                m_DMA_TX.SetLength(RX_Size);                                // Set size of the TX using RX_Size for dummy TX to kick the RX
+                m_DMA_TX.SetNoMemoryIncrement();
+                m_DMA_TX.Enable();                                          // Enable the DMA module
+                m_DMA_TX.ClearFlag();                                       // Clear IRQ DMA flag
+                // RX DMA
+                m_DMA_RX.SetDestination(pRX_Data);
+                m_DMA_RX.SetLength(RX_Size);
+                m_DMA_RX.Enable();                                          // Enable the DMA module
+                m_DMA_RX.ClearFlag();
+
+                // SPI
+                if(m_pInfo->Control == SPI_HALF_DUPLEX)
+                {
+                    MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_RX);
+                }
+
+                SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                           // Enable SPI
+                SET_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));   // Start the process
+
+                State = WaitDMA();
+
+                // Deactivate DMA
+                CLEAR_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));
+                m_DMA_RX.Disable();                                         // Disable the DMA RX module
+                m_DMA_TX.Disable();                                         // Disable the DMA TX module
             }
-
-            m_DMA_Status = SYS_BUSY_RX;                                 // Set flag to busy in TX
-
-            // TX DMA
-            Dummy = 0xFF;                                               // Value to dummy TX
-            m_DMA_TX.SetSource(&Dummy);                                 // Set DMA source for dummy TX
-            m_DMA_TX.SetLength(RX_Size);                                // Set size of the TX using RX_Size for dummy TX to kick the RX
-            m_DMA_TX.SetNoMemoryIncrement();
-            m_DMA_TX.Enable();                                          // Enable the DMA module
-            m_DMA_TX.ClearFlag();                                       // Clear IRQ DMA flag
-            // RX DMA
-            m_DMA_RX.SetDestination(pRX_Data);
-            m_DMA_RX.SetLength(RX_Size);
-            m_DMA_RX.Enable();                                          // Enable the DMA module
-            m_DMA_RX.ClearFlag();
-
-            // SPI
-            if(m_pInfo->Control == SPI_HALF_DUPLEX)
-            {
-                MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_RX);
-            }
-
-            SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                           // Enable SPI
-            SET_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));   // Start the process
-
-            if(WaitDMA() == SYS_ERROR)
-            {
-                UnlockFromDevice(m_Device);
-                return SYS_TIME_OUT;
-            }
-
-            // Deactivate DMA
-            CLEAR_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));
-            m_DMA_RX.Disable();                                         // Disable the DMA RX module
-            m_DMA_TX.Disable();                                         // Disable the DMA TX module
         }
 
         // ----------------------------------------------------------------------------------------
@@ -555,7 +521,13 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
         }
 
         m_DMA_Status = SYS_IDLE;
-        return SYS_READY;
+
+        if(State == SYS_ERROR)
+        {
+            State = SYS_TIME_OUT;
+        }
+
+        return State;
     }
 
     return SYS_BUSY;
@@ -723,215 +695,3 @@ void SPI_Driver::DMA_RX_IRQ_Handler(SPI_ID_e SPI_ID)
 //-------------------------------------------------------------------------------------------------
 
 #endif // (USE_SPI_DRIVER == DEF_ENABLED)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// might be reinstated in future !!!
-
-#if 0
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Transfer
-//
-//  Parameter(s):   pTX_Data        Pointer on the data buffer (uint16_t*) to transfer.
-//                  TX_Size			Number of byte to send.
-//                  pRX_pData       Pointer on the data buffer (uint16_t*) where to put received data.
-//                  RX_Size			Number of byte to receive.
-//                  Device          IO_ID_e (it's a unique ID in the system)
-//  Return:         SystemState_e   State
-//
-//  Description:    Read or writes data to SPI device.
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e SPI_Driver::Transfer(uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size, IO_ID_e Device)
-{
-    SystemState_e State;
-
-    if((State = LockToDevice(Device)) == SYS_READY)
-    {
-        State = Transfer(pTX_Data, TX_Size, pRX_Data, RX_Size);
-        UnlockFromDevice(Device);
-    }
-
-    return State;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Transfer
-//
-//  Parameter(s):   pTX_Data        Pointer on the data buffer (uint16_t*) to transfer.
-//                  TX_Size			Number of byte to send.
-//                  pRX_pData       Pointer on the data buffer (uint16_t*) where to put received data.
-//                  RX_Size			Number of byte to receive.
-//  Return:         SystemState_e   State
-//
-//  Description:    Read or writes data to SPI device.
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e SPI_Driver::Transfer(uint16_t* pTX_Data, uint32_t TX_Size, uint16_t* pRX_Data, uint32_t RX_Size)
-{
-	SPI_TypeDef*        pSPIx;
-    DMA_Stream_TypeDef* pDMA;
-    uint32_t            Flag;
-    uint32_t            Dummy;
-
-    if(((pTX_Data == nullptr) || (TX_Size == 0)) &&
-       ((pRX_Data == nullptr) || (RX_Size == 0)))
-    {
-        return SYS_NULLPTR;
-    }
-
-    if(m_Status == SYS_READY)
-    {
-        CLEAR_BIT(m_pInfo->pSPIx->CR1, SPI_CR1_SPE);
-
-        // ----------------------------------------------------------------------------------------
-        // TX Setup
-
-        // Note(s) needed by both TX and RX
-        pDMA  = m_pInfo->DMA_StreamTX;                                                      // In all case the first DMA set is the TX
-        pSPIx = m_pInfo->pSPIx;
-        Flag  = m_pInfo->TX_IT_Flag;
-
-        if((pTX_Data != nullptr) && (TX_Size != 0))
-        {
-            // TX DMA
-            m_DMA_Status = SYS_BUSY_TX;                                                     // Set flag to busy in TX
-            pDMA->M0AR = ((uint32_t)pTX_Data);                                              // Set DMA source
-            pDMA->NDTR = TX_Size;                                                           // Set size of the TX
-            MODIFY_REG(pDMA->CR, SPI_DMA_SxCR_8_OR_16_BITS_MASK, SPI_DMA_SxCR_16_BITS_CFG);
-
-            if(m_NoMemoryIncrement == false)
-            {
-                SET_BIT(pDMA->CR, DMA_SxCR_MINC);                                           // Enable transfer complete and memory increment
-            }
-            else
-            {
-                CLEAR_BIT(pDMA->CR, DMA_SxCR_MINC);
-                m_NoMemoryIncrement = false;
-            }
-
-            SET_BIT(pDMA->CR, DMA_SxCR_EN);                                                 // Enable the DMA module
-            DMA_ClearFlag(pDMA, Flag);                                                      // Clear IRQ DMA flag
-
-            // SPI
-            if(m_pInfo->Control == SPI_HALF_DUPLEX)
-            {
-                MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_TX);
-            }
-
-            SET_BIT(pSPIx->CR1, SPI_CR1_DFF | SPI_CR1_SPE);                                 // Enable SPI at 16 Bits
-            SET_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                                           // Enable DMA TX
-
-            if(WaitDMA() == SYS_ERROR)
-            {
-                UnlockFromDevice(m_Device);
-                return SYS_TIME_OUT;
-            }
-
-            CLEAR_BIT(pSPIx->CR1, SPI_CR1_DFF | SPI_CR1_SPE);                               // Disable SPI and put back to 8 Bits default frame format
-
-            // Deactivate DMA
-            CLEAR_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);
-            CLEAR_BIT(pDMA->CR, DMA_SxCR_EN);                                               // Disable the DMA module
-        }
-
-        // ----------------------------------------------------------------------------------------
-        // RX setup
-
-        if((pRX_Data != nullptr) && (RX_Size != 0))
-        {
-
-            while((pSPIx->SR & SPI_SR_RXNE) != 0)
-            {
-                Dummy = pSPIx->DR;
-            }
-
-            m_DMA_Status = SYS_BUSY_RX;                                                     // Set flag to busy in TX
-
-            // TX DMA
-            Dummy = 0xFF;                                                                   // Value to dummy TX
-            pDMA->M0AR = (uint32_t)&Dummy;                                                  // Set DMA source for dummy TX
-            pDMA->NDTR = RX_Size;                                                           // Set size of the TX
-            MODIFY_REG(pDMA->CR, SPI_DMA_SxCR_8_OR_16_BITS_MASK, SPI_DMA_SxCR_16_BITS_CFG); // Set 16 Bits Transfer
-            CLEAR_BIT(pDMA->CR, DMA_SxCR_MINC);
-            SET_BIT(pDMA->CR, DMA_SxCR_EN);                                                 // Enable the DMA module
-            DMA_ClearFlag(pDMA, Flag);                                                      // Clear IRQ DMA flag
-
-            // RX DMA
-            pDMA = m_pInfo->DMA_StreamRX;                                                   // Now configure RX DMA
-            Flag = m_pInfo->RX_IT_Flag;
-            pDMA->M0AR = (uint32_t)pRX_Data;
-            pDMA->NDTR = RX_Size;
-            MODIFY_REG(pDMA->CR, SPI_DMA_SxCR_8_OR_16_BITS_MASK, SPI_DMA_SxCR_16_BITS_CFG); // Set 16 Bits Transfer
-            SET_BIT(pDMA->CR, DMA_SxCR_EN);                                                 // Enable the DMA module
-            DMA_ClearFlag(pDMA, Flag);
-
-            // SPI
-            if(m_pInfo->Control == SPI_HALF_DUPLEX)
-            {
-                MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_RX);
-            }
-
-            SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                                               // Enable SPI
-            SET_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));                       // Start the process
-
-            if(WaitDMA() == SYS_ERROR)
-            {
-                UnlockFromDevice(m_Device);
-                return SYS_TIME_OUT;
-            }
-
-            // Deactivate DMA
-            CLEAR_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));
-            CLEAR_BIT(pDMA->CR, DMA_SxCR_EN);                                               // Disable the DMA RX module
-            MODIFY_REG(pDMA->CR, SPI_DMA_SxCR_8_OR_16_BITS_MASK, SPI_DMA_SxCR_8_BITS_CFG);  // Put back to 8 bits default
-            pDMA = m_pInfo->DMA_StreamTX;                                                   // In all case the first DMA set is the TX
-            CLEAR_BIT(pDMA->CR, DMA_SxCR_EN);                                               // Disable the DMA TX module
-        }
-
-        MODIFY_REG(pDMA->CR, SPI_DMA_SxCR_8_OR_16_BITS_MASK, SPI_DMA_SxCR_8_BITS_CFG);      // Put back to 8 bits default for TX ( also use on RX
-
-        // ----------------------------------------------------------------------------------------
-
-        CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                                                 // Disable SPI
-
-        if(m_pInfo->Control == SPI_HALF_DUPLEX)
-        {
-            MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_FULL_DUPLEX);
-        }
-
-        m_DMA_Status = SYS_IDLE;
-        return SYS_READY;
-    }
-
-    return SYS_BUSY;
-}
-
-
-#endif

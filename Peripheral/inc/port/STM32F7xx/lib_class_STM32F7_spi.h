@@ -130,15 +130,15 @@ enum SPI_ID_e
 
 struct SPI_Info_t
 {
-    SPI_TypeDef* pSPIx;
-    IO_ID_e      PinCLK;
-    IO_ID_e      PinMOSI;
-    IO_ID_e      PinMISO;
-    uint32_t     Control;  // Check code... it might not be used anymore....
-    uint32_t     Speed;
-    IRQn_Type    IRQn_Channel;
-    DMA_Info_t   DMA_RX;
-    DMA_Info_t   DMA_TX;
+    SPI_TypeDef*        pSPIx;
+    IO_ID_e             PinCLK;
+    IO_ID_e             PinMOSI;
+    IO_ID_e             PinMISO;
+    uint32_t            Speed;
+    uint32_t            Control;
+    IRQn_Type           IRQn;
+    DMA_Info_t          DMA_RX;
+    DMA_Info_t          DMA_TX;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -162,7 +162,7 @@ class SPI_Driver// : public DriverInterface
         SystemState_e   Read                    (uint8_t* pBuffer, size_t Size);
         SystemState_e   Read                    (uint8_t* pBuffer, size_t Size, IO_ID_e Device);
         SystemState_e   Read                    (uint8_t* pData);
-        SystemState_e   Read                    (uint8_t*  pData, IO_ID_e Device);
+        SystemState_e   Read                    (uint8_t* pData, IO_ID_e Device);
 
         // Write function (overloaded)
         SystemState_e   Write                   (uint8_t* pBuffer, size_t Size);
@@ -184,8 +184,6 @@ class SPI_Driver// : public DriverInterface
     private:
 
 //        uint16_t              GetPrescalerFromSpeed   (uint32_t speed);
-        void            Lock                    (void);
-        void            Unlock                  (void);
         SystemState_e   WaitDMA                 (void);
 
         nOS_Mutex               m_Mutex;

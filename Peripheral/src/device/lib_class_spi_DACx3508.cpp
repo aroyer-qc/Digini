@@ -84,9 +84,6 @@ SystemState_e DAC_X3508_Driver::Initialize(SPI_Driver* pSPI, IO_ID_e ChipSelectI
 
         IO_PinInit(ChipSelectIO);
 
-        // Initialize SPI Driver
-        m_pSPI->Initialize();
-
         Send3Bytes(DACX3508_STATUS_TRIGGER_REG, DAC43508_STA_TRG_SW_RESET_VALUE);	    // Reset the DAC
         //    need a delay here Minimum 5 mSec!!
         nOS_Sleep(10);

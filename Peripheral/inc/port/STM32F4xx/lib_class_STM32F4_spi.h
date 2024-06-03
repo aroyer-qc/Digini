@@ -122,8 +122,8 @@ struct SPI_Info_t
     IO_ID_e             PinCLK;
     IO_ID_e             PinMOSI;
     IO_ID_e             PinMISO;
-    uint32_t            Control;
     uint32_t            Speed;
+    uint32_t            Control;
     IRQn_Type           IRQn;
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;
@@ -172,8 +172,6 @@ class SPI_Driver// : public DriverInterface
     private:
 
 //        uint16_t              GetPrescalerFromSpeed   (uint32_t speed);
-        //void            Lock                    (void);
-        //void            Unlock                  (void);
         SystemState_e   WaitDMA                 (void);
 
         nOS_Mutex               m_Mutex;

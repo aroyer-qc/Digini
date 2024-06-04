@@ -97,7 +97,6 @@ class DMA_Driver
 
         void        ClearFlag                               (uint32_t Flag);
         bool        CheckFlag                               (uint32_t Flag);
-        //void        EnableCallbackType                      (int CallbackType);
         void        EnableIRQ                               (uint8_t PremptionPriority);
 
         // Inline method
@@ -121,14 +120,12 @@ class DMA_Driver
 
         void        EnableClock                             (void);
 
-
         DMA_TypeDef*                m_pDMA;
         DMA_Channel_TypeDef*        m_pDMA_Channel;
         uint32_t                    m_Flag;
         IRQn_Type                   m_IRQn_Channel;
         uint32_t                    m_Direction;
         CallbackInterface*          m_pCallback;
-        //int                         m_CallBackType;       // variables is not used at this time.
 };
 
 //-------------------------------------------------------------------------------------------------

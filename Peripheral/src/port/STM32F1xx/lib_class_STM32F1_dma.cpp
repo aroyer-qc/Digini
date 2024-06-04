@@ -230,31 +230,6 @@ void DMA_Driver::EnableClock(void)
   #endif
 }
 
-/*   i don't know if it is needed, so far it's not
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           EnableCallbackType
-//
-//  Parameter(s):   CallBackType    Type of the ISR callback
-//  Return:         None
-//
-//  Description:    Enable the type of interrupt for the callback.
-//
-//-------------------------------------------------------------------------------------------------
-void DMA_Driver::EnableCallbackType(int CallBackType)
-{
-    if((CallBackType & DMA_CALLBACK_HALF_TRANSFER) != 0)
-    {
-        m_CallBackType |= CallBackType;
-    }
-
-    if((CallBackType & DMA_CALLBACK_COMPLETED_TRANSFER) != 0)
-    {
-        m_CallBackType |= CallBackType;
-    }
-}
-*/
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           EnableIRQ

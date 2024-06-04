@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_WS281x.cpp
+//  File : lib_class_pwm_WS281x.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_WS281x_GLOBAL
-#include "./Digini/Peripheral/inc/device/port/STM32F7/lib_class_STM32F7_WS281x.h"
+#include "./Digini/lib_digini.h"
 #undef  LIB_WS281x_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -76,23 +76,15 @@ void WS281x::Initialize(const WS281x_Config_t* pConfig)
     m_NeedRefresh = true;
   #endif
 
-  #if (DMA2_SUPPORT == DEF_ENABLED)
-    SET_BIT(RCC->AHBENR, int(pConfig->TimID) <= int(TIM_DRIVER_ID_4) ? RCC_AHBENR_DMA1EN : \
-                                                                       RCC_AHBENR_DMA2EN);                  // Initialize DMA clock
-  #else
-    SET_BIT(RCC->AHBENR, RCC_AHBENR_DMA1EN);                                                                // Initialize DMA clock
-  #endif
-
     // USE DMA to change compare value in register of the timer
     // use 2 x 24 bits leds. So take advantage of the HT and TC of the DMA in a circular mode...
     // So we can use those to have time to prepare next set of 24 bit colors for next led
     // loop continously the 48 bytes compare value buffer
-    m_DMA.Initialize(pConfig->pDMA_Info);
-    m_DMA.SetTransfert(m_pDMA_Buffer, m_pPWM->GetCompareRegisterPointer(), WS281x_DMA_FULL_BUFFER_SIZE);
-
-    ISR_Init(pConfig->IRQn_Channel, pConfig->PreempPrio);
- 
-    //m_DMA.Start();
+    m_DMA.Initialize(&pConfig->pDMA_Info);
+    m_DMA.SetSource(m_pDMA_Buffer);
+    m_DMA.SetDestination(m_pPWM->GetCompareRegisterPointer());
+    m_DMA.SetLength(WS281x_DMA_FULL_BUFFER_SIZE);
+    m_DMA.EnableIRQ(6);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -108,7 +100,7 @@ void WS281x::Initialize(const WS281x_Config_t* pConfig)
 //-------------------------------------------------------------------------------------------------
 void WS281x::Start(void)
 {
-    m_DMA.Start();
+    m_DMA.Enable();
     m_pPWM->Start();
 }
 
@@ -125,7 +117,7 @@ void WS281x::Start(void)
 //-------------------------------------------------------------------------------------------------
 void WS281x::Stop(void)
 {
-    m_DMA.Stop();
+    m_DMA.Disable();
     m_pPWM->Stop();
 }
 

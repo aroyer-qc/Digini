@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_WS281x.h
+//  File : lib_class_pwm_WS281x.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2023 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -135,10 +135,8 @@ struct WS281x_Config_t
     // Led Chain info
     uint16_t                NumberOfLED;
     WS281x_ResetType_e      ResetType;
-    // PWM info (include timer and IO)
-    PWM_ChannelID_e         PWM_ChannelID;
-    // DMA info
-    DMA_Info_t              pDMA_Info;
+    PWM_ChannelID_e         PWM_ChannelID;      // PWM info (include timer and IO)
+    DMA_Info_t              pDMA_Info;          // DMA info
 };
 
 //-------------------------------------------------------------------------------------------------

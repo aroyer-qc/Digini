@@ -59,7 +59,6 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
     EnableClock();
     m_pDMA->CR     = pInfo->ConfigAndChannel;
     m_Direction    = pInfo->ConfigAndChannel & DMA_DIRECTION_MASK;
-    //m_CallBackType = DMA_CALLBACK_NONE;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -248,31 +247,6 @@ void DMA_Driver::EnableClock(void)
         SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA2EN);
     }
 }
-
-/*   i don't know if it is needed, so far it's not
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           EnableCallbackType
-//
-//  Parameter(s):   CallBackType    Type of the ISR callback
-//  Return:         None
-//
-//  Description:    Enable the type of interrupt for the callback.
-//
-//-------------------------------------------------------------------------------------------------
-void DMA_Driver::EnableCallbackType(int CallBackType)
-{
-    if((CallBackType & DMA_CALLBACK_HALF_TRANSFER) != 0)
-    {
-        m_CallBackType |= CallBackType;
-    }
-
-    if((CallBackType & DMA_CALLBACK_COMPLETED_TRANSFER) != 0)
-    {
-        m_CallBackType |= CallBackType;
-    }
-}
-*/
 
 //-------------------------------------------------------------------------------------------------
 //

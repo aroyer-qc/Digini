@@ -214,6 +214,14 @@ struct UART_Info_t
 #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
 struct UART_DMA_Info_t
 {
+    UART_ID_e           UartID;
+    DMA_Info_t          DMA_RX;
+    DMA_Info_t          DMA_TX;
+};
+
+/*#if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
+struct UART_DMA_Info_t
+{
     UART_ID_e            UartID;
     uint32_t             FlagRX;
     DMA_Channel_TypeDef* DMA_ChannelRX;
@@ -222,6 +230,7 @@ struct UART_DMA_Info_t
     IRQn_Type            Tx_IRQn;
     uint32_t             RCC_AHBxPeriph;
 };
+*/
 
 struct UART_Transfer_t
 {
@@ -304,10 +313,20 @@ class UART_Driver
 //void*                       m_pContextTX;       // This is the global context if there is no individual context set
 
         // DMA Config
+      //#if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
+        //UART_DMA_Info_t*            m_pDMA_Info;
+        //bool                        m_DMA_IsItBusyTX;
+//      #endif
+
+        // DMA Config
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
+        DMA_Driver                  m_DMA_RX;
+        DMA_Driver                  m_DMA_TX;
         UART_DMA_Info_t*            m_pDMA_Info;
         bool                        m_DMA_IsItBusyTX;
       #endif
+
+
 
       #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
         bool                        m_VirtualUartBusyRX;
@@ -325,6 +344,12 @@ class UART_Driver
 //-------------------------------------------------------------------------------------------------
 
 #include "uart_var.h"         // Project variable
+
+extern const UART_Info_t UART_Info[NB_OF_REAL_UART_DRIVER];
+
+#if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
+extern const UART_DMA_Info_t UART_DMA_Info[NB_OF_UART_DMA_DRIVER];
+#endif
 
 //-------------------------------------------------------------------------------------------------
 

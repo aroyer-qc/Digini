@@ -62,12 +62,6 @@
 
 #define DMA_START_TRANSFERT                 0x0001
 
-
-// Callback type in bit position
-#define DMA_CALLBACK_NONE                   0x00
-#define DMA_CALLBACK_HALF_TRANSFER          0x01
-#define DMA_CALLBACK_COMPLETED_TRANSFER     0x02
-
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------

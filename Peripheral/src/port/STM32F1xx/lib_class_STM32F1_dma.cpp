@@ -60,7 +60,6 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
     EnableClock();
     m_pDMA_Channel->CCR = pInfo->Config;
     m_Direction         = pInfo->Config & DMA_DIRECTION_MASK;
-    //m_CallBackType = DMA_CALLBACK_NONE;
 }
 
 //-------------------------------------------------------------------------------------------------

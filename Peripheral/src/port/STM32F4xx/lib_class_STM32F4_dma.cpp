@@ -61,7 +61,6 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
     EnableClock();
     m_pDMA->CR     = pInfo->ConfigAndChannel;
     m_Direction    = pInfo->ConfigAndChannel & DMA_DIRECTION_MASK;
-    //m_CallBackType = DMA_CALLBACK_NONE;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -242,39 +241,14 @@ bool DMA_Driver::CheckFlag(uint32_t Flag)
 void DMA_Driver::EnableClock(void)
 {
     if(uintptr_t(m_pDMA) < DMA2_Stream0_BASE)
-{
-        SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA1EN);
-}
-    else
-{
-        SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA2EN);
-}
-}
-
-/*   i don't know if it is needed, so far it's not
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           EnableCallbackType
-//
-//  Parameter(s):   CallBackType    Type of the ISR callback
-//  Return:         None
-//
-//  Description:    Enable the type of interrupt for the callback.
-//
-//-------------------------------------------------------------------------------------------------
-void DMA_Driver::EnableCallbackType(int CallBackType)
-{
-    if((CallBackType & DMA_CALLBACK_HALF_TRANSFER) != 0)
     {
-        m_CallBackType |= CallBackType;
-}
-
-    if((CallBackType & DMA_CALLBACK_COMPLETED_TRANSFER) != 0)
-{
-        m_CallBackType |= CallBackType;
+        SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA1EN);
+    }
+    else
+    {
+        SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA2EN);
     }
 }
-*/
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -291,4 +265,4 @@ void DMA_Driver::EnableIRQ(uint8_t PremptionPriority)
     ISR_Init(m_IRQn_Channel, PremptionPriority);
 }
 
-//---------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------

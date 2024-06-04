@@ -351,6 +351,12 @@ class UART_Driver
 
 #include "uart_var.h"         // Project variable
 
+extern const UART_Info_t UART_Info[NB_OF_REAL_UART_DRIVER];
+
+#if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
+extern const UART_DMA_Info_t UART_DMA_Info[NB_OF_UART_DMA_DRIVER];
+#endif
+
 //-------------------------------------------------------------------------------------------------
 
 #endif // (USE_UART_DRIVER == DEF_ENABLED)

@@ -78,12 +78,6 @@
 #define DMA_MEMORY_TO_PERIPHERAL       DMA_SxCR_DIR_0       // Memory to peripheral direction
 #define DMA_MEMORY_TO_MEMORY           DMA_SxCR_DIR_1       // Memory to memory direction
 
-
-// Callback type in bit position
-#define DMA_CALLBACK_NONE               0x00
-#define DMA_CALLBACK_HALF_TRANSFER      0x01
-#define DMA_CALLBACK_COMPLETED_TRANSFER 0x02
-
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -112,7 +106,6 @@ class DMA_Driver
 
         void        ClearFlag                               (uint32_t Flag);
         bool        CheckFlag                               (uint32_t Flag);
-        //void        EnableCallbackType                      (int CallbackType);
         void        EnableIRQ                               (uint8_t PremptionPriority);
 
         // Inline method
@@ -136,13 +129,11 @@ class DMA_Driver
 
         void        EnableClock                             (void);
 
-
         DMA_Stream_TypeDef*         m_pDMA;
         uint32_t                    m_Flag;
         IRQn_Type                   m_IRQn_Channel;
         uint32_t                    m_Direction;
         CallbackInterface*          m_pCallback;
-        //int                         m_CallBackType;       // variables is not used at this time.
 };
 
 //-------------------------------------------------------------------------------------------------

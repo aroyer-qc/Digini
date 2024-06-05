@@ -51,11 +51,11 @@
   #define UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG  DEF_DISABLED
 #endif
 
-#define UART_ISR_RX_ERROR                   0x01
-#define UART_ISR_RX_BYTE                    0x02
-#define UART_ISR_RX_IDLE                    0x04
-#define UART_ISR_TX_EMPTY                   0x01
-#define UART_ISR_TX_COMPLETED               0x02
+#define UART_ISR_RX_ERROR_MASK              0x01
+#define UART_ISR_RX_BYTE_MASK               0x02
+#define UART_ISR_RX_IDLE_MASK               0x04
+#define UART_ISR_TX_EMPTY_MASK              0x01
+#define UART_ISR_TX_COMPLETED_MASK          0x02
 
 // Callback type in bit position
 #define UART_CALLBACK_NONE                  0x00
@@ -151,7 +151,6 @@ enum UART_Baud_e
     UART_BAUD_IS_VIRTUAL,
 };
 
-//to do
 enum UART_Config_e
 {
     UART_ENABLE_RX_TX       =   0x0000000C,
@@ -218,19 +217,6 @@ struct UART_DMA_Info_t
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;
 };
-
-/*#if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-struct UART_DMA_Info_t
-{
-    UART_ID_e            UartID;
-    uint32_t             FlagRX;
-    DMA_Channel_TypeDef* DMA_ChannelRX;
-    uint32_t             FlagTX;
-    DMA_Channel_TypeDef* DMA_ChannelTX;
-    IRQn_Type            Tx_IRQn;
-    uint32_t             RCC_AHBxPeriph;
-};
-*/
 
 struct UART_Transfer_t
 {
@@ -304,19 +290,7 @@ class UART_Driver
         USART_TypeDef*              m_pUart;
         UART_Transfer_t             m_RX_Transfer;
         UART_Transfer_t             m_TX_Transfer;
-
         uint32_t                    m_CopySR;
-
-//from old stuff
-//UART_Variables_t            m_Variables;
-//void*                       m_pContextRX;       // This is the global context if there is no individual context set
-//void*                       m_pContextTX;       // This is the global context if there is no individual context set
-
-        // DMA Config
-      //#if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-        //UART_DMA_Info_t*            m_pDMA_Info;
-        //bool                        m_DMA_IsItBusyTX;
-//      #endif
 
         // DMA Config
       #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
@@ -325,8 +299,6 @@ class UART_Driver
         UART_DMA_Info_t*            m_pDMA_Info;
         bool                        m_DMA_IsItBusyTX;
       #endif
-
-
 
       #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
         bool                        m_VirtualUartBusyRX;

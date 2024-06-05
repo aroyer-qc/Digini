@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -1168,44 +1168,44 @@ void UART_Driver::IRQ_Handler(void)
             }
             return;
         }
-       #endif
+      #endif
 
-        #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
-         if((Status & USART_SR_IDLE) != 0)
-         {
-           #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-              m_RX_Transfer.Size -= m_DMA_RX.GetLength(); // Give actual position in the DMA Buffer
-           #endif
+      #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
+        if((Status & USART_SR_IDLE) != 0)
+        {
+          #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
+             m_RX_Transfer.Size -= m_DMA_RX.GetLength(); // Give actual position in the DMA Buffer
+          #endif
 
-             ClearFlag();
+            ClearFlag();
 
-             if(m_pCallback != nullptr)
-             {
+            if(m_pCallback != nullptr)
+            {
                 m_pCallback->CallbackFunction(UART_CALLBACK_IDLE, (void*)&m_RX_Transfer);
-             }
-           #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-             DMA_ConfigRX(nullptr, 0); // Reset RX packet to avoid override with a new RX packet
-           #endif
+            }
+          #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
+            DMA_ConfigRX(nullptr, 0); // Reset RX packet to avoid override with a new RX packet
+          #endif
             return;
-         }
-        #endif
+        }
+      #endif
 
-       #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+      #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
         if((Status & USART_SR_TC) != 0)
         {
             WRITE_REG(m_pUart->SR, ~(USART_SR_TC));
 
             if(m_pCallback != nullptr)
             {
-                m_pCallback->CallbackFunction(UART_CALLBACK_COMPLETED_TX,  (void*)m_TX_Transfer.pBuffer);
+                m_pCallback->CallbackFunction(UART_CALLBACK_COMPLETED_TX, (void*)m_TX_Transfer.pBuffer);
             }
 
             DMA_DisableTX();
             m_DMA_IsItBusyTX = false;
         }
-       #endif
+      #endif
 
-     #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
+      #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
         if((Status & USART_ISR_TXE) != 0)
         {
             if(m_TX_Transfer.Size < m_TX_Transfer.StaticSize)
@@ -1221,8 +1221,7 @@ void UART_Driver::IRQ_Handler(void)
 
             return;
         }
-       #endif
-
+      #endif
     }
 }
 

@@ -136,7 +136,7 @@ struct WS281x_Config_t
     uint16_t                NumberOfLED;
     WS281x_ResetType_e      ResetType;
     PWM_ChannelID_e         PWM_ChannelID;      // PWM info (include timer and IO)
-    DMA_Info_t              pDMA_Info;          // DMA info
+    DMA_Info_t              DMA_Info;           // DMA info
 };
 
 //-------------------------------------------------------------------------------------------------

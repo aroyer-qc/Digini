@@ -80,10 +80,12 @@ void WS281x::Initialize(const WS281x_Config_t* pConfig)
     // use 2 x 24 bits leds. So take advantage of the HT and TC of the DMA in a circular mode...
     // So we can use those to have time to prepare next set of 24 bit colors for next led
     // loop continously the 48 bytes compare value buffer
-    m_DMA.Initialize(&pConfig->pDMA_Info);
+    m_DMA.Initialize((DMA_Info_t*)&pConfig->DMA_Info);
     m_DMA.SetSource(m_pDMA_Buffer);
     m_DMA.SetDestination(m_pPWM->GetCompareRegisterPointer());
     m_DMA.SetLength(WS281x_DMA_FULL_BUFFER_SIZE);
+    m_DMA.EnableTransmitCompleteInterrupt();
+    m_DMA.EnableTransmitHalfCompleteInterrupt();
     m_DMA.EnableIRQ(6);
 }
 

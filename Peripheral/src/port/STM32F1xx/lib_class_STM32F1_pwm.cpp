@@ -216,14 +216,14 @@ void PWM_Driver::Stop(void)
 //  Note(s):        Useful for DMA configuration
 //
 //-------------------------------------------------------------------------------------------------
-volatile uint32_t* PWM_Driver::GetCompareRegisterPointer(void)
+uint32_t* PWM_Driver::GetCompareRegisterPointer(void)
 {
     switch(m_pInfo->Channel)
     {
-        case (PWM_CHANNEL_1): return &m_pTim->CCR1;
-        case (PWM_CHANNEL_2): return &m_pTim->CCR2;
-        case (PWM_CHANNEL_3): return &m_pTim->CCR3;
-        case (PWM_CHANNEL_4): return &m_pTim->CCR4;
+        case (PWM_CHANNEL_1): return (uint32_t*)&m_pTim->CCR1;
+        case (PWM_CHANNEL_2): return (uint32_t*)&m_pTim->CCR2;
+        case (PWM_CHANNEL_3): return (uint32_t*)&m_pTim->CCR3;
+        case (PWM_CHANNEL_4): return (uint32_t*)&m_pTim->CCR4;
         default:              return nullptr;
     }
 }

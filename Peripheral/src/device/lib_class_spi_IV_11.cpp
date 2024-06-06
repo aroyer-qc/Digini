@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_spi_IV_11.h
+//  File : lib_class_spi_IV_11.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -30,7 +30,6 @@
 
 #define LIB_IV_11_GLOBAL
 #include "./Digini/lib_digini.h"
-//#include "./Digini/Peripheral/inc/device/lib_class_spi_IV_11.h"
 #undef  LIB_IV_11_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -107,8 +106,6 @@ void IV_11_DigitDriver::Initialize(SPI_Driver* pSPI, const IV_11_Config_t* pConf
     m_Padding = (((pConfig->NumberOfDigit / 2) % 8) == 0) ? 4 : 0;
 
     IO_PinInit(m_pConfig->LoadPin);
-
-    m_pSPI->Initialize();
 }
 
 //-------------------------------------------------------------------------------------------------

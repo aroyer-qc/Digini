@@ -154,35 +154,16 @@ void SPI_Driver::Initialize(void)
     // Pre inititialize register that won't change
     m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
     m_DMA_TX.SetDestination((void*)&m_pInfo->pSPIx->DR);          // Configure transmit data register
-/*
-    pDMA->CCR  = DMA_MEMORY_TO_PERIPHERAL       |
-                 DMA_NORMAL_MODE                |
-                 DMA_PERIPHERAL_NO_INCREMENT    |
-                 DMA_MEMORY_INCREMENT           |
-                 DMA_PERIPHERAL_SIZE_8_BITS     |
-                 DMA_MEMORY_SIZE_8_BITS         |
-                 DMA_PRIORITY_LEVEL_LOW         |
-                 DMA_TRANSFER_COMPLETE_IRQ      |
-                 DMA_START_TRANSFERT;
-*/
-    m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
-    m_DMA_RX.SetSource((void*)&m_pInfo->pSPIx->DR);          // Configure transmit data register
-/*
-    pDMA = m_pInfo->DMA_ChannelRX;
-    pDMA->CPAR = uint32_t(&m_pInfo->pSPIx->DR);          // Configure receive data register
-    pDMA->CCR  = DMA_PERIPHERAL_TO_MEMORY       |
-                 DMA_NORMAL_MODE                |
-                 DMA_PERIPHERAL_NO_INCREMENT    |
-                 DMA_MEMORY_INCREMENT           |
-                 DMA_PERIPHERAL_SIZE_8_BITS     |
-                 DMA_MEMORY_SIZE_8_BITS         |
-                 DMA_PRIORITY_LEVEL_LOW         |
-                 DMA_TRANSFER_COMPLETE_IRQ      |
-                 DMA_START_TRANSFERT;
-*/
+    m_DMA_TX.EnableTransmitCompleteInterrupt():
+    m_DMA_TX.EnableIRQ();
 
-    //ISR_Init(m_pInfo->TX_IRQn, 6);                   // NVIC Setup for TX DMA channels interrupt request
-    //ISR_Init(m_pInfo->RX_IRQn, 6);                   // NVIC Setup for RX DMA channels interrupt request
+    if(m_pInfo->PinMISO != IO_NOT_DEFINED)
+    {
+        m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
+        m_DMA_RX.SetSource((void*)&m_pInfo->pSPIx->DR);          // Configure transmit data register
+        m_DMA_RX.EnableTransmitCompleteInterrupt():
+        m_DMA_RX.EnableIRQ();
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

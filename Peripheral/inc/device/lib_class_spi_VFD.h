@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_MAX6921.h
+//  File : lib_class_spi_VFD.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -26,14 +26,15 @@
 
 #pragma once
 
+// TODO this should replace most of the IV-11 class... IV-11 must be on top of ths class
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-struct MAX6921_PinStruct_t
+struct VFD_Config_t
 {
-    IO_ID_e     IO_DOut;
-    IO_ID_e     IO_Clk;
+    uint32_t    NumberOfBit;
     IO_ID_e     IO_Load;
     IO_ID_e     IO_Blank;
 };
@@ -42,32 +43,26 @@ struct MAX6921_PinStruct_t
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class MAX6921_Driver
+class VFD_Driver
 {
     public:
 
-        SystemState_e   Initialize                      (void* pArg);
+        SystemState_e   Initialize                      (SPI_Driver* pSPI, VFD_Config_t* pConfig);
         void            Send                            (void);
         void            Callback                        (void);
 
     private:
 
-        MAX6921_PinStruct_t*            m_pPinStruct;
-        uint8_t                         m_ChainSize;
-       
-        //IRQ related variables
-        volatile uint16_t               m_BitCounter;
-        volatile uint8_t                m_BitMask;
-        uint8_t*                        m_pDataToSend;
+        const VFD_Config_t*             m_pConfig;
 };
 
 //-------------------------------------------------------------------------------------------------
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#define __CLASS_MAX6921__
+#define __CLASS_VFD__
 #include "device_var.h"
-#undef  __CLASS_MAX6921__
+#undef  __CLASS_VFD__
 
 //-------------------------------------------------------------------------------------------------
 

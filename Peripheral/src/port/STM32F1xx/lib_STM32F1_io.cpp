@@ -153,7 +153,7 @@ void IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint3
     {
         IO_EnableClock(pPort);
 
-        // Default are for Output only
+        // Default are for output only
         if(((PinMode & IO_GPIO_OUTPUT_MASK) == 0) && ((PinMode & IO_OUTPUT_MODE_MASK) != 0))
         {
             OffsetPin   = PinNumber + ((State == IO_DEFAULT_OUTPUT_LOW) ? 8 : 0);

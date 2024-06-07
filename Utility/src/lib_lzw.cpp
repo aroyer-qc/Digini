@@ -37,11 +37,11 @@ lzw::lzw(uint8_t Bits, CompressWorkMem_t WorkingMemory)
 {
     // TODO (alain) make this flexible and setting for users
 
-    m_pPrefixCode  = new RawArray(PREFIX_BASE_ADDRESS);
+    m_pPrefixCode  = new RAW_Array(PREFIX_BASE_ADDRESS);
     m_pPrefixCode->resize(524288U);
-    m_pAppendCode  = new RawArray(APPEND_BASE_ADDRESS);
+    m_pAppendCode  = new RAW_Array(APPEND_BASE_ADDRESS);
     m_pAppendCode->resize(524288U);
-    m_pDecodeStack = new RawArray(DECODE_BASE_ADDRESS);
+    m_pDecodeStack = new RAW_Array(DECODE_BASE_ADDRESS);
 
     m_Bits         = Bits;
     m_HashingShift = Bits - 8;
@@ -60,7 +60,7 @@ lzw::~lzw()
 //-------------------------------------------------------------------------------------------------
 
 size_t lzw::DeCompress(size_t (*InputRead)(), size_t (*OutputWrite)(), size_t DataSize)
-// size_t lzw::DeCompress(RawArray* pRawData, RawArray* pCompxData)
+// size_t lzw::DeCompress(RAW_Array* pRawData, RAW_Array* pCompxData)
 {
     uint32_t   NextCode;
     uint32_t   NewCode;
@@ -139,7 +139,7 @@ void lzw::DecodeArray(uint32_t Code)
 
 //-------------------------------------------------------------------------------------------------
 
-uint32_t lzw::InputCode(RawArray* pCompxData, uint32_t* pIndex)
+uint32_t lzw::InputCode(RAW_Array* pCompxData, uint32_t* pIndex)
 {
     uint32_t Value;
 

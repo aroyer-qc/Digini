@@ -54,6 +54,7 @@ class VFD_Driver
     private:
 
         const VFD_Config_t*             m_pConfig;
+        uint8_t*                        m_pBitsStream;
 };
 
 //-------------------------------------------------------------------------------------------------

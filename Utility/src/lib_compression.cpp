@@ -83,7 +83,7 @@ void DeCompression::operator delete(void* pPtr)
 //                  with DataSize. The information is base on the ImageInfo_t for this image.
 //
 //-------------------------------------------------------------------------------------------------
-size_t DeCompression::Process(RawArray* pRawData, RawArray* pCompxData, size_t DataSize, uint8_t CompressionMethod)
+size_t DeCompression::Process(RAW_Array* pRawData, RAW_Array* pCompxData, size_t DataSize, uint8_t CompressionMethod)
 {
     size_t DecompressedSize;
 

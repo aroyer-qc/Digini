@@ -31,6 +31,9 @@
 //-------------------------------------------------------------------------------------------------
 
 #define     LIB_AlignPointer(Ptr)           {Ptr += ((4 - (uint32_t(Ptr) % 4) ) % 4);}
+#define     LIB_BA_BIT_PER_BYTE             8
+
+
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
@@ -81,12 +84,12 @@ uint8_t*    LIB_DecodeBase64                (const char* pSource);
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class RawArray
+class RAW_Array
 {
     public:
 
-                    RawArray        (void* pBuffer);
-                    RawArray        (void* pBuffer, size_t Size);
+                    RAW_Array        (void* pBuffer);
+                    RAW_Array        (void* pBuffer, size_t Size);
 
         void*       operator new    (size_t size);
         void        operator delete (void*);
@@ -123,6 +126,29 @@ class RawArray
 
 //-------------------------------------------------------------------------------------------------
 
+class BIT_Array
+{
+    public:
+
+                    BIT_Array        (void* pBuffer, size_t Size);
+
+        bool        Get             (uint32_t Index);                                   // Get a single entry by index
+        void        Set             (uint32_t Index, bool Value);                       // Set/Reset a single entry by index
+        void        Set             (uint32_t Index, uint8_t* pData, size_t Count);     // Set/reset from the index with bit from array.
+        void        Fill            (bool Value);                                       // Fill the entire arrays with 0 or 1
+        
+    private:
+
+        uint8_t*    GetBytePointer  (uint32_t Index);       
+        uint8_t     GetBitMask      (uint32_t Index);       
+
+        uint8_t*            m_pBuffer;                          // Pointer of the bit stream
+        size_t              m_Size;                             // Number of bits in stream
+        const uint8_t       m_ByteMaskLIB_BA_BIT_PER_BYTE];  
+};
+
+//-------------------------------------------------------------------------------------------------
+
 
 
 /*
@@ -130,7 +156,6 @@ class RawArray
 uint8_t                LIB_Checksum                        (const void* pMem, uint16_t wCount);
 uint32_t               LIB_SwapDWORD                       (uint32_t dwData);
 uint16_t               LIB_SwapWORD                        (uint16_t wData);
-uint32_t               LIB_Bits_Array                      (uint32_t* pArray, uint8_t byStart, uint8_t bySize);
 void                   LIB_Copy_BYTETable_To_DWORDTable    (uint32_t* pdwDest, uint8_t *pbySource, uint8_t bySize);
 void                   LIB_Copy_DWORDTable_To_BYTETable    (uint8_t* pbyDest, uint32_t* pdwSource, uint8_t bySize);
 void                   LIB_CRC16                           (uint16_t* pCrc, uint8_t byData);

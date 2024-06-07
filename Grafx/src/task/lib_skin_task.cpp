@@ -261,9 +261,9 @@ void SKIN_myClassTask::Run(void)
         {
           #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
             m_pRawInputBuffer      = (uint8_t*)GRAFX_RAW_INPUT_DATA_ADDRESS;
-            m_CompxWorkMem.pDecode = new RawArray((void*)(GRAFX_DECODE_ARRAY_ADDRESS));
-            m_CompxWorkMem.pAppend = new RawArray((void*)(GRAFX_APPEND_ARRAY_ADDRESS));
-            m_CompxWorkMem.pPrefix = new RawArray((void*)(GRAFX_PREFIX_ARRAY_ADDRESS));
+            m_CompxWorkMem.pDecode = new RAW_Array((void*)(GRAFX_DECODE_ARRAY_ADDRESS));
+            m_CompxWorkMem.pAppend = new RAW_Array((void*)(GRAFX_APPEND_ARRAY_ADDRESS));
+            m_CompxWorkMem.pPrefix = new RAW_Array((void*)(GRAFX_PREFIX_ARRAY_ADDRESS));
             m_pDecompress          = new DeCompression(&m_CompxWorkMem);
 
             // If we have to reload a new skin, then get the starting point of the previous skin
@@ -432,8 +432,8 @@ SystemState_e SKIN_myClassTask::DeCompressAllImage(void)
 {
     ImageInfo_t     ImageInfo;
     uint8_t*        pFreePointer;
-    RawArray*       pOutput;
-    RawArray*       pInput;
+    RAW_Array*       pOutput;
+    RAW_Array*       pInput;
     SystemState_e   State;
     uint32_t        ReadCount;
     uint32_t        BlockReadSize;
@@ -442,7 +442,7 @@ SystemState_e SKIN_myClassTask::DeCompressAllImage(void)
 
     State = SYS_READY;
 
-    // Prepare RawArray and get free RAM pointer
+    // Prepare RAW_Array and get free RAM pointer
     DB_Central.Get(&pFreePointer, GFX_FREE_RAM_POINTER, 0, 0);
 
     // Decompressed all image
@@ -478,8 +478,8 @@ SystemState_e SKIN_myClassTask::DeCompressAllImage(void)
         DB_Central.Set(&ImageInfo, GFX_IMAGE_INFO, i + (NUMBER_OF_STATIC_IMAGE + 1), 0);
 
 
-        pOutput    = new RawArray(pFreePointer);
-        pInput     = new RawArray(m_pRawInputBuffer);
+        pOutput    = new RAW_Array(pFreePointer);
+        pInput     = new RAW_Array(m_pRawInputBuffer);
 
         // Increment free pointer
         pFreePointer += m_pDecompress->Process(pOutput, pInput, m_pDataSize[i], m_pCompressionMethod[i]);
@@ -531,7 +531,7 @@ SystemState_e SKIN_myClassTask::DeCompressAllFont(void)
 
     State = SYS_READY;
 
-    // Prepare RawArray and get free RAM pointer
+    // Prepare RAW_Array and get free RAM pointer
     DB_Central.Get(&pFreePointer, GFX_FREE_RAM_POINTER, 0, 0);
 
     // Decompressed all font
@@ -547,8 +547,8 @@ SystemState_e SKIN_myClassTask::DeCompressAllFont(void)
 
             if(FontDescriptor.pAddress != 0)                                            // Only extract data for font if it exist
             {
-                RawArray* pInput  = new RawArray(m_pRawInputBuffer, FontDescriptor.TotalSize);
-                RawArray* pOutput = new RawArray(pFreePointer);
+                RAW_Array* pInput  = new RAW_Array(m_pRawInputBuffer, FontDescriptor.TotalSize);
+                RAW_Array* pOutput = new RAW_Array(pFreePointer);
 
                 // Read all data for this image in the raw input buffer
                 f_lseek(m_pFile, uint32_t(FontDescriptor.pAddress));
@@ -674,8 +674,8 @@ void SKIN_myClassTask::StaticLoad(void)
 {
     ImageInfo_t ImageInfo;
     uint8_t*    pFreePointer;
-    RawArray*   pInput;
-    RawArray*   pOutput;
+    RAW_Array*   pInput;
+    RAW_Array*   pOutput;
 
     DB_Central.Get(&pFreePointer, GFX_FREE_RAM_POINTER, 0, 0);
 
@@ -689,8 +689,8 @@ void SKIN_myClassTask::StaticLoad(void)
 
         if(SII_Array[StaticImage]->Compression != COMPX_COMPRESSION_NONE)
         {
-            pInput  = new RawArray(SII_Array[StaticImage]->pData);
-            pOutput = new RawArray(pFreePointer);
+            pInput  = new RAW_Array(SII_Array[StaticImage]->pData);
+            pOutput = new RAW_Array(pFreePointer);
             ImageInfo.pPointer = pFreePointer;
             pFreePointer += m_pDecompress->Process(pOutput,
                                                    pInput,

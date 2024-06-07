@@ -64,9 +64,9 @@ enum Compression_e
 
 struct CompxWorkMem_t
 {
-    RawArray* pPrefix;
-    RawArray* pAppend;
-    RawArray* pDecode;
+    RAW_Array* pPrefix;
+    RAW_Array* pAppend;
+    RAW_Array* pDecode;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ class DeCompression
 
                             DeCompression           (CompxWorkMem_t* pCompxWorkMem);
 
-        size_t              Process                 (RawArray* pRawData, RawArray* pCompxData, size_t DataSize, uint8_t CompressionMethod);
+        size_t              Process                 (RAW_Array* pRawData, RAW_Array* pCompxData, size_t DataSize, uint8_t CompressionMethod);
 
 void*       operator new(size_t Size);
 void        operator delete(void* pPtr);
@@ -111,8 +111,8 @@ void        operator delete(void* pPtr);
 
 
         size_t              m_DataSize;
-        RawArray*           m_pCompxData;
-        RawArray*           m_pRawData;
+        RAW_Array*           m_pCompxData;
+        RAW_Array*           m_pRawData;
 
         // Variables for LZW
         uint8_t             m_Bits;

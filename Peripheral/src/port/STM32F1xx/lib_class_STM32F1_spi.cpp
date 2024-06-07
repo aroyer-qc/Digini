@@ -143,7 +143,7 @@ void SPI_Driver::Initialize(void)
                                    SPI_DATA_WIDTH_8_BIT |
                                    SPI_POLARITY_LOW     |
                                    SPI_PHASE_1_EDGE     |
-                                   SPI_NSS_SOFT         |   // This driver doesn't use NSS function of the module
+                                   SPI_NSS_SOFT         |       // This driver doesn't use NSS function of the module
                                    SPI_MSB_FIRST        |
                                  //  m_pInfo->Control     |
                                    m_pInfo->Speed);
@@ -153,17 +153,14 @@ void SPI_Driver::Initialize(void)
 
     // Pre inititialize register that won't change
     m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
-    m_DMA_TX.SetDestination((void*)&m_pInfo->pSPIx->DR);          // Configure transmit data register
+    m_DMA_TX.SetDestination((void*)&m_pInfo->pSPIx->DR);        // Configure transmit data register
     m_DMA_TX.EnableTransmitCompleteInterrupt():
     m_DMA_TX.EnableIRQ();
 
-    if(m_pInfo->PinMISO != IO_NOT_DEFINED)
-    {
-        m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
-        m_DMA_RX.SetSource((void*)&m_pInfo->pSPIx->DR);          // Configure transmit data register
-        m_DMA_RX.EnableTransmitCompleteInterrupt():
-        m_DMA_RX.EnableIRQ();
-    }
+    m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
+    m_DMA_RX.SetSource((void*)&m_pInfo->pSPIx->DR);             // Configure transmit data register
+    m_DMA_RX.EnableTransmitCompleteInterrupt():
+    m_DMA_RX.EnableIRQ();
 }
 
 //-------------------------------------------------------------------------------------------------

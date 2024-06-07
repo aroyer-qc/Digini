@@ -42,13 +42,13 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-RawArray::RawArray(void* pBuffer)
+RAW_Array::RAW_Array(void* pBuffer)
 {
     m_Size    = 0;
     m_pBuffer = (uint8_t*)pBuffer;
 }
 
-RawArray::RawArray(void* pBuffer, size_t Size)
+RAW_Array::RAW_Array(void* pBuffer, size_t Size)
 {
     m_Size    = Size;
     m_pBuffer = (uint8_t*)pBuffer;
@@ -60,7 +60,7 @@ RawArray::RawArray(void* pBuffer, size_t Size)
 //
 //-------------------------------------------------------------------------------------------------
 
-void* RawArray::operator new(size_t Size)
+void* RAW_Array::operator new(size_t Size)
 {
     void* pBuffer;
 
@@ -69,7 +69,7 @@ void* RawArray::operator new(size_t Size)
     return pBuffer;
 }
 
-void RawArray::operator delete(void* pBuffer)
+void RAW_Array::operator delete(void* pBuffer)
 {
     if(pBuffer != nullptr)
     {
@@ -85,21 +85,21 @@ void RawArray::operator delete(void* pBuffer)
 //
 //-------------------------------------------------------------------------------------------------
 
-void RawArray::Append(uint8_t data)
+void RAW_Array::Append(uint8_t data)
 {
     uint32_t Offset = m_Size;
     m_Size++;
     Replace(Offset, data);
 }
 
-void RawArray::Append(uint16_t data)
+void RAW_Array::Append(uint16_t data)
 {
     uint32_t Offset = m_Size;
     m_Size += 2;
     Replace(Offset, data);
 }
 
-void RawArray::Append(uint32_t data)
+void RAW_Array::Append(uint32_t data)
 {
     uint32_t Offset = m_Size;
     m_Size += 4;
@@ -114,7 +114,7 @@ void RawArray::Append(uint32_t data)
 //
 //-------------------------------------------------------------------------------------------------
 
-uint8_t RawArray::At(uint32_t Index)
+uint8_t RAW_Array::At(uint32_t Index)
 {
     return *(m_pBuffer + Index);
 }
@@ -127,7 +127,7 @@ uint8_t RawArray::At(uint32_t Index)
 //
 //-------------------------------------------------------------------------------------------------
 
-void RawArray::Clear(void)
+void RAW_Array::Clear(void)
 {
     m_Size = 0;
 }
@@ -140,7 +140,7 @@ void RawArray::Clear(void)
 //
 //-------------------------------------------------------------------------------------------------
 
-uint8_t* RawArray::Data(void)
+uint8_t* RAW_Array::Data(void)
 {
     return m_pBuffer;
 }
@@ -153,7 +153,7 @@ uint8_t* RawArray::Data(void)
 //
 //-------------------------------------------------------------------------------------------------
 
-void RawArray::Insert(uint32_t Index, uint8_t data)
+void RAW_Array::Insert(uint32_t Index, uint8_t data)
 {
     m_Size++;
 
@@ -171,7 +171,7 @@ void RawArray::Insert(uint32_t Index, uint8_t data)
 //   Description:   Fills array with specified data.
 //
 //-------------------------------------------------------------------------------------------------
-void RawArray::Fill(uint8_t data)
+void RAW_Array::Fill(uint8_t data)
 {
     for(size_t i = 0; i < m_Size; i++)
     {
@@ -186,18 +186,18 @@ void RawArray::Fill(uint8_t data)
 //   Description:   Gets array's last value from Array.
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t RawArray::Last(void)
+uint8_t RAW_Array::Last(void)
 {
     return At(m_Size - 1);
 }
 
-uint16_t RawArray::uint16_Last(void)
+uint16_t RAW_Array::uint16_Last(void)
 {
 
     return uint16_At(m_Size - 2);
 }
 
-uint32_t RawArray::uint32_Last(void)
+uint32_t RAW_Array::uint32_Last(void)
 {
     return uint32_At(m_Size - 4);
 }
@@ -210,7 +210,7 @@ uint32_t RawArray::uint32_Last(void)
 //
 //-------------------------------------------------------------------------------------------------
 
-void RawArray::Remove(uint32_t Index)
+void RAW_Array::Remove(uint32_t Index)
 {
     for(uint32_t i = Index; i < (m_Size - 1); i++)
     {
@@ -227,7 +227,7 @@ void RawArray::Remove(uint32_t Index)
 //   Description:   replace item in array at specified index.
 //
 //-------------------------------------------------------------------------------------------------
-bool RawArray::Replace(uint32_t Index, uint8_t data)
+bool RAW_Array::Replace(uint32_t Index, uint8_t data)
 {
     bool bStatus = false;
 
@@ -239,7 +239,7 @@ bool RawArray::Replace(uint32_t Index, uint8_t data)
     return bStatus;
 }
 
-bool RawArray::Replace(uint32_t Index, uint16_t data)
+bool RAW_Array::Replace(uint32_t Index, uint16_t data)
 {
     bool bStatus = false;
 
@@ -251,7 +251,7 @@ bool RawArray::Replace(uint32_t Index, uint16_t data)
     return bStatus;
 }
 
-bool RawArray::Replace(uint32_t Index, uint32_t data)
+bool RAW_Array::Replace(uint32_t Index, uint32_t data)
 {
     bool bStatus = false;
 
@@ -273,7 +273,7 @@ bool RawArray::Replace(uint32_t Index, uint32_t data)
 //   Description:   Sets array's new size.
 //
 //-------------------------------------------------------------------------------------------------
-void RawArray::Resize(size_t Size)
+void RAW_Array::Resize(size_t Size)
 {
     m_Size = Size;
 }
@@ -286,7 +286,7 @@ void RawArray::Resize(size_t Size)
 //   Description:   Set the buffer pointer
 //
 //-------------------------------------------------------------------------------------------------
-void RawArray::SetBuffer(uint8_t* pBuffer)
+void RAW_Array::SetBuffer(uint8_t* pBuffer)
 {
     m_pBuffer = pBuffer;
 }
@@ -299,7 +299,7 @@ void RawArray::SetBuffer(uint8_t* pBuffer)
 //   Description:   Gets array's current size.
 //
 //-------------------------------------------------------------------------------------------------
-size_t RawArray::Size(void)
+size_t RAW_Array::Size(void)
 {
     return m_Size;
 }
@@ -313,7 +313,7 @@ size_t RawArray::Size(void)
 //
 //-------------------------------------------------------------------------------------------------
 
-uint8_t RawArray::TakeLast(void)
+uint8_t RAW_Array::TakeLast(void)
 {
     uint8_t data;
 
@@ -323,7 +323,7 @@ uint8_t RawArray::TakeLast(void)
     return data;
 }
 
-uint16_t RawArray::uint16_TakeLast(void)
+uint16_t RAW_Array::uint16_TakeLast(void)
 {
     uint16_t data;
 
@@ -333,7 +333,7 @@ uint16_t RawArray::uint16_TakeLast(void)
     return data;
 }
 
-uint32_t RawArray::uint32_TakeLast(void)
+uint32_t RAW_Array::uint32_TakeLast(void)
 {
     uint32_t data;
 
@@ -350,7 +350,7 @@ uint32_t RawArray::uint32_TakeLast(void)
 //   Description:   return a uint16_t at the index
 //
 //-------------------------------------------------------------------------------------------------
-uint16_t RawArray::uint16_At(uint32_t Index)
+uint16_t RAW_Array::uint16_At(uint32_t Index)
 {
     uint16_t Value;
 
@@ -371,7 +371,7 @@ uint16_t RawArray::uint16_At(uint32_t Index)
 //
 //-------------------------------------------------------------------------------------------------
 
-uint32_t RawArray::uint32_At(uint32_t Index)
+uint32_t RAW_Array::uint32_At(uint32_t Index)
 {
     uint32_t Value;
 

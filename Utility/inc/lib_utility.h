@@ -33,8 +33,6 @@
 #define     LIB_AlignPointer(Ptr)           {Ptr += ((4 - (uint32_t(Ptr) % 4) ) % 4);}
 #define     LIB_BA_BIT_PER_BYTE             8
 
-
-
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
@@ -130,21 +128,21 @@ class BIT_Array
 {
     public:
 
-                    BIT_Array        (void* pBuffer, size_t Size);
+                    BIT_Array       (uint8_t* pBuffer, size_t Size);
 
         bool        Get             (uint32_t Index);                                   // Get a single entry by index
         void        Set             (uint32_t Index, bool Value);                       // Set/Reset a single entry by index
         void        Set             (uint32_t Index, uint8_t* pData, size_t Count);     // Set/reset from the index with bit from array.
         void        Fill            (bool Value);                                       // Fill the entire arrays with 0 or 1
-        
+
     private:
 
-        uint8_t*    GetBytePointer  (uint32_t Index);       
-        uint8_t     GetBitMask      (uint32_t Index);       
+        uint8_t*    GetBytePointer  (uint32_t Index);
+        uint8_t     GetBitMask      (uint32_t Index);
 
-        uint8_t*            m_pBuffer;                          // Pointer of the bit stream
-        size_t              m_Size;                             // Number of bits in stream
-        const uint8_t       m_ByteMaskLIB_BA_BIT_PER_BYTE];  
+        uint8_t*                m_pBuffer;                                              // Pointer of the bit stream
+        size_t                  m_Size;                                                 // Number of bits in stream
+        static const uint8_t    m_ByteMask[LIB_BA_BIT_PER_BYTE];
 };
 
 //-------------------------------------------------------------------------------------------------

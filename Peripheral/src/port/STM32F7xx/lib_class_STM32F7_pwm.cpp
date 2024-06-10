@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2023 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -86,8 +86,7 @@ void PWM_Driver::Initialize(void)
 {
     TIM_Compare_e Channel = m_pInfo->Channel;
 
-    m_pTim = TIM_Driver::GetTimerPointer(m_pInfo->TimID);
-    m_pTimer->Initialize();
+    m_pTim = m_pTimer->GetTimerPointer();
     IO_PinInit(m_pInfo->PinID);
     m_pTimer->ClearConfigCompareChannel(Channel);
 

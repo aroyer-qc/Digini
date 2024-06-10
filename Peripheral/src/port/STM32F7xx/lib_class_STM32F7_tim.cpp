@@ -137,7 +137,6 @@ void TIM_Driver::Initialize(void)
 
     // Set the update interrupt enable
     if((m_pInfo->IRQ_DMA_SourceEnable & (TIM_IRQ_UPDATE | TIM_DMA_UPDATE)) != 0)
-//    if(m_pInfo->EnableUpdateIRQ == true)
     {
       #if (TIM_DRIVER_SUPPORT_LPTIM1_CFG == DEF_ENABLED)
         if(m_pTim == LPTIM1)
@@ -153,29 +152,14 @@ void TIM_Driver::Initialize(void)
         }
     }
 
+    ((TIM_TypeDef*)m_pTim)->DIER |= m_pInfo->IRQ_DMA_SourceEnable;  // Enable all source according to configuration
+
     // Configure interrupt priority for TIM
     if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
     {
-        ISR_Init(m_pInfo->IRQn_Channel, m_pInfo->PreempPrio);
+        ISR_Init(m_pInfo->IRQn_Channel, m_pInfo->PreempPrio);    // Configure interrupt priority for TIM
     }
 }
-
-#if 0 //not in F4.. Does not mean we don't keep it
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           IsItRunning
-//
-//  Parameter(s):   None
-//  Return:         true or false
-//
-//  Description:    Check if timer is enable.
-//
-//-------------------------------------------------------------------------------------------------
-bool TIM_Driver::IsItRunning(void)
-{
-    return (LPTIM1->CR & LPTIM_CR_ENABLE) ? true : false;
-}
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -202,6 +186,7 @@ void TIM_Driver::RegisterCallBack(TIM_CallBack_t pCallBack)
 //  Description:    Calculate prescaler for the specified time base
 //
 //-------------------------------------------------------------------------------------------------
+/*
 uint32_t TIM_Driver::TimeBaseToPrescaler(uint32_t TimeBase)
 {
     VAR_UNUSED(TimeBase);
@@ -209,7 +194,7 @@ uint32_t TIM_Driver::TimeBaseToPrescaler(uint32_t TimeBase)
     // TODO (Alain#2#) a function to calculate right value for a requested time period
     return 0;
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Start
@@ -563,15 +548,15 @@ void TIM_Driver::DisableCompareChannel(TIM_Compare_e Channel)
 //
 //  Name:           GetTimerPointer
 //
-//  Parameter(s):   TimID           ID of the timer to get the pointer
+//  Parameter(s):   None
 //  Return:         TIM_TypeDef*    Pointer on the timer module
 //
-//  Description:    Return the pointer on the timer use by this ID
+//  Description:    Return the pointer on the timer
 //
 //-------------------------------------------------------------------------------------------------
-TIM_TypeDef* TIM_Driver::GetTimerPointer(TIM_ID_e TimID)
+TIM_TypeDef* TIM_Driver::GetTimerPointer(void)
 {
-    return TIM_Info[TimID].pTIMx;
+    return m_pTim;
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -122,9 +122,9 @@ void SPI_Driver::Initialize(void)
         case uint32_t(DRIVER_SPI3_ID):
         {
             // ---- Reset peripheral and set clock ----
-            RCC->APB1RSTR |=  (RCC_APB1RSTR_SPI3RST;            // Enable SPI3 reset state
-            RCC->APB1RSTR &= ~(RCC_APB1RSTR_SPI3RST;            // Release SPI3 from reset state
-            RCC->APB1ENR  |=  (RCC_APB1ENR_SPI3EN;              // Enable SPI_PORT clock
+            RCC->APB1RSTR |=  RCC_APB1RSTR_SPI3RST;             // Enable SPI3 reset state
+            RCC->APB1RSTR &= ~RCC_APB1RSTR_SPI3RST;             // Release SPI3 from reset state
+            RCC->APB1ENR  |=  RCC_APB1ENR_SPI3EN;               // Enable SPI_PORT clock
         }
         break;
       #endif

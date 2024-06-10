@@ -97,6 +97,7 @@
 //  AF 5 selection
 #define IO_AF5_SPI1                     ((uint8_t)0x05)  // SPI1 Alternate Function mapping
 #define IO_AF5_SPI2                     ((uint8_t)0x05)  // SPI2/I2S2 Alternate Function mapping
+#define IO_AF5_SPI3                     ((uint8_t)0x05)  // SPI3/I2S3 Alternate Function mapping
 #define IO_AF5_SPI4                     ((uint8_t)0x05)  // SPI4 Alternate Function mapping
 #define IO_AF5_SPI5                     ((uint8_t)0x05)  // SPI5 Alternate Function mapping
 #define IO_AF5_SPI6                     ((uint8_t)0x05)  // SPI6 Alternate Function mapping

@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_VFD_GLOBAL
-#include "./Digini/Peripheral/inc/device/lib_class_spi_VFD.h"
+#include "./Digini/lib_digini.h"
 #undef  LIB_VFD_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -62,27 +62,26 @@ VFD_Driver::VFD_Driver()
 //  Note(s):        Call this init when the OS is started
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e VFD_Driver::Initialize(SPI_Driver* pSPI, PWM_Driver* pPWM, const VFD_Config_t* pConfig)
+SystemState_e VFD_Driver::Initialize(const VFD_Config_t* pConfig)
 {
-    size_t Required;
-    
-    m_pConfig = pConfig;                                                        // Get config for the stream 
-    m_pSPI    = pSPI;
-    m_pPWM    = pPWM; 
-    
+    //size_t Required;
+
+    m_pConfig = pConfig;                                                        // Get config for the stream
+    m_pSPI    = pConfig->pSPI;
+    m_pPWM    = pConfig->pPWM;
+
     IO_PinInit(pConfig->IO_Load);
-    // maybe handle by the PWM IO_PinInit(pConfig->IO_Blank);                                              // Default value will blank the VFD
-    
-    
+
     // SPI need multiple of 8 bits to send on module.
     // There is padding bits to add in the beginning of the stream if not multiple of 8 bits
-    m_Padding = 8 - (m_pConfig>NumberOfBits % 8);                               // Paddings
-    m_NumberOfBytes  = pConfig->NumberOfBits / 8                                // Number of bits
-    m_NumberOfBytes += ((pConfig->NumberOfBits % 8) != 0) 1 : 0);               // Add the bits necessary to complete the stream.
+    m_Padding = 8 - (m_pConfig->NumberOfBits % 8);                              // Paddings
+    m_NumberOfBytes  = pConfig->NumberOfBits / 8;                               // Number of bits
+    m_NumberOfBytes += (((pConfig->NumberOfBits % 8) != 0) ? 1 : 0);            // Add the bits necessary to complete the stream.
     m_pBitsStream = (uint8_t*) pMemoryPool->AllocAndClear(m_NumberOfBytes);     // No bit set at init.
 
     m_pPWM->Start();
     Dim(m_DimValue);
+    Blank(false);
     Send();
     return SYS_READY;
 }
@@ -91,7 +90,7 @@ SystemState_e VFD_Driver::Initialize(SPI_Driver* pSPI, PWM_Driver* pPWM, const V
 //
 //  Name:           Send
 //
-//  Parameter(s):   None   
+//  Parameter(s):   None
 //  Return:         None
 //
 //  Description:    Send the stream to the VFD.
@@ -99,17 +98,17 @@ SystemState_e VFD_Driver::Initialize(SPI_Driver* pSPI, PWM_Driver* pPWM, const V
 //-------------------------------------------------------------------------------------------------
 void VFD_Driver::Send(void)
 {
-    m_pSPI->Write(m_pBitsStream, m_NumberOfBytes);
-    IO_SetPinHigh(m_pPinStruct->IO_Load);
+    m_pSPI->Write(m_pBitsStream, m_NumberOfBytes, m_pConfig->IO_Load);   // We use the IO for load to lock the SPI
+    IO_SetPinHigh(m_pConfig->IO_Load);
     // delay
-    IO_SetPinLow(m_pPinStruct->IO_Load);
+    IO_SetPinLow(m_pConfig->IO_Load);
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Dim
 //
-//  Parameter(s):   
+//  Parameter(s):
 //
 //  Return:         None
 //
@@ -121,7 +120,7 @@ void VFD_Driver::Send(void)
 void VFD_Driver::Dim(uint8_t DimValue)
 {
     m_DimValue = DimValue;
-    
+
     if(m_IsItBlank == false)
     {
         m_pPWM->SetDuty(m_DimValue);
@@ -132,7 +131,7 @@ void VFD_Driver::Dim(uint8_t DimValue)
 //
 //  Name:           Blank
 //
-//  Parameter(s):   
+//  Parameter(s):
 //
 //  Return:         None
 //

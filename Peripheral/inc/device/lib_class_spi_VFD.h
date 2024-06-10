@@ -29,6 +29,10 @@
 // TODO this should replace most of the IV-11 class... IV-11 must be on top of ths class
 
 //-------------------------------------------------------------------------------------------------
+
+#if (USE_SPI_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -40,9 +44,10 @@
 
 struct VFD_Config_t
 {
+    SPI_Driver* pSPI;
+    PWM_Driver* pPWM;
     uint32_t    NumberOfBits;
     IO_ID_e     IO_Load;
-    IO_ID_e     IO_Blank;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -53,7 +58,9 @@ class VFD_Driver
 {
     public:
 
-        SystemState_e   Initialize                      (SPI_Driver* pSPI, VFD_Config_t* pConfig);
+                        VFD_Driver                      ();
+
+        SystemState_e   Initialize                      (const VFD_Config_t* pConfig);
         void            Send                            (void);
         void            Dim                             (uint8_t DimValue);
         void            Blank                           (bool IsItBlank);
@@ -67,7 +74,6 @@ class VFD_Driver
         bool                            m_IsItBlank;
         uint8_t                         m_DimValue;
         uint8_t                         m_Padding;          // Number of bit to add in front of the stream.
-        uint8_t*                        m_pBitsStream;
         size_t                          m_NumberOfBytes;
 };
 
@@ -80,4 +86,7 @@ class VFD_Driver
 #undef  __CLASS_VFD__
 
 //-------------------------------------------------------------------------------------------------
+
+#endif // (USE_SPI_DRIVER == DEF_ENABLED)
+
 

@@ -252,7 +252,10 @@ class TIM_Driver
         void                Stop                        (void);
         void                SetReload                   (uint32_t Value);
         uint32_t            GetReload                   (void);
-      
+        TIM_TypeDef*        GetTimerPointer             (void);
+
+// TODO add enable IRQ...
+
       #if (TIM_DRIVER_SUPPORT_COMPARE_CFG == DEF_ENABLED)
         void                ClearConfigCompareChannel   (TIM_Compare_e Channel);
         void                SetCompareChannel           (TIM_Compare_e Channel, uint32_t Value);
@@ -261,8 +264,6 @@ class TIM_Driver
         void                DisableCompareChannel       (TIM_Compare_e Channel);
         void                GetComparePointer           (TIM_Compare_e Channel);
       #endif
-
-        static TIM_TypeDef* GetTimerPointer         (TIM_ID_e TimID);
 
         TIM_CallBack_t      m_pCallBack;
 

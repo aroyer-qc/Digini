@@ -55,7 +55,7 @@ const uint8_t BIT_Array::m_ByteMask[LIB_BA_BIT_PER_BYTE] =
 //  Description:    Preinit pointer and size of the bit arrays
 //
 //-------------------------------------------------------------------------------------------------
-BIT_Array::BIT_Array(void* pBuffer, size_t Size)
+BIT_Array::BIT_Array(uint8_t* pBuffer, size_t Size)
 {
     m_pBuffer = pBuffer;
     m_Size    = Size;
@@ -78,13 +78,13 @@ bool BIT_Array::Get(uint32_t Index)
 
     if(pByte != nullptr)
     {
-        if(*pByte & Mask != 0)
-        {   
+        if(((*pByte) & Mask) != 0)
+        {
             return 1;
         }
     }
-    
-    return 0;    
+
+    return 0;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -142,21 +142,21 @@ void BIT_Array::Set(uint32_t Index, uint8_t* pData, size_t Count)
     {
         AppliedMask = B1_Mask;                              // Calculate proper to prevent erasing bit over the count
         AppliedMask =
-        
-        
+
+
         *pBitStream &= AppliedMask;                         // Clear all bit in the mask
-        *pBitStream |= (*pData >> Offset);                  // Shift 
-        
+        *pBitStream |= ((*pData) >> Offset);                // Shift
+
         if(B1_Mask != 0x00)                                 // If overlap next byte in bitstream
         {
             AppliedMask = B1_Mask;                          // Calculate proper to prevent erasing bit over the count
 
 
             pBitStream++;
-            *pBitStream &= ~(AppliedMask)                   // Clear all bit in reverse mask
-            *pBitStream |= (*pData << (8 - Offset);         // Shift 
+            *pBitStream &= ~(AppliedMask);                  // Clear all bit in reverse mask
+            *pBitStream |= ((*pData) << (8 - Offset));      // Shift
         }
-        
+
         Count -= LIB_BA_BIT_PER_BYTE;
     }
     while(Count >= 8);
@@ -166,7 +166,7 @@ void BIT_Array::Set(uint32_t Index, uint8_t* pData, size_t Count)
 //
 //  Name:           Fill
 //
-//  Parameter(s):   bool  Value         
+//  Parameter(s):   bool  Value
 //  Return:         None
 //
 //  Description:    Fill the entire arrays with 0 or 1
@@ -175,18 +175,18 @@ void BIT_Array::Set(uint32_t Index, uint8_t* pData, size_t Count)
 void BIT_Array::Fill(bool Value)
 {
     size_t NumberOfByte = (m_Size / BA_BIT_PER_BYTE) + 1;
-    
+
     for(size_t i = 0; i < NumberOfByte; i++)
     {
         m_pBuffer[i] = (Value == 0) ? 0x00 : 0xFF;
-    }        
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           GetBytePointer
 //
-//  Parameter(s):   uint32_t Index              Index of the entry         
+//  Parameter(s):   uint32_t Index              Index of the entry
 //  Return:         None
 //
 //  Description:   Return the pointer of the uint8_t containing the bit from the index
@@ -198,7 +198,7 @@ uint8_t* BIT_Array::GetBytePointer(uint32_t Index)
     {
         return &m_pBuffer[Index / BA_BIT_PER_BYTE];
     }
-    
+
     return nullptr;
 }
 
@@ -206,7 +206,7 @@ uint8_t* BIT_Array::GetBytePointer(uint32_t Index)
 //
 //  Name:           GetBitMask
 //
-//  Parameter(s):   uint32_t Index      Index of the entry         
+//  Parameter(s):   uint32_t Index      Index of the entry
 //  Return:         uint8_t             Return the bit mask for the entry
 //
 //  Description:    Return a bit mask
@@ -218,8 +218,8 @@ uint8_t BIT_Array::GetBitMask(uint32_t Index)
     {
         return (uint8_t(1) << (Index % BA_BIT_PER_BYTE));
     }
-    
+
     return 0;       // No mask
-}    
+}
 
 //-------------------------------------------------------------------------------------------------

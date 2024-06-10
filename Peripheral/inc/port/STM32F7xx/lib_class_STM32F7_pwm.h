@@ -72,6 +72,8 @@ class PWM_Driver
 
 #include "pwm_var.h"         // Project variable
 
+extern const PWM_Info_t PWM_Info[NB_OF_PWM_CHANNEL];
+
 //-------------------------------------------------------------------------------------------------
 
 #endif // (USE_PWM_DRIVER == DEF_ENABLED)

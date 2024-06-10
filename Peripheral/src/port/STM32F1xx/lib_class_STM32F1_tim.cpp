@@ -83,7 +83,9 @@ void TIM_Driver::Initialize(void)
     *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - TIM_BACK_OFFSET_RESET_REGISTER) &= ~m_pInfo->RCC_APBxPeriph;
     *(m_pInfo->RCC_APBxEN_Register) |= m_pInfo->RCC_APBxPeriph;
 
+    // Set the prescaler value
     m_pTim->PSC = m_pInfo->Prescaler - 1;                           // Set the prescaler value
+    
     m_pTim->ARR = m_pInfo->Reload;                                  // Set the auto reload register
     m_pTim->CNT = 0;//m_pInfo->Reload - 1;                              // Prevent PWM from been active on activation
     m_pTim->CR1 = m_pInfo->Mode | TIM_CR1_ARPE;
@@ -102,6 +104,21 @@ void TIM_Driver::Initialize(void)
     {
         ISR_Init(m_pInfo->IRQn_Channel, m_pInfo->PreempPrio);    // Configure interrupt priority for TIM
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           RegisterCallBack
+//
+//  Parameter(s):   pCallBack       Callback for application.
+//  Return:         None
+//
+//  Description:    Set callback for application.
+//
+//-------------------------------------------------------------------------------------------------
+void TIM_Driver::RegisterCallBack(TIM_CallBack_t pCallBack)
+{
+    m_pCallBack = pCallBack;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -216,6 +233,104 @@ uint32_t TIM_Driver::GetReload(void)
 uint32_t TIM_Driver::GetCounterValue(void)
 {
     return m_pTim->CNT;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ClearConfigCompareChannel
+//
+//  Parameter(s):   Channel             ID of channel
+//  Return:         None
+//
+//  Description:    Clear the configuration register for the specific channel
+//
+//-------------------------------------------------------------------------------------------------
+#if (TIM_DRIVER_SUPPORT_COMPARE_CFG == DEF_ENABLED)
+void TIM_Driver::ClearConfigCompareChannel(TIM_Compare_e Channel)
+{
+    switch(Channel)
+    {
+        case TIM_CHANNEL_1: { m_pTim->CCER  &= ~TIM_CCER_OC1_MASK;
+                              m_pTim->CCMR1 &= ~TIM_CCMR1_OC1_MASK; } break;  // Clear config for OC1
+        case TIM_CHANNEL_2: { m_pTim->CCER  &= ~TIM_CCER_OC2_MASK;
+                              m_pTim->CCMR1 &= ~TIM_CCMR1_OC2_MASK; } break;  // Clear config for OC2
+        case TIM_CHANNEL_3: { m_pTim->CCER  &= ~TIM_CCER_OC3_MASK;
+                              m_pTim->CCMR2 &= ~TIM_CCMR2_OC3_MASK; } break;  // Clear config for OC3
+        case TIM_CHANNEL_4: { m_pTim->CCER  &= ~TIM_CCER_OC4_MASK;
+                              m_pTim->CCMR2 &= ~TIM_CCMR2_OC4_MASK; } break;  // Clear config for OC4
+        default: break;
+    }
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SetCompareChannel
+//
+//  Parameter(s):   Channel             ID of channel
+//  Return:         None
+//
+//  Description:    Set the value for the compare channel
+//
+//-------------------------------------------------------------------------------------------------
+#if (TIM_DRIVER_SUPPORT_COMPARE_CFG == DEF_ENABLED)
+void TIM_Driver::SetCompareChannel(TIM_Compare_e Channel, uint32_t Value)
+{
+    switch(Channel)
+    {
+        case TIM_CHANNEL_1: { m_pTim->CCR1 = Value; } break;
+        case TIM_CHANNEL_2: { m_pTim->CCR2 = Value; } break;
+        case TIM_CHANNEL_3: { m_pTim->CCR3 = Value; } break;
+        case TIM_CHANNEL_4: { m_pTim->CCR4 = Value; } break;
+        default: break;
+    }
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           EnableCompareChannel
+//
+//  Parameter(s):   Channel             ID of channel
+//  Return:         None
+//
+//  Description:    Enable the compare channel
+//
+//-------------------------------------------------------------------------------------------------
+#if (TIM_DRIVER_SUPPORT_COMPARE_CFG == DEF_ENABLED)
+void TIM_Driver::EnableCompareChannel(TIM_Compare_e Channel)
+{
+    switch(Channel)
+    {
+        case TIM_CHANNEL_1: { m_pTim->CCER |= TIM_CCER_CC1E; } break;
+        case TIM_CHANNEL_2: { m_pTim->CCER |= TIM_CCER_CC2E; } break;
+        case TIM_CHANNEL_3: { m_pTim->CCER |= TIM_CCER_CC3E; } break;
+        case TIM_CHANNEL_4: { m_pTim->CCER |= TIM_CCER_CC4E; } break;
+        default: break;
+    }
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           DisableCompareChannel
+//
+//  Parameter(s):   Channel             ID of channel
+//  Return:         None
+//
+//  Description:    Disable the compare channel
+//
+//-------------------------------------------------------------------------------------------------
+void TIM_Driver::DisableCompareChannel(TIM_Compare_e Channel)
+{
+    switch(Channel)
+    {
+        case TIM_CHANNEL_1: { m_pTim->CCER &= ~TIM_CCER_CC1E; } break;
+        case TIM_CHANNEL_2: { m_pTim->CCER &= ~TIM_CCER_CC2E; } break;
+        case TIM_CHANNEL_3: { m_pTim->CCER &= ~TIM_CCER_CC3E; } break;
+        case TIM_CHANNEL_4: { m_pTim->CCER &= ~TIM_CCER_CC4E; } break;
+        default: break;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

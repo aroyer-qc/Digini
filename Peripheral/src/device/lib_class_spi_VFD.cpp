@@ -64,8 +64,6 @@ VFD_Driver::VFD_Driver()
 //-------------------------------------------------------------------------------------------------
 SystemState_e VFD_Driver::Initialize(const VFD_Config_t* pConfig)
 {
-    //size_t Required;
-
     m_pConfig = pConfig;                                                        // Get config for the stream
     m_pSPI    = pConfig->pSPI;
     m_pPWM    = pConfig->pPWM;
@@ -78,6 +76,7 @@ SystemState_e VFD_Driver::Initialize(const VFD_Config_t* pConfig)
     m_NumberOfBytes  = pConfig->NumberOfBits / 8;                               // Number of bits
     m_NumberOfBytes += (((pConfig->NumberOfBits % 8) != 0) ? 1 : 0);            // Add the bits necessary to complete the stream.
     m_pBitsStream = (uint8_t*) pMemoryPool->AllocAndClear(m_NumberOfBytes);     // No bit set at init.
+    m_pBitArray = new BIT_Array(m_pBitsStream, m_pConfig->NumberOfBits);        // Create BIT_Array object
 
     m_pPWM->Start();
     Dim(m_DimValue);

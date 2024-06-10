@@ -132,34 +132,45 @@ void BIT_Array::Set(uint32_t Index, uint8_t* pData, size_t Count)
     uint8_t* pBitStream;
     uint8_t  B1_Mask;
     uint8_t  AppliedMask;
-    uint8_t  Offset;
+    size_t   Offset;
 
-    pBitStream = GetBytePointer(Index);                     // The pointer on the first byte to be modified
-    Offset     = Index % LIB_BA_BIT_PER_BYTE;               // Offset to shift the data
-    B1_Mask    = m_ByteMask[Offset];                        // Get the mask for all bit in the first byte  (subsequent byte modification use the same mask)
+    pBitStream = GetBytePointer(Index);                                 // The pointer on the first byte to be modified
+    Offset     = Index % LIB_BA_BIT_PER_BYTE;                           // Offset to shift the data
+    B1_Mask    = m_ByteMask[Offset];                                    // Get the mask for all bit in the first byte  (subsequent byte modification use the same mask)
 
     do
     {
-        AppliedMask = B1_Mask;                              // Calculate proper to prevent erasing bit over the count
-        AppliedMask =
+        // Calculate proper mask to prevent erasing bit over the count
+        AppliedMask = B1_Mask;
 
-
-        *pBitStream &= AppliedMask;                         // Clear all bit in the mask
-        *pBitStream |= ((*pData) >> Offset);                // Shift
-
-        if(B1_Mask != 0x00)                                 // If overlap next byte in bitstream
+        if(Count < Offset)
         {
-            AppliedMask = B1_Mask;                          // Calculate proper to prevent erasing bit over the count
-
-
-            pBitStream++;
-            *pBitStream &= ~(AppliedMask);                  // Clear all bit in reverse mask
-            *pBitStream |= ((*pData) << (8 - Offset));      // Shift
+            AppliedMask |= ~m_ByteMask[Offset];                         // Don't clear bit past the count left in update
         }
 
-        Count -= LIB_BA_BIT_PER_BYTE;
+        *pBitStream &= AppliedMask;                                     // Clear all bit in the mask
+        *pBitStream |= ((*pData) >> Offset);              // Shift
+
+        if(((int(Count) - int(Offset)) > int(LIB_BA_BIT_PER_BYTE - Offset)) &&
+           (B1_Mask != 0x00))                                           // If it overlap next byte in bitstream
+        {
+            AppliedMask = ~AppliedMask;
+            pBitStream++;
+            *pBitStream &= AppliedMask;                                 // Clear all bit in reverse mask
+            *pBitStream |= ((*pData) << (8 - Offset));                  // Shift
+        }
+
+        if(Count > LIB_BA_BIT_PER_BYTE)
+        {
+            pData++;
+            Count -= LIB_BA_BIT_PER_BYTE;
+        }
+        else
+        {
+            Count = 0;
+        }
     }
-    while(Count >= 8);
+    while(Count > 0);
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -65,12 +65,17 @@ class VFD_Driver
         void            Dim                             (uint8_t DimValue);
         void            Blank                           (bool IsItBlank);
 
+        bool            Get                             (uint32_t Index)                                   { return m_pBitArray->Get(Index);        }
+        void            Set                             (uint32_t Index, bool Value)                       { m_pBitArray->Set(Index, Value);        }
+        void            Set                             (uint32_t Index, uint8_t* pData, size_t Count)     { m_pBitArray->Set(Index, pData, Count); }
+
     private:
 
         SPI_Driver*                     m_pSPI;
         PWM_Driver*                     m_pPWM;
         const VFD_Config_t*             m_pConfig;
         uint8_t*                        m_pBitsStream;
+        BIT_Array*                      m_pBitArray;
         bool                            m_IsItBlank;
         uint8_t                         m_DimValue;
         uint8_t                         m_Padding;          // Number of bit to add in front of the stream.

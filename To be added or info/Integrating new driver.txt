@@ -1,0 +1,78 @@
+in digini.cfg
+
+    1. need to DEF_ENABLED the peripheral used by this new driver
+        Ex. #define USE_xxx_DRIVER              DEF_ENABLED
+
+    -----------------------------------------------------------------------------------------------
+
+    2. The include file for the driver must be added in the config file device_cfg.h
+
+    -----------------------------------------------------------------------------------------------
+
+    3. The driver object must be declare in the variables file device_var.h
+    
+        Ex. #ifdef __CLASS_XXX__
+              extern class XXX_Driver         myXXX;
+             #ifdef LIB_XXX_GLOBAL
+              class XXX_Driver                myXXX;
+             #endif
+            #endif
+
+    -----------------------------------------------------------------------------------------------
+
+    4. There is no need to include any file in the header file of the driver.
+
+    -----------------------------------------------------------------------------------------------
+
+    5. Header file template is as follow:
+    
+        #pragma once
+    
+        #if (USE_xxx_DRIVER == DEF_ENABLED)                 <- this is optional and it is for a driver using SPI
+
+        class XXX_Driver
+        {
+            public:
+
+                                        XXX_Driver              ();
+
+                    SystemState_e       Initialize              (xxx2* pXXX2, ...);
+                    ... other functions
+
+            private:
+
+                    ... other private functions
+
+                    xxx2*     m_pXXX2;
+                    etc....
+        };
+
+        #define __CLASS_XXX__
+        #include "device_var.h"
+        #undef  __CLASS_XXX__
+
+        #endif // (USE_xxx_DRIVER == DEF_ENABLED)
+        
+    -----------------------------------------------------------------------------------------------
+        
+    5. CPP file template is as follow:
+
+        #define LIB_XXX_GLOBAL
+        #include "./Digini/lib_digini.h"
+        #undef  LIB_XXX_GLOBAL
+
+        XXX_Driver::XXX_Driver()
+        {
+            ... your constructor code
+        }
+
+        SystemState_e XXX_Driver::Initialize(xxx2* pXXX2, ...)
+        {
+            your initialisation code...
+            return SYS_READY;
+        }
+
+    -----------------------------------------------------------------------------------------------
+        
+    6.  Add you initialize code into the -> BSP_PostOS_Initialize function
+        Note(s) Apply to higher level driver: Make sure all required low-level driver are already initialize before your high level driver.

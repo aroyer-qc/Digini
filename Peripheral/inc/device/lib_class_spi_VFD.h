@@ -58,9 +58,9 @@ class VFD_Driver
 {
     public:
 
-                        VFD_Driver                      ();
+                        VFD_Driver                      (const VFD_Config_t* pConfig);
 
-        SystemState_e   Initialize                      (const VFD_Config_t* pConfig);
+        SystemState_e   Initialize                      (void);
         void            Send                            (void);
         void            Dim                             (uint8_t DimValue);
         void            Blank                           (bool IsItBlank);

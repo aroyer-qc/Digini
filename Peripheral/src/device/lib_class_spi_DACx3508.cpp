@@ -55,13 +55,16 @@
 //
 //   Constructor:   DAC_X3508_Driver
 //
-//   Parameter(s):
+//   Parameter(s):  SPI_Driver*     pSPI
+//                  IO_ID_e         ChipSelectIO
 //
 //   Description:   Initializes the
 //
 //-------------------------------------------------------------------------------------------------
-DAC_X3508_Driver::DAC_X3508_Driver()
+DAC_X3508_Driver::DAC_X3508_Driver(SPI_Driver* pSPI, IO_ID_e ChipSelectIO)
 {
+    m_pSPI          = pSPI;
+    m_ChipSelectIO  = ChipSelectIO;
     isItInitialized = false;
 }
 
@@ -75,14 +78,11 @@ DAC_X3508_Driver::DAC_X3508_Driver()
 //   Description:   Initialize this DACX3508
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e DAC_X3508_Driver::Initialize(SPI_Driver* pSPI, IO_ID_e ChipSelectIO)
+SystemState_e DAC_X3508_Driver::Initialize()
 {
    if(isItInitialized != true)
 	{
-        m_pSPI         = pSPI;
-        m_ChipSelectIO = ChipSelectIO;
-
-        IO_PinInit(ChipSelectIO);
+        IO_PinInit(m_ChipSelectIO);
 
         Send3Bytes(DACX3508_STATUS_TRIGGER_REG, DAC43508_STA_TRG_SW_RESET_VALUE);	    // Reset the DAC
         //    need a delay here Minimum 5 mSec!!

@@ -77,9 +77,9 @@ class DAC_X3508_Driver
 {
     public:
 
-                        DAC_X3508_Driver        ();
+                        DAC_X3508_Driver        (SPI_Driver* pSPI, IO_ID_e ChipSelectIO);
 
-        SystemState_e   Initialize              (SPI_Driver* pSPI, IO_ID_e ChipSelectIO);
+        SystemState_e   Initialize              (void);
         SystemState_e   WriteDAC                (int Channel, uint16_t Value);
 
     private:

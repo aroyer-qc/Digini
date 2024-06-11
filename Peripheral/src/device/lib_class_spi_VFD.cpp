@@ -36,14 +36,16 @@
 //
 //  Name:           Constructor
 //
-//  Parameter(s):   None
+//  Parameter(s):   const VFD_Config_t* pConfig
 //
-//  Description:    Preinit pointer
+//  Description:    Initialize config
 //
 //-------------------------------------------------------------------------------------------------
-VFD_Driver::VFD_Driver()
+VFD_Driver::VFD_Driver(const VFD_Config_t* pConfig)
 {
-    m_pConfig   = nullptr;
+    m_pConfig = pConfig;                                                        // Get config for the stream
+    m_pSPI    = pConfig->pSPI;
+    m_pPWM    = pConfig->pPWM;
     m_DimValue  = VFD_DEFAULT_DIM_VALUE;
     m_IsItBlank = true;
 }
@@ -52,9 +54,7 @@ VFD_Driver::VFD_Driver()
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   SPI_Driver*             pSPI
-//                  PWM_Driver*             pPWM
-//                  const VFD_Config_t*     pConfig
+//  Parameter(s):   None
 //  Return:         SystemState_e
 //
 //  Description:    Initialize the VFD Serial to parallel interface
@@ -62,19 +62,15 @@ VFD_Driver::VFD_Driver()
 //  Note(s):        Call this init when the OS is started
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e VFD_Driver::Initialize(const VFD_Config_t* pConfig)
+SystemState_e VFD_Driver::Initialize(void)
 {
-    m_pConfig = pConfig;                                                        // Get config for the stream
-    m_pSPI    = pConfig->pSPI;
-    m_pPWM    = pConfig->pPWM;
-
-    IO_PinInit(pConfig->IO_Load);
+    IO_PinInit(m_pConfig->IO_Load);
 
     // SPI need multiple of 8 bits to send on module.
     // There is padding bits to add in the beginning of the stream if not multiple of 8 bits
     m_Padding = 8 - (m_pConfig->NumberOfBits % 8);                              // Paddings
-    m_NumberOfBytes  = pConfig->NumberOfBits / 8;                               // Number of bits
-    m_NumberOfBytes += (((pConfig->NumberOfBits % 8) != 0) ? 1 : 0);            // Add the bits necessary to complete the stream.
+    m_NumberOfBytes  = m_pConfig->NumberOfBits / 8;                             // Number of bits
+    m_NumberOfBytes += (((m_pConfig->NumberOfBits % 8) != 0) ? 1 : 0);          // Add the bits necessary to complete the stream.
     m_pBitsStream = (uint8_t*) pMemoryPool->AllocAndClear(m_NumberOfBytes);     // No bit set at init.
     m_pBitArray = new BIT_Array(m_pBitsStream, m_pConfig->NumberOfBits);        // Create BIT_Array object
 

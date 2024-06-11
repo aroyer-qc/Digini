@@ -77,8 +77,8 @@ const uint8_t IV_11_DigitDriver::m_EncodedValue[DIGIT_NUMBER_OF_STANDARD_ENCODED
 //-------------------------------------------------------------------------------------------------
 IV_11_DigitDriver::IV_11_DigitDriver(VFD_Driver* pDriver, const uint16_t* pInfo, uint8_t NumberOfTubes)
 {
-    m_pInfo         = pInfo;
     m_pDriver       = pDriver;
+    m_pInfo         = pInfo;
     m_NumberOfTubes = NumberOfTubes;
 }
 

@@ -93,9 +93,8 @@ SystemState_e VFD_Driver::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 void VFD_Driver::Send(void)
 {
-    m_pSPI->Write(m_pBitsStream, m_NumberOfBytes, m_pConfig->IO_Load);   // We use the IO for load to lock the SPI
+    m_pSPI->Write(m_pBitsStream, m_NumberOfBytes, m_pConfig->IO_Load);   // We use the IO_load to lock the SPI
     IO_SetPinHigh(m_pConfig->IO_Load);
-    // delay
     IO_SetPinLow(m_pConfig->IO_Load);
 }
 

@@ -52,6 +52,7 @@ class IV_11_DigitDriver
 
         void        Blank                   (bool IsItBlank)   {m_pDriver->Blank(IsItBlank); }
         void        Dim                     (uint8_t DimValue) {m_pDriver->Dim(DimValue);    }
+        void        Send                    (void)             {m_pDriver->Send();           }
 
     private:
 

@@ -142,7 +142,7 @@ class BIT_Array
 
         uint8_t*                m_pBuffer;                                              // Pointer of the bit stream
         size_t                  m_Size;                                                 // Number of bits in stream
-        static const uint8_t    m_ByteMask[LIB_BA_BIT_PER_BYTE];
+        static const uint8_t    m_Mask[LIB_BA_BIT_PER_BYTE];
 };
 
 //-------------------------------------------------------------------------------------------------

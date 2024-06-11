@@ -35,45 +35,29 @@
 //-------------------------------------------------------------------------------------------------
 
 #define DIGIT_NUMBER_OF_STANDARD_ENCODED_VALUE          13
-#define DIGIT_SERIAL_SHIFT_PADDING                      4
-#define DIGIT_LOW_NIBBLE_MASK                           0x0F
-#define DIGIT_HIGH_NIBBLE_MASK                          0xF0
-
-//-------------------------------------------------------------------------------------------------
-// Typedef(s)
-//-------------------------------------------------------------------------------------------------
-
-struct IV_11_Config_t
-{
-    IO_ID_e     LoadPin;
-    IO_ID_e     BlankPin;
-    uint8_t     NumberOfDigit;
-};
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
+
 class IV_11_DigitDriver
 {
     public:
 
-                    IV_11_DigitDriver       ();
-
-        void        Initialize              (SPI_Driver* pSPI, const IV_11_Config_t* pConfig);
+                    IV_11_DigitDriver       (VFD_Driver* pDriver, const uint16_t* pInfo, uint8_t NumberOfTubes);
 
         void        Write                   (const char* pBuffer);                                  // Update all digit from string. Supporting dot and send load command
         void        Write                   (uint8_t Value, uint8_t Offset, bool Dot = false);      // Change value at offset
         void        WriteEncodedValue       (uint8_t Value, uint8_t Offset);                        // Change encoded value at offset.. Control raw digit
-        void        Load                    (void);
-        void        Blank                   (bool IsItEnabled);
-        void        Dim                     (uint8_t Percent);
+
+        void        Blank                   (bool IsItBlank)   {m_pDriver->Blank(IsItBlank); }
+        void        Dim                     (uint8_t DimValue) {m_pDriver->Dim(DimValue);    }
 
     private:
 
-        const IV_11_Config_t*       m_pConfig;
-        SPI_Driver*                 m_pSPI;
-        uint8_t*                    m_pDigitStream;
-        uint16_t                    m_Padding;
+        const uint16_t*             m_pInfo;
+        VFD_Driver*                 m_pDriver;
+        uint8_t                     m_NumberOfTubes;
         static const uint8_t        m_EncodedValue[DIGIT_NUMBER_OF_STANDARD_ENCODED_VALUE];
 };
 

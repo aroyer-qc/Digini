@@ -406,7 +406,7 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
 
             if(m_NoMemoryIncrement == false)
             {
-                m_DMA_TX.SetMemoryIncrement();                          // Enable transfer complete and memory increment
+                m_DMA_TX.SetMemoryIncrement();                          // Enable memory increment
             }
             else
             {
@@ -426,11 +426,9 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
             SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                           // Enable SPI
             SET_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                       // Enable DMA TX
             State = WaitDMA();
-            CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                         // Disable SPI
-
-            // Deactivate DMA
-            CLEAR_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);
+            CLEAR_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                     // Deactivate DMA
             m_DMA_TX.Disable();                                         // Disable the DMA module
+            CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                         // Disable SPI
         }
 
         // ----------------------------------------------------------------------------------------

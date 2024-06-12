@@ -118,6 +118,8 @@ void IV_11_DigitDriver::Write(const char* pBuffer)
 //-------------------------------------------------------------------------------------------------
 void IV_11_DigitDriver::Write(uint8_t Value, uint8_t Offset, bool Dot)
 {
+    uint8_t EncodedValue;
+
     if((Value >= '0') && (Value <= '9'))
     {
         Value -='0';                                // Remove Offset
@@ -139,7 +141,9 @@ void IV_11_DigitDriver::Write(uint8_t Value, uint8_t Offset, bool Dot)
         return;
     }
 
-    WriteEncodedValue(m_EncodedValue[Value] | (Dot == true ) ? DIGIT_DOT_VALUE : 0, Offset);
+    EncodedValue  = m_EncodedValue[Value];
+    EncodedValue |= ((Dot == true ) ? DIGIT_DOT_VALUE : 0);
+    WriteEncodedValue(EncodedValue, Offset);
 }
 
 //-------------------------------------------------------------------------------------------------

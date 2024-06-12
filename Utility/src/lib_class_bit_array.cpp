@@ -137,64 +137,67 @@ void BIT_Array::Set(uint32_t Index, uint8_t* pData, size_t Count)
     uint32_t BitsAfterBoundary;
     uint8_t  Data;
 
-    // Preset all fix value
-    pBitStream         = GetBytePointer(Index);                         // The pointer on the first byte to be modified
-    BitsAfterBoundary  = Index % LIB_BA_BIT_PER_BYTE;                   // Number of bits after uint8_t boundary
-    BitsBeforeBoundary = LIB_BA_BIT_PER_BYTE - BitsAfterBoundary;       // Number of bits before the uint_t boundary
-
-    do
+    if((Index + uint32_t(Count)) < uint32_t(m_Size))                        // Validate boundary
     {
-        Mask = m_Mask[OffsetBeforeBoundary];                            // Get the mask to protect bits in stream not touch by modification
+        // Preset all fix value
+        pBitStream         = GetBytePointer(Index);                         // The pointer on the first byte to be modified
+        BitsAfterBoundary  = Index % LIB_BA_BIT_PER_BYTE;                   // Number of bits after uint8_t boundary
+        BitsBeforeBoundary = LIB_BA_BIT_PER_BYTE - BitsAfterBoundary;       // Number of bits before the uint_t boundary
 
-        // -----------------------------------------------------------
-        // Process data before the boundary
-        // -----------------------------------------------------------
-
-        Data = *pData >> OffsetBeforeBoundary;
-
-        if(Count < BitsBeforeBoundary)
+        do
         {
-            Mask |= ~m_Mask[OffsetBeforeBoundary + Count];
-            Data &= ~Mask;
-            Count =  0;
-        }
-        else
-        {
-            Count -= BitsBeforeBoundary;
-        }
+            Mask = m_Mask[OffsetBeforeBoundary];                            // Get the mask to protect bits in stream not touch by modification
 
-        *pBitStream &= Mask;                                            // Clear all bit in the mask
-        *pBitStream |= Data;                                            // Apply data to destination
+            // -----------------------------------------------------------
+            // Process data before the boundary
+            // -----------------------------------------------------------
 
-        // -----------------------------------------------------------
-        // Process data after the boundary
-        // -----------------------------------------------------------
+            Data = *pData >> OffsetBeforeBoundary;
 
-        if(Count > 0)                                                   // If still some bit to transfer in boundary part
-        {
-            pBitStream++;
-            Data = *pData << OffsetAfterBoundary;
-            Mask = ~m_Mask[OffsetBeforeBoundary];
-
-            if(Count <= BitsAfterBoundary)
+            if(Count < BitsBeforeBoundary)
             {
-                Mask  = m_Mask[Count];
-                Data &= Mask;
-                Count = 0;
+                Mask |= ~m_Mask[OffsetBeforeBoundary + Count];
+                Data &= ~Mask;
+                Count =  0;
             }
             else
             {
-                Count -= BitsAfterBoundary;
+                Count -= BitsBeforeBoundary;
             }
 
-            *pBitStream &= Mask;                                        // Clear all bit in reverse mask
-            *pBitStream |= Data;                                        // Apply data to destination
-            pData++;
-       }
+            *pBitStream &= Mask;                                            // Clear all bit in the mask
+            *pBitStream |= Data;                                            // Apply data to destination
 
-        // -----------------------------------------------------------
+            // -----------------------------------------------------------
+            // Process data after the boundary
+            // -----------------------------------------------------------
+
+            if(Count > 0)                                                   // If still some bit to transfer in boundary part
+            {
+                pBitStream++;
+                Data = *pData << OffsetAfterBoundary;
+                Mask = ~m_Mask[OffsetBeforeBoundary];
+
+                if(Count <= BitsAfterBoundary)
+                {
+                    Mask  = m_Mask[Count];
+                    Data &= Mask;
+                    Count = 0;
+                }
+                else
+                {
+                    Count -= BitsAfterBoundary;
+                }
+
+                *pBitStream &= Mask;                                        // Clear all bit in reverse mask
+                *pBitStream |= Data;                                        // Apply data to destination
+                pData++;
+           }
+
+            // -----------------------------------------------------------
+        }
+        while(Count > 0);
     }
-    while(Count > 0);
 }
 
 //-------------------------------------------------------------------------------------------------

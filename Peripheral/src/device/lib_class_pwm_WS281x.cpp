@@ -50,6 +50,22 @@
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           Constructor
+//
+//  Parameter(s):   const WS281x_Config_t* pConfig
+//
+//  Description:    Initialize configuration
+//
+//-------------------------------------------------------------------------------------------------
+WS281x::WS281x(const WS281x_Config_t* pConfig)
+{
+    m_NumberOfLED = pConfig->NumberOfLED;                                                                // Number of real LEDs.
+    m_DMA.Initialize((DMA_Info_t*)&pConfig->DMA_Info);
+    m_pPWM_Driver = pConfig->pPWM_Driver;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           Initialize
 //
 //  Parameter(s):   WS281x_Config_t*       Configuration located in device_var.h
@@ -59,14 +75,10 @@
 //  Description:    Initialize the WS281x interface
 //
 //-------------------------------------------------------------------------------------------------
-void WS281x::Initialize(const WS281x_Config_t* pConfig)
+void WS281x::Initialize()
 {
-    m_pPWM = new PWM_Driver(pConfig->PWM_ChannelID);
-    m_pPWM->Initialize();
-
     m_SetCountReset   = 32000;//uint8_t((uint16_t(pConfig->ResetType) / WS281x_TIMER_RANGE));
     m_ResetCount      = m_SetCountReset;
-    m_NumberOfLED     = pConfig->NumberOfLED;                                                                // Number of real LEDs.
     m_pLedChain       = (WS281x_Color_t*)pMemoryPool->AllocAndClear(m_NumberOfLED * WS281x_RGB_SIZE);        // Reserved x bytes  from the alloc mem library.
     m_pDMA_Buffer     = (uint8_t*)pMemoryPool->AllocAndSet(WS281x_DMA_FULL_BUFFER_SIZE, WS281x_LOGICAL_0);   // Reserved 48 bytes DMA transfert to compare register.
     m_pDMA_HalfBuffer = m_pDMA_Buffer + WS281x_LED_BUFFER_SIZE;
@@ -80,9 +92,8 @@ void WS281x::Initialize(const WS281x_Config_t* pConfig)
     // use 2 x 24 bits leds. So take advantage of the HT and TC of the DMA in a circular mode...
     // So we can use those to have time to prepare next set of 24 bit colors for next led
     // loop continously the 48 bytes compare value buffer
-    m_DMA.Initialize((DMA_Info_t*)&pConfig->DMA_Info);
     m_DMA.SetSource(m_pDMA_Buffer);
-    m_DMA.SetDestination(m_pPWM->GetCompareRegisterPointer());
+    m_DMA.SetDestination(m_pPWM_Driver->GetCompareRegisterPointer());
     m_DMA.SetLength(WS281x_DMA_FULL_BUFFER_SIZE);
     m_DMA.EnableTransmitCompleteInterrupt();
     m_DMA.EnableTransmitHalfCompleteInterrupt();
@@ -103,7 +114,7 @@ void WS281x::Initialize(const WS281x_Config_t* pConfig)
 void WS281x::Start(void)
 {
     m_DMA.Enable();
-    m_pPWM->Start();
+    m_pPWM_Driver->Start();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -120,7 +131,7 @@ void WS281x::Start(void)
 void WS281x::Stop(void)
 {
     m_DMA.Disable();
-    m_pPWM->Stop();
+    m_pPWM_Driver->Stop();
 }
 
 //-------------------------------------------------------------------------------------------------

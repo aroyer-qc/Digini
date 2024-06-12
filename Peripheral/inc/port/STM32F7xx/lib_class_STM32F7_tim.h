@@ -262,7 +262,6 @@ class TIM_Driver
         volatile uint32_t*  GetCompareRegisterPointer   (void);
         void                EnableCompareChannel        (TIM_Compare_e Channel);
         void                DisableCompareChannel       (TIM_Compare_e Channel);
-        void                GetComparePointer           (TIM_Compare_e Channel);
       #endif
 
         TIM_CallBack_t      m_pCallBack;

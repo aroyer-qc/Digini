@@ -103,6 +103,7 @@ void PWM_Driver::Initialize(void)
     m_pTimer->SetCompareChannel(Channel, m_pInfo->InitialDuty);
     m_pTimer->EnableCompareChannel(Channel);
     m_pTim->BDTR |= TIM_BDTR_MOE;
+    m_pTim->CR1  |= TIM_CR1_CEN;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -148,6 +149,32 @@ void PWM_Driver::Start(void)
 void PWM_Driver::Stop(void)
 {
     m_pTimer->DisableCompareChannel(m_pInfo->Channel);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       GetCompareRegisterPointer
+//
+//  Parameter(s):   none
+//  Return:         none
+//
+//  Description:    Function to get the compare register address so we can set destination for DMA
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t* PWM_Driver::GetCompareRegisterPointer(void)
+{
+    volatile uint32_t* pRegister = nullptr;
+
+    switch(m_pInfo->Channel)
+    {
+        case TIM_CHANNEL_1: pRegister = &m_pTim->CCR1; break;
+        case TIM_CHANNEL_2: pRegister = &m_pTim->CCR2; break;
+        case TIM_CHANNEL_3: pRegister = &m_pTim->CCR3; break;
+        case TIM_CHANNEL_4: pRegister = &m_pTim->CCR4; break;
+        default: break;
+    }
+
+    return (uint32_t*)pRegister;
 }
 
 //-------------------------------------------------------------------------------------------------

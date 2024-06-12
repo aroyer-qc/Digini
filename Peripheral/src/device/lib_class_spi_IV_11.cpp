@@ -40,8 +40,9 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define DIGIT_DOT_VALUE             0x80
-#define NUMBER_OF_BIT_IN_DIGIT      8
+#define IV_DIGIT_DOT_VALUE             0x80
+#define IV_NUMBER_OF_BIT_IN_DIGIT      8
+#define IV_GRID_OFFSET                 8
 
 //-------------------------------------------------------------------------------------------------
 // Const(s)
@@ -62,6 +63,7 @@ const uint8_t IV_11_DigitDriver::m_EncodedValue[DIGIT_NUMBER_OF_STANDARD_ENCODED
     0x63,   // ° Degree
     0x4E,   // C Celsius
     0x47,   // F fahrenheit
+    0x80,   // . Dot
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -84,6 +86,32 @@ IV_11_DigitDriver::IV_11_DigitDriver(VFD_Driver* pDriver, const uint16_t* pInfo,
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           GridControl
+//
+//  Parameter(s):   bool    IsItDriven    if true the power is applied on the grid
+//
+//  Return:         void
+//
+//  Description:    Control the power on the grid pin of the IV tube
+//
+//  Note(s)         Invalid character will be ignored.
+//                  no support yet for custom character from string (maybe later)
+//
+//-------------------------------------------------------------------------------------------------
+
+void IV_11_DigitDriver::GridControl(bool IsItDriven)
+{
+    uint32_t StreamIndex;
+
+    for(int Offset = 0; Offset < m_NumberOfTubes; Offset++)
+    {
+        StreamIndex = m_pInfo[Offset] + IV_GRID_OFFSET;
+        m_pDriver->Set(StreamIndex, IsItDriven);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           Write
 //
 //  Parameter(s):   const uint8_t* pBuffer      Buffer to write on Digit
@@ -98,7 +126,23 @@ IV_11_DigitDriver::IV_11_DigitDriver(VFD_Driver* pDriver, const uint16_t* pInfo,
 //-------------------------------------------------------------------------------------------------
 void IV_11_DigitDriver::Write(const char* pBuffer)
 {
-    // TODO
+    bool     Dot;
+    uint8_t  Value;
+
+    for(int Offset = 0; (Offset < m_NumberOfTubes) & (pBuffer != nullptr); Offset++)
+    {
+        Dot   = false;
+        Value = *pBuffer; // Get the Value to applied
+        pBuffer++;
+
+        if(*pBuffer == '.')
+        {
+            Dot = true;
+            pBuffer++;
+        }
+
+        Write(Value, Offset, Dot);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -136,13 +180,17 @@ void IV_11_DigitDriver::Write(uint8_t Value, uint8_t Offset, bool Dot)
     {
         Value = 12;
     }
+    else if (Value == '.')
+    {
+        Value = 13;
+    }
     else
     {
         return;
     }
 
     EncodedValue  = m_EncodedValue[Value];
-    EncodedValue |= ((Dot == true ) ? DIGIT_DOT_VALUE : 0);
+    EncodedValue |= ((Dot == true ) ? IV_DIGIT_DOT_VALUE : 0);
     WriteEncodedValue(EncodedValue, Offset);
 }
 
@@ -168,7 +216,7 @@ void IV_11_DigitDriver::WriteEncodedValue(uint8_t EncodedValue, uint8_t Offset)
     {
         StreamIndex = m_pInfo[Offset];
 
-        m_pDriver->Set(StreamIndex, &EncodedValue, NUMBER_OF_BIT_IN_DIGIT);
+        m_pDriver->Set(StreamIndex, &EncodedValue, IV_NUMBER_OF_BIT_IN_DIGIT);
     }
 }
 

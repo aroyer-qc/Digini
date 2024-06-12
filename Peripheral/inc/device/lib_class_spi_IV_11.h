@@ -23,6 +23,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+//
+//  Note(s) This driver assume the grid is connected through the driver and follow the 8 bits for
+//          each segment
+//
+//          Support IV-6, IV-8, IV-11, IV-22
+//
+//          Need modification other tube are to be supported  IV-3, IV-12, IV-17,
+//
+//-------------------------------------------------------------------------------------------------
 
 #pragma once
 
@@ -34,7 +43,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define DIGIT_NUMBER_OF_STANDARD_ENCODED_VALUE          13
+#define DIGIT_NUMBER_OF_STANDARD_ENCODED_VALUE          14
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -46,6 +55,7 @@ class IV_11_DigitDriver
 
                     IV_11_DigitDriver       (VFD_Driver* pDriver, const uint16_t* pInfo, uint8_t NumberOfTubes);
 
+        void        GridControl             (bool IsItDriven);
         void        Write                   (const char* pBuffer);                                  // Update all digit from string. Supporting dot and send load command
         void        Write                   (uint8_t Value, uint8_t Offset, bool Dot = false);      // Change value at offset
         void        WriteEncodedValue       (uint8_t Value, uint8_t Offset);                        // Change encoded value at offset.. Control raw digit

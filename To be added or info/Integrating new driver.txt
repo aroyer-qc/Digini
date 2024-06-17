@@ -6,10 +6,18 @@ in digini.cfg
     -----------------------------------------------------------------------------------------------
 
     2. The include file for the driver must be added in the config file device_cfg.h
+        Ex. #include "./Digini/Peripheral/inc/device/lib_NewDriver.h"
+        
+        Note(s):
 
+            - In this file you also include #define required for this driver
+        
+             Ex.    #define USE_NEW_DRIVER_FLOAT_CALCULATION
+                    #define NEW_DRIVER_I2C_SLAVE_ADDRESS                0xAA
+        
     -----------------------------------------------------------------------------------------------
 
-    3. The driver object must be declare in the variables file device_var.h
+    3. The driver object must be declared in the variables file device_var.h
     
         Ex. #ifdef __CLASS_XXX__
               extern class XXX_Driver         myXXX;
@@ -21,6 +29,8 @@ in digini.cfg
     -----------------------------------------------------------------------------------------------
 
     4. There is no need to include any file in the header file of the driver.
+    
+        Exclusion to this rule is, if the driver need a special custom code file and header.
 
     -----------------------------------------------------------------------------------------------
 
@@ -28,7 +38,7 @@ in digini.cfg
     
         #pragma once
     
-        #if (USE_xxx_DRIVER == DEF_ENABLED)                 <- this is optional and it is for a driver using SPI
+        #if (USE_xxx_DRIVER == DEF_ENABLED)                 <- this is optional and it is for using another low level driver 
 
         class XXX_Driver
         {

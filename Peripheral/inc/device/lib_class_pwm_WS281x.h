@@ -132,10 +132,9 @@ struct WS281x_Color_t
 
 struct WS281x_Config_t
 {
-    // Led Chain info
-    uint16_t                NumberOfLED;
+    PWM_Driver*             pPWM_Driver;
+    uint16_t                NumberOfLED;        // Led Chain info
     WS281x_ResetType_e      ResetType;
-    PWM_ChannelID_e         PWM_ChannelID;      // PWM info (include timer and IO)
     DMA_Info_t              DMA_Info;           // DMA info
 };
 
@@ -147,7 +146,9 @@ class WS281x
 {
     public:
 
-        void    Initialize              (const WS281x_Config_t* pConfig);
+                WS281x                  (const WS281x_Config_t* pConfig);
+
+        void    Initialize              ();
         void    SetLed                  (uint32_t Offset, WS281x_Color_t Color);
         void    Start                   (void);
         void    Stop                    (void);
@@ -160,8 +161,9 @@ class WS281x
 
     private:
 
-        PWM_Driver*                 m_pPWM;             // Not sure about this!!!
+        PWM_Driver*                 m_pPWM_Driver;
         DMA_Driver                  m_DMA;
+
         uint32_t                    m_NumberOfLED;
         volatile uint16_t           m_LedPointer;
         WS281x_Color_t*             m_pLedChain;

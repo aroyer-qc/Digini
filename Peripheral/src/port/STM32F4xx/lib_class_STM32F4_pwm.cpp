@@ -152,5 +152,31 @@ void PWM_Driver::Stop(void)
 }
 
 //-------------------------------------------------------------------------------------------------
+//
+//  Function:       GetCompareRegisterPointer
+//
+//  Parameter(s):   none
+//  Return:         none
+//
+//  Description:    Function to get the compare register address so we can set destination for DMA
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t* PWM_Driver::GetCompareRegisterPointer(void)
+{
+    volatile uint32_t* pRegister = nullptr;
+
+    switch(m_pInfo->Channel)
+    {
+        case TIM_CHANNEL_1: pRegister = &m_pTim->CCR1; break;
+        case TIM_CHANNEL_2: pRegister = &m_pTim->CCR2; break;
+        case TIM_CHANNEL_3: pRegister = &m_pTim->CCR3; break;
+        case TIM_CHANNEL_4: pRegister = &m_pTim->CCR4; break;
+        default: break;
+    }
+
+    return (uint32_t*)pRegister;
+}
+
+//-------------------------------------------------------------------------------------------------
 
 #endif // (USE_PWM_DRIVER == DEF_ENABLED)

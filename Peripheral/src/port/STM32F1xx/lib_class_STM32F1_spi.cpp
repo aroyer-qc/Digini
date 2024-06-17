@@ -154,13 +154,13 @@ void SPI_Driver::Initialize(void)
     // Pre inititialize register that won't change
     m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
     m_DMA_TX.SetDestination((void*)&m_pInfo->pSPIx->DR);        // Configure transmit data register
-    m_DMA_TX.EnableTransmitCompleteInterrupt():
-    m_DMA_TX.EnableIRQ();
+    m_DMA_TX.EnableTransmitCompleteInterrupt();
+    m_DMA_TX.EnableIRQ(6);
 
     m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
     m_DMA_RX.SetSource((void*)&m_pInfo->pSPIx->DR);             // Configure transmit data register
-    m_DMA_RX.EnableTransmitCompleteInterrupt():
-    m_DMA_RX.EnableIRQ();
+    m_DMA_RX.EnableTransmitCompleteInterrupt();
+    m_DMA_RX.EnableIRQ(6);
 }
 
 //-------------------------------------------------------------------------------------------------

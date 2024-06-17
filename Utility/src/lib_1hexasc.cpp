@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F4_pwm.h
+//  File : lib_1hexasc.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -24,57 +24,34 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#pragma once
-
+//-------------------------------------------------------------------------------------------------
+// Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#if (USE_PWM_DRIVER == DEF_ENABLED)
+#include "./Digini/lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
-// typedef Typedef(s)
+//
+//   Function Name: LIB_1HexAsc
+//
+//   Parameter(s):  uint8_t          Value to convert
+//   Return:        uint8_t          Ascii equivalent
+//
+//   Description:   Convert 1 decimal value to 1 Ascii caracter
+//
 //-------------------------------------------------------------------------------------------------
-
-struct PWM_Info_t
+uint8_t LIB_1HexAsc(uint8_t Value)
 {
-    IO_ID_e         PinID;
-    TIM_ID_e        TimID;
-    TIM_Compare_e   Channel;
-    uint16_t        InitialDuty;
-};
+    if(Value < 10)
+    {
+        return Value + '0';
+    }
+    else if(Value < 16)
+    {
+        return Value + 'A';
+    }
+
+    return ' ';
+}
 
 //-------------------------------------------------------------------------------------------------
-// class definition(s)
-//-------------------------------------------------------------------------------------------------
-
-class PWM_Driver
-{
-    public:
-
-                                        PWM_Driver                  (PWM_ChannelID_e PWM_ID, TIM_Driver* pTimer);
-
-        void                            Initialize                  (void);
-        void                            SetDuty                     (uint16_t Duty);
-        void                            Start                       (void);
-        void                            Stop                        (void);
-        uint32_t*                       GetCompareRegisterPointer   (void);         // For DMA
-
-    private:
-
-        const PWM_Info_t*               m_pInfo;
-        TIM_Driver*                     m_pTimer;
-        TIM_TypeDef*                    m_pTim;
-        IO_ID_e                         m_IO_Pin;
-        uint16_t                        m_Duty;
-};
-
-//-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "pwm_var.h"         // Project variable
-
-extern const PWM_Info_t PWM_Info[NB_OF_PWM_CHANNEL];
-
-//-------------------------------------------------------------------------------------------------
-
-#endif // (USE_PWM_DRIVER == DEF_ENABLED)

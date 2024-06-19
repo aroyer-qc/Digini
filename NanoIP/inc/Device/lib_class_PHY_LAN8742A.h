@@ -49,7 +49,7 @@
 #define REG_MMD_ACCESS_CTRL         13          // MMD Access Control
 #define REG_MMD_ACCESS_AD           14          // MMD Access Address/Data
 
-// Vendor-specific Registers        
+// Vendor-specific Registers
 #define REG_MCSR                    17          // Mode Control/Status Register
 #define REG_SPEC_MODE               18          // Special Modes Register
 #define REG_TDR_PAT_DEL             24          // TDR Patterns/Delay Control Register
@@ -72,7 +72,7 @@
 #define BCR_DUPLEX                  0x0100      // Duplex Mode (0 = half duplex, 1 = Full duplex)
 #define BCR_COL_TEST                0x0080      // Collision Test Enable (0 = disable,
 
-// Basic Status Register    
+// Basic Status Register
 #define BSR_100B_T4                 0x8000      // 100BASE-T4 Capable
 #define BSR_100B_TX_FD              0x4000      // 100BASE-TX Full Duplex Capable
 #define BSR_100B_TX_HD              0x2000      // 100BASE-TX Half Duplex Capable
@@ -114,16 +114,26 @@
 #define PHY_TIMEOUT                 2
 
 //-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+struct PHY_Config_t
+{
+    ETH_Driver* pDriver;
+    uint32_t    PHY_Address;
+};
+
+//-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class PHY_LAN8742A_Driver : public PHY_DriverInterface
+class PHY_LAN8742A_Driver// : public PHY_DriverInterface
 {
     public:
 
-                                    PHY_LAN8742A_Driver             (uint32_t PHY_Address);
+                                    PHY_LAN8742A_Driver             (const PHY_Config_t* pConfig);
 
-        SystemState_e               Initialize                      (ETH_Driver* pDriver);
+        SystemState_e               Initialize                      (void);
         SystemState_e               Uninitialize                    (void);
         SystemState_e               PowerControl                    (ETH_PowerState_e state);
         SystemState_e               SetInterface                    (ETH_MediaInterface_e Interface);
@@ -138,13 +148,28 @@ class PHY_LAN8742A_Driver : public PHY_DriverInterface
     private:
 
         // Ethernet PHY control structure
+        const PHY_Config_t*         m_pConfig;
         uint32_t                    m_PHY_Address;
-        ETH_Driver*                 m_pETH_Driver;                  // Pointer on the class ETH_Driver
+        bool                        m_IsItInitialize;
+        ETH_Driver*                 m_pDriver;                      // Pointer on the class ETH_Driver
         uint16_t                    m_BCR_Register;                 // BCR register value
         ETH_State_e                 m_Flags;                        // Control flags
 };
 
 //-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+#define __CLASS_PHY_LAN8742A__
+#include "device_var.h"
+#undef  __CLASS_PHY_LAN8742A__
+
+//-------------------------------------------------------------------------------------------------
+
+#else // (USE_ETH_DRIVER == DEF_ENABLED)
+
+#pragma message("DIGINI driver for ETHERNET must be enable and configure to use this device driver")
+
 
 #endif // (USE_ETH_DRIVER == DEF_ENABLED)
 

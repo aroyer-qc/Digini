@@ -35,7 +35,7 @@
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
-
+/*
 class MAC_DriverInterface
 {
     public:
@@ -56,6 +56,6 @@ class MAC_DriverInterface
         virtual SystemState_e           PHY_Read                (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData)     = 0;
         virtual SystemState_e           PHY_Write               (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data)     = 0;
 };
-
+*/
 //-------------------------------------------------------------------------------------------------
 

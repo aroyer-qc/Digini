@@ -28,7 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "./Digini/Peripheral/inc/device/lib_LMT86.h"
+#define LIB_LMT86_GLOBAL
+#include "./Digini/lib_digini.h"
+#undef  LIB_LMT86_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 // Const(s)

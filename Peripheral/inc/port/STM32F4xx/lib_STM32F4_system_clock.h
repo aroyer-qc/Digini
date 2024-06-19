@@ -68,6 +68,28 @@
 #define CFG_RCC_CFGR_PPRE2_DIV8                     0x0000C000U
 #define CFG_RCC_CFGR_PPRE2_DIV16                    0x0000E000U
 
+#define CFG_RCC_CFGR_MCO1PRE_NO_DIV                 0x00000000U
+#define CFG_RCC_CFGR_MCO1PRE_DIV2                   0x04000000U
+#define CFG_RCC_CFGR_MCO1PRE_DIV3                   0x05000000U
+#define CFG_RCC_CFGR_MCO1PRE_DIV4                   0x06000000U
+#define CFG_RCC_CFGR_MCO1PRE_DIV5                   0x07000000U
+
+#define CFG_RCC_CFGR_MCO1_HSI                       0x00000000U
+#define CFG_RCC_CFGR_MCO1_LSE                       0x00200000U
+#define CFG_RCC_CFGR_MCO1_HSE                       0x00400000U
+#define CFG_RCC_CFGR_MCO1_PLL                       0x00600000U
+
+#define CFG_RCC_CFGR_MCO2PRE_NO_DIV                 0x00000000U
+#define CFG_RCC_CFGR_MCO2PRE_DIV2                   0x20000000U
+#define CFG_RCC_CFGR_MCO2PRE_DIV3                   0x28000000U
+#define CFG_RCC_CFGR_MCO2PRE_DIV4                   0x30000000U
+#define CFG_RCC_CFGR_MCO2PRE_DIV5                   0x38000000U
+
+#define CFG_RCC_CFGR_MCO2_SYSCLOCK                  0x00000000U
+#define CFG_RCC_CFGR_MCO2_PLLI2S                    0x40000000U
+#define CFG_RCC_CFGR_MCO2_HSE                       0x80000000U
+#define CFG_RCC_CFGR_MCO2_PLL                       0xC0000000U
+
 //-------------------------------------------------------------------------------------------------
 // Configuration file(s)
 //-------------------------------------------------------------------------------------------------
@@ -94,34 +116,34 @@
     #pragma message "XSTR(CFG_PLL_M_DIVIDER)"
     #error PLL_M is out of range
   #else
-    #define CFG_RCC_PLL_CFGR_PLL_M                  (CFG_PLL_M_DIVIDER << CFG_RCC_PLLCFGR_PLL_M_POS)
+    #define CFG_RCC_PLLCFGR_PLL_M                   (CFG_PLL_M_DIVIDER << CFG_RCC_PLLCFGR_PLL_M_POS)
   #endif
 
   #if (CFG_PLL_N_MULTIPLIER < 50) || (CFG_PLL_N_MULTIPLIER > 432)
     #pragma message "XSTR(CFG_PLL_N_MULTIPLIER)"
     #error PLL_N is out of range
   #else
-    #define CFG_RCC_PLL_CFGR_PLL_N                  (CFG_PLL_N_MULTIPLIER << CFG_RCC_PLLCFGR_PLL_N_POS)
+    #define CFG_RCC_PLLCFGR_PLL_N                   (CFG_PLL_N_MULTIPLIER << CFG_RCC_PLLCFGR_PLL_N_POS)
   #endif
 
   #if ((CFG_PLL_P_DIVIDER / 2) < 1) || ((CFG_PLL_P_DIVIDER / 2) > 4)   // (tested for 2,4,6,8)
     #pragma message "XSTR(CFG_PLL_P_DIVIDER)"
     #error PLL_P is out of range
   #else
-    #define CFG_RCC_PLL_CFGR_PLL_P                  (((CFG_PLL_P_DIVIDER / 2) - 1) << CFG_RCC_PLLCFGR_PLL_P_POS)
+    #define CFG_RCC_PLLCFGR_PLL_P                   (((CFG_PLL_P_DIVIDER / 2) - 1) << CFG_RCC_PLLCFGR_PLL_P_POS)
   #endif
 
   #if (CFG_PLL_Q_DIVIDER < 2) || (CFG_PLL_Q_DIVIDER > 15)
     #pragma message "XSTR(CFG_PLL_Q_DIVIDER)"
     #error PLL_Q is out of range
   #else
-    #define CFG_RCC_PLL_CFGR_PLL_Q                  (CFG_PLL_Q_DIVIDER << CFG_RCC_PLLCFGR_PLL_Q_POS)
+    #define CFG_RCC_PLLCFGR_PLL_Q                   (CFG_PLL_Q_DIVIDER << CFG_RCC_PLLCFGR_PLL_Q_POS)
   #endif
 
-  #define CFG_RCC_PLL_CFGR_CFG                      (CFG_RCC_PLL_CFGR_HSI_PLL_M |   \
-                                                     CFG_RCC_PLL_CFGR_HSI_PLL_N |   \
-                                                     CFG_RCC_PLL_CFGR_HSI_PLL_P |   \
-                                                     CFG_RCC_PLL_CFGR_HSI_PLL_Q |   \
+  #define CFG_RCC_PLLCFGR_CFG                       (CFG_RCC_PLLCFGR_PLL_M |   \
+                                                     CFG_RCC_PLLCFGR_PLL_N |   \
+                                                     CFG_RCC_PLLCFGR_PLL_P |   \
+                                                     CFG_RCC_PLLCFGR_PLL_Q |   \
                                                      CFG_RCC_PLLCFGR_PLLSRC)
 
   #define CFG_SYS_PLL_CLK_FREQUENCY                 CFG_PLL_CLK_FREQUENCY
@@ -212,6 +234,20 @@
 #define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_4WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 168000000)
 #define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_5WS
+#endif
+
+// --------------------------------------------------------------------------------------------------------------------------------
+
+#if   (SYS_CPU_CORE_CLOCK_FREQUENCY >= 150000000)
+#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div102
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY >= 100000000)
+#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div62
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY >= 60000000)
+#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div42
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY >= 35000000)
+#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div26
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY >= 20000000)
+#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div16
 #endif
 
 // Verification

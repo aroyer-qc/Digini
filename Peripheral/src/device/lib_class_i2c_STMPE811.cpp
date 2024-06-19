@@ -30,15 +30,16 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+#define LIB_STMPE811_GLOBAL
 #include "./Digini/lib_digini.h"
+#undef  LIB_STMPE811_GLOBAL
 
-//#include "digini_cfg.h"
+//-------------------------------------------------------------------------------------------------
+
 #ifdef DIGINI_USE_GRAFX
 #ifdef DIGINI_USE_POINTING_DEVICE
 //#include "./Digini/Peripheral/inc/device/lib_class_i2c_STMPE811.h"
 //#include "./Digini/Grafx/inc/driver/STM32F4xx/lib_STM32F4_lcd_quarter_vga.h"
-//#include "./Digini/Digini/inc/lib_macro.h"
-//#include "./Digini/Digini/inc/lib_define.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)

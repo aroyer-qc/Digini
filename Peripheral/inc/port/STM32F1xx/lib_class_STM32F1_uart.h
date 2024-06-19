@@ -297,7 +297,7 @@ class UART_Driver
         DMA_Driver                  m_DMA_RX;
         DMA_Driver                  m_DMA_TX;
         UART_DMA_Info_t*            m_pDMA_Info;
-        bool                        m_DMA_IsItBusyTX;
+        volatile bool               m_DMA_IsItBusyTX;
       #endif
 
       #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)

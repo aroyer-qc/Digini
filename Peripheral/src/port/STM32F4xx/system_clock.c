@@ -62,7 +62,7 @@
 //-------------------------------------------------------------------------------------------------
 void SystemInit(void)
 {
-  #if (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
+  #if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
     uint32_t Retry;
   #endif
 
@@ -82,41 +82,34 @@ void SystemInit(void)
     SET_BIT(RCC->CR, RCC_CR_HSION);
 
     // Set CFGR register
-	RCC->CFGR = (CFG_SYS_HCLK | CFG_SYS_APB1 | CFG_SYS_APB2);
+	RCC->CFGR = (CFG_SYS_HCLK | CFG_SYS_APB1 | CFG_SYS_APB2 | CFG_MCO_1 | CFG_MCO_2);
 
     // Reset HSEBYP, CSSON and PLLON bits
 	CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));
 
-  #if (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
+  #if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
 
+   #if (CFG_PLL_SOURCE == CFG_HSE_VALUE)
     SET_BIT(RCC->CR, RCC_CR_HSEON);
 
-    // Wait for HSE to be ready B4 enabling PLL
     Retry = 0;
-    while((READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0) && (Retry < SYSTEM_CLOCK_NUMBER_OF_RETRY))
+    while((READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0) && (Retry < CFG_SYSTEM_CLOCK_NUMBER_OF_RETRY))
     {
         Retry++;
     };
 
-    // If HSE not ready, will will switch to HSI
-    if(READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0)
-    {
-        CLEAR_BIT(RCC->CR, RCC_CR_HSEON);
+   #else
+    // Wait for HSI to be ready B4 enabling PLL
+    while(READ_BIT(RCC->CR, RCC_CR_HSIRDY) == 0) {};
+   #endif
 
-        // Wait for HSI to be ready B4 enabling PLL
-        while(READ_BIT(RCC->CR, RCC_CR_HSIRDY) == 0) {};
+    // Set PLLCFGR register
+    RCC->PLLCFGR = CFG_RCC_PLLCFGR_CFG;
 
-        // Set PLLCFGR register
-        RCC->PLLCFGR = RCC_HSI_PLL_CFGR_CFG;
-    }
-    else
-    {
-        // Set PLLCFGR register
-        RCC->PLLCFGR = RCC_HSE_PLL_CFGR_CFG;
-
-        // Reset HSION bit to reduce consumption
-        CLEAR_BIT(RCC->CR, RCC_CR_HSION);
-    }
+   #if (CFG_PLL_SOURCE == CFG_HSE_VALUE)
+    // Reset HSION bit to reduce consumption
+    CLEAR_BIT(RCC->CR, RCC_CR_HSION);
+   #endif
 
     // Set flash latency
     MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, CFG_FLASH_LATENCY);

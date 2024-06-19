@@ -28,7 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+#define LIB_PHY_8742A_GLOBAL
 #include "./Digini/lib_digini.h"
+#undef  LIB_PHY_8742A_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -43,9 +45,9 @@
 //  Description:    Set PHY Adress for this driver.
 //
 //-------------------------------------------------------------------------------------------------
-PHY_LAN8742A_Driver::PHY_LAN8742A_Driver(uint32_t PHY_Address)
+PHY_LAN8742A_Driver::PHY_LAN8742A_Driver(const PHY_Config_t* pConfig)
 {
-    m_PHY_Address = PHY_Address;
+    m_pConfig     = pConfig;
     Uninitialize();
 }
 
@@ -53,25 +55,32 @@ PHY_LAN8742A_Driver::PHY_LAN8742A_Driver(uint32_t PHY_Address)
 //
 //  Function:       Uninitialize
 //
-//  Parameter(s):   Ethernet driver class pointer
+//  Parameter(s):   None
 //  Return:         SystemState_e   State of function.
 //
 //  Description:    Initializee PHY Device.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e PHY_LAN8742A_Driver::Initialize(ETH_Driver* pDriver)
+SystemState_e PHY_LAN8742A_Driver::Initialize(void)
 {
-
-    if(pDriver == nullptr)
+    if(m_pConfig->pDriver == nullptr)
     {
-        return SYS_INVALID_PARAMETER;
+        return SYS_NULLPTR;
     }
 
-    if((m_Flags & ETH_INITIALIZED) == 0)
+    if(m_Flags == ETH_STATE_UNKNOWN)
     {
-        m_pETH_Driver  = pDriver;               // Register ETH_Driver
+        m_PHY_Address  = m_pConfig->PHY_Address;
+        m_pDriver      = m_pConfig->pDriver;
         m_BCR_Register = 0;
-        m_Flags        = ETH_INITIALIZED;
+        m_Flags = ETH_INITIALIZED;
+        PowerControl(ETH_POWER_FULL);
+        SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
+        SetMode(ETH_PHY_MODE_SPEED_100M | ETH_PHY_MODE_DUPLEX_FULL);
+
+
+
+
     }
 
     return SYS_READY;
@@ -89,7 +98,7 @@ SystemState_e PHY_LAN8742A_Driver::Initialize(ETH_Driver* pDriver)
 //-------------------------------------------------------------------------------------------------
 SystemState_e PHY_LAN8742A_Driver::Uninitialize(void)
 {
-    m_pETH_Driver  = nullptr;
+    m_pDriver      = nullptr;
     m_BCR_Register = 0;
     m_Flags        = ETH_STATE_UNKNOWN;
 
@@ -119,7 +128,7 @@ SystemState_e PHY_LAN8742A_Driver::PowerControl(ETH_PowerState_e PowerState)
             {
                 m_Flags        = ETH_INITIALIZED;
                 m_BCR_Register = BCR_POWER_DOWN;
-                State = m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register);
+                State = m_pDriver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register);
             }
             else
             {
@@ -142,26 +151,26 @@ SystemState_e PHY_LAN8742A_Driver::PowerControl(ETH_PowerState_e PowerState)
             else
             {
                 // Check Device Identification.
-                m_pETH_Driver->PHY_Read(m_PHY_Address, REG_PHY_ID_1, &Value);
+                m_pDriver->PHY_Read(m_PHY_Address, REG_PHY_ID_1, &Value);
 
                 if(Value != PHY_ID_1)
                 {
                     // Invalid PHY ID
-                    State = SYS_UNSUPPORTED_FEATURE;
+                    State = SYS_INVALID_ID;
                 }
                 else
                 {
-                    m_pETH_Driver->PHY_Read(m_PHY_Address, REG_PHY_ID_2, &Value);
+                    m_pDriver->PHY_Read(m_PHY_Address, REG_PHY_ID_2, &Value);
 
                     if((Value & 0xFFF0) != PHY_ID_2)
                     {
-                        State = SYS_UNSUPPORTED_FEATURE;                // Invalid PHY ID
+                        State = SYS_INVALID_ID;                // Invalid PHY ID
                     }
                     else
                     {
                         m_BCR_Register = 0;
 
-                        if((State = m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register)) == SYS_READY)
+                        if((State = m_pDriver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register)) == SYS_READY)
                         {
                             m_Flags = ETH_INITIALIZED_AND_POWERED_ON;
                             State   = SYS_READY;
@@ -197,18 +206,9 @@ SystemState_e PHY_LAN8742A_Driver::PowerControl(ETH_PowerState_e PowerState)
 //-------------------------------------------------------------------------------------------------
 SystemState_e PHY_LAN8742A_Driver::SetInterface(ETH_MediaInterface_e Interface)
 {
-
-    if((m_Flags & ETH_POWERED_ON) == 0)
+    if(Interface != ETH_INTERFACE_RMII)
     {
-        return SYS_ERROR;
-    }
-
-    switch(uint32_t(Interface))
-    {
-        case uint32_t(ETH_INTERFACE_RMII):  break;          // Nothing to do on the driver
-     // case uint32_t(ETH_INTERFACE_MII):
-     // case uint32_t(ETH_INTERFACE_SII):
-        default:                            return SYS_UNSUPPORTED_FEATURE;
+        return SYS_UNSUPPORTED_FEATURE;
     }
 
     return SYS_READY;
@@ -241,12 +241,12 @@ SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
         TickCount_t TickStart = GetTick();
 
         m_BCR_Register = BCR_AUTO_NEG_EN;
-        m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register);
+        m_pDriver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register);
 
         // Wait for auto negotiation to complete
         do
         {
-            m_pETH_Driver->PHY_Read(m_PHY_Address, REG_BSR, &RegValue);
+            m_pDriver->PHY_Read(m_PHY_Address, REG_BSR, &RegValue);
             if(TickHasTimeOut(TickStart, PHY_TIMEOUT) == false)
             {
                 // Return ERROR in case of timeout
@@ -257,7 +257,7 @@ SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
 
         }while((RegValue & BSR_AUTO_NEGO_COMPLETE) == 0);
 
-        m_pETH_Driver->PHY_Read(m_PHY_Address, REG_PSCS, &RegValue);
+        m_pDriver->PHY_Read(m_PHY_Address, REG_PSCS, &RegValue);
 
         if((RegValue & PSCS_DUPLEX) != 0)                               // Configure the MAC with the Duplex Mode fixed by the auto-negotiation process
         {
@@ -288,7 +288,7 @@ SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
         }
     }
 
-    return m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register);
+    return m_pDriver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -309,7 +309,7 @@ ETH_LinkState_e PHY_LAN8742A_Driver::GetLinkState(void)
 
     if(m_Flags & ETH_POWERED_ON)
     {
-        m_pETH_Driver->PHY_Read(m_PHY_Address, REG_BSR, &Value);
+        m_pDriver->PHY_Read(m_PHY_Address, REG_BSR, &Value);
     }
 
     State = (Value & BSR_LINK_STAT) ? ETH_LINK_UP : ETH_LINK_DOWN;
@@ -339,7 +339,7 @@ ETH_LinkInfo_t PHY_LAN8742A_Driver::GetLinkInfo(void)
 
     if(m_Flags & ETH_POWERED_ON)
     {
-        m_pETH_Driver->PHY_Read(m_PHY_Address, REG_PSCS, &Value);
+        m_pDriver->PHY_Read(m_PHY_Address, REG_PSCS, &Value);
     }
 
     Info.Speed  = (Value & PSCS_SPEED)  ? ETH_PHY_SPEED_100M  : ETH_PHY_SPEED_10M;

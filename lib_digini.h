@@ -160,10 +160,8 @@
 #endif
 
 #if (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
-#include "./lib_ethernet_typedef.h"
+#include "./Digini/NanoIP/inc/lib_ethernet_typedef.h"
 #include "./Digini/Peripheral/inc/port/lib_class_eth.h"
-#include "./lib_class_ethernet_phy_interface.h"
-#include PHY_DRIVER_INCLUDE
 #endif
 
 #if (USE_I2C_DRIVER == DEF_ENABLED)
@@ -225,11 +223,6 @@
 
 #include "device_cfg.h"
 
-#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
-//#include "ethernetif.h"
-//#include "lib_class_process_lwip.h"
-#endif
-
 #if (DIGINI_USE_FATFS == DEF_ENABLED)
 
 #include "./Digini/Peripheral/inc/FatFs/diskio_def.h"
@@ -258,7 +251,7 @@
 #include "./Digini/Peripheral/inc/FatFs/digini_diskio.h"
 #include "diskio_drv_cfg.h"                     // This will add any custom driver
 
-#endif
+#endif // (DIGINI_USE_FATFS == DEF_ENABLED)
 
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
 #include "./Grafx/inc/lib_grafx.h"

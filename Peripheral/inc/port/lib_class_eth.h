@@ -24,8 +24,6 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#include "ethernet_cfg.h"
-
 #if defined STM32F4xx
  #include "./Digini/Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_eth.h"
 #elif defined STM32F7xx

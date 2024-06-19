@@ -296,7 +296,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
            // myVT100.InMenuPrintf(1, 13, LBL_GUI_VERSION_INFO);
             myVT100.InMenuPrintf(       LBL_DIGINI_VERSION);
             myVT100.InMenuPrintf(1, 14, LBL_SERIAL_INFO);
-          #ifdef DEBUG
+          #if defined(DEBUG) || (DIGINI_USE_DATABASE == DISABLED)
             myVT100.InMenuPrintf(       LBL_SERIAL_NUMBER);
           #else
              char* pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE);

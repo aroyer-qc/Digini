@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_MCP230XX_GLOBAL
-#include "./Digini/Peripheral/inc/device/lib_class_i2c_MCP230xx.h"
+#include "./Digini/lib_digini.h"
 #undef  LIB_MCP230XX_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -39,7 +39,6 @@
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
-
 
 // General Control Registers
 #define IOEXP_INITIAL_IOCON         0x0A    // IOCON initial command address when powered-up
@@ -75,8 +74,6 @@
 #define IOEXP_IOPOLB                0x11    // Input Polarity:          If a bit is set, the corresponding GPIO register bit will reflect the inverted value on the pin.
 #define IOEXP_GPPUB                 0x16    // GPIO Pull-up resistor:   If a bit is set and the corresponding pin is cfg as input, the pin is internally pull-up with a 100k resistor
 #define IOEXP_OLATB                 0x1A    // Ouput Latch:             A write to this register modifies the output latches that modifies the pins configured as outputs.
-
-
 
 // ---- Global control bit ----
 #define IOEXP_IOCON_BANK            0x80    // Controls how the registers are addressed

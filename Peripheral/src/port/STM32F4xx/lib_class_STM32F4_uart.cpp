@@ -111,8 +111,8 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
     if(UartID < NB_OF_REAL_UART_DRIVER)
     {
         m_UartID = UartID;
-        m_pInfo = (UART_Info_t*)&UART_Info[UartID];
-        m_pUart = m_pInfo->pUARTx;
+        m_pInfo  = (UART_Info_t*)&UART_Info[UartID];
+        m_pUart  = m_pInfo->pUARTx;
 
         *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - UART_BACK_OFFSET_RESET_REGISTER) |=  m_pInfo->RCC_APBxPeriph;
         *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - UART_BACK_OFFSET_RESET_REGISTER) &= ~m_pInfo->RCC_APBxPeriph;
@@ -123,7 +123,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
         IO_PinInit(m_pInfo->PinRX);
         IO_PinInit(m_pInfo->PinTX);
 
-      #if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
+      #if (UART_ISR_RX_CFG       == DEF_ENABLED) || (UART_ISR_RX_IDLE_CFG      == DEF_ENABLED) || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
           (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
         m_pCallback    = nullptr;
         //m_CallBackType = UART_CALLBACK_NONE;
@@ -160,7 +160,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
         memset(&m_RX_Transfer, 0x00, sizeof(UART_Transfer_t));
       #endif
 
-       memset(&m_TX_Transfer, 0x00, sizeof(UART_Transfer_t));
+        memset(&m_TX_Transfer, 0x00, sizeof(UART_Transfer_t));
     }
   #if (SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
     else if(m_UartID == UART_DRIVER_VIRTUAL)
@@ -397,7 +397,6 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
             CR1_Register |= UART_CR1_OVERSAMPLING_8;
         }
 
-/*  not commented on F7
         // RX and TX enable
         MaskedConfig = UART_Config_e(uint32_t(Config) & UART_ENABLE_MASK);
 
@@ -408,7 +407,6 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
             case UART_ENABLE_RX_TX: CR1_Register |= UART_CR1_RX_TX; break;
             default: break;
         }
-*/
 
         // Register modification
         MODIFY_REG(m_pUart->CR1, (USART_CR1_M | USART_CR1_PCE | USART_CR1_PS | USART_CR1_OVER8), CR1_Register);
@@ -519,7 +517,7 @@ void UART_Driver::VirtualSendData(const uint8_t* pBuffer, uint16_t Size)
 //-------------------------------------------------------------------------------------------------
 SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
 {
-    SystemState_e       State = SYS_READY;
+    SystemState_e State = SYS_READY;
 
     if(m_pUart != nullptr)
     {
@@ -528,7 +526,7 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
           #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
             if(m_pInfo->IsItBlockingOnBusy == true)
             {
-                while(m_DMA_IsItBusyTX ==true)
+                while(m_DMA_IsItBusyTX == true)
                 {
                     nOS_Yield();
                 }
@@ -745,6 +743,7 @@ void UART_Driver::DMA_EnableRX(void)
             m_DMA_RX.ClearFlag();
             m_DMA_RX.Enable();
             EnableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
+            m_pUart->CR1 |= USART_CR1_RE;
         }
     }
 }
@@ -765,6 +764,7 @@ void UART_Driver::DMA_DisableRX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
+            m_pUart->CR1 &= ~USART_CR1_RE;
             m_DMA_RX.Disable();
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAR);
             DisableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
@@ -790,6 +790,7 @@ void UART_Driver::DMA_EnableTX(void)
         if(m_pDMA_Info != nullptr)
         {
             EnableTX_ISR(UART_ISR_TX_COMPLETED_MASK);
+            m_pUart->CR1 |= USART_CR1_TE;
             m_pUart->CR3 |= USART_CR3_DMAT;
         }
     }
@@ -811,6 +812,7 @@ void UART_Driver::DMA_DisableTX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
+            m_pUart->CR1 &= ~USART_CR1_TE;
             m_DMA_TX.Disable();
             m_DMA_TX.ClearFlag();
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAT);
@@ -830,7 +832,7 @@ void UART_Driver::DMA_DisableTX(void)
 //-------------------------------------------------------------------------------------------------
 size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
 {
-    size_t              SizeDataRX = 0;
+    size_t SizeDataRX = 0;
 
     if(m_pUart != nullptr)
     {
@@ -1109,7 +1111,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
   #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_EMPTY_TX_CFG) != 0)
     {
-        //m_CallBackType |= CallBackType;
+        // m_CallBackType |= CallBackType;
         //EnableRX_ISR(UART_ISR_TX_EMPTY_CFG);      // don't... only on send data
     }
   #endif

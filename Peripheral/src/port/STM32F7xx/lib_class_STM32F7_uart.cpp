@@ -127,7 +127,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
         IO_PinInit(m_pInfo->PinRX);
         IO_PinInit(m_pInfo->PinTX);
 
-      #if (UART_ISR_RX_CFG == DEF_ENABLED)       || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)       || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
+      #if (UART_ISR_RX_CFG       == DEF_ENABLED) || (UART_ISR_RX_IDLE_CFG      == DEF_ENABLED) || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
           (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
         m_pCallback    = nullptr;
         //m_CallBackType = UART_CALLBACK_NONE;
@@ -534,7 +534,7 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
           #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
             if(m_pInfo->IsItBlockingOnBusy == true)
             {
-                while(m_DMA_IsItBusyTX ==true)
+                while(m_DMA_IsItBusyTX == true)
                 {
                     nOS_Yield();
                 }
@@ -545,7 +545,7 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
                 m_DMA_IsItBusyTX = true;
 
                 m_DMA_TX.Disable();
-                m_DMA_TX.ClearFlag(m_pDMA_Info->DMA_TX.DMA_Flag);
+                m_DMA_TX.ClearFlag(m_pDMA_Info->DMA_TX.DMA_Flag); // no parameter on F4
 
                 if(pBufferTX != nullptr)
                 {
@@ -1106,7 +1106,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
   #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_EMPTY_TX_CFG) != 0)
     {
-       // m_CallBackType |= CallBackType;
+        // m_CallBackType |= CallBackType;
         //EnableRX_ISR(UART_ISR_TX_EMPTY_CFG);      // don't... only on send data
     }
   #endif

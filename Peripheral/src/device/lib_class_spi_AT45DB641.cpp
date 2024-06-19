@@ -29,9 +29,8 @@
 //-------------------------------------------------------------------------------------------------
 
 #define SPI_FLASH_GLOBAL
-#include "./Digini/Peripheral/inc/device/lib_class_spi_AT45DB641.h"
-#undef SPI_FLASH_GLOBAL
-#include "./Digini/Utility/inc/lib_utility.h"
+#include "./Digini/lib_digini.h"
+#undef  SPI_FLASH_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 

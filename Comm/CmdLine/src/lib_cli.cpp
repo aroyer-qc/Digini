@@ -166,7 +166,8 @@ void CommandLine::IF_Process(void)
         m_IsItOnStartup     = true;
         //m_pChildProcess     = nullptr;
         m_FifoCmd.Initialize(CLI_FIFO_CMD_SIZE);
-        m_pConsole->Printf(CLI_STRING_RESET_TERMINAL);
+//        m_pConsole->Printf(CLI_STRING_RESET_TERMINAL);
+        m_pConsole->Printf("la poutine ne marche pas comme il se doit");
         TickCount_t Delay = GetTick();
         while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
         m_pConsole->Printf(LBL_CMD_LINE_PROC_STARTED);

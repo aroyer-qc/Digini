@@ -31,6 +31,9 @@
 #define LIB_FT5336_GLOBAL
 #include "./Digini/lib_digini.h"
 #undef  LIB_FT5336_GLOBAL
+
+//-------------------------------------------------------------------------------------------------
+
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
 #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
 

@@ -30,7 +30,6 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-
 #define IP_MAX_URL_SIZE                         128
 #define IP_MAC_ADDRESS_SIZE                     6
 #define IP_MAC_V6_ADDRESS_SIZE                  8
@@ -63,8 +62,8 @@ enum IP_MsgType_e
     IP_MSG_TYPE_SNTP_MANAGEMENT     = 2,
 };
 
-enum IP_EthernetIF_e 
-{ 
+enum IP_EthernetIF_e
+{
     ETH_INTERFACE_ENUM
 };
 
@@ -152,16 +151,16 @@ enum ETH_LinkState_e
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef IP_Address_t       uint32_t
-typedef IP_Port_t          uint16_t
+typedef uint32_t IP_Address_t;
+typedef uint16_t IP_Port_t;
 
 struct IP_MAC_Address_t
 {
-    uint8_t  Address[IP_MAC_ADDRESS_SIZE];
-    
+    uint8_t  Byte[IP_MAC_ADDRESS_SIZE];
+
   #if (IP_USE_IP_V6 == DEF_ENABLED)             // Future :)
-    uint16_t  AddressV6[IP_MAC_V6_ADDRESS_SIZE];
-  #endif 
+    uint16_t  WordV6[IP_MAC_V6_ADDRESS_SIZE];
+  #endif
 };
 
 struct IP_ETH_Config_t
@@ -176,7 +175,7 @@ struct IP_ETH_Config_t
     IP_Address_t        DefaultGateway;
     IP_Address_t        DefaultSubnetMask;
     IP_Address_t        DefaultStaticDNS;
-    
+
   #if IP_INTERFACE_SUPPORT_PHY == DEF_ENABLED
     PHY_Driver*         pPHY_Driver;                                    // Driver for PHY
     ETH_Driver*         pETH_Driver;                                    // Driver for embedded MAC controller

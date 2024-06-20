@@ -337,17 +337,14 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
           #if (DIGINI_USE_DATABASE != DEF_DISABLED)
             DB_Central.Get(&Unit, SYSTEM_TEMPERATURE_UNIT);
 
-
-            if(Unit == TEMP_CELSIUS) ; // Temperature = Read ADC in Celsius
-          #endif
+            if(Unit == TEMP_CELSIUS) // Temperature = Read ADC in Celsius
             {
             }
-          #if (DIGINI_USE_DATABASE != DEF_DISABLED)
             else
+          #endif
             {
 
             }                     // Temperature = Read ADC in Fahrenheit
-          #endif
 
             myVT100.InMenuPrintf(21, 14, LBL_STRING, "25.5");       // TODO replace by the right method
 

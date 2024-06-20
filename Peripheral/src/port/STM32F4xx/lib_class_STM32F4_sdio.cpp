@@ -54,7 +54,7 @@
 #define SDIO_DRIVER_GLOBAL
 #include "./Digini/lib_digini.h"
 #undef  SDIO_DRIVER_GLOBAL
-//#include "stm32f4xx_ll_sdmmc.h"   // to replace this my my stuff
+//#include "stm32f4xx_ll_sdmmc.h"   // to replace this my stuff
 
 //-------------------------------------------------------------------------------------------------
 
@@ -101,7 +101,7 @@ SDIO_Driver::~SDIO_Driver()
 //
 //  Description:    Initializes the SDIO peripheral according to the specified Parameters
 //
-//  Note(s):
+//  Note(s):        // TODO convert to DIGINI lib
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::Initialize(void)
@@ -134,8 +134,8 @@ void SDIO_Driver::Initialize(void)
         m_DMA_FlagTCIF  = DMA_FLAG_TCIF6;
     }
 
-    ISR_Init(SDIO_IRQn, m_pSDIO->PreempPrio); 
-    ISR_Init(m_DMA_IRQn, m_pSDIO->DMA_PreempPrio); 
+    ISR_Init(SDIO_IRQn, m_pSDIO->PreempPrio);
+    ISR_Init(m_DMA_IRQn, m_pSDIO->DMA_PreempPrio);
 
     // GPIO Periph clock enable
     RCC_AHB1PeriphClockCmd(m_pSDIO->CLK_Clock |

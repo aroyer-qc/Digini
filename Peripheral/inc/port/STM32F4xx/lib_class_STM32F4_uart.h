@@ -72,8 +72,8 @@
 #define UART_CALLBACK_COMPLETED_TX          0x20
 #define UART_CALLBACK_DMA_RX                0x40
 
-#if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
-   (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+#if (UART_ISR_RX_CFG       == DEF_ENABLED) || (UART_ISR_RX_IDLE_CFG      == DEF_ENABLED) || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
+    (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
     #define UART_ISR_CFG                    DEF_ENABLED
 #endif
 
@@ -255,7 +255,7 @@ struct UART_DMA_Info_t
 struct UART_Transfer_t
 {
     uint8_t*            pBuffer;
-    size_t  Size;
+    size_t              Size;
     size_t              StaticSize;
 };
 
@@ -299,7 +299,7 @@ class UART_Driver
 
         void                IRQ_Handler                     (void);
 
-       #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
         void                VirtualUartRX_IRQHandler        (void);
         void                VirtualUartTX_IRQHandler        (void);
       #endif

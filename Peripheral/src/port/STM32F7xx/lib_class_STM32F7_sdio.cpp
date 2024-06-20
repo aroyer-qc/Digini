@@ -54,7 +54,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define SD_DATA_TIMEOUT                 ((uint32_t)0xFFFFFFFF)
+#define SD_DATA_TIMEOUT                 ((uint32_t)0x00100000)
 #define SD_SOFTWARE_COMMAND_TIMEOUT     ((uint32_t)0x00010000)
 
 // stuff to change
@@ -71,9 +71,6 @@
 #define ClearClockRegister()            { SDMMC1->CLKCR = ~((uint32_t)(SDMMC_CLKCR_CLKDIV  | SDMMC_CLKCR_PWRSAV |\
                                                                        SDMMC_CLKCR_BYPASS  | SDMMC_CLKCR_WIDBUS |\
                                                                        SDMMC_CLKCR_NEGEDGE | SDMMC_CLKCR_HWFC_EN)); }
-
-#define IFCR_CLEAR_MASK_STREAM3         (DMA_LIFCR_CTCIF3 | DMA_LIFCR_CHTIF3 | DMA_LIFCR_CTEIF3 | DMA_LIFCR_CDMEIF3 | DMA_LIFCR_CFEIF3)
-#define IFCR_CLEAR_MASK_STREAM6         (DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6)
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -96,8 +93,7 @@ enum SD_CardState_t
 //
 //   Constructor:   SDIO_Driver
 //
-//   Parameter(s):  DMA_Info_t* pDMA_RX
-//                  DMA_Info_t* pDMA_TX
+//   Parameter(s):  SDIO_Info_t* pInfo
 //
 //   Description:   Initializes the IO and the peripheral
 //
@@ -149,14 +145,14 @@ void SDIO_Driver::Initialize(void)
         // Initialize DMA2 channel 3 for RX from SD CARD
         m_DMA_RX.Initialize(&m_pInfo->DMA_RX);                                      // Write config that will never change
         m_DMA_RX.SetSource((void*)&SDMMC1->FIFO);
-        m_DMA_RX.ClearFlag(IFCR_CLEAR_MASK_STREAM3);
+        m_DMA_RX.ClearFlag();
         m_DMA_RX.SetFifoControl(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                   // Configuration FIFO control register
 
 
         // Initialize DMA2 channel 6 for TX to SD CARD
         m_DMA_TX.Initialize(&m_pInfo->DMA_TX);                                      // Write config that will never change
         m_DMA_TX.SetDestination((void*)&SDMMC1->FIFO);
-        m_DMA_TX.ClearFlag(IFCR_CLEAR_MASK_STREAM6);
+        m_DMA_TX.ClearFlag();
         m_DMA_TX.SetFifoControl(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                   // Configuration FIFO control register
 
         m_CardStatus       = STA_NOINIT;
@@ -171,8 +167,8 @@ void SDIO_Driver::Initialize(void)
         ISR_Init(SDMMC1_IRQn, 5);
 
         // NVIC configuration for DMA transfer complete interrupt
-        ISR_Init(DMA2_Stream3_IRQn, 6);
-        ISR_Init(DMA2_Stream6_IRQn, 6);
+        m_DMA_RX.EnableIRQ(6);
+        m_DMA_TX.EnableIRQ(6);
 
         // Initialize SDMMC peripheral interface with default configuration for SD card initialization
         ClearClockRegister();

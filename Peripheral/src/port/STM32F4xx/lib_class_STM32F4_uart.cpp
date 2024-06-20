@@ -1204,6 +1204,7 @@ void UART_Driver::IRQ_Handler(void)
 
             DMA_DisableTX();
             m_DMA_IsItBusyTX = false;
+            return;
         }
       #endif
 

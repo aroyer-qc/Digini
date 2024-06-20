@@ -743,7 +743,6 @@ void UART_Driver::DMA_EnableRX(void)
             m_DMA_RX.ClearFlag();
             m_DMA_RX.Enable();
             EnableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
-            m_pUart->CR1 |= USART_CR1_RE;
         }
     }
 }
@@ -764,7 +763,6 @@ void UART_Driver::DMA_DisableRX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            m_pUart->CR1 &= ~USART_CR1_RE;
             m_DMA_RX.Disable();
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAR);
             DisableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
@@ -790,7 +788,6 @@ void UART_Driver::DMA_EnableTX(void)
         if(m_pDMA_Info != nullptr)
         {
             EnableTX_ISR(UART_ISR_TX_COMPLETED_MASK);
-            m_pUart->CR1 |= USART_CR1_TE;
             m_pUart->CR3 |= USART_CR3_DMAT;
         }
     }
@@ -812,7 +809,6 @@ void UART_Driver::DMA_DisableTX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            m_pUart->CR1 &= ~USART_CR1_TE;
             m_DMA_TX.Disable();
             m_DMA_TX.ClearFlag();
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAT);
@@ -1088,7 +1084,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_RX) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_BYTE);
+        EnableRX_ISR(UART_ISR_RX_BYTE_MASK);
     }
   #endif
 
@@ -1096,7 +1092,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_IDLE) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_IDLE_CFG);
+        EnableRX_ISR(UART_ISR_RX_IDLE_MASK);
     }
   #endif
 
@@ -1104,15 +1100,15 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_ERROR) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_ERROR_CFG);
+        EnableRX_ISR(UART_ISR_RX_ERROR_MASK);
     }
   #endif
 
   #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
-    if((CallBackType & UART_CALLBACK_EMPTY_TX_CFG) != 0)
+    if((CallBackType & UART_CALLBACK_EMPTY_TX) != 0)
     {
         // m_CallBackType |= CallBackType;
-        //EnableRX_ISR(UART_ISR_TX_EMPTY_CFG);      // don't... only on send data
+        //EnableRX_ISR(UART_ISR_TX_EMPTY_MASK);      // don't... only on send data
     }
   #endif
 
@@ -1120,7 +1116,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_COMPLETED_TX) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_TX_COMPLETED_CFG);
+        EnableRX_ISR(UART_ISR_TX_COMPLETED_MASK);
     }
   #endif
 }

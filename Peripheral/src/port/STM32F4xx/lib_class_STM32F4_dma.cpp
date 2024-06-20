@@ -89,6 +89,7 @@ void DMA_Driver::SetTransfer(void* pSource, void* pDestination, size_t Length)
         m_pDMA->M0AR = uint32_t(pDestination);
         m_pDMA->PAR  = uint32_t(pSource);
     }
+    
     m_pDMA->NDTR = uint32_t(Length);
 }
 

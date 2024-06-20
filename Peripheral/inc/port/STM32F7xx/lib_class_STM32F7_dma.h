@@ -85,7 +85,7 @@
 struct DMA_Info_t
 {
     uint32_t            ConfigAndChannel;
-    uint32_t            DMA_Flag;
+    uint32_t            Flag;
     DMA_Stream_TypeDef* pDMA;
     IRQn_Type           IRQn_Channel;
     uint8_t             PreempPrio;
@@ -128,7 +128,6 @@ class DMA_Driver
     private:
 
         void        EnableClock                             (void);
-
 
         DMA_Stream_TypeDef*         m_pDMA;
         uint32_t                    m_Flag;

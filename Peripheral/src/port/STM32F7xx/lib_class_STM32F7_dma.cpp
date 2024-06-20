@@ -56,6 +56,8 @@
 void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 {
     m_pDMA         = pInfo->pDMA;
+    m_Flag         = pInfo->Flag;
+    m_IRQn_Channel = pInfo->IRQn_Channel;
     EnableClock();
     m_pDMA->CR     = pInfo->ConfigAndChannel;
     m_Direction    = pInfo->ConfigAndChannel & DMA_DIRECTION_MASK;
@@ -87,6 +89,7 @@ void DMA_Driver::SetTransfer(void* pSource, void* pDestination, size_t Length)
         m_pDMA->M0AR = uint32_t(pDestination);
         m_pDMA->PAR  = uint32_t(pSource);
     }
+    
     m_pDMA->NDTR = uint32_t(Length);
 }
 

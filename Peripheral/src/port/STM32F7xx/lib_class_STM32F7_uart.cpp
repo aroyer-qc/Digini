@@ -545,7 +545,7 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
                 m_DMA_IsItBusyTX = true;
 
                 m_DMA_TX.Disable();
-                m_DMA_TX.ClearFlag(m_pDMA_Info->DMA_TX.DMA_Flag); // no parameter on F4
+                m_DMA_TX.ClearFlag();
 
                 if(pBufferTX != nullptr)
                 {
@@ -748,7 +748,7 @@ void UART_Driver::DMA_EnableRX(void)
         {
             m_pUart->CR3 |= USART_CR3_DMAR;         // Enable the DMA transfer
             (void)m_pUart->RDR;
-            m_DMA_RX.ClearFlag(m_pDMA_Info->DMA_RX.DMA_Flag);
+            m_DMA_RX.ClearFlag();
             m_DMA_RX.Enable();
             EnableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
         }
@@ -771,10 +771,11 @@ void UART_Driver::DMA_DisableRX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
+ //           m_pUart->CR1 &= ~USART_CR1_RE;
             m_DMA_RX.Disable();
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAR);
             DisableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
-            m_DMA_RX.ClearFlag(m_pDMA_Info->DMA_RX.DMA_Flag);
+            m_DMA_RX.ClearFlag();
         }
     }
 }
@@ -818,7 +819,7 @@ void UART_Driver::DMA_DisableTX(void)
         if(m_pDMA_Info != nullptr)
         {
             m_DMA_TX.Disable();
-            m_DMA_TX.ClearFlag(m_pDMA_Info->DMA_TX.DMA_Flag);
+            m_DMA_TX.ClearFlag();
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAT);
         }
     }
@@ -841,7 +842,7 @@ size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
     if(m_pUart != nullptr)
     {
         m_DMA_RX.Disable();
-        m_DMA_RX.ClearFlag(m_pDMA_Info->DMA_RX.DMA_Flag);
+        m_DMA_RX.ClearFlag();
         SizeDataRX = m_DMA_RX.GetLength();                   // Number of byte available in p_RxBuf
 
         if(SizeDataRX <= SizeRX)
@@ -864,11 +865,6 @@ size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
 
     return SizeDataRX;
 }
-
-
-// TODO or check : Do i need DMA IRQ or IDLE will manage everything here...
-
-
 
 //-------------------------------------------------------------------------------------------------
 
@@ -985,8 +981,8 @@ void UART_Driver::DisableRX_ISR(uint8_t Mask)
 //   Function:      EnableTX_ISR
 //
 //   Parameter(s):  Mask        TX ISR request
-//                                  UART_ISR_TX_EMPTY
-//                                  UART_ISR_TX_COMPLETE
+//                                  UART_ISR_TX_EMPTY_MASK
+//                                  UART_ISR_TX_COMPLETE_MASK
 //   Return Value:  None
 //
 //   Description:   Enable specific transmit interrupt

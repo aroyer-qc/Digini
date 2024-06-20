@@ -143,12 +143,27 @@ SystemState_e MemoryNode::Free(void)
 //   Parameter(s):  size_t          NodeDataSize        Total size of data node needed
 //   Return:        void
 //
-//   Description:   Set the node size required for this memopy pool of node.
+//   Description:   Set the node size required for this memory pool of node.
 //
 //-------------------------------------------------------------------------------------------------
 void MemoryNode::SetNodeSize(size_t NodeDataSize)
 {
     m_pNodeList->SetNodeSize(NodeDataSize);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetNodeSize
+//
+//   Parameter(s):  None
+//   Return:        size_t
+//
+//   Description:   Get the node size from this memory pool of node.
+//
+//-------------------------------------------------------------------------------------------------
+size_t MemoryNode::GetNodeSize(void)
+{
+    return m_pNodeList->GetNodeSize();
 }
 
 //-------------------------------------------------------------------------------------------------

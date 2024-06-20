@@ -36,7 +36,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_CS43L22_GLOBAL
-#include "./Digini/Peripheral/inc/device/lib_class_audio_codec_CS43L22.h"
+#include "./Digini/lib_digini.h"
 #undef  LIB_CS43L22_GLOBAL
 
 //-------------------------------------------------------------------------------------------------

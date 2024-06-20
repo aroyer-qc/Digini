@@ -296,7 +296,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
            // myVT100.InMenuPrintf(1, 13, LBL_GUI_VERSION_INFO);
             myVT100.InMenuPrintf(       LBL_DIGINI_VERSION);
             myVT100.InMenuPrintf(1, 14, LBL_SERIAL_INFO);
-          #if defined(DEBUG) || (DIGINI_USE_DATABASE == DISABLED)
+          #if defined(DEBUG) || (DIGINI_USE_DATABASE == DEF_DISABLED)
             myVT100.InMenuPrintf(       LBL_SERIAL_NUMBER);
           #else
              char* pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE);
@@ -314,8 +314,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(1, 19, VT100_LBL_ESCAPE);
             myVT100.InMenuPrintf(1, 20, LBL_CPU_VOLTAGE);
             myVT100.InMenuPrintf(1, 21, LBL_CPU_TEMPERATURE);
+          #if (DIGINI_USE_DATABASE == DEF_DISABLED)
+            myVT100.InMenuPrintf(20, 21, LBL_DEGREE_CELSIUS);
+          #else
             DB_Central.Get(&Unit, SYSTEM_TEMPERATURE_UNIT);
             myVT100.InMenuPrintf(20, 21, (Unit == TEMP_CELSIUS) ? LBL_DEGREE_CELSIUS : LBL_DEGREE_FAHRENHEIT);
+          #endif
         }
         break;
 
@@ -330,10 +334,17 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             }
 
             // Get the temperature of the CPU form the ADC class
+          #if (DIGINI_USE_DATABASE != DEF_DISABLED)
             DB_Central.Get(&Unit, SYSTEM_TEMPERATURE_UNIT);
 
-            if(Unit == TEMP_CELSIUS) ; // Temperature = Read ADC in Celsius
-            else ;                     // Temperature = Read ADC in Fahrenheit
+            if(Unit == TEMP_CELSIUS) // Temperature = Read ADC in Celsius
+            {
+            }
+            else
+          #endif
+            {
+
+            }                     // Temperature = Read ADC in Fahrenheit
 
             myVT100.InMenuPrintf(21, 14, LBL_STRING, "25.5");       // TODO replace by the right method
 
@@ -369,13 +380,20 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 //-------------------------------------------------------------------------------------------------
 VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT100_CallBackType_e Type)
 {
+    extern CON_DebugLevel_e BSP_GlobalDebugLevel; // TODO get a better method ( automatically generated into debug file
+
+
     static CON_DebugLevel_e DebugLevel = CON_DEBUG_NONE;
 
     // Update VT100_DebugLevel only on item 0 if it is VT100_CALLBACK_REFRESH type
 
     if(Type == VT100_CALLBACK_REFRESH)
     {
+      #if (DIGINI_USE_DATABASE == DISABLED)
+        DebugLevel = BSP_GlobalDebugLevel;
+      #else
         DB_Central.Get(&DebugLevel, SYS_DEBUG_LEVEL, 0, 0);
+      #endif
         VT100_LastDebugLevel = DebugLevel;
 
         myVT100.SaveAttribute();
@@ -417,7 +435,11 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
 
     if(VT100_LastDebugLevel != DebugLevel)
     {
+      #if (DIGINI_USE_DATABASE == DISABLED)
+        BSP_GlobalDebugLevel = DebugLevel;
+      #else
         DB_Central.Set(&DebugLevel, SYS_DEBUG_LEVEL);           // Write a Record in backup RAM
+      #endif
     }
 
     return VT100_INPUT_MENU_CHOICE;
@@ -901,7 +923,11 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
             pLanguage = (Language_e*)pMemoryPool->Alloc(sizeof(Language_e) * 2);
             if(pLanguage != nullptr)
             {
+              #if (DIGINI_USE_DATABASE != DEF_DISABLED)
                 DB_Central.Get(&pLanguage[VT100_ACTUAL_LANGUAGE], SYSTEM_LANGUAGE);
+              #else
+                pLanguage[VT100_ACTUAL_LANGUAGE] = LANG_ENGLISH;
+              #endif
                 pLanguage[VT100_NEW_LANGUAGE] = pLanguage[VT100_ACTUAL_LANGUAGE];
                 VT100_DisplayLanguageSelection(pLanguage[VT100_ACTUAL_LANGUAGE], true);
             }
@@ -910,8 +936,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
             pBuffer2 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER));         // use to compare Serial number
             if((pBuffer1 != nullptr) && (pBuffer2 != nullptr))
             {
+              #if (DIGINI_USE_DATABASE != DEF_DISABLED)
                 DB_Central.Get(&pBuffer1, SYSTEM_SERIAL_NUMBER);
                 DB_Central.Get(&pBuffer2, SYSTEM_SERIAL_NUMBER);
+              #else
+                // TODO
+              #endif
             }
 
         }
@@ -956,7 +986,9 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                     {
                         if(pLanguage[VT100_NEW_LANGUAGE] != pLanguage[VT100_ACTUAL_LANGUAGE])
                         {
+                          #if (DIGINI_USE_DATABASE != DEF_DISABLED)
                             DB_Central.Set(&pLanguage[VT100_NEW_LANGUAGE], SYSTEM_LANGUAGE);
+                          #endif
                             myLabel.SetLanguage(pLanguage[VT100_NEW_LANGUAGE]);
                             myVT100.SetRefreshFullPage();
                           #if (DIGINI_USE_GRAFX == DEF_ENABLED)
@@ -965,6 +997,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                         }
                     }
 
+                  #if (DIGINI_USE_DATABASE != DEF_DISABLED)
                     if((pBuffer1 != nullptr) && (pBuffer2 != nullptr))
                     {
                         if(memcmp(pBuffer1, pBuffer2, sizeof(OEM_SERIAL_NUMBER)) != 0)
@@ -972,6 +1005,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                             DB_Central.Set(&pBuffer1, SYSTEM_SERIAL_NUMBER);
                         }
                     }
+                  #endif
 
                     return VT100_INPUT_SAVE_DATA;
                 }

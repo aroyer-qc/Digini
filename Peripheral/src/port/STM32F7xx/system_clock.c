@@ -122,7 +122,7 @@ void SystemInit(void)
     RCC->DCKCFGR2 |= RCC_DCKCFGR2_CK48MSEL;
 
     // AHB,APB1,APB2 CLOCK
-    RCC->CFGR |= (CFG_SYS_HCLK | CFG_SYS_APB1 | CFG_SYS_APB2);
+    RCC->CFGR |= (CFG_SYS_HCLK | CFG_SYS_APB1 | CFG_SYS_APB2 | CFG_MCO_1 | CFG_MCO_2);
 
     // Configure the Vector Table location add offset address
   #ifdef VECT_TAB_SRAM

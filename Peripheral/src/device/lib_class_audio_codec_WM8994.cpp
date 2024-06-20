@@ -32,8 +32,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
-#include "./Digini/Peripheral/inc/device/lib_class_audio_codec_WM8994.h"
+#define LIB_WM8994_GLOBAL
+#include "./Digini/lib_digini.h"
+#undef  LIB_WM8994_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)

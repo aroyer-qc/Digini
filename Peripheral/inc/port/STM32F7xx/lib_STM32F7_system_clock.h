@@ -70,6 +70,28 @@
 #define CFG_RCC_CFGR_PPRE2_DIV8                     0x0000C000U
 #define CFG_RCC_CFGR_PPRE2_DIV16                    0x0000E000U
 
+#define CFG_RCC_CFGR_MCO1PRE_NO_DIV                 0x00000000U
+#define CFG_RCC_CFGR_MCO1PRE_DIV2                   0x04000000U
+#define CFG_RCC_CFGR_MCO1PRE_DIV3                   0x05000000U
+#define CFG_RCC_CFGR_MCO1PRE_DIV4                   0x06000000U
+#define CFG_RCC_CFGR_MCO1PRE_DIV5                   0x07000000U
+
+#define CFG_RCC_CFGR_MCO1_HSI                       0x00000000U
+#define CFG_RCC_CFGR_MCO1_LSE                       0x00200000U
+#define CFG_RCC_CFGR_MCO1_HSE                       0x00400000U
+#define CFG_RCC_CFGR_MCO1_PLL                       0x00600000U
+
+#define CFG_RCC_CFGR_MCO2PRE_NO_DIV                 0x00000000U
+#define CFG_RCC_CFGR_MCO2PRE_DIV2                   0x20000000U
+#define CFG_RCC_CFGR_MCO2PRE_DIV3                   0x28000000U
+#define CFG_RCC_CFGR_MCO2PRE_DIV4                   0x30000000U
+#define CFG_RCC_CFGR_MCO2PRE_DIV5                   0x38000000U
+
+#define CFG_RCC_CFGR_MCO2_SYSCLOCK                  0x00000000U
+#define CFG_RCC_CFGR_MCO2_PLLI2S                    0x40000000U
+#define CFG_RCC_CFGR_MCO2_HSE                       0x80000000U
+#define CFG_RCC_CFGR_MCO2_PLL                       0xC0000000U
+
 //-------------------------------------------------------------------------------------------------
 // Configuration file(s)
 //-------------------------------------------------------------------------------------------------

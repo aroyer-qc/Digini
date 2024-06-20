@@ -31,7 +31,7 @@
 #define LIB_SERIAL_FLASH_GLOBAL
 #include "./Digini/lib_digini.h"
 #undef  LIB_SERIAL_FLASH_GLOBAL
-//#include "./Digini/Peripheral/inc/device/lib_class_serial_flash.h"
+
 
 //-------------------------------------------------------------------------------------------------
 

@@ -1108,7 +1108,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
   #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_EMPTY_TX) != 0)
     {
-        // m_CallBackType |= CallBackType;
+        //m_CallBackType |= CallBackType;
         //EnableRX_ISR(UART_ISR_TX_EMPTY_MASK);      // don't... only on send data
     }
   #endif

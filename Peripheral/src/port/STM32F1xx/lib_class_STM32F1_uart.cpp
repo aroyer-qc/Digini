@@ -42,27 +42,27 @@
 
 #define UART_BACK_OFFSET_RESET_REGISTER     0x0C
 
-#define UART_CR1_PARITY_NONE                0                                   // Parity control disabled
-#define UART_CR1_PARITY_EVEN                USART_CR1_PCE                       // Parity control enabled and Even Parity is selected
-#define UART_CR1_PARITY_ODD                 (USART_CR1_PCE | USART_CR1_PS)      // Parity control enabled and Odd Parity is selected
+#define UART_REG_PARITY_NONE                0                                   // Parity control disabled
+#define UART_REG_PARITY_EVEN                USART_CR1_PCE                       // Parity control enabled and Even Parity is selected
+#define UART_REG_PARITY_ODD                 (USART_CR1_PCE | USART_CR1_PS)      // Parity control enabled and Odd Parity is selected
 
-#define UART_CR1_DATA_WIDTH_8B              0                                   // 8 bits word length
-#define UART_CR1_DATA_WIDTH_9B              USART_CR1_M                         // 9 bits word length
+#define UART_REG_DATA_WIDTH_8B              0                                   // 8 bits word length
+#define UART_REG_DATA_WIDTH_9B              USART_CR1_M                         // 9 bits word length
 
-#define UART_CR1_RX                         USART_CR1_RE
-#define UART_CR1_TX                         USART_CR1_TE
-#define UART_CR1_RX_TX                      USART_CR1_RE | USART_CR1_TE
+#define UART_REG_RX_ENABLE                         USART_CR1_RE
+#define UART_REG_TX_ENABLE                         USART_CR1_TE
+#define UART_REG_RX_TX_ENABLE                      USART_CR1_RE | USART_CR1_TE
 
-#define UART_CR2_STOP_1B                    0                                   // 1   stop bit
-#define UART_CR2_STOP_0_5B                  USART_CR2_STOP_0                    // 0.5 stop bit
-#define UART_CR2_STOP_2_B                   USART_CR2_STOP_1                    // 2   stop bits
-#define UART_CR2_STOP_1_5B                  USART_CR2_STOP_0 | USART_CR2_STOP_1 // 1.5 stop bits
+#define UART_REG_STOP_1B                    0                                   // 1   stop bit
+#define UART_REG_STOP_0_5B                  USART_CR2_STOP_0                    // 0.5 stop bit
+#define UART_REG_STOP_2_B                   USART_CR2_STOP_1                    // 2   stop bits
+#define UART_REG_STOP_1_5B                  USART_CR2_STOP_0 | USART_CR2_STOP_1 // 1.5 stop bits
 
-#define UART_CR3_FLOW_CTS                   USART_CR3_CTSE
-#define UART_CR3_FLOW_CTS_ISR               USART_CR3_CTSIE
-#define UART_CR3_FLOW_RTS                   USART_CR3_RTSE
+#define UART_REG_FLOW_CTS                   USART_CR3_CTSE
+#define UART_REG_FLOW_CTS_ISR               USART_CR3_CTSIE
+#define UART_REG_FLOW_RTS                   USART_CR3_RTSE
 
-#define UART_CR2_CONFIG_OFFSET              16
+#define UART_REG_CONFIG_OFFSET              16
 
 //-------------------------------------------------------------------------------------------------
 //  private variable(s)
@@ -110,8 +110,8 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
     if(UartID < NB_OF_REAL_UART_DRIVER)
     {
         m_UartID = UartID;
-        m_pInfo = (UART_Info_t*)&UART_Info[UartID];
-        m_pUart = m_pInfo->pUARTx;
+        m_pInfo  = (UART_Info_t*)&UART_Info[UartID];
+        m_pUart  = m_pInfo->pUARTx;
 
         *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - UART_BACK_OFFSET_RESET_REGISTER) |=  m_pInfo->RCC_APBxPeriph;
         *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - UART_BACK_OFFSET_RESET_REGISTER) &= ~m_pInfo->RCC_APBxPeriph;
@@ -122,7 +122,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
         IO_PinInit(m_pInfo->PinRX);
         IO_PinInit(m_pInfo->PinTX);
 
-      #if (UART_ISR_RX_CFG == DEF_ENABLED)  || (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)  || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
+      #if (UART_ISR_RX_CFG       == DEF_ENABLED) || (UART_ISR_RX_IDLE_CFG      == DEF_ENABLED) || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
           (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
         m_pCallback    = nullptr;
         //m_CallBackType = UART_CALLBACK_NONE;
@@ -159,7 +159,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
         memset(&m_RX_Transfer, 0x00, sizeof(UART_Transfer_t));
       #endif
 
-       memset(&m_TX_Transfer, 0x00, sizeof(UART_Transfer_t));
+        memset(&m_TX_Transfer, 0x00, sizeof(UART_Transfer_t));
     }
   #if (SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
     else if(m_UartID == UART_DRIVER_VIRTUAL)
@@ -329,7 +329,7 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
         CLEAR_BIT(m_pUart->CR1, USART_CR1_UE);                      // Disable the UART
 
         // CR1 RX and TX enable, Length, Parity
-        MaskedConfig = uint32_t(Config) & UART_CR1_CONFIG_MASK;
+        MaskedConfig = UART_Config_e(Config) & UART_CFG_CONFIG_MASK;
         CR1_Register = MaskedConfig;
 
         // RX and TX enable
@@ -337,9 +337,9 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
 
         switch(MaskedConfig)
         {
-            case UART_ENABLE_RX:    CR1_Register |= UART_CR1_RX;    break;
-            case UART_ENABLE_TX:    CR1_Register |= UART_CR1_TX;    break;
-            case UART_ENABLE_RX_TX: CR1_Register |= UART_CR1_RX_TX; break;
+            case UART_CFG_ENABLE_RX:    CR1_Register |= UART_CR1_RX;    break;
+            case UART_CFG_ENABLE_TX:    CR1_Register |= UART_CR1_TX;    break;
+            case UART_CFG_ENABLE_RX_TX: CR1_Register |= UART_CR1_RX_TX; break;
             default: break;
         }
 
@@ -456,7 +456,7 @@ void UART_Driver::VirtualSendData(const uint8_t* pBuffer, uint16_t Size)
 //-------------------------------------------------------------------------------------------------
 SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
 {
-    SystemState_e       State = SYS_READY;
+    SystemState_e State = SYS_READY;
 
     if(m_pUart != nullptr)
     {
@@ -465,7 +465,7 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
           #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
             if(m_pInfo->IsItBlockingOnBusy == true)
             {
-                while(m_DMA_IsItBusyTX ==true)
+                while(m_DMA_IsItBusyTX == true)
                 {
                     nOS_Yield();
                 }
@@ -767,7 +767,7 @@ void UART_Driver::DMA_DisableTX(void)
 //-------------------------------------------------------------------------------------------------
 size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
 {
-    size_t              SizeDataRX = 0;
+    size_t SizeDataRX = 0;
 
     if(m_pUart != nullptr)
     {
@@ -1023,7 +1023,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_RX) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_BYTE);
+        EnableRX_ISR(UART_ISR_RX_BYTE_MASK);
     }
   #endif
 
@@ -1031,7 +1031,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_IDLE) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_IDLE_CFG);
+        EnableRX_ISR(UART_ISR_RX_IDLE_MASK);
     }
   #endif
 
@@ -1039,15 +1039,15 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_ERROR) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_ERROR_CFG);
+        EnableRX_ISR(UART_ISR_RX_ERROR_MASK);
     }
   #endif
 
   #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
-    if((CallBackType & UART_CALLBACK_EMPTY_TX_CFG) != 0)
+    if((CallBackType & UART_CALLBACK_EMPTY_TX) != 0)
     {
         //m_CallBackType |= CallBackType;
-        //EnableRX_ISR(UART_ISR_TX_EMPTY_CFG);      // don't... only on send data
+        //EnableRX_ISR(UART_ISR_TX_EMPTY_MASK);      // don't... only on send data
     }
   #endif
 
@@ -1055,7 +1055,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_COMPLETED_TX) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_TX_COMPLETED_CFG);
+        EnableRX_ISR(UART_ISR_TX_COMPLETED_MASK);
     }
   #endif
 }
@@ -1139,6 +1139,7 @@ void UART_Driver::IRQ_Handler(void)
 
             DMA_DisableTX();
             m_DMA_IsItBusyTX = false;
+            return;
         }
       #endif
 

@@ -396,7 +396,7 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
         }
 
         // LSB or MSB
-        if((Config & UART_DATA_ORDER_MASK) == UART_DATA_ORDER_MSB)
+        if((Config & UART_CFG_DATA_ORDER_MASK) == UART_CFG_DATA_ORDER_MSB)
         {
             CR2_Register |= UART_REG_MSB_FIRST;
         }

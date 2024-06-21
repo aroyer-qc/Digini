@@ -82,7 +82,9 @@ void Console::Initialize(UART_Driver* pUartDriver)
     pUartDriver->DMA_ConfigRX(pBuffer, CON_FIFO_PARSER_RX_SIZE);
   #endif
 
+  #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)                              // not sure it can work without DMA
     pUartDriver->RegisterCallback((CallbackInterface*)this);
+    #endif // todo not good
   #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
     pUartDriver->EnableCallbackType(UART_CALLBACK_RX | UART_CALLBACK_COMPLETED_TX | UART_CALLBACK_ERROR);
   #endif
@@ -551,14 +553,14 @@ void Console::CallbackFunction(int Type, void* pContext)
     switch(Type)
     {
         // TX from uart is completed then release memory.
-        case UART_CALLBACK_COMPLETED_TX:
+        case UART_CALLBACK_TX_COMPLETED:
         {
             pMemoryPool->Free((void**)&pContext);
         }
         break;
 
-      #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
-        case UART_CALLBACK_RX:
+      #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)
+        case UART_CALLBACK_RX_NOT_EMPTY:
         {
             uint8_t* pData = (uint8_t*)pContext;
             m_Fifo.Write(pData, 1);
@@ -566,8 +568,8 @@ void Console::CallbackFunction(int Type, void* pContext)
         break;
       #endif
 
-      #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
-        case UART_CALLBACK_IDLE:
+      #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
+        case UART_CALLBACK_RX_IDLE:
         {
             UART_Transfer_t* pTransfer = (UART_Transfer_t*)pContext;
             m_Fifo.Write(pTransfer->pBuffer, pTransfer->Size);
@@ -575,7 +577,7 @@ void Console::CallbackFunction(int Type, void* pContext)
         break;
       #endif
 
-        case UART_CALLBACK_ERROR:
+        case UART_CALLBACK_RX_ERROR:
         {
             // nothing so far
         }

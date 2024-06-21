@@ -124,8 +124,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
         IO_PinInit(m_pInfo->PinRX);
         IO_PinInit(m_pInfo->PinTX);
 
-      #if (UART_ISR_RX_CFG       == DEF_ENABLED) || (UART_ISR_RX_IDLE_CFG      == DEF_ENABLED) || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
-          (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
         m_pCallback    = nullptr;
         //m_CallBackType = UART_CALLBACK_NONE;
       #endif
@@ -212,23 +211,23 @@ void UART_Driver::Disable(void)
 {
     if(m_pUart != nullptr)
     {
-      #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_RX_ERROR_CFG == DEF_ENABLED)
         CLEAR_BIT(m_pUart->CR3, USART_CR3_EIE);
       #endif
 
-      #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)
         CLEAR_BIT(m_pUart->CR1, USART_CR1_RXNEIE);
       #endif
 
-      #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
         CLEAR_BIT(m_pUart->CR1, USART_CR1_IDLEIE);
       #endif
 
-      #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_TX_EMPTY_CFG == DEF_ENABLED)
         CLEAR_BIT(m_pUart->CR1, USART_CR1_TXEIE);
       #endif
 
-      #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
         CLEAR_BIT(m_pUart->CR1, USART_CR1_TCIE);
       #endif
 
@@ -743,7 +742,7 @@ void UART_Driver::DMA_EnableRX(void)
             (void)m_pUart->DR;
             m_DMA_RX.ClearFlag();
             m_DMA_RX.Enable();
-            EnableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
+            EnableRX_ISR(UART_SR_RX_ERROR_MASK | UART_SR_RX_IDLE_MASK);
         }
     }
 }
@@ -766,7 +765,7 @@ void UART_Driver::DMA_DisableRX(void)
         {
             m_DMA_RX.Disable();
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAR);
-            DisableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
+            DisableRX_ISR(UART_SR_RX_ERROR_MASK | UART_SR_RX_IDLE_MASK);
             m_DMA_RX.ClearFlag();
         }
     }
@@ -788,7 +787,7 @@ void UART_Driver::DMA_EnableTX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            EnableTX_ISR(UART_ISR_TX_COMPLETED_MASK);
+            EnableTX_ISR(UART_SR_TX_COMPLETED_MASK);
             m_pUart->CR3 |= USART_CR3_DMAT;
         }
     }
@@ -875,6 +874,10 @@ size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
 //  IIII RR   RR   QQQQ QQ
 //-------------------------------------------------------------------------------------------------
 
+ #if ((UART_DRIVER_RX_ERROR_CFG     == DEF_ENABLED) || \
+      (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED) || \
+      (UART_DRIVER_RX_IDLE_CFG      == DEF_ENABLED))
+
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:      EnableRX_ISR
@@ -888,7 +891,6 @@ size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
 //   Description:   Enable specific receive interrupt
 //
 //-------------------------------------------------------------------------------------------------
-#if (UART_ISR_RX_IDLE_CFG  == DEF_ENABLED) || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || (UART_ISR_RX_CFG == DEF_ENABLED)
 void UART_Driver::EnableRX_ISR(uint8_t Mask)
 {
     if(m_pUart != nullptr)
@@ -898,8 +900,8 @@ void UART_Driver::EnableRX_ISR(uint8_t Mask)
         // Not empty, Idle, Error flag (Overrun, Framing error, Parity error)
         CLEAR_BIT(m_CopySR, (USART_SR_RXNE | USART_SR_IDLE | USART_SR_ORE | USART_SR_FE | USART_SR_PE));
 
-      #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
-        if((Mask & UART_ISR_RX_IDLE_MASK) != 0)
+      #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
+        if((Mask & UART_SR_RX_IDLE_MASK) != 0)
         {
             SET_BIT(m_CopySR, USART_SR_IDLE);
             Register = m_pUart->SR;
@@ -910,16 +912,16 @@ void UART_Driver::EnableRX_ISR(uint8_t Mask)
         }
       #endif
 
-      #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
-        if((Mask & UART_ISR_RX_ERROR_MASK) != 0)
+      #if (UART_DRIVER_RX_ERROR_CFG == DEF_ENABLED)
+        if((Mask & UART_SR_RX_ALL_ERROR_MASK) != 0)
         {
-            SET_BIT(m_CopySR, (USART_SR_ORE | USART_SR_FE | USART_SR_PE));
+            SET_BIT(m_CopySR, (USART_SR_NF | USART_SR_ORE | USART_SR_FE | USART_SR_PE));
             ClearFlag();
             m_pUart->CR3 |= USART_CR3_EIE;
         }
       #endif
 
-      #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_RX_BYTE_MASK) != 0)
         {
             SET_BIT(m_CopyISR, USART_ISR_RXNE);
@@ -928,7 +930,6 @@ void UART_Driver::EnableRX_ISR(uint8_t Mask)
       #endif
     }
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -942,7 +943,6 @@ void UART_Driver::EnableRX_ISR(uint8_t Mask)
 //   Description:   Enable specific receive interrupt
 //
 //-------------------------------------------------------------------------------------------------
-#if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED) || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || (UART_ISR_RX_CFG == DEF_ENABLED)
 void UART_Driver::DisableRX_ISR(uint8_t Mask)
 {
     if(m_pUart != nullptr)
@@ -952,23 +952,23 @@ void UART_Driver::DisableRX_ISR(uint8_t Mask)
         Register = m_pUart->DR;
         (void)Register;
 
-      #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
-        if((Mask & UART_ISR_RX_IDLE_MASK) != 0)
+      #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
+        if((Mask & UART_SR_RX_IDLE_MASK) != 0)
         {
             CLEAR_BIT(m_CopySR, USART_SR_IDLE);
             CLEAR_BIT(m_pUart->CR1, USART_CR1_IDLEIE);
         }
       #endif
 
-      #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
-        if((Mask & UART_ISR_RX_ERROR_MASK) != 0)
+      #if (UART_DRIVER_RX_ERROR_CFG == DEF_ENABLED)
+        if((Mask & UART_SR_RX_ALL_ERROR_MASK) != 0)
         {
-            CLEAR_BIT(m_CopySR, (USART_SR_ORE | USART_SR_FE | USART_SR_PE));
+            CLEAR_BIT(m_CopySR, (USART_SR_NF | USART_SR_ORE | USART_SR_FE | USART_SR_PE));
             CLEAR_BIT(m_pUart->CR3, USART_CR3_EIE);
         }
       #endif
 
-      #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_RX_BYTE_MASK) != 0)
         {
             CLEAR_BIT(m_CopyISR, USART_ISR_RXNE);
@@ -977,7 +977,15 @@ void UART_Driver::DisableRX_ISR(uint8_t Mask)
       #endif
     }
 }
+
+//-------------------------------------------------------------------------------------------------
+
 #endif
+
+//-------------------------------------------------------------------------------------------------
+
+#if ((UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED) || \
+     (UART_DRIVER_TX_EMPTY_CFG     == DEF_ENABLED))
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -991,14 +999,13 @@ void UART_Driver::DisableRX_ISR(uint8_t Mask)
 //   Description:   Enable specific transmit interrupt
 //
 //-------------------------------------------------------------------------------------------------
-#if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
 void UART_Driver::EnableTX_ISR(uint8_t Mask)
 {
     if(m_pUart != nullptr)
     {
         CLEAR_BIT(m_CopySR, (USART_SR_TC | USART_SR_TXE));    // Clear transmit complete and transmit empty
 
-      #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_TX_EMPTY_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_TX_EMPTY_MASK) != 0)
         {
             SET_BIT(m_CopySR, USART_SR_TXE);
@@ -1006,8 +1013,8 @@ void UART_Driver::EnableTX_ISR(uint8_t Mask)
         }
       #endif
 
-      #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
-        if((Mask & UART_ISR_TX_COMPLETED_MASK) != 0)
+      #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
+        if((Mask & UART_SR_TX_COMPLETED_MASK) != 0)
         {
             SET_BIT(m_CopySR, USART_SR_TC);
             m_pUart->SR= ~USART_SR_TC;
@@ -1016,7 +1023,6 @@ void UART_Driver::EnableTX_ISR(uint8_t Mask)
       #endif
     }
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1030,12 +1036,11 @@ void UART_Driver::EnableTX_ISR(uint8_t Mask)
 //   Description:   Disable specific transmit interrupt
 //
 //-------------------------------------------------------------------------------------------------
-#if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
 void UART_Driver::DisableTX_ISR(uint8_t Mask)
 {
     if(m_pUart != nullptr)
     {
-      #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_TX_EMPTY_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_TX_EMPTY_MASK) != 0)
         {
             CLEAR_BIT(m_CopyISR, USART_ISR_TXE);
@@ -1043,8 +1048,8 @@ void UART_Driver::DisableTX_ISR(uint8_t Mask)
         }
       #endif
 
-      #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
-        if((Mask & UART_ISR_TX_COMPLETED_MASK) != 0)
+      #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
+        if((Mask & UART_SR_TX_COMPLETED_MASK) != 0)
         {
             CLEAR_BIT(m_CopySR, USART_SR_TC);
             CLEAR_BIT(m_pUart->CR1, USART_CR1_TCIE);
@@ -1052,7 +1057,12 @@ void UART_Driver::DisableTX_ISR(uint8_t Mask)
       #endif
     }
 }
+
 #endif
+
+//-------------------------------------------------------------------------------------------------
+
+#if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1081,46 +1091,50 @@ void UART_Driver::RegisterCallback(CallbackInterface* pCallback)
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::EnableCallbackType(int CallBackType)
 {
-  #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
-    if((CallBackType & UART_CALLBACK_RX) != 0)
+  #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)
+    if((CallBackType & UART_CALLBACK_RX_NOT_EMPTY) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_BYTE_MASK);
+        EnableRX_ISR(UART_SR_RX_NOT_EMPTY_MASK);
     }
   #endif
 
-  #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
+  #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_IDLE) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_IDLE_MASK);
+        EnableRX_ISR(UART_SR_RX_IDLE_MASK);
     }
   #endif
 
-#if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
+#if (UART_DRIVER_RX_ERROR_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_ERROR) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_ERROR_MASK);
+        EnableRX_ISR(UART_SR_RX_ERROR_MASK);
     }
   #endif
 
-  #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
+  #if (UART_DRIVER_TX_EMPTY_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_EMPTY_TX) != 0)
     {
         //m_CallBackType |= CallBackType;
-        //EnableRX_ISR(UART_ISR_TX_EMPTY_MASK);      // don't... only on send data
+        EnableRX_ISR(UART_ISR_TX_EMPTY_MASK);
     }
   #endif
 
-  #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+  #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
     if((CallBackType & UART_CALLBACK_COMPLETED_TX) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_TX_COMPLETED_MASK);
+        EnableRX_ISR(UART_SR_TX_COMPLETED_MASK);
     }
   #endif
 }
+
+//-------------------------------------------------------------------------------------------------
+
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1138,7 +1152,7 @@ void UART_Driver::IRQ_Handler(void)
         Status  = m_pUart->SR;
         Status &= m_CopySR;
 
-       #if (UART_ISR_RX_ERROR_CFG == DEF_ENABLED)
+       #if (UART_DRIVER_RX_ERROR_CFG == DEF_ENABLED)
         if((Status & (USART_SR_FE | USART_SR_NE | USART_SR_ORE)) != 0)
         {
             ClearFlag();
@@ -1153,7 +1167,7 @@ void UART_Driver::IRQ_Handler(void)
         }
        #endif
 
-       #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
+       #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)
         if((Status & USART_ISR_RXNE) != 0)
         {
             WRITE_REG(m_pUart->SR, ~(USART_SR_RXNE));
@@ -1169,7 +1183,7 @@ void UART_Driver::IRQ_Handler(void)
         }
       #endif
 
-      #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
         if((Status & USART_SR_IDLE) != 0)
         {
           #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
@@ -1178,10 +1192,13 @@ void UART_Driver::IRQ_Handler(void)
 
             ClearFlag();
 
+          #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
             if(m_pCallback != nullptr)
             {
                 m_pCallback->CallbackFunction(UART_CALLBACK_IDLE, (void*)&m_RX_Transfer);
             }
+          #endif
+
           #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
             DMA_ConfigRX(nullptr, 0); // Reset RX packet to avoid override with a new RX packet
           #endif
@@ -1189,15 +1206,17 @@ void UART_Driver::IRQ_Handler(void)
         }
       #endif
 
-      #if (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
         if((Status & USART_SR_TC) != 0)
         {
             WRITE_REG(m_pUart->SR, ~(USART_SR_TC));
 
+          #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
             if(m_pCallback != nullptr)
             {
                 m_pCallback->CallbackFunction(UART_CALLBACK_COMPLETED_TX, (void*)m_TX_Transfer.pBuffer);
             }
+          #endif
 
             DMA_DisableTX();
             m_DMA_IsItBusyTX = false;
@@ -1205,7 +1224,7 @@ void UART_Driver::IRQ_Handler(void)
         }
       #endif
 
-      #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_TX_EMPTY_CFG == DEF_ENABLED)
         if((Status & USART_ISR_TXE) != 0)
         {
             if(m_TX_Transfer.Size < m_TX_Transfer.StaticSize)

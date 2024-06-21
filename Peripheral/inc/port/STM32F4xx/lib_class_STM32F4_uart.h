@@ -44,9 +44,10 @@
     (UART_DRIVER_SUPPORT_UART8_DMA_CFG  == DEF_ENABLED) || \
     (UART_DRIVER_SUPPORT_UART9_DMA_CFG  == DEF_ENABLED) || \
     (UART_DRIVER_SUPPORT_UART10_DMA_CFG == DEF_ENABLED)
-  #define UART_DRIVER_DMA_CFG                 DEF_ENABLED
+
+  #define UART_DRIVER_DMA_CFG                   DEF_ENABLED
 #else
-  #define UART_DRIVER_DMA_CFG                 DEF_DISABLED
+  #define UART_DRIVER_DMA_CFG                   DEF_DISABLED
 #endif
 
 #if (UART_DRIVER_DMA_CFG                  == DEF_ENABLED) || \
@@ -56,29 +57,49 @@
   #define UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG  DEF_DISABLED
 #endif
 
-#define UART_ISR_RX_ERROR_MASK              0x01
-#define UART_ISR_RX_BYTE_MASK               0x02
-#define UART_ISR_RX_IDLE_MASK               0x04
-#define UART_ISR_TX_EMPTY_MASK              0x01  // maybe it should be 0x10
-#define UART_ISR_TX_COMPLETED_MASK          0x02  // maybe it should be 0x20
+#define UART_SR_RX_PARITY_ERROR_MASK            0x01
+#define UART_SR_RX_FRAMING_ERROR_MASK           0x02
+#define UART_SR_RX_NOISE_DETECTED_MASK          0x04
+#define UART_SR_RX_OVERRUN_ERROR_MASK           0x08
+#define UART_SR_RX_ERROR_MASK                   (UART_SR_RX_PARITY_ERROR_MASK | UART_SR_RX_FRAMING_ERROR_MASK | UART_SR_RX_NOISE_DETECTED_MASK | UART_SR_RX_OVERRUN_ERROR_MASK)
+#define UART_SR_RX_IDLE_MASK                    0x10
+#define UART_SR_RX_NOT_EMPTY_MASK               0x20
+#define UART_SR_TX_COMPLETED_MASK               0x40
+#define UART_SR_TX_EMPTY_MASK                   0x80
 
 // Callback type in bit position
-#define UART_CALLBACK_NONE                  0x00
-#define UART_CALLBACK_RX                    0x01
-#define UART_CALLBACK_IDLE                  0x02
-#define UART_CALLBACK_ERROR                 0x04
-#define UART_CALLBACK_CTS                   0x08
-#define UART_CALLBACK_EMPTY_TX              0x10
-#define UART_CALLBACK_COMPLETED_TX          0x20
-#define UART_CALLBACK_DMA_RX                0x40
+#define UART_CALLBACK_NONE                      0x00
+#define UART_CALLBACK_RX_ERROR                  0x01
+#define UART_CALLBACK_RX_IDLE                   0x02
+#define UART_CALLBACK_RX_NOT_EMPTY              0x04
+#define UART_CALLBACK_TX_COMPLETED              0x08
+#define UART_CALLBACK_TX_EMPTY                  0x10
+#define UART_CALLBACK_RX_DMA                    0x20
 
-#if (UART_ISR_RX_CFG       == DEF_ENABLED) || (UART_ISR_RX_IDLE_CFG      == DEF_ENABLED) || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || \
-    (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
-    #define UART_ISR_CFG                    DEF_ENABLED
+#if ((UART_DRIVER_RX_PARITY_ERROR_CFG   == DEF_ENABLED) || \
+     (UART_DRIVER_RX_FRAMING_ERROR_CFG  == DEF_ENABLED) || \
+     (UART_DRIVER_RX_NOISE_DETECTED_CFG == DEF_ENABLED) || \
+     (UART_DRIVER_RX_OVERRUN_ERROR_CFG  == DEF_ENABLED))
+
+    #define UART_DRIVER_RX_ERROR_CFG            DEF_ENABLED
+
 #endif
 
-#define UART_WAIT_ON_BUSY                    true
-#define UART_DONT_WAIT_ON_BUSY               false
+#if ((UART_DRIVER_RX_PARITY_ERROR_CFG   != DEF_ENABLED) && \
+     (UART_DRIVER_RX_FRAMING_ERROR_CFG  != DEF_ENABLED) && \
+     (UART_DRIVER_RX_NOISE_DETECTED_CFG != DEF_ENABLED) && \
+     (UART_DRIVER_RX_OVERRUN_ERROR_CFG  != DEF_ENABLED) && \
+     (UART_DRIVER_RX_IDLE_CFG           != DEF_ENABLED) && \
+     (UART_DRIVER_RX_NOT_EMPTY_CFG      != DEF_ENABLED) && \
+     (UART_DRIVER_TX_COMPLETED_CFG      != DEF_ENABLED) && \
+     (UART_DRIVER_TX_EMPTY_CFG          != DEF_ENABLED))
+
+    #undef  UART_DRIVER_USE_CALLBACK_CFG
+    #define UART_DRIVER_USE_CALLBACK_CFG        DEF_DISABLED
+#endif
+
+#define UART_WAIT_ON_BUSY                       true
+#define UART_DONT_WAIT_ON_BUSY                  false
 
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
@@ -289,7 +310,7 @@ class UART_Driver
         size_t              DMA_GetSizeRX                   (uint16_t SizeRX);
       #endif
 
-      #if (UART_ISR_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
         void                RegisterCallback                (CallbackInterface* pCallback);
         void                EnableCallbackType              (int CallbackType);
       #endif
@@ -308,12 +329,16 @@ class UART_Driver
 
         void                ClearFlag                       (void);
 
-      #if (UART_ISR_RX_IDLE_CFG  == DEF_ENABLED) || (UART_ISR_RX_ERROR_CFG == DEF_ENABLED) || (UART_ISR_RX_CFG == DEF_ENABLED)
+      #if ((UART_DRIVER_RX_ERROR_CFG          == DEF_ENABLED) || \
+           (UART_DRIVER_RX_NOT_EMPTY_CFG      == DEF_ENABLED) || \
+           (UART_DRIVER_RX_IDLE_CFG           == DEF_ENABLED))
+
         void                EnableRX_ISR                    (uint8_t Mask);
         void                DisableRX_ISR                   (uint8_t Mask);
       #endif
 
-      #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED) || (UART_ISR_TX_COMPLETED_CFG == DEF_ENABLED)
+      #if ((UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED) || \
+           (UART_DRIVER_TX_EMPTY_CFG     == DEF_ENABLED))
         void                EnableTX_ISR                    (uint8_t Mask);
         void                DisableTX_ISR                   (uint8_t Mask);
       #endif
@@ -339,7 +364,7 @@ class UART_Driver
         bool                        m_VirtualUartBusyTX;
       #endif
 
-      #if (UART_ISR_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
         CallbackInterface*          m_pCallback;
         //int                         m_CallBackType;  variables is not used at this time..
       #endif

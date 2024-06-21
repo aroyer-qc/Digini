@@ -898,7 +898,7 @@ void UART_Driver::EnableRX_ISR(uint8_t Mask)
         volatile uint32_t Register;
 
         // Not empty, Idle, Error flag (Overrun, Framing error, Parity error)
-        CLEAR_BIT(m_CopySR, (USART_SR_RXNE | USART_SR_IDLE | USART_SR_ORE | USART_SR_FE | USART_SR_PE));
+        CLEAR_BIT(m_CopySR, (USART_SR_RXNE | USART_SR_IDLE | USART_SR_NF | USART_SR_ORE | USART_SR_FE | USART_SR_PE));
 
       #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
         if((Mask & UART_SR_RX_IDLE_MASK) != 0)

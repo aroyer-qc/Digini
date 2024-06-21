@@ -49,9 +49,9 @@
 #define UART_REG_DATA_WIDTH_8B              0                                   // 8 bits word length
 #define UART_REG_DATA_WIDTH_9B              USART_CR1_M                         // 9 bits word length
 
-#define UART_REG_RX_ENABLE                         USART_CR1_RE
-#define UART_REG_TX_ENABLE                         USART_CR1_TE
-#define UART_REG_RX_TX_ENABLE                      USART_CR1_RE | USART_CR1_TE
+#define UART_REG_RX_ENABLE                  USART_CR1_RE
+#define UART_REG_TX_ENABLE                  USART_CR1_TE
+#define UART_REG_RX_TX_ENABLE               USART_CR1_RE | USART_CR1_TE
 
 #define UART_REG_STOP_1B                    0                                   // 1   stop bit
 #define UART_REG_STOP_0_5B                  USART_CR2_STOP_0                    // 0.5 stop bit
@@ -62,7 +62,7 @@
 #define UART_REG_FLOW_CTS_ISR               USART_CR3_CTSIE
 #define UART_REG_FLOW_RTS                   USART_CR3_RTSE
 
-#define UART_REG_CONFIG_OFFSET              16
+#define UART_REG_CR2_CONFIG_OFFSET          16
 
 //-------------------------------------------------------------------------------------------------
 //  private variable(s)
@@ -329,25 +329,25 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
         CLEAR_BIT(m_pUart->CR1, USART_CR1_UE);                      // Disable the UART
 
         // CR1 RX and TX enable, Length, Parity
-        MaskedConfig = UART_Config_e(Config) & UART_CFG_CONFIG_MASK;
+        MaskedConfig = UART_Config_e(Config) & UART_CFG_CR1_MASK;
         CR1_Register = MaskedConfig;
 
         // RX and TX enable
-        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_ENABLE_RX_TX_MASK);
+        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_CFG_ENABLE_RX_TX_MASK);
 
         switch(MaskedConfig)
         {
-            case UART_CFG_ENABLE_RX:    CR1_Register |= UART_CR1_RX;    break;
-            case UART_CFG_ENABLE_TX:    CR1_Register |= UART_CR1_TX;    break;
-            case UART_CFG_ENABLE_RX_TX: CR1_Register |= UART_CR1_RX_TX; break;
+            case UART_CFG_ENABLE_RX:    CR1_Register |= UART_REG_RX_ENABLE;    break;
+            case UART_CFG_ENABLE_TX:    CR1_Register |= UART_REG_TX_ENABLE;    break;
+            case UART_CFG_ENABLE_RX_TX: CR1_Register |= UART_REG_RX_TX_ENABLE; break;
             default: break;
         }
 
-        MODIFY_REG(m_pUart->CR1, UART_CR1_CONFIG_MASK, CR1_Register);
+        MODIFY_REG(m_pUart->CR1, UART_CFG_CR1_MASK, CR1_Register);
 
         // CR2 Stop Bits RX and TX enable, Length, Parity
-        MaskedConfig = (uint32_t(Config) >> UART_CR2_CONFIG_OFFSET) & UART_CR2_CONFIG_MASK;
-        MODIFY_REG(m_pUart->CR2, UART_CR2_CONFIG_MASK, MaskedConfig);
+        MaskedConfig = (uint32_t(Config) >> UART_REG_CR2_CONFIG_OFFSET) & UART_CFG_CR2_MASK;
+        MODIFY_REG(m_pUart->CR2, UART_CFG_CR2_MASK, MaskedConfig);
 
         // CR3 left to default.
 

@@ -173,8 +173,8 @@ void NetIP::PutHeader(IP_PacketMsg_t* pTX)
 	pIP_TX->VersionIHL 	= IP_VERSION4_IHL20;
     pIP_TX->TimeToLive 	= IP_TIME_TO_LIVE;
 
-	pIP_TX->Checksum 		= 0;  // use lib checksum.. or make one
-	pIP_TX->Checksum 		= IP_CalculateChecksum(pIP_TX, uint16_t(sizeof(IP_IP_Header_t)));
+	pIP_TX->Checksum    = 0;  // use lib checksum.. or make one
+	pIP_TX->Checksum    = IP_CalculateChecksum(pIP_TX, uint16_t(sizeof(IP_IP_Header_t)));
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -55,12 +55,12 @@ SystemState_e NetARP::Initialize(void)
 		m_TableEntry[i].IP_Address = IP_ADDRESS(0,0,0,0);
 	}
 
-        // Initialize an OS timer for the ARP timer
-        Error = nOS_TimerCreate(m_pTimer,
-                                &TimerCallBack,                         // Timer callback function
-                                nullptr,                                // No Parameter needed for callback
-                                OS_TMR_CFG_TICKS_PER_SEC * 10,	        // Period is define in ip_cfg.h
-                                NOS_TIMER_FREE_RUNNING                  // It will repeat indefinitely
+    // Initialize an OS timer for the ARP timer
+    Error = nOS_TimerCreate(m_pTimer,
+                            &TimerCallBack,                         // Timer callback function
+                            nullptr,                                // No Parameter needed for callback
+                            OS_TMR_CFG_TICKS_PER_SEC * 10,	        // Period is define in ip_cfg.h
+                            NOS_TIMER_FREE_RUNNING                  // It will repeat indefinitely
 
 	if(Error == SYS_OK)	
 	{

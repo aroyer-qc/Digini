@@ -42,28 +42,29 @@
 
 #define UART_BACK_OFFSET_RESET_REGISTER     0x20
 
-#define UART_CR1_PARITY_NONE                0                                   // Parity control disabled
-#define UART_CR1_PARITY_EVEN                USART_CR1_PCE                       // Parity control enabled and Even Parity is selected
-#define UART_CR1_PARITY_ODD                 (USART_CR1_PCE | USART_CR1_PS)      // Parity control enabled and Odd Parity is selected
+#define UART_REG_PARITY_NONE                0                                   // Parity control disabled
+#define UART_REG_PARITY_EVEN                USART_CR1_PCE                       // Parity control enabled and Even Parity is selected
+#define UART_REG_PARITY_ODD                 (USART_CR1_PCE | USART_CR1_PS)      // Parity control enabled and Odd Parity is selected
 
-#define UART_CR1_DATA_WIDTH_8B              0                                   // 8 bits word length
-#define UART_CR1_DATA_WIDTH_9B              USART_CR1_M                         // 9 bits word length
+#define UART_REG_DATA_WIDTH_8B              0                                   // 8 bits word length
+#define UART_REG_DATA_WIDTH_9B              USART_CR1_M                         // 9 bits word length
 
-#define UART_CR1_OVERSAMPLING_16            0                                   // Oversampling by 16
-#define UART_CR1_OVERSAMPLING_8             USART_CR1_OVER8                     // Oversampling by 8
+#define UART_REG_OVERSAMPLING_16            0                                   // Oversampling by 16
+#define UART_REG_OVERSAMPLING_8             USART_CR1_OVER8                     // Oversampling by 8
+#define UART_REG_OVERSAMPLING_MASK          UART_REG_OVERSAMPLING_8             // Mask
 
-#define UART_CR1_RX                         USART_CR1_RE
-#define UART_CR1_TX                         USART_CR1_TE
-#define UART_CR1_RX_TX                      USART_CR1_RE | USART_CR1_TE
+#define UART_REG_RX_ENABLE                  USART_CR1_RE
+#define UART_REG_TX_ENABLE                  USART_CR1_TE
+#define UART_REG_RX_TX_ENABLE               USART_CR1_RE | USART_CR1_TE
 
-#define UART_CR2_STOP_1B                    0                                   // 1   stop bit
-#define UART_CR2_STOP_0_5B                  USART_CR2_STOP_0                    // 0.5 stop bit
-#define UART_CR2_STOP_2_B                   USART_CR2_STOP_1                    // 2   stop bits
-#define UART_CR2_STOP_1_5B                  USART_CR2_STOP_0 | USART_CR2_STOP_1 // 1.5 stop bits
+#define UART_REG_STOP_1B                    0                                   // 1   stop bit
+#define UART_REG_STOP_0_5B                  USART_CR2_STOP_0                    // 0.5 stop bit
+#define UART_REG_STOP_2_B                   USART_CR2_STOP_1                    // 2   stop bits
+#define UART_REG_STOP_1_5B                  USART_CR2_STOP_0 | USART_CR2_STOP_1 // 1.5 stop bits
 
-#define UART_CR3_FLOW_CTS                   USART_CR3_CTSE
-#define UART_CR3_FLOW_CTS_ISR               USART_CR3_CTSIE
-#define UART_CR3_FLOW_RTS                   USART_CR3_RTSE
+#define UART_REG_FLOW_CTS                   USART_CR3_CTSE
+#define UART_REG_FLOW_CTS_ISR               USART_CR3_CTSIE
+#define UART_REG_FLOW_RTS                   USART_CR3_RTSE
 
 //-------------------------------------------------------------------------------------------------
 //  private variable(s)
@@ -320,7 +321,7 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
         }
       #endif
 
-        if((m_pUart->CR1 & UART_CR1_OVERSAMPLING_8) == UART_CR1_OVERSAMPLING_8)
+        if((m_pUart->CR1 & UART_REG_OVERSAMPLING_MASK) == UART_REG_OVERSAMPLING_8)
         {
             PeriphClk <<= 1;
         }
@@ -357,54 +358,54 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
         CLEAR_BIT(m_pUart->CR1, USART_CR1_UE);                      // Disable the UART
 
         // Parity
-        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_PARITY_MASK);
+        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_CFG_PARITY_MASK);
 
-        if(MaskedConfig == UART_EVEN_PARITY)
+        if(MaskedConfig == UART_CFG_EVEN_PARITY)
         {
-            CR1_Register |= UART_CR1_PARITY_EVEN;
+            CR1_Register |= UART_REG_PARITY_EVEN;
         }
-        else if(MaskedConfig == UART_ODD_PARITY)
+        else if(MaskedConfig == UART_CFG_ODD_PARITY)
         {
-            CR1_Register |= UART_CR1_PARITY_ODD;
+            CR1_Register |= UART_REG_PARITY_ODD;
         }
 
         // Length
-        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_LENGTH_MASK);
+        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_CFG_LENGTH_MASK);
 
-        if(MaskedConfig == UART_8_LEN_BITS)
+        if(MaskedConfig == UART_CFG_8_LEN_BITS)
         {
-            CR1_Register |= UART_CR1_DATA_WIDTH_8B;
+            CR1_Register |= UART_REG_DATA_WIDTH_8B;
         }
-        else if(MaskedConfig == UART_9_LEN_BITS)
+        else if(MaskedConfig == UART_CFG_9_LEN_BITS)
         {
-            CR1_Register |= UART_CR1_DATA_WIDTH_9B;
+            CR1_Register |= UART_REG_DATA_WIDTH_9B;
         }
 
         // Stop Bits
-        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_STOP_MASK);
+        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_CFG_STOP_MASK);
 
         switch(MaskedConfig)
         {
-            case UART_0_5_STOP_BIT: CR2_Register |= UART_CR2_STOP_0_5B; break;
-            case UART_1_5_STOP_BIT: CR2_Register |= UART_CR2_STOP_1_5B; break;
-            case UART_2_STOP_BITS:  CR2_Register |= UART_CR2_STOP_2_B;  break;
+            case UART_CFG_0_5_STOP_BIT: CR2_Register |= UART_REG_STOP_0_5B; break;
+            case UART_CFG_1_5_STOP_BIT: CR2_Register |= UART_REG_STOP_1_5B; break;
+            case UART_CFG_2_STOP_BITS:  CR2_Register |= UART_REG_STOP_2_B;  break;
             default: break;
         }
 
         // OverSampling 8 or 16
-        if((Config & UART_OVER_MASK) == UART_OVER_8)
+        if((Config & UART_CFG_OVER_MASK) == UART_CFG_OVER_8)
         {
-            CR1_Register |= UART_CR1_OVERSAMPLING_8;
+            CR1_Register |= UART_REG_OVERSAMPLING_8;
         }
 
         // RX and TX enable
-        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_ENABLE_MASK);
+        MaskedConfig = UART_Config_e(uint32_t(Config) & UART_CFG_ENABLE_MASK);
 
         switch(MaskedConfig)
         {
-            case UART_ENABLE_RX:    CR1_Register |= UART_CR1_RX;    break;
-            case UART_ENABLE_TX:    CR1_Register |= UART_CR1_TX;    break;
-            case UART_ENABLE_RX_TX: CR1_Register |= UART_CR1_RX_TX; break;
+            case UART_CFG_ENABLE_RX:    CR1_Register |= UART_REG_RX_ENABLE;    break;
+            case UART_CFG_ENABLE_TX:    CR1_Register |= UART_REG_TX_ENABLE;    break;
+            case UART_CFG_ENABLE_RX_TX: CR1_Register |= UART_REG_RX_TX_ENABLE; break;
             default: break;
         }
 
@@ -743,7 +744,6 @@ void UART_Driver::DMA_EnableRX(void)
             m_DMA_RX.ClearFlag();
             m_DMA_RX.Enable();
             EnableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
-            m_pUart->CR1 |= USART_CR1_RE;
         }
     }
 }
@@ -764,7 +764,6 @@ void UART_Driver::DMA_DisableRX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            m_pUart->CR1 &= ~USART_CR1_RE;
             m_DMA_RX.Disable();
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAR);
             DisableRX_ISR(UART_ISR_RX_ERROR_MASK | UART_ISR_RX_IDLE_MASK);
@@ -790,7 +789,6 @@ void UART_Driver::DMA_EnableTX(void)
         if(m_pDMA_Info != nullptr)
         {
             EnableTX_ISR(UART_ISR_TX_COMPLETED_MASK);
-            m_pUart->CR1 |= USART_CR1_TE;
             m_pUart->CR3 |= USART_CR3_DMAT;
         }
     }
@@ -812,7 +810,6 @@ void UART_Driver::DMA_DisableTX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
-            m_pUart->CR1 &= ~USART_CR1_TE;
             m_DMA_TX.Disable();
             m_DMA_TX.ClearFlag();
             CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAT);
@@ -1088,7 +1085,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_RX) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_BYTE);
+        EnableRX_ISR(UART_ISR_RX_BYTE_MASK);
     }
   #endif
 
@@ -1096,7 +1093,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_IDLE) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_IDLE_CFG);
+        EnableRX_ISR(UART_ISR_RX_IDLE_MASK);
     }
   #endif
 
@@ -1104,15 +1101,15 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_ERROR) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_RX_ERROR_CFG);
+        EnableRX_ISR(UART_ISR_RX_ERROR_MASK);
     }
   #endif
 
   #if (UART_ISR_TX_EMPTY_CFG == DEF_ENABLED)
-    if((CallBackType & UART_CALLBACK_EMPTY_TX_CFG) != 0)
+    if((CallBackType & UART_CALLBACK_EMPTY_TX) != 0)
     {
-        // m_CallBackType |= CallBackType;
-        //EnableRX_ISR(UART_ISR_TX_EMPTY_CFG);      // don't... only on send data
+        //m_CallBackType |= CallBackType;
+        //EnableRX_ISR(UART_ISR_TX_EMPTY_MASK);      // don't... only on send data
     }
   #endif
 
@@ -1120,7 +1117,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     if((CallBackType & UART_CALLBACK_COMPLETED_TX) != 0)
     {
         //m_CallBackType |= CallBackType;
-        EnableRX_ISR(UART_ISR_TX_COMPLETED_CFG);
+        EnableRX_ISR(UART_ISR_TX_COMPLETED_MASK);
     }
   #endif
 }

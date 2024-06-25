@@ -47,7 +47,7 @@
 //-------------------------------------------------------------------------------------------------
 PHY_LAN8742A_Driver::PHY_LAN8742A_Driver(const PHY_Config_t* pConfig)
 {
-    m_pConfig     = pConfig;
+    m_pConfig = pConfig;
     Uninitialize();
 }
 
@@ -247,15 +247,16 @@ SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
         do
         {
             m_pDriver->PHY_Read(m_PHY_Address, REG_BSR, &RegValue);
+
             if(TickHasTimeOut(TickStart, PHY_TIMEOUT) == false)
             {
                 // Return ERROR in case of timeout
-                return SYS_TIME_OUT;
+    //            return SYS_TIME_OUT;
             }
 
             m_BCR_Register &= ~BCR_AUTO_NEG_EN;
 
-        }while((RegValue & BSR_AUTO_NEGO_COMPLETE) == 0);
+        } while((RegValue & BSR_AUTO_NEGO_COMPLETE) == 0);
 
         m_pDriver->PHY_Read(m_PHY_Address, REG_PSCS, &RegValue);
 

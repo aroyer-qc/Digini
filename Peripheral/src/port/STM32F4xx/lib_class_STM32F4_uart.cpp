@@ -898,7 +898,7 @@ void UART_Driver::EnableRX_ISR(uint8_t Mask)
         volatile uint32_t Register;
 
         // Not empty, Idle, Error flag (Overrun, Framing error, Parity error)
-        CLEAR_BIT(m_CopySR, (USART_SR_RXNE | USART_SR_IDLE | USART_SR_NF | USART_SR_ORE | USART_SR_FE | USART_SR_PE));
+        CLEAR_BIT(m_CopySR, (USART_SR_RXNE | USART_SR_IDLE | USART_SR_NE | USART_SR_ORE | USART_SR_FE | USART_SR_PE));
 
       #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
         if((Mask & UART_SR_RX_IDLE_MASK) != 0)
@@ -1100,7 +1100,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
   #endif
 
   #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
-    if((CallBackType & UART_CALLBACK_IDLE) != 0)
+    if((CallBackType & UART_CALLBACK_RX_IDLE) != 0)
     {
         //m_CallBackType |= CallBackType;
         EnableRX_ISR(UART_SR_RX_IDLE_MASK);
@@ -1124,7 +1124,7 @@ void UART_Driver::EnableCallbackType(int CallBackType)
   #endif
 
   #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
-    if((CallBackType & UART_CALLBACK_COMPLETED_TX) != 0)
+    if((CallBackType & UART_CALLBACK_RX_IDLE) != 0)
     {
         //m_CallBackType |= CallBackType;
         EnableRX_ISR(UART_SR_TX_COMPLETED_MASK);
@@ -1195,7 +1195,7 @@ void UART_Driver::IRQ_Handler(void)
           #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
             if(m_pCallback != nullptr)
             {
-                m_pCallback->CallbackFunction(UART_CALLBACK_IDLE, (void*)&m_RX_Transfer);
+                m_pCallback->CallbackFunction(UART_CALLBACK_RX_IDLE, (void*)&m_RX_Transfer);
             }
           #endif
 
@@ -1214,7 +1214,7 @@ void UART_Driver::IRQ_Handler(void)
           #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
             if(m_pCallback != nullptr)
             {
-                m_pCallback->CallbackFunction(UART_CALLBACK_COMPLETED_TX, (void*)m_TX_Transfer.pBuffer);
+                m_pCallback->CallbackFunction(UART_CALLBACK_TX_COMPLETED, (void*)m_TX_Transfer.pBuffer);
             }
           #endif
 

@@ -857,11 +857,6 @@ size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
     return SizeDataRX;
 }
 
-
-// TODO or check : Do i need DMA IRQ or IDLE will manage everything here...
-
-
-
 //-------------------------------------------------------------------------------------------------
 
 #endif // UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG == DEF_ENABLED
@@ -1017,7 +1012,7 @@ void UART_Driver::EnableTX_ISR(uint8_t Mask)
         if((Mask & UART_SR_TX_COMPLETED_MASK) != 0)
         {
             SET_BIT(m_CopySR, USART_SR_TC);
-            m_pUart->SR= ~USART_SR_TC;
+            m_pUart->SR   = ~USART_SR_TC;
             m_pUart->CR1 |= USART_CR1_TCIE;
         }
       #endif
@@ -1152,7 +1147,7 @@ void UART_Driver::IRQ_Handler(void)
         Status  = m_pUart->SR;
         Status &= m_CopySR;
 
-       #if (UART_DRIVER_RX_ERROR_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_RX_ERROR_CFG == DEF_ENABLED)
         if((Status & (USART_SR_FE | USART_SR_NE | USART_SR_ORE)) != 0)
         {
             ClearFlag();
@@ -1165,9 +1160,9 @@ void UART_Driver::IRQ_Handler(void)
             m_DMA_IsItBusyTX = false;
             return;
         }
-       #endif
+      #endif
 
-       #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)
         if((Status & USART_ISR_RXNE) != 0)
         {
             WRITE_REG(m_pUart->SR, ~(USART_SR_RXNE));

@@ -253,12 +253,13 @@ bool                GetString                   (char* pBuffer, size_t Size);
         bool                                m_IsItInitialized;
         bool                                m_IsItInStartup;
         VT100_Menu_e                        m_MenuID;
+        const VT100_MenuDef_t*              m_pMenu;
         uint8_t                             m_PosY_SaveLabel;
         uint8_t                             m_LastSetCursorPosX;                // Set position to input selection location on screen
         uint8_t                             m_LastSetCursorPosY;
         VT100_InputType_e                   m_InputType;
-        uint64_t                            m_Input;
-        uint64_t                            m_InputCount;
+        uint8_t                             m_Input;
+        uint8_t                             m_InputCount;
         bool                                m_ValidateInput;
         uint8_t                             m_ItemsQts;
         bool                                m_BypassPrintf;

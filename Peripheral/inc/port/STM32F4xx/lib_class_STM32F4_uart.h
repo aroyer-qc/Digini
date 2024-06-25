@@ -94,8 +94,9 @@
      (UART_DRIVER_TX_COMPLETED_CFG      != DEF_ENABLED) && \
      (UART_DRIVER_TX_EMPTY_CFG          != DEF_ENABLED))
 
-    #undef  UART_DRIVER_USE_CALLBACK_CFG
     #define UART_DRIVER_USE_CALLBACK_CFG        DEF_DISABLED
+#else
+    #define UART_DRIVER_USE_CALLBACK_CFG        DEF_ENABLED
 #endif
 
 #define UART_WAIT_ON_BUSY                       true

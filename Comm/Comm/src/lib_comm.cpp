@@ -37,6 +37,38 @@
 #undef  TASK_COMM_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Static Variables
+//
+//-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
+
+nOS_Thread ClassTaskCOMM::m_Handle;
+nOS_Stack  ClassTaskCOMM::m_Stack[TASK_COMM_STACK_SIZE];
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ClassTaskCOMM_Wrapper
+//
+//  Parameter(s):   void* pvParameters
+//  Return:         void
+//
+//  Description:    main() for the ClassTaskCOMM_Wrapper
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+extern "C" void ClassTaskCOMM_Wrapper(void* pvParameters)
+{
+    (static_cast<ClassTaskCOMM*>(pvParameters))->Process();
+}
+
+#endif
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
 //
@@ -59,6 +91,18 @@ nOS_Error ClassTaskCOMM::Initialize(void)
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
     myVT100.Initialize(&myConsole);
   #endif
+
+    Error = nOS_ThreadCreate(&m_Handle,
+                             ClassTaskCOMM_Wrapper,
+                             this,
+                             &m_Stack[0],
+                             TASK_COMM_STACK_SIZE,
+                             TASK_COMM_PRIO);
+
+  #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+    myStacktistic.Register(&m_Stack[0], TASK_LOADING_STACK_SIZE, "Task COMM");
+  #endif
+
     return Error;
 }
 
@@ -71,12 +115,15 @@ nOS_Error ClassTaskCOMM::Initialize(void)
 //
 //  Description:    main() loop of COMM
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void ClassTaskCOMM::Process(void)
 {
-    myConsole.Process();
+    
+    for(;;)
+    {
+        nOS_Yield();
+        myConsole.Process();
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

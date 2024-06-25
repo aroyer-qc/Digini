@@ -57,15 +57,15 @@
   #define UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG  DEF_DISABLED
 #endif
 
-#define UART_SR_RX_PARITY_ERROR_MASK            0x01
-#define UART_SR_RX_FRAMING_ERROR_MASK           0x02
-#define UART_SR_RX_NOISE_DETECTED_MASK          0x04
-#define UART_SR_RX_OVERRUN_ERROR_MASK           0x08
-#define UART_SR_RX_ERROR_MASK                   (UART_SR_RX_PARITY_ERROR_MASK | UART_SR_RX_FRAMING_ERROR_MASK | UART_SR_RX_NOISE_DETECTED_MASK | UART_SR_RX_OVERRUN_ERROR_MASK)
-#define UART_SR_RX_IDLE_MASK                    0x10
-#define UART_SR_RX_NOT_EMPTY_MASK               0x20
-#define UART_SR_TX_COMPLETED_MASK               0x40
-#define UART_SR_TX_EMPTY_MASK                   0x80
+#define UART_ISR_RX_PARITY_ERROR_MASK            0x01
+#define UART_ISR_RX_FRAMING_ERROR_MASK           0x02
+#define UART_ISR_RX_NOISE_DETECTED_MASK          0x04
+#define UART_ISR_RX_OVERRUN_ERROR_MASK           0x08
+#define UART_ISR_RX_ERROR_MASK                   (UART_ISR_RX_PARITY_ERROR_MASK | UART_ISR_RX_FRAMING_ERROR_MASK | UART_ISR_RX_NOISE_DETECTED_MASK | UART_ISR_RX_OVERRUN_ERROR_MASK)
+#define UART_ISR_RX_IDLE_MASK                    0x10
+#define UART_ISR_RX_NOT_EMPTY_MASK               0x20
+#define UART_ISR_TX_COMPLETED_MASK               0x40
+#define UART_ISR_TX_EMPTY_MASK                   0x80
 
 // Callback type in bit position
 #define UART_CALLBACK_NONE                      0x00

@@ -263,7 +263,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
 VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT100_CallBackType_e Type)
 {
     nOS_Time        UpTime;
-    DateAndTime_t   TimeDate;
+    DateAndTime_t   DateTime;
     TempUnit_e      Unit;
     // type         Temperature;
 
@@ -283,19 +283,23 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             myVT100.ClearScreenWindow(0, 4, 80, 30);
 
             myVT100.InMenuPrintf(1, 6,  LBL_SYSTEM_INFO);
+
             myVT100.InMenuPrintf(1, 8,  LBL_VENDOR_NAME_INFO);
             myVT100.InMenuPrintf(       LBL_VENDOR_NAME);
+
             myVT100.InMenuPrintf(1, 9,  LBL_HARDWARE_INFO);
             myVT100.InMenuPrintf(       LBL_MODEL_NAME);
+
             myVT100.InMenuPrintf(1, 10, LBL_FW_NAME_INFO);
             myVT100.InMenuPrintf(       LBL_FIRMWARE_NAME);
+
             myVT100.InMenuPrintf(1, 11, LBL_FW_VERSION_INFO);
             myVT100.InMenuPrintf(       LBL_FIRMWARE_VERSION);
-           // myVT100.InMenuPrintf(1, 12, LBL_DIGINI_NAME_INFO);
-            myVT100.InMenuPrintf(       LBL_DIGINI_NAME);
-           // myVT100.InMenuPrintf(1, 13, LBL_GUI_VERSION_INFO);
+
+            myVT100.InMenuPrintf(1, 12, LBL_GUI_VERSION_INFO);
             myVT100.InMenuPrintf(       LBL_DIGINI_VERSION);
-            myVT100.InMenuPrintf(1, 14, LBL_SERIAL_INFO);
+
+            myVT100.InMenuPrintf(1, 13, LBL_SERIAL_INFO);
           #if defined(DEBUG) || (DIGINI_USE_DATABASE == DEF_DISABLED)
             myVT100.InMenuPrintf(       LBL_SERIAL_NUMBER);
           #else
@@ -303,23 +307,25 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
              DB_Central.Get(pBuffer, SERIAL_NUMBER_TEXT);
              myVT100.InMenuPrintf(LBL_STRING, pBuffer);
              pMemoryPool->Free((void**)&pBuffer);
-
           #endif
 
-
-            myVT100.InMenuPrintf(1, 15, LBL_COMPILE_DATE_INFO);
+            myVT100.InMenuPrintf(1, 14, LBL_COMPILE_DATE_INFO);
             myVT100.InMenuPrintf(       LBL_BUILT_DATE);
-            myVT100.InMenuPrintf(1, 16, VT100_LBL_NOW);
-            myVT100.InMenuPrintf(1, 17, VT100_LBL_UPTIME);
-            myVT100.InMenuPrintf(1, 19, VT100_LBL_ESCAPE);
-            myVT100.InMenuPrintf(1, 20, LBL_CPU_VOLTAGE);
-            myVT100.InMenuPrintf(1, 21, LBL_CPU_TEMPERATURE);
+
+            myVT100.InMenuPrintf(1, 15, VT100_LBL_NOW);
+            myVT100.InMenuPrintf(1, 16, VT100_LBL_UPTIME);
+
+            myVT100.InMenuPrintf(1, 17, LBL_CPU_VOLTAGE);
+
+            myVT100.InMenuPrintf(1, 18, LBL_CPU_TEMPERATURE);
           #if (DIGINI_USE_DATABASE == DEF_DISABLED)
-            myVT100.InMenuPrintf(20, 21, LBL_DEGREE_CELSIUS);
+            myVT100.InMenuPrintf(24, 18, LBL_DEGREE_CELSIUS);
           #else
             DB_Central.Get(&Unit, SYSTEM_TEMPERATURE_UNIT);
-            myVT100.InMenuPrintf(20, 21, (Unit == TEMP_CELSIUS) ? LBL_DEGREE_CELSIUS : LBL_DEGREE_FAHRENHEIT);
+            myVT100.InMenuPrintf(24, 18, (Unit == TEMP_CELSIUS) ? LBL_DEGREE_CELSIUS : LBL_DEGREE_FAHRENHEIT);
           #endif
+
+            myVT100.InMenuPrintf(1, 19, VT100_LBL_ESCAPE);
         }
         break;
 
@@ -327,10 +333,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
         {
             UpTime = nOS_GetTickCount() / NOS_CONFIG_TICKS_PER_SECOND;
 
-            if(TimeDate.Time.Second != VT100_LastSecond)
+            LIB_GetDateAndTime(&DateTime);
+
+            if(DateTime.Time.Second != VT100_LastSecond)
             {
-                VT100_LastSecond = TimeDate.Time.Second;
-                myVT100.DisplayTimeDateStamp(19, 16, &TimeDate);
+                VT100_LastSecond = DateTime.Time.Second;
+                myVT100.DisplayTimeDateStamp(19, 15, &DateTime);
             }
 
             // Get the temperature of the CPU form the ADC class
@@ -346,13 +354,14 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 
             }                     // Temperature = Read ADC in Fahrenheit
 
-            myVT100.InMenuPrintf(21, 14, LBL_STRING, "25.5");       // TODO replace by the right method
+            myVT100.InMenuPrintf(19, 17, LBL_STRING, "3.28V");       // TODO replace by the right method
+            myVT100.InMenuPrintf(19, 18, LBL_STRING, "25.5");       // TODO replace by the right method
 
 
             if(UpTime != VT100_LastUpTime)
             {
                 VT100_LastUpTime = UpTime;
-                myVT100.InMenuPrintf(19, 17, LBL_LONG_UNSIGNED_SEMICOLON,    (uint32_t)(UpTime / TIME_SECONDS_PER_DAY));
+                myVT100.InMenuPrintf(19, 16, LBL_LONG_UNSIGNED_SEMICOLON,    (uint32_t)(UpTime / TIME_SECONDS_PER_DAY));
                 UpTime %= TIME_SECONDS_PER_DAY;
                 myVT100.InMenuPrintf(        LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_HOUR));
                 UpTime %= TIME_SECONDS_PER_HOUR;
@@ -765,9 +774,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(80, 22, LBL_SD_SECTORS, FatFs->csize);                                                                  // Sector Per Cluster
             myVT100.InMenuPrintf(80, 23, LBL_SD_SECTORS, (TotalBytes * 1024) / (FatFs->csize * BLOCK_SIZE));                                                                  // Cluster Count
             myVT100.InMenuPrintf(26, 23, LBL_SD_SECTORS, (FreeBytes * 1024) / (FatFs->csize * BLOCK_SIZE));                                                                  // Free Cluster Count
-
-//test
-myVT100.InMenuPrintf(1, 23, VT100_LBL_SCROLL_ZONE, 30, 40);
+            myVT100.InMenuPrintf(1, 23, VT100_LBL_SCROLL_ZONE, 30, 40);
 
 {
     FRESULT res;
@@ -816,7 +823,6 @@ myVT100.InMenuPrintf(1, 23, VT100_LBL_SCROLL_ZONE, 30, 40);
 
         // case VT100_CALLBACK_INIT:     Nothing to do
         // case VT100_CALLBACK_ON_INPUT: Nothing to do
-        // case VT100_CALLBACK_FLUSH:    Nothing to do
         default: break;
     }
 

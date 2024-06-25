@@ -112,6 +112,7 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole)
     m_IsItInitialized         = false;
     m_InputCount              = 0;
     m_MenuID                  = VT100_MENU_NONE;
+    m_pMenu                   = nullptr;
     m_ItemsQts                = 0;
     m_BypassPrintf            = false;
     m_ID                      = -1;
@@ -147,7 +148,7 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole)
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::IF_Process(void)
 {
-    const VT100_MenuDef_t* pMenu = nullptr;
+    //const VT100_MenuDef_t* pMenu = nullptr;
     TickCount_t            Delay;
 
     ProcessRX();
@@ -174,15 +175,17 @@ void VT100_Terminal::IF_Process(void)
     {
         if(m_Input < m_ItemsQts)
         {
-            pMenu = &m_Menu[m_MenuID].pDefinition[m_Input];                 // Get pointer on the menu from actual or new menu
+            m_pMenu = &m_Menu[m_MenuID].pDefinition[m_Input];                         // Get pointer on the menu from actual or new menu
         }
         else if(m_Input == VT100_ESCAPE)
         {
+            CallBack(m_pMenu->pCallback, VT100_CALLBACK_FLUSH, 0);                    // Flush previous Menu
             m_Input = 0;
-            pMenu   = &m_Menu[m_MenuID].pDefinition[0];                     // Get pointer on the previous menu
+            m_pMenu = &m_Menu[m_MenuID].pDefinition[0];                               // Get pointer on the previous menu
         }
         else // It was an invalid entry (should not happened) do nothing
         {
+            m_pMenu         = nullptr;
             m_Input         = 0;
             m_ValidateInput = false;
         }
@@ -194,33 +197,33 @@ void VT100_Terminal::IF_Process(void)
             // Validate the range for the menu
             if(m_InputType == VT100_INPUT_MENU_CHOICE)
             {
-                if(pMenu->NextMenu == VT100_MENU_NONE)
+                if(m_pMenu->NextMenu == VT100_MENU_NONE)
                 {
                     m_IsItInitialized = false;
                     ClearScreenWindow(0, 0, VT100_X_SIZE, VT100_Y_SIZE);            // Clear screen
                     m_pConsole->ReleaseControl();
                 }
-                else if(m_MenuID != pMenu->NextMenu)                                // If new menu selection, draw this new menu
+                else if(m_MenuID != m_pMenu->NextMenu)                              // If new menu selection, draw this new menu
                 {
                     FinalizeAllItems();                                             // Finalize all items in previous menu
                     ClearConfigFLag();                                              // make sure all flag are initialize for the new menu
-                    GoToMenu(pMenu->NextMenu);                                      // display new menu and initialize all items in new menu
+                    GoToMenu(m_pMenu->NextMenu);                                    // display new menu and initialize all items in new menu
                 }
                 else
                 {
-                    CallBack(pMenu->pCallback, VT100_CALLBACK_ON_INPUT, m_Input);   // This is an input for menu with dynamic information to change
+                    CallBack(m_pMenu->pCallback, VT100_CALLBACK_ON_INPUT, m_Input); // This is an input for menu with dynamic information to change
                 }
             }
         }
-        else if (pMenu != nullptr)
+        else if (m_pMenu != nullptr)
         {
             if(m_RefreshOnce == true)
             {
                 m_RefreshOnce = false;
-                CallBack(pMenu->pCallback, VT100_CALLBACK_REFRESH_ONCE, 0);
+                CallBack(m_pMenu->pCallback, VT100_CALLBACK_REFRESH_ONCE, 0);
             }
 
-            CallBack(pMenu->pCallback, VT100_CALLBACK_REFRESH, 0);
+            CallBack(m_pMenu->pCallback, VT100_CALLBACK_REFRESH, 0);
         }
     }
 }

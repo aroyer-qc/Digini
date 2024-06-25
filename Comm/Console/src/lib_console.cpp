@@ -84,12 +84,12 @@ void Console::Initialize(UART_Driver* pUartDriver)
 
   #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)                              // not sure it can work without DMA
     pUartDriver->RegisterCallback((CallbackInterface*)this);
-    #endif // todo not good
-  #if (UART_ISR_RX_BYTE_CFG == DEF_ENABLED)
-    pUartDriver->EnableCallbackType(UART_CALLBACK_RX | UART_CALLBACK_COMPLETED_TX | UART_CALLBACK_ERROR);
-  #endif
-  #if (UART_ISR_RX_IDLE_CFG == DEF_ENABLED)
-    pUartDriver->EnableCallbackType(UART_CALLBACK_IDLE | UART_CALLBACK_COMPLETED_TX | UART_CALLBACK_ERROR);
+   #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)
+    pUartDriver->EnableCallbackType(UART_CALLBACK_RX_NOT_EMPTY | UART_CALLBACK_TX_COMPLETED | UART_CALLBACK_RX_ERROR);
+   #endif
+   #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
+    pUartDriver->EnableCallbackType(UART_CALLBACK_RX_IDLE | UART_CALLBACK_TX_COMPLETED | UART_CALLBACK_RX_ERROR);
+   #endif
   #endif
 
   #if (CON_TRAP_INCOMING_COMMENT_LINE == DEF_ENABLED)

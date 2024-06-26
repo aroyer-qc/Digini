@@ -358,7 +358,7 @@ void UART_Driver::SetConfig(UART_Config_e Config, UART_Baud_e BaudID)
 
         // Parity
         MaskedConfig = UART_Config_e(uint32_t(Config) & UART_CFG_PARITY_MASK);
-
+// Check if masker already fit the value for CR1
         if(MaskedConfig == UART_CFG_EVEN_PARITY)
         {
             CR1_Register |= UART_REG_PARITY_EVEN;

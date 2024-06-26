@@ -45,9 +45,9 @@
     (UART_DRIVER_SUPPORT_UART9_DMA_CFG  == DEF_ENABLED) || \
     (UART_DRIVER_SUPPORT_UART10_DMA_CFG == DEF_ENABLED)
 
-  #define UART_DRIVER_DMA_CFG                   DEF_ENABLED
+  #define UART_DRIVER_DMA_CFG                 DEF_ENABLED
 #else
-  #define UART_DRIVER_DMA_CFG                   DEF_DISABLED
+  #define UART_DRIVER_DMA_CFG                 DEF_DISABLED
 #endif
 
 #if (UART_DRIVER_DMA_CFG                  == DEF_ENABLED) || \
@@ -82,7 +82,6 @@
      (UART_DRIVER_RX_OVERRUN_ERROR_CFG  == DEF_ENABLED))
 
     #define UART_DRIVER_RX_ERROR_CFG            DEF_ENABLED
-
 #endif
 
 #if ((UART_DRIVER_RX_PARITY_ERROR_CFG   != DEF_ENABLED) && \
@@ -94,13 +93,13 @@
      (UART_DRIVER_TX_COMPLETED_CFG      != DEF_ENABLED) && \
      (UART_DRIVER_TX_EMPTY_CFG          != DEF_ENABLED))
 
-    #define UART_DRIVER_USE_CALLBACK_CFG        DEF_DISABLED
+    #define UART_DRIVER_USE_CALLBACK_CFG     DEF_DISABLED
 #else
-    #define UART_DRIVER_USE_CALLBACK_CFG        DEF_ENABLED
+    #define UART_DRIVER_USE_CALLBACK_CFG     DEF_ENABLED
 #endif
 
-#define UART_WAIT_ON_BUSY                       true
-#define UART_DONT_WAIT_ON_BUSY                  false
+#define UART_WAIT_ON_BUSY                    true
+#define UART_DONT_WAIT_ON_BUSY               false
 
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)

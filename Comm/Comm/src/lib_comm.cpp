@@ -83,7 +83,7 @@ nOS_Error ClassTaskCOMM::Initialize(void)
     nOS_Error Error = NOS_OK;
 
     // Uart console Command Line and VT100 terminal
-    myConsole.Initialize(DIGINI_USE_COMM_UART);
+    myConsole.Initialize(CON_USE_COMM_UART);
 
   #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
     myCommandLine.Initialize(&myConsole);

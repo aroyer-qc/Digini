@@ -212,10 +212,6 @@
 // Digini included functionality
 //
 
-#if (DIGINI_USE_COMM_MODULE == DEF_ENABLED)
-#include "./Comm/Comm/inc/lib_comm.h"
-#endif
-
 #if (DIGINI_USE_CONSOLE == DEF_ENABLED)
 #include "./Comm/Console/inc/lib_console.h"
 #endif
@@ -226,6 +222,10 @@
 
 #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
 #include "./Comm/VT100/inc/lib_vt100.h"
+#endif
+
+#if (DIGINI_USE_COMM_MODULE == DEF_ENABLED)
+#include "./Comm/Comm/inc/lib_comm.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

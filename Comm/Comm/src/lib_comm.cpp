@@ -63,7 +63,7 @@ nOS_Stack  ClassTaskCOMM::m_Stack[TASK_COMM_STACK_SIZE];
 //-------------------------------------------------------------------------------------------------
 extern "C" void ClassTaskCOMM_Wrapper(void* pvParameters)
 {
-    (static_cast<ClassTaskCOMM*>(pvParameters))->Process();
+    (static_cast<ClassTaskCOMM*>(pvParameters))->Run();
 }
 
 #endif
@@ -77,8 +77,6 @@ extern "C" void ClassTaskCOMM_Wrapper(void* pvParameters)
 //
 //  Description:    Initialize
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 nOS_Error ClassTaskCOMM::Initialize(void)
 {
@@ -86,12 +84,22 @@ nOS_Error ClassTaskCOMM::Initialize(void)
 
     // Uart console Command Line and VT100 terminal
     myConsole.Initialize(DIGINI_USE_COMM_UART);
+
+  #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
     myCommandLine.Initialize(&myConsole);
-    myConsole.GiveControlToChildProcess(&myCommandLine);          // Hijack the console!
-  #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-    myVT100.Initialize(&myConsole);
+    myConsole.GiveControlToChildProcess(&myCommandLine);            // Hijack the console if there is a CLI
   #endif
 
+  #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+    myVT100.Initialize(&myConsole);
+
+   #if (DIGINI_USE_CMD_LINE == DEF_DISABLED)
+    myConsole.GiveControlToChildProcess(&myVT100);                  // Hijack the console for VT100 if there is no CLI
+   #endif
+
+  #endif
+
+  #if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
     Error = nOS_ThreadCreate(&m_Handle,
                              ClassTaskCOMM_Wrapper,
                              this,
@@ -99,8 +107,9 @@ nOS_Error ClassTaskCOMM::Initialize(void)
                              TASK_COMM_STACK_SIZE,
                              TASK_COMM_PRIO);
 
-  #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-    myStacktistic.Register(&m_Stack[0], TASK_LOADING_STACK_SIZE, "Task COMM");
+   #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+    myStacktistic.Register(&m_Stack[0], TASK_COMM_STACK_SIZE, "Task COMM");
+   #endif
   #endif
 
     return Error;
@@ -116,14 +125,18 @@ nOS_Error ClassTaskCOMM::Initialize(void)
 //  Description:    main() loop of COMM
 //
 //-------------------------------------------------------------------------------------------------
-void ClassTaskCOMM::Process(void)
+#if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
+void ClassTaskCOMM::Run(void)
 {
-    
     for(;;)
     {
-        nOS_Yield();
+        // TODO improve sleep or yield and adjust the priority for this task... it is working nicely in process mode
+
+        //nOS_Yield();
         myConsole.Process();
+        nOS_Sleep(1);
     }
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------

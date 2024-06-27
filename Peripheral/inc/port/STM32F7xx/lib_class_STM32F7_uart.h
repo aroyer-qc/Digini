@@ -45,9 +45,9 @@
     (UART_DRIVER_SUPPORT_UART9_DMA_CFG  == DEF_ENABLED) || \
     (UART_DRIVER_SUPPORT_UART10_DMA_CFG == DEF_ENABLED)
 
-  #define UART_DRIVER_DMA_CFG                   DEF_ENABLED
+  #define UART_DRIVER_DMA_CFG                 DEF_ENABLED
 #else
-  #define UART_DRIVER_DMA_CFG                   DEF_DISABLED
+  #define UART_DRIVER_DMA_CFG                 DEF_DISABLED
 #endif
 
 #if (UART_DRIVER_DMA_CFG                  == DEF_ENABLED) || \
@@ -57,15 +57,15 @@
   #define UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG  DEF_DISABLED
 #endif
 
-#define UART_ISR_RX_PARITY_ERROR_MASK            0x01
-#define UART_ISR_RX_FRAMING_ERROR_MASK           0x02
-#define UART_ISR_RX_NOISE_DETECTED_MASK          0x04
-#define UART_ISR_RX_OVERRUN_ERROR_MASK           0x08
-#define UART_ISR_RX_ERROR_MASK                   (UART_ISR_RX_PARITY_ERROR_MASK | UART_ISR_RX_FRAMING_ERROR_MASK | UART_ISR_RX_NOISE_DETECTED_MASK | UART_ISR_RX_OVERRUN_ERROR_MASK)
-#define UART_ISR_RX_IDLE_MASK                    0x10
-#define UART_ISR_RX_NOT_EMPTY_MASK               0x20
-#define UART_ISR_TX_COMPLETED_MASK               0x40
-#define UART_ISR_TX_EMPTY_MASK                   0x80
+#define UART_ISR_RX_PARITY_ERROR_MASK           0x01
+#define UART_ISR_RX_FRAMING_ERROR_MASK          0x02
+#define UART_ISR_RX_NOISE_DETECTED_MASK         0x04
+#define UART_ISR_RX_OVERRUN_ERROR_MASK          0x08
+#define UART_ISR_RX_ERROR_MASK                  (UART_ISR_RX_PARITY_ERROR_MASK | UART_ISR_RX_FRAMING_ERROR_MASK | UART_ISR_RX_NOISE_DETECTED_MASK | UART_ISR_RX_OVERRUN_ERROR_MASK)
+#define UART_ISR_RX_IDLE_MASK                   0x10
+#define UART_ISR_RX_NOT_EMPTY_MASK              0x20
+#define UART_ISR_TX_COMPLETED_MASK              0x40
+#define UART_ISR_TX_EMPTY_MASK                  0x80
 
 // Callback type in bit position
 #define UART_CALLBACK_NONE                      0x00
@@ -94,13 +94,13 @@
      (UART_DRIVER_TX_COMPLETED_CFG      != DEF_ENABLED) && \
      (UART_DRIVER_TX_EMPTY_CFG          != DEF_ENABLED))
 
-    #define UART_DRIVER_USE_CALLBACK_CFG        DEF_DISABLED
+    #define UART_DRIVER_USE_CALLBACK_CFG     DEF_DISABLED
 #else
-    #define UART_DRIVER_USE_CALLBACK_CFG        DEF_ENABLED
+    #define UART_DRIVER_USE_CALLBACK_CFG     DEF_ENABLED
 #endif
 
-#define UART_WAIT_ON_BUSY                       true
-#define UART_DONT_WAIT_ON_BUSY                  false
+#define UART_WAIT_ON_BUSY                    true
+#define UART_DONT_WAIT_ON_BUSY               false
 
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
@@ -204,34 +204,30 @@ enum UART_Baud_e
 
 enum UART_Config_e
 {
-    UART_CFG_NO_PARITY          =   0x0000,
-    UART_CFG_EVEN_PARITY        =   0x0001,
-    UART_CFG_ODD_PARITY         =   0x0002,
-    UART_CFG_PARITY_MASK        =   0x0003,
+    UART_CFG_NO_PARITY          =   0x00000000,
+    UART_CFG_EVEN_PARITY        =   0x00000400,
+    UART_CFG_ODD_PARITY         =   0x00000600,
+    UART_CFG_PARITY_MASK        =   0x00000600,
 
-    UART_CFG_8_LEN_BITS         =   0x0000,
-    UART_CFG_7_LEN_BITS         =   0x0004,
-    UART_CFG_9_LEN_BITS         =   0x0008,
-    UART_CFG_LENGTH_MASK        =   0x000C,
+    UART_CFG_8_LEN_BITS         =   0x00000000,
+    UART_CFG_7_LEN_BITS         =   0x10000000,
+    UART_CFG_9_LEN_BITS         =   0x00001000,
+    UART_CFG_LENGTH_MASK        =   0x10001000,
 
-    UART_CFG_1_STOP_BIT         =   0x0000,
-    UART_CFG_0_5_STOP_BIT       =   0x0010,
-    UART_CFG_1_5_STOP_BIT       =   0x0020,
-    UART_CFG_2_STOP_BITS        =   0x0030,
-    UART_CFG_STOP_MASK          =   0x0030,
+    UART_CFG_1_STOP_BIT         =   0x00000000,
+    UART_CFG_0_5_STOP_BIT       =   0x40000000,
+    UART_CFG_1_5_STOP_BIT       =   0xC0000000,
+    UART_CFG_2_STOP_BITS        =   0x80000000,
+    UART_CFG_STOP_MASK          =   0xC0000000,
 
-    UART_CFG_DATA_ORDER_LSB     =   0x0000,
-    UART_CFG_DATA_ORDER_MSB     =   0x0040,
-    UART_CFG_DATA_ORDER_MASK    =   0x0040,
+    UART_CFG_OVER_16            =   0x00000000,
+    UART_CFG_OVER_8             =   0x00008000,
+    UART_CFG_OVER_MASK          =   0x00008000,
 
-    UART_CFG_OVER_16            =   0x0000,
-    UART_CFG_OVER_8             =   0x0080,
-    UART_CFG_OVER_MASK          =   0x0080,
-
-    UART_CFG_ENABLE_RX_TX       =   0x0300,
-    UART_CFG_ENABLE_RX          =   0x0100,
-    UART_CFG_ENABLE_TX          =   0x0200,
-    UART_CFG_ENABLE_MASK        =   0x0300,
+    UART_CFG_ENABLE_RX_TX       =   0x0000000C,
+    UART_CFG_ENABLE_RX          =   0x00000004,
+    UART_CFG_ENABLE_TX          =   0x00000008,
+    UART_CFG_ENABLE_MASK        =   0x0000000C,
 
     // Some more common config (all LSB with oversampling at 16, with RX and TX)
     UART_CFG_N_7_1    =   (UART_CFG_NO_PARITY   | UART_CFG_7_LEN_BITS | UART_CFG_1_STOP_BIT),
@@ -257,6 +253,9 @@ enum UART_Config_e
     UART_CFG_O_7_2    =   (UART_CFG_ODD_PARITY  | UART_CFG_7_LEN_BITS | UART_CFG_2_STOP_BITS),
     UART_CFG_O_8_2    =   (UART_CFG_ODD_PARITY  | UART_CFG_8_LEN_BITS | UART_CFG_2_STOP_BITS),
     UART_CFG_O_9_2    =   (UART_CFG_ODD_PARITY  | UART_CFG_9_LEN_BITS | UART_CFG_2_STOP_BITS),
+
+    UART_CFG_CR1_MASK = 0x1000160C,        // TX RX Enable, Length (8 or 9 Bits), Parity (DISABLE, ODD, EVEN)
+    UART_CFG_CR2_MASK = 0x00003000,        // STOP Bits,
 };
 
 struct UART_Info_t

@@ -192,7 +192,7 @@ enum UART_Config_e
     UART_CFG_ENABLE_RX_TX       =   0x0000000C,
     UART_CFG_ENABLE_RX          =   0x00000004,
     UART_CFG_ENABLE_TX          =   0x00000008,
-    UART_CFG_ENABLE_RX_TX_MASK  =   0x0000000C,
+    UART_CFG_ENABLE_MASK        =   0x0000000C,
 
     // Some more common config
     UART_CFG_N_8_1    =   (UART_CFG_NO_PARITY   | UART_CFG_8_LEN_BITS | UART_CFG_1_STOP_BIT),
@@ -214,7 +214,7 @@ enum UART_Config_e
     UART_CFG_O_9_2    =   (UART_CFG_ODD_PARITY  | UART_CFG_9_LEN_BITS | UART_CFG_2_STOP_BITS),
 
     UART_CFG_CR1_MASK = 0x0000160C,        // TX RX Enable, Length (8 or 9 Bits), Parity (DISABLE, ODD, EVEN)
-    UART_CFG_CR2_MASK = 0x00003000,        // STOP Bits,
+    UART_CFG_CR2_MASK = 0x00003000,        // STOP Bits after the shift,
 };
 
 struct UART_Info_t

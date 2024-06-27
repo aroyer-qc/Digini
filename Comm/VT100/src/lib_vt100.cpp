@@ -148,8 +148,7 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole)
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::IF_Process(void)
 {
-    //const VT100_MenuDef_t* pMenu = nullptr;
-    TickCount_t            Delay;
+    TickCount_t Delay;
 
     ProcessRX();
 
@@ -513,7 +512,6 @@ void VT100_Terminal::DisplayMenu(void)
                 InMenuPrintf(1, 6, pMenu->Label);
                 InMenuPrintf(2, 8, VT100_LBL_SELECT);
             }
-            // CallBack(pMenu->pCallback, VT100_CALLBACK_ON_INIT, Items);
         }
 
         MenuSelectItems('0');
@@ -522,11 +520,8 @@ void VT100_Terminal::DisplayMenu(void)
         ItemsChar += (ItemsChar >= 10) ? ('a' - 10) : '0';
         InMenuPrintf(VT100_LBL_ENTER_SELECTION, ItemsChar);
     }
-    //else
-    {
-        // There is nothing to draw if it has only one item ( it is a redirection menu )
-        CallBack(m_Menu[m_MenuID].pDefinition[0].pCallback, VT100_CALLBACK_INIT, 0);
-    }
+
+    CallBack(m_Menu[m_MenuID].pDefinition[0].pCallback, VT100_CALLBACK_INIT, 0);
 }
 
 //-------------------------------------------------------------------------------------------------

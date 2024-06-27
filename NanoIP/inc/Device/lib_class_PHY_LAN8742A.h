@@ -28,6 +28,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
+#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 #if (USE_ETH_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
@@ -170,7 +171,8 @@ class PHY_LAN8742A_Driver// : public PHY_DriverInterface
 
 #pragma message("DIGINI driver for ETHERNET must be enable and configure to use this device driver")
 
-
 #endif // (USE_ETH_DRIVER == DEF_ENABLED)
 
+#endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)
 //-------------------------------------------------------------------------------------------------
+

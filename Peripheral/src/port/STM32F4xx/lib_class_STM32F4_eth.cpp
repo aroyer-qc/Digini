@@ -41,7 +41,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_ETHERNET == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
+#if (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)

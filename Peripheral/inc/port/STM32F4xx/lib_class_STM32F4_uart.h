@@ -203,33 +203,29 @@ enum UART_Baud_e
 
 enum UART_Config_e
 {
-    UART_CFG_NO_PARITY          =   0x0000,
-    UART_CFG_EVEN_PARITY        =   0x0001,
-    UART_CFG_ODD_PARITY         =   0x0002,
-    UART_CFG_PARITY_MASK        =   0x0003,
+    UART_CFG_NO_PARITY          =   0x00000000,
+    UART_CFG_EVEN_PARITY        =   0x00000400,
+    UART_CFG_ODD_PARITY         =   0x00000600,
+    UART_CFG_PARITY_MASK        =   0x00000600,
 
-    UART_CFG_8_LEN_BITS         =   0x0000,
-    UART_CFG_9_LEN_BITS         =   0x0004,
-    UART_CFG_LENGTH_MASK        =   0x0004,
+    UART_CFG_8_LEN_BITS         =   0x00000000,
+    UART_CFG_9_LEN_BITS         =   0x00001000,
+    UART_CFG_LENGTH_MASK        =   0x00001000,
 
-    UART_CFG_1_STOP_BIT         =   0x0008,
-    UART_CFG_0_5_STOP_BIT       =   0x0008,
-    UART_CFG_1_5_STOP_BIT       =   0x0010,
-    UART_CFG_2_STOP_BITS        =   0x0018,
-    UART_CFG_STOP_MASK          =   0x0018,
+    UART_CFG_1_STOP_BIT         =   0x00000000,
+    UART_CFG_0_5_STOP_BIT       =   0x10000000,
+    UART_CFG_1_5_STOP_BIT       =   0x30000000,
+    UART_CFG_2_STOP_BITS        =   0x20000000,
+    UART_CFG_STOP_MASK          =   0x30000000,
 
-    UART_CFG_DATA_ORDER_LSB     =   0x0000,
-    UART_CFG_DATA_ORDER_MSB     =   0x0020,
-    UART_CFG_DATA_ORDER_MASK    =   0x0020,
+    UART_CFG_OVER_16            =   0x00000000,
+    UART_CFG_OVER_8             =   0x00008000,
+    UART_CFG_OVER_MASK          =   0x00008000,
 
-    UART_CFG_OVER_16            =   0x0000,
-    UART_CFG_OVER_8             =   0x0040,
-    UART_CFG_OVER_MASK          =   0x0040,
-
-    UART_CFG_ENABLE_RX_TX       =   0x0180,
-    UART_CFG_ENABLE_RX          =   0x0080,
-    UART_CFG_ENABLE_TX          =   0x0100,
-    UART_CFG_ENABLE_MASK        =   0x0180,
+    UART_CFG_ENABLE_RX_TX       =   0x0000000C,
+    UART_CFG_ENABLE_RX          =   0x00000004,
+    UART_CFG_ENABLE_TX          =   0x00000008,
+    UART_CFG_ENABLE_MASK        =   0x0000000C,
 
     // Some more common config (all LSB with oversampling at 16, with RX and TX)
     UART_CFG_N_8_1    =   (UART_CFG_NO_PARITY   | UART_CFG_8_LEN_BITS | UART_CFG_1_STOP_BIT),
@@ -249,6 +245,9 @@ enum UART_Config_e
 
     UART_CFG_O_8_2    =   (UART_CFG_ODD_PARITY  | UART_CFG_8_LEN_BITS | UART_CFG_2_STOP_BITS),
     UART_CFG_O_9_2    =   (UART_CFG_ODD_PARITY  | UART_CFG_9_LEN_BITS | UART_CFG_2_STOP_BITS),
+
+    UART_CFG_CR1_MASK = 0x0000160C,        // TX RX Enable, Length (8 or 9 Bits), Parity (DISABLE, ODD, EVEN)
+    UART_CFG_CR2_MASK = 0x00003000,        // STOP Bits,
 };
 
 struct UART_Info_t

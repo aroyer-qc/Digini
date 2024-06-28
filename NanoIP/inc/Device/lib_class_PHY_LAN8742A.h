@@ -128,7 +128,7 @@ struct PHY_Config_t
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class PHY_LAN8742A_Driver// : public PHY_DriverInterface
+class PHY_LAN8742A_Driver : public PHY_DriverInterface
 {
     public:
 
@@ -161,9 +161,19 @@ class PHY_LAN8742A_Driver// : public PHY_DriverInterface
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#define __CLASS_PHY_LAN8742A__
-#include "device_var.h"
-#undef  __CLASS_PHY_LAN8742A__
+#ifdef LIB_PHY_8742A_GLOBAL
+
+const PHY_Config_t PHY_Config =
+{
+    &myEthernet,                    // Ethernet driver
+    0,                              // PHY_Address
+};
+
+class        PHY_LAN8742A_Driver    PHY_Driver();
+
+#else
+extern class PHY_LAN8742A_Driver    PHY_Driver;
+#endif
 
 //-------------------------------------------------------------------------------------------------
 
@@ -175,4 +185,6 @@ class PHY_LAN8742A_Driver// : public PHY_DriverInterface
 
 #endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)
 //-------------------------------------------------------------------------------------------------
+
+
 

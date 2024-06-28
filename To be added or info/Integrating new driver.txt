@@ -6,7 +6,7 @@ in digini.cfg
     -----------------------------------------------------------------------------------------------
 
     2. The include file for the driver must be added in the config file device_cfg.h
-        Ex. #include "./Digini/Peripheral/inc/device/lib_NewDriver.h"
+        Ex. #include "./Peripheral/inc/device/lib_NewDriver.h"
         
         Note(s):
 

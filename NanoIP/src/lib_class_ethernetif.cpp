@@ -40,10 +40,12 @@
 
 #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 
-void FreePacket(MemoryNode* pPacket);
+//-------------------------------------------------------------------------------------------------
+
+void FreePacket(MemoryNode* pPacket)
 {
-    pPacket->Free(pPacket);
-    pMemoryPool->Free(*pPacket);
+    pPacket->Free();
+    pMemoryPool->Free((void**)&pPacket);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -51,7 +53,7 @@ void FreePacket(MemoryNode* pPacket);
 //  Function:       Initialize
 //
 //  Parameter(s):   EthernetIF_t*  The NanoIP network interface structure
-//  Return:         SystemState_e   
+//  Return:         SystemState_e
 //
 //  Description:    This function initialize the MAC,PHY and IO
 //
@@ -66,7 +68,7 @@ SystemState_e ETH_IF_Driver::Initialize(struct EthernetIF_t* pNetIf)
     m_pNetIf = pNetIf;
 
 	m_Link = ETH_LINK_DOWN;
-  
+
     BSP_EthernetIF_Initialize();
 
 	//pNetIf->output     = EtharpOutput;        not here!!!
@@ -119,23 +121,23 @@ SystemState_e ETH_IF_Driver::LowLevelOutput(MemoryNode* pPacket)
     uint8_t* pNodeData;
     size_t   NodeSize;
     size_t   Length;
-    
+
     if(nOS_MutexLock(&m_TX_Mutex, netifGUARD_BLOCK_TIME) == NOS_OK)
     {
         pPacket->Begin();       // Reset Node pointer to the beginning
         Length   = pPacket->GetTotalSize();
         NodeSize = pPacket->GetNodeSize();
-        
+
         do
         {
             if(Lenght < NodeSize)
             {
                 NodeSize = Length;
             }
- 
+
             Lenght   -= NodeSize;
             pNodeData = static_cast<uint8_t*>(pPacket->GetNext());
-            
+
             // Send the data from the pPacket to the interface, one pNodeData at a time.
             uint32_t flags = (pNodeData != nullptr) ? ETH_MAC_TX_FRAME_FRAGMENT : 0;
             ETH_Mac.SendFrame(pNodeData, NodeSize, flags);     //  standard call from an interface class ...  call this function  SendFrame
@@ -149,7 +151,7 @@ SystemState_e ETH_IF_Driver::LowLevelOutput(MemoryNode* pPacket)
         m_DBG_TX_Count++;
       #endif
 
-// need to flush the MemoryNode 
+// need to flush the MemoryNode
 
         nOS_MutexUnlock(&m_TX_Mutex);
     }
@@ -217,7 +219,7 @@ inline MemoryNode* ETH_IF_Driver::LowLevelInput(void)
 //
 //  Function:       Input
 //
-//  Parameter(s):   pParam       The network interface structure for this ethernetif
+//  Parameter(s):   pParam       The network interface structure for this ETH_IF_Driver
 //  Return:         None
 //
 //  Description:    This function is the ethernetif_input task
@@ -257,7 +259,7 @@ void ETH_IF_Driver::Input(void* pParam)
                     {
                         VAR_UNUSED(Error);
                         FreePacket(pPacket);
-                        
+
                       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
                         m_DBG_RX_Drop++;
                       #endif
@@ -268,7 +270,7 @@ void ETH_IF_Driver::Input(void* pParam)
                         nOS_SemTake(&m_RX_Sem, 0); // why this one
                     }
                 }
-                
+
                 if(pPacket->GetNext() == nullptr)
                 {
                     Exit = true;
@@ -398,22 +400,17 @@ void ETH_IF_Driver::LinkCallBack(void* pArg)
 
 
 
+// need to put this in BSP or BSP supported section
 
 
 
-
-
-// need to put this in BSP or BSP supported section 
-
-
-  
 void BSP_EthernetIF_Initialize(void)
 {
   #if (IP_INTERFACE_SUPPORT_PHY == DEF_ENABLED) || (IP_INTERFACE_SUPPORT_MAC == DEF_ENABLED)
     //PHY CONFIG should be out of here...
     ETH_Mac.Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
- 
-    // if(m_IF_Type == ETH_PHY_IF) 
+
+    // if(m_IF_Type == ETH_PHY_IF)
         // if(m_IF_Type == ETH_MAC_IF)
     // {
 	// Initialize Physical Media Interface

@@ -25,9 +25,9 @@
 //-------------------------------------------------------------------------------------------------
 
 #if defined STM32F4xx
- #include "./Digini/Peripheral/inc/port/lib_class_fatfs_usb.h"
+ #include "./Peripheral/inc/port/lib_class_fatfs_usb.h"
 #elif defined STM32F7xx
- #include "./Digini/Peripheral/inc/port/lib_class_fatfs_usb.h"
+ #include "./Peripheral/inc/port/lib_class_fatfs_usb.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

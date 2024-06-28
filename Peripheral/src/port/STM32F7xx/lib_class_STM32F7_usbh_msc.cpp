@@ -1,4 +1,4 @@
-#include "./Digini/Peripheral/inc/port/lib_class_usbh_msc.h"
+#include "./Peripheral/inc/port/lib_class_usbh_msc.h"
 #include "nOS.h"
 //#include "usbh_msc.h"
 //#include "usbh_msc_bot.h"

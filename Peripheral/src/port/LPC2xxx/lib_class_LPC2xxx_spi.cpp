@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define STM32F4_SPI_GLOBAL
-#include "./Digini/Peripheral/inc/port/lib_class_spi.h"
+#include "./Peripheral/inc/port/lib_class_spi.h"
 #undef STM32F4_SPI_GLOBAL
 #include "./Digini/Utility/inc/lib_utility.h"
 

@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include <stdint.h>
-#include "./Digini/Peripheral/inc/port/lib_class_usart.h"
+#include "./Peripheral/inc/port/lib_class_usart.h"
 #include "stm32f4xx_usart.h"
 
 //-------------------------------------------------------------------------------------------------

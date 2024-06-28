@@ -38,7 +38,7 @@
 
 #ifdef DIGINI_USE_GRAFX
 #ifdef DIGINI_USE_POINTING_DEVICE
-//#include "./Digini/Peripheral/inc/device/lib_class_i2c_STMPE811.h"
+//#include "./Peripheral/inc/device/lib_class_i2c_STMPE811.h"
 //#include "./Digini/Grafx/inc/driver/STM32F4xx/lib_STM32F4_lcd_quarter_vga.h"
 
 //-------------------------------------------------------------------------------------------------

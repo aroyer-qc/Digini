@@ -37,8 +37,8 @@
 #include "./Digini/Digini/inc/lib_typedef.h"
 #include "nOS.h"
 #include "lib_class_usb_interface.h"
-//#include "./Digini/Peripheral/inc/FatFs/diskio.h"
-//#include "./Digini/Peripheral/inc/port/lib_class_gpio.h"
+//#include "./Peripheral/inc/FatFs/diskio.h"
+//#include "./Peripheral/inc/port/lib_class_gpio.h"
 
 ///////////// TODO
 

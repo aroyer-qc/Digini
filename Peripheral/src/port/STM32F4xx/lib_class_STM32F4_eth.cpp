@@ -41,7 +41,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
+#if (USE_ETH_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -267,7 +267,7 @@ SystemState_e ETH_Driver::Initialize(ETH_MAC_SignalEvent_t CallbackEvent)
 
     // ---- Enable ETH interrupt ----
     ISR_ClearPendingIRQ(ETH_IRQn);
-    ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);
+    ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);   // to see if the hard still append
 
     m_MAC_Control.FrameEnd = nullptr;
 
@@ -628,12 +628,7 @@ SystemState_e ETH_Driver::ReadFrame(MemoryNode* pPacket, size_t Length)
     size_t NodeSize;
     uint8_t* pNodeData;
 
-    if(pPacket == nullptr)
-    {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: ReadFrame - Invalid Parameter\n");
-        State = SYS_INVALID_PARAMETER;
-    }
-    else
+    if(pPacket != nullptr)
     {
         NodeSize = pPacket->GetNodeSize();
         pPacket->Begin();
@@ -667,6 +662,12 @@ SystemState_e ETH_Driver::ReadFrame(MemoryNode* pPacket, size_t Length)
         // Receive buffer unavailable, resume DMA
         ETH->DMASR   = ETH_DMASR_RBUS;
         ETH->DMARPDR = 0;
+    }
+
+    if(pPacket == nullptr)
+    {
+        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: ReadFrame - Invalid Parameter\n");
+        State = SYS_INVALID_PARAMETER;
     }
 
     return State;
@@ -960,6 +961,10 @@ void ETH_Driver::ISR_CallBack(uint32_t Event)
     {
         m_MAC_Control.CallbackEvent(Event);
     }
+    else
+    {
+        myEthernet.ReadFrame(nullptr, 0);   // tempo for test
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -976,10 +981,10 @@ extern "C"
 {
     NOS_ISR(ETH_IRQHandler)
     {
-        IO_SetPinHigh(IO_ETH_EXT_LED);
-
         uint32_t Register;
         uint32_t Event = ETH_MAC_EVENT_NONE;
+
+        IO_SetPinHigh(IO_ETH_EXT_LED);
 
         Register = ETH->DMASR;
         ETH->DMASR = Register & (ETH_DMASR_NIS | ETH_DMASR_RS | ETH_DMASR_TS);
@@ -1015,7 +1020,6 @@ extern "C"
             ETH->MACPMTCSR;
             Event |= ETH_MAC_EVENT_WAKEUP;
         }
-
 
         // Callback event notification
         if(Event != ETH_MAC_EVENT_NONE)

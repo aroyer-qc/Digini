@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define SYSTEM_GLOBAL
-#include "./Digini/Peripheral/inc/port/lib_system_clock.h"
+#include "./Peripheral/inc/port/lib_system_clock.h"
 #undef  SYSTEM_GLOBAL
 
 //-------------------------------------------------------------------------------------------------

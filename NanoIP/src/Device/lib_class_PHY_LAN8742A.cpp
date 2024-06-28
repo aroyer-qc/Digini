@@ -77,10 +77,6 @@ SystemState_e PHY_LAN8742A_Driver::Initialize(void)
         PowerControl(ETH_POWER_FULL);
         SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
         SetMode(ETH_PHY_MODE_SPEED_100M | ETH_PHY_MODE_DUPLEX_FULL);
-
-
-
-
     }
 
     return SYS_READY;

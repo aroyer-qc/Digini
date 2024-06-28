@@ -78,6 +78,10 @@
 #include "label_cfg.h"
 #endif
 
+#if (USE_ETH_DRIVER == DEF_ENABLED)
+#include "ip_cfg.h"
+#endif
+
 #include "project_def.h"
 
 //-------------------------------------------------------------------------------------------------
@@ -88,12 +92,12 @@
 //-------------------------------------------------------------------------------------------------
 // System Clock
 //
-#include "./Digini/Peripheral/inc/port/lib_system_clock.h"       // No relative PATH here because it depend on CPU and project
+#include "./Peripheral/inc/port/lib_system_clock.h"       // No relative PATH here because it depend on CPU and project
 
 //-------------------------------------------------------------------------------------------------
 // Digini library
 //
-#include "./Digini/Peripheral/inc/port/lib_cpu_specific.h"
+#include "./Peripheral/inc/port/lib_cpu_specific.h"
 #include "./Digini/inc/lib_assert.h"
 
 #if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
@@ -119,21 +123,21 @@
 #include "./RTOS_Wrapper/inc/nOS/lib_class_queue.h"
 #include "./RTOS_Wrapper/inc/nOS/lib_class_timer.h"
 #include "./Utility/inc/lib_utility.h"
-#include "./Digini/Peripheral/inc/port/lib_isr.h"
+#include "./Peripheral/inc/port/lib_isr.h"
 #include "./Utility/inc/lib_pid.h"
 #include "./Utility/inc/lib_sunset.h"
-#include "./Digini/Peripheral/inc/port/lib_io.h"
+#include "./Peripheral/inc/port/lib_io.h"
 #include "./Utility/inc/lib_fifo.h"
-#include "./Digini/Peripheral/inc/port/lib_class_dma.h"
-#include "./Digini/Peripheral/inc/port/lib_dma.h"                  // todo remove when DMA porting is done
-#include "./Digini/Peripheral/inc/port/lib_rng.h"
+#include "./Peripheral/inc/port/lib_class_dma.h"
+#include "./Peripheral/inc/port/lib_dma.h"                  // todo remove when DMA porting is done
+#include "./Peripheral/inc/port/lib_rng.h"
 
 #if (DIGINI_USE_CRC == DEF_ENABLED)     // This is for software CRC calculation support
 #include "./Utility/inc/lib_crc.h"
 #endif
 
 #if (DIGINI_MPU_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_mpu.h"
+#include "./Peripheral/inc/port/lib_mpu.h"
 #endif
 
 
@@ -141,71 +145,71 @@
 // Driver
 //
 
-//#include "./Digini/Peripheral/inc/port/interface/lib_class_driver_interface.h"
+//#include "./Peripheral/inc/port/interface/lib_class_driver_interface.h"
 
 #if (USE_ADC_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_adc.h"
+#include "./Peripheral/inc/port/lib_class_adc.h"
 #endif
 
 #if (USE_CAN_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_can.h"
+#include "./Peripheral/inc/port/lib_class_can.h"
 #endif
 
 #if (USE_CRC_DRIVER == DEF_ENABLED)     // This is for hardware CRC calculation support
-#include "./Digini/Peripheral/inc/port/lib_hardware_crc.h"
+#include "./Peripheral/inc/port/lib_hardware_crc.h"
 #endif
 
 #if (USE_DAC_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_dac.h"
+#include "./Peripheral/inc/port/lib_class_dac.h"
 #endif
 
-#if (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
+#if (USE_ETH_DRIVER == DEF_ENABLED)
 #include "./Digini/NanoIP/inc/lib_ethernet_typedef.h"
-#include "./Digini/Peripheral/inc/port/lib_class_eth.h"
+#include "./Peripheral/inc/port/lib_class_eth.h"
 #endif
 
 #if (USE_I2C_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_i2c.h"
+#include "./Peripheral/inc/port/lib_class_i2c.h"
 #endif
 
 #if (USE_I2S_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_i2s.h"
+#include "./Peripheral/inc/port/lib_class_i2s.h"
 #endif
 
 #if (USE_QSPI_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_qspi.h"
+#include "./Peripheral/inc/port/lib_class_qspi.h"
 #endif
 
 #if (USE_RTC_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_rtc.h"
+#include "./Peripheral/inc/port/lib_class_rtc.h"
 #endif
 
 #if (USE_SAI_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_sai.h"
+#include "./Peripheral/inc/port/lib_class_sai.h"
 #endif
 
 #if (USE_SDIO_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_sdio.h"
+#include "./Peripheral/inc/port/lib_class_sdio.h"
 #endif
 
 #if (USE_SPI_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_spi.h"
+#include "./Peripheral/inc/port/lib_class_spi.h"
 #endif
 
 #if (USE_TIM_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_tim.h"
+#include "./Peripheral/inc/port/lib_class_tim.h"
 #endif
 
 #if (USE_PWM_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_pwm.h"
+#include "./Peripheral/inc/port/lib_class_pwm.h"
 #endif
 
 #if (USE_UART_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_uart.h"
+#include "./Peripheral/inc/port/lib_class_uart.h"
 #endif
 
 #if (USE_USB_DRIVER == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/lib_class_usb.h"
+#include "./Peripheral/inc/port/lib_class_usb.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -237,36 +241,40 @@
 
 #if (DIGINI_USE_FATFS == DEF_ENABLED)
 
-#include "./Digini/Peripheral/inc/FatFs/diskio_def.h"
-#include "./Digini/Peripheral/inc/FatFs/diskio_interface.h"
+#include "./Peripheral/inc/FatFs/diskio_def.h"
+#include "./Peripheral/inc/FatFs/diskio_interface.h"
 
 #if (DIGINI_FATFS_USE_RAM_DISK == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/FatFs/lib_class_fatfs_ram_disk.h"
+#include "./Peripheral/inc/FatFs/lib_class_fatfs_ram_disk.h"
 #endif
 
 #if (DIGINI_FATFS_USE_SDIO_SD_CARD == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/FatFs/lib_class_fatfs_sdio.h"
+#include "./Peripheral/inc/port/FatFs/lib_class_fatfs_sdio.h"
 #endif
 
 #if (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/FatFs/lib_class_fatfs_spi_flash_chip.h"     // TODO
+#include "./Peripheral/inc/port/FatFs/lib_class_fatfs_spi_flash_chip.h"     // TODO
 #endif
 
 #if (DIGINI_FATFS_USE_SPI_SD_CARD == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/FatFs/lib_class_fatfs_spi_sd_card.h"     // TODO
+#include "./Peripheral/inc/port/FatFs/lib_class_fatfs_spi_sd_card.h"     // TODO
 #endif
 
 #if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED)
-#include "./Digini/Peripheral/inc/port/FatFs/lib_class_fatfs_usb.h"
+#include "./Peripheral/inc/port/FatFs/lib_class_fatfs_usb.h"
 #endif
 
-#include "./Digini/Peripheral/inc/FatFs/digini_diskio.h"
+#include "./Peripheral/inc/FatFs/digini_diskio.h"
 #include "diskio_drv_cfg.h"                     // This will add any custom driver
 
 #endif // (DIGINI_USE_FATFS == DEF_ENABLED)
 
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
 #include "./Grafx/inc/lib_grafx.h"
+#endif
+
+#if (USE_ETH_DRIVER == DEF_ENABLED)
+  #include PHY_DRIVER_INCLUDE
 #endif
 
 //-------------------------------------------------------------------------------------------------

@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 //#include <stdint.h>
-#include "./Digini/Peripheral/inc/port/lib_class_sdram.h"
+#include "./Peripheral/inc/port/lib_class_sdram.h"
 //#include "./Digini/Digini/inc/lib_macro.h"
 
 //-------------------------------------------------------------------------------------------------

@@ -38,11 +38,11 @@
 #include "bsp.h"
 #include "STM32F4xx.h"
 //#include "lib_class_sd_card.h"
-#include "./Digini/Peripheral/inc/port/lib_class_i2c.h"
-#include "./Digini/Peripheral/inc/port/lib_class_sdio.h"
-#include "./Digini/Peripheral/inc/port/lib_class_rtc.h"
-#include "./Digini/Peripheral/inc/port/lib_class_usart.h"
-#include "./Digini/Peripheral/inc/port/lib_class_usb.h"
+#include "./Peripheral/inc/port/lib_class_i2c.h"
+#include "./Peripheral/inc/port/lib_class_sdio.h"
+#include "./Peripheral/inc/port/lib_class_rtc.h"
+#include "./Peripheral/inc/port/lib_class_usart.h"
+#include "./Peripheral/inc/port/lib_class_usb.h"
 
 //-------------------------------------------------------------------------------------------------
 // Prototype(s)

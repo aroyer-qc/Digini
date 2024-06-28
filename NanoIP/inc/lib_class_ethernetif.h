@@ -32,7 +32,15 @@
 
 #include "./Digini/lib_digini.h"
 
-#if (USE_ETH_DRIVER == DEF_ENABLED)
+//-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define TASK_ETHERNET_IF_STACK_SIZE         1024
 
 //-------------------------------------------------------------------------------------------------
 
@@ -47,10 +55,10 @@ class ETH_IF_Driver
         SystemState_e   Initialize                      (EthernetIF_t* pNetIf);
 
       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-        uint32_t        GetDBG_RX_Count      { return m_DBG_RX_Count; }
-        uint32_t        GetDBG_TX_Count      { return m_DBG_TX_Count; }
-        uint32_t        GetDBG_RX_Drop       { return m_DBG_RX_Drop;  }
-        uint32_t        GetDBG_TX_Drop       { return m_DBG_TX_Drop;  }
+        uint32_t        GetDBG_RX_Count                 (void)          { return m_DBG_RX_Count; }
+        uint32_t        GetDBG_TX_Count                 (void)          { return m_DBG_TX_Count; }
+        uint32_t        GetDBG_RX_Drop                  (void)          { return m_DBG_RX_Drop;  }
+        uint32_t        GetDBG_TX_Drop                  (void)          { return m_DBG_TX_Drop;  }
       #endif
 
     private:
@@ -75,10 +83,10 @@ class ETH_IF_Driver
         EthernetIF_t*               m_pNefIf;
 
         ETH_Driver                  m_Mac;
-        PHY_DRIVER_INTERFACE        m_Phy;
+        //PHY_DRIVER_INTERFACE        m_Phy;
         PHY_DriverInterface         m_ETH_Phy;
         ETH_LinkState_e             m_Link;                // Ethernet Link State
-        
+
       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
         uint32_t                    m_DBG_RX_Count;
         uint32_t                    m_DBG_TX_Count;
@@ -89,4 +97,4 @@ class ETH_IF_Driver
 
 //-------------------------------------------------------------------------------------------------
 
-#endif
+#endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)

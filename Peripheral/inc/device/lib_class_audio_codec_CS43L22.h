@@ -59,7 +59,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "./Digini/lib_digini.h"
-#include "./Digini/Peripheral/inc/interface/lib_class_audio_interface.h"
+#include "./Peripheral/inc/interface/lib_class_audio_interface.h"
 #include "device_cfg.h"
 
 //-------------------------------------------------------------------------------------------------

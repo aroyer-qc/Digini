@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "./Digini/lib_digini.h"
-#include "./Digini/Peripheral/inc/port/lib_class_usb.h"
+#include "./Peripheral/inc/port/lib_class_usb.h"
 #include "usb_hcd.h"
 
 #if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED)

@@ -147,7 +147,7 @@ void Console::Process(void)
     }
   #endif
 
-    if(m_pChildProcess[m_ActiveProcessLevel] != nullptr)
+    if((m_pChildProcess[m_ActiveProcessLevel] != nullptr) && (m_ActiveProcessLevel != CON_NOT_CONNECTED))
     {
         m_pChildProcess[m_ActiveProcessLevel]->IF_Process();
     }

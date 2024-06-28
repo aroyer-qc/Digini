@@ -42,7 +42,7 @@
 
 #include <stdint.h>
 #define STM32F4_RTC_GLOBAL
-#include "./Digini/Peripheral/inc/port/lib_class_rtc.h"
+#include "./Peripheral/inc/port/lib_class_rtc.h"
 #undef  STM32F4_RTC_GLOBAL
 #include "string.h"
 #include "STM32F4xx.h"

@@ -14,7 +14,7 @@
 #ifdef DIGINI_USE_SDRAM_MODULE
 #include <stdint.h>
 #include "./Digini/Digini/inc/lib_typedef.h"
-#include "./Digini/Peripheral/inc/port/lib_class_fmc.h"
+#include "./Peripheral/inc/port/lib_class_fmc.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)

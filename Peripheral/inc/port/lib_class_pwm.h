@@ -27,11 +27,11 @@
 #include "pwm_cfg.h"
 
 #if defined STM32F1xx
- #include "./Digini/Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_pwm.h"
+ #include "./Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_pwm.h"
 #elif defined STM32F4xx
- #include "./Digini/Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_pwm.h"
+ #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_pwm.h"
 #elif defined STM32F7xx
- #include "./Digini/Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_pwm.h"
+ #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_pwm.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

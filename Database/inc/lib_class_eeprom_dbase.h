@@ -37,7 +37,7 @@
 
 #include "label_cfg.h"
 #include "./Digini/Database/inc/lib_class_database.h"
-#include "./Digini/Peripheral/inc/interface/lib_class_memory_driver_interface.h"
+#include "./Peripheral/inc/interface/lib_class_memory_driver_interface.h"
 
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)

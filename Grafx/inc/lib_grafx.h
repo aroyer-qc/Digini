@@ -63,7 +63,7 @@
 #include GRAFX_DRIVER_INCLUDE
 
 #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
-  #include "./Digini/Peripheral/inc/interface/lib_class_pointing_device_interface.h"
+  #include "./Peripheral/inc/interface/lib_class_pointing_device_interface.h"
   #include PDI_DRIVER_INCLUDE
   #include "./Digini/Grafx/inc/task/lib_pdi_task.h"
 #endif

@@ -33,7 +33,7 @@
 #include <lib_class_audio_interface.h>
 #include "digini_cfg.h"
 #include "stm32f7xx.h"
-#include "./Digini/Peripheral/inc/port/lib_class_i2c.h"
+#include "./Peripheral/inc/port/lib_class_i2c.h"
 #include "lib_class_sai.h"
 
 //-------------------------------------------------------------------------------------------------

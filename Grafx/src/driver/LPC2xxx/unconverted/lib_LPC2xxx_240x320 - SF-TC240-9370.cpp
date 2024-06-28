@@ -33,7 +33,7 @@
 #ifdef DIGINI_USE_GRAFX
 #include "./Digini/Grafx/inc/lib_grafx.h"
 #include "stm32f4xx.h"
-#include "./Digini/Peripheral/inc/port/lib_class_i2c.h"
+#include "./Peripheral/inc/port/lib_class_i2c.h"
 #include "bsp.h"
 
 //-------------------------------------------------------------------------------------------------

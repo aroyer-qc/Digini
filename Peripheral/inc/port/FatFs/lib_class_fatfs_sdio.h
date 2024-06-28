@@ -25,7 +25,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #if defined STM32F4xx
- #include "./Digini/Peripheral/inc/port/STM32F4xx/fatfs/lib_class_STM32F4_fatfs_sdio.h"
+ #include "./Peripheral/inc/port/STM32F4xx/fatfs/lib_class_STM32F4_fatfs_sdio.h"
 #elif defined STM32F7xx
- #include "./Digini/Peripheral/inc/port/STM32F7xx/fatfs/lib_class_STM32F7_fatfs_sdio.h"
+ #include "./Peripheral/inc/port/STM32F7xx/fatfs/lib_class_STM32F7_fatfs_sdio.h"
 #endif

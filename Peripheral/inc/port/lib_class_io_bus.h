@@ -25,11 +25,11 @@
 //-------------------------------------------------------------------------------------------------
 
 #if defined STM32F1xx
- #include "./Digini/Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_io_bus.h"
+ #include "./Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_io_bus.h"
 #elif defined STM32F4xx
- #include "./Digini/Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_io_bus.h"
+ #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_io_bus.h"
 #elif defined STM32F7xx
- #include "./Digini/Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_io_bus.h"
+ #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_io_bus.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

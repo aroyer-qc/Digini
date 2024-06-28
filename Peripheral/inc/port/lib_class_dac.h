@@ -27,11 +27,11 @@
 #include "dac_cfg.h"
 
 #if defined STM32F1xx
- #include "./Digini/Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_dac.h"
+ #include "./Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_dac.h"
 #elif defined STM32F4xx
- #include "./Digini/Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_dac.h"
+ #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_dac.h"
 #elif defined STM32F7xx
- #include "./Digini/Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_dac.h"
+ #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_dac.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

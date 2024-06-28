@@ -32,7 +32,7 @@
 #ifdef DIGINI_USE_SAI
 #include <stdint.h>
 #define STM32F7_SAI_GLOBAL
-#include "./Digini/Peripheral/inc/port/lib_class_sai.h"
+#include "./Peripheral/inc/port/lib_class_sai.h"
 #undef  STM32F7_SAI_GLOBAL
 #include "lib_STM32F7_gpio.h"
 #include "./Digini/Digini/inc/lib_macro.h"

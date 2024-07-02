@@ -72,20 +72,6 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef void (*ETH_MAC_SignalEvent_t) (uint32_t Event);  // Pointer to ETH_MAC_SignalEvent fucntion
-
-// EMAC Driver Control Information
-struct ETH_MAC_Control_t
-{
-    ETH_MAC_SignalEvent_t   CallbackEvent;          // Event callback
-    uint8_t                 TX_Index;               // Transmit descriptor index
-    uint8_t                 RX_Index;               // Receive descriptor index
-  #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-    uint8_t                 TX_TS_Index;            // Transmit Timestamp descriptor index
-  #endif
-    uint8_t*                FrameEnd;               // End of assembled frame fragments
-};
-
 // DMA RX Descriptor
 struct RX_Descriptor_t
 {
@@ -142,11 +128,11 @@ struct TX_Descriptor_t
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class ETH_Driver //: public MAC_DriverInterface
+class ETH_Driver : public ETH_DriverInterface
 {
     public:
 
-        SystemState_e           Initialize              (ETH_MAC_SignalEvent_t CallbackEvent);                           // Initialize Ethernet MAC Device.
+        SystemState_e           Initialize              (ETH_SignalEvent_t CallbackEvent);                               // Initialize Ethernet MAC Device.
 
         void                    Start                   (void);                                                          // Start ETH module
         SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address);                          // Get Ethernet MAC Address.
@@ -172,7 +158,7 @@ class ETH_Driver //: public MAC_DriverInterface
         void                    Control                 (void);
         SystemState_e           PHY_Busy                (void);
 
-        static     ETH_MAC_Control_t           m_MAC_Control;
+        static     ETH_Control_t               m_Control;
         static     RX_Descriptor_t             m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
         static     TX_Descriptor_t             m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((aligned(4)));
         static     uint32_t                    m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((aligned(4)));   // Ethernet Receive buffers
@@ -187,11 +173,11 @@ class ETH_Driver //: public MAC_DriverInterface
 
 #ifdef LIB_ETH_DRIVER_GLOBAL
 
-class ETH_Driver myEthernet;
+class ETH_Driver myETH_Driver;
 
 #else // LIB_ETH_DRIVER_GLOBAL
 
-extern class ETH_Driver myEthernet;
+extern class ETH_Driver myETH_Driver;
 
 #endif // LIB_ETH_DRIVER_GLOBAL
 

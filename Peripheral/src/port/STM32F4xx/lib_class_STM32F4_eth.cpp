@@ -130,7 +130,7 @@ RX_Descriptor_t   ETH_Driver::m_RX_Descriptor   [NUM_RX_Buffer]                 
 TX_Descriptor_t   ETH_Driver::m_TX_Descriptor   [NUM_TX_Buffer]                                   __attribute__((aligned(4)));
 uint32_t          ETH_Driver::m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE / sizeof(uint32_t)]  __attribute__((aligned(4)));   // Ethernet Receive buffers
 uint32_t          ETH_Driver::m_TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE / sizeof(uint32_t)]  __attribute__((aligned(4)));   // Ethernet Transmit buffers
-ETH_MAC_Control_t ETH_Driver::m_MAC_Control;
+ETH_Control_t     ETH_Driver::m_Control;
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -142,7 +142,7 @@ ETH_MAC_Control_t ETH_Driver::m_MAC_Control;
 //   Description:       Initialize Ethernet MAC Device.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::Initialize(ETH_MAC_SignalEvent_t CallbackEvent)
+SystemState_e ETH_Driver::Initialize(ETH_SignalEvent_t CallbackEvent)
 {
     TickCount_t TickStart;
 
@@ -176,9 +176,9 @@ SystemState_e ETH_Driver::Initialize(ETH_MAC_SignalEvent_t CallbackEvent)
     IO_PinInit(IO_ETH_EXT_LED);
 
     // Clear Control Structure
-    memset((void *)&m_MAC_Control, 0, sizeof(ETH_MAC_Control_t));
+    memset((void *)&m_Control, 0, sizeof(ETH_Control_t));
 
-    m_MAC_Control.CallbackEvent = CallbackEvent;
+    m_Control.CallbackEvent = CallbackEvent;
 
     // Reset Ethernet MAC peripheral
     ETH->DMABMR = ETH_DMABMR_SR;
@@ -238,7 +238,7 @@ SystemState_e ETH_Driver::Initialize(ETH_MAC_SignalEvent_t CallbackEvent)
                     ETH_PTPTSCR_TSFCU     |
                     ETH_PTPTSCR_TSE);
 
-    m_MAC_Control.TX_TS_Index = 0;
+    m_Control.TX_TS_Index = 0;
   #endif
 
     // Disable MMC interrupts
@@ -269,7 +269,7 @@ SystemState_e ETH_Driver::Initialize(ETH_MAC_SignalEvent_t CallbackEvent)
     ISR_ClearPendingIRQ(ETH_IRQn);
     ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);   // to see if the hard still append
 
-    m_MAC_Control.FrameEnd = nullptr;
+    m_Control.FrameEnd = nullptr;
 
     IO_SetPinLow(IO_ETH_EXT_LED);
 
@@ -312,8 +312,8 @@ void ETH_Driver::InitializeDMA_Buffer(void)
 
     ETH->DMATDLAR = (uint32_t)&m_TX_Descriptor[0];
     ETH->DMARDLAR = (uint32_t)&m_RX_Descriptor[0];
-    m_MAC_Control.TX_Index = 0;
-    m_MAC_Control.RX_Index = 0;
+    m_Control.TX_Index = 0;
+    m_Control.RX_Index = 0;
 
     // Enable RX interrupts
     ETH->DMAIER = ETH_DMAIER_NISE | ETH_DMAIER_RIE;
@@ -506,7 +506,7 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
 //-------------------------------------------------------------------------------------------------
 SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32_t Flags)
 {
-    uint8_t* pDst = m_MAC_Control.FrameEnd;
+    uint8_t* pDst = m_Control.FrameEnd;
     uint32_t Control;
 
     if((pFrame == nullptr) || (Length == 0))
@@ -518,20 +518,20 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
     if(pDst == nullptr)
     {
         // Start of a new transmit frame
-        if(m_TX_Descriptor[m_MAC_Control.TX_Index].Stat & DMA_TX_OWN)
+        if(m_TX_Descriptor[m_Control.TX_Index].Stat & DMA_TX_OWN)
         {
             // Transmitter is busy, wait
             DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - TX Busy\n");
             return SYS_BUSY;
         }
 
-        pDst = m_TX_Descriptor[m_MAC_Control.TX_Index].Addr;
-        m_TX_Descriptor[m_MAC_Control.TX_Index].Size = Length;
+        pDst = m_TX_Descriptor[m_Control.TX_Index].Addr;
+        m_TX_Descriptor[m_Control.TX_Index].Size = Length;
     }
     else
     {
         // Sending data fragments in progress
-        m_TX_Descriptor[m_MAC_Control.TX_Index].Size += Length;
+        m_TX_Descriptor[m_Control.TX_Index].Size += Length;
     }
 
     LIB_FastMemcpy(pFrame, pDst, Length);
@@ -539,12 +539,12 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
     if(Flags & ETH_MAC_TX_FRAME_FRAGMENT)
     {
         // More data to come, remember current write position
-        m_MAC_Control.FrameEnd = pDst;
+        m_Control.FrameEnd = pDst;
         return SYS_READY;
     }
 
     // Frame is now ready, send it to DMA
-    Control = m_TX_Descriptor[m_MAC_Control.TX_Index].Stat & ~uint32_t(DMA_TX_CIC);
+    Control = m_TX_Descriptor[m_Control.TX_Index].Stat & ~uint32_t(DMA_TX_CIC);
 
   #if(ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
     /*  The following is a workaround for MAC Control silicon problem:
@@ -560,8 +560,8 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
             packets matches the NH field for TCP, UDP or ICMP and, as a result, the MAC core inserts
             a checksum.
     */
-    uint16_t Prot = UNALIGNED_UINT16_READ(&m_TX_Descriptor[m_MAC_Control.TX_Index].Addr[12]);
-    uint16_t Frag = UNALIGNED_UINT16_READ(&m_TX_Descriptor[m_MAC_Control.TX_Index].Addr[20]);
+    uint16_t Prot = UNALIGNED_UINT16_READ(&m_TX_Descriptor[m_Control.TX_Index].Addr[12]);
+    uint16_t Frag = UNALIGNED_UINT16_READ(&m_TX_Descriptor[m_Control.TX_Index].Addr[20]);
 
     if((Prot == 0x0008) && (Fag & 0xFF3F))
     {
@@ -586,18 +586,18 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
         Control |= DMA_TX_TTSE;
     }
 
-    m_MAC_Control.TX_TS_Index = m_MAC_Control.TX_Index;
+    m_Control.TX_TS_Index = m_Control.TX_Index;
   #endif
 
-    m_TX_Descriptor[m_MAC_Control.TX_Index].Stat = Control | DMA_TX_OWN;
-    m_MAC_Control.TX_Index++;
+    m_TX_Descriptor[m_Control.TX_Index].Stat = Control | DMA_TX_OWN;
+    m_Control.TX_Index++;
 
-    if(m_MAC_Control.TX_Index == NUM_TX_Buffer)
+    if(m_Control.TX_Index == NUM_TX_Buffer)
     {
-        m_MAC_Control.TX_Index = 0;
+        m_Control.TX_Index = 0;
     }
 
-    m_MAC_Control.FrameEnd = nullptr;
+    m_Control.FrameEnd = nullptr;
 
     // Start frame transmission
     ETH->DMASR   = ETH_DMASR_TBUS;
@@ -624,7 +624,7 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
 SystemState_e ETH_Driver::ReadFrame(MemoryNode* pPacket, size_t Length)
 {
     SystemState_e State = SYS_READY;
-    uint8_t const* pSrc = m_RX_Descriptor[m_MAC_Control.RX_Index].Addr;
+    uint8_t const* pSrc = m_RX_Descriptor[m_Control.RX_Index].Addr;
     size_t NodeSize;
     uint8_t* pNodeData;
 
@@ -649,12 +649,12 @@ SystemState_e ETH_Driver::ReadFrame(MemoryNode* pPacket, size_t Length)
     }
 
     // Return this block back to ETH-DMA
-    m_RX_Descriptor[m_MAC_Control.RX_Index].Stat = DMA_RX_OWN;
-    m_MAC_Control.RX_Index++;
+    m_RX_Descriptor[m_Control.RX_Index].Stat = DMA_RX_OWN;
+    m_Control.RX_Index++;
 
-    if(m_MAC_Control.RX_Index == NUM_RX_Buffer)
+    if(m_Control.RX_Index == NUM_RX_Buffer)
     {
-        m_MAC_Control.RX_Index = 0;
+        m_Control.RX_Index = 0;
     }
 
     if(ETH->DMASR & ETH_DMASR_RBUS)
@@ -685,7 +685,7 @@ SystemState_e ETH_Driver::ReadFrame(MemoryNode* pPacket, size_t Length)
 //-------------------------------------------------------------------------------------------------
 uint32_t ETH_Driver::GetRX_FrameSize(void)
 {
-    uint32_t Stat = m_RX_Descriptor[m_MAC_Control.RX_Index].Stat;
+    uint32_t Stat = m_RX_Descriptor[m_Control.RX_Index].Stat;
 
     if((Stat & DMA_RX_OWN) != 0)
     {
@@ -717,7 +717,7 @@ uint32_t ETH_Driver::GetRX_FrameSize(void)
 #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
 SystemState_e ETH_Driver::GetRX_FrameTime(ETH_MAC_Time_t* pTime)
 {
-    RX_Descriptor* RX_Desc = &RX_Descriptor[m_MAC_Control.RX_Index];
+    RX_Descriptor* RX_Desc = &RX_Descriptor[m_Control.RX_Index];
 
     if(RX_Desc->Stat & DMA_RX_OWN)
     {
@@ -745,7 +745,7 @@ SystemState_e ETH_Driver::GetRX_FrameTime(ETH_MAC_Time_t* pTime)
 #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
 SystemState_e ETH_Driver::GetTX_FrameTime(ETH_MAC_Time_t* pTime)
 {
-    TX_Descriptor *TX_Desc = &TX_Descriptor[m_MAC_Control.TX_TS_Index];
+    TX_Descriptor *TX_Desc = &TX_Descriptor[m_Control.TX_TS_Index];
 
     if(TX_Desc->Stat & DMA_RX_OWN)
     {
@@ -957,13 +957,13 @@ SystemState_e ETH_Driver::PHY_Busy(void)
 //-------------------------------------------------------------------------------------------------
 void ETH_Driver::ISR_CallBack(uint32_t Event)
 {
-    if(m_MAC_Control.CallbackEvent != nullptr)
+    if(m_Control.CallbackEvent != nullptr)
     {
-        m_MAC_Control.CallbackEvent(Event);
+        m_Control.CallbackEvent(Event);
     }
     else
     {
-        myEthernet.ReadFrame(nullptr, 0);   // tempo for test
+        myETH_Driver.ReadFrame(nullptr, 0);   // tempo for test
     }
 }
 

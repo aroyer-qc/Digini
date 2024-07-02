@@ -28,8 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-
-#include <ip.h>
+#define LIB_IP_MANAGER_GLOBAL
+#include "./lib_digini.h"
+#define LIB_IP_MANAGER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -41,39 +42,47 @@
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
-const IP_Manager::IP_ETH_Config_t m_EthernetIF[IP_NUMBER_OF_INTERFACE];
+const IP_Config_t IP_Manager::m_Config[IP_NUMBER_OF_INTERFACE] =
 {
-    ETH_IF_CONFIG_LIST
+    IF_ETH_DEF(EXPAND_X_IF_AS_STRUCT_DATA)
 };
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   IP_Configuration_t      IP_Configuration        Struct for IF configuration
-//                  IP_MAC_Address_t*       pMAC_Address            MAC Address
+//  Parameter(s):   IF_ID_e      IF_ID      ID of the IF interface configuration data
 //  Return:         void
 //
 //  Description:    Initialize IP Task and stack
 //
 //-------------------------------------------------------------------------------------------------
-void IP_Manager::Initialize(IP_Configuration_t IP_Configuration, IP_MAC_Address_t* pMAC_Address)
+void IP_Manager::Initialize(IF_ID_e IF_ID)
 {
-    nOS_Error = Error;
-    
+    nOS_Error Error;
+
        // Initialize Variables
-    m_IP_IsValid             = false;
-    IP_Status.b.DNS_IP_Found = false;
- 
+    //m_IP_IsValid             = false;
+    m_DNS_IP_Found = false;
+    m_IP_Status = false;
+
+    m_Config[IF_ID].IP_ETH_Config.pETH_Driver.Initialize();
+    m_Config[IF_ID].IP_ETH_Config.pPHY_Driver.Initialize();
+
+  // IP_ETH_Config_t*                m_pETH_C
+//
+
+
+
     // Initialize the MAC Address
-    m_pEthernetIF->pETH_Driver.SetMacAddress(pMAC_Address);
-    
+   // m_pEthernetIF->pETH_Driver.SetMacAddress(pMAC_Address);
+
 //    m_pEthernetIF->pETH_Driver.Initialize(pMAC_Address);
 
 
     // Set netif maximum transfer unit
-    m_MTU = IP_NET_IF_MTU;
- 
+   // m_MTU = IP_NET_IF_MTU;
+
 
 //    pNIC->Initialize();
 
@@ -86,7 +95,7 @@ void IP_Manager::Initialize(IP_Configuration_t IP_Configuration, IP_MAC_Address_
   #if (IP_USE_UDP == DEF_ENABLED)
    #if (IP_NUMBER_OF_INTERFACE > 1)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_UDP) != 0)
-   #endif     
+   #endif
     {
         m_pUDP = new NetUDP();
         m_pUDP->Initialize();
@@ -96,7 +105,7 @@ void IP_Manager::Initialize(IP_Configuration_t IP_Configuration, IP_MAC_Address_
   #if (IP_USE_DHCP == DEF_ENABLED)
    #if (IP_NUMBER_OF_INTERFACE > 1)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
-   #endif     
+   #endif
     {
         m_pDHCP = new NetDHCP();
         m_pDHCP->Initialize();
@@ -107,17 +116,17 @@ void IP_Manager::Initialize(IP_Configuration_t IP_Configuration, IP_MAC_Address_
   #if (IP_USE_ARP == DEF_ENABLED)
    #if (IP_NUMBER_OF_INTERFACE > 1)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-   #endif     
+   #endif
     {
         m_pARP = new NetARP();
         m_pARP->Initialize();
     }
   #endif
-  
+
   #if (IP_USE_ICMP == DEF_ENABLED)
    #if (IP_NUMBER_OF_INTERFACE > 1)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ICMP) != 0)
-   #endif     
+   #endif
     {
         m_pICMP = new NetICMP();
         m_pICMP->Initialize();
@@ -127,7 +136,7 @@ void IP_Manager::Initialize(IP_Configuration_t IP_Configuration, IP_MAC_Address_
   #if (IP_USE_TCP == DEF_ENABLED)
    #if (IP_NUMBER_OF_INTERFACE > 1)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_TCP) != 0)
-   #endif     
+   #endif
     {
         m_pTCP = new NetTCP();
         m_pTCP->Initialize();
@@ -137,7 +146,7 @@ void IP_Manager::Initialize(IP_Configuration_t IP_Configuration, IP_MAC_Address_
   #if (IP_USE_NTP == DEF_ENABLED)
    #if (IP_NUMBER_OF_INTERFACE > 1)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_NTP) != 0)
-   #endif     
+   #endif
     {
         m_pNTP = new NetNTP();
         m_pNTP->Initialize();
@@ -146,7 +155,7 @@ void IP_Manager::Initialize(IP_Configuration_t IP_Configuration, IP_MAC_Address_
 
   #if (IP_USE_SNTP == DEF_ENABLED)
    #if (IP_NUMBER_OF_INTERFACE > 1)
-   #endif     
+   #endif
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_SNTP) != 0)
     {
         m_pSNTP = new NetSNTP();
@@ -157,7 +166,7 @@ void IP_Manager::Initialize(IP_Configuration_t IP_Configuration, IP_MAC_Address_
   #if (IP_USE_SOAP == DEF_ENABLED)
    #if (IP_NUMBER_OF_INTERFACE > 1)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_SOAP) != 0)
-   #endif     
+   #endif
     {
         m_pSOAP = new NetSOAP();
         m_pSOAP->Initialize();
@@ -165,17 +174,6 @@ void IP_Manager::Initialize(IP_Configuration_t IP_Configuration, IP_MAC_Address_
   #endif
 }
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           SetMAC
-//
-//  Parameter(s):   IP_Configuration_t      IP_Configuration
-//  Return:         void
-//
-//  Description:    Initialize IP Task and stack
-//
-//-------------------------------------------------------------------------------------------------
-void IP_Manager::Initialize(IP_Configuration_t IP_Configuration)
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Run
@@ -194,13 +192,13 @@ void IP_Manager::Run(void)
 {
     IP_Address_t   Address;
     uint8_t        Error;
-    MSG_t*         pMsg        = nullptr;
+  //  MSG_t*         pMsg        = nullptr;
     IP_Address_t   IP;
 
     for(;;)
     {
         nOS_Yield();
-
+#if 0
         if(pDHCP->Process(nullptr) == true)                         // If enable, an IP must be valid to continue.
         {                                                           // If not enable it continue anyway
 			pRX = CS8900_Poll();									// Network driver read an entire IP packet into the RX Buffer
@@ -214,22 +212,22 @@ void IP_Manager::Run(void)
                       #if (IP_USE_ARP == DEF_ENABLED)
                        #if (IP_NUMBER_OF_INTERFACE > 1)
                         if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-                       #endif     
+                       #endif
                         {
                            m_pARP->ProcessIP(pRX);
                         }
-                      #endif 
-						
+                      #endif
+
                         pTX = IP_Process(pRX);
-                      
+
                       #if (IP_USE_ARP == DEF_ENABLED)
                        #if (IP_NUMBER_OF_INTERFACE > 1)
                         if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-                       #endif     
+                       #endif
                         {
                             m_pARP->ProcessOut(pTX);               		// If data are to be sent back, then send the data
                         }
-                      #endif 
+                      #endif
 					}
                     break;
 
@@ -238,13 +236,13 @@ void IP_Manager::Run(void)
 					{
                       #if (IP_NUMBER_OF_INTERFACE > 1)
                         if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-                      #endif      
+                      #endif
 						{
                             m_pARP->ProcessARP(pRX);
                         }
 					}
                     break;
-                  #endif  
+                  #endif
 				}
 
 				pMemory->Free((void**)&pRX);
@@ -260,11 +258,11 @@ void IP_Manager::Run(void)
 					{
                       #if (IP_NUMBER_OF_INTERFACE > 1)
                         if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
-                      #endif  
+                      #endif
                         {
-                            IP_Status.b.Status = m_pDHCP->Process(pMsg);
-						
-                            if(IP_Status.b.Status == false)
+                            m_IP_Status = m_pDHCP->Process(pMsg);
+
+                            if(m_IP_Status == false)
                             {
                                 for(int i = 0; i < IP_STACK_NUMBER_OF_SOCKET; i++)
                                 {
@@ -281,27 +279,28 @@ void IP_Manager::Run(void)
                     {
                       #if (IP_NUMBER_OF_INTERFACE > 1)
                         if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_SNTP) != 0)
-                      #endif  
+                      #endif
                         {
                             IP = pSNTP->Request(IP_SNTP_SOCKET, IP_DEFAULT_NTP_SERVER_1, IP_DEFAULT_NTP_SERVER_2, &Error);
-                            IP_Status.b.SNTP_Fail = (IP == IP_ADDRESS(0,0,0,0)) ? false : true;
+                            m_FlagSNTP_Fail = (IP == IP_ADDRESS(0,0,0,0)) ? false : true;
                         }
                     }
                     break;
-                  #endif 				
-                
+                  #endif
+
 					// put other management here
                 }
 
                 pMemory->Free((void**)&pMsg);
             }
         }
+#endif
     }
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           GetDNS_IP
+//  Name:           GetDNS
 //
 //  Parameter(s):   void
 //  Return:         IP_Address_t   IP
@@ -309,28 +308,28 @@ void IP_Manager::Run(void)
 //  Description:    Return DNS server IP address according to configuration
 //
 //-------------------------------------------------------------------------------------------------
-IP_Address_t IP_Manager::GetDNS_IP(void)
+IP_Address_t IP_Manager::GetDNS(void)
 {
   #if (IP_USE_DHCP == DEF_ENABLED)
    #if (IP_NUMBER_OF_INTERFACE > 1)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
-   #endif  
+   #endif
     {
        if(pDHCP->GetMode() == DHCP_IS_ON)
         {
             return IP_DHCP_DNS_IP;
         }
     }
-  #endif 
-    
+  #endif
+
     // TODO there might be a case where HEC have built-in DHCP.. need to handle that case
-    
-    return IP_StaticDNS_IP;
+
+    return IP_ADDRESS(0,0,0,0);//IP_StaticDNS_IP;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           GetHost_IP
+//  Name:           GetHost
 //
 //  Parameter(s):   void
 //  Return:         IP_Address_t   dwIP
@@ -338,7 +337,7 @@ IP_Address_t IP_Manager::GetDNS_IP(void)
 //  Description:    Return host IP address according to configuration
 //
 //-------------------------------------------------------------------------------------------------
-IP_Address_t IP_Manager::GetHost_IP(void)
+IP_Address_t IP_Manager::GetHost(void)
 {
   #if (IP_USE_DHCP == DEF_ENABLED)
    #if (IP_NUMBER_OF_INTERFACE > 1)
@@ -353,36 +352,36 @@ IP_Address_t IP_Manager::GetHost_IP(void)
   #endif
 
     // TODO there might be a case where HEC have built-in DHCP.. need to handle that case
-    // maybe ass a define for external call to get IP Address..  
+    // maybe ass a define for external call to get IP Address..
 
-    
-    return IP_StaticIP;
+
+    return IP_ADDRESS(0,0,0,0);//IP_StaticIP;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           ToAscii
+//  Name:           IP_ToAscii
 //
-//  Parameter(s):   IP_Address_t        IP_Address       
-//  Return:         uint8_t*
+//  Parameter(s):   IP_Address_t        IP_Address
+//  Return:         char*
 //
 //  Description:    Put IP in a string following standard format EX. 192.168.1.100
 //
 //  Note(s):        Don't forget to pMemory->Free() the pointer after use
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t* IP_Manager::ToAscii(IP_Address_t IP_Address)
+char* IP_Manager::IP_ToAscii(IP_Address_t IP_Address)
 {
-    uint8_t*   pBuffer;
+    char* pBuffer;
 
-    pBuffer = pMemoryPool->AllocAndClear(IP_ASCII_IP_ADDRESS_SIZE); 
+    pBuffer = (char*)pMemoryPool->AllocAndClear(IP_ASCII_IP_ADDRESS_SIZE);
 
     if(pBuffer != nullptr)
     {
         snprintf(pBuffer, IP_ASCII_IP_ADDRESS_SIZE, "%d.%d.%d.%d", uint8_t(IP_Address >> 24),
                                                                    uint8_t(IP_Address >> 16),
                                                                    uint8_t(IP_Address >> 8),
-                                                                   uint8_t(IP_Address);
+                                                                   uint8_t(IP_Address));
     }
     return pBuffer;
 }
@@ -399,81 +398,84 @@ uint8_t* IP_Manager::ToAscii(IP_Address_t IP_Address)
 //  Note(s):        lenght is check and also number of dot, to confirm it is an IP
 //
 //-------------------------------------------------------------------------------------------------
-IP_Address_t IP_Manager::AsciiToIP(uint8_t* pBuffer)
+IP_Address_t IP_Manager::AsciiToIP(char* pBuffer)
 {
     IP_Address_t IP_Address;
-    uint8_t      Count;
+    uint32_t     Count;
     uint8_t      DotCount;
 
-    IP_Address         = IP_ADDRESS(0,0,0,0);
-    IP_Status.b.Status = true;
-    Count              = 0;
+    IP_Address  = IP_ADDRESS(0,0,0,0);
+    m_IP_Status = true;
+    Count       = 0;
 
-    while((*(pBuffer + Count) != nullptr) && (IP_Status.b.Status == true))           // Scan to see if it contain only number and dot
+    if(pBuffer != nullptr)
     {
-        if(((*(pBuffer + Count) < '0') || (*(pBuffer + Count) > '9')) &&
-           ((*(pBuffer + Count) != '.')))
+        while(m_IP_Status == true)           // Scan to see if it contain only number and dot
         {
-            IP_Status.b.Status = false;
-        }
-        Count++;
-    }
-
-    if(IP_Status.b.Status == true)                                                  // Yes it contain only number and dot
-    {
-        if((Count >= 7) && (Count <= 15))                                           // Check lenght
-        {
-            Count    = 4;
-            DotCount = 0;
-
-            do
+            if(((*(pBuffer + Count) < '0') || (*(pBuffer + Count) > '9')) &&
+               ((*(pBuffer + Count) != '.')))
             {
-                Count--;
+                m_IP_Status = false;
+            }
+            Count++;
+        }
 
-                IP_Status.b.Status = false;
+        if(m_IP_Status == true)                                                // Yes it contain only number and dot
+        {
+            if((Count >= 7) && (Count <= 15))                                           // Check length
+            {
+                Count    = 4;
+                DotCount = 0;
+
                 do
                 {
-                    if((*pBuffer >= '0') && (*pBuffer <= '9'))
-                    {
-                        if(IP_Status.b.Status == false) IP_Status.b.Status = true; // Trap first occurence
-                        else                            IP.Array[Count] *= 10; // Other Must be multiply 10
+                    Count--;
+                    m_IP_Status = false;
 
-                        IP.Array[Count] += (*pBuffer - '0');
-                        pBuffer++;
-                    }
-                    else
+                    do
                     {
-                        IP_Status.b.Status = false;
+                        if((*pBuffer >= '0') && (*pBuffer <= '9'))
+                        {
+                            if(m_IP_Status == false) m_IP_Status = true;                // Trap first occurence
+                          // ??  else                     IP.Array[Count] *= 10;             // Other Must be multiply 10
+
+                          //  IP.Array[Count] += (*pBuffer - '0');
+                            pBuffer++;
+                        }
+                        else
+                        {
+                            m_IP_Status = false;
+                        }
+                    }
+                    while(m_IP_Status == true);
+
+                    if(*pBuffer == '.')
+                    {
+                        pBuffer++;                                                      // skip the dot
+                        DotCount++;
                     }
                 }
-                while(IP_Status.b.Status == true);
+                while(*pBuffer != '\0');
 
-                if(*pBuffer == '.')
+                if((Count != 0) && ( DotCount != 3))                                // Check if format was valid
                 {
-                    pBuffer++;                                                      // skip the dot
-                    DotCount++;
+                   IP_Address = IP_ADDRESS(0,0,0,0);
                 }
-            }
-            while(*pBuffer != nullptr);
-
-            if((byCount != 0) && ( DotCount != 3))                                // Check if format was valid
-            {
-               IP_Address = IP_ADDRESS(0,0,0,0);
             }
         }
     }
 
-    return IP;
+    return IP_Address;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           ProcessURL
 //
-//  Parameter(s):   uint8_t*      pBuffer
+//  Parameter(s):   char*         pBuffer
 //                  IP_Address_t* pIP
 //                  IP_Port_t     pPort
-//  Return:         uint8_t *     pURI
+//  Return:         char*         pURI
 //
 //  Description:    This function will process an URL
 //                      -   Extract Port number if any ( return 80 otherwise )
@@ -483,12 +485,12 @@ IP_Address_t IP_Manager::AsciiToIP(uint8_t* pBuffer)
 //  Note(s):        It is assume that "http://" is always lowercase
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t* IP_Manager::ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
+char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
 {
-    uint8_t*   pDomainName;
-    uint8_t*   pSearch1        = nullptr;
-    uint8_t*   pSearch2        = nullptr;
-    uint8_t    Error;
+    char*   pDomainName;
+    char*   pSearch1        = nullptr;
+    char*   pSearch2        = nullptr;
+    uint8_t Error;
 
     *pPort = 80;                                        // Set to default port if none are found
 
@@ -509,18 +511,18 @@ uint8_t* IP_Manager::ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, IP_Port_t* 
 
     if(pSearch1 != nullptr)                             // not nullptr then extract port number
     {
-        *pSearch1 = nullptr;                            // Put nullptr at the : position for nullptr terminated string
+        *pSearch1 = '\0';                               // Put nullptr at the : position for nullptr terminated string
         pSearch1++;
 
-        IP_Status.b.Status = false;
+        m_IP_Status = false;
         do
         {
             if((*pSearch1 >= '0') && (*pSearch1 <= '9'))
             {
-                if(IP_Status.b.Status == false)
+                if(m_IP_Status == false)
                 {
                     *pPort  = 0;                        // Trap first occurence
-                    IP_Status.b.Status = true;
+                    m_IP_Status = true;
                 }
                 else
                 {
@@ -532,10 +534,10 @@ uint8_t* IP_Manager::ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, IP_Port_t* 
             }
             else
             {
-                IP_Status.b.Status = false;
+                m_IP_Status = false;
             }
         }
-        while(IP_Status.b.Status == true);
+        while(m_IP_Status == true);
     }
     else
     {
@@ -549,7 +551,7 @@ uint8_t* IP_Manager::ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, IP_Port_t* 
     pSearch1 = strchr(pSearch1, '/');                   // Search for separator beginning of URI
     if(pSearch1 != nullptr)
     {
-        *pSearch1 = nullptr;                            // Put nullptr at the / position for nullptr terminated 'Domain Name' string
+        *pSearch1 = '\0';                               // Put nullptr at the / position for nullptr terminated 'Domain Name' string
         pSearch1++;                                     // Place pointer where URI start minus first '/'
 
         pSearch2 = pSearch1;
@@ -560,16 +562,16 @@ uint8_t* IP_Manager::ProcessURL(uint8_t* pBuffer, IP_Address_t* pIP, IP_Port_t* 
     pSearch2 = strchr(pSearch2, ' ');
     if(pSearch2 != nullptr)
     {
-        *pSearch2 = nullptr;                               // Put nullptr at the 'SPACE' for a nullptr terminated string
+        *pSearch2 = '\0';                               // Put nullptr at the 'SPACE' for a nullptr terminated string
     }
 
     // Scan to found if it is an IP or "Domain Name" .............................................
 
-    *pIP = IP_AsciiToIP(pDomainName);
+    *pIP = AsciiToIP(pDomainName);
 
     if(*pIP == IP_ADDRESS(0,0,0,0))
     {
-        *pIP = pDNS->Query(IP_DNS_SOCKET, pDomainName, &Error);
+ //       *pIP = pDNS->Query(IP_DNS_SOCKET, pDomainName, &Error);
     }
 
     return pSearch1;

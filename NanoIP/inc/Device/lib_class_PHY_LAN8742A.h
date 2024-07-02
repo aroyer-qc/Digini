@@ -115,16 +115,6 @@
 #define PHY_TIMEOUT                 2
 
 //-------------------------------------------------------------------------------------------------
-// Typedef(s)
-//-------------------------------------------------------------------------------------------------
-
-struct PHY_Config_t
-{
-    ETH_Driver* pDriver;
-    uint32_t    PHY_Address;
-};
-
-//-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -132,9 +122,7 @@ class PHY_LAN8742A_Driver : public PHY_DriverInterface
 {
     public:
 
-                                    PHY_LAN8742A_Driver             (const PHY_Config_t* pConfig);
-
-        SystemState_e               Initialize                      (void);
+        SystemState_e               Initialize                      (ETH_DriverInterface* pETH_Driver, uint32_t PHY_Address);
         SystemState_e               Uninitialize                    (void);
         SystemState_e               PowerControl                    (ETH_PowerState_e state);
         SystemState_e               SetInterface                    (ETH_MediaInterface_e Interface);
@@ -149,10 +137,9 @@ class PHY_LAN8742A_Driver : public PHY_DriverInterface
     private:
 
         // Ethernet PHY control structure
-        const PHY_Config_t*         m_pConfig;
+        ETH_DriverInterface*        m_pETH_Driver;                  // Pointer on the class ETH_Driver
         uint32_t                    m_PHY_Address;
         bool                        m_IsItInitialize;
-        ETH_Driver*                 m_pDriver;                      // Pointer on the class ETH_Driver
         uint16_t                    m_BCR_Register;                 // BCR register value
         ETH_State_e                 m_Flags;                        // Control flags
 };
@@ -163,16 +150,10 @@ class PHY_LAN8742A_Driver : public PHY_DriverInterface
 
 #ifdef LIB_PHY_8742A_GLOBAL
 
-const PHY_Config_t PHY_Config =
-{
-    &myEthernet,                    // Ethernet driver
-    0,                              // PHY_Address
-};
-
-class        PHY_LAN8742A_Driver    PHY_Driver();
+class        PHY_LAN8742A_Driver    myPHY_Driver;
 
 #else
-extern class PHY_LAN8742A_Driver    PHY_Driver;
+extern class PHY_LAN8742A_Driver    myPHY_Driver;
 #endif
 
 //-------------------------------------------------------------------------------------------------

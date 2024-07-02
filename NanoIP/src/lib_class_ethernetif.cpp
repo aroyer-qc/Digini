@@ -33,7 +33,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define ETHERNET_DRIVER_GLOBAL
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 #undef  ETHERNET_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -42,10 +42,35 @@
 
 //-------------------------------------------------------------------------------------------------
 
+#define ARP_TMR_INTERVAL                1000
+#define netifGUARD_BLOCK_TIME           250               // todo rename
+#define BLOCK_TIME_WAITING_FOR_INPUT    0xffff
+
+
+//-------------------------------------------------------------------------------------------------
+
 void FreePacket(MemoryNode* pPacket)
 {
     pPacket->Free();
     pMemoryPool->Free((void**)&pPacket);
+}
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ClassEthernetIf_Wrapper
+//
+//  Parameter(s):   void* pvParameters
+//  Return:         void
+//
+//  Description:    main() for the ClassEthernetIf_Wrapper
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+extern "C" void ClassEthernetIf_Wrapper(void* pvParameters)
+{
+    (static_cast<ETH_IF_Driver*>(pvParameters))->Run();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -61,15 +86,29 @@ void FreePacket(MemoryNode* pPacket)
 //                  interface.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_IF_Driver::Initialize(struct EthernetIF_t* pNetIf)
+SystemState_e ETH_IF_Driver::Initialize(IP_ETH_Config_t* pETH_Config)
 {
     static nOS_Error Error;
 
-    m_pNetIf = pNetIf;
+    m_pETH_Config = pETH_Config;
 
 	m_Link = ETH_LINK_DOWN;
 
-    BSP_EthernetIF_Initialize();
+    //BSP_EthernetIF_Initialize();
+
+
+// TODO move this into the lib_ethernetif  it will take care of the init phase
+//    myETH_Driver.Initialize(nullptr);
+    //myETH_Driver.SetMacAddress(&MAC);
+    //myETH_Driver.Start();
+    //myPHY_Driver.Initialize(&myETH_Driver, 0);
+
+
+
+
+
+
+
 
 	//pNetIf->output     = EtharpOutput;        not here!!!
 	//pNetIf->linkoutput = LowLevelOutput;
@@ -79,23 +118,22 @@ SystemState_e ETH_IF_Driver::Initialize(struct EthernetIF_t* pNetIf)
     Error = nOS_MutexCreate(&m_TX_Mutex, NOS_MUTEX_NORMAL, 1);
     VAR_UNUSED(Error);
 
-     nOS_ThreadCreate(&TaskHandle,
-                      Input,
-                      nullptr,
+     nOS_ThreadCreate(&m_TaskHandle,
+                      ClassEthernetIf_Wrapper,
+                      this,
                       &m_Stack[0],
                       TASK_ETHERNET_IF_STACK_SIZE,
                       TASK_ETHERNET_IF_PRIO);
-
 
       #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
         myStacktistic.Register(&m_Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Ethernet Input");
       #endif
 
-    ETH_Mac.Start();        // Enable MAC and DMA transmission and reception
+    m_pETH_Config->pETH_Driver->Start();        // Enable MAC and DMA transmission and reception
 
-	sys_timeout(ARP_TMR_INTERVAL, ArpTimer, nullptr);
+// 	sys_timeout(ARP_TMR_INTERVAL, ArpTimer, nullptr);  impelement my version of this
 
-	return ERR_OK;
+	return SYS_READY;//ERR_OK;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -130,17 +168,17 @@ SystemState_e ETH_IF_Driver::LowLevelOutput(MemoryNode* pPacket)
 
         do
         {
-            if(Lenght < NodeSize)
+            if(Length < NodeSize)
             {
                 NodeSize = Length;
             }
 
-            Lenght   -= NodeSize;
+            Length   -= NodeSize;
             pNodeData = static_cast<uint8_t*>(pPacket->GetNext());
 
             // Send the data from the pPacket to the interface, one pNodeData at a time.
             uint32_t flags = (pNodeData != nullptr) ? ETH_MAC_TX_FRAME_FRAGMENT : 0;
-            ETH_Mac.SendFrame(pNodeData, NodeSize, flags);     //  standard call from an interface class ...  call this function  SendFrame
+            m_pETH_Config->pETH_Driver->SendFrame(pNodeData, NodeSize, flags);     //  standard call from an interface class ...  call this function  SendFrame
         }
         while((pPacket->GetNext() != nullptr) && (Length > 0));
 
@@ -178,9 +216,10 @@ SystemState_e ETH_IF_Driver::LowLevelOutput(MemoryNode* pPacket)
 //-------------------------------------------------------------------------------------------------
 inline MemoryNode* ETH_IF_Driver::LowLevelInput(void)
 {
-    size_t Length;
+    MemoryNode* pPacket = nullptr;
+    size_t      Length;
 
-    Length = ETH_Mac.GetRX_FrameSize();                                             // Obtain the size of the packet and put it into the "len" variable.
+    Length = m_pETH_Config->pETH_Driver->GetRX_FrameSize();                                             // Obtain the size of the packet and put it into the "len" variable.
 
     if(Length != 0)
     {
@@ -188,9 +227,9 @@ inline MemoryNode* ETH_IF_Driver::LowLevelInput(void)
         m_DBG_RX_Count++;
       #endif
 
-        if(Length <= ETHERNET_FRAME_SIZE)
+        if(Length <= IP_ETHERNET_FRAME_SIZE)
         {
-            MemoryNode* pPacket = pMemoryPool->AllocAndClear(sizeof(MemoryNode*));
+            pPacket = (MemoryNode*)pMemoryPool->AllocAndClear(sizeof(MemoryNode));
 
             if(pPacket->Alloc(Length) == SYS_READY)                                 // We allocate a MemoryNode of node from the pool.
             {
@@ -209,15 +248,16 @@ inline MemoryNode* ETH_IF_Driver::LowLevelInput(void)
           #endif
         }
 
-        ETH_Mac.ReadFrame(pPacket, Length);                                         // Read or drop the packet
+         m_pETH_Config->pETH_Driver->ReadFrame(pPacket, Length);                                         // Read or drop the packet
     }
 
     return pPacket;
+
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       Input
+//  Function:       Run
 //
 //  Parameter(s):   pParam       The network interface structure for this ETH_IF_Driver
 //  Return:         None
@@ -230,21 +270,21 @@ inline MemoryNode* ETH_IF_Driver::LowLevelInput(void)
 //                  function is called.
 //
 //-------------------------------------------------------------------------------------------------
-void ETH_IF_Driver::Input(void* pParam)
+void ETH_IF_Driver::Run(void)
 {
    	MemoryNode*   pPacket;
-    EthernetIF_t* pNetIf = (EthernetIF_t*)pParam;  // this will be member since the IP_Manager is the interface obtaining the netif equvalent of lwip
-    err_t         Error;
+//    EthernetIF_t* pNetIf = (EthernetIF_t*)pParam;  // this will be member since the IP_Manager is the interface obtaining the netif equvalent of lwip
+    SystemState_e State;
     bool          Exit;
 
     PollTheNetworkInterface();        // Initial polling of the link
 
 	while(1)
 	{
-        if(nOS_SemTake(&ETH_RX_Sem, BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK)
+        if(nOS_SemTake(&m_RX_Sem, BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK)
 		{
 		    // if for some reason we receive a message and the link is down then poll the PHY for the link
-		    if(ETH_Link == ETH_LINK_DOWN)
+		    if(m_Link == ETH_LINK_DOWN)
             {
                 PollTheNetworkInterface();
             }
@@ -255,9 +295,9 @@ void ETH_IF_Driver::Input(void* pParam)
 			{
                 if((pPacket = LowLevelInput()) != nullptr)
                 {
-                    if((Error = pNetIf->input(pPacket)) != ERR_OK)
+                    //??if((State = m_pETH_Config->pETH_Driver->pNetIf->input(pPacket)) != SYS_READY)
                     {
-                        VAR_UNUSED(Error);
+                        VAR_UNUSED(State);
                         FreePacket(pPacket);
 
                       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
@@ -265,9 +305,9 @@ void ETH_IF_Driver::Input(void* pParam)
                       #endif
                       Exit = true;
                     }
-                    else
+              //      else
                     {
-                        nOS_SemTake(&m_RX_Sem, 0); // why this one
+            //            nOS_SemTake(&m_RX_Sem, 0); // why this one
                     }
                 }
 
@@ -298,11 +338,11 @@ void ETH_IF_Driver::Input(void* pParam)
 //  Description:    Call lwIP function etharp_tmr each time the configure timeout has ended
 //
 //-------------------------------------------------------------------------------------------------
-static void ETH_IF_Driver::ArpTimer(void* pArg)
+void ETH_IF_Driver::ArpTimer(void* pArg)
 {
 	VAR_UNUSED(pArg);
-	etharp_tmr();
-    sys_timeout(ARP_TMR_INTERVAL, ArpTimer, nullptr);           // Restart a new timer
+//	etharp_tmr();
+   // sys_timeout(ARP_TMR_INTERVAL, ArpTimer, nullptr);           // Restart a new timer
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -319,9 +359,9 @@ void ETH_IF_Driver::PollTheNetworkInterface(void)
 {
     ETH_LinkState_e LinkNow;
 
-    if(netif_find(IF_NAME))       // TODO temporary to debug reception of packet
+ //   if(netif_find(IF_NAME))       // TODO temporary to debug reception of packet
     {
-        LinkNow = ETH_Phy.GetLinkState();
+        LinkNow = m_pETH_Config->pPHY_Driver->GetLinkState();
 
         if(LinkNow != m_Link)
         {
@@ -343,7 +383,7 @@ void ETH_IF_Driver::PollTheNetworkInterface(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       ethernetif_Callback
+//  Function:       CallBack
 //
 //  Parameter(s):   Event           Event type received
 //  Return:         None
@@ -351,7 +391,7 @@ void ETH_IF_Driver::PollTheNetworkInterface(void)
 //  Description:    ISR activated when we receive a new message on the ethernet
 //
 //-------------------------------------------------------------------------------------------------
-void ETH_IF_Driver::_Callback(uint32_t Event)
+void ETH_IF_Driver::CallBack(uint32_t Event)
 {
     if(Event == ETH_MAC_EVENT_RX_FRAME)         // Send notification on RX event
     {

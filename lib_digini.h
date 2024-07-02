@@ -66,7 +66,6 @@
 
 // Need to integrate a dependency check for all DEF_ENABLED
 
-
 #include "driver_cfg.h"
 #include "bsp_io_def.h"
 
@@ -78,7 +77,7 @@
 #include "label_cfg.h"
 #endif
 
-#if (USE_ETH_DRIVER == DEF_ENABLED)
+#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 #include "ip_cfg.h"
 #endif
 
@@ -132,20 +131,27 @@
 #include "./Peripheral/inc/port/lib_dma.h"                  // todo remove when DMA porting is done
 #include "./Peripheral/inc/port/lib_rng.h"
 
+#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
+#include "./NanoIP/inc/lib_ethernet_typedef.h"
+#endif
+
 #if (DIGINI_USE_CRC == DEF_ENABLED)     // This is for software CRC calculation support
 #include "./Utility/inc/lib_crc.h"
 #endif
 
 #if (DIGINI_MPU_DRIVER == DEF_ENABLED)
-#include "./Peripheral/inc/port/lib_mpu.h"
+#include "./Peripheral/inc/port/lib_mpu.h"                  // TODO
 #endif
+
+//-------------------------------------------------------------------------------------------------
+// Interface
+//
+//#include "./Peripheral/inc/port/interface/lib_class_driver_interface.h"
 
 
 //-------------------------------------------------------------------------------------------------
 // Driver
 //
-
-//#include "./Peripheral/inc/port/interface/lib_class_driver_interface.h"
 
 #if (USE_ADC_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_adc.h"
@@ -164,8 +170,9 @@
 #endif
 
 #if (USE_ETH_DRIVER == DEF_ENABLED)
-#include "./Digini/NanoIP/inc/lib_ethernet_typedef.h"
+#include "./NanoIP/inc/interface/lib_class_ethernet_interface.h"
 #include "./Peripheral/inc/port/lib_class_eth.h"
+#include PHY_DRIVER_INCLUDE
 #endif
 
 #if (USE_I2C_DRIVER == DEF_ENABLED)
@@ -232,6 +239,11 @@
 #include "./Comm/Comm/inc/lib_comm.h"
 #endif
 
+#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
+#include "./NanoIP/inc/lib_class_ethernetif.h"
+#include "./NanoIP/inc/lib_Class_IP_Manager.h"
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // High level Peripheral
 //
@@ -271,10 +283,6 @@
 
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
 #include "./Grafx/inc/lib_grafx.h"
-#endif
-
-#if (USE_ETH_DRIVER == DEF_ENABLED)
-  #include PHY_DRIVER_INCLUDE
 #endif
 
 //-------------------------------------------------------------------------------------------------

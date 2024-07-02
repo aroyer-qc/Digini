@@ -43,6 +43,8 @@
 #define IP_FLAG_USE_TCP                         0x0040
 #define IP_FLAG_USE_UDP                         0x0080
 
+#define IP_ETHERNET_FRAME_SIZE                  1518
+
 //-------------------------------------------------------------------------------------------------
 // Macro(s)
 //-------------------------------------------------------------------------------------------------
@@ -70,12 +72,12 @@ enum IP_EthernetIF_e
 // Ethernet MAC Timer Control Codes
 enum ETH_ControlTimer_e
 {
-    ETH_MAC_TIMER_GET_TIME,                             // Get Current Time
-    ETH_MAC_TIMER_SET_TIME,                             // Set New Time
-    ETH_MAC_TIMER_INC_TIME,                             // Increment Current Time
-    ETH_MAC_TIMER_DEC_TIME,                             // Decrement Current Time
-    ETH_MAC_TIMER_SET_ALARM,                            // Set Alarm Time
-    ETH_MAC_TIMER_ADJUST_CLOCK,                         // Adjust Clock Frequency; Time->NanoSecond: Correction Factor * 2^31
+    ETH_TIMER_GET_TIME,                                 // Get Current Time
+    ETH_TIMER_SET_TIME,                                 // Set New Time
+    ETH_TIMER_INC_TIME,                                 // Increment Current Time
+    ETH_TIMER_DEC_TIME,                                 // Decrement Current Time
+    ETH_TIMER_SET_ALARM,                                // Set Alarm Time
+    ETH_TIMER_ADJUST_CLOCK,                             // Adjust Clock Frequency; Time->NanoSecond: Correction Factor * 2^31
 };
 
 // Ethernet MAC or PHY Power State
@@ -151,43 +153,53 @@ enum ETH_LinkState_e
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef uint32_t IP_Address_t;
-typedef uint16_t IP_Port_t;
+typedef uint32_t    IP_Address_t;
+typedef uint16_t    IP_Port_t;
+typedef void        (*ETH_SignalEvent_t) (uint32_t Event);  // Pointer to ETH_SignalEvent function
 
 struct IP_MAC_Address_t
 {
     uint8_t  Byte[IP_MAC_ADDRESS_SIZE];
 
   #if (IP_USE_IP_V6 == DEF_ENABLED)             // Future :)
-    uint16_t  WordV6[IP_MAC_V6_ADDRESS_SIZE];
+    uint16_t WordV6[IP_MAC_V6_ADDRESS_SIZE];
   #endif
 };
 
 struct IP_ETH_Config_t
+{
+    IP_MAC_Address_t            pMAC_Address;
+    class ETH_DriverInterface*  pETH_Driver;                                    // Driver for embedded MAC controller
+
+  #if (IP_INTERFACE_SUPPORT_EXTERNAL_PHY == DEF_ENABLED)
+    class PHY_DriverInterface*  pPHY_Driver;                                    // Driver for PHY
+  #endif
+};
+
+struct IP_Config_t                                          // Hosdt Name, IP_ Address, Protocol
 {
   #if (IP_USE_HOSTNAME == DEF_ENABLED)
     char*               HostName;
   #endif
 
     uint16_t            ProtocolFlag;
-
     IP_Address_t        DefaultStatic_IP;
     IP_Address_t        DefaultGateway;
     IP_Address_t        DefaultSubnetMask;
     IP_Address_t        DefaultStaticDNS;
+    IP_ETH_Config_t     IP_ETH_Config;
+};
 
-  #if IP_INTERFACE_SUPPORT_PHY == DEF_ENABLED
-    PHY_Driver*         pPHY_Driver;                                    // Driver for PHY
-    ETH_Driver*         pETH_Driver;                                    // Driver for embedded MAC controller
+// EMAC Driver Control Information
+struct ETH_Control_t
+{
+    ETH_SignalEvent_t       CallbackEvent;          // Event callback
+    uint8_t                 TX_Index;               // Transmit descriptor index
+    uint8_t                 RX_Index;               // Receive descriptor index
+  #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
+    uint8_t                 TX_TS_Index;            // Transmit Timestamps descriptor index
   #endif
-
-  #if IP_INTERFACE_SUPPORT_HEC == DEF_ENABLED
-     HEC_Driver         pHEC_Driver;                                    // Driver for HEC (Hardwired Embedded Controller)
-  #endif
-
-  #if IP_INTERFACE_SUPPORT_MAC == DEF_ENABLED
-    MAC_Driver*         pMAC_Driver;                                    // Driver for ethernal MAC and PHY chip
-  #endif
+    uint8_t*                FrameEnd;               // End of assembled frame fragments
 };
 
 struct IP_Message_t
@@ -212,7 +224,6 @@ struct  ETH_MacTime_t
 //typedef SystemState_e (*ETH_PHY_Write_t) (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data);   // Write Ethernet PHY Register.
 
 //-------------------------------------------------------------------------------------------------
-
 
 
 

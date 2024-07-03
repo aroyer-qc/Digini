@@ -41,7 +41,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "./Digini/Digini/inc/lib_typedef.h"
+#include "./Digini/inc/lib_typedef.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -55,20 +55,21 @@ class MemoryNode
 {
     public:
 
-                        MemoryNode          ();                                         // Size of node will not be initialize
-                        MemoryNode          (size_t NodeDataSize);                      // All node data size will be created with this size + node overhead
 
-        SystemState_e   Alloc               (size_t Size);                              // This reserve the memory for entire buffer  and clear the data.
-        SystemState_e   Free                (void);                                     // Will free all node data allocation and node allocation
+        void                Create              (size_t NodeDataSize);
+        SystemState_e       Alloc               (size_t Size);                              // This reserve the memory for entire buffer  and clear the data.
+        SystemState_e       Free                (void);                                     // Will free all node data allocation and node allocation
 
-        void            SetNodeSize         (size_t NodeDataSize);
-        size_t          GetNodeSize         (void);                                     // Get Node data pointer and increment node pointer
+        void                SetNodeSize         (size_t NodeDataSize);
+        size_t              GetNodeSize         (void);                                     // Get Node data pointer and increment node pointer
 
-        size_t          GetTotalSize        (void) { return m_TotalSize; }              // Get memory size requested in Alloc
+        size_t              GetTotalSize        (void) { return m_TotalSize; }              // Get memory size requested in Alloc
 
-        void            Begin               (void) { m_NodePtr = 0; }                   // Set Node pointer to first node
-        void*           GetNext             (void);                                     // Get Node data pointer and increment node pointer
+        void                Begin               (void) { m_NodePtr = 0; }                   // Set Node pointer to first node
+        void*               GetNext             (void);                                     // Get Node data pointer and increment node pointer
 
+        static MemoryNode*  AllocNode           (size_t Size, size_t NodeDataSize);         // Create and return a MemoryNode
+        static void         FreeNode            (MemoryNode* pMemoryNode);                  // Free the memory allocated by the memory node and the MemoryNode itself
 
     private:
 

@@ -28,7 +28,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -36,30 +36,16 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   MemoryNode
-//
-//   Parameter(s):  None
-//
-//   Description:   Initializes internal memory node.
-//
-//-------------------------------------------------------------------------------------------------
-MemoryNode::MemoryNode()
-{
-    m_pNodeList = (NodeList*)pMemoryPool->AllocAndClear(sizeof(NodeList));
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Constructor:   MemoryNode
+//   Constructor:   Create
 //
 //   Parameter(s):  size_t      NodeDataSize
 //
 //   Description:   Initializes internal memory node.
 //
 //-------------------------------------------------------------------------------------------------
-MemoryNode::MemoryNode(size_t NodeDataSize)
+void MemoryNode::Create(size_t NodeDataSize)
 {
-    MemoryNode();
+    m_pNodeList = (NodeList*)pMemoryPool->AllocAndClear(sizeof(NodeList));
     SetNodeSize(NodeDataSize);
     m_TotalSize = 0;
 }
@@ -189,9 +175,51 @@ void* MemoryNode::GetNext(void)
     return pData;
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: AllocNode
+//
+//   Parameter(s):  size_t      Size                    Total size for this node
+//                  size_t      NodeDataSize            Set granularity of the node
+//   Return:        MemoryNode* Node pointer            Pointer on the created Memory Node object
+//
+//   Description:   Allocate memory the the MemoryNode object
+//
+//-------------------------------------------------------------------------------------------------
+MemoryNode* MemoryNode::AllocNode(size_t Size, size_t NodeDataSize)
+{
+    MemoryNode* pMemoryNode;
 
+    pMemoryNode = (MemoryNode*)pMemoryPool->AllocAndClear(sizeof(MemoryNode));
 
+    if(pMemoryNode != nullptr)
+    {
+        pMemoryNode->Create(NodeDataSize);
+        pMemoryNode->Alloc(Size);
+    }
 
+    return pMemoryNode;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: FreeNode
+//
+//   Parameter(s):  MemoryNode*     Node pointer       Pointer on the Memory Node to be freed
+//   Return:        None
+//
+//   Description:   Free the memory allocated by the memory node and the MemoryNode itself
+//
+//-------------------------------------------------------------------------------------------------
+
+void  MemoryNode::FreeNode(MemoryNode* pMemoryNode)
+{
+    if(pMemoryNode != nullptr)
+    {
+        pMemoryNode->Free();                        // Free all node inside the object
+        pMemoryPool->Free((void**)&pMemoryNode);    // Free this MemoryNode
+    }
+}
 
 //-------------------------------------------------------------------------------------------------
 

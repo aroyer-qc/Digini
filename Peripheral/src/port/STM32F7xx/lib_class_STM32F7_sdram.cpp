@@ -30,7 +30,7 @@
 
 //#include <stdint.h>
 #include "./Peripheral/inc/port/lib_class_sdram.h"
-//#include "./Digini/Digini/inc/lib_macro.h"
+//#include "./Digini/inc/lib_macro.h"
 
 //-------------------------------------------------------------------------------------------------
 //

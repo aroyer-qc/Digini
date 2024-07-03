@@ -38,7 +38,7 @@
 #include "color_cfg.h"
 #include "grafx_cfg.h"
 #include "./Digini/Utility/inc/lib_compression.h"
-#include "./Digini/Digini/inc/lib_label.h"
+#include "./Digini/inc/lib_label.h"
 #include "./Digini/Grafx/inc/lib_grafx_define.h"
 #include "./Digini/Grafx/inc/lib_grafx_font.h"
 #include "static_skin_image.h"

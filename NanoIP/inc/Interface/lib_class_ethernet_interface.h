@@ -34,26 +34,23 @@ class ETH_DriverInterface
 {
     public:
 
-        virtual SystemState_e           Initialize              (ETH_SignalEvent_t CallbackEvent)                               = 0;                           // Initialize Ethernet MAC Device.
+        virtual SystemState_e           Initialize              (void* pContext)                                                = 0;    // Initialize Ethernet MAC Device.
 
-        virtual void                    Start                   (void)                                                          = 0;                                                          // Start ETH module
-        virtual SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address)                          = 0;                          // Get Ethernet MAC Address.
-        virtual SystemState_e           SetMacAddress           (const IP_MAC_Address_t* pMAC_Address)                          = 0;                          // Set Ethernet MAC Address.
-        virtual SystemState_e           SetAddressFilter        (const IP_MAC_Address_t* pMAC_Address, uint32_t NbAddress)      = 0;      // Configure Address Filter.
-        virtual SystemState_e           SendFrame               (const uint8_t* frame, size_t Length, uint32_t flags)           = 0;           // Send Ethernet frame.
-        virtual SystemState_e           ReadFrame               (MemoryNode* pPacket, size_t Length)                            = 0;                            // Read data of received Ethernet frame.
-        virtual uint32_t                GetRX_FrameSize         (void)                                                          = 0;                                                          // Get size of received Ethernet frame.
+        virtual void                    Start                   (void)                                                          = 0;    // Start ETH module
+        virtual SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address)                          = 0;    // Get Ethernet MAC Address.
+        virtual SystemState_e           SetMacAddress           (const IP_MAC_Address_t* pMAC_Address)                          = 0;    // Set Ethernet MAC Address.
+        virtual SystemState_e           SetAddressFilter        (const IP_MAC_Address_t* pMAC_Address, uint32_t NbAddress)      = 0;    // Configure Address Filter.
+        virtual SystemState_e           SendFrame               (const uint8_t* frame, size_t Length, uint32_t flags)           = 0;    // Send Ethernet frame.
+        virtual SystemState_e           ReadFrame               (MemoryNode* pPacket, size_t Length)                            = 0;    // Read data of received Ethernet frame.
+        virtual uint32_t                GetRX_FrameSize         (void)                                                          = 0;    // Get size of received Ethernet frame.
       #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-        virtual SystemState_e           GetRX_FrameTime         (ETH_MacTime_t* pTime)                                          = 0;                                          // Get time of received Ethernet frame.
-        virtual SystemState_e           GetTX_FrameTime         (ETH_MacTime_t* pTime)                                          = 0;                                          // Get time of transmitted Ethernet frame.
-        virtual SystemState_e           ControlTimer            (ETH_ControlTimer_e Control, ETH_MacTime_t* pTime)              = 0;              // Control Precision Timer.
+        virtual SystemState_e           GetRX_FrameTime         (ETH_MacTime_t* pTime)                                          = 0;    // Get time of received Ethernet frame.
+        virtual SystemState_e           GetTX_FrameTime         (ETH_MacTime_t* pTime)                                          = 0;    // Get time of transmitted Ethernet frame.
+        virtual SystemState_e           ControlTimer            (ETH_ControlTimer_e Control, ETH_MacTime_t* pTime)              = 0;    // Control Precision Timer.
       #endif
 
         virtual SystemState_e           PHY_Read                (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData) = 0; // Read Ethernet PHY Register through Management Interface.
         virtual SystemState_e           PHY_Write               (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data) = 0; // Write Ethernet PHY Register through Management Interface.
-
-
-
 };
 
 class PHY_DriverInterface

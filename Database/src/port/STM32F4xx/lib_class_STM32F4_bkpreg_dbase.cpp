@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include "./Digini/Database/inc/port/lib_class_bkpreg_dbase.h"
 #include "./Peripheral/inc/port/lib_class_rtc.h"
-#include "./Digini/Digini/inc/lib_macro.h"
+#include "./Digini/inc/lib_macro.h"
 #include "driver_cfg.h"
 
 //-------------------------------------------------------------------------------------------------

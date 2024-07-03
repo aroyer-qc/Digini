@@ -36,7 +36,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_ETH_DRIVER_GLOBAL
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 #undef  LIB_ETH_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -136,13 +136,13 @@ ETH_Control_t     ETH_Driver::m_Control;
 //
 //   Function name:     Initialize
 //
-//   Parameter(s):      CallbackEvent   Pointer to ETH_MAC_SignalEvent_t for processing.
-//   Return value:      SystemState_e   State of function.
+//   Parameter(s):      void*           pContext            Pointer on context for callback
+//   Return value:      SystemState_e                       State of function.
 //
 //   Description:       Initialize Ethernet MAC Device.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::Initialize(ETH_SignalEvent_t CallbackEvent)
+SystemState_e ETH_Driver::Initialize(void* pContext)
 {
     TickCount_t TickStart;
 
@@ -178,7 +178,8 @@ SystemState_e ETH_Driver::Initialize(ETH_SignalEvent_t CallbackEvent)
     // Clear Control Structure
     memset((void *)&m_Control, 0, sizeof(ETH_Control_t));
 
-    m_Control.CallbackEvent = CallbackEvent;
+    // Save context ( pointer ont ethernetif class
+    m_pContext = pContext;
 
     // Reset Ethernet MAC peripheral
     ETH->DMABMR = ETH_DMABMR_SR;
@@ -957,9 +958,9 @@ SystemState_e ETH_Driver::PHY_Busy(void)
 //-------------------------------------------------------------------------------------------------
 void ETH_Driver::ISR_CallBack(uint32_t Event)
 {
-    if(m_Control.CallbackEvent != nullptr)
+    if(m_pContext != nullptr)
     {
-        m_Control.CallbackEvent(Event);
+        ETH_IF_Driver::CallbackWrapper(m_pContext, Event);
     }
     else
     {
@@ -1024,7 +1025,7 @@ extern "C"
         // Callback event notification
         if(Event != ETH_MAC_EVENT_NONE)
         {
-            ETH_Driver::ISR_CallBack(Event);
+            myETH_Driver.ISR_CallBack(Event);
         }
     }
 }

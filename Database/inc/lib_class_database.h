@@ -31,9 +31,9 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "./Digini/Database/inc/lib_database_wrapper.h"
-#include "./Digini/Digini/inc/lib_typedef.h"
+#include "./Digini/inc/lib_typedef.h"
 #include "project_def.h"
-#include "./Digini/Digini/inc/lib_label.h"
+#include "./Digini/inc/lib_label.h"
 #include "database_cfg.h"
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
   #include "./Digini/Grafx/inc/lib_grafx_dbase.h"

@@ -155,7 +155,7 @@ enum ETH_LinkState_e
 
 typedef uint32_t    IP_Address_t;
 typedef uint16_t    IP_Port_t;
-typedef void        (*ETH_SignalEvent_t) (uint32_t Event);  // Pointer to ETH_SignalEvent function
+//typedef void        (*ETH_CallBack_t) (uint32_t Event);                         // Pointer to ETH_CallBack function
 
 struct IP_MAC_Address_t
 {
@@ -170,10 +170,8 @@ struct IP_ETH_Config_t
 {
     IP_MAC_Address_t            pMAC_Address;
     class ETH_DriverInterface*  pETH_Driver;                                    // Driver for embedded MAC controller
-
-  #if (IP_INTERFACE_SUPPORT_EXTERNAL_PHY == DEF_ENABLED)
     class PHY_DriverInterface*  pPHY_Driver;                                    // Driver for PHY
-  #endif
+    uint32_t                    PHY_Address;
 };
 
 struct IP_Config_t                                          // Hosdt Name, IP_ Address, Protocol
@@ -193,7 +191,7 @@ struct IP_Config_t                                          // Hosdt Name, IP_ A
 // EMAC Driver Control Information
 struct ETH_Control_t
 {
-    ETH_SignalEvent_t       CallbackEvent;          // Event callback
+ //   ETH_CallBack_t          pCallBack;              // Signal Event callback
     uint8_t                 TX_Index;               // Transmit descriptor index
     uint8_t                 RX_Index;               // Receive descriptor index
   #if (ETH_USE_TIME_STAMP == DEF_ENABLED)

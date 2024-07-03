@@ -30,7 +30,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -42,6 +42,7 @@
 
 #define TASK_ETHERNET_IF_STACK_SIZE         1024
 #define TASK_ETHERNET_IF_PRIO               7
+#define TASK_ETHERNET_IF_NODE_SIZE          64
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
@@ -51,18 +52,17 @@ class ETH_IF_Driver
 {
     public:
 
-        SystemState_e       Initialize                  (IP_ETH_Config_t* pETH_Config);
+        SystemState_e       Initialize                  (const IP_ETH_Config_t* pETH_Config);
 
       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-        uint32_t            GetDBG_RX_Count             (void)          { return m_DBG_RX_Count; }
-        uint32_t            GetDBG_TX_Count             (void)          { return m_DBG_TX_Count; }
-        uint32_t            GetDBG_RX_Drop              (void)          { return m_DBG_RX_Drop;  }
-        uint32_t            GetDBG_TX_Drop              (void)          { return m_DBG_TX_Drop;  }
+        uint32_t            GetDBG_RX_Count             (void)                          { return m_DBG_RX_Count; }
+        uint32_t            GetDBG_TX_Count             (void)                          { return m_DBG_TX_Count; }
+        uint32_t            GetDBG_RX_Drop              (void)                          { return m_DBG_RX_Drop;  }
+        uint32_t            GetDBG_TX_Drop              (void)                          { return m_DBG_TX_Drop;  }
       #endif
 
-        void                Run                         (void/*void* pParam*/);
-
-        void                CallBack                    (uint32_t Event);
+        void                Run                         (void);
+        static void         CallbackWrapper             (void* pContext, uint32_t Event) { static_cast<ETH_IF_Driver*>(pContext)->CallBack(Event); }
 
     private:
 
@@ -70,6 +70,7 @@ class ETH_IF_Driver
         SystemState_e       LowLevelOutput              (MemoryNode* pPacket);               // TODO Should use may chainlist buffer allocation
         void                ArpTimer                    (void* pArg);
         void                PollTheNetworkInterface     (void);                                                 // This might be a PHY, MAC, HEC ( hardwired ethernet controller Ex. W5100, ESP32 etc...)
+        void                CallBack                    (uint32_t Event);
       #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
         void                LinkCallBack                (void* pArg);
       #endif
@@ -79,7 +80,7 @@ class ETH_IF_Driver
         nOS_Thread                  m_TaskHandle;
         nOS_Stack                   m_Stack[TASK_ETHERNET_IF_STACK_SIZE];
 
-        IP_ETH_Config_t*            m_pETH_Config;
+        const IP_ETH_Config_t*      m_pETH_Config;
 
         //ETH_Driver                  m_Mac;
         //PHY_DRIVER_INTERFACE        m_Phy;

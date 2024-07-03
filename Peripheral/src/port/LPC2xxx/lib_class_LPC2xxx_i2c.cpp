@@ -32,7 +32,7 @@
 #define LPC2_I2C_GLOBAL
 #include "./Peripheral/inc/port/lib_class_i2c.h"
 #undef  LPC2_I2C_GLOBAL
-#include "./Digini/Digini/inc/lib_macro.h"
+#include "./Digini/inc/lib_macro.h"
 #include "bsp.h"
 #include "assert.h"
 

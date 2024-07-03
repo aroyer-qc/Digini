@@ -13,7 +13,7 @@
 #include "digini_cfg.h"
 #ifdef DIGINI_USE_SDRAM_MODULE
 #include <stdint.h>
-#include "./Digini/Digini/inc/lib_typedef.h"
+#include "./Digini/inc/lib_typedef.h"
 #include "./Peripheral/inc/port/lib_class_fmc.h"
 
 //-------------------------------------------------------------------------------------------------

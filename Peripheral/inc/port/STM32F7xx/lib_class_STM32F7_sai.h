@@ -32,7 +32,7 @@
 
 #include "stm32f7xx.h"
 #include "nOS.h"
-#include "./Digini/Digini/inc/lib_typedef.h"
+#include "./Digini/inc/lib_typedef.h"
 #include "./Peripheral/inc/Port/lib_io.h"
 
 //-------------------------------------------------------------------------------------------------

@@ -36,7 +36,7 @@
 #include "./Peripheral/inc/port/lib_class_i2s.h"
 #undef  STM32F7_I2S_GLOBAL
 #include "lib_STM32F7_gpio.h"
-#include "./Digini/Digini/inc/lib_macro.h"
+#include "./Digini/inc/lib_macro.h"
 #include "bsp.h"
 #include "assert.h"
 

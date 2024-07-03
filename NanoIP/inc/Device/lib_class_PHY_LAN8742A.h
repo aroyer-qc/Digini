@@ -129,9 +129,9 @@ class PHY_LAN8742A_Driver : public PHY_DriverInterface
         SystemState_e               SetMode                         (ETH_PHY_Mode_e Mode);
         ETH_LinkState_e             GetLinkState                    (void);
         ETH_LinkInfo_t              GetLinkInfo                     (void);
-        uint8_t                     GetPHY_Address                  (void)          { return m_PHY_Address; }
+        uint8_t                     GetPHY_Address                  (void)                  { return m_PHY_Address; }
       #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
-        SystemState_e               SetLinkUpInterrupt              (bool State)    { VAR_UNUSED(State); return SYS_READY; };         // No interrupt line for link status on this PHY
+        SystemState_e               SetLinkUpInterrupt              (bool State)            { VAR_UNUSED(State); return SYS_READY; };         // No interrupt line for link status on this PHY
       #endif
 
     private:

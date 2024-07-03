@@ -132,7 +132,7 @@ class ETH_Driver : public ETH_DriverInterface
 {
     public:
 
-        SystemState_e           Initialize              (ETH_SignalEvent_t CallbackEvent);                               // Initialize Ethernet MAC Device.
+        SystemState_e           Initialize              (void* pContext);                                                // Initialize Ethernet MAC Device.
 
         void                    Start                   (void);                                                          // Start ETH module
         SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address);                          // Get Ethernet MAC Address.
@@ -150,7 +150,7 @@ class ETH_Driver : public ETH_DriverInterface
         SystemState_e           PHY_Read                (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData); // Read Ethernet PHY Register through Management Interface.
         SystemState_e           PHY_Write               (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data); // Write Ethernet PHY Register through Management Interface.
 
-        static void             ISR_CallBack             (uint32_t Event);
+        void                    ISR_CallBack             (uint32_t Event);
 
     private:
 
@@ -158,6 +158,7 @@ class ETH_Driver : public ETH_DriverInterface
         void                    Control                 (void);
         SystemState_e           PHY_Busy                (void);
 
+                   void*                       m_pContext;
         static     ETH_Control_t               m_Control;
         static     RX_Descriptor_t             m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
         static     TX_Descriptor_t             m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((aligned(4)));

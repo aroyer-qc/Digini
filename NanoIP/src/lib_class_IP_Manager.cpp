@@ -59,19 +59,14 @@ const IP_Config_t IP_Manager::m_Config[IP_NUMBER_OF_INTERFACE] =
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::Initialize(IF_ID_e IF_ID)
 {
-    nOS_Error Error;
+    nOS_Error            Error;
 
        // Initialize Variables
     //m_IP_IsValid             = false;
     m_DNS_IP_Found = false;
-    m_IP_Status = false;
+    m_IP_Status    = false;
 
-    m_Config[IF_ID].IP_ETH_Config.pETH_Driver.Initialize();
-    m_Config[IF_ID].IP_ETH_Config.pPHY_Driver.Initialize();
-
-  // IP_ETH_Config_t*                m_pETH_C
-//
-
+    m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config);
 
 
     // Initialize the MAC Address

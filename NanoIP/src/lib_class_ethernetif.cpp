@@ -46,16 +46,6 @@
 #define netifGUARD_BLOCK_TIME           250               // todo rename
 #define BLOCK_TIME_WAITING_FOR_INPUT    0xffff
 
-
-//-------------------------------------------------------------------------------------------------
-
-void FreePacket(MemoryNode* pPacket)
-{
-    pPacket->Free();
-    pMemoryPool->Free((void**)&pPacket);
-}
-
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           ClassEthernetIf_Wrapper
@@ -77,7 +67,7 @@ extern "C" void ClassEthernetIf_Wrapper(void* pvParameters)
 //
 //  Function:       Initialize
 //
-//  Parameter(s):   EthernetIF_t*  The NanoIP network interface structure
+//  Parameter(s):   IP_ETH_Config_t*  pETH_Config    The NanoIP network interface structure
 //  Return:         SystemState_e
 //
 //  Description:    This function initialize the MAC,PHY and IO
@@ -86,16 +76,19 @@ extern "C" void ClassEthernetIf_Wrapper(void* pvParameters)
 //                  interface.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_IF_Driver::Initialize(IP_ETH_Config_t* pETH_Config)
+SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
 {
-    static nOS_Error Error;
+    nOS_Error            Error;
+    ETH_DriverInterface* pETH_Driver;
+
 
     m_pETH_Config = pETH_Config;
 
 	m_Link = ETH_LINK_DOWN;
 
-    //BSP_EthernetIF_Initialize();
-
+    //PHY_DriverInterface* pPHY_Driver;       // TODO conditional DIGINI_USE
+    pETH_Driver = m_pETH_Config->pETH_Driver;
+    //pPHY_Driver = m_Config[IF_ID].IP_ETH_Config.pPHY_Driver;
 
 // TODO move this into the lib_ethernetif  it will take care of the init phase
 //    myETH_Driver.Initialize(nullptr);
@@ -104,9 +97,14 @@ SystemState_e ETH_IF_Driver::Initialize(IP_ETH_Config_t* pETH_Config)
     //myPHY_Driver.Initialize(&myETH_Driver, 0);
 
 
+//typedef void        (*ETH_SignalEvent_t) (uint32_t Event);  // Pointer to ETH_SignalEvent function
+    pETH_Driver->Initialize(this);      // TODO put in here the callback
 
 
 
+
+
+    m_pETH_Config->pPHY_Driver->Initialize(pETH_Driver, m_pETH_Config->PHY_Address); // Interface ID is used as address
 
 
 
@@ -182,7 +180,7 @@ SystemState_e ETH_IF_Driver::LowLevelOutput(MemoryNode* pPacket)
         }
         while((pPacket->GetNext() != nullptr) && (Length > 0));
 
-        FreePacket(pPacket);
+        MemoryNode::FreeNode(pPacket);
 
 
       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
@@ -229,12 +227,17 @@ inline MemoryNode* ETH_IF_Driver::LowLevelInput(void)
 
         if(Length <= IP_ETHERNET_FRAME_SIZE)
         {
-            pPacket = (MemoryNode*)pMemoryPool->AllocAndClear(sizeof(MemoryNode));
 
-            if(pPacket->Alloc(Length) == SYS_READY)                                 // We allocate a MemoryNode of node from the pool.
+            pPacket = MemoryNode::AllocNode(Length, TASK_ETHERNET_IF_NODE_SIZE);
+
+
+//            pPacket = (MemoryNode*)pMemoryPool->AllocAndClear(sizeof(MemoryNode));
+           // pPacket = MemoryNode::Alloc();
+
+            if(pPacket->Alloc(Length) != SYS_READY)                                 // We allocate a MemoryNode of node from the pool.
             {
                 Length = 0;                                                         // We cannot allocated memory so this will force the packet to be dropped
-                FreePacket(pPacket);
+                MemoryNode::FreeNode(pPacket);
               #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
                 m_DBG_RX_Drop++;
               #endif
@@ -273,7 +276,6 @@ inline MemoryNode* ETH_IF_Driver::LowLevelInput(void)
 void ETH_IF_Driver::Run(void)
 {
    	MemoryNode*   pPacket;
-//    EthernetIF_t* pNetIf = (EthernetIF_t*)pParam;  // this will be member since the IP_Manager is the interface obtaining the netif equvalent of lwip
     SystemState_e State;
     bool          Exit;
 
@@ -295,10 +297,11 @@ void ETH_IF_Driver::Run(void)
 			{
                 if((pPacket = LowLevelInput()) != nullptr)
                 {
-                    //??if((State = m_pETH_Config->pETH_Driver->pNetIf->input(pPacket)) != SYS_READY)
+                    // TODO how data will be transmitted to the IP_manager
+                    //if((State = m_pETH_Config->pETH_Driver->->pNetIf->input(pPacket)) != SYS_READY)
                     {
                         VAR_UNUSED(State);
-                        FreePacket(pPacket);
+                        MemoryNode::FreeNode(pPacket);
 
                       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
                         m_DBG_RX_Drop++;
@@ -393,10 +396,12 @@ void ETH_IF_Driver::PollTheNetworkInterface(void)
 //-------------------------------------------------------------------------------------------------
 void ETH_IF_Driver::CallBack(uint32_t Event)
 {
-    if(Event == ETH_MAC_EVENT_RX_FRAME)         // Send notification on RX event
+    if(Event == ETH_MAC_EVENT_RX_FRAME)       // Send notification on RX event
     {
-        nOS_SemGive(&m_RX_Sem);               // Give the semaphore to wakeup LwIP task
+        nOS_SemGive(&m_RX_Sem);               // Give the semaphore to wakeup IP_Manager task
     }
+
+    // Handle only RX at this time
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -469,16 +474,4 @@ void BSP_EthernetIF_Initialize(void)
 	}
   // }
   #endif
-
-  #if (IP_INTERFACE_SUPPORT_HEC == DEF_ENABLED)
-    // if(m_IF_Type == ETH_HEC_IF)
-    // {
-            // This is for chip containing the everything  in them Example Microchip WS5100
-    // }
-  #endif
-
-    // if(m_IF_Type == ETH_MAC_IF)
-    // {
-            // This is for chip containing the MAC controler in them Example Microchip LAN8650/1
-    // }
 }

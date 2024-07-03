@@ -49,7 +49,7 @@
 //#include "PortState.h"
 #include "./Peripheral/inc/port/lib_class_gpio.h"
 #include "./Digini/Utility/inc/lib_fifo.h"
-#include "./Digini/Digini/inc/lib_typedef.h"
+#include "./Digini/inc/lib_typedef.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)

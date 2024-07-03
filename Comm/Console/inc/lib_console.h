@@ -27,18 +27,34 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+// Define(s) Even if Console is disabled
+//-------------------------------------------------------------------------------------------------
+
+#define CON_DEBUG_NONE          0x0000
+#define CON_DEBUG_LEVEL_1       0x0001
+#define CON_DEBUG_LEVEL_2       0x0002
+#define CON_DEBUG_LEVEL_3       0x0004
+#define CON_DEBUG_LEVEL_4       0x0008
+#define CON_DEBUG_LEVEL_5       0x0010
+#define CON_DEBUG_LEVEL_6       0x0020
+#define CON_DEBUG_LEVEL_7       0x0040
+#define CON_DEBUG_LEVEL_8       0x0080
+#define CON_DEBUG_LEVEL_9       0x0100
+#define CON_DEBUG_LEVEL_10      0x0200
+#define CON_DEBUG_LEVEL_11      0x0400
+#define CON_DEBUG_LEVEL_12      0x0800
+#define CON_DEBUG_LEVEL_13      0x1000
+#define CON_DEBUG_LEVEL_14      0x2000
+#define CON_DEBUG_LEVEL_15      0x4000
+#define CON_DEBUG_LEVEL_16      0x8000
+
+//-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_CONSOLE == DEF_ENABLED)
 
 #if (USE_UART_DRIVER != DEF_ENABLED)
   #error USE_UART_DRIVER must be define DEF_ENABLED
 #endif
-
-//-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "console_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -55,28 +71,7 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-enum CON_DebugLevel_e
-{
-    CON_DEBUG_NONE          = 0x0000,
-    CON_DEBUG_LEVEL_1       = 0x0001,
-    CON_DEBUG_LEVEL_2       = 0x0002,
-    CON_DEBUG_LEVEL_3       = 0x0004,
-    CON_DEBUG_LEVEL_4       = 0x0008,
-    CON_DEBUG_LEVEL_5       = 0x0010,
-    CON_DEBUG_LEVEL_6       = 0x0020,
-    CON_DEBUG_LEVEL_7       = 0x0040,
-    CON_DEBUG_LEVEL_8       = 0x0080,
-    CON_DEBUG_LEVEL_9       = 0x0100,
-    CON_DEBUG_LEVEL_10      = 0x0200,
-    CON_DEBUG_LEVEL_11      = 0x0400,
-    CON_DEBUG_LEVEL_12      = 0x0800,
-    CON_DEBUG_LEVEL_13      = 0x1000,
-    CON_DEBUG_LEVEL_14      = 0x2000,
-    CON_DEBUG_LEVEL_15      = 0x4000,
-    CON_DEBUG_LEVEL_16      = 0x8000,
-};
-
-//typedef void (*CON_ChildProcess_t)(void);
+typedef CON_DebugLevel_e uint32_t
 
 class ChildProcessInterface
 {
@@ -153,12 +148,12 @@ class Console : public CallbackInterface
         CON_DebugLevel_e                        m_DebugLevel;
         int32_t                                 m_ActiveProcessLevel;
         ChildProcessInterface*                  m_pChildProcess[CON_CHILD_PROCESS_PUSH_POP_LEVEL];
-        
+
       #if (CON_TRAP_INCOMING_COMMENT_LINE == DEF_ENABLED)
         bool                                    m_InTrapForCommentLine;
         TickCount_t                             m_TrapTimeOut;
         bool                                    m_IsItIdle;
-      #endif  
+      #endif
 };
 
 //-------------------------------------------------------------------------------------------------

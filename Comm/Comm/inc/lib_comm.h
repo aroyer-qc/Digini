@@ -27,10 +27,8 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
 
-#include "./Digini/lib_digini.h"
+#if (DIGINI_USE_COMM_MODULE == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Global Macro
@@ -57,7 +55,7 @@ class ClassTaskCOMM
       #else
         void            Process            (void)   { myConsole.Process(); }    // Process
       #endif
-  
+
     private:
 
       #if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
@@ -81,3 +79,8 @@ TASK_COMM_EXTERN class ClassTaskCOMM  TaskCOMM;
 #endif
 
 //-------------------------------------------------------------------------------------------------
+
+#endif // (DIGINI_USE_COMM_MODULE == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+

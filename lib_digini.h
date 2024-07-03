@@ -68,6 +68,7 @@
 
 #include "driver_cfg.h"
 #include "bsp_io_def.h"
+#include "console_cfg.h"
 
 #if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
 #include "memory_cfg.h"
@@ -223,26 +224,12 @@
 // Digini included functionality
 //
 
-#if (DIGINI_USE_CONSOLE == DEF_ENABLED)
 #include "./Comm/Console/inc/lib_console.h"
-#endif
-
-#if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
 #include "./Comm/CmdLine/inc/lib_cli.h"
-#endif
-
-#if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
 #include "./Comm/VT100/inc/lib_vt100.h"
-#endif
-
-#if (DIGINI_USE_COMM_MODULE == DEF_ENABLED)
 #include "./Comm/Comm/inc/lib_comm.h"
-#endif
-
-#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 #include "./NanoIP/inc/lib_class_ethernetif.h"
 #include "./NanoIP/inc/lib_Class_IP_Manager.h"
-#endif
 
 //-------------------------------------------------------------------------------------------------
 // High level Peripheral

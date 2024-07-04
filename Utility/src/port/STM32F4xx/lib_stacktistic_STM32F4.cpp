@@ -49,7 +49,8 @@ extern const uint32_t _Min_Stack_Size;
 //-------------------------------------------------------------------------------------------------
 void StackCheck::InitializePort(void)
 {
-    uint32_t*           pStackBottom;
+    uint32_t* pStackBottom;
+    volatile uint32_t  StackTop __attribute__((used));
 
     m_Size[0]         = uint32_t(&_Min_Stack_Size);
     pStackBottom      = (uint32_t*)&_estack - m_Size[0];

@@ -102,16 +102,17 @@ nOS_Error ClassTaskCOMM::Initialize(void)
   #endif
 
   #if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
+
+   #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+    myStacktistic.Register(&m_Stack[0], TASK_COMM_STACK_SIZE, "Task COMM");
+   #endif
+
     Error = nOS_ThreadCreate(&m_Handle,
                              ClassTaskCOMM_Wrapper,
                              this,
                              &m_Stack[0],
                              TASK_COMM_STACK_SIZE,
                              TASK_COMM_PRIO);
-
-   #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-    myStacktistic.Register(&m_Stack[0], TASK_COMM_STACK_SIZE, "Task COMM");
-   #endif
   #endif
 
     return Error;

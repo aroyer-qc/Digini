@@ -37,8 +37,17 @@
 #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define LIB_CLASS_STACKTISTIC_WATER_MARK      U32MACRO(DIGINI_STACKTISTIC_WATER_MARK_CODE, \
+                                                       DIGINI_STACKTISTIC_WATER_MARK_CODE, \
+                                                       DIGINI_STACKTISTIC_WATER_MARK_CODE, \
+                                                       DIGINI_STACKTISTIC_WATER_MARK_CODE)
+
+//-------------------------------------------------------------------------------------------------
 //
-// Name:           Initialize
+// Name:           Constructor
 //
 // Parameter(s):   None
 // Return:         None
@@ -46,7 +55,7 @@
 // Description:    Initialize the stack monitoring tool.
 //
 //-------------------------------------------------------------------------------------------------
-void StackCheck::Initialize(void)
+StackCheck::StackCheck()
 {
     for(int i = 1; i < DIGINI_STACKTISTIC_NUMBER_OF_STACK; i++)
     {
@@ -74,7 +83,10 @@ int StackCheck::Register(const uint32_t* pStack, size_t STackSz, const char* pSt
 {
     if(m_NumberOfStack < DIGINI_STACKTISTIC_NUMBER_OF_STACK)
     {
-        //STackSz--;
+        #if (NOS_CONFIG_DEBUG == 0)
+          memset((void*)pStack, DIGINI_STACKTISTIC_WATER_MARK_CODE, STackSz * 4);
+        #endif
+
         m_pStackBottom[m_NumberOfStack] = pStack;
         m_Size[m_NumberOfStack]         = STackSz;
         m_pStackName[m_NumberOfStack]   = pStackName;
@@ -121,7 +133,7 @@ size_t StackCheck::GetUsage(int StackID)
         pStack = (uint32_t*)m_pStackBottom[StackID];
 
         // Use -1 here, because if we reach -1 we now know we busted the stack.
-        while((FreeSize < m_Size[StackID]) && (*pStack == DIGINI_STACKTISTIC_WATER_MARK_CODE))
+        while((FreeSize < m_Size[StackID]) && (*pStack == LIB_CLASS_STACKTISTIC_WATER_MARK))
         {
             FreeSize += 4;
             pStack   += 4;

@@ -40,7 +40,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define TASK_ETHERNET_IF_STACK_SIZE         1024
+#define TASK_ETHERNET_IF_STACK_SIZE         256
 #define TASK_ETHERNET_IF_PRIO               7
 #define TASK_ETHERNET_IF_NODE_SIZE          64
 
@@ -77,8 +77,10 @@ class ETH_IF_Driver
 
         nOS_Sem                     m_RX_Sem;
         nOS_Mutex                   m_TX_Mutex;
-        nOS_Thread                  m_TaskHandle;
-        nOS_Stack                   m_Stack[TASK_ETHERNET_IF_STACK_SIZE];
+        static nOS_Thread           m_Handle;
+        static nOS_Stack            m_Stack[TASK_ETHERNET_IF_STACK_SIZE];
+
+
 
         const IP_ETH_Config_t*      m_pETH_Config;
 

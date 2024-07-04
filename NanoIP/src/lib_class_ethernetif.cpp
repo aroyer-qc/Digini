@@ -48,6 +48,15 @@
 
 //-------------------------------------------------------------------------------------------------
 //
+//   Static Variables
+//
+//-------------------------------------------------------------------------------------------------
+
+nOS_Thread ETH_IF_Driver::m_Handle;
+nOS_Stack  ETH_IF_Driver::m_Stack[TASK_ETHERNET_IF_STACK_SIZE];
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           ClassEthernetIf_Wrapper
 //
 //  Parameter(s):   void* pvParameters
@@ -83,13 +92,28 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
 
 
     m_pETH_Config = pETH_Config;
+	m_Link        = ETH_LINK_DOWN;
 
-	m_Link = ETH_LINK_DOWN;
+    Error = nOS_SemCreate(&m_RX_Sem, 0, 20);
+    Error = nOS_MutexCreate(&m_TX_Mutex, NOS_MUTEX_NORMAL, 1);
+    VAR_UNUSED(Error);
 
-    //PHY_DriverInterface* pPHY_Driver;       // TODO conditional DIGINI_USE
+  #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+    myStacktistic.Register(&m_Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Ethernet Input");
+  #endif
+
+    nOS_ThreadCreate(&m_Handle,
+                     ClassEthernetIf_Wrapper,
+                     this,
+                     &m_Stack[0],
+                     TASK_ETHERNET_IF_STACK_SIZE,
+                     TASK_ETHERNET_IF_PRIO);
+
+
     pETH_Driver = m_pETH_Config->pETH_Driver;
     //pPHY_Driver = m_Config[IF_ID].IP_ETH_Config.pPHY_Driver;
 
+    //PHY_DriverInterface* pPHY_Driver;       // TODO conditional DIGINI_USE
 // TODO move this into the lib_ethernetif  it will take care of the init phase
 //    myETH_Driver.Initialize(nullptr);
     //myETH_Driver.SetMacAddress(&MAC);
@@ -98,13 +122,14 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
 
 
 //typedef void        (*ETH_SignalEvent_t) (uint32_t Event);  // Pointer to ETH_SignalEvent function
-    pETH_Driver->Initialize(this);      // TODO put in here the callback
 
 
 
 
 
-    m_pETH_Config->pPHY_Driver->Initialize(pETH_Driver, m_pETH_Config->PHY_Address); // Interface ID is used as address
+//remove for test
+//    pETH_Driver->Initialize(this);      // TODO put in here the callback
+//    m_pETH_Config->pPHY_Driver->Initialize(pETH_Driver, m_pETH_Config->PHY_Address); // Interface ID is used as address
 
 
 
@@ -112,22 +137,10 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
 	//pNetIf->linkoutput = LowLevelOutput;
 
     // Create binary semaphore used for informing ethernetif of frame reception
-    Error = nOS_SemCreate(&m_RX_Sem, 0, 20);
-    Error = nOS_MutexCreate(&m_TX_Mutex, NOS_MUTEX_NORMAL, 1);
-    VAR_UNUSED(Error);
 
-     nOS_ThreadCreate(&m_TaskHandle,
-                      ClassEthernetIf_Wrapper,
-                      this,
-                      &m_Stack[0],
-                      TASK_ETHERNET_IF_STACK_SIZE,
-                      TASK_ETHERNET_IF_PRIO);
 
-      #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-        myStacktistic.Register(&m_Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Ethernet Input");
-      #endif
-
-    m_pETH_Config->pETH_Driver->Start();        // Enable MAC and DMA transmission and reception
+//remove for test
+// m_pETH_Config->pETH_Driver->Start();        // Enable MAC and DMA transmission and reception
 
 // 	sys_timeout(ARP_TMR_INTERVAL, ArpTimer, nullptr);  impelement my version of this
 
@@ -310,7 +323,7 @@ void ETH_IF_Driver::Run(void)
                     }
               //      else
                     {
-            //            nOS_SemTake(&m_RX_Sem, 0); // why this one
+                        nOS_SemTake(&m_RX_Sem, 0); // why this one
                     }
                 }
 

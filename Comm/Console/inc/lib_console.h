@@ -42,7 +42,7 @@
 #define CON_SIZE_NONE                   0
 #define CON_SERIAL_OUT_SIZE             256
 #define CON_TIME_DATE_STAMP             "%04u-%02u-%02u %2u:%02u:%02u: "
-#define CON_NOT_CONNECTED               -1
+#define CON_NOT_CONNECTED               0
 #define CON_NUMBER_OF_DEBUG_LEVEL       16
 
 //-------------------------------------------------------------------------------------------------
@@ -118,7 +118,7 @@ class Console : public CallbackInterface
         FIFO_Buffer                             m_Fifo;
         //bool                                    m_IsItOnHold;
         SystemDebugLevel_e                      m_DebugLevel;
-        int32_t                                 m_ActiveProcessLevel;
+        uint16_t                                m_ActiveProcessLevel;
         ChildProcessInterface*                  m_pChildProcess[CON_CHILD_PROCESS_PUSH_POP_LEVEL];
 
       #if (CON_TRAP_INCOMING_COMMENT_LINE == DEF_ENABLED)

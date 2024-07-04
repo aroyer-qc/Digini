@@ -147,9 +147,9 @@ void Console::Process(void)
     }
   #endif
 
-    if((m_pChildProcess[m_ActiveProcessLevel] != nullptr) && (m_ActiveProcessLevel != CON_NOT_CONNECTED))
+    if((m_pChildProcess[m_ActiveProcessLevel - 1] != nullptr) && (m_ActiveProcessLevel != CON_NOT_CONNECTED))
     {
-        m_pChildProcess[m_ActiveProcessLevel]->IF_Process();
+        m_pChildProcess[m_ActiveProcessLevel - 1]->IF_Process();
     }
 }
 //-------------------------------------------------------------------------------------------------
@@ -166,10 +166,10 @@ void Console::Process(void)
 //-------------------------------------------------------------------------------------------------
 void Console::GiveControlToChildProcess(ChildProcessInterface* pChildProcess)
 {
-    if((pChildProcess != nullptr) && (m_ActiveProcessLevel < (CON_CHILD_PROCESS_PUSH_POP_LEVEL - 1)))
+    if((pChildProcess != nullptr) && (m_ActiveProcessLevel < CON_CHILD_PROCESS_PUSH_POP_LEVEL))
     {
         m_ActiveProcessLevel++;
-        m_pChildProcess[m_ActiveProcessLevel] = pChildProcess;
+        m_pChildProcess[m_ActiveProcessLevel - 1] = pChildProcess;
     }
 }
 
@@ -189,7 +189,7 @@ void Console::ReleaseControl(void)
 {
     if((m_pChildProcess != nullptr) && (m_ActiveProcessLevel != CON_NOT_CONNECTED))
     {
-        m_pChildProcess[m_ActiveProcessLevel] = nullptr;
+        m_pChildProcess[m_ActiveProcessLevel - 1] = nullptr;
         m_ActiveProcessLevel--;
     }
 }

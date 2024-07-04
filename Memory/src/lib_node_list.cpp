@@ -45,11 +45,11 @@
 //-------------------------------------------------------------------------------------------------
 NodeList::NodeList(size_t NodeDataSize)
 {
-    m_pFirstNode    = nullptr;
-    m_pLastNode     = nullptr;
-    m_pScanNode     = nullptr;
-    m_NumberOfNode  = 0;
-    SetNodeSize(NodeDataSize);
+ //   m_pFirstNode    = nullptr;
+ //   m_pLastNode     = nullptr;
+ //   m_pScanNode     = nullptr;
+ //   m_NumberOfNode  = 0;
+ //   SetNodeSize(NodeDataSize);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -210,7 +210,7 @@ SystemState_e NodeList::RemoveAllNode(void)
     {
         if(RemoveNode(m_pFirstNode->NodeID) != SYS_READY)
         {
-                State = SYS_NODE_UNKNOWN_ERROR;
+            State = SYS_NODE_UNKNOWN_ERROR;
         }
     }
     while(m_pFirstNode != nullptr);

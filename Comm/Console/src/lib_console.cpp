@@ -66,7 +66,7 @@ void Console::Initialize(UART_Driver* pUartDriver)
     //m_IsItOnHold            = false;
     //m_IsItOnStartup         = true;
     m_MuteSerialLogging     = true;
-    m_DebugLevel            = CON_DEBUG_NONE;
+    m_DebugLevel            = SYS_DEBUG_NONE;
     m_ActiveProcessLevel    = CON_NOT_CONNECTED;
 
     for(int i = 0; i < CON_CHILD_PROCESS_PUSH_POP_LEVEL; i++)
@@ -269,7 +269,7 @@ size_t Console::Printf(const char* pFormat, va_list* p_vaArg)
 //
 //  Name:           PrintSerialLog
 //
-//  Parameter(s):   CON_DebugLevel_e    Level       Level of printf logging.
+//  Parameter(s):   SystemDebugLevel_e  Level       Level of printf logging.
 //                  const char*         pFormat     Formatted string.
 //                  ... or va_list                  Parameter if any.
 //
@@ -280,7 +280,7 @@ size_t Console::Printf(const char* pFormat, va_list* p_vaArg)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-size_t Console::PrintSerialLog(CON_DebugLevel_e Level, const char* pFormat, ...)
+size_t Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, ...)
 {
     size_t  Size;
     va_list vaArg;
@@ -292,7 +292,7 @@ size_t Console::PrintSerialLog(CON_DebugLevel_e Level, const char* pFormat, ...)
     return Size;
 }
 
-size_t Console::PrintSerialLog(CON_DebugLevel_e Level, const char* pFormat, va_list vaArg)
+size_t Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, va_list vaArg)
 {
     char*            pBuffer;
     size_t           Size = 0;

@@ -27,16 +27,20 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_DATABASE == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "./Digini/Database/inc/lib_database_wrapper.h"
+#include "./Database/inc/lib_database_wrapper.h"
 #include "./Digini/inc/lib_typedef.h"
 #include "project_def.h"
 #include "./Digini/inc/lib_label.h"
 #include "database_cfg.h"
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
-  #include "./Digini/Grafx/inc/lib_grafx_dbase.h"
+  #include "./Grafx/inc/lib_grafx_dbase.h"
 #endif
 #include <string.h>
 
@@ -165,5 +169,9 @@ EXTERN_LIB_CLASS_DATABASE class CDataBase DB_Central;
 #include "./Digini/Database/inc/lib_class_rom_dbase.h"
 #include "./Digini/Database/inc/port/lib_class_bkpreg_dbase.h"
 #include "./Digini/Database/inc/lib_database_wrapper.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#endif //(DIGINI_USE_DATABASE == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

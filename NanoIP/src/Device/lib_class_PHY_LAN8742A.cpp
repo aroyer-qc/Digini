@@ -298,7 +298,7 @@ ETH_LinkState_e PHY_LAN8742A_Driver::GetLinkState(void)
     State = (Value & BSR_LINK_STAT) ? ETH_LINK_UP : ETH_LINK_DOWN;
     if(StateNow != State)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: LINK has change, now it is %s\n", (State == ETH_LINK_UP) ? "UP" : "DOWN");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: LINK has change, now it is %s\n", (State == ETH_LINK_UP) ? "UP" : "DOWN");
         StateNow = State;
     }
 

@@ -68,11 +68,25 @@
 
 #include "driver_cfg.h"
 #include "bsp_io_def.h"
+
+#if (DIGINI_USE_CONSOLE == DEF_ENABLED)
 #include "console_cfg.h"
+#endif
+
+#if (DIGINI_USE_CRC == DEF_ENABLED)
+#include "crc_cfg.h"
+#endif
 
 #if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
 #include "memory_cfg.h"
 #endif
+
+ #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+#include "vt100_cfg.h"
+ #endif
+ #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
+#include "cli_cfg.h"
+ #endif
 
 #if (DIGINI_USE_LABEL == DEF_ENABLED)
 #include "label_cfg.h"
@@ -100,22 +114,12 @@
 #include "./Peripheral/inc/port/lib_cpu_specific.h"
 #include "./Digini/inc/lib_assert.h"
 
-#if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
-#include "./Memory/inc/lib_memory.h"
-#include "./Memory/inc/lib_node_list.h"
-#include "./Memory/inc/lib_memory_node.h"
-#endif
 
-#if (DIGINI_USE_DATABASE == DEF_ENABLED)
 #include "./Database/inc/lib_class_database.h"
-#endif
-
 #include "./Digini/inc/lib_class_cbi.h"                      // Callback interface
-
-#if (DIGINI_USE_LABEL == DEF_ENABLED)
+#include "./Comm/CmdLine/inc/lib_cli_label.h"
+#include "./Comm/VT100/inc/lib_vt100_label.h"
 #include "./Digini/inc/lib_label.h"
-#endif
-
 #include "./Digini/inc/lib_macro.h"
 #include "./Digini/inc/lib_advanced_macro.h"
 #include "./Digini/inc/lib_typedef.h"
@@ -131,14 +135,11 @@
 #include "./Peripheral/inc/port/lib_class_dma.h"
 #include "./Peripheral/inc/port/lib_dma.h"                  // todo remove when DMA porting is done
 #include "./Peripheral/inc/port/lib_rng.h"
-
-#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 #include "./NanoIP/inc/lib_ethernet_typedef.h"
-#endif
-
-#if (DIGINI_USE_CRC == DEF_ENABLED)     // This is for software CRC calculation support
 #include "./Utility/inc/lib_crc.h"
-#endif
+#include "./Memory/inc/lib_memory.h"
+#include "./Memory/inc/lib_node_list.h"
+#include "./Memory/inc/lib_memory_node.h"
 
 #if (DIGINI_MPU_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_mpu.h"                  // TODO
@@ -170,7 +171,7 @@
 #include "./Peripheral/inc/port/lib_class_dac.h"
 #endif
 
-#if (USE_ETH_DRIVER == DEF_ENABLED)
+#if (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
 #include "./NanoIP/inc/interface/lib_class_ethernet_interface.h"
 #include "./Peripheral/inc/port/lib_class_eth.h"
 #include PHY_DRIVER_INCLUDE
@@ -268,9 +269,7 @@
 
 #endif // (DIGINI_USE_FATFS == DEF_ENABLED)
 
-#if (DIGINI_USE_GRAFX == DEF_ENABLED)
 #include "./Grafx/inc/lib_grafx.h"
-#endif
 
 //-------------------------------------------------------------------------------------------------
 // Functions prototypes

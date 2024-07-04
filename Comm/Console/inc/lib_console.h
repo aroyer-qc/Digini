@@ -27,28 +27,6 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Define(s) Even if Console is disabled
-//-------------------------------------------------------------------------------------------------
-
-#define CON_DEBUG_NONE          0x0000
-#define CON_DEBUG_LEVEL_1       0x0001
-#define CON_DEBUG_LEVEL_2       0x0002
-#define CON_DEBUG_LEVEL_3       0x0004
-#define CON_DEBUG_LEVEL_4       0x0008
-#define CON_DEBUG_LEVEL_5       0x0010
-#define CON_DEBUG_LEVEL_6       0x0020
-#define CON_DEBUG_LEVEL_7       0x0040
-#define CON_DEBUG_LEVEL_8       0x0080
-#define CON_DEBUG_LEVEL_9       0x0100
-#define CON_DEBUG_LEVEL_10      0x0200
-#define CON_DEBUG_LEVEL_11      0x0400
-#define CON_DEBUG_LEVEL_12      0x0800
-#define CON_DEBUG_LEVEL_13      0x1000
-#define CON_DEBUG_LEVEL_14      0x2000
-#define CON_DEBUG_LEVEL_15      0x4000
-#define CON_DEBUG_LEVEL_16      0x8000
-
-//-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_CONSOLE == DEF_ENABLED)
 
@@ -71,7 +49,7 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef CON_DebugLevel_e uint32_t
+//typedef SystemDebugLevel_e uint32_t
 
 class ChildProcessInterface
 {
@@ -101,34 +79,34 @@ class Console : public CallbackInterface
         size_t           Printf                     (Label_e Label, ...);
         size_t           Printf                     (const char* pFormat, ...);
         size_t           Printf                     (const char* pFormat, va_list* p_vaArg);
-        size_t           PrintSerialLog             (CON_DebugLevel_e Level, const char* pFormat, ...);
-        size_t           PrintSerialLog             (CON_DebugLevel_e Level, const char* pFormat, va_list va);
+        size_t           PrintSerialLog             (SystemDebugLevel_e Level, const char* pFormat, ...);
+        size_t           PrintSerialLog             (SystemDebugLevel_e Level, const char* pFormat, va_list va);
         void             SetSerialLogging           (bool Mute);
         SystemState_e    SendData                   (const uint8_t* p_BufferTX, size_t* pSizeTX);
         void             CallbackFunction           (int Type, void* pContext);
 
         // Passthru FIFO
-        inline void      TailForward                (size_t Size)                                   { m_Fifo.TailForward(Size);                   }
-        inline void      HeadForward                (size_t Size)                                   { m_Fifo.HeadForward(Size);                   }
-        inline void      HeadBackward               (size_t Size)                                   { m_Fifo.HeadBackward(Size);                  }
-        inline size_t    Read                       (void* pBuffer, size_t BytesToRead)             { return m_Fifo.Read(pBuffer, BytesToRead);   }
-        inline size_t    Write                      (const void *pBuffer, size_t BytesToWrite)      { return m_Fifo.Write(pBuffer, BytesToWrite); }
-        inline int32_t   At                         (size_t Offset)                                 { return m_Fifo.At(Offset);                   }
-        inline size_t    Flush                      (size_t BytesToFlush)                           { return m_Fifo.Flush(BytesToFlush);          }
-        inline uint8_t   Atoi                       (int32_t* Value, uint8_t Base)                  { return m_Fifo.Atoi(Value, Base);            }
-        inline uint8_t   AtoiAt                     (size_t Offset, int32_t* Value)                 { return m_Fifo.AtoiAt(Offset, Value);        }
-        inline bool      Memncmp                    (const void* pMemPtr, size_t Length)            { return m_Fifo.Memncmp(pMemPtr, Length);     }
-        inline size_t    Memnchr                    (char Character, size_t Length)                 { return m_Fifo.Memnchr(Character, Length);   }
-        inline void      ToUpper                    (size_t Length)                                 { return m_Fifo.ToUpper(Length);              }
-        inline bool      Move                       (FIFO_Buffer* pFifoDst, size_t Length)          { return m_Fifo.Move(pFifoDst, Length);       }
-        inline bool      ReadyRead                  (void)                                          { return m_Fifo.ReadyRead();                  }
-        inline bool      ReadyWrite                 (void)                                          { return m_Fifo.ReadyWrite();                 }
-        inline size_t    CheckFreeSpace             (void)                                          { return m_Fifo.CheckFreeSpace();             }
-        inline size_t    CheckUsedSpace             (void)                                          { return m_Fifo.CheckUsedSpace();             }
+        inline void        TailForward                (size_t Size)                                   { m_Fifo.TailForward(Size);                   }
+        inline void        HeadForward                (size_t Size)                                   { m_Fifo.HeadForward(Size);                   }
+        inline void        HeadBackward               (size_t Size)                                   { m_Fifo.HeadBackward(Size);                  }
+        inline size_t      Read                       (void* pBuffer, size_t BytesToRead)             { return m_Fifo.Read(pBuffer, BytesToRead);   }
+        inline size_t      Write                      (const void *pBuffer, size_t BytesToWrite)      { return m_Fifo.Write(pBuffer, BytesToWrite); }
+        inline int32_t     At                         (size_t Offset)                                 { return m_Fifo.At(Offset);                   }
+        inline size_t      Flush                      (size_t BytesToFlush)                           { return m_Fifo.Flush(BytesToFlush);          }
+        inline uint8_t     Atoi                       (int32_t* Value, uint8_t Base)                  { return m_Fifo.Atoi(Value, Base);            }
+        inline uint8_t     AtoiAt                     (size_t Offset, int32_t* Value)                 { return m_Fifo.AtoiAt(Offset, Value);        }
+        inline bool        Memncmp                    (const void* pMemPtr, size_t Length)            { return m_Fifo.Memncmp(pMemPtr, Length);     }
+        inline size_t      Memnchr                    (char Character, size_t Length)                 { return m_Fifo.Memnchr(Character, Length);   }
+        inline void        ToUpper                    (size_t Length)                                 { return m_Fifo.ToUpper(Length);              }
+        inline bool        Move                       (FIFO_Buffer* pFifoDst, size_t Length)          { return m_Fifo.Move(pFifoDst, Length);       }
+        inline bool        ReadyRead                  (void)                                          { return m_Fifo.ReadyRead();                  }
+        inline bool        ReadyWrite                 (void)                                          { return m_Fifo.ReadyWrite();                 }
+        inline size_t      CheckFreeSpace             (void)                                          { return m_Fifo.CheckFreeSpace();             }
+        inline size_t      CheckUsedSpace             (void)                                          { return m_Fifo.CheckUsedSpace();             }
 
         // Getter/ Setter
-        CON_DebugLevel_e GetDebugLevel              (void)                                          { return m_DebugLevel;       }
-        void             SetDebugLevel              (CON_DebugLevel_e DebugLevel)                   { m_DebugLevel = DebugLevel; }
+        SystemDebugLevel_e GetDebugLevel              (void)                                          { return m_DebugLevel;       }
+        void               SetDebugLevel              (SystemDebugLevel_e DebugLevel)                   { m_DebugLevel = DebugLevel; }
 
     private:
 
@@ -136,16 +114,10 @@ class Console : public CallbackInterface
 
     // need to add echo on or off for child process.. Console need it, but menu don't need it!
         UART_Driver*                            m_pUartDriver;
-        //UART_Transfer_t**                       m_pRX_Transfer;
-        //TickCount_t                             m_CommandTimeOut;
-        //int16_t                                 m_CommandNameSize;
         bool                                    m_MuteSerialLogging;
-        //TickCount_t                             m_StartupTick;
-        //bool                                    m_IsItOnStartup;
-        //char                                    m_BufferParserRX[CON_FIFO_PARSER_RX_SIZE];
         FIFO_Buffer                             m_Fifo;
         //bool                                    m_IsItOnHold;
-        CON_DebugLevel_e                        m_DebugLevel;
+        SystemDebugLevel_e                      m_DebugLevel;
         int32_t                                 m_ActiveProcessLevel;
         ChildProcessInterface*                  m_pChildProcess[CON_CHILD_PROCESS_PUSH_POP_LEVEL];
 

@@ -370,7 +370,7 @@ SystemState_e CommandLine::CmdDBG_LEVEL(void* pArg)
     }
     else
     {
-        m_pConsole->SetDebugLevel((CON_DebugLevel_e)m_ParamValue[0]);
+        m_pConsole->SetDebugLevel((SystemDebugLevel_e)m_ParamValue[0]);
         Error = SYS_READY;
     }
 

@@ -127,7 +127,7 @@
 
 static nOS_Time                 VT100_LastUpTime;
 static uint8_t                  VT100_LastSecond;
-static CON_DebugLevel_e         VT100_LastDebugLevel;
+static SystemDebugLevel_e       VT100_LastDebugLevel;
 static uint8_t*                 pBuffer1 = nullptr;
 static uint8_t*                 pBuffer2 = nullptr;
 
@@ -389,10 +389,10 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 //-------------------------------------------------------------------------------------------------
 VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT100_CallBackType_e Type)
 {
-    extern CON_DebugLevel_e BSP_GlobalDebugLevel; // TODO get a better method ( automatically generated into debug file
+    extern SystemDebugLevel_e BSP_GlobalDebugLevel; // TODO get a better method ( automatically generated into debug file
 
 
-    static CON_DebugLevel_e DebugLevel = CON_DEBUG_NONE;
+    static SystemDebugLevel_e DebugLevel = SYS_DEBUG_NONE;
 
     // Update VT100_DebugLevel only on item 0 if it is VT100_CALLBACK_REFRESH type
 
@@ -434,11 +434,11 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
 
         if((DebugLevel & DebugValue) == 0)
         {
-            DebugLevel = CON_DebugLevel_e(int(DebugLevel) | DebugValue);
+            DebugLevel = SystemDebugLevel_e(int(DebugLevel) | DebugValue);
         }
         else
         {
-            DebugLevel = CON_DebugLevel_e(int(DebugLevel) & ~(DebugValue));
+            DebugLevel = SystemDebugLevel_e(int(DebugLevel) & ~(DebugValue));
         }
     }
 

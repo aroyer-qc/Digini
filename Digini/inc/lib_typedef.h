@@ -223,6 +223,27 @@ typedef enum
 
 typedef enum
 {
+    SYS_DEBUG_NONE          = 0x0000,
+    SYS_DEBUG_LEVEL_1       = 0x0001,
+    SYS_DEBUG_LEVEL_2       = 0x0002,
+    SYS_DEBUG_LEVEL_3       = 0x0004,
+    SYS_DEBUG_LEVEL_4       = 0x0008,
+    SYS_DEBUG_LEVEL_5       = 0x0010,
+    SYS_DEBUG_LEVEL_6       = 0x0020,
+    SYS_DEBUG_LEVEL_7       = 0x0040,
+    SYS_DEBUG_LEVEL_8       = 0x0080,
+    SYS_DEBUG_LEVEL_9       = 0x0100,
+    SYS_DEBUG_LEVEL_10      = 0x0200,
+    SYS_DEBUG_LEVEL_11      = 0x0400,
+    SYS_DEBUG_LEVEL_12      = 0x0800,
+    SYS_DEBUG_LEVEL_13      = 0x1000,
+    SYS_DEBUG_LEVEL_14      = 0x2000,
+    SYS_DEBUG_LEVEL_15      = 0x4000,
+    SYS_DEBUG_LEVEL_16      = 0x8000,
+} SystemDebugLevel_e;
+
+typedef enum
+{
     CS_DISABLE,
     CS_ENABLE,
     CS_PULSE_HIGH,

@@ -41,7 +41,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (USE_ETH_DRIVER == DEF_ENABLED)
+#if (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -354,7 +354,7 @@ SystemState_e ETH_Driver::GetMacAddress(IP_MAC_Address_t* pMAC_Address)
 
     if(pMAC_Address == nullptr)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetMacAddress - Invalid Parameter\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetMacAddress - Invalid Parameter\n");
         return SYS_INVALID_PARAMETER;
     }
 
@@ -384,7 +384,7 @@ SystemState_e ETH_Driver::SetMacAddress(const IP_MAC_Address_t* pMAC_Address)
 {
     if(pMAC_Address == nullptr)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SetMacAddress - Invalid Parameter\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SetMacAddress - Invalid Parameter\n");
         return SYS_INVALID_PARAMETER;
     }
 
@@ -419,7 +419,7 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
 
     if((pMAC_Address == nullptr) && (NbAddress != 0))
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SetAddressFilter - Invalid Parameter\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SetAddressFilter - Invalid Parameter\n");
         return SYS_INVALID_PARAMETER;
     }
 
@@ -512,7 +512,7 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
 
     if((pFrame == nullptr) || (Length == 0))
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - Invalid Parameter\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - Invalid Parameter\n");
         return SYS_INVALID_PARAMETER;
     }
 
@@ -522,7 +522,7 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
         if(m_TX_Descriptor[m_Control.TX_Index].Stat & DMA_TX_OWN)
         {
             // Transmitter is busy, wait
-            DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - TX Busy\n");
+            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - TX Busy\n");
             return SYS_BUSY;
         }
 
@@ -667,7 +667,7 @@ SystemState_e ETH_Driver::ReadFrame(MemoryNode* pPacket, size_t Length)
 
     if(pPacket == nullptr)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: ReadFrame - Invalid Parameter\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: ReadFrame - Invalid Parameter\n");
         State = SYS_INVALID_PARAMETER;
     }
 
@@ -690,7 +690,7 @@ uint32_t ETH_Driver::GetRX_FrameSize(void)
 
     if((Stat & DMA_RX_OWN) != 0)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - Owned by DMA\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - Owned by DMA\n");
         return ETH_OWNED_BY_DMA;                       // Owned by DMA
     }
 
@@ -698,7 +698,7 @@ uint32_t ETH_Driver::GetRX_FrameSize(void)
        ((Stat & DMA_RX_FS) == 0) ||
        ((Stat & DMA_RX_LS) == 0))
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - This block is invalid\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - This block is invalid\n");
         return ETH_INVALID_BLOCK;                       // Error, this block is invalid
     }
 
@@ -722,7 +722,7 @@ SystemState_e ETH_Driver::GetRX_FrameTime(ETH_MAC_Time_t* pTime)
 
     if(RX_Desc->Stat & DMA_RX_OWN)
     {
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameTime - Owned by DMA\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameTime - Owned by DMA\n");
         return SYS_BUSY;                        // Owned by DMA
     }
 
@@ -751,14 +751,14 @@ SystemState_e ETH_Driver::GetTX_FrameTime(ETH_MAC_Time_t* pTime)
     if(TX_Desc->Stat & DMA_RX_OWN)
     {
         // Owned by DMA
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetTX_FrameTime - Owned by DMA\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetTX_FrameTime - Owned by DMA\n");
         return SYS_BUSY;
     }
 
     if((TX_Desc->Stat & DMA_TX_TTSS) == 0)
     {
         // No transmit time stamp available
-        DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: GetTX_FrameTime - No TX time Stamp Available\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetTX_FrameTime - No TX time Stamp Available\n");
         return SYS_ERROR;
     }
 
@@ -942,7 +942,7 @@ SystemState_e ETH_Driver::PHY_Busy(void)
         return SYS_READY;
     }
 
-    DEBUG_PrintSerialLog(CON_DEBUG_LEVEL_ETHERNET, "ETH: PHY_Busy - It's busy\n");
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: PHY_Busy - It's busy\n");
     return SYS_TIME_OUT;
 }
 

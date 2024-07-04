@@ -1060,7 +1060,7 @@ size_t VT100_Terminal::InMenuPrintf(uint8_t PosX, uint8_t PosY, Label_e Label, .
 //
 //  Name:           LoggingPrintf
 //
-//  Parameter(s):   CON_DebugLevel_e    Level       Level of printf logging.
+//  Parameter(s):   SystemDebugLevel_e  Level       Level of printf logging.
 //                  const char*         pFormat     Formatted string.
 //                  ...                             Parameter if any.
 //
@@ -1074,10 +1074,10 @@ size_t VT100_Terminal::InMenuPrintf(uint8_t PosX, uint8_t PosY, Label_e Label, .
 /*
 size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat, ...)
 {
-    va_list          vaArg;
-    char*            pBuffer;
-    CON_DebugLevel_e DebugLevel;
-    size_t           Size = 0;
+    va_list            vaArg;
+    char*              pBuffer;
+    SystemDebugLevel_e DebugLevel;
+    size_t             Size = 0;
 
     if((m_BypassPrintf == false) && (m_LogsAreMuted == false))
     {

@@ -27,10 +27,8 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include(s)
-//-------------------------------------------------------------------------------------------------
 
-#include "./Digini/inc/lib_define.h"
+#if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 
@@ -110,3 +108,7 @@ extern class MemPoolDriver*               pMemoryPool;
 #pragma message("DIGINI use memory pool instead of the malloc library. please define you memblock into memory_cfg.h")
 
 #endif  // MEM_BLOCK_DEF
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)

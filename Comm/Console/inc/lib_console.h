@@ -66,24 +66,26 @@ class Console : public CallbackInterface
 {
     public:
 
-        void             Initialize                 (UART_Driver* pUartDriver);
-        void             Process                    (void);
-        void             GiveControlToChildProcess  (ChildProcessInterface* pChildProcess);
-        void             ReleaseControl             (void);
-        void             DisplayTimeDateStamp       (Date_t* pDate, Time_t* pTime);
-        void             LockDisplay                (bool State);
-        bool             GetString                  (char* pBuffer, size_t Size);
-        bool             GetAtoi                    (int32_t* pValue, int32_t Min, int32_t Max, uint8_t Base);
-        bool             IsItA_Comma                (void);
-        bool             IsItAnEOL                  (void);
-        size_t           Printf                     (Label_e Label, ...);
-        size_t           Printf                     (const char* pFormat, ...);
-        size_t           Printf                     (const char* pFormat, va_list* p_vaArg);
-        size_t           PrintSerialLog             (SystemDebugLevel_e Level, const char* pFormat, ...);
-        size_t           PrintSerialLog             (SystemDebugLevel_e Level, const char* pFormat, va_list va);
-        void             SetSerialLogging           (bool Mute);
-        SystemState_e    SendData                   (const uint8_t* p_BufferTX, size_t* pSizeTX);
-        void             CallbackFunction           (int Type, void* pContext);
+        void               Initialize                 (UART_Driver* pUartDriver);
+        void               Process                    (void);
+        void               GiveControlToChildProcess  (ChildProcessInterface* pChildProcess);
+        void               ReleaseControl             (void);
+        void               DisplayTimeDateStamp       (Date_t* pDate, Time_t* pTime);
+        void               LockDisplay                (bool State);
+        bool               GetString                  (char* pBuffer, size_t Size);
+        bool               GetAtoi                    (int32_t* pValue, int32_t Min, int32_t Max, uint8_t Base);
+        bool               IsItA_Comma                (void);
+        bool               IsItAnEOL                  (void);
+        size_t             Printf                     (Label_e Label, ...);
+        size_t             Printf                     (const char* pFormat, ...);
+        size_t             Printf                     (const char* pFormat, va_list* p_vaArg);
+      #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
+        size_t             PrintSerialLog             (SystemDebugLevel_e Level, const char* pFormat, ...);
+        size_t             PrintSerialLog             (SystemDebugLevel_e Level, const char* pFormat, va_list va);
+      #endif  
+        void               SetSerialLogging           (bool Mute);
+        SystemState_e      SendData                   (const uint8_t* p_BufferTX, size_t* pSizeTX);
+        void               CallbackFunction           (int Type, void* pContext);
 
         // Passthru FIFO
         inline void        TailForward                (size_t Size)                                   { m_Fifo.TailForward(Size);                   }
@@ -117,7 +119,9 @@ class Console : public CallbackInterface
         bool                                    m_MuteSerialLogging;
         FIFO_Buffer                             m_Fifo;
         //bool                                    m_IsItOnHold;
+      #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
         SystemDebugLevel_e                      m_DebugLevel;
+      #endif   
         uint16_t                                m_ActiveProcessLevel;
         ChildProcessInterface*                  m_pChildProcess[CON_CHILD_PROCESS_PUSH_POP_LEVEL];
 
@@ -142,12 +146,19 @@ extern class Console myConsole;
 
 #endif // CONSOLE_GLOBAL
 
-#define DEBUG_PrintSerialLog           myConsole.PrintSerialLog
+//-------------------------------------------------------------------------------------------------
+
+#endif // (DIGINI_USE_CONSOLE == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 
-#else // (DIGINI_USE_CONSOLE == DEF_ENABLED)
 
-#define DEBUG_PrintSerialLog(...)       // Prevent wrapping all log call with preprocessor
+#if (DIGINI_USE_CONSOLE == DEF_ENABLED) && (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
 
-#endif // (DIGINI_USE_CONSOLE == DEF_ENABLED)
+    #define DEBUG_PrintSerialLog           myConsole.PrintSerialLog
+
+#else
+    
+    #define DEBUG_PrintSerialLog(...)       // Prevent wrapping all log call with preprocessor
+
+#endif

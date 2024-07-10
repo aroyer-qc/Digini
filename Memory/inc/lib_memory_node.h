@@ -51,7 +51,6 @@ class MemoryNode
 {
     public:
 
-
         void                Create              (size_t NodeDataSize);
         SystemState_e       Alloc               (size_t Size);                              // This reserve the memory for entire buffer  and clear the data.
         SystemState_e       Free                (void);                                     // Will free all node data allocation and node allocation

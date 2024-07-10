@@ -176,7 +176,6 @@ VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
 class VT100_Terminal : public ChildProcessInterface
 {
     public:
-                            VT100_Terminal              () {};
 
         void                IF_Process                  (void);
         nOS_Error           Initialize                  (Console* pConsole);

@@ -45,11 +45,11 @@
 //-------------------------------------------------------------------------------------------------
 NodeList::NodeList(size_t NodeDataSize)
 {
- //   m_pFirstNode    = nullptr;
- //   m_pLastNode     = nullptr;
- //   m_pScanNode     = nullptr;
- //   m_NumberOfNode  = 0;
- //   SetNodeSize(NodeDataSize);
+    m_pFirstNode    = nullptr;  // TODO change this it is never called
+    m_pLastNode     = nullptr;
+    m_pScanNode     = nullptr;
+    m_NumberOfNode  = 0;
+    SetNodeSize(NodeDataSize);
 }
 
 //-------------------------------------------------------------------------------------------------

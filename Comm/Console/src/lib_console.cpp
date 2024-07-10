@@ -280,6 +280,7 @@ size_t Console::Printf(const char* pFormat, va_list* p_vaArg)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+#if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
 size_t Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, ...)
 {
     size_t  Size;
@@ -311,6 +312,7 @@ size_t Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, va
 
     return Size;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //

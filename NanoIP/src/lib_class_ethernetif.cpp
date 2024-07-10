@@ -128,8 +128,8 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
 
 
 //remove for test
-//    pETH_Driver->Initialize(this);      // TODO put in here the callback
-//    m_pETH_Config->pPHY_Driver->Initialize(pETH_Driver, m_pETH_Config->PHY_Address); // Interface ID is used as address
+    pETH_Driver->Initialize(this);      // TODO put in here the callback
+    m_pETH_Config->pPHY_Driver->Initialize(pETH_Driver, m_pETH_Config->PHY_Address); // Interface ID is used as address
 
 
 
@@ -140,7 +140,7 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
 
 
 //remove for test
-// m_pETH_Config->pETH_Driver->Start();        // Enable MAC and DMA transmission and reception
+ m_pETH_Config->pETH_Driver->Start();        // Enable MAC and DMA transmission and reception
 
 // 	sys_timeout(ARP_TMR_INTERVAL, ArpTimer, nullptr);  impelement my version of this
 

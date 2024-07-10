@@ -37,15 +37,6 @@
 #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
-
-#define LIB_CLASS_STACKTISTIC_WATER_MARK      U32MACRO(DIGINI_STACKTISTIC_WATER_MARK_CODE, \
-                                                       DIGINI_STACKTISTIC_WATER_MARK_CODE, \
-                                                       DIGINI_STACKTISTIC_WATER_MARK_CODE, \
-                                                       DIGINI_STACKTISTIC_WATER_MARK_CODE)
-
-//-------------------------------------------------------------------------------------------------
 //
 // Name:           Constructor
 //
@@ -57,6 +48,7 @@
 //-------------------------------------------------------------------------------------------------
 StackCheck::StackCheck()
 {
+
     for(int i = 1; i < DIGINI_STACKTISTIC_NUMBER_OF_STACK; i++)
     {
         m_Size[i]         = 0;
@@ -84,7 +76,7 @@ int StackCheck::Register(const uint32_t* pStack, size_t STackSz, const char* pSt
     if(m_NumberOfStack < DIGINI_STACKTISTIC_NUMBER_OF_STACK)
     {
         #if (NOS_CONFIG_DEBUG == 0)
-          memset((void*)pStack, DIGINI_STACKTISTIC_WATER_MARK_CODE, STackSz * 4);
+          memset((void*)pStack, LIB_CLASS_STACKTISTIC_WATER_MARK_CODE, STackSz * 4);
         #endif
 
         m_pStackBottom[m_NumberOfStack] = pStack;

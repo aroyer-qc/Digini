@@ -186,6 +186,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_None(uint8_t Input, VT100_CallBackTyp
     return VT100_INPUT_MENU_CHOICE;
 }
 
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           CALLBACK_StackUsage
@@ -195,6 +196,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_None(uint8_t Input, VT100_CallBackTyp
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+#if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
 VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallBackType_e Type)
 {
     static int  NbOfStack = 0;
@@ -250,6 +252,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
 
     return VT100_INPUT_ESCAPE;
 }
+#endif // (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -325,7 +328,22 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(24, 18, (Unit == TEMP_CELSIUS) ? LBL_DEGREE_CELSIUS : LBL_DEGREE_FAHRENHEIT);
           #endif
 
-            myVT100.InMenuPrintf(1, 19, VT100_LBL_ESCAPE);
+            myVT100.InMenuPrintf(1, 20, VT100_LBL_LINE_SEPARATOR);
+            myVT100.InMenuPrintf(1, 22, VT100_LBL_FONT_TERMINAL);
+            uint8_t y = 24;
+
+            for(uint32_t i = 128; i < 256; i++)
+            {
+                if((i % 32) == 0)
+                {
+                    myVT100.InMenuPrintf(1, y, LBL_CHAR, ASCII_LINE_FEED);
+                    myVT100.SetCursorPosition(4, y++);
+                }
+
+                myVT100.InMenuPrintf(LBL_CHAR, i);
+            }
+
+            myVT100.InMenuPrintf(1, 29, VT100_LBL_ESCAPE);
         }
         break;
 
@@ -833,12 +851,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CALLBACK_MiscStatistic
+//  Name:           CALLBACK_MemoryPool
 //
-//  Description:    Miscelleaneous statistic
+//  Description:    Memory Pool statistic
 //
 //-------------------------------------------------------------------------------------------------
-VT100_InputType_e VT100_Terminal::CALLBACK_MiscStatistic(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallBackType_e Type)
 {
     uint32_t Max;
     uint8_t OffsetMultiplierX;
@@ -852,7 +870,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MiscStatistic(uint8_t Input, VT100_Ca
         case VT100_CALLBACK_REFRESH_ONCE:
         {
             myVT100.SetForeColor(VT100_COLOR_WHITE);
-            myVT100.InMenuPrintf(1, 5, VT100_LBL_MISC_STAT);
+            myVT100.InMenuPrintf(1, 5, VT100_LBL_MEMORY_POOL_STAT);
 
             myVT100.InMenuPrintf(1,  8,  VT100_LBL_MEMORY_POOL);
             myVT100.InMenuPrintf(4,  10, VT100_LBL_MEMORY_POOL_TOTAL);
@@ -869,20 +887,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MiscStatistic(uint8_t Input, VT100_Ca
                 myVT100.InMenuPrintf(OffsetMultiplierX--, OffsetMultiplierY - 1, VT100_LBL_MEM_POOL_GROUP, i, pMemoryPool->GetPoolNumberOfBlock(i), pMemoryPool->GetPoolBlockSize(i));
             }
 
-            myVT100.InMenuPrintf(1, 25, VT100_LBL_LINE_SEPARATOR);
-            myVT100.InMenuPrintf(1, 27, VT100_LBL_FONT_TERMINAL);
-            uint8_t y = 29;
-
-            for(uint32_t i = 128; i < 256; i++)
-            {
-                if((i % 32) == 0)
-                {
-                    myVT100.InMenuPrintf(1, y, LBL_CHAR, ASCII_LINE_FEED);
-                    myVT100.SetCursorPosition(4, y++);
-                }
-
-                myVT100.InMenuPrintf(LBL_CHAR, i);
-            }
         }
         break;
 

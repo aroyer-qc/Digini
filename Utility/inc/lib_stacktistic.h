@@ -28,6 +28,21 @@
 
 //-------------------------------------------------------------------------------------------------
 
+#if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define LIB_CLASS_STACKTISTIC_WATER_MARK_CODE  0xFF
+
+#define LIB_CLASS_STACKTISTIC_WATER_MARK      (U32MACRO(LIB_CLASS_STACKTISTIC_WATER_MARK_CODE, \
+                                                        LIB_CLASS_STACKTISTIC_WATER_MARK_CODE,  \
+                                                        LIB_CLASS_STACKTISTIC_WATER_MARK_CODE,  \
+                                                        LIB_CLASS_STACKTISTIC_WATER_MARK_CODE))
+
+//-------------------------------------------------------------------------------------------------
+
 class StackCheck
 {
     public:
@@ -62,5 +77,9 @@ class StackCheck            myStacktistic;
 extern class StackCheck     myStacktistic;
 
 #endif // STK_CHK_GLOBAL
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

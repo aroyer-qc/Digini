@@ -28,7 +28,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_COMM_MODULE == DEF_ENABLED)
+#if (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Global Macro
@@ -80,7 +80,7 @@ TASK_COMM_EXTERN class ClassTaskCOMM  TaskCOMM;
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (DIGINI_USE_COMM_MODULE == DEF_ENABLED)
+#endif // (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 

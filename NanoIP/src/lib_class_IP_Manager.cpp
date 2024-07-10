@@ -75,8 +75,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 
     // Initialize the MAC Address
    // m_pEthernetIF->pETH_Driver.SetMacAddress(pMAC_Address);
-
-//    m_pEthernetIF->pETH_Driver.Initialize(pMAC_Address);
+    //m_pEthernetIF->pETH_Driver.Initialize(pMAC_Address);
 
 
     // Set netif maximum transfer unit

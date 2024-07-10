@@ -83,7 +83,7 @@ X_VT100_LBL( VT100_LBL_MEMORY_POOL_TOTAL,          "Total size     :",          
 X_VT100_LBL( VT100_LBL_MEMORY_POOL_USED,           "Used size :",                                                                                              "Taille Utilis\x82" "e :"                                                                ) \
 X_VT100_LBL( VT100_LBL_MEMORY_POOL_NB_OF_POOL,     "Number of Pool :    %u",                                                                                   "Nombre de bassins : %u"                                                                 ) \
 X_VT100_LBL( VT100_LBL_MEM_POOL_GROUP,             "Group %d: %u X %u Bytes",                                                                                  "Groupe %d: %u X %u Octets"                                                              ) \
-X_VT100_LBL( VT100_LBL_MEM_BLOCK_USED,             "Used Blocks : %u  Highest : %u  ",                                                                         "Blocks Utilis\x82s: %u  Haut : %u  "                                                    ) \
+X_VT100_LBL( VT100_LBL_MEM_BLOCK_USED,             "Used Blocks : %u  Highest : %u ",                                                                          "Blocks Utilis\x82s: %u  Haut : %u "                                                     ) \
 
 #define VT100_MONO_LABEL_LANGUAGE_DEF(X_VT100_LBL) \
 X_VT100_LBL( VT100_LBL_BACK_WHITE_FORE_BLACK,      "\033[30m\033[47m",                                                                                         nullptr                                                                                  ) \

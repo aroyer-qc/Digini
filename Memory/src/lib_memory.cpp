@@ -63,7 +63,7 @@ MemPoolDriver::MemPoolDriver()
     uint8_t i;
 
 
-  #if MEMORY_POOL_USE_STAT == DEF_ENABLED
+  #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
     m_UsedMemory = 0;
 
     for(i = 0; i < MEM_BLOCK_GROUP_SIZE; i++)
@@ -134,6 +134,11 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, TickCount_t TimeOut)
   #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
     nOS_StatusReg   sr;
   #endif
+
+if(SizeRequired <=64)
+{
+    __asm("nop");
+}
 
   #if (MEMORY_POOL_RESTRICT_ALLOC_TO_BLOCK_SIZE == DEF_DISABLED)
     // First loop will check for any block available, so we don't wait to be freed

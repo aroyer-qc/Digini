@@ -28,7 +28,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 #include "./Peripheral/inc/port/lib_class_usb.h"
 #include "usb_hcd.h"
 

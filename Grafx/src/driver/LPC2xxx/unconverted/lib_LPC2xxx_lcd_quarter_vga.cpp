@@ -33,7 +33,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "stm32f4xx.h"
-#include "./Digini/Grafx/inc/driver/STM32F4xx/lib_STM32F4_lcd_quarter_vga.h"
+#include "./Grafx/inc/driver/STM32F4xx/lib_STM32F4_lcd_quarter_vga.h"
 // TO DO use an lib_Port for this
 #include "./Peripheral/inc/port/lib_class_gpio.h"
 #include "./Peripheral/inc/port/lib_class_spi.h"

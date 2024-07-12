@@ -48,8 +48,6 @@
 
 // Console Generic Label
 #define CLI_LABEL_LANGUAGE_DEF(X_CLI_LBL_CFG) \
-X_CLI_LBL_CFG( LBL_CLEAR_SCREEN,            "\033[2J\033[H",                            nullptr                                                     ) \
-X_CLI_LBL_CFG( LBL_RESET_TERMINAL,          "\033c\n",                                  nullptr                                                     ) \
 X_CLI_LBL_CFG( LBL_NACK,                    "NACK, ",                                   nullptr                                                     ) \
 X_CLI_LBL_CFG( LBL_ERROR,                   "ERROR, %s",                                "ERREUR, %s"                                                ) \
 X_CLI_LBL_CFG( LBL_CMD_LINE_PROC_STARTED,   "Command Line Process Started\n>",          "Proc\x82" "d\x82 Ligne de Commande, D\x82marr\x82\n>"      ) \

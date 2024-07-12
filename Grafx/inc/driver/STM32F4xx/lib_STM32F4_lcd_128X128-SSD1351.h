@@ -32,7 +32,7 @@
 
 #include "digini_cfg.h"
 #ifdef DIGINI_USE_GRAFX
-#include "./Digini/Grafx/inc/lib_grafx.h"
+#include "./Grafx/inc/lib_grafx.h"
 #include "lib_lcd_driver.h"// TODO old stuff
 #include "./Peripheral/inc/Port/lib_io.h"
 #include "./Peripheral/inc/Port/lib_class_io_bus.h"

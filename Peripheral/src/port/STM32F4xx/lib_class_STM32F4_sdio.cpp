@@ -52,7 +52,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define SDIO_DRIVER_GLOBAL
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 #undef  SDIO_DRIVER_GLOBAL
 //#include "stm32f4xx_ll_sdmmc.h"   // to replace this my stuff
 

@@ -30,7 +30,7 @@
 
 
 #define LIB_PULSE_COUNTER_GLOBAL
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 #undef  LIB_PULSE_COUNTER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------

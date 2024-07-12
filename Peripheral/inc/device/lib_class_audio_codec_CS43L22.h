@@ -58,7 +58,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 #include "./Peripheral/inc/interface/lib_class_audio_interface.h"
 #include "device_cfg.h"
 

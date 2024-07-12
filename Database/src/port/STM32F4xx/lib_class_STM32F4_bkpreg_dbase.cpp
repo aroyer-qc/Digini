@@ -3,11 +3,12 @@
 //  File : lib_class_STM32F4_bkpreg_dbase.cpp
 //
 //-------------------------------------------------------------------------------------------------
+
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -17,8 +18,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+// TODO validate if they all need to be include ( lib_digini.h might do the job )
 #include <stdint.h>
-#include "./Digini/Database/inc/port/lib_class_bkpreg_dbase.h"
+#include ".Database/inc/port/lib_class_bkpreg_dbase.h"
 #include "./Peripheral/inc/port/lib_class_rtc.h"
 #include "./Digini/inc/lib_macro.h"
 #include "driver_cfg.h"

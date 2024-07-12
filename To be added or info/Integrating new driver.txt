@@ -68,7 +68,7 @@ in digini.cfg
     5. CPP file template is as follow:
 
         #define LIB_XXX_GLOBAL
-        #include "./Digini/lib_digini.h"
+        #include "./lib_digini.h"
         #undef  LIB_XXX_GLOBAL
 
         XXX_Driver::XXX_Driver()

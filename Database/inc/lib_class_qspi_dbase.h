@@ -35,7 +35,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "label_cfg.h"
-#include "./Digini/Database/inc/lib_class_database.h"
+#include "./Database/inc/lib_class_database.h"
 
 //-------------------------------------------------------------------------------------------------
 // typedef struct(s) and const(s)

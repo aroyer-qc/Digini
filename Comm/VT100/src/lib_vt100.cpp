@@ -159,7 +159,7 @@ void VT100_Terminal::IF_Process(void)
     if(m_IsItInitialized == false)
     {
         m_IsItInitialized = true;
-        InMenuPrintf(VT100_LBL_RESET_TERMINAL);
+        InMenuPrintf(LBL_RESET_TERMINAL);
         Delay = GetTick();
         while(TickHasTimeOut(Delay, 10) == false){};
       #if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED) || (VT100_USE_USER_MENU_STATIC_INFO == DEF_ENABLED)
@@ -546,10 +546,10 @@ void VT100_Terminal::PrintMenuStaticInfo(void)
     size_t      SizeTitle;
 
     m_BypassPrintf = true;
-    InMenuPrintf(VT100_LBL_RESET_TERMINAL);
+    InMenuPrintf(LBL_RESET_TERMINAL);
     nOS_Sleep(100);                                                 // Terminal need time to reset
     InMenuPrintf(VT100_LBL_HIDE_CURSOR);
-    InMenuPrintf(VT100_LBL_CLEAR_SCREEN);
+    InMenuPrintf(LBL_CLEAR_SCREEN);
     SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
     InMenuPrintf(VT100_LBL_LINE_SEPARATOR);
     pString  = myLabel.GetPointer(VT100_LBL_LINE_SEPARATOR);

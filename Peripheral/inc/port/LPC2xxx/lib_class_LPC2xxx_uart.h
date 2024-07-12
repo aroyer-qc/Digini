@@ -45,10 +45,10 @@
 
 #include "LPCxx.h"
 #include "nOS.h"
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 //#include "PortState.h"
 #include "./Peripheral/inc/port/lib_class_gpio.h"
-#include "./Digini/Utility/inc/lib_fifo.h"
+#include "./Utility/inc/lib_fifo.h"
 #include "./Digini/inc/lib_typedef.h"
 
 //-------------------------------------------------------------------------------------------------

@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_SERIAL_FLASH_GLOBAL
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 #undef  LIB_SERIAL_FLASH_GLOBAL
 
 

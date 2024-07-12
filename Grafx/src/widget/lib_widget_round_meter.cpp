@@ -40,7 +40,7 @@ the icon on what the pie must be blend should be already draw in the sequence on
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 

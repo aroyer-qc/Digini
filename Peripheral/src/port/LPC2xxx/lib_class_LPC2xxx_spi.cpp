@@ -31,7 +31,7 @@
 #define STM32F4_SPI_GLOBAL
 #include "./Peripheral/inc/port/lib_class_spi.h"
 #undef STM32F4_SPI_GLOBAL
-#include "./Digini/Utility/inc/lib_utility.h"
+#include "./Utility/inc/lib_utility.h"
 
 //-------------------------------------------------------------------------------------------------
 

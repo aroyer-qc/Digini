@@ -46,7 +46,7 @@
 #undef  STM32F4_RTC_GLOBAL
 #include "string.h"
 #include "STM32F4xx.h"
-#include "./Digini/Utility/inc/lib_utility.h"
+#include "./Utility/inc/lib_utility.h"
 
 //-------------------------------------------------------------------------------------------------
 

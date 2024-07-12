@@ -37,7 +37,7 @@
 #include <stdint.h>
 #include "bsp.h"
 #include "STM32F4xx.h"
-//#include "./Digini/Peripherallib_class_sd_card.h"
+//#include "./Peripheral/inc/lib_class_sd_card.h"
 #include "./Peripheral/inc/port/lib_class_i2c.h"
 #include "./Peripheral/inc/port/lib_class_sdio.h"
 #include "./Peripheral/inc/port/lib_class_rtc.h"

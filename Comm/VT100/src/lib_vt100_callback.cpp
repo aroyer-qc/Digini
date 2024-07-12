@@ -263,6 +263,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+#if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
 VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT100_CallBackType_e Type)
 {
     nOS_Time        UpTime;
@@ -395,6 +396,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 
     return VT100_INPUT_ESCAPE;
 }
+#endif //  (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //

@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define USB_DRIVER_GLOBAL
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 #undef  USB_DRIVER_GLOBAL
 #ifdef DIGINI_FATFS_USE_USB_KEY
 //#include "lib_class_usb_interface.h"

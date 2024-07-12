@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define DISKIO_GLOBAL
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 #undef  DISKIO_GLOBAL
 
 #if (DIGINI_USE_FATFS == DEF_ENABLED)

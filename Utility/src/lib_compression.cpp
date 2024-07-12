@@ -28,7 +28,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
 #include "jpeg.h"
 #include "picopng.h"

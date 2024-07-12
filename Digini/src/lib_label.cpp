@@ -37,35 +37,68 @@
 const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
 {
     COMMON_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+    LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
 
   #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
     PRODUCT_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
   #endif
 
-  #if (LABEL_USE_TIME_AND_DATE == DEF_ENABLED)
-    TIMDAT_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+  #if (LABEL_USE_DATE == DEF_ENABLED)
+    DATE_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
   #endif
 
-    LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+  #if (LABEL_USE_TIME == DEF_ENABLED)
+    TIME_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+  #endif
+
+  ///-----------------------------------------------------------------------------------------------
+  /// Command line interface label
 
   #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
     CLI_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+
    #if (CLI_USE_EXTENDED_ERROR == DEF_ENABLED)
     CLI_LABEL_EXT_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
    #endif
+
   #endif
 
-    // Include VT100 label if VT100 is defined
+  ///-----------------------------------------------------------------------------------------------
+  /// Include VT100 label if VT100 is defined
+
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+
     VT100_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
     VT100_USER_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+
+   #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)                  // todo change LABEL.. for something better...
+    VT100_PRODUCT_INFO_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+   #endif
+
+   #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+    VT100_MEMORY_STACKTISTIC_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+   #endif
+
+   #if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
+    VT100_MEMORY_POOL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+   #endif
+
+   #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
+    VT100_DEBUG_IN_CONSOLE_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+   #endif
+
    #if (DIGINI_DEBUG_SDCARD_INFO_ON_VT100 == DEF_ENABLED)
     VT100_SDCARD_INFO_DEF(EXPAND_X_LBL_CFG_AS_DATA)
    #endif
+
    #if (VT100_USE_COLOR != DEF_ENABLED)
     VT100_MONO_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
    #endif
+
   #endif
+
+  ///-----------------------------------------------------------------------------------------------
+  /// Ethernet Label
 
   #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
     NET_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)

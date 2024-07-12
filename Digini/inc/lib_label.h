@@ -42,7 +42,9 @@
 //-------------------------------------------------------------------------------------------------
 
 #define COMMON_LANGUAGE_DEF(X_LABEL)  /* Common label */ \
-X_LABEL( LBL_NULL,                       "",                               nullptr                                         ) \
+X_LABEL( LBL_NULL,                       nullptr,                          nullptr                                         ) \
+X_LABEL( LBL_CLEAR_SCREEN,               "\033[2J\033[H",                  nullptr                                         ) \
+X_LABEL( LBL_RESET_TERMINAL,             "\033c\n",                        nullptr                                         ) \
 X_LABEL( LBL_STRING,                     "%s",                             nullptr                                         ) \
 X_LABEL( LBL_STRING_LINEFEED,            "%s\n",                           nullptr                                         ) \
 X_LABEL( LBL_CHAR,                       "%c",                             nullptr                                         ) \
@@ -73,7 +75,6 @@ X_LABEL( LBL_DEGREE_FAHRENHEIT,          "\xF8" "F",                       nullp
 X_LABEL( LBL_ENABLED,                    "Enabled ",                       "Activ\x82 "                                    ) \
 X_LABEL( LBL_DISABLED,                   "Disabled",                       "D\x82" "activ\x82"                             ) \
 X_LABEL( LBL_SYSTEM_INFO,                "System Info",                    "Info Syst\x8ame"                               ) \
-
 
 #define NET_LANGUAGE_DEF(X_LABEL)  /* Network label */ \
 X_LABEL( LBL_NETWORK_INFO,               "Network Information",            "Information R\x82seau"                         ) \
@@ -110,6 +111,35 @@ X_LABEL( LBL_WEDNESDAY,                  "Wednesday",                      "Merc
 X_LABEL( LBL_THURSDAY,                   "Thursday",                       "Jeudi"                                         ) \
 X_LABEL( LBL_FRIDAY,                     "Friday",                         "Vendredi"                                      ) \
 X_LABEL( LBL_SATURDAY,                   "Saturday",                       "Samedi"                                        ) \
+X_LABEL( LBL_HOUR,                       "Hour",                           "Heure"                                         ) \
+X_LABEL( LBL_MINUTE,                     "Minute",                         nullptr                                         ) \
+X_LABEL( LBL_SECOND,                     "Second",                         "Seconde"                                       ) \
+X_LABEL( LBL_YEAR,                       "Year",                           "Ann\x82" "e"                                   ) \
+X_LABEL( LBL_MONTH,                      "Month",                          "Mois"                                          ) \
+X_LABEL( LBL_DAY,                        "Day",                            "Jour"                                          ) \
+
+#define DATE_LABEL_LANGUAGE_DEF(X_LABEL) \
+X_LABEL( LBL_JANUARY,                    "January",                        "Janvier"                                       ) \
+X_LABEL( LBL_FEBRUARY,                   "February",                       "F\x82vrier"                                    ) \
+X_LABEL( LBL_MARCH,                      "March",                          "Mars"                                          ) \
+X_LABEL( LBL_APRIL,                      "April",                          "Avril"                                         ) \
+X_LABEL( LBL_MAY,                        "May",                            "Mai"                                           ) \
+X_LABEL( LBL_JUNE,                       "June",                           "Juin"                                          ) \
+X_LABEL( LBL_JULY,                       "July",                           "Juillet"                                       ) \
+X_LABEL( LBL_AUGUST,                     "August",                         "Ao\x93t"                                       ) \
+X_LABEL( LBL_SEPTEMBER,                  "September",                      "Septembre"                                     ) \
+X_LABEL( LBL_OCTOBER,                    "October",                        "Octobre"                                       ) \
+X_LABEL( LBL_NOVEMBER,                   "November",                       "Novembre"                                      ) \
+X_LABEL( LBL_DECEMBER,                   "December",                       "D\x82" "cembre"                                ) \
+X_LABEL( LBL_SUNDAY,                     "Sunday",                         "Dimanche"                                      ) \
+X_LABEL( LBL_MONDAY,                     "Monday",                         "Lundi"                                         ) \
+X_LABEL( LBL_TUESDAY,                    "Tuesday",                        "Mardi"                                         ) \
+X_LABEL( LBL_WEDNESDAY,                  "Wednesday",                      "Mercredi"                                      ) \
+X_LABEL( LBL_THURSDAY,                   "Thursday",                       "Jeudi"                                         ) \
+X_LABEL( LBL_FRIDAY,                     "Friday",                         "Vendredi"                                      ) \
+X_LABEL( LBL_SATURDAY,                   "Saturday",                       "Samedi"                                        ) \
+
+#define TIME_LABEL_LANGUAGE_DEF(X_LABEL) \
 X_LABEL( LBL_HOUR,                       "Hour",                           "Heure"                                         ) \
 X_LABEL( LBL_MINUTE,                     "Minute",                         nullptr                                         ) \
 X_LABEL( LBL_SECOND,                     "Second",                         "Seconde"                                       ) \
@@ -154,35 +184,69 @@ enum Language_e
 enum Label_e
 {
     COMMON_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+    LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
 
-  #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
+  #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)                       /// this doesn't exist actually need to do
     PRODUCT_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
   #endif
 
-  #if (LABEL_USE_TIME_AND_DATE == DEF_ENABLED)
-    TIMDAT_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #if (LABEL_USE_DATE == DEF_ENABLED)
+    DATE_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
   #endif
 
-    LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #if (LABEL_USE_TIME == DEF_ENABLED)
+    TIME_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+
+  ///-----------------------------------------------------------------------------------------------
+  /// Command line interface label
 
   #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
+
     CLI_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+
    #if (CLI_USE_EXTENDED_ERROR == DEF_ENABLED)
     CLI_LABEL_EXT_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
    #endif
+
   #endif
 
-    // Include VT100 label if VT100 is defined
+  ///-----------------------------------------------------------------------------------------------
+  /// Include VT100 label if VT100 is defined
+
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+
     VT100_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
     VT100_USER_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+
+   #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
+    VT100_PRODUCT_INFO_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #endif
+
+   #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+    VT100_MEMORY_STACKTISTIC_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #endif
+
+   #if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
+    VT100_MEMORY_POOL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #endif
+
+   #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
+    VT100_DEBUG_IN_CONSOLE_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #endif
+
    #if (DIGINI_DEBUG_SDCARD_INFO_ON_VT100 == DEF_ENABLED)
       VT100_SDCARD_INFO_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
    #endif
+
    #if (VT100_USE_COLOR != DEF_ENABLED)
     VT100_MONO_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
    #endif
+
   #endif
+
+  ///-----------------------------------------------------------------------------------------------
+  /// Ethernet Label
 
   #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
     NET_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)

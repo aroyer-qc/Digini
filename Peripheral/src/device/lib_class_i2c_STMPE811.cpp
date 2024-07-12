@@ -31,7 +31,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define LIB_STMPE811_GLOBAL
-#include "./Digini/lib_digini.h"
+#include "./lib_digini.h"
 #undef  LIB_STMPE811_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
@@ -39,7 +39,7 @@
 #ifdef DIGINI_USE_GRAFX
 #ifdef DIGINI_USE_POINTING_DEVICE
 //#include "./Peripheral/inc/device/lib_class_i2c_STMPE811.h"
-//#include "./Digini/Grafx/inc/driver/STM32F4xx/lib_STM32F4_lcd_quarter_vga.h"
+//#include "./Grafx/inc/driver/STM32F4xx/lib_STM32F4_lcd_quarter_vga.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)

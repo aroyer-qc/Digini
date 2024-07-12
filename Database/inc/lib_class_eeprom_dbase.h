@@ -35,7 +35,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "label_cfg.h"
+//#include "label_cfg.h"
 #include "./Database/inc/lib_class_database.h"
 #include "./Peripheral/inc/interface/lib_class_memory_driver_interface.h"
 

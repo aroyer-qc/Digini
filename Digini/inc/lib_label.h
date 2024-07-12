@@ -31,7 +31,7 @@
 #if (DIGINI_USE_LABEL == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// Expand macro(s)
+// Expanding macro(s)
 //-------------------------------------------------------------------------------------------------
 
 #define EXPAND_X_LBL_CFG_AS_ENUM(ENUM_ID, LBL1, LBL2) ENUM_ID,
@@ -152,24 +152,24 @@ X_LABEL( LBL_CPU_TEMPERATURE,            "CPU Temp:         ",             nullp
 
 // Console Generic Label
 #define CLI_LABEL_LANGUAGE_DEF(X_CLI_LBL_CFG) \
-X_CLI_LBL_CFG( LBL_NACK,                    "NACK, ",                                   nullptr                                                     ) \
-X_CLI_LBL_CFG( LBL_ERROR,                   "ERROR, %s",                                "ERREUR, %s"                                                ) \
-X_CLI_LBL_CFG( LBL_CMD_LINE_PROC_STARTED,   "Command Line Process Started\n>",          "Proc\x82" "d\x82 Ligne de Commande, D\x82marr\x82\n>"      ) \
-X_CLI_LBL_CFG( LBL_COMMAND_IS_INVALID,      "\nCommand is Invalid\n>",                  "\nCommande Invalide\n>"                                    ) \
-X_CLI_LBL_CFG( LBL_MALFORMED_PACKED,        "\nMalformed Command\n>",                   "\nCommande Mal Form\x82\n>"                                ) \
-X_CLI_LBL_CFG( LBL_BUFFER_OVERFLOW,         "\nBuffer Overflow\n>",                     "\nD\x82" "bordement du Tampon\n"                           ) \
-X_CLI_LBL_CFG( LBL_CMD_TIME_OUT,            " ... Command Timeout\n>",                  " ... Expiration du D\x82lai de Commande\n>"                ) \
-X_CLI_LBL_CFG( LBL_CLI_RESPONSE,            CLI_RESPONSE_FOR_LABEL,                     nullptr                                                     ) \
+    X_CLI_LBL_CFG( LBL_NACK,                            "NACK, ",                                                                                                  nullptr                                                                                  ) \
+    X_CLI_LBL_CFG( LBL_ERROR,                           "ERROR, %s",                                                                                               "ERREUR, %s"                                                                             ) \
+    X_CLI_LBL_CFG( LBL_CMD_LINE_PROC_STARTED,           "Command Line Process Started\n>",                                                                         "Proc\x82" "d\x82 Ligne de Commande, D\x82marr\x82\n>"                                   ) \
+    X_CLI_LBL_CFG( LBL_COMMAND_IS_INVALID,              "\nCommand is Invalid\n>",                                                                                 "\nCommande Invalide\n>"                                                                 ) \
+    X_CLI_LBL_CFG( LBL_MALFORMED_PACKED,                "\nMalformed Command\n>",                                                                                  "\nCommande Mal Form\x82\n>"                                                             ) \
+    X_CLI_LBL_CFG( LBL_BUFFER_OVERFLOW,                 "\nBuffer Overflow\n>",                                                                                    "\nD\x82" "bordement du Tampon\n"                                                        ) \
+    X_CLI_LBL_CFG( LBL_CMD_TIME_OUT,                    " ... Command Timeout\n>",                                                                                 " ... Expiration du D\x82lai de Commande\n>"                                             ) \
+    X_CLI_LBL_CFG( LBL_CLI_RESPONSE,                    CLI_RESPONSE_FOR_LABEL,                                                                                    nullptr                                                                                  ) \
 
 // Extended message support CLI_USE_EXTENDED_ERROR
 #define CLI_LABEL_EXT_LANGUAGE_DEF(X_CLI_LBL_CFG) \
-X_CLI_LBL_CFG( LBL_DENIED,                  "Denied",                                   "Refuser"                                                   ) \
-X_CLI_LBL_CFG( LBL_NO_READ_SUPPORT,         "No Read Support",                          "Aucun Support de Lecture"                                  ) \
-X_CLI_LBL_CFG( LBL_NO_WRITE_SUPPORT,        "No Write Support",                         "Aucun Support d'\x90" "criture"                            ) \
-X_CLI_LBL_CFG( LBL_INVALID_PARAMETER,       "Invalid Parameter",                        "Param\x88tre Invalide"                                     ) \
-X_CLI_LBL_CFG( LBL_PASSWORD_INVALID,        "Password Invalid",                         "Mot de Passe Invalide"                                     ) \
-X_CLI_LBL_CFG( LBL_MEM_ALLOC_ERROR,         "Memory allocation Error",                  "Erreur d'Allocation M\x82moire"                            ) \
-X_CLI_LBL_CFG( LBL_PLAIN_CMD_ONLY,          "Plain Command Only",                       "Commande Simple Uniquement"                                ) \
+    X_CLI_LBL_CFG( LBL_DENIED,                          "Denied",                                                                                                  "Refuser"                                                                                ) \
+    X_CLI_LBL_CFG( LBL_NO_READ_SUPPORT,                 "No Read Support",                                                                                         "Aucun Support de Lecture"                                                               ) \
+    X_CLI_LBL_CFG( LBL_NO_WRITE_SUPPORT,                "No Write Support",                                                                                        "Aucun Support d'\x90" "criture"                                                         ) \
+    X_CLI_LBL_CFG( LBL_INVALID_PARAMETER,               "Invalid Parameter",                                                                                       "Param\x88tre Invalide"                                                                  ) \
+    X_CLI_LBL_CFG( LBL_PASSWORD_INVALID,                "Password Invalid",                                                                                        "Mot de Passe Invalide"                                                                  ) \
+    X_CLI_LBL_CFG( LBL_MEM_ALLOC_ERROR,                 "Memory allocation Error",                                                                                 "Erreur d'Allocation M\x82moire"                                                         ) \
+    X_CLI_LBL_CFG( LBL_PLAIN_CMD_ONLY,                  "Plain Command Only",                                                                                      "Commande Simple Uniquement"                                                             ) \
 
 #endif // (DIGINI_USE_CMD_LINE == DEF_ENABLED)
 
@@ -220,22 +220,22 @@ X_CLI_LBL_CFG( LBL_PLAIN_CMD_ONLY,          "Plain Command Only",               
 #define VT100_DEBUG_IN_CONSOLE_LANGUAGE_DEF(X_VT100_LBL) \
     X_VT100_LBL( VT100_LBL_DEBUG,                      "Debug",                                                                                                    "D\x82" "bogage"                                                                         ) \
     X_VT100_LBL( VT100_LBL_DEBUG_MENU,                 "Debug Menu",                                                                                               "Menu de D\x82" "bogage"                                                                 ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_1,              "Dbg level 1  - System Status   ( )",                                                                       "Dbg level 1  - Status Syst\x8ame  ( )"                                                  ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_2,              "Dbg level 2  - System Action   ( )",                                                                       "Dbg level 2  - Action Syst\x8ame  ( )"                                                  ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_3,              "Dbg level 3  - System Health   ( )",                                                                       "Dbg level 3  - Sant\x82 Syst\x8ame   ( )"                                               ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_4,              "Dbg level 4  - Monitor/Logs    ( )",                                                                       "Dbg level 4  - Moniteur/Logs   ( )"                                                     ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_5,              "Dbg level 5  - Stack Warning   ( )",                                                                       "Dbg level 5  - Alerte Stack    ( )"                                                     ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_6,              "Dbg level 6  - Ethernet driver ( )",                                                                       "Dbg level 6  - Pilote Ethernet ( )"                                                     ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_7,              "Dbg level 7  - Nano IP         ( )",                                                                       nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_8,              "Dbg level 8  - Memory Pool     ( )",                                                                       "Dbg level 8  - R\x82serve m\x82moire ( )"                                               ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_9,              "Dbg level 9  - Free            ( )",                                                                       "Dbg level 9  - Libre           ( )"                                                     ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_10,             "Dbg level 10 - Free            ( )",                                                                       "Dbg level 10 - Libre           ( )"                                                     ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_11,             "Dbg level 11 - Free            ( )",                                                                       "Dbg level 11 - Libre           ( )"                                                     ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_12,             "Dbg level 12 - Free            ( )",                                                                       "Dbg level 12 - Libre           ( )"                                                     ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_13,             "Dbg level 13 - Free            ( )",                                                                       "Dbg level 13 - Libre           ( )"                                                     ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_14,             "Dbg level 14 - Free            ( )",                                                                       "Dbg level 14 - Libre           ( )"                                                     ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_15,             "Dbg level 15 - Free            ( )",                                                                       "Dbg level 15 - Libre           ( )"                                                     ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_LEVEL_16,             "Dbg level 16 - Free            ( )",                                                                       "Dbg level 16 - Libre           ( )"                                                     ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_1,                    "Dbg level 1  - System Status   ( )",                                                                       "Dbg level 1  - Status Syst\x8ame  ( )"                                                  ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_2,                    "Dbg level 2  - System Action   ( )",                                                                       "Dbg level 2  - Action Syst\x8ame  ( )"                                                  ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_3,                    "Dbg level 3  - System Health   ( )",                                                                       "Dbg level 3  - Sant\x82 Syst\x8ame   ( )"                                               ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_4,                    "Dbg level 4  - Monitor/Logs    ( )",                                                                       "Dbg level 4  - Moniteur/Logs   ( )"                                                     ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_5,                    "Dbg level 5  - Stack Warning   ( )",                                                                       "Dbg level 5  - Alerte Stack    ( )"                                                     ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_6,                    "Dbg level 6  - Ethernet driver ( )",                                                                       "Dbg level 6  - Pilote Ethernet ( )"                                                     ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_7,                    "Dbg level 7  - Nano IP         ( )",                                                                       nullptr                                                                                  ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_8,                    "Dbg level 8  - Memory Pool     ( )",                                                                       "Dbg level 8  - R\x82serve m\x82moire ( )"                                               ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_9,                    "Dbg level 9  - Free            ( )",                                                                       "Dbg level 9  - Libre           ( )"                                                     ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_10,                   "Dbg level 10 - Free            ( )",                                                                       "Dbg level 10 - Libre           ( )"                                                     ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_11,                   "Dbg level 11 - Free            ( )",                                                                       "Dbg level 11 - Libre           ( )"                                                     ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_12,                   "Dbg level 12 - Free            ( )",                                                                       "Dbg level 12 - Libre           ( )"                                                     ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_13,                   "Dbg level 13 - Free            ( )",                                                                       "Dbg level 13 - Libre           ( )"                                                     ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_14,                   "Dbg level 14 - Free            ( )",                                                                       "Dbg level 14 - Libre           ( )"                                                     ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_15,                   "Dbg level 15 - Free            ( )",                                                                       "Dbg level 15 - Libre           ( )"                                                     ) \
+    X_VT100_LBL( LBL_DEBUG_LEVEL_16,                   "Dbg level 16 - Free            ( )",                                                                       "Dbg level 16 - Libre           ( )"                                                     ) \
 
 #define VT100_MEMORY_POOL_LANGUAGE_DEF(X_VT100_LBL) \
     X_VT100_LBL( VT100_LBL_MEMORY_POOL_STAT,           "Memory Pool Statistic",                                                                                    "Statistiques Bassin de m\x82moire"                                                      ) \
@@ -254,7 +254,7 @@ X_CLI_LBL_CFG( LBL_PLAIN_CMD_ONLY,          "Plain Command Only",               
     X_VT100_LBL( VT100_LBL_FONT_TERMINAL,              "Extended ASCII Font From This Terminal:",                                                                  "Police de Caract\x8are ASCII \x90tendue Provenant de ce Terminal:"                      ) \
 
 #define VT100_SDCARD_INFO_DEF(X_VT100_LBL) \
-    X_VT100_LBL( VT100_LBL_SD_CARD_INFORMATION,        "SD-Card Information",                                                                                      "Information Carte SD"                                                                   ) \
+    X_VT100_LBL( LBL_SD_CARD_INFORMATION,              "SD-Card Information",                                                                                      "Information Carte SD"                                                                   ) \
     X_VT100_LBL( LBL_SD_CARD_TYPE,                     "Card Type:",                                                                                               "Type de Carte:"                                                                         ) \
     X_VT100_LBL( LBL_SD_SPEC_VER,                      "SD Spec Version:",                                                                                         "Spec Version SD:"                                                                       ) \
     X_VT100_LBL( LBL_SD_MAX_SPEED,                     "Max Speed:",                                                                                               "Vitesse Max:"                                                                           ) \

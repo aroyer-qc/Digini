@@ -38,12 +38,14 @@
 // Expanding macro(s)
 //-------------------------------------------------------------------------------------------------
 
+/*
 #define COMPARE_MenuMain(x) 		    x
 #define COMPARE_MenuInfo(x)    		    x
 #define COMPARE_MenuStackUsage(x)       x
 #define COMPARE_MenuNetwork(x)          x
 #define COMPARE_MenuDebug(x)    	    x
 #define COMPARE_MenuSD_Card(x)     	    x
+*/
 #define VT100_TOKEN(x)                  VT100_Terminal::x
 
 /// This enum is a list of all menu page that exist in the VT100_MENU_DEF.

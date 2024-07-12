@@ -117,8 +117,6 @@
 
 #include "./Database/inc/lib_class_database.h"
 #include "./Digini/inc/lib_class_cbi.h"                      // Callback interface
-#include "./Comm/CmdLine/inc/lib_cli_label.h"
-#include "./Comm/VT100/inc/lib_vt100_label.h"
 #include "./Digini/inc/lib_label.h"
 #include "./Digini/inc/lib_macro.h"
 #include "./Digini/inc/lib_advanced_macro.h"

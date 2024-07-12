@@ -701,7 +701,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
 
 
             myVT100.SetForeColor(VT100_COLOR_GREEN);
-            myVT100.InMenuPrintf(1,  6,  VT100_LBL_SD_CARD_INFORMATION);
+            myVT100.InMenuPrintf(1,  6,  LBL_SD_CARD_INFORMATION);
             myVT100.InMenuPrintf(1,  17, LBL_FAT_INFORMATION);
 
             myVT100.SetForeColor(VT100_COLOR_WHITE);

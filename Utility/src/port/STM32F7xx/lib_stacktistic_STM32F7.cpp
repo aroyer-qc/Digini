@@ -49,26 +49,25 @@ extern const uint32_t _Min_Stack_Size;
 //-------------------------------------------------------------------------------------------------
 void StackCheck::InitializePort(void)
 {
-    uint32_t*           pStackBottom;
 
-    m_Size[0]         = uint32_t(&_Min_Stack_Size);
-    pStackBottom      = (uint32_t*)&_estack - m_Size[0];
-    m_pStackBottom[0] = (uint32_t*)pStackBottom;
-    m_pStackName[0]   = "TaskIdle";
+    m_Size[0]         = uint32_t(&_Min_Stack_Size) / 4;
+    m_pStackBottom[0] = (uint32_t*)&_estack - m_Size[0];
+    m_pStackName[0]   = "Task Idle";
 
     m_NumberOfStack = 1;
 
-    // Start by filling the idle stack (main stack)
-    __asm( "mov     r3,     %0"     :: "r" (pStackBottom));
+    // Copy the following code into the startup file after the call to  "bl  __libc_init_array"
 
-    __asm( "mov     r2,     sp                                                  \n"
-           "movs    r4,     " STRINGIFY(DIGINI_STACKTISTIC_WATER_MARK_CODE) "   \n"
-           "b       LoopFillStack                                               \n"
-           "FillStack:                                                          \n"
-           "str     r4,     [r3],   #4                                          \n"
-           "LoopFillStack:                                                      \n"
-           "cmp     r2,     r3                                                  \n"
-           "bne     FillStack                                                   \n" );
+    /// /* Fill the stack with watermark */
+    ///   ldr  r3, =_StackBottom;
+    ///   mov   r2, sp
+    ///   movs  r4, 0xFFFFFFFF
+    ///   b     LoopFillStack
+    /// FillStack:
+    ///   str   r4,     [r3],   #4
+    /// LoopFillStack:
+    ///   cmp  r2,     r3
+    ///   bne  FillStack
 }
 
 //-------------------------------------------------------------------------------------------------

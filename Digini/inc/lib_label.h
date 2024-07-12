@@ -91,33 +91,6 @@ X_LABEL( LBL_ETH_RX_COUNT,               "RX Packet Count  . . . :",       "Nb d
 X_LABEL( LBL_ETH_TX_COUNT,               "TX Packet Count  . . . :",       "Nb de Paquets Transmis :"                      ) \
 X_LABEL( LBL_ETH_DROP,                   "Dropped  . . :",                 "Non Trait\x82" "es :"                          ) \
 
-#define TIMDAT_LABEL_LANGUAGE_DEF(X_LABEL) \
-X_LABEL( LBL_JANUARY,                    "January",                        "Janvier"                                       ) \
-X_LABEL( LBL_FEBRUARY,                   "February",                       "F\x82vrier"                                    ) \
-X_LABEL( LBL_MARCH,                      "March",                          "Mars"                                          ) \
-X_LABEL( LBL_APRIL,                      "April",                          "Avril"                                         ) \
-X_LABEL( LBL_MAY,                        "May",                            "Mai"                                           ) \
-X_LABEL( LBL_JUNE,                       "June",                           "Juin"                                          ) \
-X_LABEL( LBL_JULY,                       "July",                           "Juillet"                                       ) \
-X_LABEL( LBL_AUGUST,                     "August",                         "Ao\x93t"                                       ) \
-X_LABEL( LBL_SEPTEMBER,                  "September",                      "Septembre"                                     ) \
-X_LABEL( LBL_OCTOBER,                    "October",                        "Octobre"                                       ) \
-X_LABEL( LBL_NOVEMBER,                   "November",                       "Novembre"                                      ) \
-X_LABEL( LBL_DECEMBER,                   "December",                       "D\x82" "cembre"                                ) \
-X_LABEL( LBL_SUNDAY,                     "Sunday",                         "Dimanche"                                      ) \
-X_LABEL( LBL_MONDAY,                     "Monday",                         "Lundi"                                         ) \
-X_LABEL( LBL_TUESDAY,                    "Tuesday",                        "Mardi"                                         ) \
-X_LABEL( LBL_WEDNESDAY,                  "Wednesday",                      "Mercredi"                                      ) \
-X_LABEL( LBL_THURSDAY,                   "Thursday",                       "Jeudi"                                         ) \
-X_LABEL( LBL_FRIDAY,                     "Friday",                         "Vendredi"                                      ) \
-X_LABEL( LBL_SATURDAY,                   "Saturday",                       "Samedi"                                        ) \
-X_LABEL( LBL_HOUR,                       "Hour",                           "Heure"                                         ) \
-X_LABEL( LBL_MINUTE,                     "Minute",                         nullptr                                         ) \
-X_LABEL( LBL_SECOND,                     "Second",                         "Seconde"                                       ) \
-X_LABEL( LBL_YEAR,                       "Year",                           "Ann\x82" "e"                                   ) \
-X_LABEL( LBL_MONTH,                      "Month",                          "Mois"                                          ) \
-X_LABEL( LBL_DAY,                        "Day",                            "Jour"                                          ) \
-
 #define DATE_LABEL_LANGUAGE_DEF(X_LABEL) \
 X_LABEL( LBL_JANUARY,                    "January",                        "Janvier"                                       ) \
 X_LABEL( LBL_FEBRUARY,                   "February",                       "F\x82vrier"                                    ) \
@@ -281,6 +254,7 @@ X_CLI_LBL_CFG( LBL_PLAIN_CMD_ONLY,          "Plain Command Only",               
     X_VT100_LBL( VT100_LBL_FONT_TERMINAL,              "Extended ASCII Font From This Terminal:",                                                                  "Police de Caract\x8are ASCII \x90tendue Provenant de ce Terminal:"                      ) \
 
 #define VT100_SDCARD_INFO_DEF(X_VT100_LBL) \
+    X_VT100_LBL( VT100_LBL_SD_CARD_INFORMATION,        "SD-Card Information",                                                                                      "Information Carte SD"                                                                   ) \
     X_VT100_LBL( LBL_SD_CARD_TYPE,                     "Card Type:",                                                                                               "Type de Carte:"                                                                         ) \
     X_VT100_LBL( LBL_SD_SPEC_VER,                      "SD Spec Version:",                                                                                         "Spec Version SD:"                                                                       ) \
     X_VT100_LBL( LBL_SD_MAX_SPEED,                     "Max Speed:",                                                                                               "Vitesse Max:"                                                                           ) \

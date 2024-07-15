@@ -190,7 +190,7 @@ void LIB_GetDateAndTime(DateAndTime_t* pTimeDate)
 {
     Time_t SyncTime;
 
-    do
+ //   do
     {
       #if (USE_RTC_DRIVER == DEF_ENABLED)
         myRTC.GetTime(&pTimeDate->Time);
@@ -202,7 +202,7 @@ void LIB_GetDateAndTime(DateAndTime_t* pTimeDate)
         LIB_GetTime(&SyncTime);
       #endif
     }
-    while(memcmp((uint8_t*)&pTimeDate->Time, (uint8_t*)&SyncTime, sizeof(Time_t)) == 0);
+ //   while(memcmp((uint8_t*)&pTimeDate->Time, (uint8_t*)&SyncTime, sizeof(Time_t)) == 0);   TODO seem to be a bug here !!!!!
 }
 
 

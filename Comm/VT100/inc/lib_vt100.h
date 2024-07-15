@@ -35,20 +35,44 @@
 #endif
 
 //-------------------------------------------------------------------------------------------------
-// Expanding macro(s)
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
-/*
 #define COMPARE_MenuMain(x) 		    x
 #define COMPARE_MenuInfo(x)    		    x
 #define COMPARE_MenuStackUsage(x)       x
-#define COMPARE_MenuNetwork(x)          x
+#define COMPARE_MenuMemoryPool(x)       x
 #define COMPARE_MenuDebug(x)    	    x
+#define COMPARE_MenuNetwork(x)          x
 #define COMPARE_MenuSD_Card(x)     	    x
-*/
+
 #define VT100_TOKEN(x)                  VT100_Terminal::x
 
-/// This enum is a list of all menu page that exist in the VT100_MENU_DEF.
+#define VT100_MENU_DEF(ENTRY) \
+                                                ENTRY(MenuMain           )  \
+    IF_USE( LABEL_USE_PRODUCT_INFO,             ENTRY(MenuInfo           ) )\
+    IF_USE( DIGINI_USE_STACKTISTIC,             ENTRY(MenuStackUsage     ) )\
+    IF_USE( DIGINI_USE_STATIC_MEMORY_ALLOC,     ENTRY(MenuMemoryPool     ) )\
+    IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE,        ENTRY(MenuDebug          ) )\
+    IF_USE( DIGINI_USE_ETHERNET,                ENTRY(MenuNetwork        ) )\
+    IF_USE( DIGINI_DEBUG_SDCARD_INFO_ON_VT100,  ENTRY(MenuSD_Card        ) )\
+
+#define VT100_CALLBACK(ENTRY)\
+                                               ENTRY(CALLBACK_MenuMain           )  \
+    IF_USE( LABEL_USE_PRODUCT_INFO,            ENTRY(CALLBACK_ProductInformation ) )\
+    IF_USE( DIGINI_USE_STACKTISTIC,            ENTRY(CALLBACK_StackUsage         ) )\
+    IF_USE( DIGINI_USE_STATIC_MEMORY_ALLOC,    ENTRY(CALLBACK_MemoryPool         ) )\
+    IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE,       ENTRY(CALLBACK_DebugLevelSetting  ) )\
+    IF_USE( DIGINI_USE_ETHERNET,               ENTRY(CALLBACK_NetworkInfo        ) )\
+    IF_USE( DIGINI_DEBUG_SDCARD_INFO_ON_VT100, ENTRY(CALLBACK_SD_CardInformation ) )\
+
+
+
+//-------------------------------------------------------------------------------------------------
+// Expanding macro(s)
+//-------------------------------------------------------------------------------------------------
+
+/// This enum is a list of all menu page that exist in the VT100_MENU_DEF and VT100_USER_MENU_DEF.
 #define EXPAND_VT100_MENU_AS_ENUM(MENU_ID)                                                                  MENU_ID ## _ID,
 
 /// This create list of pointer on each menu (see Note 1)
@@ -110,16 +134,20 @@ enum NAME ## _ItemID_e                                        \
 enum VT100_Menu_e
 {
     VT100_MENU_DEF(EXPAND_VT100_MENU_AS_ENUM)
+    VT100_USER_MENU_DEF(EXPAND_VT100_MENU_AS_ENUM)
     NUMBER_OF_MENU,
     VT100_MENU_NONE,
     VT100_MENU_NONE_ID = VT100_MENU_NONE,
 };
 
+/*
 enum VT100_Callback_e
 {
-    VT100_CALLBACK(EXPAND_VT100_MENU_AS_ENUM)               // Strange... this should be identical to the previous expand
+    VT100_CALLBACK(EXPAND_VT100_MENU_AS_ENUM)           // ths is wrong
+    VT100_USER_CALLBACK(EXPAND_VT100_MENU_AS_ENUM)
     NUMBER_OF_CALLBACK,
 };
+*/
 
 enum VT100_Color_e
 {
@@ -205,6 +233,7 @@ struct VT100_MenuObject_t
 // Create all the menu enum ID for each existing menu definition
 // Example MenuSystemSetting_ItemID_e it will have all ID for the Menu item 1 is ID_SYSTEM_LANGUAGE (to be used in callback)
 VT100_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
+VT100_USER_MENU_DEF(EXPAND_AS_MENU_ENUMS_ITEM)
 
 //-------------------------------------------------------------------------------------------------
 // class
@@ -284,7 +313,7 @@ bool                GetString                   (char* pBuffer, size_t Size);
         void                        ClearConfigFLag             (void);
         static VT100_InputType_e    CALLBACK_None               (uint8_t Input, VT100_CallBackType_e Type);
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
-
+        VT100_USER_CALLBACK(EXPAND_VT100_MENU_CALLBACK)
         Console*                            m_pConsole;
         bool                                m_IsItInitialized;
         bool                                m_IsItInStartup;
@@ -329,6 +358,8 @@ bool                GetString                   (char* pBuffer, size_t Size);
         static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
 
         VT100_MENU_DEF(EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER)
+        VT100_USER_MENU_DEF(EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER)
+
 };
 
 //-------------------------------------------------------------------------------------------------

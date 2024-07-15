@@ -483,6 +483,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+/*
 VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_CallBackType_e Type)
 {
     static DateAndTime_t TimeDate;
@@ -608,6 +609,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_Call
 
     return VT100_INPUT_MENU_CHOICE;
 }
+*/
 
 //-------------------------------------------------------------------------------------------------
 //

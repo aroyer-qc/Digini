@@ -135,11 +135,6 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, TickCount_t TimeOut)
     nOS_StatusReg   sr;
   #endif
 
-if(SizeRequired <=64)
-{
-    __asm("nop");
-}
-
   #if (MEMORY_POOL_RESTRICT_ALLOC_TO_BLOCK_SIZE == DEF_DISABLED)
     // First loop will check for any block available, so we don't wait to be freed
     for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_SIZE; GroupID++)
@@ -370,7 +365,10 @@ nOS_Error MemPoolDriver::GetLastError(void)
     return m_LastError;
 }
 
-#if MEMORY_POOL_USE_STAT == DEF_ENABLED
+//-------------------------------------------------------------------------------------------------
+
+#if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: GetTotalSizeReserved

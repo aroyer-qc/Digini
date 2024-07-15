@@ -1494,7 +1494,7 @@ void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, VT100_Color_e Color, u
     for(i = 0; i < Size; i++)
     {
       #if (VT100_USE_COLOR == DEF_ENABLED)
-        if(i < ((Value / (Max / Size))))
+        if(i < ((uint32_t(Value * 100) / (uint32_t(Max * 100) / Size))))
         {
             SetBackColor(Color);
         }
@@ -1503,7 +1503,7 @@ void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, VT100_Color_e Color, u
             SetBackColor(VT100_COLOR_BLACK);
         }
       #else
-        InvertMono((i < ((Value / (Max / Size)))));
+        InvertMono((i < ((uint32_t(Value * 100) / (uint32_t(Max * 100) / Size)))));
       #endif
 
         InMenuPrintf(LBL_CHAR, ASCII_SPACE);

@@ -1062,11 +1062,10 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     }
   #endif
 
-  if(Mask != 0)
-  {
-      EnableRX_ISR(Mask);
-  }
-
+    if(Mask != 0)
+    {
+        EnableRX_ISR(Mask);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

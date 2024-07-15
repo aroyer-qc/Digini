@@ -307,10 +307,14 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
           #if defined(DEBUG) || (DIGINI_USE_DATABASE == DEF_DISABLED)
             myVT100.InMenuPrintf(       LBL_SERIAL_NUMBER);
           #else
-             char* pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE);
-             DB_Central.Get(pBuffer, SERIAL_NUMBER_TEXT);
-             myVT100.InMenuPrintf(LBL_STRING, pBuffer);
-             pMemoryPool->Free((void**)&pBuffer);
+             char* pBuffer;
+
+             if(pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE) != nullptr)
+             {
+                 DB_Central.Get(pBuffer, SERIAL_NUMBER_TEXT);
+                 myVT100.InMenuPrintf(LBL_STRING, pBuffer);
+                 pMemoryPool->Free((void**)&pBuffer);
+             }
           #endif
 
             myVT100.InMenuPrintf(1, 14, LBL_COMPILE_DATE_INFO);
@@ -866,6 +870,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
     uint32_t Max;
     uint8_t OffsetMultiplierX;
     uint8_t OffsetMultiplierY;
+    uint8_t Percent;
 
     VAR_UNUSED(Input);
     Max = pMemoryPool->GetNumberOfPool();
@@ -887,7 +892,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
             {
                 OffsetMultiplierX = uint8_t(((i % 3) * 33) + 2);
                 OffsetMultiplierY = uint8_t(((i / 3) * 6) + 14);
-
                 myVT100.DrawBox(OffsetMultiplierX, OffsetMultiplierY, 32, 3, VT100_COLOR_WHITE);
                 myVT100.InMenuPrintf(OffsetMultiplierX--, OffsetMultiplierY - 1, VT100_LBL_MEM_POOL_GROUP, i, pMemoryPool->GetPoolNumberOfBlock(i), pMemoryPool->GetPoolBlockSize(i));
             }
@@ -906,8 +910,9 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
 
                 OffsetMultiplierX = uint8_t(((i % 3) * 33) + 3);
                 OffsetMultiplierY = uint8_t(((i / 3) * 6) + 15);
+                Percent = (UsedBlock * 100) / NumberOfBlock;
 
-                myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY, ((UsedBlock >= NumberOfBlock * 8) / 10) ? VT100_COLOR_RED : VT100_COLOR_GREEN, UsedBlock, NumberOfBlock, 30);
+                myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY, (Percent >= 80) ? VT100_COLOR_RED : VT100_COLOR_GREEN, UsedBlock, NumberOfBlock, 30);
                 myVT100.SetForeColor(VT100_COLOR_WHITE);
                 myVT100.InMenuPrintf(OffsetMultiplierX - 1,  OffsetMultiplierY + 2, VT100_LBL_MEM_BLOCK_USED,  UsedBlock, pMemoryPool->GetPoolBlockHighPoint(i));
             }

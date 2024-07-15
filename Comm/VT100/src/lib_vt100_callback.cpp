@@ -409,8 +409,9 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 //-------------------------------------------------------------------------------------------------
 VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT100_CallBackType_e Type)
 {
+  #if (DIGINI_USE_DATABASE == DISABLED)
     extern SystemDebugLevel_e BSP_GlobalDebugLevel; // TODO get a better method ( automatically generated into debug file
-
+  #endif
 
     static SystemDebugLevel_e DebugLevel = SYS_DEBUG_NONE;
 

@@ -586,7 +586,7 @@ void VT100_Terminal::RepeatChar(uint8_t Char, size_t Count)
 {
     char* pBuffer;
 
-    if((pBuffer = (char*)pMemoryPool->AllocAndSet(Count + 1, Char)) != nullptr)
+    if((pBuffer = (char*)pMemoryPool->AllocAndSet(Count + 1, Char, MEM_DBG_VT100_1)) != nullptr)
     {
         pBuffer[Count] = '\0';
         m_pConsole->SendData((const uint8_t*)pBuffer, &Count);
@@ -956,7 +956,7 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
     InMenuPrintf(PosX + 2,  PosY + 5, VT100_LBL_INPUT_VALIDATION);
 
     // Copy string
-    if((m_pString = (char*)pMemoryPool->AllocAndSet(VT100_STRING_SZ + 1, 0)) != nullptr)
+    if((m_pString = (char*)pMemoryPool->AllocAndSet(VT100_STRING_SZ + 1, 0, MEM_DBG_VT100_2)) != nullptr)
     {
         memcpy(m_pString, pString, VT100_STRING_SZ);
     }     // todo handle error....
@@ -1090,7 +1090,7 @@ size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat
         //// SYS_Read(SYS_DEBUG_LEVEL, MAIN_ACU, 0, &DebugLevel, nullptr);
         if((DebugLevel & Level) != 0)
         {
-            if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE)) == nullptr)
+            if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE), MEM_DBG_VT100_3) == nullptr)
             {
                 va_start(vaArg, pFormat);
                 Size = LIB_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, vaArg);
@@ -1487,7 +1487,7 @@ void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size)
 {
-    int i;
+    uint32_t i;
 
     SetCursorPosition(PosX, PosY);
 

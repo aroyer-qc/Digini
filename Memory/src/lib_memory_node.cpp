@@ -45,7 +45,7 @@
 //-------------------------------------------------------------------------------------------------
 void MemoryNode::Create(size_t NodeDataSize)
 {
-    m_pNodeList = (NodeList*)pMemoryPool->AllocAndClear(sizeof(NodeList));
+    m_pNodeList = (NodeList*)pMemoryPool->AllocAndClear(sizeof(NodeList), MEM_NODE_1);
     SetNodeSize(NodeDataSize);
     m_TotalSize = 0;
 }
@@ -190,7 +190,7 @@ MemoryNode* MemoryNode::AllocNode(size_t Size, size_t NodeDataSize)
 {
     MemoryNode* pMemoryNode;
 
-    pMemoryNode = (MemoryNode*)pMemoryPool->AllocAndClear(sizeof(MemoryNode));
+    pMemoryNode = (MemoryNode*)pMemoryPool->AllocAndClear(sizeof(MemoryNode), MEM_NODE_2);
 
     if(pMemoryNode != nullptr)
     {

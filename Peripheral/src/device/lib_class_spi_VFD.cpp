@@ -68,11 +68,11 @@ SystemState_e VFD_Driver::Initialize(void)
 
     // SPI need multiple of 8 bits to send on module.
     // There is padding bits to add in the beginning of the stream if not multiple of 8 bits
-    m_Padding = 8 - (m_pConfig->NumberOfBits % 8);                              // Paddings
-    m_NumberOfBytes  = m_pConfig->NumberOfBits / 8;                             // Number of bits
-    m_NumberOfBytes += (((m_pConfig->NumberOfBits % 8) != 0) ? 1 : 0);          // Add the bits necessary to complete the stream.
-    m_pBitsStream = (uint8_t*) pMemoryPool->AllocAndClear(m_NumberOfBytes);     // No bit set at init.
-    m_pBitArray = new BIT_Array(m_pBitsStream, m_pConfig->NumberOfBits);        // Create BIT_Array object
+    m_Padding = 8 - (m_pConfig->NumberOfBits % 8);                                              // Paddings
+    m_NumberOfBytes  = m_pConfig->NumberOfBits / 8;                                             // Number of bits
+    m_NumberOfBytes += (((m_pConfig->NumberOfBits % 8) != 0) ? 1 : 0);                          // Add the bits necessary to complete the stream.
+    m_pBitsStream = (uint8_t*) pMemoryPool->AllocAndClear(m_NumberOfBytes, MEM_DBG_SPI_VFD_1);  // No bit set at init.
+    m_pBitArray = new BIT_Array(m_pBitsStream, m_pConfig->NumberOfBits);                        // Create BIT_Array object
 
     m_pPWM->Start();
     Dim(m_DimValue);

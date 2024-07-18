@@ -309,7 +309,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
           #else
              char* pBuffer;
 
-             if(pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE) != nullptr)
+             if(pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE, MEM_DBG_VT100_CB_SYSSET_1) != nullptr)
              {
                  DB_Central.Get(pBuffer, SERIAL_NUMBER_TEXT);
                  myVT100.InMenuPrintf(LBL_STRING, pBuffer);
@@ -648,8 +648,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             SD_SCR_t* pSCR;
             uint32_t  CardCapacity;
 
-            pBuffer = (char*)pMemoryPool->Alloc(VT100_STRING_SIZE);
-            FatFs   = (FATFS*)pMemoryPool->AllocAndClear(sizeof(FATFS));      // Get work area for the volume
+            pBuffer = (char*)pMemoryPool->Alloc(VT100_STRING_SIZE, MEM_DBG_VT100_CB_SYSSET_2);
+            FatFs   = (FATFS*)pMemoryPool->AllocAndClear(sizeof(FATFS), MEM_DBG_VT100_CB_SYSSET_3);      // Get work area for the volume
 
             do
             {
@@ -940,7 +940,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
     {
         case VT100_CALLBACK_INIT:
         {
-            pLanguage = (Language_e*)pMemoryPool->Alloc(sizeof(Language_e) * 2);
+            pLanguage = (Language_e*)pMemoryPool->Alloc(sizeof(Language_e) * 2, MEM_DBG_VT100_CB_SYSSET_4);
             if(pLanguage != nullptr)
             {
               #if (DIGINI_USE_DATABASE != DEF_DISABLED)
@@ -952,8 +952,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                 VT100_DisplayLanguageSelection(pLanguage[VT100_ACTUAL_LANGUAGE], true);
             }
 
-            pBuffer1 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER));         // To get a new serial number
-            pBuffer2 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER));         // use to compare Serial number
+            pBuffer1 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VT100_CB_SYSSET_5);         // To get a new serial number
+            pBuffer2 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VT100_CB_SYSSET_6);         // use to compare Serial number
             if((pBuffer1 != nullptr) && (pBuffer2 != nullptr))
             {
               #if (DIGINI_USE_DATABASE != DEF_DISABLED)

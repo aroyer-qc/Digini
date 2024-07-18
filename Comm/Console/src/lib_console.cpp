@@ -75,7 +75,7 @@ void Console::Initialize(UART_Driver* pUartDriver)
     }
 
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
-    pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE);        // Reserve memory for UART internal DMA operation.
+    pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE, MEM_DBG_CONSOLE_1);        // Reserve memory for UART internal DMA operation.
 
   #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)                                          // not sure it can work without DMA
     pUartDriver->DMA_ConfigRX(pBuffer, CON_FIFO_PARSER_RX_SIZE);
@@ -249,17 +249,28 @@ size_t Console::Printf(const char* pFormat, ...)
 //
 //  Description:    Common function to format string and send it.
 //
+//  Note(s)         Memory are freed in the callback.
+//
 //-------------------------------------------------------------------------------------------------
 size_t Console::Printf(const char* pFormat, va_list* p_vaArg)
 {
     char*  pBuffer;
     size_t Size = 0;
 
-    if((pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE)) != nullptr)
+    pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE, MEM_DBG_CONSOLE_2);
+
+    if(pBuffer != nullptr)
     {
         Size = LIB_vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, *p_vaArg);
-        SendData((const uint8_t*)&pBuffer[0], &Size);
-        // Memory are freed in the callback of DMA transfer.
+
+        if(Size != 0)
+        {
+            SendData((const uint8_t*)&pBuffer[0], &Size);
+        }
+        else
+        {
+            pMemoryPool->Free((void**)&pBuffer);
+        }
     }
 
     return Size;
@@ -302,7 +313,7 @@ size_t Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, va
     {
         //if((m_DebugLevel & Level) != CON_DEBUG_NONE)      TODO fix this finish support for it
         {
-            if((pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE)) != nullptr)
+            if((pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE, MEM_DBG_CONSOLE_3)) != nullptr)
             {
                 Size = vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, vaArg);
                 m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size);
@@ -553,12 +564,23 @@ void Console::CallbackFunction(int Type, void* pContext)
 {
     switch(Type)
     {
+        // When DMA transfert is complete.
+      #if (UART_DRIVER_DMA_TX_COMPLETED_CFG == DEF_ENABLED)
+        case UART_CALLBACK_TX_DMA:
+        {
+            pMemoryPool->Free((void**)&pContext);
+        }
+        break;
+      #endif
+
         // TX from uart is completed then release memory.
+      #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
         case UART_CALLBACK_TX_COMPLETED:
         {
             pMemoryPool->Free((void**)&pContext);
         }
         break;
+      #endif
 
       #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)
         case UART_CALLBACK_RX_NOT_EMPTY:
@@ -580,8 +602,10 @@ void Console::CallbackFunction(int Type, void* pContext)
 
         case UART_CALLBACK_RX_ERROR:
         {
+            __asm("nop");
             // nothing so far
         }
+        break;
     }
 }
 

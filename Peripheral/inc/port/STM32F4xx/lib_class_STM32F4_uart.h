@@ -75,6 +75,7 @@
 #define UART_CALLBACK_TX_COMPLETED              0x08
 #define UART_CALLBACK_TX_EMPTY                  0x10
 #define UART_CALLBACK_RX_DMA                    0x20
+#define UART_CALLBACK_TX_DMA                    0x40
 
 #if ((UART_DRIVER_RX_PARITY_ERROR_CFG   == DEF_ENABLED) || \
      (UART_DRIVER_RX_FRAMING_ERROR_CFG  == DEF_ENABLED) || \
@@ -318,6 +319,8 @@ class UART_Driver
         void                Disable                         (void);
 
         void                IRQ_Handler                     (void);
+        void                DMA_TX_IRQ_Handler              (void);  
+
 
       #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
         void                VirtualUartRX_IRQHandler        (void);

@@ -99,7 +99,7 @@ SystemState_e NodeList::AddNode(uint16_t NodeID, void** pData)
     else
     {
         // Important to clear the allocation, to get 'nullptr' everywhere
-        pNode = static_cast<NodeList_t*>(pMemoryPool->AllocAndClear(m_NodeSize));
+        pNode = static_cast<NodeList_t*>(pMemoryPool->AllocAndClear(m_NodeSize, MEM_NODE_LIST_1));
 
         if(pNode != nullptr)
         {

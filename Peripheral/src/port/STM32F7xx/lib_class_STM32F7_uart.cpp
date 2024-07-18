@@ -156,6 +156,10 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
             m_DMA_TX.Initialize(&m_pDMA_Info->DMA_TX);
             m_DMA_TX.SetDestination((void*)&m_pUart->TDR);
+          #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED) && (UART_DRIVER_DMA_TX_COMPLETED_CFG == DEF_ENABLED)
+            m_DMA_TX.EnableTransmitCompleteInterrupt();
+            m_DMA_TX.EnableIRQ(m_pDMA_Info->DMA_TX.PreempPrio);
+          #endif
         }
 
         m_DMA_IsItBusyTX = false;
@@ -485,34 +489,27 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
                 }
             }
 
-            if(m_DMA_IsItBusyTX == false)
+            m_DMA_IsItBusyTX = true;
+
+            m_DMA_TX.Disable();
+            m_DMA_TX.ClearFlag();
+
+            if(pBufferTX != nullptr)
             {
-                m_DMA_IsItBusyTX = true;
-
-                m_DMA_TX.Disable();
-                m_DMA_TX.ClearFlag();
-
-                if(pBufferTX != nullptr)
-                {
-                    m_DMA_TX.SetSource((void*)pBufferTX);
-                    m_DMA_TX.SetLength(*pSizeTX);
-                    m_TX_Transfer.Size    = *pSizeTX;
-                    m_TX_Transfer.pBuffer = (uint8_t*)pBufferTX;
-                }
-                else
-                {
-                    m_DMA_TX.SetSource(m_TX_Transfer.pBuffer);
-                    m_DMA_TX.SetLength(m_TX_Transfer.Size);
-                }
-
-                ClearFlag();
-                m_DMA_TX.Enable();                    // Transmission starts as soon as TXE is detected
-                DMA_EnableTX();
+                m_DMA_TX.SetSource((void*)pBufferTX);
+                m_DMA_TX.SetLength(*pSizeTX);
+                m_TX_Transfer.Size    = *pSizeTX;
+                m_TX_Transfer.pBuffer = (uint8_t*)pBufferTX;
             }
             else
             {
-                State = SYS_BUSY;
+                m_DMA_TX.SetSource(m_TX_Transfer.pBuffer);
+                m_DMA_TX.SetLength(m_TX_Transfer.Size);
             }
+
+            ClearFlag();
+            m_DMA_TX.Enable();                    // Transmission starts as soon as TXE is detected
+            DMA_EnableTX();
           #elif
                 // Setup IRQ Transfer TODO
           #endif
@@ -740,7 +737,10 @@ void UART_Driver::DMA_EnableTX(void)
     {
         if(m_pDMA_Info != nullptr)
         {
+          #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
             EnableTX_ISR(UART_ISR_TX_COMPLETED_MASK);
+          #endif
+
             m_pUart->CR3 |= USART_CR3_DMAT;
         }
     }
@@ -1058,11 +1058,10 @@ void UART_Driver::EnableCallbackType(int CallBackType)
     }
   #endif
 
-  if(Mask != 0)
-  {
-      EnableRX_ISR(Mask);
-  }
-
+    if(Mask != 0)
+    {
+        EnableRX_ISR(Mask);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1115,11 +1114,11 @@ void UART_Driver::IRQ_Handler(void)
       #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
         if((Status & USART_ISR_IDLE) != 0)
         {
-            m_pUart->ICR = USART_ICR_IDLECF;
-
            #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-            m_RX_Transfer.Size -= m_DMA_RX.GetLength();     // Give actual position in the DMA Buffer
+            m_RX_Transfer.Size -= m_DMA_RX.GetLength(); // Give actual position in the DMA Buffer
            #endif
+
+            m_pUart->ICR = USART_ICR_IDLECF;
 
           #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
             if(m_pCallback != nullptr)
@@ -1162,7 +1161,12 @@ void UART_Driver::IRQ_Handler(void)
             }
             else
             {
-                m_pCallback->CallbackFunction(UART_CALLBACK_TX_COMPLETED, (void*)&m_TX_Transfer.pBuffer);
+              #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
+                if(m_pCallback != nullptr)
+                {
+                    m_pCallback->CallbackFunction(UART_CALLBACK_TX_COMPLETED, (void*)&m_TX_Transfer.pBuffer);
+                }
+              #endif
                 CLEAR_BIT(m_pUart->CR1, USART_CR1_TXEIE);
             }
 
@@ -1174,9 +1178,25 @@ void UART_Driver::IRQ_Handler(void)
 
 //-------------------------------------------------------------------------------------------------
 //
+//  IRQ Handler:    IRQ_Handler
+//
+//  Description:    This function handle DMA interrupt.
+//
+//-------------------------------------------------------------------------------------------------
+void UART_Driver::DMA_TX_IRQ_Handler(void)
+{
+    m_pCallback->CallbackFunction(UART_CALLBACK_TX_DMA, (void*)m_TX_Transfer.pBuffer);
+    DMA_DisableTX();
+    m_DMA_IsItBusyTX = false;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  IRQ Handler:    VirtualUartRX_IRQHandler
 //
 //  Description:    This function handles virtual UART interrupt.
+//
+//  TODO move this to a another virtual driver
 //
 //-------------------------------------------------------------------------------------------------
 #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)

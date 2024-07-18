@@ -372,7 +372,7 @@ char* IP_Manager::IP_ToAscii(IP_Address_t IP_Address)
 {
     char* pBuffer;
 
-    pBuffer = (char*)pMemoryPool->AllocAndClear(IP_ASCII_IP_ADDRESS_SIZE);
+    pBuffer = (char*)pMemoryPool->AllocAndClear(IP_ASCII_IP_ADDRESS_SIZE, MEM_DBG_CLASS_IP_MANAGER_1);
 
     if(pBuffer != nullptr)
     {

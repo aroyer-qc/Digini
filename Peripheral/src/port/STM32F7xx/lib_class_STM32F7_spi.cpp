@@ -45,6 +45,7 @@
 #define SPI_DMA_SxCR_8_OR_16_BITS_MASK      DMA_SxCR_MSIZE | DMA_SxCR_PSIZE
 #define SPI_DMA_SxCR_8_BITS_CFG             0
 #define SPI_DMA_SxCR_16_BITS_CFG            DMA_SxCR_MSIZE_0 | DMA_SxCR_PSIZE_0
+#define SPI_CR1_BR_OFFSET                   3
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -72,8 +73,12 @@ SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
     m_Device     = IO_NOT_DEFINED;
     m_pInfo      = &SPI_Info[SPI_ID];
     m_Status     = SYS_UNKNOWN;
-    m_DMA_Status = SYS_UNKNOWN;
+    m_Mutex      = NULL;
     m_pDriver[SPI_ID] = this;
+
+  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+    m_DMA_Status = SYS_UNKNOWN;
+  #endif  
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -88,11 +93,14 @@ SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::Initialize(void)
 {
+    uint32_t PCLK_Frequency;
+
     nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
 
     IO_PinInit(m_pInfo->PinCLK);
     IO_PinInit(m_pInfo->PinMOSI);
     IO_PinInit(m_pInfo->PinMISO);
+    IO_PinInit(m_pInfo->PinNSS);
 
     switch(uint32_t(m_SPI_ID))
     {
@@ -103,6 +111,7 @@ void SPI_Driver::Initialize(void)
             RCC->APB2RSTR |=  RCC_APB2RSTR_SPI1RST;             // Enable SPI1 reset state
             RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI1RST;             // Release SPI1 from reset state
             RCC->APB2ENR  |=  RCC_APB2ENR_SPI1EN;               // Enable SPI_PORT clock
+            PCLK_Frequency = HAL_RCC_GetPCLK2Freq();
         }
         break;
       #endif
@@ -114,6 +123,7 @@ void SPI_Driver::Initialize(void)
             RCC->APB1RSTR |=  RCC_APB1RSTR_SPI2RST;             // Enable SPI2 reset state
             RCC->APB1RSTR &= ~RCC_APB1RSTR_SPI2RST;             // Release SPI2 from reset state
             RCC->APB1ENR  |=  RCC_APB1ENR_SPI2EN;               // Enable SPI_PORT clock
+            PCLK_Frequency = HAL_RCC_GetPCLK1Freq();
         }
         break;
       #endif
@@ -122,45 +132,48 @@ void SPI_Driver::Initialize(void)
         case uint32_t(DRIVER_SPI3_ID):
         {
             // ---- Reset peripheral and set clock ----
-            RCC->APB1RSTR |=  (RCC_APB1RSTR_SPI3RST;            // Enable SPI3 reset state
-            RCC->APB1RSTR &= ~(RCC_APB1RSTR_SPI3RST;            // Release SPI3 from reset state
-            RCC->APB1ENR  |=  (RCC_APB1ENR_SPI3EN;              // Enable SPI_PORT clock
+            RCC->APB1RSTR |=  RCC_APB1RSTR_SPI3RST;             // Enable SPI3 reset state
+            RCC->APB1RSTR &= ~RCC_APB1RSTR_SPI3RST;             // Release SPI3 from reset state
+            RCC->APB1ENR  |=  RCC_APB1ENR_SPI3EN;               // Enable SPI_PORT clock
+            PCLK_Frequency = HAL_RCC_GetPCLK1Freq();
         }
         break;
       #endif
-    }
-
+      
       #if (SPI_DRIVER_SUPPORT_SPI4_CFG == DEF_ENABLED)
-        case DRIVER_SPI4_ID:
+        case uint32_t(DRIVER_SPI4_ID):
         {
             // ---- Reset peripheral and set clock ----
             RCC->APB2RSTR |=  RCC_APB2RSTR_SPI4RST;             // Enable SPI4 reset state
             RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI4RST;             // Release SPI4 from reset state
             RCC->APB2ENR  |=  RCC_APB2ENR_SPI4EN;               // Enable SPI_PORT clock
-            break;
+            PCLK_Frequency = HAL_RCC_GetPCLK2Freq();
         }
+        break;
       #endif
 
       #if (SPI_DRIVER_SUPPORT_SPI5_CFG == DEF_ENABLED)
-        case DRIVER_SPI5_ID:
+        case uint32_t(DRIVER_SPI5_ID):
         {
             // ---- Reset peripheral and set clock ----
-            RCC->APB2RSTR |=  RCC_APB2RSTR_SPI5RST;	        // Enable SPI5 reset state
+            RCC->APB2RSTR |=  RCC_APB2RSTR_SPI5RST;             // Enable SPI5 reset state
             RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI5RST;             // Release SPI5 from reset state
-            RCC->APB2ENR  |=  RCC_APB2ENR_SPI5EN;	        // Enable SPI_PORT clock
-            break;
+            RCC->APB2ENR  |=  RCC_APB2ENR_SPI5EN;               // Enable SPI_PORT clock
+            PCLK_Frequency = HAL_RCC_GetPCLK2Freq();
         }
+        break;
       #endif
 
       #if (SPI_DRIVER_SUPPORT_SPI6_CFG == DEF_ENABLED)
-        case DRIVER_SPI6_ID:
+        case uint32_t(DRIVER_SPI6_ID):
         {
             // ---- Reset peripheral and set clock ----
-            RCC->APB2RSTR |=  RCC_APB2RSTR_SPI5RST;	        // Enable SPI6 reset state
-            RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI5RST;             // Release SPI6 from reset state
-            RCC->APB2ENR  |=  RCC_APB2ENR_SPI5EN;	        // Enable SPI_PORT clock
-            break;
+            RCC->APB2RSTR |=  RCC_APB2RSTR_SPI6RST;             // Enable SPI6 reset state
+            RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI6RST;             // Release SPI6 from reset state
+            RCC->APB2ENR  |=  RCC_APB2ENR_SPI6EN;               // Enable SPI_PORT clock
+            PCLK_Frequency = HAL_RCC_GetPCLK2Freq();
         }
+        break;
       #endif
     }
 
@@ -170,36 +183,53 @@ void SPI_Driver::Initialize(void)
     //CLEAR_BIT(pSPIx->I2SCFGR, SPI_I2SCFGR_I2SMOD);
 
     //---------------------------- SPIx CR1 Configuration and enable module ------
+    
+    CLEAR_BIT(m_pInfo->pSPIx->CR1, SPI_CR1_SPE);                // Disable SPIx
+    MODIFY_REG(m_pInfo->pSPIx->CR1, SPI_CFG_CR1_CLEAR_MASK, m_pInfo->Config);
+    SetPrescalerFromSpeed(m_pInfo->Speed, PCLK_Frequency);
+    SET_BIT(m_pInfo->pSPIx->CR1, SPI_CR1_SPE);                  // Enable SPIx
 
-    Config(SPI_CFG_CR1_CLEAR_MASK, SPI_MODE_MASTER      |
-                                   SPI_DATA_WIDTH_8_BIT |
-                                   SPI_POLARITY_LOW     |
-                                   SPI_PHASE_1_EDGE     |
-                                   SPI_NSS_SOFT         |   // This driver doesn't use NSS function of the module
-                                   SPI_MSB_FIRST        |
-                                   m_pInfo->Control     |   // TODO should use DMA method to merge all settings.
-                                   m_pInfo->Speed);
+//    Config(SPI_CFG_CR1_CLEAR_MASK, SPI_MODE_MASTER      |
+//                                   SPI_DATA_WIDTH_8_BIT |
+//                                   SPI_POLARITY_LOW     |
+//                                   SPI_PHASE_1_EDGE     |
+//                                   SPI_NSS_SOFT         |   // This driver doesn't use NSS function of the module
+//                                   SPI_MSB_FIRST        |
+//                                   m_pInfo->Control     |   // TODO should use DMA method to merge all settings.
+//                                   m_pInfo->Speed);
 
+    //----------------------------------------------------------------------------
+    
+
+  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     m_DMA_Status = SYS_IDLE;
     m_NoMemoryIncrement = false;
 
-    // Pre initialize register that won't change
-    m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
-    m_DMA_TX.SetDestination((void*)&m_pInfo->pSPIx->DR);    // Configure transmit data register
-    m_DMA_TX.EnableTransmitCompleteInterrupt();
-    m_DMA_TX.EnableIRQ(6);                                  // NVIC Setup for TX DMA channels interrupt request
+    if(m_pInfo->DMA_TX.ConfigAndChannel != SPI_DMA_DISABLED)
+    {
+        m_IsItUsingDMA_TX = true;
+        m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
+        m_DMA_TX.SetDestination((void*)&m_pInfo->pSPIx->DR);    // Configure transmit data register
+        m_DMA_TX.EnableTransmitCompleteInterrupt();
+        m_DMA_TX.EnableIRQ();                                   // NVIC Setup for TX DMA channels interrupt request
+    }
 
-    m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
-    m_DMA_RX.SetSource((void*)&m_pInfo->pSPIx->DR);         // Configure transmit data register
-    m_DMA_RX.EnableTransmitCompleteInterrupt();
-    m_DMA_RX.EnableIRQ(6);                                  // NVIC Setup for RX DMA channels interrupt request
+    if(m_pInfo->DMA_RX.ConfigAndChannel != SPI_DMA_DISABLED)
+    {
+        m_IsItUsingDMA_RX = true;
+        m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
+        m_DMA_RX.SetSource((void*)&m_pInfo->pSPIx->DR);         // Configure transmit data register
+        m_DMA_RX.EnableTransmitCompleteInterrupt();
+        m_DMA_RX.EnableIRQ();                                   // NVIC Setup for RX DMA channels interrupt request
+    }
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           LockToDevice
 //
-//  Parameter(s):   IO_ID_e        Device
+//  Parameter(s):   IO_ID_e        Device           It use the unique ID of the CS pin as device ID
 //  Return:         SystemState_e  Status
 //
 //  Description:    This routine will lock it to a specific device so any other access to the port
@@ -253,48 +283,37 @@ SystemState_e SPI_Driver::UnlockFromDevice(IO_ID_e Device)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       GetPrescalerFromSpeed
+//  Function:       SetPrescalerFromSpeed
 //
-//  Parameter(s):   None
-//  Return:         none
-//
-//  Description:    Calculate the prescaler value for requested speed
-//
-//-------------------------------------------------------------------------------------------------
-/*
-uint16_t SPI_Driver::GetPrescalerFromSpeed(uint32_t Speed)
-{
-    int i;
-    uint16_t Prescaler;
-
-    for(i = 0; i < 8; i++)
-    {
-        Prescaler = ((i + 1) << 1);
-
-        if((APB2_CLK / Speed) < Prescaler)
-        {
-            return Prescaler;
-        }
-    }
-    return i;     // 'i' is at an invalid value
-}
-*/
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Config
-//
-//  Parameter(s):   SPI_Speed_e     Speed
+//  Parameter(s):   uint32_t Speed
+//                  uint32_t PCLK_Frequency
 //  Return:         None
 //
-//  Description:    Set speed on the SPI port
+//  Description:    Set the calculated value of the prescaler from requested speed.
 //
 //-------------------------------------------------------------------------------------------------
-void SPI_Driver::Config(uint32_t Mask, uint32_t Config)
+void SPI_Driver::SetPrescalerFromSpeed(uint32_t Speed, uint32_t PCLK_Frequency)
 {
-    CLEAR_BIT(m_pInfo->pSPIx->CR1, SPI_CR1_SPE);                // Disable SPIx
-    MODIFY_REG(m_pInfo->pSPIx->CR1, Mask, Config);
-    SET_BIT(m_pInfo->pSPIx->CR1, SPI_CR1_SPE);                  // Enable SPIx
+    uint16_t Prescaler;
+    uint16_t IdealPrescaler;
+    int BaudRate = 0;
+
+    IdealPrescaler = PCLK_Frequency / Speed;
+
+    for(int i = 0; i <= 7; i++)
+    {
+        Prescaler = (1 << (i + 1));
+
+        if(IdealPrescaler >= Prescaler)
+        {
+            BaudRate = i << SPI_CR1_BR_OFFSET;
+        }
+        else
+        {
+            MODIFY_REG(m_pInfo->pSPIx->CR1, SPI_SPEED_MASK, BaudRate);
+            return;
+        }
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -433,38 +452,41 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
 
         if((pTX_Data != nullptr) && (TX_Size != 0))
         {
-            // TX DMA
-            m_DMA_Status = SYS_BUSY_TX;                                 // Set flag to busy in TX
-            m_DMA_TX.SetSource(pTX_Data);                               // Set DMA source
-            m_DMA_TX.SetLength(TX_Size);                                // Set size of the TX
+          #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+            
+            if(m_IsItUsingDMA_TX == true)
+            {                
+                // TX DMA
+                m_DMA_Status = SYS_BUSY_TX;                                 // Set flag to busy in TX
+                m_DMA_TX.SetSource(pTX_Data);                               // Set DMA source
+                m_DMA_TX.SetLength(TX_Size);                                // Set size of the TX
 
-            if(m_NoMemoryIncrement == false)
-            {
-                m_DMA_TX.SetMemoryIncrement();                          // Enable transfer complete and memory increment
+                if(m_NoMemoryIncrement == false)
+                {
+                    m_DMA_TX.SetMemoryIncrement();                          // Enable memory increment
+                }
+                else
+                {
+                    m_DMA_TX.SetNoMemoryIncrement();
+                    m_NoMemoryIncrement = false;
+                }
+
+                m_DMA_TX.Enable();                                          // Enable the DMA module
+                m_DMA_TX.ClearFlag();                                       // Clear IRQ DMA flag
+
+                SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                           // Enable SPI
+                SET_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                       // Enable DMA TX
+                State = WaitDMA();
+                CLEAR_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                     // Deactivate DMA
+                m_DMA_TX.Disable();                                         // Disable the DMA module
+                CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                         // Disable SPI
             }
             else
+          #endif
+            
             {
-                m_DMA_TX.SetNoMemoryIncrement();
-                m_NoMemoryIncrement = false;
+                // IRQ method
             }
-
-            m_DMA_TX.Enable();                                          // Enable the DMA module
-            m_DMA_TX.ClearFlag();                                       // Clear IRQ DMA flag
-
-            // SPI
-            if(m_pInfo->Control == SPI_HALF_DUPLEX)
-            {
-                MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_TX);
-            }
-
-            SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                           // Enable SPI
-            SET_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                       // Enable DMA TX
-            State = WaitDMA();
-            CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                         // Disable SPI
-
-            // Deactivate DMA
-            CLEAR_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);
-            m_DMA_TX.Disable();                                         // Disable the DMA module
         }
 
         // ----------------------------------------------------------------------------------------
@@ -478,47 +500,45 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
                     Dummy = pSPIx->DR;
                 }
 
-                m_DMA_Status = SYS_BUSY_RX;                                 // Set flag to busy in TX
+              #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+                if(m_IsItUsingDMA_RX == true)
+                {                
+                    m_DMA_Status = SYS_BUSY_RX;                                 // Set flag to busy in TX
 
-                // TX DMA
-                Dummy = 0xFF;                                               // Value to dummy TX
-                m_DMA_TX.SetSource(&Dummy);                                 // Set DMA source for dummy TX
-                m_DMA_TX.SetLength(RX_Size);                                // Set size of the TX using RX_Size for dummy TX to kick the RX
-                m_DMA_TX.SetNoMemoryIncrement();
-                m_DMA_TX.Enable();                                          // Enable the DMA module
-                m_DMA_TX.ClearFlag();                                       // Clear IRQ DMA flag
-                // RX DMA
-                m_DMA_RX.SetDestination(pRX_Data);
-                m_DMA_RX.SetLength(RX_Size);
-                m_DMA_RX.Enable();                                          // Enable the DMA module
-                m_DMA_RX.ClearFlag();
+                    // TX DMA
+                    Dummy = 0xFF;                                               // Value to dummy TX
+                    m_DMA_TX.SetSource(&Dummy);                                 // Set DMA source for dummy TX
+                    m_DMA_TX.SetLength(RX_Size);                                // Set size of the TX using RX_Size for dummy TX to kick the RX
+                    m_DMA_TX.SetNoMemoryIncrement();
+                    m_DMA_TX.Enable();                                          // Enable the DMA module
+                    m_DMA_TX.ClearFlag();                                       // Clear IRQ DMA flag
+                    // RX DMA
+                    m_DMA_RX.SetDestination(pRX_Data);
+                    m_DMA_RX.SetLength(RX_Size);
+                    m_DMA_RX.Enable();                                          // Enable the DMA module
+                    m_DMA_RX.ClearFlag();
 
-                // SPI
-                if(m_pInfo->Control == SPI_HALF_DUPLEX)
-                {
-                    MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_HALF_DUPLEX_RX);
+                    SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                           // Enable SPI
+                    SET_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));   // Start the process
+
+                    State = WaitDMA();
+
+                    // Deactivate DMA
+                    CLEAR_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));
+                    m_DMA_RX.Disable();                                         // Disable the DMA RX module
+                    m_DMA_TX.Disable();                                         // Disable the DMA TX module
                 }
-
-                SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                           // Enable SPI
-                SET_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));   // Start the process
-
-                State = WaitDMA();
-
-                // Deactivate DMA
-                CLEAR_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));
-                m_DMA_RX.Disable();                                         // Disable the DMA RX module
-                m_DMA_TX.Disable();                                         // Disable the DMA TX module
+                else
+              #endif
+                {
+                    // IRQ method
+                }
             }
         }
 
         // ----------------------------------------------------------------------------------------
 
         CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                             // Disable SPI
-
-        if(m_pInfo->Control == SPI_HALF_DUPLEX)
-        {
-            MODIFY_REG(pSPIx->CR1, SPI_DUPLEX_MASK, SPI_FULL_DUPLEX);
-        }
 
         m_DMA_Status = SYS_IDLE;
 
@@ -545,10 +565,12 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
 //  Note(s):        This is valid only for the next transaction
 //
 //-------------------------------------------------------------------------------------------------
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 void SPI_Driver::OverrideMemoryIncrement(void)
 {
     m_NoMemoryIncrement = true;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -609,6 +631,8 @@ void SPI_Driver::IRQHandler(void)
 //  DD   DD MM  M  MM AA   AA
 //  DDDDDD  MM     MM AA   AA
 //-------------------------------------------------------------------------------------------------
+
+#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -691,6 +715,10 @@ void SPI_Driver::DMA_RX_IRQ_Handler(SPI_ID_e SPI_ID)
     pDriver->m_DMA_Status = SYS_BUSY_B4_RELEASE;
     pDriver->m_DMA_RX.ClearFlag();
 }
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 

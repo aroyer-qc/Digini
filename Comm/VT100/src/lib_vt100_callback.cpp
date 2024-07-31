@@ -307,10 +307,14 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
           #if defined(DEBUG) || (DIGINI_USE_DATABASE == DEF_DISABLED)
             myVT100.InMenuPrintf(       LBL_SERIAL_NUMBER);
           #else
-             char* pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE);
-             DB_Central.Get(pBuffer, SERIAL_NUMBER_TEXT);
-             myVT100.InMenuPrintf(LBL_STRING, pBuffer);
-             pMemoryPool->Free((void**)&pBuffer);
+             char* pBuffer;
+
+             if(pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE, MEM_DBG_VT100_CB_SYSSET_1) != nullptr)
+             {
+                 DB_Central.Get(pBuffer, SERIAL_NUMBER_TEXT);
+                 myVT100.InMenuPrintf(LBL_STRING, pBuffer);
+                 pMemoryPool->Free((void**)&pBuffer);
+             }
           #endif
 
             myVT100.InMenuPrintf(1, 14, LBL_COMPILE_DATE_INFO);
@@ -475,17 +479,17 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
     return VT100_INPUT_MENU_CHOICE;
 }
 
+/*
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CALLBACK_TimeDateCfg
+//  Name:           CALLBACK_DateTimeCfg
 //
-//  Description:    Menu Time and Date Configuration.
+//  Description:    Menu Date and Time Configuration.
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-/*
-VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALLBACK_DateTimeCfg(uint8_t Input, VT100_CallBackType_e Type)
 {
     static DateAndTime_t TimeDate;
    // uint32_t             Refresh;
@@ -644,8 +648,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             SD_SCR_t* pSCR;
             uint32_t  CardCapacity;
 
-            pBuffer = (char*)pMemoryPool->Alloc(VT100_STRING_SIZE);
-            FatFs   = (FATFS*)pMemoryPool->AllocAndClear(sizeof(FATFS));      // Get work area for the volume
+            pBuffer = (char*)pMemoryPool->Alloc(VT100_STRING_SIZE, MEM_DBG_VT100_CB_SYSSET_2);
+            FatFs   = (FATFS*)pMemoryPool->AllocAndClear(sizeof(FATFS), MEM_DBG_VT100_CB_SYSSET_3);      // Get work area for the volume
 
             do
             {
@@ -750,7 +754,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             // Card Capacity
             if(CardCapacity >= 1000000)
             {
-                myVT100.InMenuPrintf(26, 13, LBL_SIZE_GIGABYTES, uint16_t(CardCapacity / 1000000), uint16_t((CardCapacity % 1000000) / 1000));                                                                  // Card Capacity
+                myVT100.InMenuPrintf(26, 13, LBL_SIZE_GIGABYTES, uint16_t(CardCapacity / 1000000), uint16_t((CardCapacity % 1000000) / 1000));  // Card Capacity
             }
             else
             {
@@ -866,6 +870,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
     uint32_t Max;
     uint8_t OffsetMultiplierX;
     uint8_t OffsetMultiplierY;
+    uint8_t Percent;
 
     VAR_UNUSED(Input);
     Max = pMemoryPool->GetNumberOfPool();
@@ -887,7 +892,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
             {
                 OffsetMultiplierX = uint8_t(((i % 3) * 33) + 2);
                 OffsetMultiplierY = uint8_t(((i / 3) * 6) + 14);
-
                 myVT100.DrawBox(OffsetMultiplierX, OffsetMultiplierY, 32, 3, VT100_COLOR_WHITE);
                 myVT100.InMenuPrintf(OffsetMultiplierX--, OffsetMultiplierY - 1, VT100_LBL_MEM_POOL_GROUP, i, pMemoryPool->GetPoolNumberOfBlock(i), pMemoryPool->GetPoolBlockSize(i));
             }
@@ -906,8 +910,9 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
 
                 OffsetMultiplierX = uint8_t(((i % 3) * 33) + 3);
                 OffsetMultiplierY = uint8_t(((i / 3) * 6) + 15);
+                Percent = (UsedBlock * 100) / NumberOfBlock;
 
-                myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY, ((UsedBlock >= NumberOfBlock * 8) / 10) ? VT100_COLOR_RED : VT100_COLOR_GREEN, UsedBlock, NumberOfBlock, 30);
+                myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY, (Percent >= 80) ? VT100_COLOR_RED : VT100_COLOR_GREEN, UsedBlock, NumberOfBlock, 30);
                 myVT100.SetForeColor(VT100_COLOR_WHITE);
                 myVT100.InMenuPrintf(OffsetMultiplierX - 1,  OffsetMultiplierY + 2, VT100_LBL_MEM_BLOCK_USED,  UsedBlock, pMemoryPool->GetPoolBlockHighPoint(i));
             }
@@ -935,7 +940,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
     {
         case VT100_CALLBACK_INIT:
         {
-            pLanguage = (Language_e*)pMemoryPool->Alloc(sizeof(Language_e) * 2);
+            pLanguage = (Language_e*)pMemoryPool->Alloc(sizeof(Language_e) * 2, MEM_DBG_VT100_CB_SYSSET_4);
             if(pLanguage != nullptr)
             {
               #if (DIGINI_USE_DATABASE != DEF_DISABLED)
@@ -947,8 +952,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                 VT100_DisplayLanguageSelection(pLanguage[VT100_ACTUAL_LANGUAGE], true);
             }
 
-            pBuffer1 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER));         // To get a new serial number
-            pBuffer2 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER));         // use to compare Serial number
+            pBuffer1 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VT100_CB_SYSSET_5);         // To get a new serial number
+            pBuffer2 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VT100_CB_SYSSET_6);         // use to compare Serial number
             if((pBuffer1 != nullptr) && (pBuffer2 != nullptr))
             {
               #if (DIGINI_USE_DATABASE != DEF_DISABLED)
@@ -958,7 +963,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                 // TODO
               #endif
             }
-
         }
         break;
 
@@ -994,6 +998,29 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                     }
                 }
                 break;
+
+                case int(MenuSystemSetting_ID_MISC_DATE):
+                {
+                    if(pBuffer1 != nullptr)
+                    {
+                        #define DATE_SIZE  11 // 0000-00-00             // move on header when working
+                        myVT100.SetStringInput(32, 16, DATE_SIZE, Input, VT100_LBL_DATE, (const char*)pBuffer1);
+                        return VT100_INPUT_STRING;
+                    }
+                }
+                break;
+                
+                case int(MenuSystemSetting_ID_MISC_TIME):
+                {
+                    if(pBuffer1 != nullptr)
+                    {
+                        #define TIME_SIZE  9 // 00:00:00             // move on header when working
+                        myVT100.SetStringInput(32, 16, TIME_SIZE, Input, VT100_LBL_TIME, (const char*)pBuffer1);
+                        return VT100_INPUT_STRING;
+                    }
+                }
+                break;
+
 
                 case int(MenuSystemSetting_ID_MISC_SAVE):
                 {

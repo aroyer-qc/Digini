@@ -92,7 +92,7 @@ FIFO_Buffer::~FIFO_Buffer()
 void FIFO_Buffer::Initialize(size_t Size)
 {
     m_Size      = Size;
-    m_pBuffer   = (uint8_t*)pMemoryPool->AllocAndClear(Size);
+    m_pBuffer   = (uint8_t*)pMemoryPool->AllocAndClear(Size, MEM_DBG_LIB_FIFO_1);
     m_PushIndex = 0;
     m_PopIndex  = 0;
 }

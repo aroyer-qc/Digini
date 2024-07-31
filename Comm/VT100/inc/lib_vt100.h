@@ -47,7 +47,6 @@
 #define COMPARE_MenuSD_Card(x)     	        x
 #define COMPARE_MenuSystemSetting(x)        x
 
-
 #define VT100_TOKEN(x)                  VT100_Terminal::x
 
 #define VT100_MENU_DEF(ENTRY) \
@@ -58,7 +57,7 @@
     IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE,        ENTRY(MenuDebug              ) )\
     IF_USE( DIGINI_USE_ETHERNET,                ENTRY(MenuNetwork            ) )\
     IF_USE( DIGINI_DEBUG_SDCARD_INFO_ON_VT100,  ENTRY(MenuSD_Card            ) )\
-                                                ENTRY(MenuSystemSetting        )
+                                                ENTRY(MenuSystemSetting        )\
 
 
 #define VT100_CALLBACK(ENTRY)\
@@ -69,7 +68,7 @@
     IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE,       ENTRY(CALLBACK_DebugLevelSetting  ) )\
     IF_USE( DIGINI_USE_ETHERNET,               ENTRY(CALLBACK_NetworkInfo        ) )\
     IF_USE( DIGINI_DEBUG_SDCARD_INFO_ON_VT100, ENTRY(CALLBACK_SD_CardInformation ) )\
-                                               ENTRY(CALLBACK_SystemSetting        )
+                                               ENTRY(CALLBACK_SystemSetting        )\
 
 #define VT100_MENU_TREE_DEF(ENTRY, MENU) \
 \
@@ -91,6 +90,8 @@
                                                 ENTRY  (MENU,  MenuSystemSetting,       ID_SYSTEM_LANGUAGE,                  CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_LANGUAGE_SELECTION                    )  \
                                                 ENTRY  (MENU,  MenuSystemSetting,       ID_MISC_SERIAL_NUMBER,               CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_SERIAL_NUMBER_SETTING                 )  \
                                                 ENTRY  (MENU,  MenuSystemSetting,       ID_MISC_TEMPERATURE_UNIT,            CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_TEMPERATURE_UNIT_SELECTION            )  \
+                                                ENTRY  (MENU,  MenuSystemSetting,       ID_MISC_DATE,                        CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_DATE                                  )  \
+                                                ENTRY  (MENU,  MenuSystemSetting,       ID_MISC_TIME,                        CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_TIME                                  )  \
                                                 ENTRY  (MENU,  MenuSystemSetting,       ID_MISC_SAVE,                        CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_SAVE_CONFIGURATION                    )  \
 \
     IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE, \

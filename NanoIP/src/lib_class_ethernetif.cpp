@@ -244,8 +244,7 @@ inline MemoryNode* ETH_IF_Driver::LowLevelInput(void)
             pPacket = MemoryNode::AllocNode(Length, TASK_ETHERNET_IF_NODE_SIZE);
 
 
-//            pPacket = (MemoryNode*)pMemoryPool->AllocAndClear(sizeof(MemoryNode));
-           // pPacket = MemoryNode::Alloc();
+//            pPacket = (MemoryNode*)pMemoryPool->AllocAndClear(sizeof(MemoryNode), MEM_DBG_CLASS_ETHERNETIF_1);
 
             if(pPacket->Alloc(Length) != SYS_READY)                                 // We allocate a MemoryNode of node from the pool.
             {

@@ -439,12 +439,12 @@ size_t LIB_vsnformat(char* pOut, size_t Size, const char* pFormat, va_list va)
 
 
 //    if((pFmt = (STR_Format_t*)pMemoryPool->AllocAndSet(sizeof(STR_Format_t), 0xFF)) == nullptr)
-    if((pFmt = (STR_Format_t*)pMemoryPool->AllocAndClear(sizeof(STR_Format_t))) == nullptr)
+    if((pFmt = (STR_Format_t*)pMemoryPool->AllocAndClear(sizeof(STR_Format_t), MEM_DBG_LIB_STRING_1)) == nullptr)
     {
         return PointerCounter;
     }
 
-    if((pWorkFormat = (char*)pMemoryPool->AllocAndClear(DIGINI_MAX_PRINT_SIZE)) == nullptr)         // Get memory to work this printf
+    if((pWorkFormat = (char*)pMemoryPool->AllocAndClear(DIGINI_MAX_PRINT_SIZE, MEM_DBG_LIB_STRING_2)) == nullptr)         // Get memory to work this printf
     {
         pMemoryPool->Free((void**)&pFmt);
         return PointerCounter;

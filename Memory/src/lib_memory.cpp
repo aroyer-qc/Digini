@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -40,15 +40,28 @@
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_MEM_BLOCK_AS_ARRAY(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE) m_pBufferArray[i++] = (void*)&m_##GROUP_NAME[0][0];
-#define EXPAND_X_MEM_BLOCK_AS_INITIALIZE_ARRAY(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)   \
-                                               memset(&m_nOS_MemArray[i], 0, sizeof(nOS_Mem));                              \
-                                               nOS_MemCreate(&m_nOS_MemArray[i], m_pBufferArray[i], BLOCK_SIZE, BLOCK_MAX); \
-                                               i++;
+#define EXPAND_X_MEM_BLOCK_AS_ARRAY(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)                         \
+                                                                                                                    \
+                                                            m_pBufferArray[i++] = (void*)&m_##GROUP_NAME[0][0];
+
+#define EXPAND_X_MEM_BLOCK_AS_INITIALIZE_ARRAY(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)                                   \
+                                                                                                                                         \
+                                                            memset(&m_nOS_MemArray[i], 0, sizeof(nOS_Mem));                              \
+                                                            nOS_MemCreate(&m_nOS_MemArray[i], m_pBufferArray[i], BLOCK_SIZE, BLOCK_MAX); \
+                                                            i++;
+
+// For debug block trace
+#define EXPAND_X_MEM_BLOCK_AS_DEBUG_INFO_ARRAY(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)              \
+                                                                                                                    \
+                                                            m_pDebugInfoArray[i++] = &m_DebugTrace ## GROUP_NAME[0];
+
+#define EXPAND_X_MEM_BLOCK_AS_INITIALIZE_DEBUG_INFO_ARRAY(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)        \
+                                                                                                                         \
+                                                            memset(&m_DebugTrace ## GROUP_NAME[i++], 0, sizeof(nOS_Mem));
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   CMEM
+//   Constructor:   MemPoolDriver
 //
 //   Parameter(s):  None
 //
@@ -60,18 +73,21 @@
 
 MemPoolDriver::MemPoolDriver()
 {
-    uint8_t i;
+    int i;
 
 
   #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
     m_UsedMemory = 0;
 
-    for(i = 0; i < MEM_BLOCK_GROUP_SIZE; i++)
+    for(i = 0; i < MEM_BLOCK_GROUP_QTS; i++)
     {
         m_BlockUsed[i]    = 0;
         m_BlockHighest[i] = 0;
     }
   #endif
+
+    m_TimeOut = NOS_WAIT_INFINITE;
+
 
     // Get the address of each group in pointer array
     i = 0;
@@ -80,11 +96,23 @@ MemPoolDriver::MemPoolDriver()
     //Initialize nOS Memory array structure
     i = 0;
     MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_INITIALIZE_ARRAY)
+
+  #if (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
+
+    // Get the address of each group of debug info stats data
+    i = 0;
+    MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_DEBUG_INFO_ARRAY)
+
+    //Initialize info array with the MEM_DBG_NONE
+    i = 0;
+    MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_INITIALIZE_DEBUG_INFO_ARRAY)
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Destructor:    ~CMEM
+//   Destructor:    ~MemPoolDriver
 //
 //   Description:   Free up any resources if any
 //
@@ -105,17 +133,11 @@ MemPoolDriver::~MemPoolDriver()
 //
 //   Function name: Alloc
 //
-//   Parameter(s):  size_t          SizeRequired,       Size of the needed data block
-//                  TickCount_t     TimeOut             How it can wait for the data block
+//   Parameter(s):  size_t                  SizeRequired        Size of the needed data block
+//                  MEM_DebugListOfID_e     DebugID             Owner of the memory block
 //
-//                                  NOS_NO_WAIT :                 Don't wait if no blocks available.
-//                                  0 > tout < NOS_WAIT_INIFITE : Maximum number of ticks to wait
-//                                                                until a block became available.
-//                                  NOS_WAIT_INIFINE :            Wait indefinitely until a block
-//                                                                became available.
-//
-//   Return:        void*           Pointer to allocated block of memory.
-//                                  nullptr = No Block available
+//   Return:        void*          Pointer to allocated block of memory.
+//                                 nullptr = No Block available
 //
 //   Description:   Try to take one block from any of the memory array when the size is equal or
 //                  more then the requested amount of data. If no block available, calling thread
@@ -127,22 +149,17 @@ MemPoolDriver::~MemPoolDriver()
 //   Note(s):       This class wrap the nOS Function
 //
 //-------------------------------------------------------------------------------------------------
-void* MemPoolDriver::Alloc(size_t SizeRequired, TickCount_t TimeOut)
+void* MemPoolDriver::Alloc(size_t SizeRequired, MEM_DebugListOfID_e DebugID)
 {
-    void*           MemPtr;
+    void*           MemPtr = nullptr;
     size_t          SizeBlock;
   #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
     nOS_StatusReg   sr;
   #endif
 
-if(SizeRequired <=64)
-{
-    __asm("nop");
-}
-
   #if (MEMORY_POOL_RESTRICT_ALLOC_TO_BLOCK_SIZE == DEF_DISABLED)
     // First loop will check for any block available, so we don't wait to be freed
-    for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_SIZE; GroupID++)
+    for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_QTS; GroupID++)
     {
         SizeBlock = m_nOS_MemArray[GroupID].bsize;
 
@@ -152,8 +169,15 @@ if(SizeRequired <=64)
 
             if(MemPtr != nullptr)
             {
-              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) | (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
                 nOS_EnterCritical(sr);
+              #endif
+
+              #if (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
+                m_pDebugInfoArray[GroupID][m_BlockUsed[GroupID]] = DebugID;         // Tag this block with the owner ID
+              #endif
+
+              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
                 m_UsedMemory += SizeBlock;
                 m_BlockUsed[GroupID]++;
 
@@ -162,8 +186,12 @@ if(SizeRequired <=64)
                     m_BlockHighest[GroupID] = m_BlockUsed[GroupID];
                 }
 
+              #endif
+              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) || (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
                 nOS_LeaveCritical(sr);
               #endif
+
+                m_TimeOut = NOS_WAIT_INFINITE;          // Reset to default
 
                 return MemPtr;
             }
@@ -172,18 +200,25 @@ if(SizeRequired <=64)
   #endif
 
     // If we reach here then we did not succeed to get a block, so we will wait
-    for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_SIZE; GroupID++)
+    for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_QTS; GroupID++)
     {
         SizeBlock = m_nOS_MemArray[GroupID].bsize;
 
         if(SizeBlock >= SizeRequired)
         {
-            MemPtr = nOS_MemAlloc(&m_nOS_MemArray[GroupID], TimeOut);
+            MemPtr = nOS_MemAlloc(&m_nOS_MemArray[GroupID], m_TimeOut);
 
-          #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
             if(MemPtr != nullptr)
             {
+              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) || (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
                 nOS_EnterCritical(sr);
+              #endif
+
+              #if (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
+                m_pDebugInfoArray[GroupID][m_BlockUsed[GroupID]] = DebugID;         // Tag this block with the owner ID
+              #endif
+
+              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
                 m_UsedMemory += SizeBlock;
                 m_BlockUsed[GroupID]++;
 
@@ -191,30 +226,28 @@ if(SizeRequired <=64)
                 {
                     m_BlockHighest[GroupID] = m_BlockUsed[GroupID];
                 }
+              #endif
 
+              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) || (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
                 nOS_LeaveCritical(sr);
+              #endif
             }
-          #endif
 
+            m_TimeOut = NOS_WAIT_INFINITE;              // Reset to default
             return MemPtr;
         }
     }
 
-    return nullptr;
+    m_TimeOut = NOS_WAIT_INFINITE;                      // Reset to default
+    return MemPtr;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: AllocAndClear
 //
-//   Parameter(s):  size_t          SizeRequired,       Size of the needed data block
-//                  TickCount_t     TimeOut             How it can wait for the data block
-//
-//                                  NOS_NO_WAIT :                 Don't wait if no blocks available.
-//                                  0 > tout < NOS_WAIT_INIFITE : Maximum number of ticks to wait
-//                                                                until a block became available.
-//                                  NOS_WAIT_INIFINE :            Wait indefinitely until a block
-//                                                                became available.
+//   Parameter(s):  size_t                  SizeRequired,       Size of the needed data block
+//                  MEM_DebugListOfID_e     DebugID             Owner of the memory block
 //
 //   Return:        void*           Pointer to allocated block of memory.
 //                                  nullptr = No Block available
@@ -229,23 +262,26 @@ if(SizeRequired <=64)
 //   Note(s):       This class wrap the nOS Function
 //
 //-------------------------------------------------------------------------------------------------
-void* MemPoolDriver::AllocAndClear(size_t SizeRequired, TickCount_t TimeOut)
+void* MemPoolDriver::AllocAndClear(size_t SizeRequired, MEM_DebugListOfID_e DebugID)
 {
-    return AllocAndSet(SizeRequired, 0, TimeOut);
+    void* MemPtr;
+
+    MemPtr = Alloc(SizeRequired, DebugID);
+
+    if(MemPtr != nullptr)
+    {
+        memset(MemPtr, 0, SizeRequired);
+    }
+
+    return MemPtr;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: AllocAndClear
 //
-//   Parameter(s):  size_t          SizeRequired,       Size of the needed data block
-//                  TickCount_t     TimeOut             How it can wait for the data block
-//
-//                                  NOS_NO_WAIT :                 Don't wait if no blocks available.
-//                                  0 > tout < NOS_WAIT_INIFITE : Maximum number of ticks to wait
-//                                                                until a block became available.
-//                                  NOS_WAIT_INIFINE :            Wait indefinitely until a block
-//                                                                became available.
+//   Parameter(s):  size_t                  SizeRequired,       Size of the needed data block
+//                  MEM_DebugListOfID_e     DebugID             Owner of the memory block
 //
 //   Return:        void*           Pointer to allocated block of memory.
 //                                  nullptr = No Block available
@@ -260,21 +296,42 @@ void* MemPoolDriver::AllocAndClear(size_t SizeRequired, TickCount_t TimeOut)
 //   Note(s):       This class wrap the nOS Function
 //
 //-------------------------------------------------------------------------------------------------
-void* MemPoolDriver::AllocAndSet(size_t SizeRequired, uint8_t FillValue, TickCount_t TimeOut)
+void* MemPoolDriver::AllocAndSet(size_t SizeRequired, uint8_t FillValue, MEM_DebugListOfID_e DebugID)
 {
     void* MemPtr;
 
-    MemPtr = Alloc(SizeRequired, TimeOut);
+    MemPtr = Alloc(SizeRequired, DebugID);
 
     if(MemPtr != nullptr)
     {
-        for(size_t i = 0; i < SizeRequired; i++)
-        {
-            ((uint8_t*)MemPtr)[i] = FillValue;
-        }
+        memset(MemPtr, int(FillValue), SizeRequired);
     }
 
     return MemPtr;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: OverrideNextTimeOut
+//
+//   Parameter(s):  TickCount_t    TimeOut             How long it can wait for the data block
+//
+//                                 NOS_NO_WAIT:                  Don't wait if no blocks available.
+//                                 0 > tout < NOS_WAIT_INFINITE: Maximum number of ticks to wait
+//                                                               until a block became available.
+//                                 NOS_WAIT_INFINITE:            Wait indefinitely until a block
+//                                                               became available.
+//   Return:        None
+//
+//   Description:   This will override the default time out for next allocation and reduce number
+//                  of Alloc overloaded method.
+//
+//   Note(s):       This help code reduction as most of the time the default is used.
+//
+//-------------------------------------------------------------------------------------------------
+void MemPoolDriver::OverrideNextTimeOut(TickCount_t TimeOut)
+{
+    m_TimeOut = TimeOut;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -297,7 +354,7 @@ bool MemPoolDriver::Free(void** pBlock)
     nOS_StatusReg   sr;
   #endif
 
-    for(GroupID = 0; GroupID < MEM_BLOCK_GROUP_SIZE; GroupID++)
+    for(GroupID = 0; GroupID < MEM_BLOCK_GROUP_QTS; GroupID++)
     {
         if((*pBlock >= (void*)((uint8_t*)m_nOS_MemArray[GroupID].buffer)) &&
            (*pBlock < ((void*)((uint8_t*)m_nOS_MemArray[GroupID].buffer + (m_nOS_MemArray[GroupID].bsize * m_nOS_MemArray[GroupID].bmax)))))
@@ -306,14 +363,25 @@ bool MemPoolDriver::Free(void** pBlock)
 
             if(m_LastError == NOS_OK)
             {
-              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) || (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
                 nOS_EnterCritical(sr);
+              #endif
+
+              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
                 m_UsedMemory -= m_nOS_MemArray[GroupID].bsize;
                 m_BlockUsed[GroupID]--;
-                nOS_LeaveCritical(sr);
+              #endif
+
+              #if (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
+                m_pDebugInfoArray[GroupID][m_BlockUsed[GroupID]] = MEM_DBG_NONE;            // Mark block as free
               #endif
 
                 *pBlock = nullptr;
+
+              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) || (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
+                nOS_LeaveCritical(sr);
+              #endif
+
                 return true;
             }
 
@@ -338,7 +406,7 @@ bool MemPoolDriver::Free(void** pBlock)
 //-------------------------------------------------------------------------------------------------
 bool MemPoolDriver::IsAvailable(size_t SizeRequired)
 {
-    for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_SIZE; GroupID++)
+    for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_QTS; GroupID++)
     {
         if(m_nOS_MemArray[GroupID].bsize <= SizeRequired)
         {
@@ -370,7 +438,10 @@ nOS_Error MemPoolDriver::GetLastError(void)
     return m_LastError;
 }
 
-#if MEMORY_POOL_USE_STAT == DEF_ENABLED
+//-------------------------------------------------------------------------------------------------
+
+#if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: GetTotalSizeReserved
@@ -384,7 +455,6 @@ nOS_Error MemPoolDriver::GetLastError(void)
 uint32_t MemPoolDriver::GetUsedMemory(void)
 {
     return m_UsedMemory;
-
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -414,7 +484,7 @@ uint32_t MemPoolDriver::GetTotalSizeReserved(void)
 //-------------------------------------------------------------------------------------------------
 uint32_t MemPoolDriver::GetNumberOfPool(void)
 {
-    return MEM_BLOCK_GROUP_SIZE;
+    return MEM_BLOCK_GROUP_QTS;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -429,7 +499,7 @@ uint32_t MemPoolDriver::GetNumberOfPool(void)
 //-------------------------------------------------------------------------------------------------
 uint32_t MemPoolDriver::GetPoolBlockSize(uint32_t GroupID)
 {
-    if(GroupID < MEM_BLOCK_GROUP_SIZE)
+    if(GroupID < MEM_BLOCK_GROUP_QTS)
     {
         return m_nOS_MemArray[GroupID].bsize;
     }
@@ -449,7 +519,7 @@ uint32_t MemPoolDriver::GetPoolBlockSize(uint32_t GroupID)
 //-------------------------------------------------------------------------------------------------
 uint32_t MemPoolDriver::GetPoolNumberOfBlock(uint32_t GroupID)
 {
-    if(GroupID < MEM_BLOCK_GROUP_SIZE)
+    if(GroupID < MEM_BLOCK_GROUP_QTS)
     {
         return m_nOS_MemArray[GroupID].bmax;
     }
@@ -469,7 +539,7 @@ uint32_t MemPoolDriver::GetPoolNumberOfBlock(uint32_t GroupID)
 //-------------------------------------------------------------------------------------------------
 uint32_t MemPoolDriver::GetPoolBlockUsed(uint32_t GroupID)
 {
-    if(GroupID < MEM_BLOCK_GROUP_SIZE)
+    if(GroupID < MEM_BLOCK_GROUP_QTS)
     {
         return uint32_t(m_BlockUsed[GroupID]);
     }
@@ -489,7 +559,7 @@ uint32_t MemPoolDriver::GetPoolBlockUsed(uint32_t GroupID)
 //-------------------------------------------------------------------------------------------------
 uint32_t MemPoolDriver::GetPoolBlockHighPoint(uint32_t GroupID)
 {
-    if(GroupID < MEM_BLOCK_GROUP_SIZE)
+    if(GroupID < MEM_BLOCK_GROUP_QTS)
     {
         return uint32_t(m_BlockHighest[GroupID]);
     }

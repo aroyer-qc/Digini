@@ -106,7 +106,7 @@ class DMA_Driver
 
         void        ClearFlag                               (uint32_t Flag);
         bool        CheckFlag                               (uint32_t Flag);
-        void        EnableIRQ                               (uint8_t PremptionPriority);
+        void        EnableIRQ                               (void);
 
         // Inline method
         void        Enable                                  (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_EN);     }
@@ -132,6 +132,7 @@ class DMA_Driver
         DMA_Stream_TypeDef*         m_pDMA;
         uint32_t                    m_Flag;
         IRQn_Type                   m_IRQn_Channel;
+        uint8_t                     m_PreempPrio;
         uint32_t                    m_Direction;
         CallbackInterface*          m_pCallback;
 };

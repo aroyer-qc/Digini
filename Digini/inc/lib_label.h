@@ -40,8 +40,8 @@
 //-------------------------------------------------------------------------------------------------
 // X macro(s)
 //-------------------------------------------------------------------------------------------------
-
-#define COMMON_LANGUAGE_DEF(X_LABEL)  /* Common label */ \
+// Common label
+#define COMMON_LANGUAGE_DEF(X_LABEL) \
 X_LABEL( LBL_NULL,                       nullptr,                          nullptr                                         ) \
 X_LABEL( LBL_CLEAR_SCREEN,               "\033[2J\033[H",                  nullptr                                         ) \
 X_LABEL( LBL_RESET_TERMINAL,             "\033c\n",                        nullptr                                         ) \
@@ -76,7 +76,8 @@ X_LABEL( LBL_ENABLED,                    "Enabled ",                       "Acti
 X_LABEL( LBL_DISABLED,                   "Disabled",                       "D\x82" "activ\x82"                             ) \
 X_LABEL( LBL_SYSTEM_INFO,                "System Info",                    "Info Syst\x8ame"                               ) \
 
-#define NET_LANGUAGE_DEF(X_LABEL)  /* Network label */ \
+// Network label
+#define NET_LANGUAGE_DEF(X_LABEL) \
 X_LABEL( LBL_NETWORK_INFO,               "Network Information",            "Information R\x82seau"                         ) \
 X_LABEL( LBL_IP_ADDR,                    "IPV4 Address . . . . . :",       "Addresse IPV4  . . . . :"                      ) \
 X_LABEL( LBL_IP_MASK,                    "Subnet Masks . . . . . :",       "Masque Sous-R\x82seau . . :"                   ) \
@@ -177,7 +178,7 @@ X_LABEL( LBL_CPU_TEMPERATURE,            "CPU Temp:         ",             nullp
 
 #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
 
-#define VT100_LBL_BLANK_FOR_SAVE                        LBL_NULL   
+#define VT100_LBL_BLANK_FOR_SAVE                        LBL_NULL
 
 // Console Generic Label
 #define VT100_LABEL_LANGUAGE_DEF(X_VT100_LBL) \
@@ -212,6 +213,9 @@ X_LABEL( LBL_CPU_TEMPERATURE,            "CPU Temp:         ",             nullp
     X_VT100_LBL( VT100_LBL_NOW,                        "Now:",                                                                                                     "Maintenant:"                                                                            ) \
     X_VT100_LBL( VT100_LBL_UPTIME,                     "Up Time:",                                                                                                 "Temps " "\x82" "coul\x82:"                                                              ) \
     X_VT100_LBL( VT100_LBL_PERCENT_VALUE,              "%ld %%",                                                                                                   nullptr                                                                                  ) \
+\
+    X_VT100_LBL( VT100_LBL_DATE,                       "Date",                                                                                                     "Date"                                                                                   ) \
+    X_VT100_LBL( VT100_LBL_TIME,                       "Time",                                                                                                     "Heure"                                                                                  ) \
 
 #define VT100_MONO_LABEL_LANGUAGE_DEF(X_VT100_LBL) \
     X_VT100_LBL( VT100_LBL_BACK_WHITE_FORE_BLACK,      "\033[30m\033[47m",                                                                                         nullptr                                                                                  ) \

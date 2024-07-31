@@ -240,7 +240,6 @@ enum VT100_InputType_e
     VT100_INPUT_DECIMAL,
     VT100_INPUT_STRING,
     VT100_INPUT_ESCAPE,
-  //  VT100_INPUT_ESCAPE_TO_CONTINUE,
 };
 
 enum VT100_CallBackType_e
@@ -250,12 +249,7 @@ enum VT100_CallBackType_e
     VT100_CALLBACK_REFRESH_ONCE,
     VT100_CALLBACK_REFRESH,
     VT100_CALLBACK_FLUSH,
-
     VT100_CALLBACK_ON_INPUT,           // Selection input of items in thjs menu.
-
-    // Dynamic item in selection menu
-  // VT100_CALLBACK_ON_INIT,            // For Initializing items when they are listed in the menu (dynamic info on the menu page)
-//    VT100_CALLBACK_ON_MENU_REFRESH,         // For Refreshing items when they are listed in the menu (dynamic info on the menu page)
     VT100_CALLBACK_ON_FLUSH,           // When escaping or going through another menu (EX. release memory)
 };
 
@@ -265,7 +259,6 @@ struct VT100_MenuDef_t
 {
     Label_e           Label;
     VT100_InputType_e (*pCallback)(uint8_t, VT100_CallBackType_e);
-    //CallbackMethod_t  pCallback;
     VT100_Menu_e      NextMenu;
 };
 

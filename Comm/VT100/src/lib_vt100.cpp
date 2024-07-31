@@ -381,16 +381,6 @@ void VT100_Terminal::ProcessRX(void)
             }
             break;
 
-        //    case VT100_INPUT_ESCAPE_TO_CONTINUE:
-        //    {
-        //        if(Data == VT100_ESCAPE)
-        //        {
-        //            m_ValidateInput = true;
-        //            m_InputType     = VT100_INPUT_MENU_CHOICE;
-        //        }
-        //    }
-        //    break;
-
             default: break;
         }
     }
@@ -504,8 +494,6 @@ void VT100_Terminal::DisplayMenu(void)
                 if(pMenu->Label == VT100_LBL_SAVE_CONFIGURATION)
                 {
                     SetForeColor(VT100_COLOR_BLUE);
-
-                    // need to get the label position on screen
                 }
               #endif
 

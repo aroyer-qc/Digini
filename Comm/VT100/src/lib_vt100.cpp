@@ -184,9 +184,9 @@ void VT100_Terminal::IF_Process(void)
         }
         else if(m_Input == VT100_ESCAPE)
         {
-            CallBack(m_pMenu->pCallback, VT100_CALLBACK_FLUSH, 0);                    // Flush previous Menu
             m_Input = 0;
-            m_pMenu = &m_Menu[m_MenuID].pDefinition[0];                               // Get pointer on the previous menu
+            m_pMenu = &m_Menu[m_MenuID].pDefinition[0];                           // Get pointer on the previous menu
+            CallBack(m_pMenu->pCallback, VT100_CALLBACK_FLUSH, 0);                // Flush previous Menu
         }
         else // It was an invalid entry (should not happened) do nothing
         {
@@ -308,6 +308,7 @@ void VT100_Terminal::ProcessRX(void)
                 {
                     //m_BackFromEdition  = true;
                     m_InputDecimalMode = false;
+
                     GoToMenu(m_MenuID);
                 }
                 else if(Data == ASCII_BACKSPACE)
@@ -842,6 +843,7 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
     m_Divider          = Divider;
     m_InputDecimalMode = true;
     m_IsItString       = false;
+    m_InputType        = VT100_INPUT_DECIMAL;
 
     // Draw the Box
     DrawBox(PosX, PosY, 56, 8, VT100_COLOR_WHITE);
@@ -944,6 +946,7 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
     m_ID               = (int16_t)ID;
     m_InputStringMode  = true;
     m_IsItString       = true;
+    m_InputType        = VT100_INPUT_STRING;
 
     // Draw the Box
     DrawBox(PosX, PosY, 56, 8, VT100_COLOR_WHITE);

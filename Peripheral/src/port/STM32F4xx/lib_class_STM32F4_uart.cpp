@@ -159,7 +159,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
           #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED) && (UART_DRIVER_DMA_TX_COMPLETED_CFG == DEF_ENABLED)
             m_DMA_TX.EnableTransmitCompleteInterrupt();
-            m_DMA_TX.EnableIRQ(m_pDMA_Info->DMA_TX.PreempPrio);
+            m_DMA_TX.EnableIRQ();
           #endif
         }
 

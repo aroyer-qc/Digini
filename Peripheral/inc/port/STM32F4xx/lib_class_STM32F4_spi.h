@@ -95,6 +95,8 @@
 #define SPI_DATA_WIDTH_8_BIT        0x00000000U
 #define SPI_DATA_WIDTH_16_BIT       (SPI_CR1_DFF)
 
+#define SPI_DMA_DISABLED            (0xFFFFFFFFU)                                               // Config for spi_var, to disable DMA if not needed
+
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -113,20 +115,35 @@ enum SPI_ID_e
 		DRIVER_SPI3_ID,
 	#endif
 
+    #if (SPI_DRIVER_SUPPORT_SPI4_CFG == DEF_ENABLED)
+		DRIVER_SPI4_ID,
+	#endif
+
+    #if (SPI_DRIVER_SUPPORT_SPI5_CFG == DEF_ENABLED)
+		DRIVER_SPI5_ID,
+	#endif
+
+    #if (SPI_DRIVER_SUPPORT_SPI6_CFG == DEF_ENABLED)
+		DRIVER_SPI6_ID,
+	#endif
+
     NB_OF_SPI_DRIVER
 };
 
 struct SPI_Info_t
 {
     SPI_TypeDef*        pSPIx;
+    uint32_t            Config;
+    uint32_t            Speed;
     IO_ID_e             PinCLK;
     IO_ID_e             PinMOSI;
     IO_ID_e             PinMISO;
-    uint32_t            Speed;
-    uint32_t            Control;
+    IO_ID_e             PinNSS;
     IRQn_Type           IRQn;
+  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;
+  #endif  
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -162,29 +179,39 @@ class SPI_Driver// : public DriverInterface
         SystemState_e   Transfer                (uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, IO_ID_e Device);
 
         void            IRQHandler              (void);
-        void            Config                  (uint32_t Mask, uint32_t Config);
         SystemState_e   WaitReady               (void);
 
+      #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
         void            OverrideMemoryIncrement (void);
         static void     DMA_RX_IRQ_Handler      (SPI_ID_e SPI_ID);
         static void     DMA_TX_IRQ_Handler      (SPI_ID_e SPI_ID);
+      #endif
 
     private:
 
-//        uint16_t              GetPrescalerFromSpeed   (uint32_t speed);
+        void            SetPrescalerFromSpeed   (uint32_t Speed, uint32_t PCLK_Frequency);
+      
+      #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
         SystemState_e   WaitDMA                 (void);
+      #endif  
 
         nOS_Mutex               m_Mutex;
         SPI_Info_t*             m_pInfo;
         SPI_ID_e                m_SPI_ID;
         IO_ID_e                 m_Device;
         bool                    m_NoMemoryIncrement;
-        DMA_Driver              m_DMA_RX;
-        DMA_Driver              m_DMA_TX;
         volatile SystemState_e  m_Status;
-        volatile SystemState_e  m_DMA_Status;
         volatile uint8_t        m_Timeout;
         static SPI_Driver*      m_pDriver[NB_OF_SPI_DRIVER];
+
+      #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+        DMA_Driver              m_DMA_RX;
+        DMA_Driver              m_DMA_TX;
+        volatile SystemState_e  m_DMA_Status;
+        
+        bool                    m_IsItUsingDMA_TX;
+        bool                    m_IsItUsingDMA_RX;
+      #endif  
 };
 
 //-------------------------------------------------------------------------------------------------

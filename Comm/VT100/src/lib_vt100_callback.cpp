@@ -479,17 +479,17 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
     return VT100_INPUT_MENU_CHOICE;
 }
 
+/*
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CALLBACK_TimeDateCfg
+//  Name:           CALLBACK_DateTimeCfg
 //
-//  Description:    Menu Time and Date Configuration.
+//  Description:    Menu Date and Time Configuration.
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-/*
-VT100_InputType_e VT100_Terminal::CALLBACK_TimeDateCfg(uint8_t Input, VT100_CallBackType_e Type)
+VT100_InputType_e VT100_Terminal::CALLBACK_DateTimeCfg(uint8_t Input, VT100_CallBackType_e Type)
 {
     static DateAndTime_t TimeDate;
    // uint32_t             Refresh;
@@ -754,7 +754,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             // Card Capacity
             if(CardCapacity >= 1000000)
             {
-                myVT100.InMenuPrintf(26, 13, LBL_SIZE_GIGABYTES, uint16_t(CardCapacity / 1000000), uint16_t((CardCapacity % 1000000) / 1000));                                                                  // Card Capacity
+                myVT100.InMenuPrintf(26, 13, LBL_SIZE_GIGABYTES, uint16_t(CardCapacity / 1000000), uint16_t((CardCapacity % 1000000) / 1000));  // Card Capacity
             }
             else
             {
@@ -963,7 +963,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                 // TODO
               #endif
             }
-
         }
         break;
 
@@ -999,6 +998,29 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                     }
                 }
                 break;
+
+                case int(MenuSystemSetting_ID_MISC_DATE):
+                {
+                    if(pBuffer1 != nullptr)
+                    {
+                        #define DATE_SIZE  11 // 0000-00-00             // move on header when working
+                        myVT100.SetStringInput(32, 16, DATE_SIZE, Input, VT100_LBL_DATE, (const char*)pBuffer1);
+                        return VT100_INPUT_STRING;
+                    }
+                }
+                break;
+                
+                case int(MenuSystemSetting_ID_MISC_TIME):
+                {
+                    if(pBuffer1 != nullptr)
+                    {
+                        #define TIME_SIZE  9 // 00:00:00             // move on header when working
+                        myVT100.SetStringInput(32, 16, TIME_SIZE, Input, VT100_LBL_TIME, (const char*)pBuffer1);
+                        return VT100_INPUT_STRING;
+                    }
+                }
+                break;
+
 
                 case int(MenuSystemSetting_ID_MISC_SAVE):
                 {

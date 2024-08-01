@@ -1107,7 +1107,7 @@ ServiceReturn_t* GetServiceStruct(ServiceType_e ServiceType)
 {
     ServiceReturn_t* pService = nullptr;
 
-    pService = (ServiceReturn_t*)pMemoryPool->AllocAndClear(ServiceSizeType[ServiceType], 0);
+    pService = (ServiceReturn_t*)pMemoryPool->AllocAndClear(ServiceSizeType[ServiceType], MEM_DBG_SERVICE);
 
     if(ServiceType == SERVICE_RETURN_TYPE3)
     {

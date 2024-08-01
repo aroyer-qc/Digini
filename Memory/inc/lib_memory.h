@@ -85,6 +85,9 @@ enum MEM_DebugListOfID_e
     // UniqueID for included in Digini external module
     MEM_DBG_SPI_VFD_1,
 
+    // UniqueID for lib_service
+    MEM_DBG_SERVICE,
+
     // Application debug ID from user
     MEMORY_USER_DEBUG_ID
 };

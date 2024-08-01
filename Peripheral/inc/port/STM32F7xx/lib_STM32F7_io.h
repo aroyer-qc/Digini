@@ -165,11 +165,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define EXPAND_X_IO_AS_ENUM(ENUM_ID, IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA) ENUM_ID,
-#define EXPAND_X_IO_IRQ_AS_ENUM(ENUM_ID, IO_ID, NUMBER, TRIGGER) ENUM_ID,
-#define EXPAND_X_IO_AS_STRUCT_DATA(ENUM_ID,  IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA ) \
-                                           { IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA },
-#define EXPAND_X_IO_IRQ_AS_STRUCT_DATA(ENUM_ID, IO_ID, NUMBER, TRIGGER) \
-                                              { IO_ID, NUMBER, TRIGGER},
+#define EXPAND_X_IO_IRQ_AS_ENUM(ENUM_ID, IO_ID, NUMBER, PRIO, TRIGGER) ENUM_ID,
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -190,75 +186,13 @@ enum IO_IrqID_e
 };
 #endif
 
-struct IO_Properties_t
-{
-    GPIO_TypeDef*    pPort;
-    uint32_t         PinNumber;
-    uint32_t         PinMode;
-    uint32_t         PinType;
-    uint32_t         PinSpeed;
-    uint32_t         State;
-};
-
-struct IO_IRQ_Properties_t
-{
-    IO_ID_e         IO_ID;
-    IRQn_Type       IRQ_Channel;
-    uint32_t        Trigger;
-};
-
 typedef void (*IO_PinChangeCallback_t)(void* pArg);
-
-//-------------------------------------------------------------------------------------------------
-//   Global const and variables
-//-------------------------------------------------------------------------------------------------
-
-#ifdef IO_DRIVER_GLOBAL
-
-const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
-{
-    GPIOA,
-    GPIOB,
-    GPIOC,
-    GPIOD,
-    GPIOE,
-    GPIOF,
-    GPIOG,
-    GPIOH,
-    GPIOI,
-    GPIOJ,
-    GPIOK,
-};
-
-const IO_Properties_t IO_Properties[IO_NUM] =
-{
-    IO_DEF(EXPAND_X_IO_AS_STRUCT_DATA)
-};
-
-#ifdef IO_IRQ_DEF
-const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM] =
-{
-    IO_IRQ_DEF(EXPAND_X_IO_IRQ_AS_STRUCT_DATA)
-};
-#endif
-
-#else
-
-extern const GPIO_TypeDef*          IO_Port[NUMBER_OF_IO_PORT];
-extern const IO_Properties_t        IO_Properties[IO_NUM];
-
-#ifdef IO_IRQ_DEF
-extern const IO_IRQ_Properties_t  IO_IRQ_Properties[IO_IRQ_NUM];
-#endif
-
-#endif
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
 void        IO_PinInit                  (IO_ID_e IO_ID);
-void        IO_PinInit                  (GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint32_t PinType, uint32_t PinSpeed, uint32_t State);
 void        IO_PinInitInput             (IO_ID_e IO_ID);
 void        IO_PinInitOutput            (IO_ID_e IO_ID);
 void        IO_SetPinLow                (IO_ID_e IO_ID);
@@ -268,10 +202,9 @@ void        IO_SetPin                   (IO_ID_e IO_ID, bool Value);
 bool        IO_GetInputPin              (IO_ID_e IO_ID);
 uint32_t    IO_GetInputPinValue         (IO_ID_e IO_ID);
 bool        IO_GetOutputPin             (IO_ID_e IO_ID);
-void        IO_EnableClock              (GPIO_TypeDef* pPort);
 bool        IO_IsItValid                (IO_ID_e IO_ID);
 #ifdef IO_IRQ_DEF
-void        IO_InitIRQ                  (IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback);
+void        IO_PinInitIRQ               (IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback);
 void        IO_EnableIRQ                (IO_IrqID_e IO_IRQ_ID);
 void        IO_DisableIRQ               (IO_IrqID_e IO_IRQ_ID);
 IO_ID_e     IO_GetIO_ID                 (IO_IrqID_e IO_IRQ_ID);

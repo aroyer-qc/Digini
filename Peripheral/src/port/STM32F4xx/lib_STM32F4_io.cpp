@@ -208,7 +208,7 @@ void IO_PinInit(IO_ID_e IO_ID)
     if(pPort != GPIOxx)
     {
         uint32_t Pin2BitShift = PinNumber << 1;
-        IO_EnableClock(pPort);
+        _IO_EnableClock(pPort);
 
         // Set pin speed
         pPort->OSPEEDR &= ~(uint32_t)(IO_SPEED_PIN_MASK << Pin2BitShift);
@@ -703,7 +703,7 @@ uint32_t IO_PinLowLevelAccess(uint32_t PortIO, uint32_t PinNumber, uint32_t Dire
     Pin1BitMask      = 1 << PinNumber;
     Pin2BitShift     = PinNumber << 1;
 
-    IO_EnableClock(pPort);
+    _IO_EnableClock(pPort);
 
     if(Direction == IO_MODE_OUTPUT)
     {

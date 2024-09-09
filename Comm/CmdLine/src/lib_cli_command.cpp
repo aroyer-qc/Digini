@@ -345,6 +345,7 @@ SystemState_e CommandLine::CmdVERSION(void* pArg)
 //  Description:    Set individual debug level (bit position)
 //
 //-------------------------------------------------------------------------------------------------
+#if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
 SystemState_e CommandLine::CmdDBG_LEVEL(void* pArg)
 {
     SystemState_e Error;
@@ -376,6 +377,7 @@ SystemState_e CommandLine::CmdDBG_LEVEL(void* pArg)
 
     return Error;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 

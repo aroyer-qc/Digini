@@ -66,7 +66,9 @@ void Console::Initialize(UART_Driver* pUartDriver)
     //m_IsItOnHold            = false;
     //m_IsItOnStartup         = true;
     m_MuteSerialLogging     = true;
+  #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
     m_DebugLevel            = SYS_DEBUG_NONE;
+  #endif
     m_ActiveProcessLevel    = CON_NOT_CONNECTED;
 
     for(int i = 0; i < CON_CHILD_PROCESS_PUSH_POP_LEVEL; i++)

@@ -93,71 +93,71 @@
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
-  
+
 #if (CLI_NUMBER_OF_SUPPORTED_PARAM == 1)
 #define X_CLI_CMD_DEF(X_CLI_CMD)   \
-/*              ENUM_ID,        String,       Function,     Cmd Type,    Number, Param1 -          Min1,   max1  */\
-    X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,      0,                0,      0  )    \
-    X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP,  0,      0,                0,      0  )    \
-    X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP,  0,      0,                0,      0  )    \
-    X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP,  0,      0,                0,      0  )    \
-    X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P,   0,      0,                0,      0  )    \
-    X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  1,      BASE_HEXADECIMAL, 0x00, 0xFF )    \
-/* TODO generic command should be in the library and be enable by define */\                                     
-\                                                                                                                
-    X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,      0,                0,      0  )    \
-    X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,      0,                0,      0  )    \
-    X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,      0,                0,      0  )    \
+/*                                                  ENUM_ID,        String,       Function,     Cmd Type,    Number, Param1 -          Min1,   max1  */\
+                                        X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,      0,                0,      0  )    \
+                                        X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP,  0,      0,                0,      0  )    \
+                                        X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP,  0,      0,                0,      0  )    \
+                                        X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP,  0,      0,                0,      0  )    \
+                                        X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P,   0,      0,                0,      0  )    \
+    IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  1,      BASE_HEXADECIMAL, 0x00, 0xFF ))   \
+/* TODO generic command should be in the library and be enable by define */\
+\
+                                        X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,      0,                0,      0  )    \
+                                        X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,      0,                0,      0  )    \
+                                        X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,      0,                0,      0  )    \
 
 #endif
 
 #if (CLI_NUMBER_OF_SUPPORTED_PARAM == 2)
 #define X_CLI_CMD_DEF(X_CLI_CMD)   \
-/*              ENUM_ID,        String,       Function,     Cmd Type,    Number, Param1 -          Min1,  max1   Param2 - Min2,   max2  */\
-    X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP,  0,      0,                0,     0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  1,      BASE_HEXADECIMAL, 0x00, 0xFF,   0,       0,      0  )    \
-/* TODO generic command should be in the library and be enable by define */\                                     
-\                                                                                                                
-    X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0  )    \
+/*                                                  ENUM_ID,        String,       Function,     Cmd Type,    Number, Param1 -          Min1,  max1   Param2 - Min2,   max2  */\
+                                        X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP,  0,      0,                0,     0,     0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0  )    \
+    IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  1,      BASE_HEXADECIMAL, 0x00, 0xFF,   0,       0,      0  ) )   \
+/* TODO generic command should be in the library and be enable by define */\
+\
+                                        X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0  )    \
 
 #endif
 
 #if (CLI_NUMBER_OF_SUPPORTED_PARAM == 3)
 #define X_CLI_CMD_DEF(X_CLI_CMD)   \
-/*              ENUM_ID,        String,       Function,     Cmd Type,    Number, Param1 -          Min1,  max1   Param2 - Min2,   max2,  Param3 - Min3,   max3  */\
-    X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  1,      BASE_HEXADECIMAL, 0x00, 0xFF,   0,       0,      0,     0,       0,      0  )    \
-/* TODO generic command should be in the library and be enable by define */\                                                             
-\                                                                                                                                        
-    X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-    X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
+/*                                                  ENUM_ID,        String,       Function,     Cmd Type,    Number, Param1 -          Min1,  max1   Param2 - Min2,   max2,  Param3 - Min3,   max3  */\
+                                        X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
+    IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  1,      BASE_HEXADECIMAL, 0x00, 0xFF,   0,       0,      0,     0,       0,      0  )  )  \
+/* TODO generic command should be in the library and be enable by define */\
+\
+                                        X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
 
 #endif
 
 #if (CLI_NUMBER_OF_SUPPORTED_PARAM == 4)
 #define X_CLI_CMD_DEF(X_CLI_CMD)   \
-/*              ENUM_ID,        String,       Function,     Cmd Type,    Number, Param1 -          Min1,  max1   Param2 - Min2,   max2,  Param3 - Min3,   max3,   Param4 - Min4,   max4  */\
-    X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-    X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-    X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-    X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-    X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-    X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  1,      BASE_HEXADECIMAL, 0x00, 0xFF,   0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-/* TODO generic command should be in the library and be enable by define */\                                                                                                                                                                                                    
-    X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-    X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-    X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
+/*                                      ENUM_ID,        String,       Function,     Cmd Type,    Number, Param1 -          Min1,  max1   Param2 - Min2,   max2,  Param3 - Min3,   max3,   Param4 - Min4,   max4  */\
+                                        X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
+    IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  1,      BASE_HEXADECIMAL, 0x00, 0xFF,   0,       0,      0,     0,       0,      0,      0,       0,      0  )  )  \
+/* TODO generic command should be in the library and be enable by define */\
+                                        X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
+                                        X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
 
 #endif
 
@@ -177,7 +177,7 @@ enum CLI_CmdName_e
 	X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_ENUM)                // Create the enum item
   #ifdef X_CLI_USER_CMD_DEF
     X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_ENUM)           // Create the enum item from user
-  #endif      
+  #endif
     NUMBER_OF_CLI_CMD,
     CLI_NO_CMD,
     FIRST_CLI_COMMAND = 0,
@@ -258,7 +258,7 @@ enum CLI_StrCmdSize_e
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_SIZE_OF)                // Create the sizeof() for each string
   #ifdef X_CLI_USER_CMD_DEF
     X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_SIZE_OF)           // Create the sizeof() for each string (user)
-  #endif      
+  #endif
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -286,7 +286,7 @@ class CommandLine : public ChildProcessInterface
         X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION)       // Generation of all prototype
       #ifdef X_CLI_USER_CMD_DEF
         X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_FUNCTION)  // Generation of all prototype from user
-      #endif      
+      #endif
 
     private:
 
@@ -325,7 +325,7 @@ class CommandLine : public ChildProcessInterface
         X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CLASS_CONST_STRING)           // Generation of all the string
       #ifdef X_CLI_USER_CMD_DEF
         X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_CLASS_CONST_STRING)      // Generation of all the string from user
-      #endif      
+      #endif
 
       #if (CLI_USE_PASSWORD == DEF_ENABLED)
         static char                             m_CMD_Password[CLI_PASSWORD_SIZE];

@@ -82,7 +82,7 @@ class Console : public CallbackInterface
       #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
         size_t             PrintSerialLog             (SystemDebugLevel_e Level, const char* pFormat, ...);
         size_t             PrintSerialLog             (SystemDebugLevel_e Level, const char* pFormat, va_list va);
-      #endif  
+      #endif
         void               SetSerialLogging           (bool Mute);
         SystemState_e      SendData                   (const uint8_t* p_BufferTX, size_t* pSizeTX);
         void               CallbackFunction           (int Type, void* pContext);
@@ -107,8 +107,10 @@ class Console : public CallbackInterface
         inline size_t      CheckUsedSpace             (void)                                          { return m_Fifo.CheckUsedSpace();             }
 
         // Getter/ Setter
+      #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
         SystemDebugLevel_e GetDebugLevel              (void)                                          { return m_DebugLevel;       }
         void               SetDebugLevel              (SystemDebugLevel_e DebugLevel)                   { m_DebugLevel = DebugLevel; }
+      #endif
 
     private:
 
@@ -121,7 +123,7 @@ class Console : public CallbackInterface
         //bool                                    m_IsItOnHold;
       #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
         SystemDebugLevel_e                      m_DebugLevel;
-      #endif   
+      #endif
         uint16_t                                m_ActiveProcessLevel;
         ChildProcessInterface*                  m_pChildProcess[CON_CHILD_PROCESS_PUSH_POP_LEVEL];
 
@@ -158,7 +160,7 @@ extern class Console myConsole;
     #define DEBUG_PrintSerialLog           myConsole.PrintSerialLog
 
 #else
-    
+
     #define DEBUG_PrintSerialLog(...)       // Prevent wrapping all log call with preprocessor
 
 #endif

@@ -72,6 +72,10 @@
 #define WHEN(c)                         IF(c)(EXPAND, EAT)
 #define IF_USE(cond, ...)               WHEN(cond)(__VA_ARGS__)
 
+#define EMPTY()
+#define DEFER(id)                       id EMPTY()
+#define OBSTRUCT(...)                   __VA_ARGS__ DEFER(EMPTY)()
+
 #define PRIMITIVE_COMPARE(x, y)         IS_PAREN                                \
                                         (                                       \
                                             COMPARE_ ## x ( COMPARE_ ## y) (()) \

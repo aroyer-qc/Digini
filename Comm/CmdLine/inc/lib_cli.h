@@ -47,34 +47,44 @@
 #define EXPAND_CLI_CMD_AS_FUNCTION(NAME, STRING, FUNCTION, ...)                         SystemState_e FUNCTION(void*);
 #define EXPAND_CLI_CMD_AS_FUNCTION_POINTER(NAME, STRING, FUNCTION, ...)                 &CommandLine::FUNCTION,
 #define EXPAND_CLI_CMD_AS_SIZE_OF(NAME, STRING, FUNCTION, ...)                          SZ_OF_##NAME  = sizeof(STRING) - 1,
-#define EXPAND_CLI_CMD_PARAMS(TYPE, MIN, MAX, ...)                                      {TYPE, MIN, MAX},
 
-#define CLI_SPLIT_INPUT_INFO(macro, TYPE, MIN, MAX, ...)                                macro(TYPE, MIN, MAX) WHEN(ARG_COUNT(__VA_ARGS__)) (OBSTRUCT(CLI_SPLIT_INPUT_INFO_)()(macro, __VA_ARGS__))
-#define CLI_SPLIT_INPUT_INFO_()                                                         CLI_SPLIT_INPUT_INFO
-#define CLI_INPUT_INFO(SUPPORT, NUMBER, ...)                                            { \
-                                                                                            SUPPORT, NUMBER, \
-                                                                                            WHEN(ARG_COUNT(__VA_ARGS__)) \
-                                                                                            (EVAL(CLI_SPLIT_INPUT_INFO(EXPAND_CLI_CMD_PARAMS, __VA_ARGS__))) \
-                                                                                        },
-#define EXPAND_CLI_CMD_AS_INPUT_INFO(NAME, STRING, FUNCTION, SUPPORT, NUMBER, ...)      CLI_INPUT_INFO(SUPPORT, NUMBER, __VA_ARGS__)
+#define EXPAND_CLI_CMD_PARAMS(TYPE, MIN, MAX, ...)                                      {.Base = TYPE, .Min = MIN, .Max = MAX},
+#define EXPAND_CLI_CMD_PARAM_CNT(TYPE, MIN, MAX, ...)                                   + 1
+
+// depends on x-table and structure
+#define CLI_INPUT_INFO_COUNT(TYPE, MIN, MAX, ...) WHEN(ARG_COUNT(__VA_ARGS__)) (+ 1 OBSTRUCT(CLI_INPUT_INFO_COUNT_)()(__VA_ARGS__))
+#define CLI_INPUT_INFO_COUNT_() CLI_INPUT_INFO_COUNT
+#define CLI_SPLIT_INPUT_INFO(macro, TYPE, MIN, MAX, ...) macro(TYPE, MIN, MAX) WHEN(ARG_COUNT(__VA_ARGS__)) (OBSTRUCT(CLI_SPLIT_INPUT_INFO_)()(macro, __VA_ARGS__))
+#define CLI_SPLIT_INPUT_INFO_()                          CLI_SPLIT_INPUT_INFO
+#define CLI_INPUT_INFO(SUPPORT, ...) { \
+                                         .Support = SUPPORT, \
+                                         .NumberOfParam = 0 WHEN(ARG_COUNT(__VA_ARGS__)) \
+                                             (EVAL(CLI_SPLIT_INPUT_INFO(EXPAND_CLI_CMD_PARAM_CNT, __VA_ARGS__))), \
+                                         .Param = { WHEN(ARG_COUNT(__VA_ARGS__)) \
+                                             (EVAL(CLI_SPLIT_INPUT_INFO(EXPAND_CLI_CMD_PARAMS, __VA_ARGS__))) \
+                                         } \
+                                     },
+
+#define EXPAND_CLI_CMD_AS_INPUT_INFO(NAME, STRING, FUNCTION, SUPPORT,  ...) CLI_INPUT_INFO(SUPPORT, __VA_ARGS__)
+
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
 #define X_CLI_CMD_DEF(X_CLI_CMD)   \
-/*                                                  ENUM_ID,        String,       Function,     Cmd Type,    Number, Param1 -          Min1,   max1  */\
-                                        X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,      0,                0,      0  )    \
-                                        X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP,  0,      0,                0,      0  )    \
-                                        X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP,  0,      0,                0,      0  )    \
-                                        X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP,  0,      0,                0,      0  )    \
-                                        X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P,   0,      0,                0,      0  )    \
-    IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  1,      BASE_HEXADECIMAL, 0x00, 0xFF ))   \
+/*                                                  ENUM_ID,        String,       Function,     Cmd Type,    Param1 -          Min1,   max1  */\
+                                        X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP                                  )    \
+                                        X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP                                  )    \
+                                        X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP                                  )    \
+                                        X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP                                  )    \
+                                        X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P                                   )    \
+    IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  BASE_HEXADECIMAL, 0x00,   0xFF ))   \
 /* TODO generic command should be in the library and be enable by define */\
 \
-                                        X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,      0,                0,      0  )    \
-                                        X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,      0,                0,      0  )    \
-                                        X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,      0,                0,      0  )    \
+                                        X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P                                   )    \
+                                        X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P                                   )    \
+                                        X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P                                   )    \
 
 #define CMD_MENU            "MENU"
 

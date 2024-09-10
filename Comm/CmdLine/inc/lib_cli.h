@@ -38,63 +38,30 @@
 // Expanding Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#if (CLI_NUMBER_OF_SUPPORTED_PARAM == 1)
-#define EXPAND_CLI_CMD_AS_ENUM(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX)                  NAME,
-#define EXPAND_CLI_CMD_AS_CONST_STRING(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX)          const char CommandLine::m_Str##NAME[] = STRING;
-#define EXPAND_CLI_CMD_AS_CLASS_CONST_STRING(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX)    static const char m_Str##NAME[];
-#define EXPAND_CLI_CMD_AS_CMD_STRING(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX)            &m_Str##NAME[0],
-#define EXPAND_CLI_CMD_AS_STRING_SIZE(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX)           sizeof(STRING) - 1,
-#define EXPAND_CLI_CMD_AS_FUNCTION(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX)              SystemState_e FUNCTION(void*);
-#define EXPAND_CLI_CMD_AS_FUNCTION_POINTER(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX)      &CommandLine::FUNCTION,
-#define EXPAND_CLI_CMD_AS_SIZE_OF(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX)               SZ_OF_##NAME  = sizeof(STRING) - 1,
-#define EXPAND_CLI_CMD_AS_INPUT_INFO(NAME, STRING, FUNCTION, SUPPORT, NUMBER,   P1_TYPE, P1_MIN, P1_MAX) \
-                                                            {SUPPORT, NUMBER, {{P1_TYPE, P1_MIN, P1_MAX}} },
-#endif
+// common expansion macros
+#define EXPAND_CLI_CMD_AS_ENUM(NAME, STRING, FUNCTION, ...)                             NAME,
+#define EXPAND_CLI_CMD_AS_CONST_STRING(NAME, STRING, FUNCTION, ...)                     const char CommandLine::m_Str##NAME[] = STRING;
+#define EXPAND_CLI_CMD_AS_CLASS_CONST_STRING(NAME, STRING, FUNCTION, ...)               static const char m_Str##NAME[];
+#define EXPAND_CLI_CMD_AS_CMD_STRING(NAME, STRING, FUNCTION, ...)                       &m_Str##NAME[0],
+#define EXPAND_CLI_CMD_AS_STRING_SIZE(NAME, STRING, FUNCTION, ...)                      sizeof(STRING) - 1,
+#define EXPAND_CLI_CMD_AS_FUNCTION(NAME, STRING, FUNCTION, ...)                         SystemState_e FUNCTION(void*);
+#define EXPAND_CLI_CMD_AS_FUNCTION_POINTER(NAME, STRING, FUNCTION, ...)                 &CommandLine::FUNCTION,
+#define EXPAND_CLI_CMD_AS_SIZE_OF(NAME, STRING, FUNCTION, ...)                          SZ_OF_##NAME  = sizeof(STRING) - 1,
+#define EXPAND_CLI_CMD_PARAMS(TYPE, MIN, MAX, ...)                                      {TYPE, MIN, MAX},
 
-#if (CLI_NUMBER_OF_SUPPORTED_PARAM == 2)
-#define EXPAND_CLI_CMD_AS_ENUM(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX)                  NAME,
-#define EXPAND_CLI_CMD_AS_CONST_STRING(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX)          const char CommandLine::m_Str##NAME[] = STRING;
-#define EXPAND_CLI_CMD_AS_CLASS_CONST_STRING(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX)    static const char m_Str##NAME[];
-#define EXPAND_CLI_CMD_AS_CMD_STRING(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX)            &m_Str##NAME[0],
-#define EXPAND_CLI_CMD_AS_STRING_SIZE(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX)           sizeof(STRING) - 1,
-#define EXPAND_CLI_CMD_AS_FUNCTION(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX)              SystemState_e FUNCTION(void*);
-#define EXPAND_CLI_CMD_AS_FUNCTION_POINTER(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX)      &CommandLine::FUNCTION,
-#define EXPAND_CLI_CMD_AS_SIZE_OF(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX)               SZ_OF_##NAME  = sizeof(STRING) - 1,
-#define EXPAND_CLI_CMD_AS_INPUT_INFO(NAME, STRING, FUNCTION, SUPPORT, NUMBER,   P1_TYPE, P1_MIN, P1_MAX,   P2_TYPE, P2_MIN, P2_MAX) \
-                                                            {SUPPORT, NUMBER, {{P1_TYPE, P1_MIN, P1_MAX}, {P2_TYPE, P2_MIN, P2_MAX}} },
-#endif
-
-#if (CLI_NUMBER_OF_SUPPORTED_PARAM == 3)
-#define EXPAND_CLI_CMD_AS_ENUM(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX)                  NAME,
-#define EXPAND_CLI_CMD_AS_CONST_STRING(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX)          const char CommandLine::m_Str##NAME[] = STRING;
-#define EXPAND_CLI_CMD_AS_CLASS_CONST_STRING(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX)    static const char m_Str##NAME[];
-#define EXPAND_CLI_CMD_AS_CMD_STRING(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX)            &m_Str##NAME[0],
-#define EXPAND_CLI_CMD_AS_STRING_SIZE(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX)           sizeof(STRING) - 1,
-#define EXPAND_CLI_CMD_AS_FUNCTION(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX)              SystemState_e FUNCTION(void*);
-#define EXPAND_CLI_CMD_AS_FUNCTION_POINTER(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX)      &CommandLine::FUNCTION,
-#define EXPAND_CLI_CMD_AS_SIZE_OF(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX)               SZ_OF_##NAME  = sizeof(STRING) - 1,
-#define EXPAND_CLI_CMD_AS_INPUT_INFO(NAME, STRING, FUNCTION, SUPPORT, NUMBER,   P1_TYPE, P1_MIN, P1_MAX,   P2_TYPE, P2_MIN, P2_MAX,   P3_TYPE, P3_MIN, P3_MAX) \
-                                                            {SUPPORT, NUMBER, {{P1_TYPE, P1_MIN, P1_MAX}, {P2_TYPE, P2_MIN, P2_MAX}, {P3_TYPE, P3_MIN, P3_MAX}} },
-#endif
-
-#if (CLI_NUMBER_OF_SUPPORTED_PARAM == 4)
-#define EXPAND_CLI_CMD_AS_ENUM(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX, P4_TYPE, P4_MIN, P4_MAX)                  NAME,
-#define EXPAND_CLI_CMD_AS_CONST_STRING(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX, P4_TYPE, P4_MIN, P4_MAX)          const char CommandLine::m_Str##NAME[] = STRING;
-#define EXPAND_CLI_CMD_AS_CLASS_CONST_STRING(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX, P4_TYPE, P4_MIN, P4_MAX)    static const char m_Str##NAME[];
-#define EXPAND_CLI_CMD_AS_CMD_STRING(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX, P4_TYPE, P4_MIN, P4_MAX)            &m_Str##NAME[0],
-#define EXPAND_CLI_CMD_AS_STRING_SIZE(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX, P4_TYPE, P4_MIN, P4_MAX)           sizeof(STRING) - 1,
-#define EXPAND_CLI_CMD_AS_FUNCTION(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX, P4_TYPE, P4_MIN, P4_MAX)              SystemState_e FUNCTION(void*);
-#define EXPAND_CLI_CMD_AS_FUNCTION_POINTER(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX, P4_TYPE, P4_MIN, P4_MAX)      &CommandLine::FUNCTION,
-#define EXPAND_CLI_CMD_AS_SIZE_OF(NAME, STRING, FUNCTION, SUPPORT, NUMBER, P1_TYPE, P1_MIN, P1_MAX, P2_TYPE, P2_MIN, P2_MAX, P3_TYPE, P3_MIN, P3_MAX, P4_TYPE, P4_MIN, P4_MAX)               SZ_OF_##NAME  = sizeof(STRING) - 1,
-#define EXPAND_CLI_CMD_AS_INPUT_INFO(NAME, STRING, FUNCTION, SUPPORT, NUMBER,  P1_TYPE, P1_MIN, P1_MAX,    P2_TYPE, P2_MIN, P2_MAX,   P3_TYPE, P3_MIN, P3_MAX,   P4_TYPE, P4_MIN, P4_MAX) \
-                                                            {SUPPORT, NUMBER, {{P1_TYPE, P1_MIN, P1_MAX}, {P2_TYPE, P2_MIN, P2_MAX}, {P3_TYPE, P3_MIN, P3_MAX}, {P4_TYPE, P4_MIN, P4_MAX}} },
-#endif
+#define CLI_SPLIT_INPUT_INFO(macro, TYPE, MIN, MAX, ...)                                macro(TYPE, MIN, MAX) WHEN(ARG_COUNT(__VA_ARGS__)) (OBSTRUCT(CLI_SPLIT_INPUT_INFO_)()(macro, __VA_ARGS__))
+#define CLI_SPLIT_INPUT_INFO_()                                                         CLI_SPLIT_INPUT_INFO
+#define CLI_INPUT_INFO(SUPPORT, NUMBER, ...)                                            { \
+                                                                                            SUPPORT, NUMBER, \
+                                                                                            WHEN(ARG_COUNT(__VA_ARGS__)) \
+                                                                                            (EVAL(CLI_SPLIT_INPUT_INFO(EXPAND_CLI_CMD_PARAMS, __VA_ARGS__))) \
+                                                                                        },
+#define EXPAND_CLI_CMD_AS_INPUT_INFO(NAME, STRING, FUNCTION, SUPPORT, NUMBER, ...)      CLI_INPUT_INFO(SUPPORT, NUMBER, __VA_ARGS__)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#if (CLI_NUMBER_OF_SUPPORTED_PARAM == 1)
 #define X_CLI_CMD_DEF(X_CLI_CMD)   \
 /*                                                  ENUM_ID,        String,       Function,     Cmd Type,    Number, Param1 -          Min1,   max1  */\
                                         X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,      0,                0,      0  )    \
@@ -108,58 +75,6 @@
                                         X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,      0,                0,      0  )    \
                                         X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,      0,                0,      0  )    \
                                         X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,      0,                0,      0  )    \
-
-#endif
-
-#if (CLI_NUMBER_OF_SUPPORTED_PARAM == 2)
-#define X_CLI_CMD_DEF(X_CLI_CMD)   \
-/*                                                  ENUM_ID,        String,       Function,     Cmd Type,    Number, Param1 -          Min1,  max1   Param2 - Min2,   max2  */\
-                                        X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP,  0,      0,                0,     0,     0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0  )    \
-    IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  1,      BASE_HEXADECIMAL, 0x00, 0xFF,   0,       0,      0  ) )   \
-/* TODO generic command should be in the library and be enable by define */\
-\
-                                        X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0  )    \
-
-#endif
-
-#if (CLI_NUMBER_OF_SUPPORTED_PARAM == 3)
-#define X_CLI_CMD_DEF(X_CLI_CMD)   \
-/*                                                  ENUM_ID,        String,       Function,     Cmd Type,    Number, Param1 -          Min1,  max1   Param2 - Min2,   max2,  Param3 - Min3,   max3  */\
-                                        X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-    IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  1,      BASE_HEXADECIMAL, 0x00, 0xFF,   0,       0,      0,     0,       0,      0  )  )  \
-/* TODO generic command should be in the library and be enable by define */\
-\
-                                        X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0  )    \
-
-#endif
-
-#if (CLI_NUMBER_OF_SUPPORTED_PARAM == 4)
-#define X_CLI_CMD_DEF(X_CLI_CMD)   \
-/*                                      ENUM_ID,        String,       Function,     Cmd Type,    Number, Param1 -          Min1,  max1   Param2 - Min2,   max2,  Param3 - Min3,   max3,   Param4 - Min4,   max4  */\
-                                        X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP,  0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-    IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  1,      BASE_HEXADECIMAL, 0x00, 0xFF,   0,       0,      0,     0,       0,      0,      0,       0,      0  )  )  \
-/* TODO generic command should be in the library and be enable by define */\
-                                        X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-                                        X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P,   0,      0,                0,     0,     0,       0,      0,     0,       0,      0,      0,       0,      0  )    \
-
-#endif
 
 #define CMD_MENU            "MENU"
 

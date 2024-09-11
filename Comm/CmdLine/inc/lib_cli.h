@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2021 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -21,6 +21,9 @@
 // AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+// Special big thanks: Michel Solecki for his support with advanced macro optimization and
+//                     configuration
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -48,24 +51,24 @@
 #define EXPAND_CLI_CMD_AS_FUNCTION_POINTER(NAME, STRING, FUNCTION, ...)                 &CommandLine::FUNCTION,
 #define EXPAND_CLI_CMD_AS_SIZE_OF(NAME, STRING, FUNCTION, ...)                          SZ_OF_##NAME  = sizeof(STRING) - 1,
 
-#define EXPAND_CLI_CMD_PARAMS(TYPE, MIN, MAX, ...)                                      {.Base = TYPE, .Min = MIN, .Max = MAX},
+//#define EXPAND_CLI_CMD_PARAMS(TYPE, MIN, MAX, ...)                                      {.Base = TYPE, .Min = MIN, .Max = MAX},
+#define EXPAND_CLI_CMD_PARAMS(TYPE, MIN, MAX, ...)                                      {TYPE, MIN, MAX},
 #define EXPAND_CLI_CMD_PARAM_CNT(TYPE, MIN, MAX, ...)                                   + 1
 
 // depends on x-table and structure
-#define CLI_INPUT_INFO_COUNT(TYPE, MIN, MAX, ...) WHEN(ARG_COUNT(__VA_ARGS__)) (+ 1 OBSTRUCT(CLI_INPUT_INFO_COUNT_)()(__VA_ARGS__))
+#define CLI_INPUT_INFO_COUNT(TYPE, MIN, MAX, ...)                                       WHEN(ARG_COUNT(__VA_ARGS__)) (+ 1 OBSTRUCT(CLI_INPUT_INFO_COUNT_)()(__VA_ARGS__))
 #define CLI_INPUT_INFO_COUNT_() CLI_INPUT_INFO_COUNT
-#define CLI_SPLIT_INPUT_INFO(macro, TYPE, MIN, MAX, ...) macro(TYPE, MIN, MAX) WHEN(ARG_COUNT(__VA_ARGS__)) (OBSTRUCT(CLI_SPLIT_INPUT_INFO_)()(macro, __VA_ARGS__))
-#define CLI_SPLIT_INPUT_INFO_()                          CLI_SPLIT_INPUT_INFO
-#define CLI_INPUT_INFO(SUPPORT, ...) { \
-                                         .Support = SUPPORT, \
-                                         .NumberOfParam = 0 WHEN(ARG_COUNT(__VA_ARGS__)) \
-                                             (EVAL(CLI_SPLIT_INPUT_INFO(EXPAND_CLI_CMD_PARAM_CNT, __VA_ARGS__))), \
-                                         .Param = { WHEN(ARG_COUNT(__VA_ARGS__)) \
-                                             (EVAL(CLI_SPLIT_INPUT_INFO(EXPAND_CLI_CMD_PARAMS, __VA_ARGS__))) \
-                                         } \
-                                     },
+#define CLI_SPLIT_INPUT_INFO(macro, TYPE, MIN, MAX, ...)                                macro(TYPE, MIN, MAX) WHEN(ARG_COUNT(__VA_ARGS__)) (OBSTRUCT(CLI_SPLIT_INPUT_INFO_)()(macro, __VA_ARGS__))
+#define CLI_SPLIT_INPUT_INFO_()                                                         CLI_SPLIT_INPUT_INFO
+#define CLI_INPUT_INFO(SUPPORT, ...)                                                    { SUPPORT,                                                             \
+                                                                                          0 WHEN(ARG_COUNT(__VA_ARGS__))                                       \
+                                                                                          (EVAL(CLI_SPLIT_INPUT_INFO(EXPAND_CLI_CMD_PARAM_CNT, __VA_ARGS__))), \
+                                                                                          { WHEN(ARG_COUNT(__VA_ARGS__))                                       \
+                                                                                            (EVAL(CLI_SPLIT_INPUT_INFO(EXPAND_CLI_CMD_PARAMS, __VA_ARGS__)))   \
+                                                                                          }                                                                    \
+                                                                                        },
 
-#define EXPAND_CLI_CMD_AS_INPUT_INFO(NAME, STRING, FUNCTION, SUPPORT,  ...) CLI_INPUT_INFO(SUPPORT, __VA_ARGS__)
+#define EXPAND_CLI_CMD_AS_INPUT_INFO(NAME, STRING, FUNCTION, SUPPORT,  ...)             CLI_INPUT_INFO(SUPPORT, __VA_ARGS__)
 
 
 //-------------------------------------------------------------------------------------------------

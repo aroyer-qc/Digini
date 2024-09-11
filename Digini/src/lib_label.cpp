@@ -94,7 +94,10 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
    #if (VT100_USE_COLOR != DEF_ENABLED)
     VT100_MONO_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
    #endif
-
+   
+   #if (VT100_USE_LANGUAGE_SELECTION != DEF_ENABLED)
+    VT100_SELECT_THE_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+   #endif
   #endif
 
   ///-----------------------------------------------------------------------------------------------

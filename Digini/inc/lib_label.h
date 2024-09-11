@@ -40,6 +40,7 @@
 //-------------------------------------------------------------------------------------------------
 // X macro(s)
 //-------------------------------------------------------------------------------------------------
+
 // Common label
 #define COMMON_LANGUAGE_DEF(X_LABEL) \
 X_LABEL( LBL_NULL,                       nullptr,                          nullptr                                         ) \
@@ -257,6 +258,13 @@ X_LABEL( LBL_CPU_TEMPERATURE,            "CPU Temp:         ",             nullp
     X_VT100_LBL( VT100_LBL_SYSTEM_INFO,                "Display System Information",                                                                               "Information Syst\x8ame"                                                                 ) \
     X_VT100_LBL( VT100_LBL_FONT_TERMINAL,              "Extended ASCII Font From This Terminal:",                                                                  "Police de Caract\x8are ASCII \x90tendue Provenant de ce Terminal:"                      ) \
 
+#define VT100_SELECT_THE_LANGUAGE_DEF(X_VT100_LBL) \
+    X_VT100_LBL( VT100_LBL_SELECT_LANGUAGE,            "Toggle Language:",                                                                                         "Basculer de Langage:"                                                                   ) \
+    X_VT100_LBL( VT100_LBL_LANGUAGE_SELECTION,         "Choose Language:  English ( )  French   ( )",                                                              "Choisir Langage:  Anglais ( )  Fran\x87" "ais ( )"                                      ) \
+
+#define VT100_SELECT_THE_TEMPERATURE_UNIT_DEF(X_VT100_LBL) \
+    X_VT100_LBL( VT100_LBL_TEMPERATURE_UNIT_SELECTION, "Choose Temp Unit:      \xF8" "C ( )        \xF8" "F ( )",                                                  "Choisir Unit\x82 Temp:    \xF8" "C ( )        \xF8" "F ( )"                             ) \
+
 #define VT100_SDCARD_INFO_DEF(X_VT100_LBL) \
     X_VT100_LBL( LBL_SD_CARD_INFORMATION,              "SD-Card Information",                                                                                      "Information Carte SD"                                                                   ) \
     X_VT100_LBL( LBL_SD_CARD_TYPE,                     "Card Type:",                                                                                               "Type de Carte:"                                                                         ) \
@@ -376,6 +384,14 @@ enum Label_e
 
    #if (VT100_USE_COLOR != DEF_ENABLED)
     VT100_MONO_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #endif
+
+   #if (VT100_USE_LANGUAGE_SELECTION != DEF_ENABLED)
+    VT100_SELECT_THE_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #endif
+
+   #if (VT100_USE_TEMPERATURE_SELECTION != DEF_ENABLED)
+    VT100_SELECT_THE_TEMPERATURE_UNIT_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
    #endif
 
   #endif

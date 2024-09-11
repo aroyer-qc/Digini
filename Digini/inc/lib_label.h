@@ -265,6 +265,13 @@ X_LABEL( LBL_CPU_TEMPERATURE,            "CPU Temp:         ",             nullp
 #define VT100_SELECT_THE_TEMPERATURE_UNIT_DEF(X_VT100_LBL) \
     X_VT100_LBL( VT100_LBL_TEMPERATURE_UNIT_SELECTION, "Choose Temp Unit:      \xF8" "C ( )        \xF8" "F ( )",                                                  "Choisir Unit\x82 Temp:    \xF8" "C ( )        \xF8" "F ( )"                             ) \
 
+#define VT100_SERIAL_NUMBER_SETTING_DEF(X_VT100_LBL) \
+    X_VT100_LBL( VT100_LBL_SERIAL_NUMBER_SETTING,      "Setting Serial Number",                                                                                    "Configurer Num\x82ro de S\x82rie"                                                       ) \
+
+#define VT100_TIME_AND_DATE_SETTING_DEF(X_VT100_LBL) \
+    X_VT100_LBL( VT100_LBL_TIME_AND_DATE,              "Time and Date",                                                                                            "Heure et Date"                                                                          ) \
+    X_VT100_LBL( VT100_LBL_TIME_AND_DATE_CONFIG,       "Time and Date Configuration",                                                                              "Configuration Heure et Date"                                                            ) \
+
 #define VT100_SDCARD_INFO_DEF(X_VT100_LBL) \
     X_VT100_LBL( LBL_SD_CARD_INFORMATION,              "SD-Card Information",                                                                                      "Information Carte SD"                                                                   ) \
     X_VT100_LBL( LBL_SD_CARD_TYPE,                     "Card Type:",                                                                                               "Type de Carte:"                                                                         ) \
@@ -386,12 +393,20 @@ enum Label_e
     VT100_MONO_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
    #endif
 
-   #if (VT100_USE_LANGUAGE_SELECTION != DEF_ENABLED)
+   #if (VT100_USE_LANGUAGE_SELECTION == DEF_ENABLED)
     VT100_SELECT_THE_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
    #endif
 
-   #if (VT100_USE_TEMPERATURE_SELECTION != DEF_ENABLED)
+   #if (VT100_USE_TEMPERATURE_SELECTION == DEF_ENABLED)
     VT100_SELECT_THE_TEMPERATURE_UNIT_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #endif
+
+   #if (VT100_USE_SERIAL_NUMBER_SETTING == DEF_ENABLED)
+    VT100_SERIAL_NUMBER_SETTING_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #endif
+
+   #if (VT100_USE_TIME_AND_DATE_SETTING == DEF_ENABLED)
+    VT100_TIME_AND_DATE_SETTING_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
    #endif
 
   #endif

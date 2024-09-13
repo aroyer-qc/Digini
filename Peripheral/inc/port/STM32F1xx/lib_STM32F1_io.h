@@ -32,10 +32,10 @@
 
 #define GPIOxx                              ((uint32_t)0x00000000)
 #define NUMBER_OF_PIN_PER_PORT              ((uint32_t)16)
-                                            
+
 #define LED_Init(p)                         IO_PinInit(p)
 #define LED_Toggle(p)                       IO_TogglePin(p)
-                                       
+
 //#define IO_NULL                           ((IO_TypeDef *)nullptr)
 
 // PinMode
@@ -65,8 +65,6 @@
 
 // When pin mode IO_MODE_ALTERNATE_xxx or IO_MODE_INPUT_NO_PULL
 #define IO_DEFAULT_DONT_CARE                0
-                                       
-
 
 // TODO need to be validated
 // External trigger

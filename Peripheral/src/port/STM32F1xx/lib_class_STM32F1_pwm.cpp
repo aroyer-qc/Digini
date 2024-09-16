@@ -103,7 +103,6 @@ void PWM_Driver::Initialize(void)
     m_pTimer->SetCompareChannel(Channel, m_pInfo->InitialDuty);
     m_pTimer->EnableCompareChannel(Channel);
     m_pTim->BDTR |= TIM_BDTR_MOE;
-    m_pTim->CR1  |= TIM_CR1_CEN;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -134,6 +133,7 @@ void PWM_Driver::SetDuty(uint16_t Duty)
 void PWM_Driver::Start(void)
 {
     m_pTimer->EnableCompareChannel(m_pInfo->Channel);
+    m_pTim->CR1  |= TIM_CR1_CEN;
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -151,7 +151,7 @@ void SPI_Driver::Initialize(void)
     m_DMA_Status  = SYS_IDLE;
     m_NoMemoryIncrement = false;
 
-    // Pre inititialize register that won't change
+    // Pre initialize register that won't change
     m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
     m_DMA_TX.SetDestination((void*)&m_pInfo->pSPIx->DR);        // Configure transmit data register
     m_DMA_TX.EnableTransmitCompleteInterrupt();
@@ -178,7 +178,7 @@ void SPI_Driver::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
 {
-    if(Device == IO_NOT_DEFINED)
+    if(Device != IO_NOT_DEFINED)
     {
         while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
         m_Device = Device;

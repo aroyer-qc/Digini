@@ -73,7 +73,7 @@ const CLI_Function_t CLI_Function[NUMBER_OF_CLI_CMD] =
 const CLI_CmdInputInfo_t CommandLine::m_CmdInputInfo[NUMBER_OF_CLI_CMD]  =
 {
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-    {CLI_CMD_CHILD, 1, {{BASE_POINTER, (int32_t)(VT100_Terminal*)&myVT100, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}} },
+    {CLI_CMD_CHILD, 1, {{BASE_POINTER, (int32_t)(VT100_Terminal*)&myVT100, 0}} },
   #endif
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_INPUT_INFO)

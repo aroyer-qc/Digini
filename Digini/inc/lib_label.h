@@ -65,6 +65,7 @@ X_LABEL( LBL_LONG_UNSIGNED,              "%lu ",                           nullp
 X_LABEL( LBL_LONG_UNSIGNED_SEMICOLON,    "%lu:",                           nullptr                                         ) \
 X_LABEL( LBL_UNSIGNED_2_DIGIT_SEMICOLON, "%02u:",                          nullptr                                         ) \
 X_LABEL( LBL_UNSIGNED_2_DIGIT,           "%02u ",                          nullptr                                         ) \
+X_LABEL( LBL_PERCENT,                    "%2d",                            nullptr                                         ) \
 X_LABEL( LBL_STRING_AND_ONE_SPACE,       "%s ",                            nullptr                                         ) \
 X_LABEL( LBL_SIZE_GIGABYTES,             "%u.%02u GBytes",                 "%u.%02u GOctets"                               ) \
 X_LABEL( LBL_SIZE_MEGABYTES,             "%u.%02u MBytes",                 "%u.%02u MOctets"                               ) \

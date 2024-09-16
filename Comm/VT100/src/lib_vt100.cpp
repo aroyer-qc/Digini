@@ -1078,7 +1078,7 @@ size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat
 
     if((m_BypassPrintf == false) && (m_LogsAreMuted == false))
     {
-        //// SYS_Read(SYS_DEBUG_LEVEL, MAIN_ACU, 0, &DebugLevel, nullptr);
+        //// SYS_Read(SYSTEM_DEBUG_LEVEL, MAIN_ACU, 0, &DebugLevel, nullptr);
         if((DebugLevel & Level) != 0)
         {
             if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE), MEM_DBG_VT100_3) == nullptr)

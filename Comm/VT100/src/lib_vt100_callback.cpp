@@ -309,7 +309,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
           #else
              char* pBuffer;
 
-             if(pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE, MEM_DBG_VT100_CB_SYSSET_1) != nullptr)
+             if((pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE, MEM_DBG_VT100_CB_SYSSET_1)) != nullptr)
              {
                  DB_Central.Get(pBuffer, SERIAL_NUMBER_TEXT);
                  myVT100.InMenuPrintf(LBL_STRING, pBuffer);
@@ -426,7 +426,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
       #if (DIGINI_USE_DATABASE == DISABLED)
         DebugLevel = BSP_GlobalDebugLevel;
       #else
-        DB_Central.Get(&DebugLevel, SYS_DEBUG_LEVEL, 0, 0);
+        DB_Central.Get(&DebugLevel, SYSTEM_DEBUG_LEVEL, 0, 0);
       #endif
         VT100_LastDebugLevel = DebugLevel;
 
@@ -472,7 +472,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
       #if (DIGINI_USE_DATABASE == DISABLED)
         BSP_GlobalDebugLevel = DebugLevel;
       #else
-        DB_Central.Set(&DebugLevel, SYS_DEBUG_LEVEL);           // Write a Record in backup RAM
+        DB_Central.Set(&DebugLevel, SYSTEM_DEBUG_LEVEL);           // Write a Record in backup RAM
       #endif
     }
 
@@ -1009,7 +1009,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                     }
                 }
                 break;
-                
+
                 case int(MenuSystemSetting_ID_MISC_TIME):
                 {
                     if(pBuffer1 != nullptr)

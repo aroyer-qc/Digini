@@ -44,6 +44,7 @@
 // Common label
 #define COMMON_LANGUAGE_DEF(X_LABEL) \
 X_LABEL( LBL_NULL,                       nullptr,                          nullptr                                         ) \
+X_LABEL( LBL_OK,                         "Ok",                             nullptr                                         ) \
 X_LABEL( LBL_CLEAR_SCREEN,               "\033[2J\033[H",                  nullptr                                         ) \
 X_LABEL( LBL_RESET_TERMINAL,             "\033c\n",                        nullptr                                         ) \
 X_LABEL( LBL_STRING,                     "%s",                             nullptr                                         ) \
@@ -76,6 +77,7 @@ X_LABEL( LBL_DEGREE_FAHRENHEIT,          "\xF8" "F",                       nullp
 X_LABEL( LBL_ENABLED,                    "Enabled ",                       "Activ\x82 "                                    ) \
 X_LABEL( LBL_DISABLED,                   "Disabled",                       "D\x82" "activ\x82"                             ) \
 X_LABEL( LBL_SYSTEM_INFO,                "System Info",                    "Info Syst\x8ame"                               ) \
+X_LABEL( LBL_MAIN_MENU,                  "Main Menu",                      "Menu Principal"                                ) \
 
 // Network label
 #define NET_LANGUAGE_DEF(X_LABEL) \
@@ -142,6 +144,33 @@ X_LABEL( LBL_BUILT_DATE,                 OUR_FIRMWARE_BUILD_DATE,          nullp
 X_LABEL( LBL_CPU_VOLTAGE,                "Voltages:",                      nullptr                                         ) \
 X_LABEL( LBL_CPU_TEMPERATURE,            "CPU Temp:         ",             nullptr                                         ) \
 
+#define DECIMAL_KEY_LABEL_LANGUAGE_DEF(X_LABEL) \
+X_LABEL( LBL_1,                          "1",                              nullptr                                         ) \
+X_LABEL( LBL_2,                          "2",                              nullptr                                         ) \
+X_LABEL( LBL_3,                          "3",                              nullptr                                         ) \
+X_LABEL( LBL_4,                          "4",                              nullptr                                         ) \
+X_LABEL( LBL_5,                          "5",                              nullptr                                         ) \
+X_LABEL( LBL_6,                          "6",                              nullptr                                         ) \
+X_LABEL( LBL_7,                          "7",                              nullptr                                         ) \
+X_LABEL( LBL_8,                          "8",                              nullptr                                         ) \
+X_LABEL( LBL_9,                          "9",                              nullptr                                         ) \
+X_LABEL( LBL_0,                          "0",                              nullptr                                         ) \
+X_LABEL( LBL_DEL,                        "Del",                            nullptr                                         ) \
+X_LABEL( LBL_DOT,                        ".",                              nullptr                                         ) \
+X_LABEL( LBL_SIGN,                       "-",                              nullptr                                         ) \
+X_LABEL( LBL_TOGGLE_SIGN,                "+/-",                            nullptr                                         ) \
+
+#define HEXADECIMAL_KEY_LABEL_LANGUAGE_DEF(X_LABEL) \
+X_LABEL( LBL_A,                          "A",                              nullptr                                         ) \
+X_LABEL( LBL_B,                          "B",                              nullptr                                         ) \
+X_LABEL( LBL_C,                          "C",                              nullptr                                         ) \
+X_LABEL( LBL_D,                          "D",                              nullptr                                         ) \
+X_LABEL( LBL_E,                          "E",                              nullptr                                         ) \
+X_LABEL( LBL_F,                          "F",                              nullptr                                         ) \
+
+#define STANDARD_TEST_STRING_LANGUAGE_DEF(X_LABEL) \
+X_LABEL( LBL_TEST,  "the quick brown fox jumps over the lazy dog",         "portez ce vieux whisky au juge blond qui fume" ) \
+
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
@@ -201,7 +230,6 @@ X_LABEL( LBL_CPU_TEMPERATURE,            "CPU Temp:         ",             nullp
     X_VT100_LBL( VT100_LBL_EOL_ERASE,                  "\033[K",                                                                                                   nullptr                                                                                  ) \
     X_VT100_LBL( VT100_LBL_ERASE_FROM_CURSOR_N_CHAR,   "\033[%dX",                                                                                                 nullptr                                                                                  ) \
     X_VT100_LBL( VT100_LBL_LINE_SEPARATOR,             "----------------------------------------------------------------------------------------------------\n",   nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_MAIN_MENU,                  "Main Menu",                                                                                                "Menu Principal"                                                                         ) \
     X_VT100_LBL( VT100_LBL_SELECT,                     "Please Select:\n",                                                                                         "Faire une S\x82lection:\n"                                                              ) \
     X_VT100_LBL( VT100_LBL_QUIT,                       "Quit\n",                                                                                                   "Quitter\n"                                                                              ) \
     X_VT100_LBL( VT100_LBL_ENTER_SELECTION,            "\r Enter Selection [<ESC>, 1 - %c] > ",                                                                    "\r Entrer S\x82lection [<ESC>, 1 - %c] > "                                              ) \
@@ -348,6 +376,18 @@ enum Label_e
     TIME_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
   #endif
 
+  #if (LABEL_USE_DECIMAL_KEY == DEF_ENABLED)
+    DECIMAL_KEY_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+      
+  #if (LABEL_USE_HEXADECIMAL_KEY == DEF_ENABLED)
+    HEXADECIMAL_KEY_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+  
+  #if (LABEL_USE_STANDARD_TEST_STRING == DEF_ENABLED)
+    STANDARD_TEST_STRING_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+  
   ///-----------------------------------------------------------------------------------------------
   /// Command line interface label
 

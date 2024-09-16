@@ -51,6 +51,18 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
     TIME_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
   #endif
 
+  #if (LABEL_USE_DECIMAL_KEY == DEF_ENABLED)
+    DECIMAL_KEY_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+  #endif
+      
+  #if (LABEL_USE_HEXADECIMAL_KEY == DEF_ENABLED)
+    HEXADECIMAL_KEY_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+  #endif
+
+  #if (LABEL_USE_STANDARD_TEST_STRING == DEF_ENABLED)
+    STANDARD_TEST_STRING_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
+  #endif
+
   ///-----------------------------------------------------------------------------------------------
   /// Command line interface label
 

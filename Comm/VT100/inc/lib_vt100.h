@@ -72,7 +72,7 @@
 
 #define VT100_MENU_TREE_DEF(ENTRY, MENU) \
 \
-                                                ENTRY  (MENU,  MenuMain,                ID_MAIN_TITLE,                       CALLBACK_None,                           VT100_MENU_MAIN_FALLBACK,         VT100_LBL_MAIN_MENU                             )  \
+                                                ENTRY  (MENU,  MenuMain,                ID_MAIN_TITLE,                       CALLBACK_None,                           VT100_MENU_MAIN_FALLBACK,         LBL_MAIN_MENU                                   )  \
     IF_USE( LABEL_USE_PRODUCT_INFO,             ENTRY  (MENU,  MenuMain,                ID_INFO_DISPLAY,                     CALLBACK_ProductInformation,             MenuProductInformation,           VT100_LBL_SYSTEM_INFO                           ) )\
     IF_USE( DIGINI_USE_STACKTISTIC,             ENTRY  (MENU,  MenuMain,                ID_STACK_DISPLAY,                    CALLBACK_None,                           MenuStackUsage,                   VT100_LBL_STACKTISTIC                           ) )\
     IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE,        ENTRY  (MENU,  MenuMain,                ID_DEBUG_MENU,                       CALLBACK_None,                           MenuDebug,                        VT100_LBL_DEBUG                                 ) )\

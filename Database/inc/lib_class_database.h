@@ -163,7 +163,6 @@ EXTERN_LIB_CLASS_DATABASE class CDataBase DB_Central;
 #include "./Database/inc/lib_class_ram_dbase.h"
 #include "./Database/inc/lib_class_rom_dbase.h"
 #include "./Database/inc/port/lib_class_bkpreg_dbase.h"
-#include "./Database/inc/lib_database_wrapper.h"
 
 //-------------------------------------------------------------------------------------------------
 

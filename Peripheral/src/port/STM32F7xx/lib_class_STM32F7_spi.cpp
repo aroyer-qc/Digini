@@ -69,16 +69,15 @@ SPI_Driver* SPI_Driver::m_pDriver[NB_OF_SPI_DRIVER] = {nullptr};
 //-------------------------------------------------------------------------------------------------
 SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
 {
-    m_SPI_ID     = SPI_ID;
-    m_Device     = IO_NOT_DEFINED;
-    m_pInfo      = &SPI_Info[SPI_ID];
-    m_Status     = SYS_UNKNOWN;
-    m_Mutex      = NULL;
+    m_SPI_ID          = SPI_ID;
+    m_Device          = IO_NOT_DEFINED;
+    m_pInfo           = &SPI_Info[SPI_ID];
+    m_Status          = SYS_UNKNOWN;
     m_pDriver[SPI_ID] = this;
 
   #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     m_DMA_Status = SYS_UNKNOWN;
-  #endif  
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -139,7 +138,7 @@ void SPI_Driver::Initialize(void)
         }
         break;
       #endif
-      
+
       #if (SPI_DRIVER_SUPPORT_SPI4_CFG == DEF_ENABLED)
         case uint32_t(DRIVER_SPI4_ID):
         {
@@ -183,23 +182,13 @@ void SPI_Driver::Initialize(void)
     //CLEAR_BIT(pSPIx->I2SCFGR, SPI_I2SCFGR_I2SMOD);
 
     //---------------------------- SPIx CR1 Configuration and enable module ------
-    
+
     CLEAR_BIT(m_pInfo->pSPIx->CR1, SPI_CR1_SPE);                // Disable SPIx
     MODIFY_REG(m_pInfo->pSPIx->CR1, SPI_CFG_CR1_CLEAR_MASK, m_pInfo->Config);
     SetPrescalerFromSpeed(m_pInfo->Speed, PCLK_Frequency);
     SET_BIT(m_pInfo->pSPIx->CR1, SPI_CR1_SPE);                  // Enable SPIx
 
-//    Config(SPI_CFG_CR1_CLEAR_MASK, SPI_MODE_MASTER      |
-//                                   SPI_DATA_WIDTH_8_BIT |
-//                                   SPI_POLARITY_LOW     |
-//                                   SPI_PHASE_1_EDGE     |
-//                                   SPI_NSS_SOFT         |   // This driver doesn't use NSS function of the module
-//                                   SPI_MSB_FIRST        |
-//                                   m_pInfo->Control     |   // TODO should use DMA method to merge all settings.
-//                                   m_pInfo->Speed);
-
     //----------------------------------------------------------------------------
-    
 
   #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     m_DMA_Status = SYS_IDLE;
@@ -240,7 +229,7 @@ void SPI_Driver::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
 {
-    if(m_Device == IO_NOT_DEFINED)
+    if(Device != IO_NOT_DEFINED)
     {
         while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
         m_Device = Device;
@@ -266,7 +255,7 @@ SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::UnlockFromDevice(IO_ID_e Device)
 {
-    if(m_Device == Device)
+    if(Device == m_Device)
     {
         nOS_MutexUnlock(&m_Mutex);
         m_Device = IO_NOT_DEFINED;
@@ -453,9 +442,9 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
         if((pTX_Data != nullptr) && (TX_Size != 0))
         {
           #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-            
+
             if(m_IsItUsingDMA_TX == true)
-            {                
+            {
                 // TX DMA
                 m_DMA_Status = SYS_BUSY_TX;                                 // Set flag to busy in TX
                 m_DMA_TX.SetSource(pTX_Data);                               // Set DMA source
@@ -483,7 +472,7 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
             }
             else
           #endif
-            
+
             {
                 // IRQ method
             }
@@ -502,7 +491,7 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
 
               #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
                 if(m_IsItUsingDMA_RX == true)
-                {                
+                {
                     m_DMA_Status = SYS_BUSY_RX;                                 // Set flag to busy in TX
 
                     // TX DMA

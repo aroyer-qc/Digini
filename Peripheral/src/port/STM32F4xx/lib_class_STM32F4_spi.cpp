@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F7_spi.cpp
+//  File : lib_class_STM32F4_spi.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -188,9 +188,7 @@ void SPI_Driver::Initialize(void)
     SetPrescalerFromSpeed(m_pInfo->Speed, PCLK_Frequency);
     SET_BIT(m_pInfo->pSPIx->CR1, SPI_CR1_SPE);                  // Enable SPIx
 
-
     //----------------------------------------------------------------------------
-
 
   #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     m_DMA_Status = SYS_IDLE;
@@ -231,7 +229,7 @@ void SPI_Driver::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
 {
-    if(m_Device == IO_NOT_DEFINED)
+    if(Device != IO_NOT_DEFINED)
     {
         while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
         m_Device = Device;
@@ -257,7 +255,7 @@ SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::UnlockFromDevice(IO_ID_e Device)
 {
-    if(m_Device == Device)
+    if(Device == m_Device)
     {
         nOS_MutexUnlock(&m_Mutex);
         m_Device = IO_NOT_DEFINED;

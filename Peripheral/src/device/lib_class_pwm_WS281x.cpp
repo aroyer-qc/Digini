@@ -97,7 +97,7 @@ void WS281x::Initialize()
     m_DMA.SetLength(WS281x_DMA_FULL_BUFFER_SIZE);
     m_DMA.EnableTransmitCompleteInterrupt();
     m_DMA.EnableTransmitHalfCompleteInterrupt();
-    m_DMA.EnableIRQ(6);
+    m_DMA.EnableIRQ();
 }
 
 //-------------------------------------------------------------------------------------------------

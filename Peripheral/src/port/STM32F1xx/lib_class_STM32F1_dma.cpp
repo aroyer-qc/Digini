@@ -57,6 +57,8 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 {
     m_pDMA              = pInfo->pDMA;
     m_pDMA_Channel      = pInfo->pDMA_Channel;
+    m_IRQn_Channel = pInfo->IRQn_Channel;
+    m_PreempPrio   = pInfo->PreempPrio;
     EnableClock();
     m_pDMA_Channel->CCR = pInfo->Config;
     m_Direction         = pInfo->Config & DMA_DIRECTION_MASK;
@@ -233,15 +235,15 @@ void DMA_Driver::EnableClock(void)
 //
 //  Name:           EnableIRQ
 //
-//  Parameter(s):   uint8_t    PremptionPriority
+//  Parameter(s):   None
 //  Return:         None
 //
 //  Description:    Enable the IRQ DMA for the Channel and Stream
 //
 //-------------------------------------------------------------------------------------------------
-void DMA_Driver::EnableIRQ(uint8_t PremptionPriority)
+void DMA_Driver::EnableIRQ()
 {
-    ISR_Init(m_IRQn_Channel, PremptionPriority);
+    ISR_Init(m_IRQn_Channel, m_PreempPrio);
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -111,7 +111,7 @@ void SPI_Driver::Initialize(void)
             RCC->APB2RSTR |=  RCC_APB2RSTR_SPI1RST;             // Enable SPI1 reset state
             RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI1RST;             // Release SPI1 from reset state
             RCC->APB2ENR  |=  RCC_APB2ENR_SPI1EN;               // Enable SPI_PORT clock
-            PCLK_Frequency = HAL_RCC_GetPCLK2Freq();
+            PCLK_Frequency =  SYS_APB2_CLOCK_FREQUENCY;
         }
         break;
       #endif
@@ -123,7 +123,7 @@ void SPI_Driver::Initialize(void)
             RCC->APB1RSTR |=  RCC_APB1RSTR_SPI2RST;             // Enable SPI2 reset state
             RCC->APB1RSTR &= ~RCC_APB1RSTR_SPI2RST;             // Release SPI2 from reset state
             RCC->APB1ENR  |=  RCC_APB1ENR_SPI2EN;               // Enable SPI_PORT clock
-            PCLK_Frequency = HAL_RCC_GetPCLK1Freq();
+            PCLK_Frequency =  SYS_APB1_CLOCK_FREQUENCY;
         }
         break;
       #endif
@@ -135,7 +135,7 @@ void SPI_Driver::Initialize(void)
             RCC->APB1RSTR |=  RCC_APB1RSTR_SPI3RST;             // Enable SPI3 reset state
             RCC->APB1RSTR &= ~RCC_APB1RSTR_SPI3RST;             // Release SPI3 from reset state
             RCC->APB1ENR  |=  RCC_APB1ENR_SPI3EN;               // Enable SPI_PORT clock
-            PCLK_Frequency = HAL_RCC_GetPCLK1Freq();
+            PCLK_Frequency =  SYS_APB1_CLOCK_FREQUENCY;
         }
         break;
       #endif
@@ -147,7 +147,7 @@ void SPI_Driver::Initialize(void)
             RCC->APB2RSTR |=  RCC_APB2RSTR_SPI4RST;             // Enable SPI4 reset state
             RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI4RST;             // Release SPI4 from reset state
             RCC->APB2ENR  |=  RCC_APB2ENR_SPI4EN;               // Enable SPI_PORT clock
-            PCLK_Frequency = HAL_RCC_GetPCLK2Freq();
+            PCLK_Frequency =  SYS_APB2_CLOCK_FREQUENCY;
         }
         break;
       #endif
@@ -159,7 +159,7 @@ void SPI_Driver::Initialize(void)
             RCC->APB2RSTR |=  RCC_APB2RSTR_SPI5RST;             // Enable SPI5 reset state
             RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI5RST;             // Release SPI5 from reset state
             RCC->APB2ENR  |=  RCC_APB2ENR_SPI5EN;               // Enable SPI_PORT clock
-            PCLK_Frequency = HAL_RCC_GetPCLK2Freq();
+            PCLK_Frequency =  SYS_APB2_CLOCK_FREQUENCY;
         }
         break;
       #endif
@@ -171,7 +171,7 @@ void SPI_Driver::Initialize(void)
             RCC->APB2RSTR |=  RCC_APB2RSTR_SPI6RST;             // Enable SPI6 reset state
             RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI6RST;             // Release SPI6 from reset state
             RCC->APB2ENR  |=  RCC_APB2ENR_SPI6EN;               // Enable SPI_PORT clock
-            PCLK_Frequency = HAL_RCC_GetPCLK2Freq();
+            PCLK_Frequency =  SYS_APB2_CLOCK_FREQUENCY;
         }
         break;
       #endif

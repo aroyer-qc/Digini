@@ -69,16 +69,15 @@ SPI_Driver* SPI_Driver::m_pDriver[NB_OF_SPI_DRIVER] = {nullptr};
 //-------------------------------------------------------------------------------------------------
 SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
 {
-    m_SPI_ID     = SPI_ID;
-    m_Device     = IO_NOT_DEFINED;
-    m_pInfo      = &SPI_Info[SPI_ID];
-    m_Status     = SYS_UNKNOWN;
-    m_Mutex      = NULL;
+    m_SPI_ID          = SPI_ID;
+    m_Device          = IO_NOT_DEFINED;
+    m_pInfo           = &SPI_Info[SPI_ID];
+    m_Status          = SYS_UNKNOWN;
     m_pDriver[SPI_ID] = this;
 
   #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     m_DMA_Status = SYS_UNKNOWN;
-  #endif  
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -111,7 +110,7 @@ void SPI_Driver::Initialize(void)
             RCC->APB2RSTR |=  RCC_APB2RSTR_SPI1RST;             // Enable SPI1 reset state
             RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI1RST;             // Release SPI1 from reset state
             RCC->APB2ENR  |=  RCC_APB2ENR_SPI1EN;               // Enable SPI_PORT clock
-            PCLK_Frequency = HAL_RCC_GetPCLK2Freq();
+            PCLK_Frequency =  SYS_APB2_CLOCK_FREQUENCY;
         }
         break;
       #endif
@@ -123,7 +122,7 @@ void SPI_Driver::Initialize(void)
             RCC->APB1RSTR |=  RCC_APB1RSTR_SPI2RST;             // Enable SPI2 reset state
             RCC->APB1RSTR &= ~RCC_APB1RSTR_SPI2RST;             // Release SPI2 from reset state
             RCC->APB1ENR  |=  RCC_APB1ENR_SPI2EN;               // Enable SPI_PORT clock
-            PCLK_Frequency = HAL_RCC_GetPCLK1Freq();
+            PCLK_Frequency =  SYS_APB1_CLOCK_FREQUENCY;
         }
         break;
       #endif
@@ -135,11 +134,11 @@ void SPI_Driver::Initialize(void)
             RCC->APB1RSTR |=  RCC_APB1RSTR_SPI3RST;             // Enable SPI3 reset state
             RCC->APB1RSTR &= ~RCC_APB1RSTR_SPI3RST;             // Release SPI3 from reset state
             RCC->APB1ENR  |=  RCC_APB1ENR_SPI3EN;               // Enable SPI_PORT clock
-            PCLK_Frequency = HAL_RCC_GetPCLK1Freq();
+            PCLK_Frequency =  SYS_APB1_CLOCK_FREQUENCY;
         }
         break;
       #endif
-      
+
       #if (SPI_DRIVER_SUPPORT_SPI4_CFG == DEF_ENABLED)
         case uint32_t(DRIVER_SPI4_ID):
         {
@@ -147,7 +146,7 @@ void SPI_Driver::Initialize(void)
             RCC->APB2RSTR |=  RCC_APB2RSTR_SPI4RST;             // Enable SPI4 reset state
             RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI4RST;             // Release SPI4 from reset state
             RCC->APB2ENR  |=  RCC_APB2ENR_SPI4EN;               // Enable SPI_PORT clock
-            PCLK_Frequency = HAL_RCC_GetPCLK2Freq();
+            PCLK_Frequency =  SYS_APB2_CLOCK_FREQUENCY;
         }
         break;
       #endif
@@ -159,7 +158,7 @@ void SPI_Driver::Initialize(void)
             RCC->APB2RSTR |=  RCC_APB2RSTR_SPI5RST;             // Enable SPI5 reset state
             RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI5RST;             // Release SPI5 from reset state
             RCC->APB2ENR  |=  RCC_APB2ENR_SPI5EN;               // Enable SPI_PORT clock
-            PCLK_Frequency = HAL_RCC_GetPCLK2Freq();
+            PCLK_Frequency =  SYS_APB2_CLOCK_FREQUENCY;
         }
         break;
       #endif
@@ -171,7 +170,7 @@ void SPI_Driver::Initialize(void)
             RCC->APB2RSTR |=  RCC_APB2RSTR_SPI6RST;             // Enable SPI6 reset state
             RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI6RST;             // Release SPI6 from reset state
             RCC->APB2ENR  |=  RCC_APB2ENR_SPI6EN;               // Enable SPI_PORT clock
-            PCLK_Frequency = HAL_RCC_GetPCLK2Freq();
+            PCLK_Frequency =  SYS_APB2_CLOCK_FREQUENCY;
         }
         break;
       #endif
@@ -183,7 +182,7 @@ void SPI_Driver::Initialize(void)
     //CLEAR_BIT(pSPIx->I2SCFGR, SPI_I2SCFGR_I2SMOD);
 
     //---------------------------- SPIx CR1 Configuration and enable module ------
-    
+
     CLEAR_BIT(m_pInfo->pSPIx->CR1, SPI_CR1_SPE);                // Disable SPIx
     MODIFY_REG(m_pInfo->pSPIx->CR1, SPI_CFG_CR1_CLEAR_MASK, m_pInfo->Config);
     SetPrescalerFromSpeed(m_pInfo->Speed, PCLK_Frequency);
@@ -191,7 +190,7 @@ void SPI_Driver::Initialize(void)
 
 
     //----------------------------------------------------------------------------
-    
+
 
   #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     m_DMA_Status = SYS_IDLE;
@@ -445,9 +444,9 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
         if((pTX_Data != nullptr) && (TX_Size != 0))
         {
           #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-            
+
             if(m_IsItUsingDMA_TX == true)
-            {                
+            {
                 // TX DMA
                 m_DMA_Status = SYS_BUSY_TX;                                 // Set flag to busy in TX
                 m_DMA_TX.SetSource(pTX_Data);                               // Set DMA source
@@ -475,7 +474,7 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
             }
             else
           #endif
-            
+
             {
                 // IRQ method
             }
@@ -494,7 +493,7 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
 
               #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
                 if(m_IsItUsingDMA_RX == true)
-                {                
+                {
                     m_DMA_Status = SYS_BUSY_RX;                                 // Set flag to busy in TX
 
                     // TX DMA

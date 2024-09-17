@@ -98,6 +98,10 @@
 
 #include "project_def.h"
 
+#if (DIGINI_USE_DATABASE == DEF_ENABLED)
+#include "database_cfg.h"
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // Stack check and statistic
 //
@@ -106,15 +110,13 @@
 //-------------------------------------------------------------------------------------------------
 // System Clock
 //
-#include "./Peripheral/inc/port/lib_system_clock.h"       // No relative PATH here because it depend on CPU and project
+#include "./Peripheral/inc/port/lib_system_clock.h"
 
 //-------------------------------------------------------------------------------------------------
 // Digini library
 //
 #include "./Peripheral/inc/port/lib_cpu_specific.h"
 #include "./Digini/inc/lib_assert.h"
-
-
 #include "./Database/inc/lib_class_database.h"
 #include "./Digini/inc/lib_class_cbi.h"                      // Callback interface
 #include "./Digini/inc/lib_label.h"

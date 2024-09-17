@@ -35,14 +35,9 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "./Database/inc/lib_database_wrapper.h"
-//#include "./Digini/inc/lib_typedef.h"
-//#include "project_def.h"
-#include "./Digini/inc/lib_label.h"
-//#include "database_cfg.h"
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
   #include "./Grafx/inc/lib_grafx_dbase.h"
 #endif
-//#include <string.h>
 
 //-------------------------------------------------------------------------------------------------
 // Global Macro

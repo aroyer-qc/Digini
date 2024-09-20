@@ -121,6 +121,9 @@
 #define VT100_NEW_LANGUAGE                                    0
 #define VT100_ACTUAL_LANGUAGE                                 1
 
+#define VT100_NEW_TEMPERATURE_SELECTION                       0
+#define VT100_ACTUAL_TEMPERATURE_SELECTION                    1
+
 //-------------------------------------------------------------------------------------------------
 // Variable(s)
 //-------------------------------------------------------------------------------------------------
@@ -136,11 +139,11 @@ static uint8_t*                 pBuffer2 = nullptr;
 //-------------------------------------------------------------------------------------------------
 
 Language_e VT100_DisplayLanguageSelection(Language_e Language, bool StateInit = false);
+TempUnit_e VT100_DisplayTemperatureSelection(TempUnit_e Unit, bool StateInit = false);
 
 //-------------------------------------------------------------------------------------------------
 // Private(s) function(s)
 //-------------------------------------------------------------------------------------------------
-
 
 Language_e VT100_DisplayLanguageSelection(Language_e Language, bool StateInit)
 {
@@ -163,6 +166,29 @@ Language_e VT100_DisplayLanguageSelection(Language_e Language, bool StateInit)
     }
 
     return Language;
+}
+
+TempUnit_e VT100_DisplayTemperatureSelection(TempUnit_e Unit, bool StateInit)
+{
+    myVT100.SetForeColor(VT100_COLOR_CYAN);
+
+    if(StateInit == false)
+    {
+        Unit = (Unit == TEMP_CELSIUS) ? TEMP_FAHRENHEIT : TEMP_CELSIUS;
+    }
+
+    if(Unit == TEMP_CELSIUS)
+    {
+        myVT100.InMenuPrintf(36, 12, LBL_STRING, "*");
+        myVT100.InMenuPrintf(50, 12, LBL_STRING, " ");
+    }
+    else
+    {
+        myVT100.InMenuPrintf(36, 12, LBL_STRING, " ");
+        myVT100.InMenuPrintf(50, 12, LBL_STRING, "*");
+    }
+
+    return Unit;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -935,6 +961,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
 VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_CallBackType_e Type)
 {
     static Language_e* pLanguage = nullptr;
+    static TempUnit_e* pTempUnit = nullptr;
 
     switch(Type)
     {
@@ -952,13 +979,25 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                 VT100_DisplayLanguageSelection(pLanguage[VT100_ACTUAL_LANGUAGE], true);
             }
 
-            pBuffer1 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VT100_CB_SYSSET_5);         // To get a new serial number
-            pBuffer2 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VT100_CB_SYSSET_6);         // use to compare Serial number
+            pTempUnit = (TempUnit_e*)pMemoryPool->Alloc(sizeof(TempUnit_e) * 2, MEM_DBG_VT100_CB_SYSSET_5);
+            if(pTempUnit != nullptr)
+            {
+              #if (DIGINI_USE_DATABASE != DEF_DISABLED)
+                DB_Central.Get(&pTempUnit[VT100_ACTUAL_TEMPERATURE_SELECTION], SYSTEM_TEMPERATURE_UNIT);
+              #else
+                pTempUnit[VT100_ACTUAL_TEMPERATURE_SELECTION] = TEMP_CELSIUS;
+              #endif
+                pTempUnit[VT100_NEW_TEMPERATURE_SELECTION] = pTempUnit[VT100_ACTUAL_TEMPERATURE_SELECTION];
+                VT100_DisplayTemperatureSelection(pTempUnit[VT100_ACTUAL_TEMPERATURE_SELECTION], true);
+            }
+
+            pBuffer1 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VT100_CB_SYSSET_6);         // To get a new serial number
+            pBuffer2 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VT100_CB_SYSSET_7);         // use to compare Serial number
             if((pBuffer1 != nullptr) && (pBuffer2 != nullptr))
             {
               #if (DIGINI_USE_DATABASE != DEF_DISABLED)
-                DB_Central.Get(&pBuffer1, SYSTEM_SERIAL_NUMBER);
-                DB_Central.Get(&pBuffer2, SYSTEM_SERIAL_NUMBER);
+                DB_Central.Get(&pBuffer1, OEM_SERIAL_NUMBER);
+                DB_Central.Get(&pBuffer2, OEM_SERIAL_NUMBER);
               #else
                 // TODO
               #endif
@@ -971,6 +1010,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
             pMemoryPool->Free((void**)&pBuffer1);
             pMemoryPool->Free((void**)&pBuffer2);
             pMemoryPool->Free((void**)&pLanguage);
+            pMemoryPool->Free((void**)&pTempUnit);
         }
         break;
 
@@ -995,6 +1035,17 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                     {
                         myVT100.SetStringInput(32, 16, sizeof(OEM_SERIAL_NUMBER), Input, LBL_SERIAL_NUMBER, (const char*)pBuffer1);
                         return VT100_INPUT_STRING;
+                    }
+                }
+                break;
+
+                case int(MenuSystemSetting_ID_SYSTEM_TEMPERATURE):       // Temperature Unit selection
+                {
+                    if(pTempUnit != nullptr)
+                    {
+                        // Do toggle according to language
+                        pTempUnit[VT100_NEW_TEMPERATURE_SELECTION] = VT100_DisplayTemperatureSelection(pTempUnit[VT100_NEW_TEMPERATURE_SELECTION]);
+                        myVT100.UpdateSaveLabel(VT100_COLOR_YELLOW);
                     }
                 }
                 break;
@@ -1039,12 +1090,26 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                         }
                     }
 
+                    if(pTempUnit != nullptr)
+                    {
+                        if(pTempUnit[VT100_NEW_TEMPERATURE_SELECTION] != pTempUnit[VT100_ACTUAL_TEMPERATURE_SELECTION])
+                        {
+                          #if (DIGINI_USE_DATABASE != DEF_DISABLED)
+                            DB_Central.Set(&pTempUnit[VT100_NEW_TEMPERATURE_SELECTION], SYSTEM_TEMPERATURE_UNIT);
+                          #endif
+                            myVT100.SetRefreshFullPage();
+                          #if (DIGINI_USE_GRAFX == DEF_ENABLED)
+                            GUI_pTask->SetForceRefresh();                                                       // Force the graphic page to also be refresh to new language
+                          #endif
+                        }
+                    }
+
                   #if (DIGINI_USE_DATABASE != DEF_DISABLED)
                     if((pBuffer1 != nullptr) && (pBuffer2 != nullptr))
                     {
                         if(memcmp(pBuffer1, pBuffer2, sizeof(OEM_SERIAL_NUMBER)) != 0)
                         {
-                            DB_Central.Set(&pBuffer1, SYSTEM_SERIAL_NUMBER);
+                            DB_Central.Set(&pBuffer1, OEM_SERIAL_NUMBER);
                         }
                     }
                   #endif

@@ -119,9 +119,10 @@
 #include "./Digini/inc/lib_assert.h"
 #include "./Database/inc/lib_class_database.h"
 #include "./Digini/inc/lib_class_cbi.h"                      // Callback interface
-#include "./Digini/inc/lib_label.h"
+//#include "./Digini/inc/lib_label.h"
 #include "./Digini/inc/lib_macro.h"
 #include "./Digini/inc/lib_advanced_macro.h"
+#include "./Digini/inc/lib_label.h"
 #include "./Digini/inc/lib_typedef.h"
 #include "./String/inc/lib_string.h"
 #include "./RTOS_Wrapper/inc/nOS/lib_class_queue.h"

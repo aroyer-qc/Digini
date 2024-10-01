@@ -211,9 +211,9 @@ X_LABEL( LBL_TEST,  "the quick brown fox jumps over the lazy dog",         "port
   /*) */\
     X_CLI_LBL_CFG( LBL_CMD_HELP_MUTE_DEBUG,             "Mute the debugging output",                                                                               "D\x82" "activer l'affichage du d\x82" "bogage"                                          ) \
     X_CLI_LBL_CFG( LBL_CMD_HELP_UNMUTE_DEBUG,           "Unmute the debugging output",                                                                             "R\x82" "activer l'affichage du d\x82" "bogage"                                          ) \
- /* IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, */ \
+  IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE,  \
     X_CLI_LBL_CFG( LBL_CMD_HELP_DEBUG,                  "Display debugging information",                                                                           "Afficher les informations de d\x82" "bogage"                                            ) \
- /* ) */\
+  ) \
     X_CLI_LBL_CFG( LBL_CMD_HELP_HOLD,                   "Hold on the startup sequence",                                                                            "Suspendre la s\x82quence de démarrage"                                                  ) \
     X_CLI_LBL_CFG( LBL_CMD_HELP_RELEASE,                "Release the startup sequence",                                                                            "R\x82sumer la s\x82quence de démarrage"                                                 ) \
     X_CLI_LBL_CFG( LBL_CMD_HELP_VERSION,                "Display version information",                                                                             "Afficher les informations de version"                                                   ) \

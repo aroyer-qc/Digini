@@ -42,14 +42,15 @@
 //-------------------------------------------------------------------------------------------------
 
 // common expansion macros
-#define EXPAND_CLI_CMD_AS_ENUM(NAME, STRING, FUNCTION, ...)                             NAME,
-#define EXPAND_CLI_CMD_AS_CONST_STRING(NAME, STRING, FUNCTION, ...)                     const char CommandLine::m_Str##NAME[] = STRING;
-#define EXPAND_CLI_CMD_AS_CLASS_CONST_STRING(NAME, STRING, FUNCTION, ...)               static const char m_Str##NAME[];
-#define EXPAND_CLI_CMD_AS_CMD_STRING(NAME, STRING, FUNCTION, ...)                       &m_Str##NAME[0],
-#define EXPAND_CLI_CMD_AS_STRING_SIZE(NAME, STRING, FUNCTION, ...)                      sizeof(STRING) - 1,
-#define EXPAND_CLI_CMD_AS_FUNCTION(NAME, STRING, FUNCTION, ...)                         SystemState_e FUNCTION(void*);
-#define EXPAND_CLI_CMD_AS_FUNCTION_POINTER(NAME, STRING, FUNCTION, ...)                 &CommandLine::FUNCTION,
-#define EXPAND_CLI_CMD_AS_SIZE_OF(NAME, STRING, FUNCTION, ...)                          SZ_OF_##NAME  = sizeof(STRING) - 1,
+#define EXPAND_CLI_CMD_AS_ENUM(NAME, STRING, HELP, FUNCTION, ...)                       NAME,
+#define EXPAND_CLI_CMD_AS_CONST_STRING(NAME, STRING, HELP, FUNCTION, ...)               const char CommandLine::m_Str##NAME[] = STRING;
+#define EXPAND_CLI_CMD_AS_CLASS_CONST_STRING(NAME, STRING, HELP, FUNCTION, ...)         static const char m_Str##NAME[];
+#define EXPAND_CLI_CMD_AS_CMD_STRING(NAME, STRING, HELP, FUNCTION, ...)                 &m_Str##NAME[0],
+#define EXPAND_CLI_CMD_AS_STRING_SIZE(NAME, STRING, HELP, FUNCTION, ...)                sizeof(STRING) - 1,
+#define EXPAND_CLI_CMD_AS_FUNCTION(NAME, STRING, HELP, FUNCTION, ...)                   SystemState_e FUNCTION(void*);
+#define EXPAND_CLI_CMD_AS_FUNCTION_POINTER(NAME, STRING, HELP, FUNCTION, ...)           &CommandLine::FUNCTION,
+#define EXPAND_CLI_CMD_AS_SIZE_OF(NAME, STRING, HELP, FUNCTION, ...)                    SZ_OF_##NAME  = sizeof(STRING) - 1,
+#define EXPAND_CLI_CMD_AS_HELP_LABEL(NAME, STRING, HELP, FUNCTION, ...)                 HELP,
 
 //#define EXPAND_CLI_CMD_PARAMS(TYPE, MIN, MAX, ...)                                      {.Base = TYPE, .Min = MIN, .Max = MAX},
 #define EXPAND_CLI_CMD_PARAMS(TYPE, MIN, MAX, ...)                                      {TYPE, MIN, MAX},
@@ -68,7 +69,7 @@
                                                                                           }                                                                    \
                                                                                         },
 
-#define EXPAND_CLI_CMD_AS_INPUT_INFO(NAME, STRING, FUNCTION, SUPPORT,  ...)             CLI_INPUT_INFO(SUPPORT, __VA_ARGS__)
+#define EXPAND_CLI_CMD_AS_INPUT_INFO(NAME, STRING, HELP, FUNCTION, SUPPORT,  ...)       CLI_INPUT_INFO(SUPPORT, __VA_ARGS__)
 
 
 //-------------------------------------------------------------------------------------------------
@@ -76,21 +77,19 @@
 //-------------------------------------------------------------------------------------------------
 
 #define X_CLI_CMD_DEF(X_CLI_CMD)   \
-/*                                                  ENUM_ID,        String,       Function,     Cmd Type,    Param1 -          Min1,   max1  */\
-                                        X_CLI_CMD ( CLI_HOLD,       "H",          CmdHOLD,      CLI_CMD_SP                                  )    \
-                                        X_CLI_CMD ( CLI_RELEASE,    "R",          CmdRELEASE,   CLI_CMD_HP                                  )    \
-                                        X_CLI_CMD ( CLI_MUTE,       "M",          CmdMUTE,      CLI_CMD_SP                                  )    \
-                                        X_CLI_CMD ( CLI_UNMUTE,     "U",          CmdUNMUTE,    CLI_CMD_SP                                  )    \
-                                        X_CLI_CMD ( CLI_VERSION,    "V",          CmdVERSION,   CLI_CMD_P                                   )    \
-    IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, X_CLI_CMD ( CLI_DEBUG,      "DBG",        CmdDBG_LEVEL, CLI_CMD_RW,  BASE_HEXADECIMAL, 0x00,   0xFF ))   \
-/* TODO generic command should be in the library and be enable by define */\
-\
-                                        X_CLI_CMD ( CLI_INFO,       "I",          CmdINFO,      CLI_CMD_P                                   )    \
-                                        X_CLI_CMD ( CLI_RESET,      "RESET",      CmdRESET,     CLI_CMD_P                                   )    \
-                                        X_CLI_CMD ( CLI_STATUS,     "S",          CmdSTATUS,    CLI_CMD_P                                   )    \
+/*                                                  ENUM_ID,        String,       Help Definition (If Used),    Function,     Cmd Type,    Param1 -          Min1,   max1  */\
+                                        X_CLI_CMD ( CLI_HOLD,       "H",          LBL_CMD_HELP_HOLD,            CmdHOLD,      CLI_CMD_SP                                  )    \
+                                        X_CLI_CMD ( CLI_RELEASE,    "R",          LBL_CMD_HELP_RELEASE,         CmdRELEASE,   CLI_CMD_HP                                  )    \
+                                        X_CLI_CMD ( CLI_MUTE,       "M",          LBL_CMD_HELP_MUTE_DEBUG,      CmdMUTE,      CLI_CMD_SP                                  )    \
+                                        X_CLI_CMD ( CLI_UNMUTE,     "U",          LBL_CMD_HELP_UNMUTE_DEBUG,    CmdUNMUTE,    CLI_CMD_SP                                  )    \
+                                        X_CLI_CMD ( CLI_VERSION,    "V",          LBL_CMD_HELP_VERSION,         CmdVERSION,   CLI_CMD_P                                   )    \
+    IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, X_CLI_CMD ( CLI_DEBUG,      "DBG",        LBL_CMD_HELP_DEBUG,           CmdDBG_LEVEL, CLI_CMD_RW,  BASE_HEXADECIMAL, 0x00,   0xFF ))   \
+    IF_USE(DIGINI_USE_HELP_IN_CONSOLE,  X_CLI_CMD ( CLI_HELP,       "HELP",       LBL_CMD_HELP_THIS_HELP,       CmdHELP,      CLI_CMD_P                                   ))   \
+                                        X_CLI_CMD ( CLI_INFO,       "I",          LBL_CMD_HELP_APP_INFO,        CmdINFO,      CLI_CMD_P                                   )    \
+                                        X_CLI_CMD ( CLI_RESET,      "RESET",      LBL_CMD_HELP_RESET,           CmdRESET,     CLI_CMD_P                                   )    \
+                                        X_CLI_CMD ( CLI_STATUS,     "S",          LBL_CMD_HELP_STATUS,          CmdSTATUS,    CLI_CMD_P                                   )    \
 
 #define CMD_MENU            "MENU"
-
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -245,6 +244,10 @@ class CommandLine : public ChildProcessInterface
         static const CLI_CmdInputInfo_t         m_CmdInputInfo[NUMBER_OF_CLI_CMD];
         static const char*                      m_pCmdStr[NUMBER_OF_CLI_CMD];
         static const size_t                     m_CmdStrSize[NUMBER_OF_CLI_CMD];
+
+      #if (DIGINI_USE_HELP_IN_CONSOLE == DEF_ENABLED)
+        static const Label_e                    m_HelpLabel[NUMBER_OF_CLI_CMD];
+      #endif
 
       #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
         static const char                       m_StrCMD_MENU[sizeof(CMD_MENU)];

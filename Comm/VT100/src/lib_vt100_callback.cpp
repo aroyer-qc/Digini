@@ -437,6 +437,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
+#if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
 VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT100_CallBackType_e Type)
 {
   #if (DIGINI_USE_DATABASE == DISABLED)
@@ -504,6 +505,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
 
     return VT100_INPUT_MENU_CHOICE;
 }
+#endif
 
 /*
 //-------------------------------------------------------------------------------------------------
@@ -996,8 +998,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
             if((pBuffer1 != nullptr) && (pBuffer2 != nullptr))
             {
               #if (DIGINI_USE_DATABASE != DEF_DISABLED)
-                DB_Central.Get(&pBuffer1, OEM_SERIAL_NUMBER);
-                DB_Central.Get(&pBuffer2, OEM_SERIAL_NUMBER);
+                DB_Central.Get(&pBuffer1, SERIAL_NUMBER_TEXT);
+                DB_Central.Get(&pBuffer2, SERIAL_NUMBER_TEXT);
               #else
                 // TODO
               #endif
@@ -1109,7 +1111,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                     {
                         if(memcmp(pBuffer1, pBuffer2, sizeof(OEM_SERIAL_NUMBER)) != 0)
                         {
-                            DB_Central.Set(&pBuffer1, OEM_SERIAL_NUMBER);
+                            DB_Central.Set(&pBuffer1, SERIAL_NUMBER_TEXT);
                         }
                     }
                   #endif
@@ -1200,10 +1202,10 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
 //                                                                pNetif->hwaddr[3], pNetif->hwaddr[4], pNetif->hwaddr[5]);
 
           #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-  //          myVT100.InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, DBG_RX_Count);
-  //          myVT100.InMenuPrintf(56, 18, LBL_LONG_UNSIGNED, DBG_RX_Drop);
-  //          myVT100.InMenuPrintf(28, 19, LBL_LONG_UNSIGNED, DBG_TX_Count);
-  //          myVT100.InMenuPrintf(56, 19, LBL_LONG_UNSIGNED, DBG_TX_Drop);
+   //         myVT100.InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, m_IF_Driver.GetDBG_RX_Count());
+   //         myVT100.InMenuPrintf(56, 18, LBL_LONG_UNSIGNED, m_IF_Driver.GetDBG_RX_Drop());
+   //         myVT100.InMenuPrintf(28, 19, LBL_LONG_UNSIGNED, m_IF_Driver.GetDBG_TX_Count());
+   //         myVT100.InMenuPrintf(56, 19, LBL_LONG_UNSIGNED, m_IF_Driver.GetDBG_TX_Drop());
           #endif
         }
         break;

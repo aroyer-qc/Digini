@@ -58,8 +58,7 @@ SystemState_e PHY_LAN8742A_Driver::Initialize(ETH_DriverInterface* pETH_Driver, 
     {
         m_PHY_Address  = PHY_Address;
         m_pETH_Driver  = pETH_Driver;
-        m_BCR_Register = 0;
-        m_Flags = ETH_INITIALIZED;
+        m_Flags        = ETH_INITIALIZED;
         PowerControl(ETH_POWER_FULL);
         SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
         SetMode(ETH_PHY_Mode_e(ETH_PHY_MODE_SPEED_100M | ETH_PHY_MODE_DUPLEX_FULL));
@@ -81,7 +80,6 @@ SystemState_e PHY_LAN8742A_Driver::Initialize(ETH_DriverInterface* pETH_Driver, 
 SystemState_e PHY_LAN8742A_Driver::Uninitialize(void)
 {
     m_pETH_Driver  = nullptr;
-    m_BCR_Register = 0;
     m_Flags        = ETH_STATE_UNKNOWN;
 
     return SYS_READY;
@@ -108,9 +106,8 @@ SystemState_e PHY_LAN8742A_Driver::PowerControl(ETH_PowerState_e PowerState)
         {
             if((m_Flags & ETH_INITIALIZED) != 0)
             {
-                m_Flags        = ETH_INITIALIZED;
-                m_BCR_Register = BCR_POWER_DOWN;
-                State = m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register);
+                m_Flags = ETH_INITIALIZED;
+                State   = m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, BCR_POWER_DOWN);
             }
             else
             {
@@ -150,9 +147,7 @@ SystemState_e PHY_LAN8742A_Driver::PowerControl(ETH_PowerState_e PowerState)
                     }
                     else
                     {
-                        m_BCR_Register = 0;
-
-                        if((State = m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register)) == SYS_READY)
+                        if((State = m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, BCR_DEFAULT)) == SYS_READY)
                         {
                             m_Flags = ETH_INITIALIZED_AND_POWERED_ON;
                             State   = SYS_READY;
@@ -210,20 +205,19 @@ SystemState_e PHY_LAN8742A_Driver::SetInterface(ETH_MediaInterface_e Interface)
 //-------------------------------------------------------------------------------------------------
 SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
 {
+    uint16_t BCR_RegValue = BCR_DEFAULT;
+
     if((m_Flags & ETH_POWERED_ON) == 0)
     {
         return SYS_ERROR;
     }
-
-    //m_BCR_Register &= BCR_POWER_DOWN;      don't know i want that !!
 
     if(Mode & ETH_PHY_MODE_AUTO_NEGOTIATE)
     {
         uint16_t    RegValue;
         TickCount_t TickStart = GetTick();
 
-        m_BCR_Register = BCR_AUTO_NEG_EN;
-        m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register);
+        m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, BCR_AUTO_NEG_EN);
 
         // Wait for auto negotiation to complete
         do
@@ -233,45 +227,43 @@ SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
             if(TickHasTimeOut(TickStart, PHY_TIMEOUT) == false)
             {
                 // Return ERROR in case of timeout
-    //            return SYS_TIME_OUT;
+                return SYS_TIME_OUT;
             }
-
-            m_BCR_Register &= ~BCR_AUTO_NEG_EN;
-
-        } while((RegValue & BSR_AUTO_NEGO_COMPLETE) == 0);
+        }
+        while((RegValue & BSR_AUTO_NEGO_COMPLETE) == 0);
 
         m_pETH_Driver->PHY_Read(m_PHY_Address, REG_PSCS, &RegValue);
 
         if((RegValue & PSCS_DUPLEX) != 0)                               // Configure the MAC with the Duplex Mode fixed by the auto-negotiation process
         {
-            m_BCR_Register |= BCR_DUPLEX;                               // Set Ethernet duplex mode to Full-duplex following the auto-negotiation
+            BCR_RegValue |= BCR_DUPLEX;                               // Set Ethernet duplex mode to Full-duplex following the auto-negotiation
         }
 
         if((RegValue & PSCS_SPEED) != 0)                                // Configure the MAC with the speed fixed by the auto-negotiation process
         {
-            m_BCR_Register |= BCR_SPEED_SEL;                            // Set Ethernet speed to 100M following the auto-negotiation
+            BCR_RegValue |= BCR_SPEED_SEL;                            // Set Ethernet speed to 100M following the auto-negotiation
         }
     }
     else
     {
-        if(Mode & ETH_PHY_MODE_LOOPBACK)        { m_BCR_Register |= BCR_LOOPBACK; }
-        if(Mode & ETH_PHY_MODE_ISOLATE)         { m_BCR_Register |= BCR_ISOLATE;  }
+        if(Mode & ETH_PHY_MODE_LOOPBACK)        { BCR_RegValue |= BCR_LOOPBACK; }
+        if(Mode & ETH_PHY_MODE_ISOLATE)         { BCR_RegValue |= BCR_ISOLATE;  }
 
         switch(uint32_t(Mode) & ETH_PHY_MODE_SPEED_MASK)
         {
-            case uint32_t(ETH_PHY_MODE_SPEED_10M):                                      break;
-            case uint32_t(ETH_PHY_MODE_SPEED_100M):    m_BCR_Register |= BCR_SPEED_SEL; break;
+            case uint32_t(ETH_PHY_MODE_SPEED_10M):                                    break;
+            case uint32_t(ETH_PHY_MODE_SPEED_100M):    BCR_RegValue |= BCR_SPEED_SEL; break;
             default:                                   return SYS_UNSUPPORTED_FEATURE;
         }
 
         switch(uint32_t(Mode) & ETH_PHY_MODE_DUPLEX_MASK)
         {
-            case uint32_t(ETH_PHY_MODE_DUPLEX_HALF):                                    break;
-            case uint32_t(ETH_PHY_MODE_DUPLEX_FULL):   m_BCR_Register |= BCR_DUPLEX;    break;
+            case uint32_t(ETH_PHY_MODE_DUPLEX_HALF):                                  break;
+            case uint32_t(ETH_PHY_MODE_DUPLEX_FULL):   BCR_RegValue |= BCR_DUPLEX;    break;
         }
     }
 
-    return m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, m_BCR_Register);
+    return m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, BCR_RegValue);
 }
 
 //-------------------------------------------------------------------------------------------------

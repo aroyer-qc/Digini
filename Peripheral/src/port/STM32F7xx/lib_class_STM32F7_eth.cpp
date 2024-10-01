@@ -261,7 +261,7 @@ SystemState_e ETH_Driver::Initialize(ETH_MAC_SignalEvent_t CallbackEvent)
                    ETH_DMABMR_PBL_32Beat |                      // TX DMA Burst Length 32 Beats
                    ETH_DMABMR_USP);                             // Enable use of separate PBL for Rx and Tx
 
-    InitializeDMA_Buffer();                                     // Initialize buffer and descriptors
+    InitializeDMA();                                            // Initialize buffer and descriptors
 
     // ---- Enable ETH interrupt ----
     NVIC_ClearPendingIRQ(ETH_IRQn);
@@ -281,7 +281,7 @@ SystemState_e ETH_Driver::Initialize(ETH_MAC_SignalEvent_t CallbackEvent)
 //   Description:       Initialize DMA, RX DMA descriptors and TX DMA descriptors.
 //
 //-------------------------------------------------------------------------------------------------
-void ETH_Driver::InitializeDMA_Buffer(void)
+void ETH_Driver::InitializeDMA(void)
 {
     uint32_t Next;
 

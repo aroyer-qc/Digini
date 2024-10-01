@@ -111,10 +111,24 @@ const size_t CommandLine::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
   #endif
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_STRING_SIZE)
-#ifdef X_CLI_USER_CMD_DEF
-X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_STRING_SIZE)
-#endif
+  #ifdef X_CLI_USER_CMD_DEF
+    X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_STRING_SIZE)
+  #endif
 };
+
+#if (DIGINI_USE_HELP_IN_CONSOLE == DEF_ENABLED)
+const Label_e CommandLine::m_HelpLabel[NUMBER_OF_CLI_CMD] =
+{
+  #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+    LBL_CMD_HELP_MENU,
+  #endif
+
+    X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_HELP_LABEL)
+  #ifdef X_CLI_USER_CMD_DEF
+    X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_HELP_LABEL)
+  #endif
+};
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -590,20 +604,18 @@ void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char*
 
     switch(State)   // Response message to command
     {
-        case SYS_READY:                  { Label = LBL_OK;                      break; }
-        case SYS_OK_READ:                { Label = LBL_NULL;
-                                           pMsg  = pAnswer;
-                                           break;
-                                         }
+        case SYS_READY:                  { Label = LBL_OK;                      } break;
+        case SYS_OK_SILENT_AND_NEW_LINE: { Label = LBL_CLI_NEW_LINE;            } break;
+        case SYS_OK_READ:                { Label = LBL_NULL; pMsg = pAnswer;    } break;
 
       #ifdef CLI_USE_EXTENDED_ERROR
-        case SYS_OK_DENIED:              { LabelMsg = LBL_DENIED;               break; }
-        case SYS_CMD_NO_READ_SUPPORT:    { LabelMsg = LBL_NO_READ_SUPPORT;      break; }
-        case SYS_CMD_NO_WRITE_SUPPORT:   { LabelMsg = LBL_NO_WRITE_SUPPORT;     break; }
-        case SYS_INVALID_PARAMETER:      { LabelMsg = LBL_INVALID_PARAMETER;    break; }
-        case SYS_INVALID_PASSWORD:       { LabelMsg = LBL_PASSWORD_INVALID;     break; }
-        case SYS_FAIL_MEMORY_ALLOCATION: { LabelMsg = LBL_MEM_ALLOC_ERROR;      break; }
-        case SYS_CMD_PLAIN_ONLY:         { LabelMsg = LBL_PLAIN_CMD_ONLY;       break; }
+        case SYS_OK_DENIED:              { LabelMsg = LBL_DENIED;               } break;
+        case SYS_CMD_NO_READ_SUPPORT:    { LabelMsg = LBL_NO_READ_SUPPORT;      } break;
+        case SYS_CMD_NO_WRITE_SUPPORT:   { LabelMsg = LBL_NO_WRITE_SUPPORT;     } break;
+        case SYS_INVALID_PARAMETER:      { LabelMsg = LBL_INVALID_PARAMETER;    } break;
+        case SYS_INVALID_PASSWORD:       { LabelMsg = LBL_PASSWORD_INVALID;     } break;
+        case SYS_FAIL_MEMORY_ALLOCATION: { LabelMsg = LBL_MEM_ALLOC_ERROR;      } break;
+        case SYS_CMD_PLAIN_ONLY:         { LabelMsg = LBL_PLAIN_CMD_ONLY;       } break;
       #else
         case SYS_OK_DENIED:
         case SYS_CMD_NO_READ_SUPPORT:
@@ -616,7 +628,7 @@ void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char*
 
         // SYS_OK_SILENT:                // We return nothing.. it is silent
         // SYS_INVALID_COMMAND:          // This case is not supposed to happened
-        default:                         { Label = LBL_NULL;                    break; }
+        default:                         { Label = LBL_NULL;                    } break;
     }
 
     if(pMsg == nullptr)
@@ -624,7 +636,11 @@ void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char*
         pMsg = myLabel.GetPointer(LabelMsg);
     }
 
-    if(State != SYS_OK_SILENT)
+    if(Label == LBL_CLI_NEW_LINE)
+    {
+        m_pConsole->Printf(Label);
+    }
+    else if(State != SYS_OK_SILENT)
     {
         m_pConsole->Printf(LBL_CLI_RESPONSE, m_pCmdStr[Cmd], myLabel.GetPointer(Label), pMsg);
     }

@@ -147,6 +147,7 @@ class ETH_Driver : public MAC_DriverInterface
     public:
 
         SystemState_e           Initialize              (ETH_MAC_SignalEvent_t CallbackEvent);                           // Initialize Ethernet MAC Device.
+        SystemState_e           InitializeInterface     (void);                                                          // Initialize Ethernet Interface.
 
         void                    Start                   (void);                                                          // Start ETH module
         SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address);                          // Get Ethernet MAC Address.

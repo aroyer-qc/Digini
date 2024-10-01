@@ -42,9 +42,10 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#define ARP_TMR_INTERVAL                1000
-#define netifGUARD_BLOCK_TIME           250               // todo rename
-#define BLOCK_TIME_WAITING_FOR_INPUT    0xffff
+#define NET_ARP_TMR_INTERVAL                1000
+#define NET_GUARD_BLOCK_TIME                250               // todo rename
+#define NET_BLOCK_TIME_WAITING_FOR_INPUT    10  //0xFFFF
+#define NET_RX_COUNT_MAX_SEMAPHORE          20
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -94,30 +95,36 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
     m_pETH_Config = pETH_Config;
 	m_Link        = ETH_LINK_DOWN;
 
-    Error = nOS_SemCreate(&m_RX_Sem, 0, 20);
+    Error = nOS_SemCreate(&m_RX_Sem, 0, NET_RX_COUNT_MAX_SEMAPHORE);
     Error = nOS_MutexCreate(&m_TX_Mutex, NOS_MUTEX_NORMAL, 1);
     VAR_UNUSED(Error);
+
+
+  //  myETH_Driver.SetMacAddress(&MAC);
 
   #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
     myStacktistic.Register(&m_Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Ethernet Input");
   #endif
 
-    nOS_ThreadCreate(&m_Handle,
+ /*   nOS_ThreadCreate(&m_Handle,
                      ClassEthernetIf_Wrapper,
                      this,
                      &m_Stack[0],
                      TASK_ETHERNET_IF_STACK_SIZE,
                      TASK_ETHERNET_IF_PRIO);
-
-
+*/
     pETH_Driver = m_pETH_Config->pETH_Driver;
+    pETH_Driver->Initialize(this);      // TODO put in here the callback
+
+
+
+
     //pPHY_Driver = m_Config[IF_ID].IP_ETH_Config.pPHY_Driver;
 
     //PHY_DriverInterface* pPHY_Driver;       // TODO conditional DIGINI_USE
 // TODO move this into the lib_ethernetif  it will take care of the init phase
 //    myETH_Driver.Initialize(nullptr);
-    //myETH_Driver.SetMacAddress(&MAC);
-    //myETH_Driver.Start();
+ //   myETH_Driver.Start();
     //myPHY_Driver.Initialize(&myETH_Driver, 0);
 
 
@@ -128,7 +135,6 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
 
 
 //remove for test
-    pETH_Driver->Initialize(this);      // TODO put in here the callback
     m_pETH_Config->pPHY_Driver->Initialize(pETH_Driver, m_pETH_Config->PHY_Address); // Interface ID is used as address
 
 
@@ -138,11 +144,12 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
 
     // Create binary semaphore used for informing ethernetif of frame reception
 
+ pETH_Driver->InitializeInterface();        // Enable MAC and DMA transmission and reception
 
 //remove for test
- m_pETH_Config->pETH_Driver->Start();        // Enable MAC and DMA transmission and reception
+ pETH_Driver->Start();        // Enable MAC and DMA transmission and reception
 
-// 	sys_timeout(ARP_TMR_INTERVAL, ArpTimer, nullptr);  impelement my version of this
+// 	sys_timeout(NET_ARP_TMR_INTERVAL, ArpTimer, nullptr);  implement my version of this
 
 	return SYS_READY;//ERR_OK;
 }
@@ -171,7 +178,7 @@ SystemState_e ETH_IF_Driver::LowLevelOutput(MemoryNode* pPacket)
     size_t   NodeSize;
     size_t   Length;
 
-    if(nOS_MutexLock(&m_TX_Mutex, netifGUARD_BLOCK_TIME) == NOS_OK)
+    if(nOS_MutexLock(&m_TX_Mutex, NET_GUARD_BLOCK_TIME) == NOS_OK)
     {
         pPacket->Begin();       // Reset Node pointer to the beginning
         Length   = pPacket->GetTotalSize();
@@ -295,7 +302,7 @@ void ETH_IF_Driver::Run(void)
 
 	while(1)
 	{
-        if(nOS_SemTake(&m_RX_Sem, BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK)
+        if(nOS_SemTake(&m_RX_Sem, NET_BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK)
 		{
 		    // if for some reason we receive a message and the link is down then poll the PHY for the link
 		    if(m_Link == ETH_LINK_DOWN)
@@ -322,7 +329,7 @@ void ETH_IF_Driver::Run(void)
                     }
               //      else
                     {
-                        nOS_SemTake(&m_RX_Sem, 0); // why this one
+              //          nOS_SemTake(&m_RX_Sem, 0); // why this one
                     }
                 }
 
@@ -334,6 +341,8 @@ void ETH_IF_Driver::Run(void)
                 nOS_Yield();
 			}
 			while(Exit == false);
+
+            IO_SetPinLow(IO_ETH_EXT_LED);
 		}
 		else
         {
@@ -357,7 +366,7 @@ void ETH_IF_Driver::ArpTimer(void* pArg)
 {
 	VAR_UNUSED(pArg);
 //	etharp_tmr();
-   // sys_timeout(ARP_TMR_INTERVAL, ArpTimer, nullptr);           // Restart a new timer
+   // sys_timeout(NET_ARP_TMR_INTERVAL, ArpTimer, nullptr);           // Restart a new timer
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -153,5 +153,13 @@ SystemState_e DIGINI_PostInitialize(void)
     GRAFX_PostInitialize();
   #endif
 
+  #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
+    pTaskNetwork->Initialize();
+  #endif
+
+  #if (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)
+    pTaskCOMM->Initialize();
+  #endif
+
     return SYS_READY;
 }

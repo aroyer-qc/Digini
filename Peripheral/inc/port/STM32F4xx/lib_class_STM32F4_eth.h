@@ -75,9 +75,9 @@
 // DMA RX Descriptor
 struct RX_Descriptor_t
 {
-    uint32_t volatile       Stat;
-    uint32_t                Ctrl;
-    uint8_t const*          Addr;
+    uint32_t volatile       Status;
+    uint32_t                Control;
+    uint8_t const*          Address;
     struct RX_Descriptor_t* Next;
 #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
     uint32_t                ExtStat;
@@ -90,9 +90,9 @@ struct RX_Descriptor_t
 // DMA TX Descriptor
 struct TX_Descriptor_t
 {
-    uint32_t volatile       Stat;
+    uint32_t volatile       Status;
     uint32_t                Size;
-    uint8_t*                Addr;
+    uint8_t*                Address;
     struct TX_Descriptor_t* Next;
 #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
     uint32_t                Reserved[2];
@@ -133,6 +133,7 @@ class ETH_Driver : public ETH_DriverInterface
     public:
 
         SystemState_e           Initialize              (void* pContext);                                                // Initialize Ethernet MAC Device.
+        SystemState_e           InitializeInterface     (void);                                                          // Initialize Ethernet Interface.
 
         void                    Start                   (void);                                                          // Start ETH module
         SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address);                          // Get Ethernet MAC Address.

@@ -239,7 +239,6 @@ SystemState_e CommandLine::CmdSTATUS(void* pArg)
     return Error;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           CmdMENU
@@ -330,6 +329,47 @@ SystemState_e CommandLine::CmdVERSION(void* pArg)
     else
     {
         Error = SYS_INVALID_PARAMETER;       // No parameter write or read on this command
+    }
+
+    return Error;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CmdHELP
+//
+//  Parameter(s):   pArg                Not used
+//  Return:         SystemState_e
+//
+//  Description:    Display the HELP menu
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e CommandLine::CmdHELP(void* pArg)
+{
+    SystemState_e Error;
+    char          Spacing[13] = "          : ";
+    size_t        PrintSize;
+
+    VAR_UNUSED(pArg);
+
+    // Accept plain or read command
+    if((m_ReadCommand == true) || (m_PlainCommand == true))
+    {
+        m_pConsole->Printf(LBL_MENU_HEADER);
+
+        for(int i = 0; i < int(NUMBER_OF_CLI_CMD); i++)
+        {
+            PrintSize = m_pConsole->Printf(m_pCmdStr[i]);
+            m_pConsole->Printf(&Spacing[PrintSize]);
+            m_pConsole->Printf(m_HelpLabel[i]);
+            m_pConsole->Printf(LBL_LINEFEED);
+        }
+
+        Error = SYS_OK_SILENT_AND_NEW_LINE;
+    }
+    else
+    {
+        Error = SYS_CMD_NO_WRITE_SUPPORT;     // No write support for this command (for now)
     }
 
     return Error;

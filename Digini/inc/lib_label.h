@@ -184,6 +184,7 @@ X_LABEL( LBL_TEST,  "the quick brown fox jumps over the lazy dog",         "port
 
 // Console Generic Label
 #define CLI_LABEL_LANGUAGE_DEF(X_CLI_LBL_CFG) \
+    X_CLI_LBL_CFG( LBL_CLI_NEW_LINE,                    "\n\n>",                                                                                                   nullptr                                                                                  ) \
     X_CLI_LBL_CFG( LBL_NACK,                            "NACK, ",                                                                                                  nullptr                                                                                  ) \
     X_CLI_LBL_CFG( LBL_ERROR,                           "ERROR, %s",                                                                                               "ERREUR, %s"                                                                             ) \
     X_CLI_LBL_CFG( LBL_CMD_LINE_PROC_STARTED,           "Command Line Process Started\n>",                                                                         "Proc\x82" "d\x82 Ligne de Commande, D\x82marr\x82\n>"                                   ) \
@@ -197,11 +198,29 @@ X_LABEL( LBL_TEST,  "the quick brown fox jumps over the lazy dog",         "port
 #define CLI_LABEL_EXT_LANGUAGE_DEF(X_CLI_LBL_CFG) \
     X_CLI_LBL_CFG( LBL_DENIED,                          "Denied",                                                                                                  "Refuser"                                                                                ) \
     X_CLI_LBL_CFG( LBL_NO_READ_SUPPORT,                 "No Read Support",                                                                                         "Aucun Support de Lecture"                                                               ) \
-    X_CLI_LBL_CFG( LBL_NO_WRITE_SUPPORT,                "No Write Support",                                                                                        "Aucun Support d'\x90" "criture"                                                         ) \
+    X_CLI_LBL_CFG( LBL_NO_WRITE_SUPPORT,                "No Write Support",                                                                                        "Aucun Support d'\x82" "criture"                                                         ) \
     X_CLI_LBL_CFG( LBL_INVALID_PARAMETER,               "Invalid Parameter",                                                                                       "Param\x88tre Invalide"                                                                  ) \
     X_CLI_LBL_CFG( LBL_PASSWORD_INVALID,                "Password Invalid",                                                                                        "Mot de Passe Invalide"                                                                  ) \
     X_CLI_LBL_CFG( LBL_MEM_ALLOC_ERROR,                 "Memory allocation Error",                                                                                 "Erreur d'Allocation M\x82moire"                                                         ) \
     X_CLI_LBL_CFG( LBL_PLAIN_CMD_ONLY,                  "Plain Command Only",                                                                                      "Commande Simple Uniquement"                                                             ) \
+
+#define CLI_LABEL_HELP_DEF(X_CLI_LBL_CFG) \
+    X_CLI_LBL_CFG( LBL_MENU_HEADER,                     "\nFor more information on a specific command, type HELP <cmd-name>\n\n",                                  "\nPour plus d'information sur une commande specifique, tapez HELP <Nom-de-CMD>\n\n"     ) \
+  /*IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE,*/ \
+    X_CLI_LBL_CFG( LBL_CMD_HELP_MENU,                   "Access the VT100 Menu",                                                                                   "AccD\x8a" "der au menu VT100"                                                           ) \
+  /*) */\
+    X_CLI_LBL_CFG( LBL_CMD_HELP_MUTE_DEBUG,             "Mute the debugging output",                                                                               "D\x82" "activer l'affichage du d\x82" "bogage"                                          ) \
+    X_CLI_LBL_CFG( LBL_CMD_HELP_UNMUTE_DEBUG,           "Unmute the debugging output",                                                                             "R\x82" "activer l'affichage du d\x82" "bogage"                                          ) \
+ /* IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, */ \
+    X_CLI_LBL_CFG( LBL_CMD_HELP_DEBUG,                  "Display debugging information",                                                                           "Afficher les informations de d\x82" "bogage"                                            ) \
+ /* ) */\
+    X_CLI_LBL_CFG( LBL_CMD_HELP_HOLD,                   "Hold on the startup sequence",                                                                            "Suspendre la s\x82quence de démarrage"                                                  ) \
+    X_CLI_LBL_CFG( LBL_CMD_HELP_RELEASE,                "Release the startup sequence",                                                                            "R\x82sumer la s\x82quence de démarrage"                                                 ) \
+    X_CLI_LBL_CFG( LBL_CMD_HELP_VERSION,                "Display version information",                                                                             "Afficher les informations de version"                                                   ) \
+    X_CLI_LBL_CFG( LBL_CMD_HELP_THIS_HELP,              "This help",                                                                                               "Aide de cette commande"                                                                 ) \
+    X_CLI_LBL_CFG( LBL_CMD_HELP_APP_INFO,               "Display application information",                                                                         "Afficher les informations de cette application"                                         ) \
+    X_CLI_LBL_CFG( LBL_CMD_HELP_RESET,                  "Reset the processor",                                                                                     "R\x82initializer le processeur"                                                         ) \
+    X_CLI_LBL_CFG( LBL_CMD_HELP_STATUS,                 "Display general status",                                                                                  "Afficher les status courrant"                                                           ) \
 
 #endif // (DIGINI_USE_CMD_LINE == DEF_ENABLED)
 
@@ -365,99 +384,105 @@ enum Label_e
     COMMON_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
     LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
 
-  #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)                       /// this doesn't exist actually need to do
+ #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)                       /// this doesn't exist actually need to do
     PRODUCT_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-  #endif
+ #endif
 
-  #if (LABEL_USE_DATE == DEF_ENABLED)
+ #if (LABEL_USE_DATE == DEF_ENABLED)
     DATE_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-  #endif
+ #endif
 
-  #if (LABEL_USE_TIME == DEF_ENABLED)
+ #if (LABEL_USE_TIME == DEF_ENABLED)
     TIME_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-  #endif
+ #endif
 
-  #if (LABEL_USE_DECIMAL_KEY == DEF_ENABLED)
+ #if (LABEL_USE_DECIMAL_KEY == DEF_ENABLED)
     DECIMAL_KEY_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-  #endif
-      
-  #if (LABEL_USE_HEXADECIMAL_KEY == DEF_ENABLED)
+ #endif
+
+ #if (LABEL_USE_HEXADECIMAL_KEY == DEF_ENABLED)
     HEXADECIMAL_KEY_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-  #endif
-  
-  #if (LABEL_USE_STANDARD_TEST_STRING == DEF_ENABLED)
+ #endif
+
+ #if (LABEL_USE_STANDARD_TEST_STRING == DEF_ENABLED)
     STANDARD_TEST_STRING_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-  #endif
-  
+ #endif
+
   ///-----------------------------------------------------------------------------------------------
   /// Command line interface label
 
-  #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
+ #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
 
     CLI_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
 
-   #if (CLI_USE_EXTENDED_ERROR == DEF_ENABLED)
+  #if (CLI_USE_EXTENDED_ERROR == DEF_ENABLED)
     CLI_LABEL_EXT_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-   #endif
-
   #endif
+
+  #if (DIGINI_USE_HELP_IN_CONSOLE == DEF_ENABLED)
+    CLI_LABEL_HELP_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #ifdef CLI_USER_LABEL_HELP_DEF
+    CLI_USER_LABEL_HELP_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+   #endif
+  #endif
+ #endif
 
   ///-----------------------------------------------------------------------------------------------
   /// Include VT100 label if VT100 is defined
 
-  #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+ #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
 
     VT100_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
     VT100_USER_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
 
-   #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
+  #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
     VT100_PRODUCT_INFO_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-   #endif
-
-   #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-    VT100_MEMORY_STACKTISTIC_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-   #endif
-
-   #if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
-    VT100_MEMORY_POOL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-   #endif
-
-   #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
-    VT100_DEBUG_IN_CONSOLE_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-   #endif
-
-   #if (DIGINI_DEBUG_SDCARD_INFO_ON_VT100 == DEF_ENABLED)
-      VT100_SDCARD_INFO_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-   #endif
-
-   #if (VT100_USE_COLOR != DEF_ENABLED)
-    VT100_MONO_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-   #endif
-
-   #if (VT100_USE_LANGUAGE_SELECTION == DEF_ENABLED)
-    VT100_SELECT_THE_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-   #endif
-
-   #if (VT100_USE_TEMPERATURE_SELECTION == DEF_ENABLED)
-    VT100_SELECT_THE_TEMPERATURE_UNIT_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-   #endif
-
-   #if (VT100_USE_SERIAL_NUMBER_SETTING == DEF_ENABLED)
-    VT100_SERIAL_NUMBER_SETTING_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-   #endif
-
-   #if (VT100_USE_TIME_AND_DATE_SETTING == DEF_ENABLED)
-    VT100_TIME_AND_DATE_SETTING_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-   #endif
-
   #endif
+
+  #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+    VT100_MEMORY_STACKTISTIC_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+
+  #if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
+    VT100_MEMORY_POOL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+
+  #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
+    VT100_DEBUG_IN_CONSOLE_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+
+  #if (DIGINI_DEBUG_SDCARD_INFO_ON_VT100 == DEF_ENABLED)
+      VT100_SDCARD_INFO_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+
+  #if (VT100_USE_COLOR != DEF_ENABLED)
+    VT100_MONO_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+
+  #if (VT100_USE_LANGUAGE_SELECTION == DEF_ENABLED)
+    VT100_SELECT_THE_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+
+  #if (VT100_USE_TEMPERATURE_SELECTION == DEF_ENABLED)
+    VT100_SELECT_THE_TEMPERATURE_UNIT_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+
+  #if (VT100_USE_SERIAL_NUMBER_SETTING == DEF_ENABLED)
+    VT100_SERIAL_NUMBER_SETTING_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+
+  #if (VT100_USE_TIME_AND_DATE_SETTING == DEF_ENABLED)
+    VT100_TIME_AND_DATE_SETTING_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+
+ #endif
 
   ///-----------------------------------------------------------------------------------------------
   /// Ethernet Label
 
-  #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
+ #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
     NET_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-  #endif
+ #endif
 
     NB_LABEL_CONST,
     INVALID_LABEL,

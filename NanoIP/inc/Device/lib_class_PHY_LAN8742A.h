@@ -63,6 +63,7 @@
 #define REG_PSCS                    31          // PHY Special Ctrl/Status Register
 
 // Basic Control Register
+#define BCR_DEFAULT                 0x0000      // BCR default
 #define BCR_RESET                   0x8000      // Software Reset
 #define BCR_LOOPBACK                0x4000      // Loopback mode
 #define BCR_SPEED_SEL               0x2000      // Speed Select (0 = 10Mb/s, 1 = 100Mb/s)
@@ -140,7 +141,6 @@ class PHY_LAN8742A_Driver : public PHY_DriverInterface
         ETH_DriverInterface*        m_pETH_Driver;                  // Pointer on the class ETH_Driver
         uint32_t                    m_PHY_Address;
         bool                        m_IsItInitialize;
-        uint16_t                    m_BCR_Register;                 // BCR register value
         ETH_State_e                 m_Flags;                        // Control flags
 };
 

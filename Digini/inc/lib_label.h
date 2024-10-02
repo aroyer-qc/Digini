@@ -206,14 +206,14 @@ X_LABEL( LBL_TEST,  "the quick brown fox jumps over the lazy dog",         "port
 
 #define CLI_LABEL_HELP_DEF(X_CLI_LBL_CFG) \
     X_CLI_LBL_CFG( LBL_MENU_HEADER,                     "\nFor more information on a specific command, type HELP <cmd-name>\n\n",                                  "\nPour plus d'information sur une commande specifique, tapez HELP <Nom-de-CMD>\n\n"     ) \
-  /*IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE,*/ \
+  IF_USE(DIGINI_USE_VT100_MENU,                                                                                                                                                                                                                               \
     X_CLI_LBL_CFG( LBL_CMD_HELP_MENU,                   "Access the VT100 Menu",                                                                                   "AccD\x8a" "der au menu VT100"                                                           ) \
-  /*) */\
+  )                                                                                                                                                                                                                                                           \
     X_CLI_LBL_CFG( LBL_CMD_HELP_MUTE_DEBUG,             "Mute the debugging output",                                                                               "D\x82" "activer l'affichage du d\x82" "bogage"                                          ) \
     X_CLI_LBL_CFG( LBL_CMD_HELP_UNMUTE_DEBUG,           "Unmute the debugging output",                                                                             "R\x82" "activer l'affichage du d\x82" "bogage"                                          ) \
-  IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE,  \
+  IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE,                                                                                                                                                                                                                         \
     X_CLI_LBL_CFG( LBL_CMD_HELP_DEBUG,                  "Display debugging information",                                                                           "Afficher les informations de d\x82" "bogage"                                            ) \
-  ) \
+  )                                                                                                                                                                                                                                                           \
     X_CLI_LBL_CFG( LBL_CMD_HELP_HOLD,                   "Hold on the startup sequence",                                                                            "Suspendre la s\x82quence de démarrage"                                                  ) \
     X_CLI_LBL_CFG( LBL_CMD_HELP_RELEASE,                "Release the startup sequence",                                                                            "R\x82sumer la s\x82quence de démarrage"                                                 ) \
     X_CLI_LBL_CFG( LBL_CMD_HELP_VERSION,                "Display version information",                                                                             "Afficher les informations de version"                                                   ) \

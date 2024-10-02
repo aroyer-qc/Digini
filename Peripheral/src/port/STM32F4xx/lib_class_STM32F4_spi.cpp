@@ -318,7 +318,7 @@ void SPI_Driver::SetPrescalerFromSpeed(uint32_t Speed, uint32_t PCLK_Frequency)
 //
 //  Return:         None
 //
-//  Description:    Write singke data of data buffer to SPI
+//  Description:    Write single data of data buffer to SPI
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::Write(uint8_t* pBuffer, size_t Size)

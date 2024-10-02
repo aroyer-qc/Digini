@@ -227,9 +227,9 @@ SystemState_e CommandLine::CmdSTATUS(void* pArg)
     {
          // In this example we only return the state of the CLI
         Status = (m_IsItOnHold == true) ? 0 : 1;
-        snprintf(Response, 20, "%d", Status);
-        SendAnswer(CLI_STATUS, SYS_OK_READ, Response);
-        Error = SYS_OK_SILENT;
+
+        m_pConsole->Printf("\n%d", Status);
+        Error = SYS_OK_SILENT_AND_NEW_LINE;
     }
     else
     {
@@ -284,18 +284,16 @@ SystemState_e CommandLine::CmdMENU(void* pArg)
 SystemState_e CommandLine::CmdINFO(void* pArg)
 {
     SystemState_e Error;
-    char          Response[100];
 
     VAR_UNUSED(pArg);
 
     if(m_PlainCommand == true)
     {
-        snprintf(Response, 100, "%s\r    %s\r    S/N: %s\r    Build: %s", OUR_FIRMWARE_NAME,
-                                                                          OEM_MODEL_NAME,
-                                                                          OEM_SERIAL_NUMBER,
-                                                                          OUR_FIRMWARE_BUILD_DATE);
-        SendAnswer(CLI_INFO, SYS_OK_READ, Response);
-        Error = SYS_OK_SILENT;
+        m_pConsole->Printf("\n%s\n%s\nS/N: %s\nBuild: %s", OUR_FIRMWARE_NAME,
+                                                           OEM_MODEL_NAME,
+                                                           OEM_SERIAL_NUMBER,
+                                                           OUR_FIRMWARE_BUILD_DATE);
+        Error = SYS_OK_SILENT_AND_NEW_LINE;
     }
     else
     {

@@ -43,6 +43,7 @@
 
 // Common label
 #define COMMON_LANGUAGE_DEF(X_LABEL) \
+X_LABEL( LBL_NONE,                       "",                               nullptr                                         ) \
 X_LABEL( LBL_NULL,                       nullptr,                          nullptr                                         ) \
 X_LABEL( LBL_OK,                         "Ok",                             nullptr                                         ) \
 X_LABEL( LBL_CLEAR_SCREEN,               "\033[2J\033[H",                  nullptr                                         ) \
@@ -177,9 +178,9 @@ X_LABEL( LBL_TEST,  "the quick brown fox jumps over the lazy dog",         "port
 #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
 
 #if (CLI_USE_AT_PREFIX_ON_COMMAND == DEF_ENABLED)
-    #define CLI_RESPONSE_FOR_LABEL              "AT%s = %s%s\n>"
+    #define CLI_RESPONSE_FOR_LABEL              "\nAT%s = %s%s\n\n>"
 #else
-    #define CLI_RESPONSE_FOR_LABEL              "%s = %s%s\n>"
+    #define CLI_RESPONSE_FOR_LABEL              "\n%s = %s%s\n\n>"
 #endif
 
 // Console Generic Label

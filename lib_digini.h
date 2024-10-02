@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -64,6 +64,9 @@
 //-------------------------------------------------------------------------------------------------
 // Common configuration header
 //
+
+#include "project_def.h"
+
 //#include "clock_cfg.h"
 #include "digini_cfg.h"
 
@@ -99,7 +102,7 @@
 #include "ip_cfg.h"
 #endif
 
-#include "project_def.h"
+//#include "project_def.h"
 
 #if (DIGINI_USE_DATABASE == DEF_ENABLED)
 #include "database_cfg.h"
@@ -142,7 +145,7 @@
 #include "./Memory/inc/lib_memory_node.h"
 
 #if (DIGINI_MPU_DRIVER == DEF_ENABLED)
-#include "./Peripheral/inc/port/lib_mpu.h"                  // TODO
+#include "./Peripheral/inc/port/lib_mpu.h"                  // TODO 
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -163,7 +166,7 @@
 #include "./Peripheral/inc/port/lib_class_can.h"
 #endif
 
-#if (USE_CRC_DRIVER == DEF_ENABLED)     // This is for hardware CRC calculation support
+#if (USE_CRC_DRIVER == DEF_ENABLED)                         // This is for hardware CRC calculation support
 #include "./Peripheral/inc/port/lib_hardware_crc.h"
 #endif
 

@@ -606,7 +606,7 @@ void CommandLine::SendAnswer(CLI_CmdName_e Cmd, SystemState_e State, const char*
     {
         case SYS_READY:                  { Label = LBL_OK;                      } break;
         case SYS_OK_SILENT_AND_NEW_LINE: { Label = LBL_CLI_NEW_LINE;            } break;
-        case SYS_OK_READ:                { Label = LBL_NULL; pMsg = pAnswer;    } break;
+        case SYS_OK_READ:                { Label = LBL_NONE; pMsg = pAnswer;    } break;
 
       #ifdef CLI_USE_EXTENDED_ERROR
         case SYS_OK_DENIED:              { LabelMsg = LBL_DENIED;               } break;

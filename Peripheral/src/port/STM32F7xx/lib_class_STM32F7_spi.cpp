@@ -92,9 +92,12 @@ SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
 //-------------------------------------------------------------------------------------------------
 void SPI_Driver::Initialize(void)
 {
-    uint32_t PCLK_Frequency;
+    nOS_Error Error;
+    uint32_t  PCLK_Frequency;
 
-    nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
+    Error = nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
+    Error = nOS_SemCreate(&m_DMA_ReleaseSem, 0, 1);
+    VAR_UNUSED(Error);
 
     IO_PinInit(m_pInfo->PinCLK);
     IO_PinInit(m_pInfo->PinMOSI);
@@ -318,7 +321,7 @@ void SPI_Driver::SetPrescalerFromSpeed(uint32_t Speed, uint32_t PCLK_Frequency)
 //
 //  Return:         None
 //
-//  Description:    Write singke data of data buffer to SPI
+//  Description:    Write single data of data buffer to SPI
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::Write(uint8_t* pBuffer, size_t Size)
@@ -635,22 +638,19 @@ void SPI_Driver::IRQHandler(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::WaitDMA(void)
 {
+    nOS_Error    Error;
     TickCount_t  TickStart;
     SPI_TypeDef* pSPIx;
 
     pSPIx = m_pInfo->pSPIx;
 
     // Wait for DMA to conclude
-    TickStart = GetTick();
-    while(m_DMA_Status != SYS_BUSY_B4_RELEASE)
+    Error = nOS_SemTake(&m_DMA_ReleaseSem, SPI_DMA_TRANSFER_TIMEOUT)
+    
+    if(Error != NOS_OK)
     {
-        if(TickHasTimeOut(TickStart, SPI_DMA_TRANSFER_TIMEOUT) == true)
-        {
-            return SYS_TIME_OUT;
-        }
-
-        nOS_Yield();
-    };
+        return SYS_TIME_OUT;
+    }
 
     // Wait for SPI to conclude
     TickStart = GetTick();
@@ -684,6 +684,7 @@ void SPI_Driver::DMA_TX_IRQ_Handler(SPI_ID_e SPI_ID)
     pDriver = SPI_Driver::m_pDriver[SPI_ID];
     pDriver->m_DMA_Status = SYS_BUSY_B4_RELEASE;
     pDriver->m_DMA_TX.ClearFlag();
+    nOS_SemGive(pDriver->m_DMA_Release);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -701,7 +702,6 @@ void SPI_Driver::DMA_RX_IRQ_Handler(SPI_ID_e SPI_ID)
     SPI_Driver* pDriver;
 
     pDriver = m_pDriver[SPI_ID];
-    pDriver->m_DMA_Status = SYS_BUSY_B4_RELEASE;
     pDriver->m_DMA_RX.ClearFlag();
 }
 

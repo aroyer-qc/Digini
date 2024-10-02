@@ -143,7 +143,7 @@ struct SPI_Info_t
   #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;
-  #endif  
+  #endif
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -158,7 +158,6 @@ class SPI_Driver
         void            Initialize              (void);
 
         SystemState_e   GetStatus               (void)                        { return m_Status;     }
-        SystemState_e   GetDMA_Status           (void)                        {	return m_DMA_Status; }
 
         SystemState_e   LockToDevice            (IO_ID_e Device);                                                // Set SPI to this device and lock
         SystemState_e   UnlockFromDevice        (IO_ID_e Device);                                                // Unlock SPI from device
@@ -182,6 +181,7 @@ class SPI_Driver
         SystemState_e   WaitReady               (void);
 
       #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+        SystemState_e   GetDMA_Status           (void)                        {	return m_DMA_Status; }
         void            OverrideMemoryIncrement (void);
         static void     DMA_RX_IRQ_Handler      (SPI_ID_e SPI_ID);
         static void     DMA_TX_IRQ_Handler      (SPI_ID_e SPI_ID);
@@ -190,10 +190,10 @@ class SPI_Driver
     private:
 
         void            SetPrescalerFromSpeed   (uint32_t Speed, uint32_t PCLK_Frequency);
-      
+
       #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
         SystemState_e   WaitDMA                 (void);
-      #endif  
+      #endif
 
         nOS_Mutex               m_Mutex;
         SPI_Info_t*             m_pInfo;
@@ -208,10 +208,11 @@ class SPI_Driver
         DMA_Driver              m_DMA_RX;
         DMA_Driver              m_DMA_TX;
         volatile SystemState_e  m_DMA_Status;
+        nOS_Sem                 m_DMA_ReleaseSem;
         
         bool                    m_IsItUsingDMA_TX;
         bool                    m_IsItUsingDMA_RX;
-      #endif  
+      #endif
 };
 
 //-------------------------------------------------------------------------------------------------

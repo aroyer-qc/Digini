@@ -130,9 +130,12 @@
 
 static nOS_Time                 VT100_LastUpTime;
 static uint8_t                  VT100_LastSecond;
-static SystemDebugLevel_e       VT100_LastDebugLevel;
 static uint8_t*                 pBuffer1 = nullptr;
 static uint8_t*                 pBuffer2 = nullptr;
+
+#if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
+static SystemDebugLevel_e       VT100_LastDebugLevel;
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Private(s) prototype(s)

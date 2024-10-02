@@ -217,7 +217,6 @@ SystemState_e CommandLine::CmdRESET(void* pArg)
 SystemState_e CommandLine::CmdSTATUS(void* pArg)
 {
     SystemState_e Error;
-    char          Response[20];
     int           Status;
 
     VAR_UNUSED(pArg);

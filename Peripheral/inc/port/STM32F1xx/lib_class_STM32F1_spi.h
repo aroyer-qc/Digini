@@ -138,7 +138,7 @@ struct SPI_Info_t
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class SPI_Driver //: public DriverInterface
+class SPI_Driver
 {
     public:
                         SPI_Driver              (SPI_ID_e SPI_ID);
@@ -196,7 +196,8 @@ class SPI_Driver //: public DriverInterface
         DMA_Driver              m_DMA_RX;
         DMA_Driver              m_DMA_TX;
         volatile SystemState_e  m_DMA_Status;
-
+        nOS_Sem                 m_DMA_ReleaseSem;
+        
         bool                    m_IsItUsingDMA_TX;
         bool                    m_IsItUsingDMA_RX;
       #endif

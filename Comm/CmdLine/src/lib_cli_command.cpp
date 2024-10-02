@@ -169,6 +169,35 @@ SystemState_e CommandLine::CmdRELEASE(void* pArg)
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           CmdCLEAR
+//
+//  Parameter(s):   pArg                Not used
+//  Return:         SystemState_e
+//
+//  Description:  	Clear the terminal screen
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e CommandLine::CmdCLEAR(void* pArg)
+{
+    SystemState_e Error;
+
+    VAR_UNUSED(pArg);
+
+    if(m_PlainCommand == true)
+    {
+        m_pConsole->Printf(LBL_CLEAR_SCREEN);
+        Error = SYS_OK_SILENT;
+    }
+    else
+    {
+        Error = SYS_INVALID_PARAMETER;       // No parameter write or read on this command
+    }
+
+    return Error;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           CmdRESET
 //
 //  Parameter(s):   pArg                Not used

@@ -82,12 +82,13 @@
                                         X_CLI_CMD ( CLI_RELEASE,    "R",          LBL_CMD_HELP_RELEASE,         CmdRELEASE,   CLI_CMD_HP                                  )    \
                                         X_CLI_CMD ( CLI_MUTE,       "M",          LBL_CMD_HELP_MUTE_DEBUG,      CmdMUTE,      CLI_CMD_SP                                  )    \
                                         X_CLI_CMD ( CLI_UNMUTE,     "U",          LBL_CMD_HELP_UNMUTE_DEBUG,    CmdUNMUTE,    CLI_CMD_SP                                  )    \
-                                        X_CLI_CMD ( CLI_VERSION,    "V",          LBL_CMD_HELP_VERSION,         CmdVERSION,   CLI_CMD_P                                   )    \
+                                        X_CLI_CMD ( CLI_CLEAR,      "CLR",        LBL_CMD_HELP_CLEAR,           CmdCLEAR,     CLI_CMD_P                                   )    \
+                                        X_CLI_CMD ( CLI_VERSION,    "VER",        LBL_CMD_HELP_VERSION,         CmdVERSION,   CLI_CMD_P                                   )    \
     IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE, X_CLI_CMD ( CLI_DEBUG,      "DBG",        LBL_CMD_HELP_DEBUG,           CmdDBG_LEVEL, CLI_CMD_RW,  BASE_HEXADECIMAL, 0x00,   0xFF ))   \
     IF_USE(DIGINI_USE_HELP_IN_CONSOLE,  X_CLI_CMD ( CLI_HELP,       "HELP",       LBL_CMD_HELP_THIS_HELP,       CmdHELP,      CLI_CMD_P                                   ))   \
-                                        X_CLI_CMD ( CLI_INFO,       "I",          LBL_CMD_HELP_APP_INFO,        CmdINFO,      CLI_CMD_P                                   )    \
+                                        X_CLI_CMD ( CLI_INFO,       "INFO",       LBL_CMD_HELP_APP_INFO,        CmdINFO,      CLI_CMD_P                                   )    \
                                         X_CLI_CMD ( CLI_RESET,      "RESET",      LBL_CMD_HELP_RESET,           CmdRESET,     CLI_CMD_P                                   )    \
-                                        X_CLI_CMD ( CLI_STATUS,     "S",          LBL_CMD_HELP_STATUS,          CmdSTATUS,    CLI_CMD_P                                   )    \
+                                        X_CLI_CMD ( CLI_STATUS,     "STAT",       LBL_CMD_HELP_STATUS,          CmdSTATUS,    CLI_CMD_P                                   )    \
 
 #define CMD_MENU            "MENU"
 

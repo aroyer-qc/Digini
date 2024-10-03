@@ -154,7 +154,7 @@ SystemState_e DIGINI_PostInitialize(void)
   #endif
 
   #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
-    pTaskNetwork->Initialize();
+  //  pTaskNetwork->Initialize();
   #endif
 
   #if (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)

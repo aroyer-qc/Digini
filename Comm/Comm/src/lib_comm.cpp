@@ -133,11 +133,13 @@ void ClassTaskCOMM::Run(void)
 {
     for(;;)
     {
+        // wake the task if we have job to do...  flag! for RX and for print
+
         // TODO improve sleep or yield and adjust the priority for this task... it is working nicely in process mode
 
         //nOS_Yield();
         myConsole.Process();
-        nOS_Sleep(1);
+       // nOS_Sleep(1);
     }
 }
 #endif

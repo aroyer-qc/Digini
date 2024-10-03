@@ -51,9 +51,6 @@ typedef SystemState_e (CommandLine::*const CLI_Function_t)(void*);
 #define CLI_AT_STR_SIZE                             2
 #define CLI_FIFO_CMD_SIZE                           32
 
-#define CLI_STRING_CLEAR_SCREEN                     "\033[2J\e[H"
-#define CLI_STRING_RESET_TERMINAL                   "\033c\n"
-
 //-------------------------------------------------------------------------------------------------
 // Const(s)
 //-------------------------------------------------------------------------------------------------
@@ -88,9 +85,8 @@ const CLI_CmdInputInfo_t CommandLine::m_CmdInputInfo[NUMBER_OF_CLI_CMD]  =
 
 X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CONST_STRING)           // Generation of all the string
 #ifdef X_CLI_USER_CMD_DEF
-X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_CONST_STRING)      // Generation of all the string from user
+  X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_CONST_STRING)    // Generation of all the string from user
 #endif
-
 
 const char* CommandLine::m_pCmdStr[NUMBER_OF_CLI_CMD] =
 {
@@ -99,9 +95,9 @@ const char* CommandLine::m_pCmdStr[NUMBER_OF_CLI_CMD] =
   #endif
 
     X_CLI_CMD_DEF(EXPAND_CLI_CMD_AS_CMD_STRING)
-#ifdef X_CLI_USER_CMD_DEF
-X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_CMD_STRING)
-#endif
+  #ifdef X_CLI_USER_CMD_DEF
+    X_CLI_USER_CMD_DEF(EXPAND_CLI_CMD_AS_CMD_STRING)
+  #endif
 };
 
 const size_t CommandLine::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
@@ -179,7 +175,7 @@ void CommandLine::IF_Process(void)
         m_IsItOnHold        = false;
         m_IsItOnStartup     = true;
         m_FifoCmd.Initialize(CLI_FIFO_CMD_SIZE);
-        m_pConsole->Printf(CLI_STRING_RESET_TERMINAL);
+        m_pConsole->Printf(LBL_RESET_TERMINAL);
         TickCount_t Delay = GetTick();
         while(TickHasTimeOut(Delay, CLI_TERMINAL_RESET_DELAY) == false);
         m_pConsole->Printf(LBL_CMD_LINE_PROC_STARTED);
@@ -202,43 +198,47 @@ void CommandLine::IF_Process(void)
         {
             case CLI_STEP_CMD_VALID:
             {
-                // Preprocessing line of data to trap ERROR or OK or continue for data
-                m_FifoCmd.ToUpper(m_CommandNameSize);
                 State = SYS_INVALID_COMMAND;
 
-            // Process the valid input by iterating through valid command list
-                for(Command = int(FIRST_CLI_COMMAND); Command < int(NUMBER_OF_CLI_CMD); Command++)
+                if(m_CommandNameSize != 0)                                                                      // Trap 'ENTER' without command
                 {
-                    if(m_CommandNameSize == m_CmdStrSize[Command])                                            // First size must match
+                    // Preprocessing line of data to trap ERROR or OK or continue for data
+                    m_FifoCmd.ToUpper(m_CommandNameSize);
+
+                // Process the valid input by iterating through valid command list
+                    for(Command = int(FIRST_CLI_COMMAND); Command < int(NUMBER_OF_CLI_CMD); Command++)
                     {
-                        if(m_FifoCmd.Memncmp(m_pCmdStr[Command], m_CommandNameSize) == true)                // Compare command string
+                        if(m_CommandNameSize == m_CmdStrSize[Command])                                          // First size must match
                         {
-                            m_FifoCmd.Flush(m_CommandNameSize);                                             // Flush the command from the FIFO
-
-                            if((m_ReadCommand == false) && (m_PlainCommand == false))
+                            if(m_FifoCmd.Memncmp(m_pCmdStr[Command], m_CommandNameSize) == true)                // Compare command string
                             {
-                               ProcessParams(CLI_CmdName_e(Command));                                       // if its a write command, get all parameters.
-                            }
+                                m_FifoCmd.Flush(m_CommandNameSize);                                             // Flush the command from the FIFO
 
-                            Support = m_CmdInputInfo[Command].Support;
-
-                            if((((Support & CLI_CMD_H) != 0) && (m_IsItOnHold == true))         ||          // Hold specified command only on hold mode
-                               (((Support & CLI_CMD_S) != 0) && (m_IsItOnStartup == true))      ||          // Startup specified command only startup phase
-                               ((Support & (CLI_CMD_H | CLI_CMD_S)) == 0))                                  // All other command
-                            {
-                                if((Support & CLI_CMD_CHILD) != 0)
+                                if((m_ReadCommand == false) && (m_PlainCommand == false))
                                 {
-                                    void* pArg = (void*)m_CmdInputInfo[Command].Param[0].Min;
-                                    State = (this->*CLI_Function[Command])(pArg);                           // Command leading to a child process
-                                }
-                                else
-                                {
-                                    State = (this->*CLI_Function[Command])(nullptr);                        // Standard command
+                                   ProcessParams(CLI_CmdName_e(Command));                                       // if its a write command, get all parameters.
                                 }
 
-                                SendAnswer(CLI_CmdName_e(Command), State, nullptr);
+                                Support = m_CmdInputInfo[Command].Support;
+
+                                if((((Support & CLI_CMD_H) != 0) && (m_IsItOnHold == true))         ||          // Hold specified command only on hold mode
+                                   (((Support & CLI_CMD_S) != 0) && (m_IsItOnStartup == true))      ||          // Startup specified command only startup phase
+                                   ((Support & (CLI_CMD_H | CLI_CMD_S)) == 0))                                  // All other command
+                                {
+                                    if((Support & CLI_CMD_CHILD) != 0)
+                                    {
+                                        void* pArg = (void*)m_CmdInputInfo[Command].Param[0].Min;
+                                        State = (this->*CLI_Function[Command])(pArg);                           // Command leading to a child process
+                                    }
+                                    else
+                                    {
+                                        State = (this->*CLI_Function[Command])(nullptr);                        // Standard command
+                                    }
+
+                                    SendAnswer(CLI_CmdName_e(Command), State, nullptr);
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
                 }
@@ -349,8 +349,6 @@ bool CommandLine::ProcessRX(void)
     if(m_pConsole->ReadyRead() == true)
     {
         m_pConsole->Read(&Data, 1);
-        // Echo all character on the CLI
-       // m_pConsole->Write(&Data, 1);
 
         //-------------------------------------------------------------------------------------
         // Parse FIFO

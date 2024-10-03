@@ -51,36 +51,36 @@
 
 #define VT100_MENU_DEF(ENTRY) \
                                                 ENTRY(MenuMain               )  \
-    IF_USE( LABEL_USE_PRODUCT_INFO,             ENTRY(MenuProductInformation ) )\
-    IF_USE( DIGINI_USE_STACKTISTIC,             ENTRY(MenuStackUsage         ) )\
-    IF_USE( DIGINI_USE_STATIC_MEMORY_ALLOC,     ENTRY(MenuMemoryPool         ) )\
     IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE,        ENTRY(MenuDebug              ) )\
     IF_USE( DIGINI_USE_ETHERNET,                ENTRY(MenuNetwork            ) )\
+    IF_USE( DIGINI_USE_LABEL_PRODUCT_INFO,      ENTRY(MenuProductInformation ) )\
+    IF_USE( DIGINI_USE_STACKTISTIC,             ENTRY(MenuStackUsage         ) )\
+    IF_USE( DIGINI_USE_STATIC_MEMORY_ALLOC,     ENTRY(MenuMemoryPool         ) )\
     IF_USE( DIGINI_DEBUG_SDCARD_INFO_ON_VT100,  ENTRY(MenuSD_Card            ) )\
                                                 ENTRY(MenuSystemSetting        )\
 
 
 #define VT100_CALLBACK(ENTRY)\
                                                ENTRY(CALLBACK_MenuMain           )  \
-    IF_USE( LABEL_USE_PRODUCT_INFO,            ENTRY(CALLBACK_ProductInformation ) )\
-    IF_USE( DIGINI_USE_STACKTISTIC,            ENTRY(CALLBACK_StackUsage         ) )\
-    IF_USE( DIGINI_USE_STATIC_MEMORY_ALLOC,    ENTRY(CALLBACK_MemoryPool         ) )\
     IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE,       ENTRY(CALLBACK_DebugLevelSetting  ) )\
     IF_USE( DIGINI_USE_ETHERNET,               ENTRY(CALLBACK_NetworkInfo        ) )\
+    IF_USE( DIGINI_USE_LABEL_PRODUCT_INFO,     ENTRY(CALLBACK_ProductInformation ) )\
+    IF_USE( DIGINI_USE_STACKTISTIC,            ENTRY(CALLBACK_StackUsage         ) )\
+    IF_USE( DIGINI_USE_STATIC_MEMORY_ALLOC,    ENTRY(CALLBACK_MemoryPool         ) )\
     IF_USE( DIGINI_DEBUG_SDCARD_INFO_ON_VT100, ENTRY(CALLBACK_SD_CardInformation ) )\
                                                ENTRY(CALLBACK_SystemSetting        )\
 
 #define VT100_MENU_TREE_DEF(ENTRY, MENU) \
 \
                                                 ENTRY  (MENU,  MenuMain,                ID_MAIN_TITLE,                       CALLBACK_None,                           VT100_MENU_MAIN_FALLBACK,         LBL_MAIN_MENU                                   )  \
-    IF_USE( LABEL_USE_PRODUCT_INFO,             ENTRY  (MENU,  MenuMain,                ID_INFO_DISPLAY,                     CALLBACK_ProductInformation,             MenuProductInformation,           VT100_LBL_SYSTEM_INFO                           ) )\
-    IF_USE( DIGINI_USE_STACKTISTIC,             ENTRY  (MENU,  MenuMain,                ID_STACK_DISPLAY,                    CALLBACK_None,                           MenuStackUsage,                   VT100_LBL_STACKTISTIC                           ) )\
     IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE,        ENTRY  (MENU,  MenuMain,                ID_DEBUG_MENU,                       CALLBACK_None,                           MenuDebug,                        VT100_LBL_DEBUG                                 ) )\
-    IF_USE( DIGINI_USE_STATIC_MEMORY_ALLOC,     ENTRY  (MENU,  MenuMain,                ID_MEMORY_POOL_MENU,                 CALLBACK_None,                           MenuMemoryPool,                   VT100_LBL_MEMORY_POOL_STAT                      ) )\
     IF_USE( DIGINI_USE_ETHERNET,                ENTRY  (MENU,  MenuMain,                ID_NETWORK_INFO,                     CALLBACK_None,                           MenuNetwork,                      LBL_NETWORK_INFO                                ) )\
+    IF_USE( DIGINI_USE_LABEL_PRODUCT_INFO,      ENTRY  (MENU,  MenuMain,                ID_INFO_DISPLAY,                     CALLBACK_ProductInformation,             MenuProductInformation,           VT100_LBL_SYSTEM_INFO                           ) )\
+    IF_USE( DIGINI_USE_STATIC_MEMORY_ALLOC,     ENTRY  (MENU,  MenuMain,                ID_MEMORY_POOL_MENU,                 CALLBACK_None,                           MenuMemoryPool,                   VT100_LBL_MEMORY_POOL_STAT                      ) )\
+    IF_USE( DIGINI_USE_STACKTISTIC,             ENTRY  (MENU,  MenuMain,                ID_STACK_DISPLAY,                    CALLBACK_None,                           MenuStackUsage,                   VT100_LBL_STACKTISTIC                           ) )\
                                                 ENTRY  (MENU,  MenuMain,                ID_SYSTEM_SETTING_MENU,              CALLBACK_None,                           MenuSystemSetting,                VT100_LBL_SYSTEM_SETTING                        )  \
 \
-    IF_USE( LABEL_USE_PRODUCT_INFO,             ENTRY  (MENU,  MenuProductInformation,  ID_INFO_SYSTEM,                      CALLBACK_ProductInformation,             MenuMain,                         VT100_LBL_SYSTEM_INFO                           ) )\
+    IF_USE( DIGINI_USE_LABEL_PRODUCT_INFO,      ENTRY  (MENU,  MenuProductInformation,  ID_INFO_SYSTEM,                      CALLBACK_ProductInformation,             MenuMain,                         VT100_LBL_SYSTEM_INFO                           ) )\
 \
     IF_USE( DIGINI_USE_STACKTISTIC,             ENTRY  (MENU,  MenuStackUsage,          ID_INFO_DISPLAY,                     CALLBACK_StackUsage,                     MenuMain,                         VT100_LBL_STACKTISTIC                           ) )\
 \
@@ -185,7 +185,9 @@ enum NAME ## _ItemID_e                                             \
 enum VT100_Menu_e
 {
     VT100_MENU_DEF(EXPAND_VT100_MENU_AS_ENUM)
+  #ifdef VT100_USER_MENU_DEF
     VT100_USER_MENU_DEF(EXPAND_VT100_MENU_AS_ENUM)
+  #endif
     NUMBER_OF_MENU,
   #if (VT100_MENU_MAIN_FALLBACK_CFG != VT100_MENU_NONE)
     VT100_MENU_NONE,                                    // It is needed to create the enum, if it is not the fall-back for the main menu
@@ -352,7 +354,9 @@ bool                GetString                   (char* pBuffer, size_t Size);
         void                        ClearConfigFLag             (void);
         static VT100_InputType_e    CALLBACK_None               (uint8_t Input, VT100_CallBackType_e Type);
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
+      #ifdef VT100_USER_MENU_DEF
         VT100_USER_CALLBACK(EXPAND_VT100_MENU_CALLBACK)
+      #endif
         Console*                            m_pConsole;
         bool                                m_IsItInitialized;
         bool                                m_IsItInStartup;
@@ -406,13 +410,9 @@ bool                GetString                   (char* pBuffer, size_t Size);
 //-------------------------------------------------------------------------------------------------
 
 #ifdef VT100_GLOBAL
-
-class VT100_Terminal            myVT100;
-
+    class VT100_Terminal            myVT100;
 #else
-
-extern class VT100_Terminal     myVT100;
-
+    extern class VT100_Terminal     myVT100;
 #endif // VT100_GLOBAL
 
 //-------------------------------------------------------------------------------------------------

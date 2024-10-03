@@ -63,7 +63,7 @@ const IP_Config_t IP_Manager::m_Config[IP_NUMBER_OF_INTERFACE] =
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::Initialize(IF_ID_e IF_ID)
 {
-    nOS_Error            Error;
+ //   nOS_Error            Error;
 
        // Initialize Variables
     //m_IP_IsValid             = false;
@@ -188,10 +188,10 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::Run(void)
 {
-    IP_Address_t   Address;
-    uint8_t        Error;
+  //  IP_Address_t   Address;
+  //  uint8_t        Error;
   //  MSG_t*         pMsg        = nullptr;
-    IP_Address_t   IP;
+  //  IP_Address_t   IP;
 
     for(;;)
     {
@@ -488,7 +488,7 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
     char*   pDomainName;
     char*   pSearch1        = nullptr;
     char*   pSearch2        = nullptr;
-    uint8_t Error;
+  // uint8_t Error;
 
     *pPort = 80;                                        // Set to default port if none are found
 

@@ -154,6 +154,7 @@ void Console::Process(void)
         m_pChildProcess[m_ActiveProcessLevel - 1]->IF_Process();
     }
 }
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           GiveControlToChildProcess

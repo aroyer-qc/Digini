@@ -292,7 +292,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
+#if (DIGINI_USE_LABEL_PRODUCT_INFO == DEF_ENABLED)
 VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT100_CallBackType_e Type)
 {
     nOS_Time        UpTime;
@@ -429,7 +429,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 
     return VT100_INPUT_ESCAPE;
 }
-#endif //  (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
+#endif //  (DIGINI_USE_LABEL_PRODUCT_INFO == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1191,7 +1191,9 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
         //    LinkState = myETH_PHY->GetLinkState();
             myVT100.InMenuPrintf(28, 14, LBL_STRING, (LinkState == ETH_LINK_UP) != 0 ? "Up  " : "Down");
 
-        //    LinkInfo = myETH_PHY->GetLinkInfo();
+            // tempo remove warning
+            LinkInfo.Duplex = ETH_PHY_FULL_DUPLEX;
+            LinkInfo.Speed = ETH_PHY_SPEED_100M;//myETH_PHY->GetLinkInfo();
 
             switch(LinkInfo.Speed)
             {

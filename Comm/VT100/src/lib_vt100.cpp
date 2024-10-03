@@ -61,12 +61,16 @@
 //-------------------------------------------------------------------------------------------------
 
 VT100_MENU_DEF(EXPAND_VT100_AS_MENU_MEMBER_VARIABLE_DATA)
+#ifdef VT100_USER_MENU_DEF
 VT100_USER_MENU_DEF(EXPAND_VT100_AS_MENU_MEMBER_VARIABLE_DATA)
+#endif
 
 const VT100_MenuObject_t VT100_Terminal::m_Menu[NUMBER_OF_MENU] =
 {
     VT100_MENU_DEF(EXPAND_VT100_MENU_AS_DATA)
+  #ifdef VT100_USER_MENU_DEF
     VT100_USER_MENU_DEF(EXPAND_VT100_MENU_AS_DATA)
+  #endif
 };
 
 //-------------------------------------------------------------------------------------------------

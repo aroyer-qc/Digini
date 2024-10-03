@@ -151,7 +151,6 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
 {
     TickCount_t TickStart;
 
-    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
     SYSCFG->PMC  |= SYSCFG_PMC_MII_RMII_SEL;
 
     // Init all IO

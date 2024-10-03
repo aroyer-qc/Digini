@@ -184,45 +184,45 @@ X_LABEL( LBL_TEST,  "the quick brown fox jumps over the lazy dog",         "port
 #endif
 
 // Console Generic Label
-#define CLI_LABEL_LANGUAGE_DEF(X_CLI_LBL_CFG) \
-    X_CLI_LBL_CFG( LBL_CLI_NEW_LINE,                    "\n\n>",                                                                                                   nullptr                                                                                  ) \
-    X_CLI_LBL_CFG( LBL_NACK,                            "NACK, ",                                                                                                  nullptr                                                                                  ) \
-    X_CLI_LBL_CFG( LBL_ERROR,                           "ERROR, %s",                                                                                               "ERREUR, %s"                                                                             ) \
-    X_CLI_LBL_CFG( LBL_CMD_LINE_PROC_STARTED,           "Command Line Process Started\n>",                                                                         "Proc\x82" "d\x82 Ligne de Commande, D\x82marr\x82\n>"                                   ) \
-    X_CLI_LBL_CFG( LBL_COMMAND_IS_INVALID,              "\nCommand is Invalid\n>",                                                                                 "\nCommande Invalide\n>"                                                                 ) \
-    X_CLI_LBL_CFG( LBL_MALFORMED_PACKED,                "\nMalformed Command\n>",                                                                                  "\nCommande Mal Form\x82\n>"                                                             ) \
-    X_CLI_LBL_CFG( LBL_BUFFER_OVERFLOW,                 "\nBuffer Overflow\n>",                                                                                    "\nD\x82" "bordement du Tampon\n"                                                        ) \
-    X_CLI_LBL_CFG( LBL_CMD_TIME_OUT,                    " ... Command Timeout\n>",                                                                                 " ... Expiration du D\x82lai de Commande\n>"                                             ) \
-    X_CLI_LBL_CFG( LBL_CLI_RESPONSE,                    CLI_RESPONSE_FOR_LABEL,                                                                                    nullptr                                                                                  ) \
+#define CLI_LABEL_LANGUAGE_DEF(X_LABEL) \
+    X_LABEL( LBL_CLI_NEW_LINE,                    "\n\n>",                                                                                                   nullptr                                                                                  ) \
+    X_LABEL( LBL_NACK,                            "NACK, ",                                                                                                  nullptr                                                                                  ) \
+    X_LABEL( LBL_ERROR,                           "ERROR, %s",                                                                                               "ERREUR, %s"                                                                             ) \
+    X_LABEL( LBL_CMD_LINE_PROC_STARTED,           "Command Line Process Started\n>",                                                                         "Proc\x82" "d\x82 Ligne de Commande, D\x82marr\x82\n>"                                   ) \
+    X_LABEL( LBL_COMMAND_IS_INVALID,              "\nCommand is Invalid\n>",                                                                                 "\nCommande Invalide\n>"                                                                 ) \
+    X_LABEL( LBL_MALFORMED_PACKED,                "\nMalformed Command\n>",                                                                                  "\nCommande Mal Form\x82\n>"                                                             ) \
+    X_LABEL( LBL_BUFFER_OVERFLOW,                 "\nBuffer Overflow\n>",                                                                                    "\nD\x82" "bordement du Tampon\n"                                                        ) \
+    X_LABEL( LBL_CMD_TIME_OUT,                    " ... Command Timeout\n>",                                                                                 " ... Expiration du D\x82lai de Commande\n>"                                             ) \
+    X_LABEL( LBL_CLI_RESPONSE,                    CLI_RESPONSE_FOR_LABEL,                                                                                    nullptr                                                                                  ) \
 
 // Extended message support CLI_USE_EXTENDED_ERROR
-#define CLI_LABEL_EXT_LANGUAGE_DEF(X_CLI_LBL_CFG) \
-    X_CLI_LBL_CFG( LBL_DENIED,                          "Denied",                                                                                                  "Refuser"                                                                                ) \
-    X_CLI_LBL_CFG( LBL_NO_READ_SUPPORT,                 "No Read Support",                                                                                         "Aucun Support de Lecture"                                                               ) \
-    X_CLI_LBL_CFG( LBL_NO_WRITE_SUPPORT,                "No Write Support",                                                                                        "Aucun Support d'\x82" "criture"                                                         ) \
-    X_CLI_LBL_CFG( LBL_INVALID_PARAMETER,               "Invalid Parameter",                                                                                       "Param\x88tre Invalide"                                                                  ) \
-    X_CLI_LBL_CFG( LBL_PASSWORD_INVALID,                "Password Invalid",                                                                                        "Mot de Passe Invalide"                                                                  ) \
-    X_CLI_LBL_CFG( LBL_MEM_ALLOC_ERROR,                 "Memory allocation Error",                                                                                 "Erreur d'Allocation M\x82moire"                                                         ) \
-    X_CLI_LBL_CFG( LBL_PLAIN_CMD_ONLY,                  "Plain Command Only",                                                                                      "Commande Simple Uniquement"                                                             ) \
+#define CLI_LABEL_EXT_LANGUAGE_DEF(X_LABEL) \
+    X_LABEL( LBL_DENIED,                          "Denied",                                                                                                  "Refuser"                                                                                ) \
+    X_LABEL( LBL_NO_READ_SUPPORT,                 "No Read Support",                                                                                         "Aucun Support de Lecture"                                                               ) \
+    X_LABEL( LBL_NO_WRITE_SUPPORT,                "No Write Support",                                                                                        "Aucun Support d'\x82" "criture"                                                         ) \
+    X_LABEL( LBL_INVALID_PARAMETER,               "Invalid Parameter",                                                                                       "Param\x88tre Invalide"                                                                  ) \
+    X_LABEL( LBL_PASSWORD_INVALID,                "Password Invalid",                                                                                        "Mot de Passe Invalide"                                                                  ) \
+    X_LABEL( LBL_MEM_ALLOC_ERROR,                 "Memory allocation Error",                                                                                 "Erreur d'Allocation M\x82moire"                                                         ) \
+    X_LABEL( LBL_PLAIN_CMD_ONLY,                  "Plain Command Only",                                                                                      "Commande Simple Uniquement"                                                             ) \
 
-#define CLI_LABEL_HELP_DEF(X_CLI_LBL_CFG) \
-    X_CLI_LBL_CFG( LBL_MENU_HEADER,                     "\nFor more information on a specific command, type HELP <cmd-name>\n\n",                                  "\nPour plus d'information sur une commande specifique, tapez HELP <Nom-de-CMD>\n\n"     ) \
+#define CLI_LABEL_HELP_DEF(X_LABEL) \
+    X_LABEL( LBL_MENU_HEADER,                     "\nFor more information on a specific command, type HELP <cmd-name>\n\n",                                  "\nPour plus d'information sur une commande specifique, tapez HELP <Nom-de-CMD>\n\n"     ) \
   IF_USE(DIGINI_USE_VT100_MENU,                                                                                                                                                                                                                               \
-    X_CLI_LBL_CFG( LBL_CMD_HELP_MENU,                   "Access the VT100 Menu",                                                                                   "AccD\x8a" "der au menu VT100"                                                           ) \
+    X_LABEL( LBL_CMD_HELP_MENU,                   "Access the VT100 Menu",                                                                                   "AccD\x8a" "der au menu VT100"                                                           ) \
   )                                                                                                                                                                                                                                                           \
-    X_CLI_LBL_CFG( LBL_CMD_HELP_MUTE_DEBUG,             "Mute the debugging output",                                                                               "D\x82" "activer l'affichage du d\x82" "bogage"                                          ) \
-    X_CLI_LBL_CFG( LBL_CMD_HELP_UNMUTE_DEBUG,           "Unmute the debugging output",                                                                             "R\x82" "activer l'affichage du d\x82" "bogage"                                          ) \
-    X_CLI_LBL_CFG( LBL_CMD_HELP_CLEAR,                  "Clear the terminal screen",                                                                               "Effacer l'\x82" "cran du terminal"                                                      ) \
+    X_LABEL( LBL_CMD_HELP_MUTE_DEBUG,             "Mute the debugging output",                                                                               "D\x82" "activer l'affichage du d\x82" "bogage"                                          ) \
+    X_LABEL( LBL_CMD_HELP_UNMUTE_DEBUG,           "Unmute the debugging output",                                                                             "R\x82" "activer l'affichage du d\x82" "bogage"                                          ) \
+    X_LABEL( LBL_CMD_HELP_CLEAR,                  "Clear the terminal screen",                                                                               "Effacer l'\x82" "cran du terminal"                                                      ) \
   IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE,                                                                                                                                                                                                                         \
-    X_CLI_LBL_CFG( LBL_CMD_HELP_DEBUG,                  "Display debugging information",                                                                           "Afficher les informations de d\x82" "bogage"                                            ) \
+    X_LABEL( LBL_CMD_HELP_DEBUG,                  "Display debugging information",                                                                           "Afficher les informations de d\x82" "bogage"                                            ) \
   )                                                                                                                                                                                                                                                           \
-    X_CLI_LBL_CFG( LBL_CMD_HELP_HOLD,                   "Hold on the startup sequence",                                                                            "Suspendre la s\x82quence de démarrage"                                                  ) \
-    X_CLI_LBL_CFG( LBL_CMD_HELP_RELEASE,                "Release the startup sequence",                                                                            "R\x82sumer la s\x82quence de démarrage"                                                 ) \
-    X_CLI_LBL_CFG( LBL_CMD_HELP_VERSION,                "Display version information",                                                                             "Afficher les informations de version"                                                   ) \
-    X_CLI_LBL_CFG( LBL_CMD_HELP_THIS_HELP,              "This help",                                                                                               "Aide de cette commande"                                                                 ) \
-    X_CLI_LBL_CFG( LBL_CMD_HELP_APP_INFO,               "Display application information",                                                                         "Afficher les informations de cette application"                                         ) \
-    X_CLI_LBL_CFG( LBL_CMD_HELP_RESET,                  "Reset the processor",                                                                                     "R\x82initializer le processeur"                                                         ) \
-    X_CLI_LBL_CFG( LBL_CMD_HELP_STATUS,                 "Display general status",                                                                                  "Afficher les status courrant"                                                           ) \
+    X_LABEL( LBL_CMD_HELP_HOLD,                   "Hold on the startup sequence",                                                                            "Suspendre la s\x82quence de démarrage"                                                  ) \
+    X_LABEL( LBL_CMD_HELP_RELEASE,                "Release the startup sequence",                                                                            "R\x82sumer la s\x82quence de démarrage"                                                 ) \
+    X_LABEL( LBL_CMD_HELP_VERSION,                "Display version information",                                                                             "Afficher les informations de version"                                                   ) \
+    X_LABEL( LBL_CMD_HELP_THIS_HELP,              "This help",                                                                                               "Aide de cette commande"                                                                 ) \
+    X_LABEL( LBL_CMD_HELP_APP_INFO,               "Display application information",                                                                         "Afficher les informations de cette application"                                         ) \
+    X_LABEL( LBL_CMD_HELP_RESET,                  "Reset the processor",                                                                                     "R\x82initializer le processeur"                                                         ) \
+    X_LABEL( LBL_CMD_HELP_STATUS,                 "Display general status",                                                                                  "Afficher les status courrant"                                                           ) \
 
 #endif // (DIGINI_USE_CMD_LINE == DEF_ENABLED)
 
@@ -233,137 +233,137 @@ X_LABEL( LBL_TEST,  "the quick brown fox jumps over the lazy dog",         "port
 #define VT100_LBL_BLANK_FOR_SAVE                        LBL_NULL
 
 // Console Generic Label
-#define VT100_LABEL_LANGUAGE_DEF(X_VT100_LBL) \
-    X_VT100_LBL( VT100_LBL_HIDE_CURSOR,                "\033[?25l",                                                                                                nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_SHOW_CURSOR,                "\033[?25h",                                                                                                nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_ATTRIBUTE,                  "\033[%dm",                                                                                                 nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_SAVE_CURSOR,                "\033[s",                                                                                                   nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_RESTORE_CURSOR,             "\033[u",                                                                                                   nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_MOVE_LEFT_CURSOR,           "\033[D",                                                                                                   nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_WHITE_MOVE_CURSOR_2_TO_LEFT,"\033[40m \033[2D",                                                                                         nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_SAVE_ATTRIBUTE,             "\0337",                                                                                                    nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_RESTORE_ATTRIBUTE,          "\0338",                                                                                                    nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_SET_CURSOR,                 "\033[%d;%df",                                                                                              nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_CURSOR_TO_SELECT,           "\033[%d;28f    \033[4D",                                                                                   nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_START_PRINTING,             "\033[5i",                                                                                                  nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_STOP_PRINTING,              "\033[4i",                                                                                                  nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_SCROLL_ZONE,                "\033[%d;%dr",                                                                                              nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_SCROLL_UP,                  "\033M",                                                                                                    nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_EOL_ERASE,                  "\033[K",                                                                                                   nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_ERASE_FROM_CURSOR_N_CHAR,   "\033[%dX",                                                                                                 nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_LINE_SEPARATOR,             "----------------------------------------------------------------------------------------------------\n",   nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_SELECT,                     "Please Select:\n",                                                                                         "Faire une S\x82lection:\n"                                                              ) \
-    X_VT100_LBL( VT100_LBL_QUIT,                       "Quit\n",                                                                                                   "Quitter\n"                                                                              ) \
-    X_VT100_LBL( VT100_LBL_ENTER_SELECTION,            "\r Enter Selection [<ESC>, 1 - %c] > ",                                                                    "\r Entrer S\x82lection [<ESC>, 1 - %c] > "                                              ) \
-    X_VT100_LBL( VT100_LBL_ESCAPE,                     "\r\r\r Press <ESC> to return to menu",                                                                     "\r\r\r Presser <ESC> pour retourner au menu"                                            ) \
-    X_VT100_LBL( VT100_LBL_INPUT_VALIDATION,           "Press <ENTER> to accept or <ESC> to cancel",                                                               "Presser <ENTER> pour accepter ou <ESC> pour annuler"                                    ) \
-    X_VT100_LBL( VT100_LBL_SAVE_CONFIGURATION,         "Save the Configuration",                                                                                   "Sauvegarder la Configuration"                                                           ) \
-    X_VT100_LBL( VT100_LBL_MINIMUM,                    "Minimum",                                                                                                  nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_MAXIMUM,                    "Maximum",                                                                                                  nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_STATUS,                     "( )",                                                                                                      nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_NOW,                        "Now:",                                                                                                     "Maintenant:"                                                                            ) \
-    X_VT100_LBL( VT100_LBL_UPTIME,                     "Up Time:",                                                                                                 "Temps " "\x82" "coul\x82:"                                                              ) \
-    X_VT100_LBL( VT100_LBL_PERCENT_VALUE,              "%ld %%",                                                                                                   nullptr                                                                                  ) \
+#define VT100_LABEL_LANGUAGE_DEF(X_LABEL) \
+    X_LABEL( VT100_LBL_HIDE_CURSOR,                "\033[?25l",                                                                                                nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_SHOW_CURSOR,                "\033[?25h",                                                                                                nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_ATTRIBUTE,                  "\033[%dm",                                                                                                 nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_SAVE_CURSOR,                "\033[s",                                                                                                   nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_RESTORE_CURSOR,             "\033[u",                                                                                                   nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_MOVE_LEFT_CURSOR,           "\033[D",                                                                                                   nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_WHITE_MOVE_CURSOR_2_TO_LEFT,"\033[40m \033[2D",                                                                                         nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_SAVE_ATTRIBUTE,             "\0337",                                                                                                    nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_RESTORE_ATTRIBUTE,          "\0338",                                                                                                    nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_SET_CURSOR,                 "\033[%d;%df",                                                                                              nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_CURSOR_TO_SELECT,           "\033[%d;28f    \033[4D",                                                                                   nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_START_PRINTING,             "\033[5i",                                                                                                  nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_STOP_PRINTING,              "\033[4i",                                                                                                  nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_SCROLL_ZONE,                "\033[%d;%dr",                                                                                              nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_SCROLL_UP,                  "\033M",                                                                                                    nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_EOL_ERASE,                  "\033[K",                                                                                                   nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_ERASE_FROM_CURSOR_N_CHAR,   "\033[%dX",                                                                                                 nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_LINE_SEPARATOR,             "----------------------------------------------------------------------------------------------------\n",   nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_SELECT,                     "Please Select:\n",                                                                                         "Faire une S\x82lection:\n"                                                              ) \
+    X_LABEL( VT100_LBL_QUIT,                       "Quit\n",                                                                                                   "Quitter\n"                                                                              ) \
+    X_LABEL( VT100_LBL_ENTER_SELECTION,            "\r Enter Selection [<ESC>, 1 - %c] > ",                                                                    "\r Entrer S\x82lection [<ESC>, 1 - %c] > "                                              ) \
+    X_LABEL( VT100_LBL_ESCAPE,                     "\r\r\r Press <ESC> to return to menu",                                                                     "\r\r\r Presser <ESC> pour retourner au menu"                                            ) \
+    X_LABEL( VT100_LBL_INPUT_VALIDATION,           "Press <ENTER> to accept or <ESC> to cancel",                                                               "Presser <ENTER> pour accepter ou <ESC> pour annuler"                                    ) \
+    X_LABEL( VT100_LBL_SAVE_CONFIGURATION,         "Save the Configuration",                                                                                   "Sauvegarder la Configuration"                                                           ) \
+    X_LABEL( VT100_LBL_MINIMUM,                    "Minimum",                                                                                                  nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_MAXIMUM,                    "Maximum",                                                                                                  nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_STATUS,                     "( )",                                                                                                      nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_NOW,                        "Now:",                                                                                                     "Maintenant:"                                                                            ) \
+    X_LABEL( VT100_LBL_UPTIME,                     "Up Time:",                                                                                                 "Temps " "\x82" "coul\x82:"                                                              ) \
+    X_LABEL( VT100_LBL_PERCENT_VALUE,              "%ld %%",                                                                                                   nullptr                                                                                  ) \
 \
-    X_VT100_LBL( VT100_LBL_DATE,                       "Date",                                                                                                     "Date"                                                                                   ) \
-    X_VT100_LBL( VT100_LBL_TIME,                       "Time",                                                                                                     "Heure"                                                                                  ) \
+    X_LABEL( VT100_LBL_DATE,                       "Date",                                                                                                     "Date"                                                                                   ) \
+    X_LABEL( VT100_LBL_TIME,                       "Time",                                                                                                     "Heure"                                                                                  ) \
 
-#define VT100_MONO_LABEL_LANGUAGE_DEF(X_VT100_LBL) \
-    X_VT100_LBL( VT100_LBL_BACK_WHITE_FORE_BLACK,      "\033[30m\033[47m",                                                                                         nullptr                                                                                  ) \
-    X_VT100_LBL( VT100_LBL_BACK_BLACK_FORE_WHITE,      "\033[37m\033[40m",                                                                                         nullptr                                                                                  ) \
+#define VT100_MONO_LABEL_LANGUAGE_DEF(X_LABEL) \
+    X_LABEL( VT100_LBL_BACK_WHITE_FORE_BLACK,      "\033[30m\033[47m",                                                                                         nullptr                                                                                  ) \
+    X_LABEL( VT100_LBL_BACK_BLACK_FORE_WHITE,      "\033[37m\033[40m",                                                                                         nullptr                                                                                  ) \
 
-#define VT100_DEBUG_IN_CONSOLE_LANGUAGE_DEF(X_VT100_LBL) \
-    X_VT100_LBL( VT100_LBL_DEBUG,                      "Debug",                                                                                                    "D\x82" "bogage"                                                                         ) \
-    X_VT100_LBL( VT100_LBL_DEBUG_MENU,                 "Debug Menu",                                                                                               "Menu de D\x82" "bogage"                                                                 ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_1,                    "Dbg level 1  - System Status   ( )",                                                                       "Dbg level 1  - Status Syst\x8ame  ( )"                                                  ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_2,                    "Dbg level 2  - System Action   ( )",                                                                       "Dbg level 2  - Action Syst\x8ame  ( )"                                                  ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_3,                    "Dbg level 3  - System Health   ( )",                                                                       "Dbg level 3  - Sant\x82 Syst\x8ame   ( )"                                               ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_4,                    "Dbg level 4  - Monitor/Logs    ( )",                                                                       "Dbg level 4  - Moniteur/Logs   ( )"                                                     ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_5,                    "Dbg level 5  - Stack Warning   ( )",                                                                       "Dbg level 5  - Alerte Stack    ( )"                                                     ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_6,                    "Dbg level 6  - Ethernet driver ( )",                                                                       "Dbg level 6  - Pilote Ethernet ( )"                                                     ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_7,                    "Dbg level 7  - Nano IP         ( )",                                                                       nullptr                                                                                  ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_8,                    "Dbg level 8  - Memory Pool     ( )",                                                                       "Dbg level 8  - R\x82serve m\x82moire ( )"                                               ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_9,                    "Dbg level 9  - Free            ( )",                                                                       "Dbg level 9  - Libre           ( )"                                                     ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_10,                   "Dbg level 10 - Free            ( )",                                                                       "Dbg level 10 - Libre           ( )"                                                     ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_11,                   "Dbg level 11 - Free            ( )",                                                                       "Dbg level 11 - Libre           ( )"                                                     ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_12,                   "Dbg level 12 - Free            ( )",                                                                       "Dbg level 12 - Libre           ( )"                                                     ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_13,                   "Dbg level 13 - Free            ( )",                                                                       "Dbg level 13 - Libre           ( )"                                                     ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_14,                   "Dbg level 14 - Free            ( )",                                                                       "Dbg level 14 - Libre           ( )"                                                     ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_15,                   "Dbg level 15 - Free            ( )",                                                                       "Dbg level 15 - Libre           ( )"                                                     ) \
-    X_VT100_LBL( LBL_DEBUG_LEVEL_16,                   "Dbg level 16 - Free            ( )",                                                                       "Dbg level 16 - Libre           ( )"                                                     ) \
+#define VT100_DEBUG_IN_CONSOLE_LANGUAGE_DEF(X_LABEL) \
+    X_LABEL( VT100_LBL_DEBUG,                      "Debug",                                                                                                    "D\x82" "bogage"                                                                         ) \
+    X_LABEL( VT100_LBL_DEBUG_MENU,                 "Debug Menu",                                                                                               "Menu de D\x82" "bogage"                                                                 ) \
+    X_LABEL( LBL_DEBUG_LEVEL_1,                    "Dbg level 1  - System Status   ( )",                                                                       "Dbg level 1  - Status Syst\x8ame  ( )"                                                  ) \
+    X_LABEL( LBL_DEBUG_LEVEL_2,                    "Dbg level 2  - System Action   ( )",                                                                       "Dbg level 2  - Action Syst\x8ame  ( )"                                                  ) \
+    X_LABEL( LBL_DEBUG_LEVEL_3,                    "Dbg level 3  - System Health   ( )",                                                                       "Dbg level 3  - Sant\x82 Syst\x8ame   ( )"                                               ) \
+    X_LABEL( LBL_DEBUG_LEVEL_4,                    "Dbg level 4  - Monitor/Logs    ( )",                                                                       "Dbg level 4  - Moniteur/Logs   ( )"                                                     ) \
+    X_LABEL( LBL_DEBUG_LEVEL_5,                    "Dbg level 5  - Stack Warning   ( )",                                                                       "Dbg level 5  - Alerte Stack    ( )"                                                     ) \
+    X_LABEL( LBL_DEBUG_LEVEL_6,                    "Dbg level 6  - Ethernet driver ( )",                                                                       "Dbg level 6  - Pilote Ethernet ( )"                                                     ) \
+    X_LABEL( LBL_DEBUG_LEVEL_7,                    "Dbg level 7  - Nano IP         ( )",                                                                       nullptr                                                                                  ) \
+    X_LABEL( LBL_DEBUG_LEVEL_8,                    "Dbg level 8  - Memory Pool     ( )",                                                                       "Dbg level 8  - R\x82serve m\x82moire ( )"                                               ) \
+    X_LABEL( LBL_DEBUG_LEVEL_9,                    "Dbg level 9  - Free            ( )",                                                                       "Dbg level 9  - Libre           ( )"                                                     ) \
+    X_LABEL( LBL_DEBUG_LEVEL_10,                   "Dbg level 10 - Free            ( )",                                                                       "Dbg level 10 - Libre           ( )"                                                     ) \
+    X_LABEL( LBL_DEBUG_LEVEL_11,                   "Dbg level 11 - Free            ( )",                                                                       "Dbg level 11 - Libre           ( )"                                                     ) \
+    X_LABEL( LBL_DEBUG_LEVEL_12,                   "Dbg level 12 - Free            ( )",                                                                       "Dbg level 12 - Libre           ( )"                                                     ) \
+    X_LABEL( LBL_DEBUG_LEVEL_13,                   "Dbg level 13 - Free            ( )",                                                                       "Dbg level 13 - Libre           ( )"                                                     ) \
+    X_LABEL( LBL_DEBUG_LEVEL_14,                   "Dbg level 14 - Free            ( )",                                                                       "Dbg level 14 - Libre           ( )"                                                     ) \
+    X_LABEL( LBL_DEBUG_LEVEL_15,                   "Dbg level 15 - Free            ( )",                                                                       "Dbg level 15 - Libre           ( )"                                                     ) \
+    X_LABEL( LBL_DEBUG_LEVEL_16,                   "Dbg level 16 - Free            ( )",                                                                       "Dbg level 16 - Libre           ( )"                                                     ) \
 
-#define VT100_MEMORY_POOL_LANGUAGE_DEF(X_VT100_LBL) \
-    X_VT100_LBL( VT100_LBL_MEMORY_POOL_STAT,           "Memory Pool Statistic",                                                                                    "Statistiques Bassin de m\x82moire"                                                      ) \
-    X_VT100_LBL( VT100_LBL_MEMORY_POOL,                "Memory Pool",                                                                                              "Bassin de m\x82moire"                                                                   ) \
-    X_VT100_LBL( VT100_LBL_MEMORY_POOL_TOTAL,          "Total size     :",                                                                                         "Taille totale     :"                                                                    ) \
-    X_VT100_LBL( VT100_LBL_MEMORY_POOL_USED,           "Used size :",                                                                                              "Taille Utilis\x82" "e :"                                                                ) \
-    X_VT100_LBL( VT100_LBL_MEMORY_POOL_NB_OF_POOL,     "Number of Pool :    %u",                                                                                   "Nombre de bassins : %u"                                                                 ) \
-    X_VT100_LBL( VT100_LBL_MEM_POOL_GROUP,             "Group %d: %u X %u Bytes",                                                                                  "Groupe %d: %u X %u Octets"                                                              ) \
-    X_VT100_LBL( VT100_LBL_MEM_BLOCK_USED,             "Used Blocks : %u  Highest : %u ",                                                                          "Blocks Utilis\x82s: %u  Haut : %u "                                                     ) \
+#define VT100_MEMORY_POOL_LANGUAGE_DEF(X_LABEL) \
+    X_LABEL( VT100_LBL_MEMORY_POOL_STAT,           "Memory Pool Statistic",                                                                                    "Statistiques Bassin de m\x82moire"                                                      ) \
+    X_LABEL( VT100_LBL_MEMORY_POOL,                "Memory Pool",                                                                                              "Bassin de m\x82moire"                                                                   ) \
+    X_LABEL( VT100_LBL_MEMORY_POOL_TOTAL,          "Total size     :",                                                                                         "Taille totale     :"                                                                    ) \
+    X_LABEL( VT100_LBL_MEMORY_POOL_USED,           "Used size :",                                                                                              "Taille Utilis\x82" "e :"                                                                ) \
+    X_LABEL( VT100_LBL_MEMORY_POOL_NB_OF_POOL,     "Number of Pool :    %u",                                                                                   "Nombre de bassins : %u"                                                                 ) \
+    X_LABEL( VT100_LBL_MEM_POOL_GROUP,             "Group %d: %u X %u Bytes",                                                                                  "Groupe %d: %u X %u Octets"                                                              ) \
+    X_LABEL( VT100_LBL_MEM_BLOCK_USED,             "Used Blocks : %u  Highest : %u ",                                                                          "Blocks Utilis\x82s: %u  Haut : %u "                                                     ) \
 
-#define VT100_MEMORY_STACKTISTIC_LANGUAGE_DEF(X_VT100_LBL) \
-    X_VT100_LBL( VT100_LBL_STACKTISTIC,                "Stack Usage",                                                                                              "Usage des Stacks"                                                                       ) \
+#define VT100_MEMORY_STACKTISTIC_LANGUAGE_DEF(X_LABEL) \
+    X_LABEL( VT100_LBL_STACKTISTIC,                "Stack Usage",                                                                                              "Usage des Stacks"                                                                       ) \
 
-#define VT100_PRODUCT_INFO_LANGUAGE_DEF(X_VT100_LBL) \
-    X_VT100_LBL( VT100_LBL_SYSTEM_INFO,                "Display System Information",                                                                               "Information Syst\x8ame"                                                                 ) \
-    X_VT100_LBL( VT100_LBL_FONT_TERMINAL,              "Extended ASCII Font From This Terminal:",                                                                  "Police de Caract\x8are ASCII \x90tendue Provenant de ce Terminal:"                      ) \
+#define VT100_PRODUCT_INFO_LANGUAGE_DEF(X_LABEL) \
+    X_LABEL( VT100_LBL_SYSTEM_INFO,                "Display System Information",                                                                               "Information Syst\x8ame"                                                                 ) \
+    X_LABEL( VT100_LBL_FONT_TERMINAL,              "Extended ASCII Font From This Terminal:",                                                                  "Police de Caract\x8are ASCII \x90tendue Provenant de ce Terminal:"                      ) \
 
-#define VT100_SELECT_THE_LANGUAGE_DEF(X_VT100_LBL) \
-    X_VT100_LBL( VT100_LBL_SELECT_LANGUAGE,            "Toggle Language:",                                                                                         "Basculer de Langage:"                                                                   ) \
-    X_VT100_LBL( VT100_LBL_LANGUAGE_SELECTION,         "Choose Language:  English ( )  French   ( )",                                                              "Choisir Langage:  Anglais ( )  Fran\x87" "ais ( )"                                      ) \
+#define VT100_SELECT_THE_LANGUAGE_DEF(X_LABEL) \
+    X_LABEL( VT100_LBL_SELECT_LANGUAGE,            "Toggle Language:",                                                                                         "Basculer de Langage:"                                                                   ) \
+    X_LABEL( VT100_LBL_LANGUAGE_SELECTION,         "Choose Language:  English ( )  French   ( )",                                                              "Choisir Langage:  Anglais ( )  Fran\x87" "ais ( )"                                      ) \
 
-#define VT100_SELECT_THE_TEMPERATURE_UNIT_DEF(X_VT100_LBL) \
-    X_VT100_LBL( VT100_LBL_TEMPERATURE_UNIT_SELECTION, "Choose Temp Unit:      \xF8" "C ( )        \xF8" "F ( )",                                                  "Choisir Unit\x82 Temp:    \xF8" "C ( )        \xF8" "F ( )"                             ) \
+#define VT100_SELECT_THE_TEMPERATURE_UNIT_DEF(X_LABEL) \
+    X_LABEL( VT100_LBL_TEMPERATURE_UNIT_SELECTION, "Choose Temp Unit:      \xF8" "C ( )        \xF8" "F ( )",                                                  "Choisir Unit\x82 Temp:    \xF8" "C ( )        \xF8" "F ( )"                             ) \
 
-#define VT100_SERIAL_NUMBER_SETTING_DEF(X_VT100_LBL) \
-    X_VT100_LBL( VT100_LBL_SERIAL_NUMBER_SETTING,      "Setting Serial Number",                                                                                    "Configurer Num\x82ro de S\x82rie"                                                       ) \
+#define VT100_SERIAL_NUMBER_SETTING_DEF(X_LABEL) \
+    X_LABEL( VT100_LBL_SERIAL_NUMBER_SETTING,      "Setting Serial Number",                                                                                    "Configurer Num\x82ro de S\x82rie"                                                       ) \
 
-#define VT100_TIME_AND_DATE_SETTING_DEF(X_VT100_LBL) \
-    X_VT100_LBL( VT100_LBL_TIME_AND_DATE,              "Time and Date",                                                                                            "Heure et Date"                                                                          ) \
-    X_VT100_LBL( VT100_LBL_TIME_AND_DATE_CONFIG,       "Time and Date Configuration",                                                                              "Configuration Heure et Date"                                                            ) \
+#define VT100_TIME_AND_DATE_SETTING_DEF(X_LABEL) \
+    X_LABEL( VT100_LBL_TIME_AND_DATE,              "Time and Date",                                                                                            "Heure et Date"                                                                          ) \
+    X_LABEL( VT100_LBL_TIME_AND_DATE_CONFIG,       "Time and Date Configuration",                                                                              "Configuration Heure et Date"                                                            ) \
 
-#define VT100_SDCARD_INFO_DEF(X_VT100_LBL) \
-    X_VT100_LBL( LBL_SD_CARD_INFORMATION,              "SD-Card Information",                                                                                      "Information Carte SD"                                                                   ) \
-    X_VT100_LBL( LBL_SD_CARD_TYPE,                     "Card Type:",                                                                                               "Type de Carte:"                                                                         ) \
-    X_VT100_LBL( LBL_SD_SPEC_VER,                      "SD Spec Version:",                                                                                         "Spec Version SD:"                                                                       ) \
-    X_VT100_LBL( LBL_SD_MAX_SPEED,                     "Max Speed:",                                                                                               "Vitesse Max:"                                                                           ) \
-    X_VT100_LBL( LBL_SD_MANUFACTURER_ID,               "Manufacturer ID:",                                                                                         "ID du Manufacturier:"                                                                   ) \
-    X_VT100_LBL( LBL_SD_OEM_ID,                        "OEM ID:",                                                                                                  "ID OEM:"                                                                                ) \
-    X_VT100_LBL( LBL_SD_PRODUCT_NAME,                  "Product:",                                                                                                 "Produit:"                                                                               ) \
-    X_VT100_LBL( LBL_SD_PRODUCT_REVISION,              "Revision:",                                                                                                "Revision:"                                                                              ) \
-    X_VT100_LBL( LBL_SD_SERIAL_NUMBER,                 "Serial Number:",                                                                                           "Num\x82ro S\x82rie:"                                                                    ) \
-    X_VT100_LBL( LBL_SD_MANUFACTURING_DATE,            "Manufacturing date:",                                                                                      "Date de Fabrication:"                                                                   ) \
-    X_VT100_LBL( LBL_SD_CARD_SIZE,                     "Card Size:",                                                                                               "Taille de la Carte:"                                                                    ) \
-    X_VT100_LBL( LBL_SD_FLASH_ERASE_SIZE,              "Flash Erase Size:",                                                                                        "Taille d'effacement du flash:"                                                          ) \
-    X_VT100_LBL( LBL_SD_ERASE_SINGLE_BLOCK,            "Erase Single Block:",                                                                                      "effacer un seul bloc:"                                                                  ) \
-    X_VT100_LBL( LBL_SD_DATA_AFTER_ERASE,              "Data After Erase:",                                                                                        "Donn\x82" "e Apr\x8as Effacement:"                                                      ) \
-    X_VT100_LBL( LBL_SD_VOLUME_NAME,                   "Volume Name:",                                                                                             "Nom du Volume:"                                                                         ) \
-    X_VT100_LBL( LBL_SD_VOLUME_SN,                     "Volume Serial Number:",                                                                                    "Num\x82ro de S\x82rie du Volume:"                                                       ) \
-    X_VT100_LBL( LBL_SD_VOLUME_TYPE,                   "Volume Type:",                                                                                             "Type du Volume:"                                                                        ) \
-    X_VT100_LBL( LBL_SD_CAPACITY,                      "Capacity:",                                                                                                "Capacit\x82:"                                                                           ) \
-    X_VT100_LBL( LBL_SD_USED_SPACE,                    "Used Space:",                                                                                              "Espace Utilis\x82:"                                                                     ) \
-    X_VT100_LBL( LBL_SD_FREE_SPACE,                    "Free Space:",                                                                                              "Espace Disponible:"                                                                     ) \
-    X_VT100_LBL( LBL_SD_CLUSTER_SIZE,                  "Cluster Size:",                                                                                            "Taille d'un Cluster:"                                                                   ) \
-    X_VT100_LBL( LBL_SD_SECTOR_PER_CLUSTER,            "Sector Per Cluster:",                                                                                      "Secteurs Par Cluster:"                                                                  ) \
-    X_VT100_LBL( LBL_SD_CLUSTER_COUNT,                 "Cluster Count:",                                                                                           "Nombre de Clusters:"                                                                    ) \
-    X_VT100_LBL( LBL_SD_FREE_CLUSTER_COUNT,            "Free Cluster Count:",                                                                                      "Nombre de Clusters Disponibles:"                                                        ) \
-    X_VT100_LBL( LBL_SD_FAT_START_SECTOR,              "FAT Start Sector:",                                                                                        "Secteur d\x82" "but de la FAT:"                                                         ) \
-    X_VT100_LBL( LBL_SD_DATA_START_SECTOR,             "Data Start Sector:",                                                                                       "Secteur d\x82" "but des donn\x82" "es:"                                                 ) \
-    X_VT100_LBL( LBL_FAT_INFORMATION,                  "FAT Information",                                                                                          "Information sur la FAT"                                                                 ) \
-    X_VT100_LBL( LBL_SD_STD_CAPACITY_V1_1,             "Standard Capacity V1.1",                                                                                   "Capacit\x82 Standard V1.1"                                                              ) \
-    X_VT100_LBL( LBL_SD_STD_CAPACITY_V2_0,             "Standard Capacity V2.0",                                                                                   "Capacit\x82 Standard V2.0"                                                              ) \
-    X_VT100_LBL( LBL_SD_HIGH_CAPACITY,                 "High Capacity",                                                                                            "Haute Capacit\x82"                                                                      ) \
-    X_VT100_LBL( LBL_SD_UNDEFINED_D,                   "Undefined %d",                                                                                             "Non d\x82" "fini %d"                                                                    ) \
-    X_VT100_LBL( LBL_SD_UNDEFINED_2X,                  "Undefined %2x",                                                                                            "Non d\x82" "fini %2x"                                                                   ) \
-    X_VT100_LBL( LBL_SD_25MHZ,                         "25 MHz",                                                                                                   nullptr                                                                                  ) \
-    X_VT100_LBL( LBL_SD_50MHZ,                         "50 MHz",                                                                                                   nullptr                                                                                  ) \
-    X_VT100_LBL( LBL_SD_100MBITS,                      "100 Mbits/sec",                                                                                            nullptr                                                                                  ) \
-    X_VT100_LBL( LBL_SD_200MBITS,                      "200 Mbits/sec",                                                                                            nullptr                                                                                  ) \
-    X_VT100_LBL( LBL_SD_EMPTY,                         "<EMPTY>",                                                                                                  "<VIDE>"                                                                                 ) \
-    X_VT100_LBL( LBL_SD_KB_TOTAL,                      "%lu KB Total",                                                                                             "%lu KB Totale"                                                                          ) \
-    X_VT100_LBL( LBL_SD_KB_USED,                       "%lu KB Used",                                                                                              "%lu KB Utilis\x82"                                                                      ) \
-    X_VT100_LBL( LBL_SD_KB_AVAILABLE,                  "%lu KB Available",                                                                                         "%lu KB Disponible"                                                                      ) \
-    X_VT100_LBL( LBL_SD_SECTORS,                       "%lu Sectors",                                                                                              "%lu Secteurs"                                                                           ) \
+#define VT100_SDCARD_INFO_DEF(X_LABEL) \
+    X_LABEL( LBL_SD_CARD_INFORMATION,              "SD-Card Information",                                                                                      "Information Carte SD"                                                                   ) \
+    X_LABEL( LBL_SD_CARD_TYPE,                     "Card Type:",                                                                                               "Type de Carte:"                                                                         ) \
+    X_LABEL( LBL_SD_SPEC_VER,                      "SD Spec Version:",                                                                                         "Spec Version SD:"                                                                       ) \
+    X_LABEL( LBL_SD_MAX_SPEED,                     "Max Speed:",                                                                                               "Vitesse Max:"                                                                           ) \
+    X_LABEL( LBL_SD_MANUFACTURER_ID,               "Manufacturer ID:",                                                                                         "ID du Manufacturier:"                                                                   ) \
+    X_LABEL( LBL_SD_OEM_ID,                        "OEM ID:",                                                                                                  "ID OEM:"                                                                                ) \
+    X_LABEL( LBL_SD_PRODUCT_NAME,                  "Product:",                                                                                                 "Produit:"                                                                               ) \
+    X_LABEL( LBL_SD_PRODUCT_REVISION,              "Revision:",                                                                                                "Revision:"                                                                              ) \
+    X_LABEL( LBL_SD_SERIAL_NUMBER,                 "Serial Number:",                                                                                           "Num\x82ro S\x82rie:"                                                                    ) \
+    X_LABEL( LBL_SD_MANUFACTURING_DATE,            "Manufacturing date:",                                                                                      "Date de Fabrication:"                                                                   ) \
+    X_LABEL( LBL_SD_CARD_SIZE,                     "Card Size:",                                                                                               "Taille de la Carte:"                                                                    ) \
+    X_LABEL( LBL_SD_FLASH_ERASE_SIZE,              "Flash Erase Size:",                                                                                        "Taille d'effacement du flash:"                                                          ) \
+    X_LABEL( LBL_SD_ERASE_SINGLE_BLOCK,            "Erase Single Block:",                                                                                      "effacer un seul bloc:"                                                                  ) \
+    X_LABEL( LBL_SD_DATA_AFTER_ERASE,              "Data After Erase:",                                                                                        "Donn\x82" "e Apr\x8as Effacement:"                                                      ) \
+    X_LABEL( LBL_SD_VOLUME_NAME,                   "Volume Name:",                                                                                             "Nom du Volume:"                                                                         ) \
+    X_LABEL( LBL_SD_VOLUME_SN,                     "Volume Serial Number:",                                                                                    "Num\x82ro de S\x82rie du Volume:"                                                       ) \
+    X_LABEL( LBL_SD_VOLUME_TYPE,                   "Volume Type:",                                                                                             "Type du Volume:"                                                                        ) \
+    X_LABEL( LBL_SD_CAPACITY,                      "Capacity:",                                                                                                "Capacit\x82:"                                                                           ) \
+    X_LABEL( LBL_SD_USED_SPACE,                    "Used Space:",                                                                                              "Espace Utilis\x82:"                                                                     ) \
+    X_LABEL( LBL_SD_FREE_SPACE,                    "Free Space:",                                                                                              "Espace Disponible:"                                                                     ) \
+    X_LABEL( LBL_SD_CLUSTER_SIZE,                  "Cluster Size:",                                                                                            "Taille d'un Cluster:"                                                                   ) \
+    X_LABEL( LBL_SD_SECTOR_PER_CLUSTER,            "Sector Per Cluster:",                                                                                      "Secteurs Par Cluster:"                                                                  ) \
+    X_LABEL( LBL_SD_CLUSTER_COUNT,                 "Cluster Count:",                                                                                           "Nombre de Clusters:"                                                                    ) \
+    X_LABEL( LBL_SD_FREE_CLUSTER_COUNT,            "Free Cluster Count:",                                                                                      "Nombre de Clusters Disponibles:"                                                        ) \
+    X_LABEL( LBL_SD_FAT_START_SECTOR,              "FAT Start Sector:",                                                                                        "Secteur d\x82" "but de la FAT:"                                                         ) \
+    X_LABEL( LBL_SD_DATA_START_SECTOR,             "Data Start Sector:",                                                                                       "Secteur d\x82" "but des donn\x82" "es:"                                                 ) \
+    X_LABEL( LBL_FAT_INFORMATION,                  "FAT Information",                                                                                          "Information sur la FAT"                                                                 ) \
+    X_LABEL( LBL_SD_STD_CAPACITY_V1_1,             "Standard Capacity V1.1",                                                                                   "Capacit\x82 Standard V1.1"                                                              ) \
+    X_LABEL( LBL_SD_STD_CAPACITY_V2_0,             "Standard Capacity V2.0",                                                                                   "Capacit\x82 Standard V2.0"                                                              ) \
+    X_LABEL( LBL_SD_HIGH_CAPACITY,                 "High Capacity",                                                                                            "Haute Capacit\x82"                                                                      ) \
+    X_LABEL( LBL_SD_UNDEFINED_D,                   "Undefined %d",                                                                                             "Non d\x82" "fini %d"                                                                    ) \
+    X_LABEL( LBL_SD_UNDEFINED_2X,                  "Undefined %2x",                                                                                            "Non d\x82" "fini %2x"                                                                   ) \
+    X_LABEL( LBL_SD_25MHZ,                         "25 MHz",                                                                                                   nullptr                                                                                  ) \
+    X_LABEL( LBL_SD_50MHZ,                         "50 MHz",                                                                                                   nullptr                                                                                  ) \
+    X_LABEL( LBL_SD_100MBITS,                      "100 Mbits/sec",                                                                                            nullptr                                                                                  ) \
+    X_LABEL( LBL_SD_200MBITS,                      "200 Mbits/sec",                                                                                            nullptr                                                                                  ) \
+    X_LABEL( LBL_SD_EMPTY,                         "<EMPTY>",                                                                                                  "<VIDE>"                                                                                 ) \
+    X_LABEL( LBL_SD_KB_TOTAL,                      "%lu KB Total",                                                                                             "%lu KB Totale"                                                                          ) \
+    X_LABEL( LBL_SD_KB_USED,                       "%lu KB Used",                                                                                              "%lu KB Utilis\x82"                                                                      ) \
+    X_LABEL( LBL_SD_KB_AVAILABLE,                  "%lu KB Available",                                                                                         "%lu KB Disponible"                                                                      ) \
+    X_LABEL( LBL_SD_SECTORS,                       "%lu Sectors",                                                                                              "%lu Secteurs"                                                                           ) \
 
 #endif // (DIGINI_USE_VT100_MENU == DEF_ENABLED)
 
@@ -384,29 +384,31 @@ enum Language_e
 enum Label_e
 {
     COMMON_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
-    LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+ #ifdef USER_LABEL_LANGUAGE_DEF
+    USER_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+ #endif
 
- #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)                       /// this doesn't exist actually need to do
+ #if (DIGINI_USE_LABEL_PRODUCT_INFO == DEF_ENABLED)                       // this doesn't exist actually need to do
     PRODUCT_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
  #endif
 
- #if (LABEL_USE_DATE == DEF_ENABLED)
+ #if (DIGINI_USE_LABEL_DATE == DEF_ENABLED)
     DATE_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
  #endif
 
- #if (LABEL_USE_TIME == DEF_ENABLED)
+ #if (DIGINI_USE_LABEL_TIME == DEF_ENABLED)
     TIME_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
  #endif
 
- #if (LABEL_USE_DECIMAL_KEY == DEF_ENABLED)
+ #if (DIGINI_USE_LABEL_DECIMAL_KEY == DEF_ENABLED)
     DECIMAL_KEY_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
  #endif
 
- #if (LABEL_USE_HEXADECIMAL_KEY == DEF_ENABLED)
+ #if (DIGINI_USE_LABEL_HEXADECIMAL_KEY == DEF_ENABLED)
     HEXADECIMAL_KEY_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
  #endif
 
- #if (LABEL_USE_STANDARD_TEST_STRING == DEF_ENABLED)
+ #if (DIGINI_USE_LABEL_STANDARD_TEST_STRING == DEF_ENABLED)
     STANDARD_TEST_STRING_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
  #endif
 
@@ -437,7 +439,7 @@ enum Label_e
     VT100_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
     VT100_USER_LABEL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
 
-  #if (LABEL_USE_PRODUCT_INFO == DEF_ENABLED)
+  #if (DIGINI_USE_LABEL_PRODUCT_INFO == DEF_ENABLED)
     VT100_PRODUCT_INFO_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
   #endif
 
@@ -485,6 +487,8 @@ enum Label_e
  #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
     NET_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
  #endif
+
+  ///-----------------------------------------------------------------------------------------------
 
     NB_LABEL_CONST,
     INVALID_LABEL,

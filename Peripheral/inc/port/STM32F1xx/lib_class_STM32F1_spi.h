@@ -197,7 +197,7 @@ class SPI_Driver
         DMA_Driver              m_DMA_TX;
         volatile SystemState_e  m_DMA_Status;
         nOS_Sem                 m_DMA_ReleaseSem;
-        
+
         bool                    m_IsItUsingDMA_TX;
         bool                    m_IsItUsingDMA_RX;
       #endif

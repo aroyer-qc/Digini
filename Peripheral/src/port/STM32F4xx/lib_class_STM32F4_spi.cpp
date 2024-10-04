@@ -645,8 +645,8 @@ SystemState_e SPI_Driver::WaitDMA(void)
     pSPIx = m_pInfo->pSPIx;
 
     // Wait for DMA to conclude
-    Error = nOS_SemTake(&m_DMA_ReleaseSem, SPI_DMA_TRANSFER_TIMEOUT)
-    
+    Error = nOS_SemTake(&m_DMA_ReleaseSem, SPI_DMA_TRANSFER_TIMEOUT);
+
     if(Error != NOS_OK)
     {
         return SYS_TIME_OUT;
@@ -684,7 +684,7 @@ void SPI_Driver::DMA_TX_IRQ_Handler(SPI_ID_e SPI_ID)
     pDriver = SPI_Driver::m_pDriver[SPI_ID];
     pDriver->m_DMA_Status = SYS_BUSY_B4_RELEASE;
     pDriver->m_DMA_TX.ClearFlag();
-    nOS_SemGive(pDriver->m_DMA_Release);
+    nOS_SemGive(&pDriver->m_DMA_ReleaseSem);
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_STM32F4_crc.cpp
+//  File : lib_class_STM32F4_crc.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2024 Alain Royer.
+// Copyright(c) 2020 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,70 +24,48 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CRC_Reset
-//
-//  Parameter(s):   None
-//  Return:         void
-//
-//  Description:    This function init the hardware for crc calculation.
-//
-//-------------------------------------------------------------------------------------------------
-void CRC_Reset(void)
-{
-    RCC->AHB1ENR |= RCC_AHB1ENR_CRCEN;
-    CRC->CR = 1;
-}
+#pragma once
 
 //-------------------------------------------------------------------------------------------------
+// Note(s)
+//-------------------------------------------------------------------------------------------------
 //
-//  Name:           CRC_GetValue
-//
-//  Parameter(s):   void
-//  Return:         uint32_t
-//
-//  Description:    This function return the 32 bits CRC value.
+// This hardware CRC is for CRC-32 (MPEG-2) polynomial: 0x4C11DB7
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CRC_GetValue(void)
-{
-    return CRC->DR;
-}
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:           CRC_AddByte
-//
-//  Parameter(s):   uint8_t Byte
-//  Return:         void
-//
-//  Description:    Add a byte to calculation of on going CRC sequence.
-//
+// Typedef(s)
 //-------------------------------------------------------------------------------------------------
-void CRC_AddByte(const uint8_t Byte)
+
+enum CRC_InputType_e
 {
-    CRC->DR = Byte;
-}
+    CRC_INPUT_DATA_FORMAT_BYTES         = 0,
+    CRC_INPUT_DATA_FORMAT_HALF_WORDS,
+    CRC_INPUT_DATA_FORMAT_WORDS,
+};
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:           CRC_AddBuffer
-//
-//  Parameter(s):   pBuffer             Calculate CRC on this buffer
-//                  Length              Length of the buffer
-//  Return:         void
-//
-//  Description:    Add buffer to calculation of on going CRC sequence.
-//
+// class definition(s)
 //-------------------------------------------------------------------------------------------------
-void CRC_AddBuffer(const uint8_t *pBuffer, size_t Length)
+
+class CRC_Driver
 {
-    // Enter Data to the CRC calculator
-    for(size_t i = 0; i < Length; i++)
-    {
-        CRC->DR = pBuffer[i];
-    }
-}
+    public:
+
+        void        Initialize      (CRC_InputType_e Type);
+        void        Reset           (void);
+        uint32_t    GetValue        (void);
+        uint32_t    AddBuffer       (const void *pBuffer, size_t Length);
+
+    private:
+
+        void        HandleBytes     (uint8_t* pBuffer, size_t Length);
+        void        HandleHalfWords (uint16_t* pBuffer, size_t Length);
+
+        CRC_InputType_e     m_Type;
+};
+
 
 //-------------------------------------------------------------------------------------------------
+

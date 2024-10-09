@@ -35,12 +35,6 @@
 #if (DIGINI_USE_CRC == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// include(s)
-//-------------------------------------------------------------------------------------------------
-
-//#include "crc_cfg.h"
-
-//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -131,16 +125,17 @@
     IF_USE( DIGINI_USE_CRC_31_PHILIPS,     X_CRC( CRC_31_PHILIPS,     0x00411DB7,              0x7FFFFFFF,              0x7FFFFFFF,              false, false, 31 ) ) /* 0x0CE9E46C              */ \
     IF_USE( DIGINI_USE_CRC_32,             X_CRC( CRC_32,             0x04C11DB7,              0xFFFFFFFF,              0xFFFFFFFF,              true,  true,  32 ) ) /* 0xCBF43926              */ \
     IF_USE( DIGINI_USE_CRC_32_AUTOSAR,     X_CRC( CRC_32_AUTOSAR,     0xF4ACFB13,              0xFFFFFFFF,              0xFFFFFFFF,              true,  true,  32 ) ) /* 0X1697D06A              */ \
-    IF_USE( DIGINI_USE_CRC_32_BZIP2,       X_CRC( CRC_32_BZIP2,       0x04C11DB7,              0xFFFFFFFF,              0xFFFFFFFF,              false, false, 32 ) ) /* 0xFC891918              */ \
-    IF_USE( DIGINI_USE_CRC_32_C,           X_CRC( CRC_32_C,           0x1EDC6F41,              0xFFFFFFFF,              0xFFFFFFFF,              true,  true,  32 ) ) /* 0xE3069283              */ /* Also name ISCSI    */\
+    IF_USE( DIGINI_USE_CRC_32_B,           X_CRC( CRC_32_B,           0x04C11DB7,              0xFFFFFFFF,              0xFFFFFFFF,              true,  true,  32 ) ) /* 0x9AE0DAAF              */ \
+    IF_USE( DIGINI_USE_CRC_32_BZIP2,       X_CRC( CRC_32_BZIP2,       0x04C11DB7,              0xFFFFFFFF,              0xFFFFFFFF,              false, false, 32 ) ) /* 0xFC891918              */ /* Also name AAl5, DECT-B, B-CRC-32 */\
+    IF_USE( DIGINI_USE_CRC_32_C,           X_CRC( CRC_32_C,           0x1EDC6F41,              0xFFFFFFFF,              0xFFFFFFFF,              true,  true,  32 ) ) /* 0xE3069283              */ /* Also name ISCSI, BASE91-C, CASTAGNOLI, INTERLAKEN */\
     IF_USE( DIGINI_USE_CRC_32_CD_ROM_EDC,  X_CRC( CRC_32_CD_ROM_EDC,  0x8001801B,              0x00000000,              0x00000000,              true,  true,  32 ) ) /* 0X6EC2EDC4              */ \
     IF_USE( DIGINI_USE_CRC_32_D,           X_CRC( CRC_32_D,           0xA833982B,              0xFFFFFFFF,              0xFFFFFFFF,              true,  true,  32 ) ) /* 0x87315576              */ /* Also name BASE91_D */\
-    IF_USE( DIGINI_USE_CRC_32_ISO_HDLC,    X_CRC( CRC_32_ISO_HDLC,    0x04C11DB7,              0xFFFFFFFF,              0xFFFFFFFF,              true,  true,  32 ) ) /* 0xCBF43926              */ \
+    IF_USE( DIGINI_USE_CRC_32_ISO_HDLC,    X_CRC( CRC_32_ISO_HDLC,    0x04C11DB7,              0xFFFFFFFF,              0xFFFFFFFF,              true,  true,  32 ) ) /* 0xCBF43926              */ /* Also name ADCCP, ISO 3309, V.42, CRC-32-IEEEE, ETHERNET, XZ, PKZIP */\
     IF_USE( DIGINI_USE_CRC_32_JAMCRC,      X_CRC( CRC_32_JAMCRC,      0x04C11DB7,              0xFFFFFFFF,              0x00000000,              true,  true,  32 ) ) /* 0x340BC6D9              */ \
     IF_USE( DIGINI_USE_CRC_32_MEF,         X_CRC( CRC_32_MEF,         0x741B8CD7,              0xFFFFFFFF,              0x00000000,              true,  true,  32 ) ) /* 0xD2C22F51              */ \
-    IF_USE( DIGINI_USE_CRC_32_MPEG_2,      X_CRC( CRC_32_MPEG_2,      0x04C11DB7,              0xFFFFFFFF,              0x00000000,              false, false, 32 ) ) /* 0x0376E6E7              */ \
-    IF_USE( DIGINI_USE_CRC_32_POSIX,       X_CRC( CRC_32_POSIX,       0x04C11DB7,              0x00000000,              0xFFFFFFFF,              false, false, 32 ) ) /* 0x765E7680              */ /* Also name CKSUM    */\
-    IF_USE( DIGINI_USE_CRC_32_Q,           X_CRC( CRC_32_Q,           0x814141AB,              0x00000000,              0x00000000,              false, false, 32 ) ) /* 0x3010BF7F              */ \
+    IF_USE( DIGINI_USE_CRC_32_MPEG_2,      X_CRC( CRC_32_MPEG_2,      0x04C11DB7,              0xFFFFFFFF,              0x00000000,              false, false, 32 ) ) /* 0x0376E6E7              */ /* used by CRC module of STM32F1/F2/F4/L1 */\
+    IF_USE( DIGINI_USE_CRC_32_POSIX,       X_CRC( CRC_32_POSIX,       0x04C11DB7,              0x00000000,              0xFFFFFFFF,              false, false, 32 ) ) /* 0x765E7680              */ /* Also name CKSUM */\
+    IF_USE( DIGINI_USE_CRC_32_Q,           X_CRC( CRC_32_Q,           0x814141AB,              0x00000000,              0x00000000,              false, false, 32 ) ) /* 0x3010BF7F              */ /* Also name AIXM */\
     IF_USE( DIGINI_USE_CRC_32_SATA,        X_CRC( CRC_32_SATA,        0x04C11DB7,              0x52325032,              0x00000000,              false, false, 32 ) ) /* 0xCF72AFE8              */ \
     IF_USE( DIGINI_USE_CRC_32_XFER,        X_CRC( CRC_32_XFER,        0x000000AF,              0x00000000,              0x00000000,              false, false, 32 ) ) /* 0xBD0BE338              */ \
 

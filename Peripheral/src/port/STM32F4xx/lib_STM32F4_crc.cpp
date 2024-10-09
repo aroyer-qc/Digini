@@ -36,7 +36,7 @@
 //-------------------------------------------------------------------------------------------------
 void CRC_Reset(void)
 {
-    // TODO init the clock
+    RCC->AHB1ENR |= RCC_AHB1ENR_CRCEN;
     CRC->CR = 1;
 }
 

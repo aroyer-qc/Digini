@@ -319,7 +319,7 @@ class UART_Driver
         void                Disable                         (void);
 
         void                IRQ_Handler                     (void);
-        void                DMA_TX_IRQ_Handler              (void);  
+        void                DMA_TX_IRQ_Handler              (void);
 
 
       #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)

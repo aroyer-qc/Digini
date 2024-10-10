@@ -120,6 +120,8 @@ class Console : public CallbackInterface
         UART_Driver*                            m_pUartDriver;
         bool                                    m_MuteSerialLogging;
         FIFO_Buffer                             m_Fifo;
+        nOS_Sem                                 m_RX_Idle_Sem;
+
         //bool                                    m_IsItOnHold;
       #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
         SystemDebugLevel_e                      m_DebugLevel;

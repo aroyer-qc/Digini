@@ -41,6 +41,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define CON_SERIAL_OUT_SIZE                         256
+#define CON_RX_NB_OF_SEMAPHORE_COUNT                8
 
 //-------------------------------------------------------------------------------------------------
 // Public(s) Function(s)
@@ -79,6 +80,8 @@ void Console::Initialize(UART_Driver* pUartDriver)
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE, MEM_DBG_CONSOLE_1);        // Reserve memory for UART internal DMA operation.
 
+    nOS_SemCreate(&m_RX_Idle_Sem, 0, CON_RX_NB_OF_SEMAPHORE_COUNT);
+
   #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)                                          // not sure it can work without DMA
     pUartDriver->DMA_ConfigRX(pBuffer, CON_FIFO_PARSER_RX_SIZE);
   #endif
@@ -114,6 +117,12 @@ void Console::Initialize(UART_Driver* pUartDriver)
 //-------------------------------------------------------------------------------------------------
 void Console::Process(void)
 {
+    nOS_Error State;
+
+    State = nOS_SemTake(&m_RX_Idle_Sem, 10);
+
+    VAR_UNUSED(State);
+
   #if (CON_TRAP_INCOMING_COMMENT_LINE == DEF_ENABLED)
     if(ReadyRead() == true)
     {
@@ -590,6 +599,7 @@ void Console::CallbackFunction(int Type, void* pContext)
         {
             uint8_t* pData = (uint8_t*)pContext;
             m_Fifo.Write(pData, 1);
+            nOS_SemGive(&m_RX_Idle_Sem);
         }
         break;
       #endif
@@ -599,6 +609,7 @@ void Console::CallbackFunction(int Type, void* pContext)
         {
             UART_Transfer_t* pTransfer = (UART_Transfer_t*)pContext;
             m_Fifo.Write(pTransfer->pBuffer, pTransfer->Size);
+            nOS_SemGive(&m_RX_Idle_Sem);
         }
         break;
       #endif

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_STM32F1_crc.h
+//  File : lib_hardware_crc.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2024 Alain Royer.
+// Copyright(c) 2020 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,22 +24,13 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#pragma once
+#if defined STM32F1xx
+ #include "./Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_crc.h"
+#elif defined STM32F4xx
+ #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_crc.h"
+#elif defined STM32F7xx
+// #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_crc.h"       todo!
+ #include "./Peripheral/inc/port/STM32F7xx/lib_STM32F7_crc.h"
+#endif
 
 //-------------------------------------------------------------------------------------------------
-// Note(s)
-//-------------------------------------------------------------------------------------------------
-//
-// This hardware CRC is for CRC-32 (Ethernet) polynomial: 0x4C11DB7
-//
-//-------------------------------------------------------------------------------------------------
-// function definition(s)
-//-------------------------------------------------------------------------------------------------
-
-void        CRC_Reset       (void);
-uint32_t    CRC_GetValue    (void);
-void        CRC_AddByte     (const uint8_t Byte);
-void        CRC_AddBuffer   (const uint8_t *pBuffer, size_t Length);
-
-//-------------------------------------------------------------------------------------------------
-

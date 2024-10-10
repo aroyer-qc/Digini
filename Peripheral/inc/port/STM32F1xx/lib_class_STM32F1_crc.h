@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_STM32F1_crc.cpp
+//  File : lib_class_STM32F1_crc.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -24,82 +24,48 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "./lib_digini.h"
+#pragma once
 
 //-------------------------------------------------------------------------------------------------
-
-#if (USE_CRC_DRIVER == DEF_ENABLED)
-
+// Note(s)
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CRC_Reset
-//
-//  Parameter(s):   None
-//  Return:         void
-//
-//  Description:    This function init the hardware for crc calculation.
+// This hardware CRC is for CRC-32 (MPEG-2) polynomial: 0x4C11DB7
 //
 //-------------------------------------------------------------------------------------------------
-void CRC_Reset(void)
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+enum CRC_InputType_e
 {
-    RCC->AHBENR |= RCC_AHBENR_CRCEN;
-    CRC->CR = 1;
-}
+    CRC_INPUT_DATA_FORMAT_BYTES         = 0,
+    CRC_INPUT_DATA_FORMAT_HALF_WORDS,
+    CRC_INPUT_DATA_FORMAT_WORDS,
+};
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:           CRC_GetValue
-//
-//  Parameter(s):   void
-//  Return:         uint32_t
-//
-//  Description:    This function return the 32 bits CRC value.
-//
+// class definition(s)
 //-------------------------------------------------------------------------------------------------
-uint32_t CRC_GetValue(void)
+
+class CRC_Driver
 {
-    return CRC->DR;
-}
+    public:
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CRC_AddByte
-//
-//  Parameter(s):   uint8_t Byte
-//  Return:         void
-//
-//  Description:    Add a byte to calculation of on going CRC sequence.
-//
-//-------------------------------------------------------------------------------------------------
-void CRC_AddByte(const uint8_t Byte)
-{
-    CRC->DR = Byte;
-}
+        void        Initialize      (CRC_InputType_e Type);
+        void        Reset           (void);
+        uint32_t    GetValue        (void);
+        uint32_t    AddBuffer       (const void *pBuffer, size_t Length);
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CRC_AddBuffer
-//
-//  Parameter(s):   pBuffer             Calculate CRC on this buffer
-//                  Length              Length of the buffer
-//  Return:         void
-//
-//  Description:    Add buffer to calculation of on going CRC sequence.
-//
-//-------------------------------------------------------------------------------------------------
-void CRC_AddBuffer(const uint8_t *pBuffer, size_t Length)
-{
-    // Enter Data to the CRC calculator
-    for(size_t i = 0; i < Length; i++)
-    {
-        CRC->DR = pBuffer[i];
-    }
-}
+    private:
+
+        void        HandleBytes     (uint8_t* pBuffer, size_t Length);
+        void        HandleHalfWords (uint16_t* pBuffer, size_t Length);
+
+        CRC_InputType_e     m_Type;
+};
+
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (USE_CRC_DRIVER == DEF_ENABLED)

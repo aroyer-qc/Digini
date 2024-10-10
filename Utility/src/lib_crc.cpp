@@ -111,7 +111,7 @@ void CRC_Calc::Start(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Done
+//  Name:           GetValue
 //
 //  Parameter(s):   void
 //  Return:         CRC_uint_t
@@ -119,7 +119,7 @@ void CRC_Calc::Start(void)
 //  Description:    This function return the CRC value.
 //
 //-------------------------------------------------------------------------------------------------
-CRC_uint_t CRC_Calc::Done(void)
+CRC_uint_t CRC_Calc::GetValue(void)
 {
     m_Remainder ^= m_MethodList[m_Type].XorOut;
 
@@ -150,7 +150,7 @@ CRC_uint_t CRC_Calc::Done(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Calculate
+//  Name:           AddByte
 //
 //  Parameter(s):   uint8_t Value
 //  Return:         void
@@ -158,7 +158,7 @@ CRC_uint_t CRC_Calc::Done(void)
 //  Description:    Find the CRC of a byte.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC_Calc::Calculate( uint8_t Value)
+void CRC_Calc::AddByte(uint8_t Value)
 {
     if(m_RefIn == true)
     {
@@ -166,7 +166,6 @@ void CRC_Calc::Calculate( uint8_t Value)
     }
 
     m_Remainder ^= (CRC_uint_t(Value) << (m_Width - CRC_CHAR_BITSIZE));
-
 
     for(int i = CRC_CHAR_BITSIZE; i > 0; i--)
     {
@@ -186,7 +185,7 @@ void CRC_Calc::Calculate( uint8_t Value)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CalculateBuffer
+//  Name:           AddBuffer
 //
 //  Parameter(s):   pBuffer
 //                  Length
@@ -195,11 +194,11 @@ void CRC_Calc::Calculate( uint8_t Value)
 //  Description:   Calculate the CRC from a byte buffer.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC_Calc::CalculateBuffer(const uint8_t *pBuffer, size_t Length)
+void CRC_Calc::AddBuffer(const uint8_t* pBuffer, size_t Length)
 {
     for(; Length > 0; Length--, pBuffer++)
     {
-        Calculate(*pBuffer);
+        AddByte(*pBuffer);
     }
 }
 
@@ -214,11 +213,11 @@ void CRC_Calc::CalculateBuffer(const uint8_t *pBuffer, size_t Length)
 //  Description:    Start, Calculate the CRC from a byte buffer and return the CRC.
 //
 //-------------------------------------------------------------------------------------------------
-CRC_uint_t CRC_Calc::CalculateFullBuffer(const uint8_t *pBuffer, size_t Length)
+CRC_uint_t CRC_Calc::CalculateFullBuffer(const uint8_t* pBuffer, size_t Length)
 {
     Start();
-    CalculateBuffer(pBuffer, Length);
-    return Done();
+    AddBuffer(pBuffer, Length);
+    return GetValue();
 }
 
 //-------------------------------------------------------------------------------------------------

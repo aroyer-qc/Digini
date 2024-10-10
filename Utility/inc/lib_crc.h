@@ -188,10 +188,10 @@ class CRC_Calc
                    ~CRC_Calc            ();                         // destructor does something only if hardware module exist
 
         void        Start               (void);
-        void        Calculate           (uint8_t Value);
-        void        CalculateBuffer     (const uint8_t *pBuffer, size_t Length);
-        CRC_uint_t  CalculateFullBuffer (const uint8_t *pBuffer, size_t Length);
-        CRC_uint_t  Done                (void);
+        CRC_uint_t  GetValue            (void);
+        void        AddByte             (uint8_t Value);
+        void        AddBuffer           (const uint8_t* pBuffer, size_t Length);
+        CRC_uint_t  CalculateFullBuffer (const uint8_t* pBuffer, size_t Length);
 
     private:
 

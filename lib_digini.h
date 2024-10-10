@@ -167,7 +167,7 @@
 #endif
 
 #if (USE_CRC_DRIVER == DEF_ENABLED)                         // This is for hardware CRC calculation support
-#include "./Peripheral/inc/port/lib_hardware_crc.h"
+#include "./Peripheral/inc/port/lib_class_hardware_crc.h"
 #endif
 
 #if (USE_DAC_DRIVER == DEF_ENABLED)

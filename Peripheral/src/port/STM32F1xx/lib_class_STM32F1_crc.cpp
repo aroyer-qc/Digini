@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F4_crc.cpp
+//  File : lib_class_STM32F1_crc.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -24,7 +24,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-//  Note(s):    The module of the STM32F4 is very basic, it accept only 32 bits as input value.
+//  Note(s):    The module of the STM32F1 is very basic, it accept only 32 bits as input value.
 //              there is no REFIN/REFOUT or XOROUT. It is MPEG-2 with granularity of 4 bytes.
 //
 //              To calculate buffer of size that is not a multiple of 4 (sizeof(uint32_t)), the
@@ -39,46 +39,41 @@
 #include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
-// const(s)
-//-------------------------------------------------------------------------------------------------
 
 #if (USE_CRC_DRIVER == DEF_ENABLED)
-
-const CRC_HW_Info_t CRC_Driver::m_MethodList[NUMBER_OF_HW_CRC_METHOD] =
-{
-    CRC_32_HW_METHOD_DEF(EXPAND_X_CRC_AS_CLASS_CONST)
-};
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   CRC_Type_e          ID of the CRC method to use.
+//  Parameter(s):   CRC_InputType_e     Type    can be: CRC_INPUT_DATA_FORMAT_BYTES
+//                                                      CRC_INPUT_DATA_FORMAT_HALF_WORDS
+//                                                      CRC_INPUT_DATA_FORMAT_WORDS,
 //  Return:         void
 //
 //  Description:    This function Initialize the hardware for CRC calculation.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC_Driver::Initialize(CRC_Type_e Type)
+void CRC_Driver::Initialize(CRC_InputType_e Type)
 {
-    RCC->AHB1ENR |= RCC_AHB1ENR_CRCEN;
+    RCC->AHBENR |= RCC_AHBENR_CRCEN;
     m_Type  = Type;
-    Reset();
+    CRC->CR = 1;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Start
+//  Name:           Reset
+//
 //  Parameter(s):   None
 //  Return:         void
 //
-//  Description:    This function init the conversion with the CRC type selected.
+//  Description:    Reset the state of CRC calculation
 //
 //-------------------------------------------------------------------------------------------------
-void CRC_Driver::Start(void)
+void CRC_Driver::Reset(void)
 {
     CRC->CR = 1;
-    CRC_DR  = m_MethodList[m_Type].RevInit;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -93,10 +88,6 @@ void CRC_Driver::Start(void)
 //-------------------------------------------------------------------------------------------------
 uint32_t CRC_Driver::GetValue(void)
 {
-    uint32_t CRC_Value;
-    
-    CRC_Value = CRC->DR ^ m_MethodList[m_Type].XorOut;
-    
     return CRC->DR;
 }
 
@@ -106,54 +97,42 @@ uint32_t CRC_Driver::GetValue(void)
 //
 //  Parameter(s):   pBuffer             Calculate CRC on this buffer
 //                  Length              Length of the buffer
-//  Return:         void
+//  Return:         uint32_t            CRC_Value
 //
 //  Description:    Add buffer to calculation of on going CRC sequence.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC_Driver::AddBuffer(const void* pBuffer, size_t Length)
+uint32_t CRC_Driver::AddBuffer(const void *pBuffer, size_t Length)
 {
-    //switch(m_Type)// the type should be determine from size of the buffer and used method to faster calculate it
+    uint32_t Value;
+
+    switch(m_Type)
     {
-       // case CRC_INPUT_DATA_FORMAT_WORDS:
+        case CRC_INPUT_DATA_FORMAT_WORDS:
         {
-      //      for(size_t i = 0; i < Length; i++)
+            for(size_t i = 0; i < Length; i++)
             {
-       //         CRC->DR = ((uint32_t *)pBuffer)[i];
+                CRC->DR = ((uint32_t *)pBuffer)[i];
             }
         }
-       // break;
+        break;
 
-       // case CRC_INPUT_DATA_FORMAT_HALF_WORDS:
+        case CRC_INPUT_DATA_FORMAT_HALF_WORDS:
         {
-      //      HandleHalfWords((uint16_t *)pBuffer, Length);
+            HandleHalfWords((uint16_t *)pBuffer, Length);
         }
-      //  break;
+        break;
 
-      //  case CRC_INPUT_DATA_FORMAT_BYTES:
+        case CRC_INPUT_DATA_FORMAT_BYTES:
         {
             HandleBytes((uint8_t *)pBuffer, Length);
         }
-''        break;
+        break;
     }
-}
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CalculateFullBuffer
-//
-//  Parameter(s):   pBuffer
-//                  Length
-//  Return:         CRC_uint_t
-//
-//  Description:    Start, Calculate the CRC from a byte buffer and return the CRC.
-//
-//-------------------------------------------------------------------------------------------------
-CRC_uint_t CRC_Calc::CalculateFullBuffer(const uint8_t* pBuffer, size_t Length)
-{
-    Start();
-    AddBuffer(pBuffer, Length);
-    return GetValue();
+    Value = CRC->DR;
+
+    return Value;
 }
 
 //-------------------------------------------------------------------------------------------------

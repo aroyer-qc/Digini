@@ -204,7 +204,7 @@ void CRC_Calc::AddBuffer(const uint8_t* pBuffer, size_t Length)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CalculateFullBuffer
+//  Name:           CalculateBuffer
 //
 //  Parameter(s):   pBuffer
 //                  Length
@@ -213,7 +213,7 @@ void CRC_Calc::AddBuffer(const uint8_t* pBuffer, size_t Length)
 //  Description:    Start, Calculate the CRC from a byte buffer and return the CRC.
 //
 //-------------------------------------------------------------------------------------------------
-CRC_uint_t CRC_Calc::CalculateFullBuffer(const uint8_t* pBuffer, size_t Length)
+CRC_uint_t CRC_Calc::CalculateBuffer(const uint8_t* pBuffer, size_t Length)
 {
     Start();
     AddBuffer(pBuffer, Length);

@@ -191,7 +191,7 @@ class CRC_Calc
         CRC_uint_t  GetValue            (void);
         void        AddByte             (uint8_t Value);
         void        AddBuffer           (const uint8_t* pBuffer, size_t Length);
-        CRC_uint_t  CalculateFullBuffer (const uint8_t* pBuffer, size_t Length);
+        CRC_uint_t  CalculateBuffer     (const uint8_t* pBuffer, size_t Length);
 
     private:
 
@@ -202,8 +202,6 @@ class CRC_Calc
         CRC_uint_t                      m_Polynomial;
         CRC_uint_t                      m_TopBit;
         CRC_uint_t                      m_Remainder;
-
-        //static mutex..  ?? for usage of the internal CRC module... will be use only if method is supported by the module.. if not soft method will be used
 
         static const CRC_Info_t         m_MethodList       [NUMBER_OF_CRC_METHOD];
 };

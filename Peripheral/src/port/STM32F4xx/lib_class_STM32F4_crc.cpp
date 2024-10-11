@@ -25,10 +25,10 @@
 //-------------------------------------------------------------------------------------------------
 //
 //  Note(s):    The module of the STM32F4 is very basic, it accept only 32 bits as input value.
-//              there is no REFIN/REFOUT or XOROUT. It is MPEG-2 with granularity of 4 bytes.
+//              there is no REFIN/REFOUT. It is MPEG-2 with granularity of 4 bytes.
 //
 //              To calculate buffer of size that is not a multiple of 4 (sizeof(uint32_t)), the
-//              reminder of size/4 is padded with zero.
+//              remainder of size/4 is padded with zero.
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -46,24 +46,23 @@
 
 const CRC_HW_Info_t CRC_Driver::m_MethodList[NUMBER_OF_HW_CRC_METHOD] =
 {
-    CRC_32_HW_METHOD_DEF(EXPAND_X_CRC_AS_CLASS_CONST)
+    CRC_32_HW_METHOD_DEF(EXPAND_X_HW_CRC_AS_CLASS_CONST)
 };
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   CRC_Type_e          ID of the CRC method to use.
+//  Parameter(s):   CRC_HW_Type_e       ID of the CRC method to use.
 //  Return:         void
 //
 //  Description:    This function Initialize the hardware for CRC calculation.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC_Driver::Initialize(CRC_Type_e Type)
+void CRC_Driver::Initialize(CRC_HW_Type_e Type)
 {
     RCC->AHB1ENR |= RCC_AHB1ENR_CRCEN;
-    m_Type  = Type;
-    Reset();
+    m_Type = Type;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -78,7 +77,7 @@ void CRC_Driver::Initialize(CRC_Type_e Type)
 void CRC_Driver::Start(void)
 {
     CRC->CR = 1;
-    CRC_DR  = m_MethodList[m_Type].RevInit;
+    CRC->DR = m_MethodList[m_Type].RevInit;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -94,10 +93,25 @@ void CRC_Driver::Start(void)
 uint32_t CRC_Driver::GetValue(void)
 {
     uint32_t CRC_Value;
-    
+
     CRC_Value = CRC->DR ^ m_MethodList[m_Type].XorOut;
-    
-    return CRC->DR;
+
+    return CRC_Value;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           AddByte
+//
+//  Parameter(s):   Value               Add this byte to calcuation
+//  Return:         void
+//
+//  Description:    Add byte to calculation of on going CRC sequence.
+//
+//-------------------------------------------------------------------------------------------------
+void CRC_Driver::AddByte(uint8_t Value)
+{
+    AddBuffer(&Value, 1);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -111,36 +125,44 @@ uint32_t CRC_Driver::GetValue(void)
 //  Description:    Add buffer to calculation of on going CRC sequence.
 //
 //-------------------------------------------------------------------------------------------------
-void CRC_Driver::AddBuffer(const void* pBuffer, size_t Length)
+void CRC_Driver::AddBuffer(const uint8_t* pBuffer, size_t Length)
 {
-    //switch(m_Type)// the type should be determine from size of the buffer and used method to faster calculate it
+    uint32_t i;
+    uint32_t Remainder;
+    uint32_t Data;
+
+    Remainder  = Length % 4;
+    Length    -= Remainder;
+
+    // 4 bytes are entered in a row with a single word write
+    for(i = 0; i < uint32_t(Length); )
     {
-       // case CRC_INPUT_DATA_FORMAT_WORDS:
-        {
-      //      for(size_t i = 0; i < Length; i++)
-            {
-       //         CRC->DR = ((uint32_t *)pBuffer)[i];
-            }
-        }
-       // break;
+        Data  = ((uint32_t)pBuffer[i++] << 24);
+        Data |= ((uint32_t)pBuffer[i++] << 16);
+        Data |= ((uint32_t)pBuffer[i++] << 8);
+        Data |=  (uint32_t)pBuffer[i++];
+    }
 
-       // case CRC_INPUT_DATA_FORMAT_HALF_WORDS:
-        {
-      //      HandleHalfWords((uint16_t *)pBuffer, Length);
-        }
-      //  break;
+    // last bytes specific handling
+    while(Remainder != 0)
+    {
+        Data = (pBuffer[i++] << 24);
+        Remainder--;
 
-      //  case CRC_INPUT_DATA_FORMAT_BYTES:
+        if(Remainder != 0)
         {
-            HandleBytes((uint8_t *)pBuffer, Length);
+            Data >>= 8;
         }
-''        break;
+        else
+        {
+            CRC->DR = Data;
+        }
     }
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CalculateFullBuffer
+//  Name:           CalculateBuffer
 //
 //  Parameter(s):   pBuffer
 //                  Length
@@ -149,93 +171,11 @@ void CRC_Driver::AddBuffer(const void* pBuffer, size_t Length)
 //  Description:    Start, Calculate the CRC from a byte buffer and return the CRC.
 //
 //-------------------------------------------------------------------------------------------------
-CRC_uint_t CRC_Calc::CalculateFullBuffer(const uint8_t* pBuffer, size_t Length)
+uint32_t CRC_Driver::CalculateBuffer(const uint8_t* pBuffer, size_t Length)
 {
     Start();
     AddBuffer(pBuffer, Length);
     return GetValue();
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           HandleBytes
-//
-//  Parameter(s):   pBuffer             Calculate CRC on this buffer
-//                  Length              Length of the buffer
-//  Return:         void
-//
-//  Description:    Enter uint8_t buffer data to the CRC calculator.
-//
-//-------------------------------------------------------------------------------------------------
-void CRC_Driver::HandleBytes(uint8_t* pBuffer, size_t Length)
-{
-    size_t   i;
-    uint16_t Data;
-    volatile uint16_t* pRegister;
-
-    // 4 bytes are entered in a row with a single word write,
-    for(i = 0; i < (Length / 4); i++)
-    {
-        CRC->DR = ((uint32_t)pBuffer[4 * i] << 24)       |
-                  ((uint32_t)pBuffer[(4 * i) + 1] << 16) |
-                  ((uint32_t)pBuffer[(4 * i) + 2] << 8)  |
-                   (uint32_t)pBuffer[(4 * i) + 3];
-    }
-
-    // last bytes specific handling
-    if((Length % 4) != 0)
-    {
-        if((Length % 4) == 1)
-        {
-            *(volatile uint8_t *)(volatile void *)(&CRC->DR) = pBuffer[4 * i];
-        }
-
-        if((Length % 4) == 2)
-        {
-            Data = ((uint16_t)(pBuffer[4 * i]) << 8) | (uint16_t)pBuffer[(4 * i) + 1];
-            pRegister = (volatile uint16_t *)(volatile void *)(&CRC->DR);
-            *pRegister = Data;
-        }
-
-        if((Length % 4) == 3)
-        {
-            Data = ((uint16_t)(pBuffer[4 * i]) << 8) | (uint16_t)pBuffer[(4 * i) + 1];
-            pRegister = (volatile uint16_t *)(volatile void *)(&CRC->DR);
-            *pRegister = Data;
-
-            *(volatile uint8_t *)(volatile void *)(&CRC->DR) = pBuffer[(4 * i) + 2];
-        }
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           HandleHalfWords
-//
-//  Parameter(s):   pBuffer             Calculate CRC on this buffer
-//                  Length              Length of the buffer
-//  Return:         void
-//
-//  Description:    Enter uint16_t buffer data to the CRC calculator.
-//
-//-------------------------------------------------------------------------------------------------
-void CRC_Driver::HandleHalfWords(uint16_t* pBuffer, size_t Length)
-{
-    size_t i;
-    volatile uint16_t* pRegister;
-
-    // 2 half words are entered in a row with a single word write
-    for(i = 0; i < (Length / 2); i++)
-    {
-        CRC->DR = ((uint32_t)pBuffer[2 * i] << 16) | (uint32_t)pBuffer[(2 * i) + 1];
-    }
-
-    // Last half word must be carefully fed to the CRC calculator
-    if((Length % 2) != 0)
-    {
-        pRegister  = (volatile uint16_t *)(volatile void *)(&CRC->DR);
-        *pRegister = pBuffer[1 * i];
-    }
 }
 
 //-------------------------------------------------------------------------------------------------

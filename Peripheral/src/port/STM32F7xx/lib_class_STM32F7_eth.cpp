@@ -467,7 +467,7 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
         // Calculate 64-bit hash table for remaining MAC addresses
         for(; NbAddress; pMAC_Address++, NbAddress--)
         {
-            CRC_Value = myCrc.CalculateFullBuffer(&pMAC_Address->Byte[0], 6) >> 26;
+            CRC_Value = myCrc.CalculateBuffer(&pMAC_Address->Byte[0], 6) >> 26;
 
             if(CRC_Value & 0x20)
             {

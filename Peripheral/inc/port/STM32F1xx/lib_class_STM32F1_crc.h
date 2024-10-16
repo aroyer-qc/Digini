@@ -95,6 +95,8 @@ class CRC_Driver
 
         CRC_HW_Type_e                   m_Type;
         static const CRC_HW_Info_t      m_MethodList       [NUMBER_OF_HW_CRC_METHOD];
+        static nOS_Mutex                m_Mutex;
+        static bool                     m_MutexIsInitialize;
 };
 
 //-------------------------------------------------------------------------------------------------

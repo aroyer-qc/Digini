@@ -49,6 +49,9 @@ const CRC_HW_Info_t CRC_Driver::m_MethodList[NUMBER_OF_HW_CRC_METHOD] =
     CRC_32_HW_METHOD_DEF(EXPAND_X_HW_CRC_AS_CLASS_CONST)
 };
 
+nOS_Mutex CRC_Driver::m_Mutex;
+bool      CRC_Driver::m_MutexIsInitialize = false;
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
@@ -61,7 +64,19 @@ const CRC_HW_Info_t CRC_Driver::m_MethodList[NUMBER_OF_HW_CRC_METHOD] =
 //-------------------------------------------------------------------------------------------------
 void CRC_Driver::Initialize(CRC_HW_Type_e Type)
 {
-    RCC->AHB1ENR |= RCC_AHB1ENR_CRCEN;
+    nOS_StatusReg   sr;
+
+    nOS_EnterCritical(sr);                              // Make no other try to initialize the mutex at the same time
+    
+    if(CRC_Driver::m_MutexIsInitialize == false)
+    {
+        CRC_Driver::m_MutexIsInitialize = true;
+        RCC->AHB1ENR |= RCC_AHB1ENR_CRCEN;
+        nOS_MutexCreate(&CRC_Driver::m_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
+    }
+
+    nOS_LeaveCritical(sr);
+
     m_Type = Type;
 }
 
@@ -95,7 +110,7 @@ uint32_t CRC_Driver::GetValue(void)
     uint32_t CRC_Value;
 
     CRC_Value = CRC->DR ^ m_MethodList[m_Type].XorOut;
-
+    while(nOS_MutexUnlock(&CRC_Driver::m_Mutex) != NOS_OK);
     return CRC_Value;
 }
 
@@ -103,7 +118,7 @@ uint32_t CRC_Driver::GetValue(void)
 //
 //  Name:           AddByte
 //
-//  Parameter(s):   Value               Add this byte to calcuation
+//  Parameter(s):   Value               Add this byte to calculation
 //  Return:         void
 //
 //  Description:    Add byte to calculation of on going CRC sequence.
@@ -111,7 +126,7 @@ uint32_t CRC_Driver::GetValue(void)
 //-------------------------------------------------------------------------------------------------
 void CRC_Driver::AddByte(uint8_t Value)
 {
-    AddBuffer(&Value, 1);
+    CRC->DR = Value;
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_hardware_crc.h
+//  File : lib_class_hardware_crc.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -29,8 +29,7 @@
 #elif defined STM32F4xx
  #include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_crc.h"
 #elif defined STM32F7xx
-// #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_crc.h"       todo!
- #include "./Peripheral/inc/port/STM32F7xx/lib_STM32F7_crc.h"
+ #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_crc.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F1_crc.cpp
+//  File : lib_class_STM32F7_crc.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -21,14 +21,6 @@
 // AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-//
-//-------------------------------------------------------------------------------------------------
-//
-//  Note(s):    The module of the STM32F1 is very basic, it accept only 32 bits as input value.
-//              there is no REFIN/REFOUT. It is MPEG-2 with granularity of 4 bytes.
-//
-//              To calculate buffer of size that is not a multiple of 4 (sizeof(uint32_t)), the
-//              remainder of size/4 is padded with zero.
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -91,8 +83,11 @@ void CRC_Driver::Initialize(CRC_HW_Type_e Type)
 //-------------------------------------------------------------------------------------------------
 void CRC_Driver::Start(void)
 {
-    CRC->CR = 1;
-    CRC->DR = m_MethodList[m_Type].RevInit;
+    while(nOS_MutexLock(&CRC_Driver::m_Mutex, NOS_WAIT_INFINITE) != NOS_OK);
+    CRC->POL  = m_Type->Polynomial;
+    CRC->INIT = m_Type->Init;
+    CRC->CR   = m_Type->Mode;
+    CRC->CR  |= 1;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -157,6 +152,8 @@ void CRC_Driver::AddBuffer(const uint8_t* pBuffer, size_t Length)
         Data |= ((uint32_t)pBuffer[i++] << 8);
         Data |=  (uint32_t)pBuffer[i++];
     }
+
+// TODO that is wrong for this CRC module!!!!!
 
     // last bytes specific handling
     while(Remainder != 0)

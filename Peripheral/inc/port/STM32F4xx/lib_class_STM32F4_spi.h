@@ -140,10 +140,8 @@ struct SPI_Info_t
     IO_ID_e             PinMISO;
     IO_ID_e             PinNSS;
     IRQn_Type           IRQn;
-  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;
-  #endif
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -177,23 +175,18 @@ class SPI_Driver
         SystemState_e   Transfer                (uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size);
         SystemState_e   Transfer                (uint8_t* pTX_Data, uint32_t TX_Size, uint8_t* pRX_Data, uint32_t RX_Size, IO_ID_e Device);
 
-        void            IRQHandler              (void);
-        SystemState_e   WaitReady               (void);
+        //void            IRQHandler              (void);
+        //SystemState_e   WaitReady               (void);
 
-      #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
         SystemState_e   GetDMA_Status           (void)                        {	return m_DMA_Status; }
         void            OverrideMemoryIncrement (void);
         static void     DMA_RX_IRQ_Handler      (SPI_ID_e SPI_ID);
         static void     DMA_TX_IRQ_Handler      (SPI_ID_e SPI_ID);
-      #endif
 
     private:
 
         void            SetPrescalerFromSpeed   (uint32_t Speed, uint32_t PCLK_Frequency);
-
-      #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
         SystemState_e   WaitDMA                 (void);
-      #endif
 
         nOS_Mutex               m_Mutex;
         SPI_Info_t*             m_pInfo;
@@ -203,16 +196,11 @@ class SPI_Driver
         volatile SystemState_e  m_Status;
         volatile uint8_t        m_Timeout;
         static SPI_Driver*      m_pDriver[NB_OF_SPI_DRIVER];
-
-      #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
         DMA_Driver              m_DMA_RX;
         DMA_Driver              m_DMA_TX;
         volatile SystemState_e  m_DMA_Status;
-        nOS_Sem                 m_DMA_ReleaseSem;
-        
-        bool                    m_IsItUsingDMA_TX;
+        nOS_Sem                 m_DMA_Release;
         bool                    m_IsItUsingDMA_RX;
-      #endif
 };
 
 //-------------------------------------------------------------------------------------------------

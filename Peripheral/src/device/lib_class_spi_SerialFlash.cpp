@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : SPI_Flash_AT45DB641.cpp
+//  File : lib_class_spi_SerialFlash.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -47,78 +47,63 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   CSPI_FLash
+//   Constructor:   SPI_SerialFLash_Driver
 //
 //   Parameter(s):  SPI_Driver* pSPI
-//                  IO_ID_e     ChipSelect
-//                  IO_ID_e     ChipReset
-//                  IO_ID_e     ChipWriteProtect
+//                  IO_ID_e     ChipSelectIO
+//                  IO_ID_e     Reset
+//                  IO_ID_e     WriteProtect
 //
 //   Description:   Get the pointer for the init structure
 //
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CSPI_FLash::CSPI_FLash(SPI_Driver* pSPI, IO_ID_e ChipSelect, IO_ID_e ChipReset, IO_ID_e ChipWriteProtect)
+SPI_SerialFLash_Driver::SPI_SerialFLash_Driver(SPI_Driver* pSPI, IO_ID_e ChipSelect, IO_ID_e Reset, IO_ID_e WriteProtect)
 {
     m_pSPI             = pSPI;
     m_pDevice          = &SPI_DeviceInfo[SPI_DEVICE_FLASH_AT45DB64];
 
     m_ChipSelect       = ChipSelect;
-    m_ChipReset        = ChipReset;
-    m_ChipWriteProtect = ChipWriteProtect;
+    m_ChipReset        = Reset;
+    m_ChipWriteProtect = WriteProtect;
     m_Status           = STA_NOINIT;
     m_ChipStatus       = 0;
 
+    IO_PinInit(m_ChipSelect);
+    IO_PinInit(m_ChipReset);
+    IO_PinInit(m_ChipWriteProtect);
 
-    IO_Initialize(m_ChipSelect);
-    IO_Initialize(m_ChipReset);
-    IO_Initialize(m_ChipWriteProtect);
-
-    if(m_pSPI->LockToDevice(m_pDevice) != READY)                                    return;
+    if(m_pSPI->LockToDevice(m_ChipSelect) != READY)                                 return;
     WriteProtect(WRITE_ALLOWED);
     ChipSelect(CS_ENABLE);
 
     if(m_pSPI->Write(SPI_FLASH_AT45DB641_SOFTWARE_RESET) != READY)                  goto ExitSPI_Constructor;
-    if(this->WaitReadyAndChipSelect(CS_ENABLE) != READY)                            goto ExitSPI_Constructor;
+    if(WaitReadyAndChipSelect(CS_ENABLE) != READY)                                  goto ExitSPI_Constructor;
 
     // Change page size to 256 bytes per page
     if(m_pSPI->Write(SPI_FLASH_AT45DB641_CHANGE_PAGE_SIZE_TO_256) != READY)         goto ExitSPI_Constructor;
-    if(this->WaitReadyAndChipSelect(CS_ENABLE) != READY)                            goto ExitSPI_Constructor;
+    if(WaitReadyAndChipSelect(CS_ENABLE) != READY)                                  goto ExitSPI_Constructor;
 
     // Disable Sector protection if enable
-    if(this->GetLastChipStatus() & SPI_FLASH_AT45DB641_SECTOR_PROTECTION_MASK)
+    if(GetLastChipStatus() & SPI_FLASH_AT45DB641_SECTOR_PROTECTION_MASK)
     {
         if(m_pSPI->Write(SPI_FLASH_AT45DB641_DISABLE_SECTOR_PROTECTION) != READY)   goto ExitSPI_Constructor;
-        if(this->WaitReadyAndChipSelect(CS_ENABLE) != READY)                        goto ExitSPI_Constructor;
+        if(WaitReadyAndChipSelect(CS_ENABLE) != READY)                              goto ExitSPI_Constructor;
     }
 
-    if(this->GetLastChipStatus() & SPI_FLASH_AT45DB641_SECTOR_LOCKDOWN_MASK)
+    if(GetLastChipStatus() & SPI_FLASH_AT45DB641_SECTOR_LOCKDOWN_MASK)
     {
         if(m_pSPI->Write(SPI_FLASH_AT45DB641_DISABLE_SECTOR_LOCKDOWN) != READY)     goto ExitSPI_Constructor;
-        if(this->WaitReadyAndChipSelect(CS_ENABLE) != READY)                        goto ExitSPI_Constructor;
+        if(WaitReadyAndChipSelect(CS_ENABLE) != READY)                              goto ExitSPI_Constructor;
     }
 
     ExitSPI_Constructor:
 
     ChipSelect(CS_DISABLE);
     WriteProtect(WRITE_PROTECTED);
-    m_pSPI->UnlockFromDevice(m_pDevice);
+    m_pSPI->UnlockFromDevice(m_ChipSelect);
 }
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Destructor:   CSPI_FLash
-//
-//   Description:  Deinitializes the SPI Flash peripheral
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-CSPI_FLash::~CSPI_FLash()
-{
-}
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -132,12 +117,12 @@ CSPI_FLash::~CSPI_FLash()
 //   Note(s):       Check if status of the SPI FLash is ready
 //
 //-------------------------------------------------------------------------------------------------
-DSTATUS CSPI_FLash::Initialize()
+DSTATUS SPI_SerialFLash_Driver::Initialize()
 {
     DSTATUS  Result            = STA_NOINIT;
     uint16_t StatusRegister;
 
-    if(m_pSPI->LockToDevice(m_pDevice) != READY)                                                return STA_NOINIT;
+    if(m_pSPI->LockToDevice(m_ChipSelect) != READY)                                             return STA_NOINIT;
     if(m_pSPI->Write(SPI_FLASH_AT45DB641_STATUS) != READY)                                      goto ExitInitialize;
 
     m_TimeOut = SPI_FLASH_RETRY_TIMER;
@@ -156,9 +141,9 @@ DSTATUS CSPI_FLash::Initialize()
 
     ExitInitialize:
 
-    this->ChipSelect(CS_DISABLE);
-    this->WriteProtect(WRITE_PROTECTED);
-    if(m_pSPI->UnlockFromDevice(m_pDevice) != READY)                                            return STA_NOINIT;
+    ChipSelect(CS_DISABLE);
+    WriteProtect(WRITE_PROTECTED);
+    if(m_pSPI->UnlockFromDevice(m_ChipSelect) != READY)                                            return STA_NOINIT;
 
     return Result;
 }
@@ -176,7 +161,7 @@ DSTATUS CSPI_FLash::Initialize()
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DSTATUS CSPI_FLash::Status()
+DSTATUS SPI_SerialFLash_Driver::Status()
 {
     return STA_OK;
 }
@@ -196,7 +181,7 @@ DSTATUS CSPI_FLash::Status()
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DRESULT CSPI_FLash::Read(uint8_t* pBuffer, uint32_t Sector, uint8_t Count)
+DRESULT SPI_SerialFLash_Driver::Read(uint8_t* pBuffer, uint32_t Sector, uint8_t Count)
 {
     uint8_t Buffer[6];
     DRESULT Result;
@@ -208,8 +193,8 @@ DRESULT CSPI_FLash::Read(uint8_t* pBuffer, uint32_t Sector, uint8_t Count)
     LIB_uint32_t_Swap((uint32_t*)&Buffer[1]);
     Buffer[5]              = 0;
 
-    if(m_pSPI->LockToDevice(m_pDevice) != READY)                            return RES_ERROR;
-    this->ChipSelect(CS_ENABLE);
+    if(m_pSPI->LockToDevice(m_ChipSelect) != READY)                         return RES_ERROR;
+    ChipSelect(CS_ENABLE);
     if(m_pSPI->Write(&Buffer[0], 6) != READY)                               goto ExitRead;
     if(m_pSPI->Read(pBuffer, (Count * 2) * SPI_FLASH_PAGE_SIZE) != READY)   goto ExitRead;
 
@@ -217,8 +202,8 @@ DRESULT CSPI_FLash::Read(uint8_t* pBuffer, uint32_t Sector, uint8_t Count)
 
   ExitRead:
 
-    this->ChipSelect(CS_DISABLE);
-    if(m_pSPI->UnlockFromDevice(m_pDevice) != READY)                        return RES_ERROR;
+    ChipSelect(CS_DISABLE);
+    if(m_pSPI->UnlockFromDevice(m_ChipSelect) != READY)                        return RES_ERROR;
     return Result;
 }
 
@@ -238,7 +223,7 @@ DRESULT CSPI_FLash::Read(uint8_t* pBuffer, uint32_t Sector, uint8_t Count)
 //
 //-------------------------------------------------------------------------------------------------
 #if _USE_WRITE == 1
-DRESULT CSPI_FLash::Write(const uint8_t* pBuffer, uint32_t Sector, uint8_t Count)
+DRESULT SPI_SerialFLash_Driver::Write(const uint8_t* pBuffer, uint32_t Sector, uint8_t Count)
 {
     uint32_t Command;
     uint32_t Page;
@@ -249,26 +234,26 @@ DRESULT CSPI_FLash::Write(const uint8_t* pBuffer, uint32_t Sector, uint8_t Count
     TotalSize = uint32_t(Count) * 512;
     Page      = Sector * 2;                                                                                 // Adjust for real page offset
 
-    if(m_pSPI->LockToDevice(m_pDevice) != READY)                                        return RES_ERROR;
-    this->WriteProtect(WRITE_ALLOWED);
+    if(m_pSPI->LockToDevice(m_ChipSelect) != READY)                                        return RES_ERROR;
+    WriteProtect(WRITE_ALLOWED);
 
     for(uint32_t i = 0; i < TotalSize; i += 512)
     {
-        this->ChipSelect(CS_ENABLE);
+        ChipSelect(CS_ENABLE);
         Command = SPI_FLASH_AT45DB641_WRITE_1_TO_MEMORY | (Page << 8);
         if(m_pSPI->Write(Command) != READY)                                             goto ExitWrite;     // Start at 0 in buffer also erase and program memory
         if(m_pSPI->Write(&pBuffer[0], size_t(256)) != READY)                            goto ExitWrite;
-        if(this->WaitReadyAndChipSelect(CS_ENABLE) != READY)                            goto ExitWrite;
-        if(this->GetLastChipStatus() & SPI_FLASH_AT45DB641_ERROR_ERASE_PROGRAM_MASK)    goto ExitWrite;     // Exit on write error
+        if(WaitReadyAndChipSelect(CS_ENABLE) != READY)                                  goto ExitWrite;
+        if(GetLastChipStatus() & SPI_FLASH_AT45DB641_ERROR_ERASE_PROGRAM_MASK)          goto ExitWrite;     // Exit on write error
 
         Page++;                                                                                             // Next page
 
-        this->ChipSelect(CS_ENABLE);
+        ChipSelect(CS_ENABLE);
         Command = SPI_FLASH_AT45DB641_WRITE_2_TO_MEMORY | (Page << 8);
         if(m_pSPI->Write(Command) != READY)                                             goto ExitWrite;     // Start at 0 in buffer also erase and program memory
         if(m_pSPI->Write(&pBuffer[256], size_t(256)) != READY)                          goto ExitWrite;
-        if(this->WaitReadyAndChipSelect(CS_ENABLE) != READY)                            goto ExitWrite;
-        if(this->GetLastChipStatus() & SPI_FLASH_AT45DB641_ERROR_ERASE_PROGRAM_MASK)    goto ExitWrite;     // Exit on write error
+        if(WaitReadyAndChipSelect(CS_ENABLE) != READY)                                  goto ExitWrite;
+        if(GetLastChipStatus() & SPI_FLASH_AT45DB641_ERROR_ERASE_PROGRAM_MASK)          goto ExitWrite;     // Exit on write error
 
         Page++;                                                                                             // Next page
     }
@@ -277,9 +262,9 @@ DRESULT CSPI_FLash::Write(const uint8_t* pBuffer, uint32_t Sector, uint8_t Count
 
   ExitWrite:
 
-    this->ChipSelect(CS_DISABLE);
-    this->WriteProtect(WRITE_PROTECTED);
-    if(m_pSPI->UnlockFromDevice(m_pDevice) != READY)                                    return RES_ERROR;
+    ChipSelect(CS_DISABLE);
+    WriteProtect(WRITE_PROTECTED);
+    if(m_pSPI->UnlockFromDevice(m_ChipSelect) != READY)                                    return RES_ERROR;
     return Result;
 }
 #endif
@@ -298,7 +283,7 @@ DRESULT CSPI_FLash::Write(const uint8_t* pBuffer, uint32_t Sector, uint8_t Count
 //
 //-------------------------------------------------------------------------------------------------
 #if _USE_IOCTL == 1
-DRESULT CSPI_FLash::IO_Control(uint8_t Control, void *pBuffer)
+DRESULT SPI_SerialFLash_Driver::IO_Control(uint8_t Control, void *pBuffer)
 {
     DRESULT     Result;
     uint8_t*    pPtr = (uint8_t*)pBuffer;
@@ -359,7 +344,7 @@ DRESULT CSPI_FLash::IO_Control(uint8_t Control, void *pBuffer)
                     Count++;
                 }
 
-                if(this->Erase(Command) != READY)         return RES_ERROR;
+                if(Erase(Command) != READY)         return RES_ERROR;
             }
 
             break;
@@ -385,7 +370,7 @@ DRESULT CSPI_FLash::IO_Control(uint8_t Control, void *pBuffer)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CSPI_FLash::ChipSelect(eChipSelect Select)
+void SPI_SerialFLash_Driver::ChipSelect(eChipSelect Select)
 {
    #if SPI_FLASH_USE_SOFTWARE_CHIP_SELECT_CONTROL == 1
 
@@ -415,14 +400,14 @@ void CSPI_FLash::ChipSelect(eChipSelect Select)
 //                  2. Select or deselect the chip after WaitReady
 //
 //-------------------------------------------------------------------------------------------------
-eSystemState CSPI_FLash::WaitReadyAndChipSelect(eChipSelect Select)
+eSystemState SPI_SerialFLash_Driver::WaitReadyAndChipSelect(eChipSelect Select)
 {
     eSystemState State;
     uint16_t     StatusRegister;
 
     m_TimeOut = 0;
 
-    this->ChipSelect(CS_PULSE_HIGH);
+    ChipSelect(CS_PULSE_HIGH);
 
     if((State = m_pSPI->Write(SPI_FLASH_AT45DB641_STATUS)) != READY)    goto WaitExit;
     m_TimeOut = SPI_FLASH_RETRY_TIMER;
@@ -436,9 +421,9 @@ eSystemState CSPI_FLash::WaitReadyAndChipSelect(eChipSelect Select)
 
   WaitExit:
 
-    this->ChipSelect(CS_DISABLE);                                                       // end of Command
+    ChipSelect(CS_DISABLE);                                                             // end of Command
     if(m_TimeOut == 0) State = TIME_OUT;                                                // Is this a TimeOut
-    if((State == READY) && (Select == CS_ENABLE)) this->ChipSelect(CS_ENABLE);          // Reenable chip select if ask to and we are not in error
+    if((State == READY) && (Select == CS_ENABLE)) ChipSelect(CS_ENABLE);                // Reenable chip select if ask to and we are not in error
 
     return State;
 }
@@ -446,7 +431,7 @@ eSystemState CSPI_FLash::WaitReadyAndChipSelect(eChipSelect Select)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      TickHook
+//   Function:      Erase
 //
 //   Parameter(s):  uint32_t Command
 //   Return Value:  None
@@ -454,20 +439,20 @@ eSystemState CSPI_FLash::WaitReadyAndChipSelect(eChipSelect Select)
 //   Description:   Send a commad to erase part of chip or entire chip
 //
 //-------------------------------------------------------------------------------------------------
-eSystemState CSPI_FLash::Erase(uint32_t Command)
+eSystemState SPI_SerialFLash_Driver::Erase(uint32_t Command)
 {
     eSystemState State;
     eSystemState PriorityState;
 
-    if((State = m_pSPI->LockToDevice(m_pDevice)) != READY)                  return State;
-    this->ChipSelect(CS_ENABLE);
-    if((PriorityState = m_pSPI->Write(Command)) != READY)                   goto EraseExit;
-    if((PriorityState = m_pSPI->WaitReady()) != READY)                      goto EraseExit;
+    if((State = m_pSPI->LockToDevice(m_ChipSelect)) != READY)                   return State;
+    ChipSelect(CS_ENABLE);
+    if((PriorityState = m_pSPI->Write(Command)) != READY)                       goto EraseExit;
+    if((PriorityState = m_pSPI->WaitReady()) != READY)                          goto EraseExit;
 
   EraseExit:
 
-    this->ChipSelect(CS_DISABLE);
-    if((State = m_pSPI->UnlockFromDevice(m_pDevice)) != READY)              return State;
+    ChipSelect(CS_DISABLE);
+    if((State = m_pSPI->UnlockFromDevice(m_ChipSelect)) != READY)               return State;
     if(PriorityState != READY) State = PriorityState;
 
     return State;
@@ -486,7 +471,7 @@ eSystemState CSPI_FLash::Erase(uint32_t Command)
 //   Note(s):       This function adjust itself for a period of SD_SPI_TICK_PERIOD
 //
 //-------------------------------------------------------------------------------------------------
-void CSPI_FLash::TickHook()
+void SPI_SerialFLash_Driver::TickHook()
 {
     m_TickPeriod--;
     if(m_TickPeriod == 0)
@@ -513,33 +498,33 @@ void CSPI_FLash::TickHook()
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-bool CSPI_FLash::IsOperational()
+bool SPI_SerialFLash_Driver::IsOperational()
 {
     uint32_t ID;
-    bool     State;
+    uint8_t  Command;
 
-    State = false;
+// WIP!!!!!
 
-    if(m_pSPI->LockToDevice(m_pDevice) != READY)            return false;
-    this->ChipSelect(CS_ENABLE);
+    Command = FLASH_CMD_READ_JEDEC_ID;
 
-    // TO DO handle error
-    if(m_pSPI->Write(SPI_FLASH_AT45DB641_ID) != READY)      goto ExitOperational;
-    if(m_pSPI->Read(&ID) != READY)                          goto ExitOperational;       // Read device ID
+    if(m_pSPI->Transfer(&Command, 1, &ID, sizeof(uint32_t), m_ChipSelect) != SYS_READY)
+    {
+        return false;
+    }
 
-    this->ChipSelect(CS_PULSE_HIGH);
-    if(ID != (uint32_t)AT45DB641_ID) State = false;                                     // Return Error if the ID is not correct
-    else                             State = true;
+    if(ID != (uint32_t)/* TODO use config to check ID*/ ) // Return Error if the ID is not correct
+    {
+        return false;
+    }
+    
+    Command = FLASH_CMD_READ_STATUS_REGISTER;
 
-    if(m_pSPI->Write(SPI_FLASH_AT45DB641_STATUS) != READY)  goto ExitOperational;
-    if(m_pSPI->Read(&m_ChipStatus) != READY)                goto ExitOperational;
+    if(m_pSPI->Transfer(&Command, 1, &m_ChipStatus, sizeof(uint16_t), m_ChipSelect) != SYS_READY)
+    {
+        return false;
+    }
 
-  ExitOperational:
-
-    this->ChipSelect(CS_DISABLE);
-    if(m_pSPI->UnlockFromDevice(m_pDevice) != READY)        return false;
-
-    return State;
+    return true;
 }
 
 //-------------------------------------------------------------------------------------------------

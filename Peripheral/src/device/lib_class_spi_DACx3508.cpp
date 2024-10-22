@@ -65,7 +65,7 @@ DAC_X3508_Driver::DAC_X3508_Driver(SPI_Driver* pSPI, IO_ID_e ChipSelectIO)
 {
     m_pSPI          = pSPI;
     m_ChipSelectIO  = ChipSelectIO;
-    isItInitialized = false;
+    m_isItInitialized = false;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ DAC_X3508_Driver::DAC_X3508_Driver(SPI_Driver* pSPI, IO_ID_e ChipSelectIO)
 //-------------------------------------------------------------------------------------------------
 SystemState_e DAC_X3508_Driver::Initialize()
 {
-   if(isItInitialized != true)
+   if(m_isItInitialized != true)
 	{
         IO_PinInit(m_ChipSelectIO);
 
@@ -91,7 +91,7 @@ SystemState_e DAC_X3508_Driver::Initialize()
         // Put default value into DAC output.
         Send3Bytes(DACX3508_DEVICE_CONFIG_REG, 0);		                                // The broadcast will affect all DAC
         Send3Bytes(DACX3508_BROADCAST_REG, 0);								            // The default value on all DAC
-        isItInitialized = true;
+        m_isItInitialized = true;
 	}
 
 	return SYS_READY;
@@ -110,7 +110,7 @@ SystemState_e DAC_X3508_Driver::Initialize()
 //-------------------------------------------------------------------------------------------------
 SystemState_e DAC_X3508_Driver::WriteDAC(int Channel, uint16_t Value)
 {
-	if(isItInitialized == true)
+	if(m_isItInitialized == true)
 	{
         // Write data to the register for specific channel
         Send3Bytes(DAC_X3508_Cmd_e(Channel + uint32_t(DACX3508_DACA_DATA_REG)), Value);

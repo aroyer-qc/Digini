@@ -74,10 +74,7 @@ SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
     m_pInfo           = &SPI_Info[SPI_ID];
     m_Status          = SYS_UNKNOWN;
     m_pDriver[SPI_ID] = this;
-
-  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-    m_DMA_Status = SYS_UNKNOWN;
-  #endif
+    m_DMA_Status      = SYS_UNKNOWN;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -96,7 +93,7 @@ void SPI_Driver::Initialize(void)
     uint32_t  PCLK_Frequency;
 
     Error = nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
-    Error = nOS_SemCreate(&m_DMA_ReleaseSem, 0, 1);
+    Error = nOS_SemCreate(&m_DMA_Release, 0, 1);
     VAR_UNUSED(Error);
 
     IO_PinInit(m_pInfo->PinCLK);
@@ -193,18 +190,13 @@ void SPI_Driver::Initialize(void)
 
     //----------------------------------------------------------------------------
 
-  #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
     m_DMA_Status = SYS_IDLE;
     m_NoMemoryIncrement = false;
 
-    if(m_pInfo->DMA_TX.ConfigAndChannel != SPI_DMA_DISABLED)
-    {
-        m_IsItUsingDMA_TX = true;
-        m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
-        m_DMA_TX.SetDestination((void*)&m_pInfo->pSPIx->DR);    // Configure transmit data register
-        m_DMA_TX.EnableTransmitCompleteInterrupt();
-        m_DMA_TX.EnableIRQ();                                   // NVIC Setup for TX DMA channels interrupt request
-    }
+    m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
+    m_DMA_TX.SetDestination((void*)&m_pInfo->pSPIx->DR);        // Configure transmit data register
+    m_DMA_TX.EnableTransmitCompleteInterrupt();
+    m_DMA_TX.EnableIRQ();                                       // NVIC Setup for TX DMA channels interrupt request
 
     if(m_pInfo->DMA_RX.ConfigAndChannel != SPI_DMA_DISABLED)
     {
@@ -214,7 +206,6 @@ void SPI_Driver::Initialize(void)
         m_DMA_RX.EnableTransmitCompleteInterrupt();
         m_DMA_RX.EnableIRQ();                                   // NVIC Setup for RX DMA channels interrupt request
     }
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -232,6 +223,8 @@ void SPI_Driver::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
 {
+    nOS_EnterCritical();
+
     if(Device != IO_NOT_DEFINED)
     {
         while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
@@ -239,6 +232,8 @@ SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
         m_Status = SYS_READY;
         IO_SetPinLow(Device);
     }
+
+    nOS_LeaveCritical();
 
     return m_Status;
 }
@@ -260,10 +255,12 @@ SystemState_e SPI_Driver::UnlockFromDevice(IO_ID_e Device)
 {
     if(Device == m_Device)
     {
+        nOS_EnterCritical();
+        IO_SetPinHigh(Device);
         nOS_MutexUnlock(&m_Mutex);
         m_Device = IO_NOT_DEFINED;
         m_Status = SYS_DEVICE_NOT_PRESENT;
-        IO_SetPinHigh(Device);
+        nOS_LeaveCritical();
     }
     else
     {
@@ -444,45 +441,35 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
 
         if((pTX_Data != nullptr) && (TX_Size != 0))
         {
-          #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
+            // TX DMA
+            m_DMA_Status = SYS_BUSY_TX;                                 // Set flag to busy in TX
+            m_DMA_TX.SetSource(pTX_Data);                               // Set DMA source
+            m_DMA_TX.SetLength(TX_Size);                                // Set size of the TX
 
-            if(m_IsItUsingDMA_TX == true)
+            if(m_NoMemoryIncrement == false)
             {
-                // TX DMA
-                m_DMA_Status = SYS_BUSY_TX;                                 // Set flag to busy in TX
-                m_DMA_TX.SetSource(pTX_Data);                               // Set DMA source
-                m_DMA_TX.SetLength(TX_Size);                                // Set size of the TX
-
-                if(m_NoMemoryIncrement == false)
-                {
-                    m_DMA_TX.SetMemoryIncrement();                          // Enable memory increment
-                }
-                else
-                {
-                    m_DMA_TX.SetNoMemoryIncrement();
-                    m_NoMemoryIncrement = false;
-                }
-
-                m_DMA_TX.Enable();                                          // Enable the DMA module
-                m_DMA_TX.ClearFlag();                                       // Clear IRQ DMA flag
-
-                SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                           // Enable SPI
-                SET_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                       // Enable DMA TX
-                State = WaitDMA();
-                CLEAR_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                     // Deactivate DMA
-                m_DMA_TX.Disable();                                         // Disable the DMA module
-                CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                         // Disable SPI
+                m_DMA_TX.SetMemoryIncrement();                          // Enable memory increment
             }
             else
-          #endif
-
             {
-                // IRQ method
+                m_DMA_TX.SetNoMemoryIncrement();
+                m_NoMemoryIncrement = false;
             }
+
+            m_DMA_TX.Enable();                                          // Enable the DMA module
+            m_DMA_TX.ClearFlag();                                       // Clear IRQ DMA flag
+
+            SET_BIT(pSPIx->CR1, SPI_CR1_SPE);                           // Enable SPI
+            SET_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                       // Enable DMA TX
+            State = WaitDMA();
+            CLEAR_BIT(pSPIx->CR2, SPI_CR2_TXDMAEN);                     // Deactivate DMA
+            m_DMA_TX.Disable();                                         // Disable the DMA module
+            CLEAR_BIT(pSPIx->CR1, SPI_CR1_SPE);                         // Disable SPI
         }
 
         // ----------------------------------------------------------------------------------------
         // RX setup
+
         if(State == SYS_READY)
         {
             if((pRX_Data != nullptr) && (RX_Size != 0))
@@ -492,8 +479,7 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
                     Dummy = pSPIx->DR;
                 }
 
-              #if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
-                if(m_IsItUsingDMA_RX == true)
+                if(m_IsItUsingDMA_RX == true)                                   // Prevent using RX DMA if not configure
                 {
                     m_DMA_Status = SYS_BUSY_RX;                                 // Set flag to busy in TX
 
@@ -519,11 +505,6 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
                     CLEAR_BIT(pSPIx->CR2, (SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN));
                     m_DMA_RX.Disable();                                         // Disable the DMA RX module
                     m_DMA_TX.Disable();                                         // Disable the DMA TX module
-                }
-                else
-              #endif
-                {
-                    // IRQ method
                 }
             }
         }
@@ -557,12 +538,10 @@ SystemState_e SPI_Driver::Transfer(uint8_t* pTX_Data, uint32_t TX_Size, uint8_t*
 //  Note(s):        This is valid only for the next transaction
 //
 //-------------------------------------------------------------------------------------------------
-#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 void SPI_Driver::OverrideMemoryIncrement(void)
 {
     m_NoMemoryIncrement = true;
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -574,6 +553,7 @@ void SPI_Driver::OverrideMemoryIncrement(void)
 //                          SYS_HUNG  if busy pass timeout
 //
 //-------------------------------------------------------------------------------------------------
+/*
 SystemState_e SPI_Driver::WaitReady(void)
 {
 
@@ -600,7 +580,7 @@ SystemState_e SPI_Driver::WaitReady(void)
 
     return SYS_READY;
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  IRQ Handler:    IRQHandler
@@ -608,13 +588,15 @@ SystemState_e SPI_Driver::WaitReady(void)
 //  Description:    This function handles SPIx interrupt request.
 //
 //-------------------------------------------------------------------------------------------------
+/*
 void SPI_Driver::IRQHandler(void)
 {
-    //if(m_pInfo->CallBackISR != nullptr)
-    //{
-    //    m_pInfo->CallBackISR();
-    //}
+    if(m_pInfo->CallBackISR != nullptr)
+    {
+        m_pInfo->CallBackISR();
+    }
 }
+*/
 
 //-------------------------------------------------------------------------------------------------
 //  DDDDDD  MM     MM  AAAAA
@@ -623,8 +605,6 @@ void SPI_Driver::IRQHandler(void)
 //  DD   DD MM  M  MM AA   AA
 //  DDDDDD  MM     MM AA   AA
 //-------------------------------------------------------------------------------------------------
-
-#if (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -645,7 +625,7 @@ SystemState_e SPI_Driver::WaitDMA(void)
     pSPIx = m_pInfo->pSPIx;
 
     // Wait for DMA to conclude
-    Error = nOS_SemTake(&m_DMA_ReleaseSem, SPI_DMA_TRANSFER_TIMEOUT);
+    Error = nOS_SemTake(&m_DMA_Release, SPI_DMA_TRANSFER_TIMEOUT);
 
     if(Error != NOS_OK)
     {
@@ -664,7 +644,7 @@ SystemState_e SPI_Driver::WaitDMA(void)
         nOS_Yield();
     };
 
-    return SYS_IDLE;
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -684,7 +664,7 @@ void SPI_Driver::DMA_TX_IRQ_Handler(SPI_ID_e SPI_ID)
     pDriver = SPI_Driver::m_pDriver[SPI_ID];
     pDriver->m_DMA_Status = SYS_BUSY_B4_RELEASE;
     pDriver->m_DMA_TX.ClearFlag();
-    nOS_SemGive(&pDriver->m_DMA_ReleaseSem);
+    nOS_SemGive(&pDriver->m_DMA_Release);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -704,10 +684,6 @@ void SPI_Driver::DMA_RX_IRQ_Handler(SPI_ID_e SPI_ID)
     pDriver = m_pDriver[SPI_ID];
     pDriver->m_DMA_RX.ClearFlag();
 }
-
-//-------------------------------------------------------------------------------------------------
-
-#endif // (SPI_DRIVER_SUPPORT_DMA_CFG == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 

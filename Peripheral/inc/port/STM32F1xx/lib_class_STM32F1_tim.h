@@ -146,11 +146,15 @@ enum TIM_ID_e
 
 enum TIM_Compare_e
 {
-    TIM_CHANNEL_NONE,
-    TIM_CHANNEL_1,
-    TIM_CHANNEL_2,
-    TIM_CHANNEL_3,
-    TIM_CHANNEL_4,
+    TIM_CHANNEL_NONE    = -1,
+    TIM_CHANNEL_1       =  0,
+    TIM_CHANNEL_2       =  1,
+    TIM_CHANNEL_3       =  2,
+    TIM_CHANNEL_4       =  3,
+    TIM_CHANNEL_MASK    =  3,           // for channel number without the complementary output
+    TIM_CHANNEL_1N      =  4,
+    TIM_CHANNEL_2N      =  5,
+    TIM_CHANNEL_3N      =  6,
 };
 
 enum TIM_TypeMatch_e

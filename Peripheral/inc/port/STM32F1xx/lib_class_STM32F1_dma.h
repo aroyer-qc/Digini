@@ -69,7 +69,7 @@
 struct DMA_Info_t
 {
     uint32_t             Config;
-    uint32_t             DMA_Flag;
+    uint32_t             Flag;
     DMA_TypeDef*         pDMA;
     DMA_Channel_TypeDef* pDMA_Channel;
     IRQn_Type            IRQn_Channel;

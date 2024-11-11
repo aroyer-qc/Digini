@@ -55,8 +55,9 @@
 
 void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 {
-    m_pDMA              = pInfo->pDMA;
-    m_pDMA_Channel      = pInfo->pDMA_Channel;
+    m_pDMA         = pInfo->pDMA;
+    m_Flag         = pInfo->Flag;
+    m_pDMA_Channel = pInfo->pDMA_Channel;
     m_IRQn_Channel = pInfo->IRQn_Channel;
     m_PreempPrio   = pInfo->PreempPrio;
     EnableClock();

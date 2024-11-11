@@ -85,7 +85,7 @@ void TIM_Driver::Initialize(void)
 
     // Set the prescaler value
     m_pTim->PSC = m_pInfo->Prescaler - 1;                           // Set the prescaler value
-    
+
     m_pTim->ARR = m_pInfo->Reload;                                  // Set the auto reload register
     m_pTim->CNT = 0;//m_pInfo->Reload - 1;                              // Prevent PWM from been active on activation
     m_pTim->CR1 = m_pInfo->Mode | TIM_CR1_ARPE;
@@ -302,10 +302,13 @@ void TIM_Driver::EnableCompareChannel(TIM_Compare_e Channel)
 {
     switch(Channel)
     {
-        case TIM_CHANNEL_1: { m_pTim->CCER |= TIM_CCER_CC1E; } break;
-        case TIM_CHANNEL_2: { m_pTim->CCER |= TIM_CCER_CC2E; } break;
-        case TIM_CHANNEL_3: { m_pTim->CCER |= TIM_CCER_CC3E; } break;
-        case TIM_CHANNEL_4: { m_pTim->CCER |= TIM_CCER_CC4E; } break;
+        case TIM_CHANNEL_1:  { m_pTim->CCER |= TIM_CCER_CC1E;  } break;
+        case TIM_CHANNEL_2:  { m_pTim->CCER |= TIM_CCER_CC2E;  } break;
+        case TIM_CHANNEL_3:  { m_pTim->CCER |= TIM_CCER_CC3E;  } break;
+        case TIM_CHANNEL_4:  { m_pTim->CCER |= TIM_CCER_CC4E;  } break;
+        case TIM_CHANNEL_1N: { m_pTim->CCER |= TIM_CCER_CC1NE; } break;
+        case TIM_CHANNEL_2N: { m_pTim->CCER |= TIM_CCER_CC2NE; } break;
+        case TIM_CHANNEL_3N: { m_pTim->CCER |= TIM_CCER_CC3NE; } break;
         default: break;
     }
 }
@@ -325,10 +328,14 @@ void TIM_Driver::DisableCompareChannel(TIM_Compare_e Channel)
 {
     switch(Channel)
     {
-        case TIM_CHANNEL_1: { m_pTim->CCER &= ~TIM_CCER_CC1E; } break;
-        case TIM_CHANNEL_2: { m_pTim->CCER &= ~TIM_CCER_CC2E; } break;
-        case TIM_CHANNEL_3: { m_pTim->CCER &= ~TIM_CCER_CC3E; } break;
-        case TIM_CHANNEL_4: { m_pTim->CCER &= ~TIM_CCER_CC4E; } break;
+        // TODO Use table instead or other method to shrink that code
+        case TIM_CHANNEL_1:  { m_pTim->CCER &= ~TIM_CCER_CC1E;  } break;
+        case TIM_CHANNEL_2:  { m_pTim->CCER &= ~TIM_CCER_CC2E;  } break;
+        case TIM_CHANNEL_3:  { m_pTim->CCER &= ~TIM_CCER_CC3E;  } break;
+        case TIM_CHANNEL_4:  { m_pTim->CCER &= ~TIM_CCER_CC4E;  } break;
+        case TIM_CHANNEL_1N: { m_pTim->CCER &= ~TIM_CCER_CC1NE; } break;
+        case TIM_CHANNEL_2N: { m_pTim->CCER &= ~TIM_CCER_CC2NE; } break;
+        case TIM_CHANNEL_3N: { m_pTim->CCER &= ~TIM_CCER_CC3NE; } break;
         default: break;
     }
 }

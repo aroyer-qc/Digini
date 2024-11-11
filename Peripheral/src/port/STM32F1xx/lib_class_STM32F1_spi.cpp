@@ -187,7 +187,9 @@ void SPI_Driver::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
 {
-    nOS_EnterCritical();
+    nOS_StatusReg sr;
+
+    nOS_EnterCritical(sr);
 
     if(Device != IO_NOT_DEFINED)
     {
@@ -197,7 +199,7 @@ SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
         IO_SetPinLow(Device);
     }
 
-    nOS_LeaveCritical();
+    nOS_LeaveCritical(sr);
 
     return m_Status;
 }
@@ -217,14 +219,16 @@ SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
 //-------------------------------------------------------------------------------------------------
 SystemState_e SPI_Driver::UnlockFromDevice(IO_ID_e Device)
 {
+    nOS_StatusReg sr;
+
     if(Device == m_Device)
     {
-        nOS_EnterCritical();
+        nOS_EnterCritical(sr);
         IO_SetPinHigh(Device);
         nOS_MutexUnlock(&m_Mutex);
         m_Device = IO_NOT_DEFINED;
         m_Status = SYS_DEVICE_NOT_PRESENT;
-        nOS_LeaveCritical();
+        nOS_LeaveCritical(sr);
     }
     else
     {
@@ -250,11 +254,11 @@ void SPI_Driver::SetPrescalerFromSpeed(uint32_t Speed, uint32_t PCLK_Frequency)
 {
     uint16_t Prescaler;
     uint16_t IdealPrescaler;
-    int BaudRate = 0;
+    uint32_t BaudRate = 0;
 
     IdealPrescaler = PCLK_Frequency / Speed;
 
-    for(int i = 0; i <= 7; i++)
+    for(uint32_t i = 0; i <= 7; i++)
     {
         Prescaler = (1 << (i + 1));
 

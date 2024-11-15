@@ -140,12 +140,13 @@ class CRC_Driver
 {
     public:
 
-        void        Initialize          (CRC_HW_Type_e Type);
-        void        Start               (void);
+                    CRC_Driver          ();
+        
+        void        Start               (CRC_Type_e Type);
         uint32_t    GetValue            (void);
         void        AddByte             (uint8_t Value);
-        void        AddBuffer           (const uint8_t* pBuffer, size_t Length);
-        uint32_t    CalculateBuffer     (const uint8_t* pBuffer, size_t Length);
+        void        AddBuffer           (const uint32_t* pBuffer, size_t Length);
+        uint32_t    CalculateBuffer     (const uint32_t* pBuffer, size_t Length, CRC_Type_e Type);
 
     private:
 

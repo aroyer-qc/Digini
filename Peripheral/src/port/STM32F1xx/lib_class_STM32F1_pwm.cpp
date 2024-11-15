@@ -100,7 +100,7 @@ void PWM_Driver::Initialize(void)
         default: break;
     }
 
-    m_pTimer->SetCompareChannel(TIM_Compare_e(Channel & TIM_CHANNEL_MASK), m_pInfo->InitialDuty);
+    m_pTimer->SetCompareChannel(Channel, m_pInfo->InitialDuty);
     m_pTimer->EnableCompareChannel(Channel);
     m_pTim->BDTR |= TIM_BDTR_MOE;
 }

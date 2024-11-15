@@ -134,40 +134,37 @@ void CRC_Driver::AddByte(uint8_t Value)
 //
 //  Description:    Add buffer to calculation of on going CRC sequence.
 //
+//  Note(s);        Size is always in bytes
+//
 //-------------------------------------------------------------------------------------------------
-void CRC_Driver::AddBuffer(const uint8_t* pBuffer, size_t Length)
+void CRC_Driver::AddBuffer(const uint32_t* pBuffer, size_t Length)
 {
     uint32_t i;
-    uint32_t Remainder;
-    uint32_t Data;
+    uint8_t* pBuffer8 = (uint8_t*)pBuffer;
 
-    Remainder  = Length % 4;
-    Length    -= Remainder;
-
-    // 4 bytes are entered in a row with a single word write
-    for(i = 0; i < uint32_t(Length); )
+    for(i = 0; i < (Length / 4); i++)
     {
-        Data  = ((uint32_t)pBuffer[i++] << 24);
-        Data |= ((uint32_t)pBuffer[i++] << 16);
-        Data |= ((uint32_t)pBuffer[i++] << 8);
-        Data |=  (uint32_t)pBuffer[i++];
+        uint32_t Data32 = *((uint32_t*)&pBuffer8[4 * i]);
+        CRC->DR = SWAP_32(Data32);
     }
 
-// TODO that is wrong for this CRC module!!!!!
-
-    // last bytes specific handling
-    while(Remainder != 0)
+    if((Length % 4) != 0)
     {
-        Data = (pBuffer[i++] << 24);
-        Remainder--;
-
-        if(Remainder != 0)
+        if((Length % 4) == 1)
         {
-            Data >>= 8;
+            *(volatile uint8_t *)(volatile void *)(&CRC->DR) = pBuffer8[4 * i];
         }
-        else
+        
+        if((Length % 4) >= 2)
         {
-            CRC->DR = Data;
+            volatile uint16_t* pRegister = (volatile uint16_t *)(volatile void *)(&CRC->DR);
+            uint16_t Data16 = *((uint16_t*)&pBuffer8[4 * i]);
+            *pRegister = SWAP_16(Data16);
+        }
+    
+        if((Length % 4) == 3)
+        {
+            *(volatile uint8_t *)(volatile void *)(&CRC->DR) = pBuffer8[(4 * i) + 2];
         }
     }
 }
@@ -183,9 +180,9 @@ void CRC_Driver::AddBuffer(const uint8_t* pBuffer, size_t Length)
 //  Description:    Start, Calculate the CRC from a byte buffer and return the CRC.
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CRC_Driver::CalculateBuffer(const uint8_t* pBuffer, size_t Length)
+uint32_t CRC_Driver::CalculateBuffer(const uint32_t* pBuffer, size_t Length, CRC_Type_e Type)
 {
-    Start();
+    Start(Type);
     AddBuffer(pBuffer, Length);
     return GetValue();
 }

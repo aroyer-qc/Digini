@@ -32,8 +32,8 @@
 
 #define VAR_UNUSED(v)                       ((void)(v))
 
-#define AbsMin(V,T)                         (((V) < (T)) ? (T) : (V))
-#define AbsMax(V,T)                         (((V) > (T)) ? (T) : (V))
+#define AbsMin(V,T)                         (((V) < (T)) ? (V) : (T))
+#define AbsMax(V,T)                         (((V) > (T)) ? (V) : (T))
 #define Toggle(A)                           (A = (uint8_t)(1 - A))
 #define CheckOption(A,B)                    (((B) & (A)) > 0)
 #define sizearray(A)                        (sizeof(A) / sizeof(A[0]))

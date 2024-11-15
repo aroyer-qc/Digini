@@ -152,9 +152,11 @@ enum TIM_Compare_e
     TIM_CHANNEL_3       =  2,
     TIM_CHANNEL_4       =  3,
     TIM_CHANNEL_MASK    =  3,           // for channel number without the complementary output
+  #if defined(TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG) || defined(TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG)
     TIM_CHANNEL_1N      =  4,
     TIM_CHANNEL_2N      =  5,
     TIM_CHANNEL_3N      =  6,
+  #endif
 };
 
 enum TIM_TypeMatch_e

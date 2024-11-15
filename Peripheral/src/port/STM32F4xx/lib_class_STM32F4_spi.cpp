@@ -96,6 +96,7 @@ void SPI_Driver::Initialize(void)
     Error = nOS_SemCreate(&m_DMA_Release, 0, 1);
     VAR_UNUSED(Error);
 
+    // Init defined IO's
     IO_PinInit(m_pInfo->PinCLK);
     IO_PinInit(m_pInfo->PinMOSI);
     IO_PinInit(m_pInfo->PinMISO);
@@ -190,6 +191,7 @@ void SPI_Driver::Initialize(void)
 
     //----------------------------------------------------------------------------
 
+    // There is always a TX DMA
     m_DMA_Status = SYS_IDLE;
     m_NoMemoryIncrement = false;
 
@@ -213,6 +215,7 @@ void SPI_Driver::Initialize(void)
 //  Name:           LockToDevice
 //
 //  Parameter(s):   IO_ID_e        Device           It use the unique ID of the CS pin as device ID
+//                  bool          HandleCS          Handle or not the Chip Select
 //  Return:         SystemState_e  Status
 //
 //  Description:    This routine will lock it to a specific device so any other access to the port
@@ -221,19 +224,25 @@ void SPI_Driver::Initialize(void)
 //  Note(s):        If a write without lock is executed then it will be done on the locked device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
+SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device, bool HandleCS)
 {
-    nOS_EnterCritical();
+    nOS_StatusReg sr;
+
+    nOS_EnterCritical(sr);
 
     if(Device != IO_NOT_DEFINED)
     {
         while(nOS_MutexLock(&m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
         m_Device = Device;
         m_Status = SYS_READY;
-        IO_SetPinLow(Device);
+
+        if(HandleCS == true)
+        {
+            IO_SetPinLow(Device);
+        }
     }
 
-    nOS_LeaveCritical();
+    nOS_LeaveCritical(sr);
 
     return m_Status;
 }
@@ -243,6 +252,7 @@ SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
 //  Name:           UnlockFromDevice
 //
 //  Parameter(s):   IO_ID_e       Device
+//                  bool          HandleCS          Handle or not the Chip Select
 //  Return:         SystemState_e Status
 //
 //  Description:    This routine will unlock SPI port from a specific device
@@ -251,22 +261,76 @@ SystemState_e SPI_Driver::LockToDevice(IO_ID_e Device)
 //                  if lock and no write at all if not lock to a device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_Driver::UnlockFromDevice(IO_ID_e Device)
+SystemState_e SPI_Driver::UnlockFromDevice(IO_ID_e Device, bool HandleCS)
 {
+    nOS_StatusReg sr;
+
     if(Device == m_Device)
     {
-        nOS_EnterCritical();
-        IO_SetPinHigh(Device);
+        if(HandleCS == true)
+        {
+            IO_SetPinHigh(Device);
+        }
+
+        nOS_EnterCritical(sr);
         nOS_MutexUnlock(&m_Mutex);
         m_Device = IO_NOT_DEFINED;
         m_Status = SYS_DEVICE_NOT_PRESENT;
-        nOS_LeaveCritical();
+        nOS_LeaveCritical(sr);
     }
     else
     {
         if(Device != m_Device) return SYS_WRONG_DEVICE;
         else                   return SYS_NOT_LOCK_TO_DEVICE;
     }
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SelectChip
+//
+//  Parameter(s):   IO_ID_e       Device
+//  Return:         SystemState_e Status
+//
+//  Description:    This routine activate the chip select
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e SPI_Driver::SelectChip(IO_ID_e Device)
+{
+    if(m_Device == Device)
+    {
+        IO_SetPinLow(Device);
+    }
+    else
+    {
+        if(Device != m_Device) return SYS_WRONG_DEVICE;
+    }
+
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           DeSelectChip
+//
+//  Parameter(s):   IO_ID_e       Device
+//  Return:         SystemState_e Status
+//
+//  Description:    This routine de-activate the chip select
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e SPI_Driver::DeSelectChip(IO_ID_e Device)
+{
+    if(m_Device == Device)
+    {
+        IO_SetPinHigh(Device);
+    }
+    else
+    {
+        if(Device != m_Device) return SYS_WRONG_DEVICE;
+    }
+
     return SYS_READY;
 }
 
@@ -583,21 +647,6 @@ SystemState_e SPI_Driver::WaitReady(void)
 */
 //-------------------------------------------------------------------------------------------------
 //
-//  IRQ Handler:    IRQHandler
-//
-//  Description:    This function handles SPIx interrupt request.
-//
-//-------------------------------------------------------------------------------------------------
-/*
-void SPI_Driver::IRQHandler(void)
-{
-    if(m_pInfo->CallBackISR != nullptr)
-    {
-        m_pInfo->CallBackISR();
-    }
-}
-*/
-
 //-------------------------------------------------------------------------------------------------
 //  DDDDDD  MM     MM  AAAAA
 //  DD   DD MMMM MMMM AA   AA

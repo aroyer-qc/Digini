@@ -449,7 +449,7 @@ void TIM_Driver::SetCompareChannel(TIM_Compare_e Channel, uint32_t Value)
   #endif
     {
       #if (TIM_DRIVER_SUPPORT_ANY_TIM1_TO_TIM14_CFG == DEF_ENABLED)
-        switch(Channel)
+        switch(int(Channel & TIM_CHANNEL_MASK))
         {
             case TIM_CHANNEL_1: { m_pTim->CCR1 = Value; } break;
             case TIM_CHANNEL_2: { m_pTim->CCR2 = Value; } break;
@@ -493,10 +493,15 @@ void TIM_Driver::EnableCompareChannel(TIM_Compare_e Channel)
       #if (TIM_DRIVER_SUPPORT_ANY_TIM1_TO_TIM14_CFG == DEF_ENABLED)
         switch(Channel)
         {
-            case TIM_CHANNEL_1: { m_pTim->CCER |= TIM_CCER_CC1E; } break;
-            case TIM_CHANNEL_2: { m_pTim->CCER |= TIM_CCER_CC2E; } break;
-            case TIM_CHANNEL_3: { m_pTim->CCER |= TIM_CCER_CC3E; } break;
-            case TIM_CHANNEL_4: { m_pTim->CCER |= TIM_CCER_CC4E; } break;
+            case TIM_CHANNEL_1:  { m_pTim->CCER |= TIM_CCER_CC1E;  } break;
+            case TIM_CHANNEL_2:  { m_pTim->CCER |= TIM_CCER_CC2E;  } break;
+            case TIM_CHANNEL_3:  { m_pTim->CCER |= TIM_CCER_CC3E;  } break;
+            case TIM_CHANNEL_4:  { m_pTim->CCER |= TIM_CCER_CC4E;  } break;
+          #if defined(TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG) || defined(TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG)
+            case TIM_CHANNEL_1N: { m_pTim->CCER |= TIM_CCER_CC1NE; } break;
+            case TIM_CHANNEL_2N: { m_pTim->CCER |= TIM_CCER_CC2NE; } break;
+            case TIM_CHANNEL_3N: { m_pTim->CCER |= TIM_CCER_CC3NE; } break;
+          #endif  
             default: break;
         }
       #endif
@@ -514,6 +519,7 @@ void TIM_Driver::EnableCompareChannel(TIM_Compare_e Channel)
 //  Description:    Disable the compare channel
 //
 //-------------------------------------------------------------------------------------------------
+#if (TIM_DRIVER_SUPPORT_COMPARE_CFG == DEF_ENABLED)
 void TIM_Driver::DisableCompareChannel(TIM_Compare_e Channel)
 {
   #if (TIM_DRIVER_SUPPORT_LPTIM1_COMPARE_CFG == DEF_ENABLED)
@@ -534,15 +540,21 @@ void TIM_Driver::DisableCompareChannel(TIM_Compare_e Channel)
       #if (TIM_DRIVER_SUPPORT_ANY_TIM1_TO_TIM14_CFG == DEF_ENABLED)
         switch(Channel)
         {
-            case TIM_CHANNEL_1: { m_pTim->CCER &= ~TIM_CCER_CC1E; } break;
-            case TIM_CHANNEL_2: { m_pTim->CCER &= ~TIM_CCER_CC2E; } break;
-            case TIM_CHANNEL_3: { m_pTim->CCER &= ~TIM_CCER_CC3E; } break;
-            case TIM_CHANNEL_4: { m_pTim->CCER &= ~TIM_CCER_CC4E; } break;
+            case TIM_CHANNEL_1:  { m_pTim->CCER &= ~TIM_CCER_CC1E;  } break;
+            case TIM_CHANNEL_2:  { m_pTim->CCER &= ~TIM_CCER_CC2E;  } break;
+            case TIM_CHANNEL_3:  { m_pTim->CCER &= ~TIM_CCER_CC3E;  } break;
+            case TIM_CHANNEL_4:  { m_pTim->CCER &= ~TIM_CCER_CC4E;  } break;
+          #if defined(TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG) || defined(TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG)
+            case TIM_CHANNEL_1N: { m_pTim->CCER &= ~TIM_CCER_CC1NE; } break;
+            case TIM_CHANNEL_2N: { m_pTim->CCER &= ~TIM_CCER_CC2NE; } break;
+            case TIM_CHANNEL_3N: { m_pTim->CCER &= ~TIM_CCER_CC3NE; } break;
+          #endif  
             default: break;
         }
       #endif
     }
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //

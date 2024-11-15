@@ -85,7 +85,7 @@ void RTC_Driver::Initialize(uint32_t Mode)
     }
 
     // Init power and clock for RTC
-    RCC->APB1ENR |=  ( RCC_APB1ENR_PWREN);     // Backup interface & Power interface clock enable
+    RCC->APB1ENR |=  ( RCC_APB1ENR_PWREN);                          // Backup interface & Power interface clock enable
     PWR->CR1   |= PWR_CR1_DBP;                                      // RTC register access allowed
     RCC->BDCR &= uint32_t(~RCC_BDCR_RTCSEL);                        // Clear clock selection
     RCC->BDCR |= Mode;                                              // Set it with argument

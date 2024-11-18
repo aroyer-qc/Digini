@@ -95,6 +95,8 @@
 //     }
 //
 //
+//   Note(s) If the CPU is too slow, then use the setting WS281x_USE_PRECALCULATED_PWM_BUFFER
+//
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -102,15 +104,19 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+#ifndef WS281x_USE_PRECALCULATED_PWM_BUFFER
+  #define WS281x_USE_PRECALCULATED_PWM_BUFFER   DEF_DISABLED
+#endif
+
 // This enable the continuous scan of the LED stream. No refresh needed.
 #ifndef WS281x_CONTINUOUS_SCAN
-  #define WS281x_CONTINUOUS_SCAN            DEF_DISABLED
+  #define WS281x_CONTINUOUS_SCAN                DEF_DISABLED
 #endif
 
 // If a LED change is done, it will trigger a refresh automatically is it is DEF_ENABLED.
 // If has no effect if WS281x_CONTINUOUS_SCAN is DEF_ENABLED.
 #ifndef WS281x_SET_LED_TRIGGER_REFRESH
-  #define WS281x_SET_LED_TRIGGER_REFRESH    DEF_DISABLED
+  #define WS281x_SET_LED_TRIGGER_REFRESH        DEF_DISABLED
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -119,8 +125,13 @@
 
 enum WS281x_ResetType_e
 {
+  #if (WS281x_USE_PRECALCULATED_PWM_BUFFER == DEF_ENABLED)
+    WS2812B_RESET       = 42,               // Need 40  cycles of the 800 Khz to reset the scan.. added 2
+    WS2811_RESET        = 234,              // Need 224 cycles of the 800 Khz to reset the scan.. added 10
+  #else
     WS2812B_RESET       = 32000,  // TODO is it right??  just check timing when it will work
     WS2811_RESET        = 5600,
+  #endif
 };
 
 struct WS281x_Color_t
@@ -165,15 +176,20 @@ class WS281x
         DMA_Driver                  m_DMA;
 
         uint32_t                    m_NumberOfLED;
-        volatile uint16_t           m_LedPointer;
         WS281x_Color_t*             m_pLedChain;
-        uint8_t*                    m_pDMA_Buffer;
-        uint8_t*                    m_pDMA_HalfBuffer;      // to reduce DMA interrupt time
+        volatile uint32_t           m_ResetCount;
       #if (WS281x_CONTINUOUS_SCAN == DEF_DISABLED)
         bool                        m_NeedRefresh;
       #endif
+      #if (WS281x_USE_PRECALCULATED_PWM_BUFFER == DEF_ENABLED)
+        volatile bool               m_IsItinFirstHalfOfBuffer;
+        WS281x_ResetType_e          m_ResetType;
+      #else
+        volatile uint16_t           m_LedPointer;
         volatile uint32_t           m_SetCountReset;
-        volatile uint32_t           m_ResetCount;
+        uint8_t*                    m_pDMA_HalfBuffer;              // to reduce DMA interrupt time it is not required in pre-calculated buffer mode
+      #endif
+        uint8_t*                    m_pDMA_Buffer;
 
 };
 

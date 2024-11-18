@@ -112,7 +112,7 @@
     #pragma message "XSTR(CFG_PLL_DIVIDER)"
     #error PLL divider is out of range
   #else
-    #define CFG_RCC_CFGR_PLL_DIVIDER                      0//  ((CFG_PLL_DIVIDER - 1) << RCC_CFGR_PLL_DIVIDER_POS)
+    #define CFG_RCC_CFGR_PLL_DIVIDER                        ((CFG_PLL_DIVIDER - 1) << RCC_CFGR_PLL_DIVIDER_POS)
   #endif
 
   #if (CFG_PLL_MULTIPLIER < 2) || (CFG_PLL_MULTIPLIER > 16)

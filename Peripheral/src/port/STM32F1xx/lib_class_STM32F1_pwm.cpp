@@ -165,7 +165,7 @@ uint32_t* PWM_Driver::GetCompareRegisterPointer(void)
 {
     volatile uint32_t* pRegister = nullptr;
 
-    switch(m_pInfo->Channel)
+    switch(m_pInfo->Channel & TIM_CHANNEL_MASK)
     {
         case TIM_CHANNEL_1: pRegister = &m_pTim->CCR1; break;
         case TIM_CHANNEL_2: pRegister = &m_pTim->CCR2; break;

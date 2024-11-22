@@ -106,16 +106,26 @@ void TIM_Driver::Initialize(void)
     }
   #endif
 
-    ((TIM_TypeDef*)m_pTim)->CR1 = m_pInfo->Mode | TIM_CR1_ARPE;
+    m_pTim->CR1 = m_pInfo->Mode | TIM_CR1_ARPE;
 
-    // Set the update interrupt enable
-    if((m_pInfo->IRQ_DMA_SourceEnable & (TIM_IRQ_UPDATE | TIM_DMA_UPDATE)) != 0)
+    if((m_pInfo->IRQ_DMA_SourceEnable & TIM_IE_IRQ_UPDATE) != 0)
     {
-         CLEAR_BIT(((TIM_TypeDef*)m_pTim)->SR, TIM_SR_UIF);
-        ((TIM_TypeDef*)m_pTim)->DIER = TIM_DIER_UIE;
+        CLEAR_BIT(m_pTim->SR, TIM_SR_UIF);
+((TIM_TypeDef*)m_pTim)->DIER = TIM_DIER_UIE; // TODO validate
     }
 
-    ((TIM_TypeDef*)m_pTim)->DIER |= m_pInfo->IRQ_DMA_SourceEnable;  // Enable all source according to configuration
+    // Set the update interrupt enable
+//    if((m_pInfo->IRQ_DMA_SourceEnable & TIM_IE_DMA_UPDATE) != 0)
+//    {
+//        SET_BIT(m_pTim->CR2, TIM_CR2_CCUS);
+//    }
+
+//    if((m_pInfo->IRQ_DMA_SourceEnable & TIM_IE_DMA_CAPTURE_COMPARE_MASK) != 0)
+//    {
+//        SET_BIT(m_pTim->CR2, TIM_CR2_CCDS);
+//    }
+
+    SET_BIT(m_pTim->DIER, m_pInfo->IRQ_DMA_SourceEnable);       // Enable all source according to configuration
 
     // Configure interrupt priority for TIM
     if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
@@ -266,7 +276,11 @@ uint32_t TIM_Driver::GetCounterValue(void)
 #if (TIM_DRIVER_SUPPORT_COMPARE_CFG == DEF_ENABLED)
 void TIM_Driver::ClearConfigCompareChannel(TIM_Compare_e Channel)
 {
+  #if defined(TIM_DRIVER_SUPPORT_TIM1_CFG) || defined(TIM_DRIVER_SUPPORT_TIM8_CFG)
+    switch(Channel & TIM_CHANNEL_MASK)
+  #else
     switch(Channel)
+  #endif
     {
         case TIM_CHANNEL_1: { m_pTim->CCER  &= ~TIM_CCER_OC1_MASK;
                               m_pTim->CCMR1 &= ~TIM_CCMR1_OC1_MASK; } break;  // Clear config for OC1
@@ -324,11 +338,11 @@ void TIM_Driver::EnableCompareChannel(TIM_Compare_e Channel)
         case TIM_CHANNEL_2:  { m_pTim->CCER |= TIM_CCER_CC2E;  } break;
         case TIM_CHANNEL_3:  { m_pTim->CCER |= TIM_CCER_CC3E;  } break;
         case TIM_CHANNEL_4:  { m_pTim->CCER |= TIM_CCER_CC4E;  } break;
-      #if defined(TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG) || defined(TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG)
+      #if defined(TIM_DRIVER_SUPPORT_TIM1_CFG) || defined(TIM_DRIVER_SUPPORT_TIM8_CFG)
         case TIM_CHANNEL_1N: { m_pTim->CCER |= TIM_CCER_CC1NE; } break;
         case TIM_CHANNEL_2N: { m_pTim->CCER |= TIM_CCER_CC2NE; } break;
         case TIM_CHANNEL_3N: { m_pTim->CCER |= TIM_CCER_CC3NE; } break;
-      #endif  
+      #endif
         default: break;
     }
 }
@@ -349,15 +363,16 @@ void TIM_Driver::DisableCompareChannel(TIM_Compare_e Channel)
 {
     switch(Channel)
     {
+        // TODO Use table instead or other method to shrink that code
         case TIM_CHANNEL_1:  { m_pTim->CCER &= ~TIM_CCER_CC1E;  } break;
         case TIM_CHANNEL_2:  { m_pTim->CCER &= ~TIM_CCER_CC2E;  } break;
         case TIM_CHANNEL_3:  { m_pTim->CCER &= ~TIM_CCER_CC3E;  } break;
         case TIM_CHANNEL_4:  { m_pTim->CCER &= ~TIM_CCER_CC4E;  } break;
-      #if defined(TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG) || defined(TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG)
+      #if defined(TIM_DRIVER_SUPPORT_TIM1_CFG) || defined(TIM_DRIVER_SUPPORT_TIM8_CFG)
         case TIM_CHANNEL_1N: { m_pTim->CCER &= ~TIM_CCER_CC1NE; } break;
         case TIM_CHANNEL_2N: { m_pTim->CCER &= ~TIM_CCER_CC2NE; } break;
         case TIM_CHANNEL_3N: { m_pTim->CCER &= ~TIM_CCER_CC3NE; } break;
-      #endif  
+      #endif
         default: break;
     }
 }

@@ -136,7 +136,6 @@
 #include "./Peripheral/inc/port/lib_io.h"
 #include "./Utility/inc/lib_fifo.h"
 #include "./Peripheral/inc/port/lib_class_dma.h"
-#include "./Peripheral/inc/port/lib_dma.h"                  // todo remove when DMA porting is done
 #include "./Peripheral/inc/port/lib_rng.h"
 #include "./NanoIP/inc/lib_ethernet_typedef.h"
 #include "./Utility/inc/lib_crc.h"
@@ -145,7 +144,7 @@
 #include "./Memory/inc/lib_memory_node.h"
 
 #if (DIGINI_MPU_DRIVER == DEF_ENABLED)
-#include "./Peripheral/inc/port/lib_mpu.h"                  // TODO 
+#include "./Peripheral/inc/port/lib_mpu.h"                  // TODO
 #endif
 
 //-------------------------------------------------------------------------------------------------

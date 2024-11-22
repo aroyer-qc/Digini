@@ -91,7 +91,7 @@ void PWM_Driver::Initialize(void)
     m_pTimer->ClearConfigCompareChannel(Channel);
 
     // Set PWM mode and enable output
-    switch(Channel)
+    switch(int(Channel & TIM_CHANNEL_MASK))
     {
         case TIM_CHANNEL_1: { m_pTim->CCMR1 |= (TIM_CCMR1_OC1_MODE_PWM | TIM_CCMR1_OC1PE); } break;
         case TIM_CHANNEL_2: { m_pTim->CCMR1 |= (TIM_CCMR1_OC2_MODE_PWM | TIM_CCMR1_OC2PE); } break;
@@ -103,7 +103,6 @@ void PWM_Driver::Initialize(void)
     m_pTimer->SetCompareChannel(Channel, m_pInfo->InitialDuty);
     m_pTimer->EnableCompareChannel(Channel);
     m_pTim->BDTR |= TIM_BDTR_MOE;
-    m_pTim->CR1  |= TIM_CR1_CEN;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -134,6 +133,7 @@ void PWM_Driver::SetDuty(uint16_t Duty)
 void PWM_Driver::Start(void)
 {
     m_pTimer->EnableCompareChannel(m_pInfo->Channel);
+    m_pTim->CR1  |= TIM_CR1_CEN;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -165,7 +165,7 @@ uint32_t* PWM_Driver::GetCompareRegisterPointer(void)
 {
     volatile uint32_t* pRegister = nullptr;
 
-    switch(m_pInfo->Channel)
+    switch(m_pInfo->Channel & TIM_CHANNEL_MASK)
     {
         case TIM_CHANNEL_1: pRegister = &m_pTim->CCR1; break;
         case TIM_CHANNEL_2: pRegister = &m_pTim->CCR2; break;

@@ -45,6 +45,27 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+// Timer DMA/IRQ source (check for timer some don't support all feature)                    // TODO need to adjust to F7 if necessary
+#define TIM_IE_IRQ_DMA_NO_SOURCE                    0x0000
+#define TIM_IE_IRQ_UPDATE                           0x0001
+#define TIM_IE_IRQ_CAPTURE_COMPARE_1                0x0002
+#define TIM_IE_IRQ_CAPTURE_COMPARE_2                0x0004
+#define TIM_IE_IRQ_CAPTURE_COMPARE_3                0x0008
+#define TIM_IE_IRQ_CAPTURE_COMPARE_4                0x0010
+#define TIM_IE_IRQ_COM                              0x0020
+#define TIM_IE_IRQ_TRIGGER                          0x0040
+#define TIM_IE_IRQ_BREAK                            0x0080
+#define TIM_IE_DMA_UPDATE                           0x0100
+#define TIM_IE_DMA_CAPTURE_COMPARE_1                0x0200
+#define TIM_IE_DMA_CAPTURE_COMPARE_2                0x0400
+#define TIM_IE_DMA_CAPTURE_COMPARE_3                0x0800
+#define TIM_IE_DMA_CAPTURE_COMPARE_4                0x1000
+#define TIM_IE_DMA_COM                              0x2000
+#define TIM_IE_DMA_TRIGGER                          0x4000
+
+#define TIM_IE_IRQ_CAPTURE_COMPARE_MASK             0x001E
+#define TIM_IE_DMA_CAPTURE_COMPARE_MASK             0x1E00
+
 #define TIM_SR_UPDATE_AND_COMPARE_MASK              (TIM_SR_UIF | TIM_SR_CC1IF | TIM_SR_CC2IF | TIM_SR_CC3IF | TIM_SR_CC4IF)
 
 #define TIM_OP_MODE_SINGLE_UP_COUNT                 TIM_CR1_OPM
@@ -102,24 +123,6 @@
 #else
   #define TIM_DRIVER_SUPPORT_COMPARE_CFG                    DEF_DISABLED
 #endif
-
-// Timer DMA/IRQ source (check for timer some don't support all feature)                    // TODO need to adjust to F7 if necessary
-#define TIM_IRQ_DMA_NO_SOURCE                       0x0000
-#define TIM_IRQ_UPDATE                              0x0001
-#define TIM_IRQ_CAPTURE_COMPARE_1                   0x0002
-#define TIM_IRQ_CAPTURE_COMPARE_2                   0x0004
-#define TIM_IRQ_CAPTURE_COMPARE_3                   0x0008
-#define TIM_IRQ_CAPTURE_COMPARE_4                   0x0010
-#define TIM_IRQ_COM                                 0x0020
-#define TIM_IRQ_TRIGGER                             0x0040
-#define TIM_IRQ_BREAK                               0x0080
-#define TIM_DMA_UPDATE                              0x0100
-#define TIM_DMA_CAPTURE_COMPARE_1                   0x0200
-#define TIM_DMA_CAPTURE_COMPARE_2                   0x0400
-#define TIM_DMA_CAPTURE_COMPARE_3                   0x0800
-#define TIM_DMA_CAPTURE_COMPARE_4                   0x1000
-#define TIM_DMA_COM                                 0x2000
-#define TIM_DMA_TRIGGER                             0x4000
 
 #define TIM_CCER_OC1_MASK                           ((uint16_t)0x000F)
 #define TIM_CCER_OC2_MASK                           ((uint16_t)0x00F0)
@@ -203,7 +206,7 @@ enum TIM_Compare_e
     TIM_CHANNEL_3       =  2,
     TIM_CHANNEL_4       =  3,
     TIM_CHANNEL_MASK    =  3,           // for channel number without the complementary output
-  #if defined(TIM_DRIVER_SUPPORT_TIM1_COMPARE_CFG) || defined(TIM_DRIVER_SUPPORT_TIM8_COMPARE_CFG)
+  #if defined(TIM_DRIVER_SUPPORT_TIM1_CFG) || defined(TIM_DRIVER_SUPPORT_TIM8_CFG)
     TIM_CHANNEL_1N      =  4,
     TIM_CHANNEL_2N      =  5,
     TIM_CHANNEL_3N      =  6,

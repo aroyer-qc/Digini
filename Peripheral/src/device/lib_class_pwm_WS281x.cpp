@@ -49,6 +49,29 @@
 #define WS281x_LOGICAL_1                14
 
 //-------------------------------------------------------------------------------------------------
+
+// Fast mode to update Stream
+const uint32_t HalfColorByte[16] =
+{
+    /* 0  */ U32MACRO(WS281x_LOGICAL_0, WS281x_LOGICAL_0, WS281x_LOGICAL_0, WS281x_LOGICAL_0),
+    /* 1  */ U32MACRO(WS281x_LOGICAL_0, WS281x_LOGICAL_0, WS281x_LOGICAL_0, WS281x_LOGICAL_1),
+    /* 2  */ U32MACRO(WS281x_LOGICAL_0, WS281x_LOGICAL_0, WS281x_LOGICAL_1, WS281x_LOGICAL_0),
+    /* 3  */ U32MACRO(WS281x_LOGICAL_0, WS281x_LOGICAL_0, WS281x_LOGICAL_1, WS281x_LOGICAL_1),
+    /* 4  */ U32MACRO(WS281x_LOGICAL_0, WS281x_LOGICAL_1, WS281x_LOGICAL_0, WS281x_LOGICAL_0),
+    /* 5  */ U32MACRO(WS281x_LOGICAL_0, WS281x_LOGICAL_1, WS281x_LOGICAL_0, WS281x_LOGICAL_1),
+    /* 6  */ U32MACRO(WS281x_LOGICAL_0, WS281x_LOGICAL_1, WS281x_LOGICAL_1, WS281x_LOGICAL_0),
+    /* 7  */ U32MACRO(WS281x_LOGICAL_0, WS281x_LOGICAL_1, WS281x_LOGICAL_1, WS281x_LOGICAL_1),
+    /* 8  */ U32MACRO(WS281x_LOGICAL_1, WS281x_LOGICAL_0, WS281x_LOGICAL_0, WS281x_LOGICAL_0),
+    /* 9  */ U32MACRO(WS281x_LOGICAL_1, WS281x_LOGICAL_0, WS281x_LOGICAL_0, WS281x_LOGICAL_1),
+    /* 10 */ U32MACRO(WS281x_LOGICAL_1, WS281x_LOGICAL_0, WS281x_LOGICAL_1, WS281x_LOGICAL_0),
+    /* 11 */ U32MACRO(WS281x_LOGICAL_1, WS281x_LOGICAL_0, WS281x_LOGICAL_1, WS281x_LOGICAL_1),
+    /* 12 */ U32MACRO(WS281x_LOGICAL_1, WS281x_LOGICAL_1, WS281x_LOGICAL_0, WS281x_LOGICAL_0),
+    /* 13 */ U32MACRO(WS281x_LOGICAL_1, WS281x_LOGICAL_1, WS281x_LOGICAL_0, WS281x_LOGICAL_1),
+    /* 14 */ U32MACRO(WS281x_LOGICAL_1, WS281x_LOGICAL_1, WS281x_LOGICAL_1, WS281x_LOGICAL_0),
+    /* 15 */ U32MACRO(WS281x_LOGICAL_1, WS281x_LOGICAL_1, WS281x_LOGICAL_1, WS281x_LOGICAL_1),
+};
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Name:           Constructor
 //
@@ -59,7 +82,7 @@
 //-------------------------------------------------------------------------------------------------
 WS281x::WS281x(const WS281x_Config_t* pConfig)
 {
-    m_NumberOfLED = pConfig->NumberOfLED;                                                                // Number of real LEDs.
+    m_NumberOfLED = pConfig->NumberOfLED;                                   // Number of real LEDs.
     m_DMA.Initialize((DMA_Info_t*)&pConfig->DMA_Info);
     m_pPWM_Driver = pConfig->pPWM_Driver;
   #if (WS281x_USE_PRECALCULATED_PWM_BUFFER == DEF_ENABLED)
@@ -81,7 +104,6 @@ WS281x::WS281x(const WS281x_Config_t* pConfig)
 void WS281x::Initialize()
 {
     size_t BufferSize;
-
 
   #if (WS281x_USE_PRECALCULATED_PWM_BUFFER == DEF_DISABLED)
     BufferSize        = WS281x_DMA_FULL_BUFFER_SIZE;
@@ -215,7 +237,7 @@ void WS281x::SetLed(uint32_t Offset, WS281x_Color_t Color)
            #if (WS281x_USE_PRECALCULATED_PWM_BUFFER == DEF_ENABLED)
             AtStartValue = m_IsItinFirstHalfOfBuffer;
 
-            while(AtStartValue = m_IsItinFirstHalfOfBuffer)
+            while(AtStartValue == m_IsItinFirstHalfOfBuffer)
             {
                 nOS_Sleep(1);
             };
@@ -328,16 +350,16 @@ GPIOA->BSRR = 0x08;
 
     if(IsItTransferComplete == true)
     {
-GPIOA->BSRR = 0x04;
+//GPIOA->BSRR = 0x04;
         m_IsItinFirstHalfOfBuffer = false;
     }
     else
     {
-GPIOA->BSRR = 0x08;
+//GPIOA->BSRR = 0x08;
         m_IsItinFirstHalfOfBuffer = true;
     }
 
-GPIOA->BSRR = 0xC0000;
+//GPIOA->BSRR = 0xC0000;
 
   #endif
 }

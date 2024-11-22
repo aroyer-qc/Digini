@@ -40,8 +40,7 @@
 // Note(s)
 //-------------------------------------------------------------------------------------------------
 //
-// This library is specific to F1, it use too complex feature of timer to be generic or use timer
-// Library. Although it might be easy to convert to another timer from other CPU family.
+// It use too complex feature of timer to be generic or use timer
 //
 // It need a timer with DMA and compare register.
 //
@@ -71,6 +70,9 @@
 //                  _______________________________________________________________________________
 //
 //                  The Best granularity here will be 50 nSec, for a frequency of 20 MHz.
+//                  Ideally chose a pheripheral frequency in the multiple of 20MHz.
+//                  If an other frequency are choosen, the bellow value will need to be
+//                  recalculated.
 //
 //                  350 nSec    = 7  Counts
 //                  900 nSec    = 18 Counts
@@ -95,7 +97,16 @@
 //     }
 //
 //
-//   Note(s) If the CPU is too slow, then use the setting WS281x_USE_PRECALCULATED_PWM_BUFFER
+//   Note(s)
+//          - If the CPU is too slow, then use the setting WS281x_USE_PRECALCULATED_PWM_BUFFER
+//
+//          - With STM32F1, It Better to use WS281x_USE_PRECALCULATED_PWM_BUFFER if not to much
+//            time will be spent into DMA IRQ
+//          - With STM32F4, It cannot use WS281x_USE_PRECALCULATED_PWM_BUFFER because the DMA as a
+//            a bug. It cannot transfert a 8 bits to 16 Bits registers compare register.
+//            It shadow the low part of the value for the compare register into high 8 bits value.
+//            The result will be to double the buffer size for the compare value.
+//          - With STM32F7   Not tested YET. 
 //
 //
 //-------------------------------------------------------------------------------------------------

@@ -41,15 +41,38 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define WS281x_TIMER_RANGE              25
 #define WS281x_RGB_SIZE                 3
 #define WS281x_LED_BUFFER_SIZE          24                                  // One led need 24 Bits for the color.
-#define WS281x_DMA_FULL_BUFFER_SIZE     2 * WS281x_LED_BUFFER_SIZE          // DMA need 2 leds.
-#define WS281x_LOGICAL_0                7
-#define WS281x_LOGICAL_1                14
+
+#if (WS281x_USE_PRECALCULATED_PWM_BUFFER == DEF_ENABLED)
+  #define WS281x_DMA_FULL_BUFFER_SIZE       WS281x_LED_BUFFER_SIZE
+#else
+  #define WS281x_DMA_FULL_BUFFER_SIZE       2 * WS281x_LED_BUFFER_SIZE          // DMA need 2 leds.  ?? why
+#endif
+
+#define WS2812x_CALC_EXTRA_FOR_RESET(R)     (((R * 10) / 125) * 10)
 
 //-------------------------------------------------------------------------------------------------
+//  private variable(s)
+//-------------------------------------------------------------------------------------------------
 
+const WS2812x_MethodData_t WS281x::m_Methods[NUMBER_OF_METHODS] =
+{
+  #if (WS281x_USE_SK6812 == DEF_ENABLED)
+    {6, 18, WS2812x_CALC_EXTRA_FOR_RESET(80)},
+  #endif
+  #if (WS281x_USE_WS2811 == DEF_ENABLED)
+    {5, 12, WS2812x_CALC_EXTRA_FOR_RESET(50)},
+  #endif
+  #if (WS281x_USE_WS2812 == DEF_ENABLED)
+    {7, 14, WS2812x_CALC_EXTRA_FOR_RESET(50)},
+  #endif
+  #if (WS281x_USE_WS2812B == DEF_ENABLED)
+    {8, 16, WS2812x_CALC_EXTRA_FOR_RESET(50)},
+  #endif
+};
+
+#if 0   evaluating method for F4 with there DMA bug
 // Fast mode to update Stream
 const uint32_t HalfColorByte[16] =
 {
@@ -70,6 +93,7 @@ const uint32_t HalfColorByte[16] =
     /* 14 */ U32MACRO(WS281x_LOGICAL_1, WS281x_LOGICAL_1, WS281x_LOGICAL_1, WS281x_LOGICAL_0),
     /* 15 */ U32MACRO(WS281x_LOGICAL_1, WS281x_LOGICAL_1, WS281x_LOGICAL_1, WS281x_LOGICAL_1),
 };
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -82,12 +106,10 @@ const uint32_t HalfColorByte[16] =
 //-------------------------------------------------------------------------------------------------
 WS281x::WS281x(const WS281x_Config_t* pConfig)
 {
-    m_NumberOfLED = pConfig->NumberOfLED;                                   // Number of real LEDs.
+    m_Method      = pConfig->Method;
+    m_NumberOfLED = pConfig->NumberOfLED;                                                                // Number of real LEDs.
     m_DMA.Initialize((DMA_Info_t*)&pConfig->DMA_Info);
     m_pPWM_Driver = pConfig->pPWM_Driver;
-  #if (WS281x_USE_PRECALCULATED_PWM_BUFFER == DEF_ENABLED)
-    m_ResetType = pConfig->ResetType;
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -107,23 +129,23 @@ void WS281x::Initialize()
 
   #if (WS281x_USE_PRECALCULATED_PWM_BUFFER == DEF_DISABLED)
     BufferSize        = WS281x_DMA_FULL_BUFFER_SIZE;
-    m_LedPointer      = 0;                                                                              // Start at Led 0
+    m_LedPointer      = 0;                                                                                      // Start at Led 0
     m_SetCountReset   = 32000;//uint8_t((uint16_t(m_ResetType) / WS281x_TIMER_RANGE));
     m_ResetCount      = m_SetCountReset;
   #else
-    BufferSize        = (WS281x_DMA_FULL_BUFFER_SIZE * m_NumberOfLED) + size_t(m_ResetType);            // We need to add the reset time equivalent for the reset
+    BufferSize        = (WS281x_DMA_FULL_BUFFER_SIZE * m_NumberOfLED) + WS281x::m_Methods[m_Method].ResetTime;  // We need to add the reset time equivalent for the reset
     m_IsItinFirstHalfOfBuffer = true;
   #endif
 
-    m_pLedChain       = (WS281x_Color_t*)pMemoryPool->AllocAndClear(m_NumberOfLED * WS281x_RGB_SIZE);   // Reserved x bytes  from the alloc mem library.
-    m_pDMA_Buffer     = (uint8_t*)pMemoryPool->AllocAndSet(BufferSize, WS281x_LOGICAL_0);               // Reserved 48 bytes DMA transfert to compare register multiply by the number of LED.
+    m_pLedChain       = (WS281x_Color_t*)pMemoryPool->AllocAndClear(m_NumberOfLED * WS281x_RGB_SIZE);           // Reserved x bytes  from the alloc mem library.
+    m_pDMA_Buffer     = (uint8_t*)pMemoryPool->AllocAndSet(BufferSize, WS281x::m_Methods[m_Method].T0H);        // Reserved 48 bytes DMA transfer to compare register multiply by the number of LED.
 
   #if (WS281x_USE_PRECALCULATED_PWM_BUFFER == DEF_DISABLED)
     m_pDMA_HalfBuffer = m_pDMA_Buffer + (BufferSize / 2);
   #else
 
     m_IsItinFirstHalfOfBuffer = true;
-    memset(&m_pDMA_Buffer[BufferSize - size_t(m_ResetType)], 0, size_t(m_ResetType));                   // We need to add the reset time equivalent for the reset
+    memset(&m_pDMA_Buffer[BufferSize - WS281x::m_Methods[m_Method].ResetTime], 0, WS281x::m_Methods[m_Method].ResetTime); // We need to add the reset time equivalent for the reset
   #endif
 
   #if (WS281x_CONTINUOUS_SCAN == DEF_DISABLED)
@@ -254,7 +276,7 @@ void WS281x::SetLed(uint32_t Offset, WS281x_Color_t Color)
 
                 for(int j = 0x80; j != 0; j >>= 1)
                 {
-                    m_pDMA_Buffer[Offset++] = ((Color & j) == 0) ? WS281x_LOGICAL_0 : WS281x_LOGICAL_1;
+                    m_pDMA_Buffer[Offset++] = ((Color & j) == 0) ? WS281x::m_Methods[m_Method].T0H : WS281x::m_Methods[m_Method].T1H;
                 }
 
                 pColorData++;
@@ -295,12 +317,10 @@ void WS281x::DMA_Channel_IRQ_Handler(bool IsItTransferComplete)
 
     if(IsItTransferComplete == true)
     {
-GPIOA->BSRR = 0x04;
         pBuffer = m_pDMA_HalfBuffer;
     }
     else
     {
-GPIOA->BSRR = 0x08;
         pBuffer = m_pDMA_Buffer;
     }
 
@@ -350,16 +370,12 @@ GPIOA->BSRR = 0x08;
 
     if(IsItTransferComplete == true)
     {
-//GPIOA->BSRR = 0x04;
         m_IsItinFirstHalfOfBuffer = false;
     }
     else
     {
-//GPIOA->BSRR = 0x08;
         m_IsItinFirstHalfOfBuffer = true;
     }
-
-//GPIOA->BSRR = 0xC0000;
 
   #endif
 }

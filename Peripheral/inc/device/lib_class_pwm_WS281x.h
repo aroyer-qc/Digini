@@ -46,13 +46,19 @@
 //
 //  Note(s):        The Frequency for the smart LED are 800 kHz.
 //
-//                  Logical 0        ___________                       __
-//                             ...__|           \_____________________|  ...
-//                                  <- 350 nS -><------ 900 nS ------>
+//                  Logical 0        ____________                      __
+//                             ...__|            \____________________|  ...
+//                         SK6812   <-- 300 nS --><-----  950 nS ----->
+//                         WS2811   <-- 250 nS --><----- 1000 nS ----->
+//                         WS2812   <-- 350 nS --><-----  900 nS ----->
+//                         WS2812B  <-- 400 nS --><-----  850 nS ----->
 //
 //                  Logical 1        ___________________               __
 //                             ...__|                   \_____________|  ...
-//                                  <----- 700 nS -----><-- 550 nS -->
+//                         SK6812   <----- 600 nS -----><--- 650 nS -->
+//                         WS2811   <----- 600 nS -----><--- 650 nS -->
+//                         WS2812   <----- 700 nS -----><--- 550 nS -->
+//                         WS2812B  <----- 800 nS -----><--- 450 nS -->
 //
 //                                  <---------- 1.25uSec ------------>
 //                  _______________________________________________________________________________
@@ -64,24 +70,43 @@
 //                  (1) Minimum reset pulse length depends on WS281x device. Check datasheet for
 //                      your particular unit.
 //
-//                          WS2812B: > 50  uSec -> use 1000 Counts
-//                          WS2811:  > 280 uSec -> use 5600 Counts
-//
 //                  _______________________________________________________________________________
 //
 //                  The Best granularity here will be 50 nSec, for a frequency of 20 MHz.
-//                  Ideally chose a pheripheral frequency in the multiple of 20MHz.
-//                  If an other frequency are choosen, the bellow value will need to be
-//                  recalculated.
 //
-//                  350 nSec    = 7  Counts
-//                  900 nSec    = 18 Counts
-//                  700 nSec    = 14 Counts
-//                  550 nSec    = 11 Counts
-//                  Auto Reload = 25 Counts         Range for 1.25 uSec
+//
+//                  SK6812MINI, SK6812, SK6812W and SK6812WWA
+//                      Range for 1.25 uSec
+//                      T0H:  300 nSec  =  6 Counts
+//                      T1H:  600 nSec  = 12 Counts
+//                      Auto Reload     = 25 Counts
+//                      Reset           = > 80 uSec
+//
+//                  WS2811
+//                      Range for 1.25 uSec
+//                      T0H:  250 nSec  =  5 Counts
+//                      T1H:  600 nSec  = 12 Counts
+//                      Auto Reload     = 25 Counts
+//                      Reset           = > 50 uSec
+//
+//                  WS2812
+//
+//                      Range for 1.25 uSec
+//                      T0H:  350 nSec  = 7  Counts
+//                      T1H:  700 nSec  = 14 Counts
+//                      Auto Reload     = 25 Counts
+//                      Reset           = > 50 uSec
+//
+//                  WS2812B and WS2813
+//
+//                      Range for 1.25 uSec
+//                      T0H:  400 nSec  =  8 Counts
+//                      T1H:  800 nSec  = 16 Counts
+//                      Auto Reload     = 25 Counts
+//                      Reset           = > 50 uSec
 //                  _______________________________________________________________________________
 //
-//                  There two more entry in the m_pLedChain array and there value are set to zero.
+//                  There more entry in the m_pLedChain array and there value are set to zero.
 //                  when those LED entry are reach, DMA continue as nothing happened, but value is
 //                  set to zero, so this emulate a reset.
 //
@@ -130,19 +155,51 @@
   #define WS281x_SET_LED_TRIGGER_REFRESH        DEF_DISABLED
 #endif
 
+
+
+#ifndef WS281x_USE_SK6812
+  #define WS281x_USE_SK6812                     DEF_DISABLED
+#endif
+
+#ifndef WS281x_USE_WS2811
+  #define WS281x_USE_WS2811                     DEF_DISABLED
+#endif
+
+#ifndef WS281x_USE_WS2812
+  #define WS281x_USE_WS2812                     DEF_DISABLED
+#endif
+
+#ifndef WS281x_USE_WS2812B
+  #define WS281x_USE_WS2812B                    DEF_DISABLED
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-enum WS281x_ResetType_e
+enum WS281x_Methods_e
 {
-  #if (WS281x_USE_PRECALCULATED_PWM_BUFFER == DEF_ENABLED)
-    WS2812B_RESET       = 42,               // Need 40  cycles of the 800 Khz to reset the scan.. added 2
-    WS2811_RESET        = 234,              // Need 224 cycles of the 800 Khz to reset the scan.. added 10
-  #else
-    WS2812B_RESET       = 32000,  // TODO is it right??  just check timing when it will work
-    WS2811_RESET        = 5600,
+  #if (WS281x_USE_SK6812 == DEF_ENABLED)
+    MODE_SK6812,
   #endif
+  #if (WS281x_USE_WS2811 == DEF_ENABLED)
+    MODE_WS2811,
+  #endif
+  #if (WS281x_USE_WS2812 == DEF_ENABLED)
+    MODE_WS2812,
+  #endif
+  #if (WS281x_USE_WS2812B == DEF_ENABLED)
+    MODE_WS2812B,
+  #endif
+
+  NUMBER_OF_METHODS,
+};
+
+struct WS2812x_MethodData_t
+{
+    uint8_t     T0H;
+    uint8_t     T1H;
+    uint16_t    ResetTime;
 };
 
 struct WS281x_Color_t
@@ -154,9 +211,9 @@ struct WS281x_Color_t
 
 struct WS281x_Config_t
 {
+    WS281x_Methods_e        Method;
     PWM_Driver*             pPWM_Driver;
     uint16_t                NumberOfLED;        // Led Chain info
-    WS281x_ResetType_e      ResetType;
     DMA_Info_t              DMA_Info;           // DMA info
 };
 
@@ -183,25 +240,26 @@ class WS281x
 
     private:
 
-        PWM_Driver*                 m_pPWM_Driver;
-        DMA_Driver                  m_DMA;
+        WS281x_Methods_e                    m_Method;
+        PWM_Driver*                         m_pPWM_Driver;
+        DMA_Driver                          m_DMA;
 
-        uint32_t                    m_NumberOfLED;
-        WS281x_Color_t*             m_pLedChain;
-        volatile uint32_t           m_ResetCount;
+        uint32_t                            m_NumberOfLED;
+        WS281x_Color_t*                     m_pLedChain;
+        volatile uint32_t                   m_ResetCount;
       #if (WS281x_CONTINUOUS_SCAN == DEF_DISABLED)
-        bool                        m_NeedRefresh;
+        bool                                m_NeedRefresh;
       #endif
       #if (WS281x_USE_PRECALCULATED_PWM_BUFFER == DEF_ENABLED)
-        volatile bool               m_IsItinFirstHalfOfBuffer;
-        WS281x_ResetType_e          m_ResetType;
+        volatile bool                       m_IsItinFirstHalfOfBuffer;
       #else
-        volatile uint16_t           m_LedPointer;
-        volatile uint32_t           m_SetCountReset;
-        uint8_t*                    m_pDMA_HalfBuffer;              // to reduce DMA interrupt time it is not required in pre-calculated buffer mode
+        volatile uint16_t                   m_LedPointer;
+        volatile uint32_t                   m_SetCountReset;
+        uint8_t*                            m_pDMA_HalfBuffer;              // to reduce DMA interrupt time it is not required in pre-calculated buffer mode
       #endif
-        uint8_t*                    m_pDMA_Buffer;
+        uint8_t*                            m_pDMA_Buffer;
 
+        static const WS2812x_MethodData_t   m_Methods[NUMBER_OF_METHODS];
 };
 
 //-------------------------------------------------------------------------------------------------

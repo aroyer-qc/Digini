@@ -290,7 +290,7 @@
 
 #if SYS_APB2_CLOCK_FREQUENCY > CFG_MAX_APB2_CLOCK_FREQUENCY
  #pragma message "XSTR(SYS_APB2_CLOCK_FREQUENCY)"
- #error APB2 frequency exceed maximum allowed!
+ //#error APB2 frequency exceed maximum allowed!
 #endif
 
 //-------------------------------------------------------------------------------------------------

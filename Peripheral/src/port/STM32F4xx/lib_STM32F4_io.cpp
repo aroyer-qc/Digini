@@ -81,12 +81,14 @@ const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
     GPIOC,
     GPIOD,
     GPIOE,
+  #if defined(STM32F429xx) // Add other define here
     GPIOF,
     GPIOG,
     GPIOH,
     GPIOI,
     GPIOJ,
     GPIOK,
+  #endif
 };
 
 const IO_Properties_t IO_Properties[IO_NUM] =
@@ -219,8 +221,8 @@ void IO_PinInit(IO_ID_e IO_ID)
             case IO_MODE_OUTPUT:
             {
                 // Preset initial state
-                if(State == 0) pPort->BSRRH = (1 << PinNumber);
-                else           pPort->BSRRL = (1 << PinNumber);
+                if(State == 0) pPort->BSRR = ((1 << 16) << PinNumber);
+                else           pPort->BSRR = (1 << PinNumber);
             }
             break;
 
@@ -331,7 +333,7 @@ void IO_SetPinLow(IO_ID_e IO_ID)
     if(pPort != GPIOxx)
     {
         uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
-        pPort->BSRRH = (1 << PinNumber);
+        pPort->BSRR = ((1 << 16) << PinNumber);
     }
 }
 
@@ -354,7 +356,7 @@ void IO_SetPinHigh(IO_ID_e IO_ID)
     if(pPort != GPIOxx)
     {
         uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
-        pPort->BSRRL = (1 << PinNumber);
+        pPort->BSRR = (1 << PinNumber);
     }
 }
 
@@ -708,8 +710,8 @@ uint32_t IO_PinLowLevelAccess(uint32_t PortIO, uint32_t PinNumber, uint32_t Dire
     if(Direction == IO_MODE_OUTPUT)
     {
         // Preset state
-        if(State == 0) pPort->BSRRH = Pin1BitMask;
-        else           pPort->BSRRL = Pin1BitMask;
+        if(State == 0) pPort->BSRR = Pin1BitMask << 16;
+        else           pPort->BSRR = Pin1BitMask;
     }
 
     MODIFY_REG(pPort->MODER, (IO_MODE_PIN_MASK << Pin2BitShift), (Direction << Pin2BitShift));

@@ -85,7 +85,7 @@ nOS_Error ClassTaskCOMM::Initialize(void)
     nOS_Error Error = NOS_OK;
 
     // Uart console Command Line and VT100 terminal
-  #ifdef STM32F429_439xx
+  #ifdef STM32F429xx
     myConsole.Initialize(CON_USE_COMM_UART);
   #endif
 

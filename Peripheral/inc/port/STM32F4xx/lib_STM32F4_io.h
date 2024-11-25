@@ -31,7 +31,13 @@
 //-------------------------------------------------------------------------------------------------
 
 #define GPIOxx                          ((uint32_t)0x00000000)
+
+#if defined(STM32F401xE) || defined(STM32F401xC)
+#define NUMBER_OF_IO_PORT               ((uint32_t)5)
+#elif defined(STM32F429xx) // Add other define here
 #define NUMBER_OF_IO_PORT               ((uint32_t)11)
+#endif
+
 #define NUMBER_OF_PIN_PER_PORT          ((uint32_t)16)
 
 #define LED_Init(p)                     IO_PinInit(p)

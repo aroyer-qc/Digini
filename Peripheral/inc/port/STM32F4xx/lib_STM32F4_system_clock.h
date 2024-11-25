@@ -90,32 +90,24 @@
 #define CFG_RCC_CFGR_MCO2_HSE                       0x80000000U
 #define CFG_RCC_CFGR_MCO2_PLL                       0xC0000000U
 
-// complicated!!!!  need to get all PDF and check there max
-#ifdef STM32F401xx
-#define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY        (84000000U)
-#define CFG_MAX_APB1_CLOCK_FREQUENCY                (42000000U)
-#define CFG_MAX_APB2_CLOCK_FREQUENCY                (42000000U)
+#if defined(STM32F401xC) || defined(STM32F401xE)
+    #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (84000000U)
+    #define CFG_MAX_APB1_CLOCK_FREQUENCY            (42000000U)
+    #define CFG_MAX_APB2_CLOCK_FREQUENCY            (84000000U)
+#elif defined(STM32F405xx) || defined(STM32F407xx) || defined(STM32F415xx) || defined(STM32F417xx) || defined(STM32F429xx) || defined(STM32F439xx)
+    #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (168000000U)
+    #define CFG_MAX_APB1_CLOCK_FREQUENCY            (42000000U)
+    #define CFG_MAX_APB2_CLOCK_FREQUENCY            (84000000U)
+#elif defined(STM32F410Tx) || defined(STM32F410Cx) || defined(STM32F410Rx) || defined(STM32F411xE) || defined(STM32F412Cx) || defined(STM32F412Zx) || \
+      defined(STM32F412Rx) || defined(STM32F412Vx) || defined(STM32F413xx) || defined(STM32F423xx)
+    #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (100000000U)
+    #define CFG_MAX_APB1_CLOCK_FREQUENCY            (50000000U)
+    #define CFG_MAX_APB2_CLOCK_FREQUENCY            (100000000U)
+#elif defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F446xx) || defined(STM32F469xx) || defined(STM32F479xx)
+    #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (180000000U)
+    #define CFG_MAX_APB1_CLOCK_FREQUENCY            (45000000U)
+    #define CFG_MAX_APB2_CLOCK_FREQUENCY            (90000000U)
 #endif
-
-#ifdef STM32F40_41xxx
-#define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY        (168000000U)
-#define CFG_MAX_APB1_CLOCK_FREQUENCY                (840000000U)
-#define CFG_MAX_APB2_CLOCK_FREQUENCY                (42000000U)
-#endif
-
-#ifdef STM32F427_437xx
-#define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY        (180000000U)
-#define CFG_MAX_APB1_CLOCK_FREQUENCY                (90000000U)
-#define CFG_MAX_APB2_CLOCK_FREQUENCY                (45000000U)
-#endif
-
-#ifdef STM32F429_439xx
-#define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY        (180000000U)
-#define CFG_MAX_APB1_CLOCK_FREQUENCY                (90000000U)
-#define CFG_MAX_APB2_CLOCK_FREQUENCY                (45000000U)
-#endif
-
-
 
 //-------------------------------------------------------------------------------------------------
 // Configuration file(s)
@@ -290,7 +282,7 @@
 
 #if SYS_APB2_CLOCK_FREQUENCY > CFG_MAX_APB2_CLOCK_FREQUENCY
  #pragma message "XSTR(SYS_APB2_CLOCK_FREQUENCY)"
- //#error APB2 frequency exceed maximum allowed!
+ #error APB2 frequency exceed maximum allowed!
 #endif
 
 //-------------------------------------------------------------------------------------------------

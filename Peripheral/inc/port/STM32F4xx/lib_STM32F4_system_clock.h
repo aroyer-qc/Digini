@@ -90,6 +90,33 @@
 #define CFG_RCC_CFGR_MCO2_HSE                       0x80000000U
 #define CFG_RCC_CFGR_MCO2_PLL                       0xC0000000U
 
+// complicated!!!!  need to get all PDF and check there max
+#ifdef STM32F401xx
+#define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY        (84000000U)
+#define CFG_MAX_APB1_CLOCK_FREQUENCY                (42000000U)
+#define CFG_MAX_APB2_CLOCK_FREQUENCY                (42000000U)
+#endif
+
+#ifdef STM32F40_41xxx
+#define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY        (168000000U)
+#define CFG_MAX_APB1_CLOCK_FREQUENCY                (840000000U)
+#define CFG_MAX_APB2_CLOCK_FREQUENCY                (42000000U)
+#endif
+
+#ifdef STM32F427_437xx
+#define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY        (180000000U)
+#define CFG_MAX_APB1_CLOCK_FREQUENCY                (90000000U)
+#define CFG_MAX_APB2_CLOCK_FREQUENCY                (45000000U)
+#endif
+
+#ifdef STM32F429_439xx
+#define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY        (180000000U)
+#define CFG_MAX_APB1_CLOCK_FREQUENCY                (90000000U)
+#define CFG_MAX_APB2_CLOCK_FREQUENCY                (45000000U)
+#endif
+
+
+
 //-------------------------------------------------------------------------------------------------
 // Configuration file(s)
 //-------------------------------------------------------------------------------------------------
@@ -251,17 +278,17 @@
 #endif
 
 // Verification
-#if SYS_HCLK_CLOCK_FREQUENCY > 168000000
+#if SYS_HCLK_CLOCK_FREQUENCY > CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY
  #pragma message "XSTR(SYS_HCLK_CLOCK_FREQUENCY)"
  #error CPU Core frequency exceed maximum allowed!
 #endif
 
-#if SYS_APB1_CLOCK_FREQUENCY > 42000000
+#if SYS_APB1_CLOCK_FREQUENCY > CFG_MAX_APB1_CLOCK_FREQUENCY
  #pragma message "XSTR(SYS_APB1_CLOCK_FREQUENCY)"
  #error APB1 frequency exceed maximum allowed!
 #endif
 
-#if SYS_APB2_CLOCK_FREQUENCY > 84000000
+#if SYS_APB2_CLOCK_FREQUENCY > CFG_MAX_APB2_CLOCK_FREQUENCY
  #pragma message "XSTR(SYS_APB2_CLOCK_FREQUENCY)"
  #error APB2 frequency exceed maximum allowed!
 #endif

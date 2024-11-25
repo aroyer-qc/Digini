@@ -138,35 +138,20 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
         ClearFlag();
 
-      #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-        for(uint32_t i = 0; i < (uint32_t)NB_OF_UART_DMA_DRIVER; i++)
-        {
-            if(UART_DMA_Info[i].UartID == UartID)
-            {
-                m_pDMA_Info = (UART_DMA_Info_t*)&UART_DMA_Info[i];
-                i = NB_OF_UART_DMA_DRIVER;
-            }
-        }
+        m_DMA_RX.Initialize(&m_pInfo->DMA_RX); // Write config that will never change
+        m_DMA_RX.SetSource((void*)&m_pUart->DR);
+        m_DMA_RX.SetLength(UART_DRIVER_INTERNAL_RX_BUFFER_SIZE);
 
-        if(m_pDMA_Info != nullptr)
-        {
-            m_DMA_RX.Initialize(&m_pDMA_Info->DMA_RX); // Write config that will never change
-            m_DMA_RX.SetSource((void*)&m_pUart->DR);
-            m_DMA_RX.SetLength(UART_DRIVER_INTERNAL_RX_BUFFER_SIZE);
+        m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
+        m_DMA_TX.SetDestination((void*)&m_pUart->DR);
 
-            m_DMA_TX.Initialize(&m_pDMA_Info->DMA_TX);
-            m_DMA_TX.SetDestination((void*)&m_pUart->DR);
-
-          #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED) && (UART_DRIVER_DMA_TX_COMPLETED_CFG == DEF_ENABLED)
-            m_DMA_TX.EnableTransmitCompleteInterrupt();
-            m_DMA_TX.EnableIRQ();
-          #endif
-        }
+      #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED) && (UART_DRIVER_DMA_TX_COMPLETED_CFG == DEF_ENABLED)
+        m_DMA_TX.EnableTransmitCompleteInterrupt();
+        m_DMA_TX.EnableIRQ();
+      #endif
 
         m_DMA_IsItBusyTX = false;
         memset(&m_RX_Transfer, 0x00, sizeof(UART_Transfer_t));
-      #endif
-
         memset(&m_TX_Transfer, 0x00, sizeof(UART_Transfer_t));
     }
   #if (SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
@@ -252,14 +237,13 @@ void UART_Driver::Disable(void)
 //  Name:           SetBaudRate
 //
 //  Parameter(s):   BaudRate             BaudRate ID
-//                  ReEnable             if true the UART will be re enable
 //  Return:         None
 //
 //  Description:    Set UART Baudrate
 //
 //  Note(s):        - Disable uart
 //                  - Set baud rate and uart properties
-//                  - Enable uart if ReEnable is true
+//                  - Re-enable uart
 //
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
@@ -269,72 +253,116 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
     if(m_pUart != nullptr)
     {
         CLEAR_BIT(m_pUart->CR1, USART_CR1_UE);                      // Disable the UART
-
-        // Retrieve Clock frequency used for USART Peripheral
-      #if (UART_DRIVER_SUPPORT_UART1_CFG == DEF_ENABLED)
-        if(m_pUart == USART1)
-        {
-          PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
-        }
-      #endif
-
-      #if (UART_DRIVER_SUPPORT_UART2_CFG == DEF_ENABLED)
-        if(m_pUart == USART2)
-        {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-        }
-      #endif
-
-      #if (UART_DRIVER_SUPPORT_UART3_CFG == DEF_ENABLED)
-        if(m_pUart == USART3)
-        {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-        }
-      #endif
-
-      #if (UART_DRIVER_SUPPORT_UART4_CFG == DEF_ENABLED)
-        if(m_pUart == UART4)
-        {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-        }
-      #endif
-
-      #if (UART_DRIVER_SUPPORT_UART5_CFG == DEF_ENABLED)
-        if(m_pUart == UART5)
-        {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-        }
-      #endif
-
-      #if (UART_DRIVER_SUPPORT_UART6_CFG == DEF_ENABLED)
-        if(m_pUART == USART6)
-        {
-          PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
-        }
-      #endif
-
-      #if (UART_DRIVER_SUPPORT_UART7_CFG == DEF_ENABLED)
-        if(m_pUart == UART7)
-        {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-        }
-      #endif
-
-      #if (UART_DRIVER_SUPPORT_UART8_CFG == DEF_ENABLED)
-        if(m_pUart == UART8)
-        {
-          PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-        }
-      #endif
-
-        if((m_pUart->CR1 & UART_REG_OVERSAMPLING_MASK) == UART_REG_OVERSAMPLING_8)
-        {
-            PeriphClk <<= 1;
-        }
-
+        PeriphClk = GetPeripheralClock();
         m_pUart->BRR = uint16_t(PeriphClk / m_BaudRate[BaudRate]);
-        SET_BIT(m_pUart->CR1, USART_CR1_UE);                                // Enable the UART
+        SET_BIT(m_pUart->CR1, USART_CR1_UE);                        // Enable the UART
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SetBaudRate
+//
+//  Parameter(s):   uint32_t             Speed
+//  Return:         None
+//
+//  Description:    Set UART Baudrate
+//
+//  Note(s):        - Disable uart
+//                  - Set baud rate and uart properties
+//                  - Enable uart if ReEnable is true
+//
+//-------------------------------------------------------------------------------------------------
+void UART_Driver::SetCustomBaudRate(uint32_t Speed)
+{
+    uint32_t PeriphClk;
+
+    if(m_pUart != nullptr)
+    {
+        CLEAR_BIT(m_pUart->CR1, USART_CR1_UE);                      // Disable the UART
+        PeriphClk = GetPeripheralClock();
+        m_pUart->BRR = uint16_t(PeriphClk / Speed);
+        SET_BIT(m_pUart->CR1, USART_CR1_UE);                        // Enable the UART
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           GetPeripheralClock
+//
+//  Parameter(s):   None
+//  Return:         uint32_t
+//
+//  Description:    Get peripheral clock speed
+//
+//-------------------------------------------------------------------------------------------------
+uint32_t UART_Driver::GetPeripheralClock(void)
+{
+    uint32_t PeriphClk;
+
+    // Retrieve Clock frequency used for USART Peripheral
+  #if (UART_DRIVER_SUPPORT_UART1_CFG == DEF_ENABLED)
+    if(m_pUart == USART1)
+    {
+      PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
+    }
+  #endif
+
+  #if (UART_DRIVER_SUPPORT_UART2_CFG == DEF_ENABLED)
+    if(m_pUart == USART2)
+    {
+      PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
+    }
+  #endif
+
+  #if (UART_DRIVER_SUPPORT_UART3_CFG == DEF_ENABLED)
+    if(m_pUart == USART3)
+    {
+      PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
+    }
+  #endif
+
+  #if (UART_DRIVER_SUPPORT_UART4_CFG == DEF_ENABLED)
+    if(m_pUart == UART4)
+    {
+      PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
+    }
+  #endif
+
+  #if (UART_DRIVER_SUPPORT_UART5_CFG == DEF_ENABLED)
+    if(m_pUart == UART5)
+    {
+      PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
+    }
+  #endif
+
+  #if (UART_DRIVER_SUPPORT_UART6_CFG == DEF_ENABLED)
+    if(m_pUART == USART6)
+    {
+      PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
+    }
+  #endif
+
+  #if (UART_DRIVER_SUPPORT_UART7_CFG == DEF_ENABLED)
+    if(m_pUart == UART7)
+    {
+      PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
+    }
+  #endif
+
+  #if (UART_DRIVER_SUPPORT_UART8_CFG == DEF_ENABLED)
+    if(m_pUart == UART8)
+    {
+      PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
+    }
+  #endif
+
+    if((m_pUart->CR1 & UART_REG_OVERSAMPLING_MASK) == UART_REG_OVERSAMPLING_8)
+    {
+        PeriphClk <<= 1;
+    }
+
+  return PeriphClk;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -481,7 +509,6 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
     {
         if(*pSizeTX != 0)
         {
-          #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
             if(m_pInfo->IsItBlockingOnBusy == true)
             {
                 while(m_DMA_IsItBusyTX == true)
@@ -511,9 +538,6 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             ClearFlag();
             m_DMA_TX.Enable();                    // Transmission starts as soon as TXE is detected
             DMA_EnableTX();
-          #elif
-                // Setup IRQ Transfer TODO
-          #endif
         }
         else
         {
@@ -559,7 +583,6 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
 //  DDDDDD  MM     MM AA   AA
 //-------------------------------------------------------------------------------------------------
 
-#if (UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG == DEF_ENABLED)
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:      DMA_ConfigRX
@@ -687,14 +710,11 @@ void UART_Driver::DMA_EnableRX(void)
 {
     if(m_pUart != nullptr)
     {
-        if(m_pDMA_Info != nullptr)
-        {
-            m_pUart->CR3 |= USART_CR3_DMAR;         // Enable the DMA transfer
-            (void)m_pUart->DR;
-            m_DMA_RX.ClearFlag();
-            m_DMA_RX.Enable();
-            EnableRX_ISR(UART_SR_RX_ERROR_MASK | UART_SR_RX_IDLE_MASK);
-        }
+        m_pUart->CR3 |= USART_CR3_DMAR;         // Enable the DMA transfer
+        (void)m_pUart->DR;
+        m_DMA_RX.ClearFlag();
+        m_DMA_RX.Enable();
+        EnableRX_ISR(UART_SR_RX_ERROR_MASK | UART_SR_RX_IDLE_MASK);
     }
 }
 
@@ -712,13 +732,10 @@ void UART_Driver::DMA_DisableRX(void)
 {
     if(m_pUart != nullptr)
     {
-        if(m_pDMA_Info != nullptr)
-        {
-            m_DMA_RX.Disable();
-            CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAR);
-            DisableRX_ISR(UART_SR_RX_ERROR_MASK | UART_SR_RX_IDLE_MASK);
-            m_DMA_RX.ClearFlag();
-        }
+        m_DMA_RX.Disable();
+        CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAR);
+        DisableRX_ISR(UART_SR_RX_ERROR_MASK | UART_SR_RX_IDLE_MASK);
+        m_DMA_RX.ClearFlag();
     }
 }
 
@@ -736,14 +753,11 @@ void UART_Driver::DMA_EnableTX(void)
 {
     if(m_pUart != nullptr)
     {
-        if(m_pDMA_Info != nullptr)
-        {
-          #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
-            EnableTX_ISR(UART_SR_TX_COMPLETED_MASK);
-          #endif
+      #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
+        EnableTX_ISR(UART_SR_TX_COMPLETED_MASK);
+      #endif
 
-            m_pUart->CR3 |= USART_CR3_DMAT;
-        }
+        m_pUart->CR3 |= USART_CR3_DMAT;
     }
 }
 
@@ -761,12 +775,9 @@ void UART_Driver::DMA_DisableTX(void)
 {
     if(m_pUart != nullptr)
     {
-        if(m_pDMA_Info != nullptr)
-        {
-            m_DMA_TX.Disable();
-            m_DMA_TX.ClearFlag();
-            CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAT);
-        }
+        m_DMA_TX.Disable();
+        m_DMA_TX.ClearFlag();
+        CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAT);
     }
 }
 
@@ -812,8 +823,6 @@ size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
 }
 
 //-------------------------------------------------------------------------------------------------
-
-#endif // UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG == DEF_ENABLED
 
 //-------------------------------------------------------------------------------------------------
 //  IIII RRRRRR    QQQQQ
@@ -1136,9 +1145,7 @@ void UART_Driver::IRQ_Handler(void)
             }
           #endif
 
-          #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
             DMA_ConfigRX(nullptr, 0); // Reset RX packet to avoid override with a new RX packet
-          #endif
             return;
         }
       #endif

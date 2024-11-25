@@ -125,13 +125,13 @@
 //   Note(s)
 //          - If the CPU is too slow, then use the setting WS281x_USE_PRECALCULATED_PWM_BUFFER
 //
-//          - With STM32F1, It Better to use WS281x_USE_PRECALCULATED_PWM_BUFFER if not to much
-//            time will be spent into DMA IRQ
+//          - With STM32F1, It Better to use WS281x_USE_PRECALCULATED_PWM_BUFFER ,if not, to much
+//            time will be spent into DMA IRQ.
 //          - With STM32F4, It cannot use WS281x_USE_PRECALCULATED_PWM_BUFFER because the DMA as a
-//            a bug. It cannot transfert a 8 bits to 16 Bits registers compare register.
+//            a bug. It cannot transfer a 8 bits to 16 bits registers compare register.
 //            It shadow the low part of the value for the compare register into high 8 bits value.
 //            The result will be to double the buffer size for the compare value.
-//          - With STM32F7   Not tested YET. 
+//          - With STM32F7   Not tested YET.
 //
 //
 //-------------------------------------------------------------------------------------------------

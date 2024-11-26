@@ -2,13 +2,13 @@
   ******************************************************************************
   * @file    stm32f1xx.h
   * @author  MCD Application Team
-  * @brief   STM32F1xx Device Peripheral Access Layer Header File. 
+  * @brief   STM32F1xx Device Peripheral Access Layer Header File.
   *
   *          The file is the unique include file that the application programmer
   *          is using in the C source code, usually in main.c. This file contains:
   *            - Configuration section that allows to select:
   *              - The STM32F1xx device used in the target application
-  *  
+  *
   ******************************************************************************
   * @attention
   *
@@ -26,13 +26,13 @@
 #ifdef __cplusplus
  extern "C" {
 #endif
-  
+
 // Library_configuration_section
 #if !defined (STM32F1)
 #define STM32F1
 #endif
 
-// Uncomment the line below according to the target STM32L device used in your application 
+// Uncomment the line below according to the target STM32L device used in your application
 #if !defined (STM32F100xB) && !defined (STM32F100xE) && !defined (STM32F101x6) && \
     !defined (STM32F101xB) && !defined (STM32F101xE) && !defined (STM32F101xG) && !defined (STM32F102x6) && !defined (STM32F102xB) && !defined (STM32F103x6) && \
     !defined (STM32F103xB) && !defined (STM32F103xE) && !defined (STM32F103xG) && !defined (STM32F105xC) && !defined (STM32F107xC)
@@ -40,7 +40,7 @@
   // #define STM32F100xE       // STM32F100RC, STM32F100VC, STM32F100ZC, STM32F100RD, STM32F100VD, STM32F100ZD, STM32F100RE, STM32F100VE and STM32F100ZE
   // #define STM32F101x6       // STM32F101C4, STM32F101R4, STM32F101T4, STM32F101C6, STM32F101R6 and STM32F101T6 Devices
   // #define STM32F101xB       // STM32F101C8, STM32F101R8, STM32F101T8, STM32F101V8, STM32F101CB, STM32F101RB, STM32F101TB and STM32F101VB
-  // #define STM32F101xE       // STM32F101RC, STM32F101VC, STM32F101ZC, STM32F101RD, STM32F101VD, STM32F101ZD, STM32F101RE, STM32F101VE and STM32F101ZE 
+  // #define STM32F101xE       // STM32F101RC, STM32F101VC, STM32F101ZC, STM32F101RD, STM32F101VD, STM32F101ZD, STM32F101RE, STM32F101VE and STM32F101ZE
   // #define STM32F101xG       // STM32F101RF, STM32F101VF, STM32F101ZF, STM32F101RG, STM32F101VG and STM32F101ZG
   // #define STM32F102x6       // STM32F102C4, STM32F102R4, STM32F102C6 and STM32F102R6
   // #define STM32F102xB       // STM32F102C8, STM32F102R8, STM32F102CB and STM32F102RB
@@ -53,7 +53,7 @@
 #endif
 
 //  Tip: To avoid modifying this file each time you need to switch between these devices, you can define the device in your toolchain compiler preprocessor.
-  
+
 #if defined(STM32F100xB)
   #include "stm32f100xb.h"
 #elif defined(STM32F100xE)
@@ -87,15 +87,15 @@
 #endif
 
 // Exported_types
-typedef enum 
+typedef enum
 {
-  RESET = 0, 
+  RESET = 0,
   SET = !RESET
 } FlagStatus, ITStatus;
 
-typedef enum 
+typedef enum
 {
-  DISABLE = 0, 
+  DISABLE = 0,
   ENABLE = !DISABLE
 } FunctionalState;
 #define IS_FUNCTIONAL_STATE(STATE) (((STATE) == DISABLE) || ((STATE) == ENABLE))
@@ -121,7 +121,7 @@ typedef enum
 
 #define MODIFY_REG(REG, CLEARMASK, SETMASK)  WRITE_REG((REG), (((READ_REG(REG)) & (~(CLEARMASK))) | (SETMASK)))
 
-#define POSITION_VAL(VAL)     (__CLZ(__RBIT(VAL))) 
+#define POSITION_VAL(VAL)     (__CLZ(__RBIT(VAL)))
 
 // Use of CMSIS compiler intrinsics for register exclusive access
 // Atomic 32-bit register access macro to set one or several bits

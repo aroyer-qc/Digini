@@ -38,6 +38,8 @@
 
 #define IO_PORT_MASK_FOR_CLOCK_ENABLE   0x00003C00 // Keep only offset for each port
 #define IO_PORT_SHIFT_FOR_CLOCK_ENABLE  10         // Need to shift 10 bits to set value from 0 - 7
+#define IO_PORT_SHIFT_BSRR_RESET        0x00010000
+#define IO_PORT_SHIFT_BSRR_SET          0x00000001
 
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
@@ -224,8 +226,8 @@ void IO_PinInit(IO_ID_e IO_ID)
             case IO_MODE_OUTPUT:
             {
                 // Preset initial state
-                if(State == 0) pPort->BSRR = ((1 << 16) << PinNumber);
-                else           pPort->BSRR = (1 << PinNumber);
+                if(State == 0) pPort->BSRR = (IO_PORT_SHIFT_BSRR_RESET << PinNumber);
+                else           pPort->BSRR = (IO_PORT_SHIFT_BSRR_SET << PinNumber);
             }
             break;
 
@@ -336,7 +338,7 @@ void IO_SetPinLow(IO_ID_e IO_ID)
     if(pPort != GPIOxx)
     {
         uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
-        pPort->BSRR = ((1 << 16) << PinNumber);
+        pPort->BSRR = (IO_PORT_SHIFT_BSRR_RESET << PinNumber);
     }
 }
 
@@ -359,7 +361,7 @@ void IO_SetPinHigh(IO_ID_e IO_ID)
     if(pPort != GPIOxx)
     {
         uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
-        pPort->BSRR = (1 << PinNumber);
+        pPort->BSRR = (IO_PORT_SHIFT_BSRR_SET << PinNumber);
     }
 }
 

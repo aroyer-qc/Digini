@@ -83,6 +83,7 @@ const uint32_t UART_Driver::m_BaudRate[NB_OF_BAUD] =
     460800,
     921600,
     1843200,
+    8000000,
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -340,7 +341,7 @@ uint32_t UART_Driver::GetPeripheralClock(void)
   #endif
 
   #if (UART_DRIVER_SUPPORT_UART6_CFG == DEF_ENABLED)
-    if(m_pUART == USART6)
+    if(m_pUart == USART6)
     {
       PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
     }

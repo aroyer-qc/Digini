@@ -58,16 +58,16 @@
 const WS2812x_MethodData_t WS281x::m_Methods[NUMBER_OF_METHODS] =
 {
   #if (WS281x_USE_SK6812 == DEF_ENABLED)
-    {6, 18, WS2812x_CALC_EXTRA_FOR_RESET(80)},
+    {0, 0, WS2812x_CALC_EXTRA_FOR_RESET(80)},
   #endif
   #if (WS281x_USE_WS2811 == DEF_ENABLED)
-    {5, 12, WS2812x_CALC_EXTRA_FOR_RESET(50)},
+    {0, 0, WS2812x_CALC_EXTRA_FOR_RESET(50)},
   #endif
   #if (WS281x_USE_WS2812 == DEF_ENABLED)
-    {7, 14, WS2812x_CALC_EXTRA_FOR_RESET(50)},
+    {0, 0, WS2812x_CALC_EXTRA_FOR_RESET(50)},
   #endif
   #if (WS281x_USE_WS2812B == DEF_ENABLED)
-    {8, 16, WS2812x_CALC_EXTRA_FOR_RESET(50)},
+    {0, 0, WS2812x_CALC_EXTRA_FOR_RESET(50)},
   #endif
 };
 
@@ -103,7 +103,7 @@ void WS281x::Initialize()
 {
     size_t BufferSize;
 
-    m_pUART_Driver->SetCustomBaudRate(8400000);
+    //m_pUART_Driver->SetCustomBaudRate(4000000);
 
     BufferSize        = (WS281x_DMA_FULL_BUFFER_SIZE * m_NumberOfLED) + WS281x::m_Methods[m_Method].ResetTime;  // We need to add the reset time equivalent for the reset
     m_IsItinFirstHalfOfBuffer = true;
@@ -129,6 +129,8 @@ void WS281x::Initialize()
     //          change the LED value.
    // m_pUART_Driver->DMA_ConfigTX
    // m_pUART_Driver->DMA_EnableTX();
+
+   // m_pUART_Driver->Enable();
     m_pUART_Driver->SendData(m_pDMA_Buffer, &BufferSize);
 }
 

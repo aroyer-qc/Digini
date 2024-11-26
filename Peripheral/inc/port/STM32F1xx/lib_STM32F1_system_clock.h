@@ -93,6 +93,25 @@
 #define CFG_MCO_HSE                                 0x06000000U     // HSE clock selected
 #define CFG_MCO_PLL_CLK_DIV_2                       0x07000000U     // PLL clock divided by 2 selected
 
+#if defined(STM32F100xB) || defined(STM32F100xE)
+    #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (24000000U)
+    #define CFG_MAX_APB1_CLOCK_FREQUENCY            (12000000U)
+    #define CFG_MAX_APB2_CLOCK_FREQUENCY            (24000000U)
+#elif defined(STM32F101x6) || defined(STM32F101xB) || defined(STM32F101xE) || defined(STM32F101xG)
+    #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (36000000U)
+    #define CFG_MAX_APB1_CLOCK_FREQUENCY            (18000000U)
+    #define CFG_MAX_APB2_CLOCK_FREQUENCY            (36000000U)
+#elif defined(STM32F102x6) || defined(STM32F102xB)
+    #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (48000000U)
+    #define CFG_MAX_APB1_CLOCK_FREQUENCY            (24000000U)
+    #define CFG_MAX_APB2_CLOCK_FREQUENCY            (48000000U)
+#elif defined(STM32F103x6) || defined(STM32F103xB) || defined(STM32F103xE) || defined(STM32F103xG) || \
+      defined(STM32F105xC) || defined(STM32F107xC)
+    #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (72000000U)
+    #define CFG_MAX_APB1_CLOCK_FREQUENCY            (36000000U)
+    #define CFG_MAX_APB2_CLOCK_FREQUENCY            (72000000U)
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // Configuration file(s)
 //-------------------------------------------------------------------------------------------------
@@ -206,17 +225,17 @@
 #endif
 
 // Verification
-#if SYS_HCLK_CLOCK_FREQUENCY > 72000000
+#if SYS_HCLK_CLOCK_FREQUENCY > CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY
  #pragma message "XSTR(SYS_HCLK_CLOCK_FREQUENCY)"
  #error CPU Core frequency exceed maximum allowed!
 #endif
 
-#if SYS_APB1_CLOCK_FREQUENCY > 36000000
+#if SYS_APB1_CLOCK_FREQUENCY > CFG_MAX_APB1_CLOCK_FREQUENCY
  #pragma message "XSTR(SYS_APB1_CLOCK_FREQUENCY)"
  #error APB1 frequency exceed maximum allowed!
 #endif
 
-#if SYS_APB2_CLOCK_FREQUENCY > 72000000
+#if SYS_APB2_CLOCK_FREQUENCY > CFG_MAX_APB2_CLOCK_FREQUENCY
  #pragma message "XSTR(SYS_APB2_CLOCK_FREQUENCY)"
  #error APB2 frequency exceed maximum allowed!
 #endif

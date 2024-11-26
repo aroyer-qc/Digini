@@ -201,15 +201,18 @@ void IO_PinInit(IO_ID_e IO_ID)
 
     pIO_Properties = &IO_Properties[IO_ID];
     pPort          = pIO_Properties->pPort;
-    PinNumber      = pIO_Properties->PinNumber;
-    PinMode        = pIO_Properties->PinMode;
-    PinType        = pIO_Properties->PinType;
-    PinSpeed       = pIO_Properties->PinSpeed;
-    State          = pIO_Properties->State;
 
     if(pPort != GPIOxx)
     {
-        uint32_t Pin2BitShift = PinNumber << 1;
+        uint32_t Pin2BitShift;
+
+        PinNumber      = pIO_Properties->PinNumber;
+        PinMode        = pIO_Properties->PinMode;
+        PinType        = pIO_Properties->PinType;
+        PinSpeed       = pIO_Properties->PinSpeed;
+        State          = pIO_Properties->State;
+
+        Pin2BitShift = PinNumber << 1;
         _IO_EnableClock(pPort);
 
         // Set pin speed

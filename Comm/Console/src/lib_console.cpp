@@ -81,10 +81,7 @@ void Console::Initialize(UART_Driver* pUartDriver)
     pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE, MEM_DBG_CONSOLE_1);        // Reserve memory for UART internal DMA operation.
 
     nOS_SemCreate(&m_RX_Idle_Sem, 0, CON_RX_NB_OF_SEMAPHORE_COUNT);
-
-  #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)                                          // not sure it can work without DMA
     pUartDriver->DMA_ConfigRX(pBuffer, CON_FIFO_PARSER_RX_SIZE);
-  #endif
 
   #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)                                 // not sure it can work without DMA
     pUartDriver->RegisterCallback((CallbackInterface*)this);

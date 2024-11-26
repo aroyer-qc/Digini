@@ -86,7 +86,6 @@ WS281x::WS281x(const WS281x_Config_t* pConfig)
     m_NumberOfLED  = pConfig->NumberOfLED;                                                                // Number of real LEDs.
     m_DMA.Initialize((DMA_Info_t*)&pConfig->DMA_Info);
     m_pUART_Driver = pConfig->pUART_Driver;
-
 }
 
 //-------------------------------------------------------------------------------------------------

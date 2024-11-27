@@ -125,12 +125,55 @@
 //   Note(s)
 //          - If the CPU is too slow, then use the setting WS281x_USE_PRECALCULATED_PWM_BUFFER
 //
-//          - With STM32F1, It Better to use WS281x_USE_PRECALCULATED_PWM_BUFFER ,if not, to much
-//            time will be spent into DMA IRQ.
-//          - With STM32F4, It cannot use WS281x_USE_PRECALCULATED_PWM_BUFFER because the DMA as a
-//            a bug. It cannot transfer a 8 bits to 16 bits registers compare register.
-//            It shadow the low part of the value for the compare register into high 8 bits value.
-//            The result will be to double the buffer size for the compare value.
+//-------------------------------------------------------------------------------------------------
+//
+//   - With STM32F1, Use WS281x_USE_PRECALCULATED_PWM_BUFFER ,if not, to much time will be
+//                   spent into DMA IRQ.
+//
+//     Here the config to put into device_var.h (adjust to your project)
+//
+//       #ifdef __CLASS_WS281x__
+//
+//           extern class WS281x WS281x_LedStream;
+//
+//         #ifdef LIB_WS281x_GLOBAL
+//
+//           const WS281x_Config_t LedStreamConfig =
+//           {
+//               MODE_WS2812B,
+//               &myPWM_NEO_Led,
+//               24,                                     // There is 34 LED's in the chain
+//
+//               // DMA
+//               {
+//                   DMA_MODE_CIRCULAR                |
+//                   DMA_MEMORY_TO_PERIPHERAL         |
+//                   DMA_PERIPHERAL_NO_INCREMENT      |
+//                   DMA_MEMORY_INCREMENT             |
+//                   DMA_PERIPHERAL_SIZE_16_BITS      |  // <--- this is valid on a STM32F1
+//                   DMA_MEMORY_SIZE_8_BITS,
+//                   DMA_IFCR_CHTIF5 | DMA_IFCR_CTCIF5,  // Transfer complete and Half transfer
+//                   DMA1,
+//                   DMA1_Channel5,                      // DMA_Stream_TypeDef
+//                   DMA1_Channel5_IRQn,
+//                   4,                                  // PreempPrio
+//               },
+//           };
+//
+//           class WS281x WS281x_LedStream(&LedStreamConfig);
+//
+//         #endif
+//       #endif
+//
+//-------------------------------------------------------------------------------------------------
+//
+//          - With STM32F4, DMA has a a bug, it won't accept a transfer from 8 Bits memory to 16
+//                          Bits register. the compare register will shadow the value written into
+//                          the high part of the register. Ex. write 0x07 with the DMA and result
+//                          in the register will be 0x0707. we use the other method TODO.
+//
+//-------------------------------------------------------------------------------------------------
+//
 //          - With STM32F7   Not tested YET.
 //
 //
@@ -217,6 +260,15 @@ struct WS281x_Config_t
     DMA_Info_t              DMA_Info;           // DMA info
 };
 
+
+#ifdef STM32F4
+typedef uint16_t    WS_uint_t;
+#endif
+
+#ifdef STM32F1
+typedef uint8_t     WS_uint_t;
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // class(s)
 //-------------------------------------------------------------------------------------------------
@@ -255,9 +307,9 @@ class WS281x
       #else
         volatile uint16_t                   m_LedPointer;
         volatile uint32_t                   m_SetCountReset;
-        uint8_t*                            m_pDMA_HalfBuffer;              // to reduce DMA interrupt time it is not required in pre-calculated buffer mode
+        WS_uint_t                           m_pDMA_HalfBuffer;              // to reduce DMA interrupt time it is not required in pre-calculated buffer mode
       #endif
-        uint8_t*                            m_pDMA_Buffer;
+        WS_uint_t*                          m_pDMA_Buffer;
 
         static const WS2812x_MethodData_t   m_Methods[NUMBER_OF_METHODS];
 };

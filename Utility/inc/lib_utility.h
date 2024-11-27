@@ -158,7 +158,6 @@ uint32_t               LIB_SwapDWORD                       (uint32_t dwData);
 uint16_t               LIB_SwapWORD                        (uint16_t wData);
 void                   LIB_Copy_BYTETable_To_DWORDTable    (uint32_t* pdwDest, uint8_t *pbySource, uint8_t bySize);
 void                   LIB_Copy_DWORDTable_To_BYTETable    (uint8_t* pbyDest, uint32_t* pdwSource, uint8_t bySize);
-void                   LIB_CRC16                           (uint16_t* pCrc, uint8_t byData);
 void                   LIB_StringByteToWord                (void* pOut, void *pIn);
 uint8_t                LIB_DecHex                          (uint8_t bySource);
 uint16_t               LIB_3AscHex                         (void* pSrc);

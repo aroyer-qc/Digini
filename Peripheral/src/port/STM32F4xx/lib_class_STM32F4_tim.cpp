@@ -96,7 +96,8 @@ void TIM_Driver::Initialize(void)
   #endif
 
     m_pTim->ARR = m_pInfo->Reload;
-    m_pTim->CNT = m_pInfo->Reload - 1;      // Prevent PWM from been active on activation
+    m_pTim->CNT = 0; //m_pInfo->Reload - 1;      // Prevent PWM from been active on activation
+    m_pTim->CR1 = m_pInfo->Mode | TIM_CR1_ARPE;
 
     // Set mode and Auto-reload preload enable
   #if (TIM_DRIVER_SUPPORT_BASIC_TIM_CFG == DEF_ENABLED)
@@ -106,12 +107,11 @@ void TIM_Driver::Initialize(void)
     }
   #endif
 
-    m_pTim->CR1 = m_pInfo->Mode | TIM_CR1_ARPE;
 
     if((m_pInfo->IRQ_DMA_SourceEnable & TIM_IE_IRQ_UPDATE) != 0)
     {
         CLEAR_BIT(m_pTim->SR, TIM_SR_UIF);
-((TIM_TypeDef*)m_pTim)->DIER = TIM_DIER_UIE; // TODO validate
+        m_pTim->DIER = TIM_DIER_UIE; // TODO validate
     }
 
     // Set the update interrupt enable

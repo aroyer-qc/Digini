@@ -255,6 +255,7 @@ struct WS281x_Color_t
 struct WS281x_Config_t
 {
     WS281x_Methods_e        Method;
+    TIM_Driver*             pTIM_Driver;
     PWM_Driver*             pPWM_Driver;
     uint16_t                NumberOfLED;        // Led Chain info
     DMA_Info_t              DMA_Info;           // DMA info
@@ -293,6 +294,7 @@ class WS281x
     private:
 
         WS281x_Methods_e                    m_Method;
+        TIM_Driver*                         m_pTIM_Driver;
         PWM_Driver*                         m_pPWM_Driver;
         DMA_Driver                          m_DMA;
 

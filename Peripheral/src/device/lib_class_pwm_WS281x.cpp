@@ -87,7 +87,7 @@ WS281x::WS281x(const WS281x_Config_t* pConfig)
     m_NumberOfLED = pConfig->NumberOfLED;                                                                // Number of real LEDs.
     m_DMA.Initialize((DMA_Info_t*)&pConfig->DMA_Info);
     m_pPWM_Driver = pConfig->pPWM_Driver;
-
+    m_pTIM_Driver = pConfig->pTIM_Driver;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -105,6 +105,9 @@ void WS281x::Initialize()
 {
     size_t BufferSize;                                                                              // Buffer size in bytes
     size_t Size =  sizeof(WS_uint_t);
+
+    m_pTIM_Driver->Initialize();
+    m_pPWM_Driver->Initialize();
 
   #if(WS281x_USE_PRECALCULATED_PWM_BUFFER == DEF_ENABLED)
     size_t ResetTime = WS281x::m_Methods[m_Method].ResetTime;
@@ -161,7 +164,7 @@ void WS281x::Initialize()
     //          change the LED value.
     m_DMA.SetSource(m_pDMA_Buffer);
     m_DMA.SetDestination(m_pPWM_Driver->GetCompareRegisterPointer());
-    m_DMA.SetLength(BufferSize * Size);
+    m_DMA.SetLength(BufferSize);
     m_DMA.EnableTransmitCompleteInterrupt();
     m_DMA.EnableTransmitHalfCompleteInterrupt();
     m_DMA.EnableIRQ();

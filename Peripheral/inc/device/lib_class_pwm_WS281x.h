@@ -106,12 +106,14 @@
 //                      Reset           = > 50 uSec
 //                  _______________________________________________________________________________
 //
-//                  There more entry in the m_pLedChain array and there value are set to zero.
+//                  There are more entry in the m_pLedChain array and there value are set to zero.
 //                  when those LED entry are reach, DMA continue as nothing happened, but value is
 //                  set to zero, so this emulate a reset.
 //
 //                  Maybe offer 2 mode, continuous scanning (animated led stream) and single scan
 //                  for refresh on change only.
+//
+//-------------------------------------------------------------------------------------------------
 //
 //  Example of IRQ call for DMA to put into irq.cpp of the append
 //
@@ -130,6 +132,9 @@
 //   - With STM32F1, Use WS281x_USE_PRECALCULATED_PWM_BUFFER ,if not, to much time will be
 //                   spent into DMA IRQ.
 //
+//     Into device_cfg.h add this line:
+//       #include "./Digini/Peripheral/inc/device/lib_class_pwm_WS281x.h"
+//
 //     Here the config to put into device_var.h (adjust to your project)
 //
 //       #ifdef __CLASS_WS281x__
@@ -141,8 +146,9 @@
 //           const WS281x_Config_t LedStreamConfig =
 //           {
 //               MODE_WS2812B,
-//               &myPWM_NEO_Led,
-//               24,                                     // There is 34 LED's in the chain
+//                &myTIM_NEO_Led,
+//                &myPWM_NEO_Led,
+//               24,                                       // There is 34 LED's in the chain
 //
 //               // DMA
 //               {
@@ -150,13 +156,13 @@
 //                   DMA_MEMORY_TO_PERIPHERAL         |
 //                   DMA_PERIPHERAL_NO_INCREMENT      |
 //                   DMA_MEMORY_INCREMENT             |
-//                   DMA_PERIPHERAL_SIZE_16_BITS      |  // <--- this is valid on a STM32F1
-//                   DMA_MEMORY_SIZE_8_BITS,
-//                   DMA_IFCR_CHTIF5 | DMA_IFCR_CTCIF5,  // Transfer complete and Half transfer
+//                   DMA_PERIPHERAL_SIZE_16_BITS      |    // <--- this is valid on a STM32F1
+//                   DMA_MEMORY_SIZE_8_BITS,                  <--┘
+//                   DMA_IFCR_CHTIF5 | DMA_IFCR_CTCIF5,    // Transfer complete and Half transfer
 //                   DMA1,
-//                   DMA1_Channel5,                      // DMA_Stream_TypeDef
+//                   DMA1_Channel5,                        // DMA_Stream_TypeDef
 //                   DMA1_Channel5_IRQn,
-//                   4,                                  // PreempPrio
+//                   4,                                    // PreempPrio
 //               },
 //           };
 //
@@ -167,10 +173,52 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-//          - With STM32F4, DMA has a a bug, it won't accept a transfer from 8 Bits memory to 16
-//                          Bits register. the compare register will shadow the value written into
-//                          the high part of the register. Ex. write 0x07 with the DMA and result
-//                          in the register will be 0x0707. we use the other method TODO.
+//          - With STM32F4, DMA has a change versus F1, it won't accept a transfer from 8 Bits
+//                          memory to 16 Bits register. The DMA change the 8 bits source size to
+//                          16 Bits. All buffer a 16 Bits instead of 8 bits.
+//
+//     Into device_cfg.h add this line:
+//       #include "./Digini/Peripheral/inc/device/lib_class_pwm_WS281x.h"
+//
+//     Here the config to put into device_var.h (adjust to your project)
+//
+//        #ifdef __CLASS_WS281x__
+//
+//            extern class WS281x WS281x_LedStream;
+//
+//          #ifdef LIB_WS281x_GLOBAL
+//
+//            const WS281x_Config_t LedStreamConfig =
+//            {
+//                MODE_WS2812B,
+//                &myTIM_NEO_Led,
+//                &myPWM_NEO_Led,
+//                24,                                             // There is 34 LED's in the chain
+//
+//                // DMA
+//                {
+//                    DMA_MODE_CIRCULAR           |
+//                    DMA_MEMORY_TO_PERIPHERAL    |
+//                    DMA_PERIPHERAL_NO_INCREMENT |
+//                    DMA_MEMORY_INCREMENT        |
+//                    DMA_PERIPHERAL_SIZE_16_BITS |
+//                    DMA_MEMORY_SIZE_16_BITS     |
+//                    DMA_PERIPHERAL_BURST_SINGLE |
+//                    DMA_MEMORY_BURST_SINGLE     |
+//                    DMA_PRIORITY_LEVEL_HIGH     |
+//                    DMA_CHANNEL_6,                              // Configuration + DMA_Channel
+//                    DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5,        // Flag
+//                    DMA2_Stream5,                               // DMA_TypeDef
+//                    DMA2_Stream5_IRQn,                          // IRQn
+//                    4,
+//                },
+//            };
+//
+//            class WS281x WS281x_LedStream(&LedStreamConfig);
+//
+//          #endif
+//        #endif
+//
 //
 //-------------------------------------------------------------------------------------------------
 //

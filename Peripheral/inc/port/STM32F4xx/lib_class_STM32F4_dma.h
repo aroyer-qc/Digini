@@ -109,21 +109,23 @@ class DMA_Driver
         void        EnableIRQ                               (void);
 
         // Inline method
-        void        Enable                                  (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_EN);     }
-        void        Disable                                 (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_EN);   }
-        void        ClearFlag                               (void)                              { ClearFlag(m_Flag);                    }
-        size_t      GetLength                               (void)                              { return size_t(m_pDMA->NDTR);          }
-        void        SetLength                               (size_t Length)                     { m_pDMA->NDTR = uint32_t(Length);      }
-        void        SetMemoryIncrement                      (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_MINC);   }
-        void        SetNoMemoryIncrement                    (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_MINC); }
-        void        SetFifoControl                          (uint32_t Control)                  { m_pDMA->FCR = Control;                }
-        void        RegisterCallback                        (CallbackInterface* pCallback)      { m_pCallback = pCallback;              }
-        void        EnableInterrupt                         (uint32_t Interrupt)                { SET_BIT(m_pDMA->CR, Interrupt);       }
-        void        DisableInterrupt                        (uint32_t Interrupt)                { CLEAR_BIT(m_pDMA->CR, Interrupt);     }
-        void        EnableTransmitCompleteInterrupt         (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_TCIE);   }
-        void        DisableTransmitCompleteInterrupt        (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_TCIE); }
-        void        EnableTransmitHalfCompleteInterrupt     (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_HTIE);   }
-        void        DisableTransmitHalfCompleteInterrupt    (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_HTIE); }
+        void        Enable                                  (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_EN);        }
+        void        Disable                                 (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_EN);      }
+        void        ClearFlag                               (void)                              { ClearFlag(m_Flag);                       }
+        size_t      GetLength                               (void)                              { return size_t(m_pDMA->NDTR);             }
+        void        SetLength                               (size_t Length)                     { m_pDMA->NDTR = uint32_t(Length);         }
+        void        SetMemoryIncrement                      (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_MINC);      }
+        void        SetNoMemoryIncrement                    (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_MINC);    }
+        void        SetFifoControl                          (uint32_t Control)                  { m_pDMA->FCR = Control;                   }
+        void        RegisterCallback                        (CallbackInterface* pCallback)      { m_pCallback = pCallback;                 }
+        void        EnableInterrupt                         (uint32_t Interrupt)                { SET_BIT(m_pDMA->CR, Interrupt);          }
+        void        DisableInterrupt                        (uint32_t Interrupt)                { CLEAR_BIT(m_pDMA->CR, Interrupt);        }
+        void        EnableTransmitCompleteInterrupt         (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_TCIE);      }
+        void        DisableTransmitCompleteInterrupt        (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_TCIE);    }
+        void        EnableTransmitHalfCompleteInterrupt     (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_HTIE);      }
+        void        DisableTransmitHalfCompleteInterrupt    (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_HTIE);    }
+        void        EnableDirectMode                        (void)                              { CLEAR_BIT(m_pDMA->FCR, DMA_SxFCR_DMDIS); }
+        void        DisableDirectMode                       (void)                              { SET_BIT(m_pDMA->FCR, DMA_SxFCR_DMDIS);   }
 
     private:
 

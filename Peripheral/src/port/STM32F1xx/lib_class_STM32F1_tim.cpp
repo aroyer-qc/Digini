@@ -93,7 +93,7 @@ void TIM_Driver::Initialize(void)
     // Set the update interrupt enable
     if((m_pInfo->IRQ_DMA_SourceEnable & (TIM_IRQ_UPDATE | TIM_DMA_UPDATE)) != 0)
     {
-         CLEAR_BIT(m_pTim)->SR, TIM_SR_UIF);
+        CLEAR_BIT(m_pTim->SR, TIM_SR_UIF);
         m_pTim->DIER = TIM_DIER_UIE;
     }
 

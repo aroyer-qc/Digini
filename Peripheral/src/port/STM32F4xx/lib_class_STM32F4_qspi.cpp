@@ -162,6 +162,8 @@
 
 const QSPI_Command_t QSPI_Driver::m_Cmd[QSPI_NB_OF_CMD] =
 {
+    // move this to X-Macro mode!!
+    
 //                                             Instruction                        InstructionMode           AddressMode           DataMode            DummyCycles
     /* QSPI_CMD_READ_STATUS_SINGLE       */  { QSPI_READ_STATUS_REG_CMD,          QSPI_INSTRUCTION_1_LINE,  QSPI_ADDRESS_NONE,    QSPI_DATA_1_LINE,   0                                 },
     /* QSPI_CMD_WRITE_STATUS_SINGLE      */  { QSPI_WRITE_STATUS_REG_CMD,         QSPI_INSTRUCTION_1_LINE,  QSPI_ADDRESS_NONE,    QSPI_DATA_1_LINE,   0                                 },
@@ -612,7 +614,7 @@ SystemState_e QSPI_Driver::WaitReady(uint32_t TimeOut)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       WaitReady
+//  Function:       WriteEnable
 //
 //  Parameter(s):   None
 //  Return Value:   SYS_READY

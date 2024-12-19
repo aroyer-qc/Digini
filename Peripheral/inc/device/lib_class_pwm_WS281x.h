@@ -235,18 +235,21 @@
   #define WS281x_USE_PRECALCULATED_PWM_BUFFER   DEF_DISABLED
 #endif
 
-// This enable the continuous scan of the LED stream. No refresh needed.
+#ifndef WS281x_USE_48_BITS_DMA_TRANSFER
+  #define WS281x_USE_48_BITS_DMA_TRANSFER       DEF_DISABLED
+#endif
+
+// This enable the continuous scan of the LED stream. No refresh needed. It is used only for WS281x_USE_48_BITS_DMA_TRANSFER
 #ifndef WS281x_CONTINUOUS_SCAN
   #define WS281x_CONTINUOUS_SCAN                DEF_DISABLED
 #endif
 
+/// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
 // If a LED change is done, it will trigger a refresh automatically is it is DEF_ENABLED.
 // If has no effect if WS281x_CONTINUOUS_SCAN is DEF_ENABLED.
 #ifndef WS281x_SET_LED_TRIGGER_REFRESH
   #define WS281x_SET_LED_TRIGGER_REFRESH        DEF_DISABLED
 #endif
-
-
 
 #ifndef WS281x_USE_SK6812
   #define WS281x_USE_SK6812                     DEF_DISABLED
@@ -263,6 +266,9 @@
 #ifndef WS281x_USE_WS2812B
   #define WS281x_USE_WS2812B                    DEF_DISABLED
 #endif
+
+#define WS2812x_HALF_BYTE_TH_SIZE               16
+#define WS2812x_NUMBER_OF_BITS_IN_HALF_BYTE     4
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -293,6 +299,11 @@ struct WS2812x_MethodData_t
     uint16_t    ResetTime;
 };
 
+struct WS2812x_HalfBytesTH_Array_t        // only use in WS281x_USE_48_BITS_DMA_TRANSFER
+{
+    uint8_t     Level[WS2812x_NUMBER_OF_BITS_IN_HALF_BYTE];
+};
+
 struct WS281x_Color_t
 {
     uint8_t     Green;
@@ -310,7 +321,7 @@ struct WS281x_Config_t
 };
 
 
-#ifdef STM32F4
+#if defined(STM32F4) || defined(STM32F7) // speculative for F7 until test are done
 typedef uint16_t    WS_uint_t;
 #endif
 
@@ -354,12 +365,15 @@ class WS281x
       #endif
       #if (WS281x_USE_PRECALCULATED_PWM_BUFFER == DEF_ENABLED)
         volatile bool                       m_IsItinFirstHalfOfBuffer;
-      #else
-        volatile uint16_t                   m_LedPointer;
-        volatile uint32_t                   m_SetCountReset;
-        WS_uint_t                           m_pDMA_HalfBuffer;              // to reduce DMA interrupt time it is not required in pre-calculated buffer mode
       #endif
         WS_uint_t*                          m_pDMA_Buffer;
+
+      #if (WS281x_USE_48_BITS_DMA_TRANSFER == DEF_ENABLED)
+        volatile uint16_t                   m_LedPointer;
+        volatile uint32_t                   m_SetCountReset;
+        WS_uint_t*                          m_pDMA_HalfBuffer;
+        WS2812x_HalfBytesTH_Array_t         m_HalfBytesTH_Array[WS2812x_HALF_BYTE_TH_SIZE];
+      #endif
 
         static const WS2812x_MethodData_t   m_Methods[NUMBER_OF_METHODS];
 };

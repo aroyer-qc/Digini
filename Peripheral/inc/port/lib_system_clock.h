@@ -30,6 +30,8 @@
  #include "./Peripheral/inc/port/STM32F4xx/lib_STM32F4_system_clock.h"
 #elif defined STM32F7xx
  #include "./Peripheral/inc/port/STM32F7xx/lib_STM32F7_system_clock.h"
+#elif defined STM32H7xx
+ #include "./Peripheral/inc/port/STM32F7xx/lib_STM32H7_system_clock.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

@@ -36,7 +36,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define RCC_PLLCFGR_RESET_VALUE             0x24003010
+#define RCC_PLLCFGR_RESET_VALUE             0x01FF0000
 
 
 // Vector Table base offset field. This value must be a multiple of 0x200.
@@ -61,6 +61,15 @@
 //-------------------------------------------------------------------------------------------------
 void SystemInit(void)
 {
+    __asm volatile("cpsid i");                                              // Disable IRQ
+
+    
+    
+    
+    
+    
+    
+/* from F7    
     __asm volatile("cpsid i");                                              // Disable IRQ
 
     // Reset the RCC clock configuration to the default reset state
@@ -131,6 +140,6 @@ void SystemInit(void)
     SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; // Vector Table Relocation in Internal FLASH
   #endif
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_STM32HF7.h
+//  File : lib_stacktistic_STM32H7.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -24,42 +24,52 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#pragma once
-
 //-------------------------------------------------------------------------------------------------
-// Define(s)
+// Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define I2S2                ((I2S_TypeDef *) SPI2_BASE)
-#define I2S3                ((I2S_TypeDef *) SPI3_BASE)
+#include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
-// Typedef(s)
-//-------------------------------------------------------------------------------------------------
 
-struct I2S_TypeDef
+#if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+
+extern const uint32_t _estack;
+extern const uint32_t _Min_Stack_Size;
+
+//-------------------------------------------------------------------------------------------------
+//
+// Name:           InitializePort
+//
+// Parameter(s):   None
+// Return:         None
+//
+// Description:    Initialize the stack monitoring tool on the specific CPU port.
+//
+//-------------------------------------------------------------------------------------------------
+void StackCheck::InitializePort(void)
 {
-    uint32_t      RESERVED0;    //                                  Reserved:       0x00
-    __IO uint16_t CR2;          // SPI/I2S control register 2,      Address offset: 0x04
-    uint16_t      RESERVED1;    //                                  Reserved:       0x06
-    __IO uint16_t SR;           // SPI/I2S status register,         Address offset: 0x08
-    uint16_t      RESERVED2;    //                                  Reserved:       0x0A
-    __IO uint16_t DR;           // SPI/I2S data register,           Address offset: 0x0C
-    uint16_t      RESERVED3;    //                                  Reserved:       0x0E
-    uint32_t      RESERVED4;    //                                  Reserved:       0x10
-    uint32_t      RESERVED5;    //                                  Reserved:       0x14
-    uint32_t      RESERVED6;    //                                  Reserved:       0x18
-    __IO uint16_t I2SCFGR;      // SPI_I2S configuration register,  Address offset: 0x1C
-    uint16_t      RESERVED7;    //                                  Reserved:       0x1E
-    __IO uint16_t I2SPR;        // SPI_I2S prescaler register,      Address offset: 0x20
-    uint16_t      RESERVED8;    //                                  Reserved:       0x22
-};
+
+    m_Size[0]         = uint32_t(&_Min_Stack_Size) / 4;
+    m_pStackBottom[0] = (uint32_t*)&_estack - m_Size[0];
+    m_pStackName[0]   = "Task Idle";
+
+    m_NumberOfStack = 1;
+
+    // Copy the following code into the startup file after the call to  "bl  __libc_init_array"
+
+    /// /* Fill the stack with watermark */
+    ///   ldr  r3, =_StackBottom;
+    ///   mov   r2, sp
+    ///   movs  r4, 0xFFFFFFFF
+    ///   b     LoopFillStack
+    /// FillStack:
+    ///   str   r4,     [r3],   #4
+    /// LoopFillStack:
+    ///   cmp  r2,     r3
+    ///   bne  FillStack
+}
 
 //-------------------------------------------------------------------------------------------------
-// Function prototype(s)
-//-------------------------------------------------------------------------------------------------
 
-void ISR_Initialize     (void);
-void ISR_Init           (IRQn_Type Channel, const ISR_Prio_t* pPrio);
-
-//-------------------------------------------------------------------------------------------------
+#endif

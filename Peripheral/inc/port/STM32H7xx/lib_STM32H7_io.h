@@ -48,7 +48,7 @@
 #define IO_PIN_15                       ((uint16_t)0x8000)
 
 #define GPIOxx                          ((uint32_t)0x00000000)
-#define NUMBER_OF_IO_PORT               ((uint32_t)11)
+#define NUMBER_OF_IO_PORT               ((uint32_t)9)      //((uint32_t)11)
 #define NUMBER_OF_PIN_PER_PORT          ((uint32_t)16)
 
 #define LED_Init(p)                     IO_PinInit(p)
@@ -336,13 +336,20 @@
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_IO_AS_ENUM(ENUM_ID, IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA) ENUM_ID,
-#define EXPAND_X_IO_GROUP_AS_ENUM(ENUM_ID, IO_PORT, IO_GROUP, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA) ENUM_ID,
+#define EXPAND_X_IO_CFG_AS_ENUM(ENUM_ID, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA) ENUM_ID,
+#define EXPAND_X_IO_AS_ENUM(ENUM_ID, IO_PORT, IO_PIN, IO_CONFIG) ENUM_ID,
+#define EXPAND_X_IO_GROUP_AS_ENUM(ENUM_ID, IO_PORT, IO_GROUP, IO_CONFIG) ENUM_ID,
 #define EXPAND_X_IO_IRQ_AS_ENUM(ENUM_ID, IO_ID, NUMBER, PRIO, TRIGGER) ENUM_ID,
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
+
+enum IO_ConfigID_e
+{
+    IO_CFG_DEF(EXPAND_X_IO_CFG_AS_ENUM)
+    IO_CFG_NUM,
+};
 
 enum IO_ID_e
 {

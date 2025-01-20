@@ -45,10 +45,12 @@
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_IO_AS_STRUCT_DATA(ENUM_ID, IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA ) \
-                                          { IO_PORT, IO_PIN, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA },
-#define EXPAND_X_IO_GROUP_AS_STRUCT_DATA(ENUM_ID, IO_PORT, IO_GROUP, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA ) \
-                                                { IO_PORT, IO_GROUP, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA },
+#define EXPAND_X_IO_CFG_AS_STRUCT_DATA(ENUM_ID, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA) \
+                                              { IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA },
+#define EXPAND_X_IO_AS_STRUCT_DATA(ENUM_ID, IO_PORT, IO_PIN, IO_CONFIG ) \
+                                          { IO_PORT, IO_PIN, IO_CONFIG },
+#define EXPAND_X_IO_GROUP_AS_STRUCT_DATA(ENUM_ID, IO_PORT, IO_GROUP, IO_CONFIG ) \
+                                                { IO_PORT, IO_GROUP, IO_CONFIG },
 #define EXPAND_X_IO_IRQ_AS_STRUCT_DATA(ENUM_ID, IO_ID, NUMBER, PRIO, TRIGGER) \
                                               { IO_ID, NUMBER, PRIO, TRIGGER},
 
@@ -56,24 +58,26 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-struct IO_Properties_t
+struct IO_ConfigProperties_t
 {
-    GPIO_TypeDef*    pPort;
-    uint32_t         PinNumber;
     uint32_t         PinMode;
     uint32_t         PinType;
     uint32_t         PinSpeed;
     uint32_t         State;
 };
 
+struct IO_Properties_t
+{
+    GPIO_TypeDef*    pPort;
+    uint32_t         PinNumber;
+    IO_ConfigID_e    IO_ConfigID;
+};
+
 struct IO_GroupProperties_t
 {
     GPIO_TypeDef*    pPort;
     uint32_t         GroupPin;
-    uint32_t         PinMode;
-    uint32_t         PinType;
-    uint32_t         PinSpeed;
-    uint32_t         State;
+    IO_ConfigID_e    IO_ConfigID;
 };
 
 struct IO_IRQ_Properties_t
@@ -99,8 +103,13 @@ const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
     GPIOG,
     GPIOH,
     GPIOI,
-    GPIOJ,
-    GPIOK,
+//    GPIOJ,
+//    GPIOK,
+};
+
+const IO_ConfigProperties_t IO_ConfigProperties[IO_CFG_NUM] =
+{
+    IO_CFG_DEF(EXPAND_X_IO_CFG_AS_STRUCT_DATA)
 };
 
 const IO_Properties_t IO_Properties[IO_NUM] =
@@ -129,15 +138,71 @@ IO_PinChangeCallback_t IO_PinChangeCallback[IO_IRQ_NUM] = {nullptr};
 // private prototype
 //-------------------------------------------------------------------------------------------------
 
+static void _IO_PinInit         (GPIO_TypeDef* pPort, uint32_t PinNumber, IO_ConfigProperties* pIO_Config);
 static void _IO_EnableClock     (GPIO_TypeDef* pPort);
 
 #ifdef IO_IRQ_DEF
-static void _IO_GetPinInfo       (IO_IrqID_e IO_ID, uint32_t* pPinNumber, uint32_t* pPinMask);
+static void _IO_GetPinInfo      (IO_IrqID_e IO_ID, uint32_t* pPinNumber, uint32_t* pPinMask);
 #endif
 
 //-------------------------------------------------------------------------------------------------
 // private function
 //-------------------------------------------------------------------------------------------------
+
+void _PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, IO_ConfigProperties* pIO_Config)
+{        
+    uint32_t PinMode      = pIO_Config->PinMode;
+    uint32_t PinType      = pIO_Config->PinType;
+    uint32_t PinSpeed     = pIO_Config->PinSpeed;
+    uint32_t State        = pIO_Config->State;
+    uint32_t Pin2BitShift = PinNumber << 1;
+
+    // Set pin speed
+    pPort->OSPEEDR &= ~(uint32_t)(IO_SPEED_PIN_MASK << Pin2BitShift);
+    pPort->OSPEEDR |=  (uint32_t)(PinSpeed          << Pin2BitShift);
+
+    switch(PinMode)
+    {
+        case IO_MODE_OUTPUT:
+        {
+            // Preset initial state
+            if(State == 0) pPort->BSRR = (IO_PORT_RESET_MASK << PinNumber);
+            else           pPort->BSRR = (IO_PORT_SET_MASK   << PinNumber);
+        }
+        break;
+
+        case IO_MODE_ALTERNATE:
+        {
+            if(PinNumber < 8)
+            {
+                pPort->AFR[0] &= ~(uint32_t)(IO_AF_MASK << (PinNumber << 2));
+                pPort->AFR[0] |=  (uint32_t)(State      << (PinNumber << 2));
+            }
+            else
+            {
+                pPort->AFR[1] &= ~(uint32_t)(IO_AF_MASK << ((PinNumber - 8) << 2));
+                pPort->AFR[1] |=  (uint32_t)(State      << ((PinNumber - 8) << 2));
+            }
+        }
+        break;
+
+        // case IO_MODE_ANALOG:    // Nothing to do for analog
+        // case IO_MODE_INPUT:     // Nothing to do for input
+        default:
+        {
+        }
+        break;
+    }
+
+    pPort->PUPDR  &= ~(uint32_t)((IO_TYPE_PIN_PULL_MASK >> 1)             << Pin2BitShift);     // Reset bit for Pull Up
+    pPort->PUPDR  |=  (uint32_t)(((PinType & IO_TYPE_PIN_PULL_MASK) >> 1) << Pin2BitShift);     // Set new pull setting
+
+    pPort->OTYPER &= ~(uint32_t)(IO_TYPE_PIN_DRIVE_MASK << PinNumber);                          // Reset bit for Drive type PP or OD
+    pPort->OTYPER |=  (uint32_t)((PinType & IO_TYPE_PIN_DRIVE_MASK) << PinNumber);              // Set new type
+
+    pPort->MODER  &= ~(uint32_t)(IO_MODE_PIN_MASK << Pin2BitShift);
+    pPort->MODER  |=  (uint32_t)(PinMode          << Pin2BitShift);
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -157,7 +222,7 @@ static void _IO_EnableClock(GPIO_TypeDef* pPort)
     ClockEnable   = ((uint32_t)(pPort) & IO_PORT_MASK_FOR_CLOCK_ENABLE);          // Mask bit to keep only enableoffset
     ClockEnable >>= IO_PORT_SHIFT_FOR_CLOCK_ENABLE;
     ClockEnable   = 1 << ClockEnable;                                             // Set bit position
-    RCC->AHB1ENR |= ClockEnable;
+    RCC->AHB4ENR |= ClockEnable;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -210,72 +275,23 @@ static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_ID, uint32_t* pPinNumber, uint32_t*
 //-------------------------------------------------------------------------------------------------
 void IO_PinInit(IO_ID_e IO_ID)
 {
-    const IO_Properties_t* pIO_Properties;
-    GPIO_TypeDef* pPort;
-    uint32_t      PinNumber;
-    uint32_t      PinMode;
-    uint32_t      PinType;
-    uint32_t      PinSpeed;
-    uint32_t      State;
+    IO_Properties_t*     pIO_Properties;
+    IO_ConfigProperties* pIO_Config; 
+    GPIO_TypeDef*        pPort;
+    uint32_t             PinNumber;
+    uint32_t             PinMode;
+    uint32_t             PinType;
+    uint32_t             PinSpeed;
+    uint32_t             State;
 
     pIO_Properties = &IO_Properties[IO_ID];
+    pIO_Config     = &IO_ConfigProperties[IO_Properties->IO_ConfigID];
     pPort          = pIO_Properties->pPort;
-    PinNumber      = pIO_Properties->PinNumber;
-    PinMode        = pIO_Properties->PinMode;
-    PinType        = pIO_Properties->PinType;
-    PinSpeed       = pIO_Properties->PinSpeed;
-    State          = pIO_Properties->State;
 
     if(pPort != GPIOxx)
     {
-        uint32_t Pin2BitShift = PinNumber << 1;
         _IO_EnableClock(pPort);
-
-        // Set pin speed
-        pPort->OSPEEDR &= ~(uint32_t)(IO_SPEED_PIN_MASK << Pin2BitShift);
-        pPort->OSPEEDR |=  (uint32_t)(PinSpeed          << Pin2BitShift);
-
-        switch(PinMode)
-        {
-            case IO_MODE_OUTPUT:
-            {
-                // Preset initial state
-                if(State == 0) pPort->BSRR = (IO_PORT_RESET_MASK << PinNumber);
-                else           pPort->BSRR = (IO_PORT_SET_MASK   << PinNumber);
-            }
-            break;
-
-            case IO_MODE_ALTERNATE:
-            {
-                if(PinNumber < 8)
-                {
-                    pPort->AFR[0] &= ~(uint32_t)(IO_AF_MASK << (PinNumber << 2));
-                    pPort->AFR[0] |=  (uint32_t)(State      << (PinNumber << 2));
-                }
-                else
-                {
-                    pPort->AFR[1] &= ~(uint32_t)(IO_AF_MASK << ((PinNumber - 8) << 2));
-                    pPort->AFR[1] |=  (uint32_t)(State      << ((PinNumber - 8) << 2));
-                }
-            }
-            break;
-
-            // case IO_MODE_ANALOG:    // Nothing to do for analog
-            // case IO_MODE_INPUT:     // Nothing to do for input
-            default:
-            {
-            }
-            break;
-        }
-
-        pPort->PUPDR  &= ~(uint32_t)((IO_TYPE_PIN_PULL_MASK >> 1)             << Pin2BitShift);     // Reset bit for Pull Up
-        pPort->PUPDR  |=  (uint32_t)(((PinType & IO_TYPE_PIN_PULL_MASK) >> 1) << Pin2BitShift);     // Set new pull setting
-
-        pPort->OTYPER &= ~(uint32_t)(IO_TYPE_PIN_DRIVE_MASK << PinNumber);                          // Reset bit for Drive type PP or OD
-        pPort->OTYPER |=  (uint32_t)((PinType & IO_TYPE_PIN_DRIVE_MASK) << PinNumber);              // Set new type
-
-        pPort->MODER  &= ~(uint32_t)(IO_MODE_PIN_MASK << Pin2BitShift);
-        pPort->MODER  |=  (uint32_t)(PinMode          << Pin2BitShift);
+        _IO_PinInit(pPort, pIO_Properties->PinNumber, pIO_Config);
     }
 }
 
@@ -335,144 +351,44 @@ void IO_PinInitOutput(IO_ID_e IO_ID)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       IO_PinInit
+//  Function:       IO_GroupPinInit
 //
-//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Parameter(s):   IO_ID       ID of the group IO pin definition in IO_GroupProperties_t structure
 //  Return:         None
 //
-//  Description:    Basic pin initialization Using ID.
+//  Description:    Basic group pin initialization Using ID.
 //
-//  Note(s):
+//  Note(s):        Initialize a group of pin on same port with same config
 //
 //-------------------------------------------------------------------------------------------------
 void IO_GroupPinInit(IO_Group_ID_e IO_GroupID)
 {
-    const IO_GroupProperties_t* pIO_GroupProperties;
-    GPIO_TypeDef* pPort;
-    uint32_t      GroupPin;
-    uint32_t      PinMode;
-    uint32_t      PinType;
-    uint32_t      PinSpeed;
-    uint32_t      State;
+    IO_GroupProperties_t* pProperties;
+    IO_ConfigProperties*  pIO_Config; 
+    GPIO_TypeDef*         pPort;
+	uint32_t              PinPosition;
+	uint32_t              Position;
+	uint32_t              PinNumber;
 
-	uint32_t Pin2BitShift;
-	uint32_t PinPosition;
-	uint32_t Position;
-	uint32_t CurrentPin;
-
-    pIO_GroupProperties = &IO_GroupProperties[IO_GroupID];
-    pPort               = pIO_GroupProperties->pPort;
-    GroupPin            = pIO_GroupProperties->GroupPin;
-//    PinMode             = pIO_GroupProperties->PinMode;
-//    PinType             = pIO_GroupProperties->PinType;
-//    PinSpeed            = pIO_GroupProperties->PinSpeed;
-//    State               = pIO_GroupProperties->State;
+    pProperties = &pProperties[IO_GroupID];
+    pIO_Config  = &IO_ConfigProperties[IO_Properties->IO_ConfigID];
+    pPort       = pProperties->pPort;
 
     if(pPort != GPIOxx)
     {
         _IO_EnableClock(pPort);
 
-
-		for (PinPosition = 0; PinPosition <= 15; PinPosition++)
+		for(uint32_t PinPosition = 0; PinPosition <= 15; PinPosition++)
 		{
-			Pin2BitShift = PinPosition << 1;
-			Position     = ((uint32_t)0x01) << PinPosition;
-			CurrentPin   = GroupPin & Position;						// Get the port pins position
+			Position  = ((uint32_t)0x01) << PinPosition;
+			PinNumber = GroupPin & Position;						// Get the port pins position
 
-			if(CurrentPin == Position)
+			if(PinNumber == Position)
 			{
-				pPort->MODER  &= ~(GPIO_MODER_MODER0 << Pin2BitShift);
-				pPort->MODER |= (((uint32_t)GPIO_InitStruct->GPIO_Mode) << Pin2BitShift);
-
-				if((GPIO_InitStruct->GPIO_Mode == GPIO_Mode_OUT) || (GPIO_InitStruct->GPIO_Mode == GPIO_Mode_AF))
-				{
-					// Check Speed mode parameters
-					assert_param(IS_GPIO_SPEED(GPIO_InitStruct->GPIO_Speed));
-
-					// Speed mode configuration
-					pPort->OSPEEDR &= ~(GPIO_OSPEEDER_OSPEEDR0 << Pin2BitShift);
-					pPort->OSPEEDR |= ((uint32_t)(GPIO_InitStruct->GPIO_Speed) <<Pin2BitShift);
-
-					// Output mode configuration
-					pPort->OTYPER  &= ~((GPIO_OTYPER_OT_0) << ((uint16_t)PinPosition)) ;
-					pPort->OTYPER |= (uint16_t)(((uint16_t)GPIO_InitStruct->GPIO_OType) << ((uint16_t)PinPosition));
-				}
-
-				// Pull-up Pull down resistor configuration
-				pPort->PUPDR &= ~(GPIO_PUPDR_PUPDR0 << uint16_t(Pin2BitShift));
-				pPort->PUPDR |= (((uint32_t)GPIO_InitStruct->GPIO_PuPd) << Pin2BitShift);
-    }
-  }
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-/*		
-        uint32_t Pin2BitShift = PinNumber << 1;
-        _IO_EnableClock(pPort);
-
-        // Set pin speed
-        pPort->OSPEEDR &= ~(uint32_t)(IO_SPEED_PIN_MASK << Pin2BitShift);
-        pPort->OSPEEDR |=  (uint32_t)(PinSpeed          << Pin2BitShift);
-
-        switch(PinMode)
-        {
-            case IO_MODE_OUTPUT:
-            {
-                // Preset initial state
-                if(State == 0) pPort->BSRR = (IO_PORT_RESET_MASK << PinNumber);
-                else           pPort->BSRR = (IO_PORT_SET_MASK   << PinNumber);
+                _IO_PinInit(pPort, PinNumber, pIO_Config);
             }
-            break;
-
-            case IO_MODE_ALTERNATE:
-            {
-                if(PinNumber < 8)
-                {
-                    pPort->AFR[0] &= ~(uint32_t)(IO_AF_MASK << (PinNumber << 2));
-                    pPort->AFR[0] |=  (uint32_t)(State      << (PinNumber << 2));
-                }
-                else
-                {
-                    pPort->AFR[1] &= ~(uint32_t)(IO_AF_MASK << ((PinNumber - 8) << 2));
-                    pPort->AFR[1] |=  (uint32_t)(State      << ((PinNumber - 8) << 2));
-                }
-            }
-            break;
-
-            // case IO_MODE_ANALOG:    // Nothing to do for analog
-            // case IO_MODE_INPUT:     // Nothing to do for input
-            default:
-            {
-            }
-            break;
         }
-
-        pPort->PUPDR  &= ~(uint32_t)((IO_TYPE_PIN_PULL_MASK >> 1)             << Pin2BitShift);     // Reset bit for Pull Up
-        pPort->PUPDR  |=  (uint32_t)(((PinType & IO_TYPE_PIN_PULL_MASK) >> 1) << Pin2BitShift);     // Set new pull setting
-
-        pPort->OTYPER &= ~(uint32_t)(IO_TYPE_PIN_DRIVE_MASK << PinNumber);                          // Reset bit for Drive type PP or OD
-        pPort->OTYPER |=  (uint32_t)((PinType & IO_TYPE_PIN_DRIVE_MASK) << PinNumber);              // Set new type
-
-        pPort->MODER  &= ~(uint32_t)(IO_MODE_PIN_MASK << Pin2BitShift);
-        pPort->MODER  |=  (uint32_t)(PinMode          << Pin2BitShift);
-    
-	*/
 	}
-	
-
-
-  /* ------------------------- Configure the port pins ---------------- */
-  /*-- GPIO Mode Configuration --*/
-
-	
-	
 }
 
 //-------------------------------------------------------------------------------------------------

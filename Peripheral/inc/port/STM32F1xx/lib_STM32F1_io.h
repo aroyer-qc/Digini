@@ -30,6 +30,22 @@
 // Define(s) and macro(s)
 //-------------------------------------------------------------------------------------------------
 
+#define IO_PIN_0                 	    ((uint16_t)0x0001)
+#define IO_PIN_1                 	    ((uint16_t)0x0002)
+#define IO_PIN_2                 	    ((uint16_t)0x0004)
+#define IO_PIN_3                 	    ((uint16_t)0x0008)
+#define IO_PIN_4                 	    ((uint16_t)0x0010)
+#define IO_PIN_5                        ((uint16_t)0x0020)
+#define IO_PIN_6                        ((uint16_t)0x0040)
+#define IO_PIN_7                        ((uint16_t)0x0080)
+#define IO_PIN_8                        ((uint16_t)0x0100)
+#define IO_PIN_9                        ((uint16_t)0x0200)
+#define IO_PIN_10                       ((uint16_t)0x0400)
+#define IO_PIN_11                       ((uint16_t)0x0800)
+#define IO_PIN_12                       ((uint16_t)0x1000)
+#define IO_PIN_13                       ((uint16_t)0x2000)
+#define IO_PIN_14                       ((uint16_t)0x4000)
+#define IO_PIN_15                       ((uint16_t)0x8000)
 #define GPIOxx                              ((uint32_t)0x00000000)
 #define NUMBER_OF_PIN_PER_PORT              ((uint32_t)16)
 
@@ -86,6 +102,11 @@
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
+//#define EXPAND_X_IO_CFG_AS_ENUM(ENUM_ID, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA) ENUM_ID,
+//#define EXPAND_X_IO_AS_ENUM(ENUM_ID, IO_PORT, IO_PIN, IO_CONFIG) ENUM_ID,
+//#define EXPAND_X_IO_GROUP_AS_ENUM(ENUM_ID, IO_PORT, IO_GROUP, IO_CONFIG) ENUM_ID,
+//#define EXPAND_X_IO_IRQ_AS_ENUM(ENUM_ID, IO_ID, NUMBER, PRIO, TRIGGER) ENUM_ID,
+
 #define EXPAND_X_IO_AS_ENUM(ENUM_ID, IO_PORT, IO_PIN, IO_MODE, IO_EXTRA) ENUM_ID,
 #define EXPAND_X_IO_IRQ_AS_ENUM(ENUM_ID, IO_ID, NUMBER, TRIGGER) ENUM_ID,
 #define EXPAND_X_IO_AS_STRUCT_DATA(ENUM_ID,  IO_PORT, IO_PIN, IO_MODE, IO_EXTRA ) \
@@ -97,12 +118,26 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
+enum IO_ConfigID_e
+{
+    IO_CFG_DEF(EXPAND_X_IO_CFG_AS_ENUM)
+    IO_CFG_NUM,
+};
+
 enum IO_ID_e
 {
     IO_NOT_DEFINED = -1,
     IO_DEF(EXPAND_X_IO_AS_ENUM)
     IO_NUM,
 };
+
+#ifdef IO_GROUP_DEF
+enum IO_GroupID_e
+{
+    IO_GROUP_DEF(EXPAND_X_IO_GROUP_AS_ENUM)
+    IO_GROUP_NUM,
+};
+
 
 #ifdef IO_IRQ_DEF
 enum IO_IrqID_e
@@ -179,6 +214,7 @@ void        IO_PinInit                  (IO_ID_e IO_ID);
 void        IO_PinInit                  (GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint32_t State);
 void        IO_PinInitInput             (IO_ID_e IO_ID);
 void        IO_PinInitOutput            (IO_ID_e IO_ID);
+void        IO_GroupPinInit             (IO_Group_ID_e IO_GroupID);
 void        IO_SetPinLow                (IO_ID_e IO_ID);
 void        IO_SetPinHigh               (IO_ID_e IO_ID);
 void        IO_TogglePin                (IO_ID_e IO_ID);

@@ -60,30 +60,27 @@
 void SystemInit(void)
 {
     __asm volatile("cpsid i");                              // Disable IRQ
-   
+
     // FPU settings
   #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
     SCB->CPACR |= ((3 << (10 * 2)) | (3 << (11 * 2)));      // Set CP10 and CP11 Full Access
   #endif
 
+    // SEVONPEND enabled so that an interrupt coming from the CPU(n) interrupt signal is detectable by the CPU after a WFI/WFE instruction.
+    SCB->SCR |= SCB_SCR_SEVONPEND_Pos;
 
-/*
 
+    /*
+    /* Supply configuration update enable */
     HAL_PWREx_ConfigSupply(PWR_DIRECT_SMPS_SUPPLY);
 
-  // Configure the main internal regulator output voltage
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
-  while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
+    /* Configure the main internal regulator output voltage */
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+    while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
 
 __HAL_RCC_SYSCFG_CLK_ENABLE();
 
 */
-
-
-
-    // SEVONPEND enabled so that an interrupt coming from the CPU(n) interrupt signal is detectable
-    // by the CPU after a WFI/WFE instruction.
-    SCB->SCR |= SCB_SCR_SEVONPEND_Pos;
 
     // Reset the RCC clock configuration to the default reset state
     RCC->CR        |= RCC_CR_HSION;                         // Set HSION bit
@@ -159,3 +156,86 @@ void SystemInit(void)
 
 //-------------------------------------------------------------------------------------------------
 
+
+
+
+Disable IRQ
+SET_BIT(RCC->APB2ENR, RCC_APB2ENR_SYSCFGEN);
+SET_BIT(RCC->APB1ENR, RCC_APB1ENR_PWREN);
+MODIFY_REG(PWR->CR, PWR_CR_VOS, POWER_REGULATOR_CFG);
+
+// FPU settings
+#if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
+SET_BIT(SCB->CPACR, ((3UL << 10 * 2) | (3UL << 11 * 2)));   // Set CP10 and CP11 Full Access
+endif
+
+// Reset the RCC clock configuration to the default reset state ------------
+// Set HSION bit
+SET_BIT(RCC->CR, RCC_CR_HSION);
+
+// Set CFGR register
+RCC->CFGR = (CFG_SYS_HCLK | CFG_SYS_APB1 | CFG_SYS_APB2 | CFG_MCO_1 | CFG_MCO_2);
+
+// Reset HSEBYP, CSSON and PLLON bits
+CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  #if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
+
+   #if (CFG_PLL_SOURCE == CFG_HSE_VALUE)
+    SET_BIT(RCC->CR, RCC_CR_HSEON);
+
+    Retry = 0;
+    while((READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0) && (Retry < CFG_SYSTEM_CLOCK_NUMBER_OF_RETRY))
+    {
+        Retry++;
+    };
+
+   #else
+    // Wait for HSI to be ready B4 enabling PLL
+    while(READ_BIT(RCC->CR, RCC_CR_HSIRDY) == 0) {};
+   #endif
+
+    // Set PLLCFGR register
+    RCC->PLLCFGR = CFG_RCC_PLLCFGR_CFG;
+
+   #if (CFG_PLL_SOURCE == CFG_HSE_VALUE)
+    // Reset HSION bit to reduce consumption
+    CLEAR_BIT(RCC->CR, RCC_CR_HSION);
+   #endif
+
+    // Set flash latency
+    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, CFG_FLASH_LATENCY);
+
+    // Enable PLL
+    SET_BIT(RCC->CR, RCC_CR_PLLON);
+
+    // Wait for PLL to be ready B4 enabling PLL
+    while(READ_BIT(RCC->CR, RCC_CR_PLLRDY) == 0) {};
+
+    // Switch to PLL
+    SET_BIT(RCC->CFGR, RCC_CFGR_SW_PLL);
+
+  #endif // (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
+
+    // Disable all interrupts
+    RCC->CIR = 0;
+
+    // Configure the Vector Table location add offset address ------------------
+  #ifdef VECT_TAB_SRAM
+    SCB->VTOR = SRAM_BASE | VECT_TAB_OFFSET;    // Vector Table Relocation in Internal SRAM
+  #else
+    SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET;   // Vector Table Relocation in Internal FLASH
+  #endif

@@ -349,22 +349,71 @@ void IO_GroupPinInit(IO_Group_ID_e IO_GroupID)
 {
     const IO_GroupProperties_t* pIO_GroupProperties;
     GPIO_TypeDef* pPort;
-    uint32_t      PinNumber;
+    uint32_t      GroupPin;
     uint32_t      PinMode;
     uint32_t      PinType;
     uint32_t      PinSpeed;
     uint32_t      State;
 
-    pIO_Properties = &IO_GroupProperties[IO_GroupID];
-    pPort          = pIO_GroupProperties->pPort;
-    PinNumber      = pIO_GroupProperties->PinNumber;
-    PinMode        = pIO_GroupProperties->PinMode;
-    PinType        = pIO_GroupProperties->PinType;
-    PinSpeed       = pIO_GroupProperties->PinSpeed;
-    State          = pIO_GroupProperties->State;
+	uint32_t Pin2BitShift;
+	uint32_t PinPosition;
+	uint32_t Position;
+	uint32_t CurrentPin;
+
+    pIO_GroupProperties = &IO_GroupProperties[IO_GroupID];
+    pPort               = pIO_GroupProperties->pPort;
+    GroupPin            = pIO_GroupProperties->GroupPin;
+//    PinMode             = pIO_GroupProperties->PinMode;
+//    PinType             = pIO_GroupProperties->PinType;
+//    PinSpeed            = pIO_GroupProperties->PinSpeed;
+//    State               = pIO_GroupProperties->State;
 
     if(pPort != GPIOxx)
     {
+        _IO_EnableClock(pPort);
+
+
+		for (PinPosition = 0; PinPosition <= 15; PinPosition++)
+		{
+			Pin2BitShift = PinPosition << 1;
+			Position     = ((uint32_t)0x01) << PinPosition;
+			CurrentPin   = GroupPin & Position;						// Get the port pins position
+
+			if(CurrentPin == Position)
+			{
+				pPort->MODER  &= ~(GPIO_MODER_MODER0 << Pin2BitShift);
+				pPort->MODER |= (((uint32_t)GPIO_InitStruct->GPIO_Mode) << Pin2BitShift);
+
+				if((GPIO_InitStruct->GPIO_Mode == GPIO_Mode_OUT) || (GPIO_InitStruct->GPIO_Mode == GPIO_Mode_AF))
+				{
+					// Check Speed mode parameters
+					assert_param(IS_GPIO_SPEED(GPIO_InitStruct->GPIO_Speed));
+
+					// Speed mode configuration
+					pPort->OSPEEDR &= ~(GPIO_OSPEEDER_OSPEEDR0 << Pin2BitShift);
+					pPort->OSPEEDR |= ((uint32_t)(GPIO_InitStruct->GPIO_Speed) <<Pin2BitShift);
+
+					// Output mode configuration
+					pPort->OTYPER  &= ~((GPIO_OTYPER_OT_0) << ((uint16_t)PinPosition)) ;
+					pPort->OTYPER |= (uint16_t)(((uint16_t)GPIO_InitStruct->GPIO_OType) << ((uint16_t)PinPosition));
+				}
+
+				// Pull-up Pull down resistor configuration
+				pPort->PUPDR &= ~(GPIO_PUPDR_PUPDR0 << uint16_t(Pin2BitShift));
+				pPort->PUPDR |= (((uint32_t)GPIO_InitStruct->GPIO_PuPd) << Pin2BitShift);
+    }
+  }
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+/*		
         uint32_t Pin2BitShift = PinNumber << 1;
         _IO_EnableClock(pPort);
 
@@ -413,7 +462,17 @@ void IO_GroupPinInit(IO_Group_ID_e IO_GroupID)
 
         pPort->MODER  &= ~(uint32_t)(IO_MODE_PIN_MASK << Pin2BitShift);
         pPort->MODER  |=  (uint32_t)(PinMode          << Pin2BitShift);
-    }
+    
+	*/
+	}
+	
+
+
+  /* ------------------------- Configure the port pins ---------------- */
+  /*-- GPIO Mode Configuration --*/
+
+	
+	
 }
 
 //-------------------------------------------------------------------------------------------------

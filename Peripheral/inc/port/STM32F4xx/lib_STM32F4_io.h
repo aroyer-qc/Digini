@@ -114,6 +114,7 @@
 #define IO_AF3_TIM10                    ((uint8_t)0x03)  // TIM10 Alternate Function mapping
 #define IO_AF3_TIM11                    ((uint8_t)0x03)  // TIM11 Alternate Function mapping
 //  AF 4 selection
+#define IO_AF4_I2C                      ((uint8_t)0x04)  // I2C  Alternate Function mapping
 #define IO_AF4_I2C1                     ((uint8_t)0x04)  // I2C1 Alternate Function mapping
 #define IO_AF4_I2C2                     ((uint8_t)0x04)  // I2C2 Alternate Function mapping
 #define IO_AF4_I2C3                     ((uint8_t)0x04)  // I2C3 Alternate Function mapping

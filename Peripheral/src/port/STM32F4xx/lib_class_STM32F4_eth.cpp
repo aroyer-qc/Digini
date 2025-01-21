@@ -153,19 +153,6 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
 
     SYSCFG->PMC  |= SYSCFG_PMC_MII_RMII_SEL;
 
-    // Init all IO
-    IO_PinInit(IO_ETH_MDC);
-    IO_PinInit(IO_ETH_MDIO);
-    IO_PinInit(IO_ETH_TXD0);
-    IO_PinInit(IO_ETH_TXD1);
-    IO_PinInit(IO_ETH_RXD0);
-    IO_PinInit(IO_ETH_RXD1);
-    IO_PinInit(IO_ETH_TX_EN);
-    IO_PinInit(IO_ETH_RX_ER);
-    IO_PinInit(IO_ETH_CRS_DV);
-    IO_PinInit(IO_ETH_REF_CLK);
-    IO_PinInit(IO_ETH_EXT_LED);
-
     // Clear Control Structure
     memset((void *)&m_Control, 0, sizeof(ETH_Control_t));
 

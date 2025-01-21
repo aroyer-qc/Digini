@@ -145,6 +145,7 @@
 #endif // HRTIM1
 
 // AF 4 selection
+#define IO_AF4_I2C                      ((uint8_t)0x04)  // I2C Alternate Function mapping
 #define IO_AF4_I2C1                     ((uint8_t)0x04)  // I2C1 Alternate Function mapping
 #define IO_AF4_I2C2                     ((uint8_t)0x04)  // I2C2 Alternate Function mapping
 #define IO_AF4_I2C3                     ((uint8_t)0x04)  // I2C3 Alternate Function mapping
@@ -162,6 +163,7 @@
 #endif // PSSI
 
 // AF 5 selection
+#define IO_AF5_SPI                      ((uint8_t)0x05)  // SPI Alternate Function mapping
 #define IO_AF5_SPI1                     ((uint8_t)0x05)  // SPI1 Alternate Function mapping
 #define IO_AF5_SPI2                     ((uint8_t)0x05)  // SPI2 Alternate Function mapping
 #define IO_AF5_SPI3                     ((uint8_t)0x05)  // SPI3 Alternate Function mapping

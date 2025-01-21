@@ -96,6 +96,7 @@
 #define IO_AF0_SWJ                      ((uint8_t)0x00)  // SWJ (SWD and JTAG) Alternate Function mapping
 #define IO_AF0_TRACE                    ((uint8_t)0x00)  // TRACE Alternate Function mapping
 //  AF 1 selection
+#define IO_AF1                          ((uint8_t)0x01)  // Alternate Function mapping
 #define IO_AF1_TIM1                     ((uint8_t)0x01)  // TIM1 Alternate Function mapping
 #define IO_AF1_TIM2                     ((uint8_t)0x01)  // TIM2 Alternate Function mapping
 //  AF 2 selection
@@ -110,12 +111,14 @@
 #define IO_AF3_LPTIM1                   ((uint8_t)0x03)  // LPTIM1 Alternate Function mapping
 #define IO_AF3_CEC                      ((uint8_t)0x03)  // CEC Alternate Function mapping
 //  AF 4 selection
+#define IO_AF4_I2C                      ((uint8_t)0x04)  // I2C Alternate Function mapping
 #define IO_AF4_I2C1                     ((uint8_t)0x04)  // I2C1 Alternate Function mapping
 #define IO_AF4_I2C2                     ((uint8_t)0x04)  // I2C2 Alternate Function mapping
 #define IO_AF4_I2C3                     ((uint8_t)0x04)  // I2C3 Alternate Function mapping
 #define IO_AF4_I2C4                     ((uint8_t)0x04)  // I2C4 Alternate Function mapping
 #define IO_AF4_CEC                      ((uint8_t)0x04)  // CEC Alternate Function mapping
 //  AF 5 selection
+#define IO_AF5_SPI                      ((uint8_t)0x05)  // SPI Alternate Function mapping
 #define IO_AF5_SPI1                     ((uint8_t)0x05)  // SPI1 Alternate Function mapping
 #define IO_AF5_SPI2                     ((uint8_t)0x05)  // SPI2/I2S2 Alternate Function mapping
 #define IO_AF5_SPI3                     ((uint8_t)0x05)  // SPI3/I2S3 Alternate Function mapping

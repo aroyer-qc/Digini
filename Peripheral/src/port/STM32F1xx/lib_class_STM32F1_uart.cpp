@@ -120,9 +120,6 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
         SetConfig(m_pInfo->Config, m_pInfo->BaudID);
 
-        IO_PinInit(m_pInfo->PinRX);
-        IO_PinInit(m_pInfo->PinTX);
-
       #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
         m_pCallback = nullptr;
       #endif

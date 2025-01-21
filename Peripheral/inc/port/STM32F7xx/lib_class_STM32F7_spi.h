@@ -135,10 +135,6 @@ struct SPI_Info_t
     SPI_TypeDef*        pSPIx;
     uint32_t            Config;
     uint32_t            Speed;
-    IO_ID_e             PinCLK;
-    IO_ID_e             PinMOSI;
-    IO_ID_e             PinMISO;
-    IO_ID_e             PinNSS;
     IRQn_Type           IRQn;
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;
@@ -156,9 +152,13 @@ class SPI_Driver
         void            Initialize              (void);
 
         SystemState_e   GetStatus               (void)                        { return m_Status;     }
+        SystemState_e   GetDMA_Status           (void)                        { return m_DMA_Status; }
 
-        SystemState_e   LockToDevice            (IO_ID_e Device);                                                // Set SPI to this device and lock
-        SystemState_e   UnlockFromDevice        (IO_ID_e Device);                                                // Unlock SPI from device
+        SystemState_e   LockToDevice            (IO_ID_e Device, bool HandleCS = true);                                                // Set SPI to this device and lock
+        SystemState_e   UnlockFromDevice        (IO_ID_e Device, bool HandleCS = true);                                                // Unlock SPI from device
+
+        SystemState_e   SelectChip              (IO_ID_e Device);
+        SystemState_e   DeSelectChip            (IO_ID_e Device);
 
         // Read function (overloaded)
         SystemState_e   Read                    (uint8_t* pBuffer, size_t Size);
@@ -177,8 +177,6 @@ class SPI_Driver
 
         //void            IRQHandler              (void);
         //SystemState_e   WaitReady               (void);
-
-        SystemState_e   GetDMA_Status           (void)                        {	return m_DMA_Status; }
         void            OverrideMemoryIncrement (void);
         static void     DMA_RX_IRQ_Handler      (SPI_ID_e SPI_ID);
         static void     DMA_TX_IRQ_Handler      (SPI_ID_e SPI_ID);

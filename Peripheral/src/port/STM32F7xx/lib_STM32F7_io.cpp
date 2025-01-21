@@ -105,7 +105,7 @@ const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
     GPIOI,
     GPIOJ,
     GPIOK,
-}
+};
 
 const IO_ConfigProperties_t IO_ConfigProperties[IO_CFG_NUM] =
 {
@@ -138,7 +138,7 @@ IO_PinChangeCallback_t IO_PinChangeCallback[IO_IRQ_NUM] = {nullptr};
 // private prototype
 //-------------------------------------------------------------------------------------------------
 
-static void _IO_PinInit         (GPIO_TypeDef* pPort, uint32_t PinNumber, IO_ConfigProperties* pIO_Config);
+static void _IO_PinInit         (GPIO_TypeDef* pPort, uint32_t PinNumber, const IO_ConfigProperties_t* pIO_Config);
 static void _IO_EnableClock     (GPIO_TypeDef* pPort);
 
 #ifdef IO_IRQ_DEF
@@ -149,8 +149,8 @@ static void _IO_GetPinInfo      (IO_IrqID_e IO_ID, uint32_t* pPinNumber, uint32_
 // private function
 //-------------------------------------------------------------------------------------------------
 
-void _PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, IO_ConfigProperties* pIO_Config)
-{        
+void _IO_PinInit(GPIO_TypeDef* pPort, uint32_t PinNumber, const IO_ConfigProperties_t* pIO_Config)
+{
     uint32_t PinMode      = pIO_Config->PinMode;
     uint32_t PinType      = pIO_Config->PinType;
     uint32_t PinSpeed     = pIO_Config->PinSpeed;
@@ -275,18 +275,9 @@ static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_ID, uint32_t* pPinNumber, uint32_t*
 //-------------------------------------------------------------------------------------------------
 void IO_PinInit(IO_ID_e IO_ID)
 {
-    IO_Properties_t*     pIO_Properties;
-    IO_ConfigProperties* pIO_Config; 
-    GPIO_TypeDef*        pPort;
-    uint32_t             PinNumber;
-    uint32_t             PinMode;
-    uint32_t             PinType;
-    uint32_t             PinSpeed;
-    uint32_t             State;
-
-    pIO_Properties = &IO_Properties[IO_ID];
-    pIO_Config     = &IO_ConfigProperties[IO_Properties->IO_ConfigID];
-    pPort          = pIO_Properties->pPort;
+    const IO_Properties_t*       pIO_Properties = &IO_Properties[IO_ID];
+    const IO_ConfigProperties_t* pIO_Config     = &IO_ConfigProperties[IO_Properties->IO_ConfigID];;
+    GPIO_TypeDef*                pPort          = pIO_Properties->pPort;
 
     if(pPort != GPIOxx)
     {
@@ -361,18 +352,13 @@ void IO_PinInitOutput(IO_ID_e IO_ID)
 //  Note(s):        Initialize a group of pin on same port with same config
 //
 //-------------------------------------------------------------------------------------------------
-void IO_GroupPinInit(IO_Group_ID_e IO_GroupID)
+void IO_GroupPinInit(IO_GroupID_e IO_GroupID)
 {
-    IO_GroupProperties_t* pProperties;
-    IO_ConfigProperties*  pIO_Config; 
-    GPIO_TypeDef*         pPort;
-	uint32_t              PinPosition;
-	uint32_t              Position;
-	uint32_t              PinNumber;
-
-    pProperties = &pProperties[IO_GroupID];
-    pIO_Config  = &IO_ConfigProperties[IO_Properties->IO_ConfigID];
-    pPort       = pProperties->pPort;
+    const IO_GroupProperties_t*  pProperties = &IO_GroupProperties[IO_GroupID];
+    const IO_ConfigProperties_t* pIO_Config  = &IO_ConfigProperties[IO_Properties->IO_ConfigID];;
+    GPIO_TypeDef*                pPort       = pProperties->pPort;
+	uint32_t                     Position;
+	uint32_t                     PinNumber;
 
     if(pPort != GPIOxx)
     {
@@ -381,7 +367,7 @@ void IO_GroupPinInit(IO_Group_ID_e IO_GroupID)
 		for(uint32_t PinPosition = 0; PinPosition <= 15; PinPosition++)
 		{
 			Position  = ((uint32_t)0x01) << PinPosition;
-			PinNumber = GroupPin & Position;						// Get the port pins position
+			PinNumber = pProperties->GroupPin & Position;						// Get the port pins position
 
 			if(PinNumber == Position)
 			{

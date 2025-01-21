@@ -96,12 +96,6 @@ void SPI_Driver::Initialize(void)
     Error = nOS_SemCreate(&m_DMA_Release, 0, 1);
     VAR_UNUSED(Error);
 
-    // Init defined IO's
-    IO_PinInit(m_pInfo->PinCLK);
-    IO_PinInit(m_pInfo->PinMOSI);
-    IO_PinInit(m_pInfo->PinMISO);
-    IO_PinInit(m_pInfo->PinNSS);
-
     switch(uint32_t(m_SPI_ID))
     {
       #if (SPI_DRIVER_SUPPORT_SPI1_CFG == DEF_ENABLED)

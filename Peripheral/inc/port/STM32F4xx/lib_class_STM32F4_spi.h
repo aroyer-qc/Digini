@@ -135,10 +135,6 @@ struct SPI_Info_t
     SPI_TypeDef*        pSPIx;
     uint32_t            Config;
     uint32_t            Speed;
-    IO_ID_e             PinCLK;
-    IO_ID_e             PinMOSI;
-    IO_ID_e             PinMISO;
-    IO_ID_e             PinNSS;
     IRQn_Type           IRQn;
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;

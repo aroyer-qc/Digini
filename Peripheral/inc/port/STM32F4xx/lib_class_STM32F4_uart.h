@@ -194,8 +194,6 @@ enum UART_Config_e
 struct UART_Info_t
 {
     USART_TypeDef*      pUARTx;
-    IO_ID_e             PinRX;
-    IO_ID_e             PinTX;
     uint32_t            RCC_APBxPeriph;
     volatile uint32_t*  RCC_APBxEN_Register;
     IRQn_Type           IRQn_Channel;

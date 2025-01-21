@@ -206,7 +206,7 @@ enum IO_GroupID_e
     IO_GROUP_DEF(EXPAND_X_IO_GROUP_AS_ENUM)
     IO_GROUP_NUM,
 };
-
+#endif
 
 #ifdef IO_IRQ_DEF
 enum IO_IrqID_e
@@ -225,7 +225,7 @@ typedef void (*IO_PinChangeCallback_t)(void* pArg);
 void        IO_PinInit                  (IO_ID_e IO_ID);
 void        IO_PinInitInput             (IO_ID_e IO_ID);
 void        IO_PinInitOutput            (IO_ID_e IO_ID);
-void        IO_GroupPinInit             (IO_Group_ID_e IO_GroupID);
+void        IO_GroupPinInit             (IO_GroupID_e IO_GroupID);
 void        IO_SetPinLow                (IO_ID_e IO_ID);
 void        IO_SetPinHigh               (IO_ID_e IO_ID);
 void        IO_TogglePin                (IO_ID_e IO_ID);

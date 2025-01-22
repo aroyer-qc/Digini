@@ -51,8 +51,8 @@
                                           { IO_PORT, IO_PIN, IO_CONFIG },
 #define EXPAND_X_IO_GROUP_AS_STRUCT_DATA(ENUM_ID, IO_PORT, IO_GROUP, IO_CONFIG ) \
                                                 { IO_PORT, IO_GROUP, IO_CONFIG },
-#define EXPAND_X_IO_IRQ_AS_STRUCT_DATA(ENUM_ID, IO_ID, NUMBER, PRIO, TRIGGER, CALLBACK) \
-                                              { IO_ID, NUMBER, PRIO, TRIGGER, CALLBACK},
+#define EXPAND_X_IO_IRQ_AS_STRUCT_DATA(ENUM_ID, IO_ID, NUMBER, PRIO, TRIGGER, CALLBACK, ARGUMENT) \
+                                              { IO_ID, NUMBER, PRIO, TRIGGER, CALLBACK, ARGUMENT},
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -87,6 +87,7 @@ struct IO_IRQ_Properties_t
     uint8_t                Priority;
     uint32_t               Trigger;
     IO_PinChangeCallback_t pCallback;
+    void*                  pArg;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -772,8 +773,8 @@ bool IO_GetIRQ_State(IO_IrqID_e IO_IRQ_ID)
 #ifdef IO_IRQ_DEF
 void IO_CallBack(IO_IrqID_e IO_IRQ_ID)
 {
-    IO_PinChangeCallback_t* pCallBack = IO_IRQ_Properties[IO_IRQ_ID].pCallback;
-    
+    IO_PinChangeCallback_t pCallBack = IO_IRQ_Properties[IO_IRQ_ID].pCallback;
+
     if(pCallBack != nullptr)
     {
         pCallBack(IO_IRQ_Properties[IO_IRQ_ID].pArg);

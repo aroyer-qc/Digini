@@ -91,6 +91,7 @@
 #define IO_AF_MASK                      ((uint32_t)0x0000000F)
 
 // AF 0 selection
+#define IO_AF0                          ((uint8_t)0x00)  // Alternate Function mapping
 #define IO_AF0_RTC_50Hz      			((uint8_t)0x00)  // RTC_50Hz Alternate Function mapping
 #define IO_AF0_MCO           			((uint8_t)0x00)  // MCO (MCO1 and MCO2) Alternate Function mapping
 #define IO_AF0_SWJ           			((uint8_t)0x00)  // SWJ (SWD and JTAG) Alternate Function mapping
@@ -109,6 +110,7 @@
 
 // AF 1 selection
 #define IO_AF1                          ((uint8_t)0x01)  // Alternate Function mapping
+#define IO_AF1_TIM                      ((uint8_t)0x01)  // TIM Alternate Function mapping
 #define IO_AF1_TIM1          			((uint8_t)0x01)  // TIM1 Alternate Function mapping
 #define IO_AF1_TIM2          			((uint8_t)0x01)  // TIM2 Alternate Function mapping
 #define IO_AF1_TIM16         			((uint8_t)0x01)  // TIM16 Alternate Function mapping
@@ -120,6 +122,7 @@
 
 // AF 2 selection
 #define IO_AF2                          ((uint8_t)0x02)  // Alternate Function mapping
+#define IO_AF2_TIM                      ((uint8_t)0x02)  // TIM Alternate Function mapping
 #define IO_AF2_TIM3                     ((uint8_t)0x02)  // TIM3 Alternate Function mapping
 #define IO_AF2_TIM4                     ((uint8_t)0x02)  // TIM4 Alternate Function mapping
 #define IO_AF2_TIM5                     ((uint8_t)0x02)  // TIM5 Alternate Function mapping
@@ -131,6 +134,7 @@
 #define IO_AF2_TIM15                    ((uint8_t)0x02)  // TIM15 Alternate Function mapping : available on STM32H7A3xxx/STM32H7B3xxx/STM32H7B0xxx
 
 // AF 3 selection
+#define IO_AF3                          ((uint8_t)0x03)  // Alternate Function mapping
 #define IO_AF3_TIM8                     ((uint8_t)0x03)  // TIM8 Alternate Function mapping
 #define IO_AF3_LPTIM2                   ((uint8_t)0x03)  // LPTIM2 Alternate Function mapping
 #define IO_AF3_DFSDM1                   ((uint8_t)0x03)  // DFSDM Alternate Function mapping
@@ -147,6 +151,7 @@
 #endif // HRTIM1
 
 // AF 4 selection
+#define IO_AF4                          ((uint8_t)0x04)  // Alternate Function mapping
 #define IO_AF4_I2C                      ((uint8_t)0x04)  // I2C Alternate Function mapping
 #define IO_AF4_I2C1                     ((uint8_t)0x04)  // I2C1 Alternate Function mapping
 #define IO_AF4_I2C2                     ((uint8_t)0x04)  // I2C2 Alternate Function mapping
@@ -165,6 +170,7 @@
 #endif // PSSI
 
 // AF 5 selection
+#define IO_AF5                          ((uint8_t)0x05)  // Alternate Function mapping
 #define IO_AF5_SPI                      ((uint8_t)0x05)  // SPI Alternate Function mapping
 #define IO_AF5_SPI1                     ((uint8_t)0x05)  // SPI1 Alternate Function mapping
 #define IO_AF5_SPI2                     ((uint8_t)0x05)  // SPI2 Alternate Function mapping
@@ -175,6 +181,7 @@
 #define IO_AF5_CEC                      ((uint8_t)0x05)  // CEC  Alternate Function mapping
 
 // AF 6 selection
+#define IO_AF6                          ((uint8_t)0x06)  // Alternate Function mapping
 #define IO_AF6_SPI2                     ((uint8_t)0x06)  // SPI2 Alternate Function mapping
 #define IO_AF6_SPI3                     ((uint8_t)0x06)  // SPI3 Alternate Function mapping
 #define IO_AF6_SAI1                     ((uint8_t)0x06)  // SAI1 Alternate Function mapping
@@ -192,6 +199,7 @@
 #endif // OCTOSPIM
 
 // AF 7 selection
+#define IO_AF7                          ((uint8_t)0x07)  // Alternate Function mapping
 #define IO_AF7_SPI2                     ((uint8_t)0x07)  // SPI2 Alternate Function mapping
 #define IO_AF7_SPI3                     ((uint8_t)0x07)  // SPI3 Alternate Function mapping
 #define IO_AF7_SPI6                     ((uint8_t)0x07)  // SPI6 Alternate Function mapping
@@ -204,6 +212,7 @@
 #define IO_AF7_SDMMC1                   ((uint8_t)0x07)  // SDMMC1 Alternate Function mapping
 
 // AF 8 selection
+#define IO_AF8                          ((uint8_t)0x08)  // Alternate Function mapping
 #define IO_AF8_SPI6                     ((uint8_t)0x08)  // SPI6 Alternate Function mapping
 #define IO_AF8_SAI2                     ((uint8_t)0x08)  // SAI2 Alternate Function mapping
 #define IO_AF8_UART4                    ((uint8_t)0x08)  // UART4 Alternate Function mapping
@@ -217,6 +226,7 @@
 #endif // SAI4
 
 // AF 9 selection
+#define IO_AF9                          ((uint8_t)0x09)  // Alternate Function mapping
 #define IO_AF9_FDCAN1                   ((uint8_t)0x09)  // FDCAN1 Alternate Function mapping
 #define IO_AF9_FDCAN2                   ((uint8_t)0x09)  // FDCAN2 Alternate Function mapping
 #define IO_AF9_TIM13                    ((uint8_t)0x09)  // TIM13 Alternate Function mapping
@@ -237,6 +247,7 @@
 #endif // OCTOSPIM
 
 // AF 10 selection
+#define IO_AF10                         ((uint8_t)0x0A)  // Alternate Function mapping
 #define IO_AF10_SAI2                    ((uint8_t)0x0A)  // SAI2 Alternate Function mapping
 #define IO_AF10_SDMMC2                  ((uint8_t)0x0A)  // SDMMC2 Alternate Function mapping
 #if defined(USB2_OTG_FS)
@@ -264,6 +275,7 @@
 #define IO_AF10_TIM8                    ((uint8_t)0x0A)  // TIM8 Alternate Function mapping
 
 // AF 11 selection
+#define IO_AF11                         ((uint8_t)0x0B)  // Alternate Function mapping
 #define IO_AF11_SWP           			((uint8_t)0x0B)  // SWP Alternate Function mapping
 #define IO_AF11_MDIOS                   ((uint8_t)0x0B)  // MDIOS Alternate Function mapping
 #define IO_AF11_UART7                   ((uint8_t)0x0B)  // UART7 Alternate Function mapping
@@ -294,6 +306,7 @@
 #endif // OCTOSPIM
 
 // AF 12 selection
+#define IO_AF12                         ((uint8_t)0x0C)  // Alternate Function mapping
 #define IO_AF12_FMC                     ((uint8_t)0x0C)  // FMC Alternate Function mapping
 #define IO_AF12_SDMMC1                  ((uint8_t)0x0C)  // SDMMC1 Alternate Function mapping
 #define IO_AF12_MDIOS                   ((uint8_t)0x0C)  // MDIOS Alternate Function mapping
@@ -309,6 +322,7 @@
 #endif // USB2_OTG_FS
 
 // AF 13 selection
+#define IO_AF13                         ((uint8_t)0x0D)  // Alternate Function mapping
 #define IO_AF13_DCMI                    ((uint8_t)0x0D)   // DCMI Alternate Function mapping
 #define IO_AF13_COMP1                   ((uint8_t)0x0D)   // COMP1 Alternate Function mapping
 #define IO_AF13_COMP2                   ((uint8_t)0x0D)   // COMP2 Alternate Function mapping
@@ -324,10 +338,12 @@
 #define IO_AF13_TIM1                    ((uint8_t)0x0D)    // TIM1 Alternate Function mapping
 
 // AF 14 selection
+#define IO_AF14                         ((uint8_t)0x0E)  // Alternate Function mapping
 #define IO_AF14_LTDC                    ((uint8_t)0x0E)   // LTDC Alternate Function mapping
 #define IO_AF14_UART5                   ((uint8_t)0x0E)   // UART5 Alternate Function mapping
 
 // AF 15 selection
+#define IO_AF15                         ((uint8_t)0x0F)  // Alternate Function mapping
 #define IO_AF15_EVENTOUT                ((uint8_t)0x0F)  // EVENTOUT Alternate Function mapping
 
 //#define IO_EXT_MODE_IT_SHIFT          (12)

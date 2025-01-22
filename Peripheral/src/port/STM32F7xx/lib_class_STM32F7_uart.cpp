@@ -135,15 +135,16 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
         ClearFlag();
 
-      #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-        for(uint32_t i = 0; i < (uint32_t)NB_OF_UART_DMA_DRIVER; i++)
-        {
-            if(UART_DMA_Info[i].UartID == UartID)
-            {
-                m_pDMA_Info = (UART_DMA_Info_t*)&UART_DMA_Info[i];
-                i = NB_OF_UART_DMA_DRIVER;
-            }
-        }
+//Not in F4.. do i need this
+//      #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
+//        for(uint32_t i = 0; i < (uint32_t)NB_OF_UART_DMA_DRIVER; i++)
+//        {
+//            if(UART_DMA_Info[i].UartID == UartID)
+//            {
+//                m_pDMA_Info = (UART_DMA_Info_t*)&UART_DMA_Info[i];
+//                i = NB_OF_UART_DMA_DRIVER;
+//            }
+//        }
 
         if(m_pDMA_Info != nullptr)
         {
@@ -161,7 +162,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
         m_DMA_IsItBusyTX = false;
         memset(&m_RX_Transfer, 0x00, sizeof(UART_Transfer_t));
-      #endif
+//      #endif
 
         memset(&m_TX_Transfer, 0x00, sizeof(UART_Transfer_t));
     }

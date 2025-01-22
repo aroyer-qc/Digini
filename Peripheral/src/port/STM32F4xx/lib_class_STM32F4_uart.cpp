@@ -124,9 +124,6 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
         SetConfig(m_pInfo->Config, m_pInfo->BaudID);
 
-        IO_PinInit(m_pInfo->PinRX);
-        IO_PinInit(m_pInfo->PinTX);
-
       #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
         m_pCallback = nullptr;
       #endif
@@ -138,12 +135,9 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
         ClearFlag();
 
-        if(m_pInfo->PinRX != IO_NOT_DEFINED)
-        {
-            m_DMA_RX.Initialize(&m_pInfo->DMA_RX); // Write config that will never change
-            m_DMA_RX.SetSource((void*)&m_pUart->DR);
-            m_DMA_RX.SetLength(UART_DRIVER_INTERNAL_RX_BUFFER_SIZE);
-        }
+        m_DMA_RX.Initialize(&m_pInfo->DMA_RX); // Write config that will never change
+        m_DMA_RX.SetSource((void*)&m_pUart->DR);
+        m_DMA_RX.SetLength(UART_DRIVER_INTERNAL_RX_BUFFER_SIZE);
 
         m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
         m_DMA_TX.SetDestination((void*)&m_pUart->DR);

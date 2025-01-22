@@ -108,6 +108,7 @@
 #endif // PWR_CPUCR_PDDS_D2
 
 // AF 1 selection
+#define IO_AF1                          ((uint8_t)0x01)  // Alternate Function mapping
 #define IO_AF1_TIM1          			((uint8_t)0x01)  // TIM1 Alternate Function mapping
 #define IO_AF1_TIM2          			((uint8_t)0x01)  // TIM2 Alternate Function mapping
 #define IO_AF1_TIM16         			((uint8_t)0x01)  // TIM16 Alternate Function mapping
@@ -118,6 +119,7 @@
 #endif // HRTIM1
 
 // AF 2 selection
+#define IO_AF2                          ((uint8_t)0x02)  // Alternate Function mapping
 #define IO_AF2_TIM3                     ((uint8_t)0x02)  // TIM3 Alternate Function mapping
 #define IO_AF2_TIM4                     ((uint8_t)0x02)  // TIM4 Alternate Function mapping
 #define IO_AF2_TIM5                     ((uint8_t)0x02)  // TIM5 Alternate Function mapping
@@ -341,7 +343,7 @@
 #define EXPAND_X_IO_CFG_AS_ENUM(ENUM_ID, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA) ENUM_ID,
 #define EXPAND_X_IO_AS_ENUM(ENUM_ID, IO_PORT, IO_PIN, IO_CONFIG) ENUM_ID,
 #define EXPAND_X_IO_GROUP_AS_ENUM(ENUM_ID, IO_PORT, IO_GROUP, IO_CONFIG) ENUM_ID,
-#define EXPAND_X_IO_IRQ_AS_ENUM(ENUM_ID, IO_ID, NUMBER, PRIO, TRIGGER) ENUM_ID,
+#define EXPAND_X_IO_IRQ_AS_ENUM(ENUM_ID, IO_ID, NUMBER, PRIO, TRIGGER, CALLBACK) ENUM_ID,
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -366,7 +368,7 @@ enum IO_GroupID_e
     IO_GROUP_DEF(EXPAND_X_IO_GROUP_AS_ENUM)
     IO_GROUP_NUM,
 };
-
+#endif
 
 #ifdef IO_IRQ_DEF
 enum IO_IrqID_e
@@ -382,10 +384,13 @@ typedef void (*IO_PinChangeCallback_t)(void* pArg);
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
+void        IO_InitializeAll            (void);                                 // Init all IO and group
 void        IO_PinInit                  (IO_ID_e IO_ID);
 void        IO_PinInitInput             (IO_ID_e IO_ID);
 void        IO_PinInitOutput            (IO_ID_e IO_ID);
-void        IO_GroupPinInit             (IO_Group_ID_e IO_GroupID);
+#ifdef IO_GROUP_DEF
+void        IO_GroupPinInit             (IO_GroupID_e IO_GroupID);
+#endif
 void        IO_SetPinLow                (IO_ID_e IO_ID);
 void        IO_SetPinHigh               (IO_ID_e IO_ID);
 void        IO_TogglePin                (IO_ID_e IO_ID);
@@ -395,7 +400,7 @@ uint32_t    IO_GetInputPinValue         (IO_ID_e IO_ID);
 bool        IO_GetOutputPin             (IO_ID_e IO_ID);
 bool        IO_IsItValid                (IO_ID_e IO_ID);
 #ifdef IO_IRQ_DEF
-void        IO_PinInitIRQ               (IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback);
+void        IO_PinInitIRQ               (IO_IrqID_e IO_IRQ_ID);               // Change this to put callback into BSP_IO_DEF
 void        IO_EnableIRQ                (IO_IrqID_e IO_IRQ_ID);
 void        IO_DisableIRQ               (IO_IrqID_e IO_IRQ_ID);
 IO_ID_e     IO_GetIO_ID                 (IO_IrqID_e IO_IRQ_ID);

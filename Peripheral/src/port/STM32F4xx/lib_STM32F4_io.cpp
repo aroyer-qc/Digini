@@ -51,8 +51,8 @@
                                           { IO_PORT, IO_PIN, IO_CONFIG },
 #define EXPAND_X_IO_GROUP_AS_STRUCT_DATA(ENUM_ID, IO_PORT, IO_GROUP, IO_CONFIG ) \
                                                 { IO_PORT, IO_GROUP, IO_CONFIG },
-#define EXPAND_X_IO_IRQ_AS_STRUCT_DATA(ENUM_ID, IO_ID, NUMBER, PRIO, TRIGGER) \
-                                              { IO_ID, NUMBER, PRIO, TRIGGER},
+#define EXPAND_X_IO_IRQ_AS_STRUCT_DATA(ENUM_ID, IO_ID, NUMBER, PRIO, TRIGGER, CALLBACK) \
+                                              { IO_ID, NUMBER, PRIO, TRIGGER, CALLBACK},
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -82,10 +82,12 @@ struct IO_GroupProperties_t
 
 struct IO_IRQ_Properties_t
 {
-    IO_ID_e         IO_ID;
-    IRQn_Type       IRQ_Channel;
-    uint8_t         Priority;
-    uint32_t        Trigger;
+    IO_ID_e                IO_ID;
+    IRQn_Type              IRQ_Channel;
+    uint8_t                Priority;
+    uint32_t               Trigger;
+    IO_PinChangeCallback_t pCallback;
+    void*                  pArg;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -131,8 +133,6 @@ const IO_IRQ_Properties_t IO_IRQ_Properties[IO_IRQ_NUM] =
 {
     IO_IRQ_DEF(EXPAND_X_IO_IRQ_AS_STRUCT_DATA)
 };
-
-IO_PinChangeCallback_t IO_PinChangeCallback[IO_IRQ_NUM] = {nullptr};
 
 #endif
 
@@ -265,6 +265,42 @@ static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_ID, uint32_t* pPinNumber, uint32_t*
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Function:       IO_InitializeAll
+//
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Return:         None
+//
+//  Description:    Init All individual IO and group of pin IO.
+//
+//  Note(s):        This support function may not be used, and user should then call individually
+//                  their IO_PinInit or IO_GroupPinInit.
+//
+//-------------------------------------------------------------------------------------------------
+void IO_InitializeAll(void)
+{
+    for(int i = 0; i < int(IO_NUM); i++)
+    {
+        IO_PinInit(IO_ID_e(i));
+    }
+
+  #ifdef IO_GROUP_DEF
+    for(int i = 0; i < int(IO_GROUP_NUM); i++)
+    {
+        IO_GroupPinInit(IO_GroupID_e(i));
+    }
+  #endif
+
+
+  #ifdef IO_IRQ_DEF
+    for(int i = 0; i < int(IO_IRQ_NUM); i++)
+    {
+        IO_PinInitIRQ(IO_IrqID_e(i));
+    }
+  #endif
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Function:       IO_PinInit
 //
 //  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
@@ -354,6 +390,7 @@ void IO_PinInitOutput(IO_ID_e IO_ID)
 //  Note(s):        Initialize a group of pin on same port with same config
 //
 //-------------------------------------------------------------------------------------------------
+#ifdef IO_GROUP_DEF
 void IO_GroupPinInit(IO_GroupID_e IO_GroupID)
 {
     const IO_GroupProperties_t*  pProperties = &IO_GroupProperties[IO_GroupID];
@@ -378,6 +415,7 @@ void IO_GroupPinInit(IO_GroupID_e IO_GroupID)
         }
 	}
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -580,7 +618,7 @@ bool IO_IsItValid(IO_ID_e IO_ID)
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef IO_IRQ_DEF
-void IO_PinInitIRQ(IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback)
+void IO_PinInitIRQ(IO_IrqID_e IO_IRQ_ID)
 {
     const IO_IRQ_Properties_t* pIRQ_Properties;
     const IO_Properties_t*     pIO_Properties;
@@ -625,8 +663,6 @@ void IO_PinInitIRQ(IO_IrqID_e IO_IRQ_ID, IO_PinChangeCallback_t pCallback)
     {
         CLEAR_BIT(EXTI->FTSR, PinMask);
     }
-
-    IO_PinChangeCallback[IO_IRQ_ID] = pCallback;
 
     // Configure interrupt priority for IO
     ISR_Init(pIRQ_Properties->IRQ_Channel, pIRQ_Properties->Priority);
@@ -739,9 +775,11 @@ bool IO_GetIRQ_State(IO_IrqID_e IO_IRQ_ID)
 #ifdef IO_IRQ_DEF
 void IO_CallBack(IO_IrqID_e IO_IRQ_ID)
 {
-    if(IO_PinChangeCallback[IO_IRQ_ID] != nullptr)
+    IO_PinChangeCallback_t* pCallBack = IO_IRQ_Properties[IO_IRQ_ID].pCallback;
+    
+    if(pCallBack != nullptr)
     {
-        IO_PinChangeCallback[IO_IRQ_ID](nullptr);
+        pCallBack(IO_IRQ_Properties[IO_IRQ_ID].pArg);
     }
 }
 #endif

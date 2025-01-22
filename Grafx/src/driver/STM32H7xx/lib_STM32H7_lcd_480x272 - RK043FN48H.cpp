@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F7_lcd_480x272 - RK043FN48H.cpp
+//  File : lib_class_STM32H7_lcd_480x272 - RK043FN48H.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2025 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -146,7 +146,7 @@ void GrafxDriver::LCD_Initialize(void)
                        (GRAFX_PLLSAIQ_VALUE << RCC_PLLSAICFGR_PLLSAIQ_Pos) |
                        (GRAFX_PLLSAIN_VALUE << RCC_PLLSAICFGR_PLLSAIN_Pos);
 
-// TODO found a better way
+// TODO found a better way ( It is found just need to convert it to new IO
     SET_BIT(RCC->PLLSAICFGR, 0x01 << RCC_PLLSAICFGR_PLLSAIP_Pos); // Enable the USB Clock and SDMMC
     SET_BIT(RCC->DCKCFGR2, 1 << RCC_DCKCFGR2_CK48MSEL_Pos);
 

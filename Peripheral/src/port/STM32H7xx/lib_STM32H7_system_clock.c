@@ -70,7 +70,6 @@ void SystemInit(void)
     SCB->SCR |= SCB_SCR_SEVONPEND_Pos;
 
 
-    /*
     /* Supply configuration update enable */
     HAL_PWREx_ConfigSupply(PWR_DIRECT_SMPS_SUPPLY);
 

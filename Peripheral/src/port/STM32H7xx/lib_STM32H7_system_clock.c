@@ -80,7 +80,6 @@ void SystemInit(void)
 
 __HAL_RCC_SYSCFG_CLK_ENABLE();
 
-*/
 
     // Reset the RCC clock configuration to the default reset state
     RCC->CR        |= RCC_CR_HSION;                         // Set HSION bit
@@ -102,7 +101,7 @@ __HAL_RCC_SYSCFG_CLK_ENABLE();
     RCC->CR        &= 0xFFFBFFFF;                           // Reset HSEBYP bit
     RCC->CIER       = 0x00000000;                           // Disable all interrupts
     EXTI_D2->EMR3  |= 0x4000;                               // Enable CortexM7 HSEM EXTI line (line 78)
-  
+
     if((DBGMCU->IDCODE & 0xFFFF0000) < 0x20000000)
     {
         // if stm32h7 revY
@@ -134,7 +133,7 @@ __HAL_RCC_SYSCFG_CLK_ENABLE();
 void SystemInit(void)
 {
     __asm volatile("cpsid i");                        // Disable IRQ
-    
+
     // FPU settings
   #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
     SCB->CPACR |= ((3 << (10 * 2)) | (3 << (11 * 2)));  // set CP10 and CP11 full access

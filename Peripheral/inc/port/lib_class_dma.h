@@ -31,7 +31,7 @@
 #elif defined STM32F7xx
  #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_dma.h"
 #elif defined STM32H7xx
- #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32H7_dma.h"
+ #include "./Peripheral/inc/port/STM32H7xx/lib_class_STM32H7_dma.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

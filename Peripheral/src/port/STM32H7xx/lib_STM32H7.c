@@ -24,6 +24,8 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+#include <stdio.h>
+
 // that is not the real CPUID, this what cortex lib is defined to ..
 
 #define CM7_CPUID        ((uint32_t)0x00000003)
@@ -77,5 +79,5 @@ uint32_t HAL_GetCurrentCPUID(void)
 //-------------------------------------------------------------------------------------------------
 uint32_t GetUniqueCPUID(void)
 {
-    return 0; 
+    return 0;
 }

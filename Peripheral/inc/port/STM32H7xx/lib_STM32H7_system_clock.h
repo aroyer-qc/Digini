@@ -35,6 +35,13 @@
 #include "./Digini/inc/lib_macro.h"
 
 //-------------------------------------------------------------------------------------------------
+// Macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define XSTR(x) STR(x)
+#define STR(x) #x
+
+//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -42,127 +49,6 @@
 #define CFG_HSI_VALUE                               64000000
 #define CFG_CSI_VALUE                               4000000
 #define CFG_RC48_VALUE                              48000000
-
-/*
-// Own define for register bit value without cast (Do not change)
-#define CFG_RCC_CFGR_SW_HSI                         0x00000000U
-#define CFG_RCC_CFGR_SW_HSE                         0x00000001U
-#define CFG_RCC_CFGR_SW_PLL                         0x00000002U
-                #define RCC_CFGR_SW_Pos                        (0U)
-                #define RCC_CFGR_SW_Msk                        (0x7UL << RCC_CFGR_SW_Pos)           // 0x00000007
-                #define RCC_CFGR_SW                            RCC_CFGR_SW_Msk                     // SW[2:0] bits (System clock Switch)
-                #define RCC_CFGR_SW_0                          (0x1UL << RCC_CFGR_SW_Pos)           // 0x00000001
-                #define RCC_CFGR_SW_1                          (0x2UL << RCC_CFGR_SW_Pos)           // 0x00000002
-                #define RCC_CFGR_SW_2                          (0x4UL << RCC_CFGR_SW_Pos)           // 0x00000004
-
-
-#define CFG_RCC_PLLCFGR_PLLSRC_HSE                  0x00400000U
-#define CFG_RCC_PLLCFGR_PLLSRC_HSI                  0x00000000U
-
-
-#define CFG_RCC_PLL1DIVR
-#define CFG_RCC_PLL1DIVP
-#define CFG_RCC_PLL1DIVQ
-
-#define CFG_RCC_PLL2DIVR
-#define CFG_RCC_PLL2DIVP
-#define CFG_RCC_PLL2DIVQ
-
-#define CFG_RCC_PLL3DIVR
-#define CFG_RCC_PLL3DIVP
-#define CFG_RCC_PLL3DIVQ
-
-
-
-#define CFG_RCC_CFGR_D1HPRE_DIV1                     ?? 0x00000000U
-#define CFG_RCC_CFGR_D1HPRE_DIV2                     ?? 0x00000080U
-#define CFG_RCC_CFGR_D1HPRE_DIV4                     ?? 0x00000090U
-#define CFG_RCC_CFGR_D1HPRE_DIV8                     ?? 0x000000A0U
-#define CFG_RCC_CFGR_D1HPRE_DIV16                    ?? 0x000000B0U
-#define CFG_RCC_CFGR_D1HPRE_DIV64                    ?? 0x000000C0U
-#define CFG_RCC_CFGR_D1HPRE_DIV128                   ?? 0x000000D0U
-#define CFG_RCC_CFGR_D1HPRE_DIV256                   ?? 0x000000E0U
-#define CFG_RCC_CFGR_D1HPRE_DIV512                   ?? 0x000000F0U
-
-#define CFG_RCC_CFGR_D1PPRE_DIV1                     ?? 0x00000000U
-#define CFG_RCC_CFGR_D1PPRE_DIV2                     ?? 0x00000080U
-#define CFG_RCC_CFGR_D1PPRE_DIV4                     ?? 0x00000090U
-#define CFG_RCC_CFGR_D1PPRE_DIV8                     ?? 0x000000A0U
-#define CFG_RCC_CFGR_D1PPRE_DIV16                    ?? 0x000000B0U
-#define CFG_RCC_CFGR_D1PPRE_DIV64                    ?? 0x000000C0U
-#define CFG_RCC_CFGR_D1PPRE_DIV128                   ?? 0x000000D0U
-#define CFG_RCC_CFGR_D1PPRE_DIV256                   ?? 0x000000E0U
-#define CFG_RCC_CFGR_D1PPRE_DIV512                   ?? 0x000000F0U
-
-#define CFG_RCC_CFGR_D2PPRE1_DIV1                     ?? 0x00000000U
-#define CFG_RCC_CFGR_D2PPRE1_DIV2                     ?? 0x00000080U
-#define CFG_RCC_CFGR_D2PPRE1_DIV4                     ?? 0x00000090U
-#define CFG_RCC_CFGR_D2PPRE1_DIV8                     ?? 0x000000A0U
-#define CFG_RCC_CFGR_D2PPRE1_DIV16                    ?? 0x000000B0U
-#define CFG_RCC_CFGR_D2PPRE1_DIV64                    ?? 0x000000C0U
-#define CFG_RCC_CFGR_D2PPRE1_DIV128                   ?? 0x000000D0U
-#define CFG_RCC_CFGR_D2PPRE1_DIV256                   ?? 0x000000E0U
-#define CFG_RCC_CFGR_D2PPRE1_DIV512                   ?? 0x000000F0U
-
-#define CFG_RCC_CFGR_D2PPRE2_DIV1                     ?? 0x00000000U
-#define CFG_RCC_CFGR_D2PPRE2_DIV2                     ?? 0x00000080U
-#define CFG_RCC_CFGR_D2PPRE2_DIV4                     ?? 0x00000090U
-#define CFG_RCC_CFGR_D2PPRE2_DIV8                     ?? 0x000000A0U
-#define CFG_RCC_CFGR_D2PPRE2_DIV16                    ?? 0x000000B0U
-#define CFG_RCC_CFGR_D2PPRE2_DIV64                    ?? 0x000000C0U
-#define CFG_RCC_CFGR_D2PPRE2_DIV128                   ?? 0x000000D0U
-#define CFG_RCC_CFGR_D2PPRE2_DIV256                   ?? 0x000000E0U
-#define CFG_RCC_CFGR_D2PPRE2_DIV512                   ?? 0x000000F0U
-
-#define CFG_RCC_CFGR_D3PPRE_DIV1                     ?? 0x00000000U
-#define CFG_RCC_CFGR_D3PPRE_DIV2                     ?? 0x00000080U
-#define CFG_RCC_CFGR_D3PPRE_DIV4                     ?? 0x00000090U
-#define CFG_RCC_CFGR_D3PPRE_DIV8                     ?? 0x000000A0U
-#define CFG_RCC_CFGR_D3PPRE_DIV16                    ?? 0x000000B0U
-#define CFG_RCC_CFGR_D3PPRE_DIV64                    ?? 0x000000C0U
-#define CFG_RCC_CFGR_D3PPRE_DIV128                   ?? 0x000000D0U
-#define CFG_RCC_CFGR_D3PPRE_DIV256                   ?? 0x000000E0U
-#define CFG_RCC_CFGR_D3PPRE_DIV512                   ?? 0x000000F0U
-
-#define CFG_RCC_CFGR_MCO1PRE_NO_DIV                 0x00000000U
-#define CFG_RCC_CFGR_MCO1PRE_DIV2                   0x04000000U
-#define CFG_RCC_CFGR_MCO1PRE_DIV3                   0x05000000U
-#define CFG_RCC_CFGR_MCO1PRE_DIV4                   0x06000000U
-#define CFG_RCC_CFGR_MCO1PRE_DIV5                   0x07000000U
-
-            #define RCC_CFGR_MCO1PRE_Pos                   (18U)
-            #define RCC_CFGR_MCO1PRE_Msk                   (0xFUL << RCC_CFGR_MCO1PRE_Pos)
-            #define RCC_CFGR_MCO1PRE                       RCC_CFGR_MCO1PRE_Msk                    // 0x003C0000
-            #define RCC_CFGR_MCO1PRE_0                     (0x1UL << RCC_CFGR_MCO1PRE_Pos)          // 0x00040000
-            #define RCC_CFGR_MCO1PRE_1                     (0x2UL << RCC_CFGR_MCO1PRE_Pos)          // 0x00080000
-            #define RCC_CFGR_MCO1PRE_2                     (0x4UL << RCC_CFGR_MCO1PRE_Pos)          // 0x00100000
-            #define RCC_CFGR_MCO1PRE_3                     (0x8UL << RCC_CFGR_MCO1PRE_Pos)          // 0x00200000
-
-            #define RCC_CFGR_MCO2PRE_Pos                   (25U)
-            #define RCC_CFGR_MCO2PRE_Msk                   (0xFUL << RCC_CFGR_MCO2PRE_Pos)
-            #define RCC_CFGR_MCO2PRE                       RCC_CFGR_MCO2PRE_Msk                    // 0x1E000000
-            #define RCC_CFGR_MCO2PRE_0                     (0x1UL << RCC_CFGR_MCO2PRE_Pos)          // 0x02000000
-            #define RCC_CFGR_MCO2PRE_1                     (0x2UL << RCC_CFGR_MCO2PRE_Pos)          // 0x04000000
-            #define RCC_CFGR_MCO2PRE_2                     (0x4UL << RCC_CFGR_MCO2PRE_Pos)          // 0x08000000
-            #define RCC_CFGR_MCO2PRE_3                     (0x8UL << RCC_CFGR_MCO2PRE_Pos)          // 0x10000000
-
-#define CFG_RCC_CFGR_MCO1_HSI                       0x00000000U
-#define CFG_RCC_CFGR_MCO1_LSE                       0x00200000U
-#define CFG_RCC_CFGR_MCO1_HSE                       0x00400000U
-#define CFG_RCC_CFGR_MCO1_PLL                       0x00600000U
-
-#define CFG_RCC_CFGR_MCO2PRE_NO_DIV                 0x00000000U
-#define CFG_RCC_CFGR_MCO2PRE_DIV2                   0x20000000U
-#define CFG_RCC_CFGR_MCO2PRE_DIV3                   0x28000000U
-#define CFG_RCC_CFGR_MCO2PRE_DIV4                   0x30000000U
-#define CFG_RCC_CFGR_MCO2PRE_DIV5                   0x38000000U
-
-#define CFG_RCC_CFGR_MCO2_SYSCLOCK                  0x00000000U
-#define CFG_RCC_CFGR_MCO2_PLLI2S                    0x40000000U
-#define CFG_RCC_CFGR_MCO2_HSE                       0x80000000U
-#define CFG_RCC_CFGR_MCO2_PLL                       0xC0000000U
-
-*/
 
 //-------------------------------------------------------------------------------------------------
 // Multiplexer for peripheral clock source
@@ -478,7 +364,7 @@
                                                      CFG_RCC_PLLDIVR_PLL1_Q |   \
                                                      CFG_RCC_PLLDIVR_PLL1_R)
 
-#define CFG_PLL1_SPEED                              (CFG_FREQ_PLL_SOURCE / CFG_PLL1_M_DIVIDER) * CFG_PLL1_N_MULTIPLIER)
+#define CFG_PLL1_SPEED                              ((CFG_FREQ_PLL_SOURCE / CFG_PLL1_M_DIVIDER) * CFG_PLL1_N_MULTIPLIER)
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// PLL2 Configuration
@@ -524,7 +410,7 @@
                                                      CFG_RCC_PLLDIVR_PLL2_Q |   \
                                                      CFG_RCC_PLLDIVR_PLL2_R)
 
-#define CFG_PLL2_SPEED                              (CFG_FREQ_PLL_SOURCE / CFG_PLL2_M_DIVIDER) * CFG_PLL2_N_MULTIPLIER)
+#define CFG_PLL2_SPEED                              ((CFG_FREQ_PLL_SOURCE / CFG_PLL2_M_DIVIDER) * CFG_PLL2_N_MULTIPLIER)
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// PLL3 Configuration
@@ -570,7 +456,7 @@
                                                      CFG_RCC_PLLDIVR_PLL3_Q |   \
                                                      CFG_RCC_PLLDIVR_PLL3_R)
 
-#define CFG_PLL3_SPEED                              (CFG_FREQ_PLL_SOURCE / CFG_PLL3_M_DIVIDER) * CFG_PLL3_N_MULTIPLIER)
+#define CFG_PLL3_SPEED                              ((CFG_FREQ_PLL_SOURCE / CFG_PLL3_M_DIVIDER) * CFG_PLL3_N_MULTIPLIER)
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// PLLCKSELR
@@ -595,19 +481,19 @@
                                                      (CFG_ENABLE_PLL3Q << RCC_PLLCFGR_PLL3Q_POS) | \
                                                      (CFG_ENABLE_PLL3R << RCC_PLLCFGR_PLL3R_POS))
 
-#if (CFG_PLL1_SPEED >= 150) && (CFG_PLL1_SPEED <= 420)
+#if (CFG_PLL1_SPEED >= 150000000) && (CFG_PLL1_SPEED <= 420000000)
   #define CFG_PLLCFGR_PLL1VCOSEL                    RCC_PLLCFGR_PLL1VCOSEL
 #else
   #define CFG_PLLCFGR_PLL1VCOSEL                    0
 #endif
 
-#if (CFG_PLL2_SPEED >= 150) && (CFG_PLL2_SPEED <= 420)
+#if (CFG_PLL2_SPEED >= 150000000) && (CFG_PLL2_SPEED <= 420000000)
   #define CFG_PLLCFGR_PLL2VCOSEL                    RCC_PLLCFGR_PLL2VCOSEL
 #else
   #define CFG_PLLCFGR_PLL2VCOSEL                    0
 #endif
 
-#if (CFG_PLL3_SPEED >= 150) && (CFG_PLL3_SPEED <= 420)
+#if (CFG_PLL3_SPEED >= 150000000) && (CFG_PLL3_SPEED <= 420000000)
   #define CFG_PLLCFGR_PLL3VCOSEL                    RCC_PLLCFGR_PLL3VCOSEL
 #else
   #define CFG_PLLCFGR_PLL3VCOSEL                    0
@@ -617,43 +503,61 @@
 #define CFG_INPUT_FREQUENCY_PLL2                    (CFG_FREQ_PLL_SOURCE / CFG_PLL2_M_DIVIDER)
 #define CFG_INPUT_FREQUENCY_PLL3                    (CFG_FREQ_PLL_SOURCE / CFG_PLL3_M_DIVIDER)
 
-#if   (CFG_INPUT_FREQUENCY_PLL1 >= 1) && (CFG_INPUT_FREQUENCY_PLL1 <= 2)
+#if   (CFG_INPUT_FREQUENCY_PLL1 >= 1000000) && (CFG_INPUT_FREQUENCY_PLL1 <= 2000000)
   #define CFG_PLLCFGR_PLL1RGE                       RCC_PLLCFGR_PLL1RGE_0
-#elif (CFG_INPUT_FREQUENCY_PLL1 >  2) && (CFG_INPUT_FREQUENCY_PLL1 <= 4)
+#elif (CFG_INPUT_FREQUENCY_PLL1 >  2000000) && (CFG_INPUT_FREQUENCY_PLL1 <= 4000000)
   #define CFG_PLLCFGR_PLL1RGE                       RCC_PLLCFGR_PLL1RGE_1
-#elif (CFG_INPUT_FREQUENCY_PLL1 >  4) && (CFG_INPUT_FREQUENCY_PLL1 <= 8)
+#elif (CFG_INPUT_FREQUENCY_PLL1 >  4000000) && (CFG_INPUT_FREQUENCY_PLL1 <= 8000000)
   #define CFG_PLLCFGR_PLL1RGE                       RCC_PLLCFGR_PLL1RGE_2
-#elif (CFG_INPUT_FREQUENCY_PLL1 >  8) && (CFG_INPUT_FREQUENCY_PLL1 <= 16)
+#elif (CFG_INPUT_FREQUENCY_PLL1 >  8000000) && (CFG_INPUT_FREQUENCY_PLL1 <= 1600000)
   #define CFG_PLLCFGR_PLL1RGE                       RCC_PLLCFGR_PLL1RGE_3
 #else
- #pragma message "XSTR(PLLCFGR PLL1RGE)"
- #error PLL1 input frequency outside of allowed range!
+ //#pragma message "XSTR(PLLCFGR PLL1RGE)"
+ #error PLL1 input frequency outside of allowed range! XSTR(CFG_INPUT_FREQUENCY_PLL1)
 #endif
 
-#if   (CFG_INPUT_FREQUENCY_PLL2 >= 1) && (CFG_INPUT_FREQUENCY_PLL2 <= 2)
+#if   (CFG_INPUT_FREQUENCY_PLL2 >= 1000000) && (CFG_INPUT_FREQUENCY_PLL2 <= 2000000)
   #define CFG_PLLCFGR_PLL2RGE                       RCC_PLLCFGR_PLL2RGE_0
-#elif (CFG_INPUT_FREQUENCY_PLL2 >  2) && (CFG_INPUT_FREQUENCY_PLL2 <= 4)
+#elif (CFG_INPUT_FREQUENCY_PLL2 >  2000000) && (CFG_INPUT_FREQUENCY_PLL2 <= 4000000)
   #define CFG_PLLCFGR_PLL2RGE                       RCC_PLLCFGR_PLL2RGE_1
-#elif (CFG_INPUT_FREQUENCY_PLL2 >  4) && (CFG_INPUT_FREQUENCY_PLL2 <= 8)
+#elif (CFG_INPUT_FREQUENCY_PLL2 >  4000000) && (CFG_INPUT_FREQUENCY_PLL2 <= 8000000)
   #define CFG_PLLCFGR_PLL2RGE                       RCC_PLLCFGR_PLL2RGE_2
-#elif (CFG_INPUT_FREQUENCY_PLL2 >  8) && (CFG_INPUT_FREQUENCY_PLL2 <= 16)
+#elif (CFG_INPUT_FREQUENCY_PLL2 >  8000000) && (CFG_INPUT_FREQUENCY_PLL2 <= 16000000)
   #define CFG_PLLCFGR_PLL2RGE                       RCC_PLLCFGR_PLL2RGE_3
 #else
- #pragma message "XSTR(PLLCFGR PLL2RGE)"
+ //#pragma message "XSTR(PLLCFGR PLL2RGE)"
  #error PLL2 input frequency outside of allowed range!
 #endif
 
-#if   (CFG_INPUT_FREQUENCY_PLL3 >= 1) && (CFG_INPUT_FREQUENCY_PLL3 <= 2)
+#if   (CFG_INPUT_FREQUENCY_PLL3 >= 1000000) && (CFG_INPUT_FREQUENCY_PLL3 <= 2000000)
   #define CFG_PLLCFGR_PLL3RGE                       RCC_PLLCFGR_PLL3RGE_0
-#elif (CFG_INPUT_FREQUENCY_PLL3 >  2) && (CFG_INPUT_FREQUENCY_PLL3 <= 4)
+#elif (CFG_INPUT_FREQUENCY_PLL3 >  2000000) && (CFG_INPUT_FREQUENCY_PLL3 <= 4000000)
   #define CFG_PLLCFGR_PLL3RGE                       RCC_PLLCFGR_PLL3RGE_1
-#elif (CFG_INPUT_FREQUENCY_PLL3 >  4) && (CFG_INPUT_FREQUENCY_PLL3 <= 8)
+#elif (CFG_INPUT_FREQUENCY_PLL3 >  4000000) && (CFG_INPUT_FREQUENCY_PLL3 <= 8000000)
   #define CFG_PLLCFGR_PLL3RGE                       RCC_PLLCFGR_PLL3RGE_2
-#elif (CFG_INPUT_FREQUENCY_PLL3 >  8) && (CFG_INPUT_FREQUENCY_PLL3 <= 16)
+#elif (CFG_INPUT_FREQUENCY_PLL3 >  8000000) && (CFG_INPUT_FREQUENCY_PLL3 <= 16000000)
   #define CFG_PLLCFGR_PLL3RGE                       RCC_PLLCFGR_PLL3RGE_3
 #else
- #pragma message "XSTR(PLLCFGR PLL3RGE)"
+ //#pragma message "XSTR(PLLCFGR PLL3RGE)"
  #error PLL3 input frequency outside of allowed range!
+#endif
+
+#if (CFG_PLL1_FRACTIONAL_VALUE == 0)
+  #define CFG_PLLCFGR_PLL1FRAEN                     0
+#else
+  #define CFG_PLLCFGR_PLL1FRAEN                     RCC_PLLCFGR_PLL1FRAEN
+#endif
+
+#if (CFG_PLL2_FRACTIONAL_VALUE == 0)
+  #define CFG_PLLCFGR_PLL2FRAEN                     0
+#else
+  #define CFG_PLLCFGR_PLL2FRAEN                     RCC_PLLCFGR_PLL2FRAEN
+#endif
+
+#if (CFG_PLL3_FRACTIONAL_VALUE == 0)
+  #define CFG_PLLCFGR_PLL3FRAEN                     0
+#else
+  #define CFG_PLLCFGR_PLL3FRAEN                     RCC_PLLCFGR_PLL3FRAEN
 #endif
 
 #define CFG_PLLCFGR                                 (CFG_PLLCFGR_OUTPUT_ENABLE  | \
@@ -663,8 +567,9 @@
                                                      CFG_PLLCFGR_PLL1RGE        | \
                                                      CFG_PLLCFGR_PLL2RGE        | \
                                                      CFG_PLLCFGR_PLL3RGE        | \
-
-/// Missing PLL1FRACEN, PLL2FRACEN, PLL3FRACEN
+                                                     CFG_PLLCFGR_PLL1FRAEN      | \
+                                                     CFG_PLLCFGR_PLL2FRAEN      | \
+                                                     CFG_PLLCFGR_PLL3FRAEN)
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// SYS Clock Mux
@@ -771,45 +676,43 @@
 // --------------------------------------------------------------------------------------------------------------------------------
 
 // Power scaling according to speed
-#if (SYS_CPU_CORE_CLOCK_FREQUENCY <= 151000000)
-#define CFG_POWER_REGULATOR                         PWR_CR1_VOS_0   // Voltage scale 3
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 180000000)
-#define CFG_POWER_REGULATOR                         PWR_CR1_VOS_1   // Voltage scale 2
+#if (SYS_CPU_CORE_CLOCK_FREQUENCY <= 70000000)
+//#define CFG_POWER_REGULATOR                         PWR_CR1_VOS_0   // Voltage scale 3
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 140000000)
+//#define CFG_POWER_REGULATOR                         PWR_CR1_VOS_1   // Voltage scale 2
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 216000000)
 #define CFG_POWER_REGULATOR                         PWR_CR1_VOS     // Voltage scale 1
 #endif
 
 // Flash Latency configuration for Voltage from 2.7V to 3.6V
-#if   (SYS_CPU_CORE_CLOCK_FREQUENCY <= 30000000)
+#if   (SYS_CPU_CORE_CLOCK_FREQUENCY <= 70000000)
 #define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_0WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 60000000)
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 140000000)
 #define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_1WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 90000000)
-#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_2WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 120000000)
-#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_3WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 150000000)
-#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_4WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 180000000)
-#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_5WS
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 210000000)
-#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_6WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 216000000)
-#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_7WS
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_2WS
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 225000000)
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_3WS
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 240000000)
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_4WS
+#else
+#error CFG_FLASH_LATENCY
 #endif
 
 // --------------------------------------------------------------------------------------------------------------------------------
-
-#if   (SYS_CPU_CORE_CLOCK_FREQUENCY >= 150000000)
-#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div102
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY >= 100000000)
-#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div62
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY >= 60000000)
-#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div42
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY >= 35000000)
-#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div26
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY >= 25000000)
-#define ETH_MACIIAR_CR_DIVIDER                      ETH_MACMIIAR_CR_Div16
+// see page 3151 of the PDF: rm0399-stm32h745755-and-stm32h747757-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
+// This configuration is for MDIO with a Max frequency of 2.5 MHz (specified in the IEEE 802.3)
+//
+#if   (SYS_CPU_CORE_CLOCK_FREQUENCY > 155000000)
+  #define ETH_MACMDIOAR_CR_DIVIDER                  ETH_MACMIIAR_CR_Div102
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY > 105000000)
+  #define ETH_MACMDIOAR_CR_DIVIDER                  ETH_MACMIIAR_CR_Div62
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY > 65000000)
+  #define ETH_MACMDIOAR_CR_DIVIDER                  ETH_MACMIIAR_CR_Div42
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY > 40000000)
+  #define ETH_MACMDIOAR_CR_DIVIDER                  ETH_MACMIIAR_CR_Div26
+#else
+  #define ETH_MACMDIOAR_CR_DIVIDER                  ETH_MACMIIAR_CR_Div16
 #endif
 
 // Verification
@@ -818,27 +721,30 @@
  #error CPU Core frequency exceed maximum allowed!
 #endif
 
-#if SYS_APB1_CLOCK_FREQUENCY > 54000000
+#if SYS_AXI_CLOCK_FREQUENCY > 240000000
  #pragma message "XSTR(SYS_APB1_CLOCK_FREQUENCY)"
  #error APB1 frequency exceed maximum allowed!
 #endif
 
-#if SYS_APB2_CLOCK_FREQUENCY > 108000000
+#if SYS_APB1_CLOCK_FREQUENCY > 120000000
+ #pragma message "XSTR(SYS_APB1_CLOCK_FREQUENCY)"
+ #error APB1 frequency exceed maximum allowed!
+#endif
+
+#if SYS_APB2_CLOCK_FREQUENCY > 120000000
  #pragma message "XSTR(SYS_APB2_CLOCK_FREQUENCY)"
  #error APB2 frequency exceed maximum allowed!
 #endif
 
-//-------------------------------------------------------------------------------------------------
-// Global Macro
-//-------------------------------------------------------------------------------------------------
-
-/*
-#ifdef SYSTEM_GLOBAL
-    #define SYSTEM_EXTERN
-#else
-    #define SYSTEM_EXTERN extern
+#if SYS_AHB1_2_CLOCK_FREQUENCY > 240000000
+ #pragma message "XSTR(SYS_APB2_CLOCK_FREQUENCY)"
+ #error APB2 frequency exceed maximum allowed!
 #endif
-*/
+
+#if SYS_AHB4_CLOCK_FREQUENCY > 240000000
+ #pragma message "XSTR(SYS_APB2_CLOCK_FREQUENCY)"
+ #error APB2 frequency exceed maximum allowed!
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)

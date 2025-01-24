@@ -51,7 +51,7 @@
 //
 //  Description:    Configures CM7 Core
 //                      - Reset the CPU Setting
-//                      - Setup the microcontroller system.
+//                      - Setup the micro controller system.
 //                      - Initialize the FPU setting
 //                      - vector table locations configuration.
 //
@@ -59,47 +59,47 @@
 #ifdef CORE_CM7
 void SystemInit(void)
 {
-    __asm volatile("cpsid i");                              // Disable IRQ
+    __asm volatile("cpsid i");                                                  // Disable IRQ
 
     // FPU settings
   #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
-    SCB->CPACR |= ((3 << (10 * 2)) | (3 << (11 * 2)));      // Set CP10 and CP11 Full Access
+    SCB->CPACR |= ((3 << (10 * 2)) | (3 << (11 * 2)));                          // Set CP10 and CP11 Full Access
   #endif
 
     // SEVONPEND enabled so that an interrupt coming from the CPU(n) interrupt signal is detectable by the CPU after a WFI/WFE instruction.
     SCB->SCR |= SCB_SCR_SEVONPEND_Pos;
 
+//according th PDF VOS0 shoul be chossen for 240Mhz AXI clock with 4 WS
+    SET_BIT(PWR->CR3, PWR_CR3_SMPSEN);                                          // Set the power supply configuration
+    while((PWR->D3CR & PWR_D3CR_VOSRDY) != PWR_D3CR_VOSRDY){};                  // Wait till voltage level flag is set
 
-    /* Supply configuration update enable */
-    HAL_PWREx_ConfigSupply(PWR_DIRECT_SMPS_SUPPLY);
-
-    /* Configure the main internal regulator output voltage */
-    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
-    while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
-
-__HAL_RCC_SYSCFG_CLK_ENABLE();
-
+    // Configure the main internal regulator output voltage
+    CLEAR_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);                                // Disable the PWR overdrive
+    MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS, PWR_REGULATOR_VOLTAGE_SCALE3);          // Configure the main internal regulator output voltage
+    SET_BIT(RCC->APB4ENR, RCC_APB4ENR_SYSCFGEN);
 
     // Reset the RCC clock configuration to the default reset state
-    RCC->CR        |= RCC_CR_HSION;                         // Set HSION bit
-    RCC->CFGR       = 0x00000000;                           // Reset CFGR register
+    RCC->CR        |= RCC_CR_HSION;                                             // Set HSION bit
+    RCC->CFGR       = 0x00000000;                                               // Reset CFGR register
 
-    // Reset HSEON, CSSON, CSION,RC48ON, CSIKERON PLL1ON, PLL2ON and PLL3ON bits
-    RCC->CR        &= 0xEAF6ED7F;
+    CLEAR_BIT(RCC->CR, (RCC_CR_HSEON   | RCC_CR_CSSHSEON | RCC_CR_CSION  |      // Reset HSEON, CSSON, CSION, RC48ON, CSIKERON, PLL1ON, PLL2ON and PLL3ON bits
+                        RCC_CR_HSI48ON | RCC_CR_CSIKERON | RCC_CR_PLL1ON |
+                        RCC_CR_PLL2ON | RCC_CR_PLL3ON));
+
     RCC->D1CFGR     = 0x00000000;                           // Reset D1CFGR register
     RCC->D2CFGR     = 0x00000000;                           // Reset D2CFGR register
     RCC->D3CFGR     = 0x00000000;                           // Reset D3CFGR register
-    RCC->PLLCKSELR  = 0x00000000;                           // Reset PLLCKSELR register
-    RCC->PLLCFGR    = 0x00000000;                           // Reset PLLCFGR register
-    RCC->PLL1DIVR   = 0x00000000;                           // Reset PLL1DIVR register
-    RCC->PLL1FRACR  = 0x00000000;                           // Reset PLL1FRACR register
-    RCC->PLL2DIVR   = 0x00000000;                           // Reset PLL2DIVR register
-    RCC->PLL2FRACR  = 0x00000000;                           // Reset PLL2FRACR register
-    RCC->PLL3DIVR   = 0x00000000;                           // Reset PLL3DIVR register
-    RCC->PLL3FRACR  = 0x00000000;                           // Reset PLL3FRACR register
-    RCC->CR        &= 0xFFFBFFFF;                           // Reset HSEBYP bit
-    RCC->CIER       = 0x00000000;                           // Disable all interrupts
-    EXTI_D2->EMR3  |= 0x4000;                               // Enable CortexM7 HSEM EXTI line (line 78)
+    RCC->PLLCKSELR  = CFG_RCC_PLLCKSELR;
+    RCC->PLLCFGR    = CFG_PLLCFGR;
+    RCC->PLL1DIVR   = CFG_RCC_PLL1_DIVR;
+    RCC->PLL1FRACR  = (CFG_PLL1_FRACTIONAL_VALUE << RCC_PLL1FRACR_FRACN1_Pos);
+    RCC->PLL2DIVR   = CFG_RCC_PLL2_DIVR;
+    RCC->PLL2FRACR  = (CFG_PLL2_FRACTIONAL_VALUE << RCC_PLL2FRACR_FRACN2_Pos);
+    RCC->PLL3DIVR   = CFG_RCC_PLL3_DIVR;
+    RCC->PLL3FRACR  = (CFG_PLL2_FRACTIONAL_VALUE << RCC_PLL3FRACR_FRACN3_Pos);
+    CLEAR_BIT(RCC->CR, RCC_CR_HSEBYP;                                           // Reset HSEBYP bit
+    RCC->CIER       = 0x00000000;                                               // Disable all interrupts
+    SET_BIT(EXTI_D2->EMR3, EXTI_EMR3_EM78);                                     // Enable CortexM7 HSEM EXTI line (line 78)
 
     if((DBGMCU->IDCODE & 0xFFFF0000) < 0x20000000)
     {
@@ -107,6 +107,14 @@ __HAL_RCC_SYSCFG_CLK_ENABLE();
         // Change  the switch matrix read issuing capability to 1 for the AXI SRAM target (Target 7)
         *((__IO uint32_t*)0x51008108) = 0x000000001;
     }
+
+
+// start here the clcok config PLL HSE, etc....
+
+
+
+
+
 
   /* Configure the Vector Table location add offset address ------------------*/
   #ifdef VECT_TAB_SRAM
@@ -154,7 +162,7 @@ void SystemInit(void)
 
 //-------------------------------------------------------------------------------------------------
 
-
+#if 0
 
 
 Disable IRQ
@@ -182,7 +190,7 @@ CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));
 
 
 
-
+#endif
 
 
 

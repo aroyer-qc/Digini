@@ -86,11 +86,16 @@ void SystemInit(void)
                         RCC_CR_HSI48ON | RCC_CR_CSIKERON | RCC_CR_PLL1ON |
                         RCC_CR_PLL2ON | RCC_CR_PLL3ON));
 
-    RCC->D1CFGR     = 0x00000000;                           // Reset D1CFGR register
-    RCC->D2CFGR     = 0x00000000;                           // Reset D2CFGR register
-    RCC->D3CFGR     = 0x00000000;                           // Reset D3CFGR register
+    RCC->D1CFGR     = CFG_RCC_D1CFGR;
+    RCC->D2CFGR     = CFG_RCC_D2CFGR;
+    RCC->D3CFGR     = CFG_RCC_D3CFGR;
+    RCC->D1CCIPR    = CFG_RCC_D1CCIPR;
+    RCC->D2CCIP1R   = CFG_RCC_D2CCIP1R;
+    RCC->D2CCIP2R   = CFG_RCC_D2CCIP2R;
+    RCC->D3CCIPR    = CFG_RCC_D3CCIPR;
+
     RCC->PLLCKSELR  = CFG_RCC_PLLCKSELR;
-    RCC->PLLCFGR    = CFG_PLLCFGR;
+    RCC->PLLCFGR    = CFG_RCC_PLLCFGR;
     RCC->PLL1DIVR   = CFG_RCC_PLL1_DIVR;
     RCC->PLL1FRACR  = (CFG_PLL1_FRACTIONAL_VALUE << RCC_PLL1FRACR_FRACN1_Pos);
     RCC->PLL2DIVR   = CFG_RCC_PLL2_DIVR;
@@ -100,6 +105,8 @@ void SystemInit(void)
     CLEAR_BIT(RCC->CR, RCC_CR_HSEBYP;                                           // Reset HSEBYP bit
     RCC->CIER       = 0x00000000;                                               // Disable all interrupts
     SET_BIT(EXTI_D2->EMR3, EXTI_EMR3_EM78);                                     // Enable CortexM7 HSEM EXTI line (line 78)
+
+
 
     if((DBGMCU->IDCODE & 0xFFFF0000) < 0x20000000)
     {

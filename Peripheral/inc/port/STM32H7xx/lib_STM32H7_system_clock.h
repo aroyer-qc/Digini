@@ -155,12 +155,12 @@
 #define CFG_RCC_CFGR_MCO2_CSI                   RCC_CFGR_MCO2SEL_2
 #define CFG_RCC_CFGR_MCO2_LSI                   (RCC_CFGR_MCO2SEL_2 | RCC_CFGR_MCO2SEL_0)
 
-/// Already defined
-// Multiplexer define to be used for MCO2 clock source                                                  -> CFG_MCO2_SOURCE_MUX          default: SYS_CLK
-//#define RCC_PLLCKSELR_PLLSRC_HSI               ((uint32_t)0x00000000)
-//#define RCC_PLLCKSELR_PLLSRC_CSI               ((uint32_t)0x00000001)
-//#define RCC_PLLCKSELR_PLLSRC_HSE               ((uint32_t)0x00000002)
-//#define RCC_PLLCKSELR_PLLSRC_NONE              ((uint32_t)0x00000003)
+
+/// I don't find where it is used... need investigation
+#define CFG_RCC_PLLCKSELR_PLLSRC_HSI            ((uint32_t)0x00000000)
+#define CFG_RCC_PLLCKSELR_PLLSRC_CSI            ((uint32_t)0x00000001)
+#define CFG_RCC_PLLCKSELR_PLLSRC_HSE            ((uint32_t)0x00000002)
+#define CFG_RCC_PLLCKSELR_PLLSRC_NONE           ((uint32_t)0x00000003)
 
 // Multiplexer define to be used for PERIPHERAL clock source                                            -> CFG_PER_SOURCE_MUX           default: HSI
 #define CFG_RCC_D1CCIPR_PER_HSI_KER             0
@@ -274,6 +274,53 @@
 #define CFG_RCC_D2CCIP2R_USB_PLL1Q              0
 #define CFG_RCC_D2CCIP2R_USB_PLL3Q              RCC_D2CCIP2R_USBSEL_0
 #define CFG_RCC_D2CCIP2R_USB_HSI48              RCC_D2CCIP2R_USBSEL_1
+
+
+// Divider for all Clock
+#define CFG_RCC_HPRE_DIV1                       RCC_D1CFGR_HPRE_DIV1
+#define CFG_RCC_HPRE_DIV2                       RCC_D1CFGR_HPRE_DIV2
+#define CFG_RCC_HPRE_DIV4                       RCC_D1CFGR_HPRE_DIV4
+#define CFG_RCC_HPRE_DIV8                       RCC_D1CFGR_HPRE_DIV8
+#define CFG_RCC_HPRE_DIV16                      RCC_D1CFGR_HPRE_DIV16
+#define CFG_RCC_HPRE_DIV64                      RCC_D1CFGR_HPRE_DIV64
+#define CFG_RCC_HPRE_DIV128                     RCC_D1CFGR_HPRE_DIV128
+#define CFG_RCC_HPRE_DIV256                     RCC_D1CFGR_HPRE_DIV256
+#define CFG_RCC_HPRE_DIV512                     RCC_D1CFGR_HPRE_DIV512
+
+#define CFG_RCC_D1PPRE_DIV1                     RCC_D1CFGR_D1PPRE_DIV1
+#define CFG_RCC_D1PPRE_DIV2                     RCC_D1CFGR_D1PPRE_DIV2
+#define CFG_RCC_D1PPRE_DIV4                     RCC_D1CFGR_D1PPRE_DIV4
+#define CFG_RCC_D1PPRE_DIV8                     RCC_D1CFGR_D1PPRE_DIV8
+#define CFG_RCC_D1PPRE_DIV16                    RCC_D1CFGR_D1PPRE_DIV16
+
+#define CFG_RCC_D1CPRE_DIV1                     RCC_D1CFGR_D1CPRE_DIV1
+#define CFG_RCC_D1CPRE_DIV2                     RCC_D1CFGR_D1CPRE_DIV2
+#define CFG_RCC_D1CPRE_DIV4                     RCC_D1CFGR_D1CPRE_DIV4
+#define CFG_RCC_D1CPRE_DIV8                     RCC_D1CFGR_D1CPRE_DIV8
+#define CFG_RCC_D1CPRE_DIV16                    RCC_D1CFGR_D1CPRE_DIV16
+#define CFG_RCC_D1CPRE_DIV64                    RCC_D1CFGR_D1CPRE_DIV64
+#define CFG_RCC_D1CPRE_DIV128                   RCC_D1CFGR_D1CPRE_DIV128
+#define CFG_RCC_D1CPRE_DIV256                   RCC_D1CFGR_D1CPRE_DIV256
+#define CFG_RCC_D1CPRE_DIV512                   RCC_D1CFGR_D1CPRE_DIV512
+
+
+#define CFG_RCC_D2PPRE1_DIV1                    RCC_D2CFGR_D2PPRE1_DIV1
+#define CFG_RCC_D2PPRE1_DIV2                    RCC_D2CFGR_D2PPRE1_DIV2
+#define CFG_RCC_D2PPRE1_DIV4                    RCC_D2CFGR_D2PPRE1_DIV4
+#define CFG_RCC_D2PPRE1_DIV8                    RCC_D2CFGR_D2PPRE1_DIV8
+#define CFG_RCC_D2PPRE1_DIV16                   RCC_D2CFGR_D2PPRE1_DIV16
+
+#define CFG_RCC_D2PPRE2_DIV1                    RCC_D2CFGR_D2PPRE2_DIV1
+#define CFG_RCC_D2PPRE2_DIV2                    RCC_D2CFGR_D2PPRE2_DIV2
+#define CFG_RCC_D2PPRE2_DIV4                    RCC_D2CFGR_D2PPRE2_DIV4
+#define CFG_RCC_D2PPRE2_DIV8                    RCC_D2CFGR_D2PPRE2_DIV8
+#define CFG_RCC_D2PPRE2_DIV16                   RCC_D2CFGR_D2PPRE2_DIV16
+
+#define CFG_RCC_D3PPRE_DIV1                     RCC_D3CFGR_D3PPRE_DIV1
+#define CFG_RCC_D3PPRE_DIV2                     RCC_D3CFGR_D3PPRE_DIV2
+#define CFG_RCC_D3PPRE_DIV4                     RCC_D3CFGR_D3PPRE_DIV4
+#define CFG_RCC_D3PPRE_DIV8                     RCC_D3CFGR_D3PPRE_DIV8
+#define CFG_RCC_D3PPRE_DIV16                    RCC_D3CFGR_D3PPRE_DIV16
 
 
 // Valid for PLL1, PLL2, PLL3
@@ -560,7 +607,7 @@
   #define CFG_PLLCFGR_PLL3FRAEN                     RCC_PLLCFGR_PLL3FRAEN
 #endif
 
-#define CFG_PLLCFGR                                 (CFG_PLLCFGR_OUTPUT_ENABLE  | \
+#define CFG_RCC_PLLCFGR                             (CFG_PLLCFGR_OUTPUT_ENABLE  | \
                                                      CFG_PLLCFGR_PLL1VCOSEL     | \
                                                      CFG_PLLCFGR_PLL2VCOSEL     | \
                                                      CFG_PLLCFGR_PLL3VCOSEL     | \
@@ -584,6 +631,91 @@
 #else //(CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_HSE)
   #define SYS_CPU_CORE_CLOCK_FREQUENCY              CFG_HSE_VALUE
 #endif
+
+/// -------------------------------------------------------------------------------------------------------------------------------
+/// RCC_CFGR
+///
+
+/// Missing RTEPRE
+
+#define CFG_RCC_CFGR                                (CFG_MCO1_SOURCE_MUX    | \
+                                                     CFG_MCO2_SOURCE_MUX    | \
+                                                     CFG_HRTIM_SOURCE_MUX
+
+/// -------------------------------------------------------------------------------------------------------------------------------
+/// RCC_D1CCIPR - RCC domain 1 kernel clock configuration register
+///
+
+/// missing DSI
+
+#define CFG_RCC_D1CCIPR                             (CFG_PER_SOURCE_MUX        | \
+                                                     CFG_SDMMC_SOURCE_MUX      | \
+                                                     CFG_QSPI_SOURCE_MUX       | \
+                                                     CFG_FMC_SOURCE_MUX)
+
+/// -------------------------------------------------------------------------------------------------------------------------------
+/// RCC_D2CCIP1R - RCC domain 2 kernel clock configuration register
+///
+
+#define CFG_RCC_D2CCIP1R                            (CFG_SWP_SOURCE_MUX         | \
+                                                     CFG_FDCAN_SOURCE_MUX       | \
+                                                     CFG_DFSDM_SOURCE_MUX       | \
+                                                     CFG_SPDIF_SOURCE_MUX       | \
+                                                     CFG_SPI45_SOURCE_MUX       | \
+                                                     CFG_SPI123_SOURCE_MUX      | \
+                                                     CFG_SAI23_SOURCE_MUX       | \
+                                                     CFG_SAI1_SOURCE_MUX)
+
+/// -------------------------------------------------------------------------------------------------------------------------------
+/// RCC_D2CCIP2R - RCC domain 2 kernel clock configuration register
+///
+
+#define CFG_RCC_D2CCIP2R                            (CFG_LPTIM1_SOURCE_MUX      | \
+                                                     CFG_CEC_SOURCE_MUX         | \
+                                                     CFG_USB_SOURCE_MUX         | \
+                                                     CFG_I2C123_SOURCE_MUX      | \
+                                                     CFG_RNG_SOURCE_MUX         | \
+                                                     CFG_UART16_SOURCE_MUX      | \
+                                                     CFG_UART234578_SOURCE_MUX)
+
+/// -------------------------------------------------------------------------------------------------------------------------------
+/// RCC_D3CCIPR - RCC domain 3 kernel clock configuration register
+///
+
+#define CFG_RCC_D3CCIPR                             (CFG_SPI6_SOURCE_MUX        | \
+                                                     CFG_SAI4B_SOURCE_MUX       | \
+                                                     CFG_SAI4A_SOURCE_MUX       | \
+                                                     CFG_ADC_SOURCE_MUX         | \
+                                                     CFG_LPTIM345_SOURCE_MUX    | \
+                                                     CFG_LPTIM2_SOURCE_MUX      | \
+                                                     CFG_I2C4_SOURCE_MUX        | \
+                                                     CFG_LPUART1_SOURCE_MUX)
+
+/// -------------------------------------------------------------------------------------------------------------------------------
+/// RCC_D1CFGR - RCC domain 1 clock configuration register
+///
+
+#define CFG_RCC_D1CFGR                              (CFG_D1CPRE_DIVIDER         | \
+                                                     CFG_D1PPRE_DIVIDER         | \
+                                                     CFG_HPRE_DIVIDER)
+
+/// -------------------------------------------------------------------------------------------------------------------------------
+/// RCC_D2CFGR - RCC domain 2 clock configuration register
+///
+
+#define CFG_RCC_D2CFGR                              (CFG_D2PPRE2_DIVIDER        | \
+                                                     CFG_D2PPRE1_DIVIDER)
+
+/// -------------------------------------------------------------------------------------------------------------------------------
+/// RCC_D3CFGR - RCC domain 3 clock configuration register
+///
+
+#define CFG_RCC_D3CFGR                              (CFG_D3PPRE2_DIVIDER)
+
+
+
+
+
 
 
 
@@ -754,4 +886,10 @@ void    SystemInit              (void);
 
 //-------------------------------------------------------------------------------------------------
 
+#define CFG_RTC_SOURCE_MUX                          CFG_RCC_BDCR_RTC_LSE
+
+
+// Define the MUX for module that you will need.        See lib_STM32H7_system_clock for clock selection option.
+
+//#define CFG_TRACE_SOURCE_MUX                        HSI //???
 

@@ -269,11 +269,12 @@
 #define CFG_RCC_CFGR_MCO2_CSI                   RCC_CFGR_MCO2SEL_2
 #define CFG_RCC_CFGR_MCO2_LSI                   (RCC_CFGR_MCO2SEL_2 | RCC_CFGR_MCO2SEL_0)
 
+/// Already defined
 // Multiplexer define to be used for MCO2 clock source                                                  -> CFG_MCO2_SOURCE_MUX          default: SYS_CLK
-#define RCC_PLLCKSELR_PLLSRC_HSI               ((uint32_t)0x00000000)
-#define RCC_PLLCKSELR_PLLSRC_CSI               ((uint32_t)0x00000001)
-#define RCC_PLLCKSELR_PLLSRC_HSE               ((uint32_t)0x00000002)
-#define RCC_PLLCKSELR_PLLSRC_NONE              ((uint32_t)0x00000003)
+//#define RCC_PLLCKSELR_PLLSRC_HSI               ((uint32_t)0x00000000)
+//#define RCC_PLLCKSELR_PLLSRC_CSI               ((uint32_t)0x00000001)
+//#define RCC_PLLCKSELR_PLLSRC_HSE               ((uint32_t)0x00000002)
+//#define RCC_PLLCKSELR_PLLSRC_NONE              ((uint32_t)0x00000003)
 
 // Multiplexer define to be used for PERIPHERAL clock source                                            -> CFG_PER_SOURCE_MUX           default: HSI
 #define CFG_RCC_D1CCIPR_PER_HSI_KER             0
@@ -400,6 +401,17 @@
 #define RCC_PLLCKSELR_PLL2_DIV_M_POS            12
 #define RCC_PLLCKSELR_PLL3_DIV_M_POS            20
 
+// Enable for PLL output bit pos
+#define RCC_PLLCFGR_PLL1P_POS                   16
+#define RCC_PLLCFGR_PLL1Q_POS                   17
+#define RCC_PLLCFGR_PLL1R_POS                   18
+#define RCC_PLLCFGR_PLL2P_POS                   19
+#define RCC_PLLCFGR_PLL2Q_POS                   20
+#define RCC_PLLCFGR_PLL2R_POS                   21
+#define RCC_PLLCFGR_PLL3P_POS                   22
+#define RCC_PLLCFGR_PLL3Q_POS                   23
+#define RCC_PLLCFGR_PLL3R_POS                   24
+
 //-------------------------------------------------------------------------------------------------
 // Configuration file(s)
 //-------------------------------------------------------------------------------------------------
@@ -424,7 +436,6 @@
 /// PLL1 Configuration
 ///
 
-///need to handle FractionCount
 /// need to account example: 2 =  1 in selection for all divider!!!!
 
 #if (CFG_PLL1_M_DIVIDER < 1) || (CFG_PLL1_M_DIVIDER > 63)
@@ -467,11 +478,11 @@
                                                      CFG_RCC_PLLDIVR_PLL1_Q |   \
                                                      CFG_RCC_PLLDIVR_PLL1_R)
 
+#define CFG_PLL1_SPEED                              (CFG_FREQ_PLL_SOURCE / CFG_PLL1_M_DIVIDER) * CFG_PLL1_N_MULTIPLIER)
+
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// PLL2 Configuration
 ///
-
-///need to handle FractionCount
 
 #if (CFG_PLL2_M_DIVIDER < 1) || (CFG_PLL2_M_DIVIDER > 63)
   #pragma message XSTR(CFG_PLL2_M_DIVIDER)
@@ -513,11 +524,11 @@
                                                      CFG_RCC_PLLDIVR_PLL2_Q |   \
                                                      CFG_RCC_PLLDIVR_PLL2_R)
 
+#define CFG_PLL2_SPEED                              (CFG_FREQ_PLL_SOURCE / CFG_PLL2_M_DIVIDER) * CFG_PLL2_N_MULTIPLIER)
+
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// PLL3 Configuration
 ///
-
-///need to handle FractionCount
 
 #if (CFG_PLL3_M_DIVIDER < 1) || (CFG_PLL3_M_DIVIDER > 63)
   #pragma message XSTR(CFG_PLL3_M_DIVIDER)
@@ -559,6 +570,8 @@
                                                      CFG_RCC_PLLDIVR_PLL3_Q |   \
                                                      CFG_RCC_PLLDIVR_PLL3_R)
 
+#define CFG_PLL3_SPEED                              (CFG_FREQ_PLL_SOURCE / CFG_PLL3_M_DIVIDER) * CFG_PLL3_N_MULTIPLIER)
+
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// PLLCKSELR
 ///
@@ -567,6 +580,91 @@
                                                      CFG_RCC_PLLCKSELR_PLL2_M | \
                                                      CFG_RCC_PLLCKSELR_PLL3_M | \
                                                      CFG_MUX_PLL_SOURCE )
+
+/// -------------------------------------------------------------------------------------------------------------------------------
+/// PLLCFGR
+///
+
+#define CFG_PLLCFGR_OUTPUT_ENABLE                   ((CFG_ENABLE_PLL1P << RCC_PLLCFGR_PLL1P_POS) | \
+                                                     (CFG_ENABLE_PLL1Q << RCC_PLLCFGR_PLL1Q_POS) | \
+                                                     (CFG_ENABLE_PLL1R << RCC_PLLCFGR_PLL1R_POS) | \
+                                                     (CFG_ENABLE_PLL2P << RCC_PLLCFGR_PLL2P_POS) | \
+                                                     (CFG_ENABLE_PLL2Q << RCC_PLLCFGR_PLL2Q_POS) | \
+                                                     (CFG_ENABLE_PLL2R << RCC_PLLCFGR_PLL2R_POS) | \
+                                                     (CFG_ENABLE_PLL3P << RCC_PLLCFGR_PLL3P_POS) | \
+                                                     (CFG_ENABLE_PLL3Q << RCC_PLLCFGR_PLL3Q_POS) | \
+                                                     (CFG_ENABLE_PLL3R << RCC_PLLCFGR_PLL3R_POS))
+
+#if (CFG_PLL1_SPEED >= 150) && (CFG_PLL1_SPEED <= 420)
+  #define CFG_PLLCFGR_PLL1VCOSEL                    RCC_PLLCFGR_PLL1VCOSEL
+#else
+  #define CFG_PLLCFGR_PLL1VCOSEL                    0
+#endif
+
+#if (CFG_PLL2_SPEED >= 150) && (CFG_PLL2_SPEED <= 420)
+  #define CFG_PLLCFGR_PLL2VCOSEL                    RCC_PLLCFGR_PLL2VCOSEL
+#else
+  #define CFG_PLLCFGR_PLL2VCOSEL                    0
+#endif
+
+#if (CFG_PLL3_SPEED >= 150) && (CFG_PLL3_SPEED <= 420)
+  #define CFG_PLLCFGR_PLL3VCOSEL                    RCC_PLLCFGR_PLL3VCOSEL
+#else
+  #define CFG_PLLCFGR_PLL3VCOSEL                    0
+#endif
+
+#define CFG_INPUT_FREQUENCY_PLL1                    (CFG_FREQ_PLL_SOURCE / CFG_PLL1_M_DIVIDER)
+#define CFG_INPUT_FREQUENCY_PLL2                    (CFG_FREQ_PLL_SOURCE / CFG_PLL2_M_DIVIDER)
+#define CFG_INPUT_FREQUENCY_PLL3                    (CFG_FREQ_PLL_SOURCE / CFG_PLL3_M_DIVIDER)
+
+#if   (CFG_INPUT_FREQUENCY_PLL1 >= 1) && (CFG_INPUT_FREQUENCY_PLL1 <= 2)
+  #define CFG_PLLCFGR_PLL1RGE                       RCC_PLLCFGR_PLL1RGE_0
+#elif (CFG_INPUT_FREQUENCY_PLL1 >  2) && (CFG_INPUT_FREQUENCY_PLL1 <= 4)
+  #define CFG_PLLCFGR_PLL1RGE                       RCC_PLLCFGR_PLL1RGE_1
+#elif (CFG_INPUT_FREQUENCY_PLL1 >  4) && (CFG_INPUT_FREQUENCY_PLL1 <= 8)
+  #define CFG_PLLCFGR_PLL1RGE                       RCC_PLLCFGR_PLL1RGE_2
+#elif (CFG_INPUT_FREQUENCY_PLL1 >  8) && (CFG_INPUT_FREQUENCY_PLL1 <= 16)
+  #define CFG_PLLCFGR_PLL1RGE                       RCC_PLLCFGR_PLL1RGE_3
+#else
+ #pragma message "XSTR(PLLCFGR PLL1RGE)"
+ #error PLL1 input frequency outside of allowed range!
+#endif
+
+#if   (CFG_INPUT_FREQUENCY_PLL2 >= 1) && (CFG_INPUT_FREQUENCY_PLL2 <= 2)
+  #define CFG_PLLCFGR_PLL2RGE                       RCC_PLLCFGR_PLL2RGE_0
+#elif (CFG_INPUT_FREQUENCY_PLL2 >  2) && (CFG_INPUT_FREQUENCY_PLL2 <= 4)
+  #define CFG_PLLCFGR_PLL2RGE                       RCC_PLLCFGR_PLL2RGE_1
+#elif (CFG_INPUT_FREQUENCY_PLL2 >  4) && (CFG_INPUT_FREQUENCY_PLL2 <= 8)
+  #define CFG_PLLCFGR_PLL2RGE                       RCC_PLLCFGR_PLL2RGE_2
+#elif (CFG_INPUT_FREQUENCY_PLL2 >  8) && (CFG_INPUT_FREQUENCY_PLL2 <= 16)
+  #define CFG_PLLCFGR_PLL2RGE                       RCC_PLLCFGR_PLL2RGE_3
+#else
+ #pragma message "XSTR(PLLCFGR PLL2RGE)"
+ #error PLL2 input frequency outside of allowed range!
+#endif
+
+#if   (CFG_INPUT_FREQUENCY_PLL3 >= 1) && (CFG_INPUT_FREQUENCY_PLL3 <= 2)
+  #define CFG_PLLCFGR_PLL3RGE                       RCC_PLLCFGR_PLL3RGE_0
+#elif (CFG_INPUT_FREQUENCY_PLL3 >  2) && (CFG_INPUT_FREQUENCY_PLL3 <= 4)
+  #define CFG_PLLCFGR_PLL3RGE                       RCC_PLLCFGR_PLL3RGE_1
+#elif (CFG_INPUT_FREQUENCY_PLL3 >  4) && (CFG_INPUT_FREQUENCY_PLL3 <= 8)
+  #define CFG_PLLCFGR_PLL3RGE                       RCC_PLLCFGR_PLL3RGE_2
+#elif (CFG_INPUT_FREQUENCY_PLL3 >  8) && (CFG_INPUT_FREQUENCY_PLL3 <= 16)
+  #define CFG_PLLCFGR_PLL3RGE                       RCC_PLLCFGR_PLL3RGE_3
+#else
+ #pragma message "XSTR(PLLCFGR PLL3RGE)"
+ #error PLL3 input frequency outside of allowed range!
+#endif
+
+#define CFG_PLLCFGR                                 (CFG_PLLCFGR_OUTPUT_ENABLE  | \
+                                                     CFG_PLLCFGR_PLL1VCOSEL     | \
+                                                     CFG_PLLCFGR_PLL2VCOSEL     | \
+                                                     CFG_PLLCFGR_PLL3VCOSEL     | \
+                                                     CFG_PLLCFGR_PLL1RGE        | \
+                                                     CFG_PLLCFGR_PLL2RGE        | \
+                                                     CFG_PLLCFGR_PLL3RGE        | \
+
+/// Missing PLL1FRACEN, PLL2FRACEN, PLL3FRACEN
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// SYS Clock Mux
@@ -589,11 +687,11 @@
 
 
 
+///RCC_PLL1FRACR     need to handle FractionCount
 
 
 
-
-/// LEFT DO !!!
+/// LEFT TO DO !!!
 
 /// Systick  CPU1 clock
 /// CPU2 Clock
@@ -605,6 +703,8 @@
 /// AHB4 Peripheral clock
 
 /// All MUX ( done directly in .c file
+
+/// all below need to be adapted
 
 // --------------------------------------------------------------------------------------------------------------------------------
 
@@ -672,11 +772,11 @@
 
 // Power scaling according to speed
 #if (SYS_CPU_CORE_CLOCK_FREQUENCY <= 151000000)
-#define POWER_REGULATOR_CFG                         PWR_CR1_VOS_0   // Voltage scale 3
+#define CFG_POWER_REGULATOR                         PWR_CR1_VOS_0   // Voltage scale 3
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 180000000)
-#define POWER_REGULATOR_CFG                         PWR_CR1_VOS_1   // Voltage scale 2
+#define CFG_POWER_REGULATOR                         PWR_CR1_VOS_1   // Voltage scale 2
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 216000000)
-#define POWER_REGULATOR_CFG                         PWR_CR1_VOS     // Voltage scale 1
+#define CFG_POWER_REGULATOR                         PWR_CR1_VOS     // Voltage scale 1
 #endif
 
 // Flash Latency configuration for Voltage from 2.7V to 3.6V

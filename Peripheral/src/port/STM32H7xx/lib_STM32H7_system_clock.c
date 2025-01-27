@@ -59,6 +59,8 @@
 #ifdef CORE_CM7
 void SystemInit(void)
 {
+    uint32_t Retry;
+
     __asm volatile("cpsid i");                                                  // Disable IRQ
 
     // FPU settings
@@ -75,7 +77,8 @@ void SystemInit(void)
 
     // Configure the main internal regulator output voltage
     CLEAR_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);                                // Disable the PWR overdrive
-    MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS, PWR_REGULATOR_VOLTAGE_SCALE3);          // Configure the main internal regulator output voltage
+    // need to get real explanation on this
+    MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE_SCALE3);      // Configure the main internal regulator output voltage
     SET_BIT(RCC->APB4ENR, RCC_APB4ENR_SYSCFGEN);
 
     // Reset the RCC clock configuration to the default reset state
@@ -94,19 +97,9 @@ void SystemInit(void)
     RCC->D2CCIP2R   = CFG_RCC_D2CCIP2R;
     RCC->D3CCIPR    = CFG_RCC_D3CCIPR;
 
-    RCC->PLLCKSELR  = CFG_RCC_PLLCKSELR;
-    RCC->PLLCFGR    = CFG_RCC_PLLCFGR;
-    RCC->PLL1DIVR   = CFG_RCC_PLL1_DIVR;
-    RCC->PLL1FRACR  = (CFG_PLL1_FRACTIONAL_VALUE << RCC_PLL1FRACR_FRACN1_Pos);
-    RCC->PLL2DIVR   = CFG_RCC_PLL2_DIVR;
-    RCC->PLL2FRACR  = (CFG_PLL2_FRACTIONAL_VALUE << RCC_PLL2FRACR_FRACN2_Pos);
-    RCC->PLL3DIVR   = CFG_RCC_PLL3_DIVR;
-    RCC->PLL3FRACR  = (CFG_PLL2_FRACTIONAL_VALUE << RCC_PLL3FRACR_FRACN3_Pos);
-    CLEAR_BIT(RCC->CR, RCC_CR_HSEBYP;                                           // Reset HSEBYP bit
+    CLEAR_BIT(RCC->CR, RCC_CR_HSEBYP);                                           // Reset HSEBYP bit
     RCC->CIER       = 0x00000000;                                               // Disable all interrupts
     SET_BIT(EXTI_D2->EMR3, EXTI_EMR3_EM78);                                     // Enable CortexM7 HSEM EXTI line (line 78)
-
-
 
     if((DBGMCU->IDCODE & 0xFFFF0000) < 0x20000000)
     {
@@ -115,13 +108,87 @@ void SystemInit(void)
         *((__IO uint32_t*)0x51008108) = 0x000000001;
     }
 
+    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, CFG_FLASH_LATENCY);                                       // Set flash latency
 
-// start here the clcok config PLL HSE, etc....
+    /// Config all PLL
 
+  #if (CFG_MUX_PLL_SOURCE == CFG_RCC_PLLCKSELR_PLLSRC_HSE)
 
+    Retry = 0;
+    SET_BIT(RCC->CR, RCC_CR_HSEON);
 
+    while((READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0) && (Retry < CFG_SYSTEM_CLOCK_NUMBER_OF_RETRY))        // Wait for HSE to be ready B4 enabling PLL
+    {
+        Retry++;
+    };
 
+  #elif (CFG_MUX_PLL_SOURCE == CFG_RCC_PLLCKSELR_PLLSRC_CSI)
 
+    Retry = 0;
+    SET_BIT(RCC->CR, RCC_CR_CSION);
+
+    while(READ_BIT(RCC->CR, RCC_CR_CSIRDY) == 0) && (Retry < CFG_SYSTEM_CLOCK_NUMBER_OF_RETRY))         // Wait for CSI to be ready B4 enabling PLL
+    {
+        Retry++;
+    };
+
+  #else
+
+    // HSI is the default PLL source
+
+   #endif
+
+    RCC->PLLCFGR   = CFG_RCC_PLLCFGR;
+    RCC->PLL1DIVR  = CFG_RCC_PLL1_DIVR;
+    RCC->PLL1FRACR = (CFG_PLL1_FRACTIONAL_VALUE << RCC_PLL1FRACR_FRACN1_Pos);
+    RCC->PLL2DIVR  = CFG_RCC_PLL2_DIVR;
+    RCC->PLL2FRACR = (CFG_PLL2_FRACTIONAL_VALUE << RCC_PLL2FRACR_FRACN2_Pos);
+    RCC->PLL3DIVR  = CFG_RCC_PLL3_DIVR;
+    RCC->PLL3FRACR = (CFG_PLL2_FRACTIONAL_VALUE << RCC_PLL3FRACR_FRACN3_Pos);
+    RCC->PLLCKSELR = CFG_MUX_PLL_SOURCE;
+
+  #if ((CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_HSI) && (CFG_MUX_PLL_SOURCE != CFG_RCC_PLLCKSELR_PLLSRC_HSI) && (CFG_PER_SOURCE_MUX != CFG_RCC_D1CCIPR_PER_HSI_KER))
+    CLEAR_BIT(RCC->CR, RCC_CR_HSION);                                                                   // Reset HSION bit to reduce consumption
+  #endif
+
+    SET_BIT(RCC->CR, (RCC_CR_PLL1ON | RCC_CR_PLL2ON | RCC_CR_PLL3ON));                                   // Enable All PLL
+
+    // Wait for PLL to be ready B4 enabling PLL
+    Retry = 0;
+    while((READ_BIT(RCC->CR, RCC_CR_PLL1RDY) == 0) && (READ_BIT(RCC->CR, RCC_CR_PLL2RDY) == 0) && (READ_BIT(RCC->CR, RCC_CR_PLL3RDY) == 0))
+    {
+        Retry++;
+    };
+
+    /// Switch Main CPU to the configure source.
+
+  #if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL1)
+
+    SET_BIT(RCC->CFGR, CFG_RCC_CFGR_SW_PLL1);                                                           // Switch to PLL
+
+  #elif (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_HSE)
+    Retry = 0;
+    SET_BIT(RCC->CR, RCC_CR_HSEON);
+
+    while((READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0) && (Retry < CFG_SYSTEM_CLOCK_NUMBER_OF_RETRY))        // Wait for HSE to be ready B4 enabling PLL
+    {
+        Retry++;
+    };
+
+    SET_BIT(RCC->CFGR, CFG_RCC_CFGR_SW_HSE);                                                            // Switch to HSE
+
+  #elif (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_CSI)
+
+    Retry = 0;
+    SET_BIT(RCC->CR, RCC_CR_CSION);
+
+    while((READ_BIT(RCC->CR, RCC_CR_CSIRDY) == 0) && (Retry < CFG_SYSTEM_CLOCK_NUMBER_OF_RETRY))        // Wait for HSE to be ready B4 enabling PLL
+    {
+        Retry++;
+    };
+
+    SET_BIT(RCC->CFGR, CFG_RCC_CFGR_SW_CSI);                                                            // Switch to HSE
+  #endif
 
   /* Configure the Vector Table location add offset address ------------------*/
   #ifdef VECT_TAB_SRAM
@@ -130,6 +197,7 @@ void SystemInit(void)
     SCB->VTOR = FLASH_BANK1_BASE | VECT_TAB_OFFSET; // Vector Table Relocation in Internal FLASH
   #endif
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -166,89 +234,3 @@ void SystemInit(void)
   #endif
 }
 #endif
-
-//-------------------------------------------------------------------------------------------------
-
-#if 0
-
-
-Disable IRQ
-SET_BIT(RCC->APB2ENR, RCC_APB2ENR_SYSCFGEN);
-SET_BIT(RCC->APB1ENR, RCC_APB1ENR_PWREN);
-MODIFY_REG(PWR->CR, PWR_CR_VOS, POWER_REGULATOR_CFG);
-
-// FPU settings
-#if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
-SET_BIT(SCB->CPACR, ((3UL << 10 * 2) | (3UL << 11 * 2)));   // Set CP10 and CP11 Full Access
-endif
-
-// Reset the RCC clock configuration to the default reset state ------------
-// Set HSION bit
-SET_BIT(RCC->CR, RCC_CR_HSION);
-
-// Set CFGR register
-RCC->CFGR = (CFG_SYS_HCLK | CFG_SYS_APB1 | CFG_SYS_APB2 | CFG_MCO_1 | CFG_MCO_2);
-
-// Reset HSEBYP, CSSON and PLLON bits
-CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));
-
-
-
-
-
-
-#endif
-
-
-
-
-
-
-
-  #if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
-
-   #if (CFG_PLL_SOURCE == CFG_HSE_VALUE)
-    SET_BIT(RCC->CR, RCC_CR_HSEON);
-
-    Retry = 0;
-    while((READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0) && (Retry < CFG_SYSTEM_CLOCK_NUMBER_OF_RETRY))
-    {
-        Retry++;
-    };
-
-   #else
-    // Wait for HSI to be ready B4 enabling PLL
-    while(READ_BIT(RCC->CR, RCC_CR_HSIRDY) == 0) {};
-   #endif
-
-    // Set PLLCFGR register
-    RCC->PLLCFGR = CFG_RCC_PLLCFGR_CFG;
-
-   #if (CFG_PLL_SOURCE == CFG_HSE_VALUE)
-    // Reset HSION bit to reduce consumption
-    CLEAR_BIT(RCC->CR, RCC_CR_HSION);
-   #endif
-
-    // Set flash latency
-    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, CFG_FLASH_LATENCY);
-
-    // Enable PLL
-    SET_BIT(RCC->CR, RCC_CR_PLLON);
-
-    // Wait for PLL to be ready B4 enabling PLL
-    while(READ_BIT(RCC->CR, RCC_CR_PLLRDY) == 0) {};
-
-    // Switch to PLL
-    SET_BIT(RCC->CFGR, RCC_CFGR_SW_PLL);
-
-  #endif // (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
-
-    // Disable all interrupts
-    RCC->CIR = 0;
-
-    // Configure the Vector Table location add offset address ------------------
-  #ifdef VECT_TAB_SRAM
-    SCB->VTOR = SRAM_BASE | VECT_TAB_OFFSET;    // Vector Table Relocation in Internal SRAM
-  #else
-    SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET;   // Vector Table Relocation in Internal FLASH
-  #endif

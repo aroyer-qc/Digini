@@ -60,7 +60,7 @@ uint32_t GetCurrentCPUID(void)
 
 #else
 
-uint32_t HAL_GetCurrentCPUID(void)
+uint32_t GetCurrentCPUID(void)
 {
     return CM7_CPUID;
 }

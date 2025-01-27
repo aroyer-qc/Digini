@@ -45,10 +45,10 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define CFG_LSI_VALUE                               32000
-#define CFG_HSI_VALUE                               64000000
-#define CFG_CSI_VALUE                               4000000
-#define CFG_RC48_VALUE                              48000000
+#define CFG_LSI_VALUE                           32000
+#define CFG_HSI_VALUE                           64000000
+#define CFG_CSI_VALUE                           4000000
+#define CFG_RC48_VALUE                          48000000
 
 //-------------------------------------------------------------------------------------------------
 // Multiplexer for peripheral clock source
@@ -61,10 +61,10 @@
 // RCC_BDCR_RTCSEL_0+ other config
 
 // System clock mux selection
-#define CFG_RCC_CFGR_SW_HSI                     ((uint32_t)0x00000000)
-#define CFG_RCC_CFGR_SW_CSI                     ((uint32_t)0x00000001)
-#define CFG_RCC_CFGR_SW_HSE                     ((uint32_t)0x00000002)
-#define CFG_RCC_CFGR_SW_PLL1                    ((uint32_t)0x00000003)
+#define CFG_RCC_CFGR_SW_HSI                     0x00000000
+#define CFG_RCC_CFGR_SW_CSI                     0x00000001
+#define CFG_RCC_CFGR_SW_HSE                     0x00000002
+#define CFG_RCC_CFGR_SW_PLL1                    0x00000003
 
 // Multiplexer define to be used for ADC clock source                                                   -> CFG_ADC_SOURCE_MUX           default: PLL2P
 #define CFG_RCC_D3CCIPR_ADC_PLL2P               0
@@ -155,13 +155,6 @@
 #define CFG_RCC_CFGR_MCO2_CSI                   RCC_CFGR_MCO2SEL_2
 #define CFG_RCC_CFGR_MCO2_LSI                   (RCC_CFGR_MCO2SEL_2 | RCC_CFGR_MCO2SEL_0)
 
-
-/// I don't find where it is used... need investigation
-#define CFG_RCC_PLLCKSELR_PLLSRC_HSI            ((uint32_t)0x00000000)
-#define CFG_RCC_PLLCKSELR_PLLSRC_CSI            ((uint32_t)0x00000001)
-#define CFG_RCC_PLLCKSELR_PLLSRC_HSE            ((uint32_t)0x00000002)
-#define CFG_RCC_PLLCKSELR_PLLSRC_NONE           ((uint32_t)0x00000003)
-
 // Multiplexer define to be used for PERIPHERAL clock source                                            -> CFG_PER_SOURCE_MUX           default: HSI
 #define CFG_RCC_D1CCIPR_PER_HSI_KER             0
 #define CFG_RCC_D1CCIPR_PER_CSI_KER             RCC_D1CCIPR_CKPERSEL_0
@@ -250,7 +243,7 @@
 #define CFG_RCC_D2CCIP1R_SWP_HSI                RCC_D2CCIP1R_SWPSEL
 
 // Multiplexer define to be used for PER clock source
-#define CFG_TRACE_SOURCE_MUX                        HSI //???
+//#define CFG_TRACE_SOURCE_MUX                        HSI //???
 
 //not found !!
 
@@ -287,7 +280,7 @@
 #define CFG_RCC_HPRE_DIV256                     RCC_D1CFGR_HPRE_DIV256
 #define CFG_RCC_HPRE_DIV512                     RCC_D1CFGR_HPRE_DIV512
 
-#define CFG_RCC_D1PPRE_DIV1                     RCC_D1CFGR_D1PPRE_DIV1
+#define CFG_RCC_D1PPRE_DIV1                     0x00000000
 #define CFG_RCC_D1PPRE_DIV2                     RCC_D1CFGR_D1PPRE_DIV2
 #define CFG_RCC_D1PPRE_DIV4                     RCC_D1CFGR_D1PPRE_DIV4
 #define CFG_RCC_D1PPRE_DIV8                     RCC_D1CFGR_D1PPRE_DIV8
@@ -324,15 +317,19 @@
 
 
 // Valid for PLL1, PLL2, PLL3
-#define RCC_PLLDIVR_PLL_N_POS                   0
-#define RCC_PLLDIVR_PLL_P_POS                   9
-#define RCC_PLLDIVR_PLL_Q_POS                   16
-#define RCC_PLLDIVR_PLL_R_POS                   24
+#define CFG_RCC_PLLDIVR_PLL_N_POS               0
+#define CFG_RCC_PLLDIVR_PLL_P_POS               9
+#define CFG_RCC_PLLDIVR_PLL_Q_POS               16
+#define CFG_RCC_PLLDIVR_PLL_R_POS               24
 
-#define RCC_PLLCKSELR_PLLSRC_POS                0
-#define RCC_PLLCKSELR_PLL1_DIV_M_POS            4
-#define RCC_PLLCKSELR_PLL2_DIV_M_POS            12
-#define RCC_PLLCKSELR_PLL3_DIV_M_POS            20
+// PLL Clock Source and POS
+#define CFG_RCC_PLLCKSELR_PLLSRC_HSI            0x00000000
+#define CFG_RCC_PLLCKSELR_PLLSRC_CSI            0x00000001
+#define CFG_RCC_PLLCKSELR_PLLSRC_HSE            0x00000002
+#define CFG_RCC_PLLCKSELR_PLLSRC_POS            0
+#define CFG_RCC_PLLCKSELR_PLL1_DIV_M_POS        4
+#define CFG_RCC_PLLCKSELR_PLL2_DIV_M_POS        12
+#define CFG_RCC_PLLCKSELR_PLL3_DIV_M_POS        20
 
 // Enable for PLL output bit pos
 #define RCC_PLLCFGR_PLL1P_POS                   16
@@ -345,6 +342,12 @@
 #define RCC_PLLCFGR_PLL3Q_POS                   23
 #define RCC_PLLCFGR_PLL3R_POS                   24
 
+// Power regulator
+#define CFG_PWR_REGULATOR_VOLTAGE_SCALE0        (0)
+#define CFG_PWR_REGULATOR_VOLTAGE_SCALE1        (PWR_D3CR_VOS_1 | PWR_D3CR_VOS_0)
+#define CFG_PWR_REGULATOR_VOLTAGE_SCALE2        (PWR_D3CR_VOS_1)
+#define CFG_PWR_REGULATOR_VOLTAGE_SCALE3        (PWR_D3CR_VOS_0)
+
 //-------------------------------------------------------------------------------------------------
 // Configuration file(s)
 //-------------------------------------------------------------------------------------------------
@@ -354,6 +357,9 @@
 //-------------------------------------------------------------------------------------------------
 // Auto define configuration
 //-------------------------------------------------------------------------------------------------
+
+#define CFG_HSI_CLOCK_FREQUENCY                     (CFG_HSI_VALUE / CFG_HSI_DIVIDER)
+
 
 /// --------------------------------------------------------------------------------------------------------------------------------
 /// Autoconfig value for PLL
@@ -375,35 +381,35 @@
   #pragma message XSTR(CFG_PLL1_M_DIVIDER)
   #error PLL1M is out of range
 #else
-  #define CFG_RCC_PLLCKSELR_PLL1_M                  (CFG_PLL1_M_DIVIDER << RCC_PLLCKSELR_PLL1_DIV_M_POS)
+  #define CFG_RCC_PLLCKSELR_PLL1_M                  (CFG_PLL1_M_DIVIDER << CFG_RCC_PLLCKSELR_PLL1_DIV_M_POS)
 #endif
 
 #if (CFG_PLL1_N_MULTIPLIER < 4) || (CFG_PLL1_N_MULTIPLIER > 512)
   #pragma message "XSTR(CFG_PLL1_N_MULTIPLIER)"
   #error PLL1N is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL1_N                    (CFG_PLL1_N_MULTIPLIER << RCC_PLLDIVR_PLL_N_POS)
+  #define CFG_RCC_PLLDIVR_PLL1_N                    (CFG_PLL1_N_MULTIPLIER << CFG_RCC_PLLDIVR_PLL_N_POS)
 #endif
 
 #if (CFG_PLL1_P_DIVIDER < 2) || (CFG_PLL1_P_DIVIDER > 128)
   #pragma message "XSTR(CFG_PLL1_P_DIVIDER)"
   #error PLL1P is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL1_P                    (CFG_PLL1_P_DIVIDER << RCC_PLLDIVR_PLL_P_POS)
+  #define CFG_RCC_PLLDIVR_PLL1_P                    (CFG_PLL1_P_DIVIDER << CFG_RCC_PLLDIVR_PLL_P_POS)
 #endif
 
 #if (CFG_PLL1_Q_DIVIDER < 5) || (CFG_PLL1_Q_DIVIDER > 128)
   #pragma message "XSTR(CFG_PLL1_Q_DIVIDER)"
   #error PLL1Q is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL1_Q                    (CFG_PLL1_Q_DIVIDER << RCC_PLLDIVR_PLL_Q_POS)
+  #define CFG_RCC_PLLDIVR_PLL1_Q                    (CFG_PLL1_Q_DIVIDER << CFG_RCC_PLLDIVR_PLL_Q_POS)
 #endif
 
 #if (CFG_PLL1_R_DIVIDER < 2) || (CFG_PLL1_R_DIVIDER > 128)
   #pragma message "XSTR(CFG_PLL1_R_DIVIDER)"
   #error PLL1R is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL1_R                    (CFG_PLL1_R_DIVIDER << RCC_PLLDIVR_PLL_R_POS)
+  #define CFG_RCC_PLLDIVR_PLL1_R                    (CFG_PLL1_R_DIVIDER << CFG_RCC_PLLDIVR_PLL_R_POS)
 #endif
 
 #define CFG_RCC_PLL1_DIVR                           (CFG_RCC_PLLDIVR_PLL1_N |   \
@@ -421,35 +427,35 @@
   #pragma message XSTR(CFG_PLL2_M_DIVIDER)
   #error PLL2M is out of range
 #else
-  #define CFG_RCC_PLLCKSELR_PLL2_M                  (CFG_PLL2_M_DIVIDER << RCC_PLLCKSELR_PLL2_DIV_M_POS)
+  #define CFG_RCC_PLLCKSELR_PLL2_M                  (CFG_PLL2_M_DIVIDER << CFG_RCC_PLLCKSELR_PLL2_DIV_M_POS)
 #endif
 
 #if (CFG_PLL2_N_MULTIPLIER < 4) || (CFG_PLL2_N_MULTIPLIER > 512)
   #pragma message "XSTR(CFG_PLL2_N_MULTIPLIER)"
   #error PLL2N is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL2_N                    (CFG_PLL2_N_MULTIPLIER << RCC_PLLDIVR_PLL_N_POS)
+  #define CFG_RCC_PLLDIVR_PLL2_N                    (CFG_PLL2_N_MULTIPLIER << CFG_RCC_PLLDIVR_PLL_N_POS)
 #endif
 
 #if (CFG_PLL2_P_DIVIDER < 1) || (CFG_PLL2_P_DIVIDER > 128)
   #pragma message "XSTR(CFG_PLL2_P_DIVIDER)"
   #error PLL2P is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL2_P                    (CFG_PLL2_P_DIVIDER << RCC_PLLDIVR_PLL_P_POS)
+  #define CFG_RCC_PLLDIVR_PLL2_P                    (CFG_PLL2_P_DIVIDER << CFG_RCC_PLLDIVR_PLL_P_POS)
 #endif
 
 #if (CFG_PLL2_Q_DIVIDER < 1) || (CFG_PLL2_Q_DIVIDER > 128)
   #pragma message "XSTR(CFG_PLL2_Q_DIVIDER)"
   #error PLL2Q is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL2_Q                    (CFG_PLL2_Q_DIVIDER << RCC_PLLDIVR_PLL_Q_POS)
+  #define CFG_RCC_PLLDIVR_PLL2_Q                    (CFG_PLL2_Q_DIVIDER << CFG_RCC_PLLDIVR_PLL_Q_POS)
 #endif
 
 #if (CFG_PLL2_R_DIVIDER < 1) || (CFG_PLL2_R_DIVIDER > 128)
   #pragma message "XSTR(CFG_PLL2_R_DIVIDER)"
   #error PLL2R is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL2_R                    (CFG_PLL2_R_DIVIDER << RCC_PLLDIVR_PLL_R_POS)
+  #define CFG_RCC_PLLDIVR_PLL2_R                    (CFG_PLL2_R_DIVIDER << CFG_RCC_PLLDIVR_PLL_R_POS)
 #endif
 
 #define CFG_RCC_PLL2_DIVR                           (CFG_RCC_PLLDIVR_PLL2_N |   \
@@ -467,35 +473,35 @@
   #pragma message XSTR(CFG_PLL3_M_DIVIDER)
   #error PLL3M is out of range
 #else
-  #define CFG_RCC_PLLCKSELR_PLL3_M                  (CFG_PLL3_M_DIVIDER << RCC_PLLCKSELR_PLL3_DIV_M_POS)
+  #define CFG_RCC_PLLCKSELR_PLL3_M                  (CFG_PLL3_M_DIVIDER << CFG_RCC_PLLCKSELR_PLL3_DIV_M_POS)
 #endif
 
 #if (CFG_PLL3_N_MULTIPLIER < 4) || (CFG_PLL3_N_MULTIPLIER > 512)
   #pragma message "XSTR(CFG_PLL3_N_MULTIPLIER)"
   #error PLL3N is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL3_N                    (CFG_PLL3_N_MULTIPLIER << RCC_PLLDIVR_PLL_N_POS)
+  #define CFG_RCC_PLLDIVR_PLL3_N                    (CFG_PLL3_N_MULTIPLIER << CFG_RCC_PLLDIVR_PLL_N_POS)
 #endif
 
 #if (CFG_PLL3_P_DIVIDER < 1) || (CFG_PLL3_P_DIVIDER > 128)
   #pragma message "XSTR(CFG_PLL3_P_DIVIDER)"
   #error PLL3P is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL3_P                    (CFG_PLL3_P_DIVIDER << RCC_PLLDIVR_PLL_P_POS)
+  #define CFG_RCC_PLLDIVR_PLL3_P                    (CFG_PLL3_P_DIVIDER << CFG_RCC_PLLDIVR_PLL_P_POS)
 #endif
 
 #if (CFG_PLL3_Q_DIVIDER < 1) || (CFG_PLL3_Q_DIVIDER > 128)
   #pragma message "XSTR(CFG_PLL3_Q_DIVIDER)"
   #error PLL3Q is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL3_Q                    (CFG_PLL3_Q_DIVIDER << RCC_PLLDIVR_PLL_Q_POS)
+  #define CFG_RCC_PLLDIVR_PLL3_Q                    (CFG_PLL3_Q_DIVIDER << CFG_RCC_PLLDIVR_PLL_Q_POS)
 #endif
 
 #if (CFG_PLL3_R_DIVIDER < 1) || (CFG_PLL3_R_DIVIDER > 128)
   #pragma message "XSTR(CFG_PLL3_R_DIVIDER)"
   #error PLL3R is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL3_R                    (CFG_PLL3_R_DIVIDER << RCC_PLLDIVR_PLL_R_POS)
+  #define CFG_RCC_PLLDIVR_PLL3_R                    (CFG_PLL3_R_DIVIDER << CFG_RCC_PLLDIVR_PLL_R_POS)
 #endif
 
 #define CFG_RCC_PLL3_DIVR                           (CFG_RCC_PLLDIVR_PLL3_N |   \
@@ -559,8 +565,7 @@
 #elif (CFG_INPUT_FREQUENCY_PLL1 >  8000000) && (CFG_INPUT_FREQUENCY_PLL1 <= 1600000)
   #define CFG_PLLCFGR_PLL1RGE                       RCC_PLLCFGR_PLL1RGE_3
 #else
- //#pragma message "XSTR(PLLCFGR PLL1RGE)"
- #error PLL1 input frequency outside of allowed range! XSTR(CFG_INPUT_FREQUENCY_PLL1)
+ #error PLL1 input frequency outside of allowed range!
 #endif
 
 #if   (CFG_INPUT_FREQUENCY_PLL2 >= 1000000) && (CFG_INPUT_FREQUENCY_PLL2 <= 2000000)
@@ -572,7 +577,6 @@
 #elif (CFG_INPUT_FREQUENCY_PLL2 >  8000000) && (CFG_INPUT_FREQUENCY_PLL2 <= 16000000)
   #define CFG_PLLCFGR_PLL2RGE                       RCC_PLLCFGR_PLL2RGE_3
 #else
- //#pragma message "XSTR(PLLCFGR PLL2RGE)"
  #error PLL2 input frequency outside of allowed range!
 #endif
 
@@ -585,7 +589,6 @@
 #elif (CFG_INPUT_FREQUENCY_PLL3 >  8000000) && (CFG_INPUT_FREQUENCY_PLL3 <= 16000000)
   #define CFG_PLLCFGR_PLL3RGE                       RCC_PLLCFGR_PLL3RGE_3
 #else
- //#pragma message "XSTR(PLLCFGR PLL3RGE)"
  #error PLL3 input frequency outside of allowed range!
 #endif
 
@@ -625,7 +628,7 @@
 #if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL1)
   #define SYS_CPU_CORE_CLOCK_FREQUENCY              SYS_PLL_CLK_FREQUENCY
 #elif (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_HSI)
-  #define SYS_CPU_CORE_CLOCK_FREQUENCY              CFG_HSI_VALUE
+  #define SYS_CPU_CORE_CLOCK_FREQUENCY              CFG_HSI_CLOCK_FREQUENCY
 #elif (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_CSI)
   #define SYS_CPU_CORE_CLOCK_FREQUENCY              CFG_CSI_VALUE
 #else //(CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_HSE)
@@ -638,9 +641,9 @@
 
 /// Missing RTEPRE
 
-#define CFG_RCC_CFGR                                (CFG_MCO1_SOURCE_MUX    | \
-                                                     CFG_MCO2_SOURCE_MUX    | \
-                                                     CFG_HRTIM_SOURCE_MUX
+#define CFG_RCC_CFGR                                (CFG_MCO1_SOURCE_MUX        | \
+                                                     CFG_MCO2_SOURCE_MUX        | \
+                                                     CFG_HRTIM_SOURCE_MUX)
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// RCC_D1CCIPR - RCC domain 1 kernel clock configuration register
@@ -648,9 +651,9 @@
 
 /// missing DSI
 
-#define CFG_RCC_D1CCIPR                             (CFG_PER_SOURCE_MUX        | \
-                                                     CFG_SDMMC_SOURCE_MUX      | \
-                                                     CFG_QSPI_SOURCE_MUX       | \
+#define CFG_RCC_D1CCIPR                             (CFG_PER_SOURCE_MUX         | \
+                                                     CFG_SDMMC_SOURCE_MUX       | \
+                                                     CFG_QSPI_SOURCE_MUX        | \
                                                      CFG_FMC_SOURCE_MUX)
 
 /// -------------------------------------------------------------------------------------------------------------------------------
@@ -710,41 +713,10 @@
 /// RCC_D3CFGR - RCC domain 3 clock configuration register
 ///
 
-#define CFG_RCC_D3CFGR                              (CFG_D3PPRE2_DIVIDER)
-
-
-
-
-
-
-
-
-
-
-
-
-
-///RCC_PLL1FRACR     need to handle FractionCount
-
-
-
-/// LEFT TO DO !!!
-
-/// Systick  CPU1 clock
-/// CPU2 Clock
-/// Systick  CPU2 clock
-/// AXI = CPU2 clk = HCLK3 = AHB 1 & 2 = AHB4 clock
-/// APB1 clock
-/// APB2 clock
-/// APB3 Clock
-/// AHB4 Peripheral clock
-
-/// All MUX ( done directly in .c file
-
-/// all below need to be adapted
+#define CFG_RCC_D3CFGR                              (CFG_D3PPRE_DIVIDER)
 
 // --------------------------------------------------------------------------------------------------------------------------------
-
+//done
 #define CFG_SYS_HCLK                                CFG_HCLK_DIVIDER
 
 #if   CFG_HCLK_DIVIDER == CFG_CFG_RCC_CFGR_HPRE_DIV1
@@ -770,25 +742,23 @@
 #define SYSTEM_CORE_CLOCK                           SYS_HCLK_CLOCK_FREQUENCY
 
 // --------------------------------------------------------------------------------------------------------------------------------
-
-#define CFG_SYS_APB1                                CFG_APB1_CLK_DIVIDER
-
-#if   CFG_APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV1
+/*
+#if   CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV1
     #define SYS_APB1_CLOCK_FREQUENCY                SYS_HCLK_CLOCK_FREQUENCY
-#elif CFG_APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV2
+#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV2
     #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 2)
-#elif CFG_APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV4
+#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV4
     #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 4)
-#elif CFG_APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV8
+#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV8
     #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 8)
-#elif CFG_APB1_CLK_DIVIDER == CFG_RCC_CFGR_PPRE1_DIV16
+#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV16
     #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 16)
 #endif
 
 #define SYS_APB1_TIMER_CLOCK_FREQUENCY              (SYS_APB1_CLOCK_FREQUENCY * 2)
-
+*/
 // --------------------------------------------------------------------------------------------------------------------------------
-
+/*
 #define CFG_SYS_APB2                                CFG_APB2_CLK_DIVIDER
 
 #if   CFG_APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV1
@@ -804,9 +774,9 @@
 #endif
 
 #define SYS_APB2_TIMER_CLOCK_FREQUENCY              (SYS_APB2_CLOCK_FREQUENCY * 2)
-
+*/
 // --------------------------------------------------------------------------------------------------------------------------------
-
+/*
 // Power scaling according to speed
 #if (SYS_CPU_CORE_CLOCK_FREQUENCY <= 70000000)
 //#define CFG_POWER_REGULATOR                         PWR_CR1_VOS_0   // Voltage scale 3
@@ -815,20 +785,20 @@
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 216000000)
 #define CFG_POWER_REGULATOR                         PWR_CR1_VOS     // Voltage scale 1
 #endif
-
+*/
 // Flash Latency configuration for Voltage from 2.7V to 3.6V
-#if   (SYS_CPU_CORE_CLOCK_FREQUENCY <= 70000000)
+#if   (SYS_CPU_CORE_CLOCK_FREQUENCY < 80000000)
 #define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_0WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 140000000)
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY < 160000000)
 #define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_1WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 210000000)
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY < 240000000)
 #define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_2WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 225000000)
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY < 320000000)
 #define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_3WS
-#elif (SYS_CPU_CORE_CLOCK_FREQUENCY <= 240000000)
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY < 480000000)
 #define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_4WS
 #else
-#error CFG_FLASH_LATENCY
+#define CFG_FLASH_LATENCY                           FLASH_ACR_LATENCY_5WS
 #endif
 
 // --------------------------------------------------------------------------------------------------------------------------------
@@ -858,8 +828,9 @@
  #error APB1 frequency exceed maximum allowed!
 #endif
 
+/*
 #if SYS_APB1_CLOCK_FREQUENCY > 120000000
- #pragma message "XSTR(SYS_APB1_CLOCK_FREQUENCY)"
+ #pragma message XSTR(SYS_APB1_CLOCK_FREQUENCY)
  #error APB1 frequency exceed maximum allowed!
 #endif
 
@@ -877,7 +848,7 @@
  #pragma message "XSTR(SYS_APB2_CLOCK_FREQUENCY)"
  #error APB2 frequency exceed maximum allowed!
 #endif
-
+*/
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------

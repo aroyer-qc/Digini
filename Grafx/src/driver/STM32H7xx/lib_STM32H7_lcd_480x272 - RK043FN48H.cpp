@@ -137,25 +137,10 @@ static const int32_t DRV_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::LCD_Initialize(void)
 {
-    // RK043FN48H LCD clock configuration
-    // PLLSAI_VCO Input = HSI_VALUE/PLL_M = 1 Mhz
-    // PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN = 192 Mhz
-    // PLLLCDCLK = PLLSAI_VCO Output/PLLSAIR = 192/5 = 38.4 Mhz
-    // LTDC clock frequency = PLLLCDCLK / LTDC_PLLSAI_DIVR_4 = 38.4/4 = 9.6Mhz
-    RCC->PLLSAICFGR  = (GRAFX_PLLSAIR_VALUE << RCC_PLLSAICFGR_PLLSAIR_Pos) |
-                       (GRAFX_PLLSAIQ_VALUE << RCC_PLLSAICFGR_PLLSAIQ_Pos) |
-                       (GRAFX_PLLSAIN_VALUE << RCC_PLLSAICFGR_PLLSAIN_Pos);
+    // RK043FN48H LCD clock configuration is done in clk_cfg.h via the PLL3R output
 
-// TODO found a better way ( It is found just need to convert it to new IO
-    SET_BIT(RCC->PLLSAICFGR, 0x01 << RCC_PLLSAICFGR_PLLSAIP_Pos); // Enable the USB Clock and SDMMC
-    SET_BIT(RCC->DCKCFGR2, 1 << RCC_DCKCFGR2_CK48MSEL_Pos);
-
-    MODIFY_REG(RCC->DCKCFGR1, RCC_DCKCFGR1_PLLSAIDIVR, RCC_DCKCFGR1_PLLSAIDIVR_0); // PLLSA IDIVR 4;
-    RCC->CR |= RCC_CR_PLLSAION;
-    while((RCC->CR & RCC_CR_PLLSAIRDY) == 0);
-
-    RCC->APB2ENR |= RCC_APB2ENR_LTDCEN;
-    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
+    RCC->APB3ENR |= RCC_APB3ENR_LTDCEN;
+    RCC->AHB3ENR |= RCC_AHB3ENR_DMA2DEN;
 
     // Configures the HS, VS, DE and PC polarity
     LTDC->GCR = 0;
@@ -244,8 +229,8 @@ void GrafxDriver::Initialize(void* pArg)
 void GrafxDriver::DisplayOn(void)
 {
     LTDC->GCR |= LTDC_GCR_LTDCEN;
-    IO_SetPinHigh(IO_LCD_TFT_DISPLAY);
-    IO_SetPinHigh(IO_LCD_TFT_BL_CTRL);
+    IO_SetPinHigh(IO_LCD_DISPLAY);
+    IO_SetPinHigh(IO_LCD_BLANK_CTRL);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -263,8 +248,8 @@ void GrafxDriver::DisplayOn(void)
 void GrafxDriver::DisplayOff(void)
 {
     LTDC->GCR &= ~(LTDC_GCR_LTDCEN);
-    IO_SetPinLow(IO_LCD_TFT_DISPLAY);
-    IO_SetPinLow(IO_LCD_TFT_BL_CTRL);
+    IO_SetPinLow(IO_LCD_DISPLAY);
+    IO_SetPinLow(IO_LCD_BLANK_CTRL);
 }
 
 //-------------------------------------------------------------------------------------------------

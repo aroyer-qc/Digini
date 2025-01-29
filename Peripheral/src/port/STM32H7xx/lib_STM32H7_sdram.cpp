@@ -31,6 +31,58 @@
 #include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+
+/* BTR register clear mask */
+#define BTR_CLEAR_MASK    ((uint32_t)(FMC_BTRx_ADDSET | FMC_BTRx_ADDHLD  |\
+                                      FMC_BTRx_DATAST | FMC_BTRx_BUSTURN |\
+                                      FMC_BTRx_CLKDIV | FMC_BTRx_DATLAT  |\
+                                      FMC_BTRx_ACCMOD))
+
+/* --- BWTR Register ---*/
+/* BWTR register clear mask */
+#define BWTR_CLEAR_MASK   ((uint32_t)(FMC_BWTRx_ADDSET | FMC_BWTRx_ADDHLD  |\
+                                      FMC_BWTRx_DATAST | FMC_BWTRx_BUSTURN |\
+                                      FMC_BWTRx_ACCMOD))
+
+/* --- PCR Register ---*/
+/* PCR register clear mask */
+#define PCR_CLEAR_MASK    ((uint32_t)(FMC_PCR_PWAITEN | FMC_PCR_PBKEN  | \
+                                      FMC_PCR_PWID    | FMC_PCR_ECCEN  | \
+                                      FMC_PCR_TCLR    | FMC_PCR_TAR    | \
+                                      FMC_PCR_ECCPS))
+/* --- PMEM Register ---*/
+/* PMEM register clear mask */
+#define PMEM_CLEAR_MASK   ((uint32_t)(FMC_PMEM_MEMSET  | FMC_PMEM_MEMWAIT |\
+                                      FMC_PMEM_MEMHOLD | FMC_PMEM_MEMHIZ))
+
+/* --- PATT Register ---*/
+/* PATT register clear mask */
+#define PATT_CLEAR_MASK   ((uint32_t)(FMC_PATT_ATTSET  | FMC_PATT_ATTWAIT |\
+                                      FMC_PATT_ATTHOLD | FMC_PATT_ATTHIZ))
+
+
+/* --- SDCR Register ---*/
+/* SDCR register clear mask */
+#define SDCR_CLEAR_MASK   ((uint32_t)(FMC_SDCRx_NC    | FMC_SDCRx_NR     | \
+                                      FMC_SDCRx_MWID  | FMC_SDCRx_NB     | \
+                                      FMC_SDCRx_CAS   | FMC_SDCRx_WP     | \
+                                      FMC_SDCRx_SDCLK | FMC_SDCRx_RBURST | \
+                                      FMC_SDCRx_RPIPE))
+
+/* --- SDTR Register ---*/
+/* SDTR register clear mask */
+#define SDTR_CLEAR_MASK   ((uint32_t)(FMC_SDTRx_TMRD  | FMC_SDTRx_TXSR   | \
+                                      FMC_SDTRx_TRAS  | FMC_SDTRx_TRC    | \
+                                      FMC_SDTRx_TWR   | FMC_SDTRx_TRP    | \
+                                      FMC_SDTRx_TRCD))
+
+
+
+
+//-------------------------------------------------------------------------------------------------
 //
 //   Function name: SDRAM_Initialize
 //
@@ -50,8 +102,54 @@ void SDRAM::Initialize(FMC_SDRAM_TimingTypeDef* Timing)
 
     RCC->AHB3ENR |= RCC_AHB3ENR_FMCEN;                      // Enable Clock
 
+    // Set SDRAM bank configuration parameters
+    if(Init->SDBank == FMC_SDRAM_BANK1)
+    {
+        // Set SDRAM bank configuration parameters
+        MODIFY_REG(Device->SDCR[FMC_SDRAM_BANK1], SDCR_CLEAR_MASK,
+               (Init->ColumnBitsNumber   |
+                Init->RowBitsNumber      |
+                Init->MemoryDataWidth    |
+                Init->InternalBankNumber |
+                Init->CASLatency         |
+                Init->WriteProtection    |
+                Init->SDClockPeriod      |
+                Init->ReadBurst          |
+                Init->ReadPipeDelay));
     
+        // Set SDRAM device timing parameters
+        MODIFY_REG(Device->SDTR[FMC_SDRAM_BANK1],
+                   SDTR_CLEAR_MASK,
+                   (((Timing->LoadToActiveDelay) - 1U)                                      |
+                    (((Timing->ExitSelfRefreshDelay) - 1U) << FMC_SDTRx_TXSR_Pos) |
+                    (((Timing->SelfRefreshTime) - 1U)      << FMC_SDTRx_TRAS_Pos) |
+                    (((Timing->RowCycleDelay) - 1U)        << FMC_SDTRx_TRC_Pos)  |
+                    (((Timing->WriteRecoveryTime) - 1U)    << FMC_SDTRx_TWR_Pos)  |
+                    (((Timing->RPDelay) - 1U)              << FMC_SDTRx_TRP_Pos)  |
+                    (((Timing->RCDDelay) - 1U)             << FMC_SDTRx_TRCD_Pos)));
     
+    }
+    else /* FMC_Bank2_SDRAM */
+    {
+        // Set SDRAM bank configuration parameters
+        MODIFY_REG(Device->SDCR[FMC_SDRAM_BANK1],  FMC_SDCRx_SDCLK | FMC_SDCRx_RBURST | FMC_SDCRx_RPIPE, (Init->SDClockPeriod | Init->ReadBurst | Init->ReadPipeDelay));
+        MODIFY_REG(Device->SDCR[FMC_SDRAM_BANK2],  SDCR_CLEAR_MASK, (Init->ColumnBitsNumber   | Init->RowBitsNumber | Init->MemoryDataWidth | Init->InternalBankNumber | Init->CASLatency | Init->WriteProtection));
+
+
+        // Set SDRAM device timing parameters
+        MODIFY_REG(Device->SDTR[FMC_SDRAM_BANK1], FMC_SDTRx_TRC | FMC_SDTRx_TRP,
+                   (((Timing->RowCycleDelay) - 1U)         << FMC_SDTRx_TRC_Pos)  |
+                   (((Timing->RPDelay) - 1U)               << FMC_SDTRx_TRP_Pos));
+
+        MODIFY_REG(Device->SDTR[FMC_SDRAM_BANK2],
+                   SDTR_CLEAR_MASK,
+                   (((Timing->LoadToActiveDelay) - 1U)                                      |
+                    (((Timing->ExitSelfRefreshDelay) - 1U) << FMC_SDTRx_TXSR_Pos) |
+                    (((Timing->SelfRefreshTime) - 1U)      << FMC_SDTRx_TRAS_Pos) |
+                    (((Timing->WriteRecoveryTime) - 1U)    << FMC_SDTRx_TWR_Pos)  |
+                    (((Timing->RCDDelay) - 1U)             << FMC_SDTRx_TRCD_Pos)));
+
+    }
     
     
     

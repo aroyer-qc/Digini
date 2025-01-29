@@ -71,7 +71,7 @@ void SystemInit(void)
     // SEVONPEND enabled so that an interrupt coming from the CPU(n) interrupt signal is detectable by the CPU after a WFI/WFE instruction.
     SCB->SCR |= SCB_SCR_SEVONPEND_Pos;
 
-//according th PDF VOS0 shoul be chossen for 240Mhz AXI clock with 4 WS
+    //according th PDF VOS0 should be chosen for 240Mhz AXI clock with 4 WS
     SET_BIT(PWR->CR3, PWR_CR3_SMPSEN);                                          // Set the power supply configuration
     while((PWR->D3CR & PWR_D3CR_VOSRDY) != PWR_D3CR_VOSRDY){};                  // Wait till voltage level flag is set
 

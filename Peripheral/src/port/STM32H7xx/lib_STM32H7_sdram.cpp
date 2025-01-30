@@ -23,6 +23,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+// Information:
+//
+//
+//      In the STM32H7 series, the memory banks are used to interface with different types of
+//      external memory. Here's a brief overview of what each bank typically supports:
+//
+//          Bank 0: Often used for boot memory or internal flash memory.
+//          Bank 1: Typically used for SDRAM (Synchronous Dynamic RAM).
+//          Bank 2: Can be used for NOR Flash or additional SDRAM.
+//          Bank 3: Often used for PSRAM (Pseudo Static RAM) or additional NOR Flash.
+//          Bank 4: Can be used for NAND Flash or additional PSRAM.
+//          Bank 5 and Bank 6: These are additional banks available in the STM32H7 series to
+//                             support more extensive memory configurations, such as larger SDRAM
+//                             or additional Flash memory.
+//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
@@ -34,53 +49,36 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+// BTR register clear mask
+#define BTR_CLEAR_MASK          ((uint32_t)(FMC_BTRx_ADDSET | FMC_BTRx_ADDHLD | FMC_BTRx_DATAST | FMC_BTRx_BUSTURN | FMC_BTRx_CLKDIV | FMC_BTRx_DATLAT | FMC_BTRx_ACCMOD))
 
-/* BTR register clear mask */
-#define BTR_CLEAR_MASK    ((uint32_t)(FMC_BTRx_ADDSET | FMC_BTRx_ADDHLD  |\
-                                      FMC_BTRx_DATAST | FMC_BTRx_BUSTURN |\
-                                      FMC_BTRx_CLKDIV | FMC_BTRx_DATLAT  |\
-                                      FMC_BTRx_ACCMOD))
+// BWTR register clear mask
+#define BWTR_CLEAR_MASK         ((uint32_t)(FMC_BWTRx_ADDSET | FMC_BWTRx_ADDHLD | FMC_BWTRx_DATAST | FMC_BWTRx_BUSTURN | FMC_BWTRx_ACCMOD))
 
-/* --- BWTR Register ---*/
-/* BWTR register clear mask */
-#define BWTR_CLEAR_MASK   ((uint32_t)(FMC_BWTRx_ADDSET | FMC_BWTRx_ADDHLD  |\
-                                      FMC_BWTRx_DATAST | FMC_BWTRx_BUSTURN |\
-                                      FMC_BWTRx_ACCMOD))
+// PCR register clear mask
+#define PCR_CLEAR_MASK          ((uint32_t)(FMC_PCR_PWAITEN | FMC_PCR_PBKEN | FMC_PCR_PWID | FMC_PCR_ECCEN | FMC_PCR_TCLR | FMC_PCR_TAR | FMC_PCR_ECCPS))
 
-/* --- PCR Register ---*/
-/* PCR register clear mask */
-#define PCR_CLEAR_MASK    ((uint32_t)(FMC_PCR_PWAITEN | FMC_PCR_PBKEN  | \
-                                      FMC_PCR_PWID    | FMC_PCR_ECCEN  | \
-                                      FMC_PCR_TCLR    | FMC_PCR_TAR    | \
-                                      FMC_PCR_ECCPS))
-/* --- PMEM Register ---*/
-/* PMEM register clear mask */
-#define PMEM_CLEAR_MASK   ((uint32_t)(FMC_PMEM_MEMSET  | FMC_PMEM_MEMWAIT |\
-                                      FMC_PMEM_MEMHOLD | FMC_PMEM_MEMHIZ))
+// PMEM register clear mask
+#define PMEM_CLEAR_MASK         ((uint32_t)(FMC_PMEM_MEMSET | FMC_PMEM_MEMWAIT | FMC_PMEM_MEMHOLD | FMC_PMEM_MEMHIZ))
 
-/* --- PATT Register ---*/
-/* PATT register clear mask */
-#define PATT_CLEAR_MASK   ((uint32_t)(FMC_PATT_ATTSET  | FMC_PATT_ATTWAIT |\
-                                      FMC_PATT_ATTHOLD | FMC_PATT_ATTHIZ))
+// PATT register clear mask
+#define PATT_CLEAR_MASK         ((uint32_t)(FMC_PATT_ATTSET | FMC_PATT_ATTWAIT | FMC_PATT_ATTHOLD | FMC_PATT_ATTHIZ))
+
+// SDCR register clear mask
+#define SDCR_CLEAR_MASK         ((uint32_t)(FMC_SDCRx_NC | FMC_SDCRx_NR | FMC_SDCRx_MWID | FMC_SDCRx_NB | FMC_SDCRx_CAS | FMC_SDCRx_WP | FMC_SDCRx_SDCLK | FMC_SDCRx_RBURST | FMC_SDCRx_RPIPE))
+
+// SDTR register clear mask
+#define SDTR_CLEAR_MASK         ((uint32_t)(FMC_SDTRx_TMRD | FMC_SDTRx_TXSR | FMC_SDTRx_TRAS | FMC_SDTRx_TRC | FMC_SDTRx_TWR | FMC_SDTRx_TRP | FMC_SDTRx_TRCD))
+
+// SDTR register clear mask for timing
+#define SDTR_TIMING_CLEAR_MASK  ((uint32_t)(FMC_SDTRx_TRC | FMC_SDTRx_TRP))
 
 
-/* --- SDCR Register ---*/
-/* SDCR register clear mask */
-#define SDCR_CLEAR_MASK   ((uint32_t)(FMC_SDCRx_NC    | FMC_SDCRx_NR     | \
-                                      FMC_SDCRx_MWID  | FMC_SDCRx_NB     | \
-                                      FMC_SDCRx_CAS   | FMC_SDCRx_WP     | \
-                                      FMC_SDCRx_SDCLK | FMC_SDCRx_RBURST | \
-                                      FMC_SDCRx_RPIPE))
-
-/* --- SDTR Register ---*/
-/* SDTR register clear mask */
-#define SDTR_CLEAR_MASK   ((uint32_t)(FMC_SDTRx_TMRD  | FMC_SDTRx_TXSR   | \
-                                      FMC_SDTRx_TRAS  | FMC_SDTRx_TRC    | \
-                                      FMC_SDTRx_TWR   | FMC_SDTRx_TRP    | \
-                                      FMC_SDTRx_TRCD))
-
-
-
+#define SDCMR_MRD               (CFG_FMC_SDRAM_MRD_WRITE_BURST_MODE | \
+                                 CFG_FMC_SDRAM_MRD_OPERATION_MODE   | \
+                                 CFG_FMC_SDRAM_MRD_CAS_LATENCY      | \
+                                 CFG_FMC_SDRAM_MRD_BURST_TYPE       | \
+                                 CFG_FMC_SDRAM_MRD_BURST_LENGTH)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -94,7 +92,7 @@
 //   Notes:
 //
 //-------------------------------------------------------------------------------------------------
-void SDRAM::Initialize(FMC_SDRAM_TimingTypeDef* Timing)
+void SDRAM::Initialize(FMC_SDRAM_Timing_t* Timing)
 {
     // ---- FMC Reset ----
     RCC->AHB3RSTR |=  RCC_AHB3RSTR_FMCRST;
@@ -118,63 +116,54 @@ void SDRAM::Initialize(FMC_SDRAM_TimingTypeDef* Timing)
                 Init->ReadPipeDelay));
     
         // Set SDRAM device timing parameters
-        MODIFY_REG(Device->SDTR[FMC_SDRAM_BANK1],
-                   SDTR_CLEAR_MASK,
-                   (((Timing->LoadToActiveDelay) - 1U)                                      |
-                    (((Timing->ExitSelfRefreshDelay) - 1U) << FMC_SDTRx_TXSR_Pos) |
-                    (((Timing->SelfRefreshTime) - 1U)      << FMC_SDTRx_TRAS_Pos) |
-                    (((Timing->RowCycleDelay) - 1U)        << FMC_SDTRx_TRC_Pos)  |
-                    (((Timing->WriteRecoveryTime) - 1U)    << FMC_SDTRx_TWR_Pos)  |
-                    (((Timing->RPDelay) - 1U)              << FMC_SDTRx_TRP_Pos)  |
-                    (((Timing->RCDDelay) - 1U)             << FMC_SDTRx_TRCD_Pos)));
+        MODIFY_REG(Device->SDTR[FMC_SDRAM_BANK1], SDTR_CLEAR_MASK,
+                   (((Timing->LoadToActiveDelay) - 1)                                      |
+                   (((Timing->ExitSelfRefreshDelay) - 1) << FMC_SDTRx_TXSR_Pos) |
+                   (((Timing->SelfRefreshTime) - 1)      << FMC_SDTRx_TRAS_Pos) |
+                   (((Timing->RowCycleDelay) - 1)        << FMC_SDTRx_TRC_Pos)  |
+                   (((Timing->WriteRecoveryTime) - 1)    << FMC_SDTRx_TWR_Pos)  |
+                   (((Timing->RPDelay) - 1)              << FMC_SDTRx_TRP_Pos)  |
+                   (((Timing->RCDDelay) - 1)             << FMC_SDTRx_TRCD_Pos)));
     
     }
     else /* FMC_Bank2_SDRAM */
     {
         // Set SDRAM bank configuration parameters
         MODIFY_REG(Device->SDCR[FMC_SDRAM_BANK1],  FMC_SDCRx_SDCLK | FMC_SDCRx_RBURST | FMC_SDCRx_RPIPE, (Init->SDClockPeriod | Init->ReadBurst | Init->ReadPipeDelay));
-        MODIFY_REG(Device->SDCR[FMC_SDRAM_BANK2],  SDCR_CLEAR_MASK, (Init->ColumnBitsNumber   | Init->RowBitsNumber | Init->MemoryDataWidth | Init->InternalBankNumber | Init->CASLatency | Init->WriteProtection));
+        MODIFY_REG(Device->SDCR[FMC_SDRAM_BANK2],  SDCR_CLEAR_MASK, (Init->ColumnBitsNumber | Init->RowBitsNumber | Init->MemoryDataWidth | Init->InternalBankNumber | Init->CASLatency | Init->WriteProtection));
 
 
         // Set SDRAM device timing parameters
-        MODIFY_REG(Device->SDTR[FMC_SDRAM_BANK1], FMC_SDTRx_TRC | FMC_SDTRx_TRP,
-                   (((Timing->RowCycleDelay) - 1U)         << FMC_SDTRx_TRC_Pos)  |
-                   (((Timing->RPDelay) - 1U)               << FMC_SDTRx_TRP_Pos));
+        MODIFY_REG(Device->SDTR[FMC_SDRAM_BANK1], SDTR_TIMING_CLEAR_MASK,
+                   (((Timing->RowCycleDelay) - 1)         << FMC_SDTRx_TRC_Pos)  |
+                   (((Timing->RPDelay) - 1)               << FMC_SDTRx_TRP_Pos));
 
         MODIFY_REG(Device->SDTR[FMC_SDRAM_BANK2],
                    SDTR_CLEAR_MASK,
-                   (((Timing->LoadToActiveDelay) - 1U)                                      |
-                    (((Timing->ExitSelfRefreshDelay) - 1U) << FMC_SDTRx_TXSR_Pos) |
-                    (((Timing->SelfRefreshTime) - 1U)      << FMC_SDTRx_TRAS_Pos) |
-                    (((Timing->WriteRecoveryTime) - 1U)    << FMC_SDTRx_TWR_Pos)  |
-                    (((Timing->RCDDelay) - 1U)             << FMC_SDTRx_TRCD_Pos)));
+                   (((Timing->LoadToActiveDelay) - 1)                                      |
+                    (((Timing->ExitSelfRefreshDelay) - 1) << FMC_SDTRx_TXSR_Pos) |
+                    (((Timing->SelfRefreshTime) - 1)      << FMC_SDTRx_TRAS_Pos) |
+                    (((Timing->WriteRecoveryTime) - 1)    << FMC_SDTRx_TWR_Pos)  |
+                    (((Timing->RCDDelay) - 1)             << FMC_SDTRx_TRCD_Pos)));
 
     }
     
+     
+    
+    
+    
+    SDRAM_Init(hsdram->Instance, &(hsdram->Init));                      // Initialize SDRAM control Interface
+    SDRAM_TimingInit(Timing, hsdram->Init.SDBank);   // Initialize SDRAM timing Interface
     
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    if(m_State == SYS_RESET)
-
-        SDRAM_BSP_Initialize();                                             // Initialize the low level hardware (MSP)
-    }
-
-    m_State = SYS_BUSY;                                                     // Initialize the SDRAM controller state
-    something->SDRAM_Init(hsdram->Instance, &(hsdram->Init));                      // Initialize SDRAM control Interface
-    something->SDRAM_TimingInit(Timing, hsdram->Init.SDBank);   // Initialize SDRAM timing Interface
-    m_State = SYS_READY;                                                  // Update the SDRAM controller state
+    // SDRAM initialization sequence
+    FMC_Bank5_6_R->SDCMR = (FMC_SDRAM_CMD_CLK_ENABLE | bank0 or 1 or both);                 // Clock enable command
+    for(index = 0; index<5000; index++);                                                    // Delay
+    FMC_Bank5_6_R->SDCMR = (FMC_SDRAM_CMD_PALL | bank0 or 1 or both);                       // PALL command
+    FMC_Bank5_6_R->SDCMR = (FMC_SDRAM_CMD_AUTO_REFRESH_MODE | bank0 or 1 or both | ((CFG_SDRAM_AUTO_REFRESH_CYCLE - 1) << FMC_SDCMR_NRFS_Pos)); // Auto refresh mode
+    FMC_Bank5_6_R->SDCMR = (FMC_SDRAM_CMD_LOAD_MODE | bank0 or 1 or both | SDCMR_MRD);      // Load mode
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -189,6 +178,7 @@ void SDRAM::Initialize(FMC_SDRAM_TimingTypeDef* Timing)
 //   Notes:
 //
 //-------------------------------------------------------------------------------------------------
+/*
 void SDRAM::IRQHandler(void)
 {
     if(__FMC_SDRAM_GET_FLAG(hsdram->Instance, FMC_SDRAM_FLAG_REFRESH_IT))           // Check SDRAM interrupt Rising edge flag
@@ -197,7 +187,7 @@ void SDRAM::IRQHandler(void)
         __FMC_SDRAM_CLEAR_FLAG(hsdram->Instance, FMC_SDRAM_FLAG_REFRESH_ERROR);     // Clear SDRAM refresh error interrupt pending bit
     }
 }
-
+*/
 
 //-------------------------------------------------------------------------------------------------
 //

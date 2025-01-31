@@ -37,7 +37,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#if defined (DIGINI_USE_SRAM_MODULE) || defined(DIGINI_USE_NOR_MODULE) || defined(DIGINI_USE_NAND_MODULE) || defined(DIGINI_USE_SDRAM_MODULE)
+#if defined (DIGINI_USE_SRAM_MODULE) || defined(DIGINI_USE_NOR_MODULE) || defined(DIGINI_USE_NAND_MODULE) || defined(USE_SDRAM_DRIVER)
 
 // FMC_NORSRAM_Bank FMC NOR/SRAM Bank
 #define FMC_NORSRAM_BANK1                               ((uint32_t)0x00000000U)
@@ -689,7 +689,7 @@ class FMC_Driver
         SystemState_e   NAND_GetECC                     (uint32_t* ECCval, uint32_t Bank, uint32_t Timeout);
       #endif
 
-      #ifdef DIGINI_USE_SDRAM_MODULE
+      #ifdef USE_SDRAM_DRIVER
         // SDRAM Initialization
         void            SDRAM_Initialize                (FMC_SDRAM_t* Device, FMC_SDRAM_Init_t* Init);
         void            SDRAM_TimingInit                (FMC_SDRAM_Timing_t* Timing, uint32_t Bank);
@@ -717,7 +717,7 @@ class FMC_Driver
          FMC_NAND_t*        m_pNAND_Device;
      #endif
 
-      #ifdef DIGINI_USE_SDRAM_MODULE
+      #ifdef USE_SDRAM_DRIVER
         FMC_SDRAM_t*        m_pSDRAM_Device;
       #endif
 };

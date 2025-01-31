@@ -11,7 +11,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "digini_cfg.h"
-#ifdef DIGINI_USE_SDRAM_MODULE
+#ifdef USE_SDRAM_DRIVER
 #include <stdint.h>
 #include "./Digini/inc/lib_typedef.h"
 #include "./Peripheral/inc/port/lib_class_fmc.h"
@@ -66,5 +66,5 @@ void SDRAM_DMA_XferErrorCallback    (void);
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // DIGINI_USE_SDRAM_MODULE
+#endif // USE_SDRAM_DRIVER
 

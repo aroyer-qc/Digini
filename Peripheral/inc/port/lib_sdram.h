@@ -25,13 +25,16 @@
 //-------------------------------------------------------------------------------------------------
 
 
+#include "sdram_cfg.h"
+
 //#if defined STM32F1xx
 // #include "./Peripheral/inc/port/STM32F1xx/lib_STM32F1_sdram.h"
 //#elif defined STM32F4xx
 // #include "./Peripheral/inc/port/STM32F4xx/lib_STM32F4_sdram.h"
 //#elif defined STM32F7xx
 // #include "./Peripheral/inc/port/STM32F7xx/lib_STM32F7_sdram.h"
-/*#el*/if defined STM32H7xx
+/*#el*/
+#if defined STM32H7xx
  #include "./Peripheral/inc/port/STM32H7xx/lib_STM32H7_sdram.h"
 #endif
 

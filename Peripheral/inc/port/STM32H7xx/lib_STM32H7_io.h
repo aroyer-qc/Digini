@@ -80,6 +80,7 @@
 #define IO_TYPE_PIN_PULL_UP             ((uint32_t)0x00000002)
 #define IO_TYPE_PIN_PULL_DOWN           ((uint32_t)0x00000004)
 
+
 // TODO need to be validated
 // External trigger
 #define IO_EXTI_TRIGGER_NONE            ((uint8_t)0) // No Trigger Mode

@@ -70,7 +70,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if defined (DIGINI_USE_SRAM_MODULE) || defined(DIGINI_USE_NOR_MODULE) || defined(DIGINI_USE_NAND_MODULE) || defined(DIGINI_USE_SDRAM_MODULE)
+#if defined (DIGINI_USE_SRAM_MODULE) || defined(DIGINI_USE_NOR_MODULE) || defined(DIGINI_USE_NAND_MODULE) || defined(USE_SDRAM_DRIVER)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -500,7 +500,7 @@ SystemState_e FMC::NAND_GetECC(uint32_t* ECCval, uint32_t Bank, uint32_t Timeout
 //    - Bank send command using the function SDRAM_SendCommand()
 //
 //-------------------------------------------------------------------------------------------------
-#if DIGINI_USE_SDRAM_MODULE
+#if USE_SDRAM_DRIVER
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -766,8 +766,8 @@ uint32_t FMC::SDRAM_GetModeStatus(uint32_t Bank)
 }
 
 
-#endif // DIGINI_USE_SDRAM_MODULE
+#endif // USE_SDRAM_DRIVER
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (DIGINI_USE_SRAM_MODULE) || (DIGINI_USE_NOR_MODULE) || (DIGINI_USE_NAND_MODULE) || (DIGINI_USE_SDRAM_MODULE)
+#endif // (DIGINI_USE_SRAM_MODULE) || (DIGINI_USE_NOR_MODULE) || (DIGINI_USE_NAND_MODULE) || (USE_SDRAM_DRIVER)

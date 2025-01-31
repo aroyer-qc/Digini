@@ -46,6 +46,10 @@
 #include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
+
+#if (USE_SDRAM_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -73,314 +77,95 @@
 // SDTR register clear mask for timing
 #define SDTR_TIMING_CLEAR_MASK  ((uint32_t)(FMC_SDTRx_TRC | FMC_SDTRx_TRP))
 
+//--------------
+// SDRAM Command
 
-#define SDCMR_MRD               (CFG_FMC_SDRAM_MRD_WRITE_BURST_MODE | \
-                                 CFG_FMC_SDRAM_MRD_OPERATION_MODE   | \
-                                 CFG_FMC_SDRAM_MRD_CAS_LATENCY      | \
-                                 CFG_FMC_SDRAM_MRD_BURST_TYPE       | \
-                                 CFG_FMC_SDRAM_MRD_BURST_LENGTH)
+// FMC SDRAM Command Mode
+#define SDCMR_CMD_NORMAL_MODE                   (0x00000000)
+#define SDCMR_CMD_CLK_ENABLE                    (0x00000001)
+#define SDCMR_CMD_PALL                          (0x00000002)
+#define SDCMR_CMD_AUTO_REFRESH_MODE             (0x00000003)
+#define SDCMR_CMD_LOAD_MODE                     (0x00000004)
+#define SDCMR_CMD_SELF_REFRESH_MODE             (0x00000005)
+#define SDCMR_CMD_POWER_DOWN_MODE               (0x00000006)
+
+
+#if (CFG_SDRAM_BANK == FMC_SDRAM_BANK1)
+  #define SDCMR_BANK                  FMC_SDCMR_CTB1
+#elif (CFG_SDRAM_BANK == FMC_SDRAM_BANK2)
+  #define SDCMR_BANK                  FMC_SDCMR_CTB2
+#else
+  #define SDCMR_BANK                  (FMC_SDCMR_CTB1 | FMC_SDCMR_CTB2)
+#endif
+
+#define SDCMR_MRD               (CFG_SDRAM_MRD_WRITE_BURST_MODE | \
+                                 CFG_SDRAM_MRD_OPERATION_MODE   | \
+                                 CFG_SDRAM_MRD_CAS_LATENCY      | \
+                                 CFG_SDRAM_MRD_BURST_TYPE       | \
+                                 CFG_SDRAM_MRD_BURST_LENGTH)
+
+#define SDTR_LOAD_TO_ACTIVITY_DELAY            (uint32_t(CFG_SDRAM_LOAD_TO_ACTIVITY_DELAY  - 1))
+#define SDTR_EXIT_SELF_REFRESH_DELAY           (uint32_t(CFG_SDRAM_EXIT_SELF_REFRESH_DELAY - 1) << FMC_SDTRx_TXSR_Pos)
+#define SDTR_SELF_REFRESH_TIME                 (uint32_t(CFG_SDRAM_SELF_REFRESH_TIME       - 1) << FMC_SDTRx_TRAS_Pos)
+#define SDTR_ROW_CYCLE_DELAY                   (uint32_t(CFG_SDRAM_ROW_CYCLE_DELAY         - 1) << FMC_SDTRx_TRC_Pos)
+#define SDTR_WRITE_RECOVERY_TIME               (uint32_t(CFG_SDRAM_WRITE_RECOVERY_TIME     - 1) << FMC_SDTRx_TWR_Pos)
+#define SDTR_RP_DELAY                          (uint32_t(CFG_SDRAM_RP_DELAY                - 1) << FMC_SDTRx_TRP_Pos)
+#define SDTR_RCD_DELAY                         (uint32_t(CFG_SDRAM_RCD_DELAY               - 1) << FMC_SDTRx_TRCD_Pos)
+#define SDCMR_AUTO_REFRESH_CYCLE               (uint32_t(CFG_SDRAM_AUTO_REFRESH_CYCLE      - 1) << FMC_SDCMR_NRFS_Pos)
+
 
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: SDRAM_Initialize
 //
-//   Parameter(s):  Timing Pointer to SDRAM control timing structure
-//   Return:        SystemState_e
+//   Parameter(s):  None
+//   Return:        None
 //
 //   Description:   Performs the SDRAM device initialization sequence.
 //
-//   Notes:
-//
 //-------------------------------------------------------------------------------------------------
-void SDRAM::Initialize(FMC_SDRAM_Timing_t* Timing)
+void SDRAM_Initialize(void)
 {
     // ---- FMC Reset ----
     RCC->AHB3RSTR |=  RCC_AHB3RSTR_FMCRST;
     RCC->AHB3RSTR &= ~RCC_AHB3RSTR_FMCRST;
+    RCC->AHB3ENR  |=  RCC_AHB3ENR_FMCEN;                    // Enable Clock
 
-    RCC->AHB3ENR |= RCC_AHB3ENR_FMCEN;                      // Enable Clock
+  #if (CFG_SDRAM_BANK == FMC_SDRAM_BANK1)
 
     // Set SDRAM bank configuration parameters
-    if(Init->SDBank == FMC_SDRAM_BANK1)
-    {
-        // Set SDRAM bank configuration parameters
-        MODIFY_REG(Device->SDCR[FMC_SDRAM_BANK1], SDCR_CLEAR_MASK,
-               (Init->ColumnBitsNumber   |
-                Init->RowBitsNumber      |
-                Init->MemoryDataWidth    |
-                Init->InternalBankNumber |
-                Init->CASLatency         |
-                Init->WriteProtection    |
-                Init->SDClockPeriod      |
-                Init->ReadBurst          |
-                Init->ReadPipeDelay));
-    
-        // Set SDRAM device timing parameters
-        MODIFY_REG(Device->SDTR[FMC_SDRAM_BANK1], SDTR_CLEAR_MASK,
-                   (((Timing->LoadToActiveDelay) - 1)                                      |
-                   (((Timing->ExitSelfRefreshDelay) - 1) << FMC_SDTRx_TXSR_Pos) |
-                   (((Timing->SelfRefreshTime) - 1)      << FMC_SDTRx_TRAS_Pos) |
-                   (((Timing->RowCycleDelay) - 1)        << FMC_SDTRx_TRC_Pos)  |
-                   (((Timing->WriteRecoveryTime) - 1)    << FMC_SDTRx_TWR_Pos)  |
-                   (((Timing->RPDelay) - 1)              << FMC_SDTRx_TRP_Pos)  |
-                   (((Timing->RCDDelay) - 1)             << FMC_SDTRx_TRCD_Pos)));
-    
-    }
-    else /* FMC_Bank2_SDRAM */
-    {
-        // Set SDRAM bank configuration parameters
-        MODIFY_REG(Device->SDCR[FMC_SDRAM_BANK1],  FMC_SDCRx_SDCLK | FMC_SDCRx_RBURST | FMC_SDCRx_RPIPE, (Init->SDClockPeriod | Init->ReadBurst | Init->ReadPipeDelay));
-        MODIFY_REG(Device->SDCR[FMC_SDRAM_BANK2],  SDCR_CLEAR_MASK, (Init->ColumnBitsNumber | Init->RowBitsNumber | Init->MemoryDataWidth | Init->InternalBankNumber | Init->CASLatency | Init->WriteProtection));
+    MODIFY_REG(FMC_Bank5_6_R->SDCR[FMC_SDRAM_BANK1], SDCR_CLEAR_MASK, (CFG_SDRAM_COLUMN_BITS_NUMBER   | CFG_SDRAM_ROW_BITS_NUMBER | CFG_SDRAM_MEMORY_DATA_WIDTH |
+                                                                       CFG_SDRAM_INTERNAL_BANK_NUMBER | CFG_SDRAM_CAS_LATENCY     | CFG_SDRAM_WRITE_PROTECTION  |
+                                                                       CFG_SDRAM_SD_CLOCK_PERIOD      | CFG_SDRAM_READ_BURST      | CFG_SDRAM_PIPE_DELAY));
+
+    // Set SDRAM device timing parameters
+    MODIFY_REG(FMC_Bank5_6_R->SDTR[FMC_SDRAM_BANK1], SDTR_CLEAR_MASK, (SDTR_LOAD_TO_ACTIVITY_DELAY | SDTR_EXIT_SELF_REFRESH_DELAY | SDTR_SELF_REFRESH_TIME |
+                                                                       SDTR_ROW_CYCLE_DELAY        | SDTR_WRITE_RECOVERY_TIME     | SDTR_RP_DELAY          |
+                                                                       SDTR_RCD_DELAY));
+
+  #else // (CFG_SDRAM_BANK == FMC_SDRAM_BANK2)
+
+    // Set SDRAM bank configuration parameters
+    MODIFY_REG(FMC_Bank5_6_R->SDCR[FMC_SDRAM_BANK1], (FMC_SDCRx_SDCLK | FMC_SDCRx_RBURST | FMC_SDCRx_RPIPE), (CFG_SDRAM_SD_CLOCK_PERIOD | CFG_SDRAM_READ_BURST | CFG_SDRAM_PIPE_DELAY));
+    MODIFY_REG(FMC_Bank5_6_R->SDCR[FMC_SDRAM_BANK2], SDCR_CLEAR_MASK, (CFG_SDRAM_COLUMN_BITS_NUMBER   | CFG_SDRAM_ROW_BITS_NUMBER | CFG_SDRAM_MEMORY_DATA_WIDTH |
+                                                                       CFG_SDRAM_INTERNAL_BANK_NUMBER | CFG_SDRAM_CAS_LATENCY     | CFG_SDRAM_WRITE_PROTECTION));
 
 
-        // Set SDRAM device timing parameters
-        MODIFY_REG(Device->SDTR[FMC_SDRAM_BANK1], SDTR_TIMING_CLEAR_MASK,
-                   (((Timing->RowCycleDelay) - 1)         << FMC_SDTRx_TRC_Pos)  |
-                   (((Timing->RPDelay) - 1)               << FMC_SDTRx_TRP_Pos));
+    // Set SDRAM device timing parameters
+    MODIFY_REG(FMC_Bank5_6_R->SDTR[FMC_SDRAM_BANK1], SDTR_TIMING_CLEAR_MASK, (SDTR_ROW_CYCLE_DELAY | SDTR_RP_DELAY));
+    MODIFY_REG(FMC_Bank5_6_R->SDTR[FMC_SDRAM_BANK2], SDTR_CLEAR_MASK, (SDTR_LOAD_TO_ACTIVITY_DELAY | SDTR_EXIT_SELF_REFRESH_DELAY | SDTR_SELF_REFRESH_TIME |
+                                                                       SDTR_WRITE_RECOVERY_TIME    | SDTR_RCD_DELAY));
 
-        MODIFY_REG(Device->SDTR[FMC_SDRAM_BANK2],
-                   SDTR_CLEAR_MASK,
-                   (((Timing->LoadToActiveDelay) - 1)                                      |
-                    (((Timing->ExitSelfRefreshDelay) - 1) << FMC_SDTRx_TXSR_Pos) |
-                    (((Timing->SelfRefreshTime) - 1)      << FMC_SDTRx_TRAS_Pos) |
-                    (((Timing->WriteRecoveryTime) - 1)    << FMC_SDTRx_TWR_Pos)  |
-                    (((Timing->RCDDelay) - 1)             << FMC_SDTRx_TRCD_Pos)));
+  #endif
 
-    }
-    
-     
-    
-    
-    
-    SDRAM_Init(hsdram->Instance, &(hsdram->Init));                      // Initialize SDRAM control Interface
-    SDRAM_TimingInit(Timing, hsdram->Init.SDBank);   // Initialize SDRAM timing Interface
-    
-    
-    
-    
     // SDRAM initialization sequence
-    FMC_Bank5_6_R->SDCMR = (FMC_SDRAM_CMD_CLK_ENABLE | bank0 or 1 or both);                 // Clock enable command
-    for(index = 0; index<5000; index++);                                                    // Delay
-    FMC_Bank5_6_R->SDCMR = (FMC_SDRAM_CMD_PALL | bank0 or 1 or both);                       // PALL command
-    FMC_Bank5_6_R->SDCMR = (FMC_SDRAM_CMD_AUTO_REFRESH_MODE | bank0 or 1 or both | ((CFG_SDRAM_AUTO_REFRESH_CYCLE - 1) << FMC_SDCMR_NRFS_Pos)); // Auto refresh mode
-    FMC_Bank5_6_R->SDCMR = (FMC_SDRAM_CMD_LOAD_MODE | bank0 or 1 or both | SDCMR_MRD);      // Load mode
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: IRQHandler
-//
-//   Parameter(s):  None
-//   Return:        None
-//
-//   Description:   This function handles SDRAM refresh error interrupt request.
-//
-//   Notes:
-//
-//-------------------------------------------------------------------------------------------------
-/*
-void SDRAM::IRQHandler(void)
-{
-    if(__FMC_SDRAM_GET_FLAG(hsdram->Instance, FMC_SDRAM_FLAG_REFRESH_IT))           // Check SDRAM interrupt Rising edge flag
-    {
-        SDRAM_RefreshErrorCallback();                                               // SDRAM refresh error interrupt callback
-        __FMC_SDRAM_CLEAR_FLAG(hsdram->Instance, FMC_SDRAM_FLAG_REFRESH_ERROR);     // Clear SDRAM refresh error interrupt pending bit
-    }
-}
-*/
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: WriteProtectionEnable
-//
-//   Parameter(s):  None
-//   Return:        SystemState_e
-//
-//   Description:   Enables dynamically SDRAM write protection.
-//
-//   Notes:
-//
-//-------------------------------------------------------------------------------------------------
-/*
-SystemState_e SDRAM::WriteProtectionEnable(void)
-{
-    if(m_State == SYS_BUSY)                                                     // Check the SDRAM controller state
-    {
-        return SYS_BUSY;
-    }
-
-    m_State = SYS_BUSY;                                                         // Update the SDRAM state
-    FMC_SDRAM_WriteProtection_Enable(hsdram->Instance, hsdram->Init.SDBank);    // Enable write protection
-    m_State = SYS_PROTECTED;                                                    // Update the SDRAM state
-
-    return SYS_OK;
-}
-*/
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name:
-//
-//   Parameter(s):  None
-//   Return:        SystemState_e
-//
-//   Description:   Disables dynamically SDRAM write protection.
-//
-//   Notes:
-//
-//-------------------------------------------------------------------------------------------------
-/*
-SystemState_e SDRAM::WriteProtectionDisable(void)
-{
-    if(m_State == SYS_BUSY)                                                     // Check the SDRAM controller state
-    {
-        return SYS_BUSY;
-    }
-
-    m_State = SYS_BUSY;                                                         // Update the SDRAM state
-    FMC_SDRAM_WriteProtection_Disable(hsdram->Instance, hsdram->Init.SDBank);   // Disable write protection
-    m_State = SYS_READY;                                                        // Update the SDRAM state
-
-    return SYS_OK;
-}
-*/
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name:
-//
-//   Parameter(s):  Command SDRAM command structure
-//                  Timeout Timeout duration
-//   Return:        SystemState_e
-//
-//   Description:   Sends Command to the SDRAM bank.
-//
-//   Notes:
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e SDRAM::SendCommand(FMC_SDRAM_CommandTypeDef* Command, uint32_t Timeout)
-{
-    if(m_State == SYS_BUSY)                                                 // Check the SDRAM controller state
-    {
-        return SYS_BUSY;
-    }
-
-    m_State = SYS_BUSY;                                                     // Update the SDRAM state
-    FMC_SDRAM_SendCommand(hsdram->Instance, Command, Timeout);              // Send SDRAM command
-
-    if(Command->CommandMode == FMC_SDRAM_CMD_PALL)                          // Update the SDRAM controller state state
-    {
-        m_State = SYS_PRECHARGED;
-    }
-    else
-    {
-        m_State = SYS_READY;
-    }
-
-    return SYS_OK;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name:
-//
-//   Parameter(s):  None
-//   Return:        SystemState_e
-//
-//   Description:   Programs the SDRAM Memory Refresh rate.
-//
-//   Notes:
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e SDRAM::ProgramRefreshRate(uint32_t RefreshRate)
-{
-    if(m_State == SYS_BUSY)                                                     // Check the SDRAM controller state
-    {
-        return SYS_BUSY;
-    }
-
-    m_State = SYS_BUSY;                                                         // Update the SDRAM state
-    FMC_SDRAM_ProgramRefreshRate(hsdram->Instance ,RefreshRate);                // Program the refresh rate
-    m_State = SYS_READY;                                                        // Update the SDRAM state
-
-    return SYS_OK;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: SetAutoRefreshNumber
-//
-//   Parameter(s):  AutoRefreshNumber The SDRAM auto Refresh number
-//   Return:        SystemState_e
-//
-//   Description:   Sets the Number of consecutive SDRAM Memory auto Refresh commands.
-//
-//   Notes:
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e SDRAM::SetAutoRefreshNumber(uint32_t AutoRefreshNumber)
-{
-    if(m_State == SYS_BUSY)                                                     // Check the SDRAM controller state
-    {
-        return SYS_BUSY;
-    }
-
-    m_State = SYS_BUSY;                                                         // Update the SDRAM state
-    FMC_SDRAM_SetAutoRefreshNumber(hsdram->Instance ,AutoRefreshNumber);        // Set the Auto-Refresh number
-    m_State = SYS_READY;                                                        // Update the SDRAM state
-
-    return SYS_OK;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: GetModeStatus
-//
-//   Parameter(s):  None
-//   Return:        uint32_t    The SDRAM memory mode.
-//
-//   Description:   Returns the SDRAM memory current mode.
-//
-//   Notes:
-//
-//-------------------------------------------------------------------------------------------------
-uint32_t SDRAM::GetModeStatus(void)
-{
-    return FMC_SDRAM_GetModeStatus(hsdram->Instance, hsdram->Init.SDBank);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: GetState
-//
-//   Parameter(s):  None
-//   Return:        SystemState_e
-//
-//   Description:   Returns the SDRAM state.
-//
-//   Notes:
-//
-//-------------------------------------------------------------------------------------------------
-SystemState_e SDRAM::GetState(void)
-{
-    return m_State;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: SDRAM_RefreshErrorCallback
-//
-//   Parameter(s):  None
-//   Return:        None
-//
-//   Description:   SDRAM Refresh error callback.
-//
-//   Notes:         This function Should not be modified, when the callback is needed, the
-//                  SDRAM_RefreshErrorCallback could be implemented in the user file
-//
-//-------------------------------------------------------------------------------------------------
-__weak void SDRAM_RefreshErrorCallback(void)
-{
-     __asm("nop");
+    FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_CLK_ENABLE | SDCMR_BANK);                                         // Clock enable command
+    for(int index = 0; index < 5000; index++);                                                                    // Delay
+    FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_PALL | SDCMR_BANK);                                               // PALL command
+    FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_AUTO_REFRESH_MODE | SDCMR_BANK | SDCMR_AUTO_REFRESH_CYCLE);   // Auto refresh mode
+    FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_LOAD_MODE | SDCMR_BANK | SDCMR_MRD);                              // Load mode
 }
 
 //-------------------------------------------------------------------------------------------------
 
+#endif // USE_SDRAM_DRIVER

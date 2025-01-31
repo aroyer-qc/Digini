@@ -203,6 +203,10 @@
 #include "./Peripheral/inc/port/lib_class_sdio.h"
 #endif
 
+#if (USE_SDRAM_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_sdram.h"
+#endif
+
 #if (USE_SPI_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_spi.h"
 #endif

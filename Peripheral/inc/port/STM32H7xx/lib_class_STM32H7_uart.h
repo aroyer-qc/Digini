@@ -34,29 +34,6 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#if (UART_DRIVER_SUPPORT_UART1_DMA_CFG  == DEF_ENABLED) || \
-    (UART_DRIVER_SUPPORT_UART2_DMA_CFG  == DEF_ENABLED) || \
-    (UART_DRIVER_SUPPORT_UART3_DMA_CFG  == DEF_ENABLED) || \
-    (UART_DRIVER_SUPPORT_UART4_DMA_CFG  == DEF_ENABLED) || \
-    (UART_DRIVER_SUPPORT_UART5_DMA_CFG  == DEF_ENABLED) || \
-    (UART_DRIVER_SUPPORT_UART6_DMA_CFG  == DEF_ENABLED) || \
-    (UART_DRIVER_SUPPORT_UART7_DMA_CFG  == DEF_ENABLED) || \
-    (UART_DRIVER_SUPPORT_UART8_DMA_CFG  == DEF_ENABLED) || \
-    (UART_DRIVER_SUPPORT_UART9_DMA_CFG  == DEF_ENABLED) || \
-    (UART_DRIVER_SUPPORT_UART10_DMA_CFG == DEF_ENABLED)
-
-  #define UART_DRIVER_DMA_CFG                 DEF_ENABLED
-#else
-  #define UART_DRIVER_DMA_CFG                 DEF_DISABLED
-#endif
-
-#if (UART_DRIVER_DMA_CFG                  == DEF_ENABLED) || \
-    (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-  #define UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG  DEF_ENABLED
-#else
-  #define UART_DRIVER_ANY_DMA_OR_VIRTUAL_CFG  DEF_DISABLED
-#endif
-
 #define UART_ISR_RX_PARITY_ERROR_MASK           0x01
 #define UART_ISR_RX_FRAMING_ERROR_MASK          0x02
 #define UART_ISR_RX_NOISE_DETECTED_MASK         0x04
@@ -83,7 +60,6 @@
      (UART_DRIVER_RX_OVERRUN_ERROR_CFG  == DEF_ENABLED))
 
     #define UART_DRIVER_RX_ERROR_CFG            DEF_ENABLED
-
 #endif
 
 #if ((UART_DRIVER_RX_PARITY_ERROR_CFG   != DEF_ENABLED) && \
@@ -149,43 +125,6 @@ enum UART_ID_e
     #endif
 
      NB_OF_UART_DRIVER,
-};
-
-enum UART_DMA_ID_e
-{
-    #if (UART_DRIVER_SUPPORT_UART1_DMA_CFG == DEF_ENABLED)
-        UART_DMA_DRIVER_ID_1,
-    #endif
-
-    #if (UART_DRIVER_SUPPORT_UART2_DMA_CFG == DEF_ENABLED)
-        UART_DMA_DRIVER_ID_2,
-    #endif
-
-    #if (UART_DRIVER_SUPPORT_UART3_DMA_CFG == DEF_ENABLED)
-        UART_DMA_DRIVER_ID_3,
-    #endif
-
-    #if (UART_DRIVER_SUPPORT_UART4_DMA_CFG == DEF_ENABLED)
-        UART_DMA_DRIVER_ID_4,
-    #endif
-
-    #if (UART_DRIVER_SUPPORT_UART5_DMA_CFG == DEF_ENABLED)
-        UART_DMA_DRIVER_ID_5,
-    #endif
-
-    #if (UART_DRIVER_SUPPORT_UART6_DMA_CFG == DEF_ENABLED)
-        UART_DMA_DRIVER_ID_6,
-    #endif
-
-    #if (UART_DRIVER_SUPPORT_UART7_DMA_CFG == DEF_ENABLED)
-        UART_DMA_DRIVER_ID_7,
-    #endif
-
-    #if (UART_DRIVER_SUPPORT_UART8_DMA_CFG == DEF_ENABLED)
-        UART_DMA_DRIVER_ID_8,
-    #endif
-
-     NB_OF_UART_DMA_DRIVER,
 };
 
 enum UART_Baud_e
@@ -262,21 +201,11 @@ enum UART_Config_e
 struct UART_Info_t
 {
     USART_TypeDef*      pUARTx;
-    IO_ID_e             PinRX;
-    IO_ID_e             PinTX;
-    uint32_t            RCC_APBxPeriph;
-    volatile uint32_t*  RCC_APBxEN_Register;
     IRQn_Type           IRQn_Channel;
     uint8_t             PreempPrio;
     UART_Config_e       Config;
     UART_Baud_e         BaudID;
-    bool                IsItBlockingOnBusy;
-};
-
-#if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-struct UART_DMA_Info_t
-{
-    UART_ID_e           UartID;
+    bool                IsItBlockingOnBusy;  // todo check if used
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;
 };
@@ -288,8 +217,6 @@ struct UART_Transfer_t
     size_t              StaticSize;
 };
 
-#endif
-
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
@@ -300,15 +227,16 @@ class UART_Driver
 
                             UART_Driver                     (UART_ID_e UartID);
 
+        void                Initialize                      (void);
         void                SetConfig                       (UART_Config_e Config, UART_Baud_e BaudID);
         void                SetBaudRate                     (UART_Baud_e BaudID);
+        void                SetCustomBaudRate               (uint32_t Speed);
         uint32_t            GetBaudRate                     (void);
 
         SystemState_e       SendData                        (const uint8_t* p_BufferTX, size_t* pSizeTX);
 
         bool                IsItBusy                        (void);
 
-      #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
         void                DMA_ConfigRX                    (uint8_t* pBufferRX, size_t SizeRX);
         void                DMA_ConfigTX                    (uint8_t* pBufferTX, size_t SizeTX);
         void                DMA_EnableRX                    (void);
@@ -316,7 +244,6 @@ class UART_Driver
         void                DMA_EnableTX                    (void);
         void                DMA_DisableTX                   (void);
         size_t              DMA_GetSizeRX                   (uint16_t SizeRX);
-      #endif
 
       #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
         void                RegisterCallback                (CallbackInterface* pCallback);
@@ -327,7 +254,7 @@ class UART_Driver
         void                Disable                         (void);
 
         void                IRQ_Handler                     (void);
-        void                DMA_TX_IRQ_Handler              (void);  
+        void                DMA_TX_IRQ_Handler              (void);
 
 
       #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
@@ -338,6 +265,7 @@ class UART_Driver
     private:
 
         void                ClearFlag                       (void);
+        uint32_t            GetPeripheralClock              (void);
 
       #if ((UART_DRIVER_RX_ERROR_CFG          == DEF_ENABLED) || \
            (UART_DRIVER_RX_NOT_EMPTY_CFG      == DEF_ENABLED) || \
@@ -359,14 +287,13 @@ class UART_Driver
         USART_TypeDef*              m_pUart;
         UART_Transfer_t             m_RX_Transfer;
         UART_Transfer_t             m_TX_Transfer;
+        uint32_t                    m_CopySR;
+        uint32_t                    m_ClockFrequency;
 
         // DMA Config
-      #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
         DMA_Driver                  m_DMA_RX;
         DMA_Driver                  m_DMA_TX;
-        UART_DMA_Info_t*            m_pDMA_Info;
         volatile bool               m_DMA_IsItBusyTX;
-      #endif
 
       #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
         bool                        m_VirtualUartBusyRX;
@@ -386,10 +313,6 @@ class UART_Driver
 #include "uart_var.h"         // Project variable
 
 extern const UART_Info_t UART_Info[NB_OF_REAL_UART_DRIVER];
-
-#if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-extern const UART_DMA_Info_t UART_DMA_Info[NB_OF_UART_DMA_DRIVER];
-#endif
 
 //-------------------------------------------------------------------------------------------------
 

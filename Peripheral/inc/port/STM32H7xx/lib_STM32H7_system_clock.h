@@ -38,17 +38,17 @@
 // Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define XSTR(x) STR(x)
-#define STR(x) #x
+//#define XSTR(x) STR(x)
+//#define STR(x) #x
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define CFG_LSI_VALUE                           32000
-#define CFG_HSI_VALUE                           64000000
-#define CFG_CSI_VALUE                           4000000
-#define CFG_RC48_VALUE                          48000000
+#define LSI_CLOCK_FREQUENCY                     32000
+#define HSI_RC_CLOCK_FREQUENCY                  64000000
+#define CSI_CLOCK_FREQUENCY                     4000000
+#define RC48_CLOCK_FREQUENCY                    48000000
 
 //-------------------------------------------------------------------------------------------------
 // Multiplexer for peripheral clock source
@@ -358,7 +358,7 @@
 // Auto define configuration
 //-------------------------------------------------------------------------------------------------
 
-#define CFG_HSI_CLOCK_FREQUENCY                     (CFG_HSI_VALUE / CFG_HSI_DIVIDER)
+#define HSI_CLOCK_FREQUENCY                         (HSI_RC_CLOCK_FREQUENCY / CFG_HSI_DIVIDER)
 
 
 /// --------------------------------------------------------------------------------------------------------------------------------
@@ -367,7 +367,6 @@
 #if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL1)
 
   #define SYS_PLL_CLK_FREQUENCY                     (((CFG_FREQ_PLL_SOURCE / CFG_PLL1_M_DIVIDER) * CFG_PLL1_N_MULTIPLIER) / CFG_PLL1_P_DIVIDER)
-  #define SYS_PLL_Q_FREQUENCY                       (((CFG_FREQ_PLL_SOURCE / CFG_PLL1_M_DIVIDER) * CFG_PLL1_N_MULTIPLIER) / CFG_PLL1_Q_DIVIDER)
 
 #endif // CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL1
 
@@ -417,7 +416,10 @@
                                                      CFG_RCC_PLLDIVR_PLL1_Q |   \
                                                      CFG_RCC_PLLDIVR_PLL1_R)
 
-#define CFG_PLL1_SPEED                              ((CFG_FREQ_PLL_SOURCE / CFG_PLL1_M_DIVIDER) * CFG_PLL1_N_MULTIPLIER)
+#define PLL1_CLOCK_FREQUENCY                        ((CFG_FREQ_PLL_SOURCE / CFG_PLL1_M_DIVIDER) * CFG_PLL1_N_MULTIPLIER)
+#define PLL1P_CLOCK_FREQUENCY                       (PLL1_CLOCK_FREQUENCY / CFG_PLL1_P_DIVIDER)
+#define PLL1Q_CLOCK_FREQUENCY                       (PLL1_CLOCK_FREQUENCY / CFG_PLL1_Q_DIVIDER)
+#define PLL1R_CLOCK_FREQUENCY                       (PLL1_CLOCK_FREQUENCY / CFG_PLL1_R_DIVIDER)
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// PLL2 Configuration
@@ -463,7 +465,10 @@
                                                      CFG_RCC_PLLDIVR_PLL2_Q |   \
                                                      CFG_RCC_PLLDIVR_PLL2_R)
 
-#define CFG_PLL2_SPEED                              ((CFG_FREQ_PLL_SOURCE / CFG_PLL2_M_DIVIDER) * CFG_PLL2_N_MULTIPLIER)
+#define PLL2_CLOCK_FREQUENCY                        ((CFG_FREQ_PLL_SOURCE / CFG_PLL2_M_DIVIDER) * CFG_PLL2_N_MULTIPLIER)
+#define PLL2P_CLOCK_FREQUENCY                       (PLL2_CLOCK_FREQUENCY / CFG_PLL2_P_DIVIDER)
+#define PLL2Q_CLOCK_FREQUENCY                       (PLL2_CLOCK_FREQUENCY / CFG_PLL2_Q_DIVIDER)
+#define PLL2R_CLOCK_FREQUENCY                       (PLL2_CLOCK_FREQUENCY / CFG_PLL2_R_DIVIDER)
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// PLL3 Configuration
@@ -509,7 +514,10 @@
                                                      CFG_RCC_PLLDIVR_PLL3_Q |   \
                                                      CFG_RCC_PLLDIVR_PLL3_R)
 
-#define CFG_PLL3_SPEED                              ((CFG_FREQ_PLL_SOURCE / CFG_PLL3_M_DIVIDER) * CFG_PLL3_N_MULTIPLIER)
+#define PLL3_CLOCK_FREQUENCY                        ((CFG_FREQ_PLL_SOURCE / CFG_PLL3_M_DIVIDER) * CFG_PLL3_N_MULTIPLIER)
+#define PLL3P_CLOCK_FREQUENCY                       (PLL3_CLOCK_FREQUENCY / CFG_PLL3_P_DIVIDER)
+#define PLL3Q_CLOCK_FREQUENCY                       (PLL3_CLOCK_FREQUENCY / CFG_PLL3_Q_DIVIDER)
+#define PLL3R_CLOCK_FREQUENCY                       (PLL3_CLOCK_FREQUENCY / CFG_PLL3_R_DIVIDER)
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// PLLCKSELR
@@ -552,41 +560,41 @@
   #define CFG_PLLCFGR_PLL3VCOSEL                    0
 #endif
 
-#define CFG_INPUT_FREQUENCY_PLL1                    (CFG_FREQ_PLL_SOURCE / CFG_PLL1_M_DIVIDER)
-#define CFG_INPUT_FREQUENCY_PLL2                    (CFG_FREQ_PLL_SOURCE / CFG_PLL2_M_DIVIDER)
-#define CFG_INPUT_FREQUENCY_PLL3                    (CFG_FREQ_PLL_SOURCE / CFG_PLL3_M_DIVIDER)
+#define PLL1_INPUT_CLOCK_FREQUENCY                  (CFG_FREQ_PLL_SOURCE / CFG_PLL1_M_DIVIDER)
+#define PLL2_INPUT_CLOCK_FREQUENCY                  (CFG_FREQ_PLL_SOURCE / CFG_PLL2_M_DIVIDER)
+#define PLL3_INPUT_CLOCK_FREQUENCY                  (CFG_FREQ_PLL_SOURCE / CFG_PLL3_M_DIVIDER)
 
-#if   (CFG_INPUT_FREQUENCY_PLL1 >= 1000000) && (CFG_INPUT_FREQUENCY_PLL1 <= 2000000)
+#if   (PLL1_INPUT_CLOCK_FREQUENCY >= 1000000) && (PLL1_INPUT_CLOCK_FREQUENCY <= 2000000)
   #define CFG_PLLCFGR_PLL1RGE                       RCC_PLLCFGR_PLL1RGE_0
-#elif (CFG_INPUT_FREQUENCY_PLL1 >  2000000) && (CFG_INPUT_FREQUENCY_PLL1 <= 4000000)
+#elif (PLL1_INPUT_CLOCK_FREQUENCY >  2000000) && (PLL1_INPUT_CLOCK_FREQUENCY <= 4000000)
   #define CFG_PLLCFGR_PLL1RGE                       RCC_PLLCFGR_PLL1RGE_1
-#elif (CFG_INPUT_FREQUENCY_PLL1 >  4000000) && (CFG_INPUT_FREQUENCY_PLL1 <= 8000000)
+#elif (PLL1_INPUT_CLOCK_FREQUENCY >  4000000) && (PLL1_INPUT_CLOCK_FREQUENCY <= 8000000)
   #define CFG_PLLCFGR_PLL1RGE                       RCC_PLLCFGR_PLL1RGE_2
-#elif (CFG_INPUT_FREQUENCY_PLL1 >  8000000) && (CFG_INPUT_FREQUENCY_PLL1 <= 1600000)
+#elif (PLL1_INPUT_CLOCK_FREQUENCY >  8000000) && (PLL1_INPUT_CLOCK_FREQUENCY <= 1600000)
   #define CFG_PLLCFGR_PLL1RGE                       RCC_PLLCFGR_PLL1RGE_3
 #else
  #error PLL1 input frequency outside of allowed range!
 #endif
 
-#if   (CFG_INPUT_FREQUENCY_PLL2 >= 1000000) && (CFG_INPUT_FREQUENCY_PLL2 <= 2000000)
+#if   (PLL2_INPUT_CLOCK_FREQUENCY >= 1000000) && (PLL2_INPUT_CLOCK_FREQUENCY <= 2000000)
   #define CFG_PLLCFGR_PLL2RGE                       RCC_PLLCFGR_PLL2RGE_0
-#elif (CFG_INPUT_FREQUENCY_PLL2 >  2000000) && (CFG_INPUT_FREQUENCY_PLL2 <= 4000000)
+#elif (PLL2_INPUT_CLOCK_FREQUENCY >  2000000) && (PLL2_INPUT_CLOCK_FREQUENCY <= 4000000)
   #define CFG_PLLCFGR_PLL2RGE                       RCC_PLLCFGR_PLL2RGE_1
-#elif (CFG_INPUT_FREQUENCY_PLL2 >  4000000) && (CFG_INPUT_FREQUENCY_PLL2 <= 8000000)
+#elif (PLL2_INPUT_CLOCK_FREQUENCY >  4000000) && (PLL2_INPUT_CLOCK_FREQUENCY <= 8000000)
   #define CFG_PLLCFGR_PLL2RGE                       RCC_PLLCFGR_PLL2RGE_2
-#elif (CFG_INPUT_FREQUENCY_PLL2 >  8000000) && (CFG_INPUT_FREQUENCY_PLL2 <= 16000000)
+#elif (PLL2_INPUT_CLOCK_FREQUENCY >  8000000) && (PLL2_INPUT_CLOCK_FREQUENCY <= 16000000)
   #define CFG_PLLCFGR_PLL2RGE                       RCC_PLLCFGR_PLL2RGE_3
 #else
  #error PLL2 input frequency outside of allowed range!
 #endif
 
-#if   (CFG_INPUT_FREQUENCY_PLL3 >= 1000000) && (CFG_INPUT_FREQUENCY_PLL3 <= 2000000)
+#if   (PLL3_INPUT_CLOCK_FREQUENCY >= 1000000) && (PLL3_INPUT_CLOCK_FREQUENCY <= 2000000)
   #define CFG_PLLCFGR_PLL3RGE                       RCC_PLLCFGR_PLL3RGE_0
-#elif (CFG_INPUT_FREQUENCY_PLL3 >  2000000) && (CFG_INPUT_FREQUENCY_PLL3 <= 4000000)
+#elif (PLL3_INPUT_CLOCK_FREQUENCY >  2000000) && (PLL3_INPUT_CLOCK_FREQUENCY <= 4000000)
   #define CFG_PLLCFGR_PLL3RGE                       RCC_PLLCFGR_PLL3RGE_1
-#elif (CFG_INPUT_FREQUENCY_PLL3 >  4000000) && (CFG_INPUT_FREQUENCY_PLL3 <= 8000000)
+#elif (PLL3_INPUT_CLOCK_FREQUENCY >  4000000) && (PLL3_INPUT_CLOCK_FREQUENCY <= 8000000)
   #define CFG_PLLCFGR_PLL3RGE                       RCC_PLLCFGR_PLL3RGE_2
-#elif (CFG_INPUT_FREQUENCY_PLL3 >  8000000) && (CFG_INPUT_FREQUENCY_PLL3 <= 16000000)
+#elif (PLL3_INPUT_CLOCK_FREQUENCY >  8000000) && (PLL3_INPUT_CLOCK_FREQUENCY <= 16000000)
   #define CFG_PLLCFGR_PLL3RGE                       RCC_PLLCFGR_PLL3RGE_3
 #else
  #error PLL3 input frequency outside of allowed range!
@@ -620,20 +628,6 @@
                                                      CFG_PLLCFGR_PLL1FRAEN      | \
                                                      CFG_PLLCFGR_PLL2FRAEN      | \
                                                      CFG_PLLCFGR_PLL3FRAEN)
-
-/// -------------------------------------------------------------------------------------------------------------------------------
-/// SYS Clock Mux
-///
-
-#if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL1)
-  #define SYS_CPU_CORE_CLOCK_FREQUENCY              SYS_PLL_CLK_FREQUENCY
-#elif (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_HSI)
-  #define SYS_CPU_CORE_CLOCK_FREQUENCY              CFG_HSI_CLOCK_FREQUENCY
-#elif (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_CSI)
-  #define SYS_CPU_CORE_CLOCK_FREQUENCY              CFG_CSI_VALUE
-#else //(CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_HSE)
-  #define SYS_CPU_CORE_CLOCK_FREQUENCY              CFG_HSE_VALUE
-#endif
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// RCC_CFGR
@@ -715,66 +709,178 @@
 
 #define CFG_RCC_D3CFGR                              (CFG_D3PPRE_DIVIDER)
 
-// --------------------------------------------------------------------------------------------------------------------------------
-//done
-#define CFG_SYS_HCLK                                CFG_HCLK_DIVIDER
+/// -------------------------------------------------------------------------------------------------------------------------------
+/// SYS Clock Mux
+///
 
-#if   CFG_HCLK_DIVIDER == CFG_CFG_RCC_CFGR_HPRE_DIV1
-    #define SYS_HCLK_CLOCK_FREQUENCY                SYS_CPU_CORE_CLOCK_FREQUENCY
+#if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL1)
+  #define SYS_CPU_CORE_CLOCK_FREQUENCY              SYS_PLL_CLK_FREQUENCY
+#elif (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_HSI)
+  #define SYS_CPU_CORE_CLOCK_FREQUENCY              HSI_CLOCK_FREQUENCY
+#elif (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_CSI)
+  #define SYS_CPU_CORE_CLOCK_FREQUENCY              CFG_CSI_VALUE
+#else //(CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_HSE)
+  #define SYS_CPU_CORE_CLOCK_FREQUENCY              CFG_HSE_VALUE
+#endif
+
+#if   CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV1
+  #define SYS_HCLK_CLOCK_FREQUENCY                  SYS_CPU_CORE_CLOCK_FREQUENCY
 #elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV2
-    #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 2)
+  #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 2)
 #elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV4
-    #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 4)
+  #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 4)
 #elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV8
-    #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 8)
-#elif CFG_HCLK_DIVIDER == CFG_CFG_RCC_CFGR_HPRE_DIV16
-    #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 16)
+  #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 8)
+#elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV16
+  #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 16)
 #elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV64
-    #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 64)
-#elif CFG_HCLK_DIVIDER == CFG_CFG_RCC_CFGR_HPRE_DIV128
-    #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 128)
+  #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 64)
+#elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV128
+  #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 128)
 #elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV256
-    #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 256)
+  #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 256)
 #elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV512
-    #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 512)
+  #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 512)
+#endif
+
+#if   CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV1
+    #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     SYS_HCLK_CLOCK_FREQUENCY
+#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV2
+    #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 2)
+#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV4
+    #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 4)
+#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV8
+    #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 8)
+#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV16
+    #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 16)
+#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV64
+    #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 64)
+#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV128
+    #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 128)
+#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV256
+    #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 256)
+#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV512
+    #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 512)
+#endif
+
+#define AXI_CLOCK_FREQUENCY                         SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY
+#define SYS_HCLK_CPU2_CLOCK_FREQUENCY               SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY             // If second core exist
+
+#if   CFG_D2PPRE1_DIVIDER == CFG_RCC_D2PPRE1_DIV1
+  #define PCLK1_CLOCK_FREQUENCY                     SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY
+#elif CFG_D2PPRE1_DIVIDER == CFG_RCC_D2PPRE1_DIV2
+  #define PCLK1_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 2)
+#elif CFG_D2PPRE1_DIVIDER == CFG_RCC_D2PPRE1_DIV4
+  #define PCLK1_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 4)
+#elif CFG_D2PPRE1_DIVIDER == CFG_RCC_D2PPRE1_DIV8
+  #define PCLK1_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 8)
+#elif CFG_D2PPRE1_DIVIDER == CFG_RCC_D2PPRE1_DIV16
+  #define PCLK1_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 16)
+#endif
+
+#if   CFG_D2PPRE2_DIVIDER == CFG_RCC_D2PPRE2_DIV1
+  #define PCLK2_CLOCK_FREQUENCY                     SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY
+#elif CFG_D2PPRE2_DIVIDER == CFG_RCC_D2PPRE2_DIV2
+  #define PCLK2_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 2)
+#elif CFG_D2PPRE2_DIVIDER == CFG_RCC_D2PPRE2_DIV4
+  #define PCLK2_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 4)
+#elif CFG_D2PPRE2_DIVIDER == CFG_RCC_D2PPRE2_DIV8
+  #define PCLK2_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 8)
+#elif CFG_D2PPRE2_DIVIDER == CFG_RCC_D2PPRE2_DIV16
+  #define PCLK2_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 16)
+#endif
+
+#if   CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV1
+  #define PCLK3_CLOCK_FREQUENCY                     SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY
+#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV2
+  #define PCLK3_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 2)
+#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV4
+  #define PCLK3_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 4)
+#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV8
+  #define PCLK3_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 8)
+#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV16
+  #define PCLK3_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 16)
+#endif
+
+#if   CFG_D3PPRE_DIVIDER == CFG_RCC_D3PPRE_DIV1
+  #define PCLK4_CLOCK_FREQUENCY                     SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY
+#elif CFG_D3PPRE_DIVIDER == CFG_RCC_D3PPRE_DIV2
+  #define PCLK4_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 2)
+#elif CFG_D3PPRE_DIVIDER == CFG_RCC_D3PPRE_DIV4
+  #define PCLK4_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 4)
+#elif CFG_D3PPRE_DIVIDER == CFG_RCC_D3PPRE_DIV8
+  #define PCLK4_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 8)
+#elif CFG_D3PPRE_DIVIDER == CFG_RCC_D3PPRE_DIV16
+  #define PCLK4_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 16)
 #endif
 
 #define SYSTEM_CORE_CLOCK                           SYS_HCLK_CLOCK_FREQUENCY
 
-// --------------------------------------------------------------------------------------------------------------------------------
-/*
-#if   CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV1
-    #define SYS_APB1_CLOCK_FREQUENCY                SYS_HCLK_CLOCK_FREQUENCY
-#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV2
-    #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 2)
-#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV4
-    #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 4)
-#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV8
-    #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 8)
-#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV16
-    #define SYS_APB1_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 16)
+/// -------------------------------------------------------------------------------------------------------------------------------
+/// All Peripheral frequency ( TODO need to add all module clock here. )
+
+
+// CFG_PER_SOURCE_MUX                          CFG_RCC_D1CCIPR_PER_HSI_KER
+// CFG_ADC_SOURCE_MUX                          CFG_RCC_D3CCIPR_ADC_PLL2P
+// CFG_CEC_SOURCE_MUX                          CFG_RCC_D2CCIP2R_CEC_LSE
+// CFG_DFSDM_SOURCE_MUX                        CFG_RCC_D2CCIP1R_DFSDM_PLCK2
+// CFG_FDCAN_SOURCE_MUX                        CFG_RCC_D2CCIP1R_FDCAN_HSE
+// CFG_FMC_SOURCE_MUX                          CFG_RCC_D1CCIPR_FMC_PLL1Q
+// CFG_I2C123_SOURCE_MUX                       CFG_RCC_D2CCIP2R_I2C123_PCLK1
+// CFG_I2C4_SOURCE_MUX                         CFG_RCC_D3CCIPR_I2C4_PCLK4
+// CFG_HRTIM_SOURCE_MUX                        CFG_RCC_CFGR_HRTIM_TIM_CLK
+// CFG_LPTIM1_SOURCE_MUX                       CFG_RCC_D2CCIP2R_LPTIM1_PCLK1
+// CFG_LPTIM2_SOURCE_MUX                       CFG_RCC_D3CCIPR_LPTIM2_PCLK4
+// CFG_LPTIM345_SOURCE_MUX                     CFG_RCC_D3CCIPR_LPTIM345_PCLK4
+// CFG_LPUART1_SOURCE_MUX                      CFG_RCC_D3CCIPR_LPUART1_PCLK3
+// CFG_MCO1_SOURCE_MUX                         CFG_RCC_CFGR_MCO1_SYS_CLK
+// CFG_MCO2_SOURCE_MUX                         CFG_RCC_CFGR_MCO2_SYS_CLK
+// CFG_QSPI_SOURCE_MUX                         CFG_RCC_D1CCIPR_QSPI_PLL1Q
+// CFG_RNG_SOURCE_MUX                          CFG_RCC_D2CCIP2R_RNG_HSI48
+// CFG_RTC_SOURCE_MUX                          CFG_RCC_BDCR_RTC_LSE
+// CFG_SAI1_SOURCE_MUX                         CFG_RCC_D2CCIP1R_SAI1_PLL1Q
+// CFG_SAI23_SOURCE_MUX                        CFG_RCC_D2CCIP1R_SAI23_PLL1Q
+// CFG_SAI4A_SOURCE_MUX                        CFG_RCC_D3CCIPR_SAI4A_PLL1Q
+// CFG_SAI4B_SOURCE_MUX                        CFG_RCC_D3CCIPR_SAI4B_PLL1Q
+// CFG_SDMMC_SOURCE_MUX                        CFG_RCC_D1CCIPR_SDMMC_PLL1Q
+// CFG_SPDIF_SOURCE_MUX                        CFG_RCC_D2CCIP1R_SPDIF_PLL1Q
+// CFG_SPI123_SOURCE_MUX                       CFG_RCC_D2CCIP1R_SPI123_PLL1Q
+// CFG_SPI45_SOURCE_MUX                        CFG_RCC_D2CCIP1R_SPI45_PLCK2
+// CFG_SPI6_SOURCE_MUX                         CFG_RCC_D3CCIPR_SPI6_PLCK4
+// CFG_SWP_SOURCE_MUX                          CFG_RCC_D2CCIP1R_SWP_PCLK1
+
+/// USART 1,6 clock frequency
+#if   (CFG_UART16_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART16_PCLK2)
+  #define USART16_CLOCK_FREQUENCY           PCLK2_CLOCK_FREQUENCY
+#elif (CFG_UART16_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART16_PLL2Q)
+  #define USART16_CLOCK_FREQUENCY           PLL2Q_CLOCK_FREQUENCY
+#elif (CFG_UART16_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART16_PLL3Q)
+  #define USART16_CLOCK_FREQUENCY           PLL3Q_CLOCK_FREQUENCY
+#elif (CFG_UART16_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART16_HSI)
+  #define USART16_CLOCK_FREQUENCY           HSI_CLOCK_FREQUENCY
+#elif (CFG_UART16_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART16_CSI)
+  #define USART16_CLOCK_FREQUENCY           CSI_CLOCK_FREQUENCY
+#elif (CFG_UART16_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART16_LSE)
+  #define USART16_CLOCK_FREQUENCY           LSE_CLOCK_FREQUENCY
 #endif
 
-#define SYS_APB1_TIMER_CLOCK_FREQUENCY              (SYS_APB1_CLOCK_FREQUENCY * 2)
-*/
-// --------------------------------------------------------------------------------------------------------------------------------
-/*
-#define CFG_SYS_APB2                                CFG_APB2_CLK_DIVIDER
-
-#if   CFG_APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV1
-    #define SYS_APB2_CLOCK_FREQUENCY                SYS_HCLK_CLOCK_FREQUENCY
-#elif CFG_APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV2
-    #define SYS_APB2_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 2)
-#elif CFG_APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV4
-    #define SYS_APB2_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 4)
-#elif CFG_APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV8
-    #define SYS_APB2_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 8)
-#elif CFG_APB2_CLK_DIVIDER == CFG_RCC_CFGR_PPRE2_DIV16
-    #define SYS_APB2_CLOCK_FREQUENCY                (SYS_HCLK_CLOCK_FREQUENCY / 16)
+/// USART 2,3,4,5,7,8 clock frequency
+#if   (CFG_UART234578_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART234578_PCLK1)
+  #define USART234578_CLOCK_FREQUENCY           PCLK1_CLOCK_FREQUENCY
+#elif (CFG_UART234578_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART234578_PLL2Q)
+  #define USART234578_CLOCK_FREQUENCY           PLL2Q_CLOCK_FREQUENCY
+#elif (CFG_UART234578_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART234578_PLL3Q)
+  #define USART234578_CLOCK_FREQUENCY           PLL3Q_CLOCK_FREQUENCY
+#elif (CFG_UART234578_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART234578_HSI)
+  #define USART234578_CLOCK_FREQUENCY           HSI_CLOCK_FREQUENCY
+#elif (CFG_UART234578_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART234578_CSI)
+  #define USART234578_CLOCK_FREQUENCY           CSI_CLOCK_FREQUENCY
+#elif (CFG_UART234578_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART234578_LSE)
+  #define USART234578_CLOCK_FREQUENCY           LSE_CLOCK_FREQUENCY
 #endif
 
-#define SYS_APB2_TIMER_CLOCK_FREQUENCY              (SYS_APB2_CLOCK_FREQUENCY * 2)
-*/
+// CFG_USB_SOURCE_MUX                          CFG_RCC_D2CCIP2R_USB_PLL3Q
+
 // --------------------------------------------------------------------------------------------------------------------------------
 /*
 // Power scaling according to speed
@@ -828,27 +934,27 @@
  #error APB1 frequency exceed maximum allowed!
 #endif
 
-/*
-#if SYS_APB1_CLOCK_FREQUENCY > 120000000
- #pragma message XSTR(SYS_APB1_CLOCK_FREQUENCY)
- #error APB1 frequency exceed maximum allowed!
+
+#if PCLK1_CLOCK_FREQUENCY > 120000000
+ #pragma message XSTR(PCLK1_CLOCK_FREQUENCY)
+ #error PCLK1 frequency exceed maximum allowed!
 #endif
 
-#if SYS_APB2_CLOCK_FREQUENCY > 120000000
- #pragma message "XSTR(SYS_APB2_CLOCK_FREQUENCY)"
- #error APB2 frequency exceed maximum allowed!
+#if PCLK2_CLOCK_FREQUENCY > 120000000
+ #pragma message "XSTR(PLCK2_CLOCK_FREQUENCY)"
+ #error PLCK2 frequency exceed maximum allowed!
 #endif
 
-#if SYS_AHB1_2_CLOCK_FREQUENCY > 240000000
- #pragma message "XSTR(SYS_APB2_CLOCK_FREQUENCY)"
- #error APB2 frequency exceed maximum allowed!
+#if PLCK3_CLOCK_FREQUENCY > 120000000
+ #pragma message "XSTR(PLCK3_CLOCK_FREQUENCY)"
+ #error PLCK3 frequency exceed maximum allowed!
 #endif
 
-#if SYS_AHB4_CLOCK_FREQUENCY > 240000000
- #pragma message "XSTR(SYS_APB2_CLOCK_FREQUENCY)"
- #error APB2 frequency exceed maximum allowed!
+#if PLCK4_CLOCK_FREQUENCY > 120000000
+ #pragma message "XSTR(PLCK42_CLOCK_FREQUENCY)"
+ #error PLCK4 frequency exceed maximum allowed!
 #endif
-*/
+
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------

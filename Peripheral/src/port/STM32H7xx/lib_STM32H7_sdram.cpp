@@ -91,28 +91,29 @@
 
 
 #if (CFG_SDRAM_BANK == FMC_SDRAM_BANK1)
-  #define SDCMR_BANK                  FMC_SDCMR_CTB1
+  #define SDCMR_BANK                            FMC_SDCMR_CTB1
 #elif (CFG_SDRAM_BANK == FMC_SDRAM_BANK2)
-  #define SDCMR_BANK                  FMC_SDCMR_CTB2
+  #define SDCMR_BANK                            FMC_SDCMR_CTB2
 #else
-  #define SDCMR_BANK                  (FMC_SDCMR_CTB1 | FMC_SDCMR_CTB2)
+  #define SDCMR_BANK                            (FMC_SDCMR_CTB1 | FMC_SDCMR_CTB2)
 #endif
 
-#define SDCMR_MRD               (CFG_SDRAM_MRD_WRITE_BURST_MODE | \
-                                 CFG_SDRAM_MRD_OPERATION_MODE   | \
-                                 CFG_SDRAM_MRD_CAS_LATENCY      | \
-                                 CFG_SDRAM_MRD_BURST_TYPE       | \
-                                 CFG_SDRAM_MRD_BURST_LENGTH)
+#define SDCMR_MRD                               (CFG_SDRAM_MRD_WRITE_BURST_MODE | \
+                                                 CFG_SDRAM_MRD_OPERATION_MODE   | \
+                                                 CFG_SDRAM_MRD_CAS_LATENCY      | \
+                                                 CFG_SDRAM_MRD_BURST_TYPE       | \
+                                                 CFG_SDRAM_MRD_BURST_LENGTH)
 
-#define SDTR_LOAD_TO_ACTIVITY_DELAY            (uint32_t(CFG_SDRAM_LOAD_TO_ACTIVITY_DELAY  - 1))
-#define SDTR_EXIT_SELF_REFRESH_DELAY           (uint32_t(CFG_SDRAM_EXIT_SELF_REFRESH_DELAY - 1) << FMC_SDTRx_TXSR_Pos)
-#define SDTR_SELF_REFRESH_TIME                 (uint32_t(CFG_SDRAM_SELF_REFRESH_TIME       - 1) << FMC_SDTRx_TRAS_Pos)
-#define SDTR_ROW_CYCLE_DELAY                   (uint32_t(CFG_SDRAM_ROW_CYCLE_DELAY         - 1) << FMC_SDTRx_TRC_Pos)
-#define SDTR_WRITE_RECOVERY_TIME               (uint32_t(CFG_SDRAM_WRITE_RECOVERY_TIME     - 1) << FMC_SDTRx_TWR_Pos)
-#define SDTR_RP_DELAY                          (uint32_t(CFG_SDRAM_RP_DELAY                - 1) << FMC_SDTRx_TRP_Pos)
-#define SDTR_RCD_DELAY                         (uint32_t(CFG_SDRAM_RCD_DELAY               - 1) << FMC_SDTRx_TRCD_Pos)
-#define SDCMR_AUTO_REFRESH_CYCLE               (uint32_t(CFG_SDRAM_AUTO_REFRESH_CYCLE      - 1) << FMC_SDCMR_NRFS_Pos)
+#define SDTR_LOAD_TO_ACTIVITY_DELAY             (uint32_t(CFG_SDRAM_LOAD_TO_ACTIVITY_DELAY  - 1))
+#define SDTR_EXIT_SELF_REFRESH_DELAY            (uint32_t(CFG_SDRAM_EXIT_SELF_REFRESH_DELAY - 1) << FMC_SDTRx_TXSR_Pos)
+#define SDTR_SELF_REFRESH_TIME                  (uint32_t(CFG_SDRAM_SELF_REFRESH_TIME       - 1) << FMC_SDTRx_TRAS_Pos)
+#define SDTR_ROW_CYCLE_DELAY                    (uint32_t(CFG_SDRAM_ROW_CYCLE_DELAY         - 1) << FMC_SDTRx_TRC_Pos)
+#define SDTR_WRITE_RECOVERY_TIME                (uint32_t(CFG_SDRAM_WRITE_RECOVERY_TIME     - 1) << FMC_SDTRx_TWR_Pos)
+#define SDTR_RP_DELAY                           (uint32_t(CFG_SDRAM_RP_DELAY                - 1) << FMC_SDTRx_TRP_Pos)
+#define SDTR_RCD_DELAY                          (uint32_t(CFG_SDRAM_RCD_DELAY               - 1) << FMC_SDTRx_TRCD_Pos)
+#define SDCMR_AUTO_REFRESH_CYCLE                (uint32_t(CFG_SDRAM_AUTO_REFRESH_CYCLE      - 1) << FMC_SDCMR_NRFS_Pos)
 
+#define SDRTR_REFRESH_COUNT                     (uint32_t(CFG_SDRAM_REFRESH_COUNT) << FMC_SDRTR_COUNT_Pos)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -134,36 +135,37 @@ void SDRAM_Initialize(void)
   #if (CFG_SDRAM_BANK == FMC_SDRAM_BANK1)
 
     // Set SDRAM bank configuration parameters
-    MODIFY_REG(FMC_Bank5_6_R->SDCR[FMC_SDRAM_BANK1], SDCR_CLEAR_MASK, (CFG_SDRAM_COLUMN_BITS_NUMBER   | CFG_SDRAM_ROW_BITS_NUMBER | CFG_SDRAM_MEMORY_DATA_WIDTH |
-                                                                       CFG_SDRAM_INTERNAL_BANK_NUMBER | CFG_SDRAM_CAS_LATENCY     | CFG_SDRAM_WRITE_PROTECTION  |
-                                                                       CFG_SDRAM_SD_CLOCK_PERIOD      | CFG_SDRAM_READ_BURST      | CFG_SDRAM_PIPE_DELAY));
+    FMC_Bank5_6_R->SDCR[FMC_SDRAM_BANK1] = (CFG_SDRAM_COLUMN_BITS_NUMBER   | CFG_SDRAM_ROW_BITS_NUMBER | CFG_SDRAM_MEMORY_DATA_WIDTH |
+                                            CFG_SDRAM_INTERNAL_BANK_NUMBER | CFG_SDRAM_CAS_LATENCY     | CFG_SDRAM_WRITE_PROTECTION  |
+                                            CFG_SDRAM_SD_CLOCK_PERIOD      | CFG_SDRAM_READ_BURST      | CFG_SDRAM_PIPE_DELAY);
 
     // Set SDRAM device timing parameters
-    MODIFY_REG(FMC_Bank5_6_R->SDTR[FMC_SDRAM_BANK1], SDTR_CLEAR_MASK, (SDTR_LOAD_TO_ACTIVITY_DELAY | SDTR_EXIT_SELF_REFRESH_DELAY | SDTR_SELF_REFRESH_TIME |
-                                                                       SDTR_ROW_CYCLE_DELAY        | SDTR_WRITE_RECOVERY_TIME     | SDTR_RP_DELAY          |
-                                                                       SDTR_RCD_DELAY));
+    FMC_Bank5_6_R->SDTR[FMC_SDRAM_BANK1] = (SDTR_LOAD_TO_ACTIVITY_DELAY | SDTR_EXIT_SELF_REFRESH_DELAY | SDTR_SELF_REFRESH_TIME |
+                                            SDTR_ROW_CYCLE_DELAY        | SDTR_WRITE_RECOVERY_TIME     | SDTR_RP_DELAY          |
+                                            SDTR_RCD_DELAY);
 
   #else // (CFG_SDRAM_BANK == FMC_SDRAM_BANK2)
 
     // Set SDRAM bank configuration parameters
-    MODIFY_REG(FMC_Bank5_6_R->SDCR[FMC_SDRAM_BANK1], (FMC_SDCRx_SDCLK | FMC_SDCRx_RBURST | FMC_SDCRx_RPIPE), (CFG_SDRAM_SD_CLOCK_PERIOD | CFG_SDRAM_READ_BURST | CFG_SDRAM_PIPE_DELAY));
-    MODIFY_REG(FMC_Bank5_6_R->SDCR[FMC_SDRAM_BANK2], SDCR_CLEAR_MASK, (CFG_SDRAM_COLUMN_BITS_NUMBER   | CFG_SDRAM_ROW_BITS_NUMBER | CFG_SDRAM_MEMORY_DATA_WIDTH |
-                                                                       CFG_SDRAM_INTERNAL_BANK_NUMBER | CFG_SDRAM_CAS_LATENCY     | CFG_SDRAM_WRITE_PROTECTION));
+    FMC_Bank5_6_R->SDCR[FMC_SDRAM_BANK1] = (CFG_SDRAM_SD_CLOCK_PERIOD | CFG_SDRAM_READ_BURST | CFG_SDRAM_PIPE_DELAY);
+    FMC_Bank5_6_R->SDCR[FMC_SDRAM_BANK2] = (CFG_SDRAM_COLUMN_BITS_NUMBER   | CFG_SDRAM_ROW_BITS_NUMBER | CFG_SDRAM_MEMORY_DATA_WIDTH |
+                                            CFG_SDRAM_INTERNAL_BANK_NUMBER | CFG_SDRAM_CAS_LATENCY     | CFG_SDRAM_WRITE_PROTECTION);
 
 
     // Set SDRAM device timing parameters
-    MODIFY_REG(FMC_Bank5_6_R->SDTR[FMC_SDRAM_BANK1], SDTR_TIMING_CLEAR_MASK, (SDTR_ROW_CYCLE_DELAY | SDTR_RP_DELAY));
-    MODIFY_REG(FMC_Bank5_6_R->SDTR[FMC_SDRAM_BANK2], SDTR_CLEAR_MASK, (SDTR_LOAD_TO_ACTIVITY_DELAY | SDTR_EXIT_SELF_REFRESH_DELAY | SDTR_SELF_REFRESH_TIME |
-                                                                       SDTR_WRITE_RECOVERY_TIME    | SDTR_RCD_DELAY));
+    FMC_Bank5_6_R->SDTR[FMC_SDRAM_BANK1] = (SDTR_ROW_CYCLE_DELAY | SDTR_RP_DELAY);
+    FMC_Bank5_6_R->SDTR[FMC_SDRAM_BANK2] = (SDTR_LOAD_TO_ACTIVITY_DELAY | SDTR_EXIT_SELF_REFRESH_DELAY | SDTR_SELF_REFRESH_TIME |
+                                            SDTR_WRITE_RECOVERY_TIME    | SDTR_RCD_DELAY);
 
   #endif
 
     // SDRAM initialization sequence
-    FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_CLK_ENABLE | SDCMR_BANK);                                         // Clock enable command
-    for(int index = 0; index < 5000; index++);                                                                    // Delay
-    FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_PALL | SDCMR_BANK);                                               // PALL command
+    FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_CLK_ENABLE | SDCMR_BANK);                                     // Clock enable command
+    for(int index = 0; index < 5000; index++);                                                      // Delay
+    FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_PALL | SDCMR_BANK);                                           // PALL command
     FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_AUTO_REFRESH_MODE | SDCMR_BANK | SDCMR_AUTO_REFRESH_CYCLE);   // Auto refresh mode
-    FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_LOAD_MODE | SDCMR_BANK | SDCMR_MRD);                              // Load mode
+    FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_LOAD_MODE | SDCMR_BANK | SDCMR_MRD);                          // Load mode
+    SET_BIT(FMC_Bank1_R->BTCR[0], FMC_BCR1_FMCEN);                                                  // FMC controller Enable
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -370,6 +370,7 @@ SystemState_e CommandLine::CmdVERSION(void* pArg)
 //  Description:    Display the HELP menu
 //
 //-------------------------------------------------------------------------------------------------
+#if (DIGINI_USE_HELP_IN_CONSOLE == DEF_ENABLED)
 SystemState_e CommandLine::CmdHELP(void* pArg)
 {
     SystemState_e Error;
@@ -400,6 +401,7 @@ SystemState_e CommandLine::CmdHELP(void* pArg)
 
     return Error;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //

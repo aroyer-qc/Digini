@@ -23,6 +23,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+//
+// Note(s)  Does not support at this time : Memory to memory transfer.
+//                                          DMA Fifo mode.
+//                                          BDMA mode
+//
+//-------------------------------------------------------------------------------------------------
 
 #pragma once
 
@@ -328,7 +334,7 @@ class DMA_Driver
 {
     public:
 
-        void        Initialize                              (DMA_Info_t* pInfo, uint16_t MUX_Request);
+        void        Initialize                              (DMA_Info_t* pInfo, uint32_t MUX_Request);
         void        SetTransfer                             (void* pSource, void* pDestination, size_t Length);
         void        SetSource                               (void* pSource);
         void        SetDestination                          (void* pDestination);
@@ -358,11 +364,15 @@ class DMA_Driver
 
         void        EnableClock                             (void);
 
-        DMA_Stream_TypeDef*         m_pDMA;
-        uint32_t                    m_Flag;
-        IRQn_Type                   m_IRQn_Channel;
-        uint32_t                    m_Direction;
-        CallbackInterface*          m_pCallback;
+        DMA_Stream_TypeDef*             m_pDMA;
+        DMAMUX_Channel_TypeDef*         m_DMAMUX_Channel;
+        DMAMUX_ChannelStatus_TypeDef*   m_DMAMUX_ChannelStatus;
+        uint32_t                        m_DMAMUX_ChannelStatusMask;
+
+        uint32_t                        m_Flag;
+        IRQn_Type                       m_IRQn_Channel;
+        uint32_t                        m_Direction;
+        CallbackInterface*              m_pCallback;
 };
 
 //-------------------------------------------------------------------------------------------------

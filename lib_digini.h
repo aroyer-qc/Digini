@@ -79,7 +79,7 @@
 #include "console_cfg.h"
 #endif
 
-#if (DIGINI_USE_CRC == DEF_ENABLED)
+#if (DIGINI_USE_SOFT_CRC == DEF_ENABLED) || (USE_CRC_DRIVER == DEF_ENABLED)
 #include "crc_cfg.h"
 #endif
 

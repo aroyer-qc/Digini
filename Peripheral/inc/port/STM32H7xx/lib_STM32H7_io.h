@@ -48,7 +48,11 @@
 #define IO_PIN_15                       ((uint16_t)0x8000)
 
 #define GPIOxx                          ((uint32_t)0x00000000)
-#define NUMBER_OF_IO_PORT               ((uint32_t)9)      //((uint32_t)11)
+#ifdef STM32H735xx
+#define NUMBER_OF_IO_PORT               ((uint32_t)8)
+#else
+#define NUMBER_OF_IO_PORT               ((uint32_t)11)
+#endif
 #define NUMBER_OF_PIN_PER_PORT          ((uint32_t)16)
 
 #define LED_Init(p)                     IO_PinInit(p)

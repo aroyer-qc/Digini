@@ -104,9 +104,11 @@ const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
     GPIOF,
     GPIOG,
     GPIOH,
+  #ifdef STM32H745xx            // Not the best method
     GPIOI,
-//    GPIOJ,
-//    GPIOK,
+    GPIOJ,
+    GPIOK,
+  #endif
 };
 
 const IO_ConfigProperties_t IO_ConfigProperties[IO_CFG_NUM] =

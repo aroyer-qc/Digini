@@ -417,53 +417,107 @@
 #define CFG_RCC_D2CCIP2R_USB_PLL3Q              RCC_D2CCIP2R_USBSEL_0
 #define CFG_RCC_D2CCIP2R_USB_HSI48              RCC_D2CCIP2R_USBSEL_1
 
-
 // Divider for all Clock
-#define CFG_RCC_HPRE_DIV1                       RCC_D1CFGR_HPRE_DIV1
-#define CFG_RCC_HPRE_DIV2                       RCC_D1CFGR_HPRE_DIV2
-#define CFG_RCC_HPRE_DIV4                       RCC_D1CFGR_HPRE_DIV4
-#define CFG_RCC_HPRE_DIV8                       RCC_D1CFGR_HPRE_DIV8
-#define CFG_RCC_HPRE_DIV16                      RCC_D1CFGR_HPRE_DIV16
-#define CFG_RCC_HPRE_DIV64                      RCC_D1CFGR_HPRE_DIV64
-#define CFG_RCC_HPRE_DIV128                     RCC_D1CFGR_HPRE_DIV128
-#define CFG_RCC_HPRE_DIV256                     RCC_D1CFGR_HPRE_DIV256
-#define CFG_RCC_HPRE_DIV512                     RCC_D1CFGR_HPRE_DIV512
 
-#define CFG_RCC_D1PPRE_DIV1                     0x00000000
-#define CFG_RCC_D1PPRE_DIV2                     RCC_D1CFGR_D1PPRE_DIV2
-#define CFG_RCC_D1PPRE_DIV4                     RCC_D1CFGR_D1PPRE_DIV4
-#define CFG_RCC_D1PPRE_DIV8                     RCC_D1CFGR_D1PPRE_DIV8
-#define CFG_RCC_D1PPRE_DIV16                    RCC_D1CFGR_D1PPRE_DIV16
+#if defined(RCC_D1CFGR_D1CPRE_DIV1)
+  #define CFG_SYSCLK_DIV1                       RCC_D1CFGR_D1CPRE_DIV1
+  #define CFG_SYSCLK_DIV2                       RCC_D1CFGR_D1CPRE_DIV2
+  #define CFG_SYSCLK_DIV4                       RCC_D1CFGR_D1CPRE_DIV4
+  #define CFG_SYSCLK_DIV8                       RCC_D1CFGR_D1CPRE_DIV8
+  #define CFG_SYSCLK_DIV16                      RCC_D1CFGR_D1CPRE_DIV16
+  #define CFG_SYSCLK_DIV64                      RCC_D1CFGR_D1CPRE_DIV64
+  #define CFG_SYSCLK_DIV128                     RCC_D1CFGR_D1CPRE_DIV128
+  #define CFG_SYSCLK_DIV256                     RCC_D1CFGR_D1CPRE_DIV256
+  #define CFG_SYSCLK_DIV512                     RCC_D1CFGR_D1CPRE_DIV512
+#else
+  #define CFG_SYSCLK_DIV1                       RCC_CDCFGR1_CDCPRE_DIV1
+  #define CFG_SYSCLK_DIV2                       RCC_CDCFGR1_CDCPRE_DIV2
+  #define CFG_SYSCLK_DIV4                       RCC_CDCFGR1_CDCPRE_DIV4
+  #define CFG_SYSCLK_DIV8                       RCC_CDCFGR1_CDCPRE_DIV8
+  #define CFG_SYSCLK_DIV16                      RCC_CDCFGR1_CDCPRE_DIV16
+  #define CFG_SYSCLK_DIV64                      RCC_CDCFGR1_CDCPRE_DIV64
+  #define CFG_SYSCLK_DIV128                     RCC_CDCFGR1_CDCPRE_DIV128
+  #define CFG_SYSCLK_DIV256                     RCC_CDCFGR1_CDCPRE_DIV256
+  #define CFG_SYSCLK_DIV512                     RCC_CDCFGR1_CDCPRE_DIV512
+#endif
 
-#define CFG_RCC_D1CPRE_DIV1                     RCC_D1CFGR_D1CPRE_DIV1
-#define CFG_RCC_D1CPRE_DIV2                     RCC_D1CFGR_D1CPRE_DIV2
-#define CFG_RCC_D1CPRE_DIV4                     RCC_D1CFGR_D1CPRE_DIV4
-#define CFG_RCC_D1CPRE_DIV8                     RCC_D1CFGR_D1CPRE_DIV8
-#define CFG_RCC_D1CPRE_DIV16                    RCC_D1CFGR_D1CPRE_DIV16
-#define CFG_RCC_D1CPRE_DIV64                    RCC_D1CFGR_D1CPRE_DIV64
-#define CFG_RCC_D1CPRE_DIV128                   RCC_D1CFGR_D1CPRE_DIV128
-#define CFG_RCC_D1CPRE_DIV256                   RCC_D1CFGR_D1CPRE_DIV256
-#define CFG_RCC_D1CPRE_DIV512                   RCC_D1CFGR_D1CPRE_DIV512
+#if defined(RCC_D1CFGR_HPRE_DIV1)
+  #define CFG_HCLK_DIV1                         RCC_D1CFGR_HPRE_DIV1
+  #define CFG_HCLK_DIV2                         RCC_D1CFGR_HPRE_DIV2
+  #define CFG_HCLK_DIV4                         RCC_D1CFGR_HPRE_DIV4
+  #define CFG_HCLK_DIV8                         RCC_D1CFGR_HPRE_DIV8
+  #define CFG_HCLK_DIV16                        RCC_D1CFGR_HPRE_DIV16
+  #define CFG_HCLK_DIV64                        RCC_D1CFGR_HPRE_DIV64
+  #define CFG_HCLK_DIV128                       RCC_D1CFGR_HPRE_DIV128
+  #define CFG_HCLK_DIV256                       RCC_D1CFGR_HPRE_DIV256
+  #define CFG_HCLK_DIV512                       RCC_D1CFGR_HPRE_DIV512
+#else
+  #define CFG_HCLK_DIV1                         RCC_CDCFGR1_HPRE_DIV1
+  #define CFG_HCLK_DIV2                         RCC_CDCFGR1_HPRE_DIV2
+  #define CFG_HCLK_DIV4                         RCC_CDCFGR1_HPRE_DIV4
+  #define CFG_HCLK_DIV8                         RCC_CDCFGR1_HPRE_DIV8
+  #define CFG_HCLK_DIV16                        RCC_CDCFGR1_HPRE_DIV16
+  #define CFG_HCLK_DIV64                        RCC_CDCFGR1_HPRE_DIV64
+  #define CFG_HCLK_DIV128                       RCC_CDCFGR1_HPRE_DIV128
+  #define CFG_HCLK_DIV256                       RCC_CDCFGR1_HPRE_DIV256
+  #define CFG_HCLK_DIV512                       RCC_CDCFGR1_HPRE_DIV512
+#endif
 
+#if defined (RCC_D2CFGR_D2PPRE1_DIV1)
+  #define CFG_APB1_DIV1                         RCC_D2CFGR_D2PPRE1_DIV1
+  #define CFG_APB1_DIV2                         RCC_D2CFGR_D2PPRE1_DIV2
+  #define CFG_APB1_DIV4                         RCC_D2CFGR_D2PPRE1_DIV4
+  #define CFG_APB1_DIV8                         RCC_D2CFGR_D2PPRE1_DIV8
+  #define CFG_APB1_DIV16                        RCC_D2CFGR_D2PPRE1_DIV16
+#else
+  #define CFG_APB1_DIV1                         RCC_CDCFGR2_CDPPRE1_DIV1
+  #define CFG_APB1_DIV2                         RCC_CDCFGR2_CDPPRE1_DIV2
+  #define CFG_APB1_DIV4                         RCC_CDCFGR2_CDPPRE1_DIV4
+  #define CFG_APB1_DIV8                         RCC_CDCFGR2_CDPPRE1_DIV8
+  #define CFG_APB1_DIV16                        RCC_CDCFGR2_CDPPRE1_DIV16
+#endif
 
-#define CFG_RCC_D2PPRE1_DIV1                    RCC_D2CFGR_D2PPRE1_DIV1
-#define CFG_RCC_D2PPRE1_DIV2                    RCC_D2CFGR_D2PPRE1_DIV2
-#define CFG_RCC_D2PPRE1_DIV4                    RCC_D2CFGR_D2PPRE1_DIV4
-#define CFG_RCC_D2PPRE1_DIV8                    RCC_D2CFGR_D2PPRE1_DIV8
-#define CFG_RCC_D2PPRE1_DIV16                   RCC_D2CFGR_D2PPRE1_DIV16
+#if defined (RCC_D2CFGR_D2PPRE2_DIV1)
+  #define CFG_APB2_DIV1                         RCC_D2CFGR_D2PPRE2_DIV1
+  #define CFG_APB2_DIV2                         RCC_D2CFGR_D2PPRE2_DIV2
+  #define CFG_APB2_DIV4                         RCC_D2CFGR_D2PPRE2_DIV4
+  #define CFG_APB2_DIV8                         RCC_D2CFGR_D2PPRE2_DIV8
+  #define CFG_APB2_DIV16                        RCC_D2CFGR_D2PPRE2_DIV16
+#else
+  #define CFG_APB2_DIV1                         RCC_CDCFGR2_CDPPRE2_DIV1
+  #define CFG_APB2_DIV2                         RCC_CDCFGR2_CDPPRE2_DIV2
+  #define CFG_APB2_DIV4                         RCC_CDCFGR2_CDPPRE2_DIV4
+  #define CFG_APB2_DIV8                         RCC_CDCFGR2_CDPPRE2_DIV8
+  #define CFG_APB2_DIV16                        RCC_CDCFGR2_CDPPRE2_DIV16
+#endif
 
-#define CFG_RCC_D2PPRE2_DIV1                    RCC_D2CFGR_D2PPRE2_DIV1
-#define CFG_RCC_D2PPRE2_DIV2                    RCC_D2CFGR_D2PPRE2_DIV2
-#define CFG_RCC_D2PPRE2_DIV4                    RCC_D2CFGR_D2PPRE2_DIV4
-#define CFG_RCC_D2PPRE2_DIV8                    RCC_D2CFGR_D2PPRE2_DIV8
-#define CFG_RCC_D2PPRE2_DIV16                   RCC_D2CFGR_D2PPRE2_DIV16
+#if defined (RCC_D1CFGR_D1PPRE_DIV1)
+  #define CFG_APB3_DIV1                         RCC_D1CFGR_D1PPRE_DIV1
+  #define CFG_APB3_DIV2                         RCC_D1CFGR_D1PPRE_DIV2
+  #define CFG_APB3_DIV4                         RCC_D1CFGR_D1PPRE_DIV4
+  #define CFG_APB3_DIV8                         RCC_D1CFGR_D1PPRE_DIV8
+  #define CFG_APB3_DIV16                        RCC_D1CFGR_D1PPRE_DIV16
+#else
+  #define CFG_APB3_DIV1                         RCC_CDCFGR1_CDPPRE_DIV1
+  #define CFG_APB3_DIV2                         RCC_CDCFGR1_CDPPRE_DIV2
+  #define CFG_APB3_DIV4                         RCC_CDCFGR1_CDPPRE_DIV4
+  #define CFG_APB3_DIV8                         RCC_CDCFGR1_CDPPRE_DIV8
+  #define CFG_APB3_DIV16                        RCC_CDCFGR1_CDPPRE_DIV16
+#endif
 
-#define CFG_RCC_D3PPRE_DIV1                     RCC_D3CFGR_D3PPRE_DIV1
-#define CFG_RCC_D3PPRE_DIV2                     RCC_D3CFGR_D3PPRE_DIV2
-#define CFG_RCC_D3PPRE_DIV4                     RCC_D3CFGR_D3PPRE_DIV4
-#define CFG_RCC_D3PPRE_DIV8                     RCC_D3CFGR_D3PPRE_DIV8
-#define CFG_RCC_D3PPRE_DIV16                    RCC_D3CFGR_D3PPRE_DIV16
-
+#if defined(RCC_D3CFGR_D3PPRE_DIV1)
+  #define CFG_APB4_DIV1                         RCC_D3CFGR_D3PPRE_DIV1
+  #define CFG_APB4_DIV2                         RCC_D3CFGR_D3PPRE_DIV2
+  #define CFG_APB4_DIV4                         RCC_D3CFGR_D3PPRE_DIV4
+  #define CFG_APB4_DIV8                         RCC_D3CFGR_D3PPRE_DIV8
+  #define CFG_APB4_DIV16                        RCC_D3CFGR_D3PPRE_DIV16
+#else
+  #define CFG_APB4_DIV1                         RCC_SRDCFGR_SRDPPRE_DIV1
+  #define CFG_APB4_DIV2                         RCC_SRDCFGR_SRDPPRE_DIV2
+  #define CFG_APB4_DIV4                         RCC_SRDCFGR_SRDPPRE_DIV4
+  #define CFG_APB4_DIV8                         RCC_SRDCFGR_SRDPPRE_DIV8
+  #define CFG_APB4_DIV16                        RCC_SRDCFGR_SRDPPRE_DIV16
+#endif
 
 // Valid for PLL1, PLL2, PLL3
 #define CFG_RCC_PLLDIVR_PLL_N_POS               0
@@ -860,22 +914,22 @@
 /// RCC_D1CFGR - RCC domain 1 clock configuration register
 ///
 
-#define CFG_RCC_D1CFGR                              (CFG_D1CPRE_DIVIDER         | \
-                                                     CFG_D1PPRE_DIVIDER         | \
-                                                     CFG_HPRE_DIVIDER)
+#define CFG_RCC_D1CFGR                              (CFG_SYSCLK_DIVIDER         | \
+                                                     CFG_APB3_DIVIDER         | \
+                                                     CFG_HCLK_DIVIDER)
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// RCC_D2CFGR - RCC domain 2 clock configuration register
 ///
 
-#define CFG_RCC_D2CFGR                              (CFG_D2PPRE2_DIVIDER        | \
-                                                     CFG_D2PPRE1_DIVIDER)
+#define CFG_RCC_D2CFGR                              (CFG_APB2_DIVIDER        | \
+                                                     CFG_APB1_DIVIDER)
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// RCC_D3CFGR - RCC domain 3 clock configuration register
 ///
 
-#define CFG_RCC_D3CFGR                              (CFG_D3PPRE_DIVIDER)
+#define CFG_RCC_D3CFGR                              (CFG_APB4_DIVIDER)
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// SYS Clock Mux
@@ -891,94 +945,96 @@
   #define SYS_CPU_CORE_CLOCK_FREQUENCY              CFG_HSE_VALUE
 #endif
 
-#if   CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV1
+
+#if   CFG_SYSCLK_DIVIDER == CFG_SYSCLK_DIV1
   #define SYS_HCLK_CLOCK_FREQUENCY                  SYS_CPU_CORE_CLOCK_FREQUENCY
-#elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV2
+#elif CFG_SYSCLK_DIVIDER == CFG_SYSCLK_DIV2
   #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 2)
-#elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV4
+#elif CFG_SYSCLK_DIVIDER == CFG_SYSCLK_DIV4
   #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 4)
-#elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV8
+#elif CFG_SYSCLK_DIVIDER == CFG_SYSCLK_DIV8
   #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 8)
-#elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV16
+#elif CFG_SYSCLK_DIVIDER == CFG_SYSCLK_DIV16
   #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 16)
-#elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV64
+#elif CFG_SYSCLK_DIVIDER == CFG_SYSCLK_DIV64
   #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 64)
-#elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV128
+#elif CFG_SYSCLK_DIVIDER == CFG_SYSCLK_DIV128
   #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 128)
-#elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV256
+#elif CFG_SYSCLK_DIVIDER == CFG_SYSCLK_DIV256
   #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 256)
-#elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV512
+#elif CFG_SYSCLK_DIVIDER == CFG_SYSCLK_DIV512
   #define SYS_HCLK_CLOCK_FREQUENCY                  (SYS_CPU_CORE_CLOCK_FREQUENCY / 512)
 #endif
 
-#if   CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV1
+
+#if   CFG_HCLK_DIVIDER == CFG_HCLK_DIV1
     #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     SYS_HCLK_CLOCK_FREQUENCY
-#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV2
+#elif CFG_HCLK_DIVIDER == CFG_HCLK_DIV2
     #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 2)
-#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV4
+#elif CFG_HCLK_DIVIDER == CFG_HCLK_DIV4
     #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 4)
-#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV8
+#elif CFG_HCLK_DIVIDER == CFG_HCLK_DIV8
     #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 8)
-#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV16
+#elif CFG_HCLK_DIVIDER == CFG_HCLK_DIV16
     #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 16)
-#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV64
+#elif CFG_HCLK_DIVIDER == CFG_HCLK_DIV64
     #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 64)
-#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV128
+#elif CFG_HCLK_DIVIDER == CFG_HCLK_DIV128
     #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 128)
-#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV256
+#elif CFG_HCLK_DIVIDER == CFG_HCLK_DIV256
     #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 256)
-#elif CFG_HPRE_DIVIDER == CFG_RCC_HPRE_DIV512
+#elif CFG_HCLK_DIVIDER == CFG_HCLK_DIV512
     #define SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY     (SYS_HCLK_CLOCK_FREQUENCY / 512)
 #endif
 
 #define AXI_CLOCK_FREQUENCY                         SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY
 #define SYS_HCLK_CPU2_CLOCK_FREQUENCY               SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY             // If second core exist
 
-#if   CFG_D2PPRE1_DIVIDER == CFG_RCC_D2PPRE1_DIV1
+#if   CFG_APB1_DIVIDER == CFG_APB1_DIV1
   #define PCLK1_CLOCK_FREQUENCY                     SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY
-#elif CFG_D2PPRE1_DIVIDER == CFG_RCC_D2PPRE1_DIV2
+#elif CFG_APB1_DIVIDER == CFG_APB1_DIV2
   #define PCLK1_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 2)
-#elif CFG_D2PPRE1_DIVIDER == CFG_RCC_D2PPRE1_DIV4
+#elif CFG_APB1_DIVIDER == CFG_APB1_DIV4
   #define PCLK1_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 4)
-#elif CFG_D2PPRE1_DIVIDER == CFG_RCC_D2PPRE1_DIV8
+#elif CFG_APB1_DIVIDER == CFG_APB1_DIV8
   #define PCLK1_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 8)
-#elif CFG_D2PPRE1_DIVIDER == CFG_RCC_D2PPRE1_DIV16
+#elif CFG_APB1_DIVIDER == CFG_APB1_DIV16
   #define PCLK1_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 16)
 #endif
 
-#if   CFG_D2PPRE2_DIVIDER == CFG_RCC_D2PPRE2_DIV1
+#if   CFG_APB2_DIVIDER == CFG_APB2_DIV1
   #define PCLK2_CLOCK_FREQUENCY                     SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY
-#elif CFG_D2PPRE2_DIVIDER == CFG_RCC_D2PPRE2_DIV2
+#elif CFG_APB2_DIVIDER == CFG_APB2_DIV2
   #define PCLK2_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 2)
-#elif CFG_D2PPRE2_DIVIDER == CFG_RCC_D2PPRE2_DIV4
+#elif CFG_APB2_DIVIDER == CFG_APB2_DIV4
   #define PCLK2_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 4)
-#elif CFG_D2PPRE2_DIVIDER == CFG_RCC_D2PPRE2_DIV8
+#elif CFG_APB2_DIVIDER == CFG_APB2_DIV8
   #define PCLK2_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 8)
-#elif CFG_D2PPRE2_DIVIDER == CFG_RCC_D2PPRE2_DIV16
+#elif CFG_APB2_DIVIDER == CFG_APB2_DIV16
   #define PCLK2_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 16)
 #endif
 
-#if   CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV1
+#if   CFG_APB3_DIVIDER == CFG_APB3_DIV1
   #define PCLK3_CLOCK_FREQUENCY                     SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY
-#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV2
+#elif CFG_APB3_DIVIDER == CFG_APB3_DIV2
   #define PCLK3_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 2)
-#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV4
+#elif CFG_APB3_DIVIDER == CFG_APB3_DIV4
   #define PCLK3_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 4)
-#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV8
+#elif CFG_APB3_DIVIDER == CFG_APB3_DIV8
   #define PCLK3_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 8)
-#elif CFG_D1PPRE_DIVIDER == CFG_RCC_D1PPRE_DIV16
+#elif CFG_APB3_DIVIDER == CFG_APB3_DIV16
   #define PCLK3_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 16)
 #endif
 
-#if   CFG_D3PPRE_DIVIDER == CFG_RCC_D3PPRE_DIV1
+#if   CFG_APB4_DIVIDER == CFG_APB4_DIV1
   #define PCLK4_CLOCK_FREQUENCY                     SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY
-#elif CFG_D3PPRE_DIVIDER == CFG_RCC_D3PPRE_DIV2
+#elif CFG_APB4_DIVIDER == CFG_APB4_DIV2
   #define PCLK4_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 2)
-#elif CFG_D3PPRE_DIVIDER == CFG_RCC_D3PPRE_DIV4
+#elif CFG_APB4_DIVIDER == CFG_APB4_DIV4
   #define PCLK4_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 4)
-#elif CFG_D3PPRE_DIVIDER == CFG_RCC_D3PPRE_DIV8
+#elif CFG_APB4_DIVIDER == CFG_APB4_DIV8
   #define PCLK4_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 8)
-#elif CFG_D3PPRE_DIVIDER == CFG_RCC_D3PPRE_DIV16
+#elif CFG_APB4_DIVIDER == CFG_APB4_DIV16
   #define PCLK4_CLOCK_FREQUENCY                     (SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY / 16)
 #endif
 

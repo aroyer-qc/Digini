@@ -104,7 +104,7 @@ const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
     GPIOF,
     GPIOG,
     GPIOH,
-  #ifdef STM32H745xx            // Not the best method
+#if defined (STM32H745xx) || defined (STM32H7B3xx)             // Not the best method
     GPIOI,
     GPIOJ,
     GPIOK,
@@ -314,7 +314,7 @@ void IO_InitializeAll(void)
 void IO_PinInit(IO_ID_e IO_ID)
 {
     const IO_Properties_t*       pIO_Properties = &IO_Properties[IO_ID];
-    const IO_ConfigProperties_t* pIO_Config     = &IO_ConfigProperties[IO_Properties->IO_ConfigID];;
+    const IO_ConfigProperties_t* pIO_Config     = &IO_ConfigProperties[pIO_Properties->IO_ConfigID];;
     GPIO_TypeDef*                pPort          = pIO_Properties->pPort;
 
     if(pPort != GPIOxx)

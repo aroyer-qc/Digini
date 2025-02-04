@@ -46,11 +46,14 @@
 #define IO_PIN_13                       ((uint16_t)0x2000)
 #define IO_PIN_14                       ((uint16_t)0x4000)
 #define IO_PIN_15                       ((uint16_t)0x8000)
+#define IO_PIN_ALL                      ((uint16_t)0xFFFF)
 
 #define GPIOxx                          ((uint32_t)0x00000000)
-#ifdef STM32H735xx
+#if   defined(STM32H735xx)
 #define NUMBER_OF_IO_PORT               ((uint32_t)8)
-#else
+#elif defined(STM32H745xx)
+#define NUMBER_OF_IO_PORT               ((uint32_t)11)
+#elif defined(STM32H7B3xx)
 #define NUMBER_OF_IO_PORT               ((uint32_t)11)
 #endif
 #define NUMBER_OF_PIN_PER_PORT          ((uint32_t)16)

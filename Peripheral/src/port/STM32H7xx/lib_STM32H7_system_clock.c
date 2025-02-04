@@ -76,7 +76,9 @@ void SystemInit(void)
     while((PWR->D3CR & PWR_D3CR_VOSRDY) != PWR_D3CR_VOSRDY){};                  // Wait till voltage level flag is set
 
     // Configure the main internal regulator output voltage
+  #ifdef STM32H745xx
     CLEAR_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);                                // Disable the PWR overdrive
+  #endif
     // need to get real explanation on this
     MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE_SCALE3);      // Configure the main internal regulator output voltage
     SET_BIT(RCC->APB4ENR, RCC_APB4ENR_SYSCFGEN);

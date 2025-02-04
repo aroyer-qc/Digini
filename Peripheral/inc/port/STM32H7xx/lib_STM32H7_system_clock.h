@@ -133,6 +133,51 @@
     #define MAX_DIVR3                           128
 #endif
 
+#ifdef STM32H7B3xx
+    #define MAX_SYS_HCLK                        280000000
+    #define MAX_SYS_AXI                         140000000
+    #define MAX_PCLK1                           140000000
+    #define MAX_PCLK2                           140000000
+    #define MAX_PCLK3                           140000000
+    #define MAX_PCLK4                           140000000
+    #define MAX_AHB4                            140000000
+    #define VCOSEL_FREQUENCY                    2000000
+
+    #define MIN_DIVM1                           1
+    #define MAX_DIVM1                           63
+    #define MIN_MULN1                           8
+    #define MAX_MULN1                           420
+    #define MIN_DIVP1                           2
+    #define MAX_DIVP1                           128
+    #define MIN_DIVQ1                           1
+    #define MAX_DIVQ1                           128
+    #define MIN_DIVR1                           1
+    #define MAX_DIVR1                           128
+
+    #define MIN_DIVM2                           1
+    #define MAX_DIVM2                           63
+    #define MIN_MULN2                           8
+    #define MAX_MULN2                           420
+    #define MIN_DIVP2                           1
+    #define MAX_DIVP2                           128
+    #define MIN_DIVQ2                           1
+    #define MAX_DIVQ2                           128
+    #define MIN_DIVR2                           1
+    #define MAX_DIVR2                           128
+
+    #define MIN_DIVM3                           1
+    #define MAX_DIVM3                           63
+    #define MIN_MULN3                           8
+    #define MAX_MULN3                           420
+    #define MIN_DIVP3                           1
+    #define MAX_DIVP3                           128
+    #define MIN_DIVQ3                           1
+    #define MAX_DIVQ3                           128
+    #define MIN_DIVR3                           1
+    #define MAX_DIVR3                           128
+#endif
+
+
 #define LSI_CLOCK_FREQUENCY                     32000
 #define HSI_RC_CLOCK_FREQUENCY                  64000000
 #define CSI_CLOCK_FREQUENCY                     4000000

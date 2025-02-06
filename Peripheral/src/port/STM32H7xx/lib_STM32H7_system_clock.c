@@ -37,7 +37,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define RCC_PLLCFGR_RESET_VALUE             0x01FF0000
-
+\
 
 // Vector Table base offset field. This value must be a multiple of 0x200.
 #define VECT_TAB_OFFSET                     0x00000000
@@ -71,26 +71,61 @@ void SystemInit(void)
     // SEVONPEND enabled so that an interrupt coming from the CPU(n) interrupt signal is detectable by the CPU after a WFI/WFE instruction.
     SCB->SCR |= SCB_SCR_SEVONPEND_Pos;
 
-    //according th PDF VOS0 should be chosen for 240Mhz AXI clock with 4 WS
+    // According th PDF VOS0 should be chosen for 240Mhz AXI clock with 4 WS
+  #if defined (SMPS)
     SET_BIT(PWR->CR3, PWR_CR3_SMPSEN);                                          // Set the power supply configuration
-    while((PWR->D3CR & PWR_D3CR_VOSRDY) != PWR_D3CR_VOSRDY){};                  // Wait till voltage level flag is set
+  #endif
 
     // Configure the main internal regulator output voltage
-  #ifdef STM32H745xx
-    CLEAR_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);                                // Disable the PWR overdrive
+  #if defined(PWR_SRDCR_VOS)                                                    // STM32H7Axxx and STM32H7Bxxx lines
+    MODIFY_REG(PWR->SRDCR, PWR_SRDCR_VOS, CFG_PWR_REGULATOR_VOLTAGE);
+  #else
+   #if defined(SYSCFG_PWRCR_ODEN)                                               // STM32H74xxx and STM32H75xxx lines
+    uint32_t RegisterValue;
+
+    if(CFG_PWR_REGULATOR_VOLTAGE == CFG_PWR_REGULATOR_VOLTAGE_SCALE0)
+    {
+        MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE_SCALE1);  // Configure the Voltage Scaling 1
+        RegisterValue = READ_BIT(PWR->D3CR, PWR_D3CR_VOS);                      // Delay after setting the voltage scaling
+        SET_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);                              // Enable the PWR overdrive
+        RegisterValue = READ_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);             // Delay after setting the syscfg boost setting
+    }
+    else
+    {
+        CLEAR_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);                            // Disable the PWR overdrive
+        RegisterValue = READ_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);             // Delay after setting the syscfg boost setting
+        MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE);         // Configure the Voltage Scaling x
+        RegisterValue = READ_BIT(PWR->D3CR, PWR_D3CR_VOS);                      // Delay after setting the voltage scaling
+    }
+
+    VAR_UNUSED(RegisterValue);
+   #else                                                                        // STM32H72xxx and STM32H73xxx lines
+    uint32_t RegisterValue;
+
+    MODIFY_REG (PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE);            // Configure the Voltage Scaling
+    RegisterValue = READ_BIT(PWR->D3CR, PWR_D3CR_VOS);                          // Delay after setting the voltage scaling
+    VAR_UNUSED(RegisterValue);
+   #endif
   #endif
-    // need to get real explanation on this
-    MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE_SCALE3);      // Configure the main internal regulator output voltage
+
+    // Wait till voltage level flag is set
+  #if defined (DUAL_CORE) || defined (PWR_CPUCR_SBF_D2) || defined (SMPS)
+    while((PWR->D3CR & PWR_D3CR_VOSRDY) != PWR_D3CR_VOSRDY){};
+  #else // STM32H7Axx and STM32H7Bxx lines
+    while((PWR->SRDCR & PWR_SRDCR_VOSRDY) != PWR_SRDCR_VOSRDY){};
+  #endif
+
     SET_BIT(RCC->APB4ENR, RCC_APB4ENR_SYSCFGEN);
 
     // Reset the RCC clock configuration to the default reset state
-    RCC->CR        |= RCC_CR_HSION;                                             // Set HSION bit
-    RCC->CFGR       = 0x00000000;                                               // Reset CFGR register
+    RCC->CR   |= RCC_CR_HSION;                                             // Set HSION bit
+    RCC->CFGR  = 0x00000000;                                               // Reset CFGR register
 
     CLEAR_BIT(RCC->CR, (RCC_CR_HSEON   | RCC_CR_CSSHSEON | RCC_CR_CSION  |      // Reset HSEON, CSSON, CSION, RC48ON, CSIKERON, PLL1ON, PLL2ON and PLL3ON bits
                         RCC_CR_HSI48ON | RCC_CR_CSIKERON | RCC_CR_PLL1ON |
-                        RCC_CR_PLL2ON | RCC_CR_PLL3ON));
+                        RCC_CR_PLL2ON  | RCC_CR_PLL3ON));
 
+  #if defined(RCC_D1CFGR_HPRE)
     RCC->D1CFGR     = CFG_RCC_D1CFGR;
     RCC->D2CFGR     = CFG_RCC_D2CFGR;
     RCC->D3CFGR     = CFG_RCC_D3CFGR;
@@ -98,10 +133,21 @@ void SystemInit(void)
     RCC->D2CCIP1R   = CFG_RCC_D2CCIP1R;
     RCC->D2CCIP2R   = CFG_RCC_D2CCIP2R;
     RCC->D3CCIPR    = CFG_RCC_D3CCIPR;
+  #else
+    RCC->CDCFGR1    = CFG_RCC_CDCFGR1;
+    RCC->CDCFGR2    = CFG_RCC_CDCFGR2;
+    RCC->SRDCFGR    = CFG_RCC_SRDCFGR;
+    RCC->CDCCIPR    = CFG_RCC_CDCCIPR;
+    RCC->CDCCIP1R   = CFG_RCC_CDCCIP1R;
+    RCC->CDCCIP2R   = CFG_RCC_CDCCIP2R;
+    RCC->SRDCCIPR   = CFG_RCC_SRDCCIPR;
+  #endif
 
-    CLEAR_BIT(RCC->CR, RCC_CR_HSEBYP);                                           // Reset HSEBYP bit
-    RCC->CIER       = 0x00000000;                                               // Disable all interrupts
-    SET_BIT(EXTI_D2->EMR3, EXTI_EMR3_EM78);                                     // Enable CortexM7 HSEM EXTI line (line 78)
+    CLEAR_BIT(RCC->CR, RCC_CR_HSEBYP);                                              // Reset HSEBYP bit
+    RCC->CIER       = 0x00000000;                                                   // Disable all interrupts
+  #if defined(EXTI_EMR3_EM78)
+    SET_BIT(EXTI_D2->EMR3, EXTI_EMR3_EM78);                                         // Enable CortexM7 HSEM EXTI line (line 78)
+  #endif
 
     if((DBGMCU->IDCODE & 0xFFFF0000) < 0x20000000)
     {

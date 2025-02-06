@@ -104,7 +104,7 @@ const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
     GPIOF,
     GPIOG,
     GPIOH,
-#if defined (STM32H745xx) || defined (STM32H7B3xx)             // Not the best method
+#if defined (STM32H745xx) || defined (STM32H7B3xx)
     GPIOI,
     GPIOJ,
     GPIOK,
@@ -410,7 +410,7 @@ void IO_GroupPinInit(IO_GroupID_e IO_GroupID)
 
 			if(PinNumber == Position)
 			{
-                _IO_PinInit(pPort, PinNumber, pIO_Config);
+                _IO_PinInit(pPort, PinPosition, pIO_Config);
             }
         }
 	}

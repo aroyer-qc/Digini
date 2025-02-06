@@ -177,7 +177,6 @@
     #define MAX_DIVR3                           128
 #endif
 
-
 #define LSI_CLOCK_FREQUENCY                     32000
 #define HSI_RC_CLOCK_FREQUENCY                  64000000
 #define CSI_CLOCK_FREQUENCY                     4000000
@@ -186,236 +185,455 @@
 //-------------------------------------------------------------------------------------------------
 // Multiplexer for peripheral clock source
 
-// System clock mux selection
+// System clock MUX selection
 #define CFG_RCC_CFGR_SW_HSI                     0x00000000
 #define CFG_RCC_CFGR_SW_CSI                     0x00000001
 #define CFG_RCC_CFGR_SW_HSE                     0x00000002
 #define CFG_RCC_CFGR_SW_PLL1                    0x00000003
 
-// Multiplexer define to be used for ADC clock source                                                   -> CFG_ADC_SOURCE_MUX           default: PLL2P
-#define CFG_RCC_D3CCIPR_ADC_PLL2P               0
-#define CFG_RCC_D3CCIPR_ADC_PLL3R               RCC_D3CCIPR_ADCSEL_0
-#define CFG_RCC_D3CCIPR_ADC_PER_CLK             RCC_D3CCIPR_ADCSEL_1
+/// Multiplexer define to be used for ADC clock source                                                  -> CFG_ADC_SOURCE_MUX           default: PLL2P
+#if defined(RCC_D3CCIPR_ADCSEL_0)
+  #define CFG_ADC_PLL2P                         0
+  #define CFG_ADC_PLL3R                         RCC_D3CCIPR_ADCSEL_0
+  #define CFG_ADC_PER_CLK                       RCC_D3CCIPR_ADCSEL_1
+#else
+  #define CFG_ADC_PLL2P                         0
+  #define CFG_ADC_PLL3R                         RCC_SRDCCIPR_ADCSEL_0
+  #define CFG_ADC_PER_CLK                       RCC_SRDCCIPR_ADCSEL_1
+#endif
 
-// Multiplexer define to be used for HDMI CEC clock source                                              -> CFG_CEC_SOURCE_MUX           default: LSE
-#define CFG_RCC_D2CCIP2R_CEC_LSE                0
-#define CFG_RCC_D2CCIP2R_CEC_LSI                RCC_D2CCIP2R_CECSEL_0
-#define CFG_RCC_D2CCIP2R_CEC_CSI                RCC_D2CCIP2R_CECSEL_1
+/// Multiplexer define to be used for HDMI CEC clock source                                             -> CFG_CEC_SOURCE_MUX           default: LSE
+#if defined(RCC_D2CCIP2R_CECSEL_0)
+  #define CFG_CEC_LSE                           0
+  #define CFG_CEC_LSI                           RCC_D2CCIP2R_CECSEL_0
+  #define CFG_CEC_CSI                           RCC_D2CCIP2R_CECSEL_1
+#else
+  #define CFG_CEC_LSE                           0
+  #define CFG_CEC_LSI                           RCC_CDCCIP2R_CECSEL_0
+  #define CFG_CEC_CSI                           RCC_CDCCIP2R_CECSEL_1
+#endif
 
-// Multiplexer define to be used for DFSDM clock source                                                 -> CFG_DFSDM_SOURCE_MUX         default: PCLK2
-#define CFG_RCC_D2CCIP1R_DFSDM_PLCK2            0
-#define CFG_RCC_D2CCIP1R_DFSDM_SYSCLK           RCC_D2CCIP1R_DFSDM1SEL
+/// Multiplexer define to be used for DFSDM1 clock source                                               -> CFG_DFSDM1_SOURCE_MUX         default: PCLK2
+#if defined(RCC_D2CCIP1R_DFSDM1SEL)
+  #define CFG_DFSDM1_PLCK2                      0
+  #define CFG_DFSDM1_SYSCLK                     RCC_D2CCIP1R_DFSDM1SEL
+#else
+  #define CFG_DFSDM1_PLCK2                      0
+  #define CFG_DFSDM1_SYSCLK                     RCC_CDCCIP1R_DFSDM1SEL
+#endif
 
-// Multiplexer define to be used for FDCAN clock source                                                 -> CFG_FDCAN_SOURCE_MUX         default: HSE
-#define CFG_RCC_D2CCIP1R_FDCAN_HSE              0
-#define CFG_RCC_D2CCIP1R_FDCAN_PLL1Q            RCC_D2CCIP1R_FDCANSEL_0
-#define CFG_RCC_D2CCIP1R_FDCAN_PLL2Q            RCC_D2CCIP1R_FDCANSEL_1
+/// Multiplexer define to be used for DFSDM2 clock source                                               -> CFG_DFSDM2_SOURCE_MUX         default: PCLK4
+#if defined(DFSDM2)
+  #define CFG_DFSDM2_PLCK4                      0
+  #define CFG_DFSDM2_SYSCLK                     RCC_SRDCCIPR_DFSDM2SEL
+#endif
 
-// Multiplexer define to be used for FMC clock source                                                   -> CFG_FMC_SOURCE_MUX           default: HCLK3
-#define CFG_RCC_D1CCIPR_FMC_HCLK3               0
-#define CFG_RCC_D1CCIPR_FMC_PLL1Q               RCC_D1CCIPR_FMCSEL_0
-#define CFG_RCC_D1CCIPR_FMC_PLL2R               RCC_D1CCIPR_FMCSEL_1
-#define CFG_RCC_D1CCIPR_FMC_PER_CLK             (RCC_D1CCIPR_FMCSEL_1 | RCC_D1CCIPR_FMCSEL_0)
+/// Multiplexer define to be used for DFSDM clock source                                                -> CFG_DFSDM_SOURCE_MUX         default: PCLK2
+#if defined(RCC_D2CCIP1R_DFSDM1SEL)
+  #define CFG_DFSDM_PLCK2                         0
+  #define CFG_DFSDM_SYSCLK                        RCC_D2CCIP1R_DFSDM1SEL
+#else
+  #define CFG_DFSDM_PLCK2                         0
+  #define CFG_DFSDM_SYSCLK                        RCC_CDCCIP1R_DFSDM1SEL
+#endif
+
+/// Multiplexer define to be used for FDCAN clock source                                                -> CFG_FDCAN_SOURCE_MUX         default: HSE
+#if defined(FDCAN1) || defined(FDCAN2)
+ #if defined(RCC_D2CCIP1R_FDCANSEL)
+  #define CFG_FDCAN_HSE                         0
+  #define CFG_FDCAN_PLL1Q                       RCC_D2CCIP1R_FDCANSEL_0
+  #define CFG_FDCAN_PLL2Q                       RCC_D2CCIP1R_FDCANSEL_1
+ #else
+  #define CFG_FDCAN_HSE                         0
+  #define CFG_FDCAN_PLL1Q                       RCC_CDCCIP1R_FDCANSEL_0
+  #define CFG_FDCAN_PLL2Q                       RCC_CDCCIP1R_FDCANSEL_1
+ #endif
+#endif
+
+/// Multiplexer define to be used for FMC clock source                                                  -> CFG_FMC_SOURCE_MUX           default: HCLK3
+#if defined(RCC_D1CCIPR_FMCSEL)
+  #define CFG_FMC_HCLK3                           0
+  #define CFG_FMC_PLL1Q                           RCC_D1CCIPR_FMCSEL_0
+  #define CFG_FMC_PLL2R                           RCC_D1CCIPR_FMCSEL_1
+  #define CFG_FMC_PER_CLK                         (RCC_D1CCIPR_FMCSEL_1 | RCC_D1CCIPR_FMCSEL_0)
+#else
+  #define CFG_FMC_HCLK3                           0
+  #define CFG_FMC_PLL1Q                           RCC_CDCCIPR_FMCSEL_0
+  #define CFG_FMC_PLL2R                           RCC_CDCCIPR_FMCSEL_1
+  #define CFG_FMC_PER_CLK                         (RCC_CDCCIPR_FMCSEL_1 | RCC_CDCCIPR_FMCSEL_0)
+#endif
 
 #if defined (RCC_D2CCIP2R_I2C123SEL)
-  // Multiplexer define to be used for I2C123 clock source                                              -> CFG_I2C123_SOURCE_MUX        default: PCLK1
-  #define CFG_RCC_D2CCIP2R_I2C123_PCLK1         0
-  #define CFG_RCC_D2CCIP2R_I2C123_PLL3R         RCC_D2CCIP2R_I2C123SEL_0
-  #define CFG_RCC_D2CCIP2R_I2C123_HSI           RCC_D2CCIP2R_I2C123SEL_1
-  #define CFG_RCC_D2CCIP2R_I2C123_CSI           (RCC_D2CCIP2R_I2C123SEL_1 | RCC_D2CCIP2R_I2C123SEL_0)
-#else
-  // Multiplexer define to be used for I2C1235 clock source                                             -> CFG_I2C1235_SOURCE_MUX       default: PCLK1
-  #define CFG_RCC_D2CCIP2R_I2C1235_PCLK1        0
-  #define CFG_RCC_D2CCIP2R_I2C1235_PLL3R        RCC_D2CCIP2R_I2C1235SEL_0
-  #define CFG_RCC_D2CCIP2R_I2C1235_HSI          RCC_D2CCIP2R_I2C1235SEL_1
-  #define CFG_RCC_D2CCIP2R_I2C1235_CSI          (RCC_D2CCIP2R_I2C1235SEL_1 | RCC_D2CCIP2R_I2C1235SEL_0)
+  /// Multiplexer define to be used for I2C123 clock source                                             -> CFG_I2C123_SOURCE_MUX        default: PCLK1
+  #define CFG_I2C123_PCLK1                      0
+  #define CFG_I2C123_PLL3R                      RCC_D2CCIP2R_I2C123SEL_0
+  #define CFG_I2C123_HSI                        RCC_D2CCIP2R_I2C123SEL_1
+  #define CFG_I2C123_CSI                        (RCC_D2CCIP2R_I2C123SEL_1 | RCC_D2CCIP2R_I2C123SEL_0)
+#elif defined(RCC_CDCCIP2R_I2C123SEL)
+  /// Multiplexer define to be used for I2C123 clock source                                             -> CFG_I2C123_SOURCE_MUX        default: PCLK1
+  #define CFG_I2C123_PCLK1                      0
+  #define CFG_I2C123_PLL3R                      RCC_CDCCIP2R_I2C123SEL_0
+  #define CFG_I2C123_HSI                        RCC_CDCCIP2R_I2C123SEL_1
+  #define CFG_I2C123_CSI                        (RCC_CDCCIP2R_I2C123SEL_1 | RCC_CDCCIP2R_I2C123SEL_0)
+#elif defined(RCC_D2CCIP2R_I2C1235SEL)
+  /// Multiplexer define to be used for I2C1235 clock source                                            -> CFG_I2C1235_SOURCE_MUX       default: PCLK1
+  #define CFG_I2C1235_PCLK1                     0
+  #define CFG_I2C1235_PLL3R                     RCC_D2CCIP2R_I2C1235SEL_0
+  #define CFG_I2C1235_HSI                       RCC_D2CCIP2R_I2C1235SEL_1
+  #define CFG_I2C1235_CSI                       (RCC_D2CCIP2R_I2C1235SEL_1 | RCC_D2CCIP2R_I2C1235SEL_0)
 #endif
 
-// Multiplexer define to be used for I2C4 clock source                                                  -> CFG_I2C4_SOURCE_MUX          default: PCLK4
-#define CFG_RCC_D3CCIPR_I2C4_PCLK4              0
-#define CFG_RCC_D3CCIPR_I2C4_PLL3R              RCC_D3CCIPR_I2C4SEL_0
-#define CFG_RCC_D3CCIPR_I2C4_HSI                RCC_D3CCIPR_I2C4SEL_1
-#define CFG_RCC_D3CCIPR_I2C4_CSI                (RCC_D3CCIPR_I2C4SEL_1 | RCC_D3CCIPR_I2C4SEL_0)
+/// Multiplexer define to be used for I2C4 clock source                                                 -> CFG_I2C4_SOURCE_MUX          default: PCLK4
+#if defined(RCC_D3CCIPR_I2C4SEL)
+  #define CFG_I2C4_PCLK4                        0
+  #define CFG_I2C4_PLL3R                        RCC_D3CCIPR_I2C4SEL_0
+  #define CFG_I2C4_HSI                          RCC_D3CCIPR_I2C4SEL_1
+  #define CFG_I2C4_CSI                          (RCC_D3CCIPR_I2C4SEL_1 | RCC_D3CCIPR_I2C4SEL_0)
+#else
+  #define CFG_I2C4_PCLK4                        0
+  #define CFG_I2C4_PLL3R                        RCC_SRDCCIPR_I2C4SEL_0
+  #define CFG_I2C4_HSI                          RCC_SRDCCIPR_I2C4SEL_1
+  #define CFG_I2C4_CSI                          (RCC_SRDCCIPR_I2C4SEL_1 | RCC_SRDCCIPR_I2C4SEL_0)
+#endif
 
-// Multiplexer define to be used for HRTIM clock source                                                 -> CFG_HRTIM_SOURCE_MUX         default: TIM_CLK
-#define CFG_RCC_CFGR_HRTIM_TIM_CLK              0
-#define CFG_RCC_CFGR_HRTIM_CPU1_CLK             RCC_CFGR_HRTIMSEL
+/// Multiplexer define to be used for HRTIM clock source                                                -> CFG_HRTIM_SOURCE_MUX         default: TIM_CLK
+#if defined(HRTIM1)
+  #define CFG_HRTIM_TIM_CLK                     0
+  #define CFG_HRTIM_CPU1_CLK                    RCC_CFGR_HRTIMSEL
+#endif
 
-// Multiplexer define to be used for LPTIM1 clock source                                                -> CFG_LPTIM1_SOURCE_MUX        default: PCLK1
-#define CFG_RCC_D2CCIP2R_LPTIM1_PCLK1           0
-#define CFG_RCC_D2CCIP2R_LPTIM1_PLL2P           RCC_D2CCIP2R_LPTIM1SEL_0
-#define CFG_RCC_D2CCIP2R_LPTIM1_PLL3R           RCC_D2CCIP2R_LPTIM1SEL_1
-#define CFG_RCC_D2CCIP2R_LPTIM1_LSE             (RCC_D2CCIP2R_LPTIM1SEL_1 | RCC_D2CCIP2R_LPTIM1SEL_0)
-#define CFG_RCC_D2CCIP2R_LPTIM1_LSI             RCC_D2CCIP2R_LPTIM1SEL_2
-#define CFG_RCC_D2CCIP2R_LPTIM1_PER_CLK         (RCC_D2CCIP2R_LPTIM1SEL_2 | RCC_D2CCIP2R_LPTIM1SEL_0)
+/// Multiplexer define to be used for LPTIM1 clock source                                               -> CFG_LPTIM1_SOURCE_MUX        default: PCLK1
+#if defined(RCC_D2CCIP2R_LPTIM1SEL)
+  #define CFG_LPTIM1_PCLK1                      0
+  #define CFG_LPTIM1_PLL2P                      RCC_D2CCIP2R_LPTIM1SEL_0
+  #define CFG_LPTIM1_PLL3R                      RCC_D2CCIP2R_LPTIM1SEL_1
+  #define CFG_LPTIM1_LSE                        (RCC_D2CCIP2R_LPTIM1SEL_1 | RCC_D2CCIP2R_LPTIM1SEL_0)
+  #define CFG_LPTIM1_LSI                        RCC_D2CCIP2R_LPTIM1SEL_2
+  #define CFG_LPTIM1_PER_CLK                    (RCC_D2CCIP2R_LPTIM1SEL_2 | RCC_D2CCIP2R_LPTIM1SEL_0)
+#else
+  #define CFG_LPTIM1_PCLK1                      0
+  #define CFG_LPTIM1_PLL2P                      RCC_CDCCIP2R_LPTIM1SEL_0
+  #define CFG_LPTIM1_PLL3R                      RCC_CDCCIP2R_LPTIM1SEL_1
+  #define CFG_LPTIM1_LSE                        (RCC_CDCCIP2R_LPTIM1SEL_1 | RCC_CDCCIP2R_LPTIM1SEL_0)
+  #define CFG_LPTIM1_LSI                        RCC_CDCCIP2R_LPTIM1SEL_2
+  #define CFG_LPTIM1_PER_CLK                    (RCC_CDCCIP2R_LPTIM1SEL_2 | RCC_CDCCIP2R_LPTIM1SEL_0)
+#endif
 
-// Multiplexer define to be used for LPTIM2 clock source                                                -> CFG_LPTIM2_SOURCE_MUX        default: PCLK4
-#define CFG_RCC_D3CCIPR_LPTIM2_PCLK4            0
-#define CFG_RCC_D3CCIPR_LPTIM2_PLL2P            RCC_D3CCIPR_LPTIM2SEL_0
-#define CFG_RCC_D3CCIPR_LPTIM2_PLL3R            RCC_D3CCIPR_LPTIM2SEL_1
-#define CFG_RCC_D3CCIPR_LPTIM2_LSE              (RCC_D3CCIPR_LPTIM2SEL_1 | RCC_D3CCIPR_LPTIM2SEL_0)
-#define CFG_RCC_D3CCIPR_LPTIM2_LSI              RCC_D3CCIPR_LPTIM2SEL_2
-#define CFG_RCC_D3CCIPR_LPTIM2_PER_CLK          (RCC_D3CCIPR_LPTIM2SEL_2 | RCC_D3CCIPR_LPTIM2SEL_0)
+/// Multiplexer define to be used for LPTIM2 clock source                                               -> CFG_LPTIM2_SOURCE_MUX        default: PCLK4
+#if defined(RCC_D3CCIPR_LPTIM2SEL)
+  #define CFG_LPTIM2_PCLK4                      0
+  #define CFG_LPTIM2_PLL2P                      RCC_D3CCIPR_LPTIM2SEL_0
+  #define CFG_LPTIM2_PLL3R                      RCC_D3CCIPR_LPTIM2SEL_1
+  #define CFG_LPTIM2_LSE                        (RCC_D3CCIPR_LPTIM2SEL_1 | RCC_D3CCIPR_LPTIM2SEL_0)
+  #define CFG_LPTIM2_LSI                        RCC_D3CCIPR_LPTIM2SEL_2
+  #define CFG_LPTIM2_PER_CLK                    (RCC_D3CCIPR_LPTIM2SEL_2 | RCC_D3CCIPR_LPTIM2SEL_0)
+#else
+  #define CFG_LPTIM2_PCLK4                      0
+  #define CFG_LPTIM2_PLL2P                      RCC_SRDCCIPR_LPTIM2SEL_0
+  #define CFG_LPTIM2_PLL3R                      RCC_SRDCCIPR_LPTIM2SEL_1
+  #define CFG_LPTIM2_LSE                        (RCC_SRDCCIPR_LPTIM2SEL_1 | RCC_SRDCCIPR_LPTIM2SEL_0)
+  #define CFG_LPTIM2_LSI                        RCC_SRDCCIPR_LPTIM2SEL_2
+  #define CFG_LPTIM2_PER_CLK                    (RCC_SRDCCIPR_LPTIM2SEL_2 | RCC_SRDCCIPR_LPTIM2SEL_0)
+#endif
 
-// Multiplexer define to be used for LPTIM3, LPTIM4, LPTIM5 clock source                                -> CFG_LPTIM345_SOURCE_MUX      default:PCLK4
-#define CFG_RCC_D3CCIPR_LPTIM345_PCLK4          0
-#define CFG_RCC_D3CCIPR_LPTIM345_PLL2P          RCC_D3CCIPR_LPTIM345SEL_0
-#define CFG_RCC_D3CCIPR_LPTIM345_PLL3R          RCC_D3CCIPR_LPTIM345SEL_1
-#define CFG_RCC_D3CCIPR_LPTIM345_LSE            (RCC_D3CCIPR_LPTIM345SEL_1 | RCC_D3CCIPR_LPTIM345SEL_0)
-#define CFG_RCC_D3CCIPR_LPTIM345_LSI            RCC_D3CCIPR_LPTIM345SEL_2
-#define CFG_RCC_D3CCIPR_LPTIM345_PER_CLK        (RCC_D3CCIPR_LPTIM345SEL_2 | RCC_D3CCIPR_LPTIM345SEL_0)
+/// Multiplexer define to be used for LPTIM3, LPTIM4, LPTIM5 clock source                               -> CFG_LPTIM345_SOURCE_MUX      default:PCLK4
+#if defined(RCC_D3CCIPR_LPTIM345SEL)
+  #define CFG_LPTIM345_PCLK4                    0
+  #define CFG_LPTIM345_PLL2P                    RCC_D3CCIPR_LPTIM345SEL_0
+  #define CFG_LPTIM345_PLL3R                    RCC_D3CCIPR_LPTIM345SEL_1
+  #define CFG_LPTIM345_LSE                      (RCC_D3CCIPR_LPTIM345SEL_1 | RCC_D3CCIPR_LPTIM345SEL_0)
+  #define CFG_LPTIM345_LSI                      RCC_D3CCIPR_LPTIM345SEL_2
+  #define CFG_LPTIM345_PER_CLK                  (RCC_D3CCIPR_LPTIM345SEL_2 | RCC_D3CCIPR_LPTIM345SEL_0)
+#else
+  #define CFG_LPTIM345_PCLK4                    0
+  #define CFG_LPTIM345_PLL2P                    RCC_SRDCCIPRLPTIM345SEL_0
+  #define CFG_LPTIM345_PLL3R                    RCC_SRDCCIPRLPTIM345SEL_1
+  #define CFG_LPTIM345_LSE                      (RCC_SRDCCIPRLPTIM345SEL_1 | RCC_SRDCCIPRLPTIM345SEL_0)
+  #define CFG_LPTIM345_LSI                      RCC_SRDCCIPRLPTIM345SEL_2
+  #define CFG_LPTIM345_PER_CLK                  (RCC_SRDCCIPRLPTIM345SEL_2 | RCC_SRDCCIPRLPTIM345SEL_0)
+#endif
 
-// Multiplexer define to be used for LPUART1 clock source                                               -> CFG_LPUART1_SOURCE_MUX       default: PCLK3
-#define CFG_RCC_D3CCIPR_LPUART1_PCLK3           0
-#define CFG_RCC_D3CCIPR_LPUART1_PLL2Q           RCC_D3CCIPR_LPUART1SEL_0
-#define CFG_RCC_D3CCIPR_LPUART1_PLL3Q           RCC_D3CCIPR_LPUART1SEL_1
-#define CFG_RCC_D3CCIPR_LPUART1_HSI             (RCC_D3CCIPR_LPUART1SEL_1 | RCC_D3CCIPR_LPUART1SEL_0)
-#define CFG_RCC_D3CCIPR_LPUART1_CSI             RCC_D3CCIPR_LPUART1SEL_2
-#define CFG_RCC_D3CCIPR_LPUART1_LSE             (RCC_D3CCIPR_LPUART1SEL_2 | RCC_D3CCIPR_LPUART1SEL_0)
+/// Multiplexer define to be used for LPUART1 clock source                                              -> CFG_LPUART1_SOURCE_MUX       default: PCLK3
+#if defined(RCC_D3CCIPR_LPUART1SEL)
+  #define CFG_LPUART1_PCLK3                     0           // TODO check this as file say PCLK4 but IDE say PCLK3
+  #define CFG_LPUART1_PLL2Q                     RCC_D3CCIPR_LPUART1SEL_0
+  #define CFG_LPUART1_PLL3Q                     RCC_D3CCIPR_LPUART1SEL_1
+  #define CFG_LPUART1_HSI                       (RCC_D3CCIPR_LPUART1SEL_1 | RCC_D3CCIPR_LPUART1SEL_0)
+  #define CFG_LPUART1_CSI                       RCC_D3CCIPR_LPUART1SEL_2
+  #define CFG_LPUART1_LSE                       (RCC_D3CCIPR_LPUART1SEL_2 | RCC_D3CCIPR_LPUART1SEL_0)
+#else
+  #define CFG_LPUART1_PCLK3                     0
+  #define CFG_LPUART1_PLL2Q                     RCC_SRDCCIPR_LPUART1SEL_0
+  #define CFG_LPUART1_PLL3Q                     RCC_SRDCCIPR_LPUART1SEL_1
+  #define CFG_LPUART1_HSI                       (RCC_SRDCCIPR_LPUART1SEL_1 | RCC_SRDCCIPR_LPUART1SEL_0)
+  #define CFG_LPUART1_CSI                       RCC_SRDCCIPR_LPUART1SEL_2
+  #define CFG_LPUART1_LSE                       (RCC_SRDCCIPR_LPUART1SEL_2 | RCC_SRDCCIPR_LPUART1SEL_0)
+#endif
 
-// Multiplexer define to be used for MCO1 clock source                                                  -> CFG_MCO1_SOURCE_MUX          default: SYS_CLK
-#define CFG_RCC_CFGR_MCO1_SYS_CLK               0
-#define CFG_RCC_CFGR_MCO1_HSI                   RCC_CFGR_MCO1SEL_0
-#define CFG_RCC_CFGR_MCO1_LSE                   RCC_CFGR_MCO1SEL_1
-#define CFG_RCC_CFGR_MCO1_HSE                   (RCC_CFGR_MCO1SEL_1 | RCC_CFGR_MCO1SEL_0)
-#define CFG_RCC_CFGR_MCO1_PLL1Q                 RCC_CFGR_MCO1SEL_2
-#define CFG_RCC_CFGR_MCO1_HSI48                 (RCC_CFGR_MCO1SEL_2 | RCC_CFGR_MCO1SEL_0)
+/// Multiplexer define to be used for MCO1 clock source                                                 -> CFG_MCO1_SOURCE_MUX          default: SYS_CLK
+#define CFG_MCO1_SYS_CLK                        0
+#define CFG_MCO1_HSI                            RCC_CFGR_MCO1SEL_0
+#define CFG_MCO1_LSE                            RCC_CFGR_MCO1SEL_1
+#define CFG_MCO1_HSE                            (RCC_CFGR_MCO1SEL_1 | RCC_CFGR_MCO1SEL_0)
+#define CFG_MCO1_PLL1Q                          RCC_CFGR_MCO1SEL_2
+#define CFG_MCO1_HSI48                          (RCC_CFGR_MCO1SEL_2 | RCC_CFGR_MCO1SEL_0)
 
-// Multiplexer define to be used for MCO2 clock source                                                  -> CFG_MCO2_SOURCE_MUX          default: SYS_CLK
-#define CFG_RCC_CFGR_MCO2_SYS_CLK               0
-#define CFG_RCC_CFGR_MCO2_PLL2P                 RCC_CFGR_MCO2SEL_0
-#define CFG_RCC_CFGR_MCO2_HSE                   RCC_CFGR_MCO2SEL_1
-#define CFG_RCC_CFGR_MCO2_PLL1P                 (RCC_CFGR_MCO2SEL_1 | RCC_CFGR_MCO2SEL_0)
-#define CFG_RCC_CFGR_MCO2_CSI                   RCC_CFGR_MCO2SEL_2
-#define CFG_RCC_CFGR_MCO2_LSI                   (RCC_CFGR_MCO2SEL_2 | RCC_CFGR_MCO2SEL_0)
+/// Multiplexer define to be used for MCO2 clock source                                                 -> CFG_MCO2_SOURCE_MUX          default: SYS_CLK
+#define CFG_MCO2_SYS_CLK                        0
+#define CFG_MCO2_PLL2P                          RCC_CFGR_MCO2SEL_0
+#define CFG_MCO2_HSE                            RCC_CFGR_MCO2SEL_1
+#define CFG_MCO2_PLL1P                          (RCC_CFGR_MCO2SEL_1 | RCC_CFGR_MCO2SEL_0)
+#define CFG_MCO2_CSI                            RCC_CFGR_MCO2SEL_2
+#define CFG_MCO2_LSI                            (RCC_CFGR_MCO2SEL_2 | RCC_CFGR_MCO2SEL_0)
 
-// Multiplexer define to be used for PERIPHERAL clock source                                            -> CFG_PER_SOURCE_MUX           default: HSI
-#define CFG_RCC_D1CCIPR_PER_HSI_KER             0
-#define CFG_RCC_D1CCIPR_PER_CSI_KER             RCC_D1CCIPR_CKPERSEL_0
-#define CFG_RCC_D1CCIPR_PER_HSE_KER             RCC_D1CCIPR_CKPERSEL_1
+/// Multiplexer define to be used for PERIPHERAL clock source                                           -> CFG_PER_SOURCE_MUX           default: HSI
+#if defined(RCC_D1CCIPR_CKPERSEL_0)
+  #define CFG_PER_HSI_KER                         0
+  #define CFG_PER_CSI_KER                         RCC_D1CCIPR_CKPERSEL_0
+  #define CFG_PER_HSE_KER                         RCC_D1CCIPR_CKPERSEL_1
+#else
+  #define CFG_PER_HSI_KER                         0
+  #define CFG_PER_CSI_KER                         RCC_CDCCIPR_CKPERSEL_0
+  #define CFG_PER_HSE_KER                         RCC_CDCCIPR_CKPERSEL_1
+#endif
 
 #if defined(QUADSPI)
-// Multiplexer define to be used for QUADSPI clock source                                               -> CFG_QSPI_SOURCE_MUX          default: PLL1Q
-  #define CFG_RCC_D1CCIPR_QSPI_HCLK3            0
-  #define CFG_RCC_D1CCIPR_QSPI_PLL1Q            RCC_D1CCIPR_QSPISEL_0
-  #define CFG_RCC_D1CCIPR_QSPI_PLL2R            RCC_D1CCIPR_QSPISEL_1
-  #define CFG_RCC_D1CCIPR_QSPI_PER_CLK          (RCC_D1CCIPR_QSPISEL_1 | RCC_D1CCIPR_QSPISEL_0)
+/// Multiplexer define to be used for QUADSPI clock source                                              -> CFG_QSPI_SOURCE_MUX          default: PLL1Q
+  #define CFG_QSPI_HCLK3                        0
+  #define CFG_QSPI_PLL1Q                        RCC_D1CCIPR_QSPISEL_0
+  #define CFG_QSPI_PLL2R                        RCC_D1CCIPR_QSPISEL_1
+  #define CFG_QSPI_PER_CLK                      (RCC_D1CCIPR_QSPISEL_1 | RCC_D1CCIPR_QSPISEL_0)
 #endif
 
+/// Multiplexer define to be used for OCTOSPI clock source                                              -> CFG_OSPI_SOURCE_MUX          default: PLL1Q
 #if defined(OCTOSPI1) || defined(OCTOSPI2)
-// Multiplexer define to be used for OCTOSPI clock source                                               -> CFG_OSPI_SOURCE_MUX          default: PLL1Q
-  #define CFG_RCC_D1CCIPR_OSPI_HCLK3            0
-  #define CFG_RCC_D1CCIPR_OSPI_PLL1Q            RCC_D1CCIPR_OCTOSPISEL_0
-  #define CFG_RCC_D1CCIPR_OSPI_PLL2R            RCC_D1CCIPR_OCTOSPISEL_1
-  #define CFG_RCC_D1CCIPR_OSPI_PER_CLK          (RCC_D1CCIPR_OCTOSPISEL_1 | RCC_CDCCIPR_OCTOSPISEL_0)
+ #if defined (RCC_D1CCIPR_OCTOSPISEL)
+  #define CFG_OSPI_HCLK3                        0
+  #define CFG_OSPI_PLL1Q                        RCC_D1CCIPR_OCTOSPISEL_0
+  #define CFG_OSPI_PLL2R                        RCC_D1CCIPR_OCTOSPISEL_1
+  #define CFG_OSPI_PER_CLK                      (RCC_D1CCIPR_OCTOSPISEL_1 | RCC_CDCCIPR_OCTOSPISEL_0)
+ #else
+  #define CFG_OSPI_HCLK3                        0
+  #define CFG_OSPI_PLL1Q                        RCC_CDCCIPR_OCTOSPISEL_0
+  #define CFG_OSPI_PLL2R                        RCC_CDCCIPR_OCTOSPISEL_1
+  #define CFG_OSPI_PER_CLK                      (RCC_CDCCIPR_OCTOSPISEL_1 | RCC_CDCCIPR_OCTOSPISEL_0)
+ #endif
 #endif
 
-// Multiplexer define to be used for RTC clock source                                                   -> CFG_QSPI_SOURCE_MUX          default: None
-#define CFG_RCC_BDCR_RTC_LSE                    RCC_BDCR_RTCSEL_0
-#define CFG_RCC_BDCR_RTC_LSI                    RCC_BDCR_RTCSEL_1
-#define CFG_RCC_BDCR_RTC_HSE                    (RCC_BDCR_RTCSEL_1 | RCC_BDCR_RTCSEL_0)
+/// Multiplexer define to be used for RTC clock source                                                  -> CFG_QSPI_SOURCE_MUX          default: None
+#define CFG_RTC_LSE                             RCC_BDCR_RTCSEL_0
+#define CFG_RTC_LSI                             RCC_BDCR_RTCSEL_1
+#define CFG_RTC_HSE                             (RCC_BDCR_RTCSEL_1 | RCC_BDCR_RTCSEL_0)
 
-// Multiplexer define to be used for RNG clock source                                                   -> CFG_RNG_SOURCE_MUX           default: HSI48
-#define CFG_RCC_D2CCIP2R_RNG_HSI48              0
-#define CFG_RCC_D2CCIP2R_RNG_PLL1Q              RCC_D2CCIP2R_RNGSEL_0
-#define CFG_RCC_D2CCIP2R_RNG_LSE                RCC_D2CCIP2R_RNGSEL_1
-#define CFG_RCC_D2CCIP2R_RNG_LSI                (RCC_D2CCIP2R_RNGSEL_1 | RCC_D2CCIP2R_RNGSEL_0)
-
-// Multiplexer define to be used for SAI1 clock source                                                  -> CFG_SAI1_SOURCE_MUX          default: PLL1Q
-#define CFG_RCC_D2CCIP1R_SAI1_PLL1Q             0
-#define CFG_RCC_D2CCIP1R_SAI1_PLL2P             RCC_D2CCIP1R_SAI1SEL_0
-#define CFG_RCC_D2CCIP1R_SAI1_PLL3P             RCC_D2CCIP1R_SAI1SEL_1
-#define CFG_RCC_D2CCIP1R_SAI1_I2SCKIN           (RCC_D2CCIP1R_SAI1SEL_1 | RCC_D2CCIP1R_SAI1SEL_0)
-#define CFG_RCC_D2CCIP1R_SAI1_PER_CLK           RCC_D2CCIP1R_SAI1SEL_2
-
-// Multiplexer define to be used for SAI2, SAI3 clock source                                            -> CFG_SAI23_SOURCE_MUX         default: PLL1Q
-#define CFG_RCC_D2CCIP1R_SAI23_PLL1Q            0
-#define CFG_RCC_D2CCIP1R_SAI23_PLL2P            RCC_D2CCIP1R_SAI23SEL_0
-#define CFG_RCC_D2CCIP1R_SAI23_PLL3P            RCC_D2CCIP1R_SAI23SEL_1
-#define CFG_RCC_D2CCIP1R_SAI23_I2SCKIN          (RCC_D2CCIP1R_SAI23SEL_1 | RCC_D2CCIP1R_SAI23SEL_0)
-#define CFG_RCC_D2CCIP1R_SAI23_PER_CLK          RCC_D2CCIP1R_SAI23SEL_2
-
-// Multiplexer define to be used for SAI4A clock source                                                 -> CFG_SAI4B_SOURCE_MUX         default: PLL1Q
-#define CFG_RCC_D3CCIPR_SAI4A_PLL1Q             0
-#define CFG_RCC_D3CCIPR_SAI4A_PLL2P             RCC_D3CCIPR_SAI4ASEL_0
-#define CFG_RCC_D3CCIPR_SAI4A_PLL3P             RCC_D3CCIPR_SAI4ASEL_1
-#define CFG_RCC_D3CCIPR_SAI4A_I2SCKIN           (RCC_D3CCIPR_SAI4ASEL_1 | RCC_D3CCIPR_SAI4ASEL_0)
-#define CFG_RCC_D3CCIPR_SAI4A_PER_CLK           RCC_D3CCIPR_SAI4ASEL_2
-
-// Multiplexer define to be used for SAI4B clock source                                                 -> CFG_SAI4B_SOURCE_MUX         default: PLL1Q
-#define CFG_RCC_D3CCIPR_SAI4B_PLL1Q             0
-#define CFG_RCC_D3CCIPR_SAI4B_PLL2P             RCC_D3CCIPR_SAI4BSEL_0
-#define CFG_RCC_D3CCIPR_SAI4B_PLL3P             RCC_D3CCIPR_SAI4BSEL_1
-#define CFG_RCC_D3CCIPR_SAI4B_I2SCKIN           (RCC_D3CCIPR_SAI4BSEL_1 | RCC_D3CCIPR_SAI4BSEL_0)
-#define CFG_RCC_D3CCIPR_SAI4B_PER_CLK           RCC_D3CCIPR_SAI4BSEL_2
-
-// Multiplexer define to be used for SDMMC clock source                                                 -> CFG_SDMMC_SOURCE_MUX         default: PLLQ1
-#define CFG_RCC_D1CCIPR_SDMMC_PLL1Q             0
-#define CFG_RCC_D1CCIPR_SDMMC_PLL2R             RCC_D1CCIPR_SDMMCSEL
-
-// Multiplexer define to be used for SPDIF clock source                                                 -> CFG_SPDIF_SOURCE_MUX         default: PLL1Q
-#define CFG_RCC_D2CCIP1R_SPDIF_PLL1Q            0
-#define CFG_RCC_D2CCIP1R_SPDIF_PLL2R            RCC_D2CCIP1R_SPDIFSEL_0
-#define CFG_RCC_D2CCIP1R_SPDIF_PLL3R            RCC_D2CCIP1R_SPDIFSEL_1
-#define CFG_RCC_D2CCIP1R_SPDIF_HSI              (RCC_D2CCIP1R_SPDIFSEL_1 | RCC_D2CCIP1R_SPDIFSEL_0)
-
-// Multiplexer define to be used for SPI1, SPI2, SPI3 clock source                                      -> CFG_SPI123_SOURCE_MUX        default: PLL1Q
-#define CFG_RCC_D2CCIP1R_SPI123_PLL1Q           0
-#define CFG_RCC_D2CCIP1R_SPI123_PLL2P           RCC_D2CCIP1R_SPI123SEL_0
-#define CFG_RCC_D2CCIP1R_SPI123_PLL3P           RCC_D2CCIP1R_SPI123SEL_1
-#define CFG_RCC_D2CCIP1R_SPI123_I2SCKIN         (RCC_D2CCIP1R_SPI123SEL_1 | RCC_D2CCIP1R_SPI123SEL_0)
-#define CFG_RCC_D2CCIP1R_SPI123_PER_CLK         RCC_D2CCIP1R_SPI123SEL_2
-
-// Multiplexer define to be used for SPI4, SPI5 clock source                                            -> CFG_SPI45_SOURCE_MUX         default: PCLK2
-#define CFG_RCC_D2CCIP1R_SPI45_PLCK2            0
-#define CFG_RCC_D2CCIP1R_SPI45_PLL2Q            RCC_D2CCIP1R_SPI45SEL_0
-#define CFG_RCC_D2CCIP1R_SPI45_PLL3Q            RCC_D2CCIP1R_SPI45SEL_1
-#define CFG_RCC_D2CCIP1R_SPI45_HSI              (RCC_D2CCIP1R_SPI45SEL_1 | RCC_D2CCIP1R_SPI45SEL_0)
-#define CFG_RCC_D2CCIP1R_SPI45_CSI              RCC_D2CCIP1R_SPI45SEL_2
-#define CFG_RCC_D2CCIP1R_SPI45_HSE              (RCC_D2CCIP1R_SPI45SEL_2 | RCC_D2CCIP1R_SPI45SEL_0)
-
-// Multiplexer define to be used for SPI6 clock source                                                  -> CFG_SPI6_SOURCE_MUX          default: PCLK4
-#define CFG_RCC_D3CCIPR_SPI6_PLCK4              0
-#define CFG_RCC_D3CCIPR_SPI6_PLL2Q              RCC_D3CCIPR_SPI6SEL_0
-#define CFG_RCC_D3CCIPR_SPI6_PLL3Q              RCC_D3CCIPR_SPI6SEL_1
-#define CFG_RCC_D3CCIPR_SPI6_HSI                (RCC_D3CCIPR_SPI6SEL_1 | RCC_D3CCIPR_SPI6SEL_0)
-#define CFG_RCC_D3CCIPR_SPI6_CSI                RCC_D3CCIPR_SPI6SEL_2
-#define CFG_RCC_D3CCIPR_SPI6_HSE                (RCC_D3CCIPR_SPI6SEL_2 | RCC_D3CCIPR_SPI6SEL_0)
-
-// Multiplexer define to be used for SWP clock source                                                   -> CFG_SWP_SOURCE_MUX           default: PCLK1
-#define CFG_RCC_D2CCIP1R_SWP_PCLK1              0
-#define CFG_RCC_D2CCIP1R_SWP_HSI                RCC_D2CCIP1R_SWPSEL
-
-// Multiplexer define to be used for UART1, UART6 clock source                                          -> CFG_UART16_SOURCE_MUX        default: PCLK2
-#if defined(RCC_D2CCIP2R_USART16SEL)
-  #define CFG_RCC_D2CCIP2R_USART16_PCLK2        0
-  #define CFG_RCC_D2CCIP2R_USART16_PLL2Q        RCC_D2CCIP2R_USART16SEL_0
-  #define CFG_RCC_D2CCIP2R_USART16_PLL3Q        RCC_D2CCIP2R_USART16SEL_1
-  #define CFG_RCC_D2CCIP2R_USART16_HSI          (RCC_D2CCIP2R_USART16SEL_1 | RCC_D2CCIP2R_USART16SEL_0)
-  #define CFG_RCC_D2CCIP2R_USART16_CSI          RCC_D2CCIP2R_USART16SEL_2
-  #define CFG_RCC_D2CCIP2R_USART16_LSE          (RCC_D2CCIP2R_USART16SEL_2 | RCC_D2CCIP2R_USART16SEL_0)
+/// Multiplexer define to be used for RNG clock source                                                  -> CFG_RNG_SOURCE_MUX           default: HSI48
+#if defined(RCC_D2CCIP2R_RNGSEL)
+  #define CFG_RNG_HSI48                         0
+  #define CFG_RNG_PLL1Q                         RCC_D2CCIP2R_RNGSEL_0
+  #define CFG_RNG_LSE                           RCC_D2CCIP2R_RNGSEL_1
+  #define CFG_RNG_LSI                           (RCC_D2CCIP2R_RNGSEL_1 | RCC_D2CCIP2R_RNGSEL_0)
 #else
-// Multiplexer define to be used for UART1, UART6, UART9, UART10 clock source                           -> CFG_UART16910_SOURCE_MUX     default: PCLK2
-  #define CFG_RCC_D2CCIP2R_USART16910_PCLK2     0
-  #define CFG_RCC_D2CCIP2R_USART16910_PLL2Q     RCC_D2CCIP2R_USART16910SEL_0
-  #define CFG_RCC_D2CCIP2R_USART16910_PLL3Q     RCC_D2CCIP2R_USART16910SEL_1
-  #define CFG_RCC_D2CCIP2R_USART16910_HSI       (RCC_D2CCIP2R_USART16910SEL_1 | RCC_D2CCIP2R_USART16910SEL_0)
-  #define CFG_RCC_D2CCIP2R_USART16910_CSI       RCC_D2CCIP2R_USART16910SEL_2
-  #define CFG_RCC_D2CCIP2R_USART16910_LSE       (RCC_D2CCIP2R_USART16910SEL_2 | RCC_D2CCIP2R_USART16910SEL_0)
+  #define CFG_RNG_HSI48                         0
+  #define CFG_RNG_PLL1Q                         RCC_CDCCIP2R_RNGSEL_0
+  #define CFG_RNG_LSE                           RCC_CDCCIP2R_RNGSEL_1
+  #define CFG_RNG_LSI                           (RCC_CDCCIP2R_RNGSEL_1 | RCC_CDCCIP2R_RNGSEL_0)
 #endif
 
-// Multiplexer define to be used for UART2, UART3, UART4, UART5, UART7 and UART8 clock source           -> CFG_UART234578_SOURCE_MUX    default: PCLK1
-#define CFG_RCC_D2CCIP2R_USART234578_PCLK1      0
-#define CFG_RCC_D2CCIP2R_USART234578_PLL2Q      RCC_D2CCIP2R_USART28SEL_0
-#define CFG_RCC_D2CCIP2R_USART234578_PLL3Q      RCC_D2CCIP2R_USART28SEL_1
-#define CFG_RCC_D2CCIP2R_USART234578_HSI        (RCC_D2CCIP2R_USART28SEL_1 | RCC_D2CCIP2R_USART28SEL_0)
-#define CFG_RCC_D2CCIP2R_USART234578_CSI        RCC_D2CCIP2R_USART28SEL_2
-#define CFG_RCC_D2CCIP2R_USART234578_LSE        (RCC_D2CCIP2R_USART28SEL_2 | RCC_D2CCIP2R_USART28SEL_0)
+/// Multiplexer define to be used for SAI1 clock source                                                 -> CFG_SAI1_SOURCE_MUX          default: PLL1Q
+#if defined(RCC_D2CCIP1R_SAI1SEL)
+  #define CFG_SAI1_PLL1Q                        0
+  #define CFG_SAI1_PLL2P                        RCC_D2CCIP1R_SAI1SEL_0
+  #define CFG_SAI1_PLL3P                        RCC_D2CCIP1R_SAI1SEL_1
+  #define CFG_SAI1_I2SCKIN                      (RCC_D2CCIP1R_SAI1SEL_1 | RCC_D2CCIP1R_SAI1SEL_0)
+  #define CFG_SAI1_PER_CLK                      RCC_D2CCIP1R_SAI1SEL_2
+#else
+  #define CFG_SAI1_PLL1Q                        0
+  #define CFG_SAI1_PLL2P                        RCC_CDCCIP1R_SAI1SEL_0
+  #define CFG_SAI1_PLL3P                        RCC_CDCCIP1R_SAI1SEL_1
+  #define CFG_SAI1_I2SCKIN                      (RCC_CDCCIP1R_SAI1SEL_1 | RCC_CDCCIP1R_SAI1SEL_0)
+  #define CFG_SAI1_PER_CLK                      RCC_CDCCIP1R_SAI1SEL_2
+#endif
 
-// Multiplexer define to be used for USB clock source                                                   -> CFG_USB_SOURCE_MUX           default: PLL1Q
-#define CFG_RCC_D2CCIP2R_USB_PLL1Q              0
-#define CFG_RCC_D2CCIP2R_USB_PLL3Q              RCC_D2CCIP2R_USBSEL_0
-#define CFG_RCC_D2CCIP2R_USB_HSI48              RCC_D2CCIP2R_USBSEL_1
+/// Multiplexer define to be used for SAI2, SAI3 clock source                                           -> CFG_SAI23_SOURCE_MUX         default: PLL1Q
+#if defined(RCC_D2CCIP1R_SAI23SEL)
+  #define CFG_SAI23_PLL1Q                       0
+  #define CFG_SAI23_PLL2P                       RCC_D2CCIP1R_SAI23SEL_0
+  #define CFG_SAI23_PLL3P                       RCC_D2CCIP1R_SAI23SEL_1
+  #define CFG_SAI23_I2SCKIN                     (RCC_D2CCIP1R_SAI23SEL_1 | RCC_D2CCIP1R_SAI23SEL_0)
+  #define CFG_SAI23_PER_CLK                     RCC_D2CCIP1R_SAI23SEL_2
+#endif
+
+/// Multiplexer define to be used for SAI2A clock source                                                -> CFG_SAI2A_SOURCE_MUX         default: PLL1Q
+#if defined(RCC_CDCCIP1R_SAI2ASEL)
+  #define CFG_SAI2A_PLL1Q                       0
+  #define CFG_SAI2A_PLL2P                       RCC_CDCCIP1R_SAI2ASEL_0
+  #define CFG_SAI2A_PLL3P                       RCC_CDCCIP1R_SAI2ASEL_1
+  #define CFG_SAI2A_I2SCKIN                     (RCC_CDCCIP1R_SAI2ASEL_1 | RCC_CDCCIP1R_SAI2ASEL_0)
+  #define CFG_SAI2A_PER_CLK                     RCC_CDCCIP1R_SAI2ASEL_2
+#endif
+
+/// Multiplexer define to be used for SAI2B clock source                                                -> CFG_SAI2B_SOURCE_MUX         default: PLL1Q
+#if defined(RCC_CDCCIP1R_SAI2ASEL)
+  #define CFG_SAI2B_PLL1Q                       0
+  #define CFG_SAI2B_PLL2P                       RCC_CDCCIP1R_SAI2BSEL_0
+  #define CFG_SAI2B_PLL3P                       RCC_CDCCIP1R_SAI2BSEL_1
+  #define CFG_SAI2B_I2SCKIN                     (RCC_CDCCIP1R_SAI2BSEL_1 | RCC_CDCCIP1R_SAI2BSEL_0)
+  #define CFG_SAI2B_PER_CLK                     RCC_CDCCIP1R_SAI2BSEL_2
+#endif
+
+/// Multiplexer define to be used for SAI4A clock source                                                -> CFG_SAI4B_SOURCE_MUX         default: PLL1Q
+#if defined(RCC_D3CCIPR_SAI4ASEL)
+  #define CFG_SAI4A_PLL1Q                         0
+  #define CFG_SAI4A_PLL2P                         RCC_D3CCIPR_SAI4ASEL_0
+  #define CFG_SAI4A_PLL3P                         RCC_D3CCIPR_SAI4ASEL_1
+  #define CFG_SAI4A_I2SCKIN                       (RCC_D3CCIPR_SAI4ASEL_1 | RCC_D3CCIPR_SAI4ASEL_0)
+  #define CFG_SAI4A_PER_CLK                       RCC_D3CCIPR_SAI4ASEL_2
+  #define CFG_SAI4A_SPDIF                         (RCC_D3CCIPR_SAI4ASEL_2 | RCC_D3CCIPR_SAI4ASEL_0)     // Version 3.0 only
+#endif
+
+/// Multiplexer define to be used for SAI4B clock source                                               -> CFG_SAI4B_SOURCE_MUX         default: PLL1Q
+#if defined(RCC_D3CCIPR_SAI4BSEL)
+  #define CFG_SAI4B_PLL1Q                         0
+  #define CFG_SAI4B_PLL2P                         RCC_D3CCIPR_SAI4BSEL_0
+  #define CFG_SAI4B_PLL3P                         RCC_D3CCIPR_SAI4BSEL_1
+  #define CFG_SAI4B_I2SCKIN                       (RCC_D3CCIPR_SAI4BSEL_1 | RCC_D3CCIPR_SAI4BSEL_0)
+  #define CFG_SAI4B_PER_CLK                       RCC_D3CCIPR_SAI4BSEL_2
+  #define CFG_SAI4B_SPDIF                         (RCC_D3CCIPR_SAI4BSEL_2 | RCC_D3CCIPR_SAI4BSEL_0)     // Version 3.0 only
+#endif
+
+///  Multiplexer define to be used for SDMMC clock source                                               -> CFG_SDMMC_SOURCE_MUX         default: PLLQ1
+#if defined(RCC_D1CCIPR_SDMMCSEL)
+  #define CFG_SDMMC_PLL1Q                       0
+  #define CFG_SDMMC_PLL2R                       RCC_D1CCIPR_SDMMCSEL
+#else
+  #define CFG_SDMMC_PLL1Q                       0
+  #define CFG_SDMMC_PLL2R                       RCC_CDCCIPR_SDMMCSEL
+#endif
+
+/// Multiplexer define to be used for SPDIF clock source                                                -> CFG_SPDIF_SOURCE_MUX         default: PLL1Q
+#if defined(RCC_D2CCIP1R_SPDIFSEL_0)
+  #define CFG_SPDIF_PLL1Q                       0
+  #define CFG_SPDIF_PLL2R                       RCC_D2CCIP1R_SPDIFSEL_0
+  #define CFG_SPDIF_PLL3R                       RCC_D2CCIP1R_SPDIFSEL_1
+  #define CFG_SPDIF_HSI                         (RCC_D2CCIP1R_SPDIFSEL_1 | RCC_D2CCIP1R_SPDIFSEL_0)
+#else
+  #define CFG_SPDIF_PLL1Q                       0
+  #define CFG_SPDIF_PLL2R                       RCC_CDCCIP1R_SPDIFSEL_0
+  #define CFG_SPDIF_PLL3R                       RCC_CDCCIP1R_SPDIFSEL_1
+  #define CFG_SPDIF_HSI                         (RCC_CDCCIP1R_SPDIFSEL_1 | RCC_CDCCIP1R_SPDIFSEL_0)
+#endif
+
+/// Multiplexer define to be used for SPI1, SPI2, SPI3 clock source                                     -> CFG_SPI123_SOURCE_MUX        default: PLL1Q
+#if defined(RCC_D2CCIP1R_SPI123SEL)
+  #define CFG_SPI123_PLL1Q                      0
+  #define CFG_SPI123_PLL2P                      RCC_D2CCIP1R_SPI123SEL_0
+  #define CFG_SPI123_PLL3P                      RCC_D2CCIP1R_SPI123SEL_1
+  #define CFG_SPI123_I2SCKIN                    (RCC_D2CCIP1R_SPI123SEL_1 | RCC_D2CCIP1R_SPI123SEL_0)
+  #define CFG_SPI123_PER_CLK                    RCC_D2CCIP1R_SPI123SEL_2
+#else
+  #define CFG_SPI123_PLL1Q                      0
+  #define CFG_SPI123_PLL2P                      RCC_CDCCIP1R_SPI123SEL_0
+  #define CFG_SPI123_PLL3P                      RCC_CDCCIP1R_SPI123SEL_1
+  #define CFG_SPI123_I2SCKIN                    (RCC_CDCCIP1R_SPI123SEL_1 | RCC_CDCCIP1R_SPI123SEL_0)
+  #define CFG_SPI123_PER_CLK                    RCC_CDCCIP1R_SPI123SEL_2
+#endif
+
+/// Multiplexer define to be used for SPI4, SPI5 clock source                                           -> CFG_SPI45_SOURCE_MUX         default: PCLK2
+#if defined(RCC_D2CCIP1R_SPI45SEL)
+  #define CFG_SPI45_PLCK2                       0
+  #define CFG_SPI45_PLL2Q                       RCC_D2CCIP1R_SPI45SEL_0
+  #define CFG_SPI45_PLL3Q                       RCC_D2CCIP1R_SPI45SEL_1
+  #define CFG_SPI45_HSI                         (RCC_D2CCIP1R_SPI45SEL_1 | RCC_D2CCIP1R_SPI45SEL_0)
+  #define CFG_SPI45_CSI                         RCC_D2CCIP1R_SPI45SEL_2
+  #define CFG_SPI45_HSE                         (RCC_D2CCIP1R_SPI45SEL_2 | RCC_D2CCIP1R_SPI45SEL_0)
+#else
+  #define CFG_SPI45_PLCK2                       0
+  #define CFG_SPI45_PLL2Q                       RCC_CDCCIP1R_SPI45SEL_0
+  #define CFG_SPI45_PLL3Q                       RCC_CDCCIP1R_SPI45SEL_1
+  #define CFG_SPI45_HSI                         (RCC_CDCCIP1R_SPI45SEL_1 | RCC_CDCCIP1R_SPI45SEL_0)
+  #define CFG_SPI45_CSI                         RCC_CDCCIP1R_SPI45SEL_2
+  #define CFG_SPI45_HSE                         (RCC_CDCCIP1R_SPI45SEL_2 | RCC_CDCCIP1R_SPI45SEL_0)
+#endif
+
+/// Multiplexer define to be used for SPI6 clock source                                                 -> CFG_SPI6_SOURCE_MUX          default: PCLK4
+#if defined(RCC_D3CCIPR_SPI6SEL)
+  #define CFG_SPI6_PLCK4                        0
+  #define CFG_SPI6_PLL2Q                        RCC_D3CCIPR_SPI6SEL_0
+  #define CFG_SPI6_PLL3Q                        RCC_D3CCIPR_SPI6SEL_1
+  #define CFG_SPI6_HSI                          (RCC_D3CCIPR_SPI6SEL_1 | RCC_D3CCIPR_SPI6SEL_0)
+  #define CFG_SPI6_CSI                          RCC_D3CCIPR_SPI6SEL_2
+  #define CFG_SPI6_HSE                          (RCC_D3CCIPR_SPI6SEL_2 | RCC_D3CCIPR_SPI6SEL_0)
+#else
+  #define CFG_SPI6_PLCK4                        0
+  #define CFG_SPI6_PLL2Q                        RCC_SRDCCIPR_SPI6SEL_0
+  #define CFG_SPI6_PLL3Q                        RCC_SRDCCIPR_SPI6SEL_1
+  #define CFG_SPI6_HSI                          (RCC_SRDCCIPR_SPI6SEL_1 | RCC_SRDCCIPR_SPI6SEL_0)
+  #define CFG_SPI6_CSI                          RCC_SRDCCIPR_SPI6SEL_2
+  #define CFG_SPI6_HSE                          (RCC_SRDCCIPR_SPI6SEL_2 | RCC_SRDCCIPR_SPI6SEL_0)
+#endif
+
+/// Multiplexer define to be used for SWP clock source                                                  -> CFG_SWP_SOURCE_MUX           default: PCLK1
+#if defined(RCC_D2CCIP1R_SWPSEL)
+  #define CFG_SWP_PCLK1                         0
+  #define CFG_SWP_HSI                           RCC_D2CCIP1R_SWPSEL
+#else
+  #define CFG_SWP_PCLK1                         0
+  #define CFG_SWP_HSI                           RCC_CDCCIP1R_SWPSEL
+#endif
+
+#if defined(RCC_D2CCIP2R_USART16SEL)
+  /// Multiplexer define to be used for UART1, UART6 clock source                                       -> CFG_UART16_SOURCE_MUX        default: PCLK2
+  #define CFG_USART16_PCLK2                     0
+  #define CFG_USART16_PLL2Q                     RCC_D2CCIP2R_USART16SEL_0
+  #define CFG_USART16_PLL3Q                     RCC_D2CCIP2R_USART16SEL_1
+  #define CFG_USART16_HSI                       (RCC_D2CCIP2R_USART16SEL_1 | RCC_D2CCIP2R_USART16SEL_0)
+  #define CFG_USART16_CSI                       RCC_D2CCIP2R_USART16SEL_2
+  #define CFG_USART16_LSE                       (RCC_D2CCIP2R_USART16SEL_2 | RCC_D2CCIP2R_USART16SEL_0)
+#elif defined(RCC_CDCCIP2R_USART16910SEL)
+  /// Multiplexer define to be used for UART1, UART6, UART9, UART10 clock source                        -> CFG_UART16910_SOURCE_MUX     default: PCLK2
+  #define CFG_USART16910_PCLK2                  0
+  #define CFG_USART16910_PLL2Q                  RCC_CDCCIP2R_USART16910SEL_0
+  #define CFG_USART16910_PLL3Q                  RCC_CDCCIP2R_USART16910SEL_1
+  #define CFG_USART16910_HSI                    (RCC_CDCCIP2R_USART16910SEL_1 | RCC_CDCCIP2R_USART16910SEL_0)
+  #define CFG_USART16910_CSI                    RCC_CDCCIP2R_USART16910SEL_2
+  #define CFG_USART16910_LSE                    (RCC_CDCCIP2R_USART16910SEL_2 | RCC_CDCCIP2R_USART16910SEL_0)
+#else // #if defined(RCC_D2CCIP2R_USART16910SEL)
+  /// Multiplexer define to be used for UART1, UART6, UART9, UART10 clock source                        -> CFG_UART16910_SOURCE_MUX     default: PCLK2
+  #define CFG_USART16910_PCLK2                  0
+  #define CFG_USART16910_PLL2Q                  RCC_D2CCIP2R_USART16910SEL_0
+  #define CFG_USART16910_PLL3Q                  RCC_D2CCIP2R_USART16910SEL_1
+  #define CFG_USART16910_HSI                    (RCC_D2CCIP2R_USART16910SEL_1 | RCC_D2CCIP2R_USART16910SEL_0)
+  #define CFG_USART16910_CSI                    RCC_D2CCIP2R_USART16910SEL_2
+  #define CFG_USART16910_LSE                    (RCC_D2CCIP2R_USART16910SEL_2 | RCC_D2CCIP2R_USART16910SEL_0)
+#endif
+
+#if defined(RCC_D2CCIP2R_USART28SEL)
+  /// Multiplexer define to be used for UART2, UART3, UART4, UART5, UART7 and UART8 clock source        -> CFG_UART234578_SOURCE_MUX    default: PCLK1
+  #define CFG_USART234578_PCLK1                 0
+  #define CFG_USART234578_PLL2Q                 RCC_D2CCIP2R_USART28SEL_0
+  #define CFG_USART234578_PLL3Q                 RCC_D2CCIP2R_USART28SEL_1
+  #define CFG_USART234578_HSI                   (RCC_D2CCIP2R_USART28SEL_1 | RCC_D2CCIP2R_USART28SEL_0)
+  #define CFG_USART234578_CSI                   RCC_D2CCIP2R_USART28SEL_2
+  #define CFG_USART234578_LSE                   (RCC_D2CCIP2R_USART28SEL_2 | RCC_D2CCIP2R_USART28SEL_0)
+#else
+  /// Multiplexer define to be used for UART2, UART3, UART4, UART5, UART7 and UART8 clock source        -> CFG_UART234578_SOURCE_MUX    default: PCLK1
+  #define CFG_USART234578_PCLK1                 0
+  #define CFG_USART234578_PLL2Q                 RCC_CDCCIP2R_USART234578SEL_0
+  #define CFG_USART234578_PLL3Q                 RCC_CDCCIP2R_USART234578SEL_1
+  #define CFG_USART234578_HSI                   (RCC_CDCCIP2R_USART234578SEL_1 | RCC_CDCCIP2R_USART234578SEL_0)
+  #define CFG_USART234578_CSI                   RCC_CDCCIP2R_USART234578SEL_2
+  #define CFG_USART234578_LSE                   (RCC_CDCCIP2R_USART234578SEL_2 | RCC_CDCCIP2R_USART234578SEL_0)
+#endif
+
+/// Multiplexer define to be used for USB clock source                                                  -> CFG_USB_SOURCE_MUX           default: PLL1Q
+#if defined(RCC_D2CCIP2R_USBSEL)
+  #define CFG_USB_PLL1Q                         0
+  #define CFG_USB_PLL3Q                         RCC_D2CCIP2R_USBSEL_0
+  #define CFG_USB_HSI48                         RCC_D2CCIP2R_USBSEL_1
+#else
+  #define CFG_USB_PLL1Q                         0
+  #define CFG_USB_PLL3Q                         RCC_CDCCIP2R_USBSEL_0
+  #define CFG_USB_HSI48                         RCC_CDCCIP2R_USBSEL_1
+#endif
 
 // Divider for all Clock
 
@@ -546,10 +764,12 @@
 #define RCC_PLLCFGR_PLL3R_POS                   24
 
 // Power regulator
-#define CFG_PWR_REGULATOR_VOLTAGE_SCALE0        (0)
-#define CFG_PWR_REGULATOR_VOLTAGE_SCALE1        (PWR_D3CR_VOS_1 | PWR_D3CR_VOS_0)
-#define CFG_PWR_REGULATOR_VOLTAGE_SCALE2        (PWR_D3CR_VOS_1)
-#define CFG_PWR_REGULATOR_VOLTAGE_SCALE3        (PWR_D3CR_VOS_0)
+#if defined(PWR_D3CR_VOS)
+  #define CFG_PWR_REGULATOR_VOLTAGE_SCALE0      (0)
+  #define CFG_PWR_REGULATOR_VOLTAGE_SCALE1      (PWR_D3CR_VOS_1 | PWR_D3CR_VOS_0)
+  #define CFG_PWR_REGULATOR_VOLTAGE_SCALE2      (PWR_D3CR_VOS_1)
+  #define CFG_PWR_REGULATOR_VOLTAGE_SCALE3      (PWR_D3CR_VOS_0)
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Configuration file(s)
@@ -843,9 +1063,12 @@
                                                      CFG_HRTIM_SOURCE_MUX)
 
 /// -------------------------------------------------------------------------------------------------------------------------------
-/// RCC_D1CCIPR - RCC domain 1 kernel clock configuration register
+/// RCC domain kernel clock configuration register
 ///
-/// missing DSI
+/// RCC_D1CCIPR or RCC_CDCCIPR
+///
+
+// missing DSI
 
 #if defined(QUADSPI)
   #define CFG_RCC_D1CCIPR_CPU_DEPENDANCY            CFG_QSPI_SOURCE_MUX
@@ -860,32 +1083,46 @@
                                                      CFG_FMC_SOURCE_MUX         | \
                                                      CFG_RCC_D1CCIPR_CPU_DEPENDANCY)
 
+#define CFG_RCC_CDCCIPR                             CFG_RCC_D1CCIPR                                 // Alias
+
 /// -------------------------------------------------------------------------------------------------------------------------------
-/// RCC_D2CCIP1R - RCC domain 2 kernel clock configuration register
+/// RCC domain kernel clock configuration register
 ///
+/// RCC_D2CCIP1R or RCC_CDCCIP1R
+
+#if defined(RCC_D2CCIP1R_SAI23SEL)
+  #define CFG_RCC_D2CCIP1R_CPU_DEPENDANCY           CFG_SAI23_SOURCE_MUX
+#elif defined(RCC_CDCCIP1R_SAI2ASEL) && defined(RCC_CDCCIP1R_SAI2BSEL)
+  #define CFG_RCC_D2CCIP1R_CPU_DEPENDANCY           (CFG_SAI2A_SOURCE_MUX | CFG_SAI2A_SOURCE_MUX)
+#else
+  #define CFG_RCC_D2CCIP1R_CPU_DEPENDANCY           0
+#endif
 
 #define CFG_RCC_D2CCIP1R                            (CFG_SWP_SOURCE_MUX         | \
                                                      CFG_FDCAN_SOURCE_MUX       | \
-                                                     CFG_DFSDM_SOURCE_MUX       | \
+                                                     CFG_DFSDM1_SOURCE_MUX      | \
                                                      CFG_SPDIF_SOURCE_MUX       | \
-                                                     CFG_SPI45_SOURCE_MUX       | \
                                                      CFG_SPI123_SOURCE_MUX      | \
-                                                     CFG_SAI23_SOURCE_MUX       | \
-                                                     CFG_SAI1_SOURCE_MUX)
+                                                     CFG_SPI45_SOURCE_MUX       | \
+                                                     CFG_SAI1_SOURCE_MUX        | \
+                                                     CFG_RCC_D2CCIP1R_CPU_DEPENDANCY)
+
+#define CFG_RCC_CDCCIP1R                            CFG_RCC_D2CCIP1R                                // Alias
 
 /// -------------------------------------------------------------------------------------------------------------------------------
-/// RCC_D2CCIP2R - RCC domain 2 kernel clock configuration register
+/// RCC domain kernel clock configuration register
 ///
+/// RCC_D2CCIP2R or RCC_CDCCIP2R
 
 #if defined(RCC_D2CCIP2R_USART16SEL)
   #define CFG_RCC_D2CCIP2R_CPU_DEPENDANCY_1         CFG_UART16_SOURCE_MUX
-#else
+#elif defined(RCC_D2CCIP2R_USART16910SEL) || defined(RCC_CDCCIP2R_USART16910SEL)
   #define CFG_RCC_D2CCIP2R_CPU_DEPENDANCY_1         CFG_UART16910_SOURCE_MUX
 #endif
 
-#if defined(RCC_D2CCIP2R_I2C123SEL)
+#if defined(RCC_D2CCIP2R_I2C123SEL) || defined(RCC_CDCCIP2R_I2C123SEL)
   #define CFG_RCC_D2CCIP2R_CPU_DEPENDANCY_2         CFG_I2C123_SOURCE_MUX
-#else
+#elif defined(RCC_D2CCIP2R_I2C1235SEL)
   #define CFG_RCC_D2CCIP2R_CPU_DEPENDANCY_2         CFG_I2C1235_SOURCE_MUX
 #endif
 
@@ -897,39 +1134,60 @@
                                                      CFG_RCC_D2CCIP2R_CPU_DEPENDANCY_1  | \
                                                      CFG_RCC_D2CCIP2R_CPU_DEPENDANCY_2)
 
+#define CFG_RCC_CDCCIP2R                            CFG_RCC_D2CCIP2R                                // Alias
+
 /// -------------------------------------------------------------------------------------------------------------------------------
-/// RCC_D3CCIPR - RCC domain 3 kernel clock configuration register
+/// SmartRun domain kernel clock configuration register
 ///
+/// RCC_D3CCIPR or RCC_SRDCCIPR
+
+#if defined(RCC_D3CCIPR_SAI4ASEL) && defined(RCC_D3CCIPR_SAI4BSEL)
+  #define CFG_RCC_D3CCIPR_CPU_DEPENDANCY            (CFG_SAI4A_SOURCE_MUX | CFG_SAI4B_SOURCE_MUX)
+#else
+  #define CFG_RCC_D3CCIPR_CPU_DEPENDANCY            0
+#endif
 
 #define CFG_RCC_D3CCIPR                             (CFG_SPI6_SOURCE_MUX        | \
-                                                     CFG_SAI4B_SOURCE_MUX       | \
-                                                     CFG_SAI4A_SOURCE_MUX       | \
                                                      CFG_ADC_SOURCE_MUX         | \
                                                      CFG_LPTIM345_SOURCE_MUX    | \
                                                      CFG_LPTIM2_SOURCE_MUX      | \
                                                      CFG_I2C4_SOURCE_MUX        | \
-                                                     CFG_LPUART1_SOURCE_MUX)
+                                                     CFG_LPUART1_SOURCE_MUX     | \
+                                                     CFG_RCC_D3CCIPR_CPU_DEPENDANCY)
+
+#define CFG_RCC_SRDCCIPR                            CFG_RCC_D3CCIPR                                 // Alias
 
 /// -------------------------------------------------------------------------------------------------------------------------------
-/// RCC_D1CFGR - RCC domain 1 clock configuration register
+/// RCC CPU domain clock configuration register 1
 ///
+/// RCC_D1CFGR or RCC_CDCFGR1
+/// -------------------------------------------------------------------------------------------------------------------------------
 
-#define CFG_RCC_D1CFGR                              (CFG_SYSCLK_DIVIDER         | \
-                                                     CFG_APB3_DIVIDER         | \
+#define CFG_RCC_D1CFGR                              (CFG_SYSCLK_DIVIDER | \
+                                                     CFG_APB3_DIVIDER   | \
                                                      CFG_HCLK_DIVIDER)
 
-/// -------------------------------------------------------------------------------------------------------------------------------
-/// RCC_D2CFGR - RCC domain 2 clock configuration register
-///
+#define CFG_RCC_CDCFGR1                             CFG_RCC_D1CFGR
 
-#define CFG_RCC_D2CFGR                              (CFG_APB2_DIVIDER        | \
+/// -------------------------------------------------------------------------------------------------------------------------------
+/// RCC CPU domain clock configuration register 2
+///
+/// RCC_D2CFGR or RCC_CDCFGR2
+/// -------------------------------------------------------------------------------------------------------------------------------
+
+#define CFG_RCC_D2CFGR                              (CFG_APB2_DIVIDER  | \
                                                      CFG_APB1_DIVIDER)
 
+#define CFG_RCC_CDCFGR2                             CFG_RCC_D2CFGR
+
 /// -------------------------------------------------------------------------------------------------------------------------------
-/// RCC_D3CFGR - RCC domain 3 clock configuration register
+/// RCC CPU domain clock configuration register 3
 ///
+/// RCC_D3CFGR or RCC_CDCFGR3
 
 #define CFG_RCC_D3CFGR                              (CFG_APB4_DIVIDER)
+
+#define CFG_RCC_SRDCFGR                             CFG_RCC_D3CFGR
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// SYS Clock Mux
@@ -1044,63 +1302,63 @@
 /// All Peripheral frequency ( TODO need to add all module clock here. )
 
 
-// CFG_PER_SOURCE_MUX                          CFG_RCC_D1CCIPR_PER_HSI_KER
-// CFG_ADC_SOURCE_MUX                          CFG_RCC_D3CCIPR_ADC_PLL2P
-// CFG_CEC_SOURCE_MUX                          CFG_RCC_D2CCIP2R_CEC_LSE
-// CFG_DFSDM_SOURCE_MUX                        CFG_RCC_D2CCIP1R_DFSDM_PLCK2
-// CFG_FDCAN_SOURCE_MUX                        CFG_RCC_D2CCIP1R_FDCAN_HSE
-// CFG_FMC_SOURCE_MUX                          CFG_RCC_D1CCIPR_FMC_PLL1Q
-// CFG_I2C123_SOURCE_MUX                       CFG_RCC_D2CCIP2R_I2C123_PCLK1
-// CFG_I2C4_SOURCE_MUX                         CFG_RCC_D3CCIPR_I2C4_PCLK4
-// CFG_HRTIM_SOURCE_MUX                        CFG_RCC_CFGR_HRTIM_TIM_CLK
-// CFG_LPTIM1_SOURCE_MUX                       CFG_RCC_D2CCIP2R_LPTIM1_PCLK1
-// CFG_LPTIM2_SOURCE_MUX                       CFG_RCC_D3CCIPR_LPTIM2_PCLK4
-// CFG_LPTIM345_SOURCE_MUX                     CFG_RCC_D3CCIPR_LPTIM345_PCLK4
-// CFG_LPUART1_SOURCE_MUX                      CFG_RCC_D3CCIPR_LPUART1_PCLK3
-// CFG_MCO1_SOURCE_MUX                         CFG_RCC_CFGR_MCO1_SYS_CLK
-// CFG_MCO2_SOURCE_MUX                         CFG_RCC_CFGR_MCO2_SYS_CLK
-// CFG_QSPI_SOURCE_MUX                         CFG_RCC_D1CCIPR_QSPI_PLL1Q           // for 745 only
-// CFG_OSPI_SOURCE_MUX                         CFG_RCC_D1CCIPR_OCTOSPI_PLL1Q        // for 735 only
-// CFG_RNG_SOURCE_MUX                          CFG_RCC_D2CCIP2R_RNG_HSI48
-// CFG_RTC_SOURCE_MUX                          CFG_RCC_BDCR_RTC_LSE
-// CFG_SAI1_SOURCE_MUX                         CFG_RCC_D2CCIP1R_SAI1_PLL1Q
-// CFG_SAI23_SOURCE_MUX                        CFG_RCC_D2CCIP1R_SAI23_PLL1Q
-// CFG_SAI4A_SOURCE_MUX                        CFG_RCC_D3CCIPR_SAI4A_PLL1Q
-// CFG_SAI4B_SOURCE_MUX                        CFG_RCC_D3CCIPR_SAI4B_PLL1Q
-// CFG_SDMMC_SOURCE_MUX                        CFG_RCC_D1CCIPR_SDMMC_PLL1Q
-// CFG_SPDIF_SOURCE_MUX                        CFG_RCC_D2CCIP1R_SPDIF_PLL1Q
-// CFG_SPI123_SOURCE_MUX                       CFG_RCC_D2CCIP1R_SPI123_PLL1Q
-// CFG_SPI45_SOURCE_MUX                        CFG_RCC_D2CCIP1R_SPI45_PLCK2
-// CFG_SPI6_SOURCE_MUX                         CFG_RCC_D3CCIPR_SPI6_PLCK4
-// CFG_SWP_SOURCE_MUX                          CFG_RCC_D2CCIP1R_SWP_PCLK1
+// CFG_PER_SOURCE_MUX
+// CFG_ADC_SOURCE_MUX
+// CFG_CEC_SOURCE_MUX
+// CFG_DFSDM_SOURCE_MUX
+// CFG_FDCAN_SOURCE_MUX
+// CFG_FMC_SOURCE_MUX
+// CFG_I2C123_SOURCE_MUX
+// CFG_I2C4_SOURCE_MUX
+// CFG_HRTIM_SOURCE_MUX
+// CFG_LPTIM1_SOURCE_MUX
+// CFG_LPTIM2_SOURCE_MUX
+// CFG_LPTIM345_SOURCE_MUX
+// CFG_LPUART1_SOURCE_MUX
+// CFG_MCO1_SOURCE_MUX
+// CFG_MCO2_SOURCE_MUX
+// CFG_QSPI_SOURCE_MUX
+// CFG_OSPI_SOURCE_MUX
+// CFG_RNG_SOURCE_MUX
+// CFG_RTC_SOURCE_MUX
+// CFG_SAI1_SOURCE_MUX
+// CFG_SAI23_SOURCE_MUX
+// CFG_SAI4A_SOURCE_MUX
+// CFG_SAI4B_SOURCE_MUX
+// CFG_SDMMC_SOURCE_MUX
+// CFG_SPDIF_SOURCE_MUX
+// CFG_SPI123_SOURCE_MUX
+// CFG_SPI45_SOURCE_MUX
+// CFG_SPI6_SOURCE_MUX
+// CFG_SWP_SOURCE_MUX
 
 /// USART 1,6 clock frequency
-#if   (CFG_UART16_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART16_PCLK2)
+#if   (CFG_UART16_SOURCE_MUX == CFG_USART16_PCLK2)
   #define USART16_CLOCK_FREQUENCY           PCLK2_CLOCK_FREQUENCY
-#elif (CFG_UART16_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART16_PLL2Q)
+#elif (CFG_UART16_SOURCE_MUX == CFG_USART16_PLL2Q)
   #define USART16_CLOCK_FREQUENCY           PLL2Q_CLOCK_FREQUENCY
-#elif (CFG_UART16_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART16_PLL3Q)
+#elif (CFG_UART16_SOURCE_MUX == CFG_USART16_PLL3Q)
   #define USART16_CLOCK_FREQUENCY           PLL3Q_CLOCK_FREQUENCY
-#elif (CFG_UART16_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART16_HSI)
+#elif (CFG_UART16_SOURCE_MUX == CFG_USART16_HSI)
   #define USART16_CLOCK_FREQUENCY           HSI_CLOCK_FREQUENCY
-#elif (CFG_UART16_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART16_CSI)
+#elif (CFG_UART16_SOURCE_MUX == CFG_USART16_CSI)
   #define USART16_CLOCK_FREQUENCY           CSI_CLOCK_FREQUENCY
-#elif (CFG_UART16_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART16_LSE)
+#elif (CFG_UART16_SOURCE_MUX == CFG_USART16_LSE)
   #define USART16_CLOCK_FREQUENCY           LSE_CLOCK_FREQUENCY
 #endif
 
 /// USART 2,3,4,5,7,8 clock frequency
-#if   (CFG_UART234578_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART234578_PCLK1)
+#if   (CFG_UART234578_SOURCE_MUX == CFGUSART234578_PCLK1)
   #define USART234578_CLOCK_FREQUENCY           PCLK1_CLOCK_FREQUENCY
-#elif (CFG_UART234578_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART234578_PLL2Q)
+#elif (CFG_UART234578_SOURCE_MUX == CFG_USART234578_PLL2Q)
   #define USART234578_CLOCK_FREQUENCY           PLL2Q_CLOCK_FREQUENCY
-#elif (CFG_UART234578_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART234578_PLL3Q)
+#elif (CFG_UART234578_SOURCE_MUX == CFG_USART234578_PLL3Q)
   #define USART234578_CLOCK_FREQUENCY           PLL3Q_CLOCK_FREQUENCY
-#elif (CFG_UART234578_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART234578_HSI)
+#elif (CFG_UART234578_SOURCE_MUX == CFG_USART234578_HSI)
   #define USART234578_CLOCK_FREQUENCY           HSI_CLOCK_FREQUENCY
-#elif (CFG_UART234578_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART234578_CSI)
+#elif (CFG_UART234578_SOURCE_MUX == CFG_USART234578_CSI)
   #define USART234578_CLOCK_FREQUENCY           CSI_CLOCK_FREQUENCY
-#elif (CFG_UART234578_SOURCE_MUX == CFG_RCC_D2CCIP2R_USART234578_LSE)
+#elif (CFG_UART234578_SOURCE_MUX == CFG_USART234578_LSE)
   #define USART234578_CLOCK_FREQUENCY           LSE_CLOCK_FREQUENCY
 #endif
 
@@ -1192,11 +1450,3 @@
 void    SystemInit              (void);
 
 //-------------------------------------------------------------------------------------------------
-
-#define CFG_RTC_SOURCE_MUX                          CFG_RCC_BDCR_RTC_LSE
-
-
-// Define the MUX for module that you will need.        See lib_STM32H7_system_clock for clock selection option.
-
-//#define CFG_TRACE_SOURCE_MUX                        HSI //???
-

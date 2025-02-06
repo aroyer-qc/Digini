@@ -128,9 +128,6 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::Initialize(void)
 {
-    uint16_t RequestedRX_DMA_MUX;
-    uint16_t RequestedTX_DMA_MUX;
-
     if(m_UartID < NB_OF_REAL_UART_DRIVER)
     {
         m_CopySR = 0;
@@ -145,8 +142,6 @@ void UART_Driver::Initialize(void)
                 RCC->APB2RSTR  &= ~RCC_APB2RSTR_USART1RST;          // Release USART1 from reset state
                 RCC->APB2ENR   |=  RCC_APB2ENR_USART1EN;            // Enable USART_PORT clock
                 m_ClockFrequency =  SYS_APB2_CLOCK_FREQUENCY;
-                RequestedRX_DMA_MUX = DMA_REQUEST_USART1_RX;
-                RequestedTX_DMA_MUX = DMA_REQUEST_USART1_TX;
             }
             break;
           #endif
@@ -159,8 +154,6 @@ void UART_Driver::Initialize(void)
                 RCC->APB1LRSTR  &= ~RCC_APB1LRSTR_USART2RST;        // Release USART2 from reset state
                 RCC->APB1LENR   |=  RCC_APB1LENR_USART2EN;          // Enable USART_PORT clock
                 m_ClockFrequency =  USART234578_CLOCK_FREQUENCY;
-                RequestedRX_DMA_MUX = DMA_REQUEST_USART2_RX;
-                RequestedTX_DMA_MUX = DMA_REQUEST_USART2_TX;
             }
             break;
           #endif
@@ -173,8 +166,6 @@ void UART_Driver::Initialize(void)
                 RCC->APB1LRSTR  &= ~RCC_APB1LRSTR_USART3RST;        // Release USART3 from reset state
                 RCC->APB1LENR   |=  RCC_APB1LENR_USART3EN;          // Enable USART_PORT clock
                 m_ClockFrequency =  USART234578_CLOCK_FREQUENCY;
-                RequestedRX_DMA_MUX = DMA_REQUEST_USART3_RX;
-                RequestedTX_DMA_MUX = DMA_REQUEST_USART3_TX;
             }
             break;
           #endif
@@ -187,8 +178,6 @@ void UART_Driver::Initialize(void)
                 RCC->APB1LRSTR  &= ~RCC_APB1LRSTR_USART4RST;        // Release USART4 from reset state
                 RCC->APB1LENR   |=  RCC_APB1LENR_USART4EN;          // Enable USART_PORT clock
                 m_ClockFrequency =  USART234578_CLOCK_FREQUENCY;
-                RequestedRX_DMA_MUX = DMA_REQUEST_USART4_RX;
-                RequestedTX_DMA_MUX = DMA_REQUEST_USART4_TX;
             }
             break;
           #endif
@@ -201,8 +190,6 @@ void UART_Driver::Initialize(void)
                 RCC->APB1LRSTR  &= ~RCC_APB1LRSTR_USART5RST;        // Release USART5 from reset state
                 RCC->APB1LENR   |=  RCC_APB1LENR_USART5EN;          // Enable USART_PORT clock
                 m_ClockFrequency =  USART234578_CLOCK_FREQUENCY;
-                RequestedRX_DMA_MUX = DMA_REQUEST_USART5_RX;
-                RequestedTX_DMA_MUX = DMA_REQUEST_USART5_TX;
             }
             break;
           #endif
@@ -215,8 +202,6 @@ void UART_Driver::Initialize(void)
                 RCC->APB2RSTR   &= ~RCC_APB2RSTR_USART6RST;         // Release USART2 from reset state
                 RCC->APB2ENR    |=  RCC_APB2ENR_USART6EN;           // Enable USART_PORT clock
                 m_ClockFrequency =  SYS_APB2_CLOCK_FREQUENCY;
-                RequestedRX_DMA_MUX = DMA_REQUEST_USART6_RX;
-                RequestedTX_DMA_MUX = DMA_REQUEST_USART6_TX;
             }
             break;
           #endif
@@ -229,8 +214,6 @@ void UART_Driver::Initialize(void)
                 RCC->APB1LRSTR  &= ~RCC_APB1LRSTR_UART7RST;         // Release UART7 from reset state
                 RCC->APB1LENR   |=  RCC_APB1LENR_UART7EN;           // Enable UART_PORT clock
                 m_ClockFrequency =  USART234578_CLOCK_FREQUENCY;
-                RequestedRX_DMA_MUX = DMA_REQUEST_USART7_RX;
-                RequestedTX_DMA_MUX = DMA_REQUEST_USART7_TX;
             }
             break;
           #endif
@@ -243,8 +226,6 @@ void UART_Driver::Initialize(void)
                 RCC->APB1LRSTR  &= ~RCC_APB1LRSTR_UART8RST;         // Release UART8 from reset state
                 RCC->APB1LENR   |=  RCC_APB1LENR_UART8EN;           // Enable UART_PORT clock
                 m_ClockFrequency =  USART234578_CLOCK_FREQUENCY;
-                RequestedRX_DMA_MUX = DMA_REQUEST_USART8_RX;
-                RequestedTX_DMA_MUX = DMA_REQUEST_USART8_TX;
             }
             break;
           #endif
@@ -263,11 +244,11 @@ void UART_Driver::Initialize(void)
 
         ClearFlag();
 
-        m_DMA_RX.Initialize(&m_pInfo->DMA_RX, RequestedRX_DMA_MUX);
+        m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
         m_DMA_RX.SetSource((void*)&m_pUart->RDR);
         m_DMA_RX.SetLength(UART_DRIVER_INTERNAL_RX_BUFFER_SIZE);
 
-        m_DMA_TX.Initialize(&m_pInfo->DMA_TX, RequestedTX_DMA_MUX);
+        m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
         m_DMA_TX.SetDestination((void*)&m_pUart->RDR);
 
       #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED) && (UART_DRIVER_DMA_TX_COMPLETED_CFG == DEF_ENABLED)

@@ -36,6 +36,8 @@
 // Define(s) and macro(s)
 //-------------------------------------------------------------------------------------------------
 
+#define DMA_CHECK_FIFO_PARAMS               DEF_ENABLED                             // When FIFO config is good this can be deactivated
+
 // DMA Define
 #define DMA_MODE_NORMAL                     0x00000000        						// Normal Mode
 #define DMA_MODE_CIRCULAR                   DMA_SxCR_CIRC     						// Circular Mode
@@ -80,7 +82,7 @@
 #define DMA_FIFOMODE_DISABLE                0x00000000                              // FIFO mode disable
 #define DMA_FIFOMODE_ENABLE                 DMA_SxFCR_DMDIS                         // FIFO mode enable
 
-#define DMA_FIFO_THRESHOLD_1 QUARTER_FULL   0x00000000                              // FIFO threshold 1 quart full configuration
+#define DMA_FIFO_THRESHOLD_1_QUARTER_FULL   0x00000000                              // FIFO threshold 1 quart full configuration
 #define DMA_FIFO_THRESHOLD_HALF_FULL        DMA_SxFCR_FTH_0                         // FIFO threshold half full configuration
 #define DMA_FIFO_THRESHOLD_3_QUARTERS_FULL  DMA_SxFCR_FTH_1                         // FIFO threshold 3 quarts full configuration
 #define DMA_FIFO_THRESHOLD_FULL             DMA_SxFCR_FTH                           // FIFO threshold full configuration
@@ -383,41 +385,56 @@ class DMA_Driver
 {
     public:
 
-        void        Initialize                              (DMA_Info_t* pInfo);
-        void        Enable                                  (void);
-        void        Disable                                 (void);
-        void        SetTransfer                             (void* pSource, void* pDestination, size_t Length);
-        void        SetSource                               (void* pSource);
-        void        SetDestination                          (void* pDestination);
-        size_t      GetLength                               (void);
-        void        SetLength                               (size_t Length);
-        void        SetMemoryIncrement                      (void);
-        void        SetNoMemoryIncrement                    (void);
-        void        SetFifoControl                          (uint32_t Control);
-        void        ClearFlag                               (uint32_t Flag);
-        bool        CheckFlag                               (uint32_t Flag);
-        void        EnableIRQ                               (uint8_t PremptionPriority);
-        void        EnableInterrupt                         (uint32_t Interrupt);
-        void        DisableInterrupt                        (uint32_t Interrupt);
-        void        EnableTransmitCompleteInterrupt         (void);
-        void        DisableTransmitCompleteInterrupt        (void);
-        void        EnableTransmitHalfCompleteInterrupt     (void);
-        void        DisableTransmitHalfCompleteInterrupt    (void);
+        void            Initialize                              (DMA_Info_t* pInfo);
+        void            Enable                                  (void);
+        void            Disable                                 (void);
+        void            SetTransfer                             (void* pSource, void* pDestination, size_t Length);
+        void            SetSource                               (void* pSource);
+        void            SetDestination                          (void* pDestination);
+        size_t          GetLength                               (void);
+        void            SetLength                               (size_t Length);
+        void            SetMemoryIncrement                      (void);
+        void            SetNoMemoryIncrement                    (void);
+        void            SetFifoControl                          (uint32_t Control);
+        void            ClearFlag                               (uint32_t Flag);
+        bool            CheckFlag                               (uint32_t Flag);
+        void            EnableIRQ                               (uint8_t PremptionPriority);
+        void            EnableInterrupt                         (uint32_t Interrupt);
+        void            DisableInterrupt                        (uint32_t Interrupt);
+        void            EnableTransmitCompleteInterrupt         (void);
+        void            DisableTransmitCompleteInterrupt        (void);
+        void            EnableTransmitHalfCompleteInterrupt     (void);
+        void            DisableTransmitHalfCompleteInterrupt    (void);
 
         // Inline method
-        void        ClearFlag                               (void)                              { ClearFlag(m_Flag);                    }
-        void        RegisterCallback                        (CallbackInterface* pCallback)      { m_pCallback = pCallback;              }
+        void            ClearFlag                               (void)                              { ClearFlag(m_Flag);                    }
+        void            RegisterCallback                        (CallbackInterface* pCallback)      { m_pCallback = pCallback;              }
 
     private:
 
-        void        EnableClock                             (void);
+        void            EnableClock                             (void);
+        void            CalcBaseAndBitShift                     (void);
+        void            CalcDMAMUX_ChannelBaseAndMask           (void);
+        void            CalcDMAMUX_RequestGenBaseAndMask        (uint32_t Request);
+
+      #if (DMA_CHECK_FIFO_PARAMS == DEF_ENABLED)
+        SystemState_e   CheckFifoParam                          (DMA_Info_t* pInfo);
+      #endif
 
         DMA_Type_e                      m_DMA_Type;
         DMA_Pointer_u                   m_Handle;
 
-        //DMAMUX_Channel_TypeDef*         m_DMAMUX_Channel;
-        //DMAMUX_ChannelStatus_TypeDef*   m_DMAMUX_ChannelStatus;
-        //uint32_t                        m_DMAMUX_ChannelStatusMask;
+        uint32_t                        m_StreamNumber;
+        uint32_t                        m_StreamIndex;
+        uint32_t                        m_StreamBaseAddress;
+
+        DMAMUX_Channel_TypeDef*         m_pDMAMUX_Channel;
+        DMAMUX_ChannelStatus_TypeDef*   m_pDMAMUX_ChannelStatus;
+        uint32_t                        m_DMAMUX_ChannelStatusMask;
+
+        DMAMUX_RequestGen_TypeDef       m_pDMAMUX_RequestGen;           // DMAMUX request generator Base Address
+        DMAMUX_RequestGenStatus_TypeDef m_pDMAMUX_RequestGenStatus;     // DMAMUX request generator Status Address
+        uint32_t                        m_DMAMUX_RequestGenStatusMask;
 
         uint32_t                        m_Flag;
         IRQn_Type                       m_IRQn_Channel;

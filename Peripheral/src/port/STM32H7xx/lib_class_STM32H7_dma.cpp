@@ -50,17 +50,34 @@
 
 #if defined(UART9)
 #define IS_DMA_UART_USART_REQUEST(__REQUEST__) ((((__REQUEST__) >= DMA_REQUEST_USART1_RX)  &&  ((__REQUEST__) <= DMA_REQUEST_USART3_TX)) || \
-                                                (((__REQUEST__) >= DMA_REQUEST_UART4_RX)  &&  ((__REQUEST__) <= DMA_REQUEST_UART5_TX ))  || \
-                                                (((__REQUEST__) >= DMA_REQUEST_USART6_RX) &&  ((__REQUEST__) <= DMA_REQUEST_USART6_TX))  || \
-                                                (((__REQUEST__) >= DMA_REQUEST_UART7_RX)  &&  ((__REQUEST__) <= DMA_REQUEST_UART8_TX ))  || \
-                                                (((__REQUEST__) >= DMA_REQUEST_UART9_RX)  &&  ((__REQUEST__) <= DMA_REQUEST_USART10_TX )))
+                                                (((__REQUEST__) >= DMA_REQUEST_UART4_RX)   &&  ((__REQUEST__) <= DMA_REQUEST_UART5_TX )) || \
+                                                (((__REQUEST__) >= DMA_REQUEST_USART6_RX)  &&  ((__REQUEST__) <= DMA_REQUEST_USART6_TX)) || \
+                                                (((__REQUEST__) >= DMA_REQUEST_UART7_RX)   &&  ((__REQUEST__) <= DMA_REQUEST_UART8_TX )) || \
+                                                (((__REQUEST__) >= DMA_REQUEST_UART9_RX)   &&  ((__REQUEST__) <= DMA_REQUEST_USART10_TX )))
 #else
 #define IS_DMA_UART_USART_REQUEST(__REQUEST__) ((((__REQUEST__) >= DMA_REQUEST_USART1_RX)  &&  ((__REQUEST__) <= DMA_REQUEST_USART3_TX)) || \
-                                                (((__REQUEST__) >= DMA_REQUEST_UART4_RX)  &&  ((__REQUEST__) <= DMA_REQUEST_UART5_TX ))  || \
-                                                (((__REQUEST__) >= DMA_REQUEST_USART6_RX) &&  ((__REQUEST__) <= DMA_REQUEST_USART6_TX))  || \
-                                                (((__REQUEST__) >= DMA_REQUEST_UART7_RX)  &&  ((__REQUEST__) <= DMA_REQUEST_UART8_TX )))
+                                                (((__REQUEST__) >= DMA_REQUEST_UART4_RX)   &&  ((__REQUEST__) <= DMA_REQUEST_UART5_TX )) || \
+                                                (((__REQUEST__) >= DMA_REQUEST_USART6_RX)  &&  ((__REQUEST__) <= DMA_REQUEST_USART6_TX)) || \
+                                                (((__REQUEST__) >= DMA_REQUEST_UART7_RX)   &&  ((__REQUEST__) <= DMA_REQUEST_UART8_TX )))
 
 #endif
+
+#define DMA_SOURCE_TO_DESTINATION_MASK          DMA_SxCR_DIR_Msk
+
+
+
+typedef struct
+{
+  __IO uint32_t ISR;   /*!< DMA interrupt status register */
+  __IO uint32_t Reserved0;
+  __IO uint32_t IFCR;  /*!< DMA interrupt flag clear register */
+} DMA_BaseRegisters;
+
+typedef struct
+{
+  __IO uint32_t ISR;   /*!< BDMA interrupt status register */
+  __IO uint32_t IFCR;  /*!< BDMA interrupt flag clear register */
+} BDMA_BaseRegisters;
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -75,15 +92,34 @@
 void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 {
     uint32_t registerValue;
-    DMA_Base_Registers *regs_dma;
-    BDMA_Base_Registers *regs_bdma;
+    DMA_BaseRegisters *regs_dma;
+    BDMA_BaseRegisters *regs_bdma;
 
     m_Handle.pPtr = pInfo->pHandle;
 
     // DMA1 or DMA2 instance
-    if(uintptr_t(m_Handlep.Ptr) < BDMA_BASE)
+    if(uintptr_t(m_Handle.pPtr) < BDMA_BASE)
     {
-        m_DMA_Type = DMA_TYPE;
+        m_DMA_Type     = DMA_TYPE;
+        m_StreamNumber = ((uint32_t(m_Handle.pPtr) & 0xFF) - 16) / 24;
+
+        if((uint32_t(m_Handle.pPtr) <= ((uint32_t)DMA2_Stream7) ) && (uint32_t(m_Handle.pPtr) >= ((uint32_t)DMA2_Stream0)))
+        {
+          m_StreamNumber += 8;
+        }
+
+        m_StreamIndex  = ((m_StreamNumber & 0x01) ? 0x06 : 0x00) | ((m_StreamNumber & 0x02) ? 0x10 : 0x00);   // Bitshift of flags within status registers
+
+      #if (DMA_CHECK_FIFO_PARAMS == DEF_ENABLED)
+        if(CheckFifoParam(pInfo) != SYS_READY)
+        {
+            while(1)
+            {
+                __asm("nop");
+            }
+        }
+      #endif
+
         CLEAR_BIT(m_Handle.pDMA->CR, DMA_SxCR_EN);                                             // Disable the DMA
         while((m_Handle.pDMA->CR & DMA_SxCR_EN) != 0) {};                                      // Check if the DMA Stream is effectively disabled
         MODIFY_REG(m_Handle.pDMA->CR, DMA_SxCR_INIT_MASK, pInfo->Config);                      // Write the DMA Stream configuration
@@ -130,45 +166,50 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 */
 //--------------------------------------------------------------------------
 
-        regs_dma = (DMA_Base_Registers *)DMA_CalcBaseAndBitshift(hdma);                                     // Initialize StreamBaseAddress and StreamIndex parameters to be used to calculate DMA steam Base Address needed by HAL_DMA_IRQHandler() and HAL_DMA_PollForTransfer()
-        regs_dma->IFCR = 0x3F << (hdma->StreamIndex & 0x1F);                                                // Clear all interrupt flags
+        CalcBaseAndBitShift();
+        regs_dma = (DMA_BaseRegisters *)m_StreamBaseAddress;                                        // Initialize StreamBaseAddress and StreamIndex parameters to be used to calculate DMA steam Base Address needed by HAL_DMA_IRQHandler() and HAL_DMA_PollForTransfer()
+        regs_dma->IFCR = 0x3F << (m_StreamIndex & 0x1F);                                                // Clear all interrupt flags
     }
     else // BDMA instance(s)
     {
-        m_DMA_Type = BDMA_TYPE;
+        m_DMA_Type   = BDMA_TYPE;
+        m_StreamNumber = ((uint32_t(m_Handle.pPtr) & 0xFF) - 8) / 20;
+
         CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_EN);
         MODIFY_REG(m_Handle.pBDMA->CCR, BDMA_CCR_INIT_MASK, pInfo->Config);
 
         // Prepare the DMA Channel configuration
-        hdma->StreamIndex = (((uint32_t)((uint32_t*)hdma->Instance) - (uint32_t)BDMA_Channel0) / ((uint32_t)BDMA_Channel1 - (uint32_t)BDMA_Channel0)) << 2;           // calculation of the channel index
-        regs_bdma = (BDMA_Base_Registers *)DMA_CalcBaseAndBitshift(hdma);                                   // Initialize StreamBaseAddress and StreamIndex parameters to be used to calculate DMA steam Base Address needed by HAL_DMA_IRQHandler() and HAL_DMA_PollForTransfer()
-        regs_bdma->IFCR = ((BDMA_IFCR_CGIF0) << (hdma->StreamIndex & 0x1F));                                // Clear all interrupt flags
+        m_StreamIndex = ((uint32_t(m_Handle.pPtr) - (uint32_t)BDMA_Channel0) / ((uint32_t)BDMA_Channel1 - (uint32_t)BDMA_Channel0)) << 2;           // calculation of the channel index
+        CalcBaseAndBitShift();
+        regs_bdma = (BDMA_BaseRegisters *)m_StreamBaseAddress;                                   // Initialize StreamBaseAddress and StreamIndex parameters to be used to calculate DMA steam Base Address needed by HAL_DMA_IRQHandler() and HAL_DMA_PollForTransfer()
+        regs_bdma->IFCR = ((BDMA_IFCR_CGIF0) << (m_StreamIndex & 0x1F));                                // Clear all interrupt flags
     }
 
-    if(IS_DMA_DMAMUX_ALL_INSTANCE(hdma->Instance) != 0)
+    if(IS_DMA_DMAMUX_ALL_INSTANCE(m_Handle.pPtr) != 0)
     {
-        DMA_CalcDMAMUXChannelBaseAndMask(hdma);                                                             // Initialize parameters for DMAMUX channel : DMAmuxChannel, DMAmuxChannelStatus and DMAmuxChannelStatusMask
+        CalcDMAMUX_ChannelBaseAndMask();                                                             // Initialize parameters for DMAMUX channel : DMAmuxChannel, DMAmuxChannelStatus and DMAmuxChannelStatusMask
 
-        if(hdma->Init.Direction == DMA_MEMORY_TO_MEMORY)
+// THIS is VERY Strange has BDMA and DMA has different config!!!
+        if((pInfo->Config & DMA_SOURCE_TO_DESTINATION_MASK) == DMA_MEMORY_TO_MEMORY)
         {
-            hdma->Init.Request = DMA_REQUEST_MEM2MEM;                                                       // if memory to memory force the request to 0
+  //TODO          //hdma->Init.Request = DMA_REQUEST_MEM2MEM;                                               // if memory to memory force the request to 0 ( TODO understand this as the comment is wrong!!
         }
 
-        hdma->DMAmuxChannel->CCR = (hdma->Init.Request & DMAMUX_CxCR_DMAREQ_ID);                            // Set peripheral request  to DMAMUX channel
-        hdma->DMAmuxChannelStatus->CFR = hdma->DMAmuxChannelStatusMask;                                     // Clear the DMAMUX synchro overrun flag
+        m_pDMAMUX_Channel->CCR = (hdma->Init.Request & DMAMUX_CxCR_DMAREQ_ID);                              // Set peripheral request  to DMAMUX channel
+        m_pDMAMUX_ChannelStatus->CFR = m_DMAMUX_ChannelStatusMask;                                          // Clear the DMAMUX synchro overrun flag
 
         // Initialize parameters for DMAMUX request generator : if the DMA request is DMA_REQUEST_GENERATOR0 to DMA_REQUEST_GENERATOR7
-        if((hdma->Init.Request >= DMA_REQUEST_GENERATOR0) && (hdma->Init.Request <= DMA_REQUEST_GENERATOR7))
+        if((pInfo->MUX_Request >= DMA_REQUEST_GENERATOR0) && (pInfo->MUX_Request <= DMA_REQUEST_GENERATOR7))
         {
-            DMA_CalcDMAMUXRequestGenBaseAndMask(hdma);                                                      // Initialize parameters for DMAMUX request generator : DMAmuxRequestGen, DMAmuxRequestGenStatus and DMAmuxRequestGenStatusMask
-            hdma->DMAmuxRequestGen->RGCR = 0;                                                               // Reset the DMAMUX request generator register
-            hdma->DMAmuxRequestGenStatus->RGCFR = hdma->DMAmuxRequestGenStatusMask;                         // Clear the DMAMUX request generator overrun flag
+            CalcDMAMUX_RequestGenBaseAndMask(pInfo->MUX_Request);                                           // Initialize parameters for DMAMUX request generator : DMAmuxRequestGen, DMAmuxRequestGenStatus and DMAmuxRequestGenStatusMask
+            m_pDMAMUX_RequestGen->RGCR = 0;                                                                 // Reset the DMAMUX request generator register
+            m_pDMAMUX_RequestGenStatus->RGCFR = hdma->DMAmuxRequestGenStatusMask;                           // Clear the DMAMUX request generator overrun flag
         }
         else
         {
-            hdma->DMAmuxRequestGen = 0;
-            hdma->DMAmuxRequestGenStatus = 0;
-            hdma->DMAmuxRequestGenStatusMask = 0;
+            m_pDMAMUX_RequestGen          = nullptr;
+            m_pDMAMUX_RequestGenStatus    = nullptr;
+            m_DMAMUX_RequestGenStatusMask = 0;
         }
     }
 
@@ -425,6 +466,8 @@ bool DMA_Driver::CheckFlag(uint32_t Flag)
 
     if(m_DMA_Type == DMA_TYPE)
     {
+        // we may already have it with m_StreamBaseAddress
+
         switch(uintptr_t(m_Handle.pDMA))
         {
             case DMA1_Stream0_BASE:
@@ -447,6 +490,8 @@ bool DMA_Driver::CheckFlag(uint32_t Flag)
             case DMA2_Stream6_BASE:
             case DMA2_Stream7_BASE: Register = DMA2->HISR; break;
         }
+        
+        
     }
     else // BDMA_TYPE
     {
@@ -554,116 +599,203 @@ void DMA_Driver::DisableTransmitHalfCompleteInterrupt(void)
 }
 
 //-------------------------------------------------------------------------------------------------
-
-
-
-#if 0
-
-
-HAL_StatusTypeDef HAL_DMA_Init(DMA_HandleTypeDef *hdma)
+//
+//  Name:           CheckFifoParam
+//
+//  Parameter(s):   DMA_Info_t* pInfo   Pointer to a configuration structure.
+//  Return:         SystemState_e
+//
+//  Description:    Check compatibility between FIFO threshold level and size of the memory burst
+//
+//  Note(s):        Use this function only at development.
+//
+//-------------------------------------------------------------------------------------------------
+#if (DMA_CHECK_FIFO_PARAMS == DEF_ENABLED)
+SystemState_e DMA_Driver::CheckFifoParam(DMA_Info_t* pInfo)
 {
-    uint32_t registerValue;
-    uint32_t tickstart = HAL_GetTick();
-    DMA_Base_Registers *regs_dma;
-    //BDMA_Base_Registers *regs_bdma;
+    SystemState_e State;
 
-    CLEAR_BIT(m_pDMA->CR, DMA_SxCR_EN);
-
-    while(((m_pDMA->CR & DMA_SxCR_EN) != 0)                                                         // Check if the DMA Stream is effectively disabled
+    if((pInfo->Config & DMA_SxCR_MSIZE_Msk) == DMA_MEMORY_SIZE_8_BITS)             // Memory Data size equal to Byte
     {
-        if((HAL_GetTick() - tickstart ) > HAL_TIMEOUT_DMA_ABORT)                                    // Check for the Timeout
+        switch(pInfo->FIFO_Config & DMA_SxFCR_FTH_Msk)
         {
-            return HAL_ERROR;
-        }
-    }
-
-
-    registerValue = m_pDMA->CR;                                                                     // Get the CR register value
-
-    MODIFY_REG(registerValue, ((uint32_t)~(DMA_SxCR_MBURST | DMA_SxCR_PBURST |                      // Clear CHSEL, MBURST, PBURST, PL, MSIZE, PSIZE, MINC, PINC, CIRC, DIR, CT and DBM bits
-                                           DMA_SxCR_PL     | DMA_SxCR_MSIZE  | DMA_SxCR_PSIZE |
-                                           DMA_SxCR_MINC   | DMA_SxCR_PINC   | DMA_SxCR_CIRC  |
-                                           DMA_SxCR_DIR    | DMA_SxCR_CT     | DMA_SxCR_DBM),
-                              (hdma->Init.Direction           |                                     // Prepare the DMA Stream configuration
-                               hdma->Init.PeriphInc           | hdma->Init.MemInc           |
-                               hdma->Init.PeriphDataAlignment | hdma->Init.MemDataAlignment |
-                               hdma->Init.Mode                | hdma->Init.Priority));
-
-    if(hdma->Init.FIFOMode == DMA_FIFOMODE_ENABLE)                                                  // the Memory burst and peripheral burst are not used when the FIFO is disabled
-    {
-        SET_BIT(registerValue, (hdma->Init.MemBurst | hdma->Init.PeriphBurst);                      // Get memory burst and peripheral burst
-    }
-
-
-    // Work around for Errata 2.22: UART/USART- DMA transfer lock: DMA stream could lock when transferring data to/from USART/UART
-  #if (STM32H7_DEV_ID == 0x450UL)
-    if((DBGMCU->IDCODE & 0xFFFF0000U) >= 0x20000000U)
-    {
-  #endif // STM32H7_DEV_ID == 0x450UL
-        if(IS_DMA_UART_USART_REQUEST(hdma->Init.Request) != 0)
-        {
-            registerValue |= DMA_SxCR_TRBUFF;
-        }
-  #if (STM32H7_DEV_ID == 0x450UL)
-    }
-  #endif // STM32H7_DEV_ID == 0x450UL
-
-    m_pDMA->CR = registerValue;                                                                     // Write to DMA Stream CR register
-
-
-    registerValue = m_pDMA->FCR;                                                                    // Get the FCR register value
-    registerValue &= (uint32_t)~(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                                  // Clear Direct mode and FIFO threshold bits
-    registerValue |= hdma->Init.FIFOMode;                                                           // Prepare the DMA Stream FIFO configuration
-
-    // the FIFO threshold is not used when the FIFO mode is disabled
-    if(hdma->Init.FIFOMode == DMA_FIFOMODE_ENABLE)
-    {
-        registerValue |= hdma->Init.FIFOThreshold;                                                  // Get the FIFO threshold
-
-        // Check compatibility between FIFO threshold level and size of the memory burst for INCR4, INCR8, INCR16
-        if(hdma->Init.MemBurst != DMA_MBURST_SINGLE)
-        {
-            if(DMA_CheckFifoParam(hdma) != HAL_OK)
+            case DMA_FIFO_THRESHOLD_1_QUARTER_FULL:
+            case DMA_FIFO_THRESHOLD_3_QUARTERS_FULL:
+            {
+                if((pInfo->Config & DMA_SxCR_MBURST_Msk) == DMA_MEMORY_BURST_INC8)
                 {
-                    return HAL_ERROR;
+                    State = SYS_INVALID_PARAMETER;
                 }
             }
-        }
+            break;
 
-        m_pDMA->FCR = registerValue;                                                                // Write to DMA Stream FCR
-        // Initialize StreamBaseAddress and StreamIndex parameters to be used to calculate DMA steam Base Address needed by HAL_DMA_IRQHandler() and HAL_DMA_PollForTransfer()
-        regs_dma = (DMA_Base_Registers *)DMA_CalcBaseAndBitshift(hdma);
-        regs_dma->IFCR = 0x3FUL << (hdma->StreamIndex & 0x1FU);                                     // Clear all interrupt flags
+            case DMA_FIFO_THRESHOLD_HALF_FULL:
+            {
+                if((pInfo->Config & DMA_SxCR_MBURST_Msk) == DMA_MEMORY_BURST_INC16)
+                {
+                    State = SYS_INVALID_PARAMETER;
+                }
+            }
+            break;
+
+            // case DMA_FIFO_THRESHOLD_FULL:
+            default:
+            break;
+        }
+    }
+    else if((pInfo->Config & DMA_SxCR_MSIZE_Msk) == DMA_MEMORY_SIZE_16_BITS)                   // Memory Data size equal to Half-Word
+    {
+        switch(pInfo->FIFO_Config & DMA_SxFCR_FTH_Msk)
+        {
+            case DMA_FIFO_THRESHOLD_1_QUARTER_FULL:
+            case DMA_FIFO_THRESHOLD_3_QUARTERS_FULL:
+            {
+                State = SYS_INVALID_PARAMETER;
+            }
+            break;
+
+            case DMA_FIFO_THRESHOLD_HALF_FULL:
+            {
+                if((pInfo->Config & DMA_SxCR_MBURST_Msk) == DMA_MEMORY_BURST_INC8)
+                {
+                    State = SYS_INVALID_PARAMETER;
+                }
+            }
+            break;
+
+            case DMA_FIFO_THRESHOLD_FULL:
+            {
+                if((pInfo->Config & DMA_SxCR_MBURST_Msk) == DMA_MEMORY_BURST_INC16)
+                {
+                    State = SYS_INVALID_PARAMETER;
+                }
+            }
+            break;
+
+            default:
+            break;
+        }
+    }
+    else                                                                                        // Memory Data size equal to Word
+    {
+        switch(pInfo->FIFO_Config & DMA_SxFCR_FTH_Msk)
+        {
+            case DMA_FIFO_THRESHOLD_1_QUARTER_FULL:
+            case DMA_FIFO_THRESHOLD_HALF_FULL:
+            case DMA_FIFO_THRESHOLD_3_QUARTERS_FULL:
+            {
+                State = SYS_INVALID_PARAMETER;
+            }
+            break;
+
+            case DMA_FIFO_THRESHOLD_FULL:
+            {
+                if((pInfo->Config & DMA_SxCR_MBURST_Msk) == DMA_MEMORY_BURST_INC8)
+                {
+                    State = SYS_INVALID_PARAMETER;
+                }
+            }
+            break;
+
+            default:
+            break;
+        }
     }
 
-    if(IS_DMA_DMAMUX_ALL_INSTANCE(hdma->Instance) != 0U) /* No DMAMUX available for BDMA1 */
+    return State;
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CalcBaseAndBitShift
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Returns the DMA Stream base address depending on stream number
+//
+//-------------------------------------------------------------------------------------------------
+void DMA_Driver::CalcBaseAndBitShift(void)
+{
+    if(m_DMA_Type == DMA_TYPE) // DMA1 or DMA2 instance
     {
-        // Initialize parameters for DMAMUX channel : DMAmuxChannel, DMAmuxChannelStatus and DMAmuxChannelStatusMask
-        DMA_CalcDMAMUXChannelBaseAndMask(hdma);
+        m_StreamBaseAddress = (uint32_t(m_Handle.pPtr) & uint32_t(~0x3FF));
 
-        if(hdma->Init.Direction == DMA_MEMORY_TO_MEMORY)
+        if(m_StreamIndex > 3)
         {
-            hdma->Init.Request = DMA_REQUEST_MEM2MEM;                                               /* if memory to memory force the request to 0*/
+            m_StreamBaseAddress += 4;                         // Return pointer to LISR and LIFCR
         }
-
-        hdma->DMAmuxChannel->CCR = (hdma->Init.Request & DMAMUX_CxCR_DMAREQ_ID);                /* Set peripheral request  to DMAMUX channel */
-        hdma->DMAmuxChannelStatus->CFR = hdma->DMAmuxChannelStatusMask;                         /* Clear the DMAMUX synchro overrun flag */
-
-        // Initialize parameters for DMAMUX request generator :if the DMA request is DMA_REQUEST_GENERATOR0 to DMA_REQUEST_GENERATOR7
-        if((hdma->Init.Request >= DMA_REQUEST_GENERATOR0) && (hdma->Init.Request <= DMA_REQUEST_GENERATOR7))
-        {
-            /* Initialize parameters for DMAMUX request generator : DMAmuxRequestGen, DMAmuxRequestGenStatus and DMAmuxRequestGenStatusMask */
-            DMA_CalcDMAMUXRequestGenBaseAndMask(hdma);
-            hdma->DMAmuxRequestGen->RGCR = 0U;                                                  /* Reset the DMAMUX request generator register */
-            hdma->DMAmuxRequestGenStatus->RGCFR = hdma->DMAmuxRequestGenStatusMask;             /* Clear the DMAMUX request generator overrun flag */
-        }
-        else
-        {
-            hdma->DMAmuxRequestGen = 0U;
-            hdma->DMAmuxRequestGenStatus = 0U;
-            hdma->DMAmuxRequestGenStatusMask = 0U;
-        }
+// we may have already have this point in m_Handle.pDMA .... so why we calculate this???  or we may use it in CheckFlag and clear flag
+    }
+    else // BDMA instance
+    {
+        m_StreamBaseAddress = (uint32_t(m_Handle.pPtr) & uint32_t(~0xFF));                              // return pointer to ISR and IFCR
     }
 }
 
-#endif
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CalcDMAMUX_ChannelBaseAndMask
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Updates the DMAMUX channel and status mask depending on stream number
+//
+//-------------------------------------------------------------------------------------------------
+void DMA_Driver::CalcDMAMUX_ChannelBaseAndMask(void)
+{
+    uint32_t DMAMUX_ChannelAddress;
+
+    if(m_DMA_Type == DMA_TYPE) // DMA1 or DMA2 instance
+    {
+        DMAMUX_ChannelAddress   = DMAMUX1_Channel0;
+        m_pDMAMUX_ChannelStatus = DMAMUX1_ChannelStatus;
+    }
+    else // BDMA instance
+    {
+        // BDMA Channels are connected to DMAMUX2 channels
+        DMAMUX_ChannelAddress   = DMAMUX2_Channel0;
+        m_pDMAMUX_ChannelStatus = DMAMUX2_ChannelStatus;
+    }
+
+    m_pDMAMUX_Channel          = (DMAMUX_Channel_TypeDef *)((uint32_t)(((uint32_t)DMAMUX_ChannelAddress) + (m_StreamIndex * 4)));
+    m_DMAMUX_ChannelStatusMask = uint32_t(1) << (m_StreamIndex & 0x1F);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CalcDMAMUX_RequestGenBaseAndMask
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Updates the DMAMUX request generator params
+//
+//-------------------------------------------------------------------------------------------------
+void DMA_Driver::CalcDMAMUX_RequestGenBaseAndMask(uint32_t Request)
+{
+      uint32_t DMAMUX_RequestGeneratorAddress;
+
+  //uint32_t request =  hdma->Init.Request & DMAMUX_CxCR_DMAREQ_ID;
+
+    //if((request >= DMA_REQUEST_GENERATOR0) && (request <= DMA_REQUEST_GENERATOR7))
+    {
+        if(m_DMA_Type == DMA_TYPE) // DMA1 or DMA2 instance
+        {
+            // DMA1 and DMA2 Streams use DMAMUX1 request generator blocks
+            DMAMUX_RequestGeneratorAddress = uint32_t(DMAMUX1_RequestGenerator0);
+            m_pDMAMUX_RequestGenStatus     = DMAMUX1_RequestGenStatus;
+        }
+        else
+        {
+            // BDMA Channels are connected to DMAMUX2 request generator blocks
+            DMAMUX_RequestGeneratorAddress = uint32_t(DMAMUX2_RequestGenerator0);
+            m_pDMAMUX_RequestGenStatus     = DMAMUX2_RequestGenStatus;
+        }
+
+        m_pDMAMUX_RequestGen          = (DMAMUX_RequestGen_TypeDef *)((uint32_t)((DMAMUX_RequestGeneratorAddress) + ((Request - 1) * 4)));
+        m_DMAMUX_RequestGenStatusMask = uint32_t(1) << (Request - 1);
+    }
+}

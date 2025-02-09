@@ -141,7 +141,7 @@ void UART_Driver::Initialize(void)
                 RCC->APB2RSTR  |=  RCC_APB2RSTR_USART1RST;          // Enable USART1 reset state
                 RCC->APB2RSTR  &= ~RCC_APB2RSTR_USART1RST;          // Release USART1 from reset state
                 RCC->APB2ENR   |=  RCC_APB2ENR_USART1EN;            // Enable USART_PORT clock
-                m_ClockFrequency =  SYS_APB2_CLOCK_FREQUENCY;
+                m_ClockFrequency =  USART16_CLOCK_FREQUENCY;
             }
             break;
           #endif
@@ -201,7 +201,7 @@ void UART_Driver::Initialize(void)
                 RCC->APB2RSTR   |=  RCC_APB2RSTR_USART6RST;         // Enable USART2 reset state
                 RCC->APB2RSTR   &= ~RCC_APB2RSTR_USART6RST;         // Release USART2 from reset state
                 RCC->APB2ENR    |=  RCC_APB2ENR_USART6EN;           // Enable USART_PORT clock
-                m_ClockFrequency =  SYS_APB2_CLOCK_FREQUENCY;
+                m_ClockFrequency =  USART16_CLOCK_FREQUENCY;
             }
             break;
           #endif
@@ -511,11 +511,11 @@ uint32_t UART_Driver::GetBaudRate(void)
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::ClearFlag(void)
 {
-    volatile uint32_t tmpreg;
+   // volatile uint32_t tmpreg;
 
     m_pUart->ICR = (USART_ICR_CMCF | USART_ICR_CTSCF | USART_ICR_TCCF | USART_ICR_IDLECF | USART_ICR_ORECF| USART_ICR_FECF | USART_ICR_PECF);
-    tmpreg = m_pUart->RDR;
-    VAR_UNUSED(tmpreg);
+   // tmpreg = m_pUart->RDR;
+   // VAR_UNUSED(tmpreg);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -569,7 +569,9 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             m_DMA_IsItBusyTX = true;
 
             m_DMA_TX.Disable();
-            m_DMA_TX.ClearFlag();
+            m_DMA_TX.ClearFlag(0x3DUL << 6); //temp for test
+//            m_DMA_TX.ClearFlag();
+
 
             if(pBufferTX != nullptr)
             {
@@ -584,8 +586,8 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
                 m_DMA_TX.SetLength(m_TX_Transfer.Size);
             }
 
-            ClearFlag();
             m_DMA_TX.Enable();                    // Transmission starts as soon as TXE is detected
+            m_pUart->ICR = USART_ICR_TCCF | USART_ICR_TXFECF;
             DMA_EnableTX();
         }
         else

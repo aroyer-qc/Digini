@@ -85,10 +85,11 @@ void SystemInit(void)
 
     if(CFG_PWR_REGULATOR_VOLTAGE == CFG_PWR_REGULATOR_VOLTAGE_SCALE0)
     {
-        MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE_SCALE1);  // Configure the Voltage Scaling 1
-        RegisterValue = READ_BIT(PWR->D3CR, PWR_D3CR_VOS);                      // Delay after setting the voltage scaling
-        SET_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);                              // Enable the PWR overdrive
-        RegisterValue = READ_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);             // Delay after setting the syscfg boost setting
+// TODO not working with H745 at this time... when bypasssed it is OK!!
+//        MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE_SCALE1);  // Configure the Voltage Scaling 1
+//        RegisterValue = READ_BIT(PWR->D3CR, PWR_D3CR_VOS);                      // Delay after setting the voltage scaling
+//        SET_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);                              // Enable the PWR overdrive
+//        RegisterValue = READ_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);             // Delay after setting the syscfg boost setting
     }
     else
     {

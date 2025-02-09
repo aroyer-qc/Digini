@@ -585,8 +585,8 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             }
 
             ClearFlag();
-            DMA_EnableTX();
             m_DMA_TX.Enable();                    // Transmission starts as soon as TXE is detected
+            DMA_EnableTX();
         }
         else
         {

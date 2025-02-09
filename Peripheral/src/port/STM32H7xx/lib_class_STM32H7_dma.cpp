@@ -65,19 +65,18 @@
 #define DMA_SOURCE_TO_DESTINATION_MASK          DMA_SxCR_DIR_Msk
 
 
-
-typedef struct
+struct DMA_BaseRegister_t
 {
-  __IO uint32_t ISR;   /*!< DMA interrupt status register */
-  __IO uint32_t Reserved0;
-  __IO uint32_t IFCR;  /*!< DMA interrupt flag clear register */
-} DMA_BaseRegisters;
+    volatile uint32_t ISR;          // DMA interrupt status register
+    volatile uint32_t Reserved0;
+    volatile uint32_t IFCR;         // DMA interrupt flag clear register
+};
 
-typedef struct
+struct BDMA_BaseRegister_t
 {
-  __IO uint32_t ISR;   /*!< BDMA interrupt status register */
-  __IO uint32_t IFCR;  /*!< BDMA interrupt flag clear register */
-} BDMA_BaseRegisters;
+    volatile uint32_t ISR;          // BDMA interrupt status register
+    volatile uint32_t IFCR;         // BDMA interrupt flag clear register
+};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -91,10 +90,6 @@ typedef struct
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 {
-    uint32_t registerValue;
-    DMA_BaseRegisters *regs_dma;
-    BDMA_BaseRegisters *regs_bdma;
-
     m_Handle.pPtr = pInfo->pHandle;
 
     // DMA1 or DMA2 instance
@@ -105,10 +100,15 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 
         if((uint32_t(m_Handle.pPtr) <= ((uint32_t)DMA2_Stream7) ) && (uint32_t(m_Handle.pPtr) >= ((uint32_t)DMA2_Stream0)))
         {
-          m_StreamNumber += 8;
+            SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA2EN);                                                          // Enable Clock for DMA module 2
+            m_StreamNumber += 8;
+        }
+        else
+        {
+            SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA1EN);                                                          // Enable Clock for DMA module 1
         }
 
-        m_StreamIndex  = ((m_StreamNumber & 0x01) ? 0x06 : 0x00) | ((m_StreamNumber & 0x02) ? 0x10 : 0x00);   // Bitshift of flags within status registers
+        m_StreamIndex  = ((m_StreamNumber & 0x01) ? 0x06 : 0x00) | ((m_StreamNumber & 0x02) ? 0x10 : 0x00);     // Bitshift of flags within status registers
 
       #if (DMA_CHECK_FIFO_PARAMS == DEF_ENABLED)
         if(CheckFifoParam(pInfo) != SYS_READY)
@@ -120,9 +120,9 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
         }
       #endif
 
-        CLEAR_BIT(m_Handle.pDMA->CR, DMA_SxCR_EN);                                             // Disable the DMA
-        while((m_Handle.pDMA->CR & DMA_SxCR_EN) != 0) {};                                      // Check if the DMA Stream is effectively disabled
-        MODIFY_REG(m_Handle.pDMA->CR, DMA_SxCR_INIT_MASK, pInfo->Config);                      // Write the DMA Stream configuration
+        CLEAR_BIT(m_Handle.pDMA->CR, DMA_SxCR_EN);                                                              // Disable the DMA
+        while((m_Handle.pDMA->CR & DMA_SxCR_EN) != 0) {};                                                       // Check if the DMA Stream is effectively disabled
+        MODIFY_REG(m_Handle.pDMA->CR, DMA_SxCR_INIT_MASK, pInfo->Config);                                       // Write the DMA Stream configuration
 
         // Work around for Errata 2.22: UART/USART- DMA transfer lock: DMA stream could be lock when transferring data to/from USART/UART
       #if (STM32H7_DEV_ID == 0x450UL)
@@ -141,19 +141,19 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 
 /*
 
-        MODIFY_REG(m_pHandle.pDMA->FCR, (uint32_t)~(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH), pInfo->FIFO_Config));  // Prepare the DMA Stream FIFO configuration
+        MODIFY_REG(m_pHandle.pDMA->FCR, (uint32_t)~(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH), pInfo->FIFO_Config));     // Prepare the DMA Stream FIFO configuration
 
-        if(hdma->Init.FIFOMode == DMA_FIFOMODE_ENABLE)                                                      // the FIFO threshold is not used when the FIFO mode is disabled
+        if(hdma->Init.FIFOMode == DMA_FIFOMODE_ENABLE)                                                          // the FIFO threshold is not used when the FIFO mode is disabled
         {
-            if(hdma->Init.MemBurst != DMA_MEMORY_BURST_SINGLE)                                              // Check compatibility between FIFO threshold level and size of the memory burst for INCR4, INCR8, INCR16
+            if(hdma->Init.MemBurst != DMA_MEMORY_BURST_SINGLE)                                                  // Check compatibility between FIFO threshold level and size of the memory burst for INCR4, INCR8, INCR16
 
 
 
-        MODIFY_REG(m_pHandle.pDMA->FCR, (uint32_t)~(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH, hdma->Init.FIFOMode)); // Prepare the DMA Stream FIFO configuration
+        MODIFY_REG(m_pHandle.pDMA->FCR, (uint32_t)~(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH, hdma->Init.FIFOMode));     // Prepare the DMA Stream FIFO configuration
 
-        if(hdma->Init.FIFOMode == DMA_FIFOMODE_ENABLE)                                                      // the FIFO threshold is not used when the FIFO mode is disabled
+        if(hdma->Init.FIFOMode == DMA_FIFOMODE_ENABLE)                                                          // the FIFO threshold is not used when the FIFO mode is disabled
         {
-            if(hdma->Init.MemBurst != DMA_MBURST_SINGLE)                                                    // Check compatibility between FIFO threshold level and size of the memory burst for INCR4, INCR8, INCR16
+            if(hdma->Init.MemBurst != DMA_MBURST_SINGLE)                                                        // Check compatibility between FIFO threshold level and size of the memory burst for INCR4, INCR8, INCR16
             {
                 if(DMA_CheckFifoParam(hdma) != HAL_OK)
                 {
@@ -166,9 +166,8 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 */
 //--------------------------------------------------------------------------
 
-        CalcBaseAndBitShift();
-        regs_dma = (DMA_BaseRegisters *)m_StreamBaseAddress;                                        // Initialize StreamBaseAddress and StreamIndex parameters to be used to calculate DMA steam Base Address needed by HAL_DMA_IRQHandler() and HAL_DMA_PollForTransfer()
-        regs_dma->IFCR = 0x3F << (m_StreamIndex & 0x1F);                                                // Clear all interrupt flags
+        CalcBaseAddress();
+        ((DMA_BaseRegister_t *)m_StreamBaseAddress)->IFCR = 0x3F << (m_StreamIndex & 0x1F);                      // Clear all interrupt flags
     }
     else // BDMA instance(s)
     {
@@ -179,38 +178,35 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
         MODIFY_REG(m_Handle.pBDMA->CCR, BDMA_CCR_INIT_MASK, pInfo->Config);
 
         // Prepare the DMA Channel configuration
-        m_StreamIndex = ((uint32_t(m_Handle.pPtr) - (uint32_t)BDMA_Channel0) / ((uint32_t)BDMA_Channel1 - (uint32_t)BDMA_Channel0)) << 2;           // calculation of the channel index
-        CalcBaseAndBitShift();
-        regs_bdma = (BDMA_BaseRegisters *)m_StreamBaseAddress;                                   // Initialize StreamBaseAddress and StreamIndex parameters to be used to calculate DMA steam Base Address needed by HAL_DMA_IRQHandler() and HAL_DMA_PollForTransfer()
-        regs_bdma->IFCR = ((BDMA_IFCR_CGIF0) << (m_StreamIndex & 0x1F));                                // Clear all interrupt flags
+        m_StreamIndex = ((uint32_t(m_Handle.pPtr) - uint32_t(BDMA_Channel0)) /
+                         (uint32_t(BDMA_Channel1) - uint32_t(BDMA_Channel0))) << 2;                             // calculation of the channel index
+        CalcBaseAddress();
+        ((BDMA_BaseRegister_t *)m_StreamBaseAddress)->IFCR = ((BDMA_IFCR_CGIF0) << (m_StreamIndex & 0x1F));      // Clear all interrupt flags
     }
 
-    if(IS_DMA_DMAMUX_ALL_INSTANCE(m_Handle.pPtr) != 0)
-    {
-        CalcDMAMUX_ChannelBaseAndMask();                                                             // Initialize parameters for DMAMUX channel : DMAmuxChannel, DMAmuxChannelStatus and DMAmuxChannelStatusMask
+    CalcDMAMUX_ChannelBaseAndMask();                                                                            // Initialize parameters for DMAMUX channel : DMAmuxChannel, DMAmuxChannelStatus and DMAmuxChannelStatusMask
 
 // THIS is VERY Strange has BDMA and DMA has different config!!!
-        if((pInfo->Config & DMA_SOURCE_TO_DESTINATION_MASK) == DMA_MEMORY_TO_MEMORY)
-        {
-  //TODO          //hdma->Init.Request = DMA_REQUEST_MEM2MEM;                                               // if memory to memory force the request to 0 ( TODO understand this as the comment is wrong!!
-        }
+    if((pInfo->Config & DMA_SOURCE_TO_DESTINATION_MASK) == DMA_MEMORY_TO_MEMORY)
+    {
+//TODO          //hdma->Init.Request = DMA_REQUEST_MEM2MEM;                                               // if memory to memory force the request to 0 ( TODO understand this as the comment is wrong!!
+    }
 
-        m_pDMAMUX_Channel->CCR = (hdma->Init.Request & DMAMUX_CxCR_DMAREQ_ID);                              // Set peripheral request  to DMAMUX channel
-        m_pDMAMUX_ChannelStatus->CFR = m_DMAMUX_ChannelStatusMask;                                          // Clear the DMAMUX synchro overrun flag
+    m_pDMAMUX_Channel->CCR = (pInfo->MUX_Request /*hdma->Init.Request & DMAMUX_CxCR_DMAREQ_ID*/);                              // Set peripheral request  to DMAMUX channel
+    m_pDMAMUX_ChannelStatus->CFR = m_DMAMUX_ChannelStatusMask;                                                  // Clear the DMAMUX synchro overrun flag
 
-        // Initialize parameters for DMAMUX request generator : if the DMA request is DMA_REQUEST_GENERATOR0 to DMA_REQUEST_GENERATOR7
-        if((pInfo->MUX_Request >= DMA_REQUEST_GENERATOR0) && (pInfo->MUX_Request <= DMA_REQUEST_GENERATOR7))
-        {
-            CalcDMAMUX_RequestGenBaseAndMask(pInfo->MUX_Request);                                           // Initialize parameters for DMAMUX request generator : DMAmuxRequestGen, DMAmuxRequestGenStatus and DMAmuxRequestGenStatusMask
-            m_pDMAMUX_RequestGen->RGCR = 0;                                                                 // Reset the DMAMUX request generator register
-            m_pDMAMUX_RequestGenStatus->RGCFR = hdma->DMAmuxRequestGenStatusMask;                           // Clear the DMAMUX request generator overrun flag
-        }
-        else
-        {
-            m_pDMAMUX_RequestGen          = nullptr;
-            m_pDMAMUX_RequestGenStatus    = nullptr;
-            m_DMAMUX_RequestGenStatusMask = 0;
-        }
+    // Initialize parameters for DMAMUX request generator : if the DMA request is DMA_REQUEST_GENERATOR0 to DMA_REQUEST_GENERATOR7
+    if((pInfo->MUX_Request >= DMA_REQUEST_GENERATOR0) && (pInfo->MUX_Request <= DMA_REQUEST_GENERATOR7))
+    {
+        CalcDMAMUX_RequestGenBaseAndMask(pInfo->MUX_Request);                                           // Initialize parameters for DMAMUX request generator : DMAmuxRequestGen, DMAmuxRequestGenStatus and DMAmuxRequestGenStatusMask
+        m_pDMAMUX_RequestGen->RGCR = 0;                                                                 // Reset the DMAMUX request generator register
+        m_pDMAMUX_RequestGenStatus->RGCFR = m_DMAMUX_RequestGenStatusMask;                           // Clear the DMAMUX request generator overrun flag
+    }
+    else
+    {
+        m_pDMAMUX_RequestGen          = nullptr;
+        m_pDMAMUX_RequestGenStatus    = nullptr;
+        m_DMAMUX_RequestGenStatusMask = 0;
     }
 
     /*
@@ -374,32 +370,11 @@ void DMA_Driver::ClearFlag(uint32_t Flag)
 
     if(m_DMA_Type == DMA_TYPE)
     {
-        switch(uintptr_t(m_Handle.pDMA))
-        {
-            case DMA1_Stream0_BASE:
-            case DMA1_Stream1_BASE:
-            case DMA1_Stream2_BASE:
-            case DMA1_Stream3_BASE: pRegister = &DMA1->LIFCR; break;
-
-            case DMA1_Stream4_BASE:
-            case DMA1_Stream5_BASE:
-            case DMA1_Stream6_BASE:
-            case DMA1_Stream7_BASE: pRegister = &DMA1->HIFCR; break;
-
-            case DMA2_Stream0_BASE:
-            case DMA2_Stream1_BASE:
-            case DMA2_Stream2_BASE:
-            case DMA2_Stream3_BASE: pRegister = &DMA2->LIFCR; break;
-
-            case DMA2_Stream4_BASE:
-            case DMA2_Stream5_BASE:
-            case DMA2_Stream6_BASE:
-            case DMA2_Stream7_BASE: pRegister = &DMA2->HIFCR; break;
-        }
+        pRegister = (uint32_t*)&((DMA_BaseRegister_t *)m_StreamBaseAddress)->IFCR;
     }
     else // BDMA_TYPE
     {
-        pRegister = (uint32_t*)BDMA1->IFCR;
+        pRegister = (uint32_t*)&((BDMA_BaseRegister_t *)m_StreamBaseAddress)->IFCR;
     }
 
     if(pRegister != nullptr)
@@ -466,36 +441,11 @@ bool DMA_Driver::CheckFlag(uint32_t Flag)
 
     if(m_DMA_Type == DMA_TYPE)
     {
-        // we may already have it with m_StreamBaseAddress
-
-        switch(uintptr_t(m_Handle.pDMA))
-        {
-            case DMA1_Stream0_BASE:
-            case DMA1_Stream1_BASE:
-            case DMA1_Stream2_BASE:
-            case DMA1_Stream3_BASE: Register = DMA1->LISR; break;
-
-            case DMA1_Stream4_BASE:
-            case DMA1_Stream5_BASE:
-            case DMA1_Stream6_BASE:
-            case DMA1_Stream7_BASE: Register = DMA1->HISR; break;
-
-            case DMA2_Stream0_BASE:
-            case DMA2_Stream1_BASE:
-            case DMA2_Stream2_BASE:
-            case DMA2_Stream3_BASE: Register = DMA2->LISR; break;
-
-            case DMA2_Stream4_BASE:
-            case DMA2_Stream5_BASE:
-            case DMA2_Stream6_BASE:
-            case DMA2_Stream7_BASE: Register = DMA2->HISR; break;
-        }
-        
-        
+        Register = ((DMA_BaseRegister_t *)m_StreamBaseAddress)->ISR;
     }
     else // BDMA_TYPE
     {
-        Register = (uint32_t*)BDMA1->ISR;
+        Register = ((BDMA_BaseRegister_t *)m_StreamBaseAddress)->ISR;
     }
 
     if((Register & Flag) != 0)
@@ -531,7 +481,7 @@ void DMA_Driver::EnableClock(void)
     }
     else
     {
-        SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_BDMA2EN);  //?????
+        SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_BDMAEN);  //?????
     }
 }
 
@@ -613,7 +563,7 @@ void DMA_Driver::DisableTransmitHalfCompleteInterrupt(void)
 #if (DMA_CHECK_FIFO_PARAMS == DEF_ENABLED)
 SystemState_e DMA_Driver::CheckFifoParam(DMA_Info_t* pInfo)
 {
-    SystemState_e State;
+    SystemState_e State = SYS_READY;
 
     if((pInfo->Config & DMA_SxCR_MSIZE_Msk) == DMA_MEMORY_SIZE_8_BITS)             // Memory Data size equal to Byte
     {
@@ -708,7 +658,7 @@ SystemState_e DMA_Driver::CheckFifoParam(DMA_Info_t* pInfo)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CalcBaseAndBitShift
+//  Name:           CalcBaseAddress
 //
 //  Parameter(s):   None
 //  Return:         None
@@ -716,13 +666,13 @@ SystemState_e DMA_Driver::CheckFifoParam(DMA_Info_t* pInfo)
 //  Description:    Returns the DMA Stream base address depending on stream number
 //
 //-------------------------------------------------------------------------------------------------
-void DMA_Driver::CalcBaseAndBitShift(void)
+void DMA_Driver::CalcBaseAddress(void)
 {
     if(m_DMA_Type == DMA_TYPE) // DMA1 or DMA2 instance
     {
         m_StreamBaseAddress = (uint32_t(m_Handle.pPtr) & uint32_t(~0x3FF));
 
-        if(m_StreamIndex > 3)
+        if(m_StreamNumber > 3)
         {
             m_StreamBaseAddress += 4;                         // Return pointer to LISR and LIFCR
         }
@@ -760,8 +710,8 @@ void DMA_Driver::CalcDMAMUX_ChannelBaseAndMask(void)
         m_pDMAMUX_ChannelStatus = DMAMUX2_ChannelStatus;
     }
 
-    m_pDMAMUX_Channel          = (DMAMUX_Channel_TypeDef *)((uint32_t)(((uint32_t)DMAMUX_ChannelAddress) + (m_StreamIndex * 4)));
-    m_DMAMUX_ChannelStatusMask = uint32_t(1) << (m_StreamIndex & 0x1F);
+    m_pDMAMUX_Channel          = (DMAMUX_Channel_TypeDef *)((uint32_t)(((uint32_t)DMAMUX_ChannelAddress) + (m_StreamNumber * 4)));
+    m_DMAMUX_ChannelStatusMask = uint32_t(1) << (m_StreamNumber & 0x1F);
 }
 
 //-------------------------------------------------------------------------------------------------

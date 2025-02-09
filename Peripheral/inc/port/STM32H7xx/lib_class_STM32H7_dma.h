@@ -413,7 +413,7 @@ class DMA_Driver
     private:
 
         void            EnableClock                             (void);
-        void            CalcBaseAndBitShift                     (void);
+        void            CalcBaseAddress                         (void);
         void            CalcDMAMUX_ChannelBaseAndMask           (void);
         void            CalcDMAMUX_RequestGenBaseAndMask        (uint32_t Request);
 
@@ -421,25 +421,25 @@ class DMA_Driver
         SystemState_e   CheckFifoParam                          (DMA_Info_t* pInfo);
       #endif
 
-        DMA_Type_e                      m_DMA_Type;
-        DMA_Pointer_u                   m_Handle;
+        DMA_Type_e                          m_DMA_Type;
+        DMA_Pointer_u                       m_Handle;
 
-        uint32_t                        m_StreamNumber;
-        uint32_t                        m_StreamIndex;
-        uint32_t                        m_StreamBaseAddress;
+        uint32_t                            m_StreamNumber;                 // This is the real Stream number
+        uint32_t                            m_StreamIndex;                  // This is the stream index for 'Low' and
+        uint32_t                            m_StreamBaseAddress;            // For flag clearing
 
-        DMAMUX_Channel_TypeDef*         m_pDMAMUX_Channel;
-        DMAMUX_ChannelStatus_TypeDef*   m_pDMAMUX_ChannelStatus;
-        uint32_t                        m_DMAMUX_ChannelStatusMask;
+        DMAMUX_Channel_TypeDef*             m_pDMAMUX_Channel;
+        DMAMUX_ChannelStatus_TypeDef*       m_pDMAMUX_ChannelStatus;
+        uint32_t                            m_DMAMUX_ChannelStatusMask;
 
-        DMAMUX_RequestGen_TypeDef       m_pDMAMUX_RequestGen;           // DMAMUX request generator Base Address
-        DMAMUX_RequestGenStatus_TypeDef m_pDMAMUX_RequestGenStatus;     // DMAMUX request generator Status Address
-        uint32_t                        m_DMAMUX_RequestGenStatusMask;
+        DMAMUX_RequestGen_TypeDef*          m_pDMAMUX_RequestGen;           // DMAMUX request generator Base Address
+        DMAMUX_RequestGenStatus_TypeDef*    m_pDMAMUX_RequestGenStatus;     // DMAMUX request generator Status Address
+        uint32_t                            m_DMAMUX_RequestGenStatusMask;
 
-        uint32_t                        m_Flag;
-        IRQn_Type                       m_IRQn_Channel;
-        uint32_t                        m_Direction;
-        CallbackInterface*              m_pCallback;
+        uint32_t                            m_Flag;
+        IRQn_Type                           m_IRQn_Channel;
+        uint32_t                            m_Direction;
+        CallbackInterface*                  m_pCallback;
 };
 
 //-------------------------------------------------------------------------------------------------

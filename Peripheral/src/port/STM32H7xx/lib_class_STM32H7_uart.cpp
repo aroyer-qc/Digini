@@ -141,7 +141,7 @@ void UART_Driver::Initialize(void)
                 RCC->APB2RSTR   |=  RCC_APB2RSTR_USART1RST;         // Enable USART1 reset state
                 RCC->APB2RSTR   &= ~RCC_APB2RSTR_USART1RST;         // Release USART1 from reset state
                 RCC->APB2ENR    |=  RCC_APB2ENR_USART1EN;           // Enable USART_PORT clock
-                m_ClockFrequency =  USART16_CLOCK_FREQUENCY;
+                m_ClockFrequency =  USART16910_CLOCK_FREQUENCY;
             }
             break;
           #endif
@@ -201,7 +201,7 @@ void UART_Driver::Initialize(void)
                 RCC->APB2RSTR   |=  RCC_APB2RSTR_USART6RST;         // Enable USART2 reset state
                 RCC->APB2RSTR   &= ~RCC_APB2RSTR_USART6RST;         // Release USART2 from reset state
                 RCC->APB2ENR    |=  RCC_APB2ENR_USART6EN;           // Enable USART_PORT clock
-                m_ClockFrequency =  USART16_CLOCK_FREQUENCY;
+                m_ClockFrequency =  USART16910_CLOCK_FREQUENCY;
             }
             break;
           #endif
@@ -226,6 +226,30 @@ void UART_Driver::Initialize(void)
                 RCC->APB1LRSTR  &= ~RCC_APB1LRSTR_UART8RST;         // Release UART8 from reset state
                 RCC->APB1LENR   |=  RCC_APB1LENR_UART8EN;           // Enable UART_PORT clock
                 m_ClockFrequency =  USART234578_CLOCK_FREQUENCY;
+            }
+            break;
+          #endif
+
+          #if (UART_DRIVER_SUPPORT_UART9_CFG == DEF_ENABLED)
+            case uint32_t(UART_DRIVER_ID_9):
+            {
+                // ---- Reset peripheral and set clock ----
+                RCC->APB2RSTR |=  RCC_APB2RSTR_UART9RST;            // Enable UART9 reset state
+                RCC->APB2RSTR &= ~RCC_APB2RSTR_UART9RST;            // Release UART9 from reset state
+                RCC->APB2ENR  |=  RCC_APB2ENR_UART9EN;              // Enable UART_PORT clock
+                m_ClockFrequency =  USART16910_CLOCK_FREQUENCY;
+            }
+            break;
+          #endif
+
+          #if (UART_DRIVER_SUPPORT_UART10_CFG == DEF_ENABLED)
+            case uint32_t(UART_DRIVER_ID_10):
+            {
+                // ---- Reset peripheral and set clock ----
+                RCC->APB2RSTR |=  RCC_APB2RSTR_USART10RST;          // Enable USART10 reset state
+                RCC->APB2RSTR &= ~RCC_APB2RSTR_USART10RST;          // Release USART10 from reset state
+                RCC->APB2ENR  |=  RCC_APB2ENR_USART10EN;            // Enable UART_PORT clock
+                m_ClockFrequency =  USART16910_CLOCK_FREQUENCY;
             }
             break;
           #endif

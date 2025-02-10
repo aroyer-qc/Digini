@@ -398,7 +398,7 @@ class DMA_Driver
         void            SetFifoControl                          (uint32_t Control);
         void            ClearFlag                               (uint32_t Flag);
         bool            CheckFlag                               (uint32_t Flag);
-        void            EnableIRQ                               (uint8_t PremptionPriority);
+        void            EnableIRQ                               (void);
         void            EnableInterrupt                         (uint32_t Interrupt);
         void            DisableInterrupt                        (uint32_t Interrupt);
         void            EnableTransmitCompleteInterrupt         (void);
@@ -407,7 +407,7 @@ class DMA_Driver
         void            DisableTransmitHalfCompleteInterrupt    (void);
 
         // Inline method
-        void            ClearFlag                               (void)                              { ClearFlag(m_Flag);                    }
+        void            ClearFlag                               (void)                              { ClearFlag(m_pInfo->Flag);             }
         void            RegisterCallback                        (CallbackInterface* pCallback)      { m_pCallback = pCallback;              }
 
     private:
@@ -423,6 +423,7 @@ class DMA_Driver
 
         DMA_Type_e                          m_DMA_Type;
         DMA_Pointer_u                       m_Handle;
+        DMA_Info_t*                         m_pInfo;
 
         uint32_t                            m_StreamNumber;                 // This is the real Stream number
         uint32_t                            m_StreamIndex;                  // This is the stream index for 'Low' and
@@ -436,8 +437,9 @@ class DMA_Driver
         DMAMUX_RequestGenStatus_TypeDef*    m_pDMAMUX_RequestGenStatus;     // DMAMUX request generator Status Address
         uint32_t                            m_DMAMUX_RequestGenStatusMask;
 
-        uint32_t                            m_Flag;
-        IRQn_Type                           m_IRQn_Channel;
+//        uint32_t                            m_Flag;
+//        IRQn_Type                           m_IRQn_Channel;
+//        uint32_t                            m_PremptionPriority;
         uint32_t                            m_Direction;
         CallbackInterface*                  m_pCallback;
 };

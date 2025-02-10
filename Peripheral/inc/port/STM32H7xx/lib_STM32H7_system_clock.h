@@ -809,28 +809,28 @@
   #pragma message "XSTR(CFG_PLL1_N_MULTIPLIER)"
   #error PLL1N is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL1_N                    (CFG_PLL1_N_MULTIPLIER << CFG_RCC_PLLDIVR_PLL_N_POS)
+  #define CFG_RCC_PLLDIVR_PLL1_N                    ((CFG_PLL1_N_MULTIPLIER - 1) << CFG_RCC_PLLDIVR_PLL_N_POS)
 #endif
 
 #if (CFG_PLL1_P_DIVIDER < MIN_DIVP1) || (CFG_PLL1_P_DIVIDER > MAX_DIVP1)
   #pragma message "XSTR(CFG_PLL1_P_DIVIDER)"
   #error PLL1P is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL1_P                    (CFG_PLL1_P_DIVIDER << CFG_RCC_PLLDIVR_PLL_P_POS)
+  #define CFG_RCC_PLLDIVR_PLL1_P                    ((CFG_PLL1_P_DIVIDER - 1) << CFG_RCC_PLLDIVR_PLL_P_POS)
 #endif
 
 #if (CFG_PLL1_Q_DIVIDER < MIN_DIVQ1) || (CFG_PLL1_Q_DIVIDER > MAX_DIVQ1)
   #pragma message "XSTR(CFG_PLL1_Q_DIVIDER)"
   #error PLL1Q is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL1_Q                    (CFG_PLL1_Q_DIVIDER << CFG_RCC_PLLDIVR_PLL_Q_POS)
+  #define CFG_RCC_PLLDIVR_PLL1_Q                    ((CFG_PLL1_Q_DIVIDER - 1) << CFG_RCC_PLLDIVR_PLL_Q_POS)
 #endif
 
 #if (CFG_PLL1_R_DIVIDER < MIN_DIVR1) || (CFG_PLL1_R_DIVIDER > MAX_DIVR1)
   #pragma message "XSTR(CFG_PLL1_R_DIVIDER)"
   #error PLL1R is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL1_R                    (CFG_PLL1_R_DIVIDER << CFG_RCC_PLLDIVR_PLL_R_POS)
+  #define CFG_RCC_PLLDIVR_PLL1_R                    ((CFG_PLL1_R_DIVIDER - 1) << CFG_RCC_PLLDIVR_PLL_R_POS)
 #endif
 
 #define CFG_RCC_PLL1_DIVR                           (CFG_RCC_PLLDIVR_PLL1_N |   \
@@ -858,21 +858,21 @@
   #pragma message "XSTR(CFG_PLL2_N_MULTIPLIER)"
   #error PLL2N is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL2_N                    (CFG_PLL2_N_MULTIPLIER << CFG_RCC_PLLDIVR_PLL_N_POS)
+  #define CFG_RCC_PLLDIVR_PLL2_N                    ((CFG_PLL2_N_MULTIPLIER - 1) << CFG_RCC_PLLDIVR_PLL_N_POS)
 #endif
 
 #if (CFG_PLL2_P_DIVIDER < MIN_DIVP2) || (CFG_PLL2_P_DIVIDER > MAX_DIVP2)
   #pragma message "XSTR(CFG_PLL2_P_DIVIDER)"
   #error PLL2P is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL2_P                    (CFG_PLL2_P_DIVIDER << CFG_RCC_PLLDIVR_PLL_P_POS)
+  #define CFG_RCC_PLLDIVR_PLL2_P                    ((CFG_PLL2_P_DIVIDER - 1) << CFG_RCC_PLLDIVR_PLL_P_POS)
 #endif
 
 #if (CFG_PLL2_Q_DIVIDER < MIN_DIVQ2) || (CFG_PLL2_Q_DIVIDER > MAX_DIVQ2)
   #pragma message "XSTR(CFG_PLL2_Q_DIVIDER)"
   #error PLL2Q is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL2_Q                    (CFG_PLL2_Q_DIVIDER << CFG_RCC_PLLDIVR_PLL_Q_POS)
+  #define CFG_RCC_PLLDIVR_PLL2_Q                    ((CFG_PLL2_Q_DIVIDER - 1) << CFG_RCC_PLLDIVR_PLL_Q_POS)
 #endif
 
 #if (CFG_PLL2_R_DIVIDER < MIN_DIVR2) || (CFG_PLL2_R_DIVIDER > MAX_DIVR2)
@@ -907,28 +907,28 @@
   #pragma message "XSTR(CFG_PLL3_N_MULTIPLIER)"
   #error PLL3N is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL3_N                    (CFG_PLL3_N_MULTIPLIER << CFG_RCC_PLLDIVR_PLL_N_POS)
+  #define CFG_RCC_PLLDIVR_PLL3_N                    ((CFG_PLL3_N_MULTIPLIER - 1) << CFG_RCC_PLLDIVR_PLL_N_POS)
 #endif
 
 #if (CFG_PLL3_P_DIVIDER < MIN_DIVP3) || (CFG_PLL3_P_DIVIDER > MAX_DIVP3)
   #pragma message "XSTR(CFG_PLL3_P_DIVIDER)"
   #error PLL3P is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL3_P                    (CFG_PLL3_P_DIVIDER << CFG_RCC_PLLDIVR_PLL_P_POS)
+  #define CFG_RCC_PLLDIVR_PLL3_P                    ((CFG_PLL3_P_DIVIDER - 1) << CFG_RCC_PLLDIVR_PLL_P_POS)
 #endif
 
 #if (CFG_PLL3_Q_DIVIDER < MIN_DIVQ3) || (CFG_PLL3_Q_DIVIDER > MAX_DIVQ3)
   #pragma message "XSTR(CFG_PLL3_Q_DIVIDER)"
   #error PLL3Q is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL3_Q                    (CFG_PLL3_Q_DIVIDER << CFG_RCC_PLLDIVR_PLL_Q_POS)
+  #define CFG_RCC_PLLDIVR_PLL3_Q                    ((CFG_PLL3_Q_DIVIDER - 1) << CFG_RCC_PLLDIVR_PLL_Q_POS)
 #endif
 
 #if (CFG_PLL3_R_DIVIDER < MIN_DIVR3) || (CFG_PLL3_R_DIVIDER > MAX_DIVR3)
   #pragma message "XSTR(CFG_PLL3_R_DIVIDER)"
   #error PLL3R is out of range
 #else
-  #define CFG_RCC_PLLDIVR_PLL3_R                    (CFG_PLL3_R_DIVIDER << CFG_RCC_PLLDIVR_PLL_R_POS)
+  #define CFG_RCC_PLLDIVR_PLL3_R                    ((CFG_PLL3_R_DIVIDER - 1) << CFG_RCC_PLLDIVR_PLL_R_POS)
 #endif
 
 #define CFG_RCC_PLL3_DIVR                           (CFG_RCC_PLLDIVR_PLL3_N |   \
@@ -1363,7 +1363,7 @@
   #elif (CFG_UART16910_SOURCE_MUX == CFG_USART16910_LSE)
     #define USART16910_CLOCK_FREQUENCY        LSE_CLOCK_FREQUENCY
   #endif
-#endif    
+#endif
 
 /// USART 1,6 clock frequency
 #if   (CFG_UART16_SOURCE_MUX == CFG_USART16_PCLK2)

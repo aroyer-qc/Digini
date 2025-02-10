@@ -95,6 +95,7 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 {
     m_Handle.pPtr = pInfo->pHandle;
     m_Direction   = pInfo->Config & DMA_DIRECTION_MASK;
+    m_pInfo       = pInfo;
 
     // DMA1 or DMA2 instance
     if(uintptr_t(m_Handle.pPtr) < BDMA_BASE)
@@ -394,10 +395,10 @@ size_t DMA_Driver::GetLength(void)
 //
 //  Function:       SetLength
 //
-//  Parameter(s):   
+//  Parameter(s):
 //  Return:         None
 //
-//  Description:    
+//  Description:
 //
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetLength(size_t Length)
@@ -413,7 +414,7 @@ void DMA_Driver::SetLength(size_t Length)
 //  Parameter(s):   None
 //  Return:         None
 //
-//  Description:    
+//  Description:
 //
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetMemoryIncrement(void)
@@ -429,7 +430,7 @@ void DMA_Driver::SetMemoryIncrement(void)
 //  Parameter(s):   None
 //  Return:         None
 //
-//  Description:    
+//  Description:
 //
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetNoMemoryIncrement(void)
@@ -442,10 +443,10 @@ void DMA_Driver::SetNoMemoryIncrement(void)
 //
 //  Function:       SetFifoControl
 //
-//  Parameter(s):   
+//  Parameter(s):
 //  Return:         None
 //
-//  Description:    
+//  Description:
 //
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetFifoControl(uint32_t Control)
@@ -514,7 +515,13 @@ void DMA_Driver::EnableClock(void)
     }
     else
     {
-        SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_BDMAEN);  //?????
+      #ifdef RCC_AHB4ENR_BDMAEN
+        SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_BDMAEN);
+      #endif
+
+      #ifdef RCC_AHB4ENR_BDMA2EN
+        SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_BDMA2EN);
+      #endif
     }
 }
 
@@ -522,15 +529,15 @@ void DMA_Driver::EnableClock(void)
 //
 //  Name:           EnableIRQ
 //
-//  Parameter(s):   uint8_t    PremptionPriority
+//  Parameter(s):   None
 //  Return:         None
 //
 //  Description:    Enable the IRQ DMA for the Channel and Stream
 //
 //-------------------------------------------------------------------------------------------------
-void DMA_Driver::EnableIRQ(uint8_t PremptionPriority)
+void DMA_Driver::EnableIRQ(void)
 {
-    ISR_Init(m_IRQn_Channel, PremptionPriority);
+    ISR_Init(m_pInfo->IRQn_Channel, m_pInfo->PreempPrio);
 }
 
 //-------------------------------------------------------------------------------------------------

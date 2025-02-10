@@ -138,9 +138,9 @@ void UART_Driver::Initialize(void)
             case uint32_t(UART_DRIVER_ID_1):
             {
                 // ---- Reset peripheral and set clock ----
-                RCC->APB2RSTR  |=  RCC_APB2RSTR_USART1RST;          // Enable USART1 reset state
-                RCC->APB2RSTR  &= ~RCC_APB2RSTR_USART1RST;          // Release USART1 from reset state
-                RCC->APB2ENR   |=  RCC_APB2ENR_USART1EN;            // Enable USART_PORT clock
+                RCC->APB2RSTR   |=  RCC_APB2RSTR_USART1RST;         // Enable USART1 reset state
+                RCC->APB2RSTR   &= ~RCC_APB2RSTR_USART1RST;         // Release USART1 from reset state
+                RCC->APB2ENR    |=  RCC_APB2ENR_USART1EN;           // Enable USART_PORT clock
                 m_ClockFrequency =  USART16_CLOCK_FREQUENCY;
             }
             break;
@@ -253,7 +253,7 @@ void UART_Driver::Initialize(void)
 
       #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED) && (UART_DRIVER_DMA_TX_COMPLETED_CFG == DEF_ENABLED)
         m_DMA_TX.EnableTransmitCompleteInterrupt();
-//        m_DMA_TX.EnableIRQ();
+        m_DMA_TX.EnableIRQ();
       #endif
 
         m_DMA_IsItBusyTX = false;

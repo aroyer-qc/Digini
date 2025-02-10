@@ -64,6 +64,9 @@
 
 #define DMA_SOURCE_TO_DESTINATION_MASK          DMA_SxCR_DIR_Msk
 
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
 
 struct DMA_BaseRegister_t
 {
@@ -91,6 +94,7 @@ struct BDMA_BaseRegister_t
 void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 {
     m_Handle.pPtr = pInfo->pHandle;
+    m_Direction   = pInfo->Config & DMA_DIRECTION_MASK;
 
     // DMA1 or DMA2 instance
     if(uintptr_t(m_Handle.pPtr) < BDMA_BASE)
@@ -137,8 +141,11 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
         }
       #endif // STM32H7_DEV_ID == 0x450UL
 
-//--------------------------------------------------------------------------
+        CalcBaseAddress();
+        ((DMA_BaseRegister_t *)m_CommonBaseAddress)->IFCR = 0x3F << (m_StreamIndex & 0x1F);                      // Clear all interrupt flags
 
+//--------------------------------------------------------------------------
+// FIFO not required at this time..
 /*
 
         MODIFY_REG(m_pHandle.pDMA->FCR, (uint32_t)~(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH), pInfo->FIFO_Config));     // Prepare the DMA Stream FIFO configuration
@@ -165,9 +172,6 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
         }
 */
 //--------------------------------------------------------------------------
-
-        CalcBaseAddress();
-        ((DMA_BaseRegister_t *)m_StreamBaseAddress)->IFCR = 0x3F << (m_StreamIndex & 0x1F);                      // Clear all interrupt flags
     }
     else // BDMA instance(s)
     {
@@ -181,7 +185,7 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
         m_StreamIndex = ((uint32_t(m_Handle.pPtr) - uint32_t(BDMA_Channel0)) /
                          (uint32_t(BDMA_Channel1) - uint32_t(BDMA_Channel0))) << 2;                             // calculation of the channel index
         CalcBaseAddress();
-        ((BDMA_BaseRegister_t *)m_StreamBaseAddress)->IFCR = ((BDMA_IFCR_CGIF0) << (m_StreamIndex & 0x1F));      // Clear all interrupt flags
+        ((BDMA_BaseRegister_t *)m_CommonBaseAddress)->IFCR = ((BDMA_IFCR_CGIF0) << (m_StreamIndex & 0x1F));     // Clear all interrupt flags
     }
 
     CalcDMAMUX_ChannelBaseAndMask();                                                                            // Initialize parameters for DMAMUX channel : DMAmuxChannel, DMAmuxChannelStatus and DMAmuxChannelStatusMask
@@ -189,18 +193,18 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 // THIS is VERY Strange has BDMA and DMA has different config!!!
     if((pInfo->Config & DMA_SOURCE_TO_DESTINATION_MASK) == DMA_MEMORY_TO_MEMORY)
     {
-//TODO          //hdma->Init.Request = DMA_REQUEST_MEM2MEM;                                               // if memory to memory force the request to 0 ( TODO understand this as the comment is wrong!!
+//TODO          //hdma->Init.Request = DMA_REQUEST_MEM2MEM;                                                     // if memory to memory force the request to 0 ( TODO understand this as the comment is wrong!!
     }
 
-    m_pDMAMUX_Channel->CCR = (pInfo->MUX_Request /*hdma->Init.Request & DMAMUX_CxCR_DMAREQ_ID*/);                              // Set peripheral request  to DMAMUX channel
+    m_pDMAMUX_Channel->CCR = (pInfo->MUX_Request);                                                              // Set peripheral request  to DMAMUX channel
     m_pDMAMUX_ChannelStatus->CFR = m_DMAMUX_ChannelStatusMask;                                                  // Clear the DMAMUX synchro overrun flag
 
     // Initialize parameters for DMAMUX request generator : if the DMA request is DMA_REQUEST_GENERATOR0 to DMA_REQUEST_GENERATOR7
     if((pInfo->MUX_Request >= DMA_REQUEST_GENERATOR0) && (pInfo->MUX_Request <= DMA_REQUEST_GENERATOR7))
     {
-        CalcDMAMUX_RequestGenBaseAndMask(pInfo->MUX_Request);                                           // Initialize parameters for DMAMUX request generator : DMAmuxRequestGen, DMAmuxRequestGenStatus and DMAmuxRequestGenStatusMask
-        m_pDMAMUX_RequestGen->RGCR = 0;                                                                 // Reset the DMAMUX request generator register
-        m_pDMAMUX_RequestGenStatus->RGCFR = m_DMAMUX_RequestGenStatusMask;                           // Clear the DMAMUX request generator overrun flag
+        CalcDMAMUX_RequestGenBaseAndMask(pInfo->MUX_Request);                                                   // Initialize parameters for DMAMUX request generator : DMAmuxRequestGen, DMAmuxRequestGenStatus and DMAmuxRequestGenStatusMask
+        m_pDMAMUX_RequestGen->RGCR = 0;                                                                         // Reset the DMAMUX request generator register
+        m_pDMAMUX_RequestGenStatus->RGCFR = m_DMAMUX_RequestGenStatusMask;                                  // Clear the DMAMUX request generator overrun flag
     }
     else
     {
@@ -208,38 +212,18 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
         m_pDMAMUX_RequestGenStatus    = nullptr;
         m_DMAMUX_RequestGenStatusMask = 0;
     }
-
-    /*
-    uint32_t StreamNumber;
-
-    m_pDMA         = pInfo->pDMA;
-    m_Flag         = pInfo->Flag;
-    m_IRQn_Channel = pInfo->IRQn_Channel;
-    EnableClock();
-    m_pDMA->CR     = pInfo->Config;
-    m_Direction    = pInfo->Config & DMA_DIRECTION_MASK;
-
-    // DMA1/DMA2 Streams are connected to DMAMUX1 channels
-    StreamNumber = ((uint32_t(m_pDMA) & 0xFF) - 16) / 24;
-
-    if((uintptr_t(m_pDMA) <= uintptr_t(DMA2_Stream7_BASE)) && (uintptr_t(m_pDMA) >= uintptr_t(DMA2_Stream0_BASE)))
-    {
-      StreamNumber += 8;
-    }
-
-// do i need to do this... will it be use again later
-    m_DMAMUX_Channel            = (DMAMUX_Channel_TypeDef *)((uint32_t)(((uint32_t)DMAMUX1_Channel0) + (StreamNumber * 4)));
-    m_DMAMUX_ChannelStatus      = DMAMUX1_ChannelStatus;     // not neccessary all DMA1 and 2 are on this
-    m_DMAMUX_ChannelStatusMask  = uint32_t(1) << (StreamNumber & 0x1F);
-
-    m_DMAMUX_Channel->CCR       = MUX_Request;                               // Set peripheral request  to DMAMUX channel
-    m_DMAMUX_ChannelStatus->CFR = m_DMAMUX_ChannelStatusMask;           // Clear the DMAMUX synchro overrun flag
-
-    */
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Function:       Enable
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Enable the DMA Stream or Channel
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_Driver::Enable(void)
 {
      if(m_DMA_Type == DMA_TYPE) SET_BIT(m_Handle.pDMA->CR,   DMA_SxCR_EN);
@@ -247,7 +231,15 @@ void DMA_Driver::Enable(void)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Function:       Disable
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Disable the DMA Stream or Channel
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_Driver::Disable(void)
 {
     if(m_DMA_Type == DMA_TYPE) CLEAR_BIT(m_Handle.pDMA->CR,   DMA_SxCR_EN);
@@ -338,8 +330,6 @@ void DMA_Driver::SetSource(void* pSource)
 //  Description:    Setup destination for transfer from source to destination. according to
 //                  configuration
 //
-//  Note(s):        Add in direction support for M2M
-//
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetDestination(void* Destination)
 {
@@ -363,6 +353,7 @@ void DMA_Driver::SetDestination(void* Destination)
 //  Return:         None
 //
 //  Description:    Clear flag for specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::ClearFlag(uint32_t Flag)
 {
@@ -370,11 +361,11 @@ void DMA_Driver::ClearFlag(uint32_t Flag)
 
     if(m_DMA_Type == DMA_TYPE)
     {
-        pRegister = (uint32_t*)&((DMA_BaseRegister_t *)m_StreamBaseAddress)->IFCR;
+        pRegister = (uint32_t*)&((DMA_BaseRegister_t *)m_CommonBaseAddress)->IFCR;
     }
     else // BDMA_TYPE
     {
-        pRegister = (uint32_t*)&((BDMA_BaseRegister_t *)m_StreamBaseAddress)->IFCR;
+        pRegister = (uint32_t*)&((BDMA_BaseRegister_t *)m_CommonBaseAddress)->IFCR;
     }
 
     if(pRegister != nullptr)
@@ -384,7 +375,15 @@ void DMA_Driver::ClearFlag(uint32_t Flag)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Function:       GetLength
+//
+//  Parameter(s):   None
+//  Return:         The actual lenght in the register
+//
+//  Description:    Return the actual remaining length of DMA
+//
+//-------------------------------------------------------------------------------------------------
 size_t DMA_Driver::GetLength(void)
 {
     if(m_DMA_Type == DMA_TYPE) return size_t(m_Handle.pDMA->NDTR);
@@ -392,7 +391,15 @@ size_t DMA_Driver::GetLength(void)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Function:       SetLength
+//
+//  Parameter(s):   
+//  Return:         None
+//
+//  Description:    
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetLength(size_t Length)
 {
     if(m_DMA_Type == DMA_TYPE) m_Handle.pDMA->NDTR   = uint32_t(Length);
@@ -400,7 +407,15 @@ void DMA_Driver::SetLength(size_t Length)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Function:       SetMemoryIncrement
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetMemoryIncrement(void)
 {
     if(m_DMA_Type == DMA_TYPE) SET_BIT(m_Handle.pDMA->CR,   DMA_SxCR_MINC);
@@ -408,7 +423,15 @@ void DMA_Driver::SetMemoryIncrement(void)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Function:       SetNoMemoryIncrement
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetNoMemoryIncrement(void)
 {
     if(m_DMA_Type == DMA_TYPE) CLEAR_BIT(m_Handle.pDMA->CR,   DMA_SxCR_MINC);
@@ -416,7 +439,15 @@ void DMA_Driver::SetNoMemoryIncrement(void)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Function:       SetFifoControl
+//
+//  Parameter(s):   
+//  Return:         None
+//
+//  Description:    
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetFifoControl(uint32_t Control)
 {
     if(m_DMA_Type == DMA_TYPE)
@@ -433,6 +464,7 @@ void DMA_Driver::SetFifoControl(uint32_t Control)
 //  Return:         bool        If true then flag is set.
 //
 //  Description:    Check flag for specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
 bool DMA_Driver::CheckFlag(uint32_t Flag)
 {
@@ -441,11 +473,11 @@ bool DMA_Driver::CheckFlag(uint32_t Flag)
 
     if(m_DMA_Type == DMA_TYPE)
     {
-        Register = ((DMA_BaseRegister_t *)m_StreamBaseAddress)->ISR;
+        Register = ((DMA_BaseRegister_t *)m_CommonBaseAddress)->ISR;
     }
     else // BDMA_TYPE
     {
-        Register = ((BDMA_BaseRegister_t *)m_StreamBaseAddress)->ISR;
+        Register = ((BDMA_BaseRegister_t *)m_CommonBaseAddress)->ISR;
     }
 
     if((Register & Flag) != 0)
@@ -464,6 +496,7 @@ bool DMA_Driver::CheckFlag(uint32_t Flag)
 //  Return:         None
 //
 //  Description:    Enable the associated DMA module clock
+//
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::EnableClock(void)
 {
@@ -501,7 +534,15 @@ void DMA_Driver::EnableIRQ(uint8_t PremptionPriority)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           EnableInterrupt
+//
+//  Parameter(s):   uint32_t    Interrupt
+//  Return:         None
+//
+//  Description:    Enable the interrupt functionnalities at the DMA module
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_Driver::EnableInterrupt(uint32_t Interrupt)
 {
     if(m_DMA_Type == DMA_TYPE) SET_BIT(m_Handle.pDMA->CR,   Interrupt);
@@ -509,7 +550,15 @@ void DMA_Driver::EnableInterrupt(uint32_t Interrupt)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           DisableInterrupt
+//
+//  Parameter(s):   uint32_t    Interrupt
+//  Return:         None
+//
+//  Description:    Disable the interrupt functionnalities at the DMA module
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_Driver::DisableInterrupt(uint32_t Interrupt)
 {
     if(m_DMA_Type == DMA_TYPE) CLEAR_BIT(m_Handle.pDMA->CR,   Interrupt);
@@ -517,7 +566,15 @@ void DMA_Driver::DisableInterrupt(uint32_t Interrupt)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           EnableTransmitCompleteInterrupt
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Enable the interrupt transmit completed at the DMA module
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_Driver::EnableTransmitCompleteInterrupt(void)
 {
     if(m_DMA_Type == DMA_TYPE) SET_BIT(m_Handle.pDMA->CR,   DMA_SxCR_TCIE);
@@ -525,7 +582,15 @@ void DMA_Driver::EnableTransmitCompleteInterrupt(void)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           DisableTransmitCompleteInterrupt
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Disable the interrupt transmit completed at the DMA module
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_Driver::DisableTransmitCompleteInterrupt(void)
 {
     if(m_DMA_Type == DMA_TYPE) CLEAR_BIT(m_Handle.pDMA->CR,   DMA_SxCR_TCIE);
@@ -533,7 +598,15 @@ void DMA_Driver::DisableTransmitCompleteInterrupt(void)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           EnableTransmitHalfCompleteInterrupt
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Enable the interrupt half transmit completed at the DMA module
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_Driver::EnableTransmitHalfCompleteInterrupt(void)
 {
     if(m_DMA_Type == DMA_TYPE) SET_BIT(m_Handle.pDMA->CR,   DMA_SxCR_HTIE);
@@ -541,7 +614,15 @@ void DMA_Driver::EnableTransmitHalfCompleteInterrupt(void)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           DisableTransmitHalfCompleteInterrupt
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Disable the interrupt half transmit completed at the DMA module
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_Driver::DisableTransmitHalfCompleteInterrupt(void)
 {
     if(m_DMA_Type == DMA_TYPE) CLEAR_BIT(m_Handle.pDMA->CR,   DMA_SxCR_HTIE);
@@ -670,17 +751,16 @@ void DMA_Driver::CalcBaseAddress(void)
 {
     if(m_DMA_Type == DMA_TYPE) // DMA1 or DMA2 instance
     {
-        m_StreamBaseAddress = (uint32_t(m_Handle.pPtr) & uint32_t(~0x3FF));
+        m_CommonBaseAddress = (uint32_t(m_Handle.pPtr) & uint32_t(~0x3FF));     // Pointer to LISR and LIFCR
 
         if(m_StreamNumber > 3)
         {
-            m_StreamBaseAddress += 4;                         // Return pointer to LISR and LIFCR
+            m_CommonBaseAddress += 4;                                           // Pointer to HISR and HIFCR
         }
-// we may have already have this point in m_Handle.pDMA .... so why we calculate this???  or we may use it in CheckFlag and clear flag
     }
     else // BDMA instance
     {
-        m_StreamBaseAddress = (uint32_t(m_Handle.pPtr) & uint32_t(~0xFF));                              // return pointer to ISR and IFCR
+        m_CommonBaseAddress = (uint32_t(m_Handle.pPtr) & uint32_t(~0xFF));      // Pointer to ISR and IFCR
     }
 }
 
@@ -698,12 +778,12 @@ void DMA_Driver::CalcDMAMUX_ChannelBaseAndMask(void)
 {
     uint32_t DMAMUX_ChannelAddress;
 
-    if(m_DMA_Type == DMA_TYPE) // DMA1 or DMA2 instance
+    if(m_DMA_Type == DMA_TYPE)  // DMA1 or DMA2 instance
     {
         DMAMUX_ChannelAddress   = DMAMUX1_Channel0;
         m_pDMAMUX_ChannelStatus = DMAMUX1_ChannelStatus;
     }
-    else // BDMA instance
+    else                        // BDMA instance
     {
         // BDMA Channels are connected to DMAMUX2 channels
         DMAMUX_ChannelAddress   = DMAMUX2_Channel0;
@@ -726,26 +806,23 @@ void DMA_Driver::CalcDMAMUX_ChannelBaseAndMask(void)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::CalcDMAMUX_RequestGenBaseAndMask(uint32_t Request)
 {
-      uint32_t DMAMUX_RequestGeneratorAddress;
+    uint32_t DMAMUX_RequestGeneratorAddress;
 
-  //uint32_t request =  hdma->Init.Request & DMAMUX_CxCR_DMAREQ_ID;
-
-    //if((request >= DMA_REQUEST_GENERATOR0) && (request <= DMA_REQUEST_GENERATOR7))
+    if(m_DMA_Type == DMA_TYPE) // DMA1 or DMA2 instance
     {
-        if(m_DMA_Type == DMA_TYPE) // DMA1 or DMA2 instance
-        {
-            // DMA1 and DMA2 Streams use DMAMUX1 request generator blocks
-            DMAMUX_RequestGeneratorAddress = uint32_t(DMAMUX1_RequestGenerator0);
-            m_pDMAMUX_RequestGenStatus     = DMAMUX1_RequestGenStatus;
-        }
-        else
-        {
-            // BDMA Channels are connected to DMAMUX2 request generator blocks
-            DMAMUX_RequestGeneratorAddress = uint32_t(DMAMUX2_RequestGenerator0);
-            m_pDMAMUX_RequestGenStatus     = DMAMUX2_RequestGenStatus;
-        }
-
-        m_pDMAMUX_RequestGen          = (DMAMUX_RequestGen_TypeDef *)((uint32_t)((DMAMUX_RequestGeneratorAddress) + ((Request - 1) * 4)));
-        m_DMAMUX_RequestGenStatusMask = uint32_t(1) << (Request - 1);
+        // DMA1 and DMA2 Streams use DMAMUX1 request generator blocks
+        DMAMUX_RequestGeneratorAddress = uint32_t(DMAMUX1_RequestGenerator0);
+        m_pDMAMUX_RequestGenStatus     = DMAMUX1_RequestGenStatus;
     }
+    else
+    {
+        // BDMA Channels are connected to DMAMUX2 request generator blocks
+        DMAMUX_RequestGeneratorAddress = uint32_t(DMAMUX2_RequestGenerator0);
+        m_pDMAMUX_RequestGenStatus     = DMAMUX2_RequestGenStatus;
+    }
+
+    m_pDMAMUX_RequestGen          = (DMAMUX_RequestGen_TypeDef *)((uint32_t)((DMAMUX_RequestGeneratorAddress) + ((Request - 1) * 4)));
+    m_DMAMUX_RequestGenStatusMask = uint32_t(1) << (Request - 1);
 }
+
+//-------------------------------------------------------------------------------------------------

@@ -426,7 +426,7 @@ class DMA_Driver
 
         uint32_t                            m_StreamNumber;                 // This is the real Stream number
         uint32_t                            m_StreamIndex;                  // This is the stream index for 'Low' and
-        uint32_t                            m_StreamBaseAddress;            // For flag clearing
+        uint32_t                            m_CommonBaseAddress;            // For flag clearing
 
         DMAMUX_Channel_TypeDef*             m_pDMAMUX_Channel;
         DMAMUX_ChannelStatus_TypeDef*       m_pDMAMUX_ChannelStatus;

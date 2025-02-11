@@ -70,15 +70,18 @@ class FIFO_Buffer
         size_t          CheckFreeSpace          (void);
         size_t          CheckUsedSpace          (void);
 
-        void            TailForward             (size_t Size);
-        void            HeadForward             (size_t Size);
-        void            HeadBackward            (size_t Size);
+        void            SetTailForward          (size_t Size);
+        void            SetHeadForward          (size_t Size);
+        void            SetHeadBackward         (size_t Size);
+        void            SetNewHeadPosition      (size_t Position);      // Set a new 'head' position
+
+        uint8_t*        GetBufferPointer        (void)                  { return m_pBuffer; }
 
     private:
 
+        uint8_t*                                m_pBuffer;
         volatile size_t                         m_PushIndex;
         volatile size_t                         m_PopIndex;
-        volatile uint8_t*                       m_pBuffer;
         volatile size_t                         m_Size;
 };
 

@@ -671,7 +671,7 @@ void FIFO_Buffer::ToUpper(size_t Length)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           TailForward
+//  Name:           SetTailForward
 //
 //  Parameter(s):   Size        Size to forward.
 //
@@ -682,7 +682,7 @@ void FIFO_Buffer::ToUpper(size_t Length)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void FIFO_Buffer::TailForward(size_t Size)
+void FIFO_Buffer::SetTailForward(size_t Size)
 {
     size_t UsedSpace;
 
@@ -701,7 +701,7 @@ void FIFO_Buffer::TailForward(size_t Size)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           HeadForward
+//  Name:           SetHeadForward
 //
 //  Parameter(s):   Size        Size to forward.
 //
@@ -709,10 +709,8 @@ void FIFO_Buffer::TailForward(size_t Size)
 //
 //  Description:    Forward head buffer index.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-void FIFO_Buffer::HeadForward(size_t Size)
+void FIFO_Buffer::SetHeadForward(size_t Size)
 {
     size_t FreeSpace;
 
@@ -731,7 +729,7 @@ void FIFO_Buffer::HeadForward(size_t Size)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           HeadBackward
+//  Name:           SetHeadBackward
 //
 //  Parameter(s):   Size        Size to backward.
 //
@@ -739,10 +737,8 @@ void FIFO_Buffer::HeadForward(size_t Size)
 //
 //  Description:    Backward head buffer index.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-void FIFO_Buffer::HeadBackward(size_t Size)
+void FIFO_Buffer::SetHeadBackward(size_t Size)
 {
     size_t UsedSpace;
 
@@ -762,6 +758,25 @@ void FIFO_Buffer::HeadBackward(size_t Size)
     }
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SetNewHeadPosition
+//
+//  Parameter(s):   Position        new position to put the new head.
+//
+//  Return:         None
+//
+//  Description:    Set the incoming index to a new absolute forward position
+//
+//  Note(s):        It blindly update the head position. There is no overrun check.
+//                  EX. UART DMA in circular buffer can share the incoming buffer. Then FIFO class
+//                      is used only the extract the data from the buffer.
+//
+//-------------------------------------------------------------------------------------------------
+void FIFO_Buffer::SetNewHeadPosition(size_t Position)
+{
+    m_PushIndex = Position;
+}
 //-------------------------------------------------------------------------------------------------
 
 

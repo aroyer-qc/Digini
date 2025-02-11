@@ -216,7 +216,11 @@ struct UART_Info_t
 struct UART_Transfer_t
 {
     uint8_t*            pBuffer;
-    size_t              Size;
+    union
+    {
+        size_t          Size;
+        size_t          Head;               // if used in circular buffer
+    } u;
     size_t              StaticSize;
 };
 

@@ -142,8 +142,7 @@ void CommandLine::Initialize(Console* pConsole)
 {
     m_pConsole       = pConsole;
     m_IsItInitialize = false;
-
-    m_StartupTick = GetTick();
+    m_StartupTick    = GetTick();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -437,7 +436,7 @@ bool CommandLine::ProcessRX(void)
                     }
 
                     m_ParserRX_Size--;
-                    m_FifoCmd.HeadBackward(1);
+                    m_FifoCmd.SetHeadBackward(1);
                 }
                 else
                 {

@@ -273,7 +273,7 @@ void UART_Driver::Initialize(void)
         m_DMA_RX.SetLength(UART_DRIVER_INTERNAL_RX_BUFFER_SIZE);
 
         m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
-        m_DMA_TX.SetDestination((void*)&m_pUart->RDR);
+        m_DMA_TX.SetDestination((void*)&m_pUart->TDR);
 
       #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED) && (UART_DRIVER_DMA_TX_COMPLETED_CFG == DEF_ENABLED)
         m_DMA_TX.EnableTransmitCompleteInterrupt();
@@ -353,10 +353,8 @@ void UART_Driver::Disable(void)
         CLEAR_BIT(m_pUart->CR1, USART_CR1_TCIE);
       #endif
 
-      #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
         DMA_DisableRX();
         DMA_DisableTX();
-      #endif
 
         CLEAR_BIT(m_pUart->CR1, USART_CR1_UE);    // Disable the UART
     }
@@ -535,11 +533,11 @@ uint32_t UART_Driver::GetBaudRate(void)
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::ClearFlag(void)
 {
-   // volatile uint32_t tmpreg;
+    volatile uint32_t tmpreg;
 
     m_pUart->ICR = (USART_ICR_CMCF | USART_ICR_CTSCF | USART_ICR_TCCF | USART_ICR_IDLECF | USART_ICR_ORECF| USART_ICR_FECF | USART_ICR_PECF);
-   // tmpreg = m_pUart->RDR;
-   // VAR_UNUSED(tmpreg);
+    tmpreg = m_pUart->RDR;
+    VAR_UNUSED(tmpreg);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -593,26 +591,25 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             m_DMA_IsItBusyTX = true;
 
             m_DMA_TX.Disable();
-            m_DMA_TX.ClearFlag(0x3DUL << 6); //temp for test
-//            m_DMA_TX.ClearFlag();
+            m_DMA_TX.ClearFlag();
 
 
             if(pBufferTX != nullptr)
             {
                 m_DMA_TX.SetSource((void*)pBufferTX);
                 m_DMA_TX.SetLength(*pSizeTX);
-                m_TX_Transfer.Size    = *pSizeTX;
+                m_TX_Transfer.u.Size  = *pSizeTX;
                 m_TX_Transfer.pBuffer = (uint8_t*)pBufferTX;
             }
             else
             {
                 m_DMA_TX.SetSource(m_TX_Transfer.pBuffer);
-                m_DMA_TX.SetLength(m_TX_Transfer.Size);
+                m_DMA_TX.SetLength(m_TX_Transfer.u.Size);
             }
 
-            m_DMA_TX.Enable();                    // Transmission starts as soon as TXE is detected
             m_pUart->ICR = USART_ICR_TCCF | USART_ICR_TXFECF;
             DMA_EnableTX();
+            m_DMA_TX.Enable();
         }
         else
         {
@@ -683,14 +680,14 @@ void UART_Driver::DMA_ConfigRX(uint8_t* pBufferRX, size_t SizeRX)
             m_DMA_RX.SetDestination((void*)pBufferRX);
             m_DMA_RX.SetLength(SizeRX);
             pTransferRX->pBuffer    = pBufferRX;
-            pTransferRX->Size       = SizeRX;
+            pTransferRX->u.Size     = SizeRX;
             pTransferRX->StaticSize = SizeRX;
         }
         else
         {
             m_DMA_RX.SetDestination(pTransferRX->pBuffer);
             m_DMA_RX.SetLength(pTransferRX->StaticSize);
-            pTransferRX->Size = pTransferRX->StaticSize;
+            pTransferRX->u.Size = pTransferRX->StaticSize;
         }
 
         DMA_EnableRX();
@@ -700,13 +697,13 @@ void UART_Driver::DMA_ConfigRX(uint8_t* pBufferRX, size_t SizeRX)
     {
         if(pBufferRX != nullptr)
         {
-            pTransferRX->Size       = SizeRX;
+            pTransferRX->u.Size     = SizeRX;
             pTransferRX->StaticSize = SizeRX;
             pTransferRX->pBuffer    = pBufferRX;
         }
         else
         {
-            pTransferRX->Size = pTransferRX->StaticSize;
+            pTransferRX->u.Size = pTransferRX->StaticSize;
         }
     }
   #endif
@@ -741,14 +738,14 @@ void UART_Driver::DMA_ConfigTX(uint8_t* pBufferTX, size_t SizeTX)
             m_DMA_TX.SetSource(pBufferTX);
             m_DMA_TX.SetLength(SizeTX);
             pTransferTX->pBuffer    = pBufferTX;
-            pTransferTX->Size       = SizeTX;
+            pTransferTX->u.Size     = SizeTX;
             pTransferTX->StaticSize = SizeTX;
         }
         else
         {
             m_DMA_TX.SetSource((void*)pTransferTX->pBuffer);
             m_DMA_TX.SetLength(pTransferTX->StaticSize);
-            pTransferTX->Size = pTransferTX->StaticSize;
+            pTransferTX->u.Size = pTransferTX->StaticSize;
         }
 
         DMA_EnableTX();
@@ -760,12 +757,12 @@ void UART_Driver::DMA_ConfigTX(uint8_t* pBufferTX, size_t SizeTX)
         if(pBufferTX != nullptr)
         {
             pTransferTX->pBuffer    = pBufferTX;
-            pTransferTX->Size       = SizeTX;
+            pTransferTX->u.Size     = SizeTX;
             pTransferTX->StaticSize = SizeTX;
         }
         else
         {
-            pTransferTX->Size = pTransferTX->StaticSize;
+            pTransferTX->u.Size = pTransferTX->StaticSize;
         }
     }
   #endif
@@ -1164,9 +1161,7 @@ void UART_Driver::IRQ_Handler(void)
 {
     if(m_pUart != nullptr)
     {
-        uint32_t Status;
-
-        Status = m_pUart->ISR;
+        uint32_t Status = m_pUart->ISR;
 
       #if (UART_DRIVER_RX_ERROR_CFG == DEF_ENABLED)
         if((Status & (USART_ISR_FE | USART_ISR_NE | USART_ISR_ORE | USART_ISR_PE)) != 0)
@@ -1199,10 +1194,7 @@ void UART_Driver::IRQ_Handler(void)
       #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
         if((Status & USART_ISR_IDLE) != 0)
         {
-           #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-            m_RX_Transfer.Size -= m_DMA_RX.GetLength(); // Give actual position in the DMA Buffer
-           #endif
-
+            m_RX_Transfer.u.Head = m_RX_Transfer.StaticSize - m_DMA_RX.GetLength();      // Give actual position in the DMA Buffer
             m_pUart->ICR = USART_ICR_IDLECF;
 
           #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
@@ -1212,9 +1204,10 @@ void UART_Driver::IRQ_Handler(void)
             }
           #endif
 
-          #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-            DMA_ConfigRX(nullptr, 0); // Reset RX packet to avoid override with a new RX packet
-          #endif
+            if((m_pInfo->Config & DMA_MODE_CIRCULAR) == 0)
+            {
+                DMA_ConfigRX(nullptr, 0); // Reset RX packet to avoid override with a new RX packet
+            }
             return;
         }
       #endif
@@ -1240,7 +1233,7 @@ void UART_Driver::IRQ_Handler(void)
       #if (UART_DRIVER_TX_EMPTY_CFG == DEF_ENABLED)
         if((Status & USART_ISR_TXE) != 0)
         {
-            if(m_TX_Transfer.Size < m_TX_Transfer.StaticSize)
+            if(m_TX_Transfer.u.Size < m_TX_Transfer.StaticSize)
             {
                 m_pUart->TDR = m_TX_Transfer.pBuffer[m_TX_Transfer.Size++];
             }

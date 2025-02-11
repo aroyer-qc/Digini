@@ -88,9 +88,9 @@ class Console : public CallbackInterface
         void               CallbackFunction           (int Type, void* pContext);
 
         // Passthru FIFO
-        inline void        TailForward                (size_t Size)                                   { m_Fifo.TailForward(Size);                   }
-        inline void        HeadForward                (size_t Size)                                   { m_Fifo.HeadForward(Size);                   }
-        inline void        HeadBackward               (size_t Size)                                   { m_Fifo.HeadBackward(Size);                  }
+        inline void        SetTailForward             (size_t Size)                                   { m_Fifo.SetTailForward(Size);                   }
+        inline void        SetHeadForward             (size_t Size)                                   { m_Fifo.SetHeadForward(Size);                   }
+        inline void        SetHeadBackward            (size_t Size)                                   { m_Fifo.SetHeadBackward(Size);                  }
         inline size_t      Read                       (void* pBuffer, size_t BytesToRead)             { return m_Fifo.Read(pBuffer, BytesToRead);   }
         inline size_t      Write                      (const void *pBuffer, size_t BytesToWrite)      { return m_Fifo.Write(pBuffer, BytesToWrite); }
         inline int32_t     At                         (size_t Offset)                                 { return m_Fifo.At(Offset);                   }

@@ -78,12 +78,13 @@ void Console::Initialize(UART_Driver* pUartDriver)
     }
 
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
-    pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE, MEM_DBG_CONSOLE_1);        // Reserve memory for UART internal DMA operation.
+pBuffer = m_Fifo.GetBufferPointer();
+    //pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE, MEM_DBG_CONSOLE_1);        // Reserve memory for UART internal DMA operation.
 
     nOS_SemCreate(&m_RX_Idle_Sem, 0, CON_RX_NB_OF_SEMAPHORE_COUNT);
-    pUartDriver->DMA_ConfigRX(pBuffer, CON_FIFO_PARSER_RX_SIZE);
+    pUartDriver->DMA_ConfigRX(pBuffer, CON_FIFO_PARSER_RX_SIZE);                // DMA will use the FIFO buffer allocated memory
 
-  #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)                                 // not sure it can work without DMA
+  #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
     pUartDriver->RegisterCallback((CallbackInterface*)this);
    #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)
     pUartDriver->EnableCallbackType(UART_CALLBACK_RX_NOT_EMPTY | UART_CALLBACK_TX_COMPLETED | UART_CALLBACK_RX_ERROR);
@@ -591,11 +592,11 @@ void Console::CallbackFunction(int Type, void* pContext)
         break;
       #endif
 
-      #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)
+      #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)                         // Don't know if we need to keep this... this mode is never use!!
         case UART_CALLBACK_RX_NOT_EMPTY:
         {
             uint8_t* pData = (uint8_t*)pContext;
-            m_Fifo.Write(pData, 1);
+            //m_Fifo.Write(pData, 1);
             nOS_SemGive(&m_RX_Idle_Sem);
         }
         break;
@@ -605,7 +606,8 @@ void Console::CallbackFunction(int Type, void* pContext)
         case UART_CALLBACK_RX_IDLE:
         {
             UART_Transfer_t* pTransfer = (UART_Transfer_t*)pContext;
-            m_Fifo.Write(pTransfer->pBuffer, pTransfer->Size);
+            m_Fifo.SetNewHeadPosition(pTransfer->u.Head);
+            //m_Fifo.Write(pTransfer->pBuffer, pTransfer->Size);
             nOS_SemGive(&m_RX_Idle_Sem);
         }
         break;

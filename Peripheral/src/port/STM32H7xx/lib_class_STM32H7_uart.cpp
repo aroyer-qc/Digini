@@ -1204,7 +1204,7 @@ void UART_Driver::IRQ_Handler(void)
             }
           #endif
 
-            if((m_pInfo->Config & DMA_MODE_CIRCULAR) == 0)
+            if((m_pInfo->DMA_RX.Config & DMA_MODE_CIRCULAR) == 0)
             {
                 DMA_ConfigRX(nullptr, 0); // Reset RX packet to avoid override with a new RX packet
             }

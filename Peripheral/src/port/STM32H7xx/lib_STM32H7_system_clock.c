@@ -61,6 +61,20 @@ void SystemInit(void)
 {
     uint32_t Retry;
 
+    volatile uint32_t ClockValue;
+
+    ClockValue = SYS_CPU_CORE_CLOCK_FREQUENCY;
+    ClockValue = SYS_HCLK_CLOCK_FREQUENCY;
+    ClockValue = SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY;
+    ClockValue = PCLK1_CLOCK_FREQUENCY;
+    ClockValue = PCLK2_CLOCK_FREQUENCY;
+    ClockValue = PCLK3_CLOCK_FREQUENCY;
+    ClockValue = PCLK4_CLOCK_FREQUENCY;
+    ClockValue = SYSTEM_CORE_CLOCK;
+    ClockValue = CFG_FLASH_LATENCY;
+VAR_UNUSED(ClockValue);
+
+
     __asm volatile("cpsid i");                                                  // Disable IRQ
 
     // FPU settings

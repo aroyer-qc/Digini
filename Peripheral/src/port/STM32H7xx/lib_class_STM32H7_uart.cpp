@@ -128,7 +128,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::Initialize(void)
 {
-    if(m_UartID < NB_OF_REAL_UART_DRIVER)
+    if(m_UartID < NB_OF_UART_DRIVER)
     {
         m_CopySR = 0;
 
@@ -284,16 +284,6 @@ void UART_Driver::Initialize(void)
         memset(&m_RX_Transfer, 0x00, sizeof(UART_Transfer_t));
         memset(&m_TX_Transfer, 0x00, sizeof(UART_Transfer_t));
     }
-  #if (SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-    else if(m_UartID == UART_DRIVER_VIRTUAL)
-    {
-        m_VirtualUartBusyRX = false;
-        m_VirtualUartBusyTX = false;
-
-        ISR_Init(VirtualUartRX_IRQn, m_pInfo->PreempPrio);
-        ISR_Init(VirtualUartTX_IRQn, m_pInfo->PreempPrio);
-    }
-  #endif
     else
     {
         m_pInfo = nullptr;
@@ -489,15 +479,6 @@ bool UART_Driver::IsItBusy(void)
     {
         return m_DMA_IsItBusyTX;
     }
-  #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-    else if(m_UartID == UART_DRIVER_VIRTUAL)
-    {
-        if((m_VirtualUartBusyRX == true) || (m_VirtualUartBusyTX == true))
-        {
-            return true;
-        }
-    }
-  #endif
 
     return false;
 }
@@ -539,26 +520,6 @@ void UART_Driver::ClearFlag(void)
     tmpreg = m_pUart->RDR;
     VAR_UNUSED(tmpreg);
 }
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           VirtualSendData
-//
-//  Parameter(s):   pBuffer         Pointer on the buffer containing the data to send
-//                  Size            Status
-//  Return:         None
-//
-//  Description:    Send data using virtual comm driver with software ISR
-//
-//-------------------------------------------------------------------------------------------------
-#if (UART_SUPPORT_VIRTUAL_CFG == DEF_ENABLED)
-void UART_Driver::VirtualSendData(const uint8_t* pBuffer, uint16_t Size)
-{
-    ReceivedFromVirtualUart(pBuffer, Size);
-    ISR_SetPendingIRQ(VirtualUartTX_IRQn);
-    m_VirtualUartBusyTX = true;
-}
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -609,6 +570,7 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
 
             m_pUart->ICR = USART_ICR_TCCF | USART_ICR_TXFECF;
             DMA_EnableTX();
+            m_DMA_TX.ClearFlag(DMA_LISR_FEIF1 | DMA_LISR_TEIF1);
             m_DMA_TX.Enable();
         }
         else
@@ -616,29 +578,6 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             State = SYS_READY;
         }
     }
-  #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-    else if(m_UartID == UART_DRIVER_VIRTUAL)
-    {
-        nOS_EnterCritical();
-
-        if(m_VirtualUartBusyRX == false)
-        {
-            m_VirtualUartBusyRX = true;
-            nOS_LeaveCritical();
-
-            memcpy(m_pDMA_BufferRX, pBuffer, Size);
-            m_SizeRX = Size;
-            NVIC_SetPendingIRQ(VirtualUartRX_IRQn);
-            state = SYS_READY;
-        }
-        else
-        {
-            state =  SYS_BUSY;
-        }
-
-        nOS_LeaveCritical();
-
-  #endif
     else
     {
         State = SYS_WRONG_VALUE;
@@ -692,21 +631,6 @@ void UART_Driver::DMA_ConfigRX(uint8_t* pBufferRX, size_t SizeRX)
 
         DMA_EnableRX();
     }
-  #if (SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-    else if(m_UartID == UART_DRIVER_VIRTUAL)
-    {
-        if(pBufferRX != nullptr)
-        {
-            pTransferRX->u.Size     = SizeRX;
-            pTransferRX->StaticSize = SizeRX;
-            pTransferRX->pBuffer    = pBufferRX;
-        }
-        else
-        {
-            pTransferRX->u.Size = pTransferRX->StaticSize;
-        }
-    }
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -750,22 +674,6 @@ void UART_Driver::DMA_ConfigTX(uint8_t* pBufferTX, size_t SizeTX)
 
         DMA_EnableTX();
     }
-
-  #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-    else if(m_UartID == UART_DRIVER_VIRTUAL)
-    {
-        if(pBufferTX != nullptr)
-        {
-            pTransferTX->pBuffer    = pBufferTX;
-            pTransferTX->u.Size     = SizeTX;
-            pTransferTX->StaticSize = SizeTX;
-        }
-        else
-        {
-            pTransferTX->u.Size = pTransferTX->StaticSize;
-        }
-    }
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -884,12 +792,6 @@ size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
 
         m_DMA_RX.Enable();
     }
-  #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-    else if(m_UartID == UART_DRIVER_VIRTUAL)
-    {
-        SizeDataRX = m_VirtualVar.SizeRX;
-    }
-  #endif
 
     return SizeDataRX;
 }
@@ -1268,46 +1170,6 @@ void UART_Driver::DMA_TX_IRQ_Handler(void)
     DMA_DisableTX();
     m_DMA_IsItBusyTX = false;
 }
-
-//-------------------------------------------------------------------------------------------------
-//
-//  IRQ Handler:    VirtualUartRX_IRQHandler
-//
-//  Description:    This function handles virtual UART interrupt.
-//
-//  TODO move this to a another virtual driver
-//
-//-------------------------------------------------------------------------------------------------
-#if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-void UART_Driver::VirtualUartRX_IRQHandler(void)
-{
-    /*       fix this!!
-	if(m_pContextCompletedTX == nullptr) m_pCallbackCompletedTX(m_pContextTX);
-     else
-     {
-           m_pCallbackCompletedTX(m_pContextCompletedTX);
-//         DMA_ConfigRX(nullptr, 0);     // Reset RX packet to avoid override with a new RX packet
-     }
-
-     m_VirtualUartBusyRX = false;
-*/
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
-//  IRQ Handler:    VirtualUartTX_IRQHandler
-//
-//  Description:    This function handles virtual UART interrupt.
-//
-//-------------------------------------------------------------------------------------------------
-#if (SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-void UART_Driver::VirtualUartTX_IRQHandler(void)
-{
-    if(m_pContextCompletedTX != nullptr) m_pCallbackCompletedTX(m_pContextCompletedTX);
-    m_VirtualUartBusyTX = false;
-}
-#endif
 
 //-------------------------------------------------------------------------------------------------
 

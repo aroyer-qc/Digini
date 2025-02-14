@@ -179,13 +179,15 @@ void CLabelList::Draw(ServiceReturn_t* pService)
     BackLayerToDraw = BACKEGROUND_DISPLAY_LAYER_0;
     #endif
 
-    if(SKIN_pTask->IsSkinLoaded() != true)
-    {
-        CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);   // On loading with do print directly on foreground layer
-    }
-    else
+    #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
+    if(SKIN_pTask->IsSkinLoaded() == true)
     {
         CLayer::SetDrawing(((m_pLabelList->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BackLayerToDraw : ForeLayerToDraw);
+    }
+    else
+    #endif
+    {
+        CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);   // On loading with do print directly on foreground layer
     }
    #endif
 

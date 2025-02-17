@@ -287,9 +287,9 @@ void GrafxDriver::LayerConfig(CLayer* pLayer)
         pActiveLayer->CACR  = (uint32_t)pLayer->GetAlpha();                                     // Specifies the constant alpha value
         pActiveLayer->BFCR  = (LTDC_BLENDING_FACTOR1_PAxCA | LTDC_BLENDING_FACTOR2_PAxCA);      // Specifies the blending factors
         pActiveLayer->CFBAR = pLayer->GetAddress();                                             // Configures the color frame buffer start address
-        pActiveLayer->CFBLR = (((GRAFX_DRIVER_SIZE_X * PixelSize) << LTDC_LxCFBLR_CFBP_Pos) |          // Configures the color frame buffer pitch in byte
+        pActiveLayer->CFBLR = (((GRAFX_DRIVER_SIZE_X * PixelSize) << LTDC_LxCFBLR_CFBP_Pos) |   // Configures the color frame buffer pitch in byte
                                (((GRAFX_DRIVER_SIZE_X - 1) * PixelSize)  + 3));
-        pActiveLayer->CFBLNR = GRAFX_DRIVER_SIZE_Y;                                                    // Configures the frame buffer line number
+        pActiveLayer->CFBLNR = GRAFX_DRIVER_SIZE_Y;                                             // Configures the frame buffer line number
         SET_BIT(pActiveLayer->CR, LTDC_LxCR_LEN);                                               // Enable LTDC_Layer by setting LEN bit
         LTDC->SRCR = LTDC_SRCR_IMR;                                                             // Reload
     }

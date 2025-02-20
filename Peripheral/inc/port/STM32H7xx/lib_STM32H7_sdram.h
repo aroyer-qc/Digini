@@ -101,25 +101,6 @@
 #define FMC_SDRAM_MRD_BURST_LENGTH_4                (2 << (0 + FMC_SDCMR_MRD_Pos))
 #define FMC_SDRAM_MRD_BURST_LENGTH_8                (3 << (0 + FMC_SDCMR_MRD_Pos))
 
-
-/*
-0x220 should be:
-
-    0010 0010 0000
-
-
-    00 1 00 010 0 000       0 0000 0000
-
-    FMC_SDRAM_MRD_WRITE_BURST_MODE_SINGLE
-    FMC_SDRAM_MRD_OPERATION_MODE_STANDARD
-    FMC_SDRAM_MRD_CAS_LATENCY_2
-    FMC_SDRAM_MRD_BURST_TYPE_SEQUENTIAL
-    FMC_SDRAM_MRD_BURST_LENGTH_1
-
-    00 00 10 00 10 0000  0 0000 0000
-
-*/
-
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------

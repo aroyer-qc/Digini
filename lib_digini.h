@@ -66,8 +66,6 @@
 //
 
 #include "project_def.h"
-
-//#include "clock_cfg.h"
 #include "digini_cfg.h"
 
 // Need to integrate a dependency check for all DEF_ENABLED
@@ -101,8 +99,6 @@
 #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 #include "ip_cfg.h"
 #endif
-
-//#include "project_def.h"
 
 #if (DIGINI_USE_DATABASE == DEF_ENABLED)
 #include "database_cfg.h"
@@ -179,12 +175,24 @@
 #include PHY_DRIVER_INCLUDE
 #endif
 
+#if (USE_HYPER_RAM_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_hyper_ram.h"
+#endif
+
 #if (USE_I2C_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_i2c.h"
 #endif
 
 #if (USE_I2S_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_i2s.h"
+#endif
+
+#if (USE_OSPI_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_class_ospi.h"
+#endif
+
+#if (USE_PWM_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_class_pwm.h"
 #endif
 
 #if (USE_QSPI_DRIVER == DEF_ENABLED)
@@ -213,10 +221,6 @@
 
 #if (USE_TIM_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_tim.h"
-#endif
-
-#if (USE_PWM_DRIVER == DEF_ENABLED)
-#include "./Peripheral/inc/port/lib_class_pwm.h"
 #endif
 
 #if (USE_UART_DRIVER == DEF_ENABLED)

@@ -96,7 +96,7 @@ SystemState_e HYPER_RAM_Initialize(const HYPER_RAM_Info_t* pInfo)
 
     pInstance->DCR2 = ((pInfo->ClockPrescaler - 1) << OCTOSPI_DCR2_PRESCALER_Pos);              // Configure clock prescaler
     pInstance->TCR = (pInfo->SampleShifting | pInfo->DelayHoldQuarterCycle);                    // Configure sample shifting and delay hold quarter cycle
-    SET_BIT(pInstance->CR, OCTOSPI_CR_EN);                                                       // Enable OctoSPI
+    SET_BIT(pInstance->CR, OCTOSPI_CR_EN);                                                      // Enable OctoSPI
 
     TickStart = GetTick();
 

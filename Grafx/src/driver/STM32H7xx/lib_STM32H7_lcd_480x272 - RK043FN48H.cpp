@@ -59,10 +59,6 @@
 #define GRAFX_VBP                       2               // Vertical back porch
 #define GRAFX_VFP                       2               // Vertical front porch
 
-#define GRAFX_PLLSAIN_VALUE             192
-#define GRAFX_PLLSAIR_VALUE             5
-#define GRAFX_PLLSAIQ_VALUE             7
-
 #define LTDC_BLENDING_FACTOR1_PAxCA     0x00000600      // Blending factor: Cte Alpha x Pixel Alpha
 #define LTDC_BLENDING_FACTOR2_PAxCA     0x00000007      // Blending factor: Cte Alpha x Pixel Alpha
 

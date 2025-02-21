@@ -23,6 +23,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+//  
+//  Note(s)  
+//  
+//              Voltage Scaling Mode (STM32H74x/STM32H75x)
+//          -------------------------------------------------------------------
+//          |  Voltage Range  |  Mode  |    CM7    |    CM4    |  Power Mode  |  
+//          |-----------------|--------|-----------|-----------|--------------|
+//          |   Range 0       |  Run   |  480 MHz  |  240 MHz  |     LDO      |
+//          |-----------------|--------|-----------|-----------|--------------|
+//          |   Range 1       |  Run   |  400 MHz  |  200 MHz  |     SMPS     |
+//          |-----------------|--------|-----------|-----------|--------------|
+//          |   Range 2       |  Run   |  300 MHz  |  150 MHz  |     SMPS     |
+//          |-----------------|--------|-----------|-----------|--------------|
+//          |   Range 3       |  Run   |  200 MHz  |  100 MHz  |     SMPS     |
+//          -------------------------------------------------------------------
+//
+//              Voltage Scaling Mode (STM32H72x/STM32H73x)
+//          -------------------------------------------------------
+//          |  Voltage Range  |  Mode  |    CM7    |  Power Mode  |  
+//          |-----------------|--------|-----------|--------------|
+//          |   Range 0   +   |  Run   |  550 MHz  |              |
+//          |  CPU_FREQ_BOOST |        |           |              |
+//          |-----------------|--------|-----------|--------------|
+//          |   Range 0       |  Run   |  520 MHz  |              |
+//          |-----------------|--------|-----------|--------------|
+//          |   Range 1       |  Run   |  400 MHz  |              |
+//          |-----------------|--------|-----------|--------------|
+//          |   Range 2       |  Run   |  300 MHz  |              |
+//          |-----------------|--------|-----------|--------------|
+//          |   Range 3       |  Run   |  170 MHz  |              |
+//          -------------------------------------------------------
+//
+//
+//-------------------------------------------------------------------------------------------------
+
+
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
@@ -85,7 +121,7 @@ VAR_UNUSED(ClockValue);
     // SEVONPEND enabled so that an interrupt coming from the CPU(n) interrupt signal is detectable by the CPU after a WFI/WFE instruction.
     SCB->SCR |= SCB_SCR_SEVONPEND_Pos;
 
-    // According th PDF VOS0 should be chosen for 240Mhz AXI clock with 4 WS
+    // According the PDF VOS0 should be chosen for 240Mhz AXI clock with 4 WS
   #if defined (SMPS)
     SET_BIT(PWR->CR3, PWR_CR3_SMPSEN);                                          // Set the power supply configuration
   #endif
@@ -131,6 +167,20 @@ VAR_UNUSED(ClockValue);
   #endif
 
     SET_BIT(RCC->APB4ENR, RCC_APB4ENR_SYSCFGEN);
+
+  #if defined(STM32H723xx) ||  defined(STM32H725xx) || defined(STM32H730xx) || defined(STM32H730xxQ) || defined(STM32H735xx)
+    FLASH->OPTKEYR = 0x08192A3B;
+    FLASH->OPTKEYR = 0x4C5D6E7F;
+
+    if(SYS_HCLK_CLOCK_FREQUENCY > 520000000)
+    {
+        SET_BIT(FLASH->OPTSR2_PRG, FLASH_OPTSR2_CPUFREQ_BOOST);
+    }
+    else
+    {
+        CLEAR_BIT(FLASH->OPTSR2_PRG, FLASH_OPTSR2_CPUFREQ_BOOST);
+    }
+  #endif
 
     // Reset the RCC clock configuration to the default reset state
     RCC->CR   |= RCC_CR_HSION;                                             // Set HSION bit

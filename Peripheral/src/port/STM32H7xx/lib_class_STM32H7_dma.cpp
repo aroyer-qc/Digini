@@ -787,13 +787,13 @@ void DMA_Driver::CalcDMAMUX_ChannelBaseAndMask(void)
 
     if(m_DMA_Type == DMA_TYPE)  // DMA1 or DMA2 instance
     {
-        DMAMUX_ChannelAddress   = DMAMUX1_Channel0;
+        DMAMUX_ChannelAddress   = uint32_t(DMAMUX1_Channel0);
         m_pDMAMUX_ChannelStatus = DMAMUX1_ChannelStatus;
     }
     else                        // BDMA instance
     {
         // BDMA Channels are connected to DMAMUX2 channels
-        DMAMUX_ChannelAddress   = DMAMUX2_Channel0;
+        DMAMUX_ChannelAddress   = uint32_t(DMAMUX2_Channel0);
         m_pDMAMUX_ChannelStatus = DMAMUX2_ChannelStatus;
     }
 

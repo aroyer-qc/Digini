@@ -24,12 +24,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-//-------------------------------------------------------------------------------------------------
+#include "mpu_cfg.h"
 
 #if defined STM32F4xx
  #include "./Peripheral/inc/port/STM32F4xx/lib_STM32F4_mpu.h"
@@ -37,12 +32,6 @@ extern "C"
  #include "./Peripheral/inc/port/STM32F7xx/lib_STM32F7_mpu.h"
 #elif defined STM32H7xx
  #include "./Peripheral/inc/port/STM32H7xx/lib_STM32H7_mpu.h"
-#endif
-
-//-------------------------------------------------------------------------------------------------
-
-#ifdef __cplusplus
-}
 #endif
 
 //-------------------------------------------------------------------------------------------------

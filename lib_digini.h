@@ -139,10 +139,6 @@
 #include "./Memory/inc/lib_node_list.h"
 #include "./Memory/inc/lib_memory_node.h"
 
-#if (DIGINI_MPU_DRIVER == DEF_ENABLED)
-#include "./Peripheral/inc/port/lib_mpu.h"                  // TODO
-#endif
-
 //-------------------------------------------------------------------------------------------------
 // Interface
 //
@@ -189,6 +185,10 @@
 
 #if (USE_OSPI_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_ospi.h"
+#endif
+
+#if (USE_MPU_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_mpu.h"
 #endif
 
 #if (USE_PWM_DRIVER == DEF_ENABLED)

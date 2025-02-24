@@ -165,6 +165,7 @@ void SDRAM_Initialize(void)
     FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_PALL | SDCMR_BANK);                                           // PALL command
     FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_AUTO_REFRESH_MODE | SDCMR_BANK | SDCMR_AUTO_REFRESH_CYCLE);   // Auto refresh mode
     FMC_Bank5_6_R->SDCMR = (SDCMR_CMD_LOAD_MODE | SDCMR_BANK | SDCMR_MRD);                          // Load mode
+    FMC_Bank5_6_R->SDRTR = (CFG_SDRAM_REFRESH_COUNT << 1);                                          // Set refresh count
     SET_BIT(FMC_Bank1_R->BTCR[0], FMC_BCR1_FMCEN);                                                  // FMC controller Enable
 }
 

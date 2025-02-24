@@ -32,19 +32,15 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_MPU_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-
-#include "mpu_cfg.h"
+#if (USE_MPU_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Expanding Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_MPU_AS_ENUM(       REGION,  BASE_ADDRESS,  MPU_SIZE,  ACCESS_PERMISSION,  IS_BUFFERABLE,  IS_CACHEABLE,  IS_SHAREABLE,  TYPE_EXT_FIELD,  DISABLE_EXEC,            SUB_REGION_DISABLE)   REGION##ENUM,
-#define EXPAND_X_MPU_AS_STRUCT_DATA(REGION,  BASE_ADDRESS,  MPU_SIZE,  ACCESS_PERMISSION,  IS_BUFFERABLE,  IS_CACHEABLE,  IS_SHAREABLE,  TYPE_EXT_FIELD,  DISABLE_EXEC,            SUB_REGION_DISABLE)   \
-                         { uint32_t(REGION), BASE_ADDRESS, (MPU_SIZE | ACCESS_PERMISSION | IS_BUFFERABLE | IS_CACHEABLE | IS_SHAREABLE | TYPE_EXT_FIELD | DISABLE_EXEC | (uint32_t(SUB_REGION_DISABLE) << 8))},
+#define EXPAND_X_MPU_AS_ENUM(       REGION, BASE_ADDRESS,  MPU_SIZE,  ACCESS_PERMISSION,  IS_BUFFERABLE,  IS_CACHEABLE,  IS_SHAREABLE,  TYPE_EXT_FIELD,  DISABLE_EXEC,            SUB_REGION_DISABLE)   REGION##_ENUM,
+#define EXPAND_X_MPU_AS_STRUCT_DATA(REGION, BASE_ADDRESS,  MPU_SIZE,  ACCESS_PERMISSION,  IS_BUFFERABLE,  IS_CACHEABLE,  IS_SHAREABLE,  TYPE_EXT_FIELD,  DISABLE_EXEC,            SUB_REGION_DISABLE)   \
+                                  { REGION, BASE_ADDRESS, (MPU_SIZE | ACCESS_PERMISSION | IS_BUFFERABLE | IS_CACHEABLE | IS_SHAREABLE | TYPE_EXT_FIELD | DISABLE_EXEC | (uint32_t(SUB_REGION_DISABLE) << MPU_RASR_SRD_Pos))},
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -88,21 +84,21 @@ void MPU_Initialize(MPU_Priviledge_e Priviledge)
     const MPU_Region_t* pRegion;
 
     __DMB();                                                        // Disable the MPU, Make sure outstanding transfers are done
-    SCB->SHCSR &= ~SCB_SHCSR_MEMFAULTENA_Msk;                       // Disable fault exceptions
+    CLEAR_BIT(SCB->SHCSR, SCB_SHCSR_MEMFAULTENA_Msk);               // Disable fault exceptions
     MPU->CTRL = 0;                                                  // Disable the MPU and clear the control register
 
     for(int i = 0; i < int(MPU_NUM); i++)
     {
         pRegion = &MPU_Region[i];
 
-        // Set the Region number
-        MPU->RNR  = pRegion->Number;
+        MPU->RNR  = pRegion->Number;                                // Set the Region number
+        CLEAR_BIT(MPU->RASR, MPU_REGION_ENABLE);
         MPU->RBAR = pRegion->BaseAddress;
         MPU->RASR = pRegion->Config | MPU_REGION_ENABLE;
     }
 
     MPU->CTRL = uint32_t(Priviledge) | MPU_CTRL_ENABLE_Msk;         // Enable the MPU
-    SCB->SHCSR |= SCB_SHCSR_MEMFAULTENA_Msk;                        // Enable fault exceptions
+    SET_BIT(SCB->SHCSR, SCB_SHCSR_BUSFAULTACT_Msk);                 // Enable fault exceptions
     __DSB();                                                        // Ensure MPU setting take effects
     __ISB();
 }

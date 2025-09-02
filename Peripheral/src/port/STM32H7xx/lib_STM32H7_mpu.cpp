@@ -98,7 +98,7 @@ void MPU_Initialize(MPU_Priviledge_e Priviledge)
     }
 
     MPU->CTRL = uint32_t(Priviledge) | MPU_CTRL_ENABLE_Msk;         // Enable the MPU
-    SET_BIT(SCB->SHCSR, SCB_SHCSR_BUSFAULTACT_Msk);                 // Enable fault exceptions
+    SET_BIT(SCB->SHCSR, SCB_SHCSR_MEMFAULTENA_Msk);                 // Enable fault exceptions
     __DSB();                                                        // Ensure MPU setting take effects
     __ISB();
 }

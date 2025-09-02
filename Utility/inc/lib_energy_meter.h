@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_STM32H7.c
+//  File : EnergyMeter.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -24,81 +24,34 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#include <stdio.h>
-#include "stm32h7xx.h"
+#pragma once
+
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define TIME_SECONDS_PER_HOUR               3600                // use lib_define.h 
+
+#define EM_SAMPLES_PER_SECOND               10
+#define EM_BUFFER_SIZE                      (SAMPLES_PER_SECOND * NUMBER_OF_SECOND_PER_HOUR)
 
 //-------------------------------------------------------------------------------------------------
 
-// that is not the real CPUID, this what cortex lib is defined to ..
-
-#define CM7_CPUID        ((uint32_t)0x00000003)
-
-#if defined(DUAL_CORE)
-#define CM4_CPUID        ((uint32_t)0x00000001)
-#endif
-
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           GetCurrentCPUID
-//
-//  Parameter(s):   None
-//  Return:         CPU identifier
-//
-//  Description:    Returns the current CPU ID
-//
-//-------------------------------------------------------------------------------------------------
-#if defined(DUAL_CORE)
-uint32_t GetCurrentCPUID(void)
+class EnergyMeter
 {
-    if(((SCB->CPUID & 0x000000F0) >> 4) == 0x7)
-    {
-        return CM7_CPUID;
-    }
-    else
-    {
-        return CM4_CPUID;
-    }
-}
 
-#else
+    public:
+    
+        void        AddSample           (float Voltage, float Current);
+        float       GetWhLastSecond     (void);
+        float       GetWhLastHour       (void);
 
-uint32_t GetCurrentCPUID(void)
-{
-    return CM7_CPUID;
-}
-
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           GetUniqueCPUID
-//
-//  Parameter(s):   None
-//  Return:         CPU identifier
-//
-//  Description:    Returns the current CPU ID
-//
-//-------------------------------------------------------------------------------------------------
-uint32_t GetUniqueCPUID(void)
-{
-    return 0;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CPU_CACHE_Enable
-//
-//  Parameter(s):   None
-//  Return:         None
-//
-//  Description:    Enable CPU Cache
-//
-//-------------------------------------------------------------------------------------------------
-void CPU_CACHE_Enable(void)
-{
-  SCB_EnableICache();       // Enable I-Cache
-  SCB_EnableDCache();       // Enable D-Cache
-}
+    private:
+    
+        float       VoltageBuffer[EM_BUFFER_SIZE];
+        float       CurrentBuffer[EM_BUFFER_SIZE];
+        uint32_t    Index;
+        bool        Filled;
+};
 
 //-------------------------------------------------------------------------------------------------

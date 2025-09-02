@@ -156,17 +156,9 @@ void CBackground::Draw(ServiceReturn_t* pService)
         CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
         pLayer = &LayerTable[BACKGROUND_DISPLAY_LAYER_0];
   #else
-   #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
-    if(SKIN_pTask->IsSkinLoaded() == true)
     {
         CLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
         pLayer = &LayerTable[CONSTRUCTION_BACKGROUND_LAYER];
-    }
-    else
-   #endif
-    {
-        CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
-        pLayer = &LayerTable[BACKGROUND_DISPLAY_LAYER_0];
     }
   #endif
 
@@ -183,15 +175,10 @@ void CBackground::Draw(ServiceReturn_t* pService)
 
 
   #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
-   #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
-    if(SKIN_pTask->IsSkinLoaded() == true)
+   #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
+    myGrafx->WaitFor_V_Sync();
    #endif
-    {
-      #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
-        myGrafx->WaitFor_V_Sync();
-      #endif
-        myGrafx->CopyLayerToLayer(CONSTRUCTION_BACKGROUND_LAYER, BACKGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y);
-    }
+    myGrafx->CopyLayerToLayer(CONSTRUCTION_BACKGROUND_LAYER, BACKGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y);
   #endif
 
     CLayer::PopDrawing();

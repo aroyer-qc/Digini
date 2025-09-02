@@ -23,12 +23,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
-//  
-//  Note(s)  
-//  
+//
+//  Note(s)
+//
 //              Voltage Scaling Mode (STM32H74x/STM32H75x)
 //          -------------------------------------------------------------------
-//          |  Voltage Range  |  Mode  |    CM7    |    CM4    |  Power Mode  |  
+//          |  Voltage Range  |  Mode  |    CM7    |    CM4    |  Power Mode  |
 //          |-----------------|--------|-----------|-----------|--------------|
 //          |   Range 0       |  Run   |  480 MHz  |  240 MHz  |     LDO      |
 //          |-----------------|--------|-----------|-----------|--------------|
@@ -41,7 +41,7 @@
 //
 //              Voltage Scaling Mode (STM32H72x/STM32H73x)
 //          -------------------------------------------------------
-//          |  Voltage Range  |  Mode  |    CM7    |  Power Mode  |  
+//          |  Voltage Range  |  Mode  |    CM7    |  Power Mode  |
 //          |-----------------|--------|-----------|--------------|
 //          |   Range 0   +   |  Run   |  550 MHz  |              |
 //          |  CPU_FREQ_BOOST |        |           |              |
@@ -90,6 +90,9 @@
 //                      - Setup the micro controller system.
 //                      - Initialize the FPU setting
 //                      - vector table locations configuration.
+//
+//  Note(s):         The activation of the I/O Compensation Cell is recommended with communication
+//                   interfaces (GPIO, SPI, FMC, QSPI ...)  when operating at high frequencies
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef CORE_CM7
@@ -166,7 +169,7 @@ VAR_UNUSED(ClockValue);
     while((PWR->SRDCR & PWR_SRDCR_VOSRDY) != PWR_SRDCR_VOSRDY){};
   #endif
 
-    SET_BIT(RCC->APB4ENR, RCC_APB4ENR_SYSCFGEN);
+    SET_BIT(RCC->APB4ENR, RCC_APB4ENR_SYSCFGEN);                                // Enable SYSCFG Clock
 
   #if defined(STM32H723xx) ||  defined(STM32H725xx) || defined(STM32H730xx) || defined(STM32H730xxQ) || defined(STM32H735xx)
     FLASH->OPTKEYR = 0x08192A3B;
@@ -246,10 +249,8 @@ VAR_UNUSED(ClockValue);
     };
 
   #else
-
     // HSI is the default PLL source
-
-   #endif
+  #endif
 
     RCC->PLLCFGR   = CFG_RCC_PLLCFGR;
     RCC->PLL1DIVR  = CFG_RCC_PLL1_DIVR;
@@ -289,19 +290,21 @@ VAR_UNUSED(ClockValue);
     };
 
     SET_BIT(RCC->CFGR, CFG_RCC_CFGR_SW_HSE);                                                            // Switch to HSE
-
-  #elif (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_CSI)
+  #endif
 
     Retry = 0;
-    SET_BIT(RCC->CR, RCC_CR_CSION);
+    SET_BIT(RCC->CR, RCC_CR_CSION);                 // CSI must be enabled for IO compensation cell
 
     while((READ_BIT(RCC->CR, RCC_CR_CSIRDY) == 0) && (Retry < CFG_SYSTEM_CLOCK_NUMBER_OF_RETRY))        // Wait for HSE to be ready B4 enabling PLL
     {
         Retry++;
     };
 
+  #if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_CSI)
     SET_BIT(RCC->CFGR, CFG_RCC_CFGR_SW_CSI);                                                            // Switch to HSE
   #endif
+
+  SET_BIT(SYSCFG->CCCSR, SYSCFG_CCCSR_EN);          // Enables the I/O Compensation Cell
 
   /* Configure the Vector Table location add offset address ------------------*/
   #ifdef VECT_TAB_SRAM

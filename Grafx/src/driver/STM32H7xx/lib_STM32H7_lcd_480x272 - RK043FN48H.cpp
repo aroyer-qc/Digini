@@ -149,7 +149,7 @@ void GrafxDriver::LCD_Initialize(void)
     // Sets Accumulated Back porch
     MODIFY_REG(LTDC->BPCR,
                (LTDC_BPCR_AVBP | LTDC_BPCR_AHBP),
-               (GRAFX_VSYNC  + GRAFX_VBP - 1) | ((GRAFX_HSYNC  + GRAFX_HBP - 1) << LTDC_BPCR_AHBP_Pos));
+               (GRAFX_VSYNC + GRAFX_VBP - 1) | ((GRAFX_HSYNC + 1) << LTDC_BPCR_AHBP_Pos));
 
     // Sets Accumulated Active Width
     MODIFY_REG(LTDC->AWCR,
@@ -161,7 +161,7 @@ void GrafxDriver::LCD_Initialize(void)
     MODIFY_REG(LTDC->TWCR,
                (LTDC_TWCR_TOTALH | LTDC_TWCR_TOTALW),
                ((GRAFX_DRIVER_SIZE_Y + GRAFX_VSYNC + GRAFX_VBP + GRAFX_VFP - 1) |
-                ((GRAFX_DRIVER_SIZE_X + GRAFX_HSYNC + GRAFX_HBP + GRAFX_HFP - 1) << LTDC_TWCR_TOTALW_Pos)));
+                ((GRAFX_DRIVER_SIZE_X + GRAFX_HSYNC + GRAFX_HFP + 1) << LTDC_TWCR_TOTALW_Pos)));
 
     CLEAR_BIT(LTDC->BCCR, (LTDC_BCCR_BCBLUE | LTDC_BCCR_BCGREEN | LTDC_BCCR_BCRED));    // Sets the background color value to zero for all
     SET_BIT(LTDC->IER, LTDC_IER_TERRIE | LTDC_IER_FUIE);                                // Enable the transfer Error interrupt and FIFO underrun
@@ -277,14 +277,14 @@ void GrafxDriver::LayerConfig(CLayer* pLayer)
         pActiveLayer->WHPCR = ((((LTDC->BPCR & LTDC_BPCR_AHBP) >> LTDC_BPCR_AHBP_Pos) + 1) |    // Configures the horizontal start and stop position
                                (((GRAFX_DRIVER_SIZE_X - 1) + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> LTDC_BPCR_AHBP_Pos)) << LTDC_LxWHPCR_WHSPPOS_Pos));
         pActiveLayer->WVPCR = (((LTDC->BPCR & LTDC_BPCR_AVBP) + 1) |                            // Configures the vertical start and stop position
-                               (((GRAFX_DRIVER_SIZE_Y - 1) +  (LTDC->BPCR & LTDC_BPCR_AVBP)) << LTDC_LxWVPCR_WVSPPOS_Pos));
+                               (((GRAFX_DRIVER_SIZE_Y - 1) + (LTDC->BPCR & LTDC_BPCR_AVBP)) << LTDC_LxWVPCR_WVSPPOS_Pos));
         pActiveLayer->PFCR  = DRV_PixelFormatTable[PixelFormat];                                // Specifies the pixel format
         pActiveLayer->DCCR  = 0;                                                                // Configures the default color values ( all zero)
         pActiveLayer->CACR  = (uint32_t)pLayer->GetAlpha();                                     // Specifies the constant alpha value
         pActiveLayer->BFCR  = (LTDC_BLENDING_FACTOR1_PAxCA | LTDC_BLENDING_FACTOR2_PAxCA);      // Specifies the blending factors
         pActiveLayer->CFBAR = pLayer->GetAddress();                                             // Configures the color frame buffer start address
         pActiveLayer->CFBLR = (((GRAFX_DRIVER_SIZE_X * PixelSize) << LTDC_LxCFBLR_CFBP_Pos) |   // Configures the color frame buffer pitch in byte
-                               (((GRAFX_DRIVER_SIZE_X - 1) * PixelSize)  + 3));
+                               (((GRAFX_DRIVER_SIZE_X - 1) * PixelSize) + 3));
         pActiveLayer->CFBLNR = GRAFX_DRIVER_SIZE_Y;                                             // Configures the frame buffer line number
         SET_BIT(pActiveLayer->CR, LTDC_LxCR_LEN);                                               // Enable LTDC_Layer by setting LEN bit
         LTDC->SRCR = LTDC_SRCR_IMR;                                                             // Reload

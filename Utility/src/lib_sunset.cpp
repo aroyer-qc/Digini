@@ -218,9 +218,8 @@ double SunSet::CalcSunTrueLong(double t) const
 double SunSet::CalcSunApparentLong(double t) const
 {
     double o = CalcSunTrueLong(t);
-
-    double  omega = 125.04 - (1934.136 * t);
-    double  lambda = o - 0.00569 - (0.00478 * sin(degToRad(omega)));
+    double omega = 125.04 - (1934.136 * t);
+    double lambda = o - 0.00569 - (0.00478 * sin(degToRad(omega)));
     return lambda;          // in degrees
 }
 

@@ -184,13 +184,15 @@ void CProgress::Draw(ServiceReturn_t* pService)
     BackLayerToDraw = BACKGROUND_DISPLAY_LAYER_0;
    #endif
 
+   #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
     if(SKIN_pTask->IsSkinLoaded() != true)
     {
-        CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);   // On loading with do print directly on foreground layer
+        CLayer::SetDrawing(((m_pProgress->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BackLayerToDraw : ForeLayerToDraw);
     }
     else
+   #endif
     {
-        CLayer::SetDrawing(((m_pProgress->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BackLayerToDraw : ForeLayerToDraw);
+        CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);   // On loading with do print directly on foreground layer
     }
   #endif
 

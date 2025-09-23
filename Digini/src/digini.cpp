@@ -71,8 +71,12 @@
 //-------------------------------------------------------------------------------------------------
 SystemState_e DIGINI_Initialize(void)
 {
+  #if (USE_SDRAM_DRIVER == DEF_ENABLED)
+    SDRAM_Initialize();                                     // Initialize SDRAM
+  #endif
+
   #if (USE_RTC_DRIVER == DEF_ENABLED)
-    myRTC.Initialize(RTC_CLOCK_MODE_LSI);            // RTC module object
+    myRTC.Initialize(RTC_CLOCK_MODE_LSI);                   // RTC module object
   #endif
 
     // Register all database driver

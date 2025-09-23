@@ -43,6 +43,14 @@
 #define swap16(A)                           ((A << 8) | (A >> 8))
 #define swap32(A)                           ((A << 16) | (A >> 16))
 
+#ifndef SWAP_32                             // Swap all bytes
+#define SWAP_32(x) __REV(x)
+#endif
+
+#ifndef SWAP_16                             // Swap all bytes
+#define SWAP_16(x) __REV16(x)
+#endif
+
 // Macro to convert 1 ASCII character that represent a Byte in text to a real HEX value
 #define AscHex(A)                           ((((A-=48)>9?(A-=7):A)>15)?(A-=32):A)
 // Macro to convert 2 ASCII character that represent a Byte in text to a real HEX value

@@ -72,7 +72,6 @@ enum QuadSPI_DBaseItemList_e
     END_QSPI_DBASE
 };
 
-
 struct QuasSPI_DBaseInfo_s
 {
     class CQuadSPI* pQuadSPI;

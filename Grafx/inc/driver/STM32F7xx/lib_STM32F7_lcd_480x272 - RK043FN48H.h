@@ -69,7 +69,6 @@ class GrafxDriver : public GRAFX_Interface
     private:
 
         void            Line                  (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction);
-        void            IO_Initialize         (void);     // Initialize the IO on the processor
         void            LayerInitialize       (void);
         void            LCD_Initialize        (void);
 };

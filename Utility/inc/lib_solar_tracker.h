@@ -53,38 +53,47 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
+#define USE_DOUBLE_FLOAT
+
+#ifdef USE_DOUBLE_FLOAT
+    #define FLOAT       double
+#else
+    #define FLOAT       float
+#endif
+
+
 // Location to compute the Sun's position for
 struct OriginLocation_t
 {
-    double  Longitude;
-    double  Latitude;
-    double  SinLat;
-    double  CosLat;
-    double  Pressure;
-    double  Temperature;
+    FLOAT  Longitude;
+    FLOAT  Latitude;
+    FLOAT  SinLat;
+    FLOAT  CosLat;
+    FLOAT  Pressure;
+    FLOAT  Temperature;
 };
 
 // Position of the Sun
 struct SunPosition_t
 {
-    double  JulianDay;
-    double  tJD;
-    double  tJC;
-    double  tJC2;
-    double  Longitude;
-    double  Distance;
-    double  Obliquity;
-    double  CosObliquity;
-    double  NutationLon;
-    double  RightAscension;
-    double  Declination;
-    double  HourAngle;
-    double  Agst;
-    double  Altitude;
-    double  AltitudeRefract;            // Elevation
-    double  AzimuthRefract;             // Azimuth
-    double  HourAngleRefract;
-    double  DeclinationRefract;
+    FLOAT  JulianDay;
+    FLOAT  tJD;
+    FLOAT  tJC;
+    FLOAT  tJC2;
+    FLOAT  Longitude;
+    FLOAT  Distance;
+    FLOAT  Obliquity;
+    FLOAT  CosObliquity;
+    FLOAT  NutationLon;
+    FLOAT  RightAscension;
+    FLOAT  Declination;
+    FLOAT  HourAngle;
+    FLOAT  Agst;
+    FLOAT  Altitude;
+    FLOAT  AltitudeRefract;            // Elevation
+    FLOAT  AzimuthRefract;             // Azimuth
+    FLOAT  HourAngleRefract;
+    FLOAT  DeclinationRefract;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -97,11 +106,11 @@ class SolarTracker
 
     private:
 
-        double  ComputeJulianDay                (void);
+        //FLOAT   ComputeJulianDay                (void);
         void    ComputeLongitude                (bool ComputeDistance);
         void    ConvertEclipticToEquatorial     (void);
         void    ConvertEquatorialToHorizontal   (void);
-        void    ConvertEquatorialToHorizontal   (double* SinAlt);
+        void    ConvertEquatorialToHorizontal   (FLOAT* SinAlt);
         void    ConvertHorizontalToEquatorial   (void);
         void    SetNorthToZero                  (bool ComputeRefrEquatorial);
         void    ConvertRadiansToDegrees         (bool ComputeRefrEquatorial);

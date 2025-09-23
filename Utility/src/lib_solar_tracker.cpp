@@ -104,13 +104,7 @@
 #define EARTH_ORBITAL_PERIOD_X_100          36525.0
 
 
-double  CustomAtan2                     (double Y, double X);
-
-//-------------------------------------------------------------------------------------------------
-
-// Define these constants somewhere globally or in a config header
-//extern const double PI;
-//extern const double TWO_PI;
+FLOAT  CustomAtan2                     (FLOAT Y, FLOAT X);
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -133,74 +127,23 @@ double  CustomAtan2                     (double Y, double X);
 //  Description:    Main function to compute the position of the Sun
 //
 //-------------------------------------------------------------------------------------------------
-void SolarTracker::SolTrack(DateAndTime_t* pDateTime, OriginLocation_t* pLocation, SunPosition_t* pPosition, bool UseDegrees, bool UseNorthEqualsZero, bool ComputeRefrEquatorial, bool ComputeDistance)
+void SolTrack(DateAndTime_t* pDateTime, OriginLocation_t* pLocation, SunPosition_t* pPosition, bool UseDegrees, bool UseNorthEqualsZero, bool ComputeRefrEquatorial, bool ComputeDistance)
 {
-    m_pDateTime = pDateTime;
-    m_pPosition = pPosition;
-    m_pLocation = pLocation;
-
     if(UseDegrees == true)
     {
-        m_pLocation->Longitude /= RADIAN_TO_DEGREE;
-        m_pLocation->Latitude  /= RADIAN_TO_DEGREE;
+        pLocation->Longitude /= RADIAN_TO_DEGREE;
+        pLocation->Latitude  /= RADIAN_TO_DEGREE;
     }
 
     // Compute these once and reuse:
-    m_pLocation->SinLat = sin(m_pLocation->Latitude);
-    m_pLocation->CosLat = sqrt(1.0 - m_pLocation->SinLat * m_pLocation->SinLat);
+    pLocation->SinLat = sin(pLocation->Latitude);
+    pLocation->CosLat = sqrt(1.0 - pLocation->SinLat * pLocation->SinLat);
 
-    // Compute the Julian Day from the date and time:
-    m_pPosition->JulianDay = ComputeJulianDay();
+    ///-------------------------------------------------------------------------------------------------
+    /// Compute the Julian day from the date and time
 
-    // Derived expressions of time:
-    m_pPosition->tJD  = m_pPosition->JulianDay - JULIAN_DAYS_2000;                          // Time in Julian days since 2000.0
-    m_pPosition->tJC  = m_pPosition->tJD / EARTH_ORBITAL_PERIOD_X_100;
-    m_pPosition->tJC2 = m_pPosition->tJC * m_pPosition->tJC;
-
-    // Compute the ecliptic longitude of the Sun and the obliquity of the ecliptic:
-    ComputeLongitude(ComputeDistance);
-
-    // Convert ecliptic coordinates to geocentric equatorial coordinates:
-    ConvertEclipticToEquatorial();
-
-    // Convert equatorial coordinates to horizontal coordinates, correcting for parallax and refraction:
-    ConvertEquatorialToHorizontal();
-
-    // Convert the corrected horizontal coordinates back to equatorial coordinates:
-    if(ComputeRefrEquatorial == true)
-    {
-        ConvertHorizontalToEquatorial();
-    }
-
-    // Use the North=0 convention for azimuth and hour angle (default: South = 0) if desired:
-    if(UseNorthEqualsZero == true)
-    {
-        SetNorthToZero(ComputeRefrEquatorial);
-    }
-
-    // If the user wants degrees, convert final results from radians to degrees:
-    if(UseDegrees == true)
-    {
-        ConvertRadiansToDegrees(ComputeRefrEquatorial);
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           ComputeJulianDay
-//
-//  Parameter(s):   None
-//  Return:         JulianDay    Julian day for the given date and time.
-//
-//  Description:    Compute the Julian day from the date and time
-//
-//  Note(s):        Gregorian calendar only (>~1582).
-//
-//-------------------------------------------------------------------------------------------------
-double SolarTracker::ComputeJulianDay(void)
-{
-    int Year  = m_pDateTime->Date.Year;
-    int Month = m_pDateTime->Date.Month;
+    int Year  = pDateTime->Date.Year;
+    int Month = pDateTime->Date.Month;
 
     if(Month <= 2)
     {
@@ -210,228 +153,157 @@ double SolarTracker::ComputeJulianDay(void)
 
     int Tmp1 = static_cast<int>(floor(Year / TIME_YEAR_PER_CENTURY));
     int Tmp2 = 2 - Tmp1 + static_cast<int>(floor(Tmp1 / LEAP_YEAR_GRANULARITY));
-    double DDay = double(m_pDateTime->Date.Day) + (double(m_pDateTime->Time.Hour) / double(TIME_HOURS_PER_DAY)) + (double(m_pDateTime->Time.Minute) / double(TIME_MINUTES_PER_DAYS)) + (double(m_pDateTime->Time.Second) / double(TIME_SECONDS_PER_DAY));
-    return floor(EARTH_ORBITAL_PERIOD * (Year - YEAR_2000)) - FUDGE_FACTOR + floor(APPROXIMATE_DAYS_IN_MONTH * (Month + 1)) + DDay + Tmp2;
-}
+    FLOAT DDay = FLOAT(pDateTime->Date.Day) + (FLOAT(pDateTime->Time.Hour) / FLOAT(TIME_HOURS_PER_DAY)) + (FLOAT(pDateTime->Time.Minute) / FLOAT(TIME_MINUTES_PER_DAYS)) + (FLOAT(pDateTime->Time.Second) / FLOAT(TIME_SECONDS_PER_DAY));
+    pPosition->JulianDay = floor(EARTH_ORBITAL_PERIOD * (Year - YEAR_2000)) - FUDGE_FACTOR + floor(APPROXIMATE_DAYS_IN_MONTH * (Month + 1)) + DDay + Tmp2;
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           ComputeLongitude
-//
-//  Parameter(s):   ComputeDistance     Compute distance to the Sun (AU): false ->no, true -> yes
-//  Return:         Position            Position of the Sun
-//
-//  Description:    Compute the ecliptic longitude of the Sun for a given Julian Day
-//
-//-------------------------------------------------------------------------------------------------
-void SolarTracker::ComputeLongitude(bool ComputeDistance)
-{
-    double L0 = J2000_MEAN_LONGITUDE + MEAN_MOTION_SUN * m_pPosition->tJC + MEAN_MOTION_CORRECTION * m_pPosition->tJC2;                     // Solar Mean Longitude
-    double M =  J2000_MEAN_ANOMALY + MEAN_ANOMALY_RATE * m_pPosition->tJC - MEAN_ANOMALY_CORRECTION * m_pPosition->tJC2;                    // Mean Anomaly
-    double C =  (EOC_FIRST_ORDER_TERM - EOC_DRIFT_FIRST_ORDER_TERM  * m_pPosition->tJC - EOC_CORRECTION * m_pPosition->tJC2) * sin(M) +
-                    (EOC_SECOND_ORDER_TERM - EOC_DRIFT_SECOND_ORDER_TERM * m_pPosition->tJC) * sin(2 * M);                                  // Sun's equation of the centre
-    double ODot = L0 + C;
+    ///------------------------------------------------------------------------------------------------
+    /// Derived expressions of time:
+    pPosition->tJD  = pPosition->JulianDay - JULIAN_DAYS_2000;      // Time in Julian days since 2000.0
+    pPosition->tJC  = pPosition->tJD / EARTH_ORBITAL_PERIOD_X_100;
+    pPosition->tJC2 = pPosition->tJC * pPosition->tJC;
+
+    ///-------------------------------------------------------------------------------------------------
+    /// Compute the ecliptic longitude of the Sun and the obliquity of the ecliptic:
+    FLOAT L0 = J2000_MEAN_LONGITUDE + MEAN_MOTION_SUN * pPosition->tJC + MEAN_MOTION_CORRECTION * pPosition->tJC2;                  // Solar Mean Longitude
+    FLOAT M =  J2000_MEAN_ANOMALY + MEAN_ANOMALY_RATE * pPosition->tJC - MEAN_ANOMALY_CORRECTION * pPosition->tJC2;                 // Mean Anomaly
+    FLOAT C =  (EOC_FIRST_ORDER_TERM - EOC_DRIFT_FIRST_ORDER_TERM  * pPosition->tJC - EOC_CORRECTION * pPosition->tJC2) * sin(M) +
+               (EOC_SECOND_ORDER_TERM - EOC_DRIFT_SECOND_ORDER_TERM * pPosition->tJC) * sin(2 * M);                                 // Sun's equation of the centre
+    FLOAT ODot = L0 + C;
 
     // Nutation, aberration:
-    double Omg = J2000_LOAN_MOON - LOAN_RATE_CHANGE_NODE * m_pPosition->tJC + LOAN_CORRECTION * m_pPosition->tJC2;                          // Longitude of Moon's ascending node
-    double DPsi = NIL_AMPLITUDE_OF_NUTATION * sin(Omg);                                                                                     // Nutation in Longitude
-    double Dist = DISTANCE_SUN_EARTH_AU;                                                                                                    // Mean distance to the Sun in AU
+    FLOAT Omg = J2000_LOAN_MOON - LOAN_RATE_CHANGE_NODE * pPosition->tJC + LOAN_CORRECTION * pPosition->tJC2;                       // Longitude of Moon's ascending node
+    FLOAT DPsi = NIL_AMPLITUDE_OF_NUTATION * sin(Omg);                                                                              // Nutation in Longitude
+    FLOAT Dist = DISTANCE_SUN_EARTH_AU;                                                                                             // Mean distance to the Sun in AU
 
     if(ComputeDistance == true)
     {
-        double Ecc = J2000_BASE_ECCENTRICITY - LINEAR_DRIFT_CENTURY * m_pPosition->tJC - QUADRATIC_DRIFT * m_pPosition->tJC2;               // Eccentricity of the Earth's orbit
-        double Nu = M + C;                                                                                                                  // True anomaly
-        Dist = Dist * (1.0 - Ecc * Ecc) / (1.0 + Ecc * cos(Nu));                                                                            // Geocentric distance of the Sun in AU
+        FLOAT Ecc = J2000_BASE_ECCENTRICITY - LINEAR_DRIFT_CENTURY * pPosition->tJC - QUADRATIC_DRIFT * pPosition->tJC2;            // Eccentricity of the Earth's orbit
+        FLOAT Nu = M + C;                                                                                                           // True anomaly
+        Dist = Dist * (1.0 - Ecc * Ecc) / (1.0 + Ecc * cos(Nu));                                                                    // Geocentric distance of the Sun in AU
     }
 
-    double Aber = MAX_ANNUAL_ABERRATION / Dist;                                                                                             // Aberration
+    FLOAT Aber = MAX_ANNUAL_ABERRATION / Dist;                                                                                      // Aberration
 
     // Obliquity of the ecliptic and nutation - do this here, since we've already computed many of the ingredients:
-    double Eps0 = J2000_EPOCH_OBLIQUITY - LINEAR_RATE_OBLIQUITY_J_CENTURY * m_pPosition->tJC + SECULAR_VARIATION * m_pPosition->tJC2;     // Mean obliquity of the ecliptic
-    double Deps = AMPLITUDE_OF_NUTATION_OBLIQUITY * cos(Omg);                                                                               // Nutation in obliquity
+    FLOAT Eps0 = J2000_EPOCH_OBLIQUITY - (LINEAR_RATE_OBLIQUITY_J_CENTURY * pPosition->tJC + SECULAR_VARIATION * pPosition->tJC2);  // Mean obliquity of the ecliptic
+    FLOAT Deps = AMPLITUDE_OF_NUTATION_OBLIQUITY * cos(Omg);                                                                        // Nutation in obliquity
 
     // Save position parameters:
-    m_pPosition->Longitude = ODot + Aber + DPsi;
+    pPosition->Longitude = ODot + Aber + DPsi;
 
-    while(m_pPosition->Longitude > ST_TWO_PI)
+    while(pPosition->Longitude > ST_TWO_PI)
     {
-        m_pPosition->Longitude -= ST_TWO_PI;
+        pPosition->Longitude -= ST_TWO_PI;
     }
 
-    while (m_pPosition->Longitude < 0)
+    while(pPosition->Longitude < 0)
     {
-        m_pPosition->Longitude += ST_TWO_PI;
+        pPosition->Longitude += ST_TWO_PI;
     }
-                                                                              // Apparent geocentric longitude, referred to the true equinox of date
-    m_pPosition->Distance     = Dist;                                                                                                       // Distance (AU)
-    m_pPosition->Obliquity    = Eps0 + Deps;                                                                                                // True obliquity of the ecliptic
-    m_pPosition->CosObliquity = cos(m_pPosition->Obliquity);                                                                                // Need the cosine later on
-    m_pPosition->NutationLon  = DPsi;                                                                                                       // Nutation in longitude
-}
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           ComputeLongitude
-//
-//  Parameter(s):   None
-//  Return:         None
-//
-//  Description:    Convert ecliptic coordinates to equatorial coordinates
-//
-//  Note(s):        This function assumes that the ecliptic latitude = 0.
-//
-//-------------------------------------------------------------------------------------------------
-void SolarTracker::ConvertEclipticToEquatorial(void)
-{
-    double SinLon = sin(m_pPosition->Longitude);
-    double SinObl = sqrt(1.0 - m_pPosition->CosObliquity * m_pPosition->CosObliquity);                  // Sine of the obliquity of the ecliptic will be positive in the forseeable future
+    // Apparent geocentric longitude, referred to the true equinox of date
+    pPosition->Distance     = Dist;                                         // Distance (AU)
+    pPosition->Obliquity    = Eps0 + Deps;                                  // True obliquity of the ecliptic
+    pPosition->CosObliquity = cos(pPosition->Obliquity);                    // Need the cosine later on
+    pPosition->NutationLon  = DPsi;                                         // Nutation in longitude
 
-    m_pPosition->RightAscension = CustomAtan2(m_pPosition->CosObliquity * SinLon, cos(m_pPosition->Longitude));      // 0 <= azimuth < (2 * PI)
-    m_pPosition->Declination = asin(SinObl * SinLon);
-}
+    ///-------------------------------------------------------------------------------------------------
+    /// Convert ecliptic coordinates to geocentric equatorial coordinates:
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           ComputeLongitude
-//
-//  Parameter(s):   location  Geographic location of the observer (rad)
-//  Return:         None
-//
-//  Description:    Convert equatorial to horizontal coordinates
-//
-//  Note(s):        Also corrects for parallax and atmospheric refraction.
-//
-//-------------------------------------------------------------------------------------------------
-void SolarTracker::ConvertEquatorialToHorizontal(void)
-{
+    FLOAT SinLon = sin(m_pPosition->Longitude);
+    FLOAT SinObl = sqrt(1.0 - pPosition->CosObliquity * pPosition->CosObliquity); // Sine of the obliquity of the ecliptic will be positive in the forseeable future
 
-    double Gmst       = J2000_MEAN_LONGITUDE + RATE_EARTH_ROTATION_PER_JULIAN_DAY * m_pPosition->tJD + PRECESSION_EFFECTS * m_pPosition->tJC2;  // Greenwich mean sidereal time
-    m_pPosition->Agst = Gmst + m_pPosition->NutationLon * m_pPosition->CosObliquity;                                                            // Correction for equation of the equinoxes -> apparent Greenwich sidereal time
+    pPosition->RightAscension = CustomAtan2(pPosition->CosObliquity * SinLon, cos(pPosition->Longitude));      // 0 <= azimuth < (2 * PI)
+    pPosition->Declination = asin(SinObl * SinLon);
 
+    ///-------------------------------------------------------------------------------------------------
+    /// Convert equatorial coordinates to horizontal coordinates, correcting for parallax and refraction:
+    //FLOAT Gmst = J2000_MEAN_LONGITUDE + RATE_EARTH_ROTATION_PER_JULIAN_DAY * pPosition->tJD + PRECESSION_EFFECTS * pPosition->tJC2; // Greenwich mean sidereal time
+    /* according to copilot */ FLOAT Gmst = 280.46061837 + 360.98564736629 * (pPosition->tJD - JULIAN_DAYS_2000);
+    
+    pPosition->Agst = Gmst + pPosition->NutationLon * pPosition->CosObliquity;                                                            // Correction for equation of the equinoxes -> apparent Greenwich sidereal time
 
-    double SinAlt = 0.0;
+    FLOAT SinAlt = 0.0;
     // Azimuth does not need to be corrected for parallax or refraction, hence store the result in the 'azimuthRefract' variable directly:
-    ConvertEquatorialToHorizontal(&SinAlt);
+    {
+        FLOAT Ha  = pPosition->Agst + pLocation->Longitude - pPosition->RightAscension;                           // Local Hour Angle
 
-    double Alt = asin(SinAlt);                                                                                                                  // Altitude of the Sun above the horizon (rad)
-    double CosAlt = sqrt(1.0 - SinAlt * SinAlt);                                                                                                // Cosine of the altitude is always positive or zero
+        // Some preparation, saves ~29%:
+        FLOAT SinHa  = sin(Ha);
+        FLOAT CosHa  = cos(Ha);
+
+        FLOAT SinDec = sin(pPosition->Declination);
+        FLOAT CosDec = sqrt(1.0 - SinDec * SinDec);                                                               // Cosine of a declination is always positive or zero
+        FLOAT TanDec = SinDec / CosDec;
+
+        pPosition->AzimuthRefract = CustomAtan2(SinHa,  CosHa  * pLocation->SinLat - TanDec * pLocation->CosLat); // 0 <= azimuth < (2 * PI)
+        SinAlt = pLocation->SinLat * SinDec + pLocation->CosLat * CosDec * CosHa;                                 // Sine of the altitude above the horizon
+    }
+
+    FLOAT Alt = asin(SinAlt);                                                                                     // Altitude of the Sun above the horizon (rad)
+    FLOAT CosAlt = sqrt(1.0 - SinAlt * SinAlt);                                                                   // Cosine of the altitude is always positive or zero
 
     // Correct for parallax:
-    Alt -= REFRACTION_COEFFICIENT * CosAlt;                                                                                                     // Horizontal parallax = 8.794" = 4.2635e-5 rad
-    m_pPosition->Altitude = Alt;
+    Alt -= REFRACTION_COEFFICIENT * CosAlt;                                                                       // Horizontal parallax = 8.794" = 4.2635e-5 rad
+    pPosition->Altitude = Alt;
 
     // Correct for atmospheric refraction:
-    double DAlt = MAGNITUDE_OF_CORRECTION / tan(Alt + STEEPNESS_CORRECTION_CURVE / (Alt + SINGULARITY_NEAT_ZERO_ALTITUDE));                     // Refraction correction in altitude
-    DAlt *= m_pLocation->Pressure / STANDARD_PRESSURE * STANDARD_TEMPERATURE / m_pLocation->Temperature;
+    FLOAT DAlt = MAGNITUDE_OF_CORRECTION / tan(Alt + STEEPNESS_CORRECTION_CURVE / (Alt + SINGULARITY_NEAT_ZERO_ALTITUDE)); // Refraction correction in altitude
+    DAlt *= pLocation->Pressure / STANDARD_PRESSURE * STANDARD_TEMPERATURE / pLocation->Temperature;
     Alt += DAlt;
-    m_pPosition->AltitudeRefract = Alt;
-}
+    pPosition->AltitudeRefract = Alt;
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           ConvertEquatorialToHorizontal
-//
-//  Parameter(s):   sinAlt          Sine of the altitude of the Sun above the horizon.
-//  Return:         None
-//
-//  Description:    Convert equatorial coordinates to horizontal coordinates
-//
-//-------------------------------------------------------------------------------------------------
-void SolarTracker::ConvertEquatorialToHorizontal(double* pSinAlt)
-{
-    double Ha  = m_pPosition->Agst + m_pLocation->Longitude - m_pPosition->RightAscension;                            // Local Hour Angle
-
-    // Some preparation, saves ~29%:
-    double SinHa  = sin(Ha);
-    double CosHa  = cos(Ha);
-
-    double SinDec = sin(m_pPosition->Declination);
-    double CosDec = sqrt(1.0 - SinDec * SinDec);                                                                      // Cosine of a declination is always positive or zero
-    double TanDec = SinDec / CosDec;
-
-    m_pPosition->AzimuthRefract = CustomAtan2(SinHa,  CosHa  * m_pLocation->SinLat - TanDec * m_pLocation->CosLat);   // 0 <= azimuth < (2 * PI)
-    *pSinAlt = m_pLocation->SinLat * SinDec + m_pLocation->CosLat * CosDec * CosHa;                                   // Sine of the altitude above the horizon
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           ConvertHorizontalToEquatorial
-//
-//  Parameter(s):   None
-//  Return:         None
-//
-//  Description:    Convert (refraction-corrected) horizontal coordinates to equatorial coordinates
-//
-//-------------------------------------------------------------------------------------------------
-void SolarTracker::ConvertHorizontalToEquatorial(void)
-{
-    // Multiply used variables:
-    double CosAz  = cos(m_pPosition->AzimuthRefract);
-    double SinAz  = sin(m_pPosition->AzimuthRefract);                                                                   // For symmetry
-    double SinAlt = sin(m_pPosition->AltitudeRefract);
-    double CosAlt = sqrt(1.0 - SinAlt * SinAlt);                                                                        // Cosine of an altitude is always positive or zero
-    double TanAlt = SinAlt / CosAlt;
-
-    m_pPosition->HourAngle          = CustomAtan2(SinAz, CosAz * m_pLocation->SinLat + TanAlt * m_pLocation->CosLat);   // Local Hour Angle:  0 <= hourAngle < 2pi
-    m_pPosition->DeclinationRefract = asin(m_pLocation->SinLat * SinAlt - m_pLocation->CosLat * CosAlt * CosAz);        // Declination
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           ConvertHorizontalToEquatorial
-//
-//  Parameter(s):   ComputeRefrEquatorial  Compute refraction correction for equatorial coordinates
-//  Return:         None
-//
-//  Description:    Convert the South=0 convention to North=0 convention for azimuth and hour angle
-//
-//  Note(s):        South = 0 is the default in celestial astronomy.
-//                  This makes the angles compatible with the compass/wind directions.
-//
-//-------------------------------------------------------------------------------------------------
-void SolarTracker::SetNorthToZero(bool ComputeRefrEquatorial)
-{
-    m_pPosition->AzimuthRefract += ST_PI;                                           // Add PI to set North = 0
-
-    if(m_pPosition->AzimuthRefract > ST_TWO_PI)
-    {
-        m_pPosition->AzimuthRefract -= ST_TWO_PI;                                   // Ensure 0 <= azimuth < (2 * PI)
-    }
-
+    ///-------------------------------------------------------------------------------------------------
+    /// Convert the corrected horizontal coordinates back to equatorial coordinates:
     if(ComputeRefrEquatorial == true)
     {
-        m_pPosition->HourAngleRefract = m_pPosition->HourAngleRefract + ST_PI;      // Add PI to set North=0
+        FLOAT CosAz  = cos(pPosition->AzimuthRefract);
+        FLOAT SinAz  = sin(pPosition->AzimuthRefract);                                                              // For symmetry
+        FLOAT SinAlt = sin(pPosition->AltitudeRefract);
+        FLOAT CosAlt = sqrt(1.0 - SinAlt * SinAlt);                                                                 // Cosine of an altitude is always positive or zero
+        FLOAT TanAlt = SinAlt / CosAlt;
 
-        if(m_pPosition->HourAngleRefract > ST_TWO_PI)
+        pPosition->HourAngle          = CustomAtan2(SinAz, CosAz * pLocation->SinLat + TanAlt * pLocation->CosLat); // Local Hour Angle:  0 <= hourAngle < 2pi
+        pPosition->DeclinationRefract = asin(m_pLocation->SinLat * SinAlt - pLocation->CosLat * CosAlt * CosAz);    // Declination
+    }
+    
+    ///-------------------------------------------------------------------------------------------------
+    // Use the North=0 convention for azimuth and hour angle (default: South = 0) if desired:
+    if(UseNorthEqualsZero == true)
+    {
+        pPosition->AzimuthRefract += ST_PI;                                         // Add PI to set North = 0
+
+        if(pPosition->AzimuthRefract > ST_TWO_PI)
         {
-            m_pPosition->HourAngleRefract -= ST_TWO_PI;                             // Ensure 0 <= hour angle < 2pi
+            pPosition->AzimuthRefract -= ST_TWO_PI;                                 // Ensure 0 <= azimuth < (2 * PI)
+        }
+
+        if(ComputeRefrEquatorial == true)
+        {
+            pPosition->HourAngleRefract = pPosition->HourAngleRefract + ST_PI;      // Add PI to set North=0
+
+            if(pPosition->HourAngleRefract > ST_TWO_PI)
+            {
+                pPosition->HourAngleRefract -= ST_TWO_PI;                           // Ensure 0 <= hour angle < (2 * PI)
+            }
         }
     }
-}
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           ConvertRadiansToDegrees
-//
-//  Parameter(s):   ComputeRefrEquatorial  Compute refraction correction for equatorial coordinates
-//  Return:         None
-//
-//  Description:    Convert final results from radians to degrees.
-//
-//-------------------------------------------------------------------------------------------------
-void SolarTracker::ConvertRadiansToDegrees(bool ComputeRefrEquatorial)
-{
-    m_pPosition->Longitude       *= RADIAN_TO_DEGREE;
-    m_pPosition->RightAscension  *= RADIAN_TO_DEGREE;
-    m_pPosition->Declination     *= RADIAN_TO_DEGREE;
-    m_pPosition->Altitude        *= RADIAN_TO_DEGREE;
-    m_pPosition->AzimuthRefract  *= RADIAN_TO_DEGREE;
-    m_pPosition->AltitudeRefract *= RADIAN_TO_DEGREE;
-
-    if(ComputeRefrEquatorial == true)
+    // If the user wants degrees, convert final results from radians to degrees:
+    if(UseDegrees == true)
     {
-        m_pPosition->HourAngleRefract   *= RADIAN_TO_DEGREE;
-        m_pPosition->DeclinationRefract *= RADIAN_TO_DEGREE;
+        pPosition->Longitude       *= RADIAN_TO_DEGREE;
+        pPosition->RightAscension  *= RADIAN_TO_DEGREE;
+        pPosition->Declination     *= RADIAN_TO_DEGREE;
+        pPosition->Altitude        *= RADIAN_TO_DEGREE;
+        pPosition->AzimuthRefract  *= RADIAN_TO_DEGREE;
+        pPosition->AltitudeRefract *= RADIAN_TO_DEGREE;
+
+        if(ComputeRefrEquatorial == true)
+        {
+            pPosition->HourAngleRefract   *= RADIAN_TO_DEGREE;
+            pPosition->DeclinationRefract *= RADIAN_TO_DEGREE;
+        }
     }
 }
 
@@ -449,7 +321,7 @@ void SolarTracker::ConvertRadiansToDegrees(bool ComputeRefrEquatorial)
 //  Note(s)          https://en.wikipedia.org/wiki/Atan2#Definition_and_computation
 //
 //-------------------------------------------------------------------------------------------------
-double CustomAtan2(double y, double x)
+FLOAT CustomAtan2(FLOAT y, FLOAT x)
 {
     if(x > 0.0)
     {

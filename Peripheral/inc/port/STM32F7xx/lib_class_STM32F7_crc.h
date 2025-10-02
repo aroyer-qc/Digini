@@ -27,6 +27,10 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+
+#if (USE_CRC_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -105,7 +109,7 @@
 #define CRC_POLY_SIZE_8_BITS            0x00000010
 #define CRC_POLY_SIZE_16_BITS           0x00000008
 #define CRC_POLY_SIZE_32_BITS           0x00000000
-                                              
+
 #define CRC_REV_INPUT_DATA_NONE         0x00000000
 #define CRC_REV_INPUT_DATA_BYTE         0x00000020
 #define CRC_REV_INPUT_DATA_HALFWORD     0x00000040
@@ -140,13 +144,12 @@ class CRC_Driver
 {
     public:
 
-                    CRC_Driver          ();
-        
-        void        Start               (CRC_Type_e Type);
+        void        Initialize          (CRC_HW_Type_e Type);
+        void        Start               (void);
         uint32_t    GetValue            (void);
         void        AddByte             (uint8_t Value);
         void        AddBuffer           (const uint32_t* pBuffer, size_t Length);
-        uint32_t    CalculateBuffer     (const uint32_t* pBuffer, size_t Length, CRC_Type_e Type);
+        uint32_t    CalculateBuffer     (const uint32_t* pBuffer, size_t Length, CRC_HW_Type_e Type);
 
     private:
 

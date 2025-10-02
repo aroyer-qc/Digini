@@ -128,20 +128,6 @@ void SDIO_Driver::Initialize(void)
         // Enable SDIO clock
         RCC->APB2ENR |= RCC_APB2ENR_SDMMC1EN;
 
-        /// ---- GPIOs Configuration ----
-        for(uint32_t IO_Id = uint32_t(IO_SD_D0); IO_Id <= uint32_t(IO_SD_CMD); IO_Id++)
-        {
-            IO_PinInit(IO_ID_e(IO_Id));
-        }
-
-      #if SD_CARD_USE_DETECT_SIGNAL == 1
-        IO_PinInit(IO_DETECT_SD_CARD);
-      #endif
-
-      #if SD_CARD_USE_POWER_CONTROL == 1
-        IO_OutputInit(IO_POWER_SD_CARD);
-      #endif
-
         // Initialize DMA2 channel 3 for RX from SD CARD
         m_DMA_RX.Initialize(&m_pInfo->DMA_RX);                                      // Write config that will never change
         m_DMA_RX.SetSource((void*)&SDMMC1->FIFO);

@@ -487,10 +487,11 @@ void BSP_EthernetIF_Initialize(void)
 		ETH_Phy.SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
 
       #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
-        IO_PinInit(IO_ETH_PHY_LINK_IO);
-        IO_InitIRQ(ETH_PHY_LINK_IO_ISR, ethernetif_LinkCallcack);
-        ETH_Phy.SetLinkUpInterrupt();
-        IO_EnableIRQ(ETH_PHY_LINK_IO_ISR);
+        // IO are done globally into BSP they must be define set into bsp_io_def
+        //IO_PinInit(IO_ETH_PHY_LINK_IO);
+        //IO_InitIRQ(ETH_PHY_LINK_IO_ISR, ethernetif_LinkCallcack);
+        //ETH_Phy.SetLinkUpInterrupt();
+        //IO_EnableIRQ(ETH_PHY_LINK_IO_ISR);
 	  #endif
 	}
   // }

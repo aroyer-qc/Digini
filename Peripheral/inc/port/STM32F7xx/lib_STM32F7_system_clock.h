@@ -252,7 +252,7 @@
 #endif
 
 #define SYS_APB1_TIMER_CLOCK_FREQUENCY              (SYS_APB1_CLOCK_FREQUENCY * 2)
-#define SYS_PCLK1_CLOCK_FREQUENCY                   SYS_APB1_TIMER_CLOCK_FREQUENCY
+#define PCLK1_CLOCK_FREQUENCY                       SYS_APB1_TIMER_CLOCK_FREQUENCY
 
 // --------------------------------------------------------------------------------------------------------------------------------
 
@@ -271,12 +271,12 @@
 #endif
 
 #define SYS_APB2_TIMER_CLOCK_FREQUENCY              (SYS_APB2_CLOCK_FREQUENCY * 2)
-#define SYS_PCLK2_CLOCK_FREQUENCY                   SYS_APB2_TIMER_CLOCK_FREQUENCY
+#define PCLK2_CLOCK_FREQUENCY                       SYS_APB2_TIMER_CLOCK_FREQUENCY
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// All Peripheral frequency ( TODO need to add all module clock here. )
 
-// this list is not for F7 it is here as an example... 
+// this list is not for F7 it is here as an example...
 // CFG_PER_SOURCE_MUX
 // CFG_ADC_SOURCE_MUX
 // CFG_CEC_SOURCE_MUX

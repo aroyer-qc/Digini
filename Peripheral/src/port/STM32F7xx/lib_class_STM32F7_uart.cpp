@@ -141,7 +141,7 @@ void UART_Driver::Initialize(void)
                 RCC->APB2RSTR   |=  RCC_APB2RSTR_USART1RST;         // Enable USART1 reset state
                 RCC->APB2RSTR   &= ~RCC_APB2RSTR_USART1RST;         // Release USART1 from reset state
                 RCC->APB2ENR    |=  RCC_APB2ENR_USART1EN;           // Enable USART_PORT clock
-                m_ClockFrequency =  USART16910_CLOCK_FREQUENCY;
+                m_ClockFrequency =  USART1_CLOCK_FREQUENCY;
             }
             break;
           #endif
@@ -153,7 +153,7 @@ void UART_Driver::Initialize(void)
                 RCC->APB1LRSTR  |=  RCC_APB1LRSTR_USART2RST;        // Enable USART2 reset state
                 RCC->APB1LRSTR  &= ~RCC_APB1LRSTR_USART2RST;        // Release USART2 from reset state
                 RCC->APB1LENR   |=  RCC_APB1LENR_USART2EN;          // Enable USART_PORT clock
-                m_ClockFrequency =  USART234578_CLOCK_FREQUENCY;
+                m_ClockFrequency =  USART2_CLOCK_FREQUENCY;
             }
             break;
           #endif
@@ -165,7 +165,7 @@ void UART_Driver::Initialize(void)
                 RCC->APB1LRSTR  |=  RCC_APB1LRSTR_USART3RST;        // Enable USART3 reset state
                 RCC->APB1LRSTR  &= ~RCC_APB1LRSTR_USART3RST;        // Release USART3 from reset state
                 RCC->APB1LENR   |=  RCC_APB1LENR_USART3EN;          // Enable USART_PORT clock
-                m_ClockFrequency =  USART234578_CLOCK_FREQUENCY;
+                m_ClockFrequency =  USART3_CLOCK_FREQUENCY;
             }
             break;
           #endif
@@ -177,7 +177,7 @@ void UART_Driver::Initialize(void)
                 RCC->APB1LRSTR  |=  RCC_APB1LRSTR_USART4RST;        // Enable USART4 reset state
                 RCC->APB1LRSTR  &= ~RCC_APB1LRSTR_USART4RST;        // Release USART4 from reset state
                 RCC->APB1LENR   |=  RCC_APB1LENR_USART4EN;          // Enable USART_PORT clock
-                m_ClockFrequency =  USART234578_CLOCK_FREQUENCY;
+                m_ClockFrequency =  UART4_CLOCK_FREQUENCY;
             }
             break;
           #endif
@@ -189,7 +189,7 @@ void UART_Driver::Initialize(void)
                 RCC->APB1LRSTR  |=  RCC_APB1LRSTR_USART5RST;        // Enable USART5 reset state
                 RCC->APB1LRSTR  &= ~RCC_APB1LRSTR_USART5RST;        // Release USART5 from reset state
                 RCC->APB1LENR   |=  RCC_APB1LENR_USART5EN;          // Enable USART_PORT clock
-                m_ClockFrequency =  USART234578_CLOCK_FREQUENCY;
+                m_ClockFrequency =  UART5_CLOCK_FREQUENCY;
             }
             break;
           #endif
@@ -201,7 +201,7 @@ void UART_Driver::Initialize(void)
                 RCC->APB2RSTR   |=  RCC_APB2RSTR_USART6RST;         // Enable USART2 reset state
                 RCC->APB2RSTR   &= ~RCC_APB2RSTR_USART6RST;         // Release USART2 from reset state
                 RCC->APB2ENR    |=  RCC_APB2ENR_USART6EN;           // Enable USART_PORT clock
-                m_ClockFrequency =  USART16910_CLOCK_FREQUENCY;
+                m_ClockFrequency =  USART6_CLOCK_FREQUENCY;
             }
             break;
           #endif
@@ -213,7 +213,7 @@ void UART_Driver::Initialize(void)
                 RCC->APB1LRSTR  |=  RCC_APB1LRSTR_UART7RST;         // Enable UART7 reset state
                 RCC->APB1LRSTR  &= ~RCC_APB1LRSTR_UART7RST;         // Release UART7 from reset state
                 RCC->APB1LENR   |=  RCC_APB1LENR_UART7EN;           // Enable UART_PORT clock
-                m_ClockFrequency =  USART234578_CLOCK_FREQUENCY;
+                m_ClockFrequency =  UART7_CLOCK_FREQUENCY;
             }
             break;
           #endif
@@ -225,34 +225,11 @@ void UART_Driver::Initialize(void)
                 RCC->APB1LRSTR  |=  RCC_APB1LRSTR_UART8RST;         // Enable UART8 reset state
                 RCC->APB1LRSTR  &= ~RCC_APB1LRSTR_UART8RST;         // Release UART8 from reset state
                 RCC->APB1LENR   |=  RCC_APB1LENR_UART8EN;           // Enable UART_PORT clock
-                m_ClockFrequency =  USART234578_CLOCK_FREQUENCY;
+                m_ClockFrequency =  UART8_CLOCK_FREQUENCY;
             }
             break;
           #endif
 
-          #if (UART_DRIVER_SUPPORT_UART9_CFG == DEF_ENABLED)
-            case uint32_t(UART_DRIVER_ID_9):
-            {
-                // ---- Reset peripheral and set clock ----
-                RCC->APB2RSTR |=  RCC_APB2RSTR_UART9RST;            // Enable UART9 reset state
-                RCC->APB2RSTR &= ~RCC_APB2RSTR_UART9RST;            // Release UART9 from reset state
-                RCC->APB2ENR  |=  RCC_APB2ENR_UART9EN;              // Enable UART_PORT clock
-                m_ClockFrequency =  USART16910_CLOCK_FREQUENCY;
-            }
-            break;
-          #endif
-
-          #if (UART_DRIVER_SUPPORT_UART10_CFG == DEF_ENABLED)
-            case uint32_t(UART_DRIVER_ID_10):
-            {
-                // ---- Reset peripheral and set clock ----
-                RCC->APB2RSTR |=  RCC_APB2RSTR_USART10RST;          // Enable USART10 reset state
-                RCC->APB2RSTR &= ~RCC_APB2RSTR_USART10RST;          // Release USART10 from reset state
-                RCC->APB2ENR  |=  RCC_APB2ENR_USART10EN;            // Enable UART_PORT clock
-                m_ClockFrequency =  USART16910_CLOCK_FREQUENCY;
-            }
-            break;
-          #endif
         }
 
         SetConfig(m_pInfo->Config, m_pInfo->BaudID);
@@ -567,7 +544,7 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
                 m_DMA_TX.SetLength(m_TX_Transfer.u.Size);
             }
 
-            m_pUart->ICR = USART_ICR_TCCF | USART_ICR_TXFECF;
+            m_pUart->ICR = USART_ICR_TCCF | USART_ICR_FECF;
             DMA_EnableTX();
             m_DMA_TX.ClearFlag(DMA_LISR_FEIF1 | DMA_LISR_TEIF1);
             m_DMA_TX.Enable();
@@ -1104,7 +1081,7 @@ void UART_Driver::IRQ_Handler(void)
             }
           #endif
 
-            if((m_pInfo->DMA_RX.Config & DMA_MODE_CIRCULAR) == 0)
+            if((m_pInfo->DMA_RX.ConfigAndChannel & DMA_MODE_CIRCULAR) == 0)
             {
                 DMA_ConfigRX(nullptr, 0); // Reset RX packet to avoid override with a new RX packet
             }

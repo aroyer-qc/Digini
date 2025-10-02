@@ -135,9 +135,6 @@ enum UART_Baud_e
     UART_BAUD_IS_VIRTUAL,
 };
 
-
-// need to redo this part
-
 enum UART_Config_e
 {
     UART_CFG_NO_PARITY          =   0x00000000,

@@ -93,6 +93,53 @@
 #define CFG_RCC_CFGR_MCO2_PLL                       0xC0000000U
 
 //-------------------------------------------------------------------------------------------------
+// Multiplexer for peripheral clock source only UART at this time
+
+#define CFG_USART1_PCLK2                            0
+#define CFG_USART1_SYS_CLOCK                        RCC_DCKCFGR2_USART1SEL_0
+#define CFG_USART1_HSI                              RCC_DCKCFGR2_USART1SEL_1
+#define CFG_USART1_LSE                              (RCC_DCKCFGR2_USART1SEL_1 | RCC_DCKCFGR2_USART1SEL_0)
+
+#define CFG_USART2_PCLK1                            0
+#define CFG_USART2_SYS_CLOCK                        RCC_DCKCFGR2_USART2SEL_0
+#define CFG_USART2_HSI                              RCC_DCKCFGR2_USART2SEL_1
+#define CFG_USART2_LSE                              (RCC_DCKCFGR2_USART2SEL_1 | RCC_DCKCFGR2_USART2SEL_0)
+
+#define CFG_USART3_PCLK1                            0
+#define CFG_USART3_SYS_CLOCK                        RCC_DCKCFGR2_USART3SEL_0
+#define CFG_USART3_HSI                              RCC_DCKCFGR2_USART3SEL_1
+#define CFG_USART3_LSE                              (RCC_DCKCFGR2_USART3SEL_1 | RCC_DCKCFGR2_USART3SEL_0)
+
+#define CFG_UART4_PCLK1                             0
+#define CFG_UART4_SYS_CLOCK                         RCC_DCKCFGR2_UART4SEL_0
+#define CFG_UART4_HSI                               RCC_DCKCFGR2_UART4SEL_1
+#define CFG_UART4_LSE                               (RCC_DCKCFGR2_UART4SEL_1 | RCC_DCKCFGR2_UART4SEL_0)
+
+#define CFG_UART5_PCLK1                             0
+#define CFG_UART5_SYS_CLOCK                         RCC_DCKCFGR2_UART5SEL_0
+#define CFG_UART5_HSI                               RCC_DCKCFGR2_UART5SEL_1
+#define CFG_UART5_LSE                               (RCC_DCKCFGR2_UART5SEL_1 | RCC_DCKCFGR2_UART5SEL_0)
+
+#define CFG_USART6_PCLK2                            0
+#define CFG_USART6_SYS_CLOCK                        RCC_DCKCFGR2_USART6SEL_0
+#define CFG_USART6_HSI                              RCC_DCKCFGR2_USART6SEL_1
+#define CFG_USART6_LSE                              (RCC_DCKCFGR2_USART6SEL_1 | RCC_DCKCFGR2_USART6SEL_0)
+
+#define CFG_UART7_PCLK1                             0
+#define CFG_UART7_SYS_CLOCK                         RCC_DCKCFGR2_UART7SEL_0
+#define CFG_UART7_HSI                               RCC_DCKCFGR2_UART7SEL_1
+#define CFG_UART7_LSE                               (RCC_DCKCFGR2_UART7SEL_1 | RCC_DCKCFGR2_UART7SEL_0)
+
+#define CFG_UART8_PCLK1                             0
+#define CFG_UART8_SYS_CLOCK                         RCC_DCKCFGR2_UART8SEL_0
+#define CFG_UART8_HSI                               RCC_DCKCFGR2_UART8SEL_1
+#define CFG_UART8_LSE                               (RCC_DCKCFGR2_UART8SEL_1 | RCC_DCKCFGR2_UART8SEL_0)
+
+#define LSI_CLOCK_FREQUENCY                         32000
+#define HSI_CLOCK_FREQUENCY                         16000000
+#define LSE_CLOCK_FREQUENCY                         32768
+
+//-------------------------------------------------------------------------------------------------
 // Configuration file(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -106,6 +153,7 @@
 #define RCC_PLLCFGR_PLL_N_POS           6
 #define RCC_PLLCFGR_PLL_P_POS           16
 #define RCC_PLLCFGR_PLL_Q_POS           24
+
 
 // --------------------------------------------------------------------------------------------------------------------------------
 // Autoconfig value for PLL
@@ -204,6 +252,7 @@
 #endif
 
 #define SYS_APB1_TIMER_CLOCK_FREQUENCY              (SYS_APB1_CLOCK_FREQUENCY * 2)
+#define SYS_PCLK1_CLOCK_FREQUENCY                   SYS_APB1_TIMER_CLOCK_FREQUENCY
 
 // --------------------------------------------------------------------------------------------------------------------------------
 
@@ -222,6 +271,145 @@
 #endif
 
 #define SYS_APB2_TIMER_CLOCK_FREQUENCY              (SYS_APB2_CLOCK_FREQUENCY * 2)
+#define SYS_PCLK2_CLOCK_FREQUENCY                   SYS_APB2_TIMER_CLOCK_FREQUENCY
+
+/// -------------------------------------------------------------------------------------------------------------------------------
+/// All Peripheral frequency ( TODO need to add all module clock here. )
+
+// this list is not for F7 it is here as an example... 
+// CFG_PER_SOURCE_MUX
+// CFG_ADC_SOURCE_MUX
+// CFG_CEC_SOURCE_MUX
+// CFG_DFSDM_SOURCE_MUX
+// CFG_FDCAN_SOURCE_MUX
+// CFG_FMC_SOURCE_MUX
+// CFG_I2C123_SOURCE_MUX
+// CFG_I2C4_SOURCE_MUX
+// CFG_HRTIM_SOURCE_MUX
+// CFG_LPTIM1_SOURCE_MUX
+// CFG_LPTIM2_SOURCE_MUX
+// CFG_LPTIM345_SOURCE_MUX
+// CFG_LPUART1_SOURCE_MUX
+// CFG_MCO1_SOURCE_MUX
+// CFG_MCO2_SOURCE_MUX
+// CFG_QSPI_SOURCE_MUX
+// CFG_OSPI_SOURCE_MUX
+// CFG_RNG_SOURCE_MUX
+// CFG_RTC_SOURCE_MUX
+// CFG_SAI1_SOURCE_MUX
+// CFG_SAI23_SOURCE_MUX
+// CFG_SAI4A_SOURCE_MUX
+// CFG_SAI4B_SOURCE_MUX
+// CFG_SDMMC_SOURCE_MUX
+// CFG_SPDIF_SOURCE_MUX
+// CFG_SPI123_SOURCE_MUX
+// CFG_SPI45_SOURCE_MUX
+// CFG_SPI6_SOURCE_MUX
+// CFG_SWP_SOURCE_MUX
+
+/// USART 1 clock frequency
+  #if   (CFG_USART1_SOURCE_MUX == CFG_USART1_PCLK2)
+    #define USART1_CLOCK_FREQUENCY                      PCLK2_CLOCK_FREQUENCY
+  #elif (CFG_USART1_SOURCE_MUX == CFG_USART1_SYS)
+    #define USART1_CLOCK_FREQUENCY                      SYS_CLOCK_FREQUENCY
+  #elif (CFG_USART1_SOURCE_MUX == CFG_USART1_HSI)
+    #define USART1_CLOCK_FREQUENCY                      HSI_CLOCK_FREQUENCY
+  #elif (CFG_USART1_SOURCE_MUX == CFG_USART1_LSE)
+    #define USART1_CLOCK_FREQUENCY                      LSE_CLOCK_FREQUENCY
+  #else
+    #error  USART1_CLOCK_FREQUENCY not defined
+  #endif
+/// USART 2 clock frequency
+  #if   (CFG_USART2_SOURCE_MUX == CFG_USART2_PCLK1)
+    #define USART2_CLOCK_FREQUENCY                      PCLK1_CLOCK_FREQUENCY
+  #elif (CFG_USART2_SOURCE_MUX == CFG_USART2_SYS)
+    #define USART2_CLOCK_FREQUENCY                      SYS_CLOCK_FREQUENCY
+  #elif (CFG_USART2_SOURCE_MUX == CFG_USART2_HSI)
+    #define USART2_CLOCK_FREQUENCY                      HSI_CLOCK_FREQUENCY
+  #elif (CFG_USART2_SOURCE_MUX == CFG_USART2_LSE)
+    #define USART2_CLOCK_FREQUENCY                      LSE_CLOCK_FREQUENCY
+  #else
+    #error  USART2_CLOCK_FREQUENCY not defined
+  #endif
+
+/// USART 3 clock frequency
+  #if   (CFG_USART3_SOURCE_MUX == CFG_USART3_PCLK1)
+    #define USART3_CLOCK_FREQUENCY                      PCLK1_CLOCK_FREQUENCY
+  #elif (CFG_USART3_SOURCE_MUX == CFG_USART3_SYS)
+    #define USART3_CLOCK_FREQUENCY                      SYS_CLOCK_FREQUENCY
+  #elif (CFG_USART3_SOURCE_MUX == CFG_USART3_HSI)
+    #define USART3_CLOCK_FREQUENCY                      HSI_CLOCK_FREQUENCY
+  #elif (CFG_USART3_SOURCE_MUX == CFG_USART3_LSE)
+    #define USART3_CLOCK_FREQUENCY                      LSE_CLOCK_FREQUENCY
+  #else
+    #error  UART3_CLOCK_FREQUENCY not defined
+  #endif
+
+/// UART 4 clock frequency
+  #if   (CFG_UART4_SOURCE_MUX == CFG_UART4_PCLK1)
+    #define UART4_CLOCK_FREQUENCY                       PCLK1_CLOCK_FREQUENCY
+  #elif (CFG_UART4_SOURCE_MUX == CFG_UART4_SYS)
+    #define UART4_CLOCK_FREQUENCY                       SYS_CLOCK_FREQUENCY
+  #elif (CFG_UART4_SOURCE_MUX == CFG_UART4_HSI)
+    #define UART4_CLOCK_FREQUENCY                       HSI_CLOCK_FREQUENCY
+  #elif (CFG_UART4_SOURCE_MUX == CFG_UART4_LSE)
+    #define UART4_CLOCK_FREQUENCY                       LSE_CLOCK_FREQUENCY
+  #else
+    #error  UART4_CLOCK_FREQUENCY not defined
+#endif
+
+/// USART 5 clock frequency
+  #if   (CFG_UART5_SOURCE_MUX == CFG_UART5_PCLK1)
+    #define UART5_CLOCK_FREQUENCY                       PCLK1_CLOCK_FREQUENCY
+  #elif (CFG_UART5_SOURCE_MUX == CFG_UART5_SYS)
+    #define UART5_CLOCK_FREQUENCY                       SYS_CLOCK_FREQUENCY
+  #elif (CFG_UART5_SOURCE_MUX == CFG_UART5_HSI)
+    #define UART5_CLOCK_FREQUENCY                       HSI_CLOCK_FREQUENCY
+  #elif (CFG_UART5_SOURCE_MUX == CFG_UART5_LSE)
+    #define UART5_CLOCK_FREQUENCY                       LSE_CLOCK_FREQUENCY
+  #else
+    #error  UART5_CLOCK_FREQUENCY not defined
+  #endif
+
+/// USART 6 clock frequency
+  #if   (CFG_USART6_SOURCE_MUX == CFG_USART6_PCLK2)
+    #define USART6_CLOCK_FREQUENCY                      PCLK2_CLOCK_FREQUENCY
+  #elif (CFG_USART6_SOURCE_MUX == CFG_USART6_SYS)
+    #define USART6_CLOCK_FREQUENCY                      SYS_CLOCK_FREQUENCY
+  #elif (CFG_USART6_SOURCE_MUX == CFG_USART6_HSI)
+    #define USART6_CLOCK_FREQUENCY                      HSI_CLOCK_FREQUENCY
+  #elif (CFG_USART6_SOURCE_MUX == CFG_USART6_LSE)
+    #define USART6_CLOCK_FREQUENCY                      LSE_CLOCK_FREQUENCY
+  #else
+    #error  USART6_CLOCK_FREQUENCY not defined
+  #endif
+
+/// USART 7 clock frequency
+  #if   (CFG_UART7_SOURCE_MUX == CFG_UART7_PCLK1)
+    #define UART7_CLOCK_FREQUENCY                       PCLK1_CLOCK_FREQUENCY
+  #elif (CFG_UART7_SOURCE_MUX == CFG_UART7_SYS)
+    #define UART7_CLOCK_FREQUENCY                       SYS_CLOCK_FREQUENCY
+  #elif (CFG_UART7_SOURCE_MUX == CFG_UART7_HSI)
+    #define UART7_CLOCK_FREQUENCY                       HSI_CLOCK_FREQUENCY
+  #elif (CFG_UART7_SOURCE_MUX == CFG_UART7_LSE)
+    #define UART7_CLOCK_FREQUENCY                       LSE_CLOCK_FREQUENCY
+  #else
+    #error  UART7_CLOCK_FREQUENCY not defined
+  #endif
+
+/// USART 8 clock frequency
+  #if   (CFG_UART8_SOURCE_MUX == CFG_UART8_PCLK1)
+    #define UART8_CLOCK_FREQUENCY                       PCLK1_CLOCK_FREQUENCY
+  #elif (CFG_UART8_SOURCE_MUX == CFG_UART8_SYS)
+    #define UART8_CLOCK_FREQUENCY                       SYS_CLOCK_FREQUENCY
+  #elif (CFG_UART8_SOURCE_MUX == CFG_UART8_HSI)
+    #define UART8_CLOCK_FREQUENCY                       HSI_CLOCK_FREQUENCY
+  #elif (CFG_UART8_SOURCE_MUX == CFG_UART8_LSE)
+    #define UART8_CLOCK_FREQUENCY                       LSE_CLOCK_FREQUENCY
+  #endif
+
+
+// CFG_USB_SOURCE_MUX                          CFG_RCC_D2CCIP2R_USB_PLL3Q
 
 // --------------------------------------------------------------------------------------------------------------------------------
 

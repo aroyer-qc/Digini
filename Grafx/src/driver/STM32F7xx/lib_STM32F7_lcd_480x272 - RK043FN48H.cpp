@@ -125,63 +125,6 @@ static const int32_t DRV_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           IO_Initialize
-//
-//  Parameter(s):   None
-//  Return:         None
-//
-//  Description:    GPIO configuration specific for the LCD and processor used by this driver
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::IO_Initialize(void)
-{
-    // +------------------------+-----------------------+----------------------------+
-    // +                       LCD pins assignment                                   +
-    // +------------------------+-----------------------+----------------------------+
-    // |  LCD_TFT R0 <-> PI.15  |  LCD_TFT G0 <-> PJ.07 |  LCD_TFT B0 <-> PE.04      |
-    // |  LCD_TFT R1 <-> PJ.00  |  LCD_TFT G1 <-> PJ.08 |  LCD_TFT B1 <-> PJ.13      |
-    // |  LCD_TFT R2 <-> PJ.01  |  LCD_TFT G2 <-> PJ.09 |  LCD_TFT B2 <-> PJ.14      |
-    // |  LCD_TFT R3 <-> PJ.02  |  LCD_TFT G3 <-> PJ.10 |  LCD_TFT B3 <-> PJ.15      |
-    // |  LCD_TFT R4 <-> PJ.03  |  LCD_TFT G4 <-> PJ.11 |  LCD_TFT B4 <-> PG.12      |
-    // |  LCD_TFT R5 <-> PJ.04  |  LCD_TFT G5 <-> PK.00 |  LCD_TFT B5 <-> PK.04      |
-    // |  LCD_TFT R6 <-> PJ.05  |  LCD_TFT G6 <-> PK.01 |  LCD_TFT B6 <-> PK.05      |
-    // |  LCD_TFT R7 <-> PJ.06  |  LCD_TFT G7 <-> PK.02 |  LCD_TFT B7 <-> PK.06      |
-    // -------------------------------------------------------------------------------
-    // |  LCD_TFT HSYNC <-> PI.10  | LCDTFT VSYNC <->  PI.09 |
-    // |  LCD_TFT CLK   <-> PI.14  | LCD_TFT DE   <->  PK.07 |
-    // -------------------------------------------------------
-    // |  LCD_DISP      <-> PI.12  |
-    // |  LCD_BL_CTRL   <-> PK.03  |
-    // -----------------------------
-    // By port
-    //
-    // E        4           Color
-    //
-    // G       12           Color
-    //
-    // I     9-10           Sync
-    //      12-14           Control
-    //         15           Color
-    //
-    // J     0-11           Color
-    //      13-15           Color
-    //
-    // K      0-2           Color
-    // K        3           Control
-    // K      4-7           Color
-
-
-    /// ---- GPIOs Configuration ----
-    for(uint32_t IO_Id = uint32_t(IO_LCD_TFT_R0); IO_Id <= uint32_t(IO_LCD_TFT_BL_CTRL); IO_Id++)
-    {
-        IO_PinInit(IO_ID_e(IO_Id));
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           LCD_Initialize
 //
 //  Parameter(s):   None
@@ -281,7 +224,6 @@ void GrafxDriver::LayerInitialize(void)
 void GrafxDriver::Initialize(void* pArg)
 {
     VAR_UNUSED(pArg);
-    IO_Initialize();                    // Initialize the IO on the processor
     LCD_Initialize();                   // Initialize the in processor LCD controller
     LayerInitialize();
     DisplayOn();

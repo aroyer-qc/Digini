@@ -24,6 +24,11 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+#include <stdio.h>
+#include "stm32h7xx.h"
+
+//-------------------------------------------------------------------------------------------------
+
 // that is not the real CPUID, this what cortex lib is defined to ..
 
 #define CM7_CPUID        ((uint32_t)0x00000003)
@@ -58,7 +63,7 @@ uint32_t GetCurrentCPUID(void)
 
 #else
 
-uint32_t HAL_GetCurrentCPUID(void)
+uint32_t GetCurrentCPUID(void)
 {
     return CM7_CPUID;
 }
@@ -77,5 +82,23 @@ uint32_t HAL_GetCurrentCPUID(void)
 //-------------------------------------------------------------------------------------------------
 uint32_t GetUniqueCPUID(void)
 {
-    return 0; 
+    return 0;
 }
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CPU_CACHE_Enable
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Enable CPU Cache
+//
+//-------------------------------------------------------------------------------------------------
+void CPU_CACHE_Enable(void)
+{
+  SCB_EnableICache();       // Enable I-Cache
+  SCB_EnableDCache();       // Enable D-Cache
+}
+
+//-------------------------------------------------------------------------------------------------

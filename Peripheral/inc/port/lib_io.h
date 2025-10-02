@@ -50,7 +50,7 @@
 #elif defined STM32F7xx
  #include "./Peripheral/inc/port/STM32F7xx/lib_STM32F7_io.h"
 #elif defined STM32H7xx
- #include "./Peripheral/inc/port/STM32F7xx/lib_STM32H7_io.h"
+ #include "./Peripheral/inc/port/STM32H7xx/lib_STM32H7_io.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

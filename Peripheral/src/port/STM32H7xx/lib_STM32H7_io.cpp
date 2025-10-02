@@ -104,9 +104,11 @@ const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
     GPIOF,
     GPIOG,
     GPIOH,
+#if defined (STM32H745xx) || defined (STM32H7B3xx)
     GPIOI,
-//    GPIOJ,
-//    GPIOK,
+    GPIOJ,
+    GPIOK,
+  #endif
 };
 
 const IO_ConfigProperties_t IO_ConfigProperties[IO_CFG_NUM] =
@@ -312,7 +314,7 @@ void IO_InitializeAll(void)
 void IO_PinInit(IO_ID_e IO_ID)
 {
     const IO_Properties_t*       pIO_Properties = &IO_Properties[IO_ID];
-    const IO_ConfigProperties_t* pIO_Config     = &IO_ConfigProperties[IO_Properties->IO_ConfigID];;
+    const IO_ConfigProperties_t* pIO_Config     = &IO_ConfigProperties[pIO_Properties->IO_ConfigID];;
     GPIO_TypeDef*                pPort          = pIO_Properties->pPort;
 
     if(pPort != GPIOxx)
@@ -392,7 +394,7 @@ void IO_PinInitOutput(IO_ID_e IO_ID)
 void IO_GroupPinInit(IO_GroupID_e IO_GroupID)
 {
     const IO_GroupProperties_t*  pProperties = &IO_GroupProperties[IO_GroupID];
-    const IO_ConfigProperties_t* pIO_Config  = &IO_ConfigProperties[IO_Properties->IO_ConfigID];;
+    const IO_ConfigProperties_t* pIO_Config  = &IO_ConfigProperties[pProperties->IO_ConfigID];
     GPIO_TypeDef*                pPort       = pProperties->pPort;
 	uint32_t                     Position;
 	uint32_t                     PinNumber;
@@ -408,7 +410,7 @@ void IO_GroupPinInit(IO_GroupID_e IO_GroupID)
 
 			if(PinNumber == Position)
 			{
-                _IO_PinInit(pPort, PinNumber, pIO_Config);
+                _IO_PinInit(pPort, PinPosition, pIO_Config);
             }
         }
 	}

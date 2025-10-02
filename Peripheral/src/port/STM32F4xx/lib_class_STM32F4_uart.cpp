@@ -135,7 +135,7 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 
         ClearFlag();
 
-        m_DMA_RX.Initialize(&m_pInfo->DMA_RX); // Write config that will never change
+        m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
         m_DMA_RX.SetSource((void*)&m_pUart->DR);
         m_DMA_RX.SetLength(UART_DRIVER_INTERNAL_RX_BUFFER_SIZE);
 
@@ -258,12 +258,12 @@ void UART_Driver::SetBaudRate(UART_Baud_e BaudRate)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           SetBaudRate
+//  Name:           SetCustomBaudRate
 //
 //  Parameter(s):   uint32_t             Speed
 //  Return:         None
 //
-//  Description:    Set UART Baudrate
+//  Description:    Set Set a custom UART Baudrate
 //
 //  Note(s):        - Disable uart
 //                  - Set baud rate and uart properties
@@ -301,56 +301,56 @@ uint32_t UART_Driver::GetPeripheralClock(void)
   #if (UART_DRIVER_SUPPORT_UART1_CFG == DEF_ENABLED)
     if(m_pUart == USART1)
     {
-      PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
+      	PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
     }
   #endif
 
   #if (UART_DRIVER_SUPPORT_UART2_CFG == DEF_ENABLED)
     if(m_pUart == USART2)
     {
-      PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
+      	PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
     }
   #endif
 
   #if (UART_DRIVER_SUPPORT_UART3_CFG == DEF_ENABLED)
     if(m_pUart == USART3)
     {
-      PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
+      	PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
     }
   #endif
 
   #if (UART_DRIVER_SUPPORT_UART4_CFG == DEF_ENABLED)
     if(m_pUart == UART4)
     {
-      PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
+      	PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
     }
   #endif
 
   #if (UART_DRIVER_SUPPORT_UART5_CFG == DEF_ENABLED)
     if(m_pUart == UART5)
     {
-      PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
+        PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
     }
   #endif
 
   #if (UART_DRIVER_SUPPORT_UART6_CFG == DEF_ENABLED)
     if(m_pUart == USART6)
     {
-      PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
+        PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
     }
   #endif
 
   #if (UART_DRIVER_SUPPORT_UART7_CFG == DEF_ENABLED)
     if(m_pUart == UART7)
     {
-      PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
+        PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
     }
   #endif
 
   #if (UART_DRIVER_SUPPORT_UART8_CFG == DEF_ENABLED)
     if(m_pUart == UART8)
     {
-      PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
+        PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
     }
   #endif
 

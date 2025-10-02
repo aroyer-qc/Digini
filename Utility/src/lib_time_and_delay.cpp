@@ -248,7 +248,7 @@ void LIB_SetDateAndTime(DateAndTime_t* pTimeDate)
 //   Note(s):       (0-6, Sunday-Saturday) to stay generic, even if ST RTC are 1-Monday 7-Sunday
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t  LIB_GetDayOfWeek(Date_t* pDate)
+uint8_t LIB_GetDayOfWeek(Date_t* pDate)
 {
     uint16_t Day;
 
@@ -271,5 +271,51 @@ uint8_t  LIB_GetDayOfWeek(Date_t* pDate)
 
     return uint8_t(Day);
 }
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: LIB_GetEasterDate
+//
+//   Parameter(s):  Year                Wanted date for this year.
+//                  pMonth              Month will be returned for specified year.
+//                  pDay                Day will be for specified year.
+//   Return value:  None
+//
+//   Description:   Get the day and month of the easter for a specifc year.
+//
+//-------------------------------------------------------------------------------------------------
+void LIB_GetEasterDate(int Year, int* pMonth, int* pDay)
+{
+    int a = Year % 19;
+    int b = Year / 100;
+    int c = Year % 100;
+    int d = b / 4;
+    int e = b % 4;
+    int f = (b + 8) / 25;
+    int g = (b - f + 1) / 3;
+    int h = (19 * a + b - d - g + 15) % 30;
+    int i = c / 4;
+    int k = c % 4;
+    int l = (32 + 2 * e + 2 * i - h - k) % 7;
+    int m = (a + 11 * h + 22 * l) / 451;
+
+    *pMonth = (h + l - 7 * m + 114) / 31;
+    *pDay = ((h + l - 7 * m + 114) % 31) + 1;
+}
+
+/*
+int main() {
+    int currentYear = 2025; // Set your starting year
+    int endYear = currentYear + 100;
+    int month, day;
+
+    for (int year = currentYear; year < endYear; year++) {
+        calculateEaster(year, &month, &day);
+        printf("Easter in %d: %d/%d\n", year, month, day);
+    }
+
+    return 0;
+}
+*/
 
 //-------------------------------------------------------------------------------------------------

@@ -29,7 +29,7 @@
 #elif defined STM32F7xx
  #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_sdio.h"
 #elif defined STM32H7xx
- #include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32H7_sdio.h"
+ #include "./Peripheral/inc/port/STM32H7xx/lib_class_STM32H7_sdio.h"
 #endif
 
 //-------------------------------------------------------------------------------------------------

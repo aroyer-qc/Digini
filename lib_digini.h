@@ -66,8 +66,6 @@
 //
 
 #include "project_def.h"
-
-//#include "clock_cfg.h"
 #include "digini_cfg.h"
 
 // Need to integrate a dependency check for all DEF_ENABLED
@@ -79,7 +77,7 @@
 #include "console_cfg.h"
 #endif
 
-#if (DIGINI_USE_CRC == DEF_ENABLED)
+#if (DIGINI_USE_SOFT_CRC == DEF_ENABLED) || (USE_CRC_DRIVER == DEF_ENABLED)
 #include "crc_cfg.h"
 #endif
 
@@ -101,8 +99,6 @@
 #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 #include "ip_cfg.h"
 #endif
-
-//#include "project_def.h"
 
 #if (DIGINI_USE_DATABASE == DEF_ENABLED)
 #include "database_cfg.h"
@@ -143,10 +139,6 @@
 #include "./Memory/inc/lib_node_list.h"
 #include "./Memory/inc/lib_memory_node.h"
 
-#if (DIGINI_MPU_DRIVER == DEF_ENABLED)
-#include "./Peripheral/inc/port/lib_mpu.h"                  // TODO
-#endif
-
 //-------------------------------------------------------------------------------------------------
 // Interface
 //
@@ -179,12 +171,28 @@
 #include PHY_DRIVER_INCLUDE
 #endif
 
+#if (USE_HYPER_RAM_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_hyper_ram.h"
+#endif
+
 #if (USE_I2C_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_i2c.h"
 #endif
 
 #if (USE_I2S_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_i2s.h"
+#endif
+
+#if (USE_OSPI_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_class_ospi.h"
+#endif
+
+#if (USE_MPU_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_mpu.h"
+#endif
+
+#if (USE_PWM_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_class_pwm.h"
 #endif
 
 #if (USE_QSPI_DRIVER == DEF_ENABLED)
@@ -203,16 +211,16 @@
 #include "./Peripheral/inc/port/lib_class_sdio.h"
 #endif
 
+#if (USE_SDRAM_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_sdram.h"
+#endif
+
 #if (USE_SPI_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_spi.h"
 #endif
 
 #if (USE_TIM_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_tim.h"
-#endif
-
-#if (USE_PWM_DRIVER == DEF_ENABLED)
-#include "./Peripheral/inc/port/lib_class_pwm.h"
 #endif
 
 #if (USE_UART_DRIVER == DEF_ENABLED)

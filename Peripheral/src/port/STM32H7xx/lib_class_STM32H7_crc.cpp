@@ -56,14 +56,14 @@ bool      CRC_Driver::m_MutexIsInitialize = false;
 //-------------------------------------------------------------------------------------------------
 void CRC_Driver::Initialize(CRC_HW_Type_e Type)
 {
-    nOS_StatusReg   sr;
+    nOS_StatusReg sr;
 
     nOS_EnterCritical(sr);                              // Make no other try to initialize the mutex at the same time
-    
+
     if(CRC_Driver::m_MutexIsInitialize == false)
     {
         CRC_Driver::m_MutexIsInitialize = true;
-        RCC->AHB1ENR |= RCC_AHB1ENR_CRCEN;
+        RCC->AHB4ENR |= RCC_AHB4ENR_CRCEN;
         nOS_MutexCreate(&CRC_Driver::m_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
     }
 
@@ -84,10 +84,10 @@ void CRC_Driver::Initialize(CRC_HW_Type_e Type)
 void CRC_Driver::Start(void)
 {
     while(nOS_MutexLock(&CRC_Driver::m_Mutex, NOS_WAIT_INFINITE) != NOS_OK);
-    CRC->POL  = m_Type->Polynomial;
-    CRC->INIT = m_Type->Init;
-    CRC->CR   = m_Type->Mode;
-    CRC->CR  |= 1;
+    CRC->POL  = m_MethodList[m_Type].Polynomial;
+    CRC->INIT = m_MethodList[m_Type].Init;
+    CRC->CR   = m_MethodList[m_Type].Mode;
+    CRC->CR  |= CRC_CR_RESET;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -154,14 +154,14 @@ void CRC_Driver::AddBuffer(const uint32_t* pBuffer, size_t Length)
         {
             *(volatile uint8_t *)(volatile void *)(&CRC->DR) = pBuffer8[4 * i];
         }
-        
+
         if((Length % 4) >= 2)
         {
             volatile uint16_t* pRegister = (volatile uint16_t *)(volatile void *)(&CRC->DR);
             uint16_t Data16 = *((uint16_t*)&pBuffer8[4 * i]);
             *pRegister = SWAP_16(Data16);
         }
-    
+
         if((Length % 4) == 3)
         {
             *(volatile uint8_t *)(volatile void *)(&CRC->DR) = pBuffer8[(4 * i) + 2];
@@ -180,9 +180,10 @@ void CRC_Driver::AddBuffer(const uint32_t* pBuffer, size_t Length)
 //  Description:    Start, Calculate the CRC from a byte buffer and return the CRC.
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CRC_Driver::CalculateBuffer(const uint32_t* pBuffer, size_t Length, CRC_Type_e Type)
+uint32_t CRC_Driver::CalculateBuffer(const uint32_t* pBuffer, size_t Length, CRC_HW_Type_e Type)
 {
-    Start(Type);
+    Initialize(Type);
+    Start();
     AddBuffer(pBuffer, Length);
     return GetValue();
 }

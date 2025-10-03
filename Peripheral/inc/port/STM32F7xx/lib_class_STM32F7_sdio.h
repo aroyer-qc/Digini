@@ -270,13 +270,6 @@ struct SD_CardIO_t
 
 struct SDIO_Info_t
 {
-    IO_ID_e             Pin_D0;                 // SDIO Data 0 to 3
-    IO_ID_e             Pin_D1;
-    IO_ID_e             Pin_D2;
-    IO_ID_e             Pin_D3;
-    IO_ID_e             Pin_CLK;                // SDIO CLK
-    IO_ID_e             Pin_CMD;				// Command line to SDIO
-    IO_ID_e             Pin_Detect;             // Card detect line
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;
 };

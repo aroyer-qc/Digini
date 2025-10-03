@@ -419,8 +419,7 @@ void GrafxDriver::SendCommand(uint8_t Register, uint8_t* pData, uint32_t Size, u
 //
 //  Description:    LCD configuration specific
 //
-//  Note(s):
-//
+c//
 //-------------------------------------------------------------------------------------------------
 
 void GrafxDriver::Initialize(void* pArg)
@@ -429,11 +428,6 @@ void GrafxDriver::Initialize(void* pArg)
 
     //uint8_t Status;
     //uint16_t Data;
-
-    IO_PinInit(IO_ST7735_CS);
-    IO_PinInit(IO_ST7735_DC);
-    IO_PinInit(IO_ST7735_RESET);
-    IO_PinInit(IO_ST7735_BACKLIGHT);
 
     m_pSPI->Initialize();                                       // CS(NSS) handle by class
 

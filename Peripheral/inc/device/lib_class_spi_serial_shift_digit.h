@@ -130,7 +130,8 @@ void DigitDriverSerial::Initialize(const DigitConfig_t* pConfig)
     m_pConfig      = pConfig;
     m_pDigitStream = (uint8_t*) pMemoryPool->AllocAndClear(pConfig->NumberOfDigit);     // No digit ON
 
-    IO_PinInit(m_pConfig->LoadPin);
+    // IO are done globally into BSP they must be define set into bsp_io_def
+    //IO_PinInit(m_pConfig->LoadPin);
     
     pConfig->pSPI // configure the SPI....
 }

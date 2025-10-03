@@ -265,7 +265,6 @@ SystemState_e CDataBase::Set(const void* pData, uint16_t Record, uint16_t Number
    #endif
 
     pDriver = GetDriver(Record);
-
     if(pDriver != nullptr)
     {
         return pDriver->Set(pData, Record, Number, SubNumber);

@@ -116,8 +116,6 @@ struct I2C_Info_t
 {
     I2C_ID_e            I2C_ID;
     I2C_TypeDef*        pI2Cx;
-    IO_ID_e             SCL;
-    IO_ID_e             SDA;
   #if (I2C_DRIVER_SUPPORT_CLK_SELECTION_CFG == DEF_ENABLED)
     uint32_t            ClockSelection;
   #endif

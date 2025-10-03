@@ -118,7 +118,9 @@
 //
 //  Description:    LCD is equipped with a IL9341 controller that need to be initialize
 //
-//  Note(s):
+//  Note(s):        IO with those name must exist into bsp_io_def.h:
+//
+//                  IO_SSD1779_DC, IO_SSD1779_RESET, IO_SSD1779_BACK_CTRL,
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::ControllerInitialize(void)
@@ -126,9 +128,6 @@ void GrafxDriver::ControllerInitialize(void)
     uint8_t Status;
     uint16_t Data;
 
-    IO_PinInit(IO_SSD1779_DC);
-    IO_PinInit(IO_SSD1779_RESET);
-    //IO_PinInit(IO_SSD1779_BACK_CTRL);
     m_Bus.Initialize(SSD1779_BUS);
     for(int i = 0; i < 10000; i++) { __asm("nop"); }            // Hold Reset at least 10 uSec
     IO_SetPinHigh(IO_SSD1779_RESET);

@@ -824,8 +824,13 @@ void UART_Driver::EnableRX_ISR(uint8_t Mask)
     {
         volatile uint32_t Register;
 
+<<<<<<< HEAD
+        // Idle, Error flag (Overrun, Framing error, Parity error)_IRQHandler
+        m_pUart->ICR = (USART_ICR_IDLECF | USART_ICR_NCF | USART_ICR_ORECF | USART_ICR_FECF | USART_ICR_PECF);
+=======
         // Idle, Error flag (Overrun, Framing error, Parity error)
         m_pUart->ICR = (USART_ICR_IDLECF | USART_ICR_NECF | USART_ICR_ORECF | USART_ICR_FECF | USART_ICR_PECF);
+>>>>>>> da61891e036627ec7e82f90c4709a0f6c1d87503
         Register = m_pUart->RDR;
         (void)Register;
 

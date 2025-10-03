@@ -425,18 +425,15 @@ void GrafxDriver::SendCommand(uint8_t Register, uint8_t* pData, uint32_t Size, u
 //
 //  Description:    LCD configuration specific
 //
-//  Note(s):
+//  Note(s):        IO with those name must exist into bsp_io_def.h:
+//
+//                  IO_ST7735_CS, IO_ST7735_DC, IO_ST7735_RESET, IO_ST7735_BACKLIGHT
 //
 //-------------------------------------------------------------------------------------------------
 
 void GrafxDriver::Initialize(void* pArg)
 {
     m_pSPI = (SPI_Driver*)pArg;
-
-    IO_PinInit(IO_ST7735_CS);
-    IO_PinInit(IO_ST7735_DC);
-    IO_PinInit(IO_ST7735_RESET);
-    IO_PinInit(IO_ST7735_BACKLIGHT);
 
     m_pSPI->Initialize();                                       // CS(NSS) handle by class
 

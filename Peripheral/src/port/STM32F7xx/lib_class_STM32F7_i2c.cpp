@@ -212,10 +212,6 @@ void I2C_Driver::Initialize(void)
     // Disable I2C and all options
     m_pI2Cx->CR1 = 0;
 
-    // ---- GPIO configuration ----
-    IO_PinInit(m_pInfo->SCL);
-    IO_PinInit(m_pInfo->SDA);
-
     // ---- TIMINGR Configuration ----
     m_pI2Cx->TIMINGR = m_pInfo->Timing;                                    // Configure the SDA setup, hold time, SCL high, low period, Frequency range
 

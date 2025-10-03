@@ -108,7 +108,7 @@ void TIM_Driver::Initialize(void)
   #endif
 
 
-    if((m_pInfo->IRQ_DMA_SourceEnable & TIM_IE_IRQ_UPDATE) != 0)
+    if((m_pInfo->IRQ_DMA_SourceEnable & TIM_IRQ_UPDATE) != 0)
     {
         CLEAR_BIT(m_pTim->SR, TIM_SR_UIF);
         m_pTim->DIER = TIM_DIER_UIE; // TODO validate

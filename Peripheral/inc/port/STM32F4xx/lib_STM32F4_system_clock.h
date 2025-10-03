@@ -109,6 +109,10 @@
     #define CFG_MAX_APB2_CLOCK_FREQUENCY            (90000000U)
 #endif
 
+#define LSI_CLOCK_FREQUENCY                         32000
+#define HSI_CLOCK_FREQUENCY                         16000000
+#define LSE_CLOCK_FREQUENCY                         32768
+
 //-------------------------------------------------------------------------------------------------
 // Configuration file(s)
 //-------------------------------------------------------------------------------------------------

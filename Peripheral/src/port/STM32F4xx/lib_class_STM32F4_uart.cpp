@@ -107,20 +107,128 @@ const uint32_t UART_Driver::m_BaudRate[NB_OF_BAUD] =
 //-------------------------------------------------------------------------------------------------
 UART_Driver::UART_Driver(UART_ID_e UartID)
 {
-  #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
+    m_UartID = UartID;
+    m_pInfo  = (UART_Info_t*)&UART_Info[UartID];
+    m_pUart  = m_pInfo->pUARTx;
     m_DMA_IsItBusyTX = false;
-  #endif
+}
 
-    if(UartID < NB_OF_REAL_UART_DRIVER)
+//-------------------------------------------------------------------------------------------------
+//
+//   Name:          Initialize
+//
+//   Parameter(s):  None
+//   Return:        None
+//
+//   Description:   Initialize this UART port.
+//
+//   Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+void UART_Driver::Initialize(void)
+{
+    if(m_UartID < NB_OF_UART_DRIVER)
     {
         m_CopySR = 0;
-        m_UartID = UartID;
-        m_pInfo  = (UART_Info_t*)&UART_Info[UartID];
-        m_pUart  = m_pInfo->pUARTx;
 
-        *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - UART_BACK_OFFSET_RESET_REGISTER) |=  m_pInfo->RCC_APBxPeriph;
-        *(uint32_t*)((uint32_t)m_pInfo->RCC_APBxEN_Register - UART_BACK_OFFSET_RESET_REGISTER) &= ~m_pInfo->RCC_APBxPeriph;
-        *(m_pInfo->RCC_APBxEN_Register) |= m_pInfo->RCC_APBxPeriph;
+        switch(uint32_t(m_UartID))
+        {
+          #if (UART_DRIVER_SUPPORT_UART1_CFG == DEF_ENABLED)
+            case uint32_t(UART_DRIVER_ID_1):
+            {
+                // ---- Reset peripheral and set clock ----
+                RCC->APB2RSTR   |=  RCC_APB2RSTR_USART1RST;         // Enable USART1 reset state
+                RCC->APB2RSTR   &= ~RCC_APB2RSTR_USART1RST;         // Release USART1 from reset state
+                RCC->APB2ENR    |=  RCC_APB2ENR_USART1EN;           // Enable USART_PORT clock
+                m_ClockFrequency =  SYS_APB2_CLOCK_FREQUENCY;
+            }
+            break;
+          #endif
+
+          #if (UART_DRIVER_SUPPORT_UART2_CFG == DEF_ENABLED)
+            case uint32_t(UART_DRIVER_ID_2):
+            {
+                // ---- Reset peripheral and set clock ----
+                RCC->APB1RSTR   |=  RCC_APB1RSTR_USART2RST;         // Enable USART2 reset state
+                RCC->APB1RSTR   &= ~RCC_APB1RSTR_USART2RST;         // Release USART2 from reset state
+                RCC->APB1ENR    |=  RCC_APB1ENR_USART2EN;           // Enable USART_PORT clock
+                m_ClockFrequency =  SYS_APB1_CLOCK_FREQUENCY;
+            }
+            break;
+          #endif
+
+          #if (UART_DRIVER_SUPPORT_UART3_CFG == DEF_ENABLED)
+            case uint32_t(UART_DRIVER_ID_3):
+            {
+                // ---- Reset peripheral and set clock ----
+                RCC->APB1RSTR   |=  RCC_APB1RSTR_USART3RST;         // Enable USART3 reset state
+                RCC->APB1RSTR   &= ~RCC_APB1RSTR_USART3RST;         // Release USART3 from reset state
+                RCC->APB1ENR    |=  RCC_APB1ENR_USART3EN;           // Enable USART_PORT clock
+                m_ClockFrequency =  SYS_APB1_CLOCK_FREQUENCY;
+            }
+            break;
+          #endif
+
+          #if (UART_DRIVER_SUPPORT_UART4_CFG == DEF_ENABLED)
+            case uint32_t(UART_DRIVER_ID_4):
+            {
+                // ---- Reset peripheral and set clock ----
+                RCC->APB1RSTR   |=  RCC_APB1RSTR_USART4RST;         // Enable USART4 reset state
+                RCC->APB1RSTR   &= ~RCC_APB1RSTR_USART4RST;         // Release USART4 from reset state
+                RCC->APB1ENR    |=  RCC_APB1ENR_USART4EN;           // Enable USART_PORT clock
+                m_ClockFrequency =  SYS_APB1_CLOCK_FREQUENCY;
+            }
+            break;
+          #endif
+
+          #if (UART_DRIVER_SUPPORT_UART5_CFG == DEF_ENABLED)
+            case uint32_t(UART_DRIVER_ID_5):
+            {
+                // ---- Reset peripheral and set clock ----
+                RCC->APB1RSTR   |=  RCC_APB1RSTR_USART5RST;         // Enable USART5 reset state
+                RCC->APB1RSTR   &= ~RCC_APB1RSTR_USART5RST;         // Release USART5 from reset state
+                RCC->APB1ENR    |=  RCC_APB1ENR_USART5EN;           // Enable USART_PORT clock
+                m_ClockFrequency =  SYS_APB1_CLOCK_FREQUENCY;
+            }
+            break;
+          #endif
+
+          #if (UART_DRIVER_SUPPORT_UART6_CFG == DEF_ENABLED)
+            case uint32_t(UART_DRIVER_ID_6):
+            {
+                // ---- Reset peripheral and set clock ----
+                RCC->APB2RSTR    |=  RCC_APB2RSTR_USART6RST;        // Enable USART2 reset state
+                RCC->APB2RSTR    &= ~RCC_APB2RSTR_USART6RST;        // Release USART2 from reset state
+                RCC->APB2ENR     |=  RCC_APB2ENR_USART6EN;          // Enable USART_PORT clock
+                m_ClockFrequency =  SYS_APB2_CLOCK_FREQUENCY;
+            }
+            break;
+          #endif
+
+          #if (UART_DRIVER_SUPPORT_UART7_CFG == DEF_ENABLED)
+            case uint32_t(UART_DRIVER_ID_7):
+            {
+                // ---- Reset peripheral and set clock ----
+                RCC->APB1RSTR   |=  RCC_APB1RSTR_UART7RST;          // Enable UART7 reset state
+                RCC->APB1RSTR   &= ~RCC_APB1RSTR_UART7RST;          // Release UART7 from reset state
+                RCC->APB1ENR    |=  RCC_APB1ENR_UART7EN;            // Enable UART_PORT clock
+                m_ClockFrequency =  SYS_APB1_CLOCK_FREQUENCY;
+            }
+            break;
+          #endif
+
+          #if (UART_DRIVER_SUPPORT_UART8_CFG == DEF_ENABLED)
+            case uint32_t(UART_DRIVER_ID_8):
+            {
+                // ---- Reset peripheral and set clock ----
+                RCC->APB1RSTR   |=  RCC_APB1RSTR_UART8RST;         // Enable UART8 reset state
+                RCC->APB1RSTR   &= ~RCC_APB1RSTR_UART8RST;         // Release UART8 from reset state
+                RCC->APB1ENR    |=  RCC_APB1ENR_UART8EN;           // Enable UART_PORT clock
+                m_ClockFrequency =  SYS_APB1_CLOCK_FREQUENCY;
+            }
+            break;
+          #endif
+        }
 
         SetConfig(m_pInfo->Config, m_pInfo->BaudID);
 
@@ -151,16 +259,6 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
         memset(&m_RX_Transfer, 0x00, sizeof(UART_Transfer_t));
         memset(&m_TX_Transfer, 0x00, sizeof(UART_Transfer_t));
     }
-  #if (SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-    else if(m_UartID == UART_DRIVER_VIRTUAL)
-    {
-        m_VirtualUartBusyRX = false;
-        m_VirtualUartBusyTX = false;
-
-        ISR_Init(VirtualUartRX_IRQn, m_pInfo->PreempPrio);
-        ISR_Init(VirtualUartTX_IRQn, m_pInfo->PreempPrio);
-    }
-  #endif
     else
     {
         m_pInfo = nullptr;
@@ -220,10 +318,8 @@ void UART_Driver::Disable(void)
         CLEAR_BIT(m_pUart->CR1, USART_CR1_TCIE);
       #endif
 
-      #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
         DMA_DisableRX();
         DMA_DisableTX();
-      #endif
 
         CLEAR_BIT(m_pUart->CR1, USART_CR1_UE);    // Disable the UART
     }
@@ -295,64 +391,7 @@ void UART_Driver::SetCustomBaudRate(uint32_t Speed)
 //-------------------------------------------------------------------------------------------------
 uint32_t UART_Driver::GetPeripheralClock(void)
 {
-    uint32_t PeriphClk;
-
-    // Retrieve Clock frequency used for USART Peripheral
-  #if (UART_DRIVER_SUPPORT_UART1_CFG == DEF_ENABLED)
-    if(m_pUart == USART1)
-    {
-      	PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
-    }
-  #endif
-
-  #if (UART_DRIVER_SUPPORT_UART2_CFG == DEF_ENABLED)
-    if(m_pUart == USART2)
-    {
-      	PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-    }
-  #endif
-
-  #if (UART_DRIVER_SUPPORT_UART3_CFG == DEF_ENABLED)
-    if(m_pUart == USART3)
-    {
-      	PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-    }
-  #endif
-
-  #if (UART_DRIVER_SUPPORT_UART4_CFG == DEF_ENABLED)
-    if(m_pUart == UART4)
-    {
-      	PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-    }
-  #endif
-
-  #if (UART_DRIVER_SUPPORT_UART5_CFG == DEF_ENABLED)
-    if(m_pUart == UART5)
-    {
-        PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-    }
-  #endif
-
-  #if (UART_DRIVER_SUPPORT_UART6_CFG == DEF_ENABLED)
-    if(m_pUart == USART6)
-    {
-        PeriphClk = SYS_APB2_CLOCK_FREQUENCY;
-    }
-  #endif
-
-  #if (UART_DRIVER_SUPPORT_UART7_CFG == DEF_ENABLED)
-    if(m_pUart == UART7)
-    {
-        PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-    }
-  #endif
-
-  #if (UART_DRIVER_SUPPORT_UART8_CFG == DEF_ENABLED)
-    if(m_pUart == UART8)
-    {
-        PeriphClk = SYS_APB1_CLOCK_FREQUENCY;
-    }
-  #endif
+    uint32_t PeriphClk = m_ClockFrequency;
 
     if((m_pUart->CR1 & UART_REG_OVERSAMPLING_MASK) == UART_REG_OVERSAMPLING_8)
     {
@@ -415,15 +454,6 @@ bool UART_Driver::IsItBusy(void)
     {
         return m_DMA_IsItBusyTX;
     }
-  #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-    else if(m_UartID == UART_DRIVER_VIRTUAL)
-    {
-        if((m_VirtualUartBusyRX == true) || (m_VirtualUartBusyTX == true))
-        {
-            return true;
-        }
-    }
-  #endif
 
     return false;
 }
@@ -468,26 +498,6 @@ void UART_Driver::ClearFlag(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           VirtualSendData
-//
-//  Parameter(s):   pBuffer         Pointer on the buffer containing the data to send
-//                  Size            Status
-//  Return:         None
-//
-//  Description:    Send data using virtual comm driver with software ISR
-//
-//-------------------------------------------------------------------------------------------------
-#if (UART_SUPPORT_VIRTUAL_CFG == DEF_ENABLED)
-void UART_Driver::VirtualSendData(const uint8_t* pBuffer, uint16_t Size)
-{
-    ReceivedFromVirtualUart(pBuffer, Size);
-    ISR_SetPendingIRQ(VirtualUartTX_IRQn);
-    m_VirtualUartBusyTX = true;
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
 //   Function:      SendData
 //
 //   Parameter(s):  p_BufferTX  Ptr on buffer with data to send.
@@ -523,13 +533,13 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             {
                 m_DMA_TX.SetSource((void*)pBufferTX);
                 m_DMA_TX.SetLength(*pSizeTX);
-                m_TX_Transfer.Size    = *pSizeTX;
+                m_TX_Transfer.u.Size  = *pSizeTX;
                 m_TX_Transfer.pBuffer = (uint8_t*)pBufferTX;
             }
             else
             {
                 m_DMA_TX.SetSource(m_TX_Transfer.pBuffer);
-                m_DMA_TX.SetLength(m_TX_Transfer.Size);
+                m_DMA_TX.SetLength(m_TX_Transfer.u.Size);
             }
 
             ClearFlag();
@@ -541,29 +551,6 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             State = SYS_READY;
         }
     }
-  #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-    else if(m_UartID == UART_DRIVER_VIRTUAL)
-    {
-        nOS_EnterCritical();
-
-        if(m_VirtualUartBusyRX == false)
-        {
-            m_VirtualUartBusyRX = true;
-            nOS_LeaveCritical();
-
-            memcpy(m_pDMA_BufferRX, pBuffer, Size);
-            m_SizeRX = Size;
-            NVIC_SetPendingIRQ(VirtualUartRX_IRQn);
-            state = SYS_READY;
-        }
-        else
-        {
-            state =  SYS_BUSY;
-        }
-
-        nOS_LeaveCritical();
-
-  #endif
     else
     {
         State = SYS_WRONG_VALUE;
@@ -605,33 +592,18 @@ void UART_Driver::DMA_ConfigRX(uint8_t* pBufferRX, size_t SizeRX)
             m_DMA_RX.SetDestination((void*)pBufferRX);
             m_DMA_RX.SetLength(SizeRX);
             pTransferRX->pBuffer    = pBufferRX;
-            pTransferRX->Size       = SizeRX;
+            pTransferRX->u.Size     = SizeRX;
             pTransferRX->StaticSize = SizeRX;
         }
         else
         {
             m_DMA_RX.SetDestination(pTransferRX->pBuffer);
             m_DMA_RX.SetLength(pTransferRX->StaticSize);
-            pTransferRX->Size = pTransferRX->StaticSize;
+            pTransferRX->u.Size = pTransferRX->StaticSize;
         }
 
         DMA_EnableRX();
     }
-  #if (SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-    else if(m_UartID == UART_DRIVER_VIRTUAL)
-    {
-        if(pBufferRX != nullptr)
-        {
-            pTransferRX->Size       = SizeRX;
-            pTransferRX->StaticSize = SizeRX;
-            pTransferRX->pBuffer    = pBufferRX;
-        }
-        else
-        {
-            pTransferRX->Size = pTransferRX->StaticSize;
-        }
-    }
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -663,34 +635,18 @@ void UART_Driver::DMA_ConfigTX(uint8_t* pBufferTX, size_t SizeTX)
             m_DMA_TX.SetSource(pBufferTX);
             m_DMA_TX.SetLength(SizeTX);
             pTransferTX->pBuffer    = pBufferTX;
-            pTransferTX->Size       = SizeTX;
+            pTransferTX->u.Size     = SizeTX;
             pTransferTX->StaticSize = SizeTX;
         }
         else
         {
             m_DMA_TX.SetSource((void*)pTransferTX->pBuffer);
             m_DMA_TX.SetLength(pTransferTX->StaticSize);
-            pTransferTX->Size = pTransferTX->StaticSize;
+            pTransferTX->u.Size = pTransferTX->StaticSize;
         }
 
         DMA_EnableTX();
     }
-
-  #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-    else if(m_UartID == UART_DRIVER_VIRTUAL)
-    {
-        if(pBufferTX != nullptr)
-        {
-            pTransferTX->pBuffer    = pBufferTX;
-            pTransferTX->Size       = SizeTX;
-            pTransferTX->StaticSize = SizeTX;
-        }
-        else
-        {
-            pTransferTX->Size = pTransferTX->StaticSize;
-        }
-    }
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -809,17 +765,9 @@ size_t UART_Driver::DMA_GetSizeRX(uint16_t SizeRX)
 
         m_DMA_RX.Enable();
     }
-  #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-    else if(m_UartID == UART_DRIVER_VIRTUAL)
-    {
-        SizeDataRX = m_VirtualVar.SizeRX;
-    }
-  #endif
 
     return SizeDataRX;
 }
-
-//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 //  IIII RRRRRR    QQQQQ
@@ -1129,9 +1077,7 @@ void UART_Driver::IRQ_Handler(void)
       #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
         if((Status & USART_SR_IDLE) != 0)
         {
-          #if (UART_DRIVER_DMA_CFG == DEF_ENABLED)
-             m_RX_Transfer.Size -= m_DMA_RX.GetLength(); // Give actual position in the DMA Buffer
-          #endif
+            m_RX_Transfer.u.Head = m_RX_Transfer.StaticSize - m_DMA_RX.GetLength();      // Give actual position in the DMA Buffer
 
             ClearFlag();
 
@@ -1142,7 +1088,10 @@ void UART_Driver::IRQ_Handler(void)
             }
           #endif
 
-            DMA_ConfigRX(nullptr, 0); // Reset RX packet to avoid override with a new RX packet
+            if((m_pInfo->DMA_RX.ConfigAndChannel & DMA_MODE_CIRCULAR) == 0)
+            {
+                DMA_ConfigRX(nullptr, 0); // Reset RX packet to avoid override with a new RX packet
+            }
             return;
         }
       #endif
@@ -1168,7 +1117,7 @@ void UART_Driver::IRQ_Handler(void)
       #if (UART_DRIVER_TX_EMPTY_CFG == DEF_ENABLED)
         if((Status & USART_SR_TXE) != 0)
         {
-            if(m_TX_Transfer.Size < m_TX_Transfer.StaticSize)
+            if(m_TX_Transfer.u.Size < m_TX_Transfer.StaticSize)
             {
                 m_pUart->TD = m_TX_Transfer.pBuffer[m_TX_Transfer.Size++];
             }
@@ -1203,46 +1152,6 @@ void UART_Driver::DMA_TX_IRQ_Handler(void)
     DMA_DisableTX();
     m_DMA_IsItBusyTX = false;
 }
-
-//-------------------------------------------------------------------------------------------------
-//
-//  IRQ Handler:    VirtualUartRX_IRQHandler
-//
-//  Description:    This function handles virtual UART interrupt.
-//
-//  TODO move this to a another virtual driver
-//
-//-------------------------------------------------------------------------------------------------
-#if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-void UART_Driver::VirtualUartRX_IRQHandler(void)
-{
-  /*       fix this!!
-	if(m_pContextCompletedTX == nullptr) m_pCallbackCompletedTX(m_pContextTX);
-     else
-     {
-           m_pCallbackCompletedTX(m_pContextCompletedTX);
-//         DMA_ConfigRX(nullptr, 0);     // Reset RX packet to avoid override with a new RX packet
-     }
-
-     m_VirtualUartBusyRX = false;
-*/
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
-//  IRQ Handler:    VirtualUartTX_IRQHandler
-//
-//  Description:    This function handles virtual UART interrupt.
-//
-//-------------------------------------------------------------------------------------------------
-#if (SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-void UART_Driver::VirtualUartTX_IRQHandler(void)
-{
-    if(m_pContextCompletedTX != nullptr) m_pCallbackCompletedTX(m_pContextCompletedTX);
-    m_VirtualUartBusyTX = false;
-}
-#endif
 
 //-------------------------------------------------------------------------------------------------
 

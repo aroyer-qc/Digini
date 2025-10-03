@@ -191,10 +191,6 @@
 #include "./Peripheral/inc/port/lib_mpu.h"
 #endif
 
-#if (USE_PWM_DRIVER == DEF_ENABLED)
-#include "./Peripheral/inc/port/lib_class_pwm.h"
-#endif
-
 #if (USE_QSPI_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_qspi.h"
 #endif
@@ -221,6 +217,10 @@
 
 #if (USE_TIM_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_tim.h"
+#endif
+
+#if (USE_PWM_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_class_pwm.h"
 #endif
 
 #if (USE_UART_DRIVER == DEF_ENABLED)

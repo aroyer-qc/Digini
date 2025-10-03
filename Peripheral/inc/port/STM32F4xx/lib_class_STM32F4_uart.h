@@ -117,13 +117,6 @@ enum UART_ID_e
         UART_DRIVER_ID_8,
     #endif
 
-    NB_OF_REAL_UART_DRIVER,
-    INTERNAL_RESYNC_OFFSET = NB_OF_REAL_UART_DRIVER - 1,
-
-    #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-        UART_DRIVER_VIRTUAL,
-    #endif
-
      NB_OF_UART_DRIVER,
 };
 
@@ -194,8 +187,6 @@ enum UART_Config_e
 struct UART_Info_t
 {
     USART_TypeDef*      pUARTx;
-    uint32_t            RCC_APBxPeriph;
-    volatile uint32_t*  RCC_APBxEN_Register;
     IRQn_Type           IRQn_Channel;
     uint8_t             PreempPrio;
     UART_Config_e       Config;
@@ -208,7 +199,11 @@ struct UART_Info_t
 struct UART_Transfer_t
 {
     uint8_t*            pBuffer;
-    size_t              Size;
+    union
+    {
+        size_t          Size;
+        size_t          Head;               // if used in circular buffer
+    } u;
     size_t              StaticSize;
 };
 
@@ -222,6 +217,7 @@ class UART_Driver
 
                             UART_Driver                     (UART_ID_e UartID);
 
+        void                Initialize                      (void);
         void                SetConfig                       (UART_Config_e Config, UART_Baud_e BaudID);
         void                SetBaudRate                     (UART_Baud_e BaudID);
         void                SetCustomBaudRate               (uint32_t Speed);
@@ -250,12 +246,6 @@ class UART_Driver
         void                IRQ_Handler                     (void);
         void                DMA_TX_IRQ_Handler              (void);
 
-
-      #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-        void                VirtualUartRX_IRQHandler        (void);
-        void                VirtualUartTX_IRQHandler        (void);
-      #endif
-
     private:
 
         void                ClearFlag                       (void);
@@ -282,16 +272,12 @@ class UART_Driver
         UART_Transfer_t             m_RX_Transfer;
         UART_Transfer_t             m_TX_Transfer;
         uint32_t                    m_CopySR;
+        uint32_t                    m_ClockFrequency;
 
         // DMA Config
         DMA_Driver                  m_DMA_RX;
         DMA_Driver                  m_DMA_TX;
         volatile bool               m_DMA_IsItBusyTX;
-
-      #if (UART_DRIVER_SUPPORT_VIRTUAL_UART_CFG == DEF_ENABLED)
-        bool                        m_VirtualUartBusyRX;
-        bool                        m_VirtualUartBusyTX;
-      #endif
 
       #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
         CallbackInterface*          m_pCallback;
@@ -305,7 +291,7 @@ class UART_Driver
 
 #include "uart_var.h"         // Project variable
 
-extern const UART_Info_t UART_Info[NB_OF_REAL_UART_DRIVER];
+extern const UART_Info_t UART_Info[NB_OF_UART_DRIVER];
 
 //-------------------------------------------------------------------------------------------------
 

@@ -121,7 +121,6 @@ enum UART_ID_e
      NB_OF_UART_DRIVER,
 };
 
-
 enum UART_Baud_e
 {
     UART_BAUD_9600,

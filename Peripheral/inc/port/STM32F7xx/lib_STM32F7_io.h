@@ -220,6 +220,14 @@ enum IO_ID_e
 {
     IO_NOT_DEFINED = -1,
     IO_DEF(EXPAND_X_IO_AS_ENUM)
+    IO_NUM_ALL,
+
+    // Preinit IO definition are for very special case to define IO that should not be initialize by the IO_InitializeAll()
+    // As a example the si4703 FM Chip need special init method by controlling RESET pin and SDA PIN to select a 2 wired mode.
+  #ifdef IO_PRE_INIT_DEF
+    IO_NUM_ALL_RESYNC = IO_NUM_ALL - 1,
+    IO_PRE_INIT_DEF(EXPAND_X_IO_AS_ENUM)
+  #endif
     IO_NUM,
 };
 

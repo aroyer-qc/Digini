@@ -119,6 +119,10 @@ const IO_ConfigProperties_t IO_ConfigProperties[IO_CFG_NUM] =
 const IO_Properties_t IO_Properties[IO_NUM] =
 {
     IO_DEF(EXPAND_X_IO_AS_STRUCT_DATA)
+
+    #ifdef IO_PRE_INIT_DEF
+    IO_PRE_INIT_DEF(EXPAND_X_IO_AS_STRUCT_DATA)
+    #endif
 };
 
 #ifdef IO_GROUP_DEF

@@ -115,28 +115,32 @@ enum SI4703_Register_e  // Register names
 //
 //  Name:           InitializeLowLevel
 //
-//  Parameter(s):
+//  Parameter(s):   IO_ID_e     RST_Pin                     Reset Pin
+//                  IO_ID_e     SEN_Pin                     Serial Enable Pin  
+//                  IO_ID_e     SDIO_Pin                    I2C SDA Pin
 //
 //  Return:
 //
-//  Description:    Perform low level chip initialization
+//  Description:    Perform low level chip initialization with method 2 using 2 wires mode.
 //
 //  Note(s):        To get the Si4703 into 2 wires mode, SEN needs to be HIGH and SDIO (SDA) needs
 //                  to be LOW after a reset.
 //
 //                  ----!!! WARNING !!!----
 //                  SI4703_Radio.InitializeLowLevel must be called before the I2C Initialize port
+//                  and also before IO_InitializeAll
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SI4703::InitializeLowLevel(IO_ID_e RST_Pin, IO_ID_e SDIO_Pin)
+SystemState_e SI4703::InitializeLowLevel(IO_ID_e RST_Pin, IO_ID_e SEN_Pin, IO_ID_e SDIO_Pin)
 {
-    IO_PinInit(RST_Pin);                // Initialize and clear the PIN. Default (LOW) is set in bsp_io_def.h
-    IO_SetPinLow(SDIO_Pin);             // Make sure pin are high level
-    IO_PinInitOutput(SDIO_Pin);         // Init pin to control chip 2 wires mode
+    IO_PinInit(RST_Pin);                // Default LOW
+    IO_PinInit(SDIO_Pin);               // Default LOW
+    IO_PinInit(SEN_Pin);                // Default LOW
     LIB_Delay_mSec(2);
     IO_SetPinHigh(RST_Pin);             // Release RST Pin
     LIB_Delay_mSec(2);
     IO_SetPinHigh(SDIO_Pin);            // Release SDIO Pin
+    
     return SYS_READY;
 }
 

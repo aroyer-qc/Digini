@@ -51,6 +51,8 @@
 
 #if defined(STM32F401xE) || defined(STM32F401xC)
 #define NUMBER_OF_IO_PORT               ((uint32_t)5)
+#elif defined(STM32F40_41xxx)
+#define NUMBER_OF_IO_PORT               ((uint32_t)9)
 #elif defined(STM32F429xx) // Add other define here
 #define NUMBER_OF_IO_PORT               ((uint32_t)11)
 #endif
@@ -218,6 +220,14 @@ enum IO_ID_e
 {
     IO_NOT_DEFINED = -1,
     IO_DEF(EXPAND_X_IO_AS_ENUM)
+    IO_NUM_ALL,
+
+    // Preinit IO definition are for very special case to define IO that should not be initialize by the IO_InitializeAll()
+    // As a example the si4703 FM Chip need special init method by controlling RESET pin and SDA PIN to select a 2 wired mode.
+  #ifdef IO_PRE_INIT_DEF
+    IO_NUM_ALL_RESYNC = IO_NUM_ALL - 1,
+    IO_PRE_INIT_DEF(EXPAND_X_IO_AS_ENUM)
+  #endif
     IO_NUM,
 };
 

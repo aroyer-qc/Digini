@@ -170,12 +170,6 @@ void I2S_Driver::Initialize(void)
     RCC->APB1RSTR |=  m_pInfo->RCC_APB1xPeriph;          // Reset I2S
     RCC->APB1RSTR &= ~m_pInfo->RCC_APB1xPeriph;          // Release reset signal of I2S
 
-    // ---- GPIO configuration ----
-    IO_PinInit(m_pInfo->MCLK);
-    IO_PinInit(m_pInfo->CK);
-    IO_PinInit(m_pInfo->SD);
-    IO_PinInit(m_pInfo->WS);
-
     m_Status = SYS_IDLE;
     //m_NoMemoryIncrement = false; ??
 
@@ -315,7 +309,7 @@ void I2S_Driver::Initialize(void)
 
 
     // I2S DMA IRQ Channel configuration
-    ISR_Init(m_pInfo->I2S_DMA_IRQn, 5);    
+    ISR_Init(m_pInfo->I2S_DMA_IRQn, 5);
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -59,8 +59,6 @@ struct I2C_Info_t
 {
     I2C_ID_e            I2C_ID;
     I2C_TypeDef*        pI2Cx;
-    IO_ID_e             SCL;
-    IO_ID_e             SDA;
     uint32_t            RCC_APB1_En;
     uint32_t            Speed;
     uint8_t             PreempPrio;

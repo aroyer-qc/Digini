@@ -70,17 +70,17 @@ class SI4703
 {
     public:
 
-        SystemState_e       InitializeLowLevel      (IO_ID_e RST_Pin, IO_ID_e SDIO_Pin);    // Initialize chip at low level (2 Wires).
-        SystemState_e       Initialize              (I2C_Driver* pI2C);                     // Initialize the chip.
-        void                SetVolume               (uint32_t Volume); 	                    // 0 to 15
-        void                SetChannel              (uint32_t channel);  	                // 3 digit channel number
-        SystemState_e       SetMono                 (bool Mono);                            // Control mono/stereo mode of the radio chip
-        SystemState_e       SetMute                 (bool Mute);                            // Control the mute function of the radio chip
+        SystemState_e       InitializeLowLevel      (IO_ID_e RST_Pin, IO_ID_e SEN_Pin, IO_ID_e SDIO_Pin);   // Initialize chip at low level (2 Wires).
+        SystemState_e       Initialize              (I2C_Driver* pI2C);                                     // Initialize the chip.
+        void                SetVolume               (uint32_t Volume); 	                                    // 0 to 15
+        void                SetChannel              (uint32_t channel);  	                                // 3 digit channel number
+        SystemState_e       SetMono                 (bool Mono);                                            // Control mono/stereo mode of the radio chip
+        SystemState_e       SetMute                 (bool Mute);                                            // Control the mute function of the radio chip
         //SystemState_e       SetBand                 (void);
 
         //SystemState_e       FindStations            (uint8_t SearchLevel, TEA5767_Freq_t* pFrequencyArray, uint16_t* pStationCount);
-        uint32_t            SeekUp                  (void);                                 // Start seek mode upwards
-        uint32_t            SeekDown                (void);                                 // Start seek mode downwards
+        uint32_t            SeekUp                  (void);                                                 // Start seek mode upwards
+        uint32_t            SeekDown                (void);                                                 // Start seek mode downwards
         SystemState_e       GetRadioInfo            (SI4703_RadioInfo_t* pInfo);
         void                GetRDS                  (char* Message, TickCount_t TimeOut);
 									// message should be at least 9 chars
@@ -89,8 +89,8 @@ class SI4703
 
     private:
 
-        SystemState_e       ReadRegisters           (void);                               // Read all status & data registers
-        SystemState_e       SaveRegisters           (void);                               // Save writable registers back to the chip
+        SystemState_e       ReadRegisters           (void);                                                 // Read all status & data registers
+        SystemState_e       SaveRegisters           (void);                                                 // Save writable registers back to the chip
         uint32_t            Seek                    (SI4703_Seek_e Seek);
         uint32_t            GetChannel              (void);
 

@@ -118,10 +118,6 @@ void I2C_Driver::Initialize(void)
     RCC->APB1RSTR &= ~m_pInfo->RCC_APB1_En;             // Release reset signal of I2C
     RCC->APB1ENR  |=  m_pInfo->RCC_APB1_En;
 
-    // ---- GPIO configuration ----
-    IO_PinInit(m_pInfo->SCL);
-    IO_PinInit(m_pInfo->SDA);
-
     // ---- Peripheral software reset ----
     pI2Cx->CR1  =  I2C_CR1_SWRST;                                                                   // Peripheral software reset
     pI2Cx->CR1 &= ~I2C_CR1_SWRST;

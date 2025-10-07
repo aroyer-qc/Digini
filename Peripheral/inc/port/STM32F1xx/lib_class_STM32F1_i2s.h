@@ -121,10 +121,6 @@ struct I2S_Info_t
     I2S_ID_e            I2S_ID;
     I2S_TypeDef*        pI2Sx;
     uint32_t            RCC_APB1xPeriph;
-    IO_ID_e             MCLK;
-    IO_ID_e             CK;
-    IO_ID_e             SD;
-    IO_ID_e             WS;
     I2S_Mode_e          Mode;           // Specifies the I2S operating mode.
     I2S_DataFormat_e    DataFormat;     // Specifies the data format for the I2S communication.
     I2S_Standard_e      Standard;       // Specifies the standard used for the I2S communication.

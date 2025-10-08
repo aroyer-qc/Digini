@@ -56,14 +56,13 @@
 #define PIXEL_FORMAT_A4                 10
 
 #ifdef DMA2D
+  #define LTDC_BLENDING_FACTOR1_PAxCA   0x00000600              // Blending factor: Cte Alpha x Pixel Alpha
+  #define LTDC_BLENDING_FACTOR2_PAxCA   0x00000007              // Blending factor: Cte Alpha x Pixel Alpha
 
-#define LTDC_BLENDING_FACTOR1_PAxCA     0x00000600              // Blending factor: Cte Alpha x Pixel Alpha
-#define LTDC_BLENDING_FACTOR2_PAxCA     0x00000007              // Blending factor: Cte Alpha x Pixel Alpha
-
-#define DMA2D_M2M                       0                       // DMA2D memory to memory transfer mode
-#define DMA2D_M2M_PFC                   ((uint32_t)0x00010000)  // DMA2D memory to memory with pixel format conversion transfer mode
-#define DMA2D_M2M_BLEND                 ((uint32_t)0x00020000)  // DMA2D memory to memory with blending transfer mode
-#define DMA2D_R2M                       DMA2D_CR_MODE           // DMA2D register to memory transfer mode
+  #define DMA2D_M2M                     0                       // DMA2D memory to memory transfer mode
+  #define DMA2D_M2M_PFC                 ((uint32_t)0x00010000)  // DMA2D memory to memory with pixel format conversion transfer mode
+  #define DMA2D_M2M_BLEND               ((uint32_t)0x00020000)  // DMA2D memory to memory with blending transfer mode
+  #define DMA2D_R2M                     DMA2D_CR_MODE           // DMA2D register to memory transfer mode
 #endif
 
 //---------------------------------------
@@ -115,14 +114,14 @@
 #define ST7735_VMCTR1                   0xC5                    //
 
 // Colors
-#define BLACK   0x0000
-#define WHITE   0xFFFF
-#define RED     0xF800
-#define BLUE    0x00F8
-#define GREEN   0x0707
+#define BLACK                           0x0000
+#define WHITE                           0xFFFF
+#define RED                             0xF800
+#define BLUE                            0x00F8
+#define GREEN                           0x0707
 
-#define ST7735_SUCCESS 0
-#define ST7735_ERROR   1
+#define ST7735_SUCCESS                  0
+#define ST7735_ERROR                    1
 
 //-------------------------------------------------------------------------------------------------
 // const(s)
@@ -552,7 +551,7 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
         DMA2D->CR         |= (1 << 9);
 
         //Source
-        DMA2D->FGMAR       = (uint32_t)(pSrc) +(((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);    // Source address
+        DMA2D->FGMAR       = (uint32_t)(pSrc) + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);   // Source address
         DMA2D->FGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                       // Source line offset none as we are linear
         DMA2D->FGPFCCR     = PixelFormatSrc;                                                                            // Defines the size of pixel
 
@@ -571,6 +570,9 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
 
         while(DMA2D->CR & DMA2D_CR_START);                                                                              // Wait until transfer is done
       #else
+        uint32_t* pDst = (uint32_t*)Address;
+        pSrc += (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
+        DMA_Memcpy(pSrc, pDst, size_t(AreaConfig.u_32));
         // TODO provide a method without DMA2D
         // use memory to memory normal DMA
       #endif

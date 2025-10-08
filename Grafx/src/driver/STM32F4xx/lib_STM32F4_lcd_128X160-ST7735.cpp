@@ -43,18 +43,19 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-// Using DMA2D for virtual layer
-#define LTDC_PIXEL_FORMAT_ARGB8888      0
-#define LTDC_PIXEL_FORMAT_RGB888        1
-#define LTDC_PIXEL_FORMAT_RGB565        2
-#define LTDC_PIXEL_FORMAT_ARGB1555      3
-#define LTDC_PIXEL_FORMAT_ARGB4444      4
-#define LTDC_PIXEL_FORMAT_L8            5
-#define LTDC_PIXEL_FORMAT_AL44          6
-#define LTDC_PIXEL_FORMAT_AL88          7
-#define LTDC_PIXEL_FORMAT_L4            8
-#define LTDC_PIXEL_FORMAT_A8            9
-#define LTDC_PIXEL_FORMAT_A4            10
+#define PIXEL_FORMAT_ARGB8888           0
+#define PIXEL_FORMAT_RGB888             1
+#define PIXEL_FORMAT_RGB565             2
+#define PIXEL_FORMAT_ARGB1555           3
+#define PIXEL_FORMAT_ARGB4444           4
+#define PIXEL_FORMAT_L8                 5
+#define PIXEL_FORMAT_AL44               6
+#define PIXEL_FORMAT_AL88               7
+#define PIXEL_FORMAT_L4                 8
+#define PIXEL_FORMAT_A8                 9
+#define PIXEL_FORMAT_A4                 10
+
+#ifdef DMA2D
 
 #define LTDC_BLENDING_FACTOR1_PAxCA     0x00000600              // Blending factor: Cte Alpha x Pixel Alpha
 #define LTDC_BLENDING_FACTOR2_PAxCA     0x00000007              // Blending factor: Cte Alpha x Pixel Alpha
@@ -63,6 +64,7 @@
 #define DMA2D_M2M_PFC                   ((uint32_t)0x00010000)  // DMA2D memory to memory with pixel format conversion transfer mode
 #define DMA2D_M2M_BLEND                 ((uint32_t)0x00020000)  // DMA2D memory to memory with blending transfer mode
 #define DMA2D_R2M                       DMA2D_CR_MODE           // DMA2D register to memory transfer mode
+#endif
 
 //---------------------------------------
 
@@ -129,13 +131,13 @@
 static const int32_t DRV_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 {
   #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
-    LTDC_PIXEL_FORMAT_ARGB8888,
+    PIXEL_FORMAT_ARGB8888,
   #endif
   #if (GRAFX_COLOR_RGB888 == DEF_ENABLED)
     -1,
   #endif
   #if (GRAFX_COLOR_RGB565 == DEF_ENABLED)
-    LTDC_PIXEL_FORMAT_RGB565,
+    PIXEL_FORMAT_RGB565,
   #endif
   #if (GRAFX_COLOR_ARGB1555 == DEF_ENABLED)
     -1,
@@ -156,7 +158,7 @@ static const int32_t DRV_PixelFormatTable[PIXEL_FORMAT_COUNT] =
     -1,
   #endif
   #if (GRAFX_COLOR_A8 == DEF_ENABLED)
-    LTDC_PIXEL_FORMAT_A8,
+    PIXEL_FORMAT_A8,
   #endif
   #if (GRAFX_COLOR_A4 == DEF_ENABLED)
     -1,
@@ -545,7 +547,7 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
         AreaConfig.u_16.u1 = pBox->Size.Width;
         AreaConfig.u_16.u0 = pBox->Size.Height;
 
-
+      #ifdef DMA2D
         DMA2D->CR          = (BlendMode == CLEAR_BLEND) ? 0x00000000UL : 0x00020000UL;                                  // Memory to memory and TCIE blending BG + Source
         DMA2D->CR         |= (1 << 9);
 
@@ -568,6 +570,10 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
         DMA2D->CR         |= 1;                                                                                         // Start operation
 
         while(DMA2D->CR & DMA2D_CR_START);                                                                              // Wait until transfer is done
+      #else
+        // TODO provide a method without DMA2D
+        // use memory to memory normal DMA
+      #endif
     }
     else
     {
@@ -594,6 +600,7 @@ void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelForm
     AreaConfig.u_16.u1 = pBox->Size.Width;
     AreaConfig.u_16.u0 = pBox->Size.Height;
 
+  #ifdef DMA2D
     DMA2D->CR          = (BlendMode == CLEAR_BLEND) ? 0x00000000UL : 0x00020000UL;         // Memory to memory and TCIE blending BG + Source
     DMA2D->CR         |= (1 << 9);
 
@@ -616,6 +623,10 @@ void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelForm
     DMA2D->CR         |= 1;                                                                // Start operation
 
     while(DMA2D->CR & DMA2D_CR_START);                                                     // Wait until transfer is done
+  #else
+    // TODO provide a method without DMA2D
+    // use memory to memory normal DMA
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -713,6 +724,7 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
         Address            = m_pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
         AreaConfig.u_16.u1 = pBox->Size.Width;
         AreaConfig.u_16.u0 = pBox->Size.Height;
+     #ifdef DMA2D
         DMA2D->CR          = 0x00030000UL | (1 << 9);                              // Register to memory and TCIE
         DMA2D->OCOLR       = (uint32_t)Color;                                      // Color to be used
         DMA2D->OMAR        = Address;                                              // Destination address
@@ -721,6 +733,10 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
         DMA2D->NLR         = AreaConfig.u_32;                                      // Size configuration of area to be transfered
         DMA2D->CR         |= 1;                                                    // Start operation
         while(DMA2D->CR & DMA2D_CR_START);                                         // Wait until transfer is done
+      #else
+        // TODO provide a method without DMA2D
+        // use memory to memory normal DMA
+      #endif
     }
     else
     {
@@ -961,13 +977,14 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     AreaConfig.u_16.u1 = pDescriptor->Size.Width;
     AreaConfig.u_16.u0 = pDescriptor->Size.Height;
 
+  #ifdef DMA2D
     DMA2D->CR = DMA2D_M2M_BLEND;                                                // Memory to memory blending BG + Source
 
     // Font layer in Alpha blending linear (A8)
     DMA2D->FGMAR   = (uint32_t)pDescriptor->pAddress;                           // Source address 1
     DMA2D->FGOR    = 0;                                                         // Font source line offset - none as we are linear
     DMA2D->FGCOLR  = pLayer->GetTextColor();
-    DMA2D->FGPFCCR = LTDC_PIXEL_FORMAT_A8;                                      // Defines the number of pixels to be transfered
+    DMA2D->FGPFCCR = PIXEL_FORMAT_A8;                                      // Defines the number of pixels to be transfered
 
     DMA2D->BGMAR   = Address;                                                   // Source address 2
     DMA2D->BGOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)AreaConfig.u_16.u1;     // Font source line offset - none as we are linear
@@ -983,6 +1000,10 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 
     SET_BIT(DMA2D->CR, DMA2D_CR_START);                                         // Start operation
     while(DMA2D->CR & DMA2D_CR_START){};                                        // Wait until transfer is done
+  #else
+    // TODO provide a method without DMA2D
+    // use memory to memory normal DMA
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -37,17 +37,17 @@
 //-------------------------------------------------------------------------------------------------
 
 // Using DMA2D for virtual layer
-#define LTDC_PIXEL_FORMAT_ARGB8888      0
-#define LTDC_PIXEL_FORMAT_RGB888        1
-#define LTDC_PIXEL_FORMAT_RGB565        2
-#define LTDC_PIXEL_FORMAT_ARGB1555      3
-#define LTDC_PIXEL_FORMAT_ARGB4444      4
-#define LTDC_PIXEL_FORMAT_L8            5
-#define LTDC_PIXEL_FORMAT_AL44          6
-#define LTDC_PIXEL_FORMAT_AL88          7
-#define LTDC_PIXEL_FORMAT_L4            8
-#define LTDC_PIXEL_FORMAT_A8            9
-#define LTDC_PIXEL_FORMAT_A4            10
+#define PIXEL_FORMAT_ARGB8888           0
+#define PIXEL_FORMAT_RGB888             1
+#define PIXEL_FORMAT_RGB565             2
+#define PIXEL_FORMAT_ARGB1555           3
+#define PIXEL_FORMAT_ARGB4444           4
+#define PIXEL_FORMAT_L8                 5
+#define PIXEL_FORMAT_AL44               6
+#define PIXEL_FORMAT_AL88               7
+#define PIXEL_FORMAT_L4                 8
+#define PIXEL_FORMAT_A8                 9
+#define PIXEL_FORMAT_A4                 10
 
 #define LTDC_BLENDING_FACTOR1_PAxCA     0x00000600              // Blending factor: Cte Alpha x Pixel Alpha
 #define LTDC_BLENDING_FACTOR2_PAxCA     0x00000007              // Blending factor: Cte Alpha x Pixel Alpha
@@ -122,13 +122,13 @@
 static const int32_t DRV_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 {
   #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
-    LTDC_PIXEL_FORMAT_ARGB8888,
+    PIXEL_FORMAT_ARGB8888,
   #endif
   #if (GRAFX_COLOR_RGB888 == DEF_ENABLED)
     -1,
   #endif
   #if (GRAFX_COLOR_RGB565 == DEF_ENABLED)
-    LTDC_PIXEL_FORMAT_RGB565,
+    PIXEL_FORMAT_RGB565,
   #endif
   #if (GRAFX_COLOR_ARGB1555 == DEF_ENABLED)
     -1,
@@ -149,7 +149,7 @@ static const int32_t DRV_PixelFormatTable[PIXEL_FORMAT_COUNT] =
     -1,
   #endif
   #if (GRAFX_COLOR_A8 == DEF_ENABLED)
-    LTDC_PIXEL_FORMAT_A8,
+    PIXEL_FORMAT_A8,
   #endif
   #if (GRAFX_COLOR_A4 == DEF_ENABLED)
     -1,
@@ -858,7 +858,7 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     DMA2D->FGMAR   = (uint32_t)pDescriptor->pAddress;                           // Source address 1
     DMA2D->FGOR    = 0;                                                         // Font source line offset - none as we are linear
     DMA2D->FGCOLR  = pLayer->GetTextColor();
-    DMA2D->FGPFCCR = LTDC_PIXEL_FORMAT_A8;                                      // Defines the number of pixels to be transfered
+    DMA2D->FGPFCCR = PIXEL_FORMAT_A8;                                      // Defines the number of pixels to be transfered
 
     DMA2D->BGMAR   = Address;                                                   // Source address 2
     DMA2D->BGOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)AreaConfig.u_16.u1;     // Font source line offset - none as we are linear

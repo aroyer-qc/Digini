@@ -127,11 +127,7 @@ struct I2S_Info_t
     I2S_Frequency_e     Frequency;
     I2S_MCLK_Output_e   CLK_Output;     // Specifies whether the I2S MCLK output is enabled or not.
     I2S_CPOL_Level_e    CPOL_Level;     // Specifies the idle state of the I2S clock.
-    // DMA
-    uint32_t            DMA_Channel;
-    DMA_Stream_TypeDef* pDMA_Stream;
-    IRQn_Type           I2S_DMA_IRQn;
-    uint32_t            IT_Flag;
+    DMA_Info_t          DMA;            // DMA only on TX at this time!
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -169,6 +165,7 @@ class I2S_Driver
         void*                                   m_pContext;
         void*                                   m_pContextERROR;
 
+        DMA_Driver                              m_DMA;
         size_t                                  m_TX_transfertSize;
         size_t                                  m_TX_transfertCount;
 };

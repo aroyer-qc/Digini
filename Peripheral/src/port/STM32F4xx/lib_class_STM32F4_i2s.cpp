@@ -111,11 +111,6 @@
 #define SPI_GetITStatus              SPI_I2S_GetITStatus
 #define SPI_ClearITPendingBit        SPI_I2S_ClearITPendingBit
 
-
-#define RCC_PLLI2SCFGR_PLLI2SN_Pos   6
-//#define RCC_PLLI2SCFGR_PLLI2SQ_Pos
-#define RCC_PLLI2SCFGR_PLLI2SR_Pos   28
-
 //-------------------------------------------------------------------------------------------------
 // variable(s)
 //-------------------------------------------------------------------------------------------------
@@ -159,37 +154,47 @@ I2S_Driver::I2S_Driver(I2S_ID_e I2S_ID)
 //-------------------------------------------------------------------------------------------------
 void I2S_Driver::Initialize(void)
 {
-    DMA_Stream_TypeDef* pDMA;
-
     m_Timeout = 0;
 
-    NVIC_DisableIRQ(m_pInfo->I2S_DMA_IRQn);
+    switch(uint32_t(m_pInfo->I2S_ID))
+    {
+      #if (I2S_DRIVER_SUPPORT_I2S2_CFG == DEF_ENABLED)
+        case uint32_t(DRIVER_I2S2_ID):
+        {
+            // ---- Reset peripheral and set clock ----
+            RCC->APB1RSTR |=  RCC_APB1RSTR_SPI2RST;         // Reset I2S
+            RCC->APB1RSTR &= ~RCC_APB1RSTR_SPI2RST;         // Release reset signal of I2S
+            RCC->APB1ENR  |=  RCC_APB1ENR_SPI2EN;           // I2S exist only on APB1
+            //m_ClockFrequency =  SYS_APB1_CLOCK_FREQUENCY;
+        }
+        break;
+      #endif
+
+      #if (I2S_DRIVER_SUPPORT_I2S3_CFG == DEF_ENABLED)
+        case uint32_t(DRIVER_I2S3_ID):
+        {
+            // ---- Reset peripheral and set clock ----
+            RCC->APB1RSTR |=  RCC_APB1RSTR_SPI3RST;         // Reset I2S
+            RCC->APB1RSTR &= ~RCC_APB1RSTR_SPI3RST;         // Release reset signal of I2S
+            RCC->APB1ENR  |=  RCC_APB1ENR_SPI3EN;           // I2S exist only on APB1
+            //m_ClockFrequency =  SYS_APB1_CLOCK_FREQUENCY;
+        }
+        break;
+      #endif
+    }
 
     // ---- Module configuration ----
-    RCC->APB1ENR  |=  m_pInfo->RCC_APB1xPeriph;          // I2S exist only on APB1
-    RCC->APB1RSTR |=  m_pInfo->RCC_APB1xPeriph;          // Reset I2S
-    RCC->APB1RSTR &= ~m_pInfo->RCC_APB1xPeriph;          // Release reset signal of I2S
-
     m_Status = SYS_IDLE;
     //m_NoMemoryIncrement = false; ??
 
     // Preinit register that won't change
-    pDMA = m_pInfo->pDMA_Stream;
-    pDMA->PAR = uint32_t(&m_pInfo->pI2Sx->DR);          // Configure receive data register
-    pDMA->CR  = DMA_PERIPH_TO_MEMORY          |
-                DMA_MODE_NORMAL               |
-                DMA_PERIPH_NO_INCREMENT       |
-                DMA_MEMORY_INCREMENT          |
-                DMA_P_DATA_ALIGN_BYTE         |  //I2S3_DMAx_PERIPH_DATA_SIZE
-                DMA_M_DATA_ALIGN_BYTE         |  //I2S3_DMAx_MEM_DATA_SIZE
-                DMA_P_BURST_SINGLE            |
-                DMA_M_BURST_SINGLE            |
-                DMA_PRIORITY_HIGH             |
-                DMA_SxCR_TCIE                 |
-        //hdma_i2sTx.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
-        //hdma_i2sTx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
-                m_pInfo->DMA_Channel;
 
+    m_DMA.Initialize(&m_pInfo->DMA);
+    m_DMA.SetSource((void*)&m_pInfo->pI2Sx->DR);
+
+    m_DMA.EnableTransmitCompleteInterrupt();
+    //m_DMA.();
+    m_DMA.EnableIRQ();
 
 #if 0
 /**
@@ -296,20 +301,6 @@ void I2S_Driver::Initialize(void)
     SPIx->I2SCFGR = tmpreg;
 }
     #endif
-
-
-
-
-
-
-
-
-
-
-
-
-    // I2S DMA IRQ Channel configuration
-    ISR_Init(m_pInfo->I2S_DMA_IRQn, 5);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -483,18 +474,18 @@ SystemState_e I2S_Driver::Transmit(uint16_t* pBuffer, size_t Size)
         m_TX_transfertCount = Size;
     }
 
-    pDMA  = m_pInfo->pDMA_Stream;
+//    pDMA  = m_pInfo->pDMA_Stream;
 
     m_Status = SYS_BUSY_TX;                 // Set flag to busy in TX
-    pDMA->M0AR = uint32_t(pBuffer);       // Set DMA source
-    pDMA->PAR  = uint32_t(&m_pInfo->pI2Sx->DR);        // Configure DMA Stream destination address
+//    pDMA->M0AR = uint32_t(pBuffer);       // Set DMA source
+//    pDMA->PAR  = uint32_t(&m_pInfo->pI2Sx->DR);        // Configure DMA Stream destination address
     // TODO size must be of the buffer size used by DMA
-    pDMA->NDTR = Size;                      // Set size of the TX
-    pDMA->CR &= uint32_t(~DMA_SxCR_DBM);  // Clear DBM bit
-    DMA_EnableInterrupt(pDMA, m_pInfo->IT_Flag);                                             // TODO if transfer is less than HT of full buffer lenght.. handle ending
-    SET_BIT(pDMA->FCR, DMA_SxFCR_FEIE);      // Enable Common interrupts
-    SET_BIT(pDMA->CR, DMA_SxCR_EN);          // Enable the DMA module
-    DMA_ClearFlag(pDMA, m_pInfo->IT_Flag);   // Clear IRQ DMA flag
+//    pDMA->NDTR = Size;                      // Set size of the TX
+//    pDMA->CR &= uint32_t(~DMA_SxCR_DBM);  // Clear DBM bit
+//    DMA_EnableInterrupt(pDMA, m_pInfo->IT_Flag);                                             // TODO if transfer is less than HT of full buffer lenght.. handle ending
+//    SET_BIT(pDMA->FCR, DMA_SxFCR_FEIE);      // Enable Common interrupts
+//    SET_BIT(pDMA->CR, DMA_SxCR_EN);          // Enable the DMA module
+//    DMA_ClearFlag(pDMA, m_pInfo->IT_Flag);   // Clear IRQ DMA flag
 
     // Check if the I2S is already enabled
 //    if(CheckBit(m_pInfo->pI2Sx->I2SCFGR, SPI_I2SCFGR_I2SE) == 0)   // ?? why ?

@@ -140,8 +140,19 @@ class DMA_Driver
 };
 
 //-------------------------------------------------------------------------------------------------
+// Prototype(s)
+//-------------------------------------------------------------------------------------------------
+
+void DMA_MEM2MEM_Initialize     (void);
+void DMA_Memcpy                 (void* pSource, void* Destination, size_t Size);
+
+//-------------------------------------------------------------------------------------------------
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
+
+#if (USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
+nOS_Mutex MEM2MEM_Mutex;
+#endif
 
 #include "dma_var.h"         // Project variable
 

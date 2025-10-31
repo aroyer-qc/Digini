@@ -72,6 +72,7 @@
 
 #include "driver_cfg.h"
 #include "bsp_io_def.h"
+#include "dma_cfg.h"
 
 #if (DIGINI_USE_CONSOLE == DEF_ENABLED)
 #include "console_cfg.h"

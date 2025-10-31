@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2025 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -194,11 +194,9 @@ void GrafxDriver::PutColor(uint16_t Color, uint16_t Count)
     m_pSPI->Write((uint8_t*)&Color, Count);                 // Write color
 
 #if 0
-    // Counter
-    while(Count--)
+    while(Count--)                                          // Counter
     {
-        // Write color
-        m_pSPI->Write(Color);
+        m_pSPI->Write(Color);                               // Write color
     }
 #endif
 
@@ -523,8 +521,6 @@ void GrafxDriver::LayerConfig(CLayer* pLayer)
 //  Description:    Copy a rectangle region from square memory region to another square memory
 //                  region
 //
-//  Note(s):        Source is linear
-//
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode)
 {
@@ -557,7 +553,7 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
 
         // Source
         DMA2D->BGMAR       = Address;                                                                                   // Source address
-        DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                       // Source line offset
+        DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                // Source line offset
         DMA2D->BGPFCCR     = PixelFormatDst;                                                                            // Defines the size of pixel
 
         //Destination
@@ -574,8 +570,6 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
         uint32_t* pDst = (uint32_t*)Address;
         pLocalSrc += (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
         DMA_Memcpy(pLocalSrc, pDst, size_t(AreaConfig.u_32));
-        // TODO provide a method without DMA2D
-        // use memory to memory normal DMA
       #endif
     }
     else
@@ -584,7 +578,23 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
     }
 }
 
-
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           DRV_Copy
+//
+//  Parameter(s):   void*           pSrc
+//                  Box_t*          pBox
+//                  Cartesian_t*    pDstPos
+//                  PixelFormat_e   SrcPixelFormat_e
+//                  BlendMode_e     BlendMode
+//  Return:         None
+//
+//  Description:    Copy a rectangle region from linear memory region to a square memory
+//                  region
+//
+//  Note(s):        Source is linear
+//
+//-------------------------------------------------------------------------------------------------
 void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
     uint32_t           PixelFormatSrc;
@@ -614,12 +624,12 @@ void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelForm
 
     // Source
     DMA2D->BGMAR       = Address;                                                          // Source address
-    DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;              // Source line offset
+    DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;       // Source line offset
     DMA2D->BGPFCCR     = PixelFormatDst;                                                   // Defines the size of pixel
 
     // Destination
     DMA2D->OMAR        = Address;                                                          // Destination address
-    DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;              // Destination line offset
+    DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;       // Destination line offset
     DMA2D->OPFCCR      = PixelFormatDst;                                                   // Defines the size of pixel
 
     DMA2D->NLR         = AreaConfig.u_32;                                                  // Size configuration of area to be transfered
@@ -627,8 +637,10 @@ void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelForm
 
     while(DMA2D->CR & DMA2D_CR_START);                                                     // Wait until transfer is done
   #else
-    // TODO provide a method without DMA2D
-    // use memory to memory normal DMA
+        uint8_t* pLocalSrc = (uint8_t*)pSrc;
+        uint32_t* pDst = (uint32_t*)Address;
+        pLocalSrc += (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
+        DMA_Memcpy(pLocalSrc, pDst, size_t(AreaConfig.u_32));
   #endif
 }
 

@@ -61,7 +61,7 @@ class DeviceUSB : public USB_????_Interface
                             // ~DeviceUSB                ();
 
     void                        Initialize              (class USB_Application* pUSB);
-    SystemState_e               RegisterClass            (USBH_ClassTypeDef *pclass);
+    SystemState_e               RegisterClass            (USBH_Class_t *pclass);
     void                         Start                     (void);
 
 

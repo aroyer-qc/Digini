@@ -570,9 +570,10 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
 
         while(DMA2D->CR & DMA2D_CR_START);                                                                              // Wait until transfer is done
       #else
+        uint8_t* pLocalSrc = (uint8_t*)pSrc;
         uint32_t* pDst = (uint32_t*)Address;
-        pSrc += (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
-        DMA_Memcpy(pSrc, pDst, size_t(AreaConfig.u_32));
+        pLocalSrc += (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
+        DMA_Memcpy(pLocalSrc, pDst, size_t(AreaConfig.u_32));
         // TODO provide a method without DMA2D
         // use memory to memory normal DMA
       #endif

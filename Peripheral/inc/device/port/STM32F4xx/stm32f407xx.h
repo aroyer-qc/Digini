@@ -9398,6 +9398,8 @@ typedef struct
 #define PWR_CR_VOS_Pos         (14U)
 #define PWR_CR_VOS_Msk         (0x1UL << PWR_CR_VOS_Pos)                        /*!< 0x00004000 */
 #define PWR_CR_VOS             PWR_CR_VOS_Msk                                  /*!< VOS bit (Regulator voltage scaling output selection) */
+#define PWR_CR_VOS_0           0x00004000U                                     /*!< Bit 0 */
+#define PWR_CR_VOS_1           0x00008000U                                     /*!< Bit 1 */
 
 /* Legacy define */
 #define  PWR_CR_PMODE                        PWR_CR_VOS

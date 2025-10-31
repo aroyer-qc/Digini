@@ -39,6 +39,15 @@
 #define DMA_DIRECTION_MASK             (DMA_SxCR_DIR_0 | DMA_SxCR_DIR_1)
 
 //-------------------------------------------------------------------------------------------------
+// Variable(s)
+//-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
+nOS_Mutex MEM2MEM_Mutex;
+#endif
+
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Function:       Initialize
 //
@@ -269,16 +278,20 @@ void DMA_Driver::EnableIRQ()
 
 //-------------------------------------------------------------------------------------------------
 
+#if (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
+
 void DMA_MEM2MEM_Initialize(void)
 {
     nOS_MutexCreate(&MEM2MEM_Mutex, NOS_MUTEX_NORMAL, 1);
 }
 
-void DMA_Memcpy(void* pSource, void* Destination, size_t Size)
+//-------------------------------------------------------------------------------------------------
+
+void DMA_Memcpy(void* pSource, void* pDestination, size_t Size)
 {
-    uint32_t AlignedSize
+    uint32_t AlignedSize;
     uint8_t* pSrc8 = (uint8_t *)pSource;
-    uint8_t* pDst8 = (uint8_t *)Destination;
+    uint8_t* pDst8 = (uint8_t *)pDestination;
 
     // Try to acquire the DMA mutex (timeout: 100 ms)
     if(nOS_MutexLock(&MEM2MEM_Mutex, DMA_MUTEX_GUARD_TIME) != NOS_OK)
@@ -295,8 +308,8 @@ void DMA_Memcpy(void* pSource, void* Destination, size_t Size)
     if(Size >= 4)                                       // Start DMA transfer if size ≥ 4 bytes
     {
         // Configure DMA
-        DMA_MEM2MEM_STREAM->PAR  = (uint32_t)src;
-        DMA_MEM2MEM_STREAM->M0AR = (uint32_t)dst;
+        DMA_MEM2MEM_STREAM->PAR  = (uint32_t)pSource;
+        DMA_MEM2MEM_STREAM->M0AR = (uint32_t)pDestination;
         DMA_MEM2MEM_STREAM->NDTR = Size / 4;
         DMA_MEM2MEM_STREAM->CR   = DMA_SxCR_CHSEL_0 * DMA_MEM2MEM_CHANNEL |
                                    DMA_SxCR_DIR_0   |
@@ -314,17 +327,19 @@ void DMA_Memcpy(void* pSource, void* Destination, size_t Size)
         pDst8[i] = pSrc8[i];
     }
 
-    if(size >= 4)
+    if(Size >= 4)
     {
         while((DMA2->LISR & DMA_LISR_TCIF0) == 0)           // Wait for completion
         {
             nOS_Yield(); // or maybe nOS_Sleep(1);
         }
 
-        DMA_MEM2MEM_MODULE->DMA_IFCR = DMA_FLAG             // Clear transfer complete flag
+        DMA_MEM2MEM_MODULE->DMA_IFCR = DMA_FLAG;            // Clear transfer complete flag
         DMA_MEM2MEM_STREAM->CR &= ~DMA_SxCR_EN;             // Disable stream
         while(DMA_MEM2MEM_STREAM->CR & DMA_SxCR_EN);
     }
 
     nOS_MutexUnlock(&MEM2MEM_Mutex);                        // Release the mutex
 }
+
+#endif // (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)

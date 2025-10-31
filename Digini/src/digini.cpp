@@ -71,6 +71,10 @@
 //-------------------------------------------------------------------------------------------------
 SystemState_e DIGINI_Initialize(void)
 {
+  #if (USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
+    DMA_MEM2MEM_Initialize();
+  #endif
+    
   #if (USE_SDRAM_DRIVER == DEF_ENABLED)
     SDRAM_Initialize();                                     // Initialize SDRAM
   #endif

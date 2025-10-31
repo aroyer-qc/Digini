@@ -124,7 +124,7 @@ TASK_ETHERNET_IF_STACK_SIZE
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e DeviceUSB::RegisterClass(USBH_ClassTypeDef *pClass)
+SystemState_e DeviceUSB::RegisterClass(USBH_Class_t *pClass)
 {
     return SYSTEM_OK;
 }
@@ -169,7 +169,7 @@ void DeviceUSB::Start(void)
 //-------------------------------------------------------------------------------------------------
 void DeviceUSB::Run(void)
 {
-    USBH_HandleTypeDef Event;
+    USBH_Handle_t Event;
 
     for(;;)
     {

@@ -167,14 +167,17 @@ static const int32_t DRV_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 // Private Function(s)
 //-------------------------------------------------------------------------------------------------
 
-/**
- * @desc    Write color pixels
- *
- * @param   uint16_t color
- * @param   uint16_t counter
- *
- * @return  void
- */
+//-------------------------------------------------------------------------------------------------
+//
+//  Function name:  PutColor
+//
+//  Parameter(s):   uint16_t        Color
+//                  uint16_t        Count
+//  Return value:   None
+//
+//  Description:    Write color pixels
+//
+//-------------------------------------------------------------------------------------------------
 void GrafxDriver::PutColor(uint16_t Color, uint16_t Count)
 {
 
@@ -206,7 +209,7 @@ void GrafxDriver::PutColor(uint16_t Color, uint16_t Count)
 //
 //  Description:    Send a command to LCD
 //
-//  Note(s):        any sub data will be sent using LCD_WriteByte
+//  Note(s):        Any sub data will be sent using LCD_WriteByte
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::WriteCommand(uint8_t Command)
@@ -291,8 +294,6 @@ void GrafxDriver::SetWindow(uint8_t PosX1, uint8_t PosY1, uint8_t PosX2, uint8_t
 //
 //   Description:   Write 8 bits data to LCD
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::WriteData(uint8_t Data)
 {
@@ -308,8 +309,6 @@ void GrafxDriver::WriteData(uint8_t Data)
 //   Return value:  None
 //
 //   Description:   Write 16 bits data to LCD
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::WriteData(uint16_t Data)
@@ -327,8 +326,6 @@ void GrafxDriver::WriteData(uint16_t Data)
 //
 //   Description:   Write 32 bits data to LCD
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::WriteData(uint32_t Data)
 {
@@ -345,8 +342,6 @@ void GrafxDriver::WriteData(uint32_t Data)
 //   Return value:  None
 //
 //   Description:   Write a stream of data LCD
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -366,8 +361,6 @@ void GrafxDriver::WriteData(uint8_t* pData, uint32_t Size)
 //
 //   Description:   Send a command and write a uint8_t data LCD
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::SendCommand(uint8_t Register, uint8_t Data, uint32_t Delay)
 {
@@ -384,8 +377,6 @@ void GrafxDriver::SendCommand(uint8_t Register, uint8_t Data, uint32_t Delay)
 //   Return value:  None
 //
 //   Description:   Send a command and write a stream of data LCD
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::SendCommand(uint8_t Register, uint8_t* pData, uint32_t Size, uint32_t Delay)
@@ -419,9 +410,7 @@ void GrafxDriver::SendCommand(uint8_t Register, uint8_t* pData, uint32_t Size, u
 //
 //  Description:    LCD configuration specific
 //
-c//
 //-------------------------------------------------------------------------------------------------
-
 void GrafxDriver::Initialize(void* pArg)
 {
     m_pSPI = (SPI_Driver*)pArg;
@@ -437,18 +426,18 @@ void GrafxDriver::Initialize(void* pArg)
 
     SendCommand(ST7735_SWRESET, nullptr, 0, 50);            // Software reset
 
-    //------------------------------------ST7735S Frame Rate-----------------------------------------//
+    //------------------------------------ST7735S Frame Rate---------------------------------------
 
     const uint8_t Data_FRMCTR[6] = {0x05, 0x3C, 0x3C,0x05, 0x3C, 0x3C};
     SendCommand(ST7735_FRMCTR1, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 1
     SendCommand(ST7735_FRMCTR2, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 2
     SendCommand(ST7735_FRMCTR3, (uint8_t*)&Data_FRMCTR[0], 6, 1);    // Frame control 2
 
-	//------------------------------------End ST7735S Frame Rate-----------------------------------------//
+	//------------------------------------End ST7735S Frame Rate-----------------------------------
 
     SendCommand(ST7735_INVCTR, 0x03, 1);                   // Dot inversion
 
-	//------------------------------------ST7735S Power Sequence-----------------------------------------//
+	//------------------------------------ST7735S Power Sequence-----------------------------------
 
     const uint8_t Data_PWR_CTRL1[3] = {0x28, 0x08, 0x04};
     const uint8_t Data_PWR_CTRL3[2] = {0x0D, 0x00};
@@ -461,12 +450,12 @@ void GrafxDriver::Initialize(void* pArg)
     SendCommand(ST7735_POWER_CTRL_4, (uint8_t*)&Data_PWR_CTRL4[0], 2, 1);
     SendCommand(ST7735_POWER_CTRL_5, (uint8_t*)&Data_PWR_CTRL5[0], 2, 1);
 
-    //---------------------------------End ST7735S Power Sequence-------------------------------------//
+    //---------------------------------End ST7735S Power Sequence----------------------------------
 
     SendCommand(ST7735_VMCTR1, 0x10, 1);                        // VCOM
     SendCommand(ST7735_MADCTL, 0xC0, 1);                        // MX, MY, RGB mode
 
-	//------------------------------------ST7735S Gamma Sequence-----------------------------------------//
+	//------------------------------------ST7735S Gamma Sequence-----------------------------------
 
     const uint8_t Data_GMCTRP1[16] = {0x04, 0x22, 0x07, 0x0A, 0x2E, 0x30, 0x25, 0x2A,
                                       0x28, 0x26, 0x2E, 0x3A, 0x00, 0x01, 0x03, 0x13};
@@ -476,7 +465,7 @@ void GrafxDriver::Initialize(void* pArg)
     SendCommand(ST7735_GMCTRP1, (uint8_t*)&Data_GMCTRP1[0], 16, 1);
     SendCommand(ST7735_GMCTRN1, (uint8_t*)&Data_GMCTRN1[0], 16, 1);
 
-	//------------------------------------End ST7735S Gamma Sequence-----------------------------------------//
+	//------------------------------------End ST7735S Gamma Sequence-------------------------------
 
     SendCommand(ST7735_COLMOD, 0x05, 1);                        // 65K mode
     SendCommand(ST7735_SLPOUT, nullptr, 0, 120);                // Exit Sleep
@@ -505,7 +494,6 @@ void GrafxDriver::Initialize(void* pArg)
 
 IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
 */
-
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -516,8 +504,6 @@ IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
 //  Return:         None
 //
 //  Description:    Configuration for layer
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::LayerConfig(CLayer* pLayer)
@@ -644,8 +630,6 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
 //
 //  Description:    Fill a region in a specific color
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 /*
 void GrafxDriver::DrawRectangle(uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height)
@@ -670,8 +654,6 @@ void GrafxDriver::DrawRectangle(uint16_t PosX, uint16_t PosY, uint16_t Width, ui
 //  Return:         None
 //
 //  Description:    Draw a box in a specific thickness
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, uint16_t Thickness)
@@ -707,8 +689,6 @@ void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t
 //  Return:         None
 //
 //  Description:    Put a pixel on LCD
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
@@ -757,7 +737,6 @@ void GrafxDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint1
 	PutColor(Color, Length * Thickness);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DrawVLine
@@ -769,8 +748,6 @@ void GrafxDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint1
 //  Return:         None
 //
 //  Description:    Displays a vertical line of a specific thickness.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness)
@@ -794,7 +771,6 @@ void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint1
 	PutColor(Color, Length * Thickness);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DrawLine
@@ -811,8 +787,6 @@ void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint1
 //
 //  Description:    Displays a line of a specific thickness.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction)
 {
@@ -824,7 +798,6 @@ void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16
     VAR_UNUSED(Thickness);
     VAR_UNUSED(Direction);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -885,8 +858,6 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 //
 //  Description:    Enables the Display
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DisplayOn(void)
 {
@@ -901,8 +872,6 @@ void GrafxDriver::DisplayOn(void)
 //  Return:         None
 //
 //  Description:    Disables the Display
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DisplayOff(void)
@@ -919,8 +888,6 @@ void GrafxDriver::DisplayOff(void)
 //
 //  Description:    Clear and home the LCD
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::Clear(void)
 {
@@ -930,12 +897,10 @@ void GrafxDriver::Clear(void)
 
 //-------------------------------------------------------------------------------------------------
 
-
 void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
 
 }
-
 
 #if 0
 

@@ -42,8 +42,6 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-
-
 #define GRAFX_HSYNC                    ((uint16_t)9)    // Horizontal synchronization
 #define GRAFX_HBP                      ((uint16_t)20)   // Horizontal back porch
 #define GRAFX_HFP                      ((uint16_t)10)   // Horizontal front porch
@@ -155,8 +153,6 @@ DRV_Info_t* DRV_pInfo;
 //
 //  Description:    GPIO configuration specific for the LCD and processor used by this driver
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 static void DRV_IO_Initialize(void)
 {
@@ -252,7 +248,6 @@ static void DRV_IO_Initialize(void)
     GPIO_Init(GPIOD, &GPIO_InitStruct);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DRV_LCD_ControllerInitialize
@@ -261,8 +256,6 @@ static void DRV_IO_Initialize(void)
 //  Return:         None
 //
 //  Description:    LCD is equipped with a IL9341 controller that need to be initialize
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 static void DRV_LCD_ControllerInitialize(void)
@@ -402,7 +395,6 @@ static void DRV_LCD_ControllerInitialize(void)
 //  Return:         None
 //
 //  Description:    Initialize the processor built-in LCD controller
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 static void DRV_LTDC_Initialize(void)
@@ -460,7 +452,6 @@ static void DRV_LTDC_Initialize(void)
     LTDC_Init(&LTDC_InitStruct);                                                                    // Initialize LTDC
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DRV_LayerConfig
@@ -470,15 +461,12 @@ static void DRV_LTDC_Initialize(void)
 //
 //  Description:    Configuration for layer
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 static void DRV_LAYER_Initialize(void)
 {
     DRV_LayerConfig(&LayerTable[BACKGROUND_DISPLAY_LAYER_0]);
     DRV_LayerConfig(&LayerTable[FOREGROUND_DISPLAY_LAYER_0]);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -489,8 +477,6 @@ static void DRV_LAYER_Initialize(void)
 //
 //   Description:   Write to Register
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 static void DRV_WriteCommand(uint8_t Register)
 {
@@ -499,7 +485,6 @@ static void DRV_WriteCommand(uint8_t Register)
     DRV_pInfo->pSPI->Write(Register);
     GPIO_WriteBit(GPIOC, GPIO_Pin_2, Bit_SET);      // Set the CS
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -510,8 +495,6 @@ static void DRV_WriteCommand(uint8_t Register)
 //
 //   Description:   Write to Register
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 static void DRV_WriteData(uint8_t Value)
 {
@@ -520,7 +503,6 @@ static void DRV_WriteData(uint8_t Value)
     DRV_pInfo->pSPI->Write(Value);
     GPIO_WriteBit(GPIOC, GPIO_Pin_2, Bit_SET);     // Set the CS
 }
-
 
 //-------------------------------------------------------------------------------------------------
 // Global Function(s)
@@ -535,8 +517,6 @@ static void DRV_WriteData(uint8_t Value)
 //
 //  Description:    LCD configuration specific for the LCD and processor used by this driver
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 
 void DRV_Initialize(void* pArg)
@@ -550,7 +530,6 @@ void DRV_Initialize(void* pArg)
     DRV_LAYER_Initialize();
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DRV_LayerConfig
@@ -559,8 +538,6 @@ void DRV_Initialize(void* pArg)
 //  Return:         None
 //
 //  Description:    Configuration for layer
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void DRV_LayerConfig(CLayer* pLayer)
@@ -624,7 +601,6 @@ void DRV_LayerConfig(CLayer* pLayer)
     }
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DRV_Copy
@@ -661,8 +637,8 @@ void DRV_Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPi
     AreaConfig.u_16.u0 = pBox->Size.Height;
 
 
-    DMA2D->CR          = (BlendMode == CLEAR_BLEND) ? 0x00000000UL : 0x00020000UL;                                  // Memory to memory and TCIE blending BG + Source
-    DMA2D->CR         |= (1 << 9);
+    DMA2D->CR          = (BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND;                                  // Memory to memory and TCIE blending BG + Source
+    DMA2D->CR         |= DMA2D_CR_TCIE;
 
     //Source
     DMA2D->FGMAR       = (uint32_t)(pSrc) +(((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);    // Source address
@@ -680,11 +656,10 @@ void DRV_Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPi
     DMA2D->OPFCCR      = PixelFormatDst;                                                                            // Defines the size of pixel
 
     DMA2D->NLR         = AreaConfig.u_32;                                                                           // Size configuration of area to be transfered
-    DMA2D->CR         |= 1;                                                                                         // Start operation
-
+    
+    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
     while(DMA2D->CR & DMA2D_CR_START);                                                                              // Wait until transfer is done
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -719,8 +694,8 @@ void DRV_CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat_e, Ble
     AreaConfig.u_16.u1 = pBox->Size.Width;
     AreaConfig.u_16.u0 = pBox->Size.Height;
 
-    DMA2D->CR          = (BlendMode == CLEAR_BLEND) ? 0x00000000UL : 0x00020000UL;         // Memory to memory and TCIE blending BG + Source
-    DMA2D->CR         |= (1 << 9);
+    DMA2D->CR          = (BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND;         // Memory to memory and TCIE blending BG + Source
+    DMA2D->CR         |= DMA2D_CR_TCIE;
 
     // Source
     DMA2D->FGMAR       = (uint32_t)pSrc;                                                   // Source address
@@ -738,11 +713,10 @@ void DRV_CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat_e, Ble
     DMA2D->OPFCCR      = PixelFormatDst;                                                   // Defines the size of pixel
 
     DMA2D->NLR         = AreaConfig.u_32;                                                  // Size configuration of area to be transfered
-    DMA2D->CR         |= 1;                                                                // Start operation
-
+    
+    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
     while(DMA2D->CR & DMA2D_CR_START);                                                     // Wait until transfer is done
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -773,14 +747,14 @@ void DRV_DrawRectangle(Box_t* pBox)
     AreaConfig.u_16.u1 = pBox->Size.Width;
     AreaConfig.u_16.u0 = pBox->Size.Height;
 
-    DMA2D->CR          = 0x00030000UL | (1 << 9);                              // Register to memory and TCIE
+    DMA2D->CR          = DMA2D_R2M | DMA2D_CR_TCIE;                            // Register to memory and TCIE
     DMA2D->OCOLR       = Color;                                                // Color to be used
     DMA2D->OMAR        = Address;                                              // Destination address
     DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;  // Destination line offset
     DMA2D->OPFCCR      = PixelFormat;                                          // Defines the number of pixels to be transfered
     DMA2D->NLR         = AreaConfig.u_32;                                      // Size configuration of area to be transfered
-    DMA2D->CR         |= 1;                                                    // Start operation
-
+    
+    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
     while(DMA2D->CR & DMA2D_CR_START);                                         // Wait until transfer is done
 }
 
@@ -796,8 +770,6 @@ void DRV_DrawRectangle(Box_t* pBox)
 //  Return:         None
 //
 //  Description:    Draw a box in a specific thickness
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void DRV_DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness)
@@ -821,8 +793,6 @@ void DRV_DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height,
 //
 //  Description:    Put a pixel on selected layer
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void DRV_DrawPixel(uint16_t PosX, uint16_t PosY)
 {
@@ -838,7 +808,7 @@ void DRV_DrawPixel(uint16_t PosX, uint16_t PosY)
     Address        = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
     Color          = pLayer->GetColor();
 
-    DMA2D->CR      = 0x00030000UL | (1 << 9);                   // Register to memory and TCIE
+    DMA2D->CR      = DMA2D_R2M | DMA2D_CR_TCIE;                 // Register to memory and TCIE
     DMA2D->OCOLR   = Color;                                     // Color to be used
     DMA2D->OMAR    = Address;                                   // Destination address
     DMA2D->OPFCCR  = PixelFormat;                               // Defines the number of pixels to be transfered
@@ -847,7 +817,6 @@ void DRV_DrawPixel(uint16_t PosX, uint16_t PosY)
 
     while(DMA2D->CR & DMA2D_CR_START);                          // Wait until transfer is done
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -860,8 +829,6 @@ void DRV_DrawPixel(uint16_t PosX, uint16_t PosY)
 //  Return:         None
 //
 //  Description:    Displays a horizontal line of a specific thickness.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void DRV_DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness)
@@ -882,7 +849,6 @@ void DRV_DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thick
     DRV_DrawLine(PosX1, PosY, Length, Thickness, DRAW_HORIZONTAL);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DRV_DrawVLine
@@ -894,8 +860,6 @@ void DRV_DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thick
 //  Return:         None
 //
 //  Description:    Displays a vertical line of a specific thickness.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void DRV_DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness)
@@ -916,7 +880,6 @@ void DRV_DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thick
     DRV_DrawLine(PosX, PosY1, Length, Thickness, DRAW_VERTICAL);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DRV_DrawLine
@@ -932,8 +895,6 @@ void DRV_DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thick
 //  Return:         None
 //
 //  Description:    Displays a line of a specific thickness.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void DRV_DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction)
@@ -962,7 +923,7 @@ void DRV_DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickN
         AreaConfig.u_16.u0 = Length;
     }
 
-    DMA2D->CR      = 0x00030000UL | (1 << 9);                               // Register to memory and TCIE
+    DMA2D->CR      = DMA2D_R2M | DMA2D_CR_TCIE;                             // Register to memory and TCIE
     DMA2D->OCOLR   = Color;                                                 // Color to be used
     DMA2D->OMAR    = Address;                                               // Destination address
     DMA2D->OOR     = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)AreaConfig.u_16.u1; // Destination line offset
@@ -972,7 +933,6 @@ void DRV_DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickN
 
     while(DMA2D->CR & DMA2D_CR_START);                                      // Wait until transfer is done
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1002,7 +962,7 @@ void DRV_PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     AreaConfig.u_16.u1 = pDescriptor->Size.Width;
     AreaConfig.u_16.u0 = pDescriptor->Size.Height;
 
-    DMA2D->CR          = 0x00020000UL | (1 << 9);                                   // Memory to memory and TCIE
+    DMA2D->CR          = DMA2D_M2M_BLEND | DMA2D_CR_TCIE;                           // Memory to memory and TCIE
 
     // Font layer in Alpha blending linear (A8)
     DMA2D->FGMAR       = (uint32_t)pDescriptor->pAddress;                           // Source address 1
@@ -1021,11 +981,10 @@ void DRV_PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 
     // Area
     DMA2D->NLR         = AreaConfig.u_32;                                           // Size configuration of area to be transfered
-    DMA2D->CR         |= 1;                                                         // Start operation
-
+    
+    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
     while(DMA2D->CR & DMA2D_CR_START);                                              // Wait until transfer is done
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1036,14 +995,11 @@ void DRV_PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 //
 //  Description:    Enables the Display
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void DRV_DisplayOn(void)
 {
     DRV_WriteCommand(DRV_LCD_DISPLAY_ON);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1054,14 +1010,11 @@ void DRV_DisplayOn(void)
 //
 //  Description:    Disables the Display
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void DRV_DisplayOff(void)
 {
     DRV_WriteCommand(DRV_LCD_DISPLAY_OFF);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //

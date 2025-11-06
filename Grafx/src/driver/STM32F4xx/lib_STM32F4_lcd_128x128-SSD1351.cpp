@@ -119,7 +119,6 @@
 //  Description:    LCD is equipped with a IL9341 controller that need to be initialize
 //
 //  Note(s):        IO with those name must exist into bsp_io_def.h:
-//
 //                  IO_SSD1779_DC, IO_SSD1779_RESET, IO_SSD1779_BACK_CTRL,
 //
 //-------------------------------------------------------------------------------------------------
@@ -238,7 +237,7 @@ SSD1779_SetContrast(63);
 //
 //  Description:    Send a command to LCD
 //
-//  Note(s):        any sub data will be sent using LCD_WriteByte
+//  Note(s):        Any sub data will be sent using LCD_WriteByte
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::WriteCommand(uint8_t Command)
@@ -257,7 +256,7 @@ void GrafxDriver::WriteCommand(uint8_t Command)
 //
 //  Description:    Send a read command to LCD
 //
-//  Note(s):        any sub data will be sent using LCD_WriteByte
+//  Note(s):        Any sub data will be sent using LCD_WriteByte
 //
 //-------------------------------------------------------------------------------------------------
 uint8_t GrafxDriver::ReadCommand(uint8_t Command)
@@ -280,8 +279,6 @@ uint8_t GrafxDriver::ReadCommand(uint8_t Command)
 //
 //   Description:   Write 8 bits data to LCD
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::WriteData(uint8_t Data)
 {
@@ -296,8 +293,6 @@ void GrafxDriver::WriteData(uint8_t Data)
 //   Return value:  None
 //
 //   Description:   Write 16 bits data to LCD
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::WriteData(uint16_t Data)
@@ -315,8 +310,6 @@ void GrafxDriver::WriteData(uint16_t Data)
 //
 //   Description:   Read 8 bits data from LCD
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 uint8_t GrafxDriver::ReadData_8(void)
 {
@@ -331,8 +324,6 @@ uint8_t GrafxDriver::ReadData_8(void)
 //   Return value:  uint16_t         Data
 //
 //   Description:   Read 16 bits data from LCD
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 uint16_t GrafxDriver::ReadData_16(void)
@@ -352,8 +343,6 @@ uint16_t GrafxDriver::ReadData_16(void)
 //   Return value:  None
 //
 //   Description:   Draw a box or a rectangle
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawRectangle(Box_t* pBox, uint8_t Mode)
@@ -394,8 +383,6 @@ void GrafxDriver::DrawRectangle(Box_t* pBox, uint8_t Mode)
 //
 //  Description:    LCD configuration specific for the LCD and processor used by this driver
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 
 void GrafxDriver::Initialize(void* pArg)
@@ -412,8 +399,6 @@ void GrafxDriver::Initialize(void* pArg)
 //  Return:         None
 //
 //  Description:    Configuration for layer
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::LayerConfig(CLayer* pLayer)
@@ -458,28 +443,27 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
     AreaConfig.u_16.u0 = pBox->Size.Height;
 
 
-    DMA2D->CR          = (BlendMode == CLEAR_BLEND) ? 0x00000000UL : 0x00020000UL;                                  // Memory to memory and TCIE blending BG + Source
-    DMA2D->CR         |= (1 << 9);
+    DMA2D->CR          = ((BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND) | DMA2D_CR_TCIE;                    // Memory to memory and TCIE blending BG + Source
 
     //Source
-    DMA2D->FGMAR       = (uint32_t)(pSrc) +(((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);    // Source address
-    DMA2D->FGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                       // Source line offset none as we are linear
-    DMA2D->FGPFCCR     = PixelFormatSrc;                                                                            // Defines the size of pixel
+    DMA2D->FGMAR       = (uint32_t)(pSrc) +(((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize); // Source address
+    DMA2D->FGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                    // Source line offset none as we are linear
+    DMA2D->FGPFCCR     = PixelFormatSrc;                                                                                // Defines the size of pixel
 
     // Source
-    DMA2D->BGMAR       = Address;                                                                                   // Source address
-    DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                       // Source line offset
-    DMA2D->BGPFCCR     = PixelFormatDst;                                                                            // Defines the size of pixel
+    DMA2D->BGMAR       = Address;                                                                                       // Source address
+    DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                    // Source line offset
+    DMA2D->BGPFCCR     = PixelFormatDst;                                                                                // Defines the size of pixel
 
     //Destination
-    DMA2D->OMAR        = Address;                                                                                   // Destination address
-    DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                       // Destination line offset none as we are linear
-    DMA2D->OPFCCR      = PixelFormatDst;                                                                            // Defines the size of pixel
+    DMA2D->OMAR        = Address;                                                                                       // Destination address
+    DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                    // Destination line offset none as we are linear
+    DMA2D->OPFCCR      = PixelFormatDst;                                                                                // Defines the size of pixel
 
-    DMA2D->NLR         = AreaConfig.u_32;                                                                           // Size configuration of area to be transfered
-    DMA2D->CR         |= 1;                                                                                         // Start operation
-
-    while(DMA2D->CR & DMA2D_CR_START);                                                                              // Wait until transfer is done
+    DMA2D->NLR         = AreaConfig.u_32;                                                                               // Size configuration of area to be transfered
+    
+    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
+    while(DMA2D->CR & DMA2D_CR_START);                                                                                  // Wait until transfer is done
 */
 }
 
@@ -575,7 +559,6 @@ void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelForm
     VAR_UNUSED(BlendMode);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DrawCircle
@@ -584,8 +567,6 @@ void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelForm
 //  Return:         None
 //
 //  Description:
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawCircle(uint8_t X, uint8_t Y, uint8_t Radius, uint8_t Mode)
@@ -611,7 +592,6 @@ void GrafxDriver::DrawCircle(uint8_t X, uint8_t Y, uint8_t Radius, uint8_t Mode)
     }
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DrawRectangle
@@ -621,14 +601,11 @@ void GrafxDriver::DrawCircle(uint8_t X, uint8_t Y, uint8_t Radius, uint8_t Mode)
 //
 //  Description:    Fill a region in a specific color
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawRectangle(Box_t* pBox)
 {
     DrawRectangle(pBox, SSD1779_FILL);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -642,8 +619,6 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
 //  Return:         None
 //
 //  Description:    Draw a box in a specific thickness
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness)
@@ -675,8 +650,6 @@ void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_
 //  Return:         None
 //
 //  Description:    Put a pixel on LCD
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
@@ -714,7 +687,6 @@ void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DrawHLine
@@ -726,8 +698,6 @@ void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 //  Return:         None
 //
 //  Description:    Displays a horizontal line of a specific thickness.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness)
@@ -748,7 +718,6 @@ void GrafxDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint1
     DrawLine(PosX1, PosY, Length, Thickness, DRAW_HORIZONTAL);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DrawVLine
@@ -760,8 +729,6 @@ void GrafxDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint1
 //  Return:         None
 //
 //  Description:    Displays a vertical line of a specific thickness.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness)
@@ -782,7 +749,6 @@ void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint1
     DrawLine(PosX, PosY1, Length, Thickness, DRAW_VERTICAL);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DrawLine
@@ -799,8 +765,6 @@ void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint1
 //
 //  Description:    Displays a line of a specific thickness.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction)
 {
@@ -812,7 +776,6 @@ void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16
     WriteData(uint8_t(PosY + ThickNess));
     WriteData(uint16_t(m_pLayer->GetColor()));
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -851,7 +814,6 @@ pLayer->GetTextColor();
 */
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DisplayOn
@@ -861,14 +823,11 @@ pLayer->GetTextColor();
 //
 //  Description:    Enables the Display
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DisplayOn(void)
 {
     SSD1779_Display(SSD1779_ON);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -879,15 +838,11 @@ void GrafxDriver::DisplayOn(void)
 //
 //  Description:    Disables the Display
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DisplayOff(void)
 {
     SSD1779_Display(SSD1779_OFF);
 }
-
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -897,8 +852,6 @@ void GrafxDriver::DisplayOff(void)
 //  Return:         None
 //
 //  Description:    Clear and home the LCD
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::Clear(void)
@@ -916,7 +869,6 @@ void GrafxDriver::Clear(void)
 
 
 #if 0
-
 
 /*****************************************************************************
 

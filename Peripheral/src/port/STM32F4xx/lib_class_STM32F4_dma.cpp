@@ -280,13 +280,34 @@ void DMA_Driver::EnableIRQ()
 
 #if (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           DMA_MEM2MEM_Initialize
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Initialize the DMA Memory to memory transfer
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_MEM2MEM_Initialize(void)
 {
     nOS_MutexCreate(&MEM2MEM_Mutex, NOS_MUTEX_NORMAL, 1);
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           DMA_Memcpy
+//
+//  Parameter(s):   void*       pSource
+//                  void*       pDestination
+//                  size_t      Size
+//
+//  Return:         None
+//
+//  Description:    Initialize the DMA Memory to memory transfer
+//
+//-------------------------------------------------------------------------------------------------
 void DMA_Memcpy(void* pSource, void* pDestination, size_t Size)
 {
     uint32_t AlignedSize;
@@ -343,3 +364,5 @@ void DMA_Memcpy(void* pSource, void* pDestination, size_t Size)
 }
 
 #endif // (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------

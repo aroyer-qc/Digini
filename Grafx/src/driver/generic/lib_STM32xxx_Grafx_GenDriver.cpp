@@ -95,7 +95,7 @@ const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 void GrafxGenDriver::Initialize(void* pArg)
 {
   #ifdef LTDC
-    
+
 /*
     // RK043FN48H LCD clock configuration
     // PLLSAI_VCO Input = HSI_VALUE/PLL_M = 1 Mhz
@@ -115,8 +115,13 @@ void GrafxGenDriver::Initialize(void* pArg)
     while((RCC->CR & RCC_CR_PLLSAIRDY) == 0);
 */
 
+   #ifdef STM32H7xx
+    RCC->APB3ENR |= RCC_APB3ENR_LTDCEN;
+    RCC->AHB3ENR |= RCC_AHB3ENR_DMA2DEN;
+   #else
     RCC->APB2ENR |= RCC_APB2ENR_LTDCEN;
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
+   #endif
 
     // Configures the HS, VS, DE and PC polarity
     LTDC->GCR = 0;

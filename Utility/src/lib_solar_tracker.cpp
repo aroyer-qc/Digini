@@ -210,7 +210,7 @@ void SolTrack(DateAndTime_t* pDateTime, OriginLocation_t* pLocation, SunPosition
     ///-------------------------------------------------------------------------------------------------
     /// Convert ecliptic coordinates to geocentric equatorial coordinates:
 
-    FLOAT SinLon = sin(m_pPosition->Longitude);
+    FLOAT SinLon = sin(pPosition->Longitude);
     FLOAT SinObl = sqrt(1.0 - pPosition->CosObliquity * pPosition->CosObliquity); // Sine of the obliquity of the ecliptic will be positive in the forseeable future
 
     pPosition->RightAscension = CustomAtan2(pPosition->CosObliquity * SinLon, cos(pPosition->Longitude));      // 0 <= azimuth < (2 * PI)
@@ -220,7 +220,7 @@ void SolTrack(DateAndTime_t* pDateTime, OriginLocation_t* pLocation, SunPosition
     /// Convert equatorial coordinates to horizontal coordinates, correcting for parallax and refraction:
     //FLOAT Gmst = J2000_MEAN_LONGITUDE + RATE_EARTH_ROTATION_PER_JULIAN_DAY * pPosition->tJD + PRECESSION_EFFECTS * pPosition->tJC2; // Greenwich mean sidereal time
     /* according to copilot */ FLOAT Gmst = 280.46061837 + 360.98564736629 * (pPosition->tJD - JULIAN_DAYS_2000);
-    
+
     pPosition->Agst = Gmst + pPosition->NutationLon * pPosition->CosObliquity;                                                            // Correction for equation of the equinoxes -> apparent Greenwich sidereal time
 
     FLOAT SinAlt = 0.0;
@@ -264,9 +264,9 @@ void SolTrack(DateAndTime_t* pDateTime, OriginLocation_t* pLocation, SunPosition
         FLOAT TanAlt = SinAlt / CosAlt;
 
         pPosition->HourAngle          = CustomAtan2(SinAz, CosAz * pLocation->SinLat + TanAlt * pLocation->CosLat); // Local Hour Angle:  0 <= hourAngle < 2pi
-        pPosition->DeclinationRefract = asin(m_pLocation->SinLat * SinAlt - pLocation->CosLat * CosAlt * CosAz);    // Declination
+        pPosition->DeclinationRefract = asin(pLocation->SinLat * SinAlt - pLocation->CosLat * CosAlt * CosAz);      // Declination
     }
-    
+
     ///-------------------------------------------------------------------------------------------------
     // Use the North=0 convention for azimuth and hour angle (default: South = 0) if desired:
     if(UseNorthEqualsZero == true)

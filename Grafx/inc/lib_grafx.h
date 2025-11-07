@@ -60,7 +60,7 @@
 #include "service.h"
 #include "./Grafx/inc/task/lib_skin_task.h"
 //#include "./Grafx/inc/driver/lib_grafx_driver.h"      old method
-#include "./Grafx/inc/driver/lib_Grafx_GenDriver.h"
+#include "./Grafx/inc/driver/generic/lib_Grafx_GenDriver.h"
 
 #include GRAFX_DRIVER_INCLUDE
 

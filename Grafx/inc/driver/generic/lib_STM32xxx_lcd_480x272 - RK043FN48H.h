@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_STM32H7_lcd_480x272 - RK043FN48H.h
+//  File : lib_STM32xxx_lcd_480x272 - RK043FN48H.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -36,6 +36,18 @@
 
 #define GRAFX_NUMBER_OF_ACTIVE_LAYER                2
 
+// Display size
+#define GRAFX_DRIVER_SIZE_X                         480
+#define GRAFX_DRIVER_SIZE_Y                         272
+
+#define GRAFX_HSYNC                                 41              // Horizontal synchronization
+#define GRAFX_HBP                                   13              // Horizontal back porch
+#define GRAFX_HFP                                   32              // Horizontal front porch
+#define GRAFX_VSYNC                                 10              // Vertical synchronization
+#define GRAFX_VBP                                   2               // Vertical back porch
+#define GRAFX_VFP                                   2               // Vertical front porch
+
+
 #define GRAFX_USE_SOFT_COPY_LINEAR
 #define GRAFX_USE_SOFT_COPY_LAYER_TO_LAYER
 //#define GRAFX_USE_SOFT_PIXEL                      // We use this driver DMA for this function
@@ -51,10 +63,6 @@
 //#define GRAFX_USE_SOFT_COPY                       // We use this driver DMA for this function
 //#define GRAFX_USE_SOFT_FILL                       // We use this driver DMA for this function
 
-// Display size
-#define GRAFX_DRIVER_SIZE_X                         480
-#define GRAFX_DRIVER_SIZE_Y                         272
-
 //-------------------------------------------------------------------------------------------------
 // Class
 //-------------------------------------------------------------------------------------------------
@@ -62,12 +70,14 @@
 class GrafxDriver : public GrafxGenDriver
 {
     public:
-
+    
+        void        Initialize      (void* pArg)                                                                                            override;
+        void        DisplayOn       (void)                                                                                                  override;
+        void        DisplayOff      (void)                                                                                                  override;
+    
     private:
 
-        void            Line                  (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction);
-        void            LayerInitialize       (void);
-        void            LCD_Initialize        (void);
+        //void        Line             (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction);
 };
 
 //-------------------------------------------------------------------------------------------------

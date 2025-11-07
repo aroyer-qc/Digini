@@ -86,7 +86,7 @@ const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   None
+//  Parameter(s):   pArg
 //  Return:         None
 //
 //  Description:    LCD configuration specific for the LCD and processor used by this driver
@@ -94,63 +94,63 @@ const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::Initialize(void* pArg)
 {
-  #ifdef DMA2D
+  #ifdef LTDC
+    
+/*
+    // RK043FN48H LCD clock configuration
+    // PLLSAI_VCO Input = HSI_VALUE/PLL_M = 1 Mhz
+    // PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN = 192 Mhz
+    // PLLLCDCLK = PLLSAI_VCO Output/PLLSAIR = 192/5 = 38.4 Mhz
+    // LTDC clock frequency = PLLLCDCLK / LTDC_PLLSAI_DIVR_4 = 38.4/4 = 9.6Mhz
+    RCC->PLLSAICFGR  = (GRAFX_PLLSAIR_VALUE << RCC_PLLSAICFGR_PLLSAIR_Pos) |
+                       (GRAFX_PLLSAIQ_VALUE << RCC_PLLSAICFGR_PLLSAIQ_Pos) |
+                       (GRAFX_PLLSAIN_VALUE << RCC_PLLSAICFGR_PLLSAIN_Pos);
 
-    LTDC_InitTypeDef LTDC_InitStruct;
+// TODO found a better way
+    SET_BIT(RCC->PLLSAICFGR, 0x01 << RCC_PLLSAICFGR_PLLSAIP_Pos); // Enable the USB Clock and SDMMC
+    SET_BIT(RCC->DCKCFGR2, 1 << RCC_DCKCFGR2_CK48MSEL_Pos);
 
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2D, ENABLE);                                                   // Enable the DMA2D Clock for transfert
+    MODIFY_REG(RCC->DCKCFGR1, RCC_DCKCFGR1_PLLSAIDIVR, RCC_DCKCFGR1_PLLSAIDIVR_0); // PLLSA IDIVR 4;
+    RCC->CR |= RCC_CR_PLLSAION;
+    while((RCC->CR & RCC_CR_PLLSAIRDY) == 0);
+*/
 
-    // ---- Enable Pixel Clock ----
-    // Configure PLLSAI prescalers for LCD
-    // PLLSAI_VCO Input                                             = 1 Mhz
-    // PLLSAI_VCO Output    = PLLSAI_VCO Input * PLLSAI_N  = 1*192  = 192 Mhz
-    // PLLLCDCLK            = PLLSAI_VCO Output/PLLSAI_R   = 192/3  = 64 Mhz
-    // LTDC clock frequency = PLLLCDCLK / RCC_PLLSAIDivR   = 64/8   = 8.0 Mhz
-    RCC_PLLSAIConfig(192, 7, 3);
-    RCC_LTDCCLKDivConfig(RCC_PLLSAIDivR_Div8);
+    RCC->APB2ENR |= RCC_APB2ENR_LTDCEN;
+    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
 
-    RCC_PLLSAICmd(ENABLE);                                                                                  // Enable PLLSAI Clock
-    while(RCC_GetFlagStatus(RCC_FLAG_PLLSAIRDY) == RESET){};                                                // Wait for PLLSAI activation
+    // Configures the HS, VS, DE and PC polarity
+    LTDC->GCR = 0;
 
-    // ---- LTDC Initialization ----
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_LTDC, ENABLE);                                                    // Enable the LTDC Clock
+    // Sets Synchronization size
+    MODIFY_REG(LTDC->SSCR,
+               (LTDC_SSCR_VSH | LTDC_SSCR_HSW),
+               (GRAFX_VSYNC - 1) | ((GRAFX_HSYNC - 1) << LTDC_SSCR_HSW_Pos));
 
-    DRV_Config();                                                                                           // Configure the LCD Control pins
+    // Sets Accumulated Back porch
+    MODIFY_REG(LTDC->BPCR,
+               (LTDC_BPCR_AVBP | LTDC_BPCR_AHBP),
+               (GRAFX_VSYNC  + GRAFX_VBP - 1) | ((GRAFX_HSYNC  + GRAFX_HBP - 1) << LTDC_BPCR_AHBP_Pos));
 
-    LTDC_InitStruct.LTDC_HSPolarity = LTDC_HSPolarity_AL;                                                   // Initialize the horizontal synchronization polarity as active low
-    LTDC_InitStruct.LTDC_VSPolarity = LTDC_VSPolarity_AL;                                                   // Initialize the vertical synchronization polarity as active low
-    LTDC_InitStruct.LTDC_DEPolarity = LTDC_DEPolarity_AL;                                                   // Initialize the data enable polarity as active low
-    LTDC_InitStruct.LTDC_PCPolarity = LTDC_PCPolarity_IPC;                                                  // Initialize the pixel clock polarity as input pixel clock
+    // Sets Accumulated Active Width
+    MODIFY_REG(LTDC->AWCR,
+               (LTDC_AWCR_AAH | LTDC_AWCR_AAW),
+               ((GRAFX_DRIVER_SIZE_Y + GRAFX_VSYNC + GRAFX_VBP - 1) |
+                ((GRAFX_DRIVER_SIZE_X + GRAFX_HSYNC + GRAFX_HBP - 1) << LTDC_AWCR_AAW_Pos)));
 
-    // Timing configuration
-    LTDC_InitStruct.LTDC_HorizontalSync     = GRAFX_HSYNC;                                                  // Configure horizontal synchronization width
-    LTDC_InitStruct.LTDC_VerticalSync       = GRAFX_VSYNC;                                                  // Configure vertical synchronization height
-    LTDC_InitStruct.LTDC_AccumulatedHBP     = GRAFX_HSYNC + GRAFX_HBP;                                      // Configure accumulated horizontal back porch
-    LTDC_InitStruct.LTDC_AccumulatedVBP     = GRAFX_VSYNC + GRAFX_VBP;                                      // Configure accumulated vertical back porch
-    LTDC_InitStruct.LTDC_AccumulatedActiveW = GRAFX_HSYNC + GRAFX_HBP + GRAFX_DRIVER_SIZE_X;                // Configure accumulated active width
-    LTDC_InitStruct.LTDC_AccumulatedActiveH = GRAFX_VSYNC + GRAFX_VBP + GRAFX_DRIVER_SIZE_Y;                // Configure accumulated active height
-    LTDC_InitStruct.LTDC_TotalWidth         = GRAFX_HSYNC + GRAFX_HBP + GRAFX_DRIVER_SIZE_X + GRAFX_HFP;    // Configure total width
-    LTDC_InitStruct.LTDC_TotalHeigh         = GRAFX_VSYNC + GRAFX_VBP + GRAFX_DRIVER_SIZE_Y + GRAFX_VFP;    // Configure total height
+    // Sets Total Width for vertical and horizontal
+    MODIFY_REG(LTDC->TWCR, (LTDC_TWCR_TOTALH | LTDC_TWCR_TOTALW),
+                           ((GRAFX_DRIVER_SIZE_Y + GRAFX_VSYNC + GRAFX_VBP + GRAFX_VFP - 1) |
+                           ((GRAFX_DRIVER_SIZE_X + GRAFX_HSYNC + GRAFX_HBP + GRAFX_HFP - 1) << LTDC_TWCR_TOTALW_Pos)));
 
-    // Configure R,G,B component values for LCD background color
-    LTDC_InitStruct.LTDC_BackgroundRedValue   = 0;
-    LTDC_InitStruct.LTDC_BackgroundGreenValue = 0;
-    LTDC_InitStruct.LTDC_BackgroundBlueValue  = 0;
+    CLEAR_BIT(LTDC->BCCR, (LTDC_BCCR_BCBLUE | LTDC_BCCR_BCGREEN | LTDC_BCCR_BCRED));    // Sets the background color value to zero for all
+    SET_BIT(LTDC->IER, LTDC_IER_TERRIE | LTDC_IER_FUIE);                                // Enable the transfer Error interrupt and FIFO underrun
+    SET_BIT(LTDC->GCR, LTDC_GCR_LTDCEN);                                                // Enable LTDC by setting LTDCEN bit
 
-    LTDC_Init(&LTDC_InitStruct);                                                                            // Initialize LTDC
+    LayerConfig(&LayerTable[BACKGROUND_DISPLAY_LAYER_0]);
+    LayerConfig(&LayerTable[FOREGROUND_DISPLAY_LAYER_0]);
 
-    //LTDC_DitherCmd(ENABLE);
-
-    bDriverInitialize = true;
-
-    // Reload configuration
-    LTDC_ReloadConfig(LTDC_IMReload);
-
-    // Enable The LCD
-    LTDC_Cmd(ENABLE);
   #else
     VAR_UNUSED(pArg);
-    __asm("nop");
   #endif
 }
 
@@ -265,13 +265,11 @@ void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pi
 //
 //  Parameter(s):   void*           pSrc
 //                  Box_t*          pBox
-//                  Cartesian_t*    pDstPos
 //                  PixelFormat_e   SrcPixelFormat
 //                  BlendMode_e     BlendMode
 //  Return:         None
 //
-//  Description:    Copy a rectangle region from linear memory region to a square memory
-//                  region
+//  Description:    Copy a rectangle region from linear memory region to square memory area
 //
 //  Note(s):        Source is linear
 //
@@ -304,15 +302,12 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelF
         DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_TCIE;                                              // Memory to memory with pixel conversion
     }
 
-    DMA2D->CR          = (BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND;              // Memory to memory and TCIE. Blending BG + Source
-    DMA2D->CR         |= DMA2D_CR_TCIE;
-
     // Source 1
     DMA2D->FGMAR       = (uint32_t)pSrc;                                                        // Source address
     DMA2D->FGOR        = 0;                                                                     // Source line offset none as we are linear
     DMA2D->FGPFCCR     = PixelFormatSrc;                                                        // Defines the size of pixel
 
-    // Source 2
+    // Source 2 (Source2 vs Destination = Read modify write)
     DMA2D->BGMAR       = Address;                                                               // Source address
     DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;            // Source line offset
     DMA2D->BGPFCCR     = PixelFormatDst;                                                        // Defines the size of pixel
@@ -374,8 +369,6 @@ void GrafxGenDriver::DrawRectangle(uint16_t PosX, uint16_t PosY, uint16_t Width,
 //  Return:         None
 //
 //  Description:    Fill a region in a specific color
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::DrawRectangle(Box_t* pBox)
@@ -626,12 +619,10 @@ void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     uint8_t            PixelSize;
     uint32_t           Address;
     CLayer*            pLayer;
-    PixelFormat_e      PixelFormat;
     struct32_t         AreaConfig;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixFmt             = pLayer->GetPixelFormat();
-    PixelFormat        = m_PixelFormatTable[PixFmt];
+    PixelFormat        = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
     AreaConfig.u_16.u1 = pDescriptor->Size.Width;
@@ -697,7 +688,7 @@ void GrafxGenDriver::LayerConfig(CLayer* pLayer)
                                (((GRAFX_DRIVER_SIZE_X - 1) + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> LTDC_BPCR_AHBP_Pos)) << LTDC_LxWHPCR_WHSPPOS_Pos));
         pActiveLayer->WVPCR = (((LTDC->BPCR & LTDC_BPCR_AVBP) + 1) |                            // Configures the vertical start and stop position
                                (((GRAFX_DRIVER_SIZE_Y - 1) +  (LTDC->BPCR & LTDC_BPCR_AVBP)) << LTDC_LxWVPCR_WVSPPOS_Pos));
-        pActiveLayer->PFCR  = m_PixelFormatTable[PixelFormat];                                          // Specifies the pixel format
+        pActiveLayer->PFCR  = m_PixelFormatTable[PixelFormat];                                  // Specifies the pixel format
         pActiveLayer->DCCR  = 0;                                                                // Configures the default color values ( all zero)
         pActiveLayer->CACR  = (uint32_t)pLayer->GetAlpha();                                     // Specifies the constant alpha value
         pActiveLayer->BFCR  = (LTDC_BLENDING_FACTOR1_PAxCA | LTDC_BLENDING_FACTOR2_PAxCA);      // Specifies the blending factors
@@ -745,7 +736,7 @@ void GrafxGenDriver::DisplayOff(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           DRV_WaitFor_V_Sync
+//  Name:           WaitFor_V_Sync
 //
 //  Parameter(s):   None
 //  Return:         None
@@ -756,7 +747,7 @@ void GrafxGenDriver::DisplayOff(void)
 //
 //-------------------------------------------------------------------------------------------------
 #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
-void GrafxGenDriver::WaitFor_V_Sync()
+void GrafxGenDriver::WaitFor_V_Sync(void)
 {
   #ifdef DMA2D
     while(LTDC_GetCDStatus(LTDC_CDSR_VSYNCS) != SET);           // Wait for Vertical sync to occur

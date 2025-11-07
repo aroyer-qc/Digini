@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F7_lcd_480x272 - RK043FN48H.cpp
+//  File : lib_class_STM32xxx_lcd_480x272 - RK043FN48H.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2025 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -35,22 +35,6 @@
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
-
-#define GRAFX_HSYNC                     41              // Horizontal synchronization
-#define GRAFX_HBP                       13              // Horizontal back porch
-#define GRAFX_HFP                       32              // Horizontal front porch
-#define GRAFX_VSYNC                     10              // Vertical synchronization
-#define GRAFX_VBP                       2               // Vertical back porch
-#define GRAFX_VFP                       2               // Vertical front porch
-
-// this will need to be in the config not here!!!
-#define GRAFX_PLLSAIN_VALUE             192
-#define GRAFX_PLLSAIR_VALUE             5
-#define GRAFX_PLLSAIQ_VALUE             7
 
 //-------------------------------------------------------------------------------------------------
 //

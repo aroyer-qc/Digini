@@ -59,11 +59,6 @@
 //#define GRAFX_DISPLAY_PORT             GPIOI
 //#define GRAFX_DISPLAY_PIN              GPIO_PIN_12
 
-// LTDC define missing in ST Lib
-#define LTDC_Pixelformat_L4     8
-#define LTDC_Pixelformat_A8     9
-#define LTDC_Pixelformat_A4     10
-
 //
 //  LCD Registers
 //
@@ -550,7 +545,7 @@ void DRV_LayerConfig(CLayer* pLayer)
         LTDC_LayerInitStruct.LTDC_HorizontalStop    = GRAFX_HSYNC + GRAFX_HBP + GRAFX_DRIVER_SIZE_X;
         LTDC_LayerInitStruct.LTDC_VerticalStart     = GRAFX_VSYNC + GRAFX_VBP + 1;
         LTDC_LayerInitStruct.LTDC_VerticalStop      = GRAFX_VSYNC + GRAFX_VBP + GRAFX_DRIVER_SIZE_Y;
-        LTDC_LayerInitStruct.LTDC_PixelFormat       = PixelTable[pLayer->GetPixelFormat()];      // Pixel Format configuration
+        LTDC_LayerInitStruct.LTDC_PixelFormat       = m_PixelFormatTable[pLayer->GetPixelFormat()];      // Pixel Format configuration
         LTDC_LayerInitStruct.LTDC_ConstantAlpha     = (uint32_t)pLayer->GetAlpha();                        // Alpha constant (255 totally opaque)
         LTDC_LayerInitStruct.LTDC_BlendingFactor_1  = LTDC_BlendingFactor1_PAxCA;                          // Configure blending factors
         LTDC_LayerInitStruct.LTDC_BlendingFactor_2  = LTDC_BlendingFactor2_PAxCA;
@@ -594,7 +589,7 @@ void DRV_LayerConfig(CLayer* pLayer)
 //  Parameter(s):   void*           pSrc
 //                  Box_t*          pBox
 //                  Cartesian_t*    pDstPos
-//                  PixelFormat_e   SrcPixelFormat_e
+//                  PixelFormat_e   SrcPixelFormat
 //                  BlendMode_e     BlendMode
 //  Return:         None
 //
@@ -604,7 +599,7 @@ void DRV_LayerConfig(CLayer* pLayer)
 //  Note(s):        Source is linear
 //
 //-------------------------------------------------------------------------------------------------
-void DRV_Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode)
+void DRV_Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
     uint32_t           PixelFormatSrc;
     uint32_t           PixelFormatDst;
@@ -614,8 +609,8 @@ void DRV_Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPi
     uint8_t            PixelSize;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixelFormatSrc     = PixelTable[SrcPixelFormat_e];
-    PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
+    PixelFormatSrc     = m_PixelFormatTable[SrcPixelFormat];
+    PixelFormatDst     = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pDstPos->Y * GRAFX_DRIVER_SIZE_X) + pDstPos->X) * (uint32_t)PixelSize);
 
@@ -653,7 +648,7 @@ void DRV_Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPi
 //
 //  Parameter(s):   void*           pSrc
 //                  Box_t*          pBox
-//                  PixelFormat_e   SrcPixelFormat_e)
+//                  PixelFormat_e   SrcPixelFormat)
 //                  BlendMode_e     BlendMode
 //  Return:         None
 //
@@ -662,7 +657,7 @@ void DRV_Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPi
 //  Note(s):        Source is linear
 //
 //-------------------------------------------------------------------------------------------------
-void DRV_CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode)
+void DRV_CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
     uint32_t           PixelFormatSrc;
     uint32_t           PixelFormatDst;
@@ -672,8 +667,8 @@ void DRV_CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat_e, Ble
     uint8_t            PixelSize;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixelFormatSrc     = PixelTable[SrcPixelFormat_e];
-    PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
+    PixelFormatSrc     = m_PixelFormatTable[SrcPixelFormat];
+    PixelFormatDst     = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
 
@@ -726,7 +721,7 @@ void DRV_DrawRectangle(Box_t* pBox)
     uint8_t            PixelSize;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixelFormat        = PixelTable[pLayer->GetPixelFormat()];
+    PixelFormat        = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
     Color              = pLayer->GetColor();
@@ -789,7 +784,7 @@ void DRV_DrawPixel(uint16_t PosX, uint16_t PosY)
     uint8_t        PixelSize;
 
     pLayer         = &LayerTable[CLayer::GetDrawing()];
-    PixelFormat    = PixelTable[pLayer->GetPixelFormat()];
+    PixelFormat    = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize      = pLayer->GetPixelSize();
     Address        = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
     Color          = pLayer->GetColor();
@@ -893,7 +888,7 @@ void DRV_DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickN
     s32_t         AreaConfig;
 
     pLayer        = &LayerTable[CLayer::GetDrawing()];
-    PixelFormat   = PixelTable[pLayer->GetPixelFormat()];
+    PixelFormat   = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize     = pLayer->GetPixelSize();
     Address       = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
     Color         = pLayer->GetColor();
@@ -942,7 +937,7 @@ void DRV_PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
     PixFmt             = pLayer->GetPixelFormat();
-    PixelFormat        = PixelTable[PixFmt];
+    PixelFormat        = m_PixelFormatTable[PixFmt];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
     AreaConfig.u_16.u1 = pDescriptor->Size.Width;

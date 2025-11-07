@@ -421,178 +421,6 @@ void GrafxDriver::LayerConfig(CLayer* pLayer)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Copy
-//
-//  Parameter(s):   void*           pSrc
-//                  Box_t*          pBox
-//                  Cartesian_t*    pDstPos
-//                  PixelFormat_e   SrcPixelFormat_e
-//                  BlendMode_e     BlendMode
-//  Return:         None
-//
-//  Description:    Copy a rectangle region from square memory region to another square memory
-//                  region
-// we will use LCD Common
-//-------------------------------------------------------------------------------------------------
-/*
-void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode)
-{
-	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
-    {
-        uint32_t           PixelFormatSrc;
-        uint32_t           PixelFormatDst;
-        uint32_t           Address;
-        struct32_t         AreaConfig;
-        CLayer*            pLayer;
-        uint8_t            PixelSize;
-
-        pLayer             = &LayerTable[CLayer::GetDrawing()];
-        PixelFormatSrc     = PixelTable[SrcPixelFormat_e];
-        PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
-        PixelSize          = pLayer->GetPixelSize();
-        Address            = pLayer->GetAddress() + (((pDstPos->Y * GRAFX_DRIVER_SIZE_X) + pDstPos->X) * (uint32_t)PixelSize);
-
-        AreaConfig.u_16.u1 = pBox->Size.Width;
-        AreaConfig.u_16.u0 = pBox->Size.Height;
-
-      #ifdef DMA2D
-        DMA2D->CR          = ((BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND) | DMA2D_CR_TCIE;                        // Memory to memory and TCIE blending BG + Source
-
-        //Source
-        DMA2D->FGMAR       = (uint32_t)(pSrc) + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);    // Source address
-        DMA2D->FGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                        // Source line offset none as we are linear
-        DMA2D->FGPFCCR     = PixelFormatSrc;                                                                                    // Defines the size of pixel
-
-        // Source
-        DMA2D->BGMAR       = Address;                                                                                           // Source address
-        DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                        // Source line offset
-        DMA2D->BGPFCCR     = PixelFormatDst;                                                                                    // Defines the size of pixel
-
-        //Destination
-        DMA2D->OMAR        = Address;                                                                                           // Destination address
-        DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                        // Destination line offset none as we are linear
-        DMA2D->OPFCCR      = PixelFormatDst;                                                                                    // Defines the size of pixel
-
-        DMA2D->NLR         = AreaConfig.u_32;                                                                                   // Size configuration of area to be transfered
-    
-        SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                     // Start operation
-        while(DMA2D->CR & DMA2D_CR_START);                                                                                      // Wait until transfer is done
-      #else
-        uint8_t* pLocalSrc = (uint8_t*)pSrc;
-        uint32_t* pDst = (uint32_t*)Address;
-        pLocalSrc += (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
-        DMA_Memcpy(pLocalSrc, pDst, size_t(AreaConfig.u_32));
-      #endif
-    }
-    else
-    {
-
-    }
-}
-*/
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CopyLinear
-//
-//  Parameter(s):   void*           pSrc
-//                  Box_t*          pBox
-//                  Cartesian_t*    pDstPos
-//                  PixelFormat_e   SrcPixelFormat_e
-//                  BlendMode_e     BlendMode
-//  Return:         None
-//
-//  Description:    Copy a rectangle region from linear memory region to a square memory
-//                  region
-//
-//  Note(s):        Source is linear
-//
-//-------------------------------------------------------------------------------------------------
-/*void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
-{//use the LCD_Commin instead
-    uint32_t           PixelFormatSrc;
-    uint32_t           PixelFormatDst;
-    uint32_t           Address;
-    struct32_t         AreaConfig;
-    CLayer*            pLayer;
-    uint8_t            PixelSize;
-
-    pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixelFormatSrc     = PixelTable[SrcPixelFormat];
-    PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
-    PixelSize          = pLayer->GetPixelSize();
-    Address            = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
-
-    AreaConfig.u_16.u1 = pBox->Size.Width;
-    AreaConfig.u_16.u0 = pBox->Size.Height;
-
-  #ifdef DMA2D
-    DMA2D->CR          = (BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND;         // Memory to memory and TCIE. Blending BG + Source
-    DMA2D->CR         |= DMA2D_CR_TCIE;
-
-    // Source
-    DMA2D->FGMAR       = (uint32_t)pSrc;                                                   // Source address
-    DMA2D->FGOR        = 0;                                                                // Source line offset none as we are linear
-    DMA2D->FGPFCCR     = PixelFormatSrc;                                                   // Defines the size of pixel
-
-    // Source
-    DMA2D->BGMAR       = Address;                                                          // Source address
-    DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;       // Source line offset
-    DMA2D->BGPFCCR     = PixelFormatDst;                                                   // Defines the size of pixel
-
-    // Destination
-    DMA2D->OMAR        = Address;                                                          // Destination address
-    DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;       // Destination line offset
-    DMA2D->OPFCCR      = PixelFormatDst;                                                   // Defines the size of pixel
-
-    DMA2D->NLR         = AreaConfig.u_32;                                                  // Size configuration of area to be transfered
-    
-    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
-    while(DMA2D->CR & DMA2D_CR_START);                                                     // Wait until transfer is done
-  #else
-        uint8_t* pLocalSrc = (uint8_t*)pSrc;
-        uint32_t* pDst = (uint32_t*)Address;
-        pLocalSrc += (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
-        DMA_Memcpy(pLocalSrc, pDst, size_t(AreaConfig.u_32));
-  #endif
-}
-*/
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           BlockCopy
-//
-//  Parameter(s):   void*           pSrc
-//                  uint16_t        X
-//                  uint16_t        Y
-//                  uint16_t        Width
-//                  uint16_t        Height
-//                  uint16_t        DstX
-//                  uint16_t        DstY
-//                  PixelFormat_e   SrcPixelFormat_e
-//                  BlendMode_e     BlendMode
-//  Return:         None
-//
-//  Description:    Copy a rectangle region from square memory region to another square memory
-//                  region
-//
-//  Note(s):        Source is linear
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::BlockCopy(void* pSrc, uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height, uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
-{
-    Box_t       Box;
-    Cartesian_t Pos;
-
-    Box.Pos.X       = X;
-    Box.Pos.Y       = Y;
-    Box.Size.Width  = Width;
-    Box.Size.Height = Height;
-    Pos.X           = DstX;
-    Pos.Y           = DstY;
-
-    this->BlockCopy(pSrc, &Box, &Pos, SrcPixelFormat, BlendMode);
-}
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           BlockCopy
 //
 //  Parameter(s):   void*           pSrc
@@ -646,7 +474,7 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
         struct32_t         AreaConfig;
         uint8_t            PixelSize;
 
-        PixelFormat        = PixelTable[m_pLayer->GetPixelFormat()];
+        PixelFormat        = m_PixelFormatTable[m_pLayer->GetPixelFormat()];
         PixelSize          = m_pLayer->GetPixelSize();
         Address            = m_pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
         AreaConfig.u_16.u1 = pBox->Size.Width;
@@ -890,7 +718,7 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     struct32_t         AreaConfig;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixelFormat        = PixelTable[pLayer->GetPixelFormat()];
+    PixelFormat        = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
     AreaConfig.u_16.u1 = pDescriptor->Size.Width;

@@ -89,7 +89,7 @@ class GrafxDriver : public GRAFX_Interface
         void            DrawVLine             (uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t ThickNess);
         void            DrawLine              (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
         void            DrawCircle            (uint8_t X, uint8_t Y, uint8_t Radius, uint8_t Mode);
-        void            Copy                  (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode);
+        void            Copy                  (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
 
         #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
         void            WaitFor_V_Sync        (void) {};

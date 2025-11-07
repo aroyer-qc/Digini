@@ -44,7 +44,6 @@
   #define DMA2D_R2M                         DMA2D_CR_MODE           // DMA2D register to memory transfer mode
 
   #define TRANSFERT_ONE_PIXEL               0x00010001
-
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -73,14 +72,17 @@ class GrafxGenDriver
             virtual	    void    DrawLine              (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
             virtual	    void    DrawCircle            (uint16_t PosX, uint16_t PosY, uint16_t Radius, PolygonMode_e Mode);
             virtual	    void    DrawCircle            (Circle_t* pCircle, PolygonMode_e PolygonMode);
-            virtual	    void    Copy                  (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode);
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, Box_t* pBox);
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height);
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, uint16_t SrcX, uint16_t SrcY, uint16_t DstX, uint16_t DstY, uint16_t Width, uint16_t Height);
             virtual	    void    CopyLinear            (Skin_e Image, Cartesian_t Position, BlendMode_e BlendMode);
-   #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
+          #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
             virtual	    void    WaitFor_V_Sync        (void);
-   #endif
+          #endif
+
+        protected:
+
+            static const int32_t        m_PixelFormatTable    [PIXEL_FORMAT_COUNT];
 };
 
 //-------------------------------------------------------------------------------------------------

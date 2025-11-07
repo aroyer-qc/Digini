@@ -412,7 +412,7 @@ void GrafxDriver::LayerConfig(CLayer* pLayer)
 //  Parameter(s):   void*           pSrc
 //                  Box_t*          pBox
 //                  Cartesian_t*    pDstPos
-//                  PixelFormat_e   SrcPixelFormat_e
+//                  PixelFormat_e   SrcPixelFormat
 //                  BlendMode_e     BlendMode
 //  Return:         None
 //
@@ -422,7 +422,7 @@ void GrafxDriver::LayerConfig(CLayer* pLayer)
 //  Note(s):        Source is linear
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode)
+void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
 /*
     uint32_t           PixelFormatSrc;
@@ -433,8 +433,8 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
     uint8_t            PixelSize;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixelFormatSrc     = PixelTable[SrcPixelFormat_e];
-    PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
+    PixelFormatSrc     = m_PixelFormatTable[SrcPixelFormat];
+    PixelFormatDst     = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pDstPos->Y * GRAFX_DRIVER_SIZE_X) + pDstPos->X) * (uint32_t)PixelSize);
 
@@ -477,7 +477,7 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
 //                  uint16_t        Height
 //                  uint16_t        DstX
 //                  uint16_t        DstY
-//                  PixelFormat_e   SrcPixelFormat_e
+//                  PixelFormat_e   SrcPixelFormat
 //                  BlendMode_e     BlendMode
 //  Return:         None
 //

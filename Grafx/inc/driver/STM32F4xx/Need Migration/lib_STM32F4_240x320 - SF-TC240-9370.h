@@ -84,11 +84,6 @@
 #define GRAFX_VBP                                   2
 #define GRAFX_VFP                                   4
 
-// LTDC define missing in ST Lib
-#define LTDC_Pixelformat_L4     8
-#define LTDC_Pixelformat_A8     9
-#define LTDC_Pixelformat_A4     10
-
 //-------------------------------------------------------------------------------------------------
 
 #endif // DIGINI_USE_GRAFX

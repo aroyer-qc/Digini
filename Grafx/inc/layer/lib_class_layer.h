@@ -58,39 +58,39 @@ class CLayer
                                                          PixelFormat_e    PixelFormat);
 
         // Function
-        void                    Clear                   ();
+        void                    Clear                   (void);
         void                    SetAddress              (uint32_t Address);
-        uint32_t                GetAddress              ();
+        uint32_t                GetAddress              (void);
 
 
 
-        uint32_t                GetTotalSize            ();
-        Cartesian_t             GetSize                 ();
-        PixelFormat_e           GetPixelFormat          ();
-        uint8_t                 GetPixelSize            ();
+        uint32_t                GetTotalSize            (void);
+        Cartesian_t             GetSize                 (void);
+        PixelFormat_e           GetPixelFormat          (void);
+        uint8_t                 GetPixelSize            (void);
         void                    SetActive               (LayerType_e LayerType);
-        LayerType_e             GetActive               ();
-        Layer_e                 GetVirtual              ();
+        LayerType_e             GetActive               (void);
+        Layer_e                 GetVirtual              (void);
         void                    SetAlpha                (uint8_t);
-        uint8_t                 GetAlpha                ();
+        uint8_t                 GetAlpha                (void);
 
         // Static function
 
         static void             SetActiveLayer          (LayerType_e LayerType, CLayer* pLayer);
         static void             SetActiveLayer          (LayerType_e LayerType, Layer_e Layer);
 
-        static Layer_e          GetDrawing              ();
+        static Layer_e          GetDrawing              (void);
         static void             SetDrawing              (Layer_e Layer);
-        static void             PopDrawing              ();
-        static void             PushDrawing             ();
+        static void             PopDrawing              (void);
+        static void             PushDrawing             (void);
 
         // Static function they all work on the drawing layer
         static void             SetColor                (ColorTable_e Index);
         static void             SetColor                (uint32_t Color);
-        static uint32_t         GetColor                ();
+        static uint32_t         GetColor                (void);
         static void             SetTextColor            (ColorTable_e Index);
         static void             SetTextColor            (uint32_t Color);
-        static uint32_t         GetTextColor            ();
+        static uint32_t         GetTextColor            (void);
 
         static uint8_t          GetPixelSize            (PixelFormat_e PixelFormat);
 

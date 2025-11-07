@@ -59,12 +59,9 @@
 // Class
 //-------------------------------------------------------------------------------------------------
 
-class GrafxDriver : public GRAFX_Interface
+class GrafxDriver : public GrafxGenDriver
 {
     public:
-
-        // This include all required prototype for a driver.
-        #include "./Grafx/inc/driver/lib_grafx_driver_common.h"
 
     private:
 
@@ -76,10 +73,10 @@ class GrafxDriver : public GRAFX_Interface
 //-------------------------------------------------------------------------------------------------
 
 #ifdef LIB_RK043FN48H_GLOBAL
-class GrafxDriver       Grafx;
-class GRAFX_Interface*  myGrafx = &Grafx;
+GrafxDriver         Grafx;
+GrafxDriver*        myGrafx = &Grafx;
 #else
-extern GRAFX_Interface* myGrafx;
+extern GrafxDriver* myGrafx;
 #endif
 
 //-------------------------------------------------------------------------------------------------

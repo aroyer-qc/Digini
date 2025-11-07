@@ -61,9 +61,9 @@ void GRAFX_DRV_Copy(void* pSrc, sBox* pBox, sCartesian* pDstPos, ePixelFormat So
     CLayer*            pLayer;
     uint8_t            PixelSize;
 
-    pLayer             = &LayerTable[GetDrawingLayer()];
-    PixelFormatSrc     = PixelTable[SourcePixelFormat];
-    PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
+    pLayer             = &LayerTable[CLayer::GetDrawing()];
+    PixelFormatSrc     = m_PixelFormatTable[SourcePixelFormat];
+    PixelFormatDst     = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pDstPos->Y * GRAFX_DRIVER_SIZE_X) + pDstPos->X) * (uint32_t)PixelSize);
 
@@ -99,9 +99,9 @@ void GRAFX_DRV_CopyLinear(void* pSrc, sBox* pBox, ePixelFormat SourcePixelFormat
     CLayer*            pLayer;
     uint8_t            PixelSize;
 
-    pLayer             = &LayerTable[GetDrawingLayer()];
-    PixelFormatSrc     = PixelTable[SourcePixelFormat];
-    PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
+    pLayer             = &LayerTable[CLayer::GetDrawing()];
+    PixelFormatSrc     = m_PixelFormatTable[SourcePixelFormat];
+    PixelFormatDst     = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
 
@@ -133,8 +133,8 @@ void GRAFX_DRV_DrawRectangle(sBox* pBox)
     CLayer*            pLayer;
     uint8_t            PixelSize;
 
-    pLayer             = &LayerTable[GetDrawingLayer()];
-    PixelFormat        = PixelTable[pLayer->GetPixelFormat()];
+    pLayer             = &LayerTable[CLayer::GetDrawing()];
+    PixelFormat        = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
     Color              = pLayer->GetColor();
@@ -195,8 +195,8 @@ void GRAFX_DRV_DrawPixel(uint16_t PosX, uint16_t PosY)
     CLayer*        pLayer;
     uint8_t        PixelSize;
 
-    pLayer         = &LayerTable[GetDrawingLayer()];
-    PixelFormat    = PixelTable[pLayer->GetPixelFormat()];
+    pLayer         = &LayerTable[CLayer::GetDrawing()];
+    PixelFormat    = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize      = pLayer->GetPixelSize();
     Address        = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
     Color          = pLayer->GetColor();
@@ -307,8 +307,8 @@ void GRAFX_DRV_DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t 
     CLayer*       pLayer;
     s32_t         AreaConfig;
 
-    pLayer        = &LayerTable[GetDrawingLayer()];
-    PixelFormat   = PixelTable[pLayer->GetPixelFormat()];
+    pLayer        = &LayerTable[CLayer::GetDrawing()];
+    PixelFormat   = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize     = pLayer->GetPixelSize();
     Address       = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
     Color         = pLayer->GetColor();
@@ -348,9 +348,9 @@ void DRV_PrintFont(sFontDescriptor* pDescriptor, sCartesian* pPos)
     ePixelFormat       PixFmt;
     s32_t              AreaConfig;
 
-    pLayer             = &LayerTable[GetDrawingLayer()];
+    pLayer             = &LayerTable[CLayer::GetDrawing()];
     PixFmt             = pLayer->GetPixelFormat();
-    PixelFormat        = PixelTable[PixFmt];
+    PixelFormat        = m_PixelFormatTable[PixFmt];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
     AreaConfig.u_16.u1 = pDescriptor->Size.Width;

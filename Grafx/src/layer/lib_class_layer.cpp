@@ -171,7 +171,7 @@ CLayer::CLayer(Layer_e          VirtualLayer,
 //   Description:   Clear the layer
 //
 //-------------------------------------------------------------------------------------------------
-void CLayer::Clear()
+void CLayer::Clear(void)
 {
     uint32_t DrawingColor = m_Color;
     CLayer::PushDrawing();
@@ -207,7 +207,7 @@ void CLayer::SetAddress(uint32_t Address)
 //   Description:   Get layer base address
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CLayer::GetAddress()
+uint32_t CLayer::GetAddress(void)
 {
     return m_LayerAddress;
 }
@@ -222,7 +222,7 @@ uint32_t CLayer::GetAddress()
 //   Description:   Get the total size of the layer
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CLayer::GetTotalSize()
+uint32_t CLayer::GetTotalSize(void)
 {
     return m_TotalSize;
 }
@@ -237,7 +237,7 @@ uint32_t CLayer::GetTotalSize()
 //   Description:   Get the size in X and Y of the layer
 //
 //-------------------------------------------------------------------------------------------------
-Cartesian_t CLayer::GetSize()
+Cartesian_t CLayer::GetSize(void)
 {
     return m_Size;
 }
@@ -252,7 +252,7 @@ Cartesian_t CLayer::GetSize()
 //   Description:   Return the pixel format value
 //
 //-------------------------------------------------------------------------------------------------
-PixelFormat_e CLayer::GetPixelFormat()
+PixelFormat_e CLayer::GetPixelFormat(void)
 {
     return m_PixelFormat;
 }
@@ -267,7 +267,7 @@ PixelFormat_e CLayer::GetPixelFormat()
 //   Description:   Return the pixel size
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t CLayer::GetPixelSize()
+uint8_t CLayer::GetPixelSize(void)
 {
     return m_PixelSize;
 }
@@ -312,7 +312,7 @@ void CLayer::SetActive(LayerType_e ActiveLayer)
 //   Description:   Get setting for active layer
 //
 //-------------------------------------------------------------------------------------------------
-LayerType_e CLayer::GetActive()
+LayerType_e CLayer::GetActive(void)
 {
     return m_ActiveOnLayer;
 }
@@ -327,7 +327,7 @@ LayerType_e CLayer::GetActive()
 //   Description:   Get setting for virtual layer
 //
 //-------------------------------------------------------------------------------------------------
-Layer_e CLayer::GetVirtual()
+Layer_e CLayer::GetVirtual(void)
 {
     return m_VirtualLayer;
 }
@@ -365,7 +365,7 @@ void CLayer::SetAlpha(uint8_t Alpha)
 //   Description:   Get the Alpha constant for the layer
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t CLayer::GetAlpha()
+uint8_t CLayer::GetAlpha(void)
 {
     return m_Alpha;
 }
@@ -430,7 +430,7 @@ void CLayer::SetTextColor(uint32_t Color)
 //   Description:   Return the color value according to pixel format
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CLayer::GetColor()
+uint32_t CLayer::GetColor(void)
 {
     return LayerTable[CLayer::m_ActiveDrawingLayer].m_Color;
 }
@@ -445,7 +445,7 @@ uint32_t CLayer::GetColor()
 //   Description:   Return the text color value according to pixel format
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CLayer::GetTextColor()
+uint32_t CLayer::GetTextColor(void)
 {
     return LayerTable[CLayer::m_ActiveDrawingLayer].m_TextColor;
 }
@@ -532,18 +532,18 @@ void CLayer::SetActiveLayer(LayerType_e LayerType, Layer_e Layer)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function Name: GetDrawingLayer
+//   Function Name: GetDrawing
 //
 //   Parameter(s):  none
 //   Return Value:  Layer_e     Layer
 //
-//   Description:   set
+//   Description:   Get the active drawing layer.
 //
 //-------------------------------------------------------------------------------------------------
 
-Layer_e CLayer::GetDrawing()
+Layer_e CLayer::GetDrawing(void)
 {
-     return CLayer::m_ActiveDrawingLayer;
+    return CLayer::m_ActiveDrawingLayer;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -571,7 +571,7 @@ void CLayer::SetDrawing(Layer_e Layer)
 //   Description:   Push the actual drawing layer on a stack
 //
 //-------------------------------------------------------------------------------------------------
-void CLayer::PushDrawing()
+void CLayer::PushDrawing(void)
 {
     if(m_LayerStackCounter != 0)
     {
@@ -590,7 +590,7 @@ void CLayer::PushDrawing()
 //   Description:   Get a drawing layer from stack
 //
 //-------------------------------------------------------------------------------------------------
-void CLayer::PopDrawing()
+void CLayer::PopDrawing(void)
 {
     if(CLayer::m_LayerStackCounter < CLAYER_STACK_LEVEL)
     {

@@ -108,11 +108,9 @@ class GrafxDriver : public GrafxGenDriver
 //-------------------------------------------------------------------------------------------------
 
 #ifdef LIB_ST7735_GLOBAL
-GrafxDriver             Grafx;
-//GRAFX_Interface*        myGrafx = &Grafx;
+GrafxDriver         Grafx;
 GrafxDriver*        myGrafx = &Grafx;
 #else
-//extern GRAFX_Interface* myGrafx;
 extern GrafxDriver* myGrafx;
 #endif
 

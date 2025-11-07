@@ -518,7 +518,7 @@ void DRV_LayerConfig(CLayer* pLayer)
 //  Parameter(s):   void*           pSrc
 //                  Box_t*          pBox
 //                  Cartesian_t*    pDstPos
-//                  PixelFormat_e   SrcPixelFormat_e
+//                  PixelFormat_e   SrcPixelFormat
 //                  BlendMode_e     BlendMode
 //  Return:         None
 //
@@ -528,7 +528,7 @@ void DRV_LayerConfig(CLayer* pLayer)
 //  Note(s):        Source is linear
 //
 //-------------------------------------------------------------------------------------------------
-void DRV_Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode)
+void DRV_Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
 }
 
@@ -564,7 +564,7 @@ void DRV_GotoXY(uint8_t PosX, uint8_t PosY)
 //
 //  Parameter(s):   void*           pSrc
 //                  Box_t*          pBox
-//                  PixelFormat_e   SrcPixelFormat_e)
+//                  PixelFormat_e   SrcPixelFormat)
 //                  BlendMode_e     BlendMode
 //  Return:         None
 //
@@ -573,7 +573,7 @@ void DRV_GotoXY(uint8_t PosX, uint8_t PosY)
 //  Note(s):        Source is linear
 //
 //-------------------------------------------------------------------------------------------------
-void DRV_CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode)
+void DRV_CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
 }
 
@@ -803,7 +803,7 @@ void DRV_PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 {
     //pLayer             = &LayerTable[CLayer::GetDrawing()];
     //PixFmt             = pLayer->GetPixelFormat();
-    //PixelFormat        = PixelTable[PixFmt];
+    //PixelFormat        = m_PixelFormatTable[PixFmt];
     //PixelSize          = pLayer->GetPixelSize();
     //Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
     //AreaConfig.u_16.u1 = pDescriptor->Size.Width;

@@ -35,6 +35,54 @@
 #ifdef DIGINI_USE_GRAFX
 
 //-------------------------------------------------------------------------------------------------
+// const(s)
+//-------------------------------------------------------------------------------------------------
+
+const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
+{
+  #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
+    PIXEL_FORMAT_ARGB8888,
+  #endif
+  #if (GRAFX_COLOR_RGB888 == DEF_ENABLED)
+    PIXEL_FORMAT_RGB888,
+  #endif
+  #if (GRAFX_COLOR_RGB565 == DEF_ENABLED)
+    PIXEL_FORMAT_RGB565,
+  #endif
+  #if (GRAFX_COLOR_ARGB1555 == DEF_ENABLED)
+    PIXEL_FORMAT_ARGB1555,
+  #endif
+  #if (GRAFX_COLOR_ARGB4444 == DEF_ENABLED)
+    PIXEL_FORMAT_ARGB4444,
+  #endif
+  #if (GRAFX_COLOR_L8 == DEF_ENABLED)
+    PIXEL_FORMAT_L8,
+  #endif
+  #if (GRAFX_COLOR_AL44 == DEF_ENABLED)
+    PIXEL_FORMAT_AL44,
+  #endif
+  #if (GRAFX_COLOR_AL88 == DEF_ENABLED)
+    PIXEL_FORMAT_AL88,
+  #endif
+  #if (GRAFX_COLOR_L4 == DEF_ENABLED)
+    PIXEL_FORMAT_L4,
+  #endif
+  #if (GRAFX_COLOR_A8 == DEF_ENABLED)
+    PIXEL_FORMAT_A8,
+  #endif
+  #if (GRAFX_COLOR_A4 == DEF_ENABLED)
+    PIXEL_FORMAT_A4,
+  #endif
+  #if (GRAFX_COLOR_RGB332 == DEF_ENABLED)
+    PIXEL_FORMAT_RGB332,
+  #endif
+  #if (GRAFX_COLOR_RGB444 == DEF_ENABLED)
+    PIXEL_FORMAT_RGB444,
+  #endif
+    -1
+};
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
 //
@@ -108,12 +156,16 @@ void GrafxGenDriver::Initialize(void* pArg)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Copy
+//  Name:           BlockCopy
 //
 //  Parameter(s):   void*           pSrc
-//                  Box_t*          pBox
-//                  Cartesian_t*    pDstPos
-//                  PixelFormat_e   SrcPixelFormat_e
+//                  uint16_t        X
+//                  uint16_t        Y
+//                  uint16_t        Width
+//                  uint16_t        Height
+//                  uint16_t        DstX
+//                  uint16_t        DstY
+//                  PixelFormat_e   SrcPixelFormat
 //                  BlendMode_e     BlendMode
 //  Return:         None
 //
@@ -121,7 +173,34 @@ void GrafxGenDriver::Initialize(void* pArg)
 //                  region
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode)
+void GrafxGenDriver::BlockCopy(void* pSrc, uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height, uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
+{
+    Box_t Box;
+
+    Box.Pos.X = X;
+    Box.Pos.Y = Y;
+    Box.Size.Width  = Width;
+    Box.Size.Height = Height;
+
+    this->BlockCopy(pSrc, &Box, &Box.Pos, SrcPixelFormat, BlendMode);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           BlockCopy
+//
+//  Parameter(s):   void*           pSrc
+//                  Box_t*          pBox
+//                  Cartesian_t*    pDstPos
+//                  PixelFormat_e   SrcPixelFormat
+//                  BlendMode_e     BlendMode
+//  Return:         None
+//
+//  Description:    Copy a rectangle region from square memory region to another square memory
+//                  region
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
 	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
     {
@@ -133,8 +212,8 @@ void GrafxGenDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFo
         uint8_t            PixelSize;
 
         pLayer             = &LayerTable[CLayer::GetDrawing()];
-        PixelFormatSrc     = PixelTable[SrcPixelFormat_e];
-        PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
+        PixelFormatSrc     = m_PixelFormatTable[SrcPixelFormat];
+        PixelFormatDst     = m_PixelFormatTable[pLayer->GetPixelFormat()];
         PixelSize          = pLayer->GetPixelSize();
         Address            = pLayer->GetAddress() + (((pDstPos->Y * GRAFX_DRIVER_SIZE_X) + pDstPos->X) * (uint32_t)PixelSize);
 
@@ -187,7 +266,7 @@ void GrafxGenDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFo
 //  Parameter(s):   void*           pSrc
 //                  Box_t*          pBox
 //                  Cartesian_t*    pDstPos
-//                  PixelFormat_e   SrcPixelFormat_e
+//                  PixelFormat_e   SrcPixelFormat
 //                  BlendMode_e     BlendMode
 //  Return:         None
 //
@@ -207,8 +286,8 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelF
     uint8_t            PixelSize;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixelFormatSrc     = PixelTable[SrcPixelFormat];
-    PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
+    PixelFormatSrc     = m_PixelFormatTable[SrcPixelFormat];
+    PixelFormatDst     = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
 
@@ -296,12 +375,12 @@ void GrafxGenDriver::DrawRectangle(Box_t* pBox)
     uint32_t           PixelFormat;
     uint32_t           Address;
     uint32_t           Color;
-    s32_t              AreaConfig;
+    struct32_t         AreaConfig;
     CLayer*            pLayer;
     uint8_t            PixelSize;
 
-    pLayer             = &LayerTable[GetDrawingLayer()];
-    PixelFormat        = PixelTable[pLayer->GetPixelFormat()];
+    pLayer             = &LayerTable[CLayer::GetDrawing()];
+    PixelFormat        = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
     Color              = pLayer->GetColor();
@@ -379,8 +458,8 @@ void GrafxGenDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
     CLayer*        pLayer;
     uint8_t        PixelSize;
 
-    pLayer         = &LayerTable[GetDrawingLayer()];
-    PixelFormat    = PixelTable[pLayer->GetPixelFormat()];
+    pLayer         = &LayerTable[CLayer::GetDrawing()];
+    PixelFormat    = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize      = pLayer->GetPixelSize();
     Address        = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
     Color          = pLayer->GetColor();
@@ -479,17 +558,17 @@ void GrafxGenDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, ui
 //  Description:    Displays a line of a specific thickness.
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, eDrawMode Direction)
+void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction)
 {
-    uint32_t PixelFormat;
-    uint8_t  PixelSize;
-    uint32_t Address;
-    uint32_t Color;
-    CLayer*  pLayer;
-    s32_t    AreaConfig;
+    uint32_t   PixelFormat;
+    uint8_t    PixelSize;
+    uint32_t   Address;
+    uint32_t   Color;
+    CLayer*    pLayer;
+    struct32_t AreaConfig;
 
-    pLayer      = &LayerTable[GetDrawingLayer()];
-    PixelFormat = PixelTable[pLayer->GetPixelFormat()];
+    pLayer      = &LayerTable[CLayer::GetDrawing()];
+    PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize   = pLayer->GetPixelSize();
     Address     = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
     Color       = pLayer->GetColor();
@@ -526,25 +605,25 @@ void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uin
 //
 //  Name:           PrintFont
 //
-//  Parameter(s):   FONT_sDescriptor*   pDescriptor
+//  Parameter(s):   FontDescriptor_t*   pDescriptor
 //                  sCartesian*         pPos
 //  Return:         none
 //
 //  Description:    This function will print a font to drawing layer with the drawing color
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::PrintFont(sFontDescriptor* pDescriptor, sCartesian* pPos)
+void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 {
     uint32_t           PixelFormat;
     uint8_t            PixelSize;
     uint32_t           Address;
     CLayer*            pLayer;
-    ePixelFormat       PixFmt;
-    s32_t              AreaConfig;
+    PixelFormat_e      PixFmt;
+    struct32_t         AreaConfig;
 
-    pLayer             = &LayerTable[GetDrawingLayer()];
+    pLayer             = &LayerTable[CLayer::GetDrawing()];
     PixFmt             = pLayer->GetPixelFormat();
-    PixelFormat        = PixelTable[PixFmt];
+    PixelFormat        = m_PixelFormatTable[PixFmt];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
     AreaConfig.u_16.u1 = pDescriptor->Size.Width;
@@ -558,7 +637,7 @@ void GrafxGenDriver::PrintFont(sFontDescriptor* pDescriptor, sCartesian* pPos)
     DMA2D->FGMAR       = (uint32_t)pDescriptor->pAddress;                               // Source address 1
     DMA2D->FGOR        = 0;                                                             // Font source line offset - none as we are linear
     DMA2D->FGCOLR      = pLayer->GetTextColor();
-    DMA2D->FGPFCCR     = LTDC_Pixelformat_A8;                                           // Defines the number of pixels to be transfered
+    DMA2D->FGPFCCR     = PIXEL_FORMAT_A8;                                               // Defines the number of pixels to be transfered
 
     DMA2D->BGMAR       = Address;                                                       // Source address 2
     DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)AreaConfig.u_16.u1;  // Font source line offset - none as we are linear
@@ -616,7 +695,7 @@ void GrafxGenDriver::LayerConfig(CLayer* pLayer)
         LTDC_Layer_InitStruct.LTDC_HorizontalStop    = GRAFX_HSYNC + GRAFX_HBP + GRAFX_DRIVER_SIZE_X;
         LTDC_Layer_InitStruct.LTDC_VerticalStart     = GRAFX_VSYNC + GRAFX_VBP + 1;
         LTDC_Layer_InitStruct.LTDC_VerticalStop      = GRAFX_VSYNC + GRAFX_VBP + GRAFX_DRIVER_SIZE_Y;
-        LTDC_Layer_InitStruct.LTDC_PixelFormat       = PixelTable[pLayer->GetPixelFormat()];          // Pixel Format configuration
+        LTDC_Layer_InitStruct.LTDC_PixelFormat       = m_PixelFormatTable[pLayer->GetPixelFormat()];        // Pixel Format configuration
         LTDC_Layer_InitStruct.LTDC_ConstantAlpha     = (uint32_t)pLayer->GetAlpha();                        // Alpha constant (255 totally opaque)
         LTDC_Layer_InitStruct.LTDC_BlendingFactor_1  = LTDC_BlendingFactor1_PAxCA;                          // Configure blending factors
         LTDC_Layer_InitStruct.LTDC_BlendingFactor_2  = LTDC_BlendingFactor2_PAxCA;
@@ -693,12 +772,14 @@ void GrafxGenDriver::DisplayOff(void)
 //  Note(s):        this will prevent glitching on screen while changing display
 //
 //-------------------------------------------------------------------------------------------------
+#if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
 void GrafxGenDriver::WaitFor_V_Sync()
 {
   #ifdef DMA2D
     while(LTDC_GetCDStatus(LTDC_CDSR_VSYNCS) != SET);           // Wait for Vertical sync to occur
   #endif
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 

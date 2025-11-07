@@ -61,11 +61,25 @@
 
 class GrafxDriver : public GrafxGenDriver
 {
+    public:
+    
+        void        Initialize      (void* pArg)                                                                                            override;
+//        void        BlockCopy       (void* pSrc, uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height,
+//                                     uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)                     override;
+//        void        BlockCopy       (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)    override;
+//        void        DrawBox         (uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, uint16_t Thickness)                     override;
+//        void        DrawHLine       (uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness)                                     override;
+//        void        DrawVLine       (uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness)                                     override;
+//        void        DrawRectangle   (Box_t* pBox)                                                                                           override;
+        //void    DrawRectangle         (uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height);
+//        void        DrawPixel       (uint16_t PosX, uint16_t PosY)                                                                          override;
+        void        DisplayOn       (void)                                                                                                  override;
+        void        DisplayOff      (void)                                                                                                  override;
+        void        PrintFont       (FontDescriptor_t* pDescriptor, Cartesian_t* pPos)                                                      override;
+    
     private:
 
-        void            Line                  (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction);
-        void            LayerInitialize       (void);
-        void            LCD_Initialize        (void);
+        void        Line                  (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction);
 };
 
 //-------------------------------------------------------------------------------------------------

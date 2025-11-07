@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_STM32F4_Grafx_GenDriver.cpp
+//  File : lib_STM32xxx_Grafx_GenDriver.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -295,24 +295,32 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelF
     AreaConfig.u_16.u0 = pBox->Size.Height;
 
   #ifdef DMA2D
+    if(PixelFormatSrc == PixelFormatDst)
+    {
+        DMA2D->CR = ((BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND) | DMA2D_CR_TCIE; // Memory to memory or M2M with blending BG + Source
+    }
+    else
+    {
+        DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_TCIE;                                              // Memory to memory with pixel conversion
+    }
 
-    DMA2D->CR          = (BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND;         // Memory to memory and TCIE. Blending BG + Source
+    DMA2D->CR          = (BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND;              // Memory to memory and TCIE. Blending BG + Source
     DMA2D->CR         |= DMA2D_CR_TCIE;
 
-    // Source
-    DMA2D->FGMAR       = (uint32_t)pSrc;                                                   // Source address
-    DMA2D->FGOR        = 0;                                                                // Source line offset none as we are linear
-    DMA2D->FGPFCCR     = PixelFormatSrc;                                                   // Defines the size of pixel
+    // Source 1
+    DMA2D->FGMAR       = (uint32_t)pSrc;                                                        // Source address
+    DMA2D->FGOR        = 0;                                                                     // Source line offset none as we are linear
+    DMA2D->FGPFCCR     = PixelFormatSrc;                                                        // Defines the size of pixel
 
-    // Source
-    DMA2D->BGMAR       = Address;                                                          // Source address
-    DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;       // Source line offset
-    DMA2D->BGPFCCR     = PixelFormatDst;                                                   // Defines the size of pixel
+    // Source 2
+    DMA2D->BGMAR       = Address;                                                               // Source address
+    DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;            // Source line offset
+    DMA2D->BGPFCCR     = PixelFormatDst;                                                        // Defines the size of pixel
 
     // Destination
-    DMA2D->OMAR        = Address;                                                          // Destination address
-    DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;       // Destination line offset
-    DMA2D->OPFCCR      = PixelFormatDst;                                                   // Defines the size of pixel
+    DMA2D->OMAR        = Address;                                                               // Destination address
+    DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;            // Destination line offset
+    DMA2D->OPFCCR      = PixelFormatDst;                                                        // Defines the size of pixel
 
     DMA2D->NLR         = AreaConfig.u_32;                                                  // Size configuration of area to be transfered
 
@@ -362,7 +370,7 @@ void GrafxGenDriver::DrawRectangle(uint16_t PosX, uint16_t PosY, uint16_t Width,
 //
 //  Name:           DrawRectangle
 //
-//  Parameter(s):   sBox*   pBox
+//  Parameter(s):   Box_t*   pBox
 //  Return:         None
 //
 //  Description:    Fill a region in a specific color
@@ -618,7 +626,7 @@ void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     uint8_t            PixelSize;
     uint32_t           Address;
     CLayer*            pLayer;
-    PixelFormat_e      PixFmt;
+    PixelFormat_e      PixelFormat;
     struct32_t         AreaConfig;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
@@ -662,7 +670,7 @@ void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           DRV_LayerConfig
+//  Name:           LayerConfig
 //
 //  Parameter(s):   CLayer* pLayer
 //  Return:         None
@@ -673,57 +681,32 @@ void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 void GrafxGenDriver::LayerConfig(CLayer* pLayer)
 {
   #ifdef DMA2D
-    LTDC_Layer_InitTypeDef      LTDC_Layer_InitStruct;
-    uint8_t                     PixelSize;
-    LTDC_Layer_TypeDef*         pLTDC_SelectedLayer;
-    eLayerType                  ActiveLayer;
+    uint32_t            PixelFormat;
+    uint32_t            PixelSize;
+    LayerType_e         ActiveLayer;
+    LTDC_Layer_TypeDef* pActiveLayer;
 
-    ActiveLayer = pLayer->GetLayer();
+    ActiveLayer = pLayer->GetActive();
+    PixelFormat = pLayer->GetPixelFormat();
+    PixelSize   = GFX_PixelSize[PixelFormat];
 
     if(ActiveLayer < GRAFX_NUMBER_OF_ACTIVE_LAYER)
     {
-        pLTDC_SelectedLayer = (LTDC_Layer_TypeDef*)LTDC_baLayer[ActiveLayer];
-        PixelSize           = pLayer->GetPixelSize();
-
-        //      Windowing configuration
-        //          All the active display area is used to display
-        //          Horizontal start = horizontal synchronization + Horizontal back porch + 1
-        //          Horizontal stop  = Horizontal start + window width
-        //          Vertical start   = vertical synchronization + vertical back porch + 1
-        //          Vertical stop    = Vertical start + window height
-        LTDC_Layer_InitStruct.LTDC_HorizontalStart   = GRAFX_HSYNC + GRAFX_HBP + 1;
-        LTDC_Layer_InitStruct.LTDC_HorizontalStop    = GRAFX_HSYNC + GRAFX_HBP + GRAFX_DRIVER_SIZE_X;
-        LTDC_Layer_InitStruct.LTDC_VerticalStart     = GRAFX_VSYNC + GRAFX_VBP + 1;
-        LTDC_Layer_InitStruct.LTDC_VerticalStop      = GRAFX_VSYNC + GRAFX_VBP + GRAFX_DRIVER_SIZE_Y;
-        LTDC_Layer_InitStruct.LTDC_PixelFormat       = m_PixelFormatTable[pLayer->GetPixelFormat()];        // Pixel Format configuration
-        LTDC_Layer_InitStruct.LTDC_ConstantAlpha     = (uint32_t)pLayer->GetAlpha();                        // Alpha constant (255 totally opaque)
-        LTDC_Layer_InitStruct.LTDC_BlendingFactor_1  = LTDC_BlendingFactor1_PAxCA;                          // Configure blending factors
-        LTDC_Layer_InitStruct.LTDC_BlendingFactor_2  = LTDC_BlendingFactor2_PAxCA;
-        LTDC_Layer_InitStruct.LTDC_DefaultColorBlue  = 0;                                                   // Default Color configuration (configure A,R,G,B component values)
-        LTDC_Layer_InitStruct.LTDC_DefaultColorGreen = 0;
-        LTDC_Layer_InitStruct.LTDC_DefaultColorRed   = 0;
-        LTDC_Layer_InitStruct.LTDC_DefaultColorAlpha = 0;
-        LTDC_Layer_InitStruct.LTDC_CFBStartAdress    = pLayer->GetAddress();                                // Input Address configuration
-
-        // the length of one line of pixels in bytes + 3 then :
-        // Line Lenth = Active high width x number of bytes per pixel + 3
-        // Active high width         = LCD_SIZE_Y
-        LTDC_Layer_InitStruct.LTDC_CFBLineLength = ((GRAFX_DRIVER_SIZE_X * (uint32_t)PixelSize) + 3);
-
-        // the pitch is the increment from the start of one line of pixels to the
-        // start of the next line in bytes, then :
-        // Pitch = Active high width x number of bytes per pixel
-        LTDC_Layer_InitStruct.LTDC_CFBPitch      = (GRAFX_DRIVER_SIZE_X * (uint32_t)PixelSize);
-        LTDC_Layer_InitStruct.LTDC_CFBLineNumber =  GRAFX_DRIVER_SIZE_Y;                                              // Configure the number of lines
-
-        LTDC_LayerInit(pLTDC_SelectedLayer, &LTDC_Layer_InitStruct);
-
-        if(bDriverInitialize == true)
-        {
-            LTDC_LayerCmd(pLTDC_SelectedLayer, ENABLE);
-        }
-
-        LTDC_ReloadConfig(LTDC_VBReload);
+        pActiveLayer = (ActiveLayer == 0) ? LTDC_Layer1 : LTDC_Layer2;
+        pActiveLayer->WHPCR = ((((LTDC->BPCR & LTDC_BPCR_AHBP) >> LTDC_BPCR_AHBP_Pos) + 1) |    // Configures the horizontal start and stop position
+                               (((GRAFX_DRIVER_SIZE_X - 1) + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> LTDC_BPCR_AHBP_Pos)) << LTDC_LxWHPCR_WHSPPOS_Pos));
+        pActiveLayer->WVPCR = (((LTDC->BPCR & LTDC_BPCR_AVBP) + 1) |                            // Configures the vertical start and stop position
+                               (((GRAFX_DRIVER_SIZE_Y - 1) +  (LTDC->BPCR & LTDC_BPCR_AVBP)) << LTDC_LxWVPCR_WVSPPOS_Pos));
+        pActiveLayer->PFCR  = m_PixelFormatTable[PixelFormat];                                          // Specifies the pixel format
+        pActiveLayer->DCCR  = 0;                                                                // Configures the default color values ( all zero)
+        pActiveLayer->CACR  = (uint32_t)pLayer->GetAlpha();                                     // Specifies the constant alpha value
+        pActiveLayer->BFCR  = (LTDC_BLENDING_FACTOR1_PAxCA | LTDC_BLENDING_FACTOR2_PAxCA);      // Specifies the blending factors
+        pActiveLayer->CFBAR = pLayer->GetAddress();                                             // Configures the color frame buffer start address
+        pActiveLayer->CFBLR = (((GRAFX_DRIVER_SIZE_X * PixelSize) << LTDC_LxCFBLR_CFBP_Pos) |   // Configures the color frame buffer pitch in byte
+                               (((GRAFX_DRIVER_SIZE_X - 1) * PixelSize)  + 3));
+        pActiveLayer->CFBLNR = GRAFX_DRIVER_SIZE_Y;                                             // Configures the frame buffer line number
+        SET_BIT(pActiveLayer->CR, LTDC_LxCR_LEN);                                               // Enable LTDC_Layer by setting LEN bit
+        LTDC->SRCR = LTDC_SRCR_IMR;                                                             // Reload
     }
   #else
     VAR_UNUSED(pLayer);

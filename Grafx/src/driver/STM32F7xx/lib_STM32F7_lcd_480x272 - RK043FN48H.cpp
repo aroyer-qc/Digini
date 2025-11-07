@@ -47,36 +47,31 @@
 #define GRAFX_VBP                       2               // Vertical back porch
 #define GRAFX_VFP                       2               // Vertical front porch
 
+// this will need to be in the config not here!!!
 #define GRAFX_PLLSAIN_VALUE             192
 #define GRAFX_PLLSAIR_VALUE             5
 #define GRAFX_PLLSAIQ_VALUE             7
 
-#define LTDC_BLENDING_FACTOR1_PAxCA     0x00000600      // Blending factor: Cte Alpha x Pixel Alpha
-#define LTDC_BLENDING_FACTOR2_PAxCA     0x00000007      // Blending factor: Cte Alpha x Pixel Alpha
-
-#define DMA2D_M2M                       0               // DMA2D memory to memory transfer mode
-#define DMA2D_M2M_PFC                   DMA2D_CR_MODE_0 // DMA2D memory to memory with pixel format conversion transfer mode
-#define DMA2D_M2M_BLEND                 DMA2D_CR_MODE_1 // DMA2D memory to memory with blending transfer mode
-#define DMA2D_R2M                       DMA2D_CR_MODE   // DMA2D register to memory transfer mode
-
 //-------------------------------------------------------------------------------------------------
-// Local Function(s)
+// Global Function(s)
 //-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           LCD_Initialize
+//  Name:           Initialize
 //
-//  Parameter(s):   None
+//  Parameter(s):   pArg
 //  Return:         None
 //
-//  Description:    Initialize clock
+//  Description:    LCD configuration specific for the LCD and processor used by this driver
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::LCD_Initialize(void)
+void GrafxDriver::Initialize(void* pArg)
 {
+    VAR_UNUSED(pArg);
+
     // RK043FN48H LCD clock configuration
     // PLLSAI_VCO Input = HSI_VALUE/PLL_M = 1 Mhz
     // PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN = 192 Mhz
@@ -125,47 +120,10 @@ void GrafxDriver::LCD_Initialize(void)
     CLEAR_BIT(LTDC->BCCR, (LTDC_BCCR_BCBLUE | LTDC_BCCR_BCGREEN | LTDC_BCCR_BCRED));    // Sets the background color value to zero for all
     SET_BIT(LTDC->IER, LTDC_IER_TERRIE | LTDC_IER_FUIE);                                // Enable the transfer Error interrupt and FIFO underrun
     SET_BIT(LTDC->GCR, LTDC_GCR_LTDCEN);                                                // Enable LTDC by setting LTDCEN bit
-}
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           LayerConfig
-//
-//  Parameter(s):   CLayer* pLayer
-//  Return:         None
-//
-//  Description:    Configuration for layer
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::LayerInitialize(void)
-{
     LayerConfig(&LayerTable[BACKGROUND_DISPLAY_LAYER_0]);
     LayerConfig(&LayerTable[FOREGROUND_DISPLAY_LAYER_0]);
-}
 
-//-------------------------------------------------------------------------------------------------
-// Global Function(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Initialize
-//
-//  Parameter(s):   pArg
-//  Return:         None
-//
-//  Description:    LCD configuration specific for the LCD and processor used by this driver
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::Initialize(void* pArg)
-{
-    VAR_UNUSED(pArg);
-    LCD_Initialize();                   // Initialize the in processor LCD controller
-    LayerInitialize();
     DisplayOn();
 }
 
@@ -205,82 +163,6 @@ void GrafxDriver::DisplayOff(void)
     LTDC->GCR &= ~(LTDC_GCR_LTDCEN);
     IO_SetPinLow(IO_LCD_TFT_DISPLAY);
     IO_SetPinLow(IO_LCD_TFT_BL_CTRL);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           LayerConfig
-//
-//  Parameter(s):   CLayer* pLayer
-//  Return:         None
-//
-//  Description:    Configuration for layer
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::LayerConfig(CLayer* pLayer)
-{
-    uint32_t    PixelFormat;
-    uint32_t    PixelSize;
-    LayerType_e ActiveLayer;
-    LTDC_Layer_TypeDef* pActiveLayer;
-
-    ActiveLayer = pLayer->GetActive();
-    PixelFormat = pLayer->GetPixelFormat();
-    PixelSize   = GFX_PixelSize[PixelFormat];
-
-    if(ActiveLayer < GRAFX_NUMBER_OF_ACTIVE_LAYER)
-    {
-        pActiveLayer = (ActiveLayer == 0) ? LTDC_Layer1 : LTDC_Layer2;
-        pActiveLayer->WHPCR = ((((LTDC->BPCR & LTDC_BPCR_AHBP) >> LTDC_BPCR_AHBP_Pos) + 1) |    // Configures the horizontal start and stop position
-                               (((GRAFX_DRIVER_SIZE_X - 1) + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> LTDC_BPCR_AHBP_Pos)) << LTDC_LxWHPCR_WHSPPOS_Pos));
-        pActiveLayer->WVPCR = (((LTDC->BPCR & LTDC_BPCR_AVBP) + 1) |                            // Configures the vertical start and stop position
-                               (((GRAFX_DRIVER_SIZE_Y - 1) +  (LTDC->BPCR & LTDC_BPCR_AVBP)) << LTDC_LxWVPCR_WVSPPOS_Pos));
-        pActiveLayer->PFCR  = m_PixelFormatTable[PixelFormat];                                          // Specifies the pixel format
-        pActiveLayer->DCCR  = 0;                                                                // Configures the default color values ( all zero)
-        pActiveLayer->CACR  = (uint32_t)pLayer->GetAlpha();                                     // Specifies the constant alpha value
-        pActiveLayer->BFCR  = (LTDC_BLENDING_FACTOR1_PAxCA | LTDC_BLENDING_FACTOR2_PAxCA);      // Specifies the blending factors
-        pActiveLayer->CFBAR = pLayer->GetAddress();                                             // Configures the color frame buffer start address
-        pActiveLayer->CFBLR = (((GRAFX_DRIVER_SIZE_X * PixelSize) << LTDC_LxCFBLR_CFBP_Pos) |   // Configures the color frame buffer pitch in byte
-                               (((GRAFX_DRIVER_SIZE_X - 1) * PixelSize)  + 3));
-        pActiveLayer->CFBLNR = GRAFX_DRIVER_SIZE_Y;                                             // Configures the frame buffer line number
-        SET_BIT(pActiveLayer->CR, LTDC_LxCR_LEN);                                               // Enable LTDC_Layer by setting LEN bit
-        LTDC->SRCR = LTDC_SRCR_IMR;                                                             // Reload
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           BlockCopy
-//
-//  Parameter(s):   void*           pSrc
-//                  uint16_t        X
-//                  uint16_t        Y
-//                  uint16_t        Width
-//                  uint16_t        Height
-//                  uint16_t        DstX
-//                  uint16_t        DstY
-//                  PixelFormat_e   SrcPixelFormat
-//                  BlendMode_e     BlendMode
-//  Return:         None
-//
-//  Description:    Copy a rectangle region from square memory region to another square memory
-//                  region
-//
-//  Note(s):        Source is linear
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::BlockCopy(void* pSrc, uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height, uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
-{
-    Box_t Box;
-
-    Box.Pos.X = X;
-    Box.Pos.Y = Y;
-    Box.Size.Width  = Width;
-    Box.Size.Height = Height;
-
-    this->BlockCopy(pSrc, &Box, &Box.Pos, SrcPixelFormat, BlendMode);
 }
 
 //-------------------------------------------------------------------------------------------------

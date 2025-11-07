@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2025 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -43,10 +43,10 @@
 #define GRAFX_USE_SOFT_COPY_LAYER_TO_LAYER
 //#define GRAFX_USE_SOFT_PIXEL
 //#define GRAFX_USE_SOFT_BOX
-//#define GRAFX_USE_SOFT_VLINE
-//#define GRAFX_USE_SOFT_HLINE
-#define GRAFX_USE_SOFT_DLINE
-#define GRAFX_USE_SOFT_CIRCLE
+                    //                  #define GRAFX_USE_SOFT_VLINE     should not exist anymore with the override!!!!!
+                    //                  #define GRAFX_USE_SOFT_HLINE     should not exist anymore with the override!!!!!
+                    //                  #define GRAFX_USE_SOFT_DLINE     should not exist anymore with the override!!!!!
+                    //                  #define GRAFX_USE_SOFT_CIRCLE    should not exist anymore with the override!!!!!
 //#define GRAFX_USE_SOFT_RECTANGLE
 
 //#define GRAFX_USE_SOFT_PRINT_FONT
@@ -65,41 +65,55 @@
 // Class
 //-------------------------------------------------------------------------------------------------
 
-class GrafxDriver : public GRAFX_Interface
+class GrafxDriver : public GrafxGenDriver
 {
     public:
 
-        // This include all required prototype for a driver.
-        #include "./Grafx/inc/driver/lib_grafx_driver_common.h"
+        using GrafxGenDriver::DrawRectangle;            // Expose all DrawRectangle from base class
+
+        void        Initialize      (void* pArg)                                                                                            override;
+        void        BlockCopy       (void* pSrc, uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height,
+                                     uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)                     override;
+        void        BlockCopy       (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)    override;
+        void        DrawBox         (uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, uint16_t Thickness)                     override;
+        void        DrawHLine       (uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness)                                     override;
+        void        DrawVLine       (uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness)                                     override;
+        void        DrawRectangle   (Box_t* pBox)                                                                                           override;
+        //void    DrawRectangle         (uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height);
+        void        DrawPixel       (uint16_t PosX, uint16_t PosY)                                                                          override;
+        void        DisplayOn       (void)                                                                                                  override;
+        void        DisplayOff      (void)                                                                                                  override;
+        void        LayerConfig     (CLayer* pLayer)                                                                                        override;
+        void        PrintFont       (FontDescriptor_t* pDescriptor, Cartesian_t* pPos)                                                      override;
 
     private:
 
-        void            SendCommand             (uint8_t Register, uint8_t* pData, uint32_t Size, uint32_t Delay = 0);
-        void            SendCommand             (uint8_t Register, uint8_t Data, uint32_t Delay = 0);
-        void            WriteCommand            (uint8_t Register);
-        uint8_t         ReadCommand             (uint8_t Register);
-        void            WriteData               (uint8_t Data);
-        void            WriteData               (uint16_t Data);
-        void            WriteData               (uint32_t Data);
-        void            WriteData               (uint8_t* pData, uint32_t Size);
-        uint8_t         ReadData                (void);
-        void            SetWindow               (uint8_t PosX1, uint8_t PosY1, uint8_t PosX2, uint8_t PosY2);
-        void            PutColor                (uint16_t Color, uint16_t Count);
-        void            Line                    (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction);
-       // void            DrawRectangle         (Box_t* pBox, uint8_t Mode /*= SSD1779_NO_FILL*/);
-        void            Clear                   (void);
+        void        SendCommand     (uint8_t Register, uint8_t* pData, uint32_t Size, uint32_t Delay = 0);
+        void        SendCommand     (uint8_t Register, uint8_t Data, uint32_t Delay = 0);
+        void        WriteCommand    (uint8_t Register);
+        uint8_t     ReadCommand     (uint8_t Register);
+        void        WriteData       (uint8_t Data);
+        void        WriteData       (uint16_t Data);
+        void        WriteData       (uint32_t Data);
+        void        WriteData       (uint8_t* pData, uint32_t Size);
+        uint8_t     ReadData        (void);
+        void        SetWindow       (uint8_t PosX1, uint8_t PosY1, uint8_t PosX2, uint8_t PosY2);
+        void        PutColor        (uint16_t Color, uint16_t Count);
+        void        Line            (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction);
+        void        Clear           (void);
 
-        SPI_Driver*     m_pSPI;
-        CLayer*         m_pLayer;
+        SPI_Driver* m_pSPI;
 };
 
 //-------------------------------------------------------------------------------------------------
 
 #ifdef LIB_ST7735_GLOBAL
-class GrafxDriver             Grafx;
-class GRAFX_Interface*        myGrafx = &Grafx;
+GrafxDriver             Grafx;
+//GRAFX_Interface*        myGrafx = &Grafx;
+GrafxDriver*        myGrafx = &Grafx;
 #else
-extern class GRAFX_Interface* myGrafx;
+//extern GRAFX_Interface* myGrafx;
+extern GrafxDriver* myGrafx;
 #endif
 
 //-------------------------------------------------------------------------------------------------

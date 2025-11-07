@@ -40,18 +40,6 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define PIXEL_FORMAT_ARGB8888           0
-#define PIXEL_FORMAT_RGB888             1
-#define PIXEL_FORMAT_RGB565             2
-#define PIXEL_FORMAT_ARGB1555           3
-#define PIXEL_FORMAT_ARGB4444           4
-#define PIXEL_FORMAT_L8                 5
-#define PIXEL_FORMAT_AL44               6
-#define PIXEL_FORMAT_AL88               7
-#define PIXEL_FORMAT_L4                 8
-#define PIXEL_FORMAT_A8                 9
-#define PIXEL_FORMAT_A4                 10
-
 #define GRAFX_HSYNC                     41              // Horizontal synchronization
 #define GRAFX_HBP                       13              // Horizontal back porch
 #define GRAFX_HFP                       32              // Horizontal front porch
@@ -70,54 +58,6 @@
 #define DMA2D_M2M_PFC                   DMA2D_CR_MODE_0 // DMA2D memory to memory with pixel format conversion transfer mode
 #define DMA2D_M2M_BLEND                 DMA2D_CR_MODE_1 // DMA2D memory to memory with blending transfer mode
 #define DMA2D_R2M                       DMA2D_CR_MODE   // DMA2D register to memory transfer mode
-
-//-------------------------------------------------------------------------------------------------
-// const(s)
-//-------------------------------------------------------------------------------------------------
-
-static const int32_t DRV_PixelFormatTable[PIXEL_FORMAT_COUNT] =
-{
-  #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
-    PIXEL_FORMAT_ARGB8888,
-  #endif
-  #if (GRAFX_COLOR_RGB888 == DEF_ENABLED)
-    PIXEL_FORMAT_RGB888,
-  #endif
-  #if (GRAFX_COLOR_RGB565 == DEF_ENABLED)
-    PIXEL_FORMAT_RGB565,
-  #endif
-  #if (GRAFX_COLOR_ARGB1555 == DEF_ENABLED)
-    PIXEL_FORMAT_ARGB1555,
-  #endif
-  #if (GRAFX_COLOR_ARGB4444 == DEF_ENABLED)
-    PIXEL_FORMAT_ARGB4444,
-  #endif
-  #if (GRAFX_COLOR_L8 == DEF_ENABLED)
-    PIXEL_FORMAT_L8,
-  #endif
-  #if (GRAFX_COLOR_AL44 == DEF_ENABLED)
-    PIXEL_FORMAT_AL44,
-  #endif
-  #if (GRAFX_COLOR_AL88 == DEF_ENABLED)
-    PIXEL_FORMAT_AL88,
-  #endif
-  #if (GRAFX_COLOR_L4 == DEF_ENABLED)
-    LTDC_Pixelformat_L4,
-  #endif
-  #if (GRAFX_COLOR_A8 == DEF_ENABLED)
-    LTDC_Pixelformat_A8,
-  #endif
-  #if (GRAFX_COLOR_A4 == DEF_ENABLED)
-    LTDC_Pixelformat_A4,
-  #endif
-  #if (GRAFX_COLOR_RGB332 == DEF_ENABLED)
-    -1,
-  #endif
-  #if (GRAFX_COLOR_RGB444 == DEF_ENABLED)
-    -1,
-  #endif
-    -1
-};
 
 //-------------------------------------------------------------------------------------------------
 // Local Function(s)
@@ -297,14 +237,14 @@ void GrafxDriver::LayerConfig(CLayer* pLayer)
                                (((GRAFX_DRIVER_SIZE_X - 1) + ((LTDC->BPCR & LTDC_BPCR_AHBP) >> LTDC_BPCR_AHBP_Pos)) << LTDC_LxWHPCR_WHSPPOS_Pos));
         pActiveLayer->WVPCR = (((LTDC->BPCR & LTDC_BPCR_AVBP) + 1) |                            // Configures the vertical start and stop position
                                (((GRAFX_DRIVER_SIZE_Y - 1) +  (LTDC->BPCR & LTDC_BPCR_AVBP)) << LTDC_LxWVPCR_WVSPPOS_Pos));
-        pActiveLayer->PFCR  = DRV_PixelFormatTable[PixelFormat];                                // Specifies the pixel format
+        pActiveLayer->PFCR  = PixelTable[PixelFormat];                                          // Specifies the pixel format
         pActiveLayer->DCCR  = 0;                                                                // Configures the default color values ( all zero)
         pActiveLayer->CACR  = (uint32_t)pLayer->GetAlpha();                                     // Specifies the constant alpha value
         pActiveLayer->BFCR  = (LTDC_BLENDING_FACTOR1_PAxCA | LTDC_BLENDING_FACTOR2_PAxCA);      // Specifies the blending factors
         pActiveLayer->CFBAR = pLayer->GetAddress();                                             // Configures the color frame buffer start address
-        pActiveLayer->CFBLR = (((GRAFX_DRIVER_SIZE_X * PixelSize) << LTDC_LxCFBLR_CFBP_Pos) |          // Configures the color frame buffer pitch in byte
+        pActiveLayer->CFBLR = (((GRAFX_DRIVER_SIZE_X * PixelSize) << LTDC_LxCFBLR_CFBP_Pos) |   // Configures the color frame buffer pitch in byte
                                (((GRAFX_DRIVER_SIZE_X - 1) * PixelSize)  + 3));
-        pActiveLayer->CFBLNR = GRAFX_DRIVER_SIZE_Y;                                                    // Configures the frame buffer line number
+        pActiveLayer->CFBLNR = GRAFX_DRIVER_SIZE_Y;                                             // Configures the frame buffer line number
         SET_BIT(pActiveLayer->CR, LTDC_LxCR_LEN);                                               // Enable LTDC_Layer by setting LEN bit
         LTDC->SRCR = LTDC_SRCR_IMR;                                                             // Reload
     }
@@ -370,8 +310,8 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
     uint8_t            PixelSize;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixelFormatSrc     = DRV_PixelFormatTable[SrcPixelFormat];
-    PixelFormatDst     = DRV_PixelFormatTable[pLayer->GetPixelFormat()];
+    PixelFormatSrc     = PixelTable[SrcPixelFormat];
+    PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pDstPos->Y * GRAFX_DRIVER_SIZE_X) + pDstPos->X) * (uint32_t)PixelSize);
     AreaConfig.u_16.u1 = pBox->Size.Width;
@@ -423,8 +363,8 @@ void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelForm
     uint8_t            PixelSize;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixelFormatSrc     = DRV_PixelFormatTable[SrcPixelFormat];
-    PixelFormatDst     = DRV_PixelFormatTable[pLayer->GetPixelFormat()];
+    PixelFormatSrc     = PixelTable[SrcPixelFormat];
+    PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
     AreaConfig.u_16.u1 = pBox->Size.Width;
@@ -481,7 +421,7 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
     uint8_t            PixelSize;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixelFormat        = DRV_PixelFormatTable[pLayer->GetPixelFormat()];
+    PixelFormat        = PixelTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
     Color              = pLayer->GetColor();
@@ -547,7 +487,7 @@ void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
     uint8_t        PixelSize;
 
     pLayer         = &LayerTable[CLayer::GetDrawing()];
-    PixelFormat    = DRV_PixelFormatTable[pLayer->GetPixelFormat()];
+    PixelFormat    = PixelTable[pLayer->GetPixelFormat()];
     PixelSize      = pLayer->GetPixelSize();
     Address        = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
     Color          = pLayer->GetColor();
@@ -656,7 +596,7 @@ void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16
     struct32_t    AreaConfig;
 
     pLayer        = &LayerTable[CLayer::GetDrawing()];
-    PixelFormat   = DRV_PixelFormatTable[pLayer->GetPixelFormat()];
+    PixelFormat   = PixelTable[pLayer->GetPixelFormat()];
     PixelSize     = pLayer->GetPixelSize();
     Address       = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
     Color         = pLayer->GetColor();
@@ -702,7 +642,7 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     struct32_t         AreaConfig;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixelFormat        = DRV_PixelFormatTable[pLayer->GetPixelFormat()];
+    PixelFormat        = PixelTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
     AreaConfig.u_16.u1 = pDescriptor->Size.Width;

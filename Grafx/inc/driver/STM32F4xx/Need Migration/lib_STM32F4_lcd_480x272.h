@@ -89,26 +89,6 @@
 #define LCD_BL_CTRL_PIN                             GPIO_Pin_8
 
 //-------------------------------------------------------------------------------------------------
-// enum(s)
-//-------------------------------------------------------------------------------------------------
-
-enum PixelFormatTable_e
-{
-    PIXEL_FORMAT_ARGB8888  = LTDC_Pixelformat_ARGB8888,
-    PIXEL_FORMAT_RGB888    = LTDC_Pixelformat_RGB888,
-    PIXEL_FORMAT_RGB565    = LTDC_Pixelformat_RGB565,
-    PIXEL_FORMAT_ARGB1555  = LTDC_Pixelformat_ARGB1555,
-    PIXEL_FORMAT_ARGB4444  = LTDC_Pixelformat_ARGB4444,
-    PIXEL_FORMAT_L8        = LTDC_Pixelformat_L8,
-    PIXEL_FORMAT_AL44      = LTDC_Pixelformat_AL44,
-    PIXEL_FORMAT_AL88      = LTDC_Pixelformat_AL88,
-    PIXEL_FORMAT_L4,
-    PIXEL_FORMAT_A8,
-    PIXEL_FORMAT_A4,
-    GRAFX_PIXEL_FORMAT_COUNT,
-};
-
-//-------------------------------------------------------------------------------------------------
 // const(s)
 //-------------------------------------------------------------------------------------------------
 

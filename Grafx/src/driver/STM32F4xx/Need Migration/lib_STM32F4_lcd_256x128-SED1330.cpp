@@ -803,7 +803,7 @@ void DRV_PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 {
     //pLayer             = &LayerTable[CLayer::GetDrawing()];
     //PixFmt             = pLayer->GetPixelFormat();
-    //PixelFormat        = DRV_PixelFormatTable[PixFmt];
+    //PixelFormat        = PixelTable[PixFmt];
     //PixelSize          = pLayer->GetPixelSize();
     //Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
     //AreaConfig.u_16.u1 = pDescriptor->Size.Width;

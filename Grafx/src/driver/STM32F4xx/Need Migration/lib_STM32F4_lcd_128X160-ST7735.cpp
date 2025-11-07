@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2025 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -23,6 +23,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+//
+// Note(s)
+//
+//      This driver use LCD as foreground layer, and internal ram for construction layer.
+//      RGB565 only because of RAM limitation on the STM32F4
+//
+//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
@@ -35,16 +42,6 @@
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
-
-#define LTDC_BLENDING_FACTOR1_PAxCA     0x00000600              // Blending factor: Cte Alpha x Pixel Alpha
-#define LTDC_BLENDING_FACTOR2_PAxCA     0x00000007              // Blending factor: Cte Alpha x Pixel Alpha
-
-#define DMA2D_M2M                       0                       // DMA2D memory to memory transfer mode
-#define DMA2D_M2M_PFC                   ((uint32_t)0x00010000)  // DMA2D memory to memory with pixel format conversion transfer mode
-#define DMA2D_M2M_BLEND                 ((uint32_t)0x00020000)  // DMA2D memory to memory with blending transfer mode
-#define DMA2D_R2M                       DMA2D_CR_MODE           // DMA2D register to memory transfer mode
-
-//---------------------------------------
 
 #define DELAY                           0x80
 
@@ -93,14 +90,14 @@
 #define ST7735_VMCTR1                   0xC5                    //
 
 // Colors
-#define BLACK   0x0000
-#define WHITE   0xFFFF
-#define RED     0xF800
-#define BLUE    0x00F8
-#define GREEN   0x0707
+#define BLACK                           0x0000
+#define WHITE                           0xFFFF
+#define RED                             0xF800
+#define BLUE                            0x00F8
+#define GREEN                           0x0707
 
-#define ST7735_SUCCESS 0
-#define ST7735_ERROR   1
+#define ST7735_SUCCESS                  0
+#define ST7735_ERROR                    1
 
 //-------------------------------------------------------------------------------------------------
 // Private Function(s)
@@ -108,35 +105,30 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function name:  PutColor
+//  Function name:  Write color pixels
 //
-//  Parameter(s):   uint16_t        Color
-//                  uint16_t        Count
-//  Return value:   None
+//  Parameter(s):   uint16_t Color
+//  Return value:   uint16_t Count
 //
-//  Description:    Write color pixels
+//  Description:    write a number of pixel with a pecific color
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::PutColor(uint16_t Color, uint16_t Count)
 {
-
-    IO_SetPinLow(IO_ST7735_CS);
+    m_pSPI->LockToDevice(IO_ST7735_CS);
     WriteCommand(ST7735_RAM_WRITE);                         // Access to RAM
     IO_SetPinHigh(IO_ST7735_DC);                            // Set memory to data
     m_pSPI->OverrideMemoryIncrement();
-    m_pSPI->Transfer(&Color, Count, nullptr, 0, this);       // write color
+    m_pSPI->Write((uint8_t*)&Color, Count);                 // Write color
 
 #if 0
-    // Counter
-    while(Count--)
+    while(Count--)                                          // Counter
     {
-        // Write color
-        m_pSPI->Transfer(&Color, 1, nullptr, 0, this);
+        m_pSPI->Write(Color);                               // Write color
     }
-   #endif
+#endif
 
-    IO_SetPinHigh(IO_ST7735_CS);
-
+    m_pSPI->UnlockFromDevice(IO_ST7735_CS);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -149,12 +141,13 @@ void GrafxDriver::PutColor(uint16_t Color, uint16_t Count)
 //  Description:    Send a command to LCD
 //
 //  Note(s):        Any sub data will be sent using LCD_WriteByte
+//                  This function does not handle the CS
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::WriteCommand(uint8_t Command)
 {
     IO_SetPinLow(IO_ST7735_DC);
-    m_pSPI->Transfer(&Command, 1, nullptr, 0, this);
+    m_pSPI->Write(Command);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -172,9 +165,7 @@ uint8_t GrafxDriver::ReadCommand(uint8_t Command)
     uint8_t Data[2];
 
     IO_SetPinLow(IO_ST7735_DC);         // Command (active low)
-//    IO_SetPinLow(IO_ST7735_CS);         // why CS it's I2C
-    m_pSPI->Transfer(&Command, 1, &Data[0], 2, this);
-   // IO_SetPinHigh(IO_ST7735_CS);
+    m_pSPI->Transfer(&Command, 1, &Data[0], 2, IO_ST7735_CS);
     return Data[1];
 }
 
@@ -193,7 +184,7 @@ uint8_t GrafxDriver::ReadData(void)
     uint8_t Data;
 
     IO_SetPinLow(IO_ST7735_DC);         // Data (active high)
-    m_pSPI->Transfer(nullptr, 0, &Data, 1, this);
+    m_pSPI->Transfer(nullptr, 0, &Data, 1, IO_ST7735_CS);
     return Data;
 }
 
@@ -208,8 +199,6 @@ uint8_t GrafxDriver::ReadData(void)
 //   Return value:  None
 //
 //   Description:   Set drawing window
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::SetWindow(uint8_t PosX1, uint8_t PosY1, uint8_t PosX2, uint8_t PosY2)
@@ -237,7 +226,7 @@ void GrafxDriver::SetWindow(uint8_t PosX1, uint8_t PosY1, uint8_t PosX2, uint8_t
 void GrafxDriver::WriteData(uint8_t Data)
 {
     IO_SetPinHigh(IO_ST7735_DC);				// Data (active high)
-    m_pSPI->Transfer(&Data, 1, nullptr, 0, this);
+    m_pSPI->Write(&Data, 1);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -253,7 +242,7 @@ void GrafxDriver::WriteData(uint8_t Data)
 void GrafxDriver::WriteData(uint16_t Data)
 {
     IO_SetPinHigh(IO_ST7735_DC);			            // Data (active high)
-    m_pSPI->Transfer((uint8_t*)&Data, 2, nullptr, 0, this);
+    m_pSPI->Write((uint8_t*)&Data, 2);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -269,7 +258,7 @@ void GrafxDriver::WriteData(uint16_t Data)
 void GrafxDriver::WriteData(uint32_t Data)
 {
     IO_SetPinHigh(IO_ST7735_DC);			            // Data (active high)
-    m_pSPI->Transfer((uint8_t*)&Data, 4, nullptr, 0, this);
+    m_pSPI->Write((uint8_t*)&Data, 4);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -287,7 +276,7 @@ void GrafxDriver::WriteData(uint32_t Data)
 void GrafxDriver::WriteData(uint8_t* pData, uint32_t Size)
 {
     IO_SetPinHigh(IO_ST7735_DC);        			    // Data (active high)
-    m_pSPI->Transfer(pData, Size, nullptr, 0, this);
+    m_pSPI->Write(pData, Size);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -320,7 +309,7 @@ void GrafxDriver::SendCommand(uint8_t Register, uint8_t Data, uint32_t Delay)
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::SendCommand(uint8_t Register, uint8_t* pData, uint32_t Size, uint32_t Delay)
 {
-    IO_SetPinLow(IO_ST7735_CS);
+    m_pSPI->LockToDevice(IO_ST7735_CS);
     WriteCommand(Register);             // Send register
 
     if(Size > 0)
@@ -328,7 +317,7 @@ void GrafxDriver::SendCommand(uint8_t Register, uint8_t* pData, uint32_t Size, u
         WriteData(pData, Size);
     }
 
-    IO_SetPinHigh(IO_ST7735_CS);
+    m_pSPI->UnlockFromDevice(IO_ST7735_CS);
 
     if(Delay > 0)
     {
@@ -349,13 +338,15 @@ void GrafxDriver::SendCommand(uint8_t Register, uint8_t* pData, uint32_t Size, u
 //
 //  Description:    LCD configuration specific
 //
+//  Note(s):        IO with those name must exist into bsp_io_def.h:
+//
+//                  IO_ST7735_CS, IO_ST7735_DC, IO_ST7735_RESET, IO_ST7735_BACKLIGHT
+//
 //-------------------------------------------------------------------------------------------------
+
 void GrafxDriver::Initialize(void* pArg)
 {
     m_pSPI = (SPI_Driver*)pArg;
-
-    //uint8_t Status;
-    //uint16_t Data;
 
     m_pSPI->Initialize();                                       // CS(NSS) handle by class
 
@@ -365,18 +356,18 @@ void GrafxDriver::Initialize(void* pArg)
 
     SendCommand(ST7735_SWRESET, nullptr, 0, 50);            // Software reset
 
-    //------------------------------------ST7735S Frame Rate---------------------------------------
+    //------------------------------------ST7735S Frame Rate-----------------------------------------//
 
     const uint8_t Data_FRMCTR[6] = {0x05, 0x3C, 0x3C,0x05, 0x3C, 0x3C};
     SendCommand(ST7735_FRMCTR1, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 1
     SendCommand(ST7735_FRMCTR2, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 2
     SendCommand(ST7735_FRMCTR3, (uint8_t*)&Data_FRMCTR[0], 6, 1);    // Frame control 2
 
-	//------------------------------------End ST7735S Frame Rate-----------------------------------
+	//------------------------------------End ST7735S Frame Rate-----------------------------------------//
 
     SendCommand(ST7735_INVCTR, 0x03, 1);                   // Dot inversion
 
-	//------------------------------------ST7735S Power Sequence-----------------------------------
+	//------------------------------------ST7735S Power Sequence-----------------------------------------//
 
     const uint8_t Data_PWR_CTRL1[3] = {0x28, 0x08, 0x04};
     const uint8_t Data_PWR_CTRL3[2] = {0x0D, 0x00};
@@ -389,12 +380,12 @@ void GrafxDriver::Initialize(void* pArg)
     SendCommand(ST7735_POWER_CTRL_4, (uint8_t*)&Data_PWR_CTRL4[0], 2, 1);
     SendCommand(ST7735_POWER_CTRL_5, (uint8_t*)&Data_PWR_CTRL5[0], 2, 1);
 
-    //---------------------------------End ST7735S Power Sequence----------------------------------
+    //---------------------------------End ST7735S Power Sequence-------------------------------------//
 
     SendCommand(ST7735_VMCTR1, 0x10, 1);                        // VCOM
     SendCommand(ST7735_MADCTL, 0xC0, 1);                        // MX, MY, RGB mode
 
-	//------------------------------------ST7735S Gamma Sequence-----------------------------------
+	//------------------------------------ST7735S Gamma Sequence-----------------------------------------//
 
     const uint8_t Data_GMCTRP1[16] = {0x04, 0x22, 0x07, 0x0A, 0x2E, 0x30, 0x25, 0x2A,
                                       0x28, 0x26, 0x2E, 0x3A, 0x00, 0x01, 0x03, 0x13};
@@ -404,35 +395,13 @@ void GrafxDriver::Initialize(void* pArg)
     SendCommand(ST7735_GMCTRP1, (uint8_t*)&Data_GMCTRP1[0], 16, 1);
     SendCommand(ST7735_GMCTRN1, (uint8_t*)&Data_GMCTRN1[0], 16, 1);
 
-	//------------------------------------End ST7735S Gamma Sequence-------------------------------
+	//------------------------------------End ST7735S Gamma Sequence-----------------------------------------//
 
     SendCommand(ST7735_COLMOD, 0x05, 1);                        // 65K mode
     SendCommand(ST7735_SLPOUT, nullptr, 0, 120);                // Exit Sleep
     DisplayOn();
     Clear();
     IO_SetPinHigh(IO_ST7735_BACKLIGHT);
-
-/*
-    CLayer::SetColor(BLUE);
-    DrawRectangle(0, 90, 127, 20);
-    CLayer::SetColor(0x55AA);
-    DrawBox(20, 20, 80, 80, 3);
-
-    CLayer::SetColor(GREEN);
-    DrawPixel(15, 56);
-    DrawPixel(25, 66);
-    DrawPixel(35, 76);
-    DrawPixel(45, 86);
-
-    CLayer::SetColor(0xAAAA);
-    DrawVLine(79, 4, 120, 2);
-
-    CLayer::SetColor(0x5555);
-    DrawHLine(79, 4, 120, 2);
-
-
-IO_SetPinHigh(IO_ST7735_CS);				// Chip enable - active low
-*/
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -452,7 +421,7 @@ void GrafxDriver::LayerConfig(CLayer* pLayer)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           DRV_Copy
+//  Name:           Copy
 //
 //  Parameter(s):   void*           pSrc
 //                  Box_t*          pBox
@@ -463,14 +432,130 @@ void GrafxDriver::LayerConfig(CLayer* pLayer)
 //
 //  Description:    Copy a rectangle region from square memory region to another square memory
 //                  region
+// we will use LCD Common
+//-------------------------------------------------------------------------------------------------
+/*
+void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode)
+{
+	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+    {
+        uint32_t           PixelFormatSrc;
+        uint32_t           PixelFormatDst;
+        uint32_t           Address;
+        struct32_t         AreaConfig;
+        CLayer*            pLayer;
+        uint8_t            PixelSize;
+
+        pLayer             = &LayerTable[CLayer::GetDrawing()];
+        PixelFormatSrc     = PixelTable[SrcPixelFormat_e];
+        PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
+        PixelSize          = pLayer->GetPixelSize();
+        Address            = pLayer->GetAddress() + (((pDstPos->Y * GRAFX_DRIVER_SIZE_X) + pDstPos->X) * (uint32_t)PixelSize);
+
+        AreaConfig.u_16.u1 = pBox->Size.Width;
+        AreaConfig.u_16.u0 = pBox->Size.Height;
+
+      #ifdef DMA2D
+        DMA2D->CR          = ((BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND) | DMA2D_CR_TCIE;                        // Memory to memory and TCIE blending BG + Source
+
+        //Source
+        DMA2D->FGMAR       = (uint32_t)(pSrc) + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);    // Source address
+        DMA2D->FGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                        // Source line offset none as we are linear
+        DMA2D->FGPFCCR     = PixelFormatSrc;                                                                                    // Defines the size of pixel
+
+        // Source
+        DMA2D->BGMAR       = Address;                                                                                           // Source address
+        DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                        // Source line offset
+        DMA2D->BGPFCCR     = PixelFormatDst;                                                                                    // Defines the size of pixel
+
+        //Destination
+        DMA2D->OMAR        = Address;                                                                                           // Destination address
+        DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;                                        // Destination line offset none as we are linear
+        DMA2D->OPFCCR      = PixelFormatDst;                                                                                    // Defines the size of pixel
+
+        DMA2D->NLR         = AreaConfig.u_32;                                                                                   // Size configuration of area to be transfered
+    
+        SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                     // Start operation
+        while(DMA2D->CR & DMA2D_CR_START);                                                                                      // Wait until transfer is done
+      #else
+        uint8_t* pLocalSrc = (uint8_t*)pSrc;
+        uint32_t* pDst = (uint32_t*)Address;
+        pLocalSrc += (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
+        DMA_Memcpy(pLocalSrc, pDst, size_t(AreaConfig.u_32));
+      #endif
+    }
+    else
+    {
+
+    }
+}
+*/
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CopyLinear
+//
+//  Parameter(s):   void*           pSrc
+//                  Box_t*          pBox
+//                  Cartesian_t*    pDstPos
+//                  PixelFormat_e   SrcPixelFormat_e
+//                  BlendMode_e     BlendMode
+//  Return:         None
+//
+//  Description:    Copy a rectangle region from linear memory region to a square memory
+//                  region
 //
 //  Note(s):        Source is linear
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat_e, BlendMode_e BlendMode)
-{
-}
+/*void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
+{//use the LCD_Commin instead
+    uint32_t           PixelFormatSrc;
+    uint32_t           PixelFormatDst;
+    uint32_t           Address;
+    struct32_t         AreaConfig;
+    CLayer*            pLayer;
+    uint8_t            PixelSize;
 
+    pLayer             = &LayerTable[CLayer::GetDrawing()];
+    PixelFormatSrc     = PixelTable[SrcPixelFormat];
+    PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
+    PixelSize          = pLayer->GetPixelSize();
+    Address            = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
+
+    AreaConfig.u_16.u1 = pBox->Size.Width;
+    AreaConfig.u_16.u0 = pBox->Size.Height;
+
+  #ifdef DMA2D
+    DMA2D->CR          = (BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND;         // Memory to memory and TCIE. Blending BG + Source
+    DMA2D->CR         |= DMA2D_CR_TCIE;
+
+    // Source
+    DMA2D->FGMAR       = (uint32_t)pSrc;                                                   // Source address
+    DMA2D->FGOR        = 0;                                                                // Source line offset none as we are linear
+    DMA2D->FGPFCCR     = PixelFormatSrc;                                                   // Defines the size of pixel
+
+    // Source
+    DMA2D->BGMAR       = Address;                                                          // Source address
+    DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;       // Source line offset
+    DMA2D->BGPFCCR     = PixelFormatDst;                                                   // Defines the size of pixel
+
+    // Destination
+    DMA2D->OMAR        = Address;                                                          // Destination address
+    DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;       // Destination line offset
+    DMA2D->OPFCCR      = PixelFormatDst;                                                   // Defines the size of pixel
+
+    DMA2D->NLR         = AreaConfig.u_32;                                                  // Size configuration of area to be transfered
+    
+    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
+    while(DMA2D->CR & DMA2D_CR_START);                                                     // Wait until transfer is done
+  #else
+        uint8_t* pLocalSrc = (uint8_t*)pSrc;
+        uint32_t* pDst = (uint32_t*)Address;
+        pLocalSrc += (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
+        DMA_Memcpy(pLocalSrc, pDst, size_t(AreaConfig.u_32));
+  #endif
+}
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           BlockCopy
@@ -548,39 +633,47 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawRectangle(Box_t* pBox)
 {
-    //DrawRectangle(pBox->Pos.X, pBox->Pos.Y, pBox->Size.Width, pBox->Size.Height);
-  	uint16_t Color;
+  	//uint16_t Color;
 
+/* TODO problem here
     m_pLayer = &LayerTable[CLayer::GetDrawing()];
-	Color    = (uint16_t(m_pLayer->GetColor()));   // TODO do a function to get the color
-	SetWindow(pBox->Pos.X, pBox->Pos.Y, pBox->Pos.X + (pBox->Size.Width - 1), pBox->Pos.Y + (pBox->Size.Height - 1));
-	PutColor(Color, pBox->Size.Width * pBox->Size.Height);
+	Color    = (uint16_t(m_pLayer->GetColor()));
+
+	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+    {
+        uint32_t           PixelFormat;
+        uint32_t           Address;
+        struct32_t         AreaConfig;
+        uint8_t            PixelSize;
+
+        PixelFormat        = PixelTable[m_pLayer->GetPixelFormat()];
+        PixelSize          = m_pLayer->GetPixelSize();
+        Address            = m_pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
+        AreaConfig.u_16.u1 = pBox->Size.Width;
+        AreaConfig.u_16.u0 = pBox->Size.Height;
+     #ifdef DMA2D
+        DMA2D->CR          = DMA2D_R2M | DMA2D_CR_TCIE;                            // Register to memory and TCIE
+        DMA2D->OCOLR       = (uint32_t)Color;                                      // Color to be used
+        DMA2D->OMAR        = Address;                                              // Destination address
+        DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;  // Destination line offset
+        DMA2D->OPFCCR      = PixelFormat;                                          // Defines the number of pixels to be transfered
+        DMA2D->NLR         = AreaConfig.u_32;                                      // Size configuration of area to be transfered
+    
+        SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
+        while(DMA2D->CR & DMA2D_CR_START);                                         // Wait until transfer is done
+      #else
+        // TODO provide a method without DMA2D
+        // use memory to memory normal DMA
+      #endif
+    }
+    else
+    {
+        SetWindow(pBox->Pos.X, pBox->Pos.Y, pBox->Pos.X + (pBox->Size.Width - 1), pBox->Pos.Y + (pBox->Size.Height - 1));
+        PutColor(Color, pBox->Size.Width * pBox->Size.Height);
+    }
+*/
 }
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           DrawRectangle
-//
-//  Parameter(s):   uint16_t    PosX
-//                  uint16_t    PosY
-//                  uint16_t    Width
-//                  uint16_t    Height
-//  Return:         None
-//
-//  Description:    Fill a region in a specific color
-//
-//-------------------------------------------------------------------------------------------------
-/*
-void GrafxDriver::DrawRectangle(uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height)
-{
-	uint16_t Color;
-
-    m_pLayer = &LayerTable[CLayer::GetDrawing()];
-	Color    = (uint16_t(m_pLayer->GetColor()));   // TODO do a function to get the color
-	SetWindow(PosX, PosY, PosX + (Width - 1), PosY + (Height - 1));
-	PutColor(Color, Width * Height);
-}
-*/ // already define in lib_grafx_driver
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DrawBox
@@ -600,23 +693,36 @@ void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t
 	uint16_t Color;
 
     m_pLayer = &LayerTable[CLayer::GetDrawing()];
-	Color    = (uint16_t(m_pLayer->GetColor()));   // TODO do a function to get the color
+	Color    = (uint16_t(m_pLayer->GetColor()));
 
-	// Left Side
-	SetWindow(PosX, PosY, PosX + (Thickness - 1), PosY + Height);
-	PutColor(Color, Width * Height);
+	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+    {
+        uint16_t X2 = PosX + Width;
+        uint16_t Y2 = PosY + Height;
 
-	// Right Side
-	SetWindow(PosX + (Width - (Thickness - 1)), PosY, PosX + Width, PosY + Height);
-	PutColor(Color, Width * Height);
+        DrawVLine(PosX,           PosY, Y2, Thickness);
+        DrawVLine(X2 - Thickness, PosY, Y2, Thickness);
+        DrawHLine(PosY,           PosX, X2, Thickness);
+        DrawHLine(Y2 - Thickness, PosX, X2, Thickness);
+    }
+    else
+    {
+        // Left Side
+        SetWindow(PosX, PosY, PosX + (Thickness - 1), PosY + Height);
+        PutColor(Color, Width * Height);
 
-    // Top
-	SetWindow(PosX + Thickness, PosY, PosX + (Width - Thickness), PosY + (Thickness - 1));
-	PutColor(Color, Width * Height);
+        // Right Side
+        SetWindow(PosX + (Width - (Thickness - 1)), PosY, PosX + Width, PosY + Height);
+        PutColor(Color, Width * Height);
 
-	// Bottom
-	SetWindow(PosX + Thickness, PosY + (Height - (Thickness - 1)), PosX + (Width - Thickness), PosY + Height);
-	PutColor(Color, Width * Height);
+        // Top
+        SetWindow(PosX + Thickness, PosY, PosX + (Width - Thickness), PosY + (Thickness - 1));
+        PutColor(Color, Width * Height);
+
+        // Bottom
+        SetWindow(PosX + Thickness, PosY + (Height - (Thickness - 1)), PosX + (Width - Thickness), PosY + Height);
+        PutColor(Color, Width * Height);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -634,10 +740,20 @@ void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 {
 	uint16_t Color;
 
-    m_pLayer = &LayerTable[CLayer::GetDrawing()];
-	Color = (uint16_t(m_pLayer->GetColor()));
-	SetWindow(PosX, PosY, PosX, PosY);
-	PutColor(Color, 1);
+    CLayer*  pLayer  = &LayerTable[CLayer::GetDrawing()];
+    Color = (uint16_t(m_pLayer->GetColor()));
+
+	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+    {
+        uint16_t* pAddress = (uint16_t*)pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * 2);
+        *pAddress = Color;
+    }
+    else
+    {
+        m_pLayer = &LayerTable[CLayer::GetDrawing()];
+        SetWindow(PosX, PosY, PosX, PosY);
+        PutColor(Color, 1);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -652,8 +768,6 @@ void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 //
 //  Description:    Displays a horizontal line of a specific thickness.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness)
 {
@@ -666,14 +780,22 @@ void GrafxDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint1
     {
         Temp  = PosX1;
         PosX1 = PosX2;
-		PosX2 = Temp;
+        PosX2 = Temp;
     }
 
-	Length = (PosX2 - PosX1) + 1;
-    m_pLayer = &LayerTable[CLayer::GetDrawing()];
-	Color  = (uint16_t(m_pLayer->GetColor()));
-	SetWindow(PosX1, PosY, PosX2, PosY + (Thickness - 1));
-	PutColor(Color, Length * Thickness);
+    Length = (PosX2 - PosX1) + 1;
+
+	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+    {
+        this->DrawLine(PosX1, PosY, Length, Thickness, DRAW_HORIZONTAL);
+    }
+    else
+    {
+        m_pLayer = &LayerTable[CLayer::GetDrawing()];
+        Color  = (uint16_t(m_pLayer->GetColor()));
+        SetWindow(PosX1, PosY, PosX2, PosY + (Thickness - 1));
+        PutColor(Color, Length * Thickness);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -695,7 +817,7 @@ void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint1
     uint16_t Temp;
 	uint16_t Length;
 
-    // X1 need to be the lowest
+    // Y1 need to be the lowest
     if(PosY1 > PosY2)
     {
         Temp  = PosY1;
@@ -703,28 +825,38 @@ void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint1
 		PosY2 = Temp;
     }
 
-	Length = PosY2 - PosY1;
-    m_pLayer = &LayerTable[CLayer::GetDrawing()];
-	Color  = (uint16_t(m_pLayer->GetColor()));
-	SetWindow(PosX, PosY1, PosX + (Thickness - 1), PosY2);
-	PutColor(Color, Length * Thickness);
+    Length = PosY2 - PosY1;
+
+	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+    {
+        this->DrawLine(PosX, PosY1, Length, Thickness, DRAW_VERTICAL);
+    }
+    else
+    {
+        m_pLayer = &LayerTable[CLayer::GetDrawing()];
+        Color  = (uint16_t(m_pLayer->GetColor()));
+        SetWindow(PosX, PosY1, PosX + (Thickness - 1), PosY2);
+        PutColor(Color, Length * Thickness);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DrawLine
 //
-//  Parameter(s):   uint16_t   PosX       Specifies the X position, can be a value from 0 to 240.
-//                  uint16_t   PosY       Specifies the Y position, can be a value from 0 to 320.
-//                  uint16_t   Length     Line length.
-//                  uint16_t   Thickness
-//                  DrawMode_e Direction  line direction.
-//                                        This Parameter can be one of the following values
+//  Parameter(s):   uint16_t    PosX       Specifies the X position, can be a value from 0 to 240.
+//                  uint16_t    PosY       Specifies the Y position, can be a value from 0 to 320.
+//                  uint16_t    Length     Line length.
+//                  uint16_t    Thickness
+//                  DrawMode_e  Direction  line direction.
+//                                         This Parameter can be one of the following values
 //                                                 DRAW_HORIZONTAL
 //                                                 DRAW_VERTICAL
 //  Return:         None
 //
 //  Description:    Displays a line of a specific thickness.
+//
+//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction)
@@ -755,7 +887,7 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     uint32_t           Address;
     CLayer*            pLayer;
     uint32_t           PixelFormat;
-    s32_t              AreaConfig;
+    struct32_t         AreaConfig;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
     PixelFormat        = PixelTable[pLayer->GetPixelFormat()];
@@ -764,6 +896,7 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     AreaConfig.u_16.u1 = pDescriptor->Size.Width;
     AreaConfig.u_16.u0 = pDescriptor->Size.Height;
 
+  #ifdef DMA2D
     DMA2D->CR = DMA2D_M2M_BLEND;                                                // Memory to memory blending BG + Source
 
     // Font layer in Alpha blending linear (A8)
@@ -786,6 +919,10 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 
     SET_BIT(DMA2D->CR, DMA2D_CR_START);                                         // Start operation
     while(DMA2D->CR & DMA2D_CR_START){};                                        // Wait until transfer is done
+  #else
+    // TODO provide a method without DMA2D
+    // use memory to memory normal DMA
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -835,11 +972,6 @@ void GrafxDriver::Clear(void)
 }
 
 //-------------------------------------------------------------------------------------------------
-
-void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
-{
-
-}
 
 #if 0
 

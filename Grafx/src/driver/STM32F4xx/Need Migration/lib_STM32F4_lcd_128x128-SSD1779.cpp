@@ -433,8 +433,8 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
     uint8_t            PixelSize;
 
     pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixelFormatSrc     = DRV_PixelFormatTable[SrcPixelFormat_e];
-    PixelFormatDst     = DRV_PixelFormatTable[pLayer->GetPixelFormat()];
+    PixelFormatSrc     = PixelTable[SrcPixelFormat_e];
+    PixelFormatDst     = PixelTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pDstPos->Y * GRAFX_DRIVER_SIZE_X) + pDstPos->X) * (uint32_t)PixelSize);
 

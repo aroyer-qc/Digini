@@ -96,25 +96,6 @@ void GrafxGenDriver::Initialize(void* pArg)
 {
   #ifdef LTDC
 
-/*
-    // RK043FN48H LCD clock configuration
-    // PLLSAI_VCO Input = HSI_VALUE/PLL_M = 1 Mhz
-    // PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN = 192 Mhz
-    // PLLLCDCLK = PLLSAI_VCO Output/PLLSAIR = 192/5 = 38.4 Mhz
-    // LTDC clock frequency = PLLLCDCLK / LTDC_PLLSAI_DIVR_4 = 38.4/4 = 9.6Mhz
-    RCC->PLLSAICFGR  = (GRAFX_PLLSAIR_VALUE << RCC_PLLSAICFGR_PLLSAIR_Pos) |
-                       (GRAFX_PLLSAIQ_VALUE << RCC_PLLSAICFGR_PLLSAIQ_Pos) |
-                       (GRAFX_PLLSAIN_VALUE << RCC_PLLSAICFGR_PLLSAIN_Pos);
-
-// TODO found a better way
-    SET_BIT(RCC->PLLSAICFGR, 0x01 << RCC_PLLSAICFGR_PLLSAIP_Pos); // Enable the USB Clock and SDMMC
-    SET_BIT(RCC->DCKCFGR2, 1 << RCC_DCKCFGR2_CK48MSEL_Pos);
-
-    MODIFY_REG(RCC->DCKCFGR1, RCC_DCKCFGR1_PLLSAIDIVR, RCC_DCKCFGR1_PLLSAIDIVR_0); // PLLSA IDIVR 4;
-    RCC->CR |= RCC_CR_PLLSAION;
-    while((RCC->CR & RCC_CR_PLLSAIRDY) == 0);
-*/
-
    #ifdef STM32H7xx
     RCC->APB3ENR |= RCC_APB3ENR_LTDCEN;
     RCC->AHB3ENR |= RCC_AHB3ENR_DMA2DEN;

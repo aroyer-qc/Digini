@@ -106,11 +106,11 @@ void SystemInit(void)
     RCC->CR &= ~RCC_CR_PLLON;
 
     // Configure the main PLL clock source, multiplication and division factors.
-    RCC->PLLCFGR = CFG_PLLM_DIVIDER                                            |
-                   (CFG_PLLM_N_MULTIPLIER << RCC_PLLCFGR_PLL_N_POS)            |
-                   (((CFG_PLLM_P_DIVIDER >> 1) - 1) << RCC_PLLCFGR_PLL_P_POS)  |
-                   (CFG_SYS_PLL_MUX)                                        |
-                    (CFG_PLLM_Q_DIVIDER << RCC_PLLCFGR_PLL_Q_POS);
+    RCC->PLLCFGR = CFG_PLL_M_DIVIDER                                          |
+                   (CFG_PLL_N_MULTIPLIER << RCC_PLL_CFGR_PLL_N_POS)           |
+                   (((CFG_PLL_P_DIVIDER >> 1) - 1) << RCC_PLL_CFGR_PLL_P_POS) |
+                   (CFG_SYS_PLL_MUX)                                          |
+                   (CFG_PLL_Q_DIVIDER << RCC_PLL_CFGR_PLL_Q_POS);
 
     RCC->CR |= RCC_CR_PLLON;                                            // Enable the main PLL.
     while((RCC->CR & RCC_CR_PLLRDY) == 0);                              // Wait till PLL is ready
@@ -120,6 +120,35 @@ void SystemInit(void)
   #endif
 
     RCC->DCKCFGR2 |= RCC_DCKCFGR2_CK48MSEL;
+
+  #ifdef CFG_ENABLE_PLLSAI
+    RCC->PLLSAICFGR  = (CFG_PLLSAI_N_MULTIPLIER << RCC_PLLSAI_CFGR_PLL_N_POS) |
+                       (CFG_PLLSAI_P_DIVIDER    << RCC_PLLSAI_CFGR_PLL_P_POS) |
+                       (CFG_PLLSAI_Q_DIVIDER    << RCC_PLLSAI_CFGR_PLL_Q_POS) |
+                       (CFG_PLLSAI_R_DIVIDER    << RCC_PLLSAI_CFGR_PLL_R_POS);
+
+    MODIFY_REG(RCC->DCKCFGR1, RCC_DCKCFGR1_PLLSAIDIVR, CFG_LCD_CLOCK_DIVIDER);
+
+    // TODO need to use the enable for this
+    RCC->CR |= RCC_CR_PLLSAION;
+    while((RCC->CR & RCC_CR_PLLSAIRDY) == 0);
+  #endif
+
+  #ifdef CFG_ENABLE_PLLI2S
+    RCC->PLLI2SCFGR  = (CFG_PLLI2S_N_MULTIPLIER << RCC_PLLI2S_CFGR_PLL_N_POS) |
+                       (CFG_PLLI2S_P_DIVIDER    << RCC_PLLI2S_CFGR_PLL_P_POS) |
+                       (CFG_PLLI2S_Q_DIVIDER    << RCC_PLLI2S_CFGR_PLL_Q_POS) |
+                       (CFG_PLLI2S_R_DIVIDER    << RCC_PLLI2S_CFGR_PLL_R_POS);
+
+    // TODO need to use the enable for this
+    RCC->CR |= RCC_CR_PLLI2SON;
+    while((RCC->CR & RCC_CR_PLLI2SRDY) == 0);
+  #endif
+
+    // Set Source for USB
+  #if (USE_USB_DRIVER == DEF_ENABLED)
+    SET_BIT(RCC->DCKCFGR2, CFG_USB_SOURCE_MUX);
+  #endif
 
     // AHB,APB1,APB2 CLOCK
     RCC->CFGR |= (CFG_SYS_HCLK | CFG_SYS_APB1 | CFG_SYS_APB2 | CFG_MCO_1 | CFG_MCO_2);

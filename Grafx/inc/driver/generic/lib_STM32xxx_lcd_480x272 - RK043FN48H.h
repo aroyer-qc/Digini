@@ -70,14 +70,10 @@
 class GrafxDriver : public GrafxGenDriver
 {
     public:
-    
+
         void        Initialize      (void* pArg)                                                                                            override;
         void        DisplayOn       (void)                                                                                                  override;
         void        DisplayOff      (void)                                                                                                  override;
-    
-    private:
-
-        //void        Line             (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction);
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -271,7 +271,7 @@ void DMA_Driver::EnableClock(void)
 //  Description:    Enable the IRQ DMA for the Channel and Stream
 //
 //-------------------------------------------------------------------------------------------------
-void DMA_Driver::EnableIRQ()
+void DMA_Driver::EnableIRQ(void)
 {
     ISR_Init(m_IRQn_Channel, m_PreempPrio);
 }

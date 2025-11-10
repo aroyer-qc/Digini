@@ -167,8 +167,8 @@ void SDIO_Driver::Initialize(void)
         ISR_Init(SDMMC1_IRQn, 5);
 
         // NVIC configuration for DMA transfer complete interrupt
-        m_DMA_RX.EnableIRQ(6);
-        m_DMA_TX.EnableIRQ(6);
+        m_DMA_RX.EnableIRQ();
+        m_DMA_TX.EnableIRQ();
 
         // Initialize SDMMC peripheral interface with default configuration for SD card initialization
         ClearClockRegister();

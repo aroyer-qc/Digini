@@ -132,8 +132,8 @@ void GrafxGenDriver::Initialize(void* pArg)
     SET_BIT(LTDC->IER, LTDC_IER_TERRIE | LTDC_IER_FUIE);                                // Enable the transfer Error interrupt and FIFO underrun
     SET_BIT(LTDC->GCR, LTDC_GCR_LTDCEN);                                                // Enable LTDC by setting LTDCEN bit
 
-    LayerConfig(&LayerTable[BACKGROUND_DISPLAY_LAYER_0]);
-    LayerConfig(&LayerTable[FOREGROUND_DISPLAY_LAYER_0]);
+    LayerConfig(BACKGROUND_DISPLAY_LAYER_0);
+    LayerConfig(FOREGROUND_DISPLAY_LAYER_0);
 
   #else
     VAR_UNUSED(pArg);
@@ -655,8 +655,10 @@ void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 //  Description:    Configuration for layer
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::LayerConfig(CLayer* pLayer)
+void GrafxGenDriver::LayerConfig(Layer_e Layer)
 {
+    CLayer* pLayer = &LayerTable[Layer];
+    
   #ifdef DMA2D
     uint32_t            PixelFormat;
     uint32_t            PixelSize;

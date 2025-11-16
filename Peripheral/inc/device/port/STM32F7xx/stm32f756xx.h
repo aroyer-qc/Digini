@@ -8396,98 +8396,52 @@ typedef struct
 #define FMC_SDCR2_RPIPE_0          (0x1U << FMC_SDCR2_RPIPE_Pos)               /*!< 0x00002000 */
 #define FMC_SDCR2_RPIPE_1          (0x2U << FMC_SDCR2_RPIPE_Pos)               /*!< 0x00004000 */
 
-/******************  Bit definition for FMC_SDTR1 register  ******************/
-#define FMC_SDTR1_TMRD_Pos         (0U)                                        
-#define FMC_SDTR1_TMRD_Msk         (0xFU << FMC_SDTR1_TMRD_Pos)                /*!< 0x0000000F */
-#define FMC_SDTR1_TMRD             FMC_SDTR1_TMRD_Msk                          /*!<TMRD[3:0] bits (Load mode register to active) */
-#define FMC_SDTR1_TMRD_0           (0x1U << FMC_SDTR1_TMRD_Pos)                /*!< 0x00000001 */
-#define FMC_SDTR1_TMRD_1           (0x2U << FMC_SDTR1_TMRD_Pos)                /*!< 0x00000002 */
-#define FMC_SDTR1_TMRD_2           (0x4U << FMC_SDTR1_TMRD_Pos)                /*!< 0x00000004 */
-#define FMC_SDTR1_TMRD_3           (0x8U << FMC_SDTR1_TMRD_Pos)                /*!< 0x00000008 */
-#define FMC_SDTR1_TXSR_Pos         (4U)                                        
-#define FMC_SDTR1_TXSR_Msk         (0xFU << FMC_SDTR1_TXSR_Pos)                /*!< 0x000000F0 */
-#define FMC_SDTR1_TXSR             FMC_SDTR1_TXSR_Msk                          /*!<TXSR[3:0] bits (Exit self refresh) */
-#define FMC_SDTR1_TXSR_0           (0x1U << FMC_SDTR1_TXSR_Pos)                /*!< 0x00000010 */
-#define FMC_SDTR1_TXSR_1           (0x2U << FMC_SDTR1_TXSR_Pos)                /*!< 0x00000020 */
-#define FMC_SDTR1_TXSR_2           (0x4U << FMC_SDTR1_TXSR_Pos)                /*!< 0x00000040 */
-#define FMC_SDTR1_TXSR_3           (0x8U << FMC_SDTR1_TXSR_Pos)                /*!< 0x00000080 */
-#define FMC_SDTR1_TRAS_Pos         (8U)                                        
-#define FMC_SDTR1_TRAS_Msk         (0xFU << FMC_SDTR1_TRAS_Pos)                /*!< 0x00000F00 */
-#define FMC_SDTR1_TRAS             FMC_SDTR1_TRAS_Msk                          /*!<TRAS[3:0] bits (Self refresh time) */
-#define FMC_SDTR1_TRAS_0           (0x1U << FMC_SDTR1_TRAS_Pos)                /*!< 0x00000100 */
-#define FMC_SDTR1_TRAS_1           (0x2U << FMC_SDTR1_TRAS_Pos)                /*!< 0x00000200 */
-#define FMC_SDTR1_TRAS_2           (0x4U << FMC_SDTR1_TRAS_Pos)                /*!< 0x00000400 */
-#define FMC_SDTR1_TRAS_3           (0x8U << FMC_SDTR1_TRAS_Pos)                /*!< 0x00000800 */
-#define FMC_SDTR1_TRC_Pos          (12U)                                       
-#define FMC_SDTR1_TRC_Msk          (0xFU << FMC_SDTR1_TRC_Pos)                 /*!< 0x0000F000 */
-#define FMC_SDTR1_TRC              FMC_SDTR1_TRC_Msk                           /*!<TRC[2:0] bits (Row cycle delay) */
-#define FMC_SDTR1_TRC_0            (0x1U << FMC_SDTR1_TRC_Pos)                 /*!< 0x00001000 */
-#define FMC_SDTR1_TRC_1            (0x2U << FMC_SDTR1_TRC_Pos)                 /*!< 0x00002000 */
-#define FMC_SDTR1_TRC_2            (0x4U << FMC_SDTR1_TRC_Pos)                 /*!< 0x00004000 */
-#define FMC_SDTR1_TWR_Pos          (16U)                                       
-#define FMC_SDTR1_TWR_Msk          (0xFU << FMC_SDTR1_TWR_Pos)                 /*!< 0x000F0000 */
-#define FMC_SDTR1_TWR              FMC_SDTR1_TWR_Msk                           /*!<TRC[2:0] bits (Write recovery delay) */
-#define FMC_SDTR1_TWR_0            (0x1U << FMC_SDTR1_TWR_Pos)                 /*!< 0x00010000 */
-#define FMC_SDTR1_TWR_1            (0x2U << FMC_SDTR1_TWR_Pos)                 /*!< 0x00020000 */
-#define FMC_SDTR1_TWR_2            (0x4U << FMC_SDTR1_TWR_Pos)                 /*!< 0x00040000 */
-#define FMC_SDTR1_TRP_Pos          (20U)                                       
-#define FMC_SDTR1_TRP_Msk          (0xFU << FMC_SDTR1_TRP_Pos)                 /*!< 0x00F00000 */
-#define FMC_SDTR1_TRP              FMC_SDTR1_TRP_Msk                           /*!<TRP[2:0] bits (Row precharge delay) */
-#define FMC_SDTR1_TRP_0            (0x1U << FMC_SDTR1_TRP_Pos)                 /*!< 0x00100000 */
-#define FMC_SDTR1_TRP_1            (0x2U << FMC_SDTR1_TRP_Pos)                 /*!< 0x00200000 */
-#define FMC_SDTR1_TRP_2            (0x4U << FMC_SDTR1_TRP_Pos)                 /*!< 0x00400000 */
-#define FMC_SDTR1_TRCD_Pos         (24U)                                       
-#define FMC_SDTR1_TRCD_Msk         (0xFU << FMC_SDTR1_TRCD_Pos)                /*!< 0x0F000000 */
-#define FMC_SDTR1_TRCD             FMC_SDTR1_TRCD_Msk                          /*!<TRP[2:0] bits (Row to column delay) */
-#define FMC_SDTR1_TRCD_0           (0x1U << FMC_SDTR1_TRCD_Pos)                /*!< 0x01000000 */
-#define FMC_SDTR1_TRCD_1           (0x2U << FMC_SDTR1_TRCD_Pos)                /*!< 0x02000000 */
-#define FMC_SDTR1_TRCD_2           (0x4U << FMC_SDTR1_TRCD_Pos)                /*!< 0x04000000 */
-
-/******************  Bit definition for FMC_SDTR2 register  ******************/
-#define FMC_SDTR2_TMRD_Pos         (0U)                                        
-#define FMC_SDTR2_TMRD_Msk         (0xFU << FMC_SDTR2_TMRD_Pos)                /*!< 0x0000000F */
-#define FMC_SDTR2_TMRD             FMC_SDTR2_TMRD_Msk                          /*!<TMRD[3:0] bits (Load mode register to active) */
-#define FMC_SDTR2_TMRD_0           (0x1U << FMC_SDTR2_TMRD_Pos)                /*!< 0x00000001 */
-#define FMC_SDTR2_TMRD_1           (0x2U << FMC_SDTR2_TMRD_Pos)                /*!< 0x00000002 */
-#define FMC_SDTR2_TMRD_2           (0x4U << FMC_SDTR2_TMRD_Pos)                /*!< 0x00000004 */
-#define FMC_SDTR2_TMRD_3           (0x8U << FMC_SDTR2_TMRD_Pos)                /*!< 0x00000008 */
-#define FMC_SDTR2_TXSR_Pos         (4U)                                        
-#define FMC_SDTR2_TXSR_Msk         (0xFU << FMC_SDTR2_TXSR_Pos)                /*!< 0x000000F0 */
-#define FMC_SDTR2_TXSR             FMC_SDTR2_TXSR_Msk                          /*!<TXSR[3:0] bits (Exit self refresh) */
-#define FMC_SDTR2_TXSR_0           (0x1U << FMC_SDTR2_TXSR_Pos)                /*!< 0x00000010 */
-#define FMC_SDTR2_TXSR_1           (0x2U << FMC_SDTR2_TXSR_Pos)                /*!< 0x00000020 */
-#define FMC_SDTR2_TXSR_2           (0x4U << FMC_SDTR2_TXSR_Pos)                /*!< 0x00000040 */
-#define FMC_SDTR2_TXSR_3           (0x8U << FMC_SDTR2_TXSR_Pos)                /*!< 0x00000080 */
-#define FMC_SDTR2_TRAS_Pos         (8U)                                        
-#define FMC_SDTR2_TRAS_Msk         (0xFU << FMC_SDTR2_TRAS_Pos)                /*!< 0x00000F00 */
-#define FMC_SDTR2_TRAS             FMC_SDTR2_TRAS_Msk                          /*!<TRAS[3:0] bits (Self refresh time) */
-#define FMC_SDTR2_TRAS_0           (0x1U << FMC_SDTR2_TRAS_Pos)                /*!< 0x00000100 */
-#define FMC_SDTR2_TRAS_1           (0x2U << FMC_SDTR2_TRAS_Pos)                /*!< 0x00000200 */
-#define FMC_SDTR2_TRAS_2           (0x4U << FMC_SDTR2_TRAS_Pos)                /*!< 0x00000400 */
-#define FMC_SDTR2_TRAS_3           (0x8U << FMC_SDTR2_TRAS_Pos)                /*!< 0x00000800 */
-#define FMC_SDTR2_TRC_Pos          (12U)                                       
-#define FMC_SDTR2_TRC_Msk          (0xFU << FMC_SDTR2_TRC_Pos)                 /*!< 0x0000F000 */
-#define FMC_SDTR2_TRC              FMC_SDTR2_TRC_Msk                           /*!<TRC[2:0] bits (Row cycle delay) */
-#define FMC_SDTR2_TRC_0            (0x1U << FMC_SDTR2_TRC_Pos)                 /*!< 0x00001000 */
-#define FMC_SDTR2_TRC_1            (0x2U << FMC_SDTR2_TRC_Pos)                 /*!< 0x00002000 */
-#define FMC_SDTR2_TRC_2            (0x4U << FMC_SDTR2_TRC_Pos)                 /*!< 0x00004000 */
-#define FMC_SDTR2_TWR_Pos          (16U)                                       
-#define FMC_SDTR2_TWR_Msk          (0xFU << FMC_SDTR2_TWR_Pos)                 /*!< 0x000F0000 */
-#define FMC_SDTR2_TWR              FMC_SDTR2_TWR_Msk                           /*!<TRC[2:0] bits (Write recovery delay) */
-#define FMC_SDTR2_TWR_0            (0x1U << FMC_SDTR2_TWR_Pos)                 /*!< 0x00010000 */
-#define FMC_SDTR2_TWR_1            (0x2U << FMC_SDTR2_TWR_Pos)                 /*!< 0x00020000 */
-#define FMC_SDTR2_TWR_2            (0x4U << FMC_SDTR2_TWR_Pos)                 /*!< 0x00040000 */
-#define FMC_SDTR2_TRP_Pos          (20U)                                       
-#define FMC_SDTR2_TRP_Msk          (0xFU << FMC_SDTR2_TRP_Pos)                 /*!< 0x00F00000 */
-#define FMC_SDTR2_TRP              FMC_SDTR2_TRP_Msk                           /*!<TRP[2:0] bits (Row precharge delay) */
-#define FMC_SDTR2_TRP_0            (0x1U << FMC_SDTR2_TRP_Pos)                 /*!< 0x00100000 */
-#define FMC_SDTR2_TRP_1            (0x2U << FMC_SDTR2_TRP_Pos)                 /*!< 0x00200000 */
-#define FMC_SDTR2_TRP_2            (0x4U << FMC_SDTR2_TRP_Pos)                 /*!< 0x00400000 */
-#define FMC_SDTR2_TRCD_Pos         (24U)                                       
-#define FMC_SDTR2_TRCD_Msk         (0xFU << FMC_SDTR2_TRCD_Pos)                /*!< 0x0F000000 */
-#define FMC_SDTR2_TRCD             FMC_SDTR2_TRCD_Msk                          /*!<TRP[2:0] bits (Row to column delay) */
-#define FMC_SDTR2_TRCD_0           (0x1U << FMC_SDTR2_TRCD_Pos)                /*!< 0x01000000 */
-#define FMC_SDTR2_TRCD_1           (0x2U << FMC_SDTR2_TRCD_Pos)                /*!< 0x02000000 */
+/******************  Bit definition for FMC_SDTRx(1,2) register  ******************/
+#define FMC_SDTRx_TMRD_Pos         (0U)                                        
+#define FMC_SDTRx_TMRD_Msk         (0xFU << FMC_SDTR1_TMRD_Pos)                /*!< 0x0000000F */
+#define FMC_SDTRx_TMRD             FMC_SDTR1_TMRD_Msk                          /*!<TMRD[3:0] bits (Load mode register to active) */
+#define FMC_SDTRx_TMRD_0           (0x1U << FMC_SDTR1_TMRD_Pos)                /*!< 0x00000001 */
+#define FMC_SDTRx_TMRD_1           (0x2U << FMC_SDTR1_TMRD_Pos)                /*!< 0x00000002 */
+#define FMC_SDTRx_TMRD_2           (0x4U << FMC_SDTR1_TMRD_Pos)                /*!< 0x00000004 */
+#define FMC_SDTRx_TMRD_3           (0x8U << FMC_SDTR1_TMRD_Pos)                /*!< 0x00000008 */
+#define FMC_SDTRx_TXSR_Pos         (4U)                                        
+#define FMC_SDTRx_TXSR_Msk         (0xFU << FMC_SDTR1_TXSR_Pos)                /*!< 0x000000F0 */
+#define FMC_SDTRx_TXSR             FMC_SDTR1_TXSR_Msk                          /*!<TXSR[3:0] bits (Exit self refresh) */
+#define FMC_SDTRx_TXSR_0           (0x1U << FMC_SDTR1_TXSR_Pos)                /*!< 0x00000010 */
+#define FMC_SDTRx_TXSR_1           (0x2U << FMC_SDTR1_TXSR_Pos)                /*!< 0x00000020 */
+#define FMC_SDTRx_TXSR_2           (0x4U << FMC_SDTR1_TXSR_Pos)                /*!< 0x00000040 */
+#define FMC_SDTRx_TXSR_3           (0x8U << FMC_SDTR1_TXSR_Pos)                /*!< 0x00000080 */
+#define FMC_SDTRx_TRAS_Pos         (8U)                                        
+#define FMC_SDTRx_TRAS_Msk         (0xFU << FMC_SDTR1_TRAS_Pos)                /*!< 0x00000F00 */
+#define FMC_SDTRx_TRAS             FMC_SDTR1_TRAS_Msk                          /*!<TRAS[3:0] bits (Self refresh time) */
+#define FMC_SDTRx_TRAS_0           (0x1U << FMC_SDTR1_TRAS_Pos)                /*!< 0x00000100 */
+#define FMC_SDTRx_TRAS_1           (0x2U << FMC_SDTR1_TRAS_Pos)                /*!< 0x00000200 */
+#define FMC_SDTRx_TRAS_2           (0x4U << FMC_SDTR1_TRAS_Pos)                /*!< 0x00000400 */
+#define FMC_SDTRx_TRAS_3           (0x8U << FMC_SDTR1_TRAS_Pos)                /*!< 0x00000800 */
+#define FMC_SDTRx_TRC_Pos          (12U)                                       
+#define FMC_SDTRx_TRC_Msk          (0xFU << FMC_SDTR1_TRC_Pos)                 /*!< 0x0000F000 */
+#define FMC_SDTRx_TRC              FMC_SDTR1_TRC_Msk                           /*!<TRC[2:0] bits (Row cycle delay) */
+#define FMC_SDTRx_TRC_0            (0x1U << FMC_SDTR1_TRC_Pos)                 /*!< 0x00001000 */
+#define FMC_SDTRx_TRC_1            (0x2U << FMC_SDTR1_TRC_Pos)                 /*!< 0x00002000 */
+#define FMC_SDTRx_TRC_2            (0x4U << FMC_SDTR1_TRC_Pos)                 /*!< 0x00004000 */
+#define FMC_SDTRx_TWR_Pos          (16U)                                       
+#define FMC_SDTRx_TWR_Msk          (0xFU << FMC_SDTR1_TWR_Pos)                 /*!< 0x000F0000 */
+#define FMC_SDTRx_TWR              FMC_SDTR1_TWR_Msk                           /*!<TRC[2:0] bits (Write recovery delay) */
+#define FMC_SDTRx_TWR_0            (0x1U << FMC_SDTR1_TWR_Pos)                 /*!< 0x00010000 */
+#define FMC_SDTRx_TWR_1            (0x2U << FMC_SDTR1_TWR_Pos)                 /*!< 0x00020000 */
+#define FMC_SDTRx_TWR_2            (0x4U << FMC_SDTR1_TWR_Pos)                 /*!< 0x00040000 */
+#define FMC_SDTRx_TRP_Pos          (20U)                                       
+#define FMC_SDTRx_TRP_Msk          (0xFU << FMC_SDTR1_TRP_Pos)                 /*!< 0x00F00000 */
+#define FMC_SDTRx_TRP              FMC_SDTR1_TRP_Msk                           /*!<TRP[2:0] bits (Row precharge delay) */
+#define FMC_SDTRx_TRP_0            (0x1U << FMC_SDTR1_TRP_Pos)                 /*!< 0x00100000 */
+#define FMC_SDTRx_TRP_1            (0x2U << FMC_SDTR1_TRP_Pos)                 /*!< 0x00200000 */
+#define FMC_SDTRx_TRP_2            (0x4U << FMC_SDTR1_TRP_Pos)                 /*!< 0x00400000 */
+#define FMC_SDTRx_TRCD_Pos         (24U)                                       
+#define FMC_SDTRx_TRCD_Msk         (0xFU << FMC_SDTR1_TRCD_Pos)                /*!< 0x0F000000 */
+#define FMC_SDTRx_TRCD             FMC_SDTR1_TRCD_Msk                          /*!<TRP[2:0] bits (Row to column delay) */
+#define FMC_SDTRx_TRCD_0           (0x1U << FMC_SDTR1_TRCD_Pos)                /*!< 0x01000000 */
+#define FMC_SDTRx_TRCD_1           (0x2U << FMC_SDTR1_TRCD_Pos)                /*!< 0x02000000 */
+#define FMC_SDTRx_TRCD_2           (0x4U << FMC_SDTR1_TRCD_Pos)                /*!< 0x04000000 */
 #define FMC_SDTR2_TRCD_2           (0x4U << FMC_SDTR2_TRCD_Pos)                /*!< 0x04000000 */
 
 /******************  Bit definition for FMC_SDCMR register  ******************/

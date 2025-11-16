@@ -57,6 +57,7 @@ class GrafxGenDriver
             virtual     void    Initialize            (void* pArg);
 	        virtual     void    DisplayOn             (void);
             virtual     void    DisplayOff            (void);
+            virtual     void    LayerConfig           (CLayer* pLayer);
             virtual     void    LayerConfig           (Layer_e Layer);
             virtual     void    ClearLayer            (Layer_e Layer);
             virtual	    void    CopyLinear            (void* pSrc, Box_t* pBox, PixelFormat_e PixelFormat, BlendMode_e BlendMode);

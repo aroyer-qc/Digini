@@ -44,7 +44,7 @@
 #define SDIO_DRIVER_GLOBAL
 #include "./lib_digini.h"
 #undef  SDIO_DRIVER_GLOBAL
-#include "stm32f7xx_ll_sdmmc.h"   // to replace this with my stuff
+//#include "stm32f7xx_ll_sdmmc.h"   // to replace this with my stuff
 
 //-------------------------------------------------------------------------------------------------
 
@@ -62,15 +62,19 @@
 #define SD_CARD_TICK_PERIOD             1
 
 
-#define ClearAllFlag()                  { SDMMC1->ICR = (SDMMC_FLAG_CCRCFAIL | SDMMC_FLAG_DCRCFAIL | SDMMC_FLAG_CTIMEOUT | \
-                                                         SDMMC_FLAG_DTIMEOUT | SDMMC_FLAG_TXUNDERR | SDMMC_FLAG_RXOVERR  | \
-                                                         SDMMC_FLAG_CMDREND  | SDMMC_FLAG_CMDSENT  | SDMMC_FLAG_DATAEND  | \
-                                                         SDMMC_FLAG_DBCKEND); }
+#define ClearAllFlag()                  { SDMMC1->ICR = (SDMMC_STA_CCRCFAIL | SDMMC_STA_DCRCFAIL | SDMMC_STA_CTIMEOUT | \
+                                                         SDMMC_STA_DTIMEOUT | SDMMC_STA_TXUNDERR | SDMMC_STA_RXOVERR  | \
+                                                         SDMMC_STA_CMDREND  | SDMMC_STA_CMDSENT  | SDMMC_STA_DATAEND  | \
+                                                         SDMMC_STA_DBCKEND); }
 
 
 #define ClearClockRegister()            { SDMMC1->CLKCR = ~((uint32_t)(SDMMC_CLKCR_CLKDIV  | SDMMC_CLKCR_PWRSAV |\
                                                                        SDMMC_CLKCR_BYPASS  | SDMMC_CLKCR_WIDBUS |\
                                                                        SDMMC_CLKCR_NEGEDGE | SDMMC_CLKCR_HWFC_EN)); }
+
+// SDMMC Initialization Frequency (400KHz max)
+#define SDMMC_INIT_CLK_DIV              ((uint8_t)0x76)
+
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)

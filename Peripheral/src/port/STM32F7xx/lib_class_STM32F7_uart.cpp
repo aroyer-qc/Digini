@@ -522,7 +522,8 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             {
                 while(m_DMA_IsItBusyTX == true)
                 {
-                    nOS_Yield();
+                    //nOS_Yield();
+                    nOS_Sleep(10);
                 }
             }
 

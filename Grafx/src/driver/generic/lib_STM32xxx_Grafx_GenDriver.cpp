@@ -142,6 +142,21 @@ void GrafxGenDriver::Initialize(void* pArg)
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           ClearLayer
+//
+//  Parameter(s):   Layer_e 		Layer
+//  Return:         None
+//
+//  Description:    LCD configuration specific for the LCD and processor used by this driver
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxGenDriver::ClearLayer(Layer_e Layer)
+{
+	VAR_UNUSED(Layer);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           BlockCopy
 //
 //  Parameter(s):   void*           pSrc
@@ -658,7 +673,11 @@ void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 void GrafxGenDriver::LayerConfig(Layer_e Layer)
 {
     CLayer* pLayer = &LayerTable[Layer];
-    
+    LayerConfig(pLayer);	
+}
+
+void GrafxGenDriver::LayerConfig(CLayer* pLayer)
+{
   #ifdef DMA2D
     uint32_t            PixelFormat;
     uint32_t            PixelSize;

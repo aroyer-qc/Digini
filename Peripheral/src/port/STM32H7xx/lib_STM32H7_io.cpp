@@ -450,8 +450,8 @@ void IO_SetPinLow(IO_ID_e IO_ID)
 
     if(pPort != GPIOxx)
     {
-        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
-        pPort->BSRR = (IO_PORT_RESET_MASK << PinNumber);
+        uint32_t PinPosition = __builtin_ctz(IO_Properties[IO_ID].PinNumber);
+        pPort->BSRR = (IO_PORT_RESET_MASK << PinPosition);
     }
 }
 
@@ -473,8 +473,8 @@ void IO_SetPinHigh(IO_ID_e IO_ID)
 
     if(pPort != GPIOxx)
     {
-        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
-        pPort->BSRR = (IO_PORT_SET_MASK << PinNumber);
+        uint32_t PinPosition = __builtin_ctz(IO_Properties[IO_ID].PinNumber);
+        pPort->BSRR = (IO_PORT_SET_MASK << PinPosition);
     }
 }
 
@@ -496,8 +496,8 @@ void IO_TogglePin(IO_ID_e IO_ID)
 
     if(pPort != GPIOxx)
     {
-        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
-        pPort->ODR ^= (1 << PinNumber);
+        uint32_t PinPosition = __builtin_ctz(IO_Properties[IO_ID].PinNumber);
+        pPort->ODR ^= (1 << PinPosition);
     }
 }
 
@@ -541,7 +541,8 @@ uint32_t IO_GetInputPinValue(IO_ID_e IO_ID)
 
     if(pPort != GPIOxx)
     {
-        PinValue = pPort->IDR & (1 << IO_Properties[IO_ID].PinNumber);
+        uint32_t PinPosition = __builtin_ctz(IO_Properties[IO_ID].PinNumber);
+        PinValue = pPort->IDR & (1 << PinPosition);
     }
 
     return PinValue;
@@ -580,9 +581,9 @@ bool IO_GetOutputPin(IO_ID_e IO_ID)
 
     if(pPort != GPIOxx)
     {
-        uint32_t PinNumber = IO_Properties[IO_ID].PinNumber;
+        uint32_t PinPosition = __builtin_ctz(IO_Properties[IO_ID].PinNumber);
 
-        if((pPort->ODR & (1 << PinNumber)) == 0)
+        if((pPort->ODR & (1 << PinPosition)) == 0)
         {
             return false;
         }
@@ -815,22 +816,21 @@ void IO_CallBack(IO_IrqID_e IO_IRQ_ID)
 uint32_t IO_PinLowLevelAccess(uint32_t PortIO, uint32_t PinNumber, uint32_t Direction, uint32_t State)
 {
     GPIO_TypeDef* pPort = (GPIO_TypeDef*)IO_Port[PortIO];
-    uint32_t      Pin2BitShift;
-
-    Pin2BitShift     = PinNumber << 1;
+    uint32_t      BitPosition   = __builtin_ctz(PinNumber);
+    uint32_t      Pin2BitShift  = BitPosition << 1;
 
     _IO_EnableClock(pPort);
 
     if(Direction == IO_MODE_OUTPUT)
     {
         // Preset state
-        if(State == 0) pPort->BSRR = (IO_PORT_RESET_MASK << PinNumber);
-        else           pPort->BSRR = (IO_PORT_SET_MASK   << PinNumber);
+        if(State == 0) pPort->BSRR = (IO_PORT_RESET_MASK << BitPosition);
+        else           pPort->BSRR = (IO_PORT_SET_MASK   << BitPosition);
     }
 
     MODIFY_REG(pPort->MODER, (IO_MODE_PIN_MASK << Pin2BitShift), (Direction << Pin2BitShift));
 
-    return (pPort->IDR >> PinNumber) & 0x01;
+    return (pPort->IDR >> BitPosition) & 0x01;
 }
 
 //-------------------------------------------------------------------------------------------------

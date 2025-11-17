@@ -71,12 +71,20 @@
 //-------------------------------------------------------------------------------------------------
 SystemState_e DIGINI_Initialize(void)
 {
+    SysTick_Config(SYSTEM_CORE_CLOCK / CFG_SYSTICK_RATE);
+    ISR_Initialize();
+    IO_InitializeAll();
+
   #if (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
     DMA_MEM2MEM_Initialize();
   #endif
 
   #if (USE_SDRAM_DRIVER == DEF_ENABLED)
     SDRAM_Initialize();                                     // Initialize SDRAM
+  #endif
+
+  #if (USE_HYPER_RAM_DRIVER == DEF_ENABLED)
+    HYPER_RAM_Initialize();                                 // Initialize HYPER RAM
   #endif
 
   #if (USE_RTC_DRIVER == DEF_ENABLED)

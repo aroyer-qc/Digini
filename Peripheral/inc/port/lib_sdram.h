@@ -25,7 +25,7 @@
 //-------------------------------------------------------------------------------------------------
 
 
-#include "sdram_cfg.h"
+#include "ram_cfg.h"
 
 //#if defined STM32F1xx
 // #include "./Peripheral/inc/port/STM32F1xx/lib_STM32F1_sdram.h"

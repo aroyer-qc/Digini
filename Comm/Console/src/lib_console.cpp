@@ -608,7 +608,6 @@ void Console::CallbackFunction(int Type, void* pContext)
         {
             UART_Transfer_t* pTransfer = (UART_Transfer_t*)pContext;
             m_Fifo.SetNewHeadPosition(pTransfer->u.Head);
-            //m_Fifo.Write(pTransfer->pBuffer, pTransfer->Size);
             nOS_SemGive(&m_RX_Idle_Sem);
         }
         break;

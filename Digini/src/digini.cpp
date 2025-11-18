@@ -159,10 +159,10 @@ SystemState_e DIGINI_PostInitialize(void)
 
   #if (USE_USB_DRIVER == DEF_ENABLED)
     USB.Initialize();
-  #endif // (USE_USB_DRIVER == DEF_ENABLED)
+  #endif
 
   #if (DIGINI_USE_FATFS == DEF_ENABLED)
-    //FatFS_DiskIO.Initialize();
+    FatFS_DiskIO.Initialize();
   #endif
 
   #if (DIGINI_USE_GRAFX == DEF_ENABLED)
@@ -170,7 +170,7 @@ SystemState_e DIGINI_PostInitialize(void)
   #endif
 
   #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
-  //  pTaskNetwork->Initialize();
+    pTaskNetwork->Initialize();
   #endif
 
   #if (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)

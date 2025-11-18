@@ -77,7 +77,6 @@ void Console::Initialize(UART_Driver* pUartDriver)
         m_pChildProcess[i]  = nullptr;
     }
 
-
     pUartDriver->Initialize();
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     pBuffer = m_Fifo.GetBufferPointer();

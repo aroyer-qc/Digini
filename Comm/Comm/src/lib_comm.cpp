@@ -89,14 +89,14 @@ nOS_Error ClassTaskCOMM::Initialize(void)
 
   #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
     myCommandLine.Initialize(&myConsole);
-    myConsole.GiveControlToChildProcess(&myCommandLine);            // Hijack the console if there is a CLI
+    myConsole.GiveControlToChildProcess(&myCommandLine);            // Hijack the console for the CLI
   #endif
 
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
     myVT100.Initialize(&myConsole);
 
    #if (DIGINI_USE_CMD_LINE == DEF_DISABLED)
-    myConsole.GiveControlToChildProcess(&myVT100);                  // Hijack the console for VT100 if there is no CLI
+    myConsole.GiveControlToChildProcess(&myVT100);                  // Hijack the console or the CLI for VT100
    #endif
 
   #endif
@@ -133,13 +133,8 @@ void ClassTaskCOMM::Run(void)
 {
     for(;;)
     {
-        // wake the task if we have job to do...  flag! for RX and for print
-
-        // TODO improve sleep or yield and adjust the priority for this task... it is working nicely in process mode
-
-        //nOS_Yield();
         myConsole.Process();
-       // nOS_Sleep(1);
+        nOS_Yield();
     }
 }
 #endif

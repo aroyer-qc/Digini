@@ -77,8 +77,10 @@ void Console::Initialize(UART_Driver* pUartDriver)
         m_pChildProcess[i]  = nullptr;
     }
 
+
+    pUartDriver->Initialize();
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
-pBuffer = m_Fifo.GetBufferPointer();
+    pBuffer = m_Fifo.GetBufferPointer();
     //pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE, MEM_DBG_CONSOLE_1);        // Reserve memory for UART internal DMA operation.
 
     nOS_SemCreate(&m_RX_Idle_Sem, 0, CON_RX_NB_OF_SEMAPHORE_COUNT);

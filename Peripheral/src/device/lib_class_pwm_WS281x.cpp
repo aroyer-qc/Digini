@@ -34,6 +34,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
+#if (USE_SPI_WS281X_DRIVER == DEF_ENABLED)
 #if (USE_TIM_DRIVER == DEF_ENABLED)
 #if (USE_PWM_DRIVER == DEF_ENABLED)
 
@@ -426,6 +427,7 @@ void WS281x::DMA_Channel_IRQ_Handler(bool IsItTransferComplete)
 
 //-------------------------------------------------------------------------------------------------
 
+#endif // (USE_SPI_WS281X_DRIVER == DEF_ENABLED)
 #endif // (USE_PWM_DRIVER == DEF_ENABLED)
 #endif // (USE_TIM_DRIVER == DEF_ENABLED)
 

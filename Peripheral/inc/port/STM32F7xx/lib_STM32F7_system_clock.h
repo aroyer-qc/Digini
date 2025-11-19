@@ -96,23 +96,55 @@
 #define CFG_RCC_CFGR_MCO2_HSE                       0x80000000U
 #define CFG_RCC_CFGR_MCO2_PLL                       0xC0000000U
 
+#define CFG_RCC_DCKCFGR1_PLLSAI_Q_DIV(x)            ((x - 1) << RCC_DCKCFGR1_PLLSAIDIVQ_Pos)
 
-#define CFG_RCC_DCKCFGR1_LCD_CLK_DIV2               0x00000000U
-#define CFG_RCC_DCKCFGR1_LCD_CLK_DIV4               RCC_DCKCFGR1_PLLSAIDIVR_0
-#define CFG_RCC_DCKCFGR1_LCD_CLK_DIV8               RCC_DCKCFGR1_PLLSAIDIVR_1
-#define CFG_RCC_DCKCFGR1_LCD_CLK_DIV16              (RCC_DCKCFGR1_PLLSAIDIVR_1 | RCC_DCKCFGR1_PLLSAIDIVR_0)
+#define CFG_RCC_DCKCFGR1_PLLSAI_R_DIV2              0x00000000U
+#define CFG_RCC_DCKCFGR1_PLLSAI_R_DIV4              RCC_DCKCFGR1_PLLSAIDIVR_0
+#define CFG_RCC_DCKCFGR1_PLLSAI_R_DIV8              RCC_DCKCFGR1_PLLSAIDIVR_1
+#define CFG_RCC_DCKCFGR1_PLLSAI_R_DIV16             (RCC_DCKCFGR1_PLLSAIDIVR_1 | RCC_DCKCFGR1_PLLSAIDIVR_0)
 
+#define CFG_RCC_DCKCFGR1_PLLI2S_Q_DIV(x)            ((x - 1) << RCC_DCKCFGR1_PLLI2SDIVQ_Pos)
 
 //-------------------------------------------------------------------------------------------------
-// Multiplexer for peripheral clock source only UART at this time
+// Multiplexer for peripheral clock source (TODO missing one)
+
+#define CFG_CEC_LSE                                 0
+#define CFG_CEC_HSI_DIV_488                         RCC_DCKCFGR2_CECSEL_0
+
+#define CFG_CK48M_PLLQ                              0
+#define CFG_CK48M_PLLSAIP                           RCC_DCKCFGR2_CK48MSEL_0
+
+#define CFG_I2C1_PCLK1                              0
+#define CFG_I2C1_SYS_CLOCK                          RCC_DCKCFGR2_I2C1SEL_0
+#define CFG_I2C1_HSI                                RCC_DCKCFGR2_I2C1SEL_1
+
+#define CFG_I2C2_PCLK1                              0
+#define CFG_I2C2_SYS_CLOCK                          RCC_DCKCFGR2_I2C2SEL_0
+#define CFG_I2C2_HSI                                RCC_DCKCFGR2_I2C2SEL_1
+
+#define CFG_I2C3_PCLK1                              0
+#define CFG_I2C3_SYS_CLOCK                          RCC_DCKCFGR2_I2C3SEL_0
+#define CFG_I2C3_HSI                                RCC_DCKCFGR2_I2C3SEL_1
+
+#define CFG_I2C4_PCLK1                              0
+#define CFG_I2C4_SYS_CLOCK                          RCC_DCKCFGR2_I2C4SEL_0
+#define CFG_I2C4_HSI                                RCC_DCKCFGR2_I2C4SEL_1
+
+#define CFG_LPTIM1_PCLK1                            0
+#define CFG_LPTIM1_LSI                              RCC_DCKCFGR2_LPTIM1SEL_0
+#define CFG_LPTIM1_HSI                              RCC_DCKCFGR2_LPTIM1SEL_1
+#define CFG_LPTIM1_LSE                              (RCC_DCKCFGR2_LPTIM1SEL_1 | RCC_DCKCFGR2_LPTIM1SEL_0)
 
 #define CFG_SAI1_PLLSAIQ                            0
-#define CFG_SAI1_PLLI2SQ                            RCC_DCKCFGR1_SAI2SEL_0
+#define CFG_SAI1_PLLI2SQ                            RCC_DCKCFGR1_SAI1SEL_0
 #define CFG_SAI1_I2S_CKIN                           RCC_DCKCFGR1_SAI1SEL_1
 
 #define CFG_SAI2_PLLSAIQ                            0
 #define CFG_SAI2_PLLI2SQ                            RCC_DCKCFGR1_SAI2SEL_0
 #define CFG_SAI2_I2S_CKIN                           RCC_DCKCFGR1_SAI2SEL_1
+
+#define CFG_SDMMC1_PLL48_CLOCK                      0
+#define CFG_SDMMC1_SYS_CLOCK                        RCC_DCKCFGR2_SDMMC1SEL_0
 
 #define CFG_USART1_PCLK2                            0
 #define CFG_USART1_SYS_CLOCK                        RCC_DCKCFGR2_USART1SEL_0
@@ -223,6 +255,9 @@
                                                      CFG_RCC_PLL_CFGR_PLLQ |   \
                                                      CFG_RCC_PLLCFGR_PLLSRC)
 
+  #define PLLP_CLOCK_FREQUENCY                      SYS_PLL_CLK_FREQUENCY                     
+  #define PLLQ_CLOCK_FREQUENCY                      SYS_PLL_Q_FREQUENCY
+
 // --------------------------------------------------------------------------------------------------------------------------------
 
     // PLLSAI
@@ -259,6 +294,11 @@
                                                      CFG_RCC_PLLSAI_CFGR_PLLQ |   \
                                                      CFG_RCC_PLLSAI_CFGR_PLLQ)
 
+  #define PLLSAIN_CLOCK_FREQUENCY                   ((CFG_PLL_SOURCE / CFG_PLL_M_DIVIDER) * CFG_PLLSAI_N_MULTIPLIER)
+  #define PLLSAIP_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_P_DIVIDER)
+  #define PLLSAIQ_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_Q_DIVIDER)
+  #define PLLSAIR_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_Q_DIVIDER)
+
 // --------------------------------------------------------------------------------------------------------------------------------
 // PLLI2S
   #if (CFG_PLLI2S_N_MULTIPLIER < 50) || (CFG_PLLI2S_N_MULTIPLIER > 432)
@@ -293,6 +333,11 @@
                                                      CFG_RCC_PLLI2S_CFGR_PLLP |   \
                                                      CFG_RCC_PLLI2S_CFGR_PLLQ |   \
                                                      CFG_RCC_PLLI2S_CFGR_PLLQ)
+
+  #define PLLI2SN_CLOCK_FREQUENCY                   ((CFG_PLL_SOURCE / CFG_PLL_M_DIVIDER) * CFG_PLLI2S_N_MULTIPLIER)
+  #define PLLI2SP_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_P_DIVIDER)
+  #define PLLI2SQ_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_Q_DIVIDER)
+  #define PLLI2SR_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_Q_DIVIDER)
 
 // --------------------------------------------------------------------------------------------------------------------------------
 
@@ -371,37 +416,82 @@
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// All Peripheral frequency ( TODO need to add all module clock here. )
 
-// this list is not for F7 it is here as an example...
-// CFG_PER_SOURCE_MUX
-// CFG_ADC_SOURCE_MUX
-// CFG_CEC_SOURCE_MUX
-// CFG_DFSDM_SOURCE_MUX
-// CFG_FDCAN_SOURCE_MUX
-// CFG_FMC_SOURCE_MUX
-// CFG_I2C123_SOURCE_MUX
-// CFG_I2C4_SOURCE_MUX
-// CFG_HRTIM_SOURCE_MUX
-// CFG_LPTIM1_SOURCE_MUX
-// CFG_LPTIM2_SOURCE_MUX
-// CFG_LPTIM345_SOURCE_MUX
-// CFG_LPUART1_SOURCE_MUX
-// CFG_MCO1_SOURCE_MUX
-// CFG_MCO2_SOURCE_MUX
-// CFG_QSPI_SOURCE_MUX
-// CFG_OSPI_SOURCE_MUX
-// CFG_RNG_SOURCE_MUX
-// CFG_RTC_SOURCE_MUX
-// CFG_SAI1_SOURCE_MUX
-// CFG_SAI23_SOURCE_MUX
-// CFG_SAI4A_SOURCE_MUX
-// CFG_SAI4B_SOURCE_MUX
-// CFG_SDMMC_SOURCE_MUX
-// CFG_SPDIF_SOURCE_MUX
-// CFG_SPI123_SOURCE_MUX
-// CFG_SPI45_SOURCE_MUX
-// CFG_SPI6_SOURCE_MUX
-// CFG_SWP_SOURCE_MUX
-
+/// CEC clock frequency
+  #if   (CFG_CEC_SOURCE_MUX == CFG_CEC_LSE)
+    #define CEC_CLOCK_FREQUENCY                         LSE_CLOCK_FREQUENCY
+  #elif (CFG_CEC_SOURCE_MUX == CFG_CEC_HSI_DIV_488)
+    #define CEC_CLOCK_FREQUENCY                         HSI_CLOCK_FREQUENCY / 488
+  #else
+    #error  CEC_CLOCK_FREQUENCY not defined
+  #endif
+/// CK48M clock frequency
+  #if   (CFG_CK48M_SOURCE_MUX == CFG_SDMMC1_PLLQ)
+    #define CK48M_CLOCK_FREQUENCY                       PLLQ_CLOCK_FREQUENCY
+  #elif (CFG_CK48M_SOURCE_MUX == CFG_SDMMC1_PLLSAIP)
+    #define CK48M_CLOCK_FREQUENCY                       PLLSAIP_CLOCK_FREQUENCY
+  #else
+    #error  CK48M_CLOCK_FREQUENCY not defined
+  #endif
+/// I2C1 clock frequency
+  #if   (CFG_I2C1_SOURCE_MUX == CFG_I2C1_PLCK1)
+    #define I2C1_CLOCK_FREQUENCY                        PLCK1_CLOCK_FREQUENCY
+  #elif (CFG_I2C1_SOURCE_MUX == CFG_I2C1_SYS_CLOCK)
+    #define I2C1_CLOCK_FREQUENCY                        SYS_CLOCK_CLOCK_FREQUENCY
+  #elif (CFG_I2C1_SOURCE_MUX == CFG_I2C1_HSI)
+    #define I2C1_CLOCK_FREQUENCY                        HSI_CLOCK_FREQUENCY
+  #else
+    #error  I2C1_CLOCK_FREQUENCY not defined
+  #endif
+/// I2C2 clock frequency
+  #if   (CFG_I2C2_SOURCE_MUX == CFG_I2C2_PLCK1)
+    #define I2C2_CLOCK_FREQUENCY                        PLCK1_CLOCK_FREQUENCY
+  #elif (CFG_I2C2_SOURCE_MUX == CFG_I2C2_SYS_CLOCK)
+    #define I2C2_CLOCK_FREQUENCY                        SYS_CLOCK_CLOCK_FREQUENCY
+  #elif (CFG_I2C2_SOURCE_MUX == CFG_I2C2_HSI)
+    #define I2C2_CLOCK_FREQUENCY                        HSI_CLOCK_FREQUENCY
+  #else
+    #error  I2C2_CLOCK_FREQUENCY not defined
+  #endif
+/// I2C3 clock frequency
+  #if   (CFG_I2C3_SOURCE_MUX == CFG_I2C3_PLCK1)
+    #define I2C3_CLOCK_FREQUENCY                        PLCK1_CLOCK_FREQUENCY
+  #elif (CFG_I2C3_SOURCE_MUX == CFG_I2C3_SYS_CLOCK)
+    #define I2C3_CLOCK_FREQUENCY                        SYS_CLOCK_CLOCK_FREQUENCY
+  #elif (CFG_I2C3_SOURCE_MUX == CFG_I2C3_HSI)
+    #define I2C3_CLOCK_FREQUENCY                        HSI_CLOCK_FREQUENCY
+  #else
+    #error  I2C3_CLOCK_FREQUENCY not defined
+  #endif
+/// I2C4 clock frequency
+  #if   (CFG_I2C4_SOURCE_MUX == CFG_I2C4_PLCK1)
+    #define I2C4_CLOCK_FREQUENCY                        PLCK1_CLOCK_FREQUENCY
+  #elif (CFG_I2C4_SOURCE_MUX == CFG_I2C4_SYS_CLOCK)
+    #define I2C4_CLOCK_FREQUENCY                        SYS_CLOCK_CLOCK_FREQUENCY
+  #elif (CFG_I2C4_SOURCE_MUX == CFG_I2C4_HSI)
+    #define I2C4_CLOCK_FREQUENCY                        HSI_CLOCK_FREQUENCY
+  #else
+    #error  I2C4_CLOCK_FREQUENCY not defined
+  #endif
+/// LPTIM1 clock frequency
+  #if   (CFG_LPTIM1_SOURCE_MUX == CFG_LPTIM1_PLCK1)
+    #define LPTIM1_CLOCK_FREQUENCY                        PLCK1_CLOCK_FREQUENCY
+  #elif (CFG_LPTIM1_SOURCE_MUX == CFG_LPTIM1_LSI)
+    #define LPTIM1_CLOCK_FREQUENCY                        LSI_CLOCK_FREQUENCY
+  #elif (CFG_LPTIM1_SOURCE_MUX == CFG_LPTIM1_HSI)
+    #define LPTIM1_CLOCK_FREQUENCY                        HSI_CLOCK_FREQUENCY
+  #elif (CFG_LPTIM1_SOURCE_MUX == CFG_LPTIM1_LSE)
+    #define LPTIM1_CLOCK_FREQUENCY                        LSE_CLOCK_FREQUENCY
+  #else
+    #error  LPTIM1_CLOCK_FREQUENCY not defined
+  #endif
+/// SDMMC 1 clock frequency
+  #if   (CFG_SDMMC1_SOURCE_MUX == CFG_SDMMC1_PLL48_CLOCK)
+    #define SDMMC1_CLOCK_FREQUENCY                      PLL48_CLOCK_FREQUENCY
+  #elif (CFG_SDMMC1_SOURCE_MUX == CFG_SDMMC1_SYS_CLOCK)
+    #define SDMMC1_CLOCK_FREQUENCY                      SYS_CLOCK_FREQUENCY
+  #else
+    #error  SDMMC1_CLOCK_FREQUENCY not defined
+  #endif
 /// USART 1 clock frequency
   #if   (CFG_USART1_SOURCE_MUX == CFG_USART1_PCLK2)
     #define USART1_CLOCK_FREQUENCY                      PCLK2_CLOCK_FREQUENCY

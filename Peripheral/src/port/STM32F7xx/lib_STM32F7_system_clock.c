@@ -119,7 +119,38 @@ void SystemInit(void)
     while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);              // Wait till the main PLL is used as system clock source
   #endif
 
-    RCC->DCKCFGR2 |= RCC_DCKCFGR2_CK48MSEL;
+    //------------ Dedicated Clocks Configuration Register 1 -------------------
+
+    uint32_t DCKCFGR1_Value = (
+    CFG_SAI2_SOURCE_MUX   |
+    CFG_SAI1_SOURCE_MUX   |
+    CFG_PLLSAI_DIV_R      |
+    CFG_PLLSAI_DIV_Q      |
+    CFG_PLLI2S_DIV_R);
+    SET_BIT(RCC->DCKCFGR1, DCKCFGR1_Value);
+
+    //------------ Dedicated Clocks Configuration Register 2 -------------------
+    uint32_t DCKCFGR2_Value = (
+    CFG_CEC_SOURCE_MUX    |
+    CFG_CK48M_SOURCE_MUX  |
+    CFG_I2C1_SOURCE_MUX   |
+    CFG_I2C2_SOURCE_MUX   |
+    CFG_I2C3_SOURCE_MUX   |
+    CFG_I2C4_SOURCE_MUX   |
+    CFG_LPTIM1_SOURCE_MUX |
+    CFG_SDMMC1_SOURCE_MUX |
+    CFG_USART1_SOURCE_MUX |
+    CFG_USART2_SOURCE_MUX |
+    CFG_USART3_SOURCE_MUX |
+    CFG_UART4_SOURCE_MUX  |
+    CFG_UART5_SOURCE_MUX  |
+    CFG_USART6_SOURCE_MUX |
+    CFG_UART7_SOURCE_MUX  |
+    CFG_UART8_SOURCE_MUX  |
+    CFG_USB_SOURCE_MUX);
+    SET_BIT(RCC->DCKCFGR2,DCKCFGR2_Value);
+
+//--------------------------------------------------------------------------
 
   #ifdef CFG_ENABLE_PLLSAI
     RCC->PLLSAICFGR  = (CFG_PLLSAI_N_MULTIPLIER << RCC_PLLSAI_CFGR_PLL_N_POS) |
@@ -127,7 +158,6 @@ void SystemInit(void)
                        (CFG_PLLSAI_Q_DIVIDER    << RCC_PLLSAI_CFGR_PLL_Q_POS) |
                        (CFG_PLLSAI_R_DIVIDER    << RCC_PLLSAI_CFGR_PLL_R_POS);
 
-    MODIFY_REG(RCC->DCKCFGR1, RCC_DCKCFGR1_PLLSAIDIVR, CFG_LCD_CLOCK_DIVIDER);
 
     // TODO need to use the enable for this
     RCC->CR |= RCC_CR_PLLSAION;
@@ -143,11 +173,6 @@ void SystemInit(void)
     // TODO need to use the enable for this
     RCC->CR |= RCC_CR_PLLI2SON;
     while((RCC->CR & RCC_CR_PLLI2SRDY) == 0);
-  #endif
-
-    // Set Source for USB
-  #if (USE_USB_DRIVER == DEF_ENABLED)
-    SET_BIT(RCC->DCKCFGR2, CFG_USB_SOURCE_MUX);
   #endif
 
     // AHB,APB1,APB2 CLOCK

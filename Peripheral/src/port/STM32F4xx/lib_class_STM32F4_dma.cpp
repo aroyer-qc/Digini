@@ -161,6 +161,7 @@ void DMA_Driver::SetDestination(void* Destination)
 //  Return:         None
 //
 //  Description:    Clear flag for specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::ClearFlag(uint32_t Flag)
 {
@@ -203,6 +204,7 @@ void DMA_Driver::ClearFlag(uint32_t Flag)
 //  Return:         bool        If true then flag is set.
 //
 //  Description:    Check flag for specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
 bool DMA_Driver::CheckFlag(uint32_t Flag)
 {
@@ -248,6 +250,7 @@ bool DMA_Driver::CheckFlag(uint32_t Flag)
 //  Return:         None
 //
 //  Description:    Enable the associated DMA module clock
+//
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::EnableClock(void)
 {

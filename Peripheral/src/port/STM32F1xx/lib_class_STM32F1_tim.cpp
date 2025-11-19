@@ -100,7 +100,7 @@ void TIM_Driver::Initialize(void)
     SET_BIT(m_pTim->DIER, m_pInfo->IRQ_DMA_SourceEnable);        // Enable all source according to configuration
 
     // Configure interrupt priority for TIM
-    if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
+    if(m_pInfo->IRQn_Channel != ISR_NONE_IRQn)
     {
         ISR_Init(m_pInfo->IRQn_Channel, m_pInfo->PreempPrio);    // Configure interrupt priority for TIM
     }

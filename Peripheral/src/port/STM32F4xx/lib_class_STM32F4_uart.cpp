@@ -236,7 +236,7 @@ void UART_Driver::Initialize(void)
         m_pCallback = nullptr;
       #endif
 
-        if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
+        if(m_pInfo->IRQn_Channel != ISR_NONE_IRQn)
         {
             ISR_Init(m_pInfo->IRQn_Channel, m_pInfo->PreempPrio);
         }
@@ -484,6 +484,7 @@ uint32_t UART_Driver::GetBaudRate(void)
 //
 //  Note(s):        This method is use to clear any of those flag. It also do a read on the data
 //                  register.
+//                  No check for valid UART as this is called inside class function
 //
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::ClearFlag(void)

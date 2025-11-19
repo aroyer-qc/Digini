@@ -238,7 +238,7 @@ void UART_Driver::Initialize(void)
         m_pCallback = nullptr;
       #endif
 
-        if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
+        if(m_pInfo->IRQn_Channel != ISR_NONE_IRQn)
         {
             ISR_Init(m_pInfo->IRQn_Channel, m_pInfo->PreempPrio);
         }

@@ -88,7 +88,7 @@ struct BDMA_BaseRegister_t
 //  Parameter(s):   DMA_Info_t* pInfo
 //  Return:         None
 //
-//  Description:    Setup transfert from source to destination. according to configuration
+//  Description:    Setup transfer from source to destination. according to configuration
 //
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::Initialize(DMA_Info_t* pInfo)

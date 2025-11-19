@@ -101,7 +101,7 @@ const uint32_t UART_Driver::m_BaudRate[NB_OF_BAUD] =
 //
 //   Parameter(s):  UartID                  ID for the data to use for this class
 //
-//   Description:   Initializes the UARTx peripheral according to the specified Parameters
+//   Description:   Initializes the UART_Driver class
 //
 //   Note(s):
 //
@@ -261,7 +261,7 @@ void UART_Driver::Initialize(void)
         m_pCallback = nullptr;
       #endif
 
-        if(m_pInfo->IRQn_Channel != ISR_IRQn_NONE)
+        if(m_pInfo->IRQn_Channel != ISR_NONE_IRQn)
         {
             ISR_Init(m_pInfo->IRQn_Channel, m_pInfo->PreempPrio);
         }
@@ -554,7 +554,6 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             m_DMA_TX.Disable();
             m_DMA_TX.ClearFlag();
 
-
             if(pBufferTX != nullptr)
             {
                 m_DMA_TX.SetSource((void*)pBufferTX);
@@ -825,7 +824,6 @@ void UART_Driver::EnableRX_ISR(uint8_t Mask)
         volatile uint32_t Register;
 
         // Idle, Error flag (Overrun, Framing error, Parity error)_IRQHandler
-//        m_pUart->ICR = (USART_ICR_IDLECF | USART_ICR_NCF | USART_ICR_ORECF | USART_ICR_FECF | USART_ICR_PECF);
         m_pUart->ICR = (USART_ICR_IDLECF | USART_ICR_NECF | USART_ICR_ORECF | USART_ICR_FECF | USART_ICR_PECF);
         Register = m_pUart->RDR;
         (void)Register;
@@ -926,7 +924,7 @@ void UART_Driver::EnableTX_ISR(uint8_t Mask)
       #if (UART_DRIVER_TX_EMPTY_CFG == DEF_ENABLED)
         if((Mask & UART_ISR_TX_EMPTY_MASK) != 0)
         {
-           m_pUart->CR1 |= USART_CR1_TXEIE;
+            m_pUart->CR1 |= USART_CR1_TXEIE;
         }
       #endif
 

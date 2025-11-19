@@ -202,6 +202,7 @@ typedef enum
   SAI4_IRQn                   = 146,    /*!< SAI4 global interrupt                                             */
   HOLD_CORE_IRQn              = 148,    /*!< Hold core interrupt                                               */
   WAKEUP_PIN_IRQn             = 149,    /*!< Interrupt for all 6 wake-up pins                                  */
+  ISR_NONE_IRQn               = 255
 } IRQn_Type;
 
 /**

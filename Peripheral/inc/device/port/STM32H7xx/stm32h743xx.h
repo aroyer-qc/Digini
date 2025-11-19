@@ -197,6 +197,7 @@ typedef enum
   ECC_IRQn                    = 145,    /*!< ECC diagnostic Global Interrupt                                   */
   SAI4_IRQn                   = 146,    /*!< SAI4 global interrupt                                             */
   WAKEUP_PIN_IRQn             = 149,    /*!< Interrupt for all 6 wake-up pins                                  */
+  ISR_NONE_IRQn               = 255
 } IRQn_Type;
 
 /**

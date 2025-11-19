@@ -164,6 +164,7 @@ typedef enum
   SPI6_IRQn                   = 86,     /*!< SPI6 global Interrupt                                             */
   SAI1_IRQn                   = 87,     /*!< SAI1 global Interrupt                                             */
   DMA2D_IRQn                  = 90      /*!< DMA2D global Interrupt                                            */
+  ISR_NONE_IRQn               = 255
 } IRQn_Type;
 
 /**

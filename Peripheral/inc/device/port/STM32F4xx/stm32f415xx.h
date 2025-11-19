@@ -154,6 +154,7 @@ typedef enum
   CRYP_IRQn                   = 79,     /*!< CRYP crypto global interrupt                                      */
   HASH_RNG_IRQn               = 80,     /*!< Hash and Rng global interrupt                                     */
   FPU_IRQn                    = 81      /*!< FPU global interrupt                                               */
+  ISR_NONE_IRQn               = 255
 } IRQn_Type;
 
 /**

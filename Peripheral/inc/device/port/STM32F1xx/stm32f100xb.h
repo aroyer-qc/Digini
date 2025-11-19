@@ -120,6 +120,7 @@ typedef enum
   CEC_IRQn                    = 42,     /*!< HDMI-CEC Interrupt                                   */
   TIM6_DAC_IRQn               = 54,     /*!< TIM6 and DAC underrun Interrupt                      */
   TIM7_IRQn                   = 55,     /*!< TIM7 global Interrupt                                */
+  ISR_NONE_IRQn               = 255
 } IRQn_Type;
 
 /**

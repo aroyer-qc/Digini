@@ -153,6 +153,7 @@ typedef enum
   QUADSPI_IRQn                = 92,     /*!< QuadSPI global Interrupt                                          */ 
   FMPI2C1_EV_IRQn             = 95,     /*!< FMPI2C1 Event Interrupt                                           */
   FMPI2C1_ER_IRQn             = 96      /*!< FMPI2C1 Error Interrupt                                           */
+  ISR_NONE_IRQn               = 255
 } IRQn_Type;
 
 /**

@@ -198,6 +198,7 @@ typedef enum
   FDCAN3_IT1_IRQn             = 160,    /*!< FDCAN3 Interrupt line 1                                           */
   TIM23_IRQn                  = 161,    /*!< TIM23 global interrupt                                            */
   TIM24_IRQn                  = 162,    /*!< TIM24 global interrupt                                            */
+  ISR_NONE_IRQn               = 255
 } IRQn_Type;
 
 /**

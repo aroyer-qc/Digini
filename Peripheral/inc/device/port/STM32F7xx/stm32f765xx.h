@@ -179,6 +179,7 @@ typedef enum
   CAN3_RX1_IRQn               = 106,    /*!< CAN3 RX1 Interrupt                                                */
   CAN3_SCE_IRQn               = 107,    /*!< CAN3 SCE Interrupt                                                */
   MDIOS_IRQn                  = 109     /*!< MDIO Slave global Interrupt                                       */
+  ISR_NONE_IRQn               = 255
 } IRQn_Type;
 
 /**

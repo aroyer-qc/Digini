@@ -159,6 +159,7 @@ typedef enum
   QUADSPI_IRQn                = 92,     /*!< Quad SPI global interrupt                                         */
   LPTIM1_IRQn                 = 93,     /*!< LP TIM1 interrupt                                                 */
   SDMMC2_IRQn                 = 103,    /*!< SDMMC2 global Interrupt                                           */
+  ISR_NONE_IRQn               = 255
 } IRQn_Type;
 
 /**

@@ -192,6 +192,7 @@ typedef enum
   OCTOSPI2_IRQn               = 150,    /*!< OctoSPI2 global interrupt                                         */
   GFXMMU_IRQn                 = 153,    /*!< GFXMMU global interrupt                                           */
   BDMA1_IRQn                  = 154,    /*!< BDMA1 for DFSM global interrupt                                   */
+  ISR_NONE_IRQn               = 255
 } IRQn_Type;
 
 /**

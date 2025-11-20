@@ -162,7 +162,7 @@ SystemState_e DIGINI_PostInitialize(void)
   #endif
 
   #if (DIGINI_USE_FATFS == DEF_ENABLED)
-    FatFS_DiskIO.Initialize();
+    //FatFS_DiskIO.Initialize();
   #endif
 
   #if (DIGINI_USE_GRAFX == DEF_ENABLED)

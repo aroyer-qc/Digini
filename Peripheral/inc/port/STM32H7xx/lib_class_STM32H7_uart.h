@@ -187,7 +187,7 @@ enum UART_Config_e
     UART_CFG_O_8_2    =   (UART_CFG_ODD_PARITY  | UART_CFG_8_LEN_BITS | UART_CFG_2_STOP_BITS),
     UART_CFG_O_9_2    =   (UART_CFG_ODD_PARITY  | UART_CFG_9_LEN_BITS | UART_CFG_2_STOP_BITS),
 
-    UART_CFG_CR1_MASK = 0x1000160C,        // TX RX Enable, Length (8 or 9 Bits), Parity (DISABLE, ODD, EVEN)
+    UART_CFG_CR1_MASK = 0x1000960C,        // OVER8, TX RX Enable, Length (8 or 9 Bits), Parity (DISABLE, ODD, EVEN)
     UART_CFG_CR2_MASK = 0x00003000,        // STOP Bits,
 };
 

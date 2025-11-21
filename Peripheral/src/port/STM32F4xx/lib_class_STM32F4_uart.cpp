@@ -41,7 +41,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define UART_BACK_OFFSET_RESET_REGISTER     0x20
-
+/*
 #define UART_REG_PARITY_NONE                0                                   // Parity control disabled
 #define UART_REG_PARITY_EVEN                USART_CR1_PCE                       // Parity control enabled and Even Parity is selected
 #define UART_REG_PARITY_ODD                 (USART_CR1_PCE | USART_CR1_PS)      // Parity control enabled and Odd Parity is selected
@@ -65,7 +65,7 @@
 #define UART_REG_FLOW_CTS                   USART_CR3_CTSE
 #define UART_REG_FLOW_CTS_ISR               USART_CR3_CTSIE
 #define UART_REG_FLOW_RTS                   USART_CR3_RTSE
-
+*/
 #define UART_REG_CR2_CONFIG_OFFSET          16
 
 //-------------------------------------------------------------------------------------------------
@@ -393,12 +393,13 @@ uint32_t UART_Driver::GetPeripheralClock(void)
 {
     uint32_t PeriphClk = m_ClockFrequency;
 
-    if((m_pUart->CR1 & UART_REG_OVERSAMPLING_MASK) == UART_REG_OVERSAMPLING_8)
+    if((m_pInfo->Config & UART_CFG_OVER_8) == UART_CFG_OVER_8)
+//    if((m_pUart->CR1 & UART_REG_OVERSAMPLING_MASK) == UART_REG_OVERSAMPLING_8)
     {
         PeriphClk <<= 1;
     }
 
-  return PeriphClk;
+    return PeriphClk;
 }
 
 //-------------------------------------------------------------------------------------------------

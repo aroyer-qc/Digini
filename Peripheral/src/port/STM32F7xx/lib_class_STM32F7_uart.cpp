@@ -75,7 +75,7 @@ const uint32_t UART_Driver::m_BaudRate[NB_OF_BAUD] =
 //
 //   Parameter(s):  UartID                  ID for the data to use for this class
 //
-//   Description:   Initializes the UARTx peripheral according to the specified Parameters
+//   Description:   Initializes the UART_Driver class
 //
 //   Note(s):
 //
@@ -496,8 +496,8 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             {
                 while(m_DMA_IsItBusyTX == true)
                 {
-                    //nOS_Yield();
-                    nOS_Sleep(10);
+                    nOS_Yield();
+                    //nOS_Sleep(10);
                 }
             }
 

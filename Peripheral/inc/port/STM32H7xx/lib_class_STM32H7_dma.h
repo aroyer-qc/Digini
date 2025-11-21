@@ -437,6 +437,7 @@ class DMA_Driver
         DMAMUX_RequestGenStatus_TypeDef*    m_pDMAMUX_RequestGenStatus;     // DMAMUX request generator Status Address
         uint32_t                            m_DMAMUX_RequestGenStatusMask;
 
+        size_t                              m_LastBoundaryTransferSize;
 //        uint32_t                            m_Flag;
 //        IRQn_Type                           m_IRQn_Channel;
 //        uint32_t                            m_PremptionPriority;

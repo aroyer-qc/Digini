@@ -1094,6 +1094,7 @@ void UART_Driver::IRQ_Handler(void)
         if((Status & USART_ISR_IDLE) != 0)
         {
             m_RX_Transfer.u.Head = m_RX_Transfer.StaticSize - m_DMA_RX.GetLength();      // Give actual position in the DMA Buffer
+            SCB_InvalidateDCache_by_Addr((uint32_t*)m_RX_Transfer.pBuffer, UART_DRIVER_INTERNAL_RX_BUFFER_SIZE);
             m_pUart->ICR = USART_ICR_IDLECF;
 
           #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)

@@ -158,9 +158,9 @@ typedef enum
   SAI2_IRQn                   = 91,     /*!< SAI2 global Interrupt                                             */
   QUADSPI_IRQn                = 92,     /*!< QuadSPI global Interrupt                                          */
   CEC_IRQn                    = 93,     /*!< CEC global Interrupt                                              */
-  SPDIF_RX_IRQn               = 94,     /*!< SPDIF-RX global Interrupt                                          */
+  SPDIF_RX_IRQn               = 94,     /*!< SPDIF-RX global Interrupt                                         */
   FMPI2C1_EV_IRQn             = 95,     /*!< FMPI2C1 Event Interrupt                                           */
-  FMPI2C1_ER_IRQn             = 96      /*!< FMPI2C1 Error Interrupt                                           */  
+  FMPI2C1_ER_IRQn             = 96,     /*!< FMPI2C1 Error Interrupt                                           */  
   ISR_NONE_IRQn               = 255
 } IRQn_Type;
 

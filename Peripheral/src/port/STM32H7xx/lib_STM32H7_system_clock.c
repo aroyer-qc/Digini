@@ -100,25 +100,11 @@ void SystemInit(void)
 {
     uint32_t Retry;
 
-    volatile uint32_t ClockValue;
-
-    ClockValue = SYS_CPU_CORE_CLOCK_FREQUENCY;
-    ClockValue = SYS_HCLK_CLOCK_FREQUENCY;
-    ClockValue = SYS_PERIPHERAL_MAIN_CLOCK_FREQUENCY;
-    ClockValue = PCLK1_CLOCK_FREQUENCY;
-    ClockValue = PCLK2_CLOCK_FREQUENCY;
-    ClockValue = PCLK3_CLOCK_FREQUENCY;
-    ClockValue = PCLK4_CLOCK_FREQUENCY;
-    ClockValue = SYSTEM_CORE_CLOCK;
-    ClockValue = CFG_FLASH_LATENCY;
-VAR_UNUSED(ClockValue);
-
-
-    __asm volatile("cpsid i");                                                  // Disable IRQ
+    __asm volatile("cpsid i");                                                      // Disable IRQ
 
     // FPU settings
   #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
-    SCB->CPACR |= ((3 << (10 * 2)) | (3 << (11 * 2)));                          // Set CP10 and CP11 Full Access
+    SCB->CPACR |= ((3 << (10 * 2)) | (3 << (11 * 2)));                              // Set CP10 and CP11 Full Access
   #endif
 
     // SEVONPEND enabled so that an interrupt coming from the CPU(n) interrupt signal is detectable by the CPU after a WFI/WFE instruction.
@@ -126,38 +112,38 @@ VAR_UNUSED(ClockValue);
 
     // According the PDF VOS0 should be chosen for 240Mhz AXI clock with 4 WS
   #if defined (SMPS)
-    SET_BIT(PWR->CR3, PWR_CR3_SMPSEN);                                          // Set the power supply configuration
+    SET_BIT(PWR->CR3, PWR_CR3_SMPSEN);                                              // Set the power supply configuration
   #endif
 
     // Configure the main internal regulator output voltage
-  #if defined(PWR_SRDCR_VOS)                                                    // STM32H7Axxx and STM32H7Bxxx lines
+  #if defined(PWR_SRDCR_VOS)                                                        // STM32H7Axxx and STM32H7Bxxx lines
     MODIFY_REG(PWR->SRDCR, PWR_SRDCR_VOS, CFG_PWR_REGULATOR_VOLTAGE);
   #else
-   #if defined(SYSCFG_PWRCR_ODEN)                                               // STM32H74xxx and STM32H75xxx lines
+   #if defined(SYSCFG_PWRCR_ODEN)                                                   // STM32H74xxx and STM32H75xxx lines
     uint32_t RegisterValue;
 
     if(CFG_PWR_REGULATOR_VOLTAGE == CFG_PWR_REGULATOR_VOLTAGE_SCALE0)
     {
 // TODO not working with H745 at this time... when bypasssed it is OK!!
-//        MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE_SCALE1);  // Configure the Voltage Scaling 1
-//        RegisterValue = READ_BIT(PWR->D3CR, PWR_D3CR_VOS);                      // Delay after setting the voltage scaling
-//        SET_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);                              // Enable the PWR overdrive
-//        RegisterValue = READ_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);             // Delay after setting the syscfg boost setting
+//        MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE_SCALE1);    // Configure the Voltage Scaling 1
+//        RegisterValue = READ_BIT(PWR->D3CR, PWR_D3CR_VOS);                        // Delay after setting the voltage scaling
+//        SET_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);                                // Enable the PWR overdrive
+//        RegisterValue = READ_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);               // Delay after setting the syscfg boost setting
     }
     else
     {
-        CLEAR_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);                            // Disable the PWR overdrive
-        RegisterValue = READ_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);             // Delay after setting the syscfg boost setting
-        MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE);         // Configure the Voltage Scaling x
-        RegisterValue = READ_BIT(PWR->D3CR, PWR_D3CR_VOS);                      // Delay after setting the voltage scaling
+        CLEAR_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);                                // Disable the PWR overdrive
+        RegisterValue = READ_BIT(SYSCFG->PWRCR, SYSCFG_PWRCR_ODEN);                 // Delay after setting the syscfg boost setting
+        MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE);             // Configure the Voltage Scaling x
+        RegisterValue = READ_BIT(PWR->D3CR, PWR_D3CR_VOS);                          // Delay after setting the voltage scaling
     }
 
     VAR_UNUSED(RegisterValue);
-   #else                                                                        // STM32H72xxx and STM32H73xxx lines
+   #else                                                                            // STM32H72xxx and STM32H73xxx lines
     uint32_t RegisterValue;
 
-    MODIFY_REG (PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE);            // Configure the Voltage Scaling
-    RegisterValue = READ_BIT(PWR->D3CR, PWR_D3CR_VOS);                          // Delay after setting the voltage scaling
+    MODIFY_REG (PWR->D3CR, PWR_D3CR_VOS, CFG_PWR_REGULATOR_VOLTAGE);                // Configure the Voltage Scaling
+    RegisterValue = READ_BIT(PWR->D3CR, PWR_D3CR_VOS);                              // Delay after setting the voltage scaling
     VAR_UNUSED(RegisterValue);
    #endif
   #endif
@@ -169,7 +155,7 @@ VAR_UNUSED(ClockValue);
     while((PWR->SRDCR & PWR_SRDCR_VOSRDY) != PWR_SRDCR_VOSRDY){};
   #endif
 
-    SET_BIT(RCC->APB4ENR, RCC_APB4ENR_SYSCFGEN);                                // Enable SYSCFG Clock
+    SET_BIT(RCC->APB4ENR, RCC_APB4ENR_SYSCFGEN);                                    // Enable SYSCFG Clock
 
   #if defined(STM32H723xx) ||  defined(STM32H725xx) || defined(STM32H730xx) || defined(STM32H730xxQ) || defined(STM32H735xx)
     FLASH->OPTKEYR = 0x08192A3B;
@@ -186,10 +172,10 @@ VAR_UNUSED(ClockValue);
   #endif
 
     // Reset the RCC clock configuration to the default reset state
-    RCC->CR   |= RCC_CR_HSION;                                             // Set HSION bit
-    RCC->CFGR  = 0x00000000;                                               // Reset CFGR register
+    RCC->CR   |= RCC_CR_HSION;                                                      // Set HSION bit
+    RCC->CFGR  = 0x00000000;                                                        // Reset CFGR register
 
-    CLEAR_BIT(RCC->CR, (RCC_CR_HSEON   | RCC_CR_CSSHSEON | RCC_CR_CSION  |      // Reset HSEON, CSSON, CSION, RC48ON, CSIKERON, PLL1ON, PLL2ON and PLL3ON bits
+    CLEAR_BIT(RCC->CR, (RCC_CR_HSEON   | RCC_CR_CSSHSEON | RCC_CR_CSION  |          // Reset HSEON, CSSON, CSION, RC48ON, CSIKERON, PLL1ON, PLL2ON and PLL3ON bits
                         RCC_CR_HSI48ON | RCC_CR_CSIKERON | RCC_CR_PLL1ON |
                         RCC_CR_PLL2ON  | RCC_CR_PLL3ON));
 
@@ -224,7 +210,7 @@ VAR_UNUSED(ClockValue);
         *((__IO uint32_t*)0x51008108) = 0x000000001;
     }
 
-    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, CFG_FLASH_LATENCY);                                       // Set flash latency
+    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, CFG_FLASH_LATENCY);                   // Set flash latency
 
     /// Config all PLL
 

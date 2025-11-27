@@ -38,6 +38,10 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+#define LSI_CLOCK_FREQUENCY                         32000
+#define HSI_CLOCK_FREQUENCY                         16000000
+#define LSE_CLOCK_FREQUENCY                         32768
+
 // Own define for register bit value without cast (Do not change)
 #define CFG_RCC_CFGR_SW_HSI                         0x00000000U
 #define CFG_RCC_CFGR_SW_HSE                         0x00000001U
@@ -94,7 +98,7 @@
     #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (84000000U)
     #define CFG_MAX_APB1_CLOCK_FREQUENCY            (42000000U)
     #define CFG_MAX_APB2_CLOCK_FREQUENCY            (84000000U)
-#elif defined(STM32F405xx) || defined(STM32F407xx) || defined(STM32F415xx) || defined(STM32F417xx) || defined(STM32F429xx) || defined(STM32F439xx)
+#elif defined(STM32F405xx) || defined(STM32F407xx) || defined(STM32F415xx) || defined(STM32F417xx)
     #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (168000000U)
     #define CFG_MAX_APB1_CLOCK_FREQUENCY            (42000000U)
     #define CFG_MAX_APB2_CLOCK_FREQUENCY            (84000000U)
@@ -103,15 +107,44 @@
     #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (100000000U)
     #define CFG_MAX_APB1_CLOCK_FREQUENCY            (50000000U)
     #define CFG_MAX_APB2_CLOCK_FREQUENCY            (100000000U)
-#elif defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F446xx) || defined(STM32F469xx) || defined(STM32F479xx)
+#elif defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F446xx) || defined(STM32F469xx) || defined(STM32F479xx)
     #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (180000000U)
     #define CFG_MAX_APB1_CLOCK_FREQUENCY            (45000000U)
     #define CFG_MAX_APB2_CLOCK_FREQUENCY            (90000000U)
 #endif
 
-#define LSI_CLOCK_FREQUENCY                         32000
-#define HSI_CLOCK_FREQUENCY                         16000000
-#define LSE_CLOCK_FREQUENCY                         32768
+#define CFG_RCC_DCKCFGR_PLLSAI_Q_DIV(x)            ((x - 1) << RCC_DCKCFGR_PLLSAIDIVQ_Pos)
+
+#define CFG_RCC_DCKCFGR_PLLSAI_R_DIV2               0x00000000U
+#define CFG_RCC_DCKCFGR_PLLSAI_R_DIV4               RCC_DCKCFGR_PLLSAIDIVR_0
+#define CFG_RCC_DCKCFGR_PLLSAI_R_DIV8               RCC_DCKCFGR_PLLSAIDIVR_1
+#define CFG_RCC_DCKCFGR_PLLSAI_R_DIV16              (RCC_DCKCFGR_PLLSAIDIVR_1 | RCC_DCKCFGR_PLLSAIDIVR_0)
+
+#define CFG_RCC_DCKCFGR_PLLI2S_Q_DIV(x)             ((x - 1) << RCC_DCKCFGR_PLLI2SDIVQ_Pos)
+
+//-------------------------------------------------------------------------------------------------
+// Multiplexer for peripheral clock source (TODO missing one)
+
+#define CFG_I2S_PLLI2S_R                            0
+#define CFG_I2S_I2S_CKIN                            RCC_CFGR_I2SSRC
+
+#define CFG_SAI1_PLLSAI_Q                           0
+#define CFG_SAI1_PLLI2S_Q                           RCC_DCKCFGR_SAI1ASRC_0
+#define CFG_SAI1_EXT_CLK                            RCC_DCKCFGR_SAI1ASRC_1
+
+#define CFG_SAI2_PLLSAI_Q                           0
+#define CFG_SAI2_PLLI2S_Q                           RCC_DCKCFGR1_SAI2SEL_0
+#define CFG_SAI2_EXT_CLK                            RCC_DCKCFGR1_SAI2SEL_1
+
+#define CFG_MCO1_HSI                                0
+#define CFG_MCO1_LSE                                RCC_CFGR_MCO1_0
+#define CFG_MCO1_HSE                                RCC_CFGR_MCO1_1
+#define CFG_MCO1_PLL_CLK                            (RCC_CFGR_MCO1_1 | RCC_CFGR_MCO1_0)
+
+#define CFG_MCO2_SYS_CLK                            0
+#define CFG_MCO2_PLLI2S_R                           RCC_CFGR_MCO2_0
+#define CFG_MCO2_HSE                                RCC_CFGR_MCO2_1
+#define CFG_MCO2_PLL_CLK                            (RCC_CFGR_MCO2_1 | RCC_CFGR_MCO2_0)
 
 //-------------------------------------------------------------------------------------------------
 // Configuration file(s)
@@ -173,6 +206,68 @@
 
 
 #endif // CFG_SYS_CLOCK_MUX == RCC_CFGR_SW_PLL
+
+// --------------------------------------------------------------------------------------------------------------------------------
+// PLLI2S
+  #if (CFG_PLLI2S_N_MULTIPLIER < 50) || (CFG_PLLI2S_N_MULTIPLIER > 432)
+    #pragma message "XSTR(CFG_PLLSAI_N_MULTIPLIER)"
+    #error I2S PLLN is out of range
+  #else
+    #define CFG_RCC_PLLI2S_CFGR_PLLN                (CFG_PLLI2S_N_MULTIPLIER << RCC_PLLI2S_CFGR_PLL_N_POS)
+  #endif
+
+  #if (CFG_PLLI2S_Q_DIVIDER < 2) || (CFG_PLLI2S_Q_DIVIDER > 15)
+    #pragma message "XSTR(CFG_PLLI2S_Q_DIVIDER)"
+    #error I2S PLLQ is out of range
+  #else
+    #define CFG_RCC_PLLI2S_CFGR_PLLQ                (CFG_PLLI2S_Q_DIVIDER << RCC_PLLI2S_CFGR_PLL_Q_POS)
+  #endif
+
+  #if (CFG_PLLI2S_R_DIVIDER < 2) || (CFG_PLLI2S_R_DIVIDER > 7)
+    #pragma message "XSTR(CFG_PLLI2S_R_DIVIDER)"
+    #error I2S PLLR is out of range
+  #else
+    #define CFG_RCC_PLLI2S_CFGR_PLLR                (CFG_PLLI2S_R_DIVIDER << RCC_PLLI2S_CFGR_PLL_R_POS)
+  #endif
+
+  #define CFG_RCC_PLLI2S_CFGR                       (CFG_RCC_PLLI2S_CFGR_PLLN |   \
+                                                     CFG_RCC_PLLI2S_CFGR_PLLQ |   \
+                                                     CFG_RCC_PLLI2S_CFGR_PLLQ)
+
+  #define PLLI2SN_CLOCK_FREQUENCY                   ((CFG_PLL_SOURCE / CFG_PLL_M_DIVIDER) * CFG_PLLI2S_N_MULTIPLIER)
+  #define PLLI2SQ_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_Q_DIVIDER)
+  #define PLLI2SR_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_R_DIVIDER)
+
+// --------------------------------------------------------------------------------------------------------------------------------
+// PLLSAI
+  #if (CFG_PLLSAI_N_MULTIPLIER < 50) || (CFG_PLLSAI_N_MULTIPLIER > 432)
+    #pragma message "XSTR(CFG_PLLSAI_N_MULTIPLIER)"
+    #error SAI PLLN is out of range
+  #else
+    #define CFG_RCC_PLLSAI_CFGR_PLLN                (CFG_PLLSAI_N_MULTIPLIER << RCC_PLLSAI_CFGR_PLL_N_POS)
+  #endif
+
+  #if (CFG_PLLSAI_Q_DIVIDER < 2) || (CFG_PLLSAI_Q_DIVIDER > 15)
+    #pragma message "XSTR(CFG_PLLSAI_Q_DIVIDER)"
+    #error SAI PLLQ is out of range
+  #else
+    #define CFG_RCC_PLLSAI_CFGR_PLLQ                (CFG_PLLSAI_Q_DIVIDER << RCC_PLLSAI_CFGR_PLL_Q_POS)
+  #endif
+
+  #if (CFG_PLLSAI_R_DIVIDER < 2) || (CFG_PLLSAI_R_DIVIDER > 7)
+    #pragma message "XSTR(CFG_PLLSAI_R_DIVIDER)"
+    #error SAI PLLR is out of range
+  #else
+    #define CFG_RCC_PLLSAI_CFGR_PLLR                (CFG_PLLSAI_R_DIVIDER << RCC_PLLSAI_CFGR_PLL_R_POS)
+  #endif
+
+  #define CFG_RCC_PLLSAI_CFGR                       (CFG_RCC_PLLSAI_CFGR_PLLN |   \
+                                                     CFG_RCC_PLLSAI_CFGR_PLLQ |   \
+                                                     CFG_RCC_PLLSAI_CFGR_PLLQ)
+
+  #define PLLSAIN_CLOCK_FREQUENCY                   ((CFG_PLL_SOURCE / CFG_PLL_M_DIVIDER) * CFG_PLLSAI_N_MULTIPLIER)
+  #define PLLSAIQ_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_Q_DIVIDER)
+  #define PLLSAIR_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_R_DIVIDER)
 
 // --------------------------------------------------------------------------------------------------------------------------------
 

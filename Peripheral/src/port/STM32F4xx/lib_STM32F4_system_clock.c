@@ -66,7 +66,7 @@ void SystemInit(void)
     uint32_t Retry;
   #endif
 
-    __asm volatile("cpsid i");                                              // Disable IRQ
+    __asm volatile("cpsid i");                                                          // Disable IRQ
 
     SET_BIT(RCC->APB2ENR, RCC_APB2ENR_SYSCFGEN);
     SET_BIT(RCC->APB1ENR, RCC_APB1ENR_PWREN);
@@ -78,14 +78,15 @@ void SystemInit(void)
   #endif
 
     // Reset the RCC clock configuration to the default reset state ------------
-    // Set HSION bit
-    SET_BIT(RCC->CR, RCC_CR_HSION);
-
-    // Set CFGR register
-	RCC->CFGR = (CFG_SYS_HCLK | CFG_SYS_APB1 | CFG_SYS_APB2 | CFG_MCO_1 | CFG_MCO_2);
-
-    // Reset HSEBYP, CSSON and PLLON bits
-	CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));
+    SET_BIT(RCC->CR, RCC_CR_HSION);                                                     // Set HSION bit
+	RCC->CFGR = (CFG_SYS_HCLK         |
+                 CFG_SYS_APB1         |
+                 CFG_SYS_APB2         |
+                 CFG_MCO1_SOURCE_MUX  |
+                 CFG_MCO2_SOURCE_MUX  |
+                 CFG_MCO1_CLK_DIVIDER |
+                 CFG_MCO2_CLK_DIVIDER);                                                 // Set CFGR register
+    CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));                  // Reset HSEBYP, CSSON and PLLON bits
 
   #if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
 
@@ -99,40 +100,66 @@ void SystemInit(void)
     };
 
    #else
-    // Wait for HSI to be ready B4 enabling PLL
-    while(READ_BIT(RCC->CR, RCC_CR_HSIRDY) == 0) {};
+    while(READ_BIT(RCC->CR, RCC_CR_HSIRDY) == 0) {};                                    // Wait for HSI to be ready B4 enabling PLL
    #endif
 
-    // Set PLLCFGR register
-    RCC->PLLCFGR = CFG_RCC_PLLCFGR_CFG;
+    RCC->PLLCFGR = CFG_RCC_PLLCFGR_CFG;                                                 // Set PLLCFGR register
 
    #if (CFG_PLL_SOURCE == CFG_HSE_VALUE)
-    // Reset HSION bit to reduce consumption
-    CLEAR_BIT(RCC->CR, RCC_CR_HSION);
+    CLEAR_BIT(RCC->CR, RCC_CR_HSION);                                                   // Reset HSION bit to reduce consumption
    #endif
 
-    // Set flash latency
-    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, CFG_FLASH_LATENCY);
-
-    // Enable PLL
-    SET_BIT(RCC->CR, RCC_CR_PLLON);
-
-    // Wait for PLL to be ready B4 enabling PLL
-    while(READ_BIT(RCC->CR, RCC_CR_PLLRDY) == 0) {};
-
-    // Switch to PLL
-    SET_BIT(RCC->CFGR, RCC_CFGR_SW_PLL);
+    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, CFG_FLASH_LATENCY);                       // Set flash latency
+    SET_BIT(RCC->CR, RCC_CR_PLLON);                                                     // Enable PLL
+    while(READ_BIT(RCC->CR, RCC_CR_PLLRDY) == 0) {};                                    // Wait for PLL to be ready B4 enabling PLL
+    SET_BIT(RCC->CFGR, RCC_CFGR_SW_PLL);                                                // Switch to PLL
 
   #endif // (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
 
-    // Disable all interrupts
-    RCC->CIR = 0;
+   //------------ Dedicated Clocks Configuration Register 1 -------------------
+
+    uint32_t DCKCFGR_Value = (
+    CFG_SAI2_SOURCE_MUX   |
+    CFG_SAI1_SOURCE_MUX   |
+    CFG_PLLSAI_DIV_R      |
+    CFG_PLLSAI_DIV_Q      |
+    CFG_PLLI2S_DIV_Q);
+    SET_BIT(RCC->DCKCFGR, DCKCFGR_Value);
+
+//--------------------------------------------------------------------------
+
+  #ifdef CFG_ENABLE_PLLSAI
+    RCC->PLLSAICFGR  = (CFG_PLLSAI_N_MULTIPLIER << RCC_PLLSAICFGR_PLLSAIN_Pos) |
+                       (CFG_PLLSAI_Q_DIVIDER    << RCC_PLLSAICFGR_PLLSAIQ_Pos) |
+                       (CFG_PLLSAI_R_DIVIDER    << RCC_PLLSAICFGR_PLLSAIR_Pos);
+
+
+    // TODO need to use the enable for this
+    RCC->CR |= RCC_CR_PLLSAION;
+    while((RCC->CR & RCC_CR_PLLSAIRDY) == 0);
+  #endif
+
+//--------------------------------------------------------------------------
+
+  #ifdef CFG_ENABLE_PLLI2S
+    RCC->PLLI2SCFGR  = (CFG_PLLI2S_N_MULTIPLIER << RCC_PLLI2SCFGR_PLLI2SN_Pos) |
+                       (CFG_PLLI2S_Q_DIVIDER    << RCC_PLLI2SCFGR_PLLI2SQ_Pos) |
+                       (CFG_PLLI2S_R_DIVIDER    << RCC_PLLI2SCFGR_PLLI2SR_Pos);
+
+    // TODO need to use the enable for this
+    RCC->CR |= RCC_CR_PLLI2SON;
+    while((RCC->CR & RCC_CR_PLLI2SRDY) == 0);
+  #endif
+
+//--------------------------------------------------------------------------
+
+    RCC->CIR = 0;                                                                       // Disable all interrupts
 
     // Configure the Vector Table location add offset address ------------------
   #ifdef VECT_TAB_SRAM
-    SCB->VTOR = SRAM_BASE | VECT_TAB_OFFSET;    // Vector Table Relocation in Internal SRAM
+    SCB->VTOR = SRAM_BASE | VECT_TAB_OFFSET;                                            // Vector Table Relocation in Internal SRAM
   #else
-    SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET;   // Vector Table Relocation in Internal FLASH
+    SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET;                                           // Vector Table Relocation in Internal FLASH
   #endif
 }
 

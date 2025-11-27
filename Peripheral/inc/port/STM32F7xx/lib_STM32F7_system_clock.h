@@ -292,12 +292,12 @@
   #define CFG_RCC_PLLSAI_CFGR                       (CFG_RCC_PLLSAI_CFGR_PLLN |   \
                                                      CFG_RCC_PLLSAI_CFGR_PLLP |   \
                                                      CFG_RCC_PLLSAI_CFGR_PLLQ |   \
-                                                     CFG_RCC_PLLSAI_CFGR_PLLQ)
+                                                     CFG_RCC_PLLSAI_CFGR_PLLR)
 
   #define PLLSAIN_CLOCK_FREQUENCY                   ((CFG_PLL_SOURCE / CFG_PLL_M_DIVIDER) * CFG_PLLSAI_N_MULTIPLIER)
   #define PLLSAIP_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_P_DIVIDER)
   #define PLLSAIQ_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_Q_DIVIDER)
-  #define PLLSAIR_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_Q_DIVIDER)
+  #define PLLSAIR_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_R_DIVIDER)
 
 // --------------------------------------------------------------------------------------------------------------------------------
 // PLLI2S
@@ -332,12 +332,12 @@
   #define CFG_RCC_PLLI2S_CFGR                       (CFG_RCC_PLLI2S_CFGR_PLLN |   \
                                                      CFG_RCC_PLLI2S_CFGR_PLLP |   \
                                                      CFG_RCC_PLLI2S_CFGR_PLLQ |   \
-                                                     CFG_RCC_PLLI2S_CFGR_PLLQ)
+                                                     CFG_RCC_PLLI2S_CFGR_PLLR)
 
   #define PLLI2SN_CLOCK_FREQUENCY                   ((CFG_PLL_SOURCE / CFG_PLL_M_DIVIDER) * CFG_PLLI2S_N_MULTIPLIER)
   #define PLLI2SP_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_P_DIVIDER)
   #define PLLI2SQ_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_Q_DIVIDER)
-  #define PLLI2SR_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_Q_DIVIDER)
+  #define PLLI2SR_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_R_DIVIDER)
 
 // --------------------------------------------------------------------------------------------------------------------------------
 

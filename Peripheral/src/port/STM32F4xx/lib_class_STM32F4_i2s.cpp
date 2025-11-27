@@ -386,24 +386,26 @@ SystemState_e I2S_Driver::SetFrequency(I2S_Frequency_e Frequency)
         }
     }
 
+
+// clock is not set into lib_class_STM32F4_i2S.cppclock
     // I2S clock config
     // PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
     // I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR
-    RCC->PLLI2SCFGR = (I2S_Driver::m_PLLN[Frequency] << RCC_PLLI2SCFGR_PLLI2SN_Pos) | (I2S_Driver::m_PLLR[Frequency] << RCC_PLLI2SCFGR_PLLI2SR_Pos);
+ //   RCC->PLLI2SCFGR = (I2S_Driver::m_PLLN[Frequency] << RCC_PLLI2SCFGR_PLLI2SN_Pos) | (I2S_Driver::m_PLLR[Frequency] << RCC_PLLI2SCFGR_PLLI2SR_Pos);
 
     // Enable the PLLI2S
-    SET_BIT(RCC->CR, RCC_CR_PLLI2SON);
+ //   SET_BIT(RCC->CR, RCC_CR_PLLI2SON);
 
     // Wait till PLLI2S is ready
-    TickStart = GetTick();
+ //   TickStart = GetTick();
 
-    while((RCC->CR & RCC_CR_PLLI2SRDY) == 0)
-    {
-        if(TickHasTimeOut(TickStart, I2S_PLL_TIME_OUT) == true)
-        {
-            return SYS_TIME_OUT;            // Return in case of timeout detected
-        }
-    }
+ //   while((RCC->CR & RCC_CR_PLLI2SRDY) == 0)
+ //   {
+ //       if(TickHasTimeOut(TickStart, I2S_PLL_TIME_OUT) == true)
+ //       {
+ //           return SYS_TIME_OUT;            // Return in case of timeout detected
+ //       }
+ //   }
 
   return SYS_READY;
 

@@ -113,14 +113,18 @@
     #define CFG_MAX_APB2_CLOCK_FREQUENCY            (90000000U)
 #endif
 
+#if defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)
 #define CFG_RCC_DCKCFGR_PLLSAI_Q_DIV(x)            ((x - 1) << RCC_DCKCFGR_PLLSAIDIVQ_Pos)
 
 #define CFG_RCC_DCKCFGR_PLLSAI_R_DIV2               0x00000000U
 #define CFG_RCC_DCKCFGR_PLLSAI_R_DIV4               RCC_DCKCFGR_PLLSAIDIVR_0
 #define CFG_RCC_DCKCFGR_PLLSAI_R_DIV8               RCC_DCKCFGR_PLLSAIDIVR_1
 #define CFG_RCC_DCKCFGR_PLLSAI_R_DIV16              (RCC_DCKCFGR_PLLSAIDIVR_1 | RCC_DCKCFGR_PLLSAIDIVR_0)
+#endif
 
+#if defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)
 #define CFG_RCC_DCKCFGR_PLLI2S_Q_DIV(x)             ((x - 1) << RCC_DCKCFGR_PLLI2SDIVQ_Pos)
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Multiplexer for peripheral clock source (TODO missing one)
@@ -128,9 +132,11 @@
 #define CFG_I2S_PLLI2S_R                            0
 #define CFG_I2S_I2S_CKIN                            RCC_CFGR_I2SSRC
 
+#if defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)
 #define CFG_SAI1_PLLSAI_Q                           0
 #define CFG_SAI1_PLLI2S_Q                           RCC_DCKCFGR_SAI1ASRC_0
 #define CFG_SAI1_EXT_CLK                            RCC_DCKCFGR_SAI1ASRC_1
+#endif
 
 #define CFG_SAI2_PLLSAI_Q                           0
 #define CFG_SAI2_PLLI2S_Q                           RCC_DCKCFGR1_SAI2SEL_0
@@ -216,12 +222,14 @@
     #define CFG_RCC_PLLI2S_CFGR_PLLN                (CFG_PLLI2S_N_MULTIPLIER << RCC_PLLI2S_CFGR_PLL_N_POS)
   #endif
 
+ #if defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)
   #if (CFG_PLLI2S_Q_DIVIDER < 2) || (CFG_PLLI2S_Q_DIVIDER > 15)
     #pragma message "XSTR(CFG_PLLI2S_Q_DIVIDER)"
     #error I2S PLLQ is out of range
   #else
     #define CFG_RCC_PLLI2S_CFGR_PLLQ                (CFG_PLLI2S_Q_DIVIDER << RCC_PLLI2S_CFGR_PLL_Q_POS)
   #endif
+ #endif
 
   #if (CFG_PLLI2S_R_DIVIDER < 2) || (CFG_PLLI2S_R_DIVIDER > 7)
     #pragma message "XSTR(CFG_PLLI2S_R_DIVIDER)"
@@ -235,11 +243,14 @@
                                                      CFG_RCC_PLLI2S_CFGR_PLLQ)
 
   #define PLLI2SN_CLOCK_FREQUENCY                   ((CFG_PLL_SOURCE / CFG_PLL_M_DIVIDER) * CFG_PLLI2S_N_MULTIPLIER)
+ #if defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)
   #define PLLI2SQ_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_Q_DIVIDER)
+ #endif
   #define PLLI2SR_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_R_DIVIDER)
 
 // --------------------------------------------------------------------------------------------------------------------------------
 // PLLSAI
+ #if defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)
   #if (CFG_PLLSAI_N_MULTIPLIER < 50) || (CFG_PLLSAI_N_MULTIPLIER > 432)
     #pragma message "XSTR(CFG_PLLSAI_N_MULTIPLIER)"
     #error SAI PLLN is out of range
@@ -268,7 +279,7 @@
   #define PLLSAIN_CLOCK_FREQUENCY                   ((CFG_PLL_SOURCE / CFG_PLL_M_DIVIDER) * CFG_PLLSAI_N_MULTIPLIER)
   #define PLLSAIQ_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_Q_DIVIDER)
   #define PLLSAIR_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_R_DIVIDER)
-
+ #endif
 // --------------------------------------------------------------------------------------------------------------------------------
 
 #if (CFG_SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)

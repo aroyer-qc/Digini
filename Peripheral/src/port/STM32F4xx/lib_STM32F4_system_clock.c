@@ -118,6 +118,7 @@ void SystemInit(void)
 
    //------------ Dedicated Clocks Configuration Register 1 -------------------
 
+  #if defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)
     uint32_t DCKCFGR_Value = (
     CFG_SAI2_SOURCE_MUX   |
     CFG_SAI1_SOURCE_MUX   |
@@ -125,10 +126,12 @@ void SystemInit(void)
     CFG_PLLSAI_DIV_Q      |
     CFG_PLLI2S_DIV_Q);
     SET_BIT(RCC->DCKCFGR, DCKCFGR_Value);
+  #endif
 
 //--------------------------------------------------------------------------
 
-  #ifdef CFG_ENABLE_PLLSAI
+  #if defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)
+   #ifdef CFG_ENABLE_PLLSAI
     RCC->PLLSAICFGR  = (CFG_PLLSAI_N_MULTIPLIER << RCC_PLLSAICFGR_PLLSAIN_Pos) |
                        (CFG_PLLSAI_Q_DIVIDER    << RCC_PLLSAICFGR_PLLSAIQ_Pos) |
                        (CFG_PLLSAI_R_DIVIDER    << RCC_PLLSAICFGR_PLLSAIR_Pos);
@@ -137,13 +140,16 @@ void SystemInit(void)
     // TODO need to use the enable for this
     RCC->CR |= RCC_CR_PLLSAION;
     while((RCC->CR & RCC_CR_PLLSAIRDY) == 0);
+   #endif
   #endif
 
 //--------------------------------------------------------------------------
 
   #ifdef CFG_ENABLE_PLLI2S
     RCC->PLLI2SCFGR  = (CFG_PLLI2S_N_MULTIPLIER << RCC_PLLI2SCFGR_PLLI2SN_Pos) |
+   #if defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F437xx) || defined(STM32F439xx) || defined(STM32F469xx) || defined(STM32F479xx)
                        (CFG_PLLI2S_Q_DIVIDER    << RCC_PLLI2SCFGR_PLLI2SQ_Pos) |
+   #endif
                        (CFG_PLLI2S_R_DIVIDER    << RCC_PLLI2SCFGR_PLLI2SR_Pos);
 
     // TODO need to use the enable for this

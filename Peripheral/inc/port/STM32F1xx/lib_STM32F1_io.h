@@ -30,29 +30,27 @@
 // Define(s) and macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define IO_PIN_0                 	    ((uint16_t)0x0001)
-#define IO_PIN_1                 	    ((uint16_t)0x0002)
-#define IO_PIN_2                 	    ((uint16_t)0x0004)
-#define IO_PIN_3                 	    ((uint16_t)0x0008)
-#define IO_PIN_4                 	    ((uint16_t)0x0010)
-#define IO_PIN_5                        ((uint16_t)0x0020)
-#define IO_PIN_6                        ((uint16_t)0x0040)
-#define IO_PIN_7                        ((uint16_t)0x0080)
-#define IO_PIN_8                        ((uint16_t)0x0100)
-#define IO_PIN_9                        ((uint16_t)0x0200)
-#define IO_PIN_10                       ((uint16_t)0x0400)
-#define IO_PIN_11                       ((uint16_t)0x0800)
-#define IO_PIN_12                       ((uint16_t)0x1000)
-#define IO_PIN_13                       ((uint16_t)0x2000)
-#define IO_PIN_14                       ((uint16_t)0x4000)
-#define IO_PIN_15                       ((uint16_t)0x8000)
+#define IO_PIN_0                 	        ((uint16_t)0x0001)
+#define IO_PIN_1                 	        ((uint16_t)0x0002)
+#define IO_PIN_2                 	        ((uint16_t)0x0004)
+#define IO_PIN_3                 	        ((uint16_t)0x0008)
+#define IO_PIN_4                 	        ((uint16_t)0x0010)
+#define IO_PIN_5                            ((uint16_t)0x0020)
+#define IO_PIN_6                            ((uint16_t)0x0040)
+#define IO_PIN_7                            ((uint16_t)0x0080)
+#define IO_PIN_8                            ((uint16_t)0x0100)
+#define IO_PIN_9                            ((uint16_t)0x0200)
+#define IO_PIN_10                           ((uint16_t)0x0400)
+#define IO_PIN_11                           ((uint16_t)0x0800)
+#define IO_PIN_12                           ((uint16_t)0x1000)
+#define IO_PIN_13                           ((uint16_t)0x2000)
+#define IO_PIN_14                           ((uint16_t)0x4000)
+#define IO_PIN_15                           ((uint16_t)0x8000)
 #define GPIOxx                              ((uint32_t)0x00000000)
 #define NUMBER_OF_PIN_PER_PORT              ((uint32_t)16)
 
 #define LED_Init(p)                         IO_PinInit(p)
 #define LED_Toggle(p)                       IO_TogglePin(p)
-
-//#define IO_NULL                           ((IO_TypeDef *)nullptr)
 
 // PinMode
 #define IO_MODE_ANALOG                      ((uint32_t)0x00000000)      // Analog Mode
@@ -71,58 +69,43 @@
 #define IO_MODE_ALTERNATE_OPEN_DRAIN_10MHz  ((uint32_t)0x0000000D)      // Alternate Function Open Drain Mode with IO Speed 10 MHz
 #define IO_MODE_ALTERNATE_OPEN_DRAIN_50MHz  ((uint32_t)0x0000000F)      // Alternate Function Open Drain Mode with IO Speed 50 MHz
 
-// When pin mode is IO_MODE_OUTPUT_xxx
+// When pin mode is IO_MODE_OUTPUT_...
 #define IO_DEFAULT_OUTPUT_LOW               0
-#define IO_DEFAULT_OUTPUT_HIGH              1
+#define IO_DEFAULT_OUTPUT_HIGH              ((uint32_t)0x80000000)
 
 // When pin mode is IO_MODE_INPUT_WITH_PULL
 #define IO_DEFAULT_PULL_DOWN                0
-#define IO_DEFAULT_PULL_UP                  1
+#define IO_DEFAULT_PULL_UP                  ((uint32_t)0x80000000)
 
-// When pin mode IO_MODE_ALTERNATE_xxx or IO_MODE_INPUT_NO_PULL
+// When pin mode IO_MODE_ALTERNATE_... or IO_MODE_INPUT_NO_PULL
 #define IO_DEFAULT_DONT_CARE                0
 
 // TODO need to be validated
 // External trigger
-#define IO_EXTI_TRIGGER_NONE            ((uint8_t)0) // No Trigger Mode
-#define IO_EXTI_TRIGGER_RISING          ((uint8_t)1) // Trigger Rising Mode
-#define IO_EXTI_TRIGGER_FALLING         ((uint8_t)2) // Trigger Falling Mode
-#define IO_EXTI_TRIGGER_RISING_FALLING  ((uint8_t)3) // Trigger Rising & Falling Mode
+#define IO_EXTI_TRIGGER_NONE                ((uint8_t)0) // No Trigger Mode
+#define IO_EXTI_TRIGGER_RISING              ((uint8_t)1) // Trigger Rising Mode
+#define IO_EXTI_TRIGGER_FALLING             ((uint8_t)2) // Trigger Falling Mode
+#define IO_EXTI_TRIGGER_RISING_FALLING      ((uint8_t)3) // Trigger Rising & Falling Mode
 
-//#define IO_AF_SHIFT                     (8)
-//#define IO_AF_MASK                      ((uint32_t)0x0000000F)
-
-//#define IO_EXT_MODE_IT_SHIFT          (12)
-#define IO_EXT_MODE_IT_PIN_MASK         ((uint32_t)0x00000003)
-#define IO_EXT_MODE_IT_RISING           ((uint32_t)0x00000001)
-#define IO_EXT_MODE_IT_FALLING          ((uint32_t)0x00000002)
-#define IO_EXT_MODE_IT_BOTH             ((uint32_t)0x00000003)
+#define IO_EXT_MODE_IT_PIN_MASK             ((uint32_t)0x00000003)
+#define IO_EXT_MODE_IT_RISING               ((uint32_t)0x00000001)
+#define IO_EXT_MODE_IT_FALLING              ((uint32_t)0x00000002)
+#define IO_EXT_MODE_IT_BOTH                 ((uint32_t)0x00000003)
 
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-//#define EXPAND_X_IO_CFG_AS_ENUM(ENUM_ID, IO_MODE, IO_TYPE, IO_SPEED, IO_EXTRA) ENUM_ID,
-//#define EXPAND_X_IO_AS_ENUM(ENUM_ID, IO_PORT, IO_PIN, IO_CONFIG) ENUM_ID,
-//#define EXPAND_X_IO_GROUP_AS_ENUM(ENUM_ID, IO_PORT, IO_GROUP, IO_CONFIG) ENUM_ID,
-//#define EXPAND_X_IO_IRQ_AS_ENUM(ENUM_ID, IO_ID, NUMBER, PRIO, TRIGGER) ENUM_ID,
-
 #define EXPAND_X_IO_AS_ENUM(ENUM_ID, IO_PORT, IO_PIN, IO_MODE, IO_EXTRA) ENUM_ID,
 #define EXPAND_X_IO_IRQ_AS_ENUM(ENUM_ID, IO_ID, NUMBER, TRIGGER) ENUM_ID,
-#define EXPAND_X_IO_AS_STRUCT_DATA(ENUM_ID,  IO_PORT, IO_PIN, IO_MODE, IO_EXTRA ) \
-                                           { IO_PORT, IO_PIN, IO_MODE, IO_EXTRA },
+#define EXPAND_X_IO_AS_STRUCT_DATA(ENUM_ID,  IO_PORT, IO_PIN, IO_MODE,  IO_EXTRA ) \
+                                           { IO_PORT, IO_PIN, IO_MODE | IO_EXTRA },
 #define EXPAND_X_IO_IRQ_AS_STRUCT_DATA(ENUM_ID, IO_ID, NUMBER, TRIGGER) \
                                               { IO_ID, NUMBER, TRIGGER},
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
-
-enum IO_ConfigID_e
-{
-    IO_CFG_DEF(EXPAND_X_IO_CFG_AS_ENUM)
-    IO_CFG_NUM,
-};
 
 enum IO_ID_e
 {
@@ -139,14 +122,6 @@ enum IO_ID_e
     IO_NUM,
 };
 
-#ifdef IO_GROUP_DEF
-enum IO_GroupID_e
-{
-    IO_GROUP_DEF(EXPAND_X_IO_GROUP_AS_ENUM)
-    IO_GROUP_NUM,
-};
-
-
 #ifdef IO_IRQ_DEF
 enum IO_IrqID_e
 {
@@ -160,7 +135,6 @@ struct IO_Properties_t
     GPIO_TypeDef*    pPort;
     uint32_t         PinNumber;
     uint32_t         PinMode;
-    uint32_t         State;
 };
 
 struct IO_IRQ_Properties_t
@@ -218,11 +192,11 @@ extern const IO_IRQ_Properties_t  IO_IRQ_Properties[IO_IRQ_NUM];
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
+void        IO_InitializeAll            (void);                                 // Init all IO
 void        IO_PinInit                  (IO_ID_e IO_ID);
 void        IO_PinInit                  (GPIO_TypeDef* pPort, uint32_t PinNumber, uint32_t PinMode, uint32_t State);
 void        IO_PinInitInput             (IO_ID_e IO_ID);
 void        IO_PinInitOutput            (IO_ID_e IO_ID);
-void        IO_GroupPinInit             (IO_Group_ID_e IO_GroupID);
 void        IO_SetPinLow                (IO_ID_e IO_ID);
 void        IO_SetPinHigh               (IO_ID_e IO_ID);
 void        IO_TogglePin                (IO_ID_e IO_ID);

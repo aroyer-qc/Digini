@@ -47,6 +47,8 @@
 #define IO_LOCK_KEY                     0x00010000          // Lock key
 #define IO_OFFSET_BIT_RESET             16
 
+#define IO_DEFAULT_MASK                 0x80000000
+
 //-------------------------------------------------------------------------------------------------
 //  private variable(s)
 //-------------------------------------------------------------------------------------------------
@@ -103,6 +105,34 @@ static void _IO_GetPinInfo(IO_IrqID_e IO_IRQ_ID, uint32_t* pPinNumber, uint32_t*
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Function:       IO_InitializeAll
+//
+//  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
+//  Return:         None
+//
+//  Description:    Init All individual IO.
+//
+//  Note(s):        This support function may not be used, and user should then call individually
+//                  their IO_PinInit
+//
+//-------------------------------------------------------------------------------------------------
+void IO_InitializeAll(void)
+{
+    for(int i = 0; i < int(IO_NUM); i++)
+    {
+        IO_PinInit(IO_ID_e(i));
+    }
+
+  #ifdef IO_IRQ_DEF
+    for(int i = 0; i < int(IO_IRQ_NUM); i++)
+    {
+        IO_PinInitIRQ(IO_IrqID_e(i));
+    }
+  #endif
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Function:       IO_PinInit
 //
 //  Parameter(s):   IO_ID           ID of the IO pin definition in IO_Properties_t structure
@@ -125,7 +155,7 @@ void IO_PinInit(IO_ID_e IO_ID)
         pPort          = pIO_Properties->pPort;
         PinNumber      = pIO_Properties->PinNumber;
         PinMode        = pIO_Properties->PinMode;
-        State          = pIO_Properties->State;
+        State          = pIO_Properties->PinMode & IO_DEFAULT_MASK;
         IO_PinInit(pPort, PinNumber, PinMode, State);
     }
 }

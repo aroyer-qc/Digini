@@ -93,6 +93,9 @@
 #define CFG_MCO_HSE                                 0x06000000U     // HSE clock selected
 #define CFG_MCO_PLL_CLK_DIV_2                       0x07000000U     // PLL clock divided by 2 selected
 
+#define CFG_USB_DIVIDER_NOT_DIVIDED                 0x00000000U
+#define CFG_USB_DIVIDER_1_5                         0x00400000U
+
 #if defined(STM32F100xB) || defined(STM32F100xE)
     #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (24000000U)
     #define CFG_MAX_APB1_CLOCK_FREQUENCY            (12000000U)

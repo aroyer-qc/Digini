@@ -63,20 +63,19 @@
 //-------------------------------------------------------------------------------------------------
 void SystemInit(void)
 {
-    __asm volatile("cpsid i");                                              // Disable IRQ
+    __asm volatile("cpsid i");                                                              // Disable IRQ
 
     SET_BIT(RCC->APB1ENR, RCC_APB1ENR_PWREN);
-    SET_BIT(RCC->APB2ENR, RCC_APB2ENR_AFIOEN);                              // Enable alternate function I/O clock
+    SET_BIT(RCC->APB2ENR, RCC_APB2ENR_AFIOEN);                                              // Enable alternate function I/O clock
 
     // Reset the RCC clock configuration to the default reset state ------------
-    // Set HSION bit
-    SET_BIT(RCC->CR, RCC_CR_HSION);
-
-    // Set CFGR register
-	RCC->CFGR = (CFG_SYS_HCLK | CFG_SYS_APB1 | CFG_SYS_APB2 | CFG_MCO_OUTPUT_SELECT);
-
-    // Reset HSEBYP, CSSON and PLLON bits
-	CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));
+    SET_BIT(RCC->CR, RCC_CR_HSION);                                                         // Set HSION bit
+	RCC->CFGR = (CFG_SYS_HCLK          |
+                 CFG_SYS_APB1          |
+                 CFG_SYS_APB2          |
+                 CFG_MCO_OUTPUT_SELECT |
+                 CFG_USB_CLOCK_DIVIDER);                                                    // Set CFGR register
+	CLEAR_BIT(RCC->CR, (RCC_CR_CSSON | RCC_CR_PLLON | RCC_CR_HSEBYP));                      // Reset HSEBYP, CSSON and PLLON bits
 
   #if (CFG_SYS_CLOCK_MUX == CFG_CLOCK_SRC_PLL)
 
@@ -89,51 +88,36 @@ void SystemInit(void)
         Retry++;
     };
 
-    // If HSE not ready, will will switch to HSI
-    if(READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0)
+    if(READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0)                                               // If HSE not ready, will will switch to HSI
     {
         CLEAR_BIT(RCC->CR, RCC_CR_HSEON);
-
-        // Wait for HSI to be ready B4 enabling PLL
-        while(READ_BIT(RCC->CR, RCC_CR_HSIRDY) == 0) {};
+        while(READ_BIT(RCC->CR, RCC_CR_HSIRDY) == 0) {};                                    // Wait for HSI to be ready B4 enabling PLL
     }
     else
     {
-        // Set PLL src in CFGR register
-        MODIFY_REG(RCC->CFGR, RCC_CFGR_PLL_SRC_MASK, CFG_RCC_PLL_CFGR);
+        MODIFY_REG(RCC->CFGR, RCC_CFGR_PLL_SRC_MASK, CFG_RCC_PLL_CFGR);                     // Set PLL src in CFGR register
     }
 
-    // Enable Prefetch Buffer
-    FLASH->ACR |= FLASH_ACR_PRFTBE;
-
-    // Set flash latency
-    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, CFG_FLASH_LATENCY);
-
-    // Enable PLL
-    SET_BIT(RCC->CR, RCC_CR_PLLON);
-
-    // Wait for PLL to be ready B4 enabling PLL
-    while(READ_BIT(RCC->CR, RCC_CR_PLLRDY) == 0) {};
-
-    // Switch to PLL
-    SET_BIT(RCC->CFGR, RCC_CFGR_SW_PLL);
+    FLASH->ACR |= FLASH_ACR_PRFTBE;                                                         // Enable Prefetch Buffer
+    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, CFG_FLASH_LATENCY);                           // Set flash latency
+    SET_BIT(RCC->CR, RCC_CR_PLLON);                                                         // Enable PLL
+    while(READ_BIT(RCC->CR, RCC_CR_PLLRDY) == 0) {};                                        // Wait for PLL to be ready B4 enabling PLL
+    SET_BIT(RCC->CFGR, RCC_CFGR_SW_PLL);                                                    // Switch to PLL
 
     if(READ_BIT(RCC->CR, RCC_CR_HSERDY) != 0)
     {
-        // Reset HSION bit to reduce consumption
-        CLEAR_BIT(RCC->CR, RCC_CR_HSION);
+        CLEAR_BIT(RCC->CR, RCC_CR_HSION);                                                   // Reset HSION bit to reduce consumption
     }
 
   #endif // (SYS_CLOCK_MUX == CFG_RCC_CFGR_SW_PLL)
 
-    // Disable and clear all interrupts
-    RCC->CIR = 0;
+    RCC->CIR = 0;                                                                           // Disable and clear all interrupts
 
     // Configure the Vector Table location add offset address ------------------
   #ifdef VECT_TAB_SRAM
-    SCB->VTOR = SRAM_BASE | VECT_TAB_OFFSET;    // Vector Table Relocation in Internal SRAM
+    SCB->VTOR = SRAM_BASE | VECT_TAB_OFFSET;                                                // Vector Table Relocation in Internal SRAM
   #else
-    SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET;   // Vector Table Relocation in Internal FLASH
+    SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET;                                               // Vector Table Relocation in Internal FLASH
   #endif
 }
 

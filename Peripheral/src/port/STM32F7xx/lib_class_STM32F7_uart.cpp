@@ -41,32 +41,6 @@
 //-------------------------------------------------------------------------------------------------
 
 #define UART_BACK_OFFSET_RESET_REGISTER     0x20
-
-#define UART_REG_PARITY_NONE                0                                   // Parity control disabled
-#define UART_REG_PARITY_EVEN                USART_CR1_PCE                       // Parity control enabled and Even Parity is selected
-#define UART_REG_PARITY_ODD                 (USART_CR1_PCE | USART_CR1_PS)      // Parity control enabled and Odd Parity is selected
-
-#define UART_REG_DATA_WIDTH_8B              0                                   // 8 bits word length
-#define UART_REG_DATA_WIDTH_9B              USART_CR1_M0                        // 9 bits word length
-#define UART_REG_DATA_WIDTH_7B              USART_CR1_M1                        // 9 bits word length
-
-#define UART_REG_OVERSAMPLING_16            0                                   // Oversampling by 16
-#define UART_REG_OVERSAMPLING_8             USART_CR1_OVER8                     // Oversampling by 8
-#define UART_REG_OVERSAMPLING_MASK          UART_REG_OVERSAMPLING_8             // Mask
-
-#define UART_REG_RX_ENABLE                  USART_CR1_RE
-#define UART_REG_TX_ENABLE                  USART_CR1_TE
-#define UART_REG_RX_TX_ENABLE               USART_CR1_RE | USART_CR1_TE
-
-#define UART_REG_STOP_1B                    0                                   // 1   stop bit
-#define UART_REG_STOP_0_5B                  USART_CR2_STOP_0                    // 0.5 stop bit
-#define UART_REG_STOP_2_B                   USART_CR2_STOP_1                    // 2   stop bits
-#define UART_REG_STOP_1_5B                  USART_CR2_STOP_0 | USART_CR2_STOP_1 // 1.5 stop bits
-
-#define UART_REG_FLOW_CTS                   USART_CR3_CTSE
-#define UART_REG_FLOW_CTS_ISR               USART_CR3_CTSIE
-#define UART_REG_FLOW_RTS                   USART_CR3_RTSE
-
 #define UART_REG_CR2_CONFIG_OFFSET          18                                  // trick for using only one uint32_t config.. STOP (CR2) and M1(cr1) conflict otherwise
 
 //-------------------------------------------------------------------------------------------------
@@ -101,7 +75,7 @@ const uint32_t UART_Driver::m_BaudRate[NB_OF_BAUD] =
 //
 //   Parameter(s):  UartID                  ID for the data to use for this class
 //
-//   Description:   Initializes the UARTx peripheral according to the specified Parameters
+//   Description:   Initializes the UART_Driver class
 //
 //   Note(s):
 //
@@ -395,12 +369,12 @@ uint32_t UART_Driver::GetPeripheralClock(void)
 {
     uint32_t PeriphClk = m_ClockFrequency;
 
-    if((m_pUart->CR1 & UART_REG_OVERSAMPLING_MASK) == UART_REG_OVERSAMPLING_8)
+    if((m_pInfo->Config & UART_CFG_OVER_8) == UART_CFG_OVER_8)
     {
         PeriphClk <<= 1;
     }
 
-  return PeriphClk;
+    return PeriphClk;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -522,8 +496,8 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             {
                 while(m_DMA_IsItBusyTX == true)
                 {
-                    //nOS_Yield();
-                    nOS_Sleep(10);
+                    nOS_Yield();
+                    //nOS_Sleep(10);
                 }
             }
 

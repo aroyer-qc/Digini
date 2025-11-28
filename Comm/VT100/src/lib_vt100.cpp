@@ -489,6 +489,23 @@ void VT100_Terminal::DisplayMenu(void)
         {
             //pPreviousMenu = pMenu;
             pMenu = &m_Menu[m_MenuID].pDefinition[Items];
+#if 0
+            m_BypassPrintf = true;
+            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
+            nOS_Sleep(100);                                                 // Terminal need time to reset
+            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_HIDE_CURSOR);
+            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_CLEAR_SCREEN);
+          #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+            SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
+          #endif
+            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
+        //    InMenuPrintf(VT100_SZ_NONE, LBL_VT100_MENU_TITLE); // TODO Fix
+            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
+          #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
+            SetColor(VT100_COLOR_YELLOW, VT100_COLOR_BLACK);
+          #endif
+            InMenuPrintf(VT100_SZ_NONE, LBL_DOUBLE_LINEFEED);
+#endif
 
             if(Items != 0)
             {

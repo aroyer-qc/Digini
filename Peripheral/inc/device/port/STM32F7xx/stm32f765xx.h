@@ -169,16 +169,16 @@ typedef enum
   I2C4_EV_IRQn                = 95,     /*!< I2C4 Event Interrupt                                              */
   I2C4_ER_IRQn                = 96,     /*!< I2C4 Error Interrupt                                              */
   SPDIF_RX_IRQn               = 97,     /*!< SPDIF-RX global Interrupt                                         */
-  DFSDM1_FLT0_IRQn              = 99,     /*!< DFSDM1 Filter 0 global Interrupt                                  */
-  DFSDM1_FLT1_IRQn              = 100,    /*!< DFSDM1 Filter 1 global Interrupt                                  */
-  DFSDM1_FLT2_IRQn              = 101,    /*!< DFSDM1 Filter 2 global Interrupt                                  */
-  DFSDM1_FLT3_IRQn              = 102,    /*!< DFSDM1 Filter 3 global Interrupt                                  */
+  DFSDM1_FLT0_IRQn            = 99,     /*!< DFSDM1 Filter 0 global Interrupt                                  */
+  DFSDM1_FLT1_IRQn            = 100,    /*!< DFSDM1 Filter 1 global Interrupt                                  */
+  DFSDM1_FLT2_IRQn            = 101,    /*!< DFSDM1 Filter 2 global Interrupt                                  */
+  DFSDM1_FLT3_IRQn            = 102,    /*!< DFSDM1 Filter 3 global Interrupt                                  */
   SDMMC2_IRQn                 = 103,    /*!< SDMMC2 global Interrupt                                           */
   CAN3_TX_IRQn                = 104,    /*!< CAN3 TX Interrupt                                                 */
   CAN3_RX0_IRQn               = 105,    /*!< CAN3 RX0 Interrupt                                                */
   CAN3_RX1_IRQn               = 106,    /*!< CAN3 RX1 Interrupt                                                */
   CAN3_SCE_IRQn               = 107,    /*!< CAN3 SCE Interrupt                                                */
-  MDIOS_IRQn                  = 109     /*!< MDIO Slave global Interrupt                                       */
+  MDIOS_IRQn                  = 109,     /*!< MDIO Slave global Interrupt                                      */
   ISR_NONE_IRQn               = 255
 } IRQn_Type;
 

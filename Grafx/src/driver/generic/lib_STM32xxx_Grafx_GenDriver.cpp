@@ -32,7 +32,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#ifdef DIGINI_USE_GRAFX
+#if (DIGINI_USE_GRAFX == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // const(s)
@@ -673,7 +673,7 @@ void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 void GrafxGenDriver::LayerConfig(Layer_e Layer)
 {
     CLayer* pLayer = &LayerTable[Layer];
-    LayerConfig(pLayer);	
+    LayerConfig(pLayer);
 }
 
 void GrafxGenDriver::LayerConfig(CLayer* pLayer)
@@ -1156,4 +1156,4 @@ void GrafxGenDriver::DrawCircle(uint16_t PosX, uint16_t PosY, uint16_t Radius, P
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // DIGINI_USE_GRAFX
+#endif // (DIGINI_USE_GRAFX == DEF_ENABLED)

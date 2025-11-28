@@ -162,11 +162,11 @@ typedef enum
   SPI5_IRQn                   = 85,     /*!< SPI5 global Interrupt                                             */
   SPI6_IRQn                   = 86,     /*!< SPI6 global Interrupt                                             */
   SAI1_IRQn                   = 87,     /*!< SAI1 global Interrupt                                             */
-  LTDC_IRQn                   = 88,     /*!< LTDC global Interrupt                                              */
-  LTDC_ER_IRQn                = 89,     /*!< LTDC Error global Interrupt                                        */
+  LTDC_IRQn                   = 88,     /*!< LTDC global Interrupt                                             */
+  LTDC_ER_IRQn                = 89,     /*!< LTDC Error global Interrupt                                       */
   DMA2D_IRQn                  = 90,     /*!< DMA2D global Interrupt                                            */
   QUADSPI_IRQn                = 91,     /*!< QUADSPI global Interrupt                                          */
-  DSI_IRQn                    = 92      /*!< DSI global Interrupt                                              */
+  DSI_IRQn                    = 92,     /*!< DSI global Interrupt                                              */
   ISR_NONE_IRQn               = 255
 } IRQn_Type;
 

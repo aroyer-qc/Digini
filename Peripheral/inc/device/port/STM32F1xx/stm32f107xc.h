@@ -139,7 +139,7 @@ typedef enum
   CAN2_RX0_IRQn               = 64,     /*!< CAN2 RX0 Interrupt                                   */
   CAN2_RX1_IRQn               = 65,     /*!< CAN2 RX1 Interrupt                                   */
   CAN2_SCE_IRQn               = 66,     /*!< CAN2 SCE Interrupt                                   */
-  OTG_FS_IRQn                 = 67      /*!< USB OTG FS global Interrupt                          */
+  OTG_FS_IRQn                 = 67,     /*!< USB OTG FS global Interrupt                          */
   ISR_NONE_IRQn               = 255
 } IRQn_Type;
 

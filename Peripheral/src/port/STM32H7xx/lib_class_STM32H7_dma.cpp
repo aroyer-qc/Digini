@@ -64,6 +64,8 @@
 
 #define DMA_SOURCE_TO_DESTINATION_MASK          DMA_SxCR_DIR_Msk
 
+#define DMA_DCACHE_BOUNDARY                     31
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -96,6 +98,7 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
     m_Handle.pPtr = pInfo->pHandle;
     m_Direction   = pInfo->Config & DMA_DIRECTION_MASK;
     m_pInfo       = pInfo;
+    m_LastBoundaryTransferSize = 0;
 
     // DMA1 or DMA2 instance
     if(uintptr_t(m_Handle.pPtr) < BDMA_BASE)
@@ -227,8 +230,16 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::Enable(void)
 {
-     if(m_DMA_Type == DMA_TYPE) SET_BIT(m_Handle.pDMA->CR,   DMA_SxCR_EN);
-     else                       SET_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_EN);
+    if(m_DMA_Type == DMA_TYPE)
+    {
+        SCB_CleanDCache_by_Addr((uint32_t*)m_Handle.pDMA->M0AR, m_LastBoundaryTransferSize);            // Flush the DCache boundary 32 bytes
+        SET_BIT(m_Handle.pDMA->CR, DMA_SxCR_EN);
+    }
+    else
+    {
+        SCB_CleanDCache_by_Addr((uint32_t*)m_Handle.pBDMA->CM0AR, m_LastBoundaryTransferSize);          // Flush the DCache boundary 32 bytes
+        SET_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_EN);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -243,8 +254,16 @@ void DMA_Driver::Enable(void)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::Disable(void)
 {
-    if(m_DMA_Type == DMA_TYPE) CLEAR_BIT(m_Handle.pDMA->CR,   DMA_SxCR_EN);
-    else                       CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_EN);
+    if(m_DMA_Type == DMA_TYPE)
+    {
+        CLEAR_BIT(m_Handle.pDMA->CR,   DMA_SxCR_EN);
+      //  SCB_InvalidateDCache_by_Addr((uint32_t*)m_Handle.pDMA->M0AR, (m_LastTransferSize + 31) & 0x1F);
+    }
+    else
+    {
+        CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_EN);
+     //  SCB_InvalidateDCache_by_Addr((uint32_t*)m_Handle.pBDMA->CM0AR, (m_LastTransferSize + 31) & 0x1F);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -263,35 +282,9 @@ void DMA_Driver::Disable(void)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetTransfer(void* pSource, void* pDestination, size_t Length)
 {
-    if(m_Direction == DMA_MEMORY_TO_PERIPHERAL)
-    {
-        if(m_DMA_Type == DMA_TYPE)
-        {
-            m_Handle.pDMA->M0AR = uint32_t(pSource);
-            m_Handle.pDMA->PAR  = uint32_t(pDestination);
-        }
-        else
-        {
-            m_Handle.pBDMA->CM0AR = uint32_t(pSource);
-            m_Handle.pBDMA->CPAR  = uint32_t(pDestination);
-        }
-    }
-    else
-    {
-        if(m_DMA_Type == DMA_TYPE)
-        {
-            m_Handle.pDMA->M0AR = uint32_t(pDestination);
-            m_Handle.pDMA->PAR  = uint32_t(pSource);
-        }
-        else
-        {
-            m_Handle.pBDMA->CM0AR = uint32_t(pDestination);
-            m_Handle.pBDMA->CPAR  = uint32_t(pSource);
-        }
-    }
-
-    if(m_DMA_Type == DMA_TYPE) m_Handle.pDMA->NDTR   = uint32_t(Length);
-    else                       m_Handle.pBDMA->CNDTR = uint32_t(Length);
+    SetSource(pSource);
+    SetDestination(pDestination);
+    SetLength(Length);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -403,6 +396,8 @@ size_t DMA_Driver::GetLength(void)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetLength(size_t Length)
 {
+    m_LastBoundaryTransferSize = (Length + DMA_DCACHE_BOUNDARY) & ~DMA_DCACHE_BOUNDARY;
+
     if(m_DMA_Type == DMA_TYPE) m_Handle.pDMA->NDTR   = uint32_t(Length);
     else                       m_Handle.pBDMA->CNDTR = uint32_t(Length);
 }

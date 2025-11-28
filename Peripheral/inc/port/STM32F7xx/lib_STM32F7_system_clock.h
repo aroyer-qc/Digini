@@ -255,7 +255,7 @@
                                                      CFG_RCC_PLL_CFGR_PLLQ |   \
                                                      CFG_RCC_PLLCFGR_PLLSRC)
 
-  #define PLLP_CLOCK_FREQUENCY                      SYS_PLL_CLK_FREQUENCY                     
+  #define PLLP_CLOCK_FREQUENCY                      SYS_PLL_CLK_FREQUENCY
   #define PLLQ_CLOCK_FREQUENCY                      SYS_PLL_Q_FREQUENCY
 
 // --------------------------------------------------------------------------------------------------------------------------------
@@ -292,12 +292,12 @@
   #define CFG_RCC_PLLSAI_CFGR                       (CFG_RCC_PLLSAI_CFGR_PLLN |   \
                                                      CFG_RCC_PLLSAI_CFGR_PLLP |   \
                                                      CFG_RCC_PLLSAI_CFGR_PLLQ |   \
-                                                     CFG_RCC_PLLSAI_CFGR_PLLQ)
+                                                     CFG_RCC_PLLSAI_CFGR_PLLR)
 
   #define PLLSAIN_CLOCK_FREQUENCY                   ((CFG_PLL_SOURCE / CFG_PLL_M_DIVIDER) * CFG_PLLSAI_N_MULTIPLIER)
   #define PLLSAIP_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_P_DIVIDER)
   #define PLLSAIQ_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_Q_DIVIDER)
-  #define PLLSAIR_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_Q_DIVIDER)
+  #define PLLSAIR_CLOCK_FREQUENCY                   (PLLSAIN_CLOCK_FREQUENCY / CFG_PLLSAI_R_DIVIDER)
 
 // --------------------------------------------------------------------------------------------------------------------------------
 // PLLI2S
@@ -332,12 +332,12 @@
   #define CFG_RCC_PLLI2S_CFGR                       (CFG_RCC_PLLI2S_CFGR_PLLN |   \
                                                      CFG_RCC_PLLI2S_CFGR_PLLP |   \
                                                      CFG_RCC_PLLI2S_CFGR_PLLQ |   \
-                                                     CFG_RCC_PLLI2S_CFGR_PLLQ)
+                                                     CFG_RCC_PLLI2S_CFGR_PLLR)
 
   #define PLLI2SN_CLOCK_FREQUENCY                   ((CFG_PLL_SOURCE / CFG_PLL_M_DIVIDER) * CFG_PLLI2S_N_MULTIPLIER)
   #define PLLI2SP_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_P_DIVIDER)
   #define PLLI2SQ_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_Q_DIVIDER)
-  #define PLLI2SR_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_Q_DIVIDER)
+  #define PLLI2SR_CLOCK_FREQUENCY                   (PLLI2SN_CLOCK_FREQUENCY / CFG_PLLI2S_R_DIVIDER)
 
 // --------------------------------------------------------------------------------------------------------------------------------
 
@@ -353,7 +353,7 @@
 
 #define CFG_SYS_HCLK                                CFG_HCLK_DIVIDER
 
-#if   CFG_HCLK_DIVIDER == CFG_CFG_RCC_CFGR_HPRE_DIV1
+#if   CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV1
     #define SYS_HCLK_CLOCK_FREQUENCY                SYS_CPU_CORE_CLOCK_FREQUENCY
 #elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV2
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 2)
@@ -361,11 +361,11 @@
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 4)
 #elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV8
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 8)
-#elif CFG_HCLK_DIVIDER == CFG_CFG_RCC_CFGR_HPRE_DIV16
+#elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV16
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 16)
 #elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV64
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 64)
-#elif CFG_HCLK_DIVIDER == CFG_CFG_RCC_CFGR_HPRE_DIV128
+#elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV128
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 128)
 #elif CFG_HCLK_DIVIDER == CFG_RCC_CFGR_HPRE_DIV256
     #define SYS_HCLK_CLOCK_FREQUENCY                (SYS_CPU_CORE_CLOCK_FREQUENCY / 256)
@@ -374,6 +374,7 @@
 #endif
 
 #define SYSTEM_CORE_CLOCK                           SYS_HCLK_CLOCK_FREQUENCY
+#define SYS_CLOCK_FREQUENCY                         SYSTEM_CORE_CLOCK
 
 // --------------------------------------------------------------------------------------------------------------------------------
 
@@ -392,7 +393,7 @@
 #endif
 
 #define SYS_APB1_TIMER_CLOCK_FREQUENCY              (SYS_APB1_CLOCK_FREQUENCY * 2)
-#define PCLK1_CLOCK_FREQUENCY                       SYS_APB1_TIMER_CLOCK_FREQUENCY
+#define PCLK1_CLOCK_FREQUENCY                       SYS_APB1_CLOCK_FREQUENCY
 
 // --------------------------------------------------------------------------------------------------------------------------------
 
@@ -411,7 +412,7 @@
 #endif
 
 #define SYS_APB2_TIMER_CLOCK_FREQUENCY              (SYS_APB2_CLOCK_FREQUENCY * 2)
-#define PCLK2_CLOCK_FREQUENCY                       SYS_APB2_TIMER_CLOCK_FREQUENCY
+#define PCLK2_CLOCK_FREQUENCY                       SYS_APB2_CLOCK_FREQUENCY
 
 /// -------------------------------------------------------------------------------------------------------------------------------
 /// All Peripheral frequency ( TODO need to add all module clock here. )
@@ -495,7 +496,7 @@
 /// USART 1 clock frequency
   #if   (CFG_USART1_SOURCE_MUX == CFG_USART1_PCLK2)
     #define USART1_CLOCK_FREQUENCY                      PCLK2_CLOCK_FREQUENCY
-  #elif (CFG_USART1_SOURCE_MUX == CFG_USART1_SYS)
+  #elif (CFG_USART1_SOURCE_MUX == CFG_USART1_SYS_CLOCK)
     #define USART1_CLOCK_FREQUENCY                      SYS_CLOCK_FREQUENCY
   #elif (CFG_USART1_SOURCE_MUX == CFG_USART1_HSI)
     #define USART1_CLOCK_FREQUENCY                      HSI_CLOCK_FREQUENCY
@@ -507,7 +508,7 @@
 /// USART 2 clock frequency
   #if   (CFG_USART2_SOURCE_MUX == CFG_USART2_PCLK1)
     #define USART2_CLOCK_FREQUENCY                      PCLK1_CLOCK_FREQUENCY
-  #elif (CFG_USART2_SOURCE_MUX == CFG_USART2_SYS)
+  #elif (CFG_USART2_SOURCE_MUX == CFG_USART2_SYS_CLOCK)
     #define USART2_CLOCK_FREQUENCY                      SYS_CLOCK_FREQUENCY
   #elif (CFG_USART2_SOURCE_MUX == CFG_USART2_HSI)
     #define USART2_CLOCK_FREQUENCY                      HSI_CLOCK_FREQUENCY
@@ -520,7 +521,7 @@
 /// USART 3 clock frequency
   #if   (CFG_USART3_SOURCE_MUX == CFG_USART3_PCLK1)
     #define USART3_CLOCK_FREQUENCY                      PCLK1_CLOCK_FREQUENCY
-  #elif (CFG_USART3_SOURCE_MUX == CFG_USART3_SYS)
+  #elif (CFG_USART3_SOURCE_MUX == CFG_USART3_SYS_CLOCK)
     #define USART3_CLOCK_FREQUENCY                      SYS_CLOCK_FREQUENCY
   #elif (CFG_USART3_SOURCE_MUX == CFG_USART3_HSI)
     #define USART3_CLOCK_FREQUENCY                      HSI_CLOCK_FREQUENCY
@@ -533,7 +534,7 @@
 /// UART 4 clock frequency
   #if   (CFG_UART4_SOURCE_MUX == CFG_UART4_PCLK1)
     #define UART4_CLOCK_FREQUENCY                       PCLK1_CLOCK_FREQUENCY
-  #elif (CFG_UART4_SOURCE_MUX == CFG_UART4_SYS)
+  #elif (CFG_UART4_SOURCE_MUX == CFG_UART4_SYS_CLOCK)
     #define UART4_CLOCK_FREQUENCY                       SYS_CLOCK_FREQUENCY
   #elif (CFG_UART4_SOURCE_MUX == CFG_UART4_HSI)
     #define UART4_CLOCK_FREQUENCY                       HSI_CLOCK_FREQUENCY
@@ -546,7 +547,7 @@
 /// USART 5 clock frequency
   #if   (CFG_UART5_SOURCE_MUX == CFG_UART5_PCLK1)
     #define UART5_CLOCK_FREQUENCY                       PCLK1_CLOCK_FREQUENCY
-  #elif (CFG_UART5_SOURCE_MUX == CFG_UART5_SYS)
+  #elif (CFG_UART5_SOURCE_MUX == CFG_UART5_SYS_CLOCK)
     #define UART5_CLOCK_FREQUENCY                       SYS_CLOCK_FREQUENCY
   #elif (CFG_UART5_SOURCE_MUX == CFG_UART5_HSI)
     #define UART5_CLOCK_FREQUENCY                       HSI_CLOCK_FREQUENCY
@@ -559,7 +560,7 @@
 /// USART 6 clock frequency
   #if   (CFG_USART6_SOURCE_MUX == CFG_USART6_PCLK2)
     #define USART6_CLOCK_FREQUENCY                      PCLK2_CLOCK_FREQUENCY
-  #elif (CFG_USART6_SOURCE_MUX == CFG_USART6_SYS)
+  #elif (CFG_USART6_SOURCE_MUX == CFG_USART6_SYS_CLOCK)
     #define USART6_CLOCK_FREQUENCY                      SYS_CLOCK_FREQUENCY
   #elif (CFG_USART6_SOURCE_MUX == CFG_USART6_HSI)
     #define USART6_CLOCK_FREQUENCY                      HSI_CLOCK_FREQUENCY
@@ -572,7 +573,7 @@
 /// USART 7 clock frequency
   #if   (CFG_UART7_SOURCE_MUX == CFG_UART7_PCLK1)
     #define UART7_CLOCK_FREQUENCY                       PCLK1_CLOCK_FREQUENCY
-  #elif (CFG_UART7_SOURCE_MUX == CFG_UART7_SYS)
+  #elif (CFG_UART7_SOURCE_MUX == CFG_UART7_SYS_CLOCK)
     #define UART7_CLOCK_FREQUENCY                       SYS_CLOCK_FREQUENCY
   #elif (CFG_UART7_SOURCE_MUX == CFG_UART7_HSI)
     #define UART7_CLOCK_FREQUENCY                       HSI_CLOCK_FREQUENCY
@@ -585,7 +586,7 @@
 /// USART 8 clock frequency
   #if   (CFG_UART8_SOURCE_MUX == CFG_UART8_PCLK1)
     #define UART8_CLOCK_FREQUENCY                       PCLK1_CLOCK_FREQUENCY
-  #elif (CFG_UART8_SOURCE_MUX == CFG_UART8_SYS)
+  #elif (CFG_UART8_SOURCE_MUX == CFG_UART8_SYS_CLOCK)
     #define UART8_CLOCK_FREQUENCY                       SYS_CLOCK_FREQUENCY
   #elif (CFG_UART8_SOURCE_MUX == CFG_UART8_HSI)
     #define UART8_CLOCK_FREQUENCY                       HSI_CLOCK_FREQUENCY

@@ -121,33 +121,31 @@ void SystemInit(void)
 
     //------------ Dedicated Clocks Configuration Register 1 -------------------
 
-    uint32_t DCKCFGR1_Value = (
-    CFG_SAI2_SOURCE_MUX   |
-    CFG_SAI1_SOURCE_MUX   |
-    CFG_PLLSAI_DIV_R      |
-    CFG_PLLSAI_DIV_Q      |
-    CFG_PLLI2S_DIV_R);
+    uint32_t DCKCFGR1_Value = ( CFG_SAI2_SOURCE_MUX   |
+                                CFG_SAI1_SOURCE_MUX   |
+                                CFG_PLLSAI_DIV_R      |
+                                CFG_PLLSAI_DIV_Q      |
+                                CFG_PLLI2S_DIV_R);
     SET_BIT(RCC->DCKCFGR1, DCKCFGR1_Value);
 
     //------------ Dedicated Clocks Configuration Register 2 -------------------
-    uint32_t DCKCFGR2_Value = (
-    CFG_CEC_SOURCE_MUX    |
-    CFG_CK48M_SOURCE_MUX  |
-    CFG_I2C1_SOURCE_MUX   |
-    CFG_I2C2_SOURCE_MUX   |
-    CFG_I2C3_SOURCE_MUX   |
-    CFG_I2C4_SOURCE_MUX   |
-    CFG_LPTIM1_SOURCE_MUX |
-    CFG_SDMMC1_SOURCE_MUX |
-    CFG_USART1_SOURCE_MUX |
-    CFG_USART2_SOURCE_MUX |
-    CFG_USART3_SOURCE_MUX |
-    CFG_UART4_SOURCE_MUX  |
-    CFG_UART5_SOURCE_MUX  |
-    CFG_USART6_SOURCE_MUX |
-    CFG_UART7_SOURCE_MUX  |
-    CFG_UART8_SOURCE_MUX  |
-    CFG_USB_SOURCE_MUX);
+    uint32_t DCKCFGR2_Value = ( CFG_CEC_SOURCE_MUX    |
+                                CFG_CK48M_SOURCE_MUX  |
+                                CFG_I2C1_SOURCE_MUX   |
+                                CFG_I2C2_SOURCE_MUX   |
+                                CFG_I2C3_SOURCE_MUX   |
+                                CFG_I2C4_SOURCE_MUX   |
+                                CFG_LPTIM1_SOURCE_MUX |
+                                CFG_SDMMC1_SOURCE_MUX |
+                                CFG_USART1_SOURCE_MUX |
+                                CFG_USART2_SOURCE_MUX |
+                                CFG_USART3_SOURCE_MUX |
+                                CFG_UART4_SOURCE_MUX  |
+                                CFG_UART5_SOURCE_MUX  |
+                                CFG_USART6_SOURCE_MUX |
+                                CFG_UART7_SOURCE_MUX  |
+                                CFG_UART8_SOURCE_MUX  |
+                                CFG_USB_SOURCE_MUX);
     SET_BIT(RCC->DCKCFGR2,DCKCFGR2_Value);
 
 //--------------------------------------------------------------------------

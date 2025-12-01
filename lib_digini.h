@@ -135,7 +135,7 @@
 #include "./Peripheral/inc/port/lib_class_dma.h"
 #include "./Peripheral/inc/port/lib_rng.h"
 #include "./NanoIP/inc/lib_ethernet_typedef.h"
-#include "./Utility/inc/lib_crc.h"
+#include "./Utility/inc/lib_class_crc.h"
 #include "./Memory/inc/lib_memory.h"
 #include "./Memory/inc/lib_node_list.h"
 #include "./Memory/inc/lib_memory_node.h"

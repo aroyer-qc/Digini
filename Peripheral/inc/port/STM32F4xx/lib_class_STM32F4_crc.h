@@ -54,11 +54,11 @@
 #define EXPAND_X_HW_CRC_AS_CLASS_CONST(ENUM_ID, INIT, REVERSE_INIT, XOR_OUT)   {REVERSE_INIT, XOR_OUT},
 
 #define CRC_32_HW_METHOD_DEF(X_CRC)   /* Check is base on string "123456789" */ \
-/*                                             Algorithm	    Init        Rev init,   XorOut           Check                   */ \
-    IF_USE( DIGINI_USE_HW_CRC32_BZIP2,  X_CRC( CRC32_HW_BZIP2,  0xFFFFFFFF, 0xB9509BB6, 0xFFFFFFFF )) /* 0xFC891918              */ /* Also name AAl5, DECT-B, B-CRC-32 */\
-    IF_USE( DIGINI_USE_HW_CRC32_MPEG_2, X_CRC( CRC32_HW_MPEG_2, 0xFFFFFFFF, 0xB9509BB6, 0x00000000 )) /* 0x0376E6E7              */ /* used by CRC module of STM32F1/F2/F4/L1 */\
-    IF_USE( DIGINI_USE_HW_CRC32_POSIX,  X_CRC( CRC32_HW_POSIX,  0x00000000, 0xFFFFFFFF, 0xFFFFFFFF )) /* 0x765E7680              */ /* Also name CKSUM */\
-    IF_USE( DIGINI_USE_HW_CRC32_SATA,   X_CRC( CRC32_HW_SATA,   0x52325032, 0x0E0DE6FB, 0x00000000 )) /* 0xCF72AFE8              */ \
+/*                                             Algorithm	    Init        Rev init,   XorOut           Check                   */                                         \
+    IF_USE( DIGINI_USE_HW_CRC32_BZIP2,  X_CRC( CRC32_HW_BZIP2,  0xFFFFFFFF, 0xB9509BB6, 0xFFFFFFFF )) /* 0xFC891918              Also name AAl5, DECT-B, B-CRC-32 */        \
+    IF_USE( DIGINI_USE_HW_CRC32_MPEG_2, X_CRC( CRC32_HW_MPEG_2, 0xFFFFFFFF, 0xB9509BB6, 0x00000000 )) /* 0x0376E6E7              used by CRC module of STM32F1/F2/F4/L1 */  \
+    IF_USE( DIGINI_USE_HW_CRC32_POSIX,  X_CRC( CRC32_HW_POSIX,  0x00000000, 0xFFFFFFFF, 0xFFFFFFFF )) /* 0x765E7680              Also name CKSUM */                         \
+    IF_USE( DIGINI_USE_HW_CRC32_SATA,   X_CRC( CRC32_HW_SATA,   0x52325032, 0x0E0DE6FB, 0x00000000 )) /* 0xCF72AFE8              */                                         \
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)

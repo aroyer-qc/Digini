@@ -203,7 +203,7 @@ void IP_Manager::Run(void)
 
 			if(pRX != nullptr)										// Check if a packet is present
 			{
-				switch(pRX->Packet.u.ETH_Header.Type)				// Process depending on what kind of packet we have received.
+				switch(ntohs(RX->Packet.u.ETH_Header.Type))			// Process depending on what kind of packet we have received.
 				{
 					case IP_ETHERNET_TYPE_IP:
 					{
@@ -313,7 +313,7 @@ IP_Address_t IP_Manager::GetDNS(void)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
    #endif
     {
-       if(pDHCP->GetMode() == DHCP_IS_ON)
+        if(m_pDHCP->GetMode() == DHCP_IS_ON)
         {
             return IP_DHCP_DNS_IP;
         }
@@ -342,7 +342,7 @@ IP_Address_t IP_Manager::GetHost(void)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
    #endif
     {
-        if(pDHCP->GetMode() == DHCP_IS_ON)
+        if(m_pDHCP->GetMode() == DHCP_IS_ON)
         {
             return IP_DHCP_IP;
         }

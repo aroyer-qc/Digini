@@ -33,7 +33,7 @@
 #ifdef ICMP_GLOBAL
 	#define	ICMP_EXTERN
 	#define	ICMP_PRIVATE
-#else	
+#else
 	#define	ICMP_EXTERN extern
 #endif
 
@@ -45,9 +45,9 @@
 #define 	ICMP_TYPE_PING_REQUEST			8
 
 //-------------------------------------------------------------------------------------------------
-// Function prototype(s)
+// Class definition(s)
 //-------------------------------------------------------------------------------------------------
- 
+
 void 				ICMP_Init					(void);
 IP_PacketMsg_t* 	ICMP_Process				(IP_PacketMsg_t* pMsg);
 

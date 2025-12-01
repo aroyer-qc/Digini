@@ -46,28 +46,28 @@
 
 struct  ARP_TableEntry_t
 {
-    IP_Address_t            IP_Address;
-    IP_EthernetAddress_t    Ethernet;
-    uint8_t                 Time;
+    IP_Address_t        IP_Address;
+    IP_MAC_Address_t    Ethernet;
+    uint8_t             Time;
 };
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
- 
+
 class NetARP
 {
     public:
-    
+
         SystemState_e       Initialize              (void);
         void                ProcessIP               (IP_PacketMsg_t* pRX);
         void                ProcessARP              (IP_PacketMsg_t* pRX);
         void                ProcessOut              (IP_PacketMsg_t* pTX);
         void                Resolve                 (void);
-        
+
     private:
-    
-        void                UpdateEntry				(IP_Address_t IP_Address, IP_EthernetAddress_t* pEthAdress);
+
+        void                UpdateEntry				(IP_Address_t IP_Address, IP_MAC_Address_t* pMAC_Adress);
         void                TimerCallBack	    	(nOS_Timer * pTimer, void* pArg);           // typedef void(*nOS_TimerCallback)(nOS_Timer*,void*);
 
 
@@ -78,4 +78,3 @@ class NetARP
 };
 
 //-------------------------------------------------------------------------------------------------
- 

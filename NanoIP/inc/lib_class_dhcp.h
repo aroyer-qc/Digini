@@ -107,7 +107,7 @@ enum DHCP_OptionType_e
     DHCP_OPTION_DISCOVER = 1,
     DHCP_OPTION_OFFER    = 2,
     DHCP_OPTION_REQUEST  = 3,
-    DHCP_OPTION_DECLINE  = 4,        // not used   we don't declie an offer 
+    DHCP_OPTION_DECLINE  = 4,        // not used   we don't declie an offer
     DHCP_OPTION_ACK      = 5,
     DHCP_OPTION_NACK     = 6,
     DHCP_OPTION_RELEASE  = 7,        // not used???
@@ -146,20 +146,20 @@ struct DHCP_Msg_t
 };
 
 //-------------------------------------------------------------------------------------------------
-// Function prototype(s)
+// Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
 class NetDHCP
 {
     public:
-    
+
         void            Initialize      (void* pQ);
         bool            Process         (DHCP_Msg_t* pMsg);
 
-        void            SetMode         (bool Mode)                 { m_Mode = Mode; }         
+        void            SetMode         (bool Mode)                 { m_Mode = Mode; }
         bool            GetMode         (void)                      { return m_Mode; }
-        
-    private:    
+
+    private:
 
 
         bool            Start           (void);
@@ -173,20 +173,19 @@ class NetDHCP
 
         uint32_t                m_Xid;
         DHCP_Options_t          m_Options;
-        
+
         // One shot timer for DHCP transaction time out
         nOS_Timer               m_TimerDiscover;
         nOS_Timer               m_TimerT1_Lease;
         nOS_Timer               m_TimerT2_Rebind;
-        
-        nOS_Queue               m_pQ; ??
+
+        nOS_Queue               m_pQ;
         bool                    m_Mode;                      // External configuration can tell this class the DHCP is OFF or ON
         DHCP_State_e            m_State;
 
-
         static const uint8_t    m_OPL_Discover[8];
         static const uint8_t    m_OPL_Request[10];
-        
+
         IP_Address_t            m_DHCP_GatewayIP;                       // Gateway IP Address from server
         IP_Address_t            m_DHCP_SubnetMask;                      // Subnet Mask from server
         IP_Address_t            m_DHCP_IP;                              // IP Address from server

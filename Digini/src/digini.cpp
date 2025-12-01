@@ -87,6 +87,10 @@ SystemState_e DIGINI_Initialize(void)
     HYPER_RAM_Initialize();                                 // Initialize HYPER RAM
   #endif
 
+  #if (USE_RNG_DRIVER == DEF_ENABLED)
+    RNG_Initialize();                                       // Initialize Random Generator
+  #endif
+
   #if (USE_RTC_DRIVER == DEF_ENABLED)
     myRTC.Initialize(RTC_CLOCK_MODE_LSI);                   // RTC module object
   #endif

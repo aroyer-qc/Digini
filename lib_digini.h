@@ -167,7 +167,12 @@
 #endif
 
 #if (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
-#include "./NanoIP/inc/interface/lib_class_ethernet_interface.h"
+#include "./NanoIP/inc/lib_ethernet_typedef.h"
+#include "./NanoIP/inc/lib_class_arp.h"
+#include "./NanoIP/inc/lib_class_dhcp.h"
+#include "./NanoIP/inc/lib_class_icmp.h"
+#include "./NanoIP/inc/lib_class_udp.h"
+#include "./NanoIP/inc/Interface/lib_class_ethernet_interface.h"
 #include "./Peripheral/inc/port/lib_class_eth.h"
 #include PHY_DRIVER_INCLUDE
 #endif
@@ -198,6 +203,10 @@
 
 #if (USE_RTC_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_rtc.h"
+#endif
+
+#if (USE_RNG_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_rng.h"
 #endif
 
 #if (USE_SAI_DRIVER == DEF_ENABLED)

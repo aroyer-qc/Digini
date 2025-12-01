@@ -71,7 +71,7 @@ void RNG_Initialize(void)
 //-------------------------------------------------------------------------------------------------
 uint32_t RNG_GetRandom(void)
 {
-    while((RNG->SR & RNG_SR_DRDY) == 0){};      // Should never jam;
+    while((RNG->SR & RNG_SR_DRDY) == 0){};      // Should never jam
     
     return RNG->DR;
 }

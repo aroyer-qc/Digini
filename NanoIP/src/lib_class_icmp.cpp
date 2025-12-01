@@ -25,7 +25,7 @@
 //-------------------------------------------------------------------------------------------------
 
 //------ Note(s) ----------------------------------------------------------------------------------
-//          
+//
 //  ICMP - Internet Control Message Protocol
 //
 //  -Provides "ping" support only
@@ -36,17 +36,17 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <ip.h>
+#include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:         	ICMP_Initialize
-// 
+//
 //  Parameter(s):   None
 //  Return:         void
 //
 //  Description:
-//	
+//
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
@@ -57,12 +57,12 @@ void ICMP_Initialize(void)
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:          ICMP_Process
-// 
-//  Parameter(s):  IP_PacketMsg_t* 		RX packet 
+//
+//  Parameter(s):  IP_PacketMsg_t* 		RX packet
 //  Return:        IP_PacketMsg_t*      TX packet
 //
-//  Description:    
-//	
+//  Description:
+//
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
@@ -79,7 +79,7 @@ IP_PacketMsg_t* ICMP_Process(IP_PacketMsg_t* pRX)
 		{
 			return nullptr;
 		}
-	
+
 		switch(pRX->Packet.u.ICMP_Frame.Header.Type)
 		{
 			case ICMP_TYPE_PING_REQUEST:
@@ -92,15 +92,15 @@ IP_PacketMsg_t* ICMP_Process(IP_PacketMsg_t* pRX)
 				Count -= (int16_t)sizeof(IP_IP_Header_t);
 				pICMP->Header.Type     = ICMP_TYPE_PING_REPLY;
 				pICMP->Header.Checksum = IP_CalculateChecksum(&pICMP->Header, Count);
-	
-				memcpy(pETH->Dst.Address, pETH->Src.Address, 6);						                // Put Mac header
-				pICMP->IP_Header.TimeToLive    = IP_TIME_TO_LIVE;
-				pICMP->IP_Header.DstIP_Address = pICMP->IP_Header.SrcIP_Address;
-				pICMP->IP_Header.SrcIP_Address = IP_HostAddress;
+
+				memcpy(pETH->Dst.Byte, pETH->Src.Byte, IP_MAC_ADDRESS_SIZE);	                       // Put Mac header
+				pICMP->IP_Header.TimeToLive = IP_TIME_TO_LIVE;
+				pICMP->IP_Header.DstIP_Addr = pICMP->IP_Header.SrcIP_Addr;
+				pICMP->IP_Header.SrcIP_Addr = IP_HostAddress;
 				IP_PutHeader(pTX);
             }
             break;
-            
+
             default: break; // No support for other ICMP command
 		}
 	}

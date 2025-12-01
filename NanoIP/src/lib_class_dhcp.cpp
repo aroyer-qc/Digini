@@ -132,14 +132,14 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <include.h>
+#include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
-// 
+//
 //-------------------------------------------------------------------------------------------------
 
-const uint8_tNetDHCP::OPL_Discover[8] = // OPL stand for option list
-{ 
+const uint8_t NetDHCP::m_OPL_Discover[8] = // OPL stand for option list
+{
     55,        // Parameter list
     6,         // Size
     1,         // Subnet Mask
@@ -147,9 +147,10 @@ const uint8_tNetDHCP::OPL_Discover[8] = // OPL stand for option list
     6,         // DNS Server
     15,        // Domain Name
     58,        // DHCP T1 Value
-    59};       // DHCP T2 Value
+    59         // DHCP T2 Value
+};
 
-const uint8_t NetDHCP::OPL_Request[10] =
+const uint8_t NetDHCP::m_OPL_Request[10] =
 {
     55,        // Parameter list
     8,         // Size
@@ -160,7 +161,8 @@ const uint8_t NetDHCP::OPL_Request[10] =
     58,        // DHCP T1 Value
     59,        // DHCP T2 Value
     31,        // Perform Router Discovery
-    33};       // Static Route
+    33         // Static Route
+};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -174,7 +176,7 @@ const uint8_t NetDHCP::OPL_Request[10] =
 //-------------------------------------------------------------------------------------------------
 void NetDHCP::Initialize(void* pQ)
 {
-    nOS_Error;
+    nOS_Error Error;
 
     m_Mode  = DHCP_IS_ON;            // This is the default value for DHCP
     m_State = DHCP_STATE_INITIAL;
@@ -201,16 +203,16 @@ bool NetDHCP::Start(void)
 
     m_State = DHCP_STATE_INITIAL;
 
-    if(nOS_TimerIsRunning(m_TimerDiscover)  == true) nOS_TimerStop(&m_TimerDiscover,  true);
-    if(nOS_TimerIsRunning(m_TimerT1_Lease)  == true) nOS_TimerStop(&m_TimerT1_Lease,  true);
-    if(nOS_TimerIsRunning(m_TimerT2_Rebind) == true) nOS_TimerStop(&m_TimerT2_Rebind, true);
+    if(nOS_TimerIsRunning(&m_TimerDiscover)  == true) nOS_TimerStop(&m_TimerDiscover,  true);
+    if(nOS_TimerIsRunning(&m_TimerT1_Lease)  == true) nOS_TimerStop(&m_TimerT1_Lease,  true);
+    if(nOS_TimerIsRunning(&m_TimerT2_Rebind) == true) nOS_TimerStop(&m_TimerT2_Rebind, true);
 
     IpIP->SetIP_Valid(false);
     IP_DHCP_GatewayIP   = IP_ADDRESS(0,0,0,0);
     IP_DHCP_SubnetMask  = IP_ADDRESS(0,0,0,0);
     IP_DHCP_IP          = IP_ADDRESS(0,0,0,0);
     IP_DHCP_DNS_IP      = IP_ADDRESS(0,0,0,0);
-    m_Xid               = GET_Random();
+    m_Xid               = RNG_GetRandom();
 
     sipr(IP_DHCP_IP);           // w5100 stuff
 
@@ -272,7 +274,7 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
             }
             break;
         }
-        
+
         pMemory->Free((void**)&pMsg);
     }
 
@@ -296,7 +298,7 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
                 if(SOCK_GetRX_RSR(DHCP_SOCKET) > 0)
                 {
                     pRX = (DHCP_Msg_t*)pMemory->AllocAndClear(sizeof(DHCP_Msg_t));
-                    
+
                     if(pRX != nullptr)
                     {
                         SOCK_ReceivedFrom(DHCP_SOCKET, (uint8_t*)pRX, sizeof(DHCP_Msg_t), &ServerAddr, &ServerPort);
@@ -370,7 +372,7 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
                                 break;
                             }
                         }
-                        
+
                         pMemory->Free((void**)&pRX);
                     }
                 }
@@ -626,7 +628,7 @@ void NetDHCP::ParseOption(DHCP_Msg_t* pRX)
     while((*pPtr != DHCP_OPTION_END_OF_FIELD) && (*pPtr != DHCP_OPTION_PADDING))
     {
         Value = *(uint32_t*)(pPtr + 2);
-        
+
         switch(*pPtr)
         {
             case DHCP_OPTION_SUBNET_MASK:  { m_Options.SubnetMaskIP = ntohl(Value); } break;

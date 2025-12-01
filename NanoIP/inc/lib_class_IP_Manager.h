@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_Class_IP_Manager.h
+//  File : lib_class_IP_Manager.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -108,7 +108,7 @@ class IP_Manager
       #endif
 
       #if (IP_USE_ICMP == DEF_ENABLED)
-        NetICMP*                        m_pICMP;                                // Internet Control Message Protocol
+        /*NetICMP*/void*                        m_pICMP;                                // Internet Control Message Protocol
       #endif
 
       #if (IP_USE_NTP == DEF_ENABLED)

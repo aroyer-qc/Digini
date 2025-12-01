@@ -35,21 +35,20 @@
 //-------------------------------------------------------------------------------------------------
 
 #define UDP_PORT_BOOT_P_SERVER				htons(67)			 	    // Port 67
-#define UDP_PORT_BOOT_P_CLIENT				htons(68)           		// Port 68 
+#define UDP_PORT_BOOT_P_CLIENT				htons(68)           		// Port 68
 
 //-------------------------------------------------------------------------------------------------
-// Function prototype(s)
+// Class definition(s)
 //-------------------------------------------------------------------------------------------------
-
 // not sure i need a class!!
 
 class NetUDP
 {
     public:
-        
+
         void 				    Initialize  		(void);
         IP_PacketMsg_t* 	    Process				(IP_PacketMsg_t* pMsg);
-}
+};
 
 //-------------------------------------------------------------------------------------------------
 

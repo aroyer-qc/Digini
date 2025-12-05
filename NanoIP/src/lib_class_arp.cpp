@@ -35,6 +35,10 @@
 #include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
+
+void    ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg);
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Name:         	Initialize
 //
@@ -57,10 +61,10 @@ SystemState_e NetARP::Initialize(void)
 
     // Initialize an OS timer for the ARP timer
     Error = nOS_TimerCreate(m_pTimer,
-                            &TimerCallBack,                         // Timer callback function
-                            nullptr,                                // No Parameter needed for callback
-                            1000/*OS_TMR_CFG_TICKS_PER_SEC*/ * 10,	        // Period is define in ip_cfg.h
-                            NOS_TIMER_FREE_RUNNING);                 // It will repeat indefinitely
+                            &ARP_TimerCallBack,                     // Timer callback function
+                            this,                                   // This class object
+                            1000/*OS_TMR_CFG_TICKS_PER_SEC*/ * 10,	// Period is define in ip_cfg.h
+                            NOS_TIMER_FREE_RUNNING);                // It will repeat indefinitely
 
 	if(Error == NOS_OK)
 	{
@@ -85,7 +89,9 @@ SystemState_e NetARP::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 void NetARP::ProcessIP(IP_PacketMsg_t* pRX)
 {
-	if((pRX->Packet.u.IP_Frame.Header.SrcIP_Addr & IP_SubnetMaskAddress) == (IP_HostAddress & IP_SubnetMaskAddressess))
+    IP_Address_t SubnetMask = m_Context.GetActiveSubnetMask();
+
+	if((pRX->Packet.u.IP_Frame.Header.SrcIP_Addr & SubnetMask) == (m_Context.GetActiveIP() & SubnetMask))
 	{
 		UpdateEntry(pRX->Packet.u.IP_Frame.Header.SrcIP_Addr, &pRX->Packet.u.ETH_Header.Src);
 	}
@@ -103,7 +109,7 @@ void NetARP::ProcessIP(IP_PacketMsg_t* pRX)
 //-------------------------------------------------------------------------------------------------
 void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 {
-	uint8_t 		Error;
+	//uint8_t 		Error;
 	IP_ARP_Frame_t*	pRX_ARP;
 	IP_PacketMsg_t* pTX     = nullptr;
 	IP_ARP_Frame_t*	pTX_ARP = nullptr;
@@ -120,7 +126,7 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 		case ARP_REQUEST:
 		{
             // ARP request. If it asked for our address, we send out a reply.
-			if(pRX_ARP->DstIP_Addr == IP_HostAddress)
+			if(pRX_ARP->DstIP_Addr == m_Context.GetActiveIP())
 			{
                 pTX = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(pRX->PacketSize + 2);     // Get memory for TX packet + Size
 				pTX->PacketSize = pRX->PacketSize;											// Get the packet size from request packet (PING)
@@ -129,11 +135,10 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 				pTX_ARP->Opcode = ARP_REPLY;
                 memcpy(pTX_ARP->Dst.Byte, pRX_ARP->Src.Byte, IP_MAC_ADDRESS_SIZE);
 				memcpy(pTX_ARP->ETH_Header.Dst.Byte, pRX_ARP->Src.Byte, IP_MAC_ADDRESS_SIZE);
-				memcpy(pTX_ARP->Src.Byte, IP_MACAddress, IP_MAC_ADDRESS_SIZE);
-				memcpy(pTX_ARP->ETH_Header.Src.Byte, IP_MACAddress, IP_MAC_ADDRESS_SIZE);
-
+                m_Context.GetMAC_Address(&pTX_ARP->Src);
+                m_Context.GetMAC_Address(&pTX_ARP->ETH_Header.Src);
 				pTX_ARP->DstIP_Addr = pRX_ARP->SrcIP_Addr;
-				pTX_ARP->SrcIP_Addr = IP_HostAddress;
+				pTX_ARP->SrcIP_Addr = m_Context.GetActiveIP();
 
 				pTX_ARP->HardwareType          = ARP_HARDWARE_TYPE_ETHERNET;
 				pTX_ARP->Protocol              = htons(IP_ETHERNET_TYPE_IP);
@@ -147,9 +152,9 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 		case ARP_REPLY:
 		{
 			// ARP reply. We insert or update the ARP table if it was for us.
-			if((pRX_ARP->DstIP_Addr == IP_HostAddress))
+			if((pRX_ARP->DstIP_Addr == m_Context.GetActiveIP()))
 			{
-				ARP_UpdateEntry(pRX_ARP->SrcIP_Addr, &pRX_ARP->Src);
+				UpdateEntry(pRX_ARP->SrcIP_Addr, &pRX_ARP->Src);
 			}
 		}
 		break;
@@ -157,7 +162,7 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 
 	if(pTX != nullptr)
 	{
-		NIC_Send(pTX);
+		//NIC_Send(pTX);
 	}
 }
 
@@ -184,7 +189,7 @@ void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pEthernet)
     // inserted in the ARP table.
 	for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
 	{
-		pTable = &ARP_TableEntry[i];
+		pTable = &m_TableEntry[i];
 		// Only check those entries that are actually in use.
 		if(pTable->IP_Address != 0)
 		{
@@ -194,7 +199,7 @@ void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pEthernet)
 			{
 				// An old entry found, update this and return.
 				memcpy(pTable->Ethernet.Byte, pEthernet->Byte, IP_MAC_ADDRESS_SIZE);
-				pTable->Time = ARP_Time;
+				pTable->Time = m_Time;
    		      #if (IP_DBG_ARP == DEF_ENABLED)
                 DBG_Printf("ARP Cache - (%d.%d.%d.%d) Update an existing entry %d\n", uint8_t(pTable->IP_Address >> 24),
 				                                                                      uint8_t(pTable->IP_Address >> 16),
@@ -212,7 +217,7 @@ void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pEthernet)
 	// First, we try to find an unused entry in the ARP table.
 	for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
 	{
-		pTable = &m_ARP_TableEntry[i];
+		pTable = &m_TableEntry[i];
 
         if(pTable->IP_Address == 0)
 		{
@@ -231,11 +236,11 @@ void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pEthernet)
 
         for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
 		{
-			pTable = &ARP_TableEntry[i];
+			pTable = &m_TableEntry[i];
 
-            if((ARP_Time - pTable->Time) > TimePage)
+            if((m_Time - pTable->Time) > TimePage)
 			{
-				TimePage = ARP_Time - pTable->Time;
+				TimePage = m_Time - pTable->Time;
 				OldestEntry = i;
 			}
 		}
@@ -261,8 +266,8 @@ void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pEthernet)
 																   uint8_t(pTable->IP_Address),
 																   i);
   #endif
-	memcpy(pTable->Ethernet.Addr, pEthernet->Byte, IP_MAC_ADDRESS_SIZE);
-    pTable->Time = ARP_Time;
+	memcpy(pTable->Ethernet.Byte, pEthernet->Byte, IP_MAC_ADDRESS_SIZE);
+    pTable->Time = m_Time;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -298,15 +303,16 @@ void NetARP::ProcessOut(IP_PacketMsg_t* pTX)
 
 	if(pTX != nullptr)                        		// If data are to be sent back, then send the data
 	{
+        IP_Address_t SubnetMask = m_Context.GetActiveSubnetMask();
 
 		pARP	= &pTX->Packet.u.ARP_Frame;
 		pFrame  = &pTX->Packet;
 
         // Check if the destination address is on the local network.
-		if((pFrame->u.IP_Frame.Header.DstIP_Addr & IP_SubnetMaskAddress) != (IP_HostAddress & IP_SubnetMaskAddress))
+		if((pFrame->u.IP_Frame.Header.DstIP_Addr & SubnetMask) != (m_Context.GetActiveIP() & SubnetMask))
 		{
 			// Use the default router's IP address instead of the destination
-			//IP_Address = IP_DefaultGatewayAddress;
+			//IP_Address = m_Context.GetIP_     DefaultGatewayAddress;
 		}
 		else
 		{
@@ -355,7 +361,7 @@ void NetARP::ProcessOut(IP_PacketMsg_t* pTX)
 
 		//pTX->PacketSize += sizeof(IP_EthernetHeader_t);
 
-		NIC_Send(pTX);
+		//NIC_Send(pTX);
 	}
 }
 
@@ -383,34 +389,31 @@ void NetARP::Resolve(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:         	ARP_TimerCallBack
+//  Name:         	TimerCallBack
 //
-//  Parameter(s):  	nOS_Timer* pTimer       n/u
-//                  void*      pArg         n/u
+//  Parameter(s):  	None
 //
 //  Return:         void
 //
-//  Description:
+//  Description:    Callback for the nOS_Timer to handle ARP time out.
 //
 //-------------------------------------------------------------------------------------------------
-void NetARP::TimerCallBack(nOS_Timer * pTimer, void* pArg)
+void NetARP::TimerCallBack(void)
 {
 	uint16_t          Time;
 	ARP_TableEntry_t* pTable;
 
-    VAR_UNUSED(pTimer);
-    VAR_UNUSED(pArg);
-	ARP_Time++;
+	m_Time++;
 
 	for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)                      // Scan Table for the entry
 	{
-		pTable = &ARP_TableEntry[i];
+		pTable = &m_TableEntry[i];
 
         if(pTable->IP_Address != 0)
 		{
-			Time = uint16_t(ARP_Time);
+			Time = uint16_t(m_Time);
 
-            if(ARP_Time < pTable->Time)
+            if(m_Time < pTable->Time)
 			{
 				Time += uint16_t(IP_ARP_TIME_OUT);
 			}
@@ -428,6 +431,27 @@ void NetARP::TimerCallBack(nOS_Timer * pTimer, void* pArg)
 			}
 		}
 	}
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:         	ARP_TimerCallBack
+//
+//  Parameter(s):  	nOS_Timer*  pTimer
+//                  void*       pArg            holding the object of the class NetARP
+//
+//  Return:         void
+//
+//  Description:    Callback for the nOS_Timer to handle ARP time out. Will call the proper object
+//
+//-------------------------------------------------------------------------------------------------
+
+void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg)
+{
+    VAR_UNUSED(pTimer);
+    NetARP* pARP = (NetARP*)pArg;
+
+    pARP->TimerCallBack();
 }
 
 //-------------------------------------------------------------------------------------------------

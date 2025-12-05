@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2011-2024 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -32,7 +32,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <ip.h>
+#include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -73,9 +73,9 @@ bool NetSOCK::Socket(Socket_t SocketNumber, uint8_t Protocol, IP_Port_t SourcePo
 				pSocket->pFunction        	= pFunction;
 			}
 	      #else
-		  	NIC_SocketMode(SocketNumber, Protocol, Flag);
-			NIC_SourcePort(SocketNumber, SourcePort);
-			NIC_ProcessCommandAndWait(SocketNumber, NIC_SOCKET_OPEN)                    // Wait to process the command...
+		  	//NIC_SocketMode(SocketNumber, Protocol, Flag);
+			//NIC_SourcePort(SocketNumber, SourcePort);
+			//NIC_ProcessCommandAndWait(SocketNumber, NIC_SOCKET_OPEN)                    // Wait to process the command...
 		  #endif
             Status = true;
         }
@@ -126,9 +126,9 @@ bool NetSOCK::Listen(Socket_t SocketNumber)
 		Status = true;
 	}
   #else
-    if(sock_cr_read(SocketNumber) == SOCK_INIT)
+    //if(sock_cr_read(SocketNumber) == SOCK_INIT)
 	{
-		NIC_ProcessCommandAndWait(SocketNumber, NIC_SOCKET_LISTEN)
+		//NIC_ProcessCommandAndWait(SocketNumber, NIC_SOCKET_LISTEN)
         Status = true;
     }
   #endif
@@ -167,9 +167,9 @@ bool NetSOCK::Connect(Socket_t SocketNumber, IP_Address_t DstAddress, IP_Port_t 
 		
       #else
 	
-    	NIC_DestinationIP(SocketNumber, DstAddress);					// Set destination IP
-		NIC_DestinationPort(SocketNumber, wDstPort);					// Set destination PORT
-		NIC_ProcessCommandAndWait(SocketNumber, NIC_SOCKET_CONNECT);    // Wait to process the command...
+    	//NIC_DestinationIP(SocketNumber, DstAddress);					// Set destination IP
+		//NIC_DestinationPort(SocketNumber, wDstPort);					// Set destination PORT
+		//NIC_ProcessCommandAndWait(SocketNumber, NIC_SOCKET_CONNECT);    // Wait to process the command...
 
         // wait for Established or close (Timeout)
         do
@@ -204,7 +204,7 @@ void NetSOCK::Disconnect(Socket_t SocketNumber)
   #if (IP_HARDWARE_SOCKET == DEF_DISABLED)
 	// Disconnect 
   #else
-    NIC_ProcessCommandAndWait(SocketNumber, NIC_SOCKET_DISCONNECT); 
+    //NIC_ProcessCommandAndWait(SocketNumber, NIC_SOCKET_DISCONNECT); 
   #endif
 }
 
@@ -228,11 +228,11 @@ size_t NetSOCK::Send(Socket_t SocketNumber, const uint8_t* pData, size_t Length)
 
   #if (IP_HARDWARE_SOCKET == DEF_DISABLED)
   #else
-    if(Length > W5100_TX_Size[SocketNumber])               // Check size not to exceed MAX size.
+    /*if(Length > W5100_TX_Size[SocketNumber])               // Check size not to exceed MAX size.
     {
         Return = W5100_TX_Size[SocketNumber];
     }
-    else
+    else*/
     {
         Return = Length;
     }
@@ -251,6 +251,7 @@ size_t NetSOCK::Send(Socket_t SocketNumber, const uint8_t* pData, size_t Length)
     }
     while(FreeSize < Return);
 
+/*
     // Copy data
     W5100_ProcessTX_Data(SocketNumber, (uint8_t *)pData, Return);
     W5100_ProcessCmdAndWait(SocketNumber, Sn_CR_SEND);     // Wait to process the command...
@@ -265,7 +266,7 @@ size_t NetSOCK::Send(Socket_t SocketNumber, const uint8_t* pData, size_t Length)
     }
 
     sock_ir_write(SocketNumber, Sn_IR_SEND_OK);           // w5100 stuff
-  #endif
+*/  #endif
 
     return Return;
 }
@@ -289,8 +290,8 @@ size_t NetSOCK::Received(Socket_t SocketNumber, uint8_t *pData, size_t Length)
 
     if(Length > 0)
     {
-        W5100_ProcessRX_Data(SocketNumber, pData, Length);
-        W5100_ProcessCmdAndWait(SocketNumber, Sn_CR_RECV);     // Wait to process the command...
+       // W5100_ProcessRX_Data(SocketNumber, pData, Length);
+       // W5100_ProcessCmdAndWait(SocketNumber, Sn_CR_RECV);     // Wait to process the command...
         Return = Length;
     }
     
@@ -317,13 +318,13 @@ size_t NetSOCK::SendTo(Socket_t SocketNumber, const uint8_t* pData, size_t Lengt
 {
     size_t Return = 0;
 
-
+/*
     if(Length > W5100_TX_Size[SocketNumber])               // Check size not to exceed MAX size.
     {
         Return = W5100_TX_Size[SocketNumber];
     }
     else
-    {
+*/    {
         Return = Length;
     }
 
@@ -333,6 +334,7 @@ size_t NetSOCK::SendTo(Socket_t SocketNumber, const uint8_t* pData, size_t Lengt
     }
     else
     {
+        /*
         sock_dipr_write(SocketNumber, PeerAddressess);           // w5100 stuff
         sock_dportr_write(SocketNumber, PeerPort);           // w5100 stuff
 
@@ -349,8 +351,8 @@ size_t NetSOCK::SendTo(Socket_t SocketNumber, const uint8_t* pData, size_t Lengt
             }
         }
         sock_ir_write(SocketNumber, Sn_IR_SEND_OK);           // w5100 stuff
+*/
     }
-
     return Return;
 }
 

@@ -70,7 +70,9 @@
 #define EAT(...)
 #define EXPAND(...)                     __VA_ARGS__
 #define WHEN(c)                         IF(c)(EXPAND, EAT)
-#define IF_USE(cond, ...)               WHEN(cond)(__VA_ARGS__)
+#define UNROLLING(x)                    x
+#define UNROLL(x)                       UNROLLING(x)
+#define IF_USE(cond, ...)               WHEN(UNROLL(cond))(__VA_ARGS__)
 
 #define EMPTY()
 #define DEFER(id)                       id EMPTY()

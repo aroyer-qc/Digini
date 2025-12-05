@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2010-2024 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -135,7 +135,11 @@
 #include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
-//
+
+#if (IP_USE_DHCP == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+// const(s)
 //-------------------------------------------------------------------------------------------------
 
 const uint8_t NetDHCP::m_OPL_Discover[8] = // OPL stand for option list
@@ -174,13 +178,13 @@ const uint8_t NetDHCP::m_OPL_Request[10] =
 //  Description:    Initialize the DHCP Client
 //
 //-------------------------------------------------------------------------------------------------
-void NetDHCP::Initialize(void* pQ)
+void NetDHCP::Initialize(/*void* pQ*/)
 {
     nOS_Error Error;
 
     m_Mode  = DHCP_IS_ON;            // This is the default value for DHCP
     m_State = DHCP_STATE_INITIAL;
-    m_pQ    = pQ;
+    //m_pQ    = pQ;     // i don't know why a Q here
 
     Error = nOS_TimerCreate(&m_TimerDiscover,  nullptr, nullptr, DHCP_MSG_ACTION_TIME_OUT, NOS_TIMER_ONE_SHOT);
     Error = nOS_TimerCreate(&m_TimerT1_Lease,  nullptr, nullptr, 0, NOS_TIMER_ONE_SHOT);
@@ -207,14 +211,14 @@ bool NetDHCP::Start(void)
     if(nOS_TimerIsRunning(&m_TimerT1_Lease)  == true) nOS_TimerStop(&m_TimerT1_Lease,  true);
     if(nOS_TimerIsRunning(&m_TimerT2_Rebind) == true) nOS_TimerStop(&m_TimerT2_Rebind, true);
 
-    IpIP->SetIP_Valid(false);
-    IP_DHCP_GatewayIP   = IP_ADDRESS(0,0,0,0);
-    IP_DHCP_SubnetMask  = IP_ADDRESS(0,0,0,0);
-    IP_DHCP_IP          = IP_ADDRESS(0,0,0,0);
-    IP_DHCP_DNS_IP      = IP_ADDRESS(0,0,0,0);
+    m_Context.SetIP_Valid(false);
+    m_DHCP_GatewayIP   = IP_ADDRESS(0,0,0,0);
+    m_DHCP_SubnetMask  = IP_ADDRESS(0,0,0,0);
+    m_DHCP_IP          = IP_ADDRESS(0,0,0,0);
+    m_DHCP_DNS_IP      = IP_ADDRESS(0,0,0,0);
     m_Xid               = RNG_GetRandom();
 
-    sipr(IP_DHCP_IP);           // w5100 stuff
+   //sipr(IP_DHCP_IP);           // w5100 stuff
 
     if(SOCK_Socket(IP_SOCKET_DHCP, Sn_MR_UDP, DHCP_CLIENT_PORT, 0x00) == true)
     {
@@ -340,9 +344,9 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
 
                                       #if (IP_DBG_DHCP == DEF_ENABLED)
                                         DBG_Printf("DHCP ACK received and interface is bound\n");
-                                        DBG_Printf("Host IP           %d.%d.%d.%d\n",   uint8_t(IP_HostAddress           >> 24), uint8_t(IP_HostAddress           >> 16), uint8_t(IP_HostAddress           >> 8), uint8_t(IP_HostAddress));
-                                        DBG_Printf("SubNet mask IP    %d.%d.%d.%d\n",   uint8_t(IP_SubnetMaskAddress     >> 24), uint8_t(IP_SubnetMaskAddress     >> 16), uint8_t(IP_SubnetMaskAddress     >> 8), uint8_t(IP_SubnetMaskAddress));
-                                        DBG_Printf("Default router IP %d.%d.%d.%d\n\n", uint8_t(IP_DefaultGatewayAddress >> 24), uint8_t(IP_DefaultGatewayAddress >> 16), uint8_t(IP_DefaultGatewayAddress >> 8), uint8_t(IP_DefaultGatewayAddress));
+                                        DBG_Printf("Host IP           %d.%d.%d.%d\n",   uint8_t(m_HostAddress           >> 24), uint8_t(m_HostAddress           >> 16), uint8_t(m_HostAddress           >> 8), uint8_t(m_HostAddress));
+                                        DBG_Printf("SubNet mask IP    %d.%d.%d.%d\n",   uint8_t(m_SubnetMaskAddress     >> 24), uint8_t(m_SubnetMaskAddress     >> 16), uint8_t(m_SubnetMaskAddress     >> 8), uint8_t(m_SubnetMaskAddress));
+                                        DBG_Printf("Default router IP %d.%d.%d.%d\n\n", uint8_t(m_DefaultGatewayAddress >> 24), uint8_t(m_DefaultGatewayAddress >> 16), uint8_t(m_DefaultGatewayAddress >> 8), uint8_t(m_DefaultGatewayAddress));
                                       #endif
                                     }
                                     else if(m_State == DHCP_STATE_BOUND)
@@ -412,7 +416,7 @@ bool NetDHCP::Discover(void)
     size_t       Length;
     bool         Status;
 
-    W5100_Init();               // This will start fresh
+   // W5100_Init();               // This will start fresh
     Status = Start();
 
     if(Status == true)
@@ -572,14 +576,14 @@ void NetDHCP::ParseOffer(DHCP_Msg_t* pRX)
 //-------------------------------------------------------------------------------------------------
 void NetDHCP::IsBound(void)
 {
-    IP_DHCP_IP         = m_Options.ClientIP;
-    IP_DHCP_SubnetMask = m_Options.SubnetMaskIP;
-    IP_DHCP_GatewayIP  = m_Options.GatewayIP;
-    IP_DHCP_DNS_IP     = m_Options.DNS_ServerIP;
+    m_DHCP_IP         = m_Options.ClientIP;
+    m_DHCP_SubnetMask = m_Options.SubnetMaskIP;
+    m_DHCP_GatewayIP  = m_Options.GatewayIP;
+    m_DHCP_DNS_IP     = m_Options.DNS_ServerIP;
 
-    gar(IP_DHCP_GatewayIP);           // w5100 stuff
-    subr(IP_DHCP_SubnetMask);           // w5100 stuff
-    sipr(IP_DHCP_IP);           // w5100 stuff
+    //gar(IP_DHCP_GatewayIP);           // w5100 stuff
+    //subr(IP_DHCP_SubnetMask);           // w5100 stuff
+    //sipr(IP_DHCP_IP);           // w5100 stuff
 
     m_State    = DHCP_STATE_BOUND;
     pIP->SetIP_Valid(true);
@@ -681,8 +685,8 @@ size_t NetDHCP::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
         *pPtr++ = DHCP_OPTION_CLIENT_IDENTIFIER;
         *pPtr++ = 7;
         *pPtr++ = 1;
-        memcpy(pPtr, &IP_MAC, 6);
-        pPtr += 6;
+        memcpy(pPtr, &IP_MAC, IP_MAC_ADDRESS_SIZE);
+        pPtr += IP_MAC_ADDRESS_SIZE;
     }
 
     if(Options & DHCP_PUT_OPTION_PL_DISCOVER)
@@ -702,7 +706,7 @@ size_t NetDHCP::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
         *pPtr++ = DHCP_OPTION_CLIENT_IP;
         *pPtr++ = 4;
         *((int32_t*)pPtr) = htonl(m_Options.ClientIP);
-        pPtr += 4;
+        pPtr += sizeof(int32_t);
     }
 
     if(Options & DHCP_PUT_OPTION_HOST_NAME)
@@ -711,7 +715,7 @@ size_t NetDHCP::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
 
         *pPtr++ = DHCP_OPTION_HOST_NAME;
 
-        *pPtr++ = (uint8_t)(strlen(IP_HOST_NAME) + 9);              // length of hostname + 6
+        *pPtr++ = (uint8_t)(strlen(IP_HOST_NAME) + 9);              // length of hostname + 9
         strcpy(pPtr, IP_HOST_NAME);
         pPtr += strlen(IP_HOST_NAME);
 
@@ -732,7 +736,7 @@ size_t NetDHCP::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
         *pPtr++ = DHCP_OPTION_SERVER_IP;
         *pPtr++ = 4;
         *((uint32_t*)pPtr) = htonl(m_Options.ServerIP);
-        pPtr += 4;
+        pPtr += sizeof(uint32_t);
     }
 
     *pPtr++ = DHCP_OPTION_END_OF_FIELD;
@@ -771,9 +775,11 @@ void NetDHCP::PutHeader(DHCP_Msg_t* pTX)
         pTX->ClientIP_Address = htonl(IP_DHCP_IP);
     }
 
-    memcpy(pTX->ClientHardware, IP_MAC, 6);
+    memcpy(pTX->ClientHardware, IP_MAC, IP_MAC_ADDRESS_SIZE);
 }
 
 //-------------------------------------------------------------------------------------------------
+
+#endif // (IP_USE_DHCP == DEF_ENABLED)
 
 

@@ -66,10 +66,11 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
  //   nOS_Error            Error;
 
        // Initialize Variables
-    //m_IP_IsValid             = false;
+    m_Context.SetIP_Valid(false);
     m_DNS_IP_Found = false;
     m_IP_Status    = false;
 
+    m_Context.InitializeMsgQ();     // this need to handle error
     m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config);
 
 
@@ -85,8 +86,6 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 //    pNIC->Initialize();
 
 
-    //mIP->Initialize();
-
     // All protocol support are created dynamically if interface is set to use it, and if configuration is enable for that protocol
 
 
@@ -95,8 +94,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_UDP) != 0)
    #endif
     {
-        m_pUDP = new NetUDP();
-        m_pUDP->Initialize();
+        m_UDP.Initialize();
     }
   #endif
 
@@ -105,29 +103,24 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
    #endif
     {
-        m_pDHCP = new NetDHCP();
-        m_pDHCP->Initialize();
+        m_DHCP.Initialize();
     }
   #endif
 
 
-  #if (IP_USE_ARP == DEF_ENABLED)
    #if (IP_NUMBER_OF_INTERFACE > 1)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
    #endif
     {
-        m_pARP = new NetARP();
-        m_pARP->Initialize();
+        m_ARP.Initialize();
     }
-  #endif
 
   #if (IP_USE_ICMP == DEF_ENABLED)
    #if (IP_NUMBER_OF_INTERFACE > 1)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ICMP) != 0)
    #endif
     {
-        m_pICMP = new NetICMP();
-        m_pICMP->Initialize();
+        m_ICMP.Initialize();
     }
   #endif
 
@@ -136,8 +129,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_TCP) != 0)
    #endif
     {
-        m_pTCP = new NetTCP();
-        m_pTCP->Initialize();
+        m_TCP.Initialize();
     }
   #endif
 
@@ -146,8 +138,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_NTP) != 0)
    #endif
     {
-        m_pNTP = new NetNTP();
-        m_pNTP->Initialize();
+        m_NTP.Initialize();
     }
   #endif
 
@@ -156,8 +147,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
    #endif
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_SNTP) != 0)
     {
-        m_pSNTP = new NetSNTP();
-        m_pSNTP->Initialize();
+        m_pSNTP.Initialize();
     }
   #endif
 
@@ -166,8 +156,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_SOAP) != 0)
    #endif
     {
-        m_pSOAP = new NetSOAP();
-        m_pSOAP->Initialize();
+        m_SOAP.Initialize();
     }
   #endif
 }
@@ -189,65 +178,62 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 void IP_Manager::Run(void)
 {
   //  IP_Address_t   Address;
-  //  uint8_t        Error;
-  //  MSG_t*         pMsg        = nullptr;
+   // uint8_t        Error;
+  IP_PacketMsg_t*    pRX;
+  IP_PacketMsg_t*    pTX;
+  IP_Q_Message_t*    pMsg = nullptr;
   //  IP_Address_t   IP;
 
     for(;;)
     {
-        nOS_Yield();
-#if 0
-        if(pDHCP->Process(nullptr) == true)                         // If enable, an IP must be valid to continue.
+      #if (IP_USE_DHCP == DEF_ENABLED)
+        if(m_DHCP.Process(nullptr) == true)                         // If enable, an IP must be valid to continue.
+      #endif
         {                                                           // If not enable it continue anyway
-			pRX = CS8900_Poll();									// Network driver read an entire IP packet into the RX Buffer
+
+            // USE Queue from NIC driver to receive message instead of polling
+            //pRX = CS8900_Poll();									// Network driver read an entire IP packet into the RX Buffer
 
 			if(pRX != nullptr)										// Check if a packet is present
 			{
-				switch(ntohs(RX->Packet.u.ETH_Header.Type))			// Process depending on what kind of packet we have received.
+				switch(ntohs(pRX->Packet.u.ETH_Header.Type))			// Process depending on what kind of packet we have received.
 				{
 					case IP_ETHERNET_TYPE_IP:
 					{
-                      #if (IP_USE_ARP == DEF_ENABLED)
-                       #if (IP_NUMBER_OF_INTERFACE > 1)
+                      #if (IP_NUMBER_OF_INTERFACE > 1)
                         if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-                       #endif
-                        {
-                           m_pARP->ProcessIP(pRX);
-                        }
                       #endif
+                        {
+                           m_ARP.ProcessIP(pRX);
+                        }
 
-                        pTX = IP_Process(pRX);
+                        pTX = ProcessIP(pRX);
 
-                      #if (IP_USE_ARP == DEF_ENABLED)
-                       #if (IP_NUMBER_OF_INTERFACE > 1)
+                      #if (IP_NUMBER_OF_INTERFACE > 1)
                         if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-                       #endif
-                        {
-                            m_pARP->ProcessOut(pTX);               		// If data are to be sent back, then send the data
-                        }
                       #endif
+                        {
+                            m_ARP.ProcessOut(pTX);               		// If data are to be sent back, then send the data
+                        }
 					}
                     break;
 
-                  #if (IP_USE_ARP == DEF_ENABLED)
 					case IP_ETHERNET_TYPE_ARP:
 					{
                       #if (IP_NUMBER_OF_INTERFACE > 1)
                         if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
                       #endif
 						{
-                            m_pARP->ProcessARP(pRX);
+                            m_ARP.ProcessARP(pRX);
                         }
 					}
                     break;
-                  #endif
 				}
 
-				pMemory->Free((void**)&pRX);
+				pMemoryPool->Free((void**)&pRX);
 			}
 
-			/* if((pMsg = OSQAccept(Queue.Names.pTaskIP, &Error)) != nullptr)// nOS Q */
-            if(nOS_QueueRead(&m_MsgQueue, pMsg, NOS_WAIT_INFINITE) == NOS_OK);
+            if(nOS_QueueRead(m_Context.GetMsgQ(), pMsg, NOS_WAIT_INFINITE) == NOS_OK)
             {
                 switch(pMsg->Type)
                 {
@@ -258,7 +244,7 @@ void IP_Manager::Run(void)
                         if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
                       #endif
                         {
-                            m_IP_Status = m_pDHCP->Process(pMsg);
+                            m_IP_Status = m_DHCP.Process(pMsg);
 
                             if(m_IP_Status == false)
                             {
@@ -289,11 +275,67 @@ void IP_Manager::Run(void)
 					// put other management here
                 }
 
-                pMemory->Free((void**)&pMsg);
+                pMemoryPool->Free((void**)&pMsg);
             }
         }
-#endif
+
+        nOS_Yield();
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ProcessIP
+//
+//  Parameter(s):   IP_PacketMsg_t* pMsg
+//  Return:         void
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
+IP_PacketMsg_t* IP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
+{
+	IP_PacketMsg_t* pTX = nullptr;
+
+	switch(pRX->Packet.u.IP_Frame.Header.Protocol)
+	{
+      #if (IP_USE_ICMP == DEF_ENABLED)
+		case IP_PROTOCOL_ICMP:
+        {
+            pTX = m_ICMP->Process(pRX);
+        }
+        break;
+      #endif
+
+      #if (IP_USE_UDP == DEF_ENABLED)
+        case IP_PROTOCOL_UDP:
+        {
+          #if (IP_USE_DHCP == DEF_ENABLED)
+            if(pRX->Packet.u.UDP_Frame.Header.SrcPort == UDP_PORT_BOOT_P_SERVER)
+            {
+                m_DHCP->Process(pRX);
+            }
+            else
+          #endif
+            {
+                pTX = m_UDP->Process(pRX);
+            }
+        }
+        break;
+      #endif
+
+      #if (IP_USE_TCP == DEF_ENABLED)
+		case IP_PROTOCOL_TCP:	{pTX = m_TCP->Process(pRX);	 } break;
+      #endif
+
+        default:
+        {
+            /* trap debug */
+        }
+        break;
+	}
+
+	return pTX;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -313,7 +355,7 @@ IP_Address_t IP_Manager::GetDNS(void)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
    #endif
     {
-        if(m_pDHCP->GetMode() == DHCP_IS_ON)
+        if(m_DHCP.GetMode() == DHCP_IS_ON)
         {
             return IP_DHCP_DNS_IP;
         }
@@ -342,7 +384,7 @@ IP_Address_t IP_Manager::GetHost(void)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
    #endif
     {
-        if(m_pDHCP->GetMode() == DHCP_IS_ON)
+        if(m_DHCP.GetMode() == DHCP_IS_ON)
         {
             return IP_DHCP_IP;
         }
@@ -573,6 +615,79 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
     }
 
     return pSearch1;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:          PutHeader
+//
+//  Parameter(s):   void* 	    pBuffer
+// 				    uint16_t 	Count
+//  Return:         void
+//
+//  Description:    Put in header everything static
+//
+//  Requirement:	All other data must be already in the header
+//
+//  Notes:			UDP packet should be set before the IP, because UDP use same data space to
+// 					calculate it's own checksum from pseudo header + UDP datagram
+//
+//-------------------------------------------------------------------------------------------------
+void IP_Manager::PutHeader(IP_PacketMsg_t* pTX)
+{
+	IP_IP_Header_t* 	pIP_TX;
+
+	pIP_TX = &pTX->Packet.u.IP_Frame.Header;
+
+	// Setup Ethernet header
+	m_Context.GetMAC_Address(&pTX->Packet.u.ETH_Header.Src);                     		// Put our MAC in it
+	pTX->Packet.u.ETH_Header.Type = IP_ETHERNET_TYPE_IP;
+
+	// Setup IP header
+	pIP_TX->ID		    = htons(m_SequenceID++);
+	pIP_TX->VersionIHL 	= IP_VERSION4_IHL20;
+    pIP_TX->TimeToLive 	= IP_TIME_TO_LIVE;
+
+	pIP_TX->Checksum    = 0;  // use lib checksum.. or make one
+	pIP_TX->Checksum    = CalculateChecksum(pIP_TX, uint16_t(sizeof(IP_IP_Header_t)));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CalculateChecksum
+//
+//  Parameter(s):   void* 	    pBuffer
+// 				    uint16_t 	Count
+//  Return:         void
+//
+//  Description:    Calculate the checksum of the IP header
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+int16_t IP_Manager::CalculateChecksum(void* pBuffer, uint16_t Count)
+{
+	int16_t 	i;
+	uint16_t*	Value;
+	struct32_t 	Checksum;
+
+    Checksum.u_32 = 0;
+	i = Count >> 1;
+    Value = (uint16_t*)pBuffer;
+
+	while(i--)                                                                      // Calculate the sum of all words
+	{
+		Checksum.u_32 += (uint32_t)*Value++;
+	}
+
+	if(((struct16_t*)&Count)->u_8.u0)                                               // Add in the sum of the remaining byte, if present
+	{
+		Checksum.u_32 += (uint32_t)*(uint8_t*)Value;
+	}
+
+	Checksum.u_32 = (uint32_t)Checksum.u8_Array[0] + (int32_t)Checksum.u8_Array[1]; // Do an end-around carry (one's complement arithmetic)
+	Checksum.u8_Array[0] += Checksum.u8_Array[1];                                   // Do another end-around carry in case if the prior add caused a carry out
+	return ~Checksum.u8_Array[0];                                                  	// Return the resulting checksum
 }
 
 //-------------------------------------------------------------------------------------------------

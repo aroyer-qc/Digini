@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2009-2024 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,13 +27,8 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
-
 
 #define     SOCK_MODE_CLOSE                 0x00                                // < Unused socket
 #define    	SOCK_MODE_TCP                   0x01                                // < TCP
@@ -60,12 +55,12 @@ class NetSOCK
         
         bool        Socket         	    (Socket_t SocketNumber, uint8_t Protocol, IP_Port_t SourcePort, uint8_t Flag);                                // Opens a socket(TCP or UDP or IP_RAW mode)
 
-Bind missing ??
+//Bind missing ??
         int         Bind                (int sockfd, const struct sockaddr *addr, size_t Length);
 
         bool        Listen         	    (Socket_t SocketNumber);                                                                                      // Establish TCP connection (Passive connection)
 
-Accept missing ??
+//Accept missing ??
         int         Accept              (int sockfd, struct sockaddr *addr, size_t Length);   ???
 
         bool        Connect        	    (Socket_t SocketNumber, IP_Address_t DstAddress, IP_Port_t DstPort);                                          // Establish TCP connection (Active connection)

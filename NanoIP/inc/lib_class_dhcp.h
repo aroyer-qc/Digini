@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2010-2024 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,22 +27,12 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
 
-#ifdef DHCP_GLOBAL
-    #define DHCP_EXTERN
-    #define DHCP_PRIVATE
-#else
-    #define DHCP_EXTERN extern
-#endif
+#if (IP_USE_DHCP == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
-
-#define DHCP_PACKET_SIZE                        328
-#define DHCP_OPTION_IN_PACKET_SIZE              308
 
 #define DHCP_OPTION_PADDING                     0x00
 #define DHCP_OPTION_END_OF_FIELD                0xFF
@@ -62,8 +52,8 @@
 #define DHCP_BOOT_REQUEST                       0x01
 #define DHCP_BOOT_REPLY                         0x02
 
-#define DHCP_SERVER_PORT                        htons(67)
-#define DHCP_CLIENT_PORT                        htons(68)
+#define DHCP_SERVER_PORT                        67
+#define DHCP_CLIENT_PORT                        68
 
 #define DHCP_HARWARE_TYPE_ETHERNET_10           0x01
 #define DHCP_HARDWARE_TYPE_ETHERNET_100         0x02
@@ -89,62 +79,6 @@
 #define DHCP_IS_ON                              true
 #define DHCP_IS_OFF                             false
 
-
-//-------------------------------------------------------------------------------------------------
-// Type definition(s) and structure(s)
-//-------------------------------------------------------------------------------------------------
-
-enum DHCP_State_e
-{
-    DHCP_STATE_INITIAL          = 0,
-    DHCP_STATE_DISCOVER         = 1,
-    DHCP_STATE_OFFER_RECEIVED   = 2,
-    DHCP_STATE_BOUND            = 3,
-};
-
-enum DHCP_OptionType_e
-{
-    DHCP_OPTION_DISCOVER = 1,
-    DHCP_OPTION_OFFER    = 2,
-    DHCP_OPTION_REQUEST  = 3,
-    DHCP_OPTION_DECLINE  = 4,        // not used   we don't declie an offer
-    DHCP_OPTION_ACK      = 5,
-    DHCP_OPTION_NACK     = 6,
-    DHCP_OPTION_RELEASE  = 7,        // not used???
-};
-
-
-struct DHCP_Options_t
-{
-    DHCP_OptionType_e   Type;
-    IP_Address_t        GatewayIP;
-    IP_Address_t        SubnetMaskIP;
-    IP_Address_t        DNS_ServerIP;
-    IP_Address_t        ClientIP;
-    IP_Address_t        ServerIP;
-    /* TickCount ? */uint32_t            LeaseTime;
-};
-
-struct DHCP_Msg_t
-{
-    uint8_t      Op;
-    uint8_t      H_Type;
-    uint8_t      H_Length;
-    uint8_t      Hops;
-    uint32_t     X_ID;
-    uint16_t     Secs;
-    uint16_t     Flags;
-    IP_Address_t ClientIP_Address;
-    IP_Address_t YourIP_Address;
-    IP_Address_t ServerIP_Address;
-    IP_Address_t RelayAgentIP_Address;
-    uint8_t      ClientHardware[16];
-    uint8_t      Sname[64];
-    uint8_t      File[128];
-    uint32_t     MagicCookie;
-    uint8_t      Options[DHCP_OPTION_IN_PACKET_SIZE];
-};
-
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
@@ -153,7 +87,9 @@ class NetDHCP
 {
     public:
 
-        void            Initialize      (void* pQ);
+                        NetDHCP         (NetworkContext& Context) : m_Context(Context) {}
+
+        void            Initialize      (/*void* pQ*/);
         bool            Process         (DHCP_Msg_t* pMsg);
 
         void            SetMode         (bool Mode)                 { m_Mode = Mode; }
@@ -171,6 +107,8 @@ class NetDHCP
         bool            Discover        (void);
         bool            Request         (void);
 
+        NetworkContext&         m_Context;
+
         uint32_t                m_Xid;
         DHCP_Options_t          m_Options;
 
@@ -186,12 +124,15 @@ class NetDHCP
         static const uint8_t    m_OPL_Discover[8];
         static const uint8_t    m_OPL_Request[10];
 
-        IP_Address_t            m_DHCP_GatewayIP;                       // Gateway IP Address from server
-        IP_Address_t            m_DHCP_SubnetMask;                      // Subnet Mask from server
-        IP_Address_t            m_DHCP_IP;                              // IP Address from server
-        IP_Address_t            m_DHCP_DNS_IP;                          // DNS Server IP Address from server
+        //IP_Address_t            m_DHCP_GatewayIP;                       // Gateway IP Address from server
+        //IP_Address_t            m_DHCP_SubnetMask;                      // Subnet Mask from server
+        //IP_Address_t            m_DHCP_IP;                              // IP Address from server
+        //IP_Address_t            m_DHCP_DNS_IP;                          // DNS Server IP Address from server
         bool                    m_IP_IsValid;
 };
 
 //-------------------------------------------------------------------------------------------------
 
+#endif // (IP_USE_DHCP == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------

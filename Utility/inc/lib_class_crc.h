@@ -31,8 +31,300 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+// Error Checking
+//-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_SOFT_CRC == DEF_ENABLED)
+#if (DIGINI_USE_CRC_8_TO_32_BITS == DEF_ENABLED)
+
+#ifndef DIGINI_USE_CRC_8
+#error "DIGINI_USE_CRC_8   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_AUTOSAR
+#error "DIGINI_USE_CRC_8_AUTOSAR   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_BLUETOOTH
+#error "DIGINI_USE_CRC_8_BLUETOOTH   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_CDMA2000
+#error "DIGINI_USE_CRC_8_CDMA2000   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_DARC
+#error "DIGINI_USE_CRC_8_DARC   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_DVB_S2
+#error "DIGINI_USE_CRC_8_DVB_S2   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_EBU
+#error "DIGINI_USE_CRC_8_EBU   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_GSM_A
+#error "DIGINI_USE_CRC_8_GSM_A   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_GSM_B
+#error "DIGINI_USE_CRC_8_GSM_B   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_HITAG
+#error "DIGINI_USE_CRC_8_HITAG   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_I_CODE
+#error "DIGINI_USE_CRC_8_I_CODE   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_I_432_1
+#error "DIGINI_USE_CRC_8_I_432_1   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_ITU
+#error "DIGINI_USE_CRC_8_ITU   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_LTE
+#error "DIGINI_USE_CRC_8_LTE   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_MAXIM
+#error "DIGINI_USE_CRC_8_MAXIM   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_MIFARE_MAD
+#error "DIGINI_USE_CRC_8_MIFARE_MAD   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_NRSC_5
+#error "DIGINI_USE_CRC_8_NRSC_5   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_OPENSAFETY
+#error "DIGINI_USE_CRC_8_OPENSAFETY   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_ROHC
+#error "DIGINI_USE_CRC_8_ROHC   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_SAE_J1850
+#error "DIGINI_USE_CRC_8_SAE_J1850   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_SMBUS
+#error "DIGINI_USE_CRC_8_SMBUS   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_TECH_3250
+#error "DIGINI_USE_CRC_8_TECH_3250   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_8_WCDMA
+#error "DIGINI_USE_CRC_8_WCDMA   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_10_ATM
+#error "DIGINI_USE_CRC_10_ATM   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_10_CDMA2000
+#error "DIGINI_USE_CRC_10_CDMA2000   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_10_GSM
+#error "DIGINI_USE_CRC_10_GSM   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_11_FLEXRAY
+#error "DIGINI_USE_CRC_11_FLEXRAY   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_11_UMTS
+#error "DIGINI_USE_CRC_11_UMTS   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_12_CDMA2000
+#error "DIGINI_USE_CRC_12_CDMA2000   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_12_DECT
+#error "DIGINI_USE_CRC_12_DECT   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_12_GSM
+#error "DIGINI_USE_CRC_12_GSM   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_12_UMTS
+#error "DIGINI_USE_CRC_12_UMTS   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_13_BBC
+#error "DIGINI_USE_CRC_13_BBC   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_14_DARC
+#error "DIGINI_USE_CRC_14_DARC   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_14_GSM
+#error "DIGINI_USE_CRC_14_GSM   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_15_CAN
+#error "DIGINI_USE_CRC_15_CAN   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_15_MPT1327
+#error "DIGINI_USE_CRC_15_MPT1327   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_ARC
+#error "DIGINI_USE_CRC_16_ARC   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_AUG_CCITT
+#error "DIGINI_USE_CRC_16_AUG_CCITT   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_BUYPASS
+#error "DIGINI_USE_CRC_16_BUYPASS   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_CCITT_FALSE
+#error "DIGINI_USE_CRC_16_CCITT_FALSE   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_CDMA2000
+#error "DIGINI_USE_CRC_16_CDMA2000   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_CMS
+#error "DIGINI_USE_CRC_16_CMS   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_DDS_110
+#error "DIGINI_USE_CRC_16_DDS_110   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_DECT_R
+#error "DIGINI_USE_CRC_16_DECT_R   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_DECT_X
+#error "DIGINI_USE_CRC_16_DECT_X   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_DNP
+#error "DIGINI_USE_CRC_16_DNP   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_EN_13757
+#error "DIGINI_USE_CRC_16_EN_13757   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_GENIBUS
+#error "DIGINI_USE_CRC_16_GENIBUS   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_KERMIT
+#error "DIGINI_USE_CRC_16_KERMIT   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_MAXIM
+#error "DIGINI_USE_CRC_16_MAXIM   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_MCRF4XX
+#error "DIGINI_USE_CRC_16_MCRF4XX   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_MODBUS
+#error "DIGINI_USE_CRC_16_MODBUS   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_RIELLO
+#error "DIGINI_USE_CRC_16_RIELLO   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_T10_DIF
+#error "DIGINI_USE_CRC_16_T10_DIF   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_TELEDISK
+#error "DIGINI_USE_CRC_16_TELEDISK   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_TMS37157
+#error "DIGINI_USE_CRC_16_TMS37157   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_USB
+#error "DIGINI_USE_CRC_16_USB   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_X25
+#error "DIGINI_USE_CRC_16_X25   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_XMODEM
+#error "DIGINI_USE_CRC_16_XMODEM   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_16_A
+#error "DIGINI_USE_CRC_16_A   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_17_CAN_FD
+#error "DIGINI_USE_CRC_17_CAN_FD   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_21_CAN_FD
+#error "DIGINI_USE_CRC_21_CAN_FD   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_24_BLE
+#error "DIGINI_USE_CRC_24_BLE   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_24_FLEXRAY_A
+#error "DIGINI_USE_CRC_24_FLEXRAY_A   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_24_FLEXRAY_B
+#error "DIGINI_USE_CRC_24_FLEXRAY_B   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_24_INTERLAKEN
+#error "DIGINI_USE_CRC_24_INTERLAKEN   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_24_LTE_A
+#error "DIGINI_USE_CRC_24_LTE_A   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_24_LTE_B
+#error "DIGINI_USE_CRC_24_LTE_B   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_24_OPENPGP
+#error "DIGINI_USE_CRC_24_OPENPGP   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_24_OS_9
+#error "DIGINI_USE_CRC_24_OS_9   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_30_CDMA
+#error "DIGINI_USE_CRC_30_CDMA   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_31_PHILIPS
+#error "DIGINI_USE_CRC_31_PHILIPS   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_BZIP2
+#error "DIGINI_USE_CRC_32_BZIP2   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_MPEG_2
+#error "DIGINI_USE_CRC_32_MPEG_2   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_POSIX
+#error "DIGINI_USE_CRC_32_POSIX   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_SATA
+#error "DIGINI_USE_CRC_32_SATA   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32
+#error "DIGINI_USE_CRC_32   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_AUTOSAR
+#error "DIGINI_USE_CRC_32_AUTOSAR   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_B
+#error "DIGINI_USE_CRC_32_B   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_C
+#error "DIGINI_USE_CRC_32_C   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_CD_ROM_EDC
+#error "DIGINI_USE_CRC_32_CD_ROM_EDC   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_D
+#error "DIGINI_USE_CRC_32_D   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_ISO_HDLC
+#error "DIGINI_USE_CRC_32_ISO_HDLC   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_JAMCRC
+#error "DIGINI_USE_CRC_32_JAMCRC   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_MEF
+#error "DIGINI_USE_CRC_32_MEF   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_Q
+#error "DIGINI_USE_CRC_32_Q   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_32_XFER
+#error "DIGINI_USE_CRC_32_XFER   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+
+#endif
+
+#if (DIGINI_USE_CRC_MORE_THAN_32_BITS == DEF_ENABLED)
+
+#ifndef DIGINI_USE_CRC_40_GSM
+#error "DIGINI_USE_CRC_40_GSM   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_64_ECMA_182
+#error "DIGINI_USE_CRC_64_ECMA_182   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_64_GO_ISO
+#error "DIGINI_USE_CRC_64_GO_ISO   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_64_MS
+#error "DIGINI_USE_CRC_64_MS   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_64_WE
+#error "DIGINI_USE_CRC_64_WE   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+#ifndef DIGINI_USE_CRC_64_XZ
+#error "DIGINI_USE_CRC_64_XZ   Must be define as DEF_ENABLED or DEF_DISABLED"
+#endif
+
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -180,6 +472,8 @@ struct CRC_Info_t
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
+#if (DIGINI_USE_SOFT_CRC == DEF_ENABLED)
+
 class CRC_Calc
 {
     public:
@@ -205,8 +499,6 @@ class CRC_Calc
 
         static const CRC_Info_t         m_MethodList       [NUMBER_OF_CRC_METHOD];
 };
-
-//-------------------------------------------------------------------------------------------------
 
 #endif //(DIGINI_USE_SOFT_CRC == DEF_ENABLED)
 

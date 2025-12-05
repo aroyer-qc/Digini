@@ -27,15 +27,8 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
 
-#ifdef ICMP_GLOBAL
-	#define	ICMP_EXTERN
-	#define	ICMP_PRIVATE
-#else
-	#define	ICMP_EXTERN extern
-#endif
+#if (IP_USE_ICMP == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -47,9 +40,23 @@
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
+class NetICMP
+{
+    public:
 
-void 				ICMP_Init					(void);
-IP_PacketMsg_t* 	ICMP_Process				(IP_PacketMsg_t* pMsg);
+                        NetICMP         (NetworkContext& Context) : m_Context(Context) {}
+
+        void            Initialize      (void);
+        bool            Process         (IP_PacketMsg_t* pRX);
+
+    private:
+
+        NetworkContext&         m_Context;
+};
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // (IP_USE_ICMP == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 

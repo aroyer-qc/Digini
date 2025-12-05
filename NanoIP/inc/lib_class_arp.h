@@ -27,18 +27,12 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-
-//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define ARP_REQUEST                     htons(1)        // 1
-#define ARP_REPLY                       htons(2)        // 2
-
-#define ARP_HARDWARE_TYPE_ETHERNET      htons(1)        // 1
+#define ARP_REQUEST                     1
+#define ARP_REPLY                       2
+#define ARP_HARDWARE_TYPE_ETHERNET      1
 
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
@@ -59,18 +53,20 @@ class NetARP
 {
     public:
 
+                            NetARP                  (NetworkContext& Context) : m_Context(Context) {}
+
         SystemState_e       Initialize              (void);
         void                ProcessIP               (IP_PacketMsg_t* pRX);
         void                ProcessARP              (IP_PacketMsg_t* pRX);
         void                ProcessOut              (IP_PacketMsg_t* pTX);
         void                Resolve                 (void);
+        void                TimerCallBack	    	(void);
 
     private:
 
         void                UpdateEntry				(IP_Address_t IP_Address, IP_MAC_Address_t* pMAC_Adress);
-        void                TimerCallBack	    	(nOS_Timer * pTimer, void* pArg);           // typedef void(*nOS_TimerCallback)(nOS_Timer*,void*);
 
-
+        NetworkContext&     m_Context;
         IP_Address_t        m_IP_Address;
         ARP_TableEntry_t    m_TableEntry[IP_ARP_TABLE_SIZE];
         uint8_t             m_Time;

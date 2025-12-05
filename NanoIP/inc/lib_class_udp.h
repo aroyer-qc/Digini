@@ -26,29 +26,38 @@
 
 #pragma once
 
+
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
+
+#if (IP_USE_UDP == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define UDP_PORT_BOOT_P_SERVER				htons(67)			 	    // Port 67
-#define UDP_PORT_BOOT_P_CLIENT				htons(68)           		// Port 68
+#define UDP_PORT_BOOT_P_SERVER				67
+#define UDP_PORT_BOOT_P_CLIENT				68
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
-// not sure i need a class!!
-
 class NetUDP
 {
     public:
 
-        void 				    Initialize  		(void);
-        IP_PacketMsg_t* 	    Process				(IP_PacketMsg_t* pMsg);
+                                NetUDP                  (NetworkContext& Context) : m_Context(Context) {}
+
+        void 				    Initialize  		    (void);
+        IP_PacketMsg_t* 	    Process				    (IP_PacketMsg_t* pMsg);
+
+    private:
+
+        NetworkContext                  m_Context;
 };
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // (IP_USE_UDP == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 

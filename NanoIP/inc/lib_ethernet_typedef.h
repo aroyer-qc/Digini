@@ -54,9 +54,6 @@
 #define IP_ETHERNET_TYPE_IP  			        0x0800
 //#define IP_ETHERNET_TYPE_IP6 			        0x86DD
 
-
-
-
 #define IP_VERSION4_IHL20				        0x45
 #define IP_TIME_TO_LIVE					        128
 #define IP_BROADCAST_ADDRESS                    0xFFFFFFFF
@@ -65,6 +62,15 @@
 #define IP_PROTOCOL_TCP					        0x06
 #define IP_PROTOCOL_UDP					        0x11
 
+#define DHCP_PACKET_SIZE                        328
+#define DHCP_OPTION_IN_PACKET_SIZE              308
+
+#if (IP_USE_DHCP == DEF_DISABLED)
+    #define GetActiveGatewayIP()                GetStaticGatewayIP()
+    #define GetActiveSubnetMask()               GetStaticSubnetMask()
+    #define GetActiveIP()                       GetStaticIP()
+    #define GetActiveDNS_IP()                   GetStaticDNS_IP()
+#endif
 
 
 //-------------------------------------------------------------------------------------------------
@@ -171,6 +177,25 @@ enum ETH_LinkState_e
     ETH_LINK_UNKNOWN,
 };
 
+enum DHCP_State_e
+{
+    DHCP_STATE_INITIAL          = 0,
+    DHCP_STATE_DISCOVER         = 1,
+    DHCP_STATE_OFFER_RECEIVED   = 2,
+    DHCP_STATE_BOUND            = 3,
+};
+
+enum DHCP_OptionType_e
+{
+    DHCP_OPTION_DISCOVER = 1,
+    DHCP_OPTION_OFFER    = 2,
+    DHCP_OPTION_REQUEST  = 3,
+    DHCP_OPTION_DECLINE  = 4,        // not used   we don't declie an offer
+    DHCP_OPTION_ACK      = 5,
+    DHCP_OPTION_NACK     = 6,
+    DHCP_OPTION_RELEASE  = 7,        // not used???
+};
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -182,10 +207,6 @@ typedef uint16_t    IP_Port_t;
 struct IP_MAC_Address_t
 {
     uint8_t     Byte[IP_MAC_ADDRESS_SIZE];
-
-  #if (IP_USE_IP_V6 == DEF_ENABLED)                     // Future :)
-    uint16_t    MAC_V6[IP_MAC_V6_ADDRESS_SIZE];
-  #endif
 };
 
 // The Ethernet header
@@ -195,7 +216,6 @@ struct IP_EthernetHeader_t
 	IP_MAC_Address_t 	Src;                            // +   6
 	uint16_t		    Type;                           // +   2
 };                           	    // 14 Bytes
-
 
 struct IP_DHCP_Header_t
 {
@@ -368,8 +388,6 @@ struct IP_PacketMsg_t
 	IP_EthernetPacket_t	Packet;
 };
 
-
-
 struct IP_ETH_Config_t
 {
     IP_MAC_Address_t            pMAC_Address;
@@ -378,14 +396,14 @@ struct IP_ETH_Config_t
     uint32_t                    PHY_Address;
 };
 
-struct IP_Config_t                                          // Host Name, IP_ Address, Protocol
+struct IP_Config_t                                                              // Host Name, IP_ Address, Protocol (ip_cfg.h)
 {
   #if (IP_USE_HOSTNAME == DEF_ENABLED)
     char*               HostName;
   #endif
 
     uint16_t            ProtocolFlag;
-    IP_Address_t        DefaultStatic_IP;
+    IP_Address_t        DefaultStatic_IP;         // check in context
     IP_Address_t        DefaultGateway;
     IP_Address_t        DefaultSubnetMask;
     IP_Address_t        DefaultStaticDNS;
@@ -465,10 +483,143 @@ struct SocketInfo_t
 	} Receive;
 };
 
+struct DHCP_Options_t
+{
+    DHCP_OptionType_e   Type;
+    IP_Address_t        GatewayIP;
+    IP_Address_t        SubnetMaskIP;
+    IP_Address_t        DNS_ServerIP;
+    IP_Address_t        ClientIP;
+    IP_Address_t        ServerIP;
+    /* TickCount ? */uint32_t            LeaseTime;
+};
+
+struct DHCP_Msg_t
+{
+    uint8_t      Op;
+    uint8_t      H_Type;
+    uint8_t      H_Length;
+    uint8_t      Hops;
+    uint32_t     X_ID;
+    uint16_t     Secs;
+    uint16_t     Flags;
+    IP_Address_t ClientIP_Address;
+    IP_Address_t YourIP_Address;
+    IP_Address_t ServerIP_Address;
+    IP_Address_t RelayAgentIP_Address;
+    uint8_t      ClientHardware[16];
+    uint8_t      Sname[64];
+    uint8_t      File[128];
+    uint32_t     MagicCookie;
+    uint8_t      Options[DHCP_OPTION_IN_PACKET_SIZE];
+};
+
+union IP_Q_Message_t
+{
+    uint8_t         Type;
+
+    struct u8
+    {
+        uint8_t     Type;
+        uint8_t     Data;
+    };
+
+    struct Pointer
+    {
+        uint8_t     Type;
+        uint8_t*    pData;
+    };
+};
+
 
 //typedef SystemState_e (*ETH_PHY_Read_t)  (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData);   // Read Ethernet PHY Register.   not sure it is still good
 //typedef SystemState_e (*ETH_PHY_Write_t) (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data);   // Write Ethernet PHY Register.
 
+//-------------------------------------------------------------------------------------------------
+// class to access struct data
+//-------------------------------------------------------------------------------------------------
+
+// i'm thinking taking the MAC address as a pointer to the config struct!! not sure!
+
+class NetworkContext
+{
+    public:
+
+        bool                IsLinkUp                (void)          const               { return m_LinkUpState;                                                                             }
+        void                SetLinkUp               (bool State)                        { m_LinkUpState = State;                                                                            }
+
+        bool                IsIP_Valid              (void)                              { return m_IP_Valid;                                                                                }
+        void                SetIP_Valid             (bool State)                        { m_IP_Valid = State;                                                                               }
+
+      #if (IP_USE_DHCP == DEF_ENABLED)
+
+        bool                IsDHCP_Enable           (void)                              { return m_DHCP_Enable;                                                                             }
+        void                SetDHCP_Enable          (bool State)                        { m_DHCP_Enable = State;                                                                            }
+
+        IP_Address_t        GetDHCP_GatewayIP      (void)                               { return m_DHCP_GatewayIP;                                                                          }
+        void                SetDHCP_GatewayIP      (IP_Address_t GatewayIP)             { m_DHCP_GatewayIP = GatewayIP;                                                                     }
+
+        IP_Address_t        GetDHCP_SubnetMask      (void)                              { return m_DHCP_SubnetMask;                                                                         }
+        void                SetDHCP_SubnetMask      (IP_Address_t SubnetMask)           { m_DHCP_SubnetMask = SubnetMask;                                                                   }
+
+        IP_Address_t        GetDHCP_IP              (void)                              { return m_DHCP_IP;                                                                                 }
+        void                SetDHCP_IP              (IP_Address_t DHCP_IP)              { m_DHCP_IP = DHCP_IP;                                                                              }
+
+        IP_Address_t        GetDHCP_DNS_IP          (void)                              { return m_DHCP_DNS_IP;                                                                             }
+        void                SetDHCP_DNS_IP          (IP_Address_t DHCP_DNS_IP)          { m_DHCP_DNS_IP = DHCP_DNS_IP;                                                                      }
+
+        IP_Address_t        GetActiveGatewayIP      (void)                              { return m_DHCP_GatewayIP;                                                                          }
+        IP_Address_t        GetActveSubnetMask      (void)                              { return m_DHCP_SubnetMask;                                                                         }
+        IP_Address_t        GetActiveIP             (void)                              { return m_DHCP_IP;                                                                                 }
+        IP_Address_t        GetActiveDNS_IP         (void)                              { return m_DHCP_DNS_IP;                                                                             }
+
+      #endif
+
+        IP_Address_t        GetStaticGatewayIP      (void)                              { return m_StaticGatewayIP;                                                                         }
+        void                SetStaticGatewayIP      (IP_Address_t GatewayIP)            { m_StaticGatewayIP = GatewayIP;                                                                    }
+
+        IP_Address_t        GetStaticSubnetMask     (void)                              { return m_StaticSubnetMask;                                                                        }
+        void                SetStaticSubnetMask     (IP_Address_t SubnetMask)           { m_StaticSubnetMask = SubnetMask;                                                                  }
+
+        IP_Address_t        GetStaticIP             (void)                              { return m_StaticIP;                                                                                }
+        void                SetStaticIP             (IP_Address_t StaticIP)             { m_StaticIP = StaticIP;                                                                            }
+
+        IP_Address_t        GetStaticDNS_IP         (void)                              { return m_StaticDNS_IP;                                                                            }
+        void                SetStaticDNS_IP         (IP_Address_t DNS_IP)               { m_StaticDNS_IP = DNS_IP;                                                                          }
+
+        void                GetMAC_Address          (IP_MAC_Address_t* pMAC_Address)    { memcpy(pMAC_Address, &m_MAC_Address, IP_MAC_ADDRESS_SIZE);                                        }
+        void                SetMAC_Address          (IP_MAC_Address_t* pMAC_Address)    { memcpy(&m_MAC_Address, &pMAC_Address, IP_MAC_ADDRESS_SIZE);                                       }
+
+        SystemState_e       InitializeMsgQ          (void)                              { nOS_QueueCreate(&this->m_Q_Msg, &m_ArrayMsg[0], sizeof(IP_Q_Message_t*), Q_TASK_IP_MANAGER_SIZE); return SYS_READY;     }
+        nOS_Queue*          GetMsgQ                 (void)                              { return &m_Q_Msg;                                                                                  }
+
+    private:
+
+        bool                m_LinkUpState;
+        bool                m_IP_Valid;
+
+      #if (IP_USE_DHCP == DEF_ENABLED)
+        bool                m_DHCP_Enable;
+
+        IP_Address_t        m_DHCP_GatewayIP;                       // Gateway IP Address from server
+        IP_Address_t        m_DHCP_SubnetMask;                      // Subnet Mask from server
+        IP_Address_t        m_DHCP_IP;                              // IP Address from server
+        IP_Address_t        m_DHCP_DNS_IP;                          // DNS Server IP Address from server
+      #endif
+
+        IP_Address_t        m_StaticGatewayIP;                      // Gateway IP Address from server
+        IP_Address_t        m_StaticSubnetMask;                     // Subnet Mask from server
+        IP_Address_t        m_StaticIP;                             // IP Address from server
+        IP_Address_t        m_StaticDNS_IP;                         // DNS Server IP Address from server
+
+        IP_MAC_Address_t    m_MAC_Address;
+
+        nOS_Queue           m_Q_Msg;
+        IP_Q_Message_t*     m_ArrayMsg[Q_TASK_IP_MANAGER_SIZE];
+};
+
+//-------------------------------------------------------------------------------------------------
+// Inline function(s)
 //-------------------------------------------------------------------------------------------------
 
 inline uint16_t htons(uint16_t x)

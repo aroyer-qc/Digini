@@ -28,9 +28,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define RNG_DRIVER_GLOBAL
 #include "./lib_digini.h"
-#undef  RNG_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -55,7 +53,7 @@ extern "C"
 //-------------------------------------------------------------------------------------------------
 void RNG_Initialize(void)
 {
-    RCC->AHB2ENR |= RCC_AHB2ENR;        // Enable clock to module
+    RCC->AHB2ENR |= RCC_AHB2ENR_RNGEN;  // Enable clock to module
     RNG->CR      |= RNG_CR_RNGEN;       // Enable the RNG Peripheral
 }
 
@@ -72,7 +70,7 @@ void RNG_Initialize(void)
 uint32_t RNG_GetRandom(void)
 {
     while((RNG->SR & RNG_SR_DRDY) == 0){};      // Should never jam
-    
+
     return RNG->DR;
 }
 
@@ -91,11 +89,11 @@ uint32_t RNG_GetRandomFromRange(uint32_t Min, uint32_t Max)
 {
     uint32_t CalculatedRandom;
     uint32_t RandomValue;
-    
+
     CalculatedRandom = (Max - Min) + 1;             // This is the range
     while((RNG->SR & RNG_SR_DRDY) == 0){};          // Should never jam;
     RandomValue = RNG->DR;
-    
+
     return uint32_t((uint64_t(RandomValue) * uint64_t(CalculatedRandom)) >> sizeof(uint32_t)) + Min;
 }
 

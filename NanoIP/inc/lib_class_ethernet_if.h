@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_ethernetif.h
+//  File : lib_class_ethernet_if.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -52,6 +52,9 @@ class ETH_IF_Driver
 {
     public:
 
+        ETH_IF_Driver                                   (NetworkContext& Context) : m_Context(Context) {}
+
+
         SystemState_e       Initialize                  (const IP_ETH_Config_t* pETH_Config);
 
       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
@@ -68,7 +71,6 @@ class ETH_IF_Driver
 
         inline MemoryNode*  LowLevelInput               (void);
         SystemState_e       LowLevelOutput              (MemoryNode* pPacket);               // TODO Should use may chainlist buffer allocation
-        void                ArpTimer                    (void* pArg);
         void                PollTheNetworkInterface     (void);                                                 // This might be a PHY, MAC, HEC ( hardwired ethernet controller Ex. W5100, ESP32 etc...)
         void                CallBack                    (uint32_t Event);
       #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
@@ -79,9 +81,7 @@ class ETH_IF_Driver
         nOS_Mutex                   m_TX_Mutex;
         static nOS_Thread           m_Handle;
         static nOS_Stack            m_Stack[TASK_ETHERNET_IF_STACK_SIZE];
-
-
-
+        NetworkContext&             m_Context;
         const IP_ETH_Config_t*      m_pETH_Config;
 
         //ETH_Driver                  m_Mac;

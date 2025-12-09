@@ -59,15 +59,15 @@ class PHY_DriverInterface
     public:
 
         virtual SystemState_e   Initialize         (ETH_DriverInterface* pETH_Driver, uint32_t PHY_Address)  = 0;
-        virtual SystemState_e   Uninitialize       (void)                                           = 0;
-        virtual SystemState_e   PowerControl       (ETH_PowerState_e state)                         = 0;
-        virtual SystemState_e   SetInterface       (ETH_MediaInterface_e Interface)                 = 0;
-        virtual SystemState_e   SetMode            (ETH_PHY_Mode_e Mode)                            = 0;
-        virtual ETH_LinkState_e GetLinkState       (void)                                           = 0;
-        virtual ETH_LinkInfo_t  GetLinkInfo        (void)                                           = 0;
-        virtual uint8_t         GetPHY_Address     (void)                                           = 0;
+        virtual SystemState_e   Uninitialize       (void)                                                    = 0;
+        virtual SystemState_e   PowerControl       (ETH_PowerState_e state)                                  = 0;
+        virtual SystemState_e   SetInterface       (ETH_MediaInterface_e Interface)                          = 0;
+        virtual SystemState_e   SetMode            (ETH_PHY_Mode_e Mode)                                     = 0;
+        virtual ETH_LinkState_e GetLinkState       (void)                                                    = 0;
+        virtual ETH_LinkInfo_t  GetLinkInfo        (void)                                                    = 0;
+        virtual uint8_t         GetPHY_Address     (void)                                                    = 0;
       #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
-        virtual SystemState_e   SetLinkUpInterrupt (bool State)                                     = 0;
+        virtual SystemState_e   SetLinkUpInterrupt (bool State)                                              = 0;
       #endif
 };
 

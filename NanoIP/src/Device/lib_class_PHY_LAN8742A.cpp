@@ -125,7 +125,7 @@ SystemState_e PHY_LAN8742A_Driver::PowerControl(ETH_PowerState_e PowerState)
             }
             else if((m_Flags & ETH_POWERED_ON) != 0)
             {
-                State= SYS_READY;
+                State = SYS_READY;
             }
             else
             {
@@ -173,7 +173,7 @@ SystemState_e PHY_LAN8742A_Driver::PowerControl(ETH_PowerState_e PowerState)
 //
 //  Function:       SetInterface
 //
-//  Parameter(s):   Interface       ETH_INRTERFACE_RMII or ETH_INTERFACE_MII or ETH_INTERFACE_SII
+//  Parameter(s):   Interface       ETH_INTERFACE_RMII or ETH_INTERFACE_MII or ETH_INTERFACE_SII
 //  Return:         SystemState_e   State of function.
 //
 //  Description:    Set Ethernet PHY Device Operation Mode.
@@ -224,11 +224,13 @@ SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
         {
             m_pETH_Driver->PHY_Read(m_PHY_Address, REG_BSR, &RegValue);
 
-            if(TickHasTimeOut(TickStart, PHY_TIMEOUT) == false)
+            if(TickHasTimeOut(TickStart, PHY_TIMEOUT_AUTO_NEGOCIATION) == true)
             {
                 // Return ERROR in case of timeout
                 return SYS_TIME_OUT;
             }
+
+            nOS_Yield();
         }
         while((RegValue & BSR_AUTO_NEGO_COMPLETE) == 0);
 
@@ -278,20 +280,21 @@ SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
 //-------------------------------------------------------------------------------------------------
 ETH_LinkState_e PHY_LAN8742A_Driver::GetLinkState(void)
 {
-    ETH_LinkState_e         State;
+    ETH_LinkState_e         State    = ETH_LINK_UNKNOWN;
     static ETH_LinkState_e  StateNow = ETH_LINK_UNKNOWN;
     uint16_t                Value = 0;
 
     if(m_Flags & ETH_POWERED_ON)
     {
         m_pETH_Driver->PHY_Read(m_PHY_Address, REG_BSR, &Value);
-    }
 
-    State = (Value & BSR_LINK_STAT) ? ETH_LINK_UP : ETH_LINK_DOWN;
-    if(StateNow != State)
-    {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: LINK has change, now it is %s\n", (State == ETH_LINK_UP) ? "UP" : "DOWN");
-        StateNow = State;
+        State = (Value & BSR_LINK_STAT) ? ETH_LINK_UP : ETH_LINK_DOWN;
+
+        if(StateNow != State)
+        {
+            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: LINK has change, now it is %s\n", (State == ETH_LINK_UP) ? "UP" : "DOWN");
+            StateNow = State;
+        }
     }
 
     return State;

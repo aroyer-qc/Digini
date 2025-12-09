@@ -48,8 +48,8 @@
 //-------------------------------------------------------------------------------------------------
 
 //----- Timeouts -----
-#define PHY_TIMEOUT             2               // PHY Register access timeout in ms
-#define RESET_TIMEOUT           10
+#define DRIVER_PHY_TIMEOUT      2000            // PHY Register access timeout in mSec ( ST in their HAL it is 65.5 Sec)
+#define DRIVER_RESET_TIMEOUT    10
 
 //----- TDES0 - DMA Descriptor TX Packet Control/Status -----
 #define DMA_TX_OWN              0x80000000      // Own bit 1=DMA,0=CPU
@@ -116,9 +116,10 @@
 #define ETH_MACCR_RESET_VALUE   0x00008000
 
 //----- Ethernet Fixed PTPTSSR register -----
-#define ETH_PTPT_SSR_TSTTR     ((uint32_t)0x00000002)  // Time stamp target time reached
-#define ETH_PTPT_SSR_TSSO      ((uint32_t)0x00000001)  // Time stamp seconds overflow
+#define ETH_PTPT_SSR_TSTTR      ((uint32_t)0x00000002)  // Time stamp target time reached
+#define ETH_PTPT_SSR_TSSO       ((uint32_t)0x00000001)  // Time stamp seconds overflow
 
+#define ETH_MACAxHR_AE          0x80000000
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
@@ -152,12 +153,8 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
     TickCount_t TickStart;
 
     SYSCFG->PMC  |= SYSCFG_PMC_MII_RMII_SEL;
-
-    // Clear Control Structure
-    memset((void *)&m_Control, 0, sizeof(ETH_Control_t));
-
-    // Save context (pointer on ethernetif class)
-    m_pContext = pContext;
+    memset((void *)&m_Control, 0, sizeof(ETH_Control_t));       // Clear Control Structure
+    m_pContext = pContext;                                      // Save context (pointer on ethernetif class)
 
     // Enable Clock
   #if (ETH_USE_TIME_STAMP)
@@ -172,8 +169,7 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
     RCC->AHB1RSTR &= ~uint32_t(RCC_AHB1RSTR_ETHMACRST);
     __asm("nop  \n\t nop  \n\t   \n\t nop   \n\t nop");
 
-    // Reset Ethernet MAC peripheral
-    ETH->DMABMR = ETH_DMABMR_SR;
+    ETH->DMABMR = ETH_DMABMR_SR;                                // Reset Ethernet MAC peripheral
 
     // Wait for software reset
     TickStart = GetTick();
@@ -186,7 +182,7 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
 
         nOS_Yield();
     }
-    while(TickHasTimeOut(TickStart, RESET_TIMEOUT) == false);
+    while(TickHasTimeOut(TickStart, DRIVER_RESET_TIMEOUT) == false);
 
     ETH->MACMIIAR = ETH_MACIIAR_CR_DIVIDER;                     // MDC clock range selection
 
@@ -201,7 +197,7 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
     ETH->MACVLANTR = 0;                                         // Reset Value
 
     // Initialize Address registers
-    ETH->MACA0HR = 0x80000000; ETH->MACA0LR = 0;
+    ETH->MACA0HR = ETH_MACAxHR_AE; ETH->MACA0LR = 0;
     //ETH->MACA1HR = 0; ETH->MACA1LR = 0;   // check if it impair the behavior
     //ETH->MACA2HR = 0; ETH->MACA2LR = 0;
     //ETH->MACA3HR = 0; ETH->MACA3LR = 0;
@@ -238,7 +234,7 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
 
     // Enable ETH interrupt
     ISR_ClearPendingIRQ(ETH_IRQn);
-//    ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);   // to see if the hard still append
+    ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);
 
     m_Control.FrameEnd = nullptr;
 
@@ -355,22 +351,14 @@ void ETH_Driver::Start(void)
 //-------------------------------------------------------------------------------------------------
 SystemState_e ETH_Driver::GetMacAddress(IP_MAC_Address_t* pMAC_Address)
 {
-    uint32_t RegisterValue;
-
     if(pMAC_Address == nullptr)
     {
         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetMacAddress - Invalid Parameter\n");
         return SYS_INVALID_PARAMETER;
     }
 
-    RegisterValue = ETH->MACA0LR;
-    pMAC_Address->Byte[0] = uint8_t(RegisterValue);
-    pMAC_Address->Byte[1] = uint8_t(RegisterValue >> 8);
-    pMAC_Address->Byte[2] = uint8_t(RegisterValue >> 16);
-    pMAC_Address->Byte[3] = uint8_t(RegisterValue >> 24);
-    RegisterValue = ETH->MACA0HR;
-    pMAC_Address->Byte[4] = uint8_t(RegisterValue);
-    pMAC_Address->Byte[5] = uint8_t(RegisterValue >> 8);
+    *((uint16_t*)&pMAC_Address->Byte[4]) = uint16_t(ETH->MACA0HR);
+    *((uint32_t*)&pMAC_Address->Byte[0]) = uint32_t(ETH->MACA0LR);
 
     return SYS_READY;
 }
@@ -394,14 +382,8 @@ SystemState_e ETH_Driver::SetMacAddress(const IP_MAC_Address_t* pMAC_Address)
     }
 
     // Set Ethernet MAC Address registers
-    ETH->MACA0LR = (uint32_t(pMAC_Address->Byte[0])       |
-                    uint32_t(pMAC_Address->Byte[1]) << 8  |
-                    uint32_t(pMAC_Address->Byte[2]) << 16 |
-                    uint32_t(pMAC_Address->Byte[3]) << 24);
-
-    ETH->MACA0HR = (0x1UL << 31)                          |
-                   (uint32_t(pMAC_Address->Byte[4])       |
-                    uint32_t(pMAC_Address->Byte[5]) << 8);
+    ETH->MACA0HR = ETH_MACAxHR_AE | uint16_t(*(uint16_t*)&pMAC_Address->Byte[4]);
+    ETH->MACA0LR = *(uint32_t*)&pMAC_Address->Byte[0];
 
     return SYS_READY;
 }
@@ -441,9 +423,9 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
         return SYS_READY;
     }
 
-    ETH->MACA1HR = uint32_t(pMAC_Address->Byte[4])        | (uint32_t(pMAC_Address->Byte[5]) << 8) | ETH_MACA1HR_AE;
-    ETH->MACA1LR = uint32_t(pMAC_Address->Byte[0])        | (uint32_t(pMAC_Address->Byte[1]) << 8) |
-                  (uint32_t(pMAC_Address->Byte[2]) << 16) | (uint32_t(pMAC_Address->Byte[3]) << 24);
+    // Set Ethernet MAC Address registers
+    ETH->MACA1HR = ETH_MACAxHR_AE | uint16_t(*(uint16_t*)&pMAC_Address->Byte[4]);
+    ETH->MACA1LR = *(uint32_t*)&pMAC_Address->Byte[0];
     NbAddress--;
 
     if(NbAddress == 0)
@@ -454,9 +436,8 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
     }
 
     pMAC_Address++;
-    ETH->MACA2HR = uint32_t(pMAC_Address->Byte[4])        | (uint32_t(pMAC_Address->Byte[5]) << 8) | ETH_MACA2HR_AE;
-    ETH->MACA2LR = uint32_t(pMAC_Address->Byte[0])        | (uint32_t(pMAC_Address->Byte[1]) << 8) |
-                  (uint32_t(pMAC_Address->Byte[2]) << 16) | (uint32_t(pMAC_Address->Byte[3]) << 24);
+    ETH->MACA2HR = ETH_MACAxHR_AE | uint16_t(*(uint16_t*)&pMAC_Address->Byte[4]);
+    ETH->MACA2LR = *(uint32_t*)&pMAC_Address->Byte[0];
     NbAddress--;
 
     if(NbAddress == 0)
@@ -466,9 +447,8 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
     }
 
     pMAC_Address++;
-    ETH->MACA3HR = uint32_t(pMAC_Address->Byte[4])        | (uint32_t(pMAC_Address->Byte[5]) << 8) | ETH_MACA3HR_AE;
-    ETH->MACA3LR = uint32_t(pMAC_Address->Byte[0])        | (uint32_t(pMAC_Address->Byte[1]) << 8) |
-                  (uint32_t(pMAC_Address->Byte[2]) << 16) | (uint32_t(pMAC_Address->Byte[3]) << 24);
+    ETH->MACA3HR = ETH_MACAxHR_AE | uint16_t(*(uint16_t*)&pMAC_Address->Byte[4]);
+    ETH->MACA3LR = *(uint32_t*)&pMAC_Address->Byte[0];
     NbAddress--;
 
     if(NbAddress != 0)
@@ -885,11 +865,6 @@ SystemState_e ETH_Driver::PHY_Read(uint8_t PHY_Address, uint8_t RegisterAddress,
 
     RegisterValue = ETH->MACMIIAR & ETH_MACMIIAR_CR;
 
-    if((State = PHY_Busy()) != SYS_READY)
-    {
-        return State;
-    }
-
     ETH->MACMIIAR = RegisterValue                 |
                     ETH_MACMIIAR_MB               |
                     (uint32_t(PHY_Address) << 11) |
@@ -900,9 +875,8 @@ SystemState_e ETH_Driver::PHY_Read(uint8_t PHY_Address, uint8_t RegisterAddress,
         return State;
     }
 
-    *pData = uint16_t(ETH->MACMIIDR);                   // Only bit 0 to 15 are used in this register
-
-    return PHY_Busy();
+    *pData = uint16_t(ETH->MACMIIDR);           // Only bit 0 to 15 are used in this register
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -919,13 +893,7 @@ SystemState_e ETH_Driver::PHY_Read(uint8_t PHY_Address, uint8_t RegisterAddress,
 //-------------------------------------------------------------------------------------------------
 SystemState_e ETH_Driver::PHY_Write(uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t Data)
 {
-    SystemState_e State;
     uint32_t      RegisterValue;
-
-    if((State = PHY_Busy()) != SYS_READY)
-    {
-        return State;
-    }
 
     ETH->MACMIIDR = uint32_t(Data);
     RegisterValue = ETH->MACMIIAR & ETH_MACMIIAR_CR;
@@ -961,7 +929,7 @@ SystemState_e ETH_Driver::PHY_Busy(void)
 
         nOS_Yield();
     }
-    while(TickHasTimeOut(TickStart, PHY_TIMEOUT) == false);
+    while(TickHasTimeOut(TickStart, DRIVER_PHY_TIMEOUT) == false);
 
     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: PHY_Busy - It's busy\n");
     return SYS_TIME_OUT;
@@ -1002,6 +970,7 @@ void ETH_Driver::ISR_CallBack(uint32_t Event)
 //   Description:       Ethernet IRQ Handler.
 //
 //-------------------------------------------------------------------------------------------------
+
 extern "C"
 {
     NOS_ISR(ETH_IRQHandler)

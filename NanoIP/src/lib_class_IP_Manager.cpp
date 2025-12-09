@@ -40,7 +40,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define IP_ASCII_IP_ADDRESS_SIZE            16
+#define IP_ASCII_ADDRESS_SIZE               16
 
 //-------------------------------------------------------------------------------------------------
 // Const(s)
@@ -65,29 +65,16 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 {
  //   nOS_Error            Error;
 
-       // Initialize Variables
+    // Initialize Variables
     m_Context.SetIP_Valid(false);
     m_DNS_IP_Found = false;
     m_IP_Status    = false;
-
-    m_Context.InitializeMsgQ();     // this need to handle error
+    m_Context.InitializeMsgQ();                                             // this need to handle error
+    m_Context.SetMAC_Address(&m_Config[IF_ID].IP_ETH_Config.MAC_Address);
+    m_Context.SetMTU(IP_NET_IF_MTU);                                        // Set netif maximum transfer unit
     m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config);
 
-
-    // Initialize the MAC Address
-   // m_pEthernetIF->pETH_Driver.SetMacAddress(pMAC_Address);
-    //m_pEthernetIF->pETH_Driver.Initialize(pMAC_Address);
-
-
-    // Set netif maximum transfer unit
-   // m_MTU = IP_NET_IF_MTU;
-
-
-//    pNIC->Initialize();
-
-
     // All protocol support are created dynamically if interface is set to use it, and if configuration is enable for that protocol
-
 
   #if (IP_USE_UDP == DEF_ENABLED)
    #if (IP_NUMBER_OF_INTERFACE > 1)
@@ -187,97 +174,106 @@ void IP_Manager::Run(void)
     for(;;)
     {
       #if (IP_USE_DHCP == DEF_ENABLED)
-        if(m_DHCP.Process(nullptr) == true)                         // If enable, an IP must be valid to continue.
+       #if (IP_NUMBER_OF_INTERFACE > 1)
+        if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)        // We check protocol flag only if there more than one interface
+        {
+       #endif
+            if(m_DHCP.Process(nullptr) == true)                         // If enable, an IP must be valid to continue.
+            {                                                           // If not enable it continue anyway
       #endif
-        {                                                           // If not enable it continue anyway
+                // USE Queue from NIC driver to receive message instead of polling
+                //pRX = CS8900_Poll();									// Network driver read an entire IP packet into the RX Buffer
 
-            // USE Queue from NIC driver to receive message instead of polling
-            //pRX = CS8900_Poll();									// Network driver read an entire IP packet into the RX Buffer
-
-			if(pRX != nullptr)										// Check if a packet is present
-			{
-				switch(ntohs(pRX->Packet.u.ETH_Header.Type))			// Process depending on what kind of packet we have received.
-				{
-					case IP_ETHERNET_TYPE_IP:
-					{
-                      #if (IP_NUMBER_OF_INTERFACE > 1)
-                        if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-                      #endif
-                        {
-                           m_ARP.ProcessIP(pRX);
-                        }
-
-                        pTX = ProcessIP(pRX);
-
-                      #if (IP_NUMBER_OF_INTERFACE > 1)
-                        if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-                      #endif
-                        {
-                            m_ARP.ProcessOut(pTX);               		// If data are to be sent back, then send the data
-                        }
-					}
-                    break;
-
-					case IP_ETHERNET_TYPE_ARP:
-					{
-                      #if (IP_NUMBER_OF_INTERFACE > 1)
-                        if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-                      #endif
-						{
-                            m_ARP.ProcessARP(pRX);
-                        }
-					}
-                    break;
-				}
-
-				pMemoryPool->Free((void**)&pRX);
-			}
-
-            if(nOS_QueueRead(m_Context.GetMsgQ(), pMsg, NOS_WAIT_INFINITE) == NOS_OK)
-            {
-                switch(pMsg->Type)
+                if(pRX != nullptr)										// Check if a packet is present
                 {
-                  #if (IP_USE_DHCP == DEF_ENABLED)
-					case IP_MSG_TYPE_DHCP_MANAGEMENT:
-					{
-                      #if (IP_NUMBER_OF_INTERFACE > 1)
-                        if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
-                      #endif
+                    switch(ntohs(pRX->Packet.u.ETH_Header.Type))		// Process depending on what kind of packet we have received.
+                    {
+                        case IP_ETHERNET_TYPE_IP:
                         {
-                            m_IP_Status = m_DHCP.Process(pMsg);
-
-                            if(m_IP_Status == false)
+                          #if (IP_NUMBER_OF_INTERFACE > 1)
+                            if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
+                          #endif
                             {
-                                for(int i = 0; i < IP_STACK_NUMBER_OF_SOCKET; i++)
+                               m_ARP.ProcessIP(pRX);
+                            }
+
+                            pTX = ProcessIP(pRX);
+
+                          #if (IP_NUMBER_OF_INTERFACE > 1)
+                            if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
+                          #endif
+                            {
+                                m_ARP.ProcessOut(pTX);               		// If data are to be sent back, then send the data
+                            }
+                        }
+                        break;
+
+                        case IP_ETHERNET_TYPE_ARP:
+                        {
+                          #if (IP_NUMBER_OF_INTERFACE > 1)
+                            if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
+                          #endif
+                            {
+                                m_ARP.ProcessARP(pRX);
+                            }
+                        }
+                        break;
+                    }
+
+                    pMemoryPool->Free((void**)&pRX);
+                }
+
+                if(nOS_QueueRead(m_Context.GetMsgQ(), pMsg, NOS_WAIT_INFINITE) == NOS_OK)
+                {
+                    switch(pMsg->Type)
+                    {
+                      #if (IP_USE_DHCP == DEF_ENABLED)
+                        case IP_MSG_TYPE_DHCP_MANAGEMENT:
+                        {
+                          #if (IP_NUMBER_OF_INTERFACE > 1)
+                            if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
+                          #endif
+                            {
+                                m_IP_Status = m_DHCP.Process(pMsg);
+
+                                if(m_IP_Status == false)
                                 {
-                                    SOCK_Close(i);
+                                    for(int i = 0; i < IP_STACK_NUMBER_OF_SOCKET; i++)
+                                    {
+                                        SOCK_Close(i);
+                                    }
                                 }
                             }
                         }
-					}
-                    break;
-                  #endif
-
-                  #if (IP_USE_SNTP == DEF_ENABLED)
-                    case IP_MSG_TYPE_SNTP_MANAGEMENT:
-                    {
-                      #if (IP_NUMBER_OF_INTERFACE > 1)
-                        if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_SNTP) != 0)
+                        break;
                       #endif
-                        {
-                            IP = pSNTP->Request(IP_SNTP_SOCKET, IP_DEFAULT_NTP_SERVER_1, IP_DEFAULT_NTP_SERVER_2, &Error);
-                            m_FlagSNTP_Fail = (IP == IP_ADDRESS(0,0,0,0)) ? false : true;
-                        }
-                    }
-                    break;
-                  #endif
 
-					// put other management here
+                      #if (IP_USE_SNTP == DEF_ENABLED)
+                        case IP_MSG_TYPE_SNTP_MANAGEMENT:
+                        {
+                          #if (IP_NUMBER_OF_INTERFACE > 1)
+                            if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_SNTP) != 0)
+                          #endif
+                            {
+                                IP = pSNTP->Request(IP_SNTP_SOCKET, IP_DEFAULT_NTP_SERVER_1, IP_DEFAULT_NTP_SERVER_2, &Error);
+                                m_FlagSNTP_Fail = (IP == IP_ADDRESS(0,0,0,0)) ? false : true;
+                            }
+                        }
+                        break;
+                      #endif
+
+                        // put other management here
+                    }
+
+                    pMemoryPool->Free((void**)&pMsg);
                 }
 
-                pMemoryPool->Free((void**)&pMsg);
+      #if (IP_USE_DHCP == DEF_ENABLED)
             }
+       #if (IP_NUMBER_OF_INTERFACE > 1)
         }
+       #endif
+      #endif
 
         nOS_Yield();
     }
@@ -414,14 +410,14 @@ char* IP_Manager::IP_ToAscii(IP_Address_t IP_Address)
 {
     char* pBuffer;
 
-    pBuffer = (char*)pMemoryPool->AllocAndClear(IP_ASCII_IP_ADDRESS_SIZE, MEM_DBG_CLASS_IP_MANAGER_1);
+    pBuffer = (char*)pMemoryPool->AllocAndClear(IP_ASCII_ADDRESS_SIZE, MEM_DBG_CLASS_IP_MANAGER_1);
 
     if(pBuffer != nullptr)
     {
-        snprintf(pBuffer, IP_ASCII_IP_ADDRESS_SIZE, "%d.%d.%d.%d", uint8_t(IP_Address >> 24),
-                                                                   uint8_t(IP_Address >> 16),
-                                                                   uint8_t(IP_Address >> 8),
-                                                                   uint8_t(IP_Address));
+        snprintf(pBuffer, IP_ASCII_ADDRESS_SIZE, "%d.%d.%d.%d", uint8_t(IP_Address >> 24),
+                                                                uint8_t(IP_Address >> 16),
+                                                                uint8_t(IP_Address >> 8),
+                                                                uint8_t(IP_Address));
     }
     return pBuffer;
 }

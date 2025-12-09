@@ -249,7 +249,7 @@
 #include "./Comm/CmdLine/inc/lib_cli.h"
 #include "./Comm/VT100/inc/lib_vt100.h"
 #include "./Comm/Comm/inc/lib_comm.h"
-#include "./NanoIP/inc/lib_class_ethernetif.h"
+#include "./NanoIP/inc/lib_class_ethernet_if.h"
 #include "./NanoIP/inc/lib_Class_IP_Manager.h"
 
 //-------------------------------------------------------------------------------------------------

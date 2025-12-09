@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_ethernetif.cpp
+//  File : lib_class_ethernet_if.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -32,9 +32,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define ETHERNET_DRIVER_GLOBAL
+//#define ETHERNET_DRIVER_GLOBAL
 #include "./lib_digini.h"
-#undef  ETHERNET_DRIVER_GLOBAL
+//#undef  ETHERNET_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -42,10 +42,10 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#define NET_ARP_TMR_INTERVAL                1000
-#define NET_GUARD_BLOCK_TIME                250               // todo rename
-#define NET_BLOCK_TIME_WAITING_FOR_INPUT    10  //0xFFFF
-#define NET_RX_COUNT_MAX_SEMAPHORE          20
+#define NET_ARP_TMR_INTERVAL                        1000
+#define NET_GUARD_BLOCK_TIME                        250         // todo rename
+#define NET_BLOCK_TIME_WAITING_FOR_INPUT            10          // 0xFFFF
+#define NET_RX_COUNT_MAX_SEMAPHORE                  20
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -89,8 +89,9 @@ extern "C" void ClassEthernetIf_Wrapper(void* pvParameters)
 SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
 {
     nOS_Error            Error;
+    SystemState_e        State;
     ETH_DriverInterface* pETH_Driver;
-
+    IP_MAC_Address_t     MAC_Address;
 
     m_pETH_Config = pETH_Config;
 	m_Link        = ETH_LINK_DOWN;
@@ -99,59 +100,30 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
     Error = nOS_MutexCreate(&m_TX_Mutex, NOS_MUTEX_NORMAL, 1);
     VAR_UNUSED(Error);
 
-
-  //  myETH_Driver.SetMacAddress(&MAC);
-
   #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
     myStacktistic.Register(&m_Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Ethernet Input");
   #endif
 
- /*   nOS_ThreadCreate(&m_Handle,
+    nOS_ThreadCreate(&m_Handle,
                      ClassEthernetIf_Wrapper,
                      this,
                      &m_Stack[0],
                      TASK_ETHERNET_IF_STACK_SIZE,
                      TASK_ETHERNET_IF_PRIO);
-*/
+
     pETH_Driver = m_pETH_Config->pETH_Driver;
     pETH_Driver->Initialize(this);      // TODO put in here the callback
 
+    m_Context.GetMAC_Address(&MAC_Address);
+    pETH_Driver->SetMacAddress(&MAC_Address);
 
+    if((State = m_pETH_Config->pPHY_Driver->Initialize(pETH_Driver, m_pETH_Config->PHY_Address)) == SYS_READY)      // Interface ID is used as address
+    {
+        pETH_Driver->InitializeInterface();
+        pETH_Driver->Start();                                                               // Enable MAC and DMA transmission and reception
+    }
 
-
-    //pPHY_Driver = m_Config[IF_ID].IP_ETH_Config.pPHY_Driver;
-
-    //PHY_DriverInterface* pPHY_Driver;       // TODO conditional DIGINI_USE
-// TODO move this into the lib_ethernetif  it will take care of the init phase
-//    myETH_Driver.Initialize(nullptr);
- //   myETH_Driver.Start();
-    //myPHY_Driver.Initialize(&myETH_Driver, 0);
-
-
-//typedef void        (*ETH_SignalEvent_t) (uint32_t Event);  // Pointer to ETH_SignalEvent function
-
-
-
-
-
-//remove for test
-    m_pETH_Config->pPHY_Driver->Initialize(pETH_Driver, m_pETH_Config->PHY_Address); // Interface ID is used as address
-
-
-
-	//pNetIf->output     = EtharpOutput;        not here!!!
-	//pNetIf->linkoutput = LowLevelOutput;
-
-    // Create binary semaphore used for informing ethernetif of frame reception
-
- pETH_Driver->InitializeInterface();        // Enable MAC and DMA transmission and reception
-
-//remove for test
- pETH_Driver->Start();        // Enable MAC and DMA transmission and reception
-
-// 	sys_timeout(NET_ARP_TMR_INTERVAL, ArpTimer, nullptr);  implement my version of this
-
-	return SYS_READY;//ERR_OK;
+	return State;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -350,23 +322,6 @@ void ETH_IF_Driver::Run(void)
             PollTheNetworkInterface();
         }
     }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Function:       ArpTimer
-//
-//  Parameter(s):   pArg                none required
-//  Return:         None
-//
-//  Description:    Call lwIP function etharp_tmr each time the configure timeout has ended
-//
-//-------------------------------------------------------------------------------------------------
-void ETH_IF_Driver::ArpTimer(void* pArg)
-{
-	VAR_UNUSED(pArg);
-//	etharp_tmr();
-   // sys_timeout(NET_ARP_TMR_INTERVAL, ArpTimer, nullptr);           // Restart a new timer
 }
 
 //-------------------------------------------------------------------------------------------------

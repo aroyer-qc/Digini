@@ -111,15 +111,16 @@ class IP_Manager
 {
     public:
 
-                            IP_Manager               () : m_ARP(m_Context)
+                            IP_Manager               () : m_IF_Driver(m_Context),
+                                                          m_ARP(m_Context)
                                                         #if (IP_USE_DHCP == DEF_ENABLED)
-                                                          , m_DHCP(m_Context)
+                                                        , m_DHCP(m_Context)
                                                         #endif
                                                         #if (IP_USE_ICMP == DEF_ENABLED)
-                                                          , m_ICMP(m_Context)
+                                                        , m_ICMP(m_Context)
                                                         #endif
                                                         #if (IP_USE_UDP == DEF_ENABLED)
-                                                          , m_UDP(m_Context)
+                                                        , m_UDP(m_Context)
                                                         #endif
                                                           {}
 
@@ -145,7 +146,7 @@ class IP_Manager
         NetworkContext                  m_Context;
 
 
-        class ETH_IF_Driver             m_IF_Driver;
+        ETH_IF_Driver                   m_IF_Driver;
         //IP_Flag_t                       m_Flag;                               // Configuration of IP Stack
         bool                            m_IP_Status;                            // TODO give better name
         bool                            m_DNS_IP_Found;
@@ -158,7 +159,6 @@ class IP_Manager
         uint8_t                         m_TX_SocketMemorySize;                  // TX Socket Memory Configuration for all x Sockets
         uint8_t                         m_RX_SocketMemorySize;                  // RX Socket Memory Configuration for all x Sockets
 
-        uint16_t                        m_MTU;
         NetARP                          m_ARP;                                 // Address Resolution Protocol
 
       #if (IP_USE_DHCP == DEF_ENABLED)

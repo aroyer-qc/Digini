@@ -34,6 +34,13 @@
 
 #include "./lib_digini.h"
 
+
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define NET_ARP_TMR_INTERVAL                        1000
+
 //-------------------------------------------------------------------------------------------------
 
 void    ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg);
@@ -63,7 +70,7 @@ SystemState_e NetARP::Initialize(void)
     Error = nOS_TimerCreate(m_pTimer,
                             &ARP_TimerCallBack,                     // Timer callback function
                             this,                                   // This class object
-                            1000/*OS_TMR_CFG_TICKS_PER_SEC*/ * 10,	// Period is define in ip_cfg.h
+                            NET_ARP_TMR_INTERVAL,
                             NOS_TIMER_FREE_RUNNING);                // It will repeat indefinitely
 
 	if(Error == NOS_OK)
@@ -298,14 +305,14 @@ void NetARP::ProcessOut(IP_PacketMsg_t* pTX)
 {
 	uint8_t              i;
 	ARP_TableEntry_t*    pTable   	= nullptr;
-	IP_ARP_Frame_t*      pARP;
+//	IP_ARP_Frame_t*      pARP;
 	IP_EthernetPacket_t* pFrame;
 
 	if(pTX != nullptr)                        		// If data are to be sent back, then send the data
 	{
         IP_Address_t SubnetMask = m_Context.GetActiveSubnetMask();
 
-		pARP	= &pTX->Packet.u.ARP_Frame;
+//		pARP	= &pTX->Packet.u.ARP_Frame;
 		pFrame  = &pTX->Packet;
 
         // Check if the destination address is on the local network.

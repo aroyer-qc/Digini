@@ -128,7 +128,7 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       lowlevelOutput
+//  Function:       LowLevelOutput
 //
 //  Parameter(s):   MemoryNode*         pPacket   IP packet to send (Including MAC addresses and type)
 //  Return:         SystemState_e       SYS_READY if the packet could be sent
@@ -253,10 +253,10 @@ inline MemoryNode* ETH_IF_Driver::LowLevelInput(void)
 //
 //  Function:       Run
 //
-//  Parameter(s):   pParam       The network interface structure for this ETH_IF_Driver
+//  Parameter(s):   None
 //  Return:         None
 //
-//  Description:    This function is the ethernetif_input task
+//  Description:    This function is the input task
 //
 //  Note(s):        It is processed when a packet is ready to be read from the interface. That
 //                  should handle the actual reception of bytes from the network interface. Then
@@ -326,7 +326,7 @@ void ETH_IF_Driver::Run(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       ethernetif_PollThePHY
+//  Function:       PollTheNetworkInterface
 //
 //  Parameter(s):   None
 //  Return:         None
@@ -382,7 +382,7 @@ void ETH_IF_Driver::CallBack(uint32_t Event)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Function:       ethernetif_LinkCallBack
+//  Function:       LinkCallBack
 //
 //  Parameter(s):   pArg        N/U
 //  Return:         None

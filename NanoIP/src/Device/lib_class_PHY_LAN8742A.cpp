@@ -62,6 +62,11 @@ SystemState_e PHY_LAN8742A_Driver::Initialize(ETH_DriverInterface* pETH_Driver, 
         PowerControl(ETH_POWER_FULL);
         SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
         SetMode(ETH_PHY_Mode_e(ETH_PHY_MODE_SPEED_100M | ETH_PHY_MODE_DUPLEX_FULL));
+
+
+
+        //ETH_Phy.SetLinkUpInterrupt();??
+
     }
 
     return SYS_READY;

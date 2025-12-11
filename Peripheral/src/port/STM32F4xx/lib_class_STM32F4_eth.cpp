@@ -274,12 +274,12 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
 //   Description:       Initialize Ethernet Interface..
 //
 //-------------------------------------------------------------------------------------------------
- SystemState_e ETH_Driver::InitializeInterface(void)
- {
+SystemState_e ETH_Driver::InitializeInterface(void)
+{
     InitializeDMA_Buffer();                             // Initialize buffer and descriptors
 
     return SYS_READY;
- }
+}
 
 //-------------------------------------------------------------------------------------------------
 //

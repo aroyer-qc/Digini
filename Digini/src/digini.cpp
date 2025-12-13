@@ -161,6 +161,10 @@ SystemState_e DIGINI_PostInitialize(void)
     //nOS_Error Error;
     //SystemState_e State;
 
+  #if (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)
+    pTaskCOMM->Initialize();
+  #endif
+
   #if (USE_USB_DRIVER == DEF_ENABLED)
     USB.Initialize();
   #endif
@@ -175,10 +179,6 @@ SystemState_e DIGINI_PostInitialize(void)
 
   #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
     pTaskNetwork->Initialize();
-  #endif
-
-  #if (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)
-    pTaskCOMM->Initialize();
   #endif
 
     return SYS_READY;

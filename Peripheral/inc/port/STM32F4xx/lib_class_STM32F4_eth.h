@@ -76,9 +76,9 @@
 struct RX_Descriptor_t
 {
     uint32_t volatile       Status;
-    uint32_t                Control;
-    uint8_t const*          Address;
-    struct RX_Descriptor_t* Next;
+    uint32_t                ControlBufferSize;
+    uint32_t                BufferAddress;
+    struct RX_Descriptor_t* NextDescriptor;
 #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
     uint32_t                ExtStat;
     uint32_t                Reserved[1];
@@ -91,8 +91,7 @@ struct RX_Descriptor_t
 struct TX_Descriptor_t
 {
     uint32_t volatile       Status;
-    uint32_t                Size;
-    uint8_t*                Address;
+    uint32_t                BufferAddress;
     struct TX_Descriptor_t* Next;
 #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
     uint32_t                Reserved[2];

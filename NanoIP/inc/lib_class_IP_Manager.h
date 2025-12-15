@@ -79,6 +79,9 @@
 #define IP_DHCP_SOCKET                          3
 #define IP_SNTP_SOCKET                          3
 
+#define TASK_IP_MANAGER_STACK_SIZE              512
+#define TASK_IP_MANAGER_PRIO                    4
+
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
@@ -203,6 +206,9 @@ class IP_Manager
         IP_ETH_Config_t*                m_pEthernetIF;                          // Ethernet Configuration
         static const IP_Config_t        m_Config[IP_NUMBER_OF_INTERFACE];
         uint16_t                        m_SequenceID;
+
+        nOS_Thread                      m_Handle;
+        nOS_Stack                       m_Stack[TASK_IP_MANAGER_STACK_SIZE];
 };
 
 //-------------------------------------------------------------------------------------------------

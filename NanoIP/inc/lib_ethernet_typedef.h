@@ -413,8 +413,9 @@ struct IP_Config_t                                                              
 // EMAC Driver Control Information
 struct ETH_Control_t
 {
- //   ETH_CallBack_t          pCallBack;              // Signal Event callback
+ //   ETH_CallBack_t          pCallBack;            // Signal Event callback
     uint8_t                 TX_Index;               // Transmit descriptor index
+    uint32_t                TX_FrameLength;
     uint8_t                 RX_Index;               // Receive descriptor index
   #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
     uint8_t                 TX_TS_Index;            // Transmit Timestamps descriptor index

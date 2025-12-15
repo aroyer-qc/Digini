@@ -401,7 +401,7 @@ struct IP_Config_t                                                              
   #if (IP_USE_HOSTNAME == DEF_ENABLED)
     char*               HostName;
   #endif
-
+    nOS_Stack*          pStack;
     uint16_t            ProtocolFlag;
     IP_Address_t        DefaultStatic_IP;         // check in context
     IP_Address_t        DefaultGateway;
@@ -415,7 +415,6 @@ struct ETH_Control_t
 {
  //   ETH_CallBack_t          pCallBack;            // Signal Event callback
     uint8_t                 TX_Index;               // Transmit descriptor index
-    uint32_t                TX_FrameLength;
     uint8_t                 RX_Index;               // Receive descriptor index
   #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
     uint8_t                 TX_TS_Index;            // Transmit Timestamps descriptor index

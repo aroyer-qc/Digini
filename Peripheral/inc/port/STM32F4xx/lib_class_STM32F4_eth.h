@@ -50,7 +50,7 @@
 
 #define NUM_TX_Buffer               4
 #define NUM_RX_Buffer               6
-#define ETH_BUF_SIZE                1534
+#define ETH_BUF_SIZE                1524
 #define ETH_IRQ_PRIO                4
 
 //----- Ethernet MAC Frame Transmit Flags -----
@@ -91,6 +91,7 @@ struct RX_Descriptor_t
 struct TX_Descriptor_t
 {
     uint32_t volatile       Status;
+    uint32_t                Size;
     uint32_t                BufferAddress;
     struct TX_Descriptor_t* Next;
 #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))

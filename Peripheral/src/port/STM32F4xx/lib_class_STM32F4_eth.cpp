@@ -152,7 +152,14 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
 {
     TickCount_t TickStart;
 
-    SYSCFG->PMC  |= SYSCFG_PMC_MII_RMII_SEL;
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;                       // Enable SYSCFG clock
+
+  #if (ETH_INTERFACE_RMII == 0)
+	SYSCFG->PMC |=  SYSCFG_PMC_MII_RMII_SEL;
+  #else
+	SYSCFG->PMC &= ~SYSCFG_PMC_MII_RMII_SEL;
+  #endif
+
     memset((void *)&m_Control, 0, sizeof(ETH_Control_t));       // Clear Control Structure
     m_pContext = pContext;                                      // Save context (pointer on ethernetif class)
 
@@ -258,7 +265,7 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
                    ETH_DMABMR_USP);                             // Enable use of separate PBL for Rx and Tx
 
     // Enable RX interrupts
-    ETH->DMAIER = ETH_DMAIER_NISE | ETH_DMAIER_RIE | ETH_DMAIER_TIE;
+    ETH->DMAIER = ETH_DMAIER_NISE | ETH_DMAIER_RIE;
 
     return SYS_READY;
 }
@@ -489,7 +496,6 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
 //-------------------------------------------------------------------------------------------------
 SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32_t Flags)
 {
-    /*
     uint8_t* pDst = m_Control.FrameEnd;
     uint32_t Control;
 
@@ -509,14 +515,14 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
             return SYS_BUSY;
         }
 
-        pDst = m_TX_Descriptor[m_Control.TX_Index].BufferAddress;
-        //m_TX_Descriptor[m_Control.TX_Index].Size = Length;
+        pDst = (uint8_t*)m_TX_Descriptor[m_Control.TX_Index].BufferAddress;
+        m_TX_Descriptor[m_Control.TX_Index].Size = Length;
     }
-    //else
-    //{
+    else
+    {
         // Sending data fragments in progress
-    //    m_TX_Descriptor[m_Control.TX_Index].Size += Length;
-    //}
+        m_TX_Descriptor[m_Control.TX_Index].Size += Length;
+    }
 
     LIB_FastMemcpy(pFrame, pDst, Length);
 
@@ -576,100 +582,6 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
     m_TX_Descriptor[m_Control.TX_Index].Status = Control | DMA_TX_OWN;
     m_Control.TX_Index++;
 
-    if(m_Control.TX_Index == NUM_TX_Buffer)
-    {
-        m_Control.TX_Index = 0;
-    }
-
-    m_Control.FrameEnd = nullptr;
-
-    // Start frame transmission
-    ETH->DMASR   = ETH_DMASR_TBUS;
-    ETH->DMATPDR = 0;
-
-    return SYS_READY;*/
-
-    uint8_t* pDst = m_Control.FrameEnd;
-    uint32_t Control;
-
-    if((pFrame == nullptr) || (Length == 0))
-    {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - Invalid Parameter\n");
-        return SYS_INVALID_PARAMETER;
-    }
-
-    if(pDst == nullptr)
-    {
-        // Start of a new transmit frame
-        if(m_TX_Descriptor[m_Control.TX_Index].Status & DMA_TX_OWN)
-        {
-            // Transmitter is busy, wait
-            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - TX Busy\n");
-            return SYS_BUSY;
-        }
-
-        pDst = reinterpret_cast<uint8_t*>(m_TX_Descriptor[m_Control.TX_Index].BufferAddress);
-        m_Control.TX_FrameLength = Length;
-    }
-    else
-    {
-        // Sending data fragments in progress
-        m_Control.TX_FrameLength += Length;
-    }
-
-    LIB_FastMemcpy(pFrame, pDst, Length);
-
-    if(Flags & ETH_MAC_TX_FRAME_FRAGMENT)
-    {
-        // More data to come, remember current write position
-        m_Control.FrameEnd = pDst + Length;
-        return SYS_READY;
-    }
-
-    // Frame is now ready, send it to DMA
-    Control = m_TX_Descriptor[m_Control.TX_Index].Status & ~uint32_t(DMA_TX_CIC);
-
-#if(ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
-    uint16_t Prot = UNALIGNED_UINT16_READ(&reinterpret_cast<uint8_t*>(m_TX_Descriptor[m_Control.TX_Index].BufferAddress)[12]);
-    uint16_t Frag = UNALIGNED_UINT16_READ(&reinterpret_cast<uint8_t*>(m_TX_Descriptor[m_Control.TX_Index].BufferAddress)[20]);
-
-    if((Prot == 0x0008) && (Frag & 0xFF3F))
-    {
-        Control |= DMA_TX_CIC_IP;               // Insert only IP header checksum in fragmented frame
-    }
-    else
-    {
-        Control |= DMA_TX_CIC;                  // Insert IP header and payload checksums (TCP,UDP,ICMP)
-    }
-#endif
-
-    Control &= ~uint32_t(DMA_TX_IC | DMA_TX_TTSE);
-
-    if(Flags & ETH_MAC_TX_FRAME_EVENT)
-    {
-        Control |= DMA_TX_IC;
-    }
-
-#if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-    if(Flags & ETH_MAC_TX_FRAME_TIMESTAMP)
-    {
-        Control |= DMA_TX_TTSE;
-    }
-
-    m_Control.TX_TS_Index = m_Control.TX_Index;
-#endif
-
-    // --------------------------------------------------------------------
-    // Insert frame length into TBS1 (bits 28:16) — REQUIRED FOR STM32F4
-    // --------------------------------------------------------------------
-    Control &= ~(0x1FFF << 16);
-    Control |= ((m_Control.TX_FrameLength & 0x1FFF) << 16);
-
-    // Give descriptor to DMA
-    m_TX_Descriptor[m_Control.TX_Index].Status = Control | DMA_TX_OWN;
-
-    // Advance descriptor index
-    m_Control.TX_Index++;
     if(m_Control.TX_Index == NUM_TX_Buffer)
     {
         m_Control.TX_Index = 0;
@@ -1065,8 +977,7 @@ void ETH_Driver::ISR_CallBack(uint32_t Event)
 
 extern "C"
 {
-//    NOS_ISR(ETH_IRQHandler)
-     void ETH_IRQHandler()
+    NOS_ISR(ETH_IRQHandler)
     {
         uint32_t Register;
         uint32_t Event = ETH_MAC_EVENT_NONE;

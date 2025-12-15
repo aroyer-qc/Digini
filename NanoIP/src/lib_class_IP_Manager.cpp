@@ -43,6 +43,12 @@
 #define IP_ASCII_ADDRESS_SIZE               16
 
 //-------------------------------------------------------------------------------------------------
+// Stack(s)
+//-------------------------------------------------------------------------------------------------
+
+IF_ETH_DEF(EXPAND_X_IF_AS_STACK_DECLARATION)
+
+//-------------------------------------------------------------------------------------------------
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -165,14 +171,14 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
   #endif
 
     #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-    myStacktistic.Register(&m_Stack[0],   TASK_IP_MANAGER_STACK_SIZE,   "IP_Manager");
+    myStacktistic.Register(m_Config[IF_ID].pStack, TASK_IP_MANAGER_STACK_SIZE, "m_Config[IF_ID].HostName");
   #endif
 
 
     Error = nOS_ThreadCreate(&m_Handle,
                              TaskIP_Manager_Wrapper,
                              this,
-                             &m_Stack[0],
+                             m_Config[IF_ID].pStack,
                              TASK_IP_MANAGER_STACK_SIZE,
                              TASK_IP_MANAGER_PRIO);
 

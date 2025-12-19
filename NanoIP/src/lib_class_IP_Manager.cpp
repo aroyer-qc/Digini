@@ -43,6 +43,12 @@
 #define IP_ASCII_ADDRESS_SIZE               16
 
 //-------------------------------------------------------------------------------------------------
+// Stack(s)
+//-------------------------------------------------------------------------------------------------
+
+IF_ETH_DEF(EXPAND_X_IF_AS_STACK_DECLARATION)
+
+//-------------------------------------------------------------------------------------------------
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -50,12 +56,6 @@ const IP_Config_t IP_Manager::m_Config[IP_NUMBER_OF_INTERFACE] =
 {
     IF_ETH_DEF(EXPAND_X_IF_AS_STRUCT_DATA)
 };
-
-//-------------------------------------------------------------------------------------------------
-// Stack(s)
-//-------------------------------------------------------------------------------------------------
-
-IF_ETH_DEF(EXPAND_X_IF_AS_STACK_DECLARATION)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -171,7 +171,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
   #endif
 
     #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-    myStacktistic.Register(m_Config[IF_ID].pStack, TASK_IP_MANAGER_STACK_SIZE, "m_Config[IF_ID].HostName");
+    myStacktistic.Register(m_Config[IF_ID].pStack, TASK_IP_MANAGER_STACK_SIZE, m_Config[IF_ID].HostName);
   #endif
 
 

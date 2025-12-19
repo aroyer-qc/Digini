@@ -1482,12 +1482,14 @@ void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100
 //
 //  Name:           Bargraph
 //
-//  Parameter(s):   uint8_t         PosX        X Position on screen.
-//                  uint8_t         PosY        Y Position On screen.
-//              **  VT100_Color_e   Color       Color of the bargraph.
-//                  uint8_t         Value       Actual value.
-//                  uint8_t         Max         Maximum value.
-//                  uint8_t         Size        Size in character.
+//  Parameter(s):   uint8_t         PosX            X Position on screen.
+//                  uint8_t         PosY            Y Position On screen.
+//               ** VT100_Color_e   ColorCurrent    Color of the bargraph for the current value.
+//                  uint8_t         ValueCurrent    Current value.
+//               ** VT100_Color_e   ColorMax        Color of the bargraph for the max value.
+//                  uint8_t         ValueMax        Max value reach.
+//                  uint8_t         Max             Maximum range.
+//                  uint8_t         Size            Size in character.
 //
 //
 //  Return:         None
@@ -1495,30 +1497,48 @@ void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100
 //  Description:    Print the bargraph according to value and maximum at specified location.
 //
 //  Note(s):        ** This parameter exist only if VT100_USE_COLOR is defined
+//                  will need to be modified for mono using a marker instead of the color
+//                  also parameter list must differ if VT100_USE_COLOR is not enabled
 //
 //-------------------------------------------------------------------------------------------------
-void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size)
+void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, VT100_Color_e ColorCurrent, uint8_t ValueCurrent, VT100_Color_e ColorMax, uint8_t ValueMax, uint8_t Max, uint8_t Size)
 {
     uint32_t i;
+    uint32_t ScaledCurrent            = ValueCurrent * Size;
+    uint32_t CurrentThreshold         = ScaledCurrent / 100;
+    uint32_t CurrentLeftOverThreshold = ScaledCurrent % 100;
+    uint32_t MaxThreshold             = (ValueMax * Size) / 100;
 
     SetCursorPosition(PosX, PosY);
 
     for(i = 0; i < Size; i++)
     {
+
       #if (VT100_USE_COLOR == DEF_ENABLED)
-        if(i < ((uint32_t(Value * 100) / (uint32_t(Max * 100) / Size))))
+        if(i < CurrentThreshold)
         {
-            SetBackColor(Color);
+            SetBackColor(ColorCurrent);
+            InMenuPrintf(LBL_CHAR, ASCII_SPACE);
         }
         else
         {
-            SetBackColor(VT100_COLOR_BLACK);
+            SetBackColor((i < MaxThreshold) ? ColorMax : VT100_COLOR_BLACK);
+
+            if((i == CurrentThreshold) && (CurrentLeftOverThreshold > 50))
+
+            {
+                SetForeColor(ColorCurrent);
+                InMenuPrintf(LBL_CHAR, ASCII_EXT_HALF_BLOCK);
+            }
+            else
+            {
+                InMenuPrintf(LBL_CHAR, ASCII_SPACE);
+            }
         }
       #else
-        InvertMono((i < ((uint32_t(Value * 100) / (uint32_t(Max * 100) / Size)))));
+        InvertMono((i < ((uint32_t(ValueCurrent * 100) / (uint32_t(Max * 100) / Size)))));
       #endif
 
-        InMenuPrintf(LBL_CHAR, ASCII_SPACE);
     }
 
   #if (VT100_USE_COLOR == DEF_ENABLED)

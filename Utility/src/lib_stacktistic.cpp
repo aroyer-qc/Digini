@@ -106,7 +106,7 @@ const char* StackCheck::GetStackName(int StackID)
 
 //-------------------------------------------------------------------------------------------------
 //
-// Name:           GetUsage
+// Name:           GetMaxUsage
 //
 // Parameter(s):   StackID              Number attributed to stack when it was register
 // Return:         size_t               Used Size
@@ -114,7 +114,7 @@ const char* StackCheck::GetStackName(int StackID)
 // Description:    Return the use size of a specific stack.
 //
 //-------------------------------------------------------------------------------------------------
-size_t StackCheck::GetUsage(int StackID)
+size_t StackCheck::GetMaxUsage(int StackID)
 {
     size_t    FreeSize = -1;
     uint32_t* pStack;
@@ -145,11 +145,11 @@ size_t StackCheck::GetUsage(int StackID)
 // Description:    Return the use size of a specific stack
 //
 //-------------------------------------------------------------------------------------------------
-int32_t StackCheck::GetPercent(int StackID)
+int32_t StackCheck::GetMaxPercent(int StackID)
 {
     int32_t Percent;
 
-    Percent = int32_t(GetUsage(StackID));
+    Percent = int32_t(GetMaxUsage(StackID));
 
     if(Percent != -1)
     {

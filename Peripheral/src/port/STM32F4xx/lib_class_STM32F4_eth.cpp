@@ -302,7 +302,7 @@ void ETH_Driver::InitializeDMA_Buffer(void)
     // Initialize DMA Descriptors
     for(uint32_t i = 0; i < NUM_TX_Buffer; i++)
     {
-        m_TX_Descriptor[i].Status  = DMA_TX_TCH | DMA_TX_LS | DMA_TX_FS;
+        m_TX_Descriptor[i].Status        = DMA_TX_TCH | DMA_TX_LS | DMA_TX_FS;
         m_TX_Descriptor[i].BufferAddress = (uint32_t)&m_TX_Buffer[i];
         Next = i + 1;
         Next = (Next == NUM_TX_Buffer) ? 0 : Next;
@@ -311,16 +311,16 @@ void ETH_Driver::InitializeDMA_Buffer(void)
 
     for(uint32_t i = 0; i < NUM_RX_Buffer; i++)
     {
-        m_RX_Descriptor[i].Status  = DMA_RX_OWN;
+        m_RX_Descriptor[i].Status            = DMA_RX_OWN;
         m_RX_Descriptor[i].ControlBufferSize = DMA_RX_RCH | ETH_BUF_SIZE;
-        m_RX_Descriptor[i].BufferAddress = (uint32_t)&m_RX_Buffer[i];
+        m_RX_Descriptor[i].BufferAddress     = (uint32_t)&m_RX_Buffer[i];
         Next = i + 1;
         Next = (Next == NUM_RX_Buffer) ? 0 : Next;
         m_RX_Descriptor[i].NextDescriptor = &m_RX_Descriptor[Next];
     }
 
-    ETH->DMATDLAR = (uint32_t)&m_TX_Descriptor[0];
-    ETH->DMARDLAR = (uint32_t)&m_RX_Descriptor[0];
+    ETH->DMATDLAR      = (uint32_t)&m_TX_Descriptor[0];
+    ETH->DMARDLAR      = (uint32_t)&m_RX_Descriptor[0];
     m_Control.TX_Index = 0;
     m_Control.RX_Index = 0;
 }

@@ -49,7 +49,7 @@
 #if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
 
 nOS_Thread ClassTaskCOMM::m_Handle;
-nOS_Stack  ClassTaskCOMM::m_Stack[TASK_COMM_STACK_SIZE];
+nOS_Stack  ClassTaskCOMM::m_Stack[TASK_COMM_STACK_SIZE]             NOS_STACK_LOCATION;
 
 //-------------------------------------------------------------------------------------------------
 //

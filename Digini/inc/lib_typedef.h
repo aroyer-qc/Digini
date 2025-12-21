@@ -94,6 +94,7 @@ typedef enum _ASCII_e
     ASCII_EXT_VERTICAL_CHAR     = '\xB3',
     ASCII_EXT_BL_CORNER_CHAR    = '\xC0',
     ASCII_EXT_BR_CORNER_CHAR    = '\xD9',
+    ASCII_EXT_HALF_BLOCK        = '\xDD',
 } ASCII_e;
 
 typedef enum

@@ -103,6 +103,8 @@ typedef enum
   ERROR = !SUCCESS
 } ErrorStatus;
 
+#define NOS_STACK_LOCATION    __attribute__((section(".ccmram"), aligned(8)))
+
 #define SET_BIT(REG, BIT)     ((REG) |= (BIT))
 
 #define CLEAR_BIT(REG, BIT)   ((REG) &= ~(BIT))

@@ -1412,7 +1412,9 @@
 // see page 3151 of the PDF: rm0399-stm32h745755-and-stm32h747757-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
 // This configuration is for MDIO with a Max frequency of 2.5 MHz (specified in the IEEE 802.3)
 //
-#if   (SYS_CPU_CORE_CLOCK_FREQUENCY > 155000000)
+#if   (SYS_CPU_CORE_CLOCK_FREQUENCY > 255000000)    
+  #define ETH_MACMDIOAR_CR_DIVIDER                  ETH_MACMIIAR_CR_Div124
+#elif (SYS_CPU_CORE_CLOCK_FREQUENCY > 155000000)
   #define ETH_MACMDIOAR_CR_DIVIDER                  ETH_MACMIIAR_CR_Div102
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY > 105000000)
   #define ETH_MACMDIOAR_CR_DIVIDER                  ETH_MACMIIAR_CR_Div62

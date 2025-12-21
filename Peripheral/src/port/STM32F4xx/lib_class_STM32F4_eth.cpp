@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F7_eth.cpp
+//  File : lib_class_STM32F4_eth.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -152,7 +152,14 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
 {
     TickCount_t TickStart;
 
-    SYSCFG->PMC  |= SYSCFG_PMC_MII_RMII_SEL;
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;                       // Enable SYSCFG clock
+
+  #if (ETH_INTERFACE_RMII == 0)
+	SYSCFG->PMC |=  SYSCFG_PMC_MII_RMII_SEL;
+  #else
+	SYSCFG->PMC &= ~SYSCFG_PMC_MII_RMII_SEL;
+  #endif
+
     memset((void *)&m_Control, 0, sizeof(ETH_Control_t));       // Clear Control Structure
     m_pContext = pContext;                                      // Save context (pointer on ethernetif class)
 
@@ -180,9 +187,11 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
             break;
         }
 
-        nOS_Yield();
+        nOS_Sleep(1);
     }
     while(TickHasTimeOut(TickStart, DRIVER_RESET_TIMEOUT) == false);
+
+    InitializeDMA_Buffer();                             // Initialize buffer and descriptors
 
     ETH->MACMIIAR = ETH_MACIIAR_CR_DIVIDER;                     // MDC clock range selection
 
@@ -207,16 +216,13 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
 
   #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
     // Set clock accuracy to 20ns (50MHz) or 50ns (20MHz)
-    if(SYS_CPU_CORE_CLOCK_FREQUENCY >= 51000000)
-    {
-        ETH->PTPSSIR = 20;
-        ETH->PTPTSAR = (50000000ull << 32) / SYS_CPU_CORE_CLOCK_FREQUENCY;
-    }
-    else
-    {
-        ETH->PTPSSIR = 50;
-        ETH->PTPTSAR = (20000000ull << 32) / SYS_CPU_CORE_CLOCK_FREQUENCY;
-    }
+   #if (SYS_CPU_CORE_CLOCK_FREQUENCY >= 51000000)
+    ETH->PTPSSIR = 20;
+    ETH->PTPTSAR = (50000000ull << 32) / SYS_CPU_CORE_CLOCK_FREQUENCY;
+   #else
+    ETH->PTPSSIR = 50;
+    ETH->PTPTSAR = (20000000ull << 32) / SYS_CPU_CORE_CLOCK_FREQUENCY;
+   #endif
 
     ETH->PTPTSCR = (ETH_PTPTSSR_TSSIPV4FE |
                     ETH_PTPTSSR_TSSIPV6FE |
@@ -238,9 +244,9 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
 
     m_Control.FrameEnd = nullptr;
 
-    ETH->DMAOMR &= ~(ETH_DMAOMR_ST | ETH_DMAOMR_ST);
+    ETH->DMAOMR &= ~(ETH_DMAOMR_ST);
 
-#if (ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
+  #if (ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
     ETH->DMAOMR = (ETH_DMAOMR_RSF |
                    ETH_DMAOMR_TSF |
                    ETH_DMAOMR_OSF);                             // Second Frame Operate
@@ -276,8 +282,6 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
 //-------------------------------------------------------------------------------------------------
 SystemState_e ETH_Driver::InitializeInterface(void)
 {
-    InitializeDMA_Buffer();                             // Initialize buffer and descriptors
-
     return SYS_READY;
 }
 
@@ -298,8 +302,8 @@ void ETH_Driver::InitializeDMA_Buffer(void)
     // Initialize DMA Descriptors
     for(uint32_t i = 0; i < NUM_TX_Buffer; i++)
     {
-        m_TX_Descriptor[i].Status  = DMA_TX_TCH | DMA_TX_LS | DMA_TX_FS;
-        m_TX_Descriptor[i].Address = (uint8_t *)&m_TX_Buffer[i];
+        m_TX_Descriptor[i].Status        = DMA_TX_TCH | DMA_TX_LS | DMA_TX_FS;
+        m_TX_Descriptor[i].BufferAddress = (uint32_t)&m_TX_Buffer[i];
         Next = i + 1;
         Next = (Next == NUM_TX_Buffer) ? 0 : Next;
         m_TX_Descriptor[i].Next = &m_TX_Descriptor[Next];
@@ -307,16 +311,16 @@ void ETH_Driver::InitializeDMA_Buffer(void)
 
     for(uint32_t i = 0; i < NUM_RX_Buffer; i++)
     {
-        m_RX_Descriptor[i].Status  = DMA_RX_OWN;
-        m_RX_Descriptor[i].Control = DMA_RX_RCH | ETH_BUF_SIZE;
-        m_RX_Descriptor[i].Address = (uint8_t *)&m_RX_Buffer[i];
+        m_RX_Descriptor[i].Status            = DMA_RX_OWN;
+        m_RX_Descriptor[i].ControlBufferSize = DMA_RX_RCH | ETH_BUF_SIZE;
+        m_RX_Descriptor[i].BufferAddress     = (uint32_t)&m_RX_Buffer[i];
         Next = i + 1;
         Next = (Next == NUM_RX_Buffer) ? 0 : Next;
-        m_RX_Descriptor[i].Next = &m_RX_Descriptor[Next];
+        m_RX_Descriptor[i].NextDescriptor = &m_RX_Descriptor[Next];
     }
 
-    ETH->DMATDLAR = (uint32_t)&m_TX_Descriptor[0];
-    ETH->DMARDLAR = (uint32_t)&m_RX_Descriptor[0];
+    ETH->DMATDLAR      = (uint32_t)&m_TX_Descriptor[0];
+    ETH->DMARDLAR      = (uint32_t)&m_RX_Descriptor[0];
     m_Control.TX_Index = 0;
     m_Control.RX_Index = 0;
 }
@@ -511,7 +515,7 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
             return SYS_BUSY;
         }
 
-        pDst = m_TX_Descriptor[m_Control.TX_Index].Address;
+        pDst = (uint8_t*)m_TX_Descriptor[m_Control.TX_Index].BufferAddress;
         m_TX_Descriptor[m_Control.TX_Index].Size = Length;
     }
     else
@@ -610,7 +614,7 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
 SystemState_e ETH_Driver::ReadFrame(MemoryNode* pPacket, size_t Length)
 {
     SystemState_e State = SYS_READY;
-    uint8_t const* pSrc = m_RX_Descriptor[m_Control.RX_Index].Address;
+    uint8_t const* pSrc = (uint8_t*)m_RX_Descriptor[m_Control.RX_Index].BufferAddress;
     size_t NodeSize;
     uint8_t* pNodeData;
 

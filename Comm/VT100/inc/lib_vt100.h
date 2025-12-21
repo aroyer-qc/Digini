@@ -298,7 +298,7 @@ class VT100_Terminal : public ChildProcessInterface
         void                SaveCursorPosition          (void);
         void                SetAttribute                (VT100_Attribute_e Attribute);
 
-        void                Bargraph                    (uint8_t PosX, uint8_t PosY, VT100_Color_e Color, uint8_t Value, uint8_t Max, uint8_t Size);
+        void                Bargraph                    (uint8_t PosX, uint8_t PosY, VT100_Color_e ColorCurrent, uint8_t ValueCurrent, VT100_Color_e ColorMax, uint8_t ValueMax, uint8_t Max, uint8_t Size);
         void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor);
         void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor);
         void                DrawHline                   (uint8_t PosX, uint8_t PosY, uint8_t H_Size, VT100_Color_e ForeColor);

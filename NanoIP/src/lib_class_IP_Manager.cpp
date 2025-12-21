@@ -43,6 +43,12 @@
 #define IP_ASCII_ADDRESS_SIZE               16
 
 //-------------------------------------------------------------------------------------------------
+// Stack(s)
+//-------------------------------------------------------------------------------------------------
+
+IF_ETH_DEF(EXPAND_X_IF_AS_STACK_DECLARATION)
+
+//-------------------------------------------------------------------------------------------------
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -50,6 +56,23 @@ const IP_Config_t IP_Manager::m_Config[IP_NUMBER_OF_INTERFACE] =
 {
     IF_ETH_DEF(EXPAND_X_IF_AS_STRUCT_DATA)
 };
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           TaskIP_Manager_Wrapper
+//
+//  Parameter(s):   void* pvParameters
+//  Return:         void
+//
+//  Description:    main() for the IP_Manager
+//
+//  Note(s):
+//
+//-------------------------------------------------------------------------------------------------
+extern "C" void TaskIP_Manager_Wrapper(void* pvParameters)
+{
+    (static_cast<IP_Manager*>(pvParameters))->Run();
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -63,7 +86,7 @@ const IP_Config_t IP_Manager::m_Config[IP_NUMBER_OF_INTERFACE] =
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::Initialize(IF_ID_e IF_ID)
 {
- //   nOS_Error            Error;
+    nOS_Error Error;
 
     // Initialize Variables
     m_Context.SetIP_Valid(false);
@@ -146,6 +169,20 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
         m_SOAP.Initialize();
     }
   #endif
+
+    #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+    myStacktistic.Register(m_Config[IF_ID].pStack, TASK_IP_MANAGER_STACK_SIZE, m_Config[IF_ID].HostName);
+  #endif
+
+
+    Error = nOS_ThreadCreate(&m_Handle,
+                             TaskIP_Manager_Wrapper,
+                             this,
+                             m_Config[IF_ID].pStack,
+                             TASK_IP_MANAGER_STACK_SIZE,
+                             TASK_IP_MANAGER_PRIO);
+
+    VAR_UNUSED(Error);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -166,7 +203,7 @@ void IP_Manager::Run(void)
 {
   //  IP_Address_t   Address;
    // uint8_t        Error;
-  IP_PacketMsg_t*    pRX;
+  IP_PacketMsg_t*    pRX = nullptr;
   IP_PacketMsg_t*    pTX;
   IP_Q_Message_t*    pMsg = nullptr;
   //  IP_Address_t   IP;
@@ -275,7 +312,7 @@ void IP_Manager::Run(void)
        #endif
       #endif
 
-        nOS_Yield();
+        nOS_Sleep(1);
     }
 }
 

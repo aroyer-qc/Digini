@@ -79,18 +79,28 @@
 #define IP_DHCP_SOCKET                          3
 #define IP_SNTP_SOCKET                          3
 
+#define TASK_IP_MANAGER_STACK_SIZE              512
+#define TASK_IP_MANAGER_PRIO                    4
+
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
 #if (IP_USE_HOSTNAME == DEF_ENABLED)
-  #define EXPAND_X_IF_AS_ENUM(ENUM_ID, HOST_NAME, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS) ENUM_ID,
-  #define EXPAND_X_IF_AS_STRUCT_DATA(ENUM_ID, HOST_NAME, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS,   MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS) \
-                                            { HOST_NAME, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, { MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS } },
+  #define EXPAND_X_IF_AS_ENUM(ENUM_ID, HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS) ENUM_ID,
+  #define EXPAND_X_IF_AS_STRUCT_DATA(ENUM_ID, HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS,   MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS) \
+                                            { HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, { MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS } },
+
+  #define EXPAND_X_IF_AS_STACK_DECLARATION(ENUM_ID, HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS,   MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS) \
+                                                     nOS_Stack STK_VAR[TASK_IP_MANAGER_STACK_SIZE]  NOS_STACK_LOCATION;
+
 #else
-  #define EXPAND_X_IF_AS_ENUM(ENUM_ID, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS) ENUM_ID,
-  #define EXPAND_X_IF_AS_STRUCT_DATA(ENUM_ID, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS,   MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS) \
-                                            { PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, { MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS } },
+  #define EXPAND_X_IF_AS_ENUM(ENUM_ID, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS) ENUM_ID,
+  #define EXPAND_X_IF_AS_STRUCT_DATA(ENUM_ID, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS,   MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS) \
+                                            { STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, { MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS } },
+
+  #define EXPAND_X_IF_AS_STACK_DECLARATION(ENUM_ID, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS,   MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS) \
+                                          nOS_Stack STK_VAR[TASK_IP_MANAGER_STACK_SIZE]  NOS_STACK_LOCATION;
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -110,19 +120,19 @@ enum IF_ID_e
 class IP_Manager
 {
     public:
-
+                            // TODO i will also need to pass the name of the interface, because of multi instance ( Wired, WIFI)
                             IP_Manager               () : m_IF_Driver(m_Context),
                                                           m_ARP(m_Context)
-                                                        #if (IP_USE_DHCP == DEF_ENABLED)
+                                                      #if (IP_USE_DHCP == DEF_ENABLED)
                                                         , m_DHCP(m_Context)
-                                                        #endif
-                                                        #if (IP_USE_ICMP == DEF_ENABLED)
+                                                      #endif
+                                                      #if (IP_USE_ICMP == DEF_ENABLED)
                                                         , m_ICMP(m_Context)
-                                                        #endif
-                                                        #if (IP_USE_UDP == DEF_ENABLED)
+                                                      #endif
+                                                      #if (IP_USE_UDP == DEF_ENABLED)
                                                         , m_UDP(m_Context)
-                                                        #endif
-                                                          {}
+                                                      #endif
+                                                        {}
 
 
         void                Initialize                  (IF_ID_e IF_ID);
@@ -203,6 +213,8 @@ class IP_Manager
         IP_ETH_Config_t*                m_pEthernetIF;                          // Ethernet Configuration
         static const IP_Config_t        m_Config[IP_NUMBER_OF_INTERFACE];
         uint16_t                        m_SequenceID;
+
+        nOS_Thread                      m_Handle;
 };
 
 //-------------------------------------------------------------------------------------------------

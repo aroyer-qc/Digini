@@ -203,7 +203,6 @@ void UART_Driver::Initialize(void)
             }
             break;
           #endif
-
         }
 
         SetConfig(m_pInfo->Config, m_pInfo->BaudID);
@@ -497,7 +496,6 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
                 while(m_DMA_IsItBusyTX == true)
                 {
                     nOS_Yield();
-                    //nOS_Sleep(10);
                 }
             }
 
@@ -520,9 +518,10 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             }
 
             m_pUart->ICR = USART_ICR_TCCF | USART_ICR_FECF;
+m_DMA_TX.Enable();
             DMA_EnableTX();
             m_DMA_TX.ClearFlag(DMA_LISR_FEIF1 | DMA_LISR_TEIF1);
-            m_DMA_TX.Enable();
+//            m_DMA_TX.Enable();
         }
         else
         {
@@ -641,7 +640,6 @@ void UART_Driver::DMA_EnableRX(void)
 {
     if(m_pUart != nullptr)
     {
-
         m_pUart->CR3 |= USART_CR3_DMAR;         // Enable the DMA transfer
         (void)m_pUart->RDR;
         m_DMA_RX.ClearFlag();

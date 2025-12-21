@@ -388,10 +388,10 @@ size_t DMA_Driver::GetLength(void)
 //
 //  Function:       SetLength
 //
-//  Parameter(s):
+//  Parameter(s):	size_t	Lenght
 //  Return:         None
 //
-//  Description:
+//  Description:   Set the Length of the transfer
 //
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetLength(size_t Length)

@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2023 Alain Royer.
+// Copyright(c) 2024 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -72,26 +72,12 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef void (*ETH_MAC_SignalEvent_t) (uint32_t Event);  // Pointer to ETH_MAC_SignalEvent fucntion
-
-// EMAC Driver Control Information
-struct ETH_MAC_Control_t
-{
-    ETH_MAC_SignalEvent_t   CallbackEvent;          // Event callback
-    uint8_t                 TX_Index;               // Transmit descriptor index
-    uint8_t                 RX_Index;               // Receive descriptor index
-  #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-    uint8_t                 TX_TS_Index;            // Transmit Timestamp descriptor index
-  #endif
-    uint8_t*                FrameEnd;               // End of assembled frame fragments
-};
-
 // DMA RX Descriptor
 struct RX_Descriptor_t
 {
-    uint32_t volatile       Stat;
-    uint32_t                Ctrl;
-    uint8_t const*          Addr;
+    uint32_t volatile       Status;
+    uint32_t                Control;
+    uint8_t const*          Address;
     struct RX_Descriptor_t* Next;
 #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
     uint32_t                ExtStat;
@@ -104,9 +90,9 @@ struct RX_Descriptor_t
 // DMA TX Descriptor
 struct TX_Descriptor_t
 {
-    uint32_t volatile       Stat;
+    uint32_t volatile       Status;
     uint32_t                Size;
-    uint8_t*                Addr;
+    uint8_t*                Address;
     struct TX_Descriptor_t* Next;
 #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
     uint32_t                Reserved[2];
@@ -142,11 +128,11 @@ struct TX_Descriptor_t
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class ETH_Driver : public MAC_DriverInterface
+class ETH_Driver : public ETH_DriverInterface
 {
     public:
 
-        SystemState_e           Initialize              (ETH_MAC_SignalEvent_t CallbackEvent);                           // Initialize Ethernet MAC Device.
+        SystemState_e           Initialize              (void* pContext);                                                // Initialize Ethernet MAC Device.
         SystemState_e           InitializeInterface     (void);                                                          // Initialize Ethernet Interface.
 
         void                    Start                   (void);                                                          // Start ETH module
@@ -165,7 +151,7 @@ class ETH_Driver : public MAC_DriverInterface
         SystemState_e           PHY_Read                (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData); // Read Ethernet PHY Register through Management Interface.
         SystemState_e           PHY_Write               (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data); // Write Ethernet PHY Register through Management Interface.
 
-        static void             ISR_CallBack             (uint32_t Event);
+        void                    ISR_CallBack             (uint32_t Event);
 
     private:
 
@@ -173,12 +159,30 @@ class ETH_Driver : public MAC_DriverInterface
         void                    Control                 (void);
         SystemState_e           PHY_Busy                (void);
 
-        static     ETH_MAC_Control_t           m_MAC_Control;
+			       void*                       m_pContext;
+        static     ETH_Control_t               m_Control;
         static     RX_Descriptor_t             m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((section(".RX_DescriptorSection"), aligned(4)));   // Ethernet RX & TX DMA Descriptors
         static     TX_Descriptor_t             m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((section(".TX_DescriptorSection"), aligned(4)));
         static     uint32_t                    m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((section(".RX_ArraySection"),      aligned(4)));   // Ethernet Receive buffers
         static     uint32_t                    m_TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((section(".TX_ArraySection"),      aligned(4)));   // Ethernet Transmit buffers
 };
+
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+// There is only one ETHERNET peripheral, so we declare it here
+
+#ifdef LIB_ETH_DRIVER_GLOBAL
+
+class ETH_Driver myETH_Driver;
+
+#else // LIB_ETH_DRIVER_GLOBAL
+
+extern class ETH_Driver myETH_Driver;
+
+#endif // LIB_ETH_DRIVER_GLOBAL
+
 
 //-------------------------------------------------------------------------------------------------
 

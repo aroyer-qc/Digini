@@ -37,6 +37,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define DMA_DIRECTION_MASK             (DMA_SxCR_DIR_0 | DMA_SxCR_DIR_1)
+#define DMA_DCACHE_BOUNDARY            31
 
 //-------------------------------------------------------------------------------------------------
 // Variable(s)
@@ -71,6 +72,40 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
     EnableClock();
     m_pDMA->CR     = pInfo->ConfigAndChannel;
     m_Direction    = pInfo->ConfigAndChannel & DMA_DIRECTION_MASK;
+    m_LastBoundaryTransferSize = 0;
+
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       Enable
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Enable the DMA Stream or Channel
+//
+//-------------------------------------------------------------------------------------------------
+void DMA_Driver::Enable(void)
+{
+    SCB_CleanDCache_by_Addr((uint32_t*)m_pDMA->M0AR, m_LastBoundaryTransferSize);            // Flush the DCache boundary 32 bytes
+    SET_BIT(m_pDMA->CR, DMA_SxCR_EN);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Function:       Disable
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Disable the DMA Stream or Channel
+//
+//-------------------------------------------------------------------------------------------------
+void DMA_Driver::Disable(void)
+{
+    CLEAR_BIT(m_pDMA->CR, DMA_SxCR_EN);
+    //  SCB_InvalidateDCache_by_Addr((uint32_t*)m_pDMA->M0AR, (m_LastBoundaryTransferSize + 31) & 0x1F);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -89,18 +124,9 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetTransfer(void* pSource, void* pDestination, size_t Length)
 {
-    if(m_Direction == DMA_MEMORY_TO_PERIPHERAL)
-    {
-        m_pDMA->M0AR = uint32_t(pSource);
-        m_pDMA->PAR  = uint32_t(pDestination);
-    }
-    else
-    {
-        m_pDMA->M0AR = uint32_t(pDestination);
-        m_pDMA->PAR  = uint32_t(pSource);
-    }
-
-    m_pDMA->NDTR = uint32_t(Length);
+    SetSource(pSource);
+    SetDestination(pDestination);
+    SetLength(Length);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -197,12 +223,29 @@ void DMA_Driver::ClearFlag(uint32_t Flag)
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Function:       SetLength
+//
+//  Parameter(s):	size_t	Lenght
+//  Return:         None
+//
+//  Description:   Set the Length of the transfer
+//
+//-------------------------------------------------------------------------------------------------
+void DMA_Driver::SetLength(size_t Length)
+{
+    m_LastBoundaryTransferSize = (Length + DMA_DCACHE_BOUNDARY) & ~DMA_DCACHE_BOUNDARY;
+    m_pDMA->NDTR   = uint32_t(Length);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Function:       CheckFlag
 //
 //  Parameter(s):   Flag        Flag to check
 //  Return:         bool        If true then flag is set.
 //
 //  Description:    Check flag for specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
 bool DMA_Driver::CheckFlag(uint32_t Flag)
 {
@@ -248,6 +291,7 @@ bool DMA_Driver::CheckFlag(uint32_t Flag)
 //  Return:         None
 //
 //  Description:    Enable the associated DMA module clock
+//
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::EnableClock(void)
 {

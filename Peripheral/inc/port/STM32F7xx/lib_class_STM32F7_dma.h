@@ -100,20 +100,20 @@ class DMA_Driver
     public:
 
         void        Initialize                              (DMA_Info_t* pInfo);
+        void        Enable                                  (void);
+        void        Disable                                 (void);
         void        SetTransfer                             (void* pSource, void* pDestination, size_t Length);
         void        SetSource                               (void* pSource);
         void        SetDestination                          (void* pDestination);
+        void        SetLength                               (size_t Length);
 
         void        ClearFlag                               (uint32_t Flag);
         bool        CheckFlag                               (uint32_t Flag);
         void        EnableIRQ                               (void);
 
         // Inline method
-        void        Enable                                  (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_EN);        }
-        void        Disable                                 (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_EN);      }
         void        ClearFlag                               (void)                              { ClearFlag(m_Flag);                       }
         size_t      GetLength                               (void)                              { return size_t(m_pDMA->NDTR);             }
-        void        SetLength                               (size_t Length)                     { m_pDMA->NDTR = uint32_t(Length);         }
         void        SetMemoryIncrement                      (void)                              { SET_BIT(m_pDMA->CR, DMA_SxCR_MINC);      }
         void        SetNoMemoryIncrement                    (void)                              { CLEAR_BIT(m_pDMA->CR, DMA_SxCR_MINC);    }
         void        SetFifoControl                          (uint32_t Control)                  { m_pDMA->FCR = Control;                   }
@@ -137,6 +137,8 @@ class DMA_Driver
         uint8_t                     m_PreempPrio;
         uint32_t                    m_Direction;
         CallbackInterface*          m_pCallback;
+        size_t                      m_LastBoundaryTransferSize;
+
 };
 
 //-------------------------------------------------------------------------------------------------

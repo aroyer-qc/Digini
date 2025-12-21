@@ -442,7 +442,8 @@ struct  ETH_MacTime_t
 
 /// Socket typedef
 
-struct LinkList_t               // check if we have something else!!
+/*
+struct ETH_LinkList_t               // check if we have something else!!
 {
     void*       pPrevious;
     void*       pNext;
@@ -482,7 +483,7 @@ struct SocketInfo_t
 		uint16_t	    Window;
 	} Receive;
 };
-
+*/
 struct DHCP_Options_t
 {
     DHCP_OptionType_e   Type;

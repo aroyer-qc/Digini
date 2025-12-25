@@ -112,14 +112,14 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
                      TASK_ETHERNET_IF_PRIO);
 
     pETH_Driver = m_pETH_Config->pETH_Driver;
-    pETH_Driver->Initialize(this);      // TODO put in here the callback
+    pETH_Driver->Initialize(this, m_pETH_Config->PHY_Address);      // TODO put in here the callback
 
     m_Context.GetMAC_Address(&MAC_Address);
     pETH_Driver->SetMacAddress(&MAC_Address);
 
     if((State = m_pETH_Config->pPHY_Driver->Initialize(pETH_Driver, m_pETH_Config->PHY_Address)) == SYS_READY)      // Interface ID is used as address
     {
-        pETH_Driver->InitializeInterface();
+        //pETH_Driver->InitializeInterface();
         pETH_Driver->Start();                                                               // Enable MAC and DMA transmission and reception
     }
 

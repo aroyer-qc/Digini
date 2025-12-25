@@ -94,7 +94,6 @@ void ISR_Init(IRQn_Type Channel, uint8_t PremptionPriority)
     ISR_Prio.PriorityGroup     = PriorityGroup;
     ISR_Prio.SubPriority       = 0;
     ISR_Prio.PremptionPriority = PremptionPriority;
-
     ISR_Init(Channel, &ISR_Prio);
 }
 

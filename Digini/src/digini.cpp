@@ -130,6 +130,7 @@ SystemState_e DIGINI_Initialize(void)
     {
         assert_failed((const char*)__FILE__, __LINE__);
     }
+
     DB_Central.RegisterDriver(&DB_BackupRegister);
   #endif
 

@@ -169,7 +169,7 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, MEM_DebugListOfID_e DebugID)
 
             if(MemPtr != nullptr)
             {
-              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) | (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
+              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) || (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
                 nOS_EnterCritical(sr);
               #endif
 

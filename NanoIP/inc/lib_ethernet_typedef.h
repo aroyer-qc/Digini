@@ -393,7 +393,7 @@ struct IP_ETH_Config_t
     IP_MAC_Address_t            MAC_Address;
     class ETH_DriverInterface*  pETH_Driver;                                    // Driver for embedded MAC controller
     class PHY_DriverInterface*  pPHY_Driver;                                    // Driver for PHY
-    uint32_t                    PHY_Address;
+    uint8_t                     PHY_Address;
 };
 
 struct IP_Config_t                                                              // Host Name, IP_ Address, Protocol (ip_cfg.h)

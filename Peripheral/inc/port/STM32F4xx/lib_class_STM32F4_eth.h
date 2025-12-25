@@ -91,9 +91,9 @@ struct RX_Descriptor_t
 struct TX_Descriptor_t
 {
     uint32_t volatile       Status;
-    uint32_t                Size;
+    uint32_t                ControlBufferSize;
     uint32_t                BufferAddress;
-    struct TX_Descriptor_t* Next;
+    struct TX_Descriptor_t* NextDescriptor;
 #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
     uint32_t                Reserved[2];
     uint32_t                TimeLo;
@@ -132,7 +132,7 @@ class ETH_Driver : public ETH_DriverInterface
 {
     public:
 
-        SystemState_e           Initialize              (void* pContext);                                                // Initialize Ethernet MAC Device.
+        SystemState_e           Initialize              (void* pContext, uint8_t PHY_Address);                                                // Initialize Ethernet MAC Device.
         SystemState_e           InitializeInterface     (void);                                                          // Initialize Ethernet Interface.
 
         void                    Start                   (void);                                                          // Start ETH module

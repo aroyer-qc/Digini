@@ -61,7 +61,6 @@ SystemState_e PHY_LAN8742A_Driver::Initialize(ETH_DriverInterface* pETH_Driver, 
         m_Flags        = ETH_INITIALIZED;
         PowerControl(ETH_POWER_FULL);
         SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
-        SetMode(ETH_PHY_Mode_e(ETH_PHY_MODE_SPEED_100M | ETH_PHY_MODE_DUPLEX_FULL));
         //ETH_Phy.SetLinkUpInterrupt();??
 
     }
@@ -149,11 +148,7 @@ SystemState_e PHY_LAN8742A_Driver::PowerControl(ETH_PowerState_e PowerState)
                     }
                     else
                     {
-                        if((State = m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, BCR_DEFAULT)) == SYS_READY)
-                        {
-                            m_Flags = ETH_INITIALIZED_AND_POWERED_ON;
-                            State   = SYS_READY;
-                        }
+                        m_Flags |= ETH_POWERED_ON;
                     }
                 }
             }
@@ -207,7 +202,8 @@ SystemState_e PHY_LAN8742A_Driver::SetInterface(ETH_MediaInterface_e Interface)
 //-------------------------------------------------------------------------------------------------
 SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
 {
-    uint16_t BCR_RegValue = BCR_DEFAULT;
+    SystemState_e   State        = SYS_READY;
+    uint16_t        BCR_RegValue = BCR_DEFAULT;
 
     if((m_Flags & ETH_POWERED_ON) == 0)
     {
@@ -219,33 +215,24 @@ SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
         uint16_t    RegValue;
         TickCount_t TickStart = GetTick();
 
-        m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, BCR_AUTO_NEG_EN);
+        State = m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, BCR_AUTO_NEG_EN);
 
-        // Wait for auto negotiation to complete
-        do
+        if(State == SYS_READY)
         {
-            m_pETH_Driver->PHY_Read(m_PHY_Address, REG_BSR, &RegValue);
-
-            if(TickHasTimeOut(TickStart, PHY_TIMEOUT_AUTO_NEGOCIATION) == true)
+            // Wait for auto negotiation to be completed
+            do
             {
-                // Return ERROR in case of timeout
-                return SYS_TIME_OUT;
+                State = m_pETH_Driver->PHY_Read(m_PHY_Address, REG_BSR, &RegValue);
+
+                if(TickHasTimeOut(TickStart, PHY_TIMEOUT_AUTO_NEGOCIATION) == true)
+                {
+                    // Return ERROR in case of timeout
+                    return SYS_TIME_OUT;
+                }
+
+                nOS_Yield();
             }
-
-            nOS_Yield();
-        }
-        while((RegValue & BSR_AUTO_NEGO_COMPLETE) == 0);
-
-        m_pETH_Driver->PHY_Read(m_PHY_Address, REG_PSCS, &RegValue);
-
-        if((RegValue & PSCS_DUPLEX) != 0)                               // Configure the MAC with the Duplex Mode fixed by the auto-negotiation process
-        {
-            BCR_RegValue |= BCR_DUPLEX;                               // Set Ethernet duplex mode to Full-duplex following the auto-negotiation
-        }
-
-        if((RegValue & PSCS_SPEED) != 0)                                // Configure the MAC with the speed fixed by the auto-negotiation process
-        {
-            BCR_RegValue |= BCR_SPEED_SEL;                            // Set Ethernet speed to 100M following the auto-negotiation
+            while((RegValue & BSR_AUTO_NEGO_COMPLETE) == 0);
         }
     }
     else
@@ -265,9 +252,11 @@ SystemState_e PHY_LAN8742A_Driver::SetMode(ETH_PHY_Mode_e Mode)
             case uint32_t(ETH_PHY_MODE_DUPLEX_HALF):                                  break;
             case uint32_t(ETH_PHY_MODE_DUPLEX_FULL):   BCR_RegValue |= BCR_DUPLEX;    break;
         }
+
+        State = m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, BCR_RegValue);
     }
 
-    return m_pETH_Driver->PHY_Write(m_PHY_Address, REG_BCR, BCR_RegValue);
+    return State;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -286,7 +275,7 @@ ETH_LinkState_e PHY_LAN8742A_Driver::GetLinkState(void)
     static ETH_LinkState_e  StateNow = ETH_LINK_UNKNOWN;
     uint16_t                Value = 0;
 
-    if(m_Flags & ETH_POWERED_ON)
+    if((m_Flags & ETH_POWERED_ON) != 0)
     {
         m_pETH_Driver->PHY_Read(m_PHY_Address, REG_BSR, &Value);
 
@@ -317,7 +306,7 @@ ETH_LinkInfo_t PHY_LAN8742A_Driver::GetLinkInfo(void)
     ETH_LinkInfo_t Info;
     uint16_t       Value = 0;
 
-    if(m_Flags & ETH_POWERED_ON)
+    if((m_Flags & ETH_POWERED_ON) != 0)
     {
         m_pETH_Driver->PHY_Read(m_PHY_Address, REG_PSCS, &Value);
     }

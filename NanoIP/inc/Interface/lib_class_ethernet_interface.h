@@ -34,7 +34,7 @@ class ETH_DriverInterface
 {
     public:
 
-        virtual SystemState_e           Initialize              (void* pContext)                                                = 0;    // Initialize Ethernet MAC Device.
+        virtual SystemState_e           Initialize              (void* pContext, uint8_t PHY_Address)                           = 0;    // Initialize Ethernet MAC Device.
         virtual SystemState_e           InitializeInterface     (void)                                                          = 0;    // Post Initialize Ethernet DMA.
 
         virtual void                    Start                   (void)                                                          = 0;    // Start ETH module

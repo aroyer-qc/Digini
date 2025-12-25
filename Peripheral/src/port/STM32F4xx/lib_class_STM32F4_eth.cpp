@@ -48,6 +48,7 @@
 //-------------------------------------------------------------------------------------------------
 
 //----- Timeouts -----
+#define DRIVER_PHY_RESET_DELAY  4095
 #define DRIVER_PHY_TIMEOUT      2000            // PHY Register access timeout in mSec ( ST in their HAL it is 65.5 Sec)
 #define DRIVER_RESET_TIMEOUT    10
 
@@ -143,12 +144,14 @@ ETH_Control_t     ETH_Driver::m_Control;
 //   Function name:     Initialize
 //
 //   Parameter(s):      void*           pContext            Pointer on context for callback
+//                      uint32_t        PHY_Address         PHY Address
 //   Return value:      SystemState_e                       State of function.
 //
 //   Description:       Initialize Ethernet MAC Device.
 //
+// maybe enable offload checksum and RSF and TSF
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::Initialize(void* pContext)
+SystemState_e ETH_Driver::Initialize(void* pContext, uint8_t PHY_Address)
 {
     TickCount_t TickStart;
 
@@ -191,88 +194,88 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
     }
     while(TickHasTimeOut(TickStart, DRIVER_RESET_TIMEOUT) == false);
 
-    InitializeDMA_Buffer();                             // Initialize buffer and descriptors
+    InitializeDMA_Buffer();                             		// Initialize buffer and descriptors
 
     ETH->MACMIIAR = ETH_MACIIAR_CR_DIVIDER;                     // MDC clock range selection
 
-    ETH->MACCR = (ETH_MACCR_RESET_VALUE |                       // Reset value, Bit 15 must be kept at value 1                NOTE 1
-                  ETH_MACCR_FES         |                       // Fast Ethernet speed / Speed 100M
-                  ETH_MACCR_DM          |                       // Full duplex
-                  ETH_MACCR_RD );                               // Retry TX disabled
+	if(ETH_Driver::PHY_Write(PHY_Address, REG_BCR, BCR_RESET) == SYS_READY)
+	{
+        nOS_Sleep(DRIVER_PHY_RESET_DELAY);
 
-    // Initialize Filter registers
-    ETH->MACFFR    = ETH_MACFFR_PCF_BlockAll;                   // MAC filters all control frames from reaching the application
-    ETH->MACFCR    = ETH_MACFCR_ZQPD;                           // Zero-quanta pause disabled
-    ETH->MACVLANTR = 0;                                         // Reset Value
+        ETH->MACCR = (ETH_MACCR_RESET_VALUE |                       // Reset value, Bit 15 must be kept at value 1                NOTE 1
+                      ETH_MACCR_FES         |                       // Fast Ethernet speed / Speed 100M
+                      ETH_MACCR_DM          |                       // Full duplex
+                      ETH_MACCR_RD );                               // Retry TX disabled
 
-    // Initialize Address registers
-    ETH->MACA0HR = ETH_MACAxHR_AE; ETH->MACA0LR = 0;
-    //ETH->MACA1HR = 0; ETH->MACA1LR = 0;   // check if it impair the behavior
-    //ETH->MACA2HR = 0; ETH->MACA2LR = 0;
-    //ETH->MACA3HR = 0; ETH->MACA3LR = 0;
+        // Initialize Filter registers
+        ETH->MACFFR    = ETH_MACFFR_PCF_BlockAll;                   // MAC filters all control frames from reaching the application
+        ETH->MACFCR    = ETH_MACFCR_ZQPD;                           // Zero-quanta pause disabled
+        //ETH->MACVLANTR = 0;                                         // Reset Value
 
-    // Mask time stamp interrupts
-    ETH->MACIMR = 0;                                            // Reset value
+        // Initialize Address registers
+        //ETH->MACA0HR = ETH_MACAxHR_AE;
+        //ETH->MACA0LR = 0;
 
-  #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-    // Set clock accuracy to 20ns (50MHz) or 50ns (20MHz)
-   #if (SYS_CPU_CORE_CLOCK_FREQUENCY >= 51000000)
-    ETH->PTPSSIR = 20;
-    ETH->PTPTSAR = (50000000ull << 32) / SYS_CPU_CORE_CLOCK_FREQUENCY;
-   #else
-    ETH->PTPSSIR = 50;
-    ETH->PTPTSAR = (20000000ull << 32) / SYS_CPU_CORE_CLOCK_FREQUENCY;
-   #endif
+        //ETH->MACA1HR = 0; ETH->MACA1LR = 0;   // check if it impair the behavior
+        //ETH->MACA2HR = 0; ETH->MACA2LR = 0;
+        //ETH->MACA3HR = 0; ETH->MACA3LR = 0;
 
-    ETH->PTPTSCR = (ETH_PTPTSSR_TSSIPV4FE |
-                    ETH_PTPTSSR_TSSIPV6FE |
-                    ETH_PTPTSSR_TSSSR     |
-                    ETH_PTPTSCR_TSARU     |
-                    ETH_PTPTSCR_TSFCU     |
-                    ETH_PTPTSCR_TSE);
+        // Mask time stamp interrupts
+        //ETH->MACIMR = 0;                                            // Reset value
 
-    m_Control.TX_TS_Index = 0;
-  #endif
+      #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
+        // Set clock accuracy to 20ns (50MHz) or 50ns (20MHz)
+       #if (SYS_CPU_CORE_CLOCK_FREQUENCY >= 51000000)
+        ETH->PTPSSIR = 20;
+        ETH->PTPTSAR = (50000000ull << 32) / SYS_CPU_CORE_CLOCK_FREQUENCY;
+       #else
+        ETH->PTPSSIR = 50;
+        ETH->PTPTSAR = (20000000ull << 32) / SYS_CPU_CORE_CLOCK_FREQUENCY;
+       #endif
 
-    // Disable MMC interrupts
-    ETH->MMCTIMR = 0;
-    ETH->MMCRIMR = 0;
+        ETH->PTPTSCR = (ETH_PTPTSSR_TSSIPV4FE |
+                        ETH_PTPTSSR_TSSIPV6FE |
+                        ETH_PTPTSSR_TSSSR     |
+                        ETH_PTPTSCR_TSARU     |
+                        ETH_PTPTSCR_TSFCU     |
+                        ETH_PTPTSCR_TSE);
+      #endif
 
-    // Enable ETH interrupt
-    ISR_ClearPendingIRQ(ETH_IRQn);
-    ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);
+        // Disable MMC interrupts
+        //ETH->MMCTIMR = 0;
+        //ETH->MMCRIMR = 0;
+        //ETH->DMAOMR &= ~(ETH_DMAOMR_ST);
 
-    m_Control.FrameEnd = nullptr;
+      #if (ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
+        ETH->DMAOMR = (ETH_DMAOMR_RSF |
+                       ETH_DMAOMR_TSF |
+                       ETH_DMAOMR_OSF);                             // Second Frame Operate
+      #else
+        ETH->DMAOMR = ETH_DMAOMR_OSF;                               // Second Frame Operate
+      #endif
 
-    ETH->DMAOMR &= ~(ETH_DMAOMR_ST);
+        ETH->DMABMR = (ETH_DMABMR_AAB        |                      // Address Aligned Beats
+                     #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
+                       ETH_DMABMR_EDE        |                      // Enhanced Descriptor format enable
+                     #endif
+                       ETH_DMABMR_FB         |                      // Fixed Burst
+                       ETH_DMABMR_RTPR_2_1   |                      // Arbitration Round Robin RxTx 2 1
+                       ETH_DMABMR_RDP_32Beat |                      // RX DMA Burst Length 32 Beats
+                       ETH_DMABMR_PBL_32Beat |                      // TX DMA Burst Length 32 Beats
+                       ETH_DMABMR_USP);                             // Enable use of separate PBL for Rx and Tx
 
-  #if (ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
-    ETH->DMAOMR = (ETH_DMAOMR_RSF |
-                   ETH_DMAOMR_TSF |
-                   ETH_DMAOMR_OSF);                             // Second Frame Operate
-  #else
-    ETH->DMAOMR = (ETH_DMAOMR_OSF);                             // Second Frame Operate
-  #endif
+        // Enable RX interrupts
+        ETH->DMAIER = ETH_DMAIER_NISE | ETH_DMAIER_RIE;
 
-    ETH->DMABMR = (ETH_DMABMR_AAB        |                      // Address Aligned Beats
-                 #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
-                   ETH_DMABMR_EDE        |                      // Enhanced Descriptor format enable
-                 #endif
-                   ETH_DMABMR_FB         |                      // Fixed Burst
-                   ETH_DMABMR_RTPR_2_1   |                      // Arbitration Round Robin RxTx 2 1
-                   ETH_DMABMR_RDP_32Beat |                      // RX DMA Burst Length 32 Beats
-                   ETH_DMABMR_PBL_32Beat |                      // TX DMA Burst Length 32 Beats
-                   ETH_DMABMR_USP);                             // Enable use of separate PBL for Rx and Tx
+		return SYS_READY;
+	}
 
-    // Enable RX interrupts
-    ETH->DMAIER = ETH_DMAIER_NISE | ETH_DMAIER_RIE;
-
-    return SYS_READY;
+    return SYS_FAIL;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name:     InitializeDMA_Buffer
+//   Function name:     InitializeInterface
 //
 //   Parameter(s):      None
 //   Return value:      SystemState_e                       State of function.
@@ -306,13 +309,13 @@ void ETH_Driver::InitializeDMA_Buffer(void)
         m_TX_Descriptor[i].BufferAddress = (uint32_t)&m_TX_Buffer[i];
         Next = i + 1;
         Next = (Next == NUM_TX_Buffer) ? 0 : Next;
-        m_TX_Descriptor[i].Next = &m_TX_Descriptor[Next];
+        m_TX_Descriptor[i].NextDescriptor = &m_TX_Descriptor[Next];
     }
 
     for(uint32_t i = 0; i < NUM_RX_Buffer; i++)
     {
         m_RX_Descriptor[i].Status            = DMA_RX_OWN;
-        m_RX_Descriptor[i].ControlBufferSize = DMA_RX_RCH | ETH_BUF_SIZE;
+        m_RX_Descriptor[i].ControlBufferSize = DMA_RX_DIC | DMA_RX_RCH | ETH_BUF_SIZE;
         m_RX_Descriptor[i].BufferAddress     = (uint32_t)&m_RX_Buffer[i];
         Next = i + 1;
         Next = (Next == NUM_RX_Buffer) ? 0 : Next;
@@ -341,6 +344,15 @@ void ETH_Driver::Start(void)
     ETH->DMAOMR |= (ETH_DMAOMR_ST |                     // Start Transmission
                     ETH_DMAOMR_SR |                     // Start Receive
                     ETH_DMAOMR_FTF);                    // Flush TX Buffer
+
+uint32_t status = ETH->DMASR;
+        ETH->DMASR = status;
+
+
+    // Enable ETH interrupt
+    ISR_ClearPendingIRQ(ETH_IRQn);
+    ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);
+
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -516,12 +528,12 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
         }
 
         pDst = (uint8_t*)m_TX_Descriptor[m_Control.TX_Index].BufferAddress;
-        m_TX_Descriptor[m_Control.TX_Index].Size = Length;
+        m_TX_Descriptor[m_Control.TX_Index].ControlBufferSize = Length;
     }
     else
     {
         // Sending data fragments in progress
-        m_TX_Descriptor[m_Control.TX_Index].Size += Length;
+        m_TX_Descriptor[m_Control.TX_Index].ControlBufferSize += Length;
     }
 
     LIB_FastMemcpy(pFrame, pDst, Length);
@@ -865,12 +877,9 @@ SystemState_e ETH_Driver::ControlTimer(ETH_ControlTimer_e Control, ETH_MAC_Time_
 SystemState_e ETH_Driver::PHY_Read(uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData)
 {
     SystemState_e State;
-    uint32_t      RegisterValue;
 
-    RegisterValue = ETH->MACMIIAR & ETH_MACMIIAR_CR;
-
-    ETH->MACMIIAR = RegisterValue                 |
-                    ETH_MACMIIAR_MB               |
+    ETH->MACMIIAR = ETH_MACIIAR_CR_DIVIDER        |
+					ETH_MACMIIAR_MB               |
                     (uint32_t(PHY_Address) << 11) |
                     (uint32_t(RegisterAddress) << 6);
 
@@ -897,11 +906,8 @@ SystemState_e ETH_Driver::PHY_Read(uint8_t PHY_Address, uint8_t RegisterAddress,
 //-------------------------------------------------------------------------------------------------
 SystemState_e ETH_Driver::PHY_Write(uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t Data)
 {
-    uint32_t      RegisterValue;
-
     ETH->MACMIIDR = uint32_t(Data);
-    RegisterValue = ETH->MACMIIAR & ETH_MACMIIAR_CR;
-    ETH->MACMIIAR = RegisterValue                 |
+    ETH->MACMIIAR = ETH_MACIIAR_CR_DIVIDER        |
                     ETH_MACMIIAR_MB               |
                     ETH_MACMIIAR_MW               |
                     (uint32_t(PHY_Address) << 11) |

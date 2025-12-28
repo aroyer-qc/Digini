@@ -177,28 +177,28 @@ It is a robust foundation for any embedded networking or protocol subsystem requ
 ```mermaid
 flowchart TD
 
-    MP[MemoryPool (fixed-size block allocator)]
-    MN[MemoryNode (manages a group of nodes)]
-    NL[NodeList (intrusive doubly-linked list)]
-    NODE[NodeList_t Node + Payload]
+    MP[MemoryPool - fixed-size block allocator]
+    MN[MemoryNode - manages a group of nodes]
+    NL[NodeList - intrusive doubly-linked list]
+    NODE[NodeList_t Node plus payload]
 
     MP --> MN
     MN --> NL
     NL --> NODE
 
     subgraph MemoryNode_Internals
-        MNCreate[Create()]
-        MNAlloc[Alloc(totalSize)]
-        MNGetNext[GetNext()]
-        MNFree[Free()]
+        MNCreate[Create]
+        MNAlloc[Alloc totalSize]
+        MNGetNext[GetNext]
+        MNFree[Free]
     end
 
     subgraph NodeList_Internals
-        NLInit[Initialize()]
-        NLAdd[AddNode()]
-        NLRemove[RemoveNode()]
-        NLRemoveAll[RemoveAllNode()]
-        NLIter[GetNextNode()]
+        NLInit[Initialize]
+        NLAdd[AddNode]
+        NLRemove[RemoveNode]
+        NLRemoveAll[RemoveAllNode]
+        NLIter[GetNextNode]
     end
 
     MN --> MNCreate

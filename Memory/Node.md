@@ -177,19 +177,23 @@ It is a robust foundation for any embedded networking or protocol subsystem requ
 ```mermaid
 flowchart TD
 
-    subgraph MP[MemoryPool<br/>(fixed-size block allocator)]
-    end
+    MP[MemoryPool (fixed-size block allocator)]
+    MN[MemoryNode (manages a group of nodes)]
+    NL[NodeList (intrusive doubly-linked list)]
+    NODE[NodeList_t Node + Payload]
 
-    subgraph MN[MemoryNode<br/>(manages a group of nodes)]
-        direction TB
+    MP --> MN
+    MN --> NL
+    NL --> NODE
+
+    subgraph MemoryNode_Internals
         MNCreate[Create()]
         MNAlloc[Alloc(totalSize)]
         MNGetNext[GetNext()]
         MNFree[Free()]
     end
 
-    subgraph NL[NodeList<br/>(intrusive doubly-linked list)]
-        direction TB
+    subgraph NodeList_Internals
         NLInit[Initialize()]
         NLAdd[AddNode()]
         NLRemove[RemoveNode()]
@@ -197,23 +201,19 @@ flowchart TD
         NLIter[GetNextNode()]
     end
 
-    subgraph NODE[NodeList_t Node]
-        direction TB
-        Header[NodeList_t Header<br/>NodeID<br/>pNextNode<br/>pPreviousNode]
-        Payload[User Data Payload<br/>(NodeDataSize bytes)]
-    end
+    MN --> MNCreate
+    MN --> MNAlloc
+    MN --> MNGetNext
+    MN --> MNFree
 
-    MP --> MNCreate
-    MNCreate --> NLInit
-    MNAlloc --> NLAdd
-    MNAlloc --> NLRemove
-    MNGetNext --> NLIter
-    MNFree --> NLRemoveAll
+    NL --> NLInit
+    NL --> NLAdd
+    NL --> NLRemove
+    NL --> NLRemoveAll
+    NL --> NLIter
 
     NLAdd --> NODE
     NLIter --> NODE
     NLRemove --> NODE
     NLRemoveAll --> NODE
-
-    Header --> Payload
 ```

@@ -172,3 +172,48 @@ The MemoryNode/NodeList subsystem provides:
 - clean integration with custom memory pools  
 
 It is a robust foundation for any embedded networking or protocol subsystem requiring fast, reliable, and repeatable memory management.
+
+
+```mermaid
+flowchart TD
+
+    subgraph MP[MemoryPool<br/>(fixed-size block allocator)]
+    end
+
+    subgraph MN[MemoryNode<br/>(manages a group of nodes)]
+        direction TB
+        MNCreate[Create()]
+        MNAlloc[Alloc(totalSize)]
+        MNGetNext[GetNext()]
+        MNFree[Free()]
+    end
+
+    subgraph NL[NodeList<br/>(intrusive doubly-linked list)]
+        direction TB
+        NLInit[Initialize()]
+        NLAdd[AddNode()]
+        NLRemove[RemoveNode()]
+        NLRemoveAll[RemoveAllNode()]
+        NLIter[GetNextNode()]
+    end
+
+    subgraph NODE[NodeList_t Node]
+        direction TB
+        Header[NodeList_t Header<br/>NodeID<br/>pNextNode<br/>pPreviousNode]
+        Payload[User Data Payload<br/>(NodeDataSize bytes)]
+    end
+
+    MP --> MNCreate
+    MNCreate --> NLInit
+    MNAlloc --> NLAdd
+    MNAlloc --> NLRemove
+    MNGetNext --> NLIter
+    MNFree --> NLRemoveAll
+
+    NLAdd --> NODE
+    NLIter --> NODE
+    NLRemove --> NODE
+    NLRemoveAll --> NODE
+
+    Header --> Payload
+```

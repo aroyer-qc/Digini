@@ -246,7 +246,6 @@ inline MemoryNode* ETH_IF_Driver::LowLevelInput(void)
     }
 
     return pPacket;
-
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -286,23 +285,22 @@ void ETH_IF_Driver::Run(void)
 
 			do
 			{
-                if((pPacket = LowLevelInput()) != nullptr)
-                {
-                    // TODO how data will be transmitted to the IP_manager
-                    //if((State = m_pETH_Config->pETH_Driver->->pNetIf->input(pPacket)) != SYS_READY)
-                    {
-                        VAR_UNUSED(State);
-                        MemoryNode::FreeNode(pPacket);
+                pPacket = LowLevelInput();
 
-                      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-                        m_DBG_RX_Drop++;
-                      #endif
-                      Exit = true;
-                    }
-              //      else
-                    {
-              //          nOS_SemTake(&m_RX_Sem, 0); // why this one
-                    }
+                if(pPacket == nullptr)
+                {
+                    Exit = true;                // No more packets available
+                    break;
+                }
+
+                Pseudo code ->   if(add packet to queue) != true)
+                {
+                    MemoryNode::FreeNode(pPacket);
+                    Exit = true;
+
+              #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+                    m_DBG_RX_Drop++;
+              #endif
                 }
 
                 if(pPacket->GetNext() == nullptr)
@@ -310,11 +308,11 @@ void ETH_IF_Driver::Run(void)
                     Exit = true;
                 }
 
+                IO_SetPinLow(IO_ETH_EXT_LED);
                 nOS_Yield();
 			}
 			while(Exit == false);
 
-            IO_SetPinLow(IO_ETH_EXT_LED);
 		}
 		else
         {

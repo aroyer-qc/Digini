@@ -148,7 +148,7 @@ SystemState_e PHY_LAN8742A_Driver::PowerControl(ETH_PowerState_e PowerState)
                     }
                     else
                     {
-                        m_Flags |= ETH_POWERED_ON;
+                        m_Flags = ETH_INITIALIZED_AND_POWERED_ON;
                     }
                 }
             }

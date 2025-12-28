@@ -64,10 +64,8 @@ class NodeList
 {
     public:
 
-                        NodeList            (size_t NodeDataSize);                      // All node data size will be created with this size + node overhead
-
+        void            Initialize          (size_t NodeDataSize);                      // All node data size will be created with this size + node overhead
         SystemState_e   Alloc               (size_t Size);                              // Will create as many node as necessary to hold the provided size
-
         SystemState_e   AddNode             (uint16_t NodeID, void** pData);            // This reserve the memory for the node and insert it into the chain
         SystemState_e   RemoveNode          (uint16_t NodeID);                          // This will also free the memory of the node
         SystemState_e   RemoveAllNode       (void);

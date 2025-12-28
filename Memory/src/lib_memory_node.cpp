@@ -46,6 +46,12 @@
 void MemoryNode::Create(size_t NodeDataSize)
 {
     m_pNodeList = (NodeList*)pMemoryPool->AllocAndClear(sizeof(NodeList), MEM_NODE_1);
+
+    if (m_pNodeList != nullptr)
+    {
+        m_pNodeList->Initialize(NodeDataSize);
+    }
+
     SetNodeSize(NodeDataSize);
     m_TotalSize = 0;
 }
@@ -64,43 +70,42 @@ void MemoryNode::Create(size_t NodeDataSize)
 //-------------------------------------------------------------------------------------------------
 SystemState_e MemoryNode::Alloc(size_t Size)
 {
-    SystemState_e State;
-    uint16_t      NeededNumberOfNode;
-    size_t        NodeSize;
-    void*         pDummy;
+    void*           pDummy;
+    size_t          NodeSize;
+    uint16_t        Current;
+    uint16_t        Needed;
+    SystemState_e   State;
 
-    State              = SYS_READY;
-    NodeSize           = m_pNodeList->GetNodeSize();
-    NeededNumberOfNode = Size / NodeSize;
-    m_TotalSize        = Size;
+    State       = SYS_READY;
+    NodeSize    = m_pNodeList->GetNodeSize();
+    Current     = m_pNodeList->GetNumberOfNode();
+    Needed      = (Size + NodeSize - 1) / NodeSize;
+    m_TotalSize = Size;
 
-    if((Size % NodeSize) != 0)
+    // Allocate missing nodes
+    for(uint16_t i = Current; i < Needed; i++)
     {
-        NeededNumberOfNode++;
-    }
+        State = m_pNodeList->AddNode(i, &pDummy);
 
-
-    if(Size > (NodeSize * NeededNumberOfNode))              // Need to allocate more memory node.
-    {
-        for(uint16_t i = m_pNodeList->GetNumberOfNode(); (i < NeededNumberOfNode) && (State == SYS_READY); i++)
+        if(State != SYS_READY)
         {
-            m_pNodeList->AddNode(i, &pDummy);
+            return State;
+        }
+   }
+
+    // Free extra nodes
+    for(uint16_t i = Current; i > Needed; i--)
+    {
+        State = m_pNodeList->RemoveNode(i - 1);
+
+        if(State != SYS_READY)
+        {
+            return State;
         }
     }
-    else if(Size < (NodeSize * NeededNumberOfNode))         // Need to free up some memory node.
-    {
-//        for(int16_t i = (Size - NeededNumberOfNode); i
 
-
-        //for(int i = NeededNumberOfNodem_NumberOfNode; (i < NeededNumberOfNode) && (State == SYS_READY); i++)
-        //{
-            //m_pNodeList->AddNode(i, &pDummy);
-        //}
-    }
-    else
-    {
-        // It has, already, the memory node reserved for the need of the request
-    }
+    // Reset iterator
+    m_NodePtr = 0;
 
     return State;
 }
@@ -114,12 +119,28 @@ SystemState_e MemoryNode::Alloc(size_t Size)
 //                                              SYS_POOL_NOT_ALLOCATED_ERROR If no memory allocated
 //
 //   Description:   Free all node memory and the node themselve.
-//                  unneeded node.
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e MemoryNode::Free(void)
 {
-    return m_pNodeList->RemoveAllNode();
+//    return m_pNodeList->RemoveAllNode();
+    SystemState_e State = SYS_READY;
+
+    if(m_pNodeList != nullptr)
+    {
+        State = m_pNodeList->RemoveAllNode();
+
+        // Free the NodeList object itself
+        if(pMemoryPool->Free((void**)&m_pNodeList) != true)
+        {
+            State = SYS_FAIL_MEMORY_DEALLOCATION;
+        }
+
+        m_pNodeList = nullptr;
+    }
+
+    return State;
+
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -216,9 +237,17 @@ void  MemoryNode::FreeNode(MemoryNode* pMemoryNode)
 {
     if(pMemoryNode != nullptr)
     {
-        pMemoryNode->Free();                        // Free all node inside the object
-        pMemoryPool->Free((void**)&pMemoryNode);    // Free this MemoryNode
+        pMemoryNode->Free();                     // Free all nodes + NodeList
+        pMemoryPool->Free((void**)&pMemoryNode); // Free this MemoryNode
+        // local pointer copy is now invalid, but caller's pointer is unchanged
     }
+
+//    if(pMemoryNode != nullptr)
+//    {
+//        pMemoryNode->Free();                        // Free all node inside the object
+//        pMemoryPool->Free((void**)&pMemoryNode);    // Free this MemoryNode
+//        pMemoryNode = nullptr;
+//    }
 }
 
 //-------------------------------------------------------------------------------------------------

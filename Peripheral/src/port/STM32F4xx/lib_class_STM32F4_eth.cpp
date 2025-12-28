@@ -122,6 +122,10 @@
 
 #define ETH_MACAxHR_AE          0x80000000
 
+#define ETH_DMASR_ALL_FLAGS     (ETH_DMASR_TS   | ETH_DMASR_TPSS | ETH_DMASR_TBUS | ETH_DMASR_TJTS | \
+                                 ETH_DMASR_ROS  | ETH_DMASR_TUS  | ETH_DMASR_RS   | ETH_DMASR_RBUS | \
+                                 ETH_DMASR_RPSS | ETH_DMASR_RWTS | ETH_DMASR_ETS  | ETH_DMASR_FBES | \
+                                 ETH_DMASR_ERS  | ETH_DMASR_AIS  | ETH_DMASR_NIS)
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
@@ -138,6 +142,29 @@ TX_Descriptor_t   ETH_Driver::m_TX_Descriptor   [NUM_TX_Buffer]                 
 uint32_t          ETH_Driver::m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE / sizeof(uint32_t)]  __attribute__((aligned(4)));   // Ethernet Receive buffers
 uint32_t          ETH_Driver::m_TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE / sizeof(uint32_t)]  __attribute__((aligned(4)));   // Ethernet Transmit buffers
 ETH_Control_t     ETH_Driver::m_Control;
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name:     ETH_SetBitRegister
+//
+//   Parameter(s):      volatile uint32_t*  pRegister
+//                      uint32_t            Value
+//   Return value:      None
+//
+//   Description:       Support function, for Errata2.16.6 STM32F427/437xx and STM32F429/439xx
+//                      Write to a register might not be fully taken into account if a previous
+//                      write to the same register is performed within a time period of four
+//                      TX_CLK/RX_CLK clock cycles.
+//
+// maybe enable offload checksum and RSF and TSF
+//-------------------------------------------------------------------------------------------------
+void ETH_SetBitRegister(volatile uint32_t* pRegister, uint32_t Value)
+{
+    *pRegister |= Value;
+    Value = *pRegister;
+    nOS_Sleep(1);
+    *pRegister = Value;
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -163,6 +190,10 @@ SystemState_e ETH_Driver::Initialize(void* pContext, uint8_t PHY_Address)
 	SYSCFG->PMC &= ~SYSCFG_PMC_MII_RMII_SEL;
   #endif
 
+/* Dummy read to sync SYSCFG with ETH */
+//(void)SYSCFG->PMC;
+
+
     memset((void *)&m_Control, 0, sizeof(ETH_Control_t));       // Clear Control Structure
     m_pContext = pContext;                                      // Save context (pointer on ethernetif class)
 
@@ -179,10 +210,9 @@ SystemState_e ETH_Driver::Initialize(void* pContext, uint8_t PHY_Address)
     RCC->AHB1RSTR &= ~uint32_t(RCC_AHB1RSTR_ETHMACRST);
     __asm("nop  \n\t nop  \n\t   \n\t nop   \n\t nop");
 
-    ETH->DMABMR = ETH_DMABMR_SR;                                // Reset Ethernet MAC peripheral
+    ETH->DMABMR = ETH_DMABMR_SR;                                    // Reset Ethernet MAC peripheral
 
-    // Wait for software reset
-    TickStart = GetTick();
+    TickStart = GetTick();                                          // Wait for software reset
     do
     {
         if((ETH->DMABMR & ETH_DMABMR_SR) == 0)
@@ -194,34 +224,20 @@ SystemState_e ETH_Driver::Initialize(void* pContext, uint8_t PHY_Address)
     }
     while(TickHasTimeOut(TickStart, DRIVER_RESET_TIMEOUT) == false);
 
-    InitializeDMA_Buffer();                             		// Initialize buffer and descriptors
-
-    ETH->MACMIIAR = ETH_MACIIAR_CR_DIVIDER;                     // MDC clock range selection
+    ETH->MACMIIAR = ETH_MACIIAR_CR_DIVIDER;                         // MDC clock range selection
 
 	if(ETH_Driver::PHY_Write(PHY_Address, REG_BCR, BCR_RESET) == SYS_READY)
 	{
         nOS_Sleep(DRIVER_PHY_RESET_DELAY);
 
-        ETH->MACCR = (ETH_MACCR_RESET_VALUE |                       // Reset value, Bit 15 must be kept at value 1                NOTE 1
+        ETH->MACCR = (ETH_MACCR_RESET_VALUE |                       // Reset value, Bit 15 must be kept at value 1
                       ETH_MACCR_FES         |                       // Fast Ethernet speed / Speed 100M
                       ETH_MACCR_DM          |                       // Full duplex
                       ETH_MACCR_RD );                               // Retry TX disabled
 
         // Initialize Filter registers
-        ETH->MACFFR    = ETH_MACFFR_PCF_BlockAll;                   // MAC filters all control frames from reaching the application
-        ETH->MACFCR    = ETH_MACFCR_ZQPD;                           // Zero-quanta pause disabled
-        //ETH->MACVLANTR = 0;                                         // Reset Value
-
-        // Initialize Address registers
-        //ETH->MACA0HR = ETH_MACAxHR_AE;
-        //ETH->MACA0LR = 0;
-
-        //ETH->MACA1HR = 0; ETH->MACA1LR = 0;   // check if it impair the behavior
-        //ETH->MACA2HR = 0; ETH->MACA2LR = 0;
-        //ETH->MACA3HR = 0; ETH->MACA3LR = 0;
-
-        // Mask time stamp interrupts
-        //ETH->MACIMR = 0;                                            // Reset value
+        ETH->MACFFR = ETH_MACFFR_PCF_BlockAll;                      // MAC filters all control frames from reaching the application
+        ETH->MACFCR = ETH_MACFCR_ZQPD;                              // Zero-quanta pause disabled
 
       #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
         // Set clock accuracy to 20ns (50MHz) or 50ns (20MHz)
@@ -241,32 +257,24 @@ SystemState_e ETH_Driver::Initialize(void* pContext, uint8_t PHY_Address)
                         ETH_PTPTSCR_TSE);
       #endif
 
-        // Disable MMC interrupts
-        //ETH->MMCTIMR = 0;
-        //ETH->MMCRIMR = 0;
-        //ETH->DMAOMR &= ~(ETH_DMAOMR_ST);
-
       #if (ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
-        ETH->DMAOMR = (ETH_DMAOMR_RSF |
-                       ETH_DMAOMR_TSF |
-                       ETH_DMAOMR_OSF);                             // Second Frame Operate
+        ETH_SetBitRegister(&ETH->DMAOMR, ETH_DMAOMR_RSF | ETH_DMAOMR_TSF | ETH_DMAOMR_OSF);                             // Second Frame Operate
       #else
-        ETH->DMAOMR = ETH_DMAOMR_OSF;                               // Second Frame Operate
+        ETH_SetBitRegister(&ETH->DMAOMR, ETH_DMAOMR_OSF);                               // Second Frame Operate
       #endif
 
-        ETH->DMABMR = (ETH_DMABMR_AAB        |                      // Address Aligned Beats
+        ETH_SetBitRegister(&ETH->DMABMR,
+                           ETH_DMABMR_AAB        |                      // Address Aligned Beats
                      #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
-                       ETH_DMABMR_EDE        |                      // Enhanced Descriptor format enable
+                           ETH_DMABMR_EDE        |                      // Enhanced Descriptor format enable
                      #endif
-                       ETH_DMABMR_FB         |                      // Fixed Burst
-                       ETH_DMABMR_RTPR_2_1   |                      // Arbitration Round Robin RxTx 2 1
-                       ETH_DMABMR_RDP_32Beat |                      // RX DMA Burst Length 32 Beats
-                       ETH_DMABMR_PBL_32Beat |                      // TX DMA Burst Length 32 Beats
-                       ETH_DMABMR_USP);                             // Enable use of separate PBL for Rx and Tx
+                           ETH_DMABMR_FB         |                      // Fixed Burst
+                           ETH_DMABMR_RTPR_2_1   |                      // Arbitration Round Robin RxTx 2 1
+                           ETH_DMABMR_RDP_32Beat |                      // RX DMA Burst Length 32 Beats
+                           ETH_DMABMR_PBL_32Beat |                      // TX DMA Burst Length 32 Beats
+                           ETH_DMABMR_USP);                             // Enable use of separate PBL for Rx and Tx
 
-        // Enable RX interrupts
-        ETH->DMAIER = ETH_DMAIER_NISE | ETH_DMAIER_RIE;
-
+        InitializeDMA_Buffer();                             		    // Initialize buffer and descriptors
 		return SYS_READY;
 	}
 
@@ -315,7 +323,7 @@ void ETH_Driver::InitializeDMA_Buffer(void)
     for(uint32_t i = 0; i < NUM_RX_Buffer; i++)
     {
         m_RX_Descriptor[i].Status            = DMA_RX_OWN;
-        m_RX_Descriptor[i].ControlBufferSize = DMA_RX_DIC | DMA_RX_RCH | ETH_BUF_SIZE;
+        m_RX_Descriptor[i].ControlBufferSize = /*DMA_RX_DIC |*/ DMA_RX_RCH | ETH_BUF_SIZE;
         m_RX_Descriptor[i].BufferAddress     = (uint32_t)&m_RX_Buffer[i];
         Next = i + 1;
         Next = (Next == NUM_RX_Buffer) ? 0 : Next;
@@ -340,19 +348,13 @@ void ETH_Driver::InitializeDMA_Buffer(void)
 //-------------------------------------------------------------------------------------------------
 void ETH_Driver::Start(void)
 {
-    ETH->MACCR  |= (ETH_MACCR_TE  | ETH_MACCR_RE);      // Enable MAC transmitter/Receiver
-    ETH->DMAOMR |= (ETH_DMAOMR_ST |                     // Start Transmission
-                    ETH_DMAOMR_SR |                     // Start Receive
-                    ETH_DMAOMR_FTF);                    // Flush TX Buffer
-
-uint32_t status = ETH->DMASR;
-        ETH->DMASR = status;
-
-
-    // Enable ETH interrupt
+    ETH_SetBitRegister(&ETH->MACCR, 0);
+    ETH_SetBitRegister(&ETH->DMAOMR, ETH_DMAOMR_ST | ETH_DMAOMR_SR | ETH_DMAOMR_FTF);       // Start DMA TX/RX
+    ETH_SetBitRegister(&ETH->MACCR, ETH_MACCR_TE | ETH_MACCR_RE);                           // Enable MAC transmitter/receiver
     ISR_ClearPendingIRQ(ETH_IRQn);
-    ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);
-
+    ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);                                                       // Enable NVIC interrupt (CPU side ready)
+    ETH->DMAIER = (ETH_DMAIER_NISE | ETH_DMAIER_RIE  | ETH_DMAIER_TIE | ETH_DMAIER_FBEIE |  // Enable DMA interrupts (peripheral side ready)
+                                     ETH_DMAIER_AISE | ETH_DMAIER_RBUIE);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -955,18 +957,15 @@ SystemState_e ETH_Driver::PHY_Busy(void)
 //   Description:       Ethernet ISR Callback.
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t ETH_RX_COUNT;
-
 void ETH_Driver::ISR_CallBack(uint32_t Event)
 {
-    //if(m_pContext != nullptr)
-    //{
-    //    ETH_IF_Driver::CallbackWrapper(m_pContext, Event);
-    //}
-    //else
+    if(m_pContext != nullptr)
+    {
+        ETH_IF_Driver::CallbackWrapper(m_pContext, Event);
+    }
+    else
     {
         myETH_Driver.ReadFrame(nullptr, 0);   // tempo for test
-        ETH_RX_COUNT++;
     }
 }
 
@@ -981,6 +980,9 @@ void ETH_Driver::ISR_CallBack(uint32_t Event)
 //
 //-------------------------------------------------------------------------------------------------
 
+uint32_t RX_Count = 0;
+uint32_t IRQ_Count = 0;
+
 extern "C"
 {
     NOS_ISR(ETH_IRQHandler)
@@ -990,8 +992,9 @@ extern "C"
 
         IO_SetPinHigh(IO_ETH_EXT_LED);
 
+IRQ_Count++;
         Register = ETH->DMASR;
-        ETH->DMASR = Register & (ETH_DMASR_NIS | ETH_DMASR_RS | ETH_DMASR_TS);
+        ETH->DMASR = ETH_DMASR_ALL_FLAGS;
 
         if(Register & ETH_DMASR_TS)
         {
@@ -1001,6 +1004,7 @@ extern "C"
         if(Register & ETH_DMASR_RS)
         {
             Event |= ETH_MAC_EVENT_RX_FRAME;                        // Frame received
+RX_Count++;
         }
 
         Register = ETH->MACSR;

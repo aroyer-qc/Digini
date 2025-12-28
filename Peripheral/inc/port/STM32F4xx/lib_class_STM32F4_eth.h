@@ -51,7 +51,7 @@
 #define NUM_TX_Buffer               4
 #define NUM_RX_Buffer               6
 #define ETH_BUF_SIZE                1524
-#define ETH_IRQ_PRIO                4
+#define ETH_IRQ_PRIO                2
 
 //----- Ethernet MAC Frame Transmit Flags -----
 #define ETH_MAC_TX_FRAME_FRAGMENT   (1UL << 0)      // Indicate frame fragment

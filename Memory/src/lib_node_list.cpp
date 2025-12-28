@@ -36,16 +36,16 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   NodeList
+//   Function name: Initialize
 //
 //   Parameter(s):  size_t      NodeDataSize
 //
 //   Description:   Initializes internal chain list pointer and size of data struct
 //
 //-------------------------------------------------------------------------------------------------
-NodeList::NodeList(size_t NodeDataSize)
+void NodeList::Initialize(size_t NodeDataSize)
 {
-    m_pFirstNode    = nullptr;  // TODO change this it is never called
+    m_pFirstNode    = nullptr;
     m_pLastNode     = nullptr;
     m_pScanNode     = nullptr;
     m_NumberOfNode  = 0;
@@ -64,14 +64,16 @@ NodeList::NodeList(size_t NodeDataSize)
 //-------------------------------------------------------------------------------------------------
 void* NodeList::GetNodeDataAddress(NodeList_t* pNode)
 {
-    uint32_t AddressData;
-    void*    pData;
+//    uint32_t AddressData;
+//    void*    pData;
 
-    AddressData  = sizeof(NodeList_t);
-    AddressData += uint32_t(reinterpret_cast<uint8_t*>(pNode));
-    pData        = reinterpret_cast<void*>(AddressData);
+//    AddressData  = sizeof(NodeList_t);
+//    AddressData += uint32_t(reinterpret_cast<uint8_t*>(pNode));
+//    pData        = reinterpret_cast<void*>(AddressData);
 
-    return pData;
+//    return pData;
+
+    return reinterpret_cast<void*>(reinterpret_cast<uint8_t*>(pNode) + sizeof(NodeList_t));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -154,6 +156,12 @@ SystemState_e NodeList::RemoveNode(uint16_t NodeID)
 
     if((State = GetNodePointer(NodeID, &pNode)) == SYS_READY)
     {
+        // Update scan pointer if needed
+        if(m_pScanNode == pNode)
+        {
+            m_pScanNode = pNode->pNextNode;
+        }
+
         // Put the next node pointer into the previous node
         if(pNode->pPreviousNode != nullptr)
         {
@@ -178,13 +186,17 @@ SystemState_e NodeList::RemoveNode(uint16_t NodeID)
             m_pLastNode = pNode->pPreviousNode;
         }
 
-        if(pMemoryPool->Free((void**)&pNode) != true)
+        pNode->pNextNode     = nullptr;
+        pNode->pPreviousNode = nullptr;
+
+        if(pMemoryPool->Free((void**)&pNode) == true)
+        {
+            m_NumberOfNode--;
+        }
+        else
         {
             State = SYS_FAIL_MEMORY_DEALLOCATION;
         }
-
-
-        m_NumberOfNode--;
     }
 
     return State;
@@ -206,14 +218,13 @@ SystemState_e NodeList::RemoveAllNode(void)
 {
     SystemState_e State = SYS_READY;
 
-    do
+    while(m_pFirstNode != nullptr)
     {
         if(RemoveNode(m_pFirstNode->NodeID) != SYS_READY)
         {
             State = SYS_NODE_UNKNOWN_ERROR;
         }
     }
-    while(m_pFirstNode != nullptr);
 
     return State;
 }
@@ -285,7 +296,8 @@ SystemState_e NodeList::GetNodeDataPointer(uint16_t NodeID, void** pData)
 
     if(State == SYS_READY)
     {
-        *pData = static_cast<void*>(reinterpret_cast<uint8_t*>(pNode) + sizeof(NodeList_t));
+        *pData = reinterpret_cast<uint8_t*>(pNode) + sizeof(NodeList_t);
+        //*pData = static_cast<void*>(reinterpret_cast<uint8_t*>(pNode) + sizeof(NodeList_t));
     }
     else
     {

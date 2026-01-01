@@ -212,11 +212,11 @@ bool NetDHCP::Start(void)
     if(nOS_TimerIsRunning(&m_TimerT2_Rebind) == true) nOS_TimerStop(&m_TimerT2_Rebind, true);
 
     m_Context.SetIP_Valid(false);
-    m_DHCP_GatewayIP   = IP_ADDRESS(0,0,0,0);
-    m_DHCP_SubnetMask  = IP_ADDRESS(0,0,0,0);
-    m_DHCP_IP          = IP_ADDRESS(0,0,0,0);
-    m_DHCP_DNS_IP      = IP_ADDRESS(0,0,0,0);
-    m_Xid               = RNG_GetRandom();
+    m_Context.SetDHCP_GatewayIP(IP_ADDRESS(0,0,0,0));
+    m_Context.SetDHCP_SubnetMask(IP_ADDRESS(0,0,0,0));
+    m_Context.SetDHCP_IP(IP_ADDRESS(0,0,0,0));
+    m_Context.SetDHCP_DNS_IP(IP_ADDRESS(0,0,0,0));
+    m_XID = RNG_GetRandom();
 
    //sipr(IP_DHCP_IP);           // w5100 stuff
 
@@ -279,7 +279,7 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
             break;
         }
 
-        pMemory->Free((void**)&pMsg);
+        pMemoryPool->Free((void**)&pMsg);
     }
 
     if(m_Mode == true)
@@ -301,7 +301,7 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
             {
                 if(SOCK_GetRX_RSR(DHCP_SOCKET) > 0)
                 {
-                    pRX = (DHCP_Msg_t*)pMemory->AllocAndClear(sizeof(DHCP_Msg_t));
+                    pRX = (DHCP_Msg_t*)pMemoryPool->AllocAndClear(sizeof(DHCP_Msg_t));
 
                     if(pRX != nullptr)
                     {
@@ -762,7 +762,7 @@ void NetDHCP::PutHeader(DHCP_Msg_t* pTX)
     pTX->Op          = DHCP_BOOT_REQUEST;
     pTX->H_Type      = DHCP_HARDWARE_TYPE_ETHERNET_100;
     pTX->H_Length    = DHCP_HARDWARE_ADDRESS_LENGHT;
-    pTX->X_ID        = htonl(DHCP_Xid);
+    pTX->X_ID        = htonl(DHCP_XID);
     pTX->MagicCookie = DHCP_MAGIC_COOKIE;
 
     if(m_State < DHCP_STATE_BOUND)

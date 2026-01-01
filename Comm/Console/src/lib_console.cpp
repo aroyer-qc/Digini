@@ -66,7 +66,7 @@ void Console::Initialize(UART_Driver* pUartDriver)
     m_pUartDriver           = pUartDriver;
     //m_IsItOnHold            = false;
     //m_IsItOnStartup         = true;
-    m_MuteSerialLogging     = true;
+    m_MuteSerialLogging     = true;                // should read a store value if eeprom exist and an entry also exist
   #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
     m_DebugLevel            = SYS_DEBUG_NONE;
   #endif
@@ -80,7 +80,7 @@ void Console::Initialize(UART_Driver* pUartDriver)
     pUartDriver->Initialize();
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     pBuffer = m_Fifo.GetBufferPointer();
-    //pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE, MEM_DBG_CONSOLE_1);        // Reserve memory for UART internal DMA operation.
+    //pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE, MEM_DBG_CON1);        // Reserve memory for UART internal DMA operation.
 
     nOS_SemCreate(&m_RX_Idle_Sem, 0, CON_RX_NB_OF_SEMAPHORE_COUNT);
     pUartDriver->DMA_ConfigRX(pBuffer, CON_FIFO_PARSER_RX_SIZE);                // DMA will use the FIFO buffer allocated memory
@@ -268,7 +268,7 @@ size_t Console::Printf(const char* pFormat, va_list* p_vaArg)
     char*  pBuffer;
     size_t Size = 0;
 
-    pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE, MEM_DBG_CONSOLE_2);
+    pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE, MEM_DBG_CON2);
 
     if(pBuffer != nullptr)
     {
@@ -324,7 +324,7 @@ size_t Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, va
     {
         //if((m_DebugLevel & Level) != CON_DEBUG_NONE)      TODO fix this finish support for it
         {
-            if((pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE, MEM_DBG_CONSOLE_3)) != nullptr)
+            if((pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE, MEM_DBG_CON3)) != nullptr)
             {
                 Size = vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, vaArg);
                 m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size);

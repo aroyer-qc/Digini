@@ -36,14 +36,6 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-
-#if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-
-#ifdef MEM_BLOCK_DEF
-
-//-------------------------------------------------------------------------------------------------
 // Class
 //-------------------------------------------------------------------------------------------------
 
@@ -58,28 +50,21 @@ class MemoryNode
         void                SetNodeSize         (size_t NodeDataSize);
         size_t              GetNodeSize         (void);                                     // Get Node data pointer and increment node pointer
 
+        size_t              GetNodeDataSize     (void) { return m_NodeDataSize; }
         size_t              GetTotalSize        (void) { return m_TotalSize; }              // Get memory size requested in Alloc
 
         void                Begin               (void) { m_NodePtr = 0; }                   // Set Node pointer to first node
         void*               GetNext             (void);                                     // Get Node data pointer and increment node pointer
 
         static MemoryNode*  AllocNode           (size_t Size, size_t NodeDataSize);         // Create and return a MemoryNode
-        static void         FreeNode            (MemoryNode* pMemoryNode);                  // Free the memory allocated by the memory node and the MemoryNode itself
+        static void         FreeNode            (MemoryNode** ppMemoryNode);                // Free the memory allocated by the memory node and the MemoryNode itself
 
     private:
 
         NodeList*       m_pNodeList;
         uint16_t        m_NodePtr;
         size_t          m_TotalSize;
+        size_t          m_NodeDataSize;
 };
 
 //-------------------------------------------------------------------------------------------------
-
-#endif  // MEM_BLOCK_DEF
-
-//-------------------------------------------------------------------------------------------------
-
-#endif // (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-

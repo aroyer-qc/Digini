@@ -33,10 +33,6 @@
 #undef  MEM_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
-
-#ifdef MEM_BLOCK_DEF
-
-//-------------------------------------------------------------------------------------------------
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -75,8 +71,7 @@ MemPoolDriver::MemPoolDriver()
 {
     int i;
 
-
-  #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+  #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
     m_UsedMemory = 0;
 
     for(i = 0; i < MEM_BLOCK_GROUP_QTS; i++)
@@ -87,7 +82,7 @@ MemPoolDriver::MemPoolDriver()
   #endif
 
     m_TimeOut = NOS_WAIT_INFINITE;
-
+    m_LastError = NOS_OK;
 
     // Get the address of each group in pointer array
     i = 0;
@@ -97,16 +92,20 @@ MemPoolDriver::MemPoolDriver()
     i = 0;
     MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_INITIALIZE_ARRAY)
 
-  #if (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
+  #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
 
     // Get the address of each group of debug info stats data
     i = 0;
     MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_DEBUG_INFO_ARRAY)
 
-    //Initialize info array with the MEM_DBG_NONE
+    //Initialize info array with the MEM_DBG_FREE
     i = 0;
     MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_INITIALIZE_DEBUG_INFO_ARRAY)
 
+    for(i = 0; i < NUMBER_OF_MEM_DBG; i++)
+    {
+        m_AllocCount[i] = 0;
+    }
   #endif
 }
 
@@ -153,7 +152,7 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, MEM_DebugListOfID_e DebugID)
 {
     void*           MemPtr = nullptr;
     size_t          SizeBlock;
-  #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+  #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
     nOS_StatusReg   sr;
   #endif
 
@@ -169,15 +168,11 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, MEM_DebugListOfID_e DebugID)
 
             if(MemPtr != nullptr)
             {
-              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) || (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
+              #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
                 nOS_EnterCritical(sr);
-              #endif
 
-              #if (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
                 m_pDebugInfoArray[GroupID][m_BlockUsed[GroupID]] = DebugID;         // Tag this block with the owner ID
-              #endif
 
-              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
                 m_UsedMemory += SizeBlock;
                 m_BlockUsed[GroupID]++;
 
@@ -186,13 +181,15 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, MEM_DebugListOfID_e DebugID)
                     m_BlockHighest[GroupID] = m_BlockUsed[GroupID];
                 }
 
-              #endif
-              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) || (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
+                if(DebugID < NUMBER_OF_MEM_DBG)
+                {
+                    m_AllocCount[DebugID]++;
+                }
+
                 nOS_LeaveCritical(sr);
               #endif
 
                 m_TimeOut = NOS_WAIT_INFINITE;          // Reset to default
-
                 return MemPtr;
             }
         }
@@ -210,15 +207,9 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, MEM_DebugListOfID_e DebugID)
 
             if(MemPtr != nullptr)
             {
-              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) || (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
+              #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
                 nOS_EnterCritical(sr);
-              #endif
-
-              #if (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
                 m_pDebugInfoArray[GroupID][m_BlockUsed[GroupID]] = DebugID;         // Tag this block with the owner ID
-              #endif
-
-              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
                 m_UsedMemory += SizeBlock;
                 m_BlockUsed[GroupID]++;
 
@@ -226,12 +217,17 @@ void* MemPoolDriver::Alloc(size_t SizeRequired, MEM_DebugListOfID_e DebugID)
                 {
                     m_BlockHighest[GroupID] = m_BlockUsed[GroupID];
                 }
-              #endif
 
-              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) || (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
                 nOS_LeaveCritical(sr);
               #endif
             }
+
+          #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
+            if(DebugID < NUMBER_OF_MEM_DBG)
+            {
+                m_AllocCount[DebugID]++;
+            }
+          #endif
 
             m_TimeOut = NOS_WAIT_INFINITE;              // Reset to default
             return MemPtr;
@@ -278,7 +274,7 @@ void* MemPoolDriver::AllocAndClear(size_t SizeRequired, MEM_DebugListOfID_e Debu
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name: AllocAndClear
+//   Function name: AllocAndSet
 //
 //   Parameter(s):  size_t                  SizeRequired,       Size of the needed data block
 //                  MEM_DebugListOfID_e     DebugID             Owner of the memory block
@@ -350,7 +346,7 @@ void MemPoolDriver::OverrideNextTimeOut(TickCount_t TimeOut)
 bool MemPoolDriver::Free(void** pBlock)
 {
     uint8_t         GroupID;
-  #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+  #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
     nOS_StatusReg   sr;
   #endif
 
@@ -363,22 +359,19 @@ bool MemPoolDriver::Free(void** pBlock)
 
             if(m_LastError == NOS_OK)
             {
-              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) || (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
+              #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
                 nOS_EnterCritical(sr);
-              #endif
-
-              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
                 m_UsedMemory -= m_nOS_MemArray[GroupID].bsize;
                 m_BlockUsed[GroupID]--;
-              #endif
+                MEM_DebugListOfID_e DbgID = m_pDebugInfoArray[GroupID][m_BlockUsed[GroupID]];
 
-              #if (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
-                m_pDebugInfoArray[GroupID][m_BlockUsed[GroupID]] = MEM_DBG_NONE;            // Mark block as free
-              #endif
+                if(DbgID < NUMBER_OF_MEM_DBG)
+                {
+                    m_AllocCount[DbgID]--;
+                }
 
+                m_pDebugInfoArray[GroupID][m_BlockUsed[GroupID]] = MEM_DBG_FREE;            // Mark block as free
                 *pBlock = nullptr;
-
-              #if (MEMORY_POOL_USE_STAT == DEF_ENABLED) || (MEMORY_POOL_USE_DEBUG_BLOCK_TRACE == DEF_ENABLED)
                 nOS_LeaveCritical(sr);
               #endif
 
@@ -408,7 +401,7 @@ bool MemPoolDriver::IsAvailable(size_t SizeRequired)
 {
     for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_QTS; GroupID++)
     {
-        if(m_nOS_MemArray[GroupID].bsize <= SizeRequired)
+        if(m_nOS_MemArray[GroupID].bsize >= SizeRequired)
         {
             if(nOS_MemIsAvailable(&m_nOS_MemArray[GroupID]) == true)
             {
@@ -440,7 +433,7 @@ nOS_Error MemPoolDriver::GetLastError(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#if (MEMORY_POOL_USE_STAT == DEF_ENABLED)
+#if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -570,5 +563,3 @@ uint32_t MemPoolDriver::GetPoolBlockHighPoint(uint32_t GroupID)
 #endif
 
 //-------------------------------------------------------------------------------------------------
-
-#endif // MEM_BLOCK_DEF

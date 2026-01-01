@@ -338,7 +338,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
           #else
              char* pBuffer;
 
-             if((pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE, MEM_DBG_VT100_CB_SYSSET_1)) != nullptr)
+             if((pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE, MEM_DBG_VTCB1)) != nullptr)
              {
                  DB_Central.Get(pBuffer, SERIAL_NUMBER_TEXT);
                  myVT100.InMenuPrintf(LBL_STRING, pBuffer);
@@ -679,8 +679,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             SD_SCR_t* pSCR;
             uint32_t  CardCapacity;
 
-            pBuffer = (char*)pMemoryPool->Alloc(VT100_STRING_SIZE, MEM_DBG_VT100_CB_SYSSET_2);
-            FatFs   = (FATFS*)pMemoryPool->AllocAndClear(sizeof(FATFS), MEM_DBG_VT100_CB_SYSSET_3);      // Get work area for the volume
+            pBuffer = (char*)pMemoryPool->Alloc(VT100_STRING_SIZE, MEM_DBG_VTCB2);
+            FatFs   = (FATFS*)pMemoryPool->AllocAndClear(sizeof(FATFS), MEM_DBG_VTCB3);      // Get work area for the volume
 
             do
             {
@@ -896,6 +896,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
 //  Description:    Memory Pool statistic
 //
 //-------------------------------------------------------------------------------------------------
+#if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
 VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallBackType_e Type)
 {
     uint32_t Max;
@@ -928,6 +929,15 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
                 myVT100.InMenuPrintf(OffsetMultiplierX--, OffsetMultiplierY - 1, VT100_LBL_MEM_POOL_GROUP, i, pMemoryPool->GetPoolNumberOfBlock(i), pMemoryPool->GetPoolBlockSize(i));
             }
 
+            uint32_t j = pMemoryPool->GetMaxDebugID();
+            OffsetMultiplierY += 6;
+            myVT100.InMenuPrintf(0, OffsetMultiplierY++, VT100_LBL_ALLOC_COUNTER);
+
+            for(uint32_t i = 1; i < j; i++)
+            {
+                OffsetMultiplierX = uint8_t(((i % 3) * 33) + 3);
+                myVT100.InMenuPrintf(OffsetMultiplierX - 1, (OffsetMultiplierY + uint8_t(i / 3)), Label_e((uint32_t(LBL_MEM_DBG_NONE) - 1) + i));
+            }
         }
         break;
 
@@ -946,9 +956,18 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
                 PercentUsed = (UsedBlock * 100) / NumberOfBlock;
                 PercentMax  = (MaxBlock  * 100) / NumberOfBlock;
 
-                myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY, (PercentUsed >= 80) ? VT100_COLOR_RED : VT100_COLOR_YELLOW, PercentUsed, VT100_COLOR_GREEN, PercentMax, NumberOfBlock, 30);
+                myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY, (PercentUsed >= 80) ? VT100_COLOR_RED : VT100_COLOR_GREEN, PercentUsed, VT100_COLOR_YELLOW, PercentMax, NumberOfBlock, 30);
                 myVT100.SetForeColor(VT100_COLOR_WHITE);
                 myVT100.InMenuPrintf(OffsetMultiplierX - 1,  OffsetMultiplierY + 2, VT100_LBL_MEM_BLOCK_USED,  UsedBlock, MaxBlock);
+            }
+
+            uint32_t j = pMemoryPool->GetMaxDebugID();
+            OffsetMultiplierY += 6;
+
+            for(uint32_t i = 1; i < j; i++)
+            {
+                OffsetMultiplierX = uint8_t(((i % 3) * 34) + 25);
+                myVT100.InMenuPrintf(OffsetMultiplierX - 1,  (OffsetMultiplierY + uint8_t(i / 3)), VT100_LBL_ALLOC_DEBUG_COUNTER, pMemoryPool->GetAllocCount(MEM_DebugListOfID_e(i)));
             }
         }
         break;
@@ -958,6 +977,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
 
     return VT100_INPUT_ESCAPE;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -975,7 +995,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
     {
         case VT100_CALLBACK_INIT:
         {
-            pLanguage = (Language_e*)pMemoryPool->Alloc(sizeof(Language_e) * 2, MEM_DBG_VT100_CB_SYSSET_4);
+            pLanguage = (Language_e*)pMemoryPool->Alloc(sizeof(Language_e) * 2, MEM_DBG_VTCB4);
             if(pLanguage != nullptr)
             {
               #if (DIGINI_USE_DATABASE != DEF_DISABLED)
@@ -987,7 +1007,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                 VT100_DisplayLanguageSelection(pLanguage[VT100_ACTUAL_LANGUAGE], true);
             }
 
-            pTempUnit = (TempUnit_e*)pMemoryPool->Alloc(sizeof(TempUnit_e) * 2, MEM_DBG_VT100_CB_SYSSET_5);
+            pTempUnit = (TempUnit_e*)pMemoryPool->Alloc(sizeof(TempUnit_e) * 2, MEM_DBG_VTCB5);
             if(pTempUnit != nullptr)
             {
               #if (DIGINI_USE_DATABASE != DEF_DISABLED)
@@ -999,8 +1019,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                 VT100_DisplayTemperatureSelection(pTempUnit[VT100_ACTUAL_TEMPERATURE_SELECTION], true);
             }
 
-            pBuffer1 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VT100_CB_SYSSET_6);         // To get a new serial number
-            pBuffer2 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VT100_CB_SYSSET_7);         // use to compare Serial number
+            pBuffer1 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VTCB6);         // To get a new serial number
+            pBuffer2 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VTCB7);         // use to compare Serial number
             if((pBuffer1 != nullptr) && (pBuffer2 != nullptr))
             {
               #if (DIGINI_USE_DATABASE != DEF_DISABLED)
@@ -1179,20 +1199,31 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
 
         case VT100_CALLBACK_REFRESH:
         {
-   //         struct netif*    pNetif = netif_find(IF_NAME);
             ETH_LinkInfo_t   LinkInfo;
-            ETH_LinkState_e  LinkState;
+            //ETH_LinkState_e  LinkState;
             const char*      pSpeed;
+            NetworkContext*  pContext = pTaskNetwork->GetIP_Manager()->GetContext();
+            char             Buffer[16];
 
             myVT100.SetForeColor(VT100_COLOR_WHITE);
-//            myVT100.InMenuPrintf(28, 8,  LBL_STRING, ip_ntoa(&pNetif->ip_addr));
-            //myVT100.InMenuPrintf(28, 9,  LBL_STRING, ip_ntoa(&pNetif->netmask));
-            //myVT100.InMenuPrintf(28, 10, LBL_STRING, ip_ntoa(&pNetif->gw));
-            //myVT100.InMenuPrintf(28, 11, LBL_STRING, ip_ntoa(dns_getserver(0)));
-            //myVT100.InMenuPrintf(28, 12, LBL_STRING, ip_ntoa(dns_getserver(1)));
-            //myVT100.InMenuPrintf(28, 13, (ETH_DHCP_IsUsed == true) != 0 ? LBL_ENABLED : LBL_DISABLED);
+
+            IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveIP());
+            myVT100.InMenuPrintf(28, 8,  LBL_STRING, Buffer);
+            IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveSubnetMask());
+            myVT100.InMenuPrintf(28, 9,  LBL_STRING, Buffer);
+            IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveGatewayIP());
+            myVT100.InMenuPrintf(28, 10, LBL_STRING, Buffer);
+            IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveDNS_IP());
+            myVT100.InMenuPrintf(28, 11, LBL_STRING, Buffer);
+            //IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveDNS_IP()); GetActiveDNS_IP server 2 ?
+            //myVT100.InMenuPrintf(28, 12, LBL_STRING, Buffer);
+          #if (IP_USE_DHCP == DEF_ENABLED)
+            myVT100.InMenuPrintf(28, 13, (pContext->IsDHCP_Enable() == true) != 0 ? LBL_ENABLED : LBL_DISABLED);
+          #else
+            myVT100.InMenuPrintf(28, 13, LBL_DISABLED);
+          #endif
         //    LinkState = myETH_PHY->GetLinkState();
-            myVT100.InMenuPrintf(28, 14, LBL_STRING, (LinkState == ETH_LINK_UP) != 0 ? "Up  " : "Down");
+            myVT100.InMenuPrintf(28, 14, LBL_STRING, (pContext->GetLinkState() == ETH_LINK_UP) ? "Up  " : "Down");
 
             // tempo remove warning
             LinkInfo.Duplex = ETH_PHY_FULL_DUPLEX;
@@ -1210,10 +1241,10 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
 //                                                                pNetif->hwaddr[3], pNetif->hwaddr[4], pNetif->hwaddr[5]);
 
           #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-   //         myVT100.InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, m_IF_Driver.GetDBG_RX_Count());
-   //         myVT100.InMenuPrintf(56, 18, LBL_LONG_UNSIGNED, m_IF_Driver.GetDBG_RX_Drop());
-   //         myVT100.InMenuPrintf(28, 19, LBL_LONG_UNSIGNED, m_IF_Driver.GetDBG_TX_Count());
-   //         myVT100.InMenuPrintf(56, 19, LBL_LONG_UNSIGNED, m_IF_Driver.GetDBG_TX_Drop());
+            myVT100.InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, DBG_RX_Count);
+            myVT100.InMenuPrintf(56, 18, LBL_LONG_UNSIGNED, DBG_RX_Drop);
+            myVT100.InMenuPrintf(28, 19, LBL_LONG_UNSIGNED, DBG_TX_Count);
+            myVT100.InMenuPrintf(56, 19, LBL_LONG_UNSIGNED, DBG_TX_Drop);
           #endif
         }
         break;

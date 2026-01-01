@@ -536,7 +536,7 @@ void CommandLine::ProcessParams(CLI_CmdName_e Command)
         }
         else
         {
-            m_pParamStr[i] = (char*)pMemoryPool->Alloc(CLI_STRING_SIZE, MEM_DBG_CLI_1);
+            m_pParamStr[i] = (char*)pMemoryPool->Alloc(CLI_STRING_SIZE, MEM_DBG_CLI1);
 
             if(m_pParamStr[i] != nullptr)
             {

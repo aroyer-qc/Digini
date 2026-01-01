@@ -101,7 +101,7 @@ SystemState_e NodeList::AddNode(uint16_t NodeID, void** pData)
     else
     {
         // Important to clear the allocation, to get 'nullptr' everywhere
-        pNode = static_cast<NodeList_t*>(pMemoryPool->AllocAndClear(m_NodeSize, MEM_NODE_LIST_1));
+        pNode = static_cast<NodeList_t*>(pMemoryPool->AllocAndClear(m_NodeSize, MEM_DBG_NODLST1));
 
         if(pNode != nullptr)
         {
@@ -227,6 +227,42 @@ SystemState_e NodeList::RemoveAllNode(void)
     }
 
     return State;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: GetNodeByIndex
+//
+//   Parameter(s):  uint16_t        Index
+//                  NodeList_t**    pNode
+//
+//   Return:        SystemState_e               If node exist than it returned a pointer and
+//                                              State = SYS_READY
+//                                              If not pointer is null and
+//                                              State = SYS_NODE_NOT_FOUND
+//
+//   Description:   Get the node pointer from the index
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e NodeList::GetNodeByIndex(uint16_t Index, NodeList_t** pNode)
+{
+    NodeList_t* pScan = m_pFirstNode;
+    uint16_t    i     = 0;
+
+    while(pScan != nullptr)
+    {
+        if(i == Index)
+        {
+            *pNode = pScan;
+            return SYS_READY;
+        }
+
+        pScan = pScan->pNextNode;
+        i++;
+    }
+
+    *pNode = nullptr;
+    return SYS_NODE_NOT_FOUND;
 }
 
 //-------------------------------------------------------------------------------------------------

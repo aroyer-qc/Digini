@@ -82,9 +82,7 @@
 #include "crc_cfg.h"
 #endif
 
-#if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
 #include "memory_cfg.h"
-#endif
 
  #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
 #include "vt100_cfg.h"
@@ -134,11 +132,11 @@
 #include "./Utility/inc/lib_fifo.h"
 #include "./Peripheral/inc/port/lib_class_dma.h"
 #include "./Peripheral/inc/port/lib_rng.h"
-#include "./NanoIP/inc/lib_ethernet_typedef.h"
 #include "./Utility/inc/lib_class_crc.h"
 #include "./Memory/inc/lib_memory.h"
 #include "./Memory/inc/lib_node_list.h"
 #include "./Memory/inc/lib_memory_node.h"
+#include "./NanoIP/inc/lib_ethernet_typedef.h"
 
 //-------------------------------------------------------------------------------------------------
 // Interface

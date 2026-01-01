@@ -91,7 +91,6 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     // Initialize Variables
     m_Context.SetIP_Valid(false);
     m_DNS_IP_Found = false;
-    m_IP_Status    = false;
     m_Context.InitializeMsgQ();                                             // this need to handle error
     m_Context.SetMAC_Address(&m_Config[IF_ID].IP_ETH_Config.MAC_Address);
     m_Context.SetMTU(IP_NET_IF_MTU);                                        // Set netif maximum transfer unit
@@ -201,46 +200,41 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::Run(void)
 {
-  //  IP_Address_t   Address;
-   // uint8_t        Error;
-  IP_PacketMsg_t*    pRX = nullptr;
-  IP_PacketMsg_t*    pTX;
-  IP_Q_Message_t*    pMsg = nullptr;
-  //  IP_Address_t   IP;
+    IP_PacketMsg_t* pMsg;
+  #if (IP_USE_SNTP == DEF_ENABLED)
+    IP_Address_t    IP;
+    IP_Error_e      Error;
+  #endif
 
     for(;;)
     {
       #if (IP_USE_DHCP == DEF_ENABLED)
        #if (IP_NUMBER_OF_INTERFACE > 1)
-        if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)        // We check protocol flag only if there more than one interface
+        if((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
         {
        #endif
-            if(m_DHCP.Process(nullptr) == true)                         // If enable, an IP must be valid to continue.
-            {                                                           // If not enable it continue anyway
+            if(m_DHCP.Process(nullptr) == true)
+            {
       #endif
-                // USE Queue from NIC driver to receive message instead of polling
-                //pRX = CS8900_Poll();									// Network driver read an entire IP packet into the RX Buffer
-
-                if(pRX != nullptr)										// Check if a packet is present
+                if(nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
                 {
-                    switch(ntohs(pRX->Packet.u.ETH_Header.Type))		// Process depending on what kind of packet we have received.
+                    switch(ntohs(pMsg->pPacket->ETH_Header.Type))
                     {
                         case IP_ETHERNET_TYPE_IP:
                         {
                           #if (IP_NUMBER_OF_INTERFACE > 1)
-                            if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
+                            if((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
                           #endif
                             {
-                               m_ARP.ProcessIP(pRX);
+                                m_ARP.ProcessIP(pMsg);
                             }
 
-                            pTX = ProcessIP(pRX);
-
+                            ProcessIP(pMsg);
                           #if (IP_NUMBER_OF_INTERFACE > 1)
-                            if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
+                            if((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
                           #endif
                             {
-                                m_ARP.ProcessOut(pTX);               		// If data are to be sent back, then send the data
+                                m_ARP.ProcessOut(pMsg);
                             }
                         }
                         break;
@@ -248,70 +242,24 @@ void IP_Manager::Run(void)
                         case IP_ETHERNET_TYPE_ARP:
                         {
                           #if (IP_NUMBER_OF_INTERFACE > 1)
-                            if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
+                            if((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
                           #endif
                             {
-                                m_ARP.ProcessARP(pRX);
+                                m_ARP.ProcessARP(pMsg);
                             }
                         }
                         break;
                     }
 
-                    pMemoryPool->Free((void**)&pRX);
-                }
-
-                if(nOS_QueueRead(m_Context.GetMsgQ(), pMsg, NOS_WAIT_INFINITE) == NOS_OK)
-                {
-                    switch(pMsg->Type)
-                    {
-                      #if (IP_USE_DHCP == DEF_ENABLED)
-                        case IP_MSG_TYPE_DHCP_MANAGEMENT:
-                        {
-                          #if (IP_NUMBER_OF_INTERFACE > 1)
-                            if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
-                          #endif
-                            {
-                                m_IP_Status = m_DHCP.Process(pMsg);
-
-                                if(m_IP_Status == false)
-                                {
-                                    for(int i = 0; i < IP_STACK_NUMBER_OF_SOCKET; i++)
-                                    {
-                                        SOCK_Close(i);
-                                    }
-                                }
-                            }
-                        }
-                        break;
-                      #endif
-
-                      #if (IP_USE_SNTP == DEF_ENABLED)
-                        case IP_MSG_TYPE_SNTP_MANAGEMENT:
-                        {
-                          #if (IP_NUMBER_OF_INTERFACE > 1)
-                            if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_SNTP) != 0)
-                          #endif
-                            {
-                                IP = pSNTP->Request(IP_SNTP_SOCKET, IP_DEFAULT_NTP_SERVER_1, IP_DEFAULT_NTP_SERVER_2, &Error);
-                                m_FlagSNTP_Fail = (IP == IP_ADDRESS(0,0,0,0)) ? false : true;
-                            }
-                        }
-                        break;
-                      #endif
-
-                        // put other management here
-                    }
-
+                    pMemoryPool->Free((void**)&pMsg->pPacket);
                     pMemoryPool->Free((void**)&pMsg);
                 }
-
       #if (IP_USE_DHCP == DEF_ENABLED)
             }
        #if (IP_NUMBER_OF_INTERFACE > 1)
         }
        #endif
       #endif
-
         nOS_Sleep(1);
     }
 }
@@ -330,12 +278,12 @@ IP_PacketMsg_t* IP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
 {
 	IP_PacketMsg_t* pTX = nullptr;
 
-	switch(pRX->Packet.u.IP_Frame.Header.Protocol)
+	switch(pRX->pPacket->IP_Frame.Header.Protocol)
 	{
       #if (IP_USE_ICMP == DEF_ENABLED)
 		case IP_PROTOCOL_ICMP:
         {
-            pTX = m_ICMP->Process(pRX);
+            pTX = m_ICMP.Process(pRX);
         }
         break;
       #endif
@@ -344,14 +292,14 @@ IP_PacketMsg_t* IP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
         case IP_PROTOCOL_UDP:
         {
           #if (IP_USE_DHCP == DEF_ENABLED)
-            if(pRX->Packet.u.UDP_Frame.Header.SrcPort == UDP_PORT_BOOT_P_SERVER)
+            if(pRX->pPacket->UDP_Frame.Header.SrcPort == UDP_PORT_BOOT_P_SERVER)
             {
-                m_DHCP->Process(pRX);
+                m_DHCP.Process(pRX->pPacket->DHCP_Frame);
             }
             else
           #endif
             {
-                pTX = m_UDP->Process(pRX);
+                pTX = m_UDP.Process(pRX);
             }
         }
         break;
@@ -435,28 +383,21 @@ IP_Address_t IP_Manager::GetHost(void)
 //
 //  Name:           IP_ToAscii
 //
-//  Parameter(s):   IP_Address_t        IP_Address
-//  Return:         char*
+//  Parameter(s):   char*               Pointer to return formatted string
+//                  IP_Address_t        IP_Address
+//  Return:         void
 //
 //  Description:    Put IP in a string following standard format EX. 192.168.1.100
 //
 //  Note(s):        Don't forget to pMemory->Free() the pointer after use
 //
 //-------------------------------------------------------------------------------------------------
-char* IP_Manager::IP_ToAscii(IP_Address_t IP_Address)
+void IP_Manager::IP_ToAscii(char* pBuffer, IP_Address_t IP_Address)
 {
-    char* pBuffer;
-
-    pBuffer = (char*)pMemoryPool->AllocAndClear(IP_ASCII_ADDRESS_SIZE, MEM_DBG_CLASS_IP_MANAGER_1);
-
-    if(pBuffer != nullptr)
-    {
-        snprintf(pBuffer, IP_ASCII_ADDRESS_SIZE, "%d.%d.%d.%d", uint8_t(IP_Address >> 24),
-                                                                uint8_t(IP_Address >> 16),
-                                                                uint8_t(IP_Address >> 8),
-                                                                uint8_t(IP_Address));
-    }
-    return pBuffer;
+    snprintf(pBuffer, IP_ASCII_ADDRESS_SIZE, "%d.%d.%d.%d", uint8_t(IP_Address >> 24),
+                                                            uint8_t(IP_Address >> 16),
+                                                            uint8_t(IP_Address >> 8),
+                                                            uint8_t(IP_Address));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -468,7 +409,7 @@ char* IP_Manager::IP_ToAscii(IP_Address_t IP_Address)
 //
 //  Description:    Extract the IP form a string
 //
-//  Note(s):        lenght is check and also number of dot, to confirm it is an IP
+//  Note(s):        Length is check and also number of dot, to confirm it is an IP
 //
 //-------------------------------------------------------------------------------------------------
 IP_Address_t IP_Manager::AsciiToIP(char* pBuffer)
@@ -476,24 +417,25 @@ IP_Address_t IP_Manager::AsciiToIP(char* pBuffer)
     IP_Address_t IP_Address;
     uint32_t     Count;
     uint8_t      DotCount;
+    bool         IP_Status;
 
-    IP_Address  = IP_ADDRESS(0,0,0,0);
-    m_IP_Status = true;
-    Count       = 0;
+    IP_Address = IP_ADDRESS(0,0,0,0);
+    IP_Status  = true;
+    Count      = 0;
 
     if(pBuffer != nullptr)
     {
-        while(m_IP_Status == true)           // Scan to see if it contain only number and dot
+        while(IP_Status == true)           // Scan to see if it contain only number and dot
         {
             if(((*(pBuffer + Count) < '0') || (*(pBuffer + Count) > '9')) &&
                ((*(pBuffer + Count) != '.')))
             {
-                m_IP_Status = false;
+                IP_Status = false;
             }
             Count++;
         }
 
-        if(m_IP_Status == true)                                                // Yes it contain only number and dot
+        if(IP_Status == true)                                                // Yes it contain only number and dot
         {
             if((Count >= 7) && (Count <= 15))                                           // Check length
             {
@@ -503,24 +445,24 @@ IP_Address_t IP_Manager::AsciiToIP(char* pBuffer)
                 do
                 {
                     Count--;
-                    m_IP_Status = false;
+                    IP_Status = false;
 
                     do
                     {
                         if((*pBuffer >= '0') && (*pBuffer <= '9'))
                         {
-                            if(m_IP_Status == false) m_IP_Status = true;                // Trap first occurence
-                          // ??  else                     IP.Array[Count] *= 10;             // Other Must be multiply 10
+                            if(IP_Status == false) IP_Status = true;                      // Trap first occurrence
+                          // ??  else                     IP.Array[Count] *= 10;            // Other Must be multiply 10
 
                           //  IP.Array[Count] += (*pBuffer - '0');
                             pBuffer++;
                         }
                         else
                         {
-                            m_IP_Status = false;
+                            IP_Status = false;
                         }
                     }
-                    while(m_IP_Status == true);
+                    while(IP_Status == true);
 
                     if(*pBuffer == '.')
                     {
@@ -563,6 +505,7 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
     char*   pDomainName;
     char*   pSearch1        = nullptr;
     char*   pSearch2        = nullptr;
+    bool    IP_Status;
   // uint8_t Error;
 
     *pPort = 80;                                        // Set to default port if none are found
@@ -586,16 +529,16 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
     {
         *pSearch1 = '\0';                               // Put nullptr at the : position for nullptr terminated string
         pSearch1++;
+        IP_Status = false;
 
-        m_IP_Status = false;
         do
         {
             if((*pSearch1 >= '0') && (*pSearch1 <= '9'))
             {
-                if(m_IP_Status == false)
+                if(IP_Status == false)
                 {
                     *pPort  = 0;                        // Trap first occurence
-                    m_IP_Status = true;
+                    IP_Status = true;
                 }
                 else
                 {
@@ -607,10 +550,10 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
             }
             else
             {
-                m_IP_Status = false;
+                IP_Status = false;
             }
         }
-        while(m_IP_Status == true);
+        while(IP_Status == true);
     }
     else
     {
@@ -670,11 +613,11 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX)
 {
 	IP_IP_Header_t* 	pIP_TX;
 
-	pIP_TX = &pTX->Packet.u.IP_Frame.Header;
+	pIP_TX = &pTX->pPacket->IP_Frame.Header;
 
 	// Setup Ethernet header
-	m_Context.GetMAC_Address(&pTX->Packet.u.ETH_Header.Src);                     		// Put our MAC in it
-	pTX->Packet.u.ETH_Header.Type = IP_ETHERNET_TYPE_IP;
+	m_Context.GetMAC_Address(&pTX->pPacket->ETH_Header.Src);                          // Put our MAC in it
+	pTX->pPacket->ETH_Header.Type = IP_ETHERNET_TYPE_IP;
 
 	// Setup IP header
 	pIP_TX->ID		    = htons(m_SequenceID++);

@@ -109,7 +109,7 @@ class NetDHCP
 
         NetworkContext&         m_Context;
 
-        uint32_t                m_Xid;
+        uint32_t                m_XID;
         DHCP_Options_t          m_Options;
 
         // One shot timer for DHCP transaction time out

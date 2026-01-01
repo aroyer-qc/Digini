@@ -98,9 +98,9 @@ void NetARP::ProcessIP(IP_PacketMsg_t* pRX)
 {
     IP_Address_t SubnetMask = m_Context.GetActiveSubnetMask();
 
-	if((pRX->Packet.u.IP_Frame.Header.SrcIP_Addr & SubnetMask) == (m_Context.GetActiveIP() & SubnetMask))
+	if((pRX->pPacket->IP_Frame.Header.SrcIP_Addr & SubnetMask) == (m_Context.GetActiveIP() & SubnetMask))
 	{
-		UpdateEntry(pRX->Packet.u.IP_Frame.Header.SrcIP_Addr, &pRX->Packet.u.ETH_Header.Src);
+		UpdateEntry(pRX->pPacket->IP_Frame.Header.SrcIP_Addr, &pRX->pPacket->ETH_Header.Src);
 	}
 }
 
@@ -126,7 +126,7 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 		return;
 	}
 
-	pRX_ARP = &pRX->Packet.u.ARP_Frame;
+	pRX_ARP = &pRX->pPacket->ARP_Frame;
 
 	switch(pRX_ARP->Opcode)
 	{
@@ -137,7 +137,7 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 			{
                 pTX = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(pRX->PacketSize + 2);     // Get memory for TX packet + Size
 				pTX->PacketSize = pRX->PacketSize;											// Get the packet size from request packet (PING)
-                pTX_ARP = &pTX->Packet.u.ARP_Frame;
+                pTX_ARP = &pTX->pPacket->ARP_Frame;
 
 				pTX_ARP->Opcode = ARP_REPLY;
                 memcpy(pTX_ARP->Dst.Byte, pRX_ARP->Src.Byte, IP_MAC_ADDRESS_SIZE);
@@ -312,11 +312,11 @@ void NetARP::ProcessOut(IP_PacketMsg_t* pTX)
 	{
         IP_Address_t SubnetMask = m_Context.GetActiveSubnetMask();
 
-//		pARP	= &pTX->Packet.u.ARP_Frame;
-		pFrame  = &pTX->Packet;
+//		pARP	= &pTX->pPacket->ARP_Frame;
+		pFrame  = pTX->pPacket;
 
         // Check if the destination address is on the local network.
-		if((pFrame->u.IP_Frame.Header.DstIP_Addr & SubnetMask) != (m_Context.GetActiveIP() & SubnetMask))
+		if((pFrame->IP_Frame.Header.DstIP_Addr & SubnetMask) != (m_Context.GetActiveIP() & SubnetMask))
 		{
 			// Use the default router's IP address instead of the destination
 			//IP_Address = m_Context.GetIP_     DefaultGatewayAddress;
@@ -361,7 +361,7 @@ void NetARP::ProcessOut(IP_PacketMsg_t* pTX)
 		}
 
 		//// Build an ethernet header.
-		//memcpy(pFrame->u.ETH_Header.Dst.Address, pTable->Ethernet.Address, IP_MAC_ADDRESS_SIZE);
+		//memcpy(pFrame->pPacket->ETH_Header.Dst.Address, pTable->Ethernet.Address, IP_MAC_ADDRESS_SIZE);
 		//memcpy(pFrame->u.ETH_Header.Src.Address, MAC.Address, IP_MAC_ADDRESS_SIZE);
 		//
 		//pFrame->u.ETH_Header.Type = htons(IP_ETHERNET_TYPE_IP);

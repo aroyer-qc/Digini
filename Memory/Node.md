@@ -12,7 +12,8 @@ This system is ideal for packet buffers, protocol workspaces, DMA descriptors, a
 
 ### Purpose
 
-`NodeList` manages a doubly‑linked list of nodes allocated from a custom memory pool. Each node contains:
+`NodeList` manages a doubly‑linked list of nodes allocated from a custom memory pool.  
+Each node is a **single contiguous block** containing:
 
 ```
 [ NodeList_t header ][ user data payload ]
@@ -23,7 +24,7 @@ This system is ideal for packet buffers, protocol workspaces, DMA descriptors, a
 - Maintain a doubly‑linked list of nodes  
 - Allocate and free nodes from the memory pool  
 - Provide access to the user data portion  
-- Support sequential scanning  
+- Support **index‑based sequential scanning**  
 - Guarantee deterministic behavior (no hidden allocations)
 
 ### Initialization
@@ -41,7 +42,7 @@ This sets:
 - `m_pLastNode`  
 - `m_pScanNode`  
 - `m_NumberOfNode`  
-- `m_NodeSize`  
+- `m_NodeSize = sizeof(NodeList_t) + NodeDataSize`
 
 ### Key Operations
 
@@ -50,7 +51,8 @@ This sets:
 | `AddNode(id, &dataPtr)` | Allocates a new node and links it into the list |
 | `RemoveNode(id)` | Unlinks and frees a specific node |
 | `RemoveAllNode()` | Frees the entire list deterministically |
-| `GetNodeDataPointer(id)` | Returns the payload pointer for a given node |
+| `GetNodeDataPointer(id)` | Returns the payload pointer for a given node (legacy) |
+| `GetNodeByIndex(index)` | Returns the node at a given list position |
 | `ResetScanNode()` | Resets the internal iterator |
 | `GetNextNode()` | Returns the next node’s data and advances the iterator |
 
@@ -81,6 +83,7 @@ This ensures:
 - Free all nodes and the NodeList itself  
 - Provide sequential access to node payloads  
 - Ensure alloc/free symmetry  
+- Use **index‑based traversal** for deterministic iteration
 
 ### Lifecycle
 
@@ -109,7 +112,8 @@ This guarantees:
 |---------|-------------|
 | `Create(nodeDataSize)` | Allocates and initializes a NodeList |
 | `Alloc(totalSize)` | Grows/shrinks the list to fit the requested size |
-| `GetNext()` | Returns the next node’s data pointer |
+| `Begin()` | Resets internal index to 0 |
+| `GetNext()` | Returns the next node’s data pointer (index‑based) |
 | `Free()` | Frees all nodes and the NodeList |
 | `AllocNode(size, nodeDataSize)` | Factory: allocates MemoryNode + NodeList |
 | `FreeNode(ptr)` | Frees MemoryNode + NodeList |
@@ -149,8 +153,10 @@ Ideal for Ethernet drivers, IP stacks, DMA buffers, etc.
 ```cpp
 MemoryNode* packet = MemoryNode::AllocNode(totalSize, perNodeSize);
 
+packet->Begin();
 void* p = packet->GetNext();
-while(p != nullptr)
+
+while (p != nullptr)
 {
     // Fill node data
     p = packet->GetNext();
@@ -173,6 +179,9 @@ The MemoryNode/NodeList subsystem provides:
 
 It is a robust foundation for any embedded networking or protocol subsystem requiring fast, reliable, and repeatable memory management.
 
+---
+
+## Mermaid Diagram — Architecture Overview
 
 ```mermaid
 flowchart TD
@@ -180,7 +189,7 @@ flowchart TD
     MP[MemoryPool - fixed-size block allocator]
     MN[MemoryNode - manages a group of nodes]
     NL[NodeList - intrusive doubly-linked list]
-    NODE[NodeList_t Node plus payload]
+    NODE[NodeList_t + payload (contiguous block)]
 
     MP --> MN
     MN --> NL
@@ -189,7 +198,8 @@ flowchart TD
     subgraph MemoryNode_Internals
         MNCreate[Create]
         MNAlloc[Alloc totalSize]
-        MNGetNext[GetNext]
+        MNBegin[Begin]
+        MNGetNext[GetNext (index-based)]
         MNFree[Free]
     end
 
@@ -198,11 +208,12 @@ flowchart TD
         NLAdd[AddNode]
         NLRemove[RemoveNode]
         NLRemoveAll[RemoveAllNode]
-        NLIter[GetNextNode]
+        NLIndex[GetNodeByIndex]
     end
 
     MN --> MNCreate
     MN --> MNAlloc
+    MN --> MNBegin
     MN --> MNGetNext
     MN --> MNFree
 
@@ -210,10 +221,10 @@ flowchart TD
     NL --> NLAdd
     NL --> NLRemove
     NL --> NLRemoveAll
-    NL --> NLIter
+    NL --> NLIndex
 
     NLAdd --> NODE
-    NLIter --> NODE
+    NLIndex --> NODE
     NLRemove --> NODE
     NLRemoveAll --> NODE
 ```

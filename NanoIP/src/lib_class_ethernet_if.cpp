@@ -45,7 +45,8 @@
 #define NET_ARP_TMR_INTERVAL                        1000
 #define NET_GUARD_BLOCK_TIME                        250         // todo rename
 #define NET_BLOCK_TIME_WAITING_FOR_INPUT            10          // 0xFFFF
-#define NET_RX_COUNT_MAX_SEMAPHORE                  20
+#define NET_BLOCK_TIME_WAITING_FOR_Q                2
+#define NET_RX_COUNT_MAX_SEMAPHORE                  2
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -94,7 +95,7 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
     IP_MAC_Address_t     MAC_Address;
 
     m_pETH_Config = pETH_Config;
-	m_Link        = ETH_LINK_DOWN;
+	m_Context.SetLinkState(ETH_LINK_DOWN);
 
     Error = nOS_SemCreate(&m_RX_Sem, 0, NET_RX_COUNT_MAX_SEMAPHORE);
     Error = nOS_MutexCreate(&m_TX_Mutex, NOS_MUTEX_NORMAL, 1);
@@ -130,7 +131,7 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
 //
 //  Function:       LowLevelOutput
 //
-//  Parameter(s):   MemoryNode*         pPacket   IP packet to send (Including MAC addresses and type)
+//  Parameter(s):
 //  Return:         SystemState_e       SYS_READY if the packet could be sent
 //                                             other value if the packet couldn't be sent
 //
@@ -144,15 +145,18 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
 //                  memory failure (except for the TCP timers).
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_IF_Driver::LowLevelOutput(MemoryNode* pPacket)
+SystemState_e ETH_IF_Driver::LowLevelOutput(IP_PacketMsg_t** ppPacketMsg)
 {
+
+
+/*
     uint8_t* pNodeData;
     size_t   NodeSize;
     size_t   Length;
 
     if(nOS_MutexLock(&m_TX_Mutex, NET_GUARD_BLOCK_TIME) == NOS_OK)
     {
-        pPacket->Begin();       // Reset Node pointer to the beginning
+        pPacket->Begin();                               // Reset Node pointer to the beginning
         Length   = pPacket->GetTotalSize();
         NodeSize = pPacket->GetNodeSize();
 
@@ -168,84 +172,23 @@ SystemState_e ETH_IF_Driver::LowLevelOutput(MemoryNode* pPacket)
 
             // Send the data from the pPacket to the interface, one pNodeData at a time.
             uint32_t flags = (pNodeData != nullptr) ? ETH_MAC_TX_FRAME_FRAGMENT : 0;
-            m_pETH_Config->pETH_Driver->SendFrame(pNodeData, NodeSize, flags);     //  standard call from an interface class ...  call this function  SendFrame
+            m_pETH_Config->pETH_Driver->SendTX_Packet(pNodeData, NodeSize, flags);     //  standard call from an interface class ...  call this function  SendFrame
         }
         while((pPacket->GetNext() != nullptr) && (Length > 0));
-
-        MemoryNode::FreeNode(pPacket);
-
 
       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
         m_DBG_TX_Count++;
       #endif
 
-// need to flush the MemoryNode
-
+        MemoryNode::FreeNode(&pPacket);
         nOS_MutexUnlock(&m_TX_Mutex);
     }
     else
     {
         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: low_level_output: Sem TimeOut\n");
     }
-
+*/
     return SYS_READY;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Function:       LowLevelInput
-//
-//  Parameter(s):   None
-//  Return:         Pointer on MemoryNode or 'nullptr' on memory error
-//
-//  Description:    This function return a node list buffer filled with the received packet.
-//                  (including MAC header)
-//
-//  Note(s)         This is inline, break into 2 part to simplify reading
-//
-//-------------------------------------------------------------------------------------------------
-inline MemoryNode* ETH_IF_Driver::LowLevelInput(void)
-{
-    MemoryNode* pPacket = nullptr;
-    size_t      Length;
-
-    Length = m_pETH_Config->pETH_Driver->GetRX_FrameSize();                                             // Obtain the size of the packet and put it into the "len" variable.
-
-    if(Length != 0)
-    {
-      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-        m_DBG_RX_Count++;
-      #endif
-
-        if(Length <= IP_ETHERNET_FRAME_SIZE)
-        {
-
-            pPacket = MemoryNode::AllocNode(Length, TASK_ETHERNET_IF_NODE_SIZE);
-
-
-//            pPacket = (MemoryNode*)pMemoryPool->AllocAndClear(sizeof(MemoryNode), MEM_DBG_CLASS_ETHERNETIF_1);
-
-            if(pPacket->Alloc(Length) != SYS_READY)                                 // We allocate a MemoryNode of node from the pool.
-            {
-                Length = 0;                                                         // We cannot allocated memory so this will force the packet to be dropped
-                MemoryNode::FreeNode(pPacket);
-              #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-                m_DBG_RX_Drop++;
-              #endif
-            }
-        }
-        else
-        {
-            Length = 0;
-          #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-            m_DBG_RX_Drop++;
-          #endif
-        }
-
-         m_pETH_Config->pETH_Driver->ReadFrame(pPacket, Length);                                         // Read or drop the packet
-    }
-
-    return pPacket;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -265,58 +208,47 @@ inline MemoryNode* ETH_IF_Driver::LowLevelInput(void)
 //-------------------------------------------------------------------------------------------------
 void ETH_IF_Driver::Run(void)
 {
-   	MemoryNode*   pPacket;
-    SystemState_e State;
-    bool          Exit;
+    IP_PacketMsg_t* pPacketMsg = nullptr;
+    SystemState_e   State;
+    int             Count;
 
-    PollTheNetworkInterface();        // Initial polling of the link
+    PollTheNetworkInterface();
 
-	while(1)
-	{
+    while(1)
+    {
         if(nOS_SemTake(&m_RX_Sem, NET_BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK)
-		{
-		    // if for some reason we receive a message and the link is down then poll the PHY for the link
-		    if(m_Link == ETH_LINK_DOWN)
+        {
+            if(m_Context.GetLinkState() == ETH_LINK_DOWN)
             {
                 PollTheNetworkInterface();
             }
 
-            Exit = false;
+            Count = 0;
 
-			do
-			{
-                pPacket = LowLevelInput();
+            while(Count < 4)
+            {
+                State = m_pETH_Config->pETH_Driver->GetRX_Packet(&pPacketMsg);
 
-                if(pPacket == nullptr)
+                if((State != SYS_READY) || (pPacketMsg == nullptr))
                 {
-                    Exit = true;                // No more packets available
                     break;
                 }
 
-                Pseudo code ->   if(add packet to queue) != true)
+                if(nOS_QueueWrite(m_Context.GetMsgQ(), (void*)&pPacketMsg, NET_BLOCK_TIME_WAITING_FOR_Q) != NOS_OK)
                 {
-                    MemoryNode::FreeNode(pPacket);
-                    Exit = true;
-
-              #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-                    m_DBG_RX_Drop++;
-              #endif
-                }
-
-                if(pPacket->GetNext() == nullptr)
-                {
-                    Exit = true;
+                    pMemoryPool->Free((void**)&pPacketMsg);
+                  #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+                    DBG_RX_Drop++;
+                  #endif
                 }
 
                 IO_SetPinLow(IO_ETH_EXT_LED);
                 nOS_Yield();
-			}
-			while(Exit == false);
-
-		}
-		else
+                Count++;
+            }
+        }
+        else
         {
-            // If no message are received, pool the PHY for link periodically
             PollTheNetworkInterface();
         }
     }
@@ -340,7 +272,7 @@ void ETH_IF_Driver::PollTheNetworkInterface(void)
     {
         LinkNow = m_pETH_Config->pPHY_Driver->GetLinkState();
 
-        if(LinkNow != m_Link)
+        if(LinkNow != m_Context.GetLinkState())
         {
             if(LinkNow == ETH_LINK_UP)
             {
@@ -353,7 +285,7 @@ void ETH_IF_Driver::PollTheNetworkInterface(void)
                 DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: Link DOWN\n");
             }
 
-            m_Link = LinkNow;
+            m_Context.SetLinkState(LinkNow);
         }
     }
 }
@@ -375,7 +307,7 @@ void ETH_IF_Driver::CallBack(uint32_t Event)
         nOS_SemGive(&m_RX_Sem);               // Give the semaphore to wakeup IP_Manager task
     }
 
-    // Handle only RX at this time
+    // Handle only RX
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -394,59 +326,10 @@ void ETH_IF_Driver::CallBack(uint32_t Event)
 void ETH_IF_Driver::LinkCallBack(void* pArg)
 {
     VAR_UNUSED(pArg);
-    m_Link = ETH_Phy.GetLinkState();
+    m_Context->SetLinkState(ETH_Phy.GetLinkState());
 }
 #endif
 
 //-------------------------------------------------------------------------------------------------
 
 #endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// need to put this in BSP or BSP supported section
-
-
-
-void BSP_EthernetIF_Initialize(void)
-{
-  #if (IP_INTERFACE_SUPPORT_PHY == DEF_ENABLED) || (IP_INTERFACE_SUPPORT_MAC == DEF_ENABLED)
-    //PHY CONFIG should be out of here...
-    ETH_Mac.Initialize(ethernetif_Callback);							// Init IO, PUT ETH in RMII, Clear control structure
-
-    // if(m_IF_Type == ETH_PHY_IF)
-        // if(m_IF_Type == ETH_MAC_IF)
-    // {
-	// Initialize Physical Media Interface
-	if(ETH_Phy.Initialize(&ETH_Mac) == SYS_READY)
-	{
-		ETH_Phy.PowerControl(ETH_POWER_FULL);                   // configuration into the driver itself????  with config ??
-		ETH_Phy.SetInterface(ETH_USED_INTERFACE);
-		ETH_Phy.SetMode(ETH_PHY_MODE_AUTO_NEGOTIATE);
-
-      #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
-        // IO are done globally into BSP they must be define set into bsp_io_def
-        //IO_PinInit(IO_ETH_PHY_LINK_IO);
-        //IO_InitIRQ(ETH_PHY_LINK_IO_ISR, ethernetif_LinkCallcack);
-        //ETH_Phy.SetLinkUpInterrupt();
-        //IO_EnableIRQ(ETH_PHY_LINK_IO_ISR);
-	  #endif
-	}
-  // }
-  #endif
-}

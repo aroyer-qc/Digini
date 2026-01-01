@@ -171,6 +171,7 @@ typedef enum
     SYS_OUT_OF_BOUND,
     SYS_OUT_OF_RANGE,
     SYS_OVERRUN,
+    SYS_OVERFLOW,
     SYS_POOL_EMPTY,
     SYS_POOL_FULL,
     SYS_POOL_NOT_ALLOCATED_ERROR,
@@ -197,6 +198,7 @@ typedef enum
     SYS_REACH_END_OF_LIST,                          // Use by NodeList
     SYS_NODE_LIST_IS_EMPTY,                         // Use by NodeList
     SYS_NODE_UNKNOWN_ERROR,                         // Use by NodeList (maybe improve on this)
+    SYS_NODE_NOT_FOUND,
 
     // SD state
     SD_CC_ERROR,

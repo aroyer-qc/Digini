@@ -77,27 +77,35 @@ IP_PacketMsg_t* NetICMP::Process(IP_PacketMsg_t* pRX)
 	IP_EthernetHeader_t* 	pETH;
 	uint16_t                Count;
 
-	if(m_Context // pIP->GetIP_IsItValid() == true)
+	if(m_Context.IsIP_Valid() == true)
 	{
 		if(pRX->PacketSize < sizeof(IP_ICMP_Frame_t))
 		{
 			return nullptr;
 		}
 
-		switch(pRX->Packet.u.ICMP_Frame.Header.Type)
+		switch(pRX->pPacket->ICMP_Frame.Header.Type)
 		{
 			case ICMP_TYPE_PING_REQUEST:
             {
-				pTX   = (IP_PacketMsg_t*)pMemory->AllocAndClear(pRX->PacketSize);					    // Get memory for TX packet
-				pICMP = &pTX->Packet.u.ICMP_Frame;
-				pETH  = &pTX->Packet.u.ETH_Header;
+				// need to handle the error
+
+				pTX          = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(pRX->PacketSize, MEM_DBG_ICMP);		    // Get memory for TX IP_PacketMsg_t
+
+
+				pTX->pPacket = (IP_EthernetPacket_t*)pMemoryPool->AllocAndClear(pRX->PacketSize, MEM_DBG_ICMPDT);		// Get memory for TX pPacket
+
+
+
+				pICMP = &pTX->pPacket->ICMP_Frame;
+				pETH  = &pTX->pPacket->ETH_Header;
 				IP_CopyPacketMessage(pTX, pRX);											                // Copy the entire IP payload From RX to TX buffer
 				Count  = htons(pICMP->IP_Header.Length);
 				Count -= (int16_t)sizeof(IP_IP_Header_t);
 				pICMP->Header.Type     = ICMP_TYPE_PING_REPLY;
 				pICMP->Header.Checksum = IP_CalculateChecksum(&pICMP->Header, Count);
 
-				memcpy(pETH->Dst.Byte, pETH->Src.Byte, IP_MAC_ADDRESS_SIZE);	                       // Put Mac header
+				memcpy(pETH->Dst.Byte, pETH->Src.Byte, IP_MAC_ADDRESS_SIZE);	                        // Put Mac header
 				pICMP->IP_Header.TimeToLive = IP_TIME_TO_LIVE;
 				pICMP->IP_Header.DstIP_Addr = pICMP->IP_Header.SrcIP_Addr;
 				pICMP->IP_Header.SrcIP_Addr = IP_HostAddress;

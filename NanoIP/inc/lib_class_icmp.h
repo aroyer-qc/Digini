@@ -44,14 +44,14 @@ class NetICMP
 {
     public:
 
-                        NetICMP         (NetworkContext& Context) : m_Context(Context) {}
+                            NetICMP         (NetworkContext& Context) : m_Context(Context) {}
 
-        void            Initialize      (void);
-        bool            Process         (IP_PacketMsg_t* pRX);
+        void                Initialize      (void);
+        IP_PacketMsg_t*     Process         (IP_PacketMsg_t* pRX);
 
     private:
 
-        NetworkContext&         m_Context;
+        NetworkContext&     m_Context;
 };
 
 //-------------------------------------------------------------------------------------------------

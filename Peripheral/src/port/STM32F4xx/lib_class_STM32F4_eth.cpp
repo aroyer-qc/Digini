@@ -137,10 +137,8 @@ extern "C" void ETH_IRQHandler(void);
 // Variables(s)
 //-------------------------------------------------------------------------------------------------
 
-RX_Descriptor_t   ETH_Driver::m_RX_Descriptor   [NUM_RX_Buffer]                                   __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
-TX_Descriptor_t   ETH_Driver::m_TX_Descriptor   [NUM_TX_Buffer]                                   __attribute__((aligned(4)));
-uint32_t          ETH_Driver::m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE / sizeof(uint32_t)]  __attribute__((aligned(4)));   // Ethernet Receive buffers
-uint32_t          ETH_Driver::m_TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE / sizeof(uint32_t)]  __attribute__((aligned(4)));   // Ethernet Transmit buffers
+RX_Descriptor_t   ETH_Driver::m_RX_Descriptor   [NUM_RX_Buffer] __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
+TX_Descriptor_t   ETH_Driver::m_TX_Descriptor   [NUM_TX_Buffer] __attribute__((aligned(4)));
 ETH_Control_t     ETH_Driver::m_Control;
 
 //-------------------------------------------------------------------------------------------------
@@ -236,8 +234,14 @@ SystemState_e ETH_Driver::Initialize(void* pContext, uint8_t PHY_Address)
                       ETH_MACCR_RD );                               // Retry TX disabled
 
         // Initialize Filter registers
-        ETH->MACFFR = ETH_MACFFR_PCF_BlockAll;                      // MAC filters all control frames from reaching the application
+        ETH->MACFFR = (ETH_MACFFR_PCF_BlockAll |                    // MAC filters all control frames from reaching the application
+                       ETH_MACFFR_DAIF);                            // Destination Address Inverse Filtering
+
+        SET_BIT(ETH->MACA1HR, ETH_MACA1HR_AE);                      // Enable MACA1 for the default register multicast value 0xFF FF FF FF FF FF
+
         ETH->MACFCR = ETH_MACFCR_ZQPD;                              // Zero-quanta pause disabled
+
+        SET_BIT(ETH->MACVLANTR, ETH_MACVLANTR_VLANTC);              // Drop VLAN frames
 
       #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
         // Set clock accuracy to 20ns (50MHz) or 50ns (20MHz)
@@ -310,24 +314,25 @@ void ETH_Driver::InitializeDMA_Buffer(void)
 {
     uint32_t Next;
 
-    // Initialize DMA Descriptors
+    // Initialize TX DMA Descriptors
     for(uint32_t i = 0; i < NUM_TX_Buffer; i++)
     {
-        m_TX_Descriptor[i].Status        = DMA_TX_TCH | DMA_TX_LS | DMA_TX_FS;
-        m_TX_Descriptor[i].BufferAddress = (uint32_t)&m_TX_Buffer[i];
+        m_TX_Descriptor[i].Status         = DMA_TX_TCH | DMA_TX_LS | DMA_TX_FS;
+        m_TX_Descriptor[i].BufferAddress  = uint32_t(nullptr);//  no allocation here.. (uint32_t)pMemoryPool->Alloc(ETH_BUF_SIZE, MEM_DBG_ETHDMATX);
         Next = i + 1;
         Next = (Next == NUM_TX_Buffer) ? 0 : Next;
         m_TX_Descriptor[i].NextDescriptor = &m_TX_Descriptor[Next];
     }
 
+    // Initialize RX DMA Descriptors
     for(uint32_t i = 0; i < NUM_RX_Buffer; i++)
     {
         m_RX_Descriptor[i].Status            = DMA_RX_OWN;
         m_RX_Descriptor[i].ControlBufferSize = /*DMA_RX_DIC |*/ DMA_RX_RCH | ETH_BUF_SIZE;
-        m_RX_Descriptor[i].BufferAddress     = (uint32_t)&m_RX_Buffer[i];
+        m_RX_Descriptor[i].BufferAddress     = (uint32_t)pMemoryPool->Alloc(ETH_BUF_SIZE, MEM_DBG_ETHDMARX);
         Next = i + 1;
         Next = (Next == NUM_RX_Buffer) ? 0 : Next;
-        m_RX_Descriptor[i].NextDescriptor = &m_RX_Descriptor[Next];
+        m_RX_Descriptor[i].NextDescriptor    = &m_RX_Descriptor[Next];
     }
 
     ETH->DMATDLAR      = (uint32_t)&m_TX_Descriptor[0];
@@ -508,49 +513,41 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
 //   Description:       Send Ethernet frame.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32_t Flags)
+SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg, uint32_t Flags)
 {
-    uint8_t* pDst = m_Control.FrameEnd;
-    uint32_t Control;
-
-    if((pFrame == nullptr) || (Length == 0))
+    // Validate input parameters
+    if((ppPacketMsg == nullptr) || (*ppPacketMsg == nullptr) || ((*ppPacketMsg)->pPacket == nullptr) || ((*ppPacketMsg)->PacketSize == 0))
     {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - Invalid Parameter\n");
+      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+        DBG_TX_Drop++;
+      #endif
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendTX_Packet - Invalid PacketMsg\n");
         return SYS_INVALID_PARAMETER;
     }
 
-    if(pDst == nullptr)
-    {
-        // Start of a new transmit frame
-        if(m_TX_Descriptor[m_Control.TX_Index].Status & DMA_TX_OWN)
-        {
-            // Transmitter is busy, wait
-            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - TX Busy\n");
-            return SYS_BUSY;
-        }
+    IP_PacketMsg_t* pMsg    = *ppPacketMsg;
+    uint8_t*        pBuffer = reinterpret_cast<uint8_t*>(pMsg->pPacket);
+    size_t          Length  = pMsg->PacketSize;
 
-        pDst = (uint8_t*)m_TX_Descriptor[m_Control.TX_Index].BufferAddress;
-        m_TX_Descriptor[m_Control.TX_Index].ControlBufferSize = Length;
-    }
-    else
+    // Zero-copy: use the buffer directly, no memcpy involved
+    // Only one buffer per frame; fragmentation flags are ignored in zero-copy mode
+
+    if(m_TX_Descriptor[m_Control.TX_Index].Status & DMA_TX_OWN)                            // Check if the current TX descriptor is free
     {
-        // Sending data fragments in progress
-        m_TX_Descriptor[m_Control.TX_Index].ControlBufferSize += Length;
+      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+        DBG_TX_Drop++;
+      #endif
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendTX_Packet - TX Busy\n");
+        return SYS_BUSY;
     }
 
-    LIB_FastMemcpy(pFrame, pDst, Length);
+    // Attach the packet buffer directly to the DMA descriptor
+    m_TX_Descriptor[m_Control.TX_Index].BufferAddress      = reinterpret_cast<uint32_t>(pBuffer);
+    m_TX_Descriptor[m_Control.TX_Index].ControlBufferSize  = Length;
 
-    if(Flags & ETH_MAC_TX_FRAME_FRAGMENT)
-    {
-        // More data to come, remember current write position
-        m_Control.FrameEnd = pDst;
-        return SYS_READY;
-    }
+    uint32_t Control = m_TX_Descriptor[m_Control.TX_Index].Status & ~uint32_t(DMA_TX_CIC);  // Prepare descriptor control flags
 
-    // Frame is now ready, send it to DMA
-    Control = m_TX_Descriptor[m_Control.TX_Index].Status & ~uint32_t(DMA_TX_CIC);
-
-  #if(ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
+#if (ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
     //  The following is a workaround for MAC Control silicon problem:
     //      "Incorrect layer 3 (L3) checksum is inserted in the transmitted IPV6 fragmented packets
     //       without TCP, UDP or ICMP payloads."
@@ -564,98 +561,128 @@ SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32
     //      packets matches the NH field for TCP, UDP or ICMP and, as a result, the MAC core inserts
     //      a checksum.
 
-    uint16_t Prot = UNALIGNED_UINT16_READ(&m_TX_Descriptor[m_Control.TX_Index].Address[12]);
-    uint16_t Frag = UNALIGNED_UINT16_READ(&m_TX_Descriptor[m_Control.TX_Index].Address[20]);
+    // Read protocol and fragmentation fields for checksum offload workaround
+    uint16_t Prot = UNALIGNED_UINT16_READ(&pBuffer[12]);
+    uint16_t Frag = UNALIGNED_UINT16_READ(&pBuffer[20]);
 
-    if((Prot == 0x0008) && (Fag & 0xFF3F))
+    if((Prot == 0x0008) && (Frag & 0xFF3F))                                                 // Apply silicon workaround for IPv6 fragmented packets without L4 payload
     {
-        Control |= DMA_TX_CIC_IP;               // Insert only IP header checksum in fragmented frame
+        Control |= DMA_TX_CIC_IP;                                                           // Insert only IP header checksum
     }
     else
     {
-        Control |= DMA_TX_CIC;                  // Insert IP header and payload checksums (TCP,UDP,ICMP)
+        Control |= DMA_TX_CIC;                                                              // Insert full checksum (IP + L4)
     }
-  #endif
+#endif
 
-    Control &= ~uint32_t(DMA_TX_IC | DMA_TX_TTSE);
+    Control &= ~uint32_t(DMA_TX_IC | DMA_TX_TTSE);                                          // Clear interrupt and timestamp flags
 
-    if(Flags & ETH_MAC_TX_FRAME_EVENT)
+    if (Flags & ETH_MAC_TX_FRAME_EVENT)                                                     // Enable interrupt on completion if requested
     {
         Control |= DMA_TX_IC;
     }
 
-  #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-    if(Flags & ETH_MAC_TX_FRAME_TIMESTAMP)
+#if (ETH_USE_TIME_STAMP == DEF_ENABLED)
+    if(Flags & ETH_MAC_TX_FRAME_TIMESTAMP)                                                  // Enable timestamping if requested
     {
         Control |= DMA_TX_TTSE;
     }
 
     m_Control.TX_TS_Index = m_Control.TX_Index;
-  #endif
+#endif
 
-    m_TX_Descriptor[m_Control.TX_Index].Status = Control | DMA_TX_OWN;
-    m_Control.TX_Index++;
+    // NOTE: In zero-copy mode, the TX IRQ must free the packet buffer.
+    // The driver must store pMsg in a user field of the descriptor.
+    // (This field must be added to your descriptor structure.)
+    m_TX_Descriptor[m_Control.TX_Index].BufferAddress = uint32_t(pMsg);
+    m_TX_Descriptor[m_Control.TX_Index].Status = Control | DMA_TX_OWN;                      // Give ownership of the descriptor to the DMA
+    m_Control.TX_Index++;                                                                   // Advance TX descriptor index
 
-    if(m_Control.TX_Index == NUM_TX_Buffer)
+    if (m_Control.TX_Index == NUM_TX_Buffer)
     {
         m_Control.TX_Index = 0;
     }
 
-    m_Control.FrameEnd = nullptr;
-
-    // Start frame transmission
-    ETH->DMASR   = ETH_DMASR_TBUS;
+    ETH->DMASR   = ETH_DMASR_TBUS;                                                          // Trigger transmission
     ETH->DMATPDR = 0;
+
+  #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+    DBG_TX_Count++;
+  #endif
 
     return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name:     ReadFrame
+//   Function name:     GetRX_Packet
 //
-//   Parameter(s):      MemoryNode*     pPacket         Pointer to on MemoryNode NanoIP data.
-//                      size_t          Length          Frame buffer length in bytes.
+//   Parameter(s):      IP_PacketMsg_t**                ppPacketMsg
 //   Return value:      SystemState_e                   State of function.
 //
-//   Description:       Read data of received Ethernet frame.
-//
-//   Note(s):           It is assume that:
-//                          1 - Length is not 0, so 'length' lower or equal to ETHERNET_FRAME_SIZE.
-//                          2 - No MemoryNode was allocated if packet is invalid.
+//   Description:       Get the RX packet data
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::ReadFrame(MemoryNode* pPacket, size_t Length)
+SystemState_e ETH_Driver::GetRX_Packet(IP_PacketMsg_t** ppPacketMsg)
 {
-    SystemState_e State = SYS_READY;
-    uint8_t const* pSrc = (uint8_t*)m_RX_Descriptor[m_Control.RX_Index].BufferAddress;
-    size_t NodeSize;
-    uint8_t* pNodeData;
+    size_t Length;
 
-    if(pPacket != nullptr)
+    *ppPacketMsg = nullptr;
+    Length       = GetRX_FrameSize();
+
+    if(Length == 0)
     {
-        NodeSize = pPacket->GetNodeSize();
-        pPacket->Begin();
-
-        do
-        {
-            if(Length < NodeSize)
-            {
-                NodeSize = Length;
-            }
-
-            Length -= NodeSize;
-
-            pNodeData = static_cast<uint8_t*>(pPacket->GetNext());
-            memcpy(pNodeData, pSrc, NodeSize);                         // LIB_FastMemcpy(pSrc, pFrame, NodeSize);
-        }
-        while(Length > 0);
+        return SYS_NO_DATA;
     }
 
-    // Return this block back to ETH-DMA
-    m_RX_Descriptor[m_Control.RX_Index].Status = DMA_RX_OWN;
-    m_Control.RX_Index++;
+    if(Length > ETH_BUF_SIZE)               // est-ce vraiment possible ????
+    {
+      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+        DBG_RX_Drop++;
+      #endif
+        m_RX_Descriptor[m_Control.RX_Index].Status = DMA_RX_OWN;                                            // Give back the buffer to the DMA without returning it
+        m_Control.RX_Index++;
 
+        if(m_Control.RX_Index == NUM_RX_Buffer)
+        {
+            m_Control.RX_Index = 0;
+        }
+
+        return SYS_OVERFLOW;
+    }
+
+    *ppPacketMsg = (IP_PacketMsg_t*)pMemoryPool->Alloc(sizeof(IP_PacketMsg_t), MEM_DBG_IPPKT);              // Allocated a IP_PacketMsg_t from the pool
+
+    if(*ppPacketMsg == nullptr)
+    {
+      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+        DBG_RX_Drop++;
+      #endif
+        m_RX_Descriptor[m_Control.RX_Index].Status = DMA_RX_OWN;                                            // Keep the actual buffer from the pool for the DMA descriptor (No choice)
+        return SYS_POOL_NOT_ALLOCATED_ERROR;
+    }
+
+    (*ppPacketMsg)->PacketSize = Length;
+    (*ppPacketMsg)->pPacket    = (IP_EthernetPacket_t*)m_RX_Descriptor[m_Control.RX_Index].BufferAddress;   // The DMA packet DMA is already from the pool (zero copy)
+
+    void* pNewBuffer = pMemoryPool->Alloc(ETH_BUF_SIZE, MEM_DBG_ETHDMARX2);                                 // Allocate a new buffer for the DMA descriptor
+
+    if(pNewBuffer == nullptr)
+    {
+      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+        DBG_RX_Drop++;
+      #endif
+
+        pMemoryPool->Free((void**)ppPacketMsg);
+        *ppPacketMsg = nullptr;
+        m_RX_Descriptor[m_Control.RX_Index].Status = DMA_RX_OWN;                                            // Keep the actual buffer for DMA descriptor
+        return SYS_POOL_NOT_ALLOCATED_ERROR;
+    }
+
+    m_RX_Descriptor[m_Control.RX_Index].BufferAddress = (uint32_t)pNewBuffer;
+    m_RX_Descriptor[m_Control.RX_Index].Status        = DMA_RX_OWN;
+
+    m_Control.RX_Index++;
     if(m_Control.RX_Index == NUM_RX_Buffer)
     {
         m_Control.RX_Index = 0;
@@ -663,18 +690,15 @@ SystemState_e ETH_Driver::ReadFrame(MemoryNode* pPacket, size_t Length)
 
     if(ETH->DMASR & ETH_DMASR_RBUS)
     {
-        // Receive buffer unavailable, resume DMA
         ETH->DMASR   = ETH_DMASR_RBUS;
         ETH->DMARPDR = 0;
     }
 
-    if(pPacket == nullptr)
-    {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: ReadFrame - Invalid Parameter\n");
-        State = SYS_INVALID_PARAMETER;
-    }
+  #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+    DBG_RX_Count++;
+  #endif
 
-    return State;
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -691,23 +715,43 @@ uint32_t ETH_Driver::GetRX_FrameSize(void)
 {
     uint32_t Status = m_RX_Descriptor[m_Control.RX_Index].Status;
 
-    if((Status & DMA_RX_OWN) != 0)
+    // till owned by DMA: no frame available
+    if (Status & DMA_RX_OWN)
     {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - Owned by DMA\n");
-        return ETH_OWNED_BY_DMA;                       // Owned by DMA
+        return ETH_OWNED_BY_DMA;
     }
 
-    if(((Status & DMA_RX_ES) != 0) ||
-       ((Status & DMA_RX_FS) == 0) ||
-       ((Status & DMA_RX_LS) == 0))
+    // Basic validity checks: FS (first segment), LS (last segment), ES (error summary)
+    if(((Status & DMA_RX_ES) != 0)  ||        // Error summary
+       ((Status & DMA_RX_FS) == 0)  ||        // Not first segment
+       ((Status & DMA_RX_LS) == 0))           // Not last segment
     {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - This block is invalid\n");
-        return ETH_INVALID_BLOCK;                       // Error, this block is invalid
+        return ETH_INVALID_BLOCK;
     }
 
-    return ((Status & DMA_RX_FL) >> DMA_RX_FL_OFFSET) - 4;
+    // Extract frame length from descriptor
+    uint32_t Length = (Status & DMA_RX_FL) >> DMA_RX_FL_OFFSET;
+
+    // Sanity checks on length
+    //    Ethernet minimum: 14 bytes header + payload
+    //    Maximum: 1518 (Ethernet II) or 1522 (with VLAN)
+    if((Length < 14) || (Length > 1522))
+    {
+        return ETH_INVALID_BLOCK;
+    }
+
+    // Remove CRC (4 bytes) if present
+    //    STM32F4 always includes CRC in FL
+    Length -= 4;  // i will need to put that into a #ifdef if we do crc by the module
+
+    // Final safety check: must not exceed MTU
+    if(Length > 1500)
+    {
+        return ETH_INVALID_BLOCK;
+    }
+
+    return Length;
 }
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name:     GetRX_FrameTime
@@ -963,9 +1007,34 @@ void ETH_Driver::ISR_CallBack(uint32_t Event)
     {
         ETH_IF_Driver::CallbackWrapper(m_pContext, Event);
     }
-    else
+
+    if(Event == ETH_MAC_EVENT_TX_FRAME)
     {
-        myETH_Driver.ReadFrame(nullptr, 0);   // tempo for test
+       // Process all completed TX descriptors
+        while(!(m_TX_Descriptor[m_Control.TX_Index].Status & DMA_TX_OWN))
+        {
+            IP_PacketMsg_t* pMsg = (IP_PacketMsg_t*)m_TX_Descriptor[m_Control.TX_Index].BufferAddress;
+
+            if(pMsg != nullptr)
+            {
+                pMemoryPool->Free((void**)&pMsg->pPacket);                                  // Free zero-copy packet buffer
+                pMemoryPool->Free((void**)&pMsg);                                           // Free message wrapper
+                m_TX_Descriptor[m_Control.TX_Index].BufferAddress = uint32_t(nullptr);      // Clear user pointer
+            }
+
+            // Advance index
+            m_Control.TX_Index++;
+
+            if(m_Control.TX_Index == NUM_TX_Buffer)
+            {
+                m_Control.TX_Index = 0;
+            }
+
+            if (m_TX_Descriptor[m_Control.TX_Index].Status & DMA_TX_OWN)                    // Stop if next descriptor is still owned by DMA
+            {
+                break;
+            }
+        }
     }
 }
 

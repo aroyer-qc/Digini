@@ -100,7 +100,7 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
     VT100_MEMORY_STACKTISTIC_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
   #endif
 
-  #if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
+  #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
     VT100_MEMORY_POOL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
   #endif
 
@@ -139,6 +139,13 @@ const char* Label::LabelArray[NB_LABEL_CONST][NB_LANGUAGE_CONST] =
  #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
     NET_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_DATA)
  #endif
+
+   ///-----------------------------------------------------------------------------------------------
+  /// Memory Debug ID label
+
+  #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
+    MEM_DBG_DEF(EXPAND_X_MEM_DBG_AS_DATA)
+  #endif
 };
 
 Label::Label()

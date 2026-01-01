@@ -379,13 +379,13 @@ struct IP_EthernetPacket_t
 		IP_UDP_Frame_t				UDP_Frame;
 		IP_UDP_PseudoFrame_t		UDP_PseudoFrame;				// use for UDP Checksum calculation
 		IP_DHCP_Frame_t             DHCP_Frame;
-	} u;
+	};
 };
 
 struct IP_PacketMsg_t
 {
-	uint16_t    		PacketSize;
-	IP_EthernetPacket_t	Packet;
+	uint16_t    		    PacketSize;
+	IP_EthernetPacket_t*	pPacket;
 };
 
 struct IP_ETH_Config_t
@@ -515,27 +515,6 @@ struct DHCP_Msg_t
     uint8_t      Options[DHCP_OPTION_IN_PACKET_SIZE];
 };
 
-union IP_Q_Message_t
-{
-    uint8_t         Type;
-
-    struct u8
-    {
-        uint8_t     Type;
-        uint8_t     Data;
-    };
-
-    struct Pointer
-    {
-        uint8_t     Type;
-        uint8_t*    pData;
-    };
-};
-
-
-//typedef SystemState_e (*ETH_PHY_Read_t)  (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData);   // Read Ethernet PHY Register.   not sure it is still good
-//typedef SystemState_e (*ETH_PHY_Write_t) (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data);   // Write Ethernet PHY Register.
-
 //-------------------------------------------------------------------------------------------------
 // class to access struct data
 //-------------------------------------------------------------------------------------------------
@@ -546,60 +525,64 @@ class NetworkContext
 {
     public:
 
-        bool                IsLinkUp                (void)          const                   { return m_LinkUpState;                                                                             }
-        void                SetLinkUp               (bool State)                            { m_LinkUpState = State;                                                                            }
+        ETH_LinkState_e     GetLinkState            (void)          const                   { return m_LinkState;                                               }
+        void                SetLinkState            (ETH_LinkState_e State)                 { m_LinkState = State;                                              }
 
-        bool                IsIP_Valid              (void)                                  { return m_IP_Valid;                                                                                }
-        void                SetIP_Valid             (bool State)                            { m_IP_Valid = State;                                                                               }
+        bool                IsIP_Valid              (void)                                  { return m_IP_Valid;                                                }
+        void                SetIP_Valid             (bool State)                            { m_IP_Valid = State;                                               }
 
       #if (IP_USE_DHCP == DEF_ENABLED)
 
-        bool                IsDHCP_Enable           (void)                                  { return m_DHCP_Enable;                                                                             }
-        void                SetDHCP_Enable          (bool State)                            { m_DHCP_Enable = State;                                                                            }
+        bool                IsDHCP_Enable           (void)                                  { return m_DHCP_Enable;                                             }
+        void                SetDHCP_Enable          (bool State)                            { m_DHCP_Enable = State;                                            }
 
-        IP_Address_t        GetDHCP_GatewayIP      (void)                                   { return m_DHCP_GatewayIP;                                                                          }
-        void                SetDHCP_GatewayIP      (IP_Address_t GatewayIP)                 { m_DHCP_GatewayIP = GatewayIP;                                                                     }
+        IP_Address_t        GetDHCP_GatewayIP       (void)                                   { return m_DHCP_GatewayIP;                                         }
+        void                SetDHCP_GatewayIP       (IP_Address_t GatewayIP)                 { m_DHCP_GatewayIP = GatewayIP;                                    }
 
-        IP_Address_t        GetDHCP_SubnetMask      (void)                                  { return m_DHCP_SubnetMask;                                                                         }
-        void                SetDHCP_SubnetMask      (IP_Address_t SubnetMask)               { m_DHCP_SubnetMask = SubnetMask;                                                                   }
+        IP_Address_t        GetDHCP_SubnetMask      (void)                                  { return m_DHCP_SubnetMask;                                         }
+        void                SetDHCP_SubnetMask      (IP_Address_t SubnetMask)               { m_DHCP_SubnetMask = SubnetMask;                                   }
 
-        IP_Address_t        GetDHCP_IP              (void)                                  { return m_DHCP_IP;                                                                                 }
-        void                SetDHCP_IP              (IP_Address_t DHCP_IP)                  { m_DHCP_IP = DHCP_IP;                                                                              }
+        IP_Address_t        GetDHCP_IP              (void)                                  { return m_DHCP_IP;                                                 }
+        void                SetDHCP_IP              (IP_Address_t DHCP_IP)                  { m_DHCP_IP = DHCP_IP;                                              }
 
-        IP_Address_t        GetDHCP_DNS_IP          (void)                                  { return m_DHCP_DNS_IP;                                                                             }
-        void                SetDHCP_DNS_IP          (IP_Address_t DHCP_DNS_IP)              { m_DHCP_DNS_IP = DHCP_DNS_IP;                                                                      }
+        IP_Address_t        GetDHCP_DNS_IP          (void)                                  { return m_DHCP_DNS_IP;                                             }
+        void                SetDHCP_DNS_IP          (IP_Address_t DHCP_DNS_IP)              { m_DHCP_DNS_IP = DHCP_DNS_IP;                                      }
 
-        IP_Address_t        GetActiveGatewayIP      (void)                                  { return m_DHCP_GatewayIP;                                                                          }
-        IP_Address_t        GetActveSubnetMask      (void)                                  { return m_DHCP_SubnetMask;                                                                         }
-        IP_Address_t        GetActiveIP             (void)                                  { return m_DHCP_IP;                                                                                 }
-        IP_Address_t        GetActiveDNS_IP         (void)                                  { return m_DHCP_DNS_IP;                                                                             }
+        IP_Address_t        GetActiveGatewayIP      (void)                                  { return m_DHCP_GatewayIP;                                          }
+        IP_Address_t        GetActiveSubnetMask     (void)                                  { return m_DHCP_SubnetMask;                                         }
+        IP_Address_t        GetActiveIP             (void)                                  { return m_DHCP_IP;                                                 }
+        IP_Address_t        GetActiveDNS_IP         (void)                                  { return m_DHCP_DNS_IP;                                             }
 
       #endif
 
-        IP_Address_t        GetStaticGatewayIP      (void)                                  { return m_StaticGatewayIP;                                                                         }
-        void                SetStaticGatewayIP      (IP_Address_t GatewayIP)                { m_StaticGatewayIP = GatewayIP;                                                                    }
+        IP_Address_t        GetStaticGatewayIP      (void)                                  { return m_StaticGatewayIP;                                         }
+        void                SetStaticGatewayIP      (IP_Address_t GatewayIP)                { m_StaticGatewayIP = GatewayIP;                                    }
 
-        IP_Address_t        GetStaticSubnetMask     (void)                                  { return m_StaticSubnetMask;                                                                        }
-        void                SetStaticSubnetMask     (IP_Address_t SubnetMask)               { m_StaticSubnetMask = SubnetMask;                                                                  }
+        IP_Address_t        GetStaticSubnetMask     (void)                                  { return m_StaticSubnetMask;                                        }
+        void                SetStaticSubnetMask     (IP_Address_t SubnetMask)               { m_StaticSubnetMask = SubnetMask;                                  }
 
-        IP_Address_t        GetStaticIP             (void)                                  { return m_StaticIP;                                                                                }
-        void                SetStaticIP             (IP_Address_t StaticIP)                 { m_StaticIP = StaticIP;                                                                            }
+        IP_Address_t        GetStaticIP             (void)                                  { return m_StaticIP;                                                }
+        void                SetStaticIP             (IP_Address_t StaticIP)                 { m_StaticIP = StaticIP;                                            }
 
-        IP_Address_t        GetStaticDNS_IP         (void)                                  { return m_StaticDNS_IP;                                                                            }
-        void                SetStaticDNS_IP         (IP_Address_t DNS_IP)                   { m_StaticDNS_IP = DNS_IP;                                                                          }
+        IP_Address_t        GetStaticDNS_IP         (void)                                  { return m_StaticDNS_IP;                                            }
+        void                SetStaticDNS_IP         (IP_Address_t DNS_IP)                   { m_StaticDNS_IP = DNS_IP;                                          }
 
-        void                GetMAC_Address          (IP_MAC_Address_t* pMAC_Address)        { memcpy(pMAC_Address, &m_MAC_Address, IP_MAC_ADDRESS_SIZE);                                        }
-        void                SetMAC_Address          (const IP_MAC_Address_t* pMAC_Address)  { memcpy(&m_MAC_Address, pMAC_Address, IP_MAC_ADDRESS_SIZE);                                        }
+        void                GetMAC_Address          (IP_MAC_Address_t* pMAC_Address)        { memcpy(pMAC_Address, &m_MAC_Address, IP_MAC_ADDRESS_SIZE);        }
+        void                SetMAC_Address          (const IP_MAC_Address_t* pMAC_Address)  { memcpy(&m_MAC_Address, pMAC_Address, IP_MAC_ADDRESS_SIZE);        }
 
-        uint16_t            GetMTU                  (void)                                  { return m_MTU;                                                                                     }
-        void                SetMTU                  (uint16_t MTU)                          { m_MTU = MTU;                                                                                      }
+        uint16_t            GetMTU                  (void)                                  { return m_MTU;                                                     }
+        void                SetMTU                  (uint16_t MTU)                          { m_MTU = MTU;                                                      }
 
-        SystemState_e       InitializeMsgQ          (void)                                  { nOS_QueueCreate(&this->m_Q_Msg, &m_ArrayMsg[0], sizeof(IP_Q_Message_t*), Q_TASK_IP_MANAGER_SIZE); return SYS_READY;     }
-        nOS_Queue*          GetMsgQ                 (void)                                  { return &m_Q_Msg;                                                                                  }
+        SystemState_e       InitializeMsgQ          (void)                                  { nOS_QueueCreate(&this->m_Q_Msg,
+                                                                                                              &m_ArrayMemoryNode[0],
+                                                                                                              sizeof(MemoryNode*),
+                                                                                                              Q_IP_MANAGER_MEMORY_NODE_SIZE);
+                                                                                              return SYS_READY;                                                 }
+        nOS_Queue*          GetMsgQ                 (void)                                  { return &m_Q_Msg;                                                  }
 
     private:
 
-        bool                m_LinkUpState;
+        ETH_LinkState_e     m_LinkState;
         bool                m_IP_Valid;
         uint16_t            m_MTU;
 
@@ -621,7 +604,7 @@ class NetworkContext
         IP_MAC_Address_t    m_MAC_Address;
 
         nOS_Queue           m_Q_Msg;
-        IP_Q_Message_t*     m_ArrayMsg[Q_TASK_IP_MANAGER_SIZE];
+        MemoryNode*         m_ArrayMemoryNode[Q_IP_MANAGER_MEMORY_NODE_SIZE];
 };
 
 //-------------------------------------------------------------------------------------------------

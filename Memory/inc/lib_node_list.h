@@ -37,14 +37,6 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-
-#if (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-
-#ifdef MEM_BLOCK_DEF
-
-//-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -69,6 +61,7 @@ class NodeList
         SystemState_e   AddNode             (uint16_t NodeID, void** pData);            // This reserve the memory for the node and insert it into the chain
         SystemState_e   RemoveNode          (uint16_t NodeID);                          // This will also free the memory of the node
         SystemState_e   RemoveAllNode       (void);
+        SystemState_e   GetNodeByIndex      (uint16_t Index, NodeList_t** pNode);
         SystemState_e   GetNodeDataPointer  (uint16_t NodeID, void** pData);            // Get the node data from the client ID
         uint16_t        GetNumberOfNode     (void);
 
@@ -94,13 +87,5 @@ class NodeList
 // upgrade?
 // Add sorting of the NodeList using ID, need to create a class using bubble sort
 // Add search with successive approximation using ID;
-
-//-------------------------------------------------------------------------------------------------
-
-#endif  // MEM_BLOCK_DEF
-
-//-------------------------------------------------------------------------------------------------
-
-#endif // (DIGINI_USE_STATIC_MEMORY_ALLOC == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

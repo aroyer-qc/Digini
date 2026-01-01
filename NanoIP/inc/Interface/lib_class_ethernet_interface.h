@@ -41,8 +41,8 @@ class ETH_DriverInterface
         virtual SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address)                          = 0;    // Get Ethernet MAC Address.
         virtual SystemState_e           SetMacAddress           (const IP_MAC_Address_t* pMAC_Address)                          = 0;    // Set Ethernet MAC Address.
         virtual SystemState_e           SetAddressFilter        (const IP_MAC_Address_t* pMAC_Address, uint32_t NbAddress)      = 0;    // Configure Address Filter.
-        virtual SystemState_e           SendFrame               (const uint8_t* frame, size_t Length, uint32_t flags)           = 0;    // Send Ethernet frame.
-        virtual SystemState_e           ReadFrame               (MemoryNode* pPacket, size_t Length)                            = 0;    // Read data of received Ethernet frame.
+        virtual SystemState_e           SendTX_Packet           (IP_PacketMsg_t** ppPacketMsg, uint32_t flags)                  = 0;    // Send Ethernet frame.
+        virtual SystemState_e           GetRX_Packet            (IP_PacketMsg_t** ppPacketMsg)                                  = 0;    // Read data of received Ethernet frame.
         virtual uint32_t                GetRX_FrameSize         (void)                                                          = 0;    // Get size of received Ethernet frame.
       #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
         virtual SystemState_e           GetRX_FrameTime         (ETH_MacTime_t* pTime)                                          = 0;    // Get time of received Ethernet frame.

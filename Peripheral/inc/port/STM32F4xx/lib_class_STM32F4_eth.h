@@ -102,29 +102,6 @@ struct TX_Descriptor_t
 };
 
 //-------------------------------------------------------------------------------------------------
-// Validate Memory footprint(s)
-//-------------------------------------------------------------------------------------------------
-
-#define ETH_MAX_DESC_MEMORY         1024
-#define ETH_MAX_BUF_MEMORY          15 * 1024
-
-#if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
-#define SIZEOF_RX_Desc              32
-#define SIZEOF_TX_Desc              32
-#else
-#define SIZEOF_RX_Desc              16
-#define SIZEOF_TX_Desc              16
-#endif
-
-#if ((NUM_RX_Buffer * SIZEOF_RX_Desc) + (NUM_TX_Buffer * SIZEOF_TX_Desc)) > ETH_MAX_DESC_MEMORY
-    #error "SRAM2 Descriptor overflow"
-#endif
-
-#if (((NUM_RX_Buffer + NUM_TX_Buffer) * ETH_BUF_SIZE)) > ETH_MAX_BUF_MEMORY
-    #error "SRAM2 Buffer overflow"
-#endif
-
-//-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -139,8 +116,8 @@ class ETH_Driver : public ETH_DriverInterface
         SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address);                          // Get Ethernet MAC Address.
         SystemState_e           SetMacAddress           (const IP_MAC_Address_t* pMAC_Address);                          // Set Ethernet MAC Address.
         SystemState_e           SetAddressFilter        (const IP_MAC_Address_t* pMAC_Address, uint32_t NbAddress);      // Configure Address Filter.
-        SystemState_e           SendFrame               (const uint8_t* frame, size_t Length, uint32_t flags);           // Send Ethernet frame.
-        SystemState_e           ReadFrame               (MemoryNode* pPacket, size_t Length);                            // Read data of received Ethernet frame.
+        SystemState_e           SendTX_Packet           (IP_PacketMsg_t** ppPacketMsg, uint32_t flags);                  // Send Ethernet frame.
+        SystemState_e           GetRX_Packet            (IP_PacketMsg_t** ppPacketMsg);
         uint32_t                GetRX_FrameSize         (void);                                                          // Get size of received Ethernet frame.
       #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
         SystemState_e           GetRX_FrameTime         (ETH_MacTime_t* pTime);                                          // Get time of received Ethernet frame.
@@ -159,12 +136,10 @@ class ETH_Driver : public ETH_DriverInterface
         void                    Control                 (void);
         SystemState_e           PHY_Busy                (void);
 
-                   void*                       m_pContext;
-        static     ETH_Control_t               m_Control;
-        static     RX_Descriptor_t             m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
-        static     TX_Descriptor_t             m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((aligned(4)));
-        static     uint32_t                    m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((aligned(4)));   // Ethernet Receive buffers
-        static     uint32_t                    m_TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE >> 2]  __attribute__((aligned(4)));   // Ethernet Transmit buffers
+                   void*                        m_pContext;
+        static     ETH_Control_t                m_Control;
+        static     RX_Descriptor_t              m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
+        static     TX_Descriptor_t              m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((aligned(4)));
 };
 
 //-------------------------------------------------------------------------------------------------

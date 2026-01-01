@@ -143,22 +143,19 @@ class IP_Manager
 
         IP_Address_t        GetDNS                      (void);
         IP_Address_t        GetHost                     (void);
-
-        char*               IP_ToAscii                  (IP_Address_t IP_Address);
-        IP_Address_t        AsciiToIP                   (char* pBuffer);
+        NetworkContext*     GetContext                  (void)          { return &m_Context; }
 
         void                PutHeader                   (IP_PacketMsg_t* pTX);
         int16_t             CalculateChecksum           (void* pBuffer, uint16_t Count);
 
+        static void         IP_ToAscii                  (char* pBuffer, IP_Address_t IP_Address);
+        static IP_Address_t AsciiToIP                   (char* pBuffer);
 
     private:
 
         NetworkContext                  m_Context;
-
-
         ETH_IF_Driver                   m_IF_Driver;
         //IP_Flag_t                       m_Flag;                               // Configuration of IP Stack
-        bool                            m_IP_Status;                            // TODO give better name
         bool                            m_DNS_IP_Found;
 
 //        IP_Address_t                    m_StaticGatewayIP;                      // Gateway IP Address
@@ -181,7 +178,6 @@ class IP_Manager
 
       #if (IP_USE_NTP == DEF_ENABLED)
         NetNTP                          m_NTP;                                 // Network Time Protocol
-
         uint8_t                         m_NTP_Server_1[IP_MAX_URL_SIZE];       // move this to NTP
         uint8_t                         m_NTP_Server_2[IP_MAX_URL_SIZE];
       #endif

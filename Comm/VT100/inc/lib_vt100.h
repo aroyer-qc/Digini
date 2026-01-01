@@ -55,7 +55,7 @@
     IF_USE( DIGINI_USE_ETHERNET,                ENTRY(MenuNetwork            ) )\
     IF_USE( DIGINI_USE_LABEL_PRODUCT_INFO,      ENTRY(MenuProductInformation ) )\
     IF_USE( DIGINI_USE_STACKTISTIC,             ENTRY(MenuStackUsage         ) )\
-    IF_USE( DIGINI_USE_STATIC_MEMORY_ALLOC,     ENTRY(MenuMemoryPool         ) )\
+    IF_USE( MEMORY_POOL_USE_DEBUG_STAT,         ENTRY(MenuMemoryPool         ) )\
     IF_USE( DIGINI_DEBUG_SDCARD_INFO_ON_VT100,  ENTRY(MenuSD_Card            ) )\
                                                 ENTRY(MenuSystemSetting        )\
 
@@ -66,7 +66,7 @@
     IF_USE( DIGINI_USE_ETHERNET,               ENTRY(CALLBACK_NetworkInfo        ) )\
     IF_USE( DIGINI_USE_LABEL_PRODUCT_INFO,     ENTRY(CALLBACK_ProductInformation ) )\
     IF_USE( DIGINI_USE_STACKTISTIC,            ENTRY(CALLBACK_StackUsage         ) )\
-    IF_USE( DIGINI_USE_STATIC_MEMORY_ALLOC,    ENTRY(CALLBACK_MemoryPool         ) )\
+    IF_USE( MEMORY_POOL_USE_DEBUG_STAT,        ENTRY(CALLBACK_MemoryPool         ) )\
     IF_USE( DIGINI_DEBUG_SDCARD_INFO_ON_VT100, ENTRY(CALLBACK_SD_CardInformation ) )\
                                                ENTRY(CALLBACK_SystemSetting        )\
 
@@ -76,7 +76,7 @@
     IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE,        ENTRY  (MENU,  MenuMain,                ID_DEBUG_MENU,                       CALLBACK_None,                           MenuDebug,                        VT100_LBL_DEBUG                                 ) )\
     IF_USE( DIGINI_USE_ETHERNET,                ENTRY  (MENU,  MenuMain,                ID_NETWORK_INFO,                     CALLBACK_None,                           MenuNetwork,                      LBL_NETWORK_INFO                                ) )\
     IF_USE( DIGINI_USE_LABEL_PRODUCT_INFO,      ENTRY  (MENU,  MenuMain,                ID_INFO_DISPLAY,                     CALLBACK_ProductInformation,             MenuProductInformation,           VT100_LBL_SYSTEM_INFO                           ) )\
-    IF_USE( DIGINI_USE_STATIC_MEMORY_ALLOC,     ENTRY  (MENU,  MenuMain,                ID_MEMORY_POOL_MENU,                 CALLBACK_None,                           MenuMemoryPool,                   VT100_LBL_MEMORY_POOL_STAT                      ) )\
+    IF_USE( MEMORY_POOL_USE_DEBUG_STAT,         ENTRY  (MENU,  MenuMain,                ID_MEMORY_POOL_MENU,                 CALLBACK_None,                           MenuMemoryPool,                   VT100_LBL_MEMORY_POOL_STAT                      ) )\
     IF_USE( DIGINI_USE_STACKTISTIC,             ENTRY  (MENU,  MenuMain,                ID_STACK_DISPLAY,                    CALLBACK_None,                           MenuStackUsage,                   VT100_LBL_STACKTISTIC                           ) )\
                                                 ENTRY  (MENU,  MenuMain,                ID_SYSTEM_SETTING_MENU,              CALLBACK_None,                           MenuSystemSetting,                VT100_LBL_SYSTEM_SETTING                        )  \
 \
@@ -84,7 +84,7 @@
 \
     IF_USE( DIGINI_USE_STACKTISTIC,             ENTRY  (MENU,  MenuStackUsage,          ID_INFO_DISPLAY,                     CALLBACK_StackUsage,                     MenuMain,                         VT100_LBL_STACKTISTIC                           ) )\
 \
-    IF_USE( DIGINI_USE_STATIC_MEMORY_ALLOC,     ENTRY  (MENU,  MenuMemoryPool,          ID_MEM_POOL_STATS,                   CALLBACK_MemoryPool,                     MenuMain,                         VT100_LBL_MEMORY_POOL_STAT                      ) )\
+    IF_USE( MEMORY_POOL_USE_DEBUG_STAT,         ENTRY  (MENU,  MenuMemoryPool,          ID_MEM_POOL_STATS,                   CALLBACK_MemoryPool,                     MenuMain,                         VT100_LBL_MEMORY_POOL_STAT                      ) )\
 \
                                                 ENTRY  (MENU,  MenuSystemSetting,       ID_SYSTEM_SETTING,                   CALLBACK_SystemSetting,                  MenuMain,                         VT100_LBL_SYSTEM_SETTING                        )  \
                                                 ENTRY  (MENU,  MenuSystemSetting,       ID_SYSTEM_LANGUAGE,                  CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_LANGUAGE_SELECTION                    )  \
@@ -411,8 +411,24 @@ bool                GetString                   (char* pBuffer, size_t Size);
 
 #ifdef VT100_GLOBAL
     class VT100_Terminal            myVT100;
+
+  #if (DIGINI_USE_ETHERNET == DEF_ENABLED) && (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+    uint32_t                        DBG_RX_Count;
+    uint32_t                        DBG_TX_Count;
+    uint32_t                        DBG_RX_Drop;
+    uint32_t                        DBG_TX_Drop;
+  #endif
+
 #else
     extern class VT100_Terminal     myVT100;
+
+  #if (DIGINI_USE_ETHERNET == DEF_ENABLED) && (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+    extern uint32_t                 DBG_RX_Count;
+    extern uint32_t                 DBG_TX_Count;
+    extern uint32_t                 DBG_RX_Drop;
+    extern uint32_t                 DBG_TX_Drop;
+  #endif
+
 #endif // VT100_GLOBAL
 
 //-------------------------------------------------------------------------------------------------

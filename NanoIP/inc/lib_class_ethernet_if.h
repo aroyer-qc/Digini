@@ -52,29 +52,20 @@ class ETH_IF_Driver
 {
     public:
 
-        ETH_IF_Driver                                   (NetworkContext& Context) : m_Context(Context) {}
+                                ETH_IF_Driver               (NetworkContext& Context) : m_Context(Context) {}
 
 
-        SystemState_e       Initialize                  (const IP_ETH_Config_t* pETH_Config);
-
-      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-        uint32_t            GetDBG_RX_Count             (void)                          { return m_DBG_RX_Count; }
-        uint32_t            GetDBG_TX_Count             (void)                          { return m_DBG_TX_Count; }
-        uint32_t            GetDBG_RX_Drop              (void)                          { return m_DBG_RX_Drop;  }
-        uint32_t            GetDBG_TX_Drop              (void)                          { return m_DBG_TX_Drop;  }
-      #endif
-
-        void                Run                         (void);
-        static void         CallbackWrapper             (void* pContext, uint32_t Event) { static_cast<ETH_IF_Driver*>(pContext)->CallBack(Event); }
+        SystemState_e           Initialize                  (const IP_ETH_Config_t* pETH_Config);
+        void                    Run                         (void);
+        static void             CallbackWrapper             (void* pContext, uint32_t Event) { static_cast<ETH_IF_Driver*>(pContext)->CallBack(Event); }
 
     private:
 
-        inline MemoryNode*  LowLevelInput               (void);
-        SystemState_e       LowLevelOutput              (MemoryNode* pPacket);               // TODO Should use may chainlist buffer allocation
-        void                PollTheNetworkInterface     (void);                                                 // This might be a PHY, MAC, HEC ( hardwired ethernet controller Ex. W5100, ESP32 etc...)
-        void                CallBack                    (uint32_t Event);
+        SystemState_e           LowLevelOutput              (IP_PacketMsg_t** ppPacketMsg);
+        void                    PollTheNetworkInterface     (void);                                                 // This might be a PHY, MAC, HEC ( hardwired ethernet controller Ex. W5100, ESP32 etc...)
+        void                    CallBack                    (uint32_t Event);
       #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
-        void                LinkCallBack                (void* pArg);
+        void                    LinkCallBack                (void* pArg);
       #endif
 
         nOS_Sem                     m_RX_Sem;
@@ -83,25 +74,12 @@ class ETH_IF_Driver
         static nOS_Stack            m_Stack[TASK_ETHERNET_IF_STACK_SIZE];
         NetworkContext&             m_Context;
         const IP_ETH_Config_t*      m_pETH_Config;
-
-        //ETH_Driver                  m_Mac;
-        //PHY_DRIVER_INTERFACE        m_Phy;
-        //PHY_DriverInterface         m_ETH_Phy;
-        ETH_LinkState_e             m_Link;                // Ethernet Link State
-
-      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-        uint32_t                    m_DBG_RX_Count;
-        uint32_t                    m_DBG_TX_Count;
-        uint32_t                    m_DBG_RX_Drop;
-        uint32_t                    m_DBG_TX_Drop;
-      #endif
 };
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-void             FreePacket                  (MemoryNode* pPacket);
 extern "C" void  ClassEthernetIf_Wrapper     (void* pvParameters);
 
 //-------------------------------------------------------------------------------------------------

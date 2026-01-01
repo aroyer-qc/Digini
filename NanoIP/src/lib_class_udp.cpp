@@ -94,7 +94,7 @@ IP_PacketMsg_t* NetUDP::Process(IP_PacketMsg_t* pRX)
 	IP_PacketMsg_t* 		pTX = nullptr;
 	PortInfo_t* 			pPort;
 
-    if((pPort = SOCK_ValidPort(pRX->Packet.u.UDP_Frame.Header.DstPort, IP_PROTOCOL_UDP)) != nullptr)	// Check first if the port is in our allowed port list
+    if((pPort = SOCK_ValidPort(pRX->pPacket->UDP_Frame.Header.DstPort, IP_PROTOCOL_UDP)) != nullptr)	// Check first if the port is in our allowed port list
     {
         pPort->pFunction(nullptr, nullptr, 0);		// TO DO define UDP payload in frame so we can pass the address of the data easily or maybe copy data and post message
     }

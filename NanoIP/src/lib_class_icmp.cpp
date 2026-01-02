@@ -62,15 +62,88 @@ void NetICMP::Initialize(void)
 //
 //  Name:          ICMP_Process
 //
-//  Parameter(s):  IP_PacketMsg_t* 		RX packet
-//  Return:        IP_PacketMsg_t*      TX packet
+//  Parameter(s):  IP_PacketMsg_t*      pRX             RX packet
+//  Return:        None
 //
 //  Description:
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-IP_PacketMsg_t* NetICMP::Process(IP_PacketMsg_t* pRX)
+void NetICMP::Process(IP_PacketMsg_t* pRX)
+{
+    uint16_t Count;
+
+    if (!m_Context.IsIP_Valid())
+    {
+        pMemoryPool->Free((void**)&pRX->pPacket);
+        pMemoryPool->Free((void**)&pRX);
+        return;
+    }
+
+    // Validate size
+    if (pRX->PacketSize < sizeof(IP_ICMP_Frame_t))
+    {
+        pMemoryPool->Free((void**)&pRX->pPacket);
+        pMemoryPool->Free((void**)&pRX);
+        return;
+    }
+
+    IP_ICMP_Frame_t* pICMP = &pRX->pPacket->ICMP_Frame;
+
+    switch (pICMP->Header.Type)
+    {
+        case ICMP_TYPE_PING_REQUEST:
+        {
+            // Allocate TX message wrapper
+            IP_PacketMsg_t* pTX = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(pRX->PacketSize, MEM_DBG_ICMP);
+
+            if (pTX == nullptr)
+            {
+                // Cannot reply → just drop RX safely
+                pMemoryPool->Free((void**)&pRX->pPacket);
+                pMemoryPool->Free((void**)&pRX);
+                return;
+            }
+
+            // Allocate TX packet buffer
+            pTX->pPacket = (IP_EthernetPacket_t*)pMemoryPool->AllocAndClear(pRX->PacketSize, MEM_DBG_ICMPDT);
+
+            if(pTX->pPacket == nullptr)
+            {
+                // Free wrapper and RX, no reply possible
+                pMemoryPool->Free((void**)&pTX);
+                pMemoryPool->Free((void**)&pRX->pPacket);
+                pMemoryPool->Free((void**)&pRX);
+                return;
+            }
+
+            // Build reply
+            IP_CopyPacketMessage(pTX, pRX);                                                                         // Copy RX → TX
+            pTX->pPacket->ICMP_Frame.Header.Type = ICMP_TYPE_PING_REPLY;                                            // Modify ICMP header
+            Count  = htons(pTX->pPacket->ICMP_Frame.IP_Header.Length);
+            Count -= sizeof(IP_IP_Header_t);
+            pTX->pPacket->ICMP_Frame.Header.Checksum = IP_CalculateChecksum(&pTX->pPacket->ICMP_Frame.Header, Count);
+            memcpy(pTX->pPacket->ETH_Header.Dst.Byte, pTX->pPacket->ETH_Header.Src.Byte, IP_MAC_ADDRESS_SIZE);      // Swap MACs
+            // Fix IP header
+            pTX->pPacket->ICMP_Frame.IP_Header.TimeToLive = IP_TIME_TO_LIVE;
+            pTX->pPacket->ICMP_Frame.IP_Header.DstIP_Addr = pTX->pPacket->ICMP_Frame.IP_Header.SrcIP_Addr;
+            pTX->pPacket->ICMP_Frame.IP_Header.SrcIP_Addr = IP_HostAddress;
+            IP_PutHeader(pTX);
+            m_Context.SendPacket(pTX);                                                                              // Send reply internally
+            // Free TX (SendPacket will free after TX IRQ)
+        }
+        break;
+
+        default:
+            break;
+    }
+
+    // Always free RX
+    pMemoryPool->Free((void**)&pRX->pPacket);
+    pMemoryPool->Free((void**)&pRX);
+}
+
+#if 0
+void NetICMP::Process(IP_PacketMsg_t* pRX)
 {
 	IP_PacketMsg_t*  		pTX  		= nullptr;
 	IP_ICMP_Frame_t* 		pICMP;
@@ -118,6 +191,7 @@ IP_PacketMsg_t* NetICMP::Process(IP_PacketMsg_t* pRX)
 	}
 	return pTX;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 

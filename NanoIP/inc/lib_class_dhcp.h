@@ -80,6 +80,74 @@
 #define DHCP_IS_OFF                             false
 
 //-------------------------------------------------------------------------------------------------
+// Enum(s)
+//-------------------------------------------------------------------------------------------------
+
+enum DHCP_State_e
+{
+    DHCP_STATE_INITIAL,
+    DHCP_STATE_DISCOVER,
+    DHCP_STATE_OFFER_RECEIVED,
+    DHCP_STATE_BOUND,
+    DHCP_STATE_RENEWING,
+    DHCP_STATE_REBINDING,
+};
+
+enum DHCP_OptionType_e
+{
+    DHCP_OPTION_DISCOVER = 1,
+    DHCP_OPTION_OFFER    = 2,
+    DHCP_OPTION_REQUEST  = 3,
+    DHCP_OPTION_DECLINE  = 4,        // not used   we don't declie an offer
+    DHCP_OPTION_ACK      = 5,
+    DHCP_OPTION_NACK     = 6,
+    DHCP_OPTION_RELEASE  = 7,        // not used???
+};
+
+// DHCP Message Actions
+enum  DHCP_MsgAction_e
+{
+    DHCP_MSG_ACTION_TIME_OUT,
+    DHCP_MSG_ACTION_LEASE_RENEWAL,
+    DHCP_MSG_ACTION_REBIND
+};
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+struct DHCP_Options_t
+{
+    DHCP_OptionType_e   Type;
+    IP_Address_t        GatewayIP;
+    IP_Address_t        SubnetMaskIP;
+    IP_Address_t        DNS_ServerIP;
+    IP_Address_t        ClientIP;
+    IP_Address_t        ServerIP;
+    /* TickCount ? */uint32_t            LeaseTime;
+};
+
+struct DHCP_Msg_t
+{
+    uint8_t      Op;
+    uint8_t      H_Type;
+    uint8_t      H_Length;
+    uint8_t      Hops;
+    uint32_t     X_ID;
+    uint16_t     Secs;
+    uint16_t     Flags;
+    IP_Address_t ClientIP_Address;
+    IP_Address_t YourIP_Address;
+    IP_Address_t ServerIP_Address;
+    IP_Address_t RelayAgentIP_Address;
+    uint8_t      ClientHardware[16];
+    uint8_t      Sname[64];
+    uint8_t      File[128];
+    uint32_t     MagicCookie;
+    uint8_t      Options[DHCP_OPTION_IN_PACKET_SIZE];
+};
+
+//-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -89,9 +157,8 @@ class NetDHCP
 
                         NetDHCP         (NetworkContext& Context) : m_Context(Context) {}
 
-        void            Initialize      (/*void* pQ*/);
+        void            Initialize      (void);
         bool            Process         (DHCP_Msg_t* pMsg);
-
         void            SetMode         (bool Mode)                 { m_Mode = Mode; }
         bool            GetMode         (void)                      { return m_Mode; }
 
@@ -108,27 +175,18 @@ class NetDHCP
         bool            Request         (void);
 
         NetworkContext&         m_Context;
-
+        Socket*                 m_pSocket;                      // Socket UDP pour DHCP
         uint32_t                m_XID;
         DHCP_Options_t          m_Options;
-
-        // One shot timer for DHCP transaction time out
+       // One shot timer for DHCP transaction time out
         nOS_Timer               m_TimerDiscover;
         nOS_Timer               m_TimerT1_Lease;
         nOS_Timer               m_TimerT2_Rebind;
-
-        nOS_Queue               m_pQ;
-        bool                    m_Mode;                      // External configuration can tell this class the DHCP is OFF or ON
+        bool                    m_Mode;
         DHCP_State_e            m_State;
 
         static const uint8_t    m_OPL_Discover[8];
         static const uint8_t    m_OPL_Request[10];
-
-        //IP_Address_t            m_DHCP_GatewayIP;                       // Gateway IP Address from server
-        //IP_Address_t            m_DHCP_SubnetMask;                      // Subnet Mask from server
-        //IP_Address_t            m_DHCP_IP;                              // IP Address from server
-        //IP_Address_t            m_DHCP_DNS_IP;                          // DNS Server IP Address from server
-        bool                    m_IP_IsValid;
 };
 
 //-------------------------------------------------------------------------------------------------

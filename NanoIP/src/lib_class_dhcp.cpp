@@ -168,23 +168,39 @@ const uint8_t NetDHCP::m_OPL_Request[10] =
     33         // Static Route
 };
 
+
+// temporary
+//-------------------------------------------------------------------------------------------------
+// DHCP Options Structure
+//-------------------------------------------------------------------------------------------------
+struct DHCP_Options_t
+{
+    IP_Address_t    ClientIP;
+    IP_Address_t    ServerIP;
+    IP_Address_t    SubnetMaskIP;
+    IP_Address_t    GatewayIP;
+    IP_Address_t    DNS_ServerIP;
+    uint32_t        LeaseTime;
+    uint8_t         Type;
+};
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   void* pQ
-//  Return:         void
+//  Parameter(s):   None
+//  Return:         None
 //
 //  Description:    Initialize the DHCP Client
 //
 //-------------------------------------------------------------------------------------------------
-void NetDHCP::Initialize(/*void* pQ*/)
+void NetDHCP::Initialize(void)
 {
     nOS_Error Error;
 
-    m_Mode  = DHCP_IS_ON;            // This is the default value for DHCP
-    m_State = DHCP_STATE_INITIAL;
-    //m_pQ    = pQ;     // i don't know why a Q here
+    m_Mode    = DHCP_IS_ON;            // This is the default value for DHCP
+    m_State   = DHCP_STATE_INITIAL;
+    m_pSocket = nullptr;
 
     Error = nOS_TimerCreate(&m_TimerDiscover,  nullptr, nullptr, DHCP_MSG_ACTION_TIME_OUT, NOS_TIMER_ONE_SHOT);
     Error = nOS_TimerCreate(&m_TimerT1_Lease,  nullptr, nullptr, 0, NOS_TIMER_ONE_SHOT);
@@ -203,7 +219,9 @@ void NetDHCP::Initialize(/*void* pQ*/)
 //-------------------------------------------------------------------------------------------------
 bool NetDHCP::Start(void)
 {
-    bool Status = false;
+    SystemState_e State;
+    SocketInfo_t  LocalInfo;
+    bool          Status = false;
 
     m_State = DHCP_STATE_INITIAL;
 
@@ -218,11 +236,37 @@ bool NetDHCP::Start(void)
     m_Context.SetDHCP_DNS_IP(IP_ADDRESS(0,0,0,0));
     m_XID = RNG_GetRandom();
 
-   //sipr(IP_DHCP_IP);           // w5100 stuff
+    // Close existant socket if already open
+    if(m_pSocket != nullptr)
+    {
+        Socket::FreeSocket(&m_pSocket);
+    }
 
-    if(SOCK_Socket(IP_SOCKET_DHCP, Sn_MR_UDP, DHCP_CLIENT_PORT, 0x00) == true)
+    // Create a new for socket UDP
+    m_pSocket = Socket::AllocSocket(SOCKET_TYPE_UDP);
+
+    if(m_pSocket == nullptr)
+    {
+        return false;
+    }
+
+    // Configure in non blocking mode
+    bool NonBlocking = true;
+
+    m_pSocket->SetOption(SOCKET_OPT_NON_BLOCKING, &NonBlocking, sizeof(bool));
+
+    // Bind sur le port DHCP client
+    LocalAddress.Address = IP_ADDRESS(0,0,0,0);        // ANY address
+    LocalAddress.Port    = DHCP_CLIENT_PORT;
+    State = m_pSocket->Bind(&LocalAddr);
+
+    if(State == SYS_READY)
     {
         Status = true;
+    }
+    else
+    {
+        Socket::FreeSocket(&m_pSocket);
     }
 
     return Status;
@@ -240,10 +284,11 @@ bool NetDHCP::Start(void)
 //-------------------------------------------------------------------------------------------------
 bool NetDHCP::Process(DHCP_Msg_t* pMsg)
 {
-    IP_Address_t ServerAddress;
-    IP_Port_t    ServerPort;
-    DHCP_Msg_t*  pRX             = nullptr;
-    bool         Status          = false;
+    SocketInfo_t    ServerInfo;
+    DHCP_Msg_t*     pRX    = nullptr;
+    size_t          RxSize = 0;
+    SystemState_e   Error;
+    bool            Status = false;
 
     if(pMsg != nullptr)
     {
@@ -252,7 +297,11 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
             case DHCP_MSG_ACTION_TIME_OUT:
             {
                     m_State = DHCP_STATE_INITIAL;
-                    SOCK_Close(IP_SOCKET_DHCP);
+
+                    if(m_pSocket != nullptr)
+                    {
+                        Socket::FreeSocket(&m_pSocket);
+                    }
 
                     // Should close all socket.
                   #if (IP_DBG_DHCP == DEF_ENABLED)
@@ -263,7 +312,7 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
 
             case DHCP_MSG_ACTION_LEASE_RENEWAL:
             {
-                if(SOCK_Socket(IP_SOCKET_DHCP, Sn_MR_UDP, DHCP_CLIENT_PORT, 0x00) == true)
+                if(Start() == true)
                 {
                     Request();
                   #if (IP_DBG_DHCP == DEF_ENABLED)
@@ -290,15 +339,24 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
         }
         else
         {
-            if(sock_sr_read(DHCP_SOCKET) == SOCK_CLOSED)
+            // Verify if socket is still valid
+            if((m_pSocket == nullptr) || (m_pSocket->GetState() == SOCKET_STATE_CLOSED))
             {
-               if(m_State != DHCP_STATE_BOUND)
-               {
-                   m_State = DHCP_STATE_INITIAL;                          // reset DHCP state machine
-               }
+                if(m_State != DHCP_STATE_BOUND)
+                {
+                    m_State = DHCP_STATE_INITIAL;
+                }
             }
-            else
+           else
             {
+                // Try to received data
+                pRX = (DHCP_Msg_t*)pMemoryPool->Alloc( sizeof(DHCP_Msg_t), MEM_DBG_DHCP_RX);
+
+                if(pRX != nullptr)
+                {
+                    Error = m_pSocket->RecvFrom((uint8_t*)pRX, sizeof(DHCP_Msg_t), &ServerAddr, &RxSize);
+
+
                 if(SOCK_GetRX_RSR(DHCP_SOCKET) > 0)
                 {
                     pRX = (DHCP_Msg_t*)pMemoryPool->AllocAndClear(sizeof(DHCP_Msg_t));

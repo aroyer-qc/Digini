@@ -329,7 +329,7 @@ void ETH_Driver::InitializeDMA_Buffer(void)
     {
         m_RX_Descriptor[i].Status            = DMA_RX_OWN;
         m_RX_Descriptor[i].ControlBufferSize = /*DMA_RX_DIC |*/ DMA_RX_RCH | ETH_BUF_SIZE;
-        m_RX_Descriptor[i].BufferAddress     = (uint32_t)pMemoryPool->Alloc(ETH_BUF_SIZE, MEM_DBG_ETHDMARX);
+        m_RX_Descriptor[i].BufferAddress     = (uint32_t)pMemoryPool->Alloc(ETH_BUF_SIZE, MEM_DBG_ETHDMARX1);
         Next = i + 1;
         Next = (Next == NUM_RX_Buffer) ? 0 : Next;
         m_RX_Descriptor[i].NextDescriptor    = &m_RX_Descriptor[Next];

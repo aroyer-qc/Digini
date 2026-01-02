@@ -103,7 +103,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_UDP) != 0)
    #endif
     {
-        m_UDP.Initialize();
+       // m_UDP.Initialize();
     }
   #endif
 
@@ -201,65 +201,67 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 void IP_Manager::Run(void)
 {
     IP_PacketMsg_t* pMsg;
+
   #if (IP_USE_SNTP == DEF_ENABLED)
     IP_Address_t    IP;
     IP_Error_e      Error;
   #endif
 
-    for(;;)
+    for (;;)
     {
       #if (IP_USE_DHCP == DEF_ENABLED)
        #if (IP_NUMBER_OF_INTERFACE > 1)
-        if((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
+        if ((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
         {
        #endif
-            if(m_DHCP.Process(nullptr) == true)
-            {
-      #endif
-                if(nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
-                {
-                    switch(ntohs(pMsg->pPacket->ETH_Header.Type))
-                    {
-                        case IP_ETHERNET_TYPE_IP:
-                        {
-                          #if (IP_NUMBER_OF_INTERFACE > 1)
-                            if((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-                          #endif
-                            {
-                                m_ARP.ProcessIP(pMsg);
-                            }
-
-                            ProcessIP(pMsg);
-                          #if (IP_NUMBER_OF_INTERFACE > 1)
-                            if((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-                          #endif
-                            {
-                                m_ARP.ProcessOut(pMsg);
-                            }
-                        }
-                        break;
-
-                        case IP_ETHERNET_TYPE_ARP:
-                        {
-                          #if (IP_NUMBER_OF_INTERFACE > 1)
-                            if((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-                          #endif
-                            {
-                                m_ARP.ProcessARP(pMsg);
-                            }
-                        }
-                        break;
-                    }
-
-                    pMemoryPool->Free((void**)&pMsg->pPacket);
-                    pMemoryPool->Free((void**)&pMsg);
-                }
-      #if (IP_USE_DHCP == DEF_ENABLED)
-            }
+            (void)m_DHCP.Process(nullptr);    // Internal, non-blocking state machine
        #if (IP_NUMBER_OF_INTERFACE > 1)
         }
        #endif
       #endif
+
+        if (nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
+        {
+            switch (ntohs(pMsg->pPacket->ETH_Header.Type))
+            {
+                case IP_ETHERNET_TYPE_IP:
+                {
+                  #if (IP_NUMBER_OF_INTERFACE > 1)
+                    if ((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
+                  #endif
+                    {
+                        m_ARP.ProcessIP(pMsg);      // May update ARP cache, does NOT own pMsg
+                    }
+
+                    ProcessIP(pMsg);                // Transfers ownership to protocol/socket
+                    // IMPORTANT: no free here
+                }
+                break;
+
+                case IP_ETHERNET_TYPE_ARP:
+                {
+                  #if (IP_NUMBER_OF_INTERFACE > 1)
+                    if ((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
+                  #endif
+                    {
+                        m_ARP.ProcessARP(pMsg);     // ARP owns and frees pMsg
+                    }
+                    // If ARP.ProcessARP does not free, you must free here
+                    // pMemoryPool->Free((void**)&pMsg->pPacket);
+                    // pMemoryPool->Free((void**)&pMsg);
+                }
+                break;
+
+                default:
+                {
+                    // Unknown Ethernet type → free
+                    pMemoryPool->Free((void**)&pMsg->pPacket);
+                    pMemoryPool->Free((void**)&pMsg);
+                }
+                break;
+            }
+        }
+
         nOS_Sleep(1);
     }
 }
@@ -274,6 +276,31 @@ void IP_Manager::Run(void)
 //  Description:
 //
 //-------------------------------------------------------------------------------------------------
+void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
+{
+    IP_Header_t* pIP = &pMsg->pPacket->IP_Header;
+
+    switch (pIP->Protocol)
+    {
+        case IP_PROTOCOL_ICMP:
+            m_ICMP.Process(pMsg);    // ICMP owns + frees
+            break;
+
+        case IP_PROTOCOL_TCP:
+            //TCP_Input(pMsg);
+            break;
+
+        case IP_PROTOCOL_UDP:
+            //UDP_Input(pMsg);
+            break;
+
+        default:
+            //RAW_Input(pMsg);
+            break;
+    }
+}
+
+/*
 IP_PacketMsg_t* IP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
 {
 	IP_PacketMsg_t* pTX = nullptr;
@@ -311,14 +338,14 @@ IP_PacketMsg_t* IP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
 
         default:
         {
-            /* trap debug */
+            // trap debug
         }
         break;
 	}
 
 	return pTX;
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           GetDNS
@@ -671,3 +698,107 @@ int16_t IP_Manager::CalculateChecksum(void* pBuffer, uint16_t Count)
 #endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+
+
+
+
+#if 0
+
+
+void RAW_Input(IP_PacketMsg_t* pMsg)
+{
+    IP_Header_t* pIP = &pMsg->pPacket->IP_Header;
+    uint8_t proto    = pIP->Protocol;
+
+    // Find a RAW socket bound to this protocol
+    Socket* pSock = Socket_FindRAWByProtocol(proto);
+    if (pSock == nullptr)
+    {
+        // No RAW consumer → just free
+        pMemoryPool->Free((void**)&pMsg->pPacket);
+        pMemoryPool->Free((void**)&pMsg);
+        return;
+    }
+
+    RAW_Socket_t* pRaw = pSock->m_Proto.raw;
+
+    if (nOS_QueueWrite(&pRaw->RxQueue, &pMsg, 0) != NOS_OK)
+    {
+        // Queue full → drop
+        pMemoryPool->Free((void**)&pMsg->pPacket);
+        pMemoryPool->Free((void**)&pMsg);
+        return;
+    }
+
+    // Ownership moves to RAW socket
+}
+
+void TCP_Input(IP_PacketMsg_t* pMsg)
+{
+    TCP_Header_t* pTCP = &pMsg->pPacket->TCP_Header;
+    IP_Header_t*  pIP  = &pMsg->pPacket->IP_Header;
+
+    uint16_t destPort = ntohs(pTCP->DestPort);
+    IP_Address_t localIP  = pIP->DestIP;
+    IP_Address_t remoteIP = pIP->SrcIP;
+    uint16_t     srcPort  = ntohs(pTCP->SrcPort);
+
+    TCP_Socket_t* pConn = TCP_FindConnection(localIP, destPort, remoteIP, srcPort);
+
+    if (pConn == nullptr)
+    {
+        // Maybe a listening socket (SYN to a listening port)?
+        TCP_Socket_t* pListener = TCP_FindListener(localIP, destPort);
+        if (pListener != nullptr)
+        {
+            TCP_HandleListenSegment(pListener, pMsg);
+            return;
+        }
+
+        // Otherwise, send RST
+        TCP_SendRST(pMsg);
+        TCP_FreePacket(pMsg);
+        return;
+    }
+
+    TCP_ProcessSegment(pConn, pMsg);
+}
+
+TCP_Socket_t* TCP_FindConnection(IP_Address_t localIP, uint16_t localPort,
+                                 IP_Address_t remoteIP, uint16_t remotePort);
+
+TCP_Socket_t* TCP_FindListener(IP_Address_t localIP, uint16_t localPort);
+
+void TCP_ProcessSegment(TCP_Socket_t* pConn, IP_PacketMsg_t* pMsg)
+{
+    // Parse flags, seq, ack, window, etc.
+    // Check if seq in window, ACK valid, etc.
+    // Update SndUna based on ACK
+    // Queue payload into pConn->RxQueue if in-order
+    // Generate ACK if needed
+    // Handle FIN: transition to CLOSE_WAIT / LAST_ACK / TIME_WAIT
+    // Handle retransmission timers, etc.
+
+    TCP_FreePacket(pMsg);
+}
+
+void TCP_TimerTick(uint32_t elapsedMs)
+{
+    for (each TCP_Socket_t in use)
+    {
+        // Decrement timers
+        if (pConn->RtoTimer > elapsedMs) pConn->RtoTimer -= elapsedMs; else RTO_Expired(pConn);
+        if (pConn->KeepAliveTimer > elapsedMs) { ... }
+        if (pConn->TimeWaitTimer > elapsedMs) { ... }
+    }
+}
+
+typedef struct
+{
+    Socket* pSocket;
+    uint32_t Events;    // READABLE, WRITABLE, EXCEPTION
+    uint32_t Returned;  // Set by Wait()
+} SocketWaitItem_t;
+
+SystemState_e Socket_Wait(SocketWaitItem_t* pItems, size_t Count, uint32_t TimeoutMs);
+#endif

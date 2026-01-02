@@ -177,24 +177,6 @@ enum ETH_LinkState_e
     ETH_LINK_UNKNOWN,
 };
 
-enum DHCP_State_e
-{
-    DHCP_STATE_INITIAL          = 0,
-    DHCP_STATE_DISCOVER         = 1,
-    DHCP_STATE_OFFER_RECEIVED   = 2,
-    DHCP_STATE_BOUND            = 3,
-};
-
-enum DHCP_OptionType_e
-{
-    DHCP_OPTION_DISCOVER = 1,
-    DHCP_OPTION_OFFER    = 2,
-    DHCP_OPTION_REQUEST  = 3,
-    DHCP_OPTION_DECLINE  = 4,        // not used   we don't declie an offer
-    DHCP_OPTION_ACK      = 5,
-    DHCP_OPTION_NACK     = 6,
-    DHCP_OPTION_RELEASE  = 7,        // not used???
-};
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -219,76 +201,76 @@ struct IP_EthernetHeader_t
 
 struct IP_DHCP_Header_t
 {
-	uint8_t     Op;                                     //     1
-	uint8_t	    Htype;                                  // +   1
-	uint8_t	    Hlen;                                   // +   1
-	uint8_t	    Hops;                                   // +   1
-	uint32_t    X_ID;                                   // +   4
-	uint16_t 	Secs;                                   // +   2
-	uint16_t 	Flags;                                  // +   2
-	uint32_t    ClientIP_Addr;                          // +   4
-	uint32_t    YourIP_Addr;                            // +   4
-	uint32_t    ServerIP_Addr;                          // +   4
-	uint32_t    RelayAgentIP_Addr;                      // +   4
-	uint8_t     ClientHardware[16];                     // +  16
-	uint8_t	    Sname[64];                              // +  64
-	uint8_t	    File[128];                              // + 128
-	uint32_t    MagicCookie;                            // +   4
-	uint8_t     Options[308];                           // Do not use this struct with sizeof()
+	uint8_t         Op;                                 //     1
+	uint8_t	        Htype;                              // +   1
+	uint8_t	        Hlen;                               // +   1
+	uint8_t	        Hops;                               // +   1
+	uint32_t        X_ID;                               // +   4
+	uint16_t 	    Secs;                               // +   2
+	uint16_t 	    Flags;                              // +   2
+	IP_Address_t    ClientIP_Addr;                      // +   4
+	IP_Address_t    YourIP_Addr;                        // +   4
+	IP_Address_t    ServerIP_Addr;                      // +   4
+	IP_Address_t    RelayAgentIP_Addr;                  // +   4
+	uint8_t         ClientHardware[16];                 // +  16
+	uint8_t	        Sname[64];                          // +  64
+	uint8_t	        File[128];                          // + 128
+	uint32_t        MagicCookie;                        // +   4
+	uint8_t         Options[308];                       // Do not use this struct with sizeof()
 };                                                      // = 240 bytes
 
 struct IP_IP_Header_t
 {
-	uint8_t 	VersionIHL;                             //     1    IHL  = Internet Header Length
-    uint8_t 	TypeOfService;                          // +   1
-    uint16_t	Length;                                 // +   2
-    uint16_t 	ID;                                     // +   2
-    uint16_t 	Offset;                                 // +   2
-    uint8_t 	TimeToLive;                             // +   1
-    uint8_t 	Protocol;                               // +   1
-	uint16_t    Checksum;                               // +   2
-	uint32_t    SrcIP_Addr;                             // +   4
-    uint32_t    DstIP_Addr;                             // +   4
+	uint8_t 	    VersionIHL;                         //     1    IHL  = Internet Header Length
+    uint8_t 	    TypeOfService;                      // +   1
+    uint16_t	    Length;                             // +   2
+    uint16_t 	    ID;                                 // +   2
+    uint16_t 	    Offset;                             // +   2
+    uint8_t 	    TimeToLive;                         // +   1
+    uint8_t 	    Protocol;                           // +   1
+	uint16_t        Checksum;                           // +   2
+	IP_Address_t    SrcIP_Addr;                         // +   4
+    IP_Address_t    DstIP_Addr;                         // +   4
 };                              		                // =  20 Bytes
 
 struct IP_TCP_Header_t
 {
-	uint16_t 	SrcPort;                                //     2
-    uint16_t 	DstPort;                                // +   2
-	uint32_t 	SequenceNumber;                         // +   4
-    uint32_t 	AcknowledgeNumber;                      // +   4
-    uint8_t 	Offset;                                 // +   1
-    uint8_t 	Flags;                                  // +   1
-    uint16_t 	Window;                                 // +   2
-	uint16_t 	Checksum;                               // +   2
-	uint16_t 	UrgentPointer;                          // +   2
-	uint32_t    OptionData;                             // +   4
+	IP_Port_t 	    SrcPort;                            //     2
+    IP_Port_t 	    DstPort;                            // +   2
+	uint32_t 	    SequenceNumber;                     // +   4
+    uint32_t 	    AcknowledgeNumber;                  // +   4
+    uint8_t 	    Offset;                             // +   1
+    uint8_t 	    Flags;                              // +   1
+    uint16_t 	    Window;                             // +   2
+	uint16_t 	    Checksum;                           // +   2
+	uint16_t 	    UrgentPointer;                      // +   2
+	uint32_t        OptionData;                         // +   4
 };                              	                    // =  20 Bytes before option data
 
 struct IP_ICMP_Header_t
 {
-	uint8_t     Type;                                   //     1
-    uint8_t     Code;                                   // +   1
-	uint16_t	Checksum;                               // +   2
-    uint16_t    ID;                                     // +   2
-    uint16_t 	Sequence;                               // +   2
+	uint8_t         Type;                               //     1
+    uint8_t         Code;                               // +   1
+	uint16_t	    Checksum;                           // +   2
+    uint16_t        ID;                                 // +   2
+    uint16_t 	    Sequence;                           // +   2
 };                                                      // =   8 Bytes
 
 struct IP_UDP_Header_t
 {
-	uint16_t 	SrcPort;                                //     2
-	uint16_t 	DstPort;                                // +   2
-	uint16_t	Length;                                 // +   2
-	uint16_t	Checksum;                               // +   2
+	IP_Port_t 	    SrcPort;                            //     2
+	IP_Port_t 	    DstPort;                            // +   2
+	uint16_t	    Length;                             // +   2
+	uint16_t	    Checksum;                           // +   2
 };                                                      // =   8 Bytes
 
 struct IP_PseudoHeader_t                                // note that the element are not in same order as define in the protocol,
 {                                                       // but match the IP in the union
-	uint8_t     Zero_s;                                 //     1
-	uint8_t     Protocol;                               // +   1
-    uint16_t    Length;                                 // +   2
-	uint32_t  	SrcIP;                                  // +   4
-	uint32_t  	DstIP;                                  // +   4
+	uint8_t         Zero_s;                             //     1
+	uint8_t         Protocol;                           // +   1
+    uint16_t        Length;                             // +   2
+	IP_Address_t  	SrcIP;                              // +   4
+	IP_Address_t  	DstIP;                              // +   4
 }; 	                                                    // =  12 Bytes
 
 // the ARP frame
@@ -301,9 +283,9 @@ struct IP_ARP_Frame_t
 	uint8_t				    ProtocolLength;             // +   1
 	uint16_t 			    Opcode;                     // +   2
 	IP_MAC_Address_t 	    Src;           		        // +   6
-	uint32_t				SrcIP_Addr;        	        // +   4
+	IP_Address_t			SrcIP_Addr;        	        // +   4
 	IP_MAC_Address_t 	    Dst;       			        // +   6
-	uint32_t				DstIP_Addr;        	        // +   4
+	IP_Address_t			DstIP_Addr;        	        // +   4
 };                                                      // =  42 Bytes
 
 // the IP frame
@@ -440,80 +422,7 @@ struct  ETH_MacTime_t
     uint32_t Second;                             // Seconds
 };
 
-/// Socket typedef
-
-/*
-struct ETH_LinkList_t               // check if we have something else!!
-{
-    void*       pPrevious;
-    void*       pNext;
-};
-
-struct PortInfo_t
-{
-	LinkList_t  List;									    // Link to other PortInfo_t
-	uint16_t	Number;									    // Listen to this port
-	uint16_t	Protocol;                                   // this is the protocol attach to this port
-	uint16_t	BindSocketCount;
-	void 		(*pFunction)(void*, uint8_t*, uint16_t);	// function bind to this port
-};
-
-struct SocketInfo_t
-{
-	LinkList_t		    List;
-	PortInfo_t*		    pPortInfo;						    // The incoming pair is link to this PortInfo_t
-	IP_MAC_Address_t	IP_MAC;
-	uint16_t			ClientPort;                         // Return answers to this client port
-	uint32_t            ClientIP;                           // at this IP
-	uint32_t			SequenceNumber;
-	uint32_t			AckNumber;
-    uint8_t				ConnectionState;
-	uint8_t				Timer;
-
-	struct
-	{
-		uint16_t	    Unacknowledge;
-		uint16_t	    Next;
-		uint16_t	    Window;
-	} Send;
-
-	struct
-	{
-		uint16_t	    Next;
-		uint16_t	    Window;
-	} Receive;
-};
-*/
-struct DHCP_Options_t
-{
-    DHCP_OptionType_e   Type;
-    IP_Address_t        GatewayIP;
-    IP_Address_t        SubnetMaskIP;
-    IP_Address_t        DNS_ServerIP;
-    IP_Address_t        ClientIP;
-    IP_Address_t        ServerIP;
-    /* TickCount ? */uint32_t            LeaseTime;
-};
-
-struct DHCP_Msg_t
-{
-    uint8_t      Op;
-    uint8_t      H_Type;
-    uint8_t      H_Length;
-    uint8_t      Hops;
-    uint32_t     X_ID;
-    uint16_t     Secs;
-    uint16_t     Flags;
-    IP_Address_t ClientIP_Address;
-    IP_Address_t YourIP_Address;
-    IP_Address_t ServerIP_Address;
-    IP_Address_t RelayAgentIP_Address;
-    uint8_t      ClientHardware[16];
-    uint8_t      Sname[64];
-    uint8_t      File[128];
-    uint32_t     MagicCookie;
-    uint8_t      Options[DHCP_OPTION_IN_PACKET_SIZE];
-};
+typedef SystemState_e (*SendCallback_t)(IP_PacketMsg_t**);
 
 //-------------------------------------------------------------------------------------------------
 // class to access struct data
@@ -580,7 +489,21 @@ class NetworkContext
                                                                                               return SYS_READY;                                                 }
         nOS_Queue*          GetMsgQ                 (void)                                  { return &m_Q_Msg;                                                  }
 
+        void                SetSendCallback         (SendCallback_t callback)               { m_SendCallback = callback;                                        }
+        SystemState_e       SendPacket              (IP_PacketMsg_t* pMsg)                  {   if(m_SendCallback == nullptr)
+                                                                                                {
+                                                                                                    pMemoryPool->Free((void**)&pMsg->pPacket);
+                                                                                                    pMemoryPool->Free((void**)&pMsg);
+                                                                                                    return SYS_FAIL;
+                                                                                                }
+
+                                                                                                SystemState_e state = m_SendCallback(&pMsg);
+                                                                                                return state;                                                   }
+
+
     private:
+
+        SystemState_e       (*m_SendCallback)(IP_PacketMsg_t**) = nullptr;
 
         ETH_LinkState_e     m_LinkState;
         bool                m_IP_Valid;

@@ -62,12 +62,20 @@
     X_MEM_DBG(MEM_DBG_TSKNET1)                                  \
     X_MEM_DBG(MEM_DBG_TSKNET2)                                  \
     X_MEM_DBG(MEM_DBG_ETHERIF1)                                 \
-    X_MEM_DBG(MEM_DBG_ETHDMARX)                                 \
+    X_MEM_DBG(MEM_DBG_ETHDMARX1)                                \
     X_MEM_DBG(MEM_DBG_ETHDMARX2)                                \
     X_MEM_DBG(MEM_DBG_ETHDMATX)                                 \
     X_MEM_DBG(MEM_DBG_IPPKT)                                    \
     X_MEM_DBG(MEM_DBG_ICMP)                                     \
     X_MEM_DBG(MEM_DBG_ICMPDT)                                   \
+    X_MEM_DBG(MEM_DBG_SOCKET)                                   \
+    X_MEM_DBG(MEM_DBG_TCPSOCK)                                  \
+    X_MEM_DBG(MEM_DBG_TCPRXBUF)                                 \
+    X_MEM_DBG(MEM_DBG_TCPTXBUF)                                 \
+    X_MEM_DBG(MEM_DBG_UDPSOCK)                                  \
+    X_MEM_DBG(MEM_DBG_UDPRXBUF)                                 \
+    X_MEM_DBG(MEM_DBG_RAWSOCK)                                  \
+    X_MEM_DBG(MEM_DBG_RAWRXBUF)                                 \
     /* UniqueID for lib_service                               */\
     X_MEM_DBG(MEM_DBG_SERVICE)
 

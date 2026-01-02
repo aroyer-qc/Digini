@@ -47,8 +47,10 @@ class NetUDP
 
                                 NetUDP                  (NetworkContext& Context) : m_Context(Context) {}
 
-        void 				    Initialize  		    (void);
-        IP_PacketMsg_t* 	    Process				    (IP_PacketMsg_t* pMsg);
+        //void 				    Initialize  		    (void);
+        void/*IP_PacketMsg_t* */Process				    (IP_PacketMsg_t* pMsg);
+        SystemState_e           Send                    (UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent);
+
 
     private:
 

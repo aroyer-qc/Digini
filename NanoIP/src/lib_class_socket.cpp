@@ -34,6 +34,172 @@
 
 #include "./lib_digini.h"
 
+#define TCP_DEFAULT_WINDOW_SIZE         (4 * 1460)   // 5840 bytes
+#define TCP_TX_BUFFER_SIZE              (4 * 1460)   // 5840 bytes
+#define TCP_RX_BUFFER_SIZE              (4 * 1460)   // 5840 bytes
+#define UDP_RX_BUFFER_SIZE              2048
+#define RAW_RX_BUFFER_SIZE              1536
+
+//-------------------------------------------------------------------------------------------------
+
+Socket   SocketManager::s_Sockets[SOCKET_MAX_COUNT];
+bool     SocketManager::s_InUse[SOCKET_MAX_COUNT] = { false };
+
+//-------------------------------------------------------------------------------------------------
+
+Socket* SocketManager::AllocSocket(SocketType_e Type)
+{
+    for (uint16_t i = 0; i < SOCKET_MAX_COUNT; ++i)
+    {
+        if (!SocketManager::s_InUse[i])
+        {
+            SocketManager::s_InUse[i] = true;
+            Socket* pSock = &SocketManager::s_Sockets[i];
+            memset(pSock, 0, sizeof(Socket));
+            pSock->m_SocketID = i;
+            pSock->Create(Type);
+            return pSock;
+        }
+    }
+    return nullptr;
+}
+
+void SocketManager::FreeSocket(Socket** ppSocket)
+{
+    if((ppSocket == nullptr) || (*ppSocket == nullptr))
+        return;
+
+    Socket* pSock = *ppSocket;
+    uint16_t id = pSock->m_SocketID;
+
+    pSock->Close();
+    SocketManager::s_InUse[id] = false;
+    *ppSocket = nullptr;
+}
+
+SystemState_e Socket::SendTo(uint8_t* pData, size_t Length, SocketInfo_t* pDestInfo, size_t* pBytesSent)
+{
+    if (m_Type != SOCKET_TYPE_DGRAM)
+        return SYS_INVALID_STATE;
+
+    UDP_Socket_t* pUdp = m_Proto.udp;
+    return UDP_Send(pUdp, pData, Length, pDestInfo, pBytesSent);
+}
+
+SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t* pSrcInfo, size_t* pBytesReceived)
+{
+    if (m_Type != SOCKET_TYPE_DGRAM)
+        return SYS_INVALID_STATE;
+
+    UDP_Socket_t* pUdp = m_Proto.udp;
+
+    IP_PacketMsg_t* pMsg = nullptr;
+    if (nOS_QueueRead(&pUdp->RxQueue, &pMsg, m_TimeoutMs) != NOS_OK)
+        return SYS_TIMEOUT;
+
+    // Copy payload out of pMsg into pBuffer, fill pSrcInfo from IP/UDP headers
+    // ...
+
+    pMemoryPool->Free((void**)&pMsg->pPacket);
+    pMemoryPool->Free((void**)&pMsg);
+
+    *pBytesReceived = payloadLen;
+    return SYS_READY;
+}
+
+SystemState_e Socket::Send(uint8_t* pData, size_t Length, size_t* pBytesSent)
+{
+    if (m_Type != SOCKET_TYPE_STREAM)
+        return SYS_INVALID_STATE;
+
+    TCP_Socket_t* pTcp = m_Proto.tcp;
+    return TCP_Send(pTcp, pData, Length, pBytesSent);
+}
+
+SystemState_e Socket::SendTo(uint8_t* pData, size_t Length, SocketInfo_t* pDestInfo, size_t* pBytesSent)
+{
+    if (m_Type != SOCKET_TYPE_DGRAM)
+        return SYS_INVALID_STATE;
+
+    UDP_Socket_t* pUdp = m_Proto.udp;
+    return UDP_Send(pUdp, pData, Length, pDestInfo, pBytesSent);
+}
+
+SystemState_e Socket::Recv(uint8_t* pBuffer,
+                           size_t BufferSize,
+                           size_t* pBytesReceived)
+{
+    if (m_Type != SOCKET_TYPE_STREAM)
+        return SYS_INVALID_STATE;
+
+    TCP_Socket_t* pTcp = m_Proto.tcp;
+    IP_PacketMsg_t* pMsg = nullptr;
+
+    if (nOS_QueueRead(&pTcp->RxQueue, &pMsg, m_TimeoutMs) != NOS_OK)
+        return SYS_TIMEOUT;
+
+    TCP_Header_t* pTCP = &pMsg->pPacket->TCP_Frame.Header;
+    IP_Header_t*  pIP  = &pMsg->pPacket->TCP_Frame.IP_Header;
+
+    size_t headerLen = (pTCP->DataOffset >> 4) * 4;
+    size_t ipLen     = ntohs(pIP->Length);
+    size_t dataLen   = ipLen - sizeof(IP_IP_Header_t) - headerLen;
+
+    if (dataLen > BufferSize)
+        dataLen = BufferSize;
+
+    uint8_t* pPayload = (uint8_t*)((uint8_t*)pTCP + headerLen);
+    memcpy(pBuffer, pPayload, dataLen);
+
+    // Free segment
+    pMemoryPool->Free((void**)&pMsg->pPacket);
+    pMemoryPool->Free((void**)&pMsg);
+
+    *pBytesReceived = dataLen;
+    return SYS_READY;
+}
+
+SystemState_e Socket::RecvFrom(uint8_t* pBuffer,
+                               size_t BufferSize,
+                               SocketInfo_t* pSrcInfo,
+                               size_t* pBytesReceived)
+{
+    if (m_Type != SOCKET_TYPE_DGRAM)
+        return SYS_INVALID_STATE;
+
+    UDP_Socket_t* pUdp = m_Proto.udp;
+    IP_PacketMsg_t* pMsg = nullptr;
+
+    if (nOS_QueueRead(&pUdp->RxQueue, &pMsg, m_TimeoutMs) != NOS_OK)
+        return SYS_TIMEOUT;
+
+    UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.Header;
+    IP_Header_t*  pIP  = &pMsg->pPacket->UDP_Frame.IP_Header;
+
+    size_t udpLen = ntohs(pUDP->Length);
+    size_t payloadLen = udpLen - sizeof(UDP_Header_t);
+
+    if (payloadLen > BufferSize)
+        payloadLen = BufferSize;
+
+    uint8_t* pPayload = (uint8_t*)(pUDP + 1);
+    memcpy(pBuffer, pPayload, payloadLen);
+
+    if (pSrcInfo != nullptr)
+    {
+        pSrcInfo->Address = pIP->SrcIP_Addr;
+        pSrcInfo->Port    = ntohs(pUDP->SrcPort);
+        // Fill MacAddress if you store it, etc.
+    }
+
+    // Free packet now that we copied data
+    pMemoryPool->Free((void**)&pMsg->pPacket);
+    pMemoryPool->Free((void**)&pMsg);
+
+    *pBytesReceived = payloadLen;
+    return SYS_READY;
+}
+#if 0
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Socket
@@ -60,9 +226,9 @@ bool NetSOCK::Socket(Socket_t SocketNumber, uint8_t Protocol, IP_Port_t SourcePo
         if(SourcePort != 0)
         {
           #if (IP_HARDWARE_SOCKET == DEF_DISABLED)
-			//SOCK_SetSocket(SocketNumber, Protocol, Flag); 
+			//SOCK_SetSocket(SocketNumber, Protocol, Flag);
 			//SOCK_Open(SocketNumber);
-			
+
 			pSocket = MEM_AddNode(&SOCK_pSocketList, sizeof(SocketInfo_t), &Error);
 
 			if(pSocket != nullptr)
@@ -164,9 +330,9 @@ bool NetSOCK::Connect(Socket_t SocketNumber, IP_Address_t DstAddress, IP_Port_t 
 		//set destination IP
 		//set destination Port
 		//send stuff wait answers
-		
+
       #else
-	
+
     	//NIC_DestinationIP(SocketNumber, DstAddress);					// Set destination IP
 		//NIC_DestinationPort(SocketNumber, wDstPort);					// Set destination PORT
 		//NIC_ProcessCommandAndWait(SocketNumber, NIC_SOCKET_CONNECT);    // Wait to process the command...
@@ -177,9 +343,9 @@ bool NetSOCK::Connect(Socket_t SocketNumber, IP_Address_t DstAddress, IP_Port_t 
             Status = sock_sr_read(IP_STREAM_SOCKET);
         }
         while((byStatus != SOCK_CLOSED) && (byStatus != SOCK_ESTABLISHED));
-        
+
       #endif
-		
+
         if(byStatus == SOCK_CLOSED)
         {
             bStatus = false;
@@ -202,9 +368,9 @@ bool NetSOCK::Connect(Socket_t SocketNumber, IP_Address_t DstAddress, IP_Port_t 
 void NetSOCK::Disconnect(Socket_t SocketNumber)
 {
   #if (IP_HARDWARE_SOCKET == DEF_DISABLED)
-	// Disconnect 
+	// Disconnect
   #else
-    //NIC_ProcessCommandAndWait(SocketNumber, NIC_SOCKET_DISCONNECT); 
+    //NIC_ProcessCommandAndWait(SocketNumber, NIC_SOCKET_DISCONNECT);
   #endif
 }
 
@@ -294,7 +460,7 @@ size_t NetSOCK::Received(Socket_t SocketNumber, uint8_t *pData, size_t Length)
        // W5100_ProcessCmdAndWait(SocketNumber, Sn_CR_RECV);     // Wait to process the command...
         Return = Length;
     }
-    
+
     return Return;
 }
 
@@ -427,7 +593,7 @@ size_t SOCK_ReceivedFrom(Socket_t SocketNumber, uint8_t* pData, size_t Length, I
             }
             break;
 
-            default:    
+            default:
             {
             }
             break;
@@ -513,5 +679,8 @@ void SOCK_Open(SOCKETSocketNumber)
 }
 #endif
 
+
 //-------------------------------------------------------------------------------------------------
+
+#endif
 

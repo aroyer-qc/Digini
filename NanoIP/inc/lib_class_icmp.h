@@ -47,7 +47,7 @@ class NetICMP
                             NetICMP         (NetworkContext& Context) : m_Context(Context) {}
 
         void                Initialize      (void);
-        IP_PacketMsg_t*     Process         (IP_PacketMsg_t* pRX);
+        void                Process         (IP_PacketMsg_t* pRX);
 
     private:
 

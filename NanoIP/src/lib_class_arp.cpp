@@ -136,9 +136,9 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
     }
     */
 
-    IP_ARP_Frame_t* pRX_ARP = &pRX->pPacket->ARP_Frame;
-    IP_PacketMsg_t* pTX     = nullptr;
-    IP_ARP_Frame_t* pTX_ARP = nullptr;
+    ARP_Frame_t* pRX_ARP = &pRX->pPacket->ARP_Frame;
+    IP_PacketMsg_t* pTX  = nullptr;
+    ARP_Frame_t* pTX_ARP = nullptr;
 
     switch(pRX_ARP->Opcode)
     {
@@ -222,9 +222,9 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 {
 	//uint8_t 		Error;
-	IP_ARP_Frame_t*	pRX_ARP;
+	ARP_Frame_t*	pRX_ARP;
 	IP_PacketMsg_t* pTX     = nullptr;
-	IP_ARP_Frame_t*	pTX_ARP = nullptr;
+	ARP_Frame_t*	pTX_ARP = nullptr;
 
 	if(pRX->PacketSize < (sizeof(IP_ARP_Frame_t) - sizeof(IP_EthernetHeader_t)))
 	{

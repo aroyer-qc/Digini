@@ -57,7 +57,9 @@ class ETH_IF_Driver
 
         SystemState_e           Initialize                  (const IP_ETH_Config_t* pETH_Config);
         void                    Run                         (void);
-        static void             CallbackWrapper             (void* pContext, uint32_t Event) { static_cast<ETH_IF_Driver*>(pContext)->CallBack(Event); }
+        static void             CallbackWrapper             (void* pContext, uint32_t Event)                { static_cast<ETH_IF_Driver*>(pContext)->CallBack(Event); }
+        static SystemState_e    LowLevelOutputWrapper       (void* pContext, IP_PacketMsg_t** ppPacketMsg)  { ETH_IF_Driver* Self = static_cast<ETH_IF_Driver*>(pContext);
+                                                                                                              return Self->LowLevelOutput(ppPacketMsg);               }
 
     private:
 

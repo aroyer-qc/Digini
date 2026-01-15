@@ -95,6 +95,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     m_Context.SetMAC_Address(&m_Config[IF_ID].IP_ETH_Config.MAC_Address);
     m_Context.SetMTU(IP_NET_IF_MTU);                                        // Set netif maximum transfer unit
     m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config);
+    m_Context.RegisterSendCallback(&m_IF_Driver.LowLevelOutputWrapper, &m_IF_Driver);
 
     // All protocol support are created dynamically if interface is set to use it, and if configuration is enable for that protocol
 
@@ -278,25 +279,37 @@ void IP_Manager::Run(void)
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
 {
-    IP_Header_t* pIP = &pMsg->pPacket->IP_Header;
-
-    switch (pIP->Protocol)
+    switch(pMsg->pPacket->IP_Frame.Header.Protocol)
     {
+      #if (IP_USE_ICMP == DEF_ENABLED)
         case IP_PROTOCOL_ICMP:
+        {
             m_ICMP.Process(pMsg);    // ICMP owns + frees
-            break;
+        }
+        break;
+      #endif
 
+      #if (IP_USE_TCP == DEF_ENABLED)
         case IP_PROTOCOL_TCP:
+        {
             //TCP_Input(pMsg);
-            break;
+        }
+        break;
+      #endif
 
+      #if (IP_USE_UDP == DEF_ENABLED)
         case IP_PROTOCOL_UDP:
+        {
             //UDP_Input(pMsg);
-            break;
+        }
+        break;
+      #endif
 
         default:
+        {
             //RAW_Input(pMsg);
-            break;
+        }
+        break;
     }
 }
 
@@ -638,7 +651,7 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::PutHeader(IP_PacketMsg_t* pTX)
 {
-	IP_IP_Header_t* 	pIP_TX;
+	IP_Header_t* pIP_TX;
 
 	pIP_TX = &pTX->pPacket->IP_Frame.Header;
 
@@ -652,7 +665,7 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX)
     pIP_TX->TimeToLive 	= IP_TIME_TO_LIVE;
 
 	pIP_TX->Checksum    = 0;  // use lib checksum.. or make one
-	pIP_TX->Checksum    = CalculateChecksum(pIP_TX, uint16_t(sizeof(IP_IP_Header_t)));
+	pIP_TX->Checksum    = CalculateChecksum(pIP_TX, uint16_t(sizeof(IP_Header_t)));
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -138,7 +138,7 @@ class IP_Manager
         void                Initialize                  (IF_ID_e IF_ID);
         void                Run                         (void);
 
-        IP_PacketMsg_t*     ProcessIP                   (IP_PacketMsg_t* pRX);
+        void                ProcessIP                   (IP_PacketMsg_t* pRX);
         char*               ProcessURL                  (char* pBuffer, IP_Address_t* pIP_Address, IP_Port_t* pPort);
 
         IP_Address_t        GetDNS                      (void);
@@ -211,6 +211,8 @@ class IP_Manager
         uint16_t                        m_SequenceID;
 
         nOS_Thread                      m_Handle;
+
+        SocketManager                   m_SocketManager;
 };
 
 //-------------------------------------------------------------------------------------------------

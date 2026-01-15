@@ -199,7 +199,7 @@ struct IP_EthernetHeader_t
 	uint16_t		    Type;                           // +   2
 };                           	    // 14 Bytes
 
-struct IP_DHCP_Header_t
+struct DHCP_Header_t
 {
 	uint8_t         Op;                                 //     1
 	uint8_t	        Htype;                              // +   1
@@ -219,7 +219,7 @@ struct IP_DHCP_Header_t
 	uint8_t         Options[308];                       // Do not use this struct with sizeof()
 };                                                      // = 240 bytes
 
-struct IP_IP_Header_t
+struct IP_Header_t
 {
 	uint8_t 	    VersionIHL;                         //     1    IHL  = Internet Header Length
     uint8_t 	    TypeOfService;                      // +   1
@@ -233,7 +233,7 @@ struct IP_IP_Header_t
     IP_Address_t    DstIP_Addr;                         // +   4
 };                              		                // =  20 Bytes
 
-struct IP_TCP_Header_t
+struct TCP_Header_t
 {
 	IP_Port_t 	    SrcPort;                            //     2
     IP_Port_t 	    DstPort;                            // +   2
@@ -247,7 +247,7 @@ struct IP_TCP_Header_t
 	uint32_t        OptionData;                         // +   4
 };                              	                    // =  20 Bytes before option data
 
-struct IP_ICMP_Header_t
+struct ICMP_Header_t
 {
 	uint8_t         Type;                               //     1
     uint8_t         Code;                               // +   1
@@ -256,7 +256,7 @@ struct IP_ICMP_Header_t
     uint16_t 	    Sequence;                           // +   2
 };                                                      // =   8 Bytes
 
-struct IP_UDP_Header_t
+struct UDP_Header_t
 {
 	IP_Port_t 	    SrcPort;                            //     2
 	IP_Port_t 	    DstPort;                            // +   2
@@ -274,7 +274,7 @@ struct IP_PseudoHeader_t                                // note that the element
 }; 	                                                    // =  12 Bytes
 
 // the ARP frame
-struct IP_ARP_Frame_t
+struct ARP_Frame_t
 {
 	IP_EthernetHeader_t     ETH_Header;                 //    14
 	uint16_t			    HardwareType;               // +   2
@@ -289,61 +289,61 @@ struct IP_ARP_Frame_t
 };                                                      // =  42 Bytes
 
 // the IP frame
-struct IP_IP_Frame_t
+struct IP_Frame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;			        //    14
-	IP_IP_Header_t			Header;                     // +  20
+	IP_Header_t		    	Header;                     // +  20
 };                                                      // =  34 Bytes
 
 // the TCP frame
-struct IP_TCP_Frame_t
+struct TCP_Frame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;			        //    14
-	IP_IP_Header_t			IP_Header;                  // +  20
-	IP_TCP_Header_t			Header; 	                // +  20
+	IP_Header_t			    IP_Header;                  // +  20
+	TCP_Header_t			Header; 	                // +  20
 };                                                      // =  54 Bytes
 
 // the UDP pseudo frame
-struct IP_TCP_PseudoFrame_t
+struct TCP_PseudoFrame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;                 //    14
 	uint8_t 				Dummy[8]; 			        // +   8
 	IP_PseudoHeader_t		Header;	       	 		    // +  12
-	IP_TCP_Header_t			TCP_Header;		            // +  20
+	TCP_Header_t			TCP_Header;		            // +  20
 };		                                                // =  54 Bytes
 
 // the ICMP frame
-struct IP_ICMP_Frame_t
+struct ICMP_Frame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;                 //    14
-	IP_IP_Header_t			IP_Header;                  // +  20
-	IP_ICMP_Header_t		Header;		                // +   8
+	IP_Header_t 			IP_Header;                  // +  20
+	ICMP_Header_t	    	Header;		                // +   8
 };                                                      // =  42 Bytes
 
 // the UDP frame
-struct IP_UDP_Frame_t
+struct UDP_Frame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;                 //    14
-	IP_IP_Header_t			IP_Header;                  // +  20
-	IP_UDP_Header_t			Header;		                // +   8
+	IP_Header_t			    IP_Header;                  // +  20
+	UDP_Header_t			UDP_Header;		            // +   8
 };                                                      // =  42 Bytes
 
 // the UDP pseudo frame
-struct IP_UDP_PseudoFrame_t
+struct UDP_PseudoFrame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;                 //    14
 	uint8_t 				Dummy[8]; 			        // +   8
 	IP_PseudoHeader_t		Header;	       	 		    // +  12
-	IP_UDP_Header_t			UDP_Header;		            // +   8
+	UDP_Header_t			UDP_Header;		            // +   8
 };		                                                // =  42 Bytes
 
 // the DHCP frame
-struct IP_DHCP_Frame_t
+struct DHCP_Frame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;                 //    14
-	IP_IP_Header_t			IP_Header;                  // +  20
-	IP_UDP_Header_t			UDP_Header;                 // +   8
-	IP_DHCP_Header_t		Header;  		            // + 240
+	IP_Header_t			    IP_Header;                  // +  20
+	UDP_Header_t			UDP_Header;                 // +   8
+	DHCP_Header_t		    Header;  		            // + 240
 };                                                      // = 282 Bytes
 
 struct IP_EthernetPacket_t
@@ -353,14 +353,14 @@ struct IP_EthernetPacket_t
 		uint8_t						U8RawData[IP_ETHERNET_FRAME_SIZE];
 		uint16_t					U16RawData[IP_ETHERNET_FRAME_SIZE / 2];
 		IP_EthernetHeader_t			ETH_Header;
-		IP_IP_Frame_t				IP_Frame;
-		IP_ARP_Frame_t              ARP_Frame;
-		IP_TCP_Frame_t	            TCP_Frame;
-		IP_TCP_PseudoFrame_t        TCP_PseudoFrame;    // use for TCP Checksum calculation
-		IP_ICMP_Frame_t            	ICMP_Frame;
-		IP_UDP_Frame_t				UDP_Frame;
-		IP_UDP_PseudoFrame_t		UDP_PseudoFrame;				// use for UDP Checksum calculation
-		IP_DHCP_Frame_t             DHCP_Frame;
+		IP_Frame_t				    IP_Frame;
+		ARP_Frame_t                 ARP_Frame;
+		TCP_Frame_t	                TCP_Frame;
+		TCP_PseudoFrame_t           TCP_PseudoFrame;    // use for TCP Checksum calculation
+		ICMP_Frame_t            	ICMP_Frame;
+		UDP_Frame_t				    UDP_Frame;
+		UDP_PseudoFrame_t		    UDP_PseudoFrame;				// use for UDP Checksum calculation
+		DHCP_Frame_t                DHCP_Frame;
 	};
 };
 
@@ -422,7 +422,8 @@ struct  ETH_MacTime_t
     uint32_t Second;                             // Seconds
 };
 
-typedef SystemState_e (*SendCallback_t)(IP_PacketMsg_t**);
+//typedef SystemState_e (*SendCallback_t)(IP_PacketMsg_t**);
+typedef SystemState_e (*SendCallback_t)(void* Context, IP_PacketMsg_t** ppPacketMsg);
 
 //-------------------------------------------------------------------------------------------------
 // class to access struct data
@@ -434,76 +435,78 @@ class NetworkContext
 {
     public:
 
-        ETH_LinkState_e     GetLinkState            (void)          const                   { return m_LinkState;                                               }
-        void                SetLinkState            (ETH_LinkState_e State)                 { m_LinkState = State;                                              }
+        ETH_LinkState_e     GetLinkState            (void)          const                       { return m_LinkState;                                               }
+        void                SetLinkState            (ETH_LinkState_e State)                     { m_LinkState = State;                                              }
 
-        bool                IsIP_Valid              (void)                                  { return m_IP_Valid;                                                }
-        void                SetIP_Valid             (bool State)                            { m_IP_Valid = State;                                               }
+        bool                IsIP_Valid              (void)                                      { return m_IP_Valid;                                                }
+        void                SetIP_Valid             (bool State)                                { m_IP_Valid = State;                                               }
 
       #if (IP_USE_DHCP == DEF_ENABLED)
 
-        bool                IsDHCP_Enable           (void)                                  { return m_DHCP_Enable;                                             }
-        void                SetDHCP_Enable          (bool State)                            { m_DHCP_Enable = State;                                            }
+        bool                IsDHCP_Enable           (void)                                      { return m_DHCP_Enable;                                             }
+        void                SetDHCP_Enable          (bool State)                                { m_DHCP_Enable = State;                                            }
 
-        IP_Address_t        GetDHCP_GatewayIP       (void)                                   { return m_DHCP_GatewayIP;                                         }
-        void                SetDHCP_GatewayIP       (IP_Address_t GatewayIP)                 { m_DHCP_GatewayIP = GatewayIP;                                    }
+        IP_Address_t        GetDHCP_GatewayIP       (void)                                      { return m_DHCP_GatewayIP;                                         }
+        void                SetDHCP_GatewayIP       (IP_Address_t GatewayIP)                    { m_DHCP_GatewayIP = GatewayIP;                                    }
 
-        IP_Address_t        GetDHCP_SubnetMask      (void)                                  { return m_DHCP_SubnetMask;                                         }
-        void                SetDHCP_SubnetMask      (IP_Address_t SubnetMask)               { m_DHCP_SubnetMask = SubnetMask;                                   }
+        IP_Address_t        GetDHCP_SubnetMask      (void)                                      { return m_DHCP_SubnetMask;                                         }
+        void                SetDHCP_SubnetMask      (IP_Address_t SubnetMask)                   { m_DHCP_SubnetMask = SubnetMask;                                   }
 
-        IP_Address_t        GetDHCP_IP              (void)                                  { return m_DHCP_IP;                                                 }
-        void                SetDHCP_IP              (IP_Address_t DHCP_IP)                  { m_DHCP_IP = DHCP_IP;                                              }
+        IP_Address_t        GetDHCP_IP              (void)                                      { return m_DHCP_IP;                                                 }
+        void                SetDHCP_IP              (IP_Address_t DHCP_IP)                      { m_DHCP_IP = DHCP_IP;                                              }
 
-        IP_Address_t        GetDHCP_DNS_IP          (void)                                  { return m_DHCP_DNS_IP;                                             }
-        void                SetDHCP_DNS_IP          (IP_Address_t DHCP_DNS_IP)              { m_DHCP_DNS_IP = DHCP_DNS_IP;                                      }
+        IP_Address_t        GetDHCP_DNS_IP          (void)                                      { return m_DHCP_DNS_IP;                                             }
+        void                SetDHCP_DNS_IP          (IP_Address_t DHCP_DNS_IP)                  { m_DHCP_DNS_IP = DHCP_DNS_IP;                                      }
 
-        IP_Address_t        GetActiveGatewayIP      (void)                                  { return m_DHCP_GatewayIP;                                          }
-        IP_Address_t        GetActiveSubnetMask     (void)                                  { return m_DHCP_SubnetMask;                                         }
-        IP_Address_t        GetActiveIP             (void)                                  { return m_DHCP_IP;                                                 }
-        IP_Address_t        GetActiveDNS_IP         (void)                                  { return m_DHCP_DNS_IP;                                             }
+        IP_Address_t        GetActiveGatewayIP      (void)                                      { return m_DHCP_GatewayIP;                                          }
+        IP_Address_t        GetActiveSubnetMask     (void)                                      { return m_DHCP_SubnetMask;                                         }
+        IP_Address_t        GetActiveIP             (void)                                      { return m_DHCP_IP;                                                 }
+        IP_Address_t        GetActiveDNS_IP         (void)                                      { return m_DHCP_DNS_IP;                                             }
 
       #endif
 
-        IP_Address_t        GetStaticGatewayIP      (void)                                  { return m_StaticGatewayIP;                                         }
-        void                SetStaticGatewayIP      (IP_Address_t GatewayIP)                { m_StaticGatewayIP = GatewayIP;                                    }
+        IP_Address_t        GetStaticGatewayIP      (void)                                      { return m_StaticGatewayIP;                                         }
+        void                SetStaticGatewayIP      (IP_Address_t GatewayIP)                    { m_StaticGatewayIP = GatewayIP;                                    }
 
-        IP_Address_t        GetStaticSubnetMask     (void)                                  { return m_StaticSubnetMask;                                        }
-        void                SetStaticSubnetMask     (IP_Address_t SubnetMask)               { m_StaticSubnetMask = SubnetMask;                                  }
+        IP_Address_t        GetStaticSubnetMask     (void)                                      { return m_StaticSubnetMask;                                        }
+        void                SetStaticSubnetMask     (IP_Address_t SubnetMask)                   { m_StaticSubnetMask = SubnetMask;                                  }
 
-        IP_Address_t        GetStaticIP             (void)                                  { return m_StaticIP;                                                }
-        void                SetStaticIP             (IP_Address_t StaticIP)                 { m_StaticIP = StaticIP;                                            }
+        IP_Address_t        GetStaticIP             (void)                                      { return m_StaticIP;                                                }
+        void                SetStaticIP             (IP_Address_t StaticIP)                     { m_StaticIP = StaticIP;                                            }
 
-        IP_Address_t        GetStaticDNS_IP         (void)                                  { return m_StaticDNS_IP;                                            }
-        void                SetStaticDNS_IP         (IP_Address_t DNS_IP)                   { m_StaticDNS_IP = DNS_IP;                                          }
+        IP_Address_t        GetStaticDNS_IP         (void)                                      { return m_StaticDNS_IP;                                            }
+        void                SetStaticDNS_IP         (IP_Address_t DNS_IP)                       { m_StaticDNS_IP = DNS_IP;                                          }
 
-        void                GetMAC_Address          (IP_MAC_Address_t* pMAC_Address)        { memcpy(pMAC_Address, &m_MAC_Address, IP_MAC_ADDRESS_SIZE);        }
-        void                SetMAC_Address          (const IP_MAC_Address_t* pMAC_Address)  { memcpy(&m_MAC_Address, pMAC_Address, IP_MAC_ADDRESS_SIZE);        }
+        void                GetMAC_Address          (IP_MAC_Address_t* pMAC_Address)            { memcpy(pMAC_Address, &m_MAC_Address, IP_MAC_ADDRESS_SIZE);        }
+        void                SetMAC_Address          (const IP_MAC_Address_t* pMAC_Address)      { memcpy(&m_MAC_Address, pMAC_Address, IP_MAC_ADDRESS_SIZE);        }
 
-        uint16_t            GetMTU                  (void)                                  { return m_MTU;                                                     }
-        void                SetMTU                  (uint16_t MTU)                          { m_MTU = MTU;                                                      }
+        uint16_t            GetMTU                  (void)                                      { return m_MTU;                                                     }
+        void                SetMTU                  (uint16_t MTU)                              { m_MTU = MTU;                                                      }
 
-        SystemState_e       InitializeMsgQ          (void)                                  { nOS_QueueCreate(&this->m_Q_Msg,
+        SystemState_e       InitializeMsgQ          (void)                                      { nOS_QueueCreate(&this->m_Q_Msg,
                                                                                                               &m_ArrayMemoryNode[0],
                                                                                                               sizeof(MemoryNode*),
                                                                                                               Q_IP_MANAGER_MEMORY_NODE_SIZE);
-                                                                                              return SYS_READY;                                                 }
-        nOS_Queue*          GetMsgQ                 (void)                                  { return &m_Q_Msg;                                                  }
+                                                                                                  return SYS_READY;                                                 }
+        nOS_Queue*          GetMsgQ                 (void)                                      { return &m_Q_Msg;                                                  }
 
-        void                SetSendCallback         (SendCallback_t callback)               { m_SendCallback = callback;                                        }
-        SystemState_e       SendPacket              (IP_PacketMsg_t* pMsg)                  {   if(m_SendCallback == nullptr)
-                                                                                                {
-                                                                                                    pMemoryPool->Free((void**)&pMsg->pPacket);
-                                                                                                    pMemoryPool->Free((void**)&pMsg);
-                                                                                                    return SYS_FAIL;
-                                                                                                }
+        void                RegisterSendCallback    (SendCallback_t callback, void* pContext)   { m_SendCallback = callback;                                        }
+        SystemState_e       SendPacket              (IP_PacketMsg_t* pMsg)                      {   if(m_SendCallback == nullptr)
+                                                                                                    {
+                                                                                                        pMemoryPool->Free((void**)&pMsg->pPacket);
+                                                                                                        pMemoryPool->Free((void**)&pMsg);
+                                                                                                        return SYS_FAIL;
+                                                                                                    }
 
-                                                                                                SystemState_e state = m_SendCallback(&pMsg);
-                                                                                                return state;                                                   }
+                                                                                                    SystemState_e state = m_SendCallback(m_SendContext, &pMsg);
+                                                                                                    return state;                                                   }
 
 
     private:
 
-        SystemState_e       (*m_SendCallback)(IP_PacketMsg_t**) = nullptr;
+        SendCallback_t      m_SendCallback = nullptr;
+        void*               m_SendContext  = nullptr;
+
 
         ETH_LinkState_e     m_LinkState;
         bool                m_IP_Valid;

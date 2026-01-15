@@ -76,6 +76,10 @@
     X_MEM_DBG(MEM_DBG_UDPRXBUF)                                 \
     X_MEM_DBG(MEM_DBG_RAWSOCK)                                  \
     X_MEM_DBG(MEM_DBG_RAWRXBUF)                                 \
+    X_MEM_DBG(MEM_DBG_ARP)                                      \
+    X_MEM_DBG(MEM_DBG_ARPDT)                                    \
+    X_MEM_DBG(MEM_DBG_UDP)                                      \
+    X_MEM_DBG(MEM_DBG_UDPDT)                                    \
     /* UniqueID for lib_service                               */\
     X_MEM_DBG(MEM_DBG_SERVICE)
 

@@ -64,22 +64,6 @@
 #if (IP_USE_UDP == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:         	Initialize
-//
-//  Parameter(s):   none
-//  Return:         void
-//
-//  Description:
-//
-//-------------------------------------------------------------------------------------------------
-//void NetUDP::Initialize(void)
-//{
-//}
-
-//-------------------------------------------------------------------------------------------------
 //
 //  Name:           UDP_Process
 //
@@ -91,12 +75,12 @@
 //-------------------------------------------------------------------------------------------------
 void NetUDP::Process(IP_PacketMsg_t* pMsg)
 {
-    UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Header;
-    uint16_t destPort = ntohs(pUDP->DestPort);
+    UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
+    IP_Port_t dstPort  = ntohs(pUDP->DstPort);
 
-    Socket* pSock = FindUDPSocketByPort(destPort);   // Your lookup function
+    Socket* pSock = FindUDPSocketByPort(dstPort);                       // Your lookup function
 
-    if (pSock == nullptr)
+    if(pSock == nullptr)
     {
         // No socket bound to this port → drop
         pMemoryPool->Free((void**)&pMsg->pPacket);
@@ -104,9 +88,9 @@ void NetUDP::Process(IP_PacketMsg_t* pMsg)
         return;
     }
 
-    UDP_Socket_t* pUdpSock = pSock->m_Proto.udp;
-    // Enqueue packet for this socket
-    if (nOS_QueueWrite(&pUdpSock->RxQueue, &pMsg, 0) != NOS_OK)
+    UDP_Socket_t* pUDP_Sock = pSock->GetUDP();
+
+    if(nOS_QueueWrite(&pUDP_Sock->RxQueue, &pMsg, 0) != NOS_OK)         // Enqueue packet for this socket
     {
         // Queue full → drop
         pMemoryPool->Free((void**)&pMsg->pPacket);
@@ -117,6 +101,9 @@ void NetUDP::Process(IP_PacketMsg_t* pMsg)
     // Ownership now belongs to the socket. Do NOT free here.
 }
 
+
+//IA told me it is not the place
+
 SystemState_e NetUDP::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent)
 {
     *pBytesSent = 0;
@@ -125,7 +112,7 @@ SystemState_e NetUDP::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, co
     IP_PacketMsg_t* pMsg = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(sizeof(IP_PacketMsg_t), MEM_DBG_UDP);
     if(pMsg == nullptr)
     {
-        return SYS_NO_MEMORY;
+        return SYS_FAIL_MEMORY_ALLOCATION;
     }
 
     // Allocate Ethernet/IP/UDP packet buffer
@@ -135,13 +122,13 @@ SystemState_e NetUDP::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, co
     if(pMsg->pPacket == nullptr)
     {
         pMemoryPool->Free((void**)&pMsg);
-        return SYS_NO_MEMORY;
+        return SYS_FAIL_MEMORY_ALLOCATION;
     }
 
     pMsg->PacketSize = packetSize;
 
     // Build headers: ETH + IP + UDP
-    UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.Header;
+    UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
     IP_Header_t*  pIP  = &pMsg->pPacket->UDP_Frame.IP_Header;
     IP_EthernetHeader_t* pETH = &pMsg->pPacket->ETH_Header;
 

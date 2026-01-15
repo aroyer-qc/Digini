@@ -119,6 +119,14 @@ struct TCP_Socket_t
 
 struct UDP_Socket_t
 {
+    IP_Port_t      LocalPort;      // Bound port (0 = unbound)
+    IP_Address_t   LocalIP;        // Optional: only if multi-IP system
+    nOS_Queue      RxQueue;        // Queue of IP_PacketMsg_t* (ownership transfers here)
+    uint16_t       Flags;          // Bitmask: broadcast allowed, reuse-port, etc.
+                                   // (optional, but future-proof)
+
+/*
+    previous stuff
     IP_Address_t    LocalIP;            // Optional, may be ANY
     uint16_t        LocalPort;
     IP_Address_t    RemoteIP;           // Optional connected peer (for connected UDP)
@@ -127,6 +135,7 @@ struct UDP_Socket_t
    // MsgQueue_t      RxQueue;          // Per-socket RX queue: each element is an IP_PacketMsg_t*
     Socket*         pSocket;            // Link to owning Socket
     uint32_t        Flags;              // Options (broadcast, etc.)
+    */
 };
 
 struct RAW_Socket_t
@@ -153,7 +162,7 @@ class Socket
     public:
 
         void                Create              (SocketType_e Type);
-        SystemState_e       Bind                (SocketInfo_t* pInfo);
+        SystemState_e       Bind                (IP_Port_t Port);
         SystemState_e       Listen              (uint16_t Backlog);
         SystemState_e       Accept              (Socket** ppClientSocket, SocketInfo_t* pClientInfo);
         SystemState_e       Connect             (SocketInfo_t* pInfo);
@@ -178,6 +187,8 @@ class Socket
         bool                IsListening         (void);
 
         UDP_Socket_t*       GetUDP              (void)                  { return m_Protocol.pUDP;      }
+        TCP_Socket_t*       GetTCP              (void)                  { return m_Protocol.pTCP;      }
+
 
         static Socket*      AllocSocket         (SocketType_e Type);
         static void         FreeSocket          (Socket** ppSocket);
@@ -187,12 +198,17 @@ class Socket
         void                ResetStats          (void);
     #endif
 
+        bool                HasData             (void);
+        void                GetLocalInfo        (SocketInfo_t* pInfo);
+        void                GetRemoteInfo       (SocketInfo_t* pInfo);
+
     private:
 
         // Internal helpers
         SystemState_e       ValidateSocket      (void);
-        SystemState_e       AllocProtocolData   (void);
+        //SystemState_e       AllocProtocolData   (void);
         void                FreeProtocolData    (void);
+        void                FreeAllMessages     (nOS_Queue* pQueue);
 
 
         SocketType_e            m_Type;
@@ -200,21 +216,22 @@ class Socket
         SocketInfo_t            m_LocalInfo;
         SocketInfo_t            m_RemoteInfo;
         SocketProtocol_t        m_Protocol;
+        uint16_t                m_Backlog;
+        bool                    m_IsListening;
 
         uint16_t                m_SocketID;         // Used by dispatcher
         bool                    m_IsBlocking;
         bool                    m_IsBound;
-        bool                    m_IsListening;
         uint32_t                m_TimeoutMs;
 
         // Socket flags (SO_REUSEADDR, SO_BROADCAST, etc.)
         uint32_t                m_Flags;
 
         // Per-socket RX queue (filled by IP/UDP/TCP dispatcher)
-      //  MsgQueue_t            m_RxQueue;
+        nOS_Queue               m_RxQueue;
 
         // Per-socket TX queue (used by TCP only)
-      //  MsgQueue_t            m_TxQueue;
+        nOS_Queue               m_TxQueue;
 
 
     #if (SOCKET_USE_STATISTICS == DEF_ENABLED)

@@ -104,7 +104,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_UDP) != 0)
    #endif
     {
-       // m_UDP.Initialize();
+        m_UDP.Initialize();
     }
   #endif
 
@@ -635,51 +635,82 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:          PutHeader
+//  Name:           PutHeader
 //
-//  Parameter(s):   void* 	    pBuffer
-// 				    uint16_t 	Count
-//  Return:         void
+//  Parameter(s):   IP_PacketMsg_t*     pMsg            Pointer to the packet wrapper containing
+//                                                      the Ethernet/IP/UDP/TCP frame. The IP
+//                                                      header will be written directly into this
+//                                                      buffer.
+//                  IP_Address_t        dstIP           Destination IPv4 address to place in the IP
+//                                                      header.
+//                  uint16_t            payloadLength   Length of the transport‑layer payload
+//                                                      (UDP/TCP header + data).
+//                  uint8_t             protocol        Transport protocol identifier
+//                                                      (e.g., IP_PROTOCOL_UDP, IP_PROTOCOL_TCP).
 //
-//  Description:    Put in header everything static
+//  Return:         None
 //
-//  Requirement:	All other data must be already in the header
+//  Description:    Constructs the IPv4 header for an outgoing packet. The function writes the
+//                  Ethernet header (source MAC, EtherType), fills all IPv4 header fields
+//                  (version, IHL, total length, identification, flags, TTL, protocol, source
+//                  and destination addresses), and computes the IPv4 header checksum.
 //
-//  Notes:			UDP packet should be set before the IP, because UDP use same data space to
-// 					calculate it's own checksum from pseudo header + UDP datagram
+//                  The function uses the interface configuration stored in NetworkContext
+//                  (MAC address, MTU, IP settings) and the internal sequence counter for the
+//                  IP identification field. No memory allocation occurs; the header is written
+//                  directly into the caller‑provided packet buffer.
+//
+//                  After this function completes, the packet is fully assembled at the
+//                  Ethernet/IP level and ready for transmission via NetworkContext::SendPacket().
 //
 //-------------------------------------------------------------------------------------------------
-void IP_Manager::PutHeader(IP_PacketMsg_t* pTX)
+void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t SrcIP, IP_Address_t DstIP, uint16_t PayloadLength, uint8_t Protocol)    // UDP=17, TCP=6
 {
-	IP_Header_t* pIP_TX;
+    IP_Header_t*     pIP  = &pTX->pPacket.IP_Frame.Header;
+    IP_ETH_Header_t* pETH = &pTX->pPacket.ETH_Header;
 
-	pIP_TX = &pTX->pPacket->IP_Frame.Header;
+    // Ethernet header
+    IP_MAC_Address_t MacAddress;
+    m_Context.GetMAC_Address(&MacAddress);
+    memcpy(pETH->Src.Address, MacAddress, IP_MAC_ADDRESS_SIZE);
+    pETH->Type = IP_ETHERNET_TYPE_IP;
 
-	// Setup Ethernet header
-	m_Context.GetMAC_Address(&pTX->pPacket->ETH_Header.Src);                          // Put our MAC in it
-	pTX->pPacket->ETH_Header.Type = IP_ETHERNET_TYPE_IP;
+    // IPv4 header
+    pIP->VersionIHL      = IP_VERSION4_IHL20;
+    pIP->DSCP_ECN        = 0;
+    pIP->TotalLength     = htons(sizeof(IP_Header_t) + PayloadLength);
+    pIP->ID              = htons(m_SequenceID++);
+    pIP->FlagsFragOffset = htons(0);
+    pIP->TimeToLive      = IP_TIME_TO_LIVE;
+    pIP->Protocol        = Protocol;
+    pIP->SrcIP_Addr      = m_Context.GetActiveIP();
+    pIP->DstIP_Addr      = DstIP;
 
-	// Setup IP header
-	pIP_TX->ID		    = htons(m_SequenceID++);
-	pIP_TX->VersionIHL 	= IP_VERSION4_IHL20;
-    pIP_TX->TimeToLive 	= IP_TIME_TO_LIVE;
-
-	pIP_TX->Checksum    = 0;  // use lib checksum.. or make one
-	pIP_TX->Checksum    = CalculateChecksum(pIP_TX, uint16_t(sizeof(IP_Header_t)));
+    pIP->Checksum = 0;
+    pIP->Checksum = CalculateChecksum(pIP, sizeof(IP_IP_Header_t));
 }
 
 //-------------------------------------------------------------------------------------------------
-//
+// 
 //  Name:           CalculateChecksum
 //
-//  Parameter(s):   void* 	    pBuffer
-// 				    uint16_t 	Count
-//  Return:         void
+//  Parameter(s):   void*       pBuffer     Pointer to the start of the header to checksum
+//                  uint16_t    Count       Number of bytes to include in the checksum
 //
-//  Description:    Calculate the checksum of the IP header
+//  Return:         int16_t                 One's-complement checksum (network byte order)
 //
-//  Note(s):
+//  Description:    Calculate the standard Internet checksum (RFC 1071) over the supplied buffer.
+//                  The algorithm processes the data as 16-bit words, performs one's-complement
+//                  addition with end-around carry, and returns the one's-complement of the final
+//                  accumulated sum.
 //
+//  Note(s):        - If Count is odd, the final remaining byte is included as a padded 16-bit word.
+//                  - This function assumes the buffer is aligned or accessible as 16-bit values.
+//                  - Used for IPv4 header checksum and can be reused for UDP/TCP pseudo-header
+//                    checksum calculations.
+//                  - The caller is responsible for ensuring that the checksum field in the header
+//                    is zero before invoking this function.
+// 
 //-------------------------------------------------------------------------------------------------
 int16_t IP_Manager::CalculateChecksum(void* pBuffer, uint16_t Count)
 {

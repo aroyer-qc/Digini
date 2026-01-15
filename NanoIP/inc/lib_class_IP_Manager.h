@@ -144,8 +144,10 @@ class IP_Manager
         IP_Address_t        GetDNS                      (void);
         IP_Address_t        GetHost                     (void);
         NetworkContext*     GetContext                  (void)          { return &m_Context; }
-
-        void                PutHeader                   (IP_PacketMsg_t* pTX);
+        void                PutHeader                   (IP_PacketMsg_t* pTX, IP_Address_t dstIP, uint16_t payloadLength, uint8_t protocol);    // UDP=17, TCP=6        
+        
+        
+        
         int16_t             CalculateChecksum           (void* pBuffer, uint16_t Count);
 
         static void         IP_ToAscii                  (char* pBuffer, IP_Address_t IP_Address);

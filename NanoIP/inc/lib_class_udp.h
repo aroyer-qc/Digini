@@ -26,7 +26,6 @@
 
 #pragma once
 
-
 //-------------------------------------------------------------------------------------------------
 
 #if (IP_USE_UDP == DEF_ENABLED)
@@ -38,6 +37,22 @@
 #define UDP_PORT_BOOT_P_SERVER				67
 #define UDP_PORT_BOOT_P_CLIENT				68
 
+#define UDP_EPHEMERAL_PORT_MIN              49152
+#define UDP_EPHEMERAL_PORT_MAX              65535
+
+
+#define UDP_MAX_BINDS                       8                    
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+struct UDP_BoundEntry_t
+{
+    IP_Port_t Port;
+    Socket*   pSocket;
+};
+
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
@@ -47,14 +62,23 @@ class NetUDP
 
                                 NetUDP                  (NetworkContext& Context) : m_Context(Context) {}
 
-        //void 				    Initialize  		    (void);
-        void/*IP_PacketMsg_t* */Process				    (IP_PacketMsg_t* pMsg);
+        void 				    Initialize  		    (void);
+        void                    Process				    (IP_PacketMsg_t* pMsg);
         SystemState_e           Send                    (UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent);
 
+        bool                    RegisterSocket          (Socket* pSock, IP_Port_t Port);
+        void                    UnregisterSocket        (IP_Port_t Port);
+        IP_Port_t               AllocateEphemeralPort   (void);
 
     private:
 
-        NetworkContext                  m_Context;
+        Socket*                 FindSocketByPort        (IP_Port_t Port);
+
+        UDP_BoundEntry_t        m_BoundSockets          [UDP_MAX_BINDS];
+        size_t                  m_BoundCount            = 0;
+        IP_Port_t               m_NextEphemeralPort     = UDP_EPHEMERAL_PORT_MIN;
+  
+        NetworkContext          m_Context;
 };
 
 //-------------------------------------------------------------------------------------------------

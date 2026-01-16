@@ -102,7 +102,7 @@ void NetARP::ProcessIP(IP_PacketMsg_t* pRX)
 
     if((SourceIP & SubnetMask) == (ActiveIP & SubnetMask))
     {
-        UpdateEntry(SourceIP, &pRX->pPacket->ETH_Header.Src);
+        UpdateEntry(SourceIP, &pRX->pPacket->ETH_Header.SourceMAC);
     }
 }
 
@@ -145,7 +145,7 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
         case ARP_REQUEST:
         {
             // On ne répond que si la requête est pour notre IP
-            if(pRX_ARP->DstIP_Addr == m_Context.GetActiveIP())
+            if(pRX_ARP->DstIP_Address == m_Context.GetActiveIP())
             {
                 // Allouer le wrapper TX
                 pTX = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(sizeof(IP_PacketMsg_t), MEM_DBG_ARP);
@@ -171,16 +171,16 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
                 pTX_ARP->Opcode = ARP_REPLY;
 
                 // MAC de destination = MAC source de la requête
-                memcpy(pTX_ARP->Dst.Byte, pRX_ARP->Src.Byte, IP_MAC_ADDRESS_SIZE);
-                memcpy(pTX_ARP->ETH_Header.Dst.Byte, pRX_ARP->Src.Byte, IP_MAC_ADDRESS_SIZE);
+                memcpy(pTX_ARP->DestinationMAC.Byte, pRX_ARP->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);
+                memcpy(pTX_ARP->ETH_Header.DestinationMAC.Byte, pRX_ARP->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);
 
                 // MAC source = notre MAC
-                m_Context.GetMAC_Address(&pTX_ARP->Src);
-                m_Context.GetMAC_Address(&pTX_ARP->ETH_Header.Src);
+                m_Context.GetMAC_Address(&pTX_ARP->SourceMAC);
+                m_Context.GetMAC_Address(&pTX_ARP->ETH_Header.SourceMAC);
 
                 // IPs
-                pTX_ARP->DstIP_Addr = pRX_ARP->SrcIP_Addr;
-                pTX_ARP->SrcIP_Addr = m_Context.GetActiveIP();
+                pTX_ARP->DstIP_Address = pRX_ARP->SrcIP_Address;
+                pTX_ARP->SrcIP_Address = m_Context.GetActiveIP();
 
                 // Champs ARP
                 pTX_ARP->HardwareType       = ARP_HARDWARE_TYPE_ETHERNET;
@@ -201,9 +201,9 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
         case ARP_REPLY:
         {
             // On apprend seulement si la réponse nous est destinée
-            if (pRX_ARP->DstIP_Addr == m_Context.GetActiveIP())
+            if (pRX_ARP->DstIP_Address == m_Context.GetActiveIP())
             {
-                UpdateEntry(pRX_ARP->SrcIP_Addr, &pRX_ARP->Src);
+                UpdateEntry(pRX_ARP->SrcIP_Address, &pRX_ARP->SourceMAC);
             }
         }
         break;

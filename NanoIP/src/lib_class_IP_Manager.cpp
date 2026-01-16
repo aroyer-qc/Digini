@@ -96,6 +96,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     m_Context.SetMTU(IP_NET_IF_MTU);                                        // Set netif maximum transfer unit
     m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config);
     m_Context.RegisterSendCallback(&m_IF_Driver.LowLevelOutputWrapper, &m_IF_Driver);
+    m_Context.SetIP_Manager(this);
 
     // All protocol support are created dynamically if interface is set to use it, and if configuration is enable for that protocol
 
@@ -664,34 +665,34 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
 //                  Ethernet/IP level and ready for transmission via NetworkContext::SendPacket().
 //
 //-------------------------------------------------------------------------------------------------
-void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t SrcIP, IP_Address_t DstIP, uint16_t PayloadLength, uint8_t Protocol)    // UDP=17, TCP=6
+void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t DstIP, uint16_t PayloadLength, uint8_t Protocol)    // UDP=17, TCP=6
 {
-    IP_Header_t*     pIP  = &pTX->pPacket.IP_Frame.Header;
-    IP_ETH_Header_t* pETH = &pTX->pPacket.ETH_Header;
+    IP_Header_t*         pIP  = &pTX->pPacket->IP_Frame.Header;
+    IP_EthernetHeader_t* pETH = &pTX->pPacket->ETH_Header;
 
     // Ethernet header
     IP_MAC_Address_t MacAddress;
     m_Context.GetMAC_Address(&MacAddress);
-    memcpy(pETH->Src.Address, MacAddress, IP_MAC_ADDRESS_SIZE);
+    memcpy(&pETH->SourceMAC.Byte[0], &MacAddress.Byte[0], IP_MAC_ADDRESS_SIZE);
     pETH->Type = IP_ETHERNET_TYPE_IP;
 
     // IPv4 header
-    pIP->VersionIHL      = IP_VERSION4_IHL20;
-    pIP->DSCP_ECN        = 0;
-    pIP->TotalLength     = htons(sizeof(IP_Header_t) + PayloadLength);
-    pIP->ID              = htons(m_SequenceID++);
-    pIP->FlagsFragOffset = htons(0);
-    pIP->TimeToLive      = IP_TIME_TO_LIVE;
-    pIP->Protocol        = Protocol;
-    pIP->SrcIP_Addr      = m_Context.GetActiveIP();
-    pIP->DstIP_Addr      = DstIP;
+    pIP->VersionIHL          = IP_VERSION4_IHL20;
+    pIP->TypeOfService       = 0;
+    pIP->Length              = htons(sizeof(IP_Header_t) + PayloadLength);
+    pIP->ID                  = htons(m_SequenceID++);
+    pIP->FlagsFragmentOffset = htons(0);
+    pIP->TimeToLive          = IP_TIME_TO_LIVE;
+    pIP->Protocol            = Protocol;
+    pIP->SrcIP_Addr          = m_Context.GetActiveIP();
+    pIP->DstIP_Addr          = DstIP;
 
     pIP->Checksum = 0;
-    pIP->Checksum = CalculateChecksum(pIP, sizeof(IP_IP_Header_t));
+    pIP->Checksum = CalculateChecksum(pIP, sizeof(IP_Header_t));
 }
 
 //-------------------------------------------------------------------------------------------------
-// 
+//
 //  Name:           CalculateChecksum
 //
 //  Parameter(s):   void*       pBuffer     Pointer to the start of the header to checksum
@@ -710,7 +711,7 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t SrcIP, IP_Address_t
 //                    checksum calculations.
 //                  - The caller is responsible for ensuring that the checksum field in the header
 //                    is zero before invoking this function.
-// 
+//
 //-------------------------------------------------------------------------------------------------
 int16_t IP_Manager::CalculateChecksum(void* pBuffer, uint16_t Count)
 {

@@ -194,8 +194,8 @@ struct IP_MAC_Address_t
 // The Ethernet header
 struct IP_EthernetHeader_t
 {
-	IP_MAC_Address_t 	Dst;                            //     6
-	IP_MAC_Address_t 	Src;                            // +   6
+	IP_MAC_Address_t 	DestinationMAC;                 //     6
+	IP_MAC_Address_t 	SourceMAC;                      // +   6
 	uint16_t		    Type;                           // +   2
 };                           	    // 14 Bytes
 
@@ -225,7 +225,7 @@ struct IP_Header_t
     uint8_t 	    TypeOfService;                      // +   1
     uint16_t	    Length;                             // +   2
     uint16_t 	    ID;                                 // +   2
-    uint16_t 	    Offset;                             // +   2
+    uint16_t 	    FlagsFragmentOffset;                // +   2
     uint8_t 	    TimeToLive;                         // +   1
     uint8_t 	    Protocol;                           // +   1
 	uint16_t        Checksum;                           // +   2
@@ -282,10 +282,10 @@ struct ARP_Frame_t
 	uint8_t				    HardwareAddrLength;         // +   1
 	uint8_t				    ProtocolLength;             // +   1
 	uint16_t 			    Opcode;                     // +   2
-	IP_MAC_Address_t 	    Src;           		        // +   6
-	IP_Address_t			SrcIP_Addr;        	        // +   4
-	IP_MAC_Address_t 	    Dst;       			        // +   6
-	IP_Address_t			DstIP_Addr;        	        // +   4
+	IP_MAC_Address_t 	    SourceMAC;     		        // +   6
+	IP_Address_t			SrcIP_Address;     	        // +   4
+	IP_MAC_Address_t 	    DestinationMAC;		        // +   6
+	IP_Address_t			DstIP_Address;     	        // +   4
 };                                                      // =  42 Bytes
 
 // the IP frame
@@ -446,8 +446,8 @@ class NetworkContext
         bool                IsDHCP_Enable           (void)                                      { return m_DHCP_Enable;                                             }
         void                SetDHCP_Enable          (bool State)                                { m_DHCP_Enable = State;                                            }
 
-        IP_Address_t        GetDHCP_GatewayIP       (void)                                      { return m_DHCP_GatewayIP;                                         }
-        void                SetDHCP_GatewayIP       (IP_Address_t GatewayIP)                    { m_DHCP_GatewayIP = GatewayIP;                                    }
+        IP_Address_t        GetDHCP_GatewayIP       (void)                                      { return m_DHCP_GatewayIP;                                          }
+        void                SetDHCP_GatewayIP       (IP_Address_t GatewayIP)                    { m_DHCP_GatewayIP = GatewayIP;                                     }
 
         IP_Address_t        GetDHCP_SubnetMask      (void)                                      { return m_DHCP_SubnetMask;                                         }
         void                SetDHCP_SubnetMask      (IP_Address_t SubnetMask)                   { m_DHCP_SubnetMask = SubnetMask;                                   }
@@ -464,6 +464,9 @@ class NetworkContext
         IP_Address_t        GetActiveDNS_IP         (void)                                      { return m_DHCP_DNS_IP;                                             }
 
       #endif
+
+        class IP_Manager*   GetIP_Manager           (void)                                      { return m_IP_Manager;                                              }
+        void                SetIP_Manager           (IP_Manager* Manager)                       { m_IP_Manager = Manager;                                           }
 
         IP_Address_t        GetStaticGatewayIP      (void)                                      { return m_StaticGatewayIP;                                         }
         void                SetStaticGatewayIP      (IP_Address_t GatewayIP)                    { m_StaticGatewayIP = GatewayIP;                                    }
@@ -504,6 +507,7 @@ class NetworkContext
 
     private:
 
+        IP_Manager*         m_IP_Manager   = nullptr;
         SendCallback_t      m_SendCallback = nullptr;
         void*               m_SendContext  = nullptr;
 

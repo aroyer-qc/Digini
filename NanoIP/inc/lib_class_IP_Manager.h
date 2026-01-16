@@ -146,10 +146,8 @@ class IP_Manager
         NetworkContext*     GetContext                  (void)          { return &m_Context; }
         void                PutHeader                   (IP_PacketMsg_t* pTX, IP_Address_t dstIP, uint16_t payloadLength, uint8_t protocol);    // UDP=17, TCP=6        
         
-        
-        
-        int16_t             CalculateChecksum           (void* pBuffer, uint16_t Count);
-
+        static int16_t      CalculateChecksum           (void* pBuffer, uint16_t Count);
+        static void         FreeMessage                 (IP_PacketMsg_t* pMsg);
         static void         IP_ToAscii                  (char* pBuffer, IP_Address_t IP_Address);
         static IP_Address_t AsciiToIP                   (char* pBuffer);
 

@@ -249,16 +249,14 @@ void IP_Manager::Run(void)
                         m_ARP.ProcessARP(pMsg);     // ARP owns and frees pMsg
                     }
                     // If ARP.ProcessARP does not free, you must free here
-                    // pMemoryPool->Free((void**)&pMsg->pPacket);
-                    // pMemoryPool->Free((void**)&pMsg);
+                    // FreeMessage(pMsg);
                 }
                 break;
 
                 default:
                 {
                     // Unknown Ethernet type → free
-                    pMemoryPool->Free((void**)&pMsg->pPacket);
-                    pMemoryPool->Free((void**)&pMsg);
+                    FreeMessage(pMsg);
                 }
                 break;
             }
@@ -736,6 +734,40 @@ int16_t IP_Manager::CalculateChecksum(void* pBuffer, uint16_t Count)
 	Checksum.u_32 = (uint32_t)Checksum.u8_Array[0] + (int32_t)Checksum.u8_Array[1]; // Do an end-around carry (one's complement arithmetic)
 	Checksum.u8_Array[0] += Checksum.u8_Array[1];                                   // Do another end-around carry in case if the prior add caused a carry out
 	return ~Checksum.u8_Array[0];                                                  	// Return the resulting checksum
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           FreeMessage
+//
+//  Parameter(s):   IP_PacketMsg_t* pMsg     Pointer to a message wrapper containing a packet
+//                                           buffer and associated metadata.
+//
+//  Return:         void
+//
+//  Description:    Releases all resources associated with a packet message. This static utility
+//                  function frees the packet buffer (if allocated) and then frees the message
+//                  wrapper itself. Because the freeing logic does not depend on any IP_Manager
+//                  instance state, it is provided as a static function so that all protocol
+//                  layers can invoke it directly.
+//
+//  Note(s):        - Safe to call with a null pointer.
+//                  - Centralizes message destruction for the entire network stack.
+//                  - Ensures consistent zero‑copy buffer ownership release.
+//                  - Intended for use by all components that dequeue or discard messages.
+//
+//-------------------------------------------------------------------------------------------------
+void IP_Manager::FreeMessage(IP_PacketMsg_t* pMsg)
+{
+    if(pMsg != nullptr)
+    {
+        if(pMsg->pPacket != nullptr)                    // Free the packet buffer if allocated
+        {
+            pMemoryPool->Free((void**)&pMsg->pPacket);
+        }
+
+        pMemoryPool->Free((void**)&pMsg);               // Free the message wrapper
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

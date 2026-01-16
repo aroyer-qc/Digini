@@ -217,7 +217,7 @@ struct DHCP_Header_t
 	uint8_t	        File[128];                          // + 128
 	uint32_t        MagicCookie;                        // +   4
 	uint8_t         Options[308];                       // Do not use this struct with sizeof()
-};                                                      // = 240 bytes
+};                                                      // = 240 bytes + Options
 
 struct IP_Header_t
 {

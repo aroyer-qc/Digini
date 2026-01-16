@@ -426,9 +426,7 @@ SystemState_e Socket::Recv(uint8_t* pBuffer, size_t BufferSize, size_t* pBytesRe
     uint8_t* pPayload = (uint8_t*)((uint8_t*)pTCP + headerLen);
     memcpy(pBuffer, pPayload, dataLen);
 
-    // Free segment
-    pMemoryPool->Free((void**)&pMsg->pPacket);
-    pMemoryPool->Free((void**)&pMsg);
+    IP_Manager::FreeMessage(pMsg);                                      // Free segment
 
     *pBytesReceived = dataLen;
     return SYS_READY;
@@ -495,10 +493,7 @@ SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t
         pSrcInfo->Port    = ntohs(pUDP->SrcPort);
     }
 
-    // Free packet buffers (zero-copy release)
-    pMemoryPool->Free((void**)&pMsg->pPacket);
-    pMemoryPool->Free((void**)&pMsg);
-
+    IP_Manager::FreeMessage(pMsg);                                      // Free packet buffers (zero-copy release)
     *pBytesReceived = payloadLen;
     return SYS_READY;
 }
@@ -551,36 +546,31 @@ void Socket::Close()
 //
 //  Name:           FreeAllMessages
 //
-//  Parameter(s):   nOS_Queue*  pQueue      Pointer to the message queue containing
-//                                          IP_PacketMsg_t* entries.
+//  Parameter(s):   nOS_Queue* pQueue        Queue containing IP_PacketMsg_t pointers.
 //
-//  Return:         None
+//  Return:         void
 //
-//  Description:    Empties the specified message queue and releases all packet resources.
-//                  Each entry in the queue is expected to be an IP_PacketMsg_t* containing
-//                  a packet buffer allocated from the memory pool. The function repeatedly
-//                  dequeues messages, frees the associated packet buffer, and then frees the
-//                  message wrapper itself. This helper centralizes cleanup logic for both UDP
-//                  and TCP sockets and ensures deterministic, leak‑free teardown.
+//  Description:    Empties the specified message queue and releases every message it contains.
+//                  Each dequeued message is passed to IP_Manager::FreeMessage(), the static
+//                  destruction routine responsible for freeing both the packet buffer and the
+//                  message wrapper. This ensures that all message cleanup follows the same
+//                  zero‑copy‑safe logic, regardless of which subsystem generated the message.
+//
+//  Note(s):        - Uses non‑blocking queue reads to drain the queue completely.
+//                  - Safe to call when the queue is already empty.
+//                  - Intended for socket shutdown, error recovery, and cleanup paths.
+//                  - Delegates all actual freeing logic to the centralized static FreeMessage().
 //
 //-------------------------------------------------------------------------------------------------
 void Socket::FreeAllMessages(nOS_Queue* pQueue)
 {
     IP_PacketMsg_t* pMsg = nullptr;
 
-    while(!nOS_QueueIsEmpty(pQueue))                            // Drain the queue and free all pending messages
+    while(nOS_QueueIsEmpty(pQueue) == false)                    // Drain the queue and free all pending messages
     {
         if(nOS_QueueRead(pQueue, &pMsg, 0) == NOS_OK)           // Read next pointer from the queue (non-blocking)  
-    {
-            if(pMsg != nullptr)
-            {
-                if(pMsg->pPacket != nullptr)                    // Free the packet buffer if allocated
-                {
-                    pMemoryPool->Free((void**)&pMsg->pPacket);
-                }
-
-                pMemoryPool->Free((void**)&pMsg);               // Free the message wrapper
-            }
+        {
+            IP_Manager::FreeMessage(pMsg);
         }
     }
 }

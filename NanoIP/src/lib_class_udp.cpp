@@ -115,13 +115,11 @@ void NetUDP::Process(IP_PacketMsg_t* pMsg)
     UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
     IP_Port_t dstPort  = ntohs(pUDP->DstPort);
 
-    Socket* pSock = FindSocketByPort(dstPort);                       // Your lookup function
+    Socket* pSock = FindSocketByPort(dstPort);                          // Your lookup function
 
     if(pSock == nullptr)
     {
-        // No socket bound to this port → drop
-        pMemoryPool->Free((void**)&pMsg->pPacket);
-        pMemoryPool->Free((void**)&pMsg);
+        IP_Manager::FreeMessage(pMsg);                                  // No socket bound to this port → drop
         return;
     }
 
@@ -129,9 +127,7 @@ void NetUDP::Process(IP_PacketMsg_t* pMsg)
 
     if(nOS_QueueWrite(&pUDP_Sock->RxQueue, &pMsg, 0) != NOS_OK)         // Enqueue packet for this socket
     {
-        // Queue full → drop
-        pMemoryPool->Free((void**)&pMsg->pPacket);
-        pMemoryPool->Free((void**)&pMsg);
+        IP_Manager::FreeMessage(pMsg);                                  // Queue full → drop
         return;
     }
 

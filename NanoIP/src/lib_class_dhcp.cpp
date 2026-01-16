@@ -201,6 +201,7 @@ void NetDHCP::Initialize(void)
     m_Mode    = DHCP_IS_ON;            // This is the default value for DHCP
     m_State   = DHCP_STATE_INITIAL;
     m_pSocket = nullptr;
+    m_XID     = RNG_GetRandom();
 
     Error = nOS_TimerCreate(&m_TimerDiscover,  nullptr, nullptr, DHCP_MSG_ACTION_TIME_OUT, NOS_TIMER_ONE_SHOT);
     Error = nOS_TimerCreate(&m_TimerT1_Lease,  nullptr, nullptr, 0, NOS_TIMER_ONE_SHOT);
@@ -220,56 +221,49 @@ void NetDHCP::Initialize(void)
 bool NetDHCP::Start(void)
 {
     SystemState_e State;
-    SocketInfo_t  LocalInfo;
-    bool          Status = false;
+    SocketInfo_t  LocalAddress;
 
-    m_State = DHCP_STATE_INITIAL;
+    m_State = DHCP_STATE_INITIAL;                                       // Reset DHCP state
 
     if(nOS_TimerIsRunning(&m_TimerDiscover)  == true) nOS_TimerStop(&m_TimerDiscover,  true);
     if(nOS_TimerIsRunning(&m_TimerT1_Lease)  == true) nOS_TimerStop(&m_TimerT1_Lease,  true);
     if(nOS_TimerIsRunning(&m_TimerT2_Rebind) == true) nOS_TimerStop(&m_TimerT2_Rebind, true);
 
+    // Reset DHCP-related context information
     m_Context.SetIP_Valid(false);
     m_Context.SetDHCP_GatewayIP(IP_ADDRESS(0,0,0,0));
     m_Context.SetDHCP_SubnetMask(IP_ADDRESS(0,0,0,0));
     m_Context.SetDHCP_IP(IP_ADDRESS(0,0,0,0));
     m_Context.SetDHCP_DNS_IP(IP_ADDRESS(0,0,0,0));
-    m_XID = RNG_GetRandom();
+    m_XID = RNG_GetRandom();                                            // Generate a new transaction ID
 
-    // Close existant socket if already open
-    if(m_pSocket != nullptr)
+    if(m_pSocket != nullptr)                                            // Close existant socket if already open
     {
         Socket::FreeSocket(&m_pSocket);
     }
 
-    // Create a new for socket UDP
-    m_pSocket = Socket::AllocSocket(SOCKET_TYPE_UDP);
+    m_pSocket = Socket::AllocSocket(SOCKET_TYPE_UDP);                   // Create a new for socket UDP
 
     if(m_pSocket == nullptr)
     {
         return false;
     }
 
-    // Configure in non blocking mode
-    bool NonBlocking = true;
-
+    bool NonBlocking = true;                                            // Configure in non blocking mode
     m_pSocket->SetOption(SOCKET_OPT_NON_BLOCKING, &NonBlocking, sizeof(bool));
 
     // Bind sur le port DHCP client
-    LocalAddress.Address = IP_ADDRESS(0,0,0,0);        // ANY address
+    LocalAddress.Address = IP_ADDRESS(0,0,0,0);                         // ANY address
     LocalAddress.Port    = DHCP_CLIENT_PORT;
     State = m_pSocket->Bind(&LocalAddr);
 
-    if(State == SYS_READY)
-    {
-        Status = true;
-    }
-    else
+    if(State != SYS_READY)
     {
         Socket::FreeSocket(&m_pSocket);
+        return false;
     }
 
-    return Status;
+    return true;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -284,39 +278,39 @@ bool NetDHCP::Start(void)
 //-------------------------------------------------------------------------------------------------
 bool NetDHCP::Process(DHCP_Msg_t* pMsg)
 {
-    SocketInfo_t    ServerInfo;
-    DHCP_Msg_t*     pRX    = nullptr;
-    size_t          RxSize = 0;
-    SystemState_e   Error;
-    bool            Status = false;
+    bool          Status = false;
+    DHCP_Msg_t*   pRX    = nullptr;
+    size_t        RxSize = 0;
+    SystemState_e Error;
 
+    // Handle external DHCP actions (timeouts, renewal, rebind)
     if(pMsg != nullptr)
     {
         switch(pMsg->Action)
         {
             case DHCP_MSG_ACTION_TIME_OUT:
             {
-                    m_State = DHCP_STATE_INITIAL;
+                m_State = DHCP_STATE_INITIAL;                                           // Reset DHCP state machine
 
-                    if(m_pSocket != nullptr)
-                    {
-                        Socket::FreeSocket(&m_pSocket);
-                    }
+                if(m_pSocket != nullptr)                                                // Close existing socket if any
+                {
+                    Socket::FreeSocket(&m_pSocket);
+                }
 
-                    // Should close all socket.
-                  #if (IP_DBG_DHCP == DEF_ENABLED)
-                    DBG_Printf("DHCP request time out, DHCP will restart\n");
-                  #endif
+              #if (IP_DBG_DHCP == DEF_ENABLED)
+                DBG_Printf("DHCP timeout, restarting DHCP\n");
+              #endif
             }
             break;
 
             case DHCP_MSG_ACTION_LEASE_RENEWAL:
             {
-                if(Start() == true)
+                if(Start() == true)                                                     // Restart DHCP using the existing lease information
                 {
                     Request();
+
                   #if (IP_DBG_DHCP == DEF_ENABLED)
-                    DBG_Printf("DHCP request send for lease renewal\n");
+                    DBG_Printf("DHCP renewal request sent\n");
                   #endif
                 }
             }
@@ -324,130 +318,152 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
 
             case DHCP_MSG_ACTION_REBIND:
             {
+                // Rebind logic can be added later
             }
             break;
         }
 
-        pMemoryPool->Free((void**)&pMsg);
+        pMemoryPool->Free((void**)&pMsg);                                               // Free the action message
     }
 
-    if(m_Mode == true)
+    if(m_Mode == false)                                                                 // DHCP disabled → nothing to do
     {
-        if(m_State == DHCP_STATE_INITIAL)
+        return false;
+    }
+
+    if(m_State == DHCP_STATE_INITIAL)                                                   // If in INITIAL state, send a DHCP DISCOVER
+    {
+        Status = Discover();
+    }
+    else
+    {
+        if((m_pSocket == nullptr) || (m_pSocket->GetState() == SOCKET_STATE_CLOSED))    // Validate socket state
         {
-            Status = Discover();
+            if(m_State != DHCP_STATE_BOUND)                                             // If not bound yet, restart DHCP
+            {
+                m_State = DHCP_STATE_INITIAL;
+            }
         }
         else
         {
-            // Verify if socket is still valid
-            if((m_pSocket == nullptr) || (m_pSocket->GetState() == SOCKET_STATE_CLOSED))
+            // Try to receive a DHCP message (non-blocking)
+            SocketInfo_t ServerInfo;
+            pRX = (DHCP_Msg_t*)pMemoryPool->Alloc(sizeof(DHCP_Msg_t), MEM_DBG_DHCP_RX);
+
+            if(pRX != nullptr)
             {
-                if(m_State != DHCP_STATE_BOUND)
+                Error = m_pSocket->RecvFrom((uint8_t*)pRX, sizeof(DHCP_Msg_t), &ServerInfo, &RxSize);
+
+                // Validate received DHCP message
+                if((Error == SYS_READY) && (RxSize >= sizeof(DHCP_Header_t)))
                 {
-                    m_State = DHCP_STATE_INITIAL;
-                }
-            }
-           else
-            {
-                // Try to received data
-                pRX = (DHCP_Msg_t*)pMemoryPool->Alloc( sizeof(DHCP_Msg_t), MEM_DBG_DHCP_RX);
-
-                if(pRX != nullptr)
-                {
-                    Error = m_pSocket->RecvFrom((uint8_t*)pRX, sizeof(DHCP_Msg_t), &ServerAddr, &RxSize);
-
-
-                if(SOCK_GetRX_RSR(DHCP_SOCKET) > 0)
-                {
-                    pRX = (DHCP_Msg_t*)pMemoryPool->AllocAndClear(sizeof(DHCP_Msg_t));
-
-                    if(pRX != nullptr)
+                    if( (pRX->Op          == DHCP_BOOT_REPLY) &&
+                        (pRX->MagicCookie == DHCP_MAGIC_COOKIE) &&
+                        (pRX->X_ID        == htonl(m_XID)) )
                     {
-                        SOCK_ReceivedFrom(DHCP_SOCKET, (uint8_t*)pRX, sizeof(DHCP_Msg_t), &ServerAddr, &ServerPort);
+                        // Parse DHCP options
+                        ParseOption(pRX);
 
-                        if((pRX->Op          == DHCP_BOOT_REPLY) &&
-                           (pRX->MagicCookie == DHCP_MAGIC_COOKIE) &&
-                           (pRX->X_ID        == htonl(DHCP_Xid)))
+                        // Process DHCP message type
+                        switch(m_Options.Type)
                         {
-                            DHCP_ParseOption(pRX);
-
-                            switch(m_Options.Type)
+                            //-------------------------------------------------------------------------
+                            case DHCP_OPTION_OFFER:
                             {
-                                case DHCP_OPTION_OFFER:
+                                if(m_State == DHCP_STATE_DISCOVER)
                                 {
-                                    if(m_State == DHCP_STATE_DISCOVER)
+                                    if(nOS_TimerIsRunning(&m_TimerDiscover) == true)
                                     {
-                                        if(nOS_TimerIsRunning(&m_TimerDiscover) == true)
-                                        {
-                                            ParseOffer(pRX);
-                                            Request();
-                                            m_State = DHCP_STATE_OFFER_RECEIVED;
-                                          #if (IP_DBG_DHCP == DEF_ENABLED)
-                                            DBG_Printf("DHCP offer received and Request is sent\n");
-                                          #endif
-                                        }
-
-                                        nOS_TimerRestart(&m_TimerDiscover, DHCP_MSG_ACTION_TIME_OUT);
-                                    }
-                                }
-                                break;
-
-                                case DHCP_OPTION_ACK:
-                                {
-                                    if(m_State == DHCP_STATE_OFFER_RECEIVED)
-                                    {
-                                        nOS_TimerStop(&m_TimerDiscover, true);
-                                        IsBound();
-                                        SOCK_Close(DHCP_SOCKET);
+                                        ParseOffer(pRX);
+                                        Request();
+                                        m_State = DHCP_STATE_OFFER_RECEIVED;
 
                                       #if (IP_DBG_DHCP == DEF_ENABLED)
-                                        DBG_Printf("DHCP ACK received and interface is bound\n");
-                                        DBG_Printf("Host IP           %d.%d.%d.%d\n",   uint8_t(m_HostAddress           >> 24), uint8_t(m_HostAddress           >> 16), uint8_t(m_HostAddress           >> 8), uint8_t(m_HostAddress));
-                                        DBG_Printf("SubNet mask IP    %d.%d.%d.%d\n",   uint8_t(m_SubnetMaskAddress     >> 24), uint8_t(m_SubnetMaskAddress     >> 16), uint8_t(m_SubnetMaskAddress     >> 8), uint8_t(m_SubnetMaskAddress));
-                                        DBG_Printf("Default router IP %d.%d.%d.%d\n\n", uint8_t(m_DefaultGatewayAddress >> 24), uint8_t(m_DefaultGatewayAddress >> 16), uint8_t(m_DefaultGatewayAddress >> 8), uint8_t(m_DefaultGatewayAddress));
+                                        DBG_Printf("DHCP OFFER received, REQUEST sent\n");
                                       #endif
                                     }
-                                    else if(m_State == DHCP_STATE_BOUND)
-                                    {
-                                        // check if in the ACK there is possibility of new value!
-                                        IsBound();
-                                        SOCK_Close(DHCP_SOCKET);
 
-                                      #if (IP_DBG_DHCP == DEF_ENABLED)
-                                        DBG_Printf("DHCP lease renewal is accepted\n");
-                                      #endif
-                                    }
+                                    // Restart discover timer while waiting for ACK
+                                    nOS_TimerRestart(&m_TimerDiscover, DHCP_MSG_ACTION_TIME_OUT);
                                 }
-                                break;
+                            }
+                            break;
 
-                                case DHCP_OPTION_NACK:
+                            //-------------------------------------------------------------------------
+                            case DHCP_OPTION_ACK:
+                            {
+                                if(m_State == DHCP_STATE_OFFER_RECEIVED)
                                 {
-                                    m_State = DHCP_STATE_INITIAL;                          // reset DHCP state machine
-                                    nOS_TimerStop(&m_TimerT1_Lease,  true);                // stop T1 & T2
-                                    nOS_TimerStop(&m_TimerT2_Rebind, true);
-                                    SOCK_Close(DHCP_SOCKET);
+                                    // Stop discover timeout
+                                    nOS_TimerStop(&m_TimerDiscover, true);
+
+                                    // Apply lease parameters
+                                    IsBound();
+
+                                    // Close DHCP socket
+                                    if(m_pSocket != nullptr)
+                                    {
+                                        m_pSocket->Close();
+                                    }
 
                                   #if (IP_DBG_DHCP == DEF_ENABLED)
-                                    DBG_Printf("DHCP request NACK received\n");
+                                    DBG_Printf("DHCP ACK received, interface is now bound\n");
                                   #endif
                                 }
-                                break;
-                            }
-                        }
+                                else if(m_State == DHCP_STATE_BOUND)
+                                {
+                                    // Lease renewal accepted
+                                    IsBound();
 
-                        pMemory->Free((void**)&pRX);
+                                  #if (IP_DBG_DHCP == DEF_ENABLED)
+                                    DBG_Printf("DHCP lease renewal accepted\n");
+                                  #endif
+                                }
+                            }
+                            break;
+
+                            //-------------------------------------------------------------------------
+                            case DHCP_OPTION_NACK:
+                            {
+                                // Reset DHCP state machine
+                                m_State = DHCP_STATE_INITIAL;
+
+                                // Stop lease timers
+                                nOS_TimerStop(&m_TimerT1_Lease,  true);
+                                nOS_TimerStop(&m_TimerT2_Rebind, true);
+
+                                // Close socket
+                                if(m_pSocket != nullptr)
+                                {
+                                    m_pSocket->Close();
+                                }
+
+                              #if (IP_DBG_DHCP == DEF_ENABLED)
+                                DBG_Printf("DHCP NACK received\n");
+                              #endif
+                            }
+                            break;
+
+                            default:
+                                // Unsupported or irrelevant option type
+                            break;
+                        }
                     }
                 }
-            }
-        }
 
-        if(m_State == DHCP_STATE_BOUND)
-        {
-            Status = true;
+                // Free RX buffer
+                pMemoryPool->Free((void**)&pRX);
+            }
         }
     }
 
-    return Status;       // Static IP mode
+    // DHCP completed successfully when in BOUND state
+    if(m_State == DHCP_STATE_BOUND)
+    {
+        Status = true;
+    }
+
+    return Status;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -468,13 +484,74 @@ bool NetDHCP::Process(DHCP_Msg_t* pMsg)
 //-------------------------------------------------------------------------------------------------
 bool NetDHCP::Discover(void)
 {
+    uint8_t       Options;
+    DHCP_Msg_t*   pTX     = nullptr;
+    size_t        Length  = 0;
+    bool          Status  = false;
+
+    Status = Start();                                                                           // Restart DHCP state and recreate socket
+    
+    if(Status == false)
+    {
+        return false;
+    }
+
+    // Allocate DHCP transmit buffer
+    pTX = (DHCP_Msg_t*)pMemoryPool->AllocAndClear(sizeof(DHCP_Msg_t), MEM_DBG_DHCP_TX);
+    
+    if(pTX == nullptr)
+    {
+        return false;
+    }
+
+    // Build DHCP options for DISCOVER
+    Options = (DHCP_PUT_OPTION_CLIENT_IDENTIFIER |
+               DHCP_PUT_OPTION_HOST_NAME         |
+               DHCP_PUT_OPTION_PL_DISCOVER);
+
+    Length = PutOption(&pTX->Options[0], Options, DHCP_OPTION_DISCOVER);
+    PutHeader(pTX);                                                                             // Build DHCP header (Op, HTYPE, HLEN, XID, CHADDR, etc.)
+    size_t PacketLength = (sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + Length;           // Compute total packet length (header + options)
+
+    // Destination: broadcast IP
+    SocketInfo_t Dest;
+    Dest.Address = IP_ADDRESS(255,255,255,255);
+    Dest.Port    = DHCP_SERVER_PORT;
+
+    // Send DHCP DISCOVER (non-blocking)
+    size_t BytesSent = 0;
+    SystemState_e Error = m_pSocket->SendTo((uint8_t*)pTX, PacketLength, &Dest, &BytesSent);
+
+    if((Error != SYS_READY) || (BytesSent == 0))
+    {
+        Status = false;
+
+      #if (IP_DBG_DHCP == DEF_ENABLED)
+        DBG_Printf("DHCP: Fatal error while sending DISCOVER\n");
+      #endif
+    }
+    else
+    {
+      #if (IP_DBG_DHCP == DEF_ENABLED)
+        DBG_Printf("DHCP DISCOVER sent\n");
+      #endif
+
+        m_State = DHCP_STATE_DISCOVER;                                                          // Update DHCP state
+        nOS_TimerStart(&m_TimerDiscover);                                                       // Start timeout timer for OFFER
+    }
+
+    pMemoryPool->Free((void**)&pTX);                                                            // Free TX buffer
+
+    return Status;
+    
+    
+    #if 0
     uint8_t      Options;
     DHCP_Msg_t*  pTX         = nullptr;
-    IP_Address_t IP_Address;
+    //IP_Address_t IP_Address;
     size_t       Length;
     bool         Status;
 
-   // W5100_Init();               // This will start fresh
     Status = Start();
 
     if(Status == true)
@@ -531,7 +608,9 @@ bool NetDHCP::Discover(void)
     }
 
     return Status;
+#endif
 }
+we are here with the IA
 
 //-------------------------------------------------------------------------------------------------
 //

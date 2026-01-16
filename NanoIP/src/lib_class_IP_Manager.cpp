@@ -90,7 +90,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 
     // Initialize Variables
     m_Context.SetIP_Valid(false);
-    m_DNS_IP_Found = false;
+    //m_DNS_IP_Found = false;  not used so far
     m_Context.InitializeMsgQ();                                             // this need to handle error
     m_Context.SetMAC_Address(&m_Config[IF_ID].IP_ETH_Config.MAC_Address);
     m_Context.SetMTU(IP_NET_IF_MTU);                                        // Set netif maximum transfer unit
@@ -101,80 +101,38 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     // All protocol support are created dynamically if interface is set to use it, and if configuration is enable for that protocol
 
   #if (IP_USE_UDP == DEF_ENABLED)
-   #if (IP_NUMBER_OF_INTERFACE > 1)
-    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_UDP) != 0)
-   #endif
-    {
-        m_UDP.Initialize();
-    }
+    m_UDP.Initialize();
   #endif
 
   #if (IP_USE_DHCP == DEF_ENABLED)
-   #if (IP_NUMBER_OF_INTERFACE > 1)
-    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
-   #endif
-    {
-        m_DHCP.Initialize();
-    }
+    m_DHCP.Initialize();
   #endif
 
-
-   #if (IP_NUMBER_OF_INTERFACE > 1)
-    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-   #endif
-    {
-        m_ARP.Initialize();
-    }
+    m_ARP.Initialize();
 
   #if (IP_USE_ICMP == DEF_ENABLED)
-   #if (IP_NUMBER_OF_INTERFACE > 1)
-    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ICMP) != 0)
-   #endif
-    {
-        m_ICMP.Initialize();
-    }
+    m_ICMP.Initialize();
   #endif
 
   #if (IP_USE_TCP == DEF_ENABLED)
-   #if (IP_NUMBER_OF_INTERFACE > 1)
-    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_TCP) != 0)
-   #endif
-    {
-        m_TCP.Initialize();
-    }
+    m_TCP.Initialize();
   #endif
 
   #if (IP_USE_NTP == DEF_ENABLED)
-   #if (IP_NUMBER_OF_INTERFACE > 1)
-    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_NTP) != 0)
-   #endif
-    {
-        m_NTP.Initialize();
-    }
+    m_NTP.Initialize();
   #endif
 
   #if (IP_USE_SNTP == DEF_ENABLED)
-   #if (IP_NUMBER_OF_INTERFACE > 1)
-   #endif
-    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_SNTP) != 0)
-    {
-        m_pSNTP.Initialize();
-    }
+    m_pSNTP.Initialize();
   #endif
 
   #if (IP_USE_SOAP == DEF_ENABLED)
-   #if (IP_NUMBER_OF_INTERFACE > 1)
-    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_SOAP) != 0)
-   #endif
-    {
-        m_SOAP.Initialize();
-    }
+    m_SOAP.Initialize();
   #endif
 
-    #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+   #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
     myStacktistic.Register(m_Config[IF_ID].pStack, TASK_IP_MANAGER_STACK_SIZE, m_Config[IF_ID].HostName);
   #endif
-
 
     Error = nOS_ThreadCreate(&m_Handle,
                              TaskIP_Manager_Wrapper,
@@ -212,42 +170,24 @@ void IP_Manager::Run(void)
     for (;;)
     {
       #if (IP_USE_DHCP == DEF_ENABLED)
-       #if (IP_NUMBER_OF_INTERFACE > 1)
-        if ((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
-        {
-       #endif
-            (void)m_DHCP.Process(nullptr);    // Internal, non-blocking state machine
-       #if (IP_NUMBER_OF_INTERFACE > 1)
-        }
-       #endif
+        (void)m_DHCP.Process(nullptr);                      // Internal, non-blocking state machine
       #endif
 
-        if (nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
+        if(nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
         {
             switch (ntohs(pMsg->pPacket->ETH_Header.Type))
             {
                 case IP_ETHERNET_TYPE_IP:
                 {
-                  #if (IP_NUMBER_OF_INTERFACE > 1)
-                    if ((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-                  #endif
-                    {
-                        m_ARP.ProcessIP(pMsg);      // May update ARP cache, does NOT own pMsg
-                    }
-
-                    ProcessIP(pMsg);                // Transfers ownership to protocol/socket
+                    m_ARP.ProcessIP(pMsg);                  // May update ARP cache, does NOT own pMsg
+                    ProcessIP(pMsg);                        // Transfers ownership to protocol/socket
                     // IMPORTANT: no free here
                 }
                 break;
 
                 case IP_ETHERNET_TYPE_ARP:
                 {
-                  #if (IP_NUMBER_OF_INTERFACE > 1)
-                    if ((m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_ARP) != 0)
-                  #endif
-                    {
-                        m_ARP.ProcessARP(pMsg);     // ARP owns and frees pMsg
-                    }
+                    m_ARP.ProcessARP(pMsg);     // ARP owns and frees pMsg
                     // If ARP.ProcessARP does not free, you must free here
                     // FreeMessage(pMsg);
                 }
@@ -371,14 +311,9 @@ IP_PacketMsg_t* IP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
 IP_Address_t IP_Manager::GetDNS(void)
 {
   #if (IP_USE_DHCP == DEF_ENABLED)
-   #if (IP_NUMBER_OF_INTERFACE > 1)
-    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
-   #endif
+    if(m_DHCP.GetMode() == DHCP_IS_ON)
     {
-        if(m_DHCP.GetMode() == DHCP_IS_ON)
-        {
-            return IP_DHCP_DNS_IP;
-        }
+        return IP_DHCP_DNS_IP;
     }
   #endif
 
@@ -400,14 +335,9 @@ IP_Address_t IP_Manager::GetDNS(void)
 IP_Address_t IP_Manager::GetHost(void)
 {
   #if (IP_USE_DHCP == DEF_ENABLED)
-   #if (IP_NUMBER_OF_INTERFACE > 1)
-    if(m_pEthernetIF->ProtocolFlag & IP_FLAG_USE_DHCP) != 0)
-   #endif
+    if(m_DHCP.GetMode() == DHCP_IS_ON)
     {
-        if(m_DHCP.GetMode() == DHCP_IS_ON)
-        {
-            return IP_DHCP_IP;
-        }
+        return IP_DHCP_IP;
     }
   #endif
 

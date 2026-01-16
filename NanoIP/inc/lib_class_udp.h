@@ -40,7 +40,6 @@
 #define UDP_EPHEMERAL_PORT_MIN              49152
 #define UDP_EPHEMERAL_PORT_MAX              65535
 
-
 #define UDP_MAX_BINDS                       8                    
 
 //-------------------------------------------------------------------------------------------------

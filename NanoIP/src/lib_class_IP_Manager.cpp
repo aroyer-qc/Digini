@@ -88,50 +88,55 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 {
     nOS_Error Error;
 
+    m_Context.SetIP_Manager(this);
+    m_SocketManager.Initialize(&m_Context);               // Initialize socket manager
+
     // Initialize Variables
     m_Context.SetIP_Valid(false);
     //m_DNS_IP_Found = false;  not used so far
     m_Context.InitializeMsgQ();                                             // this need to handle error
     m_Context.SetMAC_Address(&m_Config[IF_ID].IP_ETH_Config.MAC_Address);
+    m_Context.SetHostName(m_Config[IF_ID].pHostName);
     m_Context.SetMTU(IP_NET_IF_MTU);                                        // Set netif maximum transfer unit
-    m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config);
+    m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config, &m_Context);
     m_Context.RegisterSendCallback(&m_IF_Driver.LowLevelOutputWrapper, &m_IF_Driver);
-    m_Context.SetIP_Manager(this);
 
     // All protocol support are created dynamically if interface is set to use it, and if configuration is enable for that protocol
 
+
+
   #if (IP_USE_UDP == DEF_ENABLED)
-    m_UDP.Initialize();
+    m_UDP.Initialize(&m_Context);
   #endif
 
   #if (IP_USE_DHCP == DEF_ENABLED)
-    m_DHCP.Initialize();
+    m_DHCP.Initialize(&m_Context);
   #endif
 
-    m_ARP.Initialize();
+    m_ARP.Initialize(&m_Context);
 
   #if (IP_USE_ICMP == DEF_ENABLED)
-    m_ICMP.Initialize();
+    m_ICMP.Initialize(&m_Context);
   #endif
 
   #if (IP_USE_TCP == DEF_ENABLED)
-    m_TCP.Initialize();
+    m_TCP.Initialize(&m_Context);
   #endif
 
   #if (IP_USE_NTP == DEF_ENABLED)
-    m_NTP.Initialize();
+    m_NTP.Initialize(&m_Context);
   #endif
 
   #if (IP_USE_SNTP == DEF_ENABLED)
-    m_pSNTP.Initialize();
+    m_pSNTP.Initialize(&m_Context);
   #endif
 
   #if (IP_USE_SOAP == DEF_ENABLED)
-    m_SOAP.Initialize();
+    m_SOAP.Initialize(&m_Context);
   #endif
 
    #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-    myStacktistic.Register(m_Config[IF_ID].pStack, TASK_IP_MANAGER_STACK_SIZE, m_Config[IF_ID].HostName);
+    myStacktistic.Register(m_Config[IF_ID].pStack, TASK_IP_MANAGER_STACK_SIZE, m_Config[IF_ID].pHostName);
   #endif
 
     Error = nOS_ThreadCreate(&m_Handle,
@@ -170,7 +175,7 @@ void IP_Manager::Run(void)
     for (;;)
     {
       #if (IP_USE_DHCP == DEF_ENABLED)
-        (void)m_DHCP.Process(nullptr);                      // Internal, non-blocking state machine
+        (void)m_DHCP.Process();                             // Internal, non-blocking state machine
       #endif
 
         if(nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
@@ -310,16 +315,7 @@ IP_PacketMsg_t* IP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
 //-------------------------------------------------------------------------------------------------
 IP_Address_t IP_Manager::GetDNS(void)
 {
-  #if (IP_USE_DHCP == DEF_ENABLED)
-    if(m_DHCP.GetMode() == DHCP_IS_ON)
-    {
-        return IP_DHCP_DNS_IP;
-    }
-  #endif
-
-    // TODO there might be a case where HEC have built-in DHCP.. need to handle that case
-
-    return IP_ADDRESS(0,0,0,0);//IP_StaticDNS_IP;
+    return m_Context.GetActiveDNS_IP();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -334,18 +330,7 @@ IP_Address_t IP_Manager::GetDNS(void)
 //-------------------------------------------------------------------------------------------------
 IP_Address_t IP_Manager::GetHost(void)
 {
-  #if (IP_USE_DHCP == DEF_ENABLED)
-    if(m_DHCP.GetMode() == DHCP_IS_ON)
-    {
-        return IP_DHCP_IP;
-    }
-  #endif
-
-    // TODO there might be a case where HEC have built-in DHCP.. need to handle that case
-    // maybe ass a define for external call to get IP Address..
-
-
-    return IP_ADDRESS(0,0,0,0);//IP_StaticIP;
+    return m_Context.GetActiveIP();
 }
 
 //-------------------------------------------------------------------------------------------------

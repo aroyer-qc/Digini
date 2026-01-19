@@ -79,8 +79,9 @@
 //                  incoming datagrams.
 //
 //-------------------------------------------------------------------------------------------------
-void NetUDP::Initialize(void)
+void NetUDP::Initialize(NetworkContext* pContext)
 {
+    m_pContext = pContext;
     memset(m_BoundSockets, 0, sizeof(m_BoundSockets));      // Clear the binding table
     m_BoundCount = 0;                                       // Reset the number of active bindings
     m_NextEphemeralPort = UDP_EPHEMERAL_PORT_MIN;           // Reset ephemeral port allocator
@@ -125,7 +126,7 @@ void NetUDP::Process(IP_PacketMsg_t* pMsg)
 
     UDP_Socket_t* pUDP_Sock = pSock->GetUDP();
 
-    if(nOS_QueueWrite(&pUDP_Sock->RxQueue, &pMsg, 0) != NOS_OK)         // Enqueue packet for this socket
+    if(nOS_QueueWrite(&pUDP_Sock->RX_Queue, &pMsg, 0) != NOS_OK)         // Enqueue packet for this socket
     {
         IP_Manager::FreeMessage(pMsg);                                  // Queue full → drop
         return;
@@ -203,7 +204,7 @@ SystemState_e NetUDP::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, co
     uint8_t* pPayload = (uint8_t*)(pUDP + 1);
     memcpy(pPayload, pData, Length);
 
-    IP_Manager* pIP_Manager = m_Context.GetIP_Manager();
+    IP_Manager* pIP_Manager = m_pContext->GetIP_Manager();
 
     // Build IP header via IP_Manager
     pIP_Manager->PutHeader(pMsg, pDestInfo->Address, UDP_PayloadLen, IP_PROTOCOL_UDP);

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :  lib_class_icmp.h
+//  File : lib_class_context.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2010-2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,37 +24,41 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#pragma once
+//-------------------------------------------------------------------------------------------------
+// Include file(s)
+//-------------------------------------------------------------------------------------------------
+
+#include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 
-#if (IP_USE_ICMP == DEF_ENABLED)
+#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
 
-#define 	ICMP_TYPE_PING_REPLY			0
-#define 	ICMP_TYPE_PING_REQUEST			8
-
-//-------------------------------------------------------------------------------------------------
-// Class definition(s)
-//-------------------------------------------------------------------------------------------------
-class NetICMP
+SystemState_e NetworkContext::InitializeMsgQ(void)
 {
-    public:
-
-        void                Initialize      (NetworkContext* pContext);
-        void                Process         (IP_PacketMsg_t* pRX);
-
-    private:
-
-        NetworkContext*     m_pContext;
-};
+    nOS_QueueCreate(&m_Q_Msg, m_ArrayPacketPtr, sizeof(IP_PacketMsg_t*), IP_MANAGER_PACKET_Q_SIZE);
+    return SYS_READY;
+}
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (IP_USE_ICMP == DEF_ENABLED)
+SystemState_e NetworkContext::SendPacket(IP_PacketMsg_t* pMsg)
+{
+    if(m_SendCallback == nullptr)
+    {
+        IP_Manager::FreeMessage(pMsg);
+        return SYS_INVALID_STATE;
+    }
+
+    return m_SendCallback(m_SendContext, &pMsg);
+}
 
 //-------------------------------------------------------------------------------------------------
+
+#endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+
 

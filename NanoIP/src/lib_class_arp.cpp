@@ -56,9 +56,11 @@ void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg);
 // 					Setup OS timer for ARP table entry
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e NetARP::Initialize(void)
+SystemState_e NetARP::Initialize(NetworkContext* pContext)
 {
     nOS_Error Error;
+
+    m_pContext = pContext;
 
 	// Clear the ARP cache table
 	for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
@@ -96,8 +98,8 @@ SystemState_e NetARP::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 void NetARP::ProcessIP(IP_PacketMsg_t* pRX)
 {
-    IP_Address_t SubnetMask = m_Context.GetActiveSubnetMask();
-    IP_Address_t ActiveIP   = m_Context.GetActiveIP();
+    IP_Address_t SubnetMask = m_pContext->GetActiveSubnetMask();
+    IP_Address_t ActiveIP   = m_pContext->GetActiveIP();
     IP_Address_t SourceIP   = pRX->pPacket->IP_Frame.Header.SrcIP_Addr;
 
     if((SourceIP & SubnetMask) == (ActiveIP & SubnetMask))
@@ -119,22 +121,11 @@ void NetARP::ProcessIP(IP_PacketMsg_t* pRX)
 void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 {
     // Sanity check: must have at least ARP frame (sans ETH header)
-    /*
-    if((pRX == nullptr) || (pRX->pPacket == nullptr) || (pRX->PacketSize < (sizeof(IP_ARP_Frame_t) - sizeof(IP_EthernetHeader_t))))
+    if((pRX == nullptr) || (pRX->pPacket == nullptr) || (pRX->PacketSize < (sizeof(ARP_Frame_t) - sizeof(IP_EthernetHeader_t))))
     {
-        if(pRX != nullptr)
-        {
-            if(pRX->pPacket != nullptr)
-            {
-                pMemoryPool->Free((void**)&pRX->pPacket);
-            }
-
-            pMemoryPool->Free((void**)&pRX);
-        }
-
+        IP_Manager::FreeMessage(pRX);
         return;
     }
-    */
 
     ARP_Frame_t* pRX_ARP = &pRX->pPacket->ARP_Frame;
     IP_PacketMsg_t* pTX  = nullptr;
@@ -145,7 +136,7 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
         case ARP_REQUEST:
         {
             // On ne répond que si la requête est pour notre IP
-            if(pRX_ARP->DstIP_Address == m_Context.GetActiveIP())
+            if(pRX_ARP->DstIP_Address == m_pContext->GetActiveIP())
             {
                 // Allouer le wrapper TX
                 pTX = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(sizeof(IP_PacketMsg_t), MEM_DBG_ARP);
@@ -155,34 +146,34 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
                     break;  // pas de réponse, mais on va quand même free pRX plus bas
                 }
 
-                // Allouer le packet Ethernet complet
+                // Alloc full Ethernet packet
                 pTX->pPacket = (IP_EthernetPacket_t*)pMemoryPool->AllocAndClear(pRX->PacketSize, MEM_DBG_ARPDT);
 
                 if(pTX->pPacket == nullptr)
                 {
                     pMemoryPool->Free((void**)&pTX);
-                    break;  // pas de réponse
+                    break;  // No response
                 }
 
                 pTX->PacketSize = pRX->PacketSize;
                 pTX_ARP         = &pTX->pPacket->ARP_Frame;
 
-                // Construire la réponse ARP
+                // Build ARP response
                 pTX_ARP->Opcode = ARP_REPLY;
 
-                // MAC de destination = MAC source de la requête
+                // Destination MAC = request source MAC
                 memcpy(pTX_ARP->DestinationMAC.Byte, pRX_ARP->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);
                 memcpy(pTX_ARP->ETH_Header.DestinationMAC.Byte, pRX_ARP->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);
 
-                // MAC source = notre MAC
-                m_Context.GetMAC_Address(&pTX_ARP->SourceMAC);
-                m_Context.GetMAC_Address(&pTX_ARP->ETH_Header.SourceMAC);
+                // MAC source = our MAC
+                m_pContext->GetMAC_Address(&pTX_ARP->SourceMAC);
+                m_pContext->GetMAC_Address(&pTX_ARP->ETH_Header.SourceMAC);
 
                 // IPs
                 pTX_ARP->DstIP_Address = pRX_ARP->SrcIP_Address;
-                pTX_ARP->SrcIP_Address = m_Context.GetActiveIP();
+                pTX_ARP->SrcIP_Address = m_pContext->GetActiveIP();
 
-                // Champs ARP
+                // ARP Field
                 pTX_ARP->HardwareType       = ARP_HARDWARE_TYPE_ETHERNET;
                 pTX_ARP->Protocol           = htons(IP_ETHERNET_TYPE_IP);
                 pTX_ARP->HardwareAddrLength = IP_MAC_ADDRESS_SIZE;
@@ -191,17 +182,17 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
                 // Header Ethernet
                 pTX_ARP->ETH_Header.Type = htons(IP_ETHERNET_TYPE_ARP);
 
-                // Envoyer via ton chemin TX standard
-                m_Context.SendPacket(pTX);
-                // TX IRQ libérera pTX->pPacket et pTX (selon ton implémentation)
+                // Send to standard TX path
+                m_pContext->SendPacket(pTX);
+                // TX IRQ will free pTX->pPacket and pTX
             }
         }
         break;
 
         case ARP_REPLY:
         {
-            // On apprend seulement si la réponse nous est destinée
-            if (pRX_ARP->DstIP_Address == m_Context.GetActiveIP())
+            // We learn this only if we are the destination
+            if (pRX_ARP->DstIP_Address == m_pContext->GetActiveIP())
             {
                 UpdateEntry(pRX_ARP->SrcIP_Address, &pRX_ARP->SourceMAC);
             }
@@ -214,70 +205,9 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
     }
 
     // Dans tous les cas, ARP est propriétaire de pRX → on doit le libérer
-    pMemoryPool->Free((void**)&pRX->pPacket);
-    pMemoryPool->Free((void**)&pRX);
+    IP_Manager::FreeMessage(pRX);
 }
 
-#if 0
-void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
-{
-	//uint8_t 		Error;
-	ARP_Frame_t*	pRX_ARP;
-	IP_PacketMsg_t* pTX     = nullptr;
-	ARP_Frame_t*	pTX_ARP = nullptr;
-
-	if(pRX->PacketSize < (sizeof(IP_ARP_Frame_t) - sizeof(IP_EthernetHeader_t)))
-	{
-		return;
-	}
-
-	pRX_ARP = &pRX->pPacket->ARP_Frame;
-
-	switch(pRX_ARP->Opcode)
-	{
-		case ARP_REQUEST:
-		{
-            // ARP request. If it asked for our address, we send out a reply.
-			if(pRX_ARP->DstIP_Addr == m_Context.GetActiveIP())
-			{
-                pTX = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(pRX->PacketSize + 2);     // Get memory for TX packet + Size
-				pTX->PacketSize = pRX->PacketSize;											// Get the packet size from request packet (PING)
-                pTX_ARP = &pTX->pPacket->ARP_Frame;
-
-				pTX_ARP->Opcode = ARP_REPLY;
-                memcpy(pTX_ARP->Dst.Byte, pRX_ARP->Src.Byte, IP_MAC_ADDRESS_SIZE);
-				memcpy(pTX_ARP->ETH_Header.Dst.Byte, pRX_ARP->Src.Byte, IP_MAC_ADDRESS_SIZE);
-                m_Context.GetMAC_Address(&pTX_ARP->Src);
-                m_Context.GetMAC_Address(&pTX_ARP->ETH_Header.Src);
-				pTX_ARP->DstIP_Addr = pRX_ARP->SrcIP_Addr;
-				pTX_ARP->SrcIP_Addr = m_Context.GetActiveIP();
-
-				pTX_ARP->HardwareType          = ARP_HARDWARE_TYPE_ETHERNET;
-				pTX_ARP->Protocol              = htons(IP_ETHERNET_TYPE_IP);
-				pTX_ARP->HardwareAddrLength    = IP_MAC_ADDRESS_SIZE;
-				pTX_ARP->ProtocolLength        = 4;
-				pTX_ARP->ETH_Header.Type       = htons(IP_ETHERNET_TYPE_ARP);
-			}
-		}
-        break;
-
-		case ARP_REPLY:
-		{
-			// ARP reply. We insert or update the ARP table if it was for us.
-			if((pRX_ARP->DstIP_Addr == m_Context.GetActiveIP()))
-			{
-				UpdateEntry(pRX_ARP->SrcIP_Addr, &pRX_ARP->Src);
-			}
-		}
-		break;
-	}
-
-	if(pTX != nullptr)
-	{
-		//NIC_Send(pTX);
-	}
-}
-#endif
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:         	UpdateEntry
@@ -415,16 +345,16 @@ void NetARP::ProcessOut(IP_PacketMsg_t* pTX)
 
 	if(pTX != nullptr)                        		// If data are to be sent back, then send the data
 	{
-        IP_Address_t SubnetMask = m_Context.GetActiveSubnetMask();
+        IP_Address_t SubnetMask = m_pContext->GetActiveSubnetMask();
 
 //		pARP	= &pTX->pPacket->ARP_Frame;
 		pFrame  = pTX->pPacket;
 
         // Check if the destination address is on the local network.
-		if((pFrame->IP_Frame.Header.DstIP_Addr & SubnetMask) != (m_Context.GetActiveIP() & SubnetMask))
+		if((pFrame->IP_Frame.Header.DstIP_Addr & SubnetMask) != (m_pContext->GetActiveIP() & SubnetMask))
 		{
 			// Use the default router's IP address instead of the destination
-			//IP_Address = m_Context.GetIP_     DefaultGatewayAddress;
+			//IP_Address = m_pContext->GetIP_     DefaultGatewayAddress;
 		}
 		else
 		{

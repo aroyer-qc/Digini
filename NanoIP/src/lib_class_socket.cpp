@@ -34,6 +34,9 @@
 
 #include "./lib_digini.h"
 
+#include <new>
+
+
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
@@ -44,24 +47,38 @@
 //#define UDP_RX_BUFFER_SIZE              2048
 //#define RAW_RX_BUFFER_SIZE              1536
 
+#define SOCKET_DEFAULT_TIME_OUT             1000
+
+//-------------------------------------------------------------------------------------------------
+
+void SocketManager::Initialize(NetworkContext* pContext)
+{
+    m_pContext = pContext;
+   // m_pManager = m_pContext->GetIP_Manager();
+    m_ActiveCount = 0;
+}
+
 //-------------------------------------------------------------------------------------------------
 
 Socket* SocketManager::AllocSocket(SocketType_e Type)
 {
-    for(uint16_t i = 0; i < SOCKET_MAX_COUNT; i++)
+    if(m_ActiveCount >= SOCKET_MAX_COUNT)              // Enforce maximum number of sockets
     {
-        if(SocketManager::m_SocketInUse[i] == false)
-        {
-            SocketManager::m_SocketInUse[i] = true;
-            Socket* pSock = &SocketManager::m_SocketTable[i];
-            memset(pSock, 0, sizeof(Socket));                       // Wipe the entire socket object (protocol structs included)
-            pSock->m_SocketID = i;                                  // Assign ID before Create()
-            pSock->Create(Type);                                    // Fully initialize protocol-specific structures
-            return pSock;
-        }
+        return nullptr;
     }
 
-    return nullptr;
+    void* pSocketMemory = pMemoryPool->Alloc(sizeof(Socket), MEM_DBG_SOCKALLOC);
+
+    if(pSocketMemory == nullptr)
+    {
+        return nullptr;
+    }
+
+    Socket* pSocket = new (pSocketMemory)Socket(*m_pContext, *m_pContext->GetIP_Manager());
+    pSocket->Create(Type);
+
+    m_ActiveSockets[m_ActiveCount++] = pSocket;
+    return pSocket;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -73,12 +90,158 @@ void SocketManager::FreeSocket(Socket** ppSocket)
         return;
     }
 
-    Socket* pSock = *ppSocket;
-    uint16_t id = pSock->m_SocketID;
+    Socket* pSocket = *ppSocket;
 
-    pSock->Close();
-    SocketManager::m_SocketInUse[id] = false;
+    // Nothing to free if no active sockets
+    if(m_ActiveCount == 0)
+    {
+        return;
+    }
+
+    // Remove from active list
+    bool Found = false;
+
+    for(uint8_t i = 0; i < m_ActiveCount; i++)
+    {
+        if(m_ActiveSockets[i] == pSocket)
+        {
+            // Replace with last active socket
+            m_ActiveSockets[i] = m_ActiveSockets[m_ActiveCount - 1];
+            m_ActiveSockets[m_ActiveCount - 1] = nullptr;
+
+            m_ActiveCount--;
+            Found = true;
+            break;
+        }
+    }
+
+    // If the socket was not in the active list, do nothing
+    if(Found == false)
+    {
+        return;
+    }
+
+    // Destroy object
+    pSocket->~Socket();
+
+    // Free memory back to pool
+    pMemoryPool->Free((void**)&pSocket);
+
     *ppSocket = nullptr;
+}
+
+//-------------------------------------------------------------------------------------------------
+Socket* SocketManager::FindUDP_SocketByPort(IP_Port_t Port)
+{
+  #if (IP_USE_UDP == DEF_ENABLED)
+    for(uint8_t i = 0; i < m_ActiveCount; i++)
+    {
+        Socket* pSocket = m_ActiveSockets[i];
+
+        if(pSocket->GetType() != SOCKET_TYPE_DATAGRAM)
+        {
+            continue;
+        }
+
+        UDP_Socket_t* pUDP = pSocket->GetUDP();
+
+        if(pUDP == nullptr)
+        {
+            continue;
+        }
+
+        if(pUDP->LocalPort == Port)
+        {
+            return pSocket;
+        }
+    }
+  #endif
+
+    return nullptr;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+Socket* SocketManager::FindRAW_ByProtocol(uint8_t Protocol)
+{
+  #if (IP_USE_RAW == DEF_ENABLED)
+    for(uint8_t i = 0; i < m_ActiveCount; i++)
+    {
+        Socket* pSocket = m_ActiveSockets[i];
+
+        if(pSocket->GetType() != SOCKET_TYPE_RAW)
+        {
+            continue;
+        }
+
+        if(pSocket->GetRawProtocol() == Protocol)
+        {
+            return pSocket;
+        }
+    }
+  #endif
+
+    return nullptr;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+Socket* SocketManager::FindTCP_Connection(uint32_t LocalIP, IP_Port_t LocalPort, uint32_t RemoteIP, IP_Port_t RemotePort)
+{
+  #if (IP_USE_TCP == DEF_ENABLED)
+    for(uint8_t i = 0; i < m_ActiveCount; i++)
+    {
+        Socket* pSocket = m_ActiveSockets[i];
+
+        if(pSocket->GetType() != SOCKET_TYPE_STREAM)
+        {
+            continue;
+        }
+
+        TCP_Socket_t* pTCP = pSocket->GetTCP();
+
+        if(pTCP == nullptr)
+        {
+            continue;
+        }
+
+        if(pTCP->LocalIP   == LocalIP   &&
+           pTCP->LocalPort == LocalPort &&
+           pTCP->RemoteIP  == RemoteIP  &&
+           pTCP->RemotePort== RemotePort)
+        {
+            return pSocket;
+        }
+    }
+  #endif
+
+    return nullptr;
+}
+//-------------------------------------------------------------------------------------------------
+
+Socket::Socket(NetworkContext& Context, IP_Manager& Manager) : m_Context(Context),  m_Manager(Manager)
+{
+    m_Type        = SOCKET_TYPE_INVALID;
+    m_State       = SOCKET_STATE_CLOSED;
+    m_IsBlocking  = true;
+    m_IsBound     = false;
+    m_IsListening = false;
+    m_Backlog     = 0;
+    m_Flags       = 0;
+    m_TimeoutMs   = SOCKET_DEFAULT_TIME_OUT;
+
+    m_LocalInfo.Address  = 0;
+    m_LocalInfo.Port     = 0;
+
+    m_RemoteInfo.Address = 0;
+    m_RemoteInfo.Port    = 0;
+
+  #if (IP_USE_UDP == DEF_ENABLED)
+    m_Protocol.pUDP = nullptr;
+  #endif
+  #if (IP_USE_TCP == DEF_ENABLED)
+    m_Protocol.pTCP = nullptr;
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -101,50 +264,79 @@ void Socket::Create(SocketType_e Type)
 {
     m_Type         = Type;
     m_State        = SOCKET_STATE_CLOSED;
-    m_TimeoutMs    = DEFAULT_SOCKET_TIMEOUT;
-    m_IsBlocking   = true;
-    m_IsBound      = false;
-    m_IsListening  = false;
-    m_Backlog      = 0;
-    m_Flags        = 0;
 
     // Reset local/remote endpoint info
-    m_LocalInfo.Port  = 0;
-    m_LocalInfo.IP    = NetIF_GetLocalIP();
-
-    m_RemoteInfo.Port = 0;
-    m_RemoteInfo.IP   = 0;
+    m_LocalInfo.Address  = m_Context.GetActiveIP();
+    m_LocalInfo.Port     = 0;
+    m_RemoteInfo.Address = 0;
+    m_RemoteInfo.Port    = 0;
 
     // Clear protocol pointers
+
+  #if (IP_USE_UDP == DEF_ENABLED)
     m_Protocol.pUDP = nullptr;
+    memset(&m_UDP_Storage, 0, sizeof(m_UDP_Storage));
+  #endif
+
+  #if (IP_USE_TCP == DEF_ENABLED)
     m_Protocol.pTCP = nullptr;
+    memset(&m_TCP_Storage, 0, sizeof(m_TCP_Storage));
+  #endif
+
+  #if (IP_USE_RAW == DEF_ENABLED)
+    m_Protocol.pRAW = nullptr;
+    memset(&m_RAW_Storage, 0, sizeof(m_RAW_Storage));
+  #endif
+
 
     switch(Type)
     {
-        case SOCKET_TYPE_DGRAM:
+      #if (IP_USE_UDP == DEF_ENABLED)
+        case SOCKET_TYPE_DATAGRAM:
         {
-            m_Protocol.pUDP = &m_UDPStorage;
+            m_Protocol.pUDP = &m_UDP_Storage;
 
-            UDP_Socket_t* pUdp = m_Protocol.pUDP;
-            pUdp->LocalPort = 0;
-            pUdp->LocalIP   = NetIF_GetLocalIP();
-            pUdp->Flags     = 0;
-            nOS_QueueCreate(&pUdp->RxQueue, pUdp->RxQueueBuffer, sizeof(UDP_Message_t), UDP_RX_QUEUE_DEPTH);
+            UDP_Socket_t* pUDP = m_Protocol.pUDP;
+            pUDP->LocalPort = 0;
+            pUDP->LocalIP   = m_Context.GetActiveIP();
+            pUDP->Flags     = 0;
+            nOS_QueueCreate(&pUDP->RX_Queue, pUDP->RX_QueueBuffer, sizeof(UDP_Message_t), UDP_RX_QUEUE_DEPTH);
         }
         break;
+      #endif
 
+      #if (IP_USE_TCP == DEF_ENABLED)
         case SOCKET_TYPE_STREAM:
         {
-            m_Protocol.pTCP    = &m_TCPStorage;
-            TCP_Socket_t* pTcp = m_Protocol.pTCP;
+            m_Protocol.pTCP    = &m_TCP_Storage;
+            TCP_Socket_t* pTCP = m_Protocol.pTCP;
 
             // Minimal TCP initialization
-            pTcp->State        = TCP_STATE_CLOSED;
-            pTcp->RxQueueCount = 0;
-            pTcp->TxQueueCount = 0;
-            pTcp->Flags        = 0;
+            pTCP->State        = TCP_STATE_CLOSED;
+            pTCP->RxQueueCount = 0;
+            pTCP->TxQueueCount = 0;
+            pTCP->Flags        = 0;
 
             // (Full TCP state machine, seq numbers, windows, etc. will be added later)
+        }
+        break;
+      #endif
+
+      #if (IP_USE_RAW == DEF_ENABLED)
+        case SOCKET_TYPE_RAW:
+        {
+            m_Protocol.pRAW = &m_RAW_Storage;
+            m_RAW_Storage.Protocol = 0;     // user must set
+            m_RAW_Storage.LocalIP  = 0;     // accept any
+            m_RAW_Storage.RemoteIP = 0;     // accept any
+        }
+        break;
+      #endif
+
+        default:
+        {
+            m_State = SOCKET_STATE_ERROR;
+            m_Type  = SOCKET_TYPE_INVALID;   // Add this enum value
         }
         break;
     }
@@ -170,7 +362,7 @@ void Socket::Create(SocketType_e Type)
 //-------------------------------------------------------------------------------------------------
 SystemState_e Socket::Bind(IP_Port_t Port)
 {
-    if(m_Type != SOCKET_TYPE_DGRAM)
+    if(m_Type != SOCKET_TYPE_DATAGRAM)
     {
         return SYS_INVALID_STATE;
     }
@@ -180,15 +372,15 @@ SystemState_e Socket::Bind(IP_Port_t Port)
 
     if(Port == 0)
     {
-        ActualPort = m_pNetUDP->AllocateEphemeralPort();
-        
+        ActualPort = m_Manager.UDP_AllocateEphemeralPort();
+
         if(ActualPort == 0)
         {
             return SYS_FAIL_PORT_IN_USE;   // No free ephemeral port
         }
     }
 
-    if(m_pNetUDP->RegisterSocket(this, Port) == false)              // Ask NetUDP to register this port
+    if(m_Manager.UDP_RegisterSocket(this, Port) == false)              // Ask NetUDP to register this port
     {
         return SYS_FAIL_PORT_IN_USE;
     }
@@ -223,27 +415,28 @@ SystemState_e Socket::Bind(IP_Port_t Port)
 //                  UDP sockets do not support Listen() and will return SYS_INVALID_STATE.
 //
 //-------------------------------------------------------------------------------------------------
+#if (IP_USE_TCP == DEF_ENABLED)
 SystemState_e Socket::Listen(uint16_t Backlog)
 {
-    if(m_Type != SOCKET_TYPE_STREAM)            // Only TCP supports Listen()
+    if(m_Type != SOCKET_TYPE_STREAM)                    // Only TCP supports Listen()
     {
         return SYS_INVALID_STATE;
     }
 
-    if(Backlog == 0)                            // Backlog must be non-zero
+    if(Backlog == 0)                                    // Backlog must be non-zero
     {
-        return SYS_INVALID_PARAM;
+        return SYS_INVALID_PARAMETER;
     }
 
-    if(m_LocalInfo.Port == 0)                   // Socket must be bound to a local port before listening
+    if(m_LocalInfo.Port == 0)                           // Socket must be bound to a local port before listening
     {
         return SYS_INVALID_STATE;
     }
 
-    m_Tcp.m_Backlog = Backlog;                  // Configure TCP passive-open state
-    m_IsListening = true;                       // Mark socket as listening
-    return m_Tcp.EnterListenState();            // Enter LISTEN state
+    m_IsListening = true;                               // Mark socket as listening
+    return m_Manager.TCP_EnterListen(this, Backlog);    // Enter LISTEN state
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -270,6 +463,7 @@ SystemState_e Socket::Listen(uint16_t Backlog)
 //                  handshake fails or times out, the function returns SYS_FAIL.
 //
 //-------------------------------------------------------------------------------------------------
+#if (IP_USE_TCP == DEF_ENABLED)
 SystemState_e Socket::Connect(const SocketInfo_t* pDestInfo)
 {
     if(m_Type == SOCKET_TYPE_DGRAM)
@@ -292,18 +486,27 @@ SystemState_e Socket::Connect(const SocketInfo_t* pDestInfo)
 
     return SYS_INVALID_STATE;
 }
+#endif
 
+//-------------------------------------------------------------------------------------------------
+#if (IP_USE_TCP == DEF_ENABLED)
 SystemState_e Socket::Accept(Socket** ppNewSocket)
 {
     if(m_Type != SOCKET_TYPE_STREAM)
+    {
         return SYS_INVALID_STATE;
+    }
 
     if(ppNewSocket == nullptr)
+    {
         return SYS_INVALID_PARAM;
+    }
 
     // TCP passive open
     return m_Tcp.Accept(ppNewSocket);
 }
+#endif
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Send
@@ -324,9 +527,10 @@ SystemState_e Socket::Accept(Socket** ppNewSocket)
 //                  architecture.
 //
 //-------------------------------------------------------------------------------------------------
+#if (IP_USE_TCP == DEF_ENABLED)
 SystemState_e Socket::Send(uint8_t* pData, size_t Length, size_t* pBytesSent)
 {
-    if(m_Type != SOCKET_TYPE_DGRAM)
+    if(m_Type != SOCKET_TYPE_DATAGRAM)
     {
         return SYS_INVALID_STATE;
     }
@@ -339,6 +543,7 @@ SystemState_e Socket::Send(uint8_t* pData, size_t Length, size_t* pBytesSent)
 
     return SendTo(pData, Length, &m_RemoteInfo, pBytesSent);
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -364,13 +569,13 @@ SystemState_e Socket::Send(uint8_t* pData, size_t Length, size_t* pBytesSent)
 //-------------------------------------------------------------------------------------------------
 SystemState_e Socket::SendTo(uint8_t* pData, size_t Length, SocketInfo_t* pDestInfo, size_t* pBytesSent)
 {
-    if(m_Type != SOCKET_TYPE_DGRAM)
+    if(m_Type != SOCKET_TYPE_DATAGRAM)
     {
         return SYS_INVALID_STATE;
     }
 
-    UDP_Socket_t* pUdp = m_Protocol.pUDP;
-    return UDP_Send(pUdp, pData, Length, pDestInfo, pBytesSent);
+    UDP_Socket_t* pUDP = m_Protocol.pUDP;
+    return m_Manager.UDP_Send(pUDP, pData, Length, pDestInfo, pBytesSent);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -396,6 +601,7 @@ SystemState_e Socket::SendTo(uint8_t* pData, size_t Length, SocketInfo_t* pDestI
 //                  Ownership of the packet is returned to the memory pool after processing.
 //
 //-------------------------------------------------------------------------------------------------
+#if (IP_USE_TCP == DEF_ENABLED)
 SystemState_e Socket::Recv(uint8_t* pBuffer, size_t BufferSize, size_t* pBytesReceived)
 {
     if(m_Type != SOCKET_TYPE_STREAM)
@@ -408,15 +614,15 @@ SystemState_e Socket::Recv(uint8_t* pBuffer, size_t BufferSize, size_t* pBytesRe
 
     if(nOS_QueueRead(&pTcp->RxQueue, &pMsg, m_TimeoutMs) != NOS_OK)
     {
-        return SYS_TIMEOUT;
+        return SYS_TIME_OUT;
     }
 
     TCP_Header_t* pTCP = &pMsg->pPacket->TCP_Frame.Header;
     IP_Header_t*  pIP  = &pMsg->pPacket->TCP_Frame.IP_Header;
 
-    size_t headerLen = (pTCP->DataOffset >> 4) * 4;
+    size_t headerLen = (pTCP->Offset >> 4) * 4;
     size_t ipLen     = ntohs(pIP->Length);
-    size_t dataLen   = ipLen - sizeof(IP_IP_Header_t) - headerLen;
+    size_t dataLen   = ipLen - sizeof(IP_Header_t) - headerLen;
 
     if(dataLen > BufferSize)
     {
@@ -431,6 +637,7 @@ SystemState_e Socket::Recv(uint8_t* pBuffer, size_t BufferSize, size_t* pBytesRe
     *pBytesReceived = dataLen;
     return SYS_READY;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -458,34 +665,34 @@ SystemState_e Socket::Recv(uint8_t* pBuffer, size_t BufferSize, size_t* pBytesRe
 //-------------------------------------------------------------------------------------------------
 SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t* pSrcInfo, size_t* pBytesReceived)
 {
-    if(m_Type != SOCKET_TYPE_DGRAM)
+    if(m_Type != SOCKET_TYPE_DATAGRAM)
     {
         return SYS_INVALID_STATE;
     }
 
-    UDP_Socket_t* pUdp      = m_Protocol.pUDP;
-    IP_PacketMsg_t* pMsg    = nullptr;
-    nOS_TickCounter timeout = m_IsBlocking ? m_TimeoutMs : 0;           // Blocking or non-blocking timeout
+    UDP_Socket_t*   pUDP_Socket = m_Protocol.pUDP;
+    IP_PacketMsg_t* pMsg        = nullptr;
+    nOS_TickCounter Timeout     = m_IsBlocking ? m_TimeoutMs : 0;           // Blocking or non-blocking timeout
 
-    if(nOS_QueueRead(&pUdp->RxQueue, &pMsg, timeout) != NOS_OK)         // Read next message from UDP RX queue
+    if(nOS_QueueRead(&pUDP_Socket->RX_Queue, &pMsg, Timeout) != NOS_OK)         // Read next message from UDP RX queue
     {
-        return SYS_TIMEOUT;
+        return SYS_TIME_OUT;
     }
 
     // Extract headers
-    UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.Header;
+    UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
     IP_Header_t*  pIP  = &pMsg->pPacket->UDP_Frame.IP_Header;
 
-    size_t udpLen = ntohs(pUDP->Length);
-    size_t payloadLen = udpLen - sizeof(UDP_Header_t);
+    size_t UDP_Len = ntohs(pUDP->Length);
+    size_t PayloadLen = UDP_Len - sizeof(UDP_Header_t);
 
-    if(payloadLen > BufferSize)
+    if(PayloadLen > BufferSize)
     {
-        payloadLen = BufferSize;
+        PayloadLen = BufferSize;
     }
 
     uint8_t* pPayload = (uint8_t*)(pUDP + 1);                           // Payload pointer (UDP header is immediately followed by data)
-    memcpy(pBuffer, pPayload, payloadLen);
+    memcpy(pBuffer, pPayload, PayloadLen);
 
     if(pSrcInfo != nullptr)                                             // Fill source info if requested
     {
@@ -494,7 +701,7 @@ SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t
     }
 
     IP_Manager::FreeMessage(pMsg);                                      // Free packet buffers (zero-copy release)
-    *pBytesReceived = payloadLen;
+    *pBytesReceived = PayloadLen;
     return SYS_READY;
 }
 
@@ -513,30 +720,59 @@ SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t
 //                  manager for reuse.
 //
 //-------------------------------------------------------------------------------------------------
-void Socket::Close()
+void Socket::Close(void)
 {
-    if(m_Type == SOCKET_TYPE_DGRAM)
+    switch(m_Type)
     {
-        UDP_Socket_t* pUdp = m_Protocol.pUDP;
-
-        if(pUdp->LocalPort != 0)                            // Unbind port if bound
+      #if (IP_USE_UDP == DEF_ENABLED)
+        case SOCKET_TYPE_DATAGRAM:
         {
-            m_pNetUDP->UnregisterSocket(pUdp->LocalPort);
-            pUdp->LocalPort = 0;
+            UDP_Socket_t* pUDP_Socket = m_Protocol.pUDP;
+
+            if(pUDP_Socket->LocalPort != 0)                             // Unbind port if bound
+            {
+                m_Manager.UDP_UnregisterSocket(pUDP_Socket->LocalPort);
+                pUDP_Socket->LocalPort = 0;
+            }
+
+            FreeAllMessages(&pUDP_Socket->RX_Queue);                    // Flush RX queue
         }
+        break;
+      #endif
 
-        FreeAllMessages(&pUdp->RxQueue);                    // Flush RX queue
-    }
+      #if (IP_USE_TCP == DEF_ENABLED)
+        case SOCKET_TYPE_STREAM:
+        {
+            TCP_Socket_t* pTCP_Socket = m_Protocol.pTCP;
+            m_Manager.TCP_Close(this);                                  // Let TCP manager handle teardown
 
-    else if(m_Type == SOCKET_TYPE_STREAM)
-    {
-        TCP_Socket_t* pTcp = m_Protocol.pTCP;
 
-        // TCP cleanup (state machine, queues, etc.)
-        FreeAllMessages(&pUdp->RxQueue);                    // Flush RX queue
+            // TCP cleanup (state machine, queues, etc.)
+            FreeAllMessages(&pTCP_Socket->RX_Queue);                    // Flush RX queue
 
-        // Additional TCP teardown if needed
-        // (state machine, retransmission buffers, etc.)
+            // Additional TCP teardown if needed
+            // (state machine, retransmission buffers, etc.)
+        }
+        break;
+      #endif
+
+      #if (IP_USE_RAW == DEF_ENABLED)
+        case SOCKET_TYPE_RAW:
+        {
+            RAW_Socket_t* pRAW = m_Protocol.pRAW;
+
+            if(pRAW->Protocol != 0)
+            {
+                m_Manager.RAW_UnregisterSocket(pRAW->Protocol);
+                pRAW->Protocol = 0;
+            }
+
+            FreeAllMessages(&pRAW->RX_Queue);
+        }
+        break;
+      #endif
+
+        default: break;
     }
 
     m_Type = SOCKET_TYPE_NONE;                              // Reset type so the allocator knows it's clean
@@ -568,12 +804,13 @@ void Socket::FreeAllMessages(nOS_Queue* pQueue)
 
     while(nOS_QueueIsEmpty(pQueue) == false)                    // Drain the queue and free all pending messages
     {
-        if(nOS_QueueRead(pQueue, &pMsg, 0) == NOS_OK)           // Read next pointer from the queue (non-blocking)  
+        if(nOS_QueueRead(pQueue, &pMsg, 0) == NOS_OK)           // Read next pointer from the queue (non-blocking)
         {
             IP_Manager::FreeMessage(pMsg);
         }
     }
 }
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           HasData
@@ -601,15 +838,19 @@ bool Socket::HasData(void)
         return false;
     }
 
-    if(m_Type == SOCKET_TYPE_DGRAM)
+  #if (IP_USE_UDP == DEF_ENABLED)
+    if(m_Type == SOCKET_TYPE_DATAGRAM)
     {
-        return (nOS_QueueIsEmpty(&m_Protocol.pUDP->RxQueue) == false) ? true : false;
+        return (nOS_QueueIsEmpty(&m_Protocol.pUDP->RX_Queue) == false) ? true : false;
     }
+  #endif
 
+  #if (IP_USE_TCP == DEF_ENABLED)
     if(m_Type == SOCKET_TYPE_STREAM)
     {
-        return (nOS_QueueIsEmpty(&m_Protocol.pTCP->RxQueue) == false) ? true : false;
+        return (nOS_QueueIsEmpty(&m_Protocol.pTCP->RX_Queue) == false) ? true : false;
     }
+  #endif
 
     return false;
 }
@@ -674,5 +915,54 @@ void Socket::GetRemoteInfo(SocketInfo_t* pInfo)
     *pInfo = m_RemoteInfo;
 }
 
+//-------------------------------------------------------------------------------------------------
+
+SystemState_e Socket::SetOption(SocketOption_e Option, void* pValue, size_t ValueSize)
+{
+    if(pValue == nullptr)
+    {
+        return SYS_INVALID_PARAMETER;
+    }
+
+    switch(Option)
+    {
+        case SOCKET_OPT_NON_BLOCKING:
+        {
+            if(ValueSize == sizeof(bool))
+            {
+                bool NonBlocking = *(bool*)pValue;
+                m_IsBlocking = !NonBlocking;
+                return SYS_READY;
+            }
+
+            return SYS_INVALID_PARAMETER;
+        }
+
+        case SOCKET_OPT_BROADCAST:
+        {
+            if(ValueSize == sizeof(bool))
+            {
+                bool Enable = *(bool*)pValue;
+
+                if(Enable)
+                {
+                    m_Flags |= SOCKET_FLAG_BROADCAST;
+                }
+                else
+                {
+                    m_Flags &= ~SOCKET_FLAG_BROADCAST;
+                }
+
+                return SYS_READY;
+            }
+
+            return SYS_INVALID_PARAMETER;
+        }
+        // Add other options here as needed
+
+        default:
+            return SYS_INVALID_PARAMETER;
+    }
+}
 
 //-------------------------------------------------------------------------------------------------

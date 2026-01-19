@@ -54,8 +54,9 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void NetICMP::Initialize(void)
+void NetICMP::Initialize(NetworkContext& pContext)
 {
+    m_pContext = pContext;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -72,9 +73,9 @@ void NetICMP::Process(IP_PacketMsg_t* pRX)
 {
     uint16_t Count;
 
-    
+
     //  Check if IP is Vaild            and  Validate size
-    if((m_Context.IsIP_Valid() == false) || (pRX->PacketSize < sizeof(IP_ICMP_Frame_t)))
+    if((m_pContext->IsIP_Valid() == false) || (pRX->PacketSize < sizeof(IP_ICMP_Frame_t)))
     {
         pMemoryPool->Free((void**)&pRX->pPacket);
         pMemoryPool->Free((void**)&pRX);
@@ -119,7 +120,7 @@ void NetICMP::Process(IP_PacketMsg_t* pRX)
             pTX->pPacket->ICMP_Frame.IP_Header.DstIP_Addr = pTX->pPacket->ICMP_Frame.IP_Header.SrcIP_Addr;
             pTX->pPacket->ICMP_Frame.IP_Header.SrcIP_Addr = IP_HostAddress;
             IP_PutHeader(pTX);
-            m_Context.SendPacket(pTX);                                                                              // Send reply internally
+            m_pContext->SendPacket(pTX);                                                                              // Send reply internally
             // Free TX (SendPacket will free after TX IRQ)
         }
         break;

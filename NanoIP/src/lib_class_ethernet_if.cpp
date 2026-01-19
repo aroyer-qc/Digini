@@ -87,15 +87,16 @@ extern "C" void ClassEthernetIf_Wrapper(void* pvParameters)
 //                  interface.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
+SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, NetworkContext* pContext)
 {
     nOS_Error            Error;
     SystemState_e        State;
     ETH_DriverInterface* pETH_Driver;
     IP_MAC_Address_t     MAC_Address;
 
+    m_pContext    = pContext;
     m_pETH_Config = pETH_Config;
-	m_Context.SetLinkState(ETH_LINK_DOWN);
+	m_pContext->SetLinkState(ETH_LINK_DOWN);
 
     Error = nOS_SemCreate(&m_RX_Sem, 0, NET_RX_COUNT_MAX_SEMAPHORE);
     Error = nOS_MutexCreate(&m_TX_Mutex, NOS_MUTEX_NORMAL, 1);
@@ -115,7 +116,7 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config)
     pETH_Driver = m_pETH_Config->pETH_Driver;
     pETH_Driver->Initialize(this, m_pETH_Config->PHY_Address);      // TODO put in here the callback
 
-    m_Context.GetMAC_Address(&MAC_Address);
+    m_pContext->GetMAC_Address(&MAC_Address);
     pETH_Driver->SetMacAddress(&MAC_Address);
 
     if((State = m_pETH_Config->pPHY_Driver->Initialize(pETH_Driver, m_pETH_Config->PHY_Address)) == SYS_READY)      // Interface ID is used as address
@@ -218,7 +219,7 @@ void ETH_IF_Driver::Run(void)
     {
         if(nOS_SemTake(&m_RX_Sem, NET_BLOCK_TIME_WAITING_FOR_INPUT) == NOS_OK)
         {
-            if(m_Context.GetLinkState() == ETH_LINK_DOWN)
+            if(m_pContext->GetLinkState() == ETH_LINK_DOWN)
             {
                 PollTheNetworkInterface();
             }
@@ -234,7 +235,7 @@ void ETH_IF_Driver::Run(void)
                     break;
                 }
 
-                if(nOS_QueueWrite(m_Context.GetMsgQ(), (void*)&pPacketMsg, NET_BLOCK_TIME_WAITING_FOR_Q) != NOS_OK)
+                if(nOS_QueueWrite(m_pContext->GetMsgQ(), (void*)&pPacketMsg, NET_BLOCK_TIME_WAITING_FOR_Q) != NOS_OK)
                 {
                     pMemoryPool->Free((void**)&pPacketMsg);
                   #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
@@ -272,7 +273,7 @@ void ETH_IF_Driver::PollTheNetworkInterface(void)
     {
         LinkNow = m_pETH_Config->pPHY_Driver->GetLinkState();
 
-        if(LinkNow != m_Context.GetLinkState())
+        if(LinkNow != m_pContext->GetLinkState())
         {
             if(LinkNow == ETH_LINK_UP)
             {
@@ -285,7 +286,7 @@ void ETH_IF_Driver::PollTheNetworkInterface(void)
                 DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: Link DOWN\n");
             }
 
-            m_Context.SetLinkState(LinkNow);
+            m_pContext->SetLinkState(LinkNow);
         }
     }
 }

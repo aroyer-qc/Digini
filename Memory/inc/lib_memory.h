@@ -69,6 +69,7 @@
     X_MEM_DBG(MEM_DBG_ICMP)                                     \
     X_MEM_DBG(MEM_DBG_ICMPDT)                                   \
     X_MEM_DBG(MEM_DBG_SOCKET)                                   \
+    X_MEM_DBG(MEM_DBG_SOCKALLOC)                                \
     X_MEM_DBG(MEM_DBG_TCPSOCK)                                  \
     X_MEM_DBG(MEM_DBG_TCPRXBUF)                                 \
     X_MEM_DBG(MEM_DBG_TCPTXBUF)                                 \
@@ -80,6 +81,8 @@
     X_MEM_DBG(MEM_DBG_ARPDT)                                    \
     X_MEM_DBG(MEM_DBG_UDP)                                      \
     X_MEM_DBG(MEM_DBG_UDPDT)                                    \
+    X_MEM_DBG(MEM_DBG_DHCP)                                     \
+    X_MEM_DBG(MEM_DBG_DHCPTX)                                   \
     /* UniqueID for lib_service                               */\
     X_MEM_DBG(MEM_DBG_SERVICE)
 

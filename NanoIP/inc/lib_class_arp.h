@@ -53,9 +53,7 @@ class NetARP
 {
     public:
 
-                            NetARP                  (NetworkContext& Context) : m_Context(Context) {}
-
-        SystemState_e       Initialize              (void);
+        SystemState_e       Initialize              (NetworkContext* pContext);
         void                ProcessIP               (IP_PacketMsg_t* pRX);
         void                ProcessARP              (IP_PacketMsg_t* pRX);
         void                ProcessOut              (IP_PacketMsg_t* pTX);
@@ -66,7 +64,7 @@ class NetARP
 
         void                UpdateEntry				(IP_Address_t IP_Address, IP_MAC_Address_t* pMAC_Adress);
 
-        NetworkContext&     m_Context;
+        NetworkContext*     m_pContext;
         IP_Address_t        m_IP_Address;
         ARP_TableEntry_t    m_TableEntry[IP_ARP_TABLE_SIZE];
         uint8_t             m_Time;

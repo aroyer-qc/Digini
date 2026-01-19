@@ -136,7 +136,10 @@
 #include "./Memory/inc/lib_memory.h"
 #include "./Memory/inc/lib_node_list.h"
 #include "./Memory/inc/lib_memory_node.h"
+#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 #include "./NanoIP/inc/lib_ethernet_typedef.h"
+#include "./NanoIP/inc/lib_class_context.h"
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Interface
@@ -165,7 +168,7 @@
 #endif
 
 #if (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
-#include "./NanoIP/inc/lib_ethernet_typedef.h"
+//#include "./NanoIP/inc/lib_ethernet_typedef.h"
 #include "./NanoIP/inc/lib_class_socket.h"
 #include "./NanoIP/inc/lib_class_arp.h"
 #include "./NanoIP/inc/lib_class_icmp.h"

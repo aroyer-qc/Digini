@@ -498,9 +498,9 @@ void VT100_Terminal::DisplayMenu(void)
           #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
             SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
           #endif
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
+            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR, VT100_SCREEN_WIDTH);
         //    InMenuPrintf(VT100_SZ_NONE, LBL_VT100_MENU_TITLE); // TODO Fix
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR);
+            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR, VT100_SCREEN_WIDTH);
           #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
             SetColor(VT100_COLOR_YELLOW, VT100_COLOR_BLACK);
           #endif
@@ -563,45 +563,20 @@ void VT100_Terminal::PrintMenuStaticInfo(void)
     InMenuPrintf(VT100_LBL_HIDE_CURSOR);
     InMenuPrintf(LBL_CLEAR_SCREEN);
     SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
-    InMenuPrintf(VT100_LBL_LINE_SEPARATOR);
-    pString  = myLabel.GetPointer(VT100_LBL_LINE_SEPARATOR);
-    SizeLine = VT100_X_SIZE;
+    InMenuPrintf(VT100_LBL_REPEAT_CHARACTER, '-', VT100_SCREEN_WIDTH);
+    InMenuPrintf(LBL_LINEFEED);
     pString  = myLabel.GetPointer(VT100_LBL_MENU_TITLE);
     SizeTitle = strlen(pString);
-    SizeLine -= SizeTitle;
-    RepeatChar(' ', SizeLine / 2);
+    SizeLine = VT100_SCREEN_WIDTH - SizeTitle;
+    InMenuPrintf(VT100_LBL_REPEAT_CHARACTER, ' ', SizeLine / 2);
     InMenuPrintf(VT100_LBL_MENU_TITLE);
-    RepeatChar(' ', (SizeLine / 2) + (SizeLine % 2));
+    InMenuPrintf(VT100_LBL_REPEAT_CHARACTER, ' ', ((SizeLine / 2) + (SizeLine % 2) - 1));
     InMenuPrintf(LBL_LINEFEED);
-    InMenuPrintf(VT100_LBL_LINE_SEPARATOR);
+    InMenuPrintf(VT100_LBL_REPEAT_CHARACTER, '-', VT100_SCREEN_WIDTH);
     SetColor(VT100_COLOR_YELLOW, VT100_COLOR_BLACK);
     InMenuPrintf(LBL_DOUBLE_LINEFEED);
 }
 #endif
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           RepeatChar
-//
-//  Parameter(s):   uint8_t             Char to print multiple time
-//                  size_t              How many time to repeat print of the char
-//  Return:         None
-//
-//  Description:    Print a char multiple time
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void VT100_Terminal::RepeatChar(uint8_t Char, size_t Count)
-{
-    char* pBuffer;
-
-    if((pBuffer = (char*)pMemoryPool->AllocAndSet(Count + 1, Char, MEM_DBG_VT100_1)) != nullptr)
-    {
-        pBuffer[Count] = '\0';
-        m_pConsole->SendData((const uint8_t*)pBuffer, &Count);
-    }
-}
 
 //-------------------------------------------------------------------------------------------------
 //

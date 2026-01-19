@@ -40,7 +40,7 @@
 #define UDP_EPHEMERAL_PORT_MIN              49152
 #define UDP_EPHEMERAL_PORT_MAX              65535
 
-#define UDP_MAX_BINDS                       8                    
+#define UDP_MAX_BINDS                       8
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -59,9 +59,7 @@ class NetUDP
 {
     public:
 
-                                NetUDP                  (NetworkContext& Context) : m_Context(Context) {}
-
-        void 				    Initialize  		    (void);
+        void 				    Initialize  		    (NetworkContext* pContext);
         void                    Process				    (IP_PacketMsg_t* pMsg);
         SystemState_e           Send                    (UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent);
 
@@ -76,8 +74,8 @@ class NetUDP
         UDP_BoundEntry_t        m_BoundSockets          [UDP_MAX_BINDS];
         size_t                  m_BoundCount            = 0;
         IP_Port_t               m_NextEphemeralPort     = UDP_EPHEMERAL_PORT_MIN;
-  
-        NetworkContext          m_Context;
+
+        NetworkContext*         m_pContext;
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -120,20 +120,6 @@ enum IF_ID_e
 class IP_Manager
 {
     public:
-                            // TODO i will also need to pass the name of the interface, because of multi instance ( Wired, WIFI)
-                            IP_Manager               () : m_IF_Driver(m_Context),
-                                                          m_ARP(m_Context)
-                                                      #if (IP_USE_DHCP == DEF_ENABLED)
-                                                        , m_DHCP(m_Context)
-                                                      #endif
-                                                      #if (IP_USE_ICMP == DEF_ENABLED)
-                                                        , m_ICMP(m_Context)
-                                                      #endif
-                                                      #if (IP_USE_UDP == DEF_ENABLED)
-                                                        , m_UDP(m_Context)
-                                                      #endif
-                                                        {}
-
 
         void                Initialize                  (IF_ID_e IF_ID);
         void                Run                         (void);
@@ -143,9 +129,38 @@ class IP_Manager
 
         IP_Address_t        GetDNS                      (void);
         IP_Address_t        GetHost                     (void);
-        NetworkContext*     GetContext                  (void)          { return &m_Context; }
-        void                PutHeader                   (IP_PacketMsg_t* pTX, IP_Address_t dstIP, uint16_t payloadLength, uint8_t protocol);    // UDP=17, TCP=6        
-        
+        NetworkContext*     GetContext                  (void)                              { return &m_Context; }
+        SocketManager*      GetSocketManager            (void)                              { return &m_SocketManager; }
+        void                PutHeader                   (IP_PacketMsg_t* pTX, IP_Address_t dstIP, uint16_t payloadLength, uint8_t protocol);    // UDP=17, TCP=6
+
+
+
+      #if IP_USE_RAW == DEF_ENABLED
+        bool                RAW_RegisterSocket          (Socket* pSock, uint8_t Protocol)   { return m_RAW.RegisterSocket(pSock, Protocol); }
+        void                RAW_UnregisterSocket        (uint8_t Protocol)                  { m_RAW.UnregisterSocket(Protocol); }
+        SystemState_e       RAW_Send                    (RAW_Socket_t* pSock,
+                                                         uint8_t* pData,
+                                                         size_t Length,
+                                                         SocketInfo_t* pDestInfo,
+                                                         size_t* pBytesSent)                { return m_RAW.Send(pSock, pData, Length, pDestInfo, pBytesSent); }
+      #endif
+
+      #if IP_USE_TCP == DEF_ENABLED
+        SystemState_e       TCP_EnterListen             (Socket* pSock, uint16_t Backlog)   { return m_TCP.EnterListen(pSock, Backlog); }
+        void                TCP_Close                   (Socket* pSock)                     { m_TCP.Close(pSock); }
+      #endif
+
+      #if IP_USE_UDP == DEF_ENABLED
+        IP_Port_t           UDP_AllocateEphemeralPort   (void)                              { return m_UDP.AllocateEphemeralPort(); }
+        bool                UDP_RegisterSocket          (Socket* pSock, IP_Port_t Port)     { return m_UDP.RegisterSocket(pSock, Port); }
+        void                UDP_UnregisterSocket        (IP_Port_t Port)                    { m_UDP.UnregisterSocket(Port); }
+        SystemState_e       UDP_Send                    (UDP_Socket_t* pSock,
+                                                         uint8_t* pData,
+                                                         size_t Length,
+                                                         SocketInfo_t* pDestInfo,
+                                                         size_t* pBytesSent)                { return m_UDP.Send(pSock, pData, Length, pDestInfo, pBytesSent); }
+      #endif
+
         static int16_t      CalculateChecksum           (void* pBuffer, uint16_t Count);
         static void         FreeMessage                 (IP_PacketMsg_t* pMsg);
         static void         IP_ToAscii                  (char* pBuffer, IP_Address_t IP_Address);
@@ -182,6 +197,10 @@ class IP_Manager
         uint8_t                         m_NTP_Server_2[IP_MAX_URL_SIZE];
       #endif
 
+      #if (IP_USE_RAW == DEF_ENABLED)
+        NetRAW                          m_RAW;                                 // RAW
+      #endif
+
       #if (IP_USE_SNTP == DEF_ENABLED)
         NetSNTP                         m_SNTP;                                // Simple Network Transport Protocol
         bool                            m_FlagSNTP_Fail;
@@ -190,12 +209,8 @@ class IP_Manager
       #if (IP_USE_SOAP == DEF_ENABLED)
         NetSOAP                         m_SOAP                                 // Simple Object Access Protocol
 
-        uint8_t                         m_SOAP_Server_1[IP_MAX_URL_SIZE];       // Messaging protocol specification for exchanging structured information.
+        uint8_t                         m_SOAP_Server_1[IP_MAX_URL_SIZE];      // Messaging protocol specification for exchanging structured information.
         uint8_t                         m_SOAP_Server_2[IP_MAX_URL_SIZE];
-      #endif
-
-      #if (IP_USE_SOCKET == DEF_ENABLED)
-        NetSOCK                         m_SOCK                                 // Socket
       #endif
 
       #if (IP_USE_TCP == DEF_ENABLED)

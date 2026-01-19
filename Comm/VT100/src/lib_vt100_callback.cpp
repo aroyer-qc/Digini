@@ -313,7 +313,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 
         case VT100_CALLBACK_REFRESH_ONCE:
         {
-            myVT100.ClearScreenWindow(0, 4, 80, 30);
+            myVT100.ClearScreenWindow(0, 4, VT100_SCREEN_WIDTH, 30);
 
             myVT100.InMenuPrintf(1, 6,  LBL_SYSTEM_INFO);
 
@@ -362,7 +362,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(24, 18, (Unit == TEMP_CELSIUS) ? LBL_DEGREE_CELSIUS : LBL_DEGREE_FAHRENHEIT);
           #endif
 
-            myVT100.InMenuPrintf(1, 20, VT100_LBL_LINE_SEPARATOR);
+            myVT100.InMenuPrintf(1, 20, VT100_LBL_REPEAT_CHARACTER, '-', VT100_SCREEN_WIDTH);
             myVT100.InMenuPrintf(1, 22, VT100_LBL_FONT_TERMINAL);
             uint8_t y = 24;
 
@@ -829,9 +829,9 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             myVT100.InMenuPrintf(26, 21, LBL_SD_KB_USED, TotalBytes - FreeBytes);                                               // Used Sector
             myVT100.InMenuPrintf(80, 21, LBL_SD_KB_AVAILABLE, FreeBytes);                                                       // Free Sector
             myVT100.InMenuPrintf(26, 22, LBL_SIZE_BYTES, uint32_t(FatFs->csize * BLOCK_SIZE));                                  // Cluster Size
-            myVT100.InMenuPrintf(80, 22, LBL_SD_SECTORS, FatFs->csize);                                                                  // Sector Per Cluster
-            myVT100.InMenuPrintf(80, 23, LBL_SD_SECTORS, (TotalBytes * 1024) / (FatFs->csize * BLOCK_SIZE));                                                                  // Cluster Count
-            myVT100.InMenuPrintf(26, 23, LBL_SD_SECTORS, (FreeBytes * 1024) / (FatFs->csize * BLOCK_SIZE));                                                                  // Free Cluster Count
+            myVT100.InMenuPrintf(80, 22, LBL_SD_SECTORS, FatFs->csize);                                                         // Sector Per Cluster
+            myVT100.InMenuPrintf(80, 23, LBL_SD_SECTORS, (TotalBytes * 1024) / (FatFs->csize * BLOCK_SIZE));                    // Cluster Count
+            myVT100.InMenuPrintf(26, 23, LBL_SD_SECTORS, (FreeBytes * 1024) / (FatFs->csize * BLOCK_SIZE));                     // Free Cluster Count
             myVT100.InMenuPrintf(1, 23, VT100_LBL_SCROLL_ZONE, 30, 40);
 
 {
@@ -923,8 +923,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
 
             for(uint32_t i = 0; i < Max; i++)
             {
-                OffsetMultiplierX = uint8_t(((i % 3) * 33) + 2);
-                OffsetMultiplierY = uint8_t(((i / 3) * 6) + 14);
+                OffsetMultiplierX = uint8_t(((i % 4) * 33) + 2);
+                OffsetMultiplierY = uint8_t(((i / 4) * 6) + 14);
                 myVT100.DrawBox(OffsetMultiplierX, OffsetMultiplierY, 32, 3, VT100_COLOR_WHITE);
                 myVT100.InMenuPrintf(OffsetMultiplierX--, OffsetMultiplierY - 1, VT100_LBL_MEM_POOL_GROUP, i, pMemoryPool->GetPoolNumberOfBlock(i), pMemoryPool->GetPoolBlockSize(i));
             }
@@ -935,8 +935,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
 
             for(uint32_t i = 1; i < j; i++)
             {
-                OffsetMultiplierX = uint8_t(((i % 3) * 33) + 3);
-                myVT100.InMenuPrintf(OffsetMultiplierX - 1, (OffsetMultiplierY + uint8_t(i / 3)), Label_e((uint32_t(LBL_MEM_DBG_NONE) - 1) + i));
+                OffsetMultiplierX = uint8_t(((i % 4) * 33) + 3);
+                myVT100.InMenuPrintf(OffsetMultiplierX - 1, (OffsetMultiplierY + uint8_t(i / 4)), Label_e((uint32_t(LBL_MEM_DBG_NONE) - 1) + i));
             }
         }
         break;
@@ -951,8 +951,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
                 uint32_t UsedBlock     = pMemoryPool->GetPoolBlockUsed(i);
                 uint32_t MaxBlock      = pMemoryPool->GetPoolBlockHighPoint(i);
 
-                OffsetMultiplierX = uint8_t(((i % 3) * 33) + 3);
-                OffsetMultiplierY = uint8_t(((i / 3) * 6) + 15);
+                OffsetMultiplierX = uint8_t(((i % 4) * 33) + 3);
+                OffsetMultiplierY = uint8_t(((i / 4) * 6) + 15);
                 PercentUsed = (UsedBlock * 100) / NumberOfBlock;
                 PercentMax  = (MaxBlock  * 100) / NumberOfBlock;
 
@@ -966,8 +966,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
 
             for(uint32_t i = 1; i < j; i++)
             {
-                OffsetMultiplierX = uint8_t(((i % 3) * 34) + 25);
-                myVT100.InMenuPrintf(OffsetMultiplierX - 1,  (OffsetMultiplierY + uint8_t(i / 3)), VT100_LBL_ALLOC_DEBUG_COUNTER, pMemoryPool->GetAllocCount(MEM_DebugListOfID_e(i)));
+                OffsetMultiplierX = uint8_t(((i % 4) * 34) + 25);
+                myVT100.InMenuPrintf(OffsetMultiplierX - 1,  (OffsetMultiplierY + uint8_t(i / 4)), VT100_LBL_ALLOC_DEBUG_COUNTER, pMemoryPool->GetAllocCount(MEM_DebugListOfID_e(i)));
             }
         }
         break;

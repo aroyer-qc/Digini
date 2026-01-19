@@ -165,7 +165,7 @@ enum NAME ## _ItemID_e                                             \
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define VT100_X_SIZE                        100
+#define VT100_X_SIZE                        132
 #define VT100_Y_SIZE                        60
 
 #define VT100_OFFSET_COLOR_FOREGROUND       30
@@ -344,7 +344,6 @@ bool                GetString                   (char* pBuffer, size_t Size);
       #endif
         void                        ClearScreenWindow           (uint8_t PosX, uint8_t PosY, uint8_t SizeX, uint8_t SizeY);
         void                        ClearInputMenuSelection     (void);
-        void                        RepeatChar                  (uint8_t Char, size_t Count);
         void                        MenuSelectItems             (char ItemsChar);
 
         VT100_InputType_e           CallBack                    (VT100_InputType_e (*pCallback)(uint8_t, VT100_CallBackType_e), VT100_CallBackType_e Type, uint8_t Item);

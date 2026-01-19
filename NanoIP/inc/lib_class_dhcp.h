@@ -34,6 +34,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+#define DHCP_HARDWARE_TYPE_ETHERNET             1
+
 #define DHCP_OPTION_PADDING                     0x00
 #define DHCP_OPTION_END_OF_FIELD                0xFF
 #define DHCP_OPTION_SUBNET_MASK                 0x01
@@ -55,8 +57,6 @@
 #define DHCP_SERVER_PORT                        67
 #define DHCP_CLIENT_PORT                        68
 
-#define DHCP_HARWARE_TYPE_ETHERNET_10           0x01
-#define DHCP_HARDWARE_TYPE_ETHERNET_100         0x02
 #define DHCP_HARDWARE_ADDRESS_LENGHT            0x06
 
 #define DHCP_MAGIC_COOKIE                       0x63538263      // 0x63825363 in Big Endian
@@ -71,11 +71,6 @@
 
 #define DHCP_TIMEOUT                            10              // 10 second before a retry at DHCP
 
-// Action Type for struct MSG_t for MSG_TYPE_DHCP_MANAGEMENT
-#define DHCP_MSG_ACTION_LEASE_RENEWAL           1
-#define DHCP_MSG_ACTION_REBIND                  2
-#define DHCP_MSG_ACTION_TIME_OUT                3
-
 #define DHCP_IS_ON                              true
 #define DHCP_IS_OFF                             false
 
@@ -86,8 +81,8 @@
 enum DHCP_State_e
 {
     DHCP_STATE_INITIAL,
-    DHCP_STATE_DISCOVER,
-    DHCP_STATE_OFFER_RECEIVED,
+    DHCP_STATE_SELECTING,
+    DHCP_STATE_REQUESTING,
     DHCP_STATE_BOUND,
     DHCP_STATE_RENEWING,
     DHCP_STATE_REBINDING,
@@ -95,13 +90,15 @@ enum DHCP_State_e
 
 enum DHCP_OptionType_e
 {
+    DHCP_OPTION_UNKNOWN  = 0,
     DHCP_OPTION_DISCOVER = 1,
     DHCP_OPTION_OFFER    = 2,
     DHCP_OPTION_REQUEST  = 3,
-    DHCP_OPTION_DECLINE  = 4,        // not used   we don't declie an offer
+    DHCP_OPTION_DECLINE  = 4,        // not used   we don't decline an offer
     DHCP_OPTION_ACK      = 5,
     DHCP_OPTION_NACK     = 6,
     DHCP_OPTION_RELEASE  = 7,        // not used???
+    DHCP_OPTION_INFORM   = 8        // not used???
 };
 
 // DHCP Message Actions
@@ -116,35 +113,41 @@ enum  DHCP_MsgAction_e
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-struct DHCP_Options_t
-{
-    DHCP_OptionType_e   Type;
-    IP_Address_t        GatewayIP;
-    IP_Address_t        SubnetMaskIP;
-    IP_Address_t        DNS_ServerIP;
-    IP_Address_t        ClientIP;
-    IP_Address_t        ServerIP;
-    /* TickCount ? */uint32_t            LeaseTime;
-};
-
+#pragma pack(push, 1)
 struct DHCP_Msg_t
 {
     uint8_t      Op;
     uint8_t      H_Type;
     uint8_t      H_Length;
     uint8_t      Hops;
+
     uint32_t     X_ID;
-    uint16_t     Secs;
+    uint16_t     Seconds;
     uint16_t     Flags;
+
     IP_Address_t ClientIP_Address;
     IP_Address_t YourIP_Address;
     IP_Address_t ServerIP_Address;
     IP_Address_t RelayAgentIP_Address;
+
     uint8_t      ClientHardware[16];
     uint8_t      Sname[64];
     uint8_t      File[128];
+
     uint32_t     MagicCookie;
     uint8_t      Options[DHCP_OPTION_IN_PACKET_SIZE];
+};
+#pragma pack(pop)
+
+struct DHCP_Options_t
+{
+    IP_Address_t    ClientIP;
+    IP_Address_t    ServerIP;
+    IP_Address_t    SubnetMaskIP;
+    IP_Address_t    GatewayIP;
+    IP_Address_t    DNS_ServerIP;
+    uint32_t        LeaseTime;
+    uint8_t         Type;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -155,10 +158,9 @@ class NetDHCP
 {
     public:
 
-                        NetDHCP         (NetworkContext& Context) : m_Context(Context) {}
+        void            Initialize      (NetworkContext* pContext);
+        bool            Process         (void);
 
-        void            Initialize      (void);
-        bool            Process         (DHCP_Msg_t* pMsg);
         void            SetMode         (bool Mode)                 { m_Mode = Mode; }
         bool            GetMode         (void)                      { return m_Mode; }
 
@@ -174,7 +176,7 @@ class NetDHCP
         bool            Discover        (void);
         bool            Request         (void);
 
-        NetworkContext&         m_Context;
+        NetworkContext*         m_pContext;
         Socket*                 m_pSocket;                      // Socket UDP pour DHCP
         uint32_t                m_XID;
         DHCP_Options_t          m_Options;

@@ -52,10 +52,7 @@ class ETH_IF_Driver
 {
     public:
 
-                                ETH_IF_Driver               (NetworkContext& Context) : m_Context(Context) {}
-
-
-        SystemState_e           Initialize                  (const IP_ETH_Config_t* pETH_Config);
+        SystemState_e           Initialize                  (const IP_ETH_Config_t* pETH_Config, NetworkContext* pContext);
         void                    Run                         (void);
         static void             CallbackWrapper             (void* pContext, uint32_t Event)                { static_cast<ETH_IF_Driver*>(pContext)->CallBack(Event); }
         static SystemState_e    LowLevelOutputWrapper       (void* pContext, IP_PacketMsg_t** ppPacketMsg)  { ETH_IF_Driver* Self = static_cast<ETH_IF_Driver*>(pContext);
@@ -74,7 +71,7 @@ class ETH_IF_Driver
         nOS_Mutex                   m_TX_Mutex;
         static nOS_Thread           m_Handle;
         static nOS_Stack            m_Stack[TASK_ETHERNET_IF_STACK_SIZE];
-        NetworkContext&             m_Context;
+        NetworkContext*             m_pContext;
         const IP_ETH_Config_t*      m_pETH_Config;
 };
 

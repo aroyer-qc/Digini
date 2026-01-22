@@ -153,4 +153,9 @@
 #define TIME_HOURS_PER_DAY                          24
 #define TIME_YEAR_PER_CENTURY                       100
 
+#define TIME_TICKS_PER_SECOND                       CFG_SYSTICK_RATE
+#define TIME_TICKS_PER_MINUTE                       TIME_SECONDS_PER_MINUTE * CFG_SYSTICK_RATE
+#define TIME_TICKS_PER_HOUR                         TIME_SECONDS_PER_HOUR   * CFG_SYSTICK_RATE
+#define TIME_TICKS_PER_DAY                          TIME_SECONDS_PER_DAY    * CFG_SYSTICK_RATE
+
 //-------------------------------------------------------------------------------------------------

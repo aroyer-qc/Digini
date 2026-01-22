@@ -212,6 +212,8 @@ union SocketProtocol_t
 
 class Socket
 {
+    friend class SocketManager;
+
     public:
 
                             Socket              (NetworkContext& Context, IP_Manager& Manager);
@@ -242,6 +244,9 @@ class Socket
         SocketState_e       GetState            (void);
         SocketType_e        GetType             (void);
 
+        void                SetActive           (bool Active)           {m_Active = Active;            }
+        bool                GetActive           (void)                  {return m_Active;              }
+
       #if (IP_USE_UDP == DEF_ENABLED)
         bool                IsBound             (void);
         bool                IsListening         (void);
@@ -262,10 +267,6 @@ class Socket
       #else
         RAW_Socket_t*       GetRAW              (void)                  { return nullptr;              }
       #endif
-
-
-       // static Socket*      AllocSocket         (SocketType_e Type);
-       // static void         FreeSocket          (Socket** ppSocket);
 
     #if (SOCKET_USE_STATISTICS == DEF_ENABLED)
         void                GetStats            (SocketStats_t* pStats);
@@ -294,6 +295,7 @@ class Socket
         SocketProtocol_t        m_Protocol;
         uint16_t                m_Backlog;
         bool                    m_IsListening;
+        bool                    m_Active;
 
         uint16_t                m_SocketID;         // Used by dispatcher
         bool                    m_IsBlocking;
@@ -347,8 +349,6 @@ class SocketManager
     private:
 
         NetworkContext*     m_pContext                          = nullptr;
-        //IP_Manager*         m_pManager                          = nullptr;
-
         Socket*             m_ActiveSockets[SOCKET_MAX_COUNT]   = { nullptr };
         uint8_t             m_ActiveCount                       = 0;
 };

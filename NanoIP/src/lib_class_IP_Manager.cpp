@@ -175,7 +175,28 @@ void IP_Manager::Run(void)
     for (;;)
     {
       #if (IP_USE_DHCP == DEF_ENABLED)
-        (void)m_DHCP.Process();                             // Internal, non-blocking state machine
+        static ETH_LinkState_e LastLinkState = ETH_LINK_UNKNOWN;
+        ETH_LinkState_e LinkState = m_Context.GetLinkState();
+
+        // Link just went DOWN
+        if((LinkState == ETH_LINK_DOWN) && (LastLinkState == ETH_LINK_UP))
+        {
+            m_DHCP.Reset();        // sets state = INITIAL, stops timers, clears context
+            LastLinkState = ETH_LINK_DOWN;
+        }
+
+        // Link just came UP
+        if((LinkState == ETH_LINK_UP) && (LastLinkState == ETH_LINK_DOWN))
+        {
+            m_DHCP.Start();        // recreate socket, reset XID, begin DISCOVER
+            LastLinkState = ETH_LINK_UP;
+        }
+
+        // Run DHCP state machine only when link is up
+        if(LinkState == ETH_LINK_UP)
+        {
+            (void)m_DHCP.Process();
+        }
       #endif
 
         if(nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
@@ -186,15 +207,12 @@ void IP_Manager::Run(void)
                 {
                     m_ARP.ProcessIP(pMsg);                  // May update ARP cache, does NOT own pMsg
                     ProcessIP(pMsg);                        // Transfers ownership to protocol/socket
-                    // IMPORTANT: no free here
                 }
                 break;
 
                 case IP_ETHERNET_TYPE_ARP:
                 {
-                    m_ARP.ProcessARP(pMsg);     // ARP owns and frees pMsg
-                    // If ARP.ProcessARP does not free, you must free here
-                    // FreeMessage(pMsg);
+                    m_ARP.ProcessARP(pMsg);                 // ARP owns and frees pMsg
                 }
                 break;
 
@@ -233,10 +251,18 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
         break;
       #endif
 
+      #if (IP_USE_RAW == DEF_ENABLED)
+        case IP_PROTOCOL_RAW:
+        {
+            m_RAW.Process(pMsg);
+        }
+        break;
+      #endif
+
       #if (IP_USE_TCP == DEF_ENABLED)
         case IP_PROTOCOL_TCP:
         {
-            //TCP_Input(pMsg);
+            m_TCP.Process(pMsg);
         }
         break;
       #endif
@@ -244,65 +270,44 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
       #if (IP_USE_UDP == DEF_ENABLED)
         case IP_PROTOCOL_UDP:
         {
-            //UDP_Input(pMsg);
+             m_UDP.Process(pMsg);
         }
         break;
       #endif
 
         default:
         {
-            //RAW_Input(pMsg);
+            FreeMessage(pMsg);
         }
         break;
     }
 }
 
-/*
-IP_PacketMsg_t* IP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
+SystemState_e IP_Manager::SendPacket(IP_PacketMsg_t* pMsg)
 {
-	IP_PacketMsg_t* pTX = nullptr;
+    IP_EthernetHeader_t* pETH = &pMsg->pPacket->ETH_Header;
+    IP_Header_t*         pIP  = &pMsg->pPacket->IP_Frame.Header;
+    IP_Address_t         dstIP = pIP->DstIP_Addr;
 
-	switch(pRX->pPacket->IP_Frame.Header.Protocol)
-	{
-      #if (IP_USE_ICMP == DEF_ENABLED)
-		case IP_PROTOCOL_ICMP:
+    // Broadcast: 255.255.255.255 → FF:FF:FF:FF:FF:FF
+    if(dstIP == IP_ADDRESS(255,255,255,255))
+    {
+        memset(pETH->DestinationMAC.Byte, 0xFF, IP_MAC_ADDRESS_SIZE);
+    }
+    else
+    {
+        // Unicast → resolve via ARP
+        if(!m_ARP.Resolve(dstIP, &pETH->DestinationMAC))
         {
-            pTX = m_ICMP.Process(pRX);
+            // ARP not ready -> caller decides what to do
+            return SYS_ARP_RESOLVE_PENDING;
         }
-        break;
-      #endif
+    }
 
-      #if (IP_USE_UDP == DEF_ENABLED)
-        case IP_PROTOCOL_UDP:
-        {
-          #if (IP_USE_DHCP == DEF_ENABLED)
-            if(pRX->pPacket->UDP_Frame.Header.SrcPort == UDP_PORT_BOOT_P_SERVER)
-            {
-                m_DHCP.Process(pRX->pPacket->DHCP_Frame);
-            }
-            else
-          #endif
-            {
-                pTX = m_UDP.Process(pRX);
-            }
-        }
-        break;
-      #endif
-
-      #if (IP_USE_TCP == DEF_ENABLED)
-		case IP_PROTOCOL_TCP:	{pTX = m_TCP->Process(pRX);	 } break;
-      #endif
-
-        default:
-        {
-            // trap debug
-        }
-        break;
-	}
-
-	return pTX;
+    // Hand off to interface context (driver callback)
+    return m_Context.SendPacket(pMsg);
 }
-*/
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           GetDNS

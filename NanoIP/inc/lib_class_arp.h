@@ -35,14 +35,26 @@
 #define ARP_HARDWARE_TYPE_ETHERNET      1
 
 //-------------------------------------------------------------------------------------------------
-// Type definition(s) and structure(s)
+// enum(s)
+//-------------------------------------------------------------------------------------------------
+
+enum ARP_State_e
+{
+    ARP_STATE_EMPTY = 0,     // No entry
+    ARP_STATE_PENDING,       // ARP request sent, waiting for reply
+    ARP_STATE_VALID          // MAC resolved and usable
+};
+
+//-------------------------------------------------------------------------------------------------
+// struct(s)
 //-------------------------------------------------------------------------------------------------
 
 struct  ARP_TableEntry_t
 {
     IP_Address_t        IP_Address;
-    IP_MAC_Address_t    Ethernet;
-    uint8_t             Time;
+    IP_MAC_Address_t    MAC_Address;
+    ARP_State_e         State;                      // Entry state
+    uint8_t             TimeToLive;                 // Optional aging counter
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -57,7 +69,7 @@ class NetARP
         void                ProcessIP               (IP_PacketMsg_t* pRX);
         void                ProcessARP              (IP_PacketMsg_t* pRX);
         void                ProcessOut              (IP_PacketMsg_t* pTX);
-        void                Resolve                 (void);
+        bool                Resolve                 (IP_Address_t IP, IP_MAC_Address_t* pMAC);
         void                TimerCallBack	    	(void);
 
     private:

@@ -132,64 +132,36 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, Netw
 //
 //  Function:       LowLevelOutput
 //
-//  Parameter(s):
-//  Return:         SystemState_e       SYS_READY if the packet could be sent
-//                                             other value if the packet couldn't be sent
+//  Parameter(s):   ppPacketMsg     Pointer to a fully prepared IP_PacketMsg_t* wrapper.
+//                                   The wrapper contains a contiguous Ethernet frame buffer
+//                                   ready for transmission.
 //
-//  Description:    This function should do the actual transmission of the packet. The packet is
-//                  contained in the pPacket that is passed to the function. This pPacket might be
-//                  chained.
+//  Return:         SystemState_e   SYS_READY if the packet was accepted by the hardware driver.
+//                                   Any other value indicates the packet could not be queued.
 //
-//  Note(s):        Returning ???ERR_MEM ( need error to define this) ??? here if a DMA queue of your MAC is full can lead to strange
-//                  results. You might consider waiting for space in the DMA queue to become
-//                  available since the stack doesn't retry to send a packet dropped because of
-//                  memory failure (except for the TCP timers).
+//  Description:    This function performs the final step of packet transmission. At this stage,
+//                  the Ethernet frame is already fully constructed:
+//
+//                      - Destination MAC address resolved (ARP or broadcast)
+//                      - Source MAC address filled
+//                      - Ethernet Type set
+//                      - IP header complete and checksummed
+//                      - Transport header and payload in place
+//
+//                  No additional processing, ARP lookup, or header modification occurs here.
+//                  The function simply forwards the packet wrapper to the hardware-specific
+//                  Ethernet driver, which is responsible for queuing the frame for DMA
+//                  transmission and freeing the wrapper after TX completion (typically in IRQ).
+//
+//  Note(s):        If the hardware TX queue is full, the driver may return an error state.
+//                  The IP stack does not automatically retry dropped packets (except TCP
+//                  retransmissions driven by timers), so the driver may optionally block or
+//                  wait for queue space depending on system requirements.
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e ETH_IF_Driver::LowLevelOutput(IP_PacketMsg_t** ppPacketMsg)
 {
-
-
-/*
-    uint8_t* pNodeData;
-    size_t   NodeSize;
-    size_t   Length;
-
-    if(nOS_MutexLock(&m_TX_Mutex, NET_GUARD_BLOCK_TIME) == NOS_OK)
-    {
-        pPacket->Begin();                               // Reset Node pointer to the beginning
-        Length   = pPacket->GetTotalSize();
-        NodeSize = pPacket->GetNodeSize();
-
-        do
-        {
-            if(Length < NodeSize)
-            {
-                NodeSize = Length;
-            }
-
-            Length   -= NodeSize;
-            pNodeData = static_cast<uint8_t*>(pPacket->GetNext());
-
-            // Send the data from the pPacket to the interface, one pNodeData at a time.
-            uint32_t flags = (pNodeData != nullptr) ? ETH_MAC_TX_FRAME_FRAGMENT : 0;
-            m_pETH_Config->pETH_Driver->SendTX_Packet(pNodeData, NodeSize, flags);     //  standard call from an interface class ...  call this function  SendFrame
-        }
-        while((pPacket->GetNext() != nullptr) && (Length > 0));
-
-      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-        m_DBG_TX_Count++;
-      #endif
-
-        MemoryNode::FreeNode(&pPacket);
-        nOS_MutexUnlock(&m_TX_Mutex);
-    }
-    else
-    {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: low_level_output: Sem TimeOut\n");
-    }
-*/
-    return SYS_READY;
+    return m_pETH_Config->pETH_Driver->SendTX_Packet(ppPacketMsg);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -303,7 +275,7 @@ void ETH_IF_Driver::PollTheNetworkInterface(void)
 //-------------------------------------------------------------------------------------------------
 void ETH_IF_Driver::CallBack(uint32_t Event)
 {
-    if(Event == ETH_MAC_EVENT_RX_FRAME)       // Send notification on RX event
+    if((Event & ETH_MAC_EVENT_RX_FRAME) != 0) // Send notification on RX event
     {
         nOS_SemGive(&m_RX_Sem);               // Give the semaphore to wakeup IP_Manager task
     }

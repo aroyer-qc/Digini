@@ -69,6 +69,9 @@
 #define DHCP_PUT_OPTION_REQUESTED_CLIENT_IP     (uint8_t)0x10
 #define DHCP_PUT_OPTION_SERVER_IP               (uint8_t)0x20
 
+#define DHCP_DISCOVER_TIME_OUT                  uint32_t(4 * TIME_TICKS_PER_SECOND)
+#define DHCP_T1_LEASE_TIME_OUT                  uint32_t(12 * TIME_TICKS_PER_HOUR)
+#define DHCP_T2_REBIND_TIME_OUT                 uint32_t(21 * TIME_TICKS_PER_HOUR)
 #define DHCP_TIMEOUT                            10              // 10 second before a retry at DHCP
 
 #define DHCP_IS_ON                              true
@@ -164,10 +167,11 @@ class NetDHCP
         void            SetMode         (bool Mode)                 { m_Mode = Mode; }
         bool            GetMode         (void)                      { return m_Mode; }
 
+        void            Reset           (void);
+        bool            Start           (void);
+
     private:
 
-
-        bool            Start           (void);
         void            ParseOffer      (DHCP_Msg_t* pRX);
         void            IsBound         (void);
         void            ParseOption     (DHCP_Msg_t* pRX);

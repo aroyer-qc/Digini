@@ -100,6 +100,13 @@ void NetARP::ProcessIP(IP_PacketMsg_t* pRX)
 {
     IP_Address_t SubnetMask = m_pContext->GetActiveSubnetMask();
     IP_Address_t ActiveIP   = m_pContext->GetActiveIP();
+
+        // Interface not configured yet -> do not learn from IP traffic
+    if((ActiveIP == 0) || (SubnetMask == 0))
+    {
+        return;
+    }
+
     IP_Address_t SourceIP   = pRX->pPacket->IP_Frame.Header.SrcIP_Addr;
 
     if((SourceIP & SubnetMask) == (ActiveIP & SubnetMask))
@@ -219,7 +226,7 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 //  Description:    Update Entry in ARP table
 //
 //-------------------------------------------------------------------------------------------------
-void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pEthernet)
+void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMAC_Address)
 {
 	uint8_t           i;
 	uint8_t           OldestEntry;
@@ -240,8 +247,8 @@ void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pEthernet)
 			if(IP_Address == pTable->IP_Address)
 			{
 				// An old entry found, update this and return.
-				memcpy(pTable->Ethernet.Byte, pEthernet->Byte, IP_MAC_ADDRESS_SIZE);
-				pTable->Time = m_Time;
+				memcpy(pTable->MAC_Address.Byte, pMAC_Address->Byte, IP_MAC_ADDRESS_SIZE);
+				pTable->TimeToLive = m_Time;
    		      #if (IP_DBG_ARP == DEF_ENABLED)
                 DBG_Printf("ARP Cache - (%d.%d.%d.%d) Update an existing entry %d\n", uint8_t(pTable->IP_Address >> 24),
 				                                                                      uint8_t(pTable->IP_Address >> 16),
@@ -280,9 +287,9 @@ void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pEthernet)
 		{
 			pTable = &m_TableEntry[i];
 
-            if((m_Time - pTable->Time) > TimePage)
+            if((m_Time - pTable->TimeToLive) > TimePage)
 			{
-				TimePage = m_Time - pTable->Time;
+				TimePage = m_Time - pTable->TimeToLive;
 				OldestEntry = i;
 			}
 		}
@@ -308,8 +315,8 @@ void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pEthernet)
 																   uint8_t(pTable->IP_Address),
 																   i);
   #endif
-	memcpy(pTable->Ethernet.Byte, pEthernet->Byte, IP_MAC_ADDRESS_SIZE);
-    pTable->Time = m_Time;
+	memcpy(pTable->MAC_Address.Byte, pMAC_Address->Byte, IP_MAC_ADDRESS_SIZE);
+    pTable->TimeToLive = m_Time;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -409,26 +416,56 @@ void NetARP::ProcessOut(IP_PacketMsg_t* pTX)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:         	ARP_Resolve
+//  Name:           ARP_Resolve
 //
-//  Parameter(s):   None
+//  Parameter(s):   IP      IPv4 address to resolve.
+//                  pMAC    Pointer to a MAC address structure to receive the result
+//                          when the address is already known.
 //
-//  Return:         void
+//  Return:         bool    true  = MAC address is available and copied to *pMAC
+//                                  (ARP table entry is VALID)
+//                          false = MAC address is not available
+//                                  (entry is missing, PENDING, or table is full)
 //
-//  Description:   	Transmits an ARP request to resolve an IP address.
-//  				This function transmits and ARP request to determine the hardware address of a
-// 					given IP address.
+//  Description:    Attempts to resolve an IPv4 address to a MAC address using the ARP table.
 //
-//  Note(s):        This function is only required when the stack is a client, and therefore is
-// 					only enabled when STACK_CLIENT_MODE is enabled.
+//                  - If a VALID entry exists for the given IP, the MAC address is copied
+//                    to *pMAC and the function returns true.
 //
-//                  To retrieve the ARP query result, call the ARPIsResolved() function.
+//                  - If no entry exists, a new PENDING entry is created (if space is
+//                    available) and an ARP request is triggered via ProcessOut().
+//                    The function then returns false.
+//
+//                  - If a PENDING entry already exists, no new request is sent and the
+//                    function returns false.
+//
+//                  - If the ARP table is full, no entry is created and the function
+//                    returns false.
+//
+//  Note(s):        This function does not transmit packets directly. It only manages ARP
+//                  table state and triggers ARP requests when needed. The caller (e.g.,
+//                  IP_Manager::SendPacket) is responsible for retrying transmission once
+//                  the entry becomes VALID.
 //
 //-------------------------------------------------------------------------------------------------
-void NetARP::Resolve(void)
+bool NetARP::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC)
 {
-}
+    // Search ARP table
+    for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
+    {
+        if((m_TableEntry[i].IP_Address == IP) && (m_TableEntry[i].State == ARP_STATE_VALID))
+        {
+            // Found -> return MAC
+            memcpy(pMAC->Byte, m_TableEntry[i].MAC_Address.Byte, IP_MAC_ADDRESS_SIZE);
+            return true;
+        }
+    }
 
+    // Not found -> trigger ARP request
+    m_IP_Address = IP;          // store target IP for ARP request
+    ProcessOut(nullptr);        // send ARP request (your existing function)
+    return false;               // unresolved → caller must retry later
+}
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:         	TimerCallBack
@@ -455,12 +492,12 @@ void NetARP::TimerCallBack(void)
 		{
 			Time = uint16_t(m_Time);
 
-            if(m_Time < pTable->Time)
+            if(m_Time < pTable->TimeToLive)
 			{
 				Time += uint16_t(IP_ARP_TIME_OUT);
 			}
 
-			if((Time - pTable->Time) >= IP_ARP_TIME_OUT)            // Remove entry from table
+			if((Time - pTable->TimeToLive) >= IP_ARP_TIME_OUT)            // Remove entry from table
 			{
    		      #if (IP_DBG_ARP == DEF_ENABLED)
    		      	DBG_Printf("ARP Cache - (%d.%d.%d.%d) Remove entry number %d\n", uint8_t(pTable->IP_Address >> 24),

@@ -62,6 +62,7 @@ class NetUDP
         void 				    Initialize  		    (NetworkContext* pContext);
         void                    Process				    (IP_PacketMsg_t* pMsg);
         SystemState_e           Send                    (UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent);
+        void                    Input                   (IP_PacketMsg_t* pMsg);
 
         bool                    RegisterSocket          (Socket* pSock, IP_Port_t Port);
         void                    UnregisterSocket        (IP_Port_t Port);

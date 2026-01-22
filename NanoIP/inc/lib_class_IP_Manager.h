@@ -133,6 +133,8 @@ class IP_Manager
         SocketManager*      GetSocketManager            (void)                              { return &m_SocketManager; }
         void                PutHeader                   (IP_PacketMsg_t* pTX, IP_Address_t dstIP, uint16_t payloadLength, uint8_t protocol);    // UDP=17, TCP=6
 
+        SystemState_e       SendPacket                  (IP_PacketMsg_t* pMsg);
+
 
 
       #if IP_USE_RAW == DEF_ENABLED

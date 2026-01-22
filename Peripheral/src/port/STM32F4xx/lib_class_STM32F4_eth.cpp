@@ -188,10 +188,6 @@ SystemState_e ETH_Driver::Initialize(void* pContext, uint8_t PHY_Address)
 	SYSCFG->PMC &= ~SYSCFG_PMC_MII_RMII_SEL;
   #endif
 
-/* Dummy read to sync SYSCFG with ETH */
-//(void)SYSCFG->PMC;
-
-
     memset((void *)&m_Control, 0, sizeof(ETH_Control_t));       // Clear Control Structure
     m_pContext = pContext;                                      // Save context (pointer on ethernetif class)
 
@@ -337,8 +333,9 @@ void ETH_Driver::InitializeDMA_Buffer(void)
 
     ETH->DMATDLAR      = (uint32_t)&m_TX_Descriptor[0];
     ETH->DMARDLAR      = (uint32_t)&m_RX_Descriptor[0];
-    m_Control.TX_Index = 0;
-    m_Control.RX_Index = 0;
+    m_Control.TX_HeadIndex = 0;
+    m_Control.TX_TailIndex = 0;
+    m_Control.RX_Index     = 0;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -506,14 +503,13 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
 //
 //   Parameter(s):      Frame           Pointer to frame buffer with data to send.
 //                      Length          Frame buffer length in bytes.
-//                      Flags           Frame transmit Flags.
 //
 //   Return value:      SystemState_e   State of function.
 //
 //   Description:       Send Ethernet frame.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg, uint32_t Flags)
+SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg)
 {
     // Validate input parameters
     if((ppPacketMsg == nullptr) || (*ppPacketMsg == nullptr) || ((*ppPacketMsg)->pPacket == nullptr) || ((*ppPacketMsg)->PacketSize == 0))
@@ -532,7 +528,7 @@ SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg, uint32_t F
     // Zero-copy: use the buffer directly, no memcpy involved
     // Only one buffer per frame; fragmentation flags are ignored in zero-copy mode
 
-    if(m_TX_Descriptor[m_Control.TX_Index].Status & DMA_TX_OWN)                            // Check if the current TX descriptor is free
+    if(m_TX_Descriptor[m_Control.TX_HeadIndex].Status & DMA_TX_OWN)                                             // Check if the current TX descriptor is free
     {
       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
         DBG_TX_Drop++;
@@ -542,10 +538,10 @@ SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg, uint32_t F
     }
 
     // Attach the packet buffer directly to the DMA descriptor
-    m_TX_Descriptor[m_Control.TX_Index].BufferAddress      = reinterpret_cast<uint32_t>(pBuffer);
-    m_TX_Descriptor[m_Control.TX_Index].ControlBufferSize  = Length;
-
-    uint32_t Control = m_TX_Descriptor[m_Control.TX_Index].Status & ~uint32_t(DMA_TX_CIC);  // Prepare descriptor control flags
+    m_TX_Descriptor[m_Control.TX_HeadIndex].BufferAddress      = reinterpret_cast<uint32_t>(pBuffer);
+    m_TX_Descriptor[m_Control.TX_HeadIndex].ControlBufferSize  = Length;
+    m_TX_Descriptor[m_Control.TX_HeadIndex].pMessage           = pMsg;                                          // Store the message pointer for later freeing
+    uint32_t Control = (m_TX_Descriptor[m_Control.TX_HeadIndex].Status & ~uint32_t(DMA_TX_CIC)) | DMA_TX_IC;    // Prepare descriptor control flags
 
 #if (ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
     //  The following is a workaround for MAC Control silicon problem:
@@ -575,32 +571,20 @@ SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg, uint32_t F
     }
 #endif
 
-    Control &= ~uint32_t(DMA_TX_IC | DMA_TX_TTSE);                                          // Clear interrupt and timestamp flags
-
-    if (Flags & ETH_MAC_TX_FRAME_EVENT)                                                     // Enable interrupt on completion if requested
-    {
-        Control |= DMA_TX_IC;
-    }
-
 #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-    if(Flags & ETH_MAC_TX_FRAME_TIMESTAMP)                                                  // Enable timestamping if requested
-    {
-        Control |= DMA_TX_TTSE;
-    }
-
-    m_Control.TX_TS_Index = m_Control.TX_Index;
+    Control |= DMA_TX_TTSE;
+    m_Control.TX_TS_Index = m_Control.TX_HeadIndex;
 #endif
 
     // NOTE: In zero-copy mode, the TX IRQ must free the packet buffer.
     // The driver must store pMsg in a user field of the descriptor.
     // (This field must be added to your descriptor structure.)
-    m_TX_Descriptor[m_Control.TX_Index].BufferAddress = uint32_t(pMsg);
-    m_TX_Descriptor[m_Control.TX_Index].Status = Control | DMA_TX_OWN;                      // Give ownership of the descriptor to the DMA
-    m_Control.TX_Index++;                                                                   // Advance TX descriptor index
+    m_TX_Descriptor[m_Control.TX_HeadIndex].Status = Control | DMA_TX_OWN;                      // Give ownership of the descriptor to the DMA
+    m_Control.TX_HeadIndex++;                                                                   // Advance TX descriptor index
 
-    if (m_Control.TX_Index == NUM_TX_Buffer)
+    if (m_Control.TX_HeadIndex == NUM_TX_Buffer)
     {
-        m_Control.TX_Index = 0;
+        m_Control.TX_HeadIndex = 0;
     }
 
     ETH->DMASR   = ETH_DMASR_TBUS;                                                          // Trigger transmission
@@ -1003,38 +987,39 @@ SystemState_e ETH_Driver::PHY_Busy(void)
 //-------------------------------------------------------------------------------------------------
 void ETH_Driver::ISR_CallBack(uint32_t Event)
 {
-    if(m_pContext != nullptr)
+    if(m_pContext == nullptr)
     {
-        ETH_IF_Driver::CallbackWrapper(m_pContext, Event);
+        return;
     }
 
-    if(Event == ETH_MAC_EVENT_TX_FRAME)
+    ETH_IF_Driver::CallbackWrapper(m_pContext, Event);
+
+    if(Event & ETH_MAC_EVENT_TX_FRAME)
     {
-       // Process all completed TX descriptors
-        while(!(m_TX_Descriptor[m_Control.TX_Index].Status & DMA_TX_OWN))
+        uint8_t Index = m_Control.TX_TailIndex;
+
+        // Process all descriptors between tail and head
+        while((Index != m_Control.TX_HeadIndex) && (m_TX_Descriptor[Index].Status & DMA_TX_OWN) == 0)
         {
-            IP_PacketMsg_t* pMsg = (IP_PacketMsg_t*)m_TX_Descriptor[m_Control.TX_Index].BufferAddress;
+            IP_PacketMsg_t* pMsg =
+                (IP_PacketMsg_t*)m_TX_Descriptor[Index].pMessage;
 
             if(pMsg != nullptr)
             {
-                pMemoryPool->Free((void**)&pMsg->pPacket);                                  // Free zero-copy packet buffer
-                pMemoryPool->Free((void**)&pMsg);                                           // Free message wrapper
-                m_TX_Descriptor[m_Control.TX_Index].BufferAddress = uint32_t(nullptr);      // Clear user pointer
+                IP_Manager::FreeMessage(pMsg);
+                m_TX_Descriptor[Index].pMessage = nullptr;
             }
 
-            // Advance index
-            m_Control.TX_Index++;
+            // Advance tail
+            Index++;
 
-            if(m_Control.TX_Index == NUM_TX_Buffer)
+            if(Index == NUM_TX_Buffer)
             {
-                m_Control.TX_Index = 0;
-            }
-
-            if (m_TX_Descriptor[m_Control.TX_Index].Status & DMA_TX_OWN)                    // Stop if next descriptor is still owned by DMA
-            {
-                break;
+                Index = 0;
             }
         }
+
+        m_Control.TX_TailIndex = Index;
     }
 }
 

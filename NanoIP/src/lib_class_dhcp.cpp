@@ -188,11 +188,51 @@ void NetDHCP::Initialize(NetworkContext* pContext)
     m_pSocket  = nullptr;
     m_XID      = RNG_GetRandom();
 
-    Error = nOS_TimerCreate(&m_TimerDiscover,  nullptr, nullptr, DHCP_MSG_ACTION_TIME_OUT, NOS_TIMER_ONE_SHOT);
-    Error = nOS_TimerCreate(&m_TimerT1_Lease,  nullptr, nullptr, 0, NOS_TIMER_ONE_SHOT);
-    Error = nOS_TimerCreate(&m_TimerT2_Rebind, nullptr, nullptr, 0, NOS_TIMER_ONE_SHOT);
+    Error = nOS_TimerCreate(&m_TimerDiscover,  nullptr, nullptr, DHCP_DISCOVER_TIME_OUT, NOS_TIMER_ONE_SHOT);
+    Error = nOS_TimerCreate(&m_TimerT1_Lease,  nullptr, nullptr, DHCP_T1_LEASE_TIME_OUT, NOS_TIMER_ONE_SHOT);
+    Error = nOS_TimerCreate(&m_TimerT2_Rebind, nullptr, nullptr, DHCP_T2_REBIND_TIME_OUT, NOS_TIMER_ONE_SHOT);
+
+    Start();
 
     VAR_UNUSED(Error); // TODO Manage error
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Reset
+//
+//  Parameter(s):   None
+//  Return:         bool
+//
+//  Description:    Reset the DHCP Client
+//
+//-------------------------------------------------------------------------------------------------
+void NetDHCP::Reset(void)
+{
+    // Stop all DHCP timers
+    if(nOS_TimerIsRunning(&m_TimerDiscover))  nOS_TimerStop(&m_TimerDiscover,  true);
+    if(nOS_TimerIsRunning(&m_TimerT1_Lease))  nOS_TimerStop(&m_TimerT1_Lease,  true);
+    if(nOS_TimerIsRunning(&m_TimerT2_Rebind)) nOS_TimerStop(&m_TimerT2_Rebind, true);
+
+    // Reset DHCP state machine
+    m_State = DHCP_STATE_INITIAL;
+
+    // Clear DHCP-assigned network parameters
+    m_pContext->SetIP_Valid(false);
+    m_pContext->SetDHCP_GatewayIP(IP_ADDRESS(0,0,0,0));
+    m_pContext->SetDHCP_SubnetMask(IP_ADDRESS(0,0,0,0));
+    m_pContext->SetDHCP_IP(IP_ADDRESS(0,0,0,0));
+    m_pContext->SetDHCP_DNS_IP(IP_ADDRESS(0,0,0,0));
+
+    // Generate a new transaction ID for the next DISCOVER
+    m_XID = RNG_GetRandom();
+
+    // Close existing DHCP socket if present
+    if(m_pSocket != nullptr)
+    {
+        m_pContext->GetIP_Manager()->GetSocketManager()->FreeSocket(&m_pSocket);
+        m_pSocket = nullptr;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -207,49 +247,29 @@ void NetDHCP::Initialize(NetworkContext* pContext)
 //-------------------------------------------------------------------------------------------------
 bool NetDHCP::Start(void)
 {
-    SystemState_e State;
-    SocketInfo_t  LocalAddress;
-
-    m_State = DHCP_STATE_INITIAL;                                       // Reset DHCP state
-
-    if(nOS_TimerIsRunning(&m_TimerDiscover)  == true) nOS_TimerStop(&m_TimerDiscover,  true);
-    if(nOS_TimerIsRunning(&m_TimerT1_Lease)  == true) nOS_TimerStop(&m_TimerT1_Lease,  true);
-    if(nOS_TimerIsRunning(&m_TimerT2_Rebind) == true) nOS_TimerStop(&m_TimerT2_Rebind, true);
-
-    // Reset DHCP-related context information
-    m_pContext->SetIP_Valid(false);
-    m_pContext->SetDHCP_GatewayIP(IP_ADDRESS(0,0,0,0));
-    m_pContext->SetDHCP_SubnetMask(IP_ADDRESS(0,0,0,0));
-    m_pContext->SetDHCP_IP(IP_ADDRESS(0,0,0,0));
-    m_pContext->SetDHCP_DNS_IP(IP_ADDRESS(0,0,0,0));
-    m_XID = RNG_GetRandom();                                            // Generate a new transaction ID
-
-    if(m_pSocket != nullptr)                                            // Close existent socket if already open
-    {
-        m_pContext->GetIP_Manager()->GetSocketManager()->FreeSocket(&m_pSocket);
-    }
-
-    m_pSocket = m_pContext->GetIP_Manager()->GetSocketManager()->AllocSocket(SOCKET_TYPE_DATAGRAM);    // Create a new for socket UDP
+    // Create a new UDP socket for DHCP
+    m_pSocket = m_pContext->GetIP_Manager()->GetSocketManager()->AllocSocket(SOCKET_TYPE_DATAGRAM);
 
     if(m_pSocket == nullptr)
     {
         return false;
     }
 
-    bool NonBlocking = true;                                            // Configure in non blocking mode
+    bool NonBlocking = true;
     m_pSocket->SetOption(SOCKET_OPT_NON_BLOCKING, &NonBlocking, sizeof(bool));
 
-    // Bind on DHCP client port
-    LocalAddress.Address = IP_ADDRESS(0,0,0,0);                         // ANY address
-    LocalAddress.Port    = DHCP_CLIENT_PORT;
-    State                = m_pSocket->Bind(LocalAddress.Port);
+    // Bind to DHCP client port
+    SystemState_e State = m_pSocket->Bind(DHCP_CLIENT_PORT);
 
     if(State != SYS_READY)
     {
         m_pContext->GetIP_Manager()->GetSocketManager()->FreeSocket(&m_pSocket);
+        m_pSocket = nullptr;
         return false;
     }
 
+    // Ready to send DISCOVER
+    m_State = DHCP_STATE_INITIAL;
     return true;
 }
 
@@ -379,20 +399,16 @@ bool NetDHCP::Discover(void)
     uint8_t       Options;
     DHCP_Msg_t*   pTX     = nullptr;
     size_t        Length  = 0;
-    bool          Status;
-
-    Status = Start();                                                                           // Restart DHCP state and recreate socket
-
-    if(Status == false)
-    {
-        return false;
-    }
+    bool          Status  = true;     // Default: assume success unless send fails
 
     // Allocate DHCP transmit buffer
     pTX = (DHCP_Msg_t*)pMemoryPool->AllocAndClear(sizeof(DHCP_Msg_t), MEM_DBG_DHCPTX);
 
     if(pTX == nullptr)
     {
+      #if (IP_DBG_DHCP == DEF_ENABLED)
+        DBG_Printf("DHCP: Failed to allocate DISCOVER buffer\n");
+      #endif
         return false;
     }
 
@@ -403,7 +419,8 @@ bool NetDHCP::Discover(void)
 
     Length = PutOption(&pTX->Options[0], Options, DHCP_OPTION_DISCOVER);
     PutHeader(pTX);                                                                             // Build DHCP header (Op, HTYPE, HLEN, XID, CHADDR, etc.)
-    size_t PacketLength = (sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + Length;           // Compute total packet length (header + options)
+
+    size_t PacketLength = (sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + Length;
 
     // Destination: broadcast IP
     SocketInfo_t Dest;
@@ -411,15 +428,15 @@ bool NetDHCP::Discover(void)
     Dest.Port    = DHCP_SERVER_PORT;
 
     // Send DHCP DISCOVER (non-blocking)
-    size_t BytesSent = 0;
-    SystemState_e Error = m_pSocket->SendTo((uint8_t*)pTX, PacketLength, &Dest, &BytesSent);
+    size_t         BytesSent = 0;
+    SystemState_e  Error     = m_pSocket->SendTo((uint8_t*)pTX, PacketLength, &Dest, &BytesSent);
 
     if((Error != SYS_READY) || (BytesSent == 0))
     {
         Status = false;
 
       #if (IP_DBG_DHCP == DEF_ENABLED)
-        DBG_Printf("DHCP: Fatal error while sending DISCOVER\n");
+        DBG_Printf("DHCP: Fatal error while sending DISCOVER (Err=%d, Sent=%u)\n", Error, (unsigned)BytesSent);
       #endif
     }
     else
@@ -432,7 +449,8 @@ bool NetDHCP::Discover(void)
         nOS_TimerStart(&m_TimerDiscover);                                                       // Start timeout timer for OFFER
     }
 
-    pMemoryPool->Free((void**)&pTX);                                                            // Free TX buffer
+    // Free TX buffer
+    pMemoryPool->Free((void**)&pTX);
 
     return Status;
 }

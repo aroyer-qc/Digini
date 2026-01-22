@@ -54,7 +54,6 @@
 void SocketManager::Initialize(NetworkContext* pContext)
 {
     m_pContext = pContext;
-   // m_pManager = m_pContext->GetIP_Manager();
     m_ActiveCount = 0;
 }
 
@@ -92,39 +91,28 @@ void SocketManager::FreeSocket(Socket** ppSocket)
 
     Socket* pSocket = *ppSocket;
 
-    // Nothing to free if no active sockets
-    if(m_ActiveCount == 0)
-    {
-        return;
-    }
+    // 1. Freeze the socket so no new packets enter its RX queue
+    pSocket->m_Active = false;
 
-    // Remove from active list
-    bool Found = false;
-
-    for(uint8_t i = 0; i < m_ActiveCount; i++)
+    // 2. Drain RX queue safely (no race because demux now drops)
+    if(pSocket->m_Type == SOCKET_TYPE_DATAGRAM)
     {
-        if(m_ActiveSockets[i] == pSocket)
+        UDP_Socket_t* pUDP = pSocket->m_Protocol.pUDP;
+        IP_PacketMsg_t* pMsg = nullptr;
+
+        while(nOS_QueueRead(&pUDP->RX_Queue, &pMsg, 0) == NOS_OK)
         {
-            // Replace with last active socket
-            m_ActiveSockets[i] = m_ActiveSockets[m_ActiveCount - 1];
-            m_ActiveSockets[m_ActiveCount - 1] = nullptr;
-
-            m_ActiveCount--;
-            Found = true;
-            break;
+            IP_Manager::FreeMessage(pMsg);
         }
     }
 
-    // If the socket was not in the active list, do nothing
-    if(Found == false)
+    // 3. Free protocol-specific structures
+    if(pSocket->m_Type == SOCKET_TYPE_DATAGRAM)
     {
-        return;
+        pMemoryPool->Free((void**)&pSocket->m_Protocol.pUDP);
     }
 
-    // Destroy object
-    pSocket->~Socket();
-
-    // Free memory back to pool
+    // 4. Free the socket object itself
     pMemoryPool->Free((void**)&pSocket);
 
     *ppSocket = nullptr;
@@ -138,12 +126,12 @@ Socket* SocketManager::FindUDP_SocketByPort(IP_Port_t Port)
     {
         Socket* pSocket = m_ActiveSockets[i];
 
-        if(pSocket->GetType() != SOCKET_TYPE_DATAGRAM)
+        if(pSocket->m_Type != SOCKET_TYPE_DATAGRAM)
         {
             continue;
         }
 
-        UDP_Socket_t* pUDP = pSocket->GetUDP();
+        UDP_Socket_t* pUDP = pSocket->m_Protocol.pUDP;
 
         if(pUDP == nullptr)
         {
@@ -169,7 +157,7 @@ Socket* SocketManager::FindRAW_ByProtocol(uint8_t Protocol)
     {
         Socket* pSocket = m_ActiveSockets[i];
 
-        if(pSocket->GetType() != SOCKET_TYPE_RAW)
+        if(pSocket->m_Type != SOCKET_TYPE_RAW)
         {
             continue;
         }
@@ -193,7 +181,7 @@ Socket* SocketManager::FindTCP_Connection(uint32_t LocalIP, IP_Port_t LocalPort,
     {
         Socket* pSocket = m_ActiveSockets[i];
 
-        if(pSocket->GetType() != SOCKET_TYPE_STREAM)
+        if(pSocket->m_Type != SOCKET_TYPE_STREAM)
         {
             continue;
         }
@@ -205,10 +193,10 @@ Socket* SocketManager::FindTCP_Connection(uint32_t LocalIP, IP_Port_t LocalPort,
             continue;
         }
 
-        if(pTCP->LocalIP   == LocalIP   &&
-           pTCP->LocalPort == LocalPort &&
-           pTCP->RemoteIP  == RemoteIP  &&
-           pTCP->RemotePort== RemotePort)
+        if((pTCP->LocalIP   == LocalIP)   &&
+           (pTCP->LocalPort == LocalPort) &&
+           (pTCP->RemoteIP  == RemoteIP)  &&
+           (pTCP->RemotePort== RemotePort))
         {
             return pSocket;
         }
@@ -224,6 +212,7 @@ Socket::Socket(NetworkContext& Context, IP_Manager& Manager) : m_Context(Context
     m_Type        = SOCKET_TYPE_INVALID;
     m_State       = SOCKET_STATE_CLOSED;
     m_IsBlocking  = true;
+    m_Active      = true;
     m_IsBound     = false;
     m_IsListening = false;
     m_Backlog     = 0;
@@ -722,6 +711,8 @@ SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t
 //-------------------------------------------------------------------------------------------------
 void Socket::Close(void)
 {
+    m_Active = false;
+
     switch(m_Type)
     {
       #if (IP_USE_UDP == DEF_ENABLED)

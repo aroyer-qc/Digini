@@ -99,6 +99,7 @@ struct TX_Descriptor_t
     uint32_t                TimeLo;
     uint32_t                TimeHi;
 #endif
+    void*                   pMessage;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -116,7 +117,7 @@ class ETH_Driver : public ETH_DriverInterface
         SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address);                          // Get Ethernet MAC Address.
         SystemState_e           SetMacAddress           (const IP_MAC_Address_t* pMAC_Address);                          // Set Ethernet MAC Address.
         SystemState_e           SetAddressFilter        (const IP_MAC_Address_t* pMAC_Address, uint32_t NbAddress);      // Configure Address Filter.
-        SystemState_e           SendTX_Packet           (IP_PacketMsg_t** ppPacketMsg, uint32_t flags);                  // Send Ethernet frame.
+        SystemState_e           SendTX_Packet           (IP_PacketMsg_t** ppPacketMsg);                                  // Send Ethernet frame.
         SystemState_e           GetRX_Packet            (IP_PacketMsg_t** ppPacketMsg);
         uint32_t                GetRX_FrameSize         (void);                                                          // Get size of received Ethernet frame.
       #if (ETH_USE_TIME_STAMP == DEF_ENABLED)

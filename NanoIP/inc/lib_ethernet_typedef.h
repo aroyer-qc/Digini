@@ -397,7 +397,8 @@ struct IP_Config_t                                                              
 struct ETH_Control_t
 {
  //   ETH_CallBack_t          pCallBack;            // Signal Event callback
-    uint8_t                 TX_Index;               // Transmit descriptor index
+    uint8_t                 TX_HeadIndex;           // Used by SendTX_Packet
+    uint8_t                 TX_TailIndex;           // Used by ISR_CallBack
     uint8_t                 RX_Index;               // Receive descriptor index
   #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
     uint8_t                 TX_TS_Index;            // Transmit Timestamps descriptor index

@@ -363,8 +363,6 @@ IP_Address_t IP_Manager::GetHost(void)
 //
 //  Description:    Put IP in a string following standard format EX. 192.168.1.100
 //
-//  Note(s):        Don't forget to pMemory->Free() the pointer after use
-//
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::IP_ToAscii(char* pBuffer, IP_Address_t IP_Address)
 {

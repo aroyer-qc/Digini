@@ -444,7 +444,7 @@ bool NetDHCP::Discover(void)
         nOS_TimerStart(&m_TimerDiscover);                                                       // Start timeout timer for OFFER
     }
 
-    // Free TX buffer
+    // Free TX buffer (It was copied into the a packet)
     pMemoryPool->Free((void**)&pTX);
 
     return Status;
@@ -539,7 +539,7 @@ bool NetDHCP::Request(void)
       #endif
     }
 
-    // Free TX buffer
+    // Free TX buffer (It was copied into the a packet)
     pMemoryPool->Free((void**)&pTX);
 
     return Status;

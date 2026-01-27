@@ -734,7 +734,6 @@ void Socket::Close(void)
             TCP_Socket_t* pTCP_Socket = m_Protocol.pTCP;
             m_Manager.TCP_Close(this);                                  // Let TCP manager handle teardown
 
-
             // TCP cleanup (state machine, queues, etc.)
             FreeAllMessages(&pTCP_Socket->RX_Queue);                    // Flush RX queue
 

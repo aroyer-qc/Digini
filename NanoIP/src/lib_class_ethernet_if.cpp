@@ -210,7 +210,7 @@ void ETH_IF_Driver::Run(void)
 
                 if(nOS_QueueWrite(m_pContext->GetMsgQ(), (void*)&pPacketMsg, NET_BLOCK_TIME_WAITING_FOR_Q) != NOS_OK)
                 {
-                    pMemoryPool->Free((void**)&pPacketMsg);
+                    IP_Manager::FreeMessage(pPacketMsg);
                   #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
                     DBG_RX_Drop++;
                   #endif
@@ -243,27 +243,24 @@ void ETH_IF_Driver::PollTheNetworkInterface(void)
     PHY_DriverInterface* pDriverIF = m_pETH_Config->pPHY_Driver;
     ETH_LinkState_e LinkNow;
 
- //   if(netif_find(IF_NAME))       // TODO temporary to debug reception of packet
+    LinkNow = pDriverIF->GetLinkState();
+
+    if(LinkNow != m_pContext->GetLinkState())
     {
-        LinkNow = pDriverIF->GetLinkState();
+        m_pContext->SetLinkChange(true);
 
-        if(LinkNow != m_pContext->GetLinkState())
+        if(LinkNow == ETH_LINK_UP)
         {
-            m_pContext->SetLinkChange(true);
-
-            if(LinkNow == ETH_LINK_UP)
-            {
-                m_pContext->SetLinkSpeed(pDriverIF->GetLinkInfo().Speed);
-                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: Link UP\n");
-            }
-            else
-            {
-                m_pContext->SetLinkSpeed(ETH_PHY_SPEED_NONE);
-                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: Link DOWN\n");
-            }
-
-            m_pContext->SetLinkState(LinkNow);
+            m_pContext->SetLinkSpeed(pDriverIF->GetLinkInfo().Speed);
+            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: Link UP\n");
         }
+        else
+        {
+            m_pContext->SetLinkSpeed(ETH_PHY_SPEED_NONE);
+            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: Link DOWN\n");
+        }
+
+        m_pContext->SetLinkState(LinkNow);
     }
 }
 

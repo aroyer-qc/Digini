@@ -188,13 +188,14 @@ typedef uint32_t    IP_Address_t;
 typedef uint16_t    IP_Port_t;
 //typedef void        (*ETH_CallBack_t) (uint32_t Event);                         // Pointer to ETH_CallBack function
 
+#pragma pack(push, 1)
+
 struct IP_MAC_Address_t
 {
     uint8_t     Byte[IP_MAC_ADDRESS_SIZE];
 };
 
 // The Ethernet header
-#pragma pack(push, 1)
 struct IP_EthernetHeader_t
 {
 	IP_MAC_Address_t 	DestinationMAC;                 //     6
@@ -349,7 +350,6 @@ struct DHCP_Frame_t
 	UDP_Header_t			UDP_Header;                 // +   8
 	DHCP_Header_t		    Header;  		            // + 240
 };                                                      // = 282 Bytes
-#pragma pack(pop)
 
 struct IP_EthernetPacket_t
 {
@@ -364,7 +364,7 @@ struct IP_EthernetPacket_t
 		TCP_PseudoFrame_t           TCP_PseudoFrame;    // use for TCP Checksum calculation
 		ICMP_Frame_t            	ICMP_Frame;
 		UDP_Frame_t				    UDP_Frame;
-		UDP_PseudoFrame_t		    UDP_PseudoFrame;				// use for UDP Checksum calculation
+		UDP_PseudoFrame_t		    UDP_PseudoFrame;	// use for UDP Checksum calculation
 		DHCP_Frame_t                DHCP_Frame;
 	};
 };
@@ -375,6 +375,8 @@ struct IP_PacketMsg_t
 	IP_EthernetPacket_t*	pPacket;
 };
 
+#pragma pack(pop)
+
 struct IP_ETH_Config_t
 {
     IP_MAC_Address_t            MAC_Address;
@@ -382,6 +384,7 @@ struct IP_ETH_Config_t
     class PHY_DriverInterface*  pPHY_Driver;                                    // Driver for PHY
     uint8_t                     PHY_Address;
 };
+
 
 struct IP_Config_t                                                              // Host Name, IP_ Address, Protocol (ip_cfg.h)
 {

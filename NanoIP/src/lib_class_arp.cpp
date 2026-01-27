@@ -107,7 +107,7 @@ void NetARP::ProcessIP(IP_PacketMsg_t* pRX)
         return;
     }
 
-    IP_Address_t SourceIP   = pRX->pPacket->IP_Frame.Header.SrcIP_Addr;
+    IP_Address_t SourceIP = pRX->pPacket->IP_Frame.Header.SrcIP_Addr;
 
     if((SourceIP & SubnetMask) == (ActiveIP & SubnetMask))
     {
@@ -140,43 +140,42 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
     {
         case ARP_REQUEST:
         {
-            if (pRX_ARP->DstIP_Address == m_pContext->GetActiveIP())                            // Respond only if the ARP request targets our IP address
+            // Respond only if the ARP request targets our IP address
+            if(pRX_ARP->DstIP_Address == m_pContext->GetActiveIP())
             {
-                pMemoryPool->ChangeDebugID(pRX, MEM_DBG_IPPKT, MEM_DBG_ARP);
+                // Re-tag for zero-copy reuse
+                pMemoryPool->ChangeDebugID(pRX,          MEM_DBG_IPPKT,   MEM_DBG_ARP);
                 pMemoryPool->ChangeDebugID(pRX->pPacket, MEM_DBG_ETHDMARX2, MEM_DBG_ARPDT);
 
-                // Zero-copy: reuse the RX buffer as TX
-                IP_PacketMsg_t*       pTX  = pRX;
-                ARP_Frame_t*          pARP = &pTX->pPacket->ARP_Frame;
-                IP_EthernetHeader_t*  pETH = &pTX->pPacket->ETH_Header;
+                // Zero-copy: reuse RX buffer as TX
+                IP_PacketMsg_t*      pTX  = pRX;
+                IP_EthernetHeader_t* pETH = &pTX->pPacket->ETH_Header;
+                ARP_Frame_t*         pARP = &pTX->pPacket->ARP_Frame;
 
                 // Ethernet header
-                memcpy(pETH->DestinationMAC.Byte, pARP->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);   // Destination MAC = requester MAC
-                m_pContext->GetMAC_Address(&pETH->SourceMAC);                                   // Source MAC = our MAC address
-                pETH->Type = htons(IP_ETHERNET_TYPE_ARP);                                       // EtherType = ARP
+                memcpy(pETH->DestinationMAC.Byte, pETH->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);    // Destination = requester MAC
+                m_pContext->GetMAC_Address(&pETH->SourceMAC);                                       // Source = our MAC
 
-                // ARP header
-                pARP->Opcode = htons(ARP_REPLY);                                                // ARP Reply opcode
+                pETH->Type = htons(IP_ETHERNET_TYPE_ARP);
 
-                // Sender fields = our device
-                m_pContext->GetMAC_Address(&pARP->SourceMAC);
-                pARP->SrcIP_Address = m_pContext->GetActiveIP();
-
-                // Target fields = original requester
-                memcpy(pARP->DestinationMAC.Byte, pRX_ARP->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);
-                pARP->DstIP_Address = pRX_ARP->SrcIP_Address;
-
-                // ARP fixed fields
+                // ARP payload Fixed fields
                 pARP->HardwareType       = htons(ARP_HARDWARE_TYPE_ETHERNET);
                 pARP->Protocol           = htons(IP_ETHERNET_TYPE_IP);
                 pARP->HardwareAddrLength = IP_MAC_ADDRESS_SIZE;
                 pARP->ProtocolLength     = 4;
-                m_pContext->SendPacket(pTX);                                                    // Send the ARP reply using the standard TX path
-                return;   // IMPORTANT: prevent FreeMessage(pRX) from freeing our TX buffer
+                pARP->Opcode             = htons(ARP_REPLY);
+
+                memcpy(pARP->SourceMAC.Byte, pETH->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);            // Sender = us
+                memcpy(pARP->DestinationMAC.Byte, pETH->DestinationMAC.Byte, IP_MAC_ADDRESS_SIZE);    // Target = original requester
+                pARP->SrcIP_Address = m_pContext->GetActiveIP();
+                pARP->DstIP_Address = pRX_ARP->SrcIP_Address;
+                m_pContext->SendPacket(pTX);                                                        // Send ARP reply via normal TX path (zero-copy)
+
+                // IMPORTANT: do not free pRX, it is now TX
+                return;
             }
         }
         break;
-
         case ARP_REPLY:
         {
             // We learn this only if we are the destination

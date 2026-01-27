@@ -220,6 +220,8 @@ void IP_Manager::Run(void)
             {
                 case IP_ETHERNET_TYPE_IP:
                 {
+                    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Protocol byte = 0x%02X\n", pMsg->pPacket->IP_Frame.Header.Protocol);
+
                     m_ARP.ProcessIP(pMsg);                  // May update ARP cache, does NOT own pMsg
                     ProcessIP(pMsg);                        // Transfers ownership to protocol/socket
                 }

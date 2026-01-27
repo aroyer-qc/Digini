@@ -1181,10 +1181,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
             myVT100.InMenuPrintf(2,  9,  LBL_IP_MASK);
             myVT100.InMenuPrintf(2,  10, LBL_IP_GATEWAY);
             myVT100.InMenuPrintf(2,  11, LBL_IP_DNS);
-            myVT100.InMenuPrintf(2,  13, LBL_IP_DHCP_STATE);
-            myVT100.InMenuPrintf(2,  14, LBL_IP_LINK_STATE);
-            myVT100.InMenuPrintf(2,  15, LBL_IP_LINK_SPEED);
-            myVT100.InMenuPrintf(2,  16, LBL_MAC_ADDRESS);
+            myVT100.InMenuPrintf(2,  12, LBL_IP_DHCP_STATE);
+            myVT100.InMenuPrintf(2,  13, LBL_IP_LINK_STATE);
+            myVT100.InMenuPrintf(2,  14, LBL_IP_LINK_SPEED);
+            myVT100.InMenuPrintf(33, 14, LBL_IP_BYTE_PER_SECOND);
+
+            myVT100.InMenuPrintf(2,  15, LBL_MAC_ADDRESS);
           #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
             myVT100.InMenuPrintf(2,  18, LBL_ETH_RX_COUNT);
             myVT100.InMenuPrintf(40, 18, LBL_ETH_DROP);
@@ -1199,46 +1201,43 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
 
         case VT100_CALLBACK_REFRESH:
         {
-            ETH_LinkInfo_t   LinkInfo;
-            //ETH_LinkState_e  LinkState;
-            const char*      pSpeed;
-            NetworkContext*  pContext = pTaskNetwork->GetIP_Manager()->GetContext();
-            char             Buffer[16];
+            Label_e           SpeedLabel;
+            NetworkContext*   pContext = pTaskNetwork->GetIP_Manager()->GetContext();
+            char              Buffer[16];
+            IP_MAC_Address_t  MAC;
 
             myVT100.SetForeColor(VT100_COLOR_WHITE);
 
             IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveIP());
             myVT100.InMenuPrintf(28, 8,  LBL_STRING, Buffer);
             IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveSubnetMask());
-            myVT100.InMenuPrintf(28, 9,  LBL_STRING, Buffer);
+            myVT100.InMenuPrintf(28, 9,   LBL_STRING, Buffer);
             IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveGatewayIP());
             myVT100.InMenuPrintf(28, 10, LBL_STRING, Buffer);
             IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveDNS_IP());
             myVT100.InMenuPrintf(28, 11, LBL_STRING, Buffer);
-            //IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveDNS_IP()); GetActiveDNS_IP server 2 ?
-            //myVT100.InMenuPrintf(28, 12, LBL_STRING, Buffer);
           #if (IP_USE_DHCP == DEF_ENABLED)
-            myVT100.InMenuPrintf(28, 13, (pContext->IsDHCP_Enable() == true) != 0 ? LBL_ENABLED : LBL_DISABLED);
+            myVT100.InMenuPrintf(28, 12, (pContext->IsDHCP_Enable() == true) != 0 ? LBL_ENABLED : LBL_DISABLED);
           #else
-            myVT100.InMenuPrintf(28, 13, LBL_DISABLED);
+            myVT100.InMenuPrintf(28, 12, LBL_DISABLED);
           #endif
-        //    LinkState = myETH_PHY->GetLinkState();
-            myVT100.InMenuPrintf(28, 14, LBL_STRING, (pContext->GetLinkState() == ETH_LINK_UP) ? "Up  " : "Down");
+            myVT100.InMenuPrintf(28, 13, (pContext->GetLinkState() == ETH_LINK_UP) ? LBL_IP_UP: LBL_IP_DOWN);
 
             // tempo remove warning
-            LinkInfo.Duplex = ETH_PHY_FULL_DUPLEX;
-            LinkInfo.Speed = ETH_PHY_SPEED_100M;//myETH_PHY->GetLinkInfo();
+            //LinkInfo.Duplex = ETH_PHY_FULL_DUPLEX;
 
-            switch(LinkInfo.Speed)
+            switch(pContext->GetLinkSpeed())
             {
-                case ETH_PHY_SPEED_10M:     pSpeed = "10  Mb/Sec";  break;
-                case ETH_PHY_SPEED_100M:    pSpeed = "100 Mb/Sec";  break;
-                case ETH_PHY_SPEED_1G:      pSpeed = "1   Gb/Sec";  break;
+                case ETH_PHY_SPEED_NONE:    SpeedLabel = LBL_IP_SPEED_NONE; break;
+                case ETH_PHY_SPEED_10M:     SpeedLabel = LBL_IP_SPEED_10M;  break;
+                case ETH_PHY_SPEED_100M:    SpeedLabel = LBL_IP_SPEED_100M; break;
+                case ETH_PHY_SPEED_1G:      SpeedLabel = LBL_IP_SPEED_1G;   break;
             }
 
-            myVT100.InMenuPrintf(28, 15, LBL_STRING, pSpeed);
-//            myVT100.InMenuPrintf(28, 16, LBL_MAC_ADDRESS_VALUE, pNetif->hwaddr[0], pNetif->hwaddr[1], pNetif->hwaddr[2],
-//                                                                pNetif->hwaddr[3], pNetif->hwaddr[4], pNetif->hwaddr[5]);
+            myVT100.InMenuPrintf(28, 14, SpeedLabel);
+            pContext->GetMAC_Address(&MAC);
+            myVT100.InMenuPrintf(28, 15, LBL_MAC_ADDRESS_VALUE, MAC.Byte[0], MAC.Byte[1], MAC.Byte[2],
+                                                                MAC.Byte[3], MAC.Byte[4], MAC.Byte[5]);
 
           #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
             myVT100.InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, DBG_RX_Count);

@@ -159,9 +159,9 @@ ETH_Control_t     ETH_Driver::m_Control;
 void ETH_SetBitRegister(volatile uint32_t* pRegister, uint32_t Value)
 {
     *pRegister |= Value;
-    Value = *pRegister;
+    //Value = *pRegister;
     nOS_Sleep(1);
-    *pRegister = Value;
+    //*pRegister = Value;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -257,11 +257,7 @@ SystemState_e ETH_Driver::Initialize(void* pContext, uint8_t PHY_Address)
                         ETH_PTPTSCR_TSE);
       #endif
 
-      #if (ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
         ETH_SetBitRegister(&ETH->DMAOMR, ETH_DMAOMR_RSF | ETH_DMAOMR_TSF | ETH_DMAOMR_OSF);                             // Second Frame Operate
-      #else
-        ETH_SetBitRegister(&ETH->DMAOMR, ETH_DMAOMR_OSF);                               // Second Frame Operate
-      #endif
 
         ETH_SetBitRegister(&ETH->DMABMR,
                            ETH_DMABMR_AAB        |                      // Address Aligned Beats
@@ -313,8 +309,8 @@ void ETH_Driver::InitializeDMA_Buffer(void)
     // Initialize TX DMA Descriptors
     for(uint32_t i = 0; i < NUM_TX_Buffer; i++)
     {
-        m_TX_Descriptor[i].Status         = DMA_TX_TCH | DMA_TX_LS | DMA_TX_FS;
-        m_TX_Descriptor[i].BufferAddress  = uint32_t(nullptr);//  no allocation here.. (uint32_t)pMemoryPool->Alloc(ETH_BUF_SIZE, MEM_DBG_ETHDMATX);
+        m_TX_Descriptor[i].Status         = DMA_TX_TCH;
+        m_TX_Descriptor[i].BufferAddress  = uint32_t(nullptr);
         Next = i + 1;
         Next = (Next == NUM_TX_Buffer) ? 0 : Next;
         m_TX_Descriptor[i].NextDescriptor = &m_TX_Descriptor[Next];
@@ -324,7 +320,7 @@ void ETH_Driver::InitializeDMA_Buffer(void)
     for(uint32_t i = 0; i < NUM_RX_Buffer; i++)
     {
         m_RX_Descriptor[i].Status            = DMA_RX_OWN;
-        m_RX_Descriptor[i].ControlBufferSize = /*DMA_RX_DIC |*/ DMA_RX_RCH | ETH_BUF_SIZE;
+        m_RX_Descriptor[i].ControlBufferSize = DMA_RX_RCH | ETH_BUF_SIZE;
         m_RX_Descriptor[i].BufferAddress     = (uint32_t)pMemoryPool->Alloc(ETH_BUF_SIZE, MEM_DBG_ETHDMARX1);
         Next = i + 1;
         Next = (Next == NUM_RX_Buffer) ? 0 : Next;
@@ -350,13 +346,16 @@ void ETH_Driver::InitializeDMA_Buffer(void)
 //-------------------------------------------------------------------------------------------------
 void ETH_Driver::Start(void)
 {
-    ETH_SetBitRegister(&ETH->MACCR, 0);
-    ETH_SetBitRegister(&ETH->DMAOMR, ETH_DMAOMR_ST | ETH_DMAOMR_SR | ETH_DMAOMR_FTF);       // Start DMA TX/RX
-    ETH_SetBitRegister(&ETH->MACCR, ETH_MACCR_TE | ETH_MACCR_RE);                           // Enable MAC transmitter/receiver
     ISR_ClearPendingIRQ(ETH_IRQn);
-    ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);                                                       // Enable NVIC interrupt (CPU side ready)
-    ETH->DMAIER = (ETH_DMAIER_NISE | ETH_DMAIER_RIE  | ETH_DMAIER_TIE | ETH_DMAIER_FBEIE |  // Enable DMA interrupts (peripheral side ready)
-                                     ETH_DMAIER_AISE | ETH_DMAIER_RBUIE);
+    ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);                                           // Enable NVIC interrupt (CPU side ready)
+    ETH->DMAIER = (ETH_DMAIER_NISE  | ETH_DMAIER_RIE  | ETH_DMAIER_TIE |        // Enable DMA interrupts (peripheral side ready)
+                   ETH_DMAIER_FBEIE | ETH_DMAIER_AISE | ETH_DMAIER_RBUIE);
+
+    ETH_SetBitRegister(&ETH->MACCR, ETH_MACCR_TE);                              // Enable MAC transmission
+    ETH_SetBitRegister(&ETH->MACCR, ETH_MACCR_RE);                              // Enable MAC Reception
+    ETH_SetBitRegister(&ETH->DMAOMR, ETH_DMAOMR_FTF);                           // Flush the FIFO
+    SET_BIT(ETH->DMAOMR, ETH_DMAOMR_ST);                                        // Start DMA TX
+    SET_BIT(ETH->DMAOMR, ETH_DMAOMR_SR);                                        // Start DMA RX
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -499,7 +498,7 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name:     SendFrame
+//   Function name:     SendTX_Packet
 //
 //   Parameter(s):      Frame           Pointer to frame buffer with data to send.
 //                      Length          Frame buffer length in bytes.
@@ -517,7 +516,7 @@ SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg)
       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
         DBG_TX_Drop++;
       #endif
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendTX_Packet - Invalid PacketMsg\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendTX_Packet - Invalid Packet Msg\n");
         return SYS_INVALID_PARAMETER;
     }
 
@@ -534,6 +533,7 @@ SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg)
         DBG_TX_Drop++;
       #endif
         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendTX_Packet - TX Busy\n");
+        IP_Manager::FreeMessage(pMsg);
         return SYS_BUSY;
     }
 
@@ -541,7 +541,7 @@ SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg)
     m_TX_Descriptor[m_Control.TX_HeadIndex].BufferAddress      = reinterpret_cast<uint32_t>(pBuffer);
     m_TX_Descriptor[m_Control.TX_HeadIndex].ControlBufferSize  = Length;
     m_TX_Descriptor[m_Control.TX_HeadIndex].pMessage           = pMsg;                                          // Store the message pointer for later freeing
-    uint32_t Control = (m_TX_Descriptor[m_Control.TX_HeadIndex].Status & ~uint32_t(DMA_TX_CIC)) | DMA_TX_IC;    // Prepare descriptor control flags
+    uint32_t Control = DMA_TX_TCH | DMA_TX_FS | DMA_TX_LS;                                                      // Prepare descriptor control flags
 
 #if (ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
     //  The following is a workaround for MAC Control silicon problem:
@@ -579,8 +579,8 @@ SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg)
     // NOTE: In zero-copy mode, the TX IRQ must free the packet buffer.
     // The driver must store pMsg in a user field of the descriptor.
     // (This field must be added to your descriptor structure.)
-    m_TX_Descriptor[m_Control.TX_HeadIndex].Status = Control | DMA_TX_OWN;                      // Give ownership of the descriptor to the DMA
-    m_Control.TX_HeadIndex++;                                                                   // Advance TX descriptor index
+    m_TX_Descriptor[m_Control.TX_HeadIndex].Status = Control | DMA_TX_OWN | DMA_TX_IC;      // Give ownership of the descriptor to the DMA
+    m_Control.TX_HeadIndex++;                                                               // Advance TX descriptor index
 
     if (m_Control.TX_HeadIndex == NUM_TX_Buffer)
     {
@@ -1001,8 +1001,7 @@ void ETH_Driver::ISR_CallBack(uint32_t Event)
         // Process all descriptors between tail and head
         while((Index != m_Control.TX_HeadIndex) && (m_TX_Descriptor[Index].Status & DMA_TX_OWN) == 0)
         {
-            IP_PacketMsg_t* pMsg =
-                (IP_PacketMsg_t*)m_TX_Descriptor[Index].pMessage;
+            IP_PacketMsg_t* pMsg = (IP_PacketMsg_t*)m_TX_Descriptor[Index].pMessage;
 
             if(pMsg != nullptr)
             {

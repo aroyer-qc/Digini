@@ -276,6 +276,7 @@ class Socket
         bool                HasData             (void);
         void                GetLocalInfo        (SocketInfo_t* pInfo);
         void                GetRemoteInfo       (SocketInfo_t* pInfo);
+        IP_Port_t           GetLocalPort        (void)                  { return m_LocalInfo.Port;     }
 
     private:
 
@@ -327,7 +328,6 @@ class Socket
     #if (SOCKET_USE_STATISTICS == DEF_ENABLED)
         SocketStats_t           m_Stats;
     #endif
-
 };
 
 //-------------------------------------------------------------------------------------------------

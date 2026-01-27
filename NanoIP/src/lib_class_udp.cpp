@@ -181,8 +181,7 @@ SystemState_e NetUDP::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, co
     }
 
     // Allocate packet buffer
-    size_t UDP_PayloadLen = sizeof(UDP_Header_t) + Length;
-    size_t packetSize    = sizeof(IP_EthernetPacket_t) + UDP_PayloadLen;
+    size_t packetSize    = sizeof(UDP_Frame_t) + Length;
     pMsg->pPacket = (IP_EthernetPacket_t*)pMemoryPool->AllocAndClear(packetSize, MEM_DBG_UDPDT);
 
     if(pMsg->pPacket == nullptr)
@@ -195,16 +194,17 @@ SystemState_e NetUDP::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, co
 
     // Build UDP header
     UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
-
     pUDP->SrcPort = htons(pUdp->LocalPort);
     pUDP->DstPort = htons(pDestInfo->Port);
-    pUDP->Length  = htons(UDP_PayloadLen);
+    uint16_t UDP_Length = sizeof(UDP_Header_t) + Length;
+    pUDP->Length  = htons(UDP_Length);
 
     // Copy payload
     uint8_t* pPayload = (uint8_t*)(pUDP + 1);
     memcpy(pPayload, pData, Length);
     IP_Manager* pIP_Manager = m_pContext->GetIP_Manager();
-    pIP_Manager->PutHeader(pMsg, pDestInfo->Address, UDP_PayloadLen, IP_PROTOCOL_UDP);          // Build IP header via IP_Manager
+    pIP_Manager->PutHeader(pMsg, pDestInfo->Address, UDP_Length, IP_PROTOCOL_UDP);          // Build IP header via IP_Manager
+    pUDP->Checksum = pIP_Manager->UDP_CalculateChecksum(&pMsg->pPacket->IP_Frame.Header, pUDP, UDP_Length);
     SystemState_e State = pIP_Manager->SendPacket(pMsg);
 
     if(State == SYS_READY)

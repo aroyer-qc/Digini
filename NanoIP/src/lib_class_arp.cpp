@@ -135,63 +135,44 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
     }
 
     ARP_Frame_t* pRX_ARP = &pRX->pPacket->ARP_Frame;
-    IP_PacketMsg_t* pTX  = nullptr;
-    ARP_Frame_t* pTX_ARP = nullptr;
 
-    switch(pRX_ARP->Opcode)
+    switch(ntohs(pRX_ARP->Opcode))
     {
         case ARP_REQUEST:
         {
-            // On ne répond que si la requête est pour notre IP
-            if(pRX_ARP->DstIP_Address == m_pContext->GetActiveIP())
+            if (pRX_ARP->DstIP_Address == m_pContext->GetActiveIP())                            // Respond only if the ARP request targets our IP address
             {
-                // Allouer le wrapper TX
-                pTX = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(sizeof(IP_PacketMsg_t), MEM_DBG_ARP);
+                pMemoryPool->ChangeDebugID(pRX, MEM_DBG_IPPKT, MEM_DBG_ARP);
+                pMemoryPool->ChangeDebugID(pRX->pPacket, MEM_DBG_ETHDMARX2, MEM_DBG_ARPDT);
 
-                if(pTX == nullptr)
-                {
-                    break;  // pas de réponse, mais on va quand même free pRX plus bas
-                }
+                // Zero-copy: reuse the RX buffer as TX
+                IP_PacketMsg_t*       pTX  = pRX;
+                ARP_Frame_t*          pARP = &pTX->pPacket->ARP_Frame;
+                IP_EthernetHeader_t*  pETH = &pTX->pPacket->ETH_Header;
 
-                // Alloc full Ethernet packet
-                pTX->pPacket = (IP_EthernetPacket_t*)pMemoryPool->AllocAndClear(pRX->PacketSize, MEM_DBG_ARPDT);
+                // Ethernet header
+                memcpy(pETH->DestinationMAC.Byte, pARP->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);   // Destination MAC = requester MAC
+                m_pContext->GetMAC_Address(&pETH->SourceMAC);                                   // Source MAC = our MAC address
+                pETH->Type = htons(IP_ETHERNET_TYPE_ARP);                                       // EtherType = ARP
 
-                if(pTX->pPacket == nullptr)
-                {
-                    pMemoryPool->Free((void**)&pTX);
-                    break;  // No response
-                }
+                // ARP header
+                pARP->Opcode = htons(ARP_REPLY);                                                // ARP Reply opcode
 
-                pTX->PacketSize = pRX->PacketSize;
-                pTX_ARP         = &pTX->pPacket->ARP_Frame;
+                // Sender fields = our device
+                m_pContext->GetMAC_Address(&pARP->SourceMAC);
+                pARP->SrcIP_Address = m_pContext->GetActiveIP();
 
-                // Build ARP response
-                pTX_ARP->Opcode = ARP_REPLY;
+                // Target fields = original requester
+                memcpy(pARP->DestinationMAC.Byte, pRX_ARP->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);
+                pARP->DstIP_Address = pRX_ARP->SrcIP_Address;
 
-                // Destination MAC = request source MAC
-                memcpy(pTX_ARP->DestinationMAC.Byte, pRX_ARP->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);
-                memcpy(pTX_ARP->ETH_Header.DestinationMAC.Byte, pRX_ARP->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);
-
-                // MAC source = our MAC
-                m_pContext->GetMAC_Address(&pTX_ARP->SourceMAC);
-                m_pContext->GetMAC_Address(&pTX_ARP->ETH_Header.SourceMAC);
-
-                // IPs
-                pTX_ARP->DstIP_Address = pRX_ARP->SrcIP_Address;
-                pTX_ARP->SrcIP_Address = m_pContext->GetActiveIP();
-
-                // ARP Field
-                pTX_ARP->HardwareType       = ARP_HARDWARE_TYPE_ETHERNET;
-                pTX_ARP->Protocol           = htons(IP_ETHERNET_TYPE_IP);
-                pTX_ARP->HardwareAddrLength = IP_MAC_ADDRESS_SIZE;
-                pTX_ARP->ProtocolLength     = 4;
-
-                // Header Ethernet
-                pTX_ARP->ETH_Header.Type = htons(IP_ETHERNET_TYPE_ARP);
-
-                // Send to standard TX path
-                m_pContext->SendPacket(pTX);
-                // TX IRQ will free pTX->pPacket and pTX
+                // ARP fixed fields
+                pARP->HardwareType       = htons(ARP_HARDWARE_TYPE_ETHERNET);
+                pARP->Protocol           = htons(IP_ETHERNET_TYPE_IP);
+                pARP->HardwareAddrLength = IP_MAC_ADDRESS_SIZE;
+                pARP->ProtocolLength     = 4;
+                m_pContext->SendPacket(pTX);                                                    // Send the ARP reply using the standard TX path
+                return;   // IMPORTANT: prevent FreeMessage(pRX) from freeing our TX buffer
             }
         }
         break;
@@ -207,11 +188,11 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
         break;
 
         default:
-            // Opcode inconnu → ignoré
+            // Unknown Opcode -> so it is ignore
             break;
     }
 
-    // Dans tous les cas, ARP est propriétaire de pRX → on doit le libérer
+    // In all case, ARP est owner of pRX -> we free it (not for ARP_REQUEST if it is for us)
     IP_Manager::FreeMessage(pRX);
 }
 

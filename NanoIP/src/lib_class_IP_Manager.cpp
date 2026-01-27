@@ -91,6 +91,8 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     m_Context.SetIP_Manager(this);
     m_SocketManager.Initialize(&m_Context);               // Initialize socket manager
 
+    m_Context.SetDHCP_Enable(false);
+
     // Initialize Variables
     m_Context.SetIP_Valid(false);
     //m_DNS_IP_Found = false;  not used so far
@@ -98,6 +100,12 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     m_Context.SetMAC_Address(&m_Config[IF_ID].IP_ETH_Config.MAC_Address);
     m_Context.SetHostName(m_Config[IF_ID].pHostName);
     m_Context.SetMTU(IP_NET_IF_MTU);                                        // Set netif maximum transfer unit
+
+    m_Context.SetStaticIP(m_Config[IF_ID].DefaultStatic_IP);
+    m_Context.SetStaticGatewayIP(m_Config[IF_ID].DefaultGateway);
+    m_Context.SetStaticSubnetMask(m_Config[IF_ID].DefaultSubnetMask);
+    m_Context.SetStaticDNS_IP(m_Config[IF_ID].DefaultStaticDNS);
+
     m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config, &m_Context);
     m_Context.RegisterSendCallback(&m_IF_Driver.LowLevelOutputWrapper, &m_IF_Driver);
 
@@ -172,28 +180,35 @@ void IP_Manager::Run(void)
     IP_Error_e      Error;
   #endif
 
-    for (;;)
+    for(;;)
     {
       #if (IP_USE_DHCP == DEF_ENABLED)
-        static ETH_LinkState_e LastLinkState = ETH_LINK_UNKNOWN;
-        ETH_LinkState_e LinkState = m_Context.GetLinkState();
 
-        // Link just went DOWN
-        if((LinkState == ETH_LINK_DOWN) && (LastLinkState == ETH_LINK_UP))
+        // Always react to link changes, regardless of DHCP enable state
+        if(m_Context.GetLinkChange() == true)
         {
-            m_DHCP.Reset();        // sets state = INITIAL, stops timers, clears context
-            LastLinkState = ETH_LINK_DOWN;
+            m_Context.SetLinkChange(false);
+
+            if(m_Context.GetLinkState() == ETH_LINK_UP)
+            {
+                if(m_Context.IsDHCP_Enable())
+                {
+                    m_DHCP.Start();
+                }
+                else
+                {
+                    m_DHCP.Reset();   // Ensure no stale DHCP state
+                }
+            }
+            else // Link down
+            {
+                m_DHCP.Reset();
+            }
         }
 
-        // Link just came UP
-        if((LinkState == ETH_LINK_UP) && (LastLinkState == ETH_LINK_DOWN))
-        {
-            m_DHCP.Start();        // recreate socket, reset XID, begin DISCOVER
-            LastLinkState = ETH_LINK_UP;
-        }
-
-        // Run DHCP state machine only when link is up
-        if(LinkState == ETH_LINK_UP)
+        // Run DHCP state machine only when enabled AND link is up
+        if (m_Context.IsDHCP_Enable() &&
+            m_Context.GetLinkState() == ETH_LINK_UP)
         {
             (void)m_DHCP.Process();
         }
@@ -201,7 +216,7 @@ void IP_Manager::Run(void)
 
         if(nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
         {
-            switch (ntohs(pMsg->pPacket->ETH_Header.Type))
+            switch(ntohs(pMsg->pPacket->ETH_Header.Type))
             {
                 case IP_ETHERNET_TYPE_IP:
                 {
@@ -218,7 +233,7 @@ void IP_Manager::Run(void)
 
                 default:
                 {
-                    // Unknown Ethernet type → free
+                    // Unknown Ethernet type -> free
                     FreeMessage(pMsg);
                 }
                 break;
@@ -289,15 +304,15 @@ SystemState_e IP_Manager::SendPacket(IP_PacketMsg_t* pMsg)
     IP_Header_t*         pIP  = &pMsg->pPacket->IP_Frame.Header;
     IP_Address_t         dstIP = pIP->DstIP_Addr;
 
-    // Broadcast: 255.255.255.255 → FF:FF:FF:FF:FF:FF
+    // Broadcast: 255.255.255.255 -> FF:FF:FF:FF:FF:FF
     if(dstIP == IP_ADDRESS(255,255,255,255))
     {
         memset(pETH->DestinationMAC.Byte, 0xFF, IP_MAC_ADDRESS_SIZE);
     }
     else
     {
-        // Unicast → resolve via ARP
-        if(!m_ARP.Resolve(dstIP, &pETH->DestinationMAC))
+        // Unicast -> resolve via ARP
+        if(m_ARP.Resolve(dstIP, &pETH->DestinationMAC) == false)
         {
             // ARP not ready -> caller decides what to do
             return SYS_ARP_RESOLVE_PENDING;
@@ -328,7 +343,7 @@ IP_Address_t IP_Manager::GetDNS(void)
 //  Name:           GetHost
 //
 //  Parameter(s):   void
-//  Return:         IP_Address_t   dwIP
+//  Return:         IP_Address_t   Host IP
 //
 //  Description:    Return host IP address according to configuration
 //
@@ -353,10 +368,10 @@ IP_Address_t IP_Manager::GetHost(void)
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::IP_ToAscii(char* pBuffer, IP_Address_t IP_Address)
 {
-    snprintf(pBuffer, IP_ASCII_ADDRESS_SIZE, "%d.%d.%d.%d", uint8_t(IP_Address >> 24),
-                                                            uint8_t(IP_Address >> 16),
+    snprintf(pBuffer, IP_ASCII_ADDRESS_SIZE, "%d.%d.%d.%d", uint8_t(IP_Address),
                                                             uint8_t(IP_Address >> 8),
-                                                            uint8_t(IP_Address));
+                                                            uint8_t(IP_Address >> 16),
+                                                            uint8_t(IP_Address >> 24));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -592,7 +607,7 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t DstIP, uint16_t Pay
     IP_MAC_Address_t MacAddress;
     m_Context.GetMAC_Address(&MacAddress);
     memcpy(&pETH->SourceMAC.Byte[0], &MacAddress.Byte[0], IP_MAC_ADDRESS_SIZE);
-    pETH->Type = IP_ETHERNET_TYPE_IP;
+    pETH->Type = htons(IP_ETHERNET_TYPE_IP);
 
     // IPv4 header
     pIP->VersionIHL          = IP_VERSION4_IHL20;
@@ -606,12 +621,12 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t DstIP, uint16_t Pay
     pIP->DstIP_Addr          = DstIP;
 
     pIP->Checksum = 0;
-    pIP->Checksum = CalculateChecksum(pIP, sizeof(IP_Header_t));
+    pIP->Checksum = IP_CalculateChecksum(pIP, sizeof(IP_Header_t));
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CalculateChecksum
+//  Name:           IP_CalculateChecksum
 //
 //  Parameter(s):   void*       pBuffer     Pointer to the start of the header to checksum
 //                  uint16_t    Count       Number of bytes to include in the checksum
@@ -631,7 +646,8 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t DstIP, uint16_t Pay
 //                    is zero before invoking this function.
 //
 //-------------------------------------------------------------------------------------------------
-int16_t IP_Manager::CalculateChecksum(void* pBuffer, uint16_t Count)
+
+int16_t IP_Manager::IP_CalculateChecksum(void* pBuffer, uint16_t Count)
 {
 	int16_t 	i;
 	uint16_t*	Value;
@@ -656,6 +672,40 @@ int16_t IP_Manager::CalculateChecksum(void* pBuffer, uint16_t Count)
 	return ~Checksum.u8_Array[0];                                                  	// Return the resulting checksum
 }
 
+
+uint16_t IP_Manager::UDP_CalculateChecksum(IP_Header_t* pIP, UDP_Header_t* pUDP, uint16_t UDP_Length)
+{
+    uint32_t Sum = 0;
+
+    // Pseudo-header
+    Sum += (pIP->SrcIP_Addr >> 16) & 0xFFFF;
+    Sum += (pIP->SrcIP_Addr      ) & 0xFFFF;
+    Sum += (pIP->DstIP_Addr >> 16) & 0xFFFF;
+    Sum += (pIP->DstIP_Addr      ) & 0xFFFF;
+    Sum += htons(IP_PROTOCOL_UDP);
+    Sum += htons(UDP_Length);
+
+    // UDP header + payload
+    uint16_t* pPtr = (uint16_t*)pUDP;
+
+    for(uint16_t i = 0; i < (UDP_Length / 2); i++)
+    {
+        Sum += *pPtr++;
+    }
+
+    if(UDP_Length & 1)               // Odd byte?
+    {
+        Sum += *((uint8_t*)pPtr);
+    }
+
+    // Fold 32-bit sum to 16 bits
+    while(Sum >> 16)
+    {
+        Sum = (Sum & 0xFFFF) + (Sum >> 16);
+    }
+
+    return ~((uint16_t)Sum);
+}
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           FreeMessage

@@ -163,7 +163,8 @@ class IP_Manager
                                                          size_t* pBytesSent)                { return m_UDP.Send(pSock, pData, Length, pDestInfo, pBytesSent); }
       #endif
 
-        static int16_t      CalculateChecksum           (void* pBuffer, uint16_t Count);
+        static uint16_t     UDP_CalculateChecksum        (IP_Header_t* pIP, UDP_Header_t* pUDP, uint16_t udpLength);
+        static int16_t      IP_CalculateChecksum        (void* pBuffer, uint16_t Count);
         static void         FreeMessage                 (IP_PacketMsg_t* pMsg);
         static void         IP_ToAscii                  (char* pBuffer, IP_Address_t IP_Address);
         static IP_Address_t AsciiToIP                   (char* pBuffer);

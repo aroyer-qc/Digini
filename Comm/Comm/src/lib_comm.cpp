@@ -131,6 +131,10 @@ nOS_Error ClassTaskCOMM::Initialize(void)
 #if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
 void ClassTaskCOMM::Run(void)
 {
+// TODO better this... only for test... need to be completed
+//const SystemDebugLevel_e DebugLvl = SystemDebugLevel_e(SYS_DEBUG_LEVEL_ETHERNET);// | SYS_DEBUG_LEVEL_MEMORY_POOL);
+//myConsole.SetDebugLevel(DebugLvl);
+
     for(;;)
     {
         myConsole.Process();

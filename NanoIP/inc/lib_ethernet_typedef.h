@@ -137,6 +137,7 @@ enum ETH_MediaInterface_e
 // Ethernet Link Speed
 enum ETH_LinkSpeed_e
 {
+    ETH_PHY_SPEED_NONE,
     ETH_PHY_SPEED_10M,
     ETH_PHY_SPEED_100M,
     ETH_PHY_SPEED_1G,
@@ -193,6 +194,7 @@ struct IP_MAC_Address_t
 };
 
 // The Ethernet header
+#pragma pack(push, 1)
 struct IP_EthernetHeader_t
 {
 	IP_MAC_Address_t 	DestinationMAC;                 //     6
@@ -264,6 +266,7 @@ struct UDP_Header_t
 	uint16_t	    Length;                             // +   2
 	uint16_t	    Checksum;                           // +   2
 };                                                      // =   8 Bytes
+
 
 struct IP_PseudoHeader_t                                // note that the element are not in same order as define in the protocol,
 {                                                       // but match the IP in the union
@@ -346,6 +349,7 @@ struct DHCP_Frame_t
 	UDP_Header_t			UDP_Header;                 // +   8
 	DHCP_Header_t		    Header;  		            // + 240
 };                                                      // = 282 Bytes
+#pragma pack(pop)
 
 struct IP_EthernetPacket_t
 {

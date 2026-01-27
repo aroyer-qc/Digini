@@ -192,7 +192,7 @@ void NetDHCP::Initialize(NetworkContext* pContext)
     Error = nOS_TimerCreate(&m_TimerT1_Lease,  nullptr, nullptr, DHCP_T1_LEASE_TIME_OUT, NOS_TIMER_ONE_SHOT);
     Error = nOS_TimerCreate(&m_TimerT2_Rebind, nullptr, nullptr, DHCP_T2_REBIND_TIME_OUT, NOS_TIMER_ONE_SHOT);
 
-    Start();
+    //Start();
 
     VAR_UNUSED(Error); // TODO Manage error
 }
@@ -285,10 +285,7 @@ bool NetDHCP::Start(void)
 //-------------------------------------------------------------------------------------------------
 bool NetDHCP::Process(void)
 {
-    //--------------------------------------------------------------------------
-    // 1) Handle internal timers (non-blocking)
-    //--------------------------------------------------------------------------
-
+    // Handle internal timers (non-blocking)
     if(nOS_TimerIsRunning(&m_TimerDiscover) == false)
     {
         // Retry DISCOVER if still not bound
@@ -371,10 +368,7 @@ bool NetDHCP::Process(void)
         pMemoryPool->Free((void**)&pBuffer);
     }
 
-    //--------------------------------------------------------------------------
-    // 3) Return true if we are bound
-    //--------------------------------------------------------------------------
-
+    // Return true if we are bound
     return (m_State == DHCP_STATE_BOUND);
 }
 
@@ -407,10 +401,12 @@ bool NetDHCP::Discover(void)
     if(pTX == nullptr)
     {
       #if (IP_DBG_DHCP == DEF_ENABLED)
-        DBG_Printf("DHCP: Failed to allocate DISCOVER buffer\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DHCP: Failed to allocate DISCOVER buffer\n");
       #endif
         return false;
     }
+
+    PutHeader(pTX);                                                                             // Build DHCP header (Op, HTYPE, HLEN, XID, CHADDR, etc.)
 
     // Build DHCP options for DISCOVER
     Options = (DHCP_PUT_OPTION_CLIENT_IDENTIFIER |
@@ -418,9 +414,8 @@ bool NetDHCP::Discover(void)
                DHCP_PUT_OPTION_PL_DISCOVER);
 
     Length = PutOption(&pTX->Options[0], Options, DHCP_OPTION_DISCOVER);
-    PutHeader(pTX);                                                                             // Build DHCP header (Op, HTYPE, HLEN, XID, CHADDR, etc.)
 
-    size_t PacketLength = (sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + Length;
+    size_t PacketLength = DHCP_HEADER_SIZE + Length;
 
     // Destination: broadcast IP
     SocketInfo_t Dest;
@@ -436,13 +431,13 @@ bool NetDHCP::Discover(void)
         Status = false;
 
       #if (IP_DBG_DHCP == DEF_ENABLED)
-        DBG_Printf("DHCP: Fatal error while sending DISCOVER (Err=%d, Sent=%u)\n", Error, (unsigned)BytesSent);
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DHCP: Fatal error while sending DISCOVER (Err=%d, Sent=%u)\n", Error, (unsigned)BytesSent);
       #endif
     }
     else
     {
       #if (IP_DBG_DHCP == DEF_ENABLED)
-        DBG_Printf("DHCP DISCOVER sent\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DHCP DISCOVER sent\n");
       #endif
 
         m_State = DHCP_STATE_SELECTING;                                                         // Update DHCP state
@@ -504,7 +499,7 @@ bool NetDHCP::Request(void)
     PutHeader(pTX);
 
     // Compute total packet length
-    size_t PacketLength = (sizeof(DHCP_Msg_t) - DHCP_OPTION_IN_PACKET_SIZE) + Length;
+    size_t PacketLength = DHCP_HEADER_SIZE + Length;
 
     // Select destination: broadcast for initial REQUEST, unicast for renewal
     SocketInfo_t Dest;
@@ -534,13 +529,13 @@ bool NetDHCP::Request(void)
         Status = false;
 
       #if (IP_DBG_DHCP == DEF_ENABLED)
-        DBG_Printf("DHCP: Fatal error while sending REQUEST\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DHCP: Fatal error while sending REQUEST\n");
       #endif
     }
     else
     {
       #if (IP_DBG_DHCP == DEF_ENABLED)
-        DBG_Printf("DHCP REQUEST sent\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DHCP REQUEST sent\n");
       #endif
     }
 
@@ -568,15 +563,15 @@ void NetDHCP::ParseOffer(DHCP_Msg_t* pRX)
     m_Options.ServerIP = ntohl(pRX->ServerIP_Address);
 
 #if (IP_DBG_DHCP == DEF_ENABLED)
-    DBG_Printf("DHCP OFFER: Client IP = %d.%d.%d.%d, Server IP = %d.%d.%d.%d\n",
-               uint8_t(m_Options.ClientIP >> 24),
-               uint8_t(m_Options.ClientIP >> 16),
-               uint8_t(m_Options.ClientIP >> 8),
-               uint8_t(m_Options.ClientIP),
-               uint8_t(m_Options.ServerIP >> 24),
-               uint8_t(m_Options.ServerIP >> 16),
-               uint8_t(m_Options.ServerIP >> 8),
-               uint8_t(m_Options.ServerIP));
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DHCP OFFER: Client IP = %d.%d.%d.%d, Server IP = %d.%d.%d.%d\n",
+                                                   uint8_t(m_Options.ClientIP >> 24),
+                                                   uint8_t(m_Options.ClientIP >> 16),
+                                                   uint8_t(m_Options.ClientIP >> 8),
+                                                   uint8_t(m_Options.ClientIP),
+                                                   uint8_t(m_Options.ServerIP >> 24),
+                                                   uint8_t(m_Options.ServerIP >> 16),
+                                                   uint8_t(m_Options.ServerIP >> 8),
+                                                   uint8_t(m_Options.ServerIP));
 #endif
 }
 
@@ -612,13 +607,13 @@ void NetDHCP::IsBound(void)
     nOS_TimerStart(&m_TimerT2_Rebind);
 
 #if (IP_DBG_DHCP == DEF_ENABLED)
-    DBG_Printf("DHCP BOUND: IP=%d.%d.%d.%d  MASK=%d.%d.%d.%d  GW=%d.%d.%d.%d\n",
-               uint8_t(m_DHCP_IP >> 24),         uint8_t(m_DHCP_IP >> 16),
-               uint8_t(m_DHCP_IP >> 8),          uint8_t(m_DHCP_IP),
-               uint8_t(m_DHCP_SubnetMask >> 24), uint8_t(m_DHCP_SubnetMask >> 16),
-               uint8_t(m_DHCP_SubnetMask >> 8),  uint8_t(m_DHCP_SubnetMask),
-               uint8_t(m_DHCP_GatewayIP >> 24),  uint8_t(m_DHCP_GatewayIP >> 16),
-               uint8_t(m_DHCP_GatewayIP >> 8),   uint8_t(m_DHCP_GatewayIP));
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DHCP BOUND: IP=%d.%d.%d.%d  MASK=%d.%d.%d.%d  GW=%d.%d.%d.%d\n",
+               uint8_t(m_Options.ClientIP >> 24),     uint8_t(m_Options.ClientIP >> 16),
+               uint8_t(m_Options.ClientIP >> 8),      uint8_t(m_Options.ClientIP),
+               uint8_t(m_Options.SubnetMaskIP >> 24), uint8_t(m_Options.SubnetMaskIP >> 16),
+               uint8_t(m_Options.SubnetMaskIP >> 8),  uint8_t(m_Options.SubnetMaskIP),
+               uint8_t(m_Options.GatewayIP >> 24),    uint8_t(m_Options.GatewayIP >> 16),
+               uint8_t(m_Options.GatewayIP >> 8),     uint8_t(m_Options.GatewayIP));
 #endif
 }
 
@@ -802,36 +797,59 @@ size_t NetDHCP::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
     }
 
     // Host Name (hostname + "_" + last 3 bytes of MAC in hex)
-    if(Options & DHCP_PUT_OPTION_HOST_NAME)
+    if (Options & DHCP_PUT_OPTION_HOST_NAME)
     {
-        const char* Host = m_pContext->GetHostName();
-        size_t HostLen   = strlen(Host);
+        // Get and sanitize hostname
+        const char* rawHost = m_pContext->GetHostName();
 
-        // Hostname + 3 separators + 6 hex chars
-        size_t ExtraLen = 3 + (3 * 2);
-        size_t TotalLen = HostLen + ExtraLen;
+        // Accept only printable ASCII, stop at first invalid or null
+        size_t HostLen = 0;
 
-        *pPtr++ = DHCP_OPTION_HOST_NAME;
-        *pPtr++ = (uint8_t)TotalLen;
+        while(rawHost[HostLen] >= 32 && rawHost[HostLen] <= 126)
+        {
+            HostLen++;
+        }
 
-        // Copy hostname
-        memcpy(pPtr, Host, HostLen);
-        pPtr += HostLen;
+        if(HostLen > 63)
+        {
+            HostLen = 63;
+        }
 
-        // Append "_XX_XX_XX" based on last 3 MAC bytes
-        IP_MAC_Address_t MAC_Address;
-        m_pContext->GetMAC_Address(&MAC_Address);
+        // Build suffix "_XX:YY:ZZ"
+        IP_MAC_Address_t mac;
+        m_pContext->GetMAC_Address(&mac);
+
+        char suffix[1 + 3 * 3];   // "_" + "XX:" + "YY:" + "ZZ" = 10 bytes
+        char* s = suffix;
+
+        *s++ = '_';
 
         for(uint8_t i = 3; i < 6; i++)
         {
-            *pPtr++ = '_';
+            uint8_t hi = (mac.Byte[i] >> 4) & 0x0F;
+            uint8_t lo =  mac.Byte[i]       & 0x0F;
 
-            uint8_t hi = (MAC_Address.Byte[i] >> 4) & 0x0F;
-            uint8_t lo = (MAC_Address.Byte[i] & 0x0F);
+            *s++ = (hi < 10) ? ('0' + hi) : ('A' + (hi - 10));
+            *s++ = (lo < 10) ? ('0' + lo) : ('A' + (lo - 10));
 
-            *pPtr++ = (hi < 10) ? ('0' + hi) : ('A' + (hi - 10));
-            *pPtr++ = (lo < 10) ? ('0' + lo) : ('A' + (lo - 10));
+            if(i < 5)
+            {
+                *s++ = ':';   // Colon between bytes
+            }
         }
+
+        const size_t SuffixLen = (size_t)(s - suffix);
+        const size_t TotalLen  = HostLen + SuffixLen;
+
+        // Emit DHCP Option 12
+        *pPtr++ = DHCP_OPTION_HOST_NAME;
+        *pPtr++ = (uint8_t)TotalLen;
+
+        memcpy(pPtr, rawHost, HostLen);
+        pPtr += HostLen;
+
+        memcpy(pPtr, suffix, SuffixLen);
+        pPtr += SuffixLen;
     }
 
     // Server Identifier (used in renewal REQUEST)
@@ -863,7 +881,8 @@ size_t NetDHCP::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
 void NetDHCP::PutHeader(DHCP_Msg_t* pTX)
 {
     // Clear all header fields (safety)
-    memset(pTX, 0, sizeof(DHCP_Msg_t));
+//    memset(pTX, 0, sizeof(DHCP_Msg_t));
+    memset(pTX, 0, offsetof(DHCP_Msg_t, Options));
 
     // DHCP fixed header
     pTX->Op          = DHCP_BOOT_REQUEST;
@@ -872,7 +891,7 @@ void NetDHCP::PutHeader(DHCP_Msg_t* pTX)
     pTX->Hops        = 0;
     pTX->X_ID        = htonl(m_XID);
     pTX->Seconds     = 0;
-    pTX->MagicCookie = DHCP_MAGIC_COOKIE;
+    pTX->MagicCookie = htonl(DHCP_MAGIC_COOKIE);
 
     // Broadcast flag for initial DISCOVER/REQUEST
     if (m_State < DHCP_STATE_BOUND)

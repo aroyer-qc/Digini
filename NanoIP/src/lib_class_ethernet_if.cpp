@@ -97,6 +97,7 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, Netw
     m_pContext    = pContext;
     m_pETH_Config = pETH_Config;
 	m_pContext->SetLinkState(ETH_LINK_DOWN);
+	m_pContext->SetLinkSpeed(ETH_PHY_SPEED_NONE);
 
     Error = nOS_SemCreate(&m_RX_Sem, 0, NET_RX_COUNT_MAX_SEMAPHORE);
     Error = nOS_MutexCreate(&m_TX_Mutex, NOS_MUTEX_NORMAL, 1);
@@ -239,22 +240,25 @@ void ETH_IF_Driver::Run(void)
 //-------------------------------------------------------------------------------------------------
 void ETH_IF_Driver::PollTheNetworkInterface(void)
 {
+    PHY_DriverInterface* pDriverIF = m_pETH_Config->pPHY_Driver;
     ETH_LinkState_e LinkNow;
 
  //   if(netif_find(IF_NAME))       // TODO temporary to debug reception of packet
     {
-        LinkNow = m_pETH_Config->pPHY_Driver->GetLinkState();
+        LinkNow = pDriverIF->GetLinkState();
 
         if(LinkNow != m_pContext->GetLinkState())
         {
+            m_pContext->SetLinkChange(true);
+
             if(LinkNow == ETH_LINK_UP)
             {
-                //netif_set_link_up(netif_find(IF_NAME));
+                m_pContext->SetLinkSpeed(pDriverIF->GetLinkInfo().Speed);
                 DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: Link UP\n");
             }
             else
             {
-                //netif_set_link_down(netif_find(IF_NAME));
+                m_pContext->SetLinkSpeed(ETH_PHY_SPEED_NONE);
                 DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: Link DOWN\n");
             }
 

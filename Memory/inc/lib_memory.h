@@ -156,6 +156,7 @@ class MemPoolDriver
         uint32_t    GetPoolBlockHighPoint       (uint32_t PoolNumber);
         uint32_t    GetAllocCount               (MEM_DebugListOfID_e DbgID)     { return m_AllocCount[DbgID];           }
         uint32_t    GetMaxDebugID               (void)                          { return uint32_t(NUMBER_OF_MEM_DBG);   }
+        bool        ChangeDebugID               (void* MemBlock, MEM_DebugListOfID_e OriginalDebugID, MEM_DebugListOfID_e NewDebugID);
       #endif
 
 

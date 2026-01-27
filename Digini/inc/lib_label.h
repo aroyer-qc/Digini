@@ -91,6 +91,13 @@ X_LABEL( LBL_IP_DNS,                     "DNS Servers  . . . . . :",       "Serv
 X_LABEL( LBL_IP_DHCP_STATE,              "DHCP State . . . . . . :",       "Status DHCP  . . . . . :"                      ) \
 X_LABEL( LBL_IP_LINK_STATE,              "Link State . . . . . . :",       "Status Lien  . . . . . :"                      ) \
 X_LABEL( LBL_IP_LINK_SPEED,              "Link Speed . . . . . . :",       "Vitesse du Lien  . . . :"                      ) \
+X_LABEL( LBL_IP_UP,                      "Up  ",                           "Lien Actif  "                                  ) \
+X_LABEL( LBL_IP_DOWN,                    "Down",                           "Lien Inactif"                                  ) \
+X_LABEL( LBL_IP_SPEED_NONE,              "--- M",                          nullptr                                         ) \
+X_LABEL( LBL_IP_SPEED_10M,               "10  M",                          nullptr                                         ) \
+X_LABEL( LBL_IP_SPEED_100M,              "100 M",                          nullptr                                         ) \
+X_LABEL( LBL_IP_SPEED_1G,                "1   G",                          nullptr                                         ) \
+X_LABEL( LBL_IP_BYTE_PER_SECOND,         "b/Sec",                          nullptr                                         ) \
 X_LABEL( LBL_MAC_ADDRESS,                "MAC Address  . . . . . :",       "Addresse MAC . . . . . :"                      ) \
 X_LABEL( LBL_MAC_ADDRESS_VALUE,          "%02X:%02X:%02X:%02X:%02X:%02X",  nullptr                                         ) \
 X_LABEL( LBL_ETH_RX_COUNT,               "RX Packet Count  . . . :",       "Nb de Paquets Re\x87" "es  . :"                ) \

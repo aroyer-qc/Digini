@@ -90,31 +90,28 @@ void SocketManager::FreeSocket(Socket** ppSocket)
     }
 
     Socket* pSocket = *ppSocket;
+    pSocket->m_Active = false;                              // Freeze the socket so no new packets enter its RX queue
 
-    // 1. Freeze the socket so no new packets enter its RX queue
-    pSocket->m_Active = false;
-
-    // 2. Drain RX queue safely (no race because demux now drops)
-    if(pSocket->m_Type == SOCKET_TYPE_DATAGRAM)
+    if(pSocket->m_Type == SOCKET_TYPE_DATAGRAM)             // Drain RX queue safely (no race because demux now drops)
     {
         UDP_Socket_t* pUDP = pSocket->m_Protocol.pUDP;
         IP_PacketMsg_t* pMsg = nullptr;
+
+        IP_Port_t port = pSocket->GetLocalPort();
+        pSocket->m_Manager.UDP_UnregisterSocket(port);
 
         while(nOS_QueueRead(&pUDP->RX_Queue, &pMsg, 0) == NOS_OK)
         {
             IP_Manager::FreeMessage(pMsg);
         }
+
+        if(pSocket->m_Type == SOCKET_TYPE_DATAGRAM)         // Free protocol-specific structures
+        {
+            pMemoryPool->Free((void**)&pSocket->m_Protocol.pUDP);
+        }
     }
 
-    // 3. Free protocol-specific structures
-    if(pSocket->m_Type == SOCKET_TYPE_DATAGRAM)
-    {
-        pMemoryPool->Free((void**)&pSocket->m_Protocol.pUDP);
-    }
-
-    // 4. Free the socket object itself
-    pMemoryPool->Free((void**)&pSocket);
-
+    pMemoryPool->Free((void**)&pSocket);                    // Free the socket object itself
     *ppSocket = nullptr;
 }
 
@@ -356,7 +353,7 @@ SystemState_e Socket::Bind(IP_Port_t Port)
         return SYS_INVALID_STATE;
     }
 
-    UDP_Socket_t* pUdp       = m_Protocol.pUDP;
+    UDP_Socket_t* pUDP       = m_Protocol.pUDP;
     IP_Port_t     ActualPort = Port;
 
     if(Port == 0)
@@ -365,16 +362,16 @@ SystemState_e Socket::Bind(IP_Port_t Port)
 
         if(ActualPort == 0)
         {
-            return SYS_FAIL_PORT_IN_USE;   // No free ephemeral port
+            return SYS_FAIL_PORT_IN_USE;                        // No free ephemeral port
         }
     }
 
-    if(m_Manager.UDP_RegisterSocket(this, Port) == false)              // Ask NetUDP to register this port
+    if(m_Manager.UDP_RegisterSocket(this, Port) == false)       // Ask NetUDP to register this port
     {
         return SYS_FAIL_PORT_IN_USE;
     }
 
-    pUdp->LocalPort = Port;                                         // Store port locally
+    pUDP->LocalPort = Port;                                     // Store port locally
     return SYS_READY;
 }
 

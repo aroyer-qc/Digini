@@ -59,7 +59,7 @@
 
 #define DHCP_HARDWARE_ADDRESS_LENGHT            0x06
 
-#define DHCP_MAGIC_COOKIE                       0x63538263      // 0x63825363 in Big Endian
+#define DHCP_MAGIC_COOKIE                       0x63825363
 #define DHCP_FLAGS_BROADCAST                    0x8000
 
 #define DHCP_PUT_OPTION_CLIENT_IDENTIFIER       (uint8_t)0x01
@@ -76,6 +76,8 @@
 
 #define DHCP_IS_ON                              true
 #define DHCP_IS_OFF                             false
+
+#define DHCP_HEADER_SIZE                        240
 
 //-------------------------------------------------------------------------------------------------
 // Enum(s)

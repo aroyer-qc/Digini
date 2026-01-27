@@ -183,9 +183,7 @@ void IP_Manager::Run(void)
     for(;;)
     {
       #if (IP_USE_DHCP == DEF_ENABLED)
-
-        // Always react to link changes, regardless of DHCP enable state
-        if(m_Context.GetLinkChange() == true)
+        if(m_Context.GetLinkChange() == true)                       // Always react to link changes, regardless of DHCP enable state
         {
             m_Context.SetLinkChange(false);
 
@@ -207,8 +205,7 @@ void IP_Manager::Run(void)
         }
 
         // Run DHCP state machine only when enabled AND link is up
-        if (m_Context.IsDHCP_Enable() &&
-            m_Context.GetLinkState() == ETH_LINK_UP)
+        if((m_Context.IsDHCP_Enable() == true) && (m_Context.GetLinkState() == ETH_LINK_UP))
         {
             (void)m_DHCP.Process();
         }
@@ -220,7 +217,7 @@ void IP_Manager::Run(void)
             {
                 case IP_ETHERNET_TYPE_IP:
                 {
-                    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Protocol byte = 0x%02X\n", pMsg->pPacket->IP_Frame.Header.Protocol);
+                    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "IP_ETHERNET_TYPE_IP: Protocol:0x%02X\n", pMsg->pPacket->IP_Frame.Header.Protocol);
 
                     m_ARP.ProcessIP(pMsg);                  // May update ARP cache, does NOT own pMsg
                     ProcessIP(pMsg);                        // Transfers ownership to protocol/socket
@@ -235,6 +232,7 @@ void IP_Manager::Run(void)
 
                 default:
                 {
+                    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH_Default: Protocol:0x%02X\n", pMsg->pPacket->IP_Frame.Header.Protocol);
                     // Unknown Ethernet type -> free
                     FreeMessage(pMsg);
                 }

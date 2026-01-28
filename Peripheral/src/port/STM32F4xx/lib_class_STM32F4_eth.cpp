@@ -736,6 +736,7 @@ uint32_t ETH_Driver::GetRX_FrameSize(void)
 
     return Length;
 }
+
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name:     GetRX_FrameTime

@@ -188,19 +188,20 @@ typedef uint32_t    IP_Address_t;
 typedef uint16_t    IP_Port_t;
 //typedef void        (*ETH_CallBack_t) (uint32_t Event);                         // Pointer to ETH_CallBack function
 
+#pragma pack(push, 1)
+
 struct IP_MAC_Address_t
 {
     uint8_t     Byte[IP_MAC_ADDRESS_SIZE];
 };
 
 // The Ethernet header
-#pragma pack(push, 1)
 struct IP_EthernetHeader_t
 {
 	IP_MAC_Address_t 	DestinationMAC;                 //     6
 	IP_MAC_Address_t 	SourceMAC;                      // +   6
 	uint16_t		    Type;                           // +   2
-};                           	    // 14 Bytes
+};                           	                        // 14 Bytes
 
 struct DHCP_Header_t
 {
@@ -349,7 +350,6 @@ struct DHCP_Frame_t
 	UDP_Header_t			UDP_Header;                 // +   8
 	DHCP_Header_t		    Header;  		            // + 240
 };                                                      // = 282 Bytes
-#pragma pack(pop)
 
 struct IP_EthernetPacket_t
 {
@@ -374,6 +374,7 @@ struct IP_PacketMsg_t
 	uint16_t    		    PacketSize;
 	IP_EthernetPacket_t*	pPacket;
 };
+#pragma pack(pop)
 
 struct IP_ETH_Config_t
 {

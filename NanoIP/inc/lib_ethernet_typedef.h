@@ -201,7 +201,7 @@ struct IP_EthernetHeader_t
 	IP_MAC_Address_t 	DestinationMAC;                 //     6
 	IP_MAC_Address_t 	SourceMAC;                      // +   6
 	uint16_t		    Type;                           // +   2
-};                           	    // 14 Bytes
+};                           	                        // 14 Bytes
 
 struct DHCP_Header_t
 {
@@ -374,6 +374,7 @@ struct IP_PacketMsg_t
 	uint16_t    		    PacketSize;
 	IP_EthernetPacket_t*	pPacket;
 };
+#pragma pack(pop)
 
 #pragma pack(pop)
 

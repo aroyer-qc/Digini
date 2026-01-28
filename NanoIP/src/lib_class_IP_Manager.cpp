@@ -213,10 +213,65 @@ void IP_Manager::Run(void)
 
         if(nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
         {
+
+if(pMsg->pPacket->U8RawData[23] == 0x01)
+{
+    __asm("nop");
+}
+
+
+
+
+
+            // Basic Ethernet header size check  peut-etre pas necessaire avec le default
+            if(pMsg->PacketSize < sizeof(IP_EthernetHeader_t))
+            {
+                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: Frame too small for Ethernet header (%u bytes)\n",  pMsg->PacketSize);
+                FreeMessage(pMsg);
+                continue;
+            }
+
             switch(ntohs(pMsg->pPacket->ETH_Header.Type))
             {
                 case IP_ETHERNET_TYPE_IP:
                 {
+                    // Check minimum size for IPv4 header
+                    if(pMsg->PacketSize < (sizeof(IP_EthernetHeader_t) + sizeof(IP_Header_t)))
+                    {
+                        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: IPv4 frame too small (%u bytes)\n", pMsg->PacketSize);
+                        FreeMessage(pMsg);
+                        break;
+                    }
+
+                    // Validate IHL (Internet Header Length)
+                    uint8_t ihl = pMsg->pPacket->IP_Frame.Header.VersionIHL & 0x0F;
+                    if(ihl < 5)
+                    {
+                        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: Invalid IHL (%u)\n", ihl);
+                        FreeMessage(pMsg);
+                        break;
+                    }
+
+                   uint16_t ipHeaderSize = ihl * 4;
+
+                    // Validate total IP length
+                    uint16_t totalLength = ntohs(pMsg->pPacket->IP_Frame.Header.Length);
+
+                    if(totalLength < ipHeaderSize)
+                    {
+                        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: totalLength < ipHeaderSize (%u < %u)\n", totalLength, ipHeaderSize);
+                        FreeMessage(pMsg);
+                        break;
+                    }
+
+                    // Ensure the received frame contains the full IP packet
+                    if(pMsg->PacketSize < (sizeof(IP_EthernetHeader_t) + totalLength))
+                    {
+                        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: Truncated IPv4 frame (%u < %u)\n", pMsg->PacketSize, sizeof(IP_EthernetHeader_t) + totalLength);
+                        FreeMessage(pMsg);
+                        break;
+                    }
+
                     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "IP_ETHERNET_TYPE_IP: Protocol:0x%02X\n", pMsg->pPacket->IP_Frame.Header.Protocol);
 
                     m_ARP.ProcessIP(pMsg);                  // May update ARP cache, does NOT own pMsg

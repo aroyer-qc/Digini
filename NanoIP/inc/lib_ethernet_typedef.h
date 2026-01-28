@@ -364,7 +364,7 @@ struct IP_EthernetPacket_t
 		TCP_PseudoFrame_t           TCP_PseudoFrame;    // use for TCP Checksum calculation
 		ICMP_Frame_t            	ICMP_Frame;
 		UDP_Frame_t				    UDP_Frame;
-		UDP_PseudoFrame_t		    UDP_PseudoFrame;				// use for UDP Checksum calculation
+		UDP_PseudoFrame_t		    UDP_PseudoFrame;	// use for UDP Checksum calculation
 		DHCP_Frame_t                DHCP_Frame;
 	};
 };
@@ -376,6 +376,8 @@ struct IP_PacketMsg_t
 };
 #pragma pack(pop)
 
+#pragma pack(pop)
+
 struct IP_ETH_Config_t
 {
     IP_MAC_Address_t            MAC_Address;
@@ -383,6 +385,7 @@ struct IP_ETH_Config_t
     class PHY_DriverInterface*  pPHY_Driver;                                    // Driver for PHY
     uint8_t                     PHY_Address;
 };
+
 
 struct IP_Config_t                                                              // Host Name, IP_ Address, Protocol (ip_cfg.h)
 {

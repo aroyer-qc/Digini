@@ -56,6 +56,8 @@
 
 #define VT100_STARTUP_MENU_ID_CFG                       CAT(VT100_STARTUP_MENU_CFG, _ID)
 
+
+
 //-------------------------------------------------------------------------------------------------
 // Const(s)
 //-------------------------------------------------------------------------------------------------
@@ -1588,3 +1590,136 @@ bool VT100_Terminal::GetString(char* pBuffer, size_t Size)
 //-------------------------------------------------------------------------------------------------
 
 #endif // (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+
+/* pseudo code windows for debug print
+Core data structures
+#define LOG_COLS   100
+#define LOG_LINES  40
+
+typedef struct {
+    char buf[LOG_LINES][LOG_COLS];  // fixed text buffer
+    int head;                                            // index of the newest line (0..LOG_LINES-1)
+    int  cur_col;                   // where next char goes (0..LOG_COLS-1)
+} LogBuffer;
+
+typedef struct {
+    int top;    // screen row (1-based VT100)
+    int left;   // screen col (1-based VT100)
+    int width;  // window width  in chars
+    int height; // window height in lines
+} Window;
+
+Low-level helpers
+also it is void log_init(LogBuffer *lb)
+void log_clear(LogBuffer *lb)
+{
+    memset(lb->buf, ' ', LOG_LINES * LOG_COLS);
+    lb->cur_line = 0;
+    lb->cur_col  = 0;
+}
+
+static void log_scroll_up(LogBuffer *lb)
+{
+head = (head + 1) % LOG_LINES;
+memset(lb->buf[head], ' ', LOG_COLS);
+cur_col = 0;
+}
+
+static void log_newline(LogBuffer *lb)
+{
+    lb->head = (lb->head + 1) % LOG_LINES;
+    memset(lb->buf[lb->head], ' ', LOG_COLS);
+    lb->cur_col = 0;
+}
+
+"Special print" into the virtual buffer
+void log_print(LogBuffer *lb, const char *s)
+{
+    while(*s)
+    {
+        char ch = *s++;
+
+        if(ch == '\n')
+        {
+            log_newline(lb);
+            continue;
+        }
+
+        if(lb->cur_col >= LOG_COLS)
+        {
+            log_newline(lb);
+        }
+
+        lb->buf[lb->head][lb->cur_col++] = ch;
+    }
+}
+
+
+// VT100 helpers
+#define VT100_SAVE    "\x1B7"
+#define VT100_RESTORE "\x1B8"
+#define VT100_CUP(row,col)  printf("\x1B[%d;%dH", (row), (col))
+
+Displaying a window onto the buffer
+void DisplayWindow(const LogBuffer *lb, const Window *w)
+{
+    char lineBuf[LOG_COLS + 1];   // temp buffer for clipping
+    int max_cols = (w->width < LOG_COLS) ? w->width : LOG_COLS;
+
+    xSemaphoreTake(vt100_sem, portMAX_DELAY);
+    printf("\x1B7"); // save cursor
+
+    // Compute first line to display (circular buffer)
+    int start = lb->head - (w->height - 1);
+    if (start < 0)
+        start += LOG_LINES;
+
+    int screen_row = w->top;
+
+    for (int i = 0; i < w->height; i++) {
+
+        int srcLine = (start + i) % LOG_LINES;
+
+        // Build clipped line
+        memcpy(lineBuf, lb->buf[srcLine], max_cols);
+        lineBuf[max_cols] = '\0';
+
+        // Move cursor to window position
+        printf("\x1B[%d;%dH", screen_row, w->left);
+
+        // Send the entire line in ONE call
+        PrintSerialLog(lineBuf);
+
+        screen_row++;
+    }
+
+    printf("\x1B8"); // restore cursor
+}
+
+
+Usage 
+
+LogBuffer g_log;
+Window    g_win = { .top = 5, .left = 10, .width = 60, .height = 10 };
+
+void init_page(void)
+{
+    log_clear(&g_log);
+}
+
+void some_task(void *arg)
+{
+    // producer
+    log_print(&g_log, "Hello world\n");
+    log_print(&g_log, "Another line...\n");
+}
+
+void ui_task(void *arg)
+{
+    for (;;) {
+        DisplayWindow(&g_log, &g_win);
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+*/

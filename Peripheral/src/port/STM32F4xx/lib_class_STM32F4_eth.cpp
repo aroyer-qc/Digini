@@ -619,12 +619,12 @@ SystemState_e ETH_Driver::GetRX_Packet(IP_PacketMsg_t** ppPacketMsg)
         return SYS_NO_DATA;
     }
 
-    if(Length > ETH_BUF_SIZE)               // est-ce vraiment possible ????
+    if(Length > ETH_BUF_SIZE)
     {
       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
         DBG_RX_Drop++;
       #endif
-        m_RX_Descriptor[m_Control.RX_Index].Status = DMA_RX_OWN;                                            // Give back the buffer to the DMA without returning it
+        m_RX_Descriptor[m_Control.RX_Index].Status = DMA_RX_OWN;    // Give back the buffer to the DMA without returning it
         m_Control.RX_Index++;
 
         if(m_Control.RX_Index == NUM_RX_Buffer)

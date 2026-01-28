@@ -1594,16 +1594,24 @@ bool VT100_Terminal::GetString(char* pBuffer, size_t Size)
 //
 //  Name:           LogInitialize
 //
-//  Parameter(s):
+//  Parameter(s):   PosX  - Left position of the log window (VT100 column, 1-based)
+//                  PosY  - Top position of the log window (VT100 row, 1-based)
+//                  SizeX - Width  of the log window in characters
+//                  SizeY - Height of the log window in lines
 //
-//  Return:
+//  Return:         None
 //
-//  Description:    
+//  Description:    Initializes the log window geometry and clears the virtual log buffer.
+//                  Window size is clipped to the maximum virtual buffer dimensions.
 //
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::LogInitialize(int PosX, int PosY, int SizeX, int SizeY)
 {
-    m_pWindowLog = pWindowsLog;
+    DrawBox(PosX, PosY, SizeX, SizeY);
+    m_LogWindowLeft   = PosX + 1;
+    m_LogWindowTop    = PosY + 1;
+    m_LogWindowWidth  = ((SizeX < VT100_LOG_COLUMNS) ? SizeX : VT100_LOG_COLUMNS) - 2;
+    m_LogWindowHeight = ((SizeY < VT100_LOG_LINES)   ? SizeY : VT100_LOG_LINES) - 2;
     LogClear();
 }
 
@@ -1615,8 +1623,8 @@ void VT100_Terminal::LogInitialize(int PosX, int PosY, int SizeX, int SizeY)
 //
 //  Return:         None
 //
-//  Description:    
-//
+//  Description:    Clears the entire virtual log buffer and resets the circular buffer head.
+//                  All lines are filled with spaces.
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::LogClear(void)
 {
@@ -1632,24 +1640,28 @@ void VT100_Terminal::LogClear(void)
 //
 //  Return:         None
 //
-//  Description:    
+//  Description:    Advances the circular log buffer to the next line.
+//                  The new line is cleared and ready to receive text.
 //
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::LogNewLine(void)
 {
-    m_LogHead = (m_LogHead + 1) % LOG_LINES;                // Advance circular index
-    memset(m_LogBuffer[m_LogBuffer], ' ', LOG_COLUMNS);     // Clear the new line
+    m_LogHead = (m_LogHead + 1) % VT100_LOG_LINES;              // Advance circular index
+    memset(m_LogBuffer[m_LogHead], ' ', VT100_LOG_COLUMNS);     // Clear the new line
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           LogPrint
 //
-//  Parameter(s): 
+//  Parameter(s):   pString - Pointer to a null-terminated string.
+//                            May contain one or more '\n' characters.
 //
 //  Return:         None
 //
-//  Description:
+//  Description:    Writes one or more lines into the circular log buffer.
+//                  Each '\n' starts a new log line.
+//                  Lines longer than the buffer width are clipped.
 //
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::LogPrint(const char* pString)
@@ -1658,16 +1670,16 @@ void VT100_Terminal::LogPrint(const char* pString)
     {
         const char *Start = pString;
 
-        while((*pString != nullptr) && (*pString != '\n'))
+        while((*pString != '\0') && (*pString != '\n'))
         {
             pString++;
         }
 
         int Length = pString - Start;
-        
-        if(Length > LOG_COLUMNS)
+
+        if(Length > VT100_LOG_COLUMNS)
         {
-            Length = LOG_COLUMNS;
+            Length = VT100_LOG_COLUMNS;
         }
 
         LogNewLine();                                 // Use the canonical function
@@ -1682,42 +1694,49 @@ void VT100_Terminal::LogPrint(const char* pString)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           DisplayLog
+//  Name:           LogDisplay
 //
 //  Parameter(s):   None
 //
 //  Return:         None
 //
-//  Description:    Displaying a log window from the virtual buffer
+//  Description:    Renders the visible portion of the virtual log buffer into the VT100 window.
+//                  Displays the most recent lines, clipped to the window width.
+//                  Each displayed line is sent using a single InMenuPrintf() call.
 //
 //-------------------------------------------------------------------------------------------------
-void VT100_Terminal::DisplayLog(void)
+void VT100_Terminal::LogDisplay(void)
 {
-    char LineBuffer[LOG_COLUMNS + 1];                                       // Temp buffer for clipping
-    int  MaxColumns = (m_LogWindowWidth < LOG_COLUMNS) ? m_LogWindowWidth : LOG_COLUMNS;
+    char LineBuffer[VT100_LOG_COLUMNS + 1];                                 // Temp buffer for clipping
     int Start       = m_LogHead - (m_LogWindowHeight - 1);                  // Compute first line to display (circular buffer)
 
     SaveCursorPosition();
-    
+
     if(Start < 0)
     {
-        Start += LOG_LINES;
+        Start += VT100_LOG_LINES;
     }
 
-    int ScreenRow = m_LogWindowTop;
+    int ScreenRow  = m_LogWindowTop;
+    int SourceLine = Start;
 
     for(int i = 0; i < m_LogWindowHeight; i++)
     {
-        int SourceLine = (Start + i) % LOG_LINES;
+        SourceLine++;
 
-        memcpy(LineBuffer, m_LogBuffer[SourceLine], MaxColumns);            // Build clipped line
-        LineBuffer[MaxColumns] = '\0';                                      // Properly terminate the line
+        if(SourceLine >= VT100_LOG_LINES)
+        {
+            SourceLine = 0;
+        }
+
+        memcpy(LineBuffer, m_LogBuffer[SourceLine], m_LogWindowWidth);      // Build clipped line
+        LineBuffer[m_LogWindowWidth] = '\0';                                // Properly terminate the line
         InMenuPrintf(VT100_LBL_SET_CURSOR, ScreenRow, m_LogWindowLeft);     // Move cursor to window position
-        PrintSerialLog(LineBuffer);                                         // Send the entire line in ONE call
+        InMenuPrintf(LBL_STRING, LineBuffer);                               // Send the entire line in ONE call
         ScreenRow++;
     }
 
-    RestoreCursorPosition(); 
+    RestoreCursorPosition();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1739,7 +1758,7 @@ void VT100_Terminal::DisplayLog(void)
 "Special print" into the virtual buffer
 
 
-Usage 
+Usage
 
 LogBuffer g_log;
 Window    g_win = { .top = 5, .left = 10, .width = 60, .height = 10 };

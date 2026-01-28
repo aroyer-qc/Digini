@@ -1195,6 +1195,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
           #endif
             myVT100.InMenuPrintf(        VT100_LBL_ESCAPE);
 
+            myVT100.LogInitialize(60, 40, 40, 40);
             // Add Lease obtain and expire???
         }
         break;
@@ -1245,6 +1246,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
             myVT100.InMenuPrintf(28, 19, LBL_LONG_UNSIGNED, DBG_TX_Count);
             myVT100.InMenuPrintf(56, 19, LBL_LONG_UNSIGNED, DBG_TX_Drop);
           #endif
+
+          myVT100.LogDisplay();
         }
         break;
 

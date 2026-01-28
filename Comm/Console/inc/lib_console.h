@@ -45,6 +45,8 @@
 #define CON_NOT_CONNECTED               0
 #define CON_NUMBER_OF_DEBUG_LEVEL       16
 
+#define DEBUG_PrintSerialLog           myConsole.PrintSerialLog
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -83,14 +85,15 @@ class Console : public CallbackInterface
         size_t             PrintSerialLog             (SystemDebugLevel_e Level, const char* pFormat, ...);
         size_t             PrintSerialLog             (SystemDebugLevel_e Level, const char* pFormat, va_list va);
       #endif
-        void               SetSerialLogging           (bool Mute);
+        void               SetSerialLogging           (bool Mute)                                     { m_MuteSerialLogging = Mute;                 }
+        bool               GetSerialLogging           (void)                                          { return m_MuteSerialLogging;                 }
         SystemState_e      SendData                   (const uint8_t* p_BufferTX, size_t* pSizeTX);
         void               CallbackFunction           (int Type, void* pContext);
 
         // Passthru FIFO
-        inline void        SetTailForward             (size_t Size)                                   { m_Fifo.SetTailForward(Size);                   }
-        inline void        SetHeadForward             (size_t Size)                                   { m_Fifo.SetHeadForward(Size);                   }
-        inline void        SetHeadBackward            (size_t Size)                                   { m_Fifo.SetHeadBackward(Size);                  }
+        inline void        SetTailForward             (size_t Size)                                   { m_Fifo.SetTailForward(Size);                }
+        inline void        SetHeadForward             (size_t Size)                                   { m_Fifo.SetHeadForward(Size);                }
+        inline void        SetHeadBackward            (size_t Size)                                   { m_Fifo.SetHeadBackward(Size);               }
         inline size_t      Read                       (void* pBuffer, size_t BytesToRead)             { return m_Fifo.Read(pBuffer, BytesToRead);   }
         inline size_t      Write                      (const void *pBuffer, size_t BytesToWrite)      { return m_Fifo.Write(pBuffer, BytesToWrite); }
         inline int32_t     At                         (size_t Offset)                                 { return m_Fifo.At(Offset);                   }
@@ -155,14 +158,3 @@ extern class Console myConsole;
 #endif // (DIGINI_USE_CONSOLE == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-
-
-#if (DIGINI_USE_CONSOLE == DEF_ENABLED) && (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
-
-    #define DEBUG_PrintSerialLog           myConsole.PrintSerialLog
-
-#else
-
-    #define DEBUG_PrintSerialLog(...)       // Prevent wrapping all log call with preprocessor
-
-#endif

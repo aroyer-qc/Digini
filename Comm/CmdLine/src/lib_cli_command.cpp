@@ -286,7 +286,9 @@ SystemState_e CommandLine::CmdMENU(void* pArg)
 
     if(m_PlainCommand == true)
     {
+        m_PreviousSerialLoging = m_pConsole->GetSerialLogging();
         m_pConsole->GiveControlToChildProcess((ChildProcessInterface*)pArg);
+        m_pConsole->SetSerialLogging(false);
         m_IsItInitialize = false;                                               // when we come back.. it will reinitialize the CLI
         Error = SYS_OK_SILENT;
     }

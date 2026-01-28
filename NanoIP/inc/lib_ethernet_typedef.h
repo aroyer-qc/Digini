@@ -374,7 +374,6 @@ struct IP_PacketMsg_t
 	uint16_t    		    PacketSize;
 	IP_EthernetPacket_t*	pPacket;
 };
-#pragma pack(pop)
 
 #pragma pack(pop)
 

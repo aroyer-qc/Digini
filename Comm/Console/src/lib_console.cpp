@@ -302,7 +302,6 @@ size_t Console::Printf(const char* pFormat, va_list* p_vaArg)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
 size_t Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, ...)
 {
     size_t  Size;
@@ -320,21 +319,27 @@ size_t Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, va
     char*            pBuffer;
     size_t           Size = 0;
 
-    if(m_MuteSerialLogging == false)
+    //if((m_DebugLevel & Level) != CON_DEBUG_NONE)      TODO fix this finish support for it
     {
-        //if((m_DebugLevel & Level) != CON_DEBUG_NONE)      TODO fix this finish support for it
+        if((pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE, MEM_DBG_CON3)) != nullptr)
         {
-            if((pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE, MEM_DBG_CON3)) != nullptr)
+            Size = vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, vaArg);
+
+          #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
+            if(m_MuteSerialLogging == false)
             {
-                Size = vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, vaArg);
                 m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size);
             }
+          #endif
+
+          #if (VT100_USE_LOG_WINDOW == DEF_ENABLED)
+            myVT100.LogPrint(pBuffer);
+          #endif
         }
     }
 
     return Size;
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -354,25 +359,6 @@ SystemState_e Console::SendData(const uint8_t* p_BufferTX, size_t* pSizeTX)
 {
     m_pUartDriver->SendData((const uint8_t*)p_BufferTX, pSizeTX);
     return SYS_READY;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           SetSerialLogging
-//
-//  Parameter(s):   bool        Mute        - if true, serial logging is muted
-//                                          - if false, serial logging unmuted
-//
-//  Return:         None
-//
-//  Description:    Set the mute flag for the serial logging.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void Console::SetSerialLogging(bool Mute)
-{
-    m_MuteSerialLogging = Mute;
 }
 
 //-------------------------------------------------------------------------------------------------

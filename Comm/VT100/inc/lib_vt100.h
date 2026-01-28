@@ -303,7 +303,7 @@ class VT100_Terminal : public ChildProcessInterface
         void                SetAttribute                (VT100_Attribute_e Attribute);
 
         void                Bargraph                    (uint8_t PosX, uint8_t PosY, VT100_Color_e ColorCurrent, uint8_t ValueCurrent, VT100_Color_e ColorMax, uint8_t ValueMax, uint8_t Max, uint8_t Size);
-        void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t SizeX, uint8_t SizeY, VT100_Color_e ForeColor);
+        void                DrawBox                     (uint8_t PosX, uint8_t PosY, uint8_t SizeX, uint8_t SizeY, VT100_Color_e ForeColor = VT100_COLOR_WHITE);
         void                DrawVline                   (uint8_t PosX, uint8_t PosY, uint8_t SizeY, VT100_Color_e ForeColor);
         void                DrawHline                   (uint8_t PosX, uint8_t PosY, uint8_t SizeX, VT100_Color_e ForeColor);
 
@@ -339,7 +339,7 @@ class VT100_Terminal : public ChildProcessInterface
         void                LogClear                    (void);
         void                LogNewLine                  (void);
         void                LogPrint                    (const char* pString);
-        void                DisplayLog                  (void);
+        void                LogDisplay                  (void);
       #endif
 
 // to check if needed in VT100
@@ -415,12 +415,12 @@ bool                GetString                   (char* pBuffer, size_t Size);
         static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
 
       #if (VT100_USE_LOG_WINDOW == DEF_ENABLED)
-        char                                m_LogBuffer[LOG_LINES][LOG_COLUMNS];            // Fixed text buffer
-        int                                 m_LogHead;                                      // Index of the newest line (0..LOG_LINES-1)
-        int                                 m_LogWindowTop;                                 // Screen row (1-based VT100)
-        int                                 m_LogWindowLeft;                                // Screen col (1-based VT100)
-        int                                 m_LogWindowWidth;                               // Window width  in chars
-        int                                 m_LogWindowHeight;                              // Window height in lines
+        char                                m_LogBuffer[VT100_LOG_LINES][VT100_LOG_COLUMNS];    // Fixed text buffer
+        int                                 m_LogHead;                                          // Index of the newest line (0..LOG_LINES-1)
+        int                                 m_LogWindowTop;                                     // Screen row (1-based VT100)
+        int                                 m_LogWindowLeft;                                    // Screen col (1-based VT100)
+        int                                 m_LogWindowWidth;                                   // Window width  in chars
+        int                                 m_LogWindowHeight;                                  // Window height in lines
       #endif
 
         VT100_MENU_DEF(EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER)

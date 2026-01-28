@@ -140,9 +140,10 @@ const Label_e CommandLine::m_HelpLabel[NUMBER_OF_CLI_CMD] =
 //-------------------------------------------------------------------------------------------------
 void CommandLine::Initialize(Console* pConsole)
 {
-    m_pConsole       = pConsole;
-    m_IsItInitialize = false;
-    m_StartupTick    = GetTick();
+    m_pConsole             = pConsole;
+    m_IsItInitialize       = false;
+    m_PreviousSerialLoging = false;
+    m_StartupTick          = GetTick();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -173,6 +174,7 @@ void CommandLine::IF_Process(void)
         m_ParserRX_Size     = 0;
         m_IsItOnHold        = false;
         m_IsItOnStartup     = true;
+        m_pConsole->SetSerialLogging(m_PreviousSerialLoging);
         m_FifoCmd.Initialize(CLI_FIFO_CMD_SIZE);
         m_pConsole->Printf(LBL_RESET_TERMINAL);
         TickCount_t Delay = GetTick();

@@ -1355,8 +1355,8 @@ void VT100_Terminal::DisplayTimeDateStamp(uint8_t PosX, uint8_t PosY, DateAndTim
 //
 //  Parameter(s):   uint8_t         PosX                Position x on screen.
 //                  uint8_t         PosY                Position y on screen.
-//                  uint8_t         H_Size              horizontal size in of the box.
-//                  uint8_t         V_Size              vertical size of the box.
+//                  uint8_t         SizeX               Horizontal size in of the box.
+//                  uint8_t         SizeY               Vertical size of the box.
 //                  VT100_Color_e   ForeColor           Color of the box.
 //
 //  Return:         None
@@ -1366,23 +1366,22 @@ void VT100_Terminal::DisplayTimeDateStamp(uint8_t PosX, uint8_t PosY, DateAndTim
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t V_Size, VT100_Color_e ForeColor)
+void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t SizeX, uint8_t SizeY, VT100_Color_e ForeColor)
 {
     if(m_IsDisplayLock == false)
     {
         SetForeColor(ForeColor);
         InMenuPrintf(PosX, PosY, LBL_CHAR, ASCII_EXT_TL_CORNER_CHAR);
-        DrawHline(PosX + 1, PosY, H_Size - 2, ForeColor);
+        DrawHline(PosX + 1, PosY, SizeX - 2, ForeColor);
         InMenuPrintf(LBL_CHAR, ASCII_EXT_TR_CORNER_CHAR);
-        //SetCursorPosition(PosX, ++PosY;)
 
         // We draw  vertical line and also clear indise the box
-        for(uint8_t i = 0; i < (V_Size - 2); i++)
+        for(uint8_t i = 0; i < (SizeY - 2); i++)
         {
             InMenuPrintf(PosX, ++PosY, LBL_CHAR, ASCII_EXT_VERTICAL_CHAR);
 
             // Erase inside
-            for(uint8_t j = 0; j < (H_Size - 2); j++)
+            for(uint8_t j = 0; j < (SizeX - 2); j++)
             {
                 InMenuPrintf(LBL_CHAR, ASCII_SPACE);
             }
@@ -1391,18 +1390,18 @@ void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t
         }
 
         InMenuPrintf(PosX, ++PosY, LBL_CHAR, ASCII_EXT_BL_CORNER_CHAR);
-        DrawHline(PosX + 1, PosY, H_Size - 2, ForeColor);
+        DrawHline(PosX + 1, PosY, SizeX - 2, ForeColor);
         InMenuPrintf(LBL_CHAR, ASCII_EXT_BR_CORNER_CHAR);
     }
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           DrawVline
+//  Name:           DrawHline
 //
 //  Parameter(s):   uint8_t         PosX                Position X on screen.
 //                  uint8_t         PosY                Position Y on screen.
-//                  uint8_t         V_Size              vertical size of line.
+//                  uint8_t         SizeX               Horizontal size of line.
 //                  VT100_Color_e   ForeColor           Color of the box.
 //
 //  Return:         None
@@ -1412,14 +1411,14 @@ void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t H_Size, uint8_t
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void VT100_Terminal::DrawHline(uint8_t PosX, uint8_t PosY, uint8_t H_Size, VT100_Color_e ForeColor)
+void VT100_Terminal::DrawHline(uint8_t PosX, uint8_t PosY, uint8_t SizeX, VT100_Color_e ForeColor)
 {
     if(m_IsDisplayLock == false)
     {
         SetForeColor(ForeColor);
         SetCursorPosition(PosX, PosY);
 
-        for(uint8_t i = 0; i < H_Size; i++)
+        for(uint8_t i = 0; i < SizeX; i++)
         {
             InMenuPrintf(LBL_CHAR, ASCII_EXT_HORIZONTAL_CHAR);
         }
@@ -1432,7 +1431,7 @@ void VT100_Terminal::DrawHline(uint8_t PosX, uint8_t PosY, uint8_t H_Size, VT100
 //
 //  Parameter(s):   uint8_t         PosX                Position X on screen.
 //                  uint8_t         PosY                Position Y on screen.
-//                  uint8_t         V_Size              vertical size of line.
+//                  uint8_t         SizeY               Vertical size of line.
 //                  VT100_Color_e   ForeColor           Color of the box.
 //
 //  Return:         None
@@ -1442,13 +1441,13 @@ void VT100_Terminal::DrawHline(uint8_t PosX, uint8_t PosY, uint8_t H_Size, VT100
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t V_Size, VT100_Color_e ForeColor)
+void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t SizeY, VT100_Color_e ForeColor)
 {
     if(m_IsDisplayLock == false)
     {
         SetForeColor(ForeColor);
 
-        for(uint8_t i = 0; i < V_Size; i++)
+        for(uint8_t i = 0; i < SizeY; i++)
         {
             InMenuPrintf(PosX, PosY++, LBL_CHAR, ASCII_EXT_VERTICAL_CHAR);
         }
@@ -1589,112 +1588,155 @@ bool VT100_Terminal::GetString(char* pBuffer, size_t Size)
 
 //-------------------------------------------------------------------------------------------------
 
+#if (VT100_USE_LOG_WINDOW == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           LogInitialize
+//
+//  Parameter(s):
+//
+//  Return:
+//
+//  Description:    
+//
+//-------------------------------------------------------------------------------------------------
+void VT100_Terminal::LogInitialize(int PosX, int PosY, int SizeX, int SizeY)
+{
+    m_pWindowLog = pWindowsLog;
+    LogClear();
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           LogClear
+//
+//  Parameter(s):   None
+//
+//  Return:         None
+//
+//  Description:    
+//
+//-------------------------------------------------------------------------------------------------
+void VT100_Terminal::LogClear(void)
+{
+    memset(m_LogBuffer, ' ', VT100_LOG_LINES * VT100_LOG_COLUMNS);
+    m_LogHead  = 0;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           LogNewLine
+//
+//  Parameter(s):   None
+//
+//  Return:         None
+//
+//  Description:    
+//
+//-------------------------------------------------------------------------------------------------
+void VT100_Terminal::LogNewLine(void)
+{
+    m_LogHead = (m_LogHead + 1) % LOG_LINES;                // Advance circular index
+    memset(m_LogBuffer[m_LogBuffer], ' ', LOG_COLUMNS);     // Clear the new line
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           LogPrint
+//
+//  Parameter(s): 
+//
+//  Return:         None
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
+void VT100_Terminal::LogPrint(const char* pString)
+{
+    while(*pString)
+    {
+        const char *Start = pString;
+
+        while((*pString != nullptr) && (*pString != '\n'))
+        {
+            pString++;
+        }
+
+        int Length = pString - Start;
+        
+        if(Length > LOG_COLUMNS)
+        {
+            Length = LOG_COLUMNS;
+        }
+
+        LogNewLine();                                 // Use the canonical function
+        memcpy(m_LogBuffer[m_LogHead], Start, Length);
+
+        if (*pString == '\n')
+        {
+            pString++;
+        }
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           DisplayLog
+//
+//  Parameter(s):   None
+//
+//  Return:         None
+//
+//  Description:    Displaying a log window from the virtual buffer
+//
+//-------------------------------------------------------------------------------------------------
+void VT100_Terminal::DisplayLog(void)
+{
+    char LineBuffer[LOG_COLUMNS + 1];                                       // Temp buffer for clipping
+    int  MaxColumns = (m_LogWindowWidth < LOG_COLUMNS) ? m_LogWindowWidth : LOG_COLUMNS;
+    int Start       = m_LogHead - (m_LogWindowHeight - 1);                  // Compute first line to display (circular buffer)
+
+    SaveCursorPosition();
+    
+    if(Start < 0)
+    {
+        Start += LOG_LINES;
+    }
+
+    int ScreenRow = m_LogWindowTop;
+
+    for(int i = 0; i < m_LogWindowHeight; i++)
+    {
+        int SourceLine = (Start + i) % LOG_LINES;
+
+        memcpy(LineBuffer, m_LogBuffer[SourceLine], MaxColumns);            // Build clipped line
+        LineBuffer[MaxColumns] = '\0';                                      // Properly terminate the line
+        InMenuPrintf(VT100_LBL_SET_CURSOR, ScreenRow, m_LogWindowLeft);     // Move cursor to window position
+        PrintSerialLog(LineBuffer);                                         // Send the entire line in ONE call
+        ScreenRow++;
+    }
+
+    RestoreCursorPosition(); 
+}
+
+//-------------------------------------------------------------------------------------------------
+
+#endif
+
+//-------------------------------------------------------------------------------------------------
+
 #endif // (DIGINI_USE_VT100_MENU == DEF_ENABLED)
 
 /* pseudo code windows for debug print
-Core data structures
-#define LOG_COLS   100
-#define LOG_LINES  40
 
-typedef struct {
-    char buf[LOG_LINES][LOG_COLS];  // fixed text buffer
-    int head;                                            // index of the newest line (0..LOG_LINES-1)
-    int  cur_col;                   // where next char goes (0..LOG_COLS-1)
-} LogBuffer;
 
-typedef struct {
-    int top;    // screen row (1-based VT100)
-    int left;   // screen col (1-based VT100)
-    int width;  // window width  in chars
-    int height; // window height in lines
-} Window;
 
-Low-level helpers
-also it is void log_init(LogBuffer *lb)
-void log_clear(LogBuffer *lb)
-{
-    memset(lb->buf, ' ', LOG_LINES * LOG_COLS);
-    lb->cur_line = 0;
-    lb->cur_col  = 0;
-}
 
-static void log_scroll_up(LogBuffer *lb)
-{
-head = (head + 1) % LOG_LINES;
-memset(lb->buf[head], ' ', LOG_COLS);
-cur_col = 0;
-}
 
-static void log_newline(LogBuffer *lb)
-{
-    lb->head = (lb->head + 1) % LOG_LINES;
-    memset(lb->buf[lb->head], ' ', LOG_COLS);
-    lb->cur_col = 0;
-}
+
 
 "Special print" into the virtual buffer
-void log_print(LogBuffer *lb, const char *s)
-{
-    while(*s)
-    {
-        char ch = *s++;
-
-        if(ch == '\n')
-        {
-            log_newline(lb);
-            continue;
-        }
-
-        if(lb->cur_col >= LOG_COLS)
-        {
-            log_newline(lb);
-        }
-
-        lb->buf[lb->head][lb->cur_col++] = ch;
-    }
-}
-
-
-// VT100 helpers
-#define VT100_SAVE    "\x1B7"
-#define VT100_RESTORE "\x1B8"
-#define VT100_CUP(row,col)  printf("\x1B[%d;%dH", (row), (col))
-
-Displaying a window onto the buffer
-void DisplayWindow(const LogBuffer *lb, const Window *w)
-{
-    char lineBuf[LOG_COLS + 1];   // temp buffer for clipping
-    int max_cols = (w->width < LOG_COLS) ? w->width : LOG_COLS;
-
-    xSemaphoreTake(vt100_sem, portMAX_DELAY);
-    printf("\x1B7"); // save cursor
-
-    // Compute first line to display (circular buffer)
-    int start = lb->head - (w->height - 1);
-    if (start < 0)
-        start += LOG_LINES;
-
-    int screen_row = w->top;
-
-    for (int i = 0; i < w->height; i++) {
-
-        int srcLine = (start + i) % LOG_LINES;
-
-        // Build clipped line
-        memcpy(lineBuf, lb->buf[srcLine], max_cols);
-        lineBuf[max_cols] = '\0';
-
-        // Move cursor to window position
-        printf("\x1B[%d;%dH", screen_row, w->left);
-
-        // Send the entire line in ONE call
-        PrintSerialLog(lineBuf);
-
-        screen_row++;
-    }
-
-    printf("\x1B8"); // restore cursor
-}
 
 
 Usage 
@@ -1702,24 +1744,5 @@ Usage
 LogBuffer g_log;
 Window    g_win = { .top = 5, .left = 10, .width = 60, .height = 10 };
 
-void init_page(void)
-{
-    log_clear(&g_log);
-}
-
-void some_task(void *arg)
-{
-    // producer
-    log_print(&g_log, "Hello world\n");
-    log_print(&g_log, "Another line...\n");
-}
-
-void ui_task(void *arg)
-{
-    for (;;) {
-        DisplayWindow(&g_log, &g_win);
-        vTaskDelay(pdMS_TO_TICKS(100));
-    }
-}
 
 */

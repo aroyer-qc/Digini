@@ -386,7 +386,7 @@ void VT100_Terminal::ProcessRX(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           FlushAllItems
+//  Name:           FinalizeAllItems
 //
 //  Parameter(s):   None
 //  Return:         None
@@ -410,7 +410,7 @@ void VT100_Terminal::FinalizeAllItems(void)
 //
 //  Name:           GoToMenu
 //
-//  Parameter(s):   CON_Menu_e  MenuID              Menu to go to.
+//  Parameter(s):   VT100_Menu_e    MenuID              Menu to go to.
 //
 //  Return:         None
 //
@@ -478,23 +478,6 @@ void VT100_Terminal::DisplayMenu(void)
         {
             //pPreviousMenu = pMenu;
             pMenu = &m_Menu[m_MenuID].pDefinition[Items];
-#if 0
-            m_BypassPrintf = true;
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_RESET_TERMINAL);
-            nOS_Sleep(100);                                                 // Terminal need time to reset
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_HIDE_CURSOR);
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_CLEAR_SCREEN);
-          #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
-            SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
-          #endif
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR, VT100_SCREEN_WIDTH);
-        //    InMenuPrintf(VT100_SZ_NONE, LBL_VT100_MENU_TITLE); // TODO Fix
-            InMenuPrintf(VT100_SZ_NONE, VT100_LBL_LINE_SEPARATOR, VT100_SCREEN_WIDTH);
-          #if (DIGINI_VT100_USE_COLOR == DEF_ENABLED)
-            SetColor(VT100_COLOR_YELLOW, VT100_COLOR_BLACK);
-          #endif
-            InMenuPrintf(VT100_SZ_NONE, LBL_DOUBLE_LINEFEED);
-#endif
 
             if(Items != 0)
             {
@@ -672,7 +655,6 @@ VT100_InputType_e VT100_Terminal::CallBack(CallbackMethod_t pCallback, VT100_Cal
               #endif
               DisplayMenu();                                // Redraw the menu.
             }
-
         }
     }
 
@@ -701,7 +683,6 @@ void VT100_Terminal::EscapeCallback(nOS_Timer* pTimer, void* pArg)
 
     VAR_UNUSED(pTimer);
     This = (VT100_Terminal*)pArg;
-
     nOS_EnterCritical(sr);
     This->m_InEscapeSequence = false;
     This->m_InputDecimalMode = false;
@@ -1042,55 +1023,6 @@ size_t VT100_Terminal::InMenuPrintf(uint8_t PosX, uint8_t PosY, Label_e Label, .
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           LoggingPrintf
-//
-//  Parameter(s):   SystemDebugLevel_e  Level       Level of printf logging.
-//                  const char*         pFormat     Formatted string.
-//                  ...                             Parameter if any.
-//
-//  Return:         size_t              Number of character printed.
-//
-//  Description:    Send formatted string to console if menu system is active.
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-/*
-size_t VT100_Terminal::LoggingPrintf(CLI_DebugLevel_e Level, const char* pFormat, ...)
-{
-    va_list            vaArg;
-    char*              pBuffer;
-    SystemDebugLevel_e DebugLevel;
-    size_t             Size = 0;
-
-    if((m_BypassPrintf == false) && (m_LogsAreMuted == false))
-    {
-        //// SYS_Read(SYSTEM_DEBUG_LEVEL, MAIN_ACU, 0, &DebugLevel, nullptr);
-        if((DebugLevel & Level) != 0)
-        {
-            if((pBuffer = (char*)pMemoryPool->Alloc(VT100_TERMINAL_SIZE), MEM_DBG_VT100_3) == nullptr)
-            {
-                va_start(vaArg, pFormat);
-                Size = LIB_vsnprintf(pBuffer, VT100_TERMINAL_SIZE, pFormat, vaArg);
-                while(m_pUartDriver->IsItBusy() == true){};
-                m_pUartDriver->SendData((const uint8_t*)&pBuffer[0], &Size, pBuffer);
-                UART_Write(UART_CONSOLE, pBuffer, Size);
-                m_pUartDriver->SendData("\n", &Size);
-
-
-
-                va_end(vaArg);
-                pMemoryPool->Free((void**)&pBuffer);
-            }
-        }
-    }
-
-    return Size;
-}
-*/
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           SetAttribute
 //
 //  Parameter(s):   CON_VT100_Attribute_e Attribute     See enum for list of attribute that can be
@@ -1312,7 +1244,7 @@ void VT100_Terminal::LockDisplay(bool State)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           CON_DisplayTimeDateStamp
+//  Name:           DisplayTimeDateStamp
 //
 //  Parameter(s):   PosX            Position X on Screen
 //                  PosY            Position X on Screen
@@ -1406,11 +1338,11 @@ void VT100_Terminal::DrawHline(uint8_t PosX, uint8_t PosY, uint8_t SizeX, VT100_
     {
         SetForeColor(ForeColor);
         SetCursorPosition(PosX, PosY);
-
-        for(uint8_t i = 0; i < SizeX; i++)
-        {
-            InMenuPrintf(LBL_CHAR, ASCII_EXT_HORIZONTAL_CHAR);
-        }
+        InMenuPrintf(VT100_LBL_REPEAT_CHARACTER, ASCII_EXT_HORIZONTAL_CHAR, SizeX);
+//        for(uint8_t i = 0; i < SizeX; i++)
+//        {
+//            InMenuPrintf(LBL_CHAR, ASCII_EXT_HORIZONTAL_CHAR);
+//        }
     }
 }
 
@@ -1602,7 +1534,6 @@ void VT100_Terminal::LogInitialize(int PosX, int PosY, int SizeX, int SizeY)
     m_LogWindowWidth  = ((SizeX < VT100_LOG_COLUMNS) ? SizeX : VT100_LOG_COLUMNS) - 2;
     m_LogWindowHeight = ((SizeY < VT100_LOG_LINES)   ? SizeY : VT100_LOG_LINES) - 2;
     m_LogRefresh      = true;
-    //LogClear();
 }
 
 //-------------------------------------------------------------------------------------------------

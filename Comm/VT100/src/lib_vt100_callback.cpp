@@ -1235,8 +1235,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
 
             InMenuPrintf(28, 14, SpeedLabel);
             pContext->GetMAC_Address(&MAC);
-            InMenuPrintf(28, 15, LBL_MAC_ADDRESS_VALUE, MAC.Byte[0], MAC.Byte[1], MAC.Byte[2],
-                                                                MAC.Byte[3], MAC.Byte[4], MAC.Byte[5]);
+            InMenuPrintf(28, 15, LBL_MAC_ADDRESS_VALUE, MAC.Byte[0], MAC.Byte[1], MAC.Byte[2], MAC.Byte[3], MAC.Byte[4], MAC.Byte[5]);
 
           #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
             InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, DBG_RX_Count);

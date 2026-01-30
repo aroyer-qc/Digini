@@ -85,8 +85,8 @@ class Console : public CallbackInterface
         size_t             PrintSerialLog             (SystemDebugLevel_e Level, const char* pFormat, ...);
         size_t             PrintSerialLog             (SystemDebugLevel_e Level, const char* pFormat, va_list va);
       #endif
-        void               SetSerialLogging           (bool Mute)                                     { m_MuteSerialLogging = Mute;                 }
-        bool               GetSerialLogging           (void)                                          { return m_MuteSerialLogging;                 }
+        void               SetMuteLogging             (bool Mute)                                     { m_MuteSerialLogging = Mute;                 }
+        bool               GetMuteLogging             (void)                                          { return m_MuteSerialLogging;                 }
         SystemState_e      SendData                   (const uint8_t* p_BufferTX, size_t* pSizeTX);
         void               CallbackFunction           (int Type, void* pContext);
 

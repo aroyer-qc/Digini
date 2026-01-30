@@ -415,8 +415,10 @@ bool                GetString                   (char* pBuffer, size_t Size);
         static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
 
       #if (VT100_USE_LOG_WINDOW == DEF_ENABLED)
+        bool                                m_LogRefresh;
         char                                m_LogBuffer[VT100_LOG_LINES][VT100_LOG_COLUMNS];    // Fixed text buffer
         int                                 m_LogHead;                                          // Index of the newest line (0..LOG_LINES-1)
+        int                                 m_LogCount;                                         // Number of valid log lines in the circular buffer
         int                                 m_LogWindowTop;                                     // Screen row (1-based VT100)
         int                                 m_LogWindowLeft;                                    // Screen col (1-based VT100)
         int                                 m_LogWindowWidth;                                   // Window width  in chars

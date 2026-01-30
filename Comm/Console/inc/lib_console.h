@@ -112,16 +112,16 @@ class Console : public CallbackInterface
 
         // Getter/ Setter
       #if (CON_USE_DEBUG_LOG == DEF_ENABLED) || (VT100_USE_LOG_WINDOW == DEF_ENABLED)
-        void                        SetSerialLogging           (bool Mute)                                     { m_MuteSerialLogging = Mute;                 }
-        bool                        GetSerialLogging           (void)                                          { return m_MuteSerialLogging;                 }
+        void                        SetMuteLogging             (bool Mute)                                     { m_MuteSerialLogging = Mute;                 }
+        bool                        GetMuteLogging             (void)                                          { return m_MuteSerialLogging;                 }
         SystemDebugLevel_e          GetDebugLevel              (void)                                          { return m_DebugLevel;                        }
         void                        SetDebugLevel              (SystemDebugLevel_e DebugLevel)                 { m_DebugLevel = DebugLevel;                  }
-        //SystemDebugLevel_e GetOverrideDebugLevel      (void)                                        { return m_OverrideDebugLevel;                }
+        //SystemDebugLevel_e        GetOverrideDebugLevel      (void)                                          { return m_OverrideDebugLevel;                }
         void                        SetOverrideDebugLevel      (SystemDebugLevel_e DebugLevel)                 { m_OverrideDebugLevel = DebugLevel;          }
       #else
-        inline void                 SetSerialLogging           (bool)                                          {                                             }
-        inline bool                 GetSerialLogging           (void)                                          {return false;                                }
-        inline SystemDebugLevel_e   GetDebugLevel              (void)                                          {return SYS_DEBUG_NONE;                       }
+        inline void                 SetMuteLogging             (bool)                                          {                                             }
+        inline bool                 GetMuteLogging             (void)                                          { return false;                               }
+        inline SystemDebugLevel_e   GetDebugLevel              (void)                                          { return SYS_DEBUG_NONE;                      }
         inline void                 SetDebugLevel              (SystemDebugLevel_e)                            {                                             }
         //inline SystemDebugLevel_e GetOverrideDebugLevel      (void)                                          {                                             }
         inline void                 SetOverrideDebugLevel      (SystemDebugLevel_e)                            {                                             }

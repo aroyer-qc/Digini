@@ -237,7 +237,7 @@ class CommandLine : public ChildProcessInterface
         bool                                    m_IsItOnStartup;
         bool                                    m_IsItOnHold;
         bool                                    m_IsItInitialize;
-        bool                                    m_PreviousSerialLoging;
+        bool                                    m_PreviousMuteLogging;
         bool                                    m_ReadCommand;
         bool                                    m_PlainCommand;
         int32_t                                 m_ParamValue[CLI_NUMBER_OF_SUPPORTED_PARAM];

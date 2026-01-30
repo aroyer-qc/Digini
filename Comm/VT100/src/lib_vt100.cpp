@@ -1601,7 +1601,8 @@ void VT100_Terminal::LogInitialize(int PosX, int PosY, int SizeX, int SizeY)
     m_LogWindowTop    = PosY + 1;
     m_LogWindowWidth  = ((SizeX < VT100_LOG_COLUMNS) ? SizeX : VT100_LOG_COLUMNS) - 2;
     m_LogWindowHeight = ((SizeY < VT100_LOG_LINES)   ? SizeY : VT100_LOG_LINES) - 2;
-    LogClear();
+    m_LogRefresh      = true;
+    //LogClear();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1619,6 +1620,7 @@ void VT100_Terminal::LogClear(void)
 {
     memset(m_LogBuffer, ' ', VT100_LOG_LINES * VT100_LOG_COLUMNS);
     m_LogHead  = 0;
+    m_LogCount = 0;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1636,6 +1638,12 @@ void VT100_Terminal::LogClear(void)
 void VT100_Terminal::LogNewLine(void)
 {
     m_LogHead = (m_LogHead + 1) % VT100_LOG_LINES;              // Advance circular index
+
+    if(m_LogCount < VT100_LOG_LINES)
+    {
+        m_LogCount++;
+    }
+
     memset(m_LogBuffer[m_LogHead], ' ', VT100_LOG_COLUMNS);     // Clear the new line
 }
 
@@ -1679,6 +1687,8 @@ void VT100_Terminal::LogPrint(const char* pString)
             pString++;
         }
     }
+
+    m_LogRefresh = true;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1696,33 +1706,42 @@ void VT100_Terminal::LogPrint(const char* pString)
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::LogDisplay(void)
 {
-    char LineBuffer[VT100_LOG_COLUMNS + 1];                                 // Temp buffer for clipping
-    int Start = m_LogHead - (m_LogWindowHeight - 1);                        // Compute first line to display (circular buffer)
+    if(m_LogRefresh == false)
+    {
+        return;
+    }
+
+    m_LogRefresh = false;
+
+    char LineBuffer[VT100_LOG_COLUMNS + 1];                                                     // Temp buffer for clipping
+    int ScreenRow = m_LogWindowTop;
 
     SaveCursorPosition();
+    int LinesToShow = (m_LogCount < m_LogWindowHeight) ? m_LogCount : m_LogWindowHeight;        // Determine how many lines we can actually show
+    int Start = m_LogHead - (LinesToShow - 1);                                                  // Compute the index of the oldest visible line in the circular buffer
 
     if(Start < 0)
     {
         Start += VT100_LOG_LINES;
     }
 
-    int ScreenRow  = m_LogWindowTop;
     int SourceLine = Start;
 
-    for(int i = 0; i < m_LogWindowHeight; i++)
+    for(int i = 0; i < LinesToShow; i++)
     {
+        memcpy(LineBuffer, m_LogBuffer[SourceLine], m_LogWindowWidth);
+        LineBuffer[m_LogWindowWidth] = '\0';
+
+        InMenuPrintf(VT100_LBL_SET_CURSOR, ScreenRow, m_LogWindowLeft);
+        InMenuPrintf(LBL_STRING, LineBuffer);
+
+        ScreenRow++;
         SourceLine++;
 
         if(SourceLine >= VT100_LOG_LINES)
         {
             SourceLine = 0;
         }
-
-        memcpy(LineBuffer, m_LogBuffer[SourceLine], m_LogWindowWidth);      // Build clipped line
-        LineBuffer[m_LogWindowWidth] = '\0';                                // Properly terminate the line
-        InMenuPrintf(VT100_LBL_SET_CURSOR, ScreenRow, m_LogWindowLeft);     // Move cursor to window position
-        InMenuPrintf(LBL_STRING, LineBuffer);                               // Send the entire line in ONE call
-        ScreenRow++;
     }
 
     RestoreCursorPosition();

@@ -56,7 +56,7 @@ SystemState_e CommandLine::CmdMUTE(void* pArg)
 
     if(m_PlainCommand == true)
     {
-        myConsole.SetSerialLogging(true);
+        myConsole.SetMuteLogging(true);
         Error = SYS_READY;
     }
     else
@@ -85,7 +85,7 @@ SystemState_e CommandLine::CmdUNMUTE(void* pArg)
 
     if(m_PlainCommand == true)
     {
-        myConsole.SetSerialLogging(false);
+        myConsole.SetMuteLogging(false);
         Error = SYS_READY;
     }
     else
@@ -286,9 +286,9 @@ SystemState_e CommandLine::CmdMENU(void* pArg)
 
     if(m_PlainCommand == true)
     {
-        m_PreviousSerialLoging = m_pConsole->GetSerialLogging();
+        m_PreviousMuteLogging = m_pConsole->GetMuteLogging();
         m_pConsole->GiveControlToChildProcess((ChildProcessInterface*)pArg);
-        m_pConsole->SetSerialLogging(false);
+        m_pConsole->SetMuteLogging(true);
         m_IsItInitialize = false;                                               // when we come back.. it will reinitialize the CLI
         Error = SYS_OK_SILENT;
     }

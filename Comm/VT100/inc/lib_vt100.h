@@ -143,7 +143,6 @@ enum NAME ## _ItemID_e                                             \
 #define EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER(NAME)                                                   static const VT100_MenuDef_t CAT(m_, NAME)[NAME ## _NB_OF_ITEMS];
 
 /// (Note 1) This create the class member structure containing actual sub item information for each menu.
-//#define EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL)   WHEN(EQUAL(MENU, MEMBER_OF))({LABEL, (VT100_TOKEN(CALLBACK)), PRIMITIVE_CAT(NAVIGATE_TO, _ID)},)
 #define EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL)     WHEN(EQUAL(MENU, MEMBER_OF))({LABEL, &VT100_Terminal::CALLBACK, PRIMITIVE_CAT(NAVIGATE_TO, _ID)},)
 
 #define EXPAND_VT100_AS_MENU_MEMBER_VARIABLE_DATA(NAME)                                                     const VT100_MenuDef_t VT100_Terminal::m_ ## NAME[NAME ## _NB_OF_ITEMS] =       \
@@ -152,11 +151,9 @@ enum NAME ## _ItemID_e                                             \
                                                                                                             };
 
 /// this automatically create all the method declaration in the class for each callback
-//#define EXPAND_VT100_MENU_CALLBACK(NAME)                                                                    VT100_InputType_e NAME(uint8_t Input, VT100_CallBackType_e Type);
-
 #define EXPAND_VT100_MENU_CALLBACK(NAME)     VT100_InputType_e NAME(uint8_t Input, VT100_CallBackType_e Type);
 
-#define EXPAND_VT100_MENU_CALLBACK_PTR(NAME)    &VT100_Terminal::CALLBACK_##NAME
+//#define EXPAND_VT100_MENU_CALLBACK_PTR(NAME)    &VT100_Terminal::CALLBACK_##NAME
 //-------------------------------------------------------------------------------------------------
 // Configuration check
 //-------------------------------------------------------------------------------------------------
@@ -424,8 +421,10 @@ bool                GetString                   (char* pBuffer, size_t Size);
         static const VT100_MenuObject_t     m_Menu[NUMBER_OF_MENU];
 
       #if (VT100_USE_LOG_WINDOW == DEF_ENABLED)
+        bool                                m_LogRefresh;
         char                                m_LogBuffer[VT100_LOG_LINES][VT100_LOG_COLUMNS];    // Fixed text buffer
         int                                 m_LogHead;                                          // Index of the newest line (0..LOG_LINES-1)
+        int                                 m_LogCount;                                         // Number of valid log lines in the circular buffer
         int                                 m_LogWindowTop;                                     // Screen row (1-based VT100)
         int                                 m_LogWindowLeft;                                    // Screen col (1-based VT100)
         int                                 m_LogWindowWidth;                                   // Window width  in chars

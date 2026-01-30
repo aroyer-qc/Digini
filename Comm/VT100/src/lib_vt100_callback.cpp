@@ -1193,7 +1193,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
             InMenuPrintf(        VT100_LBL_ESCAPE);
 
             m_pConsole->SetOverrideDebugLevel(SYS_DEBUG_LEVEL_ETHERNET);
-            LogInitialize(60, 6, 40, 40);
+            LogInitialize(66, 6, 68, 40);
             // Add Lease obtain and expire???
         }
         break;

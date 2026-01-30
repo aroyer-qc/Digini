@@ -324,11 +324,11 @@ void Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, va_l
         {
             Size = vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, vaArg);
 
-          #if (CON_USE_DEBUG_LOG == DEF_ENABLED)
+          #if (VT100_USE_LOG_WINDOW == DEF_ENABLED)
             myVT100.LogPrint(pBuffer);
           #endif
 
-          #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
+          #if (CON_USE_DEBUG_LOG == DEF_ENABLED)
             if(m_MuteSerialLogging == false)
             {
                 m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size);
@@ -339,7 +339,8 @@ void Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, va_l
             }
           #endif
 
-          #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_DISABLED)
+          #if (CON_USE_DEBUG_LOG == DEF_DISABLED)
+            VAR_UNUSED(Size);
             pMemoryPool->Free((void**)&pBuffer);
           #endif
         }

@@ -133,7 +133,7 @@ static uint8_t                  VT100_LastSecond;
 static uint8_t*                 pBuffer1 = nullptr;
 static uint8_t*                 pBuffer2 = nullptr;
 
-#if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
+#if (CON_USE_DEBUG_LOG == DEF_ENABLED)
 static SystemDebugLevel_e       VT100_LastDebugLevel;
 #endif
 
@@ -245,19 +245,19 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
         {
             uint8_t OffsetMultiplierY;
 
-            myVT100.SetForeColor(VT100_COLOR_WHITE);
-            myVT100.InMenuPrintf(1, 5, VT100_LBL_STACKTISTIC);
+            SetForeColor(VT100_COLOR_WHITE);
+            InMenuPrintf(1, 5, VT100_LBL_STACKTISTIC);
 
             for(int i = 0; i < NbOfStack; i++)
             {
                 uint8_t OffsetMultiplierX = uint8_t(((i % 4) * 26) + 2);
                 OffsetMultiplierY         = uint8_t(((i / 4) * 6) + 7);
 
-                myVT100.InMenuPrintf(OffsetMultiplierX--, OffsetMultiplierY++, LBL_STRING, myStacktistic.GetStackName(i));
-                myVT100.DrawBox(OffsetMultiplierX, OffsetMultiplierY, 22, 3, VT100_COLOR_WHITE);
+                InMenuPrintf(OffsetMultiplierX--, OffsetMultiplierY++, LBL_STRING, myStacktistic.GetStackName(i));
+                DrawBox(OffsetMultiplierX, OffsetMultiplierY, 22, 3, VT100_COLOR_WHITE);
             }
 
-            myVT100.InMenuPrintf(VT100_LBL_ESCAPE);
+            InMenuPrintf(VT100_LBL_ESCAPE);
         }
         break;
 
@@ -269,9 +269,9 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
                 uint8_t OffsetMultiplierY = uint8_t((i / 4) * 6);
 
                 Percent = myStacktistic.GetMaxPercent(i);
-                myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY + 9, (Percent >= 90) ? VT100_COLOR_RED : VT100_COLOR_GREEN, Percent, VT100_COLOR_BLUE, 0, 100, 20);
-                myVT100.SetForeColor(VT100_COLOR_WHITE);
-                myVT100.InMenuPrintf(OffsetMultiplierX, OffsetMultiplierY + 11, VT100_LBL_PERCENT_VALUE, Percent);
+                Bargraph(OffsetMultiplierX, OffsetMultiplierY + 9, (Percent >= 90) ? VT100_COLOR_RED : VT100_COLOR_GREEN, Percent, VT100_COLOR_BLUE, 0, 100, 20);
+                SetForeColor(VT100_COLOR_WHITE);
+                InMenuPrintf(OffsetMultiplierX, OffsetMultiplierY + 11, VT100_LBL_PERCENT_VALUE, Percent);
             }
         }
         break;
@@ -313,71 +313,71 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 
         case VT100_CALLBACK_REFRESH_ONCE:
         {
-            myVT100.ClearScreenWindow(0, 4, VT100_SCREEN_WIDTH, 30);
+            ClearScreenWindow(0, 4, VT100_SCREEN_WIDTH, 30);
 
-            myVT100.InMenuPrintf(1, 6,  LBL_SYSTEM_INFO);
+            InMenuPrintf(1, 6,  LBL_SYSTEM_INFO);
 
-            myVT100.InMenuPrintf(1, 8,  LBL_VENDOR_NAME_INFO);
-            myVT100.InMenuPrintf(       LBL_VENDOR_NAME);
+            InMenuPrintf(1, 8,  LBL_VENDOR_NAME_INFO);
+            InMenuPrintf(       LBL_VENDOR_NAME);
 
-            myVT100.InMenuPrintf(1, 9,  LBL_HARDWARE_INFO);
-            myVT100.InMenuPrintf(       LBL_MODEL_NAME);
+            InMenuPrintf(1, 9,  LBL_HARDWARE_INFO);
+            InMenuPrintf(       LBL_MODEL_NAME);
 
-            myVT100.InMenuPrintf(1, 10, LBL_FW_NAME_INFO);
-            myVT100.InMenuPrintf(       LBL_FIRMWARE_NAME);
+            InMenuPrintf(1, 10, LBL_FW_NAME_INFO);
+            InMenuPrintf(       LBL_FIRMWARE_NAME);
 
-            myVT100.InMenuPrintf(1, 11, LBL_FW_VERSION_INFO);
-            myVT100.InMenuPrintf(       LBL_FIRMWARE_VERSION);
+            InMenuPrintf(1, 11, LBL_FW_VERSION_INFO);
+            InMenuPrintf(       LBL_FIRMWARE_VERSION);
 
-            myVT100.InMenuPrintf(1, 12, LBL_GUI_VERSION_INFO);
-            myVT100.InMenuPrintf(       LBL_DIGINI_VERSION);
+            InMenuPrintf(1, 12, LBL_GUI_VERSION_INFO);
+            InMenuPrintf(       LBL_DIGINI_VERSION);
 
-            myVT100.InMenuPrintf(1, 13, LBL_SERIAL_INFO);
+            InMenuPrintf(1, 13, LBL_SERIAL_INFO);
           #if defined(DEBUG) || (DIGINI_USE_DATABASE == DEF_DISABLED)
-            myVT100.InMenuPrintf(       LBL_SERIAL_NUMBER);
+            InMenuPrintf(       LBL_SERIAL_NUMBER);
           #else
              char* pBuffer;
 
              if((pBuffer = (char*)pMemoryPool->Alloc(SERIAL_NUMBER_SIZE, MEM_DBG_VTCB1)) != nullptr)
              {
                  DB_Central.Get(pBuffer, SERIAL_NUMBER_TEXT);
-                 myVT100.InMenuPrintf(LBL_STRING, pBuffer);
+                 InMenuPrintf(LBL_STRING, pBuffer);
                  pMemoryPool->Free((void**)&pBuffer);
              }
           #endif
 
-            myVT100.InMenuPrintf(1, 14, LBL_COMPILE_DATE_INFO);
-            myVT100.InMenuPrintf(       LBL_BUILT_DATE);
+            InMenuPrintf(1, 14, LBL_COMPILE_DATE_INFO);
+            InMenuPrintf(       LBL_BUILT_DATE);
 
-            myVT100.InMenuPrintf(1, 15, VT100_LBL_NOW);
-            myVT100.InMenuPrintf(1, 16, VT100_LBL_UPTIME);
+            InMenuPrintf(1, 15, VT100_LBL_NOW);
+            InMenuPrintf(1, 16, VT100_LBL_UPTIME);
 
-            myVT100.InMenuPrintf(1, 17, LBL_CPU_VOLTAGE);
+            InMenuPrintf(1, 17, LBL_CPU_VOLTAGE);
 
-            myVT100.InMenuPrintf(1, 18, LBL_CPU_TEMPERATURE);
+            InMenuPrintf(1, 18, LBL_CPU_TEMPERATURE);
           #if (DIGINI_USE_DATABASE == DEF_DISABLED)
-            myVT100.InMenuPrintf(24, 18, LBL_DEGREE_CELSIUS);
+            InMenuPrintf(24, 18, LBL_DEGREE_CELSIUS);
           #else
             DB_Central.Get(&Unit, SYSTEM_TEMPERATURE_UNIT);
-            myVT100.InMenuPrintf(24, 18, (Unit == TEMP_CELSIUS) ? LBL_DEGREE_CELSIUS : LBL_DEGREE_FAHRENHEIT);
+            InMenuPrintf(24, 18, (Unit == TEMP_CELSIUS) ? LBL_DEGREE_CELSIUS : LBL_DEGREE_FAHRENHEIT);
           #endif
 
-            myVT100.InMenuPrintf(1, 20, VT100_LBL_REPEAT_CHARACTER, '-', VT100_SCREEN_WIDTH);
-            myVT100.InMenuPrintf(1, 22, VT100_LBL_FONT_TERMINAL);
+            InMenuPrintf(1, 20, VT100_LBL_REPEAT_CHARACTER, '-', VT100_SCREEN_WIDTH);
+            InMenuPrintf(1, 22, VT100_LBL_FONT_TERMINAL);
             uint8_t y = 24;
 
             for(uint32_t i = 128; i < 256; i++)
             {
                 if((i % 32) == 0)
                 {
-                    myVT100.InMenuPrintf(1, y, LBL_CHAR, ASCII_LINE_FEED);
-                    myVT100.SetCursorPosition(4, y++);
+                    InMenuPrintf(1, y, LBL_CHAR, ASCII_LINE_FEED);
+                    SetCursorPosition(4, y++);
                 }
 
-                myVT100.InMenuPrintf(LBL_CHAR, i);
+                InMenuPrintf(LBL_CHAR, i);
             }
 
-            myVT100.InMenuPrintf(1, 29, VT100_LBL_ESCAPE);
+            InMenuPrintf(1, 29, VT100_LBL_ESCAPE);
         }
         break;
 
@@ -390,7 +390,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
             if(DateTime.Time.Second != VT100_LastSecond)
             {
                 VT100_LastSecond = DateTime.Time.Second;
-                myVT100.DisplayTimeDateStamp(19, 15, &DateTime);
+                DisplayTimeDateStamp(19, 15, &DateTime);
             }
 
             // Get the temperature of the CPU form the ADC class
@@ -406,20 +406,20 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 
             }                     // Temperature = Read ADC in Fahrenheit
 
-            myVT100.InMenuPrintf(19, 17, LBL_STRING, "3.28V");       // TODO replace by the right method
-            myVT100.InMenuPrintf(19, 18, LBL_STRING, "25.5");       // TODO replace by the right method
+            InMenuPrintf(19, 17, LBL_STRING, "3.28V");       // TODO replace by the right method
+            InMenuPrintf(19, 18, LBL_STRING, "25.5");       // TODO replace by the right method
 
 
             if(UpTime != VT100_LastUpTime)
             {
                 VT100_LastUpTime = UpTime;
-                myVT100.InMenuPrintf(19, 16, LBL_LONG_UNSIGNED_SEMICOLON,    (uint32_t)(UpTime / TIME_SECONDS_PER_DAY));
+                InMenuPrintf(19, 16, LBL_LONG_UNSIGNED_SEMICOLON,    (uint32_t)(UpTime / TIME_SECONDS_PER_DAY));
                 UpTime %= TIME_SECONDS_PER_DAY;
-                myVT100.InMenuPrintf(        LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_HOUR));
+                InMenuPrintf(        LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_HOUR));
                 UpTime %= TIME_SECONDS_PER_HOUR;
-                myVT100.InMenuPrintf(        LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_MINUTE));
+                InMenuPrintf(        LBL_UNSIGNED_2_DIGIT_SEMICOLON, (uint16_t)(UpTime / TIME_SECONDS_PER_MINUTE));
                 UpTime %= TIME_SECONDS_PER_MINUTE;
-                myVT100.InMenuPrintf(        LBL_UNSIGNED_2_DIGIT,           (uint16_t)UpTime);
+                InMenuPrintf(        LBL_UNSIGNED_2_DIGIT,           (uint16_t)UpTime);
             }
         }
         break;
@@ -440,7 +440,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
+#if (CON_USE_DEBUG_LOG == DEF_ENABLED)
 VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT100_CallBackType_e Type)
 {
   #if (DIGINI_USE_DATABASE == DISABLED)
@@ -460,27 +460,27 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DebugLevelSetting(uint8_t Input, VT10
       #endif
         VT100_LastDebugLevel = DebugLevel;
 
-        myVT100.SaveAttribute();
-        myVT100.SetForeColor(VT100_COLOR_MAGENTA);
+        SaveAttribute();
+        SetForeColor(VT100_COLOR_MAGENTA);
 
-        myVT100.SaveCursorPosition();
+        SaveCursorPosition();
 
         for(uint16_t i = 0; i < CON_NUMBER_OF_DEBUG_LEVEL; i++)
         {
-            myVT100.SetCursorPosition(41, 10 + i);
+            SetCursorPosition(41, 10 + i);
 
             if(((1 << i) & uint16_t(DebugLevel)) != 0)
             {
-                myVT100.InMenuPrintf(LBL_STRING, " ");
+                InMenuPrintf(LBL_STRING, " ");
             }
             else
             {
-                myVT100.InMenuPrintf(LBL_STRING, "*");
+                InMenuPrintf(LBL_STRING, "*");
             }
         }
 
-        myVT100.RestoreAttribute();
-        myVT100.RestoreCursorPosition();
+        RestoreAttribute();
+        RestoreCursorPosition();
     }
 
     if(Type == VT100_CALLBACK_ON_INPUT)
@@ -532,12 +532,12 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DateTimeCfg(uint8_t Input, VT100_Call
     if(Type == VT100_CALLBACK_INIT)         // Menu Redraw
     {
         /// Print the box
-        myVT100.DrawBox(8, 23, 47, 4, VT100_COLOR_GREEN);
+        DrawBox(8, 23, 47, 4, VT100_COLOR_GREEN);
 
         /// Print the static info in the box
-        myVT100.SetForeColor(VT100_COLOR_YELLOW);
-        myVT100.InMenuPrintf(13, 40, LBL_TIME);
-        myVT100.InMenuPrintf(13, 41, LBL_DATE);
+        SetForeColor(VT100_COLOR_YELLOW);
+        InMenuPrintf(13, 40, LBL_TIME);
+        InMenuPrintf(13, 41, LBL_DATE);
     //    Refresh   = VT100_CFG_REFRESH_ALL;
     }
 
@@ -547,46 +547,46 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DateTimeCfg(uint8_t Input, VT100_Call
         {
             case 1: // Input Hour
             {
-                myVT100.SetDecimalInput(32, 12, 0, 23, TimeDate.Time.Hour, 1, Input, LBL_HOUR);
+                SetDecimalInput(32, 12, 0, 23, TimeDate.Time.Hour, 1, Input, LBL_HOUR);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 2: // Edit Minute
             {
-                myVT100.SetDecimalInput(32, 12, 0, 59, TimeDate.Time.Minute, 1, Input, LBL_MINUTE);
+                SetDecimalInput(32, 12, 0, 59, TimeDate.Time.Minute, 1, Input, LBL_MINUTE);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 3: // Edit Second
             {
-                myVT100.SetDecimalInput(32, 12, 0, 59, TimeDate.Time.Second, 1, Input, LBL_SECOND);
+                SetDecimalInput(32, 12, 0, 59, TimeDate.Time.Second, 1, Input, LBL_SECOND);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 4: // Edit Day
             {
                 // TODO used Digini time date method
-                myVT100.SetDecimalInput(32, 12, 1, nOS_TimeGetDaysPerMonth(TimeDate.Date.Month, TimeDate.Date.Year), TimeDate.Date.Day, 1, Input, LBL_DAY);
+                SetDecimalInput(32, 12, 1, nOS_TimeGetDaysPerMonth(TimeDate.Date.Month, TimeDate.Date.Year), TimeDate.Date.Day, 1, Input, LBL_DAY);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 5: // Edit Month
             {
-                myVT100.SetDecimalInput(32, 12, 1, 12, TimeDate.Date.Month, 1, Input, LBL_MONTH);
+                SetDecimalInput(32, 12, 1, 12, TimeDate.Date.Month, 1, Input, LBL_MONTH);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 6: // Edit Year
             {
-                myVT100.SetDecimalInput(32, 12, 2000, 2255, TimeDate.Date.Year, 1, Input, LBL_YEAR);
+                SetDecimalInput(32, 12, 2000, 2255, TimeDate.Date.Year, 1, Input, LBL_YEAR);
                 return VT100_INPUT_DECIMAL;
             }
 
             case 7:
             {
-                if(myVT100.GetConfigFlag(0) != 0)
+                if(GetConfigFlag(0) != 0)
                 {
-                    myVT100.SetConfigFlag(0, 0);
+                    SetConfigFlag(0, 0);
                     LIB_SetDateAndTime(&TimeDate);
                 }
 
@@ -602,7 +602,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DateTimeCfg(uint8_t Input, VT100_Call
 
     if(Type == VT100_CALLBACK_INIT)
     {
-        myVT100.GetDecimalInputValue(&EditedValue, &InputID);
+        GetDecimalInputValue(&EditedValue, &InputID);
 
         if     (InputID == 1)   TimeDate.Time.Hour   = (uint8_t)EditedValue;
         else if(InputID == 2)   TimeDate.Time.Minute = (uint8_t)EditedValue;
@@ -610,14 +610,14 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DateTimeCfg(uint8_t Input, VT100_Call
         else if(InputID == 4)   TimeDate.Date.Day    = (uint8_t)EditedValue;
         else if(InputID == 5)   TimeDate.Date.Month  = (uint8_t)EditedValue;
         else if(InputID == 6)   TimeDate.Date.Year   = (uint16_t)EditedValue;
-        else if((InputID == 0) && (myVT100.GetConfigFlag(0) == 0))
+        else if((InputID == 0) && (GetConfigFlag(0) == 0))
         {
             LIB_GetDateAndTime(&TimeDate);
         }
 
         if((InputID >= 1) && (InputID <= 6))
         {
-            myVT100.SetConfigFlag(0, 1);
+            SetConfigFlag(0, 1);
         }
     }
 
@@ -629,18 +629,18 @@ VT100_InputType_e VT100_Terminal::CALLBACK_DateTimeCfg(uint8_t Input, VT100_Call
         // Refresh label on the menu for what is available
 
       #if (VT100_USE_COLOR == DEF_ENABLED)
-   //     if(myVT100.GetConfigFlag(0) == 1)
+   //     if(GetConfigFlag(0) == 1)
         {
-            myVT100.UpdateSaveLabel(VT100_COLOR_YELLOW);
+            UpdateSaveLabel(VT100_COLOR_YELLOW);
         }
       #endif
 
         // ********************************************
         // Refresh information display on configuration
 
-        myVT100.SetForeColor(VT100_COLOR_CYAN);
-        myVT100.InMenuPrintf(26, 40, LBL_TIME, TimeDate.Time.Hour, TimeDate.Time.Minute, TimeDate.Time.Second);
-        myVT100.InMenuPrintf(26, 41, LBL_DATE, myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_JANUARY)))), TimeDate.Date.Day, TimeDate.Date.Year);
+        SetForeColor(VT100_COLOR_CYAN);
+        InMenuPrintf(26, 40, LBL_TIME, TimeDate.Time.Hour, TimeDate.Time.Minute, TimeDate.Time.Second);
+        InMenuPrintf(26, 41, LBL_DATE, myLabel.GetPointer(Label_e((TimeDate.Date.Month - 1) + (int(LBL_JANUARY)))), TimeDate.Date.Day, TimeDate.Date.Year);
     }
 
     return VT100_INPUT_MENU_CHOICE;
@@ -702,47 +702,44 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             disk_ioctl(FatFs->pdrv, GET_CSD_STRUCT, &pCSD);
             disk_ioctl(FatFs->pdrv, GET_SCR_STRUCT, &pSCR);
             disk_ioctl(FatFs->pdrv, GET_CARD_CAPACITY, &CardCapacity);
+            ClearScreenWindow(0, 4, VT100_SCREEN_WIDTH, 30);
+            InMenuPrintf(1,  8,  LBL_SD_CARD_TYPE);
+            InMenuPrintf(50, 8,  LBL_SD_SPEC_VER);
+            //InMenuPrintf(1,  9,  LBL_STRING, "High Speed Type??:");
+            InMenuPrintf(50, 9,  LBL_SD_MAX_SPEED);
+            InMenuPrintf(1,  10, LBL_SD_MANUFACTURER_ID);
+            InMenuPrintf(50, 10, LBL_SD_OEM_ID);
+            InMenuPrintf(1,  11, LBL_SD_PRODUCT_NAME);
+            InMenuPrintf(50, 11, LBL_SD_PRODUCT_REVISION);
+            InMenuPrintf(1,  12, LBL_SD_SERIAL_NUMBER);
+            InMenuPrintf(50, 12, LBL_SD_MANUFACTURING_DATE);
+            InMenuPrintf(1,  13, LBL_SD_CARD_SIZE);
+            InMenuPrintf(50, 13, LBL_SD_FLASH_ERASE_SIZE);
+            InMenuPrintf(1,  14, LBL_SD_ERASE_SINGLE_BLOCK);
+            InMenuPrintf(50, 14, LBL_SD_DATA_AFTER_ERASE);
+
+            InMenuPrintf(1,  19, LBL_SD_VOLUME_NAME);
+            InMenuPrintf(50, 19, LBL_SD_VOLUME_SN);
+            InMenuPrintf(1,  20, LBL_SD_VOLUME_TYPE);
+            InMenuPrintf(50, 20, LBL_SD_CAPACITY);
+            InMenuPrintf(1,  21, LBL_SD_USED_SPACE);
+            InMenuPrintf(50, 21, LBL_SD_FREE_SPACE);
+            InMenuPrintf(1,  22, LBL_SD_CLUSTER_SIZE);
+            InMenuPrintf(50, 22, LBL_SD_SECTOR_PER_CLUSTER);
+            InMenuPrintf(1,  23, LBL_SD_CLUSTER_COUNT);
+            InMenuPrintf(50, 23, LBL_SD_FREE_CLUSTER_COUNT);
+            InMenuPrintf(1,  24, LBL_SD_FAT_START_SECTOR);
+            InMenuPrintf(50, 24, LBL_SD_DATA_START_SECTOR);
+            InMenuPrintf(        VT100_LBL_ESCAPE);
+
+//            InMenuPrintf(52, 22, LBL_STRING, "Number Of Files:");
 
 
-            myVT100.ClearScreenWindow(0, 4, 80, 30);
+            SetForeColor(VT100_COLOR_GREEN);
+            InMenuPrintf(1,  6,  LBL_SD_CARD_INFORMATION);
+            InMenuPrintf(1,  17, LBL_FAT_INFORMATION);
 
-            myVT100.InMenuPrintf(1,  8,  LBL_SD_CARD_TYPE);
-            myVT100.InMenuPrintf(50, 8,  LBL_SD_SPEC_VER);
-            //myVT100.InMenuPrintf(1,  9,  LBL_STRING, "High Speed Type??:");
-            myVT100.InMenuPrintf(50, 9,  LBL_SD_MAX_SPEED);
-            myVT100.InMenuPrintf(1,  10, LBL_SD_MANUFACTURER_ID);
-            myVT100.InMenuPrintf(50, 10, LBL_SD_OEM_ID);
-            myVT100.InMenuPrintf(1,  11, LBL_SD_PRODUCT_NAME);
-            myVT100.InMenuPrintf(50, 11, LBL_SD_PRODUCT_REVISION);
-            myVT100.InMenuPrintf(1,  12, LBL_SD_SERIAL_NUMBER);
-            myVT100.InMenuPrintf(50, 12, LBL_SD_MANUFACTURING_DATE);
-            myVT100.InMenuPrintf(1,  13, LBL_SD_CARD_SIZE);
-            myVT100.InMenuPrintf(50, 13, LBL_SD_FLASH_ERASE_SIZE);
-            myVT100.InMenuPrintf(1,  14, LBL_SD_ERASE_SINGLE_BLOCK);
-            myVT100.InMenuPrintf(50, 14, LBL_SD_DATA_AFTER_ERASE);
-
-            myVT100.InMenuPrintf(1,  19, LBL_SD_VOLUME_NAME);
-            myVT100.InMenuPrintf(50, 19, LBL_SD_VOLUME_SN);
-            myVT100.InMenuPrintf(1,  20, LBL_SD_VOLUME_TYPE);
-            myVT100.InMenuPrintf(50, 20, LBL_SD_CAPACITY);
-            myVT100.InMenuPrintf(1,  21, LBL_SD_USED_SPACE);
-            myVT100.InMenuPrintf(50, 21, LBL_SD_FREE_SPACE);
-            myVT100.InMenuPrintf(1,  22, LBL_SD_CLUSTER_SIZE);
-            myVT100.InMenuPrintf(50, 22, LBL_SD_SECTOR_PER_CLUSTER);
-            myVT100.InMenuPrintf(1,  23, LBL_SD_CLUSTER_COUNT);
-            myVT100.InMenuPrintf(50, 23, LBL_SD_FREE_CLUSTER_COUNT);
-            myVT100.InMenuPrintf(1,  24, LBL_SD_FAT_START_SECTOR);
-            myVT100.InMenuPrintf(50, 24, LBL_SD_DATA_START_SECTOR);
-            myVT100.InMenuPrintf(        VT100_LBL_ESCAPE);
-
-//            myVT100.InMenuPrintf(52, 22, LBL_STRING, "Number Of Files:");
-
-
-            myVT100.SetForeColor(VT100_COLOR_GREEN);
-            myVT100.InMenuPrintf(1,  6,  LBL_SD_CARD_INFORMATION);
-            myVT100.InMenuPrintf(1,  17, LBL_FAT_INFORMATION);
-
-            myVT100.SetForeColor(VT100_COLOR_WHITE);
+            SetForeColor(VT100_COLOR_WHITE);
 
             switch(MMC_Type)
             {
@@ -751,9 +748,9 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
                 case SD_HIGH_CAPACITY:      Label = LBL_SD_HIGH_CAPACITY;       break;
                 default:                    Label = LBL_SD_UNDEFINED_D;         break;
             }
-            myVT100.InMenuPrintf(26, 8, Label, MMC_Type);
+            InMenuPrintf(26, 8, Label, MMC_Type);
 
-            myVT100.InMenuPrintf(80, 8, LBL_INT, int(pCSD->SysSpecVersion));
+            InMenuPrintf(80, 8, LBL_INT, int(pCSD->SysSpecVersion));
 
             switch(pCSD->MaxBusClkFrec)
             {
@@ -763,41 +760,41 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
                 case 0x2B:  Label = LBL_SD_100MBITS;     break;
                 default:    Label = LBL_SD_UNDEFINED_2X; break;
             }
-            myVT100.InMenuPrintf(80, 9,  Label, pCSD->MaxBusClkFrec);                                                           // Max Speed
+            InMenuPrintf(80, 9,  Label, pCSD->MaxBusClkFrec);                                                           // Max Speed
 
             snprintf(pBuffer, VT100_STRING_SIZE, "0x%02X", pCID->ManufacturerID);
-            myVT100.InMenuPrintf(26, 10, LBL_STRING, pBuffer);                                                                  // Manufacturer ID
+            InMenuPrintf(26, 10, LBL_STRING, pBuffer);                                                                  // Manufacturer ID
 
             snprintf(pBuffer, VT100_STRING_SIZE, "0x%04X", pCID->OEM_AppliID);
-            myVT100.InMenuPrintf(80, 10, LBL_STRING, pBuffer);                                                                  // OEM ID
+            InMenuPrintf(80, 10, LBL_STRING, pBuffer);                                                                  // OEM ID
 
-            myVT100.InMenuPrintf(26, 11, LBL_STRING, pCID->ProductName);                                                        // Product
+            InMenuPrintf(26, 11, LBL_STRING, pCID->ProductName);                                                        // Product
 
             snprintf(pBuffer, VT100_STRING_SIZE, "%d.%d", pCID->ProductRev >> 4, pCID->ProductRev & 0x0F);
-            myVT100.InMenuPrintf(80, 11, LBL_STRING, pBuffer);                                                                  // Revision
+            InMenuPrintf(80, 11, LBL_STRING, pBuffer);                                                                  // Revision
 
             snprintf(pBuffer, VT100_STRING_SIZE, "0x%08lX", pCID->ProductSN);
-            myVT100.InMenuPrintf(26, 12, LBL_STRING, pBuffer);
+            InMenuPrintf(26, 12, LBL_STRING, pBuffer);
 
             snprintf(pBuffer, VT100_STRING_SIZE, "%u/20%2u", pCID->ManufacturingDate & 0x000F, pCID->ManufacturingDate >> 4);   // Manufacturing Date
-            myVT100.InMenuPrintf(80, 12, LBL_STRING, pBuffer);
+            InMenuPrintf(80, 12, LBL_STRING, pBuffer);
 
             // Card Capacity
             if(CardCapacity >= 1000000)
             {
-                myVT100.InMenuPrintf(26, 13, LBL_SIZE_GIGABYTES, uint16_t(CardCapacity / 1000000), uint16_t((CardCapacity % 1000000) / 1000));  // Card Capacity
+                InMenuPrintf(26, 13, LBL_SIZE_GIGABYTES, uint16_t(CardCapacity / 1000000), uint16_t((CardCapacity % 1000000) / 1000));  // Card Capacity
             }
             else
             {
-                myVT100.InMenuPrintf(26, 13, LBL_SIZE_MEGABYTES, uint16_t(CardCapacity / 1000), uint16_t(CardCapacity % 1000));
+                InMenuPrintf(26, 13, LBL_SIZE_MEGABYTES, uint16_t(CardCapacity / 1000), uint16_t(CardCapacity % 1000));
             }
 
-            myVT100.InMenuPrintf(80, 13, LBL_SIZE_KILOBYTES, ((pCSD->EraseGrMul + 1) * BLOCK_SIZE) / 1024);                       // Flash Erase Size
+            InMenuPrintf(80, 13, LBL_SIZE_KILOBYTES, ((pCSD->EraseGrMul + 1) * BLOCK_SIZE) / 1024);                       // Flash Erase Size
             Label = pCSD->EraseGrSize ? LBL_YES : LBL_NO;
-            myVT100.InMenuPrintf(26, 14, Label);                                                                                // Erase Single Block
+            InMenuPrintf(26, 14, Label);                                                                                // Erase Single Block
 
             snprintf(pBuffer, VT100_STRING_SIZE, "0x%02X", ((pSCR->Array[0] & SD_VALUE_AFTER_ERASE) ? 0xFF : 0x00));
-            myVT100.InMenuPrintf(80, 14, LBL_STRING, pBuffer);                                                                  // Data After Erase
+            InMenuPrintf(80, 14, LBL_STRING, pBuffer);                                                                  // Data After Erase
 
             // Fat information
 
@@ -805,17 +802,17 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
             f_getlabel("", pBuffer, &VolumeSN);                                                                                 // Volume Name
             if(strlen(pBuffer) == 0)
             {
-                myVT100.SetForeColor(VT100_COLOR_RED);
-                myVT100.InMenuPrintf(26, 19, LBL_SD_EMPTY);
-                myVT100.SetForeColor(VT100_COLOR_WHITE);
+                SetForeColor(VT100_COLOR_RED);
+                InMenuPrintf(26, 19, LBL_SD_EMPTY);
+                SetForeColor(VT100_COLOR_WHITE);
             }
             else
             {
-                myVT100.InMenuPrintf(26, 19, LBL_STRING, pBuffer);
+                InMenuPrintf(26, 19, LBL_STRING, pBuffer);
             }
 
             snprintf(pBuffer, VT100_STRING_SIZE, "%04X-%04X", uint16_t(VolumeSN >> 16), uint16_t(VolumeSN));                    // Volume Serial Number
-            myVT100.InMenuPrintf(80, 19, LBL_STRING, pBuffer);
+            InMenuPrintf(80, 19, LBL_STRING, pBuffer);
 
             switch(FatFs->fs_type)
             {
@@ -824,22 +821,22 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
                 case FS_FAT32:  memcpy(pBuffer, "FAT32", 6); break;
                 case FS_EXFAT:  memcpy(pBuffer, "exFAT", 6); break;
             }
-            myVT100.InMenuPrintf(26, 20, LBL_STRING, pBuffer);                                                                  // Volume Type
-            myVT100.InMenuPrintf(80, 20, LBL_SD_KB_TOTAL, TotalBytes);                                                          // FAT Capacity
-            myVT100.InMenuPrintf(26, 21, LBL_SD_KB_USED, TotalBytes - FreeBytes);                                               // Used Sector
-            myVT100.InMenuPrintf(80, 21, LBL_SD_KB_AVAILABLE, FreeBytes);                                                       // Free Sector
-            myVT100.InMenuPrintf(26, 22, LBL_SIZE_BYTES, uint32_t(FatFs->csize * BLOCK_SIZE));                                  // Cluster Size
-            myVT100.InMenuPrintf(80, 22, LBL_SD_SECTORS, FatFs->csize);                                                         // Sector Per Cluster
-            myVT100.InMenuPrintf(80, 23, LBL_SD_SECTORS, (TotalBytes * 1024) / (FatFs->csize * BLOCK_SIZE));                    // Cluster Count
-            myVT100.InMenuPrintf(26, 23, LBL_SD_SECTORS, (FreeBytes * 1024) / (FatFs->csize * BLOCK_SIZE));                     // Free Cluster Count
-            myVT100.InMenuPrintf(1, 23, VT100_LBL_SCROLL_ZONE, 30, 40);
+            InMenuPrintf(26, 20, LBL_STRING, pBuffer);                                                                  // Volume Type
+            InMenuPrintf(80, 20, LBL_SD_KB_TOTAL, TotalBytes);                                                          // FAT Capacity
+            InMenuPrintf(26, 21, LBL_SD_KB_USED, TotalBytes - FreeBytes);                                               // Used Sector
+            InMenuPrintf(80, 21, LBL_SD_KB_AVAILABLE, FreeBytes);                                                       // Free Sector
+            InMenuPrintf(26, 22, LBL_SIZE_BYTES, uint32_t(FatFs->csize * BLOCK_SIZE));                                  // Cluster Size
+            InMenuPrintf(80, 22, LBL_SD_SECTORS, FatFs->csize);                                                         // Sector Per Cluster
+            InMenuPrintf(80, 23, LBL_SD_SECTORS, (TotalBytes * 1024) / (FatFs->csize * BLOCK_SIZE));                    // Cluster Count
+            InMenuPrintf(26, 23, LBL_SD_SECTORS, (FreeBytes * 1024) / (FatFs->csize * BLOCK_SIZE));                     // Free Cluster Count
+            InMenuPrintf(1, 23, VT100_LBL_SCROLL_ZONE, 30, 40);
 
 {
     FRESULT res;
     DIR dir;
     char string[300];
 
-    myVT100.SetCursorPosition(1, 28);
+    SetCursorPosition(1, 28);
 
     res = f_opendir(&dir, "");
 
@@ -859,7 +856,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
                                                      ((fno.fattrib & AM_HID) ? 'H' : '-'),
                                                      (int)fno.fsize, "", fno.fname);
 
-            myVT100.InMenuPrintf(LBL_STRING, string);
+            InMenuPrintf(LBL_STRING, string);
         }
     }
 }
@@ -876,7 +873,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
 
         case VT100_CALLBACK_FLUSH:
         {
-            myVT100.InMenuPrintf(1, 23, VT100_LBL_SCROLL_ZONE, 1, 100);
+            InMenuPrintf(1, 23, VT100_LBL_SCROLL_ZONE, 1, 100);
         }
 
         // case VT100_CALLBACK_INIT:     Nothing to do
@@ -912,38 +909,38 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
     {
         case VT100_CALLBACK_REFRESH_ONCE:
         {
-            myVT100.SetForeColor(VT100_COLOR_WHITE);
-            myVT100.InMenuPrintf(1, 5, VT100_LBL_MEMORY_POOL_STAT);
+            this->SetForeColor(VT100_COLOR_WHITE);
+            this->InMenuPrintf(1, 5, VT100_LBL_MEMORY_POOL_STAT);
 
-            myVT100.InMenuPrintf(1,  8,  VT100_LBL_MEMORY_POOL);
-            myVT100.InMenuPrintf(4,  10, VT100_LBL_MEMORY_POOL_TOTAL);
-            myVT100.InMenuPrintf(24, 10, LBL_SIZE_BYTES, pMemoryPool->GetTotalSizeReserved());
-            myVT100.InMenuPrintf(50, 10, VT100_LBL_MEMORY_POOL_USED);
-            myVT100.InMenuPrintf(4,  11, VT100_LBL_MEMORY_POOL_NB_OF_POOL, Max);
+            InMenuPrintf(1,  8,  VT100_LBL_MEMORY_POOL);
+            InMenuPrintf(4,  10, VT100_LBL_MEMORY_POOL_TOTAL);
+            InMenuPrintf(24, 10, LBL_SIZE_BYTES, pMemoryPool->GetTotalSizeReserved());
+            InMenuPrintf(50, 10, VT100_LBL_MEMORY_POOL_USED);
+            InMenuPrintf(4,  11, VT100_LBL_MEMORY_POOL_NB_OF_POOL, Max);
 
             for(uint32_t i = 0; i < Max; i++)
             {
                 OffsetMultiplierX = uint8_t(((i % 4) * 33) + 2);
                 OffsetMultiplierY = uint8_t(((i / 4) * 6) + 14);
-                myVT100.DrawBox(OffsetMultiplierX, OffsetMultiplierY, 32, 3, VT100_COLOR_WHITE);
-                myVT100.InMenuPrintf(OffsetMultiplierX--, OffsetMultiplierY - 1, VT100_LBL_MEM_POOL_GROUP, i, pMemoryPool->GetPoolNumberOfBlock(i), pMemoryPool->GetPoolBlockSize(i));
+                DrawBox(OffsetMultiplierX, OffsetMultiplierY, 32, 3, VT100_COLOR_WHITE);
+                InMenuPrintf(OffsetMultiplierX--, OffsetMultiplierY - 1, VT100_LBL_MEM_POOL_GROUP, i, pMemoryPool->GetPoolNumberOfBlock(i), pMemoryPool->GetPoolBlockSize(i));
             }
 
             uint32_t j = pMemoryPool->GetMaxDebugID();
             OffsetMultiplierY += 6;
-            myVT100.InMenuPrintf(0, OffsetMultiplierY++, VT100_LBL_ALLOC_COUNTER);
+            InMenuPrintf(0, OffsetMultiplierY++, VT100_LBL_ALLOC_COUNTER);
 
             for(uint32_t i = 1; i < j; i++)
             {
                 OffsetMultiplierX = uint8_t(((i % 4) * 33) + 3);
-                myVT100.InMenuPrintf(OffsetMultiplierX - 1, (OffsetMultiplierY + uint8_t(i / 4)), Label_e((uint32_t(LBL_MEM_DBG_NONE) - 1) + i));
+                InMenuPrintf(OffsetMultiplierX - 1, (OffsetMultiplierY + uint8_t(i / 4)), Label_e((uint32_t(LBL_MEM_DBG_NONE) - 1) + i));
             }
         }
         break;
 
         case VT100_CALLBACK_REFRESH:
         {
-            myVT100.InMenuPrintf(68, 10, LBL_SIZE_BYTES, pMemoryPool->GetUsedMemory());
+            InMenuPrintf(68, 10, LBL_SIZE_BYTES, pMemoryPool->GetUsedMemory());
 
             for(uint32_t i = 0; i < Max; i++)
             {
@@ -956,9 +953,9 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
                 PercentUsed = (UsedBlock * 100) / NumberOfBlock;
                 PercentMax  = (MaxBlock  * 100) / NumberOfBlock;
 
-                myVT100.Bargraph(OffsetMultiplierX, OffsetMultiplierY, (PercentUsed >= 80) ? VT100_COLOR_RED : VT100_COLOR_GREEN, PercentUsed, VT100_COLOR_YELLOW, PercentMax, NumberOfBlock, 30);
-                myVT100.SetForeColor(VT100_COLOR_WHITE);
-                myVT100.InMenuPrintf(OffsetMultiplierX - 1,  OffsetMultiplierY + 2, VT100_LBL_MEM_BLOCK_USED,  UsedBlock, MaxBlock);
+                Bargraph(OffsetMultiplierX, OffsetMultiplierY, (PercentUsed >= 80) ? VT100_COLOR_RED : VT100_COLOR_GREEN, PercentUsed, VT100_COLOR_YELLOW, PercentMax, NumberOfBlock, 30);
+                SetForeColor(VT100_COLOR_WHITE);
+                InMenuPrintf(OffsetMultiplierX - 1,  OffsetMultiplierY + 2, VT100_LBL_MEM_BLOCK_USED,  UsedBlock, MaxBlock);
             }
 
             uint32_t j = pMemoryPool->GetMaxDebugID();
@@ -967,7 +964,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_MemoryPool(uint8_t Input, VT100_CallB
             for(uint32_t i = 1; i < j; i++)
             {
                 OffsetMultiplierX = uint8_t(((i % 4) * 34) + 25);
-                myVT100.InMenuPrintf(OffsetMultiplierX - 1,  (OffsetMultiplierY + uint8_t(i / 4)), VT100_LBL_ALLOC_DEBUG_COUNTER, pMemoryPool->GetAllocCount(MEM_DebugListOfID_e(i)));
+                InMenuPrintf(OffsetMultiplierX - 1,  (OffsetMultiplierY + uint8_t(i / 4)), VT100_LBL_ALLOC_DEBUG_COUNTER, pMemoryPool->GetAllocCount(MEM_DebugListOfID_e(i)));
             }
         }
         break;
@@ -1052,7 +1049,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                     {
                         // Do toggle according to language
                         pLanguage[VT100_NEW_LANGUAGE] = VT100_DisplayLanguageSelection(pLanguage[VT100_NEW_LANGUAGE]);
-                        myVT100.UpdateSaveLabel(VT100_COLOR_YELLOW);
+                        UpdateSaveLabel(VT100_COLOR_YELLOW);
                     }
                 }
                 break;
@@ -1061,7 +1058,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                 {
                     if(pBuffer1 != nullptr)
                     {
-                        myVT100.SetStringInput(32, 16, sizeof(OEM_SERIAL_NUMBER), Input, LBL_SERIAL_NUMBER, (const char*)pBuffer1);
+                        SetStringInput(32, 16, sizeof(OEM_SERIAL_NUMBER), Input, LBL_SERIAL_NUMBER, (const char*)pBuffer1);
                         return VT100_INPUT_STRING;
                     }
                 }
@@ -1073,7 +1070,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                     {
                         // Do toggle according to language
                         pTempUnit[VT100_NEW_TEMPERATURE_SELECTION] = VT100_DisplayTemperatureSelection(pTempUnit[VT100_NEW_TEMPERATURE_SELECTION]);
-                        myVT100.UpdateSaveLabel(VT100_COLOR_YELLOW);
+                        UpdateSaveLabel(VT100_COLOR_YELLOW);
                     }
                 }
                 break;
@@ -1083,7 +1080,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                     if(pBuffer1 != nullptr)
                     {
                         #define DATE_SIZE  11 // 0000-00-00             // move on header when working
-                        myVT100.SetStringInput(32, 16, DATE_SIZE, Input, VT100_LBL_DATE, (const char*)pBuffer1);
+                        SetStringInput(32, 16, DATE_SIZE, Input, VT100_LBL_DATE, (const char*)pBuffer1);
                         return VT100_INPUT_STRING;
                     }
                 }
@@ -1094,7 +1091,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                     if(pBuffer1 != nullptr)
                     {
                         #define TIME_SIZE  9 // 00:00:00             // move on header when working
-                        myVT100.SetStringInput(32, 16, TIME_SIZE, Input, VT100_LBL_TIME, (const char*)pBuffer1);
+                        SetStringInput(32, 16, TIME_SIZE, Input, VT100_LBL_TIME, (const char*)pBuffer1);
                         return VT100_INPUT_STRING;
                     }
                 }
@@ -1111,7 +1108,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                             DB_Central.Set(&pLanguage[VT100_NEW_LANGUAGE], SYSTEM_LANGUAGE);
                           #endif
                             myLabel.SetLanguage(pLanguage[VT100_NEW_LANGUAGE]);
-                            myVT100.SetRefreshFullPage();
+                            SetRefreshFullPage();
                           #if (DIGINI_USE_GRAFX == DEF_ENABLED)
                             GUI_pTask->SetForceRefresh();                                                       // Force the graphic page to also be refresh to new language
                           #endif
@@ -1125,7 +1122,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                           #if (DIGINI_USE_DATABASE != DEF_DISABLED)
                             DB_Central.Set(&pTempUnit[VT100_NEW_TEMPERATURE_SELECTION], SYSTEM_TEMPERATURE_UNIT);
                           #endif
-                            myVT100.SetRefreshFullPage();
+                            SetRefreshFullPage();
                           #if (DIGINI_USE_GRAFX == DEF_ENABLED)
                             GUI_pTask->SetForceRefresh();                                                       // Force the graphic page to also be refresh to new language
                           #endif
@@ -1173,29 +1170,30 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
     {
         case VT100_CALLBACK_INIT:
         {
-            myVT100.SetForeColor(VT100_COLOR_WHITE);
-            myVT100.InMenuPrintf(1, 5, LBL_NETWORK_INFO);
+            SetForeColor(VT100_COLOR_WHITE);
+            InMenuPrintf(1, 5, LBL_NETWORK_INFO);
 
-            myVT100.SetForeColor(VT100_COLOR_WHITE);
-            myVT100.InMenuPrintf(2,  8,  LBL_IP_ADDR);
-            myVT100.InMenuPrintf(2,  9,  LBL_IP_MASK);
-            myVT100.InMenuPrintf(2,  10, LBL_IP_GATEWAY);
-            myVT100.InMenuPrintf(2,  11, LBL_IP_DNS);
-            myVT100.InMenuPrintf(2,  12, LBL_IP_DHCP_STATE);
-            myVT100.InMenuPrintf(2,  13, LBL_IP_LINK_STATE);
-            myVT100.InMenuPrintf(2,  14, LBL_IP_LINK_SPEED);
-            myVT100.InMenuPrintf(33, 14, LBL_IP_BYTE_PER_SECOND);
+            SetForeColor(VT100_COLOR_WHITE);
+            InMenuPrintf(2,  8,  LBL_IP_ADDR);
+            InMenuPrintf(2,  9,  LBL_IP_MASK);
+            InMenuPrintf(2,  10, LBL_IP_GATEWAY);
+            InMenuPrintf(2,  11, LBL_IP_DNS);
+            InMenuPrintf(2,  12, LBL_IP_DHCP_STATE);
+            InMenuPrintf(2,  13, LBL_IP_LINK_STATE);
+            InMenuPrintf(2,  14, LBL_IP_LINK_SPEED);
+            InMenuPrintf(33, 14, LBL_IP_BYTE_PER_SECOND);
 
-            myVT100.InMenuPrintf(2,  15, LBL_MAC_ADDRESS);
+            InMenuPrintf(2,  15, LBL_MAC_ADDRESS);
           #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-            myVT100.InMenuPrintf(2,  18, LBL_ETH_RX_COUNT);
-            myVT100.InMenuPrintf(40, 18, LBL_ETH_DROP);
-            myVT100.InMenuPrintf(2,  19, LBL_ETH_TX_COUNT);
-            myVT100.InMenuPrintf(40, 19, LBL_ETH_DROP);
+            InMenuPrintf(2,  18, LBL_ETH_RX_COUNT);
+            InMenuPrintf(40, 18, LBL_ETH_DROP);
+            InMenuPrintf(2,  19, LBL_ETH_TX_COUNT);
+            InMenuPrintf(40, 19, LBL_ETH_DROP);
           #endif
-            myVT100.InMenuPrintf(        VT100_LBL_ESCAPE);
+            InMenuPrintf(        VT100_LBL_ESCAPE);
 
-            myVT100.LogInitialize(60, 6, 40, 40);
+            m_pConsole->SetOverrideDebugLevel(SYS_DEBUG_LEVEL_ETHERNET);
+            LogInitialize(60, 6, 40, 40);
             // Add Lease obtain and expire???
         }
         break;
@@ -1207,22 +1205,22 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
             char              Buffer[16];
             IP_MAC_Address_t  MAC;
 
-            myVT100.SetForeColor(VT100_COLOR_WHITE);
+            SetForeColor(VT100_COLOR_WHITE);
 
             IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveIP());
-            myVT100.InMenuPrintf(28, 8,  LBL_STRING, Buffer);
+            InMenuPrintf(28, 8,  LBL_STRING, Buffer);
             IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveSubnetMask());
-            myVT100.InMenuPrintf(28, 9,   LBL_STRING, Buffer);
+            InMenuPrintf(28, 9,   LBL_STRING, Buffer);
             IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveGatewayIP());
-            myVT100.InMenuPrintf(28, 10, LBL_STRING, Buffer);
+            InMenuPrintf(28, 10, LBL_STRING, Buffer);
             IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveDNS_IP());
-            myVT100.InMenuPrintf(28, 11, LBL_STRING, Buffer);
+            InMenuPrintf(28, 11, LBL_STRING, Buffer);
           #if (IP_USE_DHCP == DEF_ENABLED)
-            myVT100.InMenuPrintf(28, 12, (pContext->IsDHCP_Enable() == true) != 0 ? LBL_ENABLED : LBL_DISABLED);
+            InMenuPrintf(28, 12, (pContext->IsDHCP_Enable() == true) != 0 ? LBL_ENABLED : LBL_DISABLED);
           #else
-            myVT100.InMenuPrintf(28, 12, LBL_DISABLED);
+            InMenuPrintf(28, 12, LBL_DISABLED);
           #endif
-            myVT100.InMenuPrintf(28, 13, (pContext->GetLinkState() == ETH_LINK_UP) ? LBL_IP_UP: LBL_IP_DOWN);
+            InMenuPrintf(28, 13, (pContext->GetLinkState() == ETH_LINK_UP) ? LBL_IP_UP: LBL_IP_DOWN);
 
             // tempo remove warning
             //LinkInfo.Duplex = ETH_PHY_FULL_DUPLEX;
@@ -1235,19 +1233,25 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
                 case ETH_PHY_SPEED_1G:      SpeedLabel = LBL_IP_SPEED_1G;   break;
             }
 
-            myVT100.InMenuPrintf(28, 14, SpeedLabel);
+            InMenuPrintf(28, 14, SpeedLabel);
             pContext->GetMAC_Address(&MAC);
-            myVT100.InMenuPrintf(28, 15, LBL_MAC_ADDRESS_VALUE, MAC.Byte[0], MAC.Byte[1], MAC.Byte[2],
+            InMenuPrintf(28, 15, LBL_MAC_ADDRESS_VALUE, MAC.Byte[0], MAC.Byte[1], MAC.Byte[2],
                                                                 MAC.Byte[3], MAC.Byte[4], MAC.Byte[5]);
 
           #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-            myVT100.InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, DBG_RX_Count);
-            myVT100.InMenuPrintf(56, 18, LBL_LONG_UNSIGNED, DBG_RX_Drop);
-            myVT100.InMenuPrintf(28, 19, LBL_LONG_UNSIGNED, DBG_TX_Count);
-            myVT100.InMenuPrintf(56, 19, LBL_LONG_UNSIGNED, DBG_TX_Drop);
+            InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, DBG_RX_Count);
+            InMenuPrintf(56, 18, LBL_LONG_UNSIGNED, DBG_RX_Drop);
+            InMenuPrintf(28, 19, LBL_LONG_UNSIGNED, DBG_TX_Count);
+            InMenuPrintf(56, 19, LBL_LONG_UNSIGNED, DBG_TX_Drop);
           #endif
 
-          myVT100.LogDisplay();
+          LogDisplay();
+        }
+        break;
+
+        case VT100_CALLBACK_FLUSH:
+        {
+            m_pConsole->SetOverrideDebugLevel(SYS_DEBUG_NONE);
         }
         break;
 

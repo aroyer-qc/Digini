@@ -51,7 +51,7 @@
 
 #define VT100_MENU_DEF(ENTRY) \
                                                 ENTRY(MenuMain               )  \
-    IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE,        ENTRY(MenuDebug              ) )\
+    IF_USE( CON_USE_DEBUG_LOG,                  ENTRY(MenuDebug              ) )\
     IF_USE( DIGINI_USE_ETHERNET,                ENTRY(MenuNetwork            ) )\
     IF_USE( DIGINI_USE_LABEL_PRODUCT_INFO,      ENTRY(MenuProductInformation ) )\
     IF_USE( DIGINI_USE_STACKTISTIC,             ENTRY(MenuStackUsage         ) )\
@@ -62,7 +62,7 @@
 
 #define VT100_CALLBACK(ENTRY)\
                                                ENTRY(CALLBACK_MenuMain           )  \
-    IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE,       ENTRY(CALLBACK_DebugLevelSetting  ) )\
+    IF_USE( CON_USE_DEBUG_LOG,                 ENTRY(CALLBACK_DebugLevelSetting  ) )\
     IF_USE( DIGINI_USE_ETHERNET,               ENTRY(CALLBACK_NetworkInfo        ) )\
     IF_USE( DIGINI_USE_LABEL_PRODUCT_INFO,     ENTRY(CALLBACK_ProductInformation ) )\
     IF_USE( DIGINI_USE_STACKTISTIC,            ENTRY(CALLBACK_StackUsage         ) )\
@@ -73,7 +73,7 @@
 #define VT100_MENU_TREE_DEF(ENTRY, MENU) \
 \
                                                 ENTRY  (MENU,  MenuMain,                ID_MAIN_TITLE,                       CALLBACK_None,                           VT100_MENU_MAIN_FALLBACK,         LBL_MAIN_MENU                                   )  \
-    IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE,        ENTRY  (MENU,  MenuMain,                ID_DEBUG_MENU,                       CALLBACK_None,                           MenuDebug,                        VT100_LBL_DEBUG                                 ) )\
+    IF_USE( CON_USE_DEBUG_LOG,                  ENTRY  (MENU,  MenuMain,                ID_DEBUG_MENU,                       CALLBACK_None,                           MenuDebug,                        VT100_LBL_DEBUG                                 ) )\
     IF_USE( DIGINI_USE_ETHERNET,                ENTRY  (MENU,  MenuMain,                ID_NETWORK_INFO,                     CALLBACK_None,                           MenuNetwork,                      LBL_NETWORK_INFO                                ) )\
     IF_USE( DIGINI_USE_LABEL_PRODUCT_INFO,      ENTRY  (MENU,  MenuMain,                ID_INFO_DISPLAY,                     CALLBACK_ProductInformation,             MenuProductInformation,           VT100_LBL_SYSTEM_INFO                           ) )\
     IF_USE( MEMORY_POOL_USE_DEBUG_STAT,         ENTRY  (MENU,  MenuMain,                ID_MEMORY_POOL_MENU,                 CALLBACK_None,                           MenuMemoryPool,                   VT100_LBL_MEMORY_POOL_STAT                      ) )\
@@ -94,7 +94,7 @@
                                                 ENTRY  (MENU,  MenuSystemSetting,       ID_MISC_TIME,                        CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_TIME                                  )  \
                                                 ENTRY  (MENU,  MenuSystemSetting,       ID_MISC_SAVE,                        CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_SAVE_CONFIGURATION                    )  \
 \
-    IF_USE( DIGINI_USE_DEBUG_IN_CONSOLE, \
+    IF_USE( CON_USE_DEBUG_LOG, \
                                                 ENTRY  (MENU,  MenuDebug,               ID_DEBUG_TITLE,                      CALLBACK_DebugLevelSetting,              MenuMain,                         VT100_LBL_DEBUG_MENU                            )  \
                                                 ENTRY  (MENU,  MenuDebug,               ID_DBG_LVL_0,                        CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_DEBUG_LEVEL_1                               )  \
                                                 ENTRY  (MENU,  MenuDebug,               ID_DBG_LVL_1,                        CALLBACK_DebugLevelSetting,              MenuDebug,                        LBL_DEBUG_LEVEL_2                               )  \
@@ -143,15 +143,20 @@ enum NAME ## _ItemID_e                                             \
 #define EXPAND_VT100_MENU_AS_STRUCT_VARIABLE_MEMBER(NAME)                                                   static const VT100_MenuDef_t CAT(m_, NAME)[NAME ## _NB_OF_ITEMS];
 
 /// (Note 1) This create the class member structure containing actual sub item information for each menu.
-#define EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL)   WHEN(EQUAL(MENU, MEMBER_OF))({LABEL, (VT100_TOKEN(CALLBACK)), PRIMITIVE_CAT(NAVIGATE_TO, _ID)},)
+//#define EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL)   WHEN(EQUAL(MENU, MEMBER_OF))({LABEL, (VT100_TOKEN(CALLBACK)), PRIMITIVE_CAT(NAVIGATE_TO, _ID)},)
+#define EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA(MENU, MEMBER_OF, ITEM_ID, CALLBACK, NAVIGATE_TO, LABEL)     WHEN(EQUAL(MENU, MEMBER_OF))({LABEL, &VT100_Terminal::CALLBACK, PRIMITIVE_CAT(NAVIGATE_TO, _ID)},)
+
 #define EXPAND_VT100_AS_MENU_MEMBER_VARIABLE_DATA(NAME)                                                     const VT100_MenuDef_t VT100_Terminal::m_ ## NAME[NAME ## _NB_OF_ITEMS] =       \
                                                                                                             {                                                                              \
                                                                                                                 VT100_MENU_TREE_DEF(EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA, NAME)       \
                                                                                                             };
 
 /// this automatically create all the method declaration in the class for each callback
-#define EXPAND_VT100_MENU_CALLBACK(NAME)                                                                    static VT100_InputType_e NAME(uint8_t Input, VT100_CallBackType_e Type);
+//#define EXPAND_VT100_MENU_CALLBACK(NAME)                                                                    VT100_InputType_e NAME(uint8_t Input, VT100_CallBackType_e Type);
 
+#define EXPAND_VT100_MENU_CALLBACK(NAME)     VT100_InputType_e NAME(uint8_t Input, VT100_CallBackType_e Type);
+
+#define EXPAND_VT100_MENU_CALLBACK_PTR(NAME)    &VT100_Terminal::CALLBACK_##NAME
 //-------------------------------------------------------------------------------------------------
 // Configuration check
 //-------------------------------------------------------------------------------------------------
@@ -164,9 +169,6 @@ enum NAME ## _ItemID_e                                             \
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
-
-#define VT100_X_SIZE                        132
-#define VT100_Y_SIZE                        60
 
 #define VT100_OFFSET_COLOR_FOREGROUND       30
 #define VT100_OFFSET_COLOR_BACKGROUND       40
@@ -260,12 +262,13 @@ enum VT100_CallBackType_e
     VT100_CALLBACK_ON_FLUSH,           // When escaping or going through another menu (EX. release memory)
 };
 
-typedef VT100_InputType_e (*CallbackMethod_t)(uint8_t, VT100_CallBackType_e);
+class VT100_Terminal;
+typedef VT100_InputType_e (VT100_Terminal::*CallbackMethod_t)(uint8_t, VT100_CallBackType_e);
 
 struct VT100_MenuDef_t
 {
     Label_e           Label;
-    VT100_InputType_e (*pCallback)(uint8_t, VT100_CallBackType_e);
+    CallbackMethod_t  pCallback;
     VT100_Menu_e      NextMenu;
 };
 
@@ -340,6 +343,12 @@ class VT100_Terminal : public ChildProcessInterface
         void                LogNewLine                  (void);
         void                LogPrint                    (const char* pString);
         void                LogDisplay                  (void);
+      #else
+        inline void         LogInitialize(int, int, int, int) {}
+        inline void         LogClear(void)                    {}
+        inline void         LogNewLine(void)                  {}
+        inline void         LogPrint(const char*)             {}
+        inline void         LogDisplay(void)                  {}
       #endif
 
 // to check if needed in VT100
@@ -358,12 +367,12 @@ bool                GetString                   (char* pBuffer, size_t Size);
         void                        ClearInputMenuSelection     (void);
         void                        MenuSelectItems             (char ItemsChar);
 
-        VT100_InputType_e           CallBack                    (VT100_InputType_e (*pCallback)(uint8_t, VT100_CallBackType_e), VT100_CallBackType_e Type, uint8_t Item);
+        VT100_InputType_e           CallBack                    (CallbackMethod_t pCallback, VT100_CallBackType_e Type, uint8_t Item);
         static void                 EscapeCallback              (nOS_Timer* pTimer, void* pArg);
         void                        InputString                 (void);
         void                        InputDecimal                (void);
         void                        ClearConfigFLag             (void);
-        static VT100_InputType_e    CALLBACK_None               (uint8_t Input, VT100_CallBackType_e Type);
+        VT100_InputType_e           CALLBACK_None               (uint8_t Input, VT100_CallBackType_e Type);
 
         VT100_CALLBACK(EXPAND_VT100_MENU_CALLBACK)                  // Generation of all user callback prototype
 

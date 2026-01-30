@@ -134,29 +134,26 @@ class MemPoolDriver
 {
     public:
 
-                    MemPoolDriver               ();
-                   ~MemPoolDriver               ();
+                        MemPoolDriver               ();
+                       ~MemPoolDriver               ();
 
-        void*       Alloc                       (size_t SizeRequired, MEM_DebugListOfID_e DbgID = MEM_DBG_NONE);
-        void*       AllocAndClear               (size_t SizeRequired, MEM_DebugListOfID_e DbgID = MEM_DBG_NONE);
-        void*       AllocAndSet                 (size_t SizeRequired, uint8_t FillValue, MEM_DebugListOfID_e DbgID = MEM_DBG_NONE);
-
-        void        OverrideNextTimeOut         (TickCount_t TimeOut);                          // This will override the default time out for next allocation. Code reduction as most of the time the default is used. and reduce number of overload.
-
-        bool        Free                        (void** pBlock);
-        bool        IsAvailable                 (size_t SizeRequired);
-        nOS_Error   GetLastError                (void);
+        void*           Alloc                       (size_t SizeRequired, MEM_DebugListOfID_e DbgID = MEM_DBG_NONE);
+        void*           AllocAndClear               (size_t SizeRequired, MEM_DebugListOfID_e DbgID = MEM_DBG_NONE);
+        void*           AllocAndSet                 (size_t SizeRequired, uint8_t FillValue, MEM_DebugListOfID_e DbgID = MEM_DBG_NONE);
+        bool            Free                        (void** pBlock);
+        bool            IsAvailable                 (size_t SizeRequired);
+        nOS_Error       GetLastError                (void);
       #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
-        uint32_t    GetTotalSizeReserved        (void);
-        uint32_t    GetUsedMemory               (void);
-        uint32_t    GetNumberOfPool             (void);
-        uint32_t    GetPoolNumberOfBlock        (uint32_t PoolNumber);
-        uint32_t    GetPoolBlockSize            (uint32_t PoolNumber);
-        uint32_t    GetPoolBlockUsed            (uint32_t PoolNumber);
-        uint32_t    GetPoolBlockHighPoint       (uint32_t PoolNumber);
-        uint32_t    GetAllocCount               (MEM_DebugListOfID_e DbgID)     { return m_AllocCount[DbgID];           }
-        uint32_t    GetMaxDebugID               (void)                          { return uint32_t(NUMBER_OF_MEM_DBG);   }
-        bool        ChangeDebugID               (void* MemBlock, MEM_DebugListOfID_e OriginalDebugID, MEM_DebugListOfID_e NewDebugID);
+        uint32_t        GetTotalSizeReserved        (void);
+        uint32_t        GetUsedMemory               (void);
+        uint32_t        GetNumberOfPool             (void);
+        uint32_t        GetPoolNumberOfBlock        (uint32_t PoolNumber);
+        uint32_t        GetPoolBlockSize            (uint32_t PoolNumber);
+        uint32_t        GetPoolBlockUsed            (uint32_t PoolNumber);
+        uint32_t        GetPoolBlockHighPoint       (uint32_t PoolNumber);
+        uint32_t        GetAllocCount               (MEM_DebugListOfID_e DbgID)     { return m_AllocCount[DbgID];           }
+        uint32_t        GetMaxDebugID               (void)                          { return uint32_t(NUMBER_OF_MEM_DBG);   }
+        SystemState_e   ChangeDebugID               (void* MemBlock, MEM_DebugListOfID_e OriginalDebugID, MEM_DebugListOfID_e NewDebugID);
       #endif
 
 

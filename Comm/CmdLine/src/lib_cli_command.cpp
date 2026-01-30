@@ -372,7 +372,7 @@ SystemState_e CommandLine::CmdVERSION(void* pArg)
 //  Description:    Display the HELP menu
 //
 //-------------------------------------------------------------------------------------------------
-#if (DIGINI_USE_HELP_IN_CONSOLE == DEF_ENABLED)
+#if (CON_USE_CMD_HELP == DEF_ENABLED)
 SystemState_e CommandLine::CmdHELP(void* pArg)
 {
     SystemState_e Error;
@@ -415,7 +415,7 @@ SystemState_e CommandLine::CmdHELP(void* pArg)
 //  Description:    Set individual debug level (bit position)
 //
 //-------------------------------------------------------------------------------------------------
-#if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
+#if (CON_USE_DEBUG_LOG == DEF_ENABLED)
 SystemState_e CommandLine::CmdDBG_LEVEL(void* pArg)
 {
     SystemState_e Error;

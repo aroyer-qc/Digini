@@ -66,9 +66,10 @@ void Console::Initialize(UART_Driver* pUartDriver)
     m_pUartDriver           = pUartDriver;
     //m_IsItOnHold            = false;
     //m_IsItOnStartup         = true;
+  #if (CON_USE_DEBUG_LOG == DEF_ENABLED)
     m_MuteSerialLogging     = false;                // should read a store value if eeprom exist and an entry also exist
-  #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
     m_DebugLevel            = SYS_DEBUG_NONE;
+    m_OverrideDebugLevel    = SYS_DEBUG_NONE;
   #endif
     m_ActiveProcessLevel    = CON_NOT_CONNECTED;
 
@@ -82,7 +83,7 @@ void Console::Initialize(UART_Driver* pUartDriver)
     pBuffer = m_Fifo.GetBufferPointer();
     //pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE, MEM_DBG_CON1);        // Reserve memory for UART internal DMA operation.
 
-    nOS_SemCreate(&m_RX_Idle_Sem, 0, CON_RX_NB_OF_SEMAPHORE_COUNT);
+    nOS_SemCreate(&m_RX_IdleSem, 0, CON_RX_NB_OF_SEMAPHORE_COUNT);
     pUartDriver->DMA_ConfigRX(pBuffer, CON_FIFO_PARSER_RX_SIZE);                // DMA will use the FIFO buffer allocated memory
 
   #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
@@ -118,7 +119,7 @@ void Console::Process(void)
 {
     nOS_Error State;
 
-    State = nOS_SemTake(&m_RX_Idle_Sem, 10);
+    State = nOS_SemTake(&m_RX_IdleSem, 10);
 
     VAR_UNUSED(State);
 
@@ -295,37 +296,35 @@ size_t Console::Printf(const char* pFormat, va_list* p_vaArg)
 //                  const char*         pFormat     Formatted string.
 //                  ... or va_list                  Parameter if any.
 //
-//  Return:         size_t              Number of character printed.
+//  Return:         None
 //
 //  Description:    Send formatted string to console if logging is not muted.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-size_t Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, ...)
+#if (CON_USE_DEBUG_LOG == DEF_ENABLED) || (VT100_USE_LOG_WINDOW == DEF_ENABLED)
+void Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, ...)
 {
-    size_t  Size;
     va_list vaArg;
 
     va_start(vaArg, pFormat);
-    Size = PrintSerialLog(Level, pFormat, vaArg);
+    PrintSerialLog(Level, pFormat, vaArg);
     va_end(vaArg);
-
-    return Size;
 }
 
-size_t Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, va_list vaArg)
+void Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, va_list vaArg)
 {
-    char*            pBuffer;
-    size_t           Size = 0;
+    char*  pBuffer;
+    size_t Size = 0;
 
-    //if((m_DebugLevel & Level) != CON_DEBUG_NONE)      TODO fix this finish support for it
+    SystemDebugLevel_e DebugLevel = (m_OverrideDebugLevel != SYS_DEBUG_NONE) ? m_OverrideDebugLevel : m_DebugLevel;
+
+    if((DebugLevel & Level) != SYS_DEBUG_NONE)
     {
         if((pBuffer = (char*)pMemoryPool->Alloc(CON_SERIAL_OUT_SIZE, MEM_DBG_CON3)) != nullptr)
         {
             Size = vsnprintf(pBuffer, CON_SERIAL_OUT_SIZE, pFormat, vaArg);
 
-          #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
+          #if (CON_USE_DEBUG_LOG == DEF_ENABLED)
             if(m_MuteSerialLogging == false)
             {
                 m_pUartDriver->SendData((const uint8_t*)pBuffer, &Size);
@@ -337,10 +336,8 @@ size_t Console::PrintSerialLog(SystemDebugLevel_e Level, const char* pFormat, va
           #endif
         }
     }
-
-    return Size;
 }
-
+#endif
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SendData
@@ -584,7 +581,7 @@ void Console::CallbackFunction(int Type, void* pContext)
         {
             uint8_t* pData = (uint8_t*)pContext;
             //m_Fifo.Write(pData, 1);
-            nOS_SemGive(&m_RX_Idle_Sem);
+            nOS_SemGive(&m_RX_IdleSem);
         }
         break;
       #endif
@@ -594,7 +591,7 @@ void Console::CallbackFunction(int Type, void* pContext)
         {
             UART_Transfer_t* pTransfer = (UART_Transfer_t*)pContext;
             m_Fifo.SetNewHeadPosition(pTransfer->u.Head);
-            nOS_SemGive(&m_RX_Idle_Sem);
+            nOS_SemGive(&m_RX_IdleSem);
         }
         break;
       #endif

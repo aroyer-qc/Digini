@@ -112,7 +112,7 @@ const size_t CommandLine::m_CmdStrSize[NUMBER_OF_CLI_CMD] =
   #endif
 };
 
-#if (DIGINI_USE_HELP_IN_CONSOLE == DEF_ENABLED)
+#if (CON_USE_CMD_HELP == DEF_ENABLED)
 const Label_e CommandLine::m_HelpLabel[NUMBER_OF_CLI_CMD] =
 {
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)

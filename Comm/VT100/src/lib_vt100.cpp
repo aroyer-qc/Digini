@@ -53,10 +53,7 @@
 #define VT100_INPUT_INVALID_ID                          -1
 #define VT100_LIMIT_DECIMAL_EDIT                        100000000   // Edition of decimal value limited to 100 Millions
 #define VT100_ESCAPE                                    255
-
 #define VT100_STARTUP_MENU_ID_CFG                       CAT(VT100_STARTUP_MENU_CFG, _ID)
-
-
 
 //-------------------------------------------------------------------------------------------------
 // Const(s)
@@ -112,8 +109,6 @@ bool ConvertToValue(uint8_t* pData)
 //
 //  Description:    Initialize VT100_terminal
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 nOS_Error VT100_Terminal::Initialize(Console* pConsole)
 {
@@ -154,8 +149,6 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole)
 //  Return:         None
 //
 //  Description:    Console process
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::IF_Process(void)
@@ -211,18 +204,18 @@ void VT100_Terminal::IF_Process(void)
                 if(m_pMenu->NextMenu == VT100_MENU_NONE)
                 {
                     m_IsItInitialized = false;
-                    ClearScreenWindow(0, 0, VT100_X_SIZE, VT100_Y_SIZE);            // Clear screen
+                    ClearScreenWindow(0, 0, VT100_SCREEN_WIDTH, VT100_SCREEN_HEIGHT);   // Clear screen
                     m_pConsole->ReleaseControl();
                 }
-                else if(m_MenuID != m_pMenu->NextMenu)                              // If new menu selection, draw this new menu
+                else if(m_MenuID != m_pMenu->NextMenu)                                  // If new menu selection, draw this new menu
                 {
-                    FinalizeAllItems();                                             // Finalize all items in previous menu
-                    ClearConfigFLag();                                              // make sure all flag are initialize for the new menu
-                    GoToMenu(m_pMenu->NextMenu);                                    // display new menu and initialize all items in new menu
+                    FinalizeAllItems();                                                 // Finalize all items in previous menu
+                    ClearConfigFLag();                                                  // make sure all flag are initialize for the new menu
+                    GoToMenu(m_pMenu->NextMenu);                                        // display new menu and initialize all items in new menu
                 }
                 else
                 {
-                    CallBack(m_pMenu->pCallback, VT100_CALLBACK_ON_INPUT, m_Input); // This is an input for menu with dynamic information to change
+                    CallBack(m_pMenu->pCallback, VT100_CALLBACK_ON_INPUT, m_Input);     // This is an input for menu with dynamic information to change
                 }
             }
         }
@@ -250,8 +243,6 @@ void VT100_Terminal::IF_Process(void)
 //  Description:    Here we read the character from the console.
 //
 //  Note(s):        This is a state machine to handle incoming character.
-//
-//
 //
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::ProcessRX(void)
@@ -402,8 +393,6 @@ void VT100_Terminal::ProcessRX(void)
 //
 //  Description:    Flush all items in the menu
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::FinalizeAllItems(void)
 {
@@ -426,8 +415,6 @@ void VT100_Terminal::FinalizeAllItems(void)
 //  Return:         None
 //
 //  Description:    Select a new menu to go.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::GoToMenu(VT100_Menu_e MenuID)
@@ -478,9 +465,9 @@ void VT100_Terminal::DisplayMenu(void)
     char                    ItemsChar;
 
     pMenu = nullptr;
-    ClearScreenWindow(0, 4, VT100_X_SIZE, VT100_Y_SIZE);    // Clear screen bellow header
+    ClearScreenWindow(0, 4, VT100_SCREEN_WIDTH, VT100_SCREEN_HEIGHT);       // Clear screen bellow header
     m_PosY_SaveLabel = 9;
-    SetCursorPosition(0, 6);                                // Reposition cursor to print menu
+    SetCursorPosition(0, 6);                                                // Reposition cursor to print menu
     SetForeColor(VT100_COLOR_YELLOW);
     m_ItemsQts = m_Menu[m_MenuID].Size;
 
@@ -612,6 +599,8 @@ void VT100_Terminal::ClearInputMenuSelection(void)
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::ClearScreenWindow(uint8_t PosX, uint8_t PosY, uint8_t SizeX, uint8_t SizeY)
 {
+    SizeX++;            // Cursor position in VT100 start at 1
+
     for(int y = PosY; y < (PosY + SizeY); y++)
     {
         InMenuPrintf(PosX, y, VT100_LBL_ERASE_FROM_CURSOR_N_CHAR, int(SizeX));
@@ -667,7 +656,7 @@ VT100_InputType_e VT100_Terminal::CallBack(CallbackMethod_t pCallback, VT100_Cal
     if(pCallback != nullptr)
     {
         SaveAttribute();
-        InputType = pCallback(Item, Type);
+        InputType = (this->*pCallback)(Item, Type);
         RestoreAttribute();
 
         if(InputType == VT100_INPUT_SAVE_DATA)
@@ -1708,7 +1697,7 @@ void VT100_Terminal::LogPrint(const char* pString)
 void VT100_Terminal::LogDisplay(void)
 {
     char LineBuffer[VT100_LOG_COLUMNS + 1];                                 // Temp buffer for clipping
-    int Start       = m_LogHead - (m_LogWindowHeight - 1);                  // Compute first line to display (circular buffer)
+    int Start = m_LogHead - (m_LogWindowHeight - 1);                        // Compute first line to display (circular buffer)
 
     SaveCursorPosition();
 
@@ -1741,27 +1730,8 @@ void VT100_Terminal::LogDisplay(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif
+#endif // (VT100_USE_LOG_WINDOW == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 
 #endif // (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-
-/* pseudo code windows for debug print
-
-
-
-
-
-
-
-"Special print" into the virtual buffer
-
-
-Usage
-
-LogBuffer g_log;
-Window    g_win = { .top = 5, .left = 10, .width = 60, .height = 10 };
-
-
-*/

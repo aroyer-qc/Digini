@@ -220,7 +220,7 @@ X_LABEL( LBL_TEST,  "the quick brown fox jumps over the lazy dog",         "port
     X_LABEL( LBL_CMD_HELP_MUTE_DEBUG,             "Mute the debugging output",                                                                               "D\x82" "activer l'affichage du d\x82" "bogage"                                                                                        ) \
     X_LABEL( LBL_CMD_HELP_UNMUTE_DEBUG,           "Unmute the debugging output",                                                                             "R\x82" "activer l'affichage du d\x82" "bogage"                                                                                        ) \
     X_LABEL( LBL_CMD_HELP_CLEAR,                  "Clear the terminal screen",                                                                               "Effacer l'\x82" "cran du terminal"                                                                                                    ) \
-  IF_USE(DIGINI_USE_DEBUG_IN_CONSOLE,                                                                                                                                                                                                                                                                 \
+  IF_USE(CON_USE_DEBUG_LOG,                                                                                                                                                                                                                                                                 \
     X_LABEL( LBL_CMD_HELP_DEBUG,                  "Display debugging information",                                                                           "Afficher les informations de d\x82" "bogage"                                                                                          ) \
   )                                                                                                                                                                                                                                                                                                   \
     X_LABEL( LBL_CMD_HELP_HOLD,                   "Hold on the startup sequence",                                                                            "Suspendre la s\x82quence de d\x82marrage"                                                                                             ) \
@@ -433,7 +433,7 @@ enum Label_e
     CLI_LABEL_EXT_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
   #endif
 
-  #if (DIGINI_USE_HELP_IN_CONSOLE == DEF_ENABLED)
+  #if (CON_USE_CMD_HELP == DEF_ENABLED)
     CLI_LABEL_HELP_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
    #ifdef CLI_USER_LABEL_HELP_DEF
     CLI_USER_LABEL_HELP_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
@@ -461,7 +461,7 @@ enum Label_e
     VT100_MEMORY_POOL_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
   #endif
 
-  #if (DIGINI_USE_DEBUG_IN_CONSOLE == DEF_ENABLED)
+  #if (CON_USE_DEBUG_LOG == DEF_ENABLED)
     VT100_DEBUG_IN_CONSOLE_LANGUAGE_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
   #endif
 

@@ -79,7 +79,7 @@
 //                  incoming datagrams.
 //
 //-------------------------------------------------------------------------------------------------
-void NetUDP::Initialize(NetworkContext* pContext)
+void UDP_Protocol::Initialize(NetworkContext* pContext)
 {
     m_pContext = pContext;
     memset(m_BoundSockets, 0, sizeof(m_BoundSockets));      // Clear the binding table
@@ -111,7 +111,7 @@ void NetUDP::Initialize(NetworkContext* pContext)
 //                  registered), the function frees all associated packet resources.
 //
 //-------------------------------------------------------------------------------------------------
-void NetUDP::Process(IP_PacketMsg_t* pMsg)
+void UDP_Protocol::Process(IP_PacketMsg_t* pMsg)
 {
     UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
     IP_Port_t dstPort  = ntohs(pUDP->DstPort);
@@ -168,7 +168,7 @@ void NetUDP::Process(IP_PacketMsg_t* pMsg)
 //                  On failure, all allocated resources are released before returning.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e NetUDP::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent)
+SystemState_e UDP_Protocol::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent)
 {
     *pBytesSent = 0;
 
@@ -233,7 +233,7 @@ SystemState_e NetUDP::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, co
 //                  Port Unreachable message (if enabled).
 //
 //-------------------------------------------------------------------------------------------------
-Socket* NetUDP::FindSocketByPort(IP_Port_t port)
+Socket* UDP_Protocol::FindSocketByPort(IP_Port_t port)
 {
     for(size_t i = 0; i < m_BoundCount; i++)
     {
@@ -262,7 +262,7 @@ Socket* NetUDP::FindSocketByPort(IP_Port_t port)
 //                  prevents multiple sockets from binding the same port.
 //
 //-------------------------------------------------------------------------------------------------
-bool NetUDP::RegisterSocket(Socket* pSock, IP_Port_t Port)
+bool UDP_Protocol::RegisterSocket(Socket* pSock, IP_Port_t Port)
 {
     for(size_t i = 0; i < m_BoundCount; i++)                // Check if already bound
     {
@@ -298,7 +298,7 @@ bool NetUDP::RegisterSocket(Socket* pSock, IP_Port_t Port)
 //                  rebinding to a new port.
 //
 //-------------------------------------------------------------------------------------------------
-void NetUDP::UnregisterSocket(IP_Port_t Port)
+void UDP_Protocol::UnregisterSocket(IP_Port_t Port)
 {
     for(size_t i = 0; i < m_BoundCount; i++)
     {
@@ -333,7 +333,7 @@ void NetUDP::UnregisterSocket(IP_Port_t Port)
 //                  conflict‑free port assignment.
 //
 //-------------------------------------------------------------------------------------------------
-IP_Port_t NetUDP::AllocateEphemeralPort(void)
+IP_Port_t UDP_Protocol::AllocateEphemeralPort(void)
 {
     IP_Port_t start = m_NextEphemeralPort;
 

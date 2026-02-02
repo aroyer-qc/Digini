@@ -1343,10 +1343,6 @@ void VT100_Terminal::DrawHline(uint8_t PosX, uint8_t PosY, uint8_t SizeX, VT100_
         SetForeColor(ForeColor);
         SetCursorPosition(PosX, PosY);
         InMenuPrintf(VT100_LBL_REPEAT_CHARACTER, ASCII_EXT_HORIZONTAL_CHAR, SizeX);
-//        for(uint8_t i = 0; i < SizeX; i++)
-//        {
-//            InMenuPrintf(LBL_CHAR, ASCII_EXT_HORIZONTAL_CHAR);
-//        }
     }
 }
 
@@ -1640,50 +1636,6 @@ void VT100_Terminal::LogPrint(const char* pString)
 //                  Each displayed line is sent using a single InMenuPrintf() call.
 //
 //-------------------------------------------------------------------------------------------------
-/*
-void VT100_Terminal::LogDisplay(void)
-{
-    if(m_LogRefresh == false)
-    {
-        return;
-    }
-
-    m_LogRefresh = false;
-
-    char LineBuffer[VT100_LOG_COLUMNS + 1];                                                     // Temp buffer for clipping
-    int ScreenRow = m_LogWindowTop;
-
-    SaveCursorPosition();
-    int LinesToShow = (m_LogCount < m_LogWindowHeight) ? m_LogCount : m_LogWindowHeight;        // Determine how many lines we can actually show
-    int Start = m_LogHead - (LinesToShow - 1);                                                  // Compute the index of the oldest visible line in the circular buffer
-
-    if(Start < 0)
-    {
-        Start += VT100_LOG_LINES;
-    }
-
-    int SourceLine = Start;
-
-    for(int i = 0; i < LinesToShow; i++)
-    {
-        memcpy(LineBuffer, m_LogBuffer[SourceLine], m_LogWindowWidth);
-        LineBuffer[m_LogWindowWidth] = '\0';
-
-        InMenuPrintf(VT100_LBL_SET_CURSOR, ScreenRow, m_LogWindowLeft);
-        InMenuPrintf(LBL_STRING, LineBuffer);
-
-        ScreenRow++;
-        SourceLine++;
-
-        if(SourceLine >= VT100_LOG_LINES)
-        {
-            SourceLine = 0;
-        }
-    }
-
-    RestoreCursorPosition();
-}
-*/
 void VT100_Terminal::LogDisplay(void)
 {
     if(m_LogRefresh == false)
@@ -1698,11 +1650,9 @@ void VT100_Terminal::LogDisplay(void)
 
     SaveCursorPosition();
 
-    // Number of lines we will actually display
-    int LinesToShow = (m_LogCount < m_LogWindowHeight) ? m_LogCount : m_LogWindowHeight;
-
-    // Compute the index of the oldest visible line
-    int Start = m_LogHead - (LinesToShow - 1);
+    int LinesToShow = (m_LogCount < m_LogWindowHeight) ? m_LogCount : m_LogWindowHeight;        // Number of lines we will actually display
+    int Start = m_LogHead - (LinesToShow - 1);                                                  // Compute the index of the oldest visible line
+    
     if(Start < 0)
     {
         Start += VT100_LOG_LINES;
@@ -1710,8 +1660,7 @@ void VT100_Terminal::LogDisplay(void)
 
     int SourceLine = Start;
 
-    // Print the real log lines
-    for(int i = 0; i < LinesToShow; i++)
+    for(int i = 0; i < LinesToShow; i++)                                                        // Print the real log lines
     {
         memcpy(LineBuffer, m_LogBuffer[SourceLine], m_LogWindowWidth);
         LineBuffer[m_LogWindowWidth] = '\0';

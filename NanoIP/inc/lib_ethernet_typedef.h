@@ -221,6 +221,25 @@ struct DHCP_Header_t
 	uint8_t         Options[308];                       // Do not use this struct with sizeof()
 };                                                      // = 240 bytes + Options
 
+struct DNS_Header_t
+{
+    uint16_t        ID;                                 //     2
+    uint16_t        Flags;                              // +   2
+    uint16_t        QDCount;                            // +   2
+    uint16_t        ANCount;                            // +   2
+    uint16_t        NSCount;                            // +   2
+    uint16_t        ARCount;                            // +   2
+};                                                      // = 12 bytes
+
+struct ICMP_Header_t
+{
+	uint8_t         Type;                               //     1
+    uint8_t         Code;                               // +   1
+	uint16_t	    Checksum;                           // +   2
+    uint16_t        ID;                                 // +   2
+    uint16_t 	    Sequence;                           // +   2
+};                                                      // =   8 Bytes
+
 struct IP_Header_t
 {
 	uint8_t 	    VersionIHL;                         //     1    IHL  = Internet Header Length
@@ -248,15 +267,6 @@ struct TCP_Header_t
 	uint16_t 	    UrgentPointer;                      // +   2
 	uint32_t        OptionData;                         // +   4
 };                              	                    // =  20 Bytes before option data
-
-struct ICMP_Header_t
-{
-	uint8_t         Type;                               //     1
-    uint8_t         Code;                               // +   1
-	uint16_t	    Checksum;                           // +   2
-    uint16_t        ID;                                 // +   2
-    uint16_t 	    Sequence;                           // +   2
-};                                                      // =   8 Bytes
 
 struct UDP_Header_t
 {
@@ -308,6 +318,31 @@ struct ARP_Frame_t
 	IP_Address_t			DstIP_Address;     	        // +   4
 };                                                      // =  42 Bytes
 
+// the DHCP frame
+struct DHCP_Frame_t
+{
+	IP_EthernetHeader_t 	ETH_Header;                 //    14
+	IP_Header_t			    IP_Header;                  // +  20
+	UDP_Header_t			UDP_Header;                 // +   8
+	DHCP_Header_t		    Header;  		            // + 240
+};                                                      // = 282 Bytes
+
+// the DNS frame
+struct DNS_Frame_t
+{
+	IP_EthernetHeader_t 	ETH_Header;                 //    14
+	IP_Header_t 			IP_Header;                  // +  20
+	DNS_Header_t	    	Header;		                // +  12
+};                                                      // =  46 Bytes
+
+// the ICMP frame
+struct ICMP_Frame_t
+{
+	IP_EthernetHeader_t 	ETH_Header;                 //    14
+	IP_Header_t 			IP_Header;                  // +  20
+	ICMP_Header_t	    	Header;		                // +   8
+};                                                      // =  42 Bytes
+
 // the IP frame
 struct IP_Frame_t
 {
@@ -323,22 +358,15 @@ struct TCP_Frame_t
 	TCP_Header_t			Header; 	                // +  20
 };                                                      // =  54 Bytes
 
-// the UDP pseudo frame
-struct TCP_PseudoFrame_t
+// the TCP pseudo frame
+/*struct TCP_PseudoFrame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;                 //    14
 	uint8_t 				Dummy[8]; 			        // +   8
 	IP_PseudoHeader_t		Header;	       	 		    // +  12
 	TCP_Header_t			TCP_Header;		            // +  20
 };		                                                // =  54 Bytes
-
-// the ICMP frame
-struct ICMP_Frame_t
-{
-	IP_EthernetHeader_t 	ETH_Header;                 //    14
-	IP_Header_t 			IP_Header;                  // +  20
-	ICMP_Header_t	    	Header;		                // +   8
-};                                                      // =  42 Bytes
+*/
 
 // the UDP frame
 struct UDP_Frame_t
@@ -349,22 +377,14 @@ struct UDP_Frame_t
 };                                                      // =  42 Bytes
 
 // the UDP pseudo frame
-struct UDP_PseudoFrame_t
+/*struct UDP_PseudoFrame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;                 //    14
 	uint8_t 				Dummy[8]; 			        // +   8
 	IP_PseudoHeader_t		Header;	       	 		    // +  12
 	UDP_Header_t			UDP_Header;		            // +   8
 };		                                                // =  42 Bytes
-
-// the DHCP frame
-struct DHCP_Frame_t
-{
-	IP_EthernetHeader_t 	ETH_Header;                 //    14
-	IP_Header_t			    IP_Header;                  // +  20
-	UDP_Header_t			UDP_Header;                 // +   8
-	DHCP_Header_t		    Header;  		            // + 240
-};                                                      // = 282 Bytes
+*/
 
 // the DHCP frame
 struct SNTP_Frame_t
@@ -384,13 +404,14 @@ struct IP_EthernetPacket_t
 		IP_EthernetHeader_t			ETH_Header;
 		IP_Frame_t				    IP_Frame;
 		ARP_Frame_t                 ARP_Frame;
-		TCP_Frame_t	                TCP_Frame;
-		TCP_PseudoFrame_t           TCP_PseudoFrame;    // use for TCP Checksum calculation
-		ICMP_Frame_t            	ICMP_Frame;
-		UDP_Frame_t				    UDP_Frame;
-		UDP_PseudoFrame_t		    UDP_PseudoFrame;	// use for UDP Checksum calculation
 		DHCP_Frame_t                DHCP_Frame;
+        DNS_Frame_t                 DNS_Frame;
+		ICMP_Frame_t            	ICMP_Frame;
 		SNTP_Frame_t                SNTP_Frame;
+		TCP_Frame_t	                TCP_Frame;
+	//TCP_PseudoFrame_t         TCP_PseudoFrame;    // use for TCP Checksum calculation
+		UDP_Frame_t				    UDP_Frame;
+	//UDP_PseudoFrame_t		    UDP_PseudoFrame;	// use for UDP Checksum calculation
 	};
 };
 
@@ -405,20 +426,19 @@ struct IP_PacketMsg_t
 struct IP_ETH_Config_t
 {
     IP_MAC_Address_t            MAC_Address;
-    class ETH_DriverInterface*  pETH_Driver;                                    // Driver for embedded MAC controller
-    class PHY_DriverInterface*  pPHY_Driver;                                    // Driver for PHY
+    class ETH_DriverInterface*  pETH_Driver;        // Driver for embedded MAC controller
+    class PHY_DriverInterface*  pPHY_Driver;        // Driver for PHY
     uint8_t                     PHY_Address;
 };
 
-
-struct IP_Config_t                                                              // Host Name, IP_ Address, Protocol (ip_cfg.h)
+struct IP_Config_t                                  // Host Name, IP_ Address, Protocol (ip_cfg.h)
 {
   #if (IP_USE_HOSTNAME == DEF_ENABLED)
     const char*         pHostName;
   #endif
     nOS_Stack*          pStack;
     uint16_t            ProtocolFlag;
-    IP_Address_t        DefaultStatic_IP;         // check in context
+    IP_Address_t        DefaultStatic_IP;           // check in context
     IP_Address_t        DefaultGateway;
     IP_Address_t        DefaultSubnetMask;
     IP_Address_t        DefaultStaticDNS;
@@ -428,7 +448,6 @@ struct IP_Config_t                                                              
 // EMAC Driver Control Information
 struct ETH_Control_t
 {
- //   ETH_CallBack_t          pCallBack;            // Signal Event callback
     uint8_t                 TX_HeadIndex;           // Used by SendTX_Packet
     uint8_t                 TX_TailIndex;           // Used by ISR_CallBack
     uint8_t                 RX_Index;               // Receive descriptor index
@@ -436,11 +455,6 @@ struct ETH_Control_t
     uint8_t                 TX_TS_Index;            // Transmit Timestamps descriptor index
   #endif
     uint8_t*                FrameEnd;               // End of assembled frame fragments
-};
-
-struct IP_Message_t
-{
-    // TODO missing stuff
 };
 
 // Ethernet Link Info
@@ -452,8 +466,8 @@ struct ETH_LinkInfo_t
 
 struct  ETH_MacTime_t
 {
-    uint32_t naneSecond;                         // Nano seconds
-    uint32_t Second;                             // Seconds
+    uint32_t naneSecond;                            // Nano seconds
+    uint32_t Second;                                // Seconds
 };
 
 //-------------------------------------------------------------------------------------------------

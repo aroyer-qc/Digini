@@ -61,7 +61,7 @@ struct  ARP_TableEntry_t
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-class NetARP
+class ARP_Protocol
 {
     public:
 

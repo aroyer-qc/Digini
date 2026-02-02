@@ -173,54 +173,55 @@ class IP_Manager
 
         NetworkContext                  m_Context;
         ETH_IF_Driver                   m_IF_Driver;
-        //IP_Flag_t                       m_Flag;                               // Configuration of IP Stack
         bool                            m_DNS_IP_Found;
-
-//        IP_Address_t                    m_StaticGatewayIP;                      // Gateway IP Address
-//        IP_Address_t                    m_StaticSubnetMask;                     // Subnet Mask
-//        IP_Address_t                    m_StaticIP;                             // Static IP Address
-//        IP_Address_t                    m_StaticDNS_IP;                         // Static DNS Server IP Address
 
         uint8_t                         m_TX_SocketMemorySize;                  // TX Socket Memory Configuration for all x Sockets
         uint8_t                         m_RX_SocketMemorySize;                  // RX Socket Memory Configuration for all x Sockets
 
-        NetARP                          m_ARP;                                 // Address Resolution Protocol
+        ARP_Protocol                    m_ARP;                                  // Address Resolution Protocol
 
       #if (IP_USE_DHCP == DEF_ENABLED)
-        NetDHCP                         m_DHCP;                                // Dynamic Host Control Protocol. Need UDP
+        DHCPv4_Client                   m_DHCP;                                 // Dynamic Host Control Protocol. Need UDP
+      #endif
+
+      #if (IP_USE_DNS == DEF_ENABLED)
+        DNS_Client                      m_DNS;                                  // Domain name system Protocol. Need UDP
       #endif
 
       #if (IP_USE_ICMP == DEF_ENABLED)
-        NetICMP                         m_ICMP;                                // Internet Control Message Protocol
+        ICMP_Protocol                   m_ICMP;                                 // Internet Control Message Protocol
       #endif
 
       #if (IP_USE_NTP == DEF_ENABLED)
-        NetNTP                          m_NTP;                                 // Network Time Protocol
-        uint8_t                         m_NTP_Server_1[IP_MAX_URL_SIZE];       // move this to NTP
+        NTP_Client                      m_NTP;                                  // Network Time Protocol
+        uint8_t                         m_NTP_Server_1[IP_MAX_URL_SIZE];        // move this to NTP
         uint8_t                         m_NTP_Server_2[IP_MAX_URL_SIZE];
       #endif
 
       #if (IP_USE_RAW == DEF_ENABLED)
-        NetRAW                          m_RAW;                                 // RAW
+        IP_RawProtocol                  m_RAW;                                  // RAW
       #endif
 
       #if (IP_USE_SNTP == DEF_ENABLED)
-        SNTP_Client                     m_SNTP;                                // Simple Network Transport Protocol
+        SNTP_Client                     m_SNTP;                                 // Simple Network Transport Protocol
       #endif
 
       #if (IP_USE_SOAP == DEF_ENABLED)
-        NetSOAP                         m_SOAP                                 // Simple Object Access Protocol
-
-        uint8_t                         m_SOAP_Server_1[IP_MAX_URL_SIZE];      // Messaging protocol specification for exchanging structured information.
+        SOAP_Client                     m_SOAP                                  // Simple Object Access Protocol
+        uint8_t                         m_SOAP_Server_1[IP_MAX_URL_SIZE];       // Messaging protocol specification for exchanging structured information.
         uint8_t                         m_SOAP_Server_2[IP_MAX_URL_SIZE];
       #endif
 
-      #if (IP_USE_TCP == DEF_ENABLED)
-        NetTCP                          m_TCP;                                 // Transport Control Protocol
+      #if (IP_USE_TCP_SERVER == DEF_ENABLED)
+        TCP_Server                      m_TCP_Server;                           // Transport Control Protocol Server sise
+      #endif
+
+      #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
+        TCP_Client                      m_TCP_Client;                           // Transport Control Protocol Cleint Side
       #endif
 
       #if (IP_USE_UDP == DEF_ENABLED)
-        NetUDP                          m_UDP;                                 // User Datagram Protocol
+        UDP_Protocol                    m_UDP;                                  // User Datagram Protocol
       #endif
 
         IP_ETH_Config_t*                m_pEthernetIF;                          // Ethernet Configuration

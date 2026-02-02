@@ -111,8 +111,6 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 
     // All protocol support are created dynamically if interface is set to use it, and if configuration is enable for that protocol
 
-
-
   #if (IP_USE_UDP == DEF_ENABLED)
     m_UDP.Initialize(&m_Context);
   #endif
@@ -122,6 +120,10 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
   #endif
 
     m_ARP.Initialize(&m_Context);
+
+  #if (IP_USE_DNS == DEF_ENABLED)
+    m_DNS.Initialize(&m_Context);
+  #endif
 
   #if (IP_USE_ICMP == DEF_ENABLED)
     m_ICMP.Initialize(&m_Context);

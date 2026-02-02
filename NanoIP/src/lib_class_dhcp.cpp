@@ -142,7 +142,7 @@
 // const(s)
 //-------------------------------------------------------------------------------------------------
 
-const uint8_t NetDHCP::m_OPL_Discover[8] = // OPL stand for option list
+const uint8_t DHCPv4_Client::m_OPL_Discover[8] = // OPL stand for option list
 {
     55,        // Parameter list
     6,         // Size
@@ -154,7 +154,7 @@ const uint8_t NetDHCP::m_OPL_Discover[8] = // OPL stand for option list
     59         // DHCP T2 Value
 };
 
-const uint8_t NetDHCP::m_OPL_Request[10] =
+const uint8_t DHCPv4_Client::m_OPL_Request[10] =
 {
     55,        // Parameter list
     8,         // Size
@@ -178,7 +178,7 @@ const uint8_t NetDHCP::m_OPL_Request[10] =
 //  Description:    Initialize the DHCP Client
 //
 //-------------------------------------------------------------------------------------------------
-void NetDHCP::Initialize(NetworkContext* pContext)
+void DHCPv4_Client::Initialize(NetworkContext* pContext)
 {
     nOS_Error Error;
 
@@ -207,7 +207,7 @@ void NetDHCP::Initialize(NetworkContext* pContext)
 //  Description:    Reset the DHCP Client
 //
 //-------------------------------------------------------------------------------------------------
-void NetDHCP::Reset(void)
+void DHCPv4_Client::Reset(void)
 {
     // Stop all DHCP timers
     if(nOS_TimerIsRunning(&m_TimerDiscover))  nOS_TimerStop(&m_TimerDiscover,  true);
@@ -245,7 +245,7 @@ void NetDHCP::Reset(void)
 //  Description:    Start the DHCP Client
 //
 //-------------------------------------------------------------------------------------------------
-bool NetDHCP::Start(void)
+bool DHCPv4_Client::Start(void)
 {
     // Create a new UDP socket for DHCP
     m_pSocket = m_pContext->GetIP_Manager()->GetSocketManager()->AllocSocket(SOCKET_TYPE_DATAGRAM);
@@ -283,7 +283,7 @@ bool NetDHCP::Start(void)
 //  Description:    Process the DHCP function
 //
 //-------------------------------------------------------------------------------------------------
-bool NetDHCP::Process(void)
+bool DHCPv4_Client::Process(void)
 {
     // Handle internal timers (non-blocking)
     if(nOS_TimerIsRunning(&m_TimerDiscover) == false)
@@ -385,7 +385,7 @@ bool NetDHCP::Process(void)
 //                  IP Frame Protocol      must be set after UDP checksum is calculated
 //
 //-------------------------------------------------------------------------------------------------
-bool NetDHCP::Discover(void)
+bool DHCPv4_Client::Discover(void)
 {
     uint8_t       Options;
     DHCP_Msg_t*   pTX     = nullptr;
@@ -460,7 +460,7 @@ bool NetDHCP::Discover(void)
 //  Note(s):        this command is use after an offer and we it is time for lease renewal
 //
 //-------------------------------------------------------------------------------------------------
-bool NetDHCP::Request(void)
+bool DHCPv4_Client::Request(void)
 {
     uint8_t       Options;
     DHCP_Msg_t*   pTX     = nullptr;
@@ -552,7 +552,7 @@ bool NetDHCP::Request(void)
 // Description:     Extract offered client IP and DHCP server IP from the OFFER message.
 //                  This function assumes the message has already been validated.
 //-------------------------------------------------------------------------------------------------
-void NetDHCP::ParseOffer(DHCP_Msg_t* pRX)
+void DHCPv4_Client::ParseOffer(DHCP_Msg_t* pRX)
 {
     // Offered IP address for this client
     m_Options.ClientIP = ntohl(pRX->YourIP_Address);
@@ -582,7 +582,7 @@ void NetDHCP::ParseOffer(DHCP_Msg_t* pRX)
 // Description:     Apply DHCP lease parameters to the interface and transition to BOUND state.
 //                  This function assumes that m_Options has been filled by ParseOption().
 //-------------------------------------------------------------------------------------------------
-void NetDHCP::IsBound(void)
+void DHCPv4_Client::IsBound(void)
 {
     // Update interface context
     m_pContext->SetDHCP_IP(m_Options.ClientIP);
@@ -624,7 +624,7 @@ void NetDHCP::IsBound(void)
 // Description:     Parse DHCP options from the received message. This function assumes that the
 //                  DHCP header and magic cookie have already been validated.
 //-------------------------------------------------------------------------------------------------
-void NetDHCP::ParseOption(DHCP_Msg_t* pRX)
+void DHCPv4_Client::ParseOption(DHCP_Msg_t* pRX)
 {
     uint8_t* pPtr = (uint8_t*)&pRX->Options;
     uint8_t  Code;
@@ -750,7 +750,7 @@ void NetDHCP::ParseOption(DHCP_Msg_t* pRX)
 //                  This function does not perform bounds checking; caller must ensure
 //                  the buffer is large enough.
 //-------------------------------------------------------------------------------------------------
-size_t NetDHCP::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
+size_t DHCPv4_Client::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
 {
     uint8_t* pStart = pPtr;
 
@@ -885,7 +885,7 @@ size_t NetDHCP::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
 // Description:     Build the fixed DHCP header fields for DISCOVER/REQUEST messages.
 //                  This function assumes that m_XID and m_Context are already initialized.
 //-------------------------------------------------------------------------------------------------
-void NetDHCP::PutHeader(DHCP_Msg_t* pTX)
+void DHCPv4_Client::PutHeader(DHCP_Msg_t* pTX)
 {
     // Clear all header fields (safety)
 //    memset(pTX, 0, sizeof(DHCP_Msg_t));

@@ -366,7 +366,7 @@ SystemState_e Socket::Bind(IP_Port_t Port)
         }
     }
 
-    if(m_Manager.UDP_RegisterSocket(this, Port) == false)       // Ask NetUDP to register this port
+    if(m_Manager.UDP_RegisterSocket(this, Port) == false)       // Ask UDP_Protocol to register this port
     {
         return SYS_FAIL_PORT_IN_USE;
     }

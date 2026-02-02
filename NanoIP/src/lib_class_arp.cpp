@@ -56,7 +56,7 @@ void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg);
 // 					Setup OS timer for ARP table entry
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e NetARP::Initialize(NetworkContext* pContext)
+SystemState_e ARP_Protocol::Initialize(NetworkContext* pContext)
 {
     nOS_Error Error;
 
@@ -96,7 +96,7 @@ SystemState_e NetARP::Initialize(NetworkContext* pContext)
 // 					packet comes from a host on the local network.
 //
 //-------------------------------------------------------------------------------------------------
-void NetARP::ProcessIP(IP_PacketMsg_t* pRX)
+void ARP_Protocol::ProcessIP(IP_PacketMsg_t* pRX)
 {
     IP_Address_t SubnetMask = m_pContext->GetActiveSubnetMask();
     IP_Address_t ActiveIP   = m_pContext->GetActiveIP();
@@ -125,7 +125,7 @@ void NetARP::ProcessIP(IP_PacketMsg_t* pRX)
 //  Description:
 //
 //-------------------------------------------------------------------------------------------------
-void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
+void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
 {
     // Sanity check: must have at least ARP frame (sans ETH header)
     if((pRX == nullptr) || (pRX->pPacket == nullptr) || (pRX->PacketSize < (sizeof(ARP_Frame_t) - sizeof(IP_EthernetHeader_t))))
@@ -208,7 +208,7 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 //  Description:    Update Entry in ARP table
 //
 //-------------------------------------------------------------------------------------------------
-void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMAC_Address)
+void ARP_Protocol::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMAC_Address)
 {
 	uint8_t           i;
 	uint8_t           OldestEntry;
@@ -325,7 +325,7 @@ void NetARP::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMAC_Address
 //                  the default router is used instead.
 //
 //-------------------------------------------------------------------------------------------------
-void NetARP::ProcessOut(IP_PacketMsg_t* pTX)
+void ARP_Protocol::ProcessOut(IP_PacketMsg_t* pTX)
 {
 	uint8_t              i;
 	ARP_TableEntry_t*    pTable   	= nullptr;
@@ -430,7 +430,7 @@ void NetARP::ProcessOut(IP_PacketMsg_t* pTX)
 //                  the entry becomes VALID.
 //
 //-------------------------------------------------------------------------------------------------
-bool NetARP::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC)
+bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC)
 {
     // Search ARP table
     for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
@@ -459,7 +459,7 @@ bool NetARP::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC)
 //  Description:    Callback for the nOS_Timer to handle ARP time out.
 //
 //-------------------------------------------------------------------------------------------------
-void NetARP::TimerCallBack(void)
+void ARP_Protocol::TimerCallBack(void)
 {
 	uint16_t          Time;
 	ARP_TableEntry_t* pTable;
@@ -499,7 +499,7 @@ void NetARP::TimerCallBack(void)
 //  Name:         	ARP_TimerCallBack
 //
 //  Parameter(s):  	nOS_Timer*  pTimer
-//                  void*       pArg            holding the object of the class NetARP
+//                  void*       pArg            holding the object of the class ARP_Protocol
 //
 //  Return:         void
 //
@@ -510,7 +510,7 @@ void NetARP::TimerCallBack(void)
 void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg)
 {
     VAR_UNUSED(pTimer);
-    NetARP* pARP = (NetARP*)pArg;
+    ARP_Protocol* pARP = (ARP_Protocol*)pArg;
 
     pARP->TimerCallBack();
 }

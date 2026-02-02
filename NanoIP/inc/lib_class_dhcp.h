@@ -161,7 +161,7 @@ struct DHCP_Options_t
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class NetDHCP
+class DHCPv4_Client
 {
     public:
 

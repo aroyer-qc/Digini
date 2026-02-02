@@ -65,8 +65,6 @@ FIFO_Buffer::FIFO_Buffer()
 //
 //   Description:   Initializes the fifo
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 FIFO_Buffer::~FIFO_Buffer()
 {
@@ -91,6 +89,12 @@ FIFO_Buffer::~FIFO_Buffer()
 //-------------------------------------------------------------------------------------------------
 void FIFO_Buffer::Initialize(size_t Size)
 {
+
+    if(m_pBuffer != nullptr)
+    {
+        pMemoryPool->Free((void**)&m_pBuffer);
+    }
+
     m_Size      = Size;
     m_pBuffer   = (uint8_t*)pMemoryPool->AllocAndClear(Size, MEM_DBG_FIFO1);
     m_PushIndex = 0;
@@ -107,8 +111,6 @@ void FIFO_Buffer::Initialize(size_t Size)
 //  Return:         size_t          Number of bytes read from the FIFO.
 //
 //  Description:    Reads a number of bytes from the FIFO
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 size_t FIFO_Buffer::Read(void* pBuffer, size_t BytesToRead)
@@ -202,8 +204,6 @@ size_t FIFO_Buffer::Write(const void* pBuffer, size_t BytesToWrite)
 //
 //  Description:    Is there data to read from the FIFO.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 bool FIFO_Buffer::ReadyRead(void)
 {
@@ -244,9 +244,12 @@ bool FIFO_Buffer::ReadyWrite(void)
 //
 //  Description:    Return the free space available in the FIFO.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
+size_t FIFO_Buffer::CheckFreeSpace(void)
+{
+    return (m_Size - 1) - CheckUsedSpace();
+}
+#if 0
 size_t FIFO_Buffer::CheckFreeSpace(void)
 {
     size_t FreeSize;
@@ -262,7 +265,7 @@ size_t FIFO_Buffer::CheckFreeSpace(void)
 
     return FreeSize;
 }
-
+#endif
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           CheckUsedSpace
@@ -273,9 +276,12 @@ size_t FIFO_Buffer::CheckFreeSpace(void)
 //
 //  Description:    Return the used space in the FIFO.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
+size_t FIFO_Buffer::CheckUsedSpace(void)
+{
+    return (m_PushIndex + m_Size - m_PopIndex) % m_Size;
+}
+#if 0
 size_t FIFO_Buffer::CheckUsedSpace(void)
 {
     size_t Size;
@@ -291,7 +297,7 @@ size_t FIFO_Buffer::CheckUsedSpace(void)
 
     return Size;
 }
-
+#endif
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Move
@@ -302,8 +308,6 @@ size_t FIFO_Buffer::CheckUsedSpace(void)
 //  Return:         If FIFO is ready to written, it return true, otherwise false.
 //
 //  Description:    Move a number of bytes from one FIFO to another.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 bool FIFO_Buffer::Move(FIFO_Buffer* pFifoDst, size_t BytesToCopy)
@@ -346,9 +350,19 @@ bool FIFO_Buffer::Move(FIFO_Buffer* pFifoDst, size_t BytesToCopy)
 //
 //  Description:    Retrieve a byte from FIFO without removing the element.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
+int32_t FIFO_Buffer::At(size_t Offset)
+{
+    size_t UsedSize = CheckUsedSpace();
+    if(Offset >= UsedSize)
+    {
+        return FIFO_INDEX_OUT_OF_BOUNDS;
+    }
+
+    size_t Index = (m_PopIndex + Offset) % m_Size;
+    return m_pBuffer[Index];
+}
+#if 0
 int32_t FIFO_Buffer::At(size_t Offset)
 {
     size_t UsedSize;
@@ -369,7 +383,7 @@ int32_t FIFO_Buffer::At(size_t Offset)
 
     return m_pBuffer[Offset];
 }
-
+#endif
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Flush
@@ -379,8 +393,6 @@ int32_t FIFO_Buffer::At(size_t Offset)
 //  Return:         size_t          Number of bytes actually flush from buffer.
 //
 //  Description:    Flush a number of bytes from the FIFO or less if not enough bytes to flush.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 size_t FIFO_Buffer::Flush(size_t BytesToFlush)
@@ -426,8 +438,6 @@ size_t FIFO_Buffer::Flush(size_t BytesToFlush)
 //  Return:         size_t      Number of char extracted.
 //
 //  Description:    Perform atoi() functionality directly on FIFO.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 size_t FIFO_Buffer::Atoi(int32_t* pResult, uint8_t Base)
@@ -513,8 +523,6 @@ size_t FIFO_Buffer::Atoi(int32_t* pResult, uint8_t Base)
 //  Description:    Perform atoi() functionality directly on FIFO but with added offset
 //                  functionality without extracting characters are not extracted from FIFO.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 size_t FIFO_Buffer::AtoiAt(size_t Offset, int32_t* pResult)
 {
@@ -572,8 +580,6 @@ size_t FIFO_Buffer::AtoiAt(size_t Offset, int32_t* pResult)
 //
 //  Description:    Compare a number of bytes from the FIFO with buffer.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 bool FIFO_Buffer::Memncmp(const void* pMemPtr, size_t Length)
 {
@@ -606,8 +612,6 @@ bool FIFO_Buffer::Memncmp(const void* pMemPtr, size_t Length)
 //
 //  Description:    Search for a character up to N bytes from the FIFO.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 size_t FIFO_Buffer::Memnchr(char Character, size_t Length)
 {
@@ -633,9 +637,29 @@ size_t FIFO_Buffer::Memnchr(char Character, size_t Length)
 //
 //  Description:    Convert to upper case any ascii found in the range 0 to Length.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
+void FIFO_Buffer::ToUpper(size_t Length)
+{
+    size_t UsedSize = CheckUsedSpace();
+
+    if(Length > UsedSize)
+    {
+        Length = UsedSize;
+    }
+
+    while(Length--)
+    {
+        size_t  Index     = (m_PopIndex + Length) % m_Size;
+        uint8_t Character = m_pBuffer[Index];
+
+        if((Character >= 'a') && (Character <= 'z'))
+        {
+            m_pBuffer[Index] = Character - 32;
+        }
+    }
+}
+
+#if 0
 void FIFO_Buffer::ToUpper(size_t Length)
 {
     size_t UsedSize;
@@ -667,8 +691,7 @@ void FIFO_Buffer::ToUpper(size_t Length)
     }
     while(Length != 0);
 }
-
-
+#endif
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SetTailForward
@@ -678,8 +701,6 @@ void FIFO_Buffer::ToUpper(size_t Length)
 //  Return:         None
 //
 //  Description:    Forward tail buffer index.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void FIFO_Buffer::SetTailForward(size_t Size)
@@ -696,6 +717,37 @@ void FIFO_Buffer::SetTailForward(size_t Size)
     if (m_PopIndex >= m_Size)
     {
         m_PopIndex -= m_Size;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SetTailBackward
+//
+//  Parameter(s):   Size        Size to backward.
+//
+//  Return:         None
+//
+//  Description:    Backward tail buffer index.
+//
+//-------------------------------------------------------------------------------------------------
+void FIFO_Buffer::SetTailBackward(size_t Size)
+{
+    size_t Free = CheckFreeSpace();
+
+    if(Size > Free)                     // You cannot "unread" more than the free space
+    {
+        Size = Free;
+    }
+
+    if(Size > m_PopIndex)               // Move tail backward with wrap-around
+    {
+        Size        -= m_PopIndex;
+        m_PopIndex   = m_Size - Size;
+    }
+    else
+    {
+        m_PopIndex -= Size;
     }
 }
 
@@ -775,13 +827,33 @@ void FIFO_Buffer::SetHeadBackward(size_t Size)
 //-------------------------------------------------------------------------------------------------
 void FIFO_Buffer::SetNewHeadPosition(size_t Position)
 {
+    Position %= m_Size;                                         // Normalize
+    size_t Used = (Position + m_Size - m_PopIndex) % m_Size;    // Compute used space if we move head there
+
+    if(Used >= m_Size)                                          // One-slot-empty invariant: Used must be <= m_Size - 1
+    {
+        // Invalid: would overflow FIFO capacity
+        // In debug builds, assert or trap
+        return;
+    }
+
+    m_PushIndex = Position;                                     // Valid: update head
+}
+
+#if 0
+void FIFO_Buffer::SetNewHeadPosition(size_t Position)
+{
+    Position %= m_Size;
     m_PushIndex = Position;
 }
+#endif
+#if 0
+void FIFO_Buffer::SetNewHeadPosition(size_t Position)
+{
+    m_PushIndex = Position;
+}
+#endif
 //-------------------------------------------------------------------------------------------------
-
-
-
-
 
 #if 0
 
@@ -794,8 +866,6 @@ void FIFO_Buffer::SetNewHeadPosition(size_t Position)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 bool FIFO_Buffer::IsEmpty(void)
@@ -812,8 +882,6 @@ bool FIFO_Buffer::IsEmpty(void)
 //
 //   Description:
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 bool FIFO_Buffer::IsFull(void)
 {
@@ -828,8 +896,6 @@ bool FIFO_Buffer::IsFull(void)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 bool FIFO_Buffer::Pop(uint8_t* pData)
@@ -855,8 +921,6 @@ bool FIFO_Buffer::Pop(uint8_t* pData)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 bool FIFO_Buffer::Push(uint8_t Data)

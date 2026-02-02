@@ -71,6 +71,7 @@ class FIFO_Buffer
         size_t          CheckUsedSpace          (void);
 
         void            SetTailForward          (size_t Size);
+        void            SetTailBackward         (size_t Size);
         void            SetHeadForward          (size_t Size);
         void            SetHeadBackward         (size_t Size);
         void            SetNewHeadPosition      (size_t Position);      // Set a new 'head' position

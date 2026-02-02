@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -172,7 +172,7 @@ const uint8_t NetDHCP::m_OPL_Request[10] =
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   None
+//  Parameter(s):   NetworkContext*		pContext		Pointer on the context
 //  Return:         None
 //
 //  Description:    Initialize the DHCP Client
@@ -325,16 +325,13 @@ bool NetDHCP::Process(void)
     if(pBuffer != nullptr)
     {
         // Receive directly into the packet buffer
-        SystemState_e State = m_pSocket->RecvFrom((uint8_t*)pBuffer,        // Buffer
-                                                  DHCP_PACKET_SIZE,         // Buffer size
-                                                  &SourceInfo,              // Optional source info
-                                                  &BytesReceived);          // Number of bytes received
+        SystemState_e State = m_pSocket->RecvFrom((uint8_t*)pBuffer, DHCP_PACKET_SIZE, &SourceInfo, &BytesReceived);
 
         if((State == SYS_READY) && (BytesReceived > 0))
         {
             DHCP_Msg_t* pRX = (DHCP_Msg_t*)pBuffer;
 
-            if (pRX->MagicCookie == DHCP_MAGIC_COOKIE)
+            if(ntohl(pRX->MagicCookie) == (DHCP_MAGIC_COOKIE))
             {
                 ParseOption(pRX);
 
@@ -411,7 +408,8 @@ bool NetDHCP::Discover(void)
     // Build DHCP options for DISCOVER
     Options = (DHCP_PUT_OPTION_CLIENT_IDENTIFIER |
                DHCP_PUT_OPTION_HOST_NAME         |
-               DHCP_PUT_OPTION_PL_DISCOVER);
+               DHCP_PUT_OPTION_PL_DISCOVER       |
+               DHCP_PUT_OPTION_VENDOR_CLASS);
 
     Length = PutOption(&pTX->Options[0], Options, DHCP_OPTION_DISCOVER);
 
@@ -761,41 +759,6 @@ size_t NetDHCP::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
     *pPtr++ = 1;
     *pPtr++ = Message;
 
-    // Client Identifier (Type 1 = Ethernet + MAC address)
-    if(Options & DHCP_PUT_OPTION_CLIENT_IDENTIFIER)
-    {
-        *pPtr++ = DHCP_OPTION_CLIENT_IDENTIFIER;
-        *pPtr++ = 1 + IP_MAC_ADDRESS_SIZE;   // Type + MAC
-        *pPtr++ = 1;                         // Hardware type = Ethernet
-        m_pContext->GetMAC_Address((IP_MAC_Address_t*)pPtr);
-        pPtr += IP_MAC_ADDRESS_SIZE;
-    }
-
-    // Predefined option list for DISCOVER
-    if(Options & DHCP_PUT_OPTION_PL_DISCOVER)
-    {
-        memcpy(pPtr, m_OPL_Discover, sizeof(m_OPL_Discover));
-        pPtr += sizeof(m_OPL_Discover);
-    }
-
-    // Predefined option list for REQUEST
-    if(Options & DHCP_PUT_OPTION_PL_REQUEST)
-    {
-        memcpy(pPtr, m_OPL_Request, sizeof(m_OPL_Request));
-        pPtr += sizeof(m_OPL_Request);
-    }
-
-    // Requested Client IP (used in initial REQUEST)
-    if(Options & DHCP_PUT_OPTION_REQUESTED_CLIENT_IP)
-    {
-        *pPtr++ = DHCP_OPTION_CLIENT_IP;
-        *pPtr++ = 4;
-
-        uint32_t ip = htonl(m_Options.ClientIP);
-        memcpy(pPtr, &ip, sizeof(ip));
-        pPtr += sizeof(ip);
-    }
-
     // Host Name (hostname + "_" + last 3 bytes of MAC in hex)
     if (Options & DHCP_PUT_OPTION_HOST_NAME)
     {
@@ -850,6 +813,50 @@ size_t NetDHCP::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
 
         memcpy(pPtr, suffix, SuffixLen);
         pPtr += SuffixLen;
+    }
+
+    // Requested Client IP (used in initial REQUEST)
+    if(Options & DHCP_PUT_OPTION_REQUESTED_CLIENT_IP)
+    {
+        *pPtr++ = DHCP_OPTION_CLIENT_IP;
+        *pPtr++ = 4;
+
+        uint32_t ip = htonl(m_Options.ClientIP);
+        memcpy(pPtr, &ip, sizeof(ip));
+        pPtr += sizeof(ip);
+    }
+
+    // Client Identifier (Type 1 = Ethernet + MAC address)
+    if(Options & DHCP_PUT_OPTION_CLIENT_IDENTIFIER)
+    {
+        *pPtr++ = DHCP_OPTION_CLIENT_IDENTIFIER;
+        *pPtr++ = 1 + IP_MAC_ADDRESS_SIZE;   // Type + MAC
+        *pPtr++ = 1;                         // Hardware type = Ethernet
+        m_pContext->GetMAC_Address((IP_MAC_Address_t*)pPtr);
+        pPtr += IP_MAC_ADDRESS_SIZE;
+    }
+
+    // Predefined option list for DISCOVER
+    if(Options & DHCP_PUT_OPTION_PL_DISCOVER)
+    {
+        memcpy(pPtr, m_OPL_Discover, sizeof(m_OPL_Discover));
+        pPtr += sizeof(m_OPL_Discover);
+    }
+
+    // Predefined option list for REQUEST
+    if(Options & DHCP_PUT_OPTION_PL_REQUEST)
+    {
+        memcpy(pPtr, m_OPL_Request, sizeof(m_OPL_Request));
+        pPtr += sizeof(m_OPL_Request);
+    }
+
+    if(Options & DHCP_PUT_OPTION_VENDOR_CLASS)
+    {
+        uint8_t Length = uint8_t(strlen(VENDOR_CLASS));
+        *pPtr++ = DHCP_OPTION_VENDOR_CLASS;
+        *pPtr++ = Length;
+        memcpy(pPtr, VENDOR_CLASS, Length);
+        pPtr+= Length;
     }
 
     // Server Identifier (used in renewal REQUEST)

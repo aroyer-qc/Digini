@@ -81,7 +81,11 @@ class NetworkContext
         IP_Address_t        GetActiveSubnetMask     (void)                                      { return (m_DHCP_Enable == true) ? m_DHCP_SubnetMask : m_StaticSubnetMask;  }
         IP_Address_t        GetActiveIP             (void)                                      { return (m_DHCP_Enable == true) ? m_DHCP_IP         : m_StaticIP;          }
         IP_Address_t        GetActiveDNS_IP         (void)                                      { return (m_DHCP_Enable == true) ? m_DHCP_DNS_IP     : m_StaticDNS_IP;      }
-
+      #else
+     //   IP_Address_t        GetActiveGatewayIP      (void)                                      { return (m_DHCP_Enable == true) ? m_DHCP_GatewayIP  : m_StaticGatewayIP;   }
+     //   IP_Address_t        GetActiveSubnetMask     (void)                                      { return (m_DHCP_Enable == true) ? m_DHCP_SubnetMask : m_StaticSubnetMask;  }
+     //   IP_Address_t        GetActiveIP             (void)                                      { return (m_DHCP_Enable == true) ? m_DHCP_IP         : m_StaticIP;          }
+     //   IP_Address_t        GetActiveDNS_IP         (void)                                      { return (m_DHCP_Enable == true) ? m_DHCP_DNS_IP     : m_StaticDNS_IP;      }
       #endif
 
         class IP_Manager*   GetIP_Manager           (void)                                      { return m_IP_Manager;                                                      }
@@ -125,18 +129,15 @@ class NetworkContext
         ETH_LinkSpeed_e     m_LinkSpeed    = ETH_PHY_SPEED_10M;
         bool                m_IP_Valid     = false;
         uint16_t            m_MTU;
-
+        const char*         m_pHostName;
 
       #if (IP_USE_DHCP == DEF_ENABLED)
         bool                m_DHCP_Enable;
-
         IP_Address_t        m_DHCP_GatewayIP;                       // Gateway IP Address from server
         IP_Address_t        m_DHCP_SubnetMask;                      // Subnet Mask from server
         IP_Address_t        m_DHCP_ServerIP;                        // Server IP
         IP_Address_t        m_DHCP_IP;                              // IP Address from server
         IP_Address_t        m_DHCP_DNS_IP;                          // DNS Server IP Address from server
-        const char*         m_pHostName;
-
       #endif
 
         IP_Address_t        m_StaticGatewayIP;                      // Gateway IP Address from server

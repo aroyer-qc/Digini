@@ -80,19 +80,18 @@ void NetICMP::Process(IP_PacketMsg_t* pRX)
         {
             case ICMP_TYPE_PING_REQUEST:
             {
-                IP_PacketMsg_t* pTX = pRX;      // Reuse RX as TX
+                IP_PacketMsg_t* pTX = pRX;                                                                      // Reuse RX as TX
                 IP_EthernetPacket_t* pPacket = pTX->pPacket;
                 pMemoryPool->ChangeDebugID(pTX, MEM_DBG_IPPKT, MEM_DBG_ICMP);
                 pMemoryPool->ChangeDebugID(pTX->pPacket, MEM_DBG_ETHDMARX2, MEM_DBG_ICMPDT);
                 pPacket->ICMP_Frame.Header.Type = ICMP_TYPE_PING_REPLY;                                         // Modify ICMP
-                uint16_t Count = htons(pPacket->ICMP_Frame.IP_Header.Length);
-                Count -= sizeof(IP_Header_t);
-                pPacket->ICMP_Frame.Header.Checksum = IP_Manager::IP_CalculateChecksum(&pPacket->ICMP_Frame.Header, Count);
                 memcpy(pPacket->ETH_Header.DestinationMAC.Byte, pPacket->ETH_Header.SourceMAC.Byte, 6);         // Set Destination MAC = original Source MAC
-                pPacket->ICMP_Frame.IP_Header.TimeToLive = IP_TIME_TO_LIVE;
-                uint16_t PayloadLen = pTX->PacketSize - sizeof(IP_EthernetHeader_t) - sizeof(IP_Header_t);
+                uint16_t ICMP_Length = pTX->PacketSize - sizeof(IP_EthernetHeader_t) - sizeof(IP_Header_t);     // Compute ICMP length (everything after the IP header)
                 IP_Manager* pIP_Manager = m_pContext->GetIP_Manager();
-                pIP_Manager->PutHeader(pTX, pPacket->ICMP_Frame.IP_Header.SrcIP_Addr, PayloadLen, IP_PROTOCOL_ICMP);
+                pPacket->ICMP_Frame.IP_Header.TimeToLive = IP_TIME_TO_LIVE;
+                pIP_Manager->PutHeader(pTX, pPacket->ICMP_Frame.IP_Header.SrcIP_Address, ICMP_Length, IP_PROTOCOL_ICMP); // Reply source = original destination
+                pPacket->ICMP_Frame.Header.Checksum = 0;
+                pPacket->ICMP_Frame.Header.Checksum = htons(IP_Manager::IP_CalculateChecksum(&pPacket->ICMP_Frame.Header, ICMP_Length));
                 m_pContext->SendPacket(pTX);                                                                    // Send and DO NOT free pRX
                 return;                                                                                         // Important: do NOT fall through to FreeMessage(pRX)
             }
@@ -102,7 +101,7 @@ void NetICMP::Process(IP_PacketMsg_t* pRX)
         }
     }
 
-    IP_Manager::FreeMessage(pRX);                                                                           // Always free RX
+    IP_Manager::FreeMessage(pRX);                                                                               // Always free RX
 }
 
 //-------------------------------------------------------------------------------------------------

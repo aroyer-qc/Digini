@@ -81,7 +81,6 @@ void Console::Initialize(UART_Driver* pUartDriver)
     pUartDriver->Initialize();
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     pBuffer = m_Fifo.GetBufferPointer();
-    //pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(CON_FIFO_PARSER_RX_SIZE, MEM_DBG_CON1);        // Reserve memory for UART internal DMA operation.
 
     nOS_SemCreate(&m_RX_IdleSem, 0, CON_RX_NB_OF_SEMAPHORE_COUNT);
     pUartDriver->DMA_ConfigRX(pBuffer, CON_FIFO_PARSER_RX_SIZE);                // DMA will use the FIFO buffer allocated memory

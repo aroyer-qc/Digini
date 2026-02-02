@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2010-2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,23 +27,14 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
 
-
-#ifdef SNTP_GLOBAL
-    #define SNTP_EXTERN
-    #define SNTP_PRIVATE
-#else
-    #define SNTP_EXTERN extern
-#endif
+#if (IP_USE_SNTP == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define SNTP_MODE_CLIENT                    3
-#define SNTP_VERSION_4                      4
+#define SNTP_LI_VN_MODE                     0x23                        // Leap Indicator - 2 bits: 00 (No warning, current value), Version - 4 bits: 100, Mode Client - 3 bits: 011,
 
 #define SNTP_PORT                           htons(123)
 
@@ -51,66 +42,48 @@
 #define SNTP_TIME_START                     3471292800UL                // January 1, 2010
 
 #define SNTP_OPTIONS_IN_PACKET_SIZE         160
-
 #define SNTP_MSG_ACTION_TIME_OUT            0
 
 //-------------------------------------------------------------------------------------------------
-// Typedef(s)
+// Enum(s)
 //-------------------------------------------------------------------------------------------------
 
-struct SNTP_Msg_t
+enum SNTP_State_e
 {
-    union
-    {
-        struct
-        {
-            uint8_t    MODE    :3;
-            uint8_t    VN      :3;
-            uint8_t    LI      :2;
-        } s;
-        uint8_t by;
-    } Flags_1;
-
-    uint8_t    Stratus;
-    uint8_t    Poll;
-    uint8_t    Precision;
-
-    uint32_t   RootDelay;
-    uint32_t   RootDispersion;
-    uint32_t   ReferenceID;
-    uint32_t   RefTimeStampSecond;
-    uint32_t   RefTimeStampFraction;
-    uint32_t   OriTimeStampSecond;
-    uint32_t   OriTimeStampFraction;
-    uint32_t   RcvTimeStampSecond;
-    uint32_t   RcvTimeStampFraction;
-    uint32_t   TxmTimeStampSecond;
-    uint32_t   TxmTimeStampFraction;
-    uint8_t    Data[SNTP_OPTIONS_IN_PACKET_SIZE];
+    SNTP_STATE_IDLE,
+    SNTP_STATE_INITIAL,
+    SNTP_STATE_WAIT_RESPONSE,
+    SNTP_STATE_DONE,
+    SNTP_STATE_ERROR
 };
 
 //-------------------------------------------------------------------------------------------------
-// class
+// Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class NetSNTP
+class SNTP_Client
 {
     public:
-   
-        void            Initialize      (void* pQ);
-        IP_Address_t    Request         (Socket_t SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError);
-    
+
+        bool            Initialize                  (NetworkContext* Context);
+        bool            SendRequest                 (const IP_Address_t* pServerIP);
+        bool            ReceiveResponse             (void);
+        bool            ParseResponse               (uint8_t* pPacket, size_t Length);
+        uint32_t        GetUnixTime                 (void) const                            { return m_UnixTime; }
+
     private:
 
-        void            Reply           (Socket_t SocketNumber);
+        uint32_t        GetSystemTime_Seconds_1900  (void);
+        uint32_t        Convert1900ToUnix           (uint32_t Seconds1900);
 
-
-    nOS_Timer           m_pResync;
-    TickCount_t         m_Seconds;
-    OS_EVENT*           m_pQ;
-
-    
-}
+        NetworkContext* m_pContext;
+        Socket*         m_pSocket;
+        uint32_t        m_UnixTime;
+        SNTP_State_e    m_State;
+};
 
 //-------------------------------------------------------------------------------------------------
 
+#endif // (IP_USE_SNTP == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------

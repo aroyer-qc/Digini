@@ -107,7 +107,7 @@ void NetARP::ProcessIP(IP_PacketMsg_t* pRX)
         return;
     }
 
-    IP_Address_t SourceIP = pRX->pPacket->IP_Frame.Header.SrcIP_Addr;
+    IP_Address_t SourceIP = pRX->pPacket->IP_Frame.Header.SrcIP_Address;
 
     if((SourceIP & SubnetMask) == (ActiveIP & SubnetMask))
     {
@@ -144,7 +144,7 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
             if(pRX_ARP->DstIP_Address == m_pContext->GetActiveIP())
             {
                 // Re-tag for zero-copy reuse
-                pMemoryPool->ChangeDebugID(pRX,          MEM_DBG_IPPKT,   MEM_DBG_ARP);
+                pMemoryPool->ChangeDebugID(pRX,          MEM_DBG_IPPKT,     MEM_DBG_ARP);
                 pMemoryPool->ChangeDebugID(pRX->pPacket, MEM_DBG_ETHDMARX2, MEM_DBG_ARPDT);
 
                 // Zero-copy: reuse RX buffer as TX
@@ -160,7 +160,7 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
 
                 // ARP payload Fixed fields
                 pARP->HardwareType       = htons(ARP_HARDWARE_TYPE_ETHERNET);
-                pARP->Protocol           = htons(IP_ETHERNET_TYPE_IP);
+                pARP->Protocol           = htons(IP_ETHERNET_TYPE_IPV4);
                 pARP->HardwareAddrLength = IP_MAC_ADDRESS_SIZE;
                 pARP->ProtocolLength     = 4;
                 pARP->Opcode             = htons(ARP_REPLY);
@@ -169,6 +169,8 @@ void NetARP::ProcessARP(IP_PacketMsg_t* pRX)
                 memcpy(pARP->DestinationMAC.Byte, pETH->DestinationMAC.Byte, IP_MAC_ADDRESS_SIZE);    // Target = original requester
                 pARP->SrcIP_Address = m_pContext->GetActiveIP();
                 pARP->DstIP_Address = pRX_ARP->SrcIP_Address;
+
+                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Reply Request\n");
                 m_pContext->SendPacket(pTX);                                                        // Send ARP reply via normal TX path (zero-copy)
 
                 // IMPORTANT: do not free pRX, it is now TX
@@ -338,7 +340,7 @@ void NetARP::ProcessOut(IP_PacketMsg_t* pTX)
 		pFrame  = pTX->pPacket;
 
         // Check if the destination address is on the local network.
-		if((pFrame->IP_Frame.Header.DstIP_Addr & SubnetMask) != (m_pContext->GetActiveIP() & SubnetMask))
+		if((pFrame->IP_Frame.Header.DstIP_Address & SubnetMask) != (m_pContext->GetActiveIP() & SubnetMask))
 		{
 			// Use the default router's IP address instead of the destination
 			//IP_Address = m_pContext->GetIP_     DefaultGatewayAddress;

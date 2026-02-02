@@ -376,8 +376,17 @@ SystemState_e ETH_Driver::GetMacAddress(IP_MAC_Address_t* pMAC_Address)
         return SYS_INVALID_PARAMETER;
     }
 
-    *((uint16_t*)&pMAC_Address->Byte[4]) = uint16_t(ETH->MACA0HR);
-    *((uint32_t*)&pMAC_Address->Byte[0]) = uint32_t(ETH->MACA0LR);
+    uint32_t Low  = ETH->MACA0LR;   // MAC[31:0]
+    uint32_t High = ETH->MACA0HR;   // MAC[47:32] + AE bit
+
+    // Extract bytes exactly as stored in hardware
+    pMAC_Address->Byte[0] = uint8_t(Low >>  0);
+    pMAC_Address->Byte[1] = uint8_t(Low >>  8);
+    pMAC_Address->Byte[2] = uint8_t(Low >> 16);
+    pMAC_Address->Byte[3] = uint8_t(Low >> 24);
+
+    pMAC_Address->Byte[4] = uint8_t(High >> 0);
+    pMAC_Address->Byte[5] = uint8_t(High >> 8);
 
     return SYS_READY;
 }
@@ -401,8 +410,10 @@ SystemState_e ETH_Driver::SetMacAddress(const IP_MAC_Address_t* pMAC_Address)
     }
 
     // Set Ethernet MAC Address registers
-    ETH->MACA0HR = ETH_MACAxHR_AE | uint16_t(*(uint16_t*)&pMAC_Address->Byte[4]);
-    ETH->MACA0LR = *(uint32_t*)&pMAC_Address->Byte[0];
+    ETH->MACA0HR = ETH_MACAxHR_AE | (pMAC_Address->Byte[0] << 8) | (pMAC_Address->Byte[1]);
+
+    ETH->MACA0LR = (pMAC_Address->Byte[2] << 24) | (pMAC_Address->Byte[3] << 16) |
+                   (pMAC_Address->Byte[4] << 8)  | (pMAC_Address->Byte[5]);
 
     return SYS_READY;
 }
@@ -589,6 +600,8 @@ SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg)
 
     ETH->DMASR   = ETH_DMASR_TBUS;                                                          // Trigger transmission
     ETH->DMATPDR = 0;
+
+    //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendTX_Packet - Done\n");
 
   #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
     DBG_TX_Count++;

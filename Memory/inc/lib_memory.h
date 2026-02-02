@@ -153,13 +153,14 @@ class MemPoolDriver
         uint32_t        GetPoolBlockHighPoint       (uint32_t PoolNumber);
         uint32_t        GetAllocCount               (MEM_DebugListOfID_e DbgID)     { return m_AllocCount[DbgID];           }
         uint32_t        GetMaxDebugID               (void)                          { return uint32_t(NUMBER_OF_MEM_DBG);   }
-        SystemState_e   ChangeDebugID               (void* MemBlock, MEM_DebugListOfID_e OriginalDebugID, MEM_DebugListOfID_e NewDebugID);
+        bool            ChangeDebugID               (void* MemBlock, MEM_DebugListOfID_e OriginalDebugID, MEM_DebugListOfID_e NewDebugID);
       #endif
 
 
     private:
 
-        TickCount_t                 m_TimeOut;
+        void*           TryAllocFromGroup           (uint8_t GroupID, size_t SizeRequired, MEM_DebugListOfID_e DebugID, nOS_TickCounter TimeOut);
+
         nOS_Mem                     m_nOS_MemArray      [MEM_BLOCK_GROUP_QTS];                  // handler to give to nOS_Mem... function
         void*                       m_pBufferArray      [MEM_BLOCK_GROUP_QTS];                  // pointer array of the memory block
         nOS_Error                   m_LastError;

@@ -1054,7 +1054,6 @@ void UART_Driver::IRQ_Handler(void)
         if((Status & USART_SR_IDLE) != 0)
         {
             m_RX_Transfer.u.Head = m_RX_Transfer.StaticSize - m_DMA_RX.GetLength();      // Give actual position in the DMA Buffer
-
             ClearFlag();
 
           #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)

@@ -50,8 +50,8 @@
 #define IP_ETHERNET_FRAME_SIZE                  1518
 
 #define IP_ETHERNET_TYPE_ARP 			        0x0806
-#define IP_ETHERNET_TYPE_IP  			        0x0800
-//#define IP_ETHERNET_TYPE_IP6 			        0x86DD
+#define IP_ETHERNET_TYPE_IPV4 			        0x0800
+//#define IP_ETHERNET_TYPE_IPV6 			        0x86DD
 
 #define IP_VERSION4_IHL20				        0x45
 #define IP_TIME_TO_LIVE					        128
@@ -65,14 +65,12 @@
 #define DHCP_OPTION_IN_PACKET_SIZE              308
 #define DHCP_HOSTNAME_MAX_LENGTH                63
 
-
-
-//#if (IP_USE_DHCP == DEF_DISABLED)
-//    #define GetActiveGatewayIP()                GetStaticGatewayIP()
-//    #define GetActiveSubnetMask()               GetStaticSubnetMask()
-//    #define GetActiveIP()                       GetStaticIP()
-//    #define GetActiveDNS_IP()                   GetStaticDNS_IP()
-//#endif
+#if (IP_USE_DHCP == DEF_DISABLED)
+    #define GetActiveGatewayIP()                GetStaticGatewayIP()
+    #define GetActiveSubnetMask()               GetStaticSubnetMask()
+    #define GetActiveIP()                       GetStaticIP()
+    #define GetActiveDNS_IP()                   GetStaticDNS_IP()
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Macro(s)
@@ -233,8 +231,8 @@ struct IP_Header_t
     uint8_t 	    TimeToLive;                         // +   1
     uint8_t 	    Protocol;                           // +   1
 	uint16_t        Checksum;                           // +   2
-	IP_Address_t    SrcIP_Addr;                         // +   4
-    IP_Address_t    DstIP_Addr;                         // +   4
+	IP_Address_t    SrcIP_Address;                      // +   4
+    IP_Address_t    DstIP_Address;                      // +   4
 };                              		                // =  20 Bytes
 
 struct TCP_Header_t
@@ -277,6 +275,23 @@ struct IP_PseudoHeader_t                                // note that the element
 	IP_Address_t  	SrcIP;                              // +   4
 	IP_Address_t  	DstIP;                              // +   4
 }; 	                                                    // =  12 Bytes
+
+struct SNTP_Header_t
+{
+    uint8_t   LI_VN_Mode;                               //     1    Leap Indicator (2 bits), Version (3 bits), Mode (3 bits)
+    uint8_t   Stratum;                                  // +   1    0 for SNTP client request
+    uint8_t   Poll;                                     // +   1    Not used by client
+    int8_t    Precision;                                // +   1    Not used by client
+
+    uint32_t  RootDelay;                                // +   4    Always 0 in SNTP request
+    uint32_t  RootDispersion;                           // +   4    Always 0 in SNTP request
+    uint32_t  ReferenceID;                              // +   4    Always 0 in SNTP request
+
+    uint64_t  ReferenceTimestamp;                       // +   8    Not used by client
+    uint64_t  OriginateTimestamp;                       // +   8    T1 (client send time)
+    uint64_t  ReceiveTimestamp;                         // +   8    T2 (server receive time)
+    uint64_t  TransmitTimestamp;                        // +   8    T3 (server transmit time)
+}; 	                                                    // =  48 Bytes
 
 // the ARP frame
 struct ARP_Frame_t
@@ -351,6 +366,15 @@ struct DHCP_Frame_t
 	DHCP_Header_t		    Header;  		            // + 240
 };                                                      // = 282 Bytes
 
+// the DHCP frame
+struct SNTP_Frame_t
+{
+	IP_EthernetHeader_t 	ETH_Header;                 //    14
+	IP_Header_t			    IP_Header;                  // +  20
+	UDP_Header_t			UDP_Header;                 // +   8
+    SNTP_Header_t           SNTP_Header;                // +  48
+};                                                      // =  90 Bytes
+
 struct IP_EthernetPacket_t
 {
 	union
@@ -366,6 +390,7 @@ struct IP_EthernetPacket_t
 		UDP_Frame_t				    UDP_Frame;
 		UDP_PseudoFrame_t		    UDP_PseudoFrame;	// use for UDP Checksum calculation
 		DHCP_Frame_t                DHCP_Frame;
+		SNTP_Frame_t                SNTP_Frame;
 	};
 };
 

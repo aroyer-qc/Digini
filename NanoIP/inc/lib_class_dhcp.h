@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -41,13 +41,14 @@
 #define DHCP_OPTION_SUBNET_MASK                 0x01
 #define DHCP_OPTION_GATEWAY                     0x03
 #define DHCP_OPTION_DNS_SERVER                  0x06
-#define DHCP_OPTION_HOST_NAME                   0x0C
-#define DHCP_OPTION_CLIENT_IP                   0x32
-#define DHCP_OPTION_LEASE_TIME                  0x33
-#define DHCP_OPTION_MESSAGE_TYPE                0x35
-#define DHCP_OPTION_SERVER_IP                   0x36
-#define DHCP_OPTION_PARAMETER_LIST              0x37
-#define DHCP_OPTION_CLIENT_IDENTIFIER           0x3D
+#define DHCP_OPTION_HOST_NAME                   0x0C        // 12
+#define DHCP_OPTION_CLIENT_IP                   0x32        // 50
+#define DHCP_OPTION_LEASE_TIME                  0x33        // 51 not handle
+#define DHCP_OPTION_MESSAGE_TYPE                0x35        // 53
+#define DHCP_OPTION_SERVER_IP                   0x36        // 54
+#define DHCP_OPTION_PARAMETER_LIST              0x37        // 55
+#define DHCP_OPTION_VENDOR_CLASS                0x3C        // 60
+#define DHCP_OPTION_CLIENT_IDENTIFIER           0x3D        // 61
 
 #define DHCP_MESSAGE_TYPE_DISCOVER              0x01
 
@@ -62,12 +63,13 @@
 #define DHCP_MAGIC_COOKIE                       0x63825363
 #define DHCP_FLAGS_BROADCAST                    0x8000
 
-#define DHCP_PUT_OPTION_CLIENT_IDENTIFIER       (uint8_t)0x01
-#define DHCP_PUT_OPTION_HOST_NAME               (uint8_t)0x02
+#define DHCP_PUT_OPTION_HOST_NAME               (uint8_t)0x01
+#define DHCP_PUT_OPTION_REQUESTED_CLIENT_IP     (uint8_t)0x02
+#define DHCP_PUT_OPTION_CLIENT_IDENTIFIER       (uint8_t)0x10
 #define DHCP_PUT_OPTION_PL_DISCOVER             (uint8_t)0x04
 #define DHCP_PUT_OPTION_PL_REQUEST              (uint8_t)0x08
-#define DHCP_PUT_OPTION_REQUESTED_CLIENT_IP     (uint8_t)0x10
 #define DHCP_PUT_OPTION_SERVER_IP               (uint8_t)0x20
+#define DHCP_PUT_OPTION_VENDOR_CLASS            (uint8_t)0x40
 
 #define DHCP_DISCOVER_TIME_OUT                  uint32_t(4 * TIME_TICKS_PER_SECOND)
 #define DHCP_T1_LEASE_TIME_OUT                  uint32_t(12 * TIME_TICKS_PER_HOUR)

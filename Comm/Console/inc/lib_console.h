@@ -93,6 +93,7 @@ class Console : public CallbackInterface
 
         // Passthru FIFO
         inline void                 SetTailForward             (size_t Size)                                   { m_Fifo.SetTailForward(Size);                }
+        inline void                 SetTailBackward            (size_t Size)                                   { m_Fifo.SetTailBackward(Size);               }
         inline void                 SetHeadForward             (size_t Size)                                   { m_Fifo.SetHeadForward(Size);                }
         inline void                 SetHeadBackward            (size_t Size)                                   { m_Fifo.SetHeadBackward(Size);               }
         inline size_t               Read                       (void* pBuffer, size_t BytesToRead)             { return m_Fifo.Read(pBuffer, BytesToRead);   }

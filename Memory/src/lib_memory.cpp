@@ -81,7 +81,6 @@ MemPoolDriver::MemPoolDriver()
     }
   #endif
 
-    m_TimeOut = NOS_WAIT_INFINITE;
     m_LastError = NOS_OK;
 
     // Get the address of each group in pointer array
@@ -130,6 +129,75 @@ MemPoolDriver::~MemPoolDriver()
 
 //-------------------------------------------------------------------------------------------------
 //
+//   Function name: TryAllocFromGroup
+//
+//   Parameter(s):  uint8_t                GroupID             Index of the memory block group
+//                  size_t                 SizeRequired        Size of the needed data block
+//                  MEM_DebugListOfID_e    DebugID             Owner of the memory block
+//                  nOS_TickCounter        TimeOut             Maximum time to wait for a block
+//
+//   Return:        void*                  Pointer to allocated block of memory.
+//                                         nullptr = No block available in this group
+//
+//   Description:   Attempt to allocate a memory block from a specific memory group. The function
+//                  verifies that the block size of the selected group is equal or larger than the
+//                  requested size. If so, it calls the underlying nOS memory allocator with the
+//                  specified timeout. If a block is successfully allocated, debug statistics are
+//                  updated accordingly.
+//
+//   Note(s):       This function is an internal helper used by Alloc() to avoid code duplication.
+//                  It wraps the nOS_MemAlloc() function and centralizes debug accounting logic.
+//
+//-------------------------------------------------------------------------------------------------
+void* MemPoolDriver::TryAllocFromGroup(uint8_t GroupID, size_t SizeRequired, MEM_DebugListOfID_e DebugID, nOS_TickCounter TimeOut)
+{
+    void*         MemPtr;
+    nOS_StatusReg sr;
+    #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
+    uint8_t*      Start;
+    size_t        Offset;
+    uint16_t      Index;
+    #endif
+
+    nOS_EnterCritical(sr);
+    size_t SizeBlock = m_nOS_MemArray[GroupID].bsize;
+
+    if(SizeBlock < SizeRequired)
+    {
+        MemPtr = nullptr;
+        goto Exit;
+    }
+
+    MemPtr = nOS_MemAlloc(&m_nOS_MemArray[GroupID], TimeOut);
+
+    if(MemPtr == nullptr)
+    {
+        goto Exit;
+    }
+
+  #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
+    Start  = (uint8_t*)m_nOS_MemArray[GroupID].buffer;
+    Offset = (uint8_t*)MemPtr - Start;
+    Index  = Offset / SizeBlock;
+    m_UsedMemory += SizeBlock;
+    m_BlockUsed[GroupID]++;
+
+    if(m_BlockUsed[GroupID] > m_BlockHighest[GroupID])
+    {
+        m_BlockHighest[GroupID] = m_BlockUsed[GroupID];
+    }
+
+    m_pDebugInfoArray[GroupID][Index] = DebugID;
+    m_AllocCount[DebugID]++;
+  #endif
+
+Exit:
+    nOS_LeaveCritical(sr);
+    return MemPtr;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //   Function name: Alloc
 //
 //   Parameter(s):  size_t                  SizeRequired        Size of the needed data block
@@ -150,102 +218,33 @@ MemPoolDriver::~MemPoolDriver()
 //-------------------------------------------------------------------------------------------------
 void* MemPoolDriver::Alloc(size_t SizeRequired, MEM_DebugListOfID_e DebugID)
 {
-    void*           MemPtr = nullptr;
-    size_t          SizeBlock;
-  #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
-    nOS_StatusReg   sr;
-  #endif
+    void* MemPtr = nullptr;
 
-  #if (MEMORY_POOL_RESTRICT_ALLOC_TO_BLOCK_SIZE == DEF_DISABLED)
-    // First loop will check for any block available, so we don't wait to be freed
+#if (MEMORY_POOL_RESTRICT_ALLOC_TO_BLOCK_SIZE == DEF_DISABLED)
+    // First pass: non-blocking
     for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_QTS; GroupID++)
     {
-        SizeBlock = m_nOS_MemArray[GroupID].bsize;
+        MemPtr = TryAllocFromGroup(GroupID, SizeRequired, DebugID, NOS_NO_WAIT);
 
-        if(SizeBlock >= SizeRequired)
+        if(MemPtr != nullptr)
         {
-            MemPtr = nOS_MemAlloc(&m_nOS_MemArray[GroupID], NOS_NO_WAIT);
-
-            if(MemPtr != nullptr)
-            {
-              #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
-                nOS_EnterCritical(sr);
-
-                uint8_t* start = (uint8_t*)m_nOS_MemArray[GroupID].buffer;
-                size_t offset = (uint8_t*)MemPtr - start;
-                uint16_t BlockIndex = offset / m_nOS_MemArray[GroupID].bsize;
-
-                m_pDebugInfoArray[GroupID][BlockIndex] = DebugID;
-
-                m_UsedMemory += SizeBlock;
-                m_BlockUsed[GroupID]++;
-
-                if(m_BlockUsed[GroupID] > m_BlockHighest[GroupID])
-                {
-                    m_BlockHighest[GroupID] = m_BlockUsed[GroupID];
-                }
-
-                if(DebugID < NUMBER_OF_MEM_DBG)
-                {
-                    m_AllocCount[DebugID]++;
-                }
-
-                nOS_LeaveCritical(sr);
-              #endif
-
-                m_TimeOut = NOS_WAIT_INFINITE;          // Reset to default
-                return MemPtr;
-            }
+            return MemPtr;
         }
     }
-  #endif
+#endif
 
-    // If we reach here then we did not succeed to get a block, so we will wait
+    // Second pass: blocking
     for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_QTS; GroupID++)
     {
-        SizeBlock = m_nOS_MemArray[GroupID].bsize;
+        MemPtr = TryAllocFromGroup(GroupID, SizeRequired, DebugID, NOS_WAIT_INFINITE);
 
-        if(SizeBlock >= SizeRequired)
+        if(MemPtr != nullptr)
         {
-            MemPtr = nOS_MemAlloc(&m_nOS_MemArray[GroupID], m_TimeOut);
-
-            if(MemPtr != nullptr)
-            {
-              #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
-                nOS_EnterCritical(sr);
-
-                uint8_t* start = (uint8_t*)m_nOS_MemArray[GroupID].buffer;
-                size_t offset = (uint8_t*)MemPtr - start;
-                uint16_t BlockIndex = offset / m_nOS_MemArray[GroupID].bsize;
-
-                m_pDebugInfoArray[GroupID][BlockIndex] = DebugID;
-
-                m_UsedMemory += SizeBlock;
-                m_BlockUsed[GroupID]++;
-
-                if(m_BlockUsed[GroupID] > m_BlockHighest[GroupID])
-                {
-                    m_BlockHighest[GroupID] = m_BlockUsed[GroupID];
-                }
-
-                nOS_LeaveCritical(sr);
-              #endif
-            }
-
-          #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
-            if(DebugID < NUMBER_OF_MEM_DBG)
-            {
-                m_AllocCount[DebugID]++;
-            }
-          #endif
-
-            m_TimeOut = NOS_WAIT_INFINITE;              // Reset to default
             return MemPtr;
         }
     }
 
-    m_TimeOut = NOS_WAIT_INFINITE;                      // Reset to default
-    return MemPtr;
+    return nullptr;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -331,60 +330,60 @@ void* MemPoolDriver::AllocAndSet(size_t SizeRequired, uint8_t FillValue, MEM_Deb
 //-------------------------------------------------------------------------------------------------
 bool MemPoolDriver::Free(void** pBlock)
 {
-    uint8_t GroupID;
-  #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
-    nOS_StatusReg sr;
-  #endif
+    uint8_t         GroupID;
+    bool            State;
+    nOS_StatusReg   sr;
+
+    nOS_EnterCritical(sr);
 
     for(GroupID = 0; GroupID < MEM_BLOCK_GROUP_QTS; GroupID++)
     {
         uint8_t* Start = (uint8_t*)m_nOS_MemArray[GroupID].buffer;
         uint8_t* End   = Start + (m_nOS_MemArray[GroupID].bsize * m_nOS_MemArray[GroupID].bmax);
 
-        // Check if the pointer belongs to this group
-        if((*pBlock >= (void*)Start) && (*pBlock < (void*)End))
+        if((*pBlock >= (void*)Start) && (*pBlock < (void*)End))                         // Check if the pointer belongs to this group
         {
-            // Compute block index based on pointer
-            size_t Offset = (uint8_t*)(*pBlock) - Start;
+            size_t Offset = (uint8_t*)(*pBlock) - Start;                                // Compute block index based on pointer
 
             if(Offset % m_nOS_MemArray[GroupID].bsize != 0)
             {
-                return false;   // Not aligned -> invalid block
+                State = false;
+                goto Exit;
             }
 
-            uint16_t BlockIndex = Offset / m_nOS_MemArray[GroupID].bsize;
-            m_LastError = nOS_MemFree(&m_nOS_MemArray[GroupID], *pBlock);           // Free the block in the nOS pool
+            uint16_t Index = Offset / m_nOS_MemArray[GroupID].bsize;
+            m_LastError = nOS_MemFree(&m_nOS_MemArray[GroupID], *pBlock);               // Free the block in the nOS pool
 
             if(m_LastError == NOS_OK)
             {
               #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
-                nOS_EnterCritical(sr);
-                m_UsedMemory -= m_nOS_MemArray[GroupID].bsize;                      // Update memory usage
-                MEM_DebugListOfID_e DbgID = m_pDebugInfoArray[GroupID][BlockIndex]; // Update debug counters
+                m_UsedMemory -= m_nOS_MemArray[GroupID].bsize;                          // Update memory usage
+                MEM_DebugListOfID_e DebugID = m_pDebugInfoArray[GroupID][Index];        // Update debug counters
+                m_pDebugInfoArray[GroupID][Index] = MEM_DBG_FREE;                       // Mark block as free
+                m_AllocCount[DebugID]--;
 
-                if(DbgID < NUMBER_OF_MEM_DBG)
-                {
-                    m_AllocCount[DbgID]--;
-                }
-
-                m_pDebugInfoArray[GroupID][BlockIndex] = MEM_DBG_FREE;              // Mark block as free
-
-                if(m_BlockUsed[GroupID] > 0)                                        // Decrement block usage count
+                if(m_BlockUsed[GroupID] > 0)                                            // Decrement block usage count
                 {
                     m_BlockUsed[GroupID]--;
                 }
 
                 *pBlock = nullptr;
-                nOS_LeaveCritical(sr);
               #endif
-                return true;
+
+                State = true;
+                goto Exit;
             }
 
-            return false;
+            State = false;
+            goto Exit;
         }
     }
 
-    return false;
+    State = false;
+
+Exit:
+    nOS_LeaveCritical(sr);
+    return State;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -395,11 +394,8 @@ bool MemPoolDriver::Free(void** pBlock)
 //                  MEM_DebugListOfID_e  OriginalDebugID  Expected current DebugID of the block.
 //                  MEM_DebugListOfID_e  NewDebugID       New DebugID to assign.
 //
-//   Return:        SystemState_e        SYS_READY                DebugID successfully updated.
-//                                       SYS_INVALID_PARAMETER    Invalid DebugID range.
-//                                       SYS_INVALID_BLOCK Block  Not aligned or not found.
-//                                       SYS_INVALID_MATCH        Current != OriginalDebugID.
-//
+//   Return:        bool                 true             DebugID successfully updated.
+//                                       false            Fail to update the DebugID
 //
 //   Description:   Change the debug owner ID associated with a memory block. The update is
 //                  performed only if the block belongs to a valid memory group, the block index
@@ -411,14 +407,12 @@ bool MemPoolDriver::Free(void** pBlock)
 //
 //-------------------------------------------------------------------------------------------------
 #if (MEMORY_POOL_USE_DEBUG_STAT == DEF_ENABLED)
-SystemState_e MemPoolDriver::ChangeDebugID(void* MemBlock, MEM_DebugListOfID_e OriginalDebugID, MEM_DebugListOfID_e NewDebugID)
+bool MemPoolDriver::ChangeDebugID(void* MemBlock, MEM_DebugListOfID_e OriginalDebugID, MEM_DebugListOfID_e NewDebugID)
 {
     nOS_StatusReg sr;
+    bool State;
 
-    if((OriginalDebugID < NUMBER_OF_MEM_DBG) && (NewDebugID < NUMBER_OF_MEM_DBG))
-    {
-        return SYS_INVALID_PARAMETER;
-    }
+    nOS_EnterCritical(sr);                                                          // Enter critical section
 
     for(uint8_t GroupID = 0; GroupID < MEM_BLOCK_GROUP_QTS; GroupID++)                  // Scan all block groups
     {
@@ -430,29 +424,35 @@ SystemState_e MemPoolDriver::ChangeDebugID(void* MemBlock, MEM_DebugListOfID_e O
             continue;
         }
 
-        size_t Offset = (uint8_t*)MemBlock - Start;                                     // Compute block index
+        size_t Offset = (uint8_t*)MemBlock - Start;                                     // Compute block offset
 
         if(Offset % m_nOS_MemArray[GroupID].bsize != 0)
         {
-            return SYS_INVALID_BLOCK;                                                               // Not aligned -> invalid block
+            State = false;
+            goto Exit;                                                                  // Not aligned -> invalid block
         }
 
-        uint16_t BlockIndex = Offset / m_nOS_MemArray[GroupID].bsize;
+        uint16_t Index = Offset / m_nOS_MemArray[GroupID].bsize;                        // Compute block index
 
-        if(m_pDebugInfoArray[GroupID][BlockIndex] != OriginalDebugID)                   // Check if the current DebugID matches the expected original
+        if(m_pDebugInfoArray[GroupID][Index] != OriginalDebugID)                        // Check if the current DebugID matches the expected original
         {
-            return SYS_INVALID_MATCH;
+            State = false;
+            goto Exit;
         }
 
-        nOS_EnterCritical(sr);                                                          // Enter critical section
-        m_pDebugInfoArray[GroupID][BlockIndex] = NewDebugID;                            // Update DebugID
+        m_pDebugInfoArray[GroupID][Index] = NewDebugID;                                 // Update DebugID
         m_AllocCount[OriginalDebugID]--;                                                // Update original counters
         m_AllocCount[NewDebugID]++;                                                     // Update new counters
-        nOS_LeaveCritical(sr);
-        return SYS_READY;
+        State = true;
+        goto Exit;
     }
 
-    return SYS_INVALID_BLOCK;
+    State = false;
+
+    Exit:
+
+    nOS_LeaveCritical(sr);
+    return State;
 }
 #endif
 

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_sntp.c
+//  File : lib_class_sntp.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2010-2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -63,41 +63,63 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <ip.h>
+#include "./lib_digini.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#if (IP_USE_SNTP == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:          Initialize
+//  Name:           Initialize
 //
-//  Parameter(s):   OS_EVENT*   pQ
+//  Parameter(s):   NetworkContext* 	pContext		Pointer on the context
 //  Return:         void
 //
-//  Description:    Initialize a timer for resync with server
+//  Description:    Initialize the SNTP Client
 //
 //-------------------------------------------------------------------------------------------------
-void NetSNTP::Initialize(void* pQ)
+bool SNTP_Client::Initialize(NetworkContext* pContext)
 {
-    nOS_Error Error;
+    m_pContext = pContext;
 
-    m_pQ           = (OS_EVENT*)pQ;
-    SNTP_byOST_Resync = TIME_TIMER_nullptr;
-    
-    Error = nOS_TimerCreate(&m_Resync,
-                            nullptr,
-                            nullptr,
-                            (int32_t)1,                               // first timeout at 1 second
-                            NOS_TIMER_ONE_SHOT);
+    IP_Manager* pIP = m_pContext->GetIP_Manager();
 
-// need to implement a timer Class or use OS one
-/*
-    TIMER_Start(&m_OST_Resync,
-                
-                m_pQ,
-                IP_MSG_TYPE_SNTP_MANAGEMENT,
-                SNTP_MSG_ACTION_TIME_OUT);
-*/
+    if(pIP == nullptr)
+    {
+        return false;
+    }
+
+    SocketManager* pSockMgr = pIP->GetSocketManager();
+
+    if(pSockMgr == nullptr)
+    {
+        return false;
+    }
+
+    m_pSocket = pSockMgr->AllocSocket(SOCKET_TYPE_DATAGRAM);
+
+    if(m_pSocket == nullptr)
+    {
+        return false;
+    }
+
+    bool NonBlocking = true;
+    m_pSocket->SetOption(SOCKET_OPT_NON_BLOCKING, &NonBlocking, sizeof(bool));
+
+    // Bind to ephemeral port (0 = auto-assign)
+    SystemState_e State = m_pSocket->Bind(0);
+
+    if(State != SYS_READY)
+    {
+        pSockMgr->FreeSocket(&m_pSocket);
+        m_pSocket = nullptr;
+        return false;
+    }
+
+    m_State = SNTP_STATE_INITIAL;
+    return true;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -107,130 +129,150 @@ void NetSNTP::Initialize(void* pQ)
 //                      uint8_t*     pDomainName1    Domain Name of the NTP Server 1
 //                      uint8_t*     pDomainName2    Domain Name of the NTP_Server 2
 //                      uint8_t*     pError          Pointer to return an error code
-//  Return:             IP_Address_t IP              IP of the NTP server
+//  Return:             true or false
 //
 //  Description:    Send the SNTP request
 //
 //-------------------------------------------------------------------------------------------------
-IP_Address_t NetSNTP::Request(Socket_t SocketNumber, uint8_t* pDomainName1, uint8_t* pDomainName2, uint8_t* pError)
+bool SNTP_Client::SendRequest(const IP_Address_t* pServerIP)
 {
-    IP_Port_t    Port;
-    SNTP_Msg_t*  pTX;
-    uint8_t      Error     = ERR_NONE;
-    IP_Address_t IP        = DNS_NO_IP;
-
-
-    IP = pDNS->Query(SocketNumber, pDomainName1, &Error);                         // Try NTP Server 1
-    
-    if(IP == DNS_NO_IP)
+    if((m_pSocket == nullptr) || (pServerIP == nullptr))
     {
-        IP = pDNS->Query(SocketNumber, pDomainName2, &Error);                     // if no IP Try NTP Server 2
+        return false;
     }
 
-    if(IP != DNS_NO_IP)                                                         // Continue if we have an IP
+    uint8_t Packet[48];   //this will be on the pool
+    memset(Packet, 0, sizeof(Packet));
+
+    // LI = 0, Version = 4, Mode = 3 (client)
+    Packet[0] = SNTP_LI_VN_MODE;
+
+    // Transmit Timestamp (seconds since 1900-01-01)
+    uint32_t Seconds1900 = GetSystemTime_Seconds_1900();
+
+    Packet[40] = (uint8_t)((Seconds1900 >> 24) & 0xFF);
+    Packet[41] = (uint8_t)((Seconds1900 >> 16) & 0xFF);
+    Packet[42] = (uint8_t)((Seconds1900 >>  8) & 0xFF);
+    Packet[43] = (uint8_t)((Seconds1900 >>  0) & 0xFF);
+
+    // Fractional part (optional, set to 0)
+    Packet[44] = 0;
+    Packet[45] = 0;
+    Packet[46] = 0;
+    Packet[47] = 0;
+
+    SocketInfo_t Dest;
+    memset(&Dest, 0, sizeof(Dest));
+    Dest.Address = *pServerIP;
+    Dest.Port    = 123;             // SNTP server port
+
+    size_t BytesSent = 0;
+    SystemState_e State = m_pSocket->SendTo(Packet, sizeof(Packet), &Dest, &BytesSent);
+
+    if((State != SYS_READY) || (BytesSent != sizeof(Packet)))
     {
-        pTX = (SNTP_Msg_t*)pMemory->AllocAndClear(sizeof(DHCP_Msg_t));
-
-        if(pTX != nullptr)
-        {
-            Port = IP_Port_t(RNG_GetRandomFromRange(32768, 65535));               // Get a random source port for the query from 32768 to 65535
-
-            if(SOCK_Socket(SocketNumber, Sn_MR_UDP, Port, 0) != 0)
-            {
-                // Fill up standard info for SNTP Packet
-                pTX->Flags_1.s.MODE     = SNTP_MODE_CLIENT;
-                pTX->Flags_1.s.VN       = SNTP_VERSION_4;
-                pTX->TxmTimeStampSecond = htonl(SNTP_TIME_START);
-                m_Seconds               = TIME_GetSecondTicks();
-
-                if(SOCK_SendTo(SocketNumber, (uint8_t*)pTX, sizeof(SNTP_Msg_t) - SNTP_OPTIONS_IN_PACKET_SIZE, IP, SNTP_PORT) != 0)
-                {
-                    Reply(SocketNumber);
-                }
-                else
-                {
-                    *pError = ERR_CANNOT_SEND_TO_SOCKET;
-                }
-                
-                pMemory->Free((void**)&pTX);
-                SOCK_Close(SocketNumber);
-            }
-            else
-            {
-                *pError = ERR_NO_SOCKET;
-            }
-        }
-        else
-        {
-            *pError = ERR_MEMORY_ALLOCATION;
-        }
+        return false;
     }
-    return IP;
+
+    m_State = SNTP_STATE_WAIT_RESPONSE;
+    return true;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Reply
+//  Name:           ReceiveResponse
 //
-//  Parameter(s):   Socket_t     SocketNumber
+//  Parameter(s):   None
 //  Return:         void
 //
-//  Description:    This Function process the answer to the DNS Request
-//
-//  Note(s):        No special treatment here, get the first IP and get out
+//  Description:
 //
 //-------------------------------------------------------------------------------------------------
-void SNTP_Reply(Socket_t SocketNumber)
+bool SNTP_Client::ReceiveResponse(void)
 {
-    SNTP_Msg_t*     pRX             = nullptr;
-    IP_Address_t    ServerAddr;
-    IP_Port_t       ServerPort;
-    size_t          Length;
-    TickCount_t     Second;
-    nOS_Error       Error;
-
-    do
+    if(m_pSocket == nullptr)
     {
-        if(SOCK_GetRX_RSR(SocketNumber) > 0)
-        {
-            pRX = pMemory->AllocAndClear(sizeof(SNTP_Msg_t));
-            
-            if(pRX != nullptr)
-            {
-                SOCK_ReceivedFrom(SocketNumber, (uint8_t*)pRX, sizeof(DNS_Msg_t), &ServerAddr, &ServerPort);
-
-                pRX->OriTimeStampSecond  = ntohl(pRX->OriTimeStampSecond);
-                pRX->RcvTimeStampSecond  = ntohl(pRX->RcvTimeStampSecond);
-                pRX->TxmTimeStampSecond  = ntohl(pRX->TxmTimeStampSecond);
-                m_Seconds                = GeTick() - m_Seconds;
-                pRX->TxmTimeStampSecond += (m_Seconds / 2);
-                TIME_LocalTime(pRX->RcvTimeStampSecond - SNTP_UNIX_START);
-
-                // Initialize timer resync a 1:00:00 every morning night
-                Second  = TIME_DateTime.SecondOfTheDay;     // Take the timestamps seconds for this moment
-                Second  = TIME_SECONDS_PER_DAY - Second;    // Remove this elapse time from number of second in a day
-                Second += TIME_SECONDS_PER_HOUR;            // Add to it one hour
-
-                
-                Error = nOS_TimerCreate(&m_TimerResync,
-                            EscapeCallback,
-                            this,
-                            SNTP_MSG_ACTION_TIME_OUT,
-                            NOS_TIMER_ONE_SHOT);  //??
-
-                /*
-                TIMER_Start(&m_TimerResync,
-                            Second,
-                            m_pQ,
-                            IP_MSG_TYPE_SNTP_MANAGEMENT,
-                            SNTP_MSG_ACTION_TIME_OUT);
-                            */
-            }
-        }
+        return false;
     }
-    while(pRX == nullptr);
 
-    pMemory->Free((void**)&pRX);
+    uint8_t      Buffer[128];
+    size_t       BytesReceived = 0;
+    SocketInfo_t Src;
+
+    SystemState_e State = m_pSocket->RecvFrom(Buffer, sizeof(Buffer), &Src, &BytesReceived);
+
+    if(State != SYS_READY)
+    {
+        return false;
+    }
+
+    if(BytesReceived < 48)
+    {
+        return false;
+    }
+
+    return ParseResponse(Buffer, BytesReceived);
 }
 
 //-------------------------------------------------------------------------------------------------
+//
+//  Name:           ParseResponse
+//
+//  Parameter(s):   uint8_t*        pPacket
+//                  size_t          Length
+//
+//  Return:         void
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
+bool SNTP_Client::ParseResponse(uint8_t* pPacket, size_t Length)
+{
+    VAR_UNUSED(Length);
+
+    // Basic sanity: Mode should be server (4) or broadcast (5)
+    uint8_t LI_VN_Mode = pPacket[0];
+    uint8_t Mode       = LI_VN_Mode & 0x07;
+
+    if((Mode != 4) && (Mode != 5))
+    {
+        m_State = SNTP_STATE_ERROR;
+        return false;
+    }
+
+    // Transmit Timestamp (server time)
+    uint32_t Seconds1900 =
+        ((uint32_t)pPacket[40] << 24) |
+        ((uint32_t)pPacket[41] << 16) |
+        ((uint32_t)pPacket[42] <<  8) |
+        ((uint32_t)pPacket[43] <<  0);
+
+    m_UnixTime = Convert1900ToUnix(Seconds1900);
+    m_State    = SNTP_STATE_DONE;
+
+    return true;
+}
+
+
+//that need big fix
+
+uint32_t SNTP_Client::GetSystemTime_Seconds_1900(void)
+{
+    // Difference between 1900-01-01 and 1970-01-01 in seconds
+    const uint32_t DIFF_1900_1970 = 2208988800UL;
+
+    // Replace this with your real Unix time source
+    extern uint32_t System_GetUnixTime(void);
+    uint32_t UnixNow = System_GetUnixTime();
+
+    return UnixNow + DIFF_1900_1970;
+}
+
+uint32_t SNTP_Client::Convert1900ToUnix(uint32_t Seconds1900)
+{
+    const uint32_t DIFF_1900_1970 = 2208988800UL;
+    return Seconds1900 - DIFF_1900_1970;
+}
+//-------------------------------------------------------------------------------------------------
+
+#endif // (IP_USE_SNTP == DEF_ENABLED)

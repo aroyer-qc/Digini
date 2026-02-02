@@ -163,8 +163,8 @@ class IP_Manager
                                                          size_t* pBytesSent)                { return m_UDP.Send(pSock, pData, Length, pDestInfo, pBytesSent); }
       #endif
 
-        static uint16_t     UDP_CalculateChecksum        (IP_Header_t* pIP, UDP_Header_t* pUDP, uint16_t udpLength);
-        static int16_t      IP_CalculateChecksum        (void* pBuffer, uint16_t Count);
+        static uint16_t     UDP_CalculateChecksum       (IP_Header_t* pIP, UDP_Header_t* pUDP, uint16_t udpLength);
+        static uint16_t     IP_CalculateChecksum        (const void* pBuffer, uint16_t Count);
         static void         FreeMessage                 (IP_PacketMsg_t* pMsg);
         static void         IP_ToAscii                  (char* pBuffer, IP_Address_t IP_Address);
         static IP_Address_t AsciiToIP                   (char* pBuffer);
@@ -205,8 +205,7 @@ class IP_Manager
       #endif
 
       #if (IP_USE_SNTP == DEF_ENABLED)
-        NetSNTP                         m_SNTP;                                // Simple Network Transport Protocol
-        bool                            m_FlagSNTP_Fail;
+        SNTP_Client                     m_SNTP;                                // Simple Network Transport Protocol
       #endif
 
       #if (IP_USE_SOAP == DEF_ENABLED)

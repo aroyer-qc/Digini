@@ -91,21 +91,21 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     m_Context.SetIP_Manager(this);
     m_SocketManager.Initialize(&m_Context);               // Initialize socket manager
 
-    m_Context.SetDHCP_Enable(false);
+  #if (IP_USE_DHCP == DEF_ENABLED)
+    m_Context.SetDHCP_Enable(true);
+  #endif
 
     // Initialize Variables
-    m_Context.SetIP_Valid(false);
     //m_DNS_IP_Found = false;  not used so far
     m_Context.InitializeMsgQ();                                             // this need to handle error
     m_Context.SetMAC_Address(&m_Config[IF_ID].IP_ETH_Config.MAC_Address);
     m_Context.SetHostName(m_Config[IF_ID].pHostName);
     m_Context.SetMTU(IP_NET_IF_MTU);                                        // Set netif maximum transfer unit
-
     m_Context.SetStaticIP(m_Config[IF_ID].DefaultStatic_IP);
     m_Context.SetStaticGatewayIP(m_Config[IF_ID].DefaultGateway);
     m_Context.SetStaticSubnetMask(m_Config[IF_ID].DefaultSubnetMask);
     m_Context.SetStaticDNS_IP(m_Config[IF_ID].DefaultStaticDNS);
-
+    m_Context.SetIP_Valid((m_Config[IF_ID].DefaultStatic_IP == IP_ADDRESS(255,255,255,255)) ? false : true);
     m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config, &m_Context);
     m_Context.RegisterSendCallback(&m_IF_Driver.LowLevelOutputWrapper, &m_IF_Driver);
 
@@ -136,7 +136,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
   #endif
 
   #if (IP_USE_SNTP == DEF_ENABLED)
-    m_pSNTP.Initialize(&m_Context);
+    m_SNTP.Initialize(&m_Context);
   #endif
 
   #if (IP_USE_SOAP == DEF_ENABLED)
@@ -176,8 +176,8 @@ void IP_Manager::Run(void)
     IP_PacketMsg_t* pMsg;
 
   #if (IP_USE_SNTP == DEF_ENABLED)
-    IP_Address_t    IP;
-    IP_Error_e      Error;
+    //IP_Address_t    IP;
+    //IP_Error_e      Error;
   #endif
 
     for(;;)
@@ -213,16 +213,6 @@ void IP_Manager::Run(void)
 
         if(nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
         {
-
-if(pMsg->pPacket->U8RawData[23] == 0x01)
-{
-    __asm("nop");
-}
-
-
-
-
-
             // Basic Ethernet header size check  peut-etre pas necessaire avec le default
             if(pMsg->PacketSize < sizeof(IP_EthernetHeader_t))
             {
@@ -233,7 +223,7 @@ if(pMsg->pPacket->U8RawData[23] == 0x01)
 
             switch(ntohs(pMsg->pPacket->ETH_Header.Type))
             {
-                case IP_ETHERNET_TYPE_IP:
+                case IP_ETHERNET_TYPE_IPV4:
                 {
                     // Check minimum size for IPv4 header
                     if(pMsg->PacketSize < (sizeof(IP_EthernetHeader_t) + sizeof(IP_Header_t)))
@@ -272,8 +262,7 @@ if(pMsg->pPacket->U8RawData[23] == 0x01)
                         break;
                     }
 
-                    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "IP_ETHERNET_TYPE_IP: Protocol:0x%02X\n", pMsg->pPacket->IP_Frame.Header.Protocol);
-
+                    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH type: IPV4\n");
                     m_ARP.ProcessIP(pMsg);                  // May update ARP cache, does NOT own pMsg
                     ProcessIP(pMsg);                        // Transfers ownership to protocol/socket
                 }
@@ -281,14 +270,14 @@ if(pMsg->pPacket->U8RawData[23] == 0x01)
 
                 case IP_ETHERNET_TYPE_ARP:
                 {
+                    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH type: ARP\n");
                     m_ARP.ProcessARP(pMsg);                 // ARP owns and frees pMsg
                 }
                 break;
 
                 default:
                 {
-                    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH_Default: Protocol:0x%02X\n", pMsg->pPacket->IP_Frame.Header.Protocol);
-                    // Unknown Ethernet type -> free
+                    //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH_Default: Type:0x%04X\n", pMsg->pPacket->ETH_Header.Type);
                     FreeMessage(pMsg);
                 }
                 break;
@@ -316,6 +305,7 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
       #if (IP_USE_ICMP == DEF_ENABLED)
         case IP_PROTOCOL_ICMP:
         {
+            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Ethernet IP-ICMP\n");
             m_ICMP.Process(pMsg);    // ICMP owns + frees
         }
         break;
@@ -340,13 +330,15 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
       #if (IP_USE_UDP == DEF_ENABLED)
         case IP_PROTOCOL_UDP:
         {
-             m_UDP.Process(pMsg);
+            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Ethernet IP-UDP\n");
+            m_UDP.Process(pMsg);
         }
         break;
       #endif
 
         default:
         {
+            //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Ethernet IP N/U: Type:0x%02X\n", pMsg->pPacket->IP_Frame.Header.Protocol);
             FreeMessage(pMsg);
         }
         break;
@@ -357,7 +349,7 @@ SystemState_e IP_Manager::SendPacket(IP_PacketMsg_t* pMsg)
 {
     IP_EthernetHeader_t* pETH = &pMsg->pPacket->ETH_Header;
     IP_Header_t*         pIP  = &pMsg->pPacket->IP_Frame.Header;
-    IP_Address_t         dstIP = pIP->DstIP_Addr;
+    IP_Address_t         dstIP = pIP->DstIP_Address;
 
     // Broadcast: 255.255.255.255 -> FF:FF:FF:FF:FF:FF
     if(dstIP == IP_ADDRESS(255,255,255,255))
@@ -660,81 +652,89 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t DstIP, uint16_t Pay
     IP_MAC_Address_t MacAddress;
     m_Context.GetMAC_Address(&MacAddress);
     memcpy(&pETH->SourceMAC.Byte[0], &MacAddress.Byte[0], IP_MAC_ADDRESS_SIZE);
-    pETH->Type = htons(IP_ETHERNET_TYPE_IP);
+    pETH->Type = htons(IP_ETHERNET_TYPE_IPV4);
 
     // IPv4 header
     pIP->VersionIHL          = IP_VERSION4_IHL20;
     pIP->TypeOfService       = 0;
     pIP->Length              = htons(sizeof(IP_Header_t) + PayloadLength);
-    pIP->ID                  = htons(m_SequenceID++);
     pIP->FlagsFragmentOffset = htons(0);
     pIP->TimeToLive          = IP_TIME_TO_LIVE;
     pIP->Protocol            = Protocol;
-    pIP->SrcIP_Addr          = m_Context.GetActiveIP();
-    pIP->DstIP_Addr          = DstIP;
+    pIP->SrcIP_Address       = m_Context.GetActiveIP();
+    pIP->DstIP_Address       = DstIP;
+
+    if(Protocol != IP_PROTOCOL_ICMP)
+    {
+        pIP->ID = htons(m_SequenceID++);
+    }
 
     pIP->Checksum = 0;
-    pIP->Checksum = IP_CalculateChecksum(pIP, sizeof(IP_Header_t));
+    pIP->Checksum = htons(IP_CalculateChecksum(pIP, sizeof(IP_Header_t)));
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           IP_CalculateChecksum
 //
-//  Parameter(s):   void*       pBuffer     Pointer to the start of the header to checksum
+//  Parameters:     void*       pBuffer     Pointer to the start of the data block to checksum
 //                  uint16_t    Count       Number of bytes to include in the checksum
 //
-//  Return:         int16_t                 One's-complement checksum (network byte order)
+//  Return:         uint16_t                One's-complement checksum (network byte order)
 //
-//  Description:    Calculate the standard Internet checksum (RFC 1071) over the supplied buffer.
-//                  The algorithm processes the data as 16-bit words, performs one's-complement
-//                  addition with end-around carry, and returns the one's-complement of the final
-//                  accumulated sum.
+//  Description:    Computes the standard Internet checksum as defined in RFC 1071. The algorithm
+//                  processes the buffer as a sequence of 16-bit big-endian words, performs
+//                  one's-complement addition with end-around carry, and returns the one's-
+//                  complement of the final accumulated sum.
 //
-//  Note(s):        - If Count is odd, the final remaining byte is included as a padded 16-bit word.
-//                  - This function assumes the buffer is aligned or accessible as 16-bit values.
-//                  - Used for IPv4 header checksum and can be reused for UDP/TCP pseudo-header
-//                    checksum calculations.
-//                  - The caller is responsible for ensuring that the checksum field in the header
-//                    is zero before invoking this function.
+//  Notes:          - The caller must ensure that the checksum field within the header or message
+//                    is set to zero before invoking this function.
+//                  - If Count is odd, the final remaining byte is padded as the high byte of a
+//                    16-bit word and included in the sum.
+//                  - This function is suitable for IPv4 header checksums, ICMP checksums, and
+//                    pseudo-header checksums used by UDP and TCP.
+//                  - The buffer does not need to be 16-bit aligned; the function handles byte
+//                    access safely and deterministically.
 //
 //-------------------------------------------------------------------------------------------------
-
-int16_t IP_Manager::IP_CalculateChecksum(void* pBuffer, uint16_t Count)
+uint16_t IP_Manager::IP_CalculateChecksum(const void* pBuffer, uint16_t Count)
 {
-	int16_t 	i;
-	uint16_t*	Value;
-	struct32_t 	Checksum;
+    const uint8_t* Data = (const uint8_t*)pBuffer;
+    uint32_t Sum = 0;
 
-    Checksum.u_32 = 0;
-	i = Count >> 1;
-    Value = (uint16_t*)pBuffer;
+    while(Count > 1)
+    {
+        Sum   += (uint16_t)((Data[0] << 8) | Data[1]);
+        Data  += 2;
+        Count -= 2;
 
-	while(i--)                                                                      // Calculate the sum of all words
-	{
-		Checksum.u_32 += (uint32_t)*Value++;
-	}
+        if(Sum & 0x10000)
+        {
+            Sum = (Sum & 0xFFFF) + 1;
+        }
+    }
 
-	if(((struct16_t*)&Count)->u_8.u0)                                               // Add in the sum of the remaining byte, if present
-	{
-		Checksum.u_32 += (uint32_t)*(uint8_t*)Value;
-	}
+    if(Count == 1)
+    {
+        Sum += (uint16_t)(Data[0] << 8);
 
-	Checksum.u_32 = (uint32_t)Checksum.u8_Array[0] + (int32_t)Checksum.u8_Array[1]; // Do an end-around carry (one's complement arithmetic)
-	Checksum.u8_Array[0] += Checksum.u8_Array[1];                                   // Do another end-around carry in case if the prior add caused a carry out
-	return ~Checksum.u8_Array[0];                                                  	// Return the resulting checksum
+        if(Sum & 0x10000)
+        {
+            Sum = (Sum & 0xFFFF) + 1;
+        }
+    }
+
+    return (uint16_t)~Sum;
 }
-
-
 uint16_t IP_Manager::UDP_CalculateChecksum(IP_Header_t* pIP, UDP_Header_t* pUDP, uint16_t UDP_Length)
 {
     uint32_t Sum = 0;
 
     // Pseudo-header
-    Sum += (pIP->SrcIP_Addr >> 16) & 0xFFFF;
-    Sum += (pIP->SrcIP_Addr      ) & 0xFFFF;
-    Sum += (pIP->DstIP_Addr >> 16) & 0xFFFF;
-    Sum += (pIP->DstIP_Addr      ) & 0xFFFF;
+    Sum += (pIP->SrcIP_Address >> 16) & 0xFFFF;
+    Sum += (pIP->SrcIP_Address      ) & 0xFFFF;
+    Sum += (pIP->DstIP_Address >> 16) & 0xFFFF;
+    Sum += (pIP->DstIP_Address      ) & 0xFFFF;
     Sum += htons(IP_PROTOCOL_UDP);
     Sum += htons(UDP_Length);
 

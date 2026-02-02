@@ -174,6 +174,7 @@
 #include "./NanoIP/inc/lib_class_icmp.h"
 #include "./NanoIP/inc/lib_class_udp.h"
 #include "./NanoIP/inc/lib_class_dhcp.h"
+#include "./NanoIP/inc/lib_class_sntp.h"
 #include "./NanoIP/inc/Interface/lib_class_ethernet_interface.h"
 #include "./Peripheral/inc/port/lib_class_eth.h"
 #include PHY_DRIVER_INCLUDE

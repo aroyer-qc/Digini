@@ -669,25 +669,25 @@ SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t
     UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
     IP_Header_t*  pIP  = &pMsg->pPacket->UDP_Frame.IP_Header;
 
-    size_t UDP_Len = ntohs(pUDP->Length);
-    size_t PayloadLen = UDP_Len - sizeof(UDP_Header_t);
+    size_t UDP_Lenght    = ntohs(pUDP->Length);
+    size_t PayloadLenght = UDP_Lenght - sizeof(UDP_Header_t);
 
-    if(PayloadLen > BufferSize)
+    if(PayloadLenght > BufferSize)
     {
-        PayloadLen = BufferSize;
+        PayloadLenght = BufferSize;
     }
 
-    uint8_t* pPayload = (uint8_t*)(pUDP + 1);                           // Payload pointer (UDP header is immediately followed by data)
-    memcpy(pBuffer, pPayload, PayloadLen);
+    uint8_t* pPayload = (uint8_t*)(pUDP + 1);                           // Payload pointer  + 1 -> + sizeof(UDP header) (UDP header is immediately followed by data)
+    memcpy(pBuffer, pPayload, PayloadLenght);
 
     if(pSrcInfo != nullptr)                                             // Fill source info if requested
     {
-        pSrcInfo->Address = pIP->SrcIP_Addr;
+        pSrcInfo->Address = pIP->SrcIP_Address;
         pSrcInfo->Port    = ntohs(pUDP->SrcPort);
     }
 
     IP_Manager::FreeMessage(pMsg);                                      // Free packet buffers (zero-copy release)
-    *pBytesReceived = PayloadLen;
+    *pBytesReceived = PayloadLenght;
     return SYS_READY;
 }
 

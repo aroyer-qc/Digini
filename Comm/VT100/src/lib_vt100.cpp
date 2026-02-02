@@ -133,6 +133,10 @@ nOS_Error VT100_Terminal::Initialize(Console* pConsole)
     m_NeedToSave              = false;
     m_RefreshFullPage         = false;
 
+  #if (VT100_USE_LOG_WINDOW == DEF_ENABLED)
+    LogClear();
+  #endif
+
     Error = nOS_TimerCreate(&m_EscapeTimer, EscapeCallback, this, VT100_ESCAPE_TIME_OUT, NOS_TIMER_ONE_SHOT);
   #if (VT100_USER_CALLBACK_INITIALIZE == DEF_ENABLED)
     CallbackInitialize();                       // User callback specific initialization
@@ -690,8 +694,6 @@ VT100_InputType_e VT100_Terminal::CallBack(CallbackMethod_t pCallback, VT100_Cal
 //  Description:    CallBack after we received a ESCAPE from terminal.
 //                  If we enter here, then ESCAPE was sent alone.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::EscapeCallback(nOS_Timer* pTimer, void* pArg)
 {
@@ -707,6 +709,8 @@ void VT100_Terminal::EscapeCallback(nOS_Timer* pTimer, void* pArg)
     This->m_InputDecimalMode = false;
     This->m_InputStringMode  = false;
     Escape = VT100_ESCAPE;
+    This->m_pConsole->SetTailBackward(1); // Prevent out of sync with DMA
+    This->m_pConsole->SetHeadBackward(1); // Prevent out of sync with DMA
     This->m_pConsole->Write(&Escape, 1);
     nOS_LeaveCritical(sr);
 }
@@ -1619,8 +1623,9 @@ void VT100_Terminal::LogInitialize(int PosX, int PosY, int SizeX, int SizeY)
 void VT100_Terminal::LogClear(void)
 {
     memset(m_LogBuffer, ' ', VT100_LOG_LINES * VT100_LOG_COLUMNS);
-    m_LogHead  = 0;
-    m_LogCount = 0;
+    m_LogHead    = 0;
+    m_LogCount   = 0;
+    m_LogRefresh = true;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1704,6 +1709,7 @@ void VT100_Terminal::LogPrint(const char* pString)
 //                  Each displayed line is sent using a single InMenuPrintf() call.
 //
 //-------------------------------------------------------------------------------------------------
+/*
 void VT100_Terminal::LogDisplay(void)
 {
     if(m_LogRefresh == false)
@@ -1743,6 +1749,56 @@ void VT100_Terminal::LogDisplay(void)
             SourceLine = 0;
         }
     }
+
+    RestoreCursorPosition();
+}
+*/
+void VT100_Terminal::LogDisplay(void)
+{
+    if(m_LogRefresh == false)
+    {
+        return;
+    }
+
+    m_LogRefresh = false;
+
+    char LineBuffer[VT100_LOG_COLUMNS + 1];                                                     // Temp buffer for clipping
+    int ScreenRow = m_LogWindowTop;
+
+    SaveCursorPosition();
+
+    // Number of lines we will actually display
+    int LinesToShow = (m_LogCount < m_LogWindowHeight) ? m_LogCount : m_LogWindowHeight;
+
+    // Compute the index of the oldest visible line
+    int Start = m_LogHead - (LinesToShow - 1);
+    if(Start < 0)
+    {
+        Start += VT100_LOG_LINES;
+    }
+
+    int SourceLine = Start;
+
+    // Print the real log lines
+    for(int i = 0; i < LinesToShow; i++)
+    {
+        memcpy(LineBuffer, m_LogBuffer[SourceLine], m_LogWindowWidth);
+        LineBuffer[m_LogWindowWidth] = '\0';
+
+        InMenuPrintf(VT100_LBL_SET_CURSOR, ScreenRow, m_LogWindowLeft);
+        InMenuPrintf(LBL_STRING, LineBuffer);
+
+        ScreenRow++;
+        SourceLine++;
+
+        if(SourceLine >= VT100_LOG_LINES)
+        {
+            SourceLine = 0;
+        }
+    }
+
+    // If buffer has fewer lines than window height, the rest stays visually blank.
+    // We do NOT print blank lines — the window already contains blanks from DrawBox().
 
     RestoreCursorPosition();
 }

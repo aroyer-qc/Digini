@@ -31,6 +31,24 @@
 #if (IP_USE_DNS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// Enum(s)
+//-------------------------------------------------------------------------------------------------
+
+enum DNS_State_e
+{
+    DNS_STATE_IDLE = 0,
+    DNS_STATE_WAIT_RESPONSE,
+    DNS_STATE_RESPONSE_RECEIVED,
+    DNS_STATE_TIMEOUT
+};
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+typedef void (*DNS_Callback_t)(bool Success, IP_Address_t ResolveIP);
+
+//-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -39,18 +57,24 @@ class DNS_Client
     public:
 
         void                Initialize          (NetworkContext* pContext);
-        bool                Resolve             (const char* pDomainName, IP_Address_t* pOutIP);
+        bool                Process             (void);
+        bool                Resolve             (const char* pDomainName, DNS_Callback_t pCallback);
+
+        bool                IsBusy              (void) { return (m_State == DNS_STATE_WAIT_RESPONSE); }
 
 private:
 
         bool                SendQuery           (const char* pDomainName);
-        bool                ReceiveResponse     (IP_Address_t* pOutIP);
-        bool                ParseResponse       (uint8_t* pPacket, size_t Length, IP_Address_t* pOutIP);
-        size_t              BuildDNS_Query      (uint8_t* pOut, const char* pDomainName);
+        bool                ParseResponse       (DNS_Header_t* pMsg, size_t PacketLength);
+        size_t              BuildDNS_Query      (DNS_Header_t* pMessage, const char* pDomainName);
 
         NetworkContext*     m_pContext;
         Socket*             m_pSocket;
+        DNS_State_e         m_State;
         uint16_t            m_LastID;
+        nOS_Timer           m_TimerQuery;
+        DNS_Callback_t      m_pCallback;
+        IP_Address_t        m_ResolvedIP;
 };
 
 //-------------------------------------------------------------------------------------------------

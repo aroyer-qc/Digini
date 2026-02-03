@@ -65,6 +65,8 @@
 #define DHCP_OPTION_IN_PACKET_SIZE              308
 #define DHCP_HOSTNAME_MAX_LENGTH                63
 
+#define DNS_MAX_PACKET_SIZE                     512
+
 #if (IP_USE_DHCP == DEF_DISABLED)
     #define GetActiveGatewayIP()                GetStaticGatewayIP()
     #define GetActiveSubnetMask()               GetStaticSubnetMask()
@@ -229,7 +231,8 @@ struct DNS_Header_t
     uint16_t        ANCount;                            // +   2
     uint16_t        NSCount;                            // +   2
     uint16_t        ARCount;                            // +   2
-};                                                      // = 12 bytes
+     uint8_t        Payload[DNS_MAX_PACKET_SIZE];       // +   512
+};                                                      // = 524 bytes
 
 struct ICMP_Header_t
 {
@@ -419,6 +422,8 @@ struct IP_PacketMsg_t
 {
 	uint16_t    		    PacketSize;
 	IP_EthernetPacket_t*	pPacket;
+    uint8_t*                Payload;                // Pointer to UDP payload
+    uint16_t                PayloadSize;            // length of payload
 };
 
 #pragma pack(pop)

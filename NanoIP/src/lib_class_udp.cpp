@@ -48,7 +48,7 @@
 //  |_______|____________________________________________________|
 //
 //
-//  The UDP Length field is the lenght of the Pseudo UDP header and Real Header + data
+//  The UDP Length field is the length of the Pseudo UDP header and Real Header + data
 //
 //
 //-------------------------------------------------------------------------------------------------
@@ -115,6 +115,13 @@ void UDP_Protocol::Process(IP_PacketMsg_t* pMsg)
 {
     UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
     IP_Port_t dstPort  = ntohs(pUDP->DstPort);
+
+    // Compute payload pointer and size
+    size_t UDP_Length    = ntohs(pUDP->Length);
+    size_t PayloadLength = UDP_Length - sizeof(UDP_Header_t);
+    pMsg->Payload     = (uint8_t*)(pUDP + 1);
+    pMsg->PayloadSize = PayloadLength;
+
 
     Socket* pSock = FindSocketByPort(dstPort);                          // Your lookup function
 

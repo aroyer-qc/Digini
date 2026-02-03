@@ -185,7 +185,7 @@ void IP_Manager::Run(void)
     for(;;)
     {
       #if (IP_USE_DHCP == DEF_ENABLED)
-        if(m_Context.GetLinkChange() == true)                       // Always react to link changes, regardless of DHCP enable state
+        if(m_Context.GetLinkChange() == true)                                                   // Always react to link changes, regardless of DHCP enable state
         {
             m_Context.SetLinkChange(false);
 
@@ -197,7 +197,7 @@ void IP_Manager::Run(void)
                 }
                 else
                 {
-                    m_DHCP.Reset();   // Ensure no stale DHCP state
+                    m_DHCP.Reset();                                                             // Ensure no stale DHCP state
                 }
             }
             else // Link down
@@ -206,17 +206,22 @@ void IP_Manager::Run(void)
             }
         }
 
-        // Run DHCP state machine only when enabled AND link is up
-        if((m_Context.IsDHCP_Enable() == true) && (m_Context.GetLinkState() == ETH_LINK_UP))
+        if((m_Context.IsDHCP_Enable() == true) && (m_Context.GetLinkState() == ETH_LINK_UP))    // Run DHCP state machine only when enabled AND link is up
         {
             (void)m_DHCP.Process();
         }
       #endif
 
+    #if (IP_USE_DNS == DEF_ENABLED)
+        if(m_DNS.IsBusy())
+        {
+            m_DNS.Process();
+        }
+    #endif
+
         if(nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
         {
-            // Basic Ethernet header size check  peut-etre pas necessaire avec le default
-            if(pMsg->PacketSize < sizeof(IP_EthernetHeader_t))
+            if(pMsg->PacketSize < sizeof(IP_EthernetHeader_t))                                  // Basic Ethernet header size check  peut-etre pas necessaire avec le default
             {
                 DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: Frame too small for Ethernet header (%u bytes)\n",  pMsg->PacketSize);
                 FreeMessage(pMsg);
@@ -227,16 +232,15 @@ void IP_Manager::Run(void)
             {
                 case IP_ETHERNET_TYPE_IPV4:
                 {
-                    // Check minimum size for IPv4 header
-                    if(pMsg->PacketSize < (sizeof(IP_EthernetHeader_t) + sizeof(IP_Header_t)))
+                    if(pMsg->PacketSize < (sizeof(IP_EthernetHeader_t) + sizeof(IP_Header_t)))  // Check minimum size for IPv4 header
                     {
                         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: IPv4 frame too small (%u bytes)\n", pMsg->PacketSize);
                         FreeMessage(pMsg);
                         break;
                     }
 
-                    // Validate IHL (Internet Header Length)
-                    uint8_t ihl = pMsg->pPacket->IP_Frame.Header.VersionIHL & 0x0F;
+                    uint8_t ihl = pMsg->pPacket->IP_Frame.Header.VersionIHL & 0x0F;             // Validate IHL (Internet Header Length)
+                    
                     if(ihl < 5)
                     {
                         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: Invalid IHL (%u)\n", ihl);
@@ -246,8 +250,7 @@ void IP_Manager::Run(void)
 
                    uint16_t ipHeaderSize = ihl * 4;
 
-                    // Validate total IP length
-                    uint16_t totalLength = ntohs(pMsg->pPacket->IP_Frame.Header.Length);
+                    uint16_t totalLength = ntohs(pMsg->pPacket->IP_Frame.Header.Length);        // Validate total IP length
 
                     if(totalLength < ipHeaderSize)
                     {
@@ -256,8 +259,7 @@ void IP_Manager::Run(void)
                         break;
                     }
 
-                    // Ensure the received frame contains the full IP packet
-                    if(pMsg->PacketSize < (sizeof(IP_EthernetHeader_t) + totalLength))
+                    if(pMsg->PacketSize < (sizeof(IP_EthernetHeader_t) + totalLength))          // Ensure the received frame contains the full IP packet
                     {
                         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: Truncated IPv4 frame (%u < %u)\n", pMsg->PacketSize, sizeof(IP_EthernetHeader_t) + totalLength);
                         FreeMessage(pMsg);
@@ -265,15 +267,15 @@ void IP_Manager::Run(void)
                     }
 
                     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH type: IPV4\n");
-                    m_ARP.ProcessIP(pMsg);                  // May update ARP cache, does NOT own pMsg
-                    ProcessIP(pMsg);                        // Transfers ownership to protocol/socket
+                    m_ARP.ProcessIP(pMsg);                                                      // May update ARP cache, does NOT own pMsg
+                    ProcessIP(pMsg);                                                            // Transfers ownership to protocol/socket
                 }
                 break;
 
                 case IP_ETHERNET_TYPE_ARP:
                 {
                     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH type: ARP\n");
-                    m_ARP.ProcessARP(pMsg);                 // ARP owns and frees pMsg
+                    m_ARP.ProcessARP(pMsg);                                                     // ARP owns and frees pMsg
                 }
                 break;
 

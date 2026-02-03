@@ -227,14 +227,15 @@ class Socket
         SystemState_e       Connect             (SocketInfo_t* pInfo);
         SystemState_e       Shutdown            (void);
         bool                IsConnected         (void);
-      #endif
-
 
         SystemState_e       Send                (uint8_t* pData, size_t Length, size_t* pBytesSent);
         SystemState_e       Recv                (uint8_t* pBuffer, size_t BufferSize, size_t* pBytesReceived);
+        SystemState_e       Recv                (IP_PacketMsg_t** ppMessage);
+      #endif
 
         SystemState_e       SendTo              (uint8_t* pData, size_t Length, SocketInfo_t* pDestInfo, size_t* pBytesSent);
         SystemState_e       RecvFrom            (uint8_t* pBuffer, size_t BufferSize, SocketInfo_t* pSrcInfo, size_t* pBytesReceived);
+        SystemState_e       RecvFrom            (IP_PacketMsg_t** ppMessage);
 
         void                Close               (void);
 

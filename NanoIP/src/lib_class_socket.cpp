@@ -566,25 +566,73 @@ SystemState_e Socket::SendTo(uint8_t* pData, size_t Length, SocketInfo_t* pDestI
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           Recv  (Zero-Copy Variant)
+//
+//  Parameter(s):   IP_PacketMsg_t** ppMessage
+//                      Output: pointer to the received TCP segment message. The caller obtains
+//                      full ownership of the message, including IP/TCP headers, payload pointer,
+//                      and payload size. The caller must free the message via
+//                      IP_Manager::FreeMessage() once processing is complete.
+//
+//  Return:         SystemState_e
+//                      SYS_READY         – A TCP segment was dequeued and delivered.
+//                      SYS_TIMEOUT       – No segment available within the configured timeout.
+//                      SYS_INVALID_STATE – Called on a non-TCP socket.
+//
+//  Description:    Retrieves the next TCP segment from the socket’s RX queue and returns the
+//                  complete IP_PacketMsg_t structure without copying any payload data. The caller
+//                  accesses the TCP payload directly from the underlying packet buffer, enabling
+//                  true zero-copy processing.
+//
+//  Note(s):        This method is intended for high-performance or protocol-level consumers that
+//                  require direct access to the raw segment data. The buffered Recv() variant
+//                  remains available for callers that prefer a traditional memcpy-based API.
+//
+//-------------------------------------------------------------------------------------------------
+#if (IP_USE_TCP == DEF_ENABLED)
+SystemState_e Socket::Recv(IP_PacketMsg_t** ppMessage)
+{
+    if(m_Type != SOCKET_TYPE_STREAM)
+    {
+        return SYS_INVALID_STATE;
+    }
+
+    TCP_Socket_t* pTcp = m_Protocol.pTCP;
+    nOS_TickCounter Timeout = m_TimeoutMs;
+
+    if(nOS_QueueRead(&pTcp->RxQueue, ppMessage, Timeout) != NOS_OK)
+    {
+        return SYS_TIME_OUT;
+    }
+
+    return SYS_READY;
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           Recv
 //
 //  Parameter(s):   uint8_t* pBuffer            Pointer to the user buffer where the received
-//                                              payload will be copied.
+//                                              TCP payload will be copied.
 //                  size_t   BufferSize         Size of the user buffer in bytes.
 //                  size_t*  pBytesReceived     Output: number of payload bytes copied into
 //                                              pBuffer.
 //
-//  Return:         SystemState_e   SYS_READY         – A packet was received and delivered.
-//                                  SYS_TIMEOUT       – No packet available within the configured
-//                                                      timeout.
-//                                  SYS_INVALID_STATE – Called on a non‑UDP socket.
+//  Return:         SystemState_e
+//                      SYS_READY         – A TCP segment was received and delivered.
+//                      SYS_TIMEOUT       – No segment available within the configured timeout.
+//                      SYS_INVALID_STATE – Called on a non‑TCP socket.
 //
-//  Description:    Receives the next UDP datagram from the socket’s RX queue. This function is
-//                  a simplified variant of RecvFrom(), returning only the payload data without
-//                  exposing the sender’s addressing information. The function extracts the UDP
-//                  header, determines the payload length, copies the payload into the user
-//                  buffer (clipped to BufferSize), and frees the underlying packet buffers.
-//                  Ownership of the packet is returned to the memory pool after processing.
+//  Description:    Retrieves the next TCP segment from the socket’s RX queue and copies its
+//                  payload into the user-provided buffer. The function parses the IP and TCP
+//                  headers to determine the payload offset and length, clips the copy to
+//                  BufferSize, and frees the underlying packet message once processing is
+//                  complete.
+//
+//  Note(s)         This is the buffered, POSIX-style receive method. A separate zero-copy
+//                  variant is available for callers that require direct access to the packet
+//                  memory without performing a memcpy.
 //
 //-------------------------------------------------------------------------------------------------
 #if (IP_USE_TCP == DEF_ENABLED)
@@ -629,24 +677,73 @@ SystemState_e Socket::Recv(uint8_t* pBuffer, size_t BufferSize, size_t* pBytesRe
 //
 //  Name:           RecvFrom
 //
-//  Parameter(s):   uint8_t*        pBuffer         Pointer to the user buffer where the received
-//                                                  payload will be copied.
+//  Parameter(s):   IP_PacketMsg_t** ppMessage
+//                      Output: pointer to the received packet message. The caller obtains full
+//                      ownership of the message, including headers, payload pointer, and payload
+//                      size. The caller is responsible for freeing the message via
+//                      IP_Manager::FreeMessage() when processing is complete.
+//
+//  Return:         SystemState_e
+//                      SYS_READY         – A packet was dequeued and delivered to the caller.
+//                      SYS_TIMEOUT       – No packet available within the configured timeout.
+//                      SYS_INVALID_STATE – Called on a non-UDP socket.
+//
+//  Description:    Retrieves the next UDP datagram from the socket’s RX queue. Unlike the
+//                  traditional buffered model, this function does not copy payload data into a
+//                  user buffer. Instead, it returns the full IP_PacketMsg_t structure, which
+//                  contains direct pointers to the UDP payload and its size.
+//
+//  Note(s)         This design follows the zero-copy principle: the UDP payload is never copied.
+//                  The caller parses the packet directly from the underlying network buffer and
+//                  must explicitly free the message once finished.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e Socket::RecvFrom(IP_PacketMsg_t** ppMessage)
+{
+    if(m_Type != SOCKET_TYPE_DATAGRAM)
+    {
+        return SYS_INVALID_STATE;
+    }
+
+    UDP_Socket_t* pUDP_Socket = m_Protocol.pUDP;
+    nOS_TickCounter Timeout   = m_IsBlocking ? m_TimeoutMs : 0;
+
+    // Read next message from UDP RX queue (returns pointer to message)
+    if(nOS_QueueRead(&pUDP_Socket->RX_Queue, ppMessage, Timeout) != NOS_OK)
+    {
+        return SYS_TIME_OUT;
+    }
+
+    // Caller now owns the message and must free it
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           RecvFrom   (Buffered Variant)
+//
+//  Parameter(s):   uint8_t*        pBuffer         Pointer to the user buffer where the received 
+//                                                  UDP payload will be copied.
 //                  size_t          BufferSize      Size of the user buffer in bytes.
-//                  SocketInfo_t*   pSrcInfo        Optional output: source IP address, UDP port
+//                  SocketInfo_t*   pSrcInfo        Optional output: source IP address, UDP port,
 //                                                  and MAC address.
 //                  size_t*         pBytesReceived  Output: number of payload bytes copied into
 //                                                  pBuffer.
 //
-//  Return:         SystemState_e   SYS_READY         – A packet was received and delivered.
-//                                  SYS_TIMEOUT       – No packet available within the configured
-//                                                      timeout.
-//                                  SYS_INVALID_STATE – Called on a non‑UDP socket.
+//  Return:         SystemState_e
+//                      SYS_READY         – A UDP datagram was received and delivered.
+//                      SYS_TIMEOUT       – No datagram available within the configured timeout.
+//                      SYS_INVALID_STATE – Called on a non‑UDP socket.
 //
-//  Description:    Retrieves the next UDP datagram from the socket’s RX queue. The function
-//                  extracts the UDP and IP headers, copies the payload into the user buffer,
-//                  optionally returns the sender’s addressing information, and frees the
-//                  underlying packet buffers. Ownership of the packet is transferred back to
-//                  the memory pool after processing.
+//  Description:    Retrieves the next UDP datagram from the socket’s RX queue, extracts the IP
+//                  and UDP headers, determines the payload length, and copies the payload into
+//                  the caller‑provided buffer (clipped to BufferSize). The function optionally
+//                  returns the sender’s addressing information and frees the underlying packet
+//                  buffers once processing is complete.
+//
+//  Notes(s):       This is the traditional buffered receive method. A separate zero‑copy
+//                  RecvFrom() variant is available for callers that require direct access to the
+//                  packet memory without performing a memcpy.
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t* pSrcInfo, size_t* pBytesReceived)
@@ -669,16 +766,16 @@ SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t
     UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
     IP_Header_t*  pIP  = &pMsg->pPacket->UDP_Frame.IP_Header;
 
-    size_t UDP_Lenght    = ntohs(pUDP->Length);
-    size_t PayloadLenght = UDP_Lenght - sizeof(UDP_Header_t);
+    size_t UDP_Length    = ntohs(pUDP->Length);
+    size_t PayloadLength = UDP_Length - sizeof(UDP_Header_t);
 
-    if(PayloadLenght > BufferSize)
+    if(PayloadLength > BufferSize)
     {
-        PayloadLenght = BufferSize;
+        PayloadLength = BufferSize;
     }
 
     uint8_t* pPayload = (uint8_t*)(pUDP + 1);                           // Payload pointer  + 1 -> + sizeof(UDP header) (UDP header is immediately followed by data)
-    memcpy(pBuffer, pPayload, PayloadLenght);
+    memcpy(pBuffer, pPayload, PayloadLength);
 
     if(pSrcInfo != nullptr)                                             // Fill source info if requested
     {
@@ -687,7 +784,7 @@ SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t
     }
 
     IP_Manager::FreeMessage(pMsg);                                      // Free packet buffers (zero-copy release)
-    *pBytesReceived = PayloadLenght;
+    *pBytesReceived = PayloadLength;
     return SYS_READY;
 }
 

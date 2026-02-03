@@ -72,15 +72,15 @@
 //-------------------------------------------------------------------------------------------------
 
 #define DNS_PORT                        53
-#define DNS_MAX_PACKET_SIZE             512
 #define DNS_RESPONSE_TIME_OUT           1000
 #define DNS_LABEL_POINTER_FLAG          0xC0
 #define DNS_LABEL_END                   0x00
+#define DNS_HEADER_SIZE                 12
 
 // TYPE
 #define DNS_TYPE_A                      1   				// The ARPA Internet
 #define DNS_CLASS_IN                	1                   // The Internet
-#define DNS_RECEIVE_DATA_LENGHT         4                   // IPv4 address length
+#define DNS_RECEIVE_DATA_LENGTH         4                   // IPv4 address length
 
 // Flag QR
 #define DNS_FLAG_QR_QUERY               0x0000              // Query
@@ -108,25 +108,165 @@ void DNS_Client::Initialize(NetworkContext* pContext)
     m_pContext = pContext;
     m_pSocket  = nullptr;
     m_LastID   = 0;
+    m_State    = DNS_STATE_IDLE;
+
+    nOS_TimerCreate(&m_TimerQuery, nullptr, nullptr, DNS_RESPONSE_TIME_OUT, NOS_TIMER_ONE_SHOT);
 }
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Process
+//
+//  Parameter(s):   None
+//
+//  Return:         bool
+//                      - true  : DNS transaction has completed (success or timeout)
+//                      - false : DNS transaction is still in progress
+//
+//  Description:    Advances the DNS client state machine. This function performs a single,
+//                  non-blocking receive attempt using the socket’s zero-copy RecvFrom() API and
+//                  checks whether the query timeout has expired. It must be called periodically
+//                  by the network task.
+//
+//                  When a valid DNS response is received, the client parses the payload directly
+//                  from the returned packet buffer (no memcpy). The resolved IPv4 address is
+//                  stored in m_ResolvedIP and the user callback (if provided) is invoked.
+//
+//                  If the timeout expires before a response is received, the callback is invoked
+//                  with a failure status. In both success and timeout cases, the function returns
+//                  true to signal completion. The caller is responsible for freeing the received
+//                  packet message after processing.
+//
+//-------------------------------------------------------------------------------------------------
+bool DNS_Client::Process(void)
+{
+    if(m_State != DNS_STATE_WAIT_RESPONSE)
+    {
+        return true;
+    }
+
+    if(nOS_TimerIsRunning(&m_TimerQuery) == false)
+    {
+        m_State = DNS_STATE_TIMEOUT;
+
+        if(m_pCallback != nullptr)
+        {
+            m_pCallback(false, IP_ADDRESS(0,0,0,0));
+        }
+
+        return true;
+    }
+
+    // Zero-copy receive
+    IP_PacketMsg_t* pMsg = nullptr;
+    SystemState_e State = m_pSocket->RecvFrom(&pMsg);
+
+    if(State != SYS_READY)
+    {
+        return false;   // No packet this tick
+    }
+
+    // Access payload directly
+    uint8_t* pPayload = pMsg->Payload;
+    size_t   Length   = pMsg->PayloadSize;
+
+    bool Done = false;
+
+    if(Length >= DNS_HEADER_SIZE)
+    {
+        if(ParseResponse((DNS_Header_t*)pPayload, Length))
+        {
+            m_State = DNS_STATE_RESPONSE_RECEIVED;
+            nOS_TimerStop(&m_TimerQuery, true);
+
+            if(m_pCallback != nullptr)
+            {
+                m_pCallback(true, m_ResolvedIP);
+            }
+
+            Done = true;
+        }
+    }
+
+    // Caller frees the packet
+    IP_Manager::FreeMessage(pMsg);
+
+    return Done;
+}
+/*bool DNS_Client::Process(void)
+{
+    if(m_State != DNS_STATE_WAIT_RESPONSE)
+    {
+        return true;                                                                                    // Already finished (success or timeout)
+    }
+
+    if(nOS_TimerIsRunning(&m_TimerQuery) == false)                                                      // Timer expired?
+    {
+        m_State = DNS_STATE_TIMEOUT;
+        if(m_pCallback != nullptr)
+        {
+            m_pCallback(false, IP_ADDRESS(0,0,0,0));
+        }
+
+        return true;
+    }
+
+    DNS_Header_t* pRX = (DNS_Header_t*)pMemoryPool->Alloc(sizeof(DNS_Header_t), MEM_DBG_DNSRX);         // Try one non-blocking receive
+
+    if(pRX == nullptr)
+    {
+        return false;                                                                                   // Cannot process this tick
+    }
+
+    size_t       BytesReceived = 0;
+    SocketInfo_t Source;
+    SystemState_e State = m_pSocket->RecvFrom((uint8_t*)pRX, sizeof(DNS_Header_t), &Source, &BytesReceived);
+    bool Done = false;
+
+    if((State == SYS_READY) && (BytesReceived >= DNS_HEADER_SIZE))
+    {
+        if(ParseResponse(pRX, BytesReceived))
+        {
+            m_State = DNS_STATE_RESPONSE_RECEIVED;
+            nOS_TimerStop(&m_TimerQuery, true);
+
+            if(m_pCallback != nullptr)
+            {
+                m_pCallback(true, m_ResolvedIP);
+            }
+
+            Done = true;
+        }
+    }
+
+    pMemoryPool->Free((void**)&pRX);
+
+    return Done;
+}
+*/
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Resolve
 //
-//  Parameter(s):   const char*     pDomainName     Domain name to resolve
-//                  IP_Address_t*   pOutIP          Pointer to store the resolved IP address
+//  Parameter(s):   const char*       pDomainName     Domain name to resolve
+//                  DNS_Callback_t    pCallback       Callback invoked when resolution completes
 //
-//  Return:         bool                            true if resolution succeeded
+//  Return:         bool                                true if the DNS query was successfully
+//                                                      initiated (not resolved yet)
 //
-//  Description:    Resolve a domain name using DNS. This function sends a DNS query to the
-//                  configured DNS server, waits for the response, parses the first valid A
-//                  record, and returns the resolved IPv4 address.
+//  Description:    Initiates an asynchronous DNS resolution. This function allocates a UDP
+//                  socket, builds and sends a DNS query to the configured DNS server, stores the
+//                  user callback, clears any previous result, and starts the internal timeout
+//                  timer.
+//
+//                  This function does NOT wait for the response. The DNS transaction continues
+//                  inside Process(), which will invoke the callback upon success or timeout.
 //
 //-------------------------------------------------------------------------------------------------
-bool DNS_Client::Resolve(const char* pDomainName, IP_Address_t* pOutIP)
+bool DNS_Client::Resolve(const char* pDomainName, DNS_Callback_t pCallback)
 {
-    if((pDomainName == nullptr) || (pOutIP == nullptr))
+    if(pDomainName == nullptr)
     {
         return false;
     }
@@ -160,90 +300,88 @@ bool DNS_Client::Resolve(const char* pDomainName, IP_Address_t* pOutIP)
         return false;
     }
 
-    bool Result = ReceiveResponse(pOutIP);
-    pSocketManager->FreeSocket(&m_pSocket);
-    return Result;
+    m_ResolvedIP = 0;                                                                                   // Clear previous result
+    m_pCallback  = pCallback;                                                                           // Store callback
+    nOS_TimerStart(&m_TimerQuery);
+
+    return true;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SendQuery
 //
-//  Parameter(s):   const char*        pDomainName     Domain name to encode into the DNS query
+//  Parameter(s):   const char*     pDomainName     Domain name to encode into the DNS query
 //
-//  Return:         bool                                true if the query was sent successfully
+//  Return:         bool                              true if the DNS query was successfully
+//                                                    transmitted to the DNS server
 //
-//  Description:    Build and transmit a DNS query message to the active DNS server using UDP.
-//                  The function does not wait for a response; it only handles packet creation
-//                  and transmission.
+//  Description:    Builds a DNS query message into a temporary TX buffer, sends it to the active
+//                  DNS server using the UDP socket, and starts the response wait timer. This
+//                  function does not wait for a reply; it only transmits the request.
 //
 //-------------------------------------------------------------------------------------------------
 bool DNS_Client::SendQuery(const char* pDomainName)
 {
-    uint8_t Packet[DNS_MAX_PACKET_SIZE];
-    size_t  Length = BuildDNS_Query(Packet, pDomainName);
+    DNS_Header_t* pTX = (DNS_Header_t*)pMemoryPool->AllocAndClear(sizeof(DNS_Header_t), MEM_DBG_DNSTX);
+
+    if(pTX == nullptr)
+    {
+      #if (IP_DBG_DNS == DEF_ENABLED)
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: Failed to allocate TX buffer\n");
+      #endif
+        return false;
+    }
+
+    size_t Length = BuildDNS_Query(pTX, pDomainName);
 
     SocketInfo_t Destination;
     Destination.Address = m_pContext->GetActiveDNS_IP();
     Destination.Port    = DNS_PORT;
-    size_t BytesSent    = 0;
-    SystemState_e State = m_pSocket->SendTo(Packet, Length, &Destination, &BytesSent);
-    return ((State == SYS_READY) && (BytesSent == Length));
-}
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           ReceiveResponse
-//
-//  Parameter(s):   IP_Address_t*      pOutIP          Pointer to store the resolved IPv4 address
-//
-//  Return:         bool                                true if a valid DNS response was received
-//
-//  Description:    Poll the UDP socket for a DNS response. If a valid response is received,
-//                  the function forwards the packet to the DNS parser. A timeout mechanism is
-//                  used to avoid blocking indefinitely.
-//
-//-------------------------------------------------------------------------------------------------
-bool DNS_Client::ReceiveResponse(IP_Address_t* pOutIP)
-{
-    uint8_t      Buffer[DNS_MAX_PACKET_SIZE];
-    size_t       BytesReceived = 0;
-    SocketInfo_t Source;
+    size_t        BytesSent = 0;
+    SystemState_e State     = m_pSocket->SendTo((uint8_t*)pTX, Length, &Destination, &BytesSent);
 
-    // Poll for up to ~1 second (1000 × 1ms)
-    for(int i = 0; i < DNS_RESPONSE_TIME_OUT; i++)
+    bool Status = ((State == SYS_READY) && (BytesSent == Length));
+
+    if(Status == true)
     {
-        SystemState_e State = m_pSocket->RecvFrom(Buffer, sizeof(Buffer), &Source, &BytesReceived);
-
-        if((State == SYS_READY) && (BytesReceived >= sizeof(DNS_Header_t)))
-        {
-            return ParseResponse(Buffer, BytesReceived, pOutIP);
-        }
-
-        nOS_Sleep(1);
+        m_State = DNS_STATE_WAIT_RESPONSE;
+        nOS_TimerStart(&m_TimerQuery);
+      #if (IP_DBG_DNS == DEF_ENABLED)
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: Query sent (Len=%u)\n", (unsigned)Length);
+      #endif
+    }
+    else
+    {
+      #if (IP_DBG_DNS == DEF_ENABLED)
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: SendTo failed (State=%d, Sent=%u)\n", State, (unsigned)BytesSent);
+      #endif
     }
 
-    return false;
+    pMemoryPool->Free((void**)&pTX);
+    return Status;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           ParseResponse
 //
-//  Parameter(s):   uint8_t*           pPacket         Pointer to the received DNS packet
-//                  size_t             Length          Length of the received packet
-//                  IP_Address_t*      pOutIP          Pointer to store the resolved IPv4 address
+//  Parameter(s):   DNS_Header_t*   pMsg            Pointer to the received DNS message buffer
+//                  size_t          PacketLength    Total number of bytes received
 //
-//  Return:         bool                                true if a valid A record was found
+//  Return:         bool                              true if a valid IPv4 A record was found
 //
-//  Description:    Parse a DNS response packet. The function validates the header, skips the
-//                  question section, iterates through the answer records, and extracts the first
-//                  IPv4 address (A record) if present.
+//  Description:    Parses a DNS response message. This function validates the transaction ID,
+//                  skips the question section, and iterates through the answer records to locate
+//                  the first valid IPv4 A record. When found, the resolved address is written
+//                  directly into m_ResolvedIP. The function returns true only when a valid A
+//                  record is extracted.
 //
 //-------------------------------------------------------------------------------------------------
-bool DNS_Client::ParseResponse(uint8_t* pPacket, size_t PacketLength, IP_Address_t* pOutIP)
+bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength)
 {
-    DNS_Header_t* pHeader = (DNS_Header_t*)pPacket;
+    DNS_Header_t* pHeader = pMessage;
 
     if(pHeader->ID != m_LastID)                                             // Validate transaction ID
     {
@@ -252,7 +390,9 @@ bool DNS_Client::ParseResponse(uint8_t* pPacket, size_t PacketLength, IP_Address
 
     uint16_t QuestionCount = ntohs(pHeader->QDCount);
     uint16_t AnswerCount   = ntohs(pHeader->ANCount);
-    uint8_t* pRead         = pPacket + sizeof(DNS_Header_t);
+
+    uint8_t* pRead = (uint8_t*)pMessage;
+    pRead += DNS_HEADER_SIZE;                                               // Skip fixed header
 
     while(QuestionCount--)                                                  // Skip Question Section
     {
@@ -262,12 +402,13 @@ bool DNS_Client::ParseResponse(uint8_t* pPacket, size_t PacketLength, IP_Address
             pRead += (LabelLength + 1);
         }
 
-        pRead += (1 + sizeof(uint16_t) + sizeof(uint16_t));                 // Skip null + QTYPE + QCLASS
+        pRead += (1 + sizeof(uint16_t) + sizeof(uint16_t));                 // Skip terminating zero + QTYPE + QCLASS
     }
 
     while(AnswerCount--)                                                    // Parse Answer Section
     {
-        if((*pRead & DNS_LABEL_POINTER_FLAG) == DNS_LABEL_POINTER_FLAG)     // Skip Name (either pointer or full label)
+        // Name (pointer or full label)
+        if((*pRead & DNS_LABEL_POINTER_FLAG) == DNS_LABEL_POINTER_FLAG)
         {
             pRead += 2;                                                     // Pointer is always 2 bytes
         }
@@ -282,18 +423,22 @@ bool DNS_Client::ParseResponse(uint8_t* pPacket, size_t PacketLength, IP_Address
             pRead++;                                                        // Skip terminating zero
         }
 
-        uint16_t Type = ntohs(*(uint16_t*)pRead);                           // Read Type
-        pRead += sizeof(uint16_t);                                          // Type (2 bytes)
-        uint16_t Class = ntohs(*(uint16_t*)pRead);                          // Read Class
-        pRead += (sizeof(uint16_t) + sizeof(uint32_t));                     // Class (2 bytes) + Skip TTL (4 bytes)
-        uint16_t DataLength = ntohs(*(uint16_t*)pRead);                     // Read DataLength
-        pRead += sizeof(uint16_t);                                          // DataLenght (2 bytes)
+        uint16_t Type = ntohs(*(uint16_t*)pRead);
+        pRead += sizeof(uint16_t);
 
-        if((Type == DNS_TYPE_A) && (Class == DNS_CLASS_IN) && (DataLength == DNS_RECEIVE_DATA_LENGHT))
-        {                                                                   // Check for IPv4 A record
+        uint16_t Class = ntohs(*(uint16_t*)pRead);
+        pRead += sizeof(uint16_t);
+
+        pRead += sizeof(uint32_t);                                          // Skip TTL
+
+        uint16_t DataLength = ntohs(*(uint16_t*)pRead);
+        pRead += sizeof(uint16_t);
+
+        if((Type == DNS_TYPE_A) && (Class == DNS_CLASS_IN) && (DataLength == DNS_RECEIVE_DATA_LENGTH))
+        {
             uint32_t RawIP;
             memcpy(&RawIP, pRead, sizeof(uint32_t));
-            *pOutIP = ntohl(RawIP);
+            m_ResolvedIP = ntohl(RawIP);
             return true;
         }
 
@@ -307,7 +452,7 @@ bool DNS_Client::ParseResponse(uint8_t* pPacket, size_t PacketLength, IP_Address
 //
 //  Name:           BuildDNS_Query
 //
-//  Parameter(s):   uint8_t*           pOut            Pointer to output buffer for DNS message
+//  Parameter(s):   DNS_Header_t*      pMessage        Pointer to output buffer for DNS message
 //                  const char*        pDomainName     Domain name to encode
 //
 //  Return:         size_t                             Total size of the encoded DNS query
@@ -317,9 +462,9 @@ bool DNS_Client::ParseResponse(uint8_t* pPacket, size_t PacketLength, IP_Address
 //                  the QTYPE and QCLASS fields. This function performs no memory allocation.
 //
 //-------------------------------------------------------------------------------------------------
-size_t DNS_Client::BuildDNS_Query(uint8_t* pOut, const char* pDomainName)
+size_t DNS_Client::BuildDNS_Query(DNS_Header_t* pMessage, const char* pDomainName)
 {
-    DNS_Header_t* pHeader = (DNS_Header_t*)pOut;
+    DNS_Header_t* pHeader = (DNS_Header_t*)pMessage;
 
     m_LastID         = (uint16_t)RNG_GetRandom();
     pHeader->ID      = htons(m_LastID);
@@ -329,7 +474,7 @@ size_t DNS_Client::BuildDNS_Query(uint8_t* pOut, const char* pDomainName)
     pHeader->NSCount = 0;
     pHeader->ARCount = 0;
 
-    uint8_t*    pWrite    = pOut + sizeof(DNS_Header_t);
+    uint8_t*    pWrite    = &pMessage->Payload[0];
     const char* pSegment  = pDomainName;
 
     while(*pSegment)
@@ -356,7 +501,7 @@ size_t DNS_Client::BuildDNS_Query(uint8_t* pOut, const char* pDomainName)
     *((uint16_t*)pWrite) = htons(DNS_CLASS_IN);
     pWrite += sizeof(uint16_t);
 
-    return (size_t)(pWrite - pOut);
+    return (size_t)(DNS_HEADER_SIZE + (pWrite - &pMessage->Payload[0]));
 }
 
 //-------------------------------------------------------------------------------------------------

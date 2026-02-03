@@ -58,7 +58,7 @@
 #define DHCP_SERVER_PORT                        67
 #define DHCP_CLIENT_PORT                        68
 
-#define DHCP_HARDWARE_ADDRESS_LENGHT            0x06
+#define DHCP_HARDWARE_ADDRESS_LENGTH            0x06
 
 #define DHCP_MAGIC_COOKIE                       0x63825363
 #define DHCP_FLAGS_BROADCAST                    0x8000

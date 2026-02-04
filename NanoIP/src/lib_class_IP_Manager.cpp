@@ -213,7 +213,15 @@ void IP_Manager::Run(void)
       #endif
 
     #if (IP_USE_DNS == DEF_ENABLED)
-        if(m_DNS.IsBusy())
+        if((m_DNS_Request.Pending == true) && (m_DNS.IsBusy() == false))                        // Start DNS query if requested
+        {
+            m_DNS_Request.Pending = false;
+            m_DNS.SetCallback(&IP_Manager::DNS_StaticCallback, this);                           // Register static callback with context = this
+            m_DNS_Request.Busy = true;
+            m_DNS.SendQuery(m_DNS_Request.pHostName);
+        }
+
+        if(m_DNS.IsBusy())                                                                      // Pump DNS state machine if busy
         {
             m_DNS.Process();
         }
@@ -289,62 +297,6 @@ void IP_Manager::Run(void)
         }
 
         nOS_Sleep(1);
-
-            // ---------------------------------------------------------
-    // TEST SECTION: DNS Query (runs only once)
-    // ---------------------------------------------------------
-#if IP_USE_DNS == DEF_ENABLED
-    static bool TestStarted = false;
-    static bool TestDone    = false;
-
-    if(!TestStarted)
-    {
-        TestStarted = true;
-
-        // Use DNS server from NetworkContext (DHCP or static)
-        IP_Address_t dnsServer = m_Context.GetActiveDNS_IP();
-
-        printf("DNS Test: Using DNS server %u.%u.%u.%u\n",
-               dnsServer.Byte[0],
-               dnsServer.Byte[1],
-               dnsServer.Byte[2],
-               dnsServer.Byte[3]);
-
-        // Tell DNS client which server to use
-        m_DNS.SetDNSServer(dnsServer);
-
-        // Register callback
-        m_DNS.SetCallback([](bool Success, IP_Address_t ResolvedIP)
-        {
-            if(Success)
-            {
-                printf("DNS resolved: %u.%u.%u.%u\n",
-                       ResolvedIP.Byte[0],
-                       ResolvedIP.Byte[1],
-                       ResolvedIP.Byte[2],
-                       ResolvedIP.Byte[3]);
-            }
-            else
-            {
-                printf("DNS resolution failed\n");
-            }
-        });
-
-        // Start query
-        m_DNS.Query("www.example.com");
-    }
-
-    // Pump DNS state machine until done
-    if(TestStarted && !TestDone)
-    {
-        if(m_DNS.Process())
-        {
-            TestDone = true;
-            printf("DNS test completed\n");
-        }
-    }
-#endif
-}
 
     }
 }
@@ -457,8 +409,22 @@ SystemState_e IP_Manager::SendPacket(IP_PacketMsg_t* pMsg)
         }
     }
 
-    // Hand off to interface context (driver callback)
-    return m_Context.SendPacket(pMsg);
+    return m_Context.SendPacket(pMsg);                                  // Hand off to interface context (driver callback)
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           GetHost
+//
+//  Parameter(s):   void
+//  Return:         IP_Address_t   Host IP
+//
+//  Description:    Return host IP address according to configuration
+//
+//-------------------------------------------------------------------------------------------------
+IP_Address_t IP_Manager::GetHost(void)
+{
+    return m_Context.GetActiveIP();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -478,18 +444,106 @@ IP_Address_t IP_Manager::GetDNS(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           GetHost
+//  Name:           RequestDNS
 //
-//  Parameter(s):   void
-//  Return:         IP_Address_t   Host IP
+//  Parameter(s):   const char*     pHostName   Null-terminated domain name to resolve.
+//                  DNS_Callback_t  pCallback   Application-provided function to receive the DNS
+//                                              result once the resolution completes. The callback
+//                                              is invoked asynchronously from within the IP_Manager
+//                                               task context.
 //
-//  Description:    Return host IP address according to configuration
+//  Return:         bool
+//                      - true  : DNS request accepted and queued for processing.
+//                      - false : A DNS query is already in progress; caller must retry later.
+//
+//  Description:    Submits an asynchronous DNS resolution request to the IP_Manager. The
+//                  function does not perform any network activity directly; instead, it
+//                  records the request and returns immediately. The actual DNS transaction
+//                  is initiated and processed inside the IP_Manager::Run() task.
+//
+//                  Only one DNS request may be active at a time. If a query is already in
+//                  progress, the function returns false and the caller must wait for the
+//                  current request to complete before issuing another.
 //
 //-------------------------------------------------------------------------------------------------
-IP_Address_t IP_Manager::GetHost(void)
+ #if (IP_USE_DNS == DEF_ENABLED)
+bool IP_Manager::RequestDNS(const char* pHostName, DNS_Callback_t pCallback)
 {
-    return m_Context.GetActiveIP();
+    if(m_DNS_Request.Busy)                          // Simple mutex: only one DNS request at a time
+    {
+        return false;                               // DNS already running
+    }
+
+    m_DNS_Request.pHostName = pHostName;
+    m_DNS_Request.pCallback = pCallback;
+    m_DNS_Request.Pending   = true;
+    m_DNS_Request.Busy      = true;
+    return true;
 }
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           OnDNS_Completed
+//
+//  Parameter(s):   bool            Success     Indicates whether the DNS resolution succeeded.
+//
+//                  IP_Address_t    ResolvedIP  The resolved IPv4 address when Success is true.
+//                                              Undefined when Success is false.
+//
+//  Return:         void
+//
+//  Description:    Internal completion handler for DNS queries initiated through the
+//                  IP_Manager DNS request bridge. This function is invoked by the static
+//                  DNS callback wrapper once the DNS client finishes processing a query.
+//
+//                  The function forwards the result to the application-provided callback
+//                  (if registered) and releases the DNS request lock, allowing new DNS
+//                  requests to be issued.
+//
+//-------------------------------------------------------------------------------------------------
+void IP_Manager::OnDNS_Completed(bool Success, IP_Address_t ResolvedIP)
+{
+    if(m_DNS_Request.pCallback)                         // Forward to application
+    {
+        m_DNS_Request.pCallback(this, Success, ResolvedIP);
+    }
+
+    m_DNS_Request.Busy = false;                         // Release the mutex
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           DNS_StaticCallback
+//
+//  Parameter(s):   void*           pContext    Pointer to the IP_Manager instance that initiated
+//                                              the DNS request. Used to route the completion event
+//                                              back to the correct object.
+//                  bool            Success     Indicates whether the DNS resolution completed
+//                                              successfully.
+//                  IP_Address_t    ResolvedIP  The resolved IPv4 address when Success is true.
+//                                              Undefined when Success is false.
+//
+//  Return:         void
+//
+//  Description:    Static wrapper function used by the DNS client to report completion of a DNS
+//                  query. Because the DNS client operates with a generic callback signature,
+//                  this function provides the necessary bridge to instance-level handling.
+//
+//                  The function casts the context pointer back to an IP_Manager object and
+//                  forwards the result to the instance method OnDNS_Completed(), which performs
+//                  final processing and releases the DNS request lock.
+//
+//-------------------------------------------------------------------------------------------------
+void IP_Manager::DNS_StaticCallback(void* pContext, bool Success, IP_Address_t ResolvedIP)
+{
+    IP_Manager* pIP_Manager = static_cast<IP_Manager*>(pContext);
+
+    if(pIP_Manager != nullptr)
+    {
+        pIP_Manager->OnDNS_Completed(Success, ResolvedIP);
+    }
+}
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -813,6 +867,7 @@ uint16_t IP_Manager::IP_CalculateChecksum(const void* pBuffer, uint16_t Count)
 
     return (uint16_t)~Sum;
 }
+
 uint16_t IP_Manager::UDP_CalculateChecksum(IP_Header_t* pIP, UDP_Header_t* pUDP, uint16_t UDP_Length)
 {
     uint32_t Sum = 0;

@@ -105,11 +105,12 @@
 //-------------------------------------------------------------------------------------------------
 void DNS_Client::Initialize(NetworkContext* pContext)
 {
-    m_pContext = pContext;
-    m_pSocket  = nullptr;
-    m_LastID   = 0;
-    m_State    = DNS_STATE_IDLE;
-
+    m_pContext         = pContext;
+    m_pCallbackContext = nullptr;
+    m_pCallback        = nullptr;
+    m_pSocket          = nullptr;
+    m_LastID           = 0;
+    m_State            = DNS_STATE_IDLE;
     nOS_TimerCreate(&m_TimerQuery, nullptr, nullptr, DNS_RESPONSE_TIME_OUT, NOS_TIMER_ONE_SHOT);
 }
 
@@ -151,14 +152,13 @@ bool DNS_Client::Process(void)
 
         if(m_pCallback != nullptr)
         {
-            m_pCallback(false, IP_ADDRESS(0,0,0,0));
+            m_pCallback(m_pCallbackContext, false, IP_ADDRESS(0,0,0,0));
         }
 
         return true;
     }
 
-    // Zero-copy receive
-    IP_PacketMsg_t* pMsg = nullptr;
+    IP_PacketMsg_t* pMsg = nullptr;                                 // Zero-copy receive
     SystemState_e State = m_pSocket->RecvFrom(&pMsg);
 
     if(State != SYS_READY)
@@ -181,7 +181,7 @@ bool DNS_Client::Process(void)
 
             if(m_pCallback != nullptr)
             {
-                m_pCallback(true, m_ResolvedIP);
+                m_pCallback(m_pCallbackContext, true, m_ResolvedIP);
             }
 
             Done = true;
@@ -193,57 +193,6 @@ bool DNS_Client::Process(void)
 
     return Done;
 }
-/*bool DNS_Client::Process(void)
-{
-    if(m_State != DNS_STATE_WAIT_RESPONSE)
-    {
-        return true;                                                                                    // Already finished (success or timeout)
-    }
-
-    if(nOS_TimerIsRunning(&m_TimerQuery) == false)                                                      // Timer expired?
-    {
-        m_State = DNS_STATE_TIMEOUT;
-        if(m_pCallback != nullptr)
-        {
-            m_pCallback(false, IP_ADDRESS(0,0,0,0));
-        }
-
-        return true;
-    }
-
-    DNS_Header_t* pRX = (DNS_Header_t*)pMemoryPool->Alloc(sizeof(DNS_Header_t), MEM_DBG_DNSRX);         // Try one non-blocking receive
-
-    if(pRX == nullptr)
-    {
-        return false;                                                                                   // Cannot process this tick
-    }
-
-    size_t       BytesReceived = 0;
-    SocketInfo_t Source;
-    SystemState_e State = m_pSocket->RecvFrom((uint8_t*)pRX, sizeof(DNS_Header_t), &Source, &BytesReceived);
-    bool Done = false;
-
-    if((State == SYS_READY) && (BytesReceived >= DNS_HEADER_SIZE))
-    {
-        if(ParseResponse(pRX, BytesReceived))
-        {
-            m_State = DNS_STATE_RESPONSE_RECEIVED;
-            nOS_TimerStop(&m_TimerQuery, true);
-
-            if(m_pCallback != nullptr)
-            {
-                m_pCallback(true, m_ResolvedIP);
-            }
-
-            Done = true;
-        }
-    }
-
-    pMemoryPool->Free((void**)&pRX);
-
-    return Done;
-}
-*/
 
 //-------------------------------------------------------------------------------------------------
 //

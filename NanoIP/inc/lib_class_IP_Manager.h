@@ -104,13 +104,25 @@
 #endif
 
 //-------------------------------------------------------------------------------------------------
-// Typedef(s)
+// Enum(s)
 //-------------------------------------------------------------------------------------------------
 
 enum IF_ID_e
 {
     IF_ETH_DEF(EXPAND_X_IF_AS_ENUM)
     IP_NUMBER_OF_INTERFACE,
+};
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+struct DNS_Request_t
+{
+    bool Pending             = false;               // App requested a DNS lookup
+    bool Busy                = false;               // DNS client is currently running a query
+    const char* pHostName    = nullptr;
+    DNS_Callback_t pCallback = nullptr;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -135,9 +147,11 @@ class IP_Manager
 
         SystemState_e       SendPacket                  (IP_PacketMsg_t* pMsg);
 
+      #if (IP_USE_DNS == DEF_ENABLED)
+        bool                RequestDNS                  (const char* pHostName, DNS_Callback_t Callback);
+      #endif
 
-
-      #if IP_USE_RAW == DEF_ENABLED
+      #if (IP_USE_RAW == DEF_ENABLED)
         bool                RAW_RegisterSocket          (Socket* pSock, uint8_t Protocol)   { return m_RAW.RegisterSocket(pSock, Protocol); }
         void                RAW_UnregisterSocket        (uint8_t Protocol)                  { m_RAW.UnregisterSocket(Protocol); }
         SystemState_e       RAW_Send                    (RAW_Socket_t* pSock,
@@ -147,12 +161,12 @@ class IP_Manager
                                                          size_t* pBytesSent)                { return m_RAW.Send(pSock, pData, Length, pDestInfo, pBytesSent); }
       #endif
 
-      #if IP_USE_TCP == DEF_ENABLED
+      #if (IP_USE_TCP == DEF_ENABLED)
         SystemState_e       TCP_EnterListen             (Socket* pSock, uint16_t Backlog)   { return m_TCP.EnterListen(pSock, Backlog); }
         void                TCP_Close                   (Socket* pSock)                     { m_TCP.Close(pSock); }
       #endif
 
-      #if IP_USE_UDP == DEF_ENABLED
+      #if (IP_USE_UDP == DEF_ENABLED)
         IP_Port_t           UDP_AllocateEphemeralPort   (void)                              { return m_UDP.AllocateEphemeralPort(); }
         bool                UDP_RegisterSocket          (Socket* pSock, IP_Port_t Port)     { return m_UDP.RegisterSocket(pSock, Port); }
         void                UDP_UnregisterSocket        (IP_Port_t Port)                    { m_UDP.UnregisterSocket(Port); }
@@ -171,6 +185,9 @@ class IP_Manager
 
     private:
 
+        static void         DNS_StaticCallback          (void* pContext, bool Success, IP_Address_t ResolvedIP);
+        void                OnDNS_Completed             (bool Success, IP_Address_t ResolvedIP);
+
         NetworkContext                  m_Context;
         ETH_IF_Driver                   m_IF_Driver;
         bool                            m_DNS_IP_Found;
@@ -186,6 +203,7 @@ class IP_Manager
 
       #if (IP_USE_DNS == DEF_ENABLED)
         DNS_Client                      m_DNS;                                  // Domain name system Protocol. Need UDP
+        DNS_Request_t                   m_DNS_Request;
       #endif
 
       #if (IP_USE_ICMP == DEF_ENABLED)
@@ -227,17 +245,9 @@ class IP_Manager
         IP_ETH_Config_t*                m_pEthernetIF;                          // Ethernet Configuration
         static const IP_Config_t        m_Config[IP_NUMBER_OF_INTERFACE];
         uint16_t                        m_SequenceID;
-
         nOS_Thread                      m_Handle;
-
         SocketManager                   m_SocketManager;
 };
-
-//-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "ip_var.h"         // Project variable
 
 //-------------------------------------------------------------------------------------------------
 

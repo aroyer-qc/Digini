@@ -452,12 +452,25 @@ bool DHCPv4_Client::Discover(void)
 //
 //  Name:           Request
 //
-//  Parameter(s):   void
-//  Return:         bool
+//  Parameter(s):   None
 //
-//  Description:    Send back and Ack
+//  Return:         bool    - true  : DHCP REQUEST message was successfully transmitted
+//                          - false : Failed to allocate TX buffer or socket transmission error
 //
-//  Note(s):        this command is use after an offer and we it is time for lease renewal
+//  Description:    Builds and transmits a DHCP REQUEST message. This function is used in two
+//                  scenarios:
+//
+//                      1) After receiving a DHCPOFFER (SELECTING → REQUESTING)
+//                         - The client broadcasts a REQUEST to accept the offered lease.
+//                         - The message includes the Requested IP Address option.
+//
+//                      2) During lease renewal (BOUND → RENEWING)
+//                         - The client unicasts a REQUEST directly to the DHCP server.
+//                         - The message includes the Server Identifier option.
+//
+//                  The function constructs the DHCP header, appends the appropriate option set,
+//                  selects the correct destination address (broadcast or unicast), and sends the
+//                  packet using the UDP socket. The transmit buffer is freed after sending.
 //
 //-------------------------------------------------------------------------------------------------
 bool DHCPv4_Client::Request(void)
@@ -500,27 +513,24 @@ bool DHCPv4_Client::Request(void)
     size_t PacketLength = DHCP_HEADER_SIZE + Length;
 
     // Select destination: broadcast for initial REQUEST, unicast for renewal
-    SocketInfo_t Dest;
+    SocketInfo_t Destination;
 
     if(m_State < DHCP_STATE_BOUND)
     {
         // Initial REQUEST -> broadcast
-        Dest.Address = IP_ADDRESS(255,255,255,255);
+        Destination.Address = IP_ADDRESS(255,255,255,255);
     }
     else
     {
         // Renewal REQUEST -> unicast to DHCP server
-        Dest.Address = m_pContext->GetDHCP_ServerIP();
+        Destination.Address = htonl(m_pContext->GetDHCP_ServerIP());
     }
 
-    Dest.Port = DHCP_SERVER_PORT;
+    Destination.Port = DHCP_SERVER_PORT;
 
     // Send DHCP REQUEST
     size_t BytesSent = 0;
-    SystemState_e Error = m_pSocket->SendTo((uint8_t*)pTX,
-                                            PacketLength,
-                                            &Dest,
-                                            &BytesSent);
+    SystemState_e Error = m_pSocket->SendTo((uint8_t*)pTX, PacketLength, &Destination, &BytesSent);
 
     if((Error != SYS_READY) || (BytesSent == 0))
     {
@@ -585,11 +595,11 @@ void DHCPv4_Client::ParseOffer(DHCP_Msg_t* pRX)
 void DHCPv4_Client::IsBound(void)
 {
     // Update interface context
-    m_pContext->SetDHCP_IP(m_Options.ClientIP);
-    m_pContext->SetDHCP_SubnetMask(m_Options.SubnetMaskIP);
-    m_pContext->SetDHCP_GatewayIP(m_Options.GatewayIP);
-    m_pContext->SetDHCP_DNS_IP(m_Options.DNS_ServerIP);
-    m_pContext->SetDHCP_ServerIP(m_Options.ServerIP);
+    m_pContext->SetDHCP_IP(ntohl(m_Options.ClientIP));
+    m_pContext->SetDHCP_SubnetMask(ntohl(m_Options.SubnetMaskIP));
+    m_pContext->SetDHCP_GatewayIP(ntohl(m_Options.GatewayIP));
+    m_pContext->SetDHCP_DNS_IP(ntohl(m_Options.DNS_ServerIP));
+    m_pContext->SetDHCP_ServerIP(ntohl(m_Options.ServerIP));
 
     // Mark interface as valid
     m_pContext->SetIP_Valid(true);

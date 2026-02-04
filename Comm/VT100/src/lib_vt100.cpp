@@ -1297,10 +1297,10 @@ void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t SizeX, uint8_t 
     {
         SetForeColor(ForeColor);
         InMenuPrintf(PosX, PosY, LBL_CHAR, ASCII_EXT_TL_CORNER_CHAR);
-        DrawHline(PosX + 1, PosY, SizeX - 2, ForeColor);
+        DrawHline(PosX + 1, PosY, SizeX - 3, ForeColor);
         InMenuPrintf(LBL_CHAR, ASCII_EXT_TR_CORNER_CHAR);
 
-        // We draw  vertical line and also clear indise the box
+        // We draw  vertical line and also clear inside the box
         for(uint8_t i = 0; i < (SizeY - 2); i++)
         {
             InMenuPrintf(PosX, ++PosY, LBL_CHAR, ASCII_EXT_VERTICAL_CHAR);
@@ -1315,7 +1315,7 @@ void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t SizeX, uint8_t 
         }
 
         InMenuPrintf(PosX, ++PosY, LBL_CHAR, ASCII_EXT_BL_CORNER_CHAR);
-        DrawHline(PosX + 1, PosY, SizeX - 2, ForeColor);
+        DrawHline(PosX + 1, PosY, SizeX - 3, ForeColor);
         InMenuPrintf(LBL_CHAR, ASCII_EXT_BR_CORNER_CHAR);
     }
 }
@@ -1531,8 +1531,8 @@ void VT100_Terminal::LogInitialize(int PosX, int PosY, int SizeX, int SizeY)
     DrawBox(PosX, PosY, SizeX, SizeY);
     m_LogWindowLeft   = PosX + 1;
     m_LogWindowTop    = PosY + 1;
-    m_LogWindowWidth  = ((SizeX < VT100_LOG_COLUMNS) ? SizeX : VT100_LOG_COLUMNS) - 2;
-    m_LogWindowHeight = ((SizeY < VT100_LOG_LINES)   ? SizeY : VT100_LOG_LINES) - 2;
+    m_LogWindowWidth  = ((SizeX < VT100_LOG_COLUMNS) ? SizeX - 2 : VT100_LOG_COLUMNS) - 2;
+    m_LogWindowHeight = ((SizeY < VT100_LOG_LINES)   ? SizeY - 2 : VT100_LOG_LINES)   - 2;
     m_LogRefresh      = true;
 }
 
@@ -1652,7 +1652,7 @@ void VT100_Terminal::LogDisplay(void)
 
     int LinesToShow = (m_LogCount < m_LogWindowHeight) ? m_LogCount : m_LogWindowHeight;        // Number of lines we will actually display
     int Start = m_LogHead - (LinesToShow - 1);                                                  // Compute the index of the oldest visible line
-    
+
     if(Start < 0)
     {
         Start += VT100_LOG_LINES;

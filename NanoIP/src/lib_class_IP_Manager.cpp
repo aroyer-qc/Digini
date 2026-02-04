@@ -240,7 +240,7 @@ void IP_Manager::Run(void)
                     }
 
                     uint8_t ihl = pMsg->pPacket->IP_Frame.Header.VersionIHL & 0x0F;             // Validate IHL (Internet Header Length)
-                    
+
                     if(ihl < 5)
                     {
                         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: Invalid IHL (%u)\n", ihl);
@@ -289,6 +289,63 @@ void IP_Manager::Run(void)
         }
 
         nOS_Sleep(1);
+
+            // ---------------------------------------------------------
+    // TEST SECTION: DNS Query (runs only once)
+    // ---------------------------------------------------------
+#if IP_USE_DNS == DEF_ENABLED
+    static bool TestStarted = false;
+    static bool TestDone    = false;
+
+    if(!TestStarted)
+    {
+        TestStarted = true;
+
+        // Use DNS server from NetworkContext (DHCP or static)
+        IP_Address_t dnsServer = m_Context.GetActiveDNS_IP();
+
+        printf("DNS Test: Using DNS server %u.%u.%u.%u\n",
+               dnsServer.Byte[0],
+               dnsServer.Byte[1],
+               dnsServer.Byte[2],
+               dnsServer.Byte[3]);
+
+        // Tell DNS client which server to use
+        m_DNS.SetDNSServer(dnsServer);
+
+        // Register callback
+        m_DNS.SetCallback([](bool Success, IP_Address_t ResolvedIP)
+        {
+            if(Success)
+            {
+                printf("DNS resolved: %u.%u.%u.%u\n",
+                       ResolvedIP.Byte[0],
+                       ResolvedIP.Byte[1],
+                       ResolvedIP.Byte[2],
+                       ResolvedIP.Byte[3]);
+            }
+            else
+            {
+                printf("DNS resolution failed\n");
+            }
+        });
+
+        // Start query
+        m_DNS.Query("www.example.com");
+    }
+
+    // Pump DNS state machine until done
+    if(TestStarted && !TestDone)
+    {
+        if(m_DNS.Process())
+        {
+            TestDone = true;
+            printf("DNS test completed\n");
+        }
+    }
+#endif
+}
+
     }
 }
 
@@ -349,24 +406,54 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
     }
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SendPacket
+//
+//  Parameter(s):   IP_PacketMsg_t* pMsg    Pointer to a fully constructed IP packet message. The
+//                                          packet must contain valid Ethernet, IP, and
+//                                          transport-layer headers. Ownership of the message
+//                                          remains with the caller unless the interface driver
+//                                          accepts it.
+//
+//  Return:         SystemState_e
+//                      SYS_READY               – Packet was successfully handed off to the
+//                                                network interface for transmission.
+//                      SYS_ARP_RESOLVE_PENDING – Destination MAC address is not yet known.
+//                                                The caller must retry once ARP resolution
+//                                                completes.
+//                      Other driver-specific error codes may be returned by the interface
+//                      context.
+//
+//  Description:    Prepares an outgoing IP packet for transmission by resolving the destination
+//                  MAC address and forwarding the packet to the active network interface.
+//
+//                  If the destination IP address is the broadcast address (255.255.255.255),
+//                  the Ethernet destination MAC is set to FF:FF:FF:FF:FF:FF.
+//
+//                  For unicast destinations, the function attempts to resolve the MAC address
+//                  through the ARP module. If ARP resolution is not yet available, the function
+//                  returns SYS_ARP_RESOLVE_PENDING and the caller is responsible for retrying.
+//
+//                  Once the destination MAC is known, the packet is handed off to the interface
+//                  context’s SendPacket() callback for actual transmission on the wire.
+//
+//-------------------------------------------------------------------------------------------------
 SystemState_e IP_Manager::SendPacket(IP_PacketMsg_t* pMsg)
 {
     IP_EthernetHeader_t* pETH = &pMsg->pPacket->ETH_Header;
     IP_Header_t*         pIP  = &pMsg->pPacket->IP_Frame.Header;
     IP_Address_t         dstIP = pIP->DstIP_Address;
 
-    // Broadcast: 255.255.255.255 -> FF:FF:FF:FF:FF:FF
-    if(dstIP == IP_ADDRESS(255,255,255,255))
+    if(dstIP == IP_ADDRESS(255,255,255,255))                            // Broadcast: 255.255.255.255 -> FF:FF:FF:FF:FF:FF
     {
         memset(pETH->DestinationMAC.Byte, 0xFF, IP_MAC_ADDRESS_SIZE);
     }
     else
     {
-        // Unicast -> resolve via ARP
-        if(m_ARP.Resolve(dstIP, &pETH->DestinationMAC) == false)
+        if(m_ARP.Resolve(dstIP, &pETH->DestinationMAC) == false)        // Unicast -> resolve via ARP
         {
-            // ARP not ready -> caller decides what to do
-            return SYS_ARP_RESOLVE_PENDING;
+            return SYS_ARP_RESOLVE_PENDING;                             // ARP not ready -> caller decides what to do
         }
     }
 
@@ -529,12 +616,10 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
     char*   pSearch1        = nullptr;
     char*   pSearch2        = nullptr;
     bool    IP_Status;
-  // uint8_t Error;
 
     *pPort = 80;                                        // Set to default port if none are found
 
     // Get Domain Name or IP ......................................................................
-
     pSearch1 = strstr(pBuffer, "http://");              // Remove the unused "http://"
 
     if(pSearch1 == pBuffer)
@@ -545,7 +630,6 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
     pDomainName = pBuffer;                              // Found the beginning of the domain name or IP
 
     // Get port number if any .....................................................................
-
     pSearch1 = strchr(pBuffer, ':');                    // Search for a port number  looking at the semicolon :
 
     if(pSearch1 != nullptr)                             // not nullptr then extract port number
@@ -584,10 +668,9 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
     }
 
     // Get URI pointer if any .....................................................................
-
     pSearch2 = pSearch1;
-
     pSearch1 = strchr(pSearch1, '/');                   // Search for separator beginning of URI
+
     if(pSearch1 != nullptr)
     {
         *pSearch1 = '\0';                               // Put nullptr at the / position for nullptr terminated 'Domain Name' string
@@ -597,8 +680,8 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
     }
 
     // Get the space at the end ..................................................................
-
     pSearch2 = strchr(pSearch2, ' ');
+
     if(pSearch2 != nullptr)
     {
         *pSearch2 = '\0';                               // Put nullptr at the 'SPACE' for a nullptr terminated string

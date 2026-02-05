@@ -361,12 +361,10 @@ bool DHCPv4_Client::Process(void)
             }
         }
 
-        // Always free the buffer
-        pMemoryPool->Free((void**)&pBuffer);
+        pMemoryPool->Free((void**)&pBuffer);                        // Always free the buffer
     }
 
-    // Return true if we are bound
-    return (m_State == DHCP_STATE_BOUND);
+    return (m_State == DHCP_STATE_BOUND);                           // Return true if we are bound
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -366,12 +366,12 @@ SystemState_e Socket::Bind(IP_Port_t Port)
         }
     }
 
-    if(m_Manager.UDP_RegisterSocket(this, Port) == false)       // Ask UDP_Protocol to register this port
+    if(m_Manager.UDP_RegisterSocket(this, ActualPort) == false) // Ask UDP_Protocol to register this port
     {
         return SYS_FAIL_PORT_IN_USE;
     }
 
-    pUDP->LocalPort = Port;                                     // Store port locally
+    pUDP->LocalPort = ActualPort;                               // Store port locally
     return SYS_READY;
 }
 
@@ -722,7 +722,7 @@ SystemState_e Socket::RecvFrom(IP_PacketMsg_t** ppMessage)
 //
 //  Name:           RecvFrom   (Buffered Variant)
 //
-//  Parameter(s):   uint8_t*        pBuffer         Pointer to the user buffer where the received 
+//  Parameter(s):   uint8_t*        pBuffer         Pointer to the user buffer where the received
 //                                                  UDP payload will be copied.
 //                  size_t          BufferSize      Size of the user buffer in bytes.
 //                  SocketInfo_t*   pSrcInfo        Optional output: source IP address, UDP port,

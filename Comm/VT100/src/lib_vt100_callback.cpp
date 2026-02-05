@@ -1186,14 +1186,14 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
             InMenuPrintf(2,  15, LBL_MAC_ADDRESS);
           #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
             InMenuPrintf(2,  18, LBL_ETH_RX_COUNT);
-            InMenuPrintf(40, 18, LBL_ETH_DROP);
+            InMenuPrintf(36, 18, LBL_ETH_DROP);
             InMenuPrintf(2,  19, LBL_ETH_TX_COUNT);
-            InMenuPrintf(40, 19, LBL_ETH_DROP);
+            InMenuPrintf(36, 19, LBL_ETH_DROP);
           #endif
             InMenuPrintf(        VT100_LBL_ESCAPE);
 
             m_pConsole->SetOverrideDebugLevel(SYS_DEBUG_LEVEL_ETHERNET);
-            LogInitialize(66, 6, 68, 40);
+            LogInitialize(56, 6, 78, 40);
             // Add Lease obtain and expire???
         }
         break;
@@ -1239,9 +1239,9 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
 
           #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
             InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, DBG_RX_Count);
-            InMenuPrintf(56, 18, LBL_LONG_UNSIGNED, DBG_RX_Drop);
+            InMenuPrintf(50, 18, LBL_LONG_UNSIGNED, DBG_RX_Drop);
             InMenuPrintf(28, 19, LBL_LONG_UNSIGNED, DBG_TX_Count);
-            InMenuPrintf(56, 19, LBL_LONG_UNSIGNED, DBG_TX_Drop);
+            InMenuPrintf(50, 19, LBL_LONG_UNSIGNED, DBG_TX_Drop);
           #endif
 
           LogDisplay();

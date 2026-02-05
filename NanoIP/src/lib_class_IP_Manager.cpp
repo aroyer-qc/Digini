@@ -218,10 +218,10 @@ void IP_Manager::Run(void)
             m_DNS_Request.Pending = false;
             m_DNS.SetCallback(&IP_Manager::DNS_StaticCallback, this);                           // Register static callback with context = this
             m_DNS_Request.Busy = true;
-            m_DNS.SendQuery(m_DNS_Request.pHostName);
+            m_DNS.Resolve(m_DNS_Request.pHostName);
         }
 
-        if(m_DNS.IsBusy())                                                                      // Pump DNS state machine if busy
+        if(m_DNS.IsBusy() == true)                                                             // Pump DNS state machine if busy
         {
             m_DNS.Process();
         }
@@ -469,7 +469,7 @@ IP_Address_t IP_Manager::GetDNS(void)
  #if (IP_USE_DNS == DEF_ENABLED)
 bool IP_Manager::RequestDNS(const char* pHostName, DNS_Callback_t pCallback)
 {
-    if(m_DNS_Request.Busy)                          // Simple mutex: only one DNS request at a time
+    if(m_DNS_Request.Busy == true)                  // Simple mutex: only one DNS request at a time
     {
         return false;                               // DNS already running
     }

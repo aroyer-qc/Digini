@@ -213,7 +213,7 @@ bool DNS_Client::Process(void)
 //                  inside Process(), which will invoke the callback upon success or timeout.
 //
 //-------------------------------------------------------------------------------------------------
-bool DNS_Client::Resolve(const char* pDomainName, DNS_Callback_t pCallback)
+bool DNS_Client::Resolve(const char* pDomainName)
 {
     if(pDomainName == nullptr)
     {
@@ -250,9 +250,7 @@ bool DNS_Client::Resolve(const char* pDomainName, DNS_Callback_t pCallback)
     }
 
     m_ResolvedIP = 0;                                                                                   // Clear previous result
-    m_pCallback  = pCallback;                                                                           // Store callback
     nOS_TimerStart(&m_TimerQuery);
-
     return true;
 }
 
@@ -413,15 +411,13 @@ bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength)
 //-------------------------------------------------------------------------------------------------
 size_t DNS_Client::BuildDNS_Query(DNS_Header_t* pMessage, const char* pDomainName)
 {
-    DNS_Header_t* pHeader = (DNS_Header_t*)pMessage;
-
     m_LastID         = (uint16_t)RNG_GetRandom();
-    pHeader->ID      = htons(m_LastID);
-    pHeader->Flags   = htons(DNS_FLAG_RD_RECURSION_DESIRED);   // Recursion desired
-    pHeader->QDCount = htons(1);
-    pHeader->ANCount = 0;
-    pHeader->NSCount = 0;
-    pHeader->ARCount = 0;
+    pMessage->ID      = htons(m_LastID);
+    pMessage->Flags   = htons(DNS_FLAG_RD_RECURSION_DESIRED);   // Recursion desired
+    pMessage->QDCount = htons(1);
+    pMessage->ANCount = 0;
+    pMessage->NSCount = 0;
+    pMessage->ARCount = 0;
 
     uint8_t*    pWrite    = &pMessage->Payload[0];
     const char* pSegment  = pDomainName;

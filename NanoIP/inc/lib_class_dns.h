@@ -58,7 +58,7 @@ class DNS_Client
 
         void                Initialize          (NetworkContext* pContext);
         bool                SendQuery           (const char* pDomainName);
-        bool                Resolve             (const char* pDomainName, DNS_Callback_t pCallback);
+        bool                Resolve             (const char* pDomainName);
         bool                Process             (void);
 
         void                SetCallback         (DNS_Callback_t pCallback, void* pContext)      { m_pCallback = pCallback; m_pCallbackContext = pContext; }

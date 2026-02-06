@@ -359,6 +359,61 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
 }
 
 //-------------------------------------------------------------------------------------------------
+//  Name:           AllocPacket
+//
+//  Parameter(s):   ppMsg           Output pointer that receives the allocated IP_PacketMsg_t
+//                                  wrapper.
+//                  PacketSize      Size of the protocol-specific packet buffer to allocate.
+//                  DebugWrapperID  Debug ID used for the wrapper allocation.
+//                  DebugPacketID   Debug ID used for the packet buffer allocation.
+//
+//  Return:         SystemState_e
+//                      SYS_READY                   Allocation successful.
+//                      SYS_INVALID_PARAMETER       ppMsg is null.
+//                      SYS_FAIL_MEMORY_ALLOCATION  One of the allocations failed.
+//
+//  Description:    Allocates a transmit packet consisting of:
+//
+//                      1) An IP_PacketMsg_t wrapper
+//                      2) A protocol-specific packet buffer (Ethernet + protocol frame)
+//
+//                  Both buffers are cleared and tagged with the provided debug IDs. If the packet
+//                  buffer allocation fails, the wrapper is automatically freed.
+//
+//                  This helper centralizes the common allocation pattern used by ARP, UDP, DHCP,
+//                  DNS, ICMP, SNTP, and TCP transmit paths.
+//
+//  Note(s):        - Caller must check the returned SystemState_e before using *ppMsg.
+//                  - On success, *ppMsg is guaranteed to be valid and ready for header construction.
+//-------------------------------------------------------------------------------------------------
+SystemState_e IP_Manager::AllocPacket(IP_PacketMsg_t** ppMsg, size_t PacketSize, MEM_DebugListOfID_e DebugWrapperID, MEM_DebugListOfID_e DebugPacketID)
+{
+    if(ppMsg == nullptr)                                                                                        // Validate output pointer
+    {
+        return SYS_INVALID_PARAMETER;
+    }
+
+    *ppMsg = nullptr;
+    IP_PacketMsg_t* pMsg = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(sizeof(IP_PacketMsg_t), DebugWrapperID); // Allocate wrapper
+
+    if(pMsg == nullptr)
+    {
+        return SYS_FAIL_MEMORY_ALLOCATION;
+    }
+
+    pMsg->pPacket = (IP_EthernetPacket_t*)pMemoryPool->AllocAndClear(PacketSize, DebugPacketID);                // Allocate packet buffer
+
+    if(pMsg->pPacket == nullptr)
+    {
+        pMemoryPool->Free((void**)&pMsg);
+        return SYS_FAIL_MEMORY_ALLOCATION;
+    }
+
+    *ppMsg = pMsg;                                                                                              // Success
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Name:           SendPacket
 //
@@ -403,7 +458,7 @@ SystemState_e IP_Manager::SendPacket(IP_PacketMsg_t* pMsg)
     }
     else
     {
-        if(m_ARP.Resolve(dstIP, &pETH->DestinationMAC) == false)        // Unicast -> resolve via ARP
+        if(m_ARP.Resolve(dstIP, &pETH->DestinationMAC, pMsg) == false)  // Unicast -> resolve via ARP and store packet for later transmission
         {
             return SYS_ARP_RESOLVE_PENDING;                             // ARP not ready -> caller decides what to do
         }

@@ -179,25 +179,18 @@ SystemState_e UDP_Protocol::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Leng
 {
     *pBytesSent = 0;
 
-    // Allocate wrapper
-    IP_PacketMsg_t* pMsg = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(sizeof(IP_PacketMsg_t), MEM_DBG_UDP);
+    size_t PacketSize = sizeof(UDP_Frame_t) + Length;                   // Compute total packet size (UDP header + payload)
 
-    if(pMsg == nullptr)
+    // Allocate wrapper + packet buffer using the new helper
+    IP_PacketMsg_t* pMsg = nullptr;
+    SystemState_e State  = m_pContext->GetIP_Manager()->AllocPacket(&pMsg, PacketSize, MEM_DBG_UDP, MEM_DBG_UDPDT);
+
+    if(State != SYS_READY)
     {
-        return SYS_FAIL_MEMORY_ALLOCATION;
+        return State;
     }
 
-    // Allocate packet buffer
-    size_t packetSize    = sizeof(UDP_Frame_t) + Length;
-    pMsg->pPacket = (IP_EthernetPacket_t*)pMemoryPool->AllocAndClear(packetSize, MEM_DBG_UDPDT);
-
-    if(pMsg->pPacket == nullptr)
-    {
-        pMemoryPool->Free((void**)&pMsg);
-        return SYS_FAIL_MEMORY_ALLOCATION;
-    }
-
-    pMsg->PacketSize = packetSize;
+    pMsg->PacketSize = PacketSize;
 
     // Build UDP header
     UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
@@ -212,7 +205,7 @@ SystemState_e UDP_Protocol::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Leng
     IP_Manager* pIP_Manager = m_pContext->GetIP_Manager();
     pIP_Manager->PutHeader(pMsg, pDestInfo->Address, UDP_Length, IP_PROTOCOL_UDP);          // Build IP header via IP_Manager
     pUDP->Checksum = pIP_Manager->UDP_CalculateChecksum(&pMsg->pPacket->IP_Frame.Header, pUDP, UDP_Length);
-    SystemState_e State = pIP_Manager->SendPacket(pMsg);
+    State = pIP_Manager->SendPacket(pMsg);
 
     if(State == SYS_READY)
     {

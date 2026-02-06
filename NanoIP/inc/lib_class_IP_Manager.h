@@ -145,6 +145,7 @@ class IP_Manager
         SocketManager*      GetSocketManager            (void)                              { return &m_SocketManager; }
         void                PutHeader                   (IP_PacketMsg_t* pTX, IP_Address_t dstIP, uint16_t payloadLength, uint8_t protocol);    // UDP=17, TCP=6
 
+        SystemState_e       AllocPacket                 (IP_PacketMsg_t** ppMsg, size_t PacketSize, MEM_DebugListOfID_e DebugWrapperID, MEM_DebugListOfID_e DebugPacketID);
         SystemState_e       SendPacket                  (IP_PacketMsg_t* pMsg);
 
       #if (IP_USE_DNS == DEF_ENABLED)

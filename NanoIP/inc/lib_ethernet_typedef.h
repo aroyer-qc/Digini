@@ -335,8 +335,9 @@ struct DNS_Frame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;                 //    14
 	IP_Header_t 			IP_Header;                  // +  20
+	UDP_Header_t			UDP_Header;                 // +   8
 	DNS_Header_t	    	Header;		                // +  12
-};                                                      // =  46 Bytes
+};                                                      // =  54 Bytes
 
 // the ICMP frame
 struct ICMP_Frame_t

@@ -163,7 +163,7 @@ bool DNS_Client::Process(void)
 
     if(State != SYS_READY)
     {
-        return false;   // No packet this tick
+        return false;                                               // No packet in this loop
     }
 
     // Access payload directly
@@ -317,12 +317,12 @@ bool DNS_Client::SendQuery(const char* pDomainName)
 //  Parameter(s):   DNS_Header_t*   pMsg            Pointer to the received DNS message buffer
 //                  size_t          PacketLength    Total number of bytes received
 //
-//  Return:         bool                              true if a valid IPv4 A record was found
+//  Return:         bool                              true if a valid 'IPv4 A' record was found
 //
 //  Description:    Parses a DNS response message. This function validates the transaction ID,
 //                  skips the question section, and iterates through the answer records to locate
-//                  the first valid IPv4 A record. When found, the resolved address is written
-//                  directly into m_ResolvedIP. The function returns true only when a valid A
+//                  the first valid 'IPv4 A' record. When found, the resolved address is written
+//                  directly into m_ResolvedIP. The function returns true only when a 'valid A'
 //                  record is extracted.
 //
 //-------------------------------------------------------------------------------------------------
@@ -354,8 +354,7 @@ bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength)
 
     while(AnswerCount--)                                                    // Parse Answer Section
     {
-        // Name (pointer or full label)
-        if((*pRead & DNS_LABEL_POINTER_FLAG) == DNS_LABEL_POINTER_FLAG)
+        if((*pRead & DNS_LABEL_POINTER_FLAG) == DNS_LABEL_POINTER_FLAG)     // Name (pointer or full label)
         {
             pRead += 2;                                                     // Pointer is always 2 bytes
         }
@@ -372,12 +371,9 @@ bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength)
 
         uint16_t Type = ntohs(*(uint16_t*)pRead);
         pRead += sizeof(uint16_t);
-
         uint16_t Class = ntohs(*(uint16_t*)pRead);
         pRead += sizeof(uint16_t);
-
         pRead += sizeof(uint32_t);                                          // Skip TTL
-
         uint16_t DataLength = ntohs(*(uint16_t*)pRead);
         pRead += sizeof(uint16_t);
 

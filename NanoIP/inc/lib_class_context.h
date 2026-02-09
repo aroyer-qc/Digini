@@ -103,8 +103,9 @@ class NetworkContext
         IP_Address_t        GetStaticDNS_IP         (void)                                      { return m_StaticDNS_IP;                                                    }
         void                SetStaticDNS_IP         (IP_Address_t DNS_IP)                       { m_StaticDNS_IP = DNS_IP;                                                  }
 
-        void                GetMAC_Address          (IP_MAC_Address_t* pMAC_Address)            { memcpy(pMAC_Address, &m_MAC_Address, IP_MAC_ADDRESS_SIZE);                }
-        void                SetMAC_Address          (const IP_MAC_Address_t* pMAC_Address)      { memcpy(&m_MAC_Address, pMAC_Address, IP_MAC_ADDRESS_SIZE);                }
+        void                GetMAC_Address          (IP_MAC_Address_t* pMAC)                    { memcpy(pMAC, &m_MAC_Address, IP_MAC_ADDRESS_SIZE);                        }
+        void                SetMAC_Address          (const IP_MAC_Address_t* pMAC)              { memcpy(&m_MAC_Address, pMAC, IP_MAC_ADDRESS_SIZE);                        }
+        bool                IsItMyMAC_Address       (const IP_MAC_Address_t* pMAC)              { return memcmp(pMAC->Byte, m_MAC_Address.Byte, IP_MAC_ADDRESS_SIZE) == 0;  }
 
         uint16_t            GetMTU                  (void)                                      { return m_MTU;                                                             }
         void                SetMTU                  (uint16_t MTU)                              { m_MTU = MTU;                                                              }

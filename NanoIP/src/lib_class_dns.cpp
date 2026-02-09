@@ -302,7 +302,7 @@ bool DNS_Client::SendQuery(const char* pDomainName)
     else
     {
       #if (IP_DBG_DNS == DEF_ENABLED)
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: SendTo failed (State=%d, Sent=%u)\n", State, (unsigned)BytesSent);
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: 'SendTo' failed (State=%d, Sent=%u)\n", State, (unsigned)BytesSent);
       #endif
     }
 
@@ -381,7 +381,7 @@ bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength)
         {
             uint32_t RawIP;
             memcpy(&RawIP, pRead, sizeof(uint32_t));
-            m_ResolvedIP = ntohl(RawIP);
+            m_ResolvedIP = RawIP;
             return true;
         }
 

@@ -102,18 +102,47 @@ void ARP_Protocol::ProcessIP(IP_PacketMsg_t* pRX)
     IP_Address_t SubnetMask = m_pContext->GetActiveSubnetMask();
     IP_Address_t ActiveIP   = m_pContext->GetActiveIP();
 
-    // Interface not configured yet -> do not learn from IP traffic
-    if((ActiveIP == 0) || (SubnetMask == 0))
+    if((ActiveIP == 0) || (SubnetMask == 0))                                // Interface not configured yet -> do not learn from IP traffic
     {
         return;
     }
 
-    IP_Address_t SourceIP = pRX->pPacket->IP_Frame.Header.SrcIP_Address;
+    IP_Address_t      DestIP   = pRX->pPacket->IP_Frame.Header.DstIP_Address;
+    IP_MAC_Address_t* pDstMAC  = &pRX->pPacket->ETH_Header.DestinationMAC;
+    IP_Manager* pIP_Manager = m_pContext->GetIP_Manager();
 
-    if((SourceIP & SubnetMask) == (ActiveIP & SubnetMask))
+
+    if(pIP_Manager->IsItMulticast(DestIP))                                  // Ignore multicast IP
     {
-        UpdateEntry(SourceIP, &pRX->pPacket->ETH_Header.SourceMAC);
+        return;
     }
+
+    if(pIP_Manager->IsItMulticastMAC(pDstMAC))                              //  Ignore multicast MAC destination
+    {
+        return;
+    }
+
+    IP_Address_t      SourceIP = pRX->pPacket->IP_Frame.Header.SrcIP_Address;
+    IP_MAC_Address_t* pSrcMAC  = &pRX->pPacket->ETH_Header.SourceMAC;
+
+    if((SourceIP == 0)                                      ||              // Ignore invalid IPs
+       (SourceIP == ActiveIP)                               ||              // Ignore our own IP
+       ((SourceIP & SubnetMask) != (ActiveIP & SubnetMask)) ||              // Ignore packets outside our subnet
+       (pIP_Manager->IsItBroadcastMAC(pSrcMAC))             ||              // Ignore broadcast MAC
+       (pIP_Manager->IsItMulticastMAC(pSrcMAC))             ||              // Ignore multicast MAC
+       (m_pContext->IsItMyMAC_Address(pSrcMAC))             ||              // Ignore our own MAC
+       (m_pContext->IsItMyMAC_Address(pDstMAC) == false))                   // Ignore destination if it is not own MAC
+    {
+        return;
+    }
+
+    // Optional: ignore spoofed packets (MAC/IP mismatch)
+    //if(ARP_Table.HasEntry(SourceIP) && (ARP_Table.MatchesMAC(SourceIP, pSrcMAC) == false))
+    //{
+    //    return; // suspicious -> ignore
+    //}
+
+    UpdateEntry(SourceIP, pSrcMAC);                                         // Passed all filters -> learn entry
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -136,12 +165,16 @@ void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
     }
 
     ARP_Frame_t* pRX_ARP = &pRX->pPacket->ARP_Frame;
+    IP_Address_t ActiveIP = m_pContext->GetActiveIP();
+    IP_Address_t SrcIP = pRX_ARP->SrcIP_Address;
+    IP_Address_t DstIP = pRX_ARP->DstIP_Address;
+
 
     switch(ntohs(pRX_ARP->Opcode))
     {
         case ARP_REQUEST:
         {
-            if(pRX_ARP->DstIP_Address == m_pContext->GetActiveIP())                                 // Respond only if the ARP request targets our IP address
+            if(DstIP == ActiveIP)                                                                   // Respond only if the ARP request targets our IP address
             {
                 pMemoryPool->ChangeDebugID(pRX,          MEM_DBG_IPPKT,     MEM_DBG_ARP);           // Re-tag for zero-copy reuse
                 pMemoryPool->ChangeDebugID(pRX->pPacket, MEM_DBG_ETHDMARX2, MEM_DBG_ARPDT);
@@ -154,16 +187,17 @@ void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
                 memcpy(pETH->DestinationMAC.Byte, pETH->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);       // Destination = requester MAC
                 m_pContext->GetMAC_Address(&pETH->SourceMAC);                                       // Source = our MAC
                 pETH->Type = htons(IP_ETHERNET_TYPE_ARP);
+
                 FillCommon(pARP, ARP_REPLY);                                                        // ARP payload Fixed fields
-                memcpy(pARP->SourceMAC.Byte, pETH->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);            // Sender = us
-                memcpy(pARP->DestinationMAC.Byte, pETH->DestinationMAC.Byte, IP_MAC_ADDRESS_SIZE);  // Target = original requester
-                pARP->SrcIP_Address = m_pContext->GetActiveIP();
-                pARP->DstIP_Address = pRX_ARP->SrcIP_Address;
+
+                memcpy(pARP->SourceMAC.Byte,     pETH->SourceMAC.Byte,     IP_MAC_ADDRESS_SIZE);    // Sender = us
+                memcpy(pARP->DestinationMAC.Byte,pETH->DestinationMAC.Byte,IP_MAC_ADDRESS_SIZE);    // Target = original requester
+
+                pARP->SrcIP_Address = ActiveIP;
+                pARP->DstIP_Address = SrcIP;
 
                 DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Reply Request\n");
                 m_pContext->SendPacket(pTX);                                                        // Send ARP reply via normal TX path (zero-copy)
-
-                // IMPORTANT: do not free pRX, it is now TX
                 return;
             }
         }
@@ -171,15 +205,13 @@ void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
 
         case ARP_REPLY:
         {
-            if (pRX_ARP->DstIP_Address == m_pContext->GetActiveIP())                                // We learn this only if we are the destination
+            if(DstIP == ActiveIP)                                                                   // We learn this only if we are the destination
             {
-                UpdateEntry(pRX_ARP->SrcIP_Address, &pRX_ARP->SourceMAC);
+                UpdateEntry(SrcIP, &pRX_ARP->SourceMAC);
 
                 if(m_PendingPacket != nullptr)                                                      // If a packet was waiting for this ARP resolution, resend it now
                 {
-                    memcpy(m_PendingPacket->pPacket->ETH_Header.DestinationMAC.Byte,
-                           pRX_ARP->SourceMAC.Byte,
-                           IP_MAC_ADDRESS_SIZE);                                                    // Update Ethernet destination MAC now that ARP is resolved
+                    memcpy(m_PendingPacket->pPacket->ETH_Header.DestinationMAC.Byte, pRX_ARP->SourceMAC.Byte,  IP_MAC_ADDRESS_SIZE);                                                    // Update Ethernet destination MAC now that ARP is resolved
                     m_pContext->SendPacket(m_PendingPacket);                                        // Send the packet
                     m_PendingPacket = nullptr;                                                      // Clear pending pointer
                 }
@@ -230,11 +262,11 @@ void ARP_Protocol::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMAC_A
 				memcpy(pTable->MAC_Address.Byte, pMAC_Address->Byte, IP_MAC_ADDRESS_SIZE);
 				pTable->TimeToLive = m_Time;
    		      #if (IP_DBG_ARP == DEF_ENABLED)
-                DBG_Printf("ARP Cache - (%d.%d.%d.%d) Update an existing entry %d\n", uint8_t(pTable->IP_Address >> 24),
-				                                                                      uint8_t(pTable->IP_Address >> 16),
- 																					  uint8_t(pTable->IP_Address >> 8),
-																					  uint8_t(pTable->IP_Address),
-                                                                                      i);
+                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - (%d.%d.%d.%d) Update an existing entry %d\n", IP_A(pTable->IP_Address),
+                                                                                                                          IP_B(pTable->IP_Address),
+                                                                                                                          IP_C(pTable->IP_Address),
+                                                                                                                          IP_D(pTable->IP_Address),
+                                                                                                                          i);
 			  #endif
 				return;
 			}
@@ -251,7 +283,7 @@ void ARP_Protocol::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMAC_A
         if(pTable->IP_Address == 0)
 		{
    		  #if (IP_DBG_ARP == DEF_ENABLED)
-			DBG_Printf("ARP Cache - Found a free entry %d\n", i);
+			DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - Found a free entry %d\n", i);
 	      #endif
 			break;
 		}
@@ -278,22 +310,22 @@ void ARP_Protocol::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMAC_A
 
 		pTable = &m_TableEntry[OldestEntry];
    	  #if (IP_DBG_ARP == DEF_ENABLED)
-		DBG_Printf("ARP Cache - (%d.%d.%d.%d) Flush an old entry %d\n", uint8_t(pTable->IP_Address >> 24),
-		                                                                uint8_t(pTable->IP_Address >> 16),
-																		uint8_t(pTable->IP_Address >> 8),
-																		uint8_t(pTable->IP_Address),
-																		i);
+		DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - (%d.%d.%d.%d) Flush an old entry %d\n", IP_A(pTable->IP_Address),
+                                                                                                            IP_B(pTable->IP_Address),
+                                                                                                            IP_C(pTable->IP_Address),
+                                                                                                            IP_D(pTable->IP_Address),
+                                                                                                            i);
       #endif
 	}
 
 	// Now, pTable pointer is on ARP table entry which we will fill with the new information.
 	pTable->IP_Address = IP_Address;
   #if (IP_DBG_ARP == DEF_ENABLED)
-	DBG_Printf("ARP Cache - (%d.%d.%d.%d) Added a new entry %d\n", uint8_t(pTable->IP_Address >> 24),
-	                                                               uint8_t(pTable->IP_Address >> 16),
-																   uint8_t(pTable->IP_Address >> 8),
-																   uint8_t(pTable->IP_Address),
-																   i);
+	DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - (%d.%d.%d.%d) Added a new entry %d\n", IP_A(pTable->IP_Address),
+                                                                                                       IP_B(pTable->IP_Address),
+                                                                                                       IP_C(pTable->IP_Address),
+                                                                                                       IP_D(pTable->IP_Address),
+                                                                                                       i);
   #endif
 	memcpy(pTable->MAC_Address.Byte, pMAC_Address->Byte, IP_MAC_ADDRESS_SIZE);
     pTable->TimeToLive = m_Time;
@@ -324,7 +356,7 @@ void ARP_Protocol::ProcessOut(void)
     // Allocate wrapper + ARP packet buffer using the new helper
     IP_PacketMsg_t* pMsg;// = nullptr;
     SystemState_e State  = m_pContext->GetIP_Manager()->AllocPacket(&pMsg, sizeof(ARP_Frame_t), MEM_DBG_ARP, MEM_DBG_ARPDT);
-    
+
     if(State != SYS_READY)
     {
   #if (IP_DBG_ARP == DEF_ENABLED)
@@ -349,11 +381,11 @@ void ARP_Protocol::ProcessOut(void)
 
     pMsg->PacketSize = sizeof(ARP_Frame_t);
 
-  #if (IP_DBG_ARP == DEF_ENABLED)
-    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Request for %d.%d.%d.%d\n", uint8_t(m_IP_Address >> 24),
-                                                                                     uint8_t(m_IP_Address >> 16),
-                                                                                     uint8_t(m_IP_Address >> 8),
-                                                                                     uint8_t(m_IP_Address));
+  #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Request for %d.%d.%d.%d\n", IP_A(m_IP_Address),
+                                                                                     IP_B(m_IP_Address),
+                                                                                     IP_C(m_IP_Address),
+                                                                                     IP_D(m_IP_Address));
   #endif
 
     m_pContext->SendPacket(pMsg);                                                   // Transmit ARP request
@@ -393,26 +425,28 @@ void ARP_Protocol::ProcessOut(void)
 //-------------------------------------------------------------------------------------------------
 bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg_t* pMsg)
 {
-    // Search ARP table
-    for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
+    for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)													// Search ARP table
     {
         if((m_TableEntry[i].IP_Address == IP) && (m_TableEntry[i].State == ARP_STATE_VALID))
         {
-            // Found -> return MAC
-            memcpy(pMAC->Byte, m_TableEntry[i].MAC_Address.Byte, IP_MAC_ADDRESS_SIZE);
+            memcpy(pMAC->Byte, m_TableEntry[i].MAC_Address.Byte, IP_MAC_ADDRESS_SIZE);			// Found -> return MAC
             return true;
         }
     }
 
     // Not found -> trigger ARP request
-    m_IP_Address = IP;          // Store target IP for ARP request
-    ProcessOut();               // Send ARP request
+    m_IP_Address = IP;          																// Store target IP for ARP request
+    ProcessOut();               																// Send ARP request
+
+  #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Stack Msg to send later\n");
+  #endif
     m_PendingPacket = pMsg;
-    return false;               // unresolved -> caller must retry later
+    return false;               																// Unresolved -> caller must retry later
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Name:           FillARP_Common
+//  Name:           FillCommon
 //
 //  Parameter(s):   pARP    Pointer to an ARP frame structure to initialize.
 //                  Type    ARP opcode to assign (ARP_REQUEST or ARP_REPLY).
@@ -480,11 +514,11 @@ void ARP_Protocol::TimerCallBack(void)
 			if((Time - pTable->TimeToLive) >= IP_ARP_TIME_OUT)            // Remove entry from table
 			{
    		      #if (IP_DBG_ARP == DEF_ENABLED)
-   		      	DBG_Printf("ARP Cache - (%d.%d.%d.%d) Remove entry number %d\n", uint8_t(pTable->IP_Address >> 24),
-                                                                 				 uint8_t(pTable->IP_Address >> 16),
-																				 uint8_t(pTable->IP_Address >> 8),
-																				 uint8_t(pTable->IP_Address),
-																				 i);
+   		      	DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - (%d.%d.%d.%d) Remove entry number %d\n", IP_A(pTable->IP_Address),
+                                                                                                                     IP_B(pTable->IP_Address),
+                                                                                                                     IP_C(pTable->IP_Address),
+                                                                                                                     IP_D(pTable->IP_Address),
+                                                                                                                     i);
 		      #endif
 				pTable->IP_Address = IP_ADDRESS(0,0,0,0);
 			}
@@ -515,7 +549,7 @@ void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg)
     if(pPendingPacket != nullptr)                                               // If ARP entry expired, drop pending packet
     {
         bool Found = false;                                                     // If the pending IP no longer exists in the table, drop it
-        ARP_TableEntry_t* pTableEntry = pARP->GetTableEntryPointer();
+        ARP_TableEntry_t* pTableEntry = pARP->GetTableEntryPointer(0);
 
         for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
         {

@@ -35,29 +35,6 @@
 #define ARP_HARDWARE_TYPE_ETHERNET      1
 
 //-------------------------------------------------------------------------------------------------
-// enum(s)
-//-------------------------------------------------------------------------------------------------
-
-enum ARP_State_e
-{
-    ARP_STATE_EMPTY = 0,     // No entry
-    ARP_STATE_PENDING,       // ARP request sent, waiting for reply
-    ARP_STATE_VALID          // MAC resolved and usable
-};
-
-//-------------------------------------------------------------------------------------------------
-// struct(s)
-//-------------------------------------------------------------------------------------------------
-
-struct  ARP_TableEntry_t
-{
-    IP_Address_t        IP_Address;
-    IP_MAC_Address_t    MAC_Address;
-    ARP_State_e         State;                      // Entry state
-    uint8_t             TimeToLive;                 // Optional aging counter
-};
-
-//-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -73,10 +50,10 @@ class ARP_Protocol
         void                TimerCallBack	    	(void);
 
         // For ARP Timer callback
-        IP_PacketMsg_t*     GetPendingPacketPointer (void)                      { return m_PendingPacket; }
-        void                SetPendingPacketPointer (IP_PacketMsg_t* pMsg)      { m_PendingPacket = pMsg; }
-        ARP_TableEntry_t*   GetTableEntryPointer    (void)                      { return m_TableEntry;    }
-        IP_Address_t        GetIP_Address           (void)                      { return m_IP_Address;    }
+        IP_PacketMsg_t*     GetPendingPacketPointer (void)                      { return m_PendingPacket;      }
+        void                SetPendingPacketPointer (IP_PacketMsg_t* pMsg)      { m_PendingPacket = pMsg;      }
+        ARP_TableEntry_t*   GetTableEntryPointer    (int Entry)                 { return &m_TableEntry[Entry]; }
+        IP_Address_t        GetIP_Address           (void)                      { return m_IP_Address;         }
 
     private:
 

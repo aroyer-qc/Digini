@@ -521,7 +521,7 @@ bool DHCPv4_Client::Request(void)
     else
     {
         // Renewal REQUEST -> unicast to DHCP server
-        Destination.Address = htonl(m_pContext->GetDHCP_ServerIP());
+        Destination.Address = m_pContext->GetDHCP_ServerIP();
     }
 
     Destination.Port = DHCP_SERVER_PORT;
@@ -563,21 +563,21 @@ bool DHCPv4_Client::Request(void)
 void DHCPv4_Client::ParseOffer(DHCP_Msg_t* pRX)
 {
     // Offered IP address for this client
-    m_Options.ClientIP = ntohl(pRX->YourIP_Address);
+    m_Options.ClientIP = pRX->YourIP_Address;
 
     // DHCP server identifier (may be zero if not provided)
-    m_Options.ServerIP = ntohl(pRX->ServerIP_Address);
+    m_Options.ServerIP = pRX->ServerIP_Address;
 
 #if (IP_DBG_DHCP == DEF_ENABLED)
     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DHCP OFFER: Client IP = %d.%d.%d.%d, Server IP = %d.%d.%d.%d\n",
-                                                   uint8_t(m_Options.ClientIP >> 24),
-                                                   uint8_t(m_Options.ClientIP >> 16),
-                                                   uint8_t(m_Options.ClientIP >> 8),
-                                                   uint8_t(m_Options.ClientIP),
-                                                   uint8_t(m_Options.ServerIP >> 24),
-                                                   uint8_t(m_Options.ServerIP >> 16),
-                                                   uint8_t(m_Options.ServerIP >> 8),
-                                                   uint8_t(m_Options.ServerIP));
+                                                   IP_A(m_Options.ClientIP),
+                                                   IP_B(m_Options.ClientIP),
+                                                   IP_C(m_Options.ClientIP),
+                                                   IP_D(m_Options.ClientIP),
+                                                   IP_A(m_Options.ServerIP),
+                                                   IP_B(m_Options.ServerIP),
+                                                   IP_C(m_Options.ServerIP),
+                                                   IP_D(m_Options.ServerIP);
 #endif
 }
 
@@ -593,11 +593,11 @@ void DHCPv4_Client::ParseOffer(DHCP_Msg_t* pRX)
 void DHCPv4_Client::IsBound(void)
 {
     // Update interface context
-    m_pContext->SetDHCP_IP(ntohl(m_Options.ClientIP));
-    m_pContext->SetDHCP_SubnetMask(ntohl(m_Options.SubnetMaskIP));
-    m_pContext->SetDHCP_GatewayIP(ntohl(m_Options.GatewayIP));
-    m_pContext->SetDHCP_DNS_IP(ntohl(m_Options.DNS_ServerIP));
-    m_pContext->SetDHCP_ServerIP(ntohl(m_Options.ServerIP));
+    m_pContext->SetDHCP_IP(m_Options.ClientIP);
+    m_pContext->SetDHCP_SubnetMask(m_Options.SubnetMaskIP);
+    m_pContext->SetDHCP_GatewayIP(m_Options.GatewayIP);
+    m_pContext->SetDHCP_DNS_IP(m_Options.DNS_ServerIP);
+    m_pContext->SetDHCP_ServerIP(m_Options.ServerIP);
 
     // Mark interface as valid
     m_pContext->SetIP_Valid(true);
@@ -676,7 +676,7 @@ void DHCPv4_Client::ParseOption(DHCP_Msg_t* pRX)
             {
                 if(Len >= 4)
                 {
-                    m_Options.SubnetMaskIP = ntohl(*(uint32_t*)pData);
+                    m_Options.SubnetMaskIP = *(uint32_t*)pData;
                 }
             }
             break;
@@ -685,7 +685,7 @@ void DHCPv4_Client::ParseOption(DHCP_Msg_t* pRX)
             {
                 if(Len >= 4)
                 {
-                    m_Options.GatewayIP = ntohl(*(uint32_t*)pData);
+                    m_Options.GatewayIP = *(uint32_t*)pData;
                 }
             }
             break;
@@ -694,7 +694,7 @@ void DHCPv4_Client::ParseOption(DHCP_Msg_t* pRX)
             {
                 if(Len >= 4)
                 {
-                    m_Options.DNS_ServerIP = ntohl(*(uint32_t*)pData);
+                    m_Options.DNS_ServerIP = *(uint32_t*)pData;
                 }
             }
             break;
@@ -703,7 +703,7 @@ void DHCPv4_Client::ParseOption(DHCP_Msg_t* pRX)
             {
                 if(Len >= 4)
                 {
-                    m_Options.ClientIP = ntohl(*(uint32_t*)pData);
+                    m_Options.ClientIP = *(uint32_t*)pData;
                 }
             }
             break;
@@ -730,7 +730,7 @@ void DHCPv4_Client::ParseOption(DHCP_Msg_t* pRX)
             {
                 if(Len >= 4)
                 {
-                    m_Options.ServerIP = ntohl(*(uint32_t*)pData);
+                    m_Options.ServerIP = *(uint32_t*)pData;
                 }
             }
             break;
@@ -829,7 +829,7 @@ size_t DHCPv4_Client::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
         *pPtr++ = DHCP_OPTION_CLIENT_IP;
         *pPtr++ = 4;
 
-        uint32_t ip = htonl(m_Options.ClientIP);
+        uint32_t ip = m_Options.ClientIP;
         memcpy(pPtr, &ip, sizeof(ip));
         pPtr += sizeof(ip);
     }
@@ -873,7 +873,7 @@ size_t DHCPv4_Client::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
         *pPtr++ = DHCP_OPTION_SERVER_IP;
         *pPtr++ = 4;
 
-        uint32_t ip = htonl(m_Options.ServerIP);
+        uint32_t ip = m_Options.ServerIP;
         memcpy(pPtr, &ip, sizeof(ip));
         pPtr += sizeof(ip);
     }
@@ -918,7 +918,7 @@ void DHCPv4_Client::PutHeader(DHCP_Msg_t* pTX)
         // Unicast renewal: include client IP
         pTX->Flags = 0;
 
-        uint32_t ip = htonl(m_pContext->GetDHCP_IP());
+        uint32_t ip = m_pContext->GetDHCP_IP();
         memcpy(&pTX->ClientIP_Address, &ip, sizeof(ip));
     }
 

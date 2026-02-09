@@ -1190,8 +1190,15 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
             InMenuPrintf(2,  19, LBL_ETH_TX_COUNT);
             InMenuPrintf(36, 19, LBL_ETH_DROP);
           #endif
-            InMenuPrintf(        VT100_LBL_ESCAPE);
 
+            InMenuPrintf(2, 21, LBL_ETH_ARP_TABLE);
+
+            for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
+            {
+                InMenuPrintf(2, 23 + i, LBL_ETH_ARP_TABLE_ENTRY, i);
+            }
+
+            InMenuPrintf(        VT100_LBL_ESCAPE);
             m_pConsole->SetOverrideDebugLevel(SYS_DEBUG_LEVEL_ETHERNET);
             LogInitialize(56, 6, 78, 40);
             // Add Lease obtain and expire???
@@ -1201,7 +1208,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
         case VT100_CALLBACK_REFRESH:
         {
             Label_e           SpeedLabel;
-            NetworkContext*   pContext = pTaskNetwork->GetIP_Manager()->GetContext();
+            IP_Manager*       pIP_Manager = pTaskNetwork->GetIP_Manager();
+            NetworkContext*   pContext    = pIP_Manager->GetContext();
             char              Buffer[16];
             IP_MAC_Address_t  MAC;
 
@@ -1244,7 +1252,17 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
             InMenuPrintf(50, 19, LBL_LONG_UNSIGNED, DBG_TX_Drop);
           #endif
 
-          LogDisplay();
+            for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
+            {
+                ARP_TableEntry_t* pARP_Entry = pIP_Manager->GetTableEntryPointer(i);
+                const uint8_t* Byte = pARP_Entry->MAC_Address.Byte;
+
+                IP_Manager::IP_ToAscii(Buffer, pARP_Entry->IP_Address);
+                InMenuPrintf(14, 23 + i, LBL_STRING, Buffer);
+                InMenuPrintf(34, 23 + i, LBL_MAC_ADDRESS_VALUE, Byte[0], Byte[1], Byte[2], Byte[3], Byte[4], Byte[5]);
+            }
+
+            LogDisplay();
         }
         break;
 

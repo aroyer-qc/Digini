@@ -57,6 +57,9 @@
 #define IP_TIME_TO_LIVE					        128
 #define IP_BROADCAST_ADDRESS                    0xFFFFFFFF
 
+#define IP_MULTICAST_MIN                        224   // 224.x.x.x
+#define IP_MULTICAST_MAX                        239   // 239.x.x.x
+
 #define IP_PROTOCOL_ICMP				        0x01
 #define IP_PROTOCOL_TCP					        0x06
 #define IP_PROTOCOL_UDP					        0x11
@@ -78,7 +81,22 @@
 // Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define IP_ADDRESS                              U32MACRO    // usage: IP_ADDRESS(192,168,0,0);
+//#define IP_ADDRESS                              U32MACRO    // usage: IP_ADDRESS(192,168,0,0);
+
+//#ifdef endianness
+
+#define IP_ADDRESS(A,B,C,D)     (uint32_t(D) + (uint32_t(C) << 8) + (uint32_t(B) << 16) + (uint32_t(A) << 24))
+#define IP_A(IP)                uint8_t(IP)
+#define IP_B(IP)                uint8_t(IP >> 8)
+#define IP_C(IP)                uint8_t(IP >> 16)
+#define IP_D(IP)                uint8_t(IP >> 24)
+
+//#else
+
+//#define IP_ADDRESS              ((uint32_t(D) << 24) + (uint32_t(C) << 16) + (uint32_t(B) << 8) + uint32_t(A))
+//#define PRINT_IP_ADDRESS(IP)    uint8_t(IP >> 24), uint8_t(IP >> 16), uint8_t(IP >> 8), uint8_t(IP)
+
+//#endif
 
 //-------------------------------------------------------------------------------------------------
 // Enum(s)
@@ -179,6 +197,12 @@ enum ETH_LinkState_e
     ETH_LINK_UNKNOWN,
 };
 
+enum ARP_State_e
+{
+    ARP_STATE_EMPTY = 0,     // No entry
+    ARP_STATE_PENDING,       // ARP request sent, waiting for reply
+    ARP_STATE_VALID          // MAC resolved and usable
+};
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -194,6 +218,15 @@ struct IP_MAC_Address_t
 {
     uint8_t     Byte[IP_MAC_ADDRESS_SIZE];
 };
+
+struct ARP_TableEntry_t
+{
+    IP_Address_t        IP_Address;
+    IP_MAC_Address_t    MAC_Address;
+    ARP_State_e         State;                      // Entry state
+    uint8_t             TimeToLive;                 // Optional aging counter
+};
+
 
 // The Ethernet header
 struct IP_EthernetHeader_t
@@ -480,8 +513,6 @@ struct  ETH_MacTime_t
 // Inline function(s)
 //-------------------------------------------------------------------------------------------------
 
-// This is for ARM
-
 inline uint16_t htons(uint16_t x)
 {
     return static_cast<uint16_t>(__REV16(x));
@@ -501,6 +532,7 @@ inline uint32_t ntohl(uint32_t x)
 {
     return __REV(x);
 }
+
 
 //-------------------------------------------------------------------------------------------------
 

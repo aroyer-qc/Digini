@@ -148,6 +148,12 @@ class IP_Manager
         SystemState_e       AllocPacket                 (IP_PacketMsg_t** ppMsg, size_t PacketSize, MEM_DebugListOfID_e DebugWrapperID, MEM_DebugListOfID_e DebugPacketID);
         SystemState_e       SendPacket                  (IP_PacketMsg_t* pMsg);
 
+        static bool         IsItBroadcastMAC            (const IP_MAC_Address_t* Mac)       { const uint8_t* b = Mac->Byte; return (b[0] & b[1] & b[2] & b[3] & b[4] & b[5]) == 0xFF; }
+        static bool         IsItMulticastMAC            (const IP_MAC_Address_t* mac)       { return (mac->Byte[0] & 0x01) != 0; }
+        static bool         IsItMulticast               (IP_Address_t IP)                   { uint8_t First = IP_D(IP); return ((First >= IP_MULTICAST_MIN) && (First <= IP_MULTICAST_MAX)); }
+
+        ARP_TableEntry_t*   GetTableEntryPointer        (int Entry)                         { return m_ARP.GetTableEntryPointer(Entry); }
+
       #if (IP_USE_DNS == DEF_ENABLED)
         bool                RequestDNS                  (const char* pHostName, DNS_Callback_t Callback);
       #endif
@@ -182,7 +188,7 @@ class IP_Manager
         static uint16_t     IP_CalculateChecksum        (const void* pBuffer, uint16_t Count);
         static void         FreeMessage                 (IP_PacketMsg_t* pMsg);
         static void         IP_ToAscii                  (char* pBuffer, IP_Address_t IP_Address);
-        static IP_Address_t AsciiToIP                   (char* pBuffer);
+        static IP_Address_t AsciiToIP                   (const char* pBuffer);
 
     private:
 

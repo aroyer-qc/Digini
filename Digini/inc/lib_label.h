@@ -103,6 +103,8 @@ X_LABEL( LBL_MAC_ADDRESS_VALUE,          "%02X:%02X:%02X:%02X:%02X:%02X",  nullp
 X_LABEL( LBL_ETH_RX_COUNT,               "RX Packet Count  . . . :",       "Nb de Paquets Re\x87" "es  . :"                ) \
 X_LABEL( LBL_ETH_TX_COUNT,               "TX Packet Count  . . . :",       "Nb de Paquets Transmis :"                      ) \
 X_LABEL( LBL_ETH_DROP,                   "Dropped  . . :",                 "Non Trait\x82" "es :"                          ) \
+X_LABEL( LBL_ETH_ARP_TABLE,              "ARP Table:",                     "Table d'ARP"                                   ) \
+X_LABEL( LBL_ETH_ARP_TABLE_ENTRY,        "Entry [%d]:",                    "Entr\x82" "e [%d]"                             ) \
 
 #define DATE_LABEL_LANGUAGE_DEF(X_LABEL) \
 X_LABEL( LBL_JANUARY,                    "January",                        "Janvier"                                       ) \

@@ -215,6 +215,11 @@ void IP_Manager::Run(void)
     #if (IP_USE_DNS == DEF_ENABLED)
         if((m_DNS_Request.Pending == true) && (m_DNS.IsBusy() == false))                        // Start DNS query if requested
         {
+	      #if (IP_DBG_ARP == DEF_ENABLED)
+  		  	DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Ready to send DNS Request\n");
+		  #endif
+
+
             m_DNS_Request.Pending = false;
             m_DNS.SetCallback(&IP_Manager::DNS_StaticCallback, this);                           // Register static callback with context = this
             m_DNS_Request.Busy = true;
@@ -274,7 +279,7 @@ void IP_Manager::Run(void)
                         break;
                     }
 
-                    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH type: IPV4\n");
+                    //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH type: IPV4\n");
                     m_ARP.ProcessIP(pMsg);                                                      // May update ARP cache, does NOT own pMsg
                     ProcessIP(pMsg);                                                            // Transfers ownership to protocol/socket
                 }
@@ -343,7 +348,7 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
       #if (IP_USE_UDP == DEF_ENABLED)
         case IP_PROTOCOL_UDP:
         {
-            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Ethernet IP-UDP\n");
+            //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Ethernet IP-UDP\n");
             m_UDP.Process(pMsg);
         }
         break;
@@ -613,10 +618,10 @@ void IP_Manager::DNS_StaticCallback(void* pContext, bool Success, IP_Address_t R
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::IP_ToAscii(char* pBuffer, IP_Address_t IP_Address)
 {
-    snprintf(pBuffer, IP_ASCII_ADDRESS_SIZE, "%d.%d.%d.%d", uint8_t(IP_Address),
-                                                            uint8_t(IP_Address >> 8),
-                                                            uint8_t(IP_Address >> 16),
-                                                            uint8_t(IP_Address >> 24));
+    snprintf(pBuffer, IP_ASCII_ADDRESS_SIZE, "%d.%d.%d.%d", IP_A(IP_Address),
+                                                            IP_B(IP_Address),
+                                                            IP_C(IP_Address),
+                                                            IP_D(IP_Address));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -631,77 +636,59 @@ void IP_Manager::IP_ToAscii(char* pBuffer, IP_Address_t IP_Address)
 //  Note(s):        Length is check and also number of dot, to confirm it is an IP
 //
 //-------------------------------------------------------------------------------------------------
-IP_Address_t IP_Manager::AsciiToIP(char* pBuffer)
+IP_Address_t IP_Manager::AsciiToIP(const char* pBuffer)
 {
-    IP_Address_t IP_Address;
-    uint32_t     Count;
-    uint8_t      DotCount;
-    bool         IP_Status;
-
-    IP_Address = IP_ADDRESS(0,0,0,0);
-    IP_Status  = true;
-    Count      = 0;
-
-    if(pBuffer != nullptr)
+    if(pBuffer == nullptr)
     {
-        while(IP_Status == true)           // Scan to see if it contain only number and dot
-        {
-            if(((*(pBuffer + Count) < '0') || (*(pBuffer + Count) > '9')) &&
-               ((*(pBuffer + Count) != '.')))
-            {
-                IP_Status = false;
-            }
-            Count++;
-        }
-
-        if(IP_Status == true)                                                // Yes it contain only number and dot
-        {
-            if((Count >= 7) && (Count <= 15))                                           // Check length
-            {
-                Count    = 4;
-                DotCount = 0;
-
-                do
-                {
-                    Count--;
-                    IP_Status = false;
-
-                    do
-                    {
-                        if((*pBuffer >= '0') && (*pBuffer <= '9'))
-                        {
-                            if(IP_Status == false) IP_Status = true;                      // Trap first occurrence
-                          // ??  else                     IP.Array[Count] *= 10;            // Other Must be multiply 10
-
-                          //  IP.Array[Count] += (*pBuffer - '0');
-                            pBuffer++;
-                        }
-                        else
-                        {
-                            IP_Status = false;
-                        }
-                    }
-                    while(IP_Status == true);
-
-                    if(*pBuffer == '.')
-                    {
-                        pBuffer++;                                                      // skip the dot
-                        DotCount++;
-                    }
-                }
-                while(*pBuffer != '\0');
-
-                if((Count != 0) && ( DotCount != 3))                                // Check if format was valid
-                {
-                   IP_Address = IP_ADDRESS(0,0,0,0);
-                }
-            }
-        }
+        return IP_ADDRESS(0,0,0,0);
     }
 
-    return IP_Address;
-}
+    uint8_t octets[4] = {0};
+    uint8_t index     = 0;
+    uint16_t value    = 0;
 
+    while(*pBuffer != '\0')
+    {
+        if(*pBuffer >= '0' && *pBuffer <= '9')
+        {
+            value = value * 10 + (*pBuffer - '0');
+
+            if(value > 255)
+            {
+                return IP_ADDRESS(0,0,0,0);
+            }
+        }
+        else if(*pBuffer == '.')
+        {
+            if(index >= 4)
+            {
+                return IP_ADDRESS(0,0,0,0);
+            }
+
+            octets[index++] = (uint8_t)value;
+            value = 0;
+        }
+        else
+        {
+            return IP_ADDRESS(0,0,0,0);
+        }
+
+        pBuffer++;
+    }
+
+    if(index != 3)
+    {
+        return IP_ADDRESS(0,0,0,0);
+    }
+
+    octets[3] = (uint8_t)value;
+
+    // Build in network order (your new rule)
+    return ((uint32_t)octets[0] << 24) |
+           ((uint32_t)octets[1] << 16) |
+           ((uint32_t)octets[2] << 8)  |
+           ((uint32_t)octets[3]);
+}
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           ProcessURL

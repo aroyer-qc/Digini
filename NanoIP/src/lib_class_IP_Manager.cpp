@@ -569,7 +569,7 @@ void IP_Manager::OnDNS_Completed(bool Success, IP_Address_t ResolvedIP)
 //
 //  Name:           DNS_StaticCallback
 //
-//  Parameter(s):   void*           pContext    Pointer to the IP_Manager instance that initiated
+//  Parameter(s):   IP_Manager*     pContext    Pointer to the IP_Manager instance that initiated
 //                                              the DNS request. Used to route the completion event
 //                                              back to the correct object.
 //                  bool            Success     Indicates whether the DNS resolution completed
@@ -588,10 +588,8 @@ void IP_Manager::OnDNS_Completed(bool Success, IP_Address_t ResolvedIP)
 //                  final processing and releases the DNS request lock.
 //
 //-------------------------------------------------------------------------------------------------
-void IP_Manager::DNS_StaticCallback(void* pContext, bool Success, IP_Address_t ResolvedIP)
+void IP_Manager::DNS_StaticCallback(IP_Manager* pIP_Manager, bool Success, IP_Address_t ResolvedIP)
 {
-    IP_Manager* pIP_Manager = static_cast<IP_Manager*>(pContext);
-
     if(pIP_Manager != nullptr)
     {
         pIP_Manager->OnDNS_Completed(Success, ResolvedIP);
@@ -683,6 +681,7 @@ IP_Address_t IP_Manager::AsciiToIP(const char* pBuffer)
            ((uint32_t)octets[2] << 8)  |
            ((uint32_t)octets[3]);
 }
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           ProcessURL

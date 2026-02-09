@@ -192,7 +192,7 @@ class IP_Manager
 
     private:
 
-        static void         DNS_StaticCallback          (void* pContext, bool Success, IP_Address_t ResolvedIP);
+        static void         DNS_StaticCallback          (IP_Manager* pIP_Manager, bool Success, IP_Address_t ResolvedIP);
         void                OnDNS_Completed             (bool Success, IP_Address_t ResolvedIP);
 
         NetworkContext                  m_Context;

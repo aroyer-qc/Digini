@@ -306,7 +306,7 @@ bool DNS_Client::SendQuery(const char* pDomainName)
     {
         Status = true;   // sent immediately
     }
-    else if(State == SYS_QUEUED)
+    else if(State == SYS_ARP_RESOLVE_PENDING)
     {
         Status = true;   // queued pending ARP resolution
     }

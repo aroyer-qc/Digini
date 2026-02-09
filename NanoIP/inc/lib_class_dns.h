@@ -46,7 +46,7 @@ enum DNS_State_e
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef void (*DNS_Callback_t)(void* pContext, bool Success, IP_Address_t ResolveIP);
+typedef void (*DNS_Callback_t)(IP_Manager* pIP_Manager, bool Success, IP_Address_t ResolveIP);
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
@@ -61,8 +61,8 @@ class DNS_Client
         bool                Resolve             (const char* pDomainName);
         bool                Process             (void);
 
-        void                SetCallback         (DNS_Callback_t pCallback, void* pContext)      { m_pCallback = pCallback; m_pCallbackContext = pContext; }
-        bool                IsBusy              (void)                                          { return (m_State == DNS_STATE_WAIT_RESPONSE);            }
+        void                SetCallback         (DNS_Callback_t pCallback,IP_Manager* pIP_Manager)  { m_pCallback = pCallback; m_pCallbackContext = pIP_Manager; }
+        bool                IsBusy              (void)                                              { return (m_State == DNS_STATE_WAIT_RESPONSE);               }
 
 private:
 
@@ -75,7 +75,7 @@ private:
         uint16_t            m_LastID;
         nOS_Timer           m_TimerQuery;
         DNS_Callback_t      m_pCallback;
-        void*               m_pCallbackContext;
+        IP_Manager*         m_pCallbackContext;
         IP_Address_t        m_ResolvedIP;
 };
 

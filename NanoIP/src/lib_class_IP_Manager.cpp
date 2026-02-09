@@ -89,7 +89,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     nOS_Error Error;
 
     m_Context.SetIP_Manager(this);
-    m_SocketManager.Initialize(&m_Context);               // Initialize socket manager
+    m_SocketManager.Initialize(&m_Context);                                             // Initialize socket manager
 
   #if (IP_USE_DHCP == DEF_ENABLED)
     m_Context.SetDHCP_Enable(true);
@@ -97,10 +97,10 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 
     // Initialize Variables
     //m_DNS_IP_Found = false;  not used so far
-    m_Context.InitializeMsgQ();                                             // this need to handle error
+    m_Context.InitializeMsgQ();                                                         // this need to handle error
     m_Context.SetMAC_Address(&m_Config[IF_ID].IP_ETH_Config.MAC_Address);
     m_Context.SetHostName(m_Config[IF_ID].pHostName);
-    m_Context.SetMTU(IP_NET_IF_MTU);                                        // Set netif maximum transfer unit
+    m_Context.SetMTU(IP_NET_IF_MTU);                                                    // Set netif maximum transfer unit
     m_Context.SetStaticIP(m_Config[IF_ID].DefaultStatic_IP);
     m_Context.SetStaticGatewayIP(m_Config[IF_ID].DefaultGateway);
     m_Context.SetStaticSubnetMask(m_Config[IF_ID].DefaultSubnetMask);
@@ -108,6 +108,7 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     m_Context.SetIP_Valid((m_Config[IF_ID].DefaultStatic_IP == IP_ADDRESS(255,255,255,255)) ? false : true);
     m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config, &m_Context);
     m_Context.RegisterSendCallback(&m_IF_Driver.LowLevelOutputWrapper, &m_IF_Driver);
+    m_DNS.SetCallback(&IP_Manager::DNS_StaticCallback, this);                           // Register static callback with context = this
 
     // All protocol support are created dynamically if interface is set to use it, and if configuration is enable for that protocol
 
@@ -215,13 +216,7 @@ void IP_Manager::Run(void)
     #if (IP_USE_DNS == DEF_ENABLED)
         if((m_DNS_Request.Pending == true) && (m_DNS.IsBusy() == false))                        // Start DNS query if requested
         {
-	      #if (IP_DBG_ARP == DEF_ENABLED)
-  		  	DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Ready to send DNS Request\n");
-		  #endif
-
-
             m_DNS_Request.Pending = false;
-            m_DNS.SetCallback(&IP_Manager::DNS_StaticCallback, this);                           // Register static callback with context = this
             m_DNS_Request.Busy = true;
             m_DNS.Resolve(m_DNS_Request.pHostName);
         }
@@ -302,7 +297,6 @@ void IP_Manager::Run(void)
         }
 
         nOS_Sleep(1);
-
     }
 }
 
@@ -910,6 +904,37 @@ uint16_t IP_Manager::IP_CalculateChecksum(const void* pBuffer, uint16_t Count)
     return (uint16_t)~Sum;
 }
 
+//-------------------------------------------------------------------------------------------------
+// 
+//  Name:           UDP_CalculateChecksum
+//
+//  Parameters:     IP_Header_t*   pIP         Pointer to the IPv4 header containing source/dest IP
+//                  UDP_Header_t*  pUDP        Pointer to the UDP header (checksum field = 0)
+//                  uint16_t       UDP_Length  Length of UDP header + payload (in bytes)
+//
+//  Return:         uint16_t                    One's-complement UDP checksum (network byte order)
+//
+//  Description:    Computes the UDP checksum as defined in RFC 768 and RFC 1071. The checksum is
+//                  calculated over the UDP header, UDP payload, and the IPv4 pseudo-header.
+//                  The pseudo-header includes:
+//                      - Source IP address
+//                      - Destination IP address
+//                      - Protocol number (UDP = 17)
+//                      - UDP length
+//
+//                  The algorithm performs one's-complement addition of all 16-bit words, including
+//                  end-around carry, and returns the one's-complement of the final accumulated sum.
+//
+//  Notes:          - The caller must ensure that the UDP checksum field is set to zero before
+//                    invoking this function.
+//                  - If UDP_Length is odd, the final remaining byte is padded as the high byte of
+//                    a 16-bit word and included in the sum.
+//                  - The function assumes that the IPv4 header is already in network byte order.
+//                  - Suitable for both outgoing UDP packets and validating incoming packets.
+//                  - The buffer does not need to be 16-bit aligned; the function handles byte
+//                    access safely and deterministically.
+//
+//-------------------------------------------------------------------------------------------------
 uint16_t IP_Manager::UDP_CalculateChecksum(IP_Header_t* pIP, UDP_Header_t* pUDP, uint16_t UDP_Length)
 {
     uint32_t Sum = 0;
@@ -943,6 +968,7 @@ uint16_t IP_Manager::UDP_CalculateChecksum(IP_Header_t* pIP, UDP_Header_t* pUDP,
 
     return ~((uint16_t)Sum);
 }
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           FreeMessage

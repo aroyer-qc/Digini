@@ -243,6 +243,10 @@ bool DNS_Client::Resolve(const char* pDomainName)
         return false;
     }
 
+  #if (IP_DBG_DNS == DEF_ENABLED)
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: Ready to send Request\n");
+  #endif
+
     if(SendQuery(pDomainName) == false)
     {
         pSocketManager->FreeSocket(&m_pSocket);

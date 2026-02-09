@@ -81,22 +81,23 @@
 // Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-//#define IP_ADDRESS                              U32MACRO    // usage: IP_ADDRESS(192,168,0,0);
+#if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 
-//#ifdef endianness
+    #define IP_ADDRESS(A,B,C,D)                 (uint32_t(D) + (uint32_t(C) << 8) + (uint32_t(B) << 16) + (uint32_t(A) << 24))
+    #define IP_A(IP)                            uint8_t(IP)
+    #define IP_B(IP)                            uint8_t(IP >> 8)
+    #define IP_C(IP)                            uint8_t(IP >> 16)
+    #define IP_D(IP)                            uint8_t(IP >> 24)
 
-#define IP_ADDRESS(A,B,C,D)     (uint32_t(D) + (uint32_t(C) << 8) + (uint32_t(B) << 16) + (uint32_t(A) << 24))
-#define IP_A(IP)                uint8_t(IP)
-#define IP_B(IP)                uint8_t(IP >> 8)
-#define IP_C(IP)                uint8_t(IP >> 16)
-#define IP_D(IP)                uint8_t(IP >> 24)
+#else
 
-//#else
+    #define IP_ADDRESS(A,B,C,D)                 (uint32_t(A) + (uint32_t(B) << 8) + (uint32_t(C) << 16) + (uint32_t(D) << 24))
+    #define IP_A(IP)                            uint8_t(IP >> 24)
+    #define IP_B(IP)                            uint8_t(IP >> 16)
+    #define IP_C(IP)                            uint8_t(IP >> 8)
+    #define IP_D(IP)                            uint8_t(IP)
 
-//#define IP_ADDRESS              ((uint32_t(D) << 24) + (uint32_t(C) << 16) + (uint32_t(B) << 8) + uint32_t(A))
-//#define PRINT_IP_ADDRESS(IP)    uint8_t(IP >> 24), uint8_t(IP >> 16), uint8_t(IP >> 8), uint8_t(IP)
-
-//#endif
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Enum(s)
@@ -515,22 +516,38 @@ struct  ETH_MacTime_t
 
 inline uint16_t htons(uint16_t x)
 {
+  #if defined(__ARM_ARCH_6M__)   || defined(__ARM_ARCH_7M__)   || defined(__ARM_ARCH_7EM__)  || defined(__ARM_ARCH_8M_BASE__) || defined(__ARM_ARCH_8M_MAIN__)
     return static_cast<uint16_t>(__REV16(x));
+  #endif
+
+    // ADD other CPU fast method to reverse 16 Bits order
 }
 
 inline uint16_t ntohs(uint16_t x)
 {
+  #if defined(__ARM_ARCH_6M__)   || defined(__ARM_ARCH_7M__)   || defined(__ARM_ARCH_7EM__)  || defined(__ARM_ARCH_8M_BASE__) || defined(__ARM_ARCH_8M_MAIN__)
     return static_cast<uint16_t>(__REV16(x));
+  #endif
+
+    // ADD other CPU fast method to reverse 16 Bits order
 }
 
 inline uint32_t htonl(uint32_t x)
 {
+  #if defined(__ARM_ARCH_6M__)   || defined(__ARM_ARCH_7M__)   || defined(__ARM_ARCH_7EM__)  || defined(__ARM_ARCH_8M_BASE__) || defined(__ARM_ARCH_8M_MAIN__)
     return __REV(x);
+  #endif
+
+    // ADD other CPU fast method to reverse 32 Bits order
 }
 
 inline uint32_t ntohl(uint32_t x)
 {
+  #if defined(__ARM_ARCH_6M__)   || defined(__ARM_ARCH_7M__)   || defined(__ARM_ARCH_7EM__)  || defined(__ARM_ARCH_8M_BASE__) || defined(__ARM_ARCH_8M_MAIN__)
     return __REV(x);
+  #endif
+
+    // ADD other CPU fast method to reverse 32 Bits order
 }
 
 

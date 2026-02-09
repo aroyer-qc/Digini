@@ -253,8 +253,6 @@ bool DNS_Client::Resolve(const char* pDomainName)
         return false;
     }
 
-    m_ResolvedIP = 0;                                                                                   // Clear previous result
-    nOS_TimerStart(&m_TimerQuery);
     return true;
 }
 
@@ -314,6 +312,7 @@ bool DNS_Client::SendQuery(const char* pDomainName)
     if(Status == true)
     {
         m_State = DNS_STATE_WAIT_RESPONSE;
+        m_ResolvedIP = 0;                                                                                   // Clear previous result
         nOS_TimerStart(&m_TimerQuery);
       #if (IP_DBG_DNS == DEF_ENABLED)
         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: Query dispatched (Len=%u)\n", (unsigned)Length);

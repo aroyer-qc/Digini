@@ -262,15 +262,22 @@ bool DNS_Client::Resolve(const char* pDomainName)
 //
 //  Name:           SendQuery
 //
-//  Parameter(s):   const char*     pDomainName     Domain name to encode into the DNS query
+//  Parameter(s):   const char*     pDomainName           Domain name to encode into the DNS query.
 //
-//  Return:         bool                              true if the DNS query was successfully
-//                                                    transmitted to the DNS server
+//  Return:         bool    true  = DNS query was successfully handed off to the UDP layer
+//                              (either transmitted immediately or queued pending ARP)
+//                          false = DNS query could not be sent or queued
 //
-//  Description:    Builds a DNS query message into a temporary TX buffer, sends it to the active
-//                  DNS server using the UDP socket, and starts the response wait timer. This
-//                  function does not wait for a reply; it only transmits the request.
+//  Description:    Builds a DNS query message into a temporary TX buffer and attempts to send it
+//                  to the active DNS server using the UDP socket. This function does not wait for
+//                  a reply; it only initiates transmission.
 //
+//                  If the destination MAC address is not yet known, the UDP layer may queue the
+//                  packet while ARP resolution is in progress. In that case, the function still
+//                  returns true so the DNS state machine can begin waiting for the response.
+//
+//                  On success (immediate send or queued), the DNS client enters WAIT_RESPONSE
+//                  state and starts the query timeout timer.
 //-------------------------------------------------------------------------------------------------
 bool DNS_Client::SendQuery(const char* pDomainName)
 {
@@ -293,22 +300,31 @@ bool DNS_Client::SendQuery(const char* pDomainName)
     size_t        BytesSent = 0;
     SystemState_e State     = m_pSocket->SendTo((uint8_t*)pTX, Length, &Destination, &BytesSent);
 
-    bool Status = ((State == SYS_READY) && (BytesSent == Length));
+    bool Status = false;
+
+    if((State == SYS_READY) && (BytesSent == Length))
+    {
+        Status = true;   // sent immediately
+    }
+    else if(State == SYS_QUEUED)
+    {
+        Status = true;   // queued pending ARP resolution
+    }
 
     if(Status == true)
     {
         m_State = DNS_STATE_WAIT_RESPONSE;
         nOS_TimerStart(&m_TimerQuery);
       #if (IP_DBG_DNS == DEF_ENABLED)
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: Query sent (Len=%u)\n", (unsigned)Length);
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: Query dispatched (Len=%u)\n", (unsigned)Length);
       #endif
     }
+  #if (IP_DBG_DNS == DEF_ENABLED)
     else
     {
-      #if (IP_DBG_DNS == DEF_ENABLED)
         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: 'SendTo' failed (State=%d, Sent=%u)\n", State, (unsigned)BytesSent);
-      #endif
     }
+  #endif
 
     pMemoryPool->Free((void**)&pTX);
     return Status;

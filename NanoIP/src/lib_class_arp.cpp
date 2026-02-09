@@ -438,6 +438,14 @@ bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg
     m_IP_Address = IP;          																// Store target IP for ARP request
     ProcessOut();               																// Send ARP request
 
+    // TEMPORARY SAFETY: drop if already pending
+    if (m_PendingPacket != nullptr)
+    {
+        // At this time We drop the new packet to avoid overwriting the old one.
+        // TODO: Replace with a proper pending queue.
+        return false;
+    }
+    
   #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Stack Msg to send later\n");
   #endif

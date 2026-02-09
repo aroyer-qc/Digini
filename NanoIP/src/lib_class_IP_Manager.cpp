@@ -675,11 +675,7 @@ IP_Address_t IP_Manager::AsciiToIP(const char* pBuffer)
 
     octets[3] = (uint8_t)value;
 
-    // Build in network order (your new rule)
-    return ((uint32_t)octets[0] << 24) |
-           ((uint32_t)octets[1] << 16) |
-           ((uint32_t)octets[2] << 8)  |
-           ((uint32_t)octets[3]);
+    return IP_ADDRESS(octets[0],octets[1],octets[2],octets[3]);         // TODO validate
 }
 
 //-------------------------------------------------------------------------------------------------

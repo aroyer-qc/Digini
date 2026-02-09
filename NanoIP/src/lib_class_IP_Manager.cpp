@@ -108,7 +108,6 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     m_Context.SetIP_Valid((m_Config[IF_ID].DefaultStatic_IP == IP_ADDRESS(255,255,255,255)) ? false : true);
     m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config, &m_Context);
     m_Context.RegisterSendCallback(&m_IF_Driver.LowLevelOutputWrapper, &m_IF_Driver);
-    m_DNS.SetCallback(&IP_Manager::DNS_StaticCallback, this);                           // Register static callback with context = this
 
     // All protocol support are created dynamically if interface is set to use it, and if configuration is enable for that protocol
 
@@ -124,6 +123,9 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 
   #if (IP_USE_DNS == DEF_ENABLED)
     m_DNS.Initialize(&m_Context);
+    m_DNS_Request.pCallback = nullptr;
+    m_DNS_Request.Busy      = false;
+    m_DNS.SetCallback(&IP_Manager::DNS_StaticCallback, this);                           // Register static callback with context = this
   #endif
 
   #if (IP_USE_ICMP == DEF_ENABLED)
@@ -557,12 +559,12 @@ bool IP_Manager::RequestDNS(const char* pHostName, DNS_Callback_t pCallback)
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::OnDNS_Completed(bool Success, IP_Address_t ResolvedIP)
 {
+    m_DNS_Request.Busy = false;                         // Release the mutex first
+
     if(m_DNS_Request.pCallback)                         // Forward to application
     {
         m_DNS_Request.pCallback(this, Success, ResolvedIP);
     }
-
-    m_DNS_Request.Busy = false;                         // Release the mutex
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -900,7 +902,7 @@ uint16_t IP_Manager::IP_CalculateChecksum(const void* pBuffer, uint16_t Count)
 }
 
 //-------------------------------------------------------------------------------------------------
-// 
+//
 //  Name:           UDP_CalculateChecksum
 //
 //  Parameters:     IP_Header_t*   pIP         Pointer to the IPv4 header containing source/dest IP

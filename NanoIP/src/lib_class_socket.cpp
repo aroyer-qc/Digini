@@ -286,7 +286,7 @@ void Socket::Create(SocketType_e Type)
             pUDP->LocalPort = 0;
             pUDP->LocalIP   = m_Context.GetActiveIP();
             pUDP->Flags     = 0;
-            nOS_QueueCreate(&pUDP->RX_Queue, pUDP->RX_QueueBuffer, sizeof(UDP_Message_t), UDP_RX_QUEUE_DEPTH);
+            nOS_QueueCreate(&pUDP->RX_Queue, pUDP->RX_QueueBuffer, sizeof(IP_PacketMsg_t*), UDP_RX_QUEUE_DEPTH);
         }
         break;
       #endif
@@ -590,17 +590,17 @@ SystemState_e Socket::SendTo(uint8_t* pData, size_t Length, SocketInfo_t* pDestI
 //
 //-------------------------------------------------------------------------------------------------
 #if (IP_USE_TCP == DEF_ENABLED)
-SystemState_e Socket::Recv(IP_PacketMsg_t** ppMessage)
+SystemState_e Socket::Recv(IP_PacketMsg_t** ppMsg)
 {
     if(m_Type != SOCKET_TYPE_STREAM)
     {
         return SYS_INVALID_STATE;
     }
 
-    TCP_Socket_t* pTcp = m_Protocol.pTCP;
+    TCP_Socket_t* pTCP = m_Protocol.pTCP;
     nOS_TickCounter Timeout = m_TimeoutMs;
 
-    if(nOS_QueueRead(&pTcp->RxQueue, ppMessage, Timeout) != NOS_OK)
+    if(nOS_QueueRead(&pTCP->RxQueue, ppMsg, Timeout) != NOS_OK)
     {
         return SYS_TIME_OUT;
     }
@@ -643,10 +643,10 @@ SystemState_e Socket::Recv(uint8_t* pBuffer, size_t BufferSize, size_t* pBytesRe
         return SYS_INVALID_STATE;
     }
 
-    TCP_Socket_t* pTcp = m_Protocol.pTCP;
+    TCP_Socket_t* pTCP_Socket = m_Protocol.pTCP;
     IP_PacketMsg_t* pMsg = nullptr;
 
-    if(nOS_QueueRead(&pTcp->RxQueue, &pMsg, m_TimeoutMs) != NOS_OK)
+    if(nOS_QueueRead(&pTCP_Socket->RxQueue, &pMsg, m_TimeoutMs) != NOS_OK)
     {
         return SYS_TIME_OUT;
     }
@@ -698,7 +698,7 @@ SystemState_e Socket::Recv(uint8_t* pBuffer, size_t BufferSize, size_t* pBytesRe
 //                  must explicitly free the message once finished.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e Socket::RecvFrom(IP_PacketMsg_t** ppMessage)
+SystemState_e Socket::RecvFrom(IP_PacketMsg_t** ppMsg)
 {
     if(m_Type != SOCKET_TYPE_DATAGRAM)
     {
@@ -709,7 +709,7 @@ SystemState_e Socket::RecvFrom(IP_PacketMsg_t** ppMessage)
     nOS_TickCounter Timeout   = m_IsBlocking ? m_TimeoutMs : 0;
 
     // Read next message from UDP RX queue (returns pointer to message)
-    if(nOS_QueueRead(&pUDP_Socket->RX_Queue, ppMessage, Timeout) != NOS_OK)
+    if(nOS_QueueRead(&pUDP_Socket->RX_Queue, ppMsg, Timeout) != NOS_OK)
     {
         return SYS_TIME_OUT;
     }
@@ -755,35 +755,33 @@ SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t
 
     UDP_Socket_t*   pUDP_Socket = m_Protocol.pUDP;
     IP_PacketMsg_t* pMsg        = nullptr;
-    nOS_TickCounter Timeout     = m_IsBlocking ? m_TimeoutMs : 0;           // Blocking or non-blocking timeout
+    nOS_TickCounter Timeout     = m_IsBlocking ? m_TimeoutMs : 0;               // Blocking or non-blocking timeout
 
     if(nOS_QueueRead(&pUDP_Socket->RX_Queue, &pMsg, Timeout) != NOS_OK)         // Read next message from UDP RX queue
     {
         return SYS_TIME_OUT;
     }
 
-    // Extract headers
-    UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
-    IP_Header_t*  pIP  = &pMsg->pPacket->UDP_Frame.IP_Header;
-
-    size_t UDP_Length    = ntohs(pUDP->Length);
-    size_t PayloadLength = UDP_Length - sizeof(UDP_Header_t);
+    // Use what UDP_Protocol::Process already validated
+    size_t PayloadLength = pMsg->PayloadSize;
 
     if(PayloadLength > BufferSize)
     {
         PayloadLength = BufferSize;
     }
 
-    uint8_t* pPayload = (uint8_t*)(pUDP + 1);                           // Payload pointer  + 1 -> + sizeof(UDP header) (UDP header is immediately followed by data)
-    memcpy(pBuffer, pPayload, PayloadLength);
+    memcpy(pBuffer, pMsg->Payload, PayloadLength);
 
-    if(pSrcInfo != nullptr)                                             // Fill source info if requested
+    if(pSrcInfo != nullptr)
     {
+        IP_Header_t*  pIP  = &pMsg->pPacket->UDP_Frame.IP_Header;
+        UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
+
         pSrcInfo->Address = pIP->SrcIP_Address;
         pSrcInfo->Port    = ntohs(pUDP->SrcPort);
     }
 
-    IP_Manager::FreeMessage(pMsg);                                      // Free packet buffers (zero-copy release)
+    IP_Manager::FreeMessage(pMsg);
     *pBytesReceived = PayloadLength;
     return SYS_READY;
 }

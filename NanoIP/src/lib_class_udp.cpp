@@ -133,7 +133,7 @@ void UDP_Protocol::Process(IP_PacketMsg_t* pMsg)
 
     UDP_Socket_t* pUDP_Sock = pSock->GetUDP();
 
-    if(nOS_QueueWrite(&pUDP_Sock->RX_Queue, &pMsg, 0) != NOS_OK)        // Enqueue packet for this socket
+    if(nOS_QueueWrite(&pUDP_Sock->RX_Queue, pMsg, 0) != NOS_OK)         // Enqueue packet for this socket
     {
         IP_Manager::FreeMessage(pMsg);                                  // Queue full -> drop
         return;

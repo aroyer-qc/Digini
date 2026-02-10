@@ -141,11 +141,11 @@ struct SocketInfo_t
 
 struct UDP_Socket_t
 {
-    IP_Port_t      LocalPort;      // Bound port (0 = unbound)
-    IP_Address_t   LocalIP;        // Optional: only if multi-IP system
-    nOS_Queue      RX_Queue;       // Queue of IP_PacketMsg_t* (ownership transfers here)
-    UDP_Message_t  RX_QueueBuffer[UDP_RX_QUEUE_DEPTH];
-    uint16_t       Flags;          // Bitmask: broadcast allowed, reuse-port, etc.
+    IP_Port_t       LocalPort;     // Bound port (0 = unbound)
+    IP_Address_t    LocalIP;       // Optional: only if multi-IP system
+    nOS_Queue       RX_Queue;      // Queue of IP_PacketMsg_t* (ownership transfers here)
+    IP_PacketMsg_t* RX_QueueBuffer[UDP_RX_QUEUE_DEPTH];
+    uint16_t        Flags;         // Bitmask: broadcast allowed, reuse-port, etc.
                                    // (optional, but future-proof)
 };
 

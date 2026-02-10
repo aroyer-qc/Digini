@@ -241,9 +241,9 @@ Socket::Socket(NetworkContext& Context, IP_Manager& Manager) : m_Context(Context
 //  Description:    Initializes the socket according to the specified protocol type. The socket
 //                  memory is assumed to have been cleared prior to this call (via AllocSocket).
 //                  For UDP sockets, the function sets default local addressing, initializes the
-//                  receive queue, and prepares protocol‑specific state. For TCP sockets, the
+//                  receive queue, and prepares protocol-specific state. For TCP sockets, the
 //                  function initializes the TCP control block and any required state machines.
-//                  After initialization, the socket is in a valid, ready‑to‑use state.
+//                  After initialization, the socket is in a valid, ready-to-use state.
 //
 //-------------------------------------------------------------------------------------------------
 void Socket::Create(SocketType_e Type)
@@ -344,9 +344,9 @@ for (int i = 0; i < UDP_RX_QUEUE_DEPTH; i++)
 //
 //  Return:         SystemState_e       SYS_READY            – Port successfully bound.
 //                                      SYS_FAIL_PORT_IN_USE – Requested port already in use.
-//                                      SYS_INVALID_STATE    – Called on a non‑UDP socket.
+//                                      SYS_INVALID_STATE    – Called on a non-UDP socket.
 //
-//  Description:    Associates the UDP socket with a local port. If Port is non‑zero, the
+//  Description:    Associates the UDP socket with a local port. If Port is non-zero, the
 //                  function attempts to reserve that port via the UDP binding registry. If
 //                  Port is zero, an ephemeral port is allocated and registered. Once bound,
 //                  incoming datagrams addressed to this port will be delivered to the socket’s
@@ -451,7 +451,7 @@ SystemState_e Socket::Listen(uint16_t Backlog)
 //
 //                  For TCP sockets, this function initiates an active open. It configures the
 //                  TCP control block, sends a SYN segment, and transitions the socket into the
-//                  SYN-SENT state. The function returns SYS_READY once the TCP three‑way
+//                  SYN-SENT state. The function returns SYS_READY once the TCP three-way
 //                  handshake completes and the connection reaches the ESTABLISHED state. If the
 //                  handshake fails or times out, the function returns SYS_FAIL.
 //
@@ -516,7 +516,7 @@ SystemState_e Socket::Accept(Socket** ppNewSocket)
 //  Description:    Sends a UDP datagram using the socket’s preconfigured remote endpoint.
 //                  This function requires the socket to be “connected” via Connect(), which
 //                  stores the destination address and port in m_RemoteInfo. The function
-//                  delegates the actual transmission to SendTo(), preserving the zero‑copy
+//                  delegates the actual transmission to SendTo(), preserving the zero-copy
 //                  architecture.
 //
 //-------------------------------------------------------------------------------------------------
@@ -551,7 +551,7 @@ SystemState_e Socket::Send(uint8_t* pData, size_t Length, size_t* pBytesSent)
 //
 //  Return:         SystemState_e   SYS_READY   – Packet successfully queued for transmission.
 //                                  SYS_FAIL    – Interface TX callback rejected the packet.
-//                                  SYS_INVALID_STATE – Called on a non‑UDP socket.
+//                                  SYS_INVALID_STATE – Called on a non-UDP socket.
 //
 //  Description:    Sends a UDP datagram to the specified destination. The function validates
 //                  the socket type, retrieves the associated UDP socket context, and delegates
@@ -629,7 +629,7 @@ SystemState_e Socket::Recv(IP_PacketMsg_t** ppMsg)
 //  Return:         SystemState_e
 //                      SYS_READY         – A TCP segment was received and delivered.
 //                      SYS_TIMEOUT       – No segment available within the configured timeout.
-//                      SYS_INVALID_STATE – Called on a non‑TCP socket.
+//                      SYS_INVALID_STATE – Called on a non-TCP socket.
 //
 //  Description:    Retrieves the next TCP segment from the socket’s RX queue and copies its
 //                  payload into the user-provided buffer. The function parses the IP and TCP
@@ -740,15 +740,15 @@ SystemState_e Socket::RecvFrom(IP_PacketMsg_t** ppMsg)
 //  Return:         SystemState_e
 //                      SYS_READY         – A UDP datagram was received and delivered.
 //                      SYS_TIMEOUT       – No datagram available within the configured timeout.
-//                      SYS_INVALID_STATE – Called on a non‑UDP socket.
+//                      SYS_INVALID_STATE – Called on a non-UDP socket.
 //
 //  Description:    Retrieves the next UDP datagram from the socket’s RX queue, extracts the IP
 //                  and UDP headers, determines the payload length, and copies the payload into
-//                  the caller‑provided buffer (clipped to BufferSize). The function optionally
+//                  the caller-provided buffer (clipped to BufferSize). The function optionally
 //                  returns the sender’s addressing information and frees the underlying packet
 //                  buffers once processing is complete.
 //
-//  Notes(s):       This is the traditional buffered receive method. A separate zero‑copy
+//  Notes(s):       This is the traditional buffered receive method. A separate zero-copy
 //                  RecvFrom() variant is available for callers that require direct access to the
 //                  packet memory without performing a memcpy.
 //
@@ -884,9 +884,9 @@ void Socket::Close(void)
 //                  Each dequeued message is passed to IP_Manager::FreeMessage(), the static
 //                  destruction routine responsible for freeing both the packet buffer and the
 //                  message wrapper. This ensures that all message cleanup follows the same
-//                  zero‑copy‑safe logic, regardless of which subsystem generated the message.
+//                  zero-copy-safe logic, regardless of which subsystem generated the message.
 //
-//  Note(s):        - Uses non‑blocking queue reads to drain the queue completely.
+//  Note(s):        - Uses non-blocking queue reads to drain the queue completely.
 //                  - Safe to call when the queue is already empty.
 //                  - Intended for socket shutdown, error recovery, and cleanup paths.
 //                  - Delegates all actual freeing logic to the centralized static FreeMessage().
@@ -915,7 +915,7 @@ void Socket::FreeAllMessages(nOS_Queue* pQueue)
 //                          false   – No data is currently available.
 //
 //  Description:    Indicates whether the socket has pending received data. This function
-//                  performs a non‑blocking check of the socket’s internal RX queue, which is
+//                  performs a non-blocking check of the socket’s internal RX queue, which is
 //                  populated asynchronously by the UDP or TCP dispatcher when incoming
 //                  packets are delivered to the socket.
 //
@@ -990,7 +990,7 @@ void Socket::GetLocalInfo(SocketInfo_t* pInfo)
 //  Description:    Retrieves the socket’s remote endpoint information. For UDP sockets, this
 //                  value is set when the application calls Connect() or when a datagram is
 //                  received via RecvFrom(), depending on usage. For TCP sockets, the remote
-//                  endpoint is established during the three‑way handshake and represents the
+//                  endpoint is established during the three-way handshake and represents the
 //                  connected peer.
 //
 //                  If the socket is not connected, the returned port value will be zero. This

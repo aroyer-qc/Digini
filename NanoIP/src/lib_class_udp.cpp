@@ -106,37 +106,66 @@ void UDP_Protocol::Initialize(NetworkContext* pContext)
 //                  to the destination port, the packet is discarded and its buffers are freed.
 //
 //                  This function performs no payload copying; it operates entirely on the
-//                  zero‑copy packet structure. Memory ownership is transferred to the target
+//                  zero-copy packet structure. Memory ownership is transferred to the target
 //                  socket upon successful queueing. If delivery fails (queue full or no socket
 //                  registered), the function frees all associated packet resources.
 //
 //-------------------------------------------------------------------------------------------------
 void UDP_Protocol::Process(IP_PacketMsg_t* pMsg)
 {
+    IP_Header_t*  pIP  = &pMsg->pPacket->UDP_Frame.IP_Header;
     UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
-    IP_Port_t dstPort  = ntohs(pUDP->DstPort);
 
-    // Compute payload pointer and size
-    size_t UDP_Length    = ntohs(pUDP->Length);
+    // Validate IP and UDP lengths BEFORE using them
+    size_t IpTotalLength = ntohs(pIP->Length);
+    size_t IpHeaderSize  = (pIP->VersionIHL & 0x0F) * 4;
+
+    // IP total length must cover IP header + UDP header
+    if(IpTotalLength < (IpHeaderSize + sizeof(UDP_Header_t)))
+    {
+        IP_Manager::FreeMessage(pMsg);                              // Malformed IP packet -> drop
+        return;
+    }
+
+    size_t UDP_Length = ntohs(pUDP->Length);
+
+    // UDP length must include header and fit inside IP payload
+    if((UDP_Length < sizeof(UDP_Header_t)) || (UDP_Length > (IpTotalLength - IpHeaderSize)))
+    {
+        IP_Manager::FreeMessage(pMsg);                              // Malformed UDP packet -> drop
+        return;
+    }
+
+    // Compute payload pointer and size (now guaranteed safe)
     size_t PayloadLength = UDP_Length - sizeof(UDP_Header_t);
+
     pMsg->Payload     = (uint8_t*)(pUDP + 1);
     pMsg->PayloadSize = PayloadLength;
 
-
-    Socket* pSock = FindSocketByPort(dstPort);                          // Your lookup function
+    // Socket lookup
+    IP_Port_t DstPort = ntohs(pUDP->DstPort);
+    Socket*   pSock   = FindSocketByPort(DstPort);                  // Your lookup function
 
     if((pSock == nullptr) || (pSock->GetActive() == false))
     {
-        IP_Manager::FreeMessage(pMsg);                                  // No socket bound to this port → drop
+        IP_Manager::FreeMessage(pMsg);                              // No socket bound -> drop
         return;
     }
 
     UDP_Socket_t* pUDP_Sock = pSock->GetUDP();
 
-    if(nOS_QueueWrite(&pUDP_Sock->RX_Queue, pMsg, 0) != NOS_OK)         // Enqueue packet for this socket
+    // Enqueue packet for this socket
+    if(nOS_QueueWrite(&pUDP_Sock->RX_Queue, pMsg, 0) != NOS_OK)
     {
-        IP_Manager::FreeMessage(pMsg);                                  // Queue full -> drop
+        IP_Manager::FreeMessage(pMsg);                              // Queue full -> drop
         return;
+    }
+
+    // Debug guard: pointer must be in valid SRAM range
+    if(((uint32_t)pMsg < 0x20000000) || ((uint32_t)pMsg > 0x20020000))
+    {
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "CORRUPTED BEFORE ENQUEUE: %08X\n", (uint32_t)pMsg);
+        while(1);
     }
 
     // Ownership now belongs to the socket. Do NOT free here.
@@ -330,7 +359,7 @@ void UDP_Protocol::UnregisterSocket(IP_Port_t Port)
 //                  the first unbound port. If all ephemeral ports are currently in use, the
 //                  function returns 0 to indicate failure. This helper is used by the socket
 //                  layer when a UDP socket is bound with port = 0, allowing automatic,
-//                  conflict‑free port assignment.
+//                  conflict-free port assignment.
 //
 //-------------------------------------------------------------------------------------------------
 IP_Port_t UDP_Protocol::AllocateEphemeralPort(void)

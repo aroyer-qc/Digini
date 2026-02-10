@@ -822,7 +822,7 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
 //                                                      buffer.
 //                  IP_Address_t        dstIP           Destination IPv4 address to place in the IP
 //                                                      header.
-//                  uint16_t            payloadLength   Length of the transport‑layer payload
+//                  uint16_t            payloadLength   Length of the transport-layer payload
 //                                                      (UDP/TCP header + data).
 //                  uint8_t             protocol        Transport protocol identifier
 //                                                      (e.g., IP_PROTOCOL_UDP, IP_PROTOCOL_TCP).
@@ -837,7 +837,7 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
 //                  The function uses the interface configuration stored in NetworkContext
 //                  (MAC address, MTU, IP settings) and the internal sequence counter for the
 //                  IP identification field. No memory allocation occurs; the header is written
-//                  directly into the caller‑provided packet buffer.
+//                  directly into the caller-provided packet buffer.
 //
 //                  After this function completes, the packet is fully assembled at the
 //                  Ethernet/IP level and ready for transmission via NetworkContext::SendPacket().
@@ -1009,7 +1009,7 @@ uint16_t IP_Manager::UDP_CalculateChecksum(IP_Header_t* pIP, UDP_Header_t* pUDP,
 //
 //  Note(s):        - Safe to call with a null pointer.
 //                  - Centralizes message destruction for the entire network stack.
-//                  - Ensures consistent zero‑copy buffer ownership release.
+//                  - Ensures consistent zero-copy buffer ownership release.
 //                  - Intended for use by all components that dequeue or discard messages.
 //
 //-------------------------------------------------------------------------------------------------

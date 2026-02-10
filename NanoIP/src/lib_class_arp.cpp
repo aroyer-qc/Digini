@@ -470,13 +470,13 @@ bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg
 //                      - Protocol           (IPv4)
 //                      - HardwareAddrLength (MAC address size)
 //                      - ProtocolLength     (IPv4 address size)
-//                      - Opcode             (caller‑specified)
+//                      - Opcode             (caller-specified)
 //
 //                  Fields that depend on direction (source/destination MAC and IP addresses)
 //                  are intentionally *not* set here and must be filled by the caller.
 //
 //  Note(s):        This function does not modify Ethernet header fields. It is used by both
-//                  ARP_Protocol::ProcessARP() when generating ARP replies (zero‑copy) and
+//                  ARP_Protocol::ProcessARP() when generating ARP replies (zero-copy) and
 //                  ARP_Protocol::ProcessOut() when constructing outgoing ARP requests.
 //-------------------------------------------------------------------------------------------------
 void ARP_Protocol::FillCommon(ARP_Frame_t* pARP, uint16_t Type)

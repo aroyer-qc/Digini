@@ -287,6 +287,13 @@ void Socket::Create(SocketType_e Type)
             pUDP->LocalIP   = m_Context.GetActiveIP();
             pUDP->Flags     = 0;
             nOS_QueueCreate(&pUDP->RX_Queue, pUDP->RX_QueueBuffer, sizeof(IP_PacketMsg_t*), UDP_RX_QUEUE_DEPTH);
+
+// Debug
+for (int i = 0; i < UDP_RX_QUEUE_DEPTH; i++)
+{
+    pUDP->RX_QueueBuffer[i] = (IP_PacketMsg_t*)0xAAAAAAAA;
+}
+
         }
         break;
       #endif
@@ -762,6 +769,11 @@ SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t
         return SYS_TIME_OUT;
     }
 
+if ((uint32_t)pMsg < 0x20000000 || (uint32_t)pMsg > 0x20020000)
+{
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "CORRUPTED IN QUEUE: %08X\n", (uint32_t)pMsg);
+    while(1);
+}
     // Use what UDP_Protocol::Process already validated
     size_t PayloadLength = pMsg->PayloadSize;
 

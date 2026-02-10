@@ -228,7 +228,6 @@ struct ARP_TableEntry_t
     uint8_t             TimeToLive;                 // Optional aging counter
 };
 
-
 // The Ethernet header
 struct IP_EthernetHeader_t
 {
@@ -462,6 +461,16 @@ struct IP_PacketMsg_t
 };
 
 #pragma pack(pop)
+
+#if (IP_USE_DNS == DEF_ENABLED)
+struct DNS_Request_t
+{
+    bool Pending             = false;               // App requested a DNS lookup
+    bool Busy                = false;               // DNS client is currently running a query
+    const char* pHostName    = nullptr;
+    DNS_Callback_t pCallback = nullptr;
+};
+#endif
 
 struct IP_ETH_Config_t
 {

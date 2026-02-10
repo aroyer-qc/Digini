@@ -139,6 +139,9 @@ void DNS_Client::Initialize(NetworkContext* pContext)
 //                  packet message after processing.
 //
 //-------------------------------------------------------------------------------------------------
+volatile uint32_t FunctionalityDNS = 0;
+volatile uint32_t PreviousFunctionalityDNS = 0;
+
 bool DNS_Client::Process(void)
 {
     if(m_State != DNS_STATE_WAIT_RESPONSE)
@@ -146,12 +149,14 @@ bool DNS_Client::Process(void)
         return true;
     }
 
+FunctionalityDNS = 1;
     if(nOS_TimerIsRunning(&m_TimerQuery) == false)
     {
         m_State = DNS_STATE_TIMEOUT;
 
         if(m_pCallback != nullptr)
         {
+FunctionalityDNS = 2;
             m_pCallback(m_pCallbackContext, false, IP_ADDRESS(0,0,0,0));
         }
 
@@ -159,6 +164,7 @@ bool DNS_Client::Process(void)
     }
 
     IP_PacketMsg_t* pMsg = nullptr;                                 // Zero-copy receive
+FunctionalityDNS = 3;
     SystemState_e State = m_pSocket->RecvFrom(&pMsg);
 
     if(State != SYS_READY)
@@ -174,13 +180,16 @@ bool DNS_Client::Process(void)
 
     if(Length >= DNS_HEADER_SIZE)
     {
+FunctionalityDNS = 4;
         if(ParseResponse((DNS_Header_t*)pPayload, Length))
         {
             m_State = DNS_STATE_RESPONSE_RECEIVED;
+FunctionalityDNS = 5;
             nOS_TimerStop(&m_TimerQuery, true);
 
             if(m_pCallback != nullptr)
             {
+FunctionalityDNS = 6;
                 m_pCallback(m_pCallbackContext, true, m_ResolvedIP);
             }
 
@@ -189,7 +198,12 @@ bool DNS_Client::Process(void)
     }
 
     // Caller frees the packet
+PreviousFunctionalityDNS = FunctionalityDNS;
+FunctionalityDNS = 7;
+
     IP_Manager::FreeMessage(pMsg);
+
+FunctionalityDNS = 8;
 
     return Done;
 }

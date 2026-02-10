@@ -50,8 +50,8 @@ class ARP_Protocol
         void                TimerCallBack	    	(void);
 
         // For ARP Timer callback
-        IP_PacketMsg_t*     GetPendingPacketPointer (void)                      { return m_PendingPacket;      }
-        void                SetPendingPacketPointer (IP_PacketMsg_t* pMsg)      { m_PendingPacket = pMsg;      }
+        IP_PacketMsg_t*     GetPendingPacketPointer (void)                      { return m_pPendingPacket;     }
+        void                SetPendingPacketPointer (IP_PacketMsg_t* pMsg)      { m_pPendingPacket = pMsg;     }
         ARP_TableEntry_t*   GetTableEntryPointer    (int Entry)                 { return &m_TableEntry[Entry]; }
         IP_Address_t        GetIP_Address           (void)                      { return m_IP_Address;         }
 
@@ -63,7 +63,7 @@ class ARP_Protocol
         NetworkContext*     m_pContext;
         IP_Address_t        m_IP_Address;
         ARP_TableEntry_t    m_TableEntry[IP_ARP_TABLE_SIZE];
-        IP_PacketMsg_t*     m_PendingPacket;
+        IP_PacketMsg_t*     m_pPendingPacket;
         uint8_t             m_Time;
         nOS_Timer*          m_pTimer;                               // Pointer on the OS timer
 };

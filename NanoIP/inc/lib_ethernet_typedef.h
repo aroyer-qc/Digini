@@ -205,13 +205,22 @@ enum ARP_State_e
     ARP_STATE_VALID          // MAC resolved and usable
 };
 
+enum DNS_State_e
+{
+    DNS_STATE_IDLE = 0,
+    DNS_STATE_WAIT_RESPONSE,
+    DNS_STATE_RESPONSE_RECEIVED,
+    DNS_STATE_TIMEOUT
+};
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
 typedef uint32_t    IP_Address_t;
 typedef uint16_t    IP_Port_t;
-//typedef void        (*ETH_CallBack_t) (uint32_t Event);                         // Pointer to ETH_CallBack function
+
+typedef void (*DNS_Callback_t)(class IP_Manager* pIP_Manager, bool Success, IP_Address_t ResolveIP);
 
 #pragma pack(push, 1)
 

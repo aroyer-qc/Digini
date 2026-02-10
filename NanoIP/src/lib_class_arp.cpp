@@ -60,8 +60,8 @@ SystemState_e ARP_Protocol::Initialize(NetworkContext* pContext)
 {
     nOS_Error Error;
 
-    m_pContext      = pContext;
-    m_PendingPacket = nullptr;
+    m_pContext       = pContext;
+    m_pPendingPacket = nullptr;
 
 	// Clear the ARP cache table
 	for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
@@ -102,7 +102,7 @@ void ARP_Protocol::ProcessIP(IP_PacketMsg_t* pRX)
     IP_Address_t SubnetMask = m_pContext->GetActiveSubnetMask();
     IP_Address_t ActiveIP   = m_pContext->GetActiveIP();
 
-    if((ActiveIP == 0) || (SubnetMask == 0))                                // Interface not configured yet -> do not learn from IP traffic
+    if((ActiveIP == IP_ADDRESS(0,0,0,0)) || (SubnetMask == IP_ADDRESS(0,0,0,0)))// Interface not configured yet -> do not learn from IP traffic
     {
         return;
     }
@@ -112,12 +112,12 @@ void ARP_Protocol::ProcessIP(IP_PacketMsg_t* pRX)
     IP_Manager* pIP_Manager = m_pContext->GetIP_Manager();
 
 
-    if(pIP_Manager->IsItMulticast(DestIP))                                  // Ignore multicast IP
+    if(pIP_Manager->IsItMulticast(DestIP))                                      // Ignore multicast IP
     {
         return;
     }
 
-    if(pIP_Manager->IsItMulticastMAC(pDstMAC))                              //  Ignore multicast MAC destination
+    if(pIP_Manager->IsItMulticastMAC(pDstMAC))                                  //  Ignore multicast MAC destination
     {
         return;
     }
@@ -125,13 +125,13 @@ void ARP_Protocol::ProcessIP(IP_PacketMsg_t* pRX)
     IP_Address_t      SourceIP = pRX->pPacket->IP_Frame.Header.SrcIP_Address;
     IP_MAC_Address_t* pSrcMAC  = &pRX->pPacket->ETH_Header.SourceMAC;
 
-    if((SourceIP == 0)                                      ||              // Ignore invalid IPs
-       (SourceIP == ActiveIP)                               ||              // Ignore our own IP
-       ((SourceIP & SubnetMask) != (ActiveIP & SubnetMask)) ||              // Ignore packets outside our subnet
-       (pIP_Manager->IsItBroadcastMAC(pSrcMAC))             ||              // Ignore broadcast MAC
-       (pIP_Manager->IsItMulticastMAC(pSrcMAC))             ||              // Ignore multicast MAC
-       (m_pContext->IsItMyMAC_Address(pSrcMAC))             ||              // Ignore our own MAC
-       (m_pContext->IsItMyMAC_Address(pDstMAC) == false))                   // Ignore destination if it is not own MAC
+    if((SourceIP == 0)                                      ||                  // Ignore invalid IPs
+       (SourceIP == ActiveIP)                               ||                  // Ignore our own IP
+       ((SourceIP & SubnetMask) != (ActiveIP & SubnetMask)) ||                  // Ignore packets outside our subnet
+       (pIP_Manager->IsItBroadcastMAC(pSrcMAC))             ||                  // Ignore broadcast MAC
+       (pIP_Manager->IsItMulticastMAC(pSrcMAC))             ||                  // Ignore multicast MAC
+       (m_pContext->IsItMyMAC_Address(pSrcMAC))             ||                  // Ignore our own MAC
+       (m_pContext->IsItMyMAC_Address(pDstMAC) == false))                       // Ignore destination if it is not own MAC
     {
         return;
     }
@@ -142,7 +142,7 @@ void ARP_Protocol::ProcessIP(IP_PacketMsg_t* pRX)
     //    return; // suspicious -> ignore
     //}
 
-    UpdateEntry(SourceIP, pSrcMAC);                                         // Passed all filters -> learn entry
+    UpdateEntry(SourceIP, pSrcMAC);                                             // Passed all filters -> learn entry
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -209,11 +209,11 @@ void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
             {
                 UpdateEntry(SrcIP, &pRX_ARP->SourceMAC);
 
-                if(m_PendingPacket != nullptr)                                                      // If a packet was waiting for this ARP resolution, resend it now
+                if(m_pPendingPacket != nullptr)                                                      // If a packet was waiting for this ARP resolution, resend it now
                 {
-                    memcpy(m_PendingPacket->pPacket->ETH_Header.DestinationMAC.Byte, pRX_ARP->SourceMAC.Byte,  IP_MAC_ADDRESS_SIZE);                                                    // Update Ethernet destination MAC now that ARP is resolved
-                    m_pContext->SendPacket(m_PendingPacket);                                        // Send the packet
-                    m_PendingPacket = nullptr;                                                      // Clear pending pointer
+                    memcpy(m_pPendingPacket->pPacket->ETH_Header.DestinationMAC.Byte, pRX_ARP->SourceMAC.Byte,  IP_MAC_ADDRESS_SIZE);                                                    // Update Ethernet destination MAC now that ARP is resolved
+                    m_pContext->SendPacket(m_pPendingPacket);                                        // Send the packet
+                    m_pPendingPacket = nullptr;                                                      // Clear pending pointer
                 }
             }
         }
@@ -439,17 +439,17 @@ bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg
     ProcessOut();               																// Send ARP request
 
     // TEMPORARY SAFETY: drop if already pending
-    if (m_PendingPacket != nullptr)
+    if (m_pPendingPacket != nullptr)
     {
         // At this time We drop the new packet to avoid overwriting the old one.
         // TODO: Replace with a proper pending queue.
         return false;
     }
-    
+
   #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Stack Msg to send later\n");
   #endif
-    m_PendingPacket = pMsg;
+    m_pPendingPacket = pMsg;
     return false;               																// Unresolved -> caller must retry later
 }
 

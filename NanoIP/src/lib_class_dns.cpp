@@ -72,7 +72,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define DNS_PORT                        53
-#define DNS_RESPONSE_TIME_OUT           1000
+#define DNS_RESPONSE_TIME_OUT           10000
 #define DNS_LABEL_POINTER_FLAG          0xC0
 #define DNS_LABEL_END                   0x00
 #define DNS_HEADER_SIZE                 12

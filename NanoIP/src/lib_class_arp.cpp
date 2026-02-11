@@ -45,6 +45,9 @@
 
 void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg);
 
+
+volatile void* pPending = nullptr;
+
 //-------------------------------------------------------------------------------------------------
 //  Name:           Initialize
 //
@@ -178,7 +181,7 @@ void ARP_Protocol::ProcessIP(IP_PacketMsg_t* pRX)
 //  Description:    Handles inbound ARP frames (requests and replies).
 //
 //                  - Validates the received ARP frame and extracts the ARP payload.
-//                  
+//
 //                  - For ARP_REQUEST:
 //                        If the request targets our IP address, a zero‑copy ARP reply is
 //                        constructed directly in the received buffer and transmitted.
@@ -376,6 +379,10 @@ CheckPending:
         m_pContext->SendPacket(m_pPendingPacket);
         m_pPendingPacket = nullptr;
         m_PendingIP      = 0;
+
+      #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Send Pending Packet\n");
+      #endif
     }
 }
 
@@ -429,7 +436,7 @@ void ARP_Protocol::ProcessOut(void)
 
     pMsg->PacketSize = sizeof(ARP_Frame_t);
 
-  #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
+  #if (IP_DBG_ARP == DEF_ENABLED)
     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Request for %d.%d.%d.%d\n", IP_A(m_IP_Address),
                                                                                      IP_B(m_IP_Address),
                                                                                      IP_C(m_IP_Address),
@@ -484,7 +491,7 @@ bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg
     }
 
     // Not found -> send ARP request (if not already pending)
-    if((m_pPendingPacket == nullptr) || (m_PendingIP != IP))
+    if(m_pPendingPacket == nullptr)
     {
         // New ARP resolution request
         m_IP_Address = IP;                                                                      // Target IP for ARP request
@@ -496,6 +503,7 @@ bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg
       #endif
 
         m_pPendingPacket = pMsg;                                                                // Store pending packet
+pPending = m_pPendingPacket;
         m_PendingIP      = IP;                                                                  // Track which IP we wait for
     }
     else

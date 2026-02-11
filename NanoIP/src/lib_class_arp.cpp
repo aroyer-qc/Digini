@@ -46,15 +46,23 @@
 void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg);
 
 //-------------------------------------------------------------------------------------------------
+//  Name:           Initialize
 //
-//  Name:         	Initialize
+//  Parameter(s):   NetworkContext*   pContext
 //
-//  Parameter(s):   SystemState_e
-//  Return:         void
+//  Return:         SystemState_e     SYS_READY on success
+//                                    SYS_FAIL  on timer creation/start failure
 //
-//  Description:    Clear ARP table of any entry
-// 					Setup OS timer for ARP table entry
+//  Description:    Initializes the ARP subsystem.
 //
+//                  - Stores the network context pointer.
+//                  - Clears all ARP table entries (IP -> MAC mappings).
+//                  - Resets the pending ARP resolution state (no pending packet/IP).
+//                  - Creates and starts the periodic ARP timer used for aging entries
+//                    and driving ARP retry logic.
+//
+//  Note(s):        This function must be called once during network stack initialization
+//                  before any ARP processing occurs.
 //-------------------------------------------------------------------------------------------------
 SystemState_e ARP_Protocol::Initialize(NetworkContext* pContext)
 {
@@ -62,6 +70,7 @@ SystemState_e ARP_Protocol::Initialize(NetworkContext* pContext)
 
     m_pContext       = pContext;
     m_pPendingPacket = nullptr;
+    m_PendingIP      = IP_ADDRESS(0,0,0,0);
 
 	// Clear the ARP cache table
 	for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
@@ -85,24 +94,38 @@ SystemState_e ARP_Protocol::Initialize(NetworkContext* pContext)
 }
 
 //-------------------------------------------------------------------------------------------------
+//  Name:           ProcessIP
 //
-//  Name:         	ProcessIP
+//  Parameter(s):   IP_PacketMsg_t*   pRX
 //
-//  Parameter(s):
-//  Return:
+//  Return:         void
 //
-//  Description:
+//  Description:    Learns (IP -> MAC) mappings from inbound IPv4 packets.
 //
-//  Note(s):        Only insert or update an entry if the source IP address of the incoming IP
-// 					packet comes from a host on the local network.
+//                  This function inspects the source IP and source MAC of received IP frames
+//                  and updates the ARP table when the traffic originates from a valid host
+//                  on the local subnet.
 //
+//                  Packets are ignored if:
+//                      - The interface is not yet configured (IP or subnet mask is zero)
+//                      - The destination IP or MAC is multicast
+//                      - The source IP is invalid, zero, or equal to our own IP
+//                      - The source host is outside the local subnet
+//                      - The source MAC is broadcast, multicast, or our own MAC
+//                      - The destination MAC is not ours
+//
+//                  If all filters pass, the sender’s (IP -> MAC) mapping is learned via
+//                  UpdateEntry(). This may also resolve a pending ARP request.
+//
+//  Note(s):        Only learns from hosts on the local network. This function never sends
+//                  ARP requests; it only updates the ARP cache based on observed IP traffic.
 //-------------------------------------------------------------------------------------------------
 void ARP_Protocol::ProcessIP(IP_PacketMsg_t* pRX)
 {
     IP_Address_t SubnetMask = m_pContext->GetActiveSubnetMask();
     IP_Address_t ActiveIP   = m_pContext->GetActiveIP();
 
-    if((ActiveIP == IP_ADDRESS(0,0,0,0)) || (SubnetMask == IP_ADDRESS(0,0,0,0)))// Interface not configured yet -> do not learn from IP traffic
+    if((ActiveIP == IP_ADDRESS(0,0,0,0)) || (SubnetMask == IP_ADDRESS(0,0,0,0)))    // Interface not configured yet -> do not learn from IP traffic
     {
         return;
     }
@@ -112,12 +135,12 @@ void ARP_Protocol::ProcessIP(IP_PacketMsg_t* pRX)
     IP_Manager* pIP_Manager = m_pContext->GetIP_Manager();
 
 
-    if(pIP_Manager->IsItMulticast(DestIP))                                      // Ignore multicast IP
+    if(pIP_Manager->IsItMulticast(DestIP))                                          // Ignore multicast IP
     {
         return;
     }
 
-    if(pIP_Manager->IsItMulticastMAC(pDstMAC))                                  //  Ignore multicast MAC destination
+    if(pIP_Manager->IsItMulticastMAC(pDstMAC))                                      //  Ignore multicast MAC destination
     {
         return;
     }
@@ -125,13 +148,13 @@ void ARP_Protocol::ProcessIP(IP_PacketMsg_t* pRX)
     IP_Address_t      SourceIP = pRX->pPacket->IP_Frame.Header.SrcIP_Address;
     IP_MAC_Address_t* pSrcMAC  = &pRX->pPacket->ETH_Header.SourceMAC;
 
-    if((SourceIP == 0)                                      ||                  // Ignore invalid IPs
-       (SourceIP == ActiveIP)                               ||                  // Ignore our own IP
-       ((SourceIP & SubnetMask) != (ActiveIP & SubnetMask)) ||                  // Ignore packets outside our subnet
-       (pIP_Manager->IsItBroadcastMAC(pSrcMAC))             ||                  // Ignore broadcast MAC
-       (pIP_Manager->IsItMulticastMAC(pSrcMAC))             ||                  // Ignore multicast MAC
-       (m_pContext->IsItMyMAC_Address(pSrcMAC))             ||                  // Ignore our own MAC
-       (m_pContext->IsItMyMAC_Address(pDstMAC) == false))                       // Ignore destination if it is not own MAC
+    if((SourceIP == 0)                                      ||                      // Ignore invalid IPs
+       (SourceIP == ActiveIP)                               ||                      // Ignore our own IP
+       ((SourceIP & SubnetMask) != (ActiveIP & SubnetMask)) ||                      // Ignore packets outside our subnet
+       (pIP_Manager->IsItBroadcastMAC(pSrcMAC))             ||                      // Ignore broadcast MAC
+       (pIP_Manager->IsItMulticastMAC(pSrcMAC))             ||                      // Ignore multicast MAC
+       (m_pContext->IsItMyMAC_Address(pSrcMAC))             ||                      // Ignore our own MAC
+       (m_pContext->IsItMyMAC_Address(pDstMAC) == false))                           // Ignore destination if it is not own MAC
     {
         return;
     }
@@ -142,18 +165,33 @@ void ARP_Protocol::ProcessIP(IP_PacketMsg_t* pRX)
     //    return; // suspicious -> ignore
     //}
 
-    UpdateEntry(SourceIP, pSrcMAC);                                             // Passed all filters -> learn entry
+    UpdateEntry(SourceIP, pSrcMAC);                                                 // Passed all filters -> learn entry
 }
 
 //-------------------------------------------------------------------------------------------------
+//  Name:           ProcessARP
 //
-//  Name:         	ProcessARP
+//  Parameter(s):   IP_PacketMsg_t*   pRX
 //
-//  Parameter(s):   IP_PacketMsg_t* 	pRX
 //  Return:         void
 //
-//  Description:
+//  Description:    Handles inbound ARP frames (requests and replies).
 //
+//                  - Validates the received ARP frame and extracts the ARP payload.
+//                  
+//                  - For ARP_REQUEST:
+//                        If the request targets our IP address, a zero‑copy ARP reply is
+//                        constructed directly in the received buffer and transmitted.
+//
+//                  - For ARP_REPLY:
+//                        If the reply is directed to our IP address, the sender’s
+//                        (IP -> MAC) mapping is learned via UpdateEntry(). Any pending
+//                        ARP resolution is also completed by UpdateEntry().
+//
+//                  - All non‑matching or unsupported ARP opcodes are ignored.
+//
+//                  The received ARP packet is always freed unless it is reused for
+//                  zero‑copy transmission when replying to an ARP request.
 //-------------------------------------------------------------------------------------------------
 void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
 {
@@ -208,13 +246,6 @@ void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
             if(DstIP == ActiveIP)                                                                   // We learn this only if we are the destination
             {
                 UpdateEntry(SrcIP, &pRX_ARP->SourceMAC);
-
-                if(m_pPendingPacket != nullptr)                                                      // If a packet was waiting for this ARP resolution, resend it now
-                {
-                    memcpy(m_pPendingPacket->pPacket->ETH_Header.DestinationMAC.Byte, pRX_ARP->SourceMAC.Byte,  IP_MAC_ADDRESS_SIZE);                                                    // Update Ethernet destination MAC now that ARP is resolved
-                    m_pContext->SendPacket(m_pPendingPacket);                                        // Send the packet
-                    m_pPendingPacket = nullptr;                                                      // Clear pending pointer
-                }
             }
         }
         break;
@@ -228,107 +259,124 @@ void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
 }
 
 //-------------------------------------------------------------------------------------------------
+//  Name:           UpdateEntry
 //
-//  Name:         	UpdateEntry
+//  Parameter(s):   IP_Address_t        IP_Address
+//                  IP_MAC_Address_t*   pMAC_Address
 //
-//  Parameter(s):   IP_Address_t            IP_Address
-//                  IP_MAC_Address_t*       pEthernet
 //  Return:         void
 //
-//  Description:    Update Entry in ARP table
+//  Description:    Updates (or creates) an entry in the ARP table for the specified IPv4 address.
 //
+//                  - If an existing entry matches IP_Address, its MAC address and timestamp
+//                    are refreshed.
+//
+//                  - If no entry exists, a free slot is used. If the table is full, the
+//                    oldest entry is evicted and replaced.
+//
+//                  - After updating the table, this function also checks whether the updated
+//                    IP address matches the ARP resolver’s pending request. If so, the
+//                    pending packet is completed (Ethernet destination MAC is filled) and
+//                    transmitted immediately. The pending state is then cleared.
+//
+//  Note(s):        This function is called from both ARP and IP processing paths. Any event
+//                  that provides a valid (IP -> MAC) mapping—ARP reply, ARP request directed
+//                  to us, or inbound IP traffic—can resolve a pending ARP request.
 //-------------------------------------------------------------------------------------------------
 void ARP_Protocol::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMAC_Address)
 {
-	uint8_t           i;
-	uint8_t           OldestEntry;
-	uint8_t           TimePage;
-	ARP_TableEntry_t* pTable	= nullptr;
+    uint8_t           i;
+    uint8_t           OldestEntry;
+    uint8_t           TimePage;
+    ARP_TableEntry_t* pTable = nullptr;
 
-	// Walk through the ARP mapping table and try to find an entry to
-    // update. If none is found, the IP -> MAC address mapping is
-    // inserted in the ARP table.
-	for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
-	{
-		pTable = &m_TableEntry[i];
-		// Only check those entries that are actually in use.
-		if(pTable->IP_Address != 0)
-		{
-            // Check if the source IP address of the incoming packet matches
-			// the IP address in this ARP table entry.
-			if(IP_Address == pTable->IP_Address)
-			{
-				// An old entry found, update this and return.
-				memcpy(pTable->MAC_Address.Byte, pMAC_Address->Byte, IP_MAC_ADDRESS_SIZE);
-				pTable->TimeToLive = m_Time;
-   		      #if (IP_DBG_ARP == DEF_ENABLED)
+    // Walk through the ARP mapping table and try to find an entry to update.
+    // If none is found, the IP -> MAC address mapping is inserted in the ARP table.
+    for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
+    {
+        pTable = &m_TableEntry[i];
+
+        if(pTable->IP_Address != 0)
+        {
+            if(IP_Address == pTable->IP_Address)
+            {
+                memcpy(pTable->MAC_Address.Byte, pMAC_Address->Byte, IP_MAC_ADDRESS_SIZE);
+                pTable->TimeToLive = m_Time;
+              #if (IP_DBG_ARP == DEF_ENABLED)
                 DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - (%d.%d.%d.%d) Update an existing entry %d\n", IP_A(pTable->IP_Address),
                                                                                                                           IP_B(pTable->IP_Address),
                                                                                                                           IP_C(pTable->IP_Address),
                                                                                                                           IP_D(pTable->IP_Address),
                                                                                                                           i);
-			  #endif
-				return;
-			}
-		}
-	}
+              #endif
+                goto CheckPending;
+            }
+        }
+    }
 
-	// If we get here, no existing ARP table entry was found, so we create one.
-
-	// First, we try to find an unused entry in the ARP table.
-	for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
-	{
-		pTable = &m_TableEntry[i];
+    // No existing entry found, try to find a free one.
+    for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
+    {
+        pTable = &m_TableEntry[i];
 
         if(pTable->IP_Address == 0)
-		{
-   		  #if (IP_DBG_ARP == DEF_ENABLED)
-			DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - Found a free entry %d\n", i);
-	      #endif
-			break;
-		}
-	}
+        {
+          #if (IP_DBG_ARP == DEF_ENABLED)
+            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - Found a free entry %d\n", i);
+          #endif
+            break;
+        }
+    }
 
-	// If no unused entry is found, we try to find the oldest entry and throw it away.
-	if(i == IP_ARP_TABLE_SIZE)
-	{
-		TimePage    = 0;
-		OldestEntry = 0;
+    // If no unused entry is found, evict the oldest.
+    if(i == IP_ARP_TABLE_SIZE)
+    {
+        TimePage    = 0;
+        OldestEntry = 0;
 
         for(i = 0; i < IP_ARP_TABLE_SIZE; i++)
-		{
-			pTable = &m_TableEntry[i];
+        {
+            pTable = &m_TableEntry[i];
 
             if((m_Time - pTable->TimeToLive) > TimePage)
-			{
-				TimePage = m_Time - pTable->TimeToLive;
-				OldestEntry = i;
-			}
-		}
+            {
+                TimePage    = m_Time - pTable->TimeToLive;
+                OldestEntry = i;
+            }
+        }
 
-		i = OldestEntry; // for debug only
-
-		pTable = &m_TableEntry[OldestEntry];
-   	  #if (IP_DBG_ARP == DEF_ENABLED)
-		DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - (%d.%d.%d.%d) Flush an old entry %d\n", IP_A(pTable->IP_Address),
+        i      = OldestEntry;                 // for debug only
+        pTable = &m_TableEntry[OldestEntry];
+      #if (IP_DBG_ARP == DEF_ENABLED)
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - (%d.%d.%d.%d) Flush an old entry %d\n", IP_A(pTable->IP_Address),
                                                                                                             IP_B(pTable->IP_Address),
                                                                                                             IP_C(pTable->IP_Address),
                                                                                                             IP_D(pTable->IP_Address),
                                                                                                             i);
       #endif
-	}
+    }
 
-	// Now, pTable pointer is on ARP table entry which we will fill with the new information.
-	pTable->IP_Address = IP_Address;
+    pTable->IP_Address = IP_Address;
   #if (IP_DBG_ARP == DEF_ENABLED)
-	DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - (%d.%d.%d.%d) Added a new entry %d\n", IP_A(pTable->IP_Address),
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - (%d.%d.%d.%d) Added a new entry %d\n", IP_A(pTable->IP_Address),
                                                                                                        IP_B(pTable->IP_Address),
                                                                                                        IP_C(pTable->IP_Address),
                                                                                                        IP_D(pTable->IP_Address),
                                                                                                        i);
   #endif
-	memcpy(pTable->MAC_Address.Byte, pMAC_Address->Byte, IP_MAC_ADDRESS_SIZE);
+    memcpy(pTable->MAC_Address.Byte, pMAC_Address->Byte, IP_MAC_ADDRESS_SIZE);
     pTable->TimeToLive = m_Time;
+
+CheckPending:
+
+    // If this IP resolves a pending packet, send it now.
+    if((m_pPendingPacket != nullptr) && (m_PendingIP == IP_Address))
+    {
+        memcpy(m_pPendingPacket->pPacket->ETH_Header.DestinationMAC.Byte, pMAC_Address->Byte, IP_MAC_ADDRESS_SIZE);
+        m_pContext->SendPacket(m_pPendingPacket);
+        m_pPendingPacket = nullptr;
+        m_PendingIP      = 0;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -401,56 +449,65 @@ void ARP_Protocol::ProcessOut(void)
 //  Return:         bool    true  = MAC address is available and copied to *pMAC
 //                                  (ARP table entry is VALID)
 //                          false = MAC address is not available
-//                                  (entry is missing, PENDING, or table is full)
+//                                  (entry is missing or pending)
 //
 //  Description:    Attempts to resolve an IPv4 address to a MAC address using the ARP table.
 //
 //                  - If a VALID entry exists for the given IP, the MAC address is copied
 //                    to *pMAC and the function returns true.
 //
-//                  - If no entry exists, a new PENDING entry is created (if space allows)
-//                    and an ARP request is triggered via ProcessOut(). The function then
+//                  - If no entry exists, an ARP request is triggered via ProcessOut() and
+//                    the outgoing packet is stored as a pending packet. The function then
 //                    returns false.
 //
-//                  - If a PENDING entry already exists, no additional ARP request is sent
-//                    and the function returns false.
+//                  - If a pending resolution already exists for the same IP, no additional
+//                    ARP request is sent and the function returns false.
 //
-//                  - If the ARP table is full, no entry is created and the function
-//                    returns false.
+//                  - If a pending resolution exists for a *different* IP, the new request
+//                    replaces the previous pending entry (caller’s packet becomes the new
+//                    pending packet).
 //
 //  Note(s):        This function does not transmit IP packets directly. It only manages ARP
-//                  table state and triggers ARP requests when needed. The caller (e.g.,
-//                  IP_Manager::SendPacket) must retry transmission once the ARP entry
-//                  transitions to VALID.
+//                  resolution state and triggers ARP requests when needed. The caller must
+//                  retry transmission once the ARP entry transitions to VALID (handled by
+//                  UpdateEntry()).
 //-------------------------------------------------------------------------------------------------
 bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg_t* pMsg)
 {
-    for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)													// Search ARP table
+    for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)                                                  // Search ARP table for a valid entry
     {
         if((m_TableEntry[i].IP_Address == IP) && (m_TableEntry[i].State == ARP_STATE_VALID))
         {
-            memcpy(pMAC->Byte, m_TableEntry[i].MAC_Address.Byte, IP_MAC_ADDRESS_SIZE);			// Found -> return MAC
-            return true;
+            memcpy(pMAC->Byte, m_TableEntry[i].MAC_Address.Byte, IP_MAC_ADDRESS_SIZE);
+            return true;                                                                        // Found -> resolved
         }
     }
 
-    // Not found -> trigger ARP request
-    m_IP_Address = IP;          																// Store target IP for ARP request
-    ProcessOut();               																// Send ARP request
-
-    // TEMPORARY SAFETY: drop if already pending
-    if (m_pPendingPacket != nullptr)
+    // Not found -> send ARP request (if not already pending)
+    if((m_pPendingPacket == nullptr) || (m_PendingIP != IP))
     {
-        // At this time We drop the new packet to avoid overwriting the old one.
-        // TODO: Replace with a proper pending queue.
-        return false;
+        // New ARP resolution request
+        m_IP_Address = IP;                                                                      // Target IP for ARP request
+        ProcessOut();                                                                           // Send ARP request
+
+      #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET,
+                             "ARP: Stack Msg to send later\n");
+      #endif
+
+        m_pPendingPacket = pMsg;                                                                // Store pending packet
+        m_PendingIP      = IP;                                                                  // Track which IP we wait for
+    }
+    else
+    {
+        // Already waiting for this IP -> drop new packet
+        // (Future improvement: queue multiple pending packets)
+      #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Already pending, drop new packet\n");
+      #endif
     }
 
-  #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
-    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Stack Msg to send later\n");
-  #endif
-    m_pPendingPacket = pMsg;
-    return false;               																// Unresolved -> caller must retry later
+    return false;                                                                               // Not resolved yet
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -489,62 +546,76 @@ void ARP_Protocol::FillCommon(ARP_Frame_t* pARP, uint16_t Type)
 }
 
 //-------------------------------------------------------------------------------------------------
+//  Name:           TimerCallBack
 //
-//  Name:         	TimerCallBack
-//
-//  Parameter(s):  	None
+//  Parameter(s):   None
 //
 //  Return:         void
 //
-//  Description:    Callback for the nOS_Timer to handle ARP time out.
+//  Description:    Periodic ARP maintenance handler invoked by the nOS timer.
 //
+//                  - Increments the internal ARP time counter (m_Time).
+//                  - Iterates through all ARP table entries.
+//                  - Computes the age of each entry using unsigned modular arithmetic.
+//                  - Any entry whose age exceeds IP_ARP_TIME_OUT is removed from the table.
+//
+//                  This ensures that stale (IP -> MAC) mappings are automatically aged out
+//                  and prevents the ARP cache from accumulating outdated entries.
+//
+//  Note(s):        This callback does not resend pending ARP requests or packets. Pending
+//                  resolutions are completed by UpdateEntry() when a valid mapping is learned.
 //-------------------------------------------------------------------------------------------------
 void ARP_Protocol::TimerCallBack(void)
 {
-	uint16_t          Time;
-	ARP_TableEntry_t* pTable;
+    m_Time++;                                                         // Advance ARP time counter
 
-	m_Time++;
+    for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)                        // Scan ARP table
+    {
+        ARP_TableEntry_t* pTable = &m_TableEntry[i];
 
-	for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)                      // Scan Table for the entry
-	{
-		pTable = &m_TableEntry[i];
+        if(pTable->IP_Address != IP_ADDRESS(0,0,0,0))                 // Entry in use?
+        {
+            uint16_t age = uint16_t(m_Time - pTable->TimeToLive);     // Unsigned wrap-safe age
 
-        if(pTable->IP_Address != 0)
-		{
-			Time = uint16_t(m_Time);
-
-            if(m_Time < pTable->TimeToLive)
-			{
-				Time += uint16_t(IP_ARP_TIME_OUT);
-			}
-
-			if((Time - pTable->TimeToLive) >= IP_ARP_TIME_OUT)            // Remove entry from table
-			{
-   		      #if (IP_DBG_ARP == DEF_ENABLED)
-   		      	DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - (%d.%d.%d.%d) Remove entry number %d\n", IP_A(pTable->IP_Address),
+            if(age >= IP_ARP_TIME_OUT)                                // Entry expired?
+            {
+              #if (IP_DBG_ARP == DEF_ENABLED)
+                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - (%d.%d.%d.%d) Remove entry number %d\n", IP_A(pTable->IP_Address),
                                                                                                                      IP_B(pTable->IP_Address),
                                                                                                                      IP_C(pTable->IP_Address),
                                                                                                                      IP_D(pTable->IP_Address),
                                                                                                                      i);
-		      #endif
-				pTable->IP_Address = IP_ADDRESS(0,0,0,0);
-			}
-		}
-	}
+              #endif
+
+                pTable->IP_Address = IP_ADDRESS(0,0,0,0);             // Clear entry
+            }
+        }
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
+//  Name:           ARP_TimerCallBack
 //
-//  Name:         	ARP_TimerCallBack
-//
-//  Parameter(s):  	nOS_Timer*  pTimer
-//                  void*       pArg            holding the object of the class ARP_Protocol
+//  Parameter(s):   nOS_Timer*  pTimer     Unused timer handle (provided by nOS)
+//                  void*       pArg       Pointer to the ARP_Protocol instance
 //
 //  Return:         void
 //
-//  Description:    Callback for the nOS_Timer to handle ARP time out. Will call the proper object
+//  Description:    Global nOS timer callback used to service ARP maintenance.
 //
+//                  - Casts pArg back to the ARP_Protocol object and invokes its TimerCallBack()
+//                    method to perform ARP entry aging.
+//
+//                  - After aging, checks whether a pending ARP resolution still has a corresponding
+//                    VALID entry in the ARP table. If the entry has expired or no longer exists,
+//                    the pending packet is dropped and the pending state is cleared.
+//
+//                  This ensures that stale pending packets do not remain queued indefinitely when
+//                  ARP resolution fails or times out.
+//
+//  Note(s):        This function is the bridge between the OS timer system and the ARP_Protocol
+//                  class. All ARP logic remains encapsulated inside ARP_Protocol; this callback
+//                  only forwards the timer event and performs minimal cleanup.
 //-------------------------------------------------------------------------------------------------
 void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg)
 {

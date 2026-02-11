@@ -64,6 +64,7 @@ class ARP_Protocol
         IP_Address_t        m_IP_Address;
         ARP_TableEntry_t    m_TableEntry[IP_ARP_TABLE_SIZE];
         IP_PacketMsg_t*     m_pPendingPacket;
+        IP_Address_t        m_PendingIP;
         uint8_t             m_Time;
         nOS_Timer*          m_pTimer;                               // Pointer on the OS timer
 };

@@ -119,6 +119,13 @@ void UDP_Protocol::Process(IP_PacketMsg_t* pMsg)
     // Validate IP and UDP lengths BEFORE using them
     size_t IpTotalLength = ntohs(pIP->Length);
     size_t IpHeaderSize  = (pIP->VersionIHL & 0x0F) * 4;
+    size_t UDP_Length = ntohs(pUDP->Length);
+
+
+
+DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "IP Len=%u, Hdr=%u, UDP Len=%u\n", (uint32_t)IpTotalLength, (uint32_t)IpHeaderSize, (uint32_t)UDP_Length);
+
+
 
     // IP total length must cover IP header + UDP header
     if(IpTotalLength < (IpHeaderSize + sizeof(UDP_Header_t)))
@@ -127,7 +134,7 @@ void UDP_Protocol::Process(IP_PacketMsg_t* pMsg)
         return;
     }
 
-    size_t UDP_Length = ntohs(pUDP->Length);
+    //size_t UDP_Length = ntohs(pUDP->Length);
 
     // UDP length must include header and fit inside IP payload
     if((UDP_Length < sizeof(UDP_Header_t)) || (UDP_Length > (IpTotalLength - IpHeaderSize)))
@@ -155,7 +162,7 @@ void UDP_Protocol::Process(IP_PacketMsg_t* pMsg)
     UDP_Socket_t* pUDP_Sock = pSock->GetUDP();
 
     // Enqueue packet for this socket
-    if(nOS_QueueWrite(&pUDP_Sock->RX_Queue, pMsg, 0) != NOS_OK)
+    if(nOS_QueueWrite(&pUDP_Sock->RX_Queue, &pMsg, 0) != NOS_OK)
     {
         IP_Manager::FreeMessage(pMsg);                              // Queue full -> drop
         return;

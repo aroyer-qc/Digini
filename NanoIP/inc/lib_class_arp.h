@@ -34,6 +34,19 @@
 #define ARP_REPLY                       2
 #define ARP_HARDWARE_TYPE_ETHERNET      1
 
+#define ARP_PENDING_QUEUE_SIZE          4
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+struct ARP_PendingEntry_t
+{
+    IP_Address_t      IP;
+    IP_PacketMsg_t*   pMsg;
+    ARP_State_e       State;
+};
+
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
@@ -50,9 +63,11 @@ class ARP_Protocol
         void                TimerCallBack	    	(void);
 
         // For ARP Timer callback
-        IP_PacketMsg_t*     GetPendingPacketPointer (void)                      { return m_pPendingPacket;     }
-        void                SetPendingPacketPointer (IP_PacketMsg_t* pMsg)      { m_pPendingPacket = pMsg;     }
-        ARP_TableEntry_t*   GetTableEntryPointer    (int Entry)                 { return &m_TableEntry[Entry]; }
+        ARP_PendingEntry_t* GetPendingEntryPointer  (int Index)                 { return &m_PendingQueue[Index]; }
+        int                 GetPendingCount         (void)                      { return m_PendingCount;         }
+        ARP_TableEntry_t*   GetTableBasePointer     (void)                      { return m_TableEntry;           }
+
+        //ARP_TableEntry_t*   GetTableEntryPointer    (int Entry)                 { return &m_TableEntry[Entry]; }
         IP_Address_t        GetIP_Address           (void)                      { return m_IP_Address;         }
 
     private:
@@ -63,9 +78,13 @@ class ARP_Protocol
         NetworkContext*     m_pContext;
         IP_Address_t        m_IP_Address;
         ARP_TableEntry_t    m_TableEntry[IP_ARP_TABLE_SIZE];
-        IP_PacketMsg_t*     m_pPendingPacket;
-        IP_Address_t        m_PendingIP;
-        uint8_t             m_Time;
+
+        ARP_PendingEntry_t  m_PendingQueue[ARP_PENDING_QUEUE_SIZE];
+        int                 m_PendingHead;
+        int                 m_PendingTail;
+        int                 m_PendingCount;
+
+        uint16_t            m_Time;
         nOS_Timer*          m_pTimer;                               // Pointer on the OS timer
 };
 

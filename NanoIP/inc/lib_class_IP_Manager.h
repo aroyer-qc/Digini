@@ -140,7 +140,7 @@ class IP_Manager
         static bool         IsItMulticastMAC            (const IP_MAC_Address_t* mac)       { return (mac->Byte[0] & 0x01) != 0; }
         static bool         IsItMulticast               (IP_Address_t IP)                   { uint8_t First = IP_D(IP); return ((First >= IP_MULTICAST_MIN) && (First <= IP_MULTICAST_MAX)); }
 
-        ARP_TableEntry_t*   GetTableEntryPointer        (int Entry)                         { return m_ARP.GetTableEntryPointer(Entry); }
+        ARP_TableEntry_t*   GetTableEntryPointer        (int Entry)                         { return &m_ARP.GetTableBasePointer()[Entry]; }
 
       #if (IP_USE_DNS == DEF_ENABLED)
         bool                RequestDNS                  (const char* pHostName, DNS_Callback_t Callback);

@@ -176,9 +176,6 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 //                  this task is also the task start point
 //
 //-------------------------------------------------------------------------------------------------
-
-volatile uint32_t Functionality = 0;
-
 void IP_Manager::Run(void)
 {
     IP_PacketMsg_t* pMsg;
@@ -191,68 +188,52 @@ void IP_Manager::Run(void)
     for(;;)
     {
       #if (IP_USE_DHCP == DEF_ENABLED)
-Functionality = 1;
         if(m_Context.GetLinkChange() == true)                                                   // Always react to link changes, regardless of DHCP enable state
         {
-Functionality = 2;
             m_Context.SetLinkChange(false);
 
-Functionality = 3;
             if(m_Context.GetLinkState() == ETH_LINK_UP)
             {
-Functionality = 4;
                 if(m_Context.IsDHCP_Enable())
                 {
-Functionality = 5;
                     m_DHCP.Start();
                 }
                 else
                 {
-Functionality = 6;
                     m_DHCP.Reset();                                                             // Ensure no stale DHCP state
                 }
             }
             else // Link down
             {
-Functionality = 7;
                 m_DHCP.Reset();
             }
         }
 
-Functionality = 8;
         if((m_Context.IsDHCP_Enable() == true) && (m_Context.GetLinkState() == ETH_LINK_UP))    // Run DHCP state machine only when enabled AND link is up
         {
-Functionality = 9;
             (void)m_DHCP.Process();
         }
       #endif
 
     #if (IP_USE_DNS == DEF_ENABLED)
-Functionality = 10;
         if((m_DNS_Request.Pending == true) && (m_DNS.IsBusy() == false))                        // Start DNS query if requested
         {
             m_DNS_Request.Pending = false;
             m_DNS_Request.Busy = true;
-Functionality = 11;
             m_DNS.Resolve(m_DNS_Request.pHostName);
         }
 
-Functionality = 12;
         if(m_DNS.IsBusy() == true)                                                             // Pump DNS state machine if busy
         {
-Functionality = 13;
             m_DNS.Process();
-Functionality = 30;
         }
     #endif
 
-Functionality = 14;
         if(nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
         {
             if(pMsg->PacketSize < sizeof(IP_EthernetHeader_t))                                  // Basic Ethernet header size check  peut-etre pas necessaire avec le default
             {
                 DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: Frame too small for Ethernet header (%u bytes)\n",  pMsg->PacketSize);
-Functionality = 15;
                 FreeMessage(pMsg);
                 continue;
             }
@@ -264,7 +245,6 @@ Functionality = 15;
                     if(pMsg->PacketSize < (sizeof(IP_EthernetHeader_t) + sizeof(IP_Header_t)))  // Check minimum size for IPv4 header
                     {
                         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: IPv4 frame too small (%u bytes)\n", pMsg->PacketSize);
-Functionality = 16;
                         FreeMessage(pMsg);
                         break;
                     }
@@ -274,7 +254,6 @@ Functionality = 16;
                     if(ihl < 5)
                     {
                         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: Invalid IHL (%u)\n", ihl);
-Functionality = 17;
                         FreeMessage(pMsg);
                         break;
                     }
@@ -285,7 +264,6 @@ Functionality = 17;
                     if(totalLength < ipHeaderSize)
                     {
                         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: totalLength < ipHeaderSize (%u < %u)\n", totalLength, ipHeaderSize);
-Functionality = 18;
                         FreeMessage(pMsg);
                         break;
                     }
@@ -293,15 +271,12 @@ Functionality = 18;
                     if(pMsg->PacketSize < (sizeof(IP_EthernetHeader_t) + totalLength))          // Ensure the received frame contains the full IP packet
                     {
                         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: Truncated IPv4 frame (%u < %u)\n", pMsg->PacketSize, sizeof(IP_EthernetHeader_t) + totalLength);
-Functionality = 19;
                         FreeMessage(pMsg);
                         break;
                     }
 
                     //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH type: IPV4\n");
-Functionality = 20;
                     m_ARP.ProcessIP(pMsg);                                                      // May update ARP cache, does NOT own pMsg
-Functionality = 21;
                     ProcessIP(pMsg);                                                            // Transfers ownership to protocol/socket
                 }
                 break;
@@ -309,7 +284,6 @@ Functionality = 21;
                 case IP_ETHERNET_TYPE_ARP:
                 {
                     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH type: ARP\n");
-Functionality = 22;
                     m_ARP.ProcessARP(pMsg);                                                     // ARP owns and frees pMsg
                 }
                 break;
@@ -317,7 +291,6 @@ Functionality = 22;
                 default:
                 {
                     //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH_Default: Type:0x%04X\n", pMsg->pPacket->ETH_Header.Type);
-Functionality = 23;
                     FreeMessage(pMsg);
                 }
                 break;

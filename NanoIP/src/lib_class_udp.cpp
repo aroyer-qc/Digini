@@ -119,13 +119,6 @@ void UDP_Protocol::Process(IP_PacketMsg_t* pMsg)
     // Validate IP and UDP lengths BEFORE using them
     size_t IpTotalLength = ntohs(pIP->Length);
     size_t IpHeaderSize  = (pIP->VersionIHL & 0x0F) * 4;
-    size_t UDP_Length = ntohs(pUDP->Length);
-
-
-
-DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "IP Len=%u, Hdr=%u, UDP Len=%u\n", (uint32_t)IpTotalLength, (uint32_t)IpHeaderSize, (uint32_t)UDP_Length);
-
-
 
     // IP total length must cover IP header + UDP header
     if(IpTotalLength < (IpHeaderSize + sizeof(UDP_Header_t)))
@@ -134,7 +127,7 @@ DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "IP Len=%u, Hdr=%u, UDP Len=%u\n"
         return;
     }
 
-    //size_t UDP_Length = ntohs(pUDP->Length);
+    size_t UDP_Length = ntohs(pUDP->Length);
 
     // UDP length must include header and fit inside IP payload
     if((UDP_Length < sizeof(UDP_Header_t)) || (UDP_Length > (IpTotalLength - IpHeaderSize)))
@@ -166,13 +159,6 @@ DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "IP Len=%u, Hdr=%u, UDP Len=%u\n"
     {
         IP_Manager::FreeMessage(pMsg);                              // Queue full -> drop
         return;
-    }
-
-    // Debug guard: pointer must be in valid SRAM range
-    if(((uint32_t)pMsg < 0x20000000) || ((uint32_t)pMsg > 0x20020000))
-    {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "CORRUPTED BEFORE ENQUEUE: %08X\n", (uint32_t)pMsg);
-        while(1);
     }
 
     // Ownership now belongs to the socket. Do NOT free here.

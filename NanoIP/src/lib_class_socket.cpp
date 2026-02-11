@@ -33,19 +33,11 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "./lib_digini.h"
-
 #include <new>
-
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
-
-//#define TCP_DEFAULT_WINDOW_SIZE         (4 * 1460)   // 5840 bytes
-//#define TCP_TX_BUFFER_SIZE              (4 * 1460)   // 5840 bytes
-//#define TCP_RX_BUFFER_SIZE              (4 * 1460)   // 5840 bytes
-//#define UDP_RX_BUFFER_SIZE              2048
-//#define RAW_RX_BUFFER_SIZE              1536
 
 #define SOCKET_DEFAULT_TIME_OUT             1000
 
@@ -287,13 +279,6 @@ void Socket::Create(SocketType_e Type)
             pUDP->LocalIP   = m_Context.GetActiveIP();
             pUDP->Flags     = 0;
             nOS_QueueCreate(&pUDP->RX_Queue, pUDP->RX_QueueBuffer, sizeof(IP_PacketMsg_t*), UDP_RX_QUEUE_DEPTH);
-
-// Debug
-for (int i = 0; i < UDP_RX_QUEUE_DEPTH; i++)
-{
-    pUDP->RX_QueueBuffer[i] = (IP_PacketMsg_t*)0xAAAAAAAA;
-}
-
         }
         break;
       #endif
@@ -672,9 +657,7 @@ SystemState_e Socket::Recv(uint8_t* pBuffer, size_t BufferSize, size_t* pBytesRe
 
     uint8_t* pPayload = (uint8_t*)((uint8_t*)pTCP + headerLen);
     memcpy(pBuffer, pPayload, dataLen);
-
     IP_Manager::FreeMessage(pMsg);                                      // Free segment
-
     *pBytesReceived = dataLen;
     return SYS_READY;
 }
@@ -769,11 +752,6 @@ SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t
         return SYS_TIME_OUT;
     }
 
-if ((uint32_t)pMsg < 0x20000000 || (uint32_t)pMsg > 0x20020000)
-{
-    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "CORRUPTED IN QUEUE: %08X\n", (uint32_t)pMsg);
-    while(1);
-}
     // Use what UDP_Protocol::Process already validated
     size_t PayloadLength = pMsg->PayloadSize;
 
@@ -973,8 +951,7 @@ void Socket::GetLocalInfo(SocketInfo_t* pInfo)
         return;
     }
 
-    // Copy the stored local endpoint information
-    *pInfo = m_LocalInfo;
+    *pInfo = m_LocalInfo;                       // Copy the stored local endpoint information
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1005,8 +982,7 @@ void Socket::GetRemoteInfo(SocketInfo_t* pInfo)
         return;
     }
 
-    // Copy the stored remote endpoint information
-    *pInfo = m_RemoteInfo;
+    *pInfo = m_RemoteInfo;                      // Copy the stored remote endpoint information
 }
 
 //-------------------------------------------------------------------------------------------------

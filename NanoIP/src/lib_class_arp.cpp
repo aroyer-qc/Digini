@@ -217,7 +217,7 @@ void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
     IP_Address_t DstIP = pRX_ARP->DstIP_Address;
 
 
-    switch(ntohs(pRX_ARP->Opcode))
+    switch(pRX_ARP->Opcode)
     {
         case ARP_REQUEST:
         {
@@ -233,7 +233,7 @@ void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
                 // Ethernet header
                 memcpy(pETH->DestinationMAC.Byte, pETH->SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);       // Destination = requester MAC
                 m_pContext->GetMAC_Address(&pETH->SourceMAC);                                       // Source = our MAC
-                pETH->Type = htons(IP_ETHERNET_TYPE_ARP);
+                pETH->Type = IP_ETHERNET_TYPE_ARP;
 
                 FillCommon(pARP, ARP_REPLY);                                                        // ARP payload Fixed fields
 
@@ -437,7 +437,7 @@ void ARP_Protocol::ProcessOut(void)
     ARP_Frame_t*         pARP   = &pFrame->ARP_Frame;
     memset(pFrame->ETH_Header.DestinationMAC.Byte, 0xFF, IP_MAC_ADDRESS_SIZE);      // Ethernet header (broadcast)
     m_pContext->GetMAC_Address(&pFrame->ETH_Header.SourceMAC);
-    pFrame->ETH_Header.Type = htons(IP_ETHERNET_TYPE_ARP);
+    pFrame->ETH_Header.Type = IP_ETHERNET_TYPE_ARP;
     FillCommon(pARP, ARP_REQUEST);                                                  // ARP header (common fields + opcode)
 
     // ARP payload
@@ -568,8 +568,8 @@ bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg
 //-------------------------------------------------------------------------------------------------
 void ARP_Protocol::FillCommon(ARP_Frame_t* pARP, uint16_t Type)
 {
-    pARP->HardwareType       = htons(ARP_HARDWARE_TYPE_ETHERNET);
-    pARP->Protocol           = htons(IP_ETHERNET_TYPE_IPV4);
+    pARP->HardwareType       = ARP_HARDWARE_TYPE_ETHERNET;
+    pARP->Protocol           = IP_ETHERNET_TYPE_IPV4;
     pARP->HardwareAddrLength = IP_MAC_ADDRESS_SIZE;
     pARP->ProtocolLength     = 4;
     pARP->Opcode             = htons(Type);

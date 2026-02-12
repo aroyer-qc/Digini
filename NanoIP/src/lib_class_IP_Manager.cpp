@@ -136,18 +136,6 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
     m_TCP.Initialize(&m_Context);
   #endif
 
-  #if (IP_USE_NTP == DEF_ENABLED)
-    m_NTP.Initialize(&m_Context);
-  #endif
-
-  #if (IP_USE_SNTP == DEF_ENABLED)
-    m_SNTP.Initialize(&m_Context);
-  #endif
-
-  #if (IP_USE_SOAP == DEF_ENABLED)
-    m_SOAP.Initialize(&m_Context);
-  #endif
-
    #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
     myStacktistic.Register(m_Config[IF_ID].pStack, TASK_IP_MANAGER_STACK_SIZE, m_Config[IF_ID].pHostName);
   #endif
@@ -238,7 +226,7 @@ void IP_Manager::Run(void)
                 continue;
             }
 
-            switch(ntohs(pMsg->pPacket->ETH_Header.Type))
+            switch(pMsg->pPacket->ETH_Header.Type)
             {
                 case IP_ETHERNET_TYPE_IPV4:
                 {
@@ -825,7 +813,7 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t DstIP, uint16_t Pay
     IP_MAC_Address_t MacAddress;
     m_Context.GetMAC_Address(&MacAddress);
     memcpy(&pETH->SourceMAC.Byte[0], &MacAddress.Byte[0], IP_MAC_ADDRESS_SIZE);
-    pETH->Type = htons(IP_ETHERNET_TYPE_IPV4);
+    pETH->Type = IP_ETHERNET_TYPE_IPV4;
 
     // IPv4 header
     pIP->VersionIHL          = IP_VERSION4_IHL20;

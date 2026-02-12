@@ -78,8 +78,9 @@
 #define DNS_HEADER_SIZE                 12
 
 // TYPE
-#define DNS_TYPE_A                      1   				// The ARPA Internet
-#define DNS_CLASS_IN                	1                   // The Internet
+
+#define DNS_TYPE_A                      HTONS(1)			// The ARPA Internet
+#define DNS_CLASS_IN                	HTONS(1)            // The Internet
 #define DNS_RECEIVE_DATA_LENGTH         4                   // IPv4 address length
 
 // Flag QR
@@ -91,7 +92,10 @@
 #define DNS_OPCODE_STATUS           	2                   // Server status request
 
 //Flag RD
-#define DNS_FLAG_RD_RECURSION_DESIRED   0x0100              // Recursion Desired
+#define DNS_FLAG_RD_RECURSION_DESIRED   HTONS(0x0100)       // Recursion Desired
+
+#define DNS_QDCOUNT_1                   HTONS(1)
+
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -387,9 +391,11 @@ bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength)
             pRead++;                                                        // Skip terminating zero
         }
 
-        uint16_t Type = ntohs(*(uint16_t*)pRead);
+//        uint16_t Type = ntohs(*(uint16_t*)pRead);
+        uint16_t Type = *(uint16_t*)pRead;
         pRead += sizeof(uint16_t);
-        uint16_t Class = ntohs(*(uint16_t*)pRead);
+//        uint16_t Class = ntohs(*(uint16_t*)pRead);
+        uint16_t Class = *(uint16_t*)pRead;
         pRead += sizeof(uint16_t);
         pRead += sizeof(uint32_t);                                          // Skip TTL
         uint16_t DataLength = ntohs(*(uint16_t*)pRead);
@@ -427,8 +433,8 @@ size_t DNS_Client::BuildDNS_Query(DNS_Header_t* pMessage, const char* pDomainNam
 {
     m_LastID         = (uint16_t)RNG_GetRandom();
     pMessage->ID      = m_LastID;
-    pMessage->Flags   = htons(DNS_FLAG_RD_RECURSION_DESIRED);   // Recursion desired
-    pMessage->QDCount = htons(1);
+    pMessage->Flags   = DNS_FLAG_RD_RECURSION_DESIRED;          // Recursion desired
+    pMessage->QDCount = DNS_QDCOUNT_1;
     pMessage->ANCount = 0;
     pMessage->NSCount = 0;
     pMessage->ARCount = 0;
@@ -454,10 +460,10 @@ size_t DNS_Client::BuildDNS_Query(DNS_Header_t* pMessage, const char* pDomainNam
 
     *pWrite++ = DNS_LABEL_END;                 // End of name
 
-    *((uint16_t*)pWrite) = htons(DNS_TYPE_A);
+    *((uint16_t*)pWrite) = DNS_TYPE_A;
     pWrite += sizeof(uint16_t);
 
-    *((uint16_t*)pWrite) = htons(DNS_CLASS_IN);
+    *((uint16_t*)pWrite) = DNS_CLASS_IN;
     pWrite += sizeof(uint16_t);
 
     return (size_t)(DNS_HEADER_SIZE + (pWrite - &pMessage->Payload[0]));

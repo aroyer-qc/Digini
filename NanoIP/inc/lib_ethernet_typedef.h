@@ -49,9 +49,9 @@
 
 #define IP_ETHERNET_FRAME_SIZE                  1518
 
-#define IP_ETHERNET_TYPE_ARP 			        0x0806
-#define IP_ETHERNET_TYPE_IPV4 			        0x0800
-//#define IP_ETHERNET_TYPE_IPV6 			        0x86DD
+#define IP_ETHERNET_TYPE_ARP 			        HTONS(0x0806)
+#define IP_ETHERNET_TYPE_IPV4 			        HTONS(0x0800)
+#define IP_ETHERNET_TYPE_IPV6 			    HTONS(0x86DD)
 
 #define IP_VERSION4_IHL20				        0x45
 #define IP_TIME_TO_LIVE					        128
@@ -89,6 +89,10 @@
     #define IP_C(IP)                            uint8_t(IP >> 16)
     #define IP_D(IP)                            uint8_t(IP >> 24)
 
+    // Use on static value to save code space
+    #define HTONS(V)                            uint16_t(uint16_t(V) << 8 | uint16_t(V) >> 8)
+    #define HTONL(V)                            (uint32_t((((V) & 0x000000FF) << 24) | (((V) & 0x0000FF00) << 8 ) | (((V) & 0x00FF0000) >> 8 ) | (((V) & 0xFF000000) >> 24)))
+
 #else
 
     #define IP_ADDRESS(A,B,C,D)                 (uint32_t(A) + (uint32_t(B) << 8) + (uint32_t(C) << 16) + (uint32_t(D) << 24))
@@ -96,6 +100,9 @@
     #define IP_B(IP)                            uint8_t(IP >> 16)
     #define IP_C(IP)                            uint8_t(IP >> 8)
     #define IP_D(IP)                            uint8_t(IP)
+
+    #define HTONS(V)                            uint16_t(V)
+    #define HTONL(V)                            uint32_t(V)
 
 #endif
 
@@ -220,7 +227,7 @@ enum DNS_State_e
 typedef uint32_t    IP_Address_t;
 typedef uint16_t    IP_Port_t;
 
-typedef void (*DNS_Callback_t)(class IP_Manager* pIP_Manager, bool Success, IP_Address_t ResolveIP);
+typedef void (*DNS_Callback_t)(void* pContext, bool Success, IP_Address_t ResolveIP);
 
 #pragma pack(push, 1)
 

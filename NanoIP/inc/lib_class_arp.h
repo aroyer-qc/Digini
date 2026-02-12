@@ -30,9 +30,9 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define ARP_REQUEST                     1
-#define ARP_REPLY                       2
-#define ARP_HARDWARE_TYPE_ETHERNET      1
+#define ARP_REQUEST                     HTONS(1)
+#define ARP_REPLY                       HTONS(2)
+#define ARP_HARDWARE_TYPE_ETHERNET      HTONS(1)
 
 #define ARP_PENDING_QUEUE_SIZE          4
 

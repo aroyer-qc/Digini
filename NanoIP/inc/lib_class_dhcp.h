@@ -60,11 +60,8 @@
 
 #define DHCP_HARDWARE_ADDRESS_LENGTH            0x06
 
-
-#define DHCP_MAGIC_COOKIE                       0x63825363
-
-
-#define DHCP_FLAGS_BROADCAST                    0x8000
+#define DHCP_MAGIC_COOKIE                       HTONL(0x63825363)
+#define DHCP_FLAGS_BROADCAST                    HTONS(0x8000)
 
 #define DHCP_PUT_OPTION_HOST_NAME               (uint8_t)0x01
 #define DHCP_PUT_OPTION_REQUESTED_CLIENT_IP     (uint8_t)0x02

@@ -73,12 +73,6 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-// need to find where it is used
-#define IP_STREAM_SOCKET                        0
-#define IP_DNS_SOCKET                           2
-#define IP_DHCP_SOCKET                          3
-#define IP_SNTP_SOCKET                          3
-
 #define TASK_IP_MANAGER_STACK_SIZE              512
 #define TASK_IP_MANAGER_PRIO                    4
 
@@ -213,16 +207,6 @@ class IP_Manager
 
       #if (IP_USE_RAW == DEF_ENABLED)
         IP_RawProtocol                  m_RAW;                                  // RAW
-      #endif
-
-      #if (IP_USE_SNTP == DEF_ENABLED)
-        SNTP_Client                     m_SNTP;                                 // Simple Network Transport Protocol
-      #endif
-
-      #if (IP_USE_SOAP == DEF_ENABLED)
-        SOAP_Client                     m_SOAP                                  // Simple Object Access Protocol
-        uint8_t                         m_SOAP_Server_1[IP_MAX_URL_SIZE];       // Messaging protocol specification for exchanging structured information.
-        uint8_t                         m_SOAP_Server_2[IP_MAX_URL_SIZE];
       #endif
 
       #if (IP_USE_TCP_SERVER == DEF_ENABLED)

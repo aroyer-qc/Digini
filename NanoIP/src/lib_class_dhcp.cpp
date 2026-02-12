@@ -331,7 +331,7 @@ bool DHCPv4_Client::Process(void)
         {
             DHCP_Msg_t* pRX = (DHCP_Msg_t*)pBuffer;
 
-            if(ntohl(pRX->MagicCookie) == (DHCP_MAGIC_COOKIE))
+            if(ntohl(pRX->MagicCookie) == DHCP_MAGIC_COOKIE)
             {
                 ParseOption(pRX);
 
@@ -906,12 +906,12 @@ void DHCPv4_Client::PutHeader(DHCP_Msg_t* pTX)
     pTX->Hops        = 0;
     pTX->X_ID        = htonl(m_XID);
     pTX->Seconds     = 0;
-    pTX->MagicCookie = htonl(DHCP_MAGIC_COOKIE);
+    pTX->MagicCookie = DHCP_MAGIC_COOKIE;
 
     // Broadcast flag for initial DISCOVER/REQUEST
     if (m_State < DHCP_STATE_BOUND)
     {
-        pTX->Flags = htons(DHCP_FLAGS_BROADCAST);
+        pTX->Flags = DHCP_FLAGS_BROADCAST;
     }
     else
     {

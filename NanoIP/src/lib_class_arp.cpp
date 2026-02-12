@@ -243,7 +243,7 @@ void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
                 pARP->SrcIP_Address = ActiveIP;
                 pARP->DstIP_Address = SrcIP;
 
-                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Reply Request\n");
+                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Reply to request\n");
                 m_pContext->SendPacket(pTX);                                                        // Send ARP reply via normal TX path (zero-copy)
                 return;
             }
@@ -390,8 +390,7 @@ CheckPending:
             pEntry->IP   = IP_ADDRESS(0,0,0,0);
 
         #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
-            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET,
-                                 "ARP: Sent pending packet for resolved IP\n");
+            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Sent pending packet for resolved IP\n");
         #endif
         }
     }
@@ -738,5 +737,5 @@ void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg)
         }
     }
 }
-#endif 
+#endif
 //-------------------------------------------------------------------------------------------------

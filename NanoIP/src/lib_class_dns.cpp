@@ -426,7 +426,7 @@ bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength)
 size_t DNS_Client::BuildDNS_Query(DNS_Header_t* pMessage, const char* pDomainName)
 {
     m_LastID         = (uint16_t)RNG_GetRandom();
-    pMessage->ID      = htons(m_LastID);
+    pMessage->ID      = m_LastID;
     pMessage->Flags   = htons(DNS_FLAG_RD_RECURSION_DESIRED);   // Recursion desired
     pMessage->QDCount = htons(1);
     pMessage->ANCount = 0;

@@ -34,15 +34,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define SNTP_LI_VN_MODE                     0x23                        // Leap Indicator - 2 bits: 00 (No warning, current value), Version - 4 bits: 100, Mode Client - 3 bits: 011,
-
-#define SNTP_PORT                           htons(123)
-
-#define SNTP_UNIX_START                     2208988800UL                // January 1, 1970
-#define SNTP_TIME_START                     3471292800UL                // January 1, 2010
-
-#define SNTP_OPTIONS_IN_PACKET_SIZE         160
-#define SNTP_MSG_ACTION_TIME_OUT            0
+//#define SNTP_UNIX_START                     2208988800UL                // January 1, 1970
+//#define SNTP_TIME_START                     3471292800UL                // January 1, 2010
 
 //-------------------------------------------------------------------------------------------------
 // Enum(s)
@@ -50,7 +43,6 @@
 
 enum SNTP_State_e
 {
-    SNTP_STATE_IDLE,
     SNTP_STATE_INITIAL,
     SNTP_STATE_WAIT_RESPONSE,
     SNTP_STATE_DONE,
@@ -66,13 +58,14 @@ class SNTP_Client
     public:
 
         bool            Initialize                  (NetworkContext* Context);
-        bool            SendRequest                 (const IP_Address_t* pServerIP);
-        bool            ReceiveResponse             (void);
-        bool            ParseResponse               (uint8_t* pPacket, size_t Length);
+        bool            Start                       (const IP_Address_t ServerIP);
+        void            Process                     (void);
         uint32_t        GetUnixTime                 (void) const                            { return m_UnixTime; }
 
     private:
 
+        bool            ReceiveResponse             (void);
+        bool            ParseResponse               (uint8_t* pPacket, size_t Length);
         uint32_t        GetSystemTime_Seconds_1900  (void);
         uint32_t        Convert1900ToUnix           (uint32_t Seconds1900);
 
@@ -80,6 +73,7 @@ class SNTP_Client
         Socket*         m_pSocket;
         uint32_t        m_UnixTime;
         SNTP_State_e    m_State;
+        TickCount_t     m_WaitStart;
 };
 
 //-------------------------------------------------------------------------------------------------

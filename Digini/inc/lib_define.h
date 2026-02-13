@@ -121,17 +121,9 @@
 #define DEF_CLEAR                                   0
 #endif
 
-//#ifndef DEF_ACK
-//#define DEF_ACK                                   0
-//#endif
-
 #ifndef DEF_NACK
 #define DEF_NACK                                    1
 #endif
-
-//#ifndef ERR_NONE
-//#define ERR_NONE                                  0
-//#endif
 
 #ifndef KHz
 #define KHz                                         000UL

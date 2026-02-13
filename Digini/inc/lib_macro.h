@@ -64,11 +64,6 @@
 #define BIT_FALSE(x, mask)                  (x) &= ~(mask)
 #define BIT_IS_TRUE(x, mask)                ((x & mask) != 0)
 #define BIT_IS_FALSE(x, mask)               ((x & mask) == 0)
-//#define BIT_TRUE_ATOMIC(x, mask)            BIT_TRUE(x,mask)
-//#define BIT_FALSE_ATOMIC(x, mask)           BIT_FALSE(x,mask)
-//#define BIT_TOGGLE_ATOMIC(x, mask)          (x) ^= (mask)
-
-
 
 // Create uint32_t value from 4 uint8_t value or ascii char
 #define U32MACRO(A,B,C,D)                   ((uint32_t(D) << 24) + (uint32_t(C) << 16) + (uint32_t(B) << 8) + uint32_t(A))

@@ -331,7 +331,7 @@ bool DHCPv4_Client::Process(void)
         {
             DHCP_Msg_t* pRX = (DHCP_Msg_t*)pBuffer;
 
-            if(ntohl(pRX->MagicCookie) == DHCP_MAGIC_COOKIE)
+            if(pRX->MagicCookie == DHCP_MAGIC_COOKIE)
             {
                 ParseOption(pRX);
 
@@ -414,13 +414,13 @@ bool DHCPv4_Client::Discover(void)
     size_t PacketLength = DHCP_HEADER_SIZE + Length;
 
     // Destination: broadcast IP
-    SocketInfo_t Dest;
-    Dest.Address = IP_ADDRESS(255,255,255,255);
-    Dest.Port    = DHCP_SERVER_PORT;
+    SocketInfo_t Destination;
+    Destination.Address = IP_ADDRESS(255,255,255,255);
+    Destination.Port    = DHCP_SERVER_PORT;
 
     // Send DHCP DISCOVER (non-blocking)
     size_t         BytesSent = 0;
-    SystemState_e  Error     = m_pSocket->SendTo((uint8_t*)pTX, PacketLength, &Dest, &BytesSent);
+    SystemState_e  Error     = m_pSocket->SendTo((uint8_t*)pTX, PacketLength, &Destination, &BytesSent);
 
     if((Error != SYS_READY) || (BytesSent == 0))
     {
@@ -440,7 +440,7 @@ bool DHCPv4_Client::Discover(void)
         nOS_TimerStart(&m_TimerDiscover);                                                       // Start timeout timer for OFFER
     }
 
-    // Free TX buffer (It was copied into the a packet)
+    // Free TX buffer (It was copied into the packet)
     pMemoryPool->Free((void**)&pTX);
 
     return Status;

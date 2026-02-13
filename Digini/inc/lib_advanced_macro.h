@@ -35,7 +35,6 @@
 
 // Defines used for macro unrolling
 // These defines are also used to insert "logic" to emulate if-else statements
-//#define ABS(X)                          (((X) < 0) ? (-X) : (X))
 #define PRIMITIVE_CAT(a, ...)           a ## __VA_ARGS__
 #define CAT(a, ...)                     PRIMITIVE_CAT(a, __VA_ARGS__)
 

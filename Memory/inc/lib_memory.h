@@ -85,6 +85,7 @@
     X_MEM_DBG(MEM_DBG_DHCPTX)                                   \
     X_MEM_DBG(MEM_DBG_DNSTX)                                    \
     X_MEM_DBG(MEM_DBG_DNSRX)                                    \
+    X_MEM_DBG(MEM_DBG_SNTPTX)                                   \
     /* UniqueID for lib_service                               */\
     X_MEM_DBG(MEM_DBG_SERVICE)
 

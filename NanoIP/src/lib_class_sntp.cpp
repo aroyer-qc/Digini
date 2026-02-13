@@ -70,13 +70,25 @@
 #if (IP_USE_SNTP == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define SNTP_RESPONSE_TIMEOUT_MS        5000
+#define SNTP_PORT                       HTONS(123)
+#define SNTP_LI_VN_MODE                 0x23                        // Leap Indicator - 2 bits: 00 (No warning, current value), Version - 4 bits: 100, Mode Client - 3 bits: 011,
+
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext* 	pContext		Pointer on the context
-//  Return:         void
+//  Parameter(s):   NetworkContext* pContext    Pointer to the active network context.
 //
-//  Description:    Initialize the SNTP Client
+//  Return:         bool                    - true  : Initialization successful.
+//                                          - false : Failed to allocate or bind the UDP socket.
+//
+//  Description:    Initializes the SNTP client by allocating a non-blocking UDP socket bound to
+//                  an ephemeral port. The client remains idle until SendRequest() is invoked.
 //
 //-------------------------------------------------------------------------------------------------
 bool SNTP_Client::Initialize(NetworkContext* pContext)
@@ -84,7 +96,6 @@ bool SNTP_Client::Initialize(NetworkContext* pContext)
     m_pContext = pContext;
 
     IP_Manager* pIP = m_pContext->GetIP_Manager();
-
     if(pIP == nullptr)
     {
         return false;
@@ -97,6 +108,7 @@ bool SNTP_Client::Initialize(NetworkContext* pContext)
         return false;
     }
 
+    // Allocate a UDP socket for SNTP communication
     m_pSocket = pSockMgr->AllocSocket(SOCKET_TYPE_DATAGRAM);
 
     if(m_pSocket == nullptr)
@@ -104,10 +116,11 @@ bool SNTP_Client::Initialize(NetworkContext* pContext)
         return false;
     }
 
+    // Enable non-blocking mode
     bool NonBlocking = true;
     m_pSocket->SetOption(SOCKET_OPT_NON_BLOCKING, &NonBlocking, sizeof(bool));
 
-    // Bind to ephemeral port (0 = auto-assign)
+    // Bind to an ephemeral port (0 = auto-assign)
     SystemState_e State = m_pSocket->Bind(0);
 
     if(State != SYS_READY)
@@ -123,59 +136,116 @@ bool SNTP_Client::Initialize(NetworkContext* pContext)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Request
+//  Name:           Start
 //
-//  Parameter(s):       Socket_t     SocketNumber
-//                      uint8_t*     pDomainName1    Domain Name of the NTP Server 1
-//                      uint8_t*     pDomainName2    Domain Name of the NTP_Server 2
-//                      uint8_t*     pError          Pointer to return an error code
-//  Return:             true or false
+//  Parameter(s):   const IP_Address_t  ServerIP         IPv4 address of the NTP server.
 //
-//  Description:    Send the SNTP request
+//  Return:         bool
+//                      - true  : SNTP request started successfully.
+//                      - false : Socket not ready or send failed.
+//
+//  Description:    Starts a complete SNTP transaction by building and sending the request
+//                  packet to the specified server, then arming the internal timeout and
+//                  transitioning to WAIT_RESPONSE. The caller must periodically invoke
+//                  Process() to complete the exchange.
 //
 //-------------------------------------------------------------------------------------------------
-bool SNTP_Client::SendRequest(const IP_Address_t* pServerIP)
+bool SNTP_Client::Start(const IP_Address_t ServerIP)
 {
-    if((m_pSocket == nullptr) || (pServerIP == nullptr))
+    if(m_pSocket == nullptr)
     {
+        m_State = SNTP_STATE_ERROR;
         return false;
     }
 
-    uint8_t Packet[48];   //this will be on the pool
-    memset(Packet, 0, sizeof(Packet));
+    uint8_t* pPacket = (uint8_t*)pMemoryPool->AllocAndSet(sizeof(SNTP_Header_t), 0, MEM_DBG_SNTPTX);
 
     // LI = 0, Version = 4, Mode = 3 (client)
-    Packet[0] = SNTP_LI_VN_MODE;
+    pPacket[0] = SNTP_LI_VN_MODE;
 
     // Transmit Timestamp (seconds since 1900-01-01)
     uint32_t Seconds1900 = GetSystemTime_Seconds_1900();
+    pPacket[40] = (uint8_t)(Seconds1900 >> 24);
+    pPacket[41] = (uint8_t)(Seconds1900 >> 16);
+    pPacket[42] = (uint8_t)(Seconds1900 >>  8);
+    pPacket[43] = (uint8_t)(Seconds1900 >>  0);
 
-    Packet[40] = (uint8_t)((Seconds1900 >> 24) & 0xFF);
-    Packet[41] = (uint8_t)((Seconds1900 >> 16) & 0xFF);
-    Packet[42] = (uint8_t)((Seconds1900 >>  8) & 0xFF);
-    Packet[43] = (uint8_t)((Seconds1900 >>  0) & 0xFF);
-
-    // Fractional part (optional, set to 0)
-    Packet[44] = 0;
-    Packet[45] = 0;
-    Packet[46] = 0;
-    Packet[47] = 0;
-
-    SocketInfo_t Dest;
-    memset(&Dest, 0, sizeof(Dest));
-    Dest.Address = *pServerIP;
-    Dest.Port    = 123;             // SNTP server port
+    // Fractional part left at zero
+    SocketInfo_t Destination;
+    memset(&Destination, 0, sizeof(SocketInfo_t));
+    Destination.Address = ServerIP;
+    Destination.Port    = SNTP_PORT;                                   // SNTP server port
 
     size_t BytesSent = 0;
-    SystemState_e State = m_pSocket->SendTo(Packet, sizeof(Packet), &Dest, &BytesSent);
+    SystemState_e State = m_pSocket->SendTo(pPacket, sizeof(SNTP_Header_t), &Destination, &BytesSent);
 
-    if((State != SYS_READY) || (BytesSent != sizeof(Packet)))
+    // Free TX buffer (It was copied into the packet)
+    pMemoryPool->Free((void**)&pPacket);
+
+    if((State != SYS_READY) || (BytesSent != sizeof(SNTP_Header_t)))
     {
+        m_State = SNTP_STATE_ERROR;
         return false;
     }
 
-    m_State = SNTP_STATE_WAIT_RESPONSE;
+    // Arm timeout and transition to WAIT_RESPONSE
+    m_WaitStart = GetTick();
+    m_State     = SNTP_STATE_WAIT_RESPONSE;
+
     return true;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Process
+//
+//  Parameter(s):   None
+//
+//  Return:         void
+//
+//  Description:    Executes the internal SNTP state machine. This function must be called
+//                  periodically from the TaskNetwork loop. It handles waiting for the server
+//                  response, detecting timeouts, and transitioning to the appropriate state.
+//
+//                  Expected flow:
+//                      - INITIAL:        Idle until SendRequest() is invoked.
+//                      - WAIT_RESPONSE:  Poll socket for response; timeout if no reply.
+//                      - DONE:           SNTP completed successfully.
+//                      - ERROR:          SNTP failed; caller decides when to retry.
+//
+//-------------------------------------------------------------------------------------------------
+void SNTP_Client::Process(void)
+{
+    switch(m_State)
+    {
+        // Idle state - waiting for TaskNetwork to call SendRequest()
+        case SNTP_STATE_INITIAL:
+            break;
+
+        // Request sent - waiting for server response (non-blocking)
+        case SNTP_STATE_WAIT_RESPONSE:
+        {
+            if(ReceiveResponse())                                           // Try to receive a response (non-blocking)
+            {
+                // ParseResponse() already set state to DONE
+                break;
+            }
+
+            if(TickHasTimeOut(m_WaitStart, SNTP_RESPONSE_TIMEOUT_MS))       // Timeout check
+            {
+                m_State = SNTP_STATE_ERROR;
+            }
+            break;
+        }
+
+        // SNTP completed successfully — caller decides when to refresh time
+        case SNTP_STATE_DONE:
+            break;
+
+        // Error state — caller decides when to retry or redo DNS
+        case SNTP_STATE_ERROR:
+            break;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -262,8 +332,8 @@ uint32_t SNTP_Client::GetSystemTime_Seconds_1900(void)
     const uint32_t DIFF_1900_1970 = 2208988800UL;
 
     // Replace this with your real Unix time source
-    extern uint32_t System_GetUnixTime(void);
-    uint32_t UnixNow = System_GetUnixTime();
+    //extern uint32_t System_GetUnixTime(void);
+    uint32_t UnixNow = 0;//System_GetUnixTime();
 
     return UnixNow + DIFF_1900_1970;
 }

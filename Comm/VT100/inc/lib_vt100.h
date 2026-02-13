@@ -153,7 +153,6 @@ enum NAME ## _ItemID_e                                             \
 /// this automatically create all the method declaration in the class for each callback
 #define EXPAND_VT100_MENU_CALLBACK(NAME)     VT100_InputType_e NAME(uint8_t Input, VT100_CallBackType_e Type);
 
-//#define EXPAND_VT100_MENU_CALLBACK_PTR(NAME)    &VT100_Terminal::CALLBACK_##NAME
 //-------------------------------------------------------------------------------------------------
 // Configuration check
 //-------------------------------------------------------------------------------------------------

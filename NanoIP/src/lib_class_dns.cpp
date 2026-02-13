@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2009-2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -34,7 +34,7 @@
 //                                    1  1  1  1  1  1
 //      0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
 //    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-//    |                      ID                       |
+//    |                      xID                      |
 //    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 //    |QR|   Opcode  |AA|TC|RD|RA|   Z    |   RCODE   |
 //    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
@@ -45,7 +45,7 @@
 //    |                    NSCOUNT                    |
 //    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 //    |                    ARCOUNT                    |
-//    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+           <QUESTION FORMAT >
+//    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+           <QUESTION FORMAT>
 //    |                                               |
 //    |                     QNAME                     |
 //    |                                               |
@@ -72,7 +72,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define DNS_PORT                        53
-#define DNS_RESPONSE_TIME_OUT           10000
+#define DNS_RESPONSE_TIME_OUT           1000
 #define DNS_LABEL_POINTER_FLAG          0xC0
 #define DNS_LABEL_END                   0x00
 #define DNS_HEADER_SIZE                 12
@@ -96,26 +96,54 @@
 
 #define DNS_QDCOUNT_1                   HTONS(1)
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext*		pContext		Pointer on the context
+//  Parameter(s):   NetworkContext*     pContext        Pointer on the context
 //  Return:         None
 //
-//  Description:    Initialize the DNS Client
+//  Description:    Initialize the DNS Client. Allocates a single UDP socket used for all DNS
+//                  transactions and clears the pending-request table.
 //
 //-------------------------------------------------------------------------------------------------
 void DNS_Client::Initialize(NetworkContext* pContext)
 {
-    m_pContext         = pContext;
-    m_pCallbackContext = nullptr;
-    m_pCallback        = nullptr;
-    m_pSocket          = nullptr;
-    m_LastID           = 0;
-    m_State            = DNS_STATE_IDLE;
-    nOS_TimerCreate(&m_TimerQuery, nullptr, nullptr, DNS_RESPONSE_TIME_OUT, NOS_TIMER_ONE_SHOT);
+    m_pContext    = pContext;
+
+    // Start XID counter at a random value (never 0)
+    m_XID_Counter = (uint16_t)RNG_GetRandom();
+
+    // Clear pending request table
+    for(int i = 0; i < DNS_MAX_PENDING_COUNT; i++)
+    {
+        m_Pending[i].Pending   = false;
+        m_Pending[i].XID       = 0;
+        m_Pending[i].pCallback = nullptr;
+        m_Pending[i].pContext  = nullptr;
+        m_Pending[i].TimeStamp = 0;
+    }
+
+    // Allocate the DNS UDP socket once
+    SocketManager* pSocketManager = m_pContext->GetIP_Manager()->GetSocketManager();
+
+    if(pSocketManager != nullptr)
+    {
+        m_pSocket = pSocketManager->AllocSocket(SOCKET_TYPE_DATAGRAM);
+
+        if(m_pSocket != nullptr)
+        {
+            bool NonBlocking = true;
+            m_pSocket->SetOption(SOCKET_OPT_NON_BLOCKING, &NonBlocking, sizeof(bool));
+
+            // Bind to ephemeral port
+            if(m_pSocket->Bind(0) != SYS_READY)
+            {
+                pSocketManager->FreeSocket(&m_pSocket);
+                m_pSocket = nullptr;
+            }
+        }
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -124,176 +152,136 @@ void DNS_Client::Initialize(NetworkContext* pContext)
 //
 //  Parameter(s):   None
 //
-//  Return:         bool
-//                      - true  : DNS transaction has completed (success or timeout)
-//                      - false : DNS transaction is still in progress
+//  Return:         bool    - true  : At least one DNS transaction completed (success or timeout)
+//                          - false : No DNS transaction completed in this cycle
 //
-//  Description:    Advances the DNS client state machine. This function performs a single,
-//                  non-blocking receive attempt using the socket’s zero-copy RecvFrom() API and
-//                  checks whether the query timeout has expired. It must be called periodically
-//                  by the network task.
+//  Description:    Advances the DNS client. This function performs:
 //
-//                  When a valid DNS response is received, the client parses the payload directly
-//                  from the returned packet buffer (no memcpy). The resolved IPv4 address is
-//                  stored in m_ResolvedIP and the user callback (if provided) is invoked.
+//                  1- Timeout checks for all pending DNS requests using the system-wide
+//                     GetTick() / TickHasTimeOut() mechanism.
+//                  2- A single non-blocking receive attempt using the socket’s zero-copy API.
+//                  3- If a DNS response is received, it matches the XID to the correct pending
+//                     request, parses the response, and invokes the associated callback.
 //
-//                  If the timeout expires before a response is received, the callback is invoked
-//                  with a failure status. In both success and timeout cases, the function returns
-//                  true to signal completion. The caller is responsible for freeing the received
-//                  packet message after processing.
+//  Note(s):        Must be called periodically by the network task.
 //
 //-------------------------------------------------------------------------------------------------
 bool DNS_Client::Process(void)
 {
-    if(m_State != DNS_STATE_WAIT_RESPONSE)
-    {
-        return true;
-    }
+    bool Completed = false;
 
-    if(nOS_TimerIsRunning(&m_TimerQuery) == false)
+    // Timeout checks for all pending DNS requests
+    for(int i = 0; i < DNS_MAX_PENDING_COUNT; i++)
     {
-        m_State = DNS_STATE_TIMEOUT;
-
-        if(m_pCallback != nullptr)
+        if(m_Pending[i].Pending == true)
         {
-            m_pCallback(m_pCallbackContext, false, IP_ADDRESS(0,0,0,0));
-        }
+            if(TickHasTimeOut(m_Pending[i].TimeStamp, DNS_RESPONSE_TIME_OUT))
+            {
+                // Timeout -> notify caller
+                if(m_Pending[i].pCallback != nullptr)
+                {
+                    m_Pending[i].pCallback(m_Pending[i].pContext, false, IP_ADDRESS(0,0,0,0));
+                }
 
-        return true;
+                m_Pending[i].Pending = false;
+                Completed = true;
+            }
+        }
     }
 
-    IP_PacketMsg_t* pMsg = nullptr;                                 // Zero-copy receive
+    // Attempt a single non-blocking receive
+    IP_PacketMsg_t* pMsg = nullptr;
     SystemState_e State = m_pSocket->RecvFrom(&pMsg);
 
     if(State != SYS_READY)
     {
-        return false;                                               // No packet in this loop
+        return Completed;      // No packet received this cycle
     }
 
-    // Access payload directly
+    // Parse DNS response
     uint8_t* pPayload = pMsg->Payload;
     size_t   Length   = pMsg->PayloadSize;
 
-    bool Done = false;
-
     if(Length >= DNS_HEADER_SIZE)
     {
-        if(ParseResponse((DNS_Header_t*)pPayload, Length))
-        {
-            m_State = DNS_STATE_RESPONSE_RECEIVED;
-            nOS_TimerStop(&m_TimerQuery, true);
+        DNS_Header_t* pDNS = (DNS_Header_t*)pPayload;
+        uint16_t xID = ntohs(pDNS->ID);
 
-            if(m_pCallback != nullptr)
+        int slot = FindSlotByXID(xID);
+
+        if(slot >= 0)
+        {
+            IP_Address_t ResolvedIP;
+            bool Success = ParseResponse(pDNS, Length, ResolvedIP);
+
+            if(m_Pending[slot].pCallback != nullptr)
             {
-                m_pCallback(m_pCallbackContext, true, m_ResolvedIP);
+                m_Pending[slot].pCallback(m_Pending[slot].pContext, Success, ResolvedIP);
             }
 
-            Done = true;
+            m_Pending[slot].Pending = false;
+            Completed = true;
         }
     }
 
     // Caller frees the packet
     IP_Manager::FreeMessage(pMsg);
-    return Done;
-}
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Resolve
-//
-//  Parameter(s):   const char*       pDomainName     Domain name to resolve
-//                  DNS_Callback_t    pCallback       Callback invoked when resolution completes
-//
-//  Return:         bool                                true if the DNS query was successfully
-//                                                      initiated (not resolved yet)
-//
-//  Description:    Initiates an asynchronous DNS resolution. This function allocates a UDP
-//                  socket, builds and sends a DNS query to the configured DNS server, stores the
-//                  user callback, clears any previous result, and starts the internal timeout
-//                  timer.
-//
-//                  This function does NOT wait for the response. The DNS transaction continues
-//                  inside Process(), which will invoke the callback upon success or timeout.
-//
-//-------------------------------------------------------------------------------------------------
-bool DNS_Client::Resolve(const char* pDomainName)
-{
-    if(pDomainName == nullptr)
-    {
-        return false;
-    }
-
-    SocketManager* pSocketManager = m_pContext->GetIP_Manager()->GetSocketManager();                    // Get SocketManager once, locally
-
-    if(pSocketManager == nullptr)
-    {
-        return false;
-    }
-
-    m_pSocket = pSocketManager->AllocSocket(SOCKET_TYPE_DATAGRAM);                                      // Allocate UDP socket
-
-    if(m_pSocket == nullptr)
-    {
-        return false;
-    }
-
-    bool NonBlocking = true;
-    m_pSocket->SetOption(SOCKET_OPT_NON_BLOCKING, &NonBlocking, sizeof(bool));
-
-    if(m_pSocket->Bind(0) != SYS_READY)                                                                 // Bind to ephemeral port
-    {
-        pSocketManager->FreeSocket(&m_pSocket);
-        return false;
-    }
-
-  #if (IP_DBG_DNS == DEF_ENABLED)
-    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: Ready to send Request\n");
-  #endif
-
-    if(SendQuery(pDomainName) == false)
-    {
-        pSocketManager->FreeSocket(&m_pSocket);
-        return false;
-    }
-
-    return true;
+    return Completed;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SendQuery
 //
-//  Parameter(s):   const char*     pDomainName           Domain name to encode into the DNS query.
+//  Parameter(s):   const char*       pDomainName     Domain name to encode into the DNS query.
+//                  DNS_Callback_t    pCallback       User callback for this specific request.
+//                  void*             pContext        User context passed back to callback.
 //
-//  Return:         bool    true  = DNS query was successfully handed off to the UDP layer
-//                              (either transmitted immediately or queued pending ARP)
-//                          false = DNS query could not be sent or queued
+//  Return:         bool
+//                      true  = DNS query was successfully sent or queued (ARP pending)
+//                      false = Could not allocate slot, build packet, or send
 //
-//  Description:    Builds a DNS query message into a temporary TX buffer and attempts to send it
-//                  to the active DNS server using the UDP socket. This function does not wait for
-//                  a reply; it only initiates transmission.
+//  Description:    Initiates a DNS query. Allocates a pending-request slot, generates a unique
+//                  XID, builds the DNS query message, timestamps the request, and sends the
+//                  packet using the preallocated UDP socket.
 //
-//                  If the destination MAC address is not yet known, the UDP layer may queue the
-//                  packet while ARP resolution is in progress. In that case, the function still
-//                  returns true so the DNS state machine can begin waiting for the response.
+//                  This function does NOT wait for a reply. Completion is handled in Process().
 //
-//                  On success (immediate send or queued), the DNS client enters WAIT_RESPONSE
-//                  state and starts the query timeout timer.
 //-------------------------------------------------------------------------------------------------
-bool DNS_Client::SendQuery(const char* pDomainName)
+bool DNS_Client::SendQuery(const char* pDomainName, DNS_Callback_t pCallback, void* pContext)
 {
+    if((pDomainName == nullptr) || (m_pSocket == nullptr))
+    {
+        return false;
+    }
+
+    // Find a free pending slot
+    int slot = FindFreeSlot();
+
+    if(slot < 0)
+    {
+        return false;                                       // Too many outstanding DNS requests
+    }
+
+    // Allocate TX buffer
     DNS_Header_t* pTX = (DNS_Header_t*)pMemoryPool->AllocAndClear(sizeof(DNS_Header_t), MEM_DBG_DNSTX);
 
     if(pTX == nullptr)
     {
-      #if (IP_DBG_DNS == DEF_ENABLED)
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: Failed to allocate TX buffer\n");
-      #endif
         return false;
     }
 
-    size_t Length = BuildDNS_Query(pTX, pDomainName);
+    m_XID_Counter++;                                        // Generate XID and store pending request info
+    m_Pending[slot].XID       = m_XID_Counter;
+    m_Pending[slot].pCallback = pCallback;
+    m_Pending[slot].pContext  = pContext;
+    m_Pending[slot].TimeStamp = GetTick();
+    m_Pending[slot].Pending   = true;
 
+    size_t Length = BuildDNS_Query(pTX, pDomainName);       // Build DNS query packet
+
+    // Send packet to DNS server
     SocketInfo_t Destination;
     Destination.Address = m_pContext->GetActiveDNS_IP();
     Destination.Port    = DNS_PORT;
@@ -305,30 +293,20 @@ bool DNS_Client::SendQuery(const char* pDomainName)
 
     if((State == SYS_READY) && (BytesSent == Length))
     {
-        Status = true;   // sent immediately
+        Status = true;                                      // Sent immediately
     }
     else if(State == SYS_ARP_RESOLVE_PENDING)
     {
-        Status = true;   // queued pending ARP resolution
+        Status = true;                                      // Queued while ARP resolves
     }
 
-    if(Status == true)
-    {
-        m_State = DNS_STATE_WAIT_RESPONSE;
-        m_ResolvedIP = 0;                                                                                   // Clear previous result
-        nOS_TimerStart(&m_TimerQuery);
-      #if (IP_DBG_DNS == DEF_ENABLED)
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: Query dispatched (Len=%u)\n", (unsigned)Length);
-      #endif
-    }
-  #if (IP_DBG_DNS == DEF_ENABLED)
-    else
-    {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: 'SendTo' failed (State=%d, Sent=%u)\n", State, (unsigned)BytesSent);
-    }
-  #endif
+    pMemoryPool->Free((void**)&pTX);                        // Cleanup
 
-    pMemoryPool->Free((void**)&pTX);
+    if(Status == false)
+    {
+        m_Pending[slot].Pending = false;                    // Sending failed -> cancel pending slot
+    }
+
     return Status;
 }
 
@@ -336,26 +314,24 @@ bool DNS_Client::SendQuery(const char* pDomainName)
 //
 //  Name:           ParseResponse
 //
-//  Parameter(s):   DNS_Header_t*   pMsg            Pointer to the received DNS message buffer
+//  Parameter(s):   DNS_Header_t*   pMessage        Pointer to the received DNS message buffer
 //                  size_t          PacketLength    Total number of bytes received
+//                  IP_Address_t&   OutIP           Resolved IPv4 address (output)
 //
-//  Return:         bool                              true if a valid 'IPv4 A' record was found
+//  Return:         bool            - true  : A valid IPv4 'A' record was found and OutIP is set
+//                                  - false : No valid A record found
 //
-//  Description:    Parses a DNS response message. This function validates the transaction ID,
-//                  skips the question section, and iterates through the answer records to locate
-//                  the first valid 'IPv4 A' record. When found, the resolved address is written
-//                  directly into m_ResolvedIP. The function returns true only when a 'valid A'
-//                  record is extracted.
+//  Description:    Parses a DNS response message. The caller is responsible for validating the
+//                  transaction ID (XID) and selecting the correct pending-request slot.
+//
+//                  This function skips the Question section, then iterates through all Answer
+//                  records. When the first valid IPv4 'A' record is found, the resolved address
+//                  is written into OutIP and the function returns true.
 //
 //-------------------------------------------------------------------------------------------------
-bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength)
+bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength, IP_Address_t& OutIP)
 {
     DNS_Header_t* pHeader = pMessage;
-
-    if(pHeader->ID != m_LastID)                                             // Validate transaction ID
-    {
-        return false;                                                       // Not our response
-    }
 
     uint16_t QuestionCount = ntohs(pHeader->QDCount);
     uint16_t AnswerCount   = ntohs(pHeader->ANCount);
@@ -376,7 +352,7 @@ bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength)
 
     while(AnswerCount--)                                                    // Parse Answer Section
     {
-        if((*pRead & DNS_LABEL_POINTER_FLAG) == DNS_LABEL_POINTER_FLAG)     // Name (pointer or full label)
+        if((*pRead & DNS_LABEL_POINTER_FLAG) == DNS_LABEL_POINTER_FLAG)     // Skip NAME (pointer or full label)
         {
             pRead += 2;                                                     // Pointer is always 2 bytes
         }
@@ -387,25 +363,21 @@ bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength)
                 uint8_t LabelLength = *pRead;
                 pRead += (LabelLength + 1);
             }
-
             pRead++;                                                        // Skip terminating zero
         }
 
-//        uint16_t Type = ntohs(*(uint16_t*)pRead);
         uint16_t Type = *(uint16_t*)pRead;
         pRead += sizeof(uint16_t);
-//        uint16_t Class = ntohs(*(uint16_t*)pRead);
         uint16_t Class = *(uint16_t*)pRead;
         pRead += sizeof(uint16_t);
         pRead += sizeof(uint32_t);                                          // Skip TTL
         uint16_t DataLength = ntohs(*(uint16_t*)pRead);
         pRead += sizeof(uint16_t);
 
+        // Found IPv4 A record
         if((Type == DNS_TYPE_A) && (Class == DNS_CLASS_IN) && (DataLength == DNS_RECEIVE_DATA_LENGTH))
         {
-            uint32_t RawIP;
-            memcpy(&RawIP, pRead, sizeof(uint32_t));
-            m_ResolvedIP = RawIP;
+            memcpy(&OutIP, pRead, sizeof(uint32_t));
             return true;
         }
 
@@ -424,25 +396,24 @@ bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength)
 //
 //  Return:         size_t                             Total size of the encoded DNS query
 //
-//  Description:    Construct a DNS query message in the provided buffer. The function encodes
-//                  the DNS header, formats the domain name into DNS label format, and appends
-//                  the QTYPE and QCLASS fields. This function performs no memory allocation.
+//  Description:    Constructs a DNS query message in the provided buffer. The function generates
+//                  a new transaction ID, encodes the DNS header, formats the domain name into
+//                  DNS label format, and appends QTYPE and QCLASS. No memory allocation occurs.
 //
 //-------------------------------------------------------------------------------------------------
 size_t DNS_Client::BuildDNS_Query(DNS_Header_t* pMessage, const char* pDomainName)
 {
-    m_LastID         = (uint16_t)RNG_GetRandom();
-    pMessage->ID      = m_LastID;
-    pMessage->Flags   = DNS_FLAG_RD_RECURSION_DESIRED;          // Recursion desired
+    pMessage->ID      = m_XID_Counter;
+    pMessage->Flags   = DNS_FLAG_RD_RECURSION_DESIRED;      // Recursion desired
     pMessage->QDCount = DNS_QDCOUNT_1;
     pMessage->ANCount = 0;
     pMessage->NSCount = 0;
     pMessage->ARCount = 0;
 
-    uint8_t*    pWrite    = &pMessage->Payload[0];
-    const char* pSegment  = pDomainName;
+    uint8_t*    pWrite   = &pMessage->Payload[0];
+    const char* pSegment = pDomainName;
 
-    while(*pSegment)
+    while(*pSegment)                                            // Encode domain name into DNS label format
     {
         const char* pDot = strchr(pSegment, '.');
         size_t SegmentLength = (pDot != nullptr) ? (size_t)(pDot - pSegment) : strlen(pSegment);
@@ -458,15 +429,72 @@ size_t DNS_Client::BuildDNS_Query(DNS_Header_t* pMessage, const char* pDomainNam
         pSegment = pDot + 1;
     }
 
-    *pWrite++ = DNS_LABEL_END;                 // End of name
+    *pWrite++ = DNS_LABEL_END;                                  // End of name
 
-    *((uint16_t*)pWrite) = DNS_TYPE_A;
+    *((uint16_t*)pWrite) = DNS_TYPE_A;                          // QTYPE (A)
     pWrite += sizeof(uint16_t);
-
-    *((uint16_t*)pWrite) = DNS_CLASS_IN;
+    *((uint16_t*)pWrite) = DNS_CLASS_IN;                        // QCLASS (IN)
     pWrite += sizeof(uint16_t);
 
     return (size_t)(DNS_HEADER_SIZE + (pWrite - &pMessage->Payload[0]));
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           FindFreeSlot
+//
+//  Parameter(s):   None
+//
+//  Return:         int                 - Index of the first available pending-request slot
+//                                      - -1 if no slot is available
+//
+//  Description:    Scans the DNS pending-request table and returns the index of the first entry
+//                  that is not currently in use. This function supports multiple outstanding DNS
+//                  transactions by allowing each request to occupy a dedicated slot.
+//
+//-------------------------------------------------------------------------------------------------
+int DNS_Client::FindFreeSlot(void)
+{
+    for(int i = 0; i < DNS_MAX_PENDING_COUNT; i++)
+    {
+        if(m_Pending[i].Pending == false)
+        {
+            return i;
+        }
+    }
+
+    return -1;      // No free slot
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           FindSlotByXID
+//
+//  Parameter(s):   uint16_t        XID             Transaction ID extracted from DNS response
+//
+//  Return:         int             - Index of the matching pending-request slot
+//                                  - -1 if no matching slot is found
+//
+//  Description:    Searches the DNS pending-request table for an entry whose stored transaction
+//                  ID matches the provided XID. This function is used by Process() to associate
+//                  an incoming DNS response with the correct outstanding query.
+//
+//-------------------------------------------------------------------------------------------------
+
+int DNS_Client::FindSlotByXID(uint16_t XID)
+{
+    for(int i = 0; i < DNS_MAX_PENDING_COUNT; i++)
+    {
+        if(m_Pending[i].Pending == true)
+        {
+            if(m_Pending[i].XID == XID)
+            {
+                return i;
+            }
+        }
+    }
+
+    return -1;
 }
 
 //-------------------------------------------------------------------------------------------------

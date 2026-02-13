@@ -38,27 +38,21 @@ class DNS_Client
 {
     public:
 
-        void                Initialize          (NetworkContext* pContext);
-        bool                SendQuery           (const char* pDomainName);
-        bool                Resolve             (const char* pDomainName);
-        bool                Process             (void);
-
-        void                SetCallback         (DNS_Callback_t pCallback,IP_Manager* pIP_Manager)  { m_pCallback = pCallback; m_pCallbackContext = pIP_Manager; }
-        bool                IsBusy              (void)                                              { return (m_State == DNS_STATE_WAIT_RESPONSE);               }
+        void                    Initialize          (NetworkContext* pContext);
+        bool                    SendQuery           (const char* pDomainName, DNS_Callback_t pCallback, void* pContext);
+        bool                    Process             (void);
 
 private:
 
-        bool                ParseResponse       (DNS_Header_t* pMsg, size_t PacketLength);
-        size_t              BuildDNS_Query      (DNS_Header_t* pMessage, const char* pDomainName);
+        inline int              FindFreeSlot        (void);
+        int                     FindSlotByXID       (uint16_t XID);
+        bool                    ParseResponse       (DNS_Header_t* pMessage, size_t PacketLength, IP_Address_t& OutIP);
+        size_t                  BuildDNS_Query      (DNS_Header_t* pMessage, const char* pDomainName);
 
-        NetworkContext*     m_pContext;
-        Socket*             m_pSocket;
-        DNS_State_e         m_State;
-        uint16_t            m_LastID;
-        nOS_Timer           m_TimerQuery;
-        DNS_Callback_t      m_pCallback;
-        IP_Manager*         m_pCallbackContext;
-        IP_Address_t        m_ResolvedIP;
+        NetworkContext*         m_pContext;
+        Socket*                 m_pSocket;
+        uint16_t                m_XID_Counter;
+        DNS_PendingRequest_t    m_Pending[DNS_MAX_PENDING_COUNT];
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -121,7 +121,6 @@ class IP_Manager
         void                ProcessIP                   (IP_PacketMsg_t* pRX);
         char*               ProcessURL                  (char* pBuffer, IP_Address_t* pIP_Address, IP_Port_t* pPort);
 
-        IP_Address_t        GetDNS                      (void);
         IP_Address_t        GetHost                     (void);
         NetworkContext*     GetContext                  (void)                              { return &m_Context; }
         SocketManager*      GetSocketManager            (void)                              { return &m_SocketManager; }
@@ -137,6 +136,7 @@ class IP_Manager
         ARP_TableEntry_t*   GetTableEntryPointer        (int Entry)                         { return &m_ARP.GetTableBasePointer()[Entry]; }
 
       #if (IP_USE_DNS == DEF_ENABLED)
+        IP_Address_t        GetDNS                      (void);
         bool                RequestDNS                  (const char* pHostName, DNS_Callback_t Callback);
       #endif
 
@@ -174,8 +174,8 @@ class IP_Manager
 
     private:
 
-        static void         DNS_StaticCallback          (IP_Manager* pIP_Manager, bool Success, IP_Address_t ResolvedIP);
-        void                OnDNS_Completed             (bool Success, IP_Address_t ResolvedIP);
+        //static void         DNS_StaticCallback          (IP_Manager* pIP_Manager, bool Success, IP_Address_t ResolvedIP);
+        //void                OnDNS_Completed             (bool Success, IP_Address_t ResolvedIP);
 
         NetworkContext                  m_Context;
         ETH_IF_Driver                   m_IF_Driver;
@@ -192,7 +192,6 @@ class IP_Manager
 
       #if (IP_USE_DNS == DEF_ENABLED)
         DNS_Client                      m_DNS;                                  // Domain name system Protocol. Need UDP
-        DNS_Request_t                   m_DNS_Request;
       #endif
 
       #if (IP_USE_ICMP == DEF_ENABLED)

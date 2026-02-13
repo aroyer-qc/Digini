@@ -479,13 +479,15 @@ struct IP_PacketMsg_t
 #pragma pack(pop)
 
 #if (IP_USE_DNS == DEF_ENABLED)
-struct DNS_Request_t
+struct DNS_PendingRequest_t
 {
-    bool Pending             = false;               // App requested a DNS lookup
-    bool Busy                = false;               // DNS client is currently running a query
-    const char* pHostName    = nullptr;
-    DNS_Callback_t pCallback = nullptr;
+    uint16_t        XID;
+    DNS_Callback_t  pCallback;
+    void*           pContext;
+    TickCount_t     TimeStamp;
+    bool            Pending;                        // App requested a DNS lookup
 };
+
 #endif
 
 struct IP_ETH_Config_t

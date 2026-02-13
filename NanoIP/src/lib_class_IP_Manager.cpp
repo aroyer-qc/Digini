@@ -123,9 +123,6 @@ void IP_Manager::Initialize(IF_ID_e IF_ID)
 
   #if (IP_USE_DNS == DEF_ENABLED)
     m_DNS.Initialize(&m_Context);
-    m_DNS_Request.pCallback = nullptr;
-    m_DNS_Request.Busy      = false;
-    m_DNS.SetCallback(&IP_Manager::DNS_StaticCallback, this);                           // Register static callback with context = this
   #endif
 
   #if (IP_USE_ICMP == DEF_ENABLED)
@@ -204,17 +201,7 @@ void IP_Manager::Run(void)
       #endif
 
     #if (IP_USE_DNS == DEF_ENABLED)
-        if((m_DNS_Request.Pending == true) && (m_DNS.IsBusy() == false))                        // Start DNS query if requested
-        {
-            m_DNS_Request.Pending = false;
-            m_DNS_Request.Busy = true;
-            m_DNS.Resolve(m_DNS_Request.pHostName);
-        }
-
-        if(m_DNS.IsBusy() == true)                                                             // Pump DNS state machine if busy
-        {
-            m_DNS.Process();
-        }
+        m_DNS.Process();
     #endif
 
         if(nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
@@ -489,39 +476,29 @@ IP_Address_t IP_Manager::GetDNS(void)
 //
 //  Name:           RequestDNS
 //
-//  Parameter(s):   const char*     pHostName   Null-terminated domain name to resolve.
-//                  DNS_Callback_t  pCallback   Application-provided function to receive the DNS
-//                                              result once the resolution completes. The callback
-//                                              is invoked asynchronously from within the IP_Manager
-//                                               task context.
+//  Parameter(s):   const char*     pHostName       Null-terminated domain name to resolve.
+//                  DNS_Callback_t  pCallback       Application-provided function invoked when the
+//                                                  DNS resolution completes. The callback is
+//                                                  executed asynchronously from within the DNS
+//                                                  client's processing context.
 //
 //  Return:         bool
-//                      - true  : DNS request accepted and queued for processing.
-//                      - false : A DNS query is already in progress; caller must retry later.
+//                      - true  : DNS request accepted by the DNS client.
+//                      - false : DNS client could not queue the request (e.g., no free slot).
 //
-//  Description:    Submits an asynchronous DNS resolution request to the IP_Manager. The
-//                  function does not perform any network activity directly; instead, it
-//                  records the request and returns immediately. The actual DNS transaction
-//                  is initiated and processed inside the IP_Manager::Run() task.
+//  Description:    Submits an asynchronous DNS resolution request. This function does not perform
+//                  any network activity directly; it simply forwards the request to the DNS client,
+//                  which manages its own socket, pending-request table, timeouts, and callbacks.
 //
-//                  Only one DNS request may be active at a time. If a query is already in
-//                  progress, the function returns false and the caller must wait for the
-//                  current request to complete before issuing another.
+//                  Multiple DNS requests may be active concurrently. Each request is tracked
+//                  independently inside the DNS client and resolved when the corresponding DNS
+//                  response is received.
 //
 //-------------------------------------------------------------------------------------------------
- #if (IP_USE_DNS == DEF_ENABLED)
+#if (IP_USE_DNS == DEF_ENABLED)
 bool IP_Manager::RequestDNS(const char* pHostName, DNS_Callback_t pCallback)
 {
-    if(m_DNS_Request.Busy == true)                  // Simple mutex: only one DNS request at a time
-    {
-        return false;                               // DNS already running
-    }
-
-    m_DNS_Request.pHostName = pHostName;
-    m_DNS_Request.pCallback = pCallback;
-    m_DNS_Request.Pending   = true;
-    m_DNS_Request.Busy      = true;
-    return true;
+    return m_DNS.SendQuery(pHostName, pCallback, this);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -544,6 +521,7 @@ bool IP_Manager::RequestDNS(const char* pHostName, DNS_Callback_t pCallback)
 //                  requests to be issued.
 //
 //-------------------------------------------------------------------------------------------------
+/*
 void IP_Manager::OnDNS_Completed(bool Success, IP_Address_t ResolvedIP)
 {
     m_DNS_Request.Busy = false;                         // Release the mutex first
@@ -553,7 +531,7 @@ void IP_Manager::OnDNS_Completed(bool Success, IP_Address_t ResolvedIP)
         m_DNS_Request.pCallback(this, Success, ResolvedIP);
     }
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DNS_StaticCallback
@@ -577,13 +555,14 @@ void IP_Manager::OnDNS_Completed(bool Success, IP_Address_t ResolvedIP)
 //                  final processing and releases the DNS request lock.
 //
 //-------------------------------------------------------------------------------------------------
-void IP_Manager::DNS_StaticCallback(IP_Manager* pIP_Manager, bool Success, IP_Address_t ResolvedIP)
+/*void IP_Manager::DNS_StaticCallback(IP_Manager* pIP_Manager, bool Success, IP_Address_t ResolvedIP)
 {
     if(pIP_Manager != nullptr)
     {
         pIP_Manager->OnDNS_Completed(Success, ResolvedIP);
     }
 }
+*/
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -992,107 +971,3 @@ void IP_Manager::FreeMessage(IP_PacketMsg_t* pMsg)
 #endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-
-
-
-
-#if 0
-
-
-void RAW_Input(IP_PacketMsg_t* pMsg)
-{
-    IP_Header_t* pIP = &pMsg->pPacket->IP_Header;
-    uint8_t proto    = pIP->Protocol;
-
-    // Find a RAW socket bound to this protocol
-    Socket* pSock = Socket_FindRAWByProtocol(proto);
-    if (pSock == nullptr)
-    {
-        // No RAW consumer → just free
-        pMemoryPool->Free((void**)&pMsg->pPacket);
-        pMemoryPool->Free((void**)&pMsg);
-        return;
-    }
-
-    RAW_Socket_t* pRaw = pSock->m_Proto.raw;
-
-    if (nOS_QueueWrite(&pRaw->RxQueue, &pMsg, 0) != NOS_OK)
-    {
-        // Queue full → drop
-        pMemoryPool->Free((void**)&pMsg->pPacket);
-        pMemoryPool->Free((void**)&pMsg);
-        return;
-    }
-
-    // Ownership moves to RAW socket
-}
-
-void TCP_Input(IP_PacketMsg_t* pMsg)
-{
-    TCP_Header_t* pTCP = &pMsg->pPacket->TCP_Header;
-    IP_Header_t*  pIP  = &pMsg->pPacket->IP_Header;
-
-    uint16_t destPort = ntohs(pTCP->DestPort);
-    IP_Address_t localIP  = pIP->DestIP;
-    IP_Address_t remoteIP = pIP->SrcIP;
-    uint16_t     srcPort  = ntohs(pTCP->SrcPort);
-
-    TCP_Socket_t* pConn = TCP_FindConnection(localIP, destPort, remoteIP, srcPort);
-
-    if (pConn == nullptr)
-    {
-        // Maybe a listening socket (SYN to a listening port)?
-        TCP_Socket_t* pListener = TCP_FindListener(localIP, destPort);
-        if (pListener != nullptr)
-        {
-            TCP_HandleListenSegment(pListener, pMsg);
-            return;
-        }
-
-        // Otherwise, send RST
-        TCP_SendRST(pMsg);
-        TCP_FreePacket(pMsg);
-        return;
-    }
-
-    TCP_ProcessSegment(pConn, pMsg);
-}
-
-TCP_Socket_t* TCP_FindConnection(IP_Address_t localIP, uint16_t localPort,
-                                 IP_Address_t remoteIP, uint16_t remotePort);
-
-TCP_Socket_t* TCP_FindListener(IP_Address_t localIP, uint16_t localPort);
-
-void TCP_ProcessSegment(TCP_Socket_t* pConn, IP_PacketMsg_t* pMsg)
-{
-    // Parse flags, seq, ack, window, etc.
-    // Check if seq in window, ACK valid, etc.
-    // Update SndUna based on ACK
-    // Queue payload into pConn->RxQueue if in-order
-    // Generate ACK if needed
-    // Handle FIN: transition to CLOSE_WAIT / LAST_ACK / TIME_WAIT
-    // Handle retransmission timers, etc.
-
-    TCP_FreePacket(pMsg);
-}
-
-void TCP_TimerTick(uint32_t elapsedMs)
-{
-    for (each TCP_Socket_t in use)
-    {
-        // Decrement timers
-        if (pConn->RtoTimer > elapsedMs) pConn->RtoTimer -= elapsedMs; else RTO_Expired(pConn);
-        if (pConn->KeepAliveTimer > elapsedMs) { ... }
-        if (pConn->TimeWaitTimer > elapsedMs) { ... }
-    }
-}
-
-typedef struct
-{
-    Socket* pSocket;
-    uint32_t Events;    // READABLE, WRITABLE, EXCEPTION
-    uint32_t Returned;  // Set by Wait()
-} SocketWaitItem_t;
-
-SystemState_e Socket_Wait(SocketWaitItem_t* pItems, size_t Count, uint32_t TimeoutMs);
-#endif

@@ -396,6 +396,16 @@ struct ICMP_Frame_t
 	ICMP_Header_t	    	Header;		                // +   8
 };                                                      // =  42 Bytes
 
+struct MQTT_Frame_t
+{
+    IP_EthernetHeader_t     ETH_Header;                 //    14
+    IP_Header_t             IP_Header;                  //    20
+    TCP_Header_t            TCP_Header;                 //    20
+    // MQTT payload (CONNECT / PUBLISH / SUBSCRIBE / etc.)
+    // MQTT messages are variable-length, so we reserve a buffer.
+    uint8_t                 MQTT_Data[512]; // Adjust size as needed
+};
+
 // the IP frame
 struct IP_Frame_t
 {
@@ -455,12 +465,13 @@ struct IP_EthernetPacket_t
 		uint8_t						U8RawData[IP_ETHERNET_FRAME_SIZE];
 		uint16_t					U16RawData[IP_ETHERNET_FRAME_SIZE / 2];
 		IP_EthernetHeader_t			ETH_Header;
-		IP_Frame_t				    IP_Frame;
 		ARP_Frame_t                 ARP_Frame;
 		DHCP_Frame_t                DHCP_Frame;
         DNS_Frame_t                 DNS_Frame;
 		ICMP_Frame_t            	ICMP_Frame;
-		SNTP_Frame_t                SNTP_Frame;
+		IP_Frame_t				    IP_Frame;
+		MQTT_Frame_t                MQTT_Frame;
+        SNTP_Frame_t                SNTP_Frame;
 		TCP_Frame_t	                TCP_Frame;
 	//TCP_PseudoFrame_t         TCP_PseudoFrame;    // use for TCP Checksum calculation
 		UDP_Frame_t				    UDP_Frame;

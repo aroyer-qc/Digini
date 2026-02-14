@@ -34,12 +34,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define UDP_PORT_BOOT_P_SERVER				67
-#define UDP_PORT_BOOT_P_CLIENT				68
-
 #define UDP_EPHEMERAL_PORT_MIN              49152
 #define UDP_EPHEMERAL_PORT_MAX              65535
-
 #define UDP_MAX_BINDS                       8
 
 //-------------------------------------------------------------------------------------------------

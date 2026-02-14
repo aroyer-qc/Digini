@@ -74,7 +74,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define SNTP_RESPONSE_TIMEOUT_MS        5000
-#define SNTP_PORT                       HTONS(123)
+#define SNTP_PORT                       123
 #define SNTP_LI_VN_MODE                 0x23                        // Leap Indicator - 2 bits: 00 (No warning, current value), Version - 4 bits: 100, Mode Client - 3 bits: 011,
 
 
@@ -164,11 +164,15 @@ bool SNTP_Client::Start(const IP_Address_t ServerIP)
     pPacket[0] = SNTP_LI_VN_MODE;
 
     // Transmit Timestamp (seconds since 1900-01-01)
-    uint32_t Seconds1900 = GetSystemTime_Seconds_1900();
-    pPacket[40] = (uint8_t)(Seconds1900 >> 24);
-    pPacket[41] = (uint8_t)(Seconds1900 >> 16);
-    pPacket[42] = (uint8_t)(Seconds1900 >>  8);
-    pPacket[43] = (uint8_t)(Seconds1900 >>  0);
+   // uint32_t Seconds1900 = GetSystemTime_Seconds_1900();
+   // pPacket[24] = 0xE8;//(uint8_t)(Seconds1900 >> 24);
+   // pPacket[25] = (uint8_t)(Seconds1900 >> 16);
+   // pPacket[26] = (uint8_t)(Seconds1900 >>  8);
+   // pPacket[27] = (uint8_t)(Seconds1900 >>  0);
+   // pPacket[40] = 0xE8;//(uint8_t)(Seconds1900 >> 24);
+   // pPacket[41] = (uint8_t)(Seconds1900 >> 16);
+   // pPacket[42] = (uint8_t)(Seconds1900 >>  8);
+   // pPacket[43] = (uint8_t)(Seconds1900 >>  0);
 
     // Fractional part left at zero
     SocketInfo_t Destination;
@@ -253,9 +257,22 @@ void SNTP_Client::Process(void)
 //  Name:           ReceiveResponse
 //
 //  Parameter(s):   None
-//  Return:         void
 //
-//  Description:
+//  Return:         bool        - true  : A valid SNTP response was received and parsed
+//                              - false : No response available, invalid packet, or parse failure
+//
+//  Description:    Attempts a non-blocking read on the SNTP socket. If a UDP packet is available,
+//                  the function allocates a temporary buffer from the memory pool, receives up to
+//                  sizeof(SNTP_Header_t) bytes, validates the packet length, and forwards the
+//                  payload to ParseResponse() for protocol-level validation and timestamp
+//                  extraction.
+//
+//                  The receive buffer is ALWAYS freed before returning, regardless of success or
+//                  failure. This function does not block and does not retry; it simply checks for
+//                  one pending SNTP response and processes it if present.
+//
+//  Note(s):        Expected packet size for SNTP is exactly 48 bytes (RFC 4330). Any packet
+//                  smaller than this is discarded silently.
 //
 //-------------------------------------------------------------------------------------------------
 bool SNTP_Client::ReceiveResponse(void)
@@ -265,35 +282,60 @@ bool SNTP_Client::ReceiveResponse(void)
         return false;
     }
 
-    uint8_t      Buffer[128];
+    bool         Response = false;
     size_t       BytesReceived = 0;
     SocketInfo_t Src;
 
-    SystemState_e State = m_pSocket->RecvFrom(Buffer, sizeof(Buffer), &Src, &BytesReceived);
+    uint8_t* pBuffer = (uint8_t*)pMemoryPool->Alloc(sizeof(SNTP_Header_t), MEM_DBG_SNTPRX);
 
-    if(State != SYS_READY)
+    if(pBuffer != nullptr)
     {
-        return false;
+        SystemState_e State = m_pSocket->RecvFrom(pBuffer, sizeof(SNTP_Header_t), &Src, &BytesReceived);
+
+        if(State != SYS_READY)
+        {
+            goto exit;
+        }
+
+        if(BytesReceived < sizeof(SNTP_Header_t))
+        {
+            goto exit;
+        }
+
+        Response = ParseResponse(pBuffer, BytesReceived);
     }
 
-    if(BytesReceived < 48)
-    {
-        return false;
-    }
+exit:
 
-    return ParseResponse(Buffer, BytesReceived);
+    pMemoryPool->Free((void**)&pBuffer);                        // Always free the buffer
+    return Response;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           ParseResponse
 //
-//  Parameter(s):   uint8_t*        pPacket
-//                  size_t          Length
+//  Parameter(s):   uint8_t* pPacket    Pointer to the received SNTP packet (expected 48 bytes)
 //
-//  Return:         void
+//                  size_t Length       Length of the received payload. SNTP requires exactly 48
+//                                      bytes, but the caller is responsible for enforcing this
+//                                      constraint.
 //
-//  Description:
+//  Return:         bool    - true  : Packet is a valid SNTP server response and the transmit
+//                                    timestamp was successfully extracted and converted.
+//                          - false : Invalid mode, malformed packet, or timestamp extraction
+//                                    failed.
+//
+//  Description:    Performs protocol-level validation of an SNTP response. The function verifies
+//                  that the received packet originates from an SNTP server (Mode = 4) or broadcast
+//                  source (Mode = 5). If valid, the server's Transmit Timestamp (T3) is extracted
+//                  from bytes 40-43, converted from NTP epoch (1900) to Unix epoch (1970), and
+//                  stored internally.
+//
+//  Note(s):        This function does not modify system time directly; it only updates the
+//                  client's internal Unix time field and advances the SNTP state machine to
+//                  SNTP_STATE_DONE. System-level time synchronization is handled by the caller or
+//                  higher-level logic.
 //
 //-------------------------------------------------------------------------------------------------
 bool SNTP_Client::ParseResponse(uint8_t* pPacket, size_t Length)

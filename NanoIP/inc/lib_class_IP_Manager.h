@@ -137,7 +137,7 @@ class IP_Manager
 
       #if (IP_USE_DNS == DEF_ENABLED)
         IP_Address_t        GetDNS                      (void);
-        bool                RequestDNS                  (const char* pHostName, DNS_Callback_t Callback);
+        bool                RequestDNS                  (const char* pHostName, DNS_Callback_t Callback, void* pContext);
       #endif
 
       #if (IP_USE_RAW == DEF_ENABLED)
@@ -173,9 +173,6 @@ class IP_Manager
         static IP_Address_t AsciiToIP                   (const char* pBuffer);
 
     private:
-
-        //static void         DNS_StaticCallback          (IP_Manager* pIP_Manager, bool Success, IP_Address_t ResolvedIP);
-        //void                OnDNS_Completed             (bool Success, IP_Address_t ResolvedIP);
 
         NetworkContext                  m_Context;
         ETH_IF_Driver                   m_IF_Driver;

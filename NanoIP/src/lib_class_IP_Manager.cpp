@@ -467,10 +467,12 @@ IP_Address_t IP_Manager::GetHost(void)
 //  Description:    Return DNS server IP address according to configuration
 //
 //-------------------------------------------------------------------------------------------------
+#if (IP_USE_DNS == DEF_ENABLED)
 IP_Address_t IP_Manager::GetDNS(void)
 {
     return m_Context.GetActiveDNS_IP();
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -481,6 +483,11 @@ IP_Address_t IP_Manager::GetDNS(void)
 //                                                  DNS resolution completes. The callback is
 //                                                  executed asynchronously from within the DNS
 //                                                  client's processing context.
+//                  void*           pContext        User-defined context pointer passed back to the
+//                                                  callback. This allows higher-level modules
+//                                                  (e.g., ClassNetwork) to receive DNS results
+//                                                  without relying on implicit ownership or
+//                                                  back-pointers.
 //
 //  Return:         bool
 //                      - true  : DNS request accepted by the DNS client.
@@ -492,77 +499,15 @@ IP_Address_t IP_Manager::GetDNS(void)
 //
 //                  Multiple DNS requests may be active concurrently. Each request is tracked
 //                  independently inside the DNS client and resolved when the corresponding DNS
-//                  response is received.
+//                  response is received. The provided context pointer is returned verbatim to the
+//                  callback, enabling clean separation between IP_Manager and higher-level modules.
 //
 //-------------------------------------------------------------------------------------------------
 #if (IP_USE_DNS == DEF_ENABLED)
-bool IP_Manager::RequestDNS(const char* pHostName, DNS_Callback_t pCallback)
+bool IP_Manager::RequestDNS(const char* pHostName, DNS_Callback_t pCallback, void* pContext)
 {
-    return m_DNS.SendQuery(pHostName, pCallback, this);
+    return m_DNS.SendQuery(pHostName, pCallback, pContext);
 }
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           OnDNS_Completed
-//
-//  Parameter(s):   bool            Success     Indicates whether the DNS resolution succeeded.
-//
-//                  IP_Address_t    ResolvedIP  The resolved IPv4 address when Success is true.
-//                                              Undefined when Success is false.
-//
-//  Return:         void
-//
-//  Description:    Internal completion handler for DNS queries initiated through the
-//                  IP_Manager DNS request bridge. This function is invoked by the static
-//                  DNS callback wrapper once the DNS client finishes processing a query.
-//
-//                  The function forwards the result to the application-provided callback
-//                  (if registered) and releases the DNS request lock, allowing new DNS
-//                  requests to be issued.
-//
-//-------------------------------------------------------------------------------------------------
-/*
-void IP_Manager::OnDNS_Completed(bool Success, IP_Address_t ResolvedIP)
-{
-    m_DNS_Request.Busy = false;                         // Release the mutex first
-
-    if(m_DNS_Request.pCallback)                         // Forward to application
-    {
-        m_DNS_Request.pCallback(this, Success, ResolvedIP);
-    }
-}
-*/
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           DNS_StaticCallback
-//
-//  Parameter(s):   IP_Manager*     pContext    Pointer to the IP_Manager instance that initiated
-//                                              the DNS request. Used to route the completion event
-//                                              back to the correct object.
-//                  bool            Success     Indicates whether the DNS resolution completed
-//                                              successfully.
-//                  IP_Address_t    ResolvedIP  The resolved IPv4 address when Success is true.
-//                                              Undefined when Success is false.
-//
-//  Return:         void
-//
-//  Description:    Static wrapper function used by the DNS client to report completion of a DNS
-//                  query. Because the DNS client operates with a generic callback signature,
-//                  this function provides the necessary bridge to instance-level handling.
-//
-//                  The function casts the context pointer back to an IP_Manager object and
-//                  forwards the result to the instance method OnDNS_Completed(), which performs
-//                  final processing and releases the DNS request lock.
-//
-//-------------------------------------------------------------------------------------------------
-/*void IP_Manager::DNS_StaticCallback(IP_Manager* pIP_Manager, bool Success, IP_Address_t ResolvedIP)
-{
-    if(pIP_Manager != nullptr)
-    {
-        pIP_Manager->OnDNS_Completed(Success, ResolvedIP);
-    }
-}
-*/
 #endif
 
 //-------------------------------------------------------------------------------------------------

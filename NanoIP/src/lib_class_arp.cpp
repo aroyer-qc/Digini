@@ -34,7 +34,6 @@
 
 #include "./lib_digini.h"
 
-
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
@@ -45,6 +44,38 @@
 
 void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg);
 
+
+
+ARP_PendingEntry_t* ARP_Protocol::GetPendingEntryPointer(int Index)
+{
+    int RealIndex = (m_PendingHead + Index) % ARP_PENDING_QUEUE_SIZE;
+    return &m_PendingQueue[RealIndex];
+}
+
+void ARP_Protocol::OnPendingTimeOut(int LogicalIndex)
+{
+    ARP_PendingEntry_t* pEntry = GetPendingEntryPointer(LogicalIndex);
+
+    if(pEntry->pMsg != nullptr)
+    {
+        IP_Manager::FreeMessage(pEntry->pMsg);
+        pEntry->pMsg = nullptr;
+    }
+
+    pEntry->IP = IP_ADDRESS(0,0,0,0);
+
+    // Remove from queue: always pop from head
+    m_PendingHead = (m_PendingHead + 1) % ARP_PENDING_QUEUE_SIZE;
+    m_PendingCount--;
+
+    // If more pending entries exist, send ARP for the next one
+    if(m_PendingCount > 0)
+    {
+        ARP_PendingEntry_t* pNext = GetPendingEntryPointer(0);
+        m_IP_Address = pNext->IP;
+        ProcessOut();
+    }
+}
 //-------------------------------------------------------------------------------------------------
 //  Name:           Initialize
 //
@@ -68,7 +99,7 @@ SystemState_e ARP_Protocol::Initialize(NetworkContext* pContext)
 {
     nOS_Error Error;
 
-    m_pContext       = pContext;
+    m_pContext = pContext;
 
     // Initialize pending queue
     m_PendingHead  = 0;
@@ -389,9 +420,21 @@ CheckPending:
             pEntry->pMsg = nullptr;                                                                                     // Clear queue entry
             pEntry->IP   = IP_ADDRESS(0,0,0,0);
 
-        #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
+			// Remove this entry from the queue
+			m_PendingHead = (m_PendingHead + 1) % ARP_PENDING_QUEUE_SIZE;
+			m_PendingCount--;
+
+			// If more pending entries exist, send ARP for the next one
+			if(m_PendingCount > 0)
+			{
+				ARP_PendingEntry_t* pNext = GetPendingEntryPointer(0);
+				m_IP_Address = pNext->IP;
+				ProcessOut();
+			}
+
+          #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
             DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Sent pending packet for resolved IP\n");
-        #endif
+          #endif
         }
     }
 
@@ -427,9 +470,9 @@ void ARP_Protocol::ProcessOut(void)
 
     if(State != SYS_READY)
     {
-  #if (IP_DBG_ARP == DEF_ENABLED)
+      #if (IP_DBG_ARP == DEF_ENABLED)
         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Failed to allocate ARP request buffer\n");
-  #endif
+      #endif
         return;     // No memory -> cannot send ARP request
     }
 
@@ -519,22 +562,22 @@ bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg
             m_IP_Address = IP;                                                      // Target IP for ARP request
             ProcessOut();                                                           // Send ARP request
 
-      #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
+          #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
             DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: First pending packet, sending ARP request\n");
         }
         else
         {
             DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Queued additional pending packet\n");
-      #endif
+          #endif
         }
     }
     else
     {
         IP_Manager::FreeMessage(pMsg);                                              // Queue full -> drop packet (ARP does NOT own it)
 
-    #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
+      #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Pending queue FULL, dropping packet\n");
-    #endif
+      #endif
     }
 
     return false;                                                                   // Not resolved yet
@@ -572,7 +615,7 @@ void ARP_Protocol::FillCommon(ARP_Frame_t* pARP, uint16_t Type)
     pARP->Protocol           = IP_ETHERNET_TYPE_IPV4;
     pARP->HardwareAddrLength = IP_MAC_ADDRESS_SIZE;
     pARP->ProtocolLength     = 4;
-    pARP->Opcode             = htons(Type);
+    pARP->Opcode             = Type;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -673,12 +716,7 @@ void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg)
 
         if(Found == false)
         {
-            // ARP entry expired -> drop pending packet
-            IP_Manager::FreeMessage(pEntry->pMsg);
-            pEntry->pMsg = nullptr;
-            pEntry->IP   = IP_ADDRESS(0,0,0,0);
-
-            // Optional: compact queue if you implement it
+            pARP->OnPendingTimeOut(i);
         }
     }
 }

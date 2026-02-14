@@ -59,6 +59,7 @@ class NetworkContext
         void                SetHostName             (const char* pHostName)                     { m_pHostName = pHostName;                                                  }
         const char*         GetHostName             (void)                                      { return m_pHostName;                                                       }
 
+        bool                IsEthernetReady         (void);
 
       #if (IP_USE_DHCP == DEF_ENABLED)
 

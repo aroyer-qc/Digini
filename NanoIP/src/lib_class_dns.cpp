@@ -177,6 +177,10 @@ bool DNS_Client::Process(void)
         {
             if(TickHasTimeOut(m_Pending[i].TimeStamp, DNS_RESPONSE_TIME_OUT))
             {
+              #if (IP_DBG_DNS == DEF_ENABLED)
+                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: TIMEOUT XID=0x%04X\n",  m_Pending[i].XID);
+              #endif
+
                 // Timeout -> notify caller
                 if(m_Pending[i].pCallback != nullptr)
                 {
@@ -207,12 +211,30 @@ bool DNS_Client::Process(void)
         DNS_Header_t* pDNS = (DNS_Header_t*)pPayload;
         uint16_t xID = ntohs(pDNS->ID);
 
+      #if (IP_DBG_DNS == DEF_ENABLED)
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: RX response xid=0x%04X\n", xID);
+      #endif
+
         int slot = FindSlotByXID(xID);
 
         if(slot >= 0)
         {
             IP_Address_t ResolvedIP;
             bool Success = ParseResponse(pDNS, Length, ResolvedIP);
+
+          #if (IP_DBG_DNS == DEF_ENABLED)
+            if(Success == true)
+            {
+                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: RESOLVED -> %d.%d.%d.%d\n", IP_A(ResolvedIP),
+                                                                                                 IP_B(ResolvedIP),
+                                                                                                 IP_C(ResolvedIP),
+                                                                                                 IP_D(ResolvedIP));
+            }
+            else
+            {
+                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: INVALID respons\n");
+            }
+          #endif
 
             if(m_Pending[slot].pCallback != nullptr)
             {
@@ -222,6 +244,12 @@ bool DNS_Client::Process(void)
             m_Pending[slot].Pending = false;
             Completed = true;
         }
+      #if (IP_DBG_DNS == DEF_ENABLED)
+        else
+        {
+            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DNS: RX xid=0x%04X but no matching pending slot\n", xID);
+        }
+      #endif
     }
 
     // Caller frees the packet
@@ -273,7 +301,7 @@ bool DNS_Client::SendQuery(const char* pDomainName, DNS_Callback_t pCallback, vo
     }
 
     m_XID_Counter++;                                        // Generate XID and store pending request info
-    m_Pending[slot].XID       = m_XID_Counter;
+    m_Pending[slot].XID       = htons(m_XID_Counter);
     m_Pending[slot].pCallback = pCallback;
     m_Pending[slot].pContext  = pContext;
     m_Pending[slot].TimeStamp = GetTick();

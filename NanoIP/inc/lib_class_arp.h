@@ -63,12 +63,13 @@ class ARP_Protocol
         void                TimerCallBack	    	(void);
 
         // For ARP Timer callback
-        ARP_PendingEntry_t* GetPendingEntryPointer  (int Index)                 { return &m_PendingQueue[Index]; }
+        ARP_PendingEntry_t* GetPendingEntryPointer  (int Index);
         int                 GetPendingCount         (void)                      { return m_PendingCount;         }
         ARP_TableEntry_t*   GetTableBasePointer     (void)                      { return m_TableEntry;           }
 
         //ARP_TableEntry_t*   GetTableEntryPointer    (int Entry)                 { return &m_TableEntry[Entry]; }
         IP_Address_t        GetIP_Address           (void)                      { return m_IP_Address;         }
+        void                OnPendingTimeOut        (int LogicalIndex);
 
     private:
 

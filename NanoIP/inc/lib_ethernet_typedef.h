@@ -51,7 +51,7 @@
 
 #define IP_ETHERNET_TYPE_ARP 			        HTONS(0x0806)
 #define IP_ETHERNET_TYPE_IPV4 			        HTONS(0x0800)
-#define IP_ETHERNET_TYPE_IPV6 			    HTONS(0x86DD)
+#define IP_ETHERNET_TYPE_IPV6 			        HTONS(0x86DD)
 
 #define IP_VERSION4_IHL20				        0x45
 #define IP_TIME_TO_LIVE					        128
@@ -83,7 +83,7 @@
 
 #if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 
-    #define IP_ADDRESS(A,B,C,D)                 (uint32_t(D) + (uint32_t(C) << 8) + (uint32_t(B) << 16) + (uint32_t(A) << 24))
+    #define IP_ADDRESS(A,B,C,D)                 (uint32_t(A) + (uint32_t(B) << 8) + (uint32_t(C) << 16) + (uint32_t(D) << 24))
     #define IP_A(IP)                            uint8_t(IP)
     #define IP_B(IP)                            uint8_t(IP >> 8)
     #define IP_C(IP)                            uint8_t(IP >> 16)
@@ -95,7 +95,7 @@
 
 #else
 
-    #define IP_ADDRESS(A,B,C,D)                 (uint32_t(A) + (uint32_t(B) << 8) + (uint32_t(C) << 16) + (uint32_t(D) << 24))
+    #define IP_ADDRESS(A,B,C,D)                 (uint32_t(D) + (uint32_t(C) << 8) + (uint32_t(B) << 16) + (uint32_t(A) << 24))
     #define IP_A(IP)                            uint8_t(IP >> 24)
     #define IP_B(IP)                            uint8_t(IP >> 16)
     #define IP_C(IP)                            uint8_t(IP >> 8)

@@ -55,6 +55,17 @@ SystemState_e NetworkContext::SendPacket(IP_PacketMsg_t* pMsg)
     return m_SendCallback(m_SendContext, &pMsg);
 }
 
+bool NetworkContext::IsEthernetReady(void)
+{
+    bool EthernetReady = (GetLinkState() == ETH_LINK_UP)                    &&
+                         (IsIP_Valid() == true)                             &&
+                         //(GetActiveIP() != IP_ADDRESS(0.0.0.0))    &&
+                         (GetActiveSubnetMask() != IP_ADDRESS(0, 0, 0, 0))  &&
+                         (GetActiveGatewayIP() != IP_ADDRESS(0, 0, 0, 0));
+
+    return EthernetReady;
+}
+
 //-------------------------------------------------------------------------------------------------
 
 #endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)

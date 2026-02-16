@@ -176,6 +176,8 @@
 //#include "./NanoIP/inc/lib_class_tcp_server.h"
 #include "./NanoIP/inc/lib_class_dns.h"
 #include "./NanoIP/inc/lib_class_icmp.h"
+#include "./NanoIP/inc/lib_class_tcp_client.h"
+//#include "./NanoIP/inc/lib_class_tcp_server.h"
 #include "./NanoIP/inc/lib_class_sntp.h"
 #include "./NanoIP/inc/Interface/lib_class_ethernet_interface.h"
 #include "./Peripheral/inc/port/lib_class_eth.h"

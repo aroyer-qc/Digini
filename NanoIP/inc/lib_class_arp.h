@@ -63,12 +63,9 @@ class ARP_Protocol
         void                TimerCallBack	    	(void);
 
         // For ARP Timer callback
-        ARP_PendingEntry_t* GetPendingEntryPointer  (int Index);
-        int                 GetPendingCount         (void)                      { return m_PendingCount;         }
-        ARP_TableEntry_t*   GetTableBasePointer     (void)                      { return m_TableEntry;           }
-
-        //ARP_TableEntry_t*   GetTableEntryPointer    (int Entry)                 { return &m_TableEntry[Entry]; }
-        IP_Address_t        GetIP_Address           (void)                      { return m_IP_Address;         }
+        IP_Address_t        GetIP_Address           (void)                      { return m_IP_Address; }
+        ARP_TableEntry_t*   GetTableBasePointer     (void)                      { return m_TableEntry; }
+        ARP_PendingEntry_t* GetPendingEntryByOffset (int Offset);
         void                OnPendingTimeOut        (int LogicalIndex);
 
     private:
@@ -81,12 +78,10 @@ class ARP_Protocol
         ARP_TableEntry_t    m_TableEntry[IP_ARP_TABLE_SIZE];
 
         ARP_PendingEntry_t  m_PendingQueue[ARP_PENDING_QUEUE_SIZE];
-        int                 m_PendingHead;
-        int                 m_PendingTail;
-        int                 m_PendingCount;
+        int                 m_PendingOldest;                        // Points to oldest non-EMPTY entry
 
         uint16_t            m_Time;
-        nOS_Timer*          m_pTimer;                               // Pointer on the OS timer
+        nOS_Timer           m_Timer;                                // Pointer on the OS timer
 };
 
 //-------------------------------------------------------------------------------------------------

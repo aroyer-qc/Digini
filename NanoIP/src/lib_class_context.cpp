@@ -55,6 +55,8 @@ SystemState_e NetworkContext::SendPacket(IP_PacketMsg_t* pMsg)
     return m_SendCallback(m_SendContext, &pMsg);
 }
 
+//-------------------------------------------------------------------------------------------------
+
 bool NetworkContext::IsEthernetReady(void)
 {
     bool EthernetReady = (GetLinkState() == ETH_LINK_UP)                    &&

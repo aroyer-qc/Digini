@@ -34,7 +34,7 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef SystemState_e (*SendCallback_t)(void* Context, IP_PacketMsg_t** ppPacketMsg);
+typedef SystemState_e (*SendCallback_t)(void* pContext, IP_PacketMsg_t** ppPacketMsg);
 
 //-------------------------------------------------------------------------------------------------
 // Class

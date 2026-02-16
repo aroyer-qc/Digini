@@ -234,7 +234,17 @@ void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
                 DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Reply to request\n");
               #endif
 
-                m_pContext->SendPacket(pTX);                                                        // Zero-copy TX
+                SystemState_e State = m_pContext->SendPacket(pTX);                                  // Zero-copy TX
+
+                if(State != SYS_READY)
+                {
+                    IP_Manager::FreeMessage(pTX);
+
+                  #if (IP_DBG_ARP == DEF_ENABLED)
+                    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Reply to Request - SendPacket Failed!, Drop the packet\n");
+                  #endif
+                }
+
                 return;
             }
         }
@@ -398,14 +408,27 @@ FlushPending:
         if((pEntry->State == ARP_STATE_PENDING) && (pEntry->IP == IP_Address))
         {
             memcpy(pEntry->pMsg->pPacket->ETH_Header.DestinationMAC.Byte, pMacAddress->Byte, IP_MAC_ADDRESS_SIZE);
-            m_pContext->SendPacket(pEntry->pMsg);
+
+            SystemState_e State = m_pContext->SendPacket(pEntry->pMsg);
+
+            if(State == SYS_READY)
+            {
+              #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
+                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Sent pending packet for resolved IP\n");
+              #endif
+            }
+            else
+            {
+                IP_Manager::FreeMessage(pEntry->pMsg);
+
+              #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
+                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Sent pending - SendPacket failed: Drop the packet\n");
+              #endif
+            }
+
             pEntry->pMsg  = nullptr;
             pEntry->IP    = IP_ADDRESS(0,0,0,0);
             pEntry->State = ARP_STATE_EMPTY;
-
-          #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
-            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Sent pending packet for resolved IP\n");
-          #endif
         }
     }
 
@@ -491,7 +514,18 @@ void ARP_Protocol::ProcessOut(void)
                                                                                      IP_D(m_IP_Address));
   #endif
 
-    m_pContext->SendPacket(pMsg);                                                   // Transmit ARP request
+    State = m_pContext->SendPacket(pMsg);                                           // Transmit ARP request
+
+    if(State != SYS_READY)
+    {
+      #if (IP_DBG_ARP == DEF_ENABLED)
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Request - SendPacket failed for %d.%d.%d.%d\n", IP_A(m_IP_Address),
+                                                                                                             IP_B(m_IP_Address),
+                                                                                                             IP_C(m_IP_Address),
+                                                                                                             IP_D(m_IP_Address));
+      #endif
+        IP_Manager::FreeMessage(pMsg);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -539,9 +573,31 @@ bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg
         }
     }
 
-    // Not resolved -> enqueue into pending queue
-    // Scan circularly for an EMPTY slot
+    // Not resolved -> check if this IP is already pending
+    for(int Offset = 0; Offset < ARP_PENDING_QUEUE_SIZE; Offset++)
+    {
+        int Index = (m_PendingOldest + Offset) % ARP_PENDING_QUEUE_SIZE;
+        ARP_PendingEntry_t* pEntry = &m_PendingQueue[Index];
 
+        if((pEntry->State == ARP_STATE_PENDING) && (pEntry->IP == IP))
+        {
+            // Already have a pending entry for this IP.
+            // ARP will eventually send or timeout that packet.
+            // This new one cannot be queued -> free it.
+            IP_Manager::FreeMessage(pMsg);
+
+          #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
+             DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Duplicate pending for %d.%d.%d.%d, dropping packet\n", IP_A(IP),
+                                                                                                                         IP_B(IP),
+                                                                                                                         IP_C(IP),
+                                                                                                                         IP_D(IP));
+          #endif
+
+            return false;                                                                       // Still unresolved
+        }
+    }
+
+    // Not resolved and not already pending -> enqueue into pending queue. Scan circularly for an EMPTY slot
     for(int Offset = 0; Offset < ARP_PENDING_QUEUE_SIZE; Offset++)
     {
         int Index = (m_PendingOldest + Offset) % ARP_PENDING_QUEUE_SIZE;
@@ -552,7 +608,6 @@ bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg
             pEntry->IP    = IP;                                                                 // Fill pending entry
             pEntry->pMsg  = pMsg;
             pEntry->State = ARP_STATE_PENDING;
-
             bool FirstPending = true;                                                           // If this is the ONLY pending entry, send ARP request now
 
             for(int i = 0; i < ARP_PENDING_QUEUE_SIZE; i++)
@@ -580,12 +635,11 @@ bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg
         }
     }
 
-    IP_Manager::FreeMessage(pMsg);                                                              // No EMPTY slot -> queue full -> drop packet
-
   #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Pending queue FULL, dropping packet\n");
   #endif
 
+    IP_Manager::FreeMessage(pMsg);                                                              // No EMPTY slot -> queue full -> drop packet
     return false;
 }
 

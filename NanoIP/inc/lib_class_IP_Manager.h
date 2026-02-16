@@ -166,8 +166,16 @@ class IP_Manager
                                                          size_t* pBytesSent)                { return m_UDP.Send(pSock, pData, Length, pDestInfo, pBytesSent); }
       #endif
 
-        static uint16_t     UDP_CalculateChecksum       (IP_Header_t* pIP, UDP_Header_t* pUDP, uint16_t udpLength);
+
+        static uint32_t     ChecksumAccumulate          (const uint8_t* Data, uint16_t Count);
+        static uint16_t     ChecksumFinalize            (uint32_t Checksum);
         static uint16_t     IP_CalculateChecksum        (const void* pBuffer, uint16_t Count);
+      #if (IP_USE_TCP == DEF_ENABLED)
+        static uint16_t     TCP_CalculateChecksum       (IP_Header_t* pIP, TCP_Header_t* pTCP, uint16_t TCP_Length);
+      #endif
+      #if (IP_USE_UDP == DEF_ENABLED)
+        static uint16_t     UDP_CalculateChecksum       (IP_Header_t* pIP, UDP_Header_t* pUDP, uint16_t UDP_Length);
+      #endif
         static void         FreeMessage                 (IP_PacketMsg_t* pMsg);
         static void         IP_ToAscii                  (char* pBuffer, IP_Address_t IP_Address);
         static IP_Address_t AsciiToIP                   (const char* pBuffer);

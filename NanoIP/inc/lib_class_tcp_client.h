@@ -64,9 +64,9 @@ class TCP_Client
 
     private:
 
-        bool                SendSyn                 (void);
-        bool                SendAck                 (uint32_t AckNumber);
-        bool                SendFin                 (void);
+        bool                SendSYN                 (void);
+        bool                SendACK                 (uint32_t AckNumber);
+        bool                SendFIN                 (void);
         bool                SendSegment             (const uint8_t* pPayload, size_t Length, bool PushFlag);
 
         bool                HandleIncoming          (IP_EthernetPacket_t* pPacket);
@@ -108,7 +108,7 @@ class TCP_Client
         size_t              m_TxLength;
 
         uint8_t             m_RxBuffer[512];
-        size_t              m_RxLength;
+        size_t              m_RX_Length;
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -42,7 +42,24 @@
 #define SOCKET_DEFAULT_TIME_OUT             1000
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           Initialize
+//
+//  Parameter(s):   NetworkContext* pContext
+//                      Pointer to the global network context used by all sockets.
+//
+//  Return:         void
+//
+//  Description:    Initializes the socket manager by storing the network context pointer and
+//                  resetting the active socket count. This function must be called once during
+//                  system startup before any sockets are created. No sockets are allocated or
+//                  modified here; the manager simply prepares its internal tracking state.
+//
+//  Notes:          - The manager does not take ownership of the NetworkContext pointer.
+//                  - All subsequent socket allocations will reference this context.
+//                  - Safe to call only once during initialization.
+//
+//-------------------------------------------------------------------------------------------------
 void SocketManager::Initialize(NetworkContext* pContext)
 {
     m_pContext = pContext;
@@ -50,30 +67,70 @@ void SocketManager::Initialize(NetworkContext* pContext)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           AllocSocket
+//
+//  Parameter(s):   SocketType_e Type
+//                      The protocol type (UDP, TCP, RAW) to initialize the socket as.
+//
+//  Return:         Socket*
+//                      Pointer to a fully constructed and initialized socket, or nullptr if
+//                      allocation fails or the maximum socket count has been reached.
+//
+//  Description:    Allocates a new socket object from the memory pool, constructs it in-place
+//                  using placement-new, and initializes it via Socket::Create(). The newly
+//                  created socket is added to the active socket list and becomes eligible to
+//                  receive packets from the protocol dispatchers.
+//
+//                  This function performs no protocol-specific allocation itself; all protocol
+//                  storage is allocated inside Socket::Create() according to the requested type.
+//
+//  Notes:          - The socket manager owns the lifetime of all sockets it allocates.
+//                  - The caller must eventually release the socket via FreeSocket().
+//                  - The memory pool is responsible for zeroing or initializing raw memory.
+//
+//-------------------------------------------------------------------------------------------------
 Socket* SocketManager::AllocSocket(SocketType_e Type)
 {
-    if(m_ActiveCount >= SOCKET_MAX_COUNT)              // Enforce maximum number of sockets
+    if(m_ActiveCount >= SOCKET_MAX_COUNT)                                                       // Enforce maximum socket count
     {
         return nullptr;
     }
 
-    void* pSocketMemory = pMemoryPool->Alloc(sizeof(Socket), MEM_DBG_SOCKALLOC);
+    void* pSocketMemory = pMemoryPool->Alloc(sizeof(Socket), MEM_DBG_SOCKALLOC);                // Allocate raw memory for the socket object
 
     if(pSocketMemory == nullptr)
     {
         return nullptr;
     }
 
-    Socket* pSocket = new (pSocketMemory)Socket(*m_pContext, *m_pContext->GetIP_Manager());
-    pSocket->Create(Type);
-
-    m_ActiveSockets[m_ActiveCount++] = pSocket;
+    Socket* pSocket = new (pSocketMemory) Socket(*m_pContext, *m_pContext->GetIP_Manager());    // Construct the socket in-place (placement new)
+    pSocket->Create(Type);                                                                      // Initialize protocol-specific structures
+    m_ActiveSockets[m_ActiveCount++] = pSocket;                                                 // Register in active socket list
     return pSocket;
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           FreeSocket
+//
+//  Parameter(s):   Socket** ppSocket
+//                      Pointer to a socket pointer. On return, *ppSocket is set to nullptr.
+//
+//  Return:         void
+//
+//  Description:    Releases all resources associated with a socket. The function performs a
+//                  protocol-specific unregistration (UDP port, RAW protocol filter, TCP teardown),
+//                  flushes the unified socket-level RX queue, frees protocol-specific storage,
+//                  and finally frees the socket object itself.
+//
+//                  After this call, the socket pointer is invalid and set to nullptr.
+//
+//  Notes:          - Safe to call on inactive or partially initialized sockets.
+//                  - The demultiplexer will no longer enqueue packets because m_Active is cleared.
+//                  - All message freeing is delegated to IP_Manager::FreeMessage().
+//
+//-------------------------------------------------------------------------------------------------
 void SocketManager::FreeSocket(Socket** ppSocket)
 {
     if((ppSocket == nullptr) || (*ppSocket == nullptr))
@@ -82,94 +139,231 @@ void SocketManager::FreeSocket(Socket** ppSocket)
     }
 
     Socket* pSocket = *ppSocket;
-    pSocket->m_Active = false;                              // Freeze the socket so no new packets enter its RX queue
+    pSocket->m_Active = false;                                      // Prevent any new packets from being enqueued
+    pSocket->FreeAllMessages(&pSocket->m_RX_Queue);                  // Flush all pending RX messages (unified queue)
 
-    if(pSocket->m_Type == SOCKET_TYPE_DATAGRAM)             // Drain RX queue safely (no race because demux now drops)
+    switch(pSocket->m_Type)                                         // Protocol-specific cleanup
     {
-        UDP_Socket_t* pUDP = pSocket->m_Protocol.pUDP;
-        IP_PacketMsg_t* pMsg = nullptr;
-
-        IP_Port_t port = pSocket->GetLocalPort();
-        pSocket->m_Manager.UDP_UnregisterSocket(port);
-
-        while(nOS_QueueRead(&pUDP->RX_Queue, &pMsg, 0) == NOS_OK)
+      #if (IP_USE_UDP == DEF_ENABLED)
+        case SOCKET_TYPE_DATAGRAM:
         {
-            IP_Manager::FreeMessage(pMsg);
-        }
+            UDP_Socket_t* pUDP = pSocket->m_Protocol.pUDP;
 
-        if(pSocket->m_Type == SOCKET_TYPE_DATAGRAM)         // Free protocol-specific structures
-        {
-            pMemoryPool->Free((void**)&pSocket->m_Protocol.pUDP);
+            if(pUDP && pUDP->LocalPort != 0)
+            {
+                UDP_UnregisterSocket(pUDP->LocalPort);
+            }
         }
+        break;
+      #endif
+
+      #if (IP_USE_TCP == DEF_ENABLED)
+        case SOCKET_TYPE_STREAM:
+        {
+            TCP_Close(pSocket);                                     // Let TCP manager handle FIN/RST, state machine tear-down, etc.
+        }
+        break;
+      #endif
+
+      #if (IP_USE_RAW == DEF_ENABLED)
+        case SOCKET_TYPE_RAW:
+        {
+            RAW_Socket_t* pRAW = pSocket->m_Protocol.pRAW;
+
+            if(pRAW && pRAW->Protocol != 0)
+            {
+                RAW_UnregisterSocket(pRAW->Protocol);
+            }
+        }
+        break;
+      #endif
+
+        default:
+            break;
     }
 
-    pMemoryPool->Free((void**)&pSocket);                    // Free the socket object itself
-    *ppSocket = nullptr;
+    pSocket->FreeProtocolData();                                        // Free protocol-specific storage (dynamic allocation)
+    pMemoryPool->Free((void**)&pSocket);                                // Free the socket object itself
+    *ppSocket = nullptr;                                                // Invalidate caller's pointer
 }
 
 //-------------------------------------------------------------------------------------------------
-Socket* SocketManager::FindUDP_SocketByPort(IP_Port_t Port)
+//
+//  Name:           UDP_UnregisterSocket
+//
+//  Parameter(s):   IP_Port_t Port
+//                      The UDP port to unbind.
+//
+//  Return:         void
+//
+//  Description:    Removes the UDP socket bound to the specified port from the active binding
+//                  table. After this call, incoming UDP datagrams addressed to this port will
+//                  no longer be delivered to any socket. If no socket is bound to the port,
+//                  the function performs no action.
+//
+//  Notes:          - Safe to call during socket tear-down.
+//                  - The function does not free the socket; it only removes the binding.
+//                  - The UDP dispatcher relies on FindUDP_SocketByPort(), so unbinding simply
+//                    ensures that lookup returns nullptr.
+//
+//-------------------------------------------------------------------------------------------------
+#if (IP_USE_UDP == DEF_ENABLED)
+void SocketManager::UDP_UnregisterSocket(IP_Port_t Port)
 {
-  #if (IP_USE_UDP == DEF_ENABLED)
     for(uint8_t i = 0; i < m_ActiveCount; i++)
     {
         Socket* pSocket = m_ActiveSockets[i];
 
-        if(pSocket->m_Type != SOCKET_TYPE_DATAGRAM)
+        if(pSocket->m_Type != SOCKET_TYPE_DATAGRAM)         // Only UDP sockets can be bound to ports
         {
             continue;
         }
 
         UDP_Socket_t* pUDP = pSocket->m_Protocol.pUDP;
-
         if(pUDP == nullptr)
         {
             continue;
         }
 
-        if(pUDP->LocalPort == Port)
+        if(pUDP->LocalPort == Port)                         // Match the bound port
         {
-            return pSocket;
+            pUDP->LocalPort = 0;                            // Unbind
+            return;
         }
     }
-  #endif
-
-    return nullptr;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
-
-Socket* SocketManager::FindRAW_ByProtocol(uint8_t Protocol)
+//
+//  Name:           FindUDP_SocketByPort
+//
+//  Parameter(s):   IP_Port_t Port      The UDP destination port to search for.
+//
+//  Return:         Socket*             Pointer to the matching UDP socket, or nullptr if no socket
+//                                      is bound to the specified port.
+//
+//  Description:    Searches the active socket list for a UDP socket whose dynamically allocated
+//                  UDP_Socket_t structure has a LocalPort matching the specified value. This
+//                  function is used by the UDP dispatcher to deliver incoming datagrams to the
+//                  correct socket.
+//
+//                  Only sockets of type SOCKET_TYPE_DATAGRAM are considered. Sockets that are
+//                  inactive, uninitialized, or whose protocol storage is missing are skipped.
+//
+//-------------------------------------------------------------------------------------------------
+#if (IP_USE_UDP == DEF_ENABLED)
+Socket* SocketManager::FindUDP_SocketByPort(IP_Port_t Port)
 {
-  #if (IP_USE_RAW == DEF_ENABLED)
     for(uint8_t i = 0; i < m_ActiveCount; i++)
     {
         Socket* pSocket = m_ActiveSockets[i];
 
-        if(pSocket->m_Type != SOCKET_TYPE_RAW)
+        if(pSocket->m_Type != SOCKET_TYPE_DATAGRAM)             // Must be a UDP socket
         {
             continue;
         }
 
-        if(pSocket->GetRawProtocol() == Protocol)
+        UDP_Socket_t* pUDP = pSocket->m_Protocol.pUDP;
+
+        if(pUDP == nullptr)                                     // Protocol storage must exist
+        {
+            continue;
+        }
+
+        if(pUDP->LocalPort == Port)                             // Match bound port
         {
             return pSocket;
         }
     }
-  #endif
 
     return nullptr;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
-
-Socket* SocketManager::FindTCP_Connection(uint32_t LocalIP, IP_Port_t LocalPort, uint32_t RemoteIP, IP_Port_t RemotePort)
+//
+//  Name:           FindRAW_ByProtocol
+//
+//  Parameter(s):   uint8_t Protocol    The IP protocol number (e.g., ICMP = 1, IGMP = 2, UDP = 17,
+//                                      etc.).
+//
+//  Return:         Socket*             Pointer to the matching RAW socket, or nullptr if no socket
+//                                      is registered for the specified protocol.
+//
+//  Description:    Searches the active socket list for a RAW socket whose dynamically allocated
+//                  RAW_Socket_t structure has a Protocol field matching the specified value.
+//                  This function is used by the RAW dispatcher to deliver incoming packets
+//                  based on their IP protocol number.
+//
+//                  Only sockets of type SOCKET_TYPE_RAW are considered. Sockets that are inactive,
+//                  uninitialized, or whose protocol storage is missing are skipped.
+//
+//-------------------------------------------------------------------------------------------------
+#if (IP_USE_RAW == DEF_ENABLED)
+Socket* SocketManager::FindRAW_ByProtocol(uint8_t Protocol)
 {
-  #if (IP_USE_TCP == DEF_ENABLED)
     for(uint8_t i = 0; i < m_ActiveCount; i++)
     {
         Socket* pSocket = m_ActiveSockets[i];
 
+        if(pSocket->m_Type != SOCKET_TYPE_RAW)                  // Must be a RAW socket
+        {
+            continue;
+        }
+
+        RAW_Socket_t* pRAW = pSocket->m_Protocol.pRAW;
+
+        if(pRAW == nullptr)                                     // Protocol storage must exist
+        {
+            continue;
+        }
+
+        if(pRAW->Protocol == Protocol)                          // Match protocol number
+        {
+            return pSocket;
+        }
+    }
+
+    return nullptr;
+}
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           FindTCP_Connection
+//
+//  Parameter(s):   uint32_t    LocalIP
+//                      The local IPv4 address associated with the TCP connection.
+//                  IP_Port_t   LocalPort
+//                      The local TCP port.
+//                  uint32_t    RemoteIP
+//                      The remote IPv4 address of the peer.
+//                  IP_Port_t   RemotePort
+//                      The remote TCP port.
+//
+//  Return:         Socket*
+//                      Pointer to the matching TCP socket, or nullptr if no active connection
+//                      matches the specified 4‑tuple.
+//
+//  Description:    Searches the active socket list for a TCP socket whose dynamically allocated
+//                  TCP_Socket_t structure matches the specified connection identifiers. This
+//                  function is used by the TCP dispatcher to route incoming segments to the
+//                  correct socket based on the full 4‑tuple (LocalIP, LocalPort, RemoteIP,
+//                  RemotePort).
+//
+//                  Only sockets of type SOCKET_TYPE_STREAM are considered. Sockets that are
+//                  inactive, uninitialized, or whose protocol storage is missing are skipped.
+//
+//-------------------------------------------------------------------------------------------------
+#if (IP_USE_TCP == DEF_ENABLED)
+Socket* SocketManager::FindTCP_Connection(uint32_t LocalIP, IP_Port_t LocalPort, uint32_t RemoteIP, IP_Port_t RemotePort)
+{
+    for(uint8_t i = 0; i < m_ActiveCount; i++)
+    {
+        Socket* pSocket = m_ActiveSockets[i];
+
+        // Must be a TCP socket
         if(pSocket->m_Type != SOCKET_TYPE_STREAM)
         {
             continue;
@@ -177,26 +371,52 @@ Socket* SocketManager::FindTCP_Connection(uint32_t LocalIP, IP_Port_t LocalPort,
 
         TCP_Socket_t* pTCP = pSocket->GetTCP();
 
+        // Protocol storage must exist
         if(pTCP == nullptr)
         {
             continue;
         }
 
-        if((pTCP->LocalIP   == LocalIP)   &&
-           (pTCP->LocalPort == LocalPort) &&
-           (pTCP->RemoteIP  == RemoteIP)  &&
-           (pTCP->RemotePort== RemotePort))
+        // Match full 4‑tuple
+        if((pTCP->LocalIP    == LocalIP)   &&
+           (pTCP->LocalPort  == LocalPort) &&
+           (pTCP->RemoteIP   == RemoteIP)  &&
+           (pTCP->RemotePort == RemotePort))
         {
             return pSocket;
         }
     }
-  #endif
-
     return nullptr;
 }
-//-------------------------------------------------------------------------------------------------
+#endif
 
-Socket::Socket(NetworkContext& Context, IP_Manager& Manager) : m_Context(Context),  m_Manager(Manager)
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Socket (Constructor)
+//
+//  Parameter(s):   NetworkContext& Context
+//                      Reference to the global network context.
+//                  IP_Manager&     Manager
+//                      Reference to the IP manager responsible for packet allocation,
+//                      routing, and message destruction.
+//
+//  Return:         None
+//
+//  Description:    Initializes a newly allocated socket object with default state. This
+//                  constructor sets only socket-level fields; protocol-specific storage
+//                  (UDP_Socket_t, TCP_Socket_t, RAW_Socket_t) is allocated later by
+//                  Socket::Create() based on the requested socket type.
+//
+//                  The unified RX queue is also created in Socket::Create(), not here,
+//                  because queue depth and buffer ownership depend on the protocol type.
+//
+//  Notes:          - The socket begins in a CLOSED state and is marked active so that
+//                    the dispatcher may deliver packets after Create() completes.
+//                  - All protocol pointers are initialized to nullptr.
+//                  - No memory allocation occurs here.
+//
+//-------------------------------------------------------------------------------------------------
+Socket::Socket(NetworkContext& Context, IP_Manager& Manager) : m_Context(Context), m_Manager(Manager)
 {
     m_Type        = SOCKET_TYPE_INVALID;
     m_State       = SOCKET_STATE_CLOSED;
@@ -217,8 +437,13 @@ Socket::Socket(NetworkContext& Context, IP_Manager& Manager) : m_Context(Context
   #if (IP_USE_UDP == DEF_ENABLED)
     m_Protocol.pUDP = nullptr;
   #endif
+
   #if (IP_USE_TCP == DEF_ENABLED)
     m_Protocol.pTCP = nullptr;
+  #endif
+
+  #if (IP_USE_RAW == DEF_ENABLED)
+    m_Protocol.pRAW = nullptr;
   #endif
 }
 
@@ -226,59 +451,52 @@ Socket::Socket(NetworkContext& Context, IP_Manager& Manager) : m_Context(Context
 //
 //  Name:           Create
 //
-//  Parameter(s):   SocketType_e    Type    Socket type to initialize (UDP, TCP, etc.).
+//  Parameter(s):   SocketType_e    Type    Socket type to initialize (UDP, TCP, RAW).
 //
 //  Return:         None
 //
-//  Description:    Initializes the socket according to the specified protocol type. The socket
-//                  memory is assumed to have been cleared prior to this call (via AllocSocket).
-//                  For UDP sockets, the function sets default local addressing, initializes the
-//                  receive queue, and prepares protocol-specific state. For TCP sockets, the
-//                  function initializes the TCP control block and any required state machines.
-//                  After initialization, the socket is in a valid, ready-to-use state.
+//  Description:    Initializes the socket according to the specified protocol type. Protocol
+//                  storage is dynamically allocated and stored in the SocketProtocol_t union.
+//                  The socket-level RX queue is initialized once and shared by all protocols.
+//                  After initialization, the socket is ready for Bind(), Connect(), Send(),
+//                  Recv().
 //
 //-------------------------------------------------------------------------------------------------
 void Socket::Create(SocketType_e Type)
 {
-    m_Type         = Type;
-    m_State        = SOCKET_STATE_CLOSED;
+    m_Type  = Type;
+    m_State = SOCKET_STATE_CLOSED;
 
-    // Reset local/remote endpoint info
+    // Reset endpoint info
     m_LocalInfo.Address  = m_Context.GetActiveIP();
     m_LocalInfo.Port     = 0;
     m_RemoteInfo.Address = 0;
     m_RemoteInfo.Port    = 0;
 
-    // Clear protocol pointers
+    // Clear protocol pointer
+    m_Protocol.pPtr = nullptr;
 
-  #if (IP_USE_UDP == DEF_ENABLED)
-    m_Protocol.pUDP = nullptr;
-    memset(&m_UDP_Storage, 0, sizeof(m_UDP_Storage));
-  #endif
-
-  #if (IP_USE_TCP == DEF_ENABLED)
-    m_Protocol.pTCP = nullptr;
-    memset(&m_TCP_Storage, 0, sizeof(m_TCP_Storage));
-  #endif
-
-  #if (IP_USE_RAW == DEF_ENABLED)
-    m_Protocol.pRAW = nullptr;
-    memset(&m_RAW_Storage, 0, sizeof(m_RAW_Storage));
-  #endif
-
+    // Initialize unified RX queue (shared by all protocols)
+    nOS_QueueCreate(&m_RX_Queue, m_RX_QueueBuffer, sizeof(IP_PacketMsg_t*), SOCKET_RX_QUEUE_DEPTH);
 
     switch(Type)
     {
       #if (IP_USE_UDP == DEF_ENABLED)
         case SOCKET_TYPE_DATAGRAM:
         {
-            m_Protocol.pUDP = &m_UDP_Storage;
+            // Allocate and zero UDP protocol storage
+            m_Protocol.pUDP = (UDP_Socket_t*)pMemoryPool->AllocAndSet(sizeof(UDP_Socket_t), 0, MEM_DBG_SOCKET);
+
+            if(m_Protocol.pUDP == nullptr)
+            {
+                m_State = SOCKET_STATE_ERROR;
+                return;
+            }
 
             UDP_Socket_t* pUDP = m_Protocol.pUDP;
-            pUDP->LocalPort = 0;
-            pUDP->LocalIP   = m_Context.GetActiveIP();
-            pUDP->Flags     = 0;
-            nOS_QueueCreate(&pUDP->RX_Queue, pUDP->RX_QueueBuffer, sizeof(IP_PacketMsg_t*), UDP_RX_QUEUE_DEPTH);
+
+            // This the only non-zero initialization
+            pUDP->LocalIP = m_Context.GetActiveIP();
         }
         break;
       #endif
@@ -286,16 +504,22 @@ void Socket::Create(SocketType_e Type)
       #if (IP_USE_TCP == DEF_ENABLED)
         case SOCKET_TYPE_STREAM:
         {
-            m_Protocol.pTCP    = &m_TCP_Storage;
+            // Allocate and zero TCP protocol storage
+            m_Protocol.pTCP = (TCP_Socket_t*)pMemoryPool->->AllocAndSet(sizeof(TCP_Socket_t), 0, MEM_DBG_SOCKET);
+
+            if(m_Protocol.pTCP == nullptr)
+            {
+                m_State = SOCKET_STATE_ERROR;
+                return;
+            }
+
             TCP_Socket_t* pTCP = m_Protocol.pTCP;
 
-            // Minimal TCP initialization
-            pTCP->State        = TCP_STATE_CLOSED;
-            pTCP->RxQueueCount = 0;
-            pTCP->TxQueueCount = 0;
-            pTCP->Flags        = 0;
-
-            // (Full TCP state machine, seq numbers, windows, etc. will be added later)
+            // Only non-zero initialization
+            pTCP->State      = TCP_STATE_CLOSED;
+            pTCP->Mss        = TCP_DEFAULT_MSS;
+            pTCP->WindowSize = TCP_DEFAULT_WINDOW_SIZE;
+            pTCP->pSocket    = this;
         }
         break;
       #endif
@@ -303,10 +527,14 @@ void Socket::Create(SocketType_e Type)
       #if (IP_USE_RAW == DEF_ENABLED)
         case SOCKET_TYPE_RAW:
         {
-            m_Protocol.pRAW = &m_RAW_Storage;
-            m_RAW_Storage.Protocol = 0;     // user must set
-            m_RAW_Storage.LocalIP  = 0;     // accept any
-            m_RAW_Storage.RemoteIP = 0;     // accept any
+            // Allocate and zero RAW protocol storage
+            m_Protocol.pRAW = (RAW_Socket_t*)m_Context.GetMemoryPool()->AllocAndSet(sizeof(RAW_Socket_t), 0, MEM_DBG_SOCKET);
+
+            if(m_Protocol.pRAW == nullptr)
+            {
+                m_State = SOCKET_STATE_ERROR;
+                return;
+            }
         }
         break;
       #endif
@@ -314,7 +542,7 @@ void Socket::Create(SocketType_e Type)
         default:
         {
             m_State = SOCKET_STATE_ERROR;
-            m_Type  = SOCKET_TYPE_INVALID;   // Add this enum value
+            m_Type  = SOCKET_TYPE_INVALID;
         }
         break;
     }
@@ -327,9 +555,9 @@ void Socket::Create(SocketType_e Type)
 //  Parameter(s):   IP_Port_t   Port    Local UDP port to bind. If zero, an ephemeral port will be
 //                                      automatically selected from the configured ephemeral range.
 //
-//  Return:         SystemState_e       SYS_READY            – Port successfully bound.
-//                                      SYS_FAIL_PORT_IN_USE – Requested port already in use.
-//                                      SYS_INVALID_STATE    – Called on a non-UDP socket.
+//  Return:         SystemState_e       SYS_READY            - Port successfully bound.
+//                                      SYS_FAIL_PORT_IN_USE - Requested port already in use.
+//                                      SYS_INVALID_STATE    - Called on a non-UDP socket.
 //
 //  Description:    Associates the UDP socket with a local port. If Port is non-zero, the
 //                  function attempts to reserve that port via the UDP binding registry. If
@@ -350,7 +578,7 @@ SystemState_e Socket::Bind(IP_Port_t Port)
 
     if(Port == 0)
     {
-        ActualPort = m_Manager.UDP_AllocateEphemeralPort();
+        ActualPort = m_Manager.UDP_AllocateEphemeralPort();     // Allocate ephemeral port if needed
 
         if(ActualPort == 0)
         {
@@ -364,6 +592,7 @@ SystemState_e Socket::Bind(IP_Port_t Port)
     }
 
     pUDP->LocalPort = ActualPort;                               // Store port locally
+    m_IsBound = true;
     return SYS_READY;
 }
 
@@ -375,12 +604,12 @@ SystemState_e Socket::Bind(IP_Port_t Port)
 //                                          may be queued before Accept() is called. Ignored for
 //                                          UDP sockets.
 //
-//  Return:         SystemState_e   SYS_READY         – Socket successfully placed in listening
+//  Return:         SystemState_e   SYS_READY         - Socket successfully placed in listening
 //                                                      state.
-//                                  SYS_INVALID_STATE – Socket type does not support Listen() or
+//                                  SYS_INVALID_STATE - Socket type does not support Listen() or
 //                                                      socket is not bound to a local port.
-//                                  SYS_INVALID_PARAM – Backlog value is zero.
-//                                  SYS_FAIL          – TCP layer failed to enter passive-open
+//                                  SYS_INVALID_PARAM - Backlog value is zero.
+//                                  SYS_FAIL          - TCP layer failed to enter passive-open
 //                                                      state.
 //
 //  Description:    Places the socket into a passive listening state. This function is only
@@ -423,11 +652,11 @@ SystemState_e Socket::Listen(uint16_t Backlog)
 //  Parameter(s):   SocketInfo_t*   pDestInfo     Remote endpoint information
 //                                                (IP address, port, and optional MAC address).
 //
-//  Return:         SystemState_e   SYS_READY         – Connection established or remote endpoint
+//  Return:         SystemState_e   SYS_READY         - Connection established or remote endpoint
 //                                                       stored.
-//                                  SYS_INVALID_STATE – Socket type does not support Connect().
-//                                  SYS_INVALID_PARAM – Null pointer or invalid destination port.
-//                                  SYS_FAIL          – TCP handshake failed (for stream sockets).
+//                                  SYS_INVALID_STATE - Socket type does not support Connect().
+//                                  SYS_INVALID_PARAM - Null pointer or invalid destination port.
+//                                  SYS_FAIL          - TCP handshake failed (for stream sockets).
 //
 //  Description:    Establishes a connection to a remote endpoint. For UDP sockets, this call
 //                  does not perform any network exchange; it simply stores the destination
@@ -493,13 +722,13 @@ SystemState_e Socket::Accept(Socket** ppNewSocket)
 //                  size_t      Length      Number of payload bytes to send.
 //                  size_t*     pBytesSent  Output: number of payload bytes successfully queued for
 //
-//  Return:         SystemState_e           SYS_READY         – Packet successfully queued.
-//                                          SYS_INVALID_STATE – Socket not connected or not a UDP
+//  Return:         SystemState_e           SYS_READY         - Packet successfully queued.
+//                                          SYS_INVALID_STATE - Socket not connected or not a UDP
 //                                                              socket.
-//                                          SYS_FAIL          – Lower layer rejected the packet.
+//                                          SYS_FAIL          - Lower layer rejected the packet.
 //
 //  Description:    Sends a UDP datagram using the socket’s preconfigured remote endpoint.
-//                  This function requires the socket to be “connected” via Connect(), which
+//                  This function requires the socket to be "connected" via Connect(), which
 //                  stores the destination address and port in m_RemoteInfo. The function
 //                  delegates the actual transmission to SendTo(), preserving the zero-copy
 //                  architecture.
@@ -534,9 +763,9 @@ SystemState_e Socket::Send(uint8_t* pData, size_t Length, size_t* pBytesSent)
 //                  size_t*         pBytesSent  Output: number of payload bytes successfully queued
 //                                              for transmission.
 //
-//  Return:         SystemState_e   SYS_READY   – Packet successfully queued for transmission.
-//                                  SYS_FAIL    – Interface TX callback rejected the packet.
-//                                  SYS_INVALID_STATE – Called on a non-UDP socket.
+//  Return:         SystemState_e   SYS_READY   - Packet successfully queued for transmission.
+//                                  SYS_FAIL    - Interface TX callback rejected the packet.
+//                                  SYS_INVALID_STATE - Called on a non-UDP socket.
 //
 //  Description:    Sends a UDP datagram to the specified destination. The function validates
 //                  the socket type, retrieves the associated UDP socket context, and delegates
@@ -567,9 +796,9 @@ SystemState_e Socket::SendTo(uint8_t* pData, size_t Length, SocketInfo_t* pDestI
 //                      IP_Manager::FreeMessage() once processing is complete.
 //
 //  Return:         SystemState_e
-//                      SYS_READY         – A TCP segment was dequeued and delivered.
-//                      SYS_TIMEOUT       – No segment available within the configured timeout.
-//                      SYS_INVALID_STATE – Called on a non-TCP socket.
+//                      SYS_READY         - A TCP segment was dequeued and delivered.
+//                      SYS_TIMEOUT       - No segment available within the configured timeout.
+//                      SYS_INVALID_STATE - Called on a non-TCP socket.
 //
 //  Description:    Retrieves the next TCP segment from the socket’s RX queue and returns the
 //                  complete IP_PacketMsg_t structure without copying any payload data. The caller
@@ -612,9 +841,9 @@ SystemState_e Socket::Recv(IP_PacketMsg_t** ppMsg)
 //                                              pBuffer.
 //
 //  Return:         SystemState_e
-//                      SYS_READY         – A TCP segment was received and delivered.
-//                      SYS_TIMEOUT       – No segment available within the configured timeout.
-//                      SYS_INVALID_STATE – Called on a non-TCP socket.
+//                      SYS_READY         - A TCP segment was received and delivered.
+//                      SYS_TIMEOUT       - No segment available within the configured timeout.
+//                      SYS_INVALID_STATE - Called on a non-TCP socket.
 //
 //  Description:    Retrieves the next TCP segment from the socket’s RX queue and copies its
 //                  payload into the user-provided buffer. The function parses the IP and TCP
@@ -667,25 +896,19 @@ SystemState_e Socket::Recv(uint8_t* pBuffer, size_t BufferSize, size_t* pBytesRe
 //
 //  Name:           RecvFrom
 //
-//  Parameter(s):   IP_PacketMsg_t** ppMessage
+//  Parameter(s):   IP_PacketMsg_t** ppMsg
 //                      Output: pointer to the received packet message. The caller obtains full
 //                      ownership of the message, including headers, payload pointer, and payload
 //                      size. The caller is responsible for freeing the message via
 //                      IP_Manager::FreeMessage() when processing is complete.
 //
 //  Return:         SystemState_e
-//                      SYS_READY         – A packet was dequeued and delivered to the caller.
-//                      SYS_TIMEOUT       – No packet available within the configured timeout.
-//                      SYS_INVALID_STATE – Called on a non-UDP socket.
+//                      SYS_READY         - A packet was dequeued and delivered to the caller.
+//                      SYS_TIMEOUT       - No packet available within the configured timeout.
+//                      SYS_INVALID_STATE - Called on a non-UDP socket.
 //
-//  Description:    Retrieves the next UDP datagram from the socket’s RX queue. Unlike the
-//                  traditional buffered model, this function does not copy payload data into a
-//                  user buffer. Instead, it returns the full IP_PacketMsg_t structure, which
-//                  contains direct pointers to the UDP payload and its size.
-//
-//  Note(s)         This design follows the zero-copy principle: the UDP payload is never copied.
-//                  The caller parses the packet directly from the underlying network buffer and
-//                  must explicitly free the message once finished.
+//  Description:    Retrieves the next UDP datagram from the socket’s unified RX queue.
+//                  Zero-copy: the caller receives the full IP_PacketMsg_t* and must free it.
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e Socket::RecvFrom(IP_PacketMsg_t** ppMsg)
@@ -695,45 +918,35 @@ SystemState_e Socket::RecvFrom(IP_PacketMsg_t** ppMsg)
         return SYS_INVALID_STATE;
     }
 
-    UDP_Socket_t* pUDP_Socket = m_Protocol.pUDP;
-    nOS_TickCounter Timeout   = m_IsBlocking ? m_TimeoutMs : 0;
+    nOS_TickCounter Timeout = m_IsBlocking ? m_TimeoutMs : 0;
 
-    // Read next message from UDP RX queue (returns pointer to message)
-    if(nOS_QueueRead(&pUDP_Socket->RX_Queue, ppMsg, Timeout) != NOS_OK)
+    if(nOS_QueueRead(&m_RX_Queue, ppMsg, Timeout) != NOS_OK)     // Read next message from the socket-level RX queue
     {
         return SYS_TIME_OUT;
     }
 
-    // Caller now owns the message and must free it
-    return SYS_READY;
+    return SYS_READY;                                           // Caller now owns the message
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           RecvFrom   (Buffered Variant)
 //
-//  Parameter(s):   uint8_t*        pBuffer         Pointer to the user buffer where the received
-//                                                  UDP payload will be copied.
-//                  size_t          BufferSize      Size of the user buffer in bytes.
-//                  SocketInfo_t*   pSrcInfo        Optional output: source IP address, UDP port,
-//                                                  and MAC address.
-//                  size_t*         pBytesReceived  Output: number of payload bytes copied into
-//                                                  pBuffer.
+//  Parameter(s):   uint8_t*        pBuffer        Pointer to the user buffer where the received
+//                                                 UDP payload will be copied.
+//                  size_t          BufferSize     Size of the user buffer in bytes.
+//                  SocketInfo_t*   pSrcInfo       Optional output: source IP address and UDP port.
+//                  size_t*         pBytesReceived Output: number of payload bytes copied.
 //
 //  Return:         SystemState_e
-//                      SYS_READY         – A UDP datagram was received and delivered.
-//                      SYS_TIMEOUT       – No datagram available within the configured timeout.
-//                      SYS_INVALID_STATE – Called on a non-UDP socket.
+//                      SYS_READY         - A UDP datagram was received and delivered.
+//                      SYS_TIMEOUT       - No datagram available within the configured timeout.
+//                      SYS_INVALID_STATE - Called on a non-UDP socket.
 //
-//  Description:    Retrieves the next UDP datagram from the socket’s RX queue, extracts the IP
-//                  and UDP headers, determines the payload length, and copies the payload into
-//                  the caller-provided buffer (clipped to BufferSize). The function optionally
-//                  returns the sender’s addressing information and frees the underlying packet
-//                  buffers once processing is complete.
-//
-//  Notes(s):       This is the traditional buffered receive method. A separate zero-copy
-//                  RecvFrom() variant is available for callers that require direct access to the
-//                  packet memory without performing a memcpy.
+//  Description:    Retrieves the next UDP datagram from the socket’s unified RX queue, extracts
+//                  the IP and UDP headers, determines the payload length, and copies the payload
+//                  into the caller-provided buffer (clipped to BufferSize). The caller must free
+//                  the underlying packet message after processing.
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t* pSrcInfo, size_t* pBytesReceived)
@@ -743,26 +956,24 @@ SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t
         return SYS_INVALID_STATE;
     }
 
-    UDP_Socket_t*   pUDP_Socket = m_Protocol.pUDP;
-    IP_PacketMsg_t* pMsg        = nullptr;
-    nOS_TickCounter Timeout     = m_IsBlocking ? m_TimeoutMs : 0;               // Blocking or non-blocking timeout
+    IP_PacketMsg_t* pMsg = nullptr;
+    nOS_TickCounter Timeout = m_IsBlocking ? m_TimeoutMs : 0;
 
-    if(nOS_QueueRead(&pUDP_Socket->RX_Queue, &pMsg, Timeout) != NOS_OK)         // Read next message from UDP RX queue
+    if(nOS_QueueRead(&m_RX_Queue, &pMsg, Timeout) != NOS_OK)             // Read next message from the unified socket RX queue
     {
         return SYS_TIME_OUT;
     }
 
-    // Use what UDP_Protocol::Process already validated
-    size_t PayloadLength = pMsg->PayloadSize;
+    size_t PayloadLength = pMsg->PayloadSize;                           // Extract payload length (already validated by UDP layer)
 
     if(PayloadLength > BufferSize)
     {
         PayloadLength = BufferSize;
     }
 
-    memcpy(pBuffer, pMsg->Payload, PayloadLength);
+    memcpy(pBuffer, pMsg->Payload, PayloadLength);                      // Copy payload into user buffer
 
-    if(pSrcInfo != nullptr)
+    if(pSrcInfo != nullptr)                                             // Optional: return source IP + port
     {
         IP_Header_t*  pIP  = &pMsg->pPacket->UDP_Frame.IP_Header;
         UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
@@ -771,7 +982,7 @@ SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t
         pSrcInfo->Port    = ntohs(pUDP->SrcPort);
     }
 
-    IP_Manager::FreeMessage(pMsg);
+    IP_Manager::FreeMessage(pMsg);                                      // Caller now owns the message -> free it
     *pBytesReceived = PayloadLength;
     return SYS_READY;
 }
@@ -784,31 +995,30 @@ SystemState_e Socket::RecvFrom(uint8_t* pBuffer, size_t BufferSize, SocketInfo_t
 //  Return:         None
 //
 //  Description:    Closes the socket and releases all associated resources. For UDP sockets,
-//                  the function unregisters the bound port (if any) and flushes the RX queue,
-//                  freeing all pending packet buffers. For TCP sockets, the function performs
-//                  protocol-specific teardown and clears any queued segments. After cleanup,
-//                  the socket is left in an inert state and may be returned to the socket
-//                  manager for reuse.
+//                  the function unregisters the bound port (if any). For TCP sockets, the TCP
+//                  manager performs protocol-specific tear-down. All pending RX messages in the
+//                  unified socket RX queue are freed. Protocol storage is dynamically freed.
+//                  After cleanup, the socket is inert and ready for reuse.
 //
 //-------------------------------------------------------------------------------------------------
 void Socket::Close(void)
 {
     m_Active = false;
 
+    FreeAllMessages(&m_RX_Queue);                                        // Flush all pending RX messages (shared queue for all protocols)
+
     switch(m_Type)
     {
       #if (IP_USE_UDP == DEF_ENABLED)
         case SOCKET_TYPE_DATAGRAM:
         {
-            UDP_Socket_t* pUDP_Socket = m_Protocol.pUDP;
+            UDP_Socket_t* pUDP = m_Protocol.pUDP;
 
-            if(pUDP_Socket->LocalPort != 0)                             // Unbind port if bound
+            // Unregister bound port
+            if((pUDP != nullptr) && (pUDP->LocalPort != 0))
             {
-                m_Manager.UDP_UnregisterSocket(pUDP_Socket->LocalPort);
-                pUDP_Socket->LocalPort = 0;
+                m_Manager.UDP_UnregisterSocket(pUDP->LocalPort);
             }
-
-            FreeAllMessages(&pUDP_Socket->RX_Queue);                    // Flush RX queue
         }
         break;
       #endif
@@ -816,14 +1026,7 @@ void Socket::Close(void)
       #if (IP_USE_TCP == DEF_ENABLED)
         case SOCKET_TYPE_STREAM:
         {
-            TCP_Socket_t* pTCP_Socket = m_Protocol.pTCP;
-            m_Manager.TCP_Close(this);                                  // Let TCP manager handle teardown
-
-            // TCP cleanup (state machine, queues, etc.)
-            FreeAllMessages(&pTCP_Socket->RX_Queue);                    // Flush RX queue
-
-            // Additional TCP teardown if needed
-            // (state machine, retransmission buffers, etc.)
+            m_Manager.TCP_Close(this);                                  // Let TCP manager handle tear-down (FIN, RST, etc.)
         }
         break;
       #endif
@@ -833,21 +1036,20 @@ void Socket::Close(void)
         {
             RAW_Socket_t* pRAW = m_Protocol.pRAW;
 
-            if(pRAW->Protocol != 0)
+            if((pRAW != nullptr) && (pRAW->Protocol != 0))              // Unregister protocol filter if set
             {
                 m_Manager.RAW_UnregisterSocket(pRAW->Protocol);
-                pRAW->Protocol = 0;
             }
-
-            FreeAllMessages(&pRAW->RX_Queue);
         }
         break;
       #endif
 
-        default: break;
+        default:
+            break;
     }
 
-    m_Type = SOCKET_TYPE_NONE;                              // Reset type so the allocator knows it's clean
+    FreeProtocolData();                                                 // Free protocol-specific storage
+    m_Type = SOCKET_TYPE_NONE;                                          // Reset type so allocator knows this socket is free
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -859,28 +1061,64 @@ void Socket::Close(void)
 //  Return:         void
 //
 //  Description:    Empties the specified message queue and releases every message it contains.
-//                  Each dequeued message is passed to IP_Manager::FreeMessage(), the static
-//                  destruction routine responsible for freeing both the packet buffer and the
-//                  message wrapper. This ensures that all message cleanup follows the same
-//                  zero-copy-safe logic, regardless of which subsystem generated the message.
-//
-//  Note(s):        - Uses non-blocking queue reads to drain the queue completely.
-//                  - Safe to call when the queue is already empty.
-//                  - Intended for socket shutdown, error recovery, and cleanup paths.
-//                  - Delegates all actual freeing logic to the centralized static FreeMessage().
+//                  Each dequeued message is passed to IP_Manager::FreeMessage(), which frees
+//                  both the packet buffer and the message wrapper.
 //
 //-------------------------------------------------------------------------------------------------
 void Socket::FreeAllMessages(nOS_Queue* pQueue)
 {
     IP_PacketMsg_t* pMsg = nullptr;
 
-    while(nOS_QueueIsEmpty(pQueue) == false)                    // Drain the queue and free all pending messages
+    // Drain queue completely (non-blocking)
+    while(nOS_QueueRead(pQueue, &pMsg, 0) == NOS_OK)
     {
-        if(nOS_QueueRead(pQueue, &pMsg, 0) == NOS_OK)           // Read next pointer from the queue (non-blocking)
-        {
-            IP_Manager::FreeMessage(pMsg);
-        }
+        IP_Manager::FreeMessage(pMsg);
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           FreeProtocolData
+//
+//  Parameter(s):   None
+//
+//  Return:         void
+//
+//  Description:    Releases any dynamically allocated protocol-specific storage associated with
+//                  this socket (UDP_Socket_t, TCP_Socket_t, RAW_Socket_t). This function does
+//                  not modify the socket type or state; it only frees protocol-level structures
+//                  that were allocated by Socket::Create().
+//
+//  Notes:          - Safe to call multiple times; null checks prevent double-free.
+//                  - The socket object itself is not freed here.
+//                  - The caller is responsible for updating m_Type as needed.
+//
+//-------------------------------------------------------------------------------------------------
+void Socket::FreeProtocolData(void)
+{
+  #if (IP_USE_UDP == DEF_ENABLED)
+    if(m_Protocol.pUDP != nullptr)
+    {
+        pMemoryPool->Free((void**)&m_Protocol.pUDP);
+        m_Protocol.pUDP = nullptr;
+    }
+  #endif
+
+  #if (IP_USE_TCP == DEF_ENABLED)
+    if(m_Protocol.pTCP != nullptr)
+    {
+        pMemoryPool->Free((void**)&m_Protocol.pTCP);
+        m_Protocol.pTCP = nullptr;
+    }
+  #endif
+
+  #if (IP_USE_RAW == DEF_ENABLED)
+    if(m_Protocol.pRAW != nullptr)
+    {
+        pMemoryPool->Free((void**)&m_Protocol.pRAW);
+        m_Protocol.pRAW = nullptr;
+    }
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -889,18 +1127,13 @@ void Socket::FreeAllMessages(nOS_Queue* pQueue)
 //
 //  Parameter(s):   None
 //
-//  Return:         bool    true    – One or more received messages are queued for this socket.
-//                          false   – No data is currently available.
+//  Return:         bool
+//                      true  - One or more received messages are queued for this socket.
+//                      false - No data is currently available.
 //
-//  Description:    Indicates whether the socket has pending received data. This function
-//                  performs a non-blocking check of the socket’s internal RX queue, which is
-//                  populated asynchronously by the UDP or TCP dispatcher when incoming
-//                  packets are delivered to the socket.
-//
-//                  For UDP sockets, each queued message corresponds to a complete datagram.
-//                  For TCP sockets, queued segments represent available stream data. This
-//                  function does not remove or inspect the data; it only reports whether any
-//                  data is waiting to be read via Recv() or RecvFrom().
+//  Description:    Indicates whether the socket has pending received data. This function performs
+//                  a non-blocking check of the socket’s unified RX queue, which is populated by
+//                  the UDP, TCP, or RAW dispatcher depending on the socket type.
 //
 //-------------------------------------------------------------------------------------------------
 bool Socket::HasData(void)
@@ -910,21 +1143,7 @@ bool Socket::HasData(void)
         return false;
     }
 
-  #if (IP_USE_UDP == DEF_ENABLED)
-    if(m_Type == SOCKET_TYPE_DATAGRAM)
-    {
-        return (nOS_QueueIsEmpty(&m_Protocol.pUDP->RX_Queue) == false) ? true : false;
-    }
-  #endif
-
-  #if (IP_USE_TCP == DEF_ENABLED)
-    if(m_Type == SOCKET_TYPE_STREAM)
-    {
-        return (nOS_QueueIsEmpty(&m_Protocol.pTCP->RX_Queue) == false) ? true : false;
-    }
-  #endif
-
-    return false;
+    return (nOS_QueueIsEmpty(&m_RX_Queue) == false);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -986,7 +1205,23 @@ void Socket::GetRemoteInfo(SocketInfo_t* pInfo)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           SetOption
+//
+//  Parameter(s):   SocketOption_e  Option      Socket option to configure.
+//                  void*           pValue      Pointer to the option value.
+//                  size_t          ValueSize   Size of the option value in bytes.
+//
+//  Return:         SystemState_e
+//                      SYS_READY             – Option successfully applied.
+//                      SYS_INVALID_PARAMETER – Invalid option or incorrect value size.
+//
+//  Description:    Configures socket-level options such as blocking mode or broadcast
+//                  permissions. The function validates the option identifier and the size
+//                  of the provided value before applying it. Only socket-level behavior is
+//                  affected; protocol-specific options are handled elsewhere.
+//
+//-------------------------------------------------------------------------------------------------
 SystemState_e Socket::SetOption(SocketOption_e Option, void* pValue, size_t ValueSize)
 {
     if(pValue == nullptr)

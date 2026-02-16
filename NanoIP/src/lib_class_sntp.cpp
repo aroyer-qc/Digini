@@ -77,7 +77,6 @@
 #define SNTP_PORT                       123
 #define SNTP_LI_VN_MODE                 0x23                        // Leap Indicator - 2 bits: 00 (No warning, current value), Version - 4 bits: 100, Mode Client - 3 bits: 011,
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
@@ -140,9 +139,8 @@ bool SNTP_Client::Initialize(NetworkContext* pContext)
 //
 //  Parameter(s):   const IP_Address_t  ServerIP         IPv4 address of the NTP server.
 //
-//  Return:         bool
-//                      - true  : SNTP request started successfully.
-//                      - false : Socket not ready or send failed.
+//  Return:         bool        - true  : SNTP request started successfully.
+//                              - false : Socket not ready or send failed.
 //
 //  Description:    Starts a complete SNTP transaction by building and sending the request
 //                  packet to the specified server, then arming the internal timeout and

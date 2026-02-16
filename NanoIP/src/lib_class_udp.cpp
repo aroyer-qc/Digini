@@ -152,10 +152,8 @@ void UDP_Protocol::Process(IP_PacketMsg_t* pMsg)
         return;
     }
 
-    UDP_Socket_t* pUDP_Sock = pSock->GetUDP();
-
     // Enqueue packet for this socket
-    if(nOS_QueueWrite(&pUDP_Sock->RX_Queue, &pMsg, 0) != NOS_OK)
+    if(pSock->EnqueueMessage(pMsg) == false)
     {
         IP_Manager::FreeMessage(pMsg);                              // Queue full -> drop
         return;

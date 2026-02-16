@@ -172,6 +172,8 @@
 #include "./NanoIP/inc/lib_class_arp.h"
 #include "./NanoIP/inc/lib_class_udp.h"
 #include "./NanoIP/inc/lib_class_dhcp.h"
+#include "./NanoIP/inc/lib_class_tcp_client.h"
+//#include "./NanoIP/inc/lib_class_tcp_server.h"
 #include "./NanoIP/inc/lib_class_dns.h"
 #include "./NanoIP/inc/lib_class_icmp.h"
 #include "./NanoIP/inc/lib_class_sntp.h"

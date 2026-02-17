@@ -28,9 +28,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define LIB_IP_MANAGER_GLOBAL
 #include "./lib_digini.h"
-#define LIB_IP_MANAGER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -41,21 +39,6 @@
 //-------------------------------------------------------------------------------------------------
 
 #define IP_ASCII_ADDRESS_SIZE               16
-
-//-------------------------------------------------------------------------------------------------
-// Stack(s)
-//-------------------------------------------------------------------------------------------------
-
-IF_ETH_DEF(EXPAND_X_IF_AS_STACK_DECLARATION)
-
-//-------------------------------------------------------------------------------------------------
-// Const(s)
-//-------------------------------------------------------------------------------------------------
-
-const IP_Config_t IP_Manager::m_Config[IP_NUMBER_OF_INTERFACE] =
-{
-    IF_ETH_DEF(EXPAND_X_IF_AS_STRUCT_DATA)
-};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -78,69 +61,28 @@ extern "C" void TaskIP_Manager_Wrapper(void* pvParameters)
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   IF_ID_e      IF_ID      ID of the IF interface configuration data
+//  Parameter(s):   NetworkContext* pContext
 //  Return:         void
 //
-//  Description:    Initialize IP Task and stack
+//  Description:    Initialize IP Task
 //
 //-------------------------------------------------------------------------------------------------
-void IP_Manager::Initialize(IF_ID_e IF_ID)
+void IP_Manager::Initialize(NetworkContext* pContext)
 {
     nOS_Error Error;
 
-    m_Context.SetIP_Manager(this);
-    m_SocketManager.Initialize(&m_Context);                                             // Initialize socket manager
+    m_pContext   = pContext;
+    m_SequenceID = RNG_GetRandom();
 
-  #if (IP_USE_DHCP == DEF_ENABLED)
-    m_Context.SetDHCP_Enable(true);
-  #endif
-
-    // Initialize Variables
-    //m_DNS_IP_Found = false;  not used so far
-    m_Context.InitializeMsgQ();                                                         // this need to handle error
-    m_Context.SetMAC_Address(&m_Config[IF_ID].IP_ETH_Config.MAC_Address);
-    m_Context.SetHostName(m_Config[IF_ID].pHostName);
-    m_Context.SetMTU(IP_NET_IF_MTU);                                                    // Set netif maximum transfer unit
-    m_Context.SetStaticIP(m_Config[IF_ID].DefaultStatic_IP);
-    m_Context.SetStaticGatewayIP(m_Config[IF_ID].DefaultGateway);
-    m_Context.SetStaticSubnetMask(m_Config[IF_ID].DefaultSubnetMask);
-    m_Context.SetStaticDNS_IP(m_Config[IF_ID].DefaultStaticDNS);
-    m_Context.SetIP_Valid((m_Config[IF_ID].DefaultStatic_IP == IP_ADDRESS(255,255,255,255)) ? false : true);
-    m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config, &m_Context);
-    m_Context.RegisterSendCallback(&m_IF_Driver.LowLevelOutputWrapper, &m_IF_Driver);
-
-    // All protocol support are created dynamically if interface is set to use it, and if configuration is enable for that protocol
-
-  #if (IP_USE_UDP == DEF_ENABLED)
-    m_UDP.Initialize(&m_Context);
-  #endif
-
-  #if (IP_USE_DHCP == DEF_ENABLED)
-    m_DHCP.Initialize(&m_Context);
-  #endif
-
-    m_ARP.Initialize(&m_Context);
-
-  #if (IP_USE_DNS == DEF_ENABLED)
-    m_DNS.Initialize(&m_Context);
-  #endif
-
-  #if (IP_USE_ICMP == DEF_ENABLED)
-    m_ICMP.Initialize(&m_Context);
-  #endif
-
-  #if (IP_USE_TCP == DEF_ENABLED)
-    m_TCP.Initialize(&m_Context);
-  #endif
-
+//todo need to fix the stack
    #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-    myStacktistic.Register(m_Config[IF_ID].pStack, TASK_IP_MANAGER_STACK_SIZE, m_Config[IF_ID].pHostName);
+    myStacktistic.Register(pContext->GetIP_Stack(), TASK_IP_MANAGER_STACK_SIZE, pContext->GetHostName());
   #endif
 
     Error = nOS_ThreadCreate(&m_Handle,
                              TaskIP_Manager_Wrapper,
                              this,
-                             m_Config[IF_ID].pStack,
+                             pContext->GetIP_Stack(),
                              TASK_IP_MANAGER_STACK_SIZE,
                              TASK_IP_MANAGER_PRIO);
 
@@ -173,13 +115,13 @@ void IP_Manager::Run(void)
     for(;;)
     {
       #if (IP_USE_DHCP == DEF_ENABLED)
-        if(m_Context.GetLinkChange() == true)                                                   // Always react to link changes, regardless of DHCP enable state
+        if(m_pContext->GetLinkChange() == true)                                                   // Always react to link changes, regardless of DHCP enable state
         {
-            m_Context.SetLinkChange(false);
+            m_pContext->SetLinkChange(false);
 
-            if(m_Context.GetLinkState() == ETH_LINK_UP)
+            if(m_pContext->GetLinkState() == ETH_LINK_UP)
             {
-                if(m_Context.IsDHCP_Enable())
+                if(m_pContext->IsDHCP_Enable())
                 {
                     m_DHCP.Start();
                 }
@@ -194,7 +136,7 @@ void IP_Manager::Run(void)
             }
         }
 
-        if((m_Context.IsDHCP_Enable() == true) && (m_Context.GetLinkState() == ETH_LINK_UP))    // Run DHCP state machine only when enabled AND link is up
+        if((m_pContext->isDHCP_Enable() == true) && (m_pContext->GetLinkState() == ETH_LINK_UP))    // Run DHCP state machine only when enabled AND link is up
         {
             (void)m_DHCP.Process();
         }
@@ -204,7 +146,7 @@ void IP_Manager::Run(void)
         m_DNS.Process();
     #endif
 
-        if(nOS_QueueRead(m_Context.GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
+        if(nOS_QueueRead(m_pContext->GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
         {
             if(pMsg->PacketSize < sizeof(IP_EthernetHeader_t))                                  // Basic Ethernet header size check  peut-etre pas necessaire avec le default
             {
@@ -334,61 +276,6 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Name:           AllocPacket
-//
-//  Parameter(s):   ppMsg           Output pointer that receives the allocated IP_PacketMsg_t
-//                                  wrapper.
-//                  PacketSize      Size of the protocol-specific packet buffer to allocate.
-//                  DebugWrapperID  Debug ID used for the wrapper allocation.
-//                  DebugPacketID   Debug ID used for the packet buffer allocation.
-//
-//  Return:         SystemState_e
-//                      SYS_READY                   Allocation successful.
-//                      SYS_INVALID_PARAMETER       ppMsg is null.
-//                      SYS_FAIL_MEMORY_ALLOCATION  One of the allocations failed.
-//
-//  Description:    Allocates a transmit packet consisting of:
-//
-//                      1) An IP_PacketMsg_t wrapper
-//                      2) A protocol-specific packet buffer (Ethernet + protocol frame)
-//
-//                  Both buffers are cleared and tagged with the provided debug IDs. If the packet
-//                  buffer allocation fails, the wrapper is automatically freed.
-//
-//                  This helper centralizes the common allocation pattern used by ARP, UDP, DHCP,
-//                  DNS, ICMP, SNTP, and TCP transmit paths.
-//
-//  Note(s):        - Caller must check the returned SystemState_e before using *ppMsg.
-//                  - On success, *ppMsg is guaranteed to be valid and ready for header construction.
-//-------------------------------------------------------------------------------------------------
-SystemState_e IP_Manager::AllocPacket(IP_PacketMsg_t** ppMsg, size_t PacketSize, MEM_DebugListOfID_e DebugWrapperID, MEM_DebugListOfID_e DebugPacketID)
-{
-    if(ppMsg == nullptr)                                                                                        // Validate output pointer
-    {
-        return SYS_INVALID_PARAMETER;
-    }
-
-    *ppMsg = nullptr;
-    IP_PacketMsg_t* pMsg = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(sizeof(IP_PacketMsg_t), DebugWrapperID); // Allocate wrapper
-
-    if(pMsg == nullptr)
-    {
-        return SYS_FAIL_MEMORY_ALLOCATION;
-    }
-
-    pMsg->pPacket = (IP_EthernetPacket_t*)pMemoryPool->AllocAndClear(PacketSize, DebugPacketID);                // Allocate packet buffer
-
-    if(pMsg->pPacket == nullptr)
-    {
-        pMemoryPool->Free((void**)&pMsg);
-        return SYS_FAIL_MEMORY_ALLOCATION;
-    }
-
-    *ppMsg = pMsg;                                                                                              // Success
-    return SYS_READY;
-}
-
-//-------------------------------------------------------------------------------------------------
 //
 //  Name:           SendPacket
 //
@@ -427,88 +314,20 @@ SystemState_e IP_Manager::SendPacket(IP_PacketMsg_t* pMsg)
     IP_Header_t*         pIP  = &pMsg->pPacket->IP_Frame.Header;
     IP_Address_t         dstIP = pIP->DstIP_Address;
 
-    if(dstIP == IP_ADDRESS(255,255,255,255))                            // Broadcast: 255.255.255.255 -> FF:FF:FF:FF:FF:FF
+    if(dstIP == IP_ADDRESS(255,255,255,255))                                            // Broadcast: 255.255.255.255 -> FF:FF:FF:FF:FF:FF
     {
         memset(pETH->DestinationMAC.Byte, 0xFF, IP_MAC_ADDRESS_SIZE);
     }
     else
     {
-        if(m_ARP.Resolve(dstIP, &pETH->DestinationMAC, pMsg) == false)  // Unicast -> resolve via ARP and store packet for later transmission
+         if(m_Context->GetARP().Resolve(dstIP, &pETH->DestinationMAC, pMsg) == false)   // Unicast -> resolve via ARP and store packet for later transmission
         {
-            return SYS_ARP_RESOLVE_PENDING;                             // ARP not ready -> caller decides what to do
+            return SYS_ARP_RESOLVE_PENDING;                                             // ARP not ready -> caller decides what to do
         }
     }
 
-    return m_Context.SendPacket(pMsg);                                  // Hand off to interface context (driver callback)
+    return m_pContext->SendPacket(pMsg);                                                // Hand off to interface context (driver callback)
 }
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           GetHost
-//
-//  Parameter(s):   void
-//  Return:         IP_Address_t   Host IP
-//
-//  Description:    Return host IP address according to configuration
-//
-//-------------------------------------------------------------------------------------------------
-IP_Address_t IP_Manager::GetHost(void)
-{
-    return m_Context.GetActiveIP();
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           GetDNS
-//
-//  Parameter(s):   void
-//  Return:         IP_Address_t   IP
-//
-//  Description:    Return DNS server IP address according to configuration
-//
-//-------------------------------------------------------------------------------------------------
-#if (IP_USE_DNS == DEF_ENABLED)
-IP_Address_t IP_Manager::GetDNS(void)
-{
-    return m_Context.GetActiveDNS_IP();
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           RequestDNS
-//
-//  Parameter(s):   const char*     pHostName       Null-terminated domain name to resolve.
-//                  DNS_Callback_t  pCallback       Application-provided function invoked when the
-//                                                  DNS resolution completes. The callback is
-//                                                  executed asynchronously from within the DNS
-//                                                  client's processing context.
-//                  void*           pContext        User-defined context pointer passed back to the
-//                                                  callback. This allows higher-level modules
-//                                                  (e.g., ClassNetwork) to receive DNS results
-//                                                  without relying on implicit ownership or
-//                                                  back-pointers.
-//
-//  Return:         bool
-//                      - true  : DNS request accepted by the DNS client.
-//                      - false : DNS client could not queue the request (e.g., no free slot).
-//
-//  Description:    Submits an asynchronous DNS resolution request. This function does not perform
-//                  any network activity directly; it simply forwards the request to the DNS client,
-//                  which manages its own socket, pending-request table, timeouts, and callbacks.
-//
-//                  Multiple DNS requests may be active concurrently. Each request is tracked
-//                  independently inside the DNS client and resolved when the corresponding DNS
-//                  response is received. The provided context pointer is returned verbatim to the
-//                  callback, enabling clean separation between IP_Manager and higher-level modules.
-//
-//-------------------------------------------------------------------------------------------------
-#if (IP_USE_DNS == DEF_ENABLED)
-bool IP_Manager::RequestDNS(const char* pHostName, DNS_Callback_t pCallback, void* pContext)
-{
-    return m_DNS.SendQuery(pHostName, pCallback, pContext);
-}
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -698,6 +517,61 @@ char* IP_Manager::ProcessURL(char* pBuffer, IP_Address_t* pIP, IP_Port_t* pPort)
 }
 
 //-------------------------------------------------------------------------------------------------
+//  Name:           AllocPacket
+//
+//  Parameter(s):   ppMsg           Output pointer that receives the allocated IP_PacketMsg_t
+//                                  wrapper.
+//                  PacketSize      Size of the protocol-specific packet buffer to allocate.
+//                  DebugWrapperID  Debug ID used for the wrapper allocation.
+//                  DebugPacketID   Debug ID used for the packet buffer allocation.
+//
+//  Return:         SystemState_e
+//                      SYS_READY                   Allocation successful.
+//                      SYS_INVALID_PARAMETER       ppMsg is null.
+//                      SYS_FAIL_MEMORY_ALLOCATION  One of the allocations failed.
+//
+//  Description:    Allocates a transmit packet consisting of:
+//
+//                      1) An IP_PacketMsg_t wrapper
+//                      2) A protocol-specific packet buffer (Ethernet + protocol frame)
+//
+//                  Both buffers are cleared and tagged with the provided debug IDs. If the packet
+//                  buffer allocation fails, the wrapper is automatically freed.
+//
+//                  This helper centralizes the common allocation pattern used by ARP, UDP, DHCP,
+//                  DNS, ICMP, SNTP, and TCP transmit paths.
+//
+//  Note(s):        - Caller must check the returned SystemState_e before using *ppMsg.
+//                  - On success, *ppMsg is guaranteed to be valid and ready for header construction.
+//-------------------------------------------------------------------------------------------------
+SystemState_e IP_Manager::AllocPacket(IP_PacketMsg_t** ppMsg, size_t PacketSize, MEM_DebugListOfID_e DebugWrapperID, MEM_DebugListOfID_e DebugPacketID)
+{
+    if(ppMsg == nullptr)                                                                                        // Validate output pointer
+    {
+        return SYS_INVALID_PARAMETER;
+    }
+
+    *ppMsg = nullptr;
+    IP_PacketMsg_t* pMsg = (IP_PacketMsg_t*)pMemoryPool->AllocAndClear(sizeof(IP_PacketMsg_t), DebugWrapperID); // Allocate wrapper
+
+    if(pMsg == nullptr)
+    {
+        return SYS_FAIL_MEMORY_ALLOCATION;
+    }
+
+    pMsg->pPacket = (IP_EthernetPacket_t*)pMemoryPool->AllocAndClear(PacketSize, DebugPacketID);                // Allocate packet buffer
+
+    if(pMsg->pPacket == nullptr)
+    {
+        pMemoryPool->Free((void**)&pMsg);
+        return SYS_FAIL_MEMORY_ALLOCATION;
+    }
+
+    *ppMsg = pMsg;                                                                                              // Success
+    return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Name:           PutHeader
 //
@@ -735,7 +609,7 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t DstIP, uint16_t Pay
 
     // Ethernet header
     IP_MAC_Address_t MacAddress;
-    m_Context.GetMAC_Address(&MacAddress);
+    m_pContext->GetMAC_Address(&MacAddress);
     memcpy(&pETH->SourceMAC.Byte[0], &MacAddress.Byte[0], IP_MAC_ADDRESS_SIZE);
     pETH->Type = IP_ETHERNET_TYPE_IPV4;
 
@@ -746,7 +620,7 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t DstIP, uint16_t Pay
     pIP->FlagsFragmentOffset = htons(0);
     pIP->TimeToLive          = IP_TIME_TO_LIVE;
     pIP->Protocol            = Protocol;
-    pIP->SrcIP_Address       = m_Context.GetActiveIP();
+    pIP->SrcIP_Address       = m_pContext->GetActiveIP();
     pIP->DstIP_Address       = DstIP;
 
     if(Protocol != IP_PROTOCOL_ICMP)

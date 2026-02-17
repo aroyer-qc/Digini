@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_tcp.cpp
+//  File :  lib_class_tcp_client.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2010-2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -26,431 +26,829 @@
 
 //------ Note(s) ----------------------------------------------------------------------------------
 //
-//  TCP - Transport Control Protocol
+//  Description:    Minimal deterministic TCP client for NanoIP stack.
+//                  - Active open only (client mode)
+//                  - Non-blocking, state-machine driven
+//                  - Zero dynamic allocation
+//                  - Integrates with Socket + NetworkContext
+//                  - Provides a byte-stream interface for MQTT/HTTP/etc.
 //
-//      Client                                  Server
-//                            Flag's
-//          
-//          >---------------- SYN ----------------->    Request connection
-//          <-------------- SYN,ACK ---------------<
-//          >---------------- ACK ----------------->    note: request possible in ack for connection
-//         
-//          >------------ ACK + data -------------->    Request (if more than one segment)
-//          >---------- PSH,ACK + data ------------>    Request (last data segment of request)
-//          <---------------- ACK -----------------<
-// 
-//          <------------ ACK + data --------------<    Answers (if more than one segment)
-//          <---------- PSH,ACK + data ------------<    Request (last data segment of Answers)
-//          >---------------- ACK ----------------->
-//
-//          <---------------- FIN -----------------<
-//          >------------- ACK (FIN) -------------->
-//
-//          Notes ... Packet are not necessarily in sequence
-//
-//*************************************************************************************************
-
+//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include <ip.h>
+#include "./lib_digini.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#if (IP_USE_TCP_CLIENT == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
-// 
-//  Parameter(s):   None
-//  Return:         void
 //
-//  Description:    Initialize data structure for TCP and tiner for Socket_t
-//  
-//  Note(s):
+//  Parameter(s):   NetworkContext* pContext    Pointer to the network context used to allocate
+//                                              sockets and access lower-level IP/TCP services.
+//
+//  Return:         bool        - true  : TCP client initialized and ready to connect
+//                              - false : Initialization failed
+//                                        (invalid context or socket allocation error)
+//
+//  Description:    Initializes the TCP client instance with the provided network context. This
+//                  function allocates a TCP socket from the socket manager, configures it for
+//                  non-blocking operation, resets all internal state variables, and prepares the
+//                  client for an active connection attempt via Connect().
 //
 //-------------------------------------------------------------------------------------------------
-void NetTCP::Initialize(void)
+bool TCP_Manager::Initialize(NetworkContext* pContext)
 {
-}
+    m_pContext = pContext;
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Process 
-// 
-//  Parameter(s):   IP_PacketMsg_t* pRX 
-//  Return:         IP_PacketMsg_t* 
-//
-//  Description:    Process any incoming packet. First we check if the port is open, If it is,
-//                  Basic negotiation is done here. request is then passed to the application
-//                  using the listen() function with the right port pass as argument.
-//  
-//  Note(s):
-//
-//  client  >------- SYN ------->  Server
-//          <-- SYN (ACK SYN) --<
-//          >---- ACK (SYN) ---->
-//          
-//          >----- REQUEST ----->
-//          >------- FIN ------->
-//          <- ACK (Req + FIN) -<
-//          
-//          <----- ANSWER ------<
-//          <------- FIN -------<
-//          >---- ACK (FIN) ---->
-//
-//
-//      Normal TCP Flag combination
-// 
-//          Except for the initial SYN packet, every packet in a connection must have the ACK bit set. 
-//          
-//              handshake which establishes a TCP connection.
-//                  SYN
-//                  SYN-ACK
-//                  ACK
-//
-//              Graceful teardown of an existing connection. 
-//                  FIN ACK
-//                  ACK
-//
-//              Used to immediately terminate an existing connection. 
-//                  RST ACK 
-//
-//              Packets during the "conversation" portion of the connection (after the three-way
-//              handshake but before the teardown or termination) contain just an ACK  default. 
-//              Optionally, they may also contain PSH and/or URG.
-// 
-// 
-//      Abnormal TCP Flag combination
-//              
-//              SYN FIN                 Packets with SYN FIN are malicious. in all forms 
-//              SYN FIN PSH
-//              SYN FIN RST
-//              SYN FIN RST PSH
-//              etc...
-//     
-//              FIN                     Packets should never contain just a FIN flag
-//              nullptr                     It is illegal to have a packet with no flags set. 
-//
-//      Some other strange condition are trap  the code
-//              SYN RST                 SYN must be alone for connection process to start
-//              FIN RST                 RST is done in priority, so no packet is sent.
-//
-//-------------------------------------------------------------------------------------------------
-IP_PacketMsg_t* NetTCP::Process(IP_PacketMsg_t* pRX)
-{
-    IP_TCP_Header_t*        pTCP_RX;
-    SocketInfo_t*           pSocket;
-    PortInfo_t*             pPort;
-    uint8_t                 Error;
-    uint8_t                 Flag    = TCP_FLAG_NULL;
-
-    pTCP_RX = &pRX->Packet.u.TCP_Frame.Header;
+    IP_Manager* pIP = m_pContext->GetIP_Manager();
     
-    if((pPort = SOCK_ValidPort(pTCP_RX->DstPort, IP_PROTOCOL_TCP)) != nullptr)  // Check first if the port is in our allowed port list
+    if(pIP == nullptr)
     {
-        if((pTCP_RX->Flags == TCP_FLAG_SYN) ||                                  // Is it a SYN packet
-           ((pTCP_RX->Flags & TCP_FLAG_ACK) == TCP_FLAG_ACK))                   // Packet other than SYN should alway have ACK bit set
-        {
-            pTCP_RX->byFlags &= ~(TCP_FLAG_ACK | TCP_FLAG_URG);                 // Remove ACK bit & URG bit ( don't care )
-
-            if(pTCP_RX->byFlags == TCP_FLAG_SYN)                                // Initiate a connection and create the socket
-            {
-                pSocket = SOCK_OpenSocket(pPort, pRX, &Error);
-                Flag = TCP_FLAG_SYN;
-            }
-            else                                                                // Or get the already open socket
-            {
-                pSocket = SOCK_LookupSocket(pRX, &Error);
-            }
-
-            if(pSocket != nullptr)
-            {
-                pSocket->Timer = SOCK_TIME_OUT;                                 // We received a packet than reset timeout
-
-                switch(pTCP_RX->Flags)
-                {
-                    case TCP_FLAG_SYN:                                          // Close a connection
-                    {
-                        pSocket->Send.Next++;
-                    }
-                    break;
-
-                    case TCP_FLAG_RST:                                          // Force close of a connection
-                    {
-                        // TO DO verify the sequence number for real Reset
-                        Error = SOCK_CloseSocket(pSocket);
-                        return nullptr;
-                    }
-                    break;
-
-                    case TCP_FLAG_PSH:                                          // Send Data to app
-                    {
-                        // TO DO verify the sequence number
-                        Push();
-                    }
-                    break;
-
-                    case TCP_FLAG_FIN:                                          // Close a connection
-                    {
-                        pSocket->Send.Next++;
-                    //  pSocket->Receive.Next   =  ntohl(pRX->Packet.u.TCP_Frame.Header.AcknowledgeNumber - pSocket->AckNumber); //??
-                    }
-                    break;
-
-                    default:                                                    // Here will end up any malicious bit combination
-                    {
-                        return nullptr;
-                    }
-                    break;
-                }
-
-                // We reach this point we need to ACK!
-                //  switch(pSocket->ConnectionState)
-                //  {
-                //      case TCP_SOCKET_SYN_RECEIVE:                            // Client has ack connection
-                //      {
-                //          pSocket->ConnectionState  = TCP_SOCKET_LISTENING;
-                //      }    
-                //      break;
-                //
-                //      case TCP_SOCKET_LISTENING:  {} break;
-                //      case TCP_SOCKET_CLOSE_WAIT: {} break;
-                //  }
-                //
-                // test ?? 
-                {
-                    IP_PacketMsg_t* pTX;
-                    if(pTCP_RX->Flags != TCP_FLAG_PSH)
-                    {
-                        return Ack(Flag, 0);
-                    }
-                    else
-                    {
-                        pTX = TCP_Ack(pSocket, Flag, 0);
-                        NIC_Send(pTX);
-                        pMemory->Free((void**)&pTX);
-                        return Send(nullptr, 0);
-                    }
-                }
-            }
-        }
+        m_State = TCP_CLIENT_STATE_ERROR;
+        return false;
     }
 
-    return nullptr;
+    SocketManager* pSockMgr = pIP->GetSocketManager();
+    
+    if(pSockMgr == nullptr)
+    {
+        m_State = TCP_CLIENT_STATE_ERROR;
+        return false;
+    }
+
+    m_pSocket = pSockMgr->AllocSocket(SOCKET_TYPE_STREAM);                      // Allocate a TCP socket
+    
+    if(m_pSocket == nullptr)
+    {
+        m_State = TCP_CLIENT_STATE_ERROR;
+        return false;
+    }
+
+    bool NonBlocking = true;                                                    // Enable non-blocking mode
+    m_pSocket->SetOption(SOCKET_OPT_NON_BLOCKING, &NonBlocking, sizeof(bool));
+    SystemState_e State = m_pSocket->Bind(0);                                   // Bind to an ephemeral local port (0 = auto-assign)
+    
+    if(State != SYS_READY)
+    {
+        pSockMgr->FreeSocket(&m_pSocket);
+        m_pSocket = nullptr;
+        m_State   = TCP_CLIENT_STATE_ERROR;
+        return false;
+    }
+
+    m_State        = TCP_CLIENT_STATE_CLOSED;                                   // Reset TCP state machine
+    m_ServerIP     = 0;                                                         // Clear addressing
+    m_ServerPort   = 0;
+    m_SeqNumber    = 0;                                                         // Clear sequence/ack numbers
+    m_AckNumber    = 0;
+    m_RemoteWindow = 0;                                                         // Window sizes (will be updated after SYN/SYN+ACK)
+    m_LocalWindow  = TCP_DEFAULT_WINDOW_SIZE;   // define as needed
+
+    // Timers
+    m_LastSendTick      = 0;
+    m_LastReceivedTick  = 0;
+    m_RetransmitStart   = 0;
+    m_ConnectionStart   = 0;
+
+    // Retransmission tracking
+    m_RetransmitPending = false;
+    m_LastFlags         = 0;
+    m_LastPayloadLength = 0;
+
+    m_pLastSegment      = nullptr;
+    m_LastSegmentLength = 0;
+
+    // Temporary buffers (to be replaced with memory-pool allocations)
+    m_TxLength = 0;
+    m_RX_Length = 0;
+
+    return true;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           PutHeader   
-// 
-//  Parameter(s):   Socket_t*           pSocket
-//                  IP_PacketMsg_t*     pTX
-//                  size_t              PacketSize
-//  Return:         void 
+//  Name:           Connect
 //
-//  Description:    Put in header everything static
-//  
-//  Requirement:    All other data must be already in the header
-// 
+//  Parameter(s):   const IP_Address_t* pServerIP       Destination server IP address
+//                  uint16_t Port                       Destination TCP port
+//
+//  Return:         bool    - true  : SYN sent, client is now in SYN_SENT state
+//                          - false : Invalid state, socket error, or failed to send SYN
+//
+//  Description:    Initiates an active TCP connection to the specified server. This function
+//                  stores the remote address, generates an initial sequence number, constructs a
+//                  SYN segment, and transitions the client into the SYN_SENT state. The handshake
+//                  is completed asynchronously through Process() and HandleIncoming().
+//
 //-------------------------------------------------------------------------------------------------
-void NetTCP::PutHeader(SocketInfo_t* pSocket, IP_PacketMsg_t* pTX, size_t PacketSize)
+bool TCP_Manager::Connect(const IP_Address_t* pServerIP, uint16_t Port)
 {
-    IP_TCP_Header_t*    pTCP_TX;
-    IP_PseudoHeader_t*  pPseudo_TX;
+    if((pServerIP == nullptr) || (m_pSocket == nullptr))
+    {
+        m_State = TCP_CLIENT_STATE_ERROR;
+        return false;
+    }
 
-    pTX->Packet.u.IP_Frame.Header.DstIP_Address = pSocket->ClientIP;
-    pTX->Packet.u.IP_Frame.Header.SrcIP_Address = IP_HostAddress;
+    if(m_State != TCP_CLIENT_STATE_CLOSED)                      // Only allowed from CLOSED state
+    {
+        return false;
+    }
 
-    pTCP_TX                     = &pTX->Packet.u.TCP_Frame.Header;
-    pTCP_TX->SrcPort            = pSocket->pPortInfo->Number;
-    pTCP_TX->DstPort            = pSocket->ClientPort;
-    pTCP_TX->SequenceNumber     = htonl(pSocket->SequenceNumber + (int32_t)pSocket->Receive.Next);
-    pTCP_TX->AcknowledgeNumber  = htonl(pSocket->AckNumber + (int32_t)pSocket->Send.Next);
-    pTCP_TX->Flags             |= TCP_FLAG_ACK;
-    pTCP_TX->Offset             = 0x60;                             // to do process this criss
-    pTCP_TX->Window             = htons(TCP_WINDOW_SIZE);
-    pTCP_TX->OptionData.by.by0  = 2;
-    pTCP_TX->OptionData.by.by1  = 4;
-    pTCP_TX->OptionData.by.by2  = 4;
-    pTCP_TX->OptionData.by.by3  = 0xB0;
+    m_ServerIP   = *pServerIP;                                  // Store server info
+    m_ServerPort = Port;
+    m_SeqNumber  = (uint32_t)GetTick();                         // Generate Initial Sequence Number (ISN) A simple monotonic tick-based ISN is fine for embedded systems
+    m_AckNumber  = 0;                                           // No data expected yet
 
-    // Setup pseudo header for checksum calculation
-    pPseudo_TX                  = &pTX->Packet.u.TCP_PseudoFrame.Header;
-    pPseudo_TX->Protocol        = IP_PROTOCOL_TCP;
-    pPseudo_TX->Length          = htons(PacketSize);
+    m_RemoteWindow = 0;                                         // Reset window tracking
+    m_LocalWindow  = TCP_DEFAULT_WINDOW_SIZE;
 
-    pTCP_TX->Checksum           = 0;  //??? next is = also
-    pTCP_TX->Checksum           = IP_CalculateChecksum(pPseudo_TX, PacketSize + (int16_t)sizeof(IP_PseudoHeader_t));
+    m_ConnectionStart  = GetTick();                             // Reset timers
+    m_LastSendTick     = 0;
+    m_LastReceivedTick = 0;
+
+    if(SendSYN() == false)                                      // Attempt to send SYN
+    {
+        m_State = TCP_CLIENT_STATE_ERROR;
+        return false;
+    }
+
+    m_State = TCP_CLIENT_STATE_SYN_SENT;                        // SYN successfully sent
+    m_RetransmitStart = GetTick();
+    m_RetransmitPending = true;
+
+    return true;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Send
-// 
-//  Parameter(s):   void
-//  Return:         IP_PacketMsg_t* pTX
 //
-//  Description:    
+//  Parameter(s):   const uint8_t* pData     Pointer to the application payload.
+//                  size_t Length            Number of bytes to send.
+//
+//  Return:         size_t                   Number of bytes accepted for transmission.
+//                                           Returns 0 if not connected or busy.
+//
+//  Description:    Queues application data for transmission. This function does not block and does
+//                  not guarantee immediate delivery. The actual TCP segment is constructed and
+//                  transmitted through SendSegment(), and retransmissions are handled by Process().
+//
+//  Note(s):        If the client is not in ESTABLISHED state, or if a retransmission is pending,
+//                  the function returns 0 to indicate that the caller should retry later.
 //
 //-------------------------------------------------------------------------------------------------
-IP_PacketMsg_t* NetTCP::Send(SocketInfo_t* pSocket, uint8_t* pBuffer, size_t Size)
+size_t TCP_Manager::Send(const uint8_t* pData, size_t Length)
 {
-    IP_PacketMsg_t*     pTX         = nullptr;
-    IP_TCP_Header_t*    pTCP_TX;
-
-// use memory allocation
-    uint8_t Temp[100];
-    uint8_t Buffer[1000];
-
-    LIB_sprintf(Temp, "HTTP/1.1 404 Not Found\r\n");
-    LIB_strcat(Buffer, Temp);
-    LIB_sprintf(Temp, "Content-type: text/html\r\n");
-    LIB_strcat(Buffer, Temp);
-    LIB_sprintf(Temp, "Content-length: 114\r\n");
-    LIB_strcat(Buffer, Temp);
-    LIB_sprintf(Temp, "\r\n");
-    LIB_strcat(Buffer, Temp);
-    LIB_sprintf(Temp, "<html><head><title>Not Found</title></head><body>\r\n");
-    LIB_strcat(Buffer, Temp);
-    LIB_sprintf(Temp, "Sorry, the object you requested was not found.\r\n");
-    LIB_strcat(Buffer, Temp);
-    LIB_sprintf(Temp, "</body><html>\r\n");
-    LIB_strcat(Buffer, Temp);
-
-
-    pTX = (IP_PacketMsg_t*)pMemory->AllocAndClear(Size + sizeof(IP_EthernetHeader_t) + TCP_ACK_IP_PACKET_SIZE);					    // Get memory for TX packet
-    
-    if(pTX != nullptr)
+    if((pData == nullptr) || (Length == 0))
     {
-        Size = strlen(Buffer);
-        memcpy(((uint8_t*)&pTX->Packet.u.TCP_Frame.Header.OptionData + 4), Buffer, Size);
-        
-        pTX->PacketSize = (Size + sizeof(IP_EthernetHeader_t) + TCP_ACK_IP_PACKET_SIZE);
-        pTCP_TX         = &pTX->Packet.u.TCP_Frame.Header;
-        pTCP_TX->Flags  = TCP_FLAG_PSH;
-        PutHeader(pTX, TCP_ACK_PACKET_SIZE + Size);
-
-        // Setup MAC & IP header
-        memcpy(&pTX->Packet.u.ETH_Header.Dst.Address, &pSocket->MAC[0], 6);
-        pTX->Packet.u.IP_Frame.Header.Length     = htons(Size + TCP_ACK_IP_PACKET_SIZE);
-        pTX->Packet.u.IP_Frame.Header.Protocol = IP_PROTOCOL_TCP;
-        IP_PutHeader(pTX);
+        return 0;
     }
 
-    return pTX;
+    if(m_State != TCP_CLIENT_STATE_ESTABLISHED)                         // Must be connected
+    {
+        return 0;
+    }
+
+    if(m_RetransmitPending == true)                                     // Do not send new data while retransmission is pending
+    {
+        return 0;
+    }
+
+    if(Length > sizeof(m_TxBuffer))                                     // Limit to TX buffer size (temporary until memory-pool version)
+    {
+        Length = sizeof(m_TxBuffer);
+    }
+
+    memcpy(m_TxBuffer, pData, Length);                                  // Copy into TX buffer
+    m_TxLength = Length;
+
+    if(SendSegment(m_TxBuffer, m_TxLength, true) == false)              // PSH flag = true, Send immediately (non-blocking)
+    {
+        m_TxLength = 0;                                                 // Failed to send
+        return 0;
+    }
+
+    return Length;                                                      // Data accepted for transmission
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Ack
-// 
-//  Parameter(s):   SocketInfo_t*       pSocket
-//                  uint8_t             Flag
-//                  size_t              Size
-//  Return:         IP_PacketMsg_t*     pTX
+//  Name:           Receive
 //
-//  Description:    
+//  Parameter(s):   uint8_t* pBuffer        Destination buffer provided by the caller.
+//                  size_t MaxLength        Maximum number of bytes the caller can accept.
+//
+//  Return:         size_t                  Number of bytes copied into pBuffer.
+//                                          Returns 0 if no data is available.
+//
+//  Description:    Copies any previously received TCP payload (stored in m_RxBuffer by
+//                  ParseTCP_Header()) into the caller's buffer. This function does not block and
+//                  does not attempt to read from the socket directly; all incoming data is
+//                  processed asynchronously through Process() and HandleIncoming().
+//
+//  note(s):        After copying, the internal RX length is cleared, making the buffer ready for
+//                  the next incoming segment.
 //
 //-------------------------------------------------------------------------------------------------
-IP_PacketMsg_t* NetTCP::Ack(SocketInfo_t* pSocket, uint8_t Flag, size_t Size)
+size_t TCP_Manager::Receive(uint8_t* pBuffer, size_t MaxLength)
 {
-    IP_PacketMsg_t*     pTX         = nullptr;
-    IP_TCP_Header_t*    pTCP_TX;
-    size_t              PacketSize;
-
-    
-    PacketSize = Size + sizeof(IP_EthernetHeader_t) + TCP_ACK_IP_PACKET_SIZE;
-
-    pTX = (IP_PacketMsg_t*)pMemory->AllocAndClear(PacketSize);					    // Get memory for TX packet
-    
-    if(pTX != nullptr)
+    if((pBuffer == nullptr) || (MaxLength == 0))
     {
-        pTX->PacketSize = PacketSize;
-        pTCP_TX         = &pTX->Packet.u.TCP_Frame.Header;
-        pTCP_TX->Flags  = Flag;
-        PutHeader(pTX, TCP_ACK_PACKET_SIZE);
-
-        // Setup MAC & IP header
-        memcpy(&pTX->Packet.u.ETH_Header.Dst.Address, &pSocket->MAC[0], 6);
-        pTX->Packet.u.IP_Frame.Header.Length   = htons(Size + TCP_ACK_IP_PACKET_SIZE);
-        pTX->Packet.u.IP_Frame.Header.Protocol = IP_PROTOCOL_TCP;
-        IP_PutHeader(pTX);
+        return 0;
     }
 
-    return pTX;
+    if(m_RX_Length == 0)                                                     // No data available
+    {
+        return 0;
+    }
+
+    size_t ToCopy = (m_RX_Length <= MaxLength) ? m_RX_Length : MaxLength;    // Determine how many bytes we can return
+    memcpy(pBuffer, m_RxBuffer, ToCopy);
+    m_RX_Length = 0;                                                         // Clear internal RX buffer state
+
+    return ToCopy;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Push
-// 
-//  Parameter(s):   SocketInfo_t*       pSocket
-//                  IP_PacketMsg_t*     pRX
-//                  
+//  Name:           Close
+//
+//  Parameter(s):   None
+//
 //  Return:         void
 //
-//  Description:    
-//  
+//  Description:    Initiates an active close of the TCP connection. If the client is in the
+//                  ESTABLISHED state, a FIN segment is transmitted and the state machine
+//                  transitions to FIN_WAIT_1. The remainder of the close handshake
+//                  (FIN_WAIT_2 → TIME_WAIT → CLOSED) is handled asynchronously through Process()
+//                  and HandleIncoming().
+//
 //-------------------------------------------------------------------------------------------------
-void NetTCP::Push(SocketInfo_t* pSocket, IP_PacketMsg_t* pRX)
+void TCP_Manager::Close(void)
 {
-    uint8_t DataOffset;
-    size_t  Size;
-
-    DataOffset = (uint8_t)((pRX->Packet.u.TCP_Frame.Header.Offset & 0xF0) >> 2) + (uint8_t)sizeof(IP_IP_Frame_t);
-    Size       = pRX->PacketSize - size_t(DataOffset);
-
-    // Pass pointer of data to service function to get data
-    if(pSocket->pPortInfo->pFunction != nullptr)  // temporary
+    if(m_State != TCP_CLIENT_STATE_ESTABLISHED)                             // Only valid from ESTABLISHED
     {
-        pSocket->pPortInfo->pFunction(pSocket, &pRX->Packet.u.RawData[DataOffset], Size); 
+        return;
     }
 
-    pSocket->ConnectionState  = TCP_SOCKET_LISTENING;
-    pSocket->Send.Next       += Size;
-    pSocket->Receive.Next     = (uint16_t)(ntohl(pRX->Packet.u.TCP_Frame.Header.AcknowledgeNumber) - pSocket->SequenceNumber);
+    if(m_RetransmitPending == true)                                         // Do not send FIN if retransmission is pending
+    {
+        return;
+    }
+
+    if(SendFIN() == false)                                                  // Send FIN (this moves state to FIN_WAIT_1 internally)
+    {
+
+        m_State = TCP_CLIENT_STATE_ERROR;
+        return;
+    }
+
+    // FIN_WAIT_1 is set inside SendFIN()
 }
 
 //-------------------------------------------------------------------------------------------------
+//
+//  Name:           Process
+//
+//  Parameter(s):   None
+//
+//  Return:         void
+//
+//  Description:    Drives the TCP client state machine. This function must be called periodically
+//                  from the main loop. It performs the following tasks:
+//
+//                      - Polls the socket for incoming TCP segments
+//                      - Dispatches packets to HandleIncoming()
+//                      - Manages retransmission timers
+//                      - Handles connection timeout (SYN_SENT)
+//                      - Handles FIN_WAIT and TIME_WAIT timers
+//
+//  Note(s):        This function is fully non-blocking and performs no dynamic waiting.
+//
+//-------------------------------------------------------------------------------------------------
+void TCP_Manager::Process(void)
+{
+    if(m_pSocket == nullptr)
+    {
+        return;
+    }
 
+    IP_EthernetPacket_t* pPacket = nullptr;                         // Poll socket for incoming packets
+    size_t Bytes = 0;
+    SystemState_e State = m_pSocket->RecvPacket(&pPacket, &Bytes);
 
+    if((State == SYS_READY) && (pPacket != nullptr))
+    {
+        HandleIncoming(pPacket);
+        m_pSocket->ReleasePacket(&pPacket);                         // Packet ownership returns to socket manager
+    }
 
+    RetransmitIfNeeded();                                           // Handle retransmissions
 
+    if(m_State == TCP_CLIENT_STATE_SYN_SENT)                        // Handle connection timeout (SYN_SENT)
+    {
+        TickCount_t Now = GetTick();
+    
+        if((Now - m_ConnectionStart) > TCP_CONNECT_TIMEOUT_MS)
+        {
+            m_State = TCP_CLIENT_STATE_ERROR;
+            return;
+        }
+    }
 
+    // Handle FIN_WAIT_1 → FIN_WAIT_2 transition (ACK of our FIN is processed in HandleIncoming)
+    //----------------------------------------------------------------------
+    // Nothing to do here — state changes happen in HandleIncoming()
+    //----------------------------------------------------------------------
 
+    // Handle TIME_WAIT timeout
+    if(m_State == TCP_CLIENT_STATE_TIME_WAIT)
+    {
+        TickCount_t Now = GetTick();
+        
+        if((Now - m_LastReceivedTick) > TCP_TIME_WAIT_MS)
+        {
+            m_State = TCP_CLIENT_STATE_CLOSED;
+        }
+    }
+}
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SendSYN
+//
+//  Parameter(s):   None
+//
+//  Return:         bool        - true  : SYN segment sent successfully
+//                              - false : Failed to allocate buffer or send segment
+//
+//  Description:    Constructs and transmits a TCP SYN segment to initiate the connection
+//                  handshake. This function builds a minimal TCP header with the SYN flag set,
+//                  computes the checksum, and sends the segment through the underlying socket.
+//                  Retransmission metadata is updated so that Process() can retry if no SYN+ACK
+//                  is received.
+//
+//-------------------------------------------------------------------------------------------------
+bool TCP_Manager::SendSYN(void)
+{
+    if(m_pSocket == nullptr)
+    {
+        return false;
+    }
 
+    uint8_t* pBuffer = (uint8_t*)pMemoryPool->Alloc(sizeof(TCP_Header_t), MEM_DBG_TCP_TX);          // Allocate a buffer for TCP header (no payload)
+    
+    if(pBuffer == nullptr)
+    {
+        return false;
+    }
 
+// TODO Evaluate if hton function are required for the case here!!
+    TCP_Header_t* pTCP = (TCP_Header_t*)pBuffer;
+    memset(pTCP, 0, sizeof(TCP_Header_t));                                                          // Clear header
+    pTCP->SourcePort      = htons(m_pSocket->GetLocalPort());                                       // Fill TCP header fields
+    pTCP->DestinationPort = htons(m_ServerPort);
+    pTCP->SeqNumber       = htonl(m_SeqNumber);
+    pTCP->AckNumber       = 0;                                                                      // No ACK in SYN
+    pTCP->DataOffset      = (sizeof(TCP_Header_t) / 4) << 4;
+    pTCP->Flags           = TCP_FLAG_SYN;
+    pTCP->WindowSize      = htons(m_LocalWindow);
+    pTCP->UrgentPointer   = 0;
 
+    pTCP->Checksum = 0;                                                                             // Compute checksum using your IP/TCP layer
+    pTCP->Checksum = m_pContext->GetIP_Manager()->ComputeTCP_Checksum(pTCP,
+                                                                      sizeof(TCP_Header_t),
+                                                                      m_pContext->GetIP_Manager()->GetLocalIP(),
+                                                                      m_ServerIP);
 
+    // Send SYN segment
+    SystemState_e State = m_pSocket->SendTo(pBuffer, sizeof(TCP_Header_t), &m_ServerIP, m_ServerPort);
 
+    if(State !- SYS_READY)
+    {
+        pMemoryPool->Free((void**)&pBuffer);                                                        // Free buffer
+        return false;
+    }
 
+    // Store retransmission info
+    m_RetransmitPending  = true;
+    m_LastFlags          = TCP_FLAG_SYN;
+    m_LastPayloadLength  = 0;
+    m_LastSegmentLength  = sizeof(TCP_Header_t);
+    m_LastSendTick       = GetTick();
+    return true;
+}
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SendACK
+//
+//  Parameter(s):   uint32_t ACK_Number     Acknowledgment number to include in the TCP header.
+//
+//  Return:         bool                    - true  : ACK segment sent successfully
+//                                          - false : Failed to allocate buffer or send segment
+//
+//  Description:    Constructs and transmits a pure TCP ACK segment. This function builds a minimal
+//                  TCP header with the ACK flag set, acknowledges the specified sequence number,
+//                  computes the checksum, and sends the segment through the underlying socket.
+//                  Pure ACKs do not carry payload and are not retransmitted. Retransmission
+//                  metadata is updated for consistency.
+//
+//-------------------------------------------------------------------------------------------------
+bool TCP_Manager::SendACK(uint32_t AckNumber)
+{
+    if(m_pSocket == nullptr)
+    {
+        return false;
+    }
 
+    // Allocate buffer for TCP header (no payload)
+    uint8_t* pBuffer = (uint8_t*)pMemoryPool->Alloc(sizeof(TCP_Header_t), MEM_DBG_TCP_TX);
+    
+    if(pBuffer == nullptr)
+    {
+        return false;
+    }
 
+    TCP_Header_t* pTCP = (TCP_Header_t*)pBuffer;
+    memset(pTCP, 0, sizeof(TCP_Header_t));                                      // Clear header
+    pTCP->SourcePort      = htons(m_pSocket->GetLocalPort());                   // Fill TCP header
+    pTCP->DestinationPort = htons(m_ServerPort);
+    pTCP->SeqNumber       = htonl(m_SeqNumber);                                 // Our current sequence number (unchanged for pure ACK)
+    pTCP->AckNumber       = htonl(AckNumber);                                   // Acknowledging the server's sequence
+    pTCP->DataOffset      = (sizeof(TCP_Header_t) / 4) << 4;                    // Header length (no options)
+    pTCP->Flags           = TCP_FLAG_ACK;                                       // ACK flag only
+    pTCP->WindowSize      = htons(m_LocalWindow);                               // Our advertised window
+    pTCP->UrgentPointer   = 0;
 
+    // Compute checksum
+    pTCP->Checksum = 0;
+    pTCP->Checksum = m_pContext->GetIP_Manager()->ComputeTCP_Checksum(pTCP,
+                                                                      sizeof(TCP_Header_t),
+                                                                      m_pContext->GetIP_Manager()->GetLocalIP(),
+                                                                      m_ServerIP);
+    // Send segment
+    SystemState_e State = m_pSocket->SendTo(pBuffer,
+                                            sizeof(TCP_Header_t),
+                                            &m_ServerIP,
+                                            m_ServerPort);
 
+    
 
+    if(State != SYS_READY)
+    {
+        pMemoryPool->Free((void**)&pBuffer);                                    // Free buffer
+        return false;
+    }
 
-/*
-                                DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d listening state\n", uint8_t(pSocket->ClientIP >> 24),
-                                                                                                         uint8_t(pSocket->ClientIP >> 16),
-                                                                                                         uint8_t(pSocket->ClientIP >> 8),
-                                                                                                         uint8_t(pSocket->ClientIP),
-                                                                                                         ntohs(pSocket->ClientPort),
-                                                                                                         ntohs(pPort->Number));
+    // Update retransmission tracking
+    m_RetransmitPending  = false;                                               // Pure ACKs are not retransmitted
+    m_LastFlags          = TCP_FLAG_ACK;
+    m_LastPayloadLength  = 0;
+    m_LastSegmentLength  = sizeof(TCP_Header_t);
+    m_LastSendTick       = GetTick();
+    return true;
+}
 
-        DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d Negotiating state\n", uint8_t(pSocket->ClientIP >> 24),
-                                                                                   uint8_t(pSocket->ClientIP >> 16),
-                                                                                   uint8_t(pSocket->ClientIP >> 8),
-                                                                                   uint8_t(pSocket->ClientIP),
-                                                                                   ntohs(pSocket->ClientPort),,
-                                                                                   ntohs(pPort->Number));
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SendFIN
+//
+//  Parameter(s):   None
+//
+//  Return:         bool        - true  : FIN segment sent successfully
+//                              - false : Failed to allocate buffer or send segment
+//
+//  Description:    Constructs and transmits a TCP FIN segment to initiate an active close of the
+//                  connection. This function builds a minimal TCP header with the FIN and ACK
+//                  flags set, computes the checksum, and sends the segment through the underlying
+//                  socket. The sequence number is advanced by one to account for the FIN.
+//                  Retransmission metadata is updated so that Process() can retry if the FIN
+//                  acknowledgment is not received.
+//
+//-------------------------------------------------------------------------------------------------
+bool TCP_Manager::SendFIN(void)
+{
+    if(m_pSocket == nullptr)
+    {
+        return false;
+    }
 
-//                  DBG_UartPrintf("Socket Src:%d.%d.%d.%d:%d on port %d Receiving request state\n", uint8_t(pSocket->ClientIP >> 24),
-//                                                                                                   uint8_t(pSocket->ClientIP >> 16),
-//                                                                                                   uint8_t(pSocket->ClientIP >> 8),
-//                                                                                                   uint8_t(pSocket->ClientIP),
-//                                                                                                   ntohs(pSocket->wClientPort),
-//                                                                                                   ntohs(pPort->wNumber));
-*/
+    size_t TotalLength = sizeof(TCP_Header_t);                                      // Allocate buffer: TCP header only (FIN never carries payload)
+    uint8_t* pBuffer = (uint8_t*)pMemoryPool->AllocAndSet(TotalLength, 0, MEM_DBG_TCP_TX);
+
+    if(pBuffer == nullptr)
+    {
+        return false;
+    }
+
+    TCP_Header_t* pTCP = (TCP_Header_t*)pBuffer;
+    pTCP->SourcePort      = htons(m_pSocket->GetLocalPort());                       // Fill TCP header
+    pTCP->DestinationPort = htons(m_ServerPort);
+    pTCP->SeqNumber       = htonl(m_SeqNumber);                                     // FIN consumes one sequence number
+    pTCP->AckNumber       = htonl(m_AckNumber);                                     // Acknowledge the next expected byte from server
+    pTCP->DataOffset      = (sizeof(TCP_Header_t) / 4) << 4;                        // Header length (no options)
+    uint8_t Flags = TCP_FLAG_FIN | TCP_FLAG_ACK;                                    // FIN + ACK
+    pTCP->Flags = Flags;
+    pTCP->WindowSize = htons(m_LocalWindow);                                        // Advertise our window
+
+    // Compute checksum
+    //pTCP->Checksum = 0; already 0 because of AllocAndSet
+    pTCP->Checksum = m_pContext->GetIP_Manager()->ComputeTCPChecksum(pTCP,
+                                                                     TotalLength,
+                                                                     m_pContext->GetIP_Manager()->GetLocalIP(),
+                                                                     m_ServerIP);
+
+    // Send segment
+    SystemState_e State = m_pSocket->SendTo(pBuffer,
+                                            TotalLength,
+                                            &m_ServerIP,
+                                            m_ServerPort);
+
+    if(State != SYS_READY)
+    {
+        pMemoryPool->Free((void**)&pBuffer);                                        // Free buffer
+        return false;
+    }
+
+    m_SeqNumber += 1;                                                               // FIN consumes one sequence number
+    m_RetransmitPending  = true;                                                    // Store retransmission info
+    m_LastFlags          = Flags;
+    m_LastPayloadLength  = 0;
+    m_LastSegmentLength  = TotalLength;
+    m_LastSendTick       = GetTick();
+    m_State = TCP_CLIENT_STATE_FIN_WAIT_1;                                          // Move to FIN_WAIT_1
+    return true;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           HandleIncoming
+//
+//  Parameter(s):   IP_EthernetPacket_t* pPacket     Pointer to the received Ethernet/IP/TCP packet.
+//
+//  Return:         void
+//
+//  Description:    Processes an incoming TCP segment and updates the client state machine
+//                  accordingly. This function validates the TCP header, extracts flags, updates
+//                  acknowledgment and sequence tracking, and dispatches payload data to the receive
+//                  buffer. It handles all state transitions for the TCP handshake, data exchange,
+//                  and connection teardown, including:
+//
+//                      - SYN+ACK processing during connection establishment
+//                      - ACK processing for sent segments (SYN, data, FIN)
+//                      - Payload extraction and buffering
+//                      - FIN reception and close‑sequence transitions
+//                      - RST reception and error handling
+//
+//  Note(s):        This function performs no retransmissions; those are handled by Process()
+//                  through RetransmitIfNeeded().
+//
+//-------------------------------------------------------------------------------------------------
+bool TCP_Manager::HandleIncoming(IP_EthernetPacket_t* pPacket)
+{
+    if(pPacket == nullptr)
+    {
+        return false;
+    }
+
+    if(ParseTCP_Header(pPacket) == false)               // Parse TCP header (fills internal fields)
+    {
+        return false;
+    }
+
+    TCP_Header_t* pTCP = pPacket->TCP;                  // Extract header pointer
+    uint8_t Flags = pTCP->Flags;
+
+    if(m_State == TCP_CLIENT_STATE_SYN_SENT)            // SYN_SENT -> expecting SYN+ACK
+    {
+        // Must be SYN+ACK
+        if((Flags & (TCP_FLAG_SYN | TCP_FLAG_ACK)) != (TCP_FLAG_SYN | TCP_FLAG_ACK))
+        {
+            return false;
+        }
+
+        uint32_t Ack = ntohl(pTCP->AckNumber);          // Validate ACK number
+
+        if(Ack != (m_SeqNumber + 1))
+        {
+            return false;                               // Wrong ACK -> ignore
+        }
+
+        uint32_t ServerSeq = ntohl(pTCP->SeqNumber);    // Extract server sequence number
+        m_AckNumber = ServerSeq + 1;
+
+        // Extract server window
+        m_RemoteWindow = ntohs(pTCP->WindowSize);
+
+        if(SendACK(m_AckNumber) == false)               // Send final ACK of handshake
+        {
+            m_State = TCP_CLIENT_STATE_ERROR;
+            return false;
+        }
+
+        m_State = TCP_CLIENT_STATE_ESTABLISHED;         // Handshake complete
+        m_RetransmitPending = false;
+        return true;
+    }
+
+    if(m_State == TCP_CLIENT_STATE_ESTABLISHED)         // ESTABLISHED → data or ACK handling (later)
+    {
+        return true;                                    // TODO: handle data, ACKs, PSH, FIN, etc.
+    }
+
+    return false;                                       // FIN_WAIT states (later)
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ParseTCP_Header
+//
+//  Parameter(s):   IP_EthernetPacket_t* pPacket    Pointer to a fully received Ethernet/IP/TCP
+//                                                  packet.
+//
+//  Return:         bool        - true  : TCP header parsed successfully
+//                              - false : Malformed header or unsupported segment
+//
+//  Description:    Extracts and validates the TCP header from the incoming packet. This function
+//                  verifies that the TCP header length is valid, extracts sequence and
+//                  acknowledgment numbers, updates the remote window size, and exposes the payload
+//                  pointer and length for higher-level processing. No state transitions occur
+//                  here; this function only decodes fields.
+//
+//-------------------------------------------------------------------------------------------------
+bool TCP_Manager::ParseTCP_Header(IP_EthernetPacket_t* pPacket)
+{
+    if(pPacket == nullptr)
+    {
+        return false;
+    }
+
+    TCP_Header_t* pTCP = pPacket->TCP;
+    
+    if(pTCP == nullptr)
+    {
+        return false;
+    }
+
+    // Validate header length
+    uint8_t DataOffset = (pTCP->DataOffset >> 4) & 0x0F;                // in 32-bit words
+    uint16_t HeaderLength = (uint16_t)DataOffset * 4;
+
+    if(HeaderLength < sizeof(TCP_Header_t))
+    {
+        return false;                                                   // Invalid or too small
+    }
+
+    if(HeaderLength > pPacket->IP_TotalLength)
+    {
+        return false;                                                   // Header claims more bytes than the IP packet contains
+    }
+
+    // Extract fields
+    uint16_t SrcPort = ntohs(pTCP->SourcePort);
+    uint16_t DstPort = ntohs(pTCP->DestinationPort);
+    uint32_t Seq     = ntohl(pTCP->SeqNumber);
+    uint32_t Ack     = NTOHL(pTCP->AckNumber);
+    uint8_t  Flags   = pTCP->Flags;
+    uint16_t Window  = ntohs(pTCP->WindowSize);
+
+    m_RemoteWindow = Window;                                            // Update internal tracking
+    m_LastReceivedTick = GetTick();                                     // Store last received tick for timeout logic
+    uint16_t PayloadOffset = HeaderLength;                              // Expose payload pointer and length
+    uint16_t PayloadLength = pPacket->IP_TotalLength - HeaderLength;
+    m_RX_Length = PayloadLength;
+
+    if(PayloadLength > 0)
+    {
+        if(PayloadLength <= sizeof(m_RxBuffer))                         // Copy payload into RX buffer (temporary until memory-pool version)
+        {
+            memcpy(m_RxBuffer, ((uint8_t*)pTCP) + HeaderLength, PayloadLength);
+        }
+        else
+        {
+            return false;                                               // Payload too large for buffer
+        }
+    }
+
+    // Store extracted header fields for HandleIncoming()
+    m_LastFlags = Flags;
+
+    // These are NOT applied to m_SeqNumber/m_AckNumber here.
+    // HandleIncoming() decides what to do with them.
+    pPacket->TCP_Seq = Seq;
+    pPacket->TCP_Ack = Ack;
+    return true;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           RetransmitIfNeeded
+//
+//  Parameter(s):   None
+//
+//  Return:         void
+//
+//  Description:    Handles retransmission of the last unacknowledged TCP segment. This function is
+//                  called periodically from Process(). If the retransmission timeout expires and
+//                  no ACK has been received, the last segment (SYN, data, or FIN) is
+//                  retransmitted.
+//
+//  Note(s)         If the retry limit is exceeded, the connection transitions to ERROR.
+//
+//-------------------------------------------------------------------------------------------------
+void TCP_Manager::RetransmitIfNeeded(void)
+{
+    if(!m_RetransmitPending)
+    {
+        return;
+    }
+
+    TickCount_t Now = GetTick();
+
+    if((Now - m_LastSendTick) < TCP_RETRANSMIT_TIMEOUT_MS)      // Has the retransmission timeout expired?
+    {
+        return;
+    }
+
+    static const uint8_t MaxRetries = 5;                // Too many retries?    use #define
+
+    if(m_pSocket->GetRetryCount() >= MaxRetries)
+    {
+        m_State = TCP_CLIENT_STATE_ERROR;
+        m_RetransmitPending = false;
+        return;
+    }
+
+    m_pSocket->IncrementRetryCount();
+
+    // Retransmit based on last flags
+    if(m_LastFlags & TCP_FLAG_SYN)
+    {
+        SendSYN();                                  // Retransmit SYN
+    }
+    else if(m_LastFlags & TCP_FLAG_FIN)
+    {
+        SendFIN();                                  // Retransmit FIN
+    }
+    else
+    {
+        // Retransmit data segment (Payload is still in m_TxBuffer)
+        SendSegment(m_TxBuffer, m_LastPayloadLength, (m_LastFlags & TCP_FLAG_PSH) != 0);
+    }
+
+    m_LastSendTick = Now;                           // Update timestamp
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           UpdateTimers
+//
+//  Parameter(s):   None
+//
+//  Return:         void
+//
+//  Description:    Updates internal timing information used by the TCP state machine. This
+//                  function does not perform retransmissions or state transitions directly; it
+//                  only updates timestamps and checks for timeout expiration. Higher-level logic
+//                  in Process() reacts to these values.
+//
+//-------------------------------------------------------------------------------------------------
+void TCP_Manager::UpdateTimers(void)
+{
+    TickCount_t Now = GetTick();
+
+    if(m_State == TCP_CLIENT_STATE_SYN_SENT)                        // SYN_SENT timeout (connection attempt)
+    {
+        if((Now - m_ConnectionStart) > TCP_CONNECT_TIMEOUT_MS)
+        {
+            m_State = TCP_CLIENT_STATE_ERROR;
+            return;
+        }
+    }
+
+    // FIN_WAIT_1 and FIN_WAIT_2 do not require timer actions here.
+    // State transitions occur in HandleIncoming().
+
+    if(m_State == TCP_CLIENT_STATE_TIME_WAIT)                       // TIME_WAIT expiration
+    {
+        if((Now - m_LastReceivedTick) > TCP_TIME_WAIT_MS)
+        {
+            m_State = TCP_CLIENT_STATE_CLOSED;
+            return;
+        }
+    }
+
+    // Retransmission timer is handled in RetransmitIfNeeded()
+    // This function only updates timestamps.
+}
+
+//---------------------------------------------------------------------------------------------
+
+#endif // (IP_USE_TCP_CLIENT == DEF_ENABLED)

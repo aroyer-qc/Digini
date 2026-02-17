@@ -24,10 +24,6 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-
-// it was a work in progress.. to be continued
-
-
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
@@ -578,20 +574,20 @@ SystemState_e Socket::Bind(IP_Port_t Port)
 
     if(Port == 0)
     {
-        ActualPort = m_Manager.UDP_AllocateEphemeralPort();     // Allocate ephemeral port if needed
+        ActualPort = m_pContext->GetUDP().AllocateEphemeralPort();  // Allocate ephemeral port if needed
 
         if(ActualPort == 0)
         {
-            return SYS_FAIL_PORT_IN_USE;                        // No free ephemeral port
+            return SYS_FAIL_PORT_IN_USE;                            // No free ephemeral port
         }
     }
 
-    if(m_Manager.UDP_RegisterSocket(this, ActualPort) == false) // Ask UDP_Protocol to register this port
+    if(m_Manager.UDP_RegisterSocket(this, ActualPort) == false)     // Ask UDP_Manager to register this port
     {
         return SYS_FAIL_PORT_IN_USE;
     }
 
-    pUDP->LocalPort = ActualPort;                               // Store port locally
+    pUDP->LocalPort = ActualPort;                                   // Store port locally
     m_IsBound = true;
     return SYS_READY;
 }
@@ -1014,8 +1010,7 @@ void Socket::Close(void)
         {
             UDP_Socket_t* pUDP = m_Protocol.pUDP;
 
-            // Unregister bound port
-            if((pUDP != nullptr) && (pUDP->LocalPort != 0))
+            if((pUDP != nullptr) && (pUDP->LocalPort != 0))             // Unregister bound port
             {
                 m_Manager.UDP_UnregisterSocket(pUDP->LocalPort);
             }
@@ -1069,8 +1064,7 @@ void Socket::FreeAllMessages(nOS_Queue* pQueue)
 {
     IP_PacketMsg_t* pMsg = nullptr;
 
-    // Drain queue completely (non-blocking)
-    while(nOS_QueueRead(pQueue, &pMsg, 0) == NOS_OK)
+    while(nOS_QueueRead(pQueue, &pMsg, 0) == NOS_OK)                    // Drain queue completely (non-blocking)
     {
         IP_Manager::FreeMessage(pMsg);
     }
@@ -1269,5 +1263,3 @@ SystemState_e Socket::SetOption(SocketOption_e Option, void* pValue, size_t Valu
             return SYS_INVALID_PARAMETER;
     }
 }
-
-//-------------------------------------------------------------------------------------------------

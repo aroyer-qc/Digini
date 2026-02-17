@@ -35,10 +35,25 @@
 #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// Stack(s)
+//-------------------------------------------------------------------------------------------------
+
+IF_ETH_DEF(EXPAND_X_IF_AS_STACK_DECLARATION)
+
+//-------------------------------------------------------------------------------------------------
+// Const(s)
+//-------------------------------------------------------------------------------------------------
+
+const IP_Config_t NetworkContext::m_Config[IP_NUMBER_OF_INTERFACE] =
+{
+    IF_ETH_DEF(EXPAND_X_IF_AS_STRUCT_DATA)
+};
+
+//-------------------------------------------------------------------------------------------------
 
 SystemState_e NetworkContext::InitializeMsgQ(void)
 {
-    nOS_QueueCreate(&m_Q_Msg, m_ArrayPacketPtr, sizeof(IP_PacketMsg_t*), IP_MANAGER_PACKET_Q_SIZE);
+    nOS_QueueCreate(&m_Q_Msg, m_ArrayPacketPtr, sizeof(IP_PacketMsg_t*), IP_PACKET_Q_SIZE);
     return SYS_READY;
 }
 
@@ -56,6 +71,42 @@ SystemState_e NetworkContext::SendPacket(IP_PacketMsg_t* pMsg)
 }
 
 //-------------------------------------------------------------------------------------------------
+
+void NetworkContext::Initialize(IF_ID_e IF_ID)
+{
+    m_IF_ID = IF_ID;
+    
+    // Now initialize managers
+    m_IP_Manager.Initialize(this);
+    m_SocketManager.Initialize(this);
+    m_ARP.Initialize(this);
+
+  #if (IP_USE_DHCP == DEF_ENABLED)
+    m_DHCP.Initialize(this);
+  #endif
+  #if (IP_USE_ICMP == DEF_ENABLED)
+    m_ICMP.Initialize(this);
+  #endif
+  #if (IP_USE_UDP == DEF_ENABLED)
+    m_UDP.Initialize(this);
+  #endif
+  #if (IP_USE_TCP == DEF_ENABLED)
+    m_TCP.Initialize(this);
+  #endif
+  #if (IP_USE_DNS == DEF_ENABLED)
+    m_DNS.Initialize(this);
+  #endif
+  #if (IP_USE_NTP == DEF_ENABLED)
+    m_NTP.Initialize(this);
+  #endif
+  #if (IP_USE_SNTP == DEF_ENABLED)
+    m_SNTP.Initialize(this);
+  #endif
+  #if (IP_USE_RAW == DEF_ENABLED)
+    m_RAW.Initialize(this);
+  #endif
+}
+
 
 bool NetworkContext::IsEthernetReady(void)
 {

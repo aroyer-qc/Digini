@@ -1208,8 +1208,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
         case VT100_CALLBACK_REFRESH:
         {
             Label_e           SpeedLabel;
-            IP_Manager*       pIP_Manager = pTaskNetwork->GetIP_Manager();
-            NetworkContext*   pContext    = pIP_Manager->GetContext();
+            NetworkContext*   pContext = pTaskNetwork->GetContext();
             char              Buffer[16];
             IP_MAC_Address_t  MAC;
 
@@ -1254,7 +1253,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
 
             for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
             {
-                ARP_TableEntry_t* pARP_Entry = pIP_Manager->GetTableEntryPointer(i);
+                ARP_TableEntry_t* pARP_Entry = pContext->GetARP().GetTableEntryPointer(i);
                 const uint8_t* Byte = pARP_Entry->MAC_Address.Byte;
 
                 IP_Manager::IP_ToAscii(Buffer, pARP_Entry->IP_Address);

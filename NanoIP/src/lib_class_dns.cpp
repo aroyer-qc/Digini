@@ -107,7 +107,7 @@
 //                  transactions and clears the pending-request table.
 //
 //-------------------------------------------------------------------------------------------------
-void DNS_Client::Initialize(NetworkContext* pContext)
+void DNS_Manager::Initialize(NetworkContext* pContext)
 {
     m_pContext    = pContext;
 
@@ -125,23 +125,20 @@ void DNS_Client::Initialize(NetworkContext* pContext)
     }
 
     // Allocate the DNS UDP socket once
-    SocketManager* pSocketManager = m_pContext->GetIP_Manager()->GetSocketManager();
+    SocketManager& SocketManager = m_pContext->GetSocketManager();
 
-    if(pSocketManager != nullptr)
+    m_pSocket = SocketManager.AllocSocket(SOCKET_TYPE_DATAGRAM);
+
+    if(m_pSocket != nullptr)
     {
-        m_pSocket = pSocketManager->AllocSocket(SOCKET_TYPE_DATAGRAM);
+        bool NonBlocking = true;
+        m_pSocket->SetOption(SOCKET_OPT_NON_BLOCKING, &NonBlocking, sizeof(bool));
 
-        if(m_pSocket != nullptr)
+        // Bind to ephemeral port
+        if(m_pSocket->Bind(0) != SYS_READY)
         {
-            bool NonBlocking = true;
-            m_pSocket->SetOption(SOCKET_OPT_NON_BLOCKING, &NonBlocking, sizeof(bool));
-
-            // Bind to ephemeral port
-            if(m_pSocket->Bind(0) != SYS_READY)
-            {
-                pSocketManager->FreeSocket(&m_pSocket);
-                m_pSocket = nullptr;
-            }
+            SocketManager.FreeSocket(&m_pSocket);
+            m_pSocket = nullptr;
         }
     }
 }
@@ -166,7 +163,7 @@ void DNS_Client::Initialize(NetworkContext* pContext)
 //  Note(s):        Must be called periodically by the network task.
 //
 //-------------------------------------------------------------------------------------------------
-bool DNS_Client::Process(void)
+bool DNS_Manager::Process(void)
 {
     bool Completed = false;
 
@@ -277,7 +274,7 @@ bool DNS_Client::Process(void)
 //                  This function does NOT wait for a reply. Completion is handled in Process().
 //
 //-------------------------------------------------------------------------------------------------
-bool DNS_Client::SendQuery(const char* pDomainName, DNS_Callback_t pCallback, void* pContext)
+bool DNS_Manager::SendQuery(const char* pDomainName, DNS_Callback_t pCallback, void* pContext)
 {
     if((pDomainName == nullptr) || (m_pSocket == nullptr))
     {
@@ -357,7 +354,7 @@ bool DNS_Client::SendQuery(const char* pDomainName, DNS_Callback_t pCallback, vo
 //                  is written into OutIP and the function returns true.
 //
 //-------------------------------------------------------------------------------------------------
-bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength, IP_Address_t& OutIP)
+bool DNS_Manager::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength, IP_Address_t& OutIP)
 {
     DNS_Header_t* pHeader = pMessage;
 
@@ -429,7 +426,7 @@ bool DNS_Client::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength, IP_A
 //                  DNS label format, and appends QTYPE and QCLASS. No memory allocation occurs.
 //
 //-------------------------------------------------------------------------------------------------
-size_t DNS_Client::BuildDNS_Query(DNS_Header_t* pMessage, const char* pDomainName)
+size_t DNS_Manager::BuildDNS_Query(DNS_Header_t* pMessage, const char* pDomainName)
 {
     pMessage->ID      = m_XID_Counter;
     pMessage->Flags   = DNS_FLAG_RD_RECURSION_DESIRED;      // Recursion desired
@@ -481,7 +478,7 @@ size_t DNS_Client::BuildDNS_Query(DNS_Header_t* pMessage, const char* pDomainNam
 //                  transactions by allowing each request to occupy a dedicated slot.
 //
 //-------------------------------------------------------------------------------------------------
-int DNS_Client::FindFreeSlot(void)
+int DNS_Manager::FindFreeSlot(void)
 {
     for(int i = 0; i < DNS_MAX_PENDING_COUNT; i++)
     {
@@ -509,7 +506,7 @@ int DNS_Client::FindFreeSlot(void)
 //
 //-------------------------------------------------------------------------------------------------
 
-int DNS_Client::FindSlotByXID(uint16_t XID)
+int DNS_Manager::FindSlotByXID(uint16_t XID)
 {
     for(int i = 0; i < DNS_MAX_PENDING_COUNT; i++)
     {

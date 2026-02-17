@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :  lib_class_tcp.h
+//  File :  lib_class_tcp_client.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2010-2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,57 +27,93 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
+
+#if (IP_USE_TCP_CLIENT == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
+// Enum(s)
 //-------------------------------------------------------------------------------------------------
 
-#define TCP_SYN_ACK_PACKET_SIZE         24
-#define TCP_SYN_ACK_IP_PACKET_SIZE      44
-
-#define TCP_ACK_PACKET_SIZE             24
-#define TCP_ACK_IP_PACKET_SIZE          44
-
-
-#define TCP_WINDOW_SIZE                 1396
-
-#define TCP_FLAG_FIN                    0x01                // FIN Flag
-#define TCP_FLAG_SYN                    0x02                // SYN Flag
-#define TCP_FLAG_RST                    0x04                // Reset Flag
-#define TCP_FLAG_PSH                    0x08                // Push Flag
-#define TCP_FLAG_ACK                    0x10                // Acknowledge
-#define TCP_FLAG_SYN_ACK                0x12                // SYN Flag
-#define TCP_FLAG_URG                    0x20                // Urgent Flag
-
-#define TCP_FLAG_SYN_FIN                0x03                // Illegal flag combination
-#define TCP_FLAG_NULL                   0x00
-
-
-#define TCP_HTTP_PORT                   htons(80)
+enum TCP_ClientState_e
+{
+    TCP_CLIENT_STATE_CLOSED         = 0,
+    TCP_CLIENT_STATE_SYN_SENT,
+    TCP_CLIENT_STATE_ESTABLISHED,
+    TCP_CLIENT_STATE_FIN_WAIT_1,
+    TCP_CLIENT_STATE_FIN_WAIT_2,
+    TCP_CLIENT_STATE_TIME_WAIT,
+    TCP_CLIENT_STATE_ERROR
+};
 
 //-------------------------------------------------------------------------------------------------
-// Function prototype(s)
+// Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class NetTCP
+class TCP_Manager
 {
     public:
 
-        void                Initialize          (void);
-        IP_PacketMsg_t*     Process             (IP_PacketMsg_t* pRX);
+        bool                Initialize              (NetworkContext* pContext);
+        bool                Connect                 (const IP_Address_t* pServerIP, uint16_t Port);
+        size_t              Send                    (const uint8_t* pData, size_t Length);
+        size_t              Receive                 (uint8_t* pBuffer, size_t MaxLength);
+        void                Close                   (void);
+        void                Process                 (void);
+        TCP_ClientState_e   GetState                (void)                              { return m_State; }
+        bool                IsConnected             (void)                              { return (m_State == TCP_CLIENT_STATE_ESTABLISHED); }
+
+SystemState_e       TCP_EnterListen             (Socket* pSock, uint16_t Backlog)   { return m_TCP.EnterListen(pSock, Backlog); }
+void                TCP_Close                   (Socket* pSock)                     { m_TCP.Close(pSock); }
 
     private:
 
-        IP_PacketMsg_t*     Ack                 (uint8_t Flag, size_t Size);
-        void                Push                (IP_PacketMsg_t* pRX);
-        void                PutHeader           (IP_PacketMsg_t* pTX, size_t PacketSize);
-        IP_PacketMsg_t*     Send                (uint8_t* pBuffer, size_t Size);
-        
-        
-        SocketInfo_t*       m_pSocketInfo;
+        bool                SendSYN                 (void);
+        bool                SendACK                 (uint32_t AckNumber);
+        bool                SendFIN                 (void);
+        bool                SendSegment             (const uint8_t* pPayload, size_t Length, bool PushFlag);
+
+        bool                HandleIncoming          (IP_EthernetPacket_t* pPacket);
+        bool                ParseTCP_Header         (IP_EthernetPacket_t* pPacket);
+        void                ProcessIncomingFlags    (void);
+        bool                ValidateSequence        (uint32_t Seq, uint32_t Len);
+
+        void                RetransmitIfNeeded      (void);
+        void                UpdateTimers            (void);
+
+        NetworkContext*     m_pContext;
+        Socket*             m_pSocket;
+
+        TCP_ClientState_e   m_State;
+
+        IP_Address_t        m_ServerIP;
+        uint16_t            m_ServerPort;
+
+        uint32_t            m_SeqNumber;            // Our sequence number
+        uint32_t            m_AckNumber;            // Expected next byte from server
+        uint16_t            m_RemoteWindow;
+        uint16_t            m_LocalWindow;
+
+        TickCount_t         m_LastSendTick;
+        TickCount_t         m_LastReceivedTick;
+        TickCount_t         m_RetransmitStart;
+
+        bool                m_RetransmitPending;
+        uint8_t             m_LastFlags;            // SYN, ACK, FIN, PSH
+        size_t              m_LastPayloadLength;
+
+        TickCount_t         m_ConnectionStart;
+
+        uint8_t*            m_pLastSegment;
+        size_t              m_LastSegmentLength;
+
+        // TODO replace with my stuff... no static buffer
+        uint8_t             m_TxBuffer[512];
+        size_t              m_TxLength;
+
+        uint8_t             m_RxBuffer[512];
+        size_t              m_RX_Length;
 };
 
 //-------------------------------------------------------------------------------------------------
 
+#endif // (IP_USE_TCP_CLIENT == DEF_ENABLED)

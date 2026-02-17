@@ -65,7 +65,7 @@ void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg);
 //  Note(s):        This function must be called once during network stack initialization,
 //                  before any ARP processing or IP transmission occurs.
 //-------------------------------------------------------------------------------------------------
-SystemState_e ARP_Protocol::Initialize(NetworkContext* pContext)
+SystemState_e ARP_Manager::Initialize(NetworkContext* pContext)
 {
     nOS_Error Error;
 
@@ -117,7 +117,7 @@ SystemState_e ARP_Protocol::Initialize(NetworkContext* pContext)
 //  Note(s):        Only learns from hosts on the local network. This function never sends
 //                  ARP requests; it only updates the ARP cache based on observed IP traffic.
 //-------------------------------------------------------------------------------------------------
-void ARP_Protocol::ProcessIP(IP_PacketMsg_t* pRX)
+void ARP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
 {
     IP_Address_t SubnetMask = m_pContext->GetActiveSubnetMask();
     IP_Address_t ActiveIP   = m_pContext->GetActiveIP();
@@ -189,7 +189,7 @@ void ARP_Protocol::ProcessIP(IP_PacketMsg_t* pRX)
 //                  The received ARP packet is always freed unless it is reused for
 //                  zero-copy transmission when replying to an ARP request.
 //-------------------------------------------------------------------------------------------------
-void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
+void ARP_Manager::ProcessARP(IP_PacketMsg_t* pRX)
 {
     // Sanity check: must have at least ARP frame (sans ETH header)
     if((pRX == nullptr) || (pRX->pPacket == nullptr) || (pRX->PacketSize < (sizeof(ARP_Frame_t) - sizeof(IP_EthernetHeader_t))))
@@ -309,7 +309,7 @@ void ARP_Protocol::ProcessARP(IP_PacketMsg_t* pRX)
 //                    per-entry State and circular scanning.
 //
 //-------------------------------------------------------------------------------------------------
-void ARP_Protocol::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMacAddress)
+void ARP_Manager::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMacAddress)
 {
     uint8_t Index;
     uint8_t OldestIndex = 0;
@@ -469,21 +469,21 @@ FlushPending:
 //  Description:    Builds and transmits an ARP request when the ARP table does not contain a
 //                  valid entry for the destination IP.
 //
-//                  This function is invoked by ARP_Protocol::Resolve() when an ARP lookup
+//                  This function is invoked by ARP_Manager::Resolve() when an ARP lookup
 //                  fails. It allocates a fresh packet buffer, constructs a broadcast ARP
 //                  request, and sends it through the normal transmit path.
 //
 //                  Only outgoing ARP requests are generated here. Incoming ARP requests and
-//                  replies are handled in ARP_Protocol::ProcessARP().
+//                  replies are handled in ARP_Manager::ProcessARP().
 //
 //  Note(s):        - Zero-copy is NOT used here; ARP requests are always built in a new buffer.
 //                  - The pending packet (if any) is resent upon receiving an ARP reply.
 //-------------------------------------------------------------------------------------------------
-void ARP_Protocol::ProcessOut(void)
+void ARP_Manager::ProcessOut(void)
 {
     // Allocate wrapper + ARP packet buffer using the new helper
     IP_PacketMsg_t* pMsg;// = nullptr;
-    SystemState_e State  = m_pContext->GetIP_Manager()->AllocPacket(&pMsg, sizeof(ARP_Frame_t), MEM_DBG_ARP, MEM_DBG_ARPDT);
+    SystemState_e State  = IP_Manager::AllocPacket(&pMsg, sizeof(ARP_Frame_t), MEM_DBG_ARP, MEM_DBG_ARPDT);
 
     if(State != SYS_READY)
     {
@@ -562,7 +562,7 @@ void ARP_Protocol::ProcessOut(void)
 //                  - Zero-copy ownership rules apply: ARP owns pMsg only while it is pending.
 //
 //-------------------------------------------------------------------------------------------------
-bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg_t* pMsg)
+bool ARP_Manager::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg_t* pMsg)
 {
     for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)                                                  // Check ARP table for a VALID entry
     {
@@ -666,10 +666,10 @@ bool ARP_Protocol::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg
 //                  are intentionally *not* set here and must be filled by the caller.
 //
 //  Note(s):        This function does not modify Ethernet header fields. It is used by both
-//                  ARP_Protocol::ProcessARP() when generating ARP replies (zero-copy) and
-//                  ARP_Protocol::ProcessOut() when constructing outgoing ARP requests.
+//                  ARP_Manager::ProcessARP() when generating ARP replies (zero-copy) and
+//                  ARP_Manager::ProcessOut() when constructing outgoing ARP requests.
 //-------------------------------------------------------------------------------------------------
-void ARP_Protocol::FillCommon(ARP_Frame_t* pARP, uint16_t Type)
+void ARP_Manager::FillCommon(ARP_Frame_t* pARP, uint16_t Type)
 {
     pARP->HardwareType       = ARP_HARDWARE_TYPE_ETHERNET;
     pARP->Protocol           = IP_ETHERNET_TYPE_IPV4;
@@ -700,7 +700,7 @@ void ARP_Protocol::FillCommon(ARP_Frame_t* pARP, uint16_t Type)
 //                  request is sent for the new oldest pending entry.
 //
 //-------------------------------------------------------------------------------------------------
-void ARP_Protocol::OnPendingTimeOut(int PendingOffset)
+void ARP_Manager::OnPendingTimeOut(int PendingOffset)
 {
     int PhysicalIndex = (m_PendingOldest + PendingOffset) % ARP_PENDING_QUEUE_SIZE;     // Convert logical offset to physical index
     ARP_PendingEntry_t* pEntry = &m_PendingQueue[PhysicalIndex];
@@ -745,7 +745,7 @@ void ARP_Protocol::OnPendingTimeOut(int PendingOffset)
 //                  pending queue without exposing internal member variables.
 //
 //-------------------------------------------------------------------------------------------------
-inline ARP_PendingEntry_t* ARP_Protocol::GetPendingEntryByOffset(int Offset)
+inline ARP_PendingEntry_t* ARP_Manager::GetPendingEntryByOffset(int Offset)
 {
     int Index = (m_PendingOldest + Offset) % ARP_PENDING_QUEUE_SIZE;
     return &m_PendingQueue[Index];
@@ -771,7 +771,7 @@ inline ARP_PendingEntry_t* ARP_Protocol::GetPendingEntryByOffset(int Offset)
 //  Note(s):        This callback does not resend pending ARP requests or packets. Pending
 //                  resolutions are completed by UpdateEntry() when a valid mapping is learned.
 //-------------------------------------------------------------------------------------------------
-void ARP_Protocol::TimerCallBack(void)
+void ARP_Manager::TimerCallBack(void)
 {
     m_Time++;                                                           // Advance ARP time counter
 
@@ -803,13 +803,13 @@ void ARP_Protocol::TimerCallBack(void)
 //  Name:           ARP_TimerCallBack
 //
 //  Parameter(s):   nOS_Timer*  pTimer     Unused timer handle (provided by nOS)
-//                  void*       pArg       Pointer to the ARP_Protocol instance
+//                  void*       pArg       Pointer to the ARP_Manager instance
 //
 //  Return:         void
 //
 //  Description:    Global nOS timer callback used to service ARP maintenance.
 //
-//                  - Calls ARP_Protocol::TimerCallBack() to age ARP table entries.
+//                  - Calls ARP_Manager::TimerCallBack() to age ARP table entries.
 //                  - Iterates through all pending ARP resolution requests.
 //                  - For each pending entry, checks whether a VALID ARP table entry still exists.
 //                  - If the ARP entry expired or was removed, the pending packet is dropped.
@@ -820,10 +820,10 @@ void ARP_Protocol::TimerCallBack(void)
 void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg)
 {
     VAR_UNUSED(pTimer);
-    ARP_Protocol* pARP = (ARP_Protocol*)pArg;
+    ARP_Manager* pARP = (ARP_Manager*)pArg;
 
     pARP->TimerCallBack();                                                          // Age ARP table entries
-    ARP_TableEntry_t* pTable = pARP->GetTableBasePointer();
+    ARP_TableEntry_t* pTable = pARP->GetTableEntryPointer(0);
 
     for(int Offset = 0; Offset < ARP_PENDING_QUEUE_SIZE; Offset++)                  // Scan entire pending queue in circular order
     {

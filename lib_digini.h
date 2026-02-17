@@ -136,10 +136,6 @@
 #include "./Memory/inc/lib_memory.h"
 #include "./Memory/inc/lib_node_list.h"
 #include "./Memory/inc/lib_memory_node.h"
-#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
-#include "./NanoIP/inc/lib_ethernet_typedef.h"
-#include "./NanoIP/inc/lib_class_context.h"
-#endif
 
 //-------------------------------------------------------------------------------------------------
 // Interface
@@ -168,17 +164,19 @@
 #endif
 
 #if (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
-#include "./NanoIP/inc/lib_class_socket.h"
+#include "./NanoIP/inc/lib_ethernet_typedef.h"
+#include "./NanoIP/inc/lib_class_ethernet_if.h"
 #include "./NanoIP/inc/lib_class_arp.h"
-#include "./NanoIP/inc/lib_class_udp.h"
 #include "./NanoIP/inc/lib_class_dhcp.h"
-#include "./NanoIP/inc/lib_class_tcp_client.h"
-//#include "./NanoIP/inc/lib_class_tcp_server.h"
 #include "./NanoIP/inc/lib_class_dns.h"
 #include "./NanoIP/inc/lib_class_icmp.h"
-#include "./NanoIP/inc/lib_class_tcp_client.h"
-//#include "./NanoIP/inc/lib_class_tcp_server.h"
+//#include "./NanoIP/inc/lib_class_ntp.h"
 #include "./NanoIP/inc/lib_class_sntp.h"
+#include "./NanoIP/inc/lib_class_tcp.h"
+#include "./NanoIP/inc/lib_class_udp.h"
+#include "./NanoIP/inc/lib_class_socket.h"
+#include "./NanoIP/inc/lib_class_IP_Manager.h"
+#include "./NanoIP/inc/lib_class_context.h"
 #include "./NanoIP/inc/Interface/lib_class_ethernet_interface.h"
 #include "./Peripheral/inc/port/lib_class_eth.h"
 #include PHY_DRIVER_INCLUDE
@@ -256,8 +254,6 @@
 #include "./Comm/CmdLine/inc/lib_cli.h"
 #include "./Comm/VT100/inc/lib_vt100.h"
 #include "./Comm/Comm/inc/lib_comm.h"
-#include "./NanoIP/inc/lib_class_ethernet_if.h"
-#include "./NanoIP/inc/lib_Class_IP_Manager.h"
 
 //-------------------------------------------------------------------------------------------------
 // High level Peripheral

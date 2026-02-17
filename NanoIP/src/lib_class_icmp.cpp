@@ -52,7 +52,7 @@
 //  Description:    Initialize the ICMP protocol handler
 //
 //-------------------------------------------------------------------------------------------------
-void ICMP_Protocol::Initialize(NetworkContext* pContext)
+void ICMP_Manager::Initialize(NetworkContext* pContext)
 {
     m_pContext = pContext;
 }
@@ -71,7 +71,7 @@ void ICMP_Protocol::Initialize(NetworkContext* pContext)
 //                  a TX reply.
 //  
 //-------------------------------------------------------------------------------------------------
-void ICMP_Protocol::Process(IP_PacketMsg_t* pRX)
+void ICMP_Manager::Process(IP_PacketMsg_t* pRX)
 {
     //  Check if IP is Valid              and Validate size
     if((m_pContext->IsIP_Valid() == true) && (pRX->PacketSize >= sizeof(ICMP_Frame_t)))

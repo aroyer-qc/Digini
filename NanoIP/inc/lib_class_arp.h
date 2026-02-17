@@ -51,7 +51,7 @@ struct ARP_PendingEntry_t
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-class ARP_Protocol
+class ARP_Manager
 {
     public:
 
@@ -63,10 +63,11 @@ class ARP_Protocol
         void                TimerCallBack	    	(void);
 
         // For ARP Timer callback
-        IP_Address_t        GetIP_Address           (void)                      { return m_IP_Address; }
-        ARP_TableEntry_t*   GetTableBasePointer     (void)                      { return m_TableEntry; }
+        IP_Address_t        GetIP_Address           (void)                      { return m_IP_Address;         }
+        ARP_TableEntry_t*   GetTableEntryPointer    (int Entry)                 { return &m_TableEntry[(Entry < IP_ARP_TABLE_SIZE) ? Entry : 0]; }
         ARP_PendingEntry_t* GetPendingEntryByOffset (int Offset);
         void                OnPendingTimeOut        (int LogicalIndex);
+
 
     private:
 

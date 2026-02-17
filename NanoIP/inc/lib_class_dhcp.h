@@ -161,15 +161,22 @@ struct DHCP_Options_t
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class DHCPv4_Client
+class DHCPv4_Manager
 {
     public:
 
         void            Initialize      (NetworkContext* pContext);
         bool            Process         (void);
 
+        bool            GetMode         (void)                      { return m_Mode;       }
+        bool            GetIP           (void)                      { return m_IP;         }
+        bool            GetGatewayIP    (void)                      { return m_GatewayIP;  }
+        bool            GetSubnetMask   (void)                      { return m_SubnetMask; }
+        bool            GetServerIP     (void)                      { return m_ServerIP;   }
+        bool            GetDNS_IP       (void)                      { return m_DNS_IP;     }
+        bool            IsItEnabled     (void)                      { return m_Enabled;    }
+        
         void            SetMode         (bool Mode)                 { m_Mode = Mode; }
-        bool            GetMode         (void)                      { return m_Mode; }
 
         void            Reset           (void);
         bool            Start           (void);
@@ -194,6 +201,13 @@ class DHCPv4_Client
         nOS_Timer               m_TimerT2_Rebind;
         bool                    m_Mode;
         DHCP_State_e            m_State;
+
+        bool                    m_Enabled;
+        IP_Address_t            m_GatewayIP;                    // Gateway IP Address from server
+        IP_Address_t            m_SubnetMask;                   // Subnet Mask from server
+        IP_Address_t            m_ServerIP;                     // Server IP
+        IP_Address_t            m_IP;                           // IP Address from server
+        IP_Address_t            m_DNS_IP;                       // DNS Server IP Address from server
 
         static const uint8_t    m_OPL_Discover[8];
         static const uint8_t    m_OPL_Request[10];

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :  lib_class_udp.h
+//  File :  lib_class_raw.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2010-2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -28,36 +28,27 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (IP_USE_UDP == DEF_ENABLED)
+#if (IP_USE_RAW == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define UDP_EPHEMERAL_PORT_MIN              49152
-#define UDP_EPHEMERAL_PORT_MAX              65535
-#define UDP_MAX_BINDS                       8
-
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
-
-struct UDP_BoundEntry_t
-{
-    IP_Port_t Port;
-    Socket*   pSocket;
-};
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class UDP_Manager
+class RAW_Manager
 {
     public:
 
         void 				    Initialize  		    (NetworkContext* pContext);
         void                    Process				    (IP_PacketMsg_t* pMsg);
+        
         SystemState_e           Send                    (UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent);
         void                    Input                   (IP_PacketMsg_t* pMsg);
 
@@ -72,6 +63,9 @@ class UDP_Manager
         UDP_BoundEntry_t        m_BoundSockets          [UDP_MAX_BINDS];
         size_t                  m_BoundCount            = 0;
         IP_Port_t               m_NextEphemeralPort     = UDP_EPHEMERAL_PORT_MIN;
+
+
+
 
         NetworkContext*         m_pContext;
 };

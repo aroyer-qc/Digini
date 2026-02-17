@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2010-2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -79,7 +79,7 @@
 //                  incoming datagrams.
 //
 //-------------------------------------------------------------------------------------------------
-void UDP_Protocol::Initialize(NetworkContext* pContext)
+void UDP_Manager::Initialize(NetworkContext* pContext)
 {
     m_pContext = pContext;
     memset(m_BoundSockets, 0, sizeof(m_BoundSockets));      // Clear the binding table
@@ -111,7 +111,7 @@ void UDP_Protocol::Initialize(NetworkContext* pContext)
 //                  registered), the function frees all associated packet resources.
 //
 //-------------------------------------------------------------------------------------------------
-void UDP_Protocol::Process(IP_PacketMsg_t* pMsg)
+void UDP_Manager::Process(IP_PacketMsg_t* pMsg)
 {
     IP_Header_t*  pIP  = &pMsg->pPacket->UDP_Frame.IP_Header;
     UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
@@ -195,7 +195,7 @@ void UDP_Protocol::Process(IP_PacketMsg_t* pMsg)
 //                  On failure, all allocated resources are released before returning.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e UDP_Protocol::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent)
+SystemState_e UDP_Manager::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent)
 {
     *pBytesSent = 0;
 
@@ -203,7 +203,7 @@ SystemState_e UDP_Protocol::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Leng
 
     // Allocate wrapper + packet buffer using the new helper
     IP_PacketMsg_t* pMsg = nullptr;
-    SystemState_e State  = m_pContext->GetIP_Manager()->AllocPacket(&pMsg, PacketSize, MEM_DBG_UDP, MEM_DBG_UDPDT);
+    SystemState_e State  = IP_Manager::AllocPacket(&pMsg, PacketSize, MEM_DBG_UDP, MEM_DBG_UDPDT);
 
     if(State != SYS_READY)
     {
@@ -253,7 +253,7 @@ SystemState_e UDP_Protocol::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Leng
 //                  Port Unreachable message (if enabled).
 //
 //-------------------------------------------------------------------------------------------------
-Socket* UDP_Protocol::FindSocketByPort(IP_Port_t port)
+Socket* UDP_Manager::FindSocketByPort(IP_Port_t port)
 {
     for(size_t i = 0; i < m_BoundCount; i++)
     {
@@ -282,7 +282,7 @@ Socket* UDP_Protocol::FindSocketByPort(IP_Port_t port)
 //                  prevents multiple sockets from binding the same port.
 //
 //-------------------------------------------------------------------------------------------------
-bool UDP_Protocol::RegisterSocket(Socket* pSock, IP_Port_t Port)
+bool UDP_Manager::RegisterSocket(Socket* pSock, IP_Port_t Port)
 {
     for(size_t i = 0; i < m_BoundCount; i++)                // Check if already bound
     {
@@ -318,7 +318,7 @@ bool UDP_Protocol::RegisterSocket(Socket* pSock, IP_Port_t Port)
 //                  rebinding to a new port.
 //
 //-------------------------------------------------------------------------------------------------
-void UDP_Protocol::UnregisterSocket(IP_Port_t Port)
+void UDP_Manager::UnregisterSocket(IP_Port_t Port)
 {
     for(size_t i = 0; i < m_BoundCount; i++)
     {
@@ -353,7 +353,7 @@ void UDP_Protocol::UnregisterSocket(IP_Port_t Port)
 //                  conflict-free port assignment.
 //
 //-------------------------------------------------------------------------------------------------
-IP_Port_t UDP_Protocol::AllocateEphemeralPort(void)
+IP_Port_t UDP_Manager::AllocateEphemeralPort(void)
 {
     IP_Port_t start = m_NextEphemeralPort;
 

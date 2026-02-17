@@ -142,7 +142,7 @@
 // const(s)
 //-------------------------------------------------------------------------------------------------
 
-const uint8_t DHCPv4_Client::m_OPL_Discover[8] = // OPL stand for option list
+const uint8_t DHCPv4_Manager::m_OPL_Discover[8] = // OPL stand for option list
 {
     55,        // Parameter list
     6,         // Size
@@ -154,7 +154,7 @@ const uint8_t DHCPv4_Client::m_OPL_Discover[8] = // OPL stand for option list
     59         // DHCP T2 Value
 };
 
-const uint8_t DHCPv4_Client::m_OPL_Request[10] =
+const uint8_t DHCPv4_Manager::m_OPL_Request[10] =
 {
     55,        // Parameter list
     8,         // Size
@@ -178,7 +178,7 @@ const uint8_t DHCPv4_Client::m_OPL_Request[10] =
 //  Description:    Initialize the DHCP Client
 //
 //-------------------------------------------------------------------------------------------------
-void DHCPv4_Client::Initialize(NetworkContext* pContext)
+void DHCPv4_Manager::Initialize(NetworkContext* pContext)
 {
     nOS_Error Error;
 
@@ -191,8 +191,6 @@ void DHCPv4_Client::Initialize(NetworkContext* pContext)
     Error = nOS_TimerCreate(&m_TimerDiscover,  nullptr, nullptr, DHCP_DISCOVER_TIME_OUT, NOS_TIMER_ONE_SHOT);
     Error = nOS_TimerCreate(&m_TimerT1_Lease,  nullptr, nullptr, DHCP_T1_LEASE_TIME_OUT, NOS_TIMER_ONE_SHOT);
     Error = nOS_TimerCreate(&m_TimerT2_Rebind, nullptr, nullptr, DHCP_T2_REBIND_TIME_OUT, NOS_TIMER_ONE_SHOT);
-
-    //Start();
 
     VAR_UNUSED(Error); // TODO Manage error
 }
@@ -207,7 +205,7 @@ void DHCPv4_Client::Initialize(NetworkContext* pContext)
 //  Description:    Reset the DHCP Client
 //
 //-------------------------------------------------------------------------------------------------
-void DHCPv4_Client::Reset(void)
+void DHCPv4_Manager::Reset(void)
 {
     // Stop all DHCP timers
     if(nOS_TimerIsRunning(&m_TimerDiscover))  nOS_TimerStop(&m_TimerDiscover,  true);
@@ -219,10 +217,10 @@ void DHCPv4_Client::Reset(void)
 
     // Clear DHCP-assigned network parameters
     m_pContext->SetIP_Valid(false);
-    m_pContext->SetDHCP_GatewayIP(IP_ADDRESS(0,0,0,0));
-    m_pContext->SetDHCP_SubnetMask(IP_ADDRESS(0,0,0,0));
-    m_pContext->SetDHCP_IP(IP_ADDRESS(0,0,0,0));
-    m_pContext->SetDHCP_DNS_IP(IP_ADDRESS(0,0,0,0));
+    m_IP         = IP_ADDRESS(0,0,0,0);
+    m_GatewayIP  = IP_ADDRESS(0,0,0,0);
+    m_SubnetMask = IP_ADDRESS(0,0,0,0);
+    m_DNS_IP     = IP_ADDRESS(0,0,0,0);
 
     // Generate a new transaction ID for the next DISCOVER
     m_XID = RNG_GetRandom();
@@ -230,7 +228,7 @@ void DHCPv4_Client::Reset(void)
     // Close existing DHCP socket if present
     if(m_pSocket != nullptr)
     {
-        m_pContext->GetIP_Manager()->GetSocketManager()->FreeSocket(&m_pSocket);
+        m_pContext->GetSocketManager().FreeSocket(&m_pSocket);
         m_pSocket = nullptr;
     }
 }
@@ -245,10 +243,10 @@ void DHCPv4_Client::Reset(void)
 //  Description:    Start the DHCP Client
 //
 //-------------------------------------------------------------------------------------------------
-bool DHCPv4_Client::Start(void)
+bool DHCPv4_Manager::Start(void)
 {
     // Create a new UDP socket for DHCP
-    m_pSocket = m_pContext->GetIP_Manager()->GetSocketManager()->AllocSocket(SOCKET_TYPE_DATAGRAM);
+    m_pSocket = m_pContext->GetSocketManager().AllocSocket(SOCKET_TYPE_DATAGRAM);
 
     if(m_pSocket == nullptr)
     {
@@ -263,7 +261,7 @@ bool DHCPv4_Client::Start(void)
 
     if(State != SYS_READY)
     {
-        m_pContext->GetIP_Manager()->GetSocketManager()->FreeSocket(&m_pSocket);
+        m_pContext->GetSocketManager().FreeSocket(&m_pSocket);
         m_pSocket = nullptr;
         return false;
     }
@@ -283,13 +281,11 @@ bool DHCPv4_Client::Start(void)
 //  Description:    Process the DHCP function
 //
 //-------------------------------------------------------------------------------------------------
-bool DHCPv4_Client::Process(void)
+bool DHCPv4_Manager::Process(void)
 {
-    // Handle internal timers (non-blocking)
-    if(nOS_TimerIsRunning(&m_TimerDiscover) == false)
+    if(nOS_TimerIsRunning(&m_TimerDiscover) == false)                                       // Handle internal timers (non-blocking)
     {
-        // Retry DISCOVER if still not bound
-        if((m_State == DHCP_STATE_INITIAL) || (m_State == DHCP_STATE_SELECTING))
+        if((m_State == DHCP_STATE_INITIAL) || (m_State == DHCP_STATE_SELECTING))            // Retry DISCOVER if still not bound
         {
             Discover();
         }
@@ -383,15 +379,14 @@ bool DHCPv4_Client::Process(void)
 //                  IP Frame Protocol      must be set after UDP checksum is calculated
 //
 //-------------------------------------------------------------------------------------------------
-bool DHCPv4_Client::Discover(void)
+bool DHCPv4_Manager::Discover(void)
 {
     uint8_t       Options;
     DHCP_Msg_t*   pTX     = nullptr;
     size_t        Length  = 0;
-    bool          Status  = true;     // Default: assume success unless send fails
+    bool          Status  = true;                                                               // Default: assume success unless send fails
 
-    // Allocate DHCP transmit buffer
-    pTX = (DHCP_Msg_t*)pMemoryPool->AllocAndClear(sizeof(DHCP_Msg_t), MEM_DBG_DHCPTX);
+    pTX = (DHCP_Msg_t*)pMemoryPool->AllocAndClear(sizeof(DHCP_Msg_t), MEM_DBG_DHCPTX);          // Allocate DHCP transmit buffer
 
     if(pTX == nullptr)
     {
@@ -402,19 +397,14 @@ bool DHCPv4_Client::Discover(void)
     }
 
     PutHeader(pTX);                                                                             // Build DHCP header (Op, HTYPE, HLEN, XID, CHADDR, etc.)
-
     // Build DHCP options for DISCOVER
-    Options = (DHCP_PUT_OPTION_CLIENT_IDENTIFIER |
-               DHCP_PUT_OPTION_HOST_NAME         |
-               DHCP_PUT_OPTION_PL_DISCOVER       |
-               DHCP_PUT_OPTION_VENDOR_CLASS);
+    Options = (DHCP_PUT_OPTION_CLIENT_IDENTIFIER | DHCP_PUT_OPTION_HOST_NAME | DHCP_PUT_OPTION_PL_DISCOVER | DHCP_PUT_OPTION_VENDOR_CLASS);
 
     Length = PutOption(&pTX->Options[0], Options, DHCP_OPTION_DISCOVER);
 
     size_t PacketLength = DHCP_HEADER_SIZE + Length;
 
-    // Destination: broadcast IP
-    SocketInfo_t Destination;
+    SocketInfo_t Destination;                                                                   // Destination: broadcast IP
     Destination.Address = IP_ADDRESS(255,255,255,255);
     Destination.Port    = DHCP_SERVER_PORT;
 
@@ -471,15 +461,14 @@ bool DHCPv4_Client::Discover(void)
 //                  packet using the UDP socket. The transmit buffer is freed after sending.
 //
 //-------------------------------------------------------------------------------------------------
-bool DHCPv4_Client::Request(void)
+bool DHCPv4_Manager::Request(void)
 {
     uint8_t       Options;
     DHCP_Msg_t*   pTX     = nullptr;
     size_t        Length  = 0;
     bool          Status  = true;
 
-    // Allocate DHCP transmit buffer
-    pTX = (DHCP_Msg_t*)pMemoryPool->AllocAndClear(sizeof(DHCP_Msg_t), MEM_DBG_DHCPTX);
+    pTX = (DHCP_Msg_t*)pMemoryPool->AllocAndClear(sizeof(DHCP_Msg_t), MEM_DBG_DHCPTX);      // Allocate DHCP transmit buffer
 
     if(pTX == nullptr)
     {
@@ -487,9 +476,7 @@ bool DHCPv4_Client::Request(void)
     }
 
     // Build DHCP options for REQUEST
-    Options = (DHCP_PUT_OPTION_CLIENT_IDENTIFIER |
-               DHCP_PUT_OPTION_HOST_NAME         |
-               DHCP_PUT_OPTION_PL_REQUEST);
+    Options = (DHCP_PUT_OPTION_CLIENT_IDENTIFIER | DHCP_PUT_OPTION_HOST_NAME | DHCP_PUT_OPTION_PL_REQUEST);
 
     // Before BOUND → include Requested IP
     // After BOUND  → include Server Identifier
@@ -503,31 +490,21 @@ bool DHCPv4_Client::Request(void)
     }
 
     Length = PutOption(&pTX->Options[0], Options, DHCP_OPTION_REQUEST);
-
-    // Build DHCP header (Op, HTYPE, HLEN, XID, CHADDR, etc.)
-    PutHeader(pTX);
-
-    // Compute total packet length
-    size_t PacketLength = DHCP_HEADER_SIZE + Length;
-
-    // Select destination: broadcast for initial REQUEST, unicast for renewal
-    SocketInfo_t Destination;
+    PutHeader(pTX);                                                                             // Build DHCP header (Op, HTYPE, HLEN, XID, CHADDR, etc.)
+    size_t PacketLength = DHCP_HEADER_SIZE + Length;                                            // Compute total packet length
+    SocketInfo_t Destination;                                                                   // Select destination: broadcast for initial REQUEST, unicast for renewal
 
     if(m_State < DHCP_STATE_BOUND)
     {
-        // Initial REQUEST -> broadcast
-        Destination.Address = IP_ADDRESS(255,255,255,255);
+        Destination.Address = IP_ADDRESS(255,255,255,255);                                      // Initial REQUEST -> broadcast
     }
     else
     {
-        // Renewal REQUEST -> unicast to DHCP server
-        Destination.Address = m_pContext->GetDHCP_ServerIP();
+        Destination.Address = m_pContext->GetDHCP_ServerIP();                                   // Renewal REQUEST -> unicast to DHCP server
     }
 
     Destination.Port = DHCP_SERVER_PORT;
-
-    // Send DHCP REQUEST
-    size_t BytesSent = 0;
+    size_t BytesSent = 0;                                                                       // Send DHCP REQUEST
     SystemState_e Error = m_pSocket->SendTo((uint8_t*)pTX, PacketLength, &Destination, &BytesSent);
 
     if((Error != SYS_READY) || (BytesSent == 0))
@@ -545,13 +522,13 @@ bool DHCPv4_Client::Request(void)
       #endif
     }
 
-    // Free TX buffer (It was copied into the a packet)
-    pMemoryPool->Free((void**)&pTX);
+    pMemoryPool->Free((void**)&pTX);                                                            // Free TX buffer (It was copied into the a packet)
 
     return Status;
 }
 
 //-------------------------------------------------------------------------------------------------
+//
 // Name:            ParseOffer
 //
 // Parameter(s):    DHCP_Msg_t* pRX
@@ -560,7 +537,7 @@ bool DHCPv4_Client::Request(void)
 // Description:     Extract offered client IP and DHCP server IP from the OFFER message.
 //                  This function assumes the message has already been validated.
 //-------------------------------------------------------------------------------------------------
-void DHCPv4_Client::ParseOffer(DHCP_Msg_t* pRX)
+void DHCPv4_Manager::ParseOffer(DHCP_Msg_t* pRX)
 {
     // Offered IP address for this client
     m_Options.ClientIP = pRX->YourIP_Address;
@@ -582,6 +559,7 @@ void DHCPv4_Client::ParseOffer(DHCP_Msg_t* pRX)
 }
 
 //-------------------------------------------------------------------------------------------------
+//
 // Name:            IsBound
 //
 // Parameter(s):    None
@@ -590,25 +568,19 @@ void DHCPv4_Client::ParseOffer(DHCP_Msg_t* pRX)
 // Description:     Apply DHCP lease parameters to the interface and transition to BOUND state.
 //                  This function assumes that m_Options has been filled by ParseOption().
 //-------------------------------------------------------------------------------------------------
-void DHCPv4_Client::IsBound(void)
+void DHCPv4_Manager::IsBound(void)
 {
-    // Update interface context
-    m_pContext->SetDHCP_IP(m_Options.ClientIP);
-    m_pContext->SetDHCP_SubnetMask(m_Options.SubnetMaskIP);
-    m_pContext->SetDHCP_GatewayIP(m_Options.GatewayIP);
-    m_pContext->SetDHCP_DNS_IP(m_Options.DNS_ServerIP);
-    m_pContext->SetDHCP_ServerIP(m_Options.ServerIP);
+    m_IP         = m_Options.ClientIP;              // Update DHCP
+    m_SubnetMask = m_Options.SubnetMaskIP;
+    m_GatewayIP  = m_Options.GatewayIP;
+    m_DNS_IP     = m_Options.DNS_ServerIP;
+    m_ServerIP   = m_Options.ServerIP;
 
-    // Mark interface as valid
-    m_pContext->SetIP_Valid(true);
+    m_pContext->SetIP_Valid(true);                  // Mark interface as valid
+    m_State = DHCP_STATE_BOUND;                     // Update DHCP state
 
-    // Update DHCP state
-    m_State = DHCP_STATE_BOUND;
-
-    // Restart lease timers (T1 and T2)
-    nOS_TimerStop(&m_TimerT1_Lease,  true);
+    nOS_TimerStop(&m_TimerT1_Lease,  true);         // Restart lease timers (T1 and T2)
     nOS_TimerStop(&m_TimerT2_Rebind, true);
-
     nOS_TimerStart(&m_TimerT1_Lease);
     nOS_TimerStart(&m_TimerT2_Rebind);
 
@@ -624,6 +596,7 @@ void DHCPv4_Client::IsBound(void)
 }
 
 //-------------------------------------------------------------------------------------------------
+//
 // Name:            ParseOption
 //
 // Parameter(s):    DHCP_Msg_t* pRX
@@ -632,7 +605,7 @@ void DHCPv4_Client::IsBound(void)
 // Description:     Parse DHCP options from the received message. This function assumes that the
 //                  DHCP header and magic cookie have already been validated.
 //-------------------------------------------------------------------------------------------------
-void DHCPv4_Client::ParseOption(DHCP_Msg_t* pRX)
+void DHCPv4_Manager::ParseOption(DHCP_Msg_t* pRX)
 {
     uint8_t* pPtr = (uint8_t*)&pRX->Options;
     uint8_t  Code;
@@ -643,34 +616,28 @@ void DHCPv4_Client::ParseOption(DHCP_Msg_t* pRX)
     {
         Code = *pPtr;
 
-        // End of options field
-        if(Code == DHCP_OPTION_END_OF_FIELD)
+        if(Code == DHCP_OPTION_END_OF_FIELD)                // End of options field
         {
             break;
         }
 
-        // Padding: skip one byte
-        if(Code == DHCP_OPTION_PADDING)
+        if(Code == DHCP_OPTION_PADDING)                     // Padding: skip one byte
         {
             pPtr++;
             continue;
         }
 
-        // Read option length
-        Len = *(pPtr + 1);
+        Len = *(pPtr + 1);                                  // Read option length
 
-        // Safety: avoid malformed packets
-        if(Len == 0)
+        if(Len == 0)                                        // Safety: avoid malformed packets
         {
             pPtr += 2;
             continue;
         }
 
-        // Pointer to option data
-        uint8_t* pData = pPtr + 2;
+        uint8_t* pData = pPtr + 2;                          // Pointer to option data
 
-        // Process known options
-        switch(Code)
+        switch(Code)                                        // Process known options
         {
             case DHCP_OPTION_SUBNET_MASK:
             {
@@ -735,17 +702,16 @@ void DHCPv4_Client::ParseOption(DHCP_Msg_t* pRX)
             }
             break;
 
-            default:
-                // Unknown option -> ignore
+            default:                                        // Unknown option -> ignore
                 break;
         }
 
-        // Move to next option (code + length + data)
-        pPtr += (2 + Len);
+        pPtr += (2 + Len);                                  // Move to next option (code + length + data)
     }
 }
 
 //-------------------------------------------------------------------------------------------------
+//
 // Name:            PutOption
 //
 // Parameter(s):    uint8_t* pPtr      - Pointer to DHCP options buffer
@@ -758,23 +724,18 @@ void DHCPv4_Client::ParseOption(DHCP_Msg_t* pRX)
 //                  This function does not perform bounds checking; caller must ensure
 //                  the buffer is large enough.
 //-------------------------------------------------------------------------------------------------
-size_t DHCPv4_Client::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
+size_t DHCPv4_Manager::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
 {
     uint8_t* pStart = pPtr;
 
-    // DHCP Message Type
-    *pPtr++ = DHCP_OPTION_MESSAGE_TYPE;
+    *pPtr++ = DHCP_OPTION_MESSAGE_TYPE;                     // DHCP Message Type
     *pPtr++ = 1;
     *pPtr++ = Message;
 
-    // Host Name (hostname + "_" + last 3 bytes of MAC in hex)
-    if (Options & DHCP_PUT_OPTION_HOST_NAME)
+    if (Options & DHCP_PUT_OPTION_HOST_NAME)                // Host Name (hostname + "_" + last 3 bytes of MAC in hex)
     {
-        // Get and sanitize hostname
-        const char* rawHost = m_pContext->GetHostName();
-
-        // Accept only printable ASCII, stop at first invalid or null
-        size_t HostLen = 0;
+        const char* rawHost = m_pContext->GetHostName();    // Get and sanitize hostname
+        size_t HostLen = 0;                                 // Accept only printable ASCII, stop at first invalid or null
 
         while(rawHost[HostLen] >= 32 && rawHost[HostLen] <= 126)
         {
@@ -786,11 +747,9 @@ size_t DHCPv4_Client::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
             HostLen = 63;
         }
 
-        // Build suffix "_XX:YY:ZZ"
-        IP_MAC_Address_t mac;
+        IP_MAC_Address_t mac;                               // Build suffix "_XX:YY:ZZ"
         m_pContext->GetMAC_Address(&mac);
-
-        char suffix[1 + 3 * 3];   // "_" + "XX:" + "YY:" + "ZZ" = 10 bytes
+        char suffix[1 + 3 * 3];                             // "_" + "XX:" + "YY:" + "ZZ" = 10 bytes
         char* s = suffix;
 
         *s++ = '_';
@@ -805,26 +764,21 @@ size_t DHCPv4_Client::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
 
             if(i < 5)
             {
-                *s++ = ':';   // Colon between bytes
+                *s++ = ':';                                 // Colon between bytes
             }
         }
 
         const size_t SuffixLen = (size_t)(s - suffix);
         const size_t TotalLen  = HostLen + SuffixLen;
-
-        // Emit DHCP Option 12
-        *pPtr++ = DHCP_OPTION_HOST_NAME;
+        *pPtr++ = DHCP_OPTION_HOST_NAME;                    // Emit DHCP Option 12
         *pPtr++ = (uint8_t)TotalLen;
-
         memcpy(pPtr, rawHost, HostLen);
         pPtr += HostLen;
-
         memcpy(pPtr, suffix, SuffixLen);
         pPtr += SuffixLen;
     }
 
-    // Requested Client IP (used in initial REQUEST)
-    if(Options & DHCP_PUT_OPTION_REQUESTED_CLIENT_IP)
+    if(Options & DHCP_PUT_OPTION_REQUESTED_CLIENT_IP)       // Requested Client IP (used in initial REQUEST)
     {
         *pPtr++ = DHCP_OPTION_CLIENT_IP;
         *pPtr++ = 4;
@@ -834,25 +788,22 @@ size_t DHCPv4_Client::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
         pPtr += sizeof(ip);
     }
 
-    // Client Identifier (Type 1 = Ethernet + MAC address)
-    if(Options & DHCP_PUT_OPTION_CLIENT_IDENTIFIER)
+    if(Options & DHCP_PUT_OPTION_CLIENT_IDENTIFIER)         // Client Identifier (Type 1 = Ethernet + MAC address)
     {
         *pPtr++ = DHCP_OPTION_CLIENT_IDENTIFIER;
-        *pPtr++ = 1 + IP_MAC_ADDRESS_SIZE;   // Type + MAC
-        *pPtr++ = 1;                         // Hardware type = Ethernet
+        *pPtr++ = 1 + IP_MAC_ADDRESS_SIZE;                  // Type + MAC
+        *pPtr++ = 1;                                        // Hardware type = Ethernet
         m_pContext->GetMAC_Address((IP_MAC_Address_t*)pPtr);
         pPtr += IP_MAC_ADDRESS_SIZE;
     }
 
-    // Predefined option list for DISCOVER
-    if(Options & DHCP_PUT_OPTION_PL_DISCOVER)
+    if(Options & DHCP_PUT_OPTION_PL_DISCOVER)               // Predefined option list for DISCOVER
     {
         memcpy(pPtr, m_OPL_Discover, sizeof(m_OPL_Discover));
         pPtr += sizeof(m_OPL_Discover);
     }
 
-    // Predefined option list for REQUEST
-    if(Options & DHCP_PUT_OPTION_PL_REQUEST)
+    if(Options & DHCP_PUT_OPTION_PL_REQUEST)                // Predefined option list for REQUEST
     {
         memcpy(pPtr, m_OPL_Request, sizeof(m_OPL_Request));
         pPtr += sizeof(m_OPL_Request);
@@ -867,8 +818,7 @@ size_t DHCPv4_Client::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
         pPtr+= Length;
     }
 
-    // Server Identifier (used in renewal REQUEST)
-    if(Options & DHCP_PUT_OPTION_SERVER_IP)
+    if(Options & DHCP_PUT_OPTION_SERVER_IP)                 // Server Identifier (used in renewal REQUEST)
     {
         *pPtr++ = DHCP_OPTION_SERVER_IP;
         *pPtr++ = 4;
@@ -878,13 +828,12 @@ size_t DHCPv4_Client::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
         pPtr += sizeof(ip);
     }
 
-    // End of DHCP options
-    *pPtr++ = DHCP_OPTION_END_OF_FIELD;
-
+    *pPtr++ = DHCP_OPTION_END_OF_FIELD;                     // End of DHCP options
     return (size_t)(pPtr - pStart);
 }
 
 //-------------------------------------------------------------------------------------------------
+//
 // Name:            PutHeader
 //
 // Parameter(s):    DHCP_Msg_t* pTX
@@ -893,37 +842,32 @@ size_t DHCPv4_Client::PutOption(uint8_t* pPtr, uint8_t Options, uint8_t Message)
 // Description:     Build the fixed DHCP header fields for DISCOVER/REQUEST messages.
 //                  This function assumes that m_XID and m_Context are already initialized.
 //-------------------------------------------------------------------------------------------------
-void DHCPv4_Client::PutHeader(DHCP_Msg_t* pTX)
+void DHCPv4_Manager::PutHeader(DHCP_Msg_t* pTX)
 {
     // Clear all header fields (safety)
 //    memset(pTX, 0, sizeof(DHCP_Msg_t));
     memset(pTX, 0, offsetof(DHCP_Msg_t, Options));
 
-    // DHCP fixed header
-    pTX->Op          = DHCP_BOOT_REQUEST;
-    pTX->H_Type      = DHCP_HARDWARE_TYPE_ETHERNET;     // Always 1 for Ethernet
-    pTX->H_Length    = IP_MAC_ADDRESS_SIZE;             // MAC address length
+    pTX->Op          = DHCP_BOOT_REQUEST;                               // DHCP fixed header ...
+    pTX->H_Type      = DHCP_HARDWARE_TYPE_ETHERNET;                     // Always 1 for Ethernet
+    pTX->H_Length    = IP_MAC_ADDRESS_SIZE;                             // MAC address length
     pTX->Hops        = 0;
     pTX->X_ID        = htonl(m_XID);
     pTX->Seconds     = 0;
     pTX->MagicCookie = DHCP_MAGIC_COOKIE;
 
-    // Broadcast flag for initial DISCOVER/REQUEST
-    if (m_State < DHCP_STATE_BOUND)
+    if (m_State < DHCP_STATE_BOUND)                                     // Broadcast flag for initial DISCOVER/REQUEST
     {
         pTX->Flags = DHCP_FLAGS_BROADCAST;
     }
     else
     {
-        // Unicast renewal: include client IP
-        pTX->Flags = 0;
-
+        pTX->Flags = 0;                                                 // Unicast renewal: include client IP
         uint32_t ip = m_pContext->GetDHCP_IP();
         memcpy(&pTX->ClientIP_Address, &ip, sizeof(ip));
     }
 
-    // Client hardware address (MAC)
-    m_pContext->GetMAC_Address((IP_MAC_Address_t*)pTX->ClientHardware);
+    m_pContext->GetMAC_Address((IP_MAC_Address_t*)pTX->ClientHardware); // Client hardware address (MAC)
 }
 
 //-------------------------------------------------------------------------------------------------

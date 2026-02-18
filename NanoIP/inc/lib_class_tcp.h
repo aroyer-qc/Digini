@@ -53,7 +53,7 @@ class TCP_Manager
 {
     public:
 
-        bool                Initialize              (NetworkContext* pContext);
+        bool                Initialize              (NetworkContext& Context);
         bool                Connect                 (const IP_Address_t* pServerIP, uint16_t Port);
         size_t              Send                    (const uint8_t* pData, size_t Length);
         size_t              Receive                 (uint8_t* pBuffer, size_t MaxLength);

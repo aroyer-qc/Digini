@@ -67,7 +67,7 @@
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   None
+//  Parameter(s):   NetworkContext&  Context        Reference on the context
 //
 //  Return:         None
 //
@@ -166,21 +166,18 @@ void UDP_Manager::Process(IP_PacketMsg_t* pMsg)
 //
 //  Name:           Send
 //
-//  Parameter(s):   UDP_Socket_t*           pUdp        Pointer to the UDP socket instance owning
-//                                                      the local port and RX/TX state.
-//                  uint8_t*                pData       Pointer to the payload buffer to transmit.
-//                  size_t                  Length      Number of payload bytes to send.
-//                  const SocketInfo_t*     pDestInfo   Destination addressing information
-//                                                      (IP address, UDP port, MAC address)
-//                  size_t*                 pBytesSent  Output: number of payload bytes
-//                                                      successfully queued for transmission.
+//  Parameter(s):   IP_Port_t            Port        the local port.
+//                  uint8_t*             pData       Pointer to the payload buffer to transmit.
+//                  size_t               Length      Number of payload bytes to send.
+//                  const SocketInfo_t*  pDestInfo   Destination addressing information
+//                                                   (IP address, UDP port, MAC address)
+//                  size_t*              pBytesSent  Output: number of payload bytes
+//                                                   successfully queued for transmission.
 //
-//  Return:         SystemState_e           SYS_READY                   on success.
-//                                          SYS_FAIL_MEMORY_ALLOCATION  if packet buffers cannot be
-//                                                                      allocated.
-//                                          SYS_FAIL                    if the interface TX
-//                                                                      callback rejects the
-//                                                                      packet.
+//  Return:         SystemState_e SYS_READY                   on success.
+//                                SYS_FAIL_MEMORY_ALLOCATION  if packet buffer cannot be allocated.
+//                                SYS_FAIL                    if the interface TX callback rejects
+//                                                            the packet.
 //
 //
 //  Description:    Builds and transmits a UDP datagram using the specified socket context.
@@ -195,7 +192,7 @@ void UDP_Manager::Process(IP_PacketMsg_t* pMsg)
 //                  On failure, all allocated resources are released before returning.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e UDP_Manager::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent)
+SystemState_e UDP_Manager::Send(IP_Port_t Port, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent)
 {
     *pBytesSent = 0;
 
@@ -214,7 +211,7 @@ SystemState_e UDP_Manager::Send(UDP_Socket_t* pUdp, uint8_t* pData, size_t Lengt
 
     // Build UDP header
     UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
-    pUDP->SrcPort = htons(pUdp->LocalPort);
+    pUDP->SrcPort = htons(/*pUDP_Socket->Local*/Port);
     pUDP->DstPort = htons(pDestInfo->Port);
     uint16_t UDP_Length = sizeof(UDP_Header_t) + Length;
     pUDP->Length  = htons(UDP_Length);

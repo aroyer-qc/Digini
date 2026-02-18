@@ -61,7 +61,7 @@ extern "C" void TaskIP_Manager_Wrapper(void* pvParameters)
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext* pContext
+//  Parameter(s):   NetworkContext& pContext            Reference on the context
 //  Return:         void
 //
 //  Description:    Initialize IP Task

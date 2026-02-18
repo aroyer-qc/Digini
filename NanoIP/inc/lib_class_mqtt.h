@@ -77,7 +77,7 @@ class MQTT_Client
 {
     public:
 
-        bool                    Initialize                  (NetworkContext* pContext);
+        bool                    Initialize                  (NetworkContext& Context);
         bool                    Connect                     (const IP_Address_t* pServerIP, uint16_t Port, const char* pClientId, uint16_t KeepAliveSeconds);
         bool                    Subscribe                   (const char* pTopic, MQTT_QoS_e QoS);
         bool                    Publish                     (const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS);
@@ -111,8 +111,8 @@ private:
         void*                   m_pMessageContext;
 
         // Small internal TX/RX buffers (can be moved to external pool if needed)
-        uint8_t                 m_TxBuffer[256];
-        uint8_t                 m_RxBuffer[256];
+        //uint8_t                 m_TxBuffer[256];
+        //uint8_t                 m_RxBuffer[256];
 };
 
 //-------------------------------------------------------------------------------------------------

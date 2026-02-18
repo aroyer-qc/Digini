@@ -46,7 +46,7 @@
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext*		pContext		Reference on the context
+//  Parameter(s):   NetworkContext& 	pContext		Reference on the context
 //  Return:         None
 //
 //  Description:    Initialize the ICMP protocol handler

@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :  lib_class_tcp_client.cpp
+//  File :  lib_class_tcp.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -49,7 +49,7 @@
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext* pContext    Reference to the network context used to allocate
+//  Parameter(s):   NetworkContext& pContext    Reference to the network context used to allocate
 //                                              sockets and access lower-level IP/TCP services.
 //
 //  Return:         bool        - true  : TCP client initialized and ready to connect

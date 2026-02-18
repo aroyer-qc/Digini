@@ -58,7 +58,7 @@ class UDP_Manager
 
         void 				    Initialize  		    (NetworkContext& Context);
         void                    Process				    (IP_PacketMsg_t* pMsg);
-        SystemState_e           Send                    (UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent);
+        SystemState_e           Send                    (IP_Port_t Port, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent);
         void                    Input                   (IP_PacketMsg_t* pMsg);
 
         bool                    RegisterSocket          (Socket* pSock, IP_Port_t Port);

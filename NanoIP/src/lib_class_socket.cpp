@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -41,8 +41,8 @@
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext* pContext
-//                      Pointer to the global network context used by all sockets.
+//  Parameter(s):   NetworkContext& pContext    Reference to the global network context used by all
+//                                              sockets.
 //
 //  Return:         void
 //
@@ -486,10 +486,8 @@ void Socket::Create(SocketType_e Type)
                 return;
             }
 
-            UDP_Socket_t* pUDP = m_Protocol.pUDP;
-
-            // This the only non-zero initialization
-            pUDP->LocalIP = m_pContext->GetActiveIP();
+            //UDP_Socket_t* pUDP = m_Protocol.pUDP;
+            //pUDP->LocalIP = m_pContext->GetActiveIP();            // This the only non-zero initialization  (Optional: only if multi-IP system)
         }
         break;
       #endif
@@ -775,7 +773,7 @@ SystemState_e Socket::SendTo(uint8_t* pData, size_t Length, SocketInfo_t* pDestI
     }
 
     UDP_Socket_t* pUDP = m_Protocol.pUDP;
-    return m_pContext->GetUDP().Send(pUDP, pData, Length, pDestInfo, pBytesSent);
+    return m_pContext->GetUDP().Send(pUDP->LocalPort, pData, Length, pDestInfo, pBytesSent);
 }
 
 //-------------------------------------------------------------------------------------------------

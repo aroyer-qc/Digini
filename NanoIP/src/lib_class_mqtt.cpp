@@ -55,8 +55,11 @@
 //  Description:    Initializes the MQTT client and allocates an underlying TCP socket.
 //
 //---------------------------------------------------------------------------------------------
-bool MQTT_Client::Initialize(NetworkContext* pContext)
+bool MQTT_Client::Initialize(NetworkContext& Context)
 {
+    m_pContext = &Context;
+    
+    return true;
 }
     
 //---------------------------------------------------------------------------------------------

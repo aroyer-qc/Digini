@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2023 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -671,7 +671,7 @@ struct SocketInfo_t
 struct UDP_Socket_t
 {
     IP_Port_t       LocalPort;     // Bound port (0 = unbound)
-    IP_Address_t    LocalIP;       // Optional: only if multi-IP system
+  //IP_Address_t    LocalIP;       // Optional: only if multi-IP system
     uint16_t        Flags;         // Bitmask: broadcast allowed, reuse-port, etc. (optional, but future-proof)
 };
 

@@ -77,6 +77,7 @@ class NetworkContext
         void                SetLinkState            (ETH_LinkState_e State)                     { m_LinkState = State;                                                          }
         void                SetLinkSpeed            (ETH_LinkSpeed_e Speed)                     { m_LinkSpeed = Speed;                                                          }
         void                SetLinkChange           (bool State)                                { m_LinkChange = State;                                                         }
+		void                SetHostName             (const char* pHostName)                     { m_pHostName = pHostName;                                                      }
 
         bool                IsIP_Valid              (void)                                      { return m_IP_Valid;                                                            }
         void                SetIP_Valid             (bool State)                                { m_IP_Valid = State;                                                           }
@@ -99,7 +100,7 @@ class NetworkContext
         NTP_Manager&        GetNTP                  (void)                                      { return m_NTP;                                                                 }
       #endif
       #if (IP_USE_SNTP == DEF_ENABLED)
-        SNTP_Manager&        GetSNTP                (void)                                      { return m_SNTP;                                                                }
+        SNTP_Manager&       GetSNTP                 (void)                                      { return m_SNTP;                                                                }
       #endif
       #if (IP_USE_RAW == DEF_ENABLED)
         RAW_Manager&        GetRAW                  (void)                                      { return m_RAW;                                                                 }
@@ -210,8 +211,10 @@ class NetworkContext
         IP_Address_t                    m_StaticSubnetMask;                     // Subnet Mask from server
         IP_Address_t                    m_StaticIP;                             // IP Address from server
         IP_Address_t                    m_StaticDNS_IP;                         // DNS Server IP Address from server
-
         IP_MAC_Address_t                m_MAC_Address;
+        const char*                     m_pHostName;
+
+
 
         nOS_Queue                       m_Q_Msg;
         IP_PacketMsg_t*                 m_ArrayPacketPtr[IP_PACKET_Q_SIZE];

@@ -56,9 +56,9 @@
 //                  - Safe to call only once during initialization.
 //
 //-------------------------------------------------------------------------------------------------
-void SocketManager::Initialize(NetworkContext* pContext)
+void SocketManager::Initialize(NetworkContext& Context)
 {
-    m_pContext = pContext;
+    m_pContext    = &Context;
     m_ActiveCount = 0;
 }
 
@@ -88,21 +88,21 @@ void SocketManager::Initialize(NetworkContext* pContext)
 //-------------------------------------------------------------------------------------------------
 Socket* SocketManager::AllocSocket(SocketType_e Type)
 {
-    if(m_ActiveCount >= SOCKET_MAX_COUNT)                                                       // Enforce maximum socket count
+    if(m_ActiveCount >= SOCKET_MAX_COUNT)                                           // Enforce maximum socket count
     {
         return nullptr;
     }
 
-    void* pSocketMemory = pMemoryPool->Alloc(sizeof(Socket), MEM_DBG_SOCKALLOC);                // Allocate raw memory for the socket object
+    void* pSocketMemory = pMemoryPool->Alloc(sizeof(Socket), MEM_DBG_SOCKALLOC);    // Allocate raw memory for the socket object
 
     if(pSocketMemory == nullptr)
     {
         return nullptr;
     }
 
-    Socket* pSocket = new (pSocketMemory) Socket(*m_pContext, *m_pContext->GetIP_Manager());    // Construct the socket in-place (placement new)
-    pSocket->Create(Type);                                                                      // Initialize protocol-specific structures
-    m_ActiveSockets[m_ActiveCount++] = pSocket;                                                 // Register in active socket list
+    Socket* pSocket = new (pSocketMemory) Socket(*m_pContext);                      // Construct the socket in-place (placement new)
+    pSocket->Create(Type);                                                          // Initialize protocol-specific structures
+    m_ActiveSockets[m_ActiveCount++] = pSocket;                                     // Register in active socket list
     return pSocket;
 }
 
@@ -390,11 +390,7 @@ Socket* SocketManager::FindTCP_Connection(uint32_t LocalIP, IP_Port_t LocalPort,
 //
 //  Name:           Socket (Constructor)
 //
-//  Parameter(s):   NetworkContext& Context
-//                      Reference to the global network context.
-//                  IP_Manager&     Manager
-//                      Reference to the IP manager responsible for packet allocation,
-//                      routing, and message destruction.
+//  Parameter(s):   NetworkContext& Context    Reference to the global network context.
 //
 //  Return:         None
 //
@@ -412,8 +408,9 @@ Socket* SocketManager::FindTCP_Connection(uint32_t LocalIP, IP_Port_t LocalPort,
 //                  - No memory allocation occurs here.
 //
 //-------------------------------------------------------------------------------------------------
-Socket::Socket(NetworkContext& Context, IP_Manager& Manager) : m_Context(Context), m_Manager(Manager)
+Socket::Socket(NetworkContext& Context)
 {
+    m_pContext = &Context;
     m_Type        = SOCKET_TYPE_INVALID;
     m_State       = SOCKET_STATE_CLOSED;
     m_IsBlocking  = true;
@@ -464,7 +461,7 @@ void Socket::Create(SocketType_e Type)
     m_State = SOCKET_STATE_CLOSED;
 
     // Reset endpoint info
-    m_LocalInfo.Address  = m_Context.GetActiveIP();
+    m_LocalInfo.Address  = m_pContext->GetActiveIP();
     m_LocalInfo.Port     = 0;
     m_RemoteInfo.Address = 0;
     m_RemoteInfo.Port    = 0;
@@ -492,7 +489,7 @@ void Socket::Create(SocketType_e Type)
             UDP_Socket_t* pUDP = m_Protocol.pUDP;
 
             // This the only non-zero initialization
-            pUDP->LocalIP = m_Context.GetActiveIP();
+            pUDP->LocalIP = m_pContext->GetActiveIP();
         }
         break;
       #endif
@@ -582,7 +579,7 @@ SystemState_e Socket::Bind(IP_Port_t Port)
         }
     }
 
-    if(m_Manager.UDP_RegisterSocket(this, ActualPort) == false)     // Ask UDP_Manager to register this port
+    if(m_pContext->GetUDP().RegisterSocket(this, ActualPort) == false)     // Ask UDP_Manager to register this port
     {
         return SYS_FAIL_PORT_IN_USE;
     }
@@ -778,7 +775,7 @@ SystemState_e Socket::SendTo(uint8_t* pData, size_t Length, SocketInfo_t* pDestI
     }
 
     UDP_Socket_t* pUDP = m_Protocol.pUDP;
-    return m_Manager.UDP_Send(pUDP, pData, Length, pDestInfo, pBytesSent);
+    return m_pContext->GetUDP().Send(pUDP, pData, Length, pDestInfo, pBytesSent);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1012,7 +1009,7 @@ void Socket::Close(void)
 
             if((pUDP != nullptr) && (pUDP->LocalPort != 0))             // Unregister bound port
             {
-                m_Manager.UDP_UnregisterSocket(pUDP->LocalPort);
+                m_pContext->GetUDP().UnregisterSocket(pUDP->LocalPort);
             }
         }
         break;

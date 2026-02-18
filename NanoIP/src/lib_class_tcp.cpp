@@ -49,7 +49,7 @@
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext* pContext    Pointer to the network context used to allocate
+//  Parameter(s):   NetworkContext* pContext    Reference to the network context used to allocate
 //                                              sockets and access lower-level IP/TCP services.
 //
 //  Return:         bool        - true  : TCP client initialized and ready to connect
@@ -62,12 +62,12 @@
 //                  client for an active connection attempt via Connect().
 //
 //-------------------------------------------------------------------------------------------------
-bool TCP_Manager::Initialize(NetworkContext* pContext)
+bool TCP_Manager::Initialize(NetworkContext& Context)
 {
-    m_pContext = pContext;
+    m_pContext = &Context;
 
     IP_Manager* pIP = m_pContext->GetIP_Manager();
-    
+
     if(pIP == nullptr)
     {
         m_State = TCP_CLIENT_STATE_ERROR;
@@ -75,7 +75,7 @@ bool TCP_Manager::Initialize(NetworkContext* pContext)
     }
 
     SocketManager* pSockMgr = pIP->GetSocketManager();
-    
+
     if(pSockMgr == nullptr)
     {
         m_State = TCP_CLIENT_STATE_ERROR;
@@ -83,7 +83,7 @@ bool TCP_Manager::Initialize(NetworkContext* pContext)
     }
 
     m_pSocket = pSockMgr->AllocSocket(SOCKET_TYPE_STREAM);                      // Allocate a TCP socket
-    
+
     if(m_pSocket == nullptr)
     {
         m_State = TCP_CLIENT_STATE_ERROR;
@@ -93,7 +93,7 @@ bool TCP_Manager::Initialize(NetworkContext* pContext)
     bool NonBlocking = true;                                                    // Enable non-blocking mode
     m_pSocket->SetOption(SOCKET_OPT_NON_BLOCKING, &NonBlocking, sizeof(bool));
     SystemState_e State = m_pSocket->Bind(0);                                   // Bind to an ephemeral local port (0 = auto-assign)
-    
+
     if(State != SYS_READY)
     {
         pSockMgr->FreeSocket(&m_pSocket);
@@ -354,7 +354,7 @@ void TCP_Manager::Process(void)
     if(m_State == TCP_CLIENT_STATE_SYN_SENT)                        // Handle connection timeout (SYN_SENT)
     {
         TickCount_t Now = GetTick();
-    
+
         if((Now - m_ConnectionStart) > TCP_CONNECT_TIMEOUT_MS)
         {
             m_State = TCP_CLIENT_STATE_ERROR;
@@ -371,7 +371,7 @@ void TCP_Manager::Process(void)
     if(m_State == TCP_CLIENT_STATE_TIME_WAIT)
     {
         TickCount_t Now = GetTick();
-        
+
         if((Now - m_LastReceivedTick) > TCP_TIME_WAIT_MS)
         {
             m_State = TCP_CLIENT_STATE_CLOSED;
@@ -403,7 +403,7 @@ bool TCP_Manager::SendSYN(void)
     }
 
     uint8_t* pBuffer = (uint8_t*)pMemoryPool->Alloc(sizeof(TCP_Header_t), MEM_DBG_TCP_TX);          // Allocate a buffer for TCP header (no payload)
-    
+
     if(pBuffer == nullptr)
     {
         return false;
@@ -470,7 +470,7 @@ bool TCP_Manager::SendACK(uint32_t AckNumber)
 
     // Allocate buffer for TCP header (no payload)
     uint8_t* pBuffer = (uint8_t*)pMemoryPool->Alloc(sizeof(TCP_Header_t), MEM_DBG_TCP_TX);
-    
+
     if(pBuffer == nullptr)
     {
         return false;
@@ -499,7 +499,7 @@ bool TCP_Manager::SendACK(uint32_t AckNumber)
                                             &m_ServerIP,
                                             m_ServerPort);
 
-    
+
 
     if(State != SYS_READY)
     {
@@ -691,7 +691,7 @@ bool TCP_Manager::ParseTCP_Header(IP_EthernetPacket_t* pPacket)
     }
 
     TCP_Header_t* pTCP = pPacket->TCP;
-    
+
     if(pTCP == nullptr)
     {
         return false;

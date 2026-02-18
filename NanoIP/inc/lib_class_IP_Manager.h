@@ -84,7 +84,7 @@ class IP_Manager
 {
     public:
 
-        void                    Initialize                  (NetworkContext* pContext);
+        void                    Initialize                  (NetworkContext& Context);
         void                    Run                         (void);
 
         void                    ProcessIP                   (IP_PacketMsg_t* pRX);
@@ -96,9 +96,8 @@ class IP_Manager
 
         SystemState_e           SendPacket                  (IP_PacketMsg_t* pMsg);
 
-        static SystemState_e    AllocPacket(IP_PacketMsg_t** ppMsg, size_t PacketSize, MEM_DebugListOfID_e DebugWrapperID, MEM_DebugListOfID_e DebugPacketID);
+        static SystemState_e    AllocPacket                 (IP_PacketMsg_t** ppMsg, size_t PacketSize, MEM_DebugListOfID_e DebugWrapperID, MEM_DebugListOfID_e DebugPacketID);
 
-        static uint16_t         ChecksumFinalize            (uint32_t Checksum);
         static uint16_t         IP_CalculateChecksum        (const void* pBuffer, uint16_t Count);
       #if (IP_USE_TCP == DEF_ENABLED)
         static uint16_t         TCP_CalculateChecksum       (IP_Header_t* pIP, TCP_Header_t* pTCP, uint16_t TCP_Length);

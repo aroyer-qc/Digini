@@ -49,7 +49,7 @@ void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg);
 //-------------------------------------------------------------------------------------------------
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext*   pContext
+//  Parameter(s):   NetworkContext&	  Reference on the context
 //
 //  Return:         SystemState_e     SYS_READY on success
 //                                    SYS_FAIL  on timer creation/start failure
@@ -65,11 +65,11 @@ void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg);
 //  Note(s):        This function must be called once during network stack initialization,
 //                  before any ARP processing or IP transmission occurs.
 //-------------------------------------------------------------------------------------------------
-SystemState_e ARP_Manager::Initialize(NetworkContext* pContext)
+SystemState_e ARP_Manager::Initialize(NetworkContext& Context)
 {
     nOS_Error Error;
 
-    m_pContext = pContext;
+    m_pContext = &Context;
     m_PendingOldest = 0;
 
     memset((void*)m_PendingQueue, 0, sizeof(ARP_PendingEntry_t) * ARP_PENDING_QUEUE_SIZE);  // Clear the pending queue

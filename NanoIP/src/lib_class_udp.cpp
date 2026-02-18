@@ -79,9 +79,9 @@
 //                  incoming datagrams.
 //
 //-------------------------------------------------------------------------------------------------
-void UDP_Manager::Initialize(NetworkContext* pContext)
+void UDP_Manager::Initialize(NetworkContext& Context)
 {
-    m_pContext = pContext;
+    m_pContext = &Context;
     memset(m_BoundSockets, 0, sizeof(m_BoundSockets));      // Clear the binding table
     m_BoundCount = 0;                                       // Reset the number of active bindings
     m_NextEphemeralPort = UDP_EPHEMERAL_PORT_MIN;           // Reset ephemeral port allocator

@@ -76,7 +76,8 @@ extern "C" void ClassEthernetIf_Wrapper(void* pvParameters)
 //
 //  Function:       Initialize
 //
-//  Parameter(s):   IP_ETH_Config_t*  pETH_Config    The NanoIP network interface structure
+//  Parameter(s):   IP_ETH_Config_t*    pETH_Config    The NanoIP network interface structure
+//                  NetworkContext&     Context         Reference on the context
 //  Return:         SystemState_e
 //
 //  Description:    This function initialize the MAC,PHY and IO
@@ -85,14 +86,14 @@ extern "C" void ClassEthernetIf_Wrapper(void* pvParameters)
 //                  interface.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, NetworkContext* pContext)
+SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, NetworkContext& Context)
 {
     nOS_Error            Error;
     SystemState_e        State;
     ETH_DriverInterface* pETH_Driver;
     IP_MAC_Address_t     MAC_Address;
 
-    m_pContext    = pContext;
+    m_pContext    = &Context;
     m_pETH_Config = pETH_Config;
 	m_pContext->SetLinkState(ETH_LINK_DOWN);
 	m_pContext->SetLinkSpeed(ETH_PHY_SPEED_NONE);

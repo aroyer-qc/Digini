@@ -165,18 +165,19 @@ class DHCPv4_Manager
 {
     public:
 
-        void            Initialize      (NetworkContext* pContext);
+        void            Initialize      (NetworkContext& Context);
         bool            Process         (void);
 
         bool            GetMode         (void)                      { return m_Mode;       }
-        bool            GetIP           (void)                      { return m_IP;         }
-        bool            GetGatewayIP    (void)                      { return m_GatewayIP;  }
-        bool            GetSubnetMask   (void)                      { return m_SubnetMask; }
-        bool            GetServerIP     (void)                      { return m_ServerIP;   }
-        bool            GetDNS_IP       (void)                      { return m_DNS_IP;     }
+        IP_Address_t    GetIP           (void)                      { return m_IP;         }
+        IP_Address_t    GetGatewayIP    (void)                      { return m_GatewayIP;  }
+        IP_Address_t    GetSubnetMask   (void)                      { return m_SubnetMask; }
+        IP_Address_t    GetServerIP     (void)                      { return m_ServerIP;   }
+        IP_Address_t    GetDNS_IP       (void)                      { return m_DNS_IP;     }
         bool            IsItEnabled     (void)                      { return m_Enabled;    }
-        
-        void            SetMode         (bool Mode)                 { m_Mode = Mode; }
+
+        void            SetEnabled      (bool State)                { m_Enabled = State;   }
+        void            SetMode         (bool Mode)                 { m_Mode = Mode;       }
 
         void            Reset           (void);
         bool            Start           (void);

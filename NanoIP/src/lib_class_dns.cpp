@@ -100,16 +100,16 @@
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext*     pContext        Pointer on the context
+//  Parameter(s):   NetworkContext&     Context        Reference on the context
 //  Return:         None
 //
 //  Description:    Initialize the DNS Client. Allocates a single UDP socket used for all DNS
 //                  transactions and clears the pending-request table.
 //
 //-------------------------------------------------------------------------------------------------
-void DNS_Manager::Initialize(NetworkContext* pContext)
+void DNS_Manager::Initialize(NetworkContext& Context)
 {
-    m_pContext    = pContext;
+    m_pContext = &Context;
 
     // Start XID counter at a random value (never 0)
     m_XID_Counter = (uint16_t)RNG_GetRandom();

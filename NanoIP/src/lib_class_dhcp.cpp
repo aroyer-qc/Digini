@@ -172,17 +172,17 @@ const uint8_t DHCPv4_Manager::m_OPL_Request[10] =
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext*		pContext		Pointer on the context
+//  Parameter(s):   NetworkContext&		Context		Reference on the context
 //  Return:         None
 //
 //  Description:    Initialize the DHCP Client
 //
 //-------------------------------------------------------------------------------------------------
-void DHCPv4_Manager::Initialize(NetworkContext* pContext)
+void DHCPv4_Manager::Initialize(NetworkContext& Context)
 {
     nOS_Error Error;
 
-    m_pContext = pContext;
+    m_pContext = &Context;
     m_Mode     = DHCP_IS_ON;            // This is the default value for DHCP
     m_State    = DHCP_STATE_INITIAL;
     m_pSocket  = nullptr;

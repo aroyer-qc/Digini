@@ -46,30 +46,30 @@
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext*		pContext		Pointer on the context
+//  Parameter(s):   NetworkContext*		pContext		Reference on the context
 //  Return:         None
 //
 //  Description:    Initialize the ICMP protocol handler
 //
 //-------------------------------------------------------------------------------------------------
-void ICMP_Manager::Initialize(NetworkContext* pContext)
+void ICMP_Manager::Initialize(NetworkContext& Context)
 {
-    m_pContext = pContext;
+    m_pContext = &Context;
 }
 
 //-------------------------------------------------------------------------------------------------
-//  
+//
 //  Name:           Process
-//  
+//
 //  Parameter(s):   IP_PacketMsg_t*     pRX         Incoming IP packet message
-//  
+//
 //  Return:         None
-//  
+//
 //  Description:    Process an incoming ICMP packet. Handles ICMP Echo Requests by generating
 //                  an Echo Reply using the same packet buffer (zero-copy). All other ICMP
 //                  types are ignored. The RX message is always freed unless transformed into
 //                  a TX reply.
-//  
+//
 //-------------------------------------------------------------------------------------------------
 void ICMP_Manager::Process(IP_PacketMsg_t* pRX)
 {

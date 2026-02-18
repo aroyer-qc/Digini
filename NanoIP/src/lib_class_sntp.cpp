@@ -81,7 +81,7 @@
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext* pContext    Pointer to the active network context.
+//  Parameter(s):   NetworkContext& Context    Reference to the active network context.
 //
 //  Return:         bool                    - true  : Initialization successful.
 //                                          - false : Failed to allocate or bind the UDP socket.
@@ -90,9 +90,9 @@
 //                  an ephemeral port. The client remains idle until SendRequest() is invoked.
 //
 //-------------------------------------------------------------------------------------------------
-bool SNTP_Client::Initialize(NetworkContext* pContext)
+bool SNTP_Client::Initialize(NetworkContext& Context)
 {
-    m_pContext = pContext;
+    m_pContext = &Context;
 
     IP_Manager* pIP = m_pContext->GetIP_Manager();
     if(pIP == nullptr)

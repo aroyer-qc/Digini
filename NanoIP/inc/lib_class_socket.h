@@ -40,7 +40,7 @@ class Socket
 
     public:
 
-                            Socket              (NetworkContext& Context, IP_Manager& Manager);
+                            Socket              (NetworkContext& Context);
 
         void                Create              (SocketType_e Type);
         SystemState_e       Bind                (IP_Port_t Port);
@@ -113,8 +113,7 @@ class Socket
         void                FreeProtocolData    (void);
         void                FreeAllMessages     (nOS_Queue* pQueue);
 
-        NetworkContext&         m_Context;
-        IP_Manager&             m_Manager;
+        NetworkContext*         m_pContext;
 
         SocketType_e            m_Type;
         SocketState_e           m_State;
@@ -147,7 +146,7 @@ class SocketManager
 {
     public:
 
-        void                Initialize              (NetworkContext* pContext);
+        void                Initialize              (NetworkContext& Context);
 
         Socket*             AllocSocket             (SocketType_e Type);
         void                FreeSocket              (Socket** ppSocket);

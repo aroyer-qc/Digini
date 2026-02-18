@@ -56,7 +56,7 @@ class UDP_Manager
 {
     public:
 
-        void 				    Initialize  		    (NetworkContext* pContext);
+        void 				    Initialize  		    (NetworkContext& Context);
         void                    Process				    (IP_PacketMsg_t* pMsg);
         SystemState_e           Send                    (UDP_Socket_t* pUdp, uint8_t* pData, size_t Length, const SocketInfo_t* pDestInfo, size_t* pBytesSent);
         void                    Input                   (IP_PacketMsg_t* pMsg);

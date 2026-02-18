@@ -67,22 +67,22 @@ extern "C" void TaskIP_Manager_Wrapper(void* pvParameters)
 //  Description:    Initialize IP Task
 //
 //-------------------------------------------------------------------------------------------------
-void IP_Manager::Initialize(NetworkContext* pContext)
+void IP_Manager::Initialize(NetworkContext& Context)
 {
     nOS_Error Error;
 
-    m_pContext   = pContext;
+    m_pContext   = &Context;
     m_SequenceID = RNG_GetRandom();
 
 //todo need to fix the stack
    #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-    myStacktistic.Register(pContext->GetIP_Stack(), TASK_IP_MANAGER_STACK_SIZE, pContext->GetHostName());
+    myStacktistic.Register(m_pContext->GetIP_Stack(), TASK_IP_MANAGER_STACK_SIZE, m_pContext->GetHostName());
   #endif
 
     Error = nOS_ThreadCreate(&m_Handle,
                              TaskIP_Manager_Wrapper,
                              this,
-                             pContext->GetIP_Stack(),
+                             m_pContext->GetIP_Stack(),
                              TASK_IP_MANAGER_STACK_SIZE,
                              TASK_IP_MANAGER_PRIO);
 
@@ -106,6 +106,7 @@ void IP_Manager::Initialize(NetworkContext* pContext)
 void IP_Manager::Run(void)
 {
     IP_PacketMsg_t* pMsg;
+    DHCPv4_Manager& DHCP = m_pContext->GetDHCP();
 
   #if (IP_USE_SNTP == DEF_ENABLED)
     //IP_Address_t    IP;
@@ -115,7 +116,7 @@ void IP_Manager::Run(void)
     for(;;)
     {
       #if (IP_USE_DHCP == DEF_ENABLED)
-        if(m_pContext->GetLinkChange() == true)                                                   // Always react to link changes, regardless of DHCP enable state
+        if(m_pContext->GetLinkChange() == true)                            // Always react to link changes, regardless of DHCP enable state
         {
             m_pContext->SetLinkChange(false);
 
@@ -123,27 +124,27 @@ void IP_Manager::Run(void)
             {
                 if(m_pContext->IsDHCP_Enable())
                 {
-                    m_DHCP.Start();
+                    DHCP.Start();
                 }
                 else
                 {
-                    m_DHCP.Reset();                                                             // Ensure no stale DHCP state
+                    DHCP.Reset();                                   // Ensure no stale DHCP state
                 }
             }
             else // Link down
             {
-                m_DHCP.Reset();
+                DHCP.Reset();
             }
         }
 
-        if((m_pContext->isDHCP_Enable() == true) && (m_pContext->GetLinkState() == ETH_LINK_UP))    // Run DHCP state machine only when enabled AND link is up
+        if((DHCP.IsItEnabled() == true) && (m_pContext->GetLinkState() == ETH_LINK_UP))    // Run DHCP state machine only when enabled AND link is up
         {
-            (void)m_DHCP.Process();
+            (void)DHCP.Process();
         }
       #endif
 
     #if (IP_USE_DNS == DEF_ENABLED)
-        m_DNS.Process();
+        m_pContext->GetDNS().Process();
     #endif
 
         if(nOS_QueueRead(m_pContext->GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
@@ -185,7 +186,7 @@ void IP_Manager::Run(void)
                         break;
                     }
 
-                    if(pMsg->PacketSize < (sizeof(IP_EthernetHeader_t) + totalLength))          // Ensure the received frame contains the full IP packet
+                    if(pMsg->PacketSize < (sizeof(IP_EthernetHeader_t) + totalLength))              // Ensure the received frame contains the full IP packet
                     {
                         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DROP: Truncated IPv4 frame (%u < %u)\n", pMsg->PacketSize, sizeof(IP_EthernetHeader_t) + totalLength);
                         FreeMessage(pMsg);
@@ -193,15 +194,15 @@ void IP_Manager::Run(void)
                     }
 
                     //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH type: IPV4\n");
-                    m_ARP.ProcessIP(pMsg);                                                      // May update ARP cache, does NOT own pMsg
-                    ProcessIP(pMsg);                                                            // Transfers ownership to protocol/socket
+                    m_pContext->GetARP().ProcessIP(pMsg);                                           // May update ARP cache, does NOT own pMsg
+                    ProcessIP(pMsg);                                                                // Transfers ownership to protocol/socket
                 }
                 break;
 
                 case IP_ETHERNET_TYPE_ARP:
                 {
                     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH type: ARP\n");
-                    m_ARP.ProcessARP(pMsg);                                                     // ARP owns and frees pMsg
+                    m_pContext->GetARP().ProcessARP(pMsg);                                          // ARP owns and frees pMsg
                 }
                 break;
 
@@ -236,7 +237,7 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
         case IP_PROTOCOL_ICMP:
         {
             DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Ethernet IP-ICMP\n");
-            m_ICMP.Process(pMsg);    // ICMP owns + frees
+            m_pContext->GetICMP().Process(pMsg);    // ICMP owns + frees
         }
         break;
       #endif
@@ -261,7 +262,7 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
         case IP_PROTOCOL_UDP:
         {
             //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Ethernet IP-UDP\n");
-            m_UDP.Process(pMsg);
+            m_pContext->GetUDP().Process(pMsg);
         }
         break;
       #endif
@@ -320,7 +321,7 @@ SystemState_e IP_Manager::SendPacket(IP_PacketMsg_t* pMsg)
     }
     else
     {
-         if(m_Context->GetARP().Resolve(dstIP, &pETH->DestinationMAC, pMsg) == false)   // Unicast -> resolve via ARP and store packet for later transmission
+         if(m_pContext->GetARP().Resolve(dstIP, &pETH->DestinationMAC, pMsg) == false)  // Unicast -> resolve via ARP and store packet for later transmission
         {
             return SYS_ARP_RESOLVE_PENDING;                                             // ARP not ready -> caller decides what to do
         }
@@ -634,92 +635,6 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t DstIP, uint16_t Pay
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           ChecksumAccumulate
-//
-//  Parameters:     const uint8_t*  Data        Pointer to the buffer to accumulate
-//                  uint16_t        Count       Number of bytes to include in the sum
-//
-//  Return:         uint32_t                    Partial one's-complement sum (unfolded)
-//
-//  Description:    Performs the core one's-complement accumulation used by IPv4, UDP, and TCP
-//                  checksums as defined in RFC 1071. The function iterates through the buffer
-//                  as a sequence of 16-bit words, performing one's-complement addition with
-//                  end-around carry propagation.
-//
-//                  If Count is odd, the final remaining byte is padded as the high byte of a
-//                  16-bit word and included in the sum.
-//
-//                  This function does *not* fold the accumulated sum to 16 bits and does *not*
-//                  apply the final one's-complement inversion. These steps are performed by
-//                  Checksum_Finalize().
-//
-//  Notes:          - The buffer does not need to be 16-bit aligned; byte access is handled safely.
-//                  - Suitable for accumulating IPv4 headers, UDP/TCP headers, payloads, and
-//                    pseudo-header fields.
-//                  - The caller must pass the returned sum to Checksum_Finalize() to obtain the
-//                    final network-order checksum.
-//-------------------------------------------------------------------------------------------------
-uint32_t IP_Manager::ChecksumAccumulate(const uint8_t* Data, uint16_t Count)
-{
-    uint32_t Checksum = 0;
-
-    while(Count > 1)
-    {
-        Checksum += (uint16_t)((Data[0] << 8) | Data[1]);
-        Data     += 2;
-        Count    -= 2;
-
-        if(Checksum & 0x10000)
-        {
-            Checksum = (Checksum & 0xFFFF) + 1;
-        }
-    }
-
-    if(Count == 1)
-    {
-        Checksum += (uint16_t)(Data[0] << 8);
-
-        if(Checksum & 0x10000)
-        {
-            Checksum = (Checksum & 0xFFFF) + 1;
-        }
-    }
-
-    return Checksum;
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Checksum_Finalize
-//
-//  Parameters:     uint32_t    Sum         Unfolded one's-complement accumulator
-//
-//  Return:         uint16_t                Final one's-complement checksum (network byte order)
-//
-//  Description:    Completes the one's-complement checksum computation as defined in RFC 1071.
-//                  This function folds a 32-bit accumulated sum into 16 bits by repeatedly adding
-//                  the upper 16 bits into the lower 16 bits (end-around carry). The final result
-//                  is then inverted to produce the standard one's-complement checksum.
-//
-//                  This function is used by IPv4, UDP, and TCP checksum routines after all
-//                  relevant header and payload data has been accumulated via Checksum_Accumulate().
-//
-//  Notes:          - The returned value is suitable for direct placement into IPv4, UDP, or TCP
-//                    checksum fields (already in network byte order).
-//                  - The caller must ensure that the checksum field in the header being computed
-//                    is set to zero before accumulation.
-//-------------------------------------------------------------------------------------------------
-uint16_t IP_Manager::ChecksumFinalize(uint32_t Checksum)
-{
-    while(Checksum >> 16)
-    {
-        Checksum = (Checksum & 0xFFFF) + (Checksum >> 16);
-    }
-
-    return (uint16_t)(~Checksum);
-}
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           IP_CalculateChecksum
 //
 //  Parameters:     void*       pBuffer     Pointer to the start of the data block to checksum
@@ -744,8 +659,32 @@ uint16_t IP_Manager::ChecksumFinalize(uint32_t Checksum)
 //-------------------------------------------------------------------------------------------------
 uint16_t IP_Manager::IP_CalculateChecksum(const void* pBuffer, uint16_t Count)
 {
-    uint32_t Checksum = ChecksumAccumulate((const uint8_t*)pBuffer, Count);
-    return ChecksumFinalize(Checksum);
+    const uint8_t* Data = (const uint8_t*)pBuffer;
+    uint32_t Sum = 0;
+
+    while(Count > 1)
+    {
+        Sum   += (uint16_t)((Data[0] << 8) | Data[1]);
+        Data  += 2;
+        Count -= 2;
+
+        if(Sum & 0x10000)
+        {
+            Sum = (Sum & 0xFFFF) + 1;
+        }
+    }
+
+    if(Count == 1)
+    {
+        Sum += (uint16_t)(Data[0] << 8);
+
+        if(Sum & 0x10000)
+        {
+            Sum = (Sum & 0xFFFF) + 1;
+        }
+    }
+
+    return (uint16_t)~Sum;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -839,12 +778,29 @@ uint16_t IP_Manager::UDP_CalculateChecksum(IP_Header_t* pIP, UDP_Header_t* pUDP,
     Sum += (pIP->SrcIP_Address      ) & 0xFFFF;
     Sum += (pIP->DstIP_Address >> 16) & 0xFFFF;
     Sum += (pIP->DstIP_Address      ) & 0xFFFF;
-    Sum += htons(IP_PROTOCOL_UDP);                          // todo we can use HTONS(IP_PROTOCOL_UDP) in define to reduce code
+    Sum += htons(IP_PROTOCOL_UDP);
     Sum += htons(UDP_Length);
 
     // UDP header + payload
-    Sum += ChecksumAccumulate((uint8_t*)pUDP, UDP_Length);
-    return ChecksumFinalize(Sum);
+    uint16_t* pPtr = (uint16_t*)pUDP;
+
+    for(uint16_t i = 0; i < (UDP_Length / 2); i++)
+    {
+        Sum += *pPtr++;
+    }
+
+    if(UDP_Length & 1)               // Odd byte?
+    {
+        Sum += *((uint8_t*)pPtr);
+    }
+
+    // Fold 32-bit sum to 16 bits
+    while(Sum >> 16)
+    {
+        Sum = (Sum & 0xFFFF) + (Sum >> 16);
+    }
+
+    return ~((uint16_t)Sum);
 }
 #endif
 

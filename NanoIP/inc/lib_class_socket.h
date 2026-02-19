@@ -69,30 +69,30 @@ class Socket
         SocketState_e       GetState            (void);
         SocketType_e        GetType             (void);
 
-        void                SetActive           (bool Active)           { m_Active = Active;                                       }
-        bool                GetActive           (void)                  { return m_Active;                                         }
+        void                SetActive           (bool Active)               { m_Active = Active;                                       }
+        bool                GetActive           (void)                      { return m_Active;                                         }
 
-        bool                EnqueueMessage      (IP_PacketMsg_t* pMsg)  { return (nOS_QueueWrite(&m_RX_Queue, &pMsg, 0) == NOS_OK);}
+        bool                EnqueueMessage      (IP_PacketMsg_t* pMsg)      { return (nOS_QueueWrite(&m_RX_Queue, &pMsg, 0) == NOS_OK);}
 
       #if (IP_USE_UDP == DEF_ENABLED)
         bool                IsBound             (void);
         bool                IsListening         (void);
 
-        UDP_Socket_t*       GetUDP              (void)                  { return m_Protocol.pUDP;                                   }
+        UDP_Socket_t*       GetUDP              (void)                      { return m_Protocol.pUDP;                                   }
       #else
-        UDP_Socket_t*       GetUDP              (void)                  { return nullptr;                                           }
+        UDP_Socket_t*       GetUDP              (void)                      { return nullptr;                                           }
       #endif
 
       #if (IP_USE_TCP == DEF_ENABLED)
-        TCP_Socket_t*       GetTCP              (void)                  { return m_Protocol.pTCP;                                   }
+        TCP_Socket*         GetTCP              (void)                      { return m_Protocol.pTCP;                                   }
       #else
-        TCP_Socket_t*       GetTCP              (void)                  { return nullptr;                                           }
+        TCP_Socket*         GetTCP              (void)                      { return nullptr;                                           }
       #endif
 
       #if (IP_USE_RAW == DEF_ENABLED)
-        RAW_Socket_t*       GetRAW              (void)                  { return m_Protocol.pRAW;                                   }
+        RAW_Socket_t*       GetRAW              (void)                      { return m_Protocol.pRAW;                                   }
       #else
-        RAW_Socket_t*       GetRAW              (void)                  { return nullptr;                                           }
+        RAW_Socket_t*       GetRAW              (void)                      { return nullptr;                                           }
       #endif
 
     #if (SOCKET_USE_STATISTICS == DEF_ENABLED)
@@ -103,7 +103,10 @@ class Socket
         bool                HasData             (void);
         void                GetLocalInfo        (SocketInfo_t* pInfo);
         void                GetRemoteInfo       (SocketInfo_t* pInfo);
-        IP_Port_t           GetLocalPort        (void)                  { return m_LocalInfo.Port;     }
+        void                SetLocalInfo        (const SocketInfo_t& Info)  { m_LocalInfo = Info;                                       }
+        void                SetRemoteInfo       (const SocketInfo_t& Info)  { m_RemoteInfo = Info;                                      }
+
+        IP_Port_t           GetLocalPort        (void)                      { return m_LocalInfo.Port;                                  }
 
     private:
 

@@ -123,6 +123,7 @@ class RAW_Manager;
 class SocketManager;
 class Socket;
 class SNTP_Manager;
+class TCP_Socket;
 class TCP_Manager;
 class UDP_Manager;
 class ETH_IF_Driver;
@@ -265,7 +266,7 @@ enum SocketState_e
 
 enum TCP_State_e
 {
-    TCP_STATE_CLOSED,
+    TCP_STATE_CLOSED = 0,
     TCP_STATE_LISTEN,
     TCP_STATE_SYN_SENT,
     TCP_STATE_SYN_RECEIVED,
@@ -273,11 +274,10 @@ enum TCP_State_e
     TCP_STATE_FIN_WAIT_1,
     TCP_STATE_FIN_WAIT_2,
     TCP_STATE_CLOSE_WAIT,
-    TCP_STATE_CLOSING,
     TCP_STATE_LAST_ACK,
-    TCP_STATE_TIME_WAIT
+    TCP_STATE_TIME_WAIT,
+    TCP_STATE_ERROR
 };
-
 
 // Socket Options
 enum SocketOption_e
@@ -675,43 +675,6 @@ struct UDP_Socket_t
     uint16_t        Flags;         // Bitmask: broadcast allowed, reuse-port, etc. (optional, but future-proof)
 };
 
-struct TCP_Socket_t
-{
-    uint32_t    Seq;
-    uint32_t    Ack;
-    uint16_t    Window;
-    uint16_t    Mss;
-    TCP_State_e State;
-    uint32_t    LastSendTick;
-    bool        RetransmitPending;
-};
-/*
-struct TCP_Socket_t
-{
-    // 4-tuple identifying the connection
-//    IP_Address_t    LocalIP;
-//    uint16_t        LocalPort;
-//    IP_Address_t    RemoteIP;
-//    uint16_t        RemotePort;
-    // Sequence and ack numbers
-    //uint32_t        SndUna;     // First unacknowledged byte
-    //uint32_t        SndNxt;     // Next byte to send
-    //uint32_t        SndWnd;     // Send window size
-    //uint32_t        Iss;        // Initial send sequence
-    //uint32_t        RcvNxt;     // Next expected byte
-    //uint32_t        RcvWnd;     // Receive window size
-    //uint32_t        Irs;        // Initial receive sequence
-    TCP_State_e     State;
-    // Timers (RTO, keepalive, time-wait, etc.)
-    //uint32_t        RtoMs;
-    //uint32_t        RtoTimer;
-    uint32_t        KeepAliveTimer;
-    uint32_t        TimeWaitTimer;
-    uint16_t        Flags;              // Flags e.g., FIN_SENT, FIN_RECEIVED, etc.
-    uint16_t        Mss;                // Maximum Segment Size
-    class Socket*   pSocket;            // Link to owning Socket object
-};
-*/
 struct RAW_Socket_t
 {
     uint8_t         Protocol;           // IP protocol number (ICMP, etc.)
@@ -719,13 +682,37 @@ struct RAW_Socket_t
     uint8_t         Flags;
 };
 
-
 union SocketProtocol_t
 {
-    TCP_Socket_t*   pTCP;
-    UDP_Socket_t*   pUDP;
-    RAW_Socket_t*   pRAW;
-    void*           pPtr;    // fallback
+    TCP_Socket*     pTCP;   // Full C++ TCP protocol object.
+                            // TCP is stateful and connection‑oriented, requiring:
+                            //   - sequence/ack numbers
+                            //   - sliding window management
+                            //   - retransmission timers
+                            //   - handshake/teardown state machine
+                            //   - TX/RX buffering
+                            //   - integration with TCP_Manager
+                            // Because of this complexity, TCP uses a dedicated class
+                            // rather than a lightweight struct.
+
+    UDP_Socket_t*   pUDP;   // Lightweight POD (Plain Old Data) struct.
+                            // UDP is stateless and connectionless:
+                            //   - no sequence numbers
+                            //   - no retransmission
+                            //   - no timers
+                            //   - no handshake
+                            // Only stores bound port and simple flags, so a struct
+                            // is sufficient and avoids unnecessary overhead.
+
+    RAW_Socket_t*   pRAW;   // Lightweight POD struct.
+                            // RAW sockets expose raw IP packets directly:
+                            //   - no transport‑layer state
+                            //   - no connection tracking
+                            //   - no retransmission or timers
+                            // Only protocol filters and flags are needed, so a
+                            // simple struct is appropriate.
+
+    void*           pPtr;   // Generic fallback pointer for future protocol types.
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -99,7 +99,7 @@ class IP_Manager
         static SystemState_e    AllocPacket                 (IP_PacketMsg_t** ppMsg, size_t PacketSize, MEM_DebugListOfID_e DebugWrapperID, MEM_DebugListOfID_e DebugPacketID);
 
         static uint16_t         IP_CalculateChecksum        (const void* pBuffer, uint16_t Count);
-      #if (IP_USE_TCP == DEF_ENABLED)
+      #if (IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
         static uint16_t         TCP_CalculateChecksum       (IP_Header_t* pIP, TCP_Header_t* pTCP, uint16_t TCP_Length);
       #endif
       #if (IP_USE_UDP == DEF_ENABLED)

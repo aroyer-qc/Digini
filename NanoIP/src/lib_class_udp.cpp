@@ -211,7 +211,7 @@ SystemState_e UDP_Manager::Send(IP_Port_t Port, uint8_t* pData, size_t Length, c
 
     // Build UDP header
     UDP_Header_t* pUDP = &pMsg->pPacket->UDP_Frame.UDP_Header;
-    pUDP->SrcPort = htons(/*pUDP_Socket->Local*/Port);
+    pUDP->SrcPort = htons(Port);
     pUDP->DstPort = htons(pDestInfo->Port);
     uint16_t UDP_Length = sizeof(UDP_Header_t) + Length;
     pUDP->Length  = htons(UDP_Length);

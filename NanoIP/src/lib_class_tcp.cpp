@@ -350,7 +350,7 @@ bool TCP_Manager::Initialize(NetworkContext& Context)
 //                  uint16_t Port
 //                      Destination TCP port on the remote server.
 //
-//  Return:         Socket*
+//  Return:         TCP_Socket*
 //                      Pointer to the TCP protocol data associated with the newly allocated
 //                      Socket object. Returns nullptr if allocation, binding, or SYN
 //                      transmission fails.
@@ -369,10 +369,11 @@ bool TCP_Manager::Initialize(NetworkContext& Context)
 //                  The underlying Socket object is owned and freed by SocketManager.
 //-------------------------------------------------------------------------------------------------
 #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
-Socket* TCP_Manager::Connect(const IP_Address_t& ServerIP, uint16_t Port)
+TCP_Socket* TCP_Manager::Connect(const IP_Address_t& ServerIP, uint16_t Port)
 {
     // Allocate a base socket of type STREAM (TCP)
     Socket* pSocket = m_pSocketManager->AllocSocket(SOCKET_TYPE_STREAM);
+
     if(pSocket == nullptr)
     {
         return nullptr;
@@ -380,6 +381,7 @@ Socket* TCP_Manager::Connect(const IP_Address_t& ServerIP, uint16_t Port)
 
     // Retrieve the TCP protocol data
     TCP_Socket* pTCP = pSocket->GetTCP();
+
     if(pTCP == nullptr)
     {
         m_pSocketManager->FreeSocket(&pSocket);
@@ -400,8 +402,9 @@ Socket* TCP_Manager::Connect(const IP_Address_t& ServerIP, uint16_t Port)
     pSocket->SetRemoteInfo(Remote);
 
     // Initialize TCP state
-    pTCP->m_SeqNumber = (uint32_t)GetTick();   // Simple ISN
-    pTCP->m_AckNumber = 0;
+    pTCP->m_SeqNumber     = (uint32_t)GetTick();   // Simple ISN
+    pTCP->m_LastSeqNumber = pTCP->m_SeqNumber;
+    pTCP->m_AckNumber     = 0;
 
     pTCP->m_RemoteWindow = 0;
     pTCP->m_LocalWindow  = TCP_DEFAULT_WINDOW_SIZE;
@@ -414,6 +417,7 @@ Socket* TCP_Manager::Connect(const IP_Address_t& ServerIP, uint16_t Port)
     pTCP->m_RetransmitPending = false;
     pTCP->m_LastFlags         = 0;
     pTCP->m_LastPayloadLength = 0;
+
 
     // Send SYN
     if(!SendSegment(pTCP, nullptr, 0, TCP_FLAG_SYN))
@@ -428,9 +432,9 @@ Socket* TCP_Manager::Connect(const IP_Address_t& ServerIP, uint16_t Port)
     pTCP->m_RetransmitPending = true;
 
     // Store as active client socket
-    m_pClientSocket = pSocket;
+    m_pClientSocket = pTCP;
 
-    return pSocket;
+    return pTCP;
 }
 #endif
 
@@ -770,7 +774,6 @@ bool TCP_Manager::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload, size
 
     IP_EthernetPacket_t* pPacket = pMsg->pPacket;
 
-
     // Reference the TCP header inside the frame
     TCP_Header_t& hdr = pPacket->TCP_Frame.Header;
 
@@ -817,8 +820,13 @@ bool TCP_Manager::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload, size
 
     if(Retransmit == false)
     {
+        pSocket->m_LastSeqNumber = pSocket->m_SeqNumber;
 
-        if((Flags & TCP_FLAG_SYN) || (Flags & TCP_FLAG_FIN)) pSocket->m_SeqNumber++;
+        if((Flags & TCP_FLAG_SYN) || (Flags & TCP_FLAG_FIN))
+        {
+            pSocket->m_SeqNumber++;
+        }
+
         pSocket->m_SeqNumber += Length;
     }
 
@@ -1219,6 +1227,8 @@ void TCP_Manager::RetransmitIfNeeded(TCP_Socket* pSocket)
         // Payload stored in socket's TX buffer
         pPayload = pSocket->m_TX_Buffer;
     }
+
+    pSocket->m_SeqNumber = pSocket->m_LastSeqNumber;
 
     // Re-send the segment with the SAME sequence number
     // (SendSegment() will NOT advance sequence numbers for retransmissions)

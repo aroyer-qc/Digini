@@ -150,4 +150,6 @@
 #define TIME_TICKS_PER_HOUR                         TIME_SECONDS_PER_HOUR   * CFG_SYSTICK_RATE
 #define TIME_TICKS_PER_DAY                          TIME_SECONDS_PER_DAY    * CFG_SYSTICK_RATE
 
+#define TICKS_PER_SECOND                            CFG_SYSTICK_RATE
+
 //-------------------------------------------------------------------------------------------------

@@ -57,6 +57,7 @@ class TCP_Socket : public Socket
         TCP_State_e     m_State;
 
         uint32_t        m_SeqNumber;        // Our sequence number
+        uint32_t        m_LastSeqNumber;
         uint32_t        m_AckNumber;        // Expected next byte
         uint16_t        m_RemoteWindow;
         uint16_t        m_LocalWindow;
@@ -85,7 +86,7 @@ class TCP_Manager
         bool            Initialize                      (NetworkContext& Context);
 
       #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
-        Socket*         Connect                         (const IP_Address_t& ServerIP, uint16_t Port);
+        TCP_Socket*      Connect                         (const IP_Address_t& ServerIP, uint16_t Port);
       #endif
 
       #if (IP_USE_TCP_SERVER == DEF_ENABLED)
@@ -109,7 +110,7 @@ class TCP_Manager
         NetworkContext* m_pContext;
 
         // Later: dynamic list of sockets
-        Socket*         m_pClientSocket;
+        TCP_Socket*     m_pClientSocket;
         TCP_Socket*     m_pServerSockets[IP_TCP_MAX_LISTEN];
 };
 

@@ -54,9 +54,9 @@ enum MQTT_State_e;
     MQTT_STATE_CONNECTING,
     MQTT_STATE_WAIT_CONNACK,
     MQTT_STATE_CONNECTED,
-    MQTT_STATE_SUBSCRIBING,
     MQTT_STATE_WAIT_SUBACK,
     MQTT_STATE_PUBLISHING,
+    MQTT_STATE_RECONNECTING,
     MQTT_STATE_ERROR
 }
 
@@ -81,6 +81,7 @@ class MQTT_Client
         bool                    Connect                     (const IP_Address_t* pServerIP, uint16_t Port, const char* pClientId, uint16_t KeepAliveSeconds);
         bool                    Subscribe                   (const char* pTopic, MQTT_QoS_e QoS);
         bool                    Publish                     (const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS);
+        bool                    Disconnect                  (void);
         void                    Process                     (void);
         void                    SetMessageCallback          (MQTT_MessageCallback_t Callback, void* pUserContext);
         MQTT_State_e            GetState                    (void)                                                      { return m_State; }
@@ -92,20 +93,28 @@ private:
         bool                    SendConnectFrame            (const char* pClientId);
         bool                    SendSubscribeFrame          (const char* pTopic, MQTT_QoS_e QoS);
         bool                    SendPublishFrame            (const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS);
+        bool                    SendDisconnect              (void);
         bool                    SendPingReq                 (void);
         bool                    HandleIncomingData          (void);
         bool                    ParseIncomingPacket         (uint8_t* pBuffer, size_t Length);
         uint16_t                NextPacketId                (void);
 
         NetworkContext*         m_pContext;
-        Socket*                 m_pSocket;
+        TCP_Socket*             m_pSocket;
         MQTT_State_e            m_State;
 
         uint16_t                m_KeepAliveSeconds;
         TickCount_t             m_LastActivityTick;
         TickCount_t             m_ConnectStartTick;
+        TickCount_t             m_PingSentTick;
+
+        // Automatic reconnect
+        TickCount_t             m_ReconnectStartTick;
+        uint16_t                m_ReconnectDelaySeconds;
+        bool                    m_ReconnectEnabled;
 
         uint16_t                m_NextPacketId;
+        bool                    m_WaitingPingResp;
 
         MQTT_MessageCallback_t  m_MessageCallback;
         void*                   m_pMessageContext;

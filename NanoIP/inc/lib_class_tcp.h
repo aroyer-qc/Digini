@@ -95,7 +95,7 @@ class TCP_Manager
       #endif
 
         void            Process                         (void);                 // Called from main loop
-        void            ProcessSegment                  (IP_EthernetPacket_t* pPacket);
+        void            ProcessSegment                  (IP_PacketMsg_t* pPacket);
         bool            SendSegment                     (TCP_Socket* pSocket, const uint8_t* pPayload, size_t Length, uint8_t Flags, bool Retransmit = false);
 
     private:

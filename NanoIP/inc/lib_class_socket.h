@@ -45,18 +45,6 @@ class Socket
         void                Create              (SocketType_e Type);
         SystemState_e       Bind                (IP_Port_t Port);
 
-      #if (IP_USE_TCP == DEF_ENABLED)
-        SystemState_e       Listen              (uint16_t Backlog);
-        SystemState_e       Accept              (Socket** ppClientSocket, SocketInfo_t* pClientInfo);
-        SystemState_e       Connect             (SocketInfo_t* pInfo);
-        SystemState_e       Shutdown            (void);
-        bool                IsConnected         (void);
-
-        SystemState_e       Send                (uint8_t* pData, size_t Length, size_t* pBytesSent);
-        SystemState_e       Recv                (uint8_t* pBuffer, size_t BufferSize, size_t* pBytesReceived);
-        SystemState_e       Recv                (IP_PacketMsg_t** ppMessage);
-      #endif
-
         SystemState_e       SendTo              (uint8_t* pData, size_t Length, SocketInfo_t* pDestInfo, size_t* pBytesSent);
         SystemState_e       RecvFrom            (uint8_t* pBuffer, size_t BufferSize, SocketInfo_t* pSrcInfo, size_t* pBytesReceived);
         SystemState_e       RecvFrom            (IP_PacketMsg_t** ppMessage);
@@ -83,12 +71,6 @@ class Socket
         UDP_Socket_t*       GetUDP              (void)                      { return nullptr;                                           }
       #endif
 
-      #if (IP_USE_TCP == DEF_ENABLED)
-        TCP_Socket*         GetTCP              (void)                      { return m_Protocol.pTCP;                                   }
-      #else
-        TCP_Socket*         GetTCP              (void)                      { return nullptr;                                           }
-      #endif
-
       #if (IP_USE_RAW == DEF_ENABLED)
         RAW_Socket_t*       GetRAW              (void)                      { return m_Protocol.pRAW;                                   }
       #else
@@ -112,7 +94,6 @@ class Socket
 
         // Internal helpers
         SystemState_e       ValidateSocket      (void);
-        //SystemState_e       AllocProtocolData   (void);
         void                FreeProtocolData    (void);
         void                FreeAllMessages     (nOS_Queue* pQueue);
 
@@ -161,10 +142,6 @@ class SocketManager
 
       #if (IP_USE_RAW == DEF_ENABLED)
         Socket*             FindRAW_ByProtocol      (uint8_t protocol);
-      #endif
-      #if (IP_USE_TCP == DEF_ENABLED)
-        Socket*             FindTCP_Connection      (uint32_t localIP, IP_Port_t localPort, uint32_t remoteIP, IP_Port_t remotePort);
-        Socket*             FindTCP_Listener        (IP_Port_t localPort);
       #endif
 
     private:

@@ -153,14 +153,6 @@ void SocketManager::FreeSocket(Socket** ppSocket)
         break;
       #endif
 
-      #if (IP_USE_TCP == DEF_ENABLED)
-        case SOCKET_TYPE_STREAM:
-        {
-            TCP_Close(pSocket);                                     // Let TCP manager handle FIN/RST, state machine tear-down, etc.
-        }
-        break;
-      #endif
-
       #if (IP_USE_RAW == DEF_ENABLED)
         case SOCKET_TYPE_RAW:
         {
@@ -327,67 +319,6 @@ Socket* SocketManager::FindRAW_ByProtocol(uint8_t Protocol)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           FindTCP_Connection
-//
-//  Parameter(s):   uint32_t    LocalIP
-//                      The local IPv4 address associated with the TCP connection.
-//                  IP_Port_t   LocalPort
-//                      The local TCP port.
-//                  uint32_t    RemoteIP
-//                      The remote IPv4 address of the peer.
-//                  IP_Port_t   RemotePort
-//                      The remote TCP port.
-//
-//  Return:         Socket*
-//                      Pointer to the matching TCP socket, or nullptr if no active connection
-//                      matches the specified 4‑tuple.
-//
-//  Description:    Searches the active socket list for a TCP socket whose dynamically allocated
-//                  TCP_Socket_t structure matches the specified connection identifiers. This
-//                  function is used by the TCP dispatcher to route incoming segments to the
-//                  correct socket based on the full 4‑tuple (LocalIP, LocalPort, RemoteIP,
-//                  RemotePort).
-//
-//                  Only sockets of type SOCKET_TYPE_STREAM are considered. Sockets that are
-//                  inactive, uninitialized, or whose protocol storage is missing are skipped.
-//
-//-------------------------------------------------------------------------------------------------
-#if (IP_USE_TCP == DEF_ENABLED)
-Socket* SocketManager::FindTCP_Connection(uint32_t LocalIP, IP_Port_t LocalPort, uint32_t RemoteIP, IP_Port_t RemotePort)
-{
-    for(uint8_t i = 0; i < m_ActiveCount; i++)
-    {
-        Socket* pSocket = m_ActiveSockets[i];
-
-        // Must be a TCP socket
-        if(pSocket->m_Type != SOCKET_TYPE_STREAM)
-        {
-            continue;
-        }
-
-        TCP_Socket_t* pTCP = pSocket->GetTCP();
-
-        // Protocol storage must exist
-        if(pTCP == nullptr)
-        {
-            continue;
-        }
-
-        // Match full 4‑tuple
-        if((pTCP->LocalIP    == LocalIP)   &&
-           (pTCP->LocalPort  == LocalPort) &&
-           (pTCP->RemoteIP   == RemoteIP)  &&
-           (pTCP->RemotePort == RemotePort))
-        {
-            return pSocket;
-        }
-    }
-    return nullptr;
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           Socket (Constructor)
 //
 //  Parameter(s):   NetworkContext& Context    Reference to the global network context.
@@ -429,10 +360,6 @@ Socket::Socket(NetworkContext& Context)
 
   #if (IP_USE_UDP == DEF_ENABLED)
     m_Protocol.pUDP = nullptr;
-  #endif
-
-  #if (IP_USE_TCP == DEF_ENABLED)
-    m_Protocol.pTCP = nullptr;
   #endif
 
   #if (IP_USE_RAW == DEF_ENABLED)
@@ -492,29 +419,6 @@ void Socket::Create(SocketType_e Type)
         break;
       #endif
 
-      #if (IP_USE_TCP == DEF_ENABLED)
-        case SOCKET_TYPE_STREAM:
-        {
-            // Allocate and zero TCP protocol storage
-            m_Protocol.pTCP = (TCP_Socket_t*)pMemoryPool->->AllocAndSet(sizeof(TCP_Socket_t), 0, MEM_DBG_SOCKET);
-
-            if(m_Protocol.pTCP == nullptr)
-            {
-                m_State = SOCKET_STATE_ERROR;
-                return;
-            }
-
-            TCP_Socket_t* pTCP = m_Protocol.pTCP;
-
-            // Only non-zero initialization
-            pTCP->State      = TCP_STATE_CLOSED;
-            pTCP->Mss        = TCP_DEFAULT_MSS;
-            pTCP->WindowSize = TCP_DEFAULT_WINDOW_SIZE;
-            pTCP->pSocket    = this;
-        }
-        break;
-      #endif
-
       #if (IP_USE_RAW == DEF_ENABLED)
         case SOCKET_TYPE_RAW:
         {
@@ -569,7 +473,7 @@ SystemState_e Socket::Bind(IP_Port_t Port)
 
     if(Port == 0)
     {
-        ActualPort = m_pContext->GetUDP().AllocateEphemeralPort();  // Allocate ephemeral port if needed
+        ActualPort = m_pContext->GetIP_Manager()->AllocateEphemeralPort();  // Allocate ephemeral port if needed
 
         if(ActualPort == 0)
         {
@@ -586,162 +490,6 @@ SystemState_e Socket::Bind(IP_Port_t Port)
     m_IsBound = true;
     return SYS_READY;
 }
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Listen
-//
-//  Parameter(s):   uint16_t    Backlog     Maximum number of pending TCP connection requests that
-//                                          may be queued before Accept() is called. Ignored for
-//                                          UDP sockets.
-//
-//  Return:         SystemState_e   SYS_READY         - Socket successfully placed in listening
-//                                                      state.
-//                                  SYS_INVALID_STATE - Socket type does not support Listen() or
-//                                                      socket is not bound to a local port.
-//                                  SYS_INVALID_PARAM - Backlog value is zero.
-//                                  SYS_FAIL          - TCP layer failed to enter passive-open
-//                                                      state.
-//
-//  Description:    Places the socket into a passive listening state. This function is only
-//                  valid for TCP stream sockets. The socket must already be bound to a local
-//                  port via Bind(). Once in listening mode, incoming SYN segments addressed
-//                  to the bound port are queued up to the specified backlog limit. Each
-//                  pending connection may later be retrieved using Accept(), which creates a
-//                  new socket representing the established TCP session.
-//
-//                  UDP sockets do not support Listen() and will return SYS_INVALID_STATE.
-//
-//-------------------------------------------------------------------------------------------------
-#if (IP_USE_TCP == DEF_ENABLED)
-SystemState_e Socket::Listen(uint16_t Backlog)
-{
-    if(m_Type != SOCKET_TYPE_STREAM)                    // Only TCP supports Listen()
-    {
-        return SYS_INVALID_STATE;
-    }
-
-    if(Backlog == 0)                                    // Backlog must be non-zero
-    {
-        return SYS_INVALID_PARAMETER;
-    }
-
-    if(m_LocalInfo.Port == 0)                           // Socket must be bound to a local port before listening
-    {
-        return SYS_INVALID_STATE;
-    }
-
-    m_IsListening = true;                               // Mark socket as listening
-    return m_Manager.TCP_EnterListen(this, Backlog);    // Enter LISTEN state
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Connect
-//
-//  Parameter(s):   SocketInfo_t*   pDestInfo     Remote endpoint information
-//                                                (IP address, port, and optional MAC address).
-//
-//  Return:         SystemState_e   SYS_READY         - Connection established or remote endpoint
-//                                                       stored.
-//                                  SYS_INVALID_STATE - Socket type does not support Connect().
-//                                  SYS_INVALID_PARAM - Null pointer or invalid destination port.
-//                                  SYS_FAIL          - TCP handshake failed (for stream sockets).
-//
-//  Description:    Establishes a connection to a remote endpoint. For UDP sockets, this call
-//                  does not perform any network exchange; it simply stores the destination
-//                  address and port so that subsequent Send() operations can use the socket’s
-//                  default remote endpoint.
-//
-//                  For TCP sockets, this function initiates an active open. It configures the
-//                  TCP control block, sends a SYN segment, and transitions the socket into the
-//                  SYN-SENT state. The function returns SYS_READY once the TCP three-way
-//                  handshake completes and the connection reaches the ESTABLISHED state. If the
-//                  handshake fails or times out, the function returns SYS_FAIL.
-//
-//-------------------------------------------------------------------------------------------------
-#if (IP_USE_TCP == DEF_ENABLED)
-SystemState_e Socket::Connect(const SocketInfo_t* pDestInfo)
-{
-    if(m_Type == SOCKET_TYPE_DGRAM)
-    {
-        // UDP connect (store remote endpoint)
-        if((pDestInfo == nullptr) || (pDestInfo->Port == 0))
-        {
-            return SYS_INVALID_PARAM;
-        }
-
-        m_RemoteInfo = *pDestInfo;
-        return SYS_READY;
-    }
-
-    if(m_Type == SOCKET_TYPE_STREAM)
-    {
-        // TCP connect (active open)
-        return m_Tcp.Connect(pDestInfo);
-    }
-
-    return SYS_INVALID_STATE;
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-#if (IP_USE_TCP == DEF_ENABLED)
-SystemState_e Socket::Accept(Socket** ppNewSocket)
-{
-    if(m_Type != SOCKET_TYPE_STREAM)
-    {
-        return SYS_INVALID_STATE;
-    }
-
-    if(ppNewSocket == nullptr)
-    {
-        return SYS_INVALID_PARAM;
-    }
-
-    // TCP passive open
-    return m_Tcp.Accept(ppNewSocket);
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Send
-//
-//  Parameter(s):   uint8_t*    pData       Pointer to the payload buffer to transmit.
-//                  size_t      Length      Number of payload bytes to send.
-//                  size_t*     pBytesSent  Output: number of payload bytes successfully queued for
-//
-//  Return:         SystemState_e           SYS_READY         - Packet successfully queued.
-//                                          SYS_INVALID_STATE - Socket not connected or not a UDP
-//                                                              socket.
-//                                          SYS_FAIL          - Lower layer rejected the packet.
-//
-//  Description:    Sends a UDP datagram using the socket’s preconfigured remote endpoint.
-//                  This function requires the socket to be "connected" via Connect(), which
-//                  stores the destination address and port in m_RemoteInfo. The function
-//                  delegates the actual transmission to SendTo(), preserving the zero-copy
-//                  architecture.
-//
-//-------------------------------------------------------------------------------------------------
-#if (IP_USE_TCP == DEF_ENABLED)
-SystemState_e Socket::Send(uint8_t* pData, size_t Length, size_t* pBytesSent)
-{
-    if(m_Type != SOCKET_TYPE_DATAGRAM)
-    {
-        return SYS_INVALID_STATE;
-    }
-
-    // Must have a connected remote endpoint
-    if(m_RemoteInfo.Port == 0)
-    {
-        return SYS_INVALID_STATE;
-    }
-
-    return SendTo(pData, Length, &m_RemoteInfo, pBytesSent);
-}
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -775,113 +523,6 @@ SystemState_e Socket::SendTo(uint8_t* pData, size_t Length, SocketInfo_t* pDestI
     UDP_Socket_t* pUDP = m_Protocol.pUDP;
     return m_pContext->GetUDP().Send(pUDP->LocalPort, pData, Length, pDestInfo, pBytesSent);
 }
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Recv  (Zero-Copy Variant)
-//
-//  Parameter(s):   IP_PacketMsg_t** ppMessage
-//                      Output: pointer to the received TCP segment message. The caller obtains
-//                      full ownership of the message, including IP/TCP headers, payload pointer,
-//                      and payload size. The caller must free the message via
-//                      IP_Manager::FreeMessage() once processing is complete.
-//
-//  Return:         SystemState_e
-//                      SYS_READY         - A TCP segment was dequeued and delivered.
-//                      SYS_TIMEOUT       - No segment available within the configured timeout.
-//                      SYS_INVALID_STATE - Called on a non-TCP socket.
-//
-//  Description:    Retrieves the next TCP segment from the socket’s RX queue and returns the
-//                  complete IP_PacketMsg_t structure without copying any payload data. The caller
-//                  accesses the TCP payload directly from the underlying packet buffer, enabling
-//                  true zero-copy processing.
-//
-//  Note(s):        This method is intended for high-performance or protocol-level consumers that
-//                  require direct access to the raw segment data. The buffered Recv() variant
-//                  remains available for callers that prefer a traditional memcpy-based API.
-//
-//-------------------------------------------------------------------------------------------------
-#if (IP_USE_TCP == DEF_ENABLED)
-SystemState_e Socket::Recv(IP_PacketMsg_t** ppMsg)
-{
-    if(m_Type != SOCKET_TYPE_STREAM)
-    {
-        return SYS_INVALID_STATE;
-    }
-
-    TCP_Socket_t* pTCP = m_Protocol.pTCP;
-    nOS_TickCounter Timeout = m_TimeoutMs;
-
-    if(nOS_QueueRead(&pTCP->RxQueue, ppMsg, Timeout) != NOS_OK)
-    {
-        return SYS_TIME_OUT;
-    }
-
-    return SYS_READY;
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Recv
-//
-//  Parameter(s):   uint8_t* pBuffer            Pointer to the user buffer where the received
-//                                              TCP payload will be copied.
-//                  size_t   BufferSize         Size of the user buffer in bytes.
-//                  size_t*  pBytesReceived     Output: number of payload bytes copied into
-//                                              pBuffer.
-//
-//  Return:         SystemState_e
-//                      SYS_READY         - A TCP segment was received and delivered.
-//                      SYS_TIMEOUT       - No segment available within the configured timeout.
-//                      SYS_INVALID_STATE - Called on a non-TCP socket.
-//
-//  Description:    Retrieves the next TCP segment from the socket’s RX queue and copies its
-//                  payload into the user-provided buffer. The function parses the IP and TCP
-//                  headers to determine the payload offset and length, clips the copy to
-//                  BufferSize, and frees the underlying packet message once processing is
-//                  complete.
-//
-//  Note(s)         This is the buffered, POSIX-style receive method. A separate zero-copy
-//                  variant is available for callers that require direct access to the packet
-//                  memory without performing a memcpy.
-//
-//-------------------------------------------------------------------------------------------------
-#if (IP_USE_TCP == DEF_ENABLED)
-SystemState_e Socket::Recv(uint8_t* pBuffer, size_t BufferSize, size_t* pBytesReceived)
-{
-    if(m_Type != SOCKET_TYPE_STREAM)
-    {
-        return SYS_INVALID_STATE;
-    }
-
-    TCP_Socket_t* pTCP_Socket = m_Protocol.pTCP;
-    IP_PacketMsg_t* pMsg = nullptr;
-
-    if(nOS_QueueRead(&pTCP_Socket->RxQueue, &pMsg, m_TimeoutMs) != NOS_OK)
-    {
-        return SYS_TIME_OUT;
-    }
-
-    TCP_Header_t* pTCP = &pMsg->pPacket->TCP_Frame.Header;
-    IP_Header_t*  pIP  = &pMsg->pPacket->TCP_Frame.IP_Header;
-
-    size_t headerLen = (pTCP->Offset >> 4) * 4;
-    size_t ipLen     = ntohs(pIP->Length);
-    size_t dataLen   = ipLen - sizeof(IP_Header_t) - headerLen;
-
-    if(dataLen > BufferSize)
-    {
-        dataLen = BufferSize;
-    }
-
-    uint8_t* pPayload = (uint8_t*)((uint8_t*)pTCP + headerLen);
-    memcpy(pBuffer, pPayload, dataLen);
-    IP_Manager::FreeMessage(pMsg);                                      // Free segment
-    *pBytesReceived = dataLen;
-    return SYS_READY;
-}
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1013,14 +654,6 @@ void Socket::Close(void)
         break;
       #endif
 
-      #if (IP_USE_TCP == DEF_ENABLED)
-        case SOCKET_TYPE_STREAM:
-        {
-            m_Manager.TCP_Close(this);                                  // Let TCP manager handle tear-down (FIN, RST, etc.)
-        }
-        break;
-      #endif
-
       #if (IP_USE_RAW == DEF_ENABLED)
         case SOCKET_TYPE_RAW:
         {
@@ -1090,14 +723,6 @@ void Socket::FreeProtocolData(void)
     {
         pMemoryPool->Free((void**)&m_Protocol.pUDP);
         m_Protocol.pUDP = nullptr;
-    }
-  #endif
-
-  #if (IP_USE_TCP == DEF_ENABLED)
-    if(m_Protocol.pTCP != nullptr)
-    {
-        pMemoryPool->Free((void**)&m_Protocol.pTCP);
-        m_Protocol.pTCP = nullptr;
     }
   #endif
 

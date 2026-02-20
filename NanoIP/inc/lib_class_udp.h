@@ -34,8 +34,6 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define UDP_EPHEMERAL_PORT_MIN              49152
-#define UDP_EPHEMERAL_PORT_MAX              65535
 #define UDP_MAX_BINDS                       8
 
 //-------------------------------------------------------------------------------------------------
@@ -63,7 +61,6 @@ class UDP_Manager
 
         bool                    RegisterSocket          (Socket* pSock, IP_Port_t Port);
         void                    UnregisterSocket        (IP_Port_t Port);
-        IP_Port_t               AllocateEphemeralPort   (void);
 
     private:
 
@@ -71,8 +68,6 @@ class UDP_Manager
 
         UDP_BoundEntry_t        m_BoundSockets          [UDP_MAX_BINDS];
         size_t                  m_BoundCount            = 0;
-        IP_Port_t               m_NextEphemeralPort     = UDP_EPHEMERAL_PORT_MIN;
-
         NetworkContext*         m_pContext;
 };
 

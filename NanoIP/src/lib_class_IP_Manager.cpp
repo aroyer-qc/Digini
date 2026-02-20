@@ -39,6 +39,8 @@
 //-------------------------------------------------------------------------------------------------
 
 #define IP_ASCII_ADDRESS_SIZE               16
+#define IP_EPHEMERAL_PORT_MIN               49152
+#define IP_EPHEMERAL_PORT_MAX               65535
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -71,8 +73,9 @@ void IP_Manager::Initialize(NetworkContext& Context)
 {
     nOS_Error Error;
 
-    m_pContext   = &Context;
-    m_SequenceID = RNG_GetRandom();
+    m_pContext          = &Context;
+    m_SequenceID        = RNG_GetRandom();
+    m_NextEphemeralPort = IP_EPHEMERAL_PORT_MIN;
 
 //todo need to fix the stack
    #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
@@ -146,6 +149,12 @@ void IP_Manager::Run(void)
     #if (IP_USE_DNS == DEF_ENABLED)
         m_pContext->GetDNS().Process();
     #endif
+
+    #if (IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
+        m_pContext->GetTCP().Process();
+    #endif
+
+
 
         if(nOS_QueueRead(m_pContext->GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
         {
@@ -250,10 +259,10 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
         break;
       #endif
 
-      #if (IP_USE_TCP == DEF_ENABLED)
+     #if (IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
         case IP_PROTOCOL_TCP:
         {
-            m_TCP.Process(pMsg);
+            m_pContext->GetTCP().ProcessSegment(pMsg);
         }
         break;
       #endif
@@ -328,6 +337,40 @@ SystemState_e IP_Manager::SendPacket(IP_PacketMsg_t* pMsg)
     }
 
     return m_pContext->SendPacket(pMsg);                                                // Hand off to interface context (driver callback)
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           AllocateEphemeralPort
+//
+//  Parameter(s):   None
+//
+//  Return:         IP_Port_t   A free ephemeral UDP port in the configured ephemeral range.
+//                              Returns 0 if no ports are available.
+//
+//  Description:    Searches the UDP binding table for an unused port within the ephemeral
+//                  port range. The function iterates through the configured range and returns
+//                  the first unbound port. If all ephemeral ports are currently in use, the
+//                  function returns 0 to indicate failure. This helper is used by the socket
+//                  layer when a UDP socket is bound with port = 0, allowing automatic,
+//                  conflict-free port assignment.
+//
+//-------------------------------------------------------------------------------------------------
+IP_Port_t IP_Manager::AllocateEphemeralPort(void)
+{
+    //IP_Port_t start = m_NextEphemeralPort;
+
+    // Wrap around if needed
+    if(m_NextEphemeralPort > IP_EPHEMERAL_PORT_MAX)
+    {
+        m_NextEphemeralPort = IP_EPHEMERAL_PORT_MIN;
+    }
+
+    IP_Port_t Candidate = m_NextEphemeralPort;
+    m_NextEphemeralPort++;
+
+    // implement in futur a check for already allocated port
+    return Candidate;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -717,12 +760,14 @@ uint16_t IP_Manager::IP_CalculateChecksum(const void* pBuffer, uint16_t Count)
 //                  - The buffer does not need to be 16-bit aligned; the function handles byte
 //                    access safely and deterministically.
 //-------------------------------------------------------------------------------------------------
-#if (IP_USE_TCP == DEF_ENABLED)
+#if (IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
 uint16_t IP_Manager::TCP_CalculateChecksum(IP_Header_t* pIP, TCP_Header_t* pTCP, uint16_t TCP_Length)
 {
     uint32_t Sum = 0;
 
-    // Pseudo-header
+    // ---------------------------------------------------------
+    // Pseudo-header (RFC 793)
+    // ---------------------------------------------------------
     Sum += (pIP->SrcIP_Address >> 16) & 0xFFFF;
     Sum += (pIP->SrcIP_Address      ) & 0xFFFF;
     Sum += (pIP->DstIP_Address >> 16) & 0xFFFF;
@@ -730,10 +775,43 @@ uint16_t IP_Manager::TCP_CalculateChecksum(IP_Header_t* pIP, TCP_Header_t* pTCP,
     Sum += htons(IP_PROTOCOL_TCP);
     Sum += htons(TCP_Length);
 
+    // ---------------------------------------------------------
     // TCP header + payload
-    Sum += ChecksumAccumulate((uint8_t*)pTCP, TCP_Length);
+    // ---------------------------------------------------------
+    const uint8_t* pData = reinterpret_cast<const uint8_t*>(pTCP);
+    uint32_t len = TCP_Length;
 
-    return ChecksumFinalize(Sum);
+    // Process 16-bit words
+    while(len > 1)
+    {
+        uint16_t word = (pData[0] << 8) | pData[1];
+        Sum += word;
+        pData += 2;
+        len -= 2;
+    }
+
+    // Odd byte (pad with zero)
+    if(len == 1)
+    {
+        uint16_t word = (pData[0] << 8);
+        Sum += word;
+    }
+
+    // ---------------------------------------------------------
+    // Finalize checksum (fold to 16 bits, one's complement)
+    // ---------------------------------------------------------
+    while(Sum >> 16)
+    {
+        Sum = (Sum & 0xFFFF) + (Sum >> 16);
+    }
+
+    uint16_t Result = static_cast<uint16_t>(~Sum);
+
+    // RFC: checksum of 0 becomes 0xFFFF
+    if(Result == 0)
+        Result = 0xFFFF;
+
+    return Result;
 }
 #endif
 

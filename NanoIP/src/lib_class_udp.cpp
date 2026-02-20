@@ -84,7 +84,6 @@ void UDP_Manager::Initialize(NetworkContext& Context)
     m_pContext = &Context;
     memset(m_BoundSockets, 0, sizeof(m_BoundSockets));      // Clear the binding table
     m_BoundCount = 0;                                       // Reset the number of active bindings
-    m_NextEphemeralPort = UDP_EPHEMERAL_PORT_MIN;           // Reset ephemeral port allocator
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -329,61 +328,6 @@ void UDP_Manager::UnregisterSocket(IP_Port_t Port)
 
             m_BoundCount--;
             return;
-        }
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           AllocateEphemeralPort
-//
-//  Parameter(s):   None
-//
-//  Return:         IP_Port_t   A free ephemeral UDP port in the configured ephemeral range.
-//                              Returns 0 if no ports are available.
-//
-//  Description:    Searches the UDP binding table for an unused port within the ephemeral
-//                  port range. The function iterates through the configured range and returns
-//                  the first unbound port. If all ephemeral ports are currently in use, the
-//                  function returns 0 to indicate failure. This helper is used by the socket
-//                  layer when a UDP socket is bound with port = 0, allowing automatic,
-//                  conflict-free port assignment.
-//
-//-------------------------------------------------------------------------------------------------
-IP_Port_t UDP_Manager::AllocateEphemeralPort(void)
-{
-    IP_Port_t start = m_NextEphemeralPort;
-
-    while(1)
-    {
-        // Wrap around if needed
-        if(m_NextEphemeralPort > UDP_EPHEMERAL_PORT_MAX)
-        {
-            m_NextEphemeralPort = UDP_EPHEMERAL_PORT_MIN;
-        }
-
-        IP_Port_t Candidate = m_NextEphemeralPort;
-        m_NextEphemeralPort++;
-
-        bool inUse = false;
-
-        for(size_t i = 0; i < m_BoundCount; i++)            // Check if already bound
-        {
-            if(m_BoundSockets[i].Port == Candidate)
-            {
-                inUse = true;
-                break;
-            }
-        }
-
-        if(inUse == false)
-        {
-            return Candidate;
-        }
-
-        if(m_NextEphemeralPort == start)                    // Full cycle → no free port
-        {
-            return 0;                                       // 0 = failure
         }
     }
 }

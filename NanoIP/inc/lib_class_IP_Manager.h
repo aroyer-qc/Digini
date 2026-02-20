@@ -93,6 +93,8 @@ class IP_Manager
         static bool             IsItBroadcastMAC            (const IP_MAC_Address_t* Mac)       { const uint8_t* b = Mac->Byte; return (b[0] & b[1] & b[2] & b[3] & b[4] & b[5]) == 0xFF; }
         static bool             IsItMulticastMAC            (const IP_MAC_Address_t* mac)       { return (mac->Byte[0] & 0x01) != 0; }
         static bool             IsItMulticast               (IP_Address_t IP)                   { uint8_t First = IP_D(IP); return ((First >= IP_MULTICAST_MIN) && (First <= IP_MULTICAST_MAX)); }
+        IP_Port_t               AllocateEphemeralPort       (void);
+
 
         SystemState_e           SendPacket                  (IP_PacketMsg_t* pMsg);
 
@@ -113,6 +115,7 @@ class IP_Manager
 
         NetworkContext*                 m_pContext;
         uint16_t                        m_SequenceID;
+        IP_Port_t                       m_NextEphemeralPort;
         nOS_Thread                      m_Handle;
 };
 

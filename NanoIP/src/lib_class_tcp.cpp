@@ -371,64 +371,56 @@ bool TCP_Manager::Initialize(NetworkContext& Context)
 #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
 TCP_Socket* TCP_Manager::Connect(const IP_Address_t& ServerIP, uint16_t Port)
 {
-    // Allocate a base socket of type STREAM (TCP)
-    Socket* pSocket = m_pSocketManager->AllocSocket(SOCKET_TYPE_STREAM);
-
-    if(pSocket == nullptr)
-    {
-        return nullptr;
-    }
-
-    // Retrieve the TCP protocol data
-    TCP_Socket* pTCP = pSocket->GetTCP();
-
+    // Allocate a TCP socket directly
+    TCP_Socket* pTCP = new TCP_Socket(*m_pContext, *this);
     if(pTCP == nullptr)
     {
-        m_pSocketManager->FreeSocket(&pSocket);
         return nullptr;
     }
 
-    // Bind to ephemeral port (0 = auto-assign)
-    if(pSocket->Bind(0) != SYS_READY)
-    {
-        m_pSocketManager->FreeSocket(&pSocket);
-        return nullptr;
-    }
+    // Initialize local/remote info
+    pTCP->m_State = TCP_STATE_CLOSED;
 
-    // Set remote endpoint using your new setter
-    SocketInfo_t Remote;
-    Remote.Address = ServerIP;
-    Remote.Port    = Port;
-    pSocket->SetRemoteInfo(Remote);
+    SocketInfo_t info;
+    info.Address = ServerIP;
+    info.Port    = Port;
+    pTCP->SetRemoteInfo(info);
 
-    // Initialize TCP state
-    pTCP->m_SeqNumber     = (uint32_t)GetTick();   // Simple ISN
-    pTCP->m_LastSeqNumber = pTCP->m_SeqNumber;
+    // Choose ephemeral port
+
+    SocketInfo_t local;
+    local.Address = m_pContext->GetActiveIP();
+    local.Port    = m_pContext->GetIP_Manager()->AllocateEphemeralPort();
+    pTCP->SetLocalInfo(local);
+
+    // Initialize sequence numbers
+    uint32_t isn = (uint32_t)GetTick();
+    pTCP->m_SeqNumber     = isn;
+    pTCP->m_LastSeqNumber = isn;
     pTCP->m_AckNumber     = 0;
 
     pTCP->m_RemoteWindow = 0;
     pTCP->m_LocalWindow  = TCP_DEFAULT_WINDOW_SIZE;
 
-    TickCount_t Now = GetTick();
-    pTCP->m_LastSendTick     = Now;
-    pTCP->m_LastReceivedTick = Now;
+    TickCount_t now = GetTick();
+    pTCP->m_LastSendTick     = now;
+    pTCP->m_LastReceivedTick = now;
     pTCP->m_RetransmitStart  = 0;
 
     pTCP->m_RetransmitPending = false;
     pTCP->m_LastFlags         = 0;
     pTCP->m_LastPayloadLength = 0;
 
-
     // Send SYN
     if(!SendSegment(pTCP, nullptr, 0, TCP_FLAG_SYN))
     {
-        m_pSocketManager->FreeSocket(&pSocket);
+        delete pTCP;
         return nullptr;
     }
 
-    // SYN successfully sent
+    // Update state
     pTCP->m_State             = TCP_STATE_SYN_SENT;
-    pTCP->m_RetransmitStart   = Now;
+    pTCP->m_RetransmitStart   = now;
     pTCP->m_RetransmitPending = true;
 
     // Store as active client socket
@@ -605,11 +597,7 @@ void TCP_Manager::Process(void)
 #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
     if(m_pClientSocket != nullptr)
     {
-        TCP_Socket* pTCP = m_pClientSocket->GetTCP();
-        if(pTCP != nullptr)
-        {
-            RetransmitIfNeeded(pTCP);
-        }
+        RetransmitIfNeeded(m_pClientSocket);
     }
 #endif
 
@@ -667,50 +655,60 @@ void TCP_Manager::Process(void)
 //                  This function does NOT perform retransmission or timeout handling; those are
 //                  handled by Process().
 //-------------------------------------------------------------------------------------------------
-void TCP_Manager::ProcessSegment(IP_EthernetPacket_t* pPacket)
+void TCP_Manager::ProcessSegment(IP_PacketMsg_t* pMsg)
 {
-    if(pPacket == nullptr)
+    if((pMsg == nullptr) || (pMsg->pPacket == nullptr))
     {
         return;
     }
 
+    IP_EthernetPacket_t* pPacket = pMsg->pPacket;
+
+    // Basic size check: ETH + IP + TCP header
+    if(pMsg->PacketSize < sizeof(TCP_Frame_t))
+    {
+        return;     // Caller decides how to free pMsg
+    }
+
     TCP_Socket* pSocket = nullptr;
 
-    uint8_t  Flags      = 0;
-    uint32_t Seq        = 0;
-    uint32_t Ack        = 0;
-    size_t   PayloadLen = 0;
-
-    //---------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Parse TCP header and identify the socket
-    //---------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     if(ParseTCP_Header(pPacket, pSocket) == false)
     {
         return;     // Invalid header or no matching socket
     }
 
-    //---------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Extract TCP header fields
-    //---------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     const TCP_Header_t& hdr = pPacket->TCP_Frame.Header;
     const IP_Header_t&  ip  = pPacket->TCP_Frame.IP_Header;
 
-    Flags = hdr.Flags;
-    Seq   = hdr.SequenceNumber;
-    Ack   = hdr.AcknowledgeNumber;
+    uint8_t  Flags = hdr.Flags;
+    uint32_t Seq   = ntohl(hdr.SequenceNumber);
+    uint32_t Ack   = ntohl(hdr.AcknowledgeNumber);
 
-    //---------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Compute payload length
-    //---------------------------------------------------------------------------------------------
-    uint8_t ipHeaderLen  = (ip.VersionIHL & 0x0F) * 4;       // IHL in bytes
-    uint8_t tcpHeaderLen = (hdr.Offset >> 4) * 4;            // Data offset in bytes
+    // -------------------------------------------------------------------------
+    uint8_t  ipHeaderLen  = (ip.VersionIHL & 0x0F) * 4;       // IHL in bytes
+    uint8_t  tcpHeaderLen = (hdr.Offset >> 4) * 4;            // Data offset in bytes
+    uint16_t totalLength  = ntohs(ip.Length);
 
-    PayloadLen = ip.Length - ipHeaderLen - tcpHeaderLen;
+    size_t PayloadLen = 0;
+    if(totalLength >= (ipHeaderLen + tcpHeaderLen))
+    {
+        PayloadLen = static_cast<size_t>(totalLength - ipHeaderLen - tcpHeaderLen);
+    }
 
-    //---------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // Dispatch to the TCP state machine
-    //---------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     ProcessIncomingFlags(pSocket, pPacket, Flags, Seq, Ack, PayloadLen);
+
+    IP_Manager::FreeMessage(pMsg);
 }
 
 //-------------------------------------------------------------------------------------------------

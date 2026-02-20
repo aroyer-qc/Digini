@@ -108,9 +108,6 @@ void NetworkContext::Initialize(IF_ID_e IF_ID)
   #if (IP_USE_UDP == DEF_ENABLED)
     m_UDP.Initialize(*this);
   #endif
-  #if (IP_USE_TCP == DEF_ENABLED)
-    m_TCP.Initialize(*this);
-  #endif
   #if (IP_USE_DNS == DEF_ENABLED)
     m_DNS.Initialize(*this);
   #endif

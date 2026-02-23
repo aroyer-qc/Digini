@@ -48,7 +48,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-extern "C" void nOS_ThreadCreateHook(nOS_Thread* pThread, size_t StackSize);
+extern "C" void nOS_ThreadHook(nOS_Thread* pThread, size_t StackSize);
 #endif
 
 class StackCheck

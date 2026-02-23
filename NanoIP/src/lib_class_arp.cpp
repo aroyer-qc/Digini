@@ -39,7 +39,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define ARP_TMR_INTERVAL                        1000
-#define ARP_PENDING_NONE                            -1          // No oldest pending entry
+#define ARP_PENDING_NONE                        -1          // No oldest pending entry
 
 //-------------------------------------------------------------------------------------------------
 // Prototype(s)
@@ -74,8 +74,6 @@ SystemState_e ARP_Manager::Initialize(NetworkContext& Context)
     m_PendingOldest = ARP_PENDING_NONE;
     m_IP_Address    = IP_ADDRESS(0,0,0,0);
     m_Time          = 0;
-
-
 
     memset((void*)m_PendingQueue, 0, sizeof(ARP_PendingEntry_t) * ARP_PENDING_QUEUE_SIZE);  // Clear the pending queue
     memset((void*)m_TableEntry,   0, sizeof(ARP_TableEntry_t)   * IP_ARP_TABLE_SIZE);       // Clear the ARP cache table
@@ -166,7 +164,9 @@ void ARP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
     //    return; // suspicious -> ignore
     //}
 
+  #if (ARP_SECURE_MODE != DEF_ENABLED)												// Secure mode: do not learn IP→MAC from generic IP traffic
     UpdateEntry(SourceIP, pSrcMAC);                                                 // Passed all filters -> learn entry
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -208,14 +208,30 @@ void ARP_Manager::ProcessARP(IP_PacketMsg_t* pRX)
     IP_Address_t SrcIP = pRX_ARP->SrcIP_Address;
     IP_Address_t DstIP = pRX_ARP->DstIP_Address;
 
+  #if (ARP_SECURE_MODE == DEF_ENABLED)
+	// Ignore ARP that does not involve our IP at all
+	if((SrcIP != ActiveIP) && (DstIP != ActiveIP))
+	{
+		IP_Manager::FreeMessage(pRX);
+		return;
+	}
+  #endif
+
     switch(pRX_ARP->Opcode)
     {
         case ARP_REQUEST:
         {
+
+          #if (ARP_SECURE_MODE != DEF_ENABLED)													    // In non secure mode, learn if the request targets our IP
             UpdateEntry(SrcIP, &pRX_ARP->SourceMAC);                                                // RFC-friendly: learn sender’s IP->MAC even if request is not for us
+		  #endif
 
             if(DstIP == ActiveIP)                                                                   // Only reply if the request targets our IP
             {
+			  #if (ARP_SECURE_MODE == DEF_ENABLED)										    		// In secure mode, only learn if the request targets our IP
+				UpdateEntry(SrcIP, &pRX_ARP->SourceMAC);                                            // RFC-friendly: learn sender’s IP->MAC even if request is not for us
+			  #endif
+
                 pMemoryPool->ChangeDebugID(pRX,          MEM_DBG_IPPKT,     MEM_DBG_ARP);
                 pMemoryPool->ChangeDebugID(pRX->pPacket, MEM_DBG_ETHDMARX2, MEM_DBG_ARPDT);
 
@@ -257,15 +273,19 @@ void ARP_Manager::ProcessARP(IP_PacketMsg_t* pRX)
 
         case ARP_REPLY:
         {
-            //
-            // Only learn replies actually addressed to us:
-            //   - IP destination matches our IP
-            //   - Ethernet destination MAC is ours (anti‑spoofing)
-            //
-            if((DstIP == ActiveIP) && m_pContext->IsItMyMAC_Address(&pRX->pPacket->ETH_Header.DestinationMAC))
-            {
-                UpdateEntry(SrcIP, &pRX_ARP->SourceMAC);
-            }
+			// Only learn replies:
+			//  - addressed to our IP
+			//  - to our MAC
+			//  - (ARP_SECURE_MODE only) for an IP we actually requested
+			if((DstIP == ActiveIP) && (m_pContext->IsItMyMAC_Address(&pRX->pPacket->ETH_Header.DestinationMAC) == true)
+          #if (ARP_SECURE_MODE == DEF_ENABLED)
+			   && (IsPendingARP_Request(SrcIP) == true))
+          #else
+			   )
+		  #endif
+			{
+				UpdateEntry(SrcIP, &pRX_ARP->SourceMAC);
+			}
         }
         break;
 
@@ -316,9 +336,10 @@ void ARP_Manager::ProcessARP(IP_PacketMsg_t* pRX)
 //-------------------------------------------------------------------------------------------------
 void ARP_Manager::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMacAddress)
 {
-    uint8_t Index;
-    uint8_t OldestIndex = 0;
-    uint8_t OldestAge   = 0;
+    nOS_StatusReg     sr;
+    uint8_t           Index;
+    uint8_t           OldestIndex = 0;
+    uint8_t           OldestAge   = 0;
     ARP_TableEntry_t* pTable = nullptr;
 
     // Try to update an existing ARP table entry
@@ -388,11 +409,12 @@ void ARP_Manager::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMacAdd
     }
 
     // Insert new ARP table entry
+    nOS_EnterCritical(sr);
     pTable->IP_Address = IP_Address;
     pTable->TimeToLive = m_Time;
     pTable->State      = ARP_STATE_VALID;
     memcpy(pTable->MAC_Address.Byte, pMacAddress->Byte, IP_MAC_ADDRESS_SIZE);
-
+    nOS_LeaveCritical(sr);
 
   #if (IP_DBG_ARP == DEF_ENABLED)
     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - (%d.%d.%d.%d) Added new entry %d\n", IP_A(pTable->IP_Address),
@@ -433,13 +455,16 @@ FlushPending:
             }
           #endif
 
+            nOS_EnterCritical(sr);
             pEntry->pMsg  = nullptr;
             pEntry->IP    = IP_ADDRESS(0,0,0,0);
             pEntry->State = ARP_STATE_EMPTY;
+            nOS_LeaveCritical(sr);
         }
     }
 
     // 2) Recompute m_PendingOldest and maybe send ARP for new oldest
+    nOS_EnterCritical(sr);
     m_PendingOldest = ARP_PENDING_NONE;
     m_IP_Address    = IP_ADDRESS(0,0,0,0);
 
@@ -454,10 +479,12 @@ FlushPending:
             DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Next pending entry at %d, sending ARP\n", i);
           #endif
 
+            nOS_LeaveCritical(sr);
             ProcessOut();
             return;
         }
     }
+    nOS_LeaveCritical(sr);
 
   #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: No more pending entries\n");
@@ -487,8 +514,8 @@ FlushPending:
 void ARP_Manager::ProcessOut(void)
 {
     // Allocate wrapper + ARP packet buffer using the new helper
-    IP_PacketMsg_t* pMsg;// = nullptr;
-    SystemState_e State  = IP_Manager::AllocPacket(&pMsg, sizeof(ARP_Frame_t), MEM_DBG_ARP, MEM_DBG_ARPDT);
+    IP_PacketMsg_t* pMsg;
+    SystemState_e State = IP_Manager::AllocPacket(&pMsg, sizeof(ARP_Frame_t), MEM_DBG_ARP, MEM_DBG_ARPDT);
 
     if(State != SYS_READY)
     {
@@ -569,6 +596,8 @@ void ARP_Manager::ProcessOut(void)
 //-------------------------------------------------------------------------------------------------
 bool ARP_Manager::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg_t* pMsg)
 {
+    nOS_StatusReg sr;
+
     // Check ARP table
     for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
     {
@@ -621,9 +650,11 @@ bool ARP_Manager::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg_
 
     // 4) Fill new pending entry
     ARP_PendingEntry_t* pEntry = &m_PendingQueue[FreeIndex];
+    nOS_EnterCritical(sr);
     pEntry->IP    = IP;
     pEntry->pMsg  = pMsg;
     pEntry->State = ARP_STATE_PENDING;
+    nOS_LeaveCritical(sr);
 
     // 5) If queue was empty, this becomes the oldest and we send ARP now
     if(m_PendingOldest == ARP_PENDING_NONE)
@@ -635,88 +666,22 @@ bool ARP_Manager::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg_
 
     return false;
 }
-/*
-bool ARP_Manager::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg_t* pMsg)
-{
-    for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)                                                  // Check ARP table for a VALID entry
-    {
-        if((m_TableEntry[i].IP_Address == IP) && (m_TableEntry[i].State == ARP_STATE_VALID))
-        {
-            memcpy(pMAC->Byte, m_TableEntry[i].MAC_Address.Byte, IP_MAC_ADDRESS_SIZE);
-            return true;                                                                        // Resolved immediately
-        }
-    }
 
-    // Not resolved -> check if this IP is already pending
-    for(int Offset = 0; Offset < ARP_PENDING_QUEUE_SIZE; Offset++)
+#if (ARP_SECURE_MODE == DEF_ENABLED)
+bool ARP_Manager::IsPendingARP_Request(IP_Address_t IP)
+{
+    for(int i = 0; i < ARP_PENDING_QUEUE_SIZE; i++)
     {
-        int Index = (m_PendingOldest + Offset) % ARP_PENDING_QUEUE_SIZE;
-        ARP_PendingEntry_t* pEntry = &m_PendingQueue[Index];
+        ARP_PendingEntry_t* pEntry = &m_PendingQueue[i];
 
         if((pEntry->State == ARP_STATE_PENDING) && (pEntry->IP == IP))
         {
-            // Already have a pending entry for this IP.
-            // ARP will eventually send or timeout that packet.
-            // This new one cannot be queued -> free it.
-            IP_Manager::FreeMessage(pMsg);
-
-          #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
-             DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Duplicate pending for %d.%d.%d.%d, dropping packet\n", IP_A(IP),
-                                                                                                                         IP_B(IP),
-                                                                                                                         IP_C(IP),
-                                                                                                                         IP_D(IP));
-          #endif
-
-            return false;                                                                       // Still unresolved
+            return true;
         }
     }
-
-    // Not resolved and not already pending -> enqueue into pending queue. Scan circularly for an EMPTY slot
-    for(int Offset = 0; Offset < ARP_PENDING_QUEUE_SIZE; Offset++)
-    {
-        int Index = (m_PendingOldest + Offset) % ARP_PENDING_QUEUE_SIZE;
-        ARP_PendingEntry_t* pEntry = &m_PendingQueue[Index];
-
-        if(pEntry->State == ARP_STATE_EMPTY)
-        {
-            pEntry->IP    = IP;                                                                 // Fill pending entry
-            pEntry->pMsg  = pMsg;
-            pEntry->State = ARP_STATE_PENDING;
-            bool FirstPending = true;                                                           // If this is the ONLY pending entry, send ARP request now
-
-            for(int i = 0; i < ARP_PENDING_QUEUE_SIZE; i++)
-            {
-                if(i == Index)
-                {
-                    continue;
-                }
-
-                if(m_PendingQueue[i].State == ARP_STATE_PENDING)
-                {
-                    FirstPending = false;
-                    break;
-                }
-            }
-
-            if(FirstPending == true)
-            {
-                m_PendingOldest = Index;                                                        // This becomes the oldest pending entry
-                m_IP_Address    = IP;
-                ProcessOut();                                                                   // Send ARP request
-            }
-
-            return false;                                                                       // Not resolved yet
-        }
-    }
-
-  #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
-    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Pending queue FULL, dropping packet\n");
-  #endif
-
-    IP_Manager::FreeMessage(pMsg);                                                              // No EMPTY slot -> queue full -> drop packet
     return false;
 }
-*/
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //  Name:           FillCommon
@@ -777,6 +742,8 @@ void ARP_Manager::FillCommon(ARP_Frame_t* pARP, uint16_t Type)
 //-------------------------------------------------------------------------------------------------
 void ARP_Manager::OnPendingTimeOut(int PendingOffset)
 {
+    nOS_StatusReg sr;
+
     if(m_PendingOldest == ARP_PENDING_NONE)
     {
         return;
@@ -784,6 +751,8 @@ void ARP_Manager::OnPendingTimeOut(int PendingOffset)
 
     int PhysicalIndex = (m_PendingOldest + PendingOffset) % ARP_PENDING_QUEUE_SIZE;
     ARP_PendingEntry_t* pEntry = &m_PendingQueue[PhysicalIndex];
+
+    nOS_EnterCritical(sr);
 
     if(pEntry->pMsg != nullptr)
     {
@@ -793,6 +762,7 @@ void ARP_Manager::OnPendingTimeOut(int PendingOffset)
 
     pEntry->IP    = IP_ADDRESS(0,0,0,0);
     pEntry->State = ARP_STATE_EMPTY;
+    nOS_LeaveCritical(sr);
 
     // Recompute oldest
     m_PendingOldest = ARP_PENDING_NONE;
@@ -830,7 +800,7 @@ inline ARP_PendingEntry_t* ARP_Manager::GetPendingEntryByOffset(int Offset)
     {
         return nullptr;
     }
-    
+
     int Index = (m_PendingOldest + Offset) % ARP_PENDING_QUEUE_SIZE;
     return &m_PendingQueue[Index];
 }
@@ -867,6 +837,8 @@ inline ARP_PendingEntry_t* ARP_Manager::GetPendingEntryByOffset(int Offset)
 //-------------------------------------------------------------------------------------------------
 void ARP_Manager::TimerCallBack(void)
 {
+    nOS_StatusReg sr;
+
     m_Time++;                                                                       // Advance ARP time counter
 
     // ARP table aging
@@ -886,8 +858,9 @@ void ARP_Manager::TimerCallBack(void)
                                      IP_A(pTable->IP_Address), IP_B(pTable->IP_Address),
                                      IP_C(pTable->IP_Address), IP_D(pTable->IP_Address), i);
               #endif
-
+                nOS_EnterCritical(sr);
                 memset(pTable, 0, sizeof(ARP_TableEntry_t));                        // Clear entry
+                nOS_LeaveCritical(sr);
             }
         }
     }
@@ -902,7 +875,7 @@ void ARP_Manager::TimerCallBack(void)
     for(int Offset = 0; Offset < ARP_PENDING_QUEUE_SIZE; Offset++)
     {
         ARP_PendingEntry_t* pEntry = GetPendingEntryByOffset(Offset);
-        
+
         if(pEntry == nullptr)                                                       // Defensive: no valid oldest
         {
             break;

@@ -35,6 +35,7 @@
 #define ARP_HARDWARE_TYPE_ETHERNET      HTONS(1)
 
 #define ARP_PENDING_QUEUE_SIZE          4
+#define ARP_SECURE_MODE   				DEF_ENABLED  //move to ip_cfg.h
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -68,6 +69,9 @@ class ARP_Manager
         ARP_PendingEntry_t* GetPendingEntryByOffset (int Offset);
         void                OnPendingTimeOut        (int LogicalIndex);
 
+	  #if (ARP_SECURE_MODE == DEF_ENABLED)
+        bool 				IsPendingARP_Request	(IP_Address_t IP);
+      #endif
 
     private:
 

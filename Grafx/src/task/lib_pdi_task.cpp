@@ -93,7 +93,8 @@ SystemState_e PDI_myClassTask::Initialize(PointingDeviceInterface* pDriver, uint
                                  this,
                                  &m_Stack[0],
                                  PDI_TASK_STACK_SIZE,
-                                 PDI_TASK_PRIO)) == NOS_OK)
+                                 PDI_TASK_PRIO,
+                                 "Task PDI")) == NOS_OK)
     {
       #if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
         if((Error = nOS_SemCreate(&this->m_FlagTouchDetected, 0, 1)) == NOS_OK)

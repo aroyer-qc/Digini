@@ -125,11 +125,12 @@ void USB_Host::Initialize(class USB_Application* pUSB)
                      this,
                      &m_Stack[0],
                     USBH_STACK_SIZE,
-                    USBH_PRIO);
+                    USBH_PRIO,
+                    "USB Host");
 
-  #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-    myStacktistic::Register(&m_Stack[0], USBH_STACK_SIZE);
-  #endif    
+//  #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+//    myStacktistic::Register(&m_Stack[0], USBH_STACK_SIZE);
+//  #endif    
 
 
     // Initialize low level driver

@@ -78,16 +78,17 @@ void IP_Manager::Initialize(NetworkContext& Context)
     m_NextEphemeralPort = IP_EPHEMERAL_PORT_MIN;
 
 //todo need to fix the stack
-   #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-    myStacktistic.Register(m_pContext->GetIP_Stack(), TASK_IP_MANAGER_STACK_SIZE, m_pContext->GetHostName());
-  #endif
+//   #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+//    myStacktistic.Register(m_pContext->GetIP_Stack(), TASK_IP_MANAGER_STACK_SIZE, m_pContext->GetHostName());
+  //#endif
 
     Error = nOS_ThreadCreate(&m_Handle,
                              TaskIP_Manager_Wrapper,
                              this,
                              m_pContext->GetIP_Stack(),
                              TASK_IP_MANAGER_STACK_SIZE,
-                             TASK_IP_MANAGER_PRIO);
+                             TASK_IP_MANAGER_PRIO,
+                             m_pContext->GetHostName());
 
     VAR_UNUSED(Error);
 }

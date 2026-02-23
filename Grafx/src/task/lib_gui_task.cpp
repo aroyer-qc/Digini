@@ -85,16 +85,13 @@ nOS_Error GUI_myClassTask::Initialize(void)
                                  this,
                                  &m_Stack[0],
                                  GUI_TASK_STACK_SIZE,
-                                 GUI_TASK_PRIO
-                               #if(NOS_CONFIG_THREAD_MPU_REGION_ENABLE > 0)
-                                 , nullptr
-                               #endif
-                                );
+                                 GUI_TASK_PRIO,
+                                 "Digini GUI");
     }
 
-  #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-    myStacktistic.Register(&m_Stack[0], GUI_TASK_STACK_SIZE, "Digini GUI");
-  #endif
+  //#if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+  //  myStacktistic.Register(&m_Stack[0], GUI_TASK_STACK_SIZE, "Digini GUI");
+  //#endif
 
   #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
     m_SlideRange.StartPos = -1;

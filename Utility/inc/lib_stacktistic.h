@@ -41,7 +41,15 @@
                                                         LIB_CLASS_STACKTISTIC_WATER_MARK_CODE,  \
                                                         LIB_CLASS_STACKTISTIC_WATER_MARK_CODE))
 
+#if (DIGINI_USE_STACKTISTIC != DEF_ENABLED)
+#define nOS_ThreadCreateHook(p, s)
+#endif
+
 //-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+extern "C" void nOS_ThreadCreateHook(nOS_Thread* pThread, size_t StackSize);
+#endif
 
 class StackCheck
 {

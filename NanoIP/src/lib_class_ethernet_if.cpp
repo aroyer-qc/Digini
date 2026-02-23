@@ -102,16 +102,17 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, Netw
     Error = nOS_MutexCreate(&m_TX_Mutex, NOS_MUTEX_NORMAL, 1);
     VAR_UNUSED(Error);
 
-  #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-    myStacktistic.Register(&m_Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Ethernet Input");
-  #endif
+  //#if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
+  //  myStacktistic.Register(&m_Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Ethernet Input");
+  //#endif
 
     nOS_ThreadCreate(&m_Handle,
                      ClassEthernetIf_Wrapper,
                      this,
                      &m_Stack[0],
                      TASK_ETHERNET_IF_STACK_SIZE,
-                     TASK_ETHERNET_IF_PRIO);
+                     TASK_ETHERNET_IF_PRIO,
+                     "Ethernet Input");
 
     pETH_Driver = m_pETH_Config->pETH_Driver;
     pETH_Driver->Initialize(this, m_pETH_Config->PHY_Address);      // TODO put in here the callback

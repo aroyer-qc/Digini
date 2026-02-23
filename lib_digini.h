@@ -134,8 +134,6 @@
 #include "./Peripheral/inc/port/lib_rng.h"
 #include "./Utility/inc/lib_class_crc.h"
 #include "./Memory/inc/lib_memory.h"
-#include "./Memory/inc/lib_node_list.h"
-#include "./Memory/inc/lib_memory_node.h"
 
 //-------------------------------------------------------------------------------------------------
 // Interface

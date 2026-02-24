@@ -387,10 +387,10 @@ IP_Port_t IP_Manager::AllocateEphemeralPort(void)
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::IP_ToAscii(char* pBuffer, IP_Address_t IP_Address)
 {
-    snprintf(pBuffer, IP_ASCII_ADDRESS_SIZE, "%d.%d.%d.%d", IP_A(IP_Address),
-                                                            IP_B(IP_Address),
-                                                            IP_C(IP_Address),
-                                                            IP_D(IP_Address));
+    snprintf(pBuffer, IP_ASCII_ADDRESS_SIZE, "%d.%d.%d.%d        ", IP_A(IP_Address),
+                                                                    IP_B(IP_Address),
+                                                                    IP_C(IP_Address),
+                                                                    IP_D(IP_Address));
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -179,23 +179,9 @@ int StackCheck::GetNumberOfRegisterStack(void)
 
 
 #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-extern "C" void nOS_ThreadHook(nOS_Thread* pThread, size_t StackSize)
+extern "C" void nOS_ThreadCreateHook(nOS_Stack* pStack, size_t StackSize, const char* pName)
 {
-    switch(pThread->state)
-    {
-        case NOS_THREAD_READY:
-        {        
-            myStacktistic.Register(pThread->stackPtr, StackSize, pThread->name);
-        }
-        break;
-        
-        case NOS_THREAD_STOPPED:
-        {
-        }
-        break;
-        
-        default: break;
-    }
+    myStacktistic.Register(pStack, StackSize, pName);
 }
 #endif
 

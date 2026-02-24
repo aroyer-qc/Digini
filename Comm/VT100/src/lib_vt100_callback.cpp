@@ -1209,7 +1209,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
         {
             Label_e           SpeedLabel;
             NetworkContext*   pContext = pTaskNetwork->GetContext();
-            char              Buffer[16];
+            char              Buffer[20];
             IP_MAC_Address_t  MAC;
 
             SetForeColor(VT100_COLOR_WHITE);

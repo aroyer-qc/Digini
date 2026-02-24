@@ -839,7 +839,7 @@ void ARP_Manager::TimerCallBack(void)
 {
     nOS_StatusReg sr;
 
-    m_Time++;                                                                       // Advance ARP time counter
+    //m_Time++;                                                                       // Advance ARP time counter
 
     // ARP table aging
     for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
@@ -848,9 +848,11 @@ void ARP_Manager::TimerCallBack(void)
 
         if(pTable->IP_Address != IP_ADDRESS(0,0,0,0))                               // Entry in use?
         {
-            uint16_t Age = uint16_t(m_Time - pTable->TimeToLive);                   // Unsigned wrap-safe age
+//            uint16_t Age = uint16_t(m_Time - pTable->TimeToLive);                   // Unsigned wrap-safe age
+            pTable->TimeToLive--;
 
-            if(Age >= IP_ARP_TIME_OUT)                                              // Entry expired?
+//            if(Age >= IP_ARP_TIME_OUT)                                              // Entry expired?
+            if(pTable->TimeToLive == 0)                                              // Entry expired?
             {
               #if (IP_DBG_ARP == DEF_ENABLED)
                 DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET,

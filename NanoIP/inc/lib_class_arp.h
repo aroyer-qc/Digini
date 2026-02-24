@@ -77,6 +77,8 @@ class ARP_Manager
 
         void                UpdateEntry				(IP_Address_t IP_Address, IP_MAC_Address_t* pMAC_Adress);
         void                FillCommon              (ARP_Frame_t* pARP, uint16_t Type);
+        bool                ItHasEntry              (IP_Address_t IP);
+        bool                IsItMatchingMAC         (IP_Address_t IP, IP_MAC_Address_t* pMAC);
 
         NetworkContext*     m_pContext;
         IP_Address_t        m_IP_Address;
@@ -85,7 +87,6 @@ class ARP_Manager
         ARP_PendingEntry_t  m_PendingQueue[ARP_PENDING_QUEUE_SIZE];
         int                 m_PendingOldest;                        // Points to oldest non-EMPTY entry
 
-        uint16_t            m_Time;
         nOS_Timer           m_Timer;                                // Pointer on the OS timer
 };
 

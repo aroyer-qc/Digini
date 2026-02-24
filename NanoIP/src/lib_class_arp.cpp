@@ -48,6 +48,7 @@
 void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg);
 
 //-------------------------------------------------------------------------------------------------
+//
 //  Name:           Initialize
 //
 //  Parameter(s):   NetworkContext&	  Reference on the context
@@ -73,7 +74,6 @@ SystemState_e ARP_Manager::Initialize(NetworkContext& Context)
     m_pContext      = &Context;
     m_PendingOldest = ARP_PENDING_NONE;
     m_IP_Address    = IP_ADDRESS(0,0,0,0);
-    m_Time          = 0;
 
     memset((void*)m_PendingQueue, 0, sizeof(ARP_PendingEntry_t) * ARP_PENDING_QUEUE_SIZE);  // Clear the pending queue
     memset((void*)m_TableEntry,   0, sizeof(ARP_TableEntry_t)   * IP_ARP_TABLE_SIZE);       // Clear the ARP cache table
@@ -94,6 +94,7 @@ SystemState_e ARP_Manager::Initialize(NetworkContext& Context)
 }
 
 //-------------------------------------------------------------------------------------------------
+//
 //  Name:           ProcessIP
 //
 //  Parameter(s):   IP_PacketMsg_t*   pRX
@@ -119,9 +120,11 @@ SystemState_e ARP_Manager::Initialize(NetworkContext& Context)
 //
 //  Note(s):        Only learns from hosts on the local network. This function never sends
 //                  ARP requests; it only updates the ARP cache based on observed IP traffic.
+//
 //-------------------------------------------------------------------------------------------------
 void ARP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
 {
+  #if (ARP_SECURE_MODE != DEF_ENABLED)												// Secure mode: do not learn IP→MAC from generic IP traffic
     IP_Address_t SubnetMask = m_pContext->GetActiveSubnetMask();
     IP_Address_t ActiveIP   = m_pContext->GetActiveIP();
 
@@ -147,7 +150,7 @@ void ARP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
     IP_Address_t      SourceIP = pRX->pPacket->IP_Frame.Header.SrcIP_Address;
     IP_MAC_Address_t* pSrcMAC  = &pRX->pPacket->ETH_Header.SourceMAC;
 
-    if((SourceIP == 0)                                      ||                      // Ignore invalid IPs
+    if((SourceIP == IP_ADDRESS(0,0,0,0))                    ||                      // Ignore invalid IPs
        (SourceIP == ActiveIP)                               ||                      // Ignore our own IP
        ((SourceIP & SubnetMask) != (ActiveIP & SubnetMask)) ||                      // Ignore packets outside our subnet
        (pIP_Manager->IsItBroadcastMAC(pSrcMAC))             ||                      // Ignore broadcast MAC
@@ -158,18 +161,14 @@ void ARP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
         return;
     }
 
-    // Optional: ignore spoofed packets (MAC/IP mismatch)
-    //if(ARP_Table.HasEntry(SourceIP) && (ARP_Table.MatchesMAC(SourceIP, pSrcMAC) == false))
-    //{
-    //    return; // suspicious -> ignore
-    //}
-
-  #if (ARP_SECURE_MODE != DEF_ENABLED)												// Secure mode: do not learn IP→MAC from generic IP traffic
     UpdateEntry(SourceIP, pSrcMAC);                                                 // Passed all filters -> learn entry
+  #else
+    VAR_UNUSED(pRX);
   #endif
 }
 
 //-------------------------------------------------------------------------------------------------
+//
 //  Name:           ProcessARP
 //
 //  Parameter(s):   IP_PacketMsg_t*   pRX
@@ -193,6 +192,7 @@ void ARP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
 //
 //                  The received ARP packet is always freed unless it is reused for
 //                  zero-copy transmission when replying to an ARP request.
+//
 //-------------------------------------------------------------------------------------------------
 void ARP_Manager::ProcessARP(IP_PacketMsg_t* pRX)
 {
@@ -221,7 +221,6 @@ void ARP_Manager::ProcessARP(IP_PacketMsg_t* pRX)
     {
         case ARP_REQUEST:
         {
-
           #if (ARP_SECURE_MODE != DEF_ENABLED)													    // In non secure mode, learn if the request targets our IP
             UpdateEntry(SrcIP, &pRX_ARP->SourceMAC);                                                // RFC-friendly: learn sender’s IP->MAC even if request is not for us
 		  #endif
@@ -277,15 +276,15 @@ void ARP_Manager::ProcessARP(IP_PacketMsg_t* pRX)
 			//  - addressed to our IP
 			//  - to our MAC
 			//  - (ARP_SECURE_MODE only) for an IP we actually requested
-			if((DstIP == ActiveIP) && (m_pContext->IsItMyMAC_Address(&pRX->pPacket->ETH_Header.DestinationMAC) == true)
-          #if (ARP_SECURE_MODE == DEF_ENABLED)
-			   && (IsPendingARP_Request(SrcIP) == true))
-          #else
-			   )
-		  #endif
-			{
-				UpdateEntry(SrcIP, &pRX_ARP->SourceMAC);
-			}
+			if((DstIP == ActiveIP) && (m_pContext->IsItMyMAC_Address(&pRX->pPacket->ETH_Header.DestinationMAC) == true))
+            {
+              #if (ARP_SECURE_MODE == DEF_ENABLED)
+                if(IsPendingARP_Request(SrcIP) == true)
+		      #endif
+    			{
+                    UpdateEntry(SrcIP, &pRX_ARP->SourceMAC);
+			    }
+            }
         }
         break;
 
@@ -339,8 +338,14 @@ void ARP_Manager::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMacAdd
     nOS_StatusReg     sr;
     uint8_t           Index;
     uint8_t           OldestIndex = 0;
-    uint8_t           OldestAge   = 0;
+    uint16_t          OldestTTL   = 0xFFFF;
     ARP_TableEntry_t* pTable = nullptr;
+
+    // Ignore spoofed packets (MAC/IP mismatch). But only before TTL as expired
+    if(ItHasEntry(IP_Address) && (IsItMatchingMAC(IP_Address, pMacAddress) == false))
+    {
+        return;                                                                     // Suspicious -> then ignore it
+    }
 
     // Try to update an existing ARP table entry
     for(Index = 0; Index < IP_ARP_TABLE_SIZE; Index++)
@@ -350,7 +355,7 @@ void ARP_Manager::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMacAdd
         if((pTable->IP_Address != 0) && (pTable->IP_Address == IP_Address))
         {
             memcpy(pTable->MAC_Address.Byte, pMacAddress->Byte, IP_MAC_ADDRESS_SIZE);
-            pTable->TimeToLive = m_Time;
+            pTable->TimeToLive = IP_ARP_TIME_OUT;
 
           #if (IP_DBG_ARP == DEF_ENABLED)
             DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - (%d.%d.%d.%d) Update existing entry %d\n", IP_A(pTable->IP_Address),
@@ -369,7 +374,7 @@ void ARP_Manager::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMacAdd
     {
         pTable = &m_TableEntry[Index];
 
-        if(pTable->IP_Address == 0)
+        if(pTable->IP_Address == IP_ADDRESS(0,0,0,0))
         {
           #if (IP_DBG_ARP == DEF_ENABLED)
             DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP Cache - Found free entry %d\n", Index);
@@ -381,18 +386,17 @@ void ARP_Manager::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMacAdd
     // No free entry -> delete the oldest
     if(Index == IP_ARP_TABLE_SIZE)
     {
-        OldestIndex = 0;
-        OldestAge   = 0;
-
         for(Index = 0; Index < IP_ARP_TABLE_SIZE; Index++)
         {
             pTable = &m_TableEntry[Index];
-            uint8_t Age = m_Time - pTable->TimeToLive;
 
-            if(Age > OldestAge)
+            if(pTable->IP_Address != IP_ADDRESS(0,0,0,0))
             {
-                OldestAge   = Age;
-                OldestIndex = Index;
+                if(pTable->TimeToLive <= OldestTTL)             // Smaller is the TTL, the entry is the oldest
+                {
+                    OldestTTL   = pTable->TimeToLive;
+                    OldestIndex = Index;
+                }
             }
         }
 
@@ -411,7 +415,7 @@ void ARP_Manager::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMacAdd
     // Insert new ARP table entry
     nOS_EnterCritical(sr);
     pTable->IP_Address = IP_Address;
-    pTable->TimeToLive = m_Time;
+    pTable->TimeToLive = IP_ARP_TIME_OUT;
     pTable->State      = ARP_STATE_VALID;
     memcpy(pTable->MAC_Address.Byte, pMacAddress->Byte, IP_MAC_ADDRESS_SIZE);
     nOS_LeaveCritical(sr);
@@ -492,6 +496,7 @@ FlushPending:
 }
 
 //-------------------------------------------------------------------------------------------------
+//
 //  Name:           ProcessOut
 //
 //  Parameter(s):   None
@@ -510,6 +515,7 @@ FlushPending:
 //
 //  Note(s):        - Zero-copy is NOT used here; ARP requests are always built in a new buffer.
 //                  - The pending packet (if any) is resent upon receiving an ARP reply.
+//
 //-------------------------------------------------------------------------------------------------
 void ARP_Manager::ProcessOut(void)
 {
@@ -561,6 +567,7 @@ void ARP_Manager::ProcessOut(void)
 }
 
 //-------------------------------------------------------------------------------------------------
+//
 //  Name:           ARP_Resolve
 //
 //  Parameter(s):   IP      IPv4 address to resolve.
@@ -667,6 +674,24 @@ bool ARP_Manager::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg_
     return false;
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           IsPendingARP_Request
+//
+//  Parameter(s):   IP      IP address to check for a pending ARP request.
+//
+//  Return:         bool    true  if an ARP request is already pending for this IP.
+//                          false otherwise.
+//
+//  Description:    Scans the ARP pending queue to determine whether an ARP request is
+//                  already outstanding for the specified IP address.
+//
+//                  This is used in secure mode to avoid issuing multiple ARP requests
+//                  for the same IP while a previous request is still pending.
+//
+//  Note(s):        Only compiled when ARP secure mode is enabled.
+//
+//-------------------------------------------------------------------------------------------------
 #if (ARP_SECURE_MODE == DEF_ENABLED)
 bool ARP_Manager::IsPendingARP_Request(IP_Address_t IP)
 {
@@ -684,6 +709,7 @@ bool ARP_Manager::IsPendingARP_Request(IP_Address_t IP)
 #endif
 
 //-------------------------------------------------------------------------------------------------
+//
 //  Name:           FillCommon
 //
 //  Parameter(s):   pARP    Pointer to an ARP frame structure to initialize.
@@ -708,6 +734,7 @@ bool ARP_Manager::IsPendingARP_Request(IP_Address_t IP)
 //  Note(s):        This function does not modify Ethernet header fields. It is used by both
 //                  ARP_Manager::ProcessARP() when generating ARP replies (zero-copy) and
 //                  ARP_Manager::ProcessOut() when constructing outgoing ARP requests.
+//
 //-------------------------------------------------------------------------------------------------
 void ARP_Manager::FillCommon(ARP_Frame_t* pARP, uint16_t Type)
 {
@@ -781,6 +808,62 @@ void ARP_Manager::OnPendingTimeOut(int PendingOffset)
 }
 
 //-------------------------------------------------------------------------------------------------
+//
+//  Name:           ItHasEntry
+//
+//  Parameter(s):   IP      IP address to search for in the ARP table.
+//
+//  Return:         bool    true  if an entry exists for this IP.
+//                          false otherwise.
+//
+//  Description:    Scans the ARP table for a matching IP address. This helper is used by
+//                  multiple ARP_Manager components (ProcessIP, ProcessARP, UpdateEntry,
+//                  Resolve, etc.) to determine whether an ARP entry already exists.
+//
+//  Note(s):        Does not validate MAC address. Only checks for IP presence.
+//
+//-------------------------------------------------------------------------------------------------
+bool ARP_Manager::ItHasEntry(IP_Address_t IP)
+{
+    for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
+    {
+        if(m_TableEntry[i].IP_Address == IP)
+            return true;
+    }
+    return false;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           IsItMatchingMAC
+//
+//  Parameter(s):   IP      IP address whose MAC should be validated.
+//                  pMAC    Pointer to the MAC address to compare.
+//
+//  Return:         bool    true  if the ARP table contains this IP AND the MAC matches.
+//                          false otherwise.
+//
+//  Description:    Searches the ARP table for the specified IP address and compares the stored
+//                  MAC address with the provided one. Used for spoofing detection and to
+//                  validate ARP updates before modifying an existing entry.
+//
+//  Note(s):        Returns false if the IP is not found OR if the MAC does not match.
+//
+//-------------------------------------------------------------------------------------------------
+bool ARP_Manager::IsItMatchingMAC(IP_Address_t IP, IP_MAC_Address_t* pMAC)
+{
+    for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
+    {
+        if(m_TableEntry[i].IP_Address == IP)
+        {
+            return memcmp(m_TableEntry[i].MAC_Address.Byte, pMAC->Byte, IP_MAC_ADDRESS_SIZE) == 0;
+        }
+    }
+    return false;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           GetPendingEntryByOffset
 //
 //  Parameter(s):   int Offset
@@ -806,6 +889,7 @@ inline ARP_PendingEntry_t* ARP_Manager::GetPendingEntryByOffset(int Offset)
 }
 
 //-------------------------------------------------------------------------------------------------
+//
 //  Name:           TimerCallBack
 //
 //  Parameter(s):   None
@@ -815,7 +899,6 @@ inline ARP_PendingEntry_t* ARP_Manager::GetPendingEntryByOffset(int Offset)
 //  Description:    Periodic ARP maintenance handler invoked by the nOS timer.
 //
 //                  ARP cache aging:
-//                  - Increments the internal ARP time counter (m_Time).
 //                  - Iterates through all ARP table entries.
 //                  - Computes the age of each entry using unsigned modular arithmetic.
 //                  - Any entry whose age exceeds IP_ARP_TIME_OUT is removed from the table,
@@ -839,8 +922,6 @@ void ARP_Manager::TimerCallBack(void)
 {
     nOS_StatusReg sr;
 
-    //m_Time++;                                                                       // Advance ARP time counter
-
     // ARP table aging
     for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
     {
@@ -848,11 +929,12 @@ void ARP_Manager::TimerCallBack(void)
 
         if(pTable->IP_Address != IP_ADDRESS(0,0,0,0))                               // Entry in use?
         {
-//            uint16_t Age = uint16_t(m_Time - pTable->TimeToLive);                   // Unsigned wrap-safe age
-            pTable->TimeToLive--;
+            if(pTable->TimeToLive > 0)
+            {
+                pTable->TimeToLive--;
+            }
 
-//            if(Age >= IP_ARP_TIME_OUT)                                              // Entry expired?
-            if(pTable->TimeToLive == 0)                                              // Entry expired?
+            if(pTable->TimeToLive == 0)                                             // Entry expired?
             {
               #if (IP_DBG_ARP == DEF_ENABLED)
                 DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET,
@@ -908,6 +990,7 @@ void ARP_Manager::TimerCallBack(void)
 }
 
 //-------------------------------------------------------------------------------------------------
+//
 //  Name:           ARP_TimerCallBack
 //
 //  Parameter(s):   nOS_Timer*  pTimer     Unused timer handle (provided by nOS)
@@ -919,6 +1002,7 @@ void ARP_Manager::TimerCallBack(void)
 //
 //                  - Casts pArg to ARP_Manager*.
 //                  - Delegates all periodic ARP work to ARP_Manager::TimerCallBack().
+//
 //-------------------------------------------------------------------------------------------------
 void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg)
 {

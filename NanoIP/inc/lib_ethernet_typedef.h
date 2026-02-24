@@ -325,7 +325,7 @@ struct ARP_TableEntry_t
     IP_Address_t        IP_Address;
     IP_MAC_Address_t    MAC_Address;
     ARP_State_e         State;                      // Entry state
-    uint8_t             TimeToLive;                 // Optional aging counter
+    uint16_t            TimeToLive;
 };
 
 // The Ethernet header

@@ -37,7 +37,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (IP_USE_MQTT == DEF_ENABLED)
+#if (DIGINI_USE_ETHERNET == DEF_ENABLED) && (IP_USE_MQTT == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -48,7 +48,7 @@
 // Enum(s)
 //-------------------------------------------------------------------------------------------------
 
-enum MQTT_State_e;
+enum MQTT_State_e
 {
     MQTT_STATE_IDLE = 0,
     MQTT_STATE_CONNECTING,
@@ -58,7 +58,7 @@ enum MQTT_State_e;
     MQTT_STATE_PUBLISHING,
     MQTT_STATE_RECONNECTING,
     MQTT_STATE_ERROR
-}
+};
 
 enum MQTT_QoS_e
 {
@@ -78,7 +78,7 @@ class MQTT_Client
     public:
 
         bool                    Initialize                  (NetworkContext& Context);
-        bool                    Connect                     (const IP_Address_t* pServerIP, uint16_t Port, const char* pClientId, uint16_t KeepAliveSeconds);
+        bool                    Connect                     (const IP_Address_t* pServerIP, uint16_t Port, const char* pClientID, uint16_t KeepAliveSeconds);
         bool                    Subscribe                   (const char* pTopic, MQTT_QoS_e QoS);
         bool                    Publish                     (const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS);
         bool                    Disconnect                  (void);
@@ -90,14 +90,14 @@ class MQTT_Client
 private:
 
         bool                    TCP_Connect                 (const IP_Address_t* pServerIP, uint16_t Port);
-        bool                    SendConnectFrame            (const char* pClientId);
+        bool                    SendConnectFrame            (const char* pClientID);
         bool                    SendSubscribeFrame          (const char* pTopic, MQTT_QoS_e QoS);
         bool                    SendPublishFrame            (const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS);
         bool                    SendDisconnect              (void);
         bool                    SendPingReq                 (void);
         bool                    HandleIncomingData          (void);
         bool                    ParseIncomingPacket         (uint8_t* pBuffer, size_t Length);
-        uint16_t                NextPacketId                (void);
+        uint16_t                NextPacketID                (void);
 
         NetworkContext*         m_pContext;
         TCP_Socket*             m_pSocket;
@@ -108,20 +108,24 @@ private:
         TickCount_t             m_ConnectStartTick;
         TickCount_t             m_PingSentTick;
 
-        // Automatic reconnect
-        TickCount_t             m_ReconnectStartTick;
-        uint16_t                m_ReconnectDelaySeconds;
-        bool                    m_ReconnectEnabled;
-
-        uint16_t                m_NextPacketId;
+        uint16_t                m_NextPacketID;
         bool                    m_WaitingPingResp;
 
         MQTT_MessageCallback_t  m_MessageCallback;
         void*                   m_pMessageContext;
 
-        // Small internal TX/RX buffers (can be moved to external pool if needed)
-        //uint8_t                 m_TxBuffer[256];
-        //uint8_t                 m_RxBuffer[256];
+        // Automatic reconnect
+        TickCount_t             m_ReconnectStartTick;
+        uint16_t                m_ReconnectDelaySeconds;
+        bool                    m_ReconnectEnabled;
+
+
+
+        char                    m_ClientID[64];
+        IP_Address_t            m_LastServerIP;
+        uint16_t                m_LastServerPort;
 };
 
 //-------------------------------------------------------------------------------------------------
+
+#endif // (DIGINI_USE_ETHERNET == DEF_ENABLED) && (IP_USE_MQTT == DEF_ENABLED)

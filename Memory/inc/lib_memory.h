@@ -89,6 +89,7 @@
     X_MEM_DBG(MEM_DBG_SNTPRX)                                   \
     X_MEM_DBG(MEM_DBG_TCP)                                      \
     X_MEM_DBG(MEM_DBG_TCPDT)                                    \
+    X_MEM_DBG(MEM_DBG_MQTT)                                     \
     /* UniqueID for lib_service                               */\
     X_MEM_DBG(MEM_DBG_SERVICE)
 

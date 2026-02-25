@@ -170,6 +170,7 @@
 #include "./NanoIP/inc/lib_class_dns.h"
 #include "./NanoIP/inc/lib_class_icmp.h"
 //#include "./NanoIP/inc/lib_class_ntp.h"
+#include "./NanoIP/inc/lib_class_mqtt.h"
 #include "./NanoIP/inc/lib_class_sntp.h"
 #include "./NanoIP/inc/lib_class_tcp.h"
 #include "./NanoIP/inc/lib_class_udp.h"

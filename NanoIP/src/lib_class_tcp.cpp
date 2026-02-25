@@ -140,7 +140,7 @@ size_t TCP_Socket::Send(const uint8_t* pData, size_t Length)
     }
 
     // Cannot send while retransmission is pending
-    if(m_RetransmitPending)
+    if(m_RetransmitPending == true)
     {
         return 0;
     }

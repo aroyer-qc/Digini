@@ -67,7 +67,6 @@ class NetworkContext
 
         void                Initialize              (IF_ID_e If_ID);
 
-
         ETH_LinkState_e     GetLinkState            (void)          const                       { return m_LinkState;                                                           }
         ETH_LinkSpeed_e     GetLinkSpeed            (void)          const                       { return m_LinkSpeed;                                                           }
         bool                GetLinkChange           (void)                                      { return m_LinkChange;                                                          }
@@ -106,7 +105,8 @@ class NetworkContext
         RAW_Manager&        GetRAW                  (void)                                      { return m_RAW;                                                                 }
       #endif
       #if (IP_USE_TCP_SERVER == DEF_ENABLED) || (IP_USE_TCP_CLIENT == DEF_ENABLED)
-        TCP_Manager&        GetTCP                  (void)                                      { return m_TCP;                                                                 }
+        void                SetTCP_Manager          (TCP_Manager* pManager)                     { m_pTCP = pManager;                                                            }    
+        TCP_Manager*        GetTCP                  (void)                                      { return m_pTCP;                                                                }
       #endif
       #if (IP_USE_UDP == DEF_ENABLED)
         UDP_Manager&        GetUDP                  (void)                                      { return m_UDP;                                                                 }
@@ -187,7 +187,7 @@ class NetworkContext
 
 
       #if (IP_USE_TCP_SERVER == DEF_ENABLED) || (IP_USE_TCP_CLIENT == DEF_ENABLED)
-        TCP_Manager                     m_TCP;                                  // Transport Control Protocol Cleint Side
+        TCP_Manager*                    m_pTCP = nullptr;                       // Transport Control Protocol Cleint Side
       #endif
 
       #if (IP_USE_UDP == DEF_ENABLED)

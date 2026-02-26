@@ -165,6 +165,7 @@
 #include "./NanoIP/inc/lib_ethernet_typedef.h"
 #include "./NanoIP/inc/lib_class_socket.h"
 #include "./NanoIP/inc/lib_class_ethernet_if.h"
+#include "./NanoIP/inc/Interface/lib_class_ethernet_interface.h"
 #include "./NanoIP/inc/lib_class_arp.h"
 #include "./NanoIP/inc/lib_class_dhcp.h"
 #include "./NanoIP/inc/lib_class_dns.h"
@@ -176,7 +177,6 @@
 #include "./NanoIP/inc/lib_class_udp.h"
 #include "./NanoIP/inc/lib_class_IP_Manager.h"
 #include "./NanoIP/inc/lib_class_context.h"
-#include "./NanoIP/inc/Interface/lib_class_ethernet_interface.h"
 #include "./Peripheral/inc/port/lib_class_eth.h"
 #include PHY_DRIVER_INCLUDE
 #endif

@@ -374,7 +374,7 @@ bool MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, uint16_t Port)
     }
 
     // Access TCP manager from your NetworkContext
-    TCP_Manager* pTCP = &m_pContext->GetTCP();
+    TCP_Manager* pTCP = m_pContext->GetTCP();
 
     // Initiate TCP connection (non-blocking)
     m_pSocket = pTCP->Connect(*pServerIP, Port);

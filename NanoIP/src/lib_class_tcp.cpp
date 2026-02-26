@@ -63,7 +63,7 @@
 #define TCP_TIME_WAIT_TIMEOUT   30000
 
 //-------------------------------------------------------------------------------------------------
-//  Name:           TCP_Socket (constructor)
+//  Name:           TCP_SocketSystem (constructor)
 //
 //  Parameter(s):   NetworkContext& Context
 //                      Reference to the global network context used by the base Socket class.
@@ -82,7 +82,7 @@
 //                  is called. The TCP_Manager reference is stored so the socket can invoke
 //                  SendSegment() and participate in the TCP state machine.
 //-------------------------------------------------------------------------------------------------
-TCP_Socket::TCP_Socket(NetworkContext& Context, TCP_Manager& TCP) : Socket(Context)
+TCP_SocketSystem::TCP_SocketSystem(NetworkContext& Context, TCP_Manager& TCP) : Socket(Context)
 {
     m_pTCP              = &TCP;                     // Store back-pointer to TCP manager
     m_State             = TCP_STATE_CLOSED;
@@ -131,7 +131,7 @@ TCP_Socket::TCP_Socket(NetworkContext& Context, TCP_Manager& TCP) : Socket(Conte
 //                  - Retransmission tracking is enabled so that Process() can retry the segment
 //                    if no ACK is received within the timeout interval.
 //-------------------------------------------------------------------------------------------------
-size_t TCP_Socket::Send(const uint8_t* pData, size_t Length)
+size_t TCP_SocketSystem::Send(const uint8_t* pData, size_t Length)
 {
     // Must be connected
     if(m_State != TCP_STATE_ESTABLISHED)
@@ -195,7 +195,7 @@ size_t TCP_Socket::Send(const uint8_t* pData, size_t Length)
 //                  - Does not generate ACKs; ACKs are sent when data is received.
 //                  - The internal RX buffer is cleared after the read.
 //-------------------------------------------------------------------------------------------------
-size_t TCP_Socket::Receive(uint8_t* pBuffer, size_t MaxLength)
+size_t TCP_SocketSystem::Receive(uint8_t* pBuffer, size_t MaxLength)
 {
     // Must be connected
     if(m_State != TCP_STATE_ESTABLISHED)
@@ -249,7 +249,7 @@ size_t TCP_Socket::Receive(uint8_t* pBuffer, size_t MaxLength)
 //                  This function does NOT free the socket or remove it from the server table;
 //                  socket lifecycle management is handled by the TCP_Manager and application.
 //-------------------------------------------------------------------------------------------------
-void TCP_Socket::Close(void)
+void TCP_SocketSystem::Close(void)
 {
     // Cannot close if already closed
     if(m_State == TCP_STATE_CLOSED)
@@ -323,9 +323,9 @@ void TCP_Socket::Close(void)
 //                      6. Transitions the socket to SYN-SENT state
 //
 //                  The caller receives ownership of the returned TCP_Socket pointer.
-//                  The TCP_Manager tracks the active client socket internally.
+//                  The TCP_ManagerSystem tracks the active client socket internally.
 //-------------------------------------------------------------------------------------------------
-bool TCP_Manager::Initialize(NetworkContext& Context)
+bool TCP_ManagerSystem::Initialize(NetworkContext& Context)
 {
     m_pSocketManager = &Context.GetSocketManager();                 // Retrieve socket manager
     m_pClientSocket  = nullptr;                                     // Reset internal state (client or server will set these later)
@@ -369,64 +369,67 @@ bool TCP_Manager::Initialize(NetworkContext& Context)
 //                  The underlying Socket object is owned and freed by SocketManager.
 //-------------------------------------------------------------------------------------------------
 #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
-TCP_Socket* TCP_Manager::Connect(const IP_Address_t& ServerIP, uint16_t Port)
+TCP_Socket* TCP_ManagerSystem::Connect(const IP_Address_t& ServerIP, uint16_t Port)
 {
     // Allocate a TCP socket directly
-    TCP_Socket* pTCP = new TCP_Socket(*m_pContext, *this);
-    if(pTCP == nullptr)
+    TCP_SocketSystem* pSystem = new TCP_SocketSystem(*m_pContext, *this);
+
+    if(pSystem == nullptr)
     {
         return nullptr;
     }
 
-    // Initialize local/remote info
-    pTCP->m_State = TCP_STATE_CLOSED;
+    TCP_Socket* pTCP    = pSystem;
+    Socket* pSocketBase = static_cast<Socket*>(pSystem);
 
+    // Initialize local/remote info
+    pSystem->m_State = TCP_STATE_CLOSED;
     SocketInfo_t info;
     info.Address = ServerIP;
     info.Port    = Port;
-    pTCP->SetRemoteInfo(info);
+    pSocketBase->SetRemoteInfo(info);
 
     // Choose ephemeral port
 
     SocketInfo_t local;
     local.Address = m_pContext->GetActiveIP();
     local.Port    = m_pContext->GetIP_Manager()->AllocateEphemeralPort();
-    pTCP->SetLocalInfo(local);
+    pSocketBase->SetLocalInfo(local);
 
     // Initialize sequence numbers
     uint32_t isn = (uint32_t)GetTick();
-    pTCP->m_SeqNumber     = isn;
-    pTCP->m_LastSeqNumber = isn;
-    pTCP->m_AckNumber     = 0;
+    pSystem->m_SeqNumber     = isn;
+    pSystem->m_LastSeqNumber = isn;
+    pSystem->m_AckNumber     = 0;
 
-    pTCP->m_RemoteWindow = 0;
-    pTCP->m_LocalWindow  = TCP_DEFAULT_WINDOW_SIZE;
+    pSystem->m_RemoteWindow = 0;
+    pSystem->m_LocalWindow  = TCP_DEFAULT_WINDOW_SIZE;
 
     TickCount_t now = GetTick();
-    pTCP->m_LastSendTick     = now;
-    pTCP->m_LastReceivedTick = now;
-    pTCP->m_RetransmitStart  = 0;
+    pSystem->m_LastSendTick     = now;
+    pSystem->m_LastReceivedTick = now;
+    pSystem->m_RetransmitStart  = 0;
 
-    pTCP->m_RetransmitPending = false;
-    pTCP->m_LastFlags         = 0;
-    pTCP->m_LastPayloadLength = 0;
+    pSystem->m_RetransmitPending = false;
+    pSystem->m_LastFlags         = 0;
+    pSystem->m_LastPayloadLength = 0;
 
     // Send SYN
-    if(!SendSegment(pTCP, nullptr, 0, TCP_FLAG_SYN))
+    if(SendSegment(pTCP, nullptr, 0, TCP_FLAG_SYN, false) == false)
     {
-        delete pTCP;
+        delete pSystem;
         return nullptr;
     }
 
     // Update state
-    pTCP->m_State             = TCP_STATE_SYN_SENT;
-    pTCP->m_RetransmitStart   = now;
-    pTCP->m_RetransmitPending = true;
+    pSystem->m_State             = TCP_STATE_SYN_SENT;
+    pSystem->m_RetransmitStart   = now;
+    pSystem->m_RetransmitPending = true;
 
     // Store as active client socket
     m_pClientSocket = pTCP;
 
-    return pTCP;
+    return reinterpret_cast<TCP_Socket*>(pTCP);
 }
 #endif
 
@@ -463,7 +466,7 @@ TCP_Socket* TCP_Manager::Connect(const IP_Address_t& ServerIP, uint16_t Port)
 //                  connections.
 //-------------------------------------------------------------------------------------------------
 #if (IP_USE_TCP_SERVER == DEF_ENABLED)
-SystemState_e TCP_Manager::EnterListen(Socket* pSocket, uint16_t Backlog)
+SystemState_e TCP_ManagerSystem::EnterListen(Socket* pSocket, uint16_t Backlog)
 {
     if(pSocket == nullptr)
     {
@@ -536,7 +539,7 @@ SystemState_e TCP_Manager::EnterListen(Socket* pSocket, uint16_t Backlog)
 //                  If the socket is not found in the server table, the function silently returns.
 //-------------------------------------------------------------------------------------------------
 #if (IP_USE_TCP_SERVER == DEF_ENABLED)
-void TCP_Manager::Close(Socket* pSocket)
+void TCP_ManagerSystem::Close(Socket* pSocket)
 {
     if(pSocket == nullptr)
     {
@@ -587,7 +590,7 @@ void TCP_Manager::Close(Socket* pSocket)
 //                  ProcessSegment(). Instead, Process() drives the TCP state machine forward
 //                  based on elapsed time and retransmission requirements.
 //-------------------------------------------------------------------------------------------------
-void TCP_Manager::Process(void)
+void TCP_ManagerSystem::Process(void)
 {
     UpdateTimers();
 
@@ -655,7 +658,7 @@ void TCP_Manager::Process(void)
 //                  This function does NOT perform retransmission or timeout handling; those are
 //                  handled by Process().
 //-------------------------------------------------------------------------------------------------
-void TCP_Manager::ProcessSegment(IP_PacketMsg_t* pMsg)
+void TCP_ManagerSystem::ProcessSegment(IP_PacketMsg_t* pMsg)
 {
     if((pMsg == nullptr) || (pMsg->pPacket == nullptr))
     {
@@ -741,14 +744,17 @@ void TCP_Manager::ProcessSegment(IP_PacketMsg_t* pMsg)
 //
 //                  The caller is responsible for managing retransmission state.
 //-------------------------------------------------------------------------------------------------
-bool TCP_Manager::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload, size_t Length, uint8_t Flags, bool Retransmit)
+bool TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload, size_t Length, uint8_t Flags, bool Retransmit)
 {
     if(pSocket == nullptr)
     {
         return false;
     }
 
-    IP_Manager* pIP_Manager = m_pContext->GetIP_Manager();
+    TCP_SocketSystem* pSystem     = static_cast<TCP_SocketSystem*>(pSocket);
+    Socket*           pSocketBase = static_cast<Socket*>(pSystem);
+    IP_Manager*       pIP_Manager = m_pContext->GetIP_Manager();
+
     if(pIP_Manager == nullptr)
     {
         return false;
@@ -758,8 +764,8 @@ bool TCP_Manager::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload, size
     SocketInfo_t localInfo;
     SocketInfo_t remoteInfo;
 
-    pSocket->GetLocalInfo(&localInfo);
-    pSocket->GetRemoteInfo(&remoteInfo);
+    pSocketBase->GetLocalInfo(&localInfo);
+    pSocketBase->GetRemoteInfo(&remoteInfo);
 
     IP_PacketMsg_t* pMsg = nullptr;
 
@@ -779,11 +785,11 @@ bool TCP_Manager::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload, size
     hdr.SrcPort           = localInfo.Port;
     hdr.DstPort           = remoteInfo.Port;
 
-    hdr.SequenceNumber    = pSocket->m_SeqNumber;
-    hdr.AcknowledgeNumber = pSocket->m_AckNumber;
+    hdr.SequenceNumber    = pSystem->m_SeqNumber;
+    hdr.AcknowledgeNumber = pSystem->m_AckNumber;
 
     hdr.Flags             = Flags;
-    hdr.Window            = pSocket->m_LocalWindow;
+    hdr.Window            = pSystem->m_LocalWindow;
     hdr.UrgentPointer     = 0;
 
     // Compute TCP header length (no options)
@@ -818,24 +824,24 @@ bool TCP_Manager::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload, size
 
     if(Retransmit == false)
     {
-        pSocket->m_LastSeqNumber = pSocket->m_SeqNumber;
+        pSystem->m_LastSeqNumber = pSystem->m_SeqNumber;
 
         if((Flags & TCP_FLAG_SYN) || (Flags & TCP_FLAG_FIN))
         {
-            pSocket->m_SeqNumber++;
+            pSystem->m_SeqNumber++;
         }
 
-        pSocket->m_SeqNumber += Length;
+        pSystem->m_SeqNumber += Length;
     }
 
     // Update sequence number
-    if(Flags & TCP_FLAG_SYN) pSocket->m_SeqNumber++;
-    if(Flags & TCP_FLAG_FIN) pSocket->m_SeqNumber++;
+    if(Flags & TCP_FLAG_SYN) pSystem->m_SeqNumber++;
+    if(Flags & TCP_FLAG_FIN) pSystem->m_SeqNumber++;
 
-    pSocket->m_SeqNumber += Length;
+    pSystem->m_SeqNumber += Length;
 
     // Update timestamp
-    pSocket->m_LastSendTick = GetTick();
+    pSystem->m_LastSendTick = GetTick();
 
     return true;
 }
@@ -874,7 +880,7 @@ bool TCP_Manager::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload, size
 //                  This function does NOT perform any state transitions or ACK logic; that is
 //                  handled by ProcessIncomingFlags().
 //-------------------------------------------------------------------------------------------------
-bool TCP_Manager::ParseTCP_Header(IP_EthernetPacket_t* pPacket, TCP_Socket*& pSockOut)
+bool TCP_ManagerSystem::ParseTCP_Header(IP_EthernetPacket_t* pPacket, TCP_Socket*& pSockOut)
 {
     pSockOut = nullptr;
 
@@ -906,7 +912,9 @@ bool TCP_Manager::ParseTCP_Header(IP_EthernetPacket_t* pPacket, TCP_Socket*& pSo
 #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
     if(m_pClientSocket != nullptr)
     {
-        if(m_pClientSocket->GetLocalPort() == DstPort)
+        Socket* pSocketBase = static_cast<Socket*>(static_cast<TCP_SocketSystem*>(m_pClientSocket));
+
+        if(pSocketBase->GetLocalPort() == DstPort)
         {
             pSockOut = static_cast<TCP_Socket*>(m_pClientSocket);
             return true;
@@ -927,7 +935,9 @@ bool TCP_Manager::ParseTCP_Header(IP_EthernetPacket_t* pPacket, TCP_Socket*& pSo
             continue;
         }
 
-        if(pSocket->GetLocalPort() == DstPort)
+        Socket* pSocketBase = static_cast<Socket*>(static_cast<TCP_SocketSystem*>(m_pClientSocket));
+
+        if(pSocketBase->GetLocalPort() == DstPort)
         {
             pSockOut = pSocket;
             return true;
@@ -971,20 +981,17 @@ bool TCP_Manager::ParseTCP_Header(IP_EthernetPacket_t* pPacket, TCP_Socket*& pSo
 //                  handled by Process(). It also does not send segments directly; instead it calls
 //                  SendSegment() as needed.
 //-------------------------------------------------------------------------------------------------
-void TCP_Manager::ProcessIncomingFlags(TCP_Socket* pSocket,
-                                       IP_EthernetPacket_t* pPacket,
-                                       uint8_t Flags,
-                                       uint32_t Seq,
-                                       uint32_t Ack,
-                                       size_t PayloadLen)
+void TCP_ManagerSystem::ProcessIncomingFlags(TCP_Socket* pSocket, IP_EthernetPacket_t* pPacket, uint8_t Flags, uint32_t Seq, uint32_t Ack, size_t PayloadLen)
 {
     if(pSocket == nullptr)
     {
         return;
     }
 
+    TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
+
     // Update last receive timestamp
-    pSocket->m_LastReceivedTick = GetTick();
+    pSystem->m_LastReceivedTick = GetTick();
 
     //---------------------------------------------------------------------------------------------
     // Basic ACK processing (applies in most states)
@@ -992,23 +999,23 @@ void TCP_Manager::ProcessIncomingFlags(TCP_Socket* pSocket,
     if(Flags & TCP_FLAG_ACK)
     {
         // If ACK acknowledges our last transmission, clear retransmission pending
-        if(pSocket->m_RetransmitPending)
+        if(pSystem->m_RetransmitPending)
         {
-            uint32_t ExpectedAck = pSocket->m_SeqNumber;
+            uint32_t ExpectedAck = pSystem->m_SeqNumber;
             if(Ack == ExpectedAck)
             {
-                pSocket->m_RetransmitPending = false;
+                pSystem->m_RetransmitPending = false;
             }
         }
 
         // Update acknowledgment number
-        pSocket->m_AckNumber = Ack;
+        pSystem->m_AckNumber = Ack;
     }
 
     //---------------------------------------------------------------------------------------------
     // TCP STATE MACHINE
     //---------------------------------------------------------------------------------------------
-    switch(pSocket->m_State)
+    switch(pSystem->m_State)
     {
         //-----------------------------------------------------------------------------------------
         // LISTEN: Incoming SYN from a client
@@ -1018,15 +1025,15 @@ void TCP_Manager::ProcessIncomingFlags(TCP_Socket* pSocket,
             if(Flags & TCP_FLAG_SYN)
             {
                 // Initialize sequence/ack numbers
-                pSocket->m_AckNumber = Seq + 1;
-                pSocket->m_SeqNumber = (uint32_t)GetTick();
+                pSystem->m_AckNumber = Seq + 1;
+                pSystem->m_SeqNumber = (uint32_t)GetTick();
 
                 // Send SYN+ACK
-                SendSegment(pSocket, nullptr, 0, TCP_FLAG_SYN | TCP_FLAG_ACK);
+                SendSegment(pSocket, nullptr, 0, TCP_FLAG_SYN | TCP_FLAG_ACK, false);
 
-                pSocket->m_State = TCP_STATE_SYN_RECEIVED;
-                pSocket->m_RetransmitPending = true;
-                pSocket->m_RetransmitStart = GetTick();
+                pSystem->m_State = TCP_STATE_SYN_RECEIVED;
+                pSystem->m_RetransmitPending = true;
+                pSystem->m_RetransmitStart = GetTick();
             }
             break;
         }
@@ -1039,13 +1046,13 @@ void TCP_Manager::ProcessIncomingFlags(TCP_Socket* pSocket,
             if((Flags & TCP_FLAG_SYN) && (Flags & TCP_FLAG_ACK))
             {
                 // Complete handshake
-                pSocket->m_AckNumber = Seq + 1;
+                pSystem->m_AckNumber = Seq + 1;
 
                 // Send final ACK
-                SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK);
+                SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK, false);
 
-                pSocket->m_State = TCP_STATE_ESTABLISHED;
-                pSocket->m_RetransmitPending = false;
+                pSystem->m_State = TCP_STATE_ESTABLISHED;
+                pSystem->m_RetransmitPending = false;
             }
             break;
         }
@@ -1057,8 +1064,8 @@ void TCP_Manager::ProcessIncomingFlags(TCP_Socket* pSocket,
         {
             if(Flags & TCP_FLAG_ACK)
             {
-                pSocket->m_State = TCP_STATE_ESTABLISHED;
-                pSocket->m_RetransmitPending = false;
+                pSystem->m_State = TCP_STATE_ESTABLISHED;
+                pSystem->m_RetransmitPending = false;
             }
             break;
         }
@@ -1074,29 +1081,28 @@ void TCP_Manager::ProcessIncomingFlags(TCP_Socket* pSocket,
                 TCP_Header_t& tcp = pPacket->TCP_Frame.Header;
 
                 uint8_t tcpHeaderLen = (tcp.Offset >> 4) * 4;
-                uint8_t* pPayloadStart =
-                    ((uint8_t*)&pPacket->TCP_Frame.Header) + tcpHeaderLen;
+                uint8_t* pPayloadStart = ((uint8_t*)&pPacket->TCP_Frame.Header) + tcpHeaderLen;
 
-                if(PayloadLen <= sizeof(pSocket->m_RX_Buffer))
+                if(PayloadLen <= sizeof(pSystem->m_RX_Buffer))
                 {
-                    memcpy(pSocket->m_RX_Buffer, pPayloadStart, PayloadLen);
-                    pSocket->m_RX_Length = PayloadLen;
+                    memcpy(pSystem->m_RX_Buffer, pPayloadStart, PayloadLen);
+                    pSystem->m_RX_Length = PayloadLen;
 
-                    pSocket->m_AckNumber = Seq + PayloadLen;
+                    pSystem->m_AckNumber = Seq + PayloadLen;
 
-                    SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK);
+                    SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK, false);
                 }
             }
 
             // FIN received → passive close
             if(Flags & TCP_FLAG_FIN)
             {
-                pSocket->m_AckNumber = Seq + 1;
+                pSystem->m_AckNumber = Seq + 1;
 
                 // ACK the FIN
-                SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK);
+                SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK, false);
 
-                pSocket->m_State = TCP_STATE_CLOSE_WAIT;
+                pSystem->m_State = TCP_STATE_CLOSE_WAIT;
             }
             break;
         }
@@ -1108,14 +1114,14 @@ void TCP_Manager::ProcessIncomingFlags(TCP_Socket* pSocket,
         {
             if(Flags & TCP_FLAG_ACK)
             {
-                pSocket->m_State = TCP_STATE_FIN_WAIT_2;
+                pSystem->m_State = TCP_STATE_FIN_WAIT_2;
             }
 
             if(Flags & TCP_FLAG_FIN)
             {
-                pSocket->m_AckNumber = Seq + 1;
-                SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK);
-                pSocket->m_State = TCP_STATE_TIME_WAIT;
+                pSystem->m_AckNumber = Seq + 1;
+                SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK, false);
+                pSystem->m_State = TCP_STATE_TIME_WAIT;
             }
             break;
         }
@@ -1127,9 +1133,9 @@ void TCP_Manager::ProcessIncomingFlags(TCP_Socket* pSocket,
         {
             if(Flags & TCP_FLAG_FIN)
             {
-                pSocket->m_AckNumber = Seq + 1;
-                SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK);
-                pSocket->m_State = TCP_STATE_TIME_WAIT;
+                pSystem->m_AckNumber = Seq + 1;
+                SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK, false);
+                pSystem->m_State = TCP_STATE_TIME_WAIT;
             }
             break;
         }
@@ -1150,7 +1156,7 @@ void TCP_Manager::ProcessIncomingFlags(TCP_Socket* pSocket,
         {
             if(Flags & TCP_FLAG_ACK)
             {
-                pSocket->m_State = TCP_STATE_CLOSED;
+                pSystem->m_State = TCP_STATE_CLOSED;
             }
             break;
         }
@@ -1191,15 +1197,17 @@ void TCP_Manager::ProcessIncomingFlags(TCP_Socket* pSocket,
 //                  This function does NOT modify the TCP state machine directly; state transitions
 //                  occur in ProcessIncomingFlags() when ACKs are received.
 //-------------------------------------------------------------------------------------------------
-void TCP_Manager::RetransmitIfNeeded(TCP_Socket* pSocket)
+void TCP_ManagerSystem::RetransmitIfNeeded(TCP_Socket* pSocket)
 {
     if(pSocket == nullptr)
     {
         return;
     }
 
+    TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
+
     // Nothing to do if no retransmission is pending
-    if(pSocket->m_RetransmitPending == false)
+    if(pSystem->m_RetransmitPending == false)
     {
         return;
     }
@@ -1207,7 +1215,7 @@ void TCP_Manager::RetransmitIfNeeded(TCP_Socket* pSocket)
     TickCount_t Now = GetTick();
 
     // Check if retransmission timeout has expired
-    if((Now - pSocket->m_RetransmitStart) < TCP_RETRANSMIT_TIMEOUT)
+    if((Now - pSystem->m_RetransmitStart) < TCP_RETRANSMIT_TIMEOUT)
     {
         return;     // Not yet time to retransmit
     }
@@ -1215,18 +1223,18 @@ void TCP_Manager::RetransmitIfNeeded(TCP_Socket* pSocket)
     //---------------------------------------------------------------------------------------------
     // Retransmit the last segment
     //---------------------------------------------------------------------------------------------
-    const uint8_t Flags = pSocket->m_LastFlags;
-    const size_t  Len   = pSocket->m_LastPayloadLength;
+    const uint8_t Flags = pSystem->m_LastFlags;
+    const size_t  Len   = pSystem->m_LastPayloadLength;
 
     const uint8_t* pPayload = nullptr;
 
     if(Len > 0)
     {
         // Payload stored in socket's TX buffer
-        pPayload = pSocket->m_TX_Buffer;
+        pPayload = pSystem->m_TX_Buffer;
     }
 
-    pSocket->m_SeqNumber = pSocket->m_LastSeqNumber;
+    pSystem->m_SeqNumber = pSystem->m_LastSeqNumber;
 
     // Re-send the segment with the SAME sequence number
     // (SendSegment() will NOT advance sequence numbers for retransmissions)
@@ -1238,7 +1246,7 @@ void TCP_Manager::RetransmitIfNeeded(TCP_Socket* pSocket)
     }
 
     // Restart retransmission timer
-    pSocket->m_RetransmitStart = Now;
+    pSystem->m_RetransmitStart = Now;
 
     // Keep m_RetransmitPending = true until ACK arrives
 }
@@ -1266,7 +1274,7 @@ void TCP_Manager::RetransmitIfNeeded(TCP_Socket* pSocket)
 //                  RetransmitIfNeeded(). It also does not free sockets; socket lifecycle
 //                  management is handled elsewhere.
 //-------------------------------------------------------------------------------------------------
-void TCP_Manager::UpdateTimers(void)
+void TCP_ManagerSystem::UpdateTimers(void)
 {
     TickCount_t Now = GetTick();
 
@@ -1276,16 +1284,17 @@ void TCP_Manager::UpdateTimers(void)
 #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
     if(m_pClientSocket != nullptr)
     {
-        TCP_Socket* pSocket = static_cast<TCP_Socket*>(m_pClientSocket);
+        TCP_Socket* pSocket       = static_cast<TCP_Socket*>(m_pClientSocket);
+        TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
 
         // TIME_WAIT expiration
-        if(pSocket->m_State == TCP_STATE_TIME_WAIT)
+        if(pSystem->m_State == TCP_STATE_TIME_WAIT)
         {
-            if((Now - pSocket->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
+            if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
             {
-                pSocket->m_State = TCP_STATE_CLOSED;
-                pSocket->m_RX_Length = 0;
-                pSocket->m_TX_Length = 0;
+                pSystem->m_State = TCP_STATE_CLOSED;
+                pSystem->m_RX_Length = 0;
+                pSystem->m_TX_Length = 0;
             }
         }
     }
@@ -1298,6 +1307,7 @@ void TCP_Manager::UpdateTimers(void)
     for(int i = 0; i < IP_TCP_MAX_LISTEN; i++)
     {
         TCP_Socket* pSocket = m_pServerSockets[i];
+        TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
 
         if(pSocket == nullptr)
         {
@@ -1305,13 +1315,13 @@ void TCP_Manager::UpdateTimers(void)
         }
 
         // TIME_WAIT expiration
-        if(pSocket->m_State == TCP_STATE_TIME_WAIT)
+        if(pSystem->m_State == TCP_STATE_TIME_WAIT)
         {
-            if((Now - pSocket->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
+            if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
             {
-                pSocket->m_State = TCP_STATE_CLOSED;
-                pSocket->m_RX_Length = 0;
-                pSocket->m_TX_Length = 0;
+                pSystem->m_State = TCP_STATE_CLOSED;
+                pSystem->m_RX_Length = 0;
+                pSystem->m_TX_Length = 0;
 
                 // NOTE:
                 // We do NOT free the socket here.

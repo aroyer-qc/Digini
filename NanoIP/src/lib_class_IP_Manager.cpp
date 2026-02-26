@@ -152,7 +152,7 @@ void IP_Manager::Run(void)
     #endif
 
     #if (IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
-        m_pContext->GetTCP().Process();
+        m_pContext->GetTCP()->Process();
     #endif
 
 
@@ -263,7 +263,7 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
      #if (IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
         case IP_PROTOCOL_TCP:
         {
-            m_pContext->GetTCP().ProcessSegment(pMsg);
+            m_pContext->GetTCP()->ProcessSegment(pMsg);
         }
         break;
       #endif

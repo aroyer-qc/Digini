@@ -47,7 +47,7 @@
 //  Description:    Initialize PHY Device.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e PHY_LAN8742A_Driver::Initialize(ETH_DriverInterface* pETH_Driver, uint32_t PHY_Address)
+SystemState_e PHY_LAN8742A_Driver::Initialize(ETH_MAC_DriverInterface* pETH_Driver, uint32_t PHY_Address)
 {
     if(pETH_Driver == nullptr)
     {

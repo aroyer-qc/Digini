@@ -432,6 +432,18 @@ TODO
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
+class W5500_Driver : public ETH_LinkDriver
+{
+    public:
+        
+        bool                        Initialize                      (void* pContext);
+        bool                        SendFrame                       (const uint8_t* pData, size_t Length);
+        bool                        ReceiveFrame                    (uint8_t* pBuffer, size_t* pLength);
+        bool                        LinkIsUp                        (void);
+};
+
+
+
 class HEC_W5100_Driver : public NET_DriverInterface
 {
     public:
@@ -453,13 +465,13 @@ class HEC_W5100_Driver : public NET_DriverInterface
 
 
         // from old driver
-        void       Init                     (void);
-        void       ProcessTX_Data           (Socket_t SocketNumber, uint8_t* pData, size_t Length);
-        void       ProcessRX_Data           (Socket_t SocketNumber, uint8_t* pData, size_t Length);
-        void       ReadData                 (Socket_t SocketNumber, uint16_t BufferPtr, uint8_t* pData, size_t Length);
-        void       SetSocket_tMemorySize    (uint8_t TX_Size, uint8_t RX_Size);
-        uint16_t   GetTX_FSR      		    (Socket_t SocketNumber);
-        uint16_t   GetRX_RSR      		    (Socket_t SocketNumber);
+    //    void       Init                     (void);
+    //    void       ProcessTX_Data           (Socket_t SocketNumber, uint8_t* pData, size_t Length);
+//        void       ProcessRX_Data           (Socket_t SocketNumber, uint8_t* pData, size_t Length);
+        //void       ReadData                 (Socket_t SocketNumber, uint16_t BufferPtr, uint8_t* pData, size_t Length);
+        //void       SetSocket_tMemorySize    (uint8_t TX_Size, uint8_t RX_Size);
+        //uint16_t   GetTX_FSR      		    (Socket_t SocketNumber);
+        //uint16_t   GetRX_RSR      		    (Socket_t SocketNumber);
 
     private:
 

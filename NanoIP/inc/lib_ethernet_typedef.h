@@ -587,10 +587,11 @@ struct DNS_PendingRequest_t
 
 struct IP_ETH_Config_t
 {
-    IP_MAC_Address_t            MAC_Address;
-    class ETH_DriverInterface*  pETH_Driver;        // Driver for embedded MAC controller
-    class PHY_DriverInterface*  pPHY_Driver;        // Driver for PHY
-    uint8_t                     PHY_Address;
+    IP_MAC_Address_t    MAC_Address;
+//    ETH_LinkDriver*     pLinkDriver;                // Genereic Driver (W5500, ENC28J60, STM32 via adaptor)
+    class ETH_MAC_DriverInterface*  pETH_Driver;        // Driver for embedded MAC controller
+    class PHY_DriverInterface*      pPHY_Driver;        // Driver for PHY
+    uint8_t                         PHY_Address;
 };
 
 struct IP_Config_t                                  // Host Name, IP_ Address, Protocol (ip_cfg.h)

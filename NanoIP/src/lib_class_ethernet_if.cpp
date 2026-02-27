@@ -88,10 +88,10 @@ extern "C" void ClassEthernetIf_Wrapper(void* pvParameters)
 //-------------------------------------------------------------------------------------------------
 SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, NetworkContext& Context)
 {
-    nOS_Error            Error;
-    SystemState_e        State;
-    ETH_DriverInterface* pETH_Driver;
-    IP_MAC_Address_t     MAC_Address;
+    nOS_Error                Error;
+    SystemState_e            State;
+    ETH_MAC_DriverInterface* pETH_Driver;
+    IP_MAC_Address_t         MAC_Address;
 
     m_pContext    = &Context;
     m_pETH_Config = pETH_Config;

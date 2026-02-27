@@ -123,7 +123,7 @@ class PHY_LAN8742A_Driver : public PHY_DriverInterface
 {
     public:
 
-        SystemState_e               Initialize                      (ETH_DriverInterface* pETH_Driver, uint32_t PHY_Address);
+        SystemState_e               Initialize                      (ETH_MAC_DriverInterface* pETH_Driver, uint32_t PHY_Address);
         SystemState_e               Uninitialize                    (void);
         SystemState_e               PowerControl                    (ETH_PowerState_e state);
         SystemState_e               SetInterface                    (ETH_MediaInterface_e Interface);
@@ -138,7 +138,7 @@ class PHY_LAN8742A_Driver : public PHY_DriverInterface
     private:
 
         // Ethernet PHY control structure
-        ETH_DriverInterface*        m_pETH_Driver;                  // Pointer on the class ETH_Driver
+        ETH_MAC_DriverInterface*    m_pETH_Driver;                  // Pointer on the class ETH_Driver
         uint32_t                    m_PHY_Address;
         bool                        m_IsItInitialize;
         ETH_State_e                 m_Flags;                        // Control flags

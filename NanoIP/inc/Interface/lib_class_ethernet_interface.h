@@ -30,7 +30,18 @@
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class ETH_DriverInterface
+class ETH_LinkDriver
+
+{
+    public:
+    
+        virtual bool                    Initialize              (void* pContext)                                                = 0;
+        virtual bool                    SendFrame               (const uint8_t* pData, size_t Length)                           = 0;
+        virtual bool                    ReceiveFrame            (uint8_t* pBuffer, size_t* pLength)                             = 0;
+        virtual bool                    LinkIsUp                (void)                                                          = 0;
+};
+
+class ETH_MAC_DriverInterface //ETH_DriverInterface
 {
     public:
 
@@ -58,7 +69,7 @@ class PHY_DriverInterface
 {
     public:
 
-        virtual SystemState_e           Initialize              (ETH_DriverInterface* pETH_Driver, uint32_t PHY_Address)        = 0;
+        virtual SystemState_e           Initialize              (ETH_MAC_DriverInterface* pETH_Driver, uint32_t PHY_Address)    = 0;
         virtual SystemState_e           Uninitialize            (void)                                                          = 0;
         virtual SystemState_e           PowerControl            (ETH_PowerState_e state)                                        = 0;
         virtual SystemState_e           SetInterface            (ETH_MediaInterface_e Interface)                                = 0;

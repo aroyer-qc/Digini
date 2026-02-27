@@ -106,7 +106,7 @@ struct TX_Descriptor_t
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class ETH_Driver : public ETH_DriverInterface
+class ETH_Driver : public ETH_MAC_DriverInterface
 {
     public:
 

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :  lib_class_ip.h
+//  File : ETH_link_driver_interface.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2011-2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,65 +27,18 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
+// class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
+class ETH_LinkDriver
+{
+    public:
+    
+        virtual bool        Initialize              (void* pContext)                        = 0;
+        virtual bool        SendFrame               (const uint8_t* pData, size_t Length)   = 0;
+        virtual bool        ReceiveFrame            (uint8_t* pBuffer, size_t* pLength)     = 0;
+        virtual bool        LinkIsUp                (void)                                  = 0;
+};
 
 //-------------------------------------------------------------------------------------------------
-// Include(s)
-//-------------------------------------------------------------------------------------------------
 
-#include 	<ip_debug.h>
-#include 	<ip_cfg.h>
-#include 	<task_IP.h>
-
-#if NIC_IN_USE == NIC_W5100
-#include	<w5100.h>
-#define 	IP_ARP 					DEF_DISABLED
-#define 	IP_UDP 					DEF_DISABLED
-#define 	IP_TCP 					DEF_DISABLED
-#define 	IP_ICMP					DEF_DISABLED
-#define 	IP_HARDWARE_SOCKET		DEF_ENABLED
-#endif
-
-#if NIC_IN_USE == NIC_CS8900A
-#include	<cs8900a.h>
-#define 	IP_ARP 					DEF_ENABLED
-#define 	IP_UDP 					DEF_ENABLED
-#define 	IP_TCP 					DEF_ENABLED
-#define 	IP_ICMP					DEF_ENABLED
-#define 	IP_HARDWARE_SOCKET		DEF_DISABLED
-#endif
-
-#if (IP_UDP == DEF_ENABLED) & (IP_APP_USE_UDP == DEF_ENABLED)
-#include <udp.h>
-#endif
-
-#if (IP_TCP == DEF_ENABLED) & (IP_APP_USE_TCP == DEF_ENABLED)
-#include <tcp.h>
-#endif
-
-#if (IP_ICMP == DEF_ENABLED) & (IP_APP_USE_TCP == DEF_ENABLED)
-#include <icmp.h>
-#endif
-
-#if (IP_APP_USE_ARP == DEF_ENABLED)
-#include <arp.h>
-#endif
-
-#if (IP_APP_USE_DHCP == DEF_ENABLED)
-#include <dhcp.h>
-#endif
-
-#if (IP_APP_USE_DNS == DEF_ENABLED)
-#include <dns.h>
-#endif
-
-#if (IP_APP_USE_SNTP == DEF_ENABLED)
-#include <sntp.h>
-#endif
-
-//-------------------------------------------------------------------------------------------------

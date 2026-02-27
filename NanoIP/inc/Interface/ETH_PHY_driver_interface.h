@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :  lib_class_dns.h
+//  File : ETH_PHY_driver_interface.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -27,49 +27,25 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-
-#if (IP_USE_DNS == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-// Typedef(s)
+// class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-struct DNS_PendingRequest_t
-{
-    uint16_t        XID;
-    DNS_Callback_t  pCallback;
-    void*           pContext;
-    TickCount_t     TimeStamp;
-    bool            Pending;                        // App requested a DNS lookup
-};
-
-//-------------------------------------------------------------------------------------------------
-// Class definition(s)
-//-------------------------------------------------------------------------------------------------
-
-class DNS_Manager
+class ETH_PHY_DriverInterface
 {
     public:
 
-        void                    Initialize          (NetworkContext& Context);
-        bool                    SendQuery           (const char* pDomainName, DNS_Callback_t pCallback, void* pContext);
-        bool                    Process             (void);
-
-private:
-
-        inline int              FindFreeSlot        (void);
-        int                     FindSlotByXID       (uint16_t XID);
-        bool                    ParseResponse       (DNS_Header_t* pMessage, size_t PacketLength, IP_Address_t& OutIP);
-        size_t                  BuildDNS_Query      (DNS_Header_t* pMessage, const char* pDomainName);
-
-        NetworkContext*         m_pContext;
-        Socket*                 m_pSocket;
-        uint16_t                m_XID_Counter;
-        DNS_PendingRequest_t    m_Pending[DNS_MAX_PENDING_COUNT];
+        virtual SystemState_e       Initialize          (ETH_MAC_DriverInterface* pETH_Driver, uint32_t PHY_Address)    = 0;
+        virtual SystemState_e       Uninitialize        (void)                                                          = 0;
+        virtual SystemState_e       PowerControl        (ETH_PowerState_e state)                                        = 0;
+        virtual SystemState_e       SetInterface        (ETH_MediaInterface_e Interface)                                = 0;
+        virtual SystemState_e       SetMode             (ETH_PHY_Mode_e Mode)                                           = 0;
+        virtual ETH_LinkState_e     GetLinkState        (void)                                                          = 0;
+        virtual ETH_LinkInfo_t      GetLinkInfo         (void)                                                          = 0;
+        virtual uint8_t             GetPHY_Address      (void)                                                          = 0;
+      #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
+        virtual SystemState_e       SetLinkUpInterrupt  (bool State)                                                    = 0;
+      #endif
 };
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (IP_USE_DNS == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------

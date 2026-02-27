@@ -34,11 +34,11 @@
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-  #define EXPAND_X_IF_AS_ENUM(ENUM_ID, HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS) ENUM_ID,
-  #define EXPAND_X_IF_AS_STRUCT_DATA(ENUM_ID, HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS,   MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS) \
-                                            { HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, { MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS } },
+  #define EXPAND_X_IF_AS_ENUM(ENUM_ID, HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, MAC_ADDRESS, ETH_LINK_DRIVER) ENUM_ID,
+  #define EXPAND_X_IF_AS_STRUCT_DATA(ENUM_ID, HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS,   MAC_ADDRESS, ETH_LINK_DRIVER) \
+                                            { HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, { MAC_ADDRESS, ETH_LINK_DRIVER } },
 
-  #define EXPAND_X_IF_AS_STACK_DECLARATION(ENUM_ID, HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS,   MAC_ADDRESS, ETH_DRIVER, PHY_DRIVER, PHY_ADDRESS) \
+  #define EXPAND_X_IF_AS_STACK_DECLARATION(ENUM_ID, HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS,   MAC_ADDRESS, ETH_LINK_DRIVER) \
                                                      nOS_Stack STK_VAR[TASK_IP_MANAGER_STACK_SIZE]  NOS_STACK_LOCATION;
 
 //-------------------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ class NetworkContext
         RAW_Manager&        GetRAW                  (void)                                      { return m_RAW;                                                                 }
       #endif
       #if (IP_USE_TCP_SERVER == DEF_ENABLED) || (IP_USE_TCP_CLIENT == DEF_ENABLED)
-        void                SetTCP_Manager          (TCP_Manager* pManager)                     { m_pTCP = pManager;                                                            }    
+        void                SetTCP_Manager          (TCP_Manager* pManager)                     { m_pTCP = pManager;                                                            }
         TCP_Manager*        GetTCP                  (void)                                      { return m_pTCP;                                                                }
       #endif
       #if (IP_USE_UDP == DEF_ENABLED)

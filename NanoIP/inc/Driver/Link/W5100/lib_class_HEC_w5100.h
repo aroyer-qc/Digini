@@ -448,89 +448,8 @@ class HEC_W5100_Driver : public NET_DriverInterface
 {
     public:
 
-                                    HEC_W5100_Driver                (uint32_t PHY_Address);
-
-        SystemState_e               Initialize                      (ETH_Driver* pDriver);
-        SystemState_e               Uninitialize                    (void);
-        SystemState_e               PowerControl                    (ETH_PowerState_e state);
-        SystemState_e               SetInterface                    (ETH_MediaInterface_e Interface);
-        SystemState_e               SetMode                         (ETH_PHY_Mode_e Mode);
-        ETH_LinkState_e             GetLinkState                    (void);
-        ETH_LinkInfo_t              GetLinkInfo                     (void);
-        uint8_t                     GetPHY_Address                  (void)          { return m_PHY_Address; }
-      #if (ETH_USE_PHY_LINK_IRQ == DEF_ENABLED)
-        SystemState_e               SetLinkUpInterrupt              (bool State)    { VAR_UNUSED(State); return SYS_READY; };         // No interrupt line for link status on this PHY
-      #endif
-
-
-
-        // from old driver
-    //    void       Init                     (void);
-    //    void       ProcessTX_Data           (Socket_t SocketNumber, uint8_t* pData, size_t Length);
-//        void       ProcessRX_Data           (Socket_t SocketNumber, uint8_t* pData, size_t Length);
-        //void       ReadData                 (Socket_t SocketNumber, uint16_t BufferPtr, uint8_t* pData, size_t Length);
-        //void       SetSocket_tMemorySize    (uint8_t TX_Size, uint8_t RX_Size);
-        //uint16_t   GetTX_FSR      		    (Socket_t SocketNumber);
-        //uint16_t   GetRX_RSR      		    (Socket_t SocketNumber);
-
     private:
 
-        // Ethernet PHY control structure
-        uint32_t                    m_PHY_Address;
-        ETH_Driver*                 m_pETH_Driver;                  // Pointer on the class ETH_Driver
-        uint16_t                    m_BCR_Register;                 // BCR register value
-        ETH_State_e                 m_Flags;                        // Control flags
-
-
-
-//from old driver
-
-    
-        void    WriteData         (Socket_t SocketNumber, uint8_t* pData, uint16_t BufferPtr, size_t Length);
-        void    WriteBuffer       (uint8_t* pSrc, uint8_t* pDst, size_t Length);
-        void    ReadBuffer        (uint8_t* pSrc, uint8_t* pDst, size_t Length);
-
-    volatile uint8_t        mr_addr;                        //  Mode Register
-    volatile uint32_t       gar_addr;                       //  Gateway IP Address Register
-    volatile uint32_t       subr_addr;                      //  Subnet Mask Register
-    volatile MAC_t          shar_addr;                      //  Source MAC Address Register
-    volatile uint32_t       sipr_addr;                      //  Source IP Address Register
-    volatile uint8_t        isr_addr;                       //  Interrupt Register
-    volatile uint8_t        imr_addr;                       //  Interrupt Mask Register
-    volatile uint16_t       rtr_addr;                       //  Retry Time-value Register
-    volatile uint8_t        rcr_addr;                       //  Retry Count Register
-    volatile uint8_t        rmsr_addr;                      //  RX Memory Size Register
-    volatile uint8_t        tmsr_addr;                      //  TX Memory Size Register
-    volatile uint16_t       patr_addr;                      //  Authentication Type in PPPoE mode
-    volatile uint8_t        ptimer_addr;                    //  PPP Link Control Protocol Request Timer Register
-    volatile uint8_t        pmagic_addr;                    //  PPP Link Control Protocol Magic Number Register
-    volatile uint32_t       uipr_addr;                      //  Unreachable IP Address Register
-    volatile uint16_t       uport_addr;                     //  Unreachable Port Register
-    volatile uint8_t        sock_mr_addr;                   //  Socket_t Mode Register
-    volatile uint8_t        sock_cr_addr;                   //  Socket_t Command Register
-    volatile uint8_t        sock_ir_addr;                   //  Socket_t Interrupt Register
-    volatile uint8_t        sock_sr_addr;                   //  Socket_t Status Register
-    volatile uint16_t       sock_sportr_addr;               //  Socket_t Source Port Register
-    volatile MAC_t          sock_dhar_addr;                 //  Socket_t Destination Hardware Address Register
-    volatile uint32_t       sock_dipr_addr;                 //  Socket_t Destination IP Address Register
-    volatile uint16_t       sock_dportr_addr;               //  Socket_t Destination Port Register
-    volatile uint16_t       sock_mssr_addr;                 //  Socket_t Maximum Segment Size Register
-    volatile uint16_t       sock_protor_addr;               //  Socket_t Protocol Register
-    volatile uint8_t        sock_tosr_addr;                 //  Socket_t Type Of Service Register (TOS)
-    volatile uint8_t        sock_ttlr_addr;                 //  Socket_t Time To Live Register (TTL)
-    volatile uint16_t       sock_tx_fsr_addr;               //  Socket_t TX Free Size Register
-    volatile uint16_t       sock_tx_rpr_addr;               //  Socket_t TX Memory Read Pointer Address Register
-    volatile uint16_t       sock_tx_wpr_addr;               //  Socket_t TX Memory Write Pointer Address Register
-    volatile uint16_t       sock_rx_rsr_addr;               //  Socket_t RX Received Size Register
-    volatile uint16_t       sock_rx_rpr_addr;               //  Socket_t RX Memory Read Pointer Address Register
-
-    uint8_t    m_Socket_tIntStatus [W5100_NUMBER_OF_SOCKET];
-    uint32_t   m_TX_BaseAddress    [W5100_NUMBER_OF_SOCKET];
-    uint16_t   m_TX_Size           [W5100_NUMBER_OF_SOCKET];
-    uint16_t   m_TX_Mask           [W5100_NUMBER_OF_SOCKET];
-    uint32_t   m_RX_BaseAddress    [W5100_NUMBER_OF_SOCKET];
-    uint16_t   m_RX_Size           [W5100_NUMBER_OF_SOCKET];
-    uint16_t   m_RX_Mask           [W5100_NUMBER_OF_SOCKET];
 };
 
 //-------------------------------------------------------------------------------------------------

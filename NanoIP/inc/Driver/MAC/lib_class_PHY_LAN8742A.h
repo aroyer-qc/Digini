@@ -119,7 +119,7 @@
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class PHY_LAN8742A_Driver : public PHY_DriverInterface
+class PHY_LAN8742A_Driver : public ETH_PHY_DriverInterface
 {
     public:
 

@@ -33,6 +33,43 @@
 #define SOCKET_RX_QUEUE_DEPTH       8
 
 //-------------------------------------------------------------------------------------------------
+// Enum(s)
+//-------------------------------------------------------------------------------------------------
+
+// Socket Types
+enum SocketType_e
+{
+    SOCKET_TYPE_NONE,
+    SOCKET_TYPE_STREAM,
+    SOCKET_TYPE_DATAGRAM,
+    SOCKET_TYPE_RAW_IP,
+    SOCKET_TYPE_UNKNOWN,
+    SOCKET_TYPE_INVALID
+};
+
+// Socket Options
+enum SocketOption_e
+{
+    SOCKET_OPT_NON_BLOCKING,
+    SOCKET_OPT_BROADCAST,
+    SOCKET_OPT_REUSE_ADDRESS,
+    SOCKET_OPT_TIMEOUT,
+    SOCKET_OPT_KEEP_ALIVE,
+};
+
+// Socket States
+/*enum SocketState_e
+{
+    SOCKET_STATE_CLOSED,
+    SOCKET_STATE_LISTENING,
+    SOCKET_STATE_CONNECTING,
+    SOCKET_STATE_CONNECTED,
+    SOCKET_STATE_CLOSING,
+    SOCKET_STATE_ERROR
+};
+*/
+
+//-------------------------------------------------------------------------------------------------
 
 class Socket
 {
@@ -54,7 +91,7 @@ class Socket
         SystemState_e       SetOption           (SocketOption_e Option, void* pValue, size_t ValueSize);
         SystemState_e       GetOption           (SocketOption_e Option, void* pValue, size_t* pValueSize);
 
-        SocketState_e       GetState            (void);
+        //SocketState_e       GetState            (void);
         SocketType_e        GetType             (void);
 
         void                SetActive           (bool Active)               { m_Active = Active;                                       }
@@ -100,7 +137,7 @@ class Socket
         NetworkContext*         m_pContext;
 
         SocketType_e            m_Type;
-        SocketState_e           m_State;
+        //SocketState_e           m_State;
         SocketInfo_t            m_LocalInfo;
         SocketInfo_t            m_RemoteInfo;
         SocketProtocol_t        m_Protocol;

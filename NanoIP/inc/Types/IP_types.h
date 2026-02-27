@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :  lib_class_dns.h
+//  File : IP_Types.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -28,48 +28,22 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (IP_USE_DNS == DEF_ENABLED)
+#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-struct DNS_PendingRequest_t
+typedef uint32_t    IP_Address_t;
+typedef uint16_t    IP_Port_t;
+
+struct IP_MAC_Address_t
 {
-    uint16_t        XID;
-    DNS_Callback_t  pCallback;
-    void*           pContext;
-    TickCount_t     TimeStamp;
-    bool            Pending;                        // App requested a DNS lookup
-};
-
-//-------------------------------------------------------------------------------------------------
-// Class definition(s)
-//-------------------------------------------------------------------------------------------------
-
-class DNS_Manager
-{
-    public:
-
-        void                    Initialize          (NetworkContext& Context);
-        bool                    SendQuery           (const char* pDomainName, DNS_Callback_t pCallback, void* pContext);
-        bool                    Process             (void);
-
-private:
-
-        inline int              FindFreeSlot        (void);
-        int                     FindSlotByXID       (uint16_t XID);
-        bool                    ParseResponse       (DNS_Header_t* pMessage, size_t PacketLength, IP_Address_t& OutIP);
-        size_t                  BuildDNS_Query      (DNS_Header_t* pMessage, const char* pDomainName);
-
-        NetworkContext*         m_pContext;
-        Socket*                 m_pSocket;
-        uint16_t                m_XID_Counter;
-        DNS_PendingRequest_t    m_Pending[DNS_MAX_PENDING_COUNT];
+    uint8_t     Byte[IP_MAC_ADDRESS_SIZE];
 };
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (IP_USE_DNS == DEF_ENABLED)
+#endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

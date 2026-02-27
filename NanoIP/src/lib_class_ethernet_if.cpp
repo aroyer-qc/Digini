@@ -240,7 +240,7 @@ void ETH_IF_Driver::Run(void)
 //-------------------------------------------------------------------------------------------------
 void ETH_IF_Driver::PollTheNetworkInterface(void)
 {
-    PHY_DriverInterface* pDriverIF = m_pETH_Config->pPHY_Driver;
+    ETH_PHY_DriverInterface* pDriverIF = m_pETH_Config->pPHY_Driver;
     ETH_LinkState_e LinkNow;
 
     LinkNow = pDriverIF->GetLinkState();

@@ -110,15 +110,15 @@ class ETH_Driver : public ETH_MAC_DriverInterface
 {
     public:
 
-        SystemState_e           Initialize              (void* pContext, uint8_t PHY_Address);                                                // Initialize Ethernet MAC Device.
+        SystemState_e           Initialize              (void* pContext, uint8_t PHY_Address);                           // Initialize Ethernet MAC Device.
         SystemState_e           InitializeInterface     (void);                                                          // Initialize Ethernet Interface.
 
         void                    Start                   (void);                                                          // Start ETH module
-        SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address);                          // Get Ethernet MAC Address.
-        SystemState_e           SetMacAddress           (const IP_MAC_Address_t* pMAC_Address);                          // Set Ethernet MAC Address.
+        SystemState_e           GetMAC_Address          (IP_MAC_Address_t* pMAC_Address);                                // Get Ethernet MAC Address.
+        SystemState_e           SetMAC_Address          (const IP_MAC_Address_t* pMAC_Address);                          // Set Ethernet MAC Address.
         SystemState_e           SetAddressFilter        (const IP_MAC_Address_t* pMAC_Address, uint32_t NbAddress);      // Configure Address Filter.
-        SystemState_e           SendTX_Packet           (IP_PacketMsg_t** ppPacketMsg);                                  // Send Ethernet frame.
-        SystemState_e           GetRX_Packet            (IP_PacketMsg_t** ppPacketMsg);
+        SystemState_e           SendFrame               (IP_PacketMsg_t** ppPacketMsg);                                  // Send Ethernet frame.
+        SystemState_e           ReceiveFrame            (IP_PacketMsg_t** ppPacketMsg);
         uint32_t                GetRX_FrameSize         (void);                                                          // Get size of received Ethernet frame.
       #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
         SystemState_e           GetRX_FrameTime         (ETH_MacTime_t* pTime);                                          // Get time of received Ethernet frame.
@@ -142,23 +142,6 @@ class ETH_Driver : public ETH_MAC_DriverInterface
         static     RX_Descriptor_t              m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
         static     TX_Descriptor_t              m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((aligned(4)));
 };
-
-//-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
-//-------------------------------------------------------------------------------------------------
-
-// There is only one ETHERNET peripheral, so we declare it here
-
-#ifdef LIB_ETH_DRIVER_GLOBAL
-
-class ETH_Driver myETH_Driver;
-
-#else // LIB_ETH_DRIVER_GLOBAL
-
-extern class ETH_Driver myETH_Driver;
-
-#endif // LIB_ETH_DRIVER_GLOBAL
-
 
 //-------------------------------------------------------------------------------------------------
 

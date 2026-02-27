@@ -70,50 +70,9 @@
 
 #define DNS_MAX_PACKET_SIZE                     512
 
-#if (IP_USE_DHCP == DEF_DISABLED)
-    #define GetActiveGatewayIP()                GetStaticGatewayIP()
-    #define GetActiveSubnetMask()               GetStaticSubnetMask()
-    #define GetActiveIP()                       GetStaticIP()
-    #define GetActiveDNS_IP()                   GetStaticDNS_IP()
-#endif
-
-//-------------------------------------------------------------------------------------------------
-// Macro(s)
-//-------------------------------------------------------------------------------------------------
-
-#if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-
-    #define IP_ADDRESS(A,B,C,D)                 (uint32_t(A) + (uint32_t(B) << 8) + (uint32_t(C) << 16) + (uint32_t(D) << 24))
-    #define IP_A(IP)                            uint8_t(IP)
-    #define IP_B(IP)                            uint8_t(IP >> 8)
-    #define IP_C(IP)                            uint8_t(IP >> 16)
-    #define IP_D(IP)                            uint8_t(IP >> 24)
-
-    // Use on static value to save code space
-    #define HTONS(V)                            uint16_t(uint16_t(V) << 8 | uint16_t(V) >> 8)
-    #define HTONL(V)                            (uint32_t((((V) & 0x000000FF) << 24) | (((V) & 0x0000FF00) << 8 ) | (((V) & 0x00FF0000) >> 8 ) | (((V) & 0xFF000000) >> 24)))
-
-#else
-
-    #define IP_ADDRESS(A,B,C,D)                 (uint32_t(D) + (uint32_t(C) << 8) + (uint32_t(B) << 16) + (uint32_t(A) << 24))
-    #define IP_A(IP)                            uint8_t(IP >> 24)
-    #define IP_B(IP)                            uint8_t(IP >> 16)
-    #define IP_C(IP)                            uint8_t(IP >> 8)
-    #define IP_D(IP)                            uint8_t(IP)
-
-    #define HTONS(V)                            uint16_t(V)
-    #define HTONL(V)                            uint32_t(V)
-
-#endif
-
 //-------------------------------------------------------------------------------------------------
 // Enum(s)
 //-------------------------------------------------------------------------------------------------
-
-enum IP_EthernetIF_e
-{
-    ETH_INTERFACE_ENUM
-};
 
 // Ethernet MAC or PHY Power State
 enum ETH_PowerState_e
@@ -162,21 +121,6 @@ enum ETH_LinkState_e
     ETH_LINK_DOWN,                                  // Link is Down
     ETH_LINK_UP,                                    // Link is Up
     ETH_LINK_UNKNOWN,
-};
-
-enum TCP_State_e
-{
-    TCP_STATE_CLOSED = 0,
-    TCP_STATE_LISTEN,
-    TCP_STATE_SYN_SENT,
-    TCP_STATE_SYN_RECEIVED,
-    TCP_STATE_ESTABLISHED,
-    TCP_STATE_FIN_WAIT_1,
-    TCP_STATE_FIN_WAIT_2,
-    TCP_STATE_CLOSE_WAIT,
-    TCP_STATE_LAST_ACK,
-    TCP_STATE_TIME_WAIT,
-    TCP_STATE_ERROR
 };
 
 //-------------------------------------------------------------------------------------------------

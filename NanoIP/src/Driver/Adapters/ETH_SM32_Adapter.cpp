@@ -1,54 +1,102 @@
 #include "./lib_digini.h"
 
-ETH_STM32_Adapter::ETH_STM32_Adapter(ETH_MAC_DriverInterface* pMAC, ETH_PHY_DriverInterface* pPHY, uint8_t PHY_Address) : m_pMAC(pMAC), m_pPHY(pPHY), m_PHY_Address(PHY_Address)
+ETH_STM32_Adapter::ETH_STM32_Adapter(ETH_MAC_DriverInterface* pMAC, ETH_PHY_DriverInterface* pPHY, uint8_t PHY_Address)
+: m_pMAC(pMAC), m_pPHY(pPHY), m_PHY_Address(PHY_Address), m_pIF_Context(nullptr)
 {
 }
+
+//-------------------------------------------------------------------------------------------------
 
 bool ETH_STM32_Adapter::Initialize(void* pContext)
 {
-    if(m_pMAC->Initialize(pContext, m_PHY_Address) != SYS_READY)
+    m_pIF_Context = pContext;
+
+    if((m_pMAC == nullptr) || (m_pPHY == nullptr))
     {
-        return false;
+        return SYS_STATE_ERROR;
     }
 
-    if(m_pMAC->InitializeInterface() != SYS_READY)
+    SystemState_e State;
+
+    //  Init MAC
+    State = m_pMAC->Initialize(m_pIF_Context, m_PHY_Address);
+    
+    if(State != SYS_READY)
     {
-        return false;
+        return State;
     }
 
-    return true;
+    State = m_pMAC->InitializeInterface();
+    if(State != SYS_READY)
+    {
+        return State;
+    }
+
+    // Set MAC address (from IF context)
+    IP_MAC_Address_t MAC;
+    static_cast<NetworkContext*>(m_pIF_Context)->GetMAC_Address(&MAC);
+    m_pMAC->SetMacAddress(&MAC);
+
+    // Init PHY
+    State = m_pPHY->Initialize(m_pMAC, m_PHY_Address);
+    
+    if(State != SYS_READY)
+    {
+        return State;
+    }
+
+    //  Start MAC + DMA
+    m_pMAC->Start();
+
+    return SYS_STATE_OK;
 }
 
-bool ETH_STM32_Adapter::SendFrame(const uint8_t* pData, size_t Length)
+//-------------------------------------------------------------------------------------------------
+
+bool ETH_STM32_Adapter::SendFrame(IP_PacketMsg_t** pPacketMessage)
 {
-    IP_PacketMsg_t* pMsg = (IP_PacketMsg_t*)pData;
-    return m_pMAC->SendTX_Packet(&pMsg) == SYS_READY;
+    return m_pMAC->SendFrame(ppPacketMsg);
 }
 
-bool ETH_STM32_Adapter::ReceiveFrame(uint8_t* pBuffer, size_t* pLength)
+//-------------------------------------------------------------------------------------------------
+
+bool ETH_STM32_Adapter::ReceiveFrame(IP_PacketMsg_t** pPacketMessage)
 {
-    IP_PacketMsg_t* pMsg = nullptr;
-
-    if(m_pMAC->GetRX_Packet(&pMsg) != SYS_READY)
-    {
-        return false;
-    }
-
-    uint32_t size = m_pMAC->GetRX_FrameSize();
-    memcpy(pBuffer, pMsg->pPacket, size);
-    *pLength = size;
-
-    return true;
+    return m_pMAC->ReceiveFrame(ppPacketMsg);
 }
+
+//-------------------------------------------------------------------------------------------------
 
 bool ETH_STM32_Adapter::LinkIsUp(void)
 {
-    uint16_t reg = 0;
+    return (m_pPHY->GetLinkState() == ETH_LINK_UP);
+}
 
-    if(m_pPHY->Read(m_PHY_Address, PHY_BSR, &reg) != SYS_READY)
+//-------------------------------------------------------------------------------------------------
+
+void ETH_STM32_Adapter::OnMAC_Event(uint32_t Event)
+{
+    ETH_IF_Driver* pIF = static_cast<ETH_IF_Driver*>(m_pIF_Context);
+
+    if(Event & ETH_MAC_EVENT_RX_FRAME)
     {
-        return false;
+        pIF->OnRxInterrupt();
+    }
+    
+    if(Event & ETH_MAC_EVENT_TX_FRAME)
+    {
+        pIF->OnTxComplete();
     }
 
-    return (reg & PHY_LINKED_STATUS) != 0;
+    if(Event & ETH_MAC_EVENT_TIMER_ALARM)
+    {
+        pIF->OnTimerEvent();
+    }
+
+    if(Event & ETH_MAC_EVENT_WAKEUP)
+    {
+        pIF->OnWakeUpEvent();
+    }
 }
+
+//-------------------------------------------------------------------------------------------------

@@ -81,7 +81,7 @@ struct RAW_Socket_t
 
 union SocketProtocol_t
 {
-    TCP_Socket*     pTCP;   // Full C++ TCP protocol object.
+/*    TCP_Socket*     pTCP;  */ // Full C++ TCP protocol object.
                             // TCP is stateful and connection‑oriented, requiring:
                             //   - sequence/ack numbers
                             //   - sliding window management

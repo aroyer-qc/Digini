@@ -162,10 +162,24 @@
 #endif
 
 #if (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
-#include "./NanoIP/inc/lib_ethernet_typedef.h"
+class NetworkContext;
+#include "./NanoIP/inc/lib_ethernet_helper.h"
+#include "./NanoIP/inc/lib_ethernet_enum.h"                     // macro, define, and enum
+
+#include "./NanoIP/inc/Types/IP_types.h"
+#include "./NanoIP/inc/Types/ETH_driver_types.h"
+#include "./NanoIP/inc/Types/IP_frame_types.h"
+#include "./NanoIP/inc/Types/socket_types.h"
+
+#include "./NanoIP/inc/Interface/ETH_link_driver_interface.h"
+#include "./NanoIP/inc/Interface/ETH_MAC_driver_interface.h"
+#include "./NanoIP/inc/Interface/ETH_PHY_driver_interface.h"
+#include "./NanoIP/inc/Interface/TCP_interface.h"
+#include "./NanoIP/inc/driver/Adapters/ETH_Adapter.h"
 #include "./NanoIP/inc/lib_class_socket.h"
 #include "./NanoIP/inc/lib_class_ethernet_if.h"
-#include "./NanoIP/inc/Interface/lib_class_ethernet_interface.h"
+
+
 #include "./NanoIP/inc/lib_class_arp.h"
 #include "./NanoIP/inc/lib_class_dhcp.h"
 #include "./NanoIP/inc/lib_class_dns.h"

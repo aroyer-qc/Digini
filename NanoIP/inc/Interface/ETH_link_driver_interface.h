@@ -33,11 +33,11 @@
 class ETH_LinkDriver
 {
     public:
-    
-        virtual bool        Initialize              (void* pContext)                        = 0;
-        virtual bool        SendFrame               (const uint8_t* pData, size_t Length)   = 0;
-        virtual bool        ReceiveFrame            (uint8_t* pBuffer, size_t* pLength)     = 0;
-        virtual bool        LinkIsUp                (void)                                  = 0;
+
+        virtual SystemState_e   Initialize              (void* pContext)                    = 0;
+        virtual SystemState_e   SendFrame               (IP_PacketMsg_t** pPacketMessage)   = 0;
+        virtual SystemState_e   ReceiveFrame            (IP_PacketMsg_t** pPacketMessage)   = 0;
+        virtual bool            LinkIsUp                (void)                              = 0;
 };
 
 //-------------------------------------------------------------------------------------------------

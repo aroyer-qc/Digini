@@ -90,21 +90,16 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, Netw
 {
     nOS_Error                Error;
     SystemState_e            State;
-    ETH_MAC_DriverInterface* pETH_Driver;
-    IP_MAC_Address_t         MAC_Address;
 
     m_pContext    = &Context;
     m_pETH_Config = pETH_Config;
+
 	m_pContext->SetLinkState(ETH_LINK_DOWN);
 	m_pContext->SetLinkSpeed(ETH_PHY_SPEED_NONE);
 
     Error = nOS_SemCreate(&m_RX_Sem, 0, NET_RX_COUNT_MAX_SEMAPHORE);
     Error = nOS_MutexCreate(&m_TX_Mutex, NOS_MUTEX_NORMAL, 1);
     VAR_UNUSED(Error);
-
-  //#if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-  //  myStacktistic.Register(&m_Stack[0], TASK_ETHERNET_IF_STACK_SIZE, "Ethernet Input");
-  //#endif
 
     nOS_ThreadCreate(&m_Handle,
                      ClassEthernetIf_Wrapper,
@@ -114,18 +109,12 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, Netw
                      TASK_ETHERNET_IF_PRIO,
                      "Ethernet Input");
 
-    pETH_Driver = m_pETH_Config->pETH_Driver;
-    pETH_Driver->Initialize(this, m_pETH_Config->PHY_Address);      // TODO put in here the callback
-
-    m_pContext->GetMAC_Address(&MAC_Address);
-    pETH_Driver->SetMacAddress(&MAC_Address);
-
-    if((State = m_pETH_Config->pPHY_Driver->Initialize(pETH_Driver, m_pETH_Config->PHY_Address)) == SYS_READY)      // Interface ID is used as address
+    if ((m_pETH_Config == nullptr) || (m_pETH_Config->pLinkDriver == nullptr))
     {
-        //pETH_Driver->InitializeInterface();
-        pETH_Driver->Start();                                                               // Enable MAC and DMA transmission and reception
+        return SYS_FAIL;
     }
 
+    State = m_pETH_Config->pLinkDriver->Initialize(this);
 	return State;
 }
 
@@ -162,7 +151,7 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, Netw
 //-------------------------------------------------------------------------------------------------
 SystemState_e ETH_IF_Driver::LowLevelOutput(IP_PacketMsg_t** ppPacketMsg)
 {
-    return m_pETH_Config->pETH_Driver->SendTX_Packet(ppPacketMsg);
+    return m_pETH_Config->pLinkDriver->SendFrame(ppPacketMsg);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -201,7 +190,7 @@ void ETH_IF_Driver::Run(void)
 
             while(Count < 4)
             {
-                State = m_pETH_Config->pETH_Driver->GetRX_Packet(&pPacketMsg);
+                State = m_pETH_Config->pLinkDriver->ReceiveFrame(&pPacketMsg);
 
                 if((State != SYS_READY) || (pPacketMsg == nullptr))
                 {
@@ -240,10 +229,8 @@ void ETH_IF_Driver::Run(void)
 //-------------------------------------------------------------------------------------------------
 void ETH_IF_Driver::PollTheNetworkInterface(void)
 {
-    ETH_PHY_DriverInterface* pDriverIF = m_pETH_Config->pPHY_Driver;
-    ETH_LinkState_e LinkNow;
-
-    LinkNow = pDriverIF->GetLinkState();
+    bool LinkUp = m_pETH_Config->pLinkDriver->LinkIsUp();
+    ETH_LinkState_e LinkNow = LinkUp ? ETH_LINK_UP : ETH_LINK_DOWN;
 
     if(LinkNow != m_pContext->GetLinkState())
     {
@@ -251,7 +238,8 @@ void ETH_IF_Driver::PollTheNetworkInterface(void)
 
         if(LinkNow == ETH_LINK_UP)
         {
-            m_pContext->SetLinkSpeed(pDriverIF->GetLinkInfo().Speed);
+            // Si tu veux la vitesse, il faut l’ajouter dans ETH_LinkDriver
+            m_pContext->SetLinkSpeed(ETH_PHY_SPEED_100M);
             DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: Link UP\n");
         }
         else

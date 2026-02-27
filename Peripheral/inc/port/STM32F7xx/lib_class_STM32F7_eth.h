@@ -168,23 +168,6 @@ class ETH_Driver : public ETH_MAC_DriverInterface
 };
 
 //-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
-//-------------------------------------------------------------------------------------------------
-
-// There is only one ETHERNET peripheral, so we declare it here
-
-#ifdef LIB_ETH_DRIVER_GLOBAL
-
-class ETH_Driver myETH_Driver;
-
-#else // LIB_ETH_DRIVER_GLOBAL
-
-extern class ETH_Driver myETH_Driver;
-
-#endif // LIB_ETH_DRIVER_GLOBAL
-
-
-//-------------------------------------------------------------------------------------------------
 
 #endif // (USE_ETH_DRIVER == DEF_ENABLED)
 

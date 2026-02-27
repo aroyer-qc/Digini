@@ -27,6 +27,25 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+// enum(s)
+//-------------------------------------------------------------------------------------------------
+
+enum TCP_State_e
+{
+    TCP_STATE_CLOSED = 0,
+    TCP_STATE_LISTEN,
+    TCP_STATE_SYN_SENT,
+    TCP_STATE_SYN_RECEIVED,
+    TCP_STATE_ESTABLISHED,
+    TCP_STATE_FIN_WAIT_1,
+    TCP_STATE_FIN_WAIT_2,
+    TCP_STATE_CLOSE_WAIT,
+    TCP_STATE_LAST_ACK,
+    TCP_STATE_TIME_WAIT,
+    TCP_STATE_ERROR
+};
+
+//-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 

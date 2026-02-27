@@ -35,9 +35,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define LIB_ETH_DRIVER_GLOBAL
 #include "./lib_digini.h"
-#undef  LIB_ETH_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -360,7 +358,7 @@ void ETH_Driver::Start(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name:     GetMacAddress
+//   Function name:     GetMAC_Address
 //
 //   Parameter(s):      pMAC_Address    Pointer to address.
 //   Return value:      SystemState_e   State of function.
@@ -368,11 +366,11 @@ void ETH_Driver::Start(void)
 //   Description:       Get Ethernet MAC Address.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::GetMacAddress(IP_MAC_Address_t* pMAC_Address)
+SystemState_e ETH_Driver::GetMAC_Address(IP_MAC_Address_t* pMAC_Address)
 {
     if(pMAC_Address == nullptr)
     {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetMacAddress - Invalid Parameter\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetMAC_Address - Invalid Parameter\n");
         return SYS_INVALID_PARAMETER;
     }
 
@@ -393,7 +391,7 @@ SystemState_e ETH_Driver::GetMacAddress(IP_MAC_Address_t* pMAC_Address)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name:     SetMacAddress
+//   Function name:     SetMAC_Address
 //
 //   Parameter(s):      pMAC_Address    Pointer to address.
 //   Return value:      SystemState_e   State of function.
@@ -401,11 +399,11 @@ SystemState_e ETH_Driver::GetMacAddress(IP_MAC_Address_t* pMAC_Address)
 //   Description:       Set Ethernet MAC Address.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::SetMacAddress(const IP_MAC_Address_t* pMAC_Address)
+SystemState_e ETH_Driver::SetMAC_Address(const IP_MAC_Address_t* pMAC_Address)
 {
     if(pMAC_Address == nullptr)
     {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SetMacAddress - Invalid Parameter\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SetMAC_Address - Invalid Parameter\n");
         return SYS_INVALID_PARAMETER;
     }
 
@@ -509,7 +507,7 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name:     SendTX_Packet
+//   Function name:     SendFrame
 //
 //   Parameter(s):      Frame           Pointer to frame buffer with data to send.
 //                      Length          Frame buffer length in bytes.
@@ -519,7 +517,7 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
 //   Description:       Send Ethernet frame.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg)
+SystemState_e ETH_Driver::SendFrame(IP_PacketMsg_t** ppPacketMsg)
 {
     // Validate input parameters
     if((ppPacketMsg == nullptr) || (*ppPacketMsg == nullptr) || ((*ppPacketMsg)->pPacket == nullptr) || ((*ppPacketMsg)->PacketSize == 0))
@@ -527,7 +525,7 @@ SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg)
       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
         DBG_TX_Drop++;
       #endif
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendTX_Packet - Invalid Packet Msg\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - Invalid Packet Msg\n");
         return SYS_INVALID_PARAMETER;
     }
 
@@ -543,7 +541,7 @@ SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg)
       #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
         DBG_TX_Drop++;
       #endif
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendTX_Packet - TX Busy\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - TX Busy\n");
         IP_Manager::FreeMessage(pMsg);
         return SYS_BUSY;
     }
@@ -601,7 +599,7 @@ SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg)
     ETH->DMASR   = ETH_DMASR_TBUS;                                                          // Trigger transmission
     ETH->DMATPDR = 0;
 
-    //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendTX_Packet - Done\n");
+    //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - Done\n");
 
   #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
     DBG_TX_Count++;
@@ -612,7 +610,7 @@ SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name:     GetRX_Packet
+//   Function name:     ReceiveFrame
 //
 //   Parameter(s):      IP_PacketMsg_t**                ppPacketMsg
 //   Return value:      SystemState_e                   State of function.
@@ -620,7 +618,7 @@ SystemState_e ETH_Driver::SendTX_Packet(IP_PacketMsg_t** ppPacketMsg)
 //   Description:       Get the RX packet data
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::GetRX_Packet(IP_PacketMsg_t** ppPacketMsg)
+SystemState_e ETH_Driver::ReceiveFrame(IP_PacketMsg_t** ppPacketMsg)
 {
     size_t Length;
 
@@ -1001,11 +999,46 @@ SystemState_e ETH_Driver::PHY_Busy(void)
 //-------------------------------------------------------------------------------------------------
 void ETH_Driver::ISR_CallBack(uint32_t Event)
 {
-    if(m_pContext == nullptr)
+    // ---------------------------------------------------------
+    // 1. Handle TX descriptor cleanup (must stay in MAC driver)
+    // ---------------------------------------------------------
+    if (Event & ETH_MAC_EVENT_TX_FRAME)
     {
-        return;
+        uint8_t Index = m_Control.TX_TailIndex;
+
+        // Process all descriptors between tail and head
+        while ((Index != m_Control.TX_HeadIndex) &&
+               ((m_TX_Descriptor[Index].Status & DMA_TX_OWN) == 0))
+        {
+            IP_PacketMsg_t* pMsg =
+                (IP_PacketMsg_t*)m_TX_Descriptor[Index].pMessage;
+
+            if (pMsg != nullptr)
+            {
+                // Free the message associated with this descriptor
+                IP_Manager::FreeMessage(pMsg);
+                m_TX_Descriptor[Index].pMessage = nullptr;
+            }
+
+            // Advance tail index
+            Index++;
+            if (Index == NUM_TX_Buffer)
+                Index = 0;
+        }
+
+        m_Control.TX_TailIndex = Index;
     }
 
+    // ---------------------------------------------------------
+    // 2. Forward the event to the STM32 adapter
+    // ---------------------------------------------------------
+    if (m_pContext != nullptr)
+    {
+        static_cast<ETH_STM32_Adapter*>(m_pContext)->OnMacEvent(Event);
+    }
+}
+
+ /*
     ETH_IF_Driver::CallbackWrapper(m_pContext, Event);
 
     if(Event & ETH_MAC_EVENT_TX_FRAME)
@@ -1034,7 +1067,8 @@ void ETH_Driver::ISR_CallBack(uint32_t Event)
 
         m_Control.TX_TailIndex = Index;
     }
-}
+    */
+
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1046,9 +1080,9 @@ void ETH_Driver::ISR_CallBack(uint32_t Event)
 //   Description:       Ethernet IRQ Handler.
 //
 //-------------------------------------------------------------------------------------------------
-
 uint32_t RX_Count = 0;
 uint32_t IRQ_Count = 0;
+extern ETH_Driver myETH_Driver;
 
 extern "C"
 {
@@ -1098,7 +1132,6 @@ RX_Count++;
         }
     }
 }
-
 
 //-------------------------------------------------------------------------------------------------
 

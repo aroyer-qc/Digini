@@ -30,9 +30,12 @@
 
 #if (IP_USE_DNS == DEF_ENABLED)
 
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
+
+typedef void (*DNS_Callback_t)(void* pContext, bool Success, IP_Address_t ResolveIP);
 
 struct DNS_PendingRequest_t
 {

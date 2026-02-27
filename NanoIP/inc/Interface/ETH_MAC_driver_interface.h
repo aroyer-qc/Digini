@@ -39,11 +39,11 @@ class ETH_MAC_DriverInterface
         virtual SystemState_e           InitializeInterface     (void)                                                          = 0;    // Post Initialize Ethernet DMA.
 
         virtual void                    Start                   (void)                                                          = 0;    // Start ETH module
-        virtual SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address)                          = 0;    // Get Ethernet MAC Address.
-        virtual SystemState_e           SetMacAddress           (const IP_MAC_Address_t* pMAC_Address)                          = 0;    // Set Ethernet MAC Address.
+        virtual SystemState_e           GetMAC_Address          (IP_MAC_Address_t* pMAC_Address)                                = 0;    // Get Ethernet MAC Address.
+        virtual SystemState_e           SetMAC_Address          (const IP_MAC_Address_t* pMAC_Address)                          = 0;    // Set Ethernet MAC Address.
         virtual SystemState_e           SetAddressFilter        (const IP_MAC_Address_t* pMAC_Address, uint32_t NbAddress)      = 0;    // Configure Address Filter.
-        virtual SystemState_e           SendTX_Packet           (IP_PacketMsg_t** ppPacketMsg)                                  = 0;    // Send Ethernet frame.
-        virtual SystemState_e           GetRX_Packet            (IP_PacketMsg_t** ppPacketMsg)                                  = 0;    // Read data of received Ethernet frame.
+        virtual SystemState_e           SendFrame           (IP_PacketMsg_t** ppPacketMsg)                                  = 0;    // Send Ethernet frame.
+        virtual SystemState_e           ReceiveFrame            (IP_PacketMsg_t** ppPacketMsg)                                  = 0;    // Read data of received Ethernet frame.
         virtual uint32_t                GetRX_FrameSize         (void)                                                          = 0;    // Get size of received Ethernet frame.
       #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
         virtual SystemState_e           GetRX_FrameTime         (ETH_MacTime_t* pTime)                                          = 0;    // Get time of received Ethernet frame.

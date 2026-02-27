@@ -863,13 +863,13 @@ SystemState_e Socket::SetOption(SocketOption_e Option, void* pValue, size_t Valu
             {
                 bool Enable = *(bool*)pValue;
 
-                if(Enable)
+                if(Enable == true)
                 {
-                    m_Flags |= SOCKET_FLAG_BROADCAST;
+                    //m_Flags |= SOCKET_FLAG_BROADCAST;
                 }
                 else
                 {
-                    m_Flags &= ~SOCKET_FLAG_BROADCAST;
+                    //m_Flags &= ~SOCKET_FLAG_BROADCAST;
                 }
 
                 return SYS_READY;

@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2023 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -148,14 +148,6 @@ class PHY_LAN8742A_Driver : public ETH_PHY_DriverInterface
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef LIB_PHY_8742A_GLOBAL
-
-class        PHY_LAN8742A_Driver    myPHY_Driver;
-
-#else
-extern class PHY_LAN8742A_Driver    myPHY_Driver;
-#endif
-
 //-------------------------------------------------------------------------------------------------
 
 #else // (USE_ETH_DRIVER == DEF_ENABLED)
@@ -165,6 +157,7 @@ extern class PHY_LAN8742A_Driver    myPHY_Driver;
 #endif // (USE_ETH_DRIVER == DEF_ENABLED)
 
 #endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)
+
 //-------------------------------------------------------------------------------------------------
 
 

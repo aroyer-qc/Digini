@@ -157,9 +157,7 @@ ETH_Control_t     ETH_Driver::m_Control;
 void ETH_SetBitRegister(volatile uint32_t* pRegister, uint32_t Value)
 {
     *pRegister |= Value;
-    //Value = *pRegister;
     nOS_Sleep(1);
-    //*pRegister = Value;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1034,7 +1032,7 @@ void ETH_Driver::ISR_CallBack(uint32_t Event)
     // ---------------------------------------------------------
     if (m_pContext != nullptr)
     {
-        static_cast<ETH_STM32_Adapter*>(m_pContext)->OnMacEvent(Event);
+        static_cast<ETH_STM32_Adapter*>(m_pContext)->OnMAC_Event(Event);
     }
 }
 

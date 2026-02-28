@@ -8,9 +8,9 @@ class ETH_STM32_Adapter : public ETH_LinkDriver
         SystemState_e   SendFrame                   (IP_PacketMsg_t** pPacketMessage) override;
         SystemState_e   ReceiveFrame                (IP_PacketMsg_t** pPacketMessage) override;
         bool            LinkIsUp                    (void) override;
-        
+
         // ISR event dispatcher (called by ETH_Driver::ISR_CallBack)
-        void            OnMacEvent                  (uint32_t Event);
+        void            OnMAC_Event                 (uint32_t Event);
 
 
     private:

@@ -58,6 +58,12 @@ class ETH_IF_Driver
         static SystemState_e    LowLevelOutputWrapper       (void* pContext, IP_PacketMsg_t** ppPacketMsg)  { ETH_IF_Driver* Self = static_cast<ETH_IF_Driver*>(pContext);
                                                                                                               return Self->LowLevelOutput(ppPacketMsg);               }
 
+
+        void OnRX_Interrupt(){};
+        void OnTX_Complete(){};
+        void OnTimerEvent(){};
+        void OnWakeUpEvent(){};
+
     private:
 
         SystemState_e           LowLevelOutput              (IP_PacketMsg_t** ppPacketMsg);

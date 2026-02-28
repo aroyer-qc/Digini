@@ -7,20 +7,20 @@ ETH_STM32_Adapter::ETH_STM32_Adapter(ETH_MAC_DriverInterface* pMAC, ETH_PHY_Driv
 
 //-------------------------------------------------------------------------------------------------
 
-bool ETH_STM32_Adapter::Initialize(void* pContext)
+SystemState_e ETH_STM32_Adapter::Initialize(void* pContext)
 {
     m_pIF_Context = pContext;
 
     if((m_pMAC == nullptr) || (m_pPHY == nullptr))
     {
-        return SYS_STATE_ERROR;
+        return SYS_FAIL;
     }
 
     SystemState_e State;
 
     //  Init MAC
     State = m_pMAC->Initialize(m_pIF_Context, m_PHY_Address);
-    
+
     if(State != SYS_READY)
     {
         return State;
@@ -35,11 +35,11 @@ bool ETH_STM32_Adapter::Initialize(void* pContext)
     // Set MAC address (from IF context)
     IP_MAC_Address_t MAC;
     static_cast<NetworkContext*>(m_pIF_Context)->GetMAC_Address(&MAC);
-    m_pMAC->SetMacAddress(&MAC);
+    m_pMAC->SetMAC_Address(&MAC);
 
     // Init PHY
     State = m_pPHY->Initialize(m_pMAC, m_PHY_Address);
-    
+
     if(State != SYS_READY)
     {
         return State;
@@ -48,21 +48,21 @@ bool ETH_STM32_Adapter::Initialize(void* pContext)
     //  Start MAC + DMA
     m_pMAC->Start();
 
-    return SYS_STATE_OK;
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
 
-bool ETH_STM32_Adapter::SendFrame(IP_PacketMsg_t** pPacketMessage)
+SystemState_e ETH_STM32_Adapter::SendFrame(IP_PacketMsg_t** pPacketMessage)
 {
-    return m_pMAC->SendFrame(ppPacketMsg);
+    return m_pMAC->SendFrame(pPacketMessage);
 }
 
 //-------------------------------------------------------------------------------------------------
 
-bool ETH_STM32_Adapter::ReceiveFrame(IP_PacketMsg_t** pPacketMessage)
+SystemState_e ETH_STM32_Adapter::ReceiveFrame(IP_PacketMsg_t** pPacketMessage)
 {
-    return m_pMAC->ReceiveFrame(ppPacketMsg);
+    return m_pMAC->ReceiveFrame(pPacketMessage);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -80,12 +80,12 @@ void ETH_STM32_Adapter::OnMAC_Event(uint32_t Event)
 
     if(Event & ETH_MAC_EVENT_RX_FRAME)
     {
-        pIF->OnRxInterrupt();
+        pIF->OnRX_Interrupt();
     }
-    
+
     if(Event & ETH_MAC_EVENT_TX_FRAME)
     {
-        pIF->OnTxComplete();
+        pIF->OnTX_Complete();
     }
 
     if(Event & ETH_MAC_EVENT_TIMER_ALARM)

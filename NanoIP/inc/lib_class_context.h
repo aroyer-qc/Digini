@@ -34,12 +34,9 @@
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-  #define EXPAND_X_IF_AS_ENUM(ENUM_ID, HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, MAC_ADDRESS, ETH_LINK_DRIVER) ENUM_ID,
-  #define EXPAND_X_IF_AS_STRUCT_DATA(ENUM_ID, HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS,   MAC_ADDRESS, ETH_LINK_DRIVER) \
-                                            { HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, { MAC_ADDRESS, ETH_LINK_DRIVER } },
-
-  #define EXPAND_X_IF_AS_STACK_DECLARATION(ENUM_ID, HOST_NAME, STK_VAR, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS,   MAC_ADDRESS, ETH_LINK_DRIVER) \
-                                                     nOS_Stack STK_VAR[TASK_IP_MANAGER_STACK_SIZE]  NOS_STACK_LOCATION;
+  #define EXPAND_X_IF_AS_ENUM(ENUM_ID, HOST_NAME, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, MAC_ADDRESS, ETH_LINK_DRIVER) ENUM_ID,
+  #define EXPAND_X_IF_AS_STRUCT_DATA(ENUM_ID, HOST_NAME, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS,   MAC_ADDRESS, ETH_LINK_DRIVER) \
+                                            { HOST_NAME, PROTOCOL_FLAG, DEFAULT_STATIC_IP, DEFAULT_GATEWAY, DEFAULT_SUBNET, DEFAULT_STATIC_DNS, { MAC_ADDRESS, ETH_LINK_DRIVER } },
 
 //-------------------------------------------------------------------------------------------------
 // Enum(s)
@@ -71,7 +68,6 @@ class NetworkContext
         ETH_LinkSpeed_e     GetLinkSpeed            (void)          const                       { return m_LinkSpeed;                                                           }
         bool                GetLinkChange           (void)                                      { return m_LinkChange;                                                          }
         const char*         GetHostName             (void)                                      { return m_Config[m_IF_ID].pHostName;                                           }
-        nOS_Stack*          GetIP_Stack             (void)                                      { return m_Config[m_IF_ID].pStack;                                              }
 
         void                SetLinkState            (ETH_LinkState_e State)                     { m_LinkState = State;                                                          }
         void                SetLinkSpeed            (ETH_LinkSpeed_e Speed)                     { m_LinkSpeed = Speed;                                                          }

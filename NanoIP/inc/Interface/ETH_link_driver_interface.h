@@ -34,7 +34,7 @@ class ETH_LinkDriver
 {
     public:
 
-        virtual SystemState_e   Initialize              (void* pContext)                    = 0;
+        virtual SystemState_e   Initialize              (ETH_IF_Driver* pIF_Driver)         = 0;
         virtual SystemState_e   SendFrame               (IP_PacketMsg_t** pPacketMessage)   = 0;
         virtual SystemState_e   ReceiveFrame            (IP_PacketMsg_t** pPacketMessage)   = 0;
         virtual bool            LinkIsUp                (void)                              = 0;

@@ -73,8 +73,13 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define TASK_IP_MANAGER_STACK_SIZE              512
-#define TASK_IP_MANAGER_PRIO                    4
+#define TASK_IP_MANAGER_STACK_SIZE                      192
+#define TASK_IP_MANAGER_PRIO                            4
+
+#define TASK_IP_MANAGER_TREAD_NAME_PREAMBULE            "Task IP Mgr: "
+#define TASK_IP_MANAGER_TREAD_NAME_PREAMBULE_SIZE       sizeof(TASK_IP_MANAGER_TREAD_NAME_PREAMBULE)
+#define TASK_IP_MANAGER_TREAD_NAME_SIZE                 32
+#define TASK_IP_MANAGER_TREAD_NAME_EXTRACT_SIZE         (TASK_IP_MANAGER_TREAD_NAME_SIZE - TASK_IP_MANAGER_TREAD_NAME_PREAMBULE_SIZE) + 1
 
 //-------------------------------------------------------------------------------------------------
 // Class
@@ -117,6 +122,8 @@ class IP_Manager
         uint16_t                        m_SequenceID;
         IP_Port_t                       m_NextEphemeralPort;
         nOS_Thread                      m_Handle;
+        nOS_Stack                       m_Stack                [TASK_IP_MANAGER_STACK_SIZE];
+        char                            m_ThreadName           [TASK_IP_MANAGER_TREAD_NAME_SIZE]     = TASK_IP_MANAGER_TREAD_NAME_PREAMBULE;
 };
 
 //-------------------------------------------------------------------------------------------------

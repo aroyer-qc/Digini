@@ -48,15 +48,6 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Static Variables
-//
-//-------------------------------------------------------------------------------------------------
-
-nOS_Thread ETH_IF_Driver::m_Handle;
-nOS_Stack  ETH_IF_Driver::m_Stack[TASK_ETHERNET_IF_STACK_SIZE];
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           ClassEthernetIf_Wrapper
 //
 //  Parameter(s):   void* pvParameters
@@ -101,13 +92,17 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, Netw
     Error = nOS_MutexCreate(&m_TX_Mutex, NOS_MUTEX_NORMAL, 1);
     VAR_UNUSED(Error);
 
+    const char* Host = m_pContext->GetHostName();
+    size_t HostLen = strlen(Host);
+    strncat(m_ThreadName, Host, (HostLen < TASK_ETHERNET_IF_THREAD_NAME_EXTRACT_SIZE) ? HostLen : TASK_ETHERNET_IF_THREAD_NAME_EXTRACT_SIZE);         // Copy up to 4 characters safely
+
     nOS_ThreadCreate(&m_Handle,
                      ClassEthernetIf_Wrapper,
                      this,
                      &m_Stack[0],
                      TASK_ETHERNET_IF_STACK_SIZE,
                      TASK_ETHERNET_IF_PRIO,
-                     "Ethernet Input");
+                     m_ThreadName);
 
     if ((m_pETH_Config == nullptr) || (m_pETH_Config->pLinkDriver == nullptr))
     {
@@ -152,6 +147,29 @@ SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, Netw
 SystemState_e ETH_IF_Driver::LowLevelOutput(IP_PacketMsg_t** ppPacketMsg)
 {
     return m_pETH_Config->pLinkDriver->SendFrame(ppPacketMsg);
+}
+
+
+//-------------------------------------------------------------------------------------------------
+
+void ETH_IF_Driver::OnMAC_Event(uint32_t Event)
+{
+    if(Event & ETH_MAC_EVENT_RX_FRAME)
+    {
+        nOS_SemGive(&m_RX_Sem);
+    }
+
+    if(Event & ETH_MAC_EVENT_TX_FRAME)
+    {
+    }
+
+    if(Event & ETH_MAC_EVENT_TIMER_ALARM)
+    {
+    }
+
+    if(Event & ETH_MAC_EVENT_WAKEUP)
+    {
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -250,26 +268,6 @@ void ETH_IF_Driver::PollTheNetworkInterface(void)
 
         m_pContext->SetLinkState(LinkNow);
     }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Function:       CallBack
-//
-//  Parameter(s):   Event           Event type received
-//  Return:         None
-//
-//  Description:    ISR activated when we receive a new message on the ethernet
-//
-//-------------------------------------------------------------------------------------------------
-void ETH_IF_Driver::CallBack(uint32_t Event)
-{
-    if((Event & ETH_MAC_EVENT_RX_FRAME) != 0) // Send notification on RX event
-    {
-        nOS_SemGive(&m_RX_Sem);               // Give the semaphore to wakeup IP_Manager task
-    }
-
-    // Handle only RX
 }
 
 //-------------------------------------------------------------------------------------------------

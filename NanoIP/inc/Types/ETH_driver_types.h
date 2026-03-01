@@ -105,7 +105,6 @@ struct IP_ETH_Config_t
 struct IP_Config_t                                  // Host Name, IP_ Address, Protocol (ip_cfg.h)
 {
     const char*         pHostName;
-    nOS_Stack*          pStack;
     uint16_t            ProtocolFlag;
     IP_Address_t        DefaultStatic_IP;           // check in context
     IP_Address_t        DefaultGateway;

@@ -102,7 +102,6 @@ nOS_Error ClassTaskCOMM::Initialize(void)
   #endif
 
   #if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
-
     Error = nOS_ThreadCreate(&m_Handle,
                              ClassTaskCOMM_Wrapper,
                              this,

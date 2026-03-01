@@ -222,8 +222,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_None(uint8_t Input, VT100_CallBackTyp
 //
 //  Description:    Display page for stack usage
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
 VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallBackType_e Type)
@@ -250,11 +248,11 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
 
             for(int i = 0; i < NbOfStack; i++)
             {
-                uint8_t OffsetMultiplierX = uint8_t(((i % 5) * 27) + 3);
+                uint8_t OffsetMultiplierX = uint8_t(((i % 5) * 27) + 2);
                 OffsetMultiplierY         = uint8_t(((i / 5) * 6) + 7);
 
                 InMenuPrintf(OffsetMultiplierX--, OffsetMultiplierY++, LBL_STRING, myStacktistic.GetStackName(i));
-                DrawBox(OffsetMultiplierX, OffsetMultiplierY, 23, 3, VT100_COLOR_WHITE);
+                DrawBox(OffsetMultiplierX, OffsetMultiplierY, 25, 3, VT100_COLOR_WHITE);
             }
 
             InMenuPrintf(VT100_LBL_ESCAPE);
@@ -265,11 +263,11 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
         {
             for(int i = 0; i < NbOfStack; i++)
             {
-                uint8_t OffsetMultiplierX =  uint8_t(((i % 5) * 27) + 3);
+                uint8_t OffsetMultiplierX =  uint8_t(((i % 5) * 27) + 2);
                 uint8_t OffsetMultiplierY = uint8_t((i / 5) * 6);
 
                 Percent = myStacktistic.GetMaxPercent(i);
-                Bargraph(OffsetMultiplierX, OffsetMultiplierY + 9, (Percent >= 90) ? VT100_COLOR_RED : VT100_COLOR_GREEN, Percent, VT100_COLOR_BLUE, 0, 100, 21);
+                Bargraph(OffsetMultiplierX, OffsetMultiplierY + 9, (Percent >= 90) ? VT100_COLOR_RED : VT100_COLOR_GREEN, Percent, VT100_COLOR_BLUE, 0, 100, 23);
                 SetForeColor(VT100_COLOR_WHITE);
                 InMenuPrintf(OffsetMultiplierX, OffsetMultiplierY + 11, VT100_LBL_PERCENT_VALUE, Percent);
             }

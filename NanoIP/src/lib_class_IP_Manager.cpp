@@ -77,18 +77,17 @@ void IP_Manager::Initialize(NetworkContext& Context)
     m_SequenceID        = RNG_GetRandom();
     m_NextEphemeralPort = IP_EPHEMERAL_PORT_MIN;
 
-//todo need to fix the stack
-//   #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-//    myStacktistic.Register(m_pContext->GetIP_Stack(), TASK_IP_MANAGER_STACK_SIZE, m_pContext->GetHostName());
-  //#endif
+    const char* Host = m_pContext->GetHostName();
+    size_t HostLen = strlen(Host);
+    strncat(m_ThreadName, Host, (HostLen < TASK_IP_MANAGER_TREAD_NAME_EXTRACT_SIZE) ? HostLen : TASK_IP_MANAGER_TREAD_NAME_EXTRACT_SIZE);   // Copy up to max characters allowed safely
 
     Error = nOS_ThreadCreate(&m_Handle,
                              TaskIP_Manager_Wrapper,
                              this,
-                             m_pContext->GetIP_Stack(),
+                             &m_Stack[0],
                              TASK_IP_MANAGER_STACK_SIZE,
                              TASK_IP_MANAGER_PRIO,
-                             m_pContext->GetHostName());
+                             m_ThreadName);
 
     VAR_UNUSED(Error);
 }

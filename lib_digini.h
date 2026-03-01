@@ -171,13 +171,13 @@ class NetworkContext;
 #include "./NanoIP/inc/Types/IP_frame_types.h"
 #include "./NanoIP/inc/Types/socket_types.h"
 
+#include "./NanoIP/inc/Interface/TCP_interface.h"
+#include "./NanoIP/inc/lib_class_ethernet_if.h"
 #include "./NanoIP/inc/Interface/ETH_link_driver_interface.h"
 #include "./NanoIP/inc/Interface/ETH_MAC_driver_interface.h"
 #include "./NanoIP/inc/Interface/ETH_PHY_driver_interface.h"
-#include "./NanoIP/inc/Interface/TCP_interface.h"
 #include "./NanoIP/inc/driver/Adapters/ETH_Adapter.h"
 #include "./NanoIP/inc/lib_class_socket.h"
-#include "./NanoIP/inc/lib_class_ethernet_if.h"
 
 
 #include "./NanoIP/inc/lib_class_arp.h"

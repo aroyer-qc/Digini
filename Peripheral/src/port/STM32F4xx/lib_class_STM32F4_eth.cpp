@@ -164,7 +164,7 @@ void ETH_SetBitRegister(volatile uint32_t* pRegister, uint32_t Value)
 //
 //   Function name:     Initialize
 //
-//   Parameter(s):      void*           pContext            Pointer on context for callback
+//   Parameter(s):      ETH_IF_Driver*  pIF_Driver          Pointer on context for callback
 //                      uint32_t        PHY_Address         PHY Address
 //   Return value:      SystemState_e                       State of function.
 //
@@ -172,7 +172,7 @@ void ETH_SetBitRegister(volatile uint32_t* pRegister, uint32_t Value)
 //
 // maybe enable offload checksum and RSF and TSF
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::Initialize(void* pContext, uint8_t PHY_Address)
+SystemState_e ETH_Driver::Initialize(ETH_IF_Driver* pIF_Driver, uint8_t PHY_Address)
 {
     TickCount_t TickStart;
 
@@ -185,7 +185,7 @@ SystemState_e ETH_Driver::Initialize(void* pContext, uint8_t PHY_Address)
   #endif
 
     memset((void *)&m_Control, 0, sizeof(ETH_Control_t));       // Clear Control Structure
-    m_pContext = pContext;                                      // Save context (pointer on ethernetif class)
+    m_pIF_Driver = pIF_Driver;                                      // Save context (pointer on ethernetif class)
 
     // Enable Clock
   #if (ETH_USE_TIME_STAMP)
@@ -995,21 +995,17 @@ SystemState_e ETH_Driver::PHY_Busy(void)
 //   Description:       Ethernet ISR Callback.
 //
 //-------------------------------------------------------------------------------------------------
-void ETH_Driver::ISR_CallBack(uint32_t Event)
+void ETH_Driver::ISR_CallBack(MAC_Event_e Event)
 {
-    // ---------------------------------------------------------
-    // 1. Handle TX descriptor cleanup (must stay in MAC driver)
-    // ---------------------------------------------------------
-    if (Event & ETH_MAC_EVENT_TX_FRAME)
+    // Handle TX descriptor cleanup (must stay in MAC driver)
+    if((Event & ETH_MAC_EVENT_TX_FRAME) == ETH_MAC_EVENT_TX_FRAME)
     {
         uint8_t Index = m_Control.TX_TailIndex;
 
         // Process all descriptors between tail and head
-        while ((Index != m_Control.TX_HeadIndex) &&
-               ((m_TX_Descriptor[Index].Status & DMA_TX_OWN) == 0))
+        while ((Index != m_Control.TX_HeadIndex) && ((m_TX_Descriptor[Index].Status & DMA_TX_OWN) == 0))
         {
-            IP_PacketMsg_t* pMsg =
-                (IP_PacketMsg_t*)m_TX_Descriptor[Index].pMessage;
+            IP_PacketMsg_t* pMsg = (IP_PacketMsg_t*)m_TX_Descriptor[Index].pMessage;
 
             if (pMsg != nullptr)
             {
@@ -1020,42 +1016,6 @@ void ETH_Driver::ISR_CallBack(uint32_t Event)
 
             // Advance tail index
             Index++;
-            if (Index == NUM_TX_Buffer)
-                Index = 0;
-        }
-
-        m_Control.TX_TailIndex = Index;
-    }
-
-    // ---------------------------------------------------------
-    // 2. Forward the event to the STM32 adapter
-    // ---------------------------------------------------------
-    if (m_pContext != nullptr)
-    {
-        static_cast<ETH_STM32_Adapter*>(m_pContext)->OnMAC_Event(Event);
-    }
-}
-
- /*
-    ETH_IF_Driver::CallbackWrapper(m_pContext, Event);
-
-    if(Event & ETH_MAC_EVENT_TX_FRAME)
-    {
-        uint8_t Index = m_Control.TX_TailIndex;
-
-        // Process all descriptors between tail and head
-        while((Index != m_Control.TX_HeadIndex) && (m_TX_Descriptor[Index].Status & DMA_TX_OWN) == 0)
-        {
-            IP_PacketMsg_t* pMsg = (IP_PacketMsg_t*)m_TX_Descriptor[Index].pMessage;
-
-            if(pMsg != nullptr)
-            {
-                IP_Manager::FreeMessage(pMsg);
-                m_TX_Descriptor[Index].pMessage = nullptr;
-            }
-
-            // Advance tail
-            Index++;
 
             if(Index == NUM_TX_Buffer)
             {
@@ -1065,8 +1025,13 @@ void ETH_Driver::ISR_CallBack(uint32_t Event)
 
         m_Control.TX_TailIndex = Index;
     }
-    */
 
+    // Forward the event to the STM32 adapter
+    if(m_pIF_Driver != nullptr)
+    {
+        m_pIF_Driver->OnMAC_Event(Event);
+    }
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -1086,8 +1051,8 @@ extern "C"
 {
     NOS_ISR(ETH_IRQHandler)
     {
-        uint32_t Register;
-        uint32_t Event = ETH_MAC_EVENT_NONE;
+        uint32_t    Register;
+        MAC_Event_e Event = ETH_MAC_EVENT_NONE;
 
         IO_SetPinHigh(IO_ETH_EXT_LED);
 
@@ -1097,12 +1062,12 @@ IRQ_Count++;
 
         if(Register & ETH_DMASR_TS)
         {
-            Event |= ETH_MAC_EVENT_TX_FRAME;                        // Frame sent
+            Event = MAC_Event_e(uint32_t(Event) | ETH_MAC_EVENT_TX_FRAME);          // Frame sent
         }
 
         if(Register & ETH_DMASR_RS)
         {
-            Event |= ETH_MAC_EVENT_RX_FRAME;                        // Frame received
+            Event = MAC_Event_e(uint32_t(Event) | ETH_MAC_EVENT_RX_FRAME);          // Frame received
 RX_Count++;
         }
 
@@ -1111,9 +1076,9 @@ RX_Count++;
       #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
         if(Register & ETH_MACSR_TSTS)
         {
-            if(ETH->PTPTSSR & ETH_PTPT_SSR_TSTTR)                   // Time stamp interrupt
+            if(ETH->PTPTSSR & ETH_PTPT_SSR_TSTTR)                                   // Time stamp interrupt
             {
-                Event |= ETH_MAC_EVENT_TIMER_ALARM;                 // Time stamp target time reached
+                Event = MAC_Event_e(uint32_t(Event) | ETH_MAC_EVENT_TIMER_ALARM);   // Time stamp target time reached
             }
         }
       #endif
@@ -1121,7 +1086,7 @@ RX_Count++;
         if(Register & ETH_MACSR_PMTS)
         {
             ETH->MACPMTCSR;
-            Event |= ETH_MAC_EVENT_WAKEUP;
+            Event = MAC_Event_e(uint32_t(Event) | ETH_MAC_EVENT_WAKEUP);
         }
 
         if(Event != ETH_MAC_EVENT_NONE)                             // Callback event notification

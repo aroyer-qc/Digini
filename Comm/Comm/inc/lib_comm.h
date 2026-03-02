@@ -59,8 +59,8 @@ class ClassTaskCOMM
     private:
 
       #if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
-        static nOS_Thread      m_Handle;
-        static nOS_Stack       m_Stack[TASK_COMM_STACK_SIZE];
+        nOS_Thread      m_Handle;
+        nOS_Stack       m_Stack[TASK_COMM_STACK_SIZE];
       #endif
 };
 

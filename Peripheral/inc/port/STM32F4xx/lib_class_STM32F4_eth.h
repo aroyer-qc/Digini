@@ -123,8 +123,8 @@ class ETH_Driver : public ETH_MAC_DriverInterface
         SystemState_e           GetMAC_Address          (IP_MAC_Address_t* pMAC_Address);                                // Get Ethernet MAC Address.
         SystemState_e           SetMAC_Address          (const IP_MAC_Address_t* pMAC_Address);                          // Set Ethernet MAC Address.
         SystemState_e           SetAddressFilter        (const IP_MAC_Address_t* pMAC_Address, uint32_t NbAddress);      // Configure Address Filter.
-        SystemState_e           SendFrame               (IP_PacketMsg_t** ppPacketMsg);                                  // Send Ethernet frame.
-        SystemState_e           ReceiveFrame            (IP_PacketMsg_t** ppPacketMsg);
+        SystemState_e           SendFrame               (IP_PacketMsg_t** pPacketMsg);                                  // Send Ethernet frame.
+        SystemState_e           ReceiveFrame            (IP_PacketMsg_t** pPacketMsg);
         uint32_t                GetRX_FrameSize         (void);                                                          // Get size of received Ethernet frame.
       #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
         SystemState_e           GetRX_FrameTime         (ETH_MacTime_t* pTime);                                          // Get time of received Ethernet frame.

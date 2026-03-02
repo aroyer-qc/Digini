@@ -170,7 +170,6 @@ void ETH_SetBitRegister(volatile uint32_t* pRegister, uint32_t Value)
 //
 //   Description:       Initialize Ethernet MAC Device.
 //
-// maybe enable offload checksum and RSF and TSF
 //-------------------------------------------------------------------------------------------------
 SystemState_e ETH_Driver::Initialize(ETH_IF_Driver* pIF_Driver, uint8_t PHY_Address)
 {
@@ -217,7 +216,7 @@ SystemState_e ETH_Driver::Initialize(ETH_IF_Driver* pIF_Driver, uint8_t PHY_Addr
     ETH->MACMIIAR = ETH_MACIIAR_CR_DIVIDER;                         // MDC clock range selection
 
 	if(ETH_Driver::PHY_Write(PHY_Address, REG_BCR, BCR_RESET) == SYS_READY)
-	{
+    {
         nOS_Sleep(DRIVER_PHY_RESET_DELAY);
 
         ETH->MACCR = (ETH_MACCR_RESET_VALUE |                       // Reset value, Bit 15 must be kept at value 1
@@ -507,15 +506,14 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
 //
 //   Function name:     SendFrame
 //
-//   Parameter(s):      Frame           Pointer to frame buffer with data to send.
-//                      Length          Frame buffer length in bytes.
+//   Parameter(s):      
 //
 //   Return value:      SystemState_e   State of function.
 //
 //   Description:       Send Ethernet frame.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::SendFrame(IP_PacketMsg_t** ppPacketMsg)
+SystemState_e ETH_Driver::SendFrame(IP_PacketMsg_t** ppPacketMsg )
 {
     // Validate input parameters
     if((ppPacketMsg == nullptr) || (*ppPacketMsg == nullptr) || ((*ppPacketMsg)->pPacket == nullptr) || ((*ppPacketMsg)->PacketSize == 0))
@@ -550,7 +548,7 @@ SystemState_e ETH_Driver::SendFrame(IP_PacketMsg_t** ppPacketMsg)
     m_TX_Descriptor[m_Control.TX_HeadIndex].pMessage           = pMsg;                                          // Store the message pointer for later freeing
     uint32_t Control = DMA_TX_TCH | DMA_TX_FS | DMA_TX_LS;                                                      // Prepare descriptor control flags
 
-#if (ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
+  #if (ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
     //  The following is a workaround for MAC Control silicon problem:
     //      "Incorrect layer 3 (L3) checksum is inserted in the transmitted IPV6 fragmented packets
     //       without TCP, UDP or ICMP payloads."
@@ -565,8 +563,8 @@ SystemState_e ETH_Driver::SendFrame(IP_PacketMsg_t** ppPacketMsg)
     //      a checksum.
 
     // Read protocol and fragmentation fields for checksum offload workaround
-    uint16_t Prot = UNALIGNED_UINT16_READ(&pBuffer[12]);
-    uint16_t Frag = UNALIGNED_UINT16_READ(&pBuffer[20]);
+    uint16_t Prot = UNALIGNED_UINT16_READ(&m_TX_Descriptor[m_Control.TX_Index].Address[12]);
+    uint16_t Frag = UNALIGNED_UINT16_READ(&m_TX_Descriptor[m_Control.TX_Index].Address[20]);
 
     if((Prot == 0x0008) && (Frag & 0xFF3F))                                                 // Apply silicon workaround for IPv6 fragmented packets without L4 payload
     {
@@ -576,7 +574,7 @@ SystemState_e ETH_Driver::SendFrame(IP_PacketMsg_t** ppPacketMsg)
     {
         Control |= DMA_TX_CIC;                                                              // Insert full checksum (IP + L4)
     }
-#endif
+  #endif
 
 #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
     Control |= DMA_TX_TTSE;
@@ -674,8 +672,8 @@ SystemState_e ETH_Driver::ReceiveFrame(IP_PacketMsg_t** ppPacketMsg)
 
     m_RX_Descriptor[m_Control.RX_Index].BufferAddress = (uint32_t)pNewBuffer;
     m_RX_Descriptor[m_Control.RX_Index].Status        = DMA_RX_OWN;
-
     m_Control.RX_Index++;
+
     if(m_Control.RX_Index == NUM_RX_Buffer)
     {
         m_Control.RX_Index = 0;

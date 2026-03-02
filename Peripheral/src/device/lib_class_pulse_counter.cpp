@@ -104,7 +104,7 @@ void PULSE_Counter::Reset(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           RegisterChangeCallback
+//  Name:           RegisterCallback
 //
 //  Parameter(s):   pCallback       Callback pointer
 //  Return:         None

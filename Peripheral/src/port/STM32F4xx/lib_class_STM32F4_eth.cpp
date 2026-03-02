@@ -135,8 +135,8 @@ extern "C" void ETH_IRQHandler(void);
 // Variables(s)
 //-------------------------------------------------------------------------------------------------
 
-RX_Descriptor_t   ETH_Driver::m_RX_Descriptor   [NUM_RX_Buffer] __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
-TX_Descriptor_t   ETH_Driver::m_TX_Descriptor   [NUM_TX_Buffer] __attribute__((aligned(4)));
+RX_Descriptor_t   ETH_Driver::m_RX_Descriptor   [NUM_RX_BUFFER] __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
+TX_Descriptor_t   ETH_Driver::m_TX_Descriptor   [NUM_TX_BUFFER] __attribute__((aligned(4)));
 ETH_Control_t     ETH_Driver::m_Control;
 
 //-------------------------------------------------------------------------------------------------
@@ -302,23 +302,23 @@ void ETH_Driver::InitializeDMA_Buffer(void)
     uint32_t Next;
 
     // Initialize TX DMA Descriptors
-    for(uint32_t i = 0; i < NUM_TX_Buffer; i++)
+    for(uint32_t i = 0; i < NUM_TX_BUFFER; i++)
     {
         m_TX_Descriptor[i].Status         = DMA_TX_TCH;
         m_TX_Descriptor[i].BufferAddress  = uint32_t(nullptr);
         Next = i + 1;
-        Next = (Next == NUM_TX_Buffer) ? 0 : Next;
+        Next = (Next == NUM_TX_BUFFER) ? 0 : Next;
         m_TX_Descriptor[i].NextDescriptor = &m_TX_Descriptor[Next];
     }
 
     // Initialize RX DMA Descriptors
-    for(uint32_t i = 0; i < NUM_RX_Buffer; i++)
+    for(uint32_t i = 0; i < NUM_RX_BUFFER; i++)
     {
         m_RX_Descriptor[i].Status            = DMA_RX_OWN;
         m_RX_Descriptor[i].ControlBufferSize = DMA_RX_RCH | ETH_BUF_SIZE;
         m_RX_Descriptor[i].BufferAddress     = (uint32_t)pMemoryPool->Alloc(ETH_BUF_SIZE, MEM_DBG_ETHDMARX1);
         Next = i + 1;
-        Next = (Next == NUM_RX_Buffer) ? 0 : Next;
+        Next = (Next == NUM_RX_BUFFER) ? 0 : Next;
         m_RX_Descriptor[i].NextDescriptor    = &m_RX_Descriptor[Next];
     }
 
@@ -587,7 +587,7 @@ SystemState_e ETH_Driver::SendFrame(IP_PacketMsg_t** ppPacketMsg )
     m_TX_Descriptor[m_Control.TX_HeadIndex].Status = Control | DMA_TX_OWN | DMA_TX_IC;      // Give ownership of the descriptor to the DMA
     m_Control.TX_HeadIndex++;                                                               // Advance TX descriptor index
 
-    if (m_Control.TX_HeadIndex == NUM_TX_Buffer)
+    if (m_Control.TX_HeadIndex == NUM_TX_BUFFER)
     {
         m_Control.TX_HeadIndex = 0;
     }
@@ -634,7 +634,7 @@ SystemState_e ETH_Driver::ReceiveFrame(IP_PacketMsg_t** ppPacketMsg)
         m_RX_Descriptor[m_Control.RX_Index].Status = DMA_RX_OWN;    // Give back the buffer to the DMA without returning it
         m_Control.RX_Index++;
 
-        if(m_Control.RX_Index == NUM_RX_Buffer)
+        if(m_Control.RX_Index == NUM_RX_BUFFER)
         {
             m_Control.RX_Index = 0;
         }
@@ -674,7 +674,7 @@ SystemState_e ETH_Driver::ReceiveFrame(IP_PacketMsg_t** ppPacketMsg)
     m_RX_Descriptor[m_Control.RX_Index].Status        = DMA_RX_OWN;
     m_Control.RX_Index++;
 
-    if(m_Control.RX_Index == NUM_RX_Buffer)
+    if(m_Control.RX_Index == NUM_RX_BUFFER)
     {
         m_Control.RX_Index = 0;
     }
@@ -1015,7 +1015,7 @@ void ETH_Driver::ISR_CallBack(MAC_Event_e Event)
             // Advance tail index
             Index++;
 
-            if(Index == NUM_TX_Buffer)
+            if(Index == NUM_TX_BUFFER)
             {
                 Index = 0;
             }

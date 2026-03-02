@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -48,8 +48,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define NUM_TX_Buffer               4
-#define NUM_RX_Buffer               6
+#define NUM_TX_BUFFER               4
+#define NUM_RX_BUFFER               6
 #define ETH_BUF_SIZE                1524
 #define ETH_IRQ_PRIO                2
 
@@ -116,18 +116,18 @@ struct TX_Descriptor_t
 #define ETH_MAX_BUF_MEMORY          15 * 1024
 
 #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
-#define SIZEOF_RX_Desc              32
-#define SIZEOF_TX_Desc              32
+#define SIZEOF_RX_DESC              32
+#define SIZEOF_TX_DESC              32
 #else
-#define SIZEOF_RX_Desc              16
-#define SIZEOF_TX_Desc              16
+#define SIZEOF_RX_DESC              16
+#define SIZEOF_TX_DESC              16
 #endif
 
-#if ((NUM_RX_Buffer * SIZEOF_RX_Desc) + (NUM_TX_Buffer * SIZEOF_TX_Desc)) > ETH_MAX_DESC_MEMORY
+#if ((NUM_RX_BUFFER * SIZEOF_RX_DESC) + (NUM_TX_BUFFER * SIZEOF_TX_DESC)) > ETH_MAX_DESC_MEMORY
     #error "SRAM2 Descriptor overflow"
 #endif
 
-#if (((NUM_RX_Buffer + NUM_TX_Buffer) * ETH_BUF_SIZE)) > ETH_MAX_BUF_MEMORY
+#if (((NUM_RX_BUFFER + NUM_TX_BUFFER) * ETH_BUF_SIZE)) > ETH_MAX_BUF_MEMORY
     #error "SRAM2 Buffer overflow"
 #endif
 
@@ -168,8 +168,8 @@ class ETH_Driver : public ETH_MAC_DriverInterface
 
                    ETH_IF_Driver*               m_pIF_Driver;
         static     ETH_Control_t                m_Control;
-        static     RX_Descriptor_t              m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
-        static     TX_Descriptor_t              m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((aligned(4)));
+        static     RX_Descriptor_t              m_RX_Descriptor   [NUM_RX_BUFFER]                     __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
+        static     TX_Descriptor_t              m_TX_Descriptor   [NUM_TX_BUFFER]                     __attribute__((aligned(4)));
 };
 
 //-------------------------------------------------------------------------------------------------

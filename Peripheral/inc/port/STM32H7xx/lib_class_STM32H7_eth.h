@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F7_eth.h
+//  File : lib_class_STM32H7_eth.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2023 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -48,10 +48,10 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define NUM_TX_BUFFER                           4
-#define NUM_RX_BUFFER                           4
-#define ETH_BUF_SIZE                            1536
-#define ETH_IRQ_PRIO                            4
+#define NUM_TX_BUFFER               4
+#define NUM_RX_BUFEER               6
+#define ETH_BUF_SIZE                1524
+#define ETH_IRQ_PRIO                2
 
 //-------------------------------------------------------------------------------------------------
 // MACCR configuration register
@@ -87,192 +87,79 @@
 #define ETH_ARP_OFFLOAD_DISABLE                 0x00000000
 #define ETH_ARP_OFFLOAD_ENABLE                  ETH_MACCR_ARP
 
-
-#if 0
-
-from IA
-ETH_MACConfigTypeDef macConf;
-
-/* Zero the struct to avoid CubeMX garbage */
-memset(&macConf, 0, sizeof(macConf));
-
-
-/* Filtering */
-macConf.PromiscuousMode          = ETH_PROMISCUOUS_MODE_DISABLE;
-macConf.BroadcastFramesReception = ETH_BROADCASTFRAMES_ENABLE;
-macConf.MulticastFramesFilter    = ETH_MULTICASTFRAMESFILTER_PERFECT;
-
-/* Hash table disabled unless you use it */
-macConf.HashTableHigh            = 0;
-macConf.HashTableLow             = 0;
-
-/* Flow control (optional — usually off for embedded) */
-macConf.ReceiveFlowControl       = ETH_RXFLOWCTRL_DISABLE;
-macConf.TransmitFlowControl      = ETH_TXFLOWCTRL_DISABLE;
-
-/* Apply the configuration */
-ETH_SetMACConfig(heth, &macConf);
-
-
-from ST
-
-/*--------------- ETHERNET MAC registers default Configuration --------------*/
-  macDefaultConf.DropTCPIPChecksumErrorPacket = ENABLE;
-  macDefaultConf.ForwardRxErrorPacket = DISABLE;
-  macDefaultConf.ForwardRxUndersizedGoodPacket = DISABLE;
-  macDefaultConf.PauseLowThreshold = ETH_PAUSELOWTHRESHOLD_MINUS_4;
-  macDefaultConf.ReceiveFlowControl = DISABLE;
-  macDefaultConf.ReceiveQueueMode = ETH_RECEIVESTOREFORWARD;
-  macDefaultConf.RetryTransmission = ENABLE;
-  macDefaultConf.TransmitQueueMode = ETH_TRANSMITSTOREFORWARD;
-  macDefaultConf.TransmitFlowControl = DISABLE;
-  macDefaultConf.UnicastPausePacketDetect = DISABLE;
-
-  /* MAC default configuration */
-  ETH_SetMACConfig(heth, &macDefaultConf);
-
-  /*--------------- ETHERNET DMA registers default Configuration --------------*/
-  dmaDefaultConf.AddressAlignedBeats = ENABLE;
-  dmaDefaultConf.BurstMode = ETH_BURSTLENGTH_FIXED;
-  dmaDefaultConf.DMAArbitration = ETH_DMAARBITRATION_RX1_TX1;
-  dmaDefaultConf.FlushRxPacket = DISABLE;
-  dmaDefaultConf.PBLx8Mode = DISABLE;
-  dmaDefaultConf.RebuildINCRxBurst = DISABLE;
-  dmaDefaultConf.RxDMABurstLength = ETH_RXDMABURSTLENGTH_32BEAT;
-  dmaDefaultConf.SecondPacketOperate = DISABLE;
-  dmaDefaultConf.TxDMABurstLength = ETH_TXDMABURSTLENGTH_32BEAT;
-  dmaDefaultConf.TCPSegmentation = DISABLE;
-  dmaDefaultConf.MaximumSegmentSize = ETH_SEGMENT_SIZE_DEFAULT;
-
-  /* DMA default configuration */
-  ETH_SetDMAConfig(heth, &dmaDefaultConf);
-
-#endif
-
-
-
-
-
-
-
-
-
-
 //----- Ethernet MAC Frame Transmit Flags -----
 #define ETH_MAC_TX_FRAME_FRAGMENT   (1UL << 0)      // Indicate frame fragment
 #define ETH_MAC_TX_FRAME_EVENT      (1UL << 1)      // Generate event when frame is transmitted
 #define ETH_MAC_TX_FRAME_TIMESTAMP  (1UL << 2)      // Capture frame time stamp
 
-//----- Ethernet MAC Event -----
-#define ETH_MAC_EVENT_NONE          (0UL << 0)      // No event
-#define ETH_MAC_EVENT_RX_FRAME      (1UL << 0)      // Frame received
-#define ETH_MAC_EVENT_TX_FRAME      (1UL << 1)      // Frame transmitted
-#define ETH_MAC_EVENT_WAKEUP        (1UL << 2)      // Wake-up (on Magic Packet)
-#define ETH_MAC_EVENT_TIMER_ALARM   (1UL << 3)      // Timer alarm
-
 #define ETH_OWNED_BY_DMA            0x00000000
 #define ETH_INVALID_BLOCK           0xFFFFFFFF
+
+//-------------------------------------------------------------------------------------------------
+// Enum(s)
+//-------------------------------------------------------------------------------------------------
+
+enum MAC_Event_e
+{
+    ETH_MAC_EVENT_NONE          = (1UL << 0),       // No event
+    ETH_MAC_EVENT_RX_FRAME      = (1UL << 1),       // Frame received
+    ETH_MAC_EVENT_TX_FRAME      = (1UL << 2),       // Frame transmitted
+    ETH_MAC_EVENT_WAKEUP        = (1UL << 3),       // Wake-up (on Magic Packet)
+    ETH_MAC_EVENT_TIMER_ALARM   = (1UL << 4),       // Timer alarm
+};
+
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef void (*ETH_MAC_SignalEvent_t) (uint32_t Event);  // Pointer to ETH_MAC_SignalEvent fucntion
-
-// EMAC Driver Control Information
-struct ETH_MAC_Control_t            // on deathrow probably
+// DMA RX Descriptor
+struct RX_Descriptor_t
 {
-    ETH_MAC_SignalEvent_t   CallbackEvent;                  // Event callback
-    uint8_t                 TX_Index;                       // Transmit descriptor index
-    uint8_t                 RX_Index;                       // Receive descriptor index
-  #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-    uint8_t                 TX_TS_Index;                    // Transmit Timestamp descriptor index
-  #endif
-    uint8_t*                FrameEnd;                       // End of assembled frame fragments
-};
-
-struct ETH_DMA_Descriptor_t
-{
-    volatile uint32_t   Descriptor0;
-    volatile uint32_t   Descriptor1;
-    volatile uint32_t   Descriptor2;
-    volatile uint32_t   Descriptor3;
-    uint32_t            BackupAddress0;                     // Used to store rx buffer 1 address
-    uint32_t            BackupAddress1;                     // Used to store rx buffer 2 address
-};
-
-struct ETH_RX_DescriptorList_t
-{
-    uint32_t            Descriptor[NUM_RX_BUFFER];          // RX DMA descriptors addresses.
-    uint32_t            ItMode;                             // If 1, DMA will generate the Rx complete interrupt. If 0, DMA will not generate the Rx complete interrupt.
-    uint32_t            DescriptorIndex;                    // Current RX descriptor.
-    uint32_t            DescriptorCount;                    // Number of descriptors.
-    uint32_t            DataLength;                         // Received data length.
-    uint32_t            BuildDescriptorIndex;               // Current RX Descriptor for building descriptors.
-    uint32_t            BuildDescriptorCount;               // Number of Rx Descriptors awaiting building.
-    uint32_t            LastReceivedDescriptor;             // Last received descriptor.
-    ETH_TimeStamp_t     TimeStamp;                          // Time Stamp low value for receive.
-    void*               pRX_Start;                          // Pointer to the first buffer.
-    void*               pRX_End;                            // Pointer to the last buffer.
-};
-
-struct ETH_TX_DescriptorList_t
-{
-    uint32_t            Descriptor[NUM_TX_BUFFER];          // TX DMA descriptors addresses
-    uint32_t            CurrentDescriptor;                  // Current TX descriptor index for packet transmission
-    uint32_t*           pPacketAddress[ETH_TX_DESC_CNT];    // Ethernet packet addresses array
-    uint32_t*           pCurrentPacketAddress;              // Current transmit packet addresses
-    uint32_t            BuffersInUse;                       // Buffers in use
-    uint32_t            releaseIndex;                       // Release index
-};
-
-struct ETH_Buffer_t
-{
-    uint8_t*            pBuffer;                            // Buffer address
-    uint32_t            Length;                             // Buffer length
-    ETH_Buffer_t*       pNext;                              // Pointer to the next buffer in the list
-};
-
-//-------------------------------------------------------------------------------------------------
-// Validate Memory footprint(s)
-//-------------------------------------------------------------------------------------------------
-
-#define ETH_MAX_DESC_MEMORY         1024
-#define ETH_MAX_BUF_MEMORY          15 * 1024
-
+    uint32_t volatile       Status;
+    uint32_t                ControlBufferSize;
+    uint32_t                BufferAddress;
+    struct RX_Descriptor_t* NextDescriptor;
 #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
-#define SIZEOF_RX_Desc              32
-#define SIZEOF_TX_Desc              32
-#else
-#define SIZEOF_RX_Desc              16
-#define SIZEOF_TX_Desc              16
+    uint32_t                ExtStat;
+    uint32_t                Reserved[1];
+    uint32_t                TimeLo;
+    uint32_t                TimeHi;
 #endif
+};
 
-#if ((NUM_RX_Buffer * SIZEOF_RX_Desc) + (NUM_TX_Buffer * SIZEOF_TX_Desc)) > ETH_MAX_DESC_MEMORY
-    #error "SRAM2 Descriptor overflow"
+// DMA TX Descriptor
+struct TX_Descriptor_t
+{
+    uint32_t volatile       Status;
+    uint32_t                ControlBufferSize;
+    uint32_t                BufferAddress;
+    struct TX_Descriptor_t* NextDescriptor;
+#if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
+    uint32_t                Reserved[2];
+    uint32_t                TimeLo;
+    uint32_t                TimeHi;
 #endif
-
-#if (((NUM_RX_Buffer + NUM_TX_Buffer) * ETH_BUF_SIZE)) > ETH_MAX_BUF_MEMORY
-    #error "SRAM2 Buffer overflow"
-#endif
+    void*                   pMessage;
+};
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class ETH_Driver : public MAC_DriverInterface
+class ETH_Driver : public ETH_MAC_DriverInterface
 {
     public:
 
-        SystemState_e           Initialize              (ETH_MAC_SignalEvent_t CallbackEvent);                           // Initialize Ethernet MAC Device.
+        SystemState_e           Initialize              (ETH_IF_Driver* pIF_Driver, uint8_t PHY_Address);                // Initialize Ethernet MAC Device.
         SystemState_e           InitializeInterface     (void);                                                          // Initialize Ethernet Interface.
 
         void                    Start                   (void);                                                          // Start ETH module
-        SystemState_e           GetMacAddress           (      IP_MAC_Address_t* pMAC_Address);                          // Get Ethernet MAC Address.
-        SystemState_e           SetMacAddress           (const IP_MAC_Address_t* pMAC_Address);                          // Set Ethernet MAC Address.
+        SystemState_e           GetMAC_Address          (IP_MAC_Address_t* pMAC_Address);                                // Get Ethernet MAC Address.
+        SystemState_e           SetMAC_Address          (const IP_MAC_Address_t* pMAC_Address);                          // Set Ethernet MAC Address.
         SystemState_e           SetAddressFilter        (const IP_MAC_Address_t* pMAC_Address, uint32_t NbAddress);      // Configure Address Filter.
-        SystemState_e           SendFrame               (const uint8_t* frame, size_t Length, uint32_t flags);           // Send Ethernet frame.
-        SystemState_e           ReadFrame               (MemoryNode* pPacket, size_t Length);                            // Read data of received Ethernet frame.
+        SystemState_e           SendFrame               (IP_PacketMsg_t** pPacketMsg);                                  // Send Ethernet frame.
+        SystemState_e           ReceiveFrame            (IP_PacketMsg_t** pPacketMsg);
         uint32_t                GetRX_FrameSize         (void);                                                          // Get size of received Ethernet frame.
       #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
         SystemState_e           GetRX_FrameTime         (ETH_MacTime_t* pTime);                                          // Get time of received Ethernet frame.
@@ -283,7 +170,7 @@ class ETH_Driver : public MAC_DriverInterface
         SystemState_e           PHY_Read                (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData); // Read Ethernet PHY Register through Management Interface.
         SystemState_e           PHY_Write               (uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t   Data); // Write Ethernet PHY Register through Management Interface.
 
-        static void             ISR_CallBack             (uint32_t Event);
+        void                    ISR_CallBack             (MAC_Event_e Event);
 
     private:
 
@@ -291,11 +178,10 @@ class ETH_Driver : public MAC_DriverInterface
         void                    Control                 (void);
         SystemState_e           PHY_Busy                (void);
 
-        static     ETH_MAC_Control_t           m_MAC_Control;
-        static     RX_Descriptor_t             m_RX_Descriptor   [NUM_RX_BUFFER]                     __attribute__((section(".RX_DescriptorSection"), aligned(4)));   // Ethernet RX & TX DMA Descriptors
-        static     TX_Descriptor_t             m_TX_Descriptor   [NUM_TX_BUFFER]                     __attribute__((section(".TX_DescriptorSection"), aligned(4)));
-        static     uint32_t                    m_RX_Buffer       [NUM_RX_BUFFER][ETH_BUF_SIZE >> 2]  __attribute__((section(".RX_ArraySection"),      aligned(4)));   // Ethernet Receive buffers
-        static     uint32_t                    m_TX_Buffer       [NUM_TX_BUFFER][ETH_BUF_SIZE >> 2]  __attribute__((section(".TX_ArraySection"),      aligned(4)));   // Ethernet Transmit buffers
+                   ETH_IF_Driver*               m_pIF_Driver;
+        static     ETH_Control_t                m_Control;
+        static     RX_Descriptor_t              m_RX_Descriptor   [NUM_RX_BUFFER]                     __attribute__((section(".RX_DescriptorSection"), aligned(4)));   // Ethernet RX & TX DMA Descriptors
+        static     TX_Descriptor_t              m_TX_Descriptor   [NUM_TX_BUFFER]                     __attribute__((section(".TX_DescriptorSection"), aligned(4)));
 };
 
 //-------------------------------------------------------------------------------------------------

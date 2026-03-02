@@ -48,8 +48,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define NUM_TX_Buffer               4
-#define NUM_RX_Buffer               6
+#define NUM_TX_BUFFER               4
+#define NUM_RX_BUFFER               6
 #define ETH_BUF_SIZE                1524
 #define ETH_IRQ_PRIO                2
 
@@ -145,8 +145,8 @@ class ETH_Driver : public ETH_MAC_DriverInterface
 
                    ETH_IF_Driver*               m_pIF_Driver;
         static     ETH_Control_t                m_Control;
-        static     RX_Descriptor_t              m_RX_Descriptor   [NUM_RX_Buffer]                     __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
-        static     TX_Descriptor_t              m_TX_Descriptor   [NUM_TX_Buffer]                     __attribute__((aligned(4)));
+        static     RX_Descriptor_t              m_RX_Descriptor   [NUM_RX_BUFFER]                     __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
+        static     TX_Descriptor_t              m_TX_Descriptor   [NUM_TX_BUFFER]                     __attribute__((aligned(4)));
 };
 
 //-------------------------------------------------------------------------------------------------

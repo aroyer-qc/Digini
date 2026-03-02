@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2025 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -46,68 +46,9 @@
 //-------------------------------------------------------------------------------------------------
 
 //----- Timeouts -----
+#define DRIVER_PHY_RESET_DELAY              4095
 #define DRIVER_PHY_TIMEOUT                  2000            // PHY Register access timeout in mSec ( ST in their HAL it is 65.5 Sec)
 #define DRIVER_RESET_TIMEOUT                10
-
-#define DRIVER_MAC_US_TICK                  1000000
-
-
-#define ETH_DISABLE_RX_MMC_IRQ              (MMCRIMR_RXLPITRCIM | ETH_MMCRIMR_RXLPIUSCIM | ETH_MMCRIMR_RXUCGPIM | ETH_MMCRIMR_RXALGNERPIM | ETH_MMCRIMR_RXCRCERPIM)
-#define ETH_DISABLE_RX_MMC_IRQ              (ETH_MMCTIMR_TXLPITRCIM | ETH_MMCTIMR_TXLPIUSCIM | ETH_MMCTIMR_TXGPKTIM | ETH_MMCTIMR_TXMCOLGPIM | ETH_MMCTIMR_TXSCOLGPIM)
-
-
-//----- Ethernet MACCR register value -----
-
-#define ETH_SPEED_100M                      ETH_MACCR_FES
-#define ETH_FULL_DUPLEX_MODE                ETH_MACCR_DM
-
-// ETH Source Addr Control default
-#ifndef ETH_SOURCE_ADDRESS_CFG
-#define ETH_SOURCE_ADDRESS_CFG              ETH_SOURCE_ADDRESS_REPLACE_ADDR0
-#endif
-
-// ETH Checksum Offload default
-#ifndef ETH_CHECKSUM_OFFLOAD_CFG
-#define ETH_CHECKSUM_OFFLOAD_CFG            ETH_CHECKSUM_OFFLOAD_ENABLE
-#endif
-
-// ETH ARP Offload default
-#ifndef ETH_ARP_OFFLOAD_CFG
-#define ETH_ARP_OFFLOAD_CFG                 ETH_ARP_OFFLOAD_DISABLE
-#endif
-
-#define ETH_MACCR_CONFIGURATION_VALUE       (ETH_SPEED_100M           | \
-                                             ETH_FULL_DUPLEX_MODE     | \
-                                             ETH_MACCR_IPG_96BIT      | \
-                                             ETH_MACCR_PRELEN_7       | \
-                                             ETH_SOURCE_ADDRESS_CFG   | \
-                                             ETH_CHECKSUM_OFFLOAD_CFG | \
-                                             ETH_ARP_OFFLOAD_CFG)
-
-#define ETH_MTLTQOMR0_CONFIGURATION_VALUE   (ETH_MTLTQOMR_TSF         | \
-                                             ETH_MTLTQOMR_TXQEN)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //----- TDES0 - DMA Descriptor TX Packet Control/Status -----
 #define DMA_TX_OWN              0x80000000      // Own bit 1=DMA,0=CPU
@@ -170,11 +111,20 @@
 #define DMA_RX_RCH              0x00004000      // Second address chained
 #define DMA_RX_RBS1             0x00001FFF      // Receive buffer 1 size
 
+//----- Ethernet Reset register value -----
+#define ETH_MACCR_RESET_VALUE   0x00008000
+
 //----- Ethernet Fixed PTPTSSR register -----
 #define ETH_PTPT_SSR_TSTTR      ((uint32_t)0x00000002)  // Time stamp target time reached
 #define ETH_PTPT_SSR_TSSO       ((uint32_t)0x00000001)  // Time stamp seconds overflow
 
 #define ETH_MACAxHR_AE          0x80000000
+
+#define ETH_DMACSR_ALL_FLAGS   ( ETH_DMACSR_TI  | ETH_DMACSR_TPS | ETH_DMACSR_TBU | \
+                                 ETH_DMACSR_RI  | ETH_DMACSR_RBU | ETH_DMACSR_RPS | \
+                                 ETH_DMACSR_RWT | ETH_DMACSR_ETI | ETH_DMACSR_ERI | \
+                                 ETH_DMACSR_FBE | ETH_DMACSR_CDE | ETH_DMACSR_AIS | \
+                                 ETH_DMACSR_NIS )
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
@@ -187,57 +137,53 @@ extern "C" void ETH_IRQHandler(void);
 // Variables(s)
 //-------------------------------------------------------------------------------------------------
 
-RX_Descriptor_t   ETH_Driver::m_RX_Descriptor   [NUM_RX_Buffer]                                   __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
-TX_Descriptor_t   ETH_Driver::m_TX_Descriptor   [NUM_TX_Buffer]                                   __attribute__((aligned(4)));
-uint32_t          ETH_Driver::m_RX_Buffer       [NUM_RX_Buffer][ETH_BUF_SIZE / sizeof(uint32_t)]  __attribute__((aligned(4)));   // Ethernet Receive buffers
-uint32_t          ETH_Driver::m_TX_Buffer       [NUM_TX_Buffer][ETH_BUF_SIZE / sizeof(uint32_t)]  __attribute__((aligned(4)));   // Ethernet Transmit buffers
+RX_Descriptor_t   ETH_Driver::m_RX_Descriptor   [NUM_RX_BUFFER]                                   __attribute__((aligned(4)));   // Ethernet RX & TX DMA Descriptors
+TX_Descriptor_t   ETH_Driver::m_TX_Descriptor   [NUM_TX_BUFFER]                                   __attribute__((aligned(4)));
 ETH_Control_t     ETH_Driver::m_Control;
 
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name:     Initialize
 //
-//   Parameter(s):      void*           pContext            Pointer on context for callback
+//   Parameter(s):      ETH_IF_Driver*  pIF_Driver          Pointer on context for callback
+//                      uint32_t        PHY_Address         PHY Address
 //   Return value:      SystemState_e                       State of function.
 //
 //   Description:       Initialize Ethernet MAC Device.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::Initialize(void* pContext)
+SystemState_e ETH_Driver::Initialize(ETH_IF_Driver* pIF_Driver, uint8_t PHY_Address)
 {
     TickCount_t TickStart;
 
-    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;                       // Enable SYSCFG clock
+    RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;                       // Enable SYSCFG clock
 
   #if (ETH_INTERFACE_RMII == 0)
-	SYSCFG->PMC |=  SYSCFG_PMC_MII_RMII_SEL;
+	SYSCFG->PMC1 |=  SYSCFG_PMC1_MII_RMII_SEL;
   #else
-	SYSCFG->PMC &= ~SYSCFG_PMC_MII_RMII_SEL;
+	SYSCFG->PMC1 &= ~SYSCFG_PMC1_MII_RMII_SEL;
   #endif
 
-  (void)SYSCFG->PMCR;                                           // Dummy read to sync with ETH
-
-    memset((void *)&m_Control, 0, sizeof(ETH_Control_t));       // Clear Control Structure
-    m_pContext = pContext;                                      // Save context (pointer on ethernetif class)
+    memset((void *)&m_Control, 0, sizeof(ETH_Control_t));           // Clear Control Structure
+    m_pIF_Driver = pIF_Driver;                                      // Save context (pointer on ethernetif class)
 
     // Enable Clock
   #if (ETH_USE_TIME_STAMP)
-    RCC->AHB1ENR |= (RCC_AHB1ENR_ETHMACEN | RCC_AHB1ENR_ETHMACTXEN | RCC_AHB1ENR_ETHMACRXEN | RCC_AHB1ENR_ETHMACPTPEN);
+    RCC->AHB1ENR |= (RCC_AHB1ENR_ETH1MACEN | RCC_AHB1ENR_ETH1TXEN | RCC_AHB1ENR_ETH1RXEN | RCC_AHB1ENR_ETH1MACPTPEN);
   #else
-    RCC->AHB1ENR |= (RCC_AHB1ENR_ETHMACEN | RCC_AHB1ENR_ETHMACTXEN | RCC_AHB1ENR_ETHMACRXEN);
+    RCC->AHB1ENR |= (RCC_AHB1ENR_ETH1MACEN | RCC_AHB1ENR_ETH1TXEN | RCC_AHB1ENR_ETH1RXEN);
   #endif
 
     // Reset MAC
-    RCC->AHB1RSTR |= RCC_AHB1RSTR_ETHMACRST;
+    RCC->AHB1RSTR |= RCC_AHB1RSTR_ETH1MACRST;
     __asm("nop  \n\t nop  \n\t   \n\t nop   \n\t nop");
-    RCC->AHB1RSTR &= ~uint32_t(RCC_AHB1RSTR_ETHMACRST);
+    RCC->AHB1RSTR &= ~uint32_t(RCC_AHB1RSTR_ETH1MACRST);
     __asm("nop  \n\t nop  \n\t   \n\t nop   \n\t nop");
 
+    ETH->DMAMR = ETH_DMAMR_SWR;                                     // Reset Ethernet MAC peripheral
 
-    ETH->DMAMR = ETH_DMAMR_SWR;                                                         // Reset Ethernet MAC peripheral
+    TickStart = GetTick();                                          // Wait for software reset
 
-    // Wait for software reset
-    TickStart = GetTick();
     do
     {
         if((ETH->DMAMR & ETH_DMAMR_SWR) == 0)
@@ -250,102 +196,81 @@ SystemState_e ETH_Driver::Initialize(void* pContext)
     while(TickHasTimeOut(TickStart, DRIVER_RESET_TIMEOUT) == false);
 
     ETH->MACMDIOAR = ETH_MACMDIOAR_CR_DIVIDER;                                          // MDIO CR Clock Range Configuration 
-    ETH->MAC1USTCR = ((uint32_t)SYS_HCLK_CLOCK_FREQUENCY / DRIVER_MAC_US_TICK) - 1;     // MAC LPI 1US Tick Counter Configuration
+//    ETH->MAC1USTCR = ((uint32_t)SYS_HCLK_CLOCK_FREQUENCY / DRIVER_MAC_US_TICK) - 1;     // MAC LPI 1US Tick Counter Configuration
 
-    // ------------------ ETH Configuration ----------------
+	if(ETH_Driver::PHY_Write(PHY_Address, REG_BCR, BCR_RESET) == SYS_READY)
+    {
+        nOS_Sleep(DRIVER_PHY_RESET_DELAY);
+
+        // ------------------ ETH Configuration ----------------
     
-    ETH->MACCR = ETH_MACCR_CONFIGURATION_VALUE;
-    // ETH->MACCER  All extended features OFF.                              So we leave the at default
-    // ETH->MACWTR  Default hardware limit and no programmable value.       So we leave the at default
+        ETH->MACCR = (ETH_MACCR_FES |          // 100M
+                      ETH_MACCR_DM);           // Full duplex
+  
+        // Initialize Filter registers
+        ETH->MACFFR = (ETH_MACFFR_PCF_BlockAll |                    // MAC filters all control frames from reaching the application
+                       ETH_MACFFR_DAIF);                            // Destination Address Inverse Filtering
 
-    // ETH_MMC_CONTROL  This is for debug, nothing at this time
-  
-    ETH->MTLTQOMR0 = ETH_MTLTQOMR0_CONFIGURATION_VALUE;
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-    MODIFY_REG(ETH->DMACCR, ETH_DMACCR_DSL, ETH_DMACCR_DSL_64BIT);                      // SET DSL to 64 bit
+        SET_BIT(ETH->MACA1HR, ETH_MACA1HR_AE);                      // Enable MACA1 for the default register multicast value 0xFF FF FF FF FF FF
 
-    MODIFY_REG(ETH->DMACRCR, ETH_DMACRCR_RBSZ, ((heth->Init.RxBuffLen) << 1));          // Set Receive Buffers Length (must be a multiple of 4)
-    InitializeDMA_Buffer();                                                             // Initialize buffer and descriptors
-    ETH->MACA0HR = ETH_MACAxHR_AE; ETH->MACA0LR = 0;                                    // Initialize Address registers
-    
-    SET_BIT(ETH->MMCRIMR, ETH_DISABLE_RX_MMC_IRQ);                                      // Disable RX MMC Interrupts
-    SET_BIT(ETH->MMCTIMR, ETH_DISABLE_TX_MMC_IRQ);                                      // Disable TX MMC Interrupts
+        ETH->MACFCR = ETH_MACFCR_ZQPD;                              // Zero-quanta pause disabled
 
-//ETH_MMC_RX_INTERRUPT
+        SET_BIT(ETH->MACVLANTR, ETH_MACVLANTR_VLANTC);              // Drop VLAN frames
 
-    // Mask time stamp interrupts
-    ETH->MACIMR = 0;                                            // Reset value
+      #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
 
-  #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-    // Set clock accuracy to 20ns (50MHz) or 50ns (20MHz)
-   #if (SYS_CPU_CORE_CLOCK_FREQUENCY >= 51000000)
-    ETH->PTPSSIR = 20;
-    ETH->PTPTSAR = (50000000ull << 32) / SYS_CPU_CORE_CLOCK_FREQUENCY;
-   #else
-    ETH->PTPSSIR = 50;
-    ETH->PTPTSAR = (20000000ull << 32) / SYS_CPU_CORE_CLOCK_FREQUENCY;
-   #endif
+        //----- Sub-second increment (H7: MACTSCR.TSSS) -----
+       #if (SYS_CPU_CORE_CLOCK_FREQUENCY >= 51000000)
+        // 20 ns
+        ETH->MACTSCR &= ~ETH_MACTSCR_TSSS;
+        ETH->MACTSCR |=  (20 << ETH_MACTSCR_TSSS_Pos);
 
-    ETH->PTPTSCR = (ETH_PTPTSSR_TSSIPV4FE |
-                    ETH_PTPTSSR_TSSIPV6FE |
-                    ETH_PTPTSSR_TSSSR     |
-                    ETH_PTPTSCR_TSARU     |
-                    ETH_PTPTSCR_TSFCU     |
-                    ETH_PTPTSCR_TSE);
+        // Addend for 50 MHz ref
+        ETH->MACTSAR = (50000000ull << 32) / SYS_CPU_CORE_CLOCK_FREQUENCY;
+       #else
+        // 50 ns
+        ETH->MACTSCR &= ~ETH_MACTSCR_TSSS;
+        ETH->MACTSCR |=  (50 << ETH_MACTSCR_TSSS_Pos);
 
-    m_Control.TX_TS_Index = 0;
-  #endif
+        // Addend for 20 MHz ref
+        ETH->MACTSAR = (20000000ull << 32) / SYS_CPU_CORE_CLOCK_FREQUENCY;
+       #endif
 
+        //----- Timestamp control (H7: MACTSCR) -----
+        ETH->MACTSCR |= (ETH_MACTSCR_TSIPV4FE |   // IPv4 checksum correction
+                         ETH_MACTSCR_TSIPV6FE |   // IPv6 checksum correction
+                         ETH_MACTSCR_TSSSR    |   // Snapshot rollover
+                         ETH_MACTSCR_TSARU    |   // Addend update
+                         ETH_MACTSCR_TSFCU    |   // Fine correction
+                       ETH_MACTSCR_TSE);        // Timestamp enable
 
+        //----- Initialize timestamp (H7 requirement) -----
+        ETH->MACTSCR |= ETH_MACTSCR_TSINIT;
+      #endif
 
-    // Enable ETH interrupt
-    ISR_ClearPendingIRQ(ETH_IRQn);
-    ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);
+        // DMA operation mode (H7: TX/RX séparés, plus de DMAOMR)
+        // TODO H7: configurer ETH->DMACTCR / ETH->DMACRCR avec RSF/TSF/OSF équivalents
 
-    m_Control.FrameEnd = nullptr;
-
-    ETH->DMAOMR &= ~(ETH_DMAOMR_ST);
-
-  #if (ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
-    ETH->DMAOMR = (ETH_DMAOMR_RSF |
-                   ETH_DMAOMR_TSF |
-                   ETH_DMAOMR_OSF);                             // Second Frame Operate
-  #else
-    ETH->DMAOMR = (ETH_DMAOMR_OSF);                             // Second Frame Operate
-  #endif
-
-    ETH->DMABMR = (ETH_DMABMR_AAB        |                      // Address Aligned Beats
+        ETH->DMAMR = (ETH_DMAMR_AAL        |                      // Address Aligned Beats
                  #if ((ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED) || (ETH_USE_TIME_STAMP == DEF_ENABLED))
-                   ETH_DMABMR_EDE        |                      // Enhanced Descriptor format enable
+                      ETH_DMAMR_EDE        |                      // Enhanced Descriptor format enable
                  #endif
-                   ETH_DMABMR_FB         |                      // Fixed Burst
-                   ETH_DMABMR_RTPR_2_1   |                      // Arbitration Round Robin RxTx 2 1
-                   ETH_DMABMR_RDP_32Beat |                      // RX DMA Burst Length 32 Beats
-                   ETH_DMABMR_PBL_32Beat |                      // TX DMA Burst Length 32 Beats
-                   ETH_DMABMR_USP);                             // Enable use of separate PBL for Rx and Tx
+                      ETH_DMAMR_FB         |                      // Fixed Burst
+                      ETH_DMAMR_RTPR_2_1   |                      // Arbitration Round Robin RxTx 2 1
+                      ETH_DMAMR_RDP_32Beat |                      // RX DMA Burst Length 32 Beats
+                      ETH_DMAMR_PBL_32Beat |                      // TX DMA Burst Length 32 Beats
+                      ETH_DMAMR_USP);                             // Enable use of separate PBL for Rx and Tx
 
-    // Enable RX interrupts
-    ETH->DMAIER = ETH_DMAIER_NISE | ETH_DMAIER_RIE;
+        InitializeDMA_Buffer();                             	  // Initialize buffer and descriptors
+		return SYS_READY;
+    }
 
-    return SYS_READY;
+    return SYS_FAIL;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name:     InitializeDMA_Buffer
+//   Function name:     InitializeInterface
 //
 //   Parameter(s):      None
 //   Return value:      SystemState_e                       State of function.
@@ -372,37 +297,32 @@ void ETH_Driver::InitializeDMA_Buffer(void)
 {
     uint32_t Next;
 
-/*------------------ DMA Tx Descriptors Configuration ----------------------*/
-//ETH_DMATxDescListInit(heth);
-
-/*------------------ DMA Rx Descriptors Configuration ----------------------*/
-//ETH_DMARxDescListInit(heth);
-
-
     // Initialize DMA Descriptors
-    for(uint32_t i = 0; i < NUM_TX_Buffer; i++)
+    for(uint32_t i = 0; i < NUM_TX_BUFFER; i++)
     {
-        m_TX_Descriptor[i].Status  = DMA_TX_TCH | DMA_TX_LS | DMA_TX_FS;
-        m_TX_Descriptor[i].BufferAddress = (uint32_t)&m_TX_Buffer[i];
+        m_TX_Descriptor[i].Status         = DMA_TX_TCH;
+        m_TX_Descriptor[i].BufferAddress  = uint32_t(nullptr);
         Next = i + 1;
-        Next = (Next == NUM_TX_Buffer) ? 0 : Next;
-        m_TX_Descriptor[i].Next = &m_TX_Descriptor[Next];
+        Next = (Next == NUM_TX_BUFFER) ? 0 : Next;
+        m_TX_Descriptor[i].NextDescriptor = &m_TX_Descriptor[Next];
     }
 
-    for(uint32_t i = 0; i < NUM_RX_Buffer; i++)
+    // Initialize RX DMA Descriptors
+    for(uint32_t i = 0; i < NUM_RX_BUFFER; i++)
     {
-        m_RX_Descriptor[i].Status  = DMA_RX_OWN;
+        m_RX_Descriptor[i].Status            = DMA_RX_OWN;
         m_RX_Descriptor[i].ControlBufferSize = DMA_RX_RCH | ETH_BUF_SIZE;
-        m_RX_Descriptor[i].BufferAddress = (uint32_t)&m_RX_Buffer[i];
+        m_RX_Descriptor[i].BufferAddress     = (uint32_t)pMemoryPool->Alloc(ETH_BUF_SIZE, MEM_DBG_ETHDMARX1);
         Next = i + 1;
-        Next = (Next == NUM_RX_Buffer) ? 0 : Next;
-        m_RX_Descriptor[i].NextDescriptor = &m_RX_Descriptor[Next];
+        Next = (Next == NUM_RX_BUFFER) ? 0 : Next;
+        m_RX_Descriptor[i].NextDescriptor    = &m_RX_Descriptor[Next];
     }
 
-    ETH->DMATDLAR = (uint32_t)&m_TX_Descriptor[0];
-    ETH->DMARDLAR = (uint32_t)&m_RX_Descriptor[0];
-    m_Control.TX_Index = 0;
-    m_Control.RX_Index = 0;
+    ETH->DMATDLAR      = (uint32_t)&m_TX_Descriptor[0];
+    ETH->DMARDLAR      = (uint32_t)&m_RX_Descriptor[0];
+    m_Control.TX_HeadIndex = 0;
+    m_Control.TX_TailIndex = 0;
+    m_Control.RX_Index     = 0;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -417,15 +337,22 @@ void ETH_Driver::InitializeDMA_Buffer(void)
 //-------------------------------------------------------------------------------------------------
 void ETH_Driver::Start(void)
 {
-    ETH->MACCR  |= (ETH_MACCR_TE  | ETH_MACCR_RE);      // Enable MAC transmitter/Receiver
-    ETH->DMAOMR |= (ETH_DMAOMR_ST |                     // Start Transmission
-                    ETH_DMAOMR_SR |                     // Start Receive
-                    ETH_DMAOMR_FTF);                    // Flush TX Buffer
+    ISR_ClearPendingIRQ(ETH_IRQn);
+    ISR_Init(ETH_IRQn, ETH_IRQ_PRIO);                                           // Enable NVIC interrupt (CPU side ready)
+    
+    ETH->DMAIER = (ETH_DMAIER_NIE  | ETH_DMAIER_RIE | ETH_DMAIER_TIE |          // Enable DMA interrupts (peripheral side ready)
+                   ETH_DMAIER_FBEE | ETH_DMAIER_AIE | ETH_DMAIER_RBUIE);
+
+    SET_BIT(ETH->MACCR,  ETH_MACCR_TE);                                         // Enable MAC transmission
+    SET_BIT(ETH->MACCR,  ETH_MACCR_RE);                                         // Enable MAC Reception
+    SET_BIT(ETH->DMAOMR, ETH_DMAOMR_FTF);                                       // Flush the FIFO
+    SET_BIT(ETH->DMACTCR, ETH_DMACTCR_ST);                                      // Start DMA TX
+    SET_BIT(ETH->DMACRCR, ETH_DMACRCR_SR);                                      // Start DMA RX
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name:     GetMacAddress
+//   Function name:     GetMAC_Address
 //
 //   Parameter(s):      pMAC_Address    Pointer to address.
 //   Return value:      SystemState_e   State of function.
@@ -433,11 +360,11 @@ void ETH_Driver::Start(void)
 //   Description:       Get Ethernet MAC Address.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::GetMacAddress(IP_MAC_Address_t* pMAC_Address)
+SystemState_e ETH_Driver::GetMAC_Address(IP_MAC_Address_t* pMAC_Address)
 {
     if(pMAC_Address == nullptr)
     {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetMacAddress - Invalid Parameter\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetMAC_Address - Invalid Parameter\n");
         return SYS_INVALID_PARAMETER;
     }
 
@@ -449,7 +376,7 @@ SystemState_e ETH_Driver::GetMacAddress(IP_MAC_Address_t* pMAC_Address)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name:     SetMacAddress
+//   Function name:     SetMAC_Address
 //
 //   Parameter(s):      pMAC_Address    Pointer to address.
 //   Return value:      SystemState_e   State of function.
@@ -457,11 +384,11 @@ SystemState_e ETH_Driver::GetMacAddress(IP_MAC_Address_t* pMAC_Address)
 //   Description:       Set Ethernet MAC Address.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::SetMacAddress(const IP_MAC_Address_t* pMAC_Address)
+SystemState_e ETH_Driver::SetMAC_Address(const IP_MAC_Address_t* pMAC_Address)
 {
     if(pMAC_Address == nullptr)
     {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SetMacAddress - Invalid Parameter\n");
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SetMAC_Address - Invalid Parameter\n");
         return SYS_INVALID_PARAMETER;
     }
 
@@ -565,182 +492,177 @@ SystemState_e ETH_Driver::SetAddressFilter(const IP_MAC_Address_t* pMAC_Address,
 //
 //   Function name:     SendFrame
 //
-//   Parameter(s):      Frame           Pointer to frame buffer with data to send.
-//                      Length          Frame buffer length in bytes.
-//                      Flags           Frame transmit Flags.
+//   Parameter(s):
 //
 //   Return value:      SystemState_e   State of function.
 //
 //   Description:       Send Ethernet frame.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::SendFrame(const uint8_t* pFrame, size_t Length, uint32_t Flags)
+SystemState_e ETH_Driver::SendFrame(IP_PacketMsg_t** ppPacketMsg )
 {
-    uint8_t* pDst = m_Control.FrameEnd;
-    uint32_t Control;
-
-    if((pFrame == nullptr) || (Length == 0))
+    // Validate input parameters
+    if((ppPacketMsg == nullptr) || (*ppPacketMsg == nullptr) || ((*ppPacketMsg)->pPacket == nullptr) || ((*ppPacketMsg)->PacketSize == 0))
     {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - Invalid Parameter\n");
+      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+        DBG_TX_Drop++;
+      #endif
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - Invalid Packet Msg\n");
         return SYS_INVALID_PARAMETER;
     }
 
-    if(pDst == nullptr)
-    {
-        // Start of a new transmit frame
-        if(m_TX_Descriptor[m_Control.TX_Index].Status & DMA_TX_OWN)
-        {
-            // Transmitter is busy, wait
-            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - TX Busy\n");
-            return SYS_BUSY;
-        }
+    IP_PacketMsg_t* pMsg    = *ppPacketMsg;
+    uint8_t*        pBuffer = reinterpret_cast<uint8_t*>(pMsg->pPacket);
+    size_t          Length  = pMsg->PacketSize;
 
-        pDst = (uint8_t*)m_TX_Descriptor[m_Control.TX_Index].BufferAddress;
-        m_TX_Descriptor[m_Control.TX_Index].Size = Length;
-    }
-    else
+    // Zero-copy: use the buffer directly, no memcpy involved
+    // Only one buffer per frame; fragmentation flags are ignored in zero-copy mode
+
+    if(m_TX_Descriptor[m_Control.TX_HeadIndex].Status & DMA_TX_OWN)                                             // Check if the current TX descriptor is free
     {
-        // Sending data fragments in progress
-        m_TX_Descriptor[m_Control.TX_Index].Size += Length;
+      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+        DBG_TX_Drop++;
+      #endif
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - TX Busy\n");
+        IP_Manager::FreeMessage(pMsg);
+        return SYS_BUSY;
     }
 
-    LIB_FastMemcpy(pFrame, pDst, Length);
+    // Attach the packet buffer directly to the DMA descriptor
+    m_TX_Descriptor[m_Control.TX_HeadIndex].BufferAddress      = reinterpret_cast<uint32_t>(pBuffer);
+    m_TX_Descriptor[m_Control.TX_HeadIndex].ControlBufferSize  = Length;
+    m_TX_Descriptor[m_Control.TX_HeadIndex].pMessage           = pMsg;                                          // Store the message pointer for later freeing
+    uint32_t Control = DMA_TX_TCH | DMA_TX_FS | DMA_TX_LS;                                                      // Prepare descriptor control flags
 
-    if(Flags & ETH_MAC_TX_FRAME_FRAGMENT)
-    {
-        // More data to come, remember current write position
-        m_Control.FrameEnd = pDst;
-        return SYS_READY;
-    }
-
-    // Frame is now ready, send it to DMA
-    Control = m_TX_Descriptor[m_Control.TX_Index].Status & ~uint32_t(DMA_TX_CIC);
-
-  #if(ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
-    //  The following is a workaround for MAC Control silicon problem:
-    //      "Incorrect layer 3 (L3) checksum is inserted in the transmitted IPV6 fragmented packets
-    //       without TCP, UDP or ICMP payloads."
-    //  Description:
-    //      The application provides the per-frame control to instruct the MAC to insert the L3
-    //      checksums for TCP, UDP and ICMP packets. When an automatic checksum insertion is
-    //      enabled and the input packet is an IPv6 packet without the TCP, UDP or ICMP payload, then
-    //      the MAC may incorrectly insert a checksum into the packet. For IPv6 packets without a TCP,
-    //      UDP or ICMP payload, the MAC core considers the next header (NH) field as the extension
-    //      header and continues to parse the extension header. Sometimes, the payload data in such
-    //      packets matches the NH field for TCP, UDP or ICMP and, as a result, the MAC core inserts
-    //      a checksum.
+  #if (ETH_USE_CHECKSUM_OFFLOAD == DEF_ENABLED)
 
     uint16_t Prot = UNALIGNED_UINT16_READ(&m_TX_Descriptor[m_Control.TX_Index].Address[12]);
     uint16_t Frag = UNALIGNED_UINT16_READ(&m_TX_Descriptor[m_Control.TX_Index].Address[20]);
 
-    if((Prot == 0x0008) && (Fag & 0xFF3F))
+    if((Prot == 0x0008) && (Frag & 0xFF3F))                                                 // Apply silicon workaround for IPv6 fragmented packets without L4 payload
     {
-        Control |= DMA_TX_CIC_IP;               // Insert only IP header checksum in fragmented frame
+        Control |= DMA_TX_CIC_IP;                                                           // Insert only IP header checksum
     }
     else
     {
-        Control |= DMA_TX_CIC;                  // Insert IP header and payload checksums (TCP,UDP,ICMP)
+        Control |= DMA_TX_CIC;                                                              // Insert full checksum (IP + L4)
     }
   #endif
 
-    Control &= ~uint32_t(DMA_TX_IC | DMA_TX_TTSE);
+#if (ETH_USE_TIME_STAMP == DEF_ENABLED)
+    Control |= DMA_TX_TTSE;
+    m_Control.TX_TS_Index = m_Control.TX_HeadIndex;
+#endif
 
-    if(Flags & ETH_MAC_TX_FRAME_EVENT)
+    // NOTE: In zero-copy mode, the TX IRQ must free the packet buffer.
+    // The driver must store pMsg in a user field of the descriptor.
+    // (This field must be added to your descriptor structure.)
+    m_TX_Descriptor[m_Control.TX_HeadIndex].Status = Control | DMA_TX_OWN | DMA_TX_IC;      // Give ownership of the descriptor to the DMA
+    m_Control.TX_HeadIndex++;                                                               // Advance TX descriptor index
+
+    if (m_Control.TX_HeadIndex == NUM_TX_BUFFER)
     {
-        Control |= DMA_TX_IC;
+        m_Control.TX_HeadIndex = 0;
     }
 
-  #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
-    if(Flags & ETH_MAC_TX_FRAME_TIMESTAMP)
-    {
-        Control |= DMA_TX_TTSE;
-    }
-
-    m_Control.TX_TS_Index = m_Control.TX_Index;
-  #endif
-
-    m_TX_Descriptor[m_Control.TX_Index].Status = Control | DMA_TX_OWN;
-    m_Control.TX_Index++;
-
-    if(m_Control.TX_Index == NUM_TX_Buffer)
-    {
-        m_Control.TX_Index = 0;
-    }
-
-    m_Control.FrameEnd = nullptr;
-
-    // Start frame transmission
-    ETH->DMASR   = ETH_DMASR_TBUS;
+    ETH->DMASR   = ETH_DMASR_TBUS;                                                          // Trigger transmission
     ETH->DMATPDR = 0;
+
+    //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: SendFrame - Done\n");
+
+  #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+    DBG_TX_Count++;
+  #endif
 
     return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name:     ReadFrame
+//   Function name:     ReceiveFrame
 //
-//   Parameter(s):      MemoryNode*     pPacket         Pointer to on MemoryNode NanoIP data.
-//                      size_t          Length          Frame buffer length in bytes.
+//   Parameter(s):      IP_PacketMsg_t**                ppPacketMsg
 //   Return value:      SystemState_e                   State of function.
 //
-//   Description:       Read data of received Ethernet frame.
-//
-//   Note(s):           It is assume that:
-//                          1 - Length is not 0, so 'length' lower or equal to ETHERNET_FRAME_SIZE.
-//                          2 - No MemoryNode was allocated if packet is invalid.
+//   Description:       Get the RX packet data
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_Driver::ReadFrame(MemoryNode* pPacket, size_t Length)
+SystemState_e ETH_Driver::ReceiveFrame(IP_PacketMsg_t** ppPacketMsg)
 {
-    SystemState_e State = SYS_READY;
-    uint8_t const* pSrc = (uint8_t*)m_RX_Descriptor[m_Control.RX_Index].BufferAddress;
-    size_t NodeSize;
-    uint8_t* pNodeData;
+    size_t Length;
 
-    if(pPacket != nullptr)
+    *ppPacketMsg = nullptr;
+    Length       = GetRX_FrameSize();
+
+    if(Length == 0)
     {
-        NodeSize = pPacket->GetNodeSize();
-        pPacket->Begin();
-
-        do
-        {
-            if(Length < NodeSize)
-            {
-                NodeSize = Length;
-            }
-
-            Length -= NodeSize;
-
-            pNodeData = static_cast<uint8_t*>(pPacket->GetNext());
-            memcpy(pNodeData, pSrc, NodeSize);                         // LIB_FastMemcpy(pSrc, pFrame, NodeSize);
-        }
-        while(Length > 0);
+        return SYS_NO_DATA;
     }
 
-    // Return this block back to ETH-DMA
-    m_RX_Descriptor[m_Control.RX_Index].Status = DMA_RX_OWN;
+    if(Length > ETH_BUF_SIZE)
+    {
+      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+        DBG_RX_Drop++;
+      #endif
+        m_RX_Descriptor[m_Control.RX_Index].Status = DMA_RX_OWN;    // Give back the buffer to the DMA without returning it
+        m_Control.RX_Index++;
+
+        if(m_Control.RX_Index == NUM_RX_BUFFER)
+        {
+            m_Control.RX_Index = 0;
+        }
+
+        return SYS_OVERFLOW;
+    }
+
+    *ppPacketMsg = (IP_PacketMsg_t*)pMemoryPool->Alloc(sizeof(IP_PacketMsg_t), MEM_DBG_IPPKT);              // Allocated a IP_PacketMsg_t from the pool
+
+    if(*ppPacketMsg == nullptr)
+    {
+      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+        DBG_RX_Drop++;
+      #endif
+        m_RX_Descriptor[m_Control.RX_Index].Status = DMA_RX_OWN;                                            // Keep the actual buffer from the pool for the DMA descriptor (No choice)
+        return SYS_POOL_NOT_ALLOCATED_ERROR;
+    }
+
+    (*ppPacketMsg)->PacketSize = Length;
+    (*ppPacketMsg)->pPacket    = (IP_EthernetPacket_t*)m_RX_Descriptor[m_Control.RX_Index].BufferAddress;   // The DMA packet DMA is already from the pool (zero copy)
+
+    void* pNewBuffer = pMemoryPool->Alloc(ETH_BUF_SIZE, MEM_DBG_ETHDMARX2);                                 // Allocate a new buffer for the DMA descriptor
+
+    if(pNewBuffer == nullptr)
+    {
+      #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+        DBG_RX_Drop++;
+      #endif
+
+        pMemoryPool->Free((void**)ppPacketMsg);
+        *ppPacketMsg = nullptr;
+        m_RX_Descriptor[m_Control.RX_Index].Status = DMA_RX_OWN;                                            // Keep the actual buffer for DMA descriptor
+        return SYS_POOL_NOT_ALLOCATED_ERROR;
+    }
+
+    m_RX_Descriptor[m_Control.RX_Index].BufferAddress = (uint32_t)pNewBuffer;
+    m_RX_Descriptor[m_Control.RX_Index].Status        = DMA_RX_OWN;
     m_Control.RX_Index++;
 
-    if(m_Control.RX_Index == NUM_RX_Buffer)
+    if(m_Control.RX_Index == NUM_RX_BUFFER)
     {
         m_Control.RX_Index = 0;
     }
 
     if(ETH->DMASR & ETH_DMASR_RBUS)
     {
-        // Receive buffer unavailable, resume DMA
         ETH->DMASR   = ETH_DMASR_RBUS;
         ETH->DMARPDR = 0;
     }
 
-    if(pPacket == nullptr)
-    {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: ReadFrame - Invalid Parameter\n");
-        State = SYS_INVALID_PARAMETER;
-    }
+  #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+    DBG_RX_Count++;
+  #endif
 
-    return State;
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -757,21 +679,42 @@ uint32_t ETH_Driver::GetRX_FrameSize(void)
 {
     uint32_t Status = m_RX_Descriptor[m_Control.RX_Index].Status;
 
-    if((Status & DMA_RX_OWN) != 0)
+    // till owned by DMA: no frame available
+    if (Status & DMA_RX_OWN)
     {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - Owned by DMA\n");
-        return ETH_OWNED_BY_DMA;                       // Owned by DMA
+        return ETH_OWNED_BY_DMA;
     }
 
-    if(((Status & DMA_RX_ES) != 0) ||
-       ((Status & DMA_RX_FS) == 0) ||
-       ((Status & DMA_RX_LS) == 0))
+    // Basic validity checks: FS (first segment), LS (last segment), ES (error summary)
+    if(((Status & DMA_RX_ES) != 0)  ||        // Error summary
+       ((Status & DMA_RX_FS) == 0)  ||        // Not first segment
+       ((Status & DMA_RX_LS) == 0))           // Not last segment
     {
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH: GetRX_FrameSize - This block is invalid\n");
-        return ETH_INVALID_BLOCK;                       // Error, this block is invalid
+        return ETH_INVALID_BLOCK;
     }
 
-    return ((Status & DMA_RX_FL) >> DMA_RX_FL_OFFSET) - 4;
+    // Extract frame length from descriptor
+    uint32_t Length = (Status & DMA_RX_FL) >> DMA_RX_FL_OFFSET;
+
+    // Sanity checks on length
+    //    Ethernet minimum: 14 bytes header + payload
+    //    Maximum: 1518 (Ethernet II) or 1522 (with VLAN)
+    if((Length < 14) || (Length > 1522))
+    {
+        return ETH_INVALID_BLOCK;
+    }
+
+    // Remove CRC (4 bytes) if present
+    //    STM32F7 always includes CRC in FL
+    Length -= 4;  // i will need to put that into a #ifdef if we do crc by the module
+
+    // Final safety check: must not exceed MTU
+    if(Length > 1500)
+    {
+        return ETH_INVALID_BLOCK;
+    }
+
+    return Length;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -945,12 +888,9 @@ SystemState_e ETH_Driver::ControlTimer(ETH_ControlTimer_e Control, ETH_MAC_Time_
 SystemState_e ETH_Driver::PHY_Read(uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t* pData)
 {
     SystemState_e State;
-    uint32_t      RegisterValue;
 
-    RegisterValue = ETH->MACMIIAR & ETH_MACMIIAR_CR;
-
-    ETH->MACMIIAR = RegisterValue                 |
-                    ETH_MACMIIAR_MB               |
+    ETH->MACMIIAR = ETH_MACIIAR_CR_DIVIDER        |
+					ETH_MACMIIAR_MB               |
                     (uint32_t(PHY_Address) << 11) |
                     (uint32_t(RegisterAddress) << 6);
 
@@ -977,11 +917,8 @@ SystemState_e ETH_Driver::PHY_Read(uint8_t PHY_Address, uint8_t RegisterAddress,
 //-------------------------------------------------------------------------------------------------
 SystemState_e ETH_Driver::PHY_Write(uint8_t PHY_Address, uint8_t RegisterAddress, uint16_t Data)
 {
-    uint32_t      RegisterValue;
-
     ETH->MACMIIDR = uint32_t(Data);
-    RegisterValue = ETH->MACMIIAR & ETH_MACMIIAR_CR;
-    ETH->MACMIIAR = RegisterValue                 |
+    ETH->MACMIIAR = ETH_MACIIAR_CR_DIVIDER        |
                     ETH_MACMIIAR_MB               |
                     ETH_MACMIIAR_MW               |
                     (uint32_t(PHY_Address) << 11) |
@@ -1029,18 +966,41 @@ SystemState_e ETH_Driver::PHY_Busy(void)
 //   Description:       Ethernet ISR Callback.
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t ETH_RX_COUNT;
-
-void ETH_Driver::ISR_CallBack(uint32_t Event)
+void ETH_Driver::ISR_CallBack(MAC_Event_e Event)
 {
-    //if(m_pContext != nullptr)
-    //{
-    //    ETH_IF_Driver::CallbackWrapper(m_pContext, Event);
-    //}
-    //else
+    // Handle TX descriptor cleanup (must stay in MAC driver)
+    if((Event & ETH_MAC_EVENT_TX_FRAME) == ETH_MAC_EVENT_TX_FRAME)
     {
-        myETH_Driver.ReadFrame(nullptr, 0);   // tempo for test
-        ETH_RX_COUNT++;
+        uint8_t Index = m_Control.TX_TailIndex;
+
+        // Process all descriptors between tail and head
+        while ((Index != m_Control.TX_HeadIndex) && ((m_TX_Descriptor[Index].Status & DMA_TX_OWN) == 0))
+        {
+            IP_PacketMsg_t* pMsg = (IP_PacketMsg_t*)m_TX_Descriptor[Index].pMessage;
+
+            if (pMsg != nullptr)
+            {
+                // Free the message associated with this descriptor
+                IP_Manager::FreeMessage(pMsg);
+                m_TX_Descriptor[Index].pMessage = nullptr;
+            }
+
+            // Advance tail index
+            Index++;
+
+            if(Index == NUM_TX_BUFFER)
+            {
+                Index = 0;
+            }
+        }
+
+        m_Control.TX_TailIndex = Index;
+    }
+
+    // Forward the event to the STM32 adapter
+    //if(m_pContext != nullptr)
+    {
+        m_pIF_Driver->OnMAC_Event(Event);
     }
 }
 
@@ -1054,26 +1014,32 @@ void ETH_Driver::ISR_CallBack(uint32_t Event)
 //   Description:       Ethernet IRQ Handler.
 //
 //-------------------------------------------------------------------------------------------------
+uint32_t RX_Count = 0;
+uint32_t IRQ_Count = 0;
+extern ETH_Driver myETH_Driver;
+
 extern "C"
 {
     NOS_ISR(ETH_IRQHandler)
     {
-        uint32_t Register;
-        uint32_t Event = ETH_MAC_EVENT_NONE;
+        uint32_t    Register;
+        MAC_Event_e Event = ETH_MAC_EVENT_NONE;
 
         IO_SetPinHigh(IO_ETH_EXT_LED);
 
+IRQ_Count++;
         Register = ETH->DMASR;
-        ETH->DMASR = Register & (ETH_DMASR_NIS | ETH_DMASR_RS | ETH_DMASR_TS);
+        ETH->DMASR = ETH_DMASR_ALL_FLAGS;
 
         if(Register & ETH_DMASR_TS)
         {
-            Event |= ETH_MAC_EVENT_TX_FRAME;                        // Frame sent
+            Event = MAC_Event_e(uint32_t(Event) | ETH_MAC_EVENT_TX_FRAME);          // Frame sent
         }
 
         if(Register & ETH_DMASR_RS)
         {
-            Event |= ETH_MAC_EVENT_RX_FRAME;                        // Frame received
+            Event = MAC_Event_e(uint32_t(Event) | ETH_MAC_EVENT_RX_FRAME);          // Frame received
+RX_Count++;
         }
 
         Register = ETH->MACSR;
@@ -1081,9 +1047,9 @@ extern "C"
       #if (ETH_USE_TIME_STAMP == DEF_ENABLED)
         if(Register & ETH_MACSR_TSTS)
         {
-            if(ETH->PTPTSSR & ETH_PTPT_SSR_TSTTR)                   // Time stamp interrupt
+            if(ETH->PTPTSSR & ETH_PTPT_SSR_TSTTR)                                   // Time stamp interrupt
             {
-                Event |= ETH_MAC_EVENT_TIMER_ALARM;                 // Time stamp target time reached
+                Event = MAC_Event_e(uint32_t(Event) | ETH_MAC_EVENT_TIMER_ALARM);   // Time stamp target time reached
             }
         }
       #endif
@@ -1091,7 +1057,7 @@ extern "C"
         if(Register & ETH_MACSR_PMTS)
         {
             ETH->MACPMTCSR;
-            Event |= ETH_MAC_EVENT_WAKEUP;
+            Event = MAC_Event_e(uint32_t(Event) | ETH_MAC_EVENT_WAKEUP);
         }
 
         if(Event != ETH_MAC_EVENT_NONE)                             // Callback event notification
@@ -1105,21 +1071,3 @@ extern "C"
 
 #endif // (USE_ETH_DRIVER == DEF_ENABLED) && (DIGINI_USE_ETHERNET == DEF_ENABLED)
 
-
-
-
-
-static void ETH_SetMACConfig(ETH_HandleTypeDef *heth,  ETH_MACConfigTypeDef *macconf)
-{
-
-
-   MODIFY_REG(ETH->MTLTQOMR, ETH_MTLTQOMR_MASK, macconf->TransmitQueueMode);    // Write to MTLTQOMR
-
-  macregval = (macconf->ReceiveQueueMode |
-              ((uint32_t)((macconf->DropTCPIPChecksumErrorPacket == DISABLE) ? 1U : 0U) << 6) |
-              ((uint32_t)macconf->ForwardRxErrorPacket << 4) |
-              ((uint32_t)macconf->ForwardRxUndersizedGoodPacket << 3));
-  MODIFY_REG(ETH->MTLRQOMR, ETH_MTLRQOMR_MASK, macregval);                      // Write to MTLRQOMR
-}
- 
-// so i'm going to use IP_CFG for this.. using precompile config instead of struct that eat memory

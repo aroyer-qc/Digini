@@ -27,19 +27,16 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+
+#ifdef CORE_CM7
+
+//-------------------------------------------------------------------------------------------------
 // Include(s)
 //-------------------------------------------------------------------------------------------------
 
 #include "stm32h7xx.h"
 #include <stdbool.h>
 #include "./Digini/inc/lib_macro.h"
-
-//-------------------------------------------------------------------------------------------------
-// Macro(s)
-//-------------------------------------------------------------------------------------------------
-
-//#define XSTR(x) STR(x)
-//#define STR(x) #x
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -1412,7 +1409,7 @@
 // see page 3151 of the PDF: rm0399-stm32h745755-and-stm32h747757-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
 // This configuration is for MDIO with a Max frequency of 2.5 MHz (specified in the IEEE 802.3)
 //
-#if   (SYS_CPU_CORE_CLOCK_FREQUENCY > 255000000)    
+#if   (SYS_CPU_CORE_CLOCK_FREQUENCY > 255000000)
   #define ETH_MACMDIOAR_CR_DIVIDER                  ETH_MACMIIAR_CR_Div124
 #elif (SYS_CPU_CORE_CLOCK_FREQUENCY > 155000000)
   #define ETH_MACMDIOAR_CR_DIVIDER                  ETH_MACMIIAR_CR_Div102
@@ -1470,3 +1467,8 @@
 void    SystemInit              (void);
 
 //-------------------------------------------------------------------------------------------------
+
+#endif // CORE_CM7
+
+//-------------------------------------------------------------------------------------------------
+

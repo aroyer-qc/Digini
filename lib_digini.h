@@ -307,6 +307,7 @@ class NetworkContext;
 
 #include "./Grafx/inc/lib_grafx.h"
 
+// it should not be here!!!  this is APP level
 #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 #include "task_network.h"
 #endif

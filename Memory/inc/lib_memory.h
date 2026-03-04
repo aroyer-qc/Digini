@@ -36,16 +36,33 @@
     X_MEM_DBG(MEM_DBG_STR2)                                     \
     /* Unique ID for lib_fifo                                 */\
     X_MEM_DBG(MEM_DBG_FIFO1)                                    \
-    /* Unique ID for lib_memory_node and lib_memory_node_list */\
-    X_MEM_DBG(MEM_DBG_NODE1)                                    \
-    X_MEM_DBG(MEM_DBG_NODE2)                                    \
-    X_MEM_DBG(MEM_DBG_NODLST1)                                  \
     /* Unique ID for Comm CLI                                 */\
+\
+\
+  /*---------------------------------------------------------*/ \
+  IF_USE(DIGINI_USE_CMD_LINE,                                   \
+  /*---------------------------------------------------------*/ \
     X_MEM_DBG(MEM_DBG_CLI1)                                     \
+  /*---------------------------------------------------------*/ \
+  ) /* End of DIGINI_USE_CMD_LINE */                            \
+  /*---------------------------------------------------------*/ \
+\
+\
+  /*---------------------------------------------------------*/ \
+  IF_USE(DIGINI_USE_CONSOLE,                                    \
+  /*---------------------------------------------------------*/ \
     /* Unique ID for Comm Console                             */\
     X_MEM_DBG(MEM_DBG_CON1)                                     \
     X_MEM_DBG(MEM_DBG_CON2)                                     \
     X_MEM_DBG(MEM_DBG_CON3)                                     \
+  /*---------------------------------------------------------*/ \
+  ) /* End of DIGINI_USE_CONSOLE */                             \
+  /*---------------------------------------------------------*/ \
+\
+\
+  /*---------------------------------------------------------*/ \
+  IF_USE(DIGINI_USE_VT100_MENU,                                 \
+  /*---------------------------------------------------------*/ \
     /* Unique ID for Comm VT100                               */\
     X_MEM_DBG(MEM_DBG_VT100_1)                                  \
     X_MEM_DBG(MEM_DBG_VT100_2)                                  \
@@ -58,6 +75,14 @@
     X_MEM_DBG(MEM_DBG_VTCB5)                                    \
     X_MEM_DBG(MEM_DBG_VTCB6)                                    \
     X_MEM_DBG(MEM_DBG_VTCB7)                                    \
+  /*---------------------------------------------------------*/ \
+  ) /* End of DIGINI_USE_VT100_MENU */                          \
+  /*---------------------------------------------------------*/ \
+\
+\
+  /*---------------------------------------------------------*/ \
+  IF_USE(DIGINI_USE_ETHERNET,                                   \
+  /*---------------------------------------------------------*/ \
     /* Unique ID for NanoIP                                   */\
     X_MEM_DBG(MEM_DBG_TSKNET1)                                  \
     X_MEM_DBG(MEM_DBG_TSKNET2)                                  \
@@ -70,9 +95,9 @@
     X_MEM_DBG(MEM_DBG_ICMPDT)                                   \
     X_MEM_DBG(MEM_DBG_SOCKET)                                   \
     X_MEM_DBG(MEM_DBG_SOCKALLOC)                                \
-    /*X_MEM_DBG(MEM_DBG_TCPSOCK)*/                                  \
-    /*X_MEM_DBG(MEM_DBG_TCPRXBUF) */                                \
-    /*X_MEM_DBG(MEM_DBG_TCPTXBUF)     */                            \
+    /*X_MEM_DBG(MEM_DBG_TCPSOCK)*/                              \
+    /*X_MEM_DBG(MEM_DBG_TCPRXBUF) */                            \
+    /*X_MEM_DBG(MEM_DBG_TCPTXBUF)     */                        \
     X_MEM_DBG(MEM_DBG_UDPSOCK)                                  \
     X_MEM_DBG(MEM_DBG_UDPRXBUF)                                 \
     X_MEM_DBG(MEM_DBG_RAWSOCK)                                  \
@@ -90,8 +115,14 @@
     X_MEM_DBG(MEM_DBG_TCP)                                      \
     X_MEM_DBG(MEM_DBG_TCPDT)                                    \
     X_MEM_DBG(MEM_DBG_MQTT)                                     \
-    /* UniqueID for lib_service                               */\
-    X_MEM_DBG(MEM_DBG_SERVICE)
+  /*---------------------------------------------------------*/ \
+  ) /* End of DIGINI_USE_ETHERNET */                            \
+  /*---------------------------------------------------------*/ \
+\
+\
+
+    /* UniqueID for lib_service                               */   // actually not used
+//    X_MEM_DBG(MEM_DBG_SERVICE)
 
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
@@ -118,8 +149,9 @@ enum MEM_DebugListOfID_e
 
     MEM_DBG_DEF(EXPAND_X_MEM_DBG_AS_ENUM)
 
-    // Application debug ID from user
-    //MEMORY_USER_DEBUG_ID
+  #if MEM_USER_DBG_DEF
+    MEM_USER_DBG_DEF(EXPAND_X_MEM_DBG_AS_ENUM)
+  #endif
 
     NUMBER_OF_MEM_DBG,
 };

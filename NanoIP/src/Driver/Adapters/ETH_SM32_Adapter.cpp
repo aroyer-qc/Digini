@@ -1,5 +1,8 @@
 #include "./lib_digini.h"
 
+#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
+
+
 ETH_STM32_Adapter::ETH_STM32_Adapter(ETH_MAC_DriverInterface* pMAC, ETH_PHY_DriverInterface* pPHY, uint8_t PHY_Address)
 : m_pMAC(pMAC), m_pPHY(pPHY), m_PHY_Address(PHY_Address), m_pIF_Driver(nullptr)
 {
@@ -76,3 +79,5 @@ bool ETH_STM32_Adapter::LinkIsUp(void)
 }
 
 //-------------------------------------------------------------------------------------------------
+
+#endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)

@@ -227,6 +227,10 @@ SystemState_e UDP_Manager::Send(IP_Port_t Port, uint8_t* pData, size_t Length, c
     {
         *pBytesSent = Length;
     }
+    else
+    {
+        IP_Manager::FreeMessage(pMsg);
+    }
 
     return State;
 }

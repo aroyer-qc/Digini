@@ -94,7 +94,17 @@ void ICMP_Manager::Process(IP_PacketMsg_t* pRX)
                 pIP_Manager->PutHeader(pTX, pPacket->ICMP_Frame.IP_Header.SrcIP_Address, ICMP_Length, IP_PROTOCOL_ICMP);    // Reply source = original destination
                 pPacket->ICMP_Frame.Header.Checksum = 0;
                 pPacket->ICMP_Frame.Header.Checksum = htons(IP_Manager::IP_CalculateChecksum(&pPacket->ICMP_Frame.Header, ICMP_Length));
-                m_pContext->SendPacket(pTX);                                                                                // Send and DO NOT free pRX
+                SystemState_e State = m_pContext->SendPacket(pTX);                                                          // // Zero-copy TX 
+
+                if(State != SYS_READY)
+                {
+                    IP_Manager::FreeMessage(pTX);
+
+                  #if (IP_DBG_ARP == DEF_ENABLED)
+                    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ICMP: Ping Reply - SendPacket Failed!, Drop the packet\n");
+                  #endif
+                }
+
                 return;                                                                                                     // Important: do NOT fall through to FreeMessage(pRX)
             }
 

@@ -746,6 +746,8 @@ void TCP_ManagerSystem::ProcessSegment(IP_PacketMsg_t* pMsg)
 //-------------------------------------------------------------------------------------------------
 bool TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload, size_t Length, uint8_t Flags, bool Retransmit)
 {
+    SystemState_e State;
+    
     if(pSocket == nullptr)
     {
         return false;
@@ -763,38 +765,30 @@ bool TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload
     // Retrieve local/remote info
     SocketInfo_t localInfo;
     SocketInfo_t remoteInfo;
-
     pSocketBase->GetLocalInfo(&localInfo);
     pSocketBase->GetRemoteInfo(&remoteInfo);
-
     IP_PacketMsg_t* pMsg = nullptr;
 
-    SystemState_e state = IP_Manager::AllocPacket(&pMsg, sizeof(IP_EthernetPacket_t), MEM_DBG_TCP, MEM_DBG_TCPDT);
+    State = IP_Manager::AllocPacket(&pMsg, sizeof(IP_EthernetPacket_t), MEM_DBG_TCP, MEM_DBG_TCPDT);
 
-    if(state != SYS_READY || pMsg == nullptr)
+    if((State != SYS_READY) || (pMsg == nullptr))
     {
         return false;
     }
 
     IP_EthernetPacket_t* pPacket = pMsg->pPacket;
-
-    // Reference the TCP header inside the frame
-    TCP_Header_t& hdr = pPacket->TCP_Frame.Header;
+    TCP_Header_t& hdr = pPacket->TCP_Frame.Header;              // Reference the TCP header inside the frame
 
     // Build TCP header
     hdr.SrcPort           = localInfo.Port;
     hdr.DstPort           = remoteInfo.Port;
-
     hdr.SequenceNumber    = pSystem->m_SeqNumber;
     hdr.AcknowledgeNumber = pSystem->m_AckNumber;
-
     hdr.Flags             = Flags;
     hdr.Window            = pSystem->m_LocalWindow;
     hdr.UrgentPointer     = 0;
-
-    // Compute TCP header length (no options)
-    hdr.Offset = (sizeof(TCP_Header_t) / 4) << 4;
-
+    hdr.Offset = (sizeof(TCP_Header_t) / 4) << 4;               // Compute TCP header length (no options)
+    
     // Copy payload
     if(pPayload && Length > 0)
     {
@@ -809,14 +803,13 @@ bool TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload
     tcp.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &tcp, tcpLen);
 
     // Prepare wrapper fields
-    pMsg->Payload      = nullptr;                 // TCP payload is inside the frame
+    pMsg->Payload      = nullptr;                               // TCP payload is inside the frame
     pMsg->PayloadSize  = 0;
     pMsg->PacketSize   = sizeof(IP_EthernetPacket_t);
 
-    // Send through IP layer
-    SystemState_e state2 = pIP_Manager->SendPacket(pMsg);
+    State = pIP_Manager->SendPacket(pMsg);                      // Send through IP layer                                
 
-    if(state2 != SYS_READY && state2 != SYS_ARP_RESOLVE_PENDING)
+    if((State != SYS_READY) && (State != SYS_ARP_RESOLVE_PENDING))
     {
         IP_Manager::FreeMessage(pMsg);
         return false;
@@ -839,9 +832,7 @@ bool TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload
     if(Flags & TCP_FLAG_FIN) pSystem->m_SeqNumber++;
 
     pSystem->m_SeqNumber += Length;
-
-    // Update timestamp
-    pSystem->m_LastSendTick = GetTick();
+    pSystem->m_LastSendTick = GetTick();                    // Update timestamp
 
     return true;
 }

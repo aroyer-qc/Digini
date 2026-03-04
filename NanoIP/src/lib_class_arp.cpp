@@ -205,6 +205,9 @@ void ARP_Manager::ProcessARP(IP_PacketMsg_t* pRX)
         return;
     }
 
+    pMemoryPool->ChangeDebugID(pRX, MEM_DBG_IPPKT, MEM_DBG_ARPRX);
+    pMemoryPool->ChangeDebugID(pRX->pPacket, MEM_DBG_ETHDMARX2, MEM_DBG_ARPDTRX);
+
     ARP_Frame_t* pRX_ARP = &pRX->pPacket->ARP_Frame;
     IP_Address_t ActiveIP = m_pContext->GetActiveIP();
     IP_Address_t SrcIP = pRX_ARP->SrcIP_Address;
@@ -233,8 +236,8 @@ void ARP_Manager::ProcessARP(IP_PacketMsg_t* pRX)
 				UpdateEntry(SrcIP, &pRX_ARP->SourceMAC);                                            // RFC-friendly: learn sender’s IP->MAC even if request is not for us
 			  #endif
 
-                pMemoryPool->ChangeDebugID(pRX,          MEM_DBG_IPPKT,     MEM_DBG_ARP);
-                pMemoryPool->ChangeDebugID(pRX->pPacket, MEM_DBG_ETHDMARX2, MEM_DBG_ARPDT);
+                pMemoryPool->ChangeDebugID(pRX,          MEM_DBG_ARPRX,   MEM_DBG_ARPTX);
+                pMemoryPool->ChangeDebugID(pRX->pPacket, MEM_DBG_ARPDTRX, MEM_DBG_ARPDTTX);
 
                 IP_PacketMsg_t*      pTX  = pRX;                                                    // Zero-copy reuse
                 IP_EthernetHeader_t* pETH = &pTX->pPacket->ETH_Header;
@@ -439,9 +442,7 @@ FlushPending:
 
         if((pEntry->State == ARP_STATE_PENDING) && (pEntry->IP == IP_Address))
         {
-            memcpy(pEntry->pMsg->pPacket->ETH_Header.DestinationMAC.Byte,
-                   pMacAddress->Byte, IP_MAC_ADDRESS_SIZE);
-
+            memcpy(pEntry->pMsg->pPacket->ETH_Header.DestinationMAC.Byte, pMacAddress->Byte, IP_MAC_ADDRESS_SIZE);
             SystemState_e State = m_pContext->SendPacket(pEntry->pMsg);
 
             if(State != SYS_READY)
@@ -449,15 +450,13 @@ FlushPending:
                 IP_Manager::FreeMessage(pEntry->pMsg);
 
               #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
-                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET,
-                                     "ARP: Sent pending - SendPacket failed: Drop the packet\n");
+                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Sent pending - SendPacket failed: Drop the packet\n");
               #endif
             }
           #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
             else
             {
-                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET,
-                                     "ARP: Sent pending packet for resolved IP\n");
+                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Sent pending packet for resolved IP\n");
             }
           #endif
 
@@ -523,7 +522,7 @@ void ARP_Manager::ProcessOut(void)
 {
     // Allocate wrapper + ARP packet buffer using the new helper
     IP_PacketMsg_t* pMsg;
-    SystemState_e State = IP_Manager::AllocPacket(&pMsg, sizeof(ARP_Frame_t), MEM_DBG_ARP, MEM_DBG_ARPDT);
+    SystemState_e State = IP_Manager::AllocPacket(&pMsg, sizeof(ARP_Frame_t), MEM_DBG_ARPPO, MEM_DBG_ARPDTPO);
 
     if(State != SYS_READY)
     {

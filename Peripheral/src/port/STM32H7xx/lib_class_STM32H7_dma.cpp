@@ -409,13 +409,13 @@ void DMA_Driver::Disable(void)
         CLEAR_BIT(m_Handle.pDMA->CR, DMA_SxCR_EN);
 
         // CM7 has D-Cache -> invalidate after DMA read
-        SCB_InvalidateDCache_by_Addr((uint32_t*)m_Handle.pDMA->M0AR, (m_LastTransferSize + 31) & ~31U);
+        //SCB_InvalidateDCache_by_Addr((uint32_t*)m_Handle.pDMA->M0AR, (m_LastTransferSize + 31) & ~31U);
     }
     else
     {
         CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_EN);
 
-        SCB_InvalidateDCache_by_Addr((uint32_t*)m_Handle.pBDMA->CM0AR, (m_LastTransferSize + 31) & ~31U);
+        //SCB_InvalidateDCache_by_Addr((uint32_t*)m_Handle.pBDMA->CM0AR, (m_LastTransferSize + 31) & ~31U);
     }
 
   #elif defined(CORE_CM4)

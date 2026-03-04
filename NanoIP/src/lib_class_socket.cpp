@@ -31,6 +31,9 @@
 #include "./lib_digini.h"
 #include <new>
 
+
+#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
+
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
@@ -883,3 +886,5 @@ SystemState_e Socket::SetOption(SocketOption_e Option, void* pValue, size_t Valu
             return SYS_INVALID_PARAMETER;
     }
 }
+
+#endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)

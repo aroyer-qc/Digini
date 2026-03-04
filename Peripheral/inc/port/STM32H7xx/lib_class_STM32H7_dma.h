@@ -395,7 +395,6 @@ class DMA_Driver
         void            SetLength                               (size_t Length);
         void            SetMemoryIncrement                      (void);
         void            SetNoMemoryIncrement                    (void);
-        void            SetFifoControl                          (uint32_t Control);
         void            ClearFlag                               (uint32_t Flag);
         bool            CheckFlag                               (uint32_t Flag);
         void            EnableIRQ                               (void);
@@ -405,6 +404,10 @@ class DMA_Driver
         void            DisableTransmitCompleteInterrupt        (void);
         void            EnableTransmitHalfCompleteInterrupt     (void);
         void            DisableTransmitHalfCompleteInterrupt    (void);
+
+      #ifdef CORE_CM7
+        void            SetFifoControl                          (uint32_t Control);
+      #endif    
 
         // Inline method
         void            ClearFlag                               (void)                              { ClearFlag(m_pInfo->Flag);             }
@@ -417,11 +420,14 @@ class DMA_Driver
         void            CalcDMAMUX_ChannelBaseAndMask           (void);
         void            CalcDMAMUX_RequestGenBaseAndMask        (uint32_t Request);
 
-      #if (DMA_CHECK_FIFO_PARAMS == DEF_ENABLED)
+      #if (DMA_CHECK_FIFO_PARAMS == DEF_ENABLED) && defined(CORE_CM7)
         SystemState_e   CheckFifoParam                          (DMA_Info_t* pInfo);
       #endif
 
+      #ifdef CORE_CM7
         DMA_Type_e                          m_DMA_Type;
+      #endif
+
         DMA_Pointer_u                       m_Handle;
         DMA_Info_t*                         m_pInfo;
 

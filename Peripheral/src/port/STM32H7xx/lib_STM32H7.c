@@ -95,10 +95,13 @@ uint32_t GetUniqueCPUID(void)
 //  Description:    Enable CPU Cache
 //
 //-------------------------------------------------------------------------------------------------
+
+#ifdef CORE_CM7
 void CPU_CACHE_Enable(void)
 {
   SCB_EnableICache();       // Enable I-Cache
   SCB_EnableDCache();       // Enable D-Cache
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------

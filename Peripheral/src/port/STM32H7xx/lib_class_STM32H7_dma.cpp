@@ -70,12 +70,14 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
+#if defined(CORE_CM7)
 struct DMA_BaseRegister_t
 {
     volatile uint32_t ISR;          // DMA interrupt status register
     volatile uint32_t Reserved0;
     volatile uint32_t IFCR;         // DMA interrupt flag clear register
 };
+#endif
 
 struct BDMA_BaseRegister_t
 {
@@ -93,6 +95,139 @@ struct BDMA_BaseRegister_t
 //  Description:    Setup transfer from source to destination. according to configuration
 //
 //-------------------------------------------------------------------------------------------------
+void DMA_Driver::Initialize(DMA_Info_t* pInfo)
+{
+    m_Handle.pPtr = pInfo->pHandle;
+    m_Direction   = pInfo->Config & DMA_DIRECTION_MASK;
+    m_pInfo       = pInfo;
+    m_LastBoundaryTransferSize = 0;
+
+  #if defined(CORE_CM7)
+
+    if(uintptr_t(m_Handle.pPtr) < BDMA_BASE)
+    {
+        m_DMA_Type     = DMA_TYPE;
+        m_StreamNumber = ((uint32_t(m_Handle.pPtr) & 0xFF) - 16) / 24;
+
+        if((uint32_t(m_Handle.pPtr) <= ((uint32_t)DMA2_Stream7)) && (uint32_t(m_Handle.pPtr) >= ((uint32_t)DMA2_Stream0)))
+        {
+            SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA2EN);
+            m_StreamNumber += 8;
+        }
+        else
+        {
+            SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA1EN);
+        }
+
+        m_StreamIndex = ((m_StreamNumber & 0x01) ? 0x06 : 0x00) | ((m_StreamNumber & 0x02) ? 0x10 : 0x00);
+
+      #if (DMA_CHECK_FIFO_PARAMS == DEF_ENABLED)
+        if(CheckFifoParam(pInfo) != SYS_READY)
+        {
+            while(1)
+            {
+                __asm("nop");
+            }
+        }
+      #endif
+
+        CLEAR_BIT(m_Handle.pDMA->CR, DMA_SxCR_EN);
+        while((m_Handle.pDMA->CR & DMA_SxCR_EN) != 0) {};
+        MODIFY_REG(m_Handle.pDMA->CR, DMA_SxCR_INIT_MASK, pInfo->Config);
+
+      #if (STM32H7_DEV_ID == 0x450UL)
+        if((DBGMCU->IDCODE & 0xFFFF0000) >= 0x20000000)
+        {
+      #endif
+            if(IS_DMA_UART_USART_REQUEST(pInfo->MUX_Request) != 0)
+            {
+                SET_BIT(m_Handle.pDMA->CR, DMA_SxCR_TRBUFF);
+            }
+      #if (STM32H7_DEV_ID == 0x450UL)
+        }
+      #endif
+
+        CalcBaseAddress();
+        ((DMA_BaseRegister_t *)m_CommonBaseAddress)->IFCR = 0x3F << (m_StreamIndex & 0x1F);
+
+/*--------------------------------------------------------------------------
+// FIFO not required at this time..
+
+        MODIFY_REG(m_pHandle.pDMA->FCR, (uint32_t)~(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH), pInfo->FIFO_Config));     // Prepare the DMA Stream FIFO configuration
+
+        if(hdma->Init.FIFOMode == DMA_FIFOMODE_ENABLE)                                                          // the FIFO threshold is not used when the FIFO mode is disabled
+        {
+            if(hdma->Init.MemBurst != DMA_MEMORY_BURST_SINGLE)                                                  // Check compatibility between FIFO threshold level and size of the memory burst for INCR4, INCR8, INCR16
+
+
+
+        MODIFY_REG(m_pHandle.pDMA->FCR, (uint32_t)~(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH, hdma->Init.FIFOMode));     // Prepare the DMA Stream FIFO configuration
+
+        if(hdma->Init.FIFOMode == DMA_FIFOMODE_ENABLE)                                                          // the FIFO threshold is not used when the FIFO mode is disabled
+        {
+            if(hdma->Init.MemBurst != DMA_MBURST_SINGLE)                                                        // Check compatibility between FIFO threshold level and size of the memory burst for INCR4, INCR8, INCR16
+            {
+                if(DMA_CheckFifoParam(hdma) != HAL_OK)
+                {
+                    return HAL_ERROR;
+                }
+            }
+
+            SET_BIT(m_pHandle.pDMA->FCR, hdma->Init.FIFOThreshold);
+        }
+*/
+//--------------------------------------------------------------------------
+    }
+    else
+    {
+        m_DMA_Type     = BDMA_TYPE;
+        m_StreamNumber = ((uint32_t(m_Handle.pPtr) & 0xFF) - 8) / 20;
+
+        CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_EN);
+        MODIFY_REG(m_Handle.pBDMA->CCR, BDMA_CCR_INIT_MASK, pInfo->Config);
+
+        m_StreamIndex = ((uint32_t(m_Handle.pPtr) - uint32_t(BDMA_Channel0)) / (uint32_t(BDMA_Channel1) - uint32_t(BDMA_Channel0))) << 2;
+        CalcBaseAddress();
+        ((BDMA_BaseRegister_t *)m_CommonBaseAddress)->IFCR = ((BDMA_IFCR_CGIF0) << (m_StreamIndex & 0x1F));
+    }
+
+  #elif defined(CORE_CM4)
+
+    m_StreamNumber = ((uint32_t(m_Handle.pPtr) & 0xFF) - 8) / 20;
+
+    CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_EN);
+    MODIFY_REG(m_Handle.pBDMA->CCR, BDMA_CCR_INIT_MASK, pInfo->Config);
+
+    m_StreamIndex = ((uint32_t(m_Handle.pPtr) - uint32_t(BDMA_Channel0)) / (uint32_t(BDMA_Channel1) - uint32_t(BDMA_Channel0))) << 2;
+    CalcBaseAddress();
+    ((BDMA_BaseRegister_t *)m_CommonBaseAddress)->IFCR = ((BDMA_IFCR_CGIF0) << (m_StreamIndex & 0x1F));
+
+  #endif
+
+    CalcDMAMUX_ChannelBaseAndMask();
+
+    if((pInfo->Config & DMA_SOURCE_TO_DESTINATION_MASK) == DMA_MEMORY_TO_MEMORY)
+    {
+    }
+
+    m_pDMAMUX_Channel->CCR = (pInfo->MUX_Request);
+    m_pDMAMUX_ChannelStatus->CFR = m_DMAMUX_ChannelStatusMask;
+
+    if((pInfo->MUX_Request >= DMA_REQUEST_GENERATOR0) && (pInfo->MUX_Request <= DMA_REQUEST_GENERATOR7))
+    {
+        CalcDMAMUX_RequestGenBaseAndMask(pInfo->MUX_Request);
+        m_pDMAMUX_RequestGen->RGCR = 0;
+        m_pDMAMUX_RequestGenStatus->RGCFR = m_DMAMUX_RequestGenStatusMask;
+    }
+    else
+    {
+        m_pDMAMUX_RequestGen          = nullptr;
+        m_pDMAMUX_RequestGenStatus    = nullptr;
+        m_DMAMUX_RequestGenStatusMask = 0;
+    }
+}
+
+#if 0
 void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 {
     m_Handle.pPtr = pInfo->pHandle;
@@ -218,6 +353,8 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
     }
 }
 
+#endif
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       Enable
@@ -230,16 +367,27 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::Enable(void)
 {
-    if(m_DMA_Type == DMA_TYPE)
+  #if defined(CORE_CM7)
+
+    // CM7 can use DMA or BDMA depending on m_DMA_Type
+    if (m_DMA_Type == DMA_TYPE)
     {
-        SCB_CleanDCache_by_Addr((uint32_t*)m_Handle.pDMA->M0AR, m_LastBoundaryTransferSize);            // Flush the DCache boundary 32 bytes
+        SCB_CleanDCache_by_Addr((uint32_t*)m_Handle.pDMA->M0AR, m_LastBoundaryTransferSize);
         SET_BIT(m_Handle.pDMA->CR, DMA_SxCR_EN);
     }
     else
     {
-        SCB_CleanDCache_by_Addr((uint32_t*)m_Handle.pBDMA->CM0AR, m_LastBoundaryTransferSize);          // Flush the DCache boundary 32 bytes
+        SCB_CleanDCache_by_Addr((uint32_t*)m_Handle.pBDMA->CM0AR, m_LastBoundaryTransferSize);
         SET_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_EN);
     }
+
+  #elif defined(CORE_CM4)
+
+    // CM4 must NEVER touch DMA1/DMA2
+    // Only BDMA is allowed
+    SET_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_EN);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -254,16 +402,27 @@ void DMA_Driver::Enable(void)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::Disable(void)
 {
-    if(m_DMA_Type == DMA_TYPE)
+  #if defined(CORE_CM7)
+
+    if (m_DMA_Type == DMA_TYPE)
     {
-        CLEAR_BIT(m_Handle.pDMA->CR,   DMA_SxCR_EN);
-      //  SCB_InvalidateDCache_by_Addr((uint32_t*)m_Handle.pDMA->M0AR, (m_LastTransferSize + 31) & 0x1F);
+        CLEAR_BIT(m_Handle.pDMA->CR, DMA_SxCR_EN);
+
+        // CM7 has D-Cache -> invalidate after DMA read
+        SCB_InvalidateDCache_by_Addr((uint32_t*)m_Handle.pDMA->M0AR, (m_LastTransferSize + 31) & ~31U);
     }
     else
     {
         CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_EN);
-     //  SCB_InvalidateDCache_by_Addr((uint32_t*)m_Handle.pBDMA->CM0AR, (m_LastTransferSize + 31) & 0x1F);
+
+        SCB_InvalidateDCache_by_Addr((uint32_t*)m_Handle.pBDMA->CM0AR, (m_LastTransferSize + 31) & ~31U);
     }
+
+  #elif defined(CORE_CM4)
+
+    CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_EN);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -302,16 +461,26 @@ void DMA_Driver::SetTransfer(void* pSource, void* pDestination, size_t Length)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetSource(void* pSource)
 {
-    if(m_Direction == DMA_MEMORY_TO_PERIPHERAL)
+  #if defined(CORE_CM7)
+
+    // CM7 can use DMA1/DMA2 or BDMA
+    if(m_DMA_Type == DMA_TYPE)
     {
-        if(m_DMA_Type == DMA_TYPE) m_Handle.pDMA->M0AR   = uint32_t(pSource);
-        else                       m_Handle.pBDMA->CM0AR = uint32_t(pSource);
+        if(m_Direction == DMA_MEMORY_TO_PERIPHERAL)     m_Handle.pDMA->M0AR = uint32_t(pSource);
+        else                                            m_Handle.pDMA->PAR  = uint32_t(pSource);
     }
     else
     {
-        if(m_DMA_Type == DMA_TYPE) m_Handle.pDMA->PAR   = uint32_t(pSource);
-        else                       m_Handle.pBDMA->CPAR = uint32_t(pSource);
+        if(m_Direction == DMA_MEMORY_TO_PERIPHERAL)     m_Handle.pBDMA->CM0AR = uint32_t(pSource);
+        else                                            m_Handle.pBDMA->CPAR  = uint32_t(pSource);
     }
+
+  #elif defined(CORE_CM4)
+
+    if(m_Direction == DMA_MEMORY_TO_PERIPHERAL)         m_Handle.pBDMA->CM0AR = uint32_t(pSource);
+    else                                                m_Handle.pBDMA->CPAR  = uint32_t(pSource);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -327,18 +496,26 @@ void DMA_Driver::SetSource(void* pSource)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetDestination(void* Destination)
 {
-    if(m_Direction == DMA_MEMORY_TO_PERIPHERAL)
+  #if defined(CORE_CM7)
+
+    if(m_DMA_Type == DMA_TYPE)
     {
-        if(m_DMA_Type == DMA_TYPE) m_Handle.pDMA->PAR   = uint32_t(Destination);
-        else                       m_Handle.pBDMA->CPAR = uint32_t(Destination);
+        if(m_Direction == DMA_MEMORY_TO_PERIPHERAL)     m_Handle.pDMA->PAR = uint32_t(Destination);
+        else                                            m_Handle.pDMA->M0AR = uint32_t(Destination);
     }
     else
     {
-        if(m_DMA_Type == DMA_TYPE) m_Handle.pDMA->M0AR   = uint32_t(Destination);
-        else                       m_Handle.pBDMA->CM0AR = uint32_t(Destination);
+        if(m_Direction == DMA_MEMORY_TO_PERIPHERAL)     m_Handle.pBDMA->CPAR = uint32_t(Destination);
+        else                                            m_Handle.pBDMA->CM0AR = uint32_t(Destination);
     }
-}
 
+  #elif defined(CORE_CM4)
+
+    if(m_Direction == DMA_MEMORY_TO_PERIPHERAL)         m_Handle.pBDMA->CPAR = uint32_t(Destination);
+    else                                                m_Handle.pBDMA->CM0AR = uint32_t(Destination);
+
+  #endif
+}
 //-------------------------------------------------------------------------------------------------
 //
 //  Function:       ClearFlag
@@ -351,21 +528,24 @@ void DMA_Driver::SetDestination(void* Destination)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::ClearFlag(uint32_t Flag)
 {
+  #if defined(CORE_CM7)
+
     volatile uint32_t* pRegister = nullptr;
 
-    if(m_DMA_Type == DMA_TYPE)
-    {
-        pRegister = (uint32_t*)&((DMA_BaseRegister_t *)m_CommonBaseAddress)->IFCR;
-    }
-    else // BDMA_TYPE
-    {
-        pRegister = (uint32_t*)&((BDMA_BaseRegister_t *)m_CommonBaseAddress)->IFCR;
-    }
+    if(m_DMA_Type == DMA_TYPE)      pRegister = (uint32_t*)&((DMA_BaseRegister_t*)m_CommonBaseAddress)->IFCR;
+    else                            pRegister = (uint32_t*)&((BDMA_BaseRegister_t*)m_CommonBaseAddress)->IFCR;
 
     if(pRegister != nullptr)
     {
         SET_BIT(*pRegister, Flag);
     }
+
+  #elif defined(CORE_CM4)
+
+    volatile uint32_t* pRegister = (uint32_t*)&((BDMA_BaseRegister_t*)m_CommonBaseAddress)->IFCR;
+    SET_BIT(*pRegister, Flag);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -380,8 +560,16 @@ void DMA_Driver::ClearFlag(uint32_t Flag)
 //-------------------------------------------------------------------------------------------------
 size_t DMA_Driver::GetLength(void)
 {
+  #if defined(CORE_CM7)
+
     if(m_DMA_Type == DMA_TYPE) return size_t(m_Handle.pDMA->NDTR);
                                return size_t(m_Handle.pBDMA->CNDTR);
+
+  #elif defined(CORE_CM4)
+
+    return size_t(m_Handle.pBDMA->CNDTR);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -398,8 +586,16 @@ void DMA_Driver::SetLength(size_t Length)
 {
     m_LastBoundaryTransferSize = (Length + DMA_DCACHE_BOUNDARY) & ~DMA_DCACHE_BOUNDARY;
 
-    if(m_DMA_Type == DMA_TYPE) m_Handle.pDMA->NDTR   = uint32_t(Length);
-    else                       m_Handle.pBDMA->CNDTR = uint32_t(Length);
+  #if defined(CORE_CM7)
+
+    if(m_DMA_Type == DMA_TYPE)  m_Handle.pDMA->NDTR = uint32_t(Length);
+    else                        m_Handle.pBDMA->CNDTR = uint32_t(Length);
+
+  #elif defined(CORE_CM4)
+
+    m_Handle.pBDMA->CNDTR = uint32_t(Length);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -414,8 +610,16 @@ void DMA_Driver::SetLength(size_t Length)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetMemoryIncrement(void)
 {
-    if(m_DMA_Type == DMA_TYPE) SET_BIT(m_Handle.pDMA->CR,   DMA_SxCR_MINC);
-    else                       SET_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_MINC);
+  #if defined(CORE_CM7)
+
+    if(m_DMA_Type == DMA_TYPE)  SET_BIT(m_Handle.pDMA->CR, DMA_SxCR_MINC);
+    else                        SET_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_MINC);
+
+  #elif defined(CORE_CM4)
+
+    SET_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_MINC);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -430,8 +634,16 @@ void DMA_Driver::SetMemoryIncrement(void)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::SetNoMemoryIncrement(void)
 {
-    if(m_DMA_Type == DMA_TYPE) CLEAR_BIT(m_Handle.pDMA->CR,   DMA_SxCR_MINC);
-    else                       CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_MINC);
+  #if defined(CORE_CM7)
+
+    if(m_DMA_Type == DMA_TYPE)  CLEAR_BIT(m_Handle.pDMA->CR, DMA_SxCR_MINC);
+    else                        CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_MINC);
+
+  #elif defined(CORE_CM4)
+
+    CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_MINC);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -444,6 +656,7 @@ void DMA_Driver::SetNoMemoryIncrement(void)
 //  Description:
 //
 //-------------------------------------------------------------------------------------------------
+#if defined(CORE_CM7)
 void DMA_Driver::SetFifoControl(uint32_t Control)
 {
     if(m_DMA_Type == DMA_TYPE)
@@ -451,6 +664,7 @@ void DMA_Driver::SetFifoControl(uint32_t Control)
         m_Handle.pDMA->FCR = Control;
     }
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -464,17 +678,13 @@ void DMA_Driver::SetFifoControl(uint32_t Control)
 //-------------------------------------------------------------------------------------------------
 bool DMA_Driver::CheckFlag(uint32_t Flag)
 {
+  #if defined(CORE_CM7)
+
     volatile uint32_t Register = 0;
     bool              Result   = false;
 
-    if(m_DMA_Type == DMA_TYPE)
-    {
-        Register = ((DMA_BaseRegister_t *)m_CommonBaseAddress)->ISR;
-    }
-    else // BDMA_TYPE
-    {
-        Register = ((BDMA_BaseRegister_t *)m_CommonBaseAddress)->ISR;
-    }
+    if(m_DMA_Type == DMA_TYPE)  Register = ((DMA_BaseRegister_t*)m_CommonBaseAddress)->ISR;
+    else                        Register = ((BDMA_BaseRegister_t*)m_CommonBaseAddress)->ISR;
 
     if((Register & Flag) != 0)
     {
@@ -482,6 +692,13 @@ bool DMA_Driver::CheckFlag(uint32_t Flag)
     }
 
     return Result;
+
+  #elif defined(CORE_CM4)
+
+    volatile uint32_t Register = ((BDMA_BaseRegister_t*)m_CommonBaseAddress)->ISR;
+    return ((Register & Flag) != 0);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -496,28 +713,26 @@ bool DMA_Driver::CheckFlag(uint32_t Flag)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::EnableClock(void)
 {
+  #if defined(CORE_CM7)
 
-    if(uintptr_t(m_Handle.pBDMA) < BDMA_BASE)
+    if(m_DMA_Type == DMA_TYPE)
     {
-        if(uintptr_t(m_Handle.pDMA) < DMA2_Stream0_BASE)
-        {
-            SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA1EN);
-        }
-        else
-        {
-            SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA2EN);
-        }
+        if(uintptr_t(m_Handle.pDMA) < DMA2_Stream0_BASE)    SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA1EN);
+        else                                                SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_DMA2EN);
     }
     else
     {
-      #ifdef RCC_AHB4ENR_BDMAEN
         SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_BDMAEN);
-      #endif
-
       #ifdef RCC_AHB4ENR_BDMA2EN
         SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_BDMA2EN);
       #endif
     }
+
+  #elif defined(CORE_CM4)
+
+    SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_BDMAEN);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -547,8 +762,16 @@ void DMA_Driver::EnableIRQ(void)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::EnableInterrupt(uint32_t Interrupt)
 {
-    if(m_DMA_Type == DMA_TYPE) SET_BIT(m_Handle.pDMA->CR,   Interrupt);
-    else                       SET_BIT(m_Handle.pBDMA->CCR, Interrupt);
+  #if defined(CORE_CM7)
+
+    if(m_DMA_Type == DMA_TYPE)  SET_BIT(m_Handle.pDMA->CR, Interrupt);
+    else                        SET_BIT(m_Handle.pBDMA->CCR, Interrupt);
+
+  #elif defined(CORE_CM4)
+
+    SET_BIT(m_Handle.pBDMA->CCR, Interrupt);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -563,8 +786,16 @@ void DMA_Driver::EnableInterrupt(uint32_t Interrupt)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::DisableInterrupt(uint32_t Interrupt)
 {
-    if(m_DMA_Type == DMA_TYPE) CLEAR_BIT(m_Handle.pDMA->CR,   Interrupt);
-    else                       CLEAR_BIT(m_Handle.pBDMA->CCR, Interrupt);
+  #if defined(CORE_CM7)
+
+    if(m_DMA_Type == DMA_TYPE)  CLEAR_BIT(m_Handle.pDMA->CR, Interrupt);
+    else                        CLEAR_BIT(m_Handle.pBDMA->CCR, Interrupt);
+
+  #elif defined(CORE_CM4)
+
+    CLEAR_BIT(m_Handle.pBDMA->CCR, Interrupt);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -579,8 +810,16 @@ void DMA_Driver::DisableInterrupt(uint32_t Interrupt)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::EnableTransmitCompleteInterrupt(void)
 {
-    if(m_DMA_Type == DMA_TYPE) SET_BIT(m_Handle.pDMA->CR,   DMA_SxCR_TCIE);
-    else                       SET_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_TCIE);
+  #if defined(CORE_CM7)
+
+    if(m_DMA_Type == DMA_TYPE)  SET_BIT(m_Handle.pDMA->CR, DMA_SxCR_TCIE);
+    else                        SET_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_TCIE);
+
+  #elif defined(CORE_CM4)
+
+    SET_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_TCIE);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -595,10 +834,17 @@ void DMA_Driver::EnableTransmitCompleteInterrupt(void)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::DisableTransmitCompleteInterrupt(void)
 {
-    if(m_DMA_Type == DMA_TYPE) CLEAR_BIT(m_Handle.pDMA->CR,   DMA_SxCR_TCIE);
-    else                       CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_TCIE);
-}
+  #if defined(CORE_CM7)
 
+    if(m_DMA_Type == DMA_TYPE)  CLEAR_BIT(m_Handle.pDMA->CR, DMA_SxCR_TCIE);
+    else                        CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_TCIE);
+
+  #elif defined(CORE_CM4)
+
+    CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_TCIE);
+
+  #endif
+}
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           EnableTransmitHalfCompleteInterrupt
@@ -611,10 +857,17 @@ void DMA_Driver::DisableTransmitCompleteInterrupt(void)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::EnableTransmitHalfCompleteInterrupt(void)
 {
-    if(m_DMA_Type == DMA_TYPE) SET_BIT(m_Handle.pDMA->CR,   DMA_SxCR_HTIE);
-    else                       SET_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_HTIE);
-}
+  #if defined(CORE_CM7)
 
+    if(m_DMA_Type == DMA_TYPE)  SET_BIT(m_Handle.pDMA->CR, DMA_SxCR_HTIE);
+    else                        SET_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_HTIE);
+
+  #elif defined(CORE_CM4)
+
+    SET_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_HTIE);
+
+  #endif
+}
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DisableTransmitHalfCompleteInterrupt
@@ -627,10 +880,17 @@ void DMA_Driver::EnableTransmitHalfCompleteInterrupt(void)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::DisableTransmitHalfCompleteInterrupt(void)
 {
-    if(m_DMA_Type == DMA_TYPE) CLEAR_BIT(m_Handle.pDMA->CR,   DMA_SxCR_HTIE);
-    else                       CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_HTIE);
-}
+  #if defined(CORE_CM7)
 
+    if(m_DMA_Type == DMA_TYPE)  CLEAR_BIT(m_Handle.pDMA->CR, DMA_SxCR_HTIE);
+    else                        CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_HTIE);
+
+  #elif defined(CORE_CM4)
+
+    CLEAR_BIT(m_Handle.pBDMA->CCR, BDMA_CCR_HTIE);
+
+  #endif
+}
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           CheckFifoParam
@@ -643,7 +903,7 @@ void DMA_Driver::DisableTransmitHalfCompleteInterrupt(void)
 //  Note(s):        Use this function only at development.
 //
 //-------------------------------------------------------------------------------------------------
-#if (DMA_CHECK_FIFO_PARAMS == DEF_ENABLED)
+#if (DMA_CHECK_FIFO_PARAMS == DEF_ENABLED) && defined(CORE_CM7)
 SystemState_e DMA_Driver::CheckFifoParam(DMA_Info_t* pInfo)
 {
     SystemState_e State = SYS_READY;
@@ -751,21 +1011,24 @@ SystemState_e DMA_Driver::CheckFifoParam(DMA_Info_t* pInfo)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::CalcBaseAddress(void)
 {
-    if(m_DMA_Type == DMA_TYPE) // DMA1 or DMA2 instance
-    {
-        m_CommonBaseAddress = (uint32_t(m_Handle.pPtr) & uint32_t(~0x3FF));     // Pointer to LISR and LIFCR
+  #if defined(CORE_CM7)
 
-        if(m_StreamNumber > 3)
-        {
-            m_CommonBaseAddress += 4;                                           // Pointer to HISR and HIFCR
-        }
-    }
-    else // BDMA instance
+    if(m_DMA_Type == DMA_TYPE)
     {
-        m_CommonBaseAddress = (uint32_t(m_Handle.pPtr) & uint32_t(~0xFF));      // Pointer to ISR and IFCR
+        m_CommonBaseAddress = (uint32_t(m_Handle.pPtr) & uint32_t(~0x3FF));
+        if(m_StreamNumber > 3) m_CommonBaseAddress += 4;
     }
+    else
+    {
+        m_CommonBaseAddress = (uint32_t(m_Handle.pPtr) & uint32_t(~0xFF));
+    }
+
+  #elif defined(CORE_CM4)
+
+    m_CommonBaseAddress = (uint32_t(m_Handle.pPtr) & uint32_t(~0xFF));
+
+  #endif
 }
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           CalcDMAMUX_ChannelBaseAndMask
@@ -778,22 +1041,32 @@ void DMA_Driver::CalcBaseAddress(void)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::CalcDMAMUX_ChannelBaseAndMask(void)
 {
+  #if defined(CORE_CM7)
+
     uint32_t DMAMUX_ChannelAddress;
 
-    if(m_DMA_Type == DMA_TYPE)  // DMA1 or DMA2 instance
+    if(m_DMA_Type == DMA_TYPE)
     {
-        DMAMUX_ChannelAddress   = uint32_t(DMAMUX1_Channel0);
+        DMAMUX_ChannelAddress = uint32_t(DMAMUX1_Channel0);
         m_pDMAMUX_ChannelStatus = DMAMUX1_ChannelStatus;
     }
-    else                        // BDMA instance
+    else
     {
-        // BDMA Channels are connected to DMAMUX2 channels
-        DMAMUX_ChannelAddress   = uint32_t(DMAMUX2_Channel0);
+        DMAMUX_ChannelAddress = uint32_t(DMAMUX2_Channel0);
         m_pDMAMUX_ChannelStatus = DMAMUX2_ChannelStatus;
     }
 
-    m_pDMAMUX_Channel          = (DMAMUX_Channel_TypeDef *)((uint32_t)(((uint32_t)DMAMUX_ChannelAddress) + (m_StreamNumber * 4)));
+    m_pDMAMUX_Channel = (DMAMUX_Channel_TypeDef*)(DMAMUX_ChannelAddress + (m_StreamNumber * 4));
     m_DMAMUX_ChannelStatusMask = uint32_t(1) << (m_StreamNumber & 0x1F);
+
+  #elif defined(CORE_CM4)
+
+    uint32_t DMAMUX_ChannelAddress = uint32_t(DMAMUX2_Channel0);
+    m_pDMAMUX_ChannelStatus = DMAMUX2_ChannelStatus;
+    m_pDMAMUX_Channel = (DMAMUX_Channel_TypeDef*)(DMAMUX_ChannelAddress + (m_StreamNumber * 4));
+    m_DMAMUX_ChannelStatusMask = uint32_t(1) << (m_StreamNumber & 0x1F);
+
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -808,23 +1081,31 @@ void DMA_Driver::CalcDMAMUX_ChannelBaseAndMask(void)
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::CalcDMAMUX_RequestGenBaseAndMask(uint32_t Request)
 {
+  #if defined(CORE_CM7)
+
     uint32_t DMAMUX_RequestGeneratorAddress;
 
-    if(m_DMA_Type == DMA_TYPE) // DMA1 or DMA2 instance
+    if(m_DMA_Type == DMA_TYPE)
     {
-        // DMA1 and DMA2 Streams use DMAMUX1 request generator blocks
         DMAMUX_RequestGeneratorAddress = uint32_t(DMAMUX1_RequestGenerator0);
-        m_pDMAMUX_RequestGenStatus     = DMAMUX1_RequestGenStatus;
+        m_pDMAMUX_RequestGenStatus = DMAMUX1_RequestGenStatus;
     }
     else
     {
-        // BDMA Channels are connected to DMAMUX2 request generator blocks
         DMAMUX_RequestGeneratorAddress = uint32_t(DMAMUX2_RequestGenerator0);
-        m_pDMAMUX_RequestGenStatus     = DMAMUX2_RequestGenStatus;
+        m_pDMAMUX_RequestGenStatus = DMAMUX2_RequestGenStatus;
     }
 
-    m_pDMAMUX_RequestGen          = (DMAMUX_RequestGen_TypeDef *)((uint32_t)((DMAMUX_RequestGeneratorAddress) + ((Request - 1) * 4)));
+    m_pDMAMUX_RequestGen = (DMAMUX_RequestGen_TypeDef*)(DMAMUX_RequestGeneratorAddress + ((Request - 1) * 4));
     m_DMAMUX_RequestGenStatusMask = uint32_t(1) << (Request - 1);
-}
 
+  #elif defined(CORE_CM4)
+
+    uint32_t DMAMUX_RequestGeneratorAddress = uint32_t(DMAMUX2_RequestGenerator0);
+    m_pDMAMUX_RequestGenStatus = DMAMUX2_RequestGenStatus;
+    m_pDMAMUX_RequestGen = (DMAMUX_RequestGen_TypeDef*)(DMAMUX_RequestGeneratorAddress + ((Request - 1) * 4));
+    m_DMAMUX_RequestGenStatusMask = uint32_t(1) << (Request - 1);
+
+  #endif
+}
 //-------------------------------------------------------------------------------------------------

@@ -146,7 +146,7 @@ class Console : public CallbackInterface
         uint16_t                                m_ActiveProcessLevel;
         ChildProcessInterface*                  m_pChildProcess[CON_CHILD_PROCESS_PUSH_POP_LEVEL];
 
-      #if (CON_TRAP_INCOMING_COMMENT_LINE == DEF_ENABLED)
+      #if (CON_TRAP_COMMENT_INCOMING_LINE == DEF_ENABLED)
         bool                                    m_InTrapForCommentLine;
         TickCount_t                             m_TrapTimeOut;
         bool                                    m_IsItIdle;

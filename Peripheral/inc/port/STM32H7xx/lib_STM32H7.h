@@ -70,7 +70,10 @@ struct I2S_TypeDef
 
 uint32_t GetCurrentCPUID    (void);
 uint32_t GetUniqueCPUID     (void);
+
+#if CORE_CM7
 void     CPU_CACHE_Enable   (void);
+#endif
 
 //-------------------------------------------------------------------------------------------------
 

@@ -73,7 +73,6 @@
 //-------------------------------------------------------------------------------------------------
 
 #define RCC_PLLCFGR_RESET_VALUE             0x01FF0000
-\
 
 // Vector Table base offset field. This value must be a multiple of 0x200.
 #define VECT_TAB_OFFSET                     0x00000000

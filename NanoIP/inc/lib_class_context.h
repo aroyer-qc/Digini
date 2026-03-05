@@ -183,6 +183,7 @@ class NetworkContext
 
 
       #if (IP_USE_TCP_SERVER == DEF_ENABLED) || (IP_USE_TCP_CLIENT == DEF_ENABLED)
+        TCP_ManagerSystem               m_TCP;
         TCP_Manager*                    m_pTCP = nullptr;                       // Transport Control Protocol Cleint Side
       #endif
 

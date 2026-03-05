@@ -116,9 +116,9 @@ void NetworkContext::Initialize(IF_ID_e IF_ID)
   #endif
 
   #if (IP_USE_TCP_SERVER == DEF_ENABLED) || (IP_USE_TCP_CLIENT == DEF_ENABLED)
-    m_pTCP = new TCP_ManagerSystem(this);
+    m_TCP.Initialize(this);
+    SetTCP_Manager(&m_TCP);
   #endif
-
 }
 
 

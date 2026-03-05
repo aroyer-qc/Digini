@@ -82,7 +82,7 @@ class MQTT_Client
 {
     public:
 
-        bool                    Initialize                  (NetworkContext& Context);
+        bool                    Initialize                  (NetworkContext* pContext);
         bool                    Connect                     (const IP_Address_t* pServerIP, IP_Port_t Port, const char* pClientID, uint16_t KeepAliveSeconds);
         bool                    Subscribe                   (const char* pTopic, MQTT_QoS_e QoS);
         bool                    Publish                     (const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS);

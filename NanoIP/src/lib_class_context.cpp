@@ -114,7 +114,14 @@ void NetworkContext::Initialize(IF_ID_e IF_ID)
   #if (IP_USE_RAW == DEF_ENABLED)
     m_RAW.Initialize(this);
   #endif
+
+  #if (IP_USE_TCP_SERVER == DEF_ENABLED) || (IP_USE_TCP_CLIENT == DEF_ENABLED)
+    m_pTCP = new TCP_ManagerSystem(this);
+  #endif
+
 }
+
+
 
 
 bool NetworkContext::IsEthernetReady(void)

@@ -69,11 +69,11 @@ extern "C" void TaskIP_Manager_Wrapper(void* pvParameters)
 //  Description:    Initialize IP Task
 //
 //-------------------------------------------------------------------------------------------------
-void IP_Manager::Initialize(NetworkContext& Context)
+void IP_Manager::Initialize(NetworkContext* pContext)
 {
     nOS_Error Error;
 
-    m_pContext          = &Context;
+    m_pContext          = pContext;
     m_SequenceID        = RNG_GetRandom();
     m_NextEphemeralPort = IP_EPHEMERAL_PORT_MIN;
 

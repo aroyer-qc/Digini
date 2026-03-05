@@ -76,7 +76,7 @@ class Socket
 
     public:
 
-                            Socket              (NetworkContext& Context);
+                            Socket              (NetworkContext* pContext);
 
         void                Create              (SocketType_e Type);
         SystemState_e       Bind                (IP_Port_t Port);
@@ -166,7 +166,7 @@ class SocketManager
 {
     public:
 
-        void                Initialize              (NetworkContext& Context);
+        void                Initialize              (NetworkContext* pContext);
 
         Socket*             AllocSocket             (SocketType_e Type);
         void                FreeSocket              (Socket** ppSocket);

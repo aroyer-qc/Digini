@@ -79,7 +79,7 @@ class ARP_Manager
 {
     public:
 
-        SystemState_e       Initialize              (NetworkContext& Context);
+        SystemState_e       Initialize              (NetworkContext* pContextt);
         void                ProcessIP               (IP_PacketMsg_t* pRX);
         void                ProcessARP              (IP_PacketMsg_t* pRX);
         void                ProcessOut              (void);

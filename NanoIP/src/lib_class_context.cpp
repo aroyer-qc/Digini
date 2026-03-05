@@ -85,34 +85,34 @@ void NetworkContext::Initialize(IF_ID_e IF_ID)
     SetStaticSubnetMask(m_Config[IF_ID].DefaultSubnetMask);
     SetStaticDNS_IP(m_Config[IF_ID].DefaultStaticDNS);
     SetIP_Valid((m_Config[IF_ID].DefaultStatic_IP == IP_ADDRESS(255,255,255,255)) ? false : true);
-    m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config, *this);
+    m_IF_Driver.Initialize(&m_Config[IF_ID].IP_ETH_Config, this);
     RegisterSendCallback(&m_IF_Driver.LowLevelOutputWrapper, &m_IF_Driver);
 
     // Now initialize managers
-    m_IP_Manager.Initialize(*this);
-    m_SocketManager.Initialize(*this);
-    m_ARP.Initialize(*this);
+    m_IP_Manager.Initialize(this);
+    m_SocketManager.Initialize(this);
+    m_ARP.Initialize(this);
 
   #if (IP_USE_DHCP == DEF_ENABLED)
-    m_DHCP.Initialize(*this);
+    m_DHCP.Initialize(this);
   #endif
   #if (IP_USE_ICMP == DEF_ENABLED)
-    m_ICMP.Initialize(*this);
+    m_ICMP.Initialize(this);
   #endif
   #if (IP_USE_UDP == DEF_ENABLED)
-    m_UDP.Initialize(*this);
+    m_UDP.Initialize(this);
   #endif
   #if (IP_USE_DNS == DEF_ENABLED)
-    m_DNS.Initialize(*this);
+    m_DNS.Initialize(this);
   #endif
   #if (IP_USE_NTP == DEF_ENABLED)
-    m_NTP.Initialize(*this);
+    m_NTP.Initialize(this);
   #endif
   #if (IP_USE_SNTP == DEF_ENABLED)
-    m_SNTP.Initialize(*this);
+    m_SNTP.Initialize(this);
   #endif
   #if (IP_USE_RAW == DEF_ENABLED)
-    m_RAW.Initialize(*this);
+    m_RAW.Initialize(this);
   #endif
 }
 

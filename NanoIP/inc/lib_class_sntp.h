@@ -57,7 +57,7 @@ class SNTP_Client
 {
     public:
 
-        bool            Initialize                  (NetworkContext& Context);
+        bool            Initialize                  (NetworkContext* pContextt);
         bool            Start                       (const IP_Address_t ServerIP);
         void            Process                     (void);
         uint32_t        GetUnixTime                 (void) const                            { return m_UnixTime; }

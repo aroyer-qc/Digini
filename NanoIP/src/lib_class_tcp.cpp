@@ -65,7 +65,7 @@
 //-------------------------------------------------------------------------------------------------
 //  Name:           TCP_SocketSystem (constructor)
 //
-//  Parameter(s):   NetworkContext& Context
+//  Parameter(s):   NetworkContext* pContextt
 //                      Reference to the global network context used by the base Socket class.
 //
 //                  TCP_Manager& TCP
@@ -82,7 +82,7 @@
 //                  is called. The TCP_Manager reference is stored so the socket can invoke
 //                  SendSegment() and participate in the TCP state machine.
 //-------------------------------------------------------------------------------------------------
-TCP_SocketSystem::TCP_SocketSystem(NetworkContext& Context, TCP_Manager& TCP) : Socket(Context)
+TCP_SocketSystem::TCP_SocketSystem(NetworkContext* pContext, TCP_Manager& TCP) : Socket(pContext)
 {
     m_pTCP              = &TCP;                     // Store back-pointer to TCP manager
     m_State             = TCP_STATE_CLOSED;
@@ -325,11 +325,11 @@ void TCP_SocketSystem::Close(void)
 //                  The caller receives ownership of the returned TCP_Socket pointer.
 //                  The TCP_ManagerSystem tracks the active client socket internally.
 //-------------------------------------------------------------------------------------------------
-bool TCP_ManagerSystem::Initialize(NetworkContext& Context)
+bool TCP_ManagerSystem::Initialize(NetworkContext* pContext)
 {
-    m_pSocketManager = &Context.GetSocketManager();                 // Retrieve socket manager
+    m_pSocketManager = &pContext->GetSocketManager();               // Retrieve socket manager
     m_pClientSocket  = nullptr;                                     // Reset internal state (client or server will set these later)
-    m_pContext       = &Context;
+    m_pContext       = pContext;
 
   #if (IP_USE_TCP_SERVER == DEF_ENABLED)
     for(int i = 0; i < IP_TCP_MAX_LISTEN; i++)                      // Clear server listen sockets
@@ -372,7 +372,7 @@ bool TCP_ManagerSystem::Initialize(NetworkContext& Context)
 TCP_Socket* TCP_ManagerSystem::Connect(const IP_Address_t& ServerIP, uint16_t Port)
 {
     // Allocate a TCP socket directly
-    TCP_SocketSystem* pSystem = new TCP_SocketSystem(*m_pContext, *this);
+    TCP_SocketSystem* pSystem = new TCP_SocketSystem(m_pContext, *this);
 
     if(pSystem == nullptr)
     {

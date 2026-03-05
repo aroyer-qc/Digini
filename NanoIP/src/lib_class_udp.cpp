@@ -79,9 +79,9 @@
 //                  incoming datagrams.
 //
 //-------------------------------------------------------------------------------------------------
-void UDP_Manager::Initialize(NetworkContext& Context)
+void UDP_Manager::Initialize(NetworkContext* pContext)
 {
-    m_pContext = &Context;
+    m_pContext = pContext;
     memset(m_BoundSockets, 0, sizeof(m_BoundSockets));      // Clear the binding table
     m_BoundCount = 0;                                       // Reset the number of active bindings
 }

@@ -44,7 +44,7 @@ class ICMP_Manager
 {
     public:
 
-        void                Initialize      (NetworkContext& Context);
+        void                Initialize      (NetworkContext* pContextt);
         void                Process         (IP_PacketMsg_t* pRX);
 
     private:

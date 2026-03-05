@@ -107,9 +107,9 @@
 //                  transactions and clears the pending-request table.
 //
 //-------------------------------------------------------------------------------------------------
-void DNS_Manager::Initialize(NetworkContext& Context)
+void DNS_Manager::Initialize(NetworkContext* pContext)
 {
-    m_pContext = &Context;
+    m_pContext = pContext;
 
     // Start XID counter at a random value (never 0)
     m_XID_Counter = (uint16_t)RNG_GetRandom();

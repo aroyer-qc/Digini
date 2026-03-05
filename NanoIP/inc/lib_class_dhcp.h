@@ -165,7 +165,7 @@ class DHCPv4_Manager
 {
     public:
 
-        void            Initialize      (NetworkContext& Context);
+        void            Initialize      (NetworkContext* pContextt);
         bool            Process         (void);
 
         bool            GetMode         (void)                      { return m_Mode;       }
@@ -217,7 +217,7 @@ class DHCPv4_Manager
 //-------------------------------------------------------------------------------------------------
 
 #else // (IP_USE_DHCP == DEF_DISABLED)
-    
+
     #define GetActiveGatewayIP()                GetStaticGatewayIP()
     #define GetActiveSubnetMask()               GetStaticSubnetMask()
     #define GetActiveIP()                       GetStaticIP()

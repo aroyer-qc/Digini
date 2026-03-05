@@ -54,7 +54,7 @@ class DNS_Manager
 {
     public:
 
-        void                    Initialize          (NetworkContext& Context);
+        void                    Initialize          (NetworkContext* pContextt);
         bool                    SendQuery           (const char* pDomainName, DNS_Callback_t pCallback, void* pContext);
         bool                    Process             (void);
 

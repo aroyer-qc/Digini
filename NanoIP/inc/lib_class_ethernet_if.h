@@ -58,7 +58,7 @@ class ETH_IF_Driver
 {
     public:
 
-        SystemState_e           Initialize                  (const IP_ETH_Config_t* pETH_Config, NetworkContext& Context);
+        SystemState_e           Initialize                  (const IP_ETH_Config_t* pETH_Config, NetworkContext* pContextt);
         void                    Run                         (void);
         NetworkContext*         GetContext                  (void)                                          { return m_pContext; }
         void                    OnMAC_Event                 (uint32_t Event);

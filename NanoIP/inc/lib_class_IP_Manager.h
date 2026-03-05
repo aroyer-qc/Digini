@@ -89,7 +89,7 @@ class IP_Manager
 {
     public:
 
-        void                    Initialize                  (NetworkContext& Context);
+        void                    Initialize                  (NetworkContext* pContextt);
         void                    Run                         (void);
 
         void                    ProcessIP                   (IP_PacketMsg_t* pRX);

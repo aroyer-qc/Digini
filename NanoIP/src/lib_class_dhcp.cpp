@@ -178,11 +178,11 @@ const uint8_t DHCPv4_Manager::m_OPL_Request[10] =
 //  Description:    Initialize the DHCP Client
 //
 //-------------------------------------------------------------------------------------------------
-void DHCPv4_Manager::Initialize(NetworkContext& Context)
+void DHCPv4_Manager::Initialize(NetworkContext* pContext)
 {
     nOS_Error Error;
 
-    m_pContext = &Context;
+    m_pContext = pContext;
     m_Mode     = DHCP_IS_ON;            // This is the default value for DHCP
     m_State    = DHCP_STATE_INITIAL;
     m_pSocket  = nullptr;

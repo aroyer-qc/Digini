@@ -42,7 +42,7 @@ class TCP_SocketSystem : public TCP_Socket, public Socket
     public:
 
 
-                                    TCP_SocketSystem    (NetworkContext& Context, TCP_Manager& TCP);
+                                    TCP_SocketSystem    (NetworkContext* pContext, TCP_Manager& TCP);
 
         size_t                      Send                (const uint8_t* pBuffer, size_t Length);
         size_t                      Receive             (uint8_t* pBuffer, size_t MaxLength);
@@ -85,7 +85,7 @@ class TCP_ManagerSystem : public TCP_Manager
 {
     public:
 
-        bool            Initialize                      (NetworkContext& Context);
+        bool            Initialize                      (NetworkContext* pContext);
 
       #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
         TCP_Socket*      Connect                         (const IP_Address_t& ServerIP, uint16_t Port);

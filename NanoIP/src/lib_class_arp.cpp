@@ -69,11 +69,11 @@ void ARP_TimerCallBack(nOS_Timer* pTimer, void* pArg);
 //  Note(s):        This function must be called once during network stack initialization,
 //                  before any ARP processing or IP transmission occurs.
 //-------------------------------------------------------------------------------------------------
-SystemState_e ARP_Manager::Initialize(NetworkContext& Context)
+SystemState_e ARP_Manager::Initialize(NetworkContext* pContext)
 {
     nOS_Error Error;
 
-    m_pContext      = &Context;
+    m_pContext      = pContext;
     m_PendingOldest = ARP_PENDING_NONE;
     m_IP_Address    = IP_ADDRESS(0,0,0,0);
 

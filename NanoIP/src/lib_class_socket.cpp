@@ -59,9 +59,9 @@
 //                  - Safe to call only once during initialization.
 //
 //-------------------------------------------------------------------------------------------------
-void SocketManager::Initialize(NetworkContext& Context)
+void SocketManager::Initialize(NetworkContext* pContext)
 {
-    m_pContext    = &Context;
+    m_pContext    = pContext;
     m_ActiveCount = 0;
 }
 
@@ -103,7 +103,7 @@ Socket* SocketManager::AllocSocket(SocketType_e Type)
         return nullptr;
     }
 
-    Socket* pSocket = new (pSocketMemory) Socket(*m_pContext);                      // Construct the socket in-place (placement new)
+    Socket* pSocket = new (pSocketMemory) Socket(m_pContext);                      // Construct the socket in-place (placement new)
     pSocket->Create(Type);                                                          // Initialize protocol-specific structures
     m_ActiveSockets[m_ActiveCount++] = pSocket;                                     // Register in active socket list
     return pSocket;
@@ -324,7 +324,7 @@ Socket* SocketManager::FindRAW_ByProtocol(uint8_t Protocol)
 //
 //  Name:           Socket (Constructor)
 //
-//  Parameter(s):   NetworkContext& Context    Reference to the global network context.
+//  Parameter(s):   NetworkContext* pContextt    Reference to the global network context.
 //
 //  Return:         None
 //
@@ -342,9 +342,9 @@ Socket* SocketManager::FindRAW_ByProtocol(uint8_t Protocol)
 //                  - No memory allocation occurs here.
 //
 //-------------------------------------------------------------------------------------------------
-Socket::Socket(NetworkContext& Context)
+Socket::Socket(NetworkContext* pContext)
 {
-    m_pContext = &Context;
+    m_pContext = pContext;
     m_Type        = SOCKET_TYPE_INVALID;
     m_State       = SOCKET_STATE_CLOSED;
     m_IsBlocking  = true;

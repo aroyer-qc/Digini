@@ -77,12 +77,12 @@ extern "C" void ClassEthernetIf_Wrapper(void* pvParameters)
 //                  interface.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, NetworkContext& Context)
+SystemState_e ETH_IF_Driver::Initialize(const IP_ETH_Config_t* pETH_Config, NetworkContext* pContext)
 {
     nOS_Error                Error;
     SystemState_e            State;
 
-    m_pContext    = &Context;
+    m_pContext    = pContext;
     m_pETH_Config = pETH_Config;
 
 	m_pContext->SetLinkState(ETH_LINK_DOWN);

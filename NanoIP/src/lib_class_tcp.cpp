@@ -660,56 +660,60 @@ void TCP_ManagerSystem::Process(void)
 //-------------------------------------------------------------------------------------------------
 void TCP_ManagerSystem::ProcessSegment(IP_PacketMsg_t* pMsg)
 {
-    if((pMsg == nullptr) || (pMsg->pPacket == nullptr))
+    do
     {
-        return;
+        if((pMsg == nullptr) || (pMsg->pPacket == nullptr))
+        {
+            break;
+        }
+
+        IP_EthernetPacket_t* pPacket = pMsg->pPacket;
+
+        // Basic size check: ETH + IP + TCP header
+        if(pMsg->PacketSize < sizeof(TCP_Frame_t))
+        {
+            break;
+        }
+
+        TCP_Socket* pSocket = nullptr;
+
+        // -------------------------------------------------------------------------
+        // Parse TCP header and identify the socket
+        // -------------------------------------------------------------------------
+        if(ParseTCP_Header(pPacket, pSocket) == false)
+        {
+            break;
+        }
+
+        // -------------------------------------------------------------------------
+        // Extract TCP header fields
+        // -------------------------------------------------------------------------
+        const TCP_Header_t& hdr = pPacket->TCP_Frame.Header;
+        const IP_Header_t&  ip  = pPacket->TCP_Frame.IP_Header;
+
+        uint8_t  Flags = hdr.Flags;
+        uint32_t Seq   = ntohl(hdr.SequenceNumber);
+        uint32_t Ack   = ntohl(hdr.AcknowledgeNumber);
+
+        // -------------------------------------------------------------------------
+        // Compute payload length
+        // -------------------------------------------------------------------------
+        uint8_t  ipHeaderLen  = (ip.VersionIHL & 0x0F) * 4;       // IHL in bytes
+        uint8_t  tcpHeaderLen = (hdr.Offset >> 4) * 4;            // Data offset in bytes
+        uint16_t totalLength  = ntohs(ip.Length);
+
+        size_t PayloadLen = 0;
+        if(totalLength >= (ipHeaderLen + tcpHeaderLen))
+        {
+            PayloadLen = static_cast<size_t>(totalLength - ipHeaderLen - tcpHeaderLen);
+        }
+
+        // -------------------------------------------------------------------------
+        // Dispatch to the TCP state machine
+        // -------------------------------------------------------------------------
+        ProcessIncomingFlags(pSocket, pPacket, Flags, Seq, Ack, PayloadLen);
     }
-
-    IP_EthernetPacket_t* pPacket = pMsg->pPacket;
-
-    // Basic size check: ETH + IP + TCP header
-    if(pMsg->PacketSize < sizeof(TCP_Frame_t))
-    {
-        return;     // Caller decides how to free pMsg
-    }
-
-    TCP_Socket* pSocket = nullptr;
-
-    // -------------------------------------------------------------------------
-    // Parse TCP header and identify the socket
-    // -------------------------------------------------------------------------
-    if(ParseTCP_Header(pPacket, pSocket) == false)
-    {
-        return;     // Invalid header or no matching socket
-    }
-
-    // -------------------------------------------------------------------------
-    // Extract TCP header fields
-    // -------------------------------------------------------------------------
-    const TCP_Header_t& hdr = pPacket->TCP_Frame.Header;
-    const IP_Header_t&  ip  = pPacket->TCP_Frame.IP_Header;
-
-    uint8_t  Flags = hdr.Flags;
-    uint32_t Seq   = ntohl(hdr.SequenceNumber);
-    uint32_t Ack   = ntohl(hdr.AcknowledgeNumber);
-
-    // -------------------------------------------------------------------------
-    // Compute payload length
-    // -------------------------------------------------------------------------
-    uint8_t  ipHeaderLen  = (ip.VersionIHL & 0x0F) * 4;       // IHL in bytes
-    uint8_t  tcpHeaderLen = (hdr.Offset >> 4) * 4;            // Data offset in bytes
-    uint16_t totalLength  = ntohs(ip.Length);
-
-    size_t PayloadLen = 0;
-    if(totalLength >= (ipHeaderLen + tcpHeaderLen))
-    {
-        PayloadLen = static_cast<size_t>(totalLength - ipHeaderLen - tcpHeaderLen);
-    }
-
-    // -------------------------------------------------------------------------
-    // Dispatch to the TCP state machine
-    // -------------------------------------------------------------------------
-    ProcessIncomingFlags(pSocket, pPacket, Flags, Seq, Ack, PayloadLen);
+    while(0);
 
     IP_Manager::FreeMessage(pMsg);
 }
@@ -747,7 +751,7 @@ void TCP_ManagerSystem::ProcessSegment(IP_PacketMsg_t* pMsg)
 bool TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload, size_t Length, uint8_t Flags, bool Retransmit)
 {
     SystemState_e State;
-    
+
     if(pSocket == nullptr)
     {
         return false;
@@ -788,7 +792,7 @@ bool TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload
     hdr.Window            = pSystem->m_LocalWindow;
     hdr.UrgentPointer     = 0;
     hdr.Offset = (sizeof(TCP_Header_t) / 4) << 4;               // Compute TCP header length (no options)
-    
+
     // Copy payload
     if(pPayload && Length > 0)
     {
@@ -807,7 +811,7 @@ bool TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload
     pMsg->PayloadSize  = 0;
     pMsg->PacketSize   = sizeof(IP_EthernetPacket_t);
 
-    State = pIP_Manager->SendPacket(pMsg);                      // Send through IP layer                                
+    State = pIP_Manager->SendPacket(pMsg);                      // Send through IP layer
 
     if((State != SYS_READY) && (State != SYS_ARP_RESOLVE_PENDING))
     {

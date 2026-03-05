@@ -37,43 +37,46 @@
 // TCP TCP_SocketSystem (extends generic Socket)
 class TCP_SocketSystem : public TCP_Socket, public Socket
 {
-    friend class            TCP_ManagerSystem;
+    friend class                    TCP_ManagerSystem;
 
     public:
 
 
-                            TCP_SocketSystem    (NetworkContext& Context, TCP_Manager& TCP);
+                                    TCP_SocketSystem    (NetworkContext& Context, TCP_Manager& TCP);
 
-        size_t              Send                (const uint8_t* pBuffer, size_t Length);
-        size_t              Receive             (uint8_t* pBuffer, size_t MaxLength);
-        void                Close               (void);
-        TCP_State_e         GetState            (void) const override                   { return m_State; }
-        bool                IsConnected         (void) const override                   { return (m_State == TCP_STATE_ESTABLISHED); }
+        size_t                      Send                (const uint8_t* pBuffer, size_t Length);
+        size_t                      Receive             (uint8_t* pBuffer, size_t MaxLength);
+        void                        Close               (void);
+        TCP_State_e                 GetState            (void) const override                       { return m_State; }
+        bool                        IsConnected         (void) const override                       { return (m_State == TCP_STATE_ESTABLISHED); }
+        void                        SetEventHandler     (TCP_SocketEventHandler* pEventHandler)     { m_pEventHandler = pEventHandler; }
 
     private:
 
-        friend class        TCP_Manager;
-        TCP_Manager*        m_pTCP;
-        TCP_State_e         m_State;
+        friend class                TCP_Manager;
+        TCP_Manager*                m_pTCP;
+        TCP_State_e                 m_State;
+        TCP_SocketEventHandler*     m_pEventHandler = nullptr;
 
-        uint32_t            m_SeqNumber;        // Our sequence number
-        uint32_t            m_LastSeqNumber;
-        uint32_t            m_AckNumber;        // Expected next byte
-        uint16_t            m_RemoteWindow;
-        uint16_t            m_LocalWindow;
 
-        TickCount_t         m_LastSendTick;
-        TickCount_t         m_LastReceivedTick;
-        TickCount_t         m_RetransmitStart;
+        uint32_t                    m_SeqNumber;        // Our sequence number
+        uint32_t                    m_LastSeqNumber;
+        uint32_t                    m_AckNumber;        // Expected next byte
+        uint16_t                    m_RemoteWindow;
+        uint16_t                    m_LocalWindow;
 
-        bool                m_RetransmitPending;
-        uint8_t             m_LastFlags;
-        size_t              m_LastPayloadLength;
+        TickCount_t                 m_LastSendTick;
+        TickCount_t                 m_LastReceivedTick;
+        TickCount_t                 m_RetransmitStart;
+
+        bool                        m_RetransmitPending;
+        uint8_t                     m_LastFlags;
+        size_t                      m_LastPayloadLength;
         // Replace static buffers later with your allocator
-        uint8_t             m_TX_Buffer[512];
-        size_t              m_TX_Length;
-        uint8_t             m_RX_Buffer[512];
-        size_t              m_RX_Length;
+        uint8_t                     m_TX_Buffer[512];
+        size_t                      m_TX_Length;
+        uint8_t                     m_RX_Buffer[512];
+        size_t                      m_RX_Length;
 };
 
 //-------------------------------------------------------------------------------------------------

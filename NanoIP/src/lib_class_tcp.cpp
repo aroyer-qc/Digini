@@ -1082,10 +1082,13 @@ void TCP_ManagerSystem::ProcessIncomingFlags(TCP_Socket* pSocket, IP_EthernetPac
                 {
                     memcpy(pSystem->m_RX_Buffer, pPayloadStart, PayloadLen);
                     pSystem->m_RX_Length = PayloadLen;
-
                     pSystem->m_AckNumber = Seq + PayloadLen;
-
                     SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK, false);
+
+                    if(pSystem->m_pEventHandler != nullptr)
+                    {
+                        pSystem->m_pEventHandler->OnSocketEvent(pSocket, SOCKET_EVENT_RX_READY);
+                    }
                 }
             }
 

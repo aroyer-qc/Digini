@@ -45,37 +45,56 @@ enum TCP_State_e
     TCP_STATE_ERROR
 };
 
+enum SocketEvent_e
+{
+    SOCKET_EVENT_NONE = 0,          // No event
+    SOCKET_EVENT_CONNECTED,         // TCP connection established
+    SOCKET_EVENT_RX_READY,          // New payload available in RX buffer
+    SOCKET_EVENT_CLOSED             // Connection closed (FIN or RST)
+};
+
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
+
+class TCP_Socket;               // forward declaration
+
+class TCP_SocketEventHandler
+{
+    public:
+
+        virtual void            OnSocketEvent   (TCP_Socket* pSocket, SocketEvent_e Event)      = 0;
+};
+
 
 class TCP_Socket
 {
     public:
 
         virtual                 ~TCP_Socket     (){}
-    
+
         virtual size_t          Send            (const uint8_t* pBuffer, size_t Length)         = 0;
         virtual size_t          Receive         (uint8_t* pBuffer, size_t MaxLength)            = 0;
         virtual void            Close           (void)                                          = 0;
         virtual bool            IsConnected     (void) const                                    = 0;
         virtual TCP_State_e     GetState        (void) const                                    = 0;
-};  
-    
-class TCP_Manager   
-{   
-    public: 
-    
+        virtual void            SetEventHandler (TCP_SocketEventHandler* pHandler)              = 0;
+};
+
+class TCP_Manager
+{
+    public:
+
         virtual                 ~TCP_Manager    (){}
-      #if (IP_USE_TCP_CLIENT == DEF_ENABLED)    
+      #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
         virtual TCP_Socket*     Connect         (const IP_Address_t& ServerIP, uint16_t Port)   = 0;
-      #endif    
-    
-      #if (IP_USE_TCP_SERVER == DEF_ENABLED)    
+      #endif
+
+      #if (IP_USE_TCP_SERVER == DEF_ENABLED)
         //SystemState_e   EnterListen             (Socket* pSocket, uint16_t Backlog)           = 0;
         //void            Close                   (Socket* pSocket)                             = 0;
-      #endif    
-    
+      #endif
+
         virtual void            Process         (void)                                          = 0;
         virtual void            ProcessSegment  (IP_PacketMsg_t* pPacket)                       = 0;
         virtual bool            SendSegment     (TCP_Socket* pSocket, const uint8_t* pPayload,

@@ -43,6 +43,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+#define MQTT_BROKER_PORT                1883
 
 //-------------------------------------------------------------------------------------------------
 // Enum(s)
@@ -67,6 +68,10 @@ enum MQTT_QoS_e
     MQTT_QOS_2 = 2
 };
 
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
 typedef void (*MQTT_MessageCallback_t)(void* pContext, const char* pTopic, const uint8_t* pPayload, size_t Length);
 
 //-------------------------------------------------------------------------------------------------
@@ -78,7 +83,7 @@ class MQTT_Client
     public:
 
         bool                    Initialize                  (NetworkContext& Context);
-        bool                    Connect                     (const IP_Address_t* pServerIP, uint16_t Port, const char* pClientID, uint16_t KeepAliveSeconds);
+        bool                    Connect                     (const IP_Address_t* pServerIP, IP_Port_t Port, const char* pClientID, uint16_t KeepAliveSeconds);
         bool                    Subscribe                   (const char* pTopic, MQTT_QoS_e QoS);
         bool                    Publish                     (const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS);
         bool                    Disconnect                  (void);
@@ -86,10 +91,11 @@ class MQTT_Client
         void                    SetMessageCallback          (MQTT_MessageCallback_t Callback, void* pUserContext);
         MQTT_State_e            GetState                    (void)                                                      { return m_State; }
         bool                    IsConnected                 (void)                                                      { return (m_State == MQTT_STATE_CONNECTED); }
+        TCP_Socket*             GetSocket                   (void) const                                                { return m_pSocket; }
 
 private:
 
-        bool                    TCP_Connect                 (const IP_Address_t* pServerIP, uint16_t Port);
+        TCP_Socket*             TCP_Connect                 (const IP_Address_t* pServerIP, IP_Port_t Port);
         bool                    SendConnectFrame            (const char* pClientID);
         bool                    SendSubscribeFrame          (const char* pTopic, MQTT_QoS_e QoS);
         bool                    SendPublishFrame            (const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS);

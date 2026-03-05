@@ -124,7 +124,7 @@ bool MQTT_Client::Connect(const IP_Address_t* pServerIP, uint16_t Port, const ch
 
     m_KeepAliveSeconds = KeepAliveSeconds;
 
-    if(TCP_Connect(pServerIP, Port) == false)
+    if(TCP_Connect(pServerIP, Port) == nullptr)
     {
         m_State = MQTT_STATE_ERROR;
         return false;
@@ -365,12 +365,12 @@ void MQTT_Client::SetMessageCallback(MQTT_MessageCallback_t Callback, void* pUse
 
 //---------------------------------------------------------------------------------------------
 
-bool MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, uint16_t Port)
+TCP_Socket* MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, uint16_t Port)
 {
     if((pServerIP == nullptr) || (m_pContext == nullptr))
     {
         m_State = MQTT_STATE_ERROR;
-        return false;
+        return nullptr;
     }
 
     // Access TCP manager from your NetworkContext
@@ -382,11 +382,11 @@ bool MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, uint16_t Port)
     if(m_pSocket == nullptr)
     {
         m_State = MQTT_STATE_ERROR;
-        return false;
     }
 
-    return true;
+    return m_pSocket;
 }
+
 //---------------------------------------------------------------------------------------------
 
 bool MQTT_Client::SendConnectFrame(const char* pClientID)  //this is bad... it is not using pMemory

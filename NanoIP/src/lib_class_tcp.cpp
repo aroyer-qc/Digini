@@ -371,32 +371,37 @@ bool TCP_ManagerSystem::Initialize(NetworkContext* pContext)
 #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
 TCP_Socket* TCP_ManagerSystem::Connect(const IP_Address_t& ServerIP, uint16_t Port)
 {
-    // Allocate a TCP socket directly
-    TCP_SocketSystem* pSystem = new TCP_SocketSystem(m_pContext, *this);
-
-    if(pSystem == nullptr)
+    if(m_pContext == nullptr)
     {
         return nullptr;
     }
 
-    TCP_Socket* pTCP    = pSystem;
-    Socket* pSocketBase = static_cast<Socket*>(pSystem);
+    SocketManager& socketMgr = m_pContext->GetSocketManager();
+
+    Socket* pSocketBase = socketMgr.AllocSocket(SOCKET_TYPE_STREAM);
+    if(pSocketBase == nullptr)
+    {
+        return nullptr;
+    }
+
+    TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocketBase);
+    pSystem->m_pTCP = this;
+
+    TCP_Socket* pTCP = pSystem;
 
     // Initialize local/remote info
     pSystem->m_State = TCP_STATE_CLOSED;
+
     SocketInfo_t info;
     info.Address = ServerIP;
     info.Port    = Port;
     pSocketBase->SetRemoteInfo(info);
-
-    // Choose ephemeral port
 
     SocketInfo_t local;
     local.Address = m_pContext->GetActiveIP();
     local.Port    = m_pContext->GetIP_Manager()->AllocateEphemeralPort();
     pSocketBase->SetLocalInfo(local);
 
-    // Initialize sequence numbers
     uint32_t isn = (uint32_t)GetTick();
     pSystem->m_SeqNumber     = isn;
     pSystem->m_LastSeqNumber = isn;
@@ -414,22 +419,19 @@ TCP_Socket* TCP_ManagerSystem::Connect(const IP_Address_t& ServerIP, uint16_t Po
     pSystem->m_LastFlags         = 0;
     pSystem->m_LastPayloadLength = 0;
 
-    // Send SYN
     if(SendSegment(pTCP, nullptr, 0, TCP_FLAG_SYN, false) == false)
     {
-        delete pSystem;
+        socketMgr.FreeSocket(&pSocketBase);
         return nullptr;
     }
 
-    // Update state
     pSystem->m_State             = TCP_STATE_SYN_SENT;
     pSystem->m_RetransmitStart   = now;
     pSystem->m_RetransmitPending = true;
 
-    // Store as active client socket
     m_pClientSocket = pTCP;
 
-    return reinterpret_cast<TCP_Socket*>(pTCP);
+    return pTCP;
 }
 #endif
 
@@ -1290,9 +1292,7 @@ void TCP_ManagerSystem::UpdateTimers(void)
         {
             if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
             {
-                pSystem->m_State = TCP_STATE_CLOSED;
-                pSystem->m_RX_Length = 0;
-                pSystem->m_TX_Length = 0;
+                CloseAndFreeSocket(pSystem);
             }
         }
     }
@@ -1317,14 +1317,52 @@ void TCP_ManagerSystem::UpdateTimers(void)
         {
             if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
             {
-                pSystem->m_State = TCP_STATE_CLOSED;
-                pSystem->m_RX_Length = 0;
-                pSystem->m_TX_Length = 0;
+                CloseAndFreeSocket(pSystem);
 
                 // NOTE:
                 // We do NOT free the socket here.
                 // The application or a future socket manager will handle cleanup.
             }
+        }
+    }
+#endif
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void TCP_ManagerSystem::CloseAndFreeSocket(TCP_SocketSystem* pSystem)
+{
+    if(pSystem == nullptr)
+    {
+        return;
+    }
+
+    // 1. Marquer comme fermé et nettoyer les buffers
+    pSystem->m_State = TCP_STATE_CLOSED;
+    pSystem->m_RX_Length = 0;
+    pSystem->m_TX_Length = 0;
+
+    Socket* pBase = static_cast<Socket*>(pSystem);
+
+    // Cas client
+#if (IP_USE_TCP_CLIENT == DEF_ENABLED)
+    if(m_pClientSocket == static_cast<TCP_Socket*>(pSystem))
+    {
+        m_pClientSocket = nullptr;
+        m_pContext->GetSocketManager().FreeSocket(&pBase);
+        return;
+    }
+#endif
+
+    // Cas serveur
+#if (IP_USE_TCP_SERVER == DEF_ENABLED)
+    for(int i = 0; i < IP_TCP_MAX_LISTEN; i++)
+    {
+        if(m_pServerSockets[i] == pBase)
+        {
+            m_pServerSockets[i] = nullptr;
+            m_pContext->GetSocketManager().FreeSocket(&pBase);
+            return;
         }
     }
 #endif

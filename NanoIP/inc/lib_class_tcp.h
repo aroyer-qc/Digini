@@ -43,6 +43,8 @@ class TCP_SocketSystem : public TCP_Socket, public Socket
 
 
                                     TCP_SocketSystem    (NetworkContext* pContext, TCP_Manager& TCP);
+                                    ~TCP_SocketSystem   () {}
+
 
         size_t                      Send                (const uint8_t* pBuffer, size_t Length);
         size_t                      Receive             (uint8_t* pBuffer, size_t MaxLength);
@@ -104,9 +106,10 @@ class TCP_ManagerSystem : public TCP_Manager
 
         bool            ParseTCP_Header                 (IP_EthernetPacket_t* pPacket, TCP_Socket*& pSockOut);
         void            ProcessIncomingFlags            (TCP_Socket* pSocket, IP_EthernetPacket_t* pPacket, uint8_t Flags, uint32_t Seq, uint32_t Ack, size_t PayloadLen);
-
         void            RetransmitIfNeeded              (TCP_Socket* pSocket);
         void            UpdateTimers                    (void);
+        void            CloseAndFreeSocket              (TCP_SocketSystem* pSystem);
+        
 
         SocketManager*  m_pSocketManager;
         NetworkContext* m_pContext;

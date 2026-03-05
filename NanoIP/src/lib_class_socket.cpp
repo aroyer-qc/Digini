@@ -91,21 +91,65 @@ void SocketManager::Initialize(NetworkContext* pContext)
 //-------------------------------------------------------------------------------------------------
 Socket* SocketManager::AllocSocket(SocketType_e Type)
 {
-    if(m_ActiveCount >= SOCKET_MAX_COUNT)                                           // Enforce maximum socket count
+    if(m_ActiveCount >= SOCKET_MAX_COUNT)
     {
         return nullptr;
     }
 
-    void* pSocketMemory = pMemoryPool->Alloc(sizeof(Socket), MEM_DBG_SOCKALLOC);    // Allocate raw memory for the socket object
+    size_t size = 0;
 
+    switch(Type)
+    {
+        case SOCKET_TYPE_STREAM:      // TCP
+            size = sizeof(TCP_SocketSystem);
+            break;
+
+        case SOCKET_TYPE_DATAGRAM:    // UDP
+            size = sizeof(Socket);
+            break;
+
+
+      #if (IP_USE_RAW == DEF_ENABLED)
+        case SOCKET_TYPE_RAW_IP:      // RAW
+            size = sizeof(RAW_SocketSystem);
+            break;
+      #endif
+
+        default:
+            size = sizeof(Socket);
+            break;
+    }
+
+    void* pSocketMemory = pMemoryPool->Alloc(size, MEM_DBG_SOCKALLOC);
     if(pSocketMemory == nullptr)
     {
         return nullptr;
     }
 
-    Socket* pSocket = new (pSocketMemory) Socket(m_pContext);                      // Construct the socket in-place (placement new)
-    pSocket->Create(Type);                                                          // Initialize protocol-specific structures
-    m_ActiveSockets[m_ActiveCount++] = pSocket;                                     // Register in active socket list
+    Socket* pSocket = nullptr;
+
+    switch(Type)
+    {
+        case SOCKET_TYPE_STREAM:      // TCP
+            pSocket = new (pSocketMemory) TCP_SocketSystem(m_pContext, *m_pContext->GetTCP());
+            break;
+
+        case SOCKET_TYPE_DATAGRAM:    // UDP
+            pSocket = new (pSocketMemory) Socket(m_pContext);
+            break;
+
+      #if (IP_USE_RAW == DEF_ENABLED)
+        case SOCKET_TYPE_RAW_IP:      // RAW
+            pSocket = new (pSocketMemory) RAW_SocketSystem(m_pContext);
+            break;
+      #endif
+
+        default:
+            pSocket = new (pSocketMemory) Socket(m_pContext);
+            break;
+    }
+
+    m_ActiveSockets[m_ActiveCount++] = pSocket;
     return pSocket;
 }
 
@@ -132,50 +176,31 @@ Socket* SocketManager::AllocSocket(SocketType_e Type)
 //-------------------------------------------------------------------------------------------------
 void SocketManager::FreeSocket(Socket** ppSocket)
 {
-    if((ppSocket == nullptr) || (*ppSocket == nullptr))
+    if(ppSocket == nullptr || *ppSocket == nullptr)
     {
         return;
     }
 
     Socket* pSocket = *ppSocket;
-    pSocket->m_Active = false;                                      // Prevent any new packets from being enqueued
-    pSocket->FreeAllMessages(&pSocket->m_RX_Queue);                  // Flush all pending RX messages (unified queue)
 
-    switch(pSocket->m_Type)                                         // Protocol-specific cleanup
+    pSocket->m_Active = false;
+    pSocket->FreeAllMessages(&pSocket->m_RX_Queue);
+    pSocket->FreeProtocolData();
+    pSocket->~Socket();
+
+    for(uint8_t i = 0; i < m_ActiveCount; i++)
     {
-      #if (IP_USE_UDP == DEF_ENABLED)
-        case SOCKET_TYPE_DATAGRAM:
+        if(m_ActiveSockets[i] == pSocket)
         {
-            UDP_Socket_t* pUDP = pSocket->m_Protocol.pUDP;
-
-            if(pUDP && pUDP->LocalPort != 0)
-            {
-                UDP_UnregisterSocket(pUDP->LocalPort);
-            }
-        }
-        break;
-      #endif
-
-      #if (IP_USE_RAW == DEF_ENABLED)
-        case SOCKET_TYPE_RAW:
-        {
-            RAW_Socket_t* pRAW = pSocket->m_Protocol.pRAW;
-
-            if(pRAW && pRAW->Protocol != 0)
-            {
-                RAW_UnregisterSocket(pRAW->Protocol);
-            }
-        }
-        break;
-      #endif
-
-        default:
+            m_ActiveSockets[i] = m_ActiveSockets[m_ActiveCount - 1];
+            m_ActiveSockets[m_ActiveCount - 1] = nullptr;
+            m_ActiveCount--;
             break;
+        }
     }
 
-    pSocket->FreeProtocolData();                                        // Free protocol-specific storage (dynamic allocation)
-    pMemoryPool->Free((void**)&pSocket);                                // Free the socket object itself
-    *ppSocket = nullptr;                                                // Invalidate caller's pointer
+    pMemoryPool->Free((void**)&pSocket);
+    *ppSocket = nullptr;
 }
 
 //-------------------------------------------------------------------------------------------------

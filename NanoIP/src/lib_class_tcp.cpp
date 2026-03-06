@@ -50,17 +50,18 @@
 //-------------------------------------------------------------------------------------------------
 
 // TCP Control Flags (RFC 793)
-#define TCP_FLAG_FIN            0x01    // Finish
-#define TCP_FLAG_SYN            0x02    // Synchronize sequence numbers
-#define TCP_FLAG_RST            0x04    // Reset connection
-#define TCP_FLAG_PSH            0x08    // Push function
-#define TCP_FLAG_ACK            0x10    // Acknowledgment field significant
-#define TCP_FLAG_URG            0x20    // Urgent pointer field significant
-#define TCP_FLAG_ECE            0x40    // ECN-Echo (RFC 3168)
-#define TCP_FLAG_CWR            0x80    // Congestion Window Reduced (RFC 3168)
+#define TCP_FLAG_FIN                0x01    // Finish
+#define TCP_FLAG_SYN                0x02    // Synchronize sequence numbers
+#define TCP_FLAG_RST                0x04    // Reset connection
+#define TCP_FLAG_PSH                0x08    // Push function
+#define TCP_FLAG_ACK                0x10    // Acknowledgment field significant
+#define TCP_FLAG_URG                0x20    // Urgent pointer field significant
+#define TCP_FLAG_ECE                0x40    // ECN-Echo (RFC 3168)
+#define TCP_FLAG_CWR                0x80    // Congestion Window Reduced (RFC 3168)
 
-#define TCP_RETRANSMIT_TIMEOUT  1000
-#define TCP_TIME_WAIT_TIMEOUT   30000
+#define TCP_RETRANSMIT_TIMEOUT      1000
+#define TCP_TIME_WAIT_TIMEOUT       30000
+#define TCP_GENERIC_CLOSE_TIMEOUT   2000
 
 //-------------------------------------------------------------------------------------------------
 //  Name:           TCP_SocketSystem (constructor)
@@ -93,8 +94,9 @@ TCP_SocketSystem::TCP_SocketSystem(NetworkContext* pContext, TCP_Manager& TCP) :
     m_RemoteWindow      = 0;
     m_LocalWindow       = TCP_DEFAULT_WINDOW_SIZE;
 
-    m_LastSendTick      = 0;
-    m_LastReceivedTick  = 0;
+    TickCount_t Now     = GetTick();
+    m_LastReceivedTick  = Now;
+    m_LastSendTick      = Now;
     m_RetransmitStart   = 0;
 
     m_RetransmitPending = false;
@@ -1278,51 +1280,92 @@ void TCP_ManagerSystem::UpdateTimers(void)
 {
     TickCount_t Now = GetTick();
 
-    //---------------------------------------------------------------------------------------------
-    // Process client socket (if enabled)
-    //---------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
+    // Client socket
+    // ---------------------------------------------------------------------------------------------
 #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
     if(m_pClientSocket != nullptr)
     {
         TCP_Socket* pSocket       = static_cast<TCP_Socket*>(m_pClientSocket);
         TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
 
-        // TIME_WAIT expiration
-        if(pSystem->m_State == TCP_STATE_TIME_WAIT)
+        switch(pSystem->m_State)
         {
-            if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
-            {
+            case TCP_STATE_TIME_WAIT:
+                // TIME_WAIT expiration
+                if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
+                {
+                    CloseAndFreeSocket(pSystem);
+                }
+                break;
+
+            case TCP_STATE_CLOSED:
+            case TCP_STATE_ERROR:
+                // Immediate terminal states
                 CloseAndFreeSocket(pSystem);
-            }
+                break;
+
+            case TCP_STATE_LAST_ACK:
+            case TCP_STATE_FIN_WAIT_2:
+            case TCP_STATE_CLOSE_WAIT:
+            case TCP_STATE_CLOSING:
+                // Terminal states requiring timeout before cleanup
+                if((Now - pSystem->m_LastReceivedTick) >= TCP_GENERIC_CLOSE_TIMEOUT)
+                {
+                    CloseAndFreeSocket(pSystem);
+                }
+                break;
+
+            default:
+                break;
         }
     }
 #endif
 
-    //---------------------------------------------------------------------------------------------
-    // Process server sockets (if enabled)
-    //---------------------------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------------------------------
+    // Server sockets
+    // ---------------------------------------------------------------------------------------------
 #if (IP_USE_TCP_SERVER == DEF_ENABLED)
     for(int i = 0; i < IP_TCP_MAX_LISTEN; i++)
     {
         TCP_Socket* pSocket = m_pServerSockets[i];
-        TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
-
         if(pSocket == nullptr)
         {
             continue;
         }
 
-        // TIME_WAIT expiration
-        if(pSystem->m_State == TCP_STATE_TIME_WAIT)
-        {
-            if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
-            {
-                CloseAndFreeSocket(pSystem);
+        TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
 
-                // NOTE:
-                // We do NOT free the socket here.
-                // The application or a future socket manager will handle cleanup.
-            }
+        switch(pSystem->m_State)
+        {
+            case TCP_STATE_TIME_WAIT:
+                // TIME_WAIT expiration
+                if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
+                {
+                    CloseAndFreeSocket(pSystem);
+                }
+                break;
+
+            case TCP_STATE_CLOSED:
+            case TCP_STATE_ERROR:
+                // Immediate terminal states
+                CloseAndFreeSocket(pSystem);
+                break;
+
+            case TCP_STATE_LAST_ACK:
+            case TCP_STATE_FIN_WAIT_2:
+            case TCP_STATE_CLOSE_WAIT:
+            case TCP_STATE_CLOSING:
+                // Terminal states requiring timeout before cleanup
+                if((Now - pSystem->m_LastReceivedTick) >= TCP_GENERIC_CLOSE_TIMEOUT)
+                {
+                    CloseAndFreeSocket(pSystem);
+                }
+                break;
+
+            default:
+                break;
         }
     }
 #endif
@@ -1337,30 +1380,41 @@ void TCP_ManagerSystem::CloseAndFreeSocket(TCP_SocketSystem* pSystem)
         return;
     }
 
-    // 1. Marquer comme fermé et nettoyer les buffers
-    pSystem->m_State = TCP_STATE_CLOSED;
+    // Mark socket as closed and clear internal buffers
+    pSystem->m_State     = TCP_STATE_CLOSED;
     pSystem->m_RX_Length = 0;
     pSystem->m_TX_Length = 0;
 
+    // Base class pointer (Socket*)
     Socket* pBase = static_cast<Socket*>(pSystem);
 
-    // Cas client
+    // ---------------------------------------------------------------------------------------------
+    // Client socket case
+    // ---------------------------------------------------------------------------------------------
 #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
     if(m_pClientSocket == static_cast<TCP_Socket*>(pSystem))
     {
+        // Remove reference from TCP manager
         m_pClientSocket = nullptr;
+
+        // Free the socket through the socket manager
         m_pContext->GetSocketManager().FreeSocket(&pBase);
         return;
     }
 #endif
 
-    // Cas serveur
+    // ---------------------------------------------------------------------------------------------
+    // Server socket case
+    // ---------------------------------------------------------------------------------------------
 #if (IP_USE_TCP_SERVER == DEF_ENABLED)
     for(int i = 0; i < IP_TCP_MAX_LISTEN; i++)
     {
         if(m_pServerSockets[i] == pBase)
         {
+            // Remove reference from server socket table
             m_pServerSockets[i] = nullptr;
+
+            // Free the socket through the socket manager
             m_pContext->GetSocketManager().FreeSocket(&pBase);
             return;
         }
@@ -1368,6 +1422,5 @@ void TCP_ManagerSystem::CloseAndFreeSocket(TCP_SocketSystem* pSystem)
 #endif
 }
 
-//-------------------------------------------------------------------------------------------------
 
-#endif // (IP_USE_TCP_CLIENT == DEF_ENABLED)
+#endif //(IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)

@@ -32,17 +32,20 @@
 
 enum TCP_State_e
 {
-    TCP_STATE_CLOSED = 0,
-    TCP_STATE_LISTEN,
-    TCP_STATE_SYN_SENT,
-    TCP_STATE_SYN_RECEIVED,
-    TCP_STATE_ESTABLISHED,
-    TCP_STATE_FIN_WAIT_1,
-    TCP_STATE_FIN_WAIT_2,
-    TCP_STATE_CLOSE_WAIT,
-    TCP_STATE_LAST_ACK,
-    TCP_STATE_TIME_WAIT,
-    TCP_STATE_ERROR
+    TCP_STATE_CLOSED = 0,      // No connection / socket inactive
+    TCP_STATE_LISTEN,          // Server waiting for incoming SYN
+    TCP_STATE_SYN_SENT,        // Client sent SYN, waiting for SYN+ACK
+    TCP_STATE_SYN_RECEIVED,    // SYN received, SYN+ACK sent, waiting for ACK
+    TCP_STATE_ESTABLISHED,     // Fully open connection
+
+    TCP_STATE_FIN_WAIT_1,      // FIN sent, waiting for ACK or FIN from peer
+    TCP_STATE_FIN_WAIT_2,      // ACK received, waiting for peer's FIN
+    TCP_STATE_CLOSING,         // Simultaneous close: FIN sent and FIN received
+    TCP_STATE_CLOSE_WAIT,      // FIN received, waiting for local application to close
+    TCP_STATE_LAST_ACK,        // FIN sent after CLOSE_WAIT, waiting for final ACK
+    TCP_STATE_TIME_WAIT,       // Waiting before final close (2MSL)
+
+    TCP_STATE_ERROR            // Internal error state (RST, abort, corruption)
 };
 
 enum SocketEvent_e

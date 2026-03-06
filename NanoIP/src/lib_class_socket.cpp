@@ -100,17 +100,18 @@ Socket* SocketManager::AllocSocket(SocketType_e Type)
 
     switch(Type)
     {
-        case SOCKET_TYPE_STREAM:      // TCP
+      #if (IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
+        case SOCKET_TYPE_STREAM:
             size = sizeof(TCP_SocketSystem);
             break;
+      #endif
 
-        case SOCKET_TYPE_DATAGRAM:    // UDP
+        case SOCKET_TYPE_DATAGRAM:
             size = sizeof(Socket);
             break;
 
-
       #if (IP_USE_RAW == DEF_ENABLED)
-        case SOCKET_TYPE_RAW_IP:      // RAW
+        case SOCKET_TYPE_RAW_IP:
             size = sizeof(RAW_SocketSystem);
             break;
       #endif
@@ -121,6 +122,7 @@ Socket* SocketManager::AllocSocket(SocketType_e Type)
     }
 
     void* pSocketMemory = pMemoryPool->Alloc(size, MEM_DBG_SOCKALLOC);
+
     if(pSocketMemory == nullptr)
     {
         return nullptr;
@@ -130,16 +132,18 @@ Socket* SocketManager::AllocSocket(SocketType_e Type)
 
     switch(Type)
     {
-        case SOCKET_TYPE_STREAM:      // TCP
+      #if (IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
+        case SOCKET_TYPE_STREAM:
             pSocket = new (pSocketMemory) TCP_SocketSystem(m_pContext, *m_pContext->GetTCP());
             break;
+      #endif
 
-        case SOCKET_TYPE_DATAGRAM:    // UDP
+        case SOCKET_TYPE_DATAGRAM:
             pSocket = new (pSocketMemory) Socket(m_pContext);
             break;
 
       #if (IP_USE_RAW == DEF_ENABLED)
-        case SOCKET_TYPE_RAW_IP:      // RAW
+        case SOCKET_TYPE_RAW_IP:
             pSocket = new (pSocketMemory) RAW_SocketSystem(m_pContext);
             break;
       #endif
@@ -148,6 +152,8 @@ Socket* SocketManager::AllocSocket(SocketType_e Type)
             pSocket = new (pSocketMemory) Socket(m_pContext);
             break;
     }
+
+    pSocket->Create(Type);
 
     m_ActiveSockets[m_ActiveCount++] = pSocket;
     return pSocket;
@@ -429,6 +435,16 @@ void Socket::Create(SocketType_e Type)
 
     switch(Type)
     {
+      #if (IP_USE_TCP == DEF_ENABLED)
+        case SOCKET_TYPE_STREAM:
+        {
+            // TCP does not use m_Protocol storage.
+            // Initialization is handled by TCP_SocketSystem.
+            // Nothing to allocate here, but we keep the case for clarity.
+        }
+        break;
+     #endif
+
       #if (IP_USE_UDP == DEF_ENABLED)
         case SOCKET_TYPE_DATAGRAM:
         {

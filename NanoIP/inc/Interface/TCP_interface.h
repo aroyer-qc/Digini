@@ -82,6 +82,14 @@ class TCP_Socket
         virtual bool            IsConnected     (void) const                                    = 0;
         virtual TCP_State_e     GetState        (void) const                                    = 0;
         virtual void            SetEventHandler (TCP_SocketEventHandler* pHandler)              = 0;
+
+    protected:
+
+        TCP_TX_Segment_t        m_TX_Window        [TCP_MAX_TX_SEGMENTS];
+        uint32_t                m_NextSequence;
+        uint32_t                m_UnAckedSequence;
+        uint32_t                m_RetransmitTimeOut;
+        bool                    m_Active;
 };
 
 class TCP_Manager
@@ -100,7 +108,7 @@ class TCP_Manager
 
         virtual void            Process         (void)                                          = 0;
         virtual void            ProcessSegment  (IP_PacketMsg_t* pPacket)                       = 0;
-        virtual bool            SendSegment     (TCP_Socket* pSocket, const uint8_t* pPayload,
+        virtual IP_PacketMsg_t* SendSegment     (TCP_Socket* pSocket, const uint8_t* pPayload,
                                                  size_t Length, uint8_t Flags,
                                                  bool Retransmit = false)                       = 0;
 };

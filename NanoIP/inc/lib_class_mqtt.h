@@ -45,6 +45,22 @@
 
 #define MQTT_BROKER_PORT                1883
 
+#define MQTT_FLAG_CONNECT        0x00
+#define MQTT_FLAG_CONNACK        0x00
+#define MQTT_FLAG_PUBLISH        0x00
+#define MQTT_FLAG_PUBACK         0x00
+#define MQTT_FLAG_PUBREC         0x00
+#define MQTT_FLAG_PUBREL         0x02
+#define MQTT_FLAG_PUBCOMP        0x00
+#define MQTT_FLAG_SUBSCRIBE      0x02
+#define MQTT_FLAG_SUBACK         0x00
+#define MQTT_FLAG_UNSUBSCRIBE    0x02
+#define MQTT_FLAG_UNSUBACK       0x00
+#define MQTT_FLAG_PINGREQ        0x00
+#define MQTT_FLAG_PINGRESP       0x00
+#define MQTT_FLAG_DISCONNECT     0x00
+#define MQTT_FLAG_AUTH           0x00
+
 //-------------------------------------------------------------------------------------------------
 // Enum(s)
 //-------------------------------------------------------------------------------------------------
@@ -56,6 +72,7 @@ enum MQTT_State_e
     MQTT_STATE_WAIT_CONNACK,
     MQTT_STATE_CONNECTED,
     MQTT_STATE_WAIT_SUBACK,
+    MQTT_STATE_WAIT_UNSUBACK,
     MQTT_STATE_PUBLISHING,
     MQTT_STATE_RECONNECTING,
     MQTT_STATE_ERROR
@@ -85,6 +102,11 @@ class MQTT_Client
         bool                    Initialize                  (NetworkContext* pContext);
         bool                    Connect                     (const IP_Address_t* pServerIP, IP_Port_t Port, const char* pClientID, uint16_t KeepAliveSeconds);
         bool                    Subscribe                   (const char* pTopic, MQTT_QoS_e QoS);
+
+      #if (MQTT_USE_UNSUBSCRIBE == DEF_ENABLED)
+        bool                    Unsubscribe                 (const char* pTopic);
+      #endif
+
         bool                    Publish                     (const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS);
         bool                    Disconnect                  (void);
         void                    Process                     (void);
@@ -96,14 +118,24 @@ class MQTT_Client
 private:
 
         TCP_Socket*             TCP_Connect                 (const IP_Address_t* pServerIP, IP_Port_t Port);
+        bool                    SendFrame                   (uint8_t* pBuffer, size_t Length);
         bool                    SendConnectFrame            (const char* pClientID);
         bool                    SendSubscribeFrame          (const char* pTopic, MQTT_QoS_e QoS);
+      #if (MQTT_USE_UNSUBSCRIBE == DEF_ENABLED)
+        bool                    SendUnsubscribeFrame        (const char* pTopic);
+      #endif
         bool                    SendPublishFrame            (const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS);
         bool                    SendDisconnect              (void);
         bool                    SendPingReq                 (void);
         bool                    HandleIncomingData          (void);
         bool                    ParseIncomingPacket         (uint8_t* pBuffer, size_t Length);
         uint16_t                NextPacketID                (void);
+
+        static bool             DecodeRemainingLength       (const uint8_t* pBuffer, size_t Length, size_t* pValue, size_t* pBytesUsed);
+
+      #if (MQTT_USE_UNSUBSCRIBE == DEF_ENABLED)
+        static size_t           EncodeFixedHeader           (uint8_t* pOut, uint8_t PacketType, uint8_t Flags, size_t RemainingLength);
+      #endif
 
         NetworkContext*         m_pContext;
         TCP_Socket*             m_pSocket;

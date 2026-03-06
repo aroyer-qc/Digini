@@ -30,7 +30,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define SOCKET_RX_QUEUE_DEPTH       8
+#define SOCKET_RX_QUEUE_DEPTH       12
 
 //-------------------------------------------------------------------------------------------------
 // Enum(s)
@@ -97,6 +97,9 @@ class Socket
         bool                GetActive           (void)                      { return m_Active;                                         }
 
         bool                EnqueueMessage      (IP_PacketMsg_t* pMsg)      { return (nOS_QueueWrite(&m_RX_Queue, &pMsg, 0) == NOS_OK);}
+        bool                DequeueMessage      (IP_PacketMsg_t*& pMsg)     { return (nOS_QueueRead(&m_RX_Queue, &pMsg, 0) == NOS_OK); }
+
+        NetworkContext*     GetContext          (void) const                { return m_pContext; }
 
       #if (IP_USE_UDP == DEF_ENABLED)
         bool                IsBound             (void);

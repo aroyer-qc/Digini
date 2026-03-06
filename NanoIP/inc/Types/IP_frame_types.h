@@ -271,15 +271,25 @@ struct IP_EthernetPacket_t
 	};
 };
 
+#pragma pack(pop)
+
 struct IP_PacketMsg_t
 {
 	uint16_t    		    PacketSize;
 	IP_EthernetPacket_t*	pPacket;
     uint8_t*                Payload;                // Pointer to UDP payload
     uint16_t                PayloadSize;            // length of payload
+	uint8_t                 Protocol;               // IP protocol (TCP=6, UDP=17, ICMP=1, etc.)
 };
 
-#pragma pack(pop)
+struct TCP_TX_Segment_t
+{
+    IP_PacketMsg_t*         pMsg;                   // Full complet (headers + payload)
+    uint32_t                SeqStart;               // First byte of this segment
+    uint32_t                SeqEnd;                 // Last byte + 1
+    uint32_t                TimeStamp;              // for retransmission
+    bool                    InUse;                  // Active Slot or not
+};
 
 //-------------------------------------------------------------------------------------------------
 

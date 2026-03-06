@@ -154,8 +154,6 @@ void IP_Manager::Run(void)
         m_pContext->GetTCP()->Process();
     #endif
 
-
-
         if(nOS_QueueRead(m_pContext->GetMsgQ(), (void**)&pMsg, NOS_WAIT_INFINITE) == NOS_OK)
         {
             if(pMsg->PacketSize < sizeof(IP_EthernetHeader_t))                                  // Basic Ethernet header size check  peut-etre pas necessaire avec le default
@@ -203,6 +201,7 @@ void IP_Manager::Run(void)
                     }
 
                     //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH type: IPV4\n");
+                    pMsg->Protocol = pMsg->pPacket->IP_Frame.Header.Protocol;
                     m_pContext->GetARP().ProcessIP(pMsg);                                           // May update ARP cache, does NOT own pMsg
                     ProcessIP(pMsg);                                                                // Transfers ownership to protocol/socket
                 }
@@ -240,7 +239,7 @@ void IP_Manager::Run(void)
 //-------------------------------------------------------------------------------------------------
 void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
 {
-    switch(pMsg->pPacket->IP_Frame.Header.Protocol)
+    switch(pMsg->Protocol)
     {
       #if (IP_USE_ICMP == DEF_ENABLED)
         case IP_PROTOCOL_ICMP:
@@ -278,7 +277,7 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
 
         default:
         {
-            //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Ethernet IP N/U: Type:0x%02X\n", pMsg->pPacket->IP_Frame.Header.Protocol);
+            //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Ethernet IP N/U: Type:0x%02X\n", pMsg->Protocol);
             FreeMessage(pMsg);
         }
         break;

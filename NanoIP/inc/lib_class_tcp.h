@@ -42,16 +42,18 @@ class TCP_SocketSystem : public TCP_Socket, public Socket
     public:
 
 
-                                    TCP_SocketSystem    (NetworkContext* pContext, TCP_Manager& TCP);
-                                    ~TCP_SocketSystem   () {}
+                                    TCP_SocketSystem        (NetworkContext* pContext, TCP_Manager& TCP);
+                                    ~TCP_SocketSystem       () {}
 
 
-        size_t                      Send                (const uint8_t* pBuffer, size_t Length);
-        size_t                      Receive             (uint8_t* pBuffer, size_t MaxLength);
-        void                        Close               (void);
-        TCP_State_e                 GetState            (void) const override                       { return m_State; }
-        bool                        IsConnected         (void) const override                       { return (m_State == TCP_STATE_ESTABLISHED); }
-        void                        SetEventHandler     (TCP_SocketEventHandler* pEventHandler)     { m_pEventHandler = pEventHandler; }
+        size_t                      Send                    (const uint8_t* pBuffer, size_t Length);
+        size_t                      Receive                 (uint8_t* pBuffer, size_t MaxLength);
+        void                        Close                   (void);
+        TCP_State_e                 GetState                (void) const override                       { return m_State; }
+        bool                        IsConnected             (void) const override                       { return (m_State == TCP_STATE_ESTABLISHED); }
+        void                        SetEventHandler         (TCP_SocketEventHandler* pEventHandler)     { m_pEventHandler = pEventHandler; }
+        void                        ProcessIncomingFlags    (TCP_Socket* pSocket, IP_PacketMsg_t* pMsg, uint8_t Flags, uint32_t Seq, uint32_t Ack);
+        void                        RetransmitIfNeeded      (void);
 
     private:
 
@@ -60,25 +62,19 @@ class TCP_SocketSystem : public TCP_Socket, public Socket
         TCP_State_e                 m_State;
         TCP_SocketEventHandler*     m_pEventHandler = nullptr;
 
-
         uint32_t                    m_SeqNumber;        // Our sequence number
-        uint32_t                    m_LastSeqNumber;
         uint32_t                    m_AckNumber;        // Expected next byte
         uint16_t                    m_RemoteWindow;
         uint16_t                    m_LocalWindow;
 
         TickCount_t                 m_LastSendTick;
         TickCount_t                 m_LastReceivedTick;
-        TickCount_t                 m_RetransmitStart;
 
-        bool                        m_RetransmitPending;
-        uint8_t                     m_LastFlags;
-        size_t                      m_LastPayloadLength;
-        // Replace static buffers later with your allocator
-        uint8_t                     m_TX_Buffer[512];
-        size_t                      m_TX_Length;
-        uint8_t                     m_RX_Buffer[512];
-        size_t                      m_RX_Length;
+
+        TCP_TX_Segment_t            m_TX_Window[TCP_MAX_TX_SEGMENTS];
+        uint32_t                    m_NextSequence;
+        uint32_t                    m_UnAckedSequence;
+        TickCount_t                 m_RetransmitTimeOut;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -100,16 +96,14 @@ class TCP_ManagerSystem : public TCP_Manager
 
         void            Process                         (void);                 // Called from main loop
         void            ProcessSegment                  (IP_PacketMsg_t* pPacket);
-        bool            SendSegment                     (TCP_Socket* pSocket, const uint8_t* pPayload, size_t Length, uint8_t Flags, bool Retransmit);
+        IP_PacketMsg_t* SendSegment                     (TCP_Socket* pSocket, const uint8_t* pPayload, size_t Length, uint8_t Flags, bool Retransmit);
 
     private:
 
         bool            ParseTCP_Header                 (IP_EthernetPacket_t* pPacket, TCP_Socket*& pSockOut);
-        void            ProcessIncomingFlags            (TCP_Socket* pSocket, IP_EthernetPacket_t* pPacket, uint8_t Flags, uint32_t Seq, uint32_t Ack, size_t PayloadLen);
-        void            RetransmitIfNeeded              (TCP_Socket* pSocket);
         void            UpdateTimers                    (void);
         void            CloseAndFreeSocket              (TCP_SocketSystem* pSystem);
-        
+
 
         SocketManager*  m_pSocketManager;
         NetworkContext* m_pContext;

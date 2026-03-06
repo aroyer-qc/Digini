@@ -47,10 +47,37 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define MQTT_CONNECT_TIMEOUT_MS   10000     // 10 seconds
-#define MQTT_PINGRESP_TIMEOUT_MS  5000      // 5 seconds
+#define MQTT_CONNECT_TIMEOUT_MS             10000     // 10 seconds
+#define MQTT_PINGRESP_TIMEOUT_MS            5000      // 5 seconds
 
+#define MQTT_REMAINING_LEN_MASK             0x7F
+#define MQTT_REMAINING_LEN_CONTINUATION     0x80
+#define MQTT_REMAINING_LEN_BASE_128         128
+#define MQTT_REMAINING_LEN_MAX_MULTIPLIER   (MQTT_REMAINING_LEN_BASE_128 * MQTT_REMAINING_LEN_BASE_128 * MQTT_REMAINING_LEN_BASE_128)
 
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+enum MQTT_ControlPacketType_e
+{
+    MQTT_PACKET_TYPE_RESERVED      = 0,
+    MQTT_PACKET_TYPE_CONNECT       = 1,
+    MQTT_PACKET_TYPE_CONNACK       = 2,
+    MQTT_PACKET_TYPE_PUBLISH       = 3,
+    MQTT_PACKET_TYPE_PUBACK        = 4,
+    MQTT_PACKET_TYPE_PUBREC        = 5,
+    MQTT_PACKET_TYPE_PUBREL        = 6,
+    MQTT_PACKET_TYPE_PUBCOMP       = 7,
+    MQTT_PACKET_TYPE_SUBSCRIBE     = 8,
+    MQTT_PACKET_TYPE_SUBACK        = 9,
+    MQTT_PACKET_TYPE_UNSUBSCRIBE   = 10,
+    MQTT_PACKET_TYPE_UNSUBACK      = 11,
+    MQTT_PACKET_TYPE_PINGREQ       = 12,
+    MQTT_PACKET_TYPE_PINGRESP      = 13,
+    MQTT_PACKET_TYPE_DISCONNECT    = 14,
+    MQTT_PACKET_TYPE_AUTH          = 15
+};
 //---------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
@@ -148,11 +175,11 @@ bool MQTT_Client::Connect(const IP_Address_t* pServerIP, uint16_t Port, const ch
 //  Description:    Starts a non-blocking SUBSCRIBE sequence. The caller must periodically
 //                  call Process() until the state returns to MQTT_STATE_CONNECTED or ERROR.
 //
-//  Note(s):        Fixed header:
+//  Note(s):        Fixed Header:
 //                    - byte 1: 0x82  (SUBSCRIBE + flags)
 //                    - byte 2+: Remaining Length (varint)
 //
-//                  Variable header:
+//                  Variable Header:
 //                    - Packet Identifier MSB
 //                    - Packet Identifier LSB
 //
@@ -179,6 +206,27 @@ bool MQTT_Client::Subscribe(const char* pTopic, MQTT_QoS_e QoS)
     m_LastActivityTick = GetTick();
     return true;
 }
+
+//---------------------------------------------------------------------------------------------
+
+#if (MQTT_USE_UNSUBSCRIBE == DEF_ENABLED)
+bool MQTT_Client::Unsubscribe(const char* pTopic)
+{
+    if(m_State != MQTT_STATE_CONNECTED)
+    {
+        return false;
+    }
+
+    if(SendUnsubscribeFrame(pTopic) == false)
+    {
+        return false;
+    }
+
+    m_State = MQTT_STATE_WAIT_UNSUBACK;
+    m_LastActivityTick = GetTick();
+    return true;
+}
+#endif
 
 //---------------------------------------------------------------------------------------------
 //
@@ -269,10 +317,10 @@ void MQTT_Client::Process(void)
             if((m_pSocket != nullptr) && (m_pSocket->GetState() == TCP_STATE_ESTABLISHED))
             {
                 SendConnectFrame(m_ClientID);
-                m_State           = MQTT_STATE_WAIT_CONNACK;
-                m_LastActivityTick= Now;
+                m_State            = MQTT_STATE_WAIT_CONNACK;
+                m_LastActivityTick = Now;
             }
-            else if((Now - m_ConnectStartTick) > MQTT_CONNECT_TIMEOUT_MS)               //  use macro HasTimeOut
+            else if((Now - m_ConnectStartTick) > MQTT_CONNECT_TIMEOUT_MS)
             {
                 m_State              = MQTT_STATE_RECONNECTING;
                 m_ReconnectStartTick = Now;
@@ -305,24 +353,29 @@ void MQTT_Client::Process(void)
 
         case MQTT_STATE_RECONNECTING:
         {
-            // Wait for delay to expire
+            if(m_ReconnectEnabled == false)
+            {
+                break;
+            }
+
             if((Now - m_ReconnectStartTick) >= (m_ReconnectDelaySeconds * TICKS_PER_SECOND))
             {
-                // Try TCP connect again
-                if(TCP_Connect(&m_LastServerIP, m_LastServerPort))
+                TCP_Socket* pSock = TCP_Connect(&m_LastServerIP, m_LastServerPort);
+
+                if(pSock != nullptr)
                 {
-                    // Reset backoff
+                    m_State            = MQTT_STATE_CONNECTING;
+                    m_ConnectStartTick = Now;
+                    m_LastActivityTick = Now;
                     m_ReconnectDelaySeconds = 5;
                 }
                 else
                 {
-                    // Increase delay (simple backoff)
                     if(m_ReconnectDelaySeconds < 60)
                     {
                         m_ReconnectDelaySeconds *= 2;
                     }
 
-                    // Restart timer
                     m_ReconnectStartTick = Now;
                 }
             }
@@ -364,7 +417,7 @@ void MQTT_Client::SetMessageCallback(MQTT_MessageCallback_t Callback, void* pUse
 
 //---------------------------------------------------------------------------------------------
 
-TCP_Socket* MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, uint16_t Port)
+TCP_Socket* MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, IP_Port_t Port)
 {
     if((pServerIP == nullptr) || (m_pContext == nullptr))
     {
@@ -372,10 +425,8 @@ TCP_Socket* MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, uint16_t Por
         return nullptr;
     }
 
-    // Access TCP manager from your NetworkContext
     TCP_Manager* pTCP = m_pContext->GetTCP();
 
-    // Initiate TCP connection (non-blocking)
     m_pSocket = pTCP->Connect(*pServerIP, Port);
 
     if(m_pSocket == nullptr)
@@ -388,14 +439,14 @@ TCP_Socket* MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, uint16_t Por
 
 //---------------------------------------------------------------------------------------------
 
-bool MQTT_Client::SendConnectFrame(const char* pClientID)  //this is bad... it is not using pMemory
+bool MQTT_Client::SendConnectFrame(const char* pClientID)
 {
     if((m_pSocket == nullptr) || (pClientID == nullptr))
     {
         return false;
     }
 
-    uint8_t* pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(256, MEM_DBG_MQTT);
+    uint8_t* pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(MQTT_RX_BUFFER_SIZE, MEM_DBG_MQTT);
 
     if(pBuffer == nullptr)
     {
@@ -404,52 +455,41 @@ bool MQTT_Client::SendConnectFrame(const char* pClientID)  //this is bad... it i
 
     size_t Index = 0;
 
-    // ---------------------------------------------------------
-    // FIXED HEADER
-    // ---------------------------------------------------------
-    pBuffer[Index++] = 0x10;   // CONNECT packet type (0001) + flags (0000)
+    size_t clientID_Len = strlen(pClientID);
 
-    // Remaining Length placeholder (we fill it later)
-    size_t RemainingIndex = Index++;
+    size_t RemainingLength = 10 + 2 + clientID_Len;
 
-    // ---------------------------------------------------------
-    // VARIABLE HEADER
-    // ---------------------------------------------------------
+    size_t HeaderLen = EncodeFixedHeader(pBuffer,
+                                         MQTT_PACKET_TYPE_CONNECT,
+                                         0x00,
+                                         RemainingLength);
 
-    // Protocol Name: "MQTT"
+    Index = HeaderLen;
+/*
     pBuffer[Index++] = 0x00;
     pBuffer[Index++] = 0x04;
     pBuffer[Index++] = 'M';
     pBuffer[Index++] = 'Q';
     pBuffer[Index++] = 'T';
     pBuffer[Index++] = 'T';
-    pBuffer[Index++] = 0x04;     // Protocol Level: 4 (MQTT 3.1.1)
-    pBuffer[Index++] = 0x02;     // Connect Flags (Clean Session)
-    pBuffer[Index++] = (m_KeepAliveSeconds >> 8) & 0xFF;         // Keep Alive (seconds)                 used htons()
+    pBuffer[Index++] = 0x04;
+    pBuffer[Index++] = 0x02;
+*/
+    memcpy(&pBuffer[Index], (void*)"\0\x04MQTT\x04\x02", 8);
+    Index += 8;
+
+    pBuffer[Index++] = (m_KeepAliveSeconds >> 8) & 0xFF;
     pBuffer[Index++] = (m_KeepAliveSeconds     ) & 0xFF;
 
-    // ---------------------------------------------------------
-    // PAYLOAD: Client ID
-    // ---------------------------------------------------------
-    size_t clientID_Len = strlen(pClientID);
-    pBuffer[Index++] = (clientID_Len >> 8) & 0xFF;                         // used htons()
+    pBuffer[Index++] = (clientID_Len >> 8) & 0xFF;
     pBuffer[Index++] = (clientID_Len     ) & 0xFF;
+
     memcpy(&pBuffer[Index], pClientID, clientID_Len);
     Index += clientID_Len;
 
-    // ---------------------------------------------------------
-    // REMAINING LENGTH
-    // ---------------------------------------------------------
-    size_t RemainingLength = Index - 2; // everything after fixed header
-    pBuffer[RemainingIndex] = (uint8_t)RemainingLength;
+    bool Result = SendFrame(pBuffer, Index);
 
-    // ---------------------------------------------------------
-    // SEND OVER TCP
-    // ---------------------------------------------------------
-    size_t Sent = m_pSocket->Send(pBuffer, Index);           // Send packet
-    pMemoryPool->Free((void**)&pBuffer);
-
-    if(Sent != Index)
+    if(Result == false)
     {
         return false;
     }
@@ -474,58 +514,76 @@ bool MQTT_Client::SendSubscribeFrame(const char* pTopic, MQTT_QoS_e QoS)
         return false;
     }
 
-    size_t Index = 0;
-
-    // ---------------------------------------------------------
-    // Fixed header
-    // ---------------------------------------------------------
-    pBuffer[Index++] = 0x82;   // SUBSCRIBE + required flags
-
-    // Remaining length will be filled later
-    size_t RemainingLengthIndex = Index++;
-
-    // ---------------------------------------------------------
-    // Variable header
-    // ---------------------------------------------------------
-    uint16_t PacketID = NextPacketID();
-    pBuffer[Index++] = (PacketID >> 8) & 0xFF;              // htons()
-    pBuffer[Index++] = (PacketID     ) & 0xFF;
-
-    // ---------------------------------------------------------
-    // Payload: topic + QoS
-    // ---------------------------------------------------------
     size_t TopicLen = strlen(pTopic);
 
-    pBuffer[Index++] = (TopicLen >> 8) & 0xFF;              // htons()
+    size_t RemainingLength = 2 + 2 + TopicLen + 1;
+
+    size_t HeaderLen = EncodeFixedHeader(pBuffer,
+                                         MQTT_PACKET_TYPE_SUBSCRIBE,
+                                         MQTT_FLAG_SUBSCRIBE,
+                                         RemainingLength);
+
+    size_t Index = HeaderLen;
+
+    uint16_t PacketID = NextPacketID();
+    pBuffer[Index++] = (PacketID >> 8) & 0xFF;
+    pBuffer[Index++] = (PacketID     ) & 0xFF;
+
+    pBuffer[Index++] = (TopicLen >> 8) & 0xFF;
     pBuffer[Index++] = (TopicLen     ) & 0xFF;
 
     memcpy(&pBuffer[Index], pTopic, TopicLen);
     Index += TopicLen;
 
     pBuffer[Index++] = (uint8_t)QoS;
-
-    // ---------------------------------------------------------
-    // Fill Remaining Length
-    // ---------------------------------------------------------
-    size_t RemainingLength = Index - 2; // everything after fixed header
-    pBuffer[RemainingLengthIndex] = (uint8_t)RemainingLength;
-
-    // ---------------------------------------------------------
-    // Send over TCP
-    // ---------------------------------------------------------
-    size_t Sent = m_pSocket->Send(pBuffer, Index);
-    pMemoryPool->Free((void**)&pBuffer);
-    return (Sent == Index);
+    return SendFrame(pBuffer, Index);
 }
 
+
 //---------------------------------------------------------------------------------------------
+bool MQTT_Client::SendUnsubscribeFrame(const char* pTopic)
+{
+    if(m_pSocket == nullptr)
+    {
+        return false;
+    }
+
+    uint8_t* pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(256, MEM_DBG_MQTT);
+
+    if(pBuffer == nullptr)
+    {
+        return false;
+    }
+
+    size_t TopicLen = strlen(pTopic);
+
+    size_t RemainingLength = 2 + 2 + TopicLen;
+
+    size_t HeaderLen = EncodeFixedHeader(pBuffer,
+                                         MQTT_PACKET_TYPE_UNSUBSCRIBE,
+                                         MQTT_FLAG_UNSUBSCRIBE,
+                                         RemainingLength);
+
+    size_t Index = HeaderLen;
+
+    uint16_t PacketID = NextPacketID();
+    pBuffer[Index++] = (PacketID >> 8) & 0xFF;
+    pBuffer[Index++] = (PacketID     ) & 0xFF;
+
+    pBuffer[Index++] = (TopicLen >> 8) & 0xFF;
+    pBuffer[Index++] = (TopicLen     ) & 0xFF;
+
+    memcpy(&pBuffer[Index], pTopic, TopicLen);
+    Index += TopicLen;
+    return SendFrame(pBuffer, Index);
+}
 
 /*
-Fixed header:
+Fixed Header:
   byte 1: 0x30 | (QoS << 1)
   byte 2+: Remaining Length (varint)
 
-Variable header:
+Variable Header:
   Topic length MSB
   Topic length LSB
   Topic bytes...
@@ -536,7 +594,10 @@ Payload:
   Raw payload bytes
 */
 
-bool MQTT_Client::SendPublishFrame(const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS)
+bool MQTT_Client::SendPublishFrame(const char* pTopic,
+                                   const uint8_t* pPayload,
+                                   size_t Length,
+                                   MQTT_QoS_e QoS)
 {
     if(m_pSocket == nullptr)
     {
@@ -550,59 +611,40 @@ bool MQTT_Client::SendPublishFrame(const char* pTopic, const uint8_t* pPayload, 
         return false;
     }
 
-    size_t Index = 0;
-
-    // ---------------------------------------------------------
-    // Fixed header
-    // ---------------------------------------------------------
-    uint8_t header = 0x30;  // PUBLISH
-    header |= (QoS << 1);   // QoS bits
-    pBuffer[Index++] = header;
-
-    // Remaining length placeholder
-    size_t RemainingIndex = Index++;
-
-    // ---------------------------------------------------------
-    // Variable header: Topic
-    // ---------------------------------------------------------
     size_t TopicLen = strlen(pTopic);
 
-    pBuffer[Index++] = (TopicLen >> 8) & 0xFF;               // use htons()
+    size_t RemainingLength = 2 + TopicLen + Length;
+
+    if(QoS > MQTT_QOS_0)
+    {
+        RemainingLength += 2;
+    }
+
+    uint8_t Flags = (QoS << 1);
+
+    size_t HeaderLen = EncodeFixedHeader(pBuffer,
+                                         MQTT_PACKET_TYPE_PUBLISH,
+                                         Flags,
+                                         RemainingLength);
+
+    size_t Index = HeaderLen;
+
+    pBuffer[Index++] = (TopicLen >> 8) & 0xFF;
     pBuffer[Index++] = (TopicLen     ) & 0xFF;
 
     memcpy(&pBuffer[Index], pTopic, TopicLen);
     Index += TopicLen;
 
-    // ---------------------------------------------------------
-    // Packet ID (QoS 1 or 2 only)
-    // ---------------------------------------------------------
-    uint16_t packetID = 0;
-
     if(QoS > MQTT_QOS_0)
     {
-        packetID = NextPacketID();
-        pBuffer[Index++] = (packetID >> 8) & 0xFF;             // use htons()
-        pBuffer[Index++] = (packetID     ) & 0xFF;
+        uint16_t PacketID = NextPacketID();
+        pBuffer[Index++] = (PacketID >> 8) & 0xFF;
+        pBuffer[Index++] = (PacketID     ) & 0xFF;
     }
 
-    // ---------------------------------------------------------
-    // Payload
-    // ---------------------------------------------------------
     memcpy(&pBuffer[Index], pPayload, Length);
     Index += Length;
-
-    // ---------------------------------------------------------
-    // Remaining Length
-    // ---------------------------------------------------------
-    size_t RemainingLength = Index - 2; // everything after fixed header
-    pBuffer[RemainingIndex] = (uint8_t)RemainingLength;
-
-    // ---------------------------------------------------------
-    // Send over TCP
-    // ---------------------------------------------------------
-    size_t Sent = m_pSocket->Send(pBuffer, Index);
-    pMemoryPool->Free((void**)&pBuffer);
-    return (Sent == Index);
+    return SendFrame(pBuffer, Index);
 }
 
 //---------------------------------------------------------------------------------------------
@@ -614,13 +656,16 @@ bool MQTT_Client::SendDisconnect(void)
         return false;
     }
 
-    uint8_t Buffer[2];
-    Buffer[0] = 0xE0;   // DISCONNECT
-    Buffer[1] = 0x00;   // Remaining length = 0
+    uint8_t Buffer[4];
 
-    size_t Sent = m_pSocket->Send(Buffer, 2);
+    size_t HeaderLen = EncodeFixedHeader(Buffer,
+                                         MQTT_PACKET_TYPE_DISCONNECT,
+                                         0x00,
+                                         0);
 
-    if(Sent != 2)
+    size_t Sent = m_pSocket->Send(Buffer, HeaderLen);
+
+    if(Sent != HeaderLen)
     {
         return false;
     }
@@ -637,18 +682,20 @@ bool MQTT_Client::SendPingReq(void)
         return false;
     }
 
-    uint8_t Buffer[2];
-    Buffer[0] = 0xC0;   // PINGREQ
-    Buffer[1] = 0x00;   // Remaining length = 0
+    uint8_t Buffer[4];
 
-    size_t Sent = m_pSocket->Send(Buffer, 2);
+    size_t HeaderLen = EncodeFixedHeader(Buffer,
+                                         MQTT_PACKET_TYPE_PINGREQ,
+                                         0x00,
+                                         0);
 
-    if(Sent != 2)
+    size_t Sent = m_pSocket->Send(Buffer, HeaderLen);
+
+    if(Sent != HeaderLen)
     {
         return false;
     }
 
-    // Update activity timer
     m_LastActivityTick = GetTick();
     return true;
 }
@@ -662,22 +709,68 @@ bool MQTT_Client::HandleIncomingData(void)
         return false;
     }
 
-    uint8_t* pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(256, MEM_DBG_MQTT);
+    uint8_t FixedHeader[5];
+    size_t  Received = m_pSocket->Receive(FixedHeader, 1);
 
-    if(pBuffer == nullptr)
+    if(Received == 0)
     {
         return false;
     }
 
-    size_t Len = m_pSocket->Receive(pBuffer, sizeof(pBuffer));
+    size_t RemainingLength     = 0;
+    size_t RemainingLenBytes   = 0;
 
-    if(Len == 0)
+    if(MQTT_Client::DecodeRemainingLength(&FixedHeader[1],
+                                          sizeof(FixedHeader) - 1,
+                                          &RemainingLength,
+                                          &RemainingLenBytes) == false)
     {
         return false;
     }
 
-    int Result = ParseIncomingPacket(pBuffer, Len);
-    pMemoryPool->Free((void**)&pBuffer);
+    if(RemainingLength > MQTT_RX_BUFFER_SIZE)
+    {
+        return false;
+    }
+
+    size_t FixedHeaderSize = 1 + RemainingLenBytes;
+
+    if(FixedHeaderSize > sizeof(FixedHeader))
+    {
+        return false;
+    }
+
+    size_t TotalPacketSize = FixedHeaderSize + RemainingLength;
+
+    uint8_t* pPacket = (uint8_t*)pMemoryPool->AllocAndClear(TotalPacketSize, MEM_DBG_MQTT);
+
+    if(pPacket == nullptr)
+    {
+        return false;
+    }
+
+    memcpy(pPacket, FixedHeader, FixedHeaderSize);
+
+    size_t RemainingToRead = RemainingLength;
+    size_t Offset          = FixedHeaderSize;
+
+    while(RemainingToRead > 0)
+    {
+        size_t Chunk = m_pSocket->Receive(&pPacket[Offset], RemainingToRead);
+
+        if(Chunk == 0)
+        {
+            pMemoryPool->Free((void**)&pPacket);
+            return false;
+        }
+
+        Offset          += Chunk;
+        RemainingToRead -= Chunk;
+    }
+
+    bool Result = ParseIncomingPacket(pPacket, TotalPacketSize);
+
+    pMemoryPool->Free((void**)&pPacket);
 
     return Result;
 }
@@ -686,110 +779,182 @@ bool MQTT_Client::HandleIncomingData(void)
 
 bool MQTT_Client::ParseIncomingPacket(uint8_t* pBuffer, size_t Length)
 {
-    uint8_t PacketType = pBuffer[0] >> 4;
+    if((pBuffer == nullptr) || (Length < 2))
+    {
+        return false;
+    }
+
+    uint8_t                     Header     = pBuffer[0];
+    MQTT_ControlPacketType_e    PacketType = (MQTT_ControlPacketType_e)(pBuffer[0] >> 4);
+
+    size_t RemainingLength      = 0;
+    size_t RemainingLengthBytes = 0;
+
+    if(MQTT_Client::DecodeRemainingLength(&pBuffer[1], Length - 1, &RemainingLength, &RemainingLengthBytes) == false)
+    {
+        return false;
+    }
+
+    size_t FixedHeaderSize = 1 + RemainingLengthBytes;
+
+    if((FixedHeaderSize + RemainingLength) > Length)
+    {
+        return false;
+    }
+
+    size_t Index = FixedHeaderSize;
 
     switch(PacketType)
     {
-        case 2: // CONNACK
+        case MQTT_PACKET_TYPE_CONNACK:
         {
-            // Must be at least 4 bytes: header + 2 bytes payload
-            if(Length < 4)
+            if(RemainingLength < 2)
             {
                 return false;
             }
 
-            uint8_t SessionPreSent = pBuffer[2];
-            VAR_UNUSED(SessionPreSent);                 // Keep the line for future use
-            uint8_t ReturnCode     = pBuffer[3];
+            if((Index + 2) > Length)
+            {
+                return false;
+            }
+
+            uint8_t SessionPreSent = pBuffer[Index];
+            VAR_UNUSED(SessionPreSent);
+
+            uint8_t ReturnCode = pBuffer[Index + 1];
 
             if(ReturnCode == 0x00)
             {
-                // Connection accepted
-                m_State = MQTT_STATE_CONNECTED;
+                m_State            = MQTT_STATE_CONNECTED;
                 m_LastActivityTick = GetTick();
                 return true;
             }
-            else
-            {
-                // Connection refused
-                m_State = MQTT_STATE_ERROR;
-                return false;
-            }
+
+            m_State = MQTT_STATE_ERROR;
+            return false;
         }
 
-        case 3: // PUBLISH
+        case MQTT_PACKET_TYPE_PUBLISH:
         {
-            // Decode topic length
-            size_t Index = 2;
-            uint16_t TopicLen = (pBuffer[Index] << 8) | pBuffer[Index + 1];
+            if(RemainingLength < 2)
+            {
+                return false;
+            }
+
+            if((Index + 2) > Length)
+            {
+                return false;
+            }
+
+            uint16_t TopicLen =
+                (static_cast<uint16_t>(pBuffer[Index]) << 8) |
+                static_cast<uint16_t>(pBuffer[Index + 1]);
             Index += 2;
 
-            // Extract topic
-            char topic[128];                            // use pMemoryPool
-            memcpy(topic, &pBuffer[Index], TopicLen);
-            topic[TopicLen] = '\0';
+            if(TopicLen == 0)
+            {
+                return false;
+            }
+
+            if((Index + TopicLen) > (FixedHeaderSize + RemainingLength))
+            {
+                return false;
+            }
+
+            char* pTopic = (char*)pMemoryPool->AllocAndClear(TopicLen + 1, MEM_DBG_MQTT);
+            if(pTopic == nullptr)
+            {
+                return false;
+            }
+
+            memcpy(pTopic, &pBuffer[Index], TopicLen);
+            pTopic[TopicLen] = '\0';
             Index += TopicLen;
 
-            // QoS > 0 includes packet ID
-            uint8_t QoS = (pBuffer[0] >> 1) & 0x03;
+            uint8_t QoS = (Header >> 1) & 0x03;
 
             if(QoS > 0)
             {
-                Index += 2; // skip packet ID
+                if((Index + 2) > (FixedHeaderSize + RemainingLength))
+                {
+                    pMemoryPool->Free((void**)&pTopic);
+                    return false;
+                }
+
+                Index += 2;
             }
 
-            // Payload
-            size_t PayloadLen = Length - Index;
+            if(Index > (FixedHeaderSize + RemainingLength))
+            {
+                pMemoryPool->Free((void**)&pTopic);
+                return false;
+            }
+
+            size_t PayloadLen      = (FixedHeaderSize + RemainingLength) - Index;
             const uint8_t* Payload = &pBuffer[Index];
 
-            // Deliver to user callback
-            if(m_MessageCallback)
+            if(m_MessageCallback != nullptr)
             {
-                m_MessageCallback(m_pMessageContext, topic, Payload, PayloadLen);
+                m_MessageCallback(m_pMessageContext, pTopic, Payload, PayloadLen);
             }
+
+            pMemoryPool->Free((void**)&pTopic);
 
             return true;
         }
 
-        case 4: // PUBACK
+        case MQTT_PACKET_TYPE_PUBACK:
         {
-            // Must contain at least: header + remaining length + packet ID
-            if(Length < 4)
+            if(RemainingLength < 2)
             {
                 return false;
             }
 
-            // Extract Packet ID (optional to validate)
-            uint16_t packetID = (pBuffer[2] << 8) | pBuffer[3];
+            if((Index + 2) > Length)
+            {
+                return false;
+            }
+
+            uint16_t packetID =
+                (static_cast<uint16_t>(pBuffer[Index]) << 8) |
+                static_cast<uint16_t>(pBuffer[Index + 1]);
             VAR_UNUSED(packetID);
 
-            // Publish completed
-            m_State = MQTT_STATE_CONNECTED;
+            m_State            = MQTT_STATE_CONNECTED;
             m_LastActivityTick = GetTick();
             return true;
         }
 
-        case 9: // SUBACK
+        case MQTT_PACKET_TYPE_SUBACK:
         {
-            // Minimal validation: packet must contain at least 3 bytes
-            if(Length < 3)
+            if(RemainingLength < 3)
             {
                 return false;
             }
 
-            // Packet ID is bytes 2 and 3
-            uint16_t packetID = (pBuffer[2] << 8) | pBuffer[3];
+            if((Index + 3) > Length)
+            {
+                return false;
+            }
+
+            uint16_t packetID =
+                (static_cast<uint16_t>(pBuffer[Index]) << 8) |
+                static_cast<uint16_t>(pBuffer[Index + 1]);
             VAR_UNUSED(packetID);
 
-            // You may check return code at pBuffer[4] (0x00 = success)
-            m_State = MQTT_STATE_CONNECTED;
+            m_State            = MQTT_STATE_CONNECTED;
+            m_LastActivityTick = GetTick();
             return true;
         }
 
-        case 13: // PINGRESP
+        case MQTT_PACKET_TYPE_UNSUBACK:
         {
-            // PINGRESP is always exactly 2 bytes after header
-            if(Length < 2)
+            return true;
+        }
+
+        case MQTT_PACKET_TYPE_PINGRESP:
+        {
+            if(RemainingLength != 0)
             {
                 return false;
             }
@@ -817,6 +982,113 @@ uint16_t MQTT_Client::NextPacketID(void)
 
     return m_NextPacketID;
 }
+
+//---------------------------------------------------------------------------------------------
+
+bool MQTT_Client::SendFrame(uint8_t* pBuffer, size_t Length)
+{
+    size_t Sent = m_pSocket->Send(pBuffer, Length);
+    pMemoryPool->Free((void**)&pBuffer);
+    return (Sent == Length);
+}
+
+//-------------------------------------------------------------------------------------------------
+//  Name:           DecodeRemainingLength
+//
+//  Parameter(s):   const uint8_t* pBuffer
+//                      Pointer to the start of the MQTT Remaining Length field.
+//
+//                  size_t Length
+//                      Number of bytes available in the buffer.
+//
+//                  size_t* pValue
+//                      Output pointer. On success, receives the decoded Remaining Length value.
+//
+//                  size_t* pBytesUsed
+//                      Output pointer. On success, receives the number of bytes consumed by the
+//                      variable-length encoding (1 to 4 bytes).
+//
+//  Return:         bool
+//                      true  - Remaining Length successfully decoded.
+//                      false - Invalid encoding, insufficient bytes, or multiplier overflow.
+//
+//  Description:    Decodes the MQTT "Remaining Length" field, which uses a variable-length
+//                  base-128 encoding. Each byte contributes 7 bits of payload and one continuation
+//                  bit. The function accumulates the decoded value, detects malformed encodings,
+//                  and reports how many bytes were consumed.
+//
+//                  This helper is required for parsing all MQTT control packets, as the Remaining
+//                  Length determines the boundary of the variable header and payload.
+//
+//  Notes:          - Valid encodings use 1 to 4 bytes.
+//                  - The function validates multiplier overflow as required by MQTT 3.1.1.
+//                  - The caller must ensure pBuffer points to the first Remaining Length byte.
+//
+//-------------------------------------------------------------------------------------------------
+bool MQTT_Client::DecodeRemainingLength(const uint8_t* pBuffer, size_t Length, size_t* pValue, size_t* pBytesUsed)
+{
+    if((pBuffer == nullptr) || (pValue == nullptr) || (pBytesUsed == nullptr))
+    {
+        return false;
+    }
+
+    uint32_t Value      = 0;
+    uint32_t Multiplier = 1;
+    size_t   Index      = 0;
+
+    while(Index < Length)
+    {
+        uint8_t Encoded = pBuffer[Index];
+        Value += (Encoded & MQTT_REMAINING_LEN_MASK) * Multiplier;
+        Index++;
+
+        if((Encoded & MQTT_REMAINING_LEN_CONTINUATION) == 0)
+        {
+            *pValue     = static_cast<size_t>(Value);
+            *pBytesUsed = Index;
+            return true;
+        }
+
+        Multiplier *= MQTT_REMAINING_LEN_BASE_128;
+
+        if(Multiplier > MQTT_REMAINING_LEN_MAX_MULTIPLIER)
+        {
+            return false;
+        }
+    }
+
+    return false;
+}
+
+#if (MQTT_USE_UNSUBSCRIBE == DEF_ENABLED)
+size_t MQTT_Client::EncodeFixedHeader(uint8_t* pOut,
+                                      uint8_t PacketType,
+                                      uint8_t Flags,
+                                      size_t RemainingLength)
+{
+    pOut[0] = (PacketType << 4) | Flags;
+
+    size_t Count = 0;
+
+    do
+    {
+        uint8_t Byte = RemainingLength % MQTT_REMAINING_LEN_BASE_128;
+        RemainingLength = RemainingLength / MQTT_REMAINING_LEN_BASE_128;
+
+        if(RemainingLength > 0)
+        {
+            Byte = Byte | MQTT_REMAINING_LEN_CONTINUATION;
+        }
+
+        pOut[1 + Count] = Byte;
+        Count++;
+    }
+    while(RemainingLength > 0);
+
+    return Count + 1;
+}
+#endif
+
 //---------------------------------------------------------------------------------------------
 
 #endif // (IP_USE_MQTT == DEF_ENABLED)

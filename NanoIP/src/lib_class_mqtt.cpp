@@ -465,16 +465,6 @@ bool MQTT_Client::SendConnectFrame(const char* pClientID)
                                          RemainingLength);
 
     Index = HeaderLen;
-/*
-    pBuffer[Index++] = 0x00;
-    pBuffer[Index++] = 0x04;
-    pBuffer[Index++] = 'M';
-    pBuffer[Index++] = 'Q';
-    pBuffer[Index++] = 'T';
-    pBuffer[Index++] = 'T';
-    pBuffer[Index++] = 0x04;
-    pBuffer[Index++] = 0x02;
-*/
     memcpy(&pBuffer[Index], (void*)"\0\x04MQTT\x04\x02", 8);
     Index += 8;
 

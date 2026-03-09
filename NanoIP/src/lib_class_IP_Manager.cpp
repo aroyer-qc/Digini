@@ -672,9 +672,11 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t DstIP, uint16_t Pay
     }
 
     pIP->Checksum = 0;
-    pIP->Checksum = IP_CalculateChecksum(pIP, sizeof(IP_Header_t));
+//    pIP->Checksum = IP_CalculateChecksum(pIP, sizeof(IP_Header_t));
+    LIB_Checksum16((uint8_t*)&pIP, sizeof(IP_Header_t));
 }
 
+/*
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           IP_CalculateChecksum
@@ -873,7 +875,7 @@ uint16_t IP_Manager::UDP_CalculateChecksum(IP_Header_t* pIP, UDP_Header_t* pUDP,
     return ~((uint16_t)Sum);
 }
 #endif
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           FreeMessage

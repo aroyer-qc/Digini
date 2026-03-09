@@ -1006,9 +1006,11 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
     ip.SrcIP_Address       = localInfo.Address;
     ip.DstIP_Address       = remoteInfo.Address;
     ip.Checksum = 0;
-    ip.Checksum = IP_Manager::IP_CalculateChecksum(&ip, sizeof(IP_Header_t));
+    LIB_Checksum16((uint8_t*)&ip, sizeof(IP_Header_t));
+//    ip.Checksum = IP_Manager::IP_CalculateChecksum(&ip, sizeof(IP_Header_t));
     hdr.Checksum = 0;
-    hdr.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &hdr, tcpLen);
+    LIB_Checksum16((uint8_t*)&hdr, tcpLen);
+//    hdr.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &hdr, tcpLen);
 
     pMsg->Payload     = nullptr;
     pMsg->PayloadSize = 0;
@@ -1087,39 +1089,6 @@ IP_PacketMsg_t* TCP_ManagerSystem::RebuildTCP_SegmentInPlace(
     {
         return nullptr;
     }
-
-    IP_EthernetPacket_t* pPacket = pMsg->pPacket;
-    TCP_Header_t&        hdr     = pPacket->TCP_Frame.Header;
-    IP_Header_t&         ip      = pPacket->TCP_Frame.IP_Header;
-
-    hdr.SrcPort           = localInfo.Port;
-    hdr.DstPort           = remoteInfo.Port;
-    hdr.SequenceNumber    = Seq;
-    hdr.AcknowledgeNumber = Ack;
-    hdr.Flags             = Flags;
-    hdr.Window            = Window;
-    hdr.UrgentPointer     = 0;
-    hdr.Offset            = (sizeof(TCP_Header_t) / 4) << 4;
-
-    uint16_t tcpLen = static_cast<uint16_t>(sizeof(TCP_Header_t) + Length);
-
-    ip.VersionIHL         = (4u << 4) | 5u;
-    ip.TypeOfService      = 0;
-    ip.Length             = htons(static_cast<uint16_t>(sizeof(IP_Header_t) + tcpLen));
-    ip.ID                 = 0;
-    ip.FlagsFragmentOffset= 0;
-    ip.TimeToLive         = 64;
-    ip.Protocol           = IP_PROTOCOL_TCP;
-    ip.SrcIP_Address      = localInfo.Address;
-    ip.DstIP_Address      = remoteInfo.Address;
-    ip.Checksum = 0;
-    ip.Checksum = IP_Manager::IP_CalculateChecksum(&ip, sizeof(IP_Header_t));
-
-    hdr.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &hdr, tcpLen);
-
-    pMsg->PacketSize  = sizeof(IP_EthernetPacket_t);
-    pMsg->Payload     = nullptr;
-    pMsg->PayloadSize = 0;
 
     return pMsg;
 }
@@ -1231,7 +1200,8 @@ void TCP_SocketSystem::RetransmitIfNeeded(void)
                 ip.SrcIP_Address       = localInfo.Address;
                 ip.DstIP_Address       = remoteInfo.Address;
 
-                hdr.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &hdr, tcpLen);
+                //hdr.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &hdr, tcpLen);
+                LIB_Checksum16((uint8_t*)&hdr, tcpLen);
 
                 pMsg->Payload     = nullptr;
                 pMsg->PayloadSize = 0;

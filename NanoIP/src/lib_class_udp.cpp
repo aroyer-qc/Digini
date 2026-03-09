@@ -220,7 +220,8 @@ SystemState_e UDP_Manager::Send(IP_Port_t Port, uint8_t* pData, size_t Length, c
     memcpy(pPayload, pData, Length);
     IP_Manager* pIP_Manager = m_pContext->GetIP_Manager();
     pIP_Manager->PutHeader(pMsg, pDestInfo->Address, UDP_Length, IP_PROTOCOL_UDP);          // Build IP header via IP_Manager
-    pUDP->Checksum = pIP_Manager->UDP_CalculateChecksum(&pMsg->pPacket->IP_Frame.Header, pUDP, UDP_Length);
+//    pUDP->Checksum = pIP_Manager->UDP_CalculateChecksum(&pMsg->pPacket->IP_Frame.Header, pUDP, UDP_Length);
+    LIB_Checksum16((uint8_t*)&pMsg->pPacket->IP_Frame.Header, UDP_Length);
     State = pIP_Manager->SendPacket(pMsg);
 
     if(State == SYS_READY)

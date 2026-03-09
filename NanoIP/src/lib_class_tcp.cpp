@@ -62,6 +62,7 @@
 #define TCP_RETRANSMIT_TIMEOUT      1000
 #define TCP_TIME_WAIT_TIMEOUT       30000
 #define TCP_GENERIC_CLOSE_TIMEOUT   2000
+#define TCP_CONNECT_TIMEOUT         3000
 
 //-------------------------------------------------------------------------------------------------
 //  Name:           TCP_SocketSystem (constructor)
@@ -97,14 +98,17 @@ TCP_SocketSystem::TCP_SocketSystem(NetworkContext* pContext, TCP_Manager& TCP) :
     TickCount_t Now     = GetTick();
     m_LastReceivedTick  = Now;
     m_LastSendTick      = Now;
-    
+
     m_RetransmitTimeOut = TCP_RETRANSMIT_TIMEOUT;
-    
+
     for(size_t i = 0; i < TCP_MAX_TX_SEGMENTS; i++)
     {
-        m_TX_Window[i].pMsg      = nullptr;
+        m_TX_Window[i].pPayload  = nullptr;
         m_TX_Window[i].SeqStart  = 0;
         m_TX_Window[i].SeqEnd    = 0;
+        m_TX_Window[i].Flags     = 0;
+        m_TX_Window[i].Window    = 0;
+        m_TX_Window[i].Length    = 0;
         m_TX_Window[i].TimeStamp = 0;
         m_TX_Window[i].InUse     = false;
     }
@@ -154,12 +158,7 @@ size_t TCP_SocketSystem::Send(const uint8_t* pData, size_t Length)
         size_t Remaining = Length - TotalSent;
         size_t ChunkSize = (Remaining > TCP_MSS) ? TCP_MSS : Remaining;
 
-        IP_PacketMsg_t* pMsg =
-            m_pTCP->SendSegment(this,
-                                pData + TotalSent,
-                                ChunkSize,
-                                TCP_FLAG_ACK | TCP_FLAG_PSH,
-                                false);
+        IP_PacketMsg_t* pMsg = m_pTCP->SendSegment(this, pData + TotalSent, ChunkSize, TCP_FLAG_ACK | TCP_FLAG_PSH, false);
 
         if(pMsg == nullptr)
         {
@@ -273,10 +272,14 @@ void TCP_SocketSystem::Close(void)
         return;
     }
 
+    for(size_t i = 0; i < TCP_MAX_TX_SEGMENTS; i++)
+    {
+        FlushTX_Slot(&m_TX_Window[i]);
+    }
+
     uint8_t Flags = TCP_FLAG_FIN | TCP_FLAG_ACK;
 
-    IP_PacketMsg_t* pMsg =
-        m_pTCP->SendSegment(this, nullptr, 0, Flags, false);
+    IP_PacketMsg_t* pMsg = m_pTCP->SendSegment(this, nullptr, 0, Flags, false);
 
     if(pMsg == nullptr)
     {
@@ -357,13 +360,7 @@ void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket*     pSocket,
             {
                 if(pSlot->SeqEnd <= Ack)
                 {
-                    IP_Manager::FreeMessage(pSlot->pMsg);
-
-                    pSlot->pMsg      = nullptr;
-                    pSlot->SeqStart  = 0;
-                    pSlot->SeqEnd    = 0;
-                    pSlot->TimeStamp = 0;
-                    pSlot->InUse     = false;
+                    FlushTX_Slot(pSlot);
                 }
             }
         }
@@ -498,8 +495,8 @@ void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket*     pSocket,
 //
 //  Parameter(s):
 //
-//  Return:     
-// 
+//  Return:
+//
 //  Description:
 //
 //-------------------------------------------------------------------------------------------------
@@ -576,7 +573,7 @@ TCP_Socket* TCP_ManagerSystem::Connect(const IP_Address_t& ServerIP, uint16_t Po
 
     SocketInfo_t local;
     local.Address = m_pContext->GetActiveIP();
-    local.Port    = m_pContext->GetIP_Manager()->AllocateEphemeralPort();
+    local.Port    = htons(m_pContext->GetIP_Manager()->AllocateEphemeralPort());
     pSocketBase->SetLocalInfo(local);
 
     uint32_t isn = (uint32_t)GetTick();
@@ -592,15 +589,16 @@ TCP_Socket* TCP_ManagerSystem::Connect(const IP_Address_t& ServerIP, uint16_t Po
 
     for(size_t i = 0; i < TCP_MAX_TX_SEGMENTS; i++)
     {
-        pSystem->m_TX_Window[i].pMsg      = nullptr;
+        pSystem->m_TX_Window[i].pPayload  = nullptr;
         pSystem->m_TX_Window[i].SeqStart  = 0;
         pSystem->m_TX_Window[i].SeqEnd    = 0;
         pSystem->m_TX_Window[i].TimeStamp = 0;
         pSystem->m_TX_Window[i].InUse     = false;
     }
 
-    IP_PacketMsg_t* pMsg =
-        SendSegment(pTCP, nullptr, 0, TCP_FLAG_SYN, false);
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "TCP: SEND SYN ->  %d.%d.%d.%d:%u localPort=%u\n", IP_A(ServerIP), IP_B(ServerIP), IP_C(ServerIP), IP_D(ServerIP),Port, local.Port);
+
+    IP_PacketMsg_t* pMsg = SendSegment(pTCP, nullptr, 0, TCP_FLAG_SYN, false);
 
     if(pMsg == nullptr)
     {
@@ -608,9 +606,10 @@ TCP_Socket* TCP_ManagerSystem::Connect(const IP_Address_t& ServerIP, uint16_t Po
         return nullptr;
     }
 
-    pSystem->m_State     = TCP_STATE_SYN_SENT;
-    m_pClientSocket      = pTCP;
+    pSystem->m_State = TCP_STATE_SYN_SENT;
+    m_pClientSocket  = pTCP;
 
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "TCP: STATE -> SYN_SENT (waiting SYN+ACK)\n");
     return pTCP;
 }
 #endif
@@ -758,7 +757,11 @@ void TCP_ManagerSystem::Process(void)
     if(m_pClientSocket != nullptr)
     {
         TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(m_pClientSocket);
-        pSystem->RetransmitIfNeeded();
+
+        if(pSystem->IsConnected())
+        {
+            pSystem->RetransmitIfNeeded();
+        }
     }
 #endif
 
@@ -775,7 +778,11 @@ void TCP_ManagerSystem::Process(void)
         if(pTCP != nullptr)
         {
             TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pTCP);
-            pSystem->RetransmitIfNeeded();
+
+            if(pSystem->IsConnected())
+            {
+                pSystem->RetransmitIfNeeded();
+            }
         }
     }
 #endif
@@ -849,6 +856,7 @@ void TCP_ManagerSystem::ProcessSegment(IP_PacketMsg_t* pMsg)
         uint16_t totalLength  = ntohs(ip.Length);
 
         size_t PayloadLen = 0;
+
         if(totalLength >= (ipHeaderLen + tcpHeaderLen))
         {
             PayloadLen = static_cast<size_t>(totalLength - ipHeaderLen - tcpHeaderLen);
@@ -864,6 +872,32 @@ void TCP_ManagerSystem::ProcessSegment(IP_PacketMsg_t* pMsg)
         // Forward to TCP state machine (TCP owns pMsg)
         // ---------------------------------------------------------------------
         TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
+
+
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "TCP: RX flags=0x%02X seq=%u ack=%u state=%d payload=%u\n", Flags, Seq, Ack, pSystem->m_State, PayloadLen);
+
+        if((Flags & (TCP_FLAG_SYN | TCP_FLAG_ACK)) == (TCP_FLAG_SYN | TCP_FLAG_ACK))
+        {
+            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "TCP: RX SYN+ACK detected\n");
+        }
+
+        // ⭐ LOG #3 — ACK simple
+        if((Flags & TCP_FLAG_ACK) && !(Flags & TCP_FLAG_SYN))
+        {
+            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "TCP: RX ACK\n");
+        }
+
+        // ⭐ LOG #4 — FIN
+        if(Flags & TCP_FLAG_FIN)
+        {
+            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "TCP: RX FIN\n");
+        }
+
+        // ⭐ LOG #5 — Appel au state machine
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "TCP: Processing flags in state=%d\n", pSystem->m_State);
+
+
+
         pSystem->ProcessIncomingFlags(pSocket, pMsg, Flags, Seq, Ack);
         return;
     }
@@ -902,11 +936,7 @@ void TCP_ManagerSystem::ProcessSegment(IP_PacketMsg_t* pMsg)
 //
 //                  The caller is responsible for managing retransmission state.
 //-------------------------------------------------------------------------------------------------
-IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket*    pSocket,
-                                               const uint8_t* pPayload,
-                                               size_t         Length,
-                                               uint8_t        Flags,
-                                               bool           Retransmit)
+IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_t* pPayload, size_t Length, uint8_t Flags, bool Retransmit)
 {
     if(pSocket == nullptr)
     {
@@ -929,9 +959,7 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket*    pSocket,
 
     IP_PacketMsg_t* pMsg = nullptr;
 
-    SystemState_e State =
-        IP_Manager::AllocPacket(&pMsg, sizeof(IP_EthernetPacket_t),
-                                MEM_DBG_TCP, MEM_DBG_TCPDT);
+    SystemState_e State = IP_Manager::AllocPacket(&pMsg, sizeof(IP_EthernetPacket_t), MEM_DBG_TCP, MEM_DBG_TCPDT);
 
     if((State != SYS_READY) || (pMsg == nullptr))
     {
@@ -941,33 +969,50 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket*    pSocket,
     IP_EthernetPacket_t* pPacket = pMsg->pPacket;
     TCP_Header_t&        hdr     = pPacket->TCP_Frame.Header;
 
+    IP_MAC_Address_t SourceMAC;
+    m_pContext->GetMAC_Address(&SourceMAC);
+    memcpy(&pPacket->ETH_Header.SourceMAC, &SourceMAC, 6);
+    pPacket->ETH_Header.Type = IP_ETHERNET_TYPE_IPV4;
+
     hdr.SrcPort           = localInfo.Port;
     hdr.DstPort           = remoteInfo.Port;
-    hdr.SequenceNumber    = pSystem->m_SeqNumber;
-    hdr.AcknowledgeNumber = pSystem->m_AckNumber;
+    hdr.SequenceNumber    = htonl(pSystem->m_SeqNumber);
+    hdr.AcknowledgeNumber = htonl(pSystem->m_AckNumber);
     hdr.Flags             = Flags;
-    hdr.Window            = pSystem->m_LocalWindow;
+    hdr.Window            = htons(pSystem->m_LocalWindow);
     hdr.UrgentPointer     = 0;
     hdr.Offset            = (sizeof(TCP_Header_t) / 4) << 4;
+    hdr.OptionData.Kind   = 2;                 // MSS option
+    hdr.OptionData.Length = 4;                 // always 4
+    hdr.OptionData.MSS    = HTONS(TCP_MSS);    // 1460
+
 
     if((pPayload != nullptr) && (Length > 0))
     {
-        uint8_t* pTCP_Payload =
-            ((uint8_t*)&pPacket->TCP_Frame.Header) + sizeof(TCP_Header_t);
-
+        uint8_t* pTCP_Payload = ((uint8_t*)&pPacket->TCP_Frame.Header) + sizeof(TCP_Header_t);
         memcpy(pTCP_Payload, pPayload, Length);
     }
 
-    IP_Header_t&  ip  = pPacket->TCP_Frame.IP_Header;
-    TCP_Header_t& tcp = pPacket->TCP_Frame.Header;
-    uint16_t      tcpLen = static_cast<uint16_t>(sizeof(TCP_Header_t) + Length);
+    IP_Header_t& ip = pPacket->TCP_Frame.IP_Header;
+    uint16_t tcpLen = static_cast<uint16_t>(sizeof(TCP_Header_t) + Length);
 
-    tcp.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &tcp, tcpLen);
+    ip.VersionIHL          = (4u << 4) | 5u;
+    ip.TypeOfService       = 0;
+    ip.Length              = htons(static_cast<uint16_t>(sizeof(IP_Header_t) + tcpLen));
+    ip.ID                  = 0;
+    ip.FlagsFragmentOffset = 0;
+    ip.TimeToLive          = 64;
+    ip.Protocol            = IP_PROTOCOL_TCP;
+    ip.SrcIP_Address       = localInfo.Address;
+    ip.DstIP_Address       = remoteInfo.Address;
+    ip.Checksum = 0;
+    ip.Checksum = IP_Manager::IP_CalculateChecksum(&ip, sizeof(IP_Header_t));
+    hdr.Checksum = 0;
+    hdr.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &hdr, tcpLen);
 
     pMsg->Payload     = nullptr;
     pMsg->PayloadSize = 0;
-    pMsg->PacketSize  = sizeof(IP_EthernetPacket_t);
-
+    pMsg->PacketSize  = sizeof(IP_EthernetHeader_t) + sizeof(IP_Header_t) + tcpLen;
     State = pIP_Manager->SendPacket(pMsg);
 
     if((State != SYS_READY) && (State != SYS_ARP_RESOLVE_PENDING))
@@ -981,15 +1026,8 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket*    pSocket,
         uint32_t SeqStart = pSystem->m_SeqNumber;
         uint32_t SeqEnd   = SeqStart;
 
-        if((Flags & TCP_FLAG_SYN) != 0)
-        {
-            SeqEnd++;
-        }
-
-        if((Flags & TCP_FLAG_FIN) != 0)
-        {
-            SeqEnd++;
-        }
+        if((Flags & TCP_FLAG_SYN) != 0) SeqEnd++;
+        if((Flags & TCP_FLAG_FIN) != 0) SeqEnd++;
 
         SeqEnd += static_cast<uint32_t>(Length);
 
@@ -1001,9 +1039,26 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket*    pSocket,
 
             if(pSlot->InUse == false)
             {
-                pSlot->pMsg      = pMsg;
+                uint8_t* pCopy = nullptr;
+
+                if(Length > 0)
+                {
+                    pCopy = (uint8_t*)pMemoryPool->Alloc(Length, MEM_DBG_TCPCPY);
+
+                    if(pCopy == nullptr)
+                    {
+                        break;
+                    }
+
+                    memcpy(pCopy, pPayload, Length);
+                }
+
+                pSlot->pPayload  = pCopy;
                 pSlot->SeqStart  = SeqStart;
                 pSlot->SeqEnd    = SeqEnd;
+                pSlot->Flags     = Flags;
+                pSlot->Window    = pSystem->m_LocalWindow;
+                pSlot->Length    = Length;
                 pSlot->TimeStamp = GetTick();
                 pSlot->InUse     = true;
                 break;
@@ -1014,6 +1069,179 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket*    pSocket,
     pSystem->m_LastSendTick = GetTick();
 
     return pMsg;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+IP_PacketMsg_t* TCP_ManagerSystem::RebuildTCP_SegmentInPlace(
+    IP_PacketMsg_t*      pMsg,
+    const SocketInfo_t&  localInfo,
+    const SocketInfo_t&  remoteInfo,
+    uint32_t             Seq,
+    uint32_t             Ack,
+    uint8_t              Flags,
+    uint16_t             Window,
+    size_t               Length)
+{
+    if(pMsg == nullptr)
+    {
+        return nullptr;
+    }
+
+    IP_EthernetPacket_t* pPacket = pMsg->pPacket;
+    TCP_Header_t&        hdr     = pPacket->TCP_Frame.Header;
+    IP_Header_t&         ip      = pPacket->TCP_Frame.IP_Header;
+
+    hdr.SrcPort           = localInfo.Port;
+    hdr.DstPort           = remoteInfo.Port;
+    hdr.SequenceNumber    = Seq;
+    hdr.AcknowledgeNumber = Ack;
+    hdr.Flags             = Flags;
+    hdr.Window            = Window;
+    hdr.UrgentPointer     = 0;
+    hdr.Offset            = (sizeof(TCP_Header_t) / 4) << 4;
+
+    uint16_t tcpLen = static_cast<uint16_t>(sizeof(TCP_Header_t) + Length);
+
+    ip.VersionIHL         = (4u << 4) | 5u;
+    ip.TypeOfService      = 0;
+    ip.Length             = htons(static_cast<uint16_t>(sizeof(IP_Header_t) + tcpLen));
+    ip.ID                 = 0;
+    ip.FlagsFragmentOffset= 0;
+    ip.TimeToLive         = 64;
+    ip.Protocol           = IP_PROTOCOL_TCP;
+    ip.SrcIP_Address      = localInfo.Address;
+    ip.DstIP_Address      = remoteInfo.Address;
+    ip.Checksum = 0;
+    ip.Checksum = IP_Manager::IP_CalculateChecksum(&ip, sizeof(IP_Header_t));
+
+    hdr.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &hdr, tcpLen);
+
+    pMsg->PacketSize  = sizeof(IP_EthernetPacket_t);
+    pMsg->Payload     = nullptr;
+    pMsg->PayloadSize = 0;
+
+    return pMsg;
+}
+
+//-------------------------------------------------------------------------------------------------
+//  Name:           RetransmitIfNeeded
+//
+//  Parameter(s):   TCP_Socket* pSocket
+//                      Pointer to the TCP socket whose retransmission timer is being evaluated.
+//
+//  Return:         void
+//
+//  Description:    Handles TCP retransmission for a single socket. If a segment previously sent
+//                  by this socket (SYN, data, FIN, etc.) has not been acknowledged within the
+//                  retransmission timeout interval, this function retransmits the segment.
+//
+//                  Retransmission rules:
+//                      - Only segments marked as "pending" are retransmitted.
+//                      - Sequence numbers are NOT advanced during retransmission.
+//                      - The retransmission timer is restarted after each retransmission.
+//                      - The caller (Connect(), Send(), Close()) is responsible for recording
+//                        the last transmitted flags and payload length.
+//
+//                  This function does NOT modify the TCP state machine directly; state transitions
+//                  occur in ProcessIncomingFlags() when ACKs are received.
+//-------------------------------------------------------------------------------------------------
+void TCP_SocketSystem::RetransmitIfNeeded(void)
+{
+    IP_Manager* pIP = GetContext()->GetIP_Manager();
+
+    if(pIP == nullptr)
+    {
+        return;
+    }
+
+    TickCount_t Now = GetTick();
+
+    SocketInfo_t localInfo;
+    SocketInfo_t remoteInfo;
+    GetLocalInfo(&localInfo);
+    GetRemoteInfo(&remoteInfo);
+
+    for(size_t i = 0; i < TCP_MAX_TX_SEGMENTS; i++)
+    {
+        TCP_TX_Segment_t* pSlot = &m_TX_Window[i];
+
+        if(pSlot->InUse == true)
+        {
+            if((Now - pSlot->TimeStamp) >= m_RetransmitTimeOut)
+            {
+                pSlot->RetryCount++;
+
+                if(pSlot->RetryCount >= TCP_MAX_RETRY)
+                {
+                    FlushTX_Slot(pSlot);
+                    continue;
+                }
+
+                IP_PacketMsg_t* pMsg = nullptr;
+
+                SystemState_e State =
+                    IP_Manager::AllocPacket(&pMsg,
+                                            sizeof(IP_EthernetPacket_t),
+                                            MEM_DBG_TCP,
+                                            MEM_DBG_TCPDT);
+
+                if((State != SYS_READY) || (pMsg == nullptr))
+                {
+                    continue;
+                }
+
+                IP_EthernetPacket_t* pPacket = pMsg->pPacket;
+                TCP_Header_t& hdr = pPacket->TCP_Frame.Header;
+
+                IP_MAC_Address_t SourceMAC;
+                GetContext()->GetMAC_Address(&SourceMAC);
+                memcpy(&pPacket->ETH_Header.SourceMAC, &SourceMAC, 6);
+                pPacket->ETH_Header.Type = IP_ETHERNET_TYPE_IPV4;
+
+
+                hdr.SrcPort           = localInfo.Port;
+                hdr.DstPort           = remoteInfo.Port;
+                hdr.SequenceNumber    = htonl(pSlot->SeqStart);
+                hdr.AcknowledgeNumber = htonl(m_AckNumber);
+                hdr.Flags             = pSlot->Flags;
+                hdr.Window            = htons(pSlot->Window);
+                hdr.UrgentPointer     = 0;
+                hdr.Offset            = (sizeof(TCP_Header_t) / 4) << 4;
+                hdr.OptionData.Kind   = 2;                 // MSS option
+                hdr.OptionData.Length = 4;                 // always 4
+                hdr.OptionData.MSS    = HTONS(TCP_MSS);    // 1460
+
+                if(pSlot->Length > 0)
+                {
+                    uint8_t* pTCP_Payload = ((uint8_t*)&pPacket->TCP_Frame.Header) + sizeof(TCP_Header_t);
+                    memcpy(pTCP_Payload, pSlot->pPayload, pSlot->Length);
+                }
+
+                IP_Header_t& ip = pPacket->TCP_Frame.IP_Header;
+                uint16_t tcpLen = static_cast<uint16_t>(sizeof(TCP_Header_t) + pSlot->Length);
+
+                ip.VersionIHL          = (4u << 4) | 5u;
+                ip.TypeOfService       = 0;
+                ip.Length              = htons(static_cast<uint16_t>(sizeof(IP_Header_t) + tcpLen));
+                ip.ID                  = 0;
+                ip.FlagsFragmentOffset = 0;
+                ip.TimeToLive          = 64;
+                ip.Protocol            = IP_PROTOCOL_TCP;
+                ip.SrcIP_Address       = localInfo.Address;
+                ip.DstIP_Address       = remoteInfo.Address;
+
+                hdr.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &hdr, tcpLen);
+
+                pMsg->Payload     = nullptr;
+                pMsg->PayloadSize = 0;
+                pMsg->PacketSize  = sizeof(IP_EthernetHeader_t) + sizeof(IP_Header_t) + tcpLen;   // ← CHANGÉ
+                pIP->SendPacket(pMsg);
+
+                pSlot->TimeStamp = Now;
+            }
+        }
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1100,53 +1328,24 @@ bool TCP_ManagerSystem::ParseTCP_Header(IP_EthernetPacket_t* pPacket, TCP_Socket
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Name:           RetransmitIfNeeded
-//
-//  Parameter(s):   TCP_Socket* pSocket
-//                      Pointer to the TCP socket whose retransmission timer is being evaluated.
-//
-//  Return:         void
-//
-//  Description:    Handles TCP retransmission for a single socket. If a segment previously sent
-//                  by this socket (SYN, data, FIN, etc.) has not been acknowledged within the
-//                  retransmission timeout interval, this function retransmits the segment.
-//
-//                  Retransmission rules:
-//                      - Only segments marked as "pending" are retransmitted.
-//                      - Sequence numbers are NOT advanced during retransmission.
-//                      - The retransmission timer is restarted after each retransmission.
-//                      - The caller (Connect(), Send(), Close()) is responsible for recording
-//                        the last transmitted flags and payload length.
-//
-//                  This function does NOT modify the TCP state machine directly; state transitions
-//                  occur in ProcessIncomingFlags() when ACKs are received.
-//-------------------------------------------------------------------------------------------------
-void TCP_SocketSystem::RetransmitIfNeeded(void)
+
+void TCP_SocketSystem::FlushTX_Slot(TCP_TX_Segment_t* pSlot)
 {
-    IP_Manager* pIP = GetContext()->GetIP_Manager();
-
-    if(pIP == nullptr)
+    if(pSlot->pPayload != nullptr)
     {
-        return;
+        pMemoryPool->Free((void**)&pSlot->pPayload);
     }
 
-    TickCount_t Now = GetTick();
-
-    for(size_t i = 0; i < TCP_MAX_TX_SEGMENTS; i++)
-    {
-        TCP_TX_Segment_t* pSlot = &m_TX_Window[i];
-
-        if(pSlot->InUse == true)
-        {
-            if((Now - pSlot->TimeStamp) >= m_RetransmitTimeOut)
-            {
-                pIP->SendPacket(pSlot->pMsg);
-
-                pSlot->TimeStamp = Now;
-            }
-        }
-    }
+    pSlot->pPayload  = nullptr;
+    pSlot->SeqStart  = 0;
+    pSlot->SeqEnd    = 0;
+    pSlot->Flags     = 0;
+    pSlot->Window    = 0;
+    pSlot->Length    = 0;
+    pSlot->TimeStamp = 0;
+    pSlot->InUse     = false;
 }
+
 
 //-------------------------------------------------------------------------------------------------
 //  Name:           UpdateTimers
@@ -1208,6 +1407,15 @@ void TCP_ManagerSystem::UpdateTimers(void)
                 }
                 break;
 
+            case TCP_STATE_SYN_SENT:
+                if((Now - pSystem->m_LastReceivedTick) >= TCP_CONNECT_TIMEOUT)
+                {
+                    pSystem->m_State = TCP_STATE_CLOSED;
+                    CloseAndFreeSocket(pSystem);
+                    m_pClientSocket = nullptr;
+                }
+                break;
+
             default:
                 break;
         }
@@ -1252,6 +1460,15 @@ void TCP_ManagerSystem::UpdateTimers(void)
                 }
                 break;
 
+            case TCP_STATE_SYN_SENT:
+                if((Now - pSystem->m_LastReceivedTick) >= TCP_CONNECT_TIMEOUT)
+                {
+                    pSystem->m_State = TCP_STATE_CLOSED
+                    CloseAndFreeSocket(pSystem);
+                    m_pServerSockets[i] = nullptr;
+                }
+                break;
+
             default:
                 break;
         }
@@ -1267,6 +1484,7 @@ void TCP_ManagerSystem::CloseAndFreeSocket(TCP_SocketSystem* pSystem)
         return;
     }
 
+    nOS_StatusReg   sr;
     IP_PacketMsg_t* pMsg = nullptr;
 
     while(pSystem->DequeueMessage(pMsg) == true)
@@ -1283,21 +1501,22 @@ void TCP_ManagerSystem::CloseAndFreeSocket(TCP_SocketSystem* pSystem)
 
         if(pSlot->InUse == true)
         {
-            if(pSlot->pMsg != nullptr)
-            {
-                IP_Manager::FreeMessage(pSlot->pMsg);
-            }
-
-            pSlot->pMsg      = nullptr;
-            pSlot->SeqStart  = 0;
-            pSlot->SeqEnd    = 0;
-            pSlot->TimeStamp = 0;
-            pSlot->InUse     = false;
+            pSystem->FlushTX_Slot(pSlot);
         }
     }
 
+    nOS_EnterCritical(sr);
     pSystem->m_State = TCP_STATE_CLOSED;
 
-    delete pSystem;
+    if(pSystem->m_pEventHandler != nullptr)
+    {
+        pSystem->m_pEventHandler->OnSocketEvent(pSystem, SOCKET_EVENT_CLOSED);
+    }
+
+    pSystem->~TCP_SocketSystem();
+    pMemoryPool->Free((void**)&pSystem);
+    nOS_LeaveCritical(sr);
 }
+
 #endif //(IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
+

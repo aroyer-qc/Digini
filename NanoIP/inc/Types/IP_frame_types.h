@@ -35,7 +35,6 @@
 //-------------------------------------------------------------------------------------------------
 
 #pragma pack(push, 1)
-
 // The Ethernet header
 struct IP_EthernetHeader_t
 {
@@ -43,7 +42,9 @@ struct IP_EthernetHeader_t
 	IP_MAC_Address_t 	SourceMAC;                      // +   6
 	uint16_t		    Type;                           // +   2
 };                           	                        // 14 Bytes
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct DHCP_Header_t
 {
 	uint8_t         Op;                                 //     1
@@ -63,7 +64,9 @@ struct DHCP_Header_t
 	uint32_t        MagicCookie;                        // +   4
 	uint8_t         Options[308];                       // Do not use this struct with sizeof()
 };                                                      // = 240 bytes + Options
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct DNS_Header_t
 {
     uint16_t        ID;                                 //     2
@@ -74,7 +77,9 @@ struct DNS_Header_t
     uint16_t        ARCount;                            // +   2
      uint8_t        Payload[DNS_MAX_PACKET_SIZE];       // +   512
 };                                                      // = 524 bytes
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct ICMP_Header_t
 {
 	uint8_t         Type;                               //     1
@@ -83,7 +88,9 @@ struct ICMP_Header_t
     uint16_t        ID;                                 // +   2
     uint16_t 	    Sequence;                           // +   2
 };                                                      // =   8 Bytes
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct IP_Header_t
 {
 	uint8_t 	    VersionIHL;                         //     1    IHL  = Internet Header Length
@@ -97,7 +104,18 @@ struct IP_Header_t
 	IP_Address_t    SrcIP_Address;                      // +   4
     IP_Address_t    DstIP_Address;                      // +   4
 };                              		                // =  20 Bytes
+#pragma pack(pop)
 
+#pragma pack(push, 1)
+struct OptionData_t
+{
+    uint8_t  Kind;     // always 2 for MSS
+    uint8_t  Length;   // always 4
+    uint16_t MSS;      // htons(TCP_MSS)
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
 struct TCP_Header_t
 {
 	IP_Port_t 	    SrcPort;                            //     2
@@ -109,9 +127,11 @@ struct TCP_Header_t
     uint16_t 	    Window;                             // +   2
 	uint16_t 	    Checksum;                           // +   2
 	uint16_t 	    UrgentPointer;                      // +   2
-	uint32_t        OptionData;                         // +   4
-};                              	                    // =  20 Bytes before option data
+	OptionData_t    OptionData;                         // +   4
+};                              	                    // =  24 with option data
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct UDP_Header_t
 {
 	IP_Port_t 	    SrcPort;                            //     2
@@ -119,8 +139,9 @@ struct UDP_Header_t
 	uint16_t	    Length;                             // +   2
 	uint16_t	    Checksum;                           // +   2
 };                                                      // =   8 Bytes
+#pragma pack(pop)
 
-
+#pragma pack(push, 1)
 struct IP_PseudoHeader_t                                // note that the element are not in same order as define in the protocol,
 {                                                       // but match the IP in the union
 	uint8_t         Zero_s;                             //     1
@@ -129,7 +150,9 @@ struct IP_PseudoHeader_t                                // note that the element
 	IP_Address_t  	SrcIP;                              // +   4
 	IP_Address_t  	DstIP;                              // +   4
 }; 	                                                    // =  12 Bytes
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct SNTP_Header_t
 {
     uint8_t   LI_VN_Mode;                               //     1    Leap Indicator (2 bits), Version (3 bits), Mode (3 bits)
@@ -146,8 +169,9 @@ struct SNTP_Header_t
     uint64_t  ReceiveTimestamp;                         // +   8    T2 (server receive time)
     uint64_t  TransmitTimestamp;                        // +   8    T3 (server transmit time)
 }; 	                                                    // =  48 Bytes
+#pragma pack(pop)
 
-// the ARP frame
+#pragma pack(push, 1)
 struct ARP_Frame_t
 {
 	IP_EthernetHeader_t     ETH_Header;                 //    14
@@ -161,8 +185,9 @@ struct ARP_Frame_t
 	IP_MAC_Address_t 	    DestinationMAC;		        // +   6
 	IP_Address_t			DstIP_Address;     	        // +   4
 };                                                      // =  42 Bytes
+#pragma pack(pop)
 
-// the DHCP frame
+#pragma pack(push, 1)
 struct DHCP_Frame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;                 //    14
@@ -170,8 +195,9 @@ struct DHCP_Frame_t
 	UDP_Header_t			UDP_Header;                 // +   8
 	DHCP_Header_t		    Header;  		            // + 240
 };                                                      // = 282 Bytes
+#pragma pack(pop)
 
-// the DNS frame
+#pragma pack(push, 1)
 struct DNS_Frame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;                 //    14
@@ -179,15 +205,18 @@ struct DNS_Frame_t
 	UDP_Header_t			UDP_Header;                 // +   8
 	DNS_Header_t	    	Header;		                // +  12
 };                                                      // =  54 Bytes
+#pragma pack(pop)
 
-// the ICMP frame
+#pragma pack(push, 1)
 struct ICMP_Frame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;                 //    14
 	IP_Header_t 			IP_Header;                  // +  20
 	ICMP_Header_t	    	Header;		                // +   8
 };                                                      // =  42 Bytes
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct MQTT_Frame_t
 {
     IP_EthernetHeader_t     ETH_Header;                 //    14
@@ -197,39 +226,41 @@ struct MQTT_Frame_t
     // MQTT messages are variable-length, so we reserve a buffer.
     uint8_t                 MQTT_Data[512]; // Adjust size as needed
 };
+#pragma pack(pop)
 
-// the IP frame
+#pragma pack(push, 1)
 struct IP_Frame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;			        //    14
 	IP_Header_t		    	Header;                     // +  20
 };                                                      // =  34 Bytes
+#pragma pack(pop)
 
-// the TCP frame
+#pragma pack(push, 1)
 struct TCP_Frame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;			        //    14
 	IP_Header_t			    IP_Header;                  // +  20
 	TCP_Header_t			Header; 	                // +  20
 };                                                      // =  54 Bytes
+#pragma pack(pop)
 
-// the TCP pseudo frame
-/*struct TCP_PseudoFrame_t
-{
-	IP_EthernetHeader_t 	ETH_Header;                 //    14
-	uint8_t 				Dummy[8]; 			        // +   8
-	IP_PseudoHeader_t		Header;	       	 		    // +  12
-	TCP_Header_t			TCP_Header;		            // +  20
-};		                                                // =  54 Bytes
-*/
+//struct TCP_PseudoFrame_t
+//{
+//	IP_EthernetHeader_t 	ETH_Header;                 //    14
+//	uint8_t 				Dummy[8]; 			        // +   8
+//	IP_PseudoHeader_t		Header;	       	 		    // +  12
+//	TCP_Header_t			TCP_Header;		            // +  20
+//};		                                                // =  54 Bytes
 
-// the UDP frame
+#pragma pack(push, 1)
 struct UDP_Frame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;                 //    14
 	IP_Header_t			    IP_Header;                  // +  20
 	UDP_Header_t			UDP_Header;		            // +   8
 };                                                      // =  42 Bytes
+#pragma pack(pop)
 
 // the UDP pseudo frame
 /*struct UDP_PseudoFrame_t
@@ -241,7 +272,7 @@ struct UDP_Frame_t
 };		                                                // =  42 Bytes
 */
 
-// the DHCP frame
+#pragma pack(push, 1)
 struct SNTP_Frame_t
 {
 	IP_EthernetHeader_t 	ETH_Header;                 //    14
@@ -249,7 +280,9 @@ struct SNTP_Frame_t
 	UDP_Header_t			UDP_Header;                 // +   8
     SNTP_Header_t           SNTP_Header;                // +  48
 };                                                      // =  90 Bytes
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct IP_EthernetPacket_t
 {
 	union
@@ -265,12 +298,11 @@ struct IP_EthernetPacket_t
 		MQTT_Frame_t                MQTT_Frame;
         SNTP_Frame_t                SNTP_Frame;
 		TCP_Frame_t	                TCP_Frame;
-	//TCP_PseudoFrame_t         TCP_PseudoFrame;    // use for TCP Checksum calculation
+//        TCP_PseudoFrame_t         TCP_PseudoFrame;    // use for TCP Checksum calculation
 		UDP_Frame_t				    UDP_Frame;
 	//UDP_PseudoFrame_t		    UDP_PseudoFrame;	// use for UDP Checksum calculation
 	};
 };
-
 #pragma pack(pop)
 
 struct IP_PacketMsg_t
@@ -284,11 +316,15 @@ struct IP_PacketMsg_t
 
 struct TCP_TX_Segment_t
 {
-    IP_PacketMsg_t*         pMsg;                   // Full complet (headers + payload)
-    uint32_t                SeqStart;               // First byte of this segment
-    uint32_t                SeqEnd;                 // Last byte + 1
-    uint32_t                TimeStamp;              // for retransmission
-    bool                    InUse;                  // Active Slot or not
+    uint8_t*        pPayload;
+    bool            InUse;
+    uint32_t        SeqStart;
+    uint32_t        SeqEnd;
+    uint8_t         Flags;
+    uint16_t        Window;
+    size_t          Length;
+    TickCount_t     TimeStamp;
+    uint8_t         RetryCount;
 };
 
 //-------------------------------------------------------------------------------------------------

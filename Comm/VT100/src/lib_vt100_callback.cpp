@@ -1207,59 +1207,63 @@ VT100_InputType_e VT100_Terminal::CALLBACK_NetworkInfo(uint8_t Input, VT100_Call
         {
             Label_e           SpeedLabel;
             NetworkContext*   pContext = pTaskNetwork->GetContext();
-            char              Buffer[20];
-            IP_MAC_Address_t  MAC;
 
-            SetForeColor(VT100_COLOR_WHITE);
-
-            IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveIP());
-            InMenuPrintf(28, 8,  LBL_STRING, Buffer);
-            IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveSubnetMask());
-            InMenuPrintf(28, 9,   LBL_STRING, Buffer);
-            IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveGatewayIP());
-            InMenuPrintf(28, 10, LBL_STRING, Buffer);
-            IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveDNS_IP());
-            InMenuPrintf(28, 11, LBL_STRING, Buffer);
-          #if (IP_USE_DHCP == DEF_ENABLED)
-            InMenuPrintf(28, 12, (pContext->IsDHCP_Enable() == true) != 0 ? LBL_ENABLED : LBL_DISABLED);
-          #else
-            InMenuPrintf(28, 12, LBL_DISABLED);
-          #endif
-            InMenuPrintf(28, 13, (pContext->GetLinkState() == ETH_LINK_UP) ? LBL_IP_UP: LBL_IP_DOWN);
-
-            // tempo remove warning
-            //LinkInfo.Duplex = ETH_PHY_FULL_DUPLEX;
-
-            switch(pContext->GetLinkSpeed())
+            if(pContext != nullptr)
             {
-                case ETH_PHY_SPEED_NONE:    SpeedLabel = LBL_IP_SPEED_NONE; break;
-                case ETH_PHY_SPEED_10M:     SpeedLabel = LBL_IP_SPEED_10M;  break;
-                case ETH_PHY_SPEED_100M:    SpeedLabel = LBL_IP_SPEED_100M; break;
-                case ETH_PHY_SPEED_1G:      SpeedLabel = LBL_IP_SPEED_1G;   break;
+                char              Buffer[20];
+                IP_MAC_Address_t  MAC;
+
+                SetForeColor(VT100_COLOR_WHITE);
+
+                IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveIP());
+                InMenuPrintf(28, 8,  LBL_STRING, Buffer);
+                IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveSubnetMask());
+                InMenuPrintf(28, 9,   LBL_STRING, Buffer);
+                IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveGatewayIP());
+                InMenuPrintf(28, 10, LBL_STRING, Buffer);
+                IP_Manager::IP_ToAscii(Buffer, pContext->GetActiveDNS_IP());
+                InMenuPrintf(28, 11, LBL_STRING, Buffer);
+              #if (IP_USE_DHCP == DEF_ENABLED)
+                InMenuPrintf(28, 12, (pContext->IsDHCP_Enable() == true) != 0 ? LBL_ENABLED : LBL_DISABLED);
+              #else
+                InMenuPrintf(28, 12, LBL_DISABLED);
+              #endif
+                InMenuPrintf(28, 13, (pContext->GetLinkState() == ETH_LINK_UP) ? LBL_IP_UP: LBL_IP_DOWN);
+
+                // tempo remove warning
+                //LinkInfo.Duplex = ETH_PHY_FULL_DUPLEX;
+
+                switch(pContext->GetLinkSpeed())
+                {
+                    case ETH_PHY_SPEED_NONE:    SpeedLabel = LBL_IP_SPEED_NONE; break;
+                    case ETH_PHY_SPEED_10M:     SpeedLabel = LBL_IP_SPEED_10M;  break;
+                    case ETH_PHY_SPEED_100M:    SpeedLabel = LBL_IP_SPEED_100M; break;
+                    case ETH_PHY_SPEED_1G:      SpeedLabel = LBL_IP_SPEED_1G;   break;
+                }
+
+                InMenuPrintf(28, 14, SpeedLabel);
+                pContext->GetMAC_Address(&MAC);
+                InMenuPrintf(28, 15, LBL_MAC_ADDRESS_VALUE, MAC.Byte[0], MAC.Byte[1], MAC.Byte[2], MAC.Byte[3], MAC.Byte[4], MAC.Byte[5]);
+
+              #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
+                InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, DBG_RX_Count);
+                InMenuPrintf(50, 18, LBL_LONG_UNSIGNED, DBG_RX_Drop);
+                InMenuPrintf(28, 19, LBL_LONG_UNSIGNED, DBG_TX_Count);
+                InMenuPrintf(50, 19, LBL_LONG_UNSIGNED, DBG_TX_Drop);
+              #endif
+
+                for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
+                {
+                    ARP_TableEntry_t* pARP_Entry = pContext->GetARP().GetTableEntryPointer(i);
+                    const uint8_t* Byte = pARP_Entry->MAC_Address.Byte;
+
+                    IP_Manager::IP_ToAscii(Buffer, pARP_Entry->IP_Address);
+                    InMenuPrintf(14, 23 + i, LBL_STRING, Buffer);
+                    InMenuPrintf(34, 23 + i, LBL_MAC_ADDRESS_VALUE, Byte[0], Byte[1], Byte[2], Byte[3], Byte[4], Byte[5]);
+                }
+
+                LogDisplay();
             }
-
-            InMenuPrintf(28, 14, SpeedLabel);
-            pContext->GetMAC_Address(&MAC);
-            InMenuPrintf(28, 15, LBL_MAC_ADDRESS_VALUE, MAC.Byte[0], MAC.Byte[1], MAC.Byte[2], MAC.Byte[3], MAC.Byte[4], MAC.Byte[5]);
-
-          #if (ETH_DEBUG_PACKET_COUNT == DEF_ENABLED)
-            InMenuPrintf(28, 18, LBL_LONG_UNSIGNED, DBG_RX_Count);
-            InMenuPrintf(50, 18, LBL_LONG_UNSIGNED, DBG_RX_Drop);
-            InMenuPrintf(28, 19, LBL_LONG_UNSIGNED, DBG_TX_Count);
-            InMenuPrintf(50, 19, LBL_LONG_UNSIGNED, DBG_TX_Drop);
-          #endif
-
-            for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
-            {
-                ARP_TableEntry_t* pARP_Entry = pContext->GetARP().GetTableEntryPointer(i);
-                const uint8_t* Byte = pARP_Entry->MAC_Address.Byte;
-
-                IP_Manager::IP_ToAscii(Buffer, pARP_Entry->IP_Address);
-                InMenuPrintf(14, 23 + i, LBL_STRING, Buffer);
-                InMenuPrintf(34, 23 + i, LBL_MAC_ADDRESS_VALUE, Byte[0], Byte[1], Byte[2], Byte[3], Byte[4], Byte[5]);
-            }
-
-            LogDisplay();
         }
         break;
 

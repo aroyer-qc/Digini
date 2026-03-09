@@ -53,7 +53,8 @@ enum SocketEvent_e
     SOCKET_EVENT_NONE = 0,          // No event
     SOCKET_EVENT_CONNECTED,         // TCP connection established
     SOCKET_EVENT_RX_READY,          // New payload available in RX buffer
-    SOCKET_EVENT_CLOSED             // Connection closed (FIN or RST)
+    SOCKET_EVENT_CLOSED,            // Connection closed (FIN or RST)
+    SOCKET_EVENT_ERROR,             // NOT USE AT THIS POINT
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -111,6 +112,18 @@ class TCP_Manager
         virtual IP_PacketMsg_t* SendSegment     (TCP_Socket* pSocket, const uint8_t* pPayload,
                                                  size_t Length, uint8_t Flags,
                                                  bool Retransmit = false)                       = 0;
+
+
+virtual IP_PacketMsg_t* RebuildTCP_SegmentInPlace(
+    IP_PacketMsg_t*      pMsg,
+    const SocketInfo_t&  localInfo,
+    const SocketInfo_t&  remoteInfo,
+    uint32_t             Seq,
+    uint32_t             Ack,
+    uint8_t              Flags,
+    uint16_t             Window,
+    size_t               Length) = 0;
+
 };
 
 //-------------------------------------------------------------------------------------------------

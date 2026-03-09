@@ -73,7 +73,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define TASK_IP_MANAGER_STACK_SIZE                      192
+#define TASK_IP_MANAGER_STACK_SIZE                      512// 256
 #define TASK_IP_MANAGER_PRIO                            4
 
 #define TASK_IP_MANAGER_TREAD_NAME_PREAMBULE            "Task IP Mgr: "

@@ -141,6 +141,12 @@ bool MQTT_Client::Connect(const IP_Address_t* pServerIP, uint16_t Port, const ch
         return false;
     }
 
+    if(m_pSocket != nullptr)
+    {
+        // Déjà en cours de connexion → ne pas recréer un socket
+        return true;
+    }
+
     // save it for reconnect
     m_LastServerIP   = *pServerIP;
     m_LastServerPort = Port;
@@ -278,7 +284,7 @@ bool MQTT_Client::Disconnect(void)
         SendDisconnect();
     }
 
-    if(m_pSocket)
+    if(m_pSocket != nullptr)
     {
         m_pSocket->Close();
         m_pSocket = nullptr;
@@ -416,7 +422,7 @@ void MQTT_Client::SetMessageCallback(MQTT_MessageCallback_t Callback, void* pUse
 }
 
 //---------------------------------------------------------------------------------------------
-
+static uint32_t Count = 0;
 TCP_Socket* MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, IP_Port_t Port)
 {
     if((pServerIP == nullptr) || (m_pContext == nullptr))
@@ -433,6 +439,11 @@ TCP_Socket* MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, IP_Port_t Po
     {
         m_State = MQTT_STATE_ERROR;
     }
+    else
+    {
+        Count++;
+        __asm("nop");
+    }
 
     return m_pSocket;
 }
@@ -446,7 +457,7 @@ bool MQTT_Client::SendConnectFrame(const char* pClientID)
         return false;
     }
 
-    uint8_t* pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(MQTT_RX_BUFFER_SIZE, MEM_DBG_MQTT);
+    uint8_t* pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(MQTT_RX_BUFFER_SIZE, MEM_DBG_MQTT1);
 
     if(pBuffer == nullptr)
     {
@@ -497,7 +508,7 @@ bool MQTT_Client::SendSubscribeFrame(const char* pTopic, MQTT_QoS_e QoS)
         return false;
     }
 
-    uint8_t* pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(256, MEM_DBG_MQTT);
+    uint8_t* pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(MQTT_RX_BUFFER_SIZE, MEM_DBG_MQTT2);
 
     if(pBuffer == nullptr)
     {
@@ -538,7 +549,7 @@ bool MQTT_Client::SendUnsubscribeFrame(const char* pTopic)
         return false;
     }
 
-    uint8_t* pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(256, MEM_DBG_MQTT);
+    uint8_t* pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(MQTT_RX_BUFFER_SIZE, MEM_DBG_MQTT3);
 
     if(pBuffer == nullptr)
     {
@@ -594,7 +605,7 @@ bool MQTT_Client::SendPublishFrame(const char* pTopic,
         return false;
     }
 
-    uint8_t* pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(512, MEM_DBG_MQTT);
+    uint8_t* pBuffer = (uint8_t*)pMemoryPool->AllocAndClear(MQTT_RX_BUFFER_SIZE, MEM_DBG_MQTT4);
 
     if(pBuffer == nullptr)
     {
@@ -732,7 +743,7 @@ bool MQTT_Client::HandleIncomingData(void)
 
     size_t TotalPacketSize = FixedHeaderSize + RemainingLength;
 
-    uint8_t* pPacket = (uint8_t*)pMemoryPool->AllocAndClear(TotalPacketSize, MEM_DBG_MQTT);
+    uint8_t* pPacket = (uint8_t*)pMemoryPool->AllocAndClear(TotalPacketSize, MEM_DBG_MQTT5);
 
     if(pPacket == nullptr)
     {
@@ -851,7 +862,7 @@ bool MQTT_Client::ParseIncomingPacket(uint8_t* pBuffer, size_t Length)
                 return false;
             }
 
-            char* pTopic = (char*)pMemoryPool->AllocAndClear(TopicLen + 1, MEM_DBG_MQTT);
+            char* pTopic = (char*)pMemoryPool->AllocAndClear(TopicLen + 1, MEM_DBG_MQTT6);
             if(pTopic == nullptr)
             {
                 return false;

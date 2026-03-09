@@ -87,7 +87,6 @@ class ARP_Manager
         void                TimerCallBack	    	(void);
 
         // For ARP Timer callback
-        IP_Address_t        GetIP_Address           (void)                      { return m_IP_Address;         }
         ARP_TableEntry_t*   GetTableEntryPointer    (int Entry)                 { return &m_TableEntry[(Entry < IP_ARP_TABLE_SIZE) ? Entry : 0]; }
         ARP_PendingEntry_t* GetPendingEntryByOffset (int Offset);
         void                OnPendingTimeOut        (int LogicalIndex);
@@ -104,7 +103,6 @@ class ARP_Manager
         bool                IsItMatchingMAC         (IP_Address_t IP, IP_MAC_Address_t* pMAC);
 
         NetworkContext*     m_pContext;
-        IP_Address_t        m_IP_Address;
         ARP_TableEntry_t    m_TableEntry[IP_ARP_TABLE_SIZE];
 
         ARP_PendingEntry_t  m_PendingQueue[ARP_PENDING_QUEUE_SIZE];

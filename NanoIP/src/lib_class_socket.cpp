@@ -97,17 +97,20 @@ Socket* SocketManager::AllocSocket(SocketType_e Type)
     }
 
     size_t size = 0;
+    MEM_DebugListOfID_e DebugID;
 
     switch(Type)
     {
       #if (IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
         case SOCKET_TYPE_STREAM:
             size = sizeof(TCP_SocketSystem);
+            DebugID = MEM_DBG_SOCKTCP;
             break;
       #endif
 
         case SOCKET_TYPE_DATAGRAM:
             size = sizeof(Socket);
+            DebugID = MEM_DBG_SOCKUDP;
             break;
 
       #if (IP_USE_RAW == DEF_ENABLED)
@@ -121,7 +124,7 @@ Socket* SocketManager::AllocSocket(SocketType_e Type)
             break;
     }
 
-    void* pSocketMemory = pMemoryPool->Alloc(size, MEM_DBG_SOCKALLOC);
+    void* pSocketMemory = pMemoryPool->Alloc(size, DebugID);
 
     if(pSocketMemory == nullptr)
     {

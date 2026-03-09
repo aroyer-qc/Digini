@@ -57,6 +57,8 @@ class TCP_SocketSystem : public TCP_Socket, public Socket
 
     private:
 
+        void                        FlushTX_Slot(TCP_TX_Segment_t* pSlot);
+
         friend class                TCP_Manager;
         TCP_Manager*                m_pTCP;
         TCP_State_e                 m_State;
@@ -100,6 +102,15 @@ class TCP_ManagerSystem : public TCP_Manager
 
     private:
 
+IP_PacketMsg_t* RebuildTCP_SegmentInPlace(
+    IP_PacketMsg_t*      pMsg,
+    const SocketInfo_t&  localInfo,
+    const SocketInfo_t&  remoteInfo,
+    uint32_t             Seq,
+    uint32_t             Ack,
+    uint8_t              Flags,
+    uint16_t             Window,
+    size_t               Length);
         bool            ParseTCP_Header                 (IP_EthernetPacket_t* pPacket, TCP_Socket*& pSockOut);
         void            UpdateTimers                    (void);
         void            CloseAndFreeSocket              (TCP_SocketSystem* pSystem);

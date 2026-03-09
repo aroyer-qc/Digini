@@ -75,7 +75,6 @@ SystemState_e ARP_Manager::Initialize(NetworkContext* pContext)
 
     m_pContext      = pContext;
     m_PendingOldest = ARP_PENDING_NONE;
-    m_IP_Address    = IP_ADDRESS(0,0,0,0);
 
     memset((void*)m_PendingQueue, 0, sizeof(ARP_PendingEntry_t) * ARP_PENDING_QUEUE_SIZE);  // Clear the pending queue
     memset((void*)m_TableEntry,   0, sizeof(ARP_TableEntry_t)   * IP_ARP_TABLE_SIZE);       // Clear the ARP cache table
@@ -471,14 +470,12 @@ FlushPending:
     // 2) Recompute m_PendingOldest and maybe send ARP for new oldest
     nOS_EnterCritical(sr);
     m_PendingOldest = ARP_PENDING_NONE;
-    m_IP_Address    = IP_ADDRESS(0,0,0,0);
 
     for(int i = 0; i < ARP_PENDING_QUEUE_SIZE; i++)
     {
         if(m_PendingQueue[i].State == ARP_STATE_PENDING)
         {
             m_PendingOldest = i;
-            m_IP_Address    = m_PendingQueue[i].IP;
 
           #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
             DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Next pending entry at %d, sending ARP\n", i);
@@ -520,6 +517,20 @@ FlushPending:
 //-------------------------------------------------------------------------------------------------
 void ARP_Manager::ProcessOut(void)
 {
+    if(m_PendingOldest == ARP_PENDING_NONE)
+    {
+        return;
+    }
+
+    ARP_PendingEntry_t* pEntry = &m_PendingQueue[m_PendingOldest];
+
+    if(pEntry->State != ARP_STATE_PENDING)
+    {
+        return;
+    }
+
+    IP_Address_t TargetIP = pEntry->IP;
+
     // Allocate wrapper + ARP packet buffer using the new helper
     IP_PacketMsg_t* pMsg;
     SystemState_e State = IP_Manager::AllocPacket(&pMsg, sizeof(ARP_Frame_t), MEM_DBG_ARPPO, MEM_DBG_ARPDTPO);
@@ -543,14 +554,14 @@ void ARP_Manager::ProcessOut(void)
     memcpy(pARP->SourceMAC.Byte, pFrame->ETH_Header.SourceMAC.Byte, IP_MAC_ADDRESS_SIZE);
     memset(pARP->DestinationMAC.Byte, 0x00, IP_MAC_ADDRESS_SIZE);
     pARP->SrcIP_Address = m_pContext->GetActiveIP();
-    pARP->DstIP_Address = m_IP_Address;                                             // IP we are resolving
+    pARP->DstIP_Address = TargetIP;                                                 // IP we are resolving
     pMsg->PacketSize = sizeof(ARP_Frame_t);
 
   #if (IP_DBG_ARP == DEF_ENABLED)
-    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Request for %d.%d.%d.%d\n", IP_A(m_IP_Address),
-                                                                                     IP_B(m_IP_Address),
-                                                                                     IP_C(m_IP_Address),
-                                                                                     IP_D(m_IP_Address));
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Request for %d.%d.%d.%d\n", IP_A(TargetIP),
+                                                                                     IP_B(TargetIP),
+                                                                                     IP_C(TargetIP),
+                                                                                     IP_D(TargetIP));
   #endif
 
     State = m_pContext->SendPacket(pMsg);                                           // Transmit ARP request
@@ -558,10 +569,10 @@ void ARP_Manager::ProcessOut(void)
     if(State != SYS_READY)
     {
       #if (IP_DBG_ARP == DEF_ENABLED)
-        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Request - SendPacket failed for %d.%d.%d.%d\n", IP_A(m_IP_Address),
-                                                                                                             IP_B(m_IP_Address),
-                                                                                                             IP_C(m_IP_Address),
-                                                                                                             IP_D(m_IP_Address));
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Request - SendPacket failed for %d.%d.%d.%d\n", IP_A(TargetIP),
+                                                                                                             IP_B(TargetIP),
+                                                                                                             IP_C(TargetIP),
+                                                                                                             IP_D(TargetIP));
       #endif
         IP_Manager::FreeMessage(pMsg);
     }
@@ -606,6 +617,13 @@ bool ARP_Manager::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg_
 {
     nOS_StatusReg sr;
 
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Resolve(IP=%d.%d.%d.%d)\n", IP_A(IP), IP_B(IP), IP_C(IP), IP_D(IP));
+
+if(IP == IP_ADDRESS(0,0,0,0))
+{
+    __asm("NOP");
+}
+
     // Check ARP table
     for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)
     {
@@ -626,9 +644,7 @@ bool ARP_Manager::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg_
             IP_Manager::FreeMessage(pMsg);
 
           #if (IP_DBG_ARP_RETRY_MSG == DEF_ENABLED)
-            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET,
-                                 "ARP: Duplicate pending for %d.%d.%d.%d, dropping packet\n",
-                                 IP_A(IP), IP_B(IP), IP_C(IP), IP_D(IP));
+            DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Duplicate pending for %d.%d.%d.%d, dropping packet\n", IP_A(IP), IP_B(IP), IP_C(IP), IP_D(IP));
           #endif
             return false;
         }
@@ -668,7 +684,6 @@ bool ARP_Manager::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg_
     if(m_PendingOldest == ARP_PENDING_NONE)
     {
         m_PendingOldest = FreeIndex;
-        m_IP_Address    = IP;
         ProcessOut();
     }
 
@@ -794,14 +809,12 @@ void ARP_Manager::OnPendingTimeOut(int PendingOffset)
 
     // Recompute oldest
     m_PendingOldest = ARP_PENDING_NONE;
-    m_IP_Address    = IP_ADDRESS(0,0,0,0);
 
     for(int i = 0; i < ARP_PENDING_QUEUE_SIZE; i++)
     {
         if(m_PendingQueue[i].State == ARP_STATE_PENDING)
         {
             m_PendingOldest = i;
-            m_IP_Address    = m_PendingQueue[i].IP;
             ProcessOut();
             return;
         }

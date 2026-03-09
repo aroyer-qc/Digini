@@ -93,7 +93,7 @@ void ICMP_Manager::Process(IP_PacketMsg_t* pRX)
                 pPacket->ICMP_Frame.IP_Header.TimeToLive = IP_TIME_TO_LIVE;
                 pIP_Manager->PutHeader(pTX, pPacket->ICMP_Frame.IP_Header.SrcIP_Address, ICMP_Length, IP_PROTOCOL_ICMP);    // Reply source = original destination
                 pPacket->ICMP_Frame.Header.Checksum = 0;
-                pPacket->ICMP_Frame.Header.Checksum = htons(IP_Manager::IP_CalculateChecksum(&pPacket->ICMP_Frame.Header, ICMP_Length));
+                pPacket->ICMP_Frame.Header.Checksum = IP_Manager::IP_CalculateChecksum(&pPacket->ICMP_Frame.Header, ICMP_Length);
                 SystemState_e State = m_pContext->SendPacket(pTX);                                                          // // Zero-copy TX
 
                 if(State != SYS_READY)

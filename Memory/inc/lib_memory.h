@@ -94,14 +94,8 @@
     X_MEM_DBG(MEM_DBG_ICMP)                                     \
     X_MEM_DBG(MEM_DBG_ICMPDT)                                   \
     X_MEM_DBG(MEM_DBG_SOCKET)                                   \
-    X_MEM_DBG(MEM_DBG_SOCKALLOC)                                \
-    /*X_MEM_DBG(MEM_DBG_TCPSOCK)*/                              \
-    /*X_MEM_DBG(MEM_DBG_TCPRXBUF) */                            \
-    /*X_MEM_DBG(MEM_DBG_TCPTXBUF)     */                        \
-    X_MEM_DBG(MEM_DBG_UDPSOCK)                                  \
-    X_MEM_DBG(MEM_DBG_UDPRXBUF)                                 \
-    X_MEM_DBG(MEM_DBG_RAWSOCK)                                  \
-    X_MEM_DBG(MEM_DBG_RAWRXBUF)                                 \
+    X_MEM_DBG(MEM_DBG_SOCKTCP)                                  \
+    X_MEM_DBG(MEM_DBG_SOCKUDP)                                  \
     X_MEM_DBG(MEM_DBG_ARPRX)                                    \
     X_MEM_DBG(MEM_DBG_ARPDTRX)                                  \
     X_MEM_DBG(MEM_DBG_ARPTX)                                    \
@@ -118,7 +112,13 @@
     X_MEM_DBG(MEM_DBG_SNTPRX)                                   \
     X_MEM_DBG(MEM_DBG_TCP)                                      \
     X_MEM_DBG(MEM_DBG_TCPDT)                                    \
-    X_MEM_DBG(MEM_DBG_MQTT)                                     \
+    X_MEM_DBG(MEM_DBG_TCPCPY)                                   \
+    X_MEM_DBG(MEM_DBG_MQTT1)                                    \
+    X_MEM_DBG(MEM_DBG_MQTT2)                                    \
+    X_MEM_DBG(MEM_DBG_MQTT3)                                    \
+    X_MEM_DBG(MEM_DBG_MQTT4)                                    \
+    X_MEM_DBG(MEM_DBG_MQTT5)                                    \
+    X_MEM_DBG(MEM_DBG_MQTT6)                                    \
   /*---------------------------------------------------------*/ \
   ) /* End of DIGINI_USE_ETHERNET */                            \
   /*---------------------------------------------------------*/ \

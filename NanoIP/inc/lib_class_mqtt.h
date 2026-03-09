@@ -43,7 +43,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define MQTT_BROKER_PORT                1883
+#define MQTT_BROKER_PORT         HTONS(80)
+//#define MQTT_BROKER_PORT         HTONS(1883)
 
 #define MQTT_FLAG_CONNECT        0x00
 #define MQTT_FLAG_CONNACK        0x00
@@ -112,8 +113,10 @@ class MQTT_Client
         void                    Process                     (void);
         void                    SetMessageCallback          (MQTT_MessageCallback_t Callback, void* pUserContext);
         MQTT_State_e            GetState                    (void)                                                      { return m_State; }
+        void                    SetState                    (MQTT_State_e State)                                        { m_State = State; }
         bool                    IsConnected                 (void)                                                      { return (m_State == MQTT_STATE_CONNECTED); }
         TCP_Socket*             GetSocket                   (void) const                                                { return m_pSocket; }
+        void                    ClearSocket                 (void)                                                      { m_pSocket = nullptr; }
 
 private:
 

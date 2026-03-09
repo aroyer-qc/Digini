@@ -672,7 +672,7 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t DstIP, uint16_t Pay
     }
 
     pIP->Checksum = 0;
-    pIP->Checksum = htons(IP_CalculateChecksum(pIP, sizeof(IP_Header_t)));
+    pIP->Checksum = IP_CalculateChecksum(pIP, sizeof(IP_Header_t));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -726,7 +726,7 @@ uint16_t IP_Manager::IP_CalculateChecksum(const void* pBuffer, uint16_t Count)
         }
     }
 
-    return (uint16_t)~Sum;
+    return htons((uint16_t)~Sum);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -760,27 +760,24 @@ uint16_t IP_Manager::IP_CalculateChecksum(const void* pBuffer, uint16_t Count)
 //                    access safely and deterministically.
 //-------------------------------------------------------------------------------------------------
 #if (IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
-uint16_t IP_Manager::TCP_CalculateChecksum(IP_Header_t* pIP, TCP_Header_t* pTCP, uint16_t TCP_Length)
+uint16_t IP_Manager::TCP_CalculateChecksum(IP_Header_t* pIP,
+                                           TCP_Header_t* pTCP,
+                                           uint16_t TCP_Length)
 {
     uint32_t Sum = 0;
 
-    // ---------------------------------------------------------
-    // Pseudo-header (RFC 793)
-    // ---------------------------------------------------------
+    // Pseudo-header
     Sum += (pIP->SrcIP_Address >> 16) & 0xFFFF;
     Sum += (pIP->SrcIP_Address      ) & 0xFFFF;
     Sum += (pIP->DstIP_Address >> 16) & 0xFFFF;
     Sum += (pIP->DstIP_Address      ) & 0xFFFF;
-    Sum += htons(IP_PROTOCOL_TCP);
-    Sum += htons(TCP_Length);
+    Sum += IP_PROTOCOL_TCP;   // 0x06, PAS de htons
+    Sum += TCP_Length;        // longueur en octets, PAS de htons
 
-    // ---------------------------------------------------------
-    // TCP header + payload
-    // ---------------------------------------------------------
+    // TCP header + payload (exactement TCP_Length octets)
     const uint8_t* pData = reinterpret_cast<const uint8_t*>(pTCP);
     uint32_t len = TCP_Length;
 
-    // Process 16-bit words
     while(len > 1)
     {
         uint16_t word = (pData[0] << 8) | pData[1];
@@ -789,26 +786,22 @@ uint16_t IP_Manager::TCP_CalculateChecksum(IP_Header_t* pIP, TCP_Header_t* pTCP,
         len -= 2;
     }
 
-    // Odd byte (pad with zero)
     if(len == 1)
     {
         uint16_t word = (pData[0] << 8);
         Sum += word;
     }
 
-    // ---------------------------------------------------------
-    // Finalize checksum (fold to 16 bits, one's complement)
-    // ---------------------------------------------------------
     while(Sum >> 16)
     {
         Sum = (Sum & 0xFFFF) + (Sum >> 16);
     }
 
     uint16_t Result = static_cast<uint16_t>(~Sum);
-
-    // RFC: checksum of 0 becomes 0xFFFF
     if(Result == 0)
+    {
         Result = 0xFFFF;
+    }
 
     return Result;
 }

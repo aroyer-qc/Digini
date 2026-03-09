@@ -1054,7 +1054,6 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
                 pSlot->pPayload  = pCopy;
                 pSlot->SeqStart  = SeqStart;
                 pSlot->SeqEnd    = SeqEnd;
-                pSlot->AckNumber = pSystem->m_AckNumber;
                 pSlot->Flags     = Flags;
                 pSlot->Window    = pSystem->m_LocalWindow;
                 pSlot->Length    = Length;
@@ -1166,7 +1165,7 @@ void TCP_SocketSystem::RetransmitIfNeeded(void)
                 Header.SrcPort           = localInfo.Port;
                 Header.DstPort           = remoteInfo.Port;
                 Header.SequenceNumber    = htonl(pSlot->SeqStart);
-                Header.AcknowledgeNumber = htonl(AckNumber);
+                Header.AcknowledgeNumber = htonl(m_AckNumber);
                 Header.Flags             = pSlot->Flags;
                 Header.Window            = htons(pSlot->Window);
                 // Header.UrgentPointer  = 0;

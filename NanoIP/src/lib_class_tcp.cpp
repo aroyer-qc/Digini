@@ -1006,10 +1006,10 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
     ip.SrcIP_Address       = localInfo.Address;
     ip.DstIP_Address       = remoteInfo.Address;
     ip.Checksum = 0;
-    LIB_Checksum16((uint8_t*)&ip, sizeof(IP_Header_t));
+    ip.Checksum = LIB_HTONS_Checksum16((uint8_t*)&ip, sizeof(IP_Header_t));
 //    ip.Checksum = IP_Manager::IP_CalculateChecksum(&ip, sizeof(IP_Header_t));
     hdr.Checksum = 0;
-    LIB_Checksum16((uint8_t*)&hdr, tcpLen);
+    hdr.Checksum = LIB_HTONS_Checksum16((uint8_t*)&hdr, tcpLen);
 //    hdr.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &hdr, tcpLen);
 
     pMsg->Payload     = nullptr;
@@ -1201,7 +1201,7 @@ void TCP_SocketSystem::RetransmitIfNeeded(void)
                 ip.DstIP_Address       = remoteInfo.Address;
 
                 //hdr.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &hdr, tcpLen);
-                LIB_Checksum16((uint8_t*)&hdr, tcpLen);
+                hdr.Checksum = LIB_HTONS_Checksum16((uint8_t*)&hdr, tcpLen);
 
                 pMsg->Payload     = nullptr;
                 pMsg->PayloadSize = 0;

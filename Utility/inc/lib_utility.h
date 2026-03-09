@@ -82,6 +82,7 @@ char*       LIB_EncodeBase64                (const uint8_t* pSource);
 uint8_t*    LIB_DecodeBase64                (const char* pSource);
 
 uint16_t    LIB_Checksum16                  (const uint8_t* pBuffer, uint16_t Length);
+uint16_t    LIB_HTONS_Checksum16            (const uint8_t* pBuffer, uint16_t Length);
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)

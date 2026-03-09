@@ -63,3 +63,10 @@ uint16_t LIB_Checksum16(const uint8_t* pBuffer, uint16_t Length)
 
     return (uint16_t)(~Sum & 0xFFFF);
 }
+
+//-------------------------------------------------------------------------------------------------
+
+uint16_t LIB_HTONS_Checksum16(const uint8_t* pBuffer, uint16_t Length)
+{
+    return htons(LIB_Checksum16(pBuffer, Length));
+}

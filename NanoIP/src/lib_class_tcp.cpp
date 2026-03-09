@@ -967,25 +967,10 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
     }
 
     IP_EthernetPacket_t* pPacket = pMsg->pPacket;
-    TCP_Header_t&        hdr     = pPacket->TCP_Frame.Header;
-
     IP_MAC_Address_t SourceMAC;
     m_pContext->GetMAC_Address(&SourceMAC);
     memcpy(&pPacket->ETH_Header.SourceMAC, &SourceMAC, 6);
     pPacket->ETH_Header.Type = IP_ETHERNET_TYPE_IPV4;
-
-    hdr.SrcPort           = localInfo.Port;
-    hdr.DstPort           = remoteInfo.Port;
-    hdr.SequenceNumber    = htonl(pSystem->m_SeqNumber);
-    hdr.AcknowledgeNumber = htonl(pSystem->m_AckNumber);
-    hdr.Flags             = Flags;
-    hdr.Window            = htons(pSystem->m_LocalWindow);
-    hdr.UrgentPointer     = 0;
-    hdr.Offset            = (sizeof(TCP_Header_t) / 4) << 4;
-    hdr.OptionData.Kind   = 2;                 // MSS option
-    hdr.OptionData.Length = 4;                 // always 4
-    hdr.OptionData.MSS    = HTONS(TCP_MSS);    // 1460
-
 
     if((pPayload != nullptr) && (Length > 0))
     {
@@ -993,24 +978,35 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
         memcpy(pTCP_Payload, pPayload, Length);
     }
 
-    IP_Header_t& ip = pPacket->TCP_Frame.IP_Header;
+    IP_Header_t& IP_Header = pPacket->TCP_Frame.IP_Header;
     uint16_t tcpLen = static_cast<uint16_t>(sizeof(TCP_Header_t) + Length);
 
-    ip.VersionIHL          = (4u << 4) | 5u;
-    ip.TypeOfService       = 0;
-    ip.Length              = htons(static_cast<uint16_t>(sizeof(IP_Header_t) + tcpLen));
-    ip.ID                  = 0;
-    ip.FlagsFragmentOffset = 0;
-    ip.TimeToLive          = 64;
-    ip.Protocol            = IP_PROTOCOL_TCP;
-    ip.SrcIP_Address       = localInfo.Address;
-    ip.DstIP_Address       = remoteInfo.Address;
-    ip.Checksum = 0;
-    ip.Checksum = LIB_HTONS_Checksum16((uint8_t*)&ip, sizeof(IP_Header_t));
-//    ip.Checksum = IP_Manager::IP_CalculateChecksum(&ip, sizeof(IP_Header_t));
-    hdr.Checksum = 0;
-    hdr.Checksum = LIB_HTONS_Checksum16((uint8_t*)&hdr, tcpLen);
-//    hdr.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &hdr, tcpLen);
+    IP_Header.VersionIHL            = (4u << 4) | 5u;
+    //IP_Header.TypeOfService       = 0;                                   AllocPacket already put it at 0
+    IP_Header.Length                = htons(static_cast<uint16_t>(sizeof(IP_Header_t) + tcpLen));
+    //IP_Header.ID                  = 0;                                   AllocPacket already put it at 0
+    //IP_Header.FlagsFragmentOffset = 0;                                   AllocPacket already put it at 0
+    IP_Header.TimeToLive            = 64;
+    IP_Header.Protocol              = IP_PROTOCOL_TCP;
+    IP_Header.SrcIP_Address         = localInfo.Address;
+    IP_Header.DstIP_Address         = remoteInfo.Address;
+    //IP_Header.Checksum            = 0;                                   AllocPacket already put it at 0
+    IP_Header.Checksum = LIB_HTONS_Checksum16((uint8_t*)&IP_Header, sizeof(IP_Header_t));
+
+    TCP_Header_t& Header = pPacket->TCP_Frame.Header;
+    Header.SrcPort           = localInfo.Port;
+    Header.DstPort           = remoteInfo.Port;
+    Header.SequenceNumber    = htonl(pSystem->m_SeqNumber);
+    Header.AcknowledgeNumber = htonl(pSystem->m_AckNumber);
+    Header.Flags             = Flags;
+    Header.Window            = htons(pSystem->m_LocalWindow);
+    // Header.UrgentPointer  = 0;                                      AllocPacket already put it at 0
+    Header.Offset            = (sizeof(TCP_Header_t) / 4) << 4;
+    Header.OptionData.Kind   = 2;                                      // MSS option
+    Header.OptionData.Length = 4;                                      // always 4
+    Header.OptionData.MSS    = HTONS(TCP_MSS);                         // 1460
+    // Header.Checksum       = 0;                                      AllocPacket already put it at 0
+    Header.Checksum = IP_Manager::CalculateChecksum(&IP_Header, IP_PROTOCOL_TCP, (void*)&Header, tcpLen);
 
     pMsg->Payload     = nullptr;
     pMsg->PayloadSize = 0;
@@ -1058,6 +1054,7 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
                 pSlot->pPayload  = pCopy;
                 pSlot->SeqStart  = SeqStart;
                 pSlot->SeqEnd    = SeqEnd;
+                pSlot->AckNumber = pSystem->m_AckNumber;
                 pSlot->Flags     = Flags;
                 pSlot->Window    = pSystem->m_LocalWindow;
                 pSlot->Length    = Length;
@@ -1069,26 +1066,6 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
     }
 
     pSystem->m_LastSendTick = GetTick();
-
-    return pMsg;
-}
-
-//-------------------------------------------------------------------------------------------------
-
-IP_PacketMsg_t* TCP_ManagerSystem::RebuildTCP_SegmentInPlace(
-    IP_PacketMsg_t*      pMsg,
-    const SocketInfo_t&  localInfo,
-    const SocketInfo_t&  remoteInfo,
-    uint32_t             Seq,
-    uint32_t             Ack,
-    uint8_t              Flags,
-    uint16_t             Window,
-    size_t               Length)
-{
-    if(pMsg == nullptr)
-    {
-        return nullptr;
-    }
 
     return pMsg;
 }
@@ -1149,11 +1126,7 @@ void TCP_SocketSystem::RetransmitIfNeeded(void)
 
                 IP_PacketMsg_t* pMsg = nullptr;
 
-                SystemState_e State =
-                    IP_Manager::AllocPacket(&pMsg,
-                                            sizeof(IP_EthernetPacket_t),
-                                            MEM_DBG_TCP,
-                                            MEM_DBG_TCPDT);
+                SystemState_e State = IP_Manager::AllocPacket(&pMsg, sizeof(IP_EthernetPacket_t), MEM_DBG_TCPR, MEM_DBG_TCPRDT);
 
                 if((State != SYS_READY) || (pMsg == nullptr))
                 {
@@ -1161,25 +1134,11 @@ void TCP_SocketSystem::RetransmitIfNeeded(void)
                 }
 
                 IP_EthernetPacket_t* pPacket = pMsg->pPacket;
-                TCP_Header_t& hdr = pPacket->TCP_Frame.Header;
 
                 IP_MAC_Address_t SourceMAC;
                 GetContext()->GetMAC_Address(&SourceMAC);
                 memcpy(&pPacket->ETH_Header.SourceMAC, &SourceMAC, 6);
                 pPacket->ETH_Header.Type = IP_ETHERNET_TYPE_IPV4;
-
-
-                hdr.SrcPort           = localInfo.Port;
-                hdr.DstPort           = remoteInfo.Port;
-                hdr.SequenceNumber    = htonl(pSlot->SeqStart);
-                hdr.AcknowledgeNumber = htonl(m_AckNumber);
-                hdr.Flags             = pSlot->Flags;
-                hdr.Window            = htons(pSlot->Window);
-                hdr.UrgentPointer     = 0;
-                hdr.Offset            = (sizeof(TCP_Header_t) / 4) << 4;
-                hdr.OptionData.Kind   = 2;                 // MSS option
-                hdr.OptionData.Length = 4;                 // always 4
-                hdr.OptionData.MSS    = HTONS(TCP_MSS);    // 1460
 
                 if(pSlot->Length > 0)
                 {
@@ -1187,25 +1146,40 @@ void TCP_SocketSystem::RetransmitIfNeeded(void)
                     memcpy(pTCP_Payload, pSlot->pPayload, pSlot->Length);
                 }
 
-                IP_Header_t& ip = pPacket->TCP_Frame.IP_Header;
+                IP_Header_t& IP_Header = pPacket->TCP_Frame.IP_Header;
                 uint16_t tcpLen = static_cast<uint16_t>(sizeof(TCP_Header_t) + pSlot->Length);
 
-                ip.VersionIHL          = (4u << 4) | 5u;
-                ip.TypeOfService       = 0;
-                ip.Length              = htons(static_cast<uint16_t>(sizeof(IP_Header_t) + tcpLen));
-                ip.ID                  = 0;
-                ip.FlagsFragmentOffset = 0;
-                ip.TimeToLive          = 64;
-                ip.Protocol            = IP_PROTOCOL_TCP;
-                ip.SrcIP_Address       = localInfo.Address;
-                ip.DstIP_Address       = remoteInfo.Address;
+                IP_Header.VersionIHL             = (4u << 4) | 5u;
+                // IP_Header.TypeOfService       = 0;                                                              AllocPacket already put it at 0
+                IP_Header.Length                 = htons(static_cast<uint16_t>(sizeof(IP_Header_t) + tcpLen));
+                // IP_Header.ID                  = 0;                                                              AllocPacket already put it at 0
+                // IP_Header.FlagsFragmentOffset = 0;                                                              AllocPacket already put it at 0
+                IP_Header.TimeToLive             = 64;
+                IP_Header.Protocol               = IP_PROTOCOL_TCP;
+                IP_Header.SrcIP_Address          = localInfo.Address;
+                IP_Header.DstIP_Address          = remoteInfo.Address;
+                // IP_Header.Checksum            = 0;                                                              AllocPacket already put it at 0
 
-                //hdr.Checksum = IP_Manager::TCP_CalculateChecksum(&ip, &hdr, tcpLen);
-                hdr.Checksum = LIB_HTONS_Checksum16((uint8_t*)&hdr, tcpLen);
+                IP_Header.Checksum = LIB_HTONS_Checksum16((uint8_t*)&IP_Header, sizeof(IP_Header_t));
+
+                TCP_Header_t& Header     = pPacket->TCP_Frame.Header;
+                Header.SrcPort           = localInfo.Port;
+                Header.DstPort           = remoteInfo.Port;
+                Header.SequenceNumber    = htonl(pSlot->SeqStart);
+                Header.AcknowledgeNumber = htonl(AckNumber);
+                Header.Flags             = pSlot->Flags;
+                Header.Window            = htons(pSlot->Window);
+                // Header.UrgentPointer  = 0;
+                Header.Offset            = (sizeof(TCP_Header_t) / 4) << 4;
+                Header.OptionData.Kind   = 2;                 // MSS option
+                Header.OptionData.Length = 4;                 // always 4
+                Header.OptionData.MSS    = HTONS(TCP_MSS);    // 1460
+                // Header.Checksum       = 0;
+                Header.Checksum = IP_Manager::CalculateChecksum(&IP_Header, IP_PROTOCOL_TCP, (void*)&Header, tcpLen);
 
                 pMsg->Payload     = nullptr;
                 pMsg->PayloadSize = 0;
-                pMsg->PacketSize  = sizeof(IP_EthernetHeader_t) + sizeof(IP_Header_t) + tcpLen;   // ← CHANGÉ
+                pMsg->PacketSize  = sizeof(IP_EthernetHeader_t) + sizeof(IP_Header_t) + tcpLen;
                 pIP->SendPacket(pMsg);
 
                 pSlot->TimeStamp = Now;

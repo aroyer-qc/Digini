@@ -220,9 +220,10 @@ SystemState_e UDP_Manager::Send(IP_Port_t Port, uint8_t* pData, size_t Length, c
     memcpy(pPayload, pData, Length);
     IP_Manager* pIP_Manager = m_pContext->GetIP_Manager();
     pIP_Manager->PutHeader(pMsg, pDestInfo->Address, UDP_Length, IP_PROTOCOL_UDP);          // Build IP header via IP_Manager
-//    pUDP->Checksum = pIP_Manager->UDP_CalculateChecksum(&pMsg->pPacket->IP_Frame.Header, pUDP, UDP_Length);
-    pUDP->Checksum = LIB_HTONS_Checksum16((uint8_t*)&pMsg->pPacket->IP_Frame.Header, UDP_Length);
+    pUDP->Checksum = IP_Manager::CalculateChecksum(&pMsg->pPacket->IP_Frame.Header, IP_PROTOCOL_UDP, (void*)pUDP, UDP_Length);
     State = pIP_Manager->SendPacket(pMsg);
+
+
 
     if(State == SYS_READY)
     {
@@ -307,16 +308,32 @@ bool UDP_Manager::RegisterSocket(Socket* pSock, IP_Port_t Port)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           UnregisterSocket
+//  Name:           CalculateChecksum
 //
-//  Parameter(s):   IP_Port_t   Port        Local UDP port to release.
+//  Parameter(s):   IP_Header_t*   pIP          Pointer to the IPv4 header associated with the UDP
+//                                            segment. Used to build the pseudo‑header.
+//                  UDP_Header_t*  pUDP         Pointer to the UDP header (followed by payload).
+//                  uint16_t       UDP_Length   Length of the UDP header plus payload, in bytes.
 //
-//  Return:         None
+//  Return:         uint16_t                    The computed UDP checksum in network byte order.
 //
-//  Description:    Removes the specified port from the UDP binding table. After unregistration,
-//                  incoming datagrams addressed to this port will no longer be delivered to
-//                  the socket. This function is typically invoked during socket closure or when
-//                  rebinding to a new port.
+//  Description:    Computes the UDP checksum as defined by RFC 768. The checksum covers both the
+//                  UDP header and its payload, preceded by the mandatory 12‑byte pseudo‑header
+//                  constructed from the IPv4 source address, destination address, protocol field,
+//                  and UDP length.
+//
+//                  The computation is performed in two passes:
+//                      1) Summation of the pseudo‑header fields.
+//                      2) Summation of the UDP header and payload (with the checksum field set
+//                         to zero during calculation).
+//
+//                  The intermediate 32‑bit sum is folded to 16 bits, and the final result is
+//                  returned as the one's‑complement of the accumulated value, encoded in network
+//                  byte order.
+//
+//                  This function ensures full compliance with the UDP checksum algorithm used by
+//                  all major TCP/IP stacks (Windows, Linux, BSD) and guarantees interoperability
+//                  with external hosts.
 //
 //-------------------------------------------------------------------------------------------------
 void UDP_Manager::UnregisterSocket(IP_Port_t Port)

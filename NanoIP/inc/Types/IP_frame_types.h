@@ -262,15 +262,17 @@ struct UDP_Frame_t
 };                                                      // =  42 Bytes
 #pragma pack(pop)
 
-// the UDP pseudo frame
-/*struct UDP_PseudoFrame_t
+#pragma pack(push, 1)
+struct PseudoHeader_t
 {
-	IP_EthernetHeader_t 	ETH_Header;                 //    14
-	uint8_t 				Dummy[8]; 			        // +   8
-	IP_PseudoHeader_t		Header;	       	 		    // +  12
-	UDP_Header_t			UDP_Header;		            // +   8
-};		                                                // =  42 Bytes
-*/
+	IP_Address_t    SrcIP;                              //     4
+	IP_Address_t    DstIP;                              // +   4
+	uint8_t         Zero;                               // +   1
+	uint8_t         Protocol;                           // +   1
+	uint16_t	    Length;                             // +   2
+};		                                                // =  12 Bytes
+#pragma pack(pop)
+
 
 #pragma pack(push, 1)
 struct SNTP_Frame_t

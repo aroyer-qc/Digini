@@ -672,210 +672,36 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t DstIP, uint16_t Pay
     }
 
     pIP->Checksum = 0;
-//    pIP->Checksum = IP_CalculateChecksum(pIP, sizeof(IP_Header_t));
     pIP->Checksum = LIB_HTONS_Checksum16((uint8_t*)&pIP, sizeof(IP_Header_t));
 }
 
-/*
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:           IP_CalculateChecksum
-//
-//  Parameters:     void*       pBuffer     Pointer to the start of the data block to checksum
-//                  uint16_t    Count       Number of bytes to include in the checksum
-//
-//  Return:         uint16_t                One's-complement checksum (network byte order)
-//
-//  Description:    Computes the standard Internet checksum as defined in RFC 1071. The algorithm
-//                  processes the buffer as a sequence of 16-bit big-endian words, performs
-//                  one's-complement addition with end-around carry, and returns the one's-
-//                  complement of the final accumulated sum.
-//
-//  Notes:          - The caller must ensure that the checksum field within the header or message
-//                    is set to zero before invoking this function.
-//                  - If Count is odd, the final remaining byte is padded as the high byte of a
-//                    16-bit word and included in the sum.
-//                  - This function is suitable for IPv4 header checksums, ICMP checksums, and
-//                    pseudo-header checksums used by UDP and TCP.
-//                  - The buffer does not need to be 16-bit aligned; the function handles byte
-//                    access safely and deterministically.
-//
-//-------------------------------------------------------------------------------------------------
-uint16_t IP_Manager::IP_CalculateChecksum(const void* pBuffer, uint16_t Count)
-{
-    const uint8_t* Data = (const uint8_t*)pBuffer;
-    uint32_t Sum = 0;
 
-    while(Count > 1)
-    {
-        Sum   += (uint16_t)((Data[0] << 8) | Data[1]);
-        Data  += 2;
-        Count -= 2;
-
-        if(Sum & 0x10000)
-        {
-            Sum = (Sum & 0xFFFF) + 1;
-        }
-    }
-
-    if(Count == 1)
-    {
-        Sum += (uint16_t)(Data[0] << 8);
-
-        if(Sum & 0x10000)
-        {
-            Sum = (Sum & 0xFFFF) + 1;
-        }
-    }
-
-    return htons((uint16_t)~Sum);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           TCP_CalculateChecksum
-//
-//  Parameters:     IP_Header_t*   pIP         Pointer to the IPv4 header containing source/dest IP
-//                  TCP_Header_t*  pTCP        Pointer to the TCP header (checksum field = 0)
-//                  uint16_t       TCP_Length  Length of TCP header + payload (in bytes)
-//
-//  Return:         uint16_t                   One's-complement TCP checksum (network byte order)
-//
-//  Description:    Computes the TCP checksum as defined in RFC 793 and RFC 1071. The checksum is
-//                  calculated over the TCP header, TCP payload, and the IPv4 pseudo-header.
-//                  The pseudo-header includes:
-//                      - Source IP address
-//                      - Destination IP address
-//                      - Protocol number (TCP = 6)
-//                      - TCP length
-//
-//                  The algorithm performs one's-complement addition of all 16-bit words, including
-//                  end-around carry, and returns the one's-complement of the final accumulated sum.
-//
-//  Notes:          - The caller must ensure that the TCP checksum field is set to zero before
-//                    invoking this function.
-//                  - If TCP_Length is odd, the final remaining byte is padded as the high byte of
-//                    a 16-bit word and included in the sum.
-//                  - The function assumes that the IPv4 header is already in network byte order.
-//                  - Suitable for outgoing TCP segments and validating incoming segments.
-//                  - The buffer does not need to be 16-bit aligned; the function handles byte
-//                    access safely and deterministically.
-//-------------------------------------------------------------------------------------------------
-#if (IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
-uint16_t IP_Manager::TCP_CalculateChecksum(IP_Header_t* pIP,
-                                           TCP_Header_t* pTCP,
-                                           uint16_t TCP_Length)
+uint16_t IP_Manager::CalculateChecksum(IP_Header_t* pIP, uint8_t Protocol, void* pProtocolHeader, uint16_t Length)
 {
     uint32_t Sum = 0;
 
-    // Pseudo-header
-    Sum += (pIP->SrcIP_Address >> 16) & 0xFFFF;
-    Sum += (pIP->SrcIP_Address      ) & 0xFFFF;
-    Sum += (pIP->DstIP_Address >> 16) & 0xFFFF;
-    Sum += (pIP->DstIP_Address      ) & 0xFFFF;
-    Sum += IP_PROTOCOL_TCP;   // 0x06, PAS de htons
-    Sum += TCP_Length;        // longueur en octets, PAS de htons
+    // PASS 1 : PSEUDO-HEADER
+    PseudoHeader_t PseudoHeader;
+    PseudoHeader.SrcIP = pIP->SrcIP_Address;
+    PseudoHeader.DstIP = pIP->DstIP_Address;
+    PseudoHeader.Zero      = 0;
+    PseudoHeader.Protocol  = Protocol;
+    PseudoHeader.Length    = htons(Length);
+    Sum = uint16_t(~LIB_Checksum16((uint8_t*)&PseudoHeader, sizeof(PseudoHeader_t)));
 
-    // TCP header + payload (exactement TCP_Length octets)
-    const uint8_t* pData = reinterpret_cast<const uint8_t*>(pTCP);
-    uint32_t len = TCP_Length;
+    // PASS 2 : HEADER + PAYLOAD
+    Sum += uint16_t(~LIB_Checksum16((uint8_t*)pProtocolHeader, Length));
 
-    while(len > 1)
-    {
-        uint16_t word = (pData[0] << 8) | pData[1];
-        Sum += word;
-        pData += 2;
-        len -= 2;
-    }
-
-    if(len == 1)
-    {
-        uint16_t word = (pData[0] << 8);
-        Sum += word;
-    }
-
+    // Fold 32 → 16 bits
     while(Sum >> 16)
     {
         Sum = (Sum & 0xFFFF) + (Sum >> 16);
     }
 
-    uint16_t Result = static_cast<uint16_t>(~Sum);
-    if(Result == 0)
-    {
-        Result = 0xFFFF;
-    }
-
-    return Result;
+    return htons((uint16_t)(~Sum));
 }
-#endif
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           UDP_CalculateChecksum
-//
-//  Parameters:     IP_Header_t*   pIP         Pointer to the IPv4 header containing source/dest IP
-//                  UDP_Header_t*  pUDP        Pointer to the UDP header (checksum field = 0)
-//                  uint16_t       UDP_Length  Length of UDP header + payload (in bytes)
-//
-//  Return:         uint16_t                    One's-complement UDP checksum (network byte order)
-//
-//  Description:    Computes the UDP checksum as defined in RFC 768 and RFC 1071. The checksum is
-//                  calculated over the UDP header, UDP payload, and the IPv4 pseudo-header.
-//                  The pseudo-header includes:
-//                      - Source IP address
-//                      - Destination IP address
-//                      - Protocol number (UDP = 17)
-//                      - UDP length
-//
-//                  The algorithm performs one's-complement addition of all 16-bit words, including
-//                  end-around carry, and returns the one's-complement of the final accumulated sum.
-//
-//  Notes:          - The caller must ensure that the UDP checksum field is set to zero before
-//                    invoking this function.
-//                  - If UDP_Length is odd, the final remaining byte is padded as the high byte of
-//                    a 16-bit word and included in the sum.
-//                  - The function assumes that the IPv4 header is already in network byte order.
-//                  - Suitable for both outgoing UDP packets and validating incoming packets.
-//                  - The buffer does not need to be 16-bit aligned; the function handles byte
-//                    access safely and deterministically.
-//
-//-------------------------------------------------------------------------------------------------
-#if (IP_USE_UDP == DEF_ENABLED)
-uint16_t IP_Manager::UDP_CalculateChecksum(IP_Header_t* pIP, UDP_Header_t* pUDP, uint16_t UDP_Length)
-{
-    uint32_t Sum = 0;
-
-    // Pseudo-header
-    Sum += (pIP->SrcIP_Address >> 16) & 0xFFFF;
-    Sum += (pIP->SrcIP_Address      ) & 0xFFFF;
-    Sum += (pIP->DstIP_Address >> 16) & 0xFFFF;
-    Sum += (pIP->DstIP_Address      ) & 0xFFFF;
-    Sum += htons(IP_PROTOCOL_UDP);
-    Sum += htons(UDP_Length);
-
-    // UDP header + payload
-    uint16_t* pPtr = (uint16_t*)pUDP;
-
-    for(uint16_t i = 0; i < (UDP_Length / 2); i++)
-    {
-        Sum += *pPtr++;
-    }
-
-    if(UDP_Length & 1)               // Odd byte?
-    {
-        Sum += *((uint8_t*)pPtr);
-    }
-
-    // Fold 32-bit sum to 16 bits
-    while(Sum >> 16)
-    {
-        Sum = (Sum & 0xFFFF) + (Sum >> 16);
-    }
-
-    return ~((uint16_t)Sum);
-}
-#endif
-*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           FreeMessage

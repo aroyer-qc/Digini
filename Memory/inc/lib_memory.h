@@ -112,6 +112,8 @@
     X_MEM_DBG(MEM_DBG_SNTPRX)                                   \
     X_MEM_DBG(MEM_DBG_TCP)                                      \
     X_MEM_DBG(MEM_DBG_TCPDT)                                    \
+    X_MEM_DBG(MEM_DBG_TCPR)                                     \
+    X_MEM_DBG(MEM_DBG_TCPRDT)                                   \
     X_MEM_DBG(MEM_DBG_TCPCPY)                                   \
     X_MEM_DBG(MEM_DBG_MQTT1)                                    \
     X_MEM_DBG(MEM_DBG_MQTT2)                                    \

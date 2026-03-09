@@ -61,14 +61,30 @@ void ICMP_Manager::Initialize(NetworkContext* pContext)
 //
 //  Name:           Process
 //
-//  Parameter(s):   IP_PacketMsg_t*     pRX         Incoming IP packet message
+//  Parameter(s):   IP_PacketMsg_t*   pRX
+//                      Pointer to the received IPv4 packet wrapper containing the
+//                      Ethernet, IP, and ICMP frames.
 //
 //  Return:         None
 //
-//  Description:    Process an incoming ICMP packet. Handles ICMP Echo Requests by generating
-//                  an Echo Reply using the same packet buffer (zero-copy). All other ICMP
-//                  types are ignored. The RX message is always freed unless transformed into
-//                  a TX reply.
+//  Description:    Handles incoming ICMP messages. This function currently implements
+//                  processing for ICMP Echo Requests (Ping). When a valid Echo Request
+//                  is received, the packet buffer is reused to construct an Echo Reply
+//                  in zero‑copy fashion.
+//
+//                  Processing steps:
+//                      1) Validate the IPv4 header and ensure the packet is large enough
+//                         to contain a complete ICMP frame.
+//                      2) Detect ICMP Echo Request messages.
+//                      3) Reuse the RX buffer as TX (zero‑copy), update MAC addresses,
+//                         rebuild the IPv4 header, and convert the ICMP type to Echo Reply.
+//                      4) Recompute the ICMP checksum using LIB_Checksum16() over the
+//                         ICMP header and payload.
+//                      5) Transmit the packet. If transmission fails, the buffer is freed.
+//
+//                  Any packet that is not a valid Echo Request is discarded. This function
+//                  ensures full RFC‑compliant ICMP Echo Reply generation while maintaining
+//                  NanoIP’s zero‑copy design philosophy.
 //
 //-------------------------------------------------------------------------------------------------
 void ICMP_Manager::Process(IP_PacketMsg_t* pRX)

@@ -596,7 +596,7 @@ TCP_Socket* TCP_ManagerSystem::Connect(const IP_Address_t& ServerIP, uint16_t Po
         pSystem->m_TX_Window[i].InUse     = false;
     }
 
-    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "TCP: SEND SYN ->  %d.%d.%d.%d:%u localPort=%u\n", IP_A(ServerIP), IP_B(ServerIP), IP_C(ServerIP), IP_D(ServerIP),Port, local.Port);
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "TCP: SEND SYN ->  %d.%d.%d.%d:%u localPort=%u\n", IP_A(ServerIP), IP_B(ServerIP), IP_C(ServerIP), IP_D(ServerIP), ntohs(Port), ntohs(local.Port));
 
     IP_PacketMsg_t* pMsg = SendSegment(pTCP, nullptr, 0, TCP_FLAG_SYN, false);
 
@@ -1232,7 +1232,7 @@ bool TCP_ManagerSystem::ParseTCP_Header(IP_EthernetPacket_t* pPacket, TCP_Socket
 
     TCP_Header_t& tcp = pPacket->TCP_Frame.Header;
 
-    uint16_t DstPort = ntohs(tcp.DstPort);
+    uint16_t DstPort = tcp.DstPort;
 
 #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
     if(m_pClientSocket != nullptr)

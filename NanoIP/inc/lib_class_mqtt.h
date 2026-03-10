@@ -43,8 +43,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define MQTT_BROKER_PORT         HTONS(80)
-//#define MQTT_BROKER_PORT         HTONS(1883)
+#define MQTT_BROKER_PORT         HTONS(1883)
 
 #define MQTT_FLAG_CONNECT        0x00
 #define MQTT_FLAG_CONNACK        0x00

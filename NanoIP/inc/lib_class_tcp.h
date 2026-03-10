@@ -102,19 +102,9 @@ class TCP_ManagerSystem : public TCP_Manager
 
     private:
 
-IP_PacketMsg_t* RebuildTCP_SegmentInPlace(
-    IP_PacketMsg_t*      pMsg,
-    const SocketInfo_t&  localInfo,
-    const SocketInfo_t&  remoteInfo,
-    uint32_t             Seq,
-    uint32_t             Ack,
-    uint8_t              Flags,
-    uint16_t             Window,
-    size_t               Length);
         bool            ParseTCP_Header                 (IP_EthernetPacket_t* pPacket, TCP_Socket*& pSockOut);
         void            UpdateTimers                    (void);
         void            CloseAndFreeSocket              (TCP_SocketSystem* pSystem);
-
 
         SocketManager*  m_pSocketManager;
         NetworkContext* m_pContext;

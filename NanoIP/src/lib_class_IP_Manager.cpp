@@ -672,7 +672,7 @@ void IP_Manager::PutHeader(IP_PacketMsg_t* pTX, IP_Address_t DstIP, uint16_t Pay
     }
 
     pIP->Checksum = 0;
-    pIP->Checksum = LIB_HTONS_Checksum16((uint8_t*)&pIP, sizeof(IP_Header_t));
+    pIP->Checksum = LIB_HTONS_Checksum16((uint8_t*)pIP, sizeof(IP_Header_t));
 }
 
 //-------------------------------------------------------------------------------------------------

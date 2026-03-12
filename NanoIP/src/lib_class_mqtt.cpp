@@ -31,6 +31,44 @@
 //                  - Uses existing NetworkContext / Socket abstraction
 //                  - No dynamic allocation required by design
 //
+//      NON-COMPLIANT BEHAVIOR IN THE CLIENT
+//      -----------------------------------------------
+//      
+//      1. Incomplete QoS 1 / QoS 2 handling
+//         - The PUBLISH Packet Identifier is not stored.
+//         - PUBACK is not validated (PacketID ignored).
+//         - DUP flag is not processed.
+//         - RETAIN flag is not processed.
+//         - Full QoS 2 flow (PUBREC / PUBREL / PUBCOMP) is missing.
+//      
+//      2. Simplified SUBACK / UNSUBACK processing
+//         - SUBACK return codes are not checked.
+//         - SUBACK Packet Identifier is not validated.
+//         - UNSUBACK does not restore MQTT_STATE_CONNECTED.
+//      
+//      3. Partial Keep-Alive compliance
+//         - Keep‑alive timer is not reset when receiving PUBLISH packets.
+//         - A PINGREQ is sent even if recent MQTT traffic was received.
+//      
+//      4. Minimal MQTT header validation
+//         - No validation of header flags (DUP/QoS/RETAIN).
+//         - No validation of packet-specific flags.
+//         - Unsupported packet types (AUTH, PUBREL, PUBREC, PUBCOMP, etc.) are not handled.
+//      
+//      5. Incomplete MQTT error handling
+//         - CONNACK return codes other than 0x00 are not interpreted.
+//         - MQTT_STATE_ERROR is never fully processed or recovered from.
+//      
+//      6. Simplified MQTT state machine
+//         - No dedicated state for QoS1 awaiting PUBACK (only PUBLISHING).
+//         - No QoS2 states at all.
+//         - No explicit transition after UNSUBACK.
+//      
+//      7. Limited MQTT size validation
+//         - Remaining Length is validated, but internal lengths
+//           (e.g., Topic Length vs Remaining Length) are not fully checked.
+//         
+//
 //-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
@@ -160,7 +198,8 @@ bool MQTT_Client::Connect(const IP_Address_t* pServerIP, uint16_t Port, const ch
 
     if(m_pSocket == nullptr)
     {
-        m_State = MQTT_STATE_ERROR;
+        m_State       = MQTT_STATE_ERROR;
+        m_pSocket     = nullptr;
         m_SocketValid = false;
 
       #if (IP_DBG_MQTT == DEF_ENABLED)
@@ -298,17 +337,13 @@ bool MQTT_Client::Publish(const char* pTopic, const uint8_t* pPayload, size_t Le
         return false;
     }
 
-    // For QoS 0, we stay connected
     if(QoS == MQTT_QOS_0)
     {
-        goto Exit;
+        m_LastActivityTick = GetTick();
         return true;
     }
 
-    // For QoS 1 or 2, wait for PUBACK or PUBREC
-    m_State = MQTT_STATE_PUBLISHING;
-
-Exit:
+    m_State            = MQTT_STATE_PUBLISHING;
     m_LastActivityTick = GetTick();
 
   #if (IP_DBG_MQTT == DEF_ENABLED)
@@ -333,6 +368,7 @@ bool MQTT_Client::Disconnect(void)
     {
         m_pSocket->Close();
         m_pSocket = nullptr;
+        m_SocketValid = false;
     }
 
     m_State = MQTT_STATE_IDLE;
@@ -366,23 +402,15 @@ void MQTT_Client::Process(void)
 {
     TickCount_t Now = GetTick();
 
-
-if(m_pSocket != nullptr)
-{
-    TCP_State_e tcpState = m_pSocket->GetState();
-
-    if(tcpState == TCP_STATE_CLOSED ||
-       tcpState == TCP_STATE_FIN_WAIT_1 ||
-       tcpState == TCP_STATE_FIN_WAIT_2 ||
-       tcpState == TCP_STATE_TIME_WAIT ||
-       tcpState == TCP_STATE_CLOSE_WAIT)
+    if((m_pSocket == nullptr) || (m_SocketValid == false))
     {
-        m_pSocket = nullptr;
-        m_State   = MQTT_STATE_RECONNECTING;
-        m_ReconnectStartTick = Now;
+        if(m_State != MQTT_STATE_RECONNECTING)
+        {
+            m_State              = MQTT_STATE_RECONNECTING;
+            m_ReconnectStartTick = Now;
+        }
         return;
     }
-}
 
     switch(m_State)
     {
@@ -438,19 +466,23 @@ if(m_pSocket != nullptr)
 
                 if(pSock != nullptr)
                 {
-                    m_State            = MQTT_STATE_CONNECTING;
-                    m_ConnectStartTick = Now;
-                    m_LastActivityTick = Now;
-                    m_ReconnectDelaySeconds = 5;
+                    m_pSocket             = pSock;
+                    m_SocketValid         = true;
+                    m_State               = MQTT_STATE_CONNECTING;
+                    m_ConnectStartTick    = Now;
+                    m_LastActivityTick    = Now;
+                    m_ReconnectDelaySeconds = 5;          // reset backoff
                 }
                 else
                 {
+                    m_SocketValid = false;
+
                     if(m_ReconnectDelaySeconds < 60)
                     {
-                        m_ReconnectDelaySeconds *= 2;
+                        m_ReconnectDelaySeconds *= 2;     // exponential backoff
                     }
 
-                    m_ReconnectStartTick = Now;
+                    m_ReconnectStartTick = Now;           // restart timer
                 }
             }
         }
@@ -490,7 +522,6 @@ void MQTT_Client::SetMessageCallback(MQTT_MessageCallback_t Callback, void* pUse
 }
 
 //---------------------------------------------------------------------------------------------
-static uint32_t Count = 0;
 TCP_Socket* MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, IP_Port_t Port)
 {
     if((pServerIP == nullptr) || (m_pContext == nullptr))
@@ -509,8 +540,7 @@ TCP_Socket* MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, IP_Port_t Po
     }
     else
     {
-        Count++;
-        __asm("nop");
+        m_SocketValid = (m_pSocket != nullptr);
     }
 
     return m_pSocket;
@@ -715,11 +745,15 @@ bool MQTT_Client::SendPublishFrame(const char* pTopic,
                                          Flags,
                                          RemainingLength);
 
-    size_t Index = HeaderLen;
+    if(HeaderLen + RemainingLength > MQTT_RX_BUFFER_SIZE)
+    {
+        pMemoryPool->Free((void**)&pBuffer);
+        return false;
+    }
 
+    size_t Index = HeaderLen;
     pBuffer[Index++] = (TopicLen >> 8) & 0xFF;
     pBuffer[Index++] = (TopicLen     ) & 0xFF;
-
     memcpy(&pBuffer[Index], pTopic, TopicLen);
     Index += TopicLen;
 
@@ -859,6 +893,12 @@ bool MQTT_Client::HandleIncomingData(void)
     while(RemainingToRead > 0)
     {
         size_t Chunk = m_pSocket->Receive(&pPacket[Offset], RemainingToRead);
+
+        if(Chunk > RemainingToRead)
+        {
+            pMemoryPool->Free((void**)&pPacket);
+            return false;
+        }
 
         if(Chunk == 0)
         {
@@ -1161,7 +1201,8 @@ bool MQTT_Client::DecodeRemainingLength(const uint8_t* pBuffer, size_t Length, s
     return false;
 }
 
-#if (MQTT_USE_UNSUBSCRIBE == DEF_ENABLED)
+//---------------------------------------------------------------------------------------------
+
 size_t MQTT_Client::EncodeFixedHeader(uint8_t* pOut,
                                       uint8_t PacketType,
                                       uint8_t Flags,
@@ -1188,7 +1229,6 @@ size_t MQTT_Client::EncodeFixedHeader(uint8_t* pOut,
 
     return Count + 1;
 }
-#endif
 
 //---------------------------------------------------------------------------------------------
 

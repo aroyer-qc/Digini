@@ -144,11 +144,11 @@ bool MQTT_Client::Connect(const IP_Address_t* pServerIP, uint16_t Port, const ch
 
     if(m_pSocket != nullptr)
     {
-        // Déjà en cours de connexion → ne pas recréer un socket
+        // Already in the process of connecting -> do not recreate a socket
         return true;
     }
 
-    // save it for reconnect
+    // Save it for reconnect
     m_LastServerIP   = *pServerIP;
     m_LastServerPort = Port;
 

@@ -94,6 +94,7 @@ bool MQTT_Client::Initialize(NetworkContext* pContext)
 {
     m_pContext              = pContext;
     m_pSocket               = nullptr;
+    m_SocketValid           = false;
     m_State                 = MQTT_STATE_IDLE;
 
     m_KeepAliveSeconds      = 0;
@@ -155,16 +156,29 @@ bool MQTT_Client::Connect(const IP_Address_t* pServerIP, uint16_t Port, const ch
     m_ClientID[sizeof(m_ClientID) - 1] = '\0';
 
     m_KeepAliveSeconds = KeepAliveSeconds;
+    m_pSocket = TCP_Connect(pServerIP, Port);
 
-    if(TCP_Connect(pServerIP, Port) == nullptr)
+    if(m_pSocket == nullptr)
     {
         m_State = MQTT_STATE_ERROR;
+        m_SocketValid = false;
+
+      #if (IP_DBG_MQTT == DEF_ENABLED)
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT: Connect failed");
+      #endif
+
         return false;
     }
 
+    m_SocketValid      = true;
     m_State            = MQTT_STATE_CONNECTING;
     m_ConnectStartTick = GetTick();
     m_LastActivityTick = m_ConnectStartTick;
+
+  #if (IP_DBG_MQTT == DEF_ENABLED)
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT: Connected");
+  #endif
+
     return true;
 }
 
@@ -205,11 +219,20 @@ bool MQTT_Client::Subscribe(const char* pTopic, MQTT_QoS_e QoS)
 
     if(SendSubscribeFrame(pTopic, QoS) == false)
     {
+
+      #if (IP_DBG_MQTT == DEF_ENABLED)
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT: Subscribing failed");
+      #endif
         return false;
     }
 
     m_State = MQTT_STATE_WAIT_SUBACK;
     m_LastActivityTick = GetTick();
+
+  #if (IP_DBG_MQTT == DEF_ENABLED)
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT: Subscribe");
+  #endif
+
     return true;
 }
 
@@ -225,11 +248,20 @@ bool MQTT_Client::Unsubscribe(const char* pTopic)
 
     if(SendUnsubscribeFrame(pTopic) == false)
     {
+      #if (IP_DBG_MQTT == DEF_ENABLED)
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT: Unsubscribing failed");
+      #endif
+
         return false;
     }
 
     m_State = MQTT_STATE_WAIT_UNSUBACK;
     m_LastActivityTick = GetTick();
+
+  #if (IP_DBG_MQTT == DEF_ENABLED)
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT: Unsubscribe");
+  #endif
+
     return true;
 }
 #endif
@@ -259,19 +291,30 @@ bool MQTT_Client::Publish(const char* pTopic, const uint8_t* pPayload, size_t Le
 
     if(!SendPublishFrame(pTopic, pPayload, Length, QoS))
     {
+
+      #if (IP_DBG_MQTT == DEF_ENABLED)
+        DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT: Publishing failed");
+      #endif
         return false;
     }
 
     // For QoS 0, we stay connected
     if(QoS == MQTT_QOS_0)
     {
-        m_LastActivityTick = GetTick();
+        goto Exit;
         return true;
     }
 
     // For QoS 1 or 2, wait for PUBACK or PUBREC
     m_State = MQTT_STATE_PUBLISHING;
+
+Exit:
     m_LastActivityTick = GetTick();
+
+  #if (IP_DBG_MQTT == DEF_ENABLED)
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT: Published");
+  #endif
+
     return true;
 }
 
@@ -282,6 +325,8 @@ bool MQTT_Client::Disconnect(void)
     if(m_State == MQTT_STATE_CONNECTED)
     {
         SendDisconnect();
+// TODO we don't check the true or false
+
     }
 
     if(m_pSocket != nullptr)
@@ -291,6 +336,11 @@ bool MQTT_Client::Disconnect(void)
     }
 
     m_State = MQTT_STATE_IDLE;
+
+  #if (IP_DBG_MQTT == DEF_ENABLED)
+    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT: Disconnected");
+  #endif
+
     return true;
 }
 
@@ -315,6 +365,24 @@ bool MQTT_Client::Disconnect(void)
 void MQTT_Client::Process(void)
 {
     TickCount_t Now = GetTick();
+
+
+if(m_pSocket != nullptr)
+{
+    TCP_State_e tcpState = m_pSocket->GetState();
+
+    if(tcpState == TCP_STATE_CLOSED ||
+       tcpState == TCP_STATE_FIN_WAIT_1 ||
+       tcpState == TCP_STATE_FIN_WAIT_2 ||
+       tcpState == TCP_STATE_TIME_WAIT ||
+       tcpState == TCP_STATE_CLOSE_WAIT)
+    {
+        m_pSocket = nullptr;
+        m_State   = MQTT_STATE_RECONNECTING;
+        m_ReconnectStartTick = Now;
+        return;
+    }
+}
 
     switch(m_State)
     {
@@ -476,6 +544,13 @@ bool MQTT_Client::SendConnectFrame(const char* pClientID)
                                          RemainingLength);
 
     Index = HeaderLen;
+
+if((Index + RemainingLength) > MQTT_RX_BUFFER_SIZE)
+{
+    pMemoryPool->Free((void**)&pBuffer);
+    return false;
+}
+
     memcpy(&pBuffer[Index], (void*)"\0\x04MQTT\x04\x02", 8);
     Index += 8;
 
@@ -526,6 +601,12 @@ bool MQTT_Client::SendSubscribeFrame(const char* pTopic, MQTT_QoS_e QoS)
 
     size_t Index = HeaderLen;
 
+if(Index + RemainingLength > MQTT_RX_BUFFER_SIZE)
+{
+    pMemoryPool->Free((void**)&pBuffer);
+    return false;
+}
+
     uint16_t PacketID = NextPacketID();
     pBuffer[Index++] = (PacketID >> 8) & 0xFF;
     pBuffer[Index++] = (PacketID     ) & 0xFF;
@@ -566,6 +647,12 @@ bool MQTT_Client::SendUnsubscribeFrame(const char* pTopic)
                                          RemainingLength);
 
     size_t Index = HeaderLen;
+
+if(Index + RemainingLength > MQTT_RX_BUFFER_SIZE)
+{
+    pMemoryPool->Free((void**)&pBuffer);
+    return false;
+}
 
     uint16_t PacketID = NextPacketID();
     pBuffer[Index++] = (PacketID >> 8) & 0xFF;
@@ -711,18 +798,38 @@ bool MQTT_Client::HandleIncomingData(void)
     }
 
     uint8_t FixedHeader[5];
-    size_t  Received = m_pSocket->Receive(FixedHeader, 1);
+
+    // Lire le premier octet (type + flags)
+    size_t Received = m_pSocket->Receive(FixedHeader, 1);
 
     if(Received == 0)
     {
         return false;
     }
 
-    size_t RemainingLength     = 0;
-    size_t RemainingLenBytes   = 0;
+    // Lire le Remaining Length (varint), byte par byte
+    size_t RemainingLenBytes = 0;
+    size_t RemainingLength   = 0;
+
+    while(RemainingLenBytes < 4)
+    {
+        size_t r = m_pSocket->Receive(&FixedHeader[1 + RemainingLenBytes], 1);
+
+        if(r == 0)
+        {
+            return false;
+        }
+
+        RemainingLenBytes++;
+
+        if((FixedHeader[1 + RemainingLenBytes - 1] & MQTT_REMAINING_LEN_CONTINUATION) == 0)
+        {
+            break;
+        }
+    }
 
     if(MQTT_Client::DecodeRemainingLength(&FixedHeader[1],
-                                          sizeof(FixedHeader) - 1,
+                                          RemainingLenBytes,
                                           &RemainingLength,
                                           &RemainingLenBytes) == false)
     {
@@ -735,12 +842,6 @@ bool MQTT_Client::HandleIncomingData(void)
     }
 
     size_t FixedHeaderSize = 1 + RemainingLenBytes;
-
-    if(FixedHeaderSize > sizeof(FixedHeader))
-    {
-        return false;
-    }
-
     size_t TotalPacketSize = FixedHeaderSize + RemainingLength;
 
     uint8_t* pPacket = (uint8_t*)pMemoryPool->AllocAndClear(TotalPacketSize, MEM_DBG_MQTT5);
@@ -775,7 +876,6 @@ bool MQTT_Client::HandleIncomingData(void)
 
     return Result;
 }
-
 //---------------------------------------------------------------------------------------------
 
 bool MQTT_Client::ParseIncomingPacket(uint8_t* pBuffer, size_t Length)

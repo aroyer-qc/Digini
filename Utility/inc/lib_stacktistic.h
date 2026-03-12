@@ -59,8 +59,8 @@ class StackCheck
         void        InitializePort              (void);
 
         int         Register                    (const uint32_t* pStack, size_t STackSz, const char* pStackName);
-        size_t      GetMaxUsage                 (int StackID);
-        int32_t     GetMaxPercent               (int StackID);
+        void        GetStat                     (int StackID, size_t* pStackSize, size_t* pMaxUsage, int32_t* pPercent);
+
         const char* GetStackName                (int StackID);
         int         GetNumberOfRegisterStack    (void);
 

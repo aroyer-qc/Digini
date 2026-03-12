@@ -43,6 +43,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+//#define MQTT_BROKER_PORT         HTONS(80)    // test PC open port
 #define MQTT_BROKER_PORT         HTONS(1883)
 
 #define MQTT_FLAG_CONNECT        0x00
@@ -147,6 +148,8 @@ private:
         TickCount_t             m_LastActivityTick;
         TickCount_t             m_ConnectStartTick;
         TickCount_t             m_PingSentTick;
+        bool                    m_SocketValid;
+
 
         uint16_t                m_NextPacketID;
         bool                    m_WaitingPingResp;

@@ -40,7 +40,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define TASK_ETHERNET_IF_STACK_SIZE                     96
+#define TASK_ETHERNET_IF_STACK_SIZE                     256
 #define TASK_ETHERNET_IF_PRIO                           7
 #define TASK_ETHERNET_IF_NODE_SIZE                      64
 

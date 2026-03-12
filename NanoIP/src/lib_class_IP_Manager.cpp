@@ -209,7 +209,10 @@ void IP_Manager::Run(void)
 
                 case IP_ETHERNET_TYPE_ARP:
                 {
+                  #if (IP_DBG_ARP == DEF_ENABLED)
                     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ETH type: ARP\n");
+                  #endif
+
                     m_pContext->GetARP().ProcessARP(pMsg);                                          // ARP owns and frees pMsg
                 }
                 break;

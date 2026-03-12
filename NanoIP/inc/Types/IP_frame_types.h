@@ -127,8 +127,7 @@ struct TCP_Header_t
     uint16_t 	    Window;                             // +   2
 	uint16_t 	    Checksum;                           // +   2
 	uint16_t 	    UrgentPointer;                      // +   2
-	OptionData_t    OptionData;                         // +   4
-};                              	                    // =  24 with option data
+};                              	                    // =  20 with option data
 #pragma pack(pop)
 
 #pragma pack(push, 1)

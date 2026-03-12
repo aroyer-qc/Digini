@@ -109,15 +109,16 @@ const char* StackCheck::GetStackName(int StackID)
 // Name:           GetMaxUsage
 //
 // Parameter(s):   StackID              Number attributed to stack when it was register
-// Return:         size_t               Used Size
+// Return:         None
 //
-// Description:    Return the use size of a specific stack.
+// Description:    Return the stat on the stack of a specific stack.
 //
 //-------------------------------------------------------------------------------------------------
-size_t StackCheck::GetMaxUsage(int StackID)
+void StackCheck::GetStat(int StackID, size_t* pStackSize, size_t* pMaxUsage, int32_t* pPercent)
 {
     size_t    FreeSize = -1;
     uint32_t* pStack;
+    int32_t   Percent;
 
     if(StackID != -1)
     {
@@ -132,24 +133,10 @@ size_t StackCheck::GetMaxUsage(int StackID)
         }
     }
 
-    return m_Size[StackID] - FreeSize;
-}
+    *pStackSize = m_Size[StackID];
+    *pMaxUsage  = m_Size[StackID] - FreeSize;
 
-//-------------------------------------------------------------------------------------------------
-//
-// Name:           GetPercent
-//
-// Parameter(s):   StackID              Number attributed to stack when it was register
-// Return:         int32_t              Percentage of the specific stack.
-//
-// Description:    Return the use size of a specific stack
-//
-//-------------------------------------------------------------------------------------------------
-int32_t StackCheck::GetMaxPercent(int StackID)
-{
-    int32_t Percent;
-
-    Percent = int32_t(GetMaxUsage(StackID));
+    Percent = *pMaxUsage;
 
     if(Percent != -1)
     {
@@ -157,7 +144,7 @@ int32_t StackCheck::GetMaxPercent(int StackID)
         Percent = (Percent / m_Size[StackID]) + ((((Percent * 10) % m_Size[StackID]) > 5) ? 1 : 0);      // Add 1 if .6% and more
     }
 
-    return Percent;
+    *pPercent = Percent;
 }
 
 //-------------------------------------------------------------------------------------------------

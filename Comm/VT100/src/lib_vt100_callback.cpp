@@ -228,6 +228,10 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
 {
     static int  NbOfStack = 0;
     int32_t     Percent;
+    size_t      StackSize;
+    size_t      StackUsage;
+    char        String[10];
+    int         PrintSize;
 
     VAR_UNUSED(Input);
 
@@ -266,10 +270,13 @@ VT100_InputType_e VT100_Terminal::CALLBACK_StackUsage(uint8_t Input, VT100_CallB
                 uint8_t OffsetMultiplierX =  uint8_t(((i % 5) * 27) + 2);
                 uint8_t OffsetMultiplierY = uint8_t((i / 5) * 6);
 
-                Percent = myStacktistic.GetMaxPercent(i);
+                myStacktistic.GetStat(i, &StackSize, &StackUsage, &Percent);
                 Bargraph(OffsetMultiplierX, OffsetMultiplierY + 9, (Percent >= 90) ? VT100_COLOR_RED : VT100_COLOR_GREEN, Percent, VT100_COLOR_BLUE, 0, 100, 23);
                 SetForeColor(VT100_COLOR_WHITE);
                 InMenuPrintf(OffsetMultiplierX, OffsetMultiplierY + 11, VT100_LBL_PERCENT_VALUE, Percent);
+
+                PrintSize = sprintf(String, "%d/%d", StackUsage, StackSize);
+                InMenuPrintf((OffsetMultiplierX + 23) - PrintSize, OffsetMultiplierY + 11, LBL_STRING, String);
             }
         }
         break;

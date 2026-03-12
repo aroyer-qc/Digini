@@ -617,12 +617,9 @@ bool ARP_Manager::Resolve(IP_Address_t IP, IP_MAC_Address_t* pMAC, IP_PacketMsg_
 {
     nOS_StatusReg sr;
 
+  #if (IP_DBG_ARP == DEF_ENABLED)
     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "ARP: Resolve(IP=%d.%d.%d.%d)\n", IP_A(IP), IP_B(IP), IP_C(IP), IP_D(IP));
-
-if(IP == IP_ADDRESS(0,0,0,0))
-{
-    __asm("NOP");
-}
+  #endif
 
     // Check ARP table
     for(int i = 0; i < IP_ARP_TABLE_SIZE; i++)

@@ -66,6 +66,21 @@
 // Enum(s)
 //-------------------------------------------------------------------------------------------------
 
+//  MQTT Event Types (Application-Level)
+//      These events are emitted by the MQTT_Client library and delivered to the application task
+//      through the user callback. They abstract away all TCP details and expose only meaningful
+//      MQTT-level state changes.
+enum MQTT_Event_e
+{
+    MQTT_EVENT_NONE = 0,            // No event (placeholder)
+    MQTT_EVENT_CONNECTED,           // CONNECT sent + CONNACK received
+    MQTT_EVENT_DISCONNECTED,        // Socket closed or MQTT session lost
+    MQTT_EVENT_RECONNECTING,        // Client entered automatic reconnection
+    MQTT_EVENT_MESSAGE_RECEIVED,    // Incoming PUBLISH (topic + payload)
+    MQTT_EVENT_SUBACK,              // SUBACK received for a subscription
+    MQTT_EVENT_PUBACK,              // PUBACK received for QoS1 publish
+};
+
 enum MQTT_State_e
 {
     MQTT_STATE_IDLE = 0,
@@ -90,17 +105,26 @@ enum MQTT_QoS_e
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef void (*MQTT_MessageCallback_t)(void* pContext, const char* pTopic, const uint8_t* pPayload, size_t Length);
+typedef void (*MQTT_MessageCallback_t) (void* pContext, const char* pTopic, const uint8_t* pPayload, size_t Length);
+typedef void (*MQTT_EventCallback_t)   (MQTT_Event_e Event);
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class MQTT_Client
+class MQTT_EventHandler
 {
     public:
 
-        bool                    Initialize                  (NetworkContext* pContext);
+        virtual void            OnEvent                     (MQTT_Event_e Event)      = 0;
+};
+
+class MQTT_Client : TCP_SocketEventHandler
+{
+    public:
+
+
+        bool                    Initialize                  (NetworkContext* pContext, MQTT_EventHandler* pHandler);
         bool                    Connect                     (const IP_Address_t* pServerIP, IP_Port_t Port, const char* pClientID, uint16_t KeepAliveSeconds);
         bool                    Subscribe                   (const char* pTopic, MQTT_QoS_e QoS);
 
@@ -119,6 +143,9 @@ class MQTT_Client
         void                    ClearSocket                 (void)                                                      { m_pSocket = nullptr; }
 
 private:
+
+        void                    OnEvent                     (MQTT_Event_e MQTT_Event);
+        void                    OnSocketEvent               (TCP_Socket* pSocket, SocketEvent_e Event);
 
         TCP_Socket*             TCP_Connect                 (const IP_Address_t* pServerIP, IP_Port_t Port);
         bool                    SendFrame                   (uint8_t* pBuffer, size_t Length);
@@ -155,14 +182,13 @@ private:
         bool                    m_WaitingPingResp;
 
         MQTT_MessageCallback_t  m_MessageCallback;
+        MQTT_EventHandler*      m_pEventHandler;
         void*                   m_pMessageContext;
 
         // Automatic reconnect
         TickCount_t             m_ReconnectStartTick;
         uint16_t                m_ReconnectDelaySeconds;
         bool                    m_ReconnectEnabled;
-
-
 
         char                    m_ClientID[64];
         IP_Address_t            m_LastServerIP;

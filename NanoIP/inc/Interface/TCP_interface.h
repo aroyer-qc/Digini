@@ -70,7 +70,6 @@ class TCP_SocketEventHandler
         virtual void            OnSocketEvent   (TCP_Socket* pSocket, SocketEvent_e Event)      = 0;
 };
 
-
 class TCP_Socket
 {
     public:

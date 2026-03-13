@@ -33,41 +33,41 @@
 //
 //      NON-COMPLIANT BEHAVIOR IN THE CLIENT
 //      -----------------------------------------------
-//      
+//
 //      1. Incomplete QoS 1 / QoS 2 handling
 //         - The PUBLISH Packet Identifier is not stored.
 //         - PUBACK is not validated (PacketID ignored).
 //         - DUP flag is not processed.
 //         - RETAIN flag is not processed.
 //         - Full QoS 2 flow (PUBREC / PUBREL / PUBCOMP) is missing.
-//      
+//
 //      2. Simplified SUBACK / UNSUBACK processing
 //         - SUBACK return codes are not checked.
 //         - SUBACK Packet Identifier is not validated.
 //         - UNSUBACK does not restore MQTT_STATE_CONNECTED.
-//      
+//
 //      3. Partial Keep-Alive compliance
 //         - Keep‑alive timer is not reset when receiving PUBLISH packets.
 //         - A PINGREQ is sent even if recent MQTT traffic was received.
-//      
+//
 //      4. Minimal MQTT header validation
 //         - No validation of header flags (DUP/QoS/RETAIN).
 //         - No validation of packet-specific flags.
 //         - Unsupported packet types (AUTH, PUBREL, PUBREC, PUBCOMP, etc.) are not handled.
-//      
+//
 //      5. Incomplete MQTT error handling
 //         - CONNACK return codes other than 0x00 are not interpreted.
 //         - MQTT_STATE_ERROR is never fully processed or recovered from.
-//      
+//
 //      6. Simplified MQTT state machine
 //         - No dedicated state for QoS1 awaiting PUBACK (only PUBLISHING).
 //         - No QoS2 states at all.
 //         - No explicit transition after UNSUBACK.
-//      
+//
 //      7. Limited MQTT size validation
 //         - Remaining Length is validated, but internal lengths
 //           (e.g., Topic Length vs Remaining Length) are not fully checked.
-//         
+//
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -116,19 +116,29 @@ enum MQTT_ControlPacketType_e
     MQTT_PACKET_TYPE_DISCONNECT    = 14,
     MQTT_PACKET_TYPE_AUTH          = 15
 };
+
 //---------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext* pContext        Pointer to NanoIP network context.
+//  Parameter(s):   NetworkContext*        pContext       Pointer to the NanoIP network context
+//                  MQTT_EventHandler*     pHandler
+//                                                        MQTT events.
+//                                                         - CONNECTED
+//                                                         - DISCONNECTED
+//                                                         - MESSAGE_RECEIVED,  etc.)
 //
-//  Return:         bool        - true  : Initialization successful.
-//                              - false : Socket allocation or configuration failed.
+//  Return:         bool - true  : Initialization successful.
+//                       - false : Initialization failed (reserved for future error handling).
 //
-//  Description:    Initializes the MQTT client and allocates an underlying TCP socket.
+//  Description:    Initializes the internal state of the MQTT client. This function stores
+//                  the network context, registers the application event callback, resets all
+//                  MQTT state variables, clears runtime counters, and prepares the client for
+//                  operation. No TCP socket is created at this stage; the socket will be
+//                  allocated later when Connect() is called.
 //
 //---------------------------------------------------------------------------------------------
-bool MQTT_Client::Initialize(NetworkContext* pContext)
+bool MQTT_Client::Initialize(NetworkContext* pContext, MQTT_EventHandler* pHandler)
 {
     m_pContext              = pContext;
     m_pSocket               = nullptr;
@@ -153,6 +163,8 @@ bool MQTT_Client::Initialize(NetworkContext* pContext)
     m_ClientID[0]           = '\0';
     m_LastServerIP          = IP_ADDRESS(0,0,0,0);
     m_LastServerPort        = 0;
+
+    m_pEventHandler         = pHandler;
 
     return true;
 }
@@ -208,6 +220,8 @@ bool MQTT_Client::Connect(const IP_Address_t* pServerIP, uint16_t Port, const ch
 
         return false;
     }
+
+    m_pSocket->SetEventHandler(this);
 
     m_SocketValid      = true;
     m_State            = MQTT_STATE_CONNECTING;
@@ -371,12 +385,12 @@ bool MQTT_Client::Disconnect(void)
         m_SocketValid = false;
     }
 
-    m_State = MQTT_STATE_IDLE;
-
   #if (IP_DBG_MQTT == DEF_ENABLED)
     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT: Disconnected");
   #endif
 
+    m_State = MQTT_STATE_IDLE;
+    OnEvent(MQTT_EVENT_DISCONNECTED);
     return true;
 }
 
@@ -408,6 +422,7 @@ void MQTT_Client::Process(void)
         {
             m_State              = MQTT_STATE_RECONNECTING;
             m_ReconnectStartTick = Now;
+            OnEvent(MQTT_EVENT_RECONNECTING);
         }
         return;
     }
@@ -440,6 +455,7 @@ void MQTT_Client::Process(void)
                 SendDisconnect();
                 m_State = MQTT_STATE_RECONNECTING;
                 m_ReconnectStartTick = Now;
+                OnEvent(MQTT_EVENT_RECONNECTING);
             }
 
             if((Now - m_LastActivityTick) > (m_KeepAliveSeconds * TICKS_PER_SECOND))
@@ -779,12 +795,7 @@ bool MQTT_Client::SendDisconnect(void)
     }
 
     uint8_t Buffer[4];
-
-    size_t HeaderLen = EncodeFixedHeader(Buffer,
-                                         MQTT_PACKET_TYPE_DISCONNECT,
-                                         0x00,
-                                         0);
-
+    size_t HeaderLen = EncodeFixedHeader(Buffer, MQTT_PACKET_TYPE_DISCONNECT, 0x00, 0);
     size_t Sent = m_pSocket->Send(Buffer, HeaderLen);
 
     if(Sent != HeaderLen)
@@ -805,12 +816,7 @@ bool MQTT_Client::SendPingReq(void)
     }
 
     uint8_t Buffer[4];
-
-    size_t HeaderLen = EncodeFixedHeader(Buffer,
-                                         MQTT_PACKET_TYPE_PINGREQ,
-                                         0x00,
-                                         0);
-
+    size_t HeaderLen = EncodeFixedHeader(Buffer, MQTT_PACKET_TYPE_PINGREQ, 0x00, 0);
     size_t Sent = m_pSocket->Send(Buffer, HeaderLen);
 
     if(Sent != HeaderLen)
@@ -862,10 +868,7 @@ bool MQTT_Client::HandleIncomingData(void)
         }
     }
 
-    if(MQTT_Client::DecodeRemainingLength(&FixedHeader[1],
-                                          RemainingLenBytes,
-                                          &RemainingLength,
-                                          &RemainingLenBytes) == false)
+    if(MQTT_Client::DecodeRemainingLength(&FixedHeader[1], RemainingLenBytes, &RemainingLength, &RemainingLenBytes) == false)
     {
         return false;
     }
@@ -925,8 +928,8 @@ bool MQTT_Client::ParseIncomingPacket(uint8_t* pBuffer, size_t Length)
         return false;
     }
 
-    uint8_t                     Header     = pBuffer[0];
-    MQTT_ControlPacketType_e    PacketType = (MQTT_ControlPacketType_e)(pBuffer[0] >> 4);
+    uint8_t                  Header     = pBuffer[0];
+    MQTT_ControlPacketType_e PacketType = (MQTT_ControlPacketType_e)(pBuffer[0] >> 4);
 
     size_t RemainingLength      = 0;
     size_t RemainingLengthBytes = 0;
@@ -961,13 +964,13 @@ bool MQTT_Client::ParseIncomingPacket(uint8_t* pBuffer, size_t Length)
 
             uint8_t SessionPreSent = pBuffer[Index];
             VAR_UNUSED(SessionPreSent);
-
             uint8_t ReturnCode = pBuffer[Index + 1];
 
             if(ReturnCode == 0x00)
             {
                 m_State            = MQTT_STATE_CONNECTED;
                 m_LastActivityTick = GetTick();
+                OnEvent(MQTT_EVENT_CONNECTED);
                 return true;
             }
 
@@ -987,9 +990,7 @@ bool MQTT_Client::ParseIncomingPacket(uint8_t* pBuffer, size_t Length)
                 return false;
             }
 
-            uint16_t TopicLen =
-                (static_cast<uint16_t>(pBuffer[Index]) << 8) |
-                static_cast<uint16_t>(pBuffer[Index + 1]);
+            uint16_t TopicLen = (static_cast<uint16_t>(pBuffer[Index]) << 8) | static_cast<uint16_t>(pBuffer[Index + 1]);
             Index += 2;
 
             if(TopicLen == 0)
@@ -1039,8 +1040,8 @@ bool MQTT_Client::ParseIncomingPacket(uint8_t* pBuffer, size_t Length)
                 m_MessageCallback(m_pMessageContext, pTopic, Payload, PayloadLen);
             }
 
+            OnEvent(MQTT_EVENT_MESSAGE_RECEIVED);
             pMemoryPool->Free((void**)&pTopic);
-
             return true;
         }
 
@@ -1056,13 +1057,12 @@ bool MQTT_Client::ParseIncomingPacket(uint8_t* pBuffer, size_t Length)
                 return false;
             }
 
-            uint16_t packetID =
-                (static_cast<uint16_t>(pBuffer[Index]) << 8) |
-                static_cast<uint16_t>(pBuffer[Index + 1]);
+            uint16_t packetID = (static_cast<uint16_t>(pBuffer[Index]) << 8) | static_cast<uint16_t>(pBuffer[Index + 1]);
             VAR_UNUSED(packetID);
 
             m_State            = MQTT_STATE_CONNECTED;
             m_LastActivityTick = GetTick();
+            OnEvent(MQTT_EVENT_PUBACK);
             return true;
         }
 
@@ -1078,13 +1078,12 @@ bool MQTT_Client::ParseIncomingPacket(uint8_t* pBuffer, size_t Length)
                 return false;
             }
 
-            uint16_t packetID =
-                (static_cast<uint16_t>(pBuffer[Index]) << 8) |
-                static_cast<uint16_t>(pBuffer[Index + 1]);
+            uint16_t packetID = (static_cast<uint16_t>(pBuffer[Index]) << 8) | static_cast<uint16_t>(pBuffer[Index + 1]);
             VAR_UNUSED(packetID);
 
             m_State            = MQTT_STATE_CONNECTED;
             m_LastActivityTick = GetTick();
+            OnEvent(MQTT_EVENT_SUBACK);
             return true;
         }
 
@@ -1228,6 +1227,42 @@ size_t MQTT_Client::EncodeFixedHeader(uint8_t* pOut,
     while(RemainingLength > 0);
 
     return Count + 1;
+}
+
+//---------------------------------------------------------------------------------------------
+
+void MQTT_Client::OnSocketEvent(TCP_Socket* pSocket, SocketEvent_e Event)
+{
+    MQTT_Event_e MQTT_Event = MQTT_EVENT_NONE;
+
+    switch(Event)
+    {
+        case SOCKET_EVENT_ERROR:
+        case SOCKET_EVENT_CLOSED:
+        {
+            m_SocketValid = false;
+            MQTT_Event = MQTT_EVENT_DISCONNECTED;
+        }
+        break;
+
+        default:
+            break;
+    }
+
+    if(MQTT_Event != MQTT_EVENT_NONE)
+    {
+        OnEvent(MQTT_Event);
+    }
+}
+
+//---------------------------------------------------------------------------------------------
+
+void MQTT_Client::OnEvent(MQTT_Event_e MQTT_Event)
+{
+    if((MQTT_Event != MQTT_EVENT_NONE) && (m_pEventHandler != nullptr))
+    {
+        m_pEventHandler->OnEvent(MQTT_Event);
+    }
 }
 
 //---------------------------------------------------------------------------------------------

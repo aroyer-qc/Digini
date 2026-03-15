@@ -136,7 +136,7 @@ private:
       #endif
         bool                    SendPublishFrame            (const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS);
         bool                    SendDisconnect              (void);
-        bool                    SendPingReq                 (void);
+        bool                    SendPingRequest             (void);
         bool                    HandleIncomingData          (void);
         bool                    ParseIncomingPacket         (uint8_t* pBuffer, size_t Length);
         uint16_t                NextPacketID                (void);
@@ -160,7 +160,7 @@ private:
         MQTT_Handler*           m_pHandler;
 
         uint16_t                m_NextPacketID;
-        bool                    m_WaitingPingResp;
+        bool                    m_WaitingPingResponse;
 
         // Automatic reconnect
         TickCount_t             m_ReconnectStartTick;

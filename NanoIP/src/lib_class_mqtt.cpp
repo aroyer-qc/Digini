@@ -47,7 +47,7 @@
 //         - UNSUBACK does not restore MQTT_STATE_CONNECTED.
 //
 //      3. Partial Keep-Alive compliance
-//         - Keep‑alive timer is not reset when receiving PUBLISH packets.
+//         - Keep-alive timer is not reset when receiving PUBLISH packets.
 //         - A PINGREQ is sent even if recent MQTT traffic was received.
 //
 //      4. Minimal MQTT header validation
@@ -113,8 +113,8 @@ enum MQTT_ControlPacketType_e
     MQTT_PACKET_TYPE_SUBACK        = 9,
     MQTT_PACKET_TYPE_UNSUBSCRIBE   = 10,
     MQTT_PACKET_TYPE_UNSUBACK      = 11,
-    MQTT_PACKET_TYPE_PINGREQ       = 12,
-    MQTT_PACKET_TYPE_PINGRESP      = 13,
+    MQTT_PACKET_TYPE_PING_REQUEST  = 12,
+    MQTT_PACKET_TYPE_PING_RESPONSE = 13,
     MQTT_PACKET_TYPE_DISCONNECT    = 14,
     MQTT_PACKET_TYPE_AUTH          = 15
 };
@@ -140,16 +140,22 @@ extern "C" void TaskMQTT_ClientWrapper(void* pvParameters)
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   NetworkContext*        pContext       Pointer to the NanoIP network context
+//  Parameter(s):   NetworkContext*  pContext   Pointer to the NanoIP network context
+//                  MQTT_Handler*    pHandler   Application-level event callback handler
 //
-//  Return:         bool - true  : Initialization successful.
-//                       - false : Initialization failed (reserved for future error handling).
+//  Return:         true  - Initialization successful
+//                  false - Could not create task
 //
-//  Description:    Initializes the internal state of the MQTT client. This function stores
-//                  the network context, registers the application event callback, resets all
-//                  MQTT state variables, clears runtime counters, and prepares the client for
-//                  operation. No TCP socket is created at this stage; the socket will be
-//                  allocated later when Connect() is called.
+//  Description:    Initializes the MQTT client internal state. This function stores the
+//                  network context and application callback, resets all MQTT runtime
+//                  variables, clears counters, and prepares the client for operation.
+//
+//                  No TCP socket is created here. The socket will be allocated later when
+//                  Connect() is invoked by the application or by the reconnect logic.
+//
+//                  The MQTT client task (TaskMQTT_ClientWrapper) is created here and will
+//                  handle all protocol-level operations (CONNECT, SUBACK, PING, RX parsing,
+//                  timeouts, and reconnection logic).
 //
 //---------------------------------------------------------------------------------------------
 bool MQTT_Client::Initialize(NetworkContext* pContext, MQTT_Handler* pHandler)
@@ -171,7 +177,7 @@ bool MQTT_Client::Initialize(NetworkContext* pContext, MQTT_Handler* pHandler)
     m_UserRequestedDisconnect = false;
 
     m_NextPacketID            = 1;
-    m_WaitingPingResp         = false;
+    m_WaitingPingResponse     = false;
 
     m_ClientID[0]             = '\0';
     m_LastServerIP            = IP_ADDRESS(0,0,0,0);
@@ -180,16 +186,15 @@ bool MQTT_Client::Initialize(NetworkContext* pContext, MQTT_Handler* pHandler)
 
     nOS_SemCreate(&m_RX_ReadySem, 0, 1);
 
-    // Create task
-    /*Error =*/ nOS_ThreadCreate(&m_Handle,
-                             TaskMQTT_ClientWrapper,
-                             this,
-                             &m_Stack[0],
-                             TASK_MQTT_CLIENT_STACK_SIZE,
-                             TASK_MQTT_CLIENT_PRIO,
-                             "MQTT Test");
+    bool State = nOS_ThreadCreate(&m_Handle,
+                                  TaskMQTT_ClientWrapper,
+                                  this,
+                                  &m_Stack[0],
+                                  TASK_MQTT_CLIENT_STACK_SIZE,
+                                  TASK_MQTT_CLIENT_PRIO,
+                                  "MQTT Test") == NOS_OK ? true : false;
 
-    return true;
+    return State;
 }
 
 //---------------------------------------------------------------------------------------------
@@ -200,7 +205,34 @@ bool MQTT_Client::Initialize(NetworkContext* pContext, MQTT_Handler* pHandler)
 //
 //  Return:         void
 //
-//  Description:
+//  Description:    Main MQTT protocol engine. This function runs in its own dedicated task
+//                  and drives the entire MQTT state machine. It performs the following:
+//
+//                  - Processes incoming TCP data when the RX semaphore is signaled.
+//                    Incoming bytes are parsed into MQTT packets, and application-level
+//                    events are triggered when a complete PUBLISH or control packet is
+//                    received.
+//
+//                  - Manages all MQTT protocol states:
+//                        - CONNECTING: waits for TCP establishment, then sends CONNECT.
+//                        - WAIT_CONNACK: handled inside HandleIncomingData().
+//                        - CONNECTED: handles keep-alive, PINGREQ/PINGRESP, and timeouts.
+//                        - IDLE: waiting for the application to initiate a connection.
+//
+//                  - Handles protocol timeouts such as:
+//                        - TCP connection timeout
+//                        - PINGRESP timeout
+//                        - Keep-alive expiration
+//
+//                  - Notifies the application task via OnEvent() whenever a state change
+//                    or incoming MQTT message requires application-level processing.
+//
+//                  - Sleeps periodically to avoid CPU starvation and allow other tasks
+//                    to run.
+//
+//                  This function never blocks indefinitely and never performs any
+//                  application logic. It is strictly responsible for MQTT protocol
+//                  management and socket-level operations.
 //
 //---------------------------------------------------------------------------------------------
 void MQTT_Client::Run(void)
@@ -211,10 +243,9 @@ void MQTT_Client::Run(void)
 
         if(nOS_SemTake(&m_RX_ReadySem, NOS_NO_WAIT) == NOS_OK)
         {
-            // Process incoming MQTT packets
-            if(HandleIncomingData() == true)
+            if(HandleIncomingData() == true)                                                        // Process incoming MQTT packets
             {
-                OnEvent();   // wake application
+                OnEvent();                                                                          // Wake application
             }
         }
 
@@ -222,8 +253,7 @@ void MQTT_Client::Run(void)
         {
             case MQTT_STATE_CONNECTING:
             {
-                // Wait for TCP connection to be established
-                if((m_pSocket != nullptr) && (m_pSocket->GetState() == TCP_STATE_ESTABLISHED))
+                if((m_pSocket != nullptr) && (m_pSocket->GetState() == TCP_STATE_ESTABLISHED))      // Wait for TCP connection to be established
                 {
                     SendConnectFrame(m_ClientID);
                     m_State            = MQTT_STATE_WAIT_CONNACK;
@@ -231,30 +261,26 @@ void MQTT_Client::Run(void)
                 }
                 else if((Now - m_ConnectStartTick) > MQTT_CONNECT_TIMEOUT_MS)
                 {
-                    // TCP connection timeout → return to IDLE
-                    m_State = MQTT_STATE_IDLE;
-                    OnEvent();   // wake application so it can retry
+                    m_State = MQTT_STATE_IDLE;                                                      // TCP connection timeout -> return to IDLE
+                    OnEvent();                                                                      // Wake application so it can retry
                 }
             }
             break;
 
             case MQTT_STATE_CONNECTED:
             {
-                // Check for PINGRESP timeout
-                if(m_WaitingPingResp && ((Now - m_PingSentTick) > MQTT_PINGRESP_TIMEOUT_MS))
+                if(m_WaitingPingResponse && ((Now - m_PingSentTick) > MQTT_PINGRESP_TIMEOUT_MS))    // Check for PINGRESP timeout
                 {
                     SendDisconnect();
                     m_State = MQTT_STATE_IDLE;
                     OnEvent();
                 }
 
-                // Keep-alive timer
-                if((Now - m_LastActivityTick) >
-                   (m_KeepAliveSeconds * TICKS_PER_SECOND))
+                if((Now - m_LastActivityTick) > (m_KeepAliveSeconds * TICKS_PER_SECOND))            // Keep-alive timer
                 {
-                    if(SendPingReq())
+                    if(SendPingRequest() == true)
                     {
-                        m_WaitingPingResp = true;
+                        m_WaitingPingResponse = true;
                         m_PingSentTick    = Now;
                     }
                 }
@@ -270,7 +296,6 @@ void MQTT_Client::Run(void)
                 break;
         }
 
-        // Always sleep to avoid CPU starvation
         nOS_Sleep(50);
     }
 }
@@ -279,16 +304,24 @@ void MQTT_Client::Run(void)
 //
 //  Name:           Connect
 //
-//  Parameter(s):   const IP_Address_t* pServerIP   MQTT broker IP address (network order).
-//                  uint16_t Port                   MQTT broker TCP port (typically 1883).
-//                  const char* pClientId           Null-terminated client identifier string.
-//                  uint16_t KeepAliveSeconds       MQTT keep-alive interval in seconds.
+//  Parameter(s):   const IP_Address_t* pServerIP         MQTT broker IP address.
+//                  uint16_t            Port              MQTT broker TCP port.
+//                  const char*         pClientID         Null-terminated client identifier.
+//                  uint16_t            KeepAliveSeconds  MQTT keep-alive interval in seconds.
 //
-//  Return:         bool            - true  : Connection sequence started.
-//                                  - false : Socket not ready or internal error.
+//  Return:         true  - Connection attempt started successfully.
+//                  false - Invalid parameters or socket allocation failure.
 //
-//  Description:    Starts a non-blocking MQTT CONNECT sequence. The caller must periodically
-//                  call Process() until the state reaches MQTT_STATE_CONNECTED or ERROR.
+//  Description:    Initiates a non-blocking MQTT connection sequence. If an existing socket
+//                  object is present but no longer connected, it is closed and released.
+//                  Otherwise, a new TCP socket is created and a connection attempt is started.
+//
+//                  This function does *not* wait for the TCP connection or the CONNACK.
+//                  All protocol-level progression (CONNECT -> CONNACK -> CONNECTED) is handled
+//                  asynchronously inside the MQTT client task (Run()).
+//
+//                  On success, the internal state transitions to MQTT_STATE_CONNECTING and
+//                  the MQTT client task will automatically continue the handshake.
 //
 //---------------------------------------------------------------------------------------------
 bool MQTT_Client::Connect(const IP_Address_t* pServerIP, uint16_t Port, const char* pClientID, uint16_t KeepAliveSeconds)
@@ -302,24 +335,19 @@ bool MQTT_Client::Connect(const IP_Address_t* pServerIP, uint16_t Port, const ch
     {
         if(m_pSocket->IsConnected() == false)
         {
-            // Socket mort -> on le détruit
-            m_pSocket->Close();
-            m_pSocket = nullptr;
+            m_pSocket->Close();                         // Dead Socket -> Close
+            m_pSocket = nullptr;                        // and release
         }
         else
         {
-            // Socket encore vivant → on ne reconnecte pas
-            return true;
+            return true;                                // Live socket -> we don't reconnect
         }
     }
 
-    // Save it for reconnect
-    m_LastServerIP   = *pServerIP;
+    m_LastServerIP   = *pServerIP;                      // Save it for reconnect
     m_LastServerPort = Port;
-
     strncpy(m_ClientID, pClientID, sizeof(m_ClientID) - 1);
     m_ClientID[sizeof(m_ClientID) - 1] = '\0';
-
     m_KeepAliveSeconds = KeepAliveSeconds;
     m_pSocket = TCP_Connect(pServerIP, Port);
 
@@ -337,7 +365,6 @@ bool MQTT_Client::Connect(const IP_Address_t* pServerIP, uint16_t Port, const ch
     }
 
     m_pSocket->SetEventHandler(this);
-
     m_SocketValid      = true;
     m_State            = MQTT_STATE_CONNECTING;
     m_ConnectStartTick = GetTick();
@@ -354,28 +381,23 @@ bool MQTT_Client::Connect(const IP_Address_t* pServerIP, uint16_t Port, const ch
 //
 //  Name:           Subscribe
 //
-//  Parameter(s):   const char* pTopic      Null-terminated topic filter string.
-//                  MQTT_QoS_e QoS          Requested QoS level.
+//  Parameter(s):   const char*   pTopic   Null-terminated topic filter string.
+//                  MQTT_QoS_e    QoS      Requested QoS level.
 //
-//  Return:         bool                    - true  : SUBSCRIBE frame queued/Sent.
-//                                          - false : Client not connected or internal error.
+//  Return:         true  - SUBSCRIBE frame sent successfully.
+//                  false - Client not in CONNECTED state or internal error.
 //
-//  Description:    Starts a non-blocking SUBSCRIBE sequence. The caller must periodically
-//                  call Process() until the state returns to MQTT_STATE_CONNECTED or ERROR.
+//  Description:    Sends a non-blocking MQTT SUBSCRIBE request. This function does not wait
+//                  for the SUBACK. All protocol-level progression (WAIT_SUBACK -> CONNECTED)
+//                  is handled asynchronously inside the MQTT client task (Run()).
 //
-//  Note(s):        Fixed Header:
-//                    - byte 1: 0x82  (SUBSCRIBE + flags)
-//                    - byte 2+: Remaining Length (varint)
+//                  On success, the internal state transitions to MQTT_STATE_WAIT_SUBACK.
+//                  When the SUBACK is received, HandleIncomingData() will restore the state
+//                  to MQTT_STATE_CONNECTED and notify the application via OnEvent().
 //
-//                  Variable Header:
-//                    - Packet Identifier MSB
-//                    - Packet Identifier LSB
-//
-//                  Payload:
-//                    - Topic Length MSB
-//                    - Topic Length LSB
-//                    - Topic bytes...
-//                    - QoS (1 byte)
+//                  Wildcards ('+' and '#') are fully supported. Topic matching is performed
+//                  by the MQTT broker; the client receives only the messages that match the
+//                  subscribed filter.
 //
 //---------------------------------------------------------------------------------------------
 bool MQTT_Client::Subscribe(const char* pTopic, MQTT_QoS_e QoS)
@@ -387,7 +409,6 @@ bool MQTT_Client::Subscribe(const char* pTopic, MQTT_QoS_e QoS)
 
     if(SendSubscribeFrame(pTopic, QoS) == false)
     {
-
       #if (IP_DBG_MQTT == DEF_ENABLED)
         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT: Subscribing failed");
       #endif
@@ -405,7 +426,25 @@ bool MQTT_Client::Subscribe(const char* pTopic, MQTT_QoS_e QoS)
 }
 
 //---------------------------------------------------------------------------------------------
-
+//  Name:           Unsubscribe
+//
+//  Parameter(s):   const char* pTopic   Null-terminated topic filter string to unsubscribe.
+//
+//  Return:         true  - UNSUBSCRIBE frame sent successfully.
+//                  false - Client not in CONNECTED state or internal error.
+//
+//  Description:    Sends a non-blocking MQTT UNSUBSCRIBE request. This function does not wait
+//                  for the UNSUBACK. All protocol-level progression (WAIT_UNSUBACK -> CONNECTED)
+//                  is handled asynchronously inside the MQTT client task (Run()).
+//
+//                  On success, the internal state transitions to MQTT_STATE_WAIT_UNSUBACK.
+//                  When the UNSUBACK is received, HandleIncomingData() will restore the state
+//                  to MQTT_STATE_CONNECTED and notify the application via OnEvent().
+//
+//                  Wildcards ('+' and '#') are supported exactly as in SUBSCRIBE. Topic
+//                  matching and subscription management are performed entirely by the MQTT
+//                  broker; the client simply sends the request and processes the response.
+//---------------------------------------------------------------------------------------------
 #if (MQTT_USE_UNSUBSCRIBE == DEF_ENABLED)
 bool MQTT_Client::Unsubscribe(const char* pTopic)
 {
@@ -438,16 +477,27 @@ bool MQTT_Client::Unsubscribe(const char* pTopic)
 //
 //  Name:           Publish
 //
-//  Parameter(s):   const char* pTopic          Null-terminated topic string.
-//                  const uint8_t* pPayload     Pointer to payload buffer.
-//                  size_t Length               Payload length in bytes.
-//                  MQTT_QoS_e QoS              QoS level (0 or 1 typically).
+//  Parameter(s):   const char*    pTopic       Null-terminated topic string.
+//                  const uint8_t* pPayload     Pointer to the payload buffer.
+//                  size_t         Length       Payload length in bytes.
+//                  MQTT_QoS_e     QoS          Requested QoS level (typically 0 or 1).
 //
-//  Return:         bool                    - true  : PUBLISH frame queued/Sent.
-//                                          - false : Client not connected or internal error.
+//  Return:         true  - PUBLISH frame sent successfully.
+//                  false - Client not in CONNECTED state or internal error.
 //
-//  Description:    Sends a PUBLISH message in a non-blocking manner. For QoS 0, completion
-//                  is immediate. For QoS 1, the client will wait for PUBACK in Process().
+//  Description:    Sends a non-blocking MQTT PUBLISH request. For QoS 0, the publish is
+//                  considered complete immediately after the frame is sent. For QoS 1, the
+//                  client transitions to MQTT_STATE_PUBLISHING and waits asynchronously for
+//                  the PUBACK packet.
+//
+//                  All protocol-level progression (WAIT_PUBACK -> CONNECTED) is handled
+//                  inside the MQTT client task (Run()). When the PUBACK is received,
+//                  HandleIncomingData() restores the state to MQTT_STATE_CONNECTED and
+//                  notifies the application via OnEvent().
+//
+//                  This function performs no blocking operations and does not wait for any
+//                  server response. It simply queues/sends the PUBLISH frame and updates the
+//                  internal state machine accordingly.
 //
 //---------------------------------------------------------------------------------------------
 bool MQTT_Client::Publish(const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS)
@@ -459,7 +509,6 @@ bool MQTT_Client::Publish(const char* pTopic, const uint8_t* pPayload, size_t Le
 
     if(SendPublishFrame(pTopic, pPayload, Length, QoS) == false)
     {
-
       #if (IP_DBG_MQTT == DEF_ENABLED)
         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT: Publishing failed");
       #endif
@@ -483,13 +532,38 @@ bool MQTT_Client::Publish(const char* pTopic, const uint8_t* pPayload, size_t Le
 }
 
 //---------------------------------------------------------------------------------------------
-
+//
+//  Name:           Disconnect
+//
+//  Parameter(s):   None
+//
+//  Return:         true  - Disconnect sequence initiated and socket closed.
+//                  false - (Reserved for future error handling)
+//
+//  Description:    Performs an application-requested MQTT disconnect. If the client is in the
+//                  CONNECTED state, a DISCONNECT control packet is sent to the broker before
+//                  tearing down the TCP connection.
+//
+//                  Regardless of the current protocol state, the underlying TCP socket is
+//                  closed and released. The internal state machine is reset to
+//                  MQTT_STATE_IDLE, and the application is notified via OnEvent() so it can
+//                  react (e.g., attempt a reconnect).
+//
+//                  This function is non-blocking and does not wait for any broker response.
+//                  All cleanup is performed locally, and the MQTT client task will remain
+//                  idle until a new Connect() request is issued.
+//
+//---------------------------------------------------------------------------------------------
 bool MQTT_Client::Disconnect(void)
 {
     if(m_State == MQTT_STATE_CONNECTED)
     {
         m_UserRequestedDisconnect = true;
-        SendDisconnect();       // TODO we don't check the true or false
+
+        if(SendDisconnect() == false)
+        {
+            return false;
+        };
     }
 
     if(m_pSocket != nullptr)
@@ -509,7 +583,27 @@ bool MQTT_Client::Disconnect(void)
 }
 
 //---------------------------------------------------------------------------------------------
-
+//
+//  Name:           TCP_Connect
+//
+//  Parameter(s):   const IP_Address_t* pServerIP       Pointer to the broker IP address.
+//                  IP_Port_t           Port            TCP port to connect to (typically 1883).
+//
+//  Return:         TCP_Socket*         Pointer to the allocated TCP socket on success.
+//                                      nullptr if the connection attempt could not be started.
+//
+//  Description:    Internal helper used by the MQTT client to initiate a TCP connection to
+//                  the MQTT broker. This function performs no protocol-level work; it simply
+//                  delegates the connection request to the NanoIP TCP manager.
+//
+//                  If the server IP or network context is invalid, the MQTT state machine is
+//                  reset to MQTT_STATE_IDLE and no connection is attempted.
+//
+//                  On success, a TCP socket object is returned and stored internally. The
+//                  MQTT client task (Run()) will monitor the socket state and continue the
+//                  MQTT CONNECT handshake once the TCP connection reaches ESTABLISHED.
+//
+//---------------------------------------------------------------------------------------------
 TCP_Socket* MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, IP_Port_t Port)
 {
     if((pServerIP == nullptr) || (m_pContext == nullptr))
@@ -535,7 +629,30 @@ TCP_Socket* MQTT_Client::TCP_Connect(const IP_Address_t* pServerIP, IP_Port_t Po
 }
 
 //---------------------------------------------------------------------------------------------
-
+//
+//  Name:           SendConnectFrame
+//
+//  Parameter(s):   const char* pClientID   Null-terminated MQTT client identifier.
+//
+//  Return:         true        - CONNECT frame encoded and sent successfully.
+//                  false       - Invalid parameters, buffer allocation failure, or TX error.
+//
+//  Description:    Builds and sends an MQTT CONNECT control packet. This function allocates
+//                  a temporary buffer, encodes the fixed header, variable header, and payload
+//                  according to the MQTT 3.1.1 specification, and transmits the resulting
+//                  frame over the active TCP socket.
+//
+//                  The CONNECT packet includes:
+//                      - Protocol name and version ("MQTT", level 4)
+//                      - Connect flags (clean session enabled)
+//                      - Keep-alive interval
+//                      - Client identifier (length-prefixed)
+//
+//                  No blocking operations are performed. After transmission, the MQTT client
+//                  task (Run()) transitions to MQTT_STATE_WAIT_CONNACK and waits
+//                  asynchronously for the broker's CONNACK response.
+//
+//---------------------------------------------------------------------------------------------
 bool MQTT_Client::SendConnectFrame(const char* pClientID)
 {
     if((m_pSocket == nullptr) || (pClientID == nullptr))
@@ -551,36 +668,26 @@ bool MQTT_Client::SendConnectFrame(const char* pClientID)
     }
 
     size_t Index = 0;
-
     size_t clientID_Len = strlen(pClientID);
-
     size_t RemainingLength = 10 + 2 + clientID_Len;
-
-    size_t HeaderLen = EncodeFixedHeader(pBuffer,
-                                         MQTT_PACKET_TYPE_CONNECT,
-                                         0x00,
-                                         RemainingLength);
-
+    size_t HeaderLen = EncodeFixedHeader(pBuffer, MQTT_PACKET_TYPE_CONNECT, 0x00, RemainingLength);
     Index = HeaderLen;
 
-if((Index + RemainingLength) > MQTT_RX_BUFFER_SIZE)
-{
-    pMemoryPool->Free((void**)&pBuffer);
-    return false;
-}
+    if((Index + RemainingLength) > MQTT_RX_BUFFER_SIZE)
+    {
+        pMemoryPool->Free((void**)&pBuffer);
+        return false;
+    }
 
     memcpy(&pBuffer[Index], (void*)"\0\x04MQTT\x04\x02", 8);
     Index += 8;
 
     pBuffer[Index++] = (m_KeepAliveSeconds >> 8) & 0xFF;
     pBuffer[Index++] = (m_KeepAliveSeconds     ) & 0xFF;
-
     pBuffer[Index++] = (clientID_Len >> 8) & 0xFF;
     pBuffer[Index++] = (clientID_Len     ) & 0xFF;
-
     memcpy(&pBuffer[Index], pClientID, clientID_Len);
     Index += clientID_Len;
-
     bool Result = SendFrame(pBuffer, Index);
 
     if(Result == false)
@@ -593,7 +700,28 @@ if((Index + RemainingLength) > MQTT_RX_BUFFER_SIZE)
 }
 
 //---------------------------------------------------------------------------------------------
-
+//
+//  Name:           SendSubscribeFrame
+//
+//  Parameter(s):   const char*   pTopic            Null-terminated topic filter string.
+//                  MQTT_QoS_e    QoS               Requested QoS level for the subscription.
+//
+//  Return:         true        - SUBSCRIBE frame encoded and sent successfully.
+//                  false       - Invalid socket, buffer allocation failure, or TX error.
+//
+//  Description:    Builds and transmits an MQTT SUBSCRIBE control packet. This function
+//                  allocates a temporary buffer, encodes the fixed header, variable header
+//                  (packet identifier), and payload (topic filter + QoS), then sends the
+//                  resulting frame over the active TCP socket.
+//
+//                  Wildcards ('+' and '#') are allowed. Topic matching is performed entirely
+//                  by the MQTT broker; the client simply sends the subscription request.
+//
+//                  This function performs no blocking operations. After transmission, the
+//                  MQTT client task (Run()) transitions to MQTT_STATE_WAIT_SUBACK and waits
+//                  asynchronously for the broker's SUBACK response.
+//
+//---------------------------------------------------------------------------------------------
 bool MQTT_Client::SendSubscribeFrame(const char* pTopic, MQTT_QoS_e QoS)
 {
     if(m_pSocket == nullptr)
@@ -609,37 +737,49 @@ bool MQTT_Client::SendSubscribeFrame(const char* pTopic, MQTT_QoS_e QoS)
     }
 
     size_t TopicLen = strlen(pTopic);
-
     size_t RemainingLength = 2 + 2 + TopicLen + 1;
-
-    size_t HeaderLen = EncodeFixedHeader(pBuffer,
-                                         MQTT_PACKET_TYPE_SUBSCRIBE,
-                                         MQTT_FLAG_SUBSCRIBE,
-                                         RemainingLength);
-
+    size_t HeaderLen = EncodeFixedHeader(pBuffer, MQTT_PACKET_TYPE_SUBSCRIBE, MQTT_FLAG_SUBSCRIBE, RemainingLength);
     size_t Index = HeaderLen;
 
-if(Index + RemainingLength > MQTT_RX_BUFFER_SIZE)
-{
-    pMemoryPool->Free((void**)&pBuffer);
-    return false;
-}
+    if(Index + RemainingLength > MQTT_RX_BUFFER_SIZE)
+    {
+        pMemoryPool->Free((void**)&pBuffer);
+        return false;
+    }
 
     uint16_t PacketID = NextPacketID();
     pBuffer[Index++] = (PacketID >> 8) & 0xFF;
     pBuffer[Index++] = (PacketID     ) & 0xFF;
-
     pBuffer[Index++] = (TopicLen >> 8) & 0xFF;
     pBuffer[Index++] = (TopicLen     ) & 0xFF;
-
     memcpy(&pBuffer[Index], pTopic, TopicLen);
     Index += TopicLen;
-
     pBuffer[Index++] = (uint8_t)QoS;
     return SendFrame(pBuffer, Index);
 }
 
-
+//---------------------------------------------------------------------------------------------
+//
+//  Name:           SendUnsubscribeFrame
+//
+//  Parameter(s):   const char* pTopic      Null-terminated topic filter string to unsubscribe.
+//
+//  Return:         true        - UNSUBSCRIBE frame encoded and sent successfully.
+//                  false       - Invalid socket, buffer allocation failure, or TX error.
+//
+//  Description:    Builds and transmits an MQTT UNSUBSCRIBE control packet. This function
+//                  allocates a temporary buffer, encodes the fixed header, variable header
+//                  (packet identifier), and payload (topic filter), then sends the resulting
+//                  frame over the active TCP socket.
+//
+//                  Wildcards ('+' and '#') are supported exactly as in SUBSCRIBE. Topic
+//                  removal and matching logic are handled entirely by the MQTT broker; the
+//                  client simply issues the request.
+//
+//                  This function performs no blocking operations. After transmission, the
+//                  MQTT client task (Run()) transitions to MQTT_STATE_WAIT_UNSUBACK and waits
+//                  asynchronously for the broker's UNSUBACK response.
+//
 //---------------------------------------------------------------------------------------------
 bool MQTT_Client::SendUnsubscribeFrame(const char* pTopic)
 {
@@ -656,54 +796,53 @@ bool MQTT_Client::SendUnsubscribeFrame(const char* pTopic)
     }
 
     size_t TopicLen = strlen(pTopic);
-
     size_t RemainingLength = 2 + 2 + TopicLen;
-
-    size_t HeaderLen = EncodeFixedHeader(pBuffer,
-                                         MQTT_PACKET_TYPE_UNSUBSCRIBE,
-                                         MQTT_FLAG_UNSUBSCRIBE,
-                                         RemainingLength);
-
+    size_t HeaderLen = EncodeFixedHeader(pBuffer, MQTT_PACKET_TYPE_UNSUBSCRIBE,  MQTT_FLAG_UNSUBSCRIBE, RemainingLength);
     size_t Index = HeaderLen;
 
-if(Index + RemainingLength > MQTT_RX_BUFFER_SIZE)
-{
-    pMemoryPool->Free((void**)&pBuffer);
-    return false;
-}
+    if(Index + RemainingLength > MQTT_RX_BUFFER_SIZE)
+    {
+        pMemoryPool->Free((void**)&pBuffer);
+        return false;
+    }
 
     uint16_t PacketID = NextPacketID();
     pBuffer[Index++] = (PacketID >> 8) & 0xFF;
     pBuffer[Index++] = (PacketID     ) & 0xFF;
-
     pBuffer[Index++] = (TopicLen >> 8) & 0xFF;
     pBuffer[Index++] = (TopicLen     ) & 0xFF;
-
     memcpy(&pBuffer[Index], pTopic, TopicLen);
     Index += TopicLen;
     return SendFrame(pBuffer, Index);
 }
 
-/*
-Fixed Header:
-  byte 1: 0x30 | (QoS << 1)
-  byte 2+: Remaining Length (varint)
-
-Variable Header:
-  Topic length MSB
-  Topic length LSB
-  Topic bytes...
-  [Packet ID MSB]   (only for QoS 1 or 2)
-  [Packet ID LSB]
-
-Payload:
-  Raw payload bytes
-*/
-
-bool MQTT_Client::SendPublishFrame(const char* pTopic,
-                                   const uint8_t* pPayload,
-                                   size_t Length,
-                                   MQTT_QoS_e QoS)
+//---------------------------------------------------------------------------------------------
+//
+//  Name:           SendPublishFrame
+//
+//  Parameter(s):   const char*    pTopic       Null-terminated topic string.
+//                  const uint8_t* pPayload     Pointer to the payload buffer.
+//                  size_t         Length       Payload length in bytes.
+//                  MQTT_QoS_e     QoS          Requested QoS level (0 or 1).
+//
+//  Return:         true  - PUBLISH frame encoded and sent successfully.
+//                  false - Invalid socket, buffer allocation failure, or TX error.
+//
+//  Description:    Builds and transmits an MQTT PUBLISH control packet. This function
+//                  allocates a temporary buffer, encodes the fixed header, topic name,
+//                  optional packet identifier (for QoS > 0), and payload, then sends the
+//                  resulting frame over the active TCP socket.
+//
+//                  For QoS 0, the packet contains only the topic and payload. For QoS 1,
+//                  a packet identifier is included and the MQTT client task (Run()) will
+//                  wait asynchronously for the corresponding PUBACK.
+//
+//                  This function performs no blocking operations and does not modify the
+//                  MQTT state machine directly. State transitions (e.g., to
+//                  MQTT_STATE_PUBLISHING) are handled by the higher-level Publish() API.
+//
+//---------------------------------------------------------------------------------------------
+bool MQTT_Client::SendPublishFrame(const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS)
 {
     if(m_pSocket == nullptr)
     {
@@ -718,7 +857,6 @@ bool MQTT_Client::SendPublishFrame(const char* pTopic,
     }
 
     size_t TopicLen = strlen(pTopic);
-
     size_t RemainingLength = 2 + TopicLen + Length;
 
     if(QoS > MQTT_QOS_0)
@@ -727,11 +865,7 @@ bool MQTT_Client::SendPublishFrame(const char* pTopic,
     }
 
     uint8_t Flags = (QoS << 1);
-
-    size_t HeaderLength = EncodeFixedHeader(pBuffer,
-                                         MQTT_PACKET_TYPE_PUBLISH,
-                                         Flags,
-                                         RemainingLength);
+    size_t HeaderLength = EncodeFixedHeader(pBuffer, MQTT_PACKET_TYPE_PUBLISH, Flags, RemainingLength);
 
     if(HeaderLength + RemainingLength > MQTT_RX_BUFFER_SIZE)
     {
@@ -758,7 +892,26 @@ bool MQTT_Client::SendPublishFrame(const char* pTopic,
 }
 
 //---------------------------------------------------------------------------------------------
-
+//
+//  Name:           SendDisconnect
+//
+//  Parameter(s):   None
+//
+//  Return:         true        - DISCONNECT frame sent successfully.
+//                  false       - Invalid socket or TX error.
+//
+//  Description:    Encodes and transmits an MQTT DISCONNECT control packet. The DISCONNECT
+//                  frame contains only a fixed header with a zero remaining length, as
+//                  defined by the MQTT 3.1.1 specification.
+//
+//                  This function performs no blocking operations and does not modify the
+//                  MQTT state machine. Higher-level logic (Disconnect()) is responsible for
+//                  closing the TCP socket and transitioning the client to MQTT_STATE_IDLE.
+//
+//                  The broker does not send any acknowledgment for DISCONNECT; the packet is
+//                  simply transmitted and the connection is closed locally.
+//
+//---------------------------------------------------------------------------------------------
 bool MQTT_Client::SendDisconnect(void)
 {
     if(m_pSocket == nullptr)
@@ -779,8 +932,28 @@ bool MQTT_Client::SendDisconnect(void)
 }
 
 //---------------------------------------------------------------------------------------------
-
-bool MQTT_Client::SendPingReq(void)
+//
+//  Name:           SendPingRequest
+//
+//  Parameter(s):   None
+//
+//  Return:         true        - PINGREQ frame sent successfully.
+//                  false       - Invalid socket or TX error.
+//
+//  Description:    Encodes and transmits an MQTT PINGREQ control packet. The PINGREQ frame
+//                  contains only a fixed header with a zero remaining length, as defined by
+//                  the MQTT 3.1.1 specification.
+//
+//                  This function performs no blocking operations. After transmission, the
+//                  MQTT client updates its activity timestamp so the keep-alive timer remains
+//                  valid. The MQTT client task (Run()) will then wait asynchronously for the
+//                  corresponding PINGRESP packet.
+//
+//                  If the broker does not respond within the configured timeout, the client
+//                  will treat the connection as dead and transition back to MQTT_STATE_IDLE.
+//
+//---------------------------------------------------------------------------------------------
+bool MQTT_Client::SendPingRequest(void)
 {
     if(m_pSocket == nullptr)
     {
@@ -788,7 +961,7 @@ bool MQTT_Client::SendPingReq(void)
     }
 
     uint8_t Buffer[4];
-    size_t HeaderLength = EncodeFixedHeader(Buffer, MQTT_PACKET_TYPE_PINGREQ, 0x00, 0);
+    size_t HeaderLength = EncodeFixedHeader(Buffer, MQTT_PACKET_TYPE_PING_REQUEST, 0x00, 0);
     size_t Sent = m_pSocket->Send(Buffer, HeaderLength);
 
     if(Sent != HeaderLength)
@@ -801,7 +974,30 @@ bool MQTT_Client::SendPingReq(void)
 }
 
 //---------------------------------------------------------------------------------------------
-
+//  Name:           HandleIncomingData
+//
+//  Parameter(s):   None
+//
+//  Return:         true        - A complete MQTT packet was received and parsed successfully.
+//                  false       - No data available, socket invalid, or parsing error.
+//
+//  Description:    Reads incoming TCP data and incrementally reconstructs MQTT packets.
+//                  This function implements the MQTT 3.1.1 packet framing rules, including:
+//
+//                      - Accumulating bytes into an internal RX buffer.
+//                      - Decoding the MQTT Remaining Length field (variable-length integer).
+//                      - Determining when a full MQTT packet has been received.
+//                      - Passing the completed packet to ParseIncomingPacket().
+//
+//                  The function may return multiple times while waiting for enough bytes
+//                  to complete a packet. Once a full packet is assembled, it is parsed,
+//                  the temporary buffer is released, and the internal RX state is reset
+//                  to prepare for the next packet.
+//
+//                  This function performs no blocking operations and does not modify the
+//                  MQTT state machine directly. All protocol-level transitions occur inside
+//                  ParseIncomingPacket() and the MQTT client task (Run()).
+//---------------------------------------------------------------------------------------------
 bool MQTT_Client::HandleIncomingData(void)
 {
     if(m_pSocket == nullptr)
@@ -809,8 +1005,7 @@ bool MQTT_Client::HandleIncomingData(void)
         return false;
     }
 
-    // Allocate RX buffer if needed
-    if(m_pRX_Packet == nullptr)
+    if(m_pRX_Packet == nullptr)             // Allocate RX buffer if needed
     {
         m_pRX_Packet = (uint8_t*)pMemoryPool->AllocAndClear(MQTT_RX_BUFFER_SIZE, MEM_DBG_MQTT5);
 
@@ -820,37 +1015,28 @@ bool MQTT_Client::HandleIncomingData(void)
         }
 
         m_RX_Index          = 0;
-        m_BytesNeeded       = -1;   // -1 = decoding Remaining Length varint
+        m_BytesNeeded       = -1;           // -1 = decoding Remaining Length varint
         m_RemainingLength   = 0;
         m_RemainingLenBytes = 0;
         m_Multiplier        = 1;
     }
 
-    // ----------------------------------------------------
     // Read as much as possible from TCP
-    // ----------------------------------------------------
-    size_t Received = m_pSocket->Receive(&m_pRX_Packet[m_RX_Index],
-                                         MQTT_RX_BUFFER_SIZE - m_RX_Index);
+    size_t Received = m_pSocket->Receive(&m_pRX_Packet[m_RX_Index],  MQTT_RX_BUFFER_SIZE - m_RX_Index);
 
     if(Received == 0)
     {
-        return false;   // No data available
+        return false;                       // No data available
     }
 
     m_RX_Index += Received;
 
-    // ----------------------------------------------------
-    // 1) Need at least 1 byte for fixed header
-    // ----------------------------------------------------
-    if(m_RX_Index < 1)
+    if(m_RX_Index < 1)                      // Need at least 1 byte for fixed header
     {
         return true;
     }
 
-    // ----------------------------------------------------
-    // 2) Decode Remaining Length (MQTT varint)
-    // ----------------------------------------------------
-    if(m_BytesNeeded == -1)
+    if(m_BytesNeeded == -1)                 // Decode remaining length (MQTT varint)
     {
         size_t i = 1;
 
@@ -872,13 +1058,11 @@ bool MQTT_Client::HandleIncomingData(void)
 
         if(m_BytesNeeded == -1)
         {
-            return true; // Need more bytes
+            return true;                    // Need more bytes
         }
     }
 
-    // ----------------------------------------------------
-    // 3) Check if full packet received
-    // ----------------------------------------------------
+    // Check if full packet received
     size_t FixedHeaderSize = 1 + m_RemainingLenBytes;
     size_t TotalNeeded     = FixedHeaderSize + m_RemainingLength;
 
@@ -887,9 +1071,7 @@ bool MQTT_Client::HandleIncomingData(void)
         return true; // Need more data
     }
 
-    // ----------------------------------------------------
-    // 4) Parse packet
-    // ----------------------------------------------------
+    // Parse packet
     bool ok = ParseIncomingPacket(m_pRX_Packet, TotalNeeded);
 
     // Reset for next packet
@@ -902,8 +1084,37 @@ bool MQTT_Client::HandleIncomingData(void)
 
     return ok;
 }
-//---------------------------------------------------------------------------------------------
 
+//---------------------------------------------------------------------------------------------
+//
+//  Name:           ParseIncomingPacket
+//
+//  Parameter(s):   uint8_t* pBuffer        Pointer to a fully assembled MQTT packet.
+//                  size_t   Length         Total number of bytes in the packet.
+//
+//  Return:         true  - Packet parsed and processed successfully.
+//                  false - Invalid packet, malformed fields, or unsupported type.
+//
+//  Description:    Decodes and processes a complete MQTT control packet. The function
+//                  validates the fixed header, decodes the Remaining Length field, and
+//                  dispatches handling based on the MQTT packet type:
+//
+//                      - CONNACK     -> Completes the CONNECT handshake.
+//                      - PUBLISH     -> Extracts topic and payload, forwards to handler.
+//                      - PUBACK      -> Completes QoS 1 publish sequence.
+//                      - SUBACK      -> Completes subscription sequence.
+//                      - UNSUBACK    -> Completes unsubscription sequence.
+//                      - PINGRESP    -> Completes keep-alive exchange.
+//
+//                  Each handler updates the MQTT state machine as required and notifies the
+//                  application via OnEvent() when a state transition or incoming message
+//                  requires application-level processing.
+//
+//                  This function performs no blocking operations. It assumes the packet is
+//                  already fully assembled by HandleIncomingData(), and it does not retain
+//                  any pointers into the provided buffer after returning.
+//
+//---------------------------------------------------------------------------------------------
 bool MQTT_Client::ParseIncomingPacket(uint8_t* pBuffer, size_t Length)
 {
     if((pBuffer == nullptr) || (Length < 2))
@@ -1071,14 +1282,14 @@ bool MQTT_Client::ParseIncomingPacket(uint8_t* pBuffer, size_t Length)
             return true;
         }
 
-        case MQTT_PACKET_TYPE_PINGRESP:
+        case MQTT_PACKET_TYPE_PING_RESPONSE:
         {
             if(RemainingLength != 0)
             {
                 return false;
             }
 
-            m_WaitingPingResp = false;
+            m_WaitingPingResponse = false;
             m_LastActivityTick = GetTick();
             return true;
         }
@@ -1089,7 +1300,22 @@ bool MQTT_Client::ParseIncomingPacket(uint8_t* pBuffer, size_t Length)
 }
 
 //---------------------------------------------------------------------------------------------
-
+//
+//  Name:           NextPacketID
+//
+//  Parameter(s):   None
+//
+//  Return:         uint16_t        Next non-zero MQTT packet identifier.
+//
+//  Description:    Generates the next MQTT packet identifier used for QoS 1 messages and
+//                  subscription-related packets. The counter increments monotonically and
+//                  wraps from 0xFFFF back to 1, skipping the value 0 since MQTT reserves
+//                  packet ID 0 as invalid.
+//
+//                  This function performs no blocking operations and maintains a simple
+//                  rolling sequence as required by the MQTT 3.1.1 specification.
+//
+//---------------------------------------------------------------------------------------------
 uint16_t MQTT_Client::NextPacketID(void)
 {
     m_NextPacketID++;
@@ -1103,7 +1329,25 @@ uint16_t MQTT_Client::NextPacketID(void)
 }
 
 //---------------------------------------------------------------------------------------------
-
+//
+//  Name:           SendFrame
+//
+//  Parameter(s):   uint8_t* pBuffer    Pointer to an encoded MQTT frame allocated from
+//                                      the memory pool.
+//                  size_t   Length     Number of bytes to transmit.
+//
+//  Return:         true  - Entire frame sent successfully.
+//                  false - TX error or partial send.
+//
+//  Description:    Sends a fully encoded MQTT frame over the active TCP socket. After the
+//                  transmission attempt, the function releases the temporary buffer back to
+//                  the memory pool regardless of success or failure.
+//
+//                  This function performs no blocking operations and does not modify the
+//                  MQTT state machine. Higher-level logic is responsible for interpreting
+//                  the result and updating protocol state accordingly.
+//
+//---------------------------------------------------------------------------------------------
 bool MQTT_Client::SendFrame(uint8_t* pBuffer, size_t Length)
 {
     size_t Sent = m_pSocket->Send(pBuffer, Length);
@@ -1111,39 +1355,31 @@ bool MQTT_Client::SendFrame(uint8_t* pBuffer, size_t Length)
     return (Sent == Length);
 }
 
-//-------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
+//
 //  Name:           DecodeRemainingLength
 //
-//  Parameter(s):   const uint8_t* pBuffer
-//                      Pointer to the start of the MQTT Remaining Length field.
+//  Parameter(s):   const uint8_t* pBuffer      Pointer to the first byte of the MQTT Remaining
+//                                              Length field.
+//                  size_t         Length       Number of bytes available starting at pBuffer.
+//                  size_t*        pValue       Output: decoded Remaining Length value.
+//                  size_t*        pBytesUsed   Output: number of bytes consumed by the
+//                                              variable-length encoding.
 //
-//                  size_t Length
-//                      Number of bytes available in the buffer.
+//  Return:         true  - Remaining Length successfully decoded.
+//                  false - Invalid encoding, insufficient bytes, or multiplier overflow.
 //
-//                  size_t* pValue
-//                      Output pointer. On success, receives the decoded Remaining Length value.
+//  Description:    Decodes the MQTT Remaining Length field, which uses a variable-length
+//                  base-128 encoding. Each byte contributes 7 bits of value and one
+//                  continuation bit. The function accumulates the decoded value, detects
+//                  malformed encodings, enforces the 4-bytes maximum, and reports how many
+//                  bytes were consumed.
 //
-//                  size_t* pBytesUsed
-//                      Output pointer. On success, receives the number of bytes consumed by the
-//                      variable-length encoding (1 to 4 bytes).
+//                  This helper is used by the MQTT packet parser to determine the boundary
+//                  between the fixed header, variable header, and payload. The caller must
+//                  ensure that pBuffer points to the first Remaining Length byte.
 //
-//  Return:         bool
-//                      true  - Remaining Length successfully decoded.
-//                      false - Invalid encoding, insufficient bytes, or multiplier overflow.
-//
-//  Description:    Decodes the MQTT "Remaining Length" field, which uses a variable-length
-//                  base-128 encoding. Each byte contributes 7 bits of payload and one continuation
-//                  bit. The function accumulates the decoded value, detects malformed encodings,
-//                  and reports how many bytes were consumed.
-//
-//                  This helper is required for parsing all MQTT control packets, as the Remaining
-//                  Length determines the boundary of the variable header and payload.
-//
-//  Notes:          - Valid encodings use 1 to 4 bytes.
-//                  - The function validates multiplier overflow as required by MQTT 3.1.1.
-//                  - The caller must ensure pBuffer points to the first Remaining Length byte.
-//
-//-------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
 bool MQTT_Client::DecodeRemainingLength(const uint8_t* pBuffer, size_t Length, size_t* pValue, size_t* pBytesUsed)
 {
     if((pBuffer == nullptr) || (pValue == nullptr) || (pBytesUsed == nullptr))
@@ -1180,7 +1416,30 @@ bool MQTT_Client::DecodeRemainingLength(const uint8_t* pBuffer, size_t Length, s
 }
 
 //---------------------------------------------------------------------------------------------
-
+//
+//  Name:           EncodeFixedHeader
+//
+//  Parameter(s):   uint8_t* pOut               Output buffer where the fixed header will be
+//                                              written.
+//                  uint8_t  PacketType         MQTT control packet type
+//                                              (upper 4 bits of byte 1).
+//                  uint8_t  Flags              MQTT flags (lower 4 bits of byte 1).
+//                  size_t   RemainingLength    Remaining Length field to encode
+//                                              (variable-length integer).
+//
+//  Return:         size_t   Total number of bytes written to pOut for the fixed header
+//                           (1 byte for type/flags + 1-4 bytes for Remaining Length).
+//
+//  Description:    Encodes the MQTT fixed header for any control packet. The first byte
+//                  contains the packet type and flags. The Remaining Length field is encoded
+//                  using MQTT's variable-length base-128 scheme, where each byte contributes
+//                  7 bits of value and one continuation bit.
+//
+//                  The function writes the encoded header into pOut and returns the number
+//                  of bytes produced. It performs no validation of RemainingLength beyond
+//                  the natural limits of the encoding loop.
+//
+//---------------------------------------------------------------------------------------------
 size_t MQTT_Client::EncodeFixedHeader(uint8_t* pOut, uint8_t PacketType, uint8_t Flags, size_t RemainingLength)
 {
     pOut[0] = (PacketType << 4) | Flags;
@@ -1206,7 +1465,33 @@ size_t MQTT_Client::EncodeFixedHeader(uint8_t* pOut, uint8_t PacketType, uint8_t
 }
 
 //---------------------------------------------------------------------------------------------
-
+//
+//  Name:           OnSocketEvent
+//
+//  Parameter(s):   TCP_Socket*   pSocket Pointer to the socket that generated the event.
+//                  SocketEvent_e Event   Type of socket event (RX ready, closed, error, etc.).
+//
+//  Return:         None
+//
+//  Description:    Callback invoked by the TCP layer whenever the underlying socket generates
+//                  an event. The MQTT client reacts as follows:
+//
+//                      - SOCKET_EVENT_RX_READY
+//                          Signals the MQTT task that new data is available by releasing
+//                          the RX semaphore. The task will call HandleIncomingData().
+//
+//                      - SOCKET_EVENT_ERROR / SOCKET_EVENT_CLOSED
+//                          Marks the socket as invalid and notifies the application via
+//                          OnEvent(). If the disconnect was not user-initiated, the MQTT
+//                          state machine is forced back to MQTT_STATE_IDLE so the
+//                          application may choose to reconnect. For user-requested
+//                          disconnects, no reconnection is attempted.
+//
+//                  This function performs no blocking operations and does not directly
+//                  process MQTT packets. It only updates internal state and signals the
+//                  MQTT client task.
+//
+//---------------------------------------------------------------------------------------------
 void MQTT_Client::OnSocketEvent(TCP_Socket* pSocket, SocketEvent_e Event)
 {
     switch(Event)
@@ -1244,7 +1529,22 @@ void MQTT_Client::OnSocketEvent(TCP_Socket* pSocket, SocketEvent_e Event)
 }
 
 //---------------------------------------------------------------------------------------------
-
+//
+//  Name:           OnEvent
+//
+//  Parameter(s):   None
+//
+//  Return:         None
+//
+//  Description:    Notifies the application-level MQTT handler that an internal state change
+//                  or incoming message requires processing. This function simply forwards the
+//                  event to the user-provided handler, if one is registered.
+//
+//                  All protocol logic and state transitions are handled elsewhere; this
+//                  callback provides a clean separation between the MQTT client library and
+//                  the application layer.
+//
+//---------------------------------------------------------------------------------------------
 void MQTT_Client::OnEvent()
 {
     if(m_pHandler != nullptr)

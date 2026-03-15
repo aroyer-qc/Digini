@@ -85,15 +85,22 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define MQTT_CONNECT_TIMEOUT_MS             10000     // 10 seconds
-#define MQTT_PINGRESP_TIMEOUT_MS            5000      // 5 seconds
-#define MQTT_DISCONNECTED_PERIOD_MS         500
+#define MQTT_CONNECT_TIMEOUT_MS                 10000           // 10 seconds
+#define MQTT_PINGRESP_TIMEOUT_MS                5000            // 5 seconds
+#define MQTT_DISCONNECTED_PERIOD_MS             500
 
+// MQTT Remaining Length encoding (variable-length integer)
+#define MQTT_REMAINING_LEN_MASK                 0x7F
+#define MQTT_REMAINING_LEN_CONTINUATION         0x80
+#define MQTT_REMAINING_LEN_BASE_128             128
+#define MQTT_REMAINING_LEN_MAX_MULTIPLIER       (MQTT_REMAINING_LEN_BASE_128 * MQTT_REMAINING_LEN_BASE_128 * MQTT_REMAINING_LEN_BASE_128)
+#define MQTT_CONNECT_REMAINING_SIZE             (10 + 2)        // Size of CONNECT variable header (10 bytes) + 2-byte ClientID length prefix
+#define MQTT_PUBLISH_REMAINING_BASE_SIZE        (2)             // Size of PUBLISH topic length field (2 bytes)
+#define MQTT_PUBLISH_REMAINING_QOS1_SIZE        (2)             // Size of PUBLISH Packet ID field for QoS > 0 (2 bytes)
+#define MQTT_SUBSCRIBE_REMAINING_BASE_SIZE      (2 + 2 + 1)     // Size of SUBSCRIBE fixed fields: PacketID (2) + TopicLen (2) + QoS (1)
+#define MQTT_UNSUBSCRIBE_REMAINING_BASE_SIZE    (2 + 2)         // Size of UNSUBSCRIBE fixed fields: PacketID (2) + TopicLen (2)
 
-#define MQTT_REMAINING_LEN_MASK             0x7F
-#define MQTT_REMAINING_LEN_CONTINUATION     0x80
-#define MQTT_REMAINING_LEN_BASE_128         128
-#define MQTT_REMAINING_LEN_MAX_MULTIPLIER   (MQTT_REMAINING_LEN_BASE_128 * MQTT_REMAINING_LEN_BASE_128 * MQTT_REMAINING_LEN_BASE_128)
+#define MQTT_PROTOCOL_HEADER_SIZE               8               // "\0\x04MQTT\x04\x02"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -668,8 +675,8 @@ bool MQTT_Client::SendConnectFrame(const char* pClientID)
     }
 
     size_t Index = 0;
-    size_t clientID_Len = strlen(pClientID);
-    size_t RemainingLength = 10 + 2 + clientID_Len;
+    size_t clientID_Len    = strlen(pClientID);
+    size_t RemainingLength = MQTT_CONNECT_REMAINING_SIZE + clientID_Len;
     size_t HeaderLen = EncodeFixedHeader(pBuffer, MQTT_PACKET_TYPE_CONNECT, 0x00, RemainingLength);
     Index = HeaderLen;
 
@@ -679,9 +686,8 @@ bool MQTT_Client::SendConnectFrame(const char* pClientID)
         return false;
     }
 
-    memcpy(&pBuffer[Index], (void*)"\0\x04MQTT\x04\x02", 8);
+    memcpy(&pBuffer[Index], (void*)"\0\x04MQTT\x04\x02", MQTT_PROTOCOL_HEADER_SIZE);
     Index += 8;
-
     pBuffer[Index++] = (m_KeepAliveSeconds >> 8) & 0xFF;
     pBuffer[Index++] = (m_KeepAliveSeconds     ) & 0xFF;
     pBuffer[Index++] = (clientID_Len >> 8) & 0xFF;
@@ -737,7 +743,7 @@ bool MQTT_Client::SendSubscribeFrame(const char* pTopic, MQTT_QoS_e QoS)
     }
 
     size_t TopicLen = strlen(pTopic);
-    size_t RemainingLength = 2 + 2 + TopicLen + 1;
+    size_t RemainingLength = MQTT_SUBSCRIBE_REMAINING_BASE_SIZE + TopicLen;
     size_t HeaderLen = EncodeFixedHeader(pBuffer, MQTT_PACKET_TYPE_SUBSCRIBE, MQTT_FLAG_SUBSCRIBE, RemainingLength);
     size_t Index = HeaderLen;
 
@@ -796,7 +802,7 @@ bool MQTT_Client::SendUnsubscribeFrame(const char* pTopic)
     }
 
     size_t TopicLen = strlen(pTopic);
-    size_t RemainingLength = 2 + 2 + TopicLen;
+    size_t RemainingLength = MQTT_UNSUBSCRIBE_REMAINING_BASE_SIZE + TopicLen;
     size_t HeaderLen = EncodeFixedHeader(pBuffer, MQTT_PACKET_TYPE_UNSUBSCRIBE,  MQTT_FLAG_UNSUBSCRIBE, RemainingLength);
     size_t Index = HeaderLen;
 
@@ -857,11 +863,11 @@ bool MQTT_Client::SendPublishFrame(const char* pTopic, const uint8_t* pPayload, 
     }
 
     size_t TopicLen = strlen(pTopic);
-    size_t RemainingLength = 2 + TopicLen + Length;
+    size_t RemainingLength = MQTT_PUBLISH_REMAINING_BASE_SIZE + TopicLen + Length;
 
     if(QoS > MQTT_QOS_0)
     {
-        RemainingLength += 2;
+        RemainingLength += MQTT_PUBLISH_REMAINING_QOS1_SIZE;
     }
 
     uint8_t Flags = (QoS << 1);
@@ -1043,11 +1049,11 @@ bool MQTT_Client::HandleIncomingData(void)
         while(i < m_RX_Index)
         {
             uint8_t Byte = m_pRX_Packet[i];
-            m_RemainingLength += (Byte & 0x7F) * m_Multiplier;
-            m_Multiplier *= 128;
+            m_RemainingLength += (Byte & MQTT_REMAINING_LEN_MASK) * m_Multiplier;
+            m_Multiplier *= MQTT_REMAINING_LEN_BASE_128;
             m_RemainingLenBytes++;
 
-            if((Byte & 0x80) == 0)
+            if((Byte & MQTT_REMAINING_LEN_CONTINUATION) == 0)
             {
                 m_BytesNeeded = m_RemainingLength;
                 break;

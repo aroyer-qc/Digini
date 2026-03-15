@@ -340,11 +340,11 @@ class VT100_Terminal : public ChildProcessInterface
         void                LogPrint                    (const char* pString);
         void                LogDisplay                  (void);
       #else
-        inline void         LogInitialize(int, int, int, int) {}
-        inline void         LogClear(void)                    {}
-        inline void         LogNewLine(void)                  {}
-        inline void         LogPrint(const char*)             {}
-        inline void         LogDisplay(void)                  {}
+        inline void         LogInitialize               (int, int, int, int)    {}
+        inline void         LogClear                    (void)                  {}
+        inline void         LogNewLine                  (void)                  {}
+        inline void         LogPrint                    (const char*)           {}
+        inline void         LogDisplay                  (void)                  {}
       #endif
 
 // to check if needed in VT100

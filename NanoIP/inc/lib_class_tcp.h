@@ -69,6 +69,12 @@ class TCP_SocketSystem : public TCP_Socket, public Socket
         uint16_t                    m_RemoteWindow;
         uint16_t                    m_LocalWindow;
 
+        IP_PacketMsg_t*             m_pCurrentRX;
+        size_t                      m_RX_Offset;
+        // Cached values for current segment
+        uint8_t*                    m_pRX_PayloadStart;
+        size_t                      m_RX_TotalPayloadLength;
+
         TickCount_t                 m_LastSendTick;
         TickCount_t                 m_LastReceivedTick;
 

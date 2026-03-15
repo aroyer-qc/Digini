@@ -310,7 +310,7 @@ struct IP_PacketMsg_t
 {
 	uint16_t    		    PacketSize;
 	IP_EthernetPacket_t*	pPacket;
-    uint8_t*                Payload;                // Pointer to UDP payload
+    uint8_t*                Payload;                // Pointer to UDP/TCP payload
     uint16_t                PayloadSize;            // length of payload
 	uint8_t                 Protocol;               // IP protocol (TCP=6, UDP=17, ICMP=1, etc.)
 };

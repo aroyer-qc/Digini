@@ -67,7 +67,11 @@ void Console::Initialize(UART_Driver* pUartDriver)
     //m_IsItOnHold            = false;
     //m_IsItOnStartup         = true;
   #if (CON_USE_DEBUG_LOG == DEF_ENABLED)
+   #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
     m_MuteSerialLogging     = false;                // should read a store value if eeprom exist and an entry also exist
+   #else
+    m_MuteSerialLogging     = true;
+   #endif
     m_DebugLevel            = SYS_DEBUG_NONE;
     m_OverrideDebugLevel    = SYS_DEBUG_NONE;
   #endif

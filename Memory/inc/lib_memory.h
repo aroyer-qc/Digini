@@ -75,6 +75,7 @@
     X_MEM_DBG(MEM_DBG_VTCB5)                                    \
     X_MEM_DBG(MEM_DBG_VTCB6)                                    \
     X_MEM_DBG(MEM_DBG_VTCB7)                                    \
+    X_MEM_DBG(MEM_DBG_LOG)                                      \
   /*---------------------------------------------------------*/ \
   ) /* End of DIGINI_USE_VT100_MENU */                          \
   /*---------------------------------------------------------*/ \

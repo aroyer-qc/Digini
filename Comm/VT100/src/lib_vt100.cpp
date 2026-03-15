@@ -183,13 +183,12 @@ void VT100_Terminal::IF_Process(void)
     {
         if(m_Input < m_ItemsQts)
         {
-            m_pMenu = &m_Menu[m_MenuID].pDefinition[m_Input];                         // Get pointer on the menu from actual or new menu
+            m_pMenu = &m_Menu[m_MenuID].pDefinition[m_Input];                           // Get pointer on the menu from actual or new menu
         }
-        else if(m_Input == VT100_ESCAPE)
+        else if((m_Input == VT100_ESCAPE)  && ((m_pConsole->GetActiveProcessLevel() != 1) || (m_MenuID != MenuMain_ID)))
         {
-            m_Input = 0;
-            m_pMenu = &m_Menu[m_MenuID].pDefinition[0];                           // Get pointer on the previous menu
-            CallBack(m_pMenu->pCallback, VT100_CALLBACK_FLUSH, 0);                // Flush previous Menu
+            m_pMenu = &m_Menu[m_MenuID].pDefinition[0];                             // Get pointer on the previous menu
+            CallBack(m_pMenu->pCallback, VT100_CALLBACK_FLUSH, 0);                  // Flush previous Menu
         }
         else // It was an invalid entry (should not happened) do nothing
         {
@@ -309,7 +308,6 @@ void VT100_Terminal::ProcessRX(void)
                 {
                     //m_BackFromEdition  = true;
                     m_InputDecimalMode = false;
-
                     GoToMenu(m_MenuID);
                 }
                 else if(Data == ASCII_BACKSPACE)
@@ -506,11 +504,14 @@ void VT100_Terminal::DisplayMenu(void)
             }
         }
 
-        MenuSelectItems('0');
-        InMenuPrintf(VT100_LBL_QUIT);
-        ItemsChar  = (char)(Items - 1);
-        ItemsChar += (ItemsChar >= 10) ? ('a' - 10) : '0';
-        InMenuPrintf(VT100_LBL_ENTER_SELECTION, ItemsChar);
+        if((m_pConsole->GetActiveProcessLevel() != 1) || (m_MenuID != MenuMain_ID))  // Prevent printing option to exit menu if no other application controlling the console exist
+        {
+            MenuSelectItems('0');
+            InMenuPrintf(VT100_LBL_QUIT);
+            ItemsChar  = (char)(Items - 1);
+            ItemsChar += (ItemsChar >= 10) ? ('a' - 10) : '0';
+            InMenuPrintf(VT100_LBL_ENTER_SELECTION, ItemsChar);
+        }
     }
 
     CallBack(m_Menu[m_MenuID].pDefinition[0].pCallback, VT100_CALLBACK_INIT, 0);
@@ -1644,14 +1645,13 @@ void VT100_Terminal::LogDisplay(void)
     }
 
     m_LogRefresh = false;
-
-    char LineBuffer[VT100_LOG_COLUMNS + 1];                                                     // Temp buffer for clipping
+    char* pLineBuffer = (char*)pMemoryPool->Alloc(VT100_LOG_COLUMNS + 1, MEM_DBG_LOG);   // Temp buffer for clipping
     int ScreenRow = m_LogWindowTop;
 
     SaveCursorPosition();
 
-    int LinesToShow = (m_LogCount < m_LogWindowHeight) ? m_LogCount : m_LogWindowHeight;        // Number of lines we will actually display
-    int Start = m_LogHead - (LinesToShow - 1);                                                  // Compute the index of the oldest visible line
+    int LinesToShow = (m_LogCount < m_LogWindowHeight) ? m_LogCount : m_LogWindowHeight;            // Number of lines we will actually display
+    int Start = m_LogHead - (LinesToShow - 1);                                                      // Compute the index of the oldest visible line
 
     if(Start < 0)
     {
@@ -1660,13 +1660,13 @@ void VT100_Terminal::LogDisplay(void)
 
     int SourceLine = Start;
 
-    for(int i = 0; i < LinesToShow; i++)                                                        // Print the real log lines
+    for(int i = 0; i < LinesToShow; i++)                                                            // Print the real log lines
     {
-        memcpy(LineBuffer, m_LogBuffer[SourceLine], m_LogWindowWidth);
-        LineBuffer[m_LogWindowWidth] = '\0';
+        memcpy(pLineBuffer, m_LogBuffer[SourceLine], m_LogWindowWidth);
+        pLineBuffer[m_LogWindowWidth] = '\0';
 
         InMenuPrintf(VT100_LBL_SET_CURSOR, ScreenRow, m_LogWindowLeft);
-        InMenuPrintf(LBL_STRING, LineBuffer);
+        InMenuPrintf(LBL_STRING, pLineBuffer);
 
         ScreenRow++;
         SourceLine++;
@@ -1677,8 +1677,10 @@ void VT100_Terminal::LogDisplay(void)
         }
     }
 
+    pMemoryPool->Free((void**)&pLineBuffer);
+
     // If buffer has fewer lines than window height, the rest stays visually blank.
-    // We do NOT print blank lines — the window already contains blanks from DrawBox().
+    // We do NOT print blank lines - the window already contains blanks from DrawBox().
 
     RestoreCursorPosition();
 }

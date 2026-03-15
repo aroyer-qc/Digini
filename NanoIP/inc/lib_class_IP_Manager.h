@@ -123,7 +123,6 @@ class IP_Manager
 
         NetworkContext*                 m_pContext;
         uint16_t                        m_SequenceID;
-        IP_Port_t                       m_NextEphemeralPort;
         nOS_Thread                      m_Handle;
         nOS_Stack                       m_Stack                [TASK_IP_MANAGER_STACK_SIZE];
         char                            m_ThreadName           [TASK_IP_MANAGER_TREAD_NAME_SIZE]     = TASK_IP_MANAGER_TREAD_NAME_PREAMBULE;

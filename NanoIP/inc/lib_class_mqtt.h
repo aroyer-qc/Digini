@@ -62,24 +62,12 @@
 #define MQTT_FLAG_DISCONNECT     0x00
 #define MQTT_FLAG_AUTH           0x00
 
+#define TASK_MQTT_CLIENT_STACK_SIZE               1024//320
+#define TASK_MQTT_CLIENT_PRIO                     7
+
 //-------------------------------------------------------------------------------------------------
 // Enum(s)
 //-------------------------------------------------------------------------------------------------
-
-//  MQTT Event Types (Application-Level)
-//      These events are emitted by the MQTT_Client library and delivered to the application task
-//      through the user callback. They abstract away all TCP details and expose only meaningful
-//      MQTT-level state changes.
-enum MQTT_Event_e
-{
-    MQTT_EVENT_NONE = 0,            // No event (placeholder)
-    MQTT_EVENT_CONNECTED,           // CONNECT sent + CONNACK received
-    MQTT_EVENT_DISCONNECTED,        // Socket closed or MQTT session lost
-    MQTT_EVENT_RECONNECTING,        // Client entered automatic reconnection
-    MQTT_EVENT_MESSAGE_RECEIVED,    // Incoming PUBLISH (topic + payload)
-    MQTT_EVENT_SUBACK,              // SUBACK received for a subscription
-    MQTT_EVENT_PUBACK,              // PUBACK received for QoS1 publish
-};
 
 enum MQTT_State_e
 {
@@ -90,8 +78,6 @@ enum MQTT_State_e
     MQTT_STATE_WAIT_SUBACK,
     MQTT_STATE_WAIT_UNSUBACK,
     MQTT_STATE_PUBLISHING,
-    MQTT_STATE_RECONNECTING,
-    MQTT_STATE_ERROR
 };
 
 enum MQTT_QoS_e
@@ -102,29 +88,25 @@ enum MQTT_QoS_e
 };
 
 //-------------------------------------------------------------------------------------------------
-// Typedef(s)
-//-------------------------------------------------------------------------------------------------
-
-typedef void (*MQTT_MessageCallback_t) (void* pContext, const char* pTopic, const uint8_t* pPayload, size_t Length);
-typedef void (*MQTT_EventCallback_t)   (MQTT_Event_e Event);
-
-//-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class MQTT_EventHandler
+class MQTT_Handler
 {
     public:
 
-        virtual void            OnEvent                     (MQTT_Event_e Event)      = 0;
+        virtual void            OnEvent                     (void)                                                        = 0;
+        virtual void            ReceivedTopic               (const char* pTopic, const uint8_t* pPayload, size_t Length)  = 0;
 };
 
 class MQTT_Client : TCP_SocketEventHandler
 {
     public:
 
+        bool                    Initialize                  (NetworkContext* pContext, MQTT_Handler* pHandler);
 
-        bool                    Initialize                  (NetworkContext* pContext, MQTT_EventHandler* pHandler);
+        void                    Run                        (void);
+
         bool                    Connect                     (const IP_Address_t* pServerIP, IP_Port_t Port, const char* pClientID, uint16_t KeepAliveSeconds);
         bool                    Subscribe                   (const char* pTopic, MQTT_QoS_e QoS);
 
@@ -134,8 +116,6 @@ class MQTT_Client : TCP_SocketEventHandler
 
         bool                    Publish                     (const char* pTopic, const uint8_t* pPayload, size_t Length, MQTT_QoS_e QoS);
         bool                    Disconnect                  (void);
-        void                    Process                     (void);
-        void                    SetMessageCallback          (MQTT_MessageCallback_t Callback, void* pUserContext);
         MQTT_State_e            GetState                    (void)                                                      { return m_State; }
         void                    SetState                    (MQTT_State_e State)                                        { m_State = State; }
         bool                    IsConnected                 (void)                                                      { return (m_State == MQTT_STATE_CONNECTED); }
@@ -144,7 +124,7 @@ class MQTT_Client : TCP_SocketEventHandler
 
 private:
 
-        void                    OnEvent                     (MQTT_Event_e MQTT_Event);
+        void                    OnEvent                     (void);
         void                    OnSocketEvent               (TCP_Socket* pSocket, SocketEvent_e Event);
 
         TCP_Socket*             TCP_Connect                 (const IP_Address_t* pServerIP, IP_Port_t Port);
@@ -176,14 +156,11 @@ private:
         TickCount_t             m_ConnectStartTick;
         TickCount_t             m_PingSentTick;
         bool                    m_SocketValid;
-
+        bool                    m_UserRequestedDisconnect;
+        MQTT_Handler*           m_pHandler;
 
         uint16_t                m_NextPacketID;
         bool                    m_WaitingPingResp;
-
-        MQTT_MessageCallback_t  m_MessageCallback;
-        MQTT_EventHandler*      m_pEventHandler;
-        void*                   m_pMessageContext;
 
         // Automatic reconnect
         TickCount_t             m_ReconnectStartTick;
@@ -193,6 +170,24 @@ private:
         char                    m_ClientID[64];
         IP_Address_t            m_LastServerIP;
         uint16_t                m_LastServerPort;
+
+
+// Dynamic buffer for incoming MQTT packet
+uint8_t*   m_pRX_Packet;        // Pointer to allocated RX buffer
+size_t     m_RX_Index;          // Number of bytes already stored in RX buffer
+
+// Remaining Length (MQTT varint) decoding state
+int32_t    m_BytesNeeded;       // -1 = decoding varint, >0 = remaining payload bytes
+size_t     m_RemainingLength;   // Total MQTT payload length
+size_t     m_RemainingLenBytes; // Number of bytes read from the varint
+size_t     m_Multiplier;        // MQTT varint multiplier (1, 128, 16384, ...)
+
+
+
+        nOS_Thread              m_Handle;
+        nOS_Stack               m_Stack          [TASK_MQTT_CLIENT_STACK_SIZE];
+
+        nOS_Sem                 m_RX_ReadySem;
 };
 
 //-------------------------------------------------------------------------------------------------

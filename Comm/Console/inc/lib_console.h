@@ -128,6 +128,8 @@ class Console : public CallbackInterface
         inline void                 SetOverrideDebugLevel      (SystemDebugLevel_e)                            {                                             }
       #endif
 
+        inline uint16_t             GetActiveProcessLevel      (void)                                           { return m_ActiveProcessLevel;               }
+
     private:
 
     // --------------------------------------------------------------------------------------------

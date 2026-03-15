@@ -86,20 +86,25 @@
 //-------------------------------------------------------------------------------------------------
 TCP_SocketSystem::TCP_SocketSystem(NetworkContext* pContext, TCP_Manager& TCP) : Socket(pContext)
 {
-    m_pTCP              = &TCP;                     // Store back-pointer to TCP manager
-    m_State             = TCP_STATE_CLOSED;
+    m_pTCP                  = &TCP;                     // Store back-pointer to TCP manager
+    m_State                 = TCP_STATE_CLOSED;
 
-    m_SeqNumber         = 0;
-    m_AckNumber         = 0;
+    m_SeqNumber             = 0;
+    m_AckNumber             = 0;
 
-    m_RemoteWindow      = 0;
-    m_LocalWindow       = TCP_DEFAULT_WINDOW_SIZE;
+    m_RemoteWindow          = 0;
+    m_LocalWindow           = TCP_DEFAULT_WINDOW_SIZE;
 
-    TickCount_t Now     = GetTick();
-    m_LastReceivedTick  = Now;
-    m_LastSendTick      = Now;
+    m_pCurrentRX            = nullptr;
+    m_RX_Offset             = 0;
+    m_pRX_PayloadStart      = nullptr;
+    m_RX_TotalPayloadLength = 0;
 
-    m_RetransmitTimeOut = TCP_RETRANSMIT_TIMEOUT;
+    TickCount_t Now         = GetTick();
+    m_LastReceivedTick      = Now;
+    m_LastSendTick          = Now;
+
+    m_RetransmitTimeOut  = TCP_RETRANSMIT_TIMEOUT;
 
     for(size_t i = 0; i < TCP_MAX_TX_SEGMENTS; i++)
     {
@@ -208,40 +213,72 @@ size_t TCP_SocketSystem::Receive(uint8_t* pBuffer, size_t MaxLength)
         return 0;
     }
 
-    IP_PacketMsg_t* pMsg = nullptr;
-
-    // Pop next received segment
-    if(DequeueMessage(pMsg) != true)
+    // If no current segment, dequeue one
+    if(m_pCurrentRX == nullptr)
     {
-        return 0;   // No data available
+        IP_PacketMsg_t* pMsg = nullptr;
+
+        if(DequeueMessage(pMsg) != true)
+        {
+            return 0;   // No data available
+        }
+
+        if((pMsg == nullptr) || (pMsg->pPacket == nullptr))
+        {
+            return 0;
+        }
+
+        // Set as current RX segment
+        m_pCurrentRX = pMsg;
+        m_RX_Offset  = 0;
+
+        // Cache payload start and length
+        IP_EthernetPacket_t* pPacket = m_pCurrentRX->pPacket;
+        TCP_Header_t& TCP = pPacket->TCP_Frame.Header;
+
+        uint8_t TCP_pHeaderLen = (TCP.Offset >> 4) * 4;
+        m_pRX_PayloadStart = ((uint8_t*)&pPacket->TCP_Frame.Header) + TCP_pHeaderLen;
+
+        m_RX_TotalPayloadLength = m_pCurrentRX->PacketSize    -
+                                  sizeof(IP_EthernetHeader_t) -
+                                  sizeof(IP_Header_t)         -
+                                  TCP_pHeaderLen;
     }
 
-    if((pMsg == nullptr) || (pMsg->pPacket == nullptr))
+    // Compute how many bytes remain in this segment
+    size_t Remaining = m_RX_TotalPayloadLength - m_RX_Offset;
+
+    if(Remaining == 0)
     {
+        // Should not happen, but safe guard
+        IP_Manager::FreeMessage(m_pCurrentRX);
+        m_pCurrentRX         = nullptr;
+        m_RX_Offset          = 0;
+        m_pRX_PayloadStart   = nullptr;
+        m_RX_TotalPayloadLength = 0;
         return 0;
     }
 
-    IP_EthernetPacket_t* pPacket = pMsg->pPacket;
-    TCP_Header_t& tcp = pPacket->TCP_Frame.Header;
+    // Compute how many bytes we can return now
+    size_t ToCopy = (Remaining < MaxLength) ? Remaining : MaxLength;
 
-    uint8_t tcpHeaderLen = (tcp.Offset >> 4) * 4;
-    uint8_t* pPayloadStart = ((uint8_t*)&pPacket->TCP_Frame.Header) + tcpHeaderLen;
+    // Copy data to application buffer
+    memcpy(pBuffer, m_pRX_PayloadStart + m_RX_Offset, ToCopy);
 
-    // Compute payload length
-    size_t PayloadLen = pMsg->PacketSize - sizeof(IP_EthernetHeader_t) - sizeof(IP_Header_t) - tcpHeaderLen;
+    // Advance offset
+    m_RX_Offset += ToCopy;
 
-    if(PayloadLen > MaxLength)
+    // If segment fully consumed, free it
+    if(m_RX_Offset >= m_RX_TotalPayloadLength)
     {
-        PayloadLen = MaxLength;
+        IP_Manager::FreeMessage(m_pCurrentRX);
+        m_pCurrentRX            = nullptr;
+        m_RX_Offset             = 0;
+        m_pRX_PayloadStart      = nullptr;
+        m_RX_TotalPayloadLength = 0;
     }
 
-    // Copy payload to application buffer
-    memcpy(pBuffer, pPayloadStart, PayloadLen);
-
-    // Free the message buffer
-    IP_Manager::FreeMessage(pMsg);
-
-    return PayloadLen;
+    return ToCopy;
 }
 
 //-------------------------------------------------------------------------------------------------

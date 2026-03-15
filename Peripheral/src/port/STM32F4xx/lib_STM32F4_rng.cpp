@@ -93,8 +93,8 @@ uint32_t RNG_GetRandomFromRange(uint32_t Min, uint32_t Max)
     CalculatedRandom = (Max - Min) + 1;             // This is the range
     while((RNG->SR & RNG_SR_DRDY) == 0){};          // Should never jam;
     RandomValue = RNG->DR;
-
-    return uint32_t((uint64_t(RandomValue) * uint64_t(CalculatedRandom)) >> sizeof(uint32_t)) + Min;
+    RandomValue = uint32_t((uint64_t(RandomValue) * uint64_t(CalculatedRandom)) >> 32) + Min;
+    return RandomValue;
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -75,7 +75,6 @@ void IP_Manager::Initialize(NetworkContext* pContext)
 
     m_pContext          = pContext;
     m_SequenceID        = RNG_GetRandom();
-    m_NextEphemeralPort = IP_EPHEMERAL_PORT_MIN;
 
     const char* Host = m_pContext->GetHostName();
     size_t HostLen = strlen(Host);
@@ -360,18 +359,9 @@ SystemState_e IP_Manager::SendPacket(IP_PacketMsg_t* pMsg)
 //-------------------------------------------------------------------------------------------------
 IP_Port_t IP_Manager::AllocateEphemeralPort(void)
 {
-    //IP_Port_t start = m_NextEphemeralPort;
+    IP_Port_t Candidate = RNG_GetRandomFromRange(IP_EPHEMERAL_PORT_MIN, IP_EPHEMERAL_PORT_MAX);
 
-    // Wrap around if needed
-    if(m_NextEphemeralPort > IP_EPHEMERAL_PORT_MAX)
-    {
-        m_NextEphemeralPort = IP_EPHEMERAL_PORT_MIN;
-    }
-
-    IP_Port_t Candidate = m_NextEphemeralPort;
-    m_NextEphemeralPort++;
-
-    // implement in futur a check for already allocated port
+    // implement in future a check for already allocated port
     return Candidate;
 }
 

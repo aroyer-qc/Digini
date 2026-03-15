@@ -539,13 +539,10 @@ bool DHCPv4_Manager::Request(void)
 //-------------------------------------------------------------------------------------------------
 void DHCPv4_Manager::ParseOffer(DHCP_Msg_t* pRX)
 {
-    // Offered IP address for this client
-    m_Options.ClientIP = pRX->YourIP_Address;
+    m_Options.ClientIP = pRX->YourIP_Address;           // Offered IP address for this client
+    m_Options.ServerIP = pRX->ServerIP_Address;         // DHCP server identifier (may be zero if not provided)
 
-    // DHCP server identifier (may be zero if not provided)
-    m_Options.ServerIP = pRX->ServerIP_Address;
-
-#if (IP_DBG_DHCP == DEF_ENABLED)
+  #if (IP_DBG_DHCP == DEF_ENABLED)
     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "DHCP OFFER: Client IP = %d.%d.%d.%d, Server IP = %d.%d.%d.%d\n",
                                                    IP_A(m_Options.ClientIP),
                                                    IP_B(m_Options.ClientIP),
@@ -554,8 +551,8 @@ void DHCPv4_Manager::ParseOffer(DHCP_Msg_t* pRX)
                                                    IP_A(m_Options.ServerIP),
                                                    IP_B(m_Options.ServerIP),
                                                    IP_C(m_Options.ServerIP),
-                                                   IP_D(m_Options.ServerIP);
-#endif
+                                                   IP_D(m_Options.ServerIP));
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------

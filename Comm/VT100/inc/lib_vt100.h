@@ -92,6 +92,7 @@
                                                 ENTRY  (MENU,  MenuSystemSetting,       ID_SYSTEM_TEMPERATURE,               CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_TEMPERATURE_UNIT_SELECTION            )  \
                                                 ENTRY  (MENU,  MenuSystemSetting,       ID_MISC_DATE,                        CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_DATE                                  )  \
                                                 ENTRY  (MENU,  MenuSystemSetting,       ID_MISC_TIME,                        CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_TIME                                  )  \
+                                                ENTRY  (MENU,  MenuSystemSetting,       ID_MISC_SYSTEM_RESET,                CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_RESET_PROCESSOR                       )  \
                                                 ENTRY  (MENU,  MenuSystemSetting,       ID_MISC_SAVE,                        CALLBACK_SystemSetting,                  MenuSystemSetting,                VT100_LBL_SAVE_CONFIGURATION                    )  \
 \
     IF_USE( CON_USE_DEBUG_LOG, \

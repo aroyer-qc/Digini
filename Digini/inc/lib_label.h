@@ -280,6 +280,8 @@ X_LABEL( LBL_TEST,  "the quick brown fox jumps over the lazy dog",         "port
 \
     X_LABEL( VT100_LBL_DATE,                       "Date",                                                                                                     "Date"                                                                                                                               ) \
     X_LABEL( VT100_LBL_TIME,                       "Time",                                                                                                     "Heure"                                                                                                                              ) \
+    X_LABEL( VT100_LBL_RESET_PROCESSOR,            "Reset the processor",                                                                                     "R\x82initializer le processeur"                                                                                                       ) \
+
 
 #define VT100_MONO_LABEL_LANGUAGE_DEF(X_LABEL) \
     X_LABEL( VT100_LBL_BACK_WHITE_FORE_BLACK,      "\033[30m\033[47m",                                                                                         nullptr                                                                                                                              ) \

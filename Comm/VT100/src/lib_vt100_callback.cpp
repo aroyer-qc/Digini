@@ -305,7 +305,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
     DateAndTime_t   DateTime;
     TempUnit_e      Unit;
     // type         Temperature;
-    static int      ResetCount = 0;
 
     VAR_UNUSED(Input);
 
@@ -315,21 +314,6 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
         {
             VT100_LastSecond = 60;
             VT100_LastUpTime = 0;
-            ResetCount       = 0; 
-        }
-        break;
-
-        case VT100_CALLBACK_ON_INPUT:
-        {
-            if(Input == 1)
-            {
-                ResetCount++;
-                
-                if(ResetCount >= 3)
-                {
-                    CPU_SpecificSystemReset();
-                }
-            }   
         }
         break;
 
@@ -449,8 +433,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
         default: break;
     }
 
-    return VT100_INPUT_MENU_CHOICE;
-    //return VT100_INPUT_ESCAPE;
+    return VT100_INPUT_ESCAPE;
 }
 #endif //  (DIGINI_USE_LABEL_PRODUCT_INFO == DEF_ENABLED)
 
@@ -1010,12 +993,16 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
 {
     static Language_e* pLanguage = nullptr;
     static TempUnit_e* pTempUnit = nullptr;
+    static int         ResetCount = 0;
 
     switch(Type)
     {
         case VT100_CALLBACK_INIT:
         {
+            ResetCount       = 0;
+
             pLanguage = (Language_e*)pMemoryPool->Alloc(sizeof(Language_e) * 2, MEM_DBG_VTCB4);
+
             if(pLanguage != nullptr)
             {
               #if (DIGINI_USE_DATABASE != DEF_DISABLED)
@@ -1028,6 +1015,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
             }
 
             pTempUnit = (TempUnit_e*)pMemoryPool->Alloc(sizeof(TempUnit_e) * 2, MEM_DBG_VTCB5);
+
             if(pTempUnit != nullptr)
             {
               #if (DIGINI_USE_DATABASE != DEF_DISABLED)
@@ -1041,6 +1029,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
 
             pBuffer1 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VTCB6);         // To get a new serial number
             pBuffer2 = (uint8_t*)pMemoryPool->Alloc(sizeof(OEM_SERIAL_NUMBER), MEM_DBG_VTCB7);         // use to compare Serial number
+
             if((pBuffer1 != nullptr) && (pBuffer2 != nullptr))
             {
               #if (DIGINI_USE_DATABASE != DEF_DISABLED)
@@ -1120,6 +1109,16 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                 }
                 break;
 
+                case int(MenuSystemSetting_ID_MISC_SYSTEM_RESET):
+                {
+                    ResetCount++;
+
+                    if(ResetCount >= 3)
+                    {
+                        CPU_SpecificSystemReset();
+                    }
+                }
+                break;
 
                 case int(MenuSystemSetting_ID_MISC_SAVE):
                 {

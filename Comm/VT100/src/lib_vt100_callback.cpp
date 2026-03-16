@@ -1117,6 +1117,14 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                     {
                         CPU_SpecificSystemReset();
                     }
+                    else
+                    {
+                        // Print number of press using consecutive *
+                        for(int i = 0; i < ResetCount; i++)
+                        {
+                            InMenuPrintf(24 + i, 12, LBL_STRING, "*");
+                        }
+                    }
                 }
                 break;
 

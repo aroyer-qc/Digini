@@ -216,7 +216,7 @@ SystemState_e CommandLine::CmdRESET(void* pArg)
     {
         if(m_ReadCommand != true)
         {
-            //NVIC_SystemReset();
+            CPU_SpecificSystemReset();
         }
     }
     else

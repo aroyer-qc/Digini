@@ -64,6 +64,7 @@
 #define TCP_TIME_WAIT_TIMEOUT       30000
 #define TCP_GENERIC_CLOSE_TIMEOUT   2000
 #define TCP_CONNECT_TIMEOUT         3000
+#define TCP_TIME_TO_LIVE            64
 
 //-------------------------------------------------------------------------------------------------
 //  Name:           TCP_SocketSystem (constructor)
@@ -106,18 +107,7 @@ TCP_SocketSystem::TCP_SocketSystem(NetworkContext* pContext, TCP_Manager& TCP) :
     m_LastSendTick          = Now;
 
     m_RetransmitTimeOut  = TCP_RETRANSMIT_TIMEOUT;
-
-    for(size_t i = 0; i < TCP_MAX_TX_SEGMENTS; i++)
-    {
-        m_TX_Window[i].pPayload  = nullptr;
-        m_TX_Window[i].SeqStart  = 0;
-        m_TX_Window[i].SeqEnd    = 0;
-        m_TX_Window[i].Flags     = 0;
-        m_TX_Window[i].Window    = 0;
-        m_TX_Window[i].Length    = 0;
-        m_TX_Window[i].TimeStamp = 0;
-        m_TX_Window[i].InUse     = false;
-    }
+    TCP_SocketSystem::ClearTX_Window(m_TX_Window, TCP_MAX_TX_SEGMENTS);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -239,11 +229,7 @@ size_t TCP_SocketSystem::Receive(uint8_t* pBuffer, size_t MaxLength)
 
         uint8_t TCP_pHeaderLen = (TCP.Offset >> 4) * 4;
         m_pRX_PayloadStart = ((uint8_t*)&pPacket->TCP_Frame.Header) + TCP_pHeaderLen;
-
-        m_RX_TotalPayloadLength = m_pCurrentRX->PacketSize    -
-                                  sizeof(IP_EthernetHeader_t) -
-                                  sizeof(IP_Header_t)         -
-                                  TCP_pHeaderLen;
+        m_RX_TotalPayloadLength = m_pCurrentRX->PacketSize - sizeof(IP_EthernetHeader_t) - sizeof(IP_Header_t) - TCP_pHeaderLen;
     }
 
     // Compute how many bytes remain in this segment
@@ -367,10 +353,7 @@ void TCP_SocketSystem::Close(void)
 //                  handled by Process(). It also does not send segments directly; instead it calls
 //                  SendSegment() as needed.
 //-------------------------------------------------------------------------------------------------
-void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket*     pSocket, IP_PacketMsg_t* pMsg,
-                                            uint8_t         Flags,
-                                            uint32_t        Seq,
-                                            uint32_t        Ack)
+void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket* pSocket, IP_PacketMsg_t* pMsg, uint8_t Flags, uint32_t Seq, uint32_t Ack)
 {
     if((pSocket == nullptr) || (pMsg == nullptr) || (pMsg->pPacket == nullptr))
     {
@@ -412,8 +395,7 @@ void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket*     pSocket, IP_PacketMs
         if((Flags & TCP_FLAG_SYN) != 0)
         {
             // Allocate child socket from memory pool
-            TCP_SocketSystem* pChild =
-                (TCP_SocketSystem*)pMemoryPool->Alloc(sizeof(TCP_SocketSystem), MEM_DBG_TCP);
+            TCP_SocketSystem* pChild = (TCP_SocketSystem*)pMemoryPool->Alloc(sizeof(TCP_SocketSystem), MEM_DBG_TCP);
 
             if(pChild == nullptr)
             {
@@ -429,7 +411,6 @@ void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket*     pSocket, IP_PacketMs
 
             TCP_ManagerSystem* pMgr = static_cast<TCP_ManagerSystem*>(pSystem->m_pTCP);
             pMgr->SetAcceptedSocket(pChild);
-
             pSystem->m_pTCP->SendSegment(pChild, nullptr, 0, TCP_FLAG_SYN | TCP_FLAG_ACK, false);
 
             if(pSystem->m_pEventHandler != nullptr)
@@ -454,9 +435,7 @@ void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket*     pSocket, IP_PacketMs
             if(((Flags & TCP_FLAG_SYN) != 0) && ((Flags & TCP_FLAG_ACK) != 0))
             {
                 pSystem->m_AckNumber = Seq + 1;
-
                 pSystem->m_pTCP->SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK, false);
-
                 pSystem->m_State = TCP_STATE_ESTABLISHED;
             }
             break;
@@ -476,9 +455,7 @@ void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket*     pSocket, IP_PacketMs
             if(pMsg->PayloadSize > 0)
             {
                 pSystem->EnqueueMessage(pMsg);
-
                 pSystem->m_AckNumber = Seq + pMsg->PayloadSize;
-
                 pSystem->m_pTCP->SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK, false);
 
                 if(pSystem->m_pEventHandler != nullptr)
@@ -492,9 +469,7 @@ void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket*     pSocket, IP_PacketMs
             if((Flags & TCP_FLAG_FIN) != 0)
             {
                 pSystem->m_AckNumber = Seq + 1;
-
                 pSystem->m_pTCP->SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK, false);
-
                 pSystem->m_State = TCP_STATE_CLOSE_WAIT;
             }
             break;
@@ -510,9 +485,7 @@ void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket*     pSocket, IP_PacketMs
             if((Flags & TCP_FLAG_FIN) != 0)
             {
                 pSystem->m_AckNumber = Seq + 1;
-
                 pSystem->m_pTCP->SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK, false);
-
                 pSystem->m_State = TCP_STATE_TIME_WAIT;
             }
             break;
@@ -523,9 +496,7 @@ void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket*     pSocket, IP_PacketMs
             if((Flags & TCP_FLAG_FIN) != 0)
             {
                 pSystem->m_AckNumber = Seq + 1;
-
                 pSystem->m_pTCP->SendSegment(pSocket, nullptr, 0, TCP_FLAG_ACK, false);
-
                 pSystem->m_State = TCP_STATE_TIME_WAIT;
             }
             break;
@@ -653,15 +624,7 @@ TCP_Socket* TCP_ManagerSystem::Connect(const IP_Address_t& ServerIP, uint16_t Po
     TickCount_t now = GetTick();
     pSystem->m_LastSendTick     = now;
     pSystem->m_LastReceivedTick = now;
-
-    for(size_t i = 0; i < TCP_MAX_TX_SEGMENTS; i++)
-    {
-        pSystem->m_TX_Window[i].pPayload  = nullptr;
-        pSystem->m_TX_Window[i].SeqStart  = 0;
-        pSystem->m_TX_Window[i].SeqEnd    = 0;
-        pSystem->m_TX_Window[i].TimeStamp = 0;
-        pSystem->m_TX_Window[i].InUse     = false;
-    }
+    TCP_SocketSystem::ClearTX_Window(pSystem->m_TX_Window, TCP_MAX_TX_SEGMENTS);
 
   #if (IP_DBG_TCP == DEF_ENABLED)
     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "TCP: SEND SYN ->  %d.%d.%d.%d:%u localPort=%u\n", IP_A(ServerIP), IP_B(ServerIP), IP_C(ServerIP), IP_D(ServerIP), ntohs(Port), ntohs(local.Port));
@@ -765,18 +728,18 @@ bool TCP_ManagerSystem::EnterListen(TCP_Socket* pSocket, uint16_t Backlog)
     TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
 
     // Ensure the socket is registered in the server socket table
-    bool found = false;
+    bool Found = false;
 
     for(size_t i = 0; i < IP_TCP_MAX_LISTEN; i++)
     {
         if(m_pServerSockets[i] == pSocket)
         {
-            found = true;
+            Found = true;
             break;
         }
     }
 
-    if(found == false)
+    if(Found == false)
     {
         // Socket was not created via CreateSocket()
         return false;
@@ -914,7 +877,7 @@ void TCP_ManagerSystem::Process(void)
     // ---------------------------------------------------------------------
     // CLIENT SIDE
     // ---------------------------------------------------------------------
-#if (IP_USE_TCP_CLIENT == DEF_ENABLED)
+  #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
     if(m_pClientSocket != nullptr)
     {
         TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(m_pClientSocket);
@@ -924,26 +887,25 @@ void TCP_ManagerSystem::Process(void)
             pSystem->RetransmitIfNeeded();
         }
     }
-#endif
+  #endif
 
     // ---------------------------------------------------------------------
     // SERVER SIDE
     // ---------------------------------------------------------------------
-#if (IP_USE_TCP_SERVER == DEF_ENABLED)
+  #if (IP_USE_TCP_SERVER == DEF_ENABLED)
 
-    // 1. Process listening sockets (they never retransmit)
+    //  Process listening sockets (they never retransmit)
     for(size_t i = 0; i < IP_TCP_MAX_LISTEN; i++)
     {
         TCP_Socket* pSock = m_pServerSockets[i];
+
         if(pSock == nullptr)
         {
             return;
         }
-
-        // LISTEN sockets do not retransmit
     }
 
-    // 2. Process pending accepted socket (SYN received, waiting for Accept())
+    //  Process pending accepted socket (SYN received, waiting for Accept())
     if(m_pAcceptedSocket != nullptr)
     {
         TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(m_pClientSocket);
@@ -964,7 +926,7 @@ void TCP_ManagerSystem::Process(void)
     // For now, the application holds the pointer and calls Close() when done.
     // So nothing to iterate here yet.
 
-#endif
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1025,15 +987,12 @@ void TCP_ManagerSystem::ProcessSegment(IP_PacketMsg_t* pMsg)
 
         const TCP_Header_t& hdr = pPacket->TCP_Frame.Header;
         const IP_Header_t&  ip  = pPacket->TCP_Frame.IP_Header;
-
         uint8_t  Flags = hdr.Flags;
         uint32_t Seq   = ntohl(hdr.SequenceNumber);
         uint32_t Ack   = ntohl(hdr.AcknowledgeNumber);
-
         uint8_t  ipHeaderLen  = (ip.VersionIHL & 0x0F) * 4;
         uint8_t  tcpHeaderLen = (hdr.Offset >> 4) * 4;
         uint16_t totalLength  = ntohs(ip.Length);
-
         size_t PayloadLen = 0;
 
         if(totalLength >= (ipHeaderLen + tcpHeaderLen))
@@ -1041,15 +1000,11 @@ void TCP_ManagerSystem::ProcessSegment(IP_PacketMsg_t* pMsg)
             PayloadLen = static_cast<size_t>(totalLength - ipHeaderLen - tcpHeaderLen);
         }
 
-        // ---------------------------------------------------------------------
         // Compute payload pointer (zero-copy)
-        // ---------------------------------------------------------------------
         pMsg->Payload = ((uint8_t*)&pPacket->TCP_Frame.Header) + tcpHeaderLen;
         pMsg->PayloadSize = PayloadLen;
 
-        // ---------------------------------------------------------------------
         // Forward to TCP state machine (TCP owns pMsg)
-        // ---------------------------------------------------------------------
         TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
 
       #if (IP_DBG_TCP == DEF_ENABLED)
@@ -1060,7 +1015,7 @@ void TCP_ManagerSystem::ProcessSegment(IP_PacketMsg_t* pMsg)
             DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "TCP: RX SYN+ACK detected\n");
         }
 
-        // ⭐ LOG #3 — ACK simple
+        //  ACK simple
         if((Flags & TCP_FLAG_ACK) && !(Flags & TCP_FLAG_SYN))
         {
             DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "TCP: RX ACK\n");
@@ -1140,10 +1095,10 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
         return nullptr;
     }
 
-    SocketInfo_t localInfo;
-    SocketInfo_t remoteInfo;
-    pSocketBase->GetLocalInfo(&localInfo);
-    pSocketBase->GetRemoteInfo(&remoteInfo);
+    SocketInfo_t LocalInfo;
+    SocketInfo_t RemoteInfo;
+    pSocketBase->GetLocalInfo(&LocalInfo);
+    pSocketBase->GetRemoteInfo(&RemoteInfo);
 
     IP_PacketMsg_t* pMsg = nullptr;
 
@@ -1165,14 +1120,14 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
     //IP_Header.TypeOfService       = 0;                                   AllocPacket already put it at 0
     //IP_Header.ID                  = 0;                                   AllocPacket already put it at 0
     //IP_Header.FlagsFragmentOffset = 0;                                   AllocPacket already put it at 0
-    IP_Header.TimeToLive            = 64;
+    IP_Header.TimeToLive            = TCP_TIME_TO_LIVE;
     IP_Header.Protocol              = IP_PROTOCOL_TCP;
-    IP_Header.SrcIP_Address         = localInfo.Address;
-    IP_Header.DstIP_Address         = remoteInfo.Address;
+    IP_Header.SrcIP_Address         = LocalInfo.Address;
+    IP_Header.DstIP_Address         = RemoteInfo.Address;
 
     TCP_Header_t& Header = pPacket->TCP_Frame.Header;
-    Header.SrcPort           = localInfo.Port;
-    Header.DstPort           = remoteInfo.Port;
+    Header.SrcPort           = LocalInfo.Port;
+    Header.DstPort           = RemoteInfo.Port;
     Header.SequenceNumber    = htonl(pSystem->m_SeqNumber);
     Header.AcknowledgeNumber = htonl(pSystem->m_AckNumber);
     Header.Flags             = Flags;
@@ -1194,7 +1149,6 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
 
     uint16_t TCP_Length  = static_cast<uint16_t>(HeaderBytes + Length);
     IP_Header.Length = htons(static_cast<uint16_t>(sizeof(IP_Header_t) + TCP_Length));
-
     Header.Offset = (HeaderBytes / 4) << 4;
 
     if((pPayload != nullptr) && (Length > 0))
@@ -1205,7 +1159,6 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
 
     //IP_Header.Checksum            = 0;                                   AllocPacket already put it at 0
     IP_Header.Checksum = LIB_HTONS_Checksum16((uint8_t*)&IP_Header, sizeof(IP_Header_t));
-
     // Header.Checksum       = 0;                                      AllocPacket already put it at 0
     Header.Checksum = IP_Manager::CalculateChecksum(&IP_Header, IP_PROTOCOL_TCP, (void*)&Header, TCP_Length);
 
@@ -1224,12 +1177,9 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
     {
         uint32_t SeqStart = pSystem->m_SeqNumber;
         uint32_t SeqEnd   = SeqStart;
-
         if((Flags & TCP_FLAG_SYN) != 0) SeqEnd++;
         if((Flags & TCP_FLAG_FIN) != 0) SeqEnd++;
-
         SeqEnd += static_cast<uint32_t>(Length);
-
         pSystem->m_SeqNumber = SeqEnd;
 
         for(size_t i = 0; i < TCP_MAX_TX_SEGMENTS; i++)
@@ -1294,10 +1244,12 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
 //-------------------------------------------------------------------------------------------------
 void TCP_SocketSystem::RetransmitIfNeeded(void)
 {
+  #if (IP_USE_TCP_SERVER == DEF_ENABLED)
     if(IsListening())
     {
         return;   // LISTEN sockets never retransmit
     }
+  #endif
 
     // ---------------------------------------------------------------------
     // Early exit if socket is not in a state where retransmission is valid
@@ -1321,11 +1273,10 @@ void TCP_SocketSystem::RetransmitIfNeeded(void)
     }
 
     TickCount_t Now = GetTick();
-
-    SocketInfo_t localInfo;
-    SocketInfo_t remoteInfo;
-    GetLocalInfo(&localInfo);
-    GetRemoteInfo(&remoteInfo);
+    SocketInfo_t LocalInfo;
+    SocketInfo_t RemoteInfo;
+    GetLocalInfo(&LocalInfo);
+    GetRemoteInfo(&RemoteInfo);
 
     for(size_t i = 0; i < TCP_MAX_TX_SEGMENTS; i++)
     {
@@ -1371,10 +1322,10 @@ void TCP_SocketSystem::RetransmitIfNeeded(void)
 
     TickCount_t Now = GetTick();
 
-    SocketInfo_t localInfo;
-    SocketInfo_t remoteInfo;
-    GetLocalInfo(&localInfo);
-    GetRemoteInfo(&remoteInfo);
+    SocketInfo_t LocalInfo;
+    SocketInfo_t RemoteInfo;
+    GetLocalInfo(&LocalInfo);
+    GetRemoteInfo(&RemoteInfo);
 
     for(size_t i = 0; i < TCP_MAX_TX_SEGMENTS; i++)
     {
@@ -1410,8 +1361,8 @@ void TCP_SocketSystem::RetransmitIfNeeded(void)
 
                 TCP_Header_t& Header = pPacket->TCP_Frame.Header;
 
-                Header.SrcPort           = localInfo.Port;
-                Header.DstPort           = remoteInfo.Port;
+                Header.SrcPort           = LocalInfo.Port;
+                Header.DstPort           = RemoteInfo.Port;
                 Header.SequenceNumber    = htonl(pSlot->SeqStart);
                 Header.AcknowledgeNumber = htonl(m_AckNumber);
                 Header.Flags             = pSlot->Flags;
@@ -1434,8 +1385,8 @@ void TCP_SocketSystem::RetransmitIfNeeded(void)
                 IP_Header.Length        = htons(static_cast<uint16_t>(sizeof(IP_Header_t) + TCP_Length));
                 IP_Header.TimeToLive    = 64;
                 IP_Header.Protocol      = IP_PROTOCOL_TCP;
-                IP_Header.SrcIP_Address = localInfo.Address;
-                IP_Header.DstIP_Address = remoteInfo.Address;
+                IP_Header.SrcIP_Address = LocalInfo.Address;
+                IP_Header.DstIP_Address = RemoteInfo.Address;
                 IP_Header.Checksum = LIB_HTONS_Checksum16((uint8_t*)&IP_Header, sizeof(IP_Header_t));
                 Header.Offset = static_cast<uint8_t>((HeaderBytes / 4) << 4);
 
@@ -1498,10 +1449,9 @@ bool TCP_ManagerSystem::ParseTCP_Header(IP_EthernetPacket_t* pPacket, TCP_Socket
     }
 
     TCP_Header_t& tcp = pPacket->TCP_Frame.Header;
-
     uint16_t DstPort = tcp.DstPort;
 
-#if (IP_USE_TCP_CLIENT == DEF_ENABLED)
+  #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
     if(m_pClientSocket != nullptr)
     {
         Socket* pSocketBase = static_cast<Socket*>(static_cast<TCP_SocketSystem*>(m_pClientSocket));
@@ -1512,9 +1462,9 @@ bool TCP_ManagerSystem::ParseTCP_Header(IP_EthernetPacket_t* pPacket, TCP_Socket
             return true;
         }
     }
-#endif
+  #endif
 
-#if (IP_USE_TCP_SERVER == DEF_ENABLED)
+  #if (IP_USE_TCP_SERVER == DEF_ENABLED)
     for(int i = 0; i < IP_TCP_MAX_LISTEN; i++)
     {
         TCP_Socket* pSocket = m_pServerSockets[i];
@@ -1532,7 +1482,7 @@ bool TCP_ManagerSystem::ParseTCP_Header(IP_EthernetPacket_t* pPacket, TCP_Socket
             return true;
         }
     }
-#endif
+  #endif
 
     return false;
 }
@@ -1546,14 +1496,7 @@ void TCP_SocketSystem::FlushTX_Slot(TCP_TX_Segment_t* pSlot)
         pMemoryPool->Free((void**)&pSlot->pPayload);
     }
 
-    pSlot->pPayload  = nullptr;
-    pSlot->SeqStart  = 0;
-    pSlot->SeqEnd    = 0;
-    pSlot->Flags     = 0;
-    pSlot->Window    = 0;
-    pSlot->Length    = 0;
-    pSlot->TimeStamp = 0;
-    pSlot->InUse     = false;
+    TCP_SocketSystem::ClearTX_Window(pSlot, 1);
 }
 
 
@@ -1584,7 +1527,7 @@ void TCP_ManagerSystem::UpdateTimers(void)
 {
     TickCount_t Now = GetTick();
 
-#if (IP_USE_TCP_CLIENT == DEF_ENABLED)
+  #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
     if(m_pClientSocket != nullptr)
     {
         TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(m_pClientSocket);
@@ -1592,49 +1535,56 @@ void TCP_ManagerSystem::UpdateTimers(void)
         switch(pSystem->m_State)
         {
             case TCP_STATE_TIME_WAIT:
+            {
                 if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
                 {
                     CloseAndFreeSocket(pSystem);
                     m_pClientSocket = nullptr;
                 }
-                break;
+            }
+            break;
 
             case TCP_STATE_CLOSED:
             case TCP_STATE_ERROR:
+            {
                 CloseAndFreeSocket(pSystem);
                 m_pClientSocket = nullptr;
-                break;
+            }
+            break;
 
             case TCP_STATE_LAST_ACK:
             case TCP_STATE_FIN_WAIT_2:
             case TCP_STATE_CLOSE_WAIT:
             case TCP_STATE_CLOSING:
+            {
                 if((Now - pSystem->m_LastReceivedTick) >= TCP_GENERIC_CLOSE_TIMEOUT)
                 {
                     CloseAndFreeSocket(pSystem);
                     m_pClientSocket = nullptr;
                 }
-                break;
+            }
+            break;
 
             case TCP_STATE_SYN_SENT:
+            {
                 if((Now - pSystem->m_LastReceivedTick) >= TCP_CONNECT_TIMEOUT)
                 {
                     pSystem->m_State = TCP_STATE_CLOSED;
                     CloseAndFreeSocket(pSystem);
                     m_pClientSocket = nullptr;
                 }
-                break;
+            }
+            break;
 
             default:
                 break;
         }
     }
-#endif
+  #endif
 
 
-#if (IP_USE_TCP_SERVER == DEF_ENABLED)
-
-    // 1. LISTEN sockets: no timeout logic
+  #if (IP_USE_TCP_SERVER == DEF_ENABLED)
+    //  LISTEN sockets: no timeout logic
     for(size_t i = 0; i < IP_TCP_MAX_LISTEN; i++)
     {
         // LISTEN sockets never timeout
@@ -1648,29 +1598,35 @@ void TCP_ManagerSystem::UpdateTimers(void)
         switch(pSystem->m_State)
         {
             case TCP_STATE_TIME_WAIT:
+            {
                 if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
                 {
                     CloseAndFreeSocket(pSystem);
                     m_pAcceptedSocket = nullptr;
                 }
-                break;
+            }
+            break;
 
             case TCP_STATE_CLOSED:
             case TCP_STATE_ERROR:
+            {
                 CloseAndFreeSocket(pSystem);
                 m_pAcceptedSocket = nullptr;
-                break;
+            }
+            break;
 
             case TCP_STATE_LAST_ACK:
             case TCP_STATE_FIN_WAIT_2:
             case TCP_STATE_CLOSE_WAIT:
             case TCP_STATE_CLOSING:
+            {
                 if((Now - pSystem->m_LastReceivedTick) >= TCP_GENERIC_CLOSE_TIMEOUT)
                 {
                     CloseAndFreeSocket(pSystem);
                     m_pAcceptedSocket = nullptr;
                 }
-                break;
+            }
+            break;
 
             default:
                 break;
@@ -1679,120 +1635,9 @@ void TCP_ManagerSystem::UpdateTimers(void)
 
     // 3. Accepted child sockets (already returned by Accept())
     // Application owns them; no list yet.
-
-#endif
+  #endif
 }
-/*
-void TCP_ManagerSystem::UpdateTimers(void)
-{
-    TickCount_t Now = GetTick();
 
-#if (IP_USE_TCP_CLIENT == DEF_ENABLED)
-    if(m_pClientSocket != nullptr)
-    {
-        TCP_Socket*       pSocket = m_pClientSocket;
-        TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
-
-        switch(pSystem->m_State)
-        {
-            case TCP_STATE_TIME_WAIT:
-                if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
-                {
-                    CloseAndFreeSocket(pSystem);
-                    m_pClientSocket = nullptr;
-                }
-                break;
-
-            case TCP_STATE_CLOSED:
-            case TCP_STATE_ERROR:
-                CloseAndFreeSocket(pSystem);
-                m_pClientSocket = nullptr;
-                break;
-
-            case TCP_STATE_LAST_ACK:
-            case TCP_STATE_FIN_WAIT_2:
-            case TCP_STATE_CLOSE_WAIT:
-            case TCP_STATE_CLOSING:
-                if((Now - pSystem->m_LastReceivedTick) >= TCP_GENERIC_CLOSE_TIMEOUT)
-                {
-                    CloseAndFreeSocket(pSystem);
-                    m_pClientSocket = nullptr;
-                }
-                break;
-
-            case TCP_STATE_SYN_SENT:
-                if((Now - pSystem->m_LastReceivedTick) >= TCP_CONNECT_TIMEOUT)
-                {
-                    pSystem->m_State = TCP_STATE_CLOSED;
-                    CloseAndFreeSocket(pSystem);
-                    m_pClientSocket = nullptr;
-                }
-                break;
-
-            default:
-                break;
-        }
-    }
-#endif
-
-#if (IP_USE_TCP_SERVER == DEF_ENABLED)
-
-    // 1. LISTEN sockets: no timeout logic
-    for(size_t i = 0; i < IP_TCP_MAX_LISTEN; i++)
-    {
-        // LISTEN sockets never timeout
-        // They stay alive until the application closes them
-    }
-
-    // 2. Pending accepted socket (SYN received, waiting for Accept())
-    if(m_pAcceptedSocket != nullptr)
-    {
-        TCP_SocketSystem* pSystem = m_pAcceptedSocket;
-
-        if(pSystem->IsListening())
-        {
-            continue;   // LISTEN sockets never timeout
-        }
-
-        switch(pSystem->m_State)
-        {
-            case TCP_STATE_TIME_WAIT:
-                if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
-                {
-                    CloseAndFreeSocket(pSystem);
-                    m_pAcceptedSocket = nullptr;
-                }
-                break;
-
-            case TCP_STATE_CLOSED:
-            case TCP_STATE_ERROR:
-                CloseAndFreeSocket(pSystem);
-                m_pAcceptedSocket = nullptr;
-                break;
-
-            case TCP_STATE_LAST_ACK:
-            case TCP_STATE_FIN_WAIT_2:
-            case TCP_STATE_CLOSE_WAIT:
-            case TCP_STATE_CLOSING:
-                if((Now - pSystem->m_LastReceivedTick) >= TCP_GENERIC_CLOSE_TIMEOUT)
-                {
-                    CloseAndFreeSocket(pSystem);
-                    m_pAcceptedSocket = nullptr;
-                }
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    // 3. Accepted child sockets (already returned by Accept())
-    // NOTE: You will eventually maintain a dynamic list of active sockets.
-    // For now, the application holds the pointer and calls Close() when done.
-
-#endif
-}
-*/
 //-------------------------------------------------------------------------------------------------
 void TCP_ManagerSystem::CloseAndFreeSocket(TCP_SocketSystem* pSystem)
 {

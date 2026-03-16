@@ -23,7 +23,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------
 //
 //  Note: User CLI Command Function: This is the user space for the user CLI command set.
 //
@@ -171,6 +170,8 @@ Language_e VT100_DisplayLanguageSelection(Language_e Language, bool StateInit)
     return Language;
 }
 
+//-------------------------------------------------------------------------------------------------
+
 TempUnit_e VT100_DisplayTemperatureSelection(TempUnit_e Unit, bool StateInit)
 {
     myVT100.SetForeColor(VT100_COLOR_CYAN);
@@ -304,6 +305,7 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
     DateAndTime_t   DateTime;
     TempUnit_e      Unit;
     // type         Temperature;
+    static int      ResetCount = 0;
 
     VAR_UNUSED(Input);
 
@@ -313,6 +315,21 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
         {
             VT100_LastSecond = 60;
             VT100_LastUpTime = 0;
+            ResetCount       = 0; 
+        }
+        break;
+
+        case VT100_CALLBACK_ON_INPUT:
+        {
+            if(Input == 1)
+            {
+                ResetCount++;
+                
+                if(ResetCount >= 3)
+                {
+                    CPU_SpecificSystemReset();
+                }
+            }   
         }
         break;
 
@@ -432,7 +449,8 @@ VT100_InputType_e VT100_Terminal::CALLBACK_ProductInformation(uint8_t Input, VT1
         default: break;
     }
 
-    return VT100_INPUT_ESCAPE;
+    return VT100_INPUT_MENU_CHOICE;
+    //return VT100_INPUT_ESCAPE;
 }
 #endif //  (DIGINI_USE_LABEL_PRODUCT_INFO == DEF_ENABLED)
 

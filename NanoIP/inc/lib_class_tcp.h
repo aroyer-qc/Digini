@@ -60,9 +60,10 @@ class TCP_SocketSystem : public TCP_Socket, public Socket
        // TCP_Socket*                 GetAcceptedSocket       (void) override;
       #endif
 
-    private:
+        static void                 ClearTX_Window          (TCP_TX_Segment_t* pSlot, int SegmentCount) { memset((void*)pSlot, 0x00, sizeof(TCP_TX_Segment_t) * SegmentCount); }
+        static void                 FlushTX_Slot            (TCP_TX_Segment_t* pSlot);
 
-        void                        FlushTX_Slot(TCP_TX_Segment_t* pSlot);
+    private:
 
         friend class                TCP_Manager;
         TCP_Manager*                m_pTCP;
@@ -108,7 +109,7 @@ class TCP_ManagerSystem : public TCP_Manager
         void                Close                           (TCP_Socket* pSocket);
         TCP_Socket*         Accept                          (TCP_Socket* pListenSocket);
 
-        void                SetAcceptedSocket               (TCP_SocketSystem* pSock) { m_pAcceptedSocket = pSock;  }
+        void                SetAcceptedSocket               (TCP_SocketSystem* pSock)                   { m_pAcceptedSocket = pSock; }
 
       #endif
 

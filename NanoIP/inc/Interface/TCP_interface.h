@@ -50,11 +50,12 @@ enum TCP_State_e
 
 enum SocketEvent_e
 {
-    SOCKET_EVENT_NONE = 0,          // No event
-    SOCKET_EVENT_CONNECTED,         // TCP connection established
-    SOCKET_EVENT_RX_READY,          // New payload available in RX buffer
-    SOCKET_EVENT_CLOSED,            // Connection closed (FIN or RST)
-    SOCKET_EVENT_ERROR,             // NOT USE AT THIS POINT
+    SOCKET_EVENT_NONE = 0,     // No event
+    SOCKET_EVENT_CONNECTED,    // TCP connection established
+    SOCKET_EVENT_RX_READY,     // New payload available in RX buffer
+    SOCKET_EVENT_CLOSED,       // Connection closed (FIN or RST)
+    SOCKET_EVENT_ERROR,        // NOT USE AT THIS POINT
+    SOCKET_EVENT_ACCEPT,       // Connection accepted
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -67,21 +68,26 @@ class TCP_SocketEventHandler
 {
     public:
 
-        virtual void            OnSocketEvent   (TCP_Socket* pSocket, SocketEvent_e Event)      = 0;
+        virtual void            OnSocketEvent       (TCP_Socket* pSocket, SocketEvent_e Event)      = 0;
 };
 
 class TCP_Socket
 {
     public:
 
-        virtual                 ~TCP_Socket     (){}
+        virtual                 ~TCP_Socket         (){}
 
-        virtual size_t          Send            (const uint8_t* pBuffer, size_t Length)         = 0;
-        virtual size_t          Receive         (uint8_t* pBuffer, size_t MaxLength)            = 0;
-        virtual void            Close           (void)                                          = 0;
-        virtual bool            IsConnected     (void) const                                    = 0;
-        virtual TCP_State_e     GetState        (void) const                                    = 0;
-        virtual void            SetEventHandler (TCP_SocketEventHandler* pHandler)              = 0;
+        virtual size_t          Send                (const uint8_t* pBuffer, size_t Length)         = 0;
+        virtual size_t          Receive             (uint8_t* pBuffer, size_t MaxLength)            = 0;
+        virtual void            Close               (void)                                          = 0;
+        virtual bool            IsConnected         (void) const                                    = 0;
+        virtual TCP_State_e     GetState            (void) const                                    = 0;
+        virtual void            SetEventHandler     (TCP_SocketEventHandler* pHandler)              = 0;
+
+      #if (IP_USE_TCP_SERVER == DEF_ENABLED)
+        virtual bool            IsListening         (void) const                                    = 0;
+        //virtual TCP_Socket*     GetAcceptedSocket   (void)                                          = 0;
+      #endif
 
     protected:
 
@@ -102,8 +108,10 @@ class TCP_Manager
       #endif
 
       #if (IP_USE_TCP_SERVER == DEF_ENABLED)
-        //SystemState_e   EnterListen             (Socket* pSocket, uint16_t Backlog)           = 0;
-        //void            Close                   (Socket* pSocket)                             = 0;
+        virtual TCP_Socket*     CreateSocket    (void)                                          = 0;    // Create a new TCP socket (server or client)
+        virtual bool            EnterListen     (TCP_Socket* pSocket, uint16_t Backlog)         = 0;    // Put a socket into listening mode
+        virtual void            Close           (TCP_Socket* pSocket)                           = 0;    // Close and free a socket
+        virtual TCP_Socket*     Accept          (TCP_Socket* pListenSocket)                     = 0;    // Retrieve next accepted client socket (non-blocking)
       #endif
 
         virtual void            Process         (void)                                          = 0;

@@ -183,6 +183,7 @@ class NetworkContext;
 #include "./NanoIP/inc/lib_class_arp.h"
 #include "./NanoIP/inc/lib_class_dhcp.h"
 #include "./NanoIP/inc/lib_class_dns.h"
+#include "./NanoIP/inc/lib_class_http.h"
 #include "./NanoIP/inc/lib_class_icmp.h"
 //#include "./NanoIP/inc/lib_class_ntp.h"
 #include "./NanoIP/inc/lib_class_mqtt.h"

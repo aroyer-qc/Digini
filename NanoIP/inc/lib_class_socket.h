@@ -103,7 +103,7 @@ class Socket
 
       #if (IP_USE_UDP == DEF_ENABLED)
         bool                IsBound             (void);
-        bool                IsListening         (void);
+        //bool                IsListening         (void);
 
         UDP_Socket_t*       GetUDP              (void)                      { return m_Protocol.pUDP;                                   }
       #else
@@ -144,7 +144,7 @@ class Socket
         SocketInfo_t            m_RemoteInfo;
         SocketProtocol_t        m_Protocol;
         uint16_t                m_Backlog;
-        bool                    m_IsListening;
+        //bool                    m_IsListening;
         bool                    m_Active;
 
         uint16_t                m_SocketID;         // Used by dispatcher

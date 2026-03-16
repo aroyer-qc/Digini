@@ -40,6 +40,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "./lib_digini.h"
+#include <new>
 
 //-------------------------------------------------------------------------------------------------
 
@@ -366,8 +367,7 @@ void TCP_SocketSystem::Close(void)
 //                  handled by Process(). It also does not send segments directly; instead it calls
 //                  SendSegment() as needed.
 //-------------------------------------------------------------------------------------------------
-void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket*     pSocket,
-                                            IP_PacketMsg_t* pMsg,
+void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket*     pSocket, IP_PacketMsg_t* pMsg,
                                             uint8_t         Flags,
                                             uint32_t        Seq,
                                             uint32_t        Ack)
@@ -403,22 +403,52 @@ void TCP_SocketSystem::ProcessIncomingFlags(TCP_Socket*     pSocket,
         }
     }
 
-    switch(pSystem->m_State)
+   #if (IP_USE_TCP_SERVER == DEF_ENABLED)
+    // ---------------------------------------------------------------------
+    // LISTEN sockets: handle incoming SYN (server mode)
+    // ---------------------------------------------------------------------
+    if(pSystem->IsListening())
     {
-        case TCP_STATE_LISTEN:
+        if((Flags & TCP_FLAG_SYN) != 0)
         {
-            if((Flags & TCP_FLAG_SYN) != 0)
+            // Allocate child socket from memory pool
+            TCP_SocketSystem* pChild =
+                (TCP_SocketSystem*)pMemoryPool->Alloc(sizeof(TCP_SocketSystem), MEM_DBG_TCP);
+
+            if(pChild == nullptr)
             {
-                pSystem->m_AckNumber = Seq + 1;
-                pSystem->m_SeqNumber = (uint32_t)GetTick();
-
-                pSystem->m_pTCP->SendSegment(pSocket, nullptr, 0, TCP_FLAG_SYN | TCP_FLAG_ACK, false);
-
-                pSystem->m_State = TCP_STATE_SYN_RECEIVED;
+                IP_Manager::FreeMessage(pMsg);
+                return;
             }
-            break;
+
+            new (pChild) TCP_SocketSystem(pSystem->GetContext(), *pSystem->m_pTCP);
+
+            pChild->m_State     = TCP_STATE_SYN_RECEIVED;
+            pChild->m_AckNumber = Seq + 1;
+            pChild->m_SeqNumber = (uint32_t)GetTick();
+
+            TCP_ManagerSystem* pMgr = static_cast<TCP_ManagerSystem*>(pSystem->m_pTCP);
+            pMgr->SetAcceptedSocket(pChild);
+
+            pSystem->m_pTCP->SendSegment(pChild, nullptr, 0, TCP_FLAG_SYN | TCP_FLAG_ACK, false);
+
+            if(pSystem->m_pEventHandler != nullptr)
+            {
+                pSystem->m_pEventHandler->OnSocketEvent(pSocket, SOCKET_EVENT_ACCEPT);
+            }
+
+            IP_Manager::FreeMessage(pMsg);
+            return;
         }
 
+        // LISTEN sockets ignore everything except SYN
+        IP_Manager::FreeMessage(pMsg);
+        return;
+    }
+  #endif
+
+    switch(pSystem->m_State)
+    {
         case TCP_STATE_SYN_SENT:
         {
             if(((Flags & TCP_FLAG_SYN) != 0) && ((Flags & TCP_FLAG_ACK) != 0))
@@ -656,6 +686,41 @@ TCP_Socket* TCP_ManagerSystem::Connect(const IP_Address_t& ServerIP, uint16_t Po
 }
 #endif
 
+#if (IP_USE_TCP_SERVER == DEF_ENABLED)
+TCP_Socket* TCP_ManagerSystem::CreateSocket(void)
+{
+    // Allocate memory for a TCP_SocketSystem instance
+    TCP_SocketSystem* pSock = (TCP_SocketSystem*)pMemoryPool->Alloc(sizeof(TCP_SocketSystem), MEM_DBG_TCP);
+
+    if(pSock == nullptr)
+    {
+        // No memory available
+        return nullptr;
+    }
+
+    // Construct the socket in-place
+    new (pSock) TCP_SocketSystem(m_pContext, *this);
+
+    // Initialize default state
+    pSock->m_State = TCP_STATE_CLOSED;
+
+    // Register socket in server socket table (first free slot)
+    for(size_t i = 0; i < IP_TCP_MAX_LISTEN; i++)
+    {
+        if(m_pServerSockets[i] == nullptr)
+        {
+            m_pServerSockets[i] = pSock;
+            return pSock;
+        }
+    }
+
+    // No free slot → free memory and return null
+    pSock->~TCP_SocketSystem();
+    pMemoryPool->Free((void**)&pSock);
+    return nullptr;
+}
+#endif
+
 //-------------------------------------------------------------------------------------------------
 //  Name:           EnterListen
 //
@@ -689,41 +754,41 @@ TCP_Socket* TCP_ManagerSystem::Connect(const IP_Address_t& ServerIP, uint16_t Po
 //                  connections.
 //-------------------------------------------------------------------------------------------------
 #if (IP_USE_TCP_SERVER == DEF_ENABLED)
-SystemState_e TCP_ManagerSystem::EnterListen(Socket* pSocket, uint16_t Backlog)
+bool TCP_ManagerSystem::EnterListen(TCP_Socket* pSocket, uint16_t Backlog)
 {
+    // Validate input
     if(pSocket == nullptr)
     {
-        return SYS_ERROR;
+        return false;
     }
 
-    TCP_Socket* pTCPSocket = static_cast<TCP_Socket*>(pSocket);
+    TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
 
-    if(pTCPSocket->GetLocalPort() == 0)
-    {
-        return SYS_ERROR;
-    }
+    // Ensure the socket is registered in the server socket table
+    bool found = false;
 
-    for(int i = 0; i < IP_TCP_MAX_LISTEN; i++)
+    for(size_t i = 0; i < IP_TCP_MAX_LISTEN; i++)
     {
-        if(m_pServerSockets[i] == pTCPSocket)
+        if(m_pServerSockets[i] == pSocket)
         {
-            return SYS_ERROR;
+            found = true;
+            break;
         }
     }
 
-    for(int i = 0; i < IP_TCP_MAX_LISTEN; i++)
+    if(found == false)
     {
-        if(m_pServerSockets[i] == nullptr)
-        {
-            m_pServerSockets[i] = pTCPSocket;
-
-            pTCPSocket->m_State = TCP_STATE_LISTEN;
-
-            return SYS_READY;
-        }
+        // Socket was not created via CreateSocket()
+        return false;
     }
 
-    return SYS_ERROR;
+    // Initialize listen state
+    pSystem->m_State = TCP_STATE_LISTEN;
+
+    // Backlog is not used yet, but we keep it for future expansion
+    (void)Backlog;
+
+    return true;
 }
 #endif
 
@@ -748,28 +813,78 @@ SystemState_e TCP_ManagerSystem::EnterListen(Socket* pSocket, uint16_t Backlog)
 //                  If the socket is not found in the server table, the function silently returns.
 //-------------------------------------------------------------------------------------------------
 #if (IP_USE_TCP_SERVER == DEF_ENABLED)
-void TCP_ManagerSystem::Close(Socket* pSocket)
+void TCP_ManagerSystem::Close(TCP_Socket* pSocket)
 {
     if(pSocket == nullptr)
     {
         return;
     }
 
-    for(int i = 0; i < IP_TCP_MAX_LISTEN; i++)
+    TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
+
+    // ---------------------------------------------------------------------
+    // 1. If this is a listening socket, remove it from the server table
+    // ---------------------------------------------------------------------
+    if(pSystem->IsListening())
     {
-        TCP_Socket* pTCPSock = m_pServerSockets[i];
-
-        if(pTCPSock == nullptr)
+        for(size_t i = 0; i < IP_TCP_MAX_LISTEN; i++)
         {
-            continue;
-        }
-
-        if(pTCPSock == static_cast<TCP_Socket*>(pSocket))
-        {
-            pTCPSock->Close();
-            return;
+            if(m_pServerSockets[i] == pSocket)
+            {
+                m_pServerSockets[i] = nullptr;
+                CloseAndFreeSocket(pSystem);
+                return;
+            }
         }
     }
+
+    // ---------------------------------------------------------------------
+    // 2. If this is the pending accepted socket, clear it
+    // ---------------------------------------------------------------------
+    if(m_pAcceptedSocket == pSystem)
+    {
+        m_pAcceptedSocket = nullptr;
+        CloseAndFreeSocket(pSystem);
+        return;
+    }
+
+    // ---------------------------------------------------------------------
+    // 3. Otherwise, this is a normal child socket (already accepted)
+    // ---------------------------------------------------------------------
+    CloseAndFreeSocket(pSystem);
+}
+#endif
+
+#if (IP_USE_TCP_SERVER == DEF_ENABLED)
+TCP_Socket* TCP_ManagerSystem::Accept(TCP_Socket* pListenSocket)
+{
+    // Validate input
+    if(pListenSocket == nullptr)
+    {
+        return nullptr;
+    }
+
+    TCP_SocketSystem* pListen = static_cast<TCP_SocketSystem*>(pListenSocket);
+
+    if(pListen->IsListening() == false)
+    {
+        return nullptr;   // Not a listening socket
+    }
+
+    // No pending accepted connection
+    if(m_pAcceptedSocket == nullptr)
+    {
+        return nullptr;
+    }
+
+    // Return the pending child socket
+    TCP_SocketSystem* pChild = m_pAcceptedSocket;
+
+    // Clear pending pointer
+    m_pAcceptedSocket = nullptr;
+
+    // Child socket is now ready for use
+    return pChild;
 }
 #endif
 
@@ -795,6 +910,10 @@ void TCP_ManagerSystem::Process(void)
 {
     UpdateTimers();
 
+
+    // ---------------------------------------------------------------------
+    // CLIENT SIDE
+    // ---------------------------------------------------------------------
 #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
     if(m_pClientSocket != nullptr)
     {
@@ -807,26 +926,44 @@ void TCP_ManagerSystem::Process(void)
     }
 #endif
 
+    // ---------------------------------------------------------------------
+    // SERVER SIDE
+    // ---------------------------------------------------------------------
 #if (IP_USE_TCP_SERVER == DEF_ENABLED)
-    for(int i = 0; i < IP_TCP_MAX_LISTEN; i++)
+
+    // 1. Process listening sockets (they never retransmit)
+    for(size_t i = 0; i < IP_TCP_MAX_LISTEN; i++)
     {
-        Socket* pSock = m_pServerSockets[i];
+        TCP_Socket* pSock = m_pServerSockets[i];
         if(pSock == nullptr)
         {
-            continue;
+            return;
         }
 
-        TCP_Socket* pTCP = pSock->GetTCP();
-        if(pTCP != nullptr)
-        {
-            TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pTCP);
+        // LISTEN sockets do not retransmit
+    }
 
-            if(pSystem->IsConnected())
-            {
-                pSystem->RetransmitIfNeeded();
-            }
+    // 2. Process pending accepted socket (SYN received, waiting for Accept())
+    if(m_pAcceptedSocket != nullptr)
+    {
+        TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(m_pClientSocket);
+
+        if(pSystem->IsListening())
+        {
+            return;   // LISTEN sockets never retransmit
+        }
+
+        if(m_pAcceptedSocket->IsConnected())
+        {
+            m_pAcceptedSocket->RetransmitIfNeeded();
         }
     }
+
+    // 3. Process all accepted child sockets (already returned by Accept())
+    // NOTE: You will eventually maintain a dynamic list of active sockets.
+    // For now, the application holds the pointer and calls Close() when done.
+    // So nothing to iterate here yet.
+
 #endif
 }
 
@@ -935,6 +1072,18 @@ void TCP_ManagerSystem::ProcessSegment(IP_PacketMsg_t* pMsg)
         }
 
         DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "TCP: Processing flags in state=%d\n", pSystem->m_State);
+      #endif
+
+      #if (IP_USE_TCP_SERVER == DEF_ENABLED)
+        if(pSystem->IsListening() == true)
+        {
+            // If a child socket was already created, route to it
+            if(m_pAcceptedSocket != nullptr)
+            {
+                pSystem = m_pAcceptedSocket;
+                pSocket = m_pAcceptedSocket;
+            }
+        }
       #endif
 
         pSystem->ProcessIncomingFlags(pSocket, pMsg, Flags, Seq, Ack);
@@ -1145,6 +1294,74 @@ IP_PacketMsg_t* TCP_ManagerSystem::SendSegment(TCP_Socket* pSocket, const uint8_
 //-------------------------------------------------------------------------------------------------
 void TCP_SocketSystem::RetransmitIfNeeded(void)
 {
+    if(IsListening())
+    {
+        return;   // LISTEN sockets never retransmit
+    }
+
+    // ---------------------------------------------------------------------
+    // Early exit if socket is not in a state where retransmission is valid
+    // ---------------------------------------------------------------------
+    switch(m_State)
+    {
+        case TCP_STATE_CLOSED:
+        case TCP_STATE_ERROR:
+        case TCP_STATE_LISTEN:
+        case TCP_STATE_TIME_WAIT:
+            return;
+
+        default:
+            break;
+    }
+
+    IP_Manager* pIP = GetContext()->GetIP_Manager();
+    if(pIP == nullptr)
+    {
+        return;
+    }
+
+    TickCount_t Now = GetTick();
+
+    SocketInfo_t localInfo;
+    SocketInfo_t remoteInfo;
+    GetLocalInfo(&localInfo);
+    GetRemoteInfo(&remoteInfo);
+
+    for(size_t i = 0; i < TCP_MAX_TX_SEGMENTS; i++)
+    {
+        TCP_TX_Segment_t* pSlot = &m_TX_Window[i];
+
+        if(pSlot->InUse == true)
+        {
+            // -----------------------------------------------------------------
+            // Do not retransmit segments already acknowledged
+            // -----------------------------------------------------------------
+            if(pSlot->SeqStart < m_AckNumber)
+            {
+                FlushTX_Slot(pSlot);
+                continue;
+            }
+
+            if((Now - pSlot->TimeStamp) >= m_RetransmitTimeOut)
+            {
+                pSlot->RetryCount++;
+
+                if(pSlot->RetryCount >= TCP_MAX_RETRY)
+                {
+                    FlushTX_Slot(pSlot);
+                    continue;
+                }
+
+                // (… ton code de retransmission reste inchangé …)
+
+                pSlot->TimeStamp = Now;
+            }
+        }
+    }
+}
+/*
+void TCP_SocketSystem::RetransmitIfNeeded(void)
+{
     IP_Manager* pIP = GetContext()->GetIP_Manager();
 
     if(pIP == nullptr)
@@ -1236,7 +1453,7 @@ void TCP_SocketSystem::RetransmitIfNeeded(void)
         }
     }
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //  Name:           ParseTCP_Header
 //
@@ -1370,6 +1587,109 @@ void TCP_ManagerSystem::UpdateTimers(void)
 #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
     if(m_pClientSocket != nullptr)
     {
+        TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(m_pClientSocket);
+
+        switch(pSystem->m_State)
+        {
+            case TCP_STATE_TIME_WAIT:
+                if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
+                {
+                    CloseAndFreeSocket(pSystem);
+                    m_pClientSocket = nullptr;
+                }
+                break;
+
+            case TCP_STATE_CLOSED:
+            case TCP_STATE_ERROR:
+                CloseAndFreeSocket(pSystem);
+                m_pClientSocket = nullptr;
+                break;
+
+            case TCP_STATE_LAST_ACK:
+            case TCP_STATE_FIN_WAIT_2:
+            case TCP_STATE_CLOSE_WAIT:
+            case TCP_STATE_CLOSING:
+                if((Now - pSystem->m_LastReceivedTick) >= TCP_GENERIC_CLOSE_TIMEOUT)
+                {
+                    CloseAndFreeSocket(pSystem);
+                    m_pClientSocket = nullptr;
+                }
+                break;
+
+            case TCP_STATE_SYN_SENT:
+                if((Now - pSystem->m_LastReceivedTick) >= TCP_CONNECT_TIMEOUT)
+                {
+                    pSystem->m_State = TCP_STATE_CLOSED;
+                    CloseAndFreeSocket(pSystem);
+                    m_pClientSocket = nullptr;
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+#endif
+
+
+#if (IP_USE_TCP_SERVER == DEF_ENABLED)
+
+    // 1. LISTEN sockets: no timeout logic
+    for(size_t i = 0; i < IP_TCP_MAX_LISTEN; i++)
+    {
+        // LISTEN sockets never timeout
+    }
+
+    // 2. Pending accepted socket (SYN received, waiting for Accept())
+    if(m_pAcceptedSocket != nullptr)
+    {
+        TCP_SocketSystem* pSystem = m_pAcceptedSocket;
+
+        switch(pSystem->m_State)
+        {
+            case TCP_STATE_TIME_WAIT:
+                if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
+                {
+                    CloseAndFreeSocket(pSystem);
+                    m_pAcceptedSocket = nullptr;
+                }
+                break;
+
+            case TCP_STATE_CLOSED:
+            case TCP_STATE_ERROR:
+                CloseAndFreeSocket(pSystem);
+                m_pAcceptedSocket = nullptr;
+                break;
+
+            case TCP_STATE_LAST_ACK:
+            case TCP_STATE_FIN_WAIT_2:
+            case TCP_STATE_CLOSE_WAIT:
+            case TCP_STATE_CLOSING:
+                if((Now - pSystem->m_LastReceivedTick) >= TCP_GENERIC_CLOSE_TIMEOUT)
+                {
+                    CloseAndFreeSocket(pSystem);
+                    m_pAcceptedSocket = nullptr;
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    // 3. Accepted child sockets (already returned by Accept())
+    // Application owns them; no list yet.
+
+#endif
+}
+/*
+void TCP_ManagerSystem::UpdateTimers(void)
+{
+    TickCount_t Now = GetTick();
+
+#if (IP_USE_TCP_CLIENT == DEF_ENABLED)
+    if(m_pClientSocket != nullptr)
+    {
         TCP_Socket*       pSocket = m_pClientSocket;
         TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
 
@@ -1416,15 +1736,23 @@ void TCP_ManagerSystem::UpdateTimers(void)
 #endif
 
 #if (IP_USE_TCP_SERVER == DEF_ENABLED)
-    for(int i = 0; i < IP_TCP_MAX_LISTEN; i++)
-    {
-        TCP_Socket* pSocket = m_pServerSockets[i];
-        if(pSocket == nullptr)
-        {
-            continue;
-        }
 
-        TCP_SocketSystem* pSystem = static_cast<TCP_SocketSystem*>(pSocket);
+    // 1. LISTEN sockets: no timeout logic
+    for(size_t i = 0; i < IP_TCP_MAX_LISTEN; i++)
+    {
+        // LISTEN sockets never timeout
+        // They stay alive until the application closes them
+    }
+
+    // 2. Pending accepted socket (SYN received, waiting for Accept())
+    if(m_pAcceptedSocket != nullptr)
+    {
+        TCP_SocketSystem* pSystem = m_pAcceptedSocket;
+
+        if(pSystem->IsListening())
+        {
+            continue;   // LISTEN sockets never timeout
+        }
 
         switch(pSystem->m_State)
         {
@@ -1432,14 +1760,14 @@ void TCP_ManagerSystem::UpdateTimers(void)
                 if((Now - pSystem->m_LastReceivedTick) >= TCP_TIME_WAIT_TIMEOUT)
                 {
                     CloseAndFreeSocket(pSystem);
-                    m_pServerSockets[i] = nullptr;
+                    m_pAcceptedSocket = nullptr;
                 }
                 break;
 
             case TCP_STATE_CLOSED:
             case TCP_STATE_ERROR:
                 CloseAndFreeSocket(pSystem);
-                m_pServerSockets[i] = nullptr;
+                m_pAcceptedSocket = nullptr;
                 break;
 
             case TCP_STATE_LAST_ACK:
@@ -1449,16 +1777,7 @@ void TCP_ManagerSystem::UpdateTimers(void)
                 if((Now - pSystem->m_LastReceivedTick) >= TCP_GENERIC_CLOSE_TIMEOUT)
                 {
                     CloseAndFreeSocket(pSystem);
-                    m_pServerSockets[i] = nullptr;
-                }
-                break;
-
-            case TCP_STATE_SYN_SENT:
-                if((Now - pSystem->m_LastReceivedTick) >= TCP_CONNECT_TIMEOUT)
-                {
-                    pSystem->m_State = TCP_STATE_CLOSED
-                    CloseAndFreeSocket(pSystem);
-                    m_pServerSockets[i] = nullptr;
+                    m_pAcceptedSocket = nullptr;
                 }
                 break;
 
@@ -1466,9 +1785,14 @@ void TCP_ManagerSystem::UpdateTimers(void)
                 break;
         }
     }
+
+    // 3. Accepted child sockets (already returned by Accept())
+    // NOTE: You will eventually maintain a dynamic list of active sockets.
+    // For now, the application holds the pointer and calls Close() when done.
+
 #endif
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 void TCP_ManagerSystem::CloseAndFreeSocket(TCP_SocketSystem* pSystem)
 {
@@ -1480,6 +1804,7 @@ void TCP_ManagerSystem::CloseAndFreeSocket(TCP_SocketSystem* pSystem)
     nOS_StatusReg   sr;
     IP_PacketMsg_t* pMsg = nullptr;
 
+    // Free all pending RX messages
     while(pSystem->DequeueMessage(pMsg) == true)
     {
         if(pMsg != nullptr)
@@ -1488,6 +1813,7 @@ void TCP_ManagerSystem::CloseAndFreeSocket(TCP_SocketSystem* pSystem)
         }
     }
 
+    // Flush all TX segments
     for(size_t i = 0; i < TCP_MAX_TX_SEGMENTS; i++)
     {
         TCP_TX_Segment_t* pSlot = &pSystem->m_TX_Window[i];
@@ -1499,6 +1825,25 @@ void TCP_ManagerSystem::CloseAndFreeSocket(TCP_SocketSystem* pSystem)
     }
 
     nOS_EnterCritical(sr);
+
+  #if (IP_USE_TCP_SERVER == DEF_ENABLED)
+    // Remove from server socket table
+    for(size_t i = 0; i < IP_TCP_MAX_LISTEN; i++)
+    {
+        if(m_pServerSockets[i] == pSystem)
+        {
+            m_pServerSockets[i] = nullptr;
+            break;
+        }
+    }
+
+    // Clear pending accepted socket if needed
+    if(m_pAcceptedSocket == pSystem)
+    {
+        m_pAcceptedSocket = nullptr;
+    }
+  #endif
+
     pSystem->m_State = TCP_STATE_CLOSED;
 
     if(pSystem->m_pEventHandler != nullptr)
@@ -1506,10 +1851,15 @@ void TCP_ManagerSystem::CloseAndFreeSocket(TCP_SocketSystem* pSystem)
         pSystem->m_pEventHandler->OnSocketEvent(pSystem, SOCKET_EVENT_CLOSED);
     }
 
+    // Destroy and free memory
     pSystem->~TCP_SocketSystem();
     pMemoryPool->Free((void**)&pSystem);
+
     nOS_LeaveCritical(sr);
 }
+
+//-------------------------------------------------------------------------------------------------
+
 
 #endif //(IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
 

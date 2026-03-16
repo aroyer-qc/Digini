@@ -55,6 +55,11 @@ class TCP_SocketSystem : public TCP_Socket, public Socket
         void                        ProcessIncomingFlags    (TCP_Socket* pSocket, IP_PacketMsg_t* pMsg, uint8_t Flags, uint32_t Seq, uint32_t Ack);
         void                        RetransmitIfNeeded      (void);
 
+      #if (IP_USE_TCP_SERVER == DEF_ENABLED)
+        bool                        IsListening             (void) const                                { return (m_State == TCP_STATE_LISTEN); }
+       // TCP_Socket*                 GetAcceptedSocket       (void) override;
+      #endif
+
     private:
 
         void                        FlushTX_Slot(TCP_TX_Segment_t* pSlot);
@@ -91,33 +96,42 @@ class TCP_ManagerSystem : public TCP_Manager
 {
     public:
 
-        bool            Initialize                      (NetworkContext* pContext);
+        bool                Initialize                      (NetworkContext* pContext);
 
       #if (IP_USE_TCP_CLIENT == DEF_ENABLED)
-        TCP_Socket*      Connect                         (const IP_Address_t& ServerIP, uint16_t Port);
+        TCP_Socket*         Connect                        (const IP_Address_t& ServerIP, uint16_t Port);
       #endif
 
       #if (IP_USE_TCP_SERVER == DEF_ENABLED)
-        //SystemState_e   EnterListen                     (Socket* pSocket, uint16_t Backlog);
-        //void            Close                           (Socket* pSocket);
+        TCP_Socket*         CreateSocket                    (void);
+        bool                EnterListen                     (TCP_Socket* pSocket, uint16_t Backlog);
+        void                Close                           (TCP_Socket* pSocket);
+        TCP_Socket*         Accept                          (TCP_Socket* pListenSocket);
+
+        void                SetAcceptedSocket               (TCP_SocketSystem* pSock) { m_pAcceptedSocket = pSock;  }
+
       #endif
 
-        void            Process                         (void);                 // Called from main loop
-        void            ProcessSegment                  (IP_PacketMsg_t* pPacket);
-        IP_PacketMsg_t* SendSegment                     (TCP_Socket* pSocket, const uint8_t* pPayload, size_t Length, uint8_t Flags, bool Retransmit);
+        void                Process                         (void);                 // Called from main loop
+        void                ProcessSegment                  (IP_PacketMsg_t* pPacket);
+        IP_PacketMsg_t*     SendSegment                     (TCP_Socket* pSocket, const uint8_t* pPayload, size_t Length, uint8_t Flags, bool Retransmit);
 
     private:
 
-        bool            ParseTCP_Header                 (IP_EthernetPacket_t* pPacket, TCP_Socket*& pSockOut);
-        void            UpdateTimers                    (void);
-        void            CloseAndFreeSocket              (TCP_SocketSystem* pSystem);
+        bool                ParseTCP_Header                 (IP_EthernetPacket_t* pPacket, TCP_Socket*& pSockOut);
+        void                UpdateTimers                    (void);
+        void                CloseAndFreeSocket              (TCP_SocketSystem* pSystem);
 
-        SocketManager*  m_pSocketManager;
-        NetworkContext* m_pContext;
+        SocketManager*      m_pSocketManager;
+        NetworkContext*     m_pContext;
 
         // Later: dynamic list of sockets
-        TCP_Socket*     m_pClientSocket;
-        TCP_Socket*     m_pServerSockets[IP_TCP_MAX_LISTEN];
+        TCP_Socket*         m_pClientSocket;
+        TCP_Socket*         m_pServerSockets[IP_TCP_MAX_LISTEN];
+
+      #if (IP_USE_TCP_SERVER == DEF_ENABLED)
+        TCP_SocketSystem*   m_pAcceptedSocket = nullptr;   // child socket (if =received SYN)
+      #endif
 };
 
 //-------------------------------------------------------------------------------------------------

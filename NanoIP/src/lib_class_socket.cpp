@@ -384,7 +384,7 @@ Socket::Socket(NetworkContext* pContext)
     m_IsBlocking  = true;
     m_Active      = true;
     m_IsBound     = false;
-    m_IsListening = false;
+    //m_IsListening = false;
     m_Backlog     = 0;
     m_Flags       = 0;
     m_TimeoutMs   = SOCKET_DEFAULT_TIME_OUT;

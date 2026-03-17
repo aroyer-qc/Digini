@@ -199,7 +199,7 @@ bool MQTT_Client::Initialize(NetworkContext* pContext, MQTT_Handler* pHandler)
                                   &m_Stack[0],
                                   TASK_MQTT_CLIENT_STACK_SIZE,
                                   TASK_MQTT_CLIENT_PRIO,
-                                  "MQTT Test") == NOS_OK ? true : false;
+                                  "Task MQTT Client") == NOS_OK ? true : false;
 
     return State;
 }

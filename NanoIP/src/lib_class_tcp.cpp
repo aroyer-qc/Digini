@@ -279,8 +279,8 @@ size_t TCP_SocketSystem::Receive(uint8_t* pBuffer, size_t MaxLength)
 //                  segment to the remote peer and transitions the socket into the appropriate
 //                  closing state:
 //
-//                      - ESTABLISHED → FIN_WAIT_1   (active close)
-//                      - CLOSE_WAIT  → LAST_ACK     (passive close)
+//                      - ESTABLISHED -> FIN_WAIT_1   (active close)
+//                      - CLOSE_WAIT  -> LAST_ACK     (passive close)
 //
 //                  The remainder of the TCP close handshake (ACK of our FIN, remote FIN, final
 //                  ACK, TIME_WAIT, etc.) is handled asynchronously by the TCP_Manager via
@@ -343,11 +343,11 @@ void TCP_SocketSystem::Close(void)
 //  Description:    Implements the TCP state machine for an incoming segment. This function handles
 //                  all TCP control flows, including:
 //
-//                      - Connection establishment (SYN → SYN_RECEIVED → ESTABLISHED)
-//                      - Client-side handshake completion (SYN_SENT → ESTABLISHED)
+//                      - Connection establishment (SYN -> SYN_RECEIVED -> ESTABLISHED)
+//                      - Client-side handshake completion (SYN_SENT -> ESTABLISHED)
 //                      - Data reception and ACK processing
-//                      - Active close (FIN_WAIT_1 → FIN_WAIT_2 → TIME_WAIT → CLOSED)
-//                      - Passive close (CLOSE_WAIT → LAST_ACK → CLOSED)
+//                      - Active close (FIN_WAIT_1 -> FIN_WAIT_2 -> TIME_WAIT -> CLOSED)
+//                      - Passive close (CLOSE_WAIT -> LAST_ACK -> CLOSED)
 //
 //                  This function does NOT perform retransmission or timeout handling; those are
 //                  handled by Process(). It also does not send segments directly; instead it calls
@@ -677,7 +677,7 @@ TCP_Socket* TCP_ManagerSystem::CreateSocket(void)
         }
     }
 
-    // No free slot → free memory and return null
+    // No free slot -> free memory and return null
     pSock->~TCP_SocketSystem();
     pMemoryPool->Free((void**)&pSock);
     return nullptr;
@@ -770,7 +770,7 @@ bool TCP_ManagerSystem::EnterListen(TCP_Socket* pSocket, uint16_t Backlog)
 //                  - Locates the specified TCP_Socket within the server socket table.
 //                  - Invokes the socket's own Close() method to begin the FIN handshake.
 //                  - Does NOT free the socket immediately; the remainder of the TCP close
-//                    sequence (FIN → ACK → FIN → ACK → TIME_WAIT → CLOSED) is handled
+//                    sequence (FIN -> ACK -> FIN -> ACK -> TIME_WAIT -> CLOSED) is handled
 //                    asynchronously by Process() and ProcessSegment().
 //
 //                  If the socket is not found in the server table, the function silently returns.

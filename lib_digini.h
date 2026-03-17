@@ -193,6 +193,7 @@ class NetworkContext;
 #include "./NanoIP/inc/lib_class_IP_Manager.h"
 #include "./NanoIP/inc/lib_class_context.h"
 #include "./Peripheral/inc/port/lib_class_eth.h"
+#include "./NanoIP/Task/inc/TaskMQTT.h"
 #include PHY_DRIVER_INCLUDE
 #endif
 

@@ -116,12 +116,14 @@
     X_MEM_DBG(MEM_DBG_TCPR)                                     \
     X_MEM_DBG(MEM_DBG_TCPRDT)                                   \
     X_MEM_DBG(MEM_DBG_TCPCPY)                                   \
+  /*---------------------------------------------------------*/ \
     X_MEM_DBG(MEM_DBG_MQTT1)                                    \
     X_MEM_DBG(MEM_DBG_MQTT2)                                    \
     X_MEM_DBG(MEM_DBG_MQTT3)                                    \
     X_MEM_DBG(MEM_DBG_MQTT4)                                    \
     X_MEM_DBG(MEM_DBG_MQTT5)                                    \
     X_MEM_DBG(MEM_DBG_MQTT6)                                    \
+    X_MEM_DBG(MEM_DBG_MQTTSUB)                                  \
   /*---------------------------------------------------------*/ \
   ) /* End of DIGINI_USE_ETHERNET */                            \
   /*---------------------------------------------------------*/ \

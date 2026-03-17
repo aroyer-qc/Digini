@@ -686,7 +686,7 @@ uint16_t IP_Manager::CalculateChecksum(IP_Header_t* pIP, uint8_t Protocol, void*
     // PASS 2 : HEADER + PAYLOAD
     Sum += uint16_t(~LIB_Checksum16((uint8_t*)pProtocolHeader, Length));
 
-    // Fold 32 → 16 bits
+    // Fold 32 -> 16 bits
     while(Sum >> 16)
     {
         Sum = (Sum & 0xFFFF) + (Sum >> 16);

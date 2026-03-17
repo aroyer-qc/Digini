@@ -125,6 +125,7 @@ typedef enum
     SYS_ADDRESS_MISALIGNED,
     SYS_ACKNOWLEDGE_ERROR,
     SYS_ALREADY_BLANK,
+    SYS_ALREADY_EXIST,
     SYS_ARBITRATION_LOST,
     SYS_ARP_RESOLVE_PENDING,
     SYS_AUDIO_CODEC_ERROR,
@@ -179,6 +180,7 @@ typedef enum
     SYS_NO_DRIVER,
     SYS_NOT_LOCK_TO_DEVICE,
     SYS_NOT_SUPPORTED,
+    SYS_NOT_FOUND,
     SYS_NULLPTR,
     SYS_OUT_OF_BOUND,
     SYS_OUT_OF_RANGE,
@@ -206,12 +208,11 @@ typedef enum
     SYS_WRONG_DEVICE,
     SYS_WRONG_SIZE,
     SYS_WRONG_VALUE,
-    SYS_ID_DOES_NOT_EXIST,                          // Use by NodeList
-    SYS_ID_ALREADY_EXIST,                           // Use by NodeList
-    SYS_REACH_END_OF_LIST,                          // Use by NodeList
-    SYS_NODE_LIST_IS_EMPTY,                         // Use by NodeList
-    SYS_NODE_UNKNOWN_ERROR,                         // Use by NodeList (maybe improve on this)
-    SYS_NODE_NOT_FOUND,
+   // SYS_ID_DOES_NOT_EXIST,                          // Use by NodeList
+   // SYS_ID_ALREADY_EXIST,                           // Use by NodeList
+   // SYS_REACH_END_OF_LIST,                          // Use by NodeList
+   // SYS_NODE_LIST_IS_EMPTY,                         // Use by NodeList
+   // SYS_NODE_UNKNOWN_ERROR,                         // Use by NodeList (maybe improve on this)
 
     // SD state
     SD_CC_ERROR,

@@ -448,11 +448,11 @@ bool DHCPv4_Manager::Discover(void)
 //  Description:    Builds and transmits a DHCP REQUEST message. This function is used in two
 //                  scenarios:
 //
-//                      1) After receiving a DHCPOFFER (SELECTING → REQUESTING)
+//                      1) After receiving a DHCPOFFER (SELECTING -> REQUESTING)
 //                         - The client broadcasts a REQUEST to accept the offered lease.
 //                         - The message includes the Requested IP Address option.
 //
-//                      2) During lease renewal (BOUND → RENEWING)
+//                      2) During lease renewal (BOUND -> RENEWING)
 //                         - The client unicasts a REQUEST directly to the DHCP server.
 //                         - The message includes the Server Identifier option.
 //
@@ -478,8 +478,8 @@ bool DHCPv4_Manager::Request(void)
     // Build DHCP options for REQUEST
     Options = (DHCP_PUT_OPTION_CLIENT_IDENTIFIER | DHCP_PUT_OPTION_HOST_NAME | DHCP_PUT_OPTION_PL_REQUEST);
 
-    // Before BOUND → include Requested IP
-    // After BOUND  → include Server Identifier
+    // Before BOUND -> include Requested IP
+    // After BOUND  -> include Server Identifier
     if(m_State < DHCP_STATE_BOUND)
     {
         Options |= DHCP_PUT_OPTION_REQUESTED_CLIENT_IP;

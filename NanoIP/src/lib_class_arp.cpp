@@ -125,7 +125,7 @@ SystemState_e ARP_Manager::Initialize(NetworkContext* pContext)
 //-------------------------------------------------------------------------------------------------
 void ARP_Manager::ProcessIP(IP_PacketMsg_t* pRX)
 {
-  #if (ARP_SECURE_MODE != DEF_ENABLED)												// Secure mode: do not learn IP→MAC from generic IP traffic
+  #if (ARP_SECURE_MODE != DEF_ENABLED)												// Secure mode: do not learn IP->MAC from generic IP traffic
     IP_Address_t SubnetMask = m_pContext->GetActiveSubnetMask();
     IP_Address_t ActiveIP   = m_pContext->GetActiveIP();
 
@@ -312,7 +312,7 @@ void ARP_Manager::ProcessARP(IP_PacketMsg_t* pRX)
 //
 //  Return:         void
 //
-//  Description:    Updates the ARP table with the resolved IP → MAC mapping. If an existing entry
+//  Description:    Updates the ARP table with the resolved IP -> MAC mapping. If an existing entry
 //                  matches IP_Address, its MAC and timestamp are refreshed. Otherwise, a free ARP
 //                  table slot is allocated; if none are free, the oldest entry is evicted.
 //
@@ -373,7 +373,7 @@ void ARP_Manager::UpdateEntry(IP_Address_t IP_Address, IP_MAC_Address_t* pMacAdd
         }
     }
 
-    // No existing entry → find a free one
+    // No existing entry -> find a free one
     for(Index = 0; Index < IP_ARP_TABLE_SIZE; Index++)
     {
         pTable = &m_TableEntry[Index];
@@ -992,7 +992,7 @@ void ARP_Manager::TimerCallBack(void)
             }
         }
 
-        if(Resolved == false)                                                       // If unresolved → timeout this entry
+        if(Resolved == false)                                                       // If unresolved -> timeout this entry
         {
             OnPendingTimeOut(Offset);
             break;                                                                  // Let next timer tick re-scan

@@ -56,19 +56,12 @@ class ClassTaskCOMM
     public:
 
         nOS_Error       Initialize         (void);
-
-      #if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
         void            Run                (void);                              // Task
-      #else
-        void            Process            (void)   { myConsole.Process(); }    // Process
-      #endif
 
     private:
 
-      #if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
         nOS_Thread      m_Handle;
         nOS_Stack       m_Stack[TASK_COMM_STACK_SIZE];
-      #endif
 };
 
 //-------------------------------------------------------------------------------------------------

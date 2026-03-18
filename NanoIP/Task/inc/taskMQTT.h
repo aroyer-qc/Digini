@@ -77,9 +77,9 @@ class ClassMQTT : MQTT_Handler
         SystemState_e               Initialize                  (NetworkContext* pContext, const char* pClientName, const IP_Address_t ServerIP, uint16_t Port);
         void                        Run                         (void);
 
-        SystemState_e               RegisterTopic               (const char* Topic, nOS_Queue* pUserQueue);
-        SystemState_e               UnRegisterTopic             (const char* Topic);
-      //SystemState_e               UnregisterAllTopic          (void);                                                 // Optional for later
+        SystemState_e               SubscribeTopic              (const char* Topic, nOS_Queue* pUserQueue);
+        SystemState_e               UnSubscribeTopic            (const char* Topic);
+      //SystemState_e               UnSubscribeAllTopic         (void);                                                 // Optional for later
 
         static void                 FreeTopicMessage            (MQTT_Message_t* pTopicMessage);
 

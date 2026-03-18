@@ -46,8 +46,6 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           ClassTaskCOMM_Wrapper
@@ -64,8 +62,6 @@ extern "C" void ClassTaskCOMM_Wrapper(void* pvParameters)
 {
     (static_cast<ClassTaskCOMM*>(pvParameters))->Run();
 }
-
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -98,7 +94,6 @@ nOS_Error ClassTaskCOMM::Initialize(void)
 
   #endif
 
-  #if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
     Error = nOS_ThreadCreate(&m_Handle,
                              ClassTaskCOMM_Wrapper,
                              this,
@@ -106,14 +101,13 @@ nOS_Error ClassTaskCOMM::Initialize(void)
                              TASK_COMM_STACK_SIZE,
                              TASK_COMM_PRIO,
                              "Task COMM");
-  #endif
 
     return Error;
 }
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Process
+//  Name:           Run
 //
 //  Parameter(s):   void
 //  Return:         void
@@ -121,7 +115,6 @@ nOS_Error ClassTaskCOMM::Initialize(void)
 //  Description:    main() loop of COMM
 //
 //-------------------------------------------------------------------------------------------------
-#if (DIGINI_USE_COMM_AS_A_TASK == DEF_ENABLED)
 void ClassTaskCOMM::Run(void)
 {
 // TODO better this... only for test... need to be completed
@@ -134,7 +127,6 @@ void ClassTaskCOMM::Run(void)
         nOS_Yield();
     }
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 

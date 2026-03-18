@@ -592,6 +592,7 @@ TCP_Socket* TCP_ManagerSystem::Connect(const IP_Address_t& ServerIP, uint16_t Po
     SocketManager& socketMgr = m_pContext->GetSocketManager();
 
     Socket* pSocketBase = socketMgr.AllocSocket(SOCKET_TYPE_STREAM);
+
     if(pSocketBase == nullptr)
     {
         return nullptr;

@@ -199,7 +199,7 @@ bool MQTT_Client::Initialize(NetworkContext* pContext, MQTT_Handler* pHandler)
                                   &m_Stack[0],
                                   TASK_MQTT_CLIENT_STACK_SIZE,
                                   TASK_MQTT_CLIENT_PRIO,
-                                  "Task MQTT Client") == NOS_OK ? true : false;
+                                  "Task MQTT_Client") == NOS_OK ? true : false;
 
     return State;
 }
@@ -331,6 +331,8 @@ void MQTT_Client::Run(void)
 //                  the MQTT client task will automatically continue the handshake.
 //
 //---------------------------------------------------------------------------------------------
+volatile void* pLastPointer;
+
 bool MQTT_Client::Connect(const IP_Address_t* pServerIP, uint16_t Port, const char* pClientID, uint16_t KeepAliveSeconds)
 {
     if((pServerIP == nullptr) || (pClientID == nullptr))
@@ -338,6 +340,7 @@ bool MQTT_Client::Connect(const IP_Address_t* pServerIP, uint16_t Port, const ch
         return false;
     }
 
+pLastPointer = (void*)m_pSocket;
     if(m_pSocket != nullptr)
     {
         if(m_pSocket->IsConnected() == false)

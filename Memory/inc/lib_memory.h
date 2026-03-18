@@ -124,6 +124,9 @@
     X_MEM_DBG(MEM_DBG_MQTT5)                                    \
     X_MEM_DBG(MEM_DBG_MQTT6)                                    \
     X_MEM_DBG(MEM_DBG_MQTTSUB)                                  \
+    X_MEM_DBG(MEM_DBG_MQTTMSG)                                  \
+    X_MEM_DBG(MEM_DBG_MQTTTOPIC)                                \
+    X_MEM_DBG(MEM_DBG_MQTTLOAD)                                 \
   /*---------------------------------------------------------*/ \
   ) /* End of DIGINI_USE_ETHERNET */                            \
   /*---------------------------------------------------------*/ \

@@ -1119,11 +1119,15 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SystemSetting(uint8_t Input, VT100_Ca
                     }
                     else
                     {
+                        myVT100.SetForeColor(VT100_COLOR_RED);
+
                         // Print number of press using consecutive *
                         for(int i = 0; i < ResetCount; i++)
                         {
-                            InMenuPrintf(24 + i, 12, LBL_STRING, "*");
+                            InMenuPrintf(30 + i, 15, LBL_STRING, "*");
                         }
+
+                        myVT100.SetForeColor(VT100_COLOR_YELLOW);
                     }
                 }
                 break;

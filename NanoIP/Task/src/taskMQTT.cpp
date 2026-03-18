@@ -88,7 +88,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define MQTT_TASK_PERIOD_MS                                 200
+#define MQTT_TASK_PERIOD_MS                                 1000
 #define MQTT_ETEHERNET_READY_RETRY_MS                       1000
 #define MQTT_CONNECT_TO_BROKER_KEEP_ALIVE_SEC               30
 #define MQTT_TASK_KEEP_ALIVE_SEC                            60
@@ -128,7 +128,7 @@ SystemState_e ClassMQTT::Initialize(NetworkContext* pContext, const char* pClien
 
     for(size_t i = 0; i < MQTT_MAX_SUBCRIPTIONS; i++)
     {
-        m_Subscriptions[i] = nullptr;
+          m_pSubscriptions[i] = nullptr;
     }
 
     nOS_SemCreate(&m_WakeSem, 0, 1);
@@ -150,8 +150,6 @@ SystemState_e ClassMQTT::Initialize(NetworkContext* pContext, const char* pClien
 //-------------------------------------------------------------------------------------------------
 void ClassMQTT::Run(void)
 {
-    bool AlreadySubscribed = false;
-
     while(1)
     {
         // Wait for an event or periodic timeout
@@ -161,7 +159,15 @@ void ClassMQTT::Run(void)
         if(m_pContext->IsEthernetReady() == false)
         {
             m_Client.Disconnect();
-            AlreadySubscribed = false;
+
+            for(size_t i = 0; i < m_SubcriptionsCount; i++)
+            {
+                if(m_pSubscriptions[i] != nullptr)
+                {
+                    m_pSubscriptions[i]->AlreadySubscribed = false;
+                }
+            }
+
             nOS_Sleep(MQTT_ETEHERNET_READY_RETRY_MS);
             continue;
         }
@@ -178,17 +184,15 @@ void ClassMQTT::Run(void)
         // If connected -> ensure all topics are subscribed
         if(State == MQTT_STATE_CONNECTED)
         {
-            if(AlreadySubscribed == false)
+            for(size_t i = 0; i < m_SubcriptionsCount; i++)
             {
-                for(size_t i = 0; i < m_SubcriptionsCount; i++)
+                if((m_pSubscriptions[i] != nullptr) && (m_pSubscriptions[i]->AlreadySubscribed == false))
                 {
-                    m_Client.Subscribe(m_Subscriptions[i]->pTopic, MQTT_QOS_0);
+                    m_Client.Subscribe(m_pSubscriptions[i]->pTopic, MQTT_QOS_0);
+                    m_pSubscriptions[i]->AlreadySubscribed = true;
+                    break;
                 }
-
-                AlreadySubscribed = true;
             }
-
-            continue;
         }
 
         // Other states (WAIT_CONNACK, WAIT_SUBACK, etc.)
@@ -219,7 +223,7 @@ SystemState_e ClassMQTT::RegisterTopic(const char* pTopic, nOS_Queue* pUserQueue
     // Protection: prevent duplicate topics
     for(size_t i = 0; i < m_SubcriptionsCount; i++)
     {
-        if(strcmp(m_Subscriptions[i]->pTopic, pTopic) == 0)
+        if(strcmp(m_pSubscriptions[i]->pTopic, pTopic) == 0)
         {
             return SYS_ALREADY_EXIST;
         }
@@ -234,11 +238,12 @@ SystemState_e ClassMQTT::RegisterTopic(const char* pTopic, nOS_Queue* pUserQueue
     }
 
     // Store topic + queue
-    pSubscription->pTopic     = pTopic;
-    pSubscription->pUserQueue = pUserQueue;
+    pSubscription->pTopic            = pTopic;
+    pSubscription->pUserQueue        = pUserQueue;
+    pSubscription->AlreadySubscribed = true;
 
     // Add to list
-    m_Subscriptions[m_SubcriptionsCount++] = pSubscription;
+    m_pSubscriptions[m_SubcriptionsCount++] = pSubscription;
 
     return SYS_READY;
 }
@@ -259,7 +264,7 @@ SystemState_e ClassMQTT::UnRegisterTopic(const char* pTopic)
     // Search for the subscription
     for(size_t i = 0; i < m_SubcriptionsCount; i++)
     {
-        MQTT_Subscription_t* pSubscription = m_Subscriptions[i];
+        MQTT_Subscription_t* pSubscription = m_pSubscriptions[i];
 
         if(strcmp(pSubscription->pTopic, pTopic) == 0)
         {
@@ -269,11 +274,11 @@ SystemState_e ClassMQTT::UnRegisterTopic(const char* pTopic)
             // Shift remaining entries left
             for(size_t j = i; j < m_SubcriptionsCount - 1; j++)
             {
-                m_Subscriptions[j] = m_Subscriptions[j + 1];
+                m_pSubscriptions[j] = m_pSubscriptions[j + 1];
             }
 
             // Clear last entry
-            m_Subscriptions[m_SubcriptionsCount - 1] = nullptr;
+            m_pSubscriptions[m_SubcriptionsCount - 1] = nullptr;
 
             // Decrement count
             m_SubcriptionsCount--;
@@ -300,7 +305,7 @@ SystemState_e ClassMQTT::MatchTopic(const char* pSubscriptionTopic, const char* 
     const char* pSubscription  = pSubscriptionTopic;
     const char* pIncoming      = pIncomingTopic;
 
-    while((*pSubscription != '\0') && (*pIncoming == '\0'))
+    while((*pSubscription != '\0') && (*pIncoming != '\0'))
     {
         // Wildcard '#': matches everything remaining
         if(*pSubscription == '#')
@@ -392,24 +397,93 @@ void ClassMQTT::ReceivedTopic(const char* pTopic, const uint8_t* pPayload, size_
     // Iterate through all subscriptions
     for(size_t i = 0; i < m_SubcriptionsCount; i++)
     {
-        MQTT_Subscription_t* pSubscription = m_Subscriptions[i];
+        MQTT_Subscription_t* pSubscription = m_pSubscriptions[i];
 
         // Check topic match
         if(MatchTopic(pSubscription->pTopic, pTopic) == SYS_READY)
         {
-            MQTT_Message_t msg;
+            // Allocate message
+            MQTT_Message_t* pTopicMessage = AllocateTopicMessage(pTopic, pPayload, Length);
 
-            msg.pTopic   = pTopic;
-            msg.pPayload = (uint8_t*)pPayload;   // No copy (zero‑copy dispatch)
-            msg.Length   = Length;
-
-            // Try to push message to user queue
-            if(nOS_QueueWrite(pSubscription->pUserQueue, &msg, 0) != NOS_OK)
+            if(pTopicMessage != nullptr)
             {
-                DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT RX DROP: queue full for topic '%s'\n", pSubscription->pTopic);
+                    // Try to push message to user queue
+                if(nOS_QueueWrite(pSubscription->pUserQueue, pTopicMessage, 0) != NOS_OK)
+                {
+                    DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT RX DROP: queue full for topic '%s'\n", pSubscription->pTopic);
+                    FreeTopicMessage(pTopicMessage);
+                }
             }
         }
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+
+MQTT_Message_t* ClassMQTT::AllocateTopicMessage(const char* pTopic, const uint8_t* pPayload, size_t Length)
+{
+    MQTT_Message_t* pTopicMessage = (MQTT_Message_t*)pMemoryPool->Alloc(sizeof(MQTT_Message_t), MEM_DBG_MQTTMSG);
+
+    if(pTopicMessage == nullptr)
+    {
+        return nullptr;
+    }
+
+    // Allocate and copy TOPIC
+    size_t topicLen  = strlen(pTopic) + 1;   // include null terminator
+    char* pTopicCopy = (char*)pMemoryPool->Alloc(topicLen, MEM_DBG_MQTTTOPIC);
+
+    if(pTopicCopy == nullptr)
+    {
+        pMemoryPool->Free((void**)pTopicMessage);
+        return nullptr;
+    }
+
+    memcpy(pTopicCopy, pTopic, topicLen);
+
+    // Allocate and copy PAYLOAD
+    uint8_t* pPayloadCopy = (uint8_t*)pMemoryPool->Alloc(Length, MEM_DBG_MQTTLOAD);
+
+    if(pPayloadCopy == nullptr)
+    {
+        pMemoryPool->Free((void**)pTopicCopy);
+        pMemoryPool->Free((void**)pTopicMessage);
+        return nullptr;
+    }
+
+    memcpy(pPayloadCopy, pPayload, Length);
+
+    // Fill message
+    pTopicMessage->pTopic   = pTopicCopy;
+    pTopicMessage->pPayload = pPayloadCopy;
+    pTopicMessage->Length   = Length;
+
+    return pTopicMessage;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void ClassMQTT::FreeTopicMessage(MQTT_Message_t* pMsg)
+{
+    if(pMsg == nullptr)
+    {
+        return;
+    }
+
+    // Free deep copies
+    if(pMsg->pTopic != nullptr)
+    {
+        pMemoryPool->Free((void**)pMsg->pTopic);
+    }
+
+    if(pMsg->pPayload != nullptr)
+    {
+        pMemoryPool->Free((void**)pMsg->pPayload);
+    }
+
+    // Free the message structure itself
+    pMemoryPool->Free((void**)pMsg);
 }
 
 //-------------------------------------------------------------------------------------------------

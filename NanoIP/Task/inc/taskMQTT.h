@@ -57,6 +57,7 @@ struct MQTT_Subscription_t
 {
     const char*     pTopic;             // Topic string to match
     nOS_Queue*      pUserQueue;         // Queue where messages will be delivered
+    bool            AlreadySubscribed;
 };
 
 struct MQTT_Message_t
@@ -80,11 +81,15 @@ class ClassMQTT : MQTT_Handler
         SystemState_e               UnRegisterTopic             (const char* Topic);
       //SystemState_e               UnregisterAllTopic          (void);                                                 // Optional for later
 
+        static void                 FreeTopicMessage            (MQTT_Message_t* pTopicMessage);
+
     private:
 
         SystemState_e               MatchTopic                  (const char* pSubcriptionTopic, const char* pIncomingTopic);
         void                        OnEvent                     (void);
         void                        ReceivedTopic               (const char* pTopic, const uint8_t* pPayload, size_t Length);
+
+        static MQTT_Message_t*      AllocateTopicMessage        (const char* pTopic, const uint8_t* pPayload, size_t Length);
 
         nOS_Thread                  m_Handle;
         nOS_Stack                   m_Stack                     [TASK_MQTT_STACK_SIZE];
@@ -97,7 +102,7 @@ class ClassMQTT : MQTT_Handler
         NetworkContext*             m_pContext;
         MQTT_Client                 m_Client;                                               // The MQTT library instance
 
-        MQTT_Subscription_t*        m_Subscriptions             [MQTT_MAX_SUBCRIPTIONS];    // To replace later by growing link list of Subcriptions
+        MQTT_Subscription_t*        m_pSubscriptions            [MQTT_MAX_SUBCRIPTIONS];    // To replace later by growing link list of Subcriptions
         size_t                      m_SubcriptionsCount;
 };
 

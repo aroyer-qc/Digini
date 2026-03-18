@@ -385,6 +385,11 @@ void ClassMQTT::OnEvent(void)
 
 //-------------------------------------------------------------------------------------------------
 
+MQTT_Message_t* pDEBUG_TopicMessage;
+MQTT_Message_t* pDEBUG_TopicMessage2;
+
+
+
 void ClassMQTT::ReceivedTopic(const char* pTopic, const uint8_t* pPayload, size_t Length)
 {
     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET,
@@ -407,6 +412,9 @@ void ClassMQTT::ReceivedTopic(const char* pTopic, const uint8_t* pPayload, size_
 
             if(pTopicMessage != nullptr)
             {
+                pDEBUG_TopicMessage2 = pTopicMessage;
+
+
                     // Try to push message to user queue
                 if(nOS_QueueWrite(pSubscription->pUserQueue, pTopicMessage, 0) != NOS_OK)
                 {
@@ -419,6 +427,9 @@ void ClassMQTT::ReceivedTopic(const char* pTopic, const uint8_t* pPayload, size_
 }
 
 //-------------------------------------------------------------------------------------------------
+
+char* pDEBUG_Topic;
+char* pDEBUG_Payload;
 
 
 MQTT_Message_t* ClassMQTT::AllocateTopicMessage(const char* pTopic, const uint8_t* pPayload, size_t Length)
@@ -436,28 +447,33 @@ MQTT_Message_t* ClassMQTT::AllocateTopicMessage(const char* pTopic, const uint8_
 
     if(pTopicCopy == nullptr)
     {
-        pMemoryPool->Free((void**)pTopicMessage);
+        pMemoryPool->Free((void**)&pTopicMessage);
         return nullptr;
     }
 
     memcpy(pTopicCopy, pTopic, topicLen);
+    pDEBUG_Topic = pTopicCopy;
 
     // Allocate and copy PAYLOAD
     uint8_t* pPayloadCopy = (uint8_t*)pMemoryPool->Alloc(Length, MEM_DBG_MQTTLOAD);
 
     if(pPayloadCopy == nullptr)
     {
-        pMemoryPool->Free((void**)pTopicCopy);
-        pMemoryPool->Free((void**)pTopicMessage);
+        pMemoryPool->Free((void**)&pTopicCopy);
+        pMemoryPool->Free((void**)&pTopicMessage);
         return nullptr;
     }
 
     memcpy(pPayloadCopy, pPayload, Length);
+    pDEBUG_Payload = pPayloadCopy;
+
 
     // Fill message
     pTopicMessage->pTopic   = pTopicCopy;
     pTopicMessage->pPayload = pPayloadCopy;
     pTopicMessage->Length   = Length;
+
+pDEBUG_TopicMessage=pTopicMessage;
 
     return pTopicMessage;
 }

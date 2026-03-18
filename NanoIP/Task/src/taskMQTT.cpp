@@ -416,7 +416,7 @@ void ClassMQTT::ReceivedTopic(const char* pTopic, const uint8_t* pPayload, size_
 
 
                     // Try to push message to user queue
-                if(nOS_QueueWrite(pSubscription->pUserQueue, pTopicMessage, 0) != NOS_OK)
+                if(nOS_QueueWrite(pSubscription->pUserQueue, &pTopicMessage, 0) != NOS_OK)
                 {
                     DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "MQTT RX DROP: queue full for topic '%s'\n", pSubscription->pTopic);
                     FreeTopicMessage(pTopicMessage);

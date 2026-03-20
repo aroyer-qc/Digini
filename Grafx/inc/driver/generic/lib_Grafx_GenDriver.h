@@ -31,22 +31,6 @@
 #ifdef DIGINI_USE_GRAFX
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
-
-#ifdef DMA2D
-  #define LTDC_BLENDING_FACTOR1_PAxCA       0x00000600              // Blending factor: Cte Alpha x Pixel Alpha
-  #define LTDC_BLENDING_FACTOR2_PAxCA       0x00000007              // Blending factor: Cte Alpha x Pixel Alpha
-
-  #define DMA2D_M2M                         0                       // DMA2D memory to memory transfer mode
-  #define DMA2D_M2M_PFC                     ((uint32_t)0x00010000)  // DMA2D memory to memory with pixel format conversion transfer mode
-  #define DMA2D_M2M_BLEND                   ((uint32_t)0x00020000)  // DMA2D memory to memory with blending transfer mode
-  #define DMA2D_R2M                         DMA2D_CR_MODE           // DMA2D register to memory transfer mode
-
-  #define TRANSFERT_ONE_PIXEL               0x00010001
-#endif
-
-//-------------------------------------------------------------------------------------------------
 // Class
 //-------------------------------------------------------------------------------------------------
 

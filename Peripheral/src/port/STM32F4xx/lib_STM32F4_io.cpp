@@ -101,12 +101,12 @@ const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
     GPIOC,
     GPIOD,
     GPIOE,
-  #if defined(STM32F429xx) || defined(STM32F40_41xxx)
+  #if defined(STM32F429xx) || defined(STM32F439xx) || defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F40_41xxx)
     GPIOF,
     GPIOG,
     GPIOH,
     GPIOI,
-   #if defined(STM32F429xx)
+   #if defined(STM32F429xx) || defined(STM32F439xx) || defined(STM32F427xx) || defined(STM32F437xx)
     GPIOJ,
     GPIOK,
    #endif

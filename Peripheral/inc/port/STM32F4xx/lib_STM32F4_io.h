@@ -53,7 +53,7 @@
 #define NUMBER_OF_IO_PORT               ((uint32_t)5)
 #elif defined(STM32F40_41xxx)
 #define NUMBER_OF_IO_PORT               ((uint32_t)9)
-#elif defined(STM32F429xx) // Add other define here
+#elif defined(STM32F429xx) || defined(STM32F439xx) || defined(STM32F427xx) || defined(STM32F437xx)
 #define NUMBER_OF_IO_PORT               ((uint32_t)11)
 #endif
 

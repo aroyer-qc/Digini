@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_STM32F4_lcd_240x320.h
+//  File : lib_Grafx_GenSTM32.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,50 +27,25 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
 #ifdef DIGINI_USE_GRAFX
-#include "stm32f4xx.h"
-#include "./Peripheral/inc/port/lib_class_spi.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define GRAFX_NUMBER_OF_ACTIVE_LAYER              2
+#ifdef DMA2D
+  #define LTDC_BLENDING_FACTOR1_PAxCA       0x00000600              // Blending factor: Cte Alpha x Pixel Alpha
+  #define LTDC_BLENDING_FACTOR2_PAxCA       0x00000007              // Blending factor: Cte Alpha x Pixel Alpha
 
-#define GRAFX_DRIVER_USE_V_SYNC                   DEF_ENABLED   // We use this driver hardware support V Sync
+  #define DMA2D_M2M                         0                       // DMA2D memory to memory transfer mode
+  #define DMA2D_M2M_PFC                     ((uint32_t)0x00010000)  // DMA2D memory to memory with pixel format conversion transfer mode
+  #define DMA2D_M2M_BLEND                   ((uint32_t)0x00020000)  // DMA2D memory to memory with blending transfer mode
+  #define DMA2D_R2M                         DMA2D_CR_MODE           // DMA2D register to memory transfer mode
 
-//#define GRAFX_USE_SOFT_PIXEL                                  // We use this driver DMA for this function
-//#define GRAFX_USE_SOFT_BOX                                    // We use this driver function
-//#define GRAFX_USE_SOFT_VLINE
-//#define GRAFX_USE_SOFT_HLINE
-#define GRAFX_USE_SOFT_DLINE
-#define GRAFX_USE_SOFT_CIRCLE
-
-//#define GRAFX_USE_SOFT_PRINT_FONT                             // we use this driver to print FONT using DMA2D
-//#define GRAFX_USE_SOFT_ALPHA                                  // We use this uP + LCD controller has alpha acceleration
-//#define GRAFX_USE_SOFT_COPY                                   // We use this driver DMA for this function
-//#define GRAFX_USE_SOFT_FILL                                   // We use this driver DMA for this function
-
-
-// Display size
-#define GRAFX_DRIVER_SIZE_X                         240
-#define GRAFX_DRIVER_SIZE_Y                         320
-
-//-------------------------------------------------------------------------------------------------
-// struct(s)
-//-------------------------------------------------------------------------------------------------
-
-struct DRV_Info_t
-{
-    CSPI*               pSPI;
-    SPI_DeviceInfo_t*   pDeviceInfo;
-};
+  #define TRANSFERT_ONE_PIXEL               0x00010001
+#endif
 
 //-------------------------------------------------------------------------------------------------
 
 #endif // DIGINI_USE_GRAFX
-

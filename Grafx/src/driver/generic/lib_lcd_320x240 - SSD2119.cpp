@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_STM32F4_lcd_240x320.h
+//  File : lib_lcd_320x240 - SSD2119.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,53 +24,68 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#pragma once
-
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "digini_cfg.h"
-#ifdef DIGINI_USE_GRAFX
-#include "stm32f4xx.h"
-#include "./Peripheral/inc/port/lib_class_spi.h"
+#define LIB_SSD2119_GLOBAL
+#include "./lib_digini.h"
+#undef  LIB_SSD2119_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
-//-------------------------------------------------------------------------------------------------
 
-#define GRAFX_NUMBER_OF_ACTIVE_LAYER              2
-
-#define GRAFX_DRIVER_USE_V_SYNC                   DEF_ENABLED   // We use this driver hardware support V Sync
-
-//#define GRAFX_USE_SOFT_PIXEL                                  // We use this driver DMA for this function
-//#define GRAFX_USE_SOFT_BOX                                    // We use this driver function
-//#define GRAFX_USE_SOFT_VLINE
-//#define GRAFX_USE_SOFT_HLINE
-#define GRAFX_USE_SOFT_DLINE
-#define GRAFX_USE_SOFT_CIRCLE
-
-//#define GRAFX_USE_SOFT_PRINT_FONT                             // we use this driver to print FONT using DMA2D
-//#define GRAFX_USE_SOFT_ALPHA                                  // We use this uP + LCD controller has alpha acceleration
-//#define GRAFX_USE_SOFT_COPY                                   // We use this driver DMA for this function
-//#define GRAFX_USE_SOFT_FILL                                   // We use this driver DMA for this function
-
-
-// Display size
-#define GRAFX_DRIVER_SIZE_X                         240
-#define GRAFX_DRIVER_SIZE_Y                         320
+#if (DIGINI_USE_GRAFX == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// struct(s)
+//
+//  Name:           Initialize
+//
+//  Parameter(s):   pArg
+//  Return:         None
+//
+//  Description:    LCD configuration specific for the LCD and processor used by this driver
+//
 //-------------------------------------------------------------------------------------------------
-
-struct DRV_Info_t
+void GrafxDriver::Initialize(void* pArg)
 {
-    CSPI*               pSPI;
-    SPI_DeviceInfo_t*   pDeviceInfo;
-};
+    GrafxGenDriver::Initialize(pArg);
+    DisplayOn();
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           DisplayOn
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Enables the Display
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::DisplayOn(void)
+{
+    LTDC->GCR |= LTDC_GCR_LTDCEN;
+    IO_SetPinHigh(IO_LCD_TFT_DISPLAY);
+    IO_SetPinHigh(IO_LCD_TFT_BL_CTRL);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           DisplayOff
+//
+//  Parameter(s):   None
+//  Return:         None
+//
+//  Description:    Disables the Display
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::DisplayOff(void)
+{
+    LTDC->GCR &= ~(LTDC_GCR_LTDCEN);
+    IO_SetPinLow(IO_LCD_TFT_DISPLAY);
+    IO_SetPinLow(IO_LCD_TFT_BL_CTRL);
+}
 
 //-------------------------------------------------------------------------------------------------
 
 #endif // DIGINI_USE_GRAFX
-

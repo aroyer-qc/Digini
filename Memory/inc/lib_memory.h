@@ -117,6 +117,11 @@
     X_MEM_DBG(MEM_DBG_TCPRDT)                                   \
     X_MEM_DBG(MEM_DBG_TCPCPY)                                   \
   /*---------------------------------------------------------*/ \
+  ) /* End of DIGINI_USE_ETHERNET */                            \
+  /*---------------------------------------------------------*/ \
+  /*---------------------------------------------------------*/ \
+  IF_USE(IP_USE_MQTT,                                           \
+  /*---------------------------------------------------------*/ \
     X_MEM_DBG(MEM_DBG_MQTT1)                                    \
     X_MEM_DBG(MEM_DBG_MQTT2)                                    \
     X_MEM_DBG(MEM_DBG_MQTT3)                                    \
@@ -128,13 +133,14 @@
     X_MEM_DBG(MEM_DBG_MQTTTOPIC)                                \
     X_MEM_DBG(MEM_DBG_MQTTLOAD)                                 \
   /*---------------------------------------------------------*/ \
-  ) /* End of DIGINI_USE_ETHERNET */                            \
+  ) /* End of IP_USE_MQTT */                                    \
   /*---------------------------------------------------------*/ \
+    X_MEM_DBG(MEM_DBG_SERVICE)  /*grafx service*/               \
+
 \
 \
 
     /* UniqueID for lib_service                               */   // actually not used
-//    X_MEM_DBG(MEM_DBG_SERVICE)
 
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)

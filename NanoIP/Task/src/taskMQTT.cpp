@@ -204,7 +204,11 @@ void ClassMQTT::Run(void)
 
         if(State == MQTT_STATE_IDLE)                                // If idle -> try to connect
         {
-            m_Client.Connect(&m_ServerIP, m_ServerPort, m_pClientName, MQTT_CONNECT_TO_BROKER_KEEP_ALIVE_SEC);
+            if(m_Client.Connect(&m_ServerIP, m_ServerPort, m_pClientName, MQTT_CONNECT_TO_BROKER_KEEP_ALIVE_SEC) != true)
+            {
+                nOS_Sleep(1000);   // 1 second backoff
+            }
+
             continue;
         }
 

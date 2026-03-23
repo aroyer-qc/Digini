@@ -57,10 +57,6 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-const uint8_t  RTC_Driver::m_MonthSize[12]     = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-const uint8_t  RTC_Driver::m_WeekDayTable[12]  = {4, 7, 7, 3, 5, 8, 3, 6, 9, 4, 7, 9};
-const uint16_t RTC_Driver::m_DaysSoFar[12]     = {0, 31, 59, 90, 120, 151, 181, 212, 243, 274, 303, 334};
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Constructor:   RTC_Driver
@@ -73,51 +69,34 @@ const uint16_t RTC_Driver::m_DaysSoFar[12]     = {0, 31, 59, 90, 120, 151, 181, 
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void RTC_Driver::Initialize(uint32_t Mode)
+void RTC_Driver::Initialize(void)
 {
     nOS_Error Error;
 
-    if(m_IsItInitialize == false)
-    {
-        m_IsItInitialize = true;
-        Error = nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
-        VAR_UNUSED(Error);
-    }
+    Error = nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
+    VAR_UNUSED(Error);
 
     // Init power and clock for RTC
     RCC->APB1ENR |=  ( RCC_APB1ENR_PWREN);     // Backup interface & Power interface clock enable
-    PWR->CR   |= PWR_CR_DBP;                                        // RTC register access allowed
-    RCC->BDCR &= uint32_t(~RCC_BDCR_RTCSEL);                        // Clear clock selection
-    RCC->BDCR |= Mode;                                              // Set it with argument
-    RCC->BDCR |= RCC_BDCR_RTCEN;                                    // RTC clock enable
-    if(Mode == RTC_CLOCK_MODE_LSE) RCC->BDCR |= RCC_BDCR_LSEON;     // External 32.768 kHz oscillator ON
-    if(Mode == RTC_CLOCK_MODE_LSI) RCC->CSR  |= RCC_CSR_LSION;      // Internal 32 kHz oscillator ON
-    PWR->CR   &= uint32_t(~PWR_CR_DBP);                             // RTC register access blocked
+    PWR->CR      |= PWR_CR_DBP;                                     // RTC register access allowed
+    PWR->CR      &= uint32_t(~PWR_CR_DBP);                             // RTC register access blocked
     UnlockRegister();
     EnterInitMode();
-    switch(Mode)
-    {
-        case RTC_CLOCK_MODE_LSE:
-        {
-            RTC->PRER = 0x000000FF;                                 // As per data sheet to separate write are necessary (value from data sheet)
-            RTC->PRER = 0x007F00FF;                                 // First is the synchronous prescaler then the asynchronous prescaler factor
-            break;
-        }
 
-        case RTC_CLOCK_MODE_LSI:
-        {
-            RTC->PRER = 0x000000FA;
-            RTC->PRER = 0x007F00FA;
-            break;
-        }
-       #ifdef USE_RTC_HSE_CLOCK
-        case RTC_CLOCK_MODE_HSE:
-        {
-            RTC->PRER = RTC_CLOCK_SYNC_PRESCALER;
-            RTC->PRER = RTC_CLOCK_SYNC_PRESCALER | RTC_CLOCK_ASYNC_PRESCALER;
-        }
-       #endif
-    }
+  #if (CFG_RTC_CLOCK_SOURCE == CFG_RCC_BDCR_RTCSEL_HSE)
+    RTC->PRER = RTC_CLOCK_SYNC_PRESCALER;
+    RTC->PRER = RTC_CLOCK_SYNC_PRESCALER | RTC_CLOCK_ASYNC_PRESCALER;
+  #endif
+
+  #if (CFG_RTC_CLOCK_SOURCE == CFG_RCC_BDCR_RTCSEL_LSE)
+    RTC->PRER = 0x000000FF;                         // As per data sheet to separate write are necessary (value from data sheet)
+    RTC->PRER = 0x007F00FF;                         // First is the synchronous prescaler then the asynchronous prescaler factor
+  #endif
+
+  #if (CFG_RTC_CLOCK_SOURCE == CFG_RCC_BDCR_RTCSEL_LSI)
+    RTC->PRER = 0x000000FA;
+    RTC->PRER = 0x007F00FA;
+  #endif
 
     RTC->CR &= uint32_t(~RTC_CR_FMT);                           // 12/24 Time format mode set default to 24 hours
     ExitInitMode();
@@ -171,7 +150,7 @@ void RTC_Driver::GetDate(Date_t* pDate)
 {
     Lock();
     UpdateTimeFeature();
-    memcpy(pDate, &m_Clock.Date, sizeof(Date_t));
+    memcpy(pDate, &m_Clock.DateTime.Date, sizeof(Date_t));
     Unlock();
 }
 
@@ -474,7 +453,7 @@ void RTC_Driver::UpdateTimeFeature(void)
     // ---------- Day of the year --------------------------------------------
 
     // Set the day number in the year(1 - 365/366)
-    m_Clock.DayOfYear = m_DaysSoFar[m_Clock.DateTime.Date.Month - 1] + m_Clock.DateTime.Date.Day;
+    m_Clock.DayOfYear = DaysSoFar[m_Clock.DateTime.Date.Month - 1] + m_Clock.DateTime.Date.Day;
 
     // ---------- Leap year --------------------------------------------------
 

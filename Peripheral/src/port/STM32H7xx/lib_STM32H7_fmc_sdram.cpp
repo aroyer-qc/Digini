@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32H7_sdram.cpp
+//  File : lib_class_STM32H7_fmc_sdram.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -47,7 +47,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (USE_SDRAM_DRIVER == DEF_ENABLED)
+#if (USE_FMC_SDRAM_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -117,7 +117,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name: SDRAM_Initialize
+//   Function name: FMC_SDRAM_Initialize
 //
 //   Parameter(s):  None
 //   Return:        None
@@ -125,7 +125,7 @@
 //   Description:   Performs the SDRAM device initialization sequence.
 //
 //-------------------------------------------------------------------------------------------------
-void SDRAM_Initialize(void)
+void FMC)SDRAM_Initialize(void)
 {
     // ---- FMC Reset ----
     RCC->AHB3RSTR |=  RCC_AHB3RSTR_FMCRST;
@@ -171,4 +171,4 @@ void SDRAM_Initialize(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_SDRAM_DRIVER
+#endif // USE_FMC_SDRAM_DRIVER

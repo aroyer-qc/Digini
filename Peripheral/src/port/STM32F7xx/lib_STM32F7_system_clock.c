@@ -40,7 +40,7 @@
 
 
 // Vector Table base offset field. This value must be a multiple of 0x200.
-#define VECT_TAB_OFFSET  0x00
+#define VECT_TAB_OFFSET                     0x00
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -176,6 +176,30 @@ void SystemInit(void)
     // AHB,APB1,APB2 CLOCK
     RCC->CFGR |= (CFG_SYS_HCLK | CFG_SYS_APB1 | CFG_SYS_APB2 | CFG_MCO_1 | CFG_MCO_2);
 
+
+//--------------------------------------------------------------------------
+//  RTC init clock
+    
+  #if (CFG_RTC_CLOCK_SOURCE != CFG_RCC_BDCR_RTCSEL_NO_CLOCK)
+   #if (CFG_RTC_CLOCK_SOURCE == CFG_RCC_BDCR_RTCSEL_HSE)
+    MODIFY_REG(RCC->CFGR, RCC_CFGR_RTCPRE, CFG_RCC_CFGR_RTCPRE);
+   #endif
+  
+   #if (CFG_RTC_CLOCK_SOURCE == CFG_RCC_BDCR_RTCSEL_LSE)
+    SET_BIT(RCC->BDCR, RCC_BDCR_LSEON);                     // External 32.768 KHz oscillator ON
+    while((RCC->BDCR & RCC_BDCR_LSERDY) == 0);
+   #endif
+
+   #if (CFG_RTC_CLOCK_SOURCE == CFG_RCC_BDCR_RTCSEL_LSI)
+    SET_BIT(RCC->CSR, RCC_CSR_LSION;                        // Internal 32 KHz oscillator ON
+    while((RCC->CSR & RCC_CSR_LSIRDY) == 0);
+   #endif
+
+    MODIFY_REG(RCC->BDCR, RCC_BDCR_RTCSEL, CFG_RTC_CLOCK_SOURCE);
+    SET_BIT(RCC->BDCR, RCC_BDCR_RTCEN);
+  #endif 
+
+//--------------------------------------------------------------------------
     // Configure the Vector Table location add offset address
   #ifdef VECT_TAB_SRAM
     SCB->VTOR = SRAM1_BASE | VECT_TAB_OFFSET; // Vector Table Relocation in Internal SRAM

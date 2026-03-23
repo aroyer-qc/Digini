@@ -38,11 +38,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define ETH_MTU_SIZE                                1500
-
 #define LSI_CLOCK_FREQUENCY                         32000
 #define HSI_CLOCK_FREQUENCY                         16000000
-#define LSE_CLOCK_FREQUENCY                         32768
 
 // Own define for register bit value without cast (Do not change)
 #define CFG_RCC_CFGR_SW_HSI                         0x00000000U
@@ -194,10 +191,21 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "clock_cfg.h"
+//-------------------------------------------------------------------------------------------------
+// default
+//-------------------------------------------------------------------------------------------------
+
+#ifdef CFG_LSE_VALUE
+  #define LSE_CLOCK_FREQUENCY                       CFG_LSE_VALUE
+#else
+  #define LSE_CLOCK_FREQUENCY                       32768
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Auto define configuration
 //-------------------------------------------------------------------------------------------------
+
+#define CFG_RCC_CFGR_RTCPRE                         ((CFG_HSE_VALUE / 1000000) << RCC_CFGR_RTCPRE_Pos)
 
 #define RCC_PLL_CFGR_PLL_M_POS                      0
 #define RCC_PLL_CFGR_PLL_N_POS                      6

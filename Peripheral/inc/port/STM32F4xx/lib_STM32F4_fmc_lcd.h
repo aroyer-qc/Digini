@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_sdram.h
+//  File : lib_class_STM32F7_fmc_lcd.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2025 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,17 +24,34 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-
-#include "ram_cfg.h"
-
-//#if defined STM32F1xx
-// #include "./Peripheral/inc/port/STM32F1xx/lib_STM32F1_sdram.h"
-//#elif defined STM32F4xx
-// #include "./Peripheral/inc/port/STM32F4xx/lib_STM32F4_sdram.h"
-#if defined STM32F7xx
- #include "./Peripheral/inc/port/STM32F7xx/lib_STM32F7_sdram.h"
-#elif defined STM32H7xx
- #include "./Peripheral/inc/port/STM32H7xx/lib_STM32H7_sdram.h"
-#endif
+#pragma once
 
 //-------------------------------------------------------------------------------------------------
+
+#if (USE_FMC_LCD_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+// FMC LCD Bank
+#define FMC_LCD_BANK1                           (0x00000000)
+#define FMC_LCD_BANK2                           (0x00000002)
+#define FMC_LCD_BANK3                           (0x00000004)
+#define FMC_LCD_BANK4                           (0x00000006)
+
+// FMC LCD Memory Bus Width
+#define FMC_LCD_MEM_BUS_WIDTH_8                 (0x00000000)
+#define FMC_LCD_MEM_BUS_WIDTH_16                (0x00000010)
+#define FMC_LCD_MEM_BUS_WIDTH_32                (0x00000020)
+
+//-------------------------------------------------------------------------------------------------
+// Function prototype(s)
+//-------------------------------------------------------------------------------------------------
+
+void    FMC_LCD_Initialize              (void);
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // USE_FMC_LCD_DRIVER
+

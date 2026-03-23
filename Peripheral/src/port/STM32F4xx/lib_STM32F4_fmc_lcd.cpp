@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F4_bkpreg_dbase.h
+//  File : lib_class_STM32F4_fmc_lcd.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,71 +24,54 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-
-#pragma once
-
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "./Database/inc/lib_class_database.h"
+#include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
 
-#if defined(BKPREG_DBASE_DEF)
-#if (USE_RTC_DRIVER == DEF_ENABLED)
+#if (USE_FMC_LCD_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define BACKUP_REGISTER         0x40002850
+#define FMC_WRITE_OPERATION_ENABLE                  0x00001000              // Always enable
+
+#define FMC_BTR1_ADDRESS_SETUP_TIME_POS             0
+#define FMC_BTR1_ADDRESS_HOLD_TIME_POS              4
+#define FMC_BTR1_DATA_SETUP_TIME_POS                8
 
 //-------------------------------------------------------------------------------------------------
-// Expand macro(s)
+//
+//   Function name: FMC_LCD_Initialize
+//
+//   Parameter(s):  None
+//   Return:        None
+//
+//   Description:   Performs the LCD device initialization sequence on the FMC.
+//
 //-------------------------------------------------------------------------------------------------
-
-#define EXPAND_X_BKPREG_DBASE_AS_ENUM(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY) ENUM_ID,
-
-//-------------------------------------------------------------------------------------------------
-// Typedef(s)
-//-------------------------------------------------------------------------------------------------
-
-enum BKPREG_DBaseItemList_e
+void FMC_LCD_Initialize(void)
 {
-    START_BKPREG_INDEX = DBASE_INDEX_BKPREG_RANGE - 1,
-    BKPREG_DBASE_DEF(EXPAND_X_BKPREG_DBASE_AS_ENUM)
-    END_BKPREG_INDEX
-};
+    // ---- FMC Reset ----
+    RCC->AHB3RSTR |=  RCC_AHB3RSTR_FMCRST;
+    RCC->AHB3RSTR &= ~RCC_AHB3RSTR_FMCRST;
+    RCC->AHB3ENR  |=  RCC_AHB3ENR_FMCEN;                    // Enable Clock
 
-#define NB_BKPREG_DBASE_ITEMS_CONST        ((END_BKPREG_INDEX - START_BKPREG_INDEX) - 1)
+    FMC_Bank1->BTCR[CFG_FMC_LCD_BANK] = FMC_WRITE_OPERATION_ENABLE | CFG_FMC_LCD_MEM_BUS_WIDTH;
 
-//-------------------------------------------------------------------------------------------------
+    // FSM LCD device timing parameters
+    FMC_Bank1->BTCR[CFG_FMC_LCD_BANK + 1] = (CFG_FMC_LCD_TIMING_ADDRESS_SETUP_TIME << FMC_BTR1_ADDRESS_SETUP_TIME_POS) |
+                                            (CFG_FMC_LCD_TIMING_ADDRESS_HOLD_TIME  << FMC_BTR1_ADDRESS_HOLD_TIME_POS)  |
+                                            (CFG_FMC_LCD_TIMING_DATA_SETUP_TIME    << FMC_BTR1_DATA_SETUP_TIME_POS);
 
-class BKPREG_DataBase : public CDataBaseInterface
-{
-    public:
-
-                        BKPREG_DataBase     (class RTC_Driver* pRTC);
-        SystemState_e   Initialize          (void* pConfig, size_t ObjectSize);
-        SystemState_e   Get                 (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        SystemState_e   Set                 (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        uint16_t        GetDriverIndex      (Range_e Range);
-        SystemState_e   GetSize             (uint32_t* pSize,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        SystemState_e   GetPointer          (void** pAddress,   uint16_t Record, uint16_t Number, uint16_t SubNumber);
-
-    private:
-
-        SystemState_e   CheckRange          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
-        uint8_t         GetIndex            (uint16_t Record, uint16_t Number, uint16_t SubNumber);
-
-        class RTC_Driver*       m_pRTC;
-        uint8_t                 m_ItemsIndex        [NB_BKPREG_DBASE_ITEMS_CONST];
-        static const uint8_t    m_ItemsQTY          [NB_BKPREG_DBASE_ITEMS_CONST];
-        static const uint8_t    m_ItemsSubQTY       [NB_BKPREG_DBASE_ITEMS_CONST];
-};
+    FMC_Bank1E->BWTR[CFG_FMC_LCD_BANK] = 0x0FFFFFFF;
+    SET_BIT(FMC_Bank1->BTCR[CFG_FMC_LCD_BANK], FMC_BCR1_MBKEN);
+}
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (USE_RTC_DRIVER == DEF_ENABLED)
-#endif // defined(BKPREG_DBASE_DEF)
+#endif // USE_SDRAM_DRIVER

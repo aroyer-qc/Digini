@@ -30,7 +30,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "stm32f7xx.h"
+#include "stm32f4xx.h"
 #include "./Digini/inc/lib_typedef.h"
 
 //-------------------------------------------------------------------------------------------------
@@ -707,7 +707,7 @@ class FMC_Driver
       #ifdef FMC_USE_SDRAM_MODULE
         FMC_SDRAM_t*        m_pSDRAM_Device;
       #endif
-      
+
 	  #ifdef FMC_USE_SRAM_MODULE
         FMC_SRAM_t*       	m_pSRAM_Device;
       #endif

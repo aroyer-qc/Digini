@@ -79,8 +79,12 @@ SystemState_e DIGINI_Initialize(void)
     DMA_MEM2MEM_Initialize();
   #endif
 
-  #if (USE_SDRAM_DRIVER == DEF_ENABLED)
-    SDRAM_Initialize();                                     // Initialize SDRAM
+  #if (USE_FMC_LCD_DRIVER == DEF_ENABLED)
+    FMC_LCD_Initialize();                                   // Initialize LCD on FMC
+  #endif
+
+  #if (USE_FMC_SDRAM_DRIVER == DEF_ENABLED)
+    FMC_SDRAM_Initialize();                                 // Initialize SDRAM on FMC
   #endif
 
   #if (USE_HYPER_RAM_DRIVER == DEF_ENABLED)
@@ -92,7 +96,7 @@ SystemState_e DIGINI_Initialize(void)
   #endif
 
   #if (USE_RTC_DRIVER == DEF_ENABLED)
-    myRTC.Initialize(RTC_CLOCK_MODE_LSI);                   // RTC module object
+    myRTC.Initialize();                   // RTC module object
   #endif
 
     // Register all database driver

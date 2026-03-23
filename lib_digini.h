@@ -198,7 +198,7 @@ class NetworkContext;
 #endif
 
 #if (USE_HYPER_RAM_DRIVER == DEF_ENABLED)
-#include "./Peripheral/inc/port/lib_hyper_ram.h"
+#include "./Peripheral/inc/port/lib_hyper_ram.h"                // it use QSPI
 #endif
 
 #if (USE_I2C_DRIVER == DEF_ENABLED)
@@ -207,6 +207,14 @@ class NetworkContext;
 
 #if (USE_I2S_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_i2s.h"
+#endif
+
+#if (USE_FMC_LCD_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_fmc_lcd.h"
+#endif
+
+#if (USE_FMC_SDRAM_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_fmc_sdram.h"
 #endif
 
 #if (USE_OSPI_DRIVER == DEF_ENABLED)
@@ -235,10 +243,6 @@ class NetworkContext;
 
 #if (USE_SDIO_DRIVER == DEF_ENABLED)
 #include "./Peripheral/inc/port/lib_class_sdio.h"
-#endif
-
-#if (USE_SDRAM_DRIVER == DEF_ENABLED)
-#include "./Peripheral/inc/port/lib_sdram.h"
 #endif
 
 #if (USE_SPI_DRIVER == DEF_ENABLED)

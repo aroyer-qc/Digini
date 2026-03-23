@@ -12,18 +12,15 @@
 
 //-------------------------------------------------------------------------------------------------
 
+#if defined(BKPREG_DBASE_DEF)
 #if (USE_RTC_DRIVER == DEF_ENABLED)
 
-//-------------------------------------------------------------------------------------------------
-// Include file(s)
+///-------------------------------------------------------------------------------------------------
+// Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-// TODO validate if they all need to be include ( lib_digini.h might do the job )
-#include <stdint.h>
-#include ".Database/inc/port/lib_class_bkpreg_dbase.h"
-#include "./Peripheral/inc/port/lib_class_rtc.h"
-#include "./Digini/inc/lib_macro.h"
-#include "driver_cfg.h"
+#define EXPAND_X_BKPREG_DBASE_AS_ITEMS_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY)     ITEMS_QTY,
+#define EXPAND_X_BKPREG_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY) ITEMS_SubQTY,
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -37,17 +34,13 @@
 // Create Quantity list for each record item
 const uint8_t BKPREG_DataBase::m_ItemsQTY[NB_BKPREG_DBASE_ITEMS_CONST] =                                       // Array[THIS][]
 {
-  #define X_BKPREG_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY) ITEMS_QTY,
-    BKPREG_DBASE_DEF
-  #undef X_BKPREG_DBASE
+    BKPREG_DBASE_DEF(EXPAND_X_BKPREG_DBASE_AS_ITEMS_QTY)
 };
 
 // Create SUB Quantity list for each record item
 const uint8_t BKPREG_DataBase::m_ItemsSubQTY[NB_BKPREG_DBASE_ITEMS_CONST] =                                    // Array[][THIS]
 {
-  #define X_BKPREG_DBASE(ENUM_ID, ITEMS_QTY, ITEMS_SubQTY) ITEMS_SubQTY,
-    BKPREG_DBASE_DEF
-  #undef X_BKPREG_DBASE
+    BKPREG_DBASE_DEF(EXPAND_X_BKPREG_DBASE_AS_ITEMS_SUB_QTY)
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -61,7 +54,7 @@ const uint8_t BKPREG_DataBase::m_ItemsSubQTY[NB_BKPREG_DBASE_ITEMS_CONST] =     
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-BKPREG_DataBase::BKPREG_DataBase(CRTC* pRTC)
+BKPREG_DataBase::BKPREG_DataBase(RTC_Driver* pRTC)
 {
     m_pRTC = pRTC;
 }
@@ -272,3 +265,4 @@ uint8_t BKPREG_DataBase::GetIndex(uint16_t Record, uint16_t Number, uint16_t Sub
 //-------------------------------------------------------------------------------------------------
 
 #endif // USE_RTC_DRIVER == DEF_ENABLED
+#endif //  defined(BKPREG_DBASE_DEF)

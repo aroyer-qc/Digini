@@ -148,9 +148,9 @@ void UART_Driver::Initialize(void)
             case uint32_t(UART_DRIVER_ID_4):
             {
                 // ---- Reset peripheral and set clock ----
-                RCC->APB1RSTR   |=  RCC_APB1RSTR_USART4RST;         // Enable USART4 reset state
-                RCC->APB1RSTR   &= ~RCC_APB1RSTR_USART4RST;         // Release USART4 from reset state
-                RCC->APB1ENR    |=  RCC_APB1ENR_USART4EN;           // Enable USART_PORT clock
+                RCC->APB1RSTR   |=  RCC_APB1RSTR_UART4RST;          // Enable USART4 reset state
+                RCC->APB1RSTR   &= ~RCC_APB1RSTR_UART4RST;          // Release USART4 from reset state
+                RCC->APB1ENR    |=  RCC_APB1ENR_UART4EN;            // Enable USART_PORT clock
                 m_ClockFrequency =  SYS_APB1_CLOCK_FREQUENCY;
             }
             break;

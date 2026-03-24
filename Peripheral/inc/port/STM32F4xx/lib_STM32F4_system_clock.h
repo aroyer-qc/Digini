@@ -425,7 +425,7 @@
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-SYSTEM_EXTERN   uint32_t        SystemCoreClock;
+//SYSTEM_EXTERN   uint32_t        SystemCoreClock;
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)

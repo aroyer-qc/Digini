@@ -110,7 +110,7 @@ const GPIO_TypeDef* IO_Port[NUMBER_OF_IO_PORT] =
     GPIOJ,
    #if defined(STM32F469xx) || defined(STM32F479xx)
     GPIOK,
-   #endif 
+   #endif
   #endif
  #endif
 };

@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_spi_SerialFlash.cpp
+//  File : lib_class_spi_serial_flash.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -40,14 +40,37 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define FLASH_SFDP_PAGE_SIZE        256             // At this time page are always 256 bytes
-#define FLASH_SFDP_SECTOR_SIZE      4096            // At this time sector are always 4096 bytes
+#define FLASH_SFDP_PAGE_SIZE                256             // At this time page are always 256 bytes
+#define FLASH_SFDP_SECTOR_SIZE              4096            // At this time sector are always 4096 bytes
 
-#define	FLASH_WIP_FLAG		        uint8_t(0x01)   // Write in progress Flag
+#define	FLASH_WIP_FLAG		                uint8_t(0x01)   // Write in progress Flag
 
-#define FLASH_SST_DEVICES           uint32_t(0xBF0000)
+#define FLASH_SST_DEVICES                   uint32_t(0xBF0000)
 
-#define FLASH_WAIT_END_WRITE_DELAY  10
+#define FLASH_WAIT_LOOP_DELAY               2
+#define FLASH_WAIT_LOOP_RETRY               15
+
+#define SFDP_SIGNATURE_0_OFFSET             0
+#define SFDP_MAJOR_REVISION_OFFSET          5
+#define SFDP_PARAM_ID_LSB_OFFSET            8
+#define SFDP_PARAM_ID_LSB_OFFSET            9
+#define SFDP_PARAM_MINOR_OFFSET             10
+#define SFDP_PARAM_TABLE_PTR_0              12
+#define SFDP_PARAM_TABLE_PTR_1              13
+#define SFDP_PARAM_TABLE_PTR_2              14
+#define SFDP_TABLE_ERASE_SUPPORT_OFFSET     0
+#define SFDP_TABLE_ERASE_OPCODE_OFFSET      1
+#define SFDP_TABLE_ADDRESS_BYTES_OFFSET     2
+#define SFDP_TABLE_DENSITY_0_OFFSET         4   // Density bits [7:0]
+#define SFDP_TABLE_DENSITY_1_OFFSET         5
+#define SFDP_TABLE_DENSITY_2_OFFSET         6
+#define SFDP_TABLE_DENSITY_3_OFFSET         7   // Density bits [31:24]
+#define SFDP_SIGNATURE                      ""SFDP"
+#define SFDP_SIGNATURE_SIZE                 4
+#define SFDP_BYTE_SIZE                      8
+#define SFDP_HEADER_SIZE                    16
+#define SFDP_BASIC_FLASH_PARAMETER_TABLE    8
+
 
 //-------------------------------------------------------------------------------------------------
 // Const(s)
@@ -120,10 +143,10 @@ SystemState_e SPI_SerialFLash_Driver::Initialize(SPI_Driver* pSPI, FlashList_e F
         return SYS_ERROR;
     }
   #else
-        memcpy(&m_FlashInfo, &m_FlashInfoList[Flash], sizeof(FlashInfo_t));
+    memcpy(&m_FlashInfo, &m_FlashInfoList[Flash], sizeof(FlashInfo_t));
   #endif
 
-        return SYS_READY;
+    return SYS_READY;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -308,6 +331,51 @@ DRESULT SPI_SerialFLash_Driver::Write(const uint8_t* pBuffer, uint32_t Sector, u
 
 //-------------------------------------------------------------------------------------------------
 //
+//   Function:      BulkErase
+//
+//   Parameter(s):  None
+//
+//   Return Value:  SystemState_e       SYS_READY or SYS_ERROR
+//
+//   Description:   Issues a bulk erase command to the flash device. The function locks the SPI
+//                  interface (without controlling chip select), enables writing, asserts chip
+//                  select, transmits the bulk erase opcode, then releases the device lock. Any
+//                  communication or sequencing error is propagated through the returned state.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e SPI_SerialFLash_Driver::BulkErase(void)
+{
+    SystemState_e State;
+
+    State = m_pSPI->LockToDevice(m_ChipSelect, false);                          // Lock SPI access (BulkErase controls CS)
+    
+    if(State != SYS_READY)
+    {
+        return State;
+    }
+
+    State = WriteEnable();                                                      // Enable write
+    
+    if(State == SYS_READY)
+    {
+        m_pSPI->SelectChip(m_ChipSelect);
+        State = m_pSPI->Write(uint8_t(FLASH_CMD_BULK_ERASE));                   // Send bulk erase command
+        m_pSPI->DeSelectChip(m_ChipSelect);
+    }
+
+    SystemState_e UnlockState = m_pSPI->UnlockFromDevice(m_ChipSelect, false);  // Unlock SPI access
+    
+    if(UnlockState != SYS_READY)
+    {
+        return UnlockState;
+    }
+    
+    return State;
+}
+
+
+//-------------------------------------------------------------------------------------------------
+//
 //   Function:      EraseSector
 //
 //   Parameter(s):  uint32_t            Address             Address of the sector to erase
@@ -329,47 +397,226 @@ SystemState_e SPI_SerialFLash_Driver::EraseSector(uint32_t Address)
         return State;
     }
     
-    SystemState_e PriorityState = SendCommandAndAddress(FLASH_CMD_CHIP_ERASE, Address);
+    State = SendCommandAndAddress(FLASH_CMD_CHIP_ERASE, Address);
+    SystemState_e UnlockState = m_pSPI->UnlockFromDevice(m_ChipSelect);         // Unlock SPI access
 
-    State = m_pSPI->UnlockFromDevice(m_ChipSelect);                             // Unlock SPI access
+    if(UnlockState != SYS_READY)
+    {
+        return UnlockState;
+    }
+    
+    return State;
+}
 
+//-------------------------------------------------------------------------------------------------
+//
+//   Function:      WaitForEndWrite
+//
+//   Parameter(s):  None
+//
+//   Return Value:  SystemState_e       SYS_READY or SYS_TIME_OUT or SYS_ERROR
+//
+//   Description:   Polls the flash device's status register until the Write-In-Progress (WIP)
+//                  bit clears or a retry timeout occurs. The function asserts chip select,
+//                  issues the READ STATUS command, reads the status byte, and repeats until
+//                  the write cycle completes. Any SPI communication error or timeout is
+//                  propagated through the returned state.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e SPI_SerialFLash_Driver::WaitForEndWrite(void)
+{
+	SystemState_e State;
+	uint8_t	      Command;
+	uint8_t	      ReadValue;
+	int           Retry;
+  
+    Retry   = FLASH_WAIT_LOOP_RETRY;
+    Command = FLASH_CMD_READ_STATUS_REGISTER;
+
+	do
+	{
+        nOS_Sleep(FLASH_WAIT_LOOP_DELAY); 							    // The write page take 11 ms typic. 25ms maximum.
+        Retry--;
+		m_pSPI->SelectChip(m_ChipSelect);
+		State = m_pSPI->Transfer(&Command, 1, &ReadValue, 1);		    // Send "Read Status" instruction
+		m_pSPI->DeSelectChip(m_ChipSelect);
+	} 
+	while(((ReadValue & WIP_FLAG) == WIP_FLAG) && (Retry > 0)); 		// Write in progress
+	
+	if(Retry == 0)
+    {
+        State = SYS_TIME_OUT;
+    }
+
+	return State;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function:      WriteEnable
+//
+//   Parameter(s):  None
+//
+//   Return Value:  SystemState_e       SYS_READY or ....
+//
+//   Description:   Sends the Write Enable (WREN) command to the flash device. The function
+//                  asserts chip select, transmits the WREN opcode, and then releases chip select.
+//                  This sets the Write Enable Latch (WEL), allowing subsequent program or erase
+//                  operations to be accepted by the device.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e SPI_SerialFLash_Driver::WriteEnable(void)
+{
+    m_pSPI->SelectChip(m_ChipSelect);
+	SystemState_e State = m_pSPI->Write(FLASH_CMD_WRITE_ENABLE);        // Send "Write Enable" instruction
+    m_pSPI->DeSelectChip(m_ChipSelect);
+    
+    return State;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function:      WriteDisable
+//
+//   Parameter(s):  None
+//
+//   Return Value:  SystemState_e       SYS_READY or ....
+//
+//   Description:   Sends the Write Disable (WRDI) command to the flash device. The function
+//                  asserts chip select, transmits the WRDI opcode, and then releases chip select.
+//                  This clears the Write Enable Latch (WEL) and prevents any program or erase
+//                  operations until WriteEnable() is issued again.
+//
+//-------------------------------------------------------------------------------------------------
+SystemState_e SPI_SerialFLash_Driver::WriteDisable(void)
+{
+    m_pSPI->SelectChip(m_ChipSelect);
+	SystemState_e State = m_pSPI->Write(FLASH_CMD_WRITE_DISABLE);       // Send "Write Disable" instruction
+    m_pSPI->DeSelectChip(m_ChipSelect);
+
+    return State;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function:      SFDP_Read
+//
+//   Parameter(s):  uint32_t    NumberOfByteToRead     Number of bytes to read from the SFDP table
+//                  uint32_t    Address                Starting SFDP address
+//                  uint8_t*    pBuffer                Destination buffer
+//
+//   Return Value:  SystemState_e                      SYS_READY or SYS_ERROR
+//
+//   Description:   Reads data from the Serial Flash Discoverable Parameters (SFDP) table. The
+//                  function locks the SPI interface, sends the SFDP read command and address,
+//                  performs a dummy byte transfer as required by the SFDP protocol, reads the
+//                  requested number of bytes, then unlocks the SPI interface.
+//
+//-------------------------------------------------------------------------------------------------
+#if (FLASH_USE_AUTO_DETECT_FLASH == DEF_ENABLED)
+SystemState_e SPI_SerialFLash_Driver::SFDP_Read(uint32_t NumberOfByteToRead, uint32_t Address, uint8_t *pBuffer)
+{
+    SystemState_e State;
+	uint8_t Dummy = 0;
+
+    State = m_pSPI->LockToDevice(m_ChipSelect);                             // Let it handle the  CS
+    
     if(State != SYS_READY)
     {
         return State;
     }
     
-    // If Write() failed, propagate that error
-    return (PriorityState != SYS_READY) ? PriorityState : SYS_READY;
+    State = SendCommandAndAddress(FLASH_CMD_READ_SFPD, Address);
+    
+    if(State == SYS_READY)
+    {
+        State = m_pSPI->Transfer(&Dummy, 1, pBuffer, NumberOfByteToRead);
+    }
+    
+    SystemState_e UnlockState = m_pSPI->UnlockFromDevice(m_ChipSelect);    // Let it Release the CS
+    
+    if(UnlockState != SYS_READY)
+    {
+        return UnlockState;
+    }
+
+    return State;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
-
-SystemState_e SPI_SerialFLash_Driver::WaitForEndWrite(void)
+//
+//   Function:      ReadSFDP_Density
+//
+//   Parameter(s):  None
+//
+//   Return Value:  uint32_t    Device density in bytes, as reported by the SFDP Basic Flash
+//                              Parameter Table. Returns 0 if the SFDP header, parameter header,
+//                              erase type, address size, or density fields are invalid.
+//
+//   Description:   Reads the SFDP (Serial Flash Discoverable Parameters) header and the first
+//                  DWORDs of the Basic Flash Parameter Table to extract the device density. The
+//                  SFDP specification encodes density as (number_of_bits - 1), so the function
+//                  reconstructs the true size and converts it to bytes. Only devices supporting
+//                  4‑KB erase and 3‑byte addressing are accepted.
+//
+//-------------------------------------------------------------------------------------------------
+#if (FLASH_USE_AUTO_DETECT_FLASH == DEF_ENABLED)
+uint32_t TSPI_SerialFLash_Driver::ReadSFDP_Density(void)
 {
-	uint8_t	Command = FLASH_CMD_READ_STATUS_REGISTER;
-	uint8_t	ReadValue;
-	bool    noError = false;
-	int     timeout;
-  
-    timeout = 150; 		// 25 * 2ms = 50ms timeout.
+    // Check JEDEC serial flash discoverable parameters for device specific info
+    uint8_t Header[SFDP_HEADER_SIZE];
 
-	do
+    SFDPRead(SFDP_HEADER_SIZE, 0x0, Header);
+
+    // Verify SFDP signature for sanity
+    // Also check that major/minor version is acceptable
+    if((memcmp(&Header[0], SFDP_SIGNATURE, SFDP_SIGNATURE_SIZE) != 0) && (Header[SFDP_MAJOR_REVISION_OFFSET] != 1))
+    {
+        return 0;
+    }
+
+    // The SFDP spec indicates the standard table is always at offset 0
+    // in the parameter headers, we check just to be safe
+    if((Header[SFDP_PARAM_ID_LSB_OFFSET] != 0x00) ||
+       (Header[SFDP_PARAM_ID_MSB_OFFSET] != 0xFF) ||
+       (Header[SFDP_PARAM_MAJOR_OFFSET]  != 1))
+    {
+        return 0;
+    }
+
+    // Parameter table pointer, spi commands are BE, SFDP is LE,
+    // also sfdp command expects extra read wait byte
+    uint8_t Table[SFDP_BASIC_FLASH_PARAMETER_TABLE];
+    uint32_t TableAddress = (Header[SFDP_PARAM_TABLE_PTR_2] << 16) |
+                            (Header[SFDP_PARAM_TABLE_PTR_1] << 8)  |
+                             Header[SFDP_PARAM_TABLE_PTR_0];
+    
+    SFDP_Read(SFDP_BASIC_FLASH_PARAMETER_TABLE, TableAddress, Table);
+
+    // Check erase size, currently only supports 4 KB
+    if(((Table[SFDP_TABLE_ERASE_SUPPORT_OFFSET] & 0x03) != 0x01) ||
+        (Table[SFDP_TABLE_ERASE_OPCODE_OFFSET] != 0x20))
+    {
+        return 0;
+    }
+
+    // Check address size, currently only supports 3 bytes addresses
+    if (((Table[SFDP_TABLE_ADDRESS_BYTES_OFFSET] & 0x04) != 0) ||
+        ((Table[SFDP_TABLE_DENSITY_3_OFFSET] & 0x80) != 0))
 	{
-        nOS_Sleep(FLASH_WAIT_END_WRITE_DELAY); 							// The write page take 11 ms typic. 25ms maximum.
+        return 0;
+    }
 
-		timeout--;
-
-		m_pSPI->SelectChip(m_ChipSelect);
-		m_pSPI->Transfer(&Command, 1, &ReadValue, 1);		        	// Send "Read Status" instruction
-		m_pSPI->DeSelectChip(m_ChipSelect);
-	} 
-	while(((ReadValue & WIP_FLAG) == WIP_FLAG) && (timeout > 0)); 		// Write in progress
-	
-	noError = ((timeout == 0) ? false : true);
-
-	return noError;
+    // Get device density, stored as size in bits - 1
+    uint32_t Density = ((Table[SFDP_TABLE_DENSITY_3_OFFSET] << 24) |
+                        (Table[SFDP_TABLE_DENSITY_2_OFFSET] << 16) |
+                        (Table[SFDP_TABLE_DENSITY_1_OFFSET] << 8 ) |
+                        (Table[SFDP_TABLE_DENSITY_0_OFFSET] << 0 ));
+                        
+    return (Density + 1) / SFDP_BYTE_SIZE;
 }
-
+#endif
 
 //-------------------------------------------------------------------------------------------------
 

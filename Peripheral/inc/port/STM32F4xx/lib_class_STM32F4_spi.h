@@ -199,8 +199,7 @@ class SPI_Driver
         volatile SystemState_e  m_DMA_Status;
         nOS_Sem                 m_DMA_Release;
         bool                    m_IsItUsingDMA_RX;
-        
-        // TODO add bool m_IsItInitialize;
+        bool                    m_IsItInitialize;
 };
 
 //-------------------------------------------------------------------------------------------------

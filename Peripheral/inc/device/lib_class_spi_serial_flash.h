@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_spi_SerialFlash.h
+//  File : lib_class_spi_serial_flash.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -71,7 +71,7 @@ enum SerialFlashCmd_e
     FLASH_CMD_SECTOR_ERASE			    = 0x20,     // Sector erase -- 4K
   //FLASH_CMD_READ_STATUS_REGISTER_2	= 0x35,     // Read status register         Winbond
     FLASH_CMD_SECTOR_ERASE_32K          = 0x52,     // Sector erase -- 32K
-    FLASH_CMD_CHIP_SFPD	     		    = 0x5A,  	// Read SFDP command
+    FLASH_CMD_READ_SFPD	     		    = 0x5A,  	// Read SFDP command
     FLASH_CMD_CHIP_ERASE			    = 0x60,  	// Chip Erase
     FLASH_CMD_ENABLE_RESET		        = 0x66,     // Enable Reset flash           Winbond
     FLASH_CMD_READ_ID		            = 0x90,     // Read Manufacturer/Device ID
@@ -80,7 +80,7 @@ enum SerialFlashCmd_e
     FLASH_CMD_READ_JEDEC_ID		        = 0x9F,     // Read JEDEC ID
     FLASH_CMD_READ_ELECTRONIC_SIGNATURE = 0xAB,     // Read Electronic Signature or Release from deep power down instruction
     FLASH_CMD_DEEP_POWER_DOWN           = 0xB9,     // Deep power down instruction
-  //FLASH_CMD_BULK_ERASE                = 0xC7,     // Bulk Erase instruction                   ???
+    FLASH_CMD_BULK_ERASE                = 0xC7,     // Bulk Erase instruction
     FLASH_CMD_SECTOR_ERASE_64K          = 0xD8,     // Sector erase -- 64K
     FLASH_CMD_WRITE_LOCK_REGISTER		= 0xE5,     // Write to lock Register instruction       ???
     FLASH_CMD_READ_LOCK_REGISTER        = 0xE8,     // Read lock Register instruction           ???
@@ -124,9 +124,9 @@ class SPI_SerialFLash_Driver
  
         SystemState_e               EraseSector             (uint32_t SectorAddress);
         SystemState_e               BulkErase               (void);
-        SystemState_e               Read                    (void* pBuffer, uint32_t Address, size_t Length);
-        SystemState_e               Write                   (void* pBuffer, uint32_t Address, size_t Length);
-        void                        Sync                    (void);
+SystemState_e               Read                    (void* pBuffer, uint32_t Address, size_t Length);
+SystemState_e               Write                   (void* pBuffer, uint32_t Address, size_t Length);
+void                        Sync                    (void);
 
         uint32_t                    GetPageSize             (void)          { return m_FlashInfo.PageSize; }
         uint64_t                    GetFlashSize            (void)          { return m_FlashInfo.NumberOfPages * m_FlashInfo.PageSize; }
@@ -138,11 +138,11 @@ class SPI_SerialFLash_Driver
 
         void                        SendCommandAndAddress   (SerialFlashCmd_e Command, uint32_t Address);
         uint32_t                    ReadID                  (void);
-        void                        WriteEnable             (void);
-        void                        WriteDisable            (void);
         SystemState_e               WaitForEndWrite         (void);
-        SystemState_e               WritePage               (void* pBuffer, uint32_t Address, size_t Length);
-        
+        SystemState_e               WriteEnable             (void);
+        SystemState_e               WriteDisable            (void);
+SystemState_e               WritePage               (void* pBuffer, uint32_t Address, size_t Length);
+
       #if (FLASH_USE_AUTO_DETECT_FLASH == DEF_ENABLED)
         void                        ReadSFDP                (uint32_t NumberOfByteToRead, uint32_t Address, uint8_t* pBuffer);
         uint32_t                    ReadSFDP_Density        (void);

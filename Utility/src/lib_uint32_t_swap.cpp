@@ -42,13 +42,15 @@
 //-------------------------------------------------------------------------------------------------
 void LIB_uint32_t_Swap(uint32_t* pSwap)
 {
-    struct32_t Value;
-
-    Value.u_8.u0 = ((struct32_t*)pSwap)->u_8.u3;
-    Value.u_8.u1 = ((struct32_t*)pSwap)->u_8.u2;
-    Value.u_8.u2 = ((struct32_t*)pSwap)->u_8.u1;
-    Value.u_8.u3 = ((struct32_t*)pSwap)->u_8.u0;
-    *pSwap = Value.u_32;
+  #ifdef __REV
+    *pSwap = __REV(pSwap);
+  #else
+    uint32_t value = *pSwap;
+    *pSwap = ( (value >> 24) |
+              ((value >>  8) & 0x0000FF00) |
+              ((value <<  8) & 0x00FF0000) |
+               (value << 24));
+   #endif
 }
 
 //-------------------------------------------------------------------------------------------------

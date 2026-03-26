@@ -57,7 +57,7 @@ void GRAFX_DRV_Copy(void* pSrc, sBox* pBox, sCartesian* pDstPos, ePixelFormat So
     uint32_t           PixelFormatSrc;
     uint32_t           PixelFormatDst;
     uint32_t           Address;
-    s32_t              AreaConfig;
+    //s32_t              AreaConfig;
     CLayer*            pLayer;
     uint8_t            PixelSize;
 
@@ -155,7 +155,7 @@ void GRAFX_DRV_DrawRectangle(sBox* pBox)
 //                  uint16_t    Thickness
 //  Return:         None
 //
-//  Description:    Draw a box in a specific thickness
+//  Description:    Draw a box in a specific Thickness
 //
 //  Note(s):
 //
@@ -212,10 +212,10 @@ void GRAFX_DRV_DrawPixel(uint16_t PosX, uint16_t PosY)
 //  Parameter(s):   uint16_t    Y
 //                  uint16_t    X1
 //                  uint16_t    X2
-//                  uint16_t    ThickNess
+//                  uint16_t    Thickness
 //  Return:         None
 //
-//  Description:    Displays a horizontal line of a specific thickness.
+//  Description:    Displays a horizontal line of a specific Thickness.
 //
 //  Note(s):
 //
@@ -249,10 +249,10 @@ void GRAFX_DRV_DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t
 //  Parameter(s):   uint16_t    wPosX
 //                  uint16_t    wPosY1
 //                  uint16_t    wPosY2
-//                  uint16_t    wThickNess
+//                  uint16_t    wThickness
 //  Return:         None
 //
-//  Description:    Displays a vertical line of a specific thickness.
+//  Description:    Displays a vertical line of a specific Thickness.
 //
 //  Note(s):
 //
@@ -286,14 +286,14 @@ void GRAFX_DRV_DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t
 //  Parameter(s):   uint16_t  PosX       Specifies the X position, can be a value from 0 to 240.
 //                  uint16_t  PosY       Specifies the Y position, can be a value from 0 to 320.
 //                  uint16_t  Length     Line length.
-//                  uint16_t  ThickNess
+//                  uint16_t  Thickness
 //                  eDrawMode Direction  line direction.
 //                                       This Parameter can be one of the following values
 //                                                 DRAW_HORIZONTAL
 //                                                 DRAW_VERTICAL
 //  Return:         None
 //
-//  Description:    Displays a line of a specific thickness.
+//  Description:    Displays a line of a specific Thickness.
 //
 //  Note(s):
 //

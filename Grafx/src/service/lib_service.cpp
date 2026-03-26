@@ -174,9 +174,9 @@ static ServiceReturn_t* SERV_DATE(ServiceEvent_e* pServiceState)
             pService = GetServiceStruct(SERVICE_RETURN_TYPE2);
             if(pService != nullptr)
             {
-                ((ServiceType2_t*)pService)->Data[0].u_16 = Date.Day;
-                ((ServiceType2_t*)pService)->Data[1].u_16 = Date.Month;
-                ((ServiceType2_t*)pService)->Data[2].u_16 = Date.Year;
+                ((ServiceType2_t*)pService)->Data[0] = Date.Day;
+                ((ServiceType2_t*)pService)->Data[1] = Date.Month;
+                ((ServiceType2_t*)pService)->Data[2] = Date.Year;
                 *pServiceState = SERVICE_REFRESH;
                 OldDate = Date;
             }

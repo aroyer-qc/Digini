@@ -97,7 +97,7 @@
 // Forward Declaration
 //-------------------------------------------------------------------------------------------------
 
-//static void     DRV_Line                       (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction);
+//static void     DRV_Line                       (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
 static void     DRV_IO_Initialize                   (void);     // Initialize the IO on the processor
 static void     DRV_LCD_ControllerInitialize        (void);     // LCD is equipped with a IL9341 controller
 static void     DRV_LTDC_Initialize                 (void);     // Initialize the in processor LCD controller
@@ -750,7 +750,7 @@ void DRV_DrawRectangle(Box_t* pBox)
 //                  uint16_t    Thickness
 //  Return:         None
 //
-//  Description:    Draw a box in a specific thickness
+//  Description:    Draw a box in a specific Thickness
 //
 //-------------------------------------------------------------------------------------------------
 void DRV_DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness)
@@ -806,10 +806,10 @@ void DRV_DrawPixel(uint16_t PosX, uint16_t PosY)
 //  Parameter(s):   uint16_t    Y
 //                  uint16_t    X1
 //                  uint16_t    X2
-//                  uint16_t    ThickNess
+//                  uint16_t    Thickness
 //  Return:         None
 //
-//  Description:    Displays a horizontal line of a specific thickness.
+//  Description:    Displays a horizontal line of a specific Thickness.
 //
 //-------------------------------------------------------------------------------------------------
 void DRV_DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness)
@@ -837,10 +837,10 @@ void DRV_DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thick
 //  Parameter(s):   uint16_t    wPosX
 //                  uint16_t    wPosY1
 //                  uint16_t    wPosY2
-//                  uint16_t    wThickNess
+//                  uint16_t    wThickness
 //  Return:         None
 //
-//  Description:    Displays a vertical line of a specific thickness.
+//  Description:    Displays a vertical line of a specific Thickness.
 //
 //-------------------------------------------------------------------------------------------------
 void DRV_DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness)
@@ -868,17 +868,17 @@ void DRV_DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thick
 //  Parameter(s):   uint16_t   PosX       Specifies the X position, can be a value from 0 to 240.
 //                  uint16_t   PosY       Specifies the Y position, can be a value from 0 to 320.
 //                  uint16_t   Length     Line length.
-//                  uint16_t   ThickNess
+//                  uint16_t   Thickness
 //                  DrawMode_e Direction  line direction.
 //                                        This Parameter can be one of the following values
 //                                                 DRAW_HORIZONTAL
 //                                                 DRAW_VERTICAL
 //  Return:         None
 //
-//  Description:    Displays a line of a specific thickness.
+//  Description:    Displays a line of a specific Thickness.
 //
 //-------------------------------------------------------------------------------------------------
-void DRV_DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction)
+void DRV_DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction)
 {
     uint32_t      PixelFormat;
     uint8_t       PixelSize;
@@ -896,11 +896,11 @@ void DRV_DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickN
     if(Direction == DRAW_HORIZONTAL)
     {
         AreaConfig.u_16.u1 = Length;
-        AreaConfig.u_16.u0 = ThickNess;
+        AreaConfig.u_16.u0 = Thickness;
     }
     else
     {
-        AreaConfig.u_16.u1 = ThickNess;
+        AreaConfig.u_16.u1 = Thickness;
         AreaConfig.u_16.u0 = Length;
     }
 

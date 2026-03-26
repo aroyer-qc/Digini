@@ -57,7 +57,7 @@
         SERVICE_FILTER, OPTIONS,                                                     \
     },
 
-#define EXPAND_X_BASIC_BTN_AS_STRUCT(ENUM_ID, SERVICE, SUB_SERVICE, POS_X, POS_Y, SIZE_X, SIZE_Y, THICKNESS, BACK_COLOR, PRESSED_BACK_COLOR, BOX_COLOR, PRESSED_BOX_COLOR, POS_TEXT_X, POS_TEXT_Y, SIZE_TEXT_X, SIZE_TEXT_Y, TEXT_COLOR, PRESSED_TEXT_COLOR, FONT_ID, TEXT_OPTION, TEXT_LABEL, SERVICE_FILTER)\
+#define EXPAND_X_BASIC_BTN_AS_STRUCT(ENUM_ID, SERVICE, SUB_SERVICE, POS_X, POS_Y, SIZE_X, SIZE_Y, Thickness, BACK_COLOR, PRESSED_BACK_COLOR, BOX_COLOR, PRESSED_BOX_COLOR, POS_TEXT_X, POS_TEXT_Y, SIZE_TEXT_X, SIZE_TEXT_Y, TEXT_COLOR, PRESSED_TEXT_COLOR, FONT_ID, TEXT_OPTION, TEXT_LABEL, SERVICE_FILTER)\
     {                                                                                \
         {(uint32_t)SERVICE, (uint16_t)SUB_SERVICE},                                  \
         {{(int16_t)POS_X, (int16_t)POS_Y}, {(uint16_t)SIZE_X, (uint16_t)SIZE_Y}},    \
@@ -67,7 +67,7 @@
          {GFX_ColorTable[TEXT_COLOR].u_32, GFX_ColorTable[PRESSED_TEXT_COLOR].u_32}, \
          {FONT_ID, FONT_ID}, ALPHA_BLEND, TEXT_LABEL,                                \
          (uint8_t)TEXT_OPTION},                                                      \
-         SERVICE_FILTER, OPTION_NONE, THICKNESS,                                     \
+         SERVICE_FILTER, OPTION_NONE, Thickness,                                     \
     },
 
 #define EXPAND_X_BASIC_RECT_AS_STRUCT(ENUM_ID, SERVICE, SUB_SERVICE, POS_X, POS_Y, SIZE_X, SIZE_Y, COLOR, SERVICE_FILTER, OPTIONS)\

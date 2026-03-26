@@ -119,7 +119,7 @@ Link_e CRoundMeter::Refresh(MsgRefresh_t* pMsg)
 
         if(pService->ServiceType == SERVICE_RETURN_TYPE2)
         {
-            m_Value = ((ServiceType2_t*)pService)->Data[0].u_16;
+            m_Value = ((ServiceType2_t*)pService)->Data[0];
         }
 
         Draw(pService);

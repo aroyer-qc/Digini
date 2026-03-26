@@ -53,8 +53,8 @@ class GrafxGenDriver
             virtual	    void    PrintFont             (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
             virtual	    void    DrawBox               (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness);
             virtual	    void    DrawPixel             (uint16_t PosX, uint16_t PosY);
-            virtual	    void    DrawHLine             (uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t ThickNess);
-            virtual	    void    DrawVLine             (uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t ThickNess);
+            virtual	    void    DrawHLine             (uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness);
+            virtual	    void    DrawVLine             (uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness);
             virtual	    void    DrawLine              (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
             virtual	    void    DrawCircle            (uint16_t PosX, uint16_t PosY, uint16_t Radius, PolygonMode_e Mode);
             virtual	    void    DrawCircle            (Circle_t* pCircle, PolygonMode_e PolygonMode);

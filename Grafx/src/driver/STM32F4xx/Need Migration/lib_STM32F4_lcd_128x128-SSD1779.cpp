@@ -616,7 +616,7 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
 //                  uint16_t    Thickness
 //  Return:         None
 //
-//  Description:    Draw a box in a specific thickness
+//  Description:    Draw a box in a specific Thickness
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness)
@@ -692,10 +692,10 @@ void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 //  Parameter(s):   uint16_t    Y
 //                  uint16_t    X1
 //                  uint16_t    X2
-//                  uint16_t    ThickNess
+//                  uint16_t    Thickness
 //  Return:         None
 //
-//  Description:    Displays a horizontal line of a specific thickness.
+//  Description:    Displays a horizontal line of a specific Thickness.
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness)
@@ -723,10 +723,10 @@ void GrafxDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint1
 //  Parameter(s):   uint16_t    wPosX
 //                  uint16_t    wPosY1
 //                  uint16_t    wPosY2
-//                  uint16_t    wThickNess
+//                  uint16_t    wThickness
 //  Return:         None
 //
-//  Description:    Displays a vertical line of a specific thickness.
+//  Description:    Displays a vertical line of a specific Thickness.
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness)
@@ -754,24 +754,24 @@ void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint1
 //  Parameter(s):   uint16_t   PosX       Specifies the X position, can be a value from 0 to 240.
 //                  uint16_t   PosY       Specifies the Y position, can be a value from 0 to 320.
 //                  uint16_t   Length     Line length.
-//                  uint16_t   ThickNess
+//                  uint16_t   Thickness
 //                  DrawMode_e Direction  line direction.
 //                                        This Parameter can be one of the following values
 //                                                 DRAW_HORIZONTAL
 //                                                 DRAW_VERTICAL
 //  Return:         None
 //
-//  Description:    Displays a line of a specific thickness.
+//  Description:    Displays a line of a specific Thickness.
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction)
+void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction)
 {
     m_pLayer = &LayerTable[CLayer::GetDrawing()];
     WriteCommand(SSD1779_DRAW_LINE);
     WriteData(uint8_t(PosX));
     WriteData(uint8_t(PosY));
     WriteData(uint8_t(PosX + Length));
-    WriteData(uint8_t(PosY + ThickNess));
+    WriteData(uint8_t(PosY + Thickness));
     WriteData(uint16_t(m_pLayer->GetColor()));
 }
 

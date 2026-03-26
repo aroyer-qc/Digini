@@ -71,6 +71,11 @@
 // Create uint32_t value from 4 uint8_t value or ascii char
 #define U16MACRO(A,B)                       ((uint16_t(B) << 8) + uint16_t(A))
 
+#define COLOR_R(C)                          (uint8_t(((C) >> 16) & 0xFF))
+#define COLOR_G(C)                          (uint8_t(((C) >>  8) & 0xFF))
+#define COLOR_B(C)                          (uint8_t(C))
+#define COLOR_A(C)                          (uint8_t((C) >> 24))
+
 #define GetTick()                           nOS_GetTickCount()
 #define TickHasTimeOut(start_time,delay)    ((GetTick() - (start_time)) > ((TickCount_t)delay))
 

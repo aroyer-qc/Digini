@@ -427,7 +427,7 @@ void GrafxGenDriver::DrawRectangle(Box_t* pBox)
 //                  uint16_t    Thickness
 //  Return:         None
 //
-//  Description:    Draw a box in a specific thickness
+//  Description:    Draw a box in a specific Thickness
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness)
@@ -488,10 +488,10 @@ void GrafxGenDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 //  Parameter(s):   uint16_t    Y
 //                  uint16_t    X1
 //                  uint16_t    X2
-//                  uint16_t    ThickNess
+//                  uint16_t    Thickness
 //  Return:         None
 //
-//  Description:    Displays a horizontal line of a specific thickness.
+//  Description:    Displays a horizontal line of a specific Thickness.
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness)
@@ -519,10 +519,10 @@ void GrafxGenDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, ui
 //  Parameter(s):   uint16_t    wPosX
 //                  uint16_t    wPosY1
 //                  uint16_t    wPosY2
-//                  uint16_t    wThickNess
+//                  uint16_t    wThickness
 //  Return:         None
 //
-//  Description:    Displays a vertical line of a specific thickness.
+//  Description:    Displays a vertical line of a specific Thickness.
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness)
@@ -557,7 +557,7 @@ void GrafxGenDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, ui
 //                                                 DRAW_VERTICAL
 //  Return:         None
 //
-//  Description:    Displays a line of a specific thickness.
+//  Description:    Displays a line of a specific Thickness.
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction)
@@ -961,7 +961,7 @@ void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16
 //                  float    Y2
 //   Return Value:  none
 //
-//   Description:   Draw a diagonal line of desire thickness using the Xiaolin Wu Algorithm
+//   Description:   Draw a diagonal line of desire Thickness using the Xiaolin Wu Algorithm
 //                  This algorithm allow line with anti-aliasing ( improvement on Bresenham)
 //
 //-------------------------------------------------------------------------------------------------

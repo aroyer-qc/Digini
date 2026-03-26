@@ -34,24 +34,24 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_SERIAL_FLASH_AS_ENUM(ENUM_ID, CHIP_ID, PAGE_SIZE, NB_OF_PAGE, PAGE_ERASE_SIZE, SECTOR_SIZE, SECTOR_ERASE_SIZE) \
+#define EXPAND_X_SERIAL_FLASH_AS_ENUM(ENUM_ID, FLASH_ID, PAGE_SIZE, NB_OF_PAGE, PAGE_ERASE_SIZE, SECTOR_SIZE, SECTOR_ERASE_SIZE) \
                                       ENUM_ID,
 
-#define EXPAND_X_SERIAL_FLASH_AS_CLASS_CONST(ENUM_ID, CHIP_ID, PAGE_SIZE, NB_OF_PAGE, PAGE_ERASE_SIZE, SECTOR_SIZE, SECTOR_ERASE_SIZE) \
-                                                     {CHIP_ID, PAGE_SIZE, NB_OF_PAGE, PAGE_ERASE_SIZE, SECTOR_SIZE, SECTOR_ERASE_SIZE, ((NB_OF_PAGE * PAGE_SIZE) / SECTOR_SIZE)},
+#define EXPAND_X_SERIAL_FLASH_AS_CLASS_CONST(ENUM_ID, FLASH_ID, PAGE_SIZE, NB_OF_PAGE, PAGE_ERASE_SIZE, SECTOR_SIZE, SECTOR_ERASE_SIZE) \
+                                                     {FLASH_ID, PAGE_SIZE, NB_OF_PAGE, PAGE_ERASE_SIZE, SECTOR_SIZE, SECTOR_ERASE_SIZE, ((NB_OF_PAGE * PAGE_SIZE) / SECTOR_SIZE)},
 
 #define SERIAL_FLASH_DEF(X_SERIAL_FLASH) \
-/*                                                 Flash type,         Chip ID,   Page Size,   NB of Page, Page Erase Sz,  Sector Sz, Sector Erase Sz  */ \
-    IF_USE( FLASH_USE_AT25SF321,          X_FLASH( FLASH_AT25SF321,    0x1F8701,  256,         16384,      0,              4096,       4096   ))          \
-    IF_USE( FLASH_USE_AT25SF641,          X_FLASH( FLASH_AT25SF641,    0x1F1632,  256,         32768,      0,              4096,       4096   ))          \
-    IF_USE( FLASH_USE_M25PE16,            X_FLASH( FLASH_M25PE16,      0x208015,  256,         8192,       256,            512,        65536  ))          \
-    IF_USE( FLASH_USE_M25PE80,            X_FLASH( FLASH_M25PE80,      0x208014,  256,         4096,       256,            512,        65536  ))          \
-    IF_USE( FLASH_USE_SST26VF032B,        X_FLASH( FLASH_SST26VF032B,  0xBF2642,  256,         16384,      0,              4096,       4096   ))          \
-    IF_USE( FLASH_USE_SST26VF064B,        X_FLASH( FLASH_SST26VF064B,  0xBF2643,  256,         32768,      0,              4096,       4096   ))          \
-    IF_USE( FLASH_USE_W25Q16JV,           X_FLASH( FLASH_W25Q16JV,     0xEF4015,  256,         8192,       0,              4096,       4096   ))          \
-    IF_USE( FLASH_USE_W25Q32JV,           X_FLASH( FLASH_W25Q32JV,     0xEF4016,  256,         16384,      0,              4096,       4096   ))          \
-    IF_USE( FLASH_USE_W25Q64JV,           X_FLASH( FLASH_W25Q64JV,     0xEF4017,  256,         32768,      0,              4096,       4096   ))          \
-    IF_USE( FLASH_USE_W25Q128JV,          X_FLASH( FLASH_W25Q128JV,    0xEF4018,  256,         65536,      0,              4096,       4096   ))          \
+/*                                                        Flash type,         Flash ID,  Page Size,   NB of Page, Page Erase Sz,  Sector Sz, Sector Erase Sz  */ \
+    IF_USE( FLASH_USE_AT25SF321,          X_SERIAL_FLASH( FLASH_AT25SF321,    0x1F8701,  256,         16384,      0,              4096,       4096   ))          \
+    IF_USE( FLASH_USE_AT25SF641,          X_SERIAL_FLASH( FLASH_AT25SF641,    0x1F1632,  256,         32768,      0,              4096,       4096   ))          \
+    IF_USE( FLASH_USE_M25PE16,            X_SERIAL_FLASH( FLASH_M25PE16,      0x208015,  256,         8192,       256,            512,        65536  ))          \
+    IF_USE( FLASH_USE_M25PE80,            X_SERIAL_FLASH( FLASH_M25PE80,      0x208014,  256,         4096,       256,            512,        65536  ))          \
+    IF_USE( FLASH_USE_SST26VF032B,        X_SERIAL_FLASH( FLASH_SST26VF032B,  0xBF2642,  256,         16384,      0,              4096,       4096   ))          \
+    IF_USE( FLASH_USE_SST26VF064B,        X_SERIAL_FLASH( FLASH_SST26VF064B,  0xBF2643,  256,         32768,      0,              4096,       4096   ))          \
+    IF_USE( FLASH_USE_W25Q16JV,           X_SERIAL_FLASH( FLASH_W25Q16JV,     0xEF4015,  256,         8192,       0,              4096,       4096   ))          \
+    IF_USE( FLASH_USE_W25Q32JV,           X_SERIAL_FLASH( FLASH_W25Q32JV,     0xEF4016,  256,         16384,      0,              4096,       4096   ))          \
+    IF_USE( FLASH_USE_W25Q64JV,           X_SERIAL_FLASH( FLASH_W25Q64JV,     0xEF4017,  256,         32768,      0,              4096,       4096   ))          \
+    IF_USE( FLASH_USE_W25Q128JV,          X_SERIAL_FLASH( FLASH_W25Q128JV,    0xEF4018,  256,         65536,      0,              4096,       4096   ))          \
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -103,7 +103,7 @@ struct FlashInfo_t
 #if (FLASH_USE_AUTO_DETECT_FLASH != DEF_ENABLED)
 enum FlashList_e
 {
-    X_FLASH(EXPAND_X_SERIAL_FLASH_AS_ENUM)
+    SERIAL_FLASH_DEF(EXPAND_X_SERIAL_FLASH_AS_ENUM)
     NUMBER_OF_FLASH,
 };
 #endif
@@ -112,7 +112,7 @@ enum FlashList_e
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class SPI_SerialFLash_Driver
+class SPI_SerialFLashDriver
 {
     public:
 
@@ -121,27 +121,26 @@ class SPI_SerialFLash_Driver
       #else
         SystemState_e               Initialize              (SPI_Driver* pSPI, FlashList_e Flash, IO_ID_e ChipSelect);
       #endif
- 
+
         SystemState_e               EraseSector             (uint32_t SectorAddress);
         SystemState_e               BulkErase               (void);
-SystemState_e               Read                    (void* pBuffer, uint32_t Address, size_t Length);
-SystemState_e               Write                   (void* pBuffer, uint32_t Address, size_t Length);
-void                        Sync                    (void);
+        SystemState_e               Read                    (void* pBuffer, uint32_t Address, size_t Length);
+        SystemState_e               Write                   (const void* pBuffer, uint32_t Address, size_t Length);
 
         uint32_t                    GetPageSize             (void)          { return m_FlashInfo.PageSize; }
         uint64_t                    GetFlashSize            (void)          { return m_FlashInfo.NumberOfPages * m_FlashInfo.PageSize; }
         uint32_t                    GetSectorEraseSize      (void)          { return m_FlashInfo.SectorEraseSize; }
         uint32_t                    GetSectorSize           (void)          { return m_FlashInfo.SectorSize; }
-        uint32_t                    GetFlashID              (void);         { return m_FlashInfo.FlashID; }
+        uint32_t                    GetFlashID              (void)          { return m_FlashInfo.FlashID; }
 
     private:
 
-        void                        SendCommandAndAddress   (SerialFlashCmd_e Command, uint32_t Address);
+        SystemState_e               SendCommandAndAddress   (SerialFlashCmd_e Command, uint32_t Address);
         uint32_t                    ReadID                  (void);
         SystemState_e               WaitForEndWrite         (void);
         SystemState_e               WriteEnable             (void);
         SystemState_e               WriteDisable            (void);
-SystemState_e               WritePage               (void* pBuffer, uint32_t Address, size_t Length);
+        SystemState_e               WritePage               (void* pBuffer, uint32_t Address, size_t Length);
 
       #if (FLASH_USE_AUTO_DETECT_FLASH == DEF_ENABLED)
         void                        ReadSFDP                (uint32_t NumberOfByteToRead, uint32_t Address, uint8_t* pBuffer);
@@ -151,10 +150,11 @@ SystemState_e               WritePage               (void* pBuffer, uint32_t Add
         IO_ID_e                     m_ChipSelect;
         IO_ID_e                     m_Reset;
         IO_ID_e                     m_WriteProtect;
+        SPI_Driver*                 m_pSPI;
         FlashInfo_t                 m_FlashInfo;
 
-      #if (FLASH_USE_AUTO_DETECT_FLASH != DEF_ENABLED)        
-        static const FlashInfo_t    m_FlashInfoList         [NUMBER_OF_FLASH];        
+      #if (FLASH_USE_AUTO_DETECT_FLASH != DEF_ENABLED)
+        static const FlashInfo_t    m_FlashInfoList         [NUMBER_OF_FLASH];
       #endif
 };
 
@@ -166,7 +166,7 @@ SystemState_e               WritePage               (void* pBuffer, uint32_t Add
 #include "device_var.h"
 #undef  SPI_FLASH_GLOBAL
 
----------------------------------------------------
+//-------------------------------------------------------------------------------------------------
 
 #else // (USE_SPI_DRIVER == DEF_ENABLED)
 

@@ -137,9 +137,9 @@ SystemState_e DAC_Driver::Initialize(void)
 //
 //  Function:       SetChannel_1
 //
-//  Parameter(s):   DAC_Align   - Alignment selector:       DAC_ALIGN_12_BITS_R
-//                                                          DAC_ALIGN_12_BITS_L
-//                                                          DAC_ALIGN_8_BITS_R
+//  Parameter(s):   DAC_Align   - Alignment selector:       DAC_12_BITS_LEFT
+//                                                          DAC_12_BITS_RIGHT
+//                                                          DAC_8_BITS_RIGHT
 //                  Data        - Data value to write into DAC Channel 1
 //
 //  Return:         None
@@ -149,11 +149,11 @@ SystemState_e DAC_Driver::Initialize(void)
 //                  channel-specific offset, and the selected alignment mode.
 //
 //-------------------------------------------------------------------------------------------------
-void DAC_Driver::SetChannel_1(uint32_t DAC_Align, uint16_t Data)
+void DAC_Driver::SetChannel_1(DAC_Alignment_e DAC_Align, uint16_t Data)
 {
     volatile uint32_t Register;
 
-    Register = DAC_BASE + DHR12R1_OFFSET + DAC_Align;
+    Register = DAC_BASE + DHR12R1_OFFSET + uint32_t(DAC_Align);
     *(volatile uint32_t *)Register = Data;
 }
 
@@ -161,9 +161,9 @@ void DAC_Driver::SetChannel_1(uint32_t DAC_Align, uint16_t Data)
 //
 //  Function:       SetChannel_2
 //
-//  Parameter(s):   DAC_Align   - Alignment selector:       DAC_ALIGN_12_BITS_R
-//                                                          DAC_ALIGN_12_BITS_L
-//                                                          DAC_ALIGN_8_BITS_R
+//  Parameter(s):   DAC_Align   - Alignment selector:       DAC_12_BITS_LEFT
+//                                                          DAC_12_BITS_RIGHT
+//                                                          DAC_8_BITS_RIGHT
 //                  Data        - Data value to write into DAC Channel 2
 //
 //  Return:         None
@@ -173,7 +173,7 @@ void DAC_Driver::SetChannel_1(uint32_t DAC_Align, uint16_t Data)
 //                  channel-specific offset, and the selected alignment mode.
 //
 //-------------------------------------------------------------------------------------------------
-void DAC_Driver::SetChannel_2(uint32_t DAC_Align, uint16_t Data)
+void DAC_Driver::SetChannel_2(DAC_Alignment_e DAC_Align, uint16_t Data)
 {
     volatile uint32_t Register;
 
@@ -185,9 +185,9 @@ void DAC_Driver::SetChannel_2(uint32_t DAC_Align, uint16_t Data)
 //
 //     Function:        SetDualChannelData
 //
-//     Parameter(s):    DAC_Align   - Alignment selector:   DAC_ALIGN_12_BITS_R
-//                                                          DAC_ALIGN_12_BITS_L
-//                                                          DAC_ALIGN_8_BITS_R
+//     Parameter(s):    DAC_Align   - Alignment selector:   DAC_12_BITS_LEFT
+//                                                          DAC_12_BITS_RIGHT
+//                                                          DAC_8_BITS_RIGHT
 //                      Data2       - Data for DAC Channel 2
 //                      Data1       - Data for DAC Channel 1
 //
@@ -198,13 +198,13 @@ void DAC_Driver::SetChannel_2(uint32_t DAC_Align, uint16_t Data)
 //                      selected alignment and updates the appropriate DHRxRD register.
 //
 //-------------------------------------------------------------------------------------------------
-void DAC_Driver::SetDualChannelData(uint32_t DAC_Align, uint16_t Data2, uint16_t Data1)
+void DAC_Driver::SetDualChannelData(DAC_Alignment_e DAC_Align, uint16_t Data2, uint16_t Data1)
 {
     volatile uint32_t   Register;
     uint32_t            Data = 0;
 
       // Calculate and set dual DAC data holding register value
-      if(DAC_Align == DAC_ALIGN_8_BITS_R)
+      if(DAC_Align == DAC_8_BITS_RIGHT)
       {
             Data = uint32_t(Data2 << 8) | uint32_t(Data1);
       }

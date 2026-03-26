@@ -97,6 +97,8 @@
 
 #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 #include "ip_cfg.h"
+#else
+#include "./NanoIP/inc/ip_cfg_default.h"
 #endif
 
 #if (DIGINI_USE_DATABASE == DEF_ENABLED)

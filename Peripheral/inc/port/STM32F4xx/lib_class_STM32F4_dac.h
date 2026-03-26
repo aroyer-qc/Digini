@@ -80,10 +80,6 @@
 #define DAC_OUTPUT_BUFFER_ENABLE           0x00000000
 #define DAC_OUTPUT_BUFFER_DISABLE          0x00000002
 
-#define DAC_ALIGN_12_BITS_R                0x00000000
-#define DAC_ALIGN_12_BITS_L                0x00000004
-#define DAC_ALIGN_8_BITS_R                 0x00000008
-
 // DAC Dual Channels SWTRIG masks
 #define DAC_DUAL_SWTRIG                    (DAC_SWTRIGR_SWTRIG1 | DAC_SWTRIGR_SWTRIG2)
 
@@ -103,6 +99,13 @@ enum DAC_Wave_e
     DAC_WAVE_NONE     = 0x00000000,
     DAC_WAVE_NOISE    = 0x00000040,
     DAC_WAVE_TRIANGLE = 0x00000080
+};
+
+enum DAC_Alignment_e
+{
+    DAC_12_BITS_RIGHT = 0x00000000,
+    DAC_12_BITS_LEFT  = 0x00000004,
+    DAC_8_BITS_RIGHT  = 0x00000008,
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -133,10 +136,10 @@ class DAC_Driver
         void                IT_Enable                       (DAC_Channel_e Channel, uint32_t Interrupt)             { SET_BIT(DAC->CR, Interrupt << uint32_t(Channel)); }
         void                IT_Disable                      (DAC_Channel_e Channel, uint32_t Interrupt)             { CLEAR_BIT(DAC->CR, Interrupt << uint32_t(Channel)); }
 
-        void                SetChannel_1                    (uint32_t DAC_Align, uint16_t Data);
-        void                SetChannel_2                    (uint32_t DAC_Align, uint16_t Data);
+        void                SetChannel_1                    (DAC_Alignment_e DAC_Align, uint16_t Data);
+        void                SetChannel_2                    (DAC_Alignment_e DAC_Align, uint16_t Data);
         uint16_t            GetDataOutputValue              (DAC_Channel_e Channel);
-        void                SetDualChannelData              (uint32_t DAC_Align, uint16_t Data2, uint16_t Data1);
+        void                SetDualChannelData              (DAC_Alignment_e DAC_Align, uint16_t Data2, uint16_t Data1);
 
         void                ClearFlag                       (DAC_Channel_e Channel, uint32_t Flag)                  { SET_BIT(DAC->SR, Flag << uint32_t(Channel)); }
         bool                GetFlagStatus                   (DAC_Channel_e Channel, uint32_t Flag);
@@ -163,7 +166,7 @@ class DAC_Driver
 
 #ifdef DAC_DRIVER_GLOBAL
 
-class DAC_Driver myDAC_Driver();
+class DAC_Driver myDAC_Driver;
 
 #else // DAC_DRIVER_GLOBAL
 

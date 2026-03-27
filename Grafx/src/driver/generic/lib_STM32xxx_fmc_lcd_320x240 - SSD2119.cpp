@@ -97,14 +97,11 @@ void GrafxDriver::Initialize(void* pArg)
 {
     GrafxGenDriver::Initialize(pArg);
     
-
     // Send the complete list of initialization command to LCD
     for(int i = 0; i < GRAFX_NUMBER_OF_INIT_CMD; i++)
     {
         WriteCommand(InitCMD.Register, InitCMD.Parameter);
     }
-        
-    //DisplayOn();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -116,15 +113,10 @@ void GrafxDriver::SetRAM_Pointer(uint16_t PosX, uint16_t PosY)
 	SetWriteRAM_Ready();
 }
 
-
-
+//-------------------------------------------------------------------------------------------------
 
 void GrafxDriver::ClearLayer(Layer_e Layer)
 {
-    // if the layer is in STM32 RAM use memset or DMA mem to mem;
-
-    // else : 
-    
    	SetWriteRAM_Ready();
 
 	for(uint32_t i = 0; i < GRAFX_DRIVER_SIZE; i++ )
@@ -132,7 +124,6 @@ void GrafxDriver::ClearLayer(Layer_e Layer)
 		WriteData(0x0000);
 	}
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -149,21 +140,6 @@ void GrafxDriver::DrawRectangle(Box_t* pBox, uint8_t Mode)
 {
     VAR_UNUSED(pBox);
     VAR_UNUSED(Mode);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           LayerConfig
-//
-//  Parameter(s):   CLayer* pLayer
-//  Return:         None
-//
-//  Description:    Configuration for layer
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::LayerConfig(CLayer* pLayer)
-{
-    VAR_UNUSED(pLayer);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -265,7 +241,7 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
 //
 //   Description:   Copy a rectangle region from linear memory region to square memory area
 //
-//  Note(s):        Source is linear
+//  Note(s):        Source is linear like an array
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)

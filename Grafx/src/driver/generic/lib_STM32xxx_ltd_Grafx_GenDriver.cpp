@@ -95,7 +95,6 @@ const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 void GrafxGenDriver::Initialize(void* pArg)
 {
   #ifdef LTDC
-
    #ifdef STM32H7xx
     RCC->APB3ENR |= RCC_APB3ENR_LTDCEN;
     RCC->AHB3ENR |= RCC_AHB3ENR_DMA2DEN;

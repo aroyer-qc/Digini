@@ -35,22 +35,6 @@
 #undef  LIB_SSD2119_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
-// Typedef(s)
-//-------------------------------------------------------------------------------------------------
-
-struct SSD2119_InitCMD_t
-{
-    uint8_t     Register;
-    uint16_t    Parameter;
-};
-
-struct SSD2119_TFT_LCD_t
-{
-    volatile uint16_t REG;   // A16 = 0
-    volatile uint16_t RAM;   // A16 = 1
-} 
-
-//-------------------------------------------------------------------------------------------------
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -73,21 +57,21 @@ const SSD2119_InitCMD_t GrafxDriver::InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
     {SSD2119_FRAME_FREQUENCY_CONTROL_2_REGISTER,    0x7800},        // Fine-tunes oscillator division for frame timing.
     {SSD2119_VCOM_CONTROL_1_REGISTER,               0x0078},        // Fine VCOM tuning (offset, flicker compensation).
     {SSD2119_X_RAM_ADDRESS_REGISTER,                0x0000},        // Initial X RAM pointer.
-    {SSD2119_Y_RAM_ADDRESS_REGISTER,                0x0000},        // Initial Y RAM pointer. 
+    {SSD2119_Y_RAM_ADDRESS_REGISTER,                0x0000},        // Initial Y RAM pointer.
     {SSD2119_SLEEP_MODE_CONTROL_REGISTER,           0x08D9},        // Extended sleep control: Deep sleep exit, Oscillator gating, Power block stabilization. : 0x08D9 is a known “panel-ready” value.
     // Adjust the Gamma Curve
     // These 10 registers define the full gamma curve: Brightness, Contrast, Color linearity, Mid-tone shaping, Saturation
-    {SSD2119_GAMMA_CONTROL_1_REGISTER,              0x0000}, 
-    {SSD2119_GAMMA_CONTROL_2_REGISTER,              0x0104}, 
-    {SSD2119_GAMMA_CONTROL_3_REGISTER,              0x0100}, 
-    {SSD2119_GAMMA_CONTROL_4_REGISTER,              0x0305}, 
-    {SSD2119_GAMMA_CONTROL_5_REGISTER,              0x0505}, 
-    {SSD2119_GAMMA_CONTROL_6_REGISTER,              0x0305}, 
-    {SSD2119_GAMMA_CONTROL_7_REGISTER,              0x0707}, 
-    {SSD2119_GAMMA_CONTROL_8_REGISTER,              0x0300}, 
-    {SSD2119_GAMMA_CONTROL_9_REGISTER,              0x1200}, 
-    {SSD2119_GAMMA_CONTROL_10_REGISTER,             0x0800}, 
-    
+    {SSD2119_GAMMA_CONTROL_1_REGISTER,              0x0000},
+    {SSD2119_GAMMA_CONTROL_2_REGISTER,              0x0104},
+    {SSD2119_GAMMA_CONTROL_3_REGISTER,              0x0100},
+    {SSD2119_GAMMA_CONTROL_4_REGISTER,              0x0305},
+    {SSD2119_GAMMA_CONTROL_5_REGISTER,              0x0505},
+    {SSD2119_GAMMA_CONTROL_6_REGISTER,              0x0305},
+    {SSD2119_GAMMA_CONTROL_7_REGISTER,              0x0707},
+    {SSD2119_GAMMA_CONTROL_8_REGISTER,              0x0300},
+    {SSD2119_GAMMA_CONTROL_9_REGISTER,              0x1200},
+    {SSD2119_GAMMA_CONTROL_10_REGISTER,             0x0800},
+
     {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0033},        // Final display enable: Turns on the display, Enables scanning, Enables frame output. : 0x0033 = display ON, internal oscillator ON, scanning enabled.
 };
 
@@ -96,21 +80,12 @@ const SSD2119_InitCMD_t GrafxDriver::InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
 void GrafxDriver::Initialize(void* pArg)
 {
     GrafxGenDriver::Initialize(pArg);
-    
+
     // Send the complete list of initialization command to LCD
     for(int i = 0; i < GRAFX_NUMBER_OF_INIT_CMD; i++)
     {
-        WriteCommand(InitCMD.Register, InitCMD.Parameter);
+        WriteCommand(InitCMD[i].Register, InitCMD[i].Parameter);
     }
-}
-
-//-------------------------------------------------------------------------------------------------
-
-void GrafxDriver::SetRAM_Pointer(uint16_t PosX, uint16_t PosY)
-{
-    WriteCommand(SSD2119_X_RAM_ADDRESS_REGISTER, PosX);
-	WriteCommand(SSD2119_Y_RAM_ADDRESS_REGISTER, PosY);
-	SetWriteRAM_Ready();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -166,42 +141,6 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
     VAR_UNUSED(pDstPos);
     VAR_UNUSED(SrcPixelFormat);
     VAR_UNUSED(BlendMode);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           BlockCopy
-//
-//  Parameter(s):   void*           pSrc
-//                  uint16_t        X
-//                  uint16_t        Y
-//                  uint16_t        Width
-//                  uint16_t        Height
-//                  uint16_t        DstX
-//                  uint16_t        DstY
-//                  PixelFormat_e   SrcPixelFormat
-//                  BlendMode_e     BlendMode
-//  Return:         None
-//
-//  Description:    Copy a rectangle region from square memory region to another square memory
-//                  region
-//
-//  Note(s):        Source is linear
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::BlockCopy(void* pSrc, uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height, uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
-{
-    Box_t       Box;
-    Cartesian_t Pos;
-
-    Box.Pos.X       = X;
-    Box.Pos.Y       = Y;
-    Box.Size.Width  = Width;
-    Box.Size.Height = Height;
-    Pos.X           = DstX;
-    Pos.Y           = DstY;
-
-    BlockCopy(pSrc, &Box, &Pos, SrcPixelFormat, BlendMode);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -269,40 +208,6 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           DrawBox
-//
-//  Parameter(s):   uint16_t    PosX
-//                  uint16_t    PosY
-//                  uint16_t    Length
-//                  uint16_t    Height
-//                  uint16_t    Thickness
-//  Return:         None
-//
-//  Description:    Draw a box in a specific Thickness
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness)
-{
-    Box_t Box;
-
-    Box.Pos.X = PosX;
-    Box.Pos.Y = PosY;
-    Box.Size.Width  = Length;
-    Box.Size.Height = Height;
-
-    while(Thickness)
-    {
-        DrawRectangle(&Box);
-        Box.Pos.X++;
-        Box.Pos.Y++;
-        Box.Size.Width  -= 2;
-        Box.Size.Height -= 2;
-        Thickness--;
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           DrawPixel
 //
 //  Parameter(s):   uint16_t    PosX
@@ -314,79 +219,17 @@ void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 {
-    uint16_t Color;
+    uint16_t Color = 0;
 
-    m_pLayer = &LayerTable[CLayer::GetDrawing()];
+   // m_pLayer = &LayerTable[CLayer::GetDrawing()];
 
     // if memory calculate offset check if we can call the default function
     // else
-        
+
     SetRAM_Pointer(PosX, PosY);
     //get the color!!
     SetWriteRAM_Ready();
-    Write(Color);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           DrawHLine
-//
-//  Parameter(s):   uint16_t    Y
-//                  uint16_t    X1
-//                  uint16_t    X2
-//                  uint16_t    Thickness
-//  Return:         None
-//
-//  Description:    Displays a horizontal line of a specific Thickness.
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness)
-{
-    uint16_t Length;
-
-    // X1 need to be the lowest (STM32 need this)
-    if(PosX1 > PosX2)
-    {
-        Length = PosX1 - PosX2;
-        PosX1  = PosX2;
-    }
-    else
-    {
-        Length = PosX2 - PosX1;
-    }
-
-    DrawLine(PosX1, PosY, Length, Thickness, DRAW_HORIZONTAL);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           DrawVLine
-//
-//  Parameter(s):   uint16_t    wPosX
-//                  uint16_t    wPosY1
-//                  uint16_t    wPosY2
-//                  uint16_t    wThickness
-//  Return:         None
-//
-//  Description:    Displays a vertical line of a specific Thickness.
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness)
-{
-    uint16_t Length;
-
-    // Y1 need to be the lowest (STM32 need this)
-    if(PosY1 > PosY2)
-    {
-        Length = PosY1 - PosY2;
-        PosY1  = PosY2;
-    }
-    else
-    {
-        Length = PosY2 - PosY1;
-    }
-
-    DrawLine(PosX, PosY1, Length, Thickness, DRAW_VERTICAL);
+    WriteData(Color);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -408,18 +251,18 @@ void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint1
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction)
 {
-    
-    m_pLayer = &LayerTable[CLayer::GetDrawing()];
-    
+
+    //m_pLayer = &LayerTable[CLayer::GetDrawing()];
+
     // if memory calculate offset check if we can call the default function
     // else
-        
+
     //get the color!!
     SetRAM_Pointer(PosX, PosY);
     // loop for the thickness
     // configure the offset of autoincrement...
-    // loop for the number of pixel.. 
-    Write(Color);
+    // loop for the number of pixel..
+   // Write(Color);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -439,14 +282,14 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     PixelFormat_e PixelFormat;
     uint8_t       PixelSize;
 
-    m_pLayer = &LayerTable[CLayer::GetDrawing()];
+    // m_pLayer = &LayerTable[CLayer::GetDrawing()];
 
 //    uint32_t           Address;
 
-    AreaConfig.u_16.u1 = pDescriptor->Size.Width;
-    AreaConfig.u_16.u0 = pDescriptor->Size.Height;
-    PixelFormat        = m_pLayer->GetPixelFormat();
-    PixelSize          = m_pLayer->GetPixelSize();
+ //   AreaConfig.u_16.u1 = pDescriptor->Size.Width;
+  //  AreaConfig.u_16.u0 = pDescriptor->Size.Height;
+ //   PixelFormat        = m_pLayer->GetPixelFormat();
+ //   PixelSize          = m_pLayer->GetPixelSize();
 
 /*
 (uint32_t)pDescriptor->pAddress;                           // Source address 1 of the font
@@ -461,69 +304,13 @@ pLayer->GetTextColor();
 
 //-------------------------------------------------------------------------------------------------
 
+void GrafxDriver::SetRAM_Pointer(uint16_t PosX, uint16_t PosY)
+{
+    WriteCommand(SSD2119_X_RAM_ADDRESS_REGISTER, PosX);
+	WriteCommand(SSD2119_Y_RAM_ADDRESS_REGISTER, PosY);
+	SetWriteRAM_Ready();
+}
+
+//-------------------------------------------------------------------------------------------------
+
 #endif // DIGINI_USE_GRAFX
-
-#if 0
- ??????
-	GPIO_InitTypeDef GPIO_InitStructure;
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
-
-	//LCD_CS PD7
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	GPIO_Init(GPIOD, &GPIO_InitStructure);	
-	GPIO_ResetBits(GPIOD , GPIO_Pin_7);		 //CS=0;
-
-	LCD_Configuration();
-	/* Set MN(multipliers) of PLL, VCO = crystal freq * (N+1) */
-	/* PLL freq = VCO/M with 250MHz < VCO < 800MHz */
-	/* The max PLL freq is around 120MHz. To obtain 120MHz as the PLL freq */
-
-/******************************************************************************
-* Function Name  : LCD_BGR2RGB
-* Description    : RRRRRGGGGGGBBBBB convert to BBBBBGGGGGGRRRRR
-* Input          : RGB color
-* Output         : None
-* Return         : RGB color
-* Attention		 :
-*******************************************************************************/
-static uint16_t LCD_BGR2RGB(uint16_t color)
-{
-	uint16_t  r, g, b, rgb;
-	
-	b = ( color>>0 )  & 0x1f;
-	g = ( color>>5 )  & 0x3f;
-	r = ( color>>11 ) & 0x1f;
-	
-	rgb =  (b<<11) + (g<<5) + (r<<0);
-	
-	return( rgb );
-}
-
-/******************************************************************************
-* Function Name  : LCD_GetPoint
-* Description    : Get color of the point
-* Input          : - Xpos: Row Coordinate
-*                  - Ypos: Line Coordinate 
-* Output         : None
-* Return         : Screen Color
-* Attention		 : None
-*******************************************************************************/
-uint16_t LCD_GetPoint(uint16_t Xpos,uint16_t Ypos)
-{
-	uint16_t dummy;
-	
-	LCD_SetCursor(Xpos,Ypos);
-
-	LCD_WriteIndex(0x0022);  
-	
-    default:	/* 0x9320 0x9325 0x9328 0x9331 0x5408 0x1505 0x0505 0x9919 */
-      dummy = LCD_ReadData();
-      dummy = LCD_ReadData(); 
-      return  LCD_BGR2RGB( dummy );
-	}
-}
-#endif

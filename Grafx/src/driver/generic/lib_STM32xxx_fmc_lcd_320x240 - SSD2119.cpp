@@ -282,6 +282,11 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     PixelFormat_e PixelFormat;
     uint8_t       PixelSize;
 
+
+VAR_UNUSED(pDescriptor);
+VAR_UNUSED(pPos);
+VAR_UNUSED(PixelFormat);
+VAR_UNUSED(PixelSize);
     // m_pLayer = &LayerTable[CLayer::GetDrawing()];
 
 //    uint32_t           Address;

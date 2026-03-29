@@ -39,8 +39,8 @@ class GrafxGenDriver
         public:
 
             virtual     void    Initialize            (void* pArg);
-	        virtual     void    DisplayOn             (void);
-            virtual     void    DisplayOff            (void);
+	        virtual     void    DisplayOn             (void) = 0;
+            virtual     void    DisplayOff            (void) = 0;
             virtual     void    LayerConfig           (CLayer* pLayer);
             virtual     void    LayerConfig           (Layer_e Layer);
             virtual     void    ClearLayer            (Layer_e Layer);

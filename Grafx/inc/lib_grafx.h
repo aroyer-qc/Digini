@@ -34,9 +34,13 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "widget_cfg.h"
-#include "color_cfg.h"
 #include "grafx_cfg.h"
+#include "widget_cfg.h"
+
+#if (GRAFX_USE_GRAFX_CUSTOM_COLOR == DEF_ENABLED)
+#include "color_cfg.h"
+#endif
+
 #include "./Utility/inc/lib_compression.h"
 #include "./Digini/inc/lib_label.h"
 #include "./Grafx/inc/lib_grafx_define.h"
@@ -61,9 +65,7 @@
 #include "./Grafx/inc/task/lib_skin_task.h"
 //#include "./Grafx/inc/driver/lib_grafx_driver.h"      old method
 #include "./Grafx/inc/driver/generic/lib_Grafx_GenDriver.h"
-
 #include GRAFX_DRIVER_INCLUDE
-
 #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
   #include "./Peripheral/inc/interface/lib_class_pointing_device_interface.h"
   #include PDI_DRIVER_INCLUDE

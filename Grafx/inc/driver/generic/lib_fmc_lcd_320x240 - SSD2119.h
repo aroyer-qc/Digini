@@ -45,7 +45,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define GRAFX_NUMBER_OF_ACTIVE_LAYER                2
+#define GRAFX_NUMBER_OF_ACTIVE_LAYER                1
 
 // Display size
 #define GRAFX_DRIVER_SIZE_X                         320
@@ -120,10 +120,24 @@
 #define SSD2119_DISPLAY_ON_VALUE                        0x0033
 #define SSD2119_DISPLAY_OFF_VALUE                       0x0000
 
+#define FMC_BANK1_1                                     0x00000000
+#define FMC_BANK1_2                                     0x00000002
+#define FMC_BANK1_3                                     0x00000004
+#define FMC_BANK1_4                                     0x00000006
 
 // GRAFX_LCD_BASE and GRAFX_LCD_REGISTER_SELECT_BIT must be configure into device_cfg.h
 #define LCD_REG                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE)))
-#define LCD_RAM                                         (*((volatile uint16_t*)(GRAFX_ | (1 << GRAFX_LCD_REGISTER_SELECT_BIT))))
+#define LCD_RAM                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE | (1 << GRAFX_LCD_REGISTER_SELECT_BIT))))
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+struct SSD2119_InitCMD_t
+{
+    uint8_t     Register;
+    uint16_t    Parameter;
+};
 
 //-------------------------------------------------------------------------------------------------
 // Class
@@ -133,24 +147,33 @@ class GrafxDriver : public GrafxGenDriver
 {
     public:
 
-        void        Initialize          (void* pArg)           override;
+        void            Initialize          (void* pArg)           override;
 
-        void        ClearLayer          (Layer_e Layer)        override;       
-        void        DisplayOn           (void)                 override         { LCD_REG = SSD2119_DISPLAY_CONTROL_REGISTER; LCD_RAM = SSD2119_DISPLAY_ON_VALUE; };
-        void        DisplayOff          (void)                 override         { LCD_REG = SSD2119_DISPLAY_CONTROL_REGISTER; LCD_RAM = SSD2119_DISPLAY_OFF_VALUE; }; 
-        
-    private:    
+        void            ClearLayer          (Layer_e Layer)        override;
+        void            DisplayOn           (void)                 override         { LCD_REG = SSD2119_DISPLAY_CONTROL_REGISTER; LCD_RAM = SSD2119_DISPLAY_ON_VALUE; }
+        void            DisplayOff          (void)                 override         { LCD_REG = SSD2119_DISPLAY_CONTROL_REGISTER; LCD_RAM = SSD2119_DISPLAY_OFF_VALUE; }
 
-        uint16_t    ReadCommand         (uint8_t Register)                      { LCD_REG = uint16_t(Register); return LCD_RAM; }  
-        uint16_t    ReadData            (void)                                  { return LCD_RAM; }
-        void        WriteCommand        (uint8_t Register, uint16_t Data)       { LCD_REG = uint16_t(Register); LCD_RAM = Data; }  
-        void        WriteRegister       (uint8_t Register)                      { LCD_REG = uint16_t(Register); }
-        void        WriteData           (uint16_t Data)                         { LCD_RAM = Data; }
-        void        SetWriteRAM_Ready   (void)                                  { LCD_REG = SSD2119_RAM_DATA_REGISTER; }
-        void        SetRAM_Pointer      (uint16_t PosX, uint16_t PosY);
-        
-        
-        static const SSD2119_InitCMD_t GrafxDriver::InitCMD[GRAFX_NUMBER_OF_INIT_CMD];
+        void            BlockCopy           (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
+        void            Copy                (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
+        void            CopyLinear          (void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
+        void            DrawLine            (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
+        void            DrawPixel           (uint16_t PosX, uint16_t PosY);
+        void            DrawRectangle       (Box_t* pBox, uint8_t Mode);
+        void            DrawRectangle       (Box_t* pBox);
+        void            PrintFont           (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
+
+    private:
+
+        void            SetRAM_Pointer      (uint16_t PosX, uint16_t PosY);
+
+        uint16_t        ReadCommand         (uint8_t Register)                      { LCD_REG = Register; return LCD_RAM; }
+        uint16_t        ReadData            (void)                                  { return LCD_RAM; }
+        void            WriteCommand        (uint8_t Register, uint16_t Data)       { LCD_REG = Register; LCD_RAM = Data; }
+        void            WriteRegister       (uint8_t Register)                      { LCD_REG = Register; }
+        void            WriteData           (uint16_t Data)                         { LCD_RAM = Data; }
+        void            SetWriteRAM_Ready   (void)                                  { LCD_REG = SSD2119_RAM_DATA_REGISTER; }
+
+        static const    SSD2119_InitCMD_t InitCMD[GRAFX_NUMBER_OF_INIT_CMD];
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -40,13 +40,15 @@ enum Skin_e
 {
     INVALID_IMAGE,
 
-   #ifdef STATIC_SKIN_DEF
+  #ifdef STATIC_SKIN_DEF
     STATIC_SKIN_DEF(EXPAND_X_STATIC_SKIN_AS_ENUM)
-   #endif
+  #endif
 
-    NUMBER_OF_STATIC_IMAGE,         // all image after this are loaded from external device
+    NUMBER_OF_STATIC_IMAGE,                 // All image after this are loaded from external device
 
-    #include "Skin_cfg.lst"         // list of all image in the skin file
+  #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
+    #include "Skin_cfg.lst"                 // List of all image in the skin file
+  #endif
 
     NUMBER_OF_IMAGE,
 };

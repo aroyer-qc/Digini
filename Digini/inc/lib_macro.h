@@ -67,6 +67,10 @@
 
 // Create uint32_t value from 4 uint8_t value or ascii char
 #define U32MACRO(A,B,C,D)                   ((uint32_t(D) << 24) + (uint32_t(C) << 16) + (uint32_t(B) << 8) + uint32_t(A))
+#define U32MACRO_A(V)                       (uint8_t(V))
+#define U32MACRO_B(V)                       (uint8_t(V >> 8))
+#define U32MACRO_C(V)                       (uint8_t(V >> 16))
+#define U32MACRO_D(V)                       (uint8_t(V >> 24))
 
 // Create uint32_t value from 4 uint8_t value or ascii char
 #define U16MACRO(A,B)                       ((uint16_t(B) << 8) + uint16_t(A))

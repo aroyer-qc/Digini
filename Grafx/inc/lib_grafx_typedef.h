@@ -36,10 +36,22 @@ struct StaticImageInfo_t
    uint16_t        SizeY;
    uint16_t        BytesPerLine;
    uint8_t         BitsPerPixel;
-   void*/*uint8_t* */  pData;
+   void*           pData;
    uint32_t        RawSize;
    PixelFormat_e   PixelFormat;
    Compression_e   Compression;
+};
+
+struct StaticImageRLE_16_t
+{
+    uint8_t        Repeat;
+    uint16_t       Pixel;
+};
+
+struct StaticImageRLE_32_t
+{
+    uint8_t        Repeat;
+    uint32_t       Pixel;
 };
 
 struct Cartesian_t

@@ -39,29 +39,29 @@ class GrafxGenDriver
         public:
 
             virtual     void    Initialize            (void* pArg);
-	        virtual     void    DisplayOn             (void) = 0;
-            virtual     void    DisplayOff            (void) = 0;
+	        virtual     void    DisplayOn             (void)             = 0;
+            virtual     void    DisplayOff            (void)             = 0;
             virtual     void    LayerConfig           (CLayer* pLayer);
             virtual     void    LayerConfig           (Layer_e Layer);
-            virtual     void    ClearLayer            (Layer_e Layer);
-            virtual	    void    CopyLinear            (void* pSrc, Box_t* pBox, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
-            virtual     void    CopyLinear            (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
             virtual	    void    BlockCopy             (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
             virtual	    void    BlockCopy             (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
-            virtual	    void    DrawRectangle         (Box_t* pBox);
-            virtual	    void    DrawRectangle         (uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height);
-            virtual	    void    PrintFont             (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
-            virtual	    void    DrawBox               (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness);
-            virtual	    void    DrawPixel             (uint16_t PosX, uint16_t PosY);
-            virtual	    void    DrawHLine             (uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness);
-            virtual	    void    DrawVLine             (uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness);
-            virtual	    void    DrawLine              (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
-            virtual	    void    DrawCircle            (uint16_t PosX, uint16_t PosY, uint16_t Radius, PolygonMode_e Mode);
-            virtual	    void    DrawCircle            (Circle_t* pCircle, PolygonMode_e PolygonMode);
+            virtual     void    ClearLayer            (Layer_e Layer);
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, Box_t* pBox);
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height);
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, uint16_t SrcX, uint16_t SrcY, uint16_t DstX, uint16_t DstY, uint16_t Width, uint16_t Height);
             virtual	    void    CopyLinear            (Skin_e Image, Cartesian_t Position, BlendMode_e BlendMode);
+            virtual	    void    CopyLinear            (void* pSrc, Box_t* pBox, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
+            virtual     void    CopyLinear            (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
+            virtual	    void    DrawBox               (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness);
+            virtual	    void    DrawCircle            (uint16_t PosX, uint16_t PosY, uint16_t Radius, PolygonMode_e Mode);
+            virtual	    void    DrawCircle            (Circle_t* pCircle, PolygonMode_e PolygonMode);
+            virtual	    void    DrawHLine             (uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness);
+            virtual	    void    DrawLine              (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
+            virtual	    void    DrawRectangle         (Box_t* pBox);
+            virtual	    void    DrawRectangle         (uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height);
+            virtual	    void    DrawPixel             (uint16_t PosX, uint16_t PosY);
+            virtual	    void    DrawVLine             (uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness);
+            virtual	    void    PrintFont             (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
           #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
             virtual	    void    WaitFor_V_Sync        (void);
           #endif

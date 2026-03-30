@@ -64,7 +64,7 @@
         BACK_COLOR, PRESSED_BACK_COLOR, BOX_COLOR, PRESSED_BOX_COLOR,                \
         {{{(int16_t)(POS_TEXT_X + POS_X), (int16_t)(POS_TEXT_Y + POS_Y)},            \
          {(uint16_t)SIZE_X, (uint16_t)SIZE_Y}},                                      \
-         {GFX_ColorTable[TEXT_COLOR].u_32, GFX_ColorTable[PRESSED_TEXT_COLOR].u_32}, \
+         {GFX_ColorTable[TEXT_COLOR].u_32, GFX_ColorTable[PRESSED_TEXT_COLOR]},      \
          {FONT_ID, FONT_ID}, ALPHA_BLEND, TEXT_LABEL,                                \
          (uint8_t)TEXT_OPTION},                                                      \
          SERVICE_FILTER, OPTION_NONE, Thickness,                                     \
@@ -74,7 +74,7 @@
     {                                                                                \
         {(uint32_t)SERVICE, (uint16_t)SUB_SERVICE},                                  \
         {{(int16_t)POS_X, (int16_t)POS_Y}, {(uint16_t)SIZE_X, (uint16_t)SIZE_Y}},    \
-        GFX_ColorTable[COLOR].u_32,                                                  \
+        GFX_ColorTable[COLOR],                                                       \
         SERVICE_FILTER, OPTIONS,                                                     \
     },
 
@@ -87,9 +87,9 @@
          {RELEASED_GLYPH, PRESSED_GLYPH, INACTIVE_GLYPH}},                         \
         {{{(int16_t)(POS_TEXT_X + POS_X),  (int16_t)(POS_TEXT_Y + POS_Y)},         \
           {(uint16_t)SIZE_TEXT_X, (uint16_t)SIZE_TEXT_Y}},                         \
-         {GFX_ColorTable[TEXT_COLOR].u_32,                                         \
-          GFX_ColorTable[TEXT_PR_COLOR].u_32,                                      \
-          GFX_ColorTable[TEXT_GR_COLOR].u_32},                                     \
+          {GFX_ColorTable[TEXT_COLOR],                                             \
+          GFX_ColorTable[TEXT_PR_COLOR],                                           \
+          GFX_ColorTable[TEXT_GR_COLOR]},                                          \
          FONT_ID, ALPHA_BLEND, TEXT_LABEL,                                         \
          (uint8_t)TEXT_OPTION},                                                    \
         {{{(int16_t)POS_TOUCH_X, (int16_t)POS_TOUCH_Y},                            \
@@ -135,9 +135,9 @@
         {(uint32_t)SERVICE, (uint16_t)SUB_SERVICE},                                  \
         {{{(int16_t)POS_X, (int16_t)POS_Y},                                          \
          {(uint16_t)SIZE_X, (uint16_t)SIZE_Y}},                                      \
-         {GFX_ColorTable[TEXT_COLOR].u_32,                                           \
-          GFX_ColorTable[TEXT_ALT_COLOR].u_32,                                       \
-          GFX_ColorTable[TEXT_ALT2_COLOR].u_32},                                     \
+         {GFX_ColorTable[TEXT_COLOR],                                                \
+          GFX_ColorTable[TEXT_ALT_COLOR],                                            \
+          GFX_ColorTable[TEXT_ALT2_COLOR]},                                          \
          FONT_ID,                                                                    \
          TEXT_BLEND, TEXT_LABEL,                                                     \
          (uint8_t)TEXT_OPTION},                                                      \
@@ -149,9 +149,9 @@
         {(uint32_t)SERVICE, (uint16_t)SUB_SERVICE},                              \
         {{{(int16_t)POS_X, (int16_t)POS_Y},                                      \
           {(uint16_t)SIZE_X, (uint16_t)SIZE_Y}},                                 \
-         {GFX_ColorTable[TEXT_COLOR].u_32,                                       \
-          GFX_ColorTable[TEXT_ALT_COLOR].u_32,                                   \
-          GFX_ColorTable[TEXT_ALT2_COLOR].u_32},                                 \
+         {GFX_ColorTable[TEXT_COLOR],                                            \
+          GFX_ColorTable[TEXT_ALT_COLOR],                                        \
+          GFX_ColorTable[TEXT_ALT2_COLOR]},                                      \
          FONT_ID,                                                                \
          TEXT_BLEND,                                                             \
          INVALID_LABEL,                                                          \
@@ -167,7 +167,7 @@
         CURSOR_RADIUS, START_ANGLE, END_ANGLE, RANGE, MINIMUM, MAXIMUM, CURSOR,                                \
         {{{(int16_t)(POS_TEXT_X + POS_X), (int16_t)(POS_TEXT_Y + POS_Y)},                                      \
         {(uint16_t)SIZE_TEXT_X, (uint16_t)SIZE_TEXT_Y}},                                                       \
-        {GFX_ColorTable[TEXT_COLOR].u_32, GFX_ColorTable[TEXT_ALT_COLOR].u_32},                                \
+        {GFX_ColorTable[TEXT_COLOR], GFX_ColorTable[TEXT_ALT_COLOR]},                                          \
          {FONT_ID, FONT_ALT_ID},                                                                               \
          ALPHA_BLEND,                                                                                          \
          TEXT_LABEL,                                                                                           \
@@ -190,7 +190,7 @@
         {{RELEASED_PANEL, PRESSED_PANEL}},                                                               \
         {{{(int16_t)(POS_TEXT_X + POS_X), (int16_t)(POS_TEXT_Y + POS_Y)},                                \
          {(uint16_t)SIZE_TEXT_X, (uint16_t)SIZE_TEXT_Y}},                                                \
-         {GFX_ColorTable[TEXT_COLOR].u_32, GFX_ColorTable[TEXT_ALT_COLOR].u_32},                         \
+         {GFX_ColorTable[TEXT_COLOR], GFX_ColorTable[TEXT_ALT_COLOR]},                                   \
          {FONT_ID, FONT_ALT_ID}, ALPHA_BLEND, TEXT_LABEL},                                               \
          (uint8_t)TEXT_OPTION,                                                                           \
     },
@@ -203,9 +203,9 @@
         PIXEL_RANGE, BACKGROUND, BAR, CURSOR,                                           \
         {{{(int16_t)(POS_TEXT_X + POS_X), (int16_t)(POS_TEXT_Y + POS_Y)},               \
           {(uint16_t)SIZE_TEXT_X, (uint16_t)SIZE_TEXT_Y}},                              \
-         {GFX_ColorTable[TEXT_COLOR].u_32,                                              \
-          GFX_ColorTable[TEXT_ALT_COLOR].u_32,                                          \
-          GFX_ColorTable[TEXT_ALT2_COLOR].u_32},                                        \
+         {GFX_ColorTable[TEXT_COLOR],                                                   \
+          GFX_ColorTable[TEXT_ALT_COLOR],                                               \
+          GFX_ColorTable[TEXT_ALT2_COLOR]},                                             \
          FONT_ID, ALPHA_BLEND, TEXT_LABEL,                                              \
          (uint8_t)TEXT_OPTION},                                                         \
         {(int16_t)CURSOR_OFFSET_X, (int16_t)CURSOR_OFFSET_Y},                           \
@@ -220,7 +220,7 @@
         CURSOR_RADIUS, START_ANGLE, END_ANGLE, RANGE, MINIMUM, MAXIMUM, CURSOR,                                \
         {{{(int16_t)(POS_TEXT_X + POS_X), (int16_t)(POS_TEXT_Y + POS_Y)},                                      \
         {(uint16_t)SIZE_TEXT_X, (uint16_t)SIZE_TEXT_Y}},                                                       \
-        {GFX_ColorTable[TEXT_COLOR].u_32, GFX_ColorTable[TEXT_ALT_COLOR].u_32},                                \
+        {GFX_ColorTable[TEXT_COLOR], GFX_ColorTable[TEXT_ALT_COLOR]},                                          \
          {FONT_ID, FONT_ALT_ID},                                                                               \
          ALPHA_BLEND,                                                                                          \
          TEXT_LABEL,                                                                                           \
@@ -251,7 +251,7 @@
     {(uint32_t)SERVICE, (uint16_t)SUB_SERVICE},                       \
     {{(int16_t)POS_X, (int16_t)POS_Y},                                \
      {(uint16_t)SIZE_X, (uint16_t)SIZE_Y}},                           \
-     GFX_ColorTable[TEXT_COLOR].u_32,                                 \
+     GFX_ColorTable[TEXT_COLOR],                                      \
      FONT_ID,                                                         \
      SERVICE_FILTER, OPTIONS,                                         \
 },

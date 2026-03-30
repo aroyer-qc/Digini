@@ -28,9 +28,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//#include <stdint.h>
-#include "./Peripheral/inc/port/lib_class_sdram.h"
-//#include "./Digini/inc/lib_macro.h"
+#include "./Peripheral/inc/port/lib_fmc_sdram.h"
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -44,7 +42,7 @@
 //   Notes:
 //
 //-------------------------------------------------------------------------------------------------
-void SDRAM::Initialize(FMC_SDRAM_TimingTypeDef* Timing)
+void SDRAM_Initialize(FMC_SDRAM_TimingTypeDef* Timing)
 {
     if(m_State == SYS_RESET)
 

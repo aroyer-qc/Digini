@@ -59,7 +59,7 @@ enum RAM_DBaseItemList_e
   #endif
 
   #ifdef GFX_RAM_DBASE_DEF
-   #if defined (RAM_DBASE_DEF)
+   #ifdef RAM_DBASE_DEF
     START_GFX_RAM_INDEX = END_RAM_INDEX - 1,    // Reset index if last section exist
    #else
     START_GFX_RAM_INDEX = START_RAM_DBASE,      // or start it at the beginning
@@ -70,7 +70,7 @@ enum RAM_DBaseItemList_e
   #endif
 
   #ifdef NV_RAM_DBASE_DEF
-   #if defined (GFX_RAM_DBASE_DEF)
+   #ifdef GFX_RAM_DBASE_DEF
     START_NV_RAM_INDEX = END_GFX_RAM_INDEX - 1, // Reset index if last section exist
    #elif defined (RAM_DBASE_DEF)
     START_NV_RAM_INDEX = END_RAM_INDEX - 1,     // Reset index if first section exist
@@ -81,6 +81,21 @@ enum RAM_DBaseItemList_e
     NV_RAM_DBASE_DEF(EXPAND_X_NV_RAM_DBASE_AS_ENUM)
     END_NV_RAM_INDEX,
   #endif
+
+  #ifdef GFX_SKIN_RAM_DBASE_DEF
+   #ifdef NV_RAM_DBASE_DEF
+    START_GFX_SKIN_RAM_INDEX = END_NV_RAM_INDEX - 1,
+   #elif defined(GFX_RAM_DBASE_DEF)
+    START_GFX_SKIN_RAM_INDEX = END_GFX_RAM_INDEX - 1,
+   #elif defined(RAM_DBASE_DEF)
+    START_GFX_SKIN_RAM_INDEX = END_RAM_INDEX - 1,
+   #else
+    START_GFX_SKIN_RAM_INDEX = START_RAM_DBASE,
+  #endif
+
+    GFX_SKIN_RAM_DBASE_DEF(EXPAND_X_GFX_RAM_DBASE_AS_ENUM)
+    END_GFX_SKIN_RAM_INDEX,
+#endif
 
     END_RAM_DBASE,
     NB_RAM_DBASE_ITEMS_CONST = (END_RAM_DBASE - START_RAM_DBASE) - 2,

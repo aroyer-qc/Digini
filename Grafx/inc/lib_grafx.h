@@ -88,7 +88,7 @@
   #define GFX_ROM_ADDRESS        (uint32_t)&__gfx_rom_base__
 #endif
 
-#if (DIGINI_USE_QUAD_SPI_FOR_GRAFX_DATABASE == DEF_ENABLED)
+#if (GRAFX_USE_QUAD_SPI_FOR_DATABASE == DEF_ENABLED)
  #define GFX_QSPI_DBASE_ADDRESS (uint32_t)&__gfx_qspi_data_base__
 #endif
 
@@ -129,7 +129,7 @@ extern const uint32_t __gfx_ram_data_base__;            // Pointer to ram graphi
 
 extern const uint32_t __gfx_ram_layer_base__;           // Pointer on display and/or virtual layer
 
-#if (DIGINI_USE_QUAD_SPI_FOR_GRAFX_DATABASE == DEF_ENABLED)
+#if (GRAFX_USE_QUAD_SPI_FOR_DATABASE == DEF_ENABLED)
 extern const uint32_t __gfx_qspi_data_base__;           // Pointer to database for skin info
 #endif
 

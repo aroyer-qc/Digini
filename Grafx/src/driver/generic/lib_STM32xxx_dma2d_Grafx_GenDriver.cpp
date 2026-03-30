@@ -175,7 +175,7 @@ void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pi
         uint32_t           PixelFormatSrc;
         uint32_t           PixelFormatDst;
         uint32_t           Address;
-        struct32_t         AreaConfig;
+        uint32_t           AreaConfig;
         CLayer*            pLayer;
         uint8_t            PixelSize;
 
@@ -516,17 +516,7 @@ void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uin
     Address     = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
     Color       = pLayer->GetColor();
 
-    if(Direction == DRAW_HORIZONTAL)
-    {
-        AreaConfig = (uint32_t(Length) << 16) | (uint32_t(Thickness));
-        Offset     = Length;
-    }
-    else
-    {
-        AreaConfig = (uint32_t(Thickness) << 16) | (uint32_t(Length));
-        Offset     = Thickness;
-    }
-
+c
   #ifdef DMA2D
 
     DMA2D->CR      = DMA2D_R2M | DMA2D_CR_TCIE;                                     // Register to memory and TCIE

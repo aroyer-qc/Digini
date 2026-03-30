@@ -36,8 +36,8 @@
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
-extern const int8_t      GFX_PixelSize[PIXEL_FORMAT_COUNT];
-extern const struct32_t  GFX_ColorTable[COL_NB_COLOR_CONST];
+extern const int8_t   GFX_PixelSize[PIXEL_FORMAT_COUNT];
+extern const uint32_t GFX_ColorTable[COL_NB_COLOR_CONST];
 
 #ifdef GFX_GLOBAL
 

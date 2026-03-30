@@ -29,59 +29,11 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "./lib_digini.h"
-#include ".lib_STM32_generic.h"
+#include "./Grafx/inc/driver/STM32/lib_STM32_generic.h"
 
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-// const(s)
-//-------------------------------------------------------------------------------------------------
-
-const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
-{
-  #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
-    PIXEL_FORMAT_ARGB8888,
-  #endif
-  #if (GRAFX_COLOR_RGB888 == DEF_ENABLED)
-    PIXEL_FORMAT_RGB888,
-  #endif
-  #if (GRAFX_COLOR_RGB565 == DEF_ENABLED)
-    PIXEL_FORMAT_RGB565,
-  #endif
-  #if (GRAFX_COLOR_ARGB1555 == DEF_ENABLED)
-    PIXEL_FORMAT_ARGB1555,
-  #endif
-  #if (GRAFX_COLOR_ARGB4444 == DEF_ENABLED)
-    PIXEL_FORMAT_ARGB4444,
-  #endif
-  #if (GRAFX_COLOR_L8 == DEF_ENABLED)
-    PIXEL_FORMAT_L8,
-  #endif
-  #if (GRAFX_COLOR_AL44 == DEF_ENABLED)
-    PIXEL_FORMAT_AL44,
-  #endif
-  #if (GRAFX_COLOR_AL88 == DEF_ENABLED)
-    PIXEL_FORMAT_AL88,
-  #endif
-  #if (GRAFX_COLOR_L4 == DEF_ENABLED)
-    PIXEL_FORMAT_L4,
-  #endif
-  #if (GRAFX_COLOR_A8 == DEF_ENABLED)
-    PIXEL_FORMAT_A8,
-  #endif
-  #if (GRAFX_COLOR_A4 == DEF_ENABLED)
-    PIXEL_FORMAT_A4,
-  #endif
-  #if (GRAFX_COLOR_RGB332 == DEF_ENABLED)
-    PIXEL_FORMAT_RGB332,
-  #endif
-  #if (GRAFX_COLOR_RGB444 == DEF_ENABLED)
-    PIXEL_FORMAT_RGB444,
-  #endif
-    -1
-};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -520,12 +472,6 @@ void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 //  Description:    Configuration for layer
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::LayerConfig(Layer_e Layer)
-{
-    CLayer* pLayer = &LayerTable[Layer];
-    LayerConfig(pLayer);
-}
-
 void GrafxGenDriver::LayerConfig(CLayer* pLayer)
 {
   #ifdef DMA2D
@@ -579,37 +525,6 @@ void GrafxGenDriver::WaitFor_V_Sync(void)
   #ifdef DMA2D
     while(LTDC_GetCDStatus(LTDC_CDSR_VSYNCS) != SET);           // Wait for Vertical sync to occur
   #endif
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           CopyLinear
-//
-//  Parameter(s):   void*           pSrc
-//                  Box_t*          pBox
-//                  PixelFormat_e   PixelFormat)
-//                  BlendMode_e     BlendMode
-//  Return:         None
-//
-//   Description:   Copy a rectangle region from linear memory region to square memory area
-//
-//  Note(s):        Source is linear
-//
-//-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_SOFT_COPY_LINEAR
-void GrafxGenDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode)
-{
-//    Not supported for now
-
-    VAR_UNUSED(pSrc);
-    VAR_UNUSED(PosX);
-    VAR_UNUSED(PosY);
-    VAR_UNUSED(pSrc);
-    VAR_UNUSED(Width);
-    VAR_UNUSED(Height);
-    VAR_UNUSED(PixelFormat);
-    VAR_UNUSED(BlendMode);
 }
 #endif
 

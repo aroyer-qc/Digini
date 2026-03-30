@@ -63,8 +63,7 @@
 #include "./Grafx/inc/service/lib_service.h"
 #include "service.h"
 #include "./Grafx/inc/task/lib_skin_task.h"
-//#include "./Grafx/inc/driver/lib_grafx_driver.h"      old method
-#include "./Grafx/inc/driver/generic/lib_Grafx_GenDriver.h"
+#include "./Grafx/inc/driver/generic/lib_GenericDriver.h"
 #include GRAFX_DRIVER_INCLUDE
 #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
   #include "./Peripheral/inc/interface/lib_class_pointing_device_interface.h"

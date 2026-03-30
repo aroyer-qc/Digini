@@ -84,36 +84,6 @@ const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           Initialize
-//
-//  Parameter(s):   pArg
-//  Return:         None
-//
-//  Description:    LCD configuration specific for the LCD and processor used by this driver
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::Initialize(void* pArg)
-{
-    VAR_UNUSED(pArg);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           ClearLayer
-//
-//  Parameter(s):   Layer_e 		Layer
-//  Return:         None
-//
-//  Description:    Generic Clear layer function
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::ClearLayer(Layer_e Layer)
-{
-	VAR_UNUSED(Layer);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           BlockCopy
 //
 //  Parameter(s):   void*           pSrc
@@ -131,7 +101,7 @@ void GrafxGenDriver::ClearLayer(Layer_e Layer)
 //                  region
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::BlockCopy(void* pSrc, uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height, uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
+ void GrafxGenDriver::BlockCopy(void* pSrc, uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height, uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
     Box_t Box;
 
@@ -195,21 +165,6 @@ void GrafxGenDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint
     DrawVLine(X2 - Thickness, PosY, Y2, Thickness);
     DrawHLine(PosY,           PosX, X2, Thickness);
     DrawHLine(Y2 - Thickness, PosX, X2, Thickness);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           DrawPixel
-//
-//  Parameter(s):   uint16_t    PosX
-//                  uint16_t    PosY
-//  Return:         None
-//
-//  Description:    Put a pixel on selected layer
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
-{
 }
 
 //-------------------------------------------------------------------------------------------------

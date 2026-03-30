@@ -47,38 +47,20 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (USE_FMC_SDRAM_DRIVER == DEF_ENABLED)
+#if (USE_SDRAM_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-// BTR register clear mask
-#define BTR_CLEAR_MASK          ((uint32_t)(FMC_BTRx_ADDSET | FMC_BTRx_ADDHLD | FMC_BTRx_DATAST | FMC_BTRx_BUSTURN | FMC_BTRx_CLKDIV | FMC_BTRx_DATLAT | FMC_BTRx_ACCMOD))
-
-// BWTR register clear mask
-#define BWTR_CLEAR_MASK         ((uint32_t)(FMC_BWTRx_ADDSET | FMC_BWTRx_ADDHLD | FMC_BWTRx_DATAST | FMC_BWTRx_BUSTURN | FMC_BWTRx_ACCMOD))
-
-// PCR register clear mask
-#define PCR_CLEAR_MASK          ((uint32_t)(FMC_PCR_PWAITEN | FMC_PCR_PBKEN | FMC_PCR_PWID | FMC_PCR_ECCEN | FMC_PCR_TCLR | FMC_PCR_TAR | FMC_PCR_ECCPS))
-
-// PMEM register clear mask
-#define PMEM_CLEAR_MASK         ((uint32_t)(FMC_PMEM_MEMSET | FMC_PMEM_MEMWAIT | FMC_PMEM_MEMHOLD | FMC_PMEM_MEMHIZ))
-
-// PATT register clear mask
-#define PATT_CLEAR_MASK         ((uint32_t)(FMC_PATT_ATTSET | FMC_PATT_ATTWAIT | FMC_PATT_ATTHOLD | FMC_PATT_ATTHIZ))
-
-// SDCR register clear mask
-#define SDCR_CLEAR_MASK         ((uint32_t)(FMC_SDCRx_NC | FMC_SDCRx_NR | FMC_SDCRx_MWID | FMC_SDCRx_NB | FMC_SDCRx_CAS | FMC_SDCRx_WP | FMC_SDCRx_SDCLK | FMC_SDCRx_RBURST | FMC_SDCRx_RPIPE))
-
-// SDTR register clear mask
-#define SDTR_CLEAR_MASK         ((uint32_t)(FMC_SDTRx_TMRD | FMC_SDTRx_TXSR | FMC_SDTRx_TRAS | FMC_SDTRx_TRC | FMC_SDTRx_TWR | FMC_SDTRx_TRP | FMC_SDTRx_TRCD))
-
-// SDTR register clear mask for timing
-#define SDTR_TIMING_CLEAR_MASK  ((uint32_t)(FMC_SDTRx_TRC | FMC_SDTRx_TRP))
-
-//--------------
-// SDRAM Command
+#define BTR_CLEAR_MASK          ((uint32_t)(FMC_BTRx_ADDSET | FMC_BTRx_ADDHLD | FMC_BTRx_DATAST | FMC_BTRx_BUSTURN | FMC_BTRx_CLKDIV | FMC_BTRx_DATLAT | FMC_BTRx_ACCMOD))                      // BTR register clear mask
+#define BWTR_CLEAR_MASK         ((uint32_t)(FMC_BWTRx_ADDSET | FMC_BWTRx_ADDHLD | FMC_BWTRx_DATAST | FMC_BWTRx_BUSTURN | FMC_BWTRx_ACCMOD))                                                     // BWTR register clear mask
+#define PCR_CLEAR_MASK          ((uint32_t)(FMC_PCR_PWAITEN | FMC_PCR_PBKEN | FMC_PCR_PWID | FMC_PCR_ECCEN | FMC_PCR_TCLR | FMC_PCR_TAR | FMC_PCR_ECCPS))                                       // PCR register clear mask
+#define PMEM_CLEAR_MASK         ((uint32_t)(FMC_PMEM_MEMSET | FMC_PMEM_MEMWAIT | FMC_PMEM_MEMHOLD | FMC_PMEM_MEMHIZ))                                                                           // PMEM register clear mask
+#define PATT_CLEAR_MASK         ((uint32_t)(FMC_PATT_ATTSET | FMC_PATT_ATTWAIT | FMC_PATT_ATTHOLD | FMC_PATT_ATTHIZ))                                                                           // PATT register clear mask
+#define SDCR_CLEAR_MASK         ((uint32_t)(FMC_SDCRx_NC | FMC_SDCRx_NR | FMC_SDCRx_MWID | FMC_SDCRx_NB | FMC_SDCRx_CAS | FMC_SDCRx_WP | FMC_SDCRx_SDCLK | FMC_SDCRx_RBURST | FMC_SDCRx_RPIPE)) // SDCR register clear mask
+#define SDTR_CLEAR_MASK         ((uint32_t)(FMC_SDTRx_TMRD | FMC_SDTRx_TXSR | FMC_SDTRx_TRAS | FMC_SDTRx_TRC | FMC_SDTRx_TWR | FMC_SDTRx_TRP | FMC_SDTRx_TRCD))                                 // SDTR register clear mask
+#define SDTR_TIMING_CLEAR_MASK  ((uint32_t)(FMC_SDTRx_TRC | FMC_SDTRx_TRP))                                                                                                                     // SDTR register clear mask for timing
 
 // FMC SDRAM Command Mode
 #define SDCMR_CMD_NORMAL_MODE                   (0x00000000)
@@ -117,7 +99,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name: FMC_SDRAM_Initialize
+//   Function name: SDRAM_Initialize
 //
 //   Parameter(s):  None
 //   Return:        None
@@ -125,7 +107,7 @@
 //   Description:   Performs the SDRAM device initialization sequence.
 //
 //-------------------------------------------------------------------------------------------------
-void FMC)SDRAM_Initialize(void)
+void SDRAM_Initialize(void)
 {
     // ---- FMC Reset ----
     RCC->AHB3RSTR |=  RCC_AHB3RSTR_FMCRST;
@@ -171,4 +153,4 @@ void FMC)SDRAM_Initialize(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_FMC_SDRAM_DRIVER
+#endif // (USE_SDRAM_DRIVER == DEF_ENABLED)

@@ -52,7 +52,6 @@
 #define IP_USE_SOAP 						    DEF_DISABLED
 #define IP_USE_TCP_CLIENT                       DEF_DISABLED
 #define IP_USE_TCP_SERVER                       DEF_DISABLED
-#define IP_USE_UDP 							    DEF_DISABLED
 #define IP_USE_RAW                              DEF_DISABLED
 
 //-------------------------------------------------------------------------------------------------

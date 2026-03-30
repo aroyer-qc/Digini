@@ -216,15 +216,6 @@ class DHCPv4_Manager
 
 //-------------------------------------------------------------------------------------------------
 
-#else // (IP_USE_DHCP == DEF_DISABLED)
-
-    #define GetActiveGatewayIP()                GetStaticGatewayIP()
-    #define GetActiveSubnetMask()               GetStaticSubnetMask()
-    #define GetActiveIP()                       GetStaticIP()
-    #define GetActiveDNS_IP()                   GetStaticDNS_IP()
-
-//-------------------------------------------------------------------------------------------------
-
 #endif // (IP_USE_DHCP == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

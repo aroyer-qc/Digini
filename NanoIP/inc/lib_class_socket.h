@@ -93,22 +93,14 @@ class Socket
         SocketState_e       GetState            (void);
         SocketType_e        GetType             (void);
 
-        void                SetActive           (bool Active)               { m_Active = Active;                                       }
-        bool                GetActive           (void)                      { return m_Active;                                         }
+        void                SetActive           (bool Active)               { m_Active = Active;                                        }
+        bool                GetActive           (void)                      { return m_Active;                                          }
 
-        bool                EnqueueMessage      (IP_PacketMsg_t* pMsg)      { return (nOS_QueueWrite(&m_RX_Queue, &pMsg, 0) == NOS_OK);}
-        bool                DequeueMessage      (IP_PacketMsg_t*& pMsg)     { return (nOS_QueueRead(&m_RX_Queue, &pMsg, 0) == NOS_OK); }
-
+        bool                EnqueueMessage      (IP_PacketMsg_t* pMsg)      { return (nOS_QueueWrite(&m_RX_Queue, &pMsg, 0) == NOS_OK); }
+        bool                DequeueMessage      (IP_PacketMsg_t*& pMsg)     { return (nOS_QueueRead(&m_RX_Queue, &pMsg, 0) == NOS_OK);  }
         NetworkContext*     GetContext          (void) const                { return m_pContext; }
-
-      #if (IP_USE_UDP == DEF_ENABLED)
         bool                IsBound             (void);
-        //bool                IsListening         (void);
-
         UDP_Socket_t*       GetUDP              (void)                      { return m_Protocol.pUDP;                                   }
-      #else
-        UDP_Socket_t*       GetUDP              (void)                      { return nullptr;                                           }
-      #endif
 
       #if (IP_USE_RAW == DEF_ENABLED)
         RAW_Socket_t*       GetRAW              (void)                      { return m_Protocol.pRAW;                                   }
@@ -173,11 +165,8 @@ class SocketManager
 
         Socket*             AllocSocket             (SocketType_e Type);
         void                FreeSocket              (Socket** ppSocket);
-
-      #if (IP_USE_UDP == DEF_ENABLED)
         Socket*             FindUDP_SocketByPort    (IP_Port_t port);
         void                UDP_UnregisterSocket    (IP_Port_t Port);
-      #endif
 
       #if (IP_USE_RAW == DEF_ENABLED)
         Socket*             FindRAW_ByProtocol      (uint8_t protocol);

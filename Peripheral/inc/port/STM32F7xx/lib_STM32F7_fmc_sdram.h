@@ -109,5 +109,5 @@ void    SDRAM_Initialize              (void);
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_SDRAM_DRIVER
+#endif // (USE_SDRAM_DRIVER == DEF_ENABLED)
 

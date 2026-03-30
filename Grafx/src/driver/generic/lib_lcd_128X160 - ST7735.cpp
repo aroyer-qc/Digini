@@ -419,41 +419,6 @@ void GrafxDriver::LayerConfig(CLayer* pLayer)
 //  Name:           BlockCopy
 //
 //  Parameter(s):   void*           pSrc
-//                  uint16_t        X
-//                  uint16_t        Y
-//                  uint16_t        Width
-//                  uint16_t        Height
-//                  uint16_t        DstX
-//                  uint16_t        DstY
-//                  PixelFormat_e   SrcPixelFormat
-//                  BlendMode_e     BlendMode
-//  Return:         None
-//
-//  Description:    Copy a rectangle region from square memory region to another square memory
-//                  region
-//
-//  Note(s):        Source is linear
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::BlockCopy(void* pSrc, uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height, uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
-{
-    Box_t       Box;
-    Cartesian_t Pos;
-
-    Box.Pos.X       = X;
-    Box.Pos.Y       = Y;
-    Box.Size.Width  = Width;
-    Box.Size.Height = Height;
-    Pos.X           = DstX;
-    Pos.Y           = DstY;
-
-    this->BlockCopy(pSrc, &Box, &Pos, SrcPixelFormat, BlendMode);
-}
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           BlockCopy
-//
-//  Parameter(s):   void*           pSrc
 //                  Box_t*          pBox
 //                  Cartesian_t*    pDstPos
 //                  PixelFormat_e   SrcPixelFormat
@@ -682,40 +647,11 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     AreaConfig.u_16.u1 = pDescriptor->Size.Width;
     AreaConfig.u_16.u0 = pDescriptor->Size.Height;
 
-  #ifdef DMA2D
-
-    DMA2D->CR = DMA2D_M2M_BLEND;                                                // Memory to memory blending BG + Source
-
-    // Font layer in Alpha blending linear (A8)
-    DMA2D->FGMAR   = (uint32_t)pDescriptor->pAddress;                           // Source address 1
-    DMA2D->FGOR    = 0;                                                         // Font source line offset - none as we are linear
-    DMA2D->FGCOLR  = pLayer->GetTextColor();
-    DMA2D->FGPFCCR = PIXEL_FORMAT_A8;                                      // Defines the number of pixels to be transfered
-
-    DMA2D->BGMAR   = Address;                                                   // Source address 2
-    DMA2D->BGOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)AreaConfig.u_16.u1;     // Font source line offset - none as we are linear
-    DMA2D->BGPFCCR = PixelFormat;                                               // Defines the number of pixels to be transfered
-
-    // Output Layer
-    DMA2D->OMAR    = Address;
-    DMA2D->OOR     = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)AreaConfig.u_16.u1;     // Destination line offset
-    DMA2D->OPFCCR  = PixelFormat;
-
-    // Area
-    DMA2D->NLR     = AreaConfig.u_32;                                           // Size configuration of area to be transfered
-
-    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                         // Start operation
-    while(DMA2D->CR & DMA2D_CR_START){};                                        // Wait until transfer is done
-
-  #else
     // TODO provide a method without DMA2D
     // use memory to memory normal DMA
     VAR_UNUSED(Address);
     VAR_UNUSED(PixelFormat);
     VAR_UNUSED(AreaConfig);
-
-
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -219,8 +219,8 @@ class NetworkContext;
 #include "./Peripheral/inc/port/lib_fmc_lcd.h"
 #endif
 
-#if (USE_FMC_SDRAM_DRIVER == DEF_ENABLED)
-#include "./Peripheral/inc/port/lib_fmc_sdram.h"
+#if (USE_SDRAM_DRIVER == DEF_ENABLED)
+#include "./Peripheral/inc/port/lib_sdram.h"
 #endif
 
 #if (USE_OSPI_DRIVER == DEF_ENABLED)

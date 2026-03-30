@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_lcd_320x240 - SSD2119.cpp
+//  File : lib_class_STM32xxx_ltdc_lcd_480x272 - RK043FN48H.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2026 Alain Royer.
+// Copyright(c) 2025 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -28,9 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define LIB_SSD2119_GLOBAL
+#define LIB_RK043FN48H_GLOBAL
 #include "./lib_digini.h"
-#undef  LIB_SSD2119_GLOBAL
+#undef  LIB_RK043FN48H_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 

@@ -104,9 +104,8 @@ class NetworkContext
         void                SetTCP_Manager          (TCP_Manager* pManager)                     { m_pTCP = pManager;                                                            }
         TCP_Manager*        GetTCP                  (void)                                      { return m_pTCP;                                                                }
       #endif
-      #if (IP_USE_UDP == DEF_ENABLED)
+
         UDP_Manager&        GetUDP                  (void)                                      { return m_UDP;                                                                 }
-      #endif
         SocketManager&      GetSocketManager        (void)                                      { return m_SocketManager;                                                       }
 
       #if (IP_USE_DHCP == DEF_ENABLED)
@@ -187,10 +186,7 @@ class NetworkContext
         TCP_Manager*                    m_pTCP = nullptr;                       // Transport Control Protocol Cleint Side
       #endif
 
-      #if (IP_USE_UDP == DEF_ENABLED)
         UDP_Manager                     m_UDP;                                  // User Datagram Protocol
-      #endif
-
         IF_ID_e                         m_IF_ID;
         SendCallback_t                  m_SendCallback = nullptr;
         void*                           m_SendContext  = nullptr;

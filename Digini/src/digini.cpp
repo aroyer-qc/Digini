@@ -83,8 +83,8 @@ SystemState_e DIGINI_Initialize(void)
     FMC_LCD_Initialize();                                   // Initialize LCD on FMC
   #endif
 
-  #if (USE_FMC_SDRAM_DRIVER == DEF_ENABLED)
-    FMC_SDRAM_Initialize();                                 // Initialize SDRAM on FMC
+  #if (USE_SDRAM_DRIVER == DEF_ENABLED)
+    SDRAM_Initialize();                                     // Initialize SDRAM
   #endif
 
   #if (USE_HYPER_RAM_DRIVER == DEF_ENABLED)

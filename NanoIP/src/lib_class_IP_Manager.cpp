@@ -108,7 +108,10 @@ void IP_Manager::Initialize(NetworkContext* pContext)
 void IP_Manager::Run(void)
 {
     IP_PacketMsg_t* pMsg;
+
+  #if (IP_USE_DHCP == DEF_ENABLED)
     DHCPv4_Manager& DHCP = m_pContext->GetDHCP();
+  #endif
 
   #if (IP_USE_SNTP == DEF_ENABLED)
     //IP_Address_t    IP;
@@ -268,14 +271,12 @@ void IP_Manager::ProcessIP(IP_PacketMsg_t* pMsg)
         break;
       #endif
 
-      #if (IP_USE_UDP == DEF_ENABLED)
         case IP_PROTOCOL_UDP:
         {
             //DEBUG_PrintSerialLog(SYS_DEBUG_LEVEL_ETHERNET, "Ethernet IP-UDP\n");
             m_pContext->GetUDP().Process(pMsg);
         }
         break;
-      #endif
 
         default:
         {

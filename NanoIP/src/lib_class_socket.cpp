@@ -31,6 +31,7 @@
 #include "./lib_digini.h"
 #include <new>
 
+//-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_ETHERNET == DEF_ENABLED)
 
@@ -232,7 +233,6 @@ void SocketManager::FreeSocket(Socket** ppSocket)
 //                    ensures that lookup returns nullptr.
 //
 //-------------------------------------------------------------------------------------------------
-#if (IP_USE_UDP == DEF_ENABLED)
 void SocketManager::UDP_UnregisterSocket(IP_Port_t Port)
 {
     for(uint8_t i = 0; i < m_ActiveCount; i++)
@@ -257,7 +257,6 @@ void SocketManager::UDP_UnregisterSocket(IP_Port_t Port)
         }
     }
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -277,7 +276,6 @@ void SocketManager::UDP_UnregisterSocket(IP_Port_t Port)
 //                  inactive, uninitialized, or whose protocol storage is missing are skipped.
 //
 //-------------------------------------------------------------------------------------------------
-#if (IP_USE_UDP == DEF_ENABLED)
 Socket* SocketManager::FindUDP_SocketByPort(IP_Port_t Port)
 {
     for(uint8_t i = 0; i < m_ActiveCount; i++)
@@ -304,7 +302,6 @@ Socket* SocketManager::FindUDP_SocketByPort(IP_Port_t Port)
 
     return nullptr;
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -395,10 +392,8 @@ Socket::Socket(NetworkContext* pContext)
     m_RemoteInfo.Address = 0;
     m_RemoteInfo.Port    = 0;
 
-  #if (IP_USE_UDP == DEF_ENABLED)
     m_Protocol.pUDP = nullptr;
-  #endif
-
+  
   #if (IP_USE_RAW == DEF_ENABLED)
     m_Protocol.pRAW = nullptr;
   #endif
@@ -448,7 +443,6 @@ void Socket::Create(SocketType_e Type)
         break;
      #endif
 
-      #if (IP_USE_UDP == DEF_ENABLED)
         case SOCKET_TYPE_DATAGRAM:
         {
             // Allocate and zero UDP protocol storage
@@ -464,7 +458,6 @@ void Socket::Create(SocketType_e Type)
             //pUDP->LocalIP = m_pContext->GetActiveIP();            // This the only non-zero initialization  (Optional: only if multi-IP system)
         }
         break;
-      #endif
 
       #if (IP_USE_RAW == DEF_ENABLED)
         case SOCKET_TYPE_RAW:
@@ -688,7 +681,6 @@ void Socket::Close(void)
 
     switch(m_Type)
     {
-      #if (IP_USE_UDP == DEF_ENABLED)
         case SOCKET_TYPE_DATAGRAM:
         {
             UDP_Socket_t* pUDP = m_Protocol.pUDP;
@@ -699,7 +691,6 @@ void Socket::Close(void)
             }
         }
         break;
-      #endif
 
       #if (IP_USE_RAW == DEF_ENABLED)
         case SOCKET_TYPE_RAW:
@@ -765,13 +756,11 @@ void Socket::FreeAllMessages(nOS_Queue* pQueue)
 //-------------------------------------------------------------------------------------------------
 void Socket::FreeProtocolData(void)
 {
-  #if (IP_USE_UDP == DEF_ENABLED)
     if(m_Protocol.pUDP != nullptr)
     {
         pMemoryPool->Free((void**)&m_Protocol.pUDP);
         m_Protocol.pUDP = nullptr;
     }
-  #endif
 
   #if (IP_USE_RAW == DEF_ENABLED)
     if(m_Protocol.pRAW != nullptr)

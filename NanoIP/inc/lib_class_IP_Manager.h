@@ -99,22 +99,9 @@ class IP_Manager
         static bool             IsItMulticastMAC            (const IP_MAC_Address_t* mac)       { return (mac->Byte[0] & 0x01) != 0; }
         static bool             IsItMulticast               (IP_Address_t IP)                   { uint8_t First = IP_D(IP); return ((First >= IP_MULTICAST_MIN) && (First <= IP_MULTICAST_MAX)); }
         IP_Port_t               AllocateEphemeralPort       (void);
-
-
         SystemState_e           SendPacket                  (IP_PacketMsg_t* pMsg);
-
         static SystemState_e    AllocPacket                 (IP_PacketMsg_t** ppMsg, size_t PacketSize, MEM_DebugListOfID_e DebugWrapperID, MEM_DebugListOfID_e DebugPacketID);
-
         static uint16_t         CalculateChecksum           (IP_Header_t* pIP, uint8_t Protocol, void* pProtocolHeader, uint16_t Length);
-
-
-//        static uint16_t         IP_CalculateChecksum        (const void* pBuffer, uint16_t Count);
-      #if (IP_USE_TCP_CLIENT == DEF_ENABLED) || (IP_USE_TCP_SERVER == DEF_ENABLED)
-//        static uint16_t         TCP_CalculateChecksum       (IP_Header_t* pIP, TCP_Header_t* pTCP, uint16_t TCP_Length);
-      #endif
-      #if (IP_USE_UDP == DEF_ENABLED)
-//        static uint16_t         UDP_CalculateChecksum       (IP_Header_t* pIP, UDP_Header_t* pUDP, uint16_t UDP_Length);
-      #endif
         static void             FreeMessage                 (IP_PacketMsg_t* pMsg);
         static void             IP_ToAscii                  (char* pBuffer, IP_Address_t IP_Address);
         static IP_Address_t     AsciiToIP                   (const char* pBuffer);

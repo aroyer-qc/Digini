@@ -40,7 +40,6 @@
 
 #define LSI_CLOCK_FREQUENCY                         32000
 #define HSI_CLOCK_FREQUENCY                         16000000
-#define LSE_CLOCK_FREQUENCY                         32768
 
 // Own define for register bit value without cast (Do not change)
 #define CFG_RCC_CFGR_SW_HSI                         0x00000000U
@@ -93,6 +92,11 @@
 #define CFG_RCC_CFGR_MCO2_PLLI2S                    0x40000000U
 #define CFG_RCC_CFGR_MCO2_HSE                       0x80000000U
 #define CFG_RCC_CFGR_MCO2_PLL                       0xC0000000U
+
+#define CFG_RCC_BDCR_RTCSEL_NO_CLOCK                0x00000000U
+#define CFG_RCC_BDCR_RTCSEL_LSE                     0x00000100U
+#define CFG_RCC_BDCR_RTCSEL_LSI                     0x00000200U
+#define CFG_RCC_BDCR_RTCSEL_HSE                     0x00000300U
 
 #if defined(STM32F401xC) || defined(STM32F401xE)
     #define CFG_MAX_CPU_SYS_HCLK_CLOCK_FREQUENCY    (84000000U)
@@ -159,13 +163,25 @@
 #include "clock_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
+// default
+//-------------------------------------------------------------------------------------------------
+
+#ifdef CFG_LSE_VALUE
+  #define LSE_CLOCK_FREQUENCY                       CFG_LSE_VALUE
+#else
+  #define LSE_CLOCK_FREQUENCY                       32768
+#endif
+
+//-------------------------------------------------------------------------------------------------
 // Auto define configuration
 //-------------------------------------------------------------------------------------------------
 
-#define CFG_RCC_PLLCFGR_PLL_M_POS               0
-#define CFG_RCC_PLLCFGR_PLL_N_POS               6
-#define CFG_RCC_PLLCFGR_PLL_P_POS               16
-#define CFG_RCC_PLLCFGR_PLL_Q_POS               24
+#define CFG_RCC_CFGR_RTCPRE                         ((CFG_HSE_VALUE / 1000000) << RCC_CFGR_RTCPRE_Pos)
+
+#define CFG_RCC_PLLCFGR_PLL_M_POS                   0
+#define CFG_RCC_PLLCFGR_PLL_N_POS                   6
+#define CFG_RCC_PLLCFGR_PLL_P_POS                   16
+#define CFG_RCC_PLLCFGR_PLL_Q_POS                   24
 
 //-------------------------------------------------------------------------------------------------
 // Auto configuration value for PLL
@@ -409,7 +425,7 @@
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-SYSTEM_EXTERN   uint32_t        SystemCoreClock;
+//SYSTEM_EXTERN   uint32_t        SystemCoreClock;
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)

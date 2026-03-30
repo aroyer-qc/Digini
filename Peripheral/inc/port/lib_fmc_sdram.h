@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_uint32_t_swap.c
+//  File : lib_fmc_sdram.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2025 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,33 +24,17 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
 
-#include "./lib_digini.h"
+#include "ram_cfg.h"
 
-//-------------------------------------------------------------------------------------------------
-//
-//   Function Name: LIB_uint32_t_Swap
-//
-//   Parameter(s):  uint32_t*       pSwap
-//   Return Value:  None
-//
-//   Description:   Swap all bytes in a 32 bits value
-//
-//-------------------------------------------------------------------------------------------------
-void LIB_uint32_t_Swap(uint32_t* pSwap)
-{
-  #ifdef __REV
-    *pSwap = __REV(pSwap);
-  #else
-    uint32_t value = *pSwap;
-    *pSwap = ( (value >> 24) |
-              ((value >>  8) & 0x0000FF00) |
-              ((value <<  8) & 0x00FF0000) |
-               (value << 24));
-   #endif
-}
+//#if defined STM32F1xx
+// #include "./Peripheral/inc/port/STM32F1xx/lib_STM32F1_fmc_sdram.h"
+#if defined STM32F4xx
+ #include "./Peripheral/inc/port/STM32F4xx/lib_STM32F4_fmc_sdram.h"
+#elif defined STM32F7xx
+ #include "./Peripheral/inc/port/STM32F7xx/lib_STM32F7_fmc_sdram.h"
+#elif defined STM32H7xx
+ #include "./Peripheral/inc/port/STM32H7xx/lib_STM32H7_fmc_sdram.h"
+#endif
 
 //-------------------------------------------------------------------------------------------------

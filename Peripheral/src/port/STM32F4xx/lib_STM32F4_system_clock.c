@@ -158,6 +158,28 @@ void SystemInit(void)
   #endif
 
 //--------------------------------------------------------------------------
+//  RTC init clock
+    
+  #if (CFG_RTC_CLOCK_SOURCE != CFG_RCC_BDCR_RTCSEL_NO_CLOCK)
+   #if (CFG_RTC_CLOCK_SOURCE == CFG_RCC_BDCR_RTCSEL_HSE)
+    MODIFY_REG(RCC->CFGR, RCC_CFGR_RTCPRE, CFG_RCC_CFGR_RTCPRE);
+   #endif
+  
+   #if (CFG_RTC_CLOCK_SOURCE == CFG_RCC_BDCR_RTCSEL_LSE)
+    SET_BIT(RCC->BDCR, RCC_BDCR_LSEON);                     // External 32.768 KHz oscillator ON
+    while((RCC->BDCR & RCC_BDCR_LSERDY) == 0);
+   #endif
+
+   #if (CFG_RTC_CLOCK_SOURCE == CFG_RCC_BDCR_RTCSEL_LSI)
+    SET_BIT(RCC->CSR, RCC_CSR_LSION;                        // Internal 32 KHz oscillator ON
+    while((RCC->CSR & RCC_CSR_LSIRDY) == 0);
+   #endif
+
+    MODIFY_REG(RCC->BDCR, RCC_BDCR_RTCSEL, CFG_RTC_CLOCK_SOURCE);
+    SET_BIT(RCC->BDCR, RCC_BDCR_RTCEN);
+  #endif 
+
+//--------------------------------------------------------------------------
 
     RCC->CIR = 0;                                                                       // Disable all interrupts
 

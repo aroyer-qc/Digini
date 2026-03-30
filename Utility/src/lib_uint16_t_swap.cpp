@@ -42,11 +42,12 @@
 //-------------------------------------------------------------------------------------------------
 void LIB_uint16_t_Swap(uint16_t* pSwap)
 {
-    struct16_t Value;
-
-    Value.u_8.u1 = ((struct16_t*)pSwap)->u_8.u0;
-    Value.u_8.u0 = ((struct16_t*)pSwap)->u_8.u1;
-    *pSwap = Value.u_16;
+  #ifdef __REV16
+    *pSwap = uint16_t(__REV16(pSwap));
+  #else
+    uint16_t value = *pSwap;
+    *pSwap = (uint16_t)((value >> 8) | (value << 8));
+  #endif  
 }
 
 //-------------------------------------------------------------------------------------------------

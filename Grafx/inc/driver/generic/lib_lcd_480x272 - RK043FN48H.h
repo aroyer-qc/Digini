@@ -71,9 +71,9 @@ class GrafxDriver : public GrafxGenDriver
 {
     public:
 
-        void        Initialize      (void* pArg)                                                                                            override;
-        void        DisplayOn       (void)                                                                                                  override;
-        void        DisplayOff      (void)                                                                                                  override;
+        void        Initialize      (void* pArg)  override;
+        void        DisplayOn       (void)        override;
+        void        DisplayOff      (void)        override;
 };
 
 //-------------------------------------------------------------------------------------------------

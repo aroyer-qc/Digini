@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_STM32xxx_Grafx_GenDriver.cpp
+//  File : lib_Grafx_GenDriver.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2025 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -94,50 +94,7 @@ const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::Initialize(void* pArg)
 {
-  #ifdef LTDC
-
-   #ifdef STM32H7xx
-    RCC->APB3ENR |= RCC_APB3ENR_LTDCEN;
-    RCC->AHB3ENR |= RCC_AHB3ENR_DMA2DEN;
-   #else
-    RCC->APB2ENR |= RCC_APB2ENR_LTDCEN;
-    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
-   #endif
-
-    // Configures the HS, VS, DE and PC polarity
-    LTDC->GCR = 0;
-
-    // Sets Synchronization size
-    MODIFY_REG(LTDC->SSCR,
-               (LTDC_SSCR_VSH | LTDC_SSCR_HSW),
-               (GRAFX_VSYNC - 1) | ((GRAFX_HSYNC - 1) << LTDC_SSCR_HSW_Pos));
-
-    // Sets Accumulated Back porch
-    MODIFY_REG(LTDC->BPCR,
-               (LTDC_BPCR_AVBP | LTDC_BPCR_AHBP),
-               (GRAFX_VSYNC  + GRAFX_VBP - 1) | ((GRAFX_HSYNC  + GRAFX_HBP - 1) << LTDC_BPCR_AHBP_Pos));
-
-    // Sets Accumulated Active Width
-    MODIFY_REG(LTDC->AWCR,
-               (LTDC_AWCR_AAH | LTDC_AWCR_AAW),
-               ((GRAFX_DRIVER_SIZE_Y + GRAFX_VSYNC + GRAFX_VBP - 1) |
-                ((GRAFX_DRIVER_SIZE_X + GRAFX_HSYNC + GRAFX_HBP - 1) << LTDC_AWCR_AAW_Pos)));
-
-    // Sets Total Width for vertical and horizontal
-    MODIFY_REG(LTDC->TWCR, (LTDC_TWCR_TOTALH | LTDC_TWCR_TOTALW),
-                           ((GRAFX_DRIVER_SIZE_Y + GRAFX_VSYNC + GRAFX_VBP + GRAFX_VFP - 1) |
-                           ((GRAFX_DRIVER_SIZE_X + GRAFX_HSYNC + GRAFX_HBP + GRAFX_HFP - 1) << LTDC_TWCR_TOTALW_Pos)));
-
-    CLEAR_BIT(LTDC->BCCR, (LTDC_BCCR_BCBLUE | LTDC_BCCR_BCGREEN | LTDC_BCCR_BCRED));    // Sets the background color value to zero for all
-    SET_BIT(LTDC->IER, LTDC_IER_TERRIE | LTDC_IER_FUIE);                                // Enable the transfer Error interrupt and FIFO underrun
-    SET_BIT(LTDC->GCR, LTDC_GCR_LTDCEN);                                                // Enable LTDC by setting LTDCEN bit
-
-    LayerConfig(BACKGROUND_DISPLAY_LAYER_0);
-    LayerConfig(FOREGROUND_DISPLAY_LAYER_0);
-
-  #else
     VAR_UNUSED(pArg);
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -147,7 +104,7 @@ void GrafxGenDriver::Initialize(void* pArg)
 //  Parameter(s):   Layer_e 		Layer
 //  Return:         None
 //
-//  Description:    LCD configuration specific for the LCD and processor used by this driver
+//  Description:    Generic Clear layer function
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::ClearLayer(Layer_e Layer)
@@ -183,7 +140,7 @@ void GrafxGenDriver::BlockCopy(void* pSrc, uint16_t X, uint16_t Y, uint16_t Widt
     Box.Size.Width  = Width;
     Box.Size.Height = Height;
 
-    this->BlockCopy(pSrc, &Box, &Box.Pos, SrcPixelFormat, BlendMode);
+    BlockCopy(pSrc, &Box, &Box.Pos, SrcPixelFormat, BlendMode);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -203,6 +160,7 @@ void GrafxGenDriver::BlockCopy(void* pSrc, uint16_t X, uint16_t Y, uint16_t Widt
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
+  #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
 	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
     {
         uint32_t           PixelFormatSrc;
@@ -255,6 +213,7 @@ void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pi
       #endif
     }
     else
+  #endif
     {
 
     }
@@ -280,18 +239,16 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelF
     uint32_t           PixelFormatSrc;
     uint32_t           PixelFormatDst;
     uint32_t           Address;
-    struct32_t         AreaConfig;
+    uint32_t           AreaConfig;
     CLayer*            pLayer;
     uint8_t            PixelSize;
 
-    pLayer             = &LayerTable[CLayer::GetDrawing()];
-    PixelFormatSrc     = m_PixelFormatTable[SrcPixelFormat];
-    PixelFormatDst     = m_PixelFormatTable[pLayer->GetPixelFormat()];
-    PixelSize          = pLayer->GetPixelSize();
-    Address            = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
-
-    AreaConfig.u_16.u1 = pBox->Size.Width;
-    AreaConfig.u_16.u0 = pBox->Size.Height;
+    pLayer         = &LayerTable[CLayer::GetDrawing()];
+    PixelFormatSrc = m_PixelFormatTable[SrcPixelFormat];
+    PixelFormatDst = m_PixelFormatTable[pLayer->GetPixelFormat()];
+    PixelSize      = pLayer->GetPixelSize();
+    Address        = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
+    AreaConfig     = (uint32_t(pBox->Size.Width)  << 16) | (uint32_t(pBox->Size.Height));
 
   #ifdef DMA2D
     if(PixelFormatSrc == PixelFormatDst)
@@ -318,10 +275,10 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelF
     DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;            // Destination line offset
     DMA2D->OPFCCR      = PixelFormatDst;                                                        // Defines the size of pixel
 
-    DMA2D->NLR         = AreaConfig.u_32;                                                  // Size configuration of area to be transfered
+    DMA2D->NLR         = AreaConfig;                                                            // Size configuration of area to be transfered
 
-    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
-    while(DMA2D->CR & DMA2D_CR_START);                                                     // Wait until transfer is done
+    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                         // Start operation
+    while(DMA2D->CR & DMA2D_CR_START);                                                          // Wait until transfer is done
 
   #else
 
@@ -427,7 +384,7 @@ void GrafxGenDriver::DrawRectangle(Box_t* pBox)
 //                  uint16_t    Thickness
 //  Return:         None
 //
-//  Description:    Draw a box in a specific thickness
+//  Description:    Draw a box in a specific Thickness
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness)
@@ -454,31 +411,6 @@ void GrafxGenDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 {
-    uint32_t       PixelFormat;
-    uint32_t       Address;
-    uint32_t       Color;
-    CLayer*        pLayer;
-    uint8_t        PixelSize;
-
-    pLayer         = &LayerTable[CLayer::GetDrawing()];
-    PixelFormat    = m_PixelFormatTable[pLayer->GetPixelFormat()];
-    PixelSize      = pLayer->GetPixelSize();
-    Address        = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
-    Color          = pLayer->GetColor();
-
-  #ifdef DMA2D
-
-    DMA2D->CR      = DMA2D_R2M | DMA2D_CR_TCIE;                 // Register to memory and TCIE
-    DMA2D->OCOLR   = Color;                                     // Color to be used
-    DMA2D->OMAR    = Address;                                   // Destination address
-    DMA2D->OPFCCR  = PixelFormat;                               // Defines the number of pixels to be transfered
-    DMA2D->NLR     = TRANSFERT_ONE_PIXEL;                       // Size configuration of area to be transfered
-    SET_BIT(DMA2D->CR, DMA2D_CR_START);                         // Start operation
-    while(DMA2D->CR & DMA2D_CR_START);                          // Wait until transfer is done
-
-  #else
-
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -488,10 +420,10 @@ void GrafxGenDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 //  Parameter(s):   uint16_t    Y
 //                  uint16_t    X1
 //                  uint16_t    X2
-//                  uint16_t    ThickNess
+//                  uint16_t    Thickness
 //  Return:         None
 //
-//  Description:    Displays a horizontal line of a specific thickness.
+//  Description:    Displays a horizontal line of a specific Thickness.
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint16_t Thickness)
@@ -519,10 +451,10 @@ void GrafxGenDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, ui
 //  Parameter(s):   uint16_t    wPosX
 //                  uint16_t    wPosY1
 //                  uint16_t    wPosY2
-//                  uint16_t    wThickNess
+//                  uint16_t    wThickness
 //  Return:         None
 //
-//  Description:    Displays a vertical line of a specific thickness.
+//  Description:    Displays a vertical line of a specific Thickness.
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness)
@@ -557,7 +489,7 @@ void GrafxGenDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, ui
 //                                                 DRAW_VERTICAL
 //  Return:         None
 //
-//  Description:    Displays a line of a specific thickness.
+//  Description:    Displays a line of a specific Thickness.
 //
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction)
@@ -961,7 +893,7 @@ void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16
 //                  float    Y2
 //   Return Value:  none
 //
-//   Description:   Draw a diagonal line of desire thickness using the Xiaolin Wu Algorithm
+//   Description:   Draw a diagonal line of desire Thickness using the Xiaolin Wu Algorithm
 //                  This algorithm allow line with anti-aliasing ( improvement on Bresenham)
 //
 //-------------------------------------------------------------------------------------------------

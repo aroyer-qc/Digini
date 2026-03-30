@@ -30,14 +30,14 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "stm32f7xx.h"
+#include "stm32f4xx.h"
 #include "./Digini/inc/lib_typedef.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#if defined (DIGINI_USE_SRAM_MODULE) || defined(DIGINI_USE_NOR_MODULE) || defined(DIGINI_USE_NAND_MODULE) || defined(USE_SDRAM_DRIVER)
+#if defined (DIGINI_USE_LCD_MODULE) || (DIGINI_USE_SRAM_MODULE) || defined(DIGINI_USE_NOR_MODULE) || defined(DIGINI_USE_NAND_MODULE) || defined(USE_SDRAM_DRIVER)
 
 // FMC_NORSRAM_Bank FMC NOR/SRAM Bank
 #define FMC_NORSRAM_BANK1                               ((uint32_t)0x00000000U)
@@ -530,59 +530,32 @@ struct FMC_SDRAM_Command_t
 
 // FMC_LL_NOR_Macros FMC NOR/SRAM Macros
 
-/** @brief  Enable the NORSRAM device access.
-  * @param  __INSTANCE__ FMC_NORSRAM Instance
-  * @param  __BANK__ FMC_NORSRAM Bank
-  * @retval None
-  */
+// Enable the NORSRAM device access.
 #define __FMC_NORSRAM_ENABLE(__INSTANCE__, __BANK__)  ((__INSTANCE__)->BTCR[(__BANK__)] |= FMC_BCR1_MBKEN)
 
-/** @brief  Disable the NORSRAM device access.
-  * @param  __INSTANCE__ FMC_NORSRAM Instance
-  * @param  __BANK__ FMC_NORSRAM Bank
-  * @retval None
-  */
+// Disable the NORSRAM device access.
 #define __FMC_NORSRAM_DISABLE(__INSTANCE__, __BANK__) ((__INSTANCE__)->BTCR[(__BANK__)] &= ~FMC_BCR1_MBKEN)
 
-/** @defgroup FMC_LL_NAND_Macros FMC NAND Macros
- *  @brief macros to handle NAND device enable/disable
- */
-
-/** @brief  Enable the NAND device access.
-  * @param  __INSTANCE__ FMC_NAND Instance
-  * @retval None
-  */
+// Enable the NAND device access.
 #define __FMC_NAND_ENABLE(__INSTANCE__)  ((__INSTANCE__)->PCR |= FMC_PCR_PBKEN)
 
-/** @brief  Disable the NAND device access.
-  * @param  __INSTANCE__ FMC_NAND Instance
-  * @retval None
-  */
+// Disable the NAND device access.
 #define __FMC_NAND_DISABLE(__INSTANCE__) ((__INSTANCE__)->PCR &= ~FMC_PCR_PBKEN)
 
-/* FMC_Interrupt FMC Interrupt
- *  macros to handle FMC interrupts
- */
-
-/** @brief  Enable the NAND device interrupt.
-  * @param  __INSTANCE__  FMC_NAND instance
-  * @param  __INTERRUPT__ FMC_NAND interrupt
-  *         This parameter can be any combination of the following values:
-  *            @arg FMC_IT_RISING_EDGE: Interrupt rising edge.
-  *            @arg FMC_IT_LEVEL: Interrupt level.
-  *            @arg FMC_IT_FALLING_EDGE: Interrupt falling edge.
-  * @retval None
-  */
+//  Enable the NAND device interrupt.
+//   This parameter can be any combination of the following values:
+//   FMC_IT_RISING_EDGE: Interrupt rising edge.
+//   FMC_IT_LEVEL: Interrupt level.
+//   FMC_IT_FALLING_EDGE: Interrupt falling edge.
+//	retval None
 #define __FMC_NAND_ENABLE_IT(__INSTANCE__, __INTERRUPT__)  ((__INSTANCE__)->SR |= (__INTERRUPT__))
 
-/** @brief  Disable the NAND device interrupt.
-  * @param  __INSTANCE__  FMC_NAND Instance
-  * @param  __INTERRUPT__ FMC_NAND interrupt
-  *         This parameter can be any combination of the following values:
-  *            @arg FMC_IT_RISING_EDGE: Interrupt rising edge.
-  *            @arg FMC_IT_LEVEL: Interrupt level.
-  *            @arg FMC_IT_FALLING_EDGE: Interrupt falling edge.
-  * @retval None
+//  Disable the NAND device interrupt.
+//  This parameter can be any combination of the following values:
+//   FMC_IT_RISING_EDGE: Interrupt rising edge.
+//   FMC_IT_LEVEL: Interrupt level.
+//   FMC_IT_FALLING_EDGE: Interrupt falling edge.
+//  retval None
   */
 #define __FMC_NAND_DISABLE_IT(__INSTANCE__, __INTERRUPT__)  ((__INSTANCE__)->SR &= ~(__INTERRUPT__))
 
@@ -663,21 +636,21 @@ class FMC_Driver
 {
     public:
 
-      #ifdef DIGINI_USE_SRAM_MODULE
+      #ifdef FMC_USE_LCD_MODULE
+        // LCD Initialization
+        void            LCD_Initialize                  (FMC_SDRAM_t* Device, FMC_SDRAM_Init_t* Init);
+        void            LCD_TimingInit                  (FMC_SDRAM_Timing_t* Timing, uint32_t Bank);
+
+        // LCD Control functions
+        void            SDRAM_WriteProtectionEnable     (uint32_t Bank);
+        void            SDRAM_WriteProtectionDisable    (uint32_t Bank);
+        void            SDRAM_SendCommand               (FMC_SDRAM_Command_t* Command, uint32_t Timeout);
+        void            SDRAM_ProgramRefreshRate        (uint32_t RefreshRate);
+        void            SDRAM_SetAutoRefreshNumber      (uint32_t AutoRefreshNumber);
+        uint32_t        SDRAM_GetModeStatus             (uint32_t Bank);
       #endif
 
-      #ifdef DIGINI_USE_NOR_MODULE
-        // NOR SRAM Initialization/de-initialization functions
-        void            NORSRAM_Initialize              (FMC_NORSRAM_t* Device, FMC_NORSRAM_Init_t* Init);
-        void            NORSRAM_TimingInit              (FMC_NORSRAM_Timing_t* Timing, uint32_t Bank);
-        void            NORSRAM_ExtendedTimingInit      (FMC_NORSRAM_EXTENDED_t* Device, FMC_NORSRAM_Timing_t* Timing, uint32_t Bank, uint32_t ExtendedMode);
-
-        // SRAM Control functions
-        void            NORSRAM_WriteOperationEnable    (uint32_t Bank);
-        void            NORSRAM_WriteOperationDisable   (uint32_t Bank);
-      #endif
-
-      #ifdef DIGINI_USE_NAND_MODULE
+      #ifdef FMC_USE_NAND_MODULE
         // NAND Initialization
         void            NAND_Initialize                 (FMC_NAND_t* Device, FMC_NAND_Init_t* Init);
         void            NAND_CommonSpaceTimingInit      (FMC_NAND_PCC_Timing_t* Timing, uint32_t Bank);
@@ -689,7 +662,21 @@ class FMC_Driver
         SystemState_e   NAND_GetECC                     (uint32_t* ECCval, uint32_t Bank, uint32_t Timeout);
       #endif
 
-      #ifdef USE_SDRAM_DRIVER
+      #ifdef FMC_USE_NOR_MODULE
+        // NOR SRAM Initialization/de-initialization functions
+        void            NORSRAM_Initialize              (FMC_NORSRAM_t* Device, FMC_NORSRAM_Init_t* Init);
+        void            NORSRAM_TimingInit              (FMC_NORSRAM_Timing_t* Timing, uint32_t Bank);
+        void            NORSRAM_ExtendedTimingInit      (FMC_NORSRAM_EXTENDED_t* Device, FMC_NORSRAM_Timing_t* Timing, uint32_t Bank, uint32_t ExtendedMode);
+
+        // SRAM Control functions
+        void            NORSRAM_WriteOperationEnable    (uint32_t Bank);
+        void            NORSRAM_WriteOperationDisable   (uint32_t Bank);
+      #endif
+
+      #ifdef FMC_USE_SRAM_MODULE
+      #endif
+
+      #ifdef FMC_USE_SDRAM_MODULE
         // SDRAM Initialization
         void            SDRAM_Initialize                (FMC_SDRAM_t* Device, FMC_SDRAM_Init_t* Init);
         void            SDRAM_TimingInit                (FMC_SDRAM_Timing_t* Timing, uint32_t Bank);
@@ -705,21 +692,26 @@ class FMC_Driver
 
     private:
 
-      #ifdef DIGINI_USE_SRAM_MODULE
-        //FMC_SRAM_t*         m_pSRAM_Device;
+      #ifdef FMC_USE_LCD_MODULE
+        FMC_SDRAM_t*        m_pLCD_Device;
       #endif
 
-      #ifdef DIGINI_USE_NOR_MODULE
+      #ifdef FMC_USE_NAND_MODULE
+         FMC_NAND_t*        m_pNAND_Device;
+      #endif
+
+      #ifdef FMC_USE_NOR_MODULE
         FMC_NORSRAM_t*      m_pNORSRAM_Device;
       #endif
 
-      #ifdef DIGINI_USE_NAND_MODULE
-         FMC_NAND_t*        m_pNAND_Device;
-     #endif
-
-      #ifdef USE_SDRAM_DRIVER
+      #ifdef FMC_USE_SDRAM_MODULE
         FMC_SDRAM_t*        m_pSDRAM_Device;
       #endif
+
+	  #ifdef FMC_USE_SRAM_MODULE
+        FMC_SRAM_t*       	m_pSRAM_Device;
+      #endif
+
 };
 
 //-------------------------------------------------------------------------------------------------

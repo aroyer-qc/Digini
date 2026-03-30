@@ -122,7 +122,7 @@ void GUI_myClassTask::Run()
 
     // Start at home page
     m_Link    = INVALID_LINK;
-    NewLink   = LINK_MAIN_LOADING;
+    NewLink   = LINK_START_UP;
 
     // There is no force refresh. (Use for example to refresh page on language change)
     m_ForceRefresh = false;
@@ -141,6 +141,7 @@ void GUI_myClassTask::Run()
     {
         if(m_ForceRefresh == false)
         {
+
             if((Error = nOS_QueueRead(&this->m_Q_Msg, &Msg, GRAFX_TICK_WAIT_BETWEEN_REFRESH_LOOP)) == NOS_E_TIMEOUT)
             {
                 Msg.Type     = MESSAGE_TYPE_PDI_EVENT_INFO;

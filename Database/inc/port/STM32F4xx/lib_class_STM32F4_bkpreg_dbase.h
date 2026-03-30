@@ -24,16 +24,18 @@
 //
 //-------------------------------------------------------------------------------------------------
 
+
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "./lib_digini.h"
+#include "./Database/inc/lib_class_database.h"
 
 //-------------------------------------------------------------------------------------------------
 
+#if defined(BKPREG_DBASE_DEF)
 #if (USE_RTC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
@@ -57,7 +59,7 @@ enum BKPREG_DBaseItemList_e
     START_BKPREG_INDEX = DBASE_INDEX_BKPREG_RANGE - 1,
     BKPREG_DBASE_DEF(EXPAND_X_BKPREG_DBASE_AS_ENUM)
     END_BKPREG_INDEX
-} eBKPREG_DBaseItemList;
+};
 
 #define NB_BKPREG_DBASE_ITEMS_CONST        ((END_BKPREG_INDEX - START_BKPREG_INDEX) - 1)
 
@@ -67,7 +69,7 @@ class BKPREG_DataBase : public CDataBaseInterface
 {
     public:
 
-                        BKPREG_DataBase     (class CRTC* pRTC);
+                        BKPREG_DataBase     (class RTC_Driver* pRTC);
         SystemState_e   Initialize          (void* pConfig, size_t ObjectSize);
         SystemState_e   Get                 (void*       pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
         SystemState_e   Set                 (const void* pData, uint16_t Record, uint16_t Number, uint16_t SubNumber);
@@ -80,7 +82,7 @@ class BKPREG_DataBase : public CDataBaseInterface
         SystemState_e   CheckRange          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
         uint8_t         GetIndex            (uint16_t Record, uint16_t Number, uint16_t SubNumber);
 
-        class CRTC*             m_pRTC;
+        class RTC_Driver*       m_pRTC;
         uint8_t                 m_ItemsIndex        [NB_BKPREG_DBASE_ITEMS_CONST];
         static const uint8_t    m_ItemsQTY          [NB_BKPREG_DBASE_ITEMS_CONST];
         static const uint8_t    m_ItemsSubQTY       [NB_BKPREG_DBASE_ITEMS_CONST];
@@ -89,3 +91,4 @@ class BKPREG_DataBase : public CDataBaseInterface
 //-------------------------------------------------------------------------------------------------
 
 #endif // (USE_RTC_DRIVER == DEF_ENABLED)
+#endif // defined(BKPREG_DBASE_DEF)

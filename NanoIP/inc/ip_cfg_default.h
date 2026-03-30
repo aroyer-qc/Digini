@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_uint32_t_swap.c
+//  File : ip_cfg_default.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,33 +24,36 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "./lib_digini.h"
+#pragma once
 
 //-------------------------------------------------------------------------------------------------
-//
-//   Function Name: LIB_uint32_t_Swap
-//
-//   Parameter(s):  uint32_t*       pSwap
-//   Return Value:  None
-//
-//   Description:   Swap all bytes in a 32 bits value
-//
+// Define(s)
 //-------------------------------------------------------------------------------------------------
-void LIB_uint32_t_Swap(uint32_t* pSwap)
-{
-  #ifdef __REV
-    *pSwap = __REV(pSwap);
-  #else
-    uint32_t value = *pSwap;
-    *pSwap = ( (value >> 24) |
-              ((value >>  8) & 0x0000FF00) |
-              ((value <<  8) & 0x00FF0000) |
-               (value << 24));
-   #endif
-}
 
 //-------------------------------------------------------------------------------------------------
+// Debug
+#define IP_DBG_DHCP                             DEF_DISABLED
+#define IP_DBG_DNS								DEF_DISABLED
+#define IP_DBG_ARP								DEF_DISABLED
+#define IP_DBG_TCP 								DEF_DISABLED
+#define IP_DBG_MQTT								DEF_DISABLED
+#define IP_DBG_ARP_RETRY_MSG					DEF_DISABLED
+
+//-------------------------------------------------------------------------------------------------
+// Deactivate all protocol (for lib_memory MEM_DBG_xxx list)
+
+#define IP_USE_DHCP							    DEF_DISABLED
+#define IP_USE_DNS							    DEF_DISABLED
+#define IP_USE_HTTP                             DEF_DISABLED
+#define IP_USE_ICMP							    DEF_DISABLED
+#define IP_USE_MQTT 						    DEF_DISABLED
+#define IP_USE_NTP							    DEF_DISABLED
+#define IP_USE_SNTP							    DEF_DISABLED
+#define IP_USE_SOAP 						    DEF_DISABLED
+#define IP_USE_TCP_CLIENT                       DEF_DISABLED
+#define IP_USE_TCP_SERVER                       DEF_DISABLED
+#define IP_USE_UDP 							    DEF_DISABLED
+#define IP_USE_RAW                              DEF_DISABLED
+
+//-------------------------------------------------------------------------------------------------
+

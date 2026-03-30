@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_uint32_t_swap.c
+//  File : lib_class_STM32F4_fmc_lcd.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -31,26 +31,47 @@
 #include "./lib_digini.h"
 
 //-------------------------------------------------------------------------------------------------
+
+#if (USE_FMC_LCD_DRIVER == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define FMC_WRITE_OPERATION_ENABLE                  0x00001000              // Always enable
+
+#define FMC_BTR1_ADDRESS_SETUP_TIME_POS             0
+#define FMC_BTR1_ADDRESS_HOLD_TIME_POS              4
+#define FMC_BTR1_DATA_SETUP_TIME_POS                8
+
+//-------------------------------------------------------------------------------------------------
 //
-//   Function Name: LIB_uint32_t_Swap
+//   Function name: FMC_LCD_Initialize
 //
-//   Parameter(s):  uint32_t*       pSwap
-//   Return Value:  None
+//   Parameter(s):  None
+//   Return:        None
 //
-//   Description:   Swap all bytes in a 32 bits value
+//   Description:   Performs the LCD device initialization sequence on the FMC.
 //
 //-------------------------------------------------------------------------------------------------
-void LIB_uint32_t_Swap(uint32_t* pSwap)
+void FMC_LCD_Initialize(void)
 {
-  #ifdef __REV
-    *pSwap = __REV(pSwap);
-  #else
-    uint32_t value = *pSwap;
-    *pSwap = ( (value >> 24) |
-              ((value >>  8) & 0x0000FF00) |
-              ((value <<  8) & 0x00FF0000) |
-               (value << 24));
-   #endif
+    // ---- FMC Reset ----
+    RCC->AHB3RSTR |=  RCC_AHB3RSTR_FMCRST;
+    RCC->AHB3RSTR &= ~RCC_AHB3RSTR_FMCRST;
+    RCC->AHB3ENR  |=  RCC_AHB3ENR_FMCEN;                    // Enable Clock
+
+    FMC_Bank1->BTCR[CFG_FMC_LCD_BANK] = FMC_WRITE_OPERATION_ENABLE | CFG_FMC_LCD_MEM_BUS_WIDTH;
+
+    // FSM LCD device timing parameters
+    FMC_Bank1->BTCR[CFG_FMC_LCD_BANK + 1] = (CFG_FMC_LCD_TIMING_ADDRESS_SETUP_TIME << FMC_BTR1_ADDRESS_SETUP_TIME_POS) |
+                                            (CFG_FMC_LCD_TIMING_ADDRESS_HOLD_TIME  << FMC_BTR1_ADDRESS_HOLD_TIME_POS)  |
+                                            (CFG_FMC_LCD_TIMING_DATA_SETUP_TIME    << FMC_BTR1_DATA_SETUP_TIME_POS);
+
+    FMC_Bank1E->BWTR[CFG_FMC_LCD_BANK] = 0x0FFFFFFF;
+    SET_BIT(FMC_Bank1->BTCR[CFG_FMC_LCD_BANK], FMC_BCR1_MBKEN);
 }
 
 //-------------------------------------------------------------------------------------------------
+
+#endif // USE_SDRAM_DRIVER

@@ -75,6 +75,7 @@ SPI_Driver::SPI_Driver(SPI_ID_e SPI_ID)
     m_Status          = SYS_UNKNOWN;
     m_pDriver[SPI_ID] = this;
     m_DMA_Status      = SYS_UNKNOWN;
+    m_IsItInitialize  = false;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -92,9 +93,13 @@ void SPI_Driver::Initialize(void)
     nOS_Error Error;
     uint32_t  PCLK_Frequency;
 
-    Error = nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
-    Error = nOS_SemCreate(&m_DMA_Release, 0, 1);
-    VAR_UNUSED(Error);
+    if(m_IsItInitialize == false)
+    {
+        Error = nOS_MutexCreate(&m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
+        Error = nOS_SemCreate(&m_DMA_Release, 0, 1);
+        VAR_UNUSED(Error);
+        m_IsItInitialize = true;
+    }
 
     switch(uint32_t(m_SPI_ID))
     {

@@ -312,7 +312,7 @@ typedef enum
 } TempUnit_e;
 
 // --------- General typedef ---------
-
+/*
 typedef union
 {
     uint8_t         u_8;
@@ -345,6 +345,7 @@ typedef union
         uint8_t     b7 :1;
     } bit;
 } struct8_t;
+
 
 typedef union
 {
@@ -438,6 +439,7 @@ typedef union
     } u_16;
 } struct32_t;
 
+
 typedef union
 {
     uint64_t    u64;
@@ -445,15 +447,15 @@ typedef union
 
     uint32_t    u32_Array[2];
     int32_t     n32_Array[2];
-    struct32_t  s32_Array[2];
+    //struct32_t  s32_Array[2];
 
     uint16_t    u16_Array[4];
     int16_t     n16_Array[4];
-    struct16_t  s16_Array[8];
+    //struct16_t  s16_Array[8];
 
     uint8_t     u8_Array[8];
     int8_t      n8_Array[8];
-    struct8_t   s8_Array[8];
+    //struct8_t   s8_Array[8];
 
     struct
     {
@@ -475,7 +477,7 @@ typedef union
         uint16_t u3;
     } u_16;
 } struct64_t;
-
+*/
 // --------- Time and Date ---------
 
 typedef struct

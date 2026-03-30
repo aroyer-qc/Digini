@@ -99,7 +99,7 @@ class GrafxDriver : public GrafxGenDriver
         uint8_t     ReadData        (void);
         void        SetWindow       (uint8_t PosX1, uint8_t PosY1, uint8_t PosX2, uint8_t PosY2);
         void        PutColor        (uint16_t Color, uint16_t Count);
-        void        Line            (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t ThickNess, DrawMode_e Direction);
+        void        Line            (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
         void        Clear           (void);
 
         SPI_Driver* m_pSPI;

@@ -85,7 +85,7 @@ const int8_t GFX_PixelSize[PIXEL_FORMAT_COUNT] =
     -1
 };
 
-const struct32_t GFX_ColorTable[COL_NB_COLOR_CONST] =
+const uint32_t GFX_ColorTable[COL_NB_COLOR_CONST] =
 {
     COLOR_DEF(EXPAND_X_COLOR_AS_DATA)
     GRAY_DEF(EXPAND_X_COLOR_AS_DATA)

@@ -32,7 +32,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if defined(RTC_DBASE_DEF) || defined(HARD_DBASE_DEF)
+#if defined(HARD_DBASE_DEF)
 
 //-------------------------------------------------------------------------------------------------
 // Expand macro(s)
@@ -55,33 +55,25 @@
 // Create Quantity list for each record item
 const uint16_t HARD_DataBase::m_ItemsQTY[NB_HARD_DBASE_ITEMS_CONST] =                                      // Array[THIS][]
 {
-  #ifdef HARD_DBASE_DEF
       HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_ITEMS_QTY)
-  #endif
 };
 
 // Create SUB Quantity list for each record item
 const uint16_t HARD_DataBase::m_ItemsSubQTY[NB_HARD_DBASE_ITEMS_CONST] =                                   // Array[][THIS]
 {
-  #ifdef HARD_DBASE_DEF
       HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_ITEMS_SUB_QTY)
-  #endif
 };
 
 // Create size list for each record item
 const size_t HARD_DataBase::m_ItemSize[NB_HARD_DBASE_ITEMS_CONST] =                                        // sizeof()
 {
-  #ifdef HARD_DBASE_DEF
       HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_ITEM_SIZE)
-  #endif
 };
 
 // Create Get/Set function pointer list for each record item
 const Func_DatabaseCallBack HARD_DataBase::m_CallBack[NB_HARD_DBASE_ITEMS_CONST] =
 {
-  #ifdef HARD_DBASE_DEF
       HARD_DBASE_DEF(EXPAND_X_HARD_DBASE_AS_CALLBACK)
-  #endif
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -258,4 +250,4 @@ SystemState_e HARD_DataBase::CheckRange(uint16_t Record, uint16_t Number, uint16
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // #if defined(RTC_DBASE_DEF) || defined(HARD_DBASE_DEF)
+#endif // defined(HARD_DBASE_DEF)

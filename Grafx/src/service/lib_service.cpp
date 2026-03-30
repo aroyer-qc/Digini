@@ -174,9 +174,9 @@ static ServiceReturn_t* SERV_DATE(ServiceEvent_e* pServiceState)
             pService = GetServiceStruct(SERVICE_RETURN_TYPE2);
             if(pService != nullptr)
             {
-                ((ServiceType2_t*)pService)->Data[0].u_16 = Date.Day;
-                ((ServiceType2_t*)pService)->Data[1].u_16 = Date.Month;
-                ((ServiceType2_t*)pService)->Data[2].u_16 = Date.Year;
+                ((ServiceType2_t*)pService)->Data[0] = Date.Day;
+                ((ServiceType2_t*)pService)->Data[1] = Date.Month;
+                ((ServiceType2_t*)pService)->Data[2] = Date.Year;
                 *pServiceState = SERVICE_REFRESH;
                 OldDate = Date;
             }
@@ -755,9 +755,10 @@ static ServiceReturn_t* SERV_TIME(ServiceEvent_e* pServiceState)
             pService = GetServiceStruct(SERVICE_RETURN_TYPE2);
             if(pService != nullptr)
             {
-                ((ServiceType2_t*)pService)->Data[0].u_16 = Time.Hour;
-                ((ServiceType2_t*)pService)->Data[1].u_16 = Time.Minute;
-                ((ServiceType2_t*)pService)->Data[2].u_16 = Time.Second;
+
+                ((ServiceType2_t*)pService)->Data[0] = Time.Hour;
+                ((ServiceType2_t*)pService)->Data[1] = Time.Minute;
+                ((ServiceType2_t*)pService)->Data[2] = Time.Second;
                 *pServiceState = SERVICE_REFRESH;
                 OldTime = Time;
             }
@@ -868,14 +869,14 @@ static ServiceReturn_t* SERV_XCHG(ServiceEvent_e* pServiceState, uint16_t SubSer
 ServiceReturn_t* ServiceCall(Service_t* pService, ServiceEvent_e* pServiceState)
 {
     ServiceReturn_t* pServiceReturn = nullptr;
-    struct32_t       ServiceRange;
+    uint32_t         ServiceRange;
     bool             ServiceWasProcessed = false;
 
     if(pService->ID != 0xFFFFFFFF)
     {
-        ServiceRange.u_32 = pService->ID;
+        ServiceRange = pService->ID;
 
-        switch(ServiceRange.u8_Array[0])        // To speed up process
+        switch(U32MACRO_A(ServiceRange))        // To speed up process
         {
 /*
             case 'A':

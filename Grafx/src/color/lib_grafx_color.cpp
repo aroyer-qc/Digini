@@ -59,8 +59,8 @@ enum __ColorChannel_e
 //-------------------------------------------------------------------------------------------------
 uint32_t GetFormatColor(PixelFormat_e PixelFormat, ColorTable_e Index)
 {
-    struct32_t Color;
-    struct32_t NewColor;
+    uint32_t Color;
+    uint32_t NewColor;
 
     Color = GFX_ColorTable[Index];
 
@@ -69,47 +69,34 @@ uint32_t GetFormatColor(PixelFormat_e PixelFormat, ColorTable_e Index)
       #if (GRAFX_COLOR_ARGB4444 == DEF_ENABLED)
         case PIXEL_FORMAT_ARGB4444:
         {
-            NewColor.u_16.u1      = 0;
-            NewColor.u8_Array[1]  = (Color.u8_Array[CHANNEL_ALPHA] & 0xF0);                       // 256 level down to 16
-            NewColor.u8_Array[1] |= (Color.u8_Array[CHANNEL_RED] >> 4);
-            NewColor.u8_Array[0]  = (Color.u8_Array[CHANNEL_GREEN] & 0xF0);
-            NewColor.u8_Array[0]  = (Color.u8_Array[CHANNEL_BLUE] >> 4);
-            break;
+            NewColor = ((COLOR_A(Color) & 0xF0) << 8) | ((COLOR_R(Color) & 0xF0) << 4) | ((COLOR_G(Color) & 0xF0)) | ((COLOR_B(Color) >> 4));
         }
+        break;
       #endif
 
       #if (GRAFX_COLOR_RGB565 == DEF_ENABLED)
-        case PIXEL_FORMAT_RGB565:                                                                              // No alpha
+        case PIXEL_FORMAT_RGB565:
         {
-            NewColor.u_16.u1      = 0;
-            NewColor.u8_Array[1]  = (Color.u8_Array[CHANNEL_RED] & 0xF8);                         // 256 level down to 64
-            NewColor.u8_Array[1] |= (Color.u8_Array[CHANNEL_GREEN] >> 5);                         // 256 level down to 32
-            NewColor.u8_Array[0]  = (Color.u8_Array[CHANNEL_GREEN] & 0x1C) << 3;
-            NewColor.u8_Array[0] |= (Color.u8_Array[CHANNEL_BLUE] >> 3);                          // 256 level down to 64
-            break;
+            NewColor = ((COLOR_R(Color) & 0xF8) << 8) | ((COLOR_G(Color) & 0xFC) << 3) | ((COLOR_B(Color) >> 3));
         }
+        break;
       #endif
 
       #if (GRAFX_COLOR_ARGB1555 == DEF_ENABLED)
         case PIXEL_FORMAT_ARGB1555:
         {
-            NewColor.u_16.u1      = 0;
-            NewColor.u8_Array[1]  =  (Color.u8_Array[CHANNEL_RED] == 0x80) ? 0x80 : 0x00;         // Transparency bit (threshold at 50%)
-            NewColor.u8_Array[1] |= ((Color.u8_Array[CHANNEL_RED] & 0xF8) >> 1);                  // 256 level down to 32
-            NewColor.u8_Array[1] |=  (Color.u8_Array[CHANNEL_GREEN] >> 6);                        // 256 level down to 32
-            NewColor.u8_Array[0]  =  (Color.u8_Array[CHANNEL_GREEN] & 0x38) << 2;
-            NewColor.u8_Array[0] |=  (Color.u8_Array[CHANNEL_BLUE] >> 3);                         // 256 level down to 32
-            break;
+            NewColor  = (COLOR_A(Color) >= 0x80) ? 0x8000 : 0x0000;
+            NewColor != ((COLOR_R(Color) & 0xF8) << 7) | ((COLOR_G(Color) & 0xF8) << 2) | ((COLOR_B(Color) >> 3));
         }
+        break;
       #endif
 
       #if (GRAFX_COLOR_RGB888 == DEF_ENABLED)
         case PIXEL_FORMAT_RGB888:
         {
-            NewColor.u_32 = Color.u_32;
-            NewColor.u8_Array[CHANNEL_ALPHA] = 0;
-            break;
+            NewColor = Color & 0x00FFFFFF;
         }
+        break;
       #endif
 
         // TO DO
@@ -126,32 +113,40 @@ uint32_t GetFormatColor(PixelFormat_e PixelFormat, ColorTable_e Index)
       #endif
 
       #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
-        case PIXEL_FORMAT_ARGB8888:  // Nothing to do
+        case PIXEL_FORMAT_ARGB8888:
+        {
+            NewColor = Color;
+        }
+        break;
       #endif
       #if (GRAFX_COLOR_L4 == DEF_ENABLED)
         case PIXEL_FORMAT_L4:
       #endif
+
       #if (GRAFX_COLOR_A8 == DEF_ENABLED)
         case PIXEL_FORMAT_A8:
       #endif
+
       #if (GRAFX_COLOR_A4 == DEF_ENABLED)
         case PIXEL_FORMAT_A4:
       #endif
+
       #if (GRAFX_COLOR_RGB332 == DEF_ENABLED)
         case PIXEL_FORMAT_RGB332:
       #endif
+
       #if (GRAFX_COLOR_RGB444 == DEF_ENABLED)
         case PIXEL_FORMAT_RGB444:
       #endif
 
         default:
         {
-            NewColor.u_32 = Color.u_32;
-            break;
+            NewColor = Color;
         }
+        break;
     }
 
-    return NewColor.u_32;
+    return NewColor;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -167,50 +162,47 @@ uint32_t GetFormatColor(PixelFormat_e PixelFormat, ColorTable_e Index)
 //-------------------------------------------------------------------------------------------------
 uint32_t GetUpConvertColor(PixelFormat_e PixelFormat, uint32_t Color)
 {
-    struct32_t _Color;
-
     switch(PixelFormat)
     {
       #if (GRAFX_COLOR_ARGB4444 == DEF_ENABLED)
         case PIXEL_FORMAT_ARGB4444:
         {
-             _Color.u8_Array[3] = (uint8_t) (Color >> 8)           | 0x0F;
-             _Color.u8_Array[2] = (uint8_t)((Color & 0x0F00) >> 4) | 0x0F;
-             _Color.u8_Array[1] = (uint8_t) (Color & 0x00F0)       | 0x0F;
-             _Color.u8_Array[0] = (uint8_t)((Color & 0x000F) << 4) | 0x0F;
-             break;
+            Color = (((uint32_t)((Color >> 8)            | 0x0F)) << 24) |
+                    (((uint32_t)(((Color & 0x0F00) >> 4) | 0x0F)) << 16) |
+                    (((uint32_t)((Color & 0x00F0)        | 0x0F)) << 8)  |
+                    ((uint32_t)(((Color & 0x000F) << 4) | 0x0F));
         }
+        break;
       #endif
 
       #if (GRAFX_COLOR_RGB565 == DEF_ENABLED)
         case PIXEL_FORMAT_RGB565:
         {
-             _Color.u8_Array[3] = 0xFF;
-             _Color.u8_Array[2] = (uint8_t)((Color & 0xF800) >> 8) | 0x07;
-             _Color.u8_Array[1] = (uint8_t)((Color & 0x07E0) >> 3) | 0x03;
-             _Color.u8_Array[0] = (uint8_t)((Color & 0x001F) << 3) | 0x07;
-            break;
+            Color = (((uint32_t)0xFF) << 24)                             |
+                    (((uint32_t)(((Color & 0xF800) >> 8) | 0x07)) << 16) |
+                    (((uint32_t)(((Color & 0x07E0) >> 3) | 0x03)) << 8)  |
+                    ((uint32_t)(((Color & 0x001F) << 3) | 0x07));
         }
+        break;
       #endif
 
       #if (GRAFX_COLOR_ARGB1555 == DEF_ENABLED)
         case PIXEL_FORMAT_ARGB1555:
         {
-             _Color.u8_Array[3] = (Color & 0x8000) ? 0xFF : 0x00;
-             _Color.u8_Array[2] = (uint8_t)((Color & 0x7C00) >> 7) | 0x07;
-             _Color.u8_Array[1] = (uint8_t)((Color & 0x03E0) >> 2) | 0x07;
-             _Color.u8_Array[0] = (uint8_t)((Color & 0x001F) << 3) | 0x07;
-            break;
+            Color = (((uint32_t)((Color & 0x8000) ? 0xFF : 0x00)) << 24) |
+                    (((uint32_t)(((Color & 0x7C00) >> 7) | 0x07)) << 16) |
+                    (((uint32_t)(((Color & 0x03E0) >> 2) | 0x07)) << 8)  |
+                    ((uint32_t)(((Color & 0x001F) << 3) | 0x07));
         }
+        break;
       #endif
 
       #if (GRAFX_COLOR_RGB888 == DEF_ENABLED)
         case PIXEL_FORMAT_RGB888:
         {
-             _Color.u_32 = Color;
-             _Color.u8_Array[3] = 0xFF;
-            break;
+            Color = Color | 0xFF000000;
         }
+        break;
       #endif
 
         // TO DO
@@ -243,12 +235,11 @@ uint32_t GetUpConvertColor(PixelFormat_e PixelFormat, uint32_t Color)
       #endif
         default:
         {
-            _Color.u_32 = Color;
             break;
         }
     }
 
-    return _Color.u_32;
+    return Color;
 }
 
 //-------------------------------------------------------------------------------------------------

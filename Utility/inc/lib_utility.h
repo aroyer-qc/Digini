@@ -153,6 +153,9 @@ class BIT_Array
 
 //-------------------------------------------------------------------------------------------------
 
+extern const uint8_t  MonthSize[12];
+extern const uint8_t  WeekDayTable[12];
+extern const uint16_t DaysSoFar[12];
 
 
 /*

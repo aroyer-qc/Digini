@@ -139,7 +139,7 @@ void Console::Process(void)
         {
             if(m_InTrapForCommentLine == true)                                          // Need to trap all character code in the line
             {
-                if(m_Fifo.At(0) == CON_END_OF_LINE_MARKER)                              // Until end of line marker is detected
+                if(m_Fifo.At(0) == CON_TRAP_COMMENT_END_OF_LINE_MARKER)                 // Until end of line marker is detected
                 {
                     m_InTrapForCommentLine = false;                                     // No longer in comment line
                     m_IsItIdle = true;                                                  // Idle

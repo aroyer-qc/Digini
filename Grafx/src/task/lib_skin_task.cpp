@@ -578,7 +578,7 @@ SystemState_e SKIN_myClassTask::DeCompressAllFont(void)
                     // Decompress the data
                     pFreePointer += m_pDecompress->Process(pOutput, pInput, FontDescriptor.TotalSize, m_pCompressionMethod[OffsetCompression]);
                     // Save total size for this font
-                    FontDescriptor.TotalSize = uint16_t(FontDescriptor.Size.Width) * uint16_t(FontDescriptor.Size.Height);
+                    FontDescriptor.TotalSize = uint16_t(FontDescriptor.WidthPixel) * uint16_t(FontDescriptor.HeightPixel);
                     DB_Central.Set(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, Character);
                 }
 
@@ -637,9 +637,9 @@ SystemState_e SKIN_myClassTask::GetFontInfo(void)
             if((State = Get_uint16_t(&FontDescriptor.TotalSize))                    != SYS_READY) return State;
             if((State = Get_uint8_t((uint8_t*)&FontDescriptor.LeftBearing))         != SYS_READY) return State;
             if((State = Get_uint8_t((uint8_t*)&FontDescriptor.RightBearing))        != SYS_READY) return State;
-            if((State = Get_uint8_t(&FontDescriptor.Size.Width))                    != SYS_READY) return State;
-            if((State = Get_uint8_t(&FontDescriptor.Size.Height))                   != SYS_READY) return State;
-            if((State = Get_uint8_t(&FontDescriptor.Width))                         != SYS_READY) return State;
+            if((State = Get_uint8_t(&FontDescriptor.WidthPixel))                    != SYS_READY) return State;
+            if((State = Get_uint8_t(&FontDescriptor.HeightPixel))                   != SYS_READY) return State;
+            if((State = Get_uint8_t(&FontDescriptor.HorizontalAdvance))             != SYS_READY) return State;
             if((State = Get_uint8_t((uint8_t*)&FontDescriptor.OffsetY))             != SYS_READY) return State;
             uint16_t OffsetCompression = (i * 256) + Character;
             if((State = Get_uint8_t(&m_pCompressionMethod[OffsetCompression]))      != SYS_READY) return State;
@@ -651,9 +651,9 @@ SystemState_e SKIN_myClassTask::GetFontInfo(void)
 
             DB_Central.Set(&FontDescriptor, GFX_FONT_DESC_INFO, i + NB_SYSTEM_FONTS, RemapCharacter);
 
-            if(FontDescriptor.Width > MaxWidth)
+            if(FontDescriptor.HorizontalAdvance > MaxWidth)
             {
-                MaxWidth = FontDescriptor.Width;
+                MaxWidth = FontDescriptor.HorizontalAdvance;
             }
         }
 

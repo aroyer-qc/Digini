@@ -203,7 +203,7 @@ size_t GPrintf::PutString(void)
             // Vertical cursor
             if(*(m_pSubLineString[i] + j + 1) == ASCII_CARRIAGE_RETURN)
             {
-                myGrafx->DrawVLine((m_Position.X + m_FontDescriptor.Width) - 2,
+                myGrafx->DrawVLine((m_Position.X + m_FontDescriptor.HorizontalAdvance) - 2,
                                     m_Position.Y,
                                     m_Position.Y + FontInfo.Height,
                                     2);
@@ -218,7 +218,7 @@ size_t GPrintf::PutString(void)
                 this->IncrementFeaturePointer();
             }
 
-            m_Position.X += m_FontDescriptor.Width;                                 // Update X position for the next character
+            m_Position.X += m_FontDescriptor.HorizontalAdvance;                                 // Update X position for the next character
             this->IncrementFeaturePointer();
         }
         m_Position.Y += (FontInfo.Height + FontInfo.Interline);                     // update Y position for the next line
@@ -305,7 +305,7 @@ void GPrintf::ParseString(void)
                 char LoadChar = *(m_pSubLineString[i] + j);
                 DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, LoadChar);
                 m_SubLineSizePixX[i] += (/*m_FontDescriptor.LeftBearing  +*/                    // Calculate total X size
-                                         m_FontDescriptor.Width       /* +
+                                         m_FontDescriptor.HorizontalAdvance       /* +
                                          m_FontDescriptor.RightBearing*/);
             }
         }

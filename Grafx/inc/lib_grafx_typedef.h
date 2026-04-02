@@ -136,12 +136,30 @@ struct FontDescriptor_t
 {
     int8_t         LeftBearing;
     int8_t         RightBearing;
+    uint8_t        WidthPixel;
+    uint8_t        HeightPixel;
+    uint8_t        HorizontalAdvance;
+    int8_t         OffsetY;                                 // Offset in Y for this character
+    uint16_t       TotalSize;
+  #if (GRAFX_USE_FONT_CONST_DATA == DEF_ENABLED)
+    uint32_t       Address;
+  #else
+    uint8_t*       pAddress;
+  #endif
+};
+
+/*
+struct FontDescriptor_t
+{
+    int8_t         LeftBearing;
+    int8_t         RightBearing;
     FontSize_t     Size;                                    // Width and Height pixel zone
     uint8_t        Width;                                   // Width increment
     int8_t         OffsetY;                                 // Offset in Y for this character
     uint16_t       TotalSize;
     uint8_t*       pAddress;
 };
+*/
 
 struct PageSlideRange_t
 {

@@ -292,8 +292,8 @@ void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize   = pLayer->GetPixelSize();
     Address     = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
-    AreaConfig  = (uint32_t(pDescriptor->Size.Width) << 16) | (uint32_t(pDescriptor->Size.Height));
-    Offset      = pDescriptor->Size.Width;
+    AreaConfig  = (uint32_t(pDescriptor->WidthPixel) << 16) | uint32_t(pDescriptor->HeightPixel);
+    Offset      = pDescriptor->WidthPixel;
 
     DMA2D->CR      = DMA2D_M2M_BLEND | DMA2D_CR_TCIE;                   // Memory to memory and TCIE
 

@@ -131,8 +131,8 @@ void FONT_Initialize(void)
             DB_Central.Get(&pMemory, GFX_FREE_RAM_POINTER, 0, 0);
             pDscFont                        = &StaticFontDescriptor[Font][Character - 32];
             FontDescriptor.pAddress         = pMemory;                                                          // Set address in memory
-            FontDescriptor.Size.Width       = pDscFont->Size >> 4;
-            FontDescriptor.Size.Height      = pDscFont->Size & 0x0F;
+            FontDescriptor.WidthPixel       = pDscFont->Size >> 4;
+            FontDescriptor.HeightPixel      = pDscFont->Size & 0x0F;
             FontDescriptor.LeftBearing      = pDscFont->Offset >> 4;
             FontDescriptor.RightBearing     = pDscFont->Padding >> 4;
             FontDescriptor.OffsetY          = pDscFont->Offset & 0x0F;
@@ -142,14 +142,14 @@ void FONT_Initialize(void)
             {
                 if(Character > 34)         // 32,33,34 hold special value code
                 {
-                    if((FontDescriptor.Size.Width == 0)  && ((pDscFont->Padding & 0x01) != 0)) FontDescriptor.Size.Width  = 16;
-                    if((FontDescriptor.Size.Height == 0) && ((pDscFont->Padding & 0x02) != 0)) FontDescriptor.Size.Height = 16;
+                    if((FontDescriptor.WidthPixel == 0)  && ((pDscFont->Padding & 0x01) != 0)) FontDescriptor.WidthPixel  = 16;
+                    if((FontDescriptor.HeightPixel == 0) && ((pDscFont->Padding & 0x02) != 0)) FontDescriptor.HeightPixel = 16;
                 }
             }
           #endif
 
-            FontDescriptor.Width      = FontDescriptor.Size.Width + FontDescriptor.LeftBearing + FontDescriptor.RightBearing;
-            FontDescriptor.TotalSize  = FontDescriptor.Size.Width * FontDescriptor.Size.Height;                      // Calculate size
+            FontDescriptor.HorizontalAdvance = FontDescriptor.WidthPixel + FontDescriptor.LeftBearing + FontDescriptor.RightBearing;
+            FontDescriptor.TotalSize         = FontDescriptor.WidthPixel * FontDescriptor.HeightPixel;                      // Calculate size
 
           #ifdef LCD_INVERT_SCREEN
             if(Font.Size > 0)

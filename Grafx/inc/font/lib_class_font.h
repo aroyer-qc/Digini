@@ -32,9 +32,22 @@
 
 #include "./lib_digini.h"
 
+
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+
+#if (GRAFX_USE_FONT_CONST_DATA == DEF_ENABLED)
+struct StaticFontInfo_t
+{
+    uint8_t*          pLookUpTable;
+    uint8_t           FirstCaracter;
+    uint8_t           LastCaracter;
+    FontDescriptor_t* pDescriptor;
+};
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)

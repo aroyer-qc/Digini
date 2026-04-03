@@ -74,9 +74,9 @@
 #include "bsp_io_def.h"
 #include "dma_cfg.h"
 
-//#if (DIGINI_USE_GRAFX == DEF_ENABLED)
-//#include "grafx_cfg.h"
-//#endif
+#if (DIGINI_USE_GRAFX == DEF_ENABLED)
+#include "grafx_cfg.h"
+#endif
 
 #if (DIGINI_USE_CONSOLE == DEF_ENABLED)
 #include "console_cfg.h"

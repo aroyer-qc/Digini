@@ -37,14 +37,14 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Constructor:    CVirtualHub
+//  Constructor:    WidgetVirtualHub
 //
 //  Parameter(s):   VirtualHub_t         pVirtualHub         Pointer to VirtualHub_t structure
 //
 //  Description:    Initialize widget's service and build widget.
 //
 //-------------------------------------------------------------------------------------------------
-CVirtualHub::CVirtualHub(VirtualHub_t* pVirtualHub)
+WidgetVirtualHub::WidgetVirtualHub(VirtualHub_t* pVirtualHub)
 {
     m_pVirtualHub = pVirtualHub;
 }
@@ -61,7 +61,7 @@ CVirtualHub::CVirtualHub(VirtualHub_t* pVirtualHub)
 //  Note(s)         Return a link or INVALID_LINK
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CVirtualHub::Create(PageWidget_t* pPageWidget)
+Link_e WidgetVirtualHub::Create(PageWidget_t* pPageWidget)
 {
     ServiceReturn_t* pService;
 
@@ -93,7 +93,7 @@ Link_e CVirtualHub::Create(PageWidget_t* pPageWidget)
 //  Note(s)         No link, Always return INVALID_LINK
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CVirtualHub::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetVirtualHub::Refresh(MsgRefresh_t* pMsg)
 {
     ServiceReturn_t* pService;
 
@@ -136,7 +136,7 @@ Link_e CVirtualHub::Refresh(MsgRefresh_t* pMsg)
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void CVirtualHub::Finalize()
+void WidgetVirtualHub::Finalize()
 {
     ServiceReturn_t* pService;
 

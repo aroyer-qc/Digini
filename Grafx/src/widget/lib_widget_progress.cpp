@@ -37,7 +37,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Constructor:    CProgress
+//  Constructor:    WidgetProgress
 //
 //  Parameter(s):   Progress_t         pProgress         Pointer to Progress_t structure
 //
@@ -46,7 +46,7 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CProgress::CProgress(Progress_t* pProgress)
+WidgetProgress::WidgetProgress(Progress_t* pProgress)
 {
     m_pProgress = pProgress;
     m_Value     = 0;
@@ -65,7 +65,7 @@ CProgress::CProgress(Progress_t* pProgress)
 //  Description:    This function call service and create the widget
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CProgress::Create(PageWidget_t* pPageWidget)
+Link_e WidgetProgress::Create(PageWidget_t* pPageWidget)
 {
     ServiceReturn_t* pService;
 
@@ -97,7 +97,7 @@ Link_e CProgress::Create(PageWidget_t* pPageWidget)
 //  Description:    This function call service to refresh widget
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CProgress::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetProgress::Refresh(MsgRefresh_t* pMsg)
 {
     ServiceReturn_t* pService;
 
@@ -128,7 +128,7 @@ Link_e CProgress::Refresh(MsgRefresh_t* pMsg)
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void CProgress::Finalize()
+void WidgetProgress::Finalize()
 {
     ServiceReturn_t* pService;
 
@@ -152,7 +152,7 @@ void CProgress::Finalize()
 //  Description:    Draw the Progress on display.
 //
 //-------------------------------------------------------------------------------------------------
-void CProgress::Draw(ServiceReturn_t* pService)
+void WidgetProgress::Draw(ServiceReturn_t* pService)
 {
   #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
     Layer_e BackLayerToDraw;
@@ -274,7 +274,7 @@ void CProgress::Draw(ServiceReturn_t* pService)
 //  Description:    Draw only once what does not need to be refreshed
 //
 //-------------------------------------------------------------------------------------------------
-void CProgress::DrawOnce(ServiceReturn_t* pService)
+void WidgetProgress::DrawOnce(ServiceReturn_t* pService)
 {
 
     CLayer::PushDrawing();

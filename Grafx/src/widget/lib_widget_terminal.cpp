@@ -44,7 +44,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Constructor:    CTerminal
+//  Constructor:    WidgetTerminal
 //
 //  Parameter(s):   Terminal_t           pTerminal         Pointer to Terminal_t structure
 //
@@ -54,7 +54,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-CTerminal::CTerminal(Terminal_t* pTerminal)
+WidgetTerminal::WidgetTerminal(Terminal_t* pTerminal)
 {
     FontInfo_t FontInfo;
     uint32_t   VirtualScreenSize;
@@ -90,7 +90,7 @@ CTerminal::CTerminal(Terminal_t* pTerminal)
 //  Note(s)         No link on creation of button, always invalid
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CTerminal::Create(PageWidget_t* pPageWidget)
+Link_e WidgetTerminal::Create(PageWidget_t* pPageWidget)
 {
   #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
     EventArea_t      EventArea;
@@ -116,7 +116,7 @@ Link_e CTerminal::Create(PageWidget_t* pPageWidget)
 //  Description:    This function call service to refresh widget
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CTerminal::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetTerminal::Refresh(MsgRefresh_t* pMsg)
 {
     uint8_t*         pScreenPtr;
     size_t           SizeStr;
@@ -188,7 +188,7 @@ Link_e CTerminal::Refresh(MsgRefresh_t* pMsg)
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void CTerminal::Finalize()
+void WidgetTerminal::Finalize()
 {
     pMemoryPool->Free((void**)&m_pScreen);
     ServiceReturn_t* pService;
@@ -211,7 +211,7 @@ void CTerminal::Finalize()
 //  Description:    Draw the button on display according to state.
 //
 //-------------------------------------------------------------------------------------------------
-void CTerminal::Draw(ServiceReturn_t* pService)
+void WidgetTerminal::Draw(ServiceReturn_t* pService)
 {
     Box_t    Box;
     GPrintf  Printf;

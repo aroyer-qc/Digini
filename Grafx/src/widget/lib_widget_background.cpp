@@ -37,7 +37,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Constructor:    CBackground
+//  Constructor:    WidgetBackground
 //
 //  Parameter(s):   Background_t         pBackground         Pointer to Background_t structure
 //
@@ -46,7 +46,7 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CBackground::CBackground(Background_t* pBackground)
+WidgetBackground::WidgetBackground(Background_t* pBackground)
 {
     m_pBackground = pBackground;
 }
@@ -63,7 +63,7 @@ CBackground::CBackground(Background_t* pBackground)
 //  Note(s)         Return a link or INVALID_LINK
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CBackground::Create(PageWidget_t* pPageWidget)
+Link_e WidgetBackground::Create(PageWidget_t* pPageWidget)
 {
     ServiceReturn_t* pService;
 
@@ -95,7 +95,7 @@ Link_e CBackground::Create(PageWidget_t* pPageWidget)
 //  Note(s)         No link, Always return INVALID_LINK
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CBackground::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetBackground::Refresh(MsgRefresh_t* pMsg)
 {
     ServiceReturn_t* pService;
 
@@ -121,7 +121,7 @@ Link_e CBackground::Refresh(MsgRefresh_t* pMsg)
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void CBackground::Finalize()
+void WidgetBackground::Finalize()
 {
     ServiceReturn_t* pService;
 
@@ -144,7 +144,7 @@ void CBackground::Finalize()
 //  Description:    Draw the Background on display according to state.
 //
 //-------------------------------------------------------------------------------------------------
-void CBackground::Draw(ServiceReturn_t* pService)
+void WidgetBackground::Draw(ServiceReturn_t* pService)
 {
     ImageInfo_t ImageInfo;
     CLayer*     pLayer;

@@ -37,7 +37,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Constructor:    CGraph
+//  Constructor:    WidgetGraph
 //
 //  Parameter(s):   Graph_t       pGraph         Pointer to Graph_t structure
 //
@@ -46,7 +46,7 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CGraph::CGraph(Graph_t* pGraph)
+WidgetGraph::WidgetGraph(Graph_t* pGraph)
 {
     m_pGraph = pGraph;
     m_DrawX  = pGraph->Draw_X;          // Initialize X drawing position
@@ -64,7 +64,7 @@ CGraph::CGraph(Graph_t* pGraph)
 //  Note(s)         No link, Always return INVALID_LINK
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CGraph::Create(PageWidget_t* pPageWidget)
+Link_e WidgetGraph::Create(PageWidget_t* pPageWidget)
 {
     ServiceReturn_t* pService;
 
@@ -92,7 +92,7 @@ Link_e CGraph::Create(PageWidget_t* pPageWidget)
 //  Note(s)         No link, Always return INVALID_LINK
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CGraph::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetGraph::Refresh(MsgRefresh_t* pMsg)
 {
     ServiceReturn_t* pService;
 
@@ -117,7 +117,7 @@ Link_e CGraph::Refresh(MsgRefresh_t* pMsg)
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void CGraph::Finalize()
+void WidgetGraph::Finalize()
 {
     ServiceReturn_t* pService;
 
@@ -138,7 +138,7 @@ void CGraph::Finalize()
 //  Description:    Draw the Graph on display according to state.
 //
 //-------------------------------------------------------------------------------------------------
-void CGraph::Draw(ServiceReturn_t* pService, bool IsItDrawingGrid)
+void WidgetGraph::Draw(ServiceReturn_t* pService, bool IsItDrawingGrid)
 {
     uint16_t X;
     uint16_t EndX;

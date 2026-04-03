@@ -93,10 +93,9 @@ CFont FontDefault;
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-
+#if (GRAFX_USE_FONT_SIZE_8 == DEF_ENABLED) || (GRAFX_USE_FONT_SIZE_12 == DEF_ENABLED) || (GRAFX_USE_FONT_SIZE_16 == DEF_ENABLED)
 void FONT_Initialize(void)
 {
-  #if (GRAFX_USE_FONT_SIZE_8 == DEF_ENABLED) || (GRAFX_USE_FONT_SIZE_12 == DEF_ENABLED) || (GRAFX_USE_FONT_SIZE_16 == DEF_ENABLED)
     uint16_t                        Counter;
     uint16_t                        SizeCount;
     uint8_t                         Font;
@@ -219,8 +218,8 @@ void FONT_Initialize(void)
             }
         }
     }
-  #endif
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //

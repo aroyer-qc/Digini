@@ -33,11 +33,12 @@
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
+
 #ifdef LABEL_DEF
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Constructor:    CLabel
+//  Constructor:    WidgetLabel
 //
 //  Parameter(s):   Label_t         pLabel         Pointer to Label_t structure
 //
@@ -46,7 +47,7 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CLabel::CLabel(Label_t* pLabel)
+WidgetLabel::WidgetLabel(Label_t* pLabel)
 {
     m_pLabel = pLabel;
 }
@@ -63,7 +64,7 @@ CLabel::CLabel(Label_t* pLabel)
 //  Note(s)         No link on creation of label, always invalid
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CLabel::Create(PageWidget_t* pPageWidget)
+Link_e WidgetLabel::Create(PageWidget_t* pPageWidget)
 {
     ServiceReturn_t* pService;
 
@@ -96,7 +97,7 @@ Link_e CLabel::Create(PageWidget_t* pPageWidget)
 //  Description:    This function call service to refresh widget
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CLabel::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetLabel::Refresh(MsgRefresh_t* pMsg)
 {
     ServiceReturn_t* pService;
 
@@ -139,7 +140,7 @@ Link_e CLabel::Refresh(MsgRefresh_t* pMsg)
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void CLabel::Finalize()
+void WidgetLabel::Finalize()
 {
     ServiceReturn_t* pService;
 
@@ -162,50 +163,65 @@ void CLabel::Finalize()
 //  Description:    Draw the label on display according to state.
 //
 //-------------------------------------------------------------------------------------------------
-void CLabel::Draw(ServiceReturn_t* pService)
+void WidgetLabel::Draw(ServiceReturn_t* pService)
 {
-  #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
-   #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
+ #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
+  #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED) || (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
     Layer_e BackLayerToDraw;
-   #endif
+  #elif (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED) || (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
     Layer_e ForeLayerToDraw;
   #endif
+ #endif
 
+ #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
+
+  #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED) || (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
     CLayer::PushDrawing();
-
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-    CLayer::SetDrawing(((m_pLabel->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
-  #else
-   #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
-    ForeLayerToDraw = CONSTRUCTION_FOREGROUND_LAYER;
+    #define ENABLE_POP
+   #if (GRAFX_USE_BACKGROUND_LAYER != DEF_ENABLED)
+    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+   #elif (GRAFX_USE_FOREGROUND_LAYER != DEF_ENABLED)
+    CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
    #else
-    ForeLayerToDraw = FOREGROUND_DISPLAY_LAYER_0;
+    CLayer::SetDrawing(((m_pLabel->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
    #endif
+  #endif
 
-   #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
-    #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
+ #else // (GRAFX_DEBUG_GUI == DEF_ENABLED)
+
+  #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
+    ForeLayerToDraw = CONSTRUCTION_FOREGROUND_LAYER;
+  #elif (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
+    ForeLayerToDraw = FOREGROUND_DISPLAY_LAYER_0;
+  #endif
+
+  #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
      BackLayerToDraw = CONSTRUCTION_BACKGROUND_LAYER;
-    #else
+  #elif (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
      BackLayerToDraw = BACKGROUND_DISPLAY_LAYER_0;
-    #endif
+  #endif
 
-    #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
+  #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
     if(SKIN_pTask->IsSkinLoaded() == true)
     {
         CLayer::SetDrawing(((m_pLabel->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BackLayerToDraw : ForeLayerToDraw);
     }
     else
-    #endif
-    {
-        CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);   // On loading with do print directly on foreground layer
-    }
-   #else
-    CLayer::SetDrawing(ForeLayerToDraw);
-   #endif
   #endif
+    {
+      #if (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED) || (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
+        CLayer::SetDrawing(ForeLayerToDraw);
+      #endif
+    }
+
+ #endif // (GRAFX_DEBUG_GUI == DEF_ENABLED)
 
     WidgetPrint(&m_pLabel->Text, pService);
+
+  #ifdef ENABLE_POP
     CLayer::PopDrawing();
+    #undef ENABLE_POP
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------

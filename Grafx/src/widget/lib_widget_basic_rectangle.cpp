@@ -37,7 +37,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Constructor:    CBasicRect
+//  Constructor:    WidgetBasicRectangle
 //
 //  Parameter(s):   BasicRect_t     pBasicRect        Pointer to BasicRectangle_t structure
 //
@@ -46,7 +46,7 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CBasicRect::CBasicRect(BasicRect_t* pBasicRect)
+WidgetBasicRectangle::WidgetBasicRectangle(BasicRect_t* pBasicRect)
 {
     m_pBasicRect = pBasicRect;
 }
@@ -63,7 +63,7 @@ CBasicRect::CBasicRect(BasicRect_t* pBasicRect)
 //  Note(s)         No link on creation of button, always invalid
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CBasicRect::Create(PageWidget_t* pPageWidget)
+Link_e WidgetBasicRectangle::Create(PageWidget_t* pPageWidget)
 {
     ServiceReturn_t* pService;
     EventArea_t      EventArea;
@@ -94,7 +94,7 @@ Link_e CBasicRect::Create(PageWidget_t* pPageWidget)
 //  Description:    This function call service to refresh widget
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CBasicRect::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetBasicRectangle::Refresh(MsgRefresh_t* pMsg)
 {
      ServiceReturn_t* pService;
 
@@ -145,7 +145,7 @@ Link_e CBasicRect::Refresh(MsgRefresh_t* pMsg)
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void CBasicRect::Finalize()
+void WidgetBasicRectangle::Finalize()
 {
     ServiceReturn_t* pService;
 
@@ -168,7 +168,7 @@ void CBasicRect::Finalize()
 //  Description:    Draw the button on display according to state.
 //
 //-------------------------------------------------------------------------------------------------
-void CBasicRect::Draw(ServiceReturn_t* pService)
+void WidgetBasicRectangle::Draw(ServiceReturn_t* pService)
 {
   #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
     Layer_e BackLayerToDraw;

@@ -37,7 +37,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Constructor:    CButton
+//  Constructor:    WidgetButton
 //
 //  Parameter(s):   Button_t         pButton         Pointer to Button_t structure
 //
@@ -46,7 +46,7 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CButton::CButton(Button_t* pButton)
+WidgetButton::WidgetButton(Button_t* pButton)
 {
     m_pButton = pButton;
     m_pButton->Text.Blend = ALPHA_BLEND;
@@ -64,7 +64,7 @@ CButton::CButton(Button_t* pButton)
 //  Note(s)         No link on creation of button, always invalid
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CButton::Create(PageWidget_t* pPageWidget)
+Link_e WidgetButton::Create(PageWidget_t* pPageWidget)
 {
     ServiceReturn_t* pService;
 
@@ -92,7 +92,7 @@ Link_e CButton::Create(PageWidget_t* pPageWidget)
 //  Description:    This function call service to refresh widget
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CButton::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetButton::Refresh(MsgRefresh_t* pMsg)
 {
     ServiceReturn_t* pService;
 
@@ -142,7 +142,7 @@ Link_e CButton::Refresh(MsgRefresh_t* pMsg)
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void CButton::Finalize()
+void WidgetButton::Finalize()
 {
     ServiceReturn_t* pService;
 
@@ -164,7 +164,7 @@ void CButton::Finalize()
 //  Description:    Draw the button on display according to state.
 //
 //-------------------------------------------------------------------------------------------------
-void CButton::Draw(ServiceReturn_t* pService)
+void WidgetButton::Draw(ServiceReturn_t* pService)
 {
     CLayer::PushDrawing();
 
@@ -221,7 +221,7 @@ void CButton::Draw(ServiceReturn_t* pService)
 //  Description:    Draw only once what does not need to be refreshed
 //
 //-------------------------------------------------------------------------------------------------
-void CButton::DrawOnce(ServiceReturn_t* pService)
+void WidgetButton::DrawOnce(ServiceReturn_t* pService)
 {
 
     CLayer::PushDrawing();

@@ -118,9 +118,9 @@ struct GRAFX_PostInitSubDriverPtr_t
 extern const uint32_t __gfx_display_base__;             // Pointer to beginning RAM for the display
 
 // TODO Change this as we don't always have ram to load data... sometime it is in ROM
-#if (GRAFX_USE_ROM_DATA == DEF_ENABLED)
-extern const uint32_t __gfx_rom_base__;                 // Pointer to graphic data
-#endif
+//#if (GRAFX_USE_ROM_DATA == DEF_ENABLED)
+//extern const uint32_t __gfx_rom_base__;                 // Pointer to graphic data
+//#endif
 
 #if (GRAFX_USE_RAM_DATA == DEF_ENABLED)
 extern const uint32_t __gfx_ram_data_base__;            // Pointer to ram graphic data

@@ -486,6 +486,7 @@ void CLayer::SetActiveLayer(LayerType_e LayerType, CLayer* pLayer)
         }
       #endif
 
+      #if (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
         case LAYER_FOREGROUND:
         {
             // Deactivate physical access from previous owner of the active layer
@@ -501,6 +502,7 @@ void CLayer::SetActiveLayer(LayerType_e LayerType, CLayer* pLayer)
             myGrafx->LayerConfig(CLayer::m_pActiveFG_Layer);
             break;
         }
+      #endif
 
         case LAYER_VIRTUAL:
         {

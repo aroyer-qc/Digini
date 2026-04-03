@@ -49,11 +49,11 @@ class CWidgetInterface
 };
 
 #ifdef BACK_DEF
-class CBackground : public CWidgetInterface
+class WidgetBackground : public CWidgetInterface
 {
     public:
-                            CBackground                 (Background_t* pBackground);
-                           ~CBackground                 (){};
+                            WidgetBackground            (Background_t* pBackground);
+                           ~WidgetBackground            (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -70,11 +70,11 @@ class CBackground : public CWidgetInterface
 #endif
 
 #ifdef BASIC_BOX_DEF
-class CBasicBox : public CWidgetInterface
+class WidgetBasicBox : public CWidgetInterface
 {
     public:
-                            CBasicBox                   (BasicBox_t* pBasicBox);
-                           ~CBasicBox                   (){};
+                            WidgetBasicBox              (BasicBox_t* pBasicBox);
+                           ~WidgetBasicBox              (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -109,11 +109,11 @@ class CBasicBox : public CWidgetInterface
 #endif
 
 #ifdef BASIC_BTN_DEF
-class CBasicButton : public CWidgetInterface
+class WidgetBasiWidgetButton : public CWidgetInterface
 {
     public:
-                            CBasicButton                (BasicButton_t* pBasicButton);
-                           ~CBasicButton                (){};
+                            WidgetBasiWidgetButton           (BasiWidgetButton_t* pBasiWidgetButton);
+                           ~WidgetBasiWidgetButton           (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -124,18 +124,18 @@ class CBasicButton : public CWidgetInterface
         void                Draw                        (ServiceReturn_t* pService);
         void                DrawOnce                    (ServiceReturn_t* pService);
 
-        BasicButton_t*      m_pBasicButton;
+        BasiWidgetButton_t*      m_pBasiWidgetButton;
         ServiceEvent_e      m_ServiceState;
         PageWidget_t*       m_pPageWidget;
 };
 #endif
 
 #ifdef BASIC_RECT_DEF
-class CBasicRect : public CWidgetInterface
+class WidgetBasicRectangle : public CWidgetInterface
 {
     public:
-                            CBasicRect                   (BasicRect_t* pBasicRect);
-                           ~CBasicRect                   (){};
+                            WidgetBasicRectangle        (BasicRect_t* pBasicRect);
+                           ~WidgetBasicRectangle        (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -152,11 +152,11 @@ class CBasicRect : public CWidgetInterface
 #endif
 
 #ifdef BTN_DEF
-class CButton : public CWidgetInterface
+class WidgetButton : public CWidgetInterface
 {
     public:
-                            CButton                     (Button_t* pButton);
-                           ~CButton                     (){};
+                            WidgetButton                (Button_t* pButton);
+                           ~WidgetButton                (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -174,11 +174,11 @@ class CButton : public CWidgetInterface
 #endif
 
 #ifdef GIF_DEF
-class CGif : public CWidgetInterface
+class WidgetGif : public CWidgetInterface
 {
     public:
-                            CGif                        (Gif_t* pGif);
-                           ~CGif                        (){};
+                            WidgetGif                   (Gif_t* pGif);
+                           ~WidgetGif                   (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -196,11 +196,11 @@ class CGif : public CWidgetInterface
 #endif
 
 #ifdef GRAPH_DEF
-class CGraph : public CWidgetInterface
+class WidgetGraph : public CWidgetInterface
 {
     public:
-                            CGraph                      (Graph_t* pGraph);
-                           ~CGraph                      (){};
+                            WidgetGraph                 (Graph_t* pGraph);
+                           ~WidgetGraph                 (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -220,11 +220,11 @@ class CGraph : public CWidgetInterface
 #endif
 
 #ifdef ICON_DEF
-class CIcon : public CWidgetInterface
+class WidgetIcon : public CWidgetInterface
 {
     public:
-                            CIcon                       (Icon_t* pIcon);
-                           ~CIcon                       (){};
+                            WidgetIcon                  (Icon_t* pIcon);
+                           ~WidgetIcon                  (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -242,11 +242,11 @@ class CIcon : public CWidgetInterface
 #endif
 
 #ifdef LABEL_DEF
-class CLabel : public CWidgetInterface
+class WidgetLabel : public CWidgetInterface
 {
     public:
-                            CLabel                      (Label_t* pLabel);
-                           ~CLabel                      (){};
+                            WidgetLabel                 (Label_t* pLabel);
+                           ~WidgetLabel                 (){};
 
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
@@ -264,11 +264,11 @@ class CLabel : public CWidgetInterface
 #endif
 
 #ifdef LABEL_LIST_DEF
-class CLabelList : public CWidgetInterface
+class WidgetLabelList : public CWidgetInterface
 {
     public:
-                            CLabelList                  (LabelList_t* pLabelList);
-                           ~CLabelList                  (){};
+                            WidgetLabelList             (LabelList_t* pLabelList);
+                           ~WidgetLabelList             (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -285,11 +285,11 @@ class CLabelList : public CWidgetInterface
 #endif
 
 #ifdef METER_DEF
-class CMeter : public CWidgetInterface
+class WidgetMeter : public CWidgetInterface
 {
     public:
-                            CMeter                      (Meter_t* pMeter);
-                           ~CMeter                      (){};
+                            WidgetMeter                 (Meter_t* pMeter);
+                           ~WidgetMeter                 (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -309,11 +309,11 @@ class CMeter : public CWidgetInterface
 #endif
 
 #ifdef PAGE_SLIDE_DEF
-class CPageSlide : public CWidgetInterface
+class WidgetPageSlide : public CWidgetInterface
 {
     public:
-                            CPageSlide                  (PageSlide_t* pPageSlide);
-                           ~CPageSlide                  (){};
+                            WidgetPageSlide             (PageSlide_t* pPageSlide);
+                           ~WidgetPageSlide             (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -332,11 +332,11 @@ class CPageSlide : public CWidgetInterface
 #endif
 
 #ifdef PANEL_DEF
-class CPanel : public CWidgetInterface
+class WidgetPanel : public CWidgetInterface
 {
     public:
-                            CPanel                      (Panel_t* pPanel);
-                           ~CPanel                      (){};
+                            WidgetPanel                 (Panel_t* pPanel);
+                           ~WidgetPanel                 (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -355,11 +355,11 @@ class CPanel : public CWidgetInterface
 #endif
 
 #ifdef PROGRESS_DEF
-class CProgress : public CWidgetInterface
+class WidgetProgress : public CWidgetInterface
 {
     public:
-                            CProgress                   (Progress_t* pProgress);
-                           ~CProgress                   (){};
+                            WidgetProgress              (Progress_t* pProgress);
+                           ~WidgetProgress              (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -382,11 +382,11 @@ class CProgress : public CWidgetInterface
 #endif
 
 #ifdef ROUND_METER_DEF
-class CRoundMeter : public CWidgetInterface
+class WidgetRoundMeter : public CWidgetInterface
 {
     public:
-                            CRoundMeter                 (RoundMeter_t* pPie);
-                           ~CRoundMeter                 (){};
+                            WidgetRoundMeter            (RoundMeter_t* pPie);
+                           ~WidgetRoundMeter            (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -406,11 +406,11 @@ class CRoundMeter : public CWidgetInterface
 #endif
 
 #ifdef SPECTRUM_DEF
-class CSpectrum : public CWidgetInterface
+class WidgetSpectrum : public CWidgetInterface
 {
     public:
-                            CSpectrum                   (Spectrum_t* pSpectrum);
-                           ~CSpectrum                   (){};
+                            WidgetSpectrum              (Spectrum_t* pSpectrum);
+                           ~WidgetSpectrum              (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -432,11 +432,11 @@ class CSpectrum : public CWidgetInterface
 #endif
 
 #ifdef SPRITE_DEF
-class CSprite : public CWidgetInterface
+class WidgetSprite : public CWidgetInterface
 {
     public:
-                            CSprite                     (Sprite_t* pSprite);
-                           ~CSprite                     (){};
+                            WidgetSprite                (Sprite_t* pSprite);
+                           ~WidgetSprite                (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -453,11 +453,11 @@ class CSprite : public CWidgetInterface
 #endif
 
 #ifdef TERMINAL_DEF
-class CTerminal : public CWidgetInterface
+class WidgetTerminal : public CWidgetInterface
 {
     public:
-                            CTerminal                   (Terminal_t* pTerminal);
-                           ~CTerminal                   (){};
+                            WidgetTerminal              (Terminal_t* pTerminal);
+                           ~WidgetTerminal              (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -481,11 +481,11 @@ class CTerminal : public CWidgetInterface
 #endif
 
 #ifdef VIRTUAL_HUB_DEF
-class CVirtualHub : public CWidgetInterface
+class WidgetVirtualHub : public CWidgetInterface
 {
     public:
-                            CVirtualHub                 (VirtualHub_t* pVirtualHub);
-                           ~CVirtualHub                 (){};
+                            WidgetVirtualHub            (VirtualHub_t* pVirtualHub);
+                           ~WidgetVirtualHub            (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -500,11 +500,11 @@ class CVirtualHub : public CWidgetInterface
 #endif
 
 #ifdef VIRTUAL_WINDOW_DEF
-class CVirtualWindow : public CWidgetInterface
+class WidgetVirtualWindow : public CWidgetInterface
 {
     public:
-                            CVirtualWindow              (VirtualWindow_t* pVirtualWindow);
-                           ~CVirtualWindow              (){};
+                            WidgetVirtualWindow         (VirtualWindow_t* pVirtualWindow);
+                           ~WidgetVirtualWindow         (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);

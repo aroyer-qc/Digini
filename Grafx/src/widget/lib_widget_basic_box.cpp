@@ -37,7 +37,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Constructor:    CBasicBox
+//  Constructor:    WidgetBasicBox
 //
 //  Parameter(s):   BasicBox_t          pBasicBox        Pointer to BasicBox_t structure
 //
@@ -46,7 +46,7 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CBasicBox::CBasicBox(BasicBox_t* pBasicBox)
+WidgetBasicBox::WidgetBasicBox(BasicBox_t* pBasicBox)
 {
     ImageInfo_t ImageInfo;
 
@@ -92,7 +92,7 @@ CBasicBox::CBasicBox(BasicBox_t* pBasicBox)
 //  Note(s)         No link on creation of button, always invalid
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CBasicBox::Create(PageWidget_t* pPageWidget)
+Link_e WidgetBasicBox::Create(PageWidget_t* pPageWidget)
 {
     ServiceReturn_t* pService;
     EventArea_t      EventArea;
@@ -128,7 +128,7 @@ Link_e CBasicBox::Create(PageWidget_t* pPageWidget)
 //  Description:    This function call service to refresh widget
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CBasicBox::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetBasicBox::Refresh(MsgRefresh_t* pMsg)
 {
      ServiceReturn_t* pService;
 
@@ -179,7 +179,7 @@ Link_e CBasicBox::Refresh(MsgRefresh_t* pMsg)
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void CBasicBox::Finalize()
+void WidgetBasicBox::Finalize()
 {
     ServiceReturn_t* pService;
 
@@ -202,7 +202,7 @@ void CBasicBox::Finalize()
 //  Description:    Draw the button on display according to state.
 //
 //-------------------------------------------------------------------------------------------------
-void CBasicBox::Draw(ServiceReturn_t* pService)
+void WidgetBasicBox::Draw(ServiceReturn_t* pService)
 {
   #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
     Layer_e BackLayerToDraw;
@@ -295,7 +295,7 @@ void CBasicBox::Draw(ServiceReturn_t* pService)
 //  Description:    Draw only once what does not need to be refreshed
 //
 //-------------------------------------------------------------------------------------------------
-void CBasicBox::DrawOnce(ServiceReturn_t* pService)
+void WidgetBasicBox::DrawOnce(ServiceReturn_t* pService)
 {
 
     CLayer::PushDrawing();

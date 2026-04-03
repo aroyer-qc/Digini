@@ -47,7 +47,7 @@
 //-------------------------------------------------------------------------------------------------
 
 // Calculate the offset for the Free memory after the layers used by GRAFX
-#ifdef LAYER_DEF
+#if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
 const uint32_t GFX_LoadingAddress =
     LAYER_DEF(EXPAND_X_LAYER_AS_CALC)
     GFX_BASE_ADDRESS;
@@ -95,12 +95,14 @@ SystemState_e GRAFX_Initialize(void)
     GFX_PrecomputeAlphaTable();
   #endif
 
+  #if (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
     CLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_DISPLAY_LAYER_0);
+  #endif
 
   #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
     CLayer::SetActiveLayer(LAYER_BACKGROUND, BACKGROUND_DISPLAY_LAYER_0);
     CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
-  #else
+  #elif (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
     CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #endif
 
@@ -124,15 +126,20 @@ SystemState_e GRAFX_PostInitialize(void)
     nOS_Error     Error;
     uint32_t      FreePointer;
 
+  #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
     DB_Central.Set(&GFX_LoadingAddress, GFX_FREE_RAM_POINTER, 0, 0);   // Record the free RAM pointer in database at reload ID
+  #endif
 
+  #if (GRAFX_USE_FONT_SIZE_8 == DEF_ENABLED) || (GRAFX_USE_FONT_SIZE_12 == DEF_ENABLED) || (GRAFX_USE_FONT_SIZE_16 == DEF_ENABLED)
     FONT_Initialize();
+  #endif
 
     if((Error = GUI_pTask->Initialize()) != NOS_OK)
     {
         return SYS_FAIL;
     }
 
+  #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
     //  SKIN_pTask need then at the same pointer
     DB_Central.Get(&FreePointer, GFX_FREE_RAM_POINTER,  0, 0);
     LIB_AlignPointer(FreePointer);
@@ -143,6 +150,7 @@ SystemState_e GRAFX_PostInitialize(void)
     {
         return SYS_FAIL;
     }
+  #endif
 
   #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
     if((State = PDI_pDriver->Initialize(GRAFX_PostInitSubDriverPtr.PDI_pHardInterface)) != SYS_READY)

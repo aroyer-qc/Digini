@@ -62,6 +62,15 @@
 
 #endif
 
+#if (GRAFX_USE_HARD_DATABASE == DEF_ENABLED)
+  #define GFX_HARD_DBASE_DEF(X_GFX_RAM_DBASE) \
+    X_GFX_HARD_DBASE( GFX_FONT_INFO,           DBASE_MAX_FONT_QTY,        1,                           sizeof(FontInfo_t)          )   \
+    X_GFX_HARD_DBASE( GFX_FONT_DESC_INFO,      DBASE_MAX_FONT_QTY,        FONT_CHARACTER_PER_FONT_MAX, sizeof(FontDescriptor_t)    )   \
+    X_GFX_HARD_DBASE( GFX_IMAGE_INFO,          DBASE_MAX_IMAGE_QTY,       1,                           sizeof(ImageInfo_t)         )   \
+
+#endif
+
+
 //-------------------------------------------------------------------------------------------------
 
  #endif // (DIGINI_USE_GRAFX == DEF_ENABLED)

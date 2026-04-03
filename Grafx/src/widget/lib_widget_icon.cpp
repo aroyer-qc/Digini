@@ -37,7 +37,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Constructor:    CIcon
+//  Constructor:    WidgetIcon
 //
 //  Parameter(s):   Icon_t         pIcon         Pointer to Icon_t structure
 //
@@ -46,7 +46,7 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CIcon::CIcon(Icon_t* pIcon)
+WidgetIcon::WidgetIcon(Icon_t* pIcon)
 {
     m_pIcon = pIcon;
 }
@@ -63,7 +63,7 @@ CIcon::CIcon(Icon_t* pIcon)
 //  Note(s)         No link, Always return INVALID_LINK
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CIcon::Create(PageWidget_t* pPageWidget)
+Link_e WidgetIcon::Create(PageWidget_t* pPageWidget)
 {
     ServiceReturn_t* pService;
 
@@ -95,7 +95,7 @@ Link_e CIcon::Create(PageWidget_t* pPageWidget)
 //  Note(s)         No link, Always return INVALID_LINK
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CIcon::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetIcon::Refresh(MsgRefresh_t* pMsg)
 {
     ServiceReturn_t* pService;
 
@@ -124,7 +124,7 @@ Link_e CIcon::Refresh(MsgRefresh_t* pMsg)
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void CIcon::Finalize()
+void WidgetIcon::Finalize()
 {
     ServiceReturn_t* pService;
 
@@ -146,7 +146,7 @@ void CIcon::Finalize()
 //  Description:    Draw the Icon on display according to state.
 //
 //-------------------------------------------------------------------------------------------------
-void CIcon::Draw(ServiceReturn_t* pService)
+void WidgetIcon::Draw(ServiceReturn_t* pService)
 {
   #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
    #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
@@ -174,7 +174,7 @@ void CIcon::Draw(ServiceReturn_t* pService)
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
     ForeLayerToDraw = CONSTRUCTION_FOREGROUND_LAYER;
-   #else
+   #elif (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
     ForeLayerToDraw = FOREGROUND_DISPLAY_LAYER_0;
    #endif
 
@@ -229,7 +229,7 @@ void CIcon::Draw(ServiceReturn_t* pService)
 //  Description:    Draw only once what does not need to be refreshed
 //
 //-------------------------------------------------------------------------------------------------
-void CIcon::DrawOnce(ServiceReturn_t* pService)
+void WidgetIcon::DrawOnce(ServiceReturn_t* pService)
 {
 
     CLayer::PushDrawing();

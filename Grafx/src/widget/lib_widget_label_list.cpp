@@ -37,7 +37,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Constructor:    CLabelList
+//  Constructor:    WidgetLabelList
 //
 //  Parameter(s):   LabelList_t        pLabelList      Pointer to LabelList_t structure
 //
@@ -46,7 +46,7 @@
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CLabelList::CLabelList(LabelList_t* pLabelist)
+WidgetLabelList::WidgetLabelList(LabelList_t* pLabelist)
 {
     m_pLabelList = pLabelist;
 }
@@ -64,7 +64,7 @@ CLabelList::CLabelList(LabelList_t* pLabelist)
 //  Note(s)         No link on creation of label, always invalid
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CLabelList::Create(PageWidget_t* pPageWidget)
+Link_e WidgetLabelList::Create(PageWidget_t* pPageWidget)
 {
     ServiceReturn_t* pService;
 
@@ -99,7 +99,7 @@ Link_e CLabelList::Create(PageWidget_t* pPageWidget)
 //  Description:    This function call service to refresh widget
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CLabelList::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetLabelList::Refresh(MsgRefresh_t* pMsg)
 {
     ServiceReturn_t* pService;
 
@@ -130,7 +130,7 @@ Link_e CLabelList::Refresh(MsgRefresh_t* pMsg)
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void CLabelList::Finalize()
+void WidgetLabelList::Finalize()
 {
     ServiceReturn_t* pService;
 
@@ -154,7 +154,7 @@ void CLabelList::Finalize()
 //  Description:    Draw the label on display according to state.
 //
 //-------------------------------------------------------------------------------------------------
-void CLabelList::Draw(ServiceReturn_t* pService)
+void WidgetLabelList::Draw(ServiceReturn_t* pService)
 {
   #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
     Layer_e BackLayerToDraw;

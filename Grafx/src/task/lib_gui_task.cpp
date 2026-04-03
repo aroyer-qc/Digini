@@ -122,7 +122,7 @@ void GUI_myClassTask::Run()
 
     // Start at home page
     m_Link    = INVALID_LINK;
-    NewLink   = LINK_START_UP;
+    NewLink   = LINK_START_PAGE;
 
     // There is no force refresh. (Use for example to refresh page on language change)
     m_ForceRefresh = false;
@@ -274,160 +274,160 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef BACK_DEF
         else if((Widget > APP_START_BACK_CONST) && (Widget < APP_END_BACK_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CBackground));                       // Get the memory block for the widget class object
-            *pWidgetListPointer = new(pWidget) CBackground(&Background[Widget - (APP_START_BACK_CONST + 1)]);       // Get a class object of the widget
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetBackground));                       // Get the memory block for the widget class object
+            *pWidgetListPointer = new(pWidget) WidgetBackground(&Background[Widget - (APP_START_BACK_CONST + 1)]);       // Get a class object of the widget
         }
        #endif
 
        #ifdef BASIC_BOX_DEF
         else if((Widget > APP_START_BASIC_BOX_CONST) && (Widget < APP_END_BASIC_BOX_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CBasicBox));
-            *pWidgetListPointer = new(pWidget) CBasicBox(&BasicBox[Widget - (APP_START_BASIC_BOX_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetBasicBox));
+            *pWidgetListPointer = new(pWidget) WidgetBasicBox(&BasicBox[Widget - (APP_START_BASIC_BOX_CONST + 1)]);
         }
        #endif
 
        #ifdef BASIC_BTN_DEF
         else if((Widget > APP_START_BASIC_BTN_CONST) && (Widget < APP_END_BASIC_BTN_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CBasicButton));
-            *pWidgetListPointer = new(pWidget) CBasicButton(&BasicButton[Widget - (APP_START_BASIC_BTN_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetBasiWidgetButton));
+            *pWidgetListPointer = new(pWidget) WidgetBasiWidgetButton(&BasiWidgetButton[Widget - (APP_START_BASIC_BTN_CONST + 1)]);
         }
        #endif
 
        #ifdef BASIC_RECT_DEF
         else if((Widget > APP_START_BASIC_RECT_CONST) && (Widget < APP_END_BASIC_RECT_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CBasicRect));
-            *pWidgetListPointer = new(pWidget) CBasicRect(&BasicRect[Widget - (APP_START_BASIC_RECT_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetBasicRectangle));
+            *pWidgetListPointer = new(pWidget) WidgetBasicRectangle(&BasicRect[Widget - (APP_START_BASIC_RECT_CONST + 1)]);
         }
        #endif
 
        #ifdef BTN_DEF
         else if((Widget > APP_START_BTN_CONST) && (Widget < APP_END_BTN_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CButton));
-            *pWidgetListPointer = new(pWidget) CButton(&Button[Widget - (APP_START_BTN_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetButton));
+            *pWidgetListPointer = new(pWidget) WidgetButton(&Button[Widget - (APP_START_BTN_CONST + 1)]);
         }
        #endif
 
        #ifdef GIF_DEF
         else if((Widget > APP_START_GIF_CONST) && (Widget < APP_END_GIF_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CGif));
-            *pWidgetListPointer = new(pWidget) CGif(&Gif[Widget - (APP_START_GIF_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetGif));
+            *pWidgetListPointer = new(pWidget) WidgetGif(&Gif[Widget - (APP_START_GIF_CONST + 1)]);
         }
        #endif
 
        #ifdef GRAPH_DEF
         else if((Widget > APP_START_GRAPH_CONST) && (Widget < APP_END_GRAPH_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CGraph));
-            *pWidgetListPointer = new(pWidget) CGraph(&Graph[Widget - (APP_START_GRAPH_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetGraph));
+            *pWidgetListPointer = new(pWidget) WidgetGraph(&Graph[Widget - (APP_START_GRAPH_CONST + 1)]);
         }
        #endif
 
        #ifdef ICON_DEF
         else if((Widget > APP_START_ICON_CONST) && (Widget < APP_END_ICON_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CIcon));
-            *pWidgetListPointer = new(pWidget) CIcon(&Icon[Widget - (APP_START_ICON_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetIcon));
+            *pWidgetListPointer = new(pWidget) WidgetIcon(&Icon[Widget - (APP_START_ICON_CONST + 1)]);
         }
        #endif
 
        #ifdef LABEL_DEF
         else if((Widget > APP_START_LABEL_CONST) && (Widget < APP_END_LABEL_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CLabel));
-            *pWidgetListPointer = new(pWidget) CLabel(&Label[Widget - (APP_START_LABEL_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetLabel));
+            *pWidgetListPointer = new(pWidget) WidgetLabel(&Label[Widget - (APP_START_LABEL_CONST + 1)]);
         }
        #endif
 
        #ifdef LABEL_LIST_DEF
         else if((Widget > APP_START_LABEL_LIST_CONST)  && (Widget < APP_END_LABEL_LIST_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CLabelList));
-            *pWidgetListPointer = new(pWidget) CLabelList(&LabelList[Widget - (APP_START_LABEL_LIST_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetLabelList));
+            *pWidgetListPointer = new(pWidget) WidgetLabelList(&LabelList[Widget - (APP_START_LABEL_LIST_CONST + 1)]);
         }
        #endif
 
        #ifdef METER_DEF
         else if((Widget > APP_START_METER_CONST) && (Widget < APP_END_METER_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CMeter));
-            *pWidgetListPointer = new(pWidget) CMeter(&Meter[Widget - (APP_START_METER_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetMeter));
+            *pWidgetListPointer = new(pWidget) WidgetMeter(&Meter[Widget - (APP_START_METER_CONST + 1)]);
         }
        #endif
 
        #ifdef PAGE_SLIDE_DEF
         else if((Widget > APP_START_PAGE_SLIDE_CONST) && (Widget < APP_END_PAGE_SLIDE_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CPageSlide));
-            *pWidgetListPointer = new(pWidget) CPageSlide(&PageSlide[Widget - (APP_START_PAGE_SLIDE_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetPageSlide));
+            *pWidgetListPointer = new(pWidget) WidgetPageSlide(&PageSlide[Widget - (APP_START_PAGE_SLIDE_CONST + 1)]);
        }
        #endif
 
        #ifdef PANEL_DEF
         else if((Widget > APP_START_PANEL_CONST) && (Widget < APP_END_PANEL_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CPanel));
-            *pWidgetListPointer = new(pWidget) CPanel(&Panel[Widget - (APP_START_PANEL_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetPanel));
+            *pWidgetListPointer = new(pWidget) WidgetPanel(&Panel[Widget - (APP_START_PANEL_CONST + 1)]);
         }
        #endif
 
        #ifdef PROGRESS_DEF
         else if((Widget > APP_START_PROGRESS_CONST) && (Widget < APP_END_PROGRESS_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CProgress));
-            *pWidgetListPointer = new(pWidget) CProgress(&Progress[Widget - (APP_START_PROGRESS_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetProgress));
+            *pWidgetListPointer = new(pWidget) WidgetProgress(&Progress[Widget - (APP_START_PROGRESS_CONST + 1)]);
         }
        #endif
 
        #ifdef ROUND_METER_DEF
         else if((Widget > APP_START_ROUND_METER_CONST) && (Widget < APP_END_ROUND_METER_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CRoundMeter));
-            *pWidgetListPointer = new(pWidget) CRoundMeter(&RoundMeter[Widget - (APP_START_ROUND_METER_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetRoundMeter));
+            *pWidgetListPointer = new(pWidget) WidgetRoundMeter(&RoundMeter[Widget - (APP_START_ROUND_METER_CONST + 1)]);
         }
        #endif
 
        #ifdef SPECTRUM_DEF
         else if((Widget > APP_START_SPECTRUM_CONST) && (Widget < APP_END_SPECTRUM_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CSpectrum));
-            *pWidgetListPointer = new(pWidget) CSpectrum(&Spectrum[Widget - (APP_START_SPECTRUM_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetSpectrum));
+            *pWidgetListPointer = new(pWidget) WidgetSpectrum(&Spectrum[Widget - (APP_START_SPECTRUM_CONST + 1)]);
         }
        #endif
 
        #ifdef SPRITE_DEF
         else if((Widget > APP_START_SPRITE_CONST) && (Widget < APP_END_SPRITE_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CSprite));
-            *pWidgetListPointer = new(pWidget) CSprite(&Sprite[Widget - (APP_START_SPRITE_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetSprite));
+            *pWidgetListPointer = new(pWidget) WidgetSprite(&Sprite[Widget - (APP_START_SPRITE_CONST + 1)]);
         }
        #endif
 
         #ifdef TERMINAL_DEF
         else if((Widget > APP_START_TERMINAL_CONST) && (Widget < APP_END_TERMINAL_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CTerminal));
-            *pWidgetListPointer = new(pWidget) CTerminal(&Terminal[Widget - (APP_START_TERMINAL_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetTerminal));
+            *pWidgetListPointer = new(pWidget) WidgetTerminal(&Terminal[Widget - (APP_START_TERMINAL_CONST + 1)]);
         }
        #endif
 
        #ifdef VIRTUAL_HUB_DEF
         else if((Widget > APP_START_VIRTUAL_HUB_CONST) && (Widget < APP_END_VIRTUAL_HUB_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CVirtualHub));
-            *pWidgetListPointer = new(pWidget) CVirtualHub(&VirtualHub[Widget - (APP_START_VIRTUAL_HUB_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetVirtualHub));
+            *pWidgetListPointer = new(pWidget) WidgetVirtualHub(&VirtualHub[Widget - (APP_START_VIRTUAL_HUB_CONST + 1)]);
         }
        #endif
 
        #ifdef VIRTUAL_WINDOW_DEF
         else if((Widget > APP_START_VIRTUAL_WINDOW_CONST) && (Widget < APP_END_VIRTUAL_WINDOW_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(CVirtualWindow));
-            *pWidgetListPointer = new(pWidget) CVirtualWindow(&VirtualWindow[Widget - (APP_START_VIRTUAL_WINDOW_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetVirtualWindow));
+            *pWidgetListPointer = new(pWidget) WidgetVirtualWindow(&VirtualWindow[Widget - (APP_START_VIRTUAL_WINDOW_CONST + 1)]);
         }
        #endif
 /*  // TODO (Alain#1#)  remove if the new method of exchange data work!!
@@ -839,21 +839,31 @@ void GUI_FilterServiceState(ServiceEvent_e* pServiceState, MsgRefresh_t* pMsg, W
 void GUI_ClearWidgetLayer()
 {
     Box_t Box = {{0, 0},{GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y}};
-    CLayer::PushDrawing();
 
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
+  #if (GRAFX_DEBUG_GUI == DEF_ENABLED) && (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
+    CLayer::PushDrawing();
     CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    #define ENABLE_POP
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
+    CLayer::PushDrawing();
     CLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
-   #else
+    #define ENABLE_POP
+   #elif (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
+    CLayer::PushDrawing();
     CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    #define ENABLE_POP
+   #else
+    // The Driver will take care of the clearing since there is no layer
+     #undef ENABLE_POP
    #endif
   #endif
 
     CLayer::SetColor(TRANSPARENT);
     myGrafx->DrawRectangle(&Box);
+  #ifdef ENABLE_POP
     CLayer::PopDrawing();
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------

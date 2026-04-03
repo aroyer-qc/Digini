@@ -59,8 +59,8 @@
 //#define GRAFX_VBP                                   2               // Vertical back porch
 //#define GRAFX_VFP                                   2               // Vertical front porch
 
-#define GRAFX_USE_SOFT_COPY_LINEAR
-#define GRAFX_USE_SOFT_COPY_LAYER_TO_LAYER
+//#define GRAFX_USE_SOFT_COPY_LINEAR
+//#define GRAFX_USE_SOFT_COPY_LAYER_TO_LAYER
 //#define GRAFX_USE_SOFT_PIXEL                      // We use this driver DMA for this function
 //#define GRAFX_USE_SOFT_BOX                        // We use this driver function
 //#define GRAFX_USE_SOFT_VLINE
@@ -156,6 +156,9 @@ class GrafxDriver : public GrafxGenDriver
         void            BlockCopy           (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
         void            Copy                (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
         void            CopyLinear          (void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
+void CopyLinear      (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
+void CopyLinear      (Skin_e Image, Cartesian_t Position, BlendMode_e BlendMode);
+
         void            DrawLine            (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
         void            DrawPixel           (uint16_t PosX, uint16_t PosY);
         void            DrawRectangle       (Box_t* pBox, uint8_t Mode);

@@ -191,6 +191,28 @@ void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelForm
     VAR_UNUSED(BlendMode);
 }
 
+void GrafxGenDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode)
+{
+//    Not supported for now
+
+    VAR_UNUSED(pSrc);
+    VAR_UNUSED(PosX);
+    VAR_UNUSED(PosY);
+    VAR_UNUSED(pSrc);
+    VAR_UNUSED(Width);
+    VAR_UNUSED(Height);
+    VAR_UNUSED(PixelFormat);
+    VAR_UNUSED(BlendMode);
+}
+
+void GrafxGenDriver::CopyLinear(Skin_e Image, Cartesian_t Position, BlendMode_e BlendMode)
+{
+    VAR_UNUSED(Image);
+    VAR_UNUSED(Position);
+    VAR_UNUSED(BlendMode);
+}
+
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DrawRectangle

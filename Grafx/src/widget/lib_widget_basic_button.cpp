@@ -37,21 +37,21 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Constructor:    CBasicButton
+//  Constructor:    WidgetBasiWidgetButton
 //
-//  Parameter(s):   BasicButton_t         pBasicButton         Pointer to Button_t structure
+//  Parameter(s):   BasiWidgetButton_t         pBasiWidgetButton         Pointer to Button_t structure
 //
 //  Description:    Initialize widget's service and build widget.
 //
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CBasicButton::CBasicButton(BasicButton_t* pBasicButton)
+WidgetBasiWidgetButton::WidgetBasiWidgetButton(BasiWidgetButton_t* pBasiWidgetButton)
 {
-    m_pBasicButton = pBasicButton;
+    m_pBasiWidgetButton = pBasiWidgetButton;
 
-    m_pBasicButton->Text.Font[1]    = m_pBasicButton->Text.Font[0];
-    m_pBasicButton->Text.Blend      = ALPHA_BLEND;
+    m_pBasiWidgetButton->Text.Font[1]    = m_pBasiWidgetButton->Text.Font[0];
+    m_pBasiWidgetButton->Text.Blend      = ALPHA_BLEND;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -66,18 +66,18 @@ CBasicButton::CBasicButton(BasicButton_t* pBasicButton)
 //  Note(s)         No link on creation of button, always invalid
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CBasicButton::Create(PageWidget_t* pPageWidget)
+Link_e WidgetBasiWidgetButton::Create(PageWidget_t* pPageWidget)
 {
     ServiceReturn_t* pService;
     EventArea_t      EventArea;
 
     m_pPageWidget  = pPageWidget;
     m_ServiceState = SERVICE_START;
-    if((pService = ServiceCall(&m_pBasicButton->Service, &m_ServiceState)) != nullptr)
+    if((pService = ServiceCall(&m_pBasiWidgetButton->Service, &m_ServiceState)) != nullptr)
     {
-        EventArea.Rectangle.Box = m_pBasicButton->Box;
+        EventArea.Rectangle.Box = m_pBasiWidgetButton->Box;
       #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
-        PDI_pTask->CreateZone(&EventArea, m_pBasicButton->Options, pPageWidget->ID);       // Create the zone on the touch sense virtual screen
+        PDI_pTask->CreateZone(&EventArea, m_pBasiWidgetButton->Options, pPageWidget->ID);       // Create the zone on the touch sense virtual screen
       #endif
         Draw(pService);
         FreeServiceStruct(&pService);
@@ -96,15 +96,15 @@ Link_e CBasicButton::Create(PageWidget_t* pPageWidget)
 //  Description:    This function call service to refresh widget
 //
 //-------------------------------------------------------------------------------------------------
-Link_e CBasicButton::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetBasiWidgetButton::Refresh(MsgRefresh_t* pMsg)
 {
     ServiceReturn_t* pService;
 
     // If it is our touch zone that is pressed then change service state to process the touch
-    GUI_FilterServiceState(&m_ServiceState, pMsg, m_pPageWidget->ID, m_pBasicButton->ServiceFilter, SERVICE_IDLE);
+    GUI_FilterServiceState(&m_ServiceState, pMsg, m_pPageWidget->ID, m_pBasiWidgetButton->ServiceFilter, SERVICE_IDLE);
 
     // Invoke the application service for this button (It might change by itself the m_ServiceState)
-    if((pService = ServiceCall(&m_pBasicButton->Service, &m_ServiceState)) != nullptr)
+    if((pService = ServiceCall(&m_pBasiWidgetButton->Service, &m_ServiceState)) != nullptr)
     {
         if((pService->ServiceType == SERVICE_RETURN) && (m_ServiceState == SERVICE_RELEASED))
         {
@@ -146,12 +146,12 @@ Link_e CBasicButton::Refresh(MsgRefresh_t* pMsg)
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void CBasicButton::Finalize()
+void WidgetBasiWidgetButton::Finalize()
 {
     ServiceReturn_t* pService;
 
     m_ServiceState = SERVICE_FINALIZE;
-    if((pService = ServiceCall(&m_pBasicButton->Service, &m_ServiceState)) != nullptr)
+    if((pService = ServiceCall(&m_pBasiWidgetButton->Service, &m_ServiceState)) != nullptr)
     {
         FreeServiceStruct(&pService);
     }
@@ -168,7 +168,7 @@ void CBasicButton::Finalize()
 //  Description:    Draw the button on display according to state.
 //
 //-------------------------------------------------------------------------------------------------
-void CBasicButton::Draw(ServiceReturn_t* pService)
+void WidgetBasiWidgetButton::Draw(ServiceReturn_t* pService)
 {
     uint32_t BackColor;
     uint32_t BoxColor;
@@ -184,22 +184,22 @@ void CBasicButton::Draw(ServiceReturn_t* pService)
     if(m_ServiceState == SERVICE_PRESSED || m_ServiceState == SERVICE_TYPEMATIC || m_ServiceState == SERVICE_SUPERKEY)
     {
         pService->IndexState++;
-        BackColor = m_pBasicButton->PressedBackColor;
-        BoxColor  = m_pBasicButton->PressedBoxColor;
+        BackColor = m_pBasiWidgetButton->PressedBackColor;
+        BoxColor  = m_pBasiWidgetButton->PressedBoxColor;
     }
     else
     {
-        BackColor = m_pBasicButton->BackColor;
-        BoxColor  = m_pBasicButton->BoxColor;
+        BackColor = m_pBasiWidgetButton->BackColor;
+        BoxColor  = m_pBasiWidgetButton->BoxColor;
     }
 
     CLayer::SetColor(BackColor);
-    DrawRectangle(&m_pBasicButton->Box);
+    DrawRectangle(&m_pBasiWidgetButton->Box);
 
     CLayer::SetColor(BoxColor);
-    DrawBox(&m_pBasicButton->Box, m_pBasicButton->Thickness);
+    DrawBox(&m_pBasiWidgetButton->Box, m_pBasiWidgetButton->Thickness);
 
-    WidgetPrint(&m_pBasicButton->Text, pService);
+    WidgetPrint(&m_pBasiWidgetButton->Text, pService);
     CLayer::PopDrawing();
 }
 
@@ -214,7 +214,7 @@ void CBasicButton::Draw(ServiceReturn_t* pService)
 //  Description:    Draw only once what does not need to be refreshed
 //
 //-------------------------------------------------------------------------------------------------
-void CBasicButton::DrawOnce(ServiceReturn_t* pService)
+void WidgetBasiWidgetButton::DrawOnce(ServiceReturn_t* pService)
 {
 
     CLayer::PushDrawing();

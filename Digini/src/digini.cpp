@@ -41,7 +41,7 @@
   class E2_DataBase                 DB_Eeprom;
 #endif
 
-#if defined(ROM_DBASE_DEF)
+#if defined(ROM_DBASE_DEF) || defined(GFX_HARD_DBASE_DEF)
   class ROM_DataBase                DB_Rom;
 #endif
 

@@ -79,7 +79,7 @@ const SSD2119_InitCMD_t GrafxDriver::InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
 
 void GrafxDriver::Initialize(void* pArg)
 {
-    //GrafxGenDriver::Initialize(pArg);
+    GrafxGenDriver::Initialize(pArg);
 
     // Send the complete list of initialization command to LCD
     for(int i = 0; i < GRAFX_NUMBER_OF_INIT_CMD; i++)

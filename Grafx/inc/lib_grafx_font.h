@@ -57,7 +57,7 @@ enum Font_e
 
     #include "font_cfg.lst"
 
-    NB_OF_FONT,
+	NUMBER_OF_FONT,
     INVALID_FONT
 };
 

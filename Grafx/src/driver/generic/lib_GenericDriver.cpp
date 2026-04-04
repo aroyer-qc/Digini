@@ -82,6 +82,11 @@ const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
     -1
 };
 
+
+void    GrafxGenDriver::Initialize            (void* pArg)
+{
+}
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           BlockCopy

@@ -38,13 +38,13 @@
 // Private Function(s)
 //-------------------------------------------------------------------------------------------------
 
-static void DrawSector(Skin_e Image, Circle_t* pCircle, uint16_t StartAngle, uint16_t EndAngle, uint16_t Number, BlendMode_e BlendMode);
+static void DrawSector(ImageID_e Image, Circle_t* pCircle, uint16_t StartAngle, uint16_t EndAngle, uint16_t Number, BlendMode_e BlendMode);
 
 //-------------------------------------------------------------------------------------------------
 //
 //   Function Name: DrawPie
 //
-//   Parameter(s):  Skin_e               Image
+//   Parameter(s):  ImageID_e               Image
 //                  Pie_t*               pPie
 //                  BlendMode_e          BlendMode
 //   Return Value:  none
@@ -52,7 +52,7 @@ static void DrawSector(Skin_e Image, Circle_t* pCircle, uint16_t StartAngle, uin
 //   Description:   Copy a part of a circle from linear memory region to pie shape in destination
 //
 //-------------------------------------------------------------------------------------------------
-void DrawPie(Skin_e Image, Pie_t* pPie, BlendMode_e BlendMode)
+void DrawPie(ImageID_e Image, Pie_t* pPie, BlendMode_e BlendMode)
 {
     uint16_t   SectorStartAngle;
     uint16_t   SectorEndAngle;
@@ -86,7 +86,7 @@ void DrawPie(Skin_e Image, Pie_t* pPie, BlendMode_e BlendMode)
 //
 //   Function Name: DrawPie
 //
-//   Parameter(s):  Skin_e               Image
+//   Parameter(s):  ImageID_e               Image
 //                  Cartesian_t          Position
 //                  uint16_t            Radius
 //                  uint16_t            StartAngle
@@ -97,7 +97,7 @@ void DrawPie(Skin_e Image, Pie_t* pPie, BlendMode_e BlendMode)
 //   Description:   Copy a part of a circle from linear memory region to pie shape in destination
 //
 //-------------------------------------------------------------------------------------------------
-void DrawPie(Skin_e Image, Cartesian_t Position, uint16_t Radius, uint16_t StartAngle, uint16_t EndAngle, BlendMode_e BlendMode)
+void DrawPie(ImageID_e Image, Cartesian_t Position, uint16_t Radius, uint16_t StartAngle, uint16_t EndAngle, BlendMode_e BlendMode)
 {
     Pie_t Pie;
 
@@ -113,7 +113,7 @@ void DrawPie(Skin_e Image, Cartesian_t Position, uint16_t Radius, uint16_t Start
 //
 //   Function Name: _DrawSector
 //
-//   Parameter(s):  Skin_e          Image
+//   Parameter(s):  ImageID_e          Image
 //                  Circle_t*            pCircle
 //                  uint16_t            StartAngle
 //                  uint16_t            EndAngle
@@ -124,7 +124,7 @@ void DrawPie(Skin_e Image, Cartesian_t Position, uint16_t Radius, uint16_t Start
 //   Description:   Draw one sector of the pie (4 sectors in full circle)
 //
 //-------------------------------------------------------------------------------------------------
-static void _DrawSector(Skin_e Image, Circle_t* pCircle, uint16_t StartAngle, uint16_t EndAngle, uint16_t SectorNumber, BlendMode_e BlendMode)
+static void _DrawSector(ImageID_e Image, Circle_t* pCircle, uint16_t StartAngle, uint16_t EndAngle, uint16_t SectorNumber, BlendMode_e BlendMode)
 {
     ImageInfo_t ImageInfo;
     Cartesian_t Origin;

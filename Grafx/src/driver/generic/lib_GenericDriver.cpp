@@ -249,7 +249,7 @@ void GrafxGenDriver::LayerConfig(Layer_e Layer)
 //
 //   Function Name: CopyLinear
 //
-//   Parameter(s):  Skin_e               Image
+//   Parameter(s):  ImageID_e               Image
 //                  Cartesian_t          Position
 //                  BlendMode_e          BlendMode
 //   Return Value:  none
@@ -258,7 +258,7 @@ void GrafxGenDriver::LayerConfig(Layer_e Layer)
 //
 //-------------------------------------------------------------------------------------------------
 #ifdef GRAFX_USE_SOFT_COPY_LINEAR
-void GrafxGenDriver::CopyLinear(Skin_e Image, Cartesian_t Position, BlendMode_e BlendMode)
+void GrafxGenDriver::CopyLinear(ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode)
 {
     ImageInfo_t ImageInfo;
     Box_t       Box;
@@ -345,7 +345,7 @@ void GrafxGenDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16
 //   Description:   Copy a rectangle region from a layer to another layer
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_SOFT_COPY_LAYER_TO_LAYER
+#if (GRAFX_USE_DISPLAY_LAYER == DEF_ENABLE)
 void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, Box_t* pBox)
 {
     CLayer* pLayer;

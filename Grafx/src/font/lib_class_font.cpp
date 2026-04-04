@@ -106,7 +106,7 @@ void FONT_Initialize(void)
     uint8_t*                        pMemory;
     const StaticFontDescriptor_t*   pDscFont;
     FontDescriptor_t                FontDescriptor;
-    FontInfo_t                      FontInfo;
+    FontInfo_t                 		FontInfo;
 
     // load in RAM default 8x8 and/or 12x12 and/or 16x16 font
     for(Font = 0; Font < NB_SYSTEM_FONTS; Font++)

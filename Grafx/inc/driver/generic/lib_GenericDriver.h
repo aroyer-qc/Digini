@@ -46,7 +46,7 @@ class GrafxGenDriver
             virtual	    void    BlockCopy             (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
             virtual	    void    BlockCopy             (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
             virtual     void    ClearLayer            (Layer_e Layer);
-          #if(GRAFX_USE_DISPLAY_LAYER != DEF_ENABLE)
+          #if(GRAFX_USE_DISPLAY_LAYER == DEF_ENABLE)
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, Box_t* pBox);
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height);
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, uint16_t SrcX, uint16_t SrcY, uint16_t DstX, uint16_t DstY, uint16_t Width, uint16_t Height);

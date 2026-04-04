@@ -38,7 +38,7 @@
 //
 //   Function Name: GRAFX_CursorOnCircle
 //
-//   Parameter(s):  Skin_e               Image
+//   Parameter(s):  ImageID_e               Image
 //                  Cartesian_t*         pPos
 //                  uint16_t            Radius
 //                  uint16_t            Angle
@@ -48,7 +48,7 @@
 //   Description:
 //
 //-------------------------------------------------------------------------------------------------
-void GRAFX_CursorOnCircle(Skin_e Image, Cartesian_t* pPos, uint16_t Radius, uint16_t Angle)
+void GRAFX_CursorOnCircle(ImageID_e Image, Cartesian_t* pPos, uint16_t Radius, uint16_t Angle)
 {
     uint16_t    PosX;
     uint16_t    PosY;

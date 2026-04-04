@@ -118,19 +118,11 @@ union EventArea_t
 };
 
 // Font
-
 struct FontSize_t
 {
     uint8_t        Width;
     uint8_t        Height;
 };
-
-//struct FontInfo_t
-//{
-//    uint8_t        Height;
-//    uint8_t        Interline;
-//    uint8_t        Width;
-//};
 
 struct FontDescriptor_t
 {
@@ -149,24 +141,11 @@ struct FontInfo_t
     const uint8_t*          pLookUpTable;
     uint8_t                 FirstCaracter;
     uint8_t                 LastCaracter;
-    uint8_t                 FontHeight;
-    uint8_t                 FontInterline;
+    uint8_t                 Width;
+    uint8_t                 Height;
+    uint8_t                 Interline;
     const FontDescriptor_t* pDescriptor;
 };
-
-
-/*
-struct FontDescriptor_t
-{
-    int8_t         LeftBearing;
-    int8_t         RightBearing;
-    FontSize_t     Size;                                    // Width and Height pixel zone
-    uint8_t        Width;                                   // Width increment
-    int8_t         OffsetY;                                 // Offset in Y for this character
-    uint16_t       TotalSize;
-    uint8_t*       pAddress;
-};
-*/
 
 struct PageSlideRange_t
 {

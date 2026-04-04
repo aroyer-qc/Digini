@@ -221,7 +221,7 @@ size_t GPrintf::PutString(void)
                 this->IncrementFeaturePointer();
             }
 
-            m_Position.X += m_FontDescriptor.HorizontalAdvance;                                 // Update X position for the next character
+            m_Position.X += m_FontDescriptor.HorizontalAdvance;                             // Update X position for the next character
             this->IncrementFeaturePointer();
         }
         m_Position.Y += (FontInfo.Height + FontInfo.Interline);                     // update Y position for the next line
@@ -315,10 +315,10 @@ void GPrintf::ParseString(void)
             }
         }
 
-        m_BoxSizeY += FontInfo.FontHeight;                                                      // Add this line to the total
+        m_BoxSizeY += FontInfo.Height;                                                      // Add this line to the total
         if(i != (m_Line - 1))
         {
-            m_BoxSizeY += FontInfo.FontInterline;                                               // Add the interline of the previous line but not on the last one
+            m_BoxSizeY += FontInfo.Interline;                                               // Add the interline of the previous line but not on the last one
         }
 
         if(m_BoxSizeX < m_SubLineSizePixX[i])                                               // Adjust the box size in X if this line is longer
@@ -366,7 +366,7 @@ void GPrintf::ParseString(void)
 
     // Final box size
     m_BoxSizeX = (uint16_t)lineSizePixX;
-    m_BoxSizeY = FontInfo.FontHeight;
+    m_BoxSizeY = FontInfo.Height;
 
   #endif // (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
 

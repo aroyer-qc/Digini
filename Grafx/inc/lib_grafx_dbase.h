@@ -29,7 +29,6 @@
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
-
 //-------------------------------------------------------------------------------------------------
 
 #ifndef     DBASE_MAX_SKIN_IMAGE_QTY
@@ -62,14 +61,14 @@
 
 #endif
 
-#if (GRAFX_USE_HARD_DATABASE == DEF_ENABLED)
-  #define GFX_HARD_DBASE_DEF(X_GFX_RAM_DBASE) \
-    X_GFX_HARD_DBASE( GFX_FONT_INFO,           DBASE_MAX_FONT_QTY,        1,                           sizeof(FontInfo_t)          )   \
-    X_GFX_HARD_DBASE( GFX_FONT_DESC_INFO,      DBASE_MAX_FONT_QTY,        FONT_CHARACTER_PER_FONT_MAX, sizeof(FontDescriptor_t)    )   \
-    X_GFX_HARD_DBASE( GFX_IMAGE_INFO,          DBASE_MAX_IMAGE_QTY,       1,                           sizeof(ImageInfo_t)         )   \
+#if (GRAFX_USE_ROM_DATABASE == DEF_ENABLED)
+  #define GFX_ROM_DBASE_DEF(X_GFX_ROM_DBASE) \
+    X_GFX_ROM_DBASE( GFX_FONT_INFO,          &FONT_InfoTable,       NUMBER_OF_FONT,            1,  sizeof(FontInfo_t)          )   \
+    X_GFX_ROM_DBASE( GFX_IMAGE_INFO,         &StaticImageInfo,      NUMBER_OF_IMAGE,           1,  sizeof(StaticImageInfo_t*)  )   \
 
 #endif
 
+//    X_GFX_HARD_DBASE( GFX_FONT_DESC_INFO,      DBASE_MAX_FONT_QTY,        FONT_CHARACTER_PER_FONT_MAX, sizeof(FontDescriptor_t)    )
 
 //-------------------------------------------------------------------------------------------------
 

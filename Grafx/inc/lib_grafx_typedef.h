@@ -36,7 +36,7 @@ struct StaticImageInfo_t
    uint16_t        SizeY;
    uint16_t        BytesPerLine;
    uint8_t         BitsPerPixel;
-   void*           pData;
+   const void*     pData;
    uint32_t        RawSize;
    PixelFormat_e   PixelFormat;
    Compression_e   Compression;
@@ -125,12 +125,12 @@ struct FontSize_t
     uint8_t        Height;
 };
 
-struct FontInfo_t
-{
-    uint8_t        Height;
-    uint8_t        Interline;
-    uint8_t        Width;
-};
+//struct FontInfo_t
+//{
+//    uint8_t        Height;
+//    uint8_t        Interline;
+//    uint8_t        Width;
+//};
 
 struct FontDescriptor_t
 {
@@ -141,12 +141,19 @@ struct FontDescriptor_t
     uint8_t        HorizontalAdvance;
     int8_t         OffsetY;                                 // Offset in Y for this character
     uint16_t       TotalSize;
-  #if (GRAFX_USE_FONT_CONST_DATA == DEF_ENABLED)
-    uint32_t       Address;
-  #else
-    uint8_t*       pAddress;
-  #endif
+    const uint8_t* pAddress;
 };
+
+struct FontInfo_t
+{
+    const uint8_t*          pLookUpTable;
+    uint8_t                 FirstCaracter;
+    uint8_t                 LastCaracter;
+    uint8_t                 FontHeight;
+    uint8_t                 FontInterline;
+    const FontDescriptor_t* pDescriptor;
+};
+
 
 /*
 struct FontDescriptor_t
@@ -171,13 +178,13 @@ struct PageSlideRange_t
 
 struct Image_t
 {
-    Skin_e         ID_List[SERVICE_ID_STATE_SIZE];          // IMAGE_INVALID = No icon or glyph present
+    ImageID_e      ID_List[SERVICE_ID_STATE_SIZE];          // IMAGE_INVALID = No icon or glyph present
 };
 
 struct Glyph_t
 {
     Cartesian_t    Pos;
-    Skin_e         ID_List[SERVICE_ID_STATE_SIZE];          // IMAGE_INVALID = No icon or glyph present
+    ImageID_e      ID_List[SERVICE_ID_STATE_SIZE];          // IMAGE_INVALID = No icon or glyph present
 };
 
 struct Text_t
@@ -313,12 +320,12 @@ struct BasicBox_t
 {
     Service_t      Service;
     Box_t          Box;                // Calculate position of all image from this also is touch area
-    Skin_e         ImageTL;
-    Skin_e         ImageTR;
-    Skin_e         ImageBL;
-    Skin_e         ImageBR;
-    Skin_e         ImageH;
-    Skin_e         ImageV;
+    ImageID_e      ImageTL;
+    ImageID_e      ImageTR;
+    ImageID_e      ImageBL;
+    ImageID_e      ImageBR;
+    ImageID_e      ImageH;
+    ImageID_e      ImageV;
     uint16_t       ServiceFilter;
     uint16_t       Options;
 };
@@ -412,9 +419,9 @@ struct Meter_t
     uint16_t       StartAngle;
     uint16_t       EndAngle;
     uint16_t       Range;
-    Skin_e         Minimum;
-    Skin_e         Maximum;
-    Skin_e         Cursor;
+    ImageID_e      Minimum;
+    ImageID_e      Maximum;
+    ImageID_e      Cursor;
     Text_t         Text;
     uint16_t       Options;
 };
@@ -443,9 +450,9 @@ struct Progress_t
     Service_t      Service;
     Box_t          Box;
     uint16_t       PixelRange;
-    Skin_e         Background;
-    Skin_e         Bar;
-    Skin_e         Cursor;
+    ImageID_e      Background;
+    ImageID_e      Bar;
+    ImageID_e      Cursor;
     Text_t         Text;
     Cartesian_t    CursorOffset;
     uint16_t       StartValue;
@@ -461,9 +468,9 @@ struct RoundMeter_t
     uint16_t       StartAngle;
     uint16_t       EndAngle;
     uint16_t       Range;
-    Skin_e         Minimum;
-    Skin_e         Maximum;
-    Skin_e         Cursor;
+    ImageID_e      Minimum;
+    ImageID_e      Maximum;
+    ImageID_e      Cursor;
     Text_t         Text;
     uint16_t       Options;
 };
@@ -474,7 +481,7 @@ struct Spectrum_t
     Box_t          Box;
     BoxSize_t      Resolution;              // Bar * Dot
     uint16_t       Spacing;
-    Skin_e         Bar;
+    ImageID_e      Bar;
     uint16_t       Options;
 };
 

@@ -329,12 +329,13 @@ void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 //  Description:    Configuration for layer
 //
 //-------------------------------------------------------------------------------------------------
+/*
 void GrafxGenDriver::LayerConfig(Layer_e Layer)
 {
     CLayer* pLayer = &LayerTable[Layer];
     LayerConfig(pLayer);
 }
-
+*/
 void GrafxGenDriver::LayerConfig(CLayer* pLayer)
 {
     uint32_t            PixelFormat;
@@ -361,7 +362,6 @@ void GrafxGenDriver::LayerConfig(CLayer* pLayer)
 //  Note(s):        Source is linear
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_SOFT_COPY_LINEAR
 /*
 void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e PixelFormat, BlendMode_e BlendMode)
 {
@@ -373,7 +373,6 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e PixelForm
     VAR_UNUSED(BlendMode);
 }
 */
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -390,8 +389,7 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e PixelForm
 //  Note(s):        Source is linear
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_SOFT_COPY_LINEAR
-void GrafxGenDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode)
+/*void GrafxGenDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode)
 {
 //    Not supported for now
 
@@ -404,8 +402,7 @@ void GrafxGenDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16
     VAR_UNUSED(PixelFormat);
     VAR_UNUSED(BlendMode);
 }
-#endif
-
+*/
 //-------------------------------------------------------------------------------------------------
 
 #endif // (DIGINI_USE_GRAFX == DEF_ENABLED)

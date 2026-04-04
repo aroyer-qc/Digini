@@ -35,9 +35,9 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "./Database/inc/lib_database_wrapper.h"
-#if (DIGINI_USE_GRAFX == DEF_ENABLED)
-  #include "./Grafx/inc/lib_grafx_dbase.h"
-#endif
+//#if (DIGINI_USE_GRAFX == DEF_ENABLED)
+//  #include "./Grafx/inc/lib_grafx_dbase.h"
+//#endif
 
 //-------------------------------------------------------------------------------------------------
 // Global Macro

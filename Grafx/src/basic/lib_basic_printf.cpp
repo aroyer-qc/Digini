@@ -135,8 +135,6 @@ size_t GPrintf::Draw(Box_t* pBox, const char* pFormat, va_list vaArg)
 //-------------------------------------------------------------------------------------------------
 size_t GPrintf::PutString(void)
 {
-    uint16_t   i;
-    uint16_t   j;
     uint32_t   KeepDrawingColor;
     FontInfo_t FontInfo;
 
@@ -156,6 +154,8 @@ size_t GPrintf::PutString(void)
 
     // Print each individual line according to justification
   #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
+    uint16_t   i;
+
     for(i = 0; i < m_Line; i++)
     {
         // Justify each line inside the print box
@@ -165,6 +165,8 @@ size_t GPrintf::PutString(void)
             case _X_LINE_CENTER:  m_Position.X += ((m_BoxSizeX - m_SubLineSizePixX[i]) >> 1); break;
             case _X_LINE_RIGHT:   m_Position.X += (m_BoxSizeX - m_SubLineSizePixX[i]);        break;
         }
+
+        uint16_t   j;
 
         // Print each individual character according to font use, color and all the offset
         for(j = 0; j < m_SubLineSizeChar[i]; j++)
@@ -198,7 +200,8 @@ size_t GPrintf::PutString(void)
                 CLayer::SetColor(Color);
             }
           #endif
-// todo missing code for inverted character
+
+            // todo missing code for inverted character
 
             // Vertical cursor
             if(*(m_pSubLineString[i] + j + 1) == ASCII_CARRIAGE_RETURN)
@@ -249,8 +252,6 @@ size_t GPrintf::PutString(void)
 //-------------------------------------------------------------------------------------------------
 void GPrintf::ParseString(void)
 {
-    uint8_t     k;
-    uint16_t    i;
     uint16_t    j;
     FontInfo_t  FontInfo;
 
@@ -259,11 +260,11 @@ void GPrintf::ParseString(void)
     // Find out how many segment there is to print
     // and get pointer and size on each segment
     //
+  #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
     m_pSubLineString[0] = &m_String[0];
+    uint8_t  k = 0;
 
-    k = 0;
-
-    for(i = 1; i < DIGINI_MAX_PRINT_NUMBER_OF_LINE; i++)
+    for(uint16_t i = 1; i < DIGINI_MAX_PRINT_NUMBER_OF_LINE; i++)
     {
         m_pSubLineString[i] = LIB_strnchr(&m_String[k], m_Size, '\n');
 
@@ -277,6 +278,7 @@ void GPrintf::ParseString(void)
         m_pSubLineString[i]++;                                                              // Put pointer on beginning of the string
         k = (uint8_t)(m_pSubLineString[i] - m_pSubLineString[0]);                           // Get position for the next search point
     }
+  #endif
 
     //***********************************************************************
     //
@@ -291,8 +293,11 @@ void GPrintf::ParseString(void)
     // Get the Font height for this particular font
     DB_Central.Get(&FontInfo, GFX_FONT_INFO, *m_pMovingUsedFontPtr, 0);
 
+  #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
+
+    //**********************************************************************
     // Parse all line
-    for(i = 0; i < m_Line; i++)
+    for(uint16_t i = 0; i < m_Line; i++)
     {
         // Preinit all Parameter for this line
         m_MinY[i]            = 0xFF;
@@ -310,10 +315,10 @@ void GPrintf::ParseString(void)
             }
         }
 
-        m_BoxSizeY += FontInfo.Height;                                                      // Add this line to the total
+        m_BoxSizeY += FontInfo.FontHeight;                                                      // Add this line to the total
         if(i != (m_Line - 1))
         {
-            m_BoxSizeY += FontInfo.Interline;                                               // Add the interline of the previous line but not on the last one
+            m_BoxSizeY += FontInfo.FontInterline;                                               // Add the interline of the previous line but not on the last one
         }
 
         if(m_BoxSizeX < m_SubLineSizePixX[i])                                               // Adjust the box size in X if this line is longer
@@ -323,6 +328,47 @@ void GPrintf::ParseString(void)
 
         m_pMovingUsedFontPtr++;
     }
+
+  #else //  (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
+
+    //**********************************************************************
+    // Parse the line
+    size_t lineSizeChar = m_Size;
+    size_t lineSizePixX = 0;
+
+    for(j = 0; j < lineSizeChar; j++, m_pMovingUsedFontPtr++)
+    {
+        char LoadChar = m_String[j];
+
+        if(LoadChar != ASCII_CARRIAGE_RETURN)
+        {
+          #ifdef GFX_ROM_DBASE_DEF
+            FontInfo_t FontInfo;
+
+            DB_Central.Get(&FontInfo,
+                           GFX_FONT_INFO,
+                           0,                // need the font number here
+                           LoadChar);
+
+            memcpy(&m_FontDescriptor, FontInfo.pDescriptor, sizeof(FontDescriptor_t));
+          //  *m_pMovingUsedFontPtr = m_FontDescriptor[LoadChar];  TODO fix
+
+          #else
+            DB_Central.Get(&m_FontDescriptor,
+                           GFX_FONT_DESC_INFO,
+                           *m_pMovingUsedFontPtr,
+                           LoadChar);
+          #endif
+
+            lineSizePixX += m_FontDescriptor.HorizontalAdvance;
+        }
+    }
+
+    // Final box size
+    m_BoxSizeX = (uint16_t)lineSizePixX;
+    m_BoxSizeY = FontInfo.FontHeight;
+
+  #endif // (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
 
     //**********************************************************************
     //

@@ -1,10 +1,9 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_grafx_skin.h
+//  File : lib_class_custom_resistive_touch.cpp
 //
 //-------------------------------------------------------------------------------------------------
-//
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,34 +23,14 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#pragma once
-
 //-------------------------------------------------------------------------------------------------
-// Expand macro(s)
+// Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_STATIC_SKIN_AS_ENUM(ENUM_ID, SII) ENUM_ID,
+#define LIB_CUSTOM_RESISTIVE_TOUCH_GLOBAL
+#include "./lib_digini.h"
+#undef  LIB_CUSTOM_RESISTIVE_TOUCH_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
-// Typedef(s)
+// Const(s)
 //-------------------------------------------------------------------------------------------------
-
-enum Skin_e
-{
-    INVALID_IMAGE,
-
-  #ifdef STATIC_SKIN_DEF
-    STATIC_SKIN_DEF(EXPAND_X_STATIC_SKIN_AS_ENUM)
-  #endif
-
-    NUMBER_OF_STATIC_IMAGE,                 // All image after this are loaded from external device
-
-  #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
-    #include "Skin_cfg.lst"                 // List of all image in the skin file
-  #endif
-
-    NUMBER_OF_IMAGE,
-};
-
-//-------------------------------------------------------------------------------------------------
-

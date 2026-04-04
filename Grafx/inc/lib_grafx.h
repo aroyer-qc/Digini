@@ -37,7 +37,18 @@
 #include "grafx_cfg.h"
 #include "widget_cfg.h"
 
-#if (GRAFX_USE_GRAFX_CUSTOM_COLOR == DEF_ENABLED)
+#if (GRAFX_USE_DISPLAY_LAYER != DEF_ENABLED)
+  #undef  GRAFX_USE_BACKGROUND_LAYER
+  #define GRAFX_USE_BACKGROUND_LAYER                    DEF_DISABLED
+  #undef  GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER
+  #define GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER       DEF_DISABLED
+  #undef  GRAFX_USE_FOREGROUND_LAYER
+  #define GRAFX_USE_FOREGROUND_LAYER           			DEF_DISABLED
+  #undef  GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER
+  #define GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER       DEF_DISABLED
+#endif
+
+#if (GRAFX_USE_CUSTOM_COLOR == DEF_ENABLED)
 #include "color_cfg.h"
 #endif
 
@@ -45,13 +56,17 @@
 #include "./Digini/inc/lib_label.h"
 #include "./Grafx/inc/lib_grafx_define.h"
 #include "./Grafx/inc/lib_grafx_font.h"
-#include "static_skin_image.h"
-#include "./Grafx/inc/lib_grafx_skin.h"
 #include "grafx_display_layer_cfg.h"
 #include "./Grafx/inc/lib_grafx_enum_x_macro.h"
 #include "./Grafx/inc/lib_grafx_link.h"
+#include "./Grafx/inc/lib_grafx_dbase.h"
+#include "static_image_def.h"
 #include "./Grafx/inc/lib_grafx_enum.h"
 #include "./Grafx/inc/lib_grafx_typedef.h"
+#include "staticImage.h"
+#if (GRAFX_USE_ROM_DATABASE == DEF_ENABLED)
+  #include "StaticFont.h"
+#endif
 #include "./Grafx/inc/widget/lib_class_widget.h"
 #include "./Grafx/inc/widget/lib_widget_variable.h"
 #include "./Grafx/inc/color/lib_grafx_color.h"
@@ -132,6 +147,10 @@ extern const uint32_t __gfx_ram_layer_base__;           // Pointer on display an
 extern const uint32_t __gfx_qspi_data_base__;           // Pointer to database for skin info
 #endif
 
+#ifdef STATIC_IMAGE_DEF
+extern const StaticImageInfo_t* StaticImageInfo[NUMBER_OF_STATIC_IMAGE];
+#endif
+
 //-------------------------------------------------------------------------------------------------
 // Variable(s)
 //--------------------------------------------------------------------------------------------------
@@ -172,7 +191,7 @@ SystemState_e       GRAFX_PostInitialize        (void);
 // Font function
 void                PrintFont                   (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
 
-void                DrawCursorOnCircle          (Skin_e Image, Cartesian_t* pPos, uint16_t Radius, uint16_t Angle);
+void                DrawCursorOnCircle          (ImageID_e Image, Cartesian_t* pPos, uint16_t Radius, uint16_t Angle);
 
 size_t              WidgetPrint                 (Text_t* pText, ServiceReturn_t* pService);
 
@@ -222,7 +241,7 @@ class GPrintf
         uint16_t            m_OffsetJustY;
 
         // Multi line support
-      #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED) // TODO check if DEF_DISABLED is working
+      #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
         uint8_t             m_Line;                                                   // Number of line in the print
         char*               m_pSubLineString  [DIGINI_MAX_PRINT_NUMBER_OF_LINE];      // Pointer on each start of a sub line
         size_t              m_SubLineSizeChar [DIGINI_MAX_PRINT_NUMBER_OF_LINE];      // Size of each line    in caracter

@@ -79,7 +79,7 @@ const SSD2119_InitCMD_t GrafxDriver::InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
 
 void GrafxDriver::Initialize(void* pArg)
 {
-    GrafxGenDriver::Initialize(pArg);
+    //GrafxGenDriver::Initialize(pArg);
 
     // Send the complete list of initialization command to LCD
     for(int i = 0; i < GRAFX_NUMBER_OF_INIT_CMD; i++)
@@ -191,7 +191,7 @@ void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelForm
     VAR_UNUSED(BlendMode);
 }
 
-void GrafxGenDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode)
+void GrafxDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode)
 {
 //    Not supported for now
 
@@ -205,7 +205,7 @@ void GrafxGenDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16
     VAR_UNUSED(BlendMode);
 }
 
-void GrafxGenDriver::CopyLinear(Skin_e Image, Cartesian_t Position, BlendMode_e BlendMode)
+void GrafxDriver::CopyLinear(ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode)
 {
     VAR_UNUSED(Image);
     VAR_UNUSED(Position);

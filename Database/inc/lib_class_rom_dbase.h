@@ -49,7 +49,13 @@
 enum ROM_DBaseItemList_e
 {
     START_ROM_DBASE = DBASE_INDEX_ROM_RANGE - 1,
+
+  #ifdef GFX_ROM_DBASE_DEF
+    GFX_ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ENUM)
+  #endif
+
     ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ENUM)
+
     END_ROM_DBASE,
     NB_ROM_DBASE_ITEMS_CONST = ((END_ROM_DBASE - START_ROM_DBASE) - 1)
 };
@@ -72,7 +78,7 @@ class ROM_DataBase : public CDataBaseInterface
 
         SystemState_e    CheckRange          (uint16_t Record, uint16_t Number, uint16_t SubNumber);
 
-        static const uint8_t*   m_ItemsPointer  [NB_ROM_DBASE_ITEMS_CONST];
+        static const void*      m_ItemsPointer  [NB_ROM_DBASE_ITEMS_CONST];
         static const uint16_t   m_ItemsQTY      [NB_ROM_DBASE_ITEMS_CONST];
         static const uint16_t   m_ItemsSubQTY   [NB_ROM_DBASE_ITEMS_CONST];
         static const size_t     m_ItemSize      [NB_ROM_DBASE_ITEMS_CONST];

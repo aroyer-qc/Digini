@@ -38,7 +38,7 @@
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_ROM_DBASE_AS_ITEM_ADDRESS(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)   (uint8_t*)ITEM_ADDRESS,
+#define EXPAND_X_ROM_DBASE_AS_ITEM_ADDRESS(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)   (void*)ITEM_ADDRESS,
 #define EXPAND_X_ROM_DBASE_AS_ITEMS_QTY(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)      ITEMS_QTY,
 #define EXPAND_X_ROM_DBASE_AS_ITEMS_SUB_QTY(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)  ITEMS_SubQTY,
 #define EXPAND_X_ROM_DBASE_AS_ITEMS_SIZE(ENUM_ID, ITEM_ADDRESS, ITEMS_QTY, ITEMS_SubQTY, ITEM_SIZE)     ITEM_SIZE,
@@ -53,26 +53,42 @@
 //-------------------------------------------------------------------------------------------------
 
 // Create pointer list for each record item
-const uint8_t* ROM_DataBase::m_ItemsPointer[NB_ROM_DBASE_ITEMS_CONST] =                                   // &Array[0][0]
+const void* ROM_DataBase::m_ItemsPointer[NB_ROM_DBASE_ITEMS_CONST] =                                   // &Array[0][0]
 {
+  #ifdef GFX_ROM_DBASE_DEF
+    GFX_ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEM_ADDRESS)
+  #endif
+
     ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEM_ADDRESS)
 };
 
 // Create Quantity list for each record item
 const uint16_t ROM_DataBase::m_ItemsQTY[NB_ROM_DBASE_ITEMS_CONST] =                                       // Array[THIS][]
 {
+  #ifdef GFX_ROM_DBASE_DEF
+    GFX_ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEMS_QTY)
+  #endif
+
     ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEMS_QTY)
 };
 
 // Create SUB Quantity list for each record item
 const uint16_t ROM_DataBase::m_ItemsSubQTY[NB_ROM_DBASE_ITEMS_CONST] =                                    // Array[][THIS]
 {
+  #ifdef GFX_ROM_DBASE_DEF
+    GFX_ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEMS_SUB_QTY)
+  #endif
+
     ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEMS_SUB_QTY)
 };
 
 // Create size list for each record item
 const size_t ROM_DataBase::m_ItemSize[NB_ROM_DBASE_ITEMS_CONST] =                                         // sizeof()
 {
+  #ifdef GFX_ROM_DBASE_DEF
+    GFX_ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEMS_SIZE)
+  #endif
+
     ROM_DBASE_DEF(EXPAND_X_ROM_DBASE_AS_ITEMS_SIZE)
 };
 

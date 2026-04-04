@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_font.h
+//  File : lib_class_custom_resistive_touch.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,43 +27,34 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include(s)
+// Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "./lib_digini.h"
-
-
-//-------------------------------------------------------------------------------------------------
-
-#if (DIGINI_USE_GRAFX == DEF_ENABLED)
+// Number of event supported by this device
+#define PDI_NUMBER_OF_EVENT             1
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class CFont
+class CustomResistiveTouch : PointingDeviceInterface
 {
-  public:
+    public:
 
-                CFont()                             { m_Font = INVALID_FONT; }     // Constructor
-
-    Font_e      Get(void)                           { return m_Font; }
-    void        Set(Font_e Font)                    { m_Font = Font; }
-
-  private:
-
-    Font_e      m_Font;
+        SystemState_e   Initialize                      (void* pArg)                { return SYS_READY; }
+        void            Reset                           (void)                      {};
+        uint8_t         DetectEvent                     (void)                      { return 0; }
+        void            GetXY                           (Cartesian_t* pCartesian)   { VAR_UNUSED(pCartesian); }
 };
 
-
-extern CFont  FontDefault;
-
 //-------------------------------------------------------------------------------------------------
-// Function prototype(s)
+// Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-void FONT_Initialize();
+extern class CustomResistiveTouch        PDI_ResistiveTouch;
+extern class PointingDeviceInterface*    PDI_pDriver;
 
-//-------------------------------------------------------------------------------------------------
-
-#endif // DIGINI_USE_GRAFX
+#ifdef LIB_CUSTOM_RSESISTIVE_TOUCH_GLOBAL
+ class   CustomResistiveTouch              PDI_ResistiveTouch;
+ class   PointingDeviceInterface*          PDI_pDriver = &PDI_ResistiveTouch;
+#endif

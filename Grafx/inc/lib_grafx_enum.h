@@ -27,6 +27,12 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+// Macro(s)
+//-------------------------------------------------------------------------------------------------
+
+#define EXPAND_X_STATIC_IMAGE_AS_ENUM(ENUM_ID, SII) ENUM_ID,
+
+//-------------------------------------------------------------------------------------------------
 // Typedef(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -211,6 +217,23 @@ enum SlideDir_e
     SLIDING_UP_DE_OVLAP         = 0x13,
     SLIDING_DOWN_DE_OVLAP       = 0x14,
     SLIDING_DE_OVERLAP_MASK     = 0x10,
+};
+
+enum ImageID_e
+{
+    INVALID_IMAGE               = - 1,
+
+  #ifdef STATIC_IMAGE_DEF
+    STATIC_IMAGE_DEF(EXPAND_X_STATIC_IMAGE_AS_ENUM)
+  #endif
+
+    NUMBER_OF_STATIC_IMAGE,                 // All image after this are loaded from external device
+
+  #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
+    #include "Skin_cfg.lst"                 // List of all image in the skin file
+  #endif
+
+    NUMBER_OF_IMAGE,
 };
 
 //-------------------------------------------------------------------------------------------------

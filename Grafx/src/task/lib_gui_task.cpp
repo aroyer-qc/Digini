@@ -127,7 +127,7 @@ void GUI_myClassTask::Run()
     // There is no force refresh. (Use for example to refresh page on language change)
     m_ForceRefresh = false;
 
-  #if defined(STATIC_SKIN_DEF)
+  #if (GRAFX_USE_LOAD_SKIN  == DEF_ENABLED) && defined(STATIC_SKIN_DEF)
     // Static skin must be loaded
     while(SKIN_pTask->IsStaticSkinLoaded() != true)
     {

@@ -165,7 +165,7 @@ void WidgetLabelList::Draw(ServiceReturn_t* pService)
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
     CLayer::SetDrawing(((m_pLabelList->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
-  #else
+  #else // (GRAFX_DEBUG_GUI == DEF_ENABLED)
 
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
     ForeLayerToDraw = CONSTRUCTION_FOREGROUND_LAYER;
@@ -173,23 +173,23 @@ void WidgetLabelList::Draw(ServiceReturn_t* pService)
     ForeLayerToDraw = FOREGROUND_DISPLAY_LAYER_0;
    #endif
 
-    #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
+   #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
     BackLayerToDraw = CONSTRUCTION_BACKGROUND_LAYER;
-    #else
+   #else
     BackLayerToDraw = BACKEGROUND_DISPLAY_LAYER_0;
-    #endif
+   #endif
 
-    #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
+   #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
     if(SKIN_pTask->IsSkinLoaded() == true)
     {
         CLayer::SetDrawing(((m_pLabelList->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BackLayerToDraw : ForeLayerToDraw);
     }
     else
-    #endif
+   #endif
     {
         CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);   // On loading with do print directly on foreground layer
     }
-   #endif
+  #endif //  (GRAFX_DEBUG_GUI == DEF_ENABLED)
 
     m_pLabelList->Text.Label = m_pLabelList->Label[((ServiceType1_t*)pService)->Data];
     WidgetPrint(&m_pLabelList->Text, pService);

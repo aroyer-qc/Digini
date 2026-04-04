@@ -156,9 +156,8 @@ class GrafxDriver : public GrafxGenDriver
         void            BlockCopy           (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
         void            Copy                (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
         void            CopyLinear          (void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
-void CopyLinear      (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
-void CopyLinear      (Skin_e Image, Cartesian_t Position, BlendMode_e BlendMode);
-
+        void            CopyLinear          (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
+        void            CopyLinear          (ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode);
         void            DrawLine            (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
         void            DrawPixel           (uint16_t PosX, uint16_t PosY);
         void            DrawRectangle       (Box_t* pBox, uint8_t Mode);

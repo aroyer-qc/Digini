@@ -41,6 +41,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define EXPAND_X_LAYER_AS_CALC(ENUM_ID, WORK_LAYER, PIXEL_FORMAT, SIZE_X, SIZE_Y) ((SIZE_X * SIZE_Y) * GFX_PixelSize[PIXEL_FORMAT]) +
+#define EXPAND_X_STATIC_IMAGE_AS_POINTER(ENUM_ID, SII) SII,
 
 //-------------------------------------------------------------------------------------------------
 // const(s)
@@ -51,6 +52,13 @@
 const uint32_t GFX_LoadingAddress =
     LAYER_DEF(EXPAND_X_LAYER_AS_CALC)
     GFX_BASE_ADDRESS;
+#endif
+
+#ifdef STATIC_IMAGE_DEF
+const StaticImageInfo_t* StaticImageInfo[NUMBER_OF_STATIC_IMAGE] =
+{
+    STATIC_IMAGE_DEF(EXPAND_X_STATIC_IMAGE_AS_POINTER)
+};
 #endif
 
 //-------------------------------------------------------------------------------------------------
@@ -124,7 +132,6 @@ SystemState_e GRAFX_PostInitialize(void)
     SystemState_e State;
   #endif
     nOS_Error     Error;
-    uint32_t      FreePointer;
 
   #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
     DB_Central.Set(&GFX_LoadingAddress, GFX_FREE_RAM_POINTER, 0, 0);   // Record the free RAM pointer in database at reload ID
@@ -141,6 +148,7 @@ SystemState_e GRAFX_PostInitialize(void)
 
   #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
     //  SKIN_pTask need then at the same pointer
+    uint32_t      FreePointer;
     DB_Central.Get(&FreePointer, GFX_FREE_RAM_POINTER,  0, 0);
     LIB_AlignPointer(FreePointer);
     DB_Central.Set(&FreePointer, GFX_FREE_RAM_POINTER,  0, 0);

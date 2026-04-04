@@ -319,7 +319,6 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e PixelForm
 //  Note(s):        Source is linear
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_SOFT_COPY_LINEAR
 void GrafxGenDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode)
 {
 //    Not supported for now
@@ -333,7 +332,6 @@ void GrafxGenDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16
     VAR_UNUSED(PixelFormat);
     VAR_UNUSED(BlendMode);
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -376,7 +374,7 @@ void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, Box_t*
 //   Description:   Copy a rectangle region from a layer to another layer
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_SOFT_COPY_LAYER_TO_LAYER
+#if (GRAFX_USE_DISPLAY_LAYER == DEF_ENABLED)
 void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height)
 {
     Box_t        Box;
@@ -405,7 +403,7 @@ void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16
 //   Description:   Copy a rectangle region from a layer to another layer
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_SOFT_COPY_LAYER_TO_LAYER
+#if (GRAFX_USE_DISPLAY_LAYER == DEF_ENABLED)
 void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16_t SrcX, uint16_t SrcY, uint16_t DstX, uint16_t DstY, uint16_t Width, uint16_t Height)
 {
     CLayer*      pLayer;

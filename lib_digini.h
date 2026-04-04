@@ -75,7 +75,7 @@
 #include "dma_cfg.h"
 
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
-#include "grafx_cfg.h"
+//#include "grafx_cfg.h"
 #endif
 
 #if (DIGINI_USE_CONSOLE == DEF_ENABLED)
@@ -124,7 +124,7 @@
 //
 #include "./Peripheral/inc/port/lib_cpu_specific.h"
 #include "./Digini/inc/lib_assert.h"
-#include "./Database/inc/lib_class_database.h"
+//#include "./Database/inc/lib_class_database.h"
 #include "./Digini/inc/lib_class_cbi.h"                      // Callback interface
 #include "./Digini/inc/lib_label.h"
 #include "./String/inc/lib_string.h"
@@ -317,7 +317,10 @@ class NetworkContext;
 
 #endif // (DIGINI_USE_FATFS == DEF_ENABLED)
 
+//#include "./Grafx/inc/lib_grafx_dbase.h"
 #include "./Grafx/inc/lib_grafx.h"
+#include "./Database/inc/lib_class_database.h"
+
 
 // it should not be here!!!  this is APP level
 #if (DIGINI_USE_ETHERNET == DEF_ENABLED)

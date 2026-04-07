@@ -52,13 +52,20 @@ const uint16_t DaysSoFar[12]     = {0, 31, 59, 90, 120, 151, 181, 212, 243, 274,
 //-------------------------------------------------------------------------------------------------
 void LIB_Delay_uSec(uint32_t Delay)
 {
+  #ifdef DWT
+    uint32_t Cycles = (SYSTEM_CORE_CLOCK / 1000000U) * Delay;
+    uint32_t Start  = DWT->CYCCNT;
+
+    while ((DWT->CYCCNT - Start) < Cycles) {};
+  #else
     uint32_t i;
     uint32_t j;
 
     for(i = 0; i < Delay; i++)
     {
-        for(j = 0; j <= CFG_DELAY_TIMING_LOOP_VALUE_FOR_1_USEC; j++);
+        for(j = 0; j <= CFG_DELAY_TIMING_LOOP_VALUE_FOR_1_USEC; j++) {};
     }
+  #endif  
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -76,6 +83,8 @@ void LIB_Delay_mSec(uint32_t Delay)
 {
     LIB_Delay_uSec(Delay * 1000);
 }
+
+
 
 //-------------------------------------------------------------------------------------------------
 //

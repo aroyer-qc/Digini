@@ -278,7 +278,7 @@ void SystemInit(void)
   #endif
 
     Retry = 0;
-    SET_BIT(RCC->CR, RCC_CR_CSION);                 // CSI must be enabled for IO compensation cell
+    SET_BIT(RCC->CR, RCC_CR_CSION);                                                                     // CSI must be enabled for IO compensation cell
 
     while((READ_BIT(RCC->CR, RCC_CR_CSIRDY) == 0) && (Retry < CFG_SYSTEM_CLOCK_NUMBER_OF_RETRY))        // Wait for HSE to be ready B4 enabling PLL
     {
@@ -289,13 +289,21 @@ void SystemInit(void)
     SET_BIT(RCC->CFGR, CFG_RCC_CFGR_SW_CSI);                                                            // Switch to HSE
   #endif
 
-  SET_BIT(SYSCFG->CCCSR, SYSCFG_CCCSR_EN);          // Enables the I/O Compensation Cell
+  SET_BIT(SYSCFG->CCCSR, SYSCFG_CCCSR_EN);                                                              // Enables the I/O Compensation Cell
+
+//--------------------------------------------------------------------------
+
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;                                                     // Enable DWT
+    DWT->CYCCNT = 0;                                                                                    // Reset cycle counter
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;                                                                // Start cycle counter
+
+//--------------------------------------------------------------------------
 
   /* Configure the Vector Table location add offset address ------------------*/
   #ifdef VECT_TAB_SRAM
-    SCB->VTOR = D1_AXISRAM_BASE  | VECT_TAB_OFFSET; // Vector Table Relocation in Internal D1 AXI-RAM
+    SCB->VTOR = D1_AXISRAM_BASE  | VECT_TAB_OFFSET;                                                     // Vector Table Relocation in Internal D1 AXI-RAM
   #else
-    SCB->VTOR = FLASH_BANK1_BASE | VECT_TAB_OFFSET; // Vector Table Relocation in Internal FLASH
+    SCB->VTOR = FLASH_BANK1_BASE | VECT_TAB_OFFSET;                                                     // Vector Table Relocation in Internal FLASH
   #endif
 }
 #endif
@@ -315,23 +323,30 @@ void SystemInit(void)
 #ifdef CORE_CM4
 void SystemInit(void)
 {
-    __asm volatile("cpsid i");                        // Disable IRQ
+    __asm volatile("cpsid i");                                                                          // Disable IRQ
 
     // FPU settings
   #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
-    SCB->CPACR |= ((3 << (10 * 2)) | (3 << (11 * 2)));  // set CP10 and CP11 full access
+    SCB->CPACR |= ((3 << (10 * 2)) | (3 << (11 * 2)));                                                  // Set CP10 and CP11 full access
   #endif
 
     // SEVONPEND enabled so that an interrupt coming from the CPU(n) interrupt signal is detectable
     // by the CPU after a WFI/WFE instruction.
     SCB->SCR |= SCB_SCR_SEVONPEND_Pos;
 
+//--------------------------------------------------------------------------
+
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;                                                     // Enable DWT
+    DWT->CYCCNT = 0;                                                                                    // Reset cycle counter
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;                                                                // Start cycle counter
+
+//--------------------------------------------------------------------------
 
     // Configure the Vector Table location add offset address
   #ifdef VECT_TAB_SRAM
-    SCB->VTOR = D2_AHBSRAM_BASE | VECT_TAB_OFFSET;  // Vector Table Relocation in Internal SRAM
+    SCB->VTOR = D2_AHBSRAM_BASE | VECT_TAB_OFFSET;                                                      // Vector Table Relocation in Internal SRAM
   #else
-    SCB->VTOR = FLASH_BANK2_BASE | VECT_TAB_OFFSET; // Vector Table Relocation in Internal FLASH
+    SCB->VTOR = FLASH_BANK2_BASE | VECT_TAB_OFFSET;                                                     // Vector Table Relocation in Internal FLASH
   #endif
 }
 #endif

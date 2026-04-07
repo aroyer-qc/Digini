@@ -147,7 +147,7 @@ class DMA_Driver
 
 #if (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
 void DMA_MEM2MEM_Initialize     (void);
-void DMA_Memcpy                 (void* pSource, void* pDestination, size_t Size);
+void DMA_Memcpy                 (void* pSource, void* pDestination, size_t Size, bool SourceIncrement = true);
 #endif
 
 //-------------------------------------------------------------------------------------------------

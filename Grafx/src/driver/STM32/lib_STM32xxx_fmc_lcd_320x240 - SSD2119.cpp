@@ -49,11 +49,10 @@ const SSD2119_InitCMD_t GrafxDriver::InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
     {SSD2119_OSCILLATOR_START_REGISTER,             0x0001},        // Starts the internal oscillator. This must be done before any display timing registers are touched.
     {SSD2119_SLEEP_MODE_REGISTER,                   0x0000},
     {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0033},
-    {SSD2119_ENTRY_MODE_REGISTER,                   0x6870},        // Color format (16-bit, 18-bit, etc.), Horizontal/vertical increment mode, BGR/RGB order, Addressing mode. :0x6874 is the standard 16-bit 565, left‑to‑right, top-to-bottom mode.
+    {SSD2119_ENTRY_MODE_REGISTER,        /*0x6870*/ 0x6874},        // Color format (16-bit, 18-bit, etc.), Horizontal/vertical increment mode, BGR/RGB order, Addressing mode. :0x6874 is the standard 16-bit 565, left‑to‑right, top-to-bottom mode.
     {SSD2119_LCD_DRIVE_AC_CONTROL_REGISTER,         0x0600},        // Controls: AC drive frequency, Polarity, Line inversion. : 0x0600 is a stable default for most TFT glass.
     {SSD2119_POWER_CONTROL_1_REGISTER,              0x4A38},        // Main power control: Booster, Voltage regulator, Reference voltage. This is part of the power‑up ramp.
-//    {SSD2119_OUTPUT_CONTROL_REGISTER,               0x70EF},        // Controls: Scan direction, Gate driver shift direction, LCD panel type, Display resolution mapping. : 0x72EF is a common value for 320×240 TFT panels.
-    {SSD2119_OUTPUT_CONTROL_REGISTER,               0x32EF},        // Controls: Scan direction, Gate driver shift direction, LCD panel type, Display resolution mapping. : 0x72EF is a common value for 320×240 TFT panels.
+    {SSD2119_OUTPUT_CONTROL_REGISTER,    /*0x32EF*/ 0x72EF},        // Controls: Scan direction, Gate driver shift direction, LCD panel type, Display resolution mapping. : 0x72EF is a common value for 320×240 TFT panels.
     {SSD2119_GATE_SCAN_START_REGISTER,              0x0000},        // Start scanning from gate line 0.
     {SSD2119_FRAME_FREQUENCY_REGISTER,              0xA000},        // Primary frame frequency control.
     {SSD2119_VCOM_OTP_1_REGISTER,                   0x0006},        // Sets VCOM amplitude from OTP block. This stabilizes the common electrode voltage and reduces flicker.
@@ -77,19 +76,31 @@ const SSD2119_InitCMD_t GrafxDriver::InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
     {SSD2119_GAMMA_CONTROL_8_REGISTER,              0x0201},
     {SSD2119_GAMMA_CONTROL_9_REGISTER,              0x1200},
     {SSD2119_GAMMA_CONTROL_10_REGISTER,             0x0900},
-//    {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0033},        // Final display enable: Turns on the display, Enables scanning, Enables frame output. : 0x0033 = display ON, internal oscillator ON, scanning enabled.
+    {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0033},        // Final display enable: Turns on the display, Enables scanning, Enables frame output. : 0x0033 = display ON, internal oscillator ON, scanning enabled.
 };
 
 //-------------------------------------------------------------------------------------------------
+//
+//  Name:           Initialize
+//
+//  Parameter(s):   void*      pArg       Optional initialization argument passed to the driver.
+//
+//  Return:         None
+//
+//  Description:    Performs the complete initialization sequence of the graphics driver.
+//                  Resets the LCD controller, reads the device identification code, and
+//                  sends the full initialization command table to configure the SSD2119.
+//                  Once the controller is ready, the foreground display layer is cleared
+//                  to a known state.
+//
+//-------------------------------------------------------------------------------------------------
 static uint16_t ChipID;
-
-
 void GrafxDriver::Initialize(void* pArg)
 {
     GrafxGenDriver::Initialize(pArg);
 
     IO_SetPinHigh(IO_LCD_RESET);
-    nOS_Sleep(5);
+    LIB_Delay_mSec(5);
 
     ChipID = ReadCommand(SSD2119_DEVICE_CODE_READ_REGISTER);
 
@@ -100,11 +111,11 @@ void GrafxDriver::Initialize(void* pArg)
 
         if(InitCMD[i].Register == SSD2119_SLEEP_MODE_REGISTER)
         {
-            nOS_Sleep(30);
+            LIB_Delay_mSec(30);
         }
     }
 
-   // ClearLayer(FOREGROUND_DISPLAY);
+    ClearLayer(FOREGROUND_DISPLAY);
 
 // test
     CLayer::SetColor(BLUE);
@@ -112,7 +123,22 @@ void GrafxDriver::Initialize(void* pArg)
 }
 
 //-------------------------------------------------------------------------------------------------
-static uint32_t COUNT = 0;
+//
+//  Name:           ClearLayer
+//
+//  Parameter(s):   Layer_e    Layer      Specifies the display layer to clear.
+//
+//  Return:         None
+//
+//  Description:    Clears the selected display layer by writing a constant color value to the
+//                  entire GRAM region associated with this driver. The GRAM write pointer is
+//                  positioned at the origin before sequential pixel data is written.
+//
+//  Note(s):        Only layers managed directly by this driver are cleared. Any additional
+//                  layers are handled by the base graphics class.
+//
+//-------------------------------------------------------------------------------------------------
+//static uint32_t COUNT = 0;
 void GrafxDriver::ClearLayer(Layer_e Layer)
 {
    	if(Layer == FOREGROUND_DISPLAY)
@@ -122,8 +148,12 @@ void GrafxDriver::ClearLayer(Layer_e Layer)
         for(uint32_t i = 0; i < GRAFX_DRIVER_SIZE; i++)
         {
             WriteData(0x001F);
-            COUNT++;
+  //          COUNT++;
         }
+    }
+    else
+    {
+        GrafxGenDriver::ClearLayer(Layer);
     }
 }
 
@@ -193,6 +223,8 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
     VAR_UNUSED(pDstPos);
     VAR_UNUSED(SrcPixelFormat);
     VAR_UNUSED(BlendMode);
+    
+    // We are not calling the gen driver. because we don't have that functionnality 
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -314,17 +346,6 @@ void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16
    // Write(Color);
 }
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           PrintFont
-//
-//  Parameter(s):   FONT_sDescriptor*   pDescriptor
-//                  Cartesian_t*        pPos
-//  Return:         none
-//
-//  Description:    This function will print a font to drawing layer with the drawing color
-//
-//-------------------------------------------------------------------------------------------------
 void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 {
     //s32_t         AreaConfig;
@@ -356,27 +377,46 @@ pLayer->GetTextColor();
 */
 }
 
-//-------------------------------------------------------------------------------------------------
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SetRAM_Pointer
+//
+//  Parameter(s):   uint16_t   PosX       Specifies the horizontal GRAM address.
+//                  uint16_t   PosY       Specifies the vertical   GRAM address.
+//
+//  Return:         None
+//
+//  Description:    Positions the internal GRAM write pointer of the LCD controller.
+//                  The X address register is written first, followed by the RAM data
+//                  register selection. The Y address register is then updated to
+//                  complete the pointer setup before pixel
+//
+//-------------------------------------------------------------------------------------------------
 void GrafxDriver::SetRAM_Pointer(uint16_t PosX, uint16_t PosY)
 {
     WriteCommand(SSD2119_X_RAM_ADDRESS_REGISTER, PosX);
-	WriteCommand(SSD2119_Y_RAM_ADDRESS_REGISTER, PosY);
 	SetWriteRAM_Ready();
+	WriteCommand(SSD2119_Y_RAM_ADDRESS_REGISTER, PosY);
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ReadCommand
+//
+//  Parameter(s):   uint8_t    Register    Specifies the register address to read.
+//
+//  Return:         uint16_t                Register value returned by the LCD controller.
+//
+//  Description:    Sends a register index to the LCD controller, waits for the bus
+//                  to stabilize, then reads the corresponding 16‑bit data from the
+//                  LCD RAM interface.
+//
+//-------------------------------------------------------------------------------------------------
 uint16_t GrafxDriver::ReadCommand(uint8_t Register)
 {
     LCD_REG = Register;
-
-    uint16_t Count = 112;
-    do
-    {
-        Count--;
-        __asm("nop");
-    }
-    while(Count != 0);
-
+    LIB_Delay_uSec(3);
     return LCD_RAM;
 }
 

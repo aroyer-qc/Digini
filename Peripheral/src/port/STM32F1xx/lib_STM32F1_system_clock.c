@@ -113,6 +113,14 @@ void SystemInit(void)
 
     RCC->CIR = 0;                                                                           // Disable and clear all interrupts
 
+//--------------------------------------------------------------------------
+
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;                                         // Enable DWT
+    DWT->CYCCNT = 0;                                                                        // Reset cycle counter
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;                                                    // Start cycle counter
+
+//--------------------------------------------------------------------------
+
     // Configure the Vector Table location add offset address ------------------
   #ifdef VECT_TAB_SRAM
     SCB->VTOR = SRAM_BASE | VECT_TAB_OFFSET;                                                // Vector Table Relocation in Internal SRAM

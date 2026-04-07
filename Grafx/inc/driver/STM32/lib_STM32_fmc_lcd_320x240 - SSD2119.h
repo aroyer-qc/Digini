@@ -67,7 +67,7 @@
 //#define GRAFX_USE_SOFT_COPY                       // We use this driver DMA for this function
 //#define GRAFX_USE_SOFT_FILL                       // We use this driver DMA for this function
 
-#define GRAFX_NUMBER_OF_INIT_CMD                        35
+#define GRAFX_NUMBER_OF_INIT_CMD                        36
 
 // SSD2119 Command Set
 #define SSD2119_DEVICE_CODE_READ_REGISTER               0x00

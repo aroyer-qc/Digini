@@ -166,12 +166,12 @@ void SystemInit(void)
    #endif
   
    #if (CFG_RTC_CLOCK_SOURCE == CFG_RCC_BDCR_RTCSEL_LSE)
-    SET_BIT(RCC->BDCR, RCC_BDCR_LSEON);                     // External 32.768 KHz oscillator ON
+    SET_BIT(RCC->BDCR, RCC_BDCR_LSEON);                                                 // External 32.768 KHz oscillator ON
     while((RCC->BDCR & RCC_BDCR_LSERDY) == 0);
    #endif
 
    #if (CFG_RTC_CLOCK_SOURCE == CFG_RCC_BDCR_RTCSEL_LSI)
-    SET_BIT(RCC->CSR, RCC_CSR_LSION;                        // Internal 32 KHz oscillator ON
+    SET_BIT(RCC->CSR, RCC_CSR_LSION;                                                    // Internal 32 KHz oscillator ON
     while((RCC->CSR & RCC_CSR_LSIRDY) == 0);
    #endif
 
@@ -182,6 +182,14 @@ void SystemInit(void)
 //--------------------------------------------------------------------------
 
     RCC->CIR = 0;                                                                       // Disable all interrupts
+
+//--------------------------------------------------------------------------
+
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;                                     // Enable DWT
+    DWT->CYCCNT = 0;                                                                    // Reset cycle counter
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;                                                // Start cycle counter
+
+//--------------------------------------------------------------------------
 
     // Configure the Vector Table location add offset address ------------------
   #ifdef VECT_TAB_SRAM

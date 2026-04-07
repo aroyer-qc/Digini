@@ -104,7 +104,35 @@ void GrafxGenDriver::Initialize(void* pArg)
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::ClearLayer(Layer_e Layer)
 {
-	VAR_UNUSED(Layer);
+    CLayer*  pLayer  = &LayerTable[Layer];
+    uint32_t Address = pLayer->GetAddress();
+
+  #ifdef DMA2D
+  
+    uint32_t  PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
+    uint32_t  AreaConfig  = (GRAFX_DRIVER_SIZE_X << 16) | GRAFX_DRIVER_SIZE_Y;
+
+    // Configure DMA2D for Register-to-Memory (constant color fill)
+    DMA2D->CR      = DMA2D_R2M | DMA2D_CR_TCIE;
+    DMA2D->OCOLR   = pLayer->GetColor();                        // Constant color
+    DMA2D->OMAR    = Address;                                   // Destination address
+    DMA2D->OOR     = 0;                                         // No line offset
+    DMA2D->OPFCCR  = PixelFormat;                               // Pixel format
+    DMA2D->NLR     = AreaConfig;                                // Width + Height
+    
+    SET_BIT(DMA2D->CR, DMA2D_CR_START);                         // Start operation
+    while (DMA2D->CR & DMA2D_CR_START);                         // Wait for completion
+  
+  #else
+
+    uint32_t PixelSize = pLayer->GetPixelSize();
+    uint32_t Color     = pLayer->GetColor();
+    uint32_t Size      = GRAFX_DRIVER_SIZE_X * GRAFX_DRIVER_SIZE_Y * PixelSize;
+
+    // Clear using DMA memory-to-memory (source does NOT increment)
+    DMA_Memcpy(&Color, (void*)Address, Size, false);
+    
+  #endif
 }
 
 //-------------------------------------------------------------------------------------------------

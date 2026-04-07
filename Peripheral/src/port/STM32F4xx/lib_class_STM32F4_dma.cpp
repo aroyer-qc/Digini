@@ -311,59 +311,74 @@ void DMA_MEM2MEM_Initialize(void)
 //  Description:    Initialize the DMA Memory to memory transfer
 //
 //-------------------------------------------------------------------------------------------------
-void DMA_Memcpy(void* pSource, void* pDestination, size_t Size)
+void DMA_Memcpy(void* pSource, void* pDestination, size_t Size, bool SourceIncrement)
 {
     uint32_t AlignedSize;
-    uint8_t* pSrc8 = (uint8_t *)pSource;
-    uint8_t* pDst8 = (uint8_t *)pDestination;
+    uint8_t* pSrc8 = (uint8_t*)pSource;
+    uint8_t* pDst8 = (uint8_t*)pDestination;
 
-    // Try to acquire the DMA mutex (timeout: 100 ms)
     if(nOS_MutexLock(&MEM2MEM_Mutex, DMA_MUTEX_GUARD_TIME) != NOS_OK)
     {
-        return;                                         // DMA is busy or unavailable
+        return;
     }
 
-    RCC->AHB1ENR |= DMA_MEM2MEM_ENABLE;                 // Enable DMAx clock
-    DMA_MEM2MEM_STREAM->CR = 0;                         // Use DMAx Stream, Channel x
-    while(DMA_MEM2MEM_STREAM->CR & DMA_SxCR_EN);        // Wait until disabled
-    DMA_MEM2MEM_MODULE->DMA_IFCR = DMA_FLAG;            // Clear interrupt flags
-    AlignedSize = Size & ~0x3;                          // Calculate aligned size (multiple of 4)
+    RCC->AHB1ENR |= DMA_MEM2MEM_ENABLE;
 
-    if(Size >= 4)                                       // Start DMA transfer if size ≥ 4 bytes
+    DMA_MEM2MEM_STREAM->CR = 0;
+    while(DMA_MEM2MEM_STREAM->CR & DMA_SxCR_EN);
+
+    DMA_MEM2MEM_MODULE->DMA_IFCR = DMA_FLAG;
+
+    AlignedSize = Size & ~0x3;
+
+    if(AlignedSize >= 4)
     {
-        // Configure DMA
         DMA_MEM2MEM_STREAM->PAR  = (uint32_t)pSource;
         DMA_MEM2MEM_STREAM->M0AR = (uint32_t)pDestination;
-        DMA_MEM2MEM_STREAM->NDTR = Size / 4;
-        DMA_MEM2MEM_STREAM->CR   = DMA_SxCR_CHSEL_0 * DMA_MEM2MEM_CHANNEL |
-                                   DMA_SxCR_DIR_0   |
-                                   DMA_SxCR_MINC    |
-                                   DMA_SxCR_PINC    |
-                                   DMA_SxCR_MSIZE_0 |
-                                   DMA_SxCR_PSIZE_0 |
-                                   DMA_SxCR_TCIE;
-        DMA_MEM2MEM_STREAM->CR |= DMA_SxCR_EN;              // Enable DMA stream
+        DMA_MEM2MEM_STREAM->NDTR = AlignedSize / 4;
+
+        DMA_MEM2MEM_STREAM->CR   =
+              (DMA_MEM2MEM_CHANNEL << DMA_SxCR_CHSEL_Pos)
+            | DMA_SxCR_DIR_0
+            | DMA_SxCR_MINC
+            | ((SourceIncrement == true) ? DMA_SxCR_PINC : 0)
+            | DMA_SxCR_MSIZE_0
+            | DMA_SxCR_PSIZE_0;
+
+        DMA_MEM2MEM_STREAM->CR |= DMA_SxCR_EN;
     }
 
-    // Manually copy remaining bytes (1–3) while DMA runs
-    for(uint32_t i = AlignedSize; i < Size; ++i)
+    for(uint32_t i = AlignedSize; i < Size; i++)
     {
         pDst8[i] = pSrc8[i];
     }
 
-    if(Size >= 4)
+    if(AlignedSize >= 4)
     {
-        while((DMA2->LISR & DMA_LISR_TCIF0) == 0)           // Wait for completion
+        for(;;)
         {
-            nOS_Yield(); // or maybe nOS_Sleep(1);
+            uint32_t isr = DMA_MEM2MEM_MODULE->DMA_ISR;
+
+            if(isr & DMA_TCIF)
+            {
+                break;
+            }
+
+            if(isr & DMA_ERRIF)
+            {
+                break;
+            }
+
+            nOS_Yield();
         }
 
-        DMA_MEM2MEM_MODULE->DMA_IFCR = DMA_FLAG;            // Clear transfer complete flag
-        DMA_MEM2MEM_STREAM->CR &= ~DMA_SxCR_EN;             // Disable stream
+        DMA_MEM2MEM_MODULE->DMA_IFCR = DMA_FLAG;
+
+        DMA_MEM2MEM_STREAM->CR &= ~DMA_SxCR_EN;
         while(DMA_MEM2MEM_STREAM->CR & DMA_SxCR_EN);
     }
 
-    nOS_MutexUnlock(&MEM2MEM_Mutex);                        // Release the mutex
+    nOS_MutexUnlock(&MEM2MEM_Mutex);
 }
 
 #endif // (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)

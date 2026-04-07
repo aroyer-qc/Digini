@@ -109,10 +109,6 @@ SystemState_e PDI_myClassTask::Initialize(PointingDeviceInterface* pDriver, uint
             m_Orientation = Orientation;
             State         = SYS_READY;
         }
-
-      #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-        myStacktistic.Register(&m_Stack[0], PDI_TASK_STACK_SIZE, "Digini PDI");
-      #endif
     }
 
     return State;
@@ -133,15 +129,15 @@ SystemState_e PDI_myClassTask::Initialize(PointingDeviceInterface* pDriver, uint
 //-------------------------------------------------------------------------------------------------
 void PDI_myClassTask::Run()
 {
-    ServiceEvent_e      CurrentState;
-    ServiceEvent_e      Event;
-    Widget_e            EventWidgetID;
-    Widget_e            LastEventWidgetID;
-    Widget_e            HoldEventWidgetID;
-    uint16_t            ReleasedDebounceCount;
-    uint32_t            PressedCount;
-    bool                SuperKeyTrigged;
-    MsgRefresh_t        Msg;
+    ServiceEvent_e CurrentState;
+    ServiceEvent_e Event;
+    Widget_e       EventWidgetID;
+    Widget_e       LastEventWidgetID;
+    Widget_e       HoldEventWidgetID;
+    uint16_t       ReleasedDebounceCount;
+    uint32_t       PressedCount;
+    bool           SuperKeyTrigged;
+    MsgRefresh_t   Msg;
 
     CurrentState          = SERVICE_IDLE;
     Event                 = SERVICE_NO_EVENT;

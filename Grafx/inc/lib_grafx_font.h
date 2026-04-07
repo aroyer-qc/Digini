@@ -181,7 +181,7 @@ const StaticFontDescriptor_t FontDesc8[96] =
 //#pragma section rom SectionRaw8
 const uint8_t FontRaw8[664] =
 {
-    // caracter 32 (space) has no data                                                 //  32  ' '
+    // character 32 (space) has no data                                                //  32  ' '
     0xF9, 0x19,                                                                        //  33  '!'
     0x91, 0xB1, 0xB1, 0x90,                                                            //  34  '"'
     0x19, 0x09, 0x09, 0x09, 0x0E, 0x09, 0x09, 0x0E, 0x09, 0x09, 0x09, 0x09, 0x10,      //  35  '#'

@@ -52,13 +52,6 @@
 #define GRAFX_DRIVER_SIZE_Y                         240
 #define GRAFX_DRIVER_SIZE                           (GRAFX_DRIVER_SIZE_X * GRAFX_DRIVER_SIZE_Y)
 
-//#define GRAFX_HSYNC                                 2               // Horizontal synchronization
-//#define GRAFX_HBP                                   2               // Horizontal back porch
-//#define GRAFX_HFP                                   2               // Horizontal front porch
-//#define GRAFX_VSYNC                                 1               // Vertical synchronization
-//#define GRAFX_VBP                                   2               // Vertical back porch
-//#define GRAFX_VFP                                   2               // Vertical front porch
-
 //#define GRAFX_USE_SOFT_COPY_LINEAR
 //#define GRAFX_USE_SOFT_COPY_LAYER_TO_LAYER
 //#define GRAFX_USE_SOFT_PIXEL                      // We use this driver DMA for this function
@@ -74,7 +67,7 @@
 //#define GRAFX_USE_SOFT_COPY                       // We use this driver DMA for this function
 //#define GRAFX_USE_SOFT_FILL                       // We use this driver DMA for this function
 
-#define GRAFX_NUMBER_OF_INIT_CMD                        30
+#define GRAFX_NUMBER_OF_INIT_CMD                        35
 
 // SSD2119 Command Set
 #define SSD2119_DEVICE_CODE_READ_REGISTER               0x00
@@ -120,12 +113,7 @@
 #define SSD2119_DISPLAY_ON_VALUE                        0x0033
 #define SSD2119_DISPLAY_OFF_VALUE                       0x0000
 
-#define FMC_BANK1_1                                     0x00000000
-#define FMC_BANK1_2                                     0x00000002
-#define FMC_BANK1_3                                     0x00000004
-#define FMC_BANK1_4                                     0x00000006
-
-// GRAFX_LCD_BASE and GRAFX_LCD_REGISTER_SELECT_BIT must be configure into device_cfg.h
+// GRAFX_LCD_BASE and GRAFX_LCD_REGISTER_SELECT_BIT must be configure into grafx_cfg.h
 #define LCD_REG                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE)))
 #define LCD_RAM                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE | (1 << GRAFX_LCD_REGISTER_SELECT_BIT))))
 
@@ -137,6 +125,7 @@ struct SSD2119_InitCMD_t
 {
     uint8_t     Register;
     uint16_t    Parameter;
+    uint8_t     Wait;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -167,8 +156,7 @@ class GrafxDriver : public GrafxGenDriver
     private:
 
         void            SetRAM_Pointer      (uint16_t PosX, uint16_t PosY);
-
-        uint16_t        ReadCommand         (uint8_t Register)                      { LCD_REG = Register; return LCD_RAM; }
+        uint16_t        ReadCommand         (uint8_t Register);
         uint16_t        ReadData            (void)                                  { return LCD_RAM; }
         void            WriteCommand        (uint8_t Register, uint16_t Data)       { LCD_REG = Register; LCD_RAM = Data; }
         void            WriteRegister       (uint8_t Register)                      { LCD_REG = Register; }

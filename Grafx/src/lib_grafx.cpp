@@ -86,16 +86,20 @@ SystemState_e GRAFX_Initialize(void)
     uint32_t      Address;
 
     // Init display device
-    myGrafx->Initialize(GRAFX_DRIVER_ARGUMENT);                                                         // Call the right driver according to configuration
+    myGrafx->Initialize(GRAFX_DRIVER_ARGUMENT);         // Call the right driver according to configuration
 
   #ifdef LAYER_DEF
     // Pre calculate address for each layer and also clear the layer
     Address = GFX_BASE_ADDRESS;
+
     for(int Layer = LAYER_FIRST_ITEM; Layer < LAYER_COUNT; Layer++)
     {
-        LayerTable[Layer].SetAddress(Address);
-        Address += LayerTable[Layer].GetTotalSize();
-        LayerTable[Layer].Clear();
+        if(LayerTable[Layer].GetPixelFormat() != PIXEL_FORMAT_DUMMY)
+        {
+            LayerTable[Layer].SetAddress(Address);
+            Address += LayerTable[Layer].GetTotalSize();
+            LayerTable[Layer].Clear();
+        }
     }
   #endif
 

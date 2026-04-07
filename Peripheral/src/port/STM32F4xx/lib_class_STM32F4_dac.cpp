@@ -101,16 +101,14 @@ const DMA_Info_t DAC_Driver::m_DMA_InfoChannel_2 =
 SystemState_e DAC_Driver::Initialize(void)
 {
     uint32_t Mask = CR_CLEAR_MASK;
-    uint32_t Config;
 
 	SET_BIT(RCC->APB1ENR, RCC_APB1ENR_DACEN);
 
   #if (CFG_DAC_DRIVER_CHANNEL_1 == DEF_ENABLED)
-    Config = CFG_DAC_CH1_TRIGGER                        |
-             CFG_DAC_CH1_WAVE_GENERATION                |
-             CFG_DAC_CH1_LFSR_UNMASK_TRIANGLE_AMPLITUDE |
-             CFG_DAC_CH1_OUTPUT_BUFFER;
-    MODIFY_REG(DAC->CR, Mask << DAC_CHANNEL_1, Config);
+    MODIFY_REG(DAC->CR, Mask << DAC_CHANNEL_1, CFG_DAC_CH1_TRIGGER                        |
+                                               CFG_DAC_CH1_WAVE_GENERATION                |
+                                               CFG_DAC_CH1_LFSR_UNMASK_TRIANGLE_AMPLITUDE |
+                                               CFG_DAC_CH1_OUTPUT_BUFFER);
 
    #if (CFG_DAC_DRIVER_SUPPORT_DMA_CHANNEL_1 ==  DEF_ENABLED)
         m_DMA_Channel_1.Initialize(&m_DMA_InfoChannel_1);

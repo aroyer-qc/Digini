@@ -40,64 +40,91 @@
 
 const SSD2119_InitCMD_t GrafxDriver::InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
 {
-    {SSD2119_VCOM_OTP_1_REGISTER,                   0x0006},        // Sets VCOM amplitude from OTP block. This stabilizes the common electrode voltage and reduces flicker.
+    {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0021},
+    {SSD2119_DEVICE_CODE_READ_REGISTER,             0x0001},
+    {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0023},
+    {SSD2119_SLEEP_MODE_REGISTER,                   0x0000},
+    {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0033},
+
     {SSD2119_OSCILLATOR_START_REGISTER,             0x0001},        // Starts the internal oscillator. This must be done before any display timing registers are touched.
-    {SSD2119_SLEEP_MODE_REGISTER,                   0x0000},        // Exit sleep mode. Turns on internal power blocks.
-    {SSD2119_OUTPUT_CONTROL_REGISTER,               0x72EF},        // Controls: Scan direction, Gate driver shift direction, LCD panel type, Display resolution mapping. : 0x72EF is a common value for 320×240 TFT panels.
+    {SSD2119_SLEEP_MODE_REGISTER,                   0x0000},
+    {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0033},
+    {SSD2119_ENTRY_MODE_REGISTER,                   0x6870},        // Color format (16-bit, 18-bit, etc.), Horizontal/vertical increment mode, BGR/RGB order, Addressing mode. :0x6874 is the standard 16-bit 565, left‑to‑right, top-to-bottom mode.
     {SSD2119_LCD_DRIVE_AC_CONTROL_REGISTER,         0x0600},        // Controls: AC drive frequency, Polarity, Line inversion. : 0x0600 is a stable default for most TFT glass.
-    {SSD2119_POWER_CONTROL_1_REGISTER,              0x6A38},        // Main power control: Booster, Voltage regulator, Reference voltage. This is part of the power‑up ramp.
-    {SSD2119_ENTRY_MODE_REGISTER,                   0x6874},        // Color format (16-bit, 18-bit, etc.), Horizontal/vertical increment mode, BGR/RGB order, Addressing mode. :0x6874 is the standard 16-bit 565, left‑to‑right, top-to-bottom mode.
+    {SSD2119_POWER_CONTROL_1_REGISTER,              0x4A38},        // Main power control: Booster, Voltage regulator, Reference voltage. This is part of the power‑up ramp.
+//    {SSD2119_OUTPUT_CONTROL_REGISTER,               0x70EF},        // Controls: Scan direction, Gate driver shift direction, LCD panel type, Display resolution mapping. : 0x72EF is a common value for 320×240 TFT panels.
+    {SSD2119_OUTPUT_CONTROL_REGISTER,               0x32EF},        // Controls: Scan direction, Gate driver shift direction, LCD panel type, Display resolution mapping. : 0x72EF is a common value for 320×240 TFT panels.
     {SSD2119_GATE_SCAN_START_REGISTER,              0x0000},        // Start scanning from gate line 0.
+    {SSD2119_FRAME_FREQUENCY_REGISTER,              0xA000},        // Primary frame frequency control.
+    {SSD2119_VCOM_OTP_1_REGISTER,                   0x0006},        // Sets VCOM amplitude from OTP block. This stabilizes the common electrode voltage and reduces flicker.
+    {SSD2119_SLEEP_MODE_CONTROL_REGISTER,           0x0999},        // Extended sleep control: Deep sleep exit, Oscillator gating, Power block stabilization. : 0x08D9 is a known “panel-ready” value.
+    {SSD2119_FRAME_FREQUENCY_CONTROL_2_REGISTER,    0x3800},        // Fine-tunes oscillator division for frame timing.
     {SSD2119_FRAME_CYCLE_CONTROL_REGISTER,          0x5308},        // Controls: Frame frequency, Line period, Porch timing. : 0x5308 is a typical stable timing for 60–70 Hz refresh.
-    {SSD2119_POWER_CONTROL_2_REGISTER,              0x0003},        // Booster control step 2.
-    {SSD2119_POWER_CONTROL_3_REGISTER,              0x000A},        // Booster control step 3.
-    {SSD2119_POWER_CONTROL_4_REGISTER,              0x2E00},        // VCOM voltage setting (coarse).
-    {SSD2119_POWER_CONTROL_5_REGISTER,              0x00BE},        // VCOM voltage setting (fine). This pair (0x2E00 + 0x00BE) is what stabilizes the TFT’s common electrode.
-    {SSD2119_FRAME_FREQUENCY_REGISTER,              0x8000},        // Primary frame frequency control.
-    {SSD2119_FRAME_FREQUENCY_CONTROL_2_REGISTER,    0x7800},        // Fine-tunes oscillator division for frame timing.
-    {SSD2119_VCOM_CONTROL_1_REGISTER,               0x0078},        // Fine VCOM tuning (offset, flicker compensation).
-    {SSD2119_X_RAM_ADDRESS_REGISTER,                0x0000},        // Initial X RAM pointer.
-    {SSD2119_Y_RAM_ADDRESS_REGISTER,                0x0000},        // Initial Y RAM pointer.
-    {SSD2119_SLEEP_MODE_CONTROL_REGISTER,           0x08D9},        // Extended sleep control: Deep sleep exit, Oscillator gating, Power block stabilization. : 0x08D9 is a known “panel-ready” value.
-    // Adjust the Gamma Curve
-    // These 10 registers define the full gamma curve: Brightness, Contrast, Color linearity, Mid-tone shaping, Saturation
+    {SSD2119_POWER_CONTROL_2_REGISTER,              0x0004},        // Booster control step 2.
+    {SSD2119_POWER_CONTROL_3_REGISTER,              0x000F},        // Booster control step 3.
+    {SSD2119_POWER_CONTROL_4_REGISTER,              0x1B00},        // VCOM voltage setting (coarse).
+    {SSD2119_POWER_CONTROL_5_REGISTER,              0x00B5},        // VCOM voltage setting (fine). This pair (0x2E00 + 0x00BE) is what stabilizes the TFT’s common electrode.
+    {SSD2119_VERTICAL_RAM_POSITION_REGISTER,        0xEF00},
+    {SSD2119_HORIZONTAL_RAM_START_REGISTER,         0x0000},
+    {SSD2119_HORIZONTAL_RAM_END_REGISTER,           0x013F},
     {SSD2119_GAMMA_CONTROL_1_REGISTER,              0x0000},
-    {SSD2119_GAMMA_CONTROL_2_REGISTER,              0x0104},
+    {SSD2119_GAMMA_CONTROL_2_REGISTER,              0x0101},
     {SSD2119_GAMMA_CONTROL_3_REGISTER,              0x0100},
     {SSD2119_GAMMA_CONTROL_4_REGISTER,              0x0305},
-    {SSD2119_GAMMA_CONTROL_5_REGISTER,              0x0505},
+    {SSD2119_GAMMA_CONTROL_5_REGISTER,              0x0707},
     {SSD2119_GAMMA_CONTROL_6_REGISTER,              0x0305},
     {SSD2119_GAMMA_CONTROL_7_REGISTER,              0x0707},
-    {SSD2119_GAMMA_CONTROL_8_REGISTER,              0x0300},
+    {SSD2119_GAMMA_CONTROL_8_REGISTER,              0x0201},
     {SSD2119_GAMMA_CONTROL_9_REGISTER,              0x1200},
-    {SSD2119_GAMMA_CONTROL_10_REGISTER,             0x0800},
-
-    {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0033},        // Final display enable: Turns on the display, Enables scanning, Enables frame output. : 0x0033 = display ON, internal oscillator ON, scanning enabled.
+    {SSD2119_GAMMA_CONTROL_10_REGISTER,             0x0900},
+//    {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0033},        // Final display enable: Turns on the display, Enables scanning, Enables frame output. : 0x0033 = display ON, internal oscillator ON, scanning enabled.
 };
 
 //-------------------------------------------------------------------------------------------------
+static uint16_t ChipID;
+
 
 void GrafxDriver::Initialize(void* pArg)
 {
     GrafxGenDriver::Initialize(pArg);
 
+    IO_SetPinHigh(IO_LCD_RESET);
+    nOS_Sleep(5);
+
+    ChipID = ReadCommand(SSD2119_DEVICE_CODE_READ_REGISTER);
+
     // Send the complete list of initialization command to LCD
     for(int i = 0; i < GRAFX_NUMBER_OF_INIT_CMD; i++)
     {
         WriteCommand(InitCMD[i].Register, InitCMD[i].Parameter);
+
+        if(InitCMD[i].Register == SSD2119_SLEEP_MODE_REGISTER)
+        {
+            nOS_Sleep(30);
+        }
     }
+
+   // ClearLayer(FOREGROUND_DISPLAY);
+
+// test
+    CLayer::SetColor(BLUE);
+    DrawPixel(10, 10);
 }
 
 //-------------------------------------------------------------------------------------------------
-
+static uint32_t COUNT = 0;
 void GrafxDriver::ClearLayer(Layer_e Layer)
 {
-   	SetWriteRAM_Ready();
+   	if(Layer == FOREGROUND_DISPLAY)
+    {
+        SetRAM_Pointer(0, 0);
 
-	for(uint32_t i = 0; i < GRAFX_DRIVER_SIZE; i++ )
-	{
-		WriteData(0x0000);
-	}
+        for(uint32_t i = 0; i < GRAFX_DRIVER_SIZE; i++)
+        {
+            WriteData(0x001F);
+            COUNT++;
+        }
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -336,6 +363,21 @@ void GrafxDriver::SetRAM_Pointer(uint16_t PosX, uint16_t PosY)
     WriteCommand(SSD2119_X_RAM_ADDRESS_REGISTER, PosX);
 	WriteCommand(SSD2119_Y_RAM_ADDRESS_REGISTER, PosY);
 	SetWriteRAM_Ready();
+}
+
+uint16_t GrafxDriver::ReadCommand(uint8_t Register)
+{
+    LCD_REG = Register;
+
+    uint16_t Count = 112;
+    do
+    {
+        Count--;
+        __asm("nop");
+    }
+    while(Count != 0);
+
+    return LCD_RAM;
 }
 
 //-------------------------------------------------------------------------------------------------

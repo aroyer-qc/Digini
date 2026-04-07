@@ -338,10 +338,15 @@ class ADC_Driver
         void            RegisterCallBack                (CallbackInterface* pCallback);
         void            EnableCallbackType              (int CallBackType, void* pContext = nullptr);
 
+        // Normal conversion single channel
+        void            StartSingleConversion           (ADC_ChannelID_e Channel);                      // Do a single conversion on one channel
+        SystemState_e   GetStatusSingleConversion       (void);
+        uint16_t        ReadSingleConversionValue       ()                                          { return m_LastConvertedValue; }
+
         // Normal conversion group (Up to 16 Channel)
         SystemState_e   AddChannelToGroup               (ADC_ChannelID_e Channel, uint8_t Rank);        // TODO use config to define channel information!!
         SystemState_e   RemoveChannelFromGroup          (ADC_ChannelID_e Channel, uint8_t Rank);
-        void            StartConversion                 (void);                         // Do a single conversion on one or more channel
+        void            StartConversion                 (void);                                         // Do a single conversion on one or more channel
         void            ConfigConversionTrigger         (void);
 
         // Injected group (Up to 4 Channel)
@@ -370,6 +375,8 @@ class ADC_Driver
 
         uint8_t                         m_NumberOfChannel;
         uint8_t                         m_CurrentFreeChannel;
+        uint16_t                        m_LastConvertedValue;
+
         ADC_ChannelInfo_t*              m_pChannelInfo[ADC_NUMBER_OF_RANK_FOR_CONVERSION];                     // this should represent the rank pointer on channel info
         uint8_t                         m_NumberOfInjectedChannel;
         ADC_ChannelInfo_t*              m_pInjectedChannelInfo[ADC_NUMBER_OF_RANK_FOR_INJECTED_CONVERSION];             // this should represent the rank pointer on channel info

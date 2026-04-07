@@ -34,6 +34,11 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+#define FMC_BANK1_NE1_ADDDRESS                  (0x60000000)
+#define FMC_BANK1_NE2_ADDDRESS                  (0x64000000)
+#define FMC_BANK1_NE3_ADDDRESS                  (0x68000000)
+#define FMC_BANK1_NE4_ADDDRESS                  (0x6C000000)
+
 // FMC LCD Bank
 #define FMC_LCD_BANK1                           (0x00000000)
 #define FMC_LCD_BANK2                           (0x00000002)

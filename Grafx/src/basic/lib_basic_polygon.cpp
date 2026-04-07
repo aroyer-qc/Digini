@@ -69,7 +69,7 @@ static void _DrawPolygon(void* pSrc, uint16_t SrcLineWidth, Cartesian_t SrcImage
 void DrawPolygon(Polygon_t* pPolygon, PolygonMode_e PolygonMode)
 {
     Cartesian_t Dummy = {0};
-    _DrawPolygon(nullptr, 0, Dummy, pPolygon->Pos1, pPolygon->Pos2, pPolygon->Pos3, pPolygon->Pos4, PolygonMode, DUMMY_PIXEL_FORMAT, NO_BLEND);
+    _DrawPolygon(nullptr, 0, Dummy, pPolygon->Pos1, pPolygon->Pos2, pPolygon->Pos3, pPolygon->Pos4, PolygonMode, PIXEL_FORMAT_DUMMY, NO_BLEND);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -92,7 +92,7 @@ void DrawPolygon(Polygon_t* pPolygon, PolygonMode_e PolygonMode)
 void DrawPolygon(Cartesian_t Pos1, Cartesian_t Pos2, Cartesian_t Pos3, Cartesian_t Pos4, PolygonMode_e PolygonMode)
 {
     Cartesian_t Dummy = {0};
-    _DrawPolygon(nullptr, 0, Dummy, Pos1, Pos2, Pos3, Pos4, PolygonMode, DUMMY_PIXEL_FORMAT, NO_BLEND);
+    _DrawPolygon(nullptr, 0, Dummy, Pos1, Pos2, Pos3, Pos4, PolygonMode, PIXEL_FORMAT_DUMMY, NO_BLEND);
 }
 
 //-------------------------------------------------------------------------------------------------

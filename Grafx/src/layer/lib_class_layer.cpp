@@ -175,9 +175,9 @@ void CLayer::Clear(void)
 {
     uint32_t DrawingColor = m_Color;
     CLayer::PushDrawing();
-    SetDrawing(m_VirtualLayer);
+    SetDrawing(m_VirtualLayer);         // why m_VirtualLayer ????
     m_Color = 0;
-    // myGrafx->DrawRectangle(0, 0, m_Size.X, m_Size.Y); TODO commented while working on FMC8080
+    //myGrafx->DrawRectangle(0, 0, m_Size.X, m_Size.Y); //TODO commented while working on FMC8080
     m_Color = DrawingColor;
     CLayer::PopDrawing();
 }

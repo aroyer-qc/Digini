@@ -78,7 +78,7 @@ enum PixelFormat_e
     PIXEL_FORMAT_RGB444,
   #endif
 
-    DUMMY_PIXEL_FORMAT,
+    PIXEL_FORMAT_DUMMY,
     PIXEL_FORMAT_COUNT,
 };
 
@@ -187,6 +187,7 @@ enum LayerType_e
     LAYER_FOREGROUND,
   #endif
     LAYER_VIRTUAL,
+    LAYER_DUMMY             // ID when LAYER does not exist physically but allow identification
 };
 
 enum ExchangeType_e

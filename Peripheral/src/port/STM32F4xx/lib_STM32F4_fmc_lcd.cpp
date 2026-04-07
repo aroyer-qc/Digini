@@ -44,6 +44,10 @@
 #define FMC_BTR1_ADDRESS_HOLD_TIME_POS              4
 #define FMC_BTR1_DATA_SETUP_TIME_POS                8
 
+#define FMC_BWTR1_ADDRESS_SETUP_TIME_POS            0
+#define FMC_BWTR1_ADDRESS_HOLD_TIME_POS             4
+#define FMC_BWTR1_DATA_SETUP_TIME_POS               8
+
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: FMC_LCD_Initialize
@@ -68,7 +72,12 @@ void FMC_LCD_Initialize(void)
                                             (CFG_FMC_LCD_TIMING_ADDRESS_HOLD_TIME  << FMC_BTR1_ADDRESS_HOLD_TIME_POS)  |
                                             (CFG_FMC_LCD_TIMING_DATA_SETUP_TIME    << FMC_BTR1_DATA_SETUP_TIME_POS);
 
-    FMC_Bank1E->BWTR[CFG_FMC_LCD_BANK] = 0x0FFFFFFF;
+    FMC_Bank1E->BWTR[CFG_FMC_LCD_BANK] =
+          (CFG_FMC_LCD_WRITE_TIMING_ADDRESS_SETUP_TIME << FMC_BWTR1_ADDRESS_SETUP_TIME_POS) |
+          (CFG_FMC_LCD_WRITE_TIMING_ADDRESS_HOLD_TIME << FMC_BWTR1_ADDRESS_HOLD_TIME_POS) |
+          (CFG_FMC_LCD_WRITE_TIMING_DATA_SETUP_TIME << FMC_BWTR1_DATA_SETUP_TIME_POS);
+
+
     SET_BIT(FMC_Bank1->BTCR[CFG_FMC_LCD_BANK], FMC_BCR1_MBKEN);
 }
 

@@ -70,7 +70,7 @@ Configurable delay
 // const(s)
 //-------------------------------------------------------------------------------------------------
 
-const ADC_Info_t        ADC_Driver::m_ConstInfo[NB_OF_ADC_DRIVER] =
+const ADC_Info_t ADC_Driver::m_ConstInfo[NB_OF_ADC_DRIVER] =
 {
     ADC_DEF(EXPAND_X_ADC_AS_STRUCT_DATA)
 };
@@ -138,7 +138,6 @@ ADC_Driver::ADC_Driver(ADC_ID_e ADC_ID)
 //                  of conversion selection).
 //
 //-------------------------------------------------------------------------------------------------
-
 void ADC_Driver::Initialize(void)
 {
     if(m_IsItInitialize == false)
@@ -173,7 +172,7 @@ void ADC_Driver::Initialize(void)
         m_CommonIsItInitialize = true;
 
         // ADC interrupt are common to all module
-        ISR_Init(ADC_IRQn, 4);
+        //ISR_Init(ADC_IRQn, 4);
     }
 
     // m_State = SYS_READY;                   // Initialize ADC error code
@@ -186,6 +185,64 @@ void ADC_Driver::Initialize(void)
 //ADC_REG_TRIG_EXT_EDGE_NONE
 //ADC_REG_TRIG_EXT_NONE
 
+
+void ADC_Driver::StartSingleConversion(ADC_ChannelID_e Channel)
+{
+    const ADC_ChannelInfo_t* pCh = &m_ConstChannelInfo[Channel];
+
+    // Configure sample time
+    if (pCh->Channel >= 10)
+    {
+        uint32_t shift = (pCh->Channel - 10) * 3;
+        m_pInfo->pADCx->SMPR1 &= ~(0x7 << shift);
+        m_pInfo->pADCx->SMPR1 |=  (pCh->SampleTime << shift);
+    }
+    else
+    {
+        uint32_t shift = pCh->Channel * 3;
+        m_pInfo->pADCx->SMPR2 &= ~(0x7 << shift);
+        m_pInfo->pADCx->SMPR2 |=  (pCh->SampleTime << shift);
+    }
+
+    // Configure regular sequence: 1 channel only
+    m_pInfo->pADCx->SQR1 = 0;
+    m_pInfo->pADCx->SQR2 = 0;
+    m_pInfo->pADCx->SQR3 = pCh->Channel;
+
+    // Clear flags
+    m_pInfo->pADCx->SR &= ~(ADC_SR_EOC | ADC_SR_OVR);
+
+    // Enable ADC if needed
+    if((m_pInfo->pADCx->CR2 & ADC_CR2_ADON) == 0)
+    {
+        m_pInfo->pADCx->CR2 |= ADC_CR2_ADON;
+    }
+
+    // Start conversion
+    m_pInfo->pADCx->CR2 |= ADC_CR2_SWSTART;
+
+    m_State = SYS_BUSY;
+}
+
+SystemState_e ADC_Driver::GetStatusSingleConversion(void)
+{
+    if(m_State != SYS_BUSY)
+    {
+        return m_State;
+    }
+
+    // Check EOC flag
+    if((m_pInfo->pADCx->SR & ADC_SR_EOC) == 0)
+    {
+        return SYS_BUSY;
+    }
+
+    m_LastConvertedValue = m_pInfo->pADCx->DR;      // Read result
+    m_pInfo->pADCx->SR &= ~ADC_SR_EOC;              // Clear EOC
+
+    m_State = SYS_READY;
+    return SYS_READY;
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -256,8 +313,6 @@ void ADC_Driver::EnableCallbackType(int CallBackType, void* pContext)
 //
 //   Description:   Return general status of the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e ADC_Driver::GetStatus(void)
 {
@@ -274,8 +329,6 @@ SystemState_e ADC_Driver::GetStatus(void)
 //   Return Value:  SystemState_e
 //
 //   Description:   Initializes the channel specified by ADC_Channel ID
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e ADC_Driver::AddChannelToGroup(ADC_ChannelID_e ChannelID, uint8_t Rank)
@@ -343,14 +396,10 @@ SystemState_e ADC_Driver::AddChannelToGroup(ADC_ChannelID_e ChannelID, uint8_t R
 //
 //   Description:   Enables the selected ADC software start conversion of the regular channels.
 //
-//   Note(s):
-//
-//
 //-------------------------------------------------------------------------------------------------
 void ADC_Driver::StartConversion(void)
 {
-    // Enable the selected ADC conversion for regular group
-    SET_BIT(m_pInfo->pADCx->CR2, ADC_CR2_SWSTART);
+    SET_BIT(m_pInfo->pADCx->CR2, ADC_CR2_SWSTART);  // Enable the selected ADC conversion for regular group
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -389,13 +438,11 @@ void ADC_Driver::TempSensorVrefintControl(bool NewState)
 {
     if(NewState == DEF_ENABLE)
     {
-        // Enable the temperature sensor and Vrefint channel
-        SET_BIT(ADC->CCR, ADC_CCR_TSVREFE);
+        SET_BIT(ADC->CCR, ADC_CCR_TSVREFE);         // Enable the temperature sensor and Vrefint channel
     }
     else
     {
-        // Disable the temperature sensor and Vrefint channel
-        CLEAR_BIT(ADC->CCR, ADC_CCR_TSVREFE);
+        CLEAR_BIT(ADC->CCR, ADC_CCR_TSVREFE);       // Disable the temperature sensor and Vrefint channel
     }
 }
 
@@ -417,13 +464,11 @@ void ADC_Driver::VBAT_Control(bool NewState)
 {
     if(NewState == DEF_ENABLE)
     {
-        // Enable the VBAT channel
-        SET_BIT(ADC->CCR, ADC_CCR_VBATE);
+        SET_BIT(ADC->CCR, ADC_CCR_VBATE);           // Enable the VBAT channel
     }
     else
     {
-        // Disable the VBAT channel
-        CLEAR_BIT(ADC->CCR, ADC_CCR_VBATE);
+        CLEAR_BIT(ADC->CCR, ADC_CCR_VBATE);         // Disable the VBAT channel
     }
 }
 
@@ -439,9 +484,9 @@ void ADC_Driver::VBAT_Control(bool NewState)
 void ADC_Driver::IRQHandler()
 {
     // TODO check flag and call the right function
-    m_pCallback->CallbackFunction(ADC_CALLBACK_CONVERSION_COMPLETED,          m_pContextConversionCompleted);
-    m_pCallback->CallbackFunction(ADC_CALLBACK_INJECTED_CONVERSION_COMPLETED, m_pContextConversionInjectionCompleted);
-    m_pCallback->CallbackFunction(ADC_CALLBACK_ERROR,                         m_pContextERROR);
+    //m_pCallback->CallbackFunction(ADC_CALLBACK_CONVERSION_COMPLETED,          m_pContextConversionCompleted);
+    //m_pCallback->CallbackFunction(ADC_CALLBACK_INJECTED_CONVERSION_COMPLETED, m_pContextConversionInjectionCompleted);
+    //m_pCallback->CallbackFunction(ADC_CALLBACK_ERROR,                         m_pContextERROR);
 }
 
 //-------------------------------------------------------------------------------------------------

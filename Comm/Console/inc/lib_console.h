@@ -161,7 +161,7 @@ class Console : public CallbackInterface
 
 #ifdef CONSOLE_GLOBAL
 
-class Console myConsole;
+class Console myConsole;                        // This console if for the debug  may need to put Debug define to remove it if example we need only a console for modbus
 
 #else
 

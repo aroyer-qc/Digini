@@ -8,20 +8,22 @@ enum class ModbusPath
 
 struct ModbusCommand
 {
-    uint8_t     FunctionCode;
-    uint16_t    Address;
-    uint16_t    Quantity;
+    uint8_t     functionCode;
+    uint16_t    address;
+    uint16_t    quantity;
 
-    uint8_t*        Payload = nullptr;   // fourni par MemoryPool
-    uint16_t        PayloadLength = 0;
-    uint8_t         UnitID = 1;
-    uint32_t        TimeOutMs = 200;
-    ModbusTransport Transport = ModbusTransport::AUTO;
+    uint8_t*    payload = nullptr;   // fourni par MemoryPool
+    uint16_t    payloadLen = 0;
+
+    uint8_t     unitId = 1;
+    uint32_t    timeoutMs = 200;
+
+    ModbusTransport transport = ModbusTransport::AUTO;
 };
 
-struct ModbusTCP_EndPoint
+struct ModbusTcpEndpoint
 {
-    int         SocketFD = -1;
+    int         socketFd = -1;
     uint32_t    ipAddr = 0;   // IPv4 packed
     uint16_t    port = 502;
 };
@@ -72,11 +74,10 @@ enum class ModbusCommandId : uint16_t {
     COUNT
 };
 
-class ModbusRegistry
-{
-    public:
+class ModbusRegistry {
 
-        static const ModbusCommand* Get(const ModbusCommandRegistry& reg, ModbusCommandId id)   // pas sur que c'est utile
+public:
+    static const ModbusCommand* Get(const ModbusCommandRegistry& reg, ModbusCommandId id)   // pas sur que c'est utile
     {
         uint16_t idx = static_cast<uint16_t>(id);
         
@@ -104,7 +105,6 @@ class ModbusRegistry
 class ModbusRouter
 {
     public:
-    
         ModbusExecutionContext* selectContext(const ModbusCommand& cmd, const ModbusRoute& route)
         {
             switch(route.type)

@@ -82,6 +82,15 @@
 \
 \
   /*---------------------------------------------------------*/ \
+  IF_USE(DIGINI_USE_GRAFX,                                      \
+  /*---------------------------------------------------------*/ \
+    X_MEM_DBG(MEM_DBG_GRAFX_BC)                                 \
+  /*---------------------------------------------------------*/ \
+  ) /* End of DIGINI_USE_GRAFX */                               \
+  /*---------------------------------------------------------*/ \
+\
+\
+  /*---------------------------------------------------------*/ \
   IF_USE(DIGINI_USE_ETHERNET,                                   \
   /*---------------------------------------------------------*/ \
     /* Unique ID for NanoIP                                   */\
@@ -154,7 +163,6 @@
 
 // For debug block trace
 #define EXPAND_X_MEM_BLOCK_AS_ARRAY_DEBUG_BLOCK_TRACE(ENUM_ID, GROUP_NAME, ALLOC_NAME, BLOCK_MAX, BLOCK_SIZE)  MEM_DebugListOfID_e m_DebugTrace ## GROUP_NAME[BLOCK_MAX];
-
 #define EXPAND_X_MEM_DBG_AS_ENUM(ENUM_ID)       ENUM_ID,
 #define EXPAND_X_MEM_DBG_AS_LBL_ENUM(ENUM_ID)   LBL_##ENUM_ID,
 #define EXPAND_X_MEM_DBG_AS_DATA(ENUM_ID)       {STRINGIFY(ENUM_ID) , nullptr},

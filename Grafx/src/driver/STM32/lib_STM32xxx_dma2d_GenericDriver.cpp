@@ -377,6 +377,22 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e PixelForm
 }
 */
 
+void GrafxGenDriver::CopyLinear(ImageID_e Image, Cartesian_t Pos, BlendMode_e BlendMode)
+{
+//    Not supported for now
+
+    VAR_UNUSED(Image);
+    VAR_UNUSED(Pos);
+    VAR_UNUSED(BlendMode);
+}
+
+
+void GrafxGenDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
+{
+    VAR_UNUSED(PosX);
+    VAR_UNUSED(PosY);
+}
+
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           CopyLinear

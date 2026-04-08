@@ -67,7 +67,7 @@
 //#define GRAFX_USE_SOFT_COPY                       // We use this driver DMA for this function
 //#define GRAFX_USE_SOFT_FILL                       // We use this driver DMA for this function
 
-#define GRAFX_NUMBER_OF_INIT_CMD                        36
+#define GRAFX_NUMBER_OF_INIT_CMD                        34
 
 // SSD2119 Command Set
 #define SSD2119_DEVICE_CODE_READ_REGISTER               0x00
@@ -104,14 +104,23 @@
 #define SSD2119_GAMMA_CONTROL_8_REGISTER                0x37
 #define SSD2119_GAMMA_CONTROL_9_REGISTER                0x3A
 #define SSD2119_GAMMA_CONTROL_10_REGISTER               0x3B
-#define SSD2119_VERTICAL_RAM_POSITION_REGISTER          0x44
-#define SSD2119_HORIZONTAL_RAM_START_REGISTER           0x45
-#define SSD2119_HORIZONTAL_RAM_END_REGISTER             0x46
+#define SSD2119_VERTICAL_RAM_POSITION_REGISTER          0x44                        // Window vertical function (0-7) = start for write RAM, (8-15) end for write RAM
+#define SSD2119_HORIZONTAL_RAM_START_REGISTER           0x45                        // Window horizontal function (0-8) = start for write RAM
+#define SSD2119_HORIZONTAL_RAM_END_REGISTER             0x46                        // Window horizontal function (0-8) = end for write RAM
 #define SSD2119_X_RAM_ADDRESS_REGISTER                  0x4E
 #define SSD2119_Y_RAM_ADDRESS_REGISTER                  0x4F
 
-#define SSD2119_DISPLAY_ON_VALUE                        0x0033
+#define SSD2119_OSCILLATOR_ENABLE                       0x0001
 #define SSD2119_DISPLAY_OFF_VALUE                       0x0000
+#define SSD2119_DISPLAY_EXIT_SLEEP_MODE                 0x0000
+#define SSD2119_VERTICAL_WINDOWS_FULL_SIZE              0xEF00
+#define SSD2119_HORIZONTAL_WINDOWS_START_FULL_SIZE      0x0000
+#define SSD2119_HORIZONTAL_WINDOWS_END_FULL_SIZE        0x013F
+#define SSD2119_DISPLAY_CONTROL_GATE_ON_OPERATIONAL     0x0021
+#define SSD2119_DISPLAY_CONTROL_GATE_ON_OP_GS           0x0023
+#define SSD2119_DISPLAY_ON_VALUE                        0x0033
+#define SSD2119_ENTRY_MODE_VALUE                        0x6C00    //0x6874      I remove N/U bit into RGB565 mode
+
 
 // GRAFX_LCD_BASE and GRAFX_LCD_REGISTER_SELECT_BIT must be configure into grafx_cfg.h
 #define LCD_REG                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE)))
@@ -154,15 +163,18 @@ class GrafxDriver : public GrafxGenDriver
 
     private:
 
+        void            SetWriteRAM_Ready   (void)                                  { LCD_REG = SSD2119_RAM_DATA_REGISTER; }
         void            SetRAM_Pointer      (uint16_t PosX, uint16_t PosY);
+        void            SetWindow           (Cartesian_t Position);
         uint16_t        ReadCommand         (uint8_t Register);
         uint16_t        ReadData            (void)                                  { return LCD_RAM; }
         void            WriteCommand        (uint8_t Register, uint16_t Data)       { LCD_REG = Register; LCD_RAM = Data; }
         void            WriteRegister       (uint8_t Register)                      { LCD_REG = Register; }
         void            WriteData           (uint16_t Data)                         { LCD_RAM = Data; }
-        void            SetWriteRAM_Ready   (void)                                  { LCD_REG = SSD2119_RAM_DATA_REGISTER; }
+        void            WriteData           (uint16_t* pData, size_t Length);
 
-        static const    SSD2119_InitCMD_t InitCMD[11];//GRAFX_NUMBER_OF_INIT_CMD];
+        StaticImageInfo_t*                  m_pBackgroundInfo;
+        static const    SSD2119_InitCMD_t   m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD];
 };
 
 //-------------------------------------------------------------------------------------------------

@@ -38,8 +38,22 @@
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
-const SSD2119_InitCMD_t GrafxDriver::InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
+const SSD2119_InitCMD_t GrafxDriver::InitCMD[/*GRAFX_NUMBER_OF_INIT_CMD*/11] =
 {
+    {SSD2119_VCOM_OTP_1_REGISTER,                   0x0006},        // Sets VCOM amplitude from OTP block. This stabilizes the common electrode voltage and reduces flicker.
+    {SSD2119_OSCILLATOR_START_REGISTER,             0x0001},        // Starts the internal oscillator. This must be done before any display timing registers are touched.
+    {SSD2119_SLEEP_MODE_REGISTER,                   0x0000},
+    {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0033},
+    {SSD2119_ENTRY_MODE_REGISTER,                   0x6874},        // Color format (16-bit, 18-bit, etc.), Horizontal/vertical increment mode, BGR/RGB order, Addressing mode. :0x6874 is the standard 16-bit 565, left‑to‑right, top-to-bottom mode.
+    {SSD2119_LCD_DRIVE_AC_CONTROL_REGISTER,         0x0600},        // Controls: AC drive frequency, Polarity, Line inversion. : 0x0600 is a stable default for most TFT glass.
+    {SSD2119_FRAME_CYCLE_CONTROL_REGISTER,          0x5308},        // Controls: Frame frequency, Line period, Porch timing. : 0x5308 is a typical stable timing for 60–70 Hz refresh.
+    {SSD2119_POWER_CONTROL_2_REGISTER,              0x0004},        // Booster control step 2.
+    {SSD2119_POWER_CONTROL_3_REGISTER,              0x000F},        // Booster control step 3.
+    {SSD2119_POWER_CONTROL_4_REGISTER,              0x1B00},        // VCOM voltage setting (coarse).
+    {SSD2119_POWER_CONTROL_5_REGISTER,              0x00B5},        // VCOM voltage setting (fine). This pair (0x2E00 + 0x00BE) is what stabilizes the TFT’s common electrode.
+
+
+    /*
     {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0021},
     {SSD2119_DEVICE_CODE_READ_REGISTER,             0x0001},
     {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0023},
@@ -49,10 +63,10 @@ const SSD2119_InitCMD_t GrafxDriver::InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
     {SSD2119_OSCILLATOR_START_REGISTER,             0x0001},        // Starts the internal oscillator. This must be done before any display timing registers are touched.
     {SSD2119_SLEEP_MODE_REGISTER,                   0x0000},
     {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0033},
-    {SSD2119_ENTRY_MODE_REGISTER,        /*0x6870*/ 0x6874},        // Color format (16-bit, 18-bit, etc.), Horizontal/vertical increment mode, BGR/RGB order, Addressing mode. :0x6874 is the standard 16-bit 565, left‑to‑right, top-to-bottom mode.
+    {SSD2119_ENTRY_MODE_REGISTER,                   0x6874},        // Color format (16-bit, 18-bit, etc.), Horizontal/vertical increment mode, BGR/RGB order, Addressing mode. :0x6874 is the standard 16-bit 565, left‑to‑right, top-to-bottom mode.
     {SSD2119_LCD_DRIVE_AC_CONTROL_REGISTER,         0x0600},        // Controls: AC drive frequency, Polarity, Line inversion. : 0x0600 is a stable default for most TFT glass.
     {SSD2119_POWER_CONTROL_1_REGISTER,              0x4A38},        // Main power control: Booster, Voltage regulator, Reference voltage. This is part of the power‑up ramp.
-    {SSD2119_OUTPUT_CONTROL_REGISTER,    /*0x32EF*/ 0x72EF},        // Controls: Scan direction, Gate driver shift direction, LCD panel type, Display resolution mapping. : 0x72EF is a common value for 320×240 TFT panels.
+    {SSD2119_OUTPUT_CONTROL_REGISTER,               0x72EF},        // Controls: Scan direction, Gate driver shift direction, LCD panel type, Display resolution mapping. : 0x72EF is a common value for 320×240 TFT panels.
     {SSD2119_GATE_SCAN_START_REGISTER,              0x0000},        // Start scanning from gate line 0.
     {SSD2119_FRAME_FREQUENCY_REGISTER,              0xA000},        // Primary frame frequency control.
     {SSD2119_VCOM_OTP_1_REGISTER,                   0x0006},        // Sets VCOM amplitude from OTP block. This stabilizes the common electrode voltage and reduces flicker.
@@ -77,6 +91,7 @@ const SSD2119_InitCMD_t GrafxDriver::InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
     {SSD2119_GAMMA_CONTROL_9_REGISTER,              0x1200},
     {SSD2119_GAMMA_CONTROL_10_REGISTER,             0x0900},
     {SSD2119_DISPLAY_CONTROL_REGISTER,              0x0033},        // Final display enable: Turns on the display, Enables scanning, Enables frame output. : 0x0033 = display ON, internal oscillator ON, scanning enabled.
+*/
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -105,7 +120,7 @@ void GrafxDriver::Initialize(void* pArg)
     ChipID = ReadCommand(SSD2119_DEVICE_CODE_READ_REGISTER);
 
     // Send the complete list of initialization command to LCD
-    for(int i = 0; i < GRAFX_NUMBER_OF_INIT_CMD; i++)
+    for(int i = 0; i < 11/* GRAFX_NUMBER_OF_INIT_CMD*/; i++)
     {
         WriteCommand(InitCMD[i].Register, InitCMD[i].Parameter);
 
@@ -223,8 +238,8 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
     VAR_UNUSED(pDstPos);
     VAR_UNUSED(SrcPixelFormat);
     VAR_UNUSED(BlendMode);
-    
-    // We are not calling the gen driver. because we don't have that functionnality 
+
+    // We are not calling the gen driver. because we don't have that functionnality
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -395,9 +410,9 @@ pLayer->GetTextColor();
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::SetRAM_Pointer(uint16_t PosX, uint16_t PosY)
 {
+	WriteCommand(SSD2119_Y_RAM_ADDRESS_REGISTER, PosY);
     WriteCommand(SSD2119_X_RAM_ADDRESS_REGISTER, PosX);
 	SetWriteRAM_Ready();
-	WriteCommand(SSD2119_Y_RAM_ADDRESS_REGISTER, PosY);
 }
 
 //-------------------------------------------------------------------------------------------------

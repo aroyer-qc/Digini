@@ -125,7 +125,6 @@ struct SSD2119_InitCMD_t
 {
     uint8_t     Register;
     uint16_t    Parameter;
-    uint8_t     Wait;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -163,7 +162,7 @@ class GrafxDriver : public GrafxGenDriver
         void            WriteData           (uint16_t Data)                         { LCD_RAM = Data; }
         void            SetWriteRAM_Ready   (void)                                  { LCD_REG = SSD2119_RAM_DATA_REGISTER; }
 
-        static const    SSD2119_InitCMD_t InitCMD[GRAFX_NUMBER_OF_INIT_CMD];
+        static const    SSD2119_InitCMD_t InitCMD[11];//GRAFX_NUMBER_OF_INIT_CMD];
 };
 
 //-------------------------------------------------------------------------------------------------

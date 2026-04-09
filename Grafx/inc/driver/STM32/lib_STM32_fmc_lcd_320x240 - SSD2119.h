@@ -119,12 +119,12 @@
 #define SSD2119_DISPLAY_CONTROL_GATE_ON_OPERATIONAL     0x0021
 #define SSD2119_DISPLAY_CONTROL_GATE_ON_OP_GS           0x0023
 #define SSD2119_DISPLAY_ON_VALUE                        0x0033
-#define SSD2119_ENTRY_MODE_VALUE                        0x6C00    //0x6874      I remove N/U bit into RGB565 mode
+#define SSD2119_ENTRY_MODE_VALUE                        0x6874    // 0x6C00     I remove N/U bit into RGB565 mode
 
 
 // GRAFX_LCD_BASE and GRAFX_LCD_REGISTER_SELECT_BIT must be configure into grafx_cfg.h
 #define LCD_REG                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE)))
-#define LCD_RAM                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE | (1 << GRAFX_LCD_REGISTER_SELECT_BIT))))
+#define LCD_RAM                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE | (0x02 << GRAFX_LCD_REGISTER_SELECT_BIT))))
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)

@@ -352,7 +352,7 @@ void DMA_MEM2MEM_Initialize(void)
 //  Description:    Initialize the DMA Memory to memory transfer
 //
 //-------------------------------------------------------------------------------------------------
-void DMA_Memcpy(void* pSource, void* pDestination, size_t Size, bool SourceIncrement)
+void DMA_Memcpy(void* pSource, void* pDestination, size_t Size, uint32_t Increment)
 {
     uint32_t AlignedSize;
     uint8_t* pSrc8 = (uint8_t*)pSource;
@@ -381,8 +381,7 @@ void DMA_Memcpy(void* pSource, void* pDestination, size_t Size, bool SourceIncre
         DMA_MEM2MEM_STREAM->CR   =
               (DMA_MEM2MEM_CHANNEL << DMA_SxCR_CHSEL_Pos)
             | DMA_SxCR_DIR_0
-            | DMA_SxCR_MINC
-            | ((SourceIncrement == true) ? DMA_SxCR_PINC : 0)
+            | Increment
             | DMA_SxCR_MSIZE_0
             | DMA_SxCR_PSIZE_0;
 

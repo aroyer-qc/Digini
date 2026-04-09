@@ -93,7 +93,6 @@ const SSD2119_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
 //                  to a known state.
 //
 //-------------------------------------------------------------------------------------------------
-static uint16_t ChipID;
 void GrafxDriver::Initialize(void* pArg)
 {
     // I may need to provide a pointer to the background image for building element to display on the screen (merge)
@@ -103,8 +102,6 @@ void GrafxDriver::Initialize(void* pArg)
 
     IO_SetPinHigh(IO_LCD_RESET);
     LIB_Delay_mSec(5);
-
-    ChipID = ReadCommand(SSD2119_DEVICE_CODE_READ_REGISTER);
 
     // Send the complete list of initialization command to LCD
     for(int i = 0; i < GRAFX_NUMBER_OF_INIT_CMD; i++)
@@ -120,8 +117,22 @@ void GrafxDriver::Initialize(void* pArg)
     ClearLayer(FOREGROUND_DISPLAY);
 
 // test
-    CLayer::SetColor(BLUE);
-    DrawPixel(10, 10);
+SetRAM_Pointer(10, 10);
+WriteData(0x001F);
+
+SetRAM_Pointer(12, 12);
+WriteData(0x0070);
+
+SetRAM_Pointer(10, 10);
+ChipID = 0;
+ChipID = LCD_RAM;
+ChipID = LCD_RAM;
+
+SetRAM_Pointer(12, 12);
+ChipID = 0;
+ChipID = LCD_RAM;
+ChipID = LCD_RAM;
+
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -140,7 +151,6 @@ void GrafxDriver::Initialize(void* pArg)
 //                  layers are handled by the base graphics class.
 //
 //-------------------------------------------------------------------------------------------------
-//static uint32_t COUNT = 0;
 void GrafxDriver::ClearLayer(Layer_e Layer)
 {
    	if(Layer == FOREGROUND_DISPLAY)
@@ -150,7 +160,6 @@ void GrafxDriver::ClearLayer(Layer_e Layer)
         for(uint32_t i = 0; i < GRAFX_DRIVER_SIZE; i++)
         {
             WriteData(0x001F);
-  //          COUNT++;
         }
     }
     else
@@ -225,20 +234,15 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
 
     // What is needed here..
 
-    pMemoryPool->Alloc(Size, MEM_DBG_GRAFX_BC);                // Reserve memory for merging image into background
+    pMemoryPool->Alloc(Size, MEM_DBG_GRAFX_BC);                                     // Reserve memory for merging image into background
         // -    Use DMA2D to merge
-            // -    Calculate offset on the background
         // merge both image.
-        // Send the square area to the LCD.
-        
-        
-        
-    pMemoryPool->Free((void**)&pBuffer);
-    //
 
+    SetWindow(pBox);
+    pMemoryPool->Free((void**)&pBuffer);
+    DMA_Memcpy(pBuffer, LCD_RAM, Size, DMA_M2M_INCREMENT_SOURCE);                   // Copy from buffer to screen 
 
     VAR_UNUSED(pSrc);
-    VAR_UNUSED(pBox);
     VAR_UNUSED(pDstPos);
     VAR_UNUSED(SrcPixelFormat);
     VAR_UNUSED(BlendMode);
@@ -443,21 +447,47 @@ uint16_t GrafxDriver::ReadCommand(uint8_t Register)
 //
 //  Name:           WriteWindowData
 //
-//  Parameter(s):   
+//  Parameter(s):
 //
-//  Return:         
+//  Return:
 //
-//  Description:    
+//  Description:
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::WriteWindowData(Cartesian_t* pDstPos, uint16_t* pData, size_t Length)
-{
+//void GrafxDriver::WriteWindowData(Cartesian_t* pDstPos, uint16_t* pData, size_t Length)
+//{
     // Set window frame into LCD
-    
+
     // Set Start Address
-    SetRAM_Pointer      (uint16_t PosX, uint16_t PosY);
-    
-    
+    //SetRAM_Pointer      (uint16_t PosX, uint16_t PosY);
+
+
+//}
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SetWindow
+//
+//  Parameter(s):
+//
+//  Return:
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::SetWindow(Box_t* pBox)
+{
+    uint16_t StartX = pBox->Pos.X;
+    uint16_t EndX   = StartX + pBox->Size.Width  - 1;
+    uint16_t StartY = pBox->Pos.Y;
+    uint16_t EndY   = StartY + pBox->Size.Height - 1;
+    WriteCommand(SSD2119_HORIZONTAL_RAM_START_REGISTER, StartX);        // Horizontal window (X) Start
+    WriteCommand(SSD2119_HORIZONTAL_RAM_END_REGISTER,   EndX);          // Horizontal window (X) End
+    uint16_t Vertical = (EndY << 8) | (StartY & 0x00FF);
+    WriteCommand(SSD2119_VERTICAL_RAM_POSITION_REGISTER, Vertical);     // Vertical window (Y) packed into one register
+    SetRAM_Pointer(StartX, StartY);                                     // Set GRAM cursor to top-left of window
+    SetWriteRAM_Ready();                                                // Prepare for RAM write
 }
 
 //-------------------------------------------------------------------------------------------------

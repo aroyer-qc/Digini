@@ -78,6 +78,10 @@
 #define DMA_MEMORY_TO_PERIPHERAL       DMA_SxCR_DIR_0       // Memory to peripheral direction
 #define DMA_MEMORY_TO_MEMORY           DMA_SxCR_DIR_1       // Memory to memory direction
 
+#define DMA_M2M_INCREMENT_SOURCE       DMA_SxCR_PINC
+#define DMA_M2M_INCREMENT_DESTINATION  DMA_SxCR_MINC
+#define DMA_M2M_INCREMENT_BOTH         (DMA_SxCR_MINC | DMA_SxCR_PINC)
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -147,7 +151,7 @@ class DMA_Driver
 
 #if (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
 void DMA_MEM2MEM_Initialize     (void);
-void DMA_Memcpy                 (void* pSource, void* pDestination, size_t Size, bool SourceIncrement = true);
+void DMA_Memcpy                 (void* pSource, void* pDestination, size_t Size, uint32_t Increment = DMA_M2M_INCREMENT_BOTH);
 #endif
 
 //-------------------------------------------------------------------------------------------------

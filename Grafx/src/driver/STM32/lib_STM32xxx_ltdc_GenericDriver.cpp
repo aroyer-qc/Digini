@@ -129,8 +129,8 @@ void GrafxGenDriver::ClearLayer(Layer_e Layer)
     uint32_t Color     = pLayer->GetColor();
     uint32_t Size      = GRAFX_DRIVER_SIZE_X * GRAFX_DRIVER_SIZE_Y * PixelSize;
 
-    // Clear using DMA memory-to-memory (source does NOT increment)
-    DMA_Memcpy(&Color, (void*)Address, Size, false);
+    // Clear using DMA memory-to-memory (increment only the destination)
+    DMA_Memcpy(&Color, (void*)Address, Size, DMA_SxCR_MINC);
     
   #endif
 }

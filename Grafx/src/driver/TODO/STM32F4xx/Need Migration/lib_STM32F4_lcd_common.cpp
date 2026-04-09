@@ -97,7 +97,7 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
         uint8_t* pLocalSrc = (uint8_t*)pSrc;
         uint32_t* pDst = (uint32_t*)Address;
         pLocalSrc += (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
-        DMA_Memcpy(pLocalSrc, pDst, size_t(AreaConfig.u_32));
+        DMA_Memcpy(pLocalSrc, pDst, size_t(AreaConfig);
       #endif
     }
     else
@@ -168,7 +168,7 @@ void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelForm
         uint8_t* pLocalSrc = (uint8_t*)pSrc;
         uint32_t* pDst = (uint32_t*)Address;
         pLocalSrc += (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
-        DMA_Memcpy(pLocalSrc, pDst, size_t(AreaConfig.u_32));
+        DMA_Memcpy(pLocalSrc, pDst, size_t(AreaConfig));
   #endif
 }
 

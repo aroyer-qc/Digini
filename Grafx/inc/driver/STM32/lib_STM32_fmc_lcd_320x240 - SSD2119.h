@@ -124,7 +124,11 @@
 
 // GRAFX_LCD_BASE and GRAFX_LCD_REGISTER_SELECT_BIT must be configure into grafx_cfg.h
 #define LCD_REG                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE)))
+<<<<<<< HEAD
 #define LCD_RAM                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE | (0x02 << GRAFX_LCD_REGISTER_SELECT_BIT))))
+=======
+#define LCD_RAM                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE | (6 << GRAFX_LCD_REGISTER_SELECT_BIT))))
+>>>>>>> ae75659c1a9e55efdc7931935b9b9ed5992b2727
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -165,7 +169,7 @@ class GrafxDriver : public GrafxGenDriver
 
         void            SetWriteRAM_Ready   (void)                                  { LCD_REG = SSD2119_RAM_DATA_REGISTER; }
         void            SetRAM_Pointer      (uint16_t PosX, uint16_t PosY);
-        void            SetWindow           (Cartesian_t Position);
+        void            SetWindow           (Box_t* pBox);
         uint16_t        ReadCommand         (uint8_t Register);
         uint16_t        ReadData            (void)                                  { return LCD_RAM; }
         void            WriteCommand        (uint8_t Register, uint16_t Data)       { LCD_REG = Register; LCD_RAM = Data; }

@@ -267,7 +267,7 @@ MODBUS_Router::MODBUS_Router()
 
 void MODBUS_Router::Process(void)
 {
-    for(size_t i = 0; i < MODBUS_MAX_BACKENDS; i++)
+    for(size_t i = 0; i < MODBUS_BACKEND_COUNT; i++)
     {
         if(m_BackEnds[i] != nullptr)
         {
@@ -278,7 +278,7 @@ void MODBUS_Router::Process(void)
 
 bool MODBUS_Router::RegisterEndpoint(IModbusBackend* pBackEnd)
 {
-    for(size_t i = 0; i < MODBUS_MAX_BACKENDS; i++)
+    for(size_t i = 0; i < MODBUS_BACKEND_COUNT; i++)
     {
         if(m_BackEnds[i] == nullptr)
         {
@@ -292,31 +292,7 @@ bool MODBUS_Router::RegisterEndpoint(IModbusBackend* pBackEnd)
 
 bool MODBUS_Router::Queue(const ModbusCommand& Command)
 {
-    // Check passthru rules if it exist
-    for(size_t r = 0; r < MODBUS_MAX_RULES; r++)
-    {
-        if(Command.UnitID == m_PassthruRules[r].SrcUnitID)
-        {
-            ModbusCommand_t NewCommand = Command;
-            NewCommand.UnitID = m_PassthruRules[r].DstUnitID;
-
-            // Find backend for new UnitID
-            for(size_t i = 0; i < MODBUS_MAX_BACKENDS; i++)
-            {
-                MODBUS_InterfaceBackEnd* pBackEnd = m_BackEnds[i];
-
-                if((pBackEnd != 0) &&
-                   (pBackEnd->CanHandle(NewCommand.UnitID) == true))
-                {
-                    return pBackEnd->Queue(NewCommand);
-                }
-            }
-
-            return false;
-        }
-    }
-
-    for(size_t i = 0; i < MODBUS_MAX_BACKENDS; i++)
+    for(size_t i = 0; i < MODBUS_BACKEND_COUNT; i++)
     {
         MODBUS_InterfaceBackEnd* pBackEnd = m_BackEnds[i];
 
@@ -331,7 +307,7 @@ bool MODBUS_Router::Queue(const ModbusCommand& Command)
 
 bool MODBUS_Router::IsBusy(void)
 {
-    for(size_t i = 0; i < MODBUS_MAX_BACKENDS; i++)
+    for(size_t i = 0; i < MODBUS_BACKEND_COUNT; i++)
     {
         if((m_BackEnds[i] != nullptr) && (m_BackEnds[i]->IsBusy() == true))
         {
@@ -344,7 +320,7 @@ bool MODBUS_Router::IsBusy(void)
 
 bool MODBUS_Router::Queue(const ModbusCommand& Command)
 {
-    for(size_t i = 0; i < MODBUS_MAX_BACKENDS; i++)
+    for(size_t i = 0; i < MODBUS_BACKEND_COUNT; i++)
     {
         IModbusBackEnd* pBackEnd = m_BackEnds[i];
 

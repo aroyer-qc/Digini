@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_modbus.cpp
+//  File : lib_class_modbus_app.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -23,72 +23,86 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
-
-//------ Note(s) ----------------------------------------------------------------------------------
 //
+//  Note(s):
+//
+//  +---------------------+
+//  |     ModbusAPP       |  <-- Application layer
+//  |  X-macro table      |      - callbacks
+//  |  callbacks          |      - passthru rules
+//  |                     |      - dynamic entries (later)
+//  +---------------------+
+//           ^
+//           |
+//           v
+//  +---------------------+
+//  |   MODBUS_Manager    |  <-- Modbus protocol logic (stateless)
+//  |  BuildFrame()       |
+//  |  ParseResponse()    |
+//  +---------------------+
+//           ^
+//           |
+//           v
+//  +---------------------+
+//  |   MODBUS_Router     |  <-- choose RTU or TCP
+//  |  passthru rules     |      - need a struct to define behavior of a passthru with address change (later)
+//  +---------------------+
+//      ^            ^
+//      |            |
+//      v            v
+//  +-----------+   +-----------+
+//  | ModbusRTU |   | ModbusTCP |
+//  | Process() |   | Process() |
+//  +-----------+   +-----------+
 //
 //-------------------------------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "./lib_digini.h"
+#pragma once
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_ETHERNET == DEF_ENABLED)
+#if (DIGINI_USE_MODBUS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:           Initialize
-//
-//  Parameter(s):   NetworkContext&  Context        Reference on the context
-//
-//  Return:         None
-//
-//  Description:
-//
+// Define(s)
 //-------------------------------------------------------------------------------------------------
-void MODBUS_Manager::Initialize(NetworkContext* pContext)
+
+#define MODBUS_MAX_BACKENDS   8   // Pour le config plus tard!!
+
+
+#define MAKE_ENTRY(ID, FUNC, CB, PT) { ID, FUNC, CB, PT },
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+struct MODBUS_AppEntry_t
 {
-    m_pContext = pContext;
-}
+    uint8_t         UnitID;
+    uint8_t         Function;
+    void            (*Callback)(const MODBUS_Command_t&, MODBUS_Response_t&);
+};
+
+
+/*
+#define MODBUS_APP_TABLE(X) \
+    X(1, 0x03, ReadHoldingRegs) \
+    X(1, 0x06, WriteSingleReg) \
+    X(2, 0x03, Poutine) \
+    X(3, 0x10, WriteMultipleRegs)
+*/
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:           Process
-//
-//  Parameter(s):   
-//  Return:         None
-//
-//  Description:    
-//
+// Class
 //-------------------------------------------------------------------------------------------------
-void MODBUS_Manager::Process(IP_PacketMsg_t* pMsg)
+
+class ModbusAPP
 {
-}
+    public:
+        
+        bool Process(const MODBUS_Command_t& Command, MODBUS_Response_t& Response);
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Send
-//
-//  Parameter(s):   
-//                  
-//
-//  Return:         
-//                  
-//                  
-//  Description:
-//
-//-------------------------------------------------------------------------------------------------
+    private:
 
-//-------------------------------------------------------------------------------------------------
-
-#endif // (DIGINI_USE_ETHERNET == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-
-
-
-
+        const ModbusAppEntry* Find(uint8_t UnitID, uint8_t Function);
+};

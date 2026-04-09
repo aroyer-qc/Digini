@@ -26,27 +26,24 @@
 //
 //  Note(s):
 //
-// |---- Comm
-// |     |--- CLI
-// |     |--- Terminal
-// |     |--- VT100
-// |     |--- Console
-// |     |--- Modbus                <- RTU Part of MODBUS
-// |
-// |── NanoIP
-// |     |
-// |     |--- ... 
-// |     |--- Modbus                <- TCP Part of MODBUS
-// |
-// |---- Modbus                     <- Central Modbus class
-//       |--- IModbusTransport
-//       |--- ModbusCentral
-//       |--- ModbusRouter
-//       |--- ModbusFrame
-//       |--- ModbusTypes
-//       |--- ModbusCommand
-//       |--- ModbusRoute
-//       |--- ModbusContext
+//  +---------------------+
+//  |   MODBUS_Manager    |  <-- Modbus logic (stateless)
+//  |  BuildFrame()       |
+//  |  ParseResponse()    |
+//  +---------------------+
+//           ^
+//           |
+//           v
+//  +---------------------+
+//  |   MODBUS_Router     |  <-- choose RTU or TCP
+//  +---------------------+
+//      ^            ^
+//      |            |
+//      v            v
+//  +-----------+   +-----------+
+//  | ModbusRTU |   | ModbusTCP |
+//  | Process() |   | Process() |
+//  +-----------+   +-----------+
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -60,146 +57,99 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+#define MODBUS_MAX_BACKENDS   8   // Pour le config plus tard!!
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
+enum MODBUS_Function_e
+{
+    MODBUS_READ_COILS                  = 0x01,
+    MODBUS_READ_DISCRETE_INPUTS        = 0x02,
+    MODBUS_READ_HOLDING_REGISTERS      = 0x03,
+    MODBUS_READ_INPUT_REGISTERS        = 0x04,
+    MODBUS_WRITE_SINGLE_COIL           = 0x05,
+    MODBUS_WRITE_SINGLE_REGISTER       = 0x06,
+    MODBUS_WRITE_MULTIPLE_COILS        = 0x0F,
+    MODBUS_WRITE_MULTIPLE_REGISTERS    = 0x10
+};
+
+enum MODBUS_Backend_e
+{
+    MODBUS_BACKEND_LOCAL,
+    MODBUS_BACKEND_TCP,
+    MODBUS_BACKEND_RTU,
+};
+
+struct ModbusCommand_t
+{
+    MODBUS_Backend_e   BackEnd;         // RTU, TCP, etc.
+    uint8_t            UnitID;          // Slave address
+    MODBUS_Function_e  Function;        // Function code
+    uint16_t           Address;         // Starting address
+    uint16_t           Quantity;        // Number of items
+    uint16_t           Value;           // For single write
+    uint16_t*          Data;            // For multiple write
+    uint8_t*           ResultBuffer;    // For coils / discrete inputs
+    uint16_t*          ResultRegisters; // For registers
+    size_t             ResultLength;    // Number of bytes or registers
+};
+
+struct MODBUS_PassthruRule_t
+{
+    uint8_t     SrcUnitID;
+    uint8_t     SrcFunction;
+
+    uint8_t     DstUnitID;
+    uint8_t     DstFunction;
+
+    MODBUS_InterfaceBackEnd* pTargetBackEnd;
+};
 //-------------------------------------------------------------------------------------------------
 // Class
 //-------------------------------------------------------------------------------------------------
 
-
-enum class ModbusPath
-{
-    LOCAL,
-    TCP,
-    RTU,
-    AUTO
-};
-
-struct ModbusCommand
-{
-    uint8_t     functionCode;
-    uint16_t    address;
-    uint16_t    quantity;
-
-    uint8_t*    payload = nullptr;   // fourni par MemoryPool
-    uint16_t    payloadLen = 0;
-
-    uint8_t     unitId = 1;
-    uint32_t    timeoutMs = 200;
-
-    ModbusTransport transport = ModbusTransport::AUTO;
-};
-
-struct ModbusTcpEndpoint
-{
-    int         socketFd = -1;
-    uint32_t    ipAddr = 0;   // IPv4 packed
-    uint16_t    port = 502;
-};
-
-struct ModbusRtuEndpoint
-{
-    int         uartFd = -1;
-    uint32_t    baudrate = 115200;
-    uint8_t     parity = 0;
-    uint8_t     stopBits = 1;
-};
-
-struct ModbusExecutionContext
-{
-    ModbusTcpEndpoint* tcp = nullptr;
-    ModbusRtuEndpoint* rtu = nullptr;
-    uint32_t timestampMs = 0;
-    uint8_t  retries = 0;
-
-    void* userData = nullptr;
-};
-
-struct ModbusRoute
-{
-    ModbusRouteType type = ModbusRouteType::AUTO;
-
-    uint8_t     unitId = 1;
-    uint32_t    ipAddr = 0;   // IPv4 packed
-    uint16_t    port = 502;
-};
-
-struct ModbusCommandEntry
-{
-    const char*     name;   // string literal ou pool
-    ModbusCommand   cmd;
-};
-
-struct ModbusCommandRegistry {
-    ModbusCommand* entries = nullptr;   // tableau statique ou MemoryPool
-    uint16_t       count = 0;
-};
-
-enum class ModbusCommandId : uint16_t {
-    READ_HOLDING,
-    READ_INPUT,
-    WRITE_SINGLE,
-    WRITE_MULTIPLE,
-    COUNT
-};
-
-class ModbusRegistry {
-
-public:
-    static const ModbusCommand* Get(const ModbusCommandRegistry& reg, ModbusCommandId id)   // pas sur que c'est utile
-    {
-        uint16_t idx = static_cast<uint16_t>(id);
-        
-        if(idx >= reg.count)
-        {
-            return nullptr;
-        }
-        
-        return &reg.entries[idx];
-    }
-
-    static ModbusCommand* Get(ModbusCommandRegistry& reg, ModbusCommandId id)
-    {
-        uint16_t idx = static_cast<uint16_t>(id);
-        
-        if(idx >= reg.count)
-        {
-            return nullptr;
-        }
-        
-        return &reg.entries[idx];
-    }
-};
-
-class ModbusRouter
+class MODBUS_InterfaceBackEnd
 {
     public:
-        ModbusExecutionContext* selectContext(const ModbusCommand& cmd, const ModbusRoute& route)
-        {
-            switch(route.type)
-            {
-                case ModbusRouteType::LOCAL:
-                    return localContext;
+        
+        virtual             ~MODBUS_InterfaceBackEnd    ()                              {}
 
-                case ModbusRouteType::TCP:
-                    return getTcpContext(route.ipAddr, route.port);
+        virtual bool        Queue                       (const ModbusCommand& Command)  = 0;
+        virtual void        Process                     (void)                          = 0;
+        virtual bool        IsBusy                      (void)                          = 0;
+        virtual bool        CanHandle                   (uint8_t UnitID)                = 0;
+};
 
-                case ModbusRouteType::RTU:
-                    return getRtuContext(route.unitId);
+class MODBUS_Manager
+{
+    public:
+    
+        int                 BuildFrame                  (const ModbusCommand& Command, uint8_t* pOut, size_t MaxLength);
+        int                 ParseResponse               (const ModbusCommand& Command, const uint8_t* pIn, size_t Length);
+        int                 ParsePayload                (const ModbusCommand& Command, uint8_t Function, const uint8_t* pIn, size_t Length);
 
-                case ModbusRouteType::AUTO:
-                    return autoSelect(cmd);
-            }
-            
-            return nullptr;
-        }
+    private:
 
-private:
-    ModbusExecutionContext* localContext = nullptr;
+        bool                ValidateCRC                 (const uint8_t* pData, size_t Length);
+};
 
-    ModbusExecutionContext* getTcpContext(uint32_t ip, uint16_t port);
-    ModbusExecutionContext* getRtuContext(uint8_t unitId);
-    ModbusExecutionContext* autoSelect(const ModbusCommand&);
+class MODBUS_Router
+{
+    public:
+
+                            ModbusRouter            () = default;
+
+        bool                RegisterEndpoint        (IModbusBackend* pBackEnd);
+
+        bool                Queue                   (const ModbusCommand_t& Command);
+        void                Process                 (void);
+        bool                IsBusy                  (void);
+        bool                CanHandle               (uint8_t UnitID);
+
+    private:
+
+        MODBUS_InterfaceBackEnd*        m_BackEnds[MODBUS_MAX_BACKENDS];
+        MODBUS_PassthruRule_t           m_PassthruRules[MODBUS_MAX_RULES];
 };

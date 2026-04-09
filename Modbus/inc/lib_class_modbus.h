@@ -82,7 +82,7 @@ enum MODBUS_Backend_e
     MODBUS_BACKEND_RTU,
 };
 
-struct ModbusCommand_t
+struct MODBUS_Command_t
 {
     MODBUS_Backend_e   BackEnd;         // RTU, TCP, etc.
     uint8_t            UnitID;          // Slave address
@@ -99,13 +99,9 @@ struct ModbusCommand_t
 struct MODBUS_PassthruRule_t
 {
     uint8_t     SrcUnitID;
-    uint8_t     SrcFunction;
-
     uint8_t     DstUnitID;
-    uint8_t     DstFunction;
-
-    MODBUS_InterfaceBackEnd* pTargetBackEnd;
 };
+
 //-------------------------------------------------------------------------------------------------
 // Class
 //-------------------------------------------------------------------------------------------------
@@ -126,9 +122,9 @@ class MODBUS_Manager
 {
     public:
     
-        int                 BuildFrame                  (const ModbusCommand& Command, uint8_t* pOut, size_t MaxLength);
-        int                 ParseResponse               (const ModbusCommand& Command, const uint8_t* pIn, size_t Length);
-        int                 ParsePayload                (const ModbusCommand& Command, uint8_t Function, const uint8_t* pIn, size_t Length);
+        int                 BuildFrame                  (const MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength);
+        int                 ParseResponse               (const MODBUS_Command_t& Command, const uint8_t* pIn, size_t Length);
+        int                 ParsePayload                (const MODBUS_Command_t& Command, uint8_t Function, const uint8_t* pIn, size_t Length);
 
     private:
 

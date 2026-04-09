@@ -51,7 +51,7 @@ const SSD2119_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
     {SSD2119_ENTRY_MODE_REGISTER,                   SSD2119_ENTRY_MODE_VALUE                        },        // Color format (16-bit, 18-bit, etc.), Horizontal/vertical increment mode, BGR/RGB order, Addressing mode.
     {SSD2119_LCD_DRIVE_AC_CONTROL_REGISTER,         0x0600                                          },        // Controls: AC drive frequency, Polarity, Line inversion. : 0x0600 is a stable default for most TFT glass.
     {SSD2119_POWER_CONTROL_1_REGISTER,              0x4A38                                          },        // Main power control: Booster, Voltage regulator, Reference voltage. This is part of the power-up ramp.
-    {SSD2119_OUTPUT_CONTROL_REGISTER,               0x72EF                                          },        // Controls: Scan direction, Gate driver shift direction, LCD panel type, Display resolution mapping. : 0x72EF is a common value for 320×240 TFT panels.
+    {SSD2119_OUTPUT_CONTROL_REGISTER,               0x70EF                                          },        // Controls: Scan direction, Gate driver shift direction, LCD panel type, Display resolution mapping. : 0x72EF is a common value for 320×240 TFT panels.
     {SSD2119_GATE_SCAN_START_REGISTER,              0x0000                                          },        // Start scanning from gate line 0.
     {SSD2119_FRAME_FREQUENCY_REGISTER,              0xA000                                          },        // Primary frame frequency control.
     {SSD2119_VCOM_OTP_1_REGISTER,                   0x0006                                          },        // Sets VCOM amplitude from OTP block. This stabilizes the common electrode voltage and reduces flicker.
@@ -62,9 +62,9 @@ const SSD2119_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
     {SSD2119_POWER_CONTROL_3_REGISTER,              0x000F                                          },        // Booster control step 3.
     {SSD2119_POWER_CONTROL_4_REGISTER,              0x1B00                                          },        // VCOM voltage setting (coarse).
     {SSD2119_POWER_CONTROL_5_REGISTER,              0x00B5                                          },        // VCOM voltage setting (fine). This pair (0x2E00 + 0x00BE) is what stabilizes the TFT’s common electrode.
-    {SSD2119_VERTICAL_RAM_POSITION_REGISTER,        SSD2119_VERTICAL_WINDOWS_FULL_SIZE              },
-    {SSD2119_HORIZONTAL_RAM_START_REGISTER,         SSD2119_HORIZONTAL_WINDOWS_START_FULL_SIZE      },
-    {SSD2119_HORIZONTAL_RAM_END_REGISTER,           SSD2119_HORIZONTAL_WINDOWS_END_FULL_SIZE        },
+//    {SSD2119_VERTICAL_RAM_POSITION_REGISTER,        SSD2119_VERTICAL_WINDOWS_FULL_SIZE              },
+//    {SSD2119_HORIZONTAL_RAM_START_REGISTER,         SSD2119_HORIZONTAL_WINDOWS_START_FULL_SIZE      },
+//    {SSD2119_HORIZONTAL_RAM_END_REGISTER,           SSD2119_HORIZONTAL_WINDOWS_END_FULL_SIZE        },
     {SSD2119_GAMMA_CONTROL_1_REGISTER,              0x0000                                          },
     {SSD2119_GAMMA_CONTROL_2_REGISTER,              0x0101                                          },
     {SSD2119_GAMMA_CONTROL_3_REGISTER,              0x0100                                          },
@@ -93,6 +93,8 @@ const SSD2119_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
 //                  to a known state.
 //
 //-------------------------------------------------------------------------------------------------
+uint16_t DataLCD;
+
 void GrafxDriver::Initialize(void* pArg)
 {
     // I may need to provide a pointer to the background image for building element to display on the screen (merge)
@@ -124,14 +126,14 @@ SetRAM_Pointer(12, 12);
 WriteData(0x0070);
 
 SetRAM_Pointer(10, 10);
-ChipID = 0;
-ChipID = LCD_RAM;
-ChipID = LCD_RAM;
+DataLCD = 0;
+DataLCD = LCD_RAM;
+DataLCD = LCD_RAM;
 
 SetRAM_Pointer(12, 12);
-ChipID = 0;
-ChipID = LCD_RAM;
-ChipID = LCD_RAM;
+DataLCD = 0;
+DataLCD = LCD_RAM;
+DataLCD = LCD_RAM;
 
 }
 
@@ -155,8 +157,11 @@ void GrafxDriver::ClearLayer(Layer_e Layer)
 {
    	if(Layer == FOREGROUND_DISPLAY)
     {
-        SetRAM_Pointer(0, 0);
 
+        //uint16_t Black = 0x001F; // for test
+        ResetWindow();
+        SetRAM_Pointer(0, 0);
+        //DMA_Memcpy(Black, LCD_RAM, GRAFX_DRIVER_SIZE, DMA_M2M_NO_INCREMENT);
         for(uint32_t i = 0; i < GRAFX_DRIVER_SIZE; i++)
         {
             WriteData(0x001F);
@@ -240,7 +245,7 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
 
     SetWindow(pBox);
     pMemoryPool->Free((void**)&pBuffer);
-    DMA_Memcpy(pBuffer, LCD_RAM, Size, DMA_M2M_INCREMENT_SOURCE);                   // Copy from buffer to screen 
+    DMA_Memcpy(pBuffer, LCD_RAM, Size, DMA_M2M_INCREMENT_SOURCE);                   // Copy from buffer to screen
 
     VAR_UNUSED(pSrc);
     VAR_UNUSED(pDstPos);
@@ -488,6 +493,24 @@ void GrafxDriver::SetWindow(Box_t* pBox)
     WriteCommand(SSD2119_VERTICAL_RAM_POSITION_REGISTER, Vertical);     // Vertical window (Y) packed into one register
     SetRAM_Pointer(StartX, StartY);                                     // Set GRAM cursor to top-left of window
     SetWriteRAM_Ready();                                                // Prepare for RAM write
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SetWindow
+//
+//  Parameter(s):
+//
+//  Return:
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::ResetWindow(void)
+{
+    WriteCommand(SSD2119_VERTICAL_RAM_POSITION_REGISTER, SSD2119_VERTICAL_WINDOWS_FULL_SIZE);
+    WriteCommand(SSD2119_HORIZONTAL_RAM_START_REGISTER,  SSD2119_HORIZONTAL_WINDOWS_START_FULL_SIZE);
+    WriteCommand(SSD2119_HORIZONTAL_RAM_END_REGISTER,    SSD2119_HORIZONTAL_WINDOWS_END_FULL_SIZE);
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -52,7 +52,7 @@
 //  Description:
 //
 //-------------------------------------------------------------------------------------------------
-int MODBUS_Manager::BuildFrame(const ModbusCommand& Command, uint8_t* pOut, size_t MaxLength)
+int MODBUS_Manager::BuildFrame(const MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength)
 {
     size_t Index = 0;
     
@@ -94,7 +94,7 @@ int MODBUS_Manager::BuildFrame(const ModbusCommand& Command, uint8_t* pOut, size
 //  Description:
 //
 //-------------------------------------------------------------------------------------------------
-int MODBUS_Manager::ParseResponse(const ModbusCommand& Command, const uint8_t* pIn, size_t Length)
+int MODBUS_Manager::ParseResponse(const MODBUS_Command_t& Command, const uint8_t* pIn, size_t Length)
 {
     if(Length < 4)                                              // Minimal length
     {
@@ -172,7 +172,7 @@ bool MODBUS_Manager::ValidateCRC(const uint8_t* pData, size_t Length)
 //  Description:
 //
 //-------------------------------------------------------------------------------------------------
-int MODBUS_Manager::ParsePayload(const ModbusCommand& Command, uint8_t Function, const uint8_t* pIn, size_t Length)
+int MODBUS_Manager::ParsePayload(const MODBUS_Command_t& Command, uint8_t Function, const uint8_t* pIn, size_t Length)
 {
     switch(Function)
     {
@@ -259,30 +259,30 @@ int MODBUS_Manager::ParsePayload(const ModbusCommand& Command, uint8_t Function,
 
 MODBUS_Router::MODBUS_Router()
 {
-    for(size_t i = 0; i < (size_t)MODBUS_Backend_e::COUNT; i++)
+    for(size_t BackEnd = 0; BackEnd < MODBUS_MAX_BACKENDS; BackEnd++)
     {
-        m_BackEnds[i] = nullptr;
+        m_BackEnds[BackEnd] = nullptr;
     }
 }
 
 void MODBUS_Router::Process(void)
 {
-    for(size_t i = 0; i < MODBUS_MAX_BACKENDS; i++)
+    for(size_t BackEnd = 0; BackEnd < MODBUS_MAX_BACKENDS; BackEnd++)
     {
-        if(m_BackEnds[i] != nullptr)
+        if(m_BackEnds[BackEnd] != nullptr)
         {
-            m_BackEnds[i]->Process();
+            m_BackEnds[BackEnd]->Process();
         }
     }
 }
 
 bool MODBUS_Router::RegisterEndpoint(IModbusBackend* pBackEnd)
 {
-    for(size_t i = 0; i < MODBUS_MAX_BACKENDS; i++)
+    for(size_t BackEnd = 0; BackEnd < MODBUS_MAX_BACKENDS; BackEnd++)
     {
-        if(m_BackEnds[i] == nullptr)
+        if(m_BackEnds[BackEnd] == nullptr)
         {
-            m_BackEnds[i] = pBackEnd;
+            m_BackEnds[BackEnd] = pBackEnd;
             return true;
         }
     }
@@ -290,23 +290,22 @@ bool MODBUS_Router::RegisterEndpoint(IModbusBackend* pBackEnd)
     return false; // No more space
 }
 
-bool MODBUS_Router::Queue(const ModbusCommand& Command)
+bool MODBUS_Router::Queue(const MODBUS_Command_t& Command)
 {
     // Check passthru rules if it exist
-    for(size_t r = 0; r < MODBUS_MAX_RULES; r++)
+    for(size_t Rules = 0; Rules < MODBUS_MAX_RULES; Rules++)
     {
-        if(Command.UnitID == m_PassthruRules[r].SrcUnitID)
+        if(Command.UnitID == m_PassthruRules[Rules].SrcUnitID)
         {
             ModbusCommand_t NewCommand = Command;
-            NewCommand.UnitID = m_PassthruRules[r].DstUnitID;
+            NewCommand.UnitID = m_PassthruRules[Rules].DstUnitID;
 
             // Find backend for new UnitID
-            for(size_t i = 0; i < MODBUS_MAX_BACKENDS; i++)
+            for(size_t BackEnd = 0; BackEnd < MODBUS_MAX_BACKENDS; BackEnd++)
             {
-                MODBUS_InterfaceBackEnd* pBackEnd = m_BackEnds[i];
+                MODBUS_InterfaceBackEnd* pBackEnd = m_BackEnds[BackEnd];
 
-                if((pBackEnd != 0) &&
-                   (pBackEnd->CanHandle(NewCommand.UnitID) == true))
+                if((pBackEnd != 0) && (pBackEnd->CanHandle(NewCommand.UnitID) == true))
                 {
                     return pBackEnd->Queue(NewCommand);
                 }
@@ -316,9 +315,9 @@ bool MODBUS_Router::Queue(const ModbusCommand& Command)
         }
     }
 
-    for(size_t i = 0; i < MODBUS_MAX_BACKENDS; i++)
+    for(size_t BackEnd = 0; BackEnd < MODBUS_MAX_BACKENDS; BackEnd++)
     {
-        MODBUS_InterfaceBackEnd* pBackEnd = m_BackEnds[i];
+        MODBUS_InterfaceBackEnd* pBackEnd = m_BackEnds[BackEnd];
 
         if((pBackEnd != nullptr) && (pBackEnd->CanHandle(Command.UnitID) == true))
         {
@@ -331,9 +330,9 @@ bool MODBUS_Router::Queue(const ModbusCommand& Command)
 
 bool MODBUS_Router::IsBusy(void)
 {
-    for(size_t i = 0; i < MODBUS_MAX_BACKENDS; i++)
+    for(size_t BackEnd = 0; BackEnd < MODBUS_MAX_BACKENDS; BackEnd++)
     {
-        if((m_BackEnds[i] != nullptr) && (m_BackEnds[i]->IsBusy() == true))
+        if((m_BackEnds[BackEnd] != nullptr) && (m_BackEnds[BackEnd]->IsBusy() == true))
         {
             return true;
         }
@@ -342,11 +341,11 @@ bool MODBUS_Router::IsBusy(void)
     return false;
 }
 
-bool MODBUS_Router::Queue(const ModbusCommand& Command)
+bool MODBUS_Router::Queue(const MODBUS_Command_t& Command)
 {
-    for(size_t i = 0; i < MODBUS_MAX_BACKENDS; i++)
+    for(size_t BackEnd = 0; BackEnd < MODBUS_MAX_BACKENDS; BackEnd++)
     {
-        IModbusBackEnd* pBackEnd = m_BackEnds[i];
+        IModbusBackEnd* pBackEnd = m_BackEnds[BackEnd];
 
         if((pBackEnd != nullptr) && (pBackEnd->CanHandle(Command.UnitID) == true))
         {

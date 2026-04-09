@@ -81,6 +81,7 @@
 #define DMA_M2M_INCREMENT_SOURCE       DMA_SxCR_PINC
 #define DMA_M2M_INCREMENT_DESTINATION  DMA_SxCR_MINC
 #define DMA_M2M_INCREMENT_BOTH         (DMA_SxCR_MINC | DMA_SxCR_PINC)
+#define DMA_M2M_INCREMENT_NONE         0
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)

@@ -93,7 +93,7 @@ const SSD2119_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
 //                  to a known state.
 //
 //-------------------------------------------------------------------------------------------------
-static uint16_t ChipID;
+volatile uint16_t ChipID;
 void GrafxDriver::Initialize(void* pArg)
 {
     // I may need to provide a pointer to the background image for building element to display on the screen (merge)
@@ -104,7 +104,7 @@ void GrafxDriver::Initialize(void* pArg)
     IO_SetPinHigh(IO_LCD_RESET);
     LIB_Delay_mSec(5);
 
-    ChipID = ReadCommand(SSD2119_DEVICE_CODE_READ_REGISTER);
+    ChipID = LCD_REG; //ReadCommand(SSD2119_DEVICE_CODE_READ_REGISTER);
 
     // Send the complete list of initialization command to LCD
     for(int i = 0; i < GRAFX_NUMBER_OF_INIT_CMD; i++)
@@ -120,8 +120,22 @@ void GrafxDriver::Initialize(void* pArg)
     ClearLayer(FOREGROUND_DISPLAY);
 
 // test
-    CLayer::SetColor(BLUE);
-    DrawPixel(10, 10);
+SetRAM_Pointer(10, 10);
+WriteData(0x001F);
+
+SetRAM_Pointer(12, 12);
+WriteData(0x0070);
+
+SetRAM_Pointer(10, 10);
+ChipID = 0;
+ChipID = LCD_RAM;
+ChipID = LCD_RAM;
+
+SetRAM_Pointer(12, 12);
+ChipID = 0;
+ChipID = LCD_RAM;
+ChipID = LCD_RAM;
+
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -230,9 +244,9 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
             // -    Calculate offset on the background
         // merge both image.
         // Send the square area to the LCD.
-        
-        
-        
+
+
+
     pMemoryPool->Free((void**)&pBuffer);
     //
 
@@ -443,22 +457,22 @@ uint16_t GrafxDriver::ReadCommand(uint8_t Register)
 //
 //  Name:           WriteWindowData
 //
-//  Parameter(s):   
+//  Parameter(s):
 //
-//  Return:         
+//  Return:
 //
-//  Description:    
+//  Description:
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::WriteWindowData(Cartesian_t* pDstPos, uint16_t* pData, size_t Length)
-{
+//void GrafxDriver::WriteWindowData(Cartesian_t* pDstPos, uint16_t* pData, size_t Length)
+//{
     // Set window frame into LCD
-    
+
     // Set Start Address
-    SetRAM_Pointer      (uint16_t PosX, uint16_t PosY);
-    
-    
-}
+    //SetRAM_Pointer      (uint16_t PosX, uint16_t PosY);
+
+
+//}
 
 //-------------------------------------------------------------------------------------------------
 

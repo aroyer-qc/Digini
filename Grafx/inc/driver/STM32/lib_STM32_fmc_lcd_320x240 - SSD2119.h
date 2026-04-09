@@ -124,7 +124,7 @@
 
 // GRAFX_LCD_BASE and GRAFX_LCD_REGISTER_SELECT_BIT must be configure into grafx_cfg.h
 #define LCD_REG                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE)))
-#define LCD_RAM                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE | (1 << GRAFX_LCD_REGISTER_SELECT_BIT))))
+#define LCD_RAM                                         (*((volatile uint16_t*)(GRAFX_LCD_BASE | (6 << GRAFX_LCD_REGISTER_SELECT_BIT))))
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)

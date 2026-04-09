@@ -91,6 +91,7 @@ void CRC_Driver::Initialize(CRC_HW_Type_e Type)
 //-------------------------------------------------------------------------------------------------
 void CRC_Driver::Start(void)
 {
+    while(nOS_MutexLock(&CRC_Driver::m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
     CRC->CR = 1;
     CRC->DR = m_MethodList[m_Type].RevInit;
 }

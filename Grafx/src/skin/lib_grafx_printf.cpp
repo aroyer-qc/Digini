@@ -62,21 +62,21 @@ size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService)
 
     if(pText->Label != INVALID_LABEL)
     {
-        CLayer::SetTextColor(pText->Color[pService->IndexState]);
+        DisplayLayer::SetTextColor(pText->Color[pService->IndexState]);
         FontDefault.Set(pText->Font);
         SetXY_Justification(pText->Options);
         DB_Central.Get(&pString, APPLICATION_LABEL, pText->Label);
 
         if(pText->Blend == CLEAR_BLEND)
         {
-            CLayer::SetColor(TRANSPARENT);
+            DisplayLayer::SetColor(TRANSPARENT);
             myGrafx->DrawRectangle(&pText->Box);
         }
 
       #if (GRAFX_PAINT_BOX_DEBUG == DEF_ENABLED)
         if((pText->Box.Size.Width != 0) && (pText->Box.Size.Height != 0))
         {
-            CLayer::SetColor(GRAFX_PAINT_BOX_DEBUG_COLOR);
+            DisplayLayer::SetColor(GRAFX_PAINT_BOX_DEBUG_COLOR);
             DrawDebugBox(&pText->Box);
         }
       #endif

@@ -292,11 +292,11 @@ void PDI_myClassTask::Run()
 void PDI_myClassTask::ClearAllZone(void)
 {
     Box_t Box = {{0, 0},{m_ConfigSizeX, m_ConfigSizeY}};
-    CLayer::PushDrawing();
-    CLayer::SetDrawing(TOUCH_SENSE_LAYER);
-    CLayer::SetColor(BLACK);
+    DisplayLayer::PushDrawing();
+    DisplayLayer::SetDrawing(TOUCH_SENSE_LAYER);
+    DisplayLayer::SetColor(BLACK);
     myGrafx->DrawRectangle(&Box);
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -314,9 +314,9 @@ void PDI_myClassTask::ClearAllZone(void)
 void PDI_myClassTask::CreateZone(EventArea_t* pEventArea, uint16_t Options, Widget_e Widget)
 {
 
-    CLayer::PushDrawing();
-    CLayer::SetDrawing(TOUCH_SENSE_LAYER);
-    CLayer::SetColor(Widget);
+    DisplayLayer::PushDrawing();
+    DisplayLayer::SetDrawing(TOUCH_SENSE_LAYER);
+    DisplayLayer::SetColor(Widget);
 
     switch(Options & GRAFX_OPTION_TOUCH_MASK)
     {
@@ -325,7 +325,7 @@ void PDI_myClassTask::CreateZone(EventArea_t* pEventArea, uint16_t Options, Widg
  //       case GRAFX_OPTION_TOUCH_POLYGON:      myGrafx->DrawPolygon  (&pEventArea->Polygon, POLY_FILL);     break;
     }
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------

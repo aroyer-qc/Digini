@@ -46,11 +46,11 @@
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class CLayer
+class DisplayLayer
 {
     public:
 
-                                CLayer                  (Layer_e          VirtualLayer,
+                                DisplayLayer                  (Layer_e          VirtualLayer,
                                                          uint32_t         u32LayerAddress,
                                                          LayerType_e      ActiveOnLayer,
                                                          uint16_t         SizeX,
@@ -76,7 +76,7 @@ class CLayer
 
         // Static function
 
-        static void             SetActiveLayer          (LayerType_e LayerType, CLayer* pLayer);
+        static void             SetActiveLayer          (LayerType_e LayerType, DisplayLayer* pLayer);
         static void             SetActiveLayer          (LayerType_e LayerType, Layer_e Layer);
 
         static Layer_e          GetDrawing              (void);
@@ -112,12 +112,14 @@ class CLayer
         // Static variables
         static Layer_e          m_ActiveDrawingLayer;
 
-      #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
-        static CLayer*          m_pActiveBG_Layer;
-        static CLayer*          m_pConstructBG_Layer;
+        static DisplayLayer*    m_pActiveBG_Layer;
+      #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
+        static DisplayLayer*    m_pConstructBG_Layer;
       #endif
-        static CLayer*          m_pActiveFG_Layer;
-        static CLayer*          m_pConstructFG_Layer;
+        static DisplayLayer*    m_pActiveFG_Layer;
+      #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
+        static DisplayLayer*    m_pConstructFG_Layer;
+      #endif
         static uint8_t          m_LayerStackCounter;
         static Layer_e          m_LayerStack[CLAYER_STACK_LEVEL];
         static const uint8_t    m_LayerPixelSize[PIXEL_FORMAT_COUNT];
@@ -127,7 +129,7 @@ class CLayer
 // Global variable(s)
 //-------------------------------------------------------------------------------------------------
 
-extern CLayer    LayerTable[LAYER_COUNT];
+extern DisplayLayer    LayerTable[LAYER_COUNT];
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)

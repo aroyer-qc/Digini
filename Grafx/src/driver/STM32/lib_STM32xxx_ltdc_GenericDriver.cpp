@@ -110,7 +110,7 @@ void GrafxGenDriver::ClearLayer(Layer_e Layer)
   #ifdef DMA2D
   
     uint32_t  PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
-    uint32_t  AreaConfig  = (GRAFX_DRIVER_SIZE_X << 16) | GRAFX_DRIVER_SIZE_Y;
+    uint32_t  AreaConfig  = (pLayer->GetSize().X << 16) | pLayer->GetSize().Y;
 
     // Configure DMA2D for Register-to-Memory (constant color fill)
     DMA2D->CR      = DMA2D_R2M | DMA2D_CR_TCIE;
@@ -123,11 +123,11 @@ void GrafxGenDriver::ClearLayer(Layer_e Layer)
     SET_BIT(DMA2D->CR, DMA2D_CR_START);                         // Start operation
     while (DMA2D->CR & DMA2D_CR_START);                         // Wait for completion
   
-  #else
+  #else // some F4xx doesn't have DMA2D
 
     uint32_t PixelSize = pLayer->GetPixelSize();
     uint32_t Color     = pLayer->GetColor();
-    uint32_t Size      = GRAFX_DRIVER_SIZE_X * GRAFX_DRIVER_SIZE_Y * PixelSize;
+    uint32_t Size      = (pLayer->GetSize().X << 16) | pLayer->GetSize().Y * PixelSize;
 
     // Clear using DMA memory-to-memory (increment only the destination)
     DMA_Memcpy(&Color, (void*)Address, Size, DMA_SxCR_MINC);

@@ -44,7 +44,7 @@ static uint8_t Justification;
 // External low level function from driver
 //-------------------------------------------------------------------------------------------------
 
-//void DRV_LayerConfig       (CLayer* pLayer);
+//void DRV_LayerConfig       (DisplayLayer* pLayer);
 
 //-------------------------------------------------------------------------------------------------
 //

@@ -38,7 +38,7 @@
 // Expand macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_LAYER_AS_COLOR_TABLE(ENUM_ID, WORK_LAYER, PIXEL_FORMAT, SIZE_X, SIZE_Y) CLayer(ENUM_ID, 0, WORK_LAYER, SIZE_X, SIZE_Y, PIXEL_FORMAT),
+#define EXPAND_X_LAYER_AS_COLOR_TABLE(ENUM_ID, WORK_LAYER, PIXEL_FORMAT, SIZE_X, SIZE_Y) DisplayLayer(ENUM_ID, 0, WORK_LAYER, SIZE_X, SIZE_Y, PIXEL_FORMAT),
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -47,7 +47,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #ifdef LAYER_DEF
-CLayer LayerTable[LAYER_COUNT] =
+DisplayLayer LayerTable[LAYER_COUNT] =
 {
     LAYER_DEF(EXPAND_X_LAYER_AS_COLOR_TABLE)
 };
@@ -59,21 +59,22 @@ CLayer LayerTable[LAYER_COUNT] =
 //
 //-------------------------------------------------------------------------------------------------
 
-Layer_e      CLayer::m_ActiveDrawingLayer;
-      //static CLayer*      m_pActiveDrawingLayer;
+Layer_e      DisplayLayer::m_ActiveDrawingLayer;
+      //static DisplayLayer*      m_pActiveDrawingLayer;
 
-#if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
-CLayer*      CLayer::m_pActiveBG_Layer;
-CLayer*      CLayer::m_pConstructBG_Layer;
+DisplayLayer*      DisplayLayer::m_pActiveBG_Layer;
+#if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
+DisplayLayer*      DisplayLayer::m_pConstructBG_Layer;
 #endif
-
-CLayer*      CLayer::m_pActiveFG_Layer;
-CLayer*      CLayer::m_pConstructFG_Layer;
-uint8_t      CLayer::m_LayerStackCounter;
-Layer_e      CLayer::m_LayerStack[CLAYER_STACK_LEVEL];
+DisplayLayer*      DisplayLayer::m_pActiveFG_Layer;
+#if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
+DisplayLayer*      DisplayLayer::m_pConstructFG_Layer;
+#endif
+uint8_t      DisplayLayer::m_LayerStackCounter;
+Layer_e      DisplayLayer::m_LayerStack[CLAYER_STACK_LEVEL];
 
 // This table must match the enum PixelFormat_e (lib_grafx_enum.h)
-const uint8_t CLayer::m_LayerPixelSize[PIXEL_FORMAT_COUNT] =
+const uint8_t DisplayLayer::m_LayerPixelSize[PIXEL_FORMAT_COUNT] =
 {
   #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
     4,
@@ -119,7 +120,7 @@ const uint8_t CLayer::m_LayerPixelSize[PIXEL_FORMAT_COUNT] =
 
 //-------------------------------------------------------------------------------------------------
 //
-//   class: CLayer
+//   class: DisplayLayer
 //
 //
 //   Description:   Class to handle layer properties and function
@@ -128,7 +129,7 @@ const uint8_t CLayer::m_LayerPixelSize[PIXEL_FORMAT_COUNT] =
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   CLayer
+//   Constructor:   DisplayLayer
 //
 //   Parameter(s):  Layer_e      VirtualLayer
 //                  uint32_t     LayerAddress
@@ -139,26 +140,26 @@ const uint8_t CLayer::m_LayerPixelSize[PIXEL_FORMAT_COUNT] =
 //   Return Value:  none
 //
 //-------------------------------------------------------------------------------------------------
-CLayer::CLayer(Layer_e          VirtualLayer,
-               uint32_t         LayerAddress,
-               LayerType_e      ActiveOnLayer,
-               uint16_t         SizeX,
-               uint16_t         SizeY,
-               PixelFormat_e    PixelFormat)
+DisplayLayer::DisplayLayer(Layer_e          VirtualLayer,
+                           uint32_t         LayerAddress,
+                           LayerType_e      ActiveOnLayer,
+                           uint16_t         SizeX,
+                           uint16_t         SizeY,
+                           PixelFormat_e    PixelFormat)
 {
     m_VirtualLayer   = VirtualLayer;
     m_LayerAddress   = LayerAddress;
     m_ActiveOnLayer  = ActiveOnLayer;
     m_Size.X         = SizeX;
     m_Size.Y         = SizeY;
-    m_PixelSize      = CLayer::GetPixelSize(PixelFormat);
+    m_PixelSize      = DisplayLayer::GetPixelSize(PixelFormat);
     m_TotalSize      = (uint32_t)SizeX * (uint32_t)SizeY * (uint32_t)m_PixelSize;
     m_PixelFormat    = PixelFormat;
     m_Alpha          = 255;
     m_Color          = GetFormatColor(PixelFormat, BLACK);
     m_TextColor      = GetFormatColor(PixelFormat, WHITE);
 
-    CLayer::m_LayerStackCounter = CLAYER_STACK_LEVEL;
+    DisplayLayer::m_LayerStackCounter = CLAYER_STACK_LEVEL;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -171,15 +172,15 @@ CLayer::CLayer(Layer_e          VirtualLayer,
 //   Description:   Clear the layer
 //
 //-------------------------------------------------------------------------------------------------
-void CLayer::Clear(void)
+void DisplayLayer::Clear(void)
 {
     uint32_t DrawingColor = m_Color;
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
     SetDrawing(m_VirtualLayer);         // why m_VirtualLayer ????
     m_Color = 0;
     //myGrafx->DrawRectangle(0, 0, m_Size.X, m_Size.Y); //TODO commented while working on FMC8080
     m_Color = DrawingColor;
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -192,7 +193,7 @@ void CLayer::Clear(void)
 //   Description:   Set layer base address
 //
 //-------------------------------------------------------------------------------------------------
-void CLayer::SetAddress(uint32_t Address)
+void DisplayLayer::SetAddress(uint32_t Address)
 {
     m_LayerAddress = Address;
 }
@@ -207,7 +208,7 @@ void CLayer::SetAddress(uint32_t Address)
 //   Description:   Get layer base address
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CLayer::GetAddress(void)
+uint32_t DisplayLayer::GetAddress(void)
 {
     return m_LayerAddress;
 }
@@ -222,7 +223,7 @@ uint32_t CLayer::GetAddress(void)
 //   Description:   Get the total size of the layer
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CLayer::GetTotalSize(void)
+uint32_t DisplayLayer::GetTotalSize(void)
 {
     return m_TotalSize;
 }
@@ -237,7 +238,7 @@ uint32_t CLayer::GetTotalSize(void)
 //   Description:   Get the size in X and Y of the layer
 //
 //-------------------------------------------------------------------------------------------------
-Cartesian_t CLayer::GetSize(void)
+Cartesian_t DisplayLayer::GetSize(void)
 {
     return m_Size;
 }
@@ -252,7 +253,7 @@ Cartesian_t CLayer::GetSize(void)
 //   Description:   Return the pixel format value
 //
 //-------------------------------------------------------------------------------------------------
-PixelFormat_e CLayer::GetPixelFormat(void)
+PixelFormat_e DisplayLayer::GetPixelFormat(void)
 {
     return m_PixelFormat;
 }
@@ -267,7 +268,7 @@ PixelFormat_e CLayer::GetPixelFormat(void)
 //   Description:   Return the pixel size
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t CLayer::GetPixelSize(void)
+uint8_t DisplayLayer::GetPixelSize(void)
 {
     return m_PixelSize;
 }
@@ -282,7 +283,7 @@ uint8_t CLayer::GetPixelSize(void)
 //   Description:   Return the pixel size
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t CLayer::GetPixelSize(PixelFormat_e PixelFormat)
+uint8_t DisplayLayer::GetPixelSize(PixelFormat_e PixelFormat)
 {
     return m_LayerPixelSize[PixelFormat];
 }
@@ -294,10 +295,10 @@ uint8_t CLayer::GetPixelSize(PixelFormat_e PixelFormat)
 //   Parameter(s):  Layer_e          ActiveLayer
 //   Return Value:  none
 //
-//   Description:   Set the the virtual layer to be use as active layer
+//   Description:   Set the virtual layer to be use as active layer
 //
 //-------------------------------------------------------------------------------------------------
-void CLayer::SetActive(LayerType_e ActiveLayer)
+void DisplayLayer::SetActive(LayerType_e ActiveLayer)
 {
     m_ActiveOnLayer = ActiveLayer;
 }
@@ -312,7 +313,7 @@ void CLayer::SetActive(LayerType_e ActiveLayer)
 //   Description:   Get setting for active layer
 //
 //-------------------------------------------------------------------------------------------------
-LayerType_e CLayer::GetActive(void)
+LayerType_e DisplayLayer::GetActive(void)
 {
     return m_ActiveOnLayer;
 }
@@ -327,7 +328,7 @@ LayerType_e CLayer::GetActive(void)
 //   Description:   Get setting for virtual layer
 //
 //-------------------------------------------------------------------------------------------------
-Layer_e CLayer::GetVirtual(void)
+Layer_e DisplayLayer::GetVirtual(void)
 {
     return m_VirtualLayer;
 }
@@ -344,7 +345,7 @@ Layer_e CLayer::GetVirtual(void)
 //   note(s):       Update the physical layer if active
 //
 //-------------------------------------------------------------------------------------------------
-void CLayer::SetAlpha(uint8_t Alpha)
+void DisplayLayer::SetAlpha(uint8_t Alpha)
 {
     m_Alpha = Alpha;
 
@@ -365,7 +366,7 @@ void CLayer::SetAlpha(uint8_t Alpha)
 //   Description:   Get the Alpha constant for the layer
 //
 //-------------------------------------------------------------------------------------------------
-uint8_t CLayer::GetAlpha(void)
+uint8_t DisplayLayer::GetAlpha(void)
 {
     return m_Alpha;
 }
@@ -385,14 +386,14 @@ uint8_t CLayer::GetAlpha(void)
 //   Description:   Set the drawing color
 //
 //-------------------------------------------------------------------------------------------------
-void CLayer::SetColor(ColorTable_e Index)
+void DisplayLayer::SetColor(ColorTable_e Index)
 {
-     SetColor(GetFormatColor(LayerTable[CLayer::m_ActiveDrawingLayer].m_PixelFormat, Index));
+     SetColor(GetFormatColor(LayerTable[DisplayLayer::m_ActiveDrawingLayer].m_PixelFormat, Index));
 }
 
-void CLayer::SetColor(uint32_t Color)
+void DisplayLayer::SetColor(uint32_t Color)
 {
-     LayerTable[CLayer::m_ActiveDrawingLayer].m_Color = Color;
+     LayerTable[DisplayLayer::m_ActiveDrawingLayer].m_Color = Color;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -410,14 +411,14 @@ void CLayer::SetColor(uint32_t Color)
 //   Description:   Set the text drawing color
 //
 //-------------------------------------------------------------------------------------------------
-void CLayer::SetTextColor(ColorTable_e Index)
+void DisplayLayer::SetTextColor(ColorTable_e Index)
 {
-     SetTextColor(GetFormatColor(LayerTable[CLayer::m_ActiveDrawingLayer].m_PixelFormat, Index));
+     SetTextColor(GetFormatColor(LayerTable[DisplayLayer::m_ActiveDrawingLayer].m_PixelFormat, Index));
 }
 
-void CLayer::SetTextColor(uint32_t Color)
+void DisplayLayer::SetTextColor(uint32_t Color)
 {
-     LayerTable[CLayer::m_ActiveDrawingLayer].m_TextColor = Color;
+     LayerTable[DisplayLayer::m_ActiveDrawingLayer].m_TextColor = Color;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -430,9 +431,9 @@ void CLayer::SetTextColor(uint32_t Color)
 //   Description:   Return the color value according to pixel format
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CLayer::GetColor(void)
+uint32_t DisplayLayer::GetColor(void)
 {
-    return LayerTable[CLayer::m_ActiveDrawingLayer].m_Color;
+    return LayerTable[DisplayLayer::m_ActiveDrawingLayer].m_Color;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -445,9 +446,9 @@ uint32_t CLayer::GetColor(void)
 //   Description:   Return the text color value according to pixel format
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t CLayer::GetTextColor(void)
+uint32_t DisplayLayer::GetTextColor(void)
 {
-    return LayerTable[CLayer::m_ActiveDrawingLayer].m_TextColor;
+    return LayerTable[DisplayLayer::m_ActiveDrawingLayer].m_TextColor;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -455,7 +456,7 @@ uint32_t CLayer::GetTextColor(void)
 //   Function Name: SetActiveLayer
 //
 //   Parameter(s):  LayerType_e LayerType               Physical layer affected
-//                  CLayer*     pLayer                  Virtual layer to used
+//                  DisplayLayer*     pLayer                  Virtual layer to used
 //   Return Value:  none
 //
 //   Description:   Set the active layer according to Parameter
@@ -463,53 +464,59 @@ uint32_t CLayer::GetTextColor(void)
 //   Note(s)        For practical purpose, the previous layer will be assign to construct duty
 //
 //-------------------------------------------------------------------------------------------------
-void CLayer::SetActiveLayer(LayerType_e LayerType, CLayer* pLayer)
+void DisplayLayer::SetActiveLayer(LayerType_e LayerType, DisplayLayer* pLayer)
 {
     switch(LayerType)
     {
-
-      #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
         case LAYER_BACKGROUND:
         {
             // Deactivate physical access from previous owner of the active layer
-            if(CLayer::m_pActiveBG_Layer != nullptr)
+            if(DisplayLayer::m_pActiveBG_Layer != nullptr)
             {
-                CLayer::m_pActiveBG_Layer->SetActive(LAYER_VIRTUAL);                    // Set the old layer to virtual status
-                CLayer::m_pConstructBG_Layer = CLayer::m_pActiveBG_Layer;               // And also assign this layer to construct duty
+                DisplayLayer::m_pActiveBG_Layer->SetActive(LAYER_VIRTUAL);                    // Set the old layer to virtual status
+              #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
+                DisplayLayer::m_pConstructBG_Layer = DisplayLayer::m_pActiveBG_Layer;               // And also assign this layer to construct duty
+              #endif
             }
 
             // Activate new owner of the active layer
-            CLayer::m_pActiveBG_Layer = pLayer;
-            CLayer::m_pActiveBG_Layer->SetActive(LayerType);
-            myGrafx->LayerConfig(CLayer::m_pActiveBG_Layer);
-            break;
+            DisplayLayer::m_pActiveBG_Layer = pLayer;
+            DisplayLayer::m_pActiveBG_Layer->SetActive(LayerType);
+            myGrafx->LayerConfig(DisplayLayer::m_pActiveBG_Layer);
         }
-      #endif
+        break;
 
-      #if (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
         case LAYER_FOREGROUND:
         {
             // Deactivate physical access from previous owner of the active layer
-            if(CLayer::m_pActiveFG_Layer != nullptr)
+            if(DisplayLayer::m_pActiveFG_Layer != nullptr)
             {
-                CLayer::m_pActiveFG_Layer->SetActive(LAYER_VIRTUAL);                    // Set the old layer to virtual status
-                CLayer::m_pConstructFG_Layer = CLayer::m_pActiveFG_Layer;               // And also assign this layer to construct duty
+                DisplayLayer::m_pActiveFG_Layer->SetActive(LAYER_VIRTUAL);                    // Set the old layer to virtual status
+              #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
+                DisplayLayer::m_pConstructFG_Layer = DisplayLayer::m_pActiveFG_Layer;               // And also assign this layer to construct duty
+              #endif
             }
 
             // Activate new owner of the active layer
-            CLayer::m_pActiveFG_Layer = pLayer;
-            CLayer::m_pActiveFG_Layer->SetActive(LayerType);
-            myGrafx->LayerConfig(CLayer::m_pActiveFG_Layer);
-            break;
+            DisplayLayer::m_pActiveFG_Layer = pLayer;
+            DisplayLayer::m_pActiveFG_Layer->SetActive(LayerType);
+            myGrafx->LayerConfig(DisplayLayer::m_pActiveFG_Layer);
         }
-      #endif
+        break;
 
         case LAYER_VIRTUAL:
         {
             // TODO (Alain#1#): Handle the virtual layer if any
 
-            break;
         }
+        break;
+
+        case LAYER_DUMMY:
+        {
+            // TODO (Alain#1#): Handle the virtual layer if any
+
+        }
+        break;
     }
 }
 
@@ -527,7 +534,7 @@ void CLayer::SetActiveLayer(LayerType_e LayerType, CLayer* pLayer)
 //
 //-------------------------------------------------------------------------------------------------
 
-void CLayer::SetActiveLayer(LayerType_e LayerType, Layer_e Layer)
+void DisplayLayer::SetActiveLayer(LayerType_e LayerType, Layer_e Layer)
 {
     SetActiveLayer(LayerType, &LayerTable[Layer]);
 }
@@ -543,9 +550,9 @@ void CLayer::SetActiveLayer(LayerType_e LayerType, Layer_e Layer)
 //
 //-------------------------------------------------------------------------------------------------
 
-Layer_e CLayer::GetDrawing(void)
+Layer_e DisplayLayer::GetDrawing(void)
 {
-    return CLayer::m_ActiveDrawingLayer;
+    return DisplayLayer::m_ActiveDrawingLayer;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -558,9 +565,9 @@ Layer_e CLayer::GetDrawing(void)
 //   Description:   Set the default layer for drawing (it can be virtual or physical)
 //
 //-------------------------------------------------------------------------------------------------
-void CLayer::SetDrawing(Layer_e Layer)
+void DisplayLayer::SetDrawing(Layer_e Layer)
 {
-    CLayer::m_ActiveDrawingLayer = Layer;
+    DisplayLayer::m_ActiveDrawingLayer = Layer;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -573,7 +580,7 @@ void CLayer::SetDrawing(Layer_e Layer)
 //   Description:   Push the actual drawing layer on a stack
 //
 //-------------------------------------------------------------------------------------------------
-void CLayer::PushDrawing(void)
+void DisplayLayer::PushDrawing(void)
 {
     if(m_LayerStackCounter != 0)
     {
@@ -592,12 +599,12 @@ void CLayer::PushDrawing(void)
 //   Description:   Get a drawing layer from stack
 //
 //-------------------------------------------------------------------------------------------------
-void CLayer::PopDrawing(void)
+void DisplayLayer::PopDrawing(void)
 {
-    if(CLayer::m_LayerStackCounter < CLAYER_STACK_LEVEL)
+    if(DisplayLayer::m_LayerStackCounter < CLAYER_STACK_LEVEL)
     {
-        CLayer::m_ActiveDrawingLayer = CLayer::m_LayerStack[m_LayerStackCounter];
-        CLayer::m_LayerStackCounter++;
+        DisplayLayer::m_ActiveDrawingLayer = DisplayLayer::m_LayerStack[m_LayerStackCounter];
+        DisplayLayer::m_LayerStackCounter++;
     }
 }
 

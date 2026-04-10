@@ -138,7 +138,7 @@ size_t GPrintf::PutString(void)
     uint32_t   KeepDrawingColor;
     FontInfo_t FontInfo;
 
-    KeepDrawingColor = CLayer::GetColor();                                          // Push drawing color
+    KeepDrawingColor = DisplayLayer::GetColor();                                          // Push drawing color
 
     m_pFontUsedInString  = (Font_e*) pMemoryPool->Alloc(sizeof(Font_e) * m_Size);
     m_pColorUsedInString = (uint32_t*)pMemoryPool->Alloc(sizeof(uint32_t) * m_Size);
@@ -177,27 +177,27 @@ size_t GPrintf::PutString(void)
 
             if(m_FontDescriptor.pAddress != 0)
             {
-                CLayer::SetTextColor(*m_pMovingUsedColorPtr);
+                DisplayLayer::SetTextColor(*m_pMovingUsedColorPtr);
                 PrintFont(&m_FontDescriptor, &m_CorrectedPos);
             }
 
           #if (GRAFX_PAINT_BOX_DEBUG == DEF_ENABLED)
             if((m_FontDescriptor.Size.Width != 0) && (m_FontDescriptor.Size.Height != 0))
             {
-                uint32_t Color = CLayer::GetColor();
-                CLayer::SetColor(GRAFX_PAINT_BOX_DEBUG_COLOR);
+                uint32_t Color = DisplayLayer::GetColor();
+                DisplayLayer::SetColor(GRAFX_PAINT_BOX_DEBUG_COLOR);
                 DrawBox(m_Position.X,
                         m_CorrectedPos.Y,
                         m_FontDescriptor.Width,
                         m_FontDescriptor.Size.Height,
                         1);
-                CLayer::SetColor(BLUE);
+                DisplayLayer::SetColor(BLUE);
                 DrawBox(m_CorrectedPos.X,
                         m_CorrectedPos.Y,
                         m_FontDescriptor.Size.Width,
                         m_FontDescriptor.Size.Height,
                         1);
-                CLayer::SetColor(Color);
+                DisplayLayer::SetColor(Color);
             }
           #endif
 
@@ -232,7 +232,7 @@ size_t GPrintf::PutString(void)
     pMemoryPool->Free((void**)&m_pColorUsedInString);
     pMemoryPool->Free((void**)&m_pFontUsedInString);
 
-    CLayer::SetColor(KeepDrawingColor);                                             // Pop drawing color
+    DisplayLayer::SetColor(KeepDrawingColor);                                             // Pop drawing color
     return 0;
 }
 
@@ -422,14 +422,14 @@ void GPrintf::ParseFeature(void)
         else
         {
             *m_pMovingUsedFontPtr  = FontDefault.Get();
-            *m_pMovingUsedColorPtr = CLayer::GetTextColor();
+            *m_pMovingUsedColorPtr = DisplayLayer::GetTextColor();
         }
 
         // Color override
         if((m_String[i] == ASCII_SINGLE_COLOR_OVERRIDE) || (m_String[i] == ASCII_COLOR_OVERRIDE))
         {
             *m_pMovingUsedColorPtr = (uint32_t)LIB_6AscHex(&m_String[i + 1]) | 0xFF000000;      // Extract the color from 6 Ascii character
-            if(m_String[i] == ASCII_COLOR_OVERRIDE) CLayer::SetTextColor(*m_pMovingUsedColorPtr);
+            if(m_String[i] == ASCII_COLOR_OVERRIDE) DisplayLayer::SetTextColor(*m_pMovingUsedColorPtr);
             strncpy(&m_String[i], &m_String[i + 7], ((m_Size - 7) + 1) - i);                    // Strip font info from string
             m_Size -= 7;                                                                        // Remove it from the size also
             BackPtrCtrl = true;

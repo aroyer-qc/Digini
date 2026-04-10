@@ -30,30 +30,6 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-struct StaticImageInfo_t
-{
-   uint16_t        SizeX;
-   uint16_t        SizeY;
-   uint16_t        BytesPerLine;
-   uint8_t         BitsPerPixel;
-   const void*     pData;
-   uint32_t        RawSize;
-   PixelFormat_e   PixelFormat;
-   Compression_e   Compression;
-};
-
-struct StaticImageRLE_16_t
-{
-    uint8_t        Repeat;
-    uint16_t       Pixel;
-};
-
-struct StaticImageRLE_32_t
-{
-    uint8_t        Repeat;
-    uint32_t       Pixel;
-};
-
 struct Cartesian_t
 {
     int16_t        X;
@@ -98,6 +74,27 @@ struct ImageInfo_t
     void*          pPointer;
     BoxSize_t      Size;
     PixelFormat_e  PixelFormat;
+};
+
+struct StaticImageInfo_t
+{
+   ImageInfo_t     ImageInfo;
+   uint16_t        BytesPerLine;
+   uint8_t         BitsPerPixel;
+   uint32_t        RawSize;
+   Compression_e   Compression;
+};
+
+struct StaticImageRLE_16_t
+{
+    uint8_t        Repeat;
+    uint16_t       Pixel;
+};
+
+struct StaticImageRLE_32_t
+{
+    uint8_t        Repeat;
+    uint32_t       Pixel;
 };
 
 union EventArea_t

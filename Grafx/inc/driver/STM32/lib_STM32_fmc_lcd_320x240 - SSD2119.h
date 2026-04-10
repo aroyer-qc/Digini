@@ -176,6 +176,9 @@ class GrafxDriver : public GrafxGenDriver
         void            DrawLine            (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
         void            DrawPixel           (uint16_t PosX, uint16_t PosY);
         void            DrawRectangle       (Box_t* pBox);
+
+        void            ImageCopy           (StaticImageInfo_t* pImageInfo, uint16_t PosX, uint16_t PosY, BlendMode_e BlendMode);
+
         void            PrintFont           (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
 
     private:

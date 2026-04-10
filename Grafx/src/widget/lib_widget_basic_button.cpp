@@ -173,12 +173,12 @@ void WidgetBasiWidgetButton::Draw(ServiceReturn_t* pService)
     uint32_t BackColor;
     uint32_t BoxColor;
 
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-    CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
   #else
-    CLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
+    DisplayLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
   #endif
 
     if(m_ServiceState == SERVICE_PRESSED || m_ServiceState == SERVICE_TYPEMATIC || m_ServiceState == SERVICE_SUPERKEY)
@@ -193,14 +193,14 @@ void WidgetBasiWidgetButton::Draw(ServiceReturn_t* pService)
         BoxColor  = m_pBasiWidgetButton->BoxColor;
     }
 
-    CLayer::SetColor(BackColor);
+    DisplayLayer::SetColor(BackColor);
     DrawRectangle(&m_pBasiWidgetButton->Box);
 
-    CLayer::SetColor(BoxColor);
+    DisplayLayer::SetColor(BoxColor);
     DrawBox(&m_pBasiWidgetButton->Box, m_pBasiWidgetButton->Thickness);
 
     WidgetPrint(&m_pBasiWidgetButton->Text, pService);
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -217,11 +217,11 @@ void WidgetBasiWidgetButton::Draw(ServiceReturn_t* pService)
 void WidgetBasiWidgetButton::DrawOnce(ServiceReturn_t* pService)
 {
 
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
     // Copy merge stuff
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------

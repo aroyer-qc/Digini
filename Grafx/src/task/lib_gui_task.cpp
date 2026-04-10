@@ -211,7 +211,7 @@ void GUI_myClassTask::Run()
                   #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
                     if(IsPageWasSliding == true)
                     {
-                        CLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_DISPLAY_LAYER_0);
+                        DisplayLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_DISPLAY_LAYER_0);
                     }
                   #endif
                 }
@@ -590,7 +590,7 @@ bool GUI_myClassTask::SlidingPage(void)
             SlidePosNewPage    = GRAFX_DRIVER_SIZE_X;
             SlidePosActualPage = 0;
             myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, &Box);      // copy actual foreground to sliding layer
-            CLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_SLIDING_LAYER);
+            DisplayLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_SLIDING_LAYER);
             Size = (m_SlideRange.EndPos == -1) ? GRAFX_DRIVER_SIZE_Y : m_SlideRange.EndPos - Start;
 
             do
@@ -632,7 +632,7 @@ bool GUI_myClassTask::SlidingPage(void)
             SlidePosNewPage    = GRAFX_DRIVER_SIZE_X;
             SlidePosActualPage = 0;
             myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, &Box);      // copy actual foreground to sliding layer
-            CLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_SLIDING_LAYER);
+            DisplayLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_SLIDING_LAYER);
             Size = (m_SlideRange.EndPos == -1) ? GRAFX_DRIVER_SIZE_Y : m_SlideRange.EndPos - Start;
 
             do
@@ -673,7 +673,7 @@ bool GUI_myClassTask::SlidingPage(void)
             SlidePosNewPage    = GRAFX_DRIVER_SIZE_Y;
             SlidePosActualPage = 0;
             myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, &Box);      // copy actual foreground to sliding layer
-            CLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_SLIDING_LAYER);
+            DisplayLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_SLIDING_LAYER);
             Size = (m_SlideRange.EndPos == -1) ? GRAFX_DRIVER_SIZE_X : m_SlideRange.EndPos - Start;
 
             do
@@ -714,7 +714,7 @@ bool GUI_myClassTask::SlidingPage(void)
             SlidePosNewPage    = GRAFX_DRIVER_SIZE_Y;
             SlidePosActualPage = 0;
             myGrafx->CopyLayerToLayer(FOREGROUND_DISPLAY_LAYER_0, FOREGROUND_SLIDING_LAYER, &Box);      // copy actual foreground to sliding layer
-            CLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_SLIDING_LAYER);
+            DisplayLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_SLIDING_LAYER);
             Size = (m_SlideRange.EndPos == -1) ? GRAFX_DRIVER_SIZE_X : m_SlideRange.EndPos - Start;
 
             do
@@ -837,17 +837,17 @@ void GUI_ClearWidgetLayer()
     Box_t Box = {{0, 0},{GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y}};
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED) && (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
-    CLayer::PushDrawing();
-    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::PushDrawing();
+    DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
     #define ENABLE_POP
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
-    CLayer::PushDrawing();
-    CLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
+    DisplayLayer::PushDrawing();
+    DisplayLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
     #define ENABLE_POP
    #elif (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
-    CLayer::PushDrawing();
-    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::PushDrawing();
+    DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
     #define ENABLE_POP
    #else
     // The Driver will take care of the clearing since there is no layer
@@ -855,10 +855,10 @@ void GUI_ClearWidgetLayer()
    #endif
   #endif
 
-    CLayer::SetColor(TRANSPARENT);
+    DisplayLayer::SetColor(TRANSPARENT);
     myGrafx->DrawRectangle(&Box);
   #ifdef ENABLE_POP
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
   #endif
 }
 

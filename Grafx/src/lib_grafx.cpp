@@ -107,16 +107,9 @@ SystemState_e GRAFX_Initialize(void)
     GFX_PrecomputeAlphaTable();
   #endif
 
-  #if (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
-    CLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_DISPLAY_LAYER_0);
-  #endif
-
-  #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
-    CLayer::SetActiveLayer(LAYER_BACKGROUND, BACKGROUND_DISPLAY_LAYER_0);
-    CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
-  #elif (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
-    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
-  #endif
+    DisplayLayer::SetActiveLayer(LAYER_FOREGROUND, FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetActiveLayer(LAYER_BACKGROUND, BACKGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
 
     return SYS_READY;
 }
@@ -177,6 +170,35 @@ SystemState_e GRAFX_PostInitialize(void)
   #endif
 
     return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//   Function Name: GRAFX_SelectBackgroundDrawingLayer
+//                  GRAFX_SelectForegroundDrawingLayer
+//
+//   Parameter(s):  None
+//   Return Value:  Layer_e
+//
+//   Description:   Return the appropriate layer to draw on according to configuration
+//
+//-------------------------------------------------------------------------------------------------
+Layer_e GRAFX_SelectBackgroundDrawingLayer(void)
+{
+   #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
+     return CONSTRUCTION_BACKGROUND_LAYER;
+   #else
+     return BACKGROUND_DISPLAY_LAYER_0;
+   #endif
+}
+
+Layer_e GRAFX_SelectForegroundDrawingLayer(void)
+{
+   #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
+    return CONSTRUCTION_FOREGROUND_LAYER;
+   #else
+    return FOREGROUND_DISPLAY_LAYER_0;
+   #endif
 }
 
 //-------------------------------------------------------------------------------------------------

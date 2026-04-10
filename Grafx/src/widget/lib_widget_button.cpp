@@ -166,15 +166,15 @@ void WidgetButton::Finalize()
 //-------------------------------------------------------------------------------------------------
 void WidgetButton::Draw(ServiceReturn_t* pService)
 {
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
-    CLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
+    DisplayLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
    #else
-    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
    #endif
   #endif
 
@@ -207,7 +207,7 @@ void WidgetButton::Draw(ServiceReturn_t* pService)
         myGrafx->CopyLinear(m_pButton->Glyph.ID_List[pService->IndexState], m_pButton->Glyph.Pos, ALPHA_BLEND);
     }
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -224,11 +224,11 @@ void WidgetButton::Draw(ServiceReturn_t* pService)
 void WidgetButton::DrawOnce(ServiceReturn_t* pService)
 {
 
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
     // Copy merge stuff
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------

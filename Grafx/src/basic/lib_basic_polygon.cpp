@@ -222,7 +222,7 @@ static void _DrawPolygon(void*         pSrc,
             Address  = (i + uint32_t(SrcImageOffset.Y)) * uint32_t(SrcLineWidth);                       // Offset for Y
             Address += uint32_t(SrcImageOffset.X);                                                      // + Base X offset in image
             Address += (pMin[i] - OffsetX);                                                         // + Polygon X Offset
-  //Address *= uint32_t(CLayer.GetPixelSize(PixelFormat);                                            // * Pixel Size
+  //Address *= uint32_t(DisplayLayer.GetPixelSize(PixelFormat);                                            // * Pixel Size
             Address += uint32_t(pSrc);                                                                  // + Base address of image
             myGrafx->CopyLinear((void*)Address, pMin[i], MinY + i, pMax[i] - pMin[i], 1, PixelFormat, BlendMode);
         }

@@ -23,17 +23,76 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------
+// Include file(s)
+//-------------------------------------------------------------------------------------------------
+
+#include "./lib_digini.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_MODBUS == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Process
+//
+//  Parameters:     Command     - Parsed Modbus request (validated by the manager)
+//                  Response    - Structure to be filled by the application callback
+//
+//  Returns:        true        - A matching entry was found and its callback executed
+//                  false       - No entry found; the manager will generate an exception
+//
+//  Description:    Locates the application handler associated with the requested UnitID and
+//                  Function code. If a matching entry exists and provides a callback, the
+//                  callback is invoked to generate the Modbus response. Passthru routing is
+//                  not handled here; it is performed by the Modbus manager before calling APP.
+//
+//-------------------------------------------------------------------------------------------------
+bool ModbusAPP::Process(const MODBUS_Command_t& Command, MODBUS_Response_t& Response)
+{
+    const ModbusAppEntry_t* Entry = Find(Command.UnitID, Command.Function);
+
+    if(Entry == nullptr)
+    {
+        return false; // Manager will return an exception
+    }
+
+    if(Entry->Callback != nullptr)
+    {
+        Entry->Callback(Command, Response);
+        return true;
+    }
+
+    return false;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Find
+//
+//  Parameters:     UnitID      - Modbus slave address to match
+//                  Function    - Modbus function code to match
+//
+//  Returns:        Pointer to the matching MODBUS_AppEntry_t, or nullptr if no entry matches.
+//
+//  Description:    Performs a linear search in the application command table and returns
+//                  the entry whose UnitID and Function fields match the requested command.
+//                  Used by ModbusAPP to locate the application handler for a given request.
+//
+//-------------------------------------------------------------------------------------------------
 const MODBUS_AppEntry_t* ModbusAPP::Find(uint8_t UnitID, uint8_t Function)
 {
-    for(size_t index = 0; index < g_ModbusAppTableCount; index++)
+    for(size_t Index = 0; Index < m_ModbusAppTableCount; Index++)
     {
-        const MODBUS_AppEntry_t* entry = &g_ModbusAppTable[index];
+        const MODBUS_AppEntry_t* Entry = &m_ModbusAppTable[Index];
 
-        if(entry->UnitID == UnitID)
+        if(Entry->UnitID == UnitID)
         {
-            if(entry->Function == Function)
+            if(Entry->Function == Function)
             {
-                return entry;
+                return Entry;
             }
         }
     }
@@ -41,30 +100,8 @@ const MODBUS_AppEntry_t* ModbusAPP::Find(uint8_t UnitID, uint8_t Function)
     return 0;
 }
 
-bool ModbusAPP::Process(const MODBUS_Command_t& cmd, MODBUS_Response_t& rsp)
-{
-    const ModbusAppEntry_t* e = Find(cmd.UnitID, cmd.Function);
+//-------------------------------------------------------------------------------------------------
 
-    if(e == nullptr)
-    {
-        return false; // Manager renverra exception
-    }
+#endif // (DIGINI_USE_MODBUS == DEF_ENABLED)
 
-    if(e->Passthru != nullptr)
-    {
-        const ModbusPassthru* pt = (const ModbusPassthru*)e->Passthru;
-
-        MODBUS_Command_t newCmd = cmd;
-        newCmd.UnitID = pt->NewUnitID;
-
-        return pt->TargetBackend->Queue(newCmd);
-    }
-
-    if(e->Callback != nullptr)
-    {
-        e->Callback(cmd, rsp);
-        return true;
-    }
-
-    return false;
-}
+//-------------------------------------------------------------------------------------------------

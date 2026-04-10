@@ -204,44 +204,30 @@ void WidgetBasicBox::Finalize()
 //-------------------------------------------------------------------------------------------------
 void WidgetBasicBox::Draw(ServiceReturn_t* pService)
 {
-  #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
-    Layer_e BackLayerToDraw;
-    Layer_e ForeLayerToDraw;
-  #endif
-
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-    CLayer::SetDrawing(((m_pBasicBox->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(((m_pBasicBox->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
   #else
 
-   #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
-    ForeLayerToDraw = CONSTRUCTION_FOREGROUND_LAYER;
-   #else
-    ForeLayerToDraw = FOREGROUND_DISPLAY_LAYER_0;
-   #endif
-
-   #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
-    BackLayerToDraw = CONSTRUCTION_BACKGROUND_LAYER;
-   #else
-    BackLayerToDraw = BACKEGROUND_DISPLAY_LAYER_0;
-   #endif
-
-   #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
+   #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
     if(SKIN_pTask->IsSkinLoaded() == true)
-    {
-        CLayer::SetDrawing(((m_pBasicBox->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BackLayerToDraw : ForeLayerToDraw);
-    }
-    else
    #endif
     {
-        CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);   // On loading with do print directly on foreground layer
+        DisplayLayer::SetDrawing(((m_pBasicBox->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? GRAFX_SelectBackgroundDrawingLayer() :
+                                                                                             GRAFX_SelectForegroundDrawingLayer());
+    }
+  #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
+    else
+    {
+        DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);   // On loading with do print directly on foreground layer
     }
   #endif
+ #endif
 
     if((m_pBasicBox->Options & GRAFX_OPTION_CLEAR) != 0)
     {
-        CLayer::SetColor(BLACK);
+        DisplayLayer::SetColor(BLACK);
         myGrafx->DrawRectangle(&m_pBasicBox->Box);
     }
 
@@ -281,7 +267,7 @@ void WidgetBasicBox::Draw(ServiceReturn_t* pService)
     }
 
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -298,11 +284,11 @@ void WidgetBasicBox::Draw(ServiceReturn_t* pService)
 void WidgetBasicBox::DrawOnce(ServiceReturn_t* pService)
 {
 
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
     // Copy merge stuff
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------

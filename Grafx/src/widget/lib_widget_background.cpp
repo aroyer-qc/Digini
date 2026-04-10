@@ -146,45 +146,49 @@ void WidgetBackground::Finalize()
 //-------------------------------------------------------------------------------------------------
 void WidgetBackground::Draw(ServiceReturn_t* pService)
 {
-    ImageInfo_t ImageInfo;
-    CLayer*     pLayer;
-
-
-    CLayer::PushDrawing();
-
-  #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-    CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
-    pLayer = &LayerTable[BACKGROUND_DISPLAY_LAYER_0];
-  #elif (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
-    CLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
-    pLayer = &LayerTable[CONSTRUCTION_BACKGROUND_LAYER];
+  #if (GRAFX_USE_ROM_DATABASE == DEF_ENABLED)
+    StaticImageInfo_t ImageInfo;                    // All Image reside in ROM in static format some are compressed in RLE
   #else
-    CLayer::SetDrawing(FOREGROUND_DISPLAY);                         // for display without background like 8080 interface LCD
+    ImageInfo_t ImageInfo;                          // All Image reside in RAM fully without compression
+  #endif
+    //DisplayLayer*     pLayer;
+
+    DisplayLayer::PushDrawing();
+
+  #if (GRAFX_DEBUG_GUI == DEF_ENABLED) || (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_DISABLED)
+    DisplayLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
+    //pLayer = &LayerTable[BACKGROUND_DISPLAY_LAYER_0];
+  #else
+    DisplayLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
+    //pLayer = &LayerTable[CONSTRUCTION_BACKGROUND_LAYER];
   #endif
 
     DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, uint16_t(m_pBackground->Image.ID_List[pService->IndexState]), 0);
+    myGrafx->ImageCopy(&ImageInfo, m_pBackground->Pos.X, m_pBackground->Pos.Y, CLEAR_BLEND);
 
- #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
-  #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
+
+/*
     myGrafx->BlockCopy(ImageInfo.pPointer,
-                       m_pBackground->Pos.X,
-                       m_pBackground->Pos.Y,
-                       ImageInfo.Size.Width,
-                       ImageInfo.Size.Height,
-                       m_pBackground->Pos.X,
-                       m_pBackground->Pos.Y,
-                       pLayer->GetPixelFormat(),
-                       CLEAR_BLEND);
-   #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
-    #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
+                            m_pBackground->Pos.X,
+                            m_pBackground->Pos.Y,
+                            ImageInfo.Size.Width,
+                            ImageInfo.Size.Height,
+                            m_pBackground->Pos.X,
+                            m_pBackground->Pos.Y,
+                            pLayer->GetPixelFormat(),
+                            CLEAR_BLEND);
+*/
+
+  #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
+   #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
     myGrafx->WaitFor_V_Sync();
-    #endif
+   #endif
+   #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
     myGrafx->CopyLayerToLayer(CONSTRUCTION_BACKGROUND_LAYER, BACKGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y);
    #endif
   #endif
- #endif
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------

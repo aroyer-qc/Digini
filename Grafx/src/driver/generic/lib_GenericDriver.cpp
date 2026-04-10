@@ -238,7 +238,7 @@ void GrafxGenDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, ui
 //
 //  Name:           LayerConfig
 //
-//  Parameter(s):   CLayer* pLayer
+//  Parameter(s):   DisplayLayer* pLayer
 //  Return:         None
 //
 //  Description:    Configuration for layer
@@ -246,7 +246,7 @@ void GrafxGenDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, ui
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::LayerConfig(Layer_e Layer)
 {
-    CLayer* pLayer = &LayerTable[Layer];
+    DisplayLayer* pLayer = &LayerTable[Layer];
     LayerConfig(pLayer);
 }
 
@@ -353,14 +353,14 @@ void GrafxGenDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16
 #if (GRAFX_USE_DISPLAY_LAYER == DEF_ENABLE)
 void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, Box_t* pBox)
 {
-    CLayer* pLayer;
+    DisplayLayer* pLayer;
 
-    CLayer::PushDrawing();
-    CLayer::SetDrawing(DstLayer);
+    DisplayLayer::PushDrawing();
+    DisplayLayer::SetDrawing(DstLayer);
     pLayer = &LayerTable[SrcLayer];
     BlockCopy((void*)pLayer->GetAddress(), pBox, &pBox->Pos, pLayer->GetPixelFormat(), CLEAR_BLEND);
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 #endif
 
@@ -411,7 +411,7 @@ void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16
 #if (GRAFX_USE_DISPLAY_LAYER == DEF_ENABLED)
 void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16_t SrcX, uint16_t SrcY, uint16_t DstX, uint16_t DstY, uint16_t Width, uint16_t Height)
 {
-    CLayer*      pLayer;
+    DisplayLayer*      pLayer;
     Box_t        Box;
     Cartesian_t  Pos;
 
@@ -423,11 +423,11 @@ void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16
     Pos.X = DstX;
     Pos.Y = DstY;
 
-    CLayer::PushDrawing();
-    CLayer::SetDrawing(DstLayer);
+    DisplayLayer::PushDrawing();
+    DisplayLayer::SetDrawing(DstLayer);
     pLayer = &LayerTable[SrcLayer];
     BlockCopy((void*)pLayer->GetAddress(), &Box, &Pos, pLayer->GetPixelFormat(), CLEAR_BLEND);
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 #endif
 
@@ -597,7 +597,7 @@ void GrafxGenDriver::DrawCircle(uint16_t PosX, uint16_t PosY, uint16_t Radius, P
             Cartesian_t Size;
 
             Size.X = 240; Size.Y = 320;
-           // Size = CLayer::GetMaxSize();
+           // Size = DisplayLayer::GetMaxSize();
 // TODO (Alain#1#): update this when it is time
 
 

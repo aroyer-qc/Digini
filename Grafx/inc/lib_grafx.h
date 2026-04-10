@@ -38,12 +38,8 @@
 #include "widget_cfg.h"
 
 #if (GRAFX_USE_DISPLAY_LAYER != DEF_ENABLED)
-  #undef  GRAFX_USE_BACKGROUND_LAYER
-  #define GRAFX_USE_BACKGROUND_LAYER                    DEF_DISABLED
   #undef  GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER
   #define GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER       DEF_DISABLED
-  #undef  GRAFX_USE_FOREGROUND_LAYER
-  #define GRAFX_USE_FOREGROUND_LAYER           			DEF_DISABLED
   #undef  GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER
   #define GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER       DEF_DISABLED
 #endif
@@ -184,45 +180,48 @@ extern const StaticImageInfo_t* StaticImageInfo[NUMBER_OF_STATIC_IMAGE];
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-SystemState_e       GRAFX_Initialize            (void);
-SystemState_e       GRAFX_PostInitialize        (void);
+SystemState_e       GRAFX_Initialize                    (void);
+SystemState_e       GRAFX_PostInitialize                (void);
+
+// helper function
+Layer_e             GRAFX_SelectBackgroundDrawingLayer  (void);
+Layer_e             GRAFX_SelectForegroundDrawingLayer  (void);
 
 // Font function
-void                PrintFont                   (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
+void                PrintFont                           (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
 
-void                DrawCursorOnCircle          (ImageID_e Image, Cartesian_t* pPos, uint16_t Radius, uint16_t Angle);
+void                DrawCursorOnCircle                  (ImageID_e Image, Cartesian_t* pPos, uint16_t Radius, uint16_t Angle);
 
-size_t              WidgetPrint                 (Text_t* pText, ServiceReturn_t* pService);
+size_t              WidgetPrint                         (Text_t* pText, ServiceReturn_t* pService);
 
 // Alpha function
-void                AlphaBlend                  (void);
+void                AlphaBlend                          (void);
 
 // Tools function
 
-Cartesian_t         GetMaxSize                  (void);
-bool                BoxValid                    (Box_t* pBox);
-void                SetXY_Justification         (uint8_t Justification);
-uint8_t             GetXY_Justification         (void);
+Cartesian_t         GetMaxSize                          (void);
+bool                BoxValid                            (Box_t* pBox);
+void                SetXY_Justification                 (uint8_t Justification);
+uint8_t             GetXY_Justification                 (void);
 
-ServiceReturn_t*    ServiceCall                 (Service_t* pService, ServiceEvent_e* pServiceState);
-ServiceReturn_t*    ServiceCallApp              (Service_t* pService, ServiceEvent_e* pServiceState);
-ServiceReturn_t*    GetServiceStruct            (ServiceType_e ServiceType);
-void                FreeServiceStruct           (ServiceReturn_t** pService);
-
+ServiceReturn_t*    ServiceCall                         (Service_t* pService, ServiceEvent_e* pServiceState);
+ServiceReturn_t*    ServiceCallApp                      (Service_t* pService, ServiceEvent_e* pServiceState);
+ServiceReturn_t*    GetServiceStruct                    (ServiceType_e ServiceType);
+void                FreeServiceStruct                   (ServiceReturn_t** pService);
 
 class GPrintf
 {
     public:
 
-        size_t              Draw                      (Box_t* pBox, const char* pFormat, ...);
+        size_t              Draw                        (Box_t* pBox, const char* pFormat, ...);
 
     private:
 
-        size_t              Draw                      (Box_t* pBox, const char* pFormat, va_list arg);
-        size_t              PutString                 (void);
-        void                ParseFeature              (void);
-        void                ParseString               (void);
-        void                IncrementFeaturePointer   (void);
+        size_t              Draw                        (Box_t* pBox, const char* pFormat, va_list arg);
+        size_t              PutString                   (void);
+        void                ParseFeature                (void);
+        void                ParseString                 (void);
+        void                IncrementFeaturePointer     (void);
 
         char                m_String[DIGINI_MAX_PRINT_SIZE];        // TODO replace this by memorypool
         Font_e*             m_pMovingUsedFontPtr;                                     // Moving pointer in "font use" string

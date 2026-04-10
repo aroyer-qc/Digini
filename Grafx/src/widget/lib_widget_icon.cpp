@@ -148,51 +148,30 @@ void WidgetIcon::Finalize()
 //-------------------------------------------------------------------------------------------------
 void WidgetIcon::Draw(ServiceReturn_t* pService)
 {
-  #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
-   #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
-    Layer_e BackLayerToDraw;
-   #endif
-    Layer_e ForeLayerToDraw;
-  #endif
-
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
 /*
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
-    CLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
+    DisplayLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
    #else
-    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
    #endif
   #endif
 */
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-    CLayer::SetDrawing(((m_pIcon->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(((m_pIcon->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
   #else
-   #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
-    ForeLayerToDraw = CONSTRUCTION_FOREGROUND_LAYER;
-   #elif (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
-    ForeLayerToDraw = FOREGROUND_DISPLAY_LAYER_0;
+    DisplayLayer::SetDrawing(((m_pIcon->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? GRAFX_SelectBackgroundDrawingLayer() :
+                                                                                     GRAFX_SelectForegroundDrawingLayer());
    #endif
-
-   #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
-   #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
-     BackLayerToDraw = CONSTRUCTION_BACKGROUND_LAYER;
-    #else
-     BackLayerToDraw = BACKGROUND_DISPLAY_LAYER_0;
-    #endif
-    CLayer::SetDrawing(((m_pIcon->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BackLayerToDraw : ForeLayerToDraw);
-   #else
-    CLayer::SetDrawing(ForeLayerToDraw);
-   #endif
-  #endif
 
     if((m_pIcon->Options & GRAFX_OPTION_CLEAR) != 0)
     {
-        CLayer::SetColor(BLACK);
+        DisplayLayer::SetColor(BLACK);
         myGrafx->DrawRectangle(&m_pIcon->Box);
     }
 
@@ -206,16 +185,14 @@ void WidgetIcon::Draw(ServiceReturn_t* pService)
                             ((ServiceType5_t*)pService)->PixelFormat,
                             CLEAR_BLEND);
     }
-    else if((m_pIcon->Options & GRAFX_OPTION_BLEND_CLEAR) != 0)
-    {
-        myGrafx->CopyLinear(m_pIcon->Image.ID_List[pService->IndexState], m_pIcon->Box.Pos, CLEAR_BLEND);
-    }
     else
     {
-        myGrafx->CopyLinear(m_pIcon->Image.ID_List[pService->IndexState], m_pIcon->Box.Pos, ALPHA_BLEND);
+        myGrafx->CopyLinear(m_pIcon->Image.ID_List[pService->IndexState],
+                            m_pIcon->Box.Pos,
+                            ((m_pIcon->Options & GRAFX_OPTION_BLEND_CLEAR) != 0) ? CLEAR_BLEND : ALPHA_BLEND);
     }
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -232,11 +209,11 @@ void WidgetIcon::Draw(ServiceReturn_t* pService)
 void WidgetIcon::DrawOnce(ServiceReturn_t* pService)
 {
 
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
     // Copy merge stuff
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -170,45 +170,31 @@ void WidgetBasicRectangle::Finalize()
 //-------------------------------------------------------------------------------------------------
 void WidgetBasicRectangle::Draw(ServiceReturn_t* pService)
 {
-  #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
-    Layer_e BackLayerToDraw;
-    Layer_e ForeLayerToDraw;
-  #endif
-
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-    CLayer::SetDrawing(((m_pBasicRect->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(((m_pBasicRect->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
   #else
-
-   #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
-    ForeLayerToDraw = CONSTRUCTION_FOREGROUND_LAYER;
-   #else
-    ForeLayerToDraw = FOREGROUND_DISPLAY_LAYER_0;
-   #endif
-
-   #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
-    BackLayerToDraw = CONSTRUCTION_BACKGROUND_LAYER;
-   #else
-    BackLayerToDraw = BACKEGROUND_DISPLAY_LAYER_0;
-   #endif
 
    #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
     if(SKIN_pTask->IsSkinLoaded() == true)
    #endif
     {
-        CLayer::SetDrawing(((m_pBasicRect->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BackLayerToDraw : ForeLayerToDraw);
+        DisplayLayer::SetDrawing(((m_pBasicRect->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? GRAFX_SelectBackgroundDrawingLayer() :
+                                                                                              GRAFX_SelectForegroundDrawingLayer());
     }
+   #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
     else
     {
-        CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);   // On loading with do print directly on foreground layer
+        DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);   // On loading with do print directly on foreground layer
     }
   #endif
+ #endif
 
-    CLayer::SetColor(m_pBasicRect->RectColor);
+    DisplayLayer::SetColor(m_pBasicRect->RectColor);
     myGrafx->DrawRectangle(&m_pBasicRect->Box);
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------

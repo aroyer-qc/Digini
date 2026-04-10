@@ -107,9 +107,9 @@ void GrafxDriver::Initialize(void* pArg)
         }
     }
 
-    ClearLayer(FOREGROUND_DISPLAY);
+    ClearLayer(FOREGROUND_DISPLAY_LAYER_0);
 /*
-    CLayer::SetColor(BLUE);
+    DisplayLayer::SetColor(BLUE);
     DrawPixel(100, 100);
 
     Box_t Box;
@@ -120,23 +120,23 @@ void GrafxDriver::Initialize(void* pArg)
     DrawRectangle(&Box);
 
 
-    CLayer::SetColor(RED);
+    DisplayLayer::SetColor(RED);
     DrawCircle(120, 130, 100, POLY_SHAPE);
 
 
-    CLayer::SetColor(MAGENTA);
+    DisplayLayer::SetColor(MAGENTA);
     DrawBox(20, 20, 280, 200, 4);
 
     while(1)
     {
-        CLayer::SetColor(RNG_GetRandomFromRange(0, 65535));
+        DisplayLayer::SetColor(RNG_GetRandomFromRange(0, 65535));
         Box.Size.Width = RNG_GetRandomFromRange(10, 50);
         Box.Size.Height = RNG_GetRandomFromRange(10, 50);
         Box.Pos.X = RNG_GetRandomFromRange(0, 269);
         Box.Pos.Y = RNG_GetRandomFromRange(0, 189);
         DrawRectangle(&Box);
 
-        CLayer::SetColor(RNG_GetRandomFromRange(0, 65535));
+        DisplayLayer::SetColor(RNG_GetRandomFromRange(0, 65535));
         DrawCircle(RNG_GetRandomFromRange(30, 289),
                    RNG_GetRandomFromRange(30, 209),
                    RNG_GetRandomFromRange(5, 30),
@@ -165,7 +165,7 @@ void GrafxDriver::Initialize(void* pArg)
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::ClearLayer(Layer_e Layer)
 {
-   	if(Layer == FOREGROUND_DISPLAY)
+   	if(Layer == FOREGROUND_DISPLAY_LAYER_0)
     {
         ResetWindow();
         for(uint32_t i = 0; i < GRAFX_DRIVER_SIZE; i++)
@@ -211,9 +211,9 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
 {
     uint32_t Color;
     uint32_t Size;
-    CLayer*  pLayer;
+    DisplayLayer*  pLayer;
 
-    pLayer = &LayerTable[CLayer::GetDrawing()];
+    pLayer = &LayerTable[DisplayLayer::GetDrawing()];
     Color       = pLayer->GetColor();
     SetWindow(pBox);
 
@@ -280,7 +280,6 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
 
     SetWindow(pBox);
     pMemoryPool->Free((void**)&pBuffer);
-    DMA_Memcpy(pBuffer, LCD_RAM, Size, DMA_M2M_INCREMENT_SOURCE);                   // Copy from buffer to screen
 
     VAR_UNUSED(pSrc);
     VAR_UNUSED(pDstPos);
@@ -350,10 +349,10 @@ void GrafxDriver::CopyLinear(ImageID_e Image, Cartesian_t Position, BlendMode_e 
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 {
-    CLayer*  pLayer;
+    DisplayLayer*  pLayer;
     uint32_t Color;
 
-    pLayer = &LayerTable[CLayer::GetDrawing()];
+    pLayer = &LayerTable[DisplayLayer::GetDrawing()];
     Color  = pLayer->GetColor();
     SetRAM_Pointer(PosX, PosY);
     WriteData(Color);
@@ -379,7 +378,7 @@ void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction)
 {
 
-    //m_pLayer = &LayerTable[CLayer::GetDrawing()];
+    //m_pLayer = &LayerTable[DisplayLayer::GetDrawing()];
 
     // if memory calculate offset check if we can call the default function
     // else
@@ -392,6 +391,79 @@ void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16
    // Write(Color);
 }
 
+void GrafxDriver::ImageCopy(StaticImageInfo_t* pImageInfo, uint16_t PosX, uint16_t PosY, BlendMode_e BlendMode)
+{
+    Box_t Box;
+    uint32_t  Size  = pImageInfo->RawSize;
+
+    Box.Pos.X       = PosX;
+    Box.Pos.Y       = PosY;
+    Box.Size.Width  = pImageInfo->ImageInfo.Size.Width;
+    Box.Size.Height = pImageInfo->ImageInfo.Size.Height;
+    SetWindow(&Box);
+
+    //pLayer = &LayerTable[DisplayLayer::GetDrawing()];
+    switch(pImageInfo->Compression)
+    {
+        case COMPX_COMPRESSION_NONE:
+        {
+            uint16_t* pData = (uint16_t*)pImageInfo->ImageInfo.pPointer;
+
+            for(uint32_t i = 0; i > Size; i++)
+            {
+                WriteData(*pData);
+                pData++;
+            }
+        }
+        break;
+
+        case COMPX_RLE_16:
+        {
+            uint8_t* pData = (uint8_t*)pImageInfo->ImageInfo.pPointer;
+
+            for(uint32_t i = 0; i > Size; )
+            {
+                uint32_t Repeat = uint32_t(*(uint8_t*)pData) + 1;
+                pData++;
+                uint16_t Pixel = *(uint16_t*)pData;
+                pData += sizeof(uint16_t);
+
+                while(Repeat--)
+                {
+                    WriteData(Pixel);
+                    i++;
+                }
+            }
+        }
+        break;
+
+        default: break;
+
+/*
+        case COMPX_RLE_32:
+        {
+            uint8_t* pData = (uint16_t*)pImageInfo->ImageInfo.pPointer;
+
+            for(uint32_t i = 0; i > Size; )
+            {
+                uint32_t Repeat = uint32_t(*(uint8_t*)pData) + 1;
+                pData++;
+                uint32_t Pixel = *(uint32_t*)pData);
+                pData += sizeof(uint32_t);
+
+                while(Repeat--)
+                {
+                    WriteData(Pixel);
+                    i++;
+                }
+            }
+        }
+        break;
+*/
+    }
+}
+
+
 void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 {
     //s32_t         AreaConfig;
@@ -403,7 +475,7 @@ VAR_UNUSED(pDescriptor);
 VAR_UNUSED(pPos);
 VAR_UNUSED(PixelFormat);
 VAR_UNUSED(PixelSize);
-    // m_pLayer = &LayerTable[CLayer::GetDrawing()];
+    // m_pLayer = &LayerTable[DisplayLayer::GetDrawing()];
 
 //    uint32_t           Address;
 

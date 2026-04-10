@@ -180,12 +180,8 @@ enum MessageType_e
 
 enum LayerType_e
 {
-  #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
     LAYER_BACKGROUND,
-  #endif
-  #if (GRAFX_USE_FOREGROUND_LAYER == DEF_ENABLED)
     LAYER_FOREGROUND,
-  #endif
     LAYER_VIRTUAL,
     LAYER_DUMMY             // ID when LAYER does not exist physically but allow identification
 };

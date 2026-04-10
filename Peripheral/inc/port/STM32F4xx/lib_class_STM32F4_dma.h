@@ -82,6 +82,9 @@
 #define DMA_M2M_INCREMENT_DESTINATION  DMA_SxCR_MINC
 #define DMA_M2M_INCREMENT_BOTH         (DMA_SxCR_MINC | DMA_SxCR_PINC)
 #define DMA_M2M_INCREMENT_NONE         0
+#define DMA_M2M_TRANSFERT_8_BITS       0
+#define DMA_M2M_TRANSFERT_16_BITS      (DMA_SxCR_MSIZE_0 | DMA_SxCR_PSIZE_0)
+#define DMA_M2M_TRANSFERT_32_BITS      (DMA_SxCR_MSIZE_1 | DMA_SxCR_PSIZE_1)
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -150,7 +153,7 @@ class DMA_Driver
 
 #if (DIGINI_USE_DMA_MEM2MEM_FUNCTION == DEF_ENABLED)
 void DMA_MEM2MEM_Initialize     (void);
-void DMA_Memcpy                 (void* pSource, void* pDestination, size_t Size, uint32_t Increment = DMA_M2M_INCREMENT_BOTH);
+void DMA_Memcpy                 (void* pSource, void* pDestination, size_t Size, uint32_t Parameter = (DMA_M2M_INCREMENT_BOTH | DMA_M2M_TRANSFERT_8_BITS));
 #endif
 
 //-------------------------------------------------------------------------------------------------

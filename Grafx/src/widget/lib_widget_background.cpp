@@ -153,16 +153,19 @@ void WidgetBackground::Draw(ServiceReturn_t* pService)
     CLayer::PushDrawing();
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-        CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
-        pLayer = &LayerTable[BACKGROUND_DISPLAY_LAYER_0];
+    CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
+    pLayer = &LayerTable[BACKGROUND_DISPLAY_LAYER_0];
+  #elif (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
+    CLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
+    pLayer = &LayerTable[CONSTRUCTION_BACKGROUND_LAYER];
   #else
-    {
-        CLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
-        pLayer = &LayerTable[CONSTRUCTION_BACKGROUND_LAYER];
-    }
+    CLayer::SetDrawing(FOREGROUND_DISPLAY);                         // for display without background like 8080 interface LCD
   #endif
 
     DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, uint16_t(m_pBackground->Image.ID_List[pService->IndexState]), 0);
+
+ #if (GRAFX_USE_BACKGROUND_LAYER == DEF_ENABLED)
+  #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
     myGrafx->BlockCopy(ImageInfo.pPointer,
                        m_pBackground->Pos.X,
                        m_pBackground->Pos.Y,
@@ -172,14 +175,14 @@ void WidgetBackground::Draw(ServiceReturn_t* pService)
                        m_pBackground->Pos.Y,
                        pLayer->GetPixelFormat(),
                        CLEAR_BLEND);
-
-
-  #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
-   #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
+   #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
+    #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
     myGrafx->WaitFor_V_Sync();
-   #endif
+    #endif
     myGrafx->CopyLayerToLayer(CONSTRUCTION_BACKGROUND_LAYER, BACKGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y);
+   #endif
   #endif
+ #endif
 
     CLayer::PopDrawing();
 }

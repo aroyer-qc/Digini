@@ -345,6 +345,7 @@ uint16_t GrafxDriver::ReadData_16(void)
 //   Description:   Draw a box or a rectangle
 //
 //-------------------------------------------------------------------------------------------------
+/*  the other mode is handle by a Box
 void GrafxDriver::DrawRectangle(Box_t* pBox, uint8_t Mode)
 {
     m_pLayer = &LayerTable[CLayer::GetDrawing()];
@@ -369,7 +370,7 @@ void GrafxDriver::DrawRectangle(Box_t* pBox, uint8_t Mode)
         WriteData(uint8_t(0x00));
     }
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 // Global Function(s)
 //-------------------------------------------------------------------------------------------------

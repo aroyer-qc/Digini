@@ -43,39 +43,32 @@
 
 const SSD2119_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
 {
-    {SSD2119_DISPLAY_CONTROL_REGISTER,              SSD2119_DISPLAY_CONTROL_GATE_ON_OPERATIONAL     },
-    {SSD2119_OSCILLATOR_START_REGISTER,             SSD2119_OSCILLATOR_ENABLE                       },        // Starts the internal oscillator. This must be done before any display timing registers are touched.
-    {SSD2119_DISPLAY_CONTROL_REGISTER,              SSD2119_DISPLAY_CONTROL_GATE_ON_OP_GS           },
-    {SSD2119_SLEEP_MODE_REGISTER,                   SSD2119_DISPLAY_EXIT_SLEEP_MODE                 },
-    {SSD2119_DISPLAY_CONTROL_REGISTER,              SSD2119_DISPLAY_ON_VALUE                        },
-    {SSD2119_ENTRY_MODE_REGISTER,                   SSD2119_ENTRY_MODE_VALUE                        },        // Color format (16-bit, 18-bit, etc.), Horizontal/vertical increment mode, BGR/RGB order, Addressing mode.
-    {SSD2119_LCD_DRIVE_AC_CONTROL_REGISTER,         0x0600                                          },        // Controls: AC drive frequency, Polarity, Line inversion. : 0x0600 is a stable default for most TFT glass.
-    {SSD2119_POWER_CONTROL_1_REGISTER,              0x4A38                                          },        // Main power control: Booster, Voltage regulator, Reference voltage. This is part of the power-up ramp.
-    {SSD2119_OUTPUT_CONTROL_REGISTER,               0x70EF                                          },        // Controls: Scan direction, Gate driver shift direction, LCD panel type, Display resolution mapping. : 0x72EF is a common value for 320×240 TFT panels.
-    {SSD2119_GATE_SCAN_START_REGISTER,              0x0000                                          },        // Start scanning from gate line 0.
-    {SSD2119_FRAME_FREQUENCY_REGISTER,              0xA000                                          },        // Primary frame frequency control.
-    {SSD2119_VCOM_OTP_1_REGISTER,                   0x0006                                          },        // Sets VCOM amplitude from OTP block. This stabilizes the common electrode voltage and reduces flicker.
-    {SSD2119_SLEEP_MODE_CONTROL_REGISTER,           0x0999                                          },        // Extended sleep control: Deep sleep exit, Oscillator gating, Power block stabilization. : 0x08D9 is a known “panel-ready” value.
-    {SSD2119_FRAME_FREQUENCY_CONTROL_2_REGISTER,    0x3800                                          },        // Fine-tunes oscillator division for frame timing.
-    {SSD2119_FRAME_CYCLE_CONTROL_REGISTER,          0x5308                                          },        // Controls: Frame frequency, Line period, Porch timing. : 0x5308 is a typical stable timing for 60–70 Hz refresh.
-    {SSD2119_POWER_CONTROL_2_REGISTER,              0x0004                                          },        // Booster control step 2.
-    {SSD2119_POWER_CONTROL_3_REGISTER,              0x000F                                          },        // Booster control step 3.
-    {SSD2119_POWER_CONTROL_4_REGISTER,              0x1B00                                          },        // VCOM voltage setting (coarse).
-    {SSD2119_POWER_CONTROL_5_REGISTER,              0x00B5                                          },        // VCOM voltage setting (fine). This pair (0x2E00 + 0x00BE) is what stabilizes the TFT’s common electrode.
-//    {SSD2119_VERTICAL_RAM_POSITION_REGISTER,        SSD2119_VERTICAL_WINDOWS_FULL_SIZE              },
-//    {SSD2119_HORIZONTAL_RAM_START_REGISTER,         SSD2119_HORIZONTAL_WINDOWS_START_FULL_SIZE      },
-//    {SSD2119_HORIZONTAL_RAM_END_REGISTER,           SSD2119_HORIZONTAL_WINDOWS_END_FULL_SIZE        },
-    {SSD2119_GAMMA_CONTROL_1_REGISTER,              0x0000                                          },
-    {SSD2119_GAMMA_CONTROL_2_REGISTER,              0x0101                                          },
-    {SSD2119_GAMMA_CONTROL_3_REGISTER,              0x0100                                          },
-    {SSD2119_GAMMA_CONTROL_4_REGISTER,              0x0305                                          },
-    {SSD2119_GAMMA_CONTROL_5_REGISTER,              0x0707                                          },
-    {SSD2119_GAMMA_CONTROL_6_REGISTER,              0x0305                                          },
-    {SSD2119_GAMMA_CONTROL_7_REGISTER,              0x0707                                          },
-    {SSD2119_GAMMA_CONTROL_8_REGISTER,              0x0201                                          },
-    {SSD2119_GAMMA_CONTROL_9_REGISTER,              0x1200                                          },
-    {SSD2119_GAMMA_CONTROL_10_REGISTER,             0x0900                                          },
-    {SSD2119_DISPLAY_CONTROL_REGISTER,              SSD2119_DISPLAY_ON_VALUE                        },        // Final display enable: Turns on the display, Enables scanning, Enables frame output. : 0x0033 = display ON, internal oscillator ON, scanning enabled.
+    {SSD2119_DISPLAY_CONTROL_REGISTER,        SSD2119_DISPLAY_OFF_VALUE},          // Display OFF
+    {SSD2119_OSCILLATOR_START_REGISTER,       SSD2119_OSCILLATOR_ENABLE},          // Enable oscillator
+    {SSD2119_POWER_CONTROL_1_REGISTER,        SSD2119_POWER_CONTROL_1_VALUE},      // Power step 1
+    {SSD2119_POWER_CONTROL_2_REGISTER,        SSD2119_POWER_CONTROL_2_VALUE},      // Power step 2
+    {SSD2119_POWER_CONTROL_3_REGISTER,        SSD2119_POWER_CONTROL_3_VALUE},      // Power step 3
+    {SSD2119_POWER_CONTROL_4_REGISTER,        SSD2119_POWER_CONTROL_4_VALUE},      // Power step 4
+    {SSD2119_POWER_CONTROL_5_REGISTER,        SSD2119_POWER_CONTROL_5_VALUE},      // Power step 5
+    {SSD2119_VCOM_OTP_1_REGISTER,             SSD2119_VCOM_OTP_1_VALUE},           // VCOM amplitude
+    {SSD2119_SLEEP_MODE_REGISTER,             SSD2119_DISPLAY_EXIT_SLEEP_MODE},    // Exit sleep
+    {SSD2119_ENTRY_MODE_REGISTER,             SSD2119_ENTRY_MODE_VALUE},           // RGB565, normal scan
+    {SSD2119_OUTPUT_CONTROL_REGISTER,         SSD2119_OUTPUT_CONTROL_VALUE},       // Panel type + scan direction
+    {SSD2119_GATE_SCAN_START_REGISTER,        0x0000},                             // Start at gate 0
+    {SSD2119_FRAME_FREQUENCY_REGISTER,        SSD2119_FRAME_FREQUENCY_VALUE},      // Frame timing
+    {SSD2119_FRAME_FREQUENCY_CONTROL_2_REGISTER, SSD2119_FRAME_FREQUENCY_CONTROL_2_VALUE},
+    {SSD2119_FRAME_CYCLE_CONTROL_REGISTER,    SSD2119_FRAME_CYCLE_CONTROL_VALUE},
+    {SSD2119_GAMMA_CONTROL_1_REGISTER,        0x0000},
+    {SSD2119_GAMMA_CONTROL_2_REGISTER,        0x0101},
+    {SSD2119_GAMMA_CONTROL_3_REGISTER,        0x0100},
+    {SSD2119_GAMMA_CONTROL_4_REGISTER,        0x0305},
+    {SSD2119_GAMMA_CONTROL_5_REGISTER,        0x0707},
+    {SSD2119_GAMMA_CONTROL_6_REGISTER,        0x0305},
+    {SSD2119_GAMMA_CONTROL_7_REGISTER,        0x0707},
+    {SSD2119_GAMMA_CONTROL_8_REGISTER,        0x0201},
+    {SSD2119_GAMMA_CONTROL_9_REGISTER,        0x1200},
+    {SSD2119_GAMMA_CONTROL_10_REGISTER,       0x0900},
+    {SSD2119_DISPLAY_CONTROL_REGISTER,        SSD2119_DISPLAY_ON_VALUE}            // Display ON
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -93,8 +86,6 @@ const SSD2119_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
 //                  to a known state.
 //
 //-------------------------------------------------------------------------------------------------
-uint16_t DataLCD;
-
 void GrafxDriver::Initialize(void* pArg)
 {
     // I may need to provide a pointer to the background image for building element to display on the screen (merge)
@@ -117,23 +108,42 @@ void GrafxDriver::Initialize(void* pArg)
     }
 
     ClearLayer(FOREGROUND_DISPLAY);
+/*
+    CLayer::SetColor(BLUE);
+    DrawPixel(100, 100);
 
-// test
-SetRAM_Pointer(10, 10);
-WriteData(0x001F);
+    Box_t Box;
+    Box.Size.Width = 30;
+    Box.Size.Height = 30;
+    Box.Pos.X = 30;
+    Box.Pos.Y = 30;
+    DrawRectangle(&Box);
 
-SetRAM_Pointer(12, 12);
-WriteData(0x0070);
 
-SetRAM_Pointer(10, 10);
-DataLCD = 0;
-DataLCD = LCD_RAM;
-DataLCD = LCD_RAM;
+    CLayer::SetColor(RED);
+    DrawCircle(120, 130, 100, POLY_SHAPE);
 
-SetRAM_Pointer(12, 12);
-DataLCD = 0;
-DataLCD = LCD_RAM;
-DataLCD = LCD_RAM;
+
+    CLayer::SetColor(MAGENTA);
+    DrawBox(20, 20, 280, 200, 4);
+
+    while(1)
+    {
+        CLayer::SetColor(RNG_GetRandomFromRange(0, 65535));
+        Box.Size.Width = RNG_GetRandomFromRange(10, 50);
+        Box.Size.Height = RNG_GetRandomFromRange(10, 50);
+        Box.Pos.X = RNG_GetRandomFromRange(0, 269);
+        Box.Pos.Y = RNG_GetRandomFromRange(0, 189);
+        DrawRectangle(&Box);
+
+        CLayer::SetColor(RNG_GetRandomFromRange(0, 65535));
+        DrawCircle(RNG_GetRandomFromRange(30, 289),
+                   RNG_GetRandomFromRange(30, 209),
+                   RNG_GetRandomFromRange(5, 30),
+                   POLY_SHAPE);
+
+    }
+*/
 
 }
 
@@ -157,14 +167,10 @@ void GrafxDriver::ClearLayer(Layer_e Layer)
 {
    	if(Layer == FOREGROUND_DISPLAY)
     {
-
-        //uint16_t Black = 0x001F; // for test
         ResetWindow();
-        SetRAM_Pointer(0, 0);
-        //DMA_Memcpy(Black, LCD_RAM, GRAFX_DRIVER_SIZE, DMA_M2M_NO_INCREMENT);
         for(uint32_t i = 0; i < GRAFX_DRIVER_SIZE; i++)
         {
-            WriteData(0x001F);
+            WriteData(0x0000);
         }
     }
     else
@@ -173,21 +179,50 @@ void GrafxDriver::ClearLayer(Layer_e Layer)
     }
 }
 
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: DrawRectangle
-//
-//   Parameter(s):  Box_t*  pBox
-//                  uint8_t Mode
-//   Return value:  None
-//
-//   Description:   Draw a box or a rectangle
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::DrawRectangle(Box_t* pBox, uint8_t Mode)
+void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness)
 {
-    VAR_UNUSED(pBox);
-    VAR_UNUSED(Mode);
+    Box_t Box;
+
+    Box.Pos.X = PosX;
+    Box.Pos.Y = PosY;
+    Box.Size.Width  = Length;
+    Box.Size.Height = Thickness;
+    DrawRectangle(&Box);                        // Top
+    Box.Pos.Y = PosY + Height - Thickness;
+    DrawRectangle(&Box);                        // Bottom
+    Box.Pos.Y = PosY + Thickness;
+    Box.Size.Width  = Thickness;
+    DrawRectangle(&Box);                        // Left
+    Box.Pos.X = PosX + Length - Thickness;
+    DrawRectangle(&Box);                        // Right
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           DrawRectangle
+//
+//  Parameter(s):   Box_t*   pBox
+//  Return:         None
+//
+//  Description:    Fill a region in a specific color
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::DrawRectangle(Box_t* pBox)
+{
+    uint32_t Color;
+    uint32_t Size;
+    CLayer*  pLayer;
+
+    pLayer = &LayerTable[CLayer::GetDrawing()];
+    Color       = pLayer->GetColor();
+    SetWindow(pBox);
+
+    Size = pBox->Size.Width * pBox->Size.Height;
+
+    for(uint32_t i = 0; i < Size; i++)
+    {
+         WriteData(Color);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -252,7 +287,7 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
     VAR_UNUSED(SrcPixelFormat);
     VAR_UNUSED(BlendMode);
 
-    // We are not calling the gen driver. because we don't have that functionnality
+    // We are not calling the gen driver. because we don't have that functionality
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -294,26 +329,13 @@ void GrafxDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t 
 
 void GrafxDriver::CopyLinear(ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode)
 {
+
+    // this is the next function to develop in this driver
     VAR_UNUSED(Image);
     VAR_UNUSED(Position);
     VAR_UNUSED(BlendMode);
 }
 
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           DrawRectangle
-//
-//  Parameter(s):   Box_t*   pBox
-//  Return:         None
-//
-//  Description:    Fill a region in a specific color
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::DrawRectangle(Box_t* pBox)
-{
-    VAR_UNUSED(pBox);
-}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -328,16 +350,12 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 {
-    uint16_t Color = 0;
+    CLayer*  pLayer;
+    uint32_t Color;
 
-   // m_pLayer = &LayerTable[CLayer::GetDrawing()];
-
-    // if memory calculate offset check if we can call the default function
-    // else
-
+    pLayer = &LayerTable[CLayer::GetDrawing()];
+    Color  = pLayer->GetColor();
     SetRAM_Pointer(PosX, PosY);
-    //get the color!!
-    SetWriteRAM_Ready();
     WriteData(Color);
 }
 
@@ -459,6 +477,7 @@ uint16_t GrafxDriver::ReadCommand(uint8_t Register)
 //  Description:
 //
 //-------------------------------------------------------------------------------------------------
+void WriteData(uint16_t* pData, size_t Length){}
 //void GrafxDriver::WriteWindowData(Cartesian_t* pDstPos, uint16_t* pData, size_t Length)
 //{
     // Set window frame into LCD
@@ -492,7 +511,7 @@ void GrafxDriver::SetWindow(Box_t* pBox)
     uint16_t Vertical = (EndY << 8) | (StartY & 0x00FF);
     WriteCommand(SSD2119_VERTICAL_RAM_POSITION_REGISTER, Vertical);     // Vertical window (Y) packed into one register
     SetRAM_Pointer(StartX, StartY);                                     // Set GRAM cursor to top-left of window
-    SetWriteRAM_Ready();                                                // Prepare for RAM write
+    SetWriteRAM_Ready();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -511,6 +530,7 @@ void GrafxDriver::ResetWindow(void)
     WriteCommand(SSD2119_VERTICAL_RAM_POSITION_REGISTER, SSD2119_VERTICAL_WINDOWS_FULL_SIZE);
     WriteCommand(SSD2119_HORIZONTAL_RAM_START_REGISTER,  SSD2119_HORIZONTAL_WINDOWS_START_FULL_SIZE);
     WriteCommand(SSD2119_HORIZONTAL_RAM_END_REGISTER,    SSD2119_HORIZONTAL_WINDOWS_END_FULL_SIZE);
+    SetRAM_Pointer(0, 0);
 }
 
 //-------------------------------------------------------------------------------------------------

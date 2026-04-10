@@ -311,71 +311,30 @@ void DMA_MEM2MEM_Initialize(void)
 //  Description:    Initialize the DMA Memory to memory transfer
 //
 //-------------------------------------------------------------------------------------------------
-void DMA_Memcpy(void* pSource, void* pDestination, size_t Size, uint32_t Increment)
+void DMA_Memcpy(void* pSource, void* pDestination, size_t Size, uint32_t Parameter)
 {
-    uint32_t AlignedSize;
-    uint8_t* pSrc8 = (uint8_t*)pSource;
-    uint8_t* pDst8 = (uint8_t*)pDestination;
-
     if(nOS_MutexLock(&MEM2MEM_Mutex, DMA_MUTEX_GUARD_TIME) != NOS_OK)
     {
         return;
     }
 
     RCC->AHB1ENR |= DMA_MEM2MEM_ENABLE;
-
     DMA_MEM2MEM_STREAM->CR = 0;
-    while(DMA_MEM2MEM_STREAM->CR & DMA_SxCR_EN);
-
+    while(DMA_MEM2MEM_STREAM->CR & DMA_SxCR_EN){};
     DMA_MEM2MEM_MODULE->DMA_IFCR = DMA_FLAG;
 
-    AlignedSize = Size & ~0x3;
+    // Configure DMA
+    DMA_MEM2MEM_STREAM->PAR  = (uint32_t)pSource;
+    DMA_MEM2MEM_STREAM->M0AR = (uint32_t)pDestination;
+    DMA_MEM2MEM_STREAM->NDTR = Size;
+    DMA_MEM2MEM_STREAM->CR   = (DMA_MEM2MEM_CHANNEL << DMA_SxCR_CHSEL_Pos) | DMA_SxCR_DIR_1 | Parameter;
+    DMA_MEM2MEM_STREAM->CR  |= DMA_SxCR_EN;
 
-    if(AlignedSize >= 4)
-    {
-        DMA_MEM2MEM_STREAM->PAR  = (uint32_t)pSource;
-        DMA_MEM2MEM_STREAM->M0AR = (uint32_t)pDestination;
-        DMA_MEM2MEM_STREAM->NDTR = AlignedSize / 4;
-
-        DMA_MEM2MEM_STREAM->CR   =
-              (DMA_MEM2MEM_CHANNEL << DMA_SxCR_CHSEL_Pos)
-            | DMA_SxCR_DIR_0
-            | Increment
-            | DMA_SxCR_MSIZE_0
-            | DMA_SxCR_PSIZE_0;
-
-        DMA_MEM2MEM_STREAM->CR |= DMA_SxCR_EN;
-    }
-
-    for(uint32_t i = AlignedSize; i < Size; i++)
-    {
-        pDst8[i] = pSrc8[i];
-    }
-
-    if(AlignedSize >= 4)
-    {
-        for(;;)
-        {
-            uint32_t isr = DMA_MEM2MEM_MODULE->DMA_ISR;
-
-            if(isr & DMA_TCIF)
-            {
-                break;
-            }
-
-            if(isr & DMA_ERRIF)
-            {
-                break;
-            }
-
-            nOS_Yield();
-        }
-
-        DMA_MEM2MEM_MODULE->DMA_IFCR = DMA_FLAG;
-
-        DMA_MEM2MEM_STREAM->CR &= ~DMA_SxCR_EN;
-        while(DMA_MEM2MEM_STREAM->CR & DMA_SxCR_EN);
-    }
+    // Wait for completion
+    while((DMA_MEM2MEM_MODULE->DMA_ISR & DMA_TCIF) == 0) nOS_Yield();
+    DMA_MEM2MEM_MODULE->DMA_IFCR = DMA_FLAG;
+    DMA_MEM2MEM_STREAM->CR &= ~DMA_SxCR_EN;
+    while(DMA_MEM2MEM_STREAM->CR & DMA_SxCR_EN);
 
     nOS_MutexUnlock(&MEM2MEM_Mutex);
 }

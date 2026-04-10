@@ -67,7 +67,7 @@
 //#define GRAFX_USE_SOFT_COPY                       // We use this driver DMA for this function
 //#define GRAFX_USE_SOFT_FILL                       // We use this driver DMA for this function
 
-#define GRAFX_NUMBER_OF_INIT_CMD                        31
+#define GRAFX_NUMBER_OF_INIT_CMD                        26
 
 // SSD2119 Command Set
 #define SSD2119_DEVICE_CODE_READ_REGISTER               0x00
@@ -119,7 +119,24 @@
 #define SSD2119_DISPLAY_CONTROL_GATE_ON_OPERATIONAL     0x0021
 #define SSD2119_DISPLAY_CONTROL_GATE_ON_OP_GS           0x0023
 #define SSD2119_DISPLAY_ON_VALUE                        0x0033
-#define SSD2119_ENTRY_MODE_VALUE                        0x6870    // 0x6C00     I remove N/U bit into RGB565 mode
+#define SSD2119_ENTRY_MODE_VALUE                        0x6830    // 0x6C00     I remove N/U bit into RGB565 mode
+#define SSD2119_OUTPUT_CONTROL_VALUE                    0x30EF
+
+// --- Power control ---
+#define SSD2119_POWER_CONTROL_1_VALUE                   0xA8A4
+#define SSD2119_POWER_CONTROL_2_VALUE                   0x0000
+#define SSD2119_POWER_CONTROL_3_VALUE                   0x080C
+#define SSD2119_POWER_CONTROL_4_VALUE                   0x2B00
+#define SSD2119_POWER_CONTROL_5_VALUE                   0x00B0
+
+// --- VCOM ---
+#define SSD2119_VCOM_OTP_1_VALUE                        0x0006
+
+// --- Frame cycle / timing ---
+#define SSD2119_FRAME_CYCLE_CONTROL_VALUE               0x5308
+#define SSD2119_FRAME_FREQUENCY_VALUE                   0xA000
+#define SSD2119_FRAME_FREQUENCY_CONTROL_2_VALUE         0x0000
+
 
 
 // GRAFX_LCD_BASE and GRAFX_LCD_REGISTER_SELECT_BIT must be configure into grafx_cfg.h
@@ -155,9 +172,9 @@ class GrafxDriver : public GrafxGenDriver
         void            CopyLinear          (void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
         void            CopyLinear          (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
         void            CopyLinear          (ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode);
+        void            DrawBox             (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness);
         void            DrawLine            (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
         void            DrawPixel           (uint16_t PosX, uint16_t PosY);
-        void            DrawRectangle       (Box_t* pBox, uint8_t Mode);
         void            DrawRectangle       (Box_t* pBox);
         void            PrintFont           (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
 

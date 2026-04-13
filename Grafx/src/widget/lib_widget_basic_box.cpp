@@ -266,6 +266,11 @@ void WidgetBasicBox::Draw(ServiceReturn_t* pService)
         myGrafx->CopyLinear(m_pBasicBox->ImageV, Right, ALPHA_BLEND);
     }
 
+   #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+    {
+//        myGrafx->CopyWidgetToDevice(uint16_t SizeX, uint16_t SizeY, Cartesian_t Position)
+    }
+  #endif
 
     DisplayLayer::PopDrawing();
 }

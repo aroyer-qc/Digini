@@ -59,22 +59,22 @@ DisplayLayer LayerTable[LAYER_COUNT] =
 //
 //-------------------------------------------------------------------------------------------------
 
-Layer_e      DisplayLayer::m_ActiveDrawingLayer;
+Layer_e             DisplayLayer::m_ActiveDrawingLayer;
       //static DisplayLayer*      m_pActiveDrawingLayer;
 
-DisplayLayer*      DisplayLayer::m_pActiveBG_Layer;
+DisplayLayer*       DisplayLayer::m_pActiveBG_Layer;
 #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
-DisplayLayer*      DisplayLayer::m_pConstructBG_Layer;
+DisplayLayer*       DisplayLayer::m_pConstructBG_Layer;
 #endif
-DisplayLayer*      DisplayLayer::m_pActiveFG_Layer;
+DisplayLayer*       DisplayLayer::m_pActiveFG_Layer;
 #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
-DisplayLayer*      DisplayLayer::m_pConstructFG_Layer;
+DisplayLayer*       DisplayLayer::m_pConstructFG_Layer;
 #endif
-uint8_t      DisplayLayer::m_LayerStackCounter;
-Layer_e      DisplayLayer::m_LayerStack[CLAYER_STACK_LEVEL];
+uint8_t             DisplayLayer::m_LayerStackCounter;
+Layer_e             DisplayLayer::m_LayerStack[CLAYER_STACK_LEVEL];
 
 // This table must match the enum PixelFormat_e (lib_grafx_enum.h)
-const uint8_t DisplayLayer::m_LayerPixelSize[PIXEL_FORMAT_COUNT] =
+const uint8_t       DisplayLayer::m_LayerPixelSize[PIXEL_FORMAT_COUNT] =
 {
   #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
     4,
@@ -450,7 +450,6 @@ uint32_t DisplayLayer::GetTextColor(void)
 {
     return LayerTable[DisplayLayer::m_ActiveDrawingLayer].m_TextColor;
 }
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function Name: SetActiveLayer
@@ -533,7 +532,6 @@ void DisplayLayer::SetActiveLayer(LayerType_e LayerType, DisplayLayer* pLayer)
 //   Note(s)        For practical purpose, the previous layer will be assign to construct duty
 //
 //-------------------------------------------------------------------------------------------------
-
 void DisplayLayer::SetActiveLayer(LayerType_e LayerType, Layer_e Layer)
 {
     SetActiveLayer(LayerType, &LayerTable[Layer]);
@@ -549,7 +547,6 @@ void DisplayLayer::SetActiveLayer(LayerType_e LayerType, Layer_e Layer)
 //   Description:   Get the active drawing layer.
 //
 //-------------------------------------------------------------------------------------------------
-
 Layer_e DisplayLayer::GetDrawing(void)
 {
     return DisplayLayer::m_ActiveDrawingLayer;

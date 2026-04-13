@@ -286,8 +286,8 @@ Link_e GUI_myClassTask::CreateAllWidget()
        #ifdef BASIC_BTN_DEF
         else if((Widget > APP_START_BASIC_BTN_CONST) && (Widget < APP_END_BASIC_BTN_CONST))
         {
-            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetBasiWidgetButton));
-            *pWidgetListPointer = new(pWidget) WidgetBasiWidgetButton(&BasiWidgetButton[Widget - (APP_START_BASIC_BTN_CONST + 1)]);
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetBasicButton));
+            *pWidgetListPointer = new(pWidget) WidgetBasicButton(&BasiWidgetButton[Widget - (APP_START_BASIC_BTN_CONST + 1)]);
         }
        #endif
 

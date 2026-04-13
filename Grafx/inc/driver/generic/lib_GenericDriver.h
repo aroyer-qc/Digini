@@ -39,8 +39,8 @@ class GrafxGenDriver
         public:
 
             virtual     void    Initialize            (const void* pArg);
-	        virtual     void    DisplayOn             (void)             = 0;
-            virtual     void    DisplayOff            (void)             = 0;
+	        virtual     void    DisplayOn             (void) = 0;
+            virtual     void    DisplayOff            (void) = 0;
             virtual     void    LayerConfig           (DisplayLayer* pLayer);
             virtual     void    LayerConfig           (Layer_e Layer);
 
@@ -48,6 +48,7 @@ class GrafxGenDriver
             virtual    void     ImageCopy             (ImageID_e Image, uint16_t PosX, uint16_t PosY) = 0;
 
           #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+            virtual    void     CopyWidgetToDevice    (BoxSize_t BoxSize, Cartesian_t Position) = 0;
             virtual    void     CopyWidgetToDevice    (ImageID_e Image, Cartesian_t Position) = 0;
           #endif
 

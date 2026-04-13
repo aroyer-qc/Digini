@@ -194,6 +194,12 @@ void WidgetBasicRectangle::Draw(ServiceReturn_t* pService)
     DisplayLayer::SetColor(m_pBasicRect->RectColor);
     myGrafx->DrawRectangle(&m_pBasicRect->Box);
 
+   #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+    {
+        myGrafx->CopyWidgetToDevice(m_pBasicRect->????, m_pButton->Box.Pos);
+    }
+  #endif
+
     DisplayLayer::PopDrawing();
 }
 

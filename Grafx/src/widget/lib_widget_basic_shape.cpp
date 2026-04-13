@@ -39,14 +39,14 @@
 //
 //  Constructor:    CBasicShape
 //
-//  Parameter(s):   BasicShape_t         pBasicShape         Pointer to BasicShape_t structure
+//  Parameter(s):   WidgetBasicShape_t         pBasicShape         Pointer to WidgetBasicShape_t structure
 //
 //  Description:    Initialize widget's service.
 //
 //  Note(s):        Class
 //
 //-------------------------------------------------------------------------------------------------
-CBasicShape::CBasicShape(BasicShape_t* pBasicShape)
+CBasicShape::CBasicShape(WidgetBasicShape_t* pBasicShape)
 {
     m_pBasicShape = pBasicShape;
 }
@@ -63,7 +63,7 @@ CBasicShape::CBasicShape(BasicShape_t* pBasicShape)
 //  Note(s)
 //
 //-------------------------------------------------------------------------------------------------
-Link_e BasicShape::Create(PageWidget_t* pPageWidget)
+Link_e WidgetBasicShape::Create(PageWidget_t* pPageWidget)
 {
     VAR_UNUSED(pPageWidget);
     // Nothing to do
@@ -80,7 +80,7 @@ Link_e BasicShape::Create(PageWidget_t* pPageWidget)
 //  Description:    This function does nothing
 //
 //-------------------------------------------------------------------------------------------------
-Link_e BasicShape::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetBasicShape::Refresh(MsgRefresh_t* pMsg)
 {
     VAR_UNUSED(pMsg);
     // Nothing to do
@@ -97,7 +97,7 @@ Link_e BasicShape::Refresh(MsgRefresh_t* pMsg)
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void BasicShape::Finalize()
+void WidgetBasicShape::Finalize()
 {
     // Nothing to do
 }

@@ -71,7 +71,7 @@ class PDI_myClassTask
     public:
 
         void                Run                 (void);
-        SystemState_e       Initialize          (PointingDeviceInterface* pDriver, uint16_t SizeX, uint16_t SizeY, uint8_t Orientation);
+        SystemState_e       Initialize          (PointingDeviceInterface* pDriver, uint8_t Orientation);
         SystemState_e       GetState            (void);
 
       #if (GRAFX_USE_PDI_MULTI_EVENT == DEF_ENABLED)

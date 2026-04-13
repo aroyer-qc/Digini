@@ -48,12 +48,13 @@
 void GrafxGenDriver::ClearLayer(Layer_e Layer)
 {
     DisplayLayer* pLayer      = &LayerTable[Layer];
-    uint32_t      PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
-    uint32_t      Address     = pLayer->GetAddress();
     uint32_t      AreaConfig  = (pLayer->GetSize().X << 16) | pLayer->GetSize().Y;
 
     if(AreaConfig != 0) // Do not try to erase layer with no size
     {
+        uint32_t PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
+        uint32_t Address     = pLayer->GetAddress();
+
         // Configure DMA2D for Register-to-Memory (constant color fill)
         DMA2D->CR      = DMA2D_R2M | DMA2D_CR_TCIE;
         DMA2D->OCOLR   = pLayer->GetColor();                        // Constant color

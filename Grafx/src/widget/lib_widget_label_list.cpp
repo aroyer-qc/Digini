@@ -180,6 +180,14 @@ void WidgetLabelList::Draw(ServiceReturn_t* pService)
 
     m_pLabelList->Text.Label = m_pLabelList->Label[((ServiceType1_t*)pService)->Data];
     WidgetPrint(&m_pLabelList->Text, pService);
+
+  #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+    {
+        // We might need to modify WidgetPrint to return a BoxSize_t or Box_t (full info)
+        myGrafx->CopyWidgetToDevice(m_pLabelList->, m_pLabelList->????);
+    }
+  #endif
+
     DisplayLayer::PopDrawing();
 }
 

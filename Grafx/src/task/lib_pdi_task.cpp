@@ -70,9 +70,10 @@ extern "C" void PDI_TaskWrapper(void* pvParameters)
 //
 //  Name:           Initialize
 //
-//  Parameter(s):   uint16_t    SizeX
-//                  uint16_t    SizeY
-//                  uint8_t     Orientation
+//  Parameter(s):   PointingDeviceInterface* pDriver
+//                  uint16_t                 SizeX
+//                  uint16_t                 SizeY
+//                  uint8_t                  Orientation
 //  Return:         nOS_Error
 //
 //  Description:    Initializes and configures the pointing device functionalities and configures
@@ -80,10 +81,11 @@ extern "C" void PDI_TaskWrapper(void* pvParameters)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e PDI_myClassTask::Initialize(PointingDeviceInterface* pDriver, uint16_t SizeX, uint16_t SizeY, uint8_t Orientation)
+SystemState_e PDI_myClassTask::Initialize(PointingDeviceInterface* pDriver, uint8_t Orientation)
 {
     nOS_Error       Error;
     SystemState_e   State;
+    DisplayLayer*   pLayer;
 
     State     = SYS_FAIL;
     m_pDriver = nullptr;
@@ -104,8 +106,10 @@ SystemState_e PDI_myClassTask::Initialize(PointingDeviceInterface* pDriver, uint
          #if (GRAFX_PDI_INTERRUPT_IO == DEF_ENABLED)
             this->EnableIT();
          #endif
-            m_ConfigSizeX = SizeX;
-            m_ConfigSizeY = SizeY;
+
+            pLayer = &LayerTable[TOUCH_SENSE_LAYER];
+            m_ConfigSizeX = pLayer->GetSize().X;
+            m_ConfigSizeY = pLayer->GetSize().Y;
             m_Orientation = Orientation;
             State         = SYS_READY;
         }

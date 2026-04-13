@@ -187,6 +187,14 @@ void WidgetLabel::Draw(ServiceReturn_t* pService)
   #endif // (GRAFX_DEBUG_GUI == DEF_ENABLED)
 
     WidgetPrint(&m_pLabel->Text, pService);
+
+  #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+    {
+        // myGrafx->CopyWidgetToDevice(m_pLabel->????, m_pLabel->Text.Box.Pos);
+    }
+  #endif
+
+
     DisplayLayer::PopDrawing();
 }
 

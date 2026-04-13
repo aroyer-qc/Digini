@@ -109,11 +109,11 @@ class WidgetBasicBox : public CWidgetInterface
 #endif
 
 #ifdef BASIC_BTN_DEF
-class WidgetBasiWidgetButton : public CWidgetInterface
+class WidgetBasicButton : public CWidgetInterface
 {
     public:
-                            WidgetBasiWidgetButton           (BasiWidgetButton_t* pBasiWidgetButton);
-                           ~WidgetBasiWidgetButton           (){};
+                            WidgetBasicButton           (BasiWidgetButton_t* pBasiWidgetButton);
+                           ~WidgetBasicButton           (){};
 
         Link_e              Create                      (PageWidget_t* pPageWidget);
         Link_e              Refresh                     (MsgRefresh_t* pMsg);
@@ -124,7 +124,7 @@ class WidgetBasiWidgetButton : public CWidgetInterface
         void                Draw                        (ServiceReturn_t* pService);
         void                DrawOnce                    (ServiceReturn_t* pService);
 
-        BasiWidgetButton_t*      m_pBasiWidgetButton;
+        BasiWidgetButton_t*      m_pBasicWidgetButton;
         ServiceEvent_e      m_ServiceState;
         PageWidget_t*       m_pPageWidget;
 };

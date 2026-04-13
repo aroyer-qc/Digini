@@ -62,16 +62,16 @@ const SSD2119_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
     {SSD2119_FRAME_CYCLE_CONTROL_REGISTER,    SSD2119_FRAME_CYCLE_CONTROL_VALUE},
     {SSD2119_VCOM_FINE_ADJUSTMENT_REGISTER,   0x0009},
     {SSD2119_GAMMA_CONTROL_1_REGISTER,        0x0000},
-    {SSD2119_GAMMA_CONTROL_2_REGISTER,        0x0106},//0x0101},
-    {SSD2119_GAMMA_CONTROL_3_REGISTER,        0x0100},//0x0100},
-    {SSD2119_GAMMA_CONTROL_4_REGISTER,        0x0303},//0x0305},
-    {SSD2119_GAMMA_CONTROL_5_REGISTER,        0x0003},//0x0707},
-    {SSD2119_GAMMA_CONTROL_6_REGISTER,        0x0004},//0x0305},
-    {SSD2119_GAMMA_CONTROL_7_REGISTER,        0x0203},//0x0707},
-    {SSD2119_GAMMA_CONTROL_8_REGISTER,        0x0303},//0x0201},
-    {SSD2119_GAMMA_CONTROL_9_REGISTER,        0x0100},//0x1200},
-    {SSD2119_GAMMA_CONTROL_10_REGISTER,       0x0504},//0x0900},
-    {SSD2119_DISPLAY_CONTROL_REGISTER,        SSD2119_DISPLAY_ON_VALUE}            // Display ON
+    {SSD2119_GAMMA_CONTROL_2_REGISTER,        0x0106},
+    {SSD2119_GAMMA_CONTROL_3_REGISTER,        0x0100},
+    {SSD2119_GAMMA_CONTROL_4_REGISTER,        0x0303},
+    {SSD2119_GAMMA_CONTROL_5_REGISTER,        0x0003},
+    {SSD2119_GAMMA_CONTROL_6_REGISTER,        0x0004},
+    {SSD2119_GAMMA_CONTROL_7_REGISTER,        0x0203},
+    {SSD2119_GAMMA_CONTROL_8_REGISTER,        0x0303},
+    {SSD2119_GAMMA_CONTROL_9_REGISTER,        0x0100},
+    {SSD2119_GAMMA_CONTROL_10_REGISTER,       0x0504},
+    {SSD2119_DISPLAY_CONTROL_REGISTER,        SSD2119_DISPLAY_ON_VALUE}             // Display ON
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -444,7 +444,16 @@ void GrafxDriver::ImageCopy(ImageID_e Image, uint16_t PosX, uint16_t PosY)
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           CopyLinear
+//
+//  Parameter(s):
+//
+//  Return:         None
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
 void GrafxDriver::CopyLinear(ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode)
 {
     DisplayLayer* pLayer = &LayerTable[DisplayLayer::GetDrawing()];
@@ -592,6 +601,17 @@ void GrafxDriver::CopyLinear(ImageID_e Image, Cartesian_t Position, BlendMode_e 
 }
 */
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           PrintFont
+//
+//  Parameter(s):
+//
+//  Return:         None
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
 void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 {
     //s32_t         AreaConfig;
@@ -623,65 +643,89 @@ pLayer->GetTextColor();
 */
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CopyWidgetToDevice
+//
+//  Parameter(s):
+//
+//  Return:         None
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
 #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
 void GrafxDriver::CopyWidgetToDevice(ImageID_e Image, Cartesian_t Position)
 {
-    DisplayLayer* pLayer   = &LayerTable[DisplayLayer::GetDrawing()];
-    uint32_t      pAddress = pLayer->GetAddress();
-    uint16_t*     pDataPtr;
-    uint16_t*     pDataPtr2;
     StaticImageInfo_t* pImageInfo;
 
     DB_Central.Get(&pImageInfo, GFX_IMAGE_INFO, uint16_t(Image));
+    CopyWidgetToDevice(pImageInfo->ImageInfo.Size, Position);
+}
+#endif
 
-    uint32_t SizeX = pImageInfo->ImageInfo.Size.Width;
-    uint32_t SizeY = pImageInfo->ImageInfo.Size.Height;
-    size_t ImageSize = SizeX * SizeY;
-
-    uint16_t* pImageBack = (uint16_t*)pMemoryPool->Alloc(ImageSize * sizeof(uint16_t), MEM_DBG_GRAFX_CL1);
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CopyWidgetToDevice
+//
+//  Parameter(s):
+//
+//  Return:         None
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
+#if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+void GrafxDriver::CopyWidgetToDevice(BoxSize_t BoxSize, Cartesian_t Position)
+{
+    DisplayLayer* pLayer   = &LayerTable[DisplayLayer::GetDrawing()];
+    uint32_t      pAddress = pLayer->GetAddress();
+    uint16_t*     pDataPtrXY;
+    uint16_t*     pDataPtrX;
+    uint16_t      SizeX = BoxSize.Width;
+    uint16_t      SizeY = BoxSize.Height;
+    size_t        ImageSize = SizeX * SizeY;
+    uint16_t*     pImageBack = (uint16_t*)pMemoryPool->Alloc(ImageSize * sizeof(uint16_t), MEM_DBG_GRAFX_CL1);
 
     //-------------------------------------------------------------------------
     // DMA2D the 2 buffers
 
-    DMA2D->CR      = DMA2D_M2M_PFC;                                                                                     // Memory to memory and TCIE blending BG + Source
+    DMA2D->CR      = DMA2D_M2M_PFC;                                 // Memory to memory conversion only
 
     //Source
-    DMA2D->FGMAR   = pAddress;                                                                                          // Source address
-    DMA2D->FGOR    = (uint32_t)pLayer->GetSize().X - (uint32_t)pImageInfo->ImageInfo.Size.Width;;                                                                                                 // Source line offset so none as we are linear
-    DMA2D->FGPFCCR = 0;                                                                                                 // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
+    DMA2D->FGMAR   = pAddress;                                      // Source address
+    DMA2D->FGOR    = (uint32_t)pLayer->GetSize().X - SizeX;         // Source line offset so none as we are linear
+    DMA2D->FGPFCCR = 0;                                             // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
 
     //Destination
-    DMA2D->OMAR    = uint32_t(pImageBack);                                                                              // Destination address
-    DMA2D->OOR     = 0;                                                                                                 // Destination line offset none as we are linear
-    DMA2D->OPFCCR  = 2;                                                                                                 // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
+    DMA2D->OMAR    = uint32_t(pImageBack);                          // Destination address
+    DMA2D->OOR     = 0;                                             // Destination line offset none as we are linear
+    DMA2D->OPFCCR  = 2;                                             // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
 
-    DMA2D->NLR     = (pImageInfo->ImageInfo.Size.Width << 16) | pImageInfo->ImageInfo.Size.Height;                      // Size configuration of area to be transfered
+    DMA2D->NLR     = (SizeX << 16) | SizeY;                         // Size configuration of area to be transfered
 
-    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
-    while(DMA2D->CR & DMA2D_CR_START);                                                                                  // Wait until transfer is done
+    SET_BIT(DMA2D->CR, DMA2D_CR_START);                             // Start operation
+    while(DMA2D->CR & DMA2D_CR_START);                              // Wait until transfer is done
 
-    pDataPtr2 = pImageBack;
-    BoxSize_t BoxSize;
-    BoxSize.Width = SizeX;
-    BoxSize.Width = SizeY;
+    pDataPtrXY = pImageBack;
 
     for(uint32_t y = 0; y < SizeY; y++)
     {
         SetWindow(Position.X, Position.Y, &BoxSize);
-        pDataPtr = pDataPtr2;
+        pDataPtrX = pDataPtrXY;
 
         for(uint32_t x = 0; x < SizeX; x++)
         {
-            WriteData(*pDataPtr);
+            WriteData(*pDataPtrX);
+            pDataPtrX++;
         }
 
-        pDataPtr2 += pLayer->GetSize().X;
+        pDataPtrXY += pLayer->GetSize().X;
     }
 
     pMemoryPool->Free((void**)&pImageBack);
 }
 #endif
-
 
 //-------------------------------------------------------------------------------------------------
 //

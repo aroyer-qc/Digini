@@ -181,6 +181,7 @@ class GrafxDriver : public GrafxGenDriver
         void            ImageCopy           (ImageID_e Image, uint16_t PosX, uint16_t PosY);
 
       #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+        void            CopyWidgetToDevice  (BoxSize_t BoxSize, Cartesian_t Position);
         void            CopyWidgetToDevice  (ImageID_e Image, Cartesian_t Position);
       #endif
 

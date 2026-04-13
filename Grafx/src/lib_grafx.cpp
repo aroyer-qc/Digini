@@ -166,8 +166,8 @@ SystemState_e GRAFX_PostInitialize(void)
     {
         return State;
     }
-// on doit aller chercher la grosseur du Touch... pas la valeur static
-    if((State = PDI_pTask->Initialize(PDI_pDriver, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y, PDI_SWAP_NONE)) != SYS_READY)
+
+    if((State = PDI_pTask->Initialize(PDI_pDriver, PDI_SWAP_NONE)) != SYS_READY)
     {
         return State;
     }

@@ -83,7 +83,7 @@ const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 };
 
 
-void    GrafxGenDriver::Initialize            (void* pArg)
+void    GrafxGenDriver::Initialize            (const void* pArg)
 {
 }
 
@@ -350,7 +350,6 @@ void GrafxGenDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16
 //   Description:   Copy a rectangle region from a layer to another layer
 //
 //-------------------------------------------------------------------------------------------------
-#if (GRAFX_USE_DISPLAY_LAYER == DEF_ENABLE)
 void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, Box_t* pBox)
 {
     DisplayLayer* pLayer;
@@ -362,7 +361,6 @@ void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, Box_t*
 
     DisplayLayer::PopDrawing();
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -379,7 +377,6 @@ void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, Box_t*
 //   Description:   Copy a rectangle region from a layer to another layer
 //
 //-------------------------------------------------------------------------------------------------
-#if (GRAFX_USE_DISPLAY_LAYER == DEF_ENABLED)
 void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height)
 {
     Box_t        Box;
@@ -391,7 +388,6 @@ void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16
 
     CopyLayerToLayer(SrcLayer, DstLayer, &Box);
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -408,7 +404,6 @@ void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16
 //   Description:   Copy a rectangle region from a layer to another layer
 //
 //-------------------------------------------------------------------------------------------------
-#if (GRAFX_USE_DISPLAY_LAYER == DEF_ENABLED)
 void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16_t SrcX, uint16_t SrcY, uint16_t DstX, uint16_t DstY, uint16_t Width, uint16_t Height)
 {
     DisplayLayer*      pLayer;
@@ -429,7 +424,6 @@ void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16
     BlockCopy((void*)pLayer->GetAddress(), &Box, &Pos, pLayer->GetPixelFormat(), CLEAR_BLEND);
     DisplayLayer::PopDrawing();
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //

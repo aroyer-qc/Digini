@@ -67,7 +67,7 @@
 //#define GRAFX_USE_SOFT_COPY                       // We use this driver DMA for this function
 //#define GRAFX_USE_SOFT_FILL                       // We use this driver DMA for this function
 
-#define GRAFX_NUMBER_OF_INIT_CMD                        26
+#define GRAFX_NUMBER_OF_INIT_CMD                        28
 
 // SSD2119 Command Set
 #define SSD2119_DEVICE_CODE_READ_REGISTER               0x00
@@ -86,14 +86,13 @@
 #define SSD2119_SLEEP_MODE_CONTROL_REGISTER             0x12
 #define SSD2119_GENERAL_INTERFACE_CONTROL_REGISTER      0x15
 #define SSD2119_POWER_CONTROL_5_REGISTER                0x1E
-//#define SSD2119_X_RAM_ADDRESS_REGISTER                  0x20
-//#define SSD2119_Y_RAM_ADDRESS_REGISTER                  0x21
 #define SSD2119_RAM_DATA_REGISTER                       0x22
 #define SSD2119_FRAME_FREQUENCY_REGISTER                0x25
 #define SSD2119_FRAME_FREQUENCY_CONTROL_2_REGISTER      0x26
 #define SSD2119_VCOM_CONTROL_1_REGISTER                 0x27
 #define SSD2119_VCOM_OTP_1_REGISTER                     0x28
 #define SSD2119_VCOM_OTP_2_REGISTER                     0x29
+#define SSD2119_VCOM_FINE_ADJUSTMENT_REGISTER           0x2B
 #define SSD2119_GAMMA_CONTROL_1_REGISTER                0x30
 #define SSD2119_GAMMA_CONTROL_2_REGISTER                0x31
 #define SSD2119_GAMMA_CONTROL_3_REGISTER                0x32
@@ -131,6 +130,7 @@
 
 // --- VCOM ---
 #define SSD2119_VCOM_OTP_1_VALUE                        0x0006
+#define SSD2119_VCOM_OTP_2_VALUE                        0x0042
 
 // --- Frame cycle / timing ---
 #define SSD2119_FRAME_CYCLE_CONTROL_VALUE               0x5308
@@ -161,7 +161,7 @@ class GrafxDriver : public GrafxGenDriver
 {
     public:
 
-        void            Initialize          (void* pArg)           override;
+        void            Initialize          (const void* pArg)     override;
 
         void            ClearLayer          (Layer_e Layer)        override;
         void            DisplayOn           (void)                 override         { LCD_REG = SSD2119_DISPLAY_CONTROL_REGISTER; LCD_RAM = SSD2119_DISPLAY_ON_VALUE; }
@@ -169,15 +169,21 @@ class GrafxDriver : public GrafxGenDriver
 
         void            BlockCopy           (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
         void            Copy                (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
-        void            CopyLinear          (void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
-        void            CopyLinear          (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
-        void            CopyLinear          (ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode);
+/*Old*/ void            CopyLinear          (void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
+/*Old*/ void            CopyLinear          (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
         void            DrawBox             (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness);
         void            DrawLine            (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
         void            DrawPixel           (uint16_t PosX, uint16_t PosY);
         void            DrawRectangle       (Box_t* pBox);
 
-        void            ImageCopy           (StaticImageInfo_t* pImageInfo, uint16_t PosX, uint16_t PosY, BlendMode_e BlendMode);
+//validated
+/*need rename*/ void    CopyLinear          (ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode);
+        void            ImageCopy           (ImageID_e Image, uint16_t PosX, uint16_t PosY);
+
+      #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+        void            CopyWidgetToDevice  (ImageID_e Image, Cartesian_t Position);
+      #endif
+
 
         void            PrintFont           (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
 
@@ -185,6 +191,7 @@ class GrafxDriver : public GrafxGenDriver
 
         void            SetWriteRAM_Ready   (void)                                  { LCD_REG = SSD2119_RAM_DATA_REGISTER; }
         void            SetRAM_Pointer      (uint16_t PosX, uint16_t PosY);
+        void            SetWindow           (uint16_t PosX, uint16_t PosY, BoxSize_t* pBoxSize);
         void            SetWindow           (Box_t* pBox);
         void            ResetWindow         (void);
         uint16_t        ReadCommand         (uint8_t Register);
@@ -192,7 +199,8 @@ class GrafxDriver : public GrafxGenDriver
         void            WriteCommand        (uint8_t Register, uint16_t Data)       { LCD_REG = Register; LCD_RAM = Data; }
         void            WriteRegister       (uint8_t Register)                      { LCD_REG = Register; }
         void            WriteData           (uint16_t Data)                         { LCD_RAM = Data; }
-        void            WriteData           (uint16_t* pData, size_t Length);
+        void            WriteRLE16          (StaticImageRLE_16_t* pData, uint16_t* pDestination, size_t Size);
+        void            WriteRLE32          (StaticImageRLE_32_t* pData, uint32_t* pDestination, size_t Size);
 
         StaticImageInfo_t*                  m_pBackgroundInfo;
         static const    SSD2119_InitCMD_t   m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD];

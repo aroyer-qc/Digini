@@ -159,7 +159,7 @@ void GUI_myClassTask::Run()
               #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
                 PDI_pTask->ClearAllZone();
               #endif
-                GUI_ClearWidgetLayer();
+                //GUI_ClearWidgetLayer();   this may be already done in the driver...
 
                 // TODO (Alain#2#) maybe do a stack of previous link... now only one level is active
                 if(m_ForceRefresh == false)

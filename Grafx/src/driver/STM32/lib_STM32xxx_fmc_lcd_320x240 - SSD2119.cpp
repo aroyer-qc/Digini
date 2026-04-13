@@ -33,6 +33,7 @@
 #define LIB_SSD2119_GLOBAL
 #include "./lib_digini.h"
 #undef  LIB_SSD2119_GLOBAL
+#include "./Grafx/inc/driver/STM32/lib_STM32_Generic.h"
 
 //-------------------------------------------------------------------------------------------------
 // Const(s)
@@ -51,6 +52,7 @@ const SSD2119_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
     {SSD2119_POWER_CONTROL_4_REGISTER,        SSD2119_POWER_CONTROL_4_VALUE},      // Power step 4
     {SSD2119_POWER_CONTROL_5_REGISTER,        SSD2119_POWER_CONTROL_5_VALUE},      // Power step 5
     {SSD2119_VCOM_OTP_1_REGISTER,             SSD2119_VCOM_OTP_1_VALUE},           // VCOM amplitude
+    {SSD2119_VCOM_OTP_2_REGISTER,             SSD2119_VCOM_OTP_2_VALUE},           // VCOM amplitude
     {SSD2119_SLEEP_MODE_REGISTER,             SSD2119_DISPLAY_EXIT_SLEEP_MODE},    // Exit sleep
     {SSD2119_ENTRY_MODE_REGISTER,             SSD2119_ENTRY_MODE_VALUE},           // RGB565, normal scan
     {SSD2119_OUTPUT_CONTROL_REGISTER,         SSD2119_OUTPUT_CONTROL_VALUE},       // Panel type + scan direction
@@ -58,16 +60,17 @@ const SSD2119_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
     {SSD2119_FRAME_FREQUENCY_REGISTER,        SSD2119_FRAME_FREQUENCY_VALUE},      // Frame timing
     {SSD2119_FRAME_FREQUENCY_CONTROL_2_REGISTER, SSD2119_FRAME_FREQUENCY_CONTROL_2_VALUE},
     {SSD2119_FRAME_CYCLE_CONTROL_REGISTER,    SSD2119_FRAME_CYCLE_CONTROL_VALUE},
+    {SSD2119_VCOM_FINE_ADJUSTMENT_REGISTER,   0x0009},
     {SSD2119_GAMMA_CONTROL_1_REGISTER,        0x0000},
-    {SSD2119_GAMMA_CONTROL_2_REGISTER,        0x0101},
-    {SSD2119_GAMMA_CONTROL_3_REGISTER,        0x0100},
-    {SSD2119_GAMMA_CONTROL_4_REGISTER,        0x0305},
-    {SSD2119_GAMMA_CONTROL_5_REGISTER,        0x0707},
-    {SSD2119_GAMMA_CONTROL_6_REGISTER,        0x0305},
-    {SSD2119_GAMMA_CONTROL_7_REGISTER,        0x0707},
-    {SSD2119_GAMMA_CONTROL_8_REGISTER,        0x0201},
-    {SSD2119_GAMMA_CONTROL_9_REGISTER,        0x1200},
-    {SSD2119_GAMMA_CONTROL_10_REGISTER,       0x0900},
+    {SSD2119_GAMMA_CONTROL_2_REGISTER,        0x0106},//0x0101},
+    {SSD2119_GAMMA_CONTROL_3_REGISTER,        0x0100},//0x0100},
+    {SSD2119_GAMMA_CONTROL_4_REGISTER,        0x0303},//0x0305},
+    {SSD2119_GAMMA_CONTROL_5_REGISTER,        0x0003},//0x0707},
+    {SSD2119_GAMMA_CONTROL_6_REGISTER,        0x0004},//0x0305},
+    {SSD2119_GAMMA_CONTROL_7_REGISTER,        0x0203},//0x0707},
+    {SSD2119_GAMMA_CONTROL_8_REGISTER,        0x0303},//0x0201},
+    {SSD2119_GAMMA_CONTROL_9_REGISTER,        0x0100},//0x1200},
+    {SSD2119_GAMMA_CONTROL_10_REGISTER,       0x0504},//0x0900},
     {SSD2119_DISPLAY_CONTROL_REGISTER,        SSD2119_DISPLAY_ON_VALUE}            // Display ON
 };
 
@@ -86,8 +89,10 @@ const SSD2119_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
 //                  to a known state.
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::Initialize(void* pArg)
+void GrafxDriver::Initialize(const void* pArg)
 {
+    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
+
     // I may need to provide a pointer to the background image for building element to display on the screen (merge)
     m_pBackgroundInfo = (StaticImageInfo_t*)pArg;
 
@@ -168,6 +173,7 @@ void GrafxDriver::ClearLayer(Layer_e Layer)
    	if(Layer == FOREGROUND_DISPLAY_LAYER_0)
     {
         ResetWindow();
+
         for(uint32_t i = 0; i < GRAFX_DRIVER_SIZE; i++)
         {
             WriteData(0x0000);
@@ -179,6 +185,17 @@ void GrafxDriver::ClearLayer(Layer_e Layer)
     }
 }
 
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           DrawBox
+//
+//  Parameter(s):
+//
+//  Return:         None
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness)
 {
     Box_t Box;
@@ -209,19 +226,28 @@ void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawRectangle(Box_t* pBox)
 {
-    uint32_t Color;
-    uint32_t Size;
-    DisplayLayer*  pLayer;
-
-    pLayer = &LayerTable[DisplayLayer::GetDrawing()];
-    Color       = pLayer->GetColor();
-    SetWindow(pBox);
-
-    Size = pBox->Size.Width * pBox->Size.Height;
-
-    for(uint32_t i = 0; i < Size; i++)
+    if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
     {
-         WriteData(Color);
+        uint32_t      Color;
+        uint32_t      Size;
+        DisplayLayer* pLayer;
+
+        pLayer = &LayerTable[DisplayLayer::GetDrawing()];
+
+
+        Color       = pLayer->GetColor();
+        SetWindow(pBox);
+
+        Size = pBox->Size.Width * pBox->Size.Height;
+
+        for(uint32_t i = 0; i < Size; i++)
+        {
+             WriteData(Color);
+        }
+    }
+    else
+    {
+        GrafxGenDriver::DrawRectangle(pBox);
     }
 }
 
@@ -326,16 +352,6 @@ void GrafxDriver::CopyLinear(void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t 
     VAR_UNUSED(BlendMode);
 }
 
-void GrafxDriver::CopyLinear(ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode)
-{
-
-    // this is the next function to develop in this driver
-    VAR_UNUSED(Image);
-    VAR_UNUSED(Position);
-    VAR_UNUSED(BlendMode);
-}
-
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           DrawPixel
@@ -391,25 +407,23 @@ void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16
    // Write(Color);
 }
 
-void GrafxDriver::ImageCopy(StaticImageInfo_t* pImageInfo, uint16_t PosX, uint16_t PosY, BlendMode_e BlendMode)
+//-------------------------------------------------------------------------------------------------
+
+void GrafxDriver::ImageCopy(ImageID_e Image, uint16_t PosX, uint16_t PosY)
 {
-    Box_t Box;
+    StaticImageInfo_t* pImageInfo;
+
+    DB_Central.Get(&pImageInfo, GFX_IMAGE_INFO, uint16_t(Image));
     uint32_t  Size  = pImageInfo->RawSize;
+    SetWindow(PosX, PosY, &pImageInfo->ImageInfo.Size);
 
-    Box.Pos.X       = PosX;
-    Box.Pos.Y       = PosY;
-    Box.Size.Width  = pImageInfo->ImageInfo.Size.Width;
-    Box.Size.Height = pImageInfo->ImageInfo.Size.Height;
-    SetWindow(&Box);
-
-    //pLayer = &LayerTable[DisplayLayer::GetDrawing()];
     switch(pImageInfo->Compression)
     {
         case COMPX_COMPRESSION_NONE:
         {
             uint16_t* pData = (uint16_t*)pImageInfo->ImageInfo.pPointer;
 
-            for(uint32_t i = 0; i > Size; i++)
+            for(uint32_t i = 0; i < Size; i++)
             {
                 WriteData(*pData);
                 pData++;
@@ -417,52 +431,166 @@ void GrafxDriver::ImageCopy(StaticImageInfo_t* pImageInfo, uint16_t PosX, uint16
         }
         break;
 
-        case COMPX_RLE_16:
+        case COMPX_RLE_16:  // Copy to LCD only
         {
-            uint8_t* pData = (uint8_t*)pImageInfo->ImageInfo.pPointer;
-
-            for(uint32_t i = 0; i > Size; )
-            {
-                uint32_t Repeat = uint32_t(*(uint8_t*)pData) + 1;
-                pData++;
-                uint16_t Pixel = *(uint16_t*)pData;
-                pData += sizeof(uint16_t);
-
-                while(Repeat--)
-                {
-                    WriteData(Pixel);
-                    i++;
-                }
-            }
+            WriteRLE16((StaticImageRLE_16_t*)pImageInfo->ImageInfo.pPointer, nullptr, Size);
         }
         break;
+
+        // COMPX_RLE_32 // No 32 Bits on this LCD
 
         default: break;
-
-/*
-        case COMPX_RLE_32:
-        {
-            uint8_t* pData = (uint16_t*)pImageInfo->ImageInfo.pPointer;
-
-            for(uint32_t i = 0; i > Size; )
-            {
-                uint32_t Repeat = uint32_t(*(uint8_t*)pData) + 1;
-                pData++;
-                uint32_t Pixel = *(uint32_t*)pData);
-                pData += sizeof(uint32_t);
-
-                while(Repeat--)
-                {
-                    WriteData(Pixel);
-                    i++;
-                }
-            }
-        }
-        break;
-*/
     }
 }
 
+//-------------------------------------------------------------------------------------------------
+
+void GrafxDriver::CopyLinear(ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode)
+{
+    DisplayLayer* pLayer = &LayerTable[DisplayLayer::GetDrawing()];
+
+    if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+    {
+        StaticImageInfo_t* pImageInfo;
+        //size_t             ImageSize;
+        uint32_t           ConstructAlphaLayer;
+        uint32_t*          pImageSourceAlpha = nullptr;
+        VAR_UNUSED(BlendMode);      // On this LCD
+
+        DB_Central.Get(&pImageInfo, GFX_IMAGE_INFO, uint16_t(Image));
+        //ImageSize = pImageInfo->ImageInfo.Size.Width * pImageInfo->ImageInfo.Size.Height;
+
+        //-------------------------------------------------------------------------
+        // Copy source alpha to blend into background
+
+        ConstructAlphaLayer = pLayer->GetAddress();
+
+        if(pImageInfo->Compression == COMPX_RLE_32)
+        {
+            WriteRLE32((StaticImageRLE_32_t*)pImageInfo->ImageInfo.pPointer, pImageSourceAlpha, pImageInfo->RawSize);
+        }
+        else
+        {
+            pImageSourceAlpha = (uint32_t*)pImageInfo->ImageInfo.pPointer;
+        }
+
+        //-------------------------------------------------------------------------
+        // DMA2D the 2 buffers
+
+        DMA2D->CR      = DMA2D_M2M_BLEND | DMA2D_CR_TCIE;                                                                   // Memory to memory and TCIE blending BG + Source
+
+        //Source
+        DMA2D->FGMAR   = (uint32_t)pImageSourceAlpha;    // Source address
+        DMA2D->FGOR    = 0;                                                                                                 // Source line offset so none as we are linear
+        DMA2D->FGPFCCR = 0;                                                                                                 // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
+
+        // Source
+        DMA2D->BGMAR   = (uint32_t)(SII_DiamondPlate.ImageInfo.pPointer) + (((Position.Y * GRAFX_DRIVER_SIZE_X) + Position.X) * sizeof(uint16_t));
+        DMA2D->BGOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pImageInfo->ImageInfo.Size.Width;                        // Source line offset so none as we are linear
+        DMA2D->BGPFCCR = 2;                                                                                                 // Defines the size of pixel. 2 for PIXEL_FORMAT_RGB565
+
+        //Destination
+        DMA2D->OMAR    = ConstructAlphaLayer;                                                                               // Destination address
+        DMA2D->OOR     = (uint32_t)pLayer->GetSize().X - (uint32_t)pImageInfo->ImageInfo.Size.Width;                        // Destination line offset none as we are linear
+        DMA2D->OPFCCR  = 0;                                                                                                 // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
+
+        DMA2D->NLR     = (pImageInfo->ImageInfo.Size.Width << 16) | pImageInfo->ImageInfo.Size.Height;                      // Size configuration of area to be transfered
+
+        SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
+        while(DMA2D->CR & DMA2D_CR_START);                                                                                  // Wait until transfer is done
+
+        //-------------------------------------------------------------------------
+        // Free Resource
+
+        if(pImageInfo->Compression == COMPX_RLE_32)
+        {
+            pMemoryPool->Free((void**)&pImageSourceAlpha);
+        }
+    }
+    else
+    {
+        GrafxDriver::CopyLinear(Image, Position, BlendMode);
+    }
+}
+
+/*
+void GrafxDriver::CopyLinear(ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode)
+{
+    StaticImageInfo_t* pImageInfo;
+    size_t             ImageSize;
+    uint16_t*          pImageBack        = nullptr;
+    uint32_t*          pImageSourceAlpha = nullptr;
+    VAR_UNUSED(BlendMode);      // On this LCD
+
+    DB_Central.Get(&pImageInfo, GFX_IMAGE_INFO, uint16_t(Image));
+    ImageSize = pImageInfo->ImageInfo.Size.Width * pImageInfo->ImageInfo.Size.Height;
+
+    //-------------------------------------------------------------------------
+    // Copy source background from the flash for merge into buffer
+    pImageBack = (uint16_t*)pMemoryPool->Alloc(ImageSize * sizeof(uint16_t), MEM_DBG_GRAFX_CL1);
+
+    //-------------------------------------------------------------------------
+    // Copy source alpha to blend into background
+
+    if(pImageInfo->Compression == COMPX_RLE_32)
+    {
+        pImageSourceAlpha = (uint32_t*)pMemoryPool->Alloc(ImageSize * sizeof(uint32_t), MEM_DBG_GRAFX_CL2);
+        WriteRLE32((StaticImageRLE_32_t*)pImageInfo->ImageInfo.pPointer, pImageSourceAlpha, pImageInfo->RawSize);
+    }
+    else
+    {
+        pImageSourceAlpha = (uint32_t*)pImageInfo->ImageInfo.pPointer;
+    }
+
+    //-------------------------------------------------------------------------
+    // DMA2D the 2 buffers
+
+    DMA2D->CR      = DMA2D_M2M_BLEND | DMA2D_CR_TCIE;                                                                   // Memory to memory and TCIE blending BG + Source
+
+    //Source
+    DMA2D->FGMAR   = (uint32_t)pImageSourceAlpha;    // Source address
+    DMA2D->FGOR    = 0;                                                                                                 // Source line offset so none as we are linear
+    DMA2D->FGPFCCR = 0;                                                                                                 // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
+
+    // Source
+    DMA2D->BGMAR   = (uint32_t)(SII_DiamondPlate.ImageInfo.pPointer) + (((Position.Y * GRAFX_DRIVER_SIZE_X) + Position.X) * sizeof(uint16_t));                                                                                        // Source address
+    DMA2D->BGOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pImageInfo->ImageInfo.Size.Width;                                                                                                 // Source line offset so none as we are linear
+    DMA2D->BGPFCCR = 2;                                                                                                 // Defines the size of pixel. 2 for PIXEL_FORMAT_RGB565
+
+    //Destination
+    DMA2D->OMAR    = (uint32_t)pImageBack;                                                                              // Destination address
+    DMA2D->OOR     = 0;                                                                                                 // Destination line offset none as we are linear
+    DMA2D->OPFCCR  = 2;                                                                                                 // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
+
+    DMA2D->NLR     = (pImageInfo->ImageInfo.Size.Width << 16) | pImageInfo->ImageInfo.Size.Height;                      // Size configuration of area to be transfered
+
+    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
+    while(DMA2D->CR & DMA2D_CR_START);                                                                                  // Wait until transfer is done
+
+    SetWindow(Position.X, Position.Y, &pImageInfo->ImageInfo.Size);
+
+    //-------------------------------------------------------------------------
+    // Copy back buffer to LCD
+
+    uint16_t* pBackPtr = pImageBack;
+
+    for(uint32_t i = 0; i < ImageSize; i++)
+    {
+        WriteData(*pBackPtr);
+        pBackPtr++;
+    }
+
+    //-------------------------------------------------------------------------
+    // Free Resource
+
+    pMemoryPool->Free((void**)&pImageBack);
+
+    if(pImageInfo->Compression == COMPX_RLE_32)
+    {
+        pMemoryPool->Free((void**)&pImageSourceAlpha);
+    }
+}
+*/
 
 void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 {
@@ -494,6 +622,65 @@ pLayer->GetTextColor();
 //must be all the info needed
 */
 }
+
+#if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+void GrafxDriver::CopyWidgetToDevice(ImageID_e Image, Cartesian_t Position)
+{
+    DisplayLayer* pLayer   = &LayerTable[DisplayLayer::GetDrawing()];
+    uint32_t      pAddress = pLayer->GetAddress();
+    uint16_t*     pDataPtr;
+    uint16_t*     pDataPtr2;
+    StaticImageInfo_t* pImageInfo;
+
+    DB_Central.Get(&pImageInfo, GFX_IMAGE_INFO, uint16_t(Image));
+
+    uint32_t SizeX = pImageInfo->ImageInfo.Size.Width;
+    uint32_t SizeY = pImageInfo->ImageInfo.Size.Height;
+    size_t ImageSize = SizeX * SizeY;
+
+    uint16_t* pImageBack = (uint16_t*)pMemoryPool->Alloc(ImageSize * sizeof(uint16_t), MEM_DBG_GRAFX_CL1);
+
+    //-------------------------------------------------------------------------
+    // DMA2D the 2 buffers
+
+    DMA2D->CR      = DMA2D_M2M_PFC;                                                                                     // Memory to memory and TCIE blending BG + Source
+
+    //Source
+    DMA2D->FGMAR   = pAddress;                                                                                          // Source address
+    DMA2D->FGOR    = (uint32_t)pLayer->GetSize().X - (uint32_t)pImageInfo->ImageInfo.Size.Width;;                                                                                                 // Source line offset so none as we are linear
+    DMA2D->FGPFCCR = 0;                                                                                                 // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
+
+    //Destination
+    DMA2D->OMAR    = uint32_t(pImageBack);                                                                              // Destination address
+    DMA2D->OOR     = 0;                                                                                                 // Destination line offset none as we are linear
+    DMA2D->OPFCCR  = 2;                                                                                                 // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
+
+    DMA2D->NLR     = (pImageInfo->ImageInfo.Size.Width << 16) | pImageInfo->ImageInfo.Size.Height;                      // Size configuration of area to be transfered
+
+    SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
+    while(DMA2D->CR & DMA2D_CR_START);                                                                                  // Wait until transfer is done
+
+    pDataPtr2 = pImageBack;
+    BoxSize_t BoxSize;
+    BoxSize.Width = SizeX;
+    BoxSize.Width = SizeY;
+
+    for(uint32_t y = 0; y < SizeY; y++)
+    {
+        SetWindow(Position.X, Position.Y, &BoxSize);
+        pDataPtr = pDataPtr2;
+
+        for(uint32_t x = 0; x < SizeX; x++)
+        {
+            WriteData(*pDataPtr);
+        }
+
+        pDataPtr2 += pLayer->GetSize().X;
+    }
+
+    pMemoryPool->Free((void**)&pImageBack);
+}
+#endif
 
 
 //-------------------------------------------------------------------------------------------------
@@ -540,7 +727,7 @@ uint16_t GrafxDriver::ReadCommand(uint8_t Register)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           WriteWindowData
+//  Name:           SetWindow
 //
 //  Parameter(s):
 //
@@ -549,17 +736,15 @@ uint16_t GrafxDriver::ReadCommand(uint8_t Register)
 //  Description:
 //
 //-------------------------------------------------------------------------------------------------
-void WriteData(uint16_t* pData, size_t Length){}
-//void GrafxDriver::WriteWindowData(Cartesian_t* pDstPos, uint16_t* pData, size_t Length)
-//{
-    // Set window frame into LCD
-
-    // Set Start Address
-    //SetRAM_Pointer      (uint16_t PosX, uint16_t PosY);
-
-
-//}
-
+void GrafxDriver::SetWindow(uint16_t PosX, uint16_t PosY, BoxSize_t* pBoxSize)
+{
+    Box_t Box;
+    Box.Pos.X       = PosX;
+    Box.Pos.Y       = PosY;
+    Box.Size.Width  = pBoxSize->Width;
+    Box.Size.Height = pBoxSize->Height;
+    SetWindow(&Box);
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -603,6 +788,66 @@ void GrafxDriver::ResetWindow(void)
     WriteCommand(SSD2119_HORIZONTAL_RAM_START_REGISTER,  SSD2119_HORIZONTAL_WINDOWS_START_FULL_SIZE);
     WriteCommand(SSD2119_HORIZONTAL_RAM_END_REGISTER,    SSD2119_HORIZONTAL_WINDOWS_END_FULL_SIZE);
     SetRAM_Pointer(0, 0);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void GrafxDriver::WriteRLE16(StaticImageRLE_16_t* pData, uint16_t* pDestination, size_t Size)
+{
+    while(Size != 0)
+    {
+        uint32_t Repeat = pData->Repeat + 1;
+        uint16_t Pixel  = pData->Pixel;
+        pData++;
+
+        if(pDestination == nullptr)
+        {
+            while(Repeat--)
+            {
+                WriteData(Pixel);
+            }
+        }
+        else
+        {
+            while(Repeat--)
+            {
+                *pDestination = Pixel;
+                pDestination++;
+            }
+        }
+
+        Size--;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void GrafxDriver::WriteRLE32(StaticImageRLE_32_t* pData, uint32_t* pDestination, size_t Size)
+{
+    while(Size != 0)
+    {
+        uint32_t Repeat = pData->Repeat + 1;
+        uint32_t Pixel  = pData->Pixel;
+        pData++;
+
+        if(pDestination == nullptr)
+        {
+            while(Repeat--)
+            {
+                WriteData(Pixel);
+            }
+        }
+        else
+        {
+            while(Repeat--)
+            {
+                *pDestination = Pixel;
+                pDestination++;
+            }
+        }
+
+        Size--;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

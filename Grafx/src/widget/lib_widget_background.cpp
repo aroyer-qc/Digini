@@ -146,13 +146,6 @@ void WidgetBackground::Finalize()
 //-------------------------------------------------------------------------------------------------
 void WidgetBackground::Draw(ServiceReturn_t* pService)
 {
-  #if (GRAFX_USE_ROM_DATABASE == DEF_ENABLED)
-    StaticImageInfo_t ImageInfo;                    // All Image reside in ROM in static format some are compressed in RLE
-  #else
-    ImageInfo_t ImageInfo;                          // All Image reside in RAM fully without compression
-  #endif
-    //DisplayLayer*     pLayer;
-
     DisplayLayer::PushDrawing();
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED) || (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_DISABLED)
@@ -163,21 +156,7 @@ void WidgetBackground::Draw(ServiceReturn_t* pService)
     //pLayer = &LayerTable[CONSTRUCTION_BACKGROUND_LAYER];
   #endif
 
-    DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, uint16_t(m_pBackground->Image.ID_List[pService->IndexState]), 0);
-    myGrafx->ImageCopy(&ImageInfo, m_pBackground->Pos.X, m_pBackground->Pos.Y, CLEAR_BLEND);
-
-
-/*
-    myGrafx->BlockCopy(ImageInfo.pPointer,
-                            m_pBackground->Pos.X,
-                            m_pBackground->Pos.Y,
-                            ImageInfo.Size.Width,
-                            ImageInfo.Size.Height,
-                            m_pBackground->Pos.X,
-                            m_pBackground->Pos.Y,
-                            pLayer->GetPixelFormat(),
-                            CLEAR_BLEND);
-*/
+    myGrafx->ImageCopy(m_pBackground->Image.ID_List[pService->IndexState], m_pBackground->Pos.X, m_pBackground->Pos.Y);
 
   #if (GRAFX_DEBUG_GUI == DEF_DISABLED)
    #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)

@@ -175,6 +175,7 @@
 // Blending mode
 #define GRAFX_OPTION_BLEND_CLEAR                    (uint16_t)0x0400
 #define GRAFX_OPTION_BLEND_ALPHA                    (uint16_t)0x0800
+#define GRAFX_OPTION_BLEND_MASK                     (uint16_t)0x0C00
 
 #define GRAFX_OPTION_TEXT                           (uint16_t)0x1000
 

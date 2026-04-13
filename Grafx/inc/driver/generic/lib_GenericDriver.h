@@ -38,26 +38,37 @@ class GrafxGenDriver
 {
         public:
 
-            virtual     void    Initialize            (void* pArg);
+            virtual     void    Initialize            (const void* pArg);
 	        virtual     void    DisplayOn             (void)             = 0;
             virtual     void    DisplayOff            (void)             = 0;
             virtual     void    LayerConfig           (DisplayLayer* pLayer);
             virtual     void    LayerConfig           (Layer_e Layer);
 
-           #if (GRAFX_USE_ROM_DATABASE == DEF_ENABLED)
-            virtual    void     ImageCopy             (StaticImageInfo_t* pImageInfo, uint16_t PosX, uint16_t PosY, BlendMode_e BlendMode) = 0;
-           #else
-            virtual    void     ImageCopy             (ImageInfo_t* pImageInfo, uint16_t PosX, uint16_t PosY, BlendMode_e BlendMode) = 0;
-           #endif
+// validated and good
+            virtual    void     ImageCopy             (ImageID_e Image, uint16_t PosX, uint16_t PosY) = 0;
+
+          #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+            virtual    void     CopyWidgetToDevice    (ImageID_e Image, Cartesian_t Position) = 0;
+          #endif
+
+
+
+
+
+
+
+
+
+
+
+
 
             virtual	    void    BlockCopy             (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
             virtual	    void    BlockCopy             (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
             virtual     void    ClearLayer            (Layer_e Layer);
-          #if (GRAFX_USE_DISPLAY_LAYER == DEF_ENABLE)
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, Box_t* pBox);
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height);
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, uint16_t SrcX, uint16_t SrcY, uint16_t DstX, uint16_t DstY, uint16_t Width, uint16_t Height);
-          #endif
             virtual	    void    CopyLinear            (ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode);
             virtual	    void    CopyLinear            (void* pSrc, Box_t* pBox, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
             virtual     void    CopyLinear            (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode);

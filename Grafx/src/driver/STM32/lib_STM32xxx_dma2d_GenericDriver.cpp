@@ -29,7 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "./lib_digini.h"
-#include "./Grafx/inc/driver/STM32/lib_STM32_generic.h"
+#include "./Grafx/inc/driver/STM32/lib_STM32_Generic.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -208,16 +208,6 @@ void GrafxGenDriver::DrawRectangle(Box_t* pBox)
     Color       = pLayer->GetColor();
     AreaConfig  = (uint32_t(pBox->Size.Width)  << 16) | (uint32_t(pBox->Size.Height));
 
-  #if defined(GRAFX_USE_SOFT_RECTANGLE)
-
-    // if rectangle need to use software version
-
-    #ifdef GRAFX_USE_SOFT_FILL
-        // TO DO write code if fill is done in software
-    #else
-        // TO DO write code if done in software
-    #endif
-
     DMA2D->CR     = DMA2D_R2M | DMA2D_CR_TCIE;                                     // Register to memory and TCIE
     DMA2D->OCOLR  = Color;                                                         // Color to be used
     DMA2D->OMAR   = Address;                                                       // Destination address
@@ -227,7 +217,6 @@ void GrafxGenDriver::DrawRectangle(Box_t* pBox)
 
     SET_BIT(DMA2D->CR, DMA2D_CR_START);                                            // Start operation
     while(DMA2D->CR & DMA2D_CR_START);                                             // Wait until transfer is done
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------

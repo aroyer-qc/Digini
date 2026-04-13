@@ -185,27 +185,33 @@ void WidgetButton::Draw(ServiceReturn_t* pService)
         pService->IndexState++;
     }
 
-    //if(m_ServiceState == SERVICE_MOVE_UP)// TODO (Alain#1#) what this do ... i have no idea... missing comment
-    //{
-    //    pService->IndexState = 2;
-    //}
+
 
     if(m_pButton->Image.ID_List[pService->IndexState] != INVALID_IMAGE)
     {
-        myGrafx->CopyLinear(m_pButton->Image.ID_List[pService->IndexState], m_pButton->Pos, CLEAR_BLEND);
+        BlendMode_e BlendOption = ((m_pButton->Options & GRAFX_OPTION_BLEND_MASK) == GRAFX_OPTION_BLEND_ALPHA) ? ALPHA_BLEND : CLEAR_BLEND;
+        myGrafx->CopyLinear(m_pButton->Image.ID_List[pService->IndexState], m_pButton->Pos, BlendOption);
 
-        // Need image button for label
+        // Label for button
         if(m_pButton->Text.Label != INVALID_LABEL)
         {
             WidgetPrint(&m_pButton->Text, pService);
         }
     }
 
-    // Glyph can be a button
+    // Button can have a glyph
     if(m_pButton->Glyph.ID_List[pService->IndexState] != INVALID_IMAGE)
     {
         myGrafx->CopyLinear(m_pButton->Glyph.ID_List[pService->IndexState], m_pButton->Glyph.Pos, ALPHA_BLEND);
     }
+
+
+    //myGrafx->BlockCopy()yLinear(m_pButton->Glyph.ID_List[pService->IndexState], m_pButton->Glyph.Pos, ALPHA_BLEND);
+  #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+    {
+        myGrafx->CopyWidgetToDevice(m_pButton->Image.ID_List[pService->IndexState], m_pButton->Pos);
+    }
+  #endif
 
     DisplayLayer::PopDrawing();
 }

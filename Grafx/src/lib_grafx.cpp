@@ -94,11 +94,15 @@ SystemState_e GRAFX_Initialize(void)
 
     for(int Layer = LAYER_FIRST_ITEM; Layer < LAYER_COUNT; Layer++)
     {
-        if(LayerTable[Layer].GetPixelFormat() != PIXEL_FORMAT_DUMMY)
+        if(LayerTable[Layer].GetTotalSize() != 0)
         {
             LayerTable[Layer].SetAddress(Address);
             Address += LayerTable[Layer].GetTotalSize();
             LayerTable[Layer].Clear();
+        }
+        else
+        {
+            LayerTable[Layer].SetAddress(0);
         }
     }
   #endif
@@ -162,7 +166,7 @@ SystemState_e GRAFX_PostInitialize(void)
     {
         return State;
     }
-
+// on doit aller chercher la grosseur du Touch... pas la valeur static
     if((State = PDI_pTask->Initialize(PDI_pDriver, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y, PDI_SWAP_NONE)) != SYS_READY)
     {
         return State;

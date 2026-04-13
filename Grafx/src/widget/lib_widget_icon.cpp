@@ -192,6 +192,12 @@ void WidgetIcon::Draw(ServiceReturn_t* pService)
                             ((m_pIcon->Options & GRAFX_OPTION_BLEND_CLEAR) != 0) ? CLEAR_BLEND : ALPHA_BLEND);
     }
 
+  #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+    {
+        myGrafx->CopyWidgetToDevice(m_pIcon->Image.ID_List[pService->IndexState], m_pIcon->Box.Pos);
+    }
+  #endif
+
     DisplayLayer::PopDrawing();
 }
 

@@ -50,7 +50,7 @@ class DisplayLayer
 {
     public:
 
-                                DisplayLayer                  (Layer_e          VirtualLayer,
+                                DisplayLayer            (Layer_e          VirtualLayer,
                                                          uint32_t         u32LayerAddress,
                                                          LayerType_e      ActiveOnLayer,
                                                          uint16_t         SizeX,

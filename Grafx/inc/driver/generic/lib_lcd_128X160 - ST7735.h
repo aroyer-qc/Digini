@@ -71,7 +71,12 @@ class GrafxDriver : public GrafxGenDriver
 
         using GrafxGenDriver::DrawRectangle;            // Expose all DrawRectangle from base class
 
-        void        Initialize      (void* pArg)                                                                                            override;
+        void        Initialize      (const void* pArg)                                                                                      override;
+        void        DisplayOn       (void)                                                                                                  override;
+        void        DisplayOff      (void)                                                                                                  override;
+
+        void        LayerConfig     (DisplayLayer* pLayer)                                                                                  override;
+
         void        BlockCopy       (void* pSrc, uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height,
                                      uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)                     override;
         void        BlockCopy       (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)    override;
@@ -81,9 +86,6 @@ class GrafxDriver : public GrafxGenDriver
         void        DrawRectangle   (Box_t* pBox)                                                                                           override;
         //void    DrawRectangle         (uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height);
         void        DrawPixel       (uint16_t PosX, uint16_t PosY)                                                                          override;
-        void        DisplayOn       (void)                                                                                                  override;
-        void        DisplayOff      (void)                                                                                                  override;
-        void        LayerConfig     (CLayer* pLayer)                                                                                        override;
         void        PrintFont       (FontDescriptor_t* pDescriptor, Cartesian_t* pPos)                                                      override;
 
     private:

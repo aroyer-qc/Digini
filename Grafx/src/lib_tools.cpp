@@ -120,24 +120,7 @@ uint8_t GetXY_Justification(void)
 {
     return Justification;
 }
-/*
-//-------------------------------------------------------------------------------------------------
-//
-//   Function Name: GFX_WaitFor_V_Sync
-//
-//   Parameter(s):  none
-//   Return Value:  void
-//
-//   Description:   set
-//
-//-------------------------------------------------------------------------------------------------
-#if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
-void WaitFor_V_Sync(void)
-{
-    myGrafx->WaitFor_V_Sync();
-}
-#endif
-*/
+
 //-------------------------------------------------------------------------------------------------
 
 #endif // DIGINI_USE_GRAFX

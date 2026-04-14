@@ -133,7 +133,7 @@ struct FontDescriptor_t
 
 struct FontInfo_t
 {
-    const uint8_t*          pLookUpTable;
+    const uint8_t*          pLookUpTable;       // maybe it should be a pointer
     uint8_t                 FirstCaracter;
     uint8_t                 LastCaracter;
     uint8_t                 Width;

@@ -147,7 +147,7 @@ void CPageSlide::Finalize()
 //-------------------------------------------------------------------------------------------------
 void CPageSlide::Draw(ServiceReturn_t* pService)
 {
-    ImageInfo_t ImageInfo;
+    ImageInfo_t Image;
     CLayer*     pLayer;
 
 
@@ -172,11 +172,11 @@ void CPageSlide::Draw(ServiceReturn_t* pService)
   #endif
 
 /*
-    myGrafx->BlockCopy(ImageInfo.pPointer,
+    myGrafx->BlockCopy(Image.pPointer,
                        m_pPageSlide->Pos.X,
                        m_pPageSlide->Pos.Y,
-                       ImageInfo.Size.Width,
-                       ImageInfo.Size.Height,
+                       Image.Size.Width,
+                       Image.Size.Height,
                        m_pPageSlide->Pos.X,
                        m_pPageSlide->Pos.Y,
                        pLayer->GetPixelFormat(),

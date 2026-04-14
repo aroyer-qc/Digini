@@ -39,20 +39,6 @@
 #define GRAFX_NUMBER_OF_ACTIVE_LAYER                2
 
 #define GRAFX_DRIVER_USE_V_SYNC                     DEF_DISABLED
-#define GRAFX_USE_SOFT_COPY_LINEAR
-#define GRAFX_USE_SOFT_COPY_LAYER_TO_LAYER
-//#define GRAFX_USE_SOFT_PIXEL
-//#define GRAFX_USE_SOFT_BOX
-                    //                  #define GRAFX_USE_SOFT_VLINE     should not exist anymore with the override!!!!!
-                    //                  #define GRAFX_USE_SOFT_HLINE     should not exist anymore with the override!!!!!
-                    //                  #define GRAFX_USE_SOFT_DLINE     should not exist anymore with the override!!!!!
-                    //                  #define GRAFX_USE_SOFT_CIRCLE    should not exist anymore with the override!!!!!
-//#define GRAFX_USE_SOFT_RECTANGLE
-
-//#define GRAFX_USE_SOFT_PRINT_FONT
-//#define GRAFX_USE_SOFT_ALPHA                      needon this project as LCD doesn't have alpha
-//#define GRAFX_USE_SOFT_COPY
-//#define GRAFX_USE_SOFT_FILL
 
 // Display size
 #define GRAFX_DRIVER_SIZE_X                         128

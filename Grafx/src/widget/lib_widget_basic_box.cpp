@@ -48,36 +48,36 @@
 //-------------------------------------------------------------------------------------------------
 WidgetBasicBox::WidgetBasicBox(BasicBox_t* pBasicBox)
 {
-    ImageInfo_t ImageInfo;
+    ImageInfo_t Image;
 
     m_pBasicBox = pBasicBox;
 
-    DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, pBasicBox->ImageTL, 0);
+    DB_Central.Get(&Image, GFX_IMAGE_INFO, pBasicBox->ImageTL, 0);
     m_TopLeft.X     = pBasicBox->Box.Pos.X;
     m_X_VerLeft     = pBasicBox->Box.Pos.X;
-    m_X_Hor         = m_TopLeft.X + ImageInfo.Size.Width;
+    m_X_Hor         = m_TopLeft.X + Image.Size.Width;
 
     m_TopLeft.Y     = pBasicBox->Box.Pos.Y;
     m_Y_HorTop      = pBasicBox->Box.Pos.Y;
-    m_Y_Ver         = pBasicBox->Box.Pos.Y + ImageInfo.Size.Height;
+    m_Y_Ver         = pBasicBox->Box.Pos.Y + Image.Size.Height;
 
-    DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, pBasicBox->ImageTR, 0);
-    m_TopRight.X    = ((pBasicBox->Box.Pos.X + pBasicBox->Box.Size.Width) - 1) - ImageInfo.Size.Width;
+    DB_Central.Get(&Image, GFX_IMAGE_INFO, pBasicBox->ImageTR, 0);
+    m_TopRight.X    = ((pBasicBox->Box.Pos.X + pBasicBox->Box.Size.Width) - 1) - Image.Size.Width;
     m_TopRight.Y    = pBasicBox->Box.Pos.Y;
 
-    DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, pBasicBox->ImageBL, 0);
+    DB_Central.Get(&Image, GFX_IMAGE_INFO, pBasicBox->ImageBL, 0);
     m_BottomLeft.X  = pBasicBox->Box.Pos.X;
-    m_BottomLeft.Y  = ((pBasicBox->Box.Pos.Y + pBasicBox->Box.Size.Height) - 1) - ImageInfo.Size.Height;
+    m_BottomLeft.Y  = ((pBasicBox->Box.Pos.Y + pBasicBox->Box.Size.Height) - 1) - Image.Size.Height;
 
-    DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, pBasicBox->ImageBR, 0);
-    m_BottomRight.X = ((pBasicBox->Box.Pos.X + pBasicBox->Box.Size.Width) - 1) - ImageInfo.Size.Width;
-    m_BottomRight.Y = ((pBasicBox->Box.Pos.Y + pBasicBox->Box.Size.Height) - 1) - ImageInfo.Size.Height;
+    DB_Central.Get(&Image, GFX_IMAGE_INFO, pBasicBox->ImageBR, 0);
+    m_BottomRight.X = ((pBasicBox->Box.Pos.X + pBasicBox->Box.Size.Width) - 1) - Image.Size.Width;
+    m_BottomRight.Y = ((pBasicBox->Box.Pos.Y + pBasicBox->Box.Size.Height) - 1) - Image.Size.Height;
 
-    DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, pBasicBox->ImageH, 0);
-    m_Y_HorBot      = ((pBasicBox->Box.Pos.Y + pBasicBox->Box.Size.Height) - 1) - ImageInfo.Size.Height;
+    DB_Central.Get(&Image, GFX_IMAGE_INFO, pBasicBox->ImageH, 0);
+    m_Y_HorBot      = ((pBasicBox->Box.Pos.Y + pBasicBox->Box.Size.Height) - 1) - Image.Size.Height;
 
-    DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, pBasicBox->ImageV, 0);
-    m_X_VerRight    = ((pBasicBox->Box.Pos.X + pBasicBox->Box.Size.Width) - 1) - ImageInfo.Size.Width;
+    DB_Central.Get(&Image, GFX_IMAGE_INFO, pBasicBox->ImageV, 0);
+    m_X_VerRight    = ((pBasicBox->Box.Pos.X + pBasicBox->Box.Size.Width) - 1) - Image.Size.Width;
 }
 
 //-------------------------------------------------------------------------------------------------

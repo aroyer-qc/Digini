@@ -126,7 +126,7 @@ void DrawPie(ImageID_e Image, Cartesian_t Position, uint16_t Radius, uint16_t St
 //-------------------------------------------------------------------------------------------------
 static void _DrawSector(ImageID_e Image, Circle_t* pCircle, uint16_t StartAngle, uint16_t EndAngle, uint16_t SectorNumber, BlendMode_e BlendMode)
 {
-    ImageInfo_t ImageInfo;
+    ImageInfo_t Image;
     Cartesian_t Origin;
     Cartesian_t StartPoint;
     Cartesian_t CornerPoint;
@@ -280,8 +280,8 @@ static void _DrawSector(ImageID_e Image, Circle_t* pCircle, uint16_t StartAngle,
     if(EndPoint.Y < SrcImageOffset.Y)    SrcImageOffset.Y = EndPoint.Y;
     SrcImageOffset.Y -= pCircle->Pos.Y;
 
-    DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, Image, 0);
-    PatternPolygon(ImageInfo.pPointer, ImageInfo.Size.Width, SrcImageOffset, Origin, StartPoint, CornerPoint, EndPoint, ImageInfo.PixelFormat, BlendMode);
+    DB_Central.Get(&Image, GFX_IMAGE_INFO, Image, 0);
+    PatternPolygon(Image.pPointer, ImageInfo.Size.Width, SrcImageOffset, Origin, StartPoint, CornerPoint, EndPoint, ImageInfo.PixelFormat, BlendMode);
 }
 
 //-------------------------------------------------------------------------------------------------

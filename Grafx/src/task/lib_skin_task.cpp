@@ -428,10 +428,10 @@ SystemState_e SKIN_myClassTask::Load(void)
 #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
 SystemState_e SKIN_myClassTask::DeCompressAllImage(void)
 {
-    ImageInfo_t     ImageInfo;
+    ImageInfo_t     Image;
     uint8_t*        pFreePointer;
-    RAW_Array*       pOutput;
-    RAW_Array*       pInput;
+    RAW_Array*      pOutput;
+    RAW_Array*      pInput;
     SystemState_e   State;
     uint32_t        ReadCount;
     uint32_t        BlockReadSize;
@@ -448,10 +448,10 @@ SystemState_e SKIN_myClassTask::DeCompressAllImage(void)
     {
         RawPointer = (uint8_t*)m_pRawInputBuffer;
         // To get index in file as save previously in GetImageInfo
-        DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, i + (NUMBER_OF_STATIC_IMAGE + 1), 0);
+        DB_Central.Get(&Image, GFX_IMAGE_INFO, i + (NUMBER_OF_STATIC_IMAGE + 1), 0);
 
         // Read all data for this image in the raw input buffer
-        f_lseek(m_pFile, uint32_t(ImageInfo.pPointer));
+        f_lseek(m_pFile, uint32_t(Image.pPointer));
         ReadSize   = uint32_t(m_pDataSize[i]);
         while(ReadSize != 0)
         {
@@ -472,8 +472,8 @@ SystemState_e SKIN_myClassTask::DeCompressAllImage(void)
         // Align free pointer to 32 bits boundary
         LIB_AlignPointer(pFreePointer);
         // Save memory pointer for this image
-        ImageInfo.pPointer = pFreePointer;
-        DB_Central.Set(&ImageInfo, GFX_IMAGE_INFO, i + (NUMBER_OF_STATIC_IMAGE + 1), 0);
+        Image.pPointer = pFreePointer;
+        DB_Central.Set(&Image, GFX_IMAGE_INFO, i + (NUMBER_OF_STATIC_IMAGE + 1), 0);
 
 
         pOutput    = new RAW_Array(pFreePointer);
@@ -498,19 +498,19 @@ SystemState_e SKIN_myClassTask::GetImageInfo(void)
 {
     SystemState_e State;
     uint32_t      Dummy;
-    ImageInfo_t   ImageInfo;
+    ImageInfo_t   Image;
 
     // Read all image information
-    for(uint16_t i = 0; (i < m_ItemCount) && ( i < DBASE_MAX_SKIN_IMAGE_QTY); i++)       // Do not go over maximum number of image
+    for(uint16_t i = 0; (i < m_ItemCount) && ( i < DBASE_MAX_SKIN_IMAGE_QTY); i++)              // Do not go over maximum number of image
     {
-        if((State = Get_uint32_t(&Dummy))                          != SYS_READY) return State;      // dummy read ID
-        if((State = Get_uint32_t(&m_pDataSize[i]))                 != SYS_READY) return State;
-        if((State = Get_uint8_t((uint8_t*)&ImageInfo.PixelFormat)) != SYS_READY) return State;
-        if((State = Get_uint16_t(&ImageInfo.Size.Width))           != SYS_READY) return State;
-        if((State = Get_uint16_t(&ImageInfo.Size.Height))          != SYS_READY) return State;
-        if((State = Get_uint8_t(&m_pCompressionMethod[i]))         != SYS_READY) return State;
-        if((State = Get_uint32_t((uint32_t*)&ImageInfo.pPointer))  != SYS_READY) return State;      // use memory address pointer as temporary storage for in file index
-        DB_Central.Set(&ImageInfo, GFX_IMAGE_INFO, i + (NUMBER_OF_STATIC_IMAGE + 1), 0);
+        if((State = Get_uint32_t(&Dummy))                      != SYS_READY) return State;      // dummy read ID
+        if((State = Get_uint32_t(&m_pDataSize[i]))             != SYS_READY) return State;
+        if((State = Get_uint8_t((uint8_t*)&Image.PixelFormat)) != SYS_READY) return State;
+        if((State = Get_uint16_t(&Image.Size.Width))           != SYS_READY) return State;
+        if((State = Get_uint16_t(&Image.Size.Height))          != SYS_READY) return State;
+        if((State = Get_uint8_t(&m_pCompressionMethod[i]))     != SYS_READY) return State;
+        if((State = Get_uint32_t((uint32_t*)&Image.pPointer))  != SYS_READY) return State;      // use memory address pointer as temporary storage for in file index
+        DB_Central.Set(&Image, GFX_IMAGE_INFO, i + (NUMBER_OF_STATIC_IMAGE + 1), 0);
     }
     return SYS_READY;
 }
@@ -670,10 +670,10 @@ SystemState_e SKIN_myClassTask::GetFontInfo(void)
 #ifdef STATIC_SKIN_DEF
 void SKIN_myClassTask::StaticLoad(void)
 {
-    ImageInfo_t ImageInfo;
+    ImageInfo_t Image;
     uint8_t*    pFreePointer;
-    RAW_Array*   pInput;
-    RAW_Array*   pOutput;
+    RAW_Array*  pInput;
+    RAW_Array*  pOutput;
 
     DB_Central.Get(&pFreePointer, GFX_FREE_RAM_POINTER, 0, 0);
 
@@ -681,15 +681,15 @@ void SKIN_myClassTask::StaticLoad(void)
     for(int StaticImage = 1; StaticImage < NUMBER_OF_STATIC_IMAGE; StaticImage++)
     {
 
-        ImageInfo.Size.Width  = SII_Array[StaticImage]->SizeX;
-        ImageInfo.Size.Height = SII_Array[StaticImage]->SizeY;
-        ImageInfo.PixelFormat = SII_Array[StaticImage]->PixelFormat;
+        Image.Size.Width  = SII_Array[StaticImage]->SizeX;
+        Image.Size.Height = SII_Array[StaticImage]->SizeY;
+        Image.PixelFormat = SII_Array[StaticImage]->PixelFormat;
 
         if(SII_Array[StaticImage]->Compression != COMPX_COMPRESSION_NONE)
         {
             pInput  = new RAW_Array(SII_Array[StaticImage]->pData);
             pOutput = new RAW_Array(pFreePointer);
-            ImageInfo.pPointer = pFreePointer;
+            Image.pPointer = pFreePointer;
             pFreePointer += m_pDecompress->Process(pOutput,
                                                    pInput,
                                                    SII_Array[StaticImage]->RawSize,
@@ -699,10 +699,10 @@ void SKIN_myClassTask::StaticLoad(void)
         }
         else // No compression, so we can work directly from flash memory
         {
-            ImageInfo.pPointer = SII_Array[StaticImage]->pData;
+            Image.pPointer = SII_Array[StaticImage]->pData;
         }
 
-        DB_Central.Set(&ImageInfo, GFX_IMAGE_INFO, StaticImage, 0);
+        DB_Central.Set(&Image, GFX_IMAGE_INFO, StaticImage, 0);
     }
 
     DB_Central.Set(&pFreePointer, GFX_FREE_RAM_POINTER, 0, 0);

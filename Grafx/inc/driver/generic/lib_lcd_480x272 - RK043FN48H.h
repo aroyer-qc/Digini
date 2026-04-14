@@ -47,22 +47,6 @@
 #define GRAFX_VBP                                   2               // Vertical back porch
 #define GRAFX_VFP                                   2               // Vertical front porch
 
-
-#define GRAFX_USE_SOFT_COPY_LINEAR
-#define GRAFX_USE_SOFT_COPY_LAYER_TO_LAYER
-//#define GRAFX_USE_SOFT_PIXEL                      // We use this driver DMA for this function
-//#define GRAFX_USE_SOFT_BOX                        // We use this driver function
-//#define GRAFX_USE_SOFT_VLINE
-//#define GRAFX_USE_SOFT_HLINE
-#define GRAFX_USE_SOFT_DLINE
-#define GRAFX_USE_SOFT_CIRCLE
-//#define GRAFX_USE_SOFT_RECTANGLE
-
-//#define GRAFX_USE_SOFT_PRINT_FONT                 // we use this driver to print FONT using DMA2D
-//#define GRAFX_USE_SOFT_ALPHA                      // We use this uP + LCD controller has alpha acceleration
-//#define GRAFX_USE_SOFT_COPY                       // We use this driver DMA for this function
-//#define GRAFX_USE_SOFT_FILL                       // We use this driver DMA for this function
-
 //-------------------------------------------------------------------------------------------------
 // Class
 //-------------------------------------------------------------------------------------------------

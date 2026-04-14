@@ -143,13 +143,6 @@ extern const StaticImageInfo_t* StaticImageInfo[NUMBER_OF_STATIC_IMAGE];
 // Variable(s)
 //--------------------------------------------------------------------------------------------------
 
-#ifdef GRAFX_USE_SOFT_ALPHA
-//uint16_t           g_AlphaTableRed[32][32];
-//uint16_t           g_AlphaTableGreen[64][64];
-//uint16_t           g_AlphaTableBlue[32][32];
-#endif
-
-
 #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED) /* || defined(DIGINI_USE_XXX) */
     extern GRAFX_PostInitSubDriverPtr_t GRAFX_PostInitSubDriverPtr;
 
@@ -183,7 +176,7 @@ Layer_e             GRAFX_SelectForegroundDrawingLayer  (void);
 // Font function
 void                PrintFont                           (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
 
-void                DrawCursorOnCircle                  (ImageID_e Image, Cartesian_t* pPos, uint16_t Radius, uint16_t Angle);
+void                DrawCursorOnCircle                  (ImageID_e ImageID, Cartesian_t* pPos, uint16_t Radius, uint16_t Angle);
 
 size_t              WidgetPrint                         (Text_t* pText, ServiceReturn_t* pService);
 

@@ -139,12 +139,7 @@ void GrafxGenDriver::DrawRectangle(uint16_t PosX, uint16_t PosY, uint16_t Width,
     Box.Pos.Y       = PosY;
     Box.Size.Width  = Width;
     Box.Size.Height = Height;
-
-    #ifdef GRAFX_USE_SOFT_FILL
-        // TO DO write code if fill is done in software
-    #else
-        DrawRectangle(&Box);
-    #endif
+    DrawRectangle(&Box);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -254,7 +249,7 @@ void GrafxGenDriver::LayerConfig(Layer_e Layer)
 //
 //   Function Name: CopyLinear
 //
-//   Parameter(s):  ImageID_e               Image
+//   Parameter(s):  ImageID_e            ImageID
 //                  Cartesian_t          Position
 //                  BlendMode_e          BlendMode
 //   Return Value:  none
@@ -262,23 +257,21 @@ void GrafxGenDriver::LayerConfig(Layer_e Layer)
 //   Description:   Copy a rectangle region from linear memory region to square memory area
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_SOFT_COPY_LINEAR
-void GrafxGenDriver::CopyLinear(ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode)
+void GrafxGenDriver::CopyLinear(ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode)
 {
-    ImageInfo_t ImageInfo;
+    ImageInfo_t Image;
     Box_t       Box;
 
-    if(Image != INVALID_IMAGE)
+    if(ImageID != INVALID_IMAGE)
     {
-        DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, uint16_t(Image), 0);
+        DB_Central.Get(&Image, GFX_IMAGE_INFO, uint16_t(ImageID), 0);
         Box.Pos.X       = Position.X;
-        Box.Size.Width  = ImageInfo.Size.Width;
+        Box.Size.Width  = Image.Size.Width;
         Box.Pos.Y       = Position.Y;
-        Box.Size.Height = ImageInfo.Size.Height;
-        myGrafx->CopyLinear(ImageInfo.pPointer, &Box, ImageInfo.PixelFormat, BlendMode);
+        Box.Size.Height = Image.Size.Height;
+        myGrafx->CopyLinear(Image.pPointer, &Box, Image.PixelFormat, BlendMode);
     }
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -295,7 +288,6 @@ void GrafxGenDriver::CopyLinear(ImageID_e Image, Cartesian_t Position, BlendMode
 //  Note(s):        Source is linear
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef GRAFX_USE_SOFT_COPY_LINEAR
 /*
 void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e PixelFormat, BlendMode_e BlendMode)
 {
@@ -307,7 +299,6 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e PixelForm
     VAR_UNUSED(BlendMode);
 }
 */
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -406,9 +397,9 @@ void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::CopyLayerToLayer(Layer_e SrcLayer, Layer_e DstLayer, uint16_t SrcX, uint16_t SrcY, uint16_t DstX, uint16_t DstY, uint16_t Width, uint16_t Height)
 {
-    DisplayLayer*      pLayer;
-    Box_t        Box;
-    Cartesian_t  Pos;
+    DisplayLayer* pLayer;
+    Box_t         Box;
+    Cartesian_t   Pos;
 
     Box.Pos.X       = SrcX;
     Box.Size.Width  = Width;

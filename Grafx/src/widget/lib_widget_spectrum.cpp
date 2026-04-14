@@ -46,15 +46,15 @@
 //-------------------------------------------------------------------------------------------------
 CSpectrum::CSpectrum(Spectrum_t* pSpectrum)
 {
-   ImageInfo_t  ImageInfo;
+   ImageInfo_t  Image;
 
     m_pSpectrum = pSpectrum;
-    DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, uint16_t(m_pSpectrum->Bar), 0);
-    m_BarSize.Width  = ImageInfo.Size.Width;
-    m_BarSize.Height = ImageInfo.Size.Height;
+    DB_Central.Get(&Image, GFX_IMAGE_INFO, uint16_t(m_pSpectrum->Bar), 0);
+    m_BarSize.Width  = Image.Size.Width;
+    m_BarSize.Height = Image.Size.Height;
     m_DotSize        = m_BarSize.Height / m_pSpectrum->Resolution.Height;
-    m_BarAddress     = ImageInfo.pPointer;
-    m_PixelFormat    = ImageInfo.PixelFormat;
+    m_BarAddress     = Image.pPointer;
+    m_PixelFormat    = Imageo.PixelFormat;
 }
 
 //-------------------------------------------------------------------------------------------------

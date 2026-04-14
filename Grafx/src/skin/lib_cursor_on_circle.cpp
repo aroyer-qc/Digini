@@ -57,9 +57,9 @@ void GRAFX_CursorOnCircle(ImageID_e Image, Cartesian_t* pPos, uint16_t Radius, u
     uint8_t     Sector;
     uint16_t    CosAngle;
     uint16_t    SinAngle;
-    ImageInfo_t  ImageInfo;
+    ImageInfo_t Image;
 
-    DB_Central.Get(&ImageInfo, GFX_IMAGE_INFO, Image, 0);
+    DB_Central.Get(&Image, GFX_IMAGE_INFO, Image, 0);
 
     Sector = Angle / 90;
 
@@ -74,11 +74,11 @@ void GRAFX_CursorOnCircle(ImageID_e Image, Cartesian_t* pPos, uint16_t Radius, u
         SinAngle = 90 - (Angle % 90);
     }
 
-    OffX = LIB_SinCos(CosAngle, Radius - ImageInfo.Size.Width /2);
-    OffY = LIB_SinCos(SinAngle, Radius - ImageInfo.Size.Height /2);
+    OffX = LIB_SinCos(CosAngle, Radius - Image.Size.Width /2);
+    OffY = LIB_SinCos(SinAngle, Radius - Image.Size.Height /2);
 
-    PosX = pPos->X + (Radius - (ImageInfo.Size.Width / 2));
-    PosY = pPos->Y + (Radius - (ImageInfo.Size.Height / 2));
+    PosX = pPos->X + (Radius - (Image.Size.Width / 2));
+    PosY = pPos->Y + (Radius - (Image.Size.Height / 2));
 
     switch(Sector)
     {
@@ -88,7 +88,7 @@ void GRAFX_CursorOnCircle(ImageID_e Image, Cartesian_t* pPos, uint16_t Radius, u
         case 3: PosX -= OffX; PosY -= OffY; break;
     }
 
-    myGrafx->CopyLinear(ImageInfo.pPointer, PosX, PosY, ImageInfo.Size.Width, ImageInfo.Size.Width, ImageInfo.PixelFormat, ALPHA_BLEND);
+    myGrafx->CopyLinear(Image.pPointer, PosX, PosY, Image.Size.Width, Image.Size.Width, Image.PixelFormat, ALPHA_BLEND);
 }
 
 

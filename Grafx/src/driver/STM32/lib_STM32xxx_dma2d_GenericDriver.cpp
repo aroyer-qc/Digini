@@ -56,7 +56,7 @@ void GrafxGenDriver::ClearLayer(Layer_e Layer)
         uint32_t Address     = pLayer->GetAddress();
 
         // Configure DMA2D for Register-to-Memory (constant color fill)
-        DMA2D->CR      = DMA2D_R2M | DMA2D_CR_TCIE;
+        DMA2D->CR      = DMA2D_R2M;
         DMA2D->OCOLR   = pLayer->GetColor();                        // Constant color
         DMA2D->OMAR    = Address;                                   // Destination address
         DMA2D->OOR     = 0;                                         // No line offset
@@ -82,15 +82,18 @@ void GrafxGenDriver::ClearLayer(Layer_e Layer)
 //  Description:    Copy a rectangle region from square memory region to another square memory
 //                  region according to drawing layer
 //
+//
+//  THSI function has a big FLAW, it assume both source and destination has a size of GRAFX_DRIVER_SIZE_X
+//
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
-    uint32_t           PixelFormatSrc;
-    uint32_t           PixelFormatDst;
-    uint32_t           Address;
-    uint32_t           AreaConfig;
-    DisplayLayer*            pLayer;
-    uint8_t            PixelSize;
+    uint32_t      PixelFormatSrc;
+    uint32_t      PixelFormatDst;
+    uint32_t      Address;
+    uint32_t      AreaConfig;
+    DisplayLayer* pLayer;
+    uint8_t       PixelSize;
 
     pLayer         = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormatSrc = m_PixelFormatTable[SrcPixelFormat];
@@ -139,27 +142,29 @@ void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pi
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
-    uint32_t PixelFormatSrc;
-    uint32_t PixelFormatDst;
-    uint32_t Address;
-    uint32_t AreaConfig;
-    DisplayLayer*  pLayer;
-    uint8_t  PixelSize;
+    uint32_t      PixelFormatSrc;
+    uint32_t      PixelFormatDst;
+    uint32_t      Address;
+    uint32_t      AreaConfig;
+    DisplayLayer* pLayer;
+    uint8_t       PixelSize;
+    uint16_t      SizeX;
 
     pLayer         = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormatSrc = m_PixelFormatTable[SrcPixelFormat];
     PixelFormatDst = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize      = pLayer->GetPixelSize();
-    Address        = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
+    SizeX          = pLayer->GetSize().X;
+    Address        = pLayer->GetAddress() + (((pBox->Pos.Y * SizeX) + pBox->Pos.X) * (uint32_t)PixelSize);
     AreaConfig     = (uint32_t(pBox->Size.Width)  << 16) | (uint32_t(pBox->Size.Height));
 
     if(PixelFormatSrc == PixelFormatDst)
     {
-        DMA2D->CR = ((BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND) | DMA2D_CR_TCIE; // Memory to memory or M2M with blending BG + Source
+        DMA2D->CR = ((BlendMode == CLEAR_BLEND) ? DMA2D_M2M : DMA2D_M2M_BLEND);                 // Memory to memory or M2M with blending BG + Source
     }
     else
     {
-        DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_TCIE;                                              // Memory to memory with pixel conversion
+        DMA2D->CR = DMA2D_M2M_PFC;                                                              // Memory to memory with pixel conversion
     }
 
     // Source 1
@@ -169,12 +174,12 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelF
 
     // Source 2 (Source2 vs Destination = Read modify write)
     DMA2D->BGMAR       = Address;                                                               // Source address
-    DMA2D->BGOR        = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;            // Source line offset
+    DMA2D->BGOR        = (uint32_t)SizeX - (uint32_t)pBox->Size.Width;            // Source line offset
     DMA2D->BGPFCCR     = PixelFormatDst;                                                        // Defines the size of pixel
 
     // Destination
     DMA2D->OMAR        = Address;                                                               // Destination address
-    DMA2D->OOR         = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;            // Destination line offset
+    DMA2D->OOR         = (uint32_t)SizeX - (uint32_t)pBox->Size.Width;            // Destination line offset
     DMA2D->OPFCCR      = PixelFormatDst;                                                        // Defines the size of pixel
 
     DMA2D->NLR         = AreaConfig;                                                            // Size configuration of area to be transfered
@@ -195,24 +200,26 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelF
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::DrawRectangle(Box_t* pBox)
 {
-    uint32_t        PixelFormat;
-    uint32_t        Address;
-    uint32_t        Color;
-    uint32_t        AreaConfig;
-    DisplayLayer*   pLayer;
-    uint8_t         PixelSize;
+    uint32_t      PixelFormat;
+    uint32_t      Address;
+    uint32_t      Color;
+    uint32_t      AreaConfig;
+    DisplayLayer* pLayer;
+    uint8_t       PixelSize;
+    uint16_t      SizeX;
 
-    pLayer      = &LayerTable[DisplayLayer::GetDrawing()];
-    PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
-    PixelSize   = pLayer->GetPixelSize();
-    Address     = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
-    Color       = pLayer->GetColor();
-    AreaConfig  = (uint32_t(pBox->Size.Width)  << 16) | (uint32_t(pBox->Size.Height));
+    pLayer        = &LayerTable[DisplayLayer::GetDrawing()];
+    PixelFormat   = m_PixelFormatTable[pLayer->GetPixelFormat()];
+    PixelSize     = pLayer->GetPixelSize();
+    SizeX         = pLayer->GetSize().X;
+    Address       = pLayer->GetAddress() + (((pBox->Pos.Y * SizeX) + pBox->Pos.X) * (uint32_t)PixelSize);
+    Color         = pLayer->GetColor();
+    AreaConfig    = (uint32_t(pBox->Size.Width)  << 16) | (uint32_t(pBox->Size.Height));
 
-    DMA2D->CR     = DMA2D_R2M | DMA2D_CR_TCIE;                                     // Register to memory and TCIE
+    DMA2D->CR     = DMA2D_R2M;                                                    // Register to memory
     DMA2D->OCOLR  = Color;                                                         // Color to be used
     DMA2D->OMAR   = Address;                                                       // Destination address
-    DMA2D->OOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pBox->Size.Width;    // Destination line offset
+    DMA2D->OOR    = (uint32_t)SizeX - (uint32_t)pBox->Size.Width;                  // Destination line offset
     DMA2D->OPFCCR = PixelFormat;                                                   // Defines the number of pixels to be transfered
     DMA2D->NLR    = AreaConfig;                                                    // Size configuration of area to be transfered
 
@@ -239,26 +246,40 @@ void GrafxGenDriver::DrawRectangle(Box_t* pBox)
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction)
 {
-    uint32_t        PixelFormat;
-    uint8_t         PixelSize;
-    uint32_t        Address;
-    uint32_t        Color;
-    DisplayLayer*   pLayer;
-    uint32_t        AreaConfig;
-    uint32_t        Offset;
+    uint32_t      PixelFormat;
+    uint8_t       PixelSize;
+    uint32_t      Address;
+    uint32_t      Color;
+    DisplayLayer* pLayer;
+    uint32_t      Offset;
+    uint32_t      Width;
+    uint32_t      Height;
+    uint16_t      SizeX;
 
     pLayer      = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize   = pLayer->GetPixelSize();
-    Address     = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
+    SizeX       = pLayer->GetSize().X;
+    Address     = pLayer->GetAddress() + (((PosY * SizeX) + PosX) * (uint32_t)PixelSize);
     Color       = pLayer->GetColor();
 
-    DMA2D->CR      = DMA2D_R2M | DMA2D_CR_TCIE;                                     // Register to memory and TCIE
+    if(Direction == DRAW_HORIZONTAL)
+    {
+        Width  = Length;
+        Height = Thickness;
+    }
+    else // DRAW_VERTICAL
+    {
+        Width  = Thickness;
+        Height = Length;
+    }
+
+    DMA2D->CR      = DMA2D_R2M;                                                     // Register to memory
     DMA2D->OCOLR   = Color;                                                         // Color to be used
     DMA2D->OMAR    = Address;                                                       // Destination address
-    DMA2D->OOR     = (uint32_t)GRAFX_DRIVER_SIZE_X - Offset;                        // Destination line offset
+    DMA2D->OOR     = (uint32_t)SizeX - Offset;                                      // Destination line offset
     DMA2D->OPFCCR  = PixelFormat;                                                   // Defines the number of pixels to be transfered
-    DMA2D->NLR     = AreaConfig;                                                    // Size configuration of area to be transfered
+    DMA2D->NLR = (Width << 16) | Height;                                            // Size configuration of area
 
     SET_BIT(DMA2D->CR, DMA2D_CR_START);                                             // Start operation
     while(DMA2D->CR & DMA2D_CR_START);                                              // Wait until transfer is done
@@ -277,35 +298,37 @@ void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uin
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 {
-    uint32_t PixelFormat;
-    uint8_t  PixelSize;
-    uint32_t Address;
-    DisplayLayer*  pLayer;
-    uint32_t AreaConfig;
-    uint32_t Offset;
+    uint32_t      PixelFormat;
+    uint8_t       PixelSize;
+    uint32_t      Address;
+    DisplayLayer* pLayer;
+    uint32_t      AreaConfig;
+    uint32_t      Offset;
+    uint16_t      SizeX;
 
     pLayer      = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize   = pLayer->GetPixelSize();
-    Address     = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
+    SizeX       = pLayer->GetSize().X;
+    Address     = pLayer->GetAddress() + (((pPos->Y * SizeX) + pPos->X) * (uint32_t)PixelSize);
     AreaConfig  = (uint32_t(pDescriptor->WidthPixel) << 16) | uint32_t(pDescriptor->HeightPixel);
     Offset      = pDescriptor->WidthPixel;
 
-    DMA2D->CR      = DMA2D_M2M_BLEND | DMA2D_CR_TCIE;                   // Memory to memory and TCIE
+    DMA2D->CR      = DMA2D_M2M_BLEND;                                   // Memory to memory
 
     // Font layer in Alpha blending linear (A8)
     DMA2D->FGMAR   = (uint32_t)pDescriptor->pAddress;                   // Source address 1
     DMA2D->FGOR    = 0;                                                 // Font source line offset - none as we are linear
     DMA2D->FGCOLR  = pLayer->GetTextColor();
-    DMA2D->FGPFCCR = PIXEL_FORMAT_A8;                                   // Defines the number of pixels to be transfered
+    DMA2D->FGPFCCR = DMA2D_CONVERSION_A8;                               // Defines the number of pixels to be transfered
 
     DMA2D->BGMAR   = Address;                                           // Source address 2
-    DMA2D->BGOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - Offset;            // Font source line offset - none as we are linear
+    DMA2D->BGOR    = (uint32_t)SizeX - Offset;                          // Font source line offset - none as we are linear
     DMA2D->BGPFCCR = PixelFormat;                                       // Defines the number of pixels to be transfered
 
     // Output Layer
     DMA2D->OMAR    = Address;
-    DMA2D->OOR     = (uint32_t)GRAFX_DRIVER_SIZE_X - Offset;            // Destination line offset
+    DMA2D->OOR     = (uint32_t)SizeX - Offset;                          // Destination line offset
     DMA2D->OPFCCR  = PixelFormat;
 
     // Area
@@ -334,9 +357,9 @@ void GrafxGenDriver::LayerConfig(Layer_e Layer)
 */
 void GrafxGenDriver::LayerConfig(DisplayLayer* pLayer)
 {
-    uint32_t            PixelFormat;
-    uint32_t            PixelSize;
-    LayerType_e         ActiveLayer;
+    uint32_t    PixelFormat;
+    uint32_t    PixelSize;
+    LayerType_e ActiveLayer;
 
     ActiveLayer = pLayer->GetActive();
     PixelFormat = pLayer->GetPixelFormat();
@@ -368,7 +391,6 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e PixelForm
     VAR_UNUSED(PixelFormat);
     VAR_UNUSED(BlendMode);
 }
-*/
 
 void GrafxGenDriver::CopyLinear(ImageID_e Image, Cartesian_t Pos, BlendMode_e BlendMode)
 {
@@ -378,6 +400,7 @@ void GrafxGenDriver::CopyLinear(ImageID_e Image, Cartesian_t Pos, BlendMode_e Bl
     VAR_UNUSED(Pos);
     VAR_UNUSED(BlendMode);
 }
+*/
 
 
 void GrafxGenDriver::DrawPixel(uint16_t PosX, uint16_t PosY)

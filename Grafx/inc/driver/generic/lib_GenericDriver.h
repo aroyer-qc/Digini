@@ -45,11 +45,11 @@ class GrafxGenDriver
             virtual     void    LayerConfig           (Layer_e Layer);
 
 // validated and good
-            virtual    void     ImageCopy             (ImageID_e Image, uint16_t PosX, uint16_t PosY) = 0;
+            virtual    void     ImageCopy             (ImageID_e ImageID, uint16_t PosX, uint16_t PosY) = 0;
 
           #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
             virtual    void     CopyWidgetToDevice    (BoxSize_t BoxSize, Cartesian_t Position) = 0;
-            virtual    void     CopyWidgetToDevice    (ImageID_e Image, Cartesian_t Position) = 0;
+            virtual    void     CopyWidgetToDevice    (ImageID_e ImageID, Cartesian_t Position) = 0;
           #endif
 
 
@@ -70,7 +70,7 @@ class GrafxGenDriver
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, Box_t* pBox);
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height);
             virtual	    void    CopyLayerToLayer      (Layer_e SrcLayer, Layer_e DstLayer, uint16_t SrcX, uint16_t SrcY, uint16_t DstX, uint16_t DstY, uint16_t Width, uint16_t Height);
-            virtual	    void    CopyLinear            (ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode);
+            virtual	    void    CopyLinear            (ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode);
             virtual	    void    CopyLinear            (void* pSrc, Box_t* pBox, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
             virtual     void    CopyLinear            (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
             virtual	    void    DrawBox               (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness);

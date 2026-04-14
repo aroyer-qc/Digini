@@ -129,7 +129,7 @@ class DisplayLayer
 // Global variable(s)
 //-------------------------------------------------------------------------------------------------
 
-extern DisplayLayer    LayerTable[LAYER_COUNT];
+extern DisplayLayer LayerTable[LAYER_COUNT];
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)

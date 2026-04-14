@@ -78,9 +78,7 @@ struct ImageInfo_t
 
 struct StaticImageInfo_t
 {
-   ImageInfo_t     ImageInfo;
-   uint16_t        BytesPerLine;
-   uint8_t         BitsPerPixel;
+   ImageInfo_t     Info;
    uint32_t        RawSize;
    Compression_e   Compression;
 };

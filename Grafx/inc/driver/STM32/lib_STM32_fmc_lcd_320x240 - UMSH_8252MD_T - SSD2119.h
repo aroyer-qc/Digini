@@ -52,21 +52,6 @@
 #define GRAFX_DRIVER_SIZE_Y                         240
 #define GRAFX_DRIVER_SIZE                           (GRAFX_DRIVER_SIZE_X * GRAFX_DRIVER_SIZE_Y)
 
-//#define GRAFX_USE_SOFT_COPY_LINEAR
-//#define GRAFX_USE_SOFT_COPY_LAYER_TO_LAYER
-//#define GRAFX_USE_SOFT_PIXEL                      // We use this driver DMA for this function
-//#define GRAFX_USE_SOFT_BOX                        // We use this driver function
-//#define GRAFX_USE_SOFT_VLINE
-//#define GRAFX_USE_SOFT_HLINE
-#define GRAFX_USE_SOFT_DLINE
-#define GRAFX_USE_SOFT_CIRCLE
-//#define GRAFX_USE_SOFT_RECTANGLE
-
-//#define GRAFX_USE_SOFT_PRINT_FONT                 // we use this driver to print FONT using DMA2D
-//#define GRAFX_USE_SOFT_ALPHA                      // We use this uP + LCD controller has alpha acceleration
-//#define GRAFX_USE_SOFT_COPY                       // We use this driver DMA for this function
-//#define GRAFX_USE_SOFT_FILL                       // We use this driver DMA for this function
-
 #define GRAFX_NUMBER_OF_INIT_CMD                        28
 
 // SSD2119 Command Set
@@ -177,12 +162,12 @@ class GrafxDriver : public GrafxGenDriver
         void            DrawRectangle       (Box_t* pBox);
 
 //validated
-/*need rename*/ void    CopyLinear          (ImageID_e Image, Cartesian_t Position, BlendMode_e BlendMode);
-        void            ImageCopy           (ImageID_e Image, uint16_t PosX, uint16_t PosY);
+/*need rename*/ void    CopyLinear          (ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode);
+        void            ImageCopy           (ImageID_e ImageID, uint16_t PosX, uint16_t PosY);
 
       #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
         void            CopyWidgetToDevice  (BoxSize_t BoxSize, Cartesian_t Position);
-        void            CopyWidgetToDevice  (ImageID_e Image, Cartesian_t Position);
+        void            CopyWidgetToDevice  (ImageID_e ImageID, Cartesian_t Position);
       #endif
 
 
@@ -203,7 +188,7 @@ class GrafxDriver : public GrafxGenDriver
         void            WriteRLE16          (StaticImageRLE_16_t* pData, uint16_t* pDestination, size_t Size);
         void            WriteRLE32          (StaticImageRLE_32_t* pData, uint32_t* pDestination, size_t Size);
 
-        StaticImageInfo_t*                  m_pBackgroundInfo;
+        StaticImageInfo_t*                  m_pBackground;
         static const    SSD2119_InitCMD_t   m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD];
 };
 

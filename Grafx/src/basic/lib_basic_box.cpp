@@ -50,10 +50,7 @@
 //-------------------------------------------------------------------------------------------------
 void DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness)
 {
-  #ifdef GRAFX_USE_SOFT_BOX
-  #else
     myGrafx->DrawBox(PosX, PosY, Length, Height, Thickness);
-  #endif
 }
 
 
@@ -70,17 +67,7 @@ void DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uin
 //-------------------------------------------------------------------------------------------------
 void DrawBox(Box_t* pBox, uint16_t Thickness)
 {
-  #ifdef GRAFX_USE_SOFT_BOX
-    uint16_t X2 = pBox->Pos.X + pBox->Size.X;
-    uint16_t Y2 = pBox->Pos.Y + pBox->Size.Y;
-
-    myGrafx->DrawVLine(pBox->Pos.u_16.X, pBox->Pos.Y, wY2, Thickness);
-    myGrafx->DrawVLine(wX2 - Thickness,  pBox->Pos.Y, wY2, Thickness);
-    myGrafx->DrawHLine(pBox->Pos.u_16.Y, pBox->Pos.X, wX2, Thickness);
-    myGrafx->DrawHLine(wY2 - Thickness,  pBox->Pos.X, wX2, Thickness);
-  #else
     myGrafx->DrawBox(pBox->Pos.X, pBox->Pos.Y, pBox->Size.Width, pBox->Size.Height, Thickness);
-  #endif
 }
 
 

@@ -448,7 +448,7 @@ void GrafxDriver::ImageCopy(ImageID_e ImageID, uint16_t PosX, uint16_t PosY)
 //                  for M2M blending, combining:
 //
 //                      - Foreground : ARGB8888 source image
-//                      - Background : RGB565 frame buffer region at the target position
+//                      - Background : ARGB8888 construction layer only into this driver
 //
 //                  The blended result is written into the construction layer buffer. This path
 //                  is only executed when drawing on the foreground construction layer; otherwise,
@@ -474,7 +474,7 @@ void GrafxDriver::CopyLinear(ImageID_e ImageID, Cartesian_t Position, BlendMode_
         ImageSize = pImage->Info.Size.Width * pImage->Info.Size.Height;
 
         //-------------------------------------------------------------------------
-        // Copy source alpha to blend into background
+        // Copy source alpha to blend actual construction layer
         ConstructAlphaLayer = pLayer->GetAddress();
 
         if(pImage->Compression == COMPX_RLE_32)
@@ -490,27 +490,30 @@ void GrafxDriver::CopyLinear(ImageID_e ImageID, Cartesian_t Position, BlendMode_
         //-------------------------------------------------------------------------
         // DMA2D the 2 buffers
 
-        DMA2D->CR      = DMA2D_M2M_BLEND;                                                                                   // Memory to memory and TCIE blending BG + Source
+        uint32_t Width  = uint32_t(pImage->Info.Size.Width);
+        uint32_t Offset = uint32_t(pLayer->GetSize().X) - Width;
+
+        DMA2D->CR      = DMA2D_M2M_BLEND;                                                                               // Memory to memory and TCIE blending BG + Source
 
         //Source
-        DMA2D->FGMAR   = ConstructAlphaLayer;                                                                               // Source address
-        DMA2D->FGOR    = (uint32_t)pLayer->GetSize().X - (uint32_t)pImage->Info.Size.Width;                                 // Source line offset so none as we are linear
-        DMA2D->FGPFCCR = DMA2D_CONVERSION_ARGB8888;                                                                         // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
+        DMA2D->FGMAR   = pImageSourceAlpha;// + (((Position.Y * GRAFX_DRIVER_SIZE_X) + Position.X) * sizeof(uint32_t));  why ???????
+        DMA2D->FGOR    = 0;                                                                                             // Source line offset so none as we are linear
+        DMA2D->FGPFCCR = DMA2D_CONVERSION_ARGB8888;                                                                     // Defines the size of pixel.
 
         // Source
-        DMA2D->BGMAR   = pImageSourceAlpha + (((Position.Y * GRAFX_DRIVER_SIZE_X) + Position.X) * sizeof(uint32_t));
-        DMA2D->BGOR    = (uint32_t)GRAFX_DRIVER_SIZE_X - (uint32_t)pImage->Info.Size.Width;                                 // Source line offset so none as we are linear
-        DMA2D->BGPFCCR = DMA2D_CONVERSION_ARGB8888;                                                                           // Defines the size of pixel. 2 for PIXEL_FORMAT_RGB565
+        DMA2D->BGMAR   = ConstructAlphaLayer;                                                                           // Source address
+        DMA2D->BGOR    = Offset;                                                                                        // Source line offset
+        DMA2D->BGPFCCR = DMA2D_CONVERSION_ARGB8888;                                                                     // Defines the size of pixel.
 
         //Destination
-        DMA2D->OMAR    = ConstructAlphaLayer;                                                                               // Destination address
-        DMA2D->OOR     = (uint32_t)pLayer->GetSize().X - (uint32_t)pImage->Info.Size.Width;                                 // Destination line offset none as we are linearDMA2D->FGOR;
-        DMA2D->OPFCCR  = DMA2D_CONVERSION_ARGB8888;                                                                         // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
+        DMA2D->OMAR    = ConstructAlphaLayer;                                                                           // Destination address
+        DMA2D->OOR     = Offset;                                                                                        // Destination line offset
+        DMA2D->OPFCCR  = DMA2D_CONVERSION_ARGB8888;                                                                     // Defines the size of pixel.
 
-        DMA2D->NLR     = (pImage->Info.Size.Width << 16) | pImage->Info.Size.Height;                                        // Size configuration of area to be transfered
+        DMA2D->NLR     = (Width << 16) | pImage->Info.Size.Height;                                                      // Size configuration of area to be transfered
 
-        SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                 // Start operation
-        while(DMA2D->CR & DMA2D_CR_START);                                                                                  // Wait until transfer is done
+        SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                             // Start operation
+        while(DMA2D->CR & DMA2D_CR_START);                                                                              // Wait until transfer is done
 
         //-------------------------------------------------------------------------
         // Free Resource

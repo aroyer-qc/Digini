@@ -169,11 +169,17 @@ void WidgetIcon::Draw(ServiceReturn_t* pService)
                                                                                      GRAFX_SelectForegroundDrawingLayer());
    #endif
 
+    ImageID_e ImageID = m_pIcon->Image.ID_List[pService->IndexState];
+
+  #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
+    myGrafx->CopyBackgroundToConstruction(ImageID, m_pIcon->Box.Pos);               // if the display has no multilayer capability.
+  #else
     if((m_pIcon->Options & GRAFX_OPTION_CLEAR) != 0)
     {
         DisplayLayer::SetColor(BLACK);
         myGrafx->DrawRectangle(&m_pIcon->Box);
     }
+  #endif
 
     if(pService->ServiceType == SERVICE_RETURN_TYPE5)
     {
@@ -187,37 +193,14 @@ void WidgetIcon::Draw(ServiceReturn_t* pService)
     }
     else
     {
-        myGrafx->CopyLinear(m_pIcon->Image.ID_List[pService->IndexState],
-                            m_pIcon->Box.Pos,
-                            ((m_pIcon->Options & GRAFX_OPTION_BLEND_CLEAR) != 0) ? CLEAR_BLEND : ALPHA_BLEND);
+        myGrafx->CopyLinear(ImageID, m_pIcon->Box.Pos, ((m_pIcon->Options & GRAFX_OPTION_BLEND_CLEAR) != 0) ? CLEAR_BLEND : ALPHA_BLEND);
     }
 
   #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
     {
-        myGrafx->CopyWidgetToDevice(m_pIcon->Image.ID_List[pService->IndexState], m_pIcon->Box.Pos);
+        myGrafx->CopyWidgetToDevice(ImageID, m_pIcon->Box.Pos);
     }
   #endif
-
-    DisplayLayer::PopDrawing();
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           DrawOnce
-//
-//  Parameter(s):   ServiceReturn_t* pService
-//  Return:         None
-//
-//
-//  Description:    Draw only once what does not need to be refreshed
-//
-//-------------------------------------------------------------------------------------------------
-void WidgetIcon::DrawOnce(ServiceReturn_t* pService)
-{
-
-    DisplayLayer::PushDrawing();
-
-    // Copy merge stuff
 
     DisplayLayer::PopDrawing();
 }

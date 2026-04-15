@@ -41,31 +41,31 @@ class CWidgetInterface
 {
     public:
 
-        virtual            ~CWidgetInterface            (){};
+        virtual                ~CWidgetInterface            (){};
 
-        virtual Link_e      Create                      (PageWidget_t* pPageWidget)     = 0;
-        virtual Link_e      Refresh                     (MsgRefresh_t* pMsg)            = 0;
-        virtual void        Finalize                    (void)                          = 0;
+        virtual Link_e          Create                      (PageWidget_t* pPageWidget)     = 0;
+        virtual Link_e          Refresh                     (MsgRefresh_t* pMsg)            = 0;
+        virtual void            Finalize                    (void)                          = 0;
 };
 
 #ifdef BACK_DEF
 class WidgetBackground : public CWidgetInterface
 {
     public:
-                            WidgetBackground            (Background_t* pBackground);
-                           ~WidgetBackground            (){};
+                                WidgetBackground            (Background_t* pBackground);
+                               ~WidgetBackground            (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        Background_t*       m_pBackground;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        Background_t*           m_pBackground;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 };
 #endif
 
@@ -73,38 +73,37 @@ class WidgetBackground : public CWidgetInterface
 class WidgetBasicBox : public CWidgetInterface
 {
     public:
-                            WidgetBasicBox              (BasicBox_t* pBasicBox);
-                           ~WidgetBasicBox              (){};
+                                WidgetBasicBox              (BasicBox_t* pBasicBox);
+                               ~WidgetBasicBox              (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
-        void                DrawOnce                    (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        BasicBox_t*         m_pBasicBox;
-        Cartesian_t         m_TopLeft;
-        Cartesian_t         m_TopRight;
-        Cartesian_t         m_BottomLeft;
-        Cartesian_t         m_BottomRight;
+        BasicBox_t*             m_pBasicBox;
+        Cartesian_t             m_TopLeft;
+        Cartesian_t             m_TopRight;
+        Cartesian_t             m_BottomLeft;
+        Cartesian_t             m_BottomRight;
 
         // Horizontal bar info for draw
-        int16_t             m_X_Hor;
-        int16_t             m_Y_HorTop;
-        int16_t             m_Y_HorBot;
-        int16_t             m_HorUpTo;
+        int16_t                 m_X_Hor;
+        int16_t                 m_Y_HorTop;
+        int16_t                 m_Y_HorBot;
+        int16_t                 m_HorUpTo;
 
         // Vertical bar info for draw
-        int16_t             m_Y_Ver;
-        int16_t             m_X_VerLeft;
-        int16_t             m_X_VerRight;
-        int16_t             m_VerUpTo;
+        int16_t                 m_Y_Ver;
+        int16_t                 m_X_VerLeft;
+        int16_t                 m_X_VerRight;
+        int16_t                 m_VerUpTo;
 
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 };
 #endif
 
@@ -112,21 +111,20 @@ class WidgetBasicBox : public CWidgetInterface
 class WidgetBasicButton : public CWidgetInterface
 {
     public:
-                            WidgetBasicButton           (BasiWidgetButton_t* pBasiWidgetButton);
-                           ~WidgetBasicButton           (){};
+                                WidgetBasicButton           (BasiWidgetButton_t* pBasiWidgetButton);
+                               ~WidgetBasicButton           (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
-        void                DrawOnce                    (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        BasiWidgetButton_t*      m_pBasicWidgetButton;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        BasicWidgetButton_t*    m_pBasicWidgetButton;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 };
 #endif
 
@@ -134,20 +132,20 @@ class WidgetBasicButton : public CWidgetInterface
 class WidgetBasicRectangle : public CWidgetInterface
 {
     public:
-                            WidgetBasicRectangle        (BasicRect_t* pBasicRect);
-                           ~WidgetBasicRectangle        (){};
+                                WidgetBasicRectangle        (BasicRect_t* pBasicRect);
+                               ~WidgetBasicRectangle        (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        BasicRect_t*        m_pBasicRect;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        BasicRect_t*            m_pBasicRect;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 };
 #endif
 
@@ -155,21 +153,20 @@ class WidgetBasicRectangle : public CWidgetInterface
 class WidgetButton : public CWidgetInterface
 {
     public:
-                            WidgetButton                (Button_t* pButton);
-                           ~WidgetButton                (){};
+                                WidgetButton                (Button_t* pButton);
+                               ~WidgetButton                (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
-        void                DrawOnce                    (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        Button_t*           m_pButton;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        Button_t*               m_pButton;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 };
 #endif
 
@@ -177,21 +174,20 @@ class WidgetButton : public CWidgetInterface
 class WidgetGif : public CWidgetInterface
 {
     public:
-                            WidgetGif                   (Gif_t* pGif);
-                           ~WidgetGif                   (){};
+                                WidgetGif                   (Gif_t* pGif);
+                               ~WidgetGif                   (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
-        void                DrawOnce                    (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        Gif_t*              m_pGif;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        Gif_t*                  m_pGif;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 };
 #endif
 
@@ -199,23 +195,23 @@ class WidgetGif : public CWidgetInterface
 class WidgetGraph : public CWidgetInterface
 {
     public:
-                            WidgetGraph                 (Graph_t* pGraph);
-                           ~WidgetGraph                 (){};
+                                WidgetGraph                 (Graph_t* pGraph);
+                               ~WidgetGraph                 (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService, bool IsItDrawingGrid);
+        void                    Draw                        (ServiceReturn_t* pService, bool IsItDrawingGrid);
 
-        Graph_t*            m_pGraph;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        Graph_t*                m_pGraph;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 
-        uint16_t            m_DrawX;
-        uint16_t            m_MaxDrawX;
+        uint16_t                m_DrawX;
+        uint16_t                m_MaxDrawX;
 };
 #endif
 
@@ -223,21 +219,20 @@ class WidgetGraph : public CWidgetInterface
 class WidgetIcon : public CWidgetInterface
 {
     public:
-                            WidgetIcon                  (Icon_t* pIcon);
-                           ~WidgetIcon                  (){};
+                                WidgetIcon                  (Icon_t* pIcon);
+                               ~WidgetIcon                  (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
-    private:
+    private:                    
 
-        void                Draw                        (ServiceReturn_t* pService);
-        void                DrawOnce                    (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        Icon_t*             m_pIcon;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        Icon_t*                 m_pIcon;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 };
 #endif
 
@@ -245,21 +240,21 @@ class WidgetIcon : public CWidgetInterface
 class WidgetLabel : public CWidgetInterface
 {
     public:
-                            WidgetLabel                 (Label_t* pLabel);
-                           ~WidgetLabel                 (){};
+                                WidgetLabel                 (Label_t* pLabel);
+                                ~WidgetLabel                 (){};
 
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        Label_t*            m_pLabel;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        Label_t*                m_pLabel;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 };
 #endif
 
@@ -267,20 +262,20 @@ class WidgetLabel : public CWidgetInterface
 class WidgetLabelList : public CWidgetInterface
 {
     public:
-                            WidgetLabelList             (LabelList_t* pLabelList);
-                           ~WidgetLabelList             (){};
+                                WidgetLabelList             (LabelList_t* pLabelList);
+                               ~WidgetLabelList             (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        LabelList_t*        m_pLabelList;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        LabelList_t*            m_pLabelList;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 };
 #endif
 
@@ -288,23 +283,22 @@ class WidgetLabelList : public CWidgetInterface
 class WidgetMeter : public CWidgetInterface
 {
     public:
-                            WidgetMeter                 (Meter_t* pMeter);
-                           ~WidgetMeter                 (){};
+                                WidgetMeter                 (Meter_t* pMeter);
+                               ~WidgetMeter                 (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
-        void                DrawOnce                    (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        Meter_t*            m_pMeter;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        Meter_t*                m_pMeter;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 
-        uint16_t            m_Value;
+        uint16_t                m_Value;
 };
 #endif
 
@@ -312,22 +306,21 @@ class WidgetMeter : public CWidgetInterface
 class WidgetPageSlide : public CWidgetInterface
 {
     public:
-                            WidgetPageSlide             (PageSlide_t* pPageSlide);
-                           ~WidgetPageSlide             (){};
+                                WidgetPageSlide             (PageSlide_t* pPageSlide);
+                               ~WidgetPageSlide             (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
-        void                DrawOnce                    (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        PageSlide_t*        m_pPageSlide;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
-        ServiceEvent_e      m_LastServiceState;
+        PageSlide_t*            m_pPageSlide;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
+        ServiceEvent_e          m_LastServiceState;
 };
 #endif
 
@@ -335,22 +328,21 @@ class WidgetPageSlide : public CWidgetInterface
 class WidgetPanel : public CWidgetInterface
 {
     public:
-                            WidgetPanel                 (Panel_t* pPanel);
-                           ~WidgetPanel                 (){};
+                                WidgetPanel                 (Panel_t* pPanel);
+                               ~WidgetPanel                 (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
-        void                DrawOnce                    (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        Panel_t*            m_pPanel;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
-        ServiceEvent_e      m_LastServiceState;
+        Panel_t*                m_pPanel;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
+        ServiceEvent_e          m_LastServiceState;
 };
 #endif
 
@@ -358,26 +350,26 @@ class WidgetPanel : public CWidgetInterface
 class WidgetProgress : public CWidgetInterface
 {
     public:
-                            WidgetProgress              (Progress_t* pProgress);
-                           ~WidgetProgress              (){};
+                                WidgetProgress              (Progress_t* pProgress);
+                               ~WidgetProgress              (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
-        void                DrawOnce                    (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
+        void                    DrawOnce                    (ServiceReturn_t* pService);
 
-        Progress_t*         m_pProgress;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        Progress_t*             m_pProgress;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 
-        uint16_t            m_Range;
-        uint16_t            m_Value;
-        bool                m_NegativeMovement;
-        Cartesian_t         m_CursorPos;
+        uint16_t                m_Range;
+        uint16_t                m_Value;
+        bool                    m_NegativeMovement;
+        Cartesian_t             m_CursorPos;
 };
 #endif
 
@@ -385,23 +377,22 @@ class WidgetProgress : public CWidgetInterface
 class WidgetRoundMeter : public CWidgetInterface
 {
     public:
-                            WidgetRoundMeter            (RoundMeter_t* pPie);
-                           ~WidgetRoundMeter            (){};
+                                WidgetRoundMeter            (RoundMeter_t* pPie);
+                               ~WidgetRoundMeter            (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
-        void                DrawOnce                    (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        Pie_t*              m_pPie;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        Pie_t*                  m_pPie;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 
-        uint16_t            m_Value;
+        uint16_t                m_Value;
 };
 #endif
 
@@ -409,25 +400,25 @@ class WidgetRoundMeter : public CWidgetInterface
 class WidgetSpectrum : public CWidgetInterface
 {
     public:
-                            WidgetSpectrum              (Spectrum_t* pSpectrum);
-                           ~WidgetSpectrum              (){};
+                                WidgetSpectrum              (Spectrum_t* pSpectrum);
+                               ~WidgetSpectrum              (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        Spectrum_t*         m_pSpectrum;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        Spectrum_t*             m_pSpectrum;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 
-        uint16_t            m_DotSize;
-        BoxSize_t           m_BarSize;
-        void*               m_BarAddress;
-        PixelFormat_e       m_PixelFormat;
+        uint16_t                m_DotSize;
+        BoxSize_t               m_BarSize;
+        void*                   m_BarAddress;
+        PixelFormat_e           m_PixelFormat;
 };
 #endif
 
@@ -435,20 +426,20 @@ class WidgetSpectrum : public CWidgetInterface
 class WidgetSprite : public CWidgetInterface
 {
     public:
-                            WidgetSprite                (Sprite_t* pSprite);
-                           ~WidgetSprite                (){};
+                                WidgetSprite                (Sprite_t* pSprite);
+                               ~WidgetSprite                (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (void);
+        void                    Draw                        (void);
 
-        Sprite_t*           m_pSprite;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        Sprite_t*               m_pSprite;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 };
 #endif
 
@@ -456,27 +447,27 @@ class WidgetSprite : public CWidgetInterface
 class WidgetTerminal : public CWidgetInterface
 {
     public:
-                            WidgetTerminal              (Terminal_t* pTerminal);
-                           ~WidgetTerminal              (){};
+                                WidgetTerminal              (Terminal_t* pTerminal);
+                               ~WidgetTerminal              (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (ServiceReturn_t* pService);
+        void                    Draw                        (ServiceReturn_t* pService);
 
-        Terminal_t*         m_pTerminal;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        Terminal_t*             m_pTerminal;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 
-        uint8_t             m_NumberOfLine;
-        uint8_t             m_NbOfCharPerLine;
-        uint8_t             m_OffsetLine;
-        uint8_t             m_CurrentLine;
-        uint8_t             m_LineSize;
-        uint8_t*            m_pScreen;
+        uint8_t                 m_NumberOfLine;
+        uint8_t                 m_NbOfCharPerLine;
+        uint8_t                 m_OffsetLine;
+        uint8_t                 m_CurrentLine;
+        uint8_t                 m_LineSize;
+        uint8_t*                m_pScreen;
 };
 #endif
 
@@ -484,18 +475,18 @@ class WidgetTerminal : public CWidgetInterface
 class WidgetVirtualHub : public CWidgetInterface
 {
     public:
-                            WidgetVirtualHub            (VirtualHub_t* pVirtualHub);
-                           ~WidgetVirtualHub            (){};
+                                WidgetVirtualHub            (VirtualHub_t* pVirtualHub);
+                               ~WidgetVirtualHub            (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        VirtualHub_t*       m_pVirtualHub;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        VirtualHub_t*           m_pVirtualHub;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 };
 #endif
 
@@ -503,24 +494,23 @@ class WidgetVirtualHub : public CWidgetInterface
 class WidgetVirtualWindow : public CWidgetInterface
 {
     public:
-                            WidgetVirtualWindow         (VirtualWindow_t* pVirtualWindow);
-                           ~WidgetVirtualWindow         (){};
+                                WidgetVirtualWindow         (VirtualWindow_t* pVirtualWindow);
+                               ~WidgetVirtualWindow         (){};
 
-        Link_e              Create                      (PageWidget_t* pPageWidget);
-        Link_e              Refresh                     (MsgRefresh_t* pMsg);
-        void                Finalize                    (void);
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
 
     private:
 
-        void                Draw                        (void);
-        void                DrawOnce                    (ServiceReturn_t* pService);
+        void                    Draw                        (void);
 
-        VirtualWindow_t*    m_pVirtualWindow;
-        ServiceEvent_e      m_ServiceState;
-        PageWidget_t*       m_pPageWidget;
+        VirtualWindow_t*        m_pVirtualWindow;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 
-        PixelFormat_e       m_PixelFormat;
-        uint8_t*            m_pAddress;
+        PixelFormat_e           m_PixelFormat;
+        uint8_t*                m_pAddress;
 };
 #endif
 

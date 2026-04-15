@@ -221,27 +221,6 @@ void WidgetButton::Draw(ServiceReturn_t* pService)
 }
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:           DrawOnce
-//
-//  Parameter(s):   ServiceReturn_t* pService
-//  Return:         None
-//
-//
-//  Description:    Draw only once what does not need to be refreshed
-//
-//-------------------------------------------------------------------------------------------------
-void WidgetButton::DrawOnce(ServiceReturn_t* pService)
-{
-
-    DisplayLayer::PushDrawing();
-
-    // Copy merge stuff
-
-    DisplayLayer::PopDrawing();
-}
-
-//-------------------------------------------------------------------------------------------------
 
 #endif // BTN_DEF
 #endif // DIGINI_USE_GRAFX

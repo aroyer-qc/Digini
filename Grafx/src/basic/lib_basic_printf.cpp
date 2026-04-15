@@ -409,7 +409,15 @@ void GPrintf::ParseString(void)
             if(*(m_pSubLineString[i] + j) != ASCII_CARRIAGE_RETURN)                         // Do all normal font parsing
             {
                 char LoadChar = *(m_pSubLineString[i] + j);
-//                DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, LoadChar);
+
+              #ifdef GFX_ROM_DBASE_DEF
+                //DB_Central.Get(&FontInfo, GFX_FONT_INFO, 0, LoadChar);           // need the font number here
+                memcpy(&m_FontDescriptor, FontInfo.pDescriptor, sizeof(FontDescriptor_t));
+              #else
+                DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, LoadChar);
+              #endif
+              //  *m_pMovingUsedFontPtr = m_FontDescriptor[LoadChar];  TODO fix
+
                 m_SubLineSizePixX[i] += (/*m_FontDescriptor.LeftBearing  +*/                    // Calculate total X size
                                          m_FontDescriptor.HorizontalAdvance       /* +
                                          m_FontDescriptor.RightBearing*/);
@@ -446,20 +454,12 @@ void GPrintf::ParseString(void)
           #ifdef GFX_ROM_DBASE_DEF
             FontInfo_t FontInfo;
 
-            DB_Central.Get(&FontInfo,
-                           GFX_FONT_INFO,
-                           0,                // need the font number here
-                           LoadChar);
-
+            DB_Central.Get(&FontInfo, GFX_FONT_INFO, *m_pMovingUsedFontPtr, LoadChar);           // TODO validate
             memcpy(&m_FontDescriptor, FontInfo.pDescriptor, sizeof(FontDescriptor_t));
-          //  *m_pMovingUsedFontPtr = m_FontDescriptor[LoadChar];  TODO fix
-
           #else
-            DB_Central.Get(&m_FontDescriptor,
-                           GFX_FONT_DESC_INFO,
-                           *m_pMovingUsedFontPtr,
-                           LoadChar);
+            DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, LoadChar);
           #endif
+          //  *m_pMovingUsedFontPtr = m_FontDescriptor[LoadChar];  TODO fix
 
             lineSizePixX += m_FontDescriptor.HorizontalAdvance;
         }

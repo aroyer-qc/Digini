@@ -150,27 +150,6 @@ void CVirtualWindow::Draw()
 }
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:           DrawOnce
-//
-//  Parameter(s):   ServiceReturn_t* pService
-//  Return:         None
-//
-//
-//  Description:    Draw only once what does not need to be refreshed
-//
-//-------------------------------------------------------------------------------------------------
-void CVirtualWindow::DrawOnce(ServiceReturn_t* pService)
-{
-
-    CLayer::PushDrawing();
-
-    // Copy merge stuff
-
-    CLayer::PopDrawing();
-}
-
-//-------------------------------------------------------------------------------------------------
 
 #endif // VIRTUAL_WINDOW_DEF
 #endif // DIGINI_USE_GRAFX

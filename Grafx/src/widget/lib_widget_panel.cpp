@@ -197,27 +197,6 @@ void CPanel::Draw(ServiceReturn_t* pService)
 }
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:           DrawOnce
-//
-//  Parameter(s):   ServiceReturn_t* pService
-//  Return:         None
-//
-//
-//  Description:    Draw only once what does not need to be refreshed
-//
-//-------------------------------------------------------------------------------------------------
-void CPanel::DrawOnce(ServiceReturn_t* pService)
-{
-
-    CLayer::PushDrawing();
-
-    // Copy merge stuff
-
-    CLayer::PopDrawing();
-}
-
-//-------------------------------------------------------------------------------------------------
 
 #endif // PANEL_DEF
 #endif // DIGINI_USE_GRAFX

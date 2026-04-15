@@ -206,27 +206,6 @@ void CRoundMeter::Draw(ServiceReturn_t* pService)
 }
 
 //-------------------------------------------------------------------------------------------------
-//
-//  Name:           DrawOnce
-//
-//  Parameter(s):   ServiceReturn_t* pService
-//  Return:         None
-//
-//
-//  Description:    Draw only once what does not need to be refreshed
-//
-//-------------------------------------------------------------------------------------------------
-void CRoundMeter::DrawOnce(ServiceReturn_t* pService)
-{
-
-    CLayer::PushDrawing();
-
-    // Copy merge stuff
-
-    CLayer::PopDrawing();
-}
-
-//-------------------------------------------------------------------------------------------------
 
 #endif // ROUND_METER_DEF
 #endif // DIGINI_USE_GRAFX

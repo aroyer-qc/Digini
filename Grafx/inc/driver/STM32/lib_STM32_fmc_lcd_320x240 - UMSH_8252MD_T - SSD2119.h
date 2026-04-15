@@ -146,47 +146,49 @@ class GrafxDriver : public GrafxGenDriver
 {
     public:
 
-        void            Initialize          (const void* pArg)     override;
+        void            Initialize                      (const void* pArg)     override;
 
-        void            ClearLayer          (Layer_e Layer)        override;
-        void            DisplayOn           (void)                 override         { LCD_REG = SSD2119_DISPLAY_CONTROL_REGISTER; LCD_RAM = SSD2119_DISPLAY_ON_VALUE; }
-        void            DisplayOff          (void)                 override         { LCD_REG = SSD2119_DISPLAY_CONTROL_REGISTER; LCD_RAM = SSD2119_DISPLAY_OFF_VALUE; }
+        void            ClearLayer                      (Layer_e Layer)        override;
+        void            DisplayOn                       (void)                 override         { LCD_REG = SSD2119_DISPLAY_CONTROL_REGISTER; LCD_RAM = SSD2119_DISPLAY_ON_VALUE; }
+        void            DisplayOff                      (void)                 override         { LCD_REG = SSD2119_DISPLAY_CONTROL_REGISTER; LCD_RAM = SSD2119_DISPLAY_OFF_VALUE; }
 
-        void            BlockCopy           (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
-        void            Copy                (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
-/*Old*/ void            CopyLinear          (void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
-/*Old*/ void            CopyLinear          (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
-        void            DrawBox             (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness);
-        void            DrawLine            (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
-        void            DrawPixel           (uint16_t PosX, uint16_t PosY);
-        void            DrawRectangle       (Box_t* pBox);
+        void            BlockCopy                       (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
+        void            Copy                            (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
+/*Old*/ void            CopyLinear                      (void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
+/*Old*/ void            CopyLinear                      (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
+        void            DrawBox                         (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness);
+        void            DrawLine                        (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
+        void            DrawPixel                       (uint16_t PosX, uint16_t PosY);
+        void            DrawRectangle                   (Box_t* pBox);
 
 //validated
-/*need rename*/ void    CopyLinear          (ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode);
-        void            ImageCopy           (ImageID_e ImageID, uint16_t PosX, uint16_t PosY);
+/*need rename*/ void    CopyLinear                      (ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode);
+        void            ImageCopy                       (ImageID_e ImageID, uint16_t PosX, uint16_t PosY);
+        void            CopyBackgroundToConstruction    (ImageID_e Image, Cartesian_t Position);
+
 
       #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
-        void            CopyWidgetToDevice  (BoxSize_t BoxSize, Cartesian_t Position);
-        void            CopyWidgetToDevice  (ImageID_e ImageID, Cartesian_t Position);
+        void            CopyWidgetToDevice              (BoxSize_t BoxSize, Cartesian_t Position);
+        void            CopyWidgetToDevice              (ImageID_e ImageID, Cartesian_t Position);
       #endif
 
 
-        void            PrintFont           (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
+        void            PrintFont                       (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
 
     private:
 
-        void            SetWriteRAM_Ready   (void)                                  { LCD_REG = SSD2119_RAM_DATA_REGISTER; }
-        void            SetRAM_Pointer      (uint16_t PosX, uint16_t PosY);
-        void            SetWindow           (uint16_t PosX, uint16_t PosY, BoxSize_t* pBoxSize);
-        void            SetWindow           (Box_t* pBox);
-        void            ResetWindow         (void);
-        uint16_t        ReadCommand         (uint8_t Register);
-        uint16_t        ReadData            (void)                                  { return LCD_RAM; }
-        void            WriteCommand        (uint8_t Register, uint16_t Data)       { LCD_REG = Register; LCD_RAM = Data; }
-        void            WriteRegister       (uint8_t Register)                      { LCD_REG = Register; }
-        void            WriteData           (uint16_t Data)                         { LCD_RAM = Data; }
-        void            WriteRLE16          (StaticImageRLE_16_t* pData, uint16_t* pDestination, size_t Size);
-        void            WriteRLE32          (StaticImageRLE_32_t* pData, uint32_t* pDestination, size_t Size);
+        void            SetWriteRAM_Ready               (void)                                  { LCD_REG = SSD2119_RAM_DATA_REGISTER; }
+        void            SetRAM_Pointer                  (uint16_t PosX, uint16_t PosY);
+        void            SetWindow                       (uint16_t PosX, uint16_t PosY, BoxSize_t* pBoxSize);
+        void            SetWindow                       (Box_t* pBox);
+        void            ResetWindow                     (void);
+        uint16_t        ReadCommand                     (uint8_t Register);
+        uint16_t        ReadData                        (void)                                  { return LCD_RAM; }
+        void            WriteCommand                    (uint8_t Register, uint16_t Data)       { LCD_REG = Register; LCD_RAM = Data; }
+        void            WriteRegister                   (uint8_t Register)                      { LCD_REG = Register; }
+        void            WriteData                       (uint16_t Data)                         { LCD_RAM = Data; }
+        void            WriteRLE16                      (StaticImageRLE_16_t* pData, uint16_t* pDestination, size_t Size);
+        void            WriteRLE32                      (StaticImageRLE_32_t* pData, uint32_t* pDestination, size_t Size);
 
         StaticImageInfo_t*                  m_pBackground;
         static const    SSD2119_InitCMD_t   m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD];

@@ -185,17 +185,21 @@ void WidgetButton::Draw(ServiceReturn_t* pService)
         pService->IndexState++;
     }
 
+    ImageID_e ImageID = m_pButton->Image.ID_List[pService->IndexState];
 
+  #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
+    myGrafx->CopyBackgroundToConstruction(ImageID, m_pButton->Pos);             // if the display has no multilayer capability.
+  #endif
 
-    if(m_pButton->Image.ID_List[pService->IndexState] != INVALID_IMAGE)
+    if(ImageID != INVALID_IMAGE)
     {
         BlendMode_e BlendOption = ((m_pButton->Options & GRAFX_OPTION_BLEND_MASK) == GRAFX_OPTION_BLEND_ALPHA) ? ALPHA_BLEND : CLEAR_BLEND;
-        myGrafx->CopyLinear(m_pButton->Image.ID_List[pService->IndexState], m_pButton->Pos, BlendOption);
+        myGrafx->CopyLinear(ImageID, m_pButton->Pos, BlendOption);
 
         // Label for button
         if(m_pButton->Text.Label != INVALID_LABEL)
         {
-            WidgetPrint(&m_pButton->Text, pService);
+          //  WidgetPrint(&m_pButton->Text, pService);
         }
     }
 

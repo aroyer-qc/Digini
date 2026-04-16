@@ -191,6 +191,7 @@ class GrafxDriver : public GrafxGenDriver
         void            WriteRLE32                      (StaticImageRLE_32_t* pData, uint32_t* pDestination, size_t Size);
 
         StaticImageInfo_t*                  m_pBackground;
+        Cartesian_t                         m_ConstructPosition;
         static const    SSD2119_InitCMD_t   m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD];
 };
 

@@ -403,13 +403,13 @@ void GrafxDriver::Initialize(void* pArg)
 //
 //  Name:           LayerConfig
 //
-//  Parameter(s):   CLayer* pLayer
+//  Parameter(s):   DisplayLayer* pLayer
 //  Return:         None
 //
 //  Description:    Configuration for layer
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::LayerConfig(CLayer* pLayer)
+void GrafxDriver::LayerConfig(DisplayLayer* pLayer)
 {
     VAR_UNUSED(pLayer);         // This is a single layer LCD controller
 }
@@ -456,7 +456,7 @@ void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pixel
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawRectangle(Box_t* pBox)
 {
-    CLayer*  pLayer = &LayerTable[CLayer::GetDrawing()];
+    DisplayLayer*  pLayer = &LayerTable[DisplayLayer::GetDrawing()];
 	uint16_t Color  = (uint16_t(pLayer->GetColor()));
     SetWindow(pBox->Pos.X, pBox->Pos.Y, pBox->Pos.X + (pBox->Size.Width - 1), pBox->Pos.Y + (pBox->Size.Height - 1));
     PutColor(Color, pBox->Size.Width * pBox->Size.Height);
@@ -478,10 +478,10 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, uint16_t Thickness)
 {
-    CLayer*  pLayer = &LayerTable[CLayer::GetDrawing()];
+    DisplayLayer*  pLayer = &LayerTable[DisplayLayer::GetDrawing()];
 	uint16_t Color  = (uint16_t(pLayer->GetColor()));
 
-	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+	if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
     {
         uint16_t X2 = PosX + Width;
         uint16_t Y2 = PosY + Height;
@@ -524,10 +524,10 @@ void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 {
-    CLayer*  pLayer = &LayerTable[CLayer::GetDrawing()];
+    DisplayLayer*  pLayer = &LayerTable[DisplayLayer::GetDrawing()];
     uint16_t Color  = (uint16_t(pLayer->GetColor()));
 
-	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+	if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
     {
         uint16_t* pAddress = (uint16_t*)pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * 2);
         *pAddress = Color;
@@ -567,13 +567,13 @@ void GrafxDriver::DrawHLine(uint16_t PosY, uint16_t PosX1, uint16_t PosX2, uint1
 
     Length = (PosX2 - PosX1) + 1;
 
-	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+	if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
     {
         this->DrawLine(PosX1, PosY, Length, Thickness, DRAW_HORIZONTAL);
     }
     else
     {
-        CLayer*  pLayer = &LayerTable[CLayer::GetDrawing()];
+        DisplayLayer*  pLayer = &LayerTable[DisplayLayer::GetDrawing()];
         uint16_t Color  = (uint16_t(pLayer->GetColor()));
         SetWindow(PosX1, PosY, PosX2, PosY + (Thickness - 1));
         PutColor(Color, Length * Thickness);
@@ -608,13 +608,13 @@ void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint1
 
     Length = PosY2 - PosY1;
 
-	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+	if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
     {
         this->DrawLine(PosX, PosY1, Length, Thickness, DRAW_VERTICAL);
     }
     else
     {
-        CLayer*  pLayer = &LayerTable[CLayer::GetDrawing()];
+        DisplayLayer*  pLayer = &LayerTable[DisplayLayer::GetDrawing()];
         uint16_t Color  = (uint16_t(pLayer->GetColor()));
         SetWindow(PosX, PosY1, PosX + (Thickness - 1), PosY2);
         PutColor(Color, Length * Thickness);
@@ -636,11 +636,11 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 {
     uint8_t            PixelSize;
     uint32_t           Address;
-    CLayer*            pLayer;
+    DisplayLayer*            pLayer;
     uint32_t           PixelFormat;
     struct32_t         AreaConfig;
 
-    pLayer             = &LayerTable[CLayer::GetDrawing()];
+    pLayer             = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormat        = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);

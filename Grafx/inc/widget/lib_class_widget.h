@@ -226,7 +226,7 @@ class WidgetIcon : public CWidgetInterface
         Link_e                  Refresh                     (MsgRefresh_t* pMsg);
         void                    Finalize                    (void);
 
-    private:                    
+    private:
 
         void                    Draw                        (ServiceReturn_t* pService);
 
@@ -370,6 +370,27 @@ class WidgetProgress : public CWidgetInterface
         uint16_t                m_Value;
         bool                    m_NegativeMovement;
         Cartesian_t             m_CursorPos;
+};
+#endif
+
+#ifdef ROTARY_DIAL_DEF  // TODO
+class WidgetRotaryDial : public CWidgetInterface
+{
+    public:
+                                WidgetRotaryDial            (RotaryDial_t* pRotaryDial);
+                               ~WidgetRotaryDial            (){};
+
+        Link_e                  Create                      (PageWidget_t* pPageWidget);
+        Link_e                  Refresh                     (MsgRefresh_t* pMsg);
+        void                    Finalize                    (void);
+
+    private:
+
+        void                    Draw                        (ServiceReturn_t* pService);
+
+        Pie_t*                  m_pPie;
+        ServiceEvent_e          m_ServiceState;
+        PageWidget_t*           m_pPageWidget;
 };
 #endif
 

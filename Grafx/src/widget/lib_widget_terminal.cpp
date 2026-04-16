@@ -217,22 +217,22 @@ void WidgetTerminal::Draw(ServiceReturn_t* pService)
     GPrintf  Printf;
     uint8_t* pScreenPtr;
 
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
-    CLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
+    DisplayLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
    #else
-    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
    #endif
   #endif
 
-    CLayer::SetColor(BLACK);
+    DisplayLayer::SetColor(BLACK);
     myGrafx->DrawRectangle(&m_pTerminal->Box);
 
-    CLayer::SetColor(m_pTerminal->TextColor);
+    DisplayLayer::SetColor(m_pTerminal->TextColor);
     FontDefault.Set(m_pTerminal->Font);
     Box.Pos.X       = m_pTerminal->Box.Pos.X;
     Box.Pos.Y       = m_pTerminal->Box.Pos.Y;
@@ -247,10 +247,10 @@ void WidgetTerminal::Draw(ServiceReturn_t* pService)
     }
 
     // Uncomment to debug and see window size
-    //CLayer::SetColor(OPAQUE_RED);
+    //DisplayLayer::SetColor(OPAQUE_RED);
     //DrawBox(&m_pTerminal->Box, 2);
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------

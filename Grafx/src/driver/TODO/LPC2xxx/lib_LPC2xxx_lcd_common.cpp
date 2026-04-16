@@ -58,10 +58,10 @@ void GRAFX_DRV_Copy(void* pSrc, sBox* pBox, sCartesian* pDstPos, ePixelFormat So
     uint32_t           PixelFormatDst;
     uint32_t           Address;
     //s32_t              AreaConfig;
-    CLayer*            pLayer;
+    DisplayLayer*            pLayer;
     uint8_t            PixelSize;
 
-    pLayer             = &LayerTable[CLayer::GetDrawing()];
+    pLayer             = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormatSrc     = m_PixelFormatTable[SourcePixelFormat];
     PixelFormatDst     = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
@@ -96,10 +96,10 @@ void GRAFX_DRV_CopyLinear(void* pSrc, sBox* pBox, ePixelFormat SourcePixelFormat
     uint32_t           PixelFormatDst;
     uint32_t           Address;
     s32_t              AreaConfig;
-    CLayer*            pLayer;
+    DisplayLayer*            pLayer;
     uint8_t            PixelSize;
 
-    pLayer             = &LayerTable[CLayer::GetDrawing()];
+    pLayer             = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormatSrc     = m_PixelFormatTable[SourcePixelFormat];
     PixelFormatDst     = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
@@ -130,10 +130,10 @@ void GRAFX_DRV_DrawRectangle(sBox* pBox)
     uint32_t           Address;
     uint32_t           Color;
     s32_t              AreaConfig;
-    CLayer*            pLayer;
+    DisplayLayer*            pLayer;
     uint8_t            PixelSize;
 
-    pLayer             = &LayerTable[CLayer::GetDrawing()];
+    pLayer             = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormat        = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
     Address            = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
@@ -192,10 +192,10 @@ void GRAFX_DRV_DrawPixel(uint16_t PosX, uint16_t PosY)
     uint32_t       PixelFormat;
     uint32_t       Address;
     uint32_t       Color;
-    CLayer*        pLayer;
+    DisplayLayer*        pLayer;
     uint8_t        PixelSize;
 
-    pLayer         = &LayerTable[CLayer::GetDrawing()];
+    pLayer         = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormat    = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize      = pLayer->GetPixelSize();
     Address        = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
@@ -304,10 +304,10 @@ void GRAFX_DRV_DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t 
     uint8_t       PixelSize;
     uint32_t      Address;
     uint32_t      Color;
-    CLayer*       pLayer;
+    DisplayLayer*       pLayer;
     s32_t         AreaConfig;
 
-    pLayer        = &LayerTable[CLayer::GetDrawing()];
+    pLayer        = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormat   = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize     = pLayer->GetPixelSize();
     Address       = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
@@ -344,11 +344,11 @@ void DRV_PrintFont(sFontDescriptor* pDescriptor, sCartesian* pPos)
     uint32_t           PixelFormat;
     uint8_t            PixelSize;
     uint32_t           Address;
-    CLayer*            pLayer;
+    DisplayLayer*            pLayer;
     ePixelFormat       PixFmt;
     s32_t              AreaConfig;
 
-    pLayer             = &LayerTable[CLayer::GetDrawing()];
+    pLayer             = &LayerTable[DisplayLayer::GetDrawing()];
     PixFmt             = pLayer->GetPixelFormat();
     PixelFormat        = m_PixelFormatTable[PixFmt];
     PixelSize          = pLayer->GetPixelSize();
@@ -386,7 +386,7 @@ void DRV_Init()
 //
 //  Name:           DRV_LayerConfig
 //
-//  Parameter(s):   CLayer* pLayer
+//  Parameter(s):   DisplayLayer* pLayer
 //  Return:         None
 //
 //  Description:    Configuration for layer
@@ -394,7 +394,7 @@ void DRV_Init()
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void DRV_LayerConfig(CLayer* pLayer)
+void DRV_LayerConfig(DisplayLayer* pLayer)
 {
 // don't know if it apply to LPC
 }

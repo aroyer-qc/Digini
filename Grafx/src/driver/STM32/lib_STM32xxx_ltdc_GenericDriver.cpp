@@ -104,7 +104,7 @@ void GrafxGenDriver::Initialize(void* pArg)
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::ClearLayer(Layer_e Layer)
 {
-    CLayer*  pLayer  = &LayerTable[Layer];
+    DisplayLayer*  pLayer  = &LayerTable[Layer];
     uint32_t Address = pLayer->GetAddress();
 
   #ifdef DMA2D
@@ -152,16 +152,16 @@ void GrafxGenDriver::ClearLayer(Layer_e Layer)
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
-	if(CLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+	if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
     {
         uint32_t           PixelFormatSrc;
         uint32_t           PixelFormatDst;
         uint32_t           Address;
         uint32_t           AreaConfig;
-        CLayer*            pLayer;
+        DisplayLayer*            pLayer;
         uint8_t            PixelSize;
 
-        pLayer         = &LayerTable[CLayer::GetDrawing()];
+        pLayer         = &LayerTable[DisplayLayer::GetDrawing()];
         PixelFormatSrc = m_PixelFormatTable[SrcPixelFormat];
         PixelFormatDst = m_PixelFormatTable[pLayer->GetPixelFormat()];
         PixelSize      = pLayer->GetPixelSize();
@@ -228,10 +228,10 @@ void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelF
     uint32_t PixelFormatDst;
     uint32_t Address;
     uint32_t AreaConfig;
-    CLayer*  pLayer;
+    DisplayLayer*  pLayer;
     uint8_t  PixelSize;
 
-    pLayer         = &LayerTable[CLayer::GetDrawing()];
+    pLayer         = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormatSrc = m_PixelFormatTable[SrcPixelFormat];
     PixelFormatDst = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize      = pLayer->GetPixelSize();
@@ -294,10 +294,10 @@ void GrafxGenDriver::DrawRectangle(Box_t* pBox)
     uint32_t Address;
     uint32_t Color;
     uint32_t AreaConfig;
-    CLayer*  pLayer;
+    DisplayLayer*  pLayer;
     uint8_t  PixelSize;
 
-    pLayer      = &LayerTable[CLayer::GetDrawing()];
+    pLayer      = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize   = pLayer->GetPixelSize();
     Address     = pLayer->GetAddress() + (((pBox->Pos.Y * GRAFX_DRIVER_SIZE_X) + pBox->Pos.X) * (uint32_t)PixelSize);
@@ -337,10 +337,10 @@ void GrafxGenDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
     uint32_t       PixelFormat;
     uint32_t       Address;
     uint32_t       Color;
-    CLayer*        pLayer;
+    DisplayLayer*        pLayer;
     uint8_t        PixelSize;
 
-    pLayer         = &LayerTable[CLayer::GetDrawing()];
+    pLayer         = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormat    = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize      = pLayer->GetPixelSize();
     Address        = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
@@ -384,11 +384,11 @@ void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uin
     uint8_t  PixelSize;
     uint32_t Address;
     uint32_t Color;
-    CLayer*  pLayer;
+    DisplayLayer*  pLayer;
     uint32_t AreaConfig;
     uint32_t Offset;
 
-    pLayer      = &LayerTable[CLayer::GetDrawing()];
+    pLayer      = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize   = pLayer->GetPixelSize();
     Address     = pLayer->GetAddress() + (((PosY * GRAFX_DRIVER_SIZE_X) + PosX) * (uint32_t)PixelSize);
@@ -438,11 +438,11 @@ void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     uint32_t PixelFormat;
     uint8_t  PixelSize;
     uint32_t Address;
-    CLayer*  pLayer;
+    DisplayLayer*  pLayer;
     uint32_t AreaConfig;
     uint32_t Offset;
 
-    pLayer      = &LayerTable[CLayer::GetDrawing()];
+    pLayer      = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize   = pLayer->GetPixelSize();
     Address     = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
@@ -484,13 +484,13 @@ void GrafxGenDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 //
 //  Name:           LayerConfig
 //
-//  Parameter(s):   CLayer* pLayer
+//  Parameter(s):   DisplayLayer* pLayer
 //  Return:         None
 //
 //  Description:    Configuration for layer
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::LayerConfig(CLayer* pLayer)
+void GrafxGenDriver::LayerConfig(DisplayLayer* pLayer)
 {
   #ifdef DMA2D
     uint32_t            PixelFormat;

@@ -148,25 +148,25 @@ void CPageSlide::Finalize()
 void CPageSlide::Draw(ServiceReturn_t* pService)
 {
     ImageInfo_t Image;
-    CLayer*     pLayer;
+    DisplayLayer*     pLayer;
 
 
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-        CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
+        DisplayLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
         pLayer = &LayerTable[BACKGROUND_DISPLAY_LAYER_0];
   #else
    #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
     if(SKIN_pTask->IsSkinLoaded() == true)
     {
-        CLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
+        DisplayLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
         pLayer = &LayerTable[CONSTRUCTION_BACKGROUND_LAYER];
     }
     else
    #endif
     {
-        CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
+        DisplayLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
         pLayer = &LayerTable[BACKGROUND_DISPLAY_LAYER_0];
     }
   #endif
@@ -193,7 +193,7 @@ void CPageSlide::Draw(ServiceReturn_t* pService)
     }
   #endif
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------

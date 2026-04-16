@@ -149,12 +149,12 @@ void CSpectrum::Draw(ServiceReturn_t* pService)
     }
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
-    CLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
+    DisplayLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
    #else
-    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
    #endif
   #endif
 
@@ -162,7 +162,7 @@ void CSpectrum::Draw(ServiceReturn_t* pService)
     Width       = m_BarSize.Width;
     PosX        = m_pSpectrum->Box.Pos.X;
 
-    CLayer::SetColor(TRANSPARENT);
+    DisplayLayer::SetColor(TRANSPARENT);
     myGrafx->DrawRectangle(&m_pSpectrum->Box);
 
     for(int i = 0; i < NumberOfBar; i++)
@@ -177,7 +177,7 @@ void CSpectrum::Draw(ServiceReturn_t* pService)
         myGrafx->CopyLinear(m_BarAddress, PosX, PosY, Width, Height, m_PixelFormat, CLEAR_BLEND);
     }
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
     FreeServiceStruct(&pService);
 }
 

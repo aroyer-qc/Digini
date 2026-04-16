@@ -434,6 +434,19 @@ struct Progress_t
     uint16_t       Options;
 };
 
+struct RotaryDial_t
+{
+    Service_t      Service;
+    Box_t          Box;
+    uint16_t       Radius;
+    uint16_t       StartAngle;
+    uint16_t       EndAngle;
+    uint16_t       StepAngle;
+    uint16_t       Range;
+    Text_t         Text;
+    uint16_t       Options;
+};
+
 struct RoundMeter_t
 {
     Service_t      Service;

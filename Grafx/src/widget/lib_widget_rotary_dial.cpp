@@ -1,10 +1,10 @@
- //-------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
 //
-//  File : lib_widget_graph.cpp
+//  File : lib_widget_rotary_dial.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2021 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -32,24 +32,23 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_GRAFX == DEF_ENABLED)
-#ifdef GRAPH_DEF
+#ifdef DIGINI_USE_GRAFX
+#ifdef ROTARY_DIAL_DEF
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Constructor:    WidgetGraph
+//  Constructor:    WidgetRotaryDial
 //
-//  Parameter(s):   Graph_t       pGraph         Pointer to Graph_t structure
+//  Parameter(s):   RotaryDial_t         pRotaryDial         Pointer to RotaryDial_t structure
 //
 //  Description:    Initialize widget's service and build widget.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-WidgetGraph::WidgetGraph(Graph_t* pGraph)
+WidgetRotaryDial::WidgetRotaryDial(RotaryDial_t* pRotaryDial)
 {
-    m_pGraph = pGraph;
-    m_DrawX  = pGraph->Draw_X;          // Initialize X drawing position
+    m_pRotaryDial = pRotaryDial;
+    m_Value       = 0;
+    m_pRotaryDial->Text.Blend = ALPHA_BLEND;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -57,23 +56,25 @@ WidgetGraph::WidgetGraph(Graph_t* pGraph)
 //  Name:           Create
 //
 //  Parameter(s):   PageWidget_t* pPageWidget
-//  Return:         Link_e        INVALID_LINK
+//  Return:         Link_e        link
 //
 //  Description:    This function call service and create the widget
 //
-//  Note(s)         No link, Always return INVALID_LINK
-//
 //-------------------------------------------------------------------------------------------------
-Link_e WidgetGraph::Create(PageWidget_t* pPageWidget)
+Link_e WidgetRotaryDial::Create(PageWidget_t* pPageWidget)
 {
     ServiceReturn_t* pService;
 
     m_pPageWidget  = pPageWidget;
     m_ServiceState = SERVICE_START;
-
-    if((pService = ServiceCall(&m_pGraph->Service, &m_ServiceState)) != nullptr)
+    if((pService = ServiceCall(&m_pRotaryDial->Service, &m_ServiceState)) != nullptr)
     {
-        Draw(pService, true);
+        if(pService->ServiceType == SERVICE_RETURN_TYPE1)
+        {
+            m_Value = ((ServiceType1_t*)pService)->Data;
+        }
+
+        Draw(pService);
         FreeServiceStruct(&pService);
     }
 
@@ -84,23 +85,32 @@ Link_e WidgetGraph::Create(PageWidget_t* pPageWidget)
 //
 //  Name:           Refresh
 //
-//  Parameter(s):   MsgRefresh_t*    pMsg
-//  Return:         Link_e           INVALID_LINK
+//  Parameter(s):   MsgRefresh_t*        pMsg
+//  Return:         Link_e               Link            Link to switch page if it's needed
 //
 //  Description:    This function call service to refresh widget
 //
-//  Note(s)         No link, Always return INVALID_LINK
-//
 //-------------------------------------------------------------------------------------------------
-Link_e WidgetGraph::Refresh(MsgRefresh_t* pMsg)
+Link_e WidgetRotaryDial::Refresh(MsgRefresh_t* pMsg)
 {
     ServiceReturn_t* pService;
 
     m_ServiceState = SERVICE_REFRESH;
 
-    if((pService = ServiceCall(&m_pGraph->Service, &m_ServiceState)) != nullptr)        // Invoke the application service for this icon (It might change by itself the m_ServiceState)
+    // Invoke the application service for this meter (It might change by itself the m_ServiceState)
+    if((pService = ServiceCall(&m_pRotaryDial->Service, &m_ServiceState)) != nullptr)
     {
-        Draw(pService, true);
+        if(pService->ServiceType == SERVICE_RETURN_TYPE1)
+        {
+            m_Value = ((ServiceType1_t*)pService)->Data;
+        }
+
+        if(pService->ServiceType == SERVICE_RETURN_TYPE2)
+        {
+            m_Value = ((ServiceType2_t*)pService)->Data[0];
+        }
+
+        Draw(pService);
         FreeServiceStruct(&pService);
     }
 
@@ -111,19 +121,22 @@ Link_e WidgetGraph::Refresh(MsgRefresh_t* pMsg)
 //
 //  Name:           Finalize
 //
-//  Parameter(s):   none
-//  Return:         void
+//  Parameter(s):   None
+//  Return:         None
 //
 //  Description:    This function call service associated with widget to finalize it properly.
 //
 //-------------------------------------------------------------------------------------------------
-void WidgetGraph::Finalize()
+void WidgetRotaryDial::Finalize()
 {
     ServiceReturn_t* pService;
 
     m_ServiceState = SERVICE_FINALIZE;
-    pService = ServiceCall(&m_pGraph->Service, &m_ServiceState);
-    FreeServiceStruct(&pService);
+
+    if((pService = ServiceCall(&m_pRotaryDial->Service, &m_ServiceState)) != nullptr)
+    {
+        FreeServiceStruct(&pService);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -131,18 +144,19 @@ void WidgetGraph::Finalize()
 //  Name:           Draw
 //
 //  Parameter(s):   ServiceReturn_t* pService
-//                  bool             IsItDrawingGrid
 //  Return:         None
 //
 //
-//  Description:    Draw the Graph on display according to state.
+//  Description:    Draw the meter on display.
 //
 //-------------------------------------------------------------------------------------------------
-void WidgetGraph::Draw(ServiceReturn_t* pService, bool IsItDrawingGrid)
+void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
 {
-    uint16_t X;
-    uint16_t EndX;
-    //uint16_t Y;
+    uint16_t    Angle;
+    uint16_t    EndAngle;
+    BlendMode_e  BlendMode;
+
+    BlendMode = ((m_pRotaryDial->Options & OPTION_BLEND_CLEAR) != 0) ? CLEAR_BLEND : ALPHA_BLEND;
 
     DisplayLayer::PushDrawing();
 
@@ -156,57 +170,10 @@ void WidgetGraph::Draw(ServiceReturn_t* pService, bool IsItDrawingGrid)
    #endif
   #endif
 
-/*
-Box.Pos.X;
-Box.Pos.Y;
-Box.Size.Width
-
-struct Graph_t
-{
-    Service_t      Service;
-    Box_t          Box;
-    uint32_t       GridColor;               // Grid color
-    uint16_t       GridSpacing_X;           // Pixel grid X
-    uint16_t       GridSpacing_Y;           // Pixel grid Y
-    uint16_t       Scale_X;                 // Scale value for X
-    uint16_t       Scale_Y;                 // Scale value for Y
-    uint16_t       ScrollStep;              // Number of step for each slot
-    uint16_t       Draw_X;                  // Start drawing position
-    uint16_t       Options;
-};
-*/
-
-    // Put here drawing function
-
-    if(IsItDrawingGrid == true)
-    {
-        EndX = (m_pGraph->Box.Pos.X + 2);
-
-        for(X = m_pGraph->Box.Pos.X; X < EndX; X += m_pGraph->Scale_X)
-        {
-
-        }
-        // Do iteration to draw the vertical grid
-
-        // Do iteration to draw the horizontal grid
-    }
-
-    // Check if its time to shift the graph do it here by copy!!
-    {
-        // Check if we if we need to add a new vertical line do it..
-        {
-        }
-
-        // Add every horizontal line pixel of the graph
-    }
-
-    // Plot the pixel X and Y
-    // Update all variables for next iteration
-
     DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // GRAPH_DEF
+#endif // ROTARY_DIAL_DEF
 #endif // DIGINI_USE_GRAFX

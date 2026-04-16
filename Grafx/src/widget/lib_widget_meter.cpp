@@ -162,15 +162,15 @@ void CMeter::Draw(ServiceReturn_t* pService)
     if(EndAngle < m_pMeter->StartAngle) EndAngle += 360;
     Angle = (m_Value * (EndAngle - m_pMeter->StartAngle)) / m_pMeter->Range;
 
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
   #else
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
-    CLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
+    DisplayLayer::SetDrawing(CONSTRUCTION_FOREGROUND_LAYER);
    #else
-    CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
    #endif
   #endif
 
@@ -190,7 +190,7 @@ void CMeter::Draw(ServiceReturn_t* pService)
 //        CursorOnCircle(m_pMeter->Cursor, &m_pMeter->Box.Pos, m_pMeter->Radius, Angle);                      // Put cursor at angle if priority is disable
     }
     WidgetPrint(&m_pMeter->Text, pService);
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------

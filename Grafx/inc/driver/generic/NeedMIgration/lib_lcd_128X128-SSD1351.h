@@ -68,7 +68,7 @@ class GrafxDriver : public GRAFX_Interface
         void            Initialize            (void* pArg);
         void            DisplayOn             (void);
         void            DisplayOff            (void);
-        void            LayerConfig           (CLayer* pLayer);
+        void            LayerConfig           (DisplayLayer* pLayer);
         void            CopyLinear            (void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
         void            BlockCopy             (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
         void            BlockCopy             (void* pSrc, uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height, uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
@@ -106,7 +106,7 @@ class GrafxDriver : public GRAFX_Interface
         IO_ID_e         m_RegSelect;
         IO_ID_e         m_Reset;
         IO_BusDriver    m_Bus;
-        CLayer*         m_pLayer;
+        DisplayLayer*         m_pLayer;
 };
 
 //-------------------------------------------------------------------------------------------------

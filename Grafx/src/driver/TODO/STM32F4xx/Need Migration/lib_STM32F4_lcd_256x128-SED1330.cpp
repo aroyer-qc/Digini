@@ -277,7 +277,7 @@ static void DRV_LCD_ControllerInitialize(void)
 //
 //  Function name:  DRV_LayerConfig
 //
-//  Parameter(s):   CLayer* pLayer
+//  Parameter(s):   DisplayLayer* pLayer
 //  Return:         None
 //
 //  Description:    Configuration for layer
@@ -481,7 +481,7 @@ void DRV_Initialize(void* pArg)
 //
 //  Name:           DRV_LayerConfig
 //
-//  Parameter(s):   CLayer* pLayer
+//  Parameter(s):   DisplayLayer* pLayer
 //  Return:         None
 //
 //  Description:    Configuration for layer
@@ -489,7 +489,7 @@ void DRV_Initialize(void* pArg)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void DRV_LayerConfig(CLayer* pLayer)
+void DRV_LayerConfig(DisplayLayer* pLayer)
 {
 }
 
@@ -784,7 +784,7 @@ void DRV_DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickn
 //-------------------------------------------------------------------------------------------------
 void DRV_PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
 {
-    //pLayer             = &LayerTable[CLayer::GetDrawing()];
+    //pLayer             = &LayerTable[DisplayLayer::GetDrawing()];
     //PixFmt             = pLayer->GetPixelFormat();
     //PixelFormat        = m_PixelFormatTable[PixFmt];
     //PixelSize          = pLayer->GetPixelSize();

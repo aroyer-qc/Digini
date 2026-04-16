@@ -348,7 +348,7 @@ uint16_t GrafxDriver::ReadData_16(void)
 /*
 void GrafxDriver::DrawRectangle(Box_t* pBox, uint8_t Mode)
 {
-    m_pLayer = &LayerTable[CLayer::GetDrawing()];
+    m_pLayer = &LayerTable[DisplayLayer::GetDrawing()];
 
     if(Mode == SSD1779_FILL_MODE)
     {
@@ -395,13 +395,13 @@ void GrafxDriver::Initialize(void* pArg)
 //
 //  Name:           LayerConfig
 //
-//  Parameter(s):   CLayer* pLayer
+//  Parameter(s):   DisplayLayer* pLayer
 //  Return:         None
 //
 //  Description:    Configuration for layer
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::LayerConfig(CLayer* pLayer)
+void GrafxDriver::LayerConfig(DisplayLayer* pLayer)
 {
     VAR_UNUSED(pLayer); // This is a single layer LCD controller
 }
@@ -430,10 +430,10 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
     uint32_t           PixelFormatDst;
     uint32_t           Address;
     s32_t              AreaConfig;
-    CLayer*            pLayer;
+    DisplayLayer*            pLayer;
     uint8_t            PixelSize;
 
-    pLayer             = &LayerTable[CLayer::GetDrawing()];
+    pLayer             = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormatSrc     = m_PixelFormatTable[SrcPixelFormat];
     PixelFormatDst     = m_PixelFormatTable[pLayer->GetPixelFormat()];
     PixelSize          = pLayer->GetPixelSize();
@@ -570,7 +570,7 @@ void GrafxDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelForm
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawCircle(uint8_t X, uint8_t Y, uint8_t Radius, uint8_t Mode)
 {
-    m_pLayer = &LayerTable[CLayer::GetDrawing()];
+    m_pLayer = &LayerTable[DisplayLayer::GetDrawing()];
 
     if(Mode == SSD1779_FILL)
     {
@@ -653,7 +653,7 @@ void GrafxDriver::DrawBox(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawPixel(uint16_t PosX, uint16_t PosY)
 {
-    m_pLayer = &LayerTable[CLayer::GetDrawing()];
+    m_pLayer = &LayerTable[DisplayLayer::GetDrawing()];
 
     WriteCommand(SSD1779_SET_COLUMN_ADDRESS);
     WriteData(uint8_t(PosX));
@@ -767,7 +767,7 @@ void GrafxDriver::DrawVLine(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint1
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction)
 {
-    m_pLayer = &LayerTable[CLayer::GetDrawing()];
+    m_pLayer = &LayerTable[DisplayLayer::GetDrawing()];
     WriteCommand(SSD1779_DRAW_LINE);
     WriteData(uint8_t(PosX));
     WriteData(uint8_t(PosY));
@@ -793,7 +793,7 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     PixelFormat_e PixelFormat;
     uint8_t       PixelSize;
 
-    m_pLayer = &LayerTable[CLayer::GetDrawing()];
+    m_pLayer = &LayerTable[DisplayLayer::GetDrawing()];
 
 //    uint32_t           Address;
 

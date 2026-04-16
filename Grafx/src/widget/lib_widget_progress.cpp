@@ -166,10 +166,10 @@ void WidgetProgress::Draw(ServiceReturn_t* pService)
     Position = (m_Value * m_pProgress->PixelRange) / m_Range;
 
 // TODO can i put this into a support function
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-    CLayer::SetDrawing(((m_pProgress->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
+    DisplayLayer::SetDrawing(((m_pProgress->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BACKGROUND_DISPLAY_LAYER_0 : FOREGROUND_DISPLAY_LAYER_0);
   #else
 
    #if (GRAFX_USE_CONSTRUCTION_FOREGROUND_LAYER == DEF_ENABLED)
@@ -187,26 +187,26 @@ void WidgetProgress::Draw(ServiceReturn_t* pService)
    #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)     // TODO confirm this
     if(SKIN_pTask->IsSkinLoaded() != true)
     {
-        CLayer::SetDrawing(((m_pProgress->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BackLayerToDraw : ForeLayerToDraw);
+        DisplayLayer::SetDrawing(((m_pProgress->Options & GRAFX_OPTION_DRAW_ON_BACK) != 0) ? BackLayerToDraw : ForeLayerToDraw);
     }
     else
    #endif
     {
-        CLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);   // On loading with do print directly on foreground layer
+        DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);   // On loading with do print directly on foreground layer
     }
   #endif
 
-  // CLayer::SetColor(TRANSPARENT);
+  // DisplayLayer::SetColor(TRANSPARENT);
 
     // this erase the old bar...  do we put a option for redraw full widget?
     // DrawRectangle(&m_pProgress->Box);                          // Erase previous draw
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-    CLayer::SetColor(LIGHT_RED);
+    DisplayLayer::SetColor(LIGHT_RED);
     DrawDebugBox(&m_pProgress->Box);
   #endif
 
-    //CLayer::SetColor(LIGHT_RED);
+    //DisplayLayer::SetColor(LIGHT_RED);
     //DrawDLine(10, 100, 450, 110);  not working
 
 
@@ -255,12 +255,12 @@ void WidgetProgress::Draw(ServiceReturn_t* pService)
     #if (GRAFX_PAINT_BOX_DEBUG == DEF_ENABLED)
       if((m_pProgress->Box.Size.Width != 0) && (m_pProgress->Box.Size.Height != 0))
       {
-          CLayer::SetColor(GRAFX_PAINT_BOX_DEBUG_COLOR);
+          DisplayLayer::SetColor(GRAFX_PAINT_BOX_DEBUG_COLOR);
           DrawBox(&m_pProgress->Box, 1);
       }
     #endif
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -277,14 +277,14 @@ void WidgetProgress::Draw(ServiceReturn_t* pService)
 void WidgetProgress::DrawOnce(ServiceReturn_t* pService)
 {
 
-    CLayer::PushDrawing();
+    DisplayLayer::PushDrawing();
 
     if(m_pProgress->Background != INVALID_IMAGE)
     {
         myGrafx->CopyLinear(m_pProgress->Background, m_pProgress->Box.Pos, ALPHA_BLEND);
     }
 
-    CLayer::PopDrawing();
+    DisplayLayer::PopDrawing();
 }
 
 //-------------------------------------------------------------------------------------------------

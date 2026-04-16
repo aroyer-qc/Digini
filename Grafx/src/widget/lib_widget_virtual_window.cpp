@@ -138,14 +138,14 @@ void CVirtualWindow::Draw()
 {
     if(m_pAddress != nullptr)
     {
-        CLayer::PushDrawing();
+        DisplayLayer::PushDrawing();
       #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
-        CLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
+        DisplayLayer::SetDrawing(BACKGROUND_DISPLAY_LAYER_0);
       #else
-        CLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
+        DisplayLayer::SetDrawing(CONSTRUCTION_BACKGROUND_LAYER);
       #endif
         myGrafx->CopyLinear(m_pAddress, &m_pVirtualWindow->Box, m_PixelFormat, CLEAR_BLEND);
-        CLayer::PopDrawing();
+        DisplayLayer::PopDrawing();
     }
 }
 

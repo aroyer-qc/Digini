@@ -164,7 +164,6 @@ int StackCheck::GetNumberOfRegisterStack(void)
 
 //-------------------------------------------------------------------------------------------------
 
-
 #if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
 extern "C" void nOS_ThreadCreateHook(nOS_Stack* pStack, size_t StackSize, const char* pName)
 {

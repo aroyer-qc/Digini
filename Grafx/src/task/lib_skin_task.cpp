@@ -162,10 +162,6 @@ nOS_Error SKIN_myClassTask::Initialize(void)
                                 )) == NOS_OK)
     {
         //Error = nOS_FlagCreate(&this->m_SkinFlags, 0,0);
-
-      //#if (DIGINI_USE_STACKTISTIC == DEF_ENABLED)
-      //  myStacktistic.Register(&m_Stack[0], SKIN_TASK_STACK_SIZE, "Loading Skin");
-      //#endif
     }
 
     return Error;

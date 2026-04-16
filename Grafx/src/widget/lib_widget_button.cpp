@@ -199,7 +199,7 @@ void WidgetButton::Draw(ServiceReturn_t* pService)
         // Label for button
         if(m_pButton->Text.Label != INVALID_LABEL)
         {
-          //  WidgetPrint(&m_pButton->Text, pService);
+            WidgetPrint(&m_pButton->Text, pService);
         }
     }
 
@@ -209,12 +209,8 @@ void WidgetButton::Draw(ServiceReturn_t* pService)
         myGrafx->CopyLinear(m_pButton->Glyph.ID_List[pService->IndexState], m_pButton->Glyph.Pos, ALPHA_BLEND);
     }
 
-
-    //myGrafx->BlockCopy()yLinear(m_pButton->Glyph.ID_List[pService->IndexState], m_pButton->Glyph.Pos, ALPHA_BLEND);
   #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
-    {
-        myGrafx->CopyWidgetToDevice(m_pButton->Image.ID_List[pService->IndexState], m_pButton->Pos);
-    }
+    myGrafx->CopyWidgetToDevice(m_pButton->Image.ID_List[pService->IndexState], m_pButton->Pos);
   #endif
 
     DisplayLayer::PopDrawing();

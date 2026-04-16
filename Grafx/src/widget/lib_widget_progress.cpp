@@ -223,7 +223,7 @@ void WidgetProgress::Draw(ServiceReturn_t* pService)
 
     if(m_pProgress->Cursor != INVALID_IMAGE)
     {
-        myGrafx->CopyLinear(m_pProgress->Cursor, CursorPos, ALPHA_BLEND);                        // Put cursor if priority is disable
+        myGrafx->BlendFromImage(m_pProgress->Cursor, CursorPos, ALPHA_BLEND);                        // Put cursor if priority is disable
     }
 
     if(m_pProgress->Bar != INVALID_IMAGE)
@@ -234,7 +234,7 @@ void WidgetProgress::Draw(ServiceReturn_t* pService)
             {
                 while(m_CursorPos.X != CursorPos.X)
                 {
-                    myGrafx->CopyLinear(m_pProgress->Bar, m_CursorPos, ALPHA_BLEND);
+                    myGrafx->BlendFromImage(m_pProgress->Bar, m_CursorPos, ALPHA_BLEND);
                     m_CursorPos.X++;
                 }
             }
@@ -242,7 +242,7 @@ void WidgetProgress::Draw(ServiceReturn_t* pService)
             {
                 while(m_CursorPos.Y != CursorPos.Y)
                 {
-                    myGrafx->CopyLinear(m_pProgress->Bar, m_CursorPos, ALPHA_BLEND);
+                    myGrafx->BlendFromImage(m_pProgress->Bar, m_CursorPos, ALPHA_BLEND);
                     m_CursorPos.Y--;
                 }
             }
@@ -281,7 +281,7 @@ void WidgetProgress::DrawOnce(ServiceReturn_t* pService)
 
     if(m_pProgress->Background != INVALID_IMAGE)
     {
-        myGrafx->CopyLinear(m_pProgress->Background, m_pProgress->Box.Pos, ALPHA_BLEND);
+        myGrafx->BlendFromImage(m_pProgress->Background, m_pProgress->Box.Pos, ALPHA_BLEND);
     }
 
     DisplayLayer::PopDrawing();

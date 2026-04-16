@@ -45,7 +45,7 @@
 //  Description:    LCD configuration specific for the LCD and processor used by this driver
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::Initialize(void* pArg)
+void GrafxGenDriver::Initialize(const void* pArg)
 {
   #ifdef LTDC
    #ifdef STM32H7xx
@@ -108,7 +108,7 @@ void GrafxGenDriver::ClearLayer(Layer_e Layer)
     uint32_t Address = pLayer->GetAddress();
 
   #ifdef DMA2D
-  
+
     uint32_t  PixelFormat = m_PixelFormatTable[pLayer->GetPixelFormat()];
     uint32_t  AreaConfig  = (pLayer->GetSize().X << 16) | pLayer->GetSize().Y;
 
@@ -119,10 +119,10 @@ void GrafxGenDriver::ClearLayer(Layer_e Layer)
     DMA2D->OOR     = 0;                                         // No line offset
     DMA2D->OPFCCR  = PixelFormat;                               // Pixel format
     DMA2D->NLR     = AreaConfig;                                // Width + Height
-    
+
     SET_BIT(DMA2D->CR, DMA2D_CR_START);                         // Start operation
     while (DMA2D->CR & DMA2D_CR_START);                         // Wait for completion
-  
+
   #else // some F4xx doesn't have DMA2D
 
     uint32_t PixelSize = pLayer->GetPixelSize();
@@ -131,7 +131,7 @@ void GrafxGenDriver::ClearLayer(Layer_e Layer)
 
     // Clear using DMA memory-to-memory (increment only the destination)
     DMA_Memcpy(&Color, (void*)Address, Size, DMA_SxCR_MINC);
-    
+
   #endif
 }
 

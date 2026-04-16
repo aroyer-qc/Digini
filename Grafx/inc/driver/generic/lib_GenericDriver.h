@@ -43,8 +43,6 @@ class GrafxGenDriver
             virtual     void    DisplayOff            			(void)             = 0;
             virtual     void    LayerConfig           			(DisplayLayer* pLayer);
             virtual     void    LayerConfig           			(Layer_e Layer);
-
-// validated and good
             virtual    void     ImageCopy             			(ImageID_e Image, uint16_t PosX, uint16_t PosY) = 0;
 
           #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)

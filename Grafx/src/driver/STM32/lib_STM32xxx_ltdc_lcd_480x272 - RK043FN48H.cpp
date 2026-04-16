@@ -46,7 +46,7 @@
 //  Description:    LCD configuration specific for the LCD and processor used by this driver
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::Initialize(void* pArg)
+void GrafxDriver::Initialize(const void* pArg)
 {
     GrafxGenDriver::Initialize(pArg);
     DisplayOn();

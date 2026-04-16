@@ -231,10 +231,10 @@ void WidgetBasicBox::Draw(ServiceReturn_t* pService)
         myGrafx->DrawRectangle(&m_pBasicBox->Box);
     }
 
-    myGrafx->CopyLinear(m_pBasicBox->ImageTL, m_TopLeft,     ALPHA_BLEND);
-    myGrafx->CopyLinear(m_pBasicBox->ImageTR, m_TopRight,    ALPHA_BLEND);
-    myGrafx->CopyLinear(m_pBasicBox->ImageBL, m_BottomLeft,  ALPHA_BLEND);
-    myGrafx->CopyLinear(m_pBasicBox->ImageBR, m_BottomRight, ALPHA_BLEND);
+    myGrafx->BlendFromImage(m_pBasicBox->ImageTL, m_TopLeft,     ALPHA_BLEND);
+    myGrafx->BlendFromImage(m_pBasicBox->ImageTR, m_TopRight,    ALPHA_BLEND);
+    myGrafx->BlendFromImage(m_pBasicBox->ImageBL, m_BottomLeft,  ALPHA_BLEND);
+    myGrafx->BlendFromImage(m_pBasicBox->ImageBR, m_BottomRight, ALPHA_BLEND);
 
     Cartesian_t Top;
     Cartesian_t Bot;
@@ -247,8 +247,8 @@ void WidgetBasicBox::Draw(ServiceReturn_t* pService)
         Top.X = i;
         Bot.X = i;
 
-        myGrafx->CopyLinear(m_pBasicBox->ImageH, Top, ALPHA_BLEND);
-        myGrafx->CopyLinear(m_pBasicBox->ImageH, Bot, ALPHA_BLEND);
+        myGrafx->BlendFromImage(m_pBasicBox->ImageH, Top, ALPHA_BLEND);
+        myGrafx->BlendFromImage(m_pBasicBox->ImageH, Bot, ALPHA_BLEND);
     }
 
     Cartesian_t Left;
@@ -262,8 +262,8 @@ void WidgetBasicBox::Draw(ServiceReturn_t* pService)
         Left.Y  = i;
         Right.Y = i;
 
-        myGrafx->CopyLinear(m_pBasicBox->ImageV, Left,  ALPHA_BLEND);
-        myGrafx->CopyLinear(m_pBasicBox->ImageV, Right, ALPHA_BLEND);
+        myGrafx->BlendFromImage(m_pBasicBox->ImageV, Left,  ALPHA_BLEND);
+        myGrafx->BlendFromImage(m_pBasicBox->ImageV, Right, ALPHA_BLEND);
     }
 
    #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)

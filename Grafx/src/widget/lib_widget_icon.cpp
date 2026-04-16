@@ -193,7 +193,7 @@ void WidgetIcon::Draw(ServiceReturn_t* pService)
     }
     else
     {
-        myGrafx->CopyLinear(ImageID, m_pIcon->Box.Pos, ((m_pIcon->Options & GRAFX_OPTION_BLEND_CLEAR) != 0) ? CLEAR_BLEND : ALPHA_BLEND);
+        myGrafx->BlendFromImage(ImageID, m_pIcon->Box.Pos, ((m_pIcon->Options & GRAFX_OPTION_BLEND_CLEAR) != 0) ? CLEAR_BLEND : ALPHA_BLEND);
     }
 
   #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)

@@ -194,7 +194,7 @@ void WidgetButton::Draw(ServiceReturn_t* pService)
     if(ImageID != INVALID_IMAGE)
     {
         BlendMode_e BlendOption = ((m_pButton->Options & GRAFX_OPTION_BLEND_MASK) == GRAFX_OPTION_BLEND_ALPHA) ? ALPHA_BLEND : CLEAR_BLEND;
-        myGrafx->CopyLinear(ImageID, m_pButton->Pos, BlendOption);
+        myGrafx->BlendFromImage(ImageID, m_pButton->Pos, BlendOption);
 
         // Label for button
         if(m_pButton->Text.Label != INVALID_LABEL)
@@ -206,7 +206,7 @@ void WidgetButton::Draw(ServiceReturn_t* pService)
     // Button can have a glyph
     if(m_pButton->Glyph.ID_List[pService->IndexState] != INVALID_IMAGE)
     {
-        myGrafx->CopyLinear(m_pButton->Glyph.ID_List[pService->IndexState], m_pButton->Glyph.Pos, ALPHA_BLEND);
+        myGrafx->BlendFromImage(m_pButton->Glyph.ID_List[pService->IndexState], m_pButton->Glyph.Pos, ALPHA_BLEND);
     }
 
   #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)

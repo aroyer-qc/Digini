@@ -434,7 +434,7 @@ void GrafxDriver::ImageCopy(ImageID_e ImageID, uint16_t PosX, uint16_t PosY)
 }
 
 //-------------------------------------------------------------------------------------------------
-//  Name:           CopyLinear
+//  Name:           BlendFromImage
 //
 //  Parameter(s):   ImageID     Image identifier used to retrieve image metadata and raw data.
 //                  Position    Top-left coordinate where the image will be blended.
@@ -456,7 +456,7 @@ void GrafxDriver::ImageCopy(ImageID_e ImageID, uint16_t PosX, uint16_t PosY)
 //
 //                  Temporary buffers allocated for RLE32 decoding are released after use.
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::CopyLinear(ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode)
+void GrafxDriver::BlendFromImage(ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode)
 {
     DisplayLayer* pLayer = &LayerTable[DisplayLayer::GetDrawing()];
 
@@ -528,7 +528,7 @@ void GrafxDriver::CopyLinear(ImageID_e ImageID, Cartesian_t Position, BlendMode_
     }
     else
     {
-        GrafxDriver::CopyLinear(ImageID, Position, BlendMode);
+        GrafxDriver::BlendFromImage(ImageID, Position, BlendMode);
     }
 }
 

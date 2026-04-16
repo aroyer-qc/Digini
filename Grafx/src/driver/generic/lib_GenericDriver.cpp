@@ -247,17 +247,17 @@ void GrafxGenDriver::LayerConfig(Layer_e Layer)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function Name: CopyLinear
+//   Function Name: BlendFromImage
 //
 //   Parameter(s):  ImageID_e            ImageID
 //                  Cartesian_t          Position
 //                  BlendMode_e          BlendMode
 //   Return Value:  none
 //
-//   Description:   Copy a rectangle region from linear memory region to square memory area
+//   Description:   Copy an image from memory region to window memory area
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxGenDriver::CopyLinear(ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode)
+void GrafxGenDriver::BlendFromImage(ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode)
 {
     ImageInfo_t Image;
     Box_t       Box;

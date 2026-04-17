@@ -113,6 +113,11 @@ extern "C" {
   extern Progress_t         Progress            [APP_NB_PROGRESS_CONST];
  #endif
 
+ #ifdef ROTARY_DIAL_DEF
+  #define APP_NB_ROTARY_DIAL_CONST          (APP_END_ROTARY_DIAL_CONST      - APP_START_ROTARY_DIAL_CONST)      - 1
+  extern RotaryDial_t       RotaryDial          [APP_NB_ROTARY_DIAL_CONST];
+ #endif
+
  #ifdef ROUND_METER_DEF
   #define APP_NB_ROUND_METER_CONST          (APP_END_ROUND_METER_CONST      - APP_START_ROUND_METER_CONST)      - 1
   extern RoundMeter_t       RoundMeter          [APP_NB_ROUND_METER_CONST];

@@ -38,7 +38,7 @@ class GrafxGenDriver
 {
         public:
 
-            virtual     void    Initialize            			(const void* pArg) = 0;
+            virtual     void    Initialize            			(const void* pArg);
 	        virtual     void    DisplayOn             			(void)             = 0;
             virtual     void    DisplayOff            			(void)             = 0;
             virtual     void    LayerConfig           			(DisplayLayer* pLayer);

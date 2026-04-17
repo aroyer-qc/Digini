@@ -213,6 +213,15 @@
         (uint16_t)OPTIONS,                                                              \
     },
 
+#define EXPAND_X_ROTARY_DIAL_AS_STRUCT(ENUM_ID, SERVICE, SUB_SERVICE, POS_X, POS_Y, SIZE_X, SIZE_Y, START_ANGLE, END_ANGLE, STEP_ANGLE, RANGE, FONT_ID, OPTIONS) \
+\
+    {                                                                                                          \
+        {(uint32_t)SERVICE, (uint16_t)SUB_SERVICE},                                                            \
+        {{(int16_t)POS_X, (int16_t)POS_Y}, {(uint16_t)SIZE_X, (uint16_t)SIZE_Y}},                              \
+        START_ANGLE, END_ANGLE, STEP_ANGLE, RANGE, MINIMUM, FONT_ID,                                           \
+        (uint16_t)OPTIONS,                                                                                     \
+    },
+
 #define EXPAND_X_ROUND_METER_AS_STRUCT(ENUM_ID, SERVICE, SUB_SERVICE, POS_X, POS_Y, SIZE_X, SIZE_Y, MINIMUM, MAXIMUM, CURSOR, CURSOR_RADIUS, START_ANGLE, END_ANGLE, RANGE, OPTIONS, POS_TEXT_X, POS_TEXT_Y, SIZE_TEXT_X, SIZE_TEXT_Y, TEXT_COLOR, TEXT_ALT_COLOR, FONT_ID, FONT_ALT_ID, TEXT_OPTION, TEXT_LABEL)\
     {                                                                                                          \
         {(uint32_t)SERVICE, (uint16_t)SUB_SERVICE},                                                            \
@@ -424,6 +433,17 @@ Progress_t Progress[APP_NB_PROGRESS_CONST] =
     PROGRESS_DEF(EXPAND_X_PROGRESS_AS_STRUCT)
 };
 #endif   // PROGRESS_DEF
+
+//-------------------------------------------------------------------------------------------------
+//  ROTARY_DIAL Widget
+//-------------------------------------------------------------------------------------------------
+
+#ifdef ROTARY_DIAL_DEF
+RotaryDial_t RotaryDial[APP_NB_ROTARY_DIAL_CONST] =
+{
+    ROTARY_DIAL_DEF(EXPAND_X_ROTARY_DIAL_AS_STRUCT)
+};
+#endif   // ROUND_METER_DEF
 
 //-------------------------------------------------------------------------------------------------
 //  ROUND_METER Widget

@@ -37,6 +37,21 @@
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           Initialize
+//
+//  Parameter(s):   const void*         pArg        N/U
+//  Return:         None
+//
+//  Description:   Nothing to initialize on DMA2D
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxGenDriver::Initialize(const void* pArg)
+{
+    VAR_UNUSED(pArg);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           ClearLayer
 //
 //  Parameter(s):   Layer_e 		Layer

@@ -443,7 +443,7 @@ struct RotaryDial_t
     uint16_t       EndAngle;
     uint16_t       StepAngle;
     uint16_t       Range;
-    Text_t         Text;
+    Font_e         FontID;
     uint16_t       Options;
 };
 

@@ -45,7 +45,7 @@
 
 #endif
 
-#if (GRAFX_USE_QUAD_SPI_FOR_DATABASE == DEF_ENABLED)  // this is not yet develop.. is it directly like GRAFX_USE_ROM_DATABASE ??
+#if (GRAFX_USE_QUAD_SPI_DATABASE == DEF_ENABLED)  // this is not yet develop.. is it directly like GRAFX_USE_ROM_DATABASE ??
   #define GFX_QSPI_DBASE_DEF(X_GFX_QSPI_DBASE) \
     X_GFX_QSPI_DBASE( GFX_FONT_INFO,          DBASE_MAX_SKIN_FONT_QTY,    1,                           sizeof(FontInfo_t)          )   \
     X_GFX_QSPI_DBASE( GFX_FONT_DESC_INFO,     DBASE_MAX_SKIN_FONT_QTY,    FONT_CHARACTER_PER_FONT_MAX, sizeof(FontDescriptor_t)    )   \

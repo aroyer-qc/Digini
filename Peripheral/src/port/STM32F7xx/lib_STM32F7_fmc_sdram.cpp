@@ -53,48 +53,55 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define FMC_BTR_CLEAR_MASK          ((uint32_t)(FMC_BTR_ADDSET | FMC_BTR_ADDHLD | FMC_BTR_DATAST | FMC_BTR_BUSTURN | FMC_BTR_ACCMOD))                                                           // BTR register clear mask
-#define FMC_BWTR_CLEAR_MASK         ((uint32_t)(FMC_BWTR_ADDSET | FMC_BWTR_ADDHLD | FMC_BWTR_DATAST | FMC_BWTR_BUSTURN | FMC_BWTR_ACCMOD))                                                      // BWTR register clear mask
-#define FMC_PCR_CLEAR_MASK          ((uint32_t)(FMC_PCR_PWAITEN | FMC_PCR_PBKEN | FMC_PCR_PWID | FMC_PCR_ECCEN | FMC_PCR_TCLR | FMC_PCR_TAR | FMC_PCR_ECCPS))                                   // PCR register clear mask
-#define FMC_PMEM_CLEAR_MASK         ((uint32_t)(FMC_PMEM_MEMSET | FMC_PMEM_MEMWAIT | FMC_PMEM_MEMHOLD | FMC_PMEM_MEMHIZ))                                                                       // PMEM register clear mask
-#define FMC_PATT_CLEAR_MASK         ((uint32_t)(FMC_PATT_ATTSET | FMC_PATT_ATTWAIT | FMC_PATT_ATTHOLD | FMC_PATT_ATTHIZ))                                                                       // PATT register clear mask
-#define FMC_SDCR_CLEAR_MASK         ((uint32_t)(FMC_SDCR_NC | FMC_SDCR_NR | FMC_SDCR_MWID | FMC_SDCR_NB | FMC_SDCR_CAS | FMC_SDCR_WP | FMC_SDCR_SDCLK | FMC_SDCR_RBURST | FMC_SDCR_RPIPE))      // SDCR register clear mask
-#define FMC_SDTR_CLEAR_MASK         ((uint32_t)(FMC_SDTR_TMRD | FMC_SDTR_TXSR | FMC_SDTR_TRAS | FMC_SDTR_TRC | FMC_SDTR_TWR | FMC_SDTR_TRP | FMC_SDTR_TRCD))                                    // SDTR register clear mask
-#define FMC_SDTR_TIMING_CLEAR_MASK  ((uint32_t)(FMC_SDTR_TRC | FMC_SDTR_TRP))                                                                                                                   // SDTR register clear mask for timing
+#define FMC_BTR_CLEAR_MASK                  ((uint32_t)(FMC_BTR_ADDSET | FMC_BTR_ADDHLD | FMC_BTR_DATAST | FMC_BTR_BUSTURN | FMC_BTR_ACCMOD))                                                           // BTR register clear mask
+#define FMC_BWTR_CLEAR_MASK                 ((uint32_t)(FMC_BWTR_ADDSET | FMC_BWTR_ADDHLD | FMC_BWTR_DATAST | FMC_BWTR_BUSTURN | FMC_BWTR_ACCMOD))                                                      // BWTR register clear mask
+#define FMC_PCR_CLEAR_MASK                  ((uint32_t)(FMC_PCR_PWAITEN | FMC_PCR_PBKEN | FMC_PCR_PWID | FMC_PCR_ECCEN | FMC_PCR_TCLR | FMC_PCR_TAR | FMC_PCR_ECCPS))                                   // PCR register clear mask
+#define FMC_PMEM_CLEAR_MASK                 ((uint32_t)(FMC_PMEM_MEMSET | FMC_PMEM_MEMWAIT | FMC_PMEM_MEMHOLD | FMC_PMEM_MEMHIZ))                                                                       // PMEM register clear mask
+#define FMC_PATT_CLEAR_MASK                 ((uint32_t)(FMC_PATT_ATTSET | FMC_PATT_ATTWAIT | FMC_PATT_ATTHOLD | FMC_PATT_ATTHIZ))                                                                       // PATT register clear mask
+#define FMC_SDCR_CLEAR_MASK                 ((uint32_t)(FMC_SDCR_NC | FMC_SDCR_NR | FMC_SDCR_MWID | FMC_SDCR_NB | FMC_SDCR_CAS | FMC_SDCR_WP | FMC_SDCR_SDCLK | FMC_SDCR_RBURST | FMC_SDCR_RPIPE))      // SDCR register clear mask
+#define FMC_SDTR_CLEAR_MASK                 ((uint32_t)(FMC_SDTR_TMRD | FMC_SDTR_TXSR | FMC_SDTR_TRAS | FMC_SDTR_TRC | FMC_SDTR_TWR | FMC_SDTR_TRP | FMC_SDTR_TRCD))                                    // SDTR register clear mask
+#define FMC_SDTR_TIMING_CLEAR_MASK          ((uint32_t)(FMC_SDTR_TRC | FMC_SDTR_TRP))                                                                                                                   // SDTR register clear mask for timing
 
 // FMC SDRAM Command Mode
-#define FMC_SDCMR_CMD_NORMAL_MODE                   (0x00000000U)
-#define FMC_SDCMR_CMD_CLK_ENABLE                    (0x00000001U)
-#define FMC_SDCMR_CMD_PALL                          (0x00000002U)
-#define FMC_SDCMR_CMD_AUTO_REFRESH_MODE             (0x00000003U)
-#define FMC_SDCMR_CMD_LOAD_MODE                     (0x00000004U)
-#define FMC_SDCMR_CMD_SELF_REFRESH_MODE             (0x00000005U)
-#define FMC_SDCMR_CMD_POWER_DOWN_MODE               (0x00000006U)
+#define FMC_SDCMR_CMD_NORMAL_MODE           (0x00000000)
+#define FMC_SDCMR_CMD_CLK_ENABLE            (0x00000001)
+#define FMC_SDCMR_CMD_PALL                  (0x00000002)
+#define FMC_SDCMR_CMD_AUTO_REFRESH_MODE     (0x00000003)
+#define FMC_SDCMR_CMD_LOAD_MODE             (0x00000004)
+#define FMC_SDCMR_CMD_SELF_REFRESH_MODE     (0x00000005)
+#define FMC_SDCMR_CMD_POWER_DOWN_MODE       (0x00000006)
 
 #if (CFG_SDRAM_BANK == FMC_SDRAM_BANK1)
-  #define FMC_SDCMR_BANK                            FMC_SDCMR_CTB1
+  #define FMC_SDCMR_BANK                    FMC_SDCMR_CTB1
 #elif (CFG_SDRAM_BANK == FMC_SDRAM_BANK2)
-  #define FMC_SDCMR_BANK                            FMC_SDCMR_CTB2
+  #define FMC_SDCMR_BANK                    FMC_SDCMR_CTB2
 #else
-  #define FMC_SDCMR_BANK                            (FMC_SDCMR_CTB1 | FMC_SDCMR_CTB2)
+  #define FMC_SDCMR_BANK                    (FMC_SDCMR_CTB1 | FMC_SDCMR_CTB2)
 #endif
 
-#define FMC_SDCMR_MODE_REGISTER                     (CFG_SDRAM_MRD_WRITE_BURST_MODE | CFG_SDRAM_MRD_OPERATION_MODE | CFG_SDRAM_MRD_CAS_LATENCY | CFG_SDRAM_MRD_BURST_TYPE | CFG_SDRAM_MRD_BURST_LENGTH)
+#define FMC_SDCMR_MODE_REGISTER             (CFG_SDRAM_MRD_WRITE_BURST_MODE | \
+                                             CFG_SDRAM_MRD_OPERATION_MODE   | \
+                                             CFG_SDRAM_MRD_CAS_LATENCY      | \
+                                             CFG_SDRAM_MRD_BURST_TYPE       | \
+                                             CFG_SDRAM_MRD_BURST_LENGTH)
 
 // SDTR timing macros (STM32F7 naming)
-#define FMC_SDTR_LOAD_TO_ACTIVITY_DELAY             (uint32_t(CFG_SDRAM_LOAD_TO_ACTIVITY_DELAY)  - 1)
-#define FMC_SDTR_EXIT_SELF_REFRESH_DELAY            ((uint32_t(CFG_SDRAM_EXIT_SELF_REFRESH_DELAY) - 1) << FMC_SDTRx_TXSR_Pos)
-#define FMC_SDTR_SELF_REFRESH_TIME                  ((uint32_t(CFG_SDRAM_SELF_REFRESH_TIME)       - 1) << FMC_SDTRx_TRAS_Pos)
-#define FMC_SDTR_ROW_CYCLE_DELAY                    ((uint32_t(CFG_SDRAM_ROW_CYCLE_DELAY)         - 1) << FMC_SDTRx_TRC_Pos)
-#define FMC_SDTR_WRITE_RECOVERY_TIME                ((uint32_t(CFG_SDRAM_WRITE_RECOVERY_TIME)     - 1) << FMC_SDTRx_TWR_Pos)
-#define FMC_SDTR_RP_DELAY                           ((uint32_t(CFG_SDRAM_RP_DELAY)                - 1) << FMC_SDTRx_TRP_Pos)
-#define FMC_SDTR_RCD_DELAY                          ((uint32_t(CFG_SDRAM_RCD_DELAY)               - 1) << FMC_SDTRx_TRCD_Pos)
-#define SDCMR_AUTO_REFRESH_CYCLE                    ((uint32_t(CFG_SDRAM_AUTO_REFRESH_CYCLE)      - 1) << FMC_SDCMR_NRFS_Pos)
+#define FMC_SDTR_LOAD_TO_ACTIVITY_DELAY     (uint32_t(CFG_SDRAM_LOAD_TO_ACTIVITY_DELAY)   - 1)
+#define FMC_SDTR_EXIT_SELF_REFRESH_DELAY    ((uint32_t(CFG_SDRAM_EXIT_SELF_REFRESH_DELAY) - 1) << FMC_SDTRx_TXSR_Pos)
+#define FMC_SDTR_SELF_REFRESH_TIME          ((uint32_t(CFG_SDRAM_SELF_REFRESH_TIME)       - 1) << FMC_SDTRx_TRAS_Pos)
+#define FMC_SDTR_ROW_CYCLE_DELAY            ((uint32_t(CFG_SDRAM_ROW_CYCLE_DELAY)         - 1) << FMC_SDTRx_TRC_Pos)
+#define FMC_SDTR_WRITE_RECOVERY_TIME        ((uint32_t(CFG_SDRAM_WRITE_RECOVERY_TIME)     - 1) << FMC_SDTRx_TWR_Pos)
+#define FMC_SDTR_RP_DELAY                   ((uint32_t(CFG_SDRAM_RP_DELAY)                - 1) << FMC_SDTRx_TRP_Pos)
+#define FMC_SDTR_RCD_DELAY                  ((uint32_t(CFG_SDRAM_RCD_DELAY)               - 1) << FMC_SDTRx_TRCD_Pos)
+#define FMC_SDCMR_AUTO_REFRESH_CYCLE        ((uint32_t(CFG_SDRAM_AUTO_REFRESH_CYCLE)      - 1) << FMC_SDCMR_NRFS_Pos)
 
-#define SDRTR_REFRESH_COUNT                         ((uint32_t)(CFG_SDRAM_REFRESH_COUNT) << FMC_SDRTR_COUNT_Pos)
+#define SDRTR_REFRESH_COUNT                 ((uint32_t)(CFG_SDRAM_REFRESH_COUNT) << FMC_SDRTR_COUNT_Pos)
 
-#define FMC_MRD_CONFIG								(CFG_SDRAM_MRD_BURST_LENGTH   | CFG_SDRAM_MRD_BURST_TYPE | CFG_SDRAM_MRD_CAS_LATENCY | \
-													 CFG_SDRAM_MRD_OPERATION_MODE | (CFG_SDRAM_MRD_WRITE_BURST_MODE <<  FMC_SDCMR_MRD_Pos))
+#define FMC_MRD_CONFIG						(CFG_SDRAM_MRD_BURST_LENGTH   | \
+                                             CFG_SDRAM_MRD_BURST_TYPE     | \
+                                             CFG_SDRAM_MRD_CAS_LATENCY    | \
+										     CFG_SDRAM_MRD_OPERATION_MODE | \
+										     (CFG_SDRAM_MRD_WRITE_BURST_MODE <<  FMC_SDCMR_MRD_Pos))
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -127,12 +134,12 @@ void SDRAM_Initialize(void)
                                           CFG_SDRAM_PIPE_DELAY);
 
     // Set SDRAM device timing parameters
-    FMC_Bank5_6->SDTR[FMC_SDRAM_BANK1] = (FMC_SDTR_LOAD_TO_ACTIVITY_DELAY    |
-                                          FMC_SDTR_EXIT_SELF_REFRESH_DELAY   |
-                                          FMC_SDTR_SELF_REFRESH_TIME         |
-                                          FMC_SDTR_ROW_CYCLE_DELAY           |
-                                          FMC_SDTR_WRITE_RECOVERY_TIME       |
-                                          FMC_SDTR_RP_DELAY                  |
+    FMC_Bank5_6->SDTR[FMC_SDRAM_BANK1] = (FMC_SDTR_LOAD_TO_ACTIVITY_DELAY  |
+                                          FMC_SDTR_EXIT_SELF_REFRESH_DELAY |
+                                          FMC_SDTR_SELF_REFRESH_TIME       |
+                                          FMC_SDTR_ROW_CYCLE_DELAY         |
+                                          FMC_SDTR_WRITE_RECOVERY_TIME     |
+                                          FMC_SDTR_RP_DELAY                |
                                           FMC_SDTR_RCD_DELAY);
 
   #else // (CFG_SDRAM_BANK == FMC_SDRAM_BANK2)
@@ -170,4 +177,4 @@ void SDRAM_Initialize(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // USE_SDRAM_DRIVER
+#endif // (USE_SDRAM_DRIVER == DEF_ENABLED)

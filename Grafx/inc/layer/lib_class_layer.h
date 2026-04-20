@@ -58,6 +58,9 @@ class DisplayLayer
                                                          PixelFormat_e    PixelFormat);
 
         // Function
+
+        static void             Initialize              (void);
+
         void                    Clear                   (void);
         void                    SetAddress              (uint32_t Address);
         uint32_t                GetAddress              (void);
@@ -96,11 +99,13 @@ class DisplayLayer
 
     private:
 
+        static void             TakeMutex               (void);
+        static void             GiveMutex               (void);
+
         //  Variables
         Layer_e                 m_VirtualLayer;                  // This is the memory layer
         uint32_t                m_LayerAddress;
         LayerType_e             m_ActiveOnLayer;                 // This is the physical if any ( to enable the physical part )
-
         PixelFormat_e           m_PixelFormat;
         uint8_t                 m_PixelSize;
         uint8_t                 m_Alpha;
@@ -110,8 +115,9 @@ class DisplayLayer
         uint32_t                m_TextColor;
 
         // Static variables
+        static bool             m_IsItInitialize;
+        static nOS_Mutex        m_Mutex;
         static Layer_e          m_ActiveDrawingLayer;
-
         static DisplayLayer*    m_pActiveBG_Layer;
       #if (GRAFX_USE_CONSTRUCTION_BACKGROUND_LAYER == DEF_ENABLED)
         static DisplayLayer*    m_pConstructBG_Layer;

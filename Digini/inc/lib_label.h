@@ -336,6 +336,10 @@ X_LABEL( LBL_TEST,  "the quick brown fox jumps over the lazy dog",         "port
 #define VT100_SERIAL_NUMBER_SETTING_DEF(X_LABEL) \
     X_LABEL( VT100_LBL_SERIAL_NUMBER_SETTING,      "Setting Serial Number",                                                                                    "Configurer Num\x82ro de S\x82rie"                                                                                                   ) \
 
+#define VT100_SYSTEM_SETTING_DEF(X_LABEL) \
+    X_LABEL( VT100_LBL_SYSTEM_SETTING,             "System Settings",                                                                                          "Configuration Syst\x8ame"                                                                                                           ) \
+    X_LABEL( VT100_LBL_SYSTEM_SETTING_MENU,        "System Settings Menu",                                                                                     "Menu Configuration Syst\x8ame"                                                                                                      ) \
+
 #define VT100_TIME_AND_DATE_SETTING_DEF(X_LABEL) \
     X_LABEL( VT100_LBL_TIME_AND_DATE,              "Time and Date",                                                                                            "Heure et Date"                                                                                                                      ) \
     X_LABEL( VT100_LBL_TIME_AND_DATE_CONFIG,       "Time and Date Configuration",                                                                              "Configuration Heure et Date"                                                                                                        ) \
@@ -491,6 +495,10 @@ enum Label_e
 
   #if (VT100_USE_SERIAL_NUMBER_SETTING == DEF_ENABLED)
     VT100_SERIAL_NUMBER_SETTING_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
+  #endif
+
+  #if (VT100_USE_SYSTEM_SETTING == DEF_ENABLED)
+    VT100_SYSTEM_SETTING_DEF(EXPAND_X_LBL_CFG_AS_ENUM)
   #endif
 
   #if (VT100_USE_TIME_AND_DATE_SETTING == DEF_ENABLED)

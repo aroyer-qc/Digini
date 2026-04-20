@@ -59,6 +59,9 @@ DisplayLayer LayerTable[LAYER_COUNT] =
 //
 //-------------------------------------------------------------------------------------------------
 
+bool                DisplayLayer::m_IsItInitialize = false;
+nOS_Mutex           DisplayLayer::m_Mutex;
+
 Layer_e             DisplayLayer::m_ActiveDrawingLayer;
       //static DisplayLayer*      m_pActiveDrawingLayer;
 
@@ -158,8 +161,28 @@ DisplayLayer::DisplayLayer(Layer_e          VirtualLayer,
     m_Alpha          = 255;
     m_Color          = GetFormatColor(PixelFormat, BLACK);
     m_TextColor      = GetFormatColor(PixelFormat, WHITE);
-
     DisplayLayer::m_LayerStackCounter = CLAYER_STACK_LEVEL;
+
+}
+
+void DisplayLayer::Initialize(void)
+{
+    if(m_IsItInitialize == false)
+    {
+        nOS_MutexCreate(&DisplayLayer::m_Mutex, NOS_MUTEX_NORMAL, NOS_MUTEX_PRIO_INHERIT);
+        m_IsItInitialize = true;
+    }
+}
+
+
+void DisplayLayer::TakeMutex(void)
+{
+    nOS_MutexLock(&DisplayLayer::m_Mutex, NOS_WAIT_INFINITE);
+}
+
+void DisplayLayer::GiveMutex(void)
+{
+    nOS_MutexUnlock(&DisplayLayer::m_Mutex);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -581,6 +604,7 @@ void DisplayLayer::PushDrawing(void)
 {
     if(m_LayerStackCounter != 0)
     {
+        TakeMutex();
         m_LayerStackCounter--;
         m_LayerStack[m_LayerStackCounter] = m_ActiveDrawingLayer;
     }
@@ -602,6 +626,7 @@ void DisplayLayer::PopDrawing(void)
     {
         DisplayLayer::m_ActiveDrawingLayer = DisplayLayer::m_LayerStack[m_LayerStackCounter];
         DisplayLayer::m_LayerStackCounter++;
+        GiveMutex();
     }
 }
 

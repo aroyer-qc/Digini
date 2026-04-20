@@ -164,14 +164,15 @@ class GrafxDriver : public GrafxGenDriver
 //validated
         void            BlendFromImage                  (ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode);
         void            ImageCopy                       (ImageID_e ImageID, uint16_t PosX, uint16_t PosY);
-        void            CopyBackgroundToConstruction    (ImageID_e Image, Cartesian_t Position);
 
-
-      #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
-        void            CopyWidgetToDevice              (BoxSize_t BoxSize, Cartesian_t Position);
-        void            CopyWidgetToDevice              (ImageID_e ImageID, Cartesian_t Position);
+      #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
+        void            CopyBackgroundToConstruction    (Cartesian_t Position);
       #endif
 
+      #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+        void            CopyWidgetToDevice              (ImageID_e ImageID, Cartesian_t Position);
+        void            CopyWidgetToDevice              (BoxSize_t BoxSize, Cartesian_t Position);
+      #endif
 
         void            PrintFont                       (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
 

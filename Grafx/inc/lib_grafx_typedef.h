@@ -83,6 +83,7 @@ struct StaticImageInfo_t
    Compression_e   Compression;
 };
 
+#pragma pack(push, 1)
 struct StaticImageRLE_16_t
 {
     uint8_t        Repeat;
@@ -94,6 +95,7 @@ struct StaticImageRLE_32_t
     uint8_t        Repeat;
     uint32_t       Pixel;
 };
+#pragma pack(pop)
 
 union EventArea_t
 {
@@ -119,6 +121,7 @@ struct FontSize_t
     uint8_t        Height;
 };
 
+#pragma pack(push, 1)
 struct FontDescriptor_t
 {
     int8_t         LeftBearing;
@@ -130,7 +133,9 @@ struct FontDescriptor_t
     uint16_t       TotalSize;
     const uint8_t* pAddress;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct FontInfo_t
 {
     const uint8_t*          pLookUpTable;       // maybe it should be a pointer
@@ -141,6 +146,7 @@ struct FontInfo_t
     uint8_t                 Interline;
     const FontDescriptor_t* pDescriptor;
 };
+#pragma pack(pop)
 
 struct PageSlideRange_t
 {

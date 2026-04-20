@@ -188,7 +188,7 @@ void WidgetButton::Draw(ServiceReturn_t* pService)
     ImageID_e ImageID = m_pButton->Image.ID_List[pService->IndexState];
 
   #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
-    myGrafx->CopyBackgroundToConstruction(ImageID, m_pButton->Pos);             // if the display has no multilayer capability.
+    myGrafx->CopyBackgroundToConstruction(m_pButton->Pos);              // if the display has no multilayer capability.
   #endif
 
     if(ImageID != INVALID_IMAGE)

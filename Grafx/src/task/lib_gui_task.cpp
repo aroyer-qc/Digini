@@ -206,7 +206,9 @@ void GUI_myClassTask::Run()
                     myGrafx->WaitFor_V_Sync();
                   #endif
 
+                  #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_DISABLED)
                     myGrafx->CopyLayerToLayer(CONSTRUCTION_FOREGROUND_LAYER, FOREGROUND_DISPLAY_LAYER_0, 0, 0, GRAFX_DRIVER_SIZE_X, GRAFX_DRIVER_SIZE_Y);
+                  #endif
 
                   #if (GRAFX_USE_SLIDING_PAGE == DEF_ENABLED)
                     if(IsPageWasSliding == true)
@@ -376,6 +378,14 @@ Link_e GUI_myClassTask::CreateAllWidget()
         {
             pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetProgress));
             *pWidgetListPointer = new(pWidget) WidgetProgress(&Progress[Widget - (APP_START_PROGRESS_CONST + 1)]);
+        }
+       #endif
+
+       #ifdef ROTARY_DIAL_DEF
+        else if((Widget > APP_START_ROTARY_DIAL_CONST) && (Widget < APP_END_ROTARY_DIAL_CONST))
+        {
+            pWidget             = (CWidgetInterface*)pMemoryPool->Alloc(sizeof(WidgetRotaryDial));
+            *pWidgetListPointer = new(pWidget) WidgetRotaryDial(&RotaryDial[Widget - (APP_START_ROTARY_DIAL_CONST + 1)]);
         }
        #endif
 

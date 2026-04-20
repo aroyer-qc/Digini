@@ -134,6 +134,8 @@ SystemState_e GRAFX_PostInitialize(void)
   #endif
     nOS_Error     Error;
 
+    DisplayLayer::Initialize();
+
   #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
     DB_Central.Set(&GFX_LoadingAddress, GFX_FREE_RAM_POINTER, 0, 0);   // Record the free RAM pointer in database at reload ID
   #endif

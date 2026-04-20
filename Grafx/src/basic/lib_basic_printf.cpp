@@ -103,7 +103,7 @@ size_t GPrintf::Draw(Box_t* pBox, const char* pFormat, va_list vaArg)
     if(m_Size != 0)
     {
         m_pLocalBox = pBox;
-        this->PutString();
+        PutString();
         Size = m_Size;
     }
 
@@ -135,7 +135,6 @@ size_t GPrintf::Draw(Box_t* pBox, const char* pFormat, va_list vaArg)
 //-------------------------------------------------------------------------------------------------
 size_t GPrintf::PutString(void)
 {
-    #if 0
     uint32_t   KeepDrawingColor = DisplayLayer::GetColor();
     FontInfo_t FontInfo;
 
@@ -203,15 +202,34 @@ size_t GPrintf::PutString(void)
         // -------------------------------------------------------------
         for(uint16_t j = 0; j < charCount; j++)
         {
-            DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, pLineString[j]);
 
-            m_CorrectedPos.X = m_Position.X + m_FontDescriptor.LeftBearing;
-            m_CorrectedPos.Y = m_Position.Y + m_FontDescriptor.OffsetY;
+// OLD Method if else according to mode          DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, pLineString[j]);
+//            m_CorrectedPos.X = m_Position.X + m_FontDescriptor.LeftBearing;
+//            m_CorrectedPos.Y = m_Position.Y + m_FontDescriptor.OffsetY;
 
-            if(m_FontDescriptor.pAddress != 0)
+//            if(m_FontDescriptor.pAddress != 0)
+//            {
+//                DisplayLayer::SetTextColor(*m_pMovingUsedColorPtr);
+//                PrintFont(&m_FontDescriptor, &m_CorrectedPos);
+//            }
+
+            uint32_t Character = uint32_t(pLineString[j]) - uint32_t(FontInfo.FirstCaracter);                      // Get the offset for this font
+
+            if(Character <= (FontInfo.LastCaracter - FontInfo.FirstCaracter))
             {
-                DisplayLayer::SetTextColor(*m_pMovingUsedColorPtr);
-                PrintFont(&m_FontDescriptor, &m_CorrectedPos);
+                uint8_t RealIndex = FontInfo.pLookUpTable[Character];
+
+                const FontDescriptor_t* AddresstDescriptor = FontInfo.pDescriptor + RealIndex;
+                memcpy(&m_FontDescriptor, (void*)AddresstDescriptor, sizeof(FontDescriptor_t));
+
+                m_CorrectedPos.X = m_Position.X + m_FontDescriptor.LeftBearing;
+                m_CorrectedPos.Y = m_Position.Y + m_FontDescriptor.OffsetY;
+
+                if(m_FontDescriptor.pAddress != 0)
+                {
+                    DisplayLayer::SetTextColor(*m_pMovingUsedColorPtr);
+                    PrintFont(&m_FontDescriptor, &m_CorrectedPos);
+                }
             }
 
             m_Position.X += m_FontDescriptor.HorizontalAdvance;
@@ -230,10 +248,11 @@ size_t GPrintf::PutString(void)
     pMemoryPool->Free((void**)&m_pFontUsedInString);
 
     DisplayLayer::SetColor(KeepDrawingColor);
-  #endif
+
     return 0;
 }
-/*
+
+#if 0
 size_t GPrintf::PutString(void)
 {
     uint32_t   KeepDrawingColor;
@@ -272,7 +291,16 @@ size_t GPrintf::PutString(void)
         // Print each individual character according to font use, color and all the offset
         for(j = 0; j < m_SubLineSizeChar[i]; j++)
         {
-            DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, *(m_pSubLineString[i] + j));
+//            DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, *(m_pSubLineString[i] + j));
+
+    uint32_t Character = uint32_t(m_SubLineSizeChar[j]) - uint32_t(FontInfo.FirstCaracter);                      // Get the offset for this font
+
+    //if(Character <= FontInfo.LastCaracter)
+    //{
+        const FontDescriptor_t* AddresstDescriptor = (const FontDescriptor_t*)(uint32_t(Character * sizeof(FontDescriptor_t)) + uint32_t(FontInfo.pDescriptor));
+
+        memcpy(&m_FontDescriptor, (void*)AddresstDescriptor, sizeof(FontDescriptor_t));
+
             m_CorrectedPos.X  = m_Position.X + m_FontDescriptor.LeftBearing;
             m_CorrectedPos.Y  = m_Position.Y + m_FontDescriptor.OffsetY;
 
@@ -336,7 +364,7 @@ size_t GPrintf::PutString(void)
     DisplayLayer::SetColor(KeepDrawingColor);                                             // Pop drawing color
     return 0;
 }
-*/
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //

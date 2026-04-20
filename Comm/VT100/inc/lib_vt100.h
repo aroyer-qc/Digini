@@ -149,6 +149,7 @@ enum NAME ## _ItemID_e                                             \
 #define EXPAND_VT100_AS_MENU_MEMBER_VARIABLE_DATA(NAME)                                                     const VT100_MenuDef_t VT100_Terminal::m_ ## NAME[NAME ## _NB_OF_ITEMS] =       \
                                                                                                             {                                                                              \
                                                                                                                 VT100_MENU_TREE_DEF(EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA, NAME)       \
+                                                                                                                VT100_USER_MENU_TREE_DEF(EXPAND_VT100_MENU_AS_MEMBER_VARIABLE_DATA, NAME)  \
                                                                                                             };
 
 /// this automatically create all the method declaration in the class for each callback
@@ -294,8 +295,8 @@ class VT100_Terminal : public ChildProcessInterface
         void                CallbackInitialize          (void);
       #endif
         void                GoToMenu                    (VT100_Menu_e MenuID);
-        size_t              InMenuPrintf                (Label_e Label, ...);                                   // TODO they should also be a generic to CLI and other serial printing methos that need language
-        size_t              InMenuPrintf                (uint8_t PosX, uint8_t PosY, Label_e Label, ...);       // TODO this should use part of the code from the prior function
+        size_t              VT100_Printf                (Label_e Label, ...);                                   // TODO they should also be a generic to CLI and other serial printing methos that need language
+        size_t              VT100_Printf                (uint8_t PosX, uint8_t PosY, Label_e Label, ...);       // TODO this should use part of the code from the prior function
         void                RestoreAttribute            (void);
         void                RestoreCursorPosition       (void);
         void                SaveAttribute               (void);

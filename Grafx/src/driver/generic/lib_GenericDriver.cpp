@@ -35,54 +35,6 @@
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// const(s)
-//-------------------------------------------------------------------------------------------------
-
-const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
-{
-  #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
-    PIXEL_FORMAT_ARGB8888,
-  #endif
-  #if (GRAFX_COLOR_RGB888 == DEF_ENABLED)
-    PIXEL_FORMAT_RGB888,
-  #endif
-  #if (GRAFX_COLOR_RGB565 == DEF_ENABLED)
-    PIXEL_FORMAT_RGB565,
-  #endif
-  #if (GRAFX_COLOR_ARGB1555 == DEF_ENABLED)
-    PIXEL_FORMAT_ARGB1555,
-  #endif
-  #if (GRAFX_COLOR_ARGB4444 == DEF_ENABLED)
-    PIXEL_FORMAT_ARGB4444,
-  #endif
-  #if (GRAFX_COLOR_L8 == DEF_ENABLED)
-    PIXEL_FORMAT_L8,
-  #endif
-  #if (GRAFX_COLOR_AL44 == DEF_ENABLED)
-    PIXEL_FORMAT_AL44,
-  #endif
-  #if (GRAFX_COLOR_AL88 == DEF_ENABLED)
-    PIXEL_FORMAT_AL88,
-  #endif
-  #if (GRAFX_COLOR_L4 == DEF_ENABLED)
-    PIXEL_FORMAT_L4,
-  #endif
-  #if (GRAFX_COLOR_A8 == DEF_ENABLED)
-    PIXEL_FORMAT_A8,
-  #endif
-  #if (GRAFX_COLOR_A4 == DEF_ENABLED)
-    PIXEL_FORMAT_A4,
-  #endif
-  #if (GRAFX_COLOR_RGB332 == DEF_ENABLED)
-    PIXEL_FORMAT_RGB332,
-  #endif
-  #if (GRAFX_COLOR_RGB444 == DEF_ENABLED)
-    PIXEL_FORMAT_RGB444,
-  #endif
-    -1
-};
-
-//-------------------------------------------------------------------------------------------------
 //
 //  Name:           BlockCopy
 //

@@ -158,7 +158,7 @@ void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pi
         uint32_t           PixelFormatDst;
         uint32_t           Address;
         uint32_t           AreaConfig;
-        DisplayLayer*            pLayer;
+        DisplayLayer*      pLayer;
         uint8_t            PixelSize;
 
         pLayer         = &LayerTable[DisplayLayer::GetDrawing()];

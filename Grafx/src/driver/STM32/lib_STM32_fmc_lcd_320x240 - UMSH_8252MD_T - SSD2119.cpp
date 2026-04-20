@@ -263,24 +263,37 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
-    uint16_t* pBuffer;
-    size_t    Size = pBox->Size.Width *  pBox->Size.Height * sizeof(uint16_t);
+    VAR_UNUSED(BlendMode);                      // NU On this LCD
 
-    // What is needed here..
+    if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+    {
+        uint32_t Width       = uint32_t(pBox->Size.Width);
+        uint32_t Height      = uint32_t(pBox->Size.Height);
 
-    pMemoryPool->Alloc(Size, MEM_DBG_GRAFX_BC);                                     // Reserve memory for merging image into background
-        // -    Use DMA2D to merge
-        // merge both image.
+        DisplayLayer* pLayer         = &LayerTable[DisplayLayer::GetDrawing()];
+        uint32_t ConstructAlphaLayer = pLayer->GetAddress();
+        uint32_t Offset              = uint32_t(pLayer->GetSize().X) - Width;
+        uint32_t OffsetSource        = ((pDstPos->Y * pLayer->GetSize().X) + pDstPos->X) * sizeof(uint32_t);
 
-    SetWindow(pBox);
-    pMemoryPool->Free((void**)&pBuffer);
+        DMA2D->CR = DMA2D_M2M_BLEND;                                                        // Memory to memory and TCIE blending BG + Source
 
-    VAR_UNUSED(pSrc);
-    VAR_UNUSED(pDstPos);
-    VAR_UNUSED(SrcPixelFormat);
-    VAR_UNUSED(BlendMode);
+        //Source of the image to blend
+        DMA2D->FGMAR   = uint32_t(pSrc);
+        DMA2D->FGOR    = 0;                                                                 // Source line offset so none as we are linear
+        DMA2D->FGPFCCR = SrcPixelFormat;                                                    // Defines the size of pixel.
 
-    // We are not calling the gen driver. because we don't have that functionality
+       // Source in construction layer of the previous blended image or just background
+        DMA2D->BGMAR   = ConstructAlphaLayer + OffsetSource;                                // Source address
+        DMA2D->BGOR    = Offset;                                                            // Source line offset
+        DMA2D->BGPFCCR = DMA2D_CONVERSION_ARGB8888;                                         // Defines the size of pixel.
+
+        //Destination write back to construction layer
+        DMA2D->OMAR    = ConstructAlphaLayer + OffsetSource;                                // Destination address
+        DMA2D->OOR     = Offset;                                                            // Destination line offset
+        DMA2D->OPFCCR  = DMA2D_CONVERSION_ARGB8888;                                         // Defines the size of pixel.
+
+        DMA2D->NLR     = (Width << 16) | Height;                                            // Size configuration of area to be transfered
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -377,6 +390,165 @@ void GrafxDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uint16
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           BlendFromImage
+//
+//  Parameter(s):   ImageID     Image identifier used to retrieve image metadata and raw data.
+//                  Position    Top-left coordinate where the image will be blended.
+//                  BlendMode   Blending mode (unused on this LCD; alpha handled via DMA2D).
+//
+//  Return:         None
+//
+//  Description:    Performs a linear memory-to-memory copy of an ARGB8888 image into the active
+//                  construction layer. If the image is RLE32-compressed, it is first expanded
+//                  into a temporary ARGB8888 buffer. The STM32 DMA2D engine is then configured
+//                  for M2M blending, combining:
+//
+//                      - Foreground : ARGB8888 source image
+//                      - Background : ARGB8888 construction layer only into this driver
+//
+//                  The blended result is written into the construction layer buffer. This path
+//                  is only executed when drawing on the foreground construction layer; otherwise,
+//                  the function falls back to the standard CopyLinear() implementation.
+//
+//                  Temporary buffers allocated for RLE32 decoding are released after use.
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::BlendFromImage(ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode)
+{
+    VAR_UNUSED(BlendMode);                      // NU On this LCD
+
+    if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+    {
+        StaticImageInfo_t* pImage;
+        uint32_t*          pImageSourceAlpha = nullptr;
+
+        DB_Central.Get(&pImage, GFX_IMAGE_INFO, uint16_t(ImageID));
+        uint32_t Width     = uint32_t(pImage->Info.Size.Width);
+        uint32_t Height    = uint32_t(pImage->Info.Size.Height);
+        uint32_t ImageSize = Width * Height;
+
+        // Copy source alpha to blend actual construction layer
+        DisplayLayer* pLayer              = &LayerTable[DisplayLayer::GetDrawing()];
+        uint32_t      ConstructAlphaLayer = pLayer->GetAddress();
+
+        if(pImage->Compression == COMPX_RLE_32)
+        {
+            pImageSourceAlpha = (uint32_t*)pMemoryPool->Alloc(ImageSize * sizeof(uint32_t), MEM_DBG_GRAFX_CL1);
+            WriteRLE32((StaticImageRLE_32_t*)pImage->Info.pPointer, pImageSourceAlpha, pImage->RawSize);
+        }
+        else
+        {
+            pImageSourceAlpha = (uint32_t*)pImage->Info.pPointer;
+        }
+
+        // DMA2D the 2 buffers
+        uint32_t Offset = uint32_t(pLayer->GetSize().X) - Width;
+        uint32_t AddressOffset = 0;
+
+        if((Position.X > m_ConstructPosition.X) || (Position.Y > m_ConstructPosition.Y))
+        {
+            Position.X  -= m_ConstructPosition.X;
+            Position.Y  -= m_ConstructPosition.Y;
+            AddressOffset = ((Position.Y * pLayer->GetSize().X) + Position.X) * sizeof(uint32_t);
+        }
+
+        DMA2D->CR = DMA2D_M2M_BLEND;                                                        // Memory to memory and TCIE blending BG + Source
+
+        //Source of the image to blend
+        DMA2D->FGMAR   = uint32_t(pImageSourceAlpha);
+        DMA2D->FGOR    = 0;                                                                 // Source line offset so none as we are linear
+        DMA2D->FGPFCCR = DMA2D_CONVERSION_ARGB8888;                                         // Defines the size of pixel.
+
+        // Source in construction layer of the previous blended image or just background
+        DMA2D->BGMAR   = ConstructAlphaLayer + AddressOffset;                               // Source address
+        DMA2D->BGOR    = Offset;                                                            // Source line offset
+        DMA2D->BGPFCCR = DMA2D_CONVERSION_ARGB8888;                                         // Defines the size of pixel.
+
+        //Destination write back to construction layer
+        DMA2D->OMAR    = ConstructAlphaLayer + AddressOffset;                               // Destination address
+        DMA2D->OOR     = Offset;                                                            // Destination line offset
+        DMA2D->OPFCCR  = DMA2D_CONVERSION_ARGB8888;                                         // Defines the size of pixel.
+
+        DMA2D->NLR     = (Width << 16) | Height;                                            // Size configuration of area to be transfered
+
+        SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                 // Start operation
+        while ((DMA2D->ISR & DMA2D_ISR_ALL_FLAG) == 0);                                     // Wait for transfer complete
+        DMA2D->IFCR = DMA2D_IFCR_ALL_FLAG;                                                  // Clear flag
+
+        //-------------------------------------------------------------------------
+        // Free Resource
+
+        if(pImage->Compression == COMPX_RLE_32)
+        {
+            pMemoryPool->Free((void**)&pImageSourceAlpha);
+        }
+    }
+    else
+    {
+        GrafxGenDriver::BlendFromImage(ImageID, Position, BlendMode);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           PrintFont
+//
+//  Parameter(s):
+//
+//  Return:         None
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
+{
+    if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+    {
+        uint32_t    ConstructAlphaLayer;
+        Cartesian_t Pos;
+
+        DisplayLayer* pLayer = &LayerTable[DisplayLayer::GetDrawing()];
+
+        Pos.X = pPos->X - m_ConstructPosition.X;
+        Pos.Y = pPos->Y - m_ConstructPosition.Y;
+
+        uint32_t Width               = uint32_t(pDescriptor->WidthPixel);
+        uint32_t Height              = uint32_t(pDescriptor->HeightPixel);
+        uint32_t Offset              = uint32_t(pLayer->GetSize().X) - Width;
+
+        ConstructAlphaLayer  = ((Pos.Y * uint32_t(pLayer->GetSize().X)) + Pos.X);           // Calculate Offset of print
+        ConstructAlphaLayer *= sizeof(uint32_t);                                            // Adjust for ARGB size
+        ConstructAlphaLayer += pLayer->GetAddress();                                        // Add Address of the construction layer
+        // DMA2D the 2 buffers
+
+        DMA2D->CR = DMA2D_M2M_BLEND;                                                        // Memory to memory and TCIE blending BG + Source
+
+        //Source of the image to blend
+        DMA2D->FGMAR   = uint32_t(pDescriptor->pAddress);
+        DMA2D->FGOR    = 0;                                                                 // Source line offset so none as we are linear
+        DMA2D->FGCOLR  = pLayer->GetTextColor();
+        DMA2D->FGPFCCR = DMA2D_CONVERSION_A8;                                               // Defines the size of pixel.
+
+        // Source in construction layer of the previous blended image or just background
+        DMA2D->BGMAR   = ConstructAlphaLayer;                                               // Source address
+        DMA2D->BGOR    = Offset;                                                            // Source line offset
+        DMA2D->BGPFCCR = DMA2D_CONVERSION_ARGB8888;                                         // Defines the size of pixel.
+
+        //Destination write back to construction layer
+        DMA2D->OMAR    = ConstructAlphaLayer;                                               // Destination address
+        DMA2D->OOR     = Offset;                                                            // Destination line offset
+        DMA2D->OPFCCR  = DMA2D_CONVERSION_ARGB8888;                                         // Defines the size of pixel.
+
+        DMA2D->NLR     = (Width << 16) | Height;                                            // Size configuration of area to be transfered
+
+        SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                 // Start operation
+        while ((DMA2D->ISR & DMA2D_ISR_ALL_FLAG) == 0);                                     // Wait for transfer complete
+        DMA2D->IFCR = DMA2D_IFCR_ALL_FLAG;                                                  // Clear flag
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           ImageCopy
 //
 //  Parameter(s):   ImageID     Image identifier used to retrieve image metadata and raw data.
@@ -432,155 +604,6 @@ void GrafxDriver::ImageCopy(ImageID_e ImageID, uint16_t PosX, uint16_t PosY)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           BlendFromImage
-//
-//  Parameter(s):   ImageID     Image identifier used to retrieve image metadata and raw data.
-//                  Position    Top-left coordinate where the image will be blended.
-//                  BlendMode   Blending mode (unused on this LCD; alpha handled via DMA2D).
-//
-//  Return:         None
-//
-//  Description:    Performs a linear memory-to-memory copy of an ARGB8888 image into the active
-//                  construction layer. If the image is RLE32-compressed, it is first expanded
-//                  into a temporary ARGB8888 buffer. The STM32 DMA2D engine is then configured
-//                  for M2M blending, combining:
-//
-//                      - Foreground : ARGB8888 source image
-//                      - Background : ARGB8888 construction layer only into this driver
-//
-//                  The blended result is written into the construction layer buffer. This path
-//                  is only executed when drawing on the foreground construction layer; otherwise,
-//                  the function falls back to the standard CopyLinear() implementation.
-//
-//                  Temporary buffers allocated for RLE32 decoding are released after use.
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::BlendFromImage(ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode)
-{
-    DisplayLayer* pLayer = &LayerTable[DisplayLayer::GetDrawing()];
-
-    if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
-    {
-        StaticImageInfo_t* pImage;
-        size_t             ImageSize;
-        uint32_t           ConstructAlphaLayer;
-        uint32_t*          pImageSourceAlpha = nullptr;
-        VAR_UNUSED(BlendMode);      // NU On this LCD
-
-        DB_Central.Get(&pImage, GFX_IMAGE_INFO, uint16_t(ImageID));
-        ImageSize = pImage->Info.Size.Width * pImage->Info.Size.Height;
-
-        //-------------------------------------------------------------------------
-        // Copy source alpha to blend actual construction layer
-        ConstructAlphaLayer = pLayer->GetAddress();
-
-        if(pImage->Compression == COMPX_RLE_32)
-        {
-            pImageSourceAlpha = (uint32_t*)pMemoryPool->Alloc(ImageSize * sizeof(uint32_t), MEM_DBG_GRAFX_CL1);
-            WriteRLE32((StaticImageRLE_32_t*)pImage->Info.pPointer, pImageSourceAlpha, pImage->RawSize);
-        }
-        else
-        {
-            pImageSourceAlpha = (uint32_t*)pImage->Info.pPointer;
-        }
-
-        //-------------------------------------------------------------------------
-        // DMA2D the 2 buffers
-
-        uint32_t Width  = uint32_t(pImage->Info.Size.Width);
-        uint32_t Offset = uint32_t(pLayer->GetSize().X) - Width;
-        uint32_t OffsetSource = 0;
-
-if((Position.X > m_ConstructPosition.X) || (Position.Y > m_ConstructPosition.Y))
-{
-    Position.X -= m_ConstructPosition.X;
-    Position.Y -= m_ConstructPosition.Y;
-    OffsetSource = (Position.Y * pLayer->GetSize().X) + Position.X;
-}
-// replace this
-//OffsetSource  = (Position.Y * pLayer->GetSize().X) + Position.X;
-//OffsetSource -= (m_ConstructPosition.Y * pLayer->GetSize().X) + m_ConstructPosition.X;
-
-        DMA2D->CR      = DMA2D_M2M_BLEND;                                                                               // Memory to memory and TCIE blending BG + Source
-
-        //Source of the image to blend
-        DMA2D->FGMAR   = uint32_t(pImageSourceAlpha);
-        DMA2D->FGOR    = 0;                                                                                             // Source line offset so none as we are linear
-        DMA2D->FGPFCCR = DMA2D_CONVERSION_ARGB8888;                                                                     // Defines the size of pixel.
-
-        // Source in construction layer of the previous blended image or just background
-        DMA2D->BGMAR   = ConstructAlphaLayer + OffsetSource;                                                                           // Source address
-        DMA2D->BGOR    = Offset;                                                                                        // Source line offset
-        DMA2D->BGPFCCR = DMA2D_CONVERSION_ARGB8888;                                                                     // Defines the size of pixel.
-
-        //Destination write back to construction layer
-        DMA2D->OMAR    = ConstructAlphaLayer + OffsetSource;                                                                           // Destination address
-        DMA2D->OOR     = Offset;                                                                                        // Destination line offset
-        DMA2D->OPFCCR  = DMA2D_CONVERSION_ARGB8888;                                                                     // Defines the size of pixel.
-
-        DMA2D->NLR     = (Width << 16) | pImage->Info.Size.Height;                                                      // Size configuration of area to be transfered
-
-        SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                             // Start operation
-        while(DMA2D->CR & DMA2D_CR_START);                                                                              // Wait until transfer is done
-
-        //-------------------------------------------------------------------------
-        // Free Resource
-
-        if(pImage->Compression == COMPX_RLE_32)
-        {
-            pMemoryPool->Free((void**)&pImageSourceAlpha);
-        }
-    }
-    else
-    {
-        GrafxGenDriver::BlendFromImage(ImageID, Position, BlendMode);
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           PrintFont
-//
-//  Parameter(s):
-//
-//  Return:         None
-//
-//  Description:
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
-{
-    //s32_t         AreaConfig;
-    PixelFormat_e PixelFormat;
-    uint8_t       PixelSize;
-
-
-VAR_UNUSED(pDescriptor);
-VAR_UNUSED(pPos);
-VAR_UNUSED(PixelFormat);
-VAR_UNUSED(PixelSize);
-    // m_pLayer = &LayerTable[DisplayLayer::GetDrawing()];
-
-//    uint32_t           Address;
-
- //   AreaConfig.u_16.u1 = pDescriptor->Size.Width;
-  //  AreaConfig.u_16.u0 = pDescriptor->Size.Height;
- //   PixelFormat        = m_pLayer->GetPixelFormat();
- //   PixelSize          = m_pLayer->GetPixelSize();
-
-/*
-(uint32_t)pDescriptor->pAddress;                           // Source address 1 of the font
-0;                                                         // Font source line offset - none as we are linear
-pLayer->GetTextColor();
-
-//??    Address            = pLayer->GetAddress() + (((pPos->Y * GRAFX_DRIVER_SIZE_X) + pPos->X) * (uint32_t)PixelSize);
-
-//must be all the info needed
-*/
-}
-
-//-------------------------------------------------------------------------------------------------
-//
 //  Name:           CopyBackgroundToConstruction
 //
 //  Parameter(s):   ImageID_e ImageID           this is the source image for position ex
@@ -590,18 +613,15 @@ pLayer->GetTextColor();
 //  Description:    Put a pixel on LCD
 //
 //-------------------------------------------------------------------------------------------------
-void GrafxDriver::CopyBackgroundToConstruction(ImageID_e ImageID, Cartesian_t Position)
+void GrafxDriver::CopyBackgroundToConstruction(Cartesian_t Position)
 {
-    StaticImageInfo_t* pImage;
     DisplayLayer*      pLayer = &LayerTable[DisplayLayer::GetDrawing()];
     uint32_t           ConstructAlphaLayer = pLayer->GetAddress();
     uint32_t           BackgroundAddress = uint32_t(m_pBackground->Info.pPointer);
 
     m_ConstructPosition = Position;
-    DB_Central.Get(&pImage, GFX_IMAGE_INFO, uint16_t(ImageID));
-
-    uint32_t Width  = pImage->Info.Size.Width;
-    uint32_t Height = pImage->Info.Size.Height;
+    uint32_t Width      = pLayer->GetSize().X;
+    uint32_t Height     = pLayer->GetSize().Y;
 
     DMA2D->CR      = DMA2D_M2M_PFC;                                                                                             // Memory-to-Memory with Pixel Format Conversion
 
@@ -612,13 +632,14 @@ void GrafxDriver::CopyBackgroundToConstruction(ImageID_e ImageID, Cartesian_t Po
 
     // Convert the portion of the background to ARGB8888
     DMA2D->OMAR    = ConstructAlphaLayer;                                                                                       // Destination address
-    DMA2D->OOR     = pLayer->GetSize().X - Width;                                                                               // Destination line offset none as we are linear
+    DMA2D->OOR     = 0;                                                                                                         // Destination line offset none as we are linear
     DMA2D->OPFCCR  = DMA2D_CONVERSION_ARGB8888;                                                                                 // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
 
     DMA2D->NLR     = (Width << 16) | Height;                                                                                    // Size configuration of area to be transfered
 
     SET_BIT(DMA2D->CR, DMA2D_CR_START);                                                                                         // Start operation
-    while(DMA2D->CR & DMA2D_CR_START);                                                                                          // Wait until transfer is done
+    while ((DMA2D->ISR & DMA2D_ISR_ALL_FLAG) == 0);                                                                             // Wait for transfer complete
+    DMA2D->IFCR = DMA2D_IFCR_ALL_FLAG;                                                                                          // Clear flag
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -654,16 +675,16 @@ void GrafxDriver::CopyWidgetToDevice(ImageID_e Image, Cartesian_t Position)
 void GrafxDriver::CopyWidgetToDevice(BoxSize_t BoxSize, Cartesian_t Position)
 {
     DisplayLayer* pLayer   = &LayerTable[DisplayLayer::GetDrawing()];
-    uint16_t*     pAddress = (uint16_t*)pLayer->GetAddress();
+    uint32_t      Address = pLayer->GetAddress();
     uint16_t*     pDataPtr;
-    uint16_t      SizeX = BoxSize.Width;
-    uint16_t      SizeY = BoxSize.Height;
-    uint16_t      ImageSize = SizeX * SizeY;
+    uint32_t      SizeX = BoxSize.Width;
+    uint32_t      SizeY = BoxSize.Height;
+    uint32_t      ImageSize = SizeX * SizeY;
 
     uint16_t* pImageDestination = (uint16_t*)pMemoryPool->Alloc(ImageSize * sizeof(uint16_t), MEM_DBG_GRAFX_CL1);
 
     DMA2D->CR      = DMA2D_M2M_PFC;                                 // Memory-to-Memory with Pixel Format Conversion
-    DMA2D->FGMAR   = uint32_t(pAddress);                            // Source address
+    DMA2D->FGMAR   = Address;                                       // Source address
     DMA2D->FGOR    = (uint32_t)pLayer->GetSize().X - SizeX;         // Source line offset so none as we are linear
     DMA2D->FGPFCCR = DMA2D_CONVERSION_ARGB8888;                     // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
     DMA2D->OMAR    = uint32_t(pImageDestination);                   // Destination address
@@ -672,7 +693,8 @@ void GrafxDriver::CopyWidgetToDevice(BoxSize_t BoxSize, Cartesian_t Position)
     DMA2D->NLR     = (SizeX << 16) | SizeY;                         // Size configuration of area to be transfered
 
     SET_BIT(DMA2D->CR, DMA2D_CR_START);                             // Start operation
-    while(DMA2D->CR & DMA2D_CR_START);                              // Wait until transfer is done
+    while ((DMA2D->ISR & DMA2D_ISR_ALL_FLAG) == 0);                 // Wait for transfer complete
+    DMA2D->IFCR = DMA2D_IFCR_ALL_FLAG;                              // Clear flag
 
     SetWindow(Position.X, Position.Y, &BoxSize);
     pDataPtr = pImageDestination;
@@ -777,7 +799,6 @@ void GrafxDriver::SetWindow(Box_t* pBox)
     uint16_t Vertical = (EndY << 8) | StartY;
     WriteCommand(SSD2119_VERTICAL_RAM_POSITION_REGISTER, Vertical);     // Vertical window (Y) packed into one register
     SetRAM_Pointer(StartX, StartY);                                     // Set GRAM cursor to top-left of window
-    SetWriteRAM_Ready();
 }
 
 //-------------------------------------------------------------------------------------------------

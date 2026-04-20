@@ -68,6 +68,7 @@
 #include "./Grafx/inc/task/lib_skin_task.h"
 #include "./Grafx/inc/driver/generic/lib_GenericDriver.h"
 #include GRAFX_DRIVER_INCLUDE
+
 #if (GRAFX_USE_POINTING_DEVICE == DEF_ENABLED)
   #include "./Peripheral/inc/interface/lib_class_pointing_device_interface.h"
   #include PDI_DRIVER_INCLUDE

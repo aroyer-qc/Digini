@@ -170,6 +170,7 @@ void ADC_Driver::Initialize(void)
     if(m_CommonIsItInitialize == false)
     {
         m_CommonIsItInitialize = true;
+        m_State = SYS_READY;
 
         // ADC interrupt are common to all module
         //ISR_Init(ADC_IRQn, 4);

@@ -33,7 +33,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define PDI_NUMBER_OF_EVENT             1               // Number of event supported by this device
-#define PDI_PROCESS_LOOP_DELAY          16              // scan at a rate of 60 Hz
+#define PDI_PROCESS_LOOP_DELAY          2               // scan at a rate of 10 machine state = 60 Hz
 
 //-------------------------------------------------------------------------------------------------
 // Enum(s)
@@ -41,16 +41,17 @@
 
 enum TouchState_e
 {
-    TOUCH_IDLE,
-    TOUCH_PREPARE_X,
-    TOUCH_STABILIZE_X,
-    TOUCH_WAIT_X,
-    TOUCH_READ_X,
-    TOUCH_PREPARE_Y,
-    TOUCH_STABILIZE_Y,
-    TOUCH_WAIT_Y,
-    TOUCH_READ_Y,
-    TOUCH_DONE,
+    TOUCH_ENERGIZE_Y_AXIS,
+    TOUCH_START_ADC_X1,
+    TOUCH_READ_X1,
+    TOUCH_START_ADC_X2,
+    TOUCH_READ_X2,
+    TOUCH_ENERGIZE_X_AXIS,
+    TOUCH_START_ADC_Y1,
+    TOUCH_READ_Y1,
+    TOUCH_START_ADC_Y2,
+    TOUCH_READ_Y2,
+    TOUCH_CALCULATE_XY,
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -61,6 +62,8 @@ class CustomResistiveTouchDriver : public PointingDeviceInterface
 {
     public:
 
+                        CustomResistiveTouchDriver      ();
+
         SystemState_e   Initialize                      (void* pArg);
         void            Process                         (void);
         void            Reset                           (void);
@@ -68,18 +71,25 @@ class CustomResistiveTouchDriver : public PointingDeviceInterface
         void            GetXY                           (Cartesian_t* pCartesian);
         void            SetTouchCorrection              (Cartesian_t Correction);
 
+        uint16_t        GetRawADC                       (uint32_t Number);
+
     private:
 
         void            EnableX_Axis                    (void);
         void            EnableY_Axis                    (void);
         void            DisableAllAxis                  (void);
 
-        uint16_t        m_rawX;
-        uint16_t        m_rawY;
-        uint16_t        m_X;
-        uint16_t        m_Y;
-        int16_t         m_X_Correction;
-        int16_t         m_Y_Correction;
+        Box_t           m_TouchSize;
+        uint16_t        m_RawX1;
+        uint16_t        m_RawX2;
+        uint16_t        m_RawY1;
+        uint16_t        m_RawY2;
+        int16_t         m_X;
+        int16_t         m_Y;
+        int16_t         m_MinX_Correction;
+        int16_t         m_MinY_Correction;
+        int16_t         m_MaxX_Correction;
+        int16_t         m_MaxY_Correction;
         uint32_t        m_TimeStamp;            // Timestamp for settle delay
         TouchState_e    m_State;
         bool            m_IsCalibrated;

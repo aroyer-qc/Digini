@@ -164,7 +164,7 @@ void VT100_Terminal::IF_Process(void)
     if(m_IsItInitialized == false)
     {
         m_IsItInitialized = true;
-        InMenuPrintf(LBL_RESET_TERMINAL);
+        VT100_Printf(LBL_RESET_TERMINAL);
         Delay = GetTick();
         while(TickHasTimeOut(Delay, 10) == false){};
       #if (VT100_USE_STANDARD_MENU_STATIC_INFO == DEF_ENABLED) || (VT100_USE_USER_MENU_STATIC_INFO == DEF_ENABLED)
@@ -493,24 +493,24 @@ void VT100_Terminal::DisplayMenu(void)
                 }
               #endif
 
-                InMenuPrintf(pMenu->Label);
+                VT100_Printf(pMenu->Label);
                 m_PosY_SaveLabel++;
                 SetForeColor(VT100_COLOR_YELLOW);
             }
             else
             {
-                InMenuPrintf(1, 6, pMenu->Label);
-                InMenuPrintf(2, 8, VT100_LBL_SELECT);
+                VT100_Printf(1, 6, pMenu->Label);
+                VT100_Printf(2, 8, VT100_LBL_SELECT);
             }
         }
 
         if((m_pConsole->GetActiveProcessLevel() != 1) || (m_MenuID != MenuMain_ID))  // Prevent printing option to exit menu if no other application controlling the console exist
         {
             MenuSelectItems('0');
-            InMenuPrintf(VT100_LBL_QUIT);
+            VT100_Printf(VT100_LBL_QUIT);
             ItemsChar  = (char)(Items - 1);
             ItemsChar += (ItemsChar >= 10) ? ('a' - 10) : '0';
-            InMenuPrintf(VT100_LBL_ENTER_SELECTION, ItemsChar);
+            VT100_Printf(VT100_LBL_ENTER_SELECTION, ItemsChar);
         }
     }
 
@@ -535,23 +535,23 @@ void VT100_Terminal::PrintMenuStaticInfo(void)
     size_t      SizeTitle;
 
     m_BypassPrintf = true;
-    InMenuPrintf(LBL_RESET_TERMINAL);
+    VT100_Printf(LBL_RESET_TERMINAL);
     nOS_Sleep(100);                                                 // Terminal need time to reset
-    InMenuPrintf(VT100_LBL_HIDE_CURSOR);
-    InMenuPrintf(LBL_CLEAR_SCREEN);
+    VT100_Printf(VT100_LBL_HIDE_CURSOR);
+    VT100_Printf(LBL_CLEAR_SCREEN);
     SetColor(VT100_COLOR_WHITE, VT100_COLOR_BLUE);
-    InMenuPrintf(VT100_LBL_REPEAT_CHARACTER, '-', VT100_SCREEN_WIDTH);
-    InMenuPrintf(LBL_LINEFEED);
+    VT100_Printf(VT100_LBL_REPEAT_CHARACTER, '-', VT100_SCREEN_WIDTH);
+    VT100_Printf(LBL_LINEFEED);
     pString  = myLabel.GetPointer(VT100_LBL_MENU_TITLE);
     SizeTitle = strlen(pString);
     SizeLine = VT100_SCREEN_WIDTH - SizeTitle;
-    InMenuPrintf(VT100_LBL_REPEAT_CHARACTER, ' ', SizeLine / 2);
-    InMenuPrintf(VT100_LBL_MENU_TITLE);
-    InMenuPrintf(VT100_LBL_REPEAT_CHARACTER, ' ', ((SizeLine / 2) + (SizeLine % 2) - 1));
-    InMenuPrintf(LBL_LINEFEED);
-    InMenuPrintf(VT100_LBL_REPEAT_CHARACTER, '-', VT100_SCREEN_WIDTH);
+    VT100_Printf(VT100_LBL_REPEAT_CHARACTER, ' ', SizeLine / 2);
+    VT100_Printf(VT100_LBL_MENU_TITLE);
+    VT100_Printf(VT100_LBL_REPEAT_CHARACTER, ' ', ((SizeLine / 2) + (SizeLine % 2) - 1));
+    VT100_Printf(LBL_LINEFEED);
+    VT100_Printf(VT100_LBL_REPEAT_CHARACTER, '-', VT100_SCREEN_WIDTH);
     SetColor(VT100_COLOR_YELLOW, VT100_COLOR_BLACK);
-    InMenuPrintf(LBL_DOUBLE_LINEFEED);
+    VT100_Printf(LBL_DOUBLE_LINEFEED);
 }
 #endif
 
@@ -568,7 +568,7 @@ void VT100_Terminal::PrintMenuStaticInfo(void)
 void VT100_Terminal::ClearInputMenuSelection(void)
 {
     SetCursorPosition(m_LastSetCursorPosX, m_LastSetCursorPosY);
-    InMenuPrintf(VT100_LBL_ERASE_FROM_CURSOR_N_CHAR, 2);
+    VT100_Printf(VT100_LBL_ERASE_FROM_CURSOR_N_CHAR, 2);
     SetCursorPosition(m_LastSetCursorPosX, m_LastSetCursorPosY);
 }
 
@@ -591,7 +591,7 @@ void VT100_Terminal::ClearScreenWindow(uint8_t PosX, uint8_t PosY, uint8_t SizeX
 
     for(int y = PosY; y < (PosY + SizeY); y++)
     {
-        InMenuPrintf(PosX, y, VT100_LBL_ERASE_FROM_CURSOR_N_CHAR, int(SizeX));
+        VT100_Printf(PosX, y, VT100_LBL_ERASE_FROM_CURSOR_N_CHAR, int(SizeX));
     }
 }
 
@@ -609,16 +609,16 @@ void VT100_Terminal::ClearScreenWindow(uint8_t PosX, uint8_t PosY, uint8_t SizeX
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::MenuSelectItems(char ItemsChar)
 {
-    InMenuPrintf(LBL_STRING, "\n  (");
+    VT100_Printf(LBL_STRING, "\n  (");
     SetForeColor(VT100_COLOR_CYAN);
 
-    if(ItemsChar == '0') InMenuPrintf(LBL_STRING, "ESC");
-    else                 InMenuPrintf(LBL_CHAR, ItemsChar);
+    if(ItemsChar == '0') VT100_Printf(LBL_STRING, "ESC");
+    else                 VT100_Printf(LBL_CHAR, ItemsChar);
 
     SetForeColor(VT100_COLOR_YELLOW);
 
-    if(ItemsChar == '0') InMenuPrintf(LBL_STRING, ") ");
-    else                 InMenuPrintf(LBL_STRING, ")   ");
+    if(ItemsChar == '0') VT100_Printf(LBL_STRING, ") ");
+    else                 VT100_Printf(LBL_STRING, ")   ");
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -715,17 +715,17 @@ void VT100_Terminal::InputDecimal(void)
     {
         m_RefreshValue = m_Value;
         SetColor(VT100_COLOR_BLACK, ((m_Value >= m_Minimum) && (m_Value <= m_Maximum)) ? VT100_COLOR_GREEN : VT100_COLOR_RED);
-        InMenuPrintf(m_PosX + 36, m_PosY + 3, LBL_CHAR, ' ');
+        VT100_Printf(m_PosX + 36, m_PosY + 3, LBL_CHAR, ' ');
 
         switch(m_Divider)
         {
-            case 10:   InMenuPrintf(LBL_INT_TO_DIVIDE_BY_10,   m_Value / m_Divider, abs(m_Value % m_Divider)); break;
-            case 100:  InMenuPrintf(LBL_INT_TO_DIVIDE_BY_100,  m_Value / m_Divider, abs(m_Value % m_Divider)); break;
-            case 1000: InMenuPrintf(LBL_INT_TO_DIVIDE_BY_1000, m_Value / m_Divider, abs(m_Value % m_Divider)); break;
-            default:   InMenuPrintf(LBL_INT_NO_DIVIDE,         m_Value);                                       break;
+            case 10:   VT100_Printf(LBL_INT_TO_DIVIDE_BY_10,   m_Value / m_Divider, abs(m_Value % m_Divider)); break;
+            case 100:  VT100_Printf(LBL_INT_TO_DIVIDE_BY_100,  m_Value / m_Divider, abs(m_Value % m_Divider)); break;
+            case 1000: VT100_Printf(LBL_INT_TO_DIVIDE_BY_1000, m_Value / m_Divider, abs(m_Value % m_Divider)); break;
+            default:   VT100_Printf(LBL_INT_NO_DIVIDE,         m_Value);                                       break;
         }
 
-        InMenuPrintf(VT100_LBL_WHITE_MOVE_CURSOR_2_TO_LEFT);
+        VT100_Printf(VT100_LBL_WHITE_MOVE_CURSOR_2_TO_LEFT);
     }
 }
 
@@ -746,8 +746,8 @@ void VT100_Terminal::InputString(void)
     if(m_RefreshInputPtr != m_InputPtr)
     {
         m_RefreshInputPtr = m_InputPtr;
-        InMenuPrintf(m_PosX + 2, m_PosY + 3, LBL_STRING_AND_ONE_SPACE, m_pString);
-        InMenuPrintf(VT100_LBL_MOVE_LEFT_CURSOR);
+        VT100_Printf(m_PosX + 2, m_PosY + 3, LBL_STRING_AND_ONE_SPACE, m_pString);
+        VT100_Printf(VT100_LBL_MOVE_LEFT_CURSOR);
     }
 }
 
@@ -767,7 +767,7 @@ void VT100_Terminal::InputString(void)
 void VT100_Terminal::UpdateSaveLabel(VT100_Color_e Color, bool State)
 {
     SetForeColor(Color);
-    InMenuPrintf(9, m_PosY_SaveLabel, VT100_LBL_SAVE_CONFIGURATION);
+    VT100_Printf(9, m_PosY_SaveLabel, VT100_LBL_SAVE_CONFIGURATION);
     m_NeedToSave = State;
 }
 
@@ -811,38 +811,38 @@ void VT100_Terminal::SetDecimalInput(uint8_t PosX, uint8_t PosY, int32_t Minimum
 
     // Write input information
     SetForeColor(VT100_COLOR_CYAN);
-    InMenuPrintf(PosX + 2,  PosY + 1, VT100_LBL_MINIMUM);
-    InMenuPrintf(LBL_STRING, " : ");
+    VT100_Printf(PosX + 2,  PosY + 1, VT100_LBL_MINIMUM);
+    VT100_Printf(LBL_STRING, " : ");
 
     switch(Divider)
     {
-        case 10:  InMenuPrintf(LBL_INT_TO_DIVIDE_BY_10,   Minimum / Divider,  abs(Minimum % Divider)); break;
-        case 100: InMenuPrintf(LBL_INT_TO_DIVIDE_BY_100,  Minimum / Divider,  abs(Minimum % Divider)); break;
-        case 1000:InMenuPrintf(LBL_INT_TO_DIVIDE_BY_1000, Minimum / Divider,  abs(Minimum % Divider)); break;
-        default:  InMenuPrintf(LBL_INT_NO_DIVIDE,         Minimum);                                    break;
+        case 10:  VT100_Printf(LBL_INT_TO_DIVIDE_BY_10,   Minimum / Divider,  abs(Minimum % Divider)); break;
+        case 100: VT100_Printf(LBL_INT_TO_DIVIDE_BY_100,  Minimum / Divider,  abs(Minimum % Divider)); break;
+        case 1000:VT100_Printf(LBL_INT_TO_DIVIDE_BY_1000, Minimum / Divider,  abs(Minimum % Divider)); break;
+        default:  VT100_Printf(LBL_INT_NO_DIVIDE,         Minimum);                                    break;
     }
 
 
-    InMenuPrintf(PosX + 24, PosY + 1, VT100_LBL_MAXIMUM);
-    InMenuPrintf(LBL_STRING, " : ");
+    VT100_Printf(PosX + 24, PosY + 1, VT100_LBL_MAXIMUM);
+    VT100_Printf(LBL_STRING, " : ");
 
     switch(Divider)
     {
-        case 10:  InMenuPrintf(LBL_INT_TO_DIVIDE_BY_10,   Maximum / Divider,  abs(Maximum % Divider)); break;
-        case 100: InMenuPrintf(LBL_INT_TO_DIVIDE_BY_100,  Maximum / Divider,  abs(Maximum % Divider)); break;
-        case 1000:InMenuPrintf(LBL_INT_TO_DIVIDE_BY_1000, Maximum / Divider,  abs(Maximum % Divider)); break;
-        default:  InMenuPrintf(LBL_INT_NO_DIVIDE,         Maximum);                                    break;
+        case 10:  VT100_Printf(LBL_INT_TO_DIVIDE_BY_10,   Maximum / Divider,  abs(Maximum % Divider)); break;
+        case 100: VT100_Printf(LBL_INT_TO_DIVIDE_BY_100,  Maximum / Divider,  abs(Maximum % Divider)); break;
+        case 1000:VT100_Printf(LBL_INT_TO_DIVIDE_BY_1000, Maximum / Divider,  abs(Maximum % Divider)); break;
+        default:  VT100_Printf(LBL_INT_NO_DIVIDE,         Maximum);                                    break;
     }
 
     // Print type of input
     SetForeColor(VT100_COLOR_YELLOW);
-    //InMenuPrintf(PosX + 2, PosY + 3, LBL_STRING, pMsg);
+    //VT100_Printf(PosX + 2, PosY + 3, LBL_STRING, pMsg);
 
     // Add 'how to' info
-    InMenuPrintf(PosX + 2,  PosY + 5, VT100_LBL_INPUT_VALIDATION);
+    VT100_Printf(PosX + 2,  PosY + 5, VT100_LBL_INPUT_VALIDATION);
 
     // And show cursor
-    InMenuPrintf(VT100_LBL_SHOW_CURSOR);
+    VT100_Printf(VT100_LBL_SHOW_CURSOR);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -914,10 +914,10 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
 
     // Write input information
     SetForeColor(VT100_COLOR_CYAN);
-    //InMenuPrintf(PosX + 2,  PosY + 1, Maximum, LBL_STRING, pMsg);
+    //VT100_Printf(PosX + 2,  PosY + 1, Maximum, LBL_STRING, pMsg);
 
     // Add 'how to' info
-    InMenuPrintf(PosX + 2,  PosY + 5, VT100_LBL_INPUT_VALIDATION);
+    VT100_Printf(PosX + 2,  PosY + 5, VT100_LBL_INPUT_VALIDATION);
 
     // Copy string
     if((m_pString = (char*)pMemoryPool->AllocAndSet(VT100_STRING_SZ + 1, 0, MEM_DBG_VT100_2)) != nullptr)
@@ -930,7 +930,7 @@ void VT100_Terminal::SetStringInput(uint8_t PosX, uint8_t PosY, int32_t Maximum,
     m_RefreshInputPtr = m_InputPtr + 1;                     // To force a refresh
 
     // And show cursor
-    InMenuPrintf(VT100_LBL_SHOW_CURSOR);
+    VT100_Printf(VT100_LBL_SHOW_CURSOR);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -973,7 +973,7 @@ void VT100_Terminal::GetStringInput(char* pString, uint8_t* pID)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           InMenuPrintf
+//  Name:           VT100_Printf
 //
 //  Parameter(s):   Label_e     Label       ID of the label to with optional formatting.
 //                  ...                     Parameter for formatting if any.
@@ -985,7 +985,7 @@ void VT100_Terminal::GetStringInput(char* pString, uint8_t* pID)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-size_t VT100_Terminal::InMenuPrintf(Label_e Label, ...)
+size_t VT100_Terminal::VT100_Printf(Label_e Label, ...)
 {
     size_t      Size;
     va_list     vaArg;
@@ -1000,7 +1000,7 @@ size_t VT100_Terminal::InMenuPrintf(Label_e Label, ...)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           InMenuPrintf
+//  Name:           VT100_Printf
 //
 //  Parameter(s):   Label_e     Label       ID of the label to with optional formatting.
 //                  ...                     Parameter for formatting if any.
@@ -1012,7 +1012,7 @@ size_t VT100_Terminal::InMenuPrintf(Label_e Label, ...)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-size_t VT100_Terminal::InMenuPrintf(uint8_t PosX, uint8_t PosY, Label_e Label, ...)
+size_t VT100_Terminal::VT100_Printf(uint8_t PosX, uint8_t PosY, Label_e Label, ...)
 {
     size_t      Size;
     va_list     vaArg;
@@ -1044,7 +1044,7 @@ void VT100_Terminal::SetAttribute(VT100_Attribute_e Attribute)
 {
     if(m_IsDisplayLock == false)
     {
-        InMenuPrintf(VT100_LBL_ATTRIBUTE, Attribute);
+        VT100_Printf(VT100_LBL_ATTRIBUTE, Attribute);
     }
 }
 
@@ -1065,7 +1065,7 @@ void VT100_Terminal::SaveAttribute(void)
 {
     if(m_IsDisplayLock == false)
     {
-        InMenuPrintf(VT100_LBL_SAVE_ATTRIBUTE);
+        VT100_Printf(VT100_LBL_SAVE_ATTRIBUTE);
     }
 }
 
@@ -1086,7 +1086,7 @@ void VT100_Terminal::RestoreAttribute(void)
 {
     if(m_IsDisplayLock == false)
     {
-        InMenuPrintf(VT100_LBL_RESTORE_ATTRIBUTE);
+        VT100_Printf(VT100_LBL_RESTORE_ATTRIBUTE);
     }
 }
 
@@ -1108,7 +1108,7 @@ void VT100_Terminal::SetCursorPosition(uint8_t PosX, uint8_t PosY)
 {
     if(m_IsDisplayLock == false)
     {
-        InMenuPrintf(VT100_LBL_SET_CURSOR, PosY, PosX);
+        VT100_Printf(VT100_LBL_SET_CURSOR, PosY, PosX);
         m_LastSetCursorPosX = PosX;
         m_LastSetCursorPosY = PosY;
     }
@@ -1131,7 +1131,7 @@ void VT100_Terminal::SaveCursorPosition(void)
 {
     if(m_IsDisplayLock == false)
     {
-        InMenuPrintf(VT100_LBL_SAVE_CURSOR);
+        VT100_Printf(VT100_LBL_SAVE_CURSOR);
     }
 }
 
@@ -1152,7 +1152,7 @@ void VT100_Terminal::RestoreCursorPosition(void)
 {
     if(m_IsDisplayLock == false)
     {
-        InMenuPrintf(VT100_LBL_RESTORE_CURSOR);
+        VT100_Printf(VT100_LBL_RESTORE_CURSOR);
     }
 }
 
@@ -1174,7 +1174,7 @@ void VT100_Terminal::SetScrollZone(uint8_t FirstLine, uint8_t LastLine)
 {
     if(m_IsDisplayLock == false)
     {
-        InMenuPrintf(VT100_LBL_SCROLL_ZONE, FirstLine, LastLine);
+        VT100_Printf(VT100_LBL_SCROLL_ZONE, FirstLine, LastLine);
     }
 }
 
@@ -1220,8 +1220,8 @@ void VT100_Terminal::SetColor(VT100_Color_e ForeColor, VT100_Color_e BackColor)
 #if (VT100_USE_COLOR == DEF_DISABLED)
 void VT100_Terminal::InvertMono(bool Invert)
 {
-    if(Invert == true) InMenuPrintf(VT100_LBL_BACK_WHITE_FORE_BLACK);
-    else               InMenuPrintf(VT100_LBL_BACK_BLACK_FORE_WHITE);
+    if(Invert == true) VT100_Printf(VT100_LBL_BACK_WHITE_FORE_BLACK);
+    else               VT100_Printf(VT100_LBL_BACK_BLACK_FORE_WHITE);
 }
 #endif
 
@@ -1266,7 +1266,7 @@ void VT100_Terminal::DisplayTimeDateStamp(uint8_t PosX, uint8_t PosY, DateAndTim
 {
     // TODO Should use register date time printing method..
 
-   myVT100.InMenuPrintf(PosX, PosY, LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&pTimeDate->Date)) + (int(LBL_SUNDAY)))),
+   myVT100.VT100_Printf(PosX, PosY, LBL_FULL_DATE, myLabel.GetPointer(Label_e((LIB_GetDayOfWeek(&pTimeDate->Date)) + (int(LBL_SUNDAY)))),
                                                    myLabel.GetPointer(Label_e((pTimeDate->Date.Month - 1) + (int(LBL_JANUARY)))),
                                                    pTimeDate->Date.Day,
                                                    pTimeDate->Date.Year,
@@ -1297,27 +1297,27 @@ void VT100_Terminal::DrawBox(uint8_t PosX, uint8_t PosY, uint8_t SizeX, uint8_t 
     if(m_IsDisplayLock == false)
     {
         SetForeColor(ForeColor);
-        InMenuPrintf(PosX, PosY, LBL_CHAR, ASCII_EXT_TL_CORNER_CHAR);
+        VT100_Printf(PosX, PosY, LBL_CHAR, ASCII_EXT_TL_CORNER_CHAR);
         DrawHline(PosX + 1, PosY, SizeX - 3, ForeColor);
-        InMenuPrintf(LBL_CHAR, ASCII_EXT_TR_CORNER_CHAR);
+        VT100_Printf(LBL_CHAR, ASCII_EXT_TR_CORNER_CHAR);
 
         // We draw  vertical line and also clear inside the box
         for(uint8_t i = 0; i < (SizeY - 2); i++)
         {
-            InMenuPrintf(PosX, ++PosY, LBL_CHAR, ASCII_EXT_VERTICAL_CHAR);
+            VT100_Printf(PosX, ++PosY, LBL_CHAR, ASCII_EXT_VERTICAL_CHAR);
 
             // Erase inside
             for(uint8_t j = 0; j < (SizeX - 2); j++)
             {
-                InMenuPrintf(LBL_CHAR, ASCII_SPACE);
+                VT100_Printf(LBL_CHAR, ASCII_SPACE);
             }
 
-            InMenuPrintf(LBL_CHAR, ASCII_EXT_VERTICAL_CHAR);
+            VT100_Printf(LBL_CHAR, ASCII_EXT_VERTICAL_CHAR);
         }
 
-        InMenuPrintf(PosX, ++PosY, LBL_CHAR, ASCII_EXT_BL_CORNER_CHAR);
+        VT100_Printf(PosX, ++PosY, LBL_CHAR, ASCII_EXT_BL_CORNER_CHAR);
         DrawHline(PosX + 1, PosY, SizeX - 3, ForeColor);
-        InMenuPrintf(LBL_CHAR, ASCII_EXT_BR_CORNER_CHAR);
+        VT100_Printf(LBL_CHAR, ASCII_EXT_BR_CORNER_CHAR);
     }
 }
 
@@ -1343,7 +1343,7 @@ void VT100_Terminal::DrawHline(uint8_t PosX, uint8_t PosY, uint8_t SizeX, VT100_
     {
         SetForeColor(ForeColor);
         SetCursorPosition(PosX, PosY);
-        InMenuPrintf(VT100_LBL_REPEAT_CHARACTER, ASCII_EXT_HORIZONTAL_CHAR, SizeX);
+        VT100_Printf(VT100_LBL_REPEAT_CHARACTER, ASCII_EXT_HORIZONTAL_CHAR, SizeX);
     }
 }
 
@@ -1371,7 +1371,7 @@ void VT100_Terminal::DrawVline(uint8_t PosX, uint8_t PosY, uint8_t SizeY, VT100_
 
         for(uint8_t i = 0; i < SizeY; i++)
         {
-            InMenuPrintf(PosX, PosY++, LBL_CHAR, ASCII_EXT_VERTICAL_CHAR);
+            VT100_Printf(PosX, PosY++, LBL_CHAR, ASCII_EXT_VERTICAL_CHAR);
         }
     }
 }
@@ -1416,7 +1416,7 @@ void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, VT100_Color_e ColorCur
         if(i < CurrentThreshold)
         {
             SetBackColor(ColorCurrent);
-            InMenuPrintf(LBL_CHAR, ASCII_SPACE);
+            VT100_Printf(LBL_CHAR, ASCII_SPACE);
         }
         else
         {
@@ -1426,11 +1426,11 @@ void VT100_Terminal::Bargraph(uint8_t PosX, uint8_t PosY, VT100_Color_e ColorCur
 
             {
                 SetForeColor(ColorCurrent);
-                InMenuPrintf(LBL_CHAR, ASCII_EXT_HALF_BLOCK);
+                VT100_Printf(LBL_CHAR, ASCII_EXT_HALF_BLOCK);
             }
             else
             {
-                InMenuPrintf(LBL_CHAR, ASCII_SPACE);
+                VT100_Printf(LBL_CHAR, ASCII_SPACE);
             }
         }
       #else
@@ -1634,7 +1634,7 @@ void VT100_Terminal::LogPrint(const char* pString)
 //
 //  Description:    Renders the visible portion of the virtual log buffer into the VT100 window.
 //                  Displays the most recent lines, clipped to the window width.
-//                  Each displayed line is sent using a single InMenuPrintf() call.
+//                  Each displayed line is sent using a single VT100_Printf() call.
 //
 //-------------------------------------------------------------------------------------------------
 void VT100_Terminal::LogDisplay(void)
@@ -1665,8 +1665,8 @@ void VT100_Terminal::LogDisplay(void)
         memcpy(pLineBuffer, m_LogBuffer[SourceLine], m_LogWindowWidth);
         pLineBuffer[m_LogWindowWidth] = '\0';
 
-        InMenuPrintf(VT100_LBL_SET_CURSOR, ScreenRow, m_LogWindowLeft);
-        InMenuPrintf(LBL_STRING, pLineBuffer);
+        VT100_Printf(VT100_LBL_SET_CURSOR, ScreenRow, m_LogWindowLeft);
+        VT100_Printf(LBL_STRING, pLineBuffer);
 
         ScreenRow++;
         SourceLine++;

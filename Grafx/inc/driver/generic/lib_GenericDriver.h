@@ -47,20 +47,12 @@ class GrafxGenDriver
 
           #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
             virtual    void     CopyWidgetToDevice    			(ImageID_e Image, Cartesian_t Position) = 0;
+            virtual    void     CopyWidgetToDevice    			(BoxSize_t Box, Cartesian_t Position) = 0;
           #endif
 
 		  #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
-			virtual    void     CopyBackgroundToConstruction	(ImageID_e ImageID, Cartesian_t Position) = 0;
+			virtual    void     CopyBackgroundToConstruction	(Cartesian_t Position) = 0;
 		  #endif
-
-
-
-
-
-
-
-
-
 
             virtual	    void    BlockCopy             			(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
             virtual	    void    BlockCopy             			(void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, uint16_t DstX, uint16_t DstY, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
@@ -82,12 +74,12 @@ class GrafxGenDriver
             virtual	    void    DrawVLine             			(uint16_t PosX, uint16_t PosY1, uint16_t PosY2, uint16_t Thickness);
             virtual	    void    PrintFont             			(FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
           #if (GRAFX_DRIVER_USE_V_SYNC == DEF_ENABLED)
-            virtual	    void    WaitFor_V_Sync        (void);
+            virtual	    void    WaitFor_V_Sync                  (void);
           #endif
 
         protected:
 
-            static const int32_t        m_PixelFormatTable    [PIXEL_FORMAT_COUNT];
+            static const int32_t    m_PixelFormatTable    [PIXEL_FORMAT_COUNT];
 };
 
 //-------------------------------------------------------------------------------------------------

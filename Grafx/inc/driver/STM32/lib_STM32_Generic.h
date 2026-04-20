@@ -42,7 +42,10 @@
   #define DMA2D_M2M                         0                       // DMA2D memory to memory transfer mode
   #define DMA2D_M2M_PFC                     ((uint32_t)0x00010000)  // DMA2D memory to memory with pixel format conversion transfer mode
   #define DMA2D_M2M_BLEND                   ((uint32_t)0x00020000)  // DMA2D memory to memory with blending transfer mode
-  #define DMA2D_R2M                         DMA2D_CR_MODE           // DMA2D register to memory transfer mode
+  #define DMA2D_R2M                         ((uint32_t)0x00030000)  // DMA2D register to memory transfer mode
+
+  #define DMA2D_ISR_ALL_FLAG                (DMA2D_ISR_TCIF | DMA2D_ISR_TEIF | DMA2D_ISR_CEIF)
+  #define DMA2D_IFCR_ALL_FLAG               (DMA2D_IFCR_CTCIF | DMA2D_IFCR_CTEIF | DMA2D_IFCR_CCEIF)
 
   #define TRANSFERT_ONE_PIXEL               0x00010001
 
@@ -66,7 +69,6 @@ enum GFX_DMA2D_Conversion_e
     DMA2D_CONVERSION_L4                 = 0x8,
     DMA2D_CONVERSION_A8                 = 0x9,
     DMA2D_CONVERSION_A4                 = 0xA,
- 
 };
 
 #endif // DMA2D

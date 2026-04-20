@@ -186,12 +186,14 @@ void WidgetLabel::Draw(ServiceReturn_t* pService)
 
   #endif // (GRAFX_DEBUG_GUI == DEF_ENABLED)
 
+  #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
+    myGrafx->CopyBackgroundToConstruction(m_pLabel->Text.Box.Pos);              // if the display has no multilayer capability.
+  #endif
+
     WidgetPrint(&m_pLabel->Text, pService);
 
   #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
-    {
-        // myGrafx->CopyWidgetToDevice(m_pLabel->????, m_pLabel->Text.Box.Pos);
-    }
+    myGrafx->CopyWidgetToDevice(m_pLabel->Text.Box.Size, m_pLabel->Text.Box.Pos);
   #endif
 
 

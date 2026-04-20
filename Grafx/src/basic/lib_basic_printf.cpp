@@ -151,15 +151,12 @@ size_t GPrintf::PutString(void)
     // Load first font info
     DB_Central.Get(&FontInfo, GFX_FONT_INFO, *m_pFontUsedInString, 0);
 
-    // ---------------------------------------------------------------------
-    // UNIFIED PRINT ENGINE
-    // ---------------------------------------------------------------------
-
+    // Unified print engine
     uint16_t totalLines = 1;
 
-   #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
+  #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
     totalLines = m_Line;
-   #endif
+  #endif
 
     m_Position.Y = m_pLocalBox->Pos.Y + m_OffsetJustY;
 
@@ -168,51 +165,43 @@ size_t GPrintf::PutString(void)
         // Compute X justification
         m_Position.X = m_pLocalBox->Pos.X + m_OffsetJustX;
 
-       #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
+      #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
         switch(GetXY_Justification() & _X_LINE_JUSTIFICATION)
         {
             case _X_LINE_CENTER:
+			{
                 m_Position.X += ((m_BoxSizeX - m_SubLineSizePixX[line]) >> 1);
-                break;
+			}
+            break;
 
             case _X_LINE_RIGHT:
+			{
                 m_Position.X += (m_BoxSizeX - m_SubLineSizePixX[line]);
-                break;
+			}
+            break;
         }
-       #endif
+      #endif
 
         // Number of characters in this line
         uint16_t charCount =
-          #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
-            m_SubLineSizeChar[line];
-          #else
-            m_Size;
-          #endif
+      #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
+        m_SubLineSizeChar[line];
+      #else
+        m_Size;
+      #endif
 
         // Pointer to the string for this line
         const char* pLineString =
-          #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
-            m_pSubLineString[line];
-          #else
-            m_pString;
-          #endif
+      #if (GRAFX_USE_MULTI_LINE == DEF_ENABLED)
+        m_pSubLineString[line];
+      #else
+        m_pString;
+      #endif
 
-        // -------------------------------------------------------------
-        // PRINT EACH CHARACTER
-        // -------------------------------------------------------------
+        // Print each character
         for(uint16_t j = 0; j < charCount; j++)
         {
-
-// OLD Method if else according to mode          DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, pLineString[j]);
-//            m_CorrectedPos.X = m_Position.X + m_FontDescriptor.LeftBearing;
-//            m_CorrectedPos.Y = m_Position.Y + m_FontDescriptor.OffsetY;
-
-//            if(m_FontDescriptor.pAddress != 0)
-//            {
-//                DisplayLayer::SetTextColor(*m_pMovingUsedColorPtr);
-//                PrintFont(&m_FontDescriptor, &m_CorrectedPos);
-//            }
-
+          #if (GRAFX_USE_ROM_DATABASE == DEF_ENABLED)
             uint32_t Character = uint32_t(pLineString[j]) - uint32_t(FontInfo.FirstCaracter);                      // Get the offset for this font
 
             if(Character <= (FontInfo.LastCaracter - FontInfo.FirstCaracter))
@@ -231,6 +220,37 @@ size_t GPrintf::PutString(void)
                     PrintFont(&m_FontDescriptor, &m_CorrectedPos);
                 }
             }
+          #else // RAM database 
+			DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, pLineString[j]);
+			m_CorrectedPos.X = m_Position.X + m_FontDescriptor.LeftBearing;
+			m_CorrectedPos.Y = m_Position.Y + m_FontDescriptor.OffsetY;
+
+			if(m_FontDescriptor.pAddress != 0)
+			{
+			    DisplayLayer::SetTextColor(*m_pMovingUsedColorPtr);
+			    PrintFont(&m_FontDescriptor, &m_CorrectedPos);
+			}
+	      #endif		
+
+          #if (GRAFX_PAINT_BOX_DEBUG == DEF_ENABLED)
+            if((m_FontDescriptor.Size.Width != 0) && (m_FontDescriptor.Size.Height != 0))
+            {
+                uint32_t Color = DisplayLayer::GetColor();
+                DisplayLayer::SetColor(GRAFX_PAINT_BOX_DEBUG_COLOR);
+                DrawBox(m_Position.X,
+                        m_CorrectedPos.Y,
+                        m_FontDescriptor.Width,
+                        m_FontDescriptor.Size.Height,
+                        1);
+                DisplayLayer::SetColor(BLUE);
+                DrawBox(m_CorrectedPos.X,
+                        m_CorrectedPos.Y,
+                        m_FontDescriptor.Size.Width,
+                        m_FontDescriptor.Size.Height,
+                        1);
+                DisplayLayer::SetColor(Color);
+            }
+          #endif
 
             m_Position.X += m_FontDescriptor.HorizontalAdvance;
             IncrementFeaturePointer();
@@ -241,12 +261,9 @@ size_t GPrintf::PutString(void)
         IncrementFeaturePointer();
     }
 
-    // ---------------------------------------------------------------------
-    // CLEANUP
-    // ---------------------------------------------------------------------
+    // Cleanup
     pMemoryPool->Free((void**)&m_pColorUsedInString);
     pMemoryPool->Free((void**)&m_pFontUsedInString);
-
     DisplayLayer::SetColor(KeepDrawingColor);
 
     return 0;
@@ -258,17 +275,17 @@ size_t GPrintf::PutString(void)
     uint32_t   KeepDrawingColor;
     FontInfo_t FontInfo;
 
-    KeepDrawingColor = DisplayLayer::GetColor();                                          // Push drawing color
+    KeepDrawingColor = DisplayLayer::GetColor();                                          		// Push drawing color
 
     m_pFontUsedInString  = (Font_e*) pMemoryPool->Alloc(sizeof(Font_e) * m_Size);
     m_pColorUsedInString = (uint32_t*)pMemoryPool->Alloc(sizeof(uint32_t) * m_Size);
 
-    this->ParseFeature();                                                           // Parse for special feature (Color & Font change)
-    this->ParseString();                                                            // Calculate all the Parameter of the printf
+    this->ParseFeature();                                                           					// Parse for special feature (Color & Font change)
+    this->ParseString();                                                            					// Calculate all the Parameter of the printf
 
     m_pMovingUsedFontPtr  = m_pFontUsedInString;
     m_pMovingUsedColorPtr = m_pColorUsedInString;
-    m_Position.Y          = (m_pLocalBox->Pos.Y + m_OffsetJustY);                   // Adjust starting position according to calculated real size
+    m_Position.Y          = (m_pLocalBox->Pos.Y + m_OffsetJustY);                   					// Adjust starting position according to calculated real size
 
     DB_Central.Get(&FontInfo, GFX_FONT_INFO, *m_pFontUsedInString, 0);
 
@@ -291,15 +308,30 @@ size_t GPrintf::PutString(void)
         // Print each individual character according to font use, color and all the offset
         for(j = 0; j < m_SubLineSizeChar[i]; j++)
         {
-//            DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, *(m_pSubLineString[i] + j));
+          #if (GRAFX_USE_ROM_DATABASE == DEF_ENABLED)
+            uint32_t Character = uint32_t(m_SubLineSizeChar[j]) - uint32_t(FontInfo.FirstCaracter);    	// Get the offset for this font
 
-    uint32_t Character = uint32_t(m_SubLineSizeChar[j]) - uint32_t(FontInfo.FirstCaracter);                      // Get the offset for this font
+            if(Character <= (FontInfo.LastCaracter - FontInfo.FirstCaracter))
+            {
+                uint8_t RealIndex = FontInfo.pLookUpTable[Character];
 
-    //if(Character <= FontInfo.LastCaracter)
-    //{
-        const FontDescriptor_t* AddresstDescriptor = (const FontDescriptor_t*)(uint32_t(Character * sizeof(FontDescriptor_t)) + uint32_t(FontInfo.pDescriptor));
+                const FontDescriptor_t* AddresstDescriptor = FontInfo.pDescriptor + RealIndex;
+                memcpy(&m_FontDescriptor, (void*)AddresstDescriptor, sizeof(FontDescriptor_t));
 
-        memcpy(&m_FontDescriptor, (void*)AddresstDescriptor, sizeof(FontDescriptor_t));
+                m_CorrectedPos.X = m_Position.X + m_FontDescriptor.LeftBearing;
+                m_CorrectedPos.Y = m_Position.Y + m_FontDescriptor.OffsetY;
+
+                if(m_FontDescriptor.pAddress != 0)
+                {
+                    DisplayLayer::SetTextColor(*m_pMovingUsedColorPtr);
+                    PrintFont(&m_FontDescriptor, &m_CorrectedPos);
+                }
+            }
+          #else // RAM database 
+            DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, *(m_pSubLineString[i] + j));
+			uint32_t Character = uint32_t(m_SubLineSizeChar[j]) - uint32_t(FontInfo.FirstCaracter);                      // Get the offset for this font
+            const FontDescriptor_t* AddresstDescriptor = (const FontDescriptor_t*)(uint32_t(Character * sizeof(FontDescriptor_t)) + uint32_t(FontInfo.pDescriptor));
+            memcpy(&m_FontDescriptor, (void*)AddresstDescriptor, sizeof(FontDescriptor_t));
 
             m_CorrectedPos.X  = m_Position.X + m_FontDescriptor.LeftBearing;
             m_CorrectedPos.Y  = m_Position.Y + m_FontDescriptor.OffsetY;
@@ -309,6 +341,8 @@ size_t GPrintf::PutString(void)
                 DisplayLayer::SetTextColor(*m_pMovingUsedColorPtr);
                 PrintFont(&m_FontDescriptor, &m_CorrectedPos);
             }
+
+          #endif
 
           #if (GRAFX_PAINT_BOX_DEBUG == DEF_ENABLED)
             if((m_FontDescriptor.Size.Width != 0) && (m_FontDescriptor.Size.Height != 0))

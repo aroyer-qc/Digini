@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2025 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -99,6 +99,519 @@
 #define ST7735_SUCCESS                  0
 #define ST7735_ERROR                    1
 
+const ST7735_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
+{
+    {ST7735_SWRESET,   nullptr, 0, 50},
+    {,             SSD2119_OSCILLATOR_ENABLE},          // Enable oscillator
+    {,              SSD2119_POWER_CONTROL_1_VALUE},      // Power step 1
+    {,              SSD2119_POWER_CONTROL_2_VALUE},      // Power step 2
+    {ST7735_INVCTR, 0x03, 1,              },      // Power step 3
+    {,              SSD2119_POWER_CONTROL_4_VALUE},      // Power step 4
+    {,              SSD2119_POWER_CONTROL_5_VALUE},      // Power step 5
+    {,                   SSD2119_VCOM_OTP_1_VALUE},           // VCOM amplitude
+    {,                   SSD2119_VCOM_OTP_2_VALUE},           // VCOM amplitude
+    {,                   SSD2119_DISPLAY_EXIT_SLEEP_MODE},    // Exit sleep
+    {,                   SSD2119_ENTRY_MODE_VALUE},           // RGB565, normal scan
+    {,               SSD2119_OUTPUT_CONTROL_VALUE},       // Panel type + scan direction
+    {,              0x0000},                             // Start at gate 0
+    {,              SSD2119_FRAME_FREQUENCY_VALUE},      // Frame timing
+    {,    SSD2119_FRAME_FREQUENCY_CONTROL_2_VALUE},
+    {,          SSD2119_FRAME_CYCLE_CONTROL_VALUE},
+    {,         0x0009},
+    {,              0x0000},
+    {,              0x0106},
+    {,              0x0100},
+    {,              0x0303},
+    {,              0x0003},
+    {,              0x0004},
+    {,              0x0203},
+    {,              0x0303},
+    {,              0x0100},
+    {,             0x0504},
+    {,              SSD2119_DISPLAY_ON_VALUE}             // Display ON
+};
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           Initialize
+//
+//  Parameter(s):   void*      pArg       Optional initialization argument passed to the driver.
+//
+//  Return:         None
+//
+//  Description:    Performs the complete initialization sequence of the graphics driver.
+//                  Resets the LCD controller, reads the device identification code, and
+//                  sends the full initialization command table to configure the ST7735.
+//                  Once the controller is ready, the foreground display layer is cleared
+//                  to a known state.
+//
+//  Note(s):        IO with those name must exist into bsp_io_def.h:
+//                  IO_ST7735_CS, IO_ST7735_DC, IO_LCD_RESET, IO_ST7735_BACKLIGHT
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::Initialize(const void* pArg)
+{
+    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
+
+    m_pSPI = (SPI_Driver*)pArg;
+    m_pSPI->Initialize();                                           // CS(NSS) handle by class
+
+    // I may need to provide a pointer to the background image for building element to display on the screen (merge)
+    //m_pBackground = (StaticImageInfo_t*)pArg;
+
+    GrafxGenDriver::Initialize(nullptr);
+    IO_SetPinHigh(IO_LCD_RESET);
+    LIB_Delay_mSec(50);
+
+    SendCommand(ST7735_SWRESET, nullptr, 0, 50);            // Software reset
+
+    // Frame Rate
+    const uint8_t Data_FRMCTR[6] = {0x05, 0x3C, 0x3C,0x05, 0x3C, 0x3C};
+    SendCommand(ST7735_FRMCTR1, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 1
+    SendCommand(ST7735_FRMCTR2, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 2
+    SendCommand(ST7735_FRMCTR3, (uint8_t*)&Data_FRMCTR[0], 6, 1);    // Frame control 2
+
+    SendCommand(ST7735_INVCTR, 0x03, 1);                   // Dot inversion
+
+	// Power Sequence
+
+    const uint8_t Data_PWR_CTRL1[3] = {0x28, 0x08, 0x04};
+    const uint8_t Data_PWR_CTRL3[2] = {0x0D, 0x00};
+    const uint8_t Data_PWR_CTRL4[2] = {0x8D, 0x2A};
+    const uint8_t Data_PWR_CTRL5[2] = {0x8D, 0xEE};
+    SendCommand(ST7735_POWER_CTRL_1, (uint8_t*)&Data_PWR_CTRL1[0], 3, 1);
+    SendCommand(ST7735_POWER_CTRL_2, 0xC0, 1);
+    SendCommand(ST7735_POWER_CTRL_3, (uint8_t*)&Data_PWR_CTRL3[0], 2, 1);
+    SendCommand(ST7735_POWER_CTRL_4, (uint8_t*)&Data_PWR_CTRL4[0], 2, 1);
+    SendCommand(ST7735_POWER_CTRL_5, (uint8_t*)&Data_PWR_CTRL5[0], 2, 1);
+
+    SendCommand(ST7735_VMCTR1, 0x10, 1);                        // VCOM
+    SendCommand(ST7735_MADCTL, 0xC0, 1);                        // MX, MY, RGB mode
+
+	// Gamma Sequence
+    const uint8_t Data_GMCTRP1[16] = {0x04, 0x22, 0x07, 0x0A, 0x2E, 0x30, 0x25, 0x2A,
+                                      0x28, 0x26, 0x2E, 0x3A, 0x00, 0x01, 0x03, 0x13};
+    const uint8_t Data_GMCTRN1[16] = {0x04, 0x16, 0x06, 0x0D, 0x2D, 0x26, 0x23, 0x27,
+                                      0x27, 0x25, 0x2D, 0x3B, 0x00, 0x01, 0x04, 0x13};
+    SendCommand(ST7735_GMCTRP1, (uint8_t*)&Data_GMCTRP1[0], 16, 1);
+    SendCommand(ST7735_GMCTRN1, (uint8_t*)&Data_GMCTRN1[0], 16, 1);
+
+    SendCommand(ST7735_COLMOD, 0x05, 1);                        // 65K mode
+    SendCommand(ST7735_SLPOUT, nullptr, 0, 120);                // Exit Sleep
+    DisplayOn();
+    Clear();
+    IO_SetPinHigh(IO_ST7735_BACKLIGHT);
+
+    ClearLayer(FOREGROUND_DISPLAY_LAYER_0);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ClearLayer
+//
+//  Parameter(s):   Layer_e    Layer      Specifies the display layer to clear.
+//
+//  Return:         None
+//
+//  Description:    Clears the selected display layer by writing a constant color value to the
+//                  entire GRAM region associated with this driver. The GRAM write pointer is
+//                  positioned at the origin before sequential pixel data is written.
+//
+//  Note(s):        Only layers managed directly by this driver are cleared. Any additional
+//                  layers are handled by the base graphics class.
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::ClearLayer(Layer_e Layer)
+{
+   	if(Layer == FOREGROUND_DISPLAY_LAYER_0)
+    {
+        ResetWindow();
+
+        for(uint32_t i = 0; i < GRAFX_DRIVER_SIZE; i++)
+        {
+            WriteData(0x0000);
+        }
+    }
+    else
+    {
+        GrafxGenDriver::ClearLayer(Layer);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CopyWidgetToDevice
+//
+//  Parameter(s):
+//
+//  Return:         None
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::CopyWidgetToDevice(ImageID_e Image, Cartesian_t Position)
+{
+    StaticImageInfo_t* pImage;
+
+    DB_Central.Get(&pImage, GFX_IMAGE_INFO, uint16_t(Image));
+    CopyWidgetToDevice(pImage->Info.Size, Position);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CopyWidgetToDevice
+//
+//  Parameter(s):
+//
+//  Return:         None
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::CopyWidgetToDevice(BoxSize_t BoxSize, Cartesian_t Position)
+{
+    DisplayLayer* pLayer   = &LayerTable[DisplayLayer::GetDrawing()];
+    uint32_t      Address = pLayer->GetAddress();
+    uint16_t*     pDataPtr;
+    uint32_t      SizeX = BoxSize.Width;
+    uint32_t      SizeY = BoxSize.Height;
+    uint32_t      ImageSize = SizeX * SizeY;
+
+    uint16_t* pImageDestination = (uint16_t*)pMemoryPool->Alloc(ImageSize * sizeof(uint16_t), MEM_DBG_GRAFX_CL1);
+
+    DMA2D->CR      = DMA2D_M2M_PFC;                                 // Memory-to-Memory with Pixel Format Conversion
+    DMA2D->FGMAR   = Address;                                       // Source address
+    DMA2D->FGOR    = (uint32_t)pLayer->GetSize().X - SizeX;         // Source line offset so none as we are linear
+    DMA2D->FGPFCCR = DMA2D_CONVERSION_ARGB8888;                     // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
+    DMA2D->OMAR    = uint32_t(pImageDestination);                   // Destination address
+    DMA2D->OOR     = 0;                                             // Destination line offset none as we are linear
+    DMA2D->OPFCCR  = DMA2D_CONVERSION_RGB565;                       // Defines the size of pixel. 0 for format PIXEL_FORMAT_ARGB8888
+    DMA2D->NLR     = (SizeX << 16) | SizeY;                         // Size configuration of area to be transfered
+
+    SET_BIT(DMA2D->CR, DMA2D_CR_START);                             // Start operation
+    while ((DMA2D->ISR & DMA2D_ISR_ALL_FLAG) == 0);                 // Wait for transfer complete
+    DMA2D->IFCR = DMA2D_IFCR_ALL_FLAG;                              // Clear flag
+
+    SetWindow(Position.X, Position.Y, &BoxSize);
+    pDataPtr = pImageDestination;
+
+    for(uint32_t i = 0; i < ImageSize; i++)
+    {
+        WriteData(*pDataPtr);
+        pDataPtr++;
+    }
+
+    pMemoryPool->Free((void**)&pImageDestination);
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SetRAM_Pointer
+//
+//  Parameter(s):   uint16_t   PosX       Specifies the horizontal GRAM address.
+//                  uint16_t   PosY       Specifies the vertical   GRAM address.
+//
+//  Return:         None
+//
+//  Description:    Positions the internal GRAM write pointer of the LCD controller.
+//                  The X address register is written first, followed by the RAM data
+//                  register selection. The Y address register is then updated to
+//                  complete the pointer setup before pixel
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::SetRAM_Pointer(uint16_t PosX, uint16_t PosY)
+{
+	WriteCommand(SSD2119_Y_RAM_ADDRESS_REGISTER, PosY);
+    WriteCommand(SSD2119_X_RAM_ADDRESS_REGISTER, PosX);
+	SetWriteRAM_Ready();
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ReadCommand
+//
+//  Parameter(s):   Register    8-bit register index to read from the LCD controller.
+//
+//  Return:         uint16_t    16-bit value returned by the LCD controller.
+//
+//  Description:    Sends the specified register index to the SSD2119, waits briefly for the bus
+//                  to settle, and then reads the corresponding 16-bit data from the LCD RAM
+//                  interface. This function performs a direct register read and assumes that the
+//                  controller is already configured for indexed register access.
+//
+//-------------------------------------------------------------------------------------------------
+uint16_t GrafxDriver::ReadCommand(uint8_t Register)
+{
+    LCD_REG = Register;
+    LIB_Delay_uSec(3);
+    return LCD_RAM;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           SetWindow
+//
+//  Parameter(s):
+//
+//  Return:
+//
+//  Description:
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::SetWindow(uint16_t PosX, uint16_t PosY, BoxSize_t* pBoxSize)
+{
+    Box_t Box;
+    Box.Pos.X       = PosX;
+    Box.Pos.Y       = PosY;
+    Box.Size.Width  = pBoxSize->Width;
+    Box.Size.Height = pBoxSize->Height;
+    SetWindow(&Box);
+}
+
+//-------------------------------------------------------------------------------------------------
+//  Name:           SetWindow
+//
+//  Parameter(s):   pBox    Pointer to a Box_t structure defining the drawing region.
+//                          - pBox->Pos.X / pBox->Pos.Y   : Top-left coordinate of the window
+//                          - pBox->Size.Width / Height   : Dimensions of the window
+//
+//  Return:         None
+//
+//  Description:    Configure the SSD2119 GRAM access window to the rectangular region defined
+//                  by pBox. This sets the horizontal and vertical RAM boundaries so that all
+//                  subsequent pixel writes are clipped to this area. The GRAM cursor is then
+//                  positioned at the top-left corner of the window and the controller is placed
+//                  in write-ready state.
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::SetWindow(Box_t* pBox)
+{
+    uint16_t StartX = pBox->Pos.X;
+    uint16_t EndX   = StartX + pBox->Size.Width  - 1;
+    uint16_t StartY = pBox->Pos.Y;
+    uint16_t EndY   = StartY + pBox->Size.Height - 1;
+    WriteCommand(SSD2119_HORIZONTAL_RAM_START_REGISTER, StartX);        // Horizontal window (X) Start
+    WriteCommand(SSD2119_HORIZONTAL_RAM_END_REGISTER,   EndX);          // Horizontal window (X) End
+    uint16_t Vertical = (EndY << 8) | StartY;
+    WriteCommand(SSD2119_VERTICAL_RAM_POSITION_REGISTER, Vertical);     // Vertical window (Y) packed into one register
+    SetRAM_Pointer(StartX, StartY);                                     // Set GRAM cursor to top-left of window
+}
+//-------------------------------------------------------------------------------------------------
+//
+//   Function name: SetWindow
+//
+//   Parameter(s):  PosX1         X and ...
+//                  PosY1         Y for top left corner of the window
+//                  PosX2         X and ...
+//                  PosY2         Y for bottom right corner of the window
+//   Return value:  None
+//
+//   Description:   Set drawing window
+//
+//-------------------------------------------------------------------------------------------------
+
+void GrafxDriver::SetWindow(uint8_t PosX1, uint8_t PosY1, uint8_t PosX2, uint8_t PosY2)
+{
+    uint8_t Data[4] = {0,0,0,0};
+
+    //uint16_t StartX = pBox->Pos.X;
+    //uint16_t EndX   = StartX + pBox->Size.Width  - 1;
+    //uint16_t StartY = pBox->Pos.Y;
+    //uint16_t EndY   = StartY + pBox->Size.Height - 1;
+
+??
+
+    Data[1] = PosX1;                // X start
+    Data[3] = PosX2;                // X end
+    SendCommand(ST7735_CASET, &Data[0], 4, 1);
+    Data[1] = PosY1;                // Y start
+    Data[3] = PosY2;                // Y end
+    SendCommand(ST7735_RASET, &Data[0], 4, 1);
+}
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           WriteRLE16
+//
+//  Parameter(s):   pData           Pointer to the RLE16 source data.
+//                  pDestination    Pointer to the destination RGB565 buffer.
+//                  Size            Number of RLE entries to decode.
+//
+//  Return:         None
+//
+//  Description:    Decode 16-bit RLE (RGB565) image data and write the expanded pixels either to
+//                  the LCD interface (when pDestination is nullptr) or into a destination buffer.
+//                  Each RLE entry contains a pixel value and a repeat count (Repeat + 1). The
+//                  function expands all entries sequentially until the specified number of RLE
+//                  items has been processed.
+//
+//  Note(s):        - When pDestination is nullptr, pixels are streamed directly to the LCD using
+//                    WriteData(), which must accept RGB565 format.
+//                  - The caller must ensure that the destination buffer is large enough to hold
+//                    all expanded pixels.
+//                  - No bounds checking is performed on the expanded output; RLE data must be
+//                    valid and consistent with the expected image size.
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::WriteRLE16(StaticImageRLE_16_t* pData, uint16_t* pDestination, size_t Size)
+{
+    while(Size != 0)
+    {
+        uint32_t Repeat = pData->Repeat + 1;
+        uint16_t Pixel  = pData->Pixel;
+        pData++;
+
+        if(pDestination == nullptr)
+        {
+            while(Repeat--)
+            {
+                WriteData(Pixel);
+            }
+        }
+        else
+        {
+            while(Repeat--)
+            {
+                *pDestination = Pixel;
+                pDestination++;
+            }
+        }
+
+        Size--;
+    }
+}
+
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           WriteRLE32
+//
+//  Parameter(s):   pData           Pointer to the RLE32 source data.
+//                  pDestination    Pointer to the destination ARGB8888 buffer.
+//                  Size            Number of RLE entries to decode.
+//
+//  Return:         None
+//
+//  Description:    Decode 32-bit RLE (ARGB8888) image data and write the expanded pixels into
+//                  the destination buffer. Each RLE entry contains a pixel value and a repeat
+//                  count (Repeat + 1). The function expands all entries sequentially until the
+//                  specified number of RLE items has been processed.
+//
+//  Note(s):        - This LCD does not support ARGB8888, therefore no write to LCD memory.
+//                  - The caller must ensure that the destination buffer is large enough to
+//                    receive all expanded pixels.
+//
+//-------------------------------------------------------------------------------------------------
+void GrafxDriver::WriteRLE32(StaticImageRLE_32_t* pData, uint32_t* pDestination, size_t Size)
+{
+    if(pDestination != nullptr)
+    {
+        while(Size != 0)
+        {
+            uint32_t Repeat = pData->Repeat + 1;
+            uint32_t Pixel  = pData->Pixel;
+            pData++;
+
+            while(Repeat--)
+            {
+                *pDestination = Pixel;
+                pDestination++;
+            }
+
+            Size--;
+        }
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // DIGINI_USE_GRAFX
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -187,31 +700,6 @@ uint8_t GrafxDriver::ReadData(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function name: SetWindow
-//
-//   Parameter(s):  PosX1         X and ...
-//                  PosY1         Y for top left corner of the window
-//                  PosX2         X and ...
-//                  PosY2         Y for bottom right corner of the window
-//   Return value:  None
-//
-//   Description:   Set drawing window
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::SetWindow(uint8_t PosX1, uint8_t PosY1, uint8_t PosX2, uint8_t PosY2)
-{
-    uint8_t Data[4] = {0,0,0,0};
-
-    Data[1] = PosX1;                // X start
-    Data[3] = PosX2;                // X end
-    SendCommand(ST7735_CASET, &Data[0], 4, 1);
-    Data[1] = PosY1;                // Y start
-    Data[3] = PosY2;                // Y end
-    SendCommand(ST7735_RASET, &Data[0], 4, 1);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
 //   Function name: WriteData
 //
 //   Parameter(s):  uint8_t         Data
@@ -222,7 +710,7 @@ void GrafxDriver::SetWindow(uint8_t PosX1, uint8_t PosY1, uint8_t PosX2, uint8_t
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::WriteData(uint8_t Data)
 {
-    IO_SetPinHigh(IO_ST7735_DC);				// Data (active high)
+    //IO_SetPinHigh(IO_ST7735_DC);				// Data (active high)
     m_pSPI->Write(&Data, 1);
 }
 
@@ -238,7 +726,7 @@ void GrafxDriver::WriteData(uint8_t Data)
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::WriteData(uint16_t Data)
 {
-    IO_SetPinHigh(IO_ST7735_DC);			            // Data (active high)
+    //IO_SetPinHigh(IO_ST7735_DC);			            // Data (active high)
     m_pSPI->Write((uint8_t*)&Data, 2);
 }
 
@@ -254,7 +742,7 @@ void GrafxDriver::WriteData(uint16_t Data)
 //-------------------------------------------------------------------------------------------------
 void GrafxDriver::WriteData(uint32_t Data)
 {
-    IO_SetPinHigh(IO_ST7735_DC);			            // Data (active high)
+    //IO_SetPinHigh(IO_ST7735_DC);			            // Data (active high)
     m_pSPI->Write((uint8_t*)&Data, 4);
 }
 
@@ -272,7 +760,7 @@ void GrafxDriver::WriteData(uint32_t Data)
 
 void GrafxDriver::WriteData(uint8_t* pData, uint32_t Size)
 {
-    IO_SetPinHigh(IO_ST7735_DC);        			    // Data (active high)
+    //IO_SetPinHigh(IO_ST7735_DC);        			    // Data (active high)
     m_pSPI->Write(pData, Size);
 }
 
@@ -322,82 +810,6 @@ void GrafxDriver::SendCommand(uint8_t Register, uint8_t* pData, uint32_t Size, u
     }
 }
 
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           Initialize
-//
-//  Parameter(s):   void* Arg           ( to pass any kind data the driver might need
-//  Return:         None
-//
-//  Description:    LCD configuration specific
-//
-//  Note(s):        IO with those name must exist into bsp_io_def.h:
-//                  IO_ST7735_CS, IO_ST7735_DC, IO_ST7735_RESET, IO_ST7735_BACKLIGHT
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::Initialize(void* pArg)
-{
-    m_pSPI = (SPI_Driver*)pArg;
-
-    m_pSPI->Initialize();                                           // CS(NSS) handle by class
-
-    LIB_Delay_mSec(1);                                              // Hold Reset at least 10 uSec
-    IO_SetPinHigh(IO_ST7735_RESET);
-    LIB_Delay_mSec(50);
-
-    SendCommand(ST7735_SWRESET, nullptr, 0, 50);            // Software reset
-
-    //------------------------------------ST7735S Frame Rate---------------------------------------
-
-    const uint8_t Data_FRMCTR[6] = {0x05, 0x3C, 0x3C,0x05, 0x3C, 0x3C};
-    SendCommand(ST7735_FRMCTR1, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 1
-    SendCommand(ST7735_FRMCTR2, (uint8_t*)&Data_FRMCTR[0], 3, 1);    // Frame control 2
-    SendCommand(ST7735_FRMCTR3, (uint8_t*)&Data_FRMCTR[0], 6, 1);    // Frame control 2
-
-	//------------------------------------End ST7735S Frame Rate-----------------------------------
-
-    SendCommand(ST7735_INVCTR, 0x03, 1);                   // Dot inversion
-
-	//------------------------------------ST7735S Power Sequence-----------------------------------
-
-    const uint8_t Data_PWR_CTRL1[3] = {0x28, 0x08, 0x04};
-    const uint8_t Data_PWR_CTRL3[2] = {0x0D, 0x00};
-    const uint8_t Data_PWR_CTRL4[2] = {0x8D, 0x2A};
-    const uint8_t Data_PWR_CTRL5[2] = {0x8D, 0xEE};
-
-    SendCommand(ST7735_POWER_CTRL_1, (uint8_t*)&Data_PWR_CTRL1[0], 3, 1);
-    SendCommand(ST7735_POWER_CTRL_2, 0xC0, 1);
-    SendCommand(ST7735_POWER_CTRL_3, (uint8_t*)&Data_PWR_CTRL3[0], 2, 1);
-    SendCommand(ST7735_POWER_CTRL_4, (uint8_t*)&Data_PWR_CTRL4[0], 2, 1);
-    SendCommand(ST7735_POWER_CTRL_5, (uint8_t*)&Data_PWR_CTRL5[0], 2, 1);
-
-    //---------------------------------End ST7735S Power Sequence----------------------------------
-
-    SendCommand(ST7735_VMCTR1, 0x10, 1);                        // VCOM
-    SendCommand(ST7735_MADCTL, 0xC0, 1);                        // MX, MY, RGB mode
-
-	//------------------------------------ST7735S Gamma Sequence-----------------------------------
-
-    const uint8_t Data_GMCTRP1[16] = {0x04, 0x22, 0x07, 0x0A, 0x2E, 0x30, 0x25, 0x2A,
-                                      0x28, 0x26, 0x2E, 0x3A, 0x00, 0x01, 0x03, 0x13};
-    const uint8_t Data_GMCTRN1[16] = {0x04, 0x16, 0x06, 0x0D, 0x2D, 0x26, 0x23, 0x27,
-                                      0x27, 0x25, 0x2D, 0x3B, 0x00, 0x01, 0x04, 0x13};
-
-    SendCommand(ST7735_GMCTRP1, (uint8_t*)&Data_GMCTRP1[0], 16, 1);
-    SendCommand(ST7735_GMCTRN1, (uint8_t*)&Data_GMCTRN1[0], 16, 1);
-
-	//------------------------------------End ST7735S Gamma Sequence-------------------------------
-
-    SendCommand(ST7735_COLMOD, 0x05, 1);                        // 65K mode
-    SendCommand(ST7735_SLPOUT, nullptr, 0, 120);                // Exit Sleep
-    DisplayOn();
-    Clear();
-    IO_SetPinHigh(IO_ST7735_BACKLIGHT);
-
-	//------------------------------------Call to generic initialize-------------------------------
-
-    GrafxGenDriver::Initialize(nullptr);
-}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -652,36 +1064,6 @@ void GrafxDriver::PrintFont(FontDescriptor_t* pDescriptor, Cartesian_t* pPos)
     VAR_UNUSED(Address);
     VAR_UNUSED(PixelFormat);
     VAR_UNUSED(AreaConfig);
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           DisplayOn
-//
-//  Parameter(s):   None
-//  Return:         None
-//
-//  Description:    Enables the Display
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::DisplayOn(void)
-{
-    SendCommand(ST7735_DISPON, nullptr, 0, 1);                  // Display on
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           DisplayOff
-//
-//  Parameter(s):   None
-//  Return:         None
-//
-//  Description:    Disables the Display
-//
-//-------------------------------------------------------------------------------------------------
-void GrafxDriver::DisplayOff(void)
-{
-    SendCommand(ST7735_DISPOFF, nullptr, 0, 1);                  // Display on
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1227,3 +1609,4 @@ IO_SetPinHigh(IO_ST7735_CS);
 
 #endif
 
+*/

@@ -179,7 +179,7 @@ void                PrintFont                           (FontDescriptor_t* pDesc
 
 void                DrawCursorOnCircle                  (ImageID_e ImageID, Cartesian_t* pPos, uint16_t Radius, uint16_t Angle);
 
-size_t              WidgetPrint                         (Text_t* pText, ServiceReturn_t* pService);
+size_t              WidgetPrint                         (Text_t* pText, ServiceReturn_t* pService, bool UseBackText = false);
 
 // Alpha function
 void                AlphaBlend                          (void);

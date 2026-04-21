@@ -309,13 +309,16 @@ size_t GPrintf::PutString(void)
         for(j = 0; j < m_SubLineSizeChar[i]; j++)
         {
           #if (GRAFX_USE_ROM_DATABASE == DEF_ENABLED)
-            uint32_t Character = uint32_t(m_SubLineSizeChar[j]) - uint32_t(FontInfo.FirstCaracter);    	// Get the offset for this font
+            uint8_t Character = uint32_t(m_SubLineSizeChar[j]) - uint32_t(FontInfo.FirstCaracter);    	// Get the offset for this font
 
             if(Character <= (FontInfo.LastCaracter - FontInfo.FirstCaracter))
             {
-                uint8_t RealIndex = FontInfo.pLookUpTable[Character];
+				if(FontInfo.pLookUpTable != nullptr)			// Use a lookup only if it exist
+                {
+					Character = FontInfo.pLookUpTable[Character];
+				}
 
-                const FontDescriptor_t* AddresstDescriptor = FontInfo.pDescriptor + RealIndex;
+                const FontDescriptor_t* AddresstDescriptor = FontInfo.pDescriptor + Character;
                 memcpy(&m_FontDescriptor, (void*)AddresstDescriptor, sizeof(FontDescriptor_t));
 
                 m_CorrectedPos.X = m_Position.X + m_FontDescriptor.LeftBearing;

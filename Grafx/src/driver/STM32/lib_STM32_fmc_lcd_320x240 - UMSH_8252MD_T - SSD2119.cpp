@@ -47,7 +47,6 @@
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
-
 //notes: In R01h, bits REV, BGR, RL, CM will override the corresponding hardware pins settings. Setting R28h as 0x0006 is required before setting R25h and R29h registers.
 
 const SSD2119_InitCMD_t GrafxDriver::m_InitCMD[GRAFX_NUMBER_OF_INIT_CMD] =
@@ -105,7 +104,6 @@ void GrafxDriver::Initialize(const void* pArg)
     m_pBackground = (StaticImageInfo_t*)pArg;
 
     GrafxGenDriver::Initialize(nullptr);
-
     IO_SetPinHigh(IO_LCD_RESET);
     LIB_Delay_mSec(5);
 

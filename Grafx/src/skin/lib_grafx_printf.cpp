@@ -41,11 +41,18 @@
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+//  Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define GRAFX_TEXT_ALTERNATE_COLOR_2			2
+
+//-------------------------------------------------------------------------------------------------
 //
 //   Function Name: WidgetPrint
 //
 //   Parameter(s):  Text_t*              pText,
 //                  ServiceReturn_t*     pService
+//					bool 				 UseBackText  		to draw a background text
 //   Return Value:  size_t              Size
 //
 //   Description:   Print a formatted text on the display.
@@ -54,18 +61,20 @@
 //                  It received te data from ServiceReturn_t structure
 //
 //-------------------------------------------------------------------------------------------------
-size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService)
+size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService, bool UseBackText)
 {
     GPrintf     Printf;
     char*       pString = nullptr;
     size_t      Size = 0;
 
-    if(pText->Label != INVALID_LABEL)
+	Label_e Label = (UseBackText == false) ? pText->Label : pText->BackLabel;
+
+    if(Label != INVALID_LABEL)
     {
-        DisplayLayer::SetTextColor(pText->Color[pService->IndexState]);
-        FontDefault.Set(pText->Font);
+		DisplayLayer::SetTextColor((UseBackText == false) ? pText->Color[pService->IndexState] : GRAFX_TEXT_ALTERNATE_COLOR_2);
+		FontDefault.Set(pText->Font);
         SetXY_Justification(pText->Options);
-        DB_Central.Get(&pString, APPLICATION_LABEL, pText->Label);
+        DB_Central.Get(&pString, APPLICATION_LABEL, Label);
 
         if(pText->Blend == CLEAR_BLEND)
         {

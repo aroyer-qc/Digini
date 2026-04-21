@@ -143,21 +143,86 @@ void WidgetRotaryDial::Finalize()
 //
 //  Name:           Draw
 //
-//  Parameter(s):   ServiceReturn_t* pService
+//  Parameter(s):   ServiceReturn_t* pService	Pointer to the service structure providing the
+//												current dial state.  pService->IndexState contains
+//                                              the dynamic rotation angle of the dial, expressed
+//                                              in degrees, where a positive value represents a
+//                                              clockwise visual rotation. Since the internal
+//                                              rotation engine uses mathematical angles
+//                                              (counter‑clockwise positive), this value is negated
+//                                              before use.
+//
 //  Return:         None
 //
+//  Description:	Render the rotary dial widget onto the active drawing layer.
 //
-//  Description:    Draw the meter on display.
+//      			The rotary dial consists of a sequence of elements (numbers, ticks, labels)
+//      			distributed along a circular arc defined by StartAngle and EndAngle. The
+//                  angular	spacing between two consecutive elements is StepAngle. For example, a
+//                  StepAngle of 20° places elements at 0°, 20°, 40°, 60°, etc.
+//
+//      			For each element in the range [StartValue, EndValue):
+//          			- Compute its base angular position:
+//                		  BaseAngle = StartAngle + (ElementIndex - StartValue) * StepAngle
+//
+//          			- Apply the dynamic rotation offset:
+//                		  FinalAngle = BaseAngle - pService->IndexState
+//                        (The subtraction ensures that a positive IndexState rotates the dial
+//                        clockwise on screen, matching visual expectations.)
+//
+//          	        - Convert FinalAngle to Cartesian coordinates on the dial radius.
+//
+//          			- Generate the bitmap for the element text
+//                        (may contain multiple characters).
+//
+//          			- Rotate the bitmap using the Q8.8 rotation engine.
+//
+//          			- Compute the top‑left placement of the rotated bitmap using
+//            			  ComputeCircularPlacement(), ensuring proper alignment on the circular
+//                        path.
+//
+//          			- Blend the rotated bitmap onto the construction or foreground layer,
+//                        depending on the active rendering mode.
+//
+//      When construction layers are enabled, the function restores the background region
+//      behind each element before redrawing it, ensuring clean incremental updates
+//      without visual artifacts.
+//
+//      All temporary bitmaps are allocated from the graphics memory pool and released
+//      immediately after use.
+//
+//      Upon completion, the drawing state is restored to its previous configuration.
 //
 //-------------------------------------------------------------------------------------------------
+struct Box_t
+{
+    Cartesian_t    Pos;
+    BoxSize_t      Size;
+};
+
+struct RotaryDial_t
+{
+    Service_t      Service;
+    Box_t          Box;							// This is the box position and dimension for this widget construction
+    int            Radius;						// Radius offset where to draw element
+    uint16_t       StartAngle;					// Static position of the display start angle (number outside angle range cover by StartAngle and EndAngle are not drawed)
+    uint16_t       EndAngle;					// Static position of the display end angle
+    uint16_t       StepAngle;					// Static value of the step angle    Ex. 20 Degree tell this widget to draw a number at every 20 degrees
+    int16_t        StartValue;					// Static value to tell this widget to draw from 0 Degree with this value. Signed value.
+    int16_t        EndValue;					// Static value to tell this widget to draw up to X Degree with this end value. Signed value.
+    uint16_t       MovingStepAngle;				// This is the angle of the moving dial versus 0 degree at top of the circle
+    Font_e         FontID;						// Font ID to use on this widget
+    uint16_t       Options;						// Drawing option.
+};
+
 void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
 {
-    uint16_t    Angle;
+    uint16_t    StartAngle;
     uint16_t    EndAngle;
-    BlendMode_e  BlendMode;
+    uint16_t    DisplayAngle;
+    BlendMode_e BlendMode;
 
     BlendMode = ((m_pRotaryDial->Options & OPTION_BLEND_CLEAR) != 0) ? CLEAR_BLEND : ALPHA_BLEND;
-
     DisplayLayer::PushDrawing();
 
   #if (GRAFX_DEBUG_GUI == DEF_ENABLED)
@@ -169,6 +234,41 @@ void WidgetRotaryDial::Draw(ServiceReturn_t* pService)
     DisplayLayer::SetDrawing(FOREGROUND_DISPLAY_LAYER_0);
    #endif
   #endif
+
+  #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
+	// need to copy part of the background to erase previous dial (m_pRotaryDial->Box);			// Copy part of the background into the construction layer
+  #endif
+
+    StartAngle   = m_pRotaryDial->StartAngle;					    // Display of number start at this angle.	0 degree is at the top of the arc
+    EndAngle     = m_pRotaryDial->EndAngle;							// Display of number end at that angle.
+	Range        = m_pRotaryDial->Range;							// The range of the rotary dial is 0 to range  
+	DisplayAngle = pService->IndexState;							// This is the angle of rotation
+	Radius       = m_pRotaryDial->Radius;
+
+    for(int16_t Element = StartValue; Element < EndValue; Element++)
+	{
+	  // calculate the pos of this element
+	  
+	  #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
+		CopyBackgroundToConstruction(Position of this element);			// Copy part of the background into the construction layer
+	  #endif
+
+		We need to construct the bitmap of the print for this element (Maybe more than one character)
+		Get the font character for each element
+		
+		uint8_t* pDestination = (uint8_t*)pMemoryPool->Alloc(ImageSize, MEM_DBG_GRAFX_CL1);
+
+		ImageRotationA8_Q8(const uint8_t* pSrc, uint8_t* pDestination, int Width, int Height, int AngleIndex)
+		ComputeCircularPlacement(int CenterX, int CenterY, Radius, int AngleIndex, int BitmapWidth, int BitmapHeight, int* pOutX,  int* pOutY)
+
+		copy the element onto the the construction layer
+
+		pMemoryPool->Free((void**)&pImageDestination);
+	}
+
+      #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
+        myGrafx->CopyWidgetToDevice(Dimension of this element,  Position of this element);
+      #endif
 
     DisplayLayer::PopDrawing();
 }

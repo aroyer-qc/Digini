@@ -118,7 +118,7 @@ void FONT_Initialize(void)
         for(Character = 128; Character < 256; Character++)  DB_Central.Set(&FontDescriptor, GFX_FONT_DESC_INFO, Font, Character);
 
         FontInfo.Width     = StaticFontDescriptor[Font][0].Padding & 0x0F;
-        FontInfo.Width     = (FontInfo.Width == 0) ? 16 : FontInfo.Width;   // Save the Width
+        FontInfo.Width     = (FontInfo.Width == 0) ? 16 : FontInfo.Width;   // Save the width
         FontInfo.Height    = StaticFontDescriptor[Font][1].Padding & 0x0F;
         FontInfo.Height    = (FontInfo.Height == 0) ? 16 : FontInfo.Height;  // Save the height of the font into database
         FontInfo.Interline = StaticFontDescriptor[Font][2].Padding & 0x0F;   // Get Interline

@@ -174,6 +174,7 @@ struct Text_t
     Font_e         Font;
     BlendMode_e    Blend;
     Label_e        Label;                                   // INVALID_LABEL //0xFF = No label present
+    Label_e        BackLabel;                               // INVALID_LABEL //0xFF = No label present
     uint8_t        Options;
 };
 
@@ -453,19 +454,19 @@ struct RotaryDial_t
     uint16_t       Options;
 };
 
-struct RoundMeter_t
+struct RotaryDial_t
 {
     Service_t      Service;
-    Box_t          Box;
-    uint16_t       Radius;
-    uint16_t       StartAngle;
-    uint16_t       EndAngle;
-    uint16_t       Range;
-    ImageID_e      Minimum;
-    ImageID_e      Maximum;
-    ImageID_e      Cursor;
-    Text_t         Text;
-    uint16_t       Options;
+    Box_t          Box;							// This is the box position and dimension for this widget construction
+    int            Radius;						// Radius offset where to draw element
+    uint16_t       StartAngle;					// Static position of the display start angle (number outside angle range cover by StartAngle and EndAngle are not drawed)
+    uint16_t       EndAngle;					// Static position of the display end angle
+    uint16_t       StepAngle;					// Static value of the step angle    Ex. 20 Degree tell this widget to draw a number at every 20 degrees
+    int16_t        StartValue;					// Static value to tell this widget to draw from 0 Degree with this value. Signed value.
+    int16_t        EndValue;					// Static value to tell this widget to draw up to X Degree with this end value. Signed value.
+    uint16_t       MovingStepAngle;				// This is the angle of the moving dial versus 0 degree at top of the circle
+    Font_e         FontID;						// Font ID to use on this widget
+    uint16_t       Options;						// Drawing option.
 };
 
 struct Spectrum_t

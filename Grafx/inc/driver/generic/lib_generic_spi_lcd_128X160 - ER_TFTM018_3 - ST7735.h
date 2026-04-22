@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_lcd_128X160-ST7735.h
+//  File : lib_generic_spi_lcd_128X160 - ER_TFTM018_3 - ST7735.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -47,6 +47,67 @@
 #define GRAFX_RAM_SIZE_X                            132
 #define GRAFX_RAM_SIZE_Y                            162
 
+
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#define DELAY                           0x80
+
+#define ST7735_NOP                      0x00                    // No operation
+#define ST7735_SWRESET                  0x01                    // Software Reset
+#define ST7735_RDDID                    0x04                    // Read Display ID
+#define ST7735_RDDST                    0x09                    // Read Display Status
+
+#define ST7735_SLPIN                    0x10                    // Sleep In & Booster OFF
+#define ST7735_SLPOUT                   0x11                    // Sleep Out & Booster ON
+#define ST7735_PTLON                    0x12                    // Partial Mode ON
+#define ST7735_NORON                    0x13                    // Partial Mode OFF (Normal)
+#define ST7735_INVOFF                   0x20                    // Display Inversion OFF
+#define ST7735_INVON                    0x21                    // Display Inversion ON
+#define ST7735_DISPOFF                  0x28                    // Display OFF
+#define ST7735_DISPON                   0x29                    // Display ON
+#define ST7735_CASET                    0x2A                    // Column Address Set
+#define ST7735_RAMRD                    0x2E                    // Memory read
+#define ST7735_RASET                    0x2B                    // Row Address Set
+#define ST7735_RAM_WRITE                0x2C                    // Memory Write
+
+#define ST7735_PTLAR                    0x30                    // Partial Start/End Address Set
+#define ST7735_MADCTL                   0x36                    // Memory Data Access Control
+#define ST7735_COLMOD                   0x3A                    // Interface Pixel Format
+
+#define ST7735_FRMCTR1                  0xB1                    //
+#define ST7735_FRMCTR2                  0xB2                    //
+#define ST7735_FRMCTR3                  0xB3                    //
+#define ST7735_INVCTR                   0xB4                    //
+#define ST7735_DISSET5                  0xB6                    //
+
+#define ST7735_RDID_1                   0xDA                    // Read ID1
+#define ST7735_RDID_2                   0xDB                    // Read ID2
+#define ST7735_RDID_3                   0xDC                    // Read ID3
+#define ST7735_RDID_4                   0xDD                    // Read ID4
+
+#define ST7735_GMCTRP1                  0xE0                    //
+#define ST7735_GMCTRN1                  0xE1                    //
+
+#define ST7735_POWER_CTRL_1             0xC0                    //
+#define ST7735_POWER_CTRL_2             0xC1                    //
+#define ST7735_POWER_CTRL_3             0xC2                    //
+#define ST7735_POWER_CTRL_4             0xC3                    //
+#define ST7735_POWER_CTRL_5             0xC4                    //
+#define ST7735_POWER_CTRL_6             0xFC                    //
+#define ST7735_VMCTR1                   0xC5                    //
+
+// Colors
+#define BLACK                           0x0000
+#define WHITE                           0xFFFF
+#define RED                             0xF800
+#define BLUE                            0x00F8
+#define GREEN                           0x0707
+
+#define ST7735_SUCCESS                  0
+#define ST7735_ERROR                    1
+
 //-------------------------------------------------------------------------------------------------
 // Class
 //-------------------------------------------------------------------------------------------------
@@ -58,8 +119,8 @@ class GrafxDriver : public GrafxGenDriver
         //using GrafxGenDriver::DrawRectangle;            // Expose all DrawRectangle from base class
 
         void        Initialize      		(const void* pArg)                                                                                      override;
-        void        DisplayOn       		(void)                 override         { SendCommand(ST7735_DISPON, nullptr, 0, 1); }   
-        void        DisplayOff      		(void)                 override;        { SendCommand(ST7735_DISPOFF, nullptr, 0, 1); }
+        void        DisplayOn       		(void)                 override         { SendCommand(ST7735_DISPON, nullptr, 0, 1); }
+        void        DisplayOff      		(void)                 override         { SendCommand(ST7735_DISPOFF, nullptr, 0, 1); }
 
 
         void        LayerConfig     		(DisplayLayer* pLayer)                                                                                  override;

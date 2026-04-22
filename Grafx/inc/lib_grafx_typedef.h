@@ -444,19 +444,6 @@ struct Progress_t
 struct RotaryDial_t
 {
     Service_t      Service;
-    Box_t          Box;
-    uint16_t       Radius;
-    uint16_t       StartAngle;
-    uint16_t       EndAngle;
-    uint16_t       StepAngle;
-    uint16_t       Range;
-    Font_e         FontID;
-    uint16_t       Options;
-};
-
-struct RotaryDial_t
-{
-    Service_t      Service;
     Box_t          Box;							// This is the box position and dimension for this widget construction
     int            Radius;						// Radius offset where to draw element
     uint16_t       StartAngle;					// Static position of the display start angle (number outside angle range cover by StartAngle and EndAngle are not drawed)

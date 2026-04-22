@@ -115,7 +115,7 @@
 
 // --- VCOM ---
 #define SSD2119_VCOM_OTP_1_VALUE                        0x0006
-#define SSD2119_VCOM_OTP_2_VALUE                        0x0042
+#define SSD2119_VCOM_OTP_2_VALUE                        0x0040
 
 // --- Frame cycle / timing ---
 #define SSD2119_FRAME_CYCLE_CONTROL_VALUE               0x5308

@@ -148,7 +148,6 @@ size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService, bool UseBackText)
                 __asm("nop");
             }
 
-
             Size = Printf.Draw(&pText->Box, (const char*)pString);
         }
     }

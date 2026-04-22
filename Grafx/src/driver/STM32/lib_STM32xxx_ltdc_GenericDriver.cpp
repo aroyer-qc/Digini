@@ -36,6 +36,48 @@
 #if (DIGINI_USE_GRAFX == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// const(s)
+//-------------------------------------------------------------------------------------------------
+
+const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
+{
+  #if (GRAFX_COLOR_ARGB8888 == DEF_ENABLED)
+    DMA2D_CONVERSION_ARGB8888,
+  #endif
+  #if (GRAFX_COLOR_RGB888 == DEF_ENABLED)
+    DMA2D_CONVERSION_RGB888,
+  #endif
+  #if (GRAFX_COLOR_RGB565 == DEF_ENABLED)
+    DMA2D_CONVERSION_RGB565,
+  #endif
+  #if (GRAFX_COLOR_ARGB1555 == DEF_ENABLED)
+    DMA2D_CONVERSION_ARGB1555,
+  #endif
+  #if (GRAFX_COLOR_ARGB4444 == DEF_ENABLED)
+    DMA2D_CONVERSION_ARGB4444,
+  #endif
+  #if (GRAFX_COLOR_L8 == DEF_ENABLED)
+    DMA2D_CONVERSION_L8,
+  #endif
+  #if (GRAFX_COLOR_AL44 == DEF_ENABLED)
+    DMA2D_CONVERSION_AL44,
+  #endif
+  #if (GRAFX_COLOR_AL88 == DEF_ENABLED)
+    DMA2D_CONVERSION_AL88,
+  #endif
+  #if (GRAFX_COLOR_L4 == DEF_ENABLED)
+    DMA2D_CONVERSION_L4,
+  #endif
+  #if (GRAFX_COLOR_A8 == DEF_ENABLED)
+    DMA2D_CONVERSION_A8,
+  #endif
+  #if (GRAFX_COLOR_A4 == DEF_ENABLED)
+    DMA2D_CONVERSION_A4,
+  #endif
+    -1
+};
+
+//-------------------------------------------------------------------------------------------------
 //
 //  Name:           Initialize
 //

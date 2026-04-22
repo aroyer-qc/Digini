@@ -154,7 +154,7 @@
           GFX_ColorTable[TEXT_ALT2_COLOR]},                                      \
          FONT_ID,                                                                \
          TEXT_BLEND,                                                             \
-         INVALID_LABEL,                                                          \
+         INVALID_LABEL, INVALID_LABEL,                                           \
          (uint8_t)TEXT_OPTION},                                                  \
          {TEXT_STATE_0,  TEXT_STATE_1,  TEXT_STATE_2,  TEXT_STATE_3},            \
          LABEL_OPTION,                                                           \

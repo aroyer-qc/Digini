@@ -167,12 +167,12 @@ void SDRAM_Initialize(void)
   #endif
 
     // SDRAM initialization sequence
-    FMC_Bank5_6->SDCMR = (FMC_SDCMR_CMD_CLK_ENABLE | FMC_SDCMR_BANK); 									// Clock enable command
-    LIB_Delay_uSec(1000);                                                                            	// Delay (simple loop)
-    FMC_Bank5_6->SDCMR = (FMC_SDCMR_CMD_PALL | FMC_SDCMR_BANK);                                     	// PALL command
-    FMC_Bank5_6->SDCMR = (FMC_SDCMR_CMD_AUTO_REFRESH_MODE | FMC_SDCMR_BANK | SDCMR_AUTO_REFRESH_CYCLE); // Auto refresh mode
+    FMC_Bank5_6->SDCMR = (FMC_SDCMR_CMD_CLK_ENABLE | FMC_SDCMR_BANK); 									    // Clock enable command
+    LIB_Delay_uSec(1000);                                                                            	    // Delay (simple loop)
+    FMC_Bank5_6->SDCMR = (FMC_SDCMR_CMD_PALL | FMC_SDCMR_BANK);                                     	    // PALL command
+    FMC_Bank5_6->SDCMR = (FMC_SDCMR_CMD_AUTO_REFRESH_MODE | FMC_SDCMR_BANK | FMC_SDCMR_AUTO_REFRESH_CYCLE); // Auto refresh mode
     FMC_Bank5_6->SDCMR = (FMC_SDCMR_CMD_LOAD_MODE | FMC_SDCMR_BANK | FMC_MRD_CONFIG);
-    FMC_Bank5_6->SDRTR = (CFG_SDRAM_REFRESH_COUNT << 1);                                                // Set refresh count
+    FMC_Bank5_6->SDRTR = (CFG_SDRAM_REFRESH_COUNT << 1);                                                    // Set refresh count
 }
 
 //-------------------------------------------------------------------------------------------------

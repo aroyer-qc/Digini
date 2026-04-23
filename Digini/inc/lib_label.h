@@ -140,6 +140,7 @@ X_LABEL( LBL_MONTH,                      "Month",                          "Mois
 X_LABEL( LBL_DAY,                        "Day",                            "Jour"                                          ) \
 
 #define PRODUCT_LABEL_LANGUAGE_DEF(X_LABEL) \
+X_LABEL( LBL_PAGE_INFO,                  "Software Information",           "Information Logiciel"                          ) \
 X_LABEL( LBL_VENDOR_NAME_INFO,           "Vendor:           ",             "Vendeur:          "                            ) \
 X_LABEL( LBL_FW_NAME_INFO,               "Name:             ",             "Nom:              "                            ) \
 X_LABEL( LBL_FW_VERSION_INFO,            "Version:          ",             nullptr                                         ) \

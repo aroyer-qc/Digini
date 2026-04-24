@@ -86,7 +86,7 @@ size_t WidgetPrint(Text_t* pText, ServiceReturn_t* pService, bool UseBackText)
         if((pText->Box.Size.Width != 0) && (pText->Box.Size.Height != 0))
         {
             DisplayLayer::SetColor(GRAFX_PAINT_BOX_DEBUG_COLOR);
-            DrawDebugBox(&pText->Box);
+            //myGrafx->DrawBox(pText->Box);
         }
       #endif
 

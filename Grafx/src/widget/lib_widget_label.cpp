@@ -190,7 +190,7 @@ void WidgetLabel::Draw(ServiceReturn_t* pService)
     myGrafx->CopyBackgroundToConstruction(m_pLabel->Text.Box.Pos);              		// if the display has no multilayer capability.
   #endif
 
-   // WidgetPrint(&m_pLabel->Text, pService, _USE_BACKGROUD_TEXT_ON_LABEL);				// Example: a 7 Segments digit print. It allow to have the background looking like an OFF digit with a darker color
+    WidgetPrint(&m_pLabel->Text, pService, _USE_BACKGROUD_TEXT_ON_LABEL);				// Example: a 7 Segments digit print. It allow to have the background looking like an OFF digit with a darker color
     WidgetPrint(&m_pLabel->Text, pService);
 
   #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)

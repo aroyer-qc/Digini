@@ -199,7 +199,7 @@ void WidgetButton::Draw(ServiceReturn_t* pService)
         // Label for button
         if(m_pButton->Text.Label != INVALID_LABEL)
         {
-            //WidgetPrint(&m_pButton->Text, pService);
+            WidgetPrint(&m_pButton->Text, pService);
         }
     }
 

@@ -52,7 +52,7 @@
 //-------------------------------------------------------------------------------------------------
 bool ModbusAPP::Process(const MODBUS_Command_t& Command, MODBUS_Response_t& Response)
 {
-    const ModbusAppEntry_t* Entry = Find(Command.UnitID, Command.Function);
+    const MODBUS_AppEntry_t* Entry = Find(Command.UnitID, Command.Function);
 
     if(Entry == nullptr)
     {

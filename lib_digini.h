@@ -276,6 +276,10 @@ class NetworkContext;
 #include "./Comm/VT100/inc/lib_vt100.h"
 #include "./Comm/Comm/inc/lib_comm.h"
 
+#include "./Modbus/inc/lib_class_modbus.h"
+#include "./Modbus/inc/lib_class_modbus_app.h"
+
+
 //-------------------------------------------------------------------------------------------------
 // High level Peripheral
 //
@@ -316,7 +320,6 @@ class NetworkContext;
 //#include "./Grafx/inc/lib_grafx_dbase.h"
 #include "./Grafx/inc/lib_grafx.h"
 #include "./Database/inc/lib_class_database.h"
-
 
 // it should not be here!!!  this is APP level
 #if (DIGINI_USE_ETHERNET == DEF_ENABLED)

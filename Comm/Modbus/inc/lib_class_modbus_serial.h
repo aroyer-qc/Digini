@@ -27,6 +27,10 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED) && (DIGINI_USE_MODBUS == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -53,7 +57,7 @@ class ModbusRTU : public ChildProcessInterface, public MODBUS_InterfaceBackEnd
         void            IF_Process                  (void);
 
         void            Initialize                  (MODBUS_Manager* pManager, Console* pConsole, uint8_t MinID, uint8_t MaxID);
-        
+
         int             Send                        (const uint8_t* pData, size_t Length);
         int             Received                    (uint8_t* pBuffer, size_t MaxLength, TickCount_t TimeOutMsec);
         bool            Queue                       (const MODBUS_Command_t& Command) override;
@@ -67,7 +71,7 @@ class ModbusRTU : public ChildProcessInterface, public MODBUS_InterfaceBackEnd
         Console*            m_pConsole              = nullptr;
         MODBUS_State_e      m_State                 = MODBUS_IDLE;
         MODBUS_Manager*     m_pManager              = nullptr;
-        
+
         uint8_t             m_MinUnitID;
         uint8_t             m_MaxUnitID;
 
@@ -79,9 +83,15 @@ class ModbusRTU : public ChildProcessInterface, public MODBUS_InterfaceBackEnd
 
         MODBUS_Command_t    m_Command;
         bool                m_HasPending            = false;
-        
+
         uint32_t            m_StartTick             = 0;
         uint32_t            m_SilentTick            = 0;
 };
+
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+#endif // (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED) && (DIGINI_USE_MODBUS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

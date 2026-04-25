@@ -57,7 +57,8 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define MODBUS_MAX_BACKENDS   8   // Pour le config plus tard!!
+#define MODBUS_MAX_BACKENDS   8    // Pour le config plus tard!!
+#define MODBUS_MAX_RULES      100  // for the config or loading a file with the rules
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -102,6 +103,11 @@ struct MODBUS_PassthruRule_t
     uint8_t     DstUnitID;
 };
 
+struct MODBUS_Response_t
+{
+    uint8_t     TODO;
+};
+
 //-------------------------------------------------------------------------------------------------
 // Class
 //-------------------------------------------------------------------------------------------------
@@ -109,19 +115,19 @@ struct MODBUS_PassthruRule_t
 class MODBUS_InterfaceBackEnd
 {
     public:
-        
+
         virtual             ~MODBUS_InterfaceBackEnd    ()                              {}
 
-        virtual bool        Queue                       (const ModbusCommand& Command)  = 0;
-        virtual void        Process                     (void)                          = 0;
-        virtual bool        IsBusy                      (void)                          = 0;
-        virtual bool        CanHandle                   (uint8_t UnitID)                = 0;
+        virtual bool        Queue                       (const MODBUS_Command_t& Command)  = 0;
+        virtual void        Process                     (void)                             = 0;
+        virtual bool        IsBusy                      (void)                             = 0;
+        virtual bool        CanHandle                   (uint8_t UnitID)                   = 0;
 };
 
 class MODBUS_Manager
 {
     public:
-    
+
         int                 BuildFrame                  (const MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength);
         int                 ParseResponse               (const MODBUS_Command_t& Command, const uint8_t* pIn, size_t Length);
         int                 ParsePayload                (const MODBUS_Command_t& Command, uint8_t Function, const uint8_t* pIn, size_t Length);
@@ -135,17 +141,21 @@ class MODBUS_Router
 {
     public:
 
-                            ModbusRouter            () = default;
+                            MODBUS_Router               () = default;
 
-        bool                RegisterEndpoint        (IModbusBackend* pBackEnd);
+        bool                RegisterEndpoint            (MODBUS_InterfaceBackEnd* pBackEnd);
 
-        bool                Queue                   (const ModbusCommand_t& Command);
-        void                Process                 (void);
-        bool                IsBusy                  (void);
-        bool                CanHandle               (uint8_t UnitID);
+        bool                Queue                       (const MODBUS_Command_t& Command);
+        void                Process                     (void);
+        bool                IsBusy                      (void);
+        bool                CanHandle                   (uint8_t UnitID);
 
     private:
 
-        MODBUS_InterfaceBackEnd*        m_BackEnds[MODBUS_MAX_BACKENDS];
-        MODBUS_PassthruRule_t           m_PassthruRules[MODBUS_MAX_RULES];
+        MODBUS_InterfaceBackEnd*        m_BackEnds          [MODBUS_MAX_BACKENDS];
+        MODBUS_PassthruRule_t           m_PassthruRules     [MODBUS_MAX_RULES];
 };
+
+//-------------------------------------------------------------------------------------------------
+
+#endif //(DIGINI_USE_MODBUS == DEF_ENABLED)

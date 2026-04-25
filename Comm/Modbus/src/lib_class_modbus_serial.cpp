@@ -29,7 +29,7 @@
 // ModbusRTU rtu3(&Console3, 100, 100); // gère seulement UnitID 100
 //
 //
-//  define for MODBUS_RTU_SILENT_INTERVAL_MSEC 
+//  define for MODBUS_RTU_SILENT_INTERVAL_MSEC
 //  +----------------+-------------------+----------------------+
 //  | Baudrate (bps) | 1 char (ms)       | 3.5 chars (ms)       |
 //  +----------------+-------------------+----------------------+
@@ -44,6 +44,16 @@
 //  +----------------+-------------------+----------------------+
 //
 //-------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------
+// Include file(s)
+//-------------------------------------------------------------------------------------------------
+
+#include "./lib_digini.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED) && (DIGINI_USE_MODBUS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -78,7 +88,7 @@ void ModbusRTU::IF_Process(void)
             m_State = MODBUS_BUILD_FRAME;
         }
         break;
-        
+
         case MODBUS_BUILD_FRAME:
         {
             m_pTxBuf = (uint8_t*)pMemoryPool->Alloc(MAX_MODBUS_FRAME_SIZE, 0);
@@ -105,7 +115,7 @@ void ModbusRTU::IF_Process(void)
             m_State = MODBUS_SEND_FRAME;
         }
         break;
-        
+
         case MODBUS_SEND_FRAME:
         {
             int Sent = Send(m_pTxBuf, m_TxLen);
@@ -122,7 +132,7 @@ void ModbusRTU::IF_Process(void)
             m_State = MODBUS_WAIT_SILENT;
         }
         break;
-        
+
         case MODBUS_WAIT_SILENT:
         {
             // Wait for the required silent interval before receiving
@@ -135,7 +145,7 @@ void ModbusRTU::IF_Process(void)
             }
         }
         break;
-        
+
         case MODBUS_WAIT_RESPONSE:
         {
             uint8_t Byte;
@@ -179,7 +189,7 @@ void ModbusRTU::IF_Process(void)
             }
         }
         break;
-        
+
         case MODBUS_PARSE_RESPONSE:
         {
             int Status = m_pManager->ParseResponse(m_Command,
@@ -195,7 +205,7 @@ void ModbusRTU::IF_Process(void)
             m_State = MODBUS_DONE;
         }
         break;
-        
+
         case MODBUS_DONE:
         {
             // Command completed successfully
@@ -238,7 +248,7 @@ int ModbusRTU::Received(uint8_t* pBuffer, size_t MaxLength, TickCount_t TimeOutM
         return -1;
     }
 
-    return m_pConsole->Read(pBuffer, MaxLength, TimeOutMsec);    
+    return m_pConsole->Read(pBuffer, MaxLength, TimeOutMsec);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -319,7 +329,11 @@ bool ModbusRTU::IsEndOfRTU_Frame(const uint8_t* pBuf, size_t Len)
 
 bool ModbusRTU::CanHandle(uint8_t UnitID)
 {
-    return (UnitID >= m_MinUnitID) && (UnitID <= m_MaxUnitID); 
+    return (UnitID >= m_MinUnitID) && (UnitID <= m_MaxUnitID);
 }
+
+//-------------------------------------------------------------------------------------------------
+
+#endif  // (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED) && (DIGINI_USE_MODBUS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

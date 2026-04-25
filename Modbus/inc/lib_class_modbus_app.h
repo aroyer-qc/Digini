@@ -99,10 +99,14 @@ struct MODBUS_AppEntry_t
 class ModbusAPP
 {
     public:
-        
+
         bool Process(const MODBUS_Command_t& Command, MODBUS_Response_t& Response);
 
     private:
 
-        const ModbusAppEntry* Find(uint8_t UnitID, uint8_t Function);
+        const MODBUS_AppEntry_t* Find(uint8_t UnitID, uint8_t Function);
 };
+
+//-------------------------------------------------------------------------------------------------
+
+#endif //(DIGINI_USE_MODBUS == DEF_ENABLED)

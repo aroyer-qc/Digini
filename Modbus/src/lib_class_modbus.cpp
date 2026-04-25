@@ -54,7 +54,7 @@
 int MODBUS_Manager::BuildFrame(const MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength)
 {
     size_t Index = 0;
-    
+
     pOut[Index++] = Command.UnitID;                                             // Address (UnitId)
     pOut[Index++] = Command.Function;                                           // Function
     int PayloadLength = BuildPayload(Command, &pOut[Index], MaxLength - Index); // Payload according to function
@@ -70,9 +70,8 @@ int MODBUS_Manager::BuildFrame(const MODBUS_Command_t& Command, uint8_t* pOut, s
     {
         return 0;
     }
-    
-    CRC_Driver ModbusCRC;
-    ModbusCRC.Initialize(CRC_16_MODBUS);
+
+    CRC_Calc ModbusCRC(CRC_16_MODBUS);
     uint16_t CRC_Result = uint16_t(ModbusCRC.CalculateBuffer(pOut, Index));
     pOut[Index++] = (uint8_t)(CRC_Result & 0xFF);                               // CRC Low
     pOut[Index++] = (uint8_t)((CRC_Result >> 8) & 0xFF);                        // CRC High
@@ -159,8 +158,7 @@ bool MODBUS_Manager::ValidateCRC(const uint8_t* pData, size_t Length)
     }
 
     uint16_t ReceivedCRC = (uint16_t)pData[Length - 2] | ((uint16_t)pData[Length - 1] << 8);
-    CRC_Driver ModbusCRC;
-    ModbusCRC.Initialize(CRC_16_MODBUS);
+    CRC_Calc ModbusCRC(CRC_16_MODBUS);
     uint16_t ComputedCRC = (uint16_t)ModbusCRC.CalculateBuffer(pData, Length - 2);
     return (ReceivedCRC == ComputedCRC);
 }
@@ -327,7 +325,7 @@ void MODBUS_Router::Process(void)
 //                  will be included in the router's periodic Process() calls.
 //
 //-------------------------------------------------------------------------------------------------
-bool MODBUS_Router::RegisterEndpoint(IModbusBackend* pBackEnd)
+bool MODBUS_Router::RegisterEndpoint(MODBUS_InterfaceBackEnd* pBackEnd)
 {
     for(size_t BackEnd = 0; BackEnd < MODBUS_MAX_BACKENDS; BackEnd++)
     {
@@ -337,7 +335,7 @@ bool MODBUS_Router::RegisterEndpoint(IModbusBackend* pBackEnd)
             return true;
         }
     }
-    
+
     return false; // No more space
 }
 
@@ -365,7 +363,7 @@ bool MODBUS_Router::Queue(const MODBUS_Command_t& Command)
     {
         if(Command.UnitID == m_PassthruRules[Rules].SrcUnitID)
         {
-            ModbusCommand_t NewCommand = Command;
+            MODBUS_Command_t NewCommand = Command;
             NewCommand.UnitID = m_PassthruRules[Rules].DstUnitID;
 
             // Find backend for new UnitID
@@ -420,7 +418,7 @@ bool MODBUS_Router::IsBusy(void)
             return true;
         }
     }
-    
+
     return false;
 }
 

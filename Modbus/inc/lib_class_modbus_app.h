@@ -68,13 +68,22 @@
 //-------------------------------------------------------------------------------------------------
 
 #define MODBUS_MAX_BACKENDS   8   // Pour le config plus tard!!
-
+#define MODBUS_MAX_PDU_SIZE   252
 
 #define MAKE_ENTRY(ID, FUNC, CB, PT) { ID, FUNC, CB, PT },
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
+
+struct MODBUS_Response_t
+{
+    uint8_t     Function;       // Function code (or function | 0x80 for exception)
+    uint8_t     Payload[MODBUS_MAX_PDU_SIZE]; // Raw payload bytes
+    size_t      PayloadLength;  // Number of bytes in payload
+    bool        IsException;    // True if exception frame
+    uint8_t     ExceptionCode;  // Only valid if IsException = true
+};
 
 struct MODBUS_AppEntry_t
 {
@@ -83,14 +92,25 @@ struct MODBUS_AppEntry_t
     void            (*Callback)(const MODBUS_Command_t&, MODBUS_Response_t&);
 };
 
+//-------------------------------------------------------------------------------------------------
+// Temp(s)
+//-------------------------------------------------------------------------------------------------
 
-/*
+
+extern void ReadHoldingRegs(const MODBUS_Command_t& Command, MODBUS_Response_t& Response);
+extern void WriteSingleReg(const MODBUS_Command_t& Command, MODBUS_Response_t& Response);
+extern void Poutine(const MODBUS_Command_t& Command, MODBUS_Response_t& Response);
+extern void WriteMultipleRegs(const MODBUS_Command_t& Command, MODBUS_Response_t& Response);
+
+
+
+
 #define MODBUS_APP_TABLE(X) \
     X(1, 0x03, ReadHoldingRegs) \
     X(1, 0x06, WriteSingleReg) \
     X(2, 0x03, Poutine) \
     X(3, 0x10, WriteMultipleRegs)
-*/
+
 
 //-------------------------------------------------------------------------------------------------
 // Class
@@ -105,6 +125,8 @@ class ModbusAPP
     private:
 
         const MODBUS_AppEntry_t* Find(uint8_t UnitID, uint8_t Function);
+        static const MODBUS_AppEntry_t m_ModbusAppTable[];
+        static const size_t        m_ModbusAppTableCount;
 };
 
 //-------------------------------------------------------------------------------------------------

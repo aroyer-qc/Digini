@@ -167,7 +167,9 @@ SystemState_e DIGINI_PostInitialize(void)
     //SystemState_e State;
 
   #if (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)
-    pTaskCOMM->Initialize();
+   #ifdef CON_DEBUG_CONSOLE
+    pTaskCOMM->Initialize(CON_DEBUG_CONSOLE, CON_DEBUG_UART);
+   #endif
   #endif
 
   #if (USE_USB_DRIVER == DEF_ENABLED)

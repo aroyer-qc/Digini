@@ -45,7 +45,7 @@
 #define CON_NOT_CONNECTED               0
 #define CON_NUMBER_OF_DEBUG_LEVEL       16
 
-#define DEBUG_PrintSerialLog           myConsole.PrintSerialLog
+#define DEBUG_PrintSerialLog           DebugConsole.PrintSerialLog
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -159,15 +159,7 @@ class Console : public CallbackInterface
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef CONSOLE_GLOBAL
-
-class Console myConsole;                        // This console if for the debug  may need to put Debug define to remove it if example we need only a console for modbus
-
-#else
-
-extern class Console myConsole;
-
-#endif // CONSOLE_GLOBAL
+#include "console_var.h"         // Project variable
 
 //-------------------------------------------------------------------------------------------------
 

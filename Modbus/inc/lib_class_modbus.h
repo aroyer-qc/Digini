@@ -103,11 +103,6 @@ struct MODBUS_PassthruRule_t
     uint8_t     DstUnitID;
 };
 
-struct MODBUS_Response_t
-{
-    uint8_t     TODO;
-};
-
 //-------------------------------------------------------------------------------------------------
 // Class
 //-------------------------------------------------------------------------------------------------
@@ -118,34 +113,37 @@ class MODBUS_InterfaceBackEnd
 
         virtual             ~MODBUS_InterfaceBackEnd    ()                              {}
 
-        virtual bool        Queue                       (const MODBUS_Command_t& Command)  = 0;
-        virtual void        Process                     (void)                             = 0;
-        virtual bool        IsBusy                      (void)                             = 0;
-        virtual bool        CanHandle                   (uint8_t UnitID)                   = 0;
+        virtual bool        Queue                       (MODBUS_Command_t& Command)  = 0;
+        virtual void        Process                     (void)                       = 0;
+        virtual bool        IsBusy                      (void)                       = 0;
+        virtual bool        CanHandle                   (uint8_t UnitID)             = 0;
 };
 
 class MODBUS_Manager
 {
     public:
 
-        int                 BuildFrame                  (const MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength);
-        int                 ParseResponse               (const MODBUS_Command_t& Command, const uint8_t* pIn, size_t Length);
-        int                 ParsePayload                (const MODBUS_Command_t& Command, uint8_t Function, const uint8_t* pIn, size_t Length);
+        int                 BuildFrame                  (MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength);
+        int                 ParseResponse               (MODBUS_Command_t& Command, const uint8_t* pIn, size_t Length);
+        int                 ParsePayload                (MODBUS_Command_t& Command, uint8_t Function, const uint8_t* pIn, size_t Length);
 
     private:
 
         bool                ValidateCRC                 (const uint8_t* pData, size_t Length);
+        int                 BuildPayload                (MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength);
+
+
 };
 
 class MODBUS_Router
 {
     public:
 
-                            MODBUS_Router               () = default;
+                            MODBUS_Router               ();
 
         bool                RegisterEndpoint            (MODBUS_InterfaceBackEnd* pBackEnd);
 
-        bool                Queue                       (const MODBUS_Command_t& Command);
+        bool                Queue                       (MODBUS_Command_t& Command);
         void                Process                     (void);
         bool                IsBusy                      (void);
         bool                CanHandle                   (uint8_t UnitID);

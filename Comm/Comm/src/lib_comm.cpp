@@ -73,23 +73,25 @@ extern "C" void ClassTaskCOMM_Wrapper(void* pvParameters)
 //  Description:    Initialize
 //
 //-------------------------------------------------------------------------------------------------
-nOS_Error ClassTaskCOMM::Initialize(void)
+nOS_Error ClassTaskCOMM::Initialize(Console* pConsole, UART_Driver* pUart)
 {
     nOS_Error Error = NOS_OK;
 
+    m_pConsole = pConsole;
+
     // Uart console Command Line and VT100 terminal
-    myConsole.Initialize(CON_USE_COMM_UART);
+    m_pConsole->Initialize(pUart);
 
   #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
-    myCommandLine.Initialize(&myConsole);
-    myConsole.GiveControlToChildProcess(&myCommandLine);            // Hijack the console for the CLI
+    myCommandLine.Initialize(m_pConsole);
+    m_pConsoleGiveControlToChildProcess(&myCommandLine);            // Hijack the console for the CLI
   #endif
 
   #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-    myVT100.Initialize(&myConsole);
+    myVT100.Initialize(m_pConsole);
 
    #if (DIGINI_USE_CMD_LINE == DEF_DISABLED)
-    myConsole.GiveControlToChildProcess(&myVT100);                  // Hijack the console or the CLI for VT100
+    m_pConsole->GiveControlToChildProcess(&myVT100);                  // Hijack the console or the CLI for VT100
    #endif
 
   #endif
@@ -123,7 +125,7 @@ void ClassTaskCOMM::Run(void)
 
     for(;;)
     {
-        myConsole.Process();
+        m_pConsole->Process();
         nOS_Yield();
     }
 }

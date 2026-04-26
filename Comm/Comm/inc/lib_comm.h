@@ -55,13 +55,14 @@ class ClassTaskCOMM
 {
     public:
 
-        nOS_Error       Initialize         (void);
+        nOS_Error       Initialize         (Console* m_pConsole, UART_Driver* pUart);
         void            Run                (void);                              // Task
 
     private:
 
         nOS_Thread      m_Handle;
         nOS_Stack       m_Stack[TASK_COMM_STACK_SIZE];
+        Console*        m_pConsole;
 };
 
 //-------------------------------------------------------------------------------------------------

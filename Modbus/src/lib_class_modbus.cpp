@@ -51,7 +51,7 @@
 //                  buffer is too small, the function returns 0 to indicate failure.
 //
 //-------------------------------------------------------------------------------------------------
-int MODBUS_Manager::BuildFrame(const MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength)
+int MODBUS_Manager::BuildFrame(MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength)
 {
     size_t Index = 0;
 
@@ -98,7 +98,7 @@ int MODBUS_Manager::BuildFrame(const MODBUS_Command_t& Command, uint8_t* pOut, s
 //                  function-specific extraction.
 //
 //-------------------------------------------------------------------------------------------------
-int MODBUS_Manager::ParseResponse(const MODBUS_Command_t& Command, const uint8_t* pIn, size_t Length)
+int MODBUS_Manager::ParseResponse(MODBUS_Command_t& Command, const uint8_t* pIn, size_t Length)
 {
     if(Length < 4)                                              // Minimal length
     {
@@ -135,6 +135,81 @@ int MODBUS_Manager::ParseResponse(const MODBUS_Command_t& Command, const uint8_t
     return Status;
 }
 
+int MODBUS_Manager::BuildPayload(MODBUS_Command_t& Command,  uint8_t* pOut, size_t MaxLength)
+{
+    size_t Index = 0;
+
+    switch(Command.Function)
+    {
+        //---------------------------------------------------------
+        // 0x03 - Read Holding Registers
+        //---------------------------------------------------------
+        case 0x03:
+        {
+            if(MaxLength < 4)
+                return -1;
+
+            pOut[Index++] = (uint8_t)(Command.Address >> 8);
+            pOut[Index++] = (uint8_t)(Command.Address & 0xFF);
+
+            pOut[Index++] = (uint8_t)(Command.Quantity >> 8);
+            pOut[Index++] = (uint8_t)(Command.Quantity & 0xFF);
+
+            return (int)Index;
+        }
+
+        //---------------------------------------------------------
+        // 0x06 - Write Single Register
+        //---------------------------------------------------------
+        case 0x06:
+        {
+            if(MaxLength < 4)
+                return -1;
+
+            pOut[Index++] = (uint8_t)(Command.Address >> 8);
+            pOut[Index++] = (uint8_t)(Command.Address & 0xFF);
+
+            pOut[Index++] = (uint8_t)(Command.Value >> 8);
+            pOut[Index++] = (uint8_t)(Command.Value & 0xFF);
+
+            return (int)Index;
+        }
+
+        //---------------------------------------------------------
+        // 0x10 - Write Multiple Registers
+        //---------------------------------------------------------
+        case 0x10:
+        {
+            size_t ByteCount = Command.Quantity * 2;
+
+            if(MaxLength < (5 + ByteCount))
+                return -1;
+
+            pOut[Index++] = (uint8_t)(Command.Address >> 8);
+            pOut[Index++] = (uint8_t)(Command.Address & 0xFF);
+
+            pOut[Index++] = (uint8_t)(Command.Quantity >> 8);
+            pOut[Index++] = (uint8_t)(Command.Quantity & 0xFF);
+
+            pOut[Index++] = (uint8_t)(ByteCount);
+
+            for(size_t i = 0; i < Command.Quantity; i++)
+            {
+                uint16_t Reg = Command.Data[i];
+                pOut[Index++] = (uint8_t)(Reg >> 8);
+                pOut[Index++] = (uint8_t)(Reg & 0xFF);
+            }
+
+            return (int)Index;
+        }
+
+        //---------------------------------------------------------
+        // Unsupported function
+        //---------------------------------------------------------
+        default:
+            return -1;
+    }
+}
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           ValidateCRC
@@ -183,7 +258,7 @@ bool MODBUS_Manager::ValidateCRC(const uint8_t* pData, size_t Length)
 //                  echo of the request and requires no data extraction.
 //
 //-------------------------------------------------------------------------------------------------
-int MODBUS_Manager::ParsePayload(const MODBUS_Command_t& Command, uint8_t Function, const uint8_t* pIn, size_t Length)
+int MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command, uint8_t Function, const uint8_t* pIn, size_t Length)
 {
     switch(Function)
     {
@@ -356,7 +431,7 @@ bool MODBUS_Router::RegisterEndpoint(MODBUS_InterfaceBackEnd* pBackEnd)
 //                  UnitID. If no backend matches, the command cannot be queued.
 //
 //-------------------------------------------------------------------------------------------------
-bool MODBUS_Router::Queue(const MODBUS_Command_t& Command)
+bool MODBUS_Router::Queue(MODBUS_Command_t& Command)
 {
     // Check passthru rules if it exist
     for(size_t Rules = 0; Rules < MODBUS_MAX_RULES; Rules++)
@@ -420,34 +495,6 @@ bool MODBUS_Router::IsBusy(void)
     }
 
     return false;
-}
-
-//-------------------------------------------------------------------------------------------------
-//  Name:           Queue
-//
-//  Parameters:     Command     - Modbus command to route toward the appropriate backend
-//
-//  Returns:        true        - Command successfully queued to a backend
-//                  false       - No backend available to handle the command's UnitID
-//
-//  Description:    Routes a Modbus command to the backend responsible for the specified UnitID.
-//                  The router scans all registered backends and selects the first one whose
-//                  CanHandle() method confirms ownership of the target address. If no backend
-//                  accepts the UnitID, the command cannot be queued.
-//-------------------------------------------------------------------------------------------------
-bool MODBUS_Router::Queue(const MODBUS_Command_t& Command)
-{
-    for(size_t BackEnd = 0; BackEnd < MODBUS_MAX_BACKENDS; BackEnd++)
-    {
-        IModbusBackEnd* pBackEnd = m_BackEnds[BackEnd];
-
-        if((pBackEnd != nullptr) && (pBackEnd->CanHandle(Command.UnitID) == true))
-        {
-            return pBackEnd->Queue(Command);
-        }
-    }
-
-    return false;   // No backend to handle this address
 }
 
 //-------------------------------------------------------------------------------------------------

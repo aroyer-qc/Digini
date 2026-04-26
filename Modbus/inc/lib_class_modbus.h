@@ -59,6 +59,7 @@
 
 #define MODBUS_MAX_BACKENDS   8    // Pour le config plus tard!!
 #define MODBUS_MAX_RULES      100  // for the config or loading a file with the rules
+#define MODBUS_MAX_PDU_SIZE   252
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -95,6 +96,7 @@ struct MODBUS_Command_t
     uint8_t*           ResultBuffer;    // For coils / discrete inputs
     uint16_t*          ResultRegisters; // For registers
     size_t             ResultLength;    // Number of bytes or registers
+    TickCount_t        TimeoutMsec;
 };
 
 struct MODBUS_PassthruRule_t

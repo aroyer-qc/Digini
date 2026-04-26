@@ -28,13 +28,13 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED) && (DIGINI_USE_MODBUS == DEF_ENABLED)
+#if (DIGINI_USE_MODBUS == DEF_ENABLED) && (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-enum class MODBUS_State_e
+enum MODBUS_State_e
 {
     MODBUS_IDLE,
     MODBUS_BUILD_FRAME,
@@ -54,18 +54,18 @@ class ModbusRTU : public ChildProcessInterface, public MODBUS_InterfaceBackEnd
 {
     public:
 
-        void            IF_Process                  (void);
+        void                IF_Process              (void);
 
-        void            Initialize                  (MODBUS_Manager* pManager, Console* pConsole, uint8_t MinID, uint8_t MaxID);
+        void                Initialize              (MODBUS_Manager* pManager, Console* pConsole, uint8_t MinID, uint8_t MaxID);
 
-        int             Send                        (const uint8_t* pData, size_t Length);
-        int             Received                    (uint8_t* pBuffer, size_t MaxLength, TickCount_t TimeOutMsec);
-        bool            Queue                       (const MODBUS_Command_t& Command) override;
-        bool            CanHandle                   (uint8_t UnitID) override;
+        int                 Send                    (const uint8_t* pData, size_t Length);
+        int                 Received                (uint8_t* pBuffer, size_t MaxLength, TickCount_t TimeOutMsec);
+        bool                Queue                   (const MODBUS_Command_t& Command)/* override*/;
+        bool                CanHandle               (uint8_t UnitID) override;
 
     private:
 
-        bool            IsEndOfRTU_Frame            (const uint8_t* pBuffer, size_t Length);
+        bool                IsEndOfRTU_Frame        (const uint8_t* pBuffer, size_t Length);
 
 
         Console*            m_pConsole              = nullptr;
@@ -79,7 +79,7 @@ class ModbusRTU : public ChildProcessInterface, public MODBUS_InterfaceBackEnd
         size_t              m_TxLen                 = 0;
 
         uint8_t*            m_pRxBuf                = nullptr;
-        size_t              m_RxLen                 = 0
+        size_t              m_RxLen                 = 0;
 
         MODBUS_Command_t    m_Command;
         bool                m_HasPending            = false;
@@ -89,9 +89,7 @@ class ModbusRTU : public ChildProcessInterface, public MODBUS_InterfaceBackEnd
 };
 
 //-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
-//-------------------------------------------------------------------------------------------------
 
-#endif // (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED) && (DIGINI_USE_MODBUS == DEF_ENABLED)
+#endif // (DIGINI_USE_MODBUS == DEF_ENABLED) && (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

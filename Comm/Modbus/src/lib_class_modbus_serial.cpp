@@ -53,13 +53,14 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED) && (DIGINI_USE_MODBUS == DEF_ENABLED)
+#if (DIGINI_USE_MODBUS == DEF_ENABLED) && (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
 #define MODBUS_RTU_SILENT_INTERVAL_MSEC   1    // <- Put this into the config file for modbus
+#define MODBUS_RTU_MAX_FRAME_SIZE         MODBUS_MAX_PDU_SIZE + 2       // CRC16
 
 //-------------------------------------------------------------------------------------------------
 
@@ -91,7 +92,7 @@ void ModbusRTU::IF_Process(void)
 
         case MODBUS_BUILD_FRAME:
         {
-            m_pTxBuf = (uint8_t*)pMemoryPool->Alloc(MAX_MODBUS_FRAME_SIZE, 0);
+            m_pTxBuf = (uint8_t*)pMemoryPool->Alloc(MODBUS_RTU_MAX_FRAME_SIZE, MEM_DBG_MB_SERIAL);
 
             if(m_pTxBuf == nullptr)
             {
@@ -100,7 +101,7 @@ void ModbusRTU::IF_Process(void)
             }
 
             // Ask the manager to build the RTU frame
-            int FrameLen = m_pManager->BuildFrame(m_Command, m_pTxBuf, MAX_MODBUS_FRAME_SIZE);
+            int FrameLen = m_pManager->BuildFrame(m_Command, m_pTxBuf, MODBUS_RTU_MAX_FRAME_SIZE);
 
             if(FrameLen <= 0)
             {
@@ -162,7 +163,7 @@ void ModbusRTU::IF_Process(void)
 
             if(Result > 0)
             {
-                if(m_RxLen < MAX_MODBUS_FRAME_SIZE)
+                if(m_RxLen < MODBUS_RTU_MAX_FRAME_SIZE)
                 {
                     m_pRxBuf[m_RxLen++] = Byte;
                 }
@@ -248,7 +249,9 @@ int ModbusRTU::Received(uint8_t* pBuffer, size_t MaxLength, TickCount_t TimeOutM
         return -1;
     }
 
-    return m_pConsole->Read(pBuffer, MaxLength, TimeOutMsec);
+VAR_UNUSED(TimeOutMsec); // Tick Count a valider
+
+    return m_pConsole->Read(pBuffer, MaxLength);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -334,6 +337,6 @@ bool ModbusRTU::CanHandle(uint8_t UnitID)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif  // (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED) && (DIGINI_USE_MODBUS == DEF_ENABLED)
+#endif  // (DIGINI_USE_MODBUS == DEF_ENABLED) && (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

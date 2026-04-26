@@ -277,6 +277,9 @@ class NetworkContext;
 #include "./Comm/Comm/inc/lib_comm.h"
 
 #include "./Modbus/inc/lib_class_modbus.h"
+#include "./Comm/Modbus/inc/lib_class_modbus_serial.h"
+// todo need include for TCP and other endpoint
+
 #include "./Modbus/inc/lib_class_modbus_app.h"
 
 

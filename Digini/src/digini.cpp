@@ -166,10 +166,25 @@ SystemState_e DIGINI_PostInitialize(void)
     //nOS_Error Error;
     //SystemState_e State;
 
-  #if (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)
-   #ifdef CON_DEBUG_CONSOLE
-    pTaskCOMM->Initialize(CON_DEBUG_CONSOLE, CON_DEBUG_UART);
+ #if (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)
+    TaskCOMM.Initialize(&DebugConsole, &UART_DebugTerminal, "TaskComm");
+
+  #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
+    myCommandLine.Initialize(&DebugConsole);
+    DebugConsole.GiveControlToChildProcess(&myCommandLine);           // Hijack the console for the CLI
+  #endif
+
+  #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+    myVT100.Initialize(&DebugConsole);
+
+   #if (DIGINI_USE_CMD_LINE == DEF_DISABLED)
+    DebugConsole.GiveControlToChildProcess(&myVT100);                  // Hijack the console or the CLI for VT100
    #endif
+  #endif
+ #endif
+
+  #if (DIGINI_USE_MODBUS == DEF_ENABLED) && (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
+    TaskCommModbus.Initialize(&DebugConsole, &UART_DebugTerminal, "TaskCommMODBUS");
   #endif
 
   #if (USE_USB_DRIVER == DEF_ENABLED)

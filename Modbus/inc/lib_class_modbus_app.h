@@ -68,7 +68,6 @@
 //-------------------------------------------------------------------------------------------------
 
 #define MODBUS_MAX_BACKENDS   8   // Pour le config plus tard!!
-#define MODBUS_MAX_PDU_SIZE   252
 
 #define MAKE_ENTRY(ID, FUNC, CB, PT) { ID, FUNC, CB, PT },
 

@@ -73,7 +73,7 @@ extern "C" void ClassTaskCOMM_Wrapper(void* pvParameters)
 //  Description:    Initialize
 //
 //-------------------------------------------------------------------------------------------------
-nOS_Error ClassTaskCOMM::Initialize(Console* pConsole, UART_Driver* pUart)
+nOS_Error ClassTaskCOMM::Initialize(Console* pConsole, UART_Driver* pUart, const char* pTaskName)
 {
     nOS_Error Error = NOS_OK;
 
@@ -82,27 +82,13 @@ nOS_Error ClassTaskCOMM::Initialize(Console* pConsole, UART_Driver* pUart)
     // Uart console Command Line and VT100 terminal
     m_pConsole->Initialize(pUart);
 
-  #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
-    myCommandLine.Initialize(m_pConsole);
-    m_pConsoleGiveControlToChildProcess(&myCommandLine);            // Hijack the console for the CLI
-  #endif
-
-  #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
-    myVT100.Initialize(m_pConsole);
-
-   #if (DIGINI_USE_CMD_LINE == DEF_DISABLED)
-    m_pConsole->GiveControlToChildProcess(&myVT100);                  // Hijack the console or the CLI for VT100
-   #endif
-
-  #endif
-
     Error = nOS_ThreadCreate(&m_Handle,
                              ClassTaskCOMM_Wrapper,
                              this,
                              &m_Stack[0],
                              TASK_COMM_STACK_SIZE,
                              TASK_COMM_PRIO,
-                             "Task COMM");
+                             pTaskName);
 
     return Error;
 }

@@ -34,6 +34,13 @@
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
+#define MODBUS_RTU_MAX_FRAME_SIZE       MODBUS_MAX_PDU_SIZE + 2   		// CRC16
+#define MODBUS_SERIAL_OUT_SIZE          MODBUS_RTU_MAX_FRAME_SIZE
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
 enum MODBUS_State_e
 {
     MODBUS_IDLE,
@@ -50,36 +57,44 @@ enum MODBUS_State_e
 // Class
 //-------------------------------------------------------------------------------------------------
 
-class ModbusRTU : public ChildProcessInterface, public MODBUS_InterfaceBackEnd
+class ModbusRTU : public ChildProcessInterface, public MODBUS_InterfaceBackEnd , public CallbackInterface
 {
     public:
 
         void                IF_Process              (void);
 
-        void                Initialize              (MODBUS_Manager* pManager, Console* pConsole, uint8_t MinID, uint8_t MaxID);
+
+//        void                Initialize              (MODBUS_Manager* pManager, Console* pConsole, uint8_t MinID, uint8_t MaxID);
+        void                Initialize              (MODBUS_Manager* pManager, UART_Driver* pUartDriver, uint8_t MinID, uint8_t MaxID);
 
         int                 Send                    (const uint8_t* pData, size_t Length);
-        int                 Received                (uint8_t* pBuffer, size_t MaxLength, TickCount_t TimeOutMsec);
-        bool                Queue                   (const MODBUS_Command_t& Command)/* override*/;
+        int                 Received                (uint8_t* pBuffer, size_t MaxLength);
+        bool                Queue                   (const MODBUS_Command_t& Command);
         bool                CanHandle               (uint8_t UnitID) override;
+
+        void                CallbackFunction        (int Type, void* pContext);
 
     private:
 
         bool                IsEndOfRTU_Frame        (const uint8_t* pBuffer, size_t Length);
 
 
-        Console*            m_pConsole              = nullptr;
+        //Console*            m_pConsole              = nullptr;
+		UART_Driver*		m_pUartDriver           = nullptr;
         MODBUS_State_e      m_State                 = MODBUS_IDLE;
         MODBUS_Manager*     m_pManager              = nullptr;
+
+        FIFO_Buffer         m_Fifo;
+        nOS_Sem             m_RX_IdleSem;
 
         uint8_t             m_MinUnitID;
         uint8_t             m_MaxUnitID;
 
-        uint8_t*            m_pTxBuf                = nullptr;
-        size_t              m_TxLen                 = 0;
+        uint8_t*            m_pTX_Buffer            = nullptr;
+        size_t              m_pTX_Length            = 0;
 
-        uint8_t*            m_pRxBuf                = nullptr;
-        size_t              m_RxLen                 = 0;
+        uint8_t*            m_pRX_Buffer            = nullptr;
+        size_t              m_RX_Length             = 0;
 
         MODBUS_Command_t    m_Command;
         bool                m_HasPending            = false;

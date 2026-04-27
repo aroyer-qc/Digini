@@ -24,8 +24,8 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// ModbusRTU rtu1(&Console1, 1, 10);   // gère UnitID 1 à 10
-// ModbusRTU rtu2(&Console2, 20, 30);  // gère UnitID 20 à 30
+// ModbusRTU rtu1(&Console1, 1, 10);   	// gère UnitID 1 à 10
+// ModbusRTU rtu2(&Console2, 20, 30);  	// gère UnitID 20 à 30
 // ModbusRTU rtu3(&Console3, 100, 100); // gère seulement UnitID 100
 //
 //
@@ -59,17 +59,28 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define MODBUS_RTU_SILENT_INTERVAL_MSEC   1    // <- Put this into the config file for modbus
-#define MODBUS_RTU_MAX_FRAME_SIZE         MODBUS_MAX_PDU_SIZE + 2       // CRC16
+#define MODBUS_RTU_SILENT_INTERVAL_MSEC   			1		// <- Put this into the config file for modbus
+#define MODBUS_RTU_RX_NB_OF_SEMAPHORE_COUNT         8
+#define MODBUS_RTU_FIFO_RX_SIZE         			MODBUS_RTU_MAX_FRAME_SIZE
 
 //-------------------------------------------------------------------------------------------------
 
-void ModbusRTU::Initialize(MODBUS_Manager* pManager, Console* pConsole, uint8_t MinID, uint8_t MaxID)
+//void ModbusRTU::Initialize(MODBUS_Manager* pManager, Console* pConsole, uint8_t MinID, uint8_t MaxID)
+void ModbusRTU::Initialize(MODBUS_Manager* pManager, UART_Driver* pUartDriver, uint8_t MinID, uint8_t MaxID)
 {
-    m_pManager  = pManager;
-    m_pConsole  = pConsole;
-    m_MinUnitID = MinID;
-    m_MaxUnitID = MaxID;
+    m_pManager    = pManager;
+    //m_pConsole    = pConsole;
+    m_pUartDriver = pUartDriver;
+    m_MinUnitID   = MinID;
+    m_MaxUnitID   = MaxID;
+
+    m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
+    m_pRX_Buffer = m_Fifo.GetBufferPointer();
+
+    nOS_SemCreate(&m_RX_IdleSem, 0, MODBUS_RTU_RX_NB_OF_SEMAPHORE_COUNT);
+    pUartDriver->DMA_ConfigRX(m_pRX_Buffer, MODBUS_RTU_FIFO_RX_SIZE);                // DMA will use the FIFO buffer allocated memory
+    pUartDriver->RegisterCallback((CallbackInterface*)this);
+    pUartDriver->EnableCallbackType(UART_CALLBACK_RX_IDLE | UART_CALLBACK_TX_COMPLETED | UART_CALLBACK_RX_ERROR);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -92,25 +103,25 @@ void ModbusRTU::IF_Process(void)
 
         case MODBUS_BUILD_FRAME:
         {
-            m_pTxBuf = (uint8_t*)pMemoryPool->Alloc(MODBUS_RTU_MAX_FRAME_SIZE, MEM_DBG_MB_SERIAL);
+            m_pTX_Buffer = (uint8_t*)pMemoryPool->Alloc(MODBUS_RTU_MAX_FRAME_SIZE, MEM_DBG_MB_SERIAL);
 
-            if(m_pTxBuf == nullptr)
+            if(m_pTX_Buffer == nullptr)
             {
                 m_State = MODBUS_ERROR;
                 return;
             }
 
             // Ask the manager to build the RTU frame
-            int FrameLen = m_pManager->BuildFrame(m_Command, m_pTxBuf, MODBUS_RTU_MAX_FRAME_SIZE);
+            int FrameLength = m_pManager->BuildFrame(m_Command, m_pTX_Buffer, MODBUS_RTU_MAX_FRAME_SIZE);
 
-            if(FrameLen <= 0)
+            if(FrameLength <= 0)
             {
                 // Invalid command or buffer too small
                 m_State = MODBUS_ERROR;
                 return;
             }
 
-            m_TxLen = (size_t)FrameLen;
+            m_pTX_Length = (size_t)FrameLength;
 
             // Next step: send the frame
             m_State = MODBUS_SEND_FRAME;
@@ -119,7 +130,7 @@ void ModbusRTU::IF_Process(void)
 
         case MODBUS_SEND_FRAME:
         {
-            int Sent = Send(m_pTxBuf, m_TxLen);
+            int Sent = Send(m_pTX_Buffer, m_pTX_Length);
 
             if(Sent < 0)
             {
@@ -139,7 +150,7 @@ void ModbusRTU::IF_Process(void)
             // Wait for the required silent interval before receiving
             if(TickHasTimeOut(m_SilentTick, MODBUS_RTU_SILENT_INTERVAL_MSEC))
             {
-                m_RxLen     = 0;
+                m_RX_Length = 0;
                 m_StartTick = GetTick();
 
                 m_State = MODBUS_WAIT_RESPONSE;
@@ -147,55 +158,42 @@ void ModbusRTU::IF_Process(void)
         }
         break;
 
-        case MODBUS_WAIT_RESPONSE:
-        {
-            uint8_t Byte;
-            int     Result;
+		case MODBUS_WAIT_RESPONSE:
+		{
+			// Wait for incoming data notification (non-blocking)
+			if(nOS_SemTake(&m_RX_IdleSem, 0) == NOS_OK)
+			{
+				// Read all available bytes from the UART FIFO
+				int Count = (int)m_Fifo.Read(&m_pRX_Buffer[m_RX_Length], MODBUS_RTU_MAX_FRAME_SIZE - m_RX_Length);
 
-            // Non-blocking read (timeout = 0)
-            Result = Received(&Byte, 1, 0);
+				if(Count < 0)
+				{
+					m_State = MODBUS_ERROR;
+					return;
+				}
 
-            if(Result < 0)
-            {
-                m_State = MODBUS_ERROR;
-                return;
-            }
+				m_RX_Length += Count;
 
-            if(Result > 0)
-            {
-                if(m_RxLen < MODBUS_RTU_MAX_FRAME_SIZE)
-                {
-                    m_pRxBuf[m_RxLen++] = Byte;
-                }
-                else
-                {
-                    // RX buffer overflow
-                    m_State = MODBUS_ERROR;
-                    return;
-                }
+				// Check if the RTU frame is complete
+				if(IsEndOfRTU_Frame(m_pRX_Buffer, m_RX_Length))
+				{
+					m_State = MODBUS_PARSE_RESPONSE;
+					return;
+				}
+			}
 
-                // Check if the RTU frame is complete
-                if(IsEndOfRTU_Frame(m_pRxBuf, m_RxLen))
-                {
-                    m_State = MODBUS_PARSE_RESPONSE;
-                    return;
-                }
-            }
-
-            // Global response timeout
-            if(TickHasTimeOut(m_StartTick, m_Command.TimeoutMsec))
-            {
-                m_State = MODBUS_ERROR;
-                return;
-            }
-        }
-        break;
+			// Check global Modbus response timeout
+			if(TickHasTimeOut(m_StartTick, m_Command.TimeoutMsec))
+			{
+				m_State = MODBUS_ERROR;
+				return;
+			}
+		}
+		break;
 
         case MODBUS_PARSE_RESPONSE:
         {
-            int Status = m_pManager->ParseResponse(m_Command,
-                                                   m_pRxBuf,
-                                                   m_RxLen);
+            int Status = m_pManager->ParseResponse(m_Command, m_pRX_Buffer, m_RX_Length);
 
             if(Status < 0)
             {
@@ -232,56 +230,55 @@ void ModbusRTU::IF_Process(void)
 
 int ModbusRTU::Send(const uint8_t* pData, size_t Length)
 {
-    if(m_pConsole == nullptr)
+    if(m_pUartDriver == nullptr)
     {
         return -1;
     }
 
-    return m_pConsole->Write(pData, Length);
+    return m_pUartDriver->SendData(pData, &Length);
 }
 
 //-------------------------------------------------------------------------------------------------
 
-int ModbusRTU::Received(uint8_t* pBuffer, size_t MaxLength, TickCount_t TimeOutMsec)
+int ModbusRTU::Received(uint8_t* pBuffer, size_t MaxLength)
 {
-    if(m_pConsole == nullptr)
-    {
+    if(m_pUartDriver == nullptr)
+	{
         return -1;
-    }
+	}
 
-VAR_UNUSED(TimeOutMsec); // Tick Count a valider
-
-    return m_pConsole->Read(pBuffer, MaxLength);
+    // Read all that is available from the fifo
+    return (int)m_Fifo.Read(pBuffer, MaxLength);
 }
 
 //-------------------------------------------------------------------------------------------------
 
 bool ModbusRTU::Queue(const MODBUS_Command_t& Command)
 {
-    if(m_HasPending == true)                // Already busy?
+    if(m_HasPending == true)                	// Already busy?
     {
         return false;
     }
 
-    m_Command    = Command;                 // Accept command
+    m_Command    = Command;                 	// Accept command
     m_HasPending = true;
-    m_State      = MODBUS_BUILD_FRAME;      // Start state machine
+    m_State      = MODBUS_BUILD_FRAME;      	// Start state machine
 
     return true;
 }
 
 //-------------------------------------------------------------------------------------------------
 
-bool ModbusRTU::IsEndOfRTU_Frame(const uint8_t* pBuf, size_t Len)
+bool ModbusRTU::IsEndOfRTU_Frame(const uint8_t* pBuffer, size_t Length)
 {
-    if(Len < 4)
+    if(Length < 4)
     {
-        return false;                       // Address + function + CRC(2)
+        return false;                       						// Address + function + CRC(2)
     }
 
-    uint8_t function = pBuf[1];
+    uint8_t Function = pBuffer[1];
 
-    switch(function)
+    switch(Function)
     {
         // Functions with field ByteCount
         case MODBUS_READ_COILS:
@@ -289,37 +286,37 @@ bool ModbusRTU::IsEndOfRTU_Frame(const uint8_t* pBuf, size_t Len)
         case MODBUS_READ_HOLDING_REGISTERS:
         case MODBUS_READ_INPUT_REGISTERS:
         {
-            if(Len < 3)
+            if(Length < 3)
             {
                 return false;
             }
 
-            uint8_t byteCount = pBuf[2];
-            size_t expected = 3 + byteCount + 2; // addr + func + bytecount + data + CRC
+            uint8_t ByteCount = pBuffer[2];
+            size_t Expected = 3 + ByteCount + 2;					// addr + func + bytecount + data + CRC
 
-            return (Len >= expected);
+            return (Length >= Expected);
         }
 
         // Functions Write Single
-        case MODBUS_WRITE_SINGLE_COIL: // Write Single Coil
-        case MODBUS_WRITE_SINGLE_REGISTER: // Write Single Register
+        case MODBUS_WRITE_SINGLE_COIL: 								// Write Single Coil
+        case MODBUS_WRITE_SINGLE_REGISTER: 							// Write Single Register
         {
-            return (Len >= 8); // addr + func + addr_hi + addr_lo + val_hi + val_lo + CRC(2)
+            return (Length >= 8); 									// addr + func + addr_hi + addr_lo + val_hi + val_lo + CRC(2)
         }
 
         // Functions Write Multiple
         case MODBUS_WRITE_MULTIPLE_COILS:
         case MODBUS_WRITE_MULTIPLE_REGISTERS:
         {
-            return (Len >= 8);                                  // addr + func + addr_hi + addr_lo + qty_hi + qty_lo + CRC(2)
+            return (Length >= 8);                                  	// addr + func + addr_hi + addr_lo + qty_hi + qty_lo + CRC(2)
         }
 
         // Exception responses
         default:
         {
-            if(function & 0x80)
+            if(Function & 0x80)
             {
-                return (Len >= 5);                              // addr + func + exception_code + CRC(2)
+                return (Length >= 5);                              	// addr + func + exception_code + CRC(2)
             }
         }
         break;
@@ -333,6 +330,70 @@ bool ModbusRTU::IsEndOfRTU_Frame(const uint8_t* pBuf, size_t Len)
 bool ModbusRTU::CanHandle(uint8_t UnitID)
 {
     return (UnitID >= m_MinUnitID) && (UnitID <= m_MaxUnitID);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           CallbackFunction
+//
+//  Parameter(s):   void
+//
+//  Return:         None
+//
+//  Description:    Check if password is valid parsing the FIFO
+//
+//-------------------------------------------------------------------------------------------------
+void ModbusRTU::CallbackFunction(int Type, void* pContext)
+{
+    switch(Type)
+    {
+        // When DMA transfert is complete.
+      #if (UART_DRIVER_DMA_TX_COMPLETED_CFG == DEF_ENABLED)
+        case UART_CALLBACK_TX_DMA:
+        {
+            pMemoryPool->Free((void**)&pContext);
+        }
+        break;
+      #endif
+
+        // TX from uart is completed then release memory.
+      #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
+        case UART_CALLBACK_TX_COMPLETED:
+        {
+            pMemoryPool->Free((void**)&pContext);
+        }
+        break;
+      #endif
+
+      #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)                         // Don't know if we need to keep this... this mode is never use!!
+        case UART_CALLBACK_RX_NOT_EMPTY:
+        {
+            uint8_t* pData = (uint8_t*)pContext;
+            //m_Fifo.Write(pData, 1);
+            nOS_SemGive(&m_RX_IdleSem);
+        }
+        break;
+      #endif
+
+      #if (UART_DRIVER_RX_IDLE_CFG == DEF_ENABLED)
+        case UART_CALLBACK_RX_IDLE:
+        {
+            UART_Transfer_t* pTransfer = (UART_Transfer_t*)pContext;
+            m_Fifo.SetNewHeadPosition(pTransfer->u.Head);
+            nOS_SemGive(&m_RX_IdleSem);
+        }
+        break;
+      #endif
+
+        case UART_CALLBACK_RX_ERROR:
+        {
+            __asm("nop");
+            // nothing so far
+        }
+        break;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

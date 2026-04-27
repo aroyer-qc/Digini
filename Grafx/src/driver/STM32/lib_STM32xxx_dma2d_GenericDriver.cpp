@@ -311,7 +311,7 @@ void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uin
     uint32_t      Address;
     uint32_t      Color;
     DisplayLayer* pLayer;
-    uint32_t      Offset;
+    //uint32_t      Offset;
     uint32_t      Width;
     uint32_t      Height;
     uint32_t      SizeX;
@@ -337,7 +337,7 @@ void GrafxGenDriver::DrawLine(uint16_t PosX, uint16_t PosY, uint16_t Length, uin
     DMA2D->CR      = DMA2D_R2M;                                                     // Register to memory
     DMA2D->OCOLR   = Color;                                                         // Color to be used
     DMA2D->OMAR    = Address;                                                       // Destination address
-    DMA2D->OOR     = SizeX - Offset;                                                // Destination line offset
+    DMA2D->OOR     = SizeX;//  - Offset;                                                // Destination line offset
     DMA2D->OPFCCR  = PixelFormat;                                                   // Defines the number of pixels to be transfered
     DMA2D->NLR     = (Width << 16) | Height;                                        // Size configuration of area
 
@@ -417,15 +417,19 @@ void GrafxGenDriver::LayerConfig(Layer_e Layer)
     LayerConfig(pLayer);
 }
 */
+
+// what is the use of this fonction ????
 void GrafxGenDriver::LayerConfig(DisplayLayer* pLayer)
 {
-    uint32_t    PixelFormat;
-    uint32_t    PixelSize;
-    LayerType_e ActiveLayer;
+    //uint32_t    PixelFormat;
+    //uint32_t    PixelSize;
+    //LayerType_e ActiveLayer;
 
-    ActiveLayer = pLayer->GetActive();
-    PixelFormat = pLayer->GetPixelFormat();
-    PixelSize   = GFX_PixelSize[PixelFormat];
+    //ActiveLayer = pLayer->GetActive();
+    //PixelFormat = pLayer->GetPixelFormat();
+    //PixelSize   = GFX_PixelSize[PixelFormat];
+
+    VAR_UNUSED(pLayer);
 }
 
 //-------------------------------------------------------------------------------------------------

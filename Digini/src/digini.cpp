@@ -183,8 +183,13 @@ SystemState_e DIGINI_PostInitialize(void)
   #endif
  #endif
 
-  #if (DIGINI_USE_MODBUS == DEF_ENABLED) && (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
-    TaskCommModbus.Initialize(&DebugConsole, &UART_DebugTerminal, "TaskCommMODBUS");
+  #if (DIGINI_USE_MODBUS == DEF_ENABLED)
+   #if (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
+	//ModbusRTU.Initialize(MODBUS_Manager* pManager, MODBUS_RTU_UART, MODBUS_RTU_IO_RE_DE_CONTROL_PIN, MODBUS_RTU_MIN_ADDRESS, MODBUS_RTU_MAX_ADDRESS);
+   #endif
+   #if (DIGINI_USE_TCP_MODBUS == DEF_ENABLED)
+	// TODO   
+   #endif
   #endif
 
   #if (USE_USB_DRIVER == DEF_ENABLED)

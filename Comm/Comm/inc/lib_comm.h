@@ -69,26 +69,8 @@ class ClassTaskCOMM
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
+// Default Digini TaskComm
 TASK_COMM_EXTERN class ClassTaskCOMM  TaskCOMM;
-#if (DIGINI_USE_MODBUS == DEF_ENABLED) && (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
-TASK_COMM_EXTERN class ClassTaskCOMM  TaskCommModbus;
-#endif
-
-#ifdef TASK_COMM_GLOBAL
-
-                 class ClassTaskCOMM* pTaskCOMM = &TaskCOMM;
-  #if (DIGINI_USE_MODBUS == DEF_ENABLED) && (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
-                 class ClassTaskCOMM* pTaskCommModbus = &TaskCommModbus;
-  #endif
-
-#else
-
-    extern       class ClassTaskCOMM* pTaskCOMM;
-  #if (DIGINI_USE_MODBUS == DEF_ENABLED) && (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
-    extern       class ClassTaskCOMM* pTaskCommModbus;
-  #endif
-
-#endif
 
 //-------------------------------------------------------------------------------------------------
 

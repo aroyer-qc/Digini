@@ -31,6 +31,16 @@
 #if (DIGINI_USE_MODBUS == DEF_ENABLED) && (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// Global Macro
+//-------------------------------------------------------------------------------------------------
+
+#ifdef MODBUS_RTU_GLOBAL
+    #define MODBUS_RTU_EXTERN
+#else
+    #define MODBUS_RTU_EXTERN extern
+#endif
+
+//-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -57,20 +67,19 @@ enum MODBUS_State_e
 // Class
 //-------------------------------------------------------------------------------------------------
 
-class ModbusRTU : public ChildProcessInterface, public MODBUS_InterfaceBackEnd , public CallbackInterface
+class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
 {
     public:
 
-        void                IF_Process              (void);
+        void                Process                 (void);
 
-
-//        void                Initialize              (MODBUS_Manager* pManager, Console* pConsole, uint8_t MinID, uint8_t MaxID);
-        void                Initialize              (MODBUS_Manager* pManager, UART_Driver* pUartDriver, uint8_t MinID, uint8_t MaxID);
-
+        void                Initialize              (MODBUS_Manager* pManager, UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, uint8_t MinID, uint8_t MaxID);
         int                 Send                    (const uint8_t* pData, size_t Length);
         int                 Received                (uint8_t* pBuffer, size_t MaxLength);
-        bool                Queue                   (const MODBUS_Command_t& Command);
-        bool                CanHandle               (uint8_t UnitID) override;
+        bool                Queue                   (MODBUS_Command_t& Command);
+        bool                CanHandle               (uint8_t UnitID);
+        bool                IsBusy                  (void)                              { return (m_State != MODBUS_IDLE); }
+
 
         void                CallbackFunction        (int Type, void* pContext);
 
@@ -78,9 +87,8 @@ class ModbusRTU : public ChildProcessInterface, public MODBUS_InterfaceBackEnd ,
 
         bool                IsEndOfRTU_Frame        (const uint8_t* pBuffer, size_t Length);
 
-
-        //Console*            m_pConsole              = nullptr;
 		UART_Driver*		m_pUartDriver           = nullptr;
+		IO_ID_e             m_RE_DE_ControlPin;
         MODBUS_State_e      m_State                 = MODBUS_IDLE;
         MODBUS_Manager*     m_pManager              = nullptr;
 
@@ -102,6 +110,13 @@ class ModbusRTU : public ChildProcessInterface, public MODBUS_InterfaceBackEnd ,
         uint32_t            m_StartTick             = 0;
         uint32_t            m_SilentTick            = 0;
 };
+
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+// Default Digini Modbus RTU
+MODBUS_RTU_EXTERN class ModbusRTU myModbusRTU;
 
 //-------------------------------------------------------------------------------------------------
 

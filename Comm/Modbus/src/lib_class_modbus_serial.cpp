@@ -49,7 +49,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+#define MODBUS_RTU_GLOBAL
 #include "./lib_digini.h"
+#undef  MODBUS_RTU_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -65,14 +67,13 @@
 
 //-------------------------------------------------------------------------------------------------
 
-//void ModbusRTU::Initialize(MODBUS_Manager* pManager, Console* pConsole, uint8_t MinID, uint8_t MaxID)
-void ModbusRTU::Initialize(MODBUS_Manager* pManager, UART_Driver* pUartDriver, uint8_t MinID, uint8_t MaxID)
+void ModbusRTU::Initialize(MODBUS_Manager* pManager, UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, uint8_t MinID, uint8_t MaxID)
 {
-    m_pManager    = pManager;
-    //m_pConsole    = pConsole;
-    m_pUartDriver = pUartDriver;
-    m_MinUnitID   = MinID;
-    m_MaxUnitID   = MaxID;
+    m_pManager         = pManager;
+    m_pUartDriver      = pUartDriver;
+    m_RE_DE_ControlPin = RE_DE_ControlPin;
+    m_MinUnitID        = MinID;
+    m_MaxUnitID        = MaxID;
 
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     m_pRX_Buffer = m_Fifo.GetBufferPointer();
@@ -85,7 +86,7 @@ void ModbusRTU::Initialize(MODBUS_Manager* pManager, UART_Driver* pUartDriver, u
 
 //-------------------------------------------------------------------------------------------------
 
-void ModbusRTU::IF_Process(void)
+void ModbusRTU::Process(void)
 {
     switch(m_State)
     {
@@ -235,6 +236,7 @@ int ModbusRTU::Send(const uint8_t* pData, size_t Length)
         return -1;
     }
 
+    IO_SetPinHigh(m_RE_DE_ControlPin);
     return m_pUartDriver->SendData(pData, &Length);
 }
 
@@ -253,7 +255,7 @@ int ModbusRTU::Received(uint8_t* pBuffer, size_t MaxLength)
 
 //-------------------------------------------------------------------------------------------------
 
-bool ModbusRTU::Queue(const MODBUS_Command_t& Command)
+bool ModbusRTU::Queue(MODBUS_Command_t& Command)
 {
     if(m_HasPending == true)                	// Already busy?
     {
@@ -354,6 +356,7 @@ void ModbusRTU::CallbackFunction(int Type, void* pContext)
         case UART_CALLBACK_TX_DMA:
         {
             pMemoryPool->Free((void**)&pContext);
+            IO_SetPinLow(m_RE_DE_ControlPin);
         }
         break;
       #endif
@@ -363,6 +366,7 @@ void ModbusRTU::CallbackFunction(int Type, void* pContext)
         case UART_CALLBACK_TX_COMPLETED:
         {
             pMemoryPool->Free((void**)&pContext);
+            IO_SetPinLow(m_RE_DE_ControlPin);
         }
         break;
       #endif

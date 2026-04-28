@@ -7,18 +7,6 @@ enum class ModbusPath
     AUTO
 };
 
-struct ModbusCommand
-{
-    uint8_t     FunctionCode;
-    uint16_t    Address;
-    uint16_t    Quantity;
-
-    uint8_t*        Payload = nullptr;   // fourni par MemoryPool
-    uint16_t        PayloadLength = 0;
-    uint8_t         UnitID = 1;
-    uint32_t        TimeOutMs = 200;
-    ModbusTransport Transport = ModbusTransport::AUTO;
-};
 
 struct ModbusTCP_EndPoint
 {

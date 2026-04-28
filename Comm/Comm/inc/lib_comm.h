@@ -56,7 +56,7 @@ class ClassTaskCOMM
     public:
 
         nOS_Error       Initialize         (Console* m_pConsole, UART_Driver* pUart, const char* pTaskName);
-        void            Run                (void);                              // Task
+        void            Run                (void);
 
     private:
 
@@ -70,7 +70,7 @@ class ClassTaskCOMM
 //-------------------------------------------------------------------------------------------------
 
 // Default Digini TaskComm
-TASK_COMM_EXTERN class ClassTaskCOMM  TaskCOMM;
+TASK_COMM_EXTERN class ClassTaskCOMM  myTaskCOMM;
 
 //-------------------------------------------------------------------------------------------------
 

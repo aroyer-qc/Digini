@@ -56,8 +56,8 @@ int MODBUS_Manager::BuildFrame(const ModbusCommand& Command, uint8_t* pOut, size
 {
     size_t Index = 0;
     
-    pOut[Index++] = Command.UnitID;                                             // Address (UnitId)
-    pOut[Index++] = Command.Function;                                           // Function
+    pOut[Index++] = Command.DeviceAddress;
+    pOut[Index++] = Command.Function;
     int PayloadLength = BuildPayload(Command, &pOut[Index], MaxLength - Index); // Payload according to function
 
     if(PayloadLength < 0)
@@ -101,11 +101,11 @@ int MODBUS_Manager::ParseResponse(const ModbusCommand& Command, const uint8_t* p
         return -1;
     }
 
-    size_t  Index    = 0;
-    uint8_t UnitID   = pIn[Index++];
-    uint8_t Function = pIn[Index++];
+    size_t  Index     = 0;
+    uint8_t DeviceAddress = pIn[Index++];
+    uint8_t Function  = pIn[Index++];
 
-    if(UnitID != Command.UnitID)                                // Verify UnitID
+    if(DeviceAddress != Command.DeviceAddress)                          // Verify DeviceAddress
     {
         return -1;
     }
@@ -115,7 +115,7 @@ int MODBUS_Manager::ParseResponse(const ModbusCommand& Command, const uint8_t* p
         return -1;
     }
 
-    if(Function & 0x80)                                         // MODBUS Exception ?
+    if(Function & MODBUS_EXCEPTION_RESPONSE)                    // MODBUS Exception ?
     {
         uint8_t ExceptionCode = pIn[Index];
         return -ExceptionCode;                                  // Standard : negative error
@@ -290,13 +290,13 @@ bool MODBUS_Router::RegisterEndpoint(IModbusBackend* pBackEnd)
     return false; // No more space
 }
 
-bool MODBUS_Router::Queue(const ModbusCommand& Command)
+bool MODBUS_Router::Queue(ModbusCommand& Command)
 {
     for(size_t i = 0; i < MODBUS_BACKEND_COUNT; i++)
     {
         MODBUS_InterfaceBackEnd* pBackEnd = m_BackEnds[i];
 
-        if((pBackEnd != nullptr) && (pBackEnd->CanHandle(Command.UnitID) == true))
+        if((pBackEnd != nullptr) && (pBackEnd->CanHandle(Command.DeviceAddress) == true))
         {
             return pBackEnd->Queue(Command);
         }
@@ -318,13 +318,13 @@ bool MODBUS_Router::IsBusy(void)
     return false;
 }
 
-bool MODBUS_Router::Queue(const ModbusCommand& Command)
+bool MODBUS_Router::Queue(ModbusCommand& Command)
 {
     for(size_t i = 0; i < MODBUS_BACKEND_COUNT; i++)
     {
         IModbusBackEnd* pBackEnd = m_BackEnds[i];
 
-        if((pBackEnd != nullptr) && (pBackEnd->CanHandle(Command.UnitID) == true))
+        if((pBackEnd != nullptr) && (pBackEnd->CanHandle(Command.DeviceAddress) == true))
         {
             return pBackEnd->Queue(Command);
         }

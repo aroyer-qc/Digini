@@ -54,12 +54,28 @@
 #if (DIGINI_USE_MODBUS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// Global Macro
+//-------------------------------------------------------------------------------------------------
+
+#ifdef MODBUS_GLOBAL
+    #define MODBUS_EXTERN
+#else
+    #define MODBUS_EXTERN extern
+#endif
+
+//-------------------------------------------------------------------------------------------------
+
+#include "modbus_cfg.h"
+
+//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define MODBUS_MAX_BACKENDS   8    // Pour le config plus tard!!
-#define MODBUS_MAX_RULES      100  // for the config or loading a file with the rules
-#define MODBUS_MAX_PDU_SIZE   252
+#define MODBUS_MAX_PDU_SIZE   			252
+#define MODBUS_EXCEPTION_RESPONSE		0x80
+
+#define TASK_MODBUS_PRIO                7
+#define TASK_MODBUS_STACK_SIZE          256
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -87,7 +103,7 @@ enum MODBUS_Backend_e
 struct MODBUS_Command_t
 {
     MODBUS_Backend_e   BackEnd;         // RTU, TCP, etc.
-    uint8_t            UnitID;          // Slave address
+    uint8_t            DeviceAddress;   // Slave address
     MODBUS_Function_e  Function;        // Function code
     uint16_t           Address;         // Starting address
     uint16_t           Quantity;        // Number of items
@@ -99,10 +115,11 @@ struct MODBUS_Command_t
     TickCount_t        TimeoutMsec;
 };
 
-struct MODBUS_PassthruRule_t
+
+struct MODBUS_PassThruRule_t
 {
-    uint8_t     SrcUnitID;
-    uint8_t     DstUnitID;
+    uint8_t     SrcDeviceAddress;
+    uint8_t     DstDeviceAddress;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -118,8 +135,10 @@ class MODBUS_InterfaceBackEnd
         virtual bool        Queue                       (MODBUS_Command_t& Command)  = 0;
         virtual void        Process                     (void)                       = 0;
         virtual bool        IsBusy                      (void)                       = 0;
-        virtual bool        CanHandle                   (uint8_t UnitID)             = 0;
+        virtual bool        CanHandle                   (uint8_t DeviceAddress)      = 0;
 };
+
+//-------------------------------------------------------------------------------------------------
 
 class MODBUS_Manager
 {
@@ -133,28 +152,42 @@ class MODBUS_Manager
 
         bool                ValidateCRC                 (const uint8_t* pData, size_t Length);
         int                 BuildPayload                (MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength);
-
-
 };
+
+//-------------------------------------------------------------------------------------------------
 
 class MODBUS_Router
 {
     public:
 
-                            MODBUS_Router               ();
+        nOS_Error       	Initialize         			(void);
+        void            	Run                			(void);
 
         bool                RegisterEndpoint            (MODBUS_InterfaceBackEnd* pBackEnd);
-
+		bool				RegisterPassThru         	(const MODBUS_PassThruRule_t& PassThruRule);
         bool                Queue                       (MODBUS_Command_t& Command);
-        void                Process                     (void);
         bool                IsBusy                      (void);
-        bool                CanHandle                   (uint8_t UnitID);
+        bool                CanHandle                   (uint8_t DeviceAddress);
 
     private:
 
-        MODBUS_InterfaceBackEnd*        m_BackEnds          [MODBUS_MAX_BACKENDS];
-        MODBUS_PassthruRule_t           m_PassthruRules     [MODBUS_MAX_RULES];
+        nOS_Thread      					m_Handle;
+        nOS_Stack       					m_Stack[TASK_MODBUS_STACK_SIZE];
+
+        MODBUS_InterfaceBackEnd*        	m_BackEnds          [MODBUS_MAX_BACKENDS];
+		
+      #if (MODBUS_USE_ROUTER_PASSTHRU == DEF_DISABLED)        
+		static 	MODBUS_PassThruRule_t 		m_PassThruRules     [MODBUS_MAX_PASSTHRU_RULES];
+		static  size_t            			m_PassThruCount;   	// Number of used passthru entries (static + dynamic)
+      #endif	
 };
+
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+MODBUS_EXTERN class MODBUS_Manager 		myMODBUS_Manager;
+MODBUS_EXTERN class MODBUS_Router	  	myMODBUS_Router;
 
 //-------------------------------------------------------------------------------------------------
 

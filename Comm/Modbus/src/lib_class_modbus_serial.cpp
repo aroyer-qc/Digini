@@ -24,11 +24,6 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// ModbusRTU rtu1(&Console1, 1, 10);   	// gère UnitID 1 à 10
-// ModbusRTU rtu2(&Console2, 20, 30);  	// gère UnitID 20 à 30
-// ModbusRTU rtu3(&Console3, 100, 100); // gère seulement UnitID 100
-//
-//
 //  define for MODBUS_RTU_SILENT_INTERVAL_MSEC
 //  +----------------+-------------------+----------------------+
 //  | Baudrate (bps) | 1 char (ms)       | 3.5 chars (ms)       |
@@ -67,13 +62,13 @@
 
 //-------------------------------------------------------------------------------------------------
 
-void ModbusRTU::Initialize(MODBUS_Manager* pManager, UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, uint8_t MinID, uint8_t MaxID)
+void ModbusRTU::Initialize(MODBUS_Manager* pManager, UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress)
 {
     m_pManager         = pManager;
     m_pUartDriver      = pUartDriver;
     m_RE_DE_ControlPin = RE_DE_ControlPin;
-    m_MinUnitID        = MinID;
-    m_MaxUnitID        = MaxID;
+    m_MinDeviceAddress     = MinDeviceAddress;
+    m_MaxDeviceAddress     = MaxDeviceAddress;
 
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     m_pRX_Buffer = m_Fifo.GetBufferPointer();
@@ -257,14 +252,14 @@ int ModbusRTU::Received(uint8_t* pBuffer, size_t MaxLength)
 
 bool ModbusRTU::Queue(MODBUS_Command_t& Command)
 {
-    if(m_HasPending == true)                	// Already busy?
+    if(m_HasPending == true)                						// Already busy?
     {
         return false;
     }
 
-    m_Command    = Command;                 	// Accept command
+    m_Command    = Command;                 						// Accept command
     m_HasPending = true;
-    m_State      = MODBUS_BUILD_FRAME;      	// Start state machine
+    m_State      = MODBUS_BUILD_FRAME;      						// Start state machine
 
     return true;
 }
@@ -273,9 +268,9 @@ bool ModbusRTU::Queue(MODBUS_Command_t& Command)
 
 bool ModbusRTU::IsEndOfRTU_Frame(const uint8_t* pBuffer, size_t Length)
 {
-    if(Length < 4)
+    if(Length < 4)													// Need at least: address + function + CRC(2)
     {
-        return false;                       						// Address + function + CRC(2)
+        return false;
     }
 
     uint8_t Function = pBuffer[1];
@@ -288,7 +283,7 @@ bool ModbusRTU::IsEndOfRTU_Frame(const uint8_t* pBuffer, size_t Length)
         case MODBUS_READ_HOLDING_REGISTERS:
         case MODBUS_READ_INPUT_REGISTERS:
         {
-            if(Length < 3)
+            if(Length < 3)											// Need: address + function + bytecount
             {
                 return false;
             }
@@ -316,7 +311,7 @@ bool ModbusRTU::IsEndOfRTU_Frame(const uint8_t* pBuffer, size_t Length)
         // Exception responses
         default:
         {
-            if(Function & 0x80)
+            if(Function & MODBUS_EXCEPTION_RESPONSE)
             {
                 return (Length >= 5);                              	// addr + func + exception_code + CRC(2)
             }
@@ -329,9 +324,9 @@ bool ModbusRTU::IsEndOfRTU_Frame(const uint8_t* pBuffer, size_t Length)
 
 //-------------------------------------------------------------------------------------------------
 
-bool ModbusRTU::CanHandle(uint8_t UnitID)
+bool ModbusRTU::CanHandle(uint8_t Address)
 {
-    return (UnitID >= m_MinUnitID) && (UnitID <= m_MaxUnitID);
+    return (Address >= m_MinDeviceAddress) && (Address <= m_MaxDeviceAddress);
 }
 
 //-------------------------------------------------------------------------------------------------

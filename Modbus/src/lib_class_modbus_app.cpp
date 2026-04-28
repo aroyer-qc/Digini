@@ -38,18 +38,30 @@
 // Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define MAKE_MODBUS_ENTRY(Unit, Func, Handler)      { Unit, Func, Handler },
+#define MODBUS_INIT_ENTRY(DEVICE_ADDRESS, FUNCTION, HANDLER) m_ModbusAppTable[m_ModbusAppCount++] = { DEVICE_ADDRESS, FUNCTION, HANDLER };
 
 //-------------------------------------------------------------------------------------------------
-// Const(s)
+// Variable(s)
 //-------------------------------------------------------------------------------------------------
 
-const MODBUS_AppEntry_t ModbusAPP::m_ModbusAppTable[] =
+MODBUS_AppEntry_t ModbusAPP::m_ModbusAppTable[MODBUS_MAX_COMMAND_ENTRY];
+size_t            ModbusAPP::m_ModbusAppCount = 0;
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           ModbusAPP
+//
+//  Parameters:     None
+//
+//  Description:    Initializes the Modbus application command table. Static entries are loaded
+//                  from the MODBUS_APP_TABLE macro, and the internal counter is set to the
+//                  number of predefined commands. Dynamic entries may be registered afterward.
+//
+//-------------------------------------------------------------------------------------------------
+ModbusAPP::ModbusAPP()
 {
-    MODBUS_APP_TABLE(MAKE_MODBUS_ENTRY)
-};
-
-const size_t ModbusAPP::m_ModbusAppTableCount = sizeof(m_ModbusAppTable) / sizeof(m_ModbusAppTable[0]);
+    MODBUS_APP_TABLE(MODBUS_INIT_ENTRY)
+}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -61,15 +73,15 @@ const size_t ModbusAPP::m_ModbusAppTableCount = sizeof(m_ModbusAppTable) / sizeo
 //  Returns:        true        - A matching entry was found and its callback executed
 //                  false       - No entry found; the manager will generate an exception
 //
-//  Description:    Locates the application handler associated with the requested UnitID and
+//  Description:    Locates the application handler associated with the requested DeviceAddress and
 //                  Function code. If a matching entry exists and provides a callback, the
 //                  callback is invoked to generate the Modbus response. Passthru routing is
 //                  not handled here; it is performed by the Modbus manager before calling APP.
 //
 //-------------------------------------------------------------------------------------------------
-bool ModbusAPP::Process(const MODBUS_Command_t& Command, MODBUS_Response_t& Response)
+bool ModbusAPP::Process(MODBUS_Command_t& Command, MODBUS_Response_t& Response)
 {
-    const MODBUS_AppEntry_t* Entry = Find(Command.UnitID, Command.Function);
+    const MODBUS_AppEntry_t* Entry = Find(Command.DeviceAddress, Command.Function);
 
     if(Entry == nullptr)
     {
@@ -87,25 +99,55 @@ bool ModbusAPP::Process(const MODBUS_Command_t& Command, MODBUS_Response_t& Resp
 
 //-------------------------------------------------------------------------------------------------
 //
+//  Name:           RegisterCommand
+//
+//  Parameters:     Entry   - Application command entry to register
+//
+//  Returns:        true    - Entry successfully added
+//                  false   - Table is full; entry not added
+//
+//  Description:    Adds a new Modbus application command entry to the dynamic portion of the
+//                  application table. Static entries are loaded during initialization, and this
+//                  function appends additional entries at runtime until the table reaches its
+//                  maximum capacity.
+//
+//-------------------------------------------------------------------------------------------------
+bool ModbusAPP::RegisterCommand(const MODBUS_AppEntry_t& Entry)
+{
+    if(m_ModbusAppCount >= MODBUS_MAX_COMMAND_ENTRY)
+	{
+        return false;
+	}
+
+    // Copy fields explicitly (safe)
+    m_ModbusAppTable[m_ModbusAppCount].DeviceAddress = Entry.DeviceAddress;
+    m_ModbusAppTable[m_ModbusAppCount].Function      = Entry.Function;
+    m_ModbusAppTable[m_ModbusAppCount].Callback      = Entry.Callback;
+    m_ModbusAppCount++;
+    return true;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
 //  Name:           Find
 //
-//  Parameters:     UnitID      - Modbus slave address to match
+//  Parameters:     DeviceAddress   - Modbus slave address to match
 //                  Function    - Modbus function code to match
 //
 //  Returns:        Pointer to the matching MODBUS_AppEntry_t, or nullptr if no entry matches.
 //
 //  Description:    Performs a linear search in the application command table and returns
-//                  the entry whose UnitID and Function fields match the requested command.
+//                  the entry whose DeviceAddress and Function fields match the requested command.
 //                  Used by ModbusAPP to locate the application handler for a given request.
 //
 //-------------------------------------------------------------------------------------------------
-const MODBUS_AppEntry_t* ModbusAPP::Find(uint8_t UnitID, uint8_t Function)
+const MODBUS_AppEntry_t* ModbusAPP::Find(uint8_t DeviceAddress, uint8_t Function)
 {
-    for(size_t Index = 0; Index < m_ModbusAppTableCount; Index++)
+    for(size_t Index = 0; Index < m_ModbusAppCount; Index++)
     {
         const MODBUS_AppEntry_t* Entry = &m_ModbusAppTable[Index];
 
-        if(Entry->UnitID == UnitID)
+        if(Entry->DeviceAddress == DeviceAddress)
         {
             if(Entry->Function == Function)
             {

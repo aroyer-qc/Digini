@@ -73,11 +73,11 @@ class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
 
         void                Process                 (void);
 
-        void                Initialize              (MODBUS_Manager* pManager, UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, uint8_t MinID, uint8_t MaxID);
+        void                Initialize              (MODBUS_Manager* pManager, UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress);
         int                 Send                    (const uint8_t* pData, size_t Length);
         int                 Received                (uint8_t* pBuffer, size_t MaxLength);
         bool                Queue                   (MODBUS_Command_t& Command);
-        bool                CanHandle               (uint8_t UnitID);
+        bool                CanHandle               (uint8_t Address);
         bool                IsBusy                  (void)                              { return (m_State != MODBUS_IDLE); }
 
 
@@ -95,8 +95,8 @@ class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
         FIFO_Buffer         m_Fifo;
         nOS_Sem             m_RX_IdleSem;
 
-        uint8_t             m_MinUnitID;
-        uint8_t             m_MaxUnitID;
+        uint8_t             m_MinDeviceAddress;
+        uint8_t             m_MaxDeviceAddress;
 
         uint8_t*            m_pTX_Buffer            = nullptr;
         size_t              m_pTX_Length            = 0;

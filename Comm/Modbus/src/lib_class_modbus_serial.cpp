@@ -67,13 +67,14 @@ void ModbusRTU::Initialize(MODBUS_Manager* pManager, UART_Driver* pUartDriver, I
     m_pManager         = pManager;
     m_pUartDriver      = pUartDriver;
     m_RE_DE_ControlPin = RE_DE_ControlPin;
-    m_MinDeviceAddress     = MinDeviceAddress;
-    m_MaxDeviceAddress     = MaxDeviceAddress;
+    m_MinDeviceAddress = MinDeviceAddress;
+    m_MaxDeviceAddress = MaxDeviceAddress;
 
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     m_pRX_Buffer = m_Fifo.GetBufferPointer();
 
     nOS_SemCreate(&m_RX_IdleSem, 0, MODBUS_RTU_RX_NB_OF_SEMAPHORE_COUNT);
+    pUartDriver->Initialize();
     pUartDriver->DMA_ConfigRX(m_pRX_Buffer, MODBUS_RTU_FIFO_RX_SIZE);                // DMA will use the FIFO buffer allocated memory
     pUartDriver->RegisterCallback((CallbackInterface*)this);
     pUartDriver->EnableCallbackType(UART_CALLBACK_RX_IDLE | UART_CALLBACK_TX_COMPLETED | UART_CALLBACK_RX_ERROR);

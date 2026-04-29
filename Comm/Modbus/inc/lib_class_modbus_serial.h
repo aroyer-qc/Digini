@@ -71,6 +71,64 @@ class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
 {
     public:
 
+        void        Process             (void);
+
+        void        Initialize          (UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress);
+
+        int         Send                (const uint8_t* pData, size_t Length);
+        int         Received            (uint8_t* pBuffer, size_t MaxLength);
+
+        bool        Queue               (MODBUS_Command_t& Command);
+        bool        CanHandle           (uint8_t Address);
+        bool        IsBusy              (void)                                      { return (m_State != MODBUS_IDLE); }
+
+        // --- NOUVEAU : interface pour le Router ---
+        bool        HasRequest          (void) const                                { return m_HasPending; }
+        bool        GetRequest          (const uint8_t** ppRX, size_t* pLength);
+
+        uint8_t*    GetTXBuffer         (void)                                      { return m_pTX_Buffer; }
+        size_t      GetTXBufferSize     (void) const                                { return MODBUS_RTU_MAX_FRAME_SIZE; }
+
+
+        void        SetManager          (MODBUS_Manager* pManager)                  { m_pManager = pManager; }
+        void        CallbackFunction    (int Type, void* pContext);
+
+    private:
+
+        bool        IsEndOfRTU_Frame    (const uint8_t* pBuffer, size_t Length);
+        bool        IsEndOfRTU_Request  (const uint8_t* pBuffer, size_t Length);
+
+        UART_Driver*    	m_pUartDriver       = nullptr;
+        MODBUS_Manager* 	m_pManager          = nullptr;
+        IO_ID_e         	m_RE_DE_ControlPin;
+        MODBUS_State_e  	m_State             = MODBUS_IDLE;
+
+        FIFO_Buffer     	m_Fifo;
+        nOS_Sem         	m_RX_IdleSem;
+
+        uint8_t         	m_MinDeviceAddress;
+        uint8_t         	m_MaxDeviceAddress;
+
+        uint8_t*        	m_pTX_Buffer        = nullptr;
+		size_t           	m_pTX_Length 		= 0;
+
+        uint8_t*        	m_pRX_Buffer        = nullptr;
+        size_t          	m_RX_Length         = 0;
+
+        bool            	m_HasPending        = false;
+
+        uint32_t        	m_StartTick         = 0;
+        uint32_t        	m_SilentTick        = 0;
+
+	    MODBUS_Command_t	m_Command;          // Commande en cours (queue côté MASTER)
+};
+
+
+/*
+class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
+{
+    public:
+
         void                Process                 (void);
 
         void                Initialize              (MODBUS_Manager* pManager, UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress);
@@ -86,6 +144,7 @@ class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
     private:
 
         bool                IsEndOfRTU_Frame        (const uint8_t* pBuffer, size_t Length);
+		bool 				IsEndOfRTU_Request		(const uint8_t* pBuffer, size_t Length);
 
 		UART_Driver*		m_pUartDriver           = nullptr;
 		IO_ID_e             m_RE_DE_ControlPin;
@@ -110,7 +169,7 @@ class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
         uint32_t            m_StartTick             = 0;
         uint32_t            m_SilentTick            = 0;
 };
-
+*/
 //-------------------------------------------------------------------------------------------------
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------

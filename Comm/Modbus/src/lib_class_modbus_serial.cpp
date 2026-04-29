@@ -62,9 +62,8 @@
 
 //-------------------------------------------------------------------------------------------------
 
-void ModbusRTU::Initialize(MODBUS_Manager* pManager, UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress)
+void ModbusRTU::Initialize(UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress)
 {
-    m_pManager         = pManager;
     m_pUartDriver      = pUartDriver;
     m_RE_DE_ControlPin = RE_DE_ControlPin;
     m_MinDeviceAddress = MinDeviceAddress;
@@ -74,13 +73,12 @@ void ModbusRTU::Initialize(MODBUS_Manager* pManager, UART_Driver* pUartDriver, I
     m_pRX_Buffer = m_Fifo.GetBufferPointer();
 
     nOS_SemCreate(&m_RX_IdleSem, 0, MODBUS_RTU_RX_NB_OF_SEMAPHORE_COUNT);
+
     pUartDriver->Initialize();
-    pUartDriver->DMA_ConfigRX(m_pRX_Buffer, MODBUS_RTU_FIFO_RX_SIZE);                // DMA will use the FIFO buffer allocated memory
-    pUartDriver->RegisterCallback((CallbackInterface*)this);
+    pUartDriver->DMA_ConfigRX(m_pRX_Buffer, MODBUS_RTU_FIFO_RX_SIZE);
+    pUartDriver->RegisterCallback(this);
     pUartDriver->EnableCallbackType(UART_CALLBACK_RX_IDLE | UART_CALLBACK_TX_COMPLETED | UART_CALLBACK_RX_ERROR);
 }
-
-//-------------------------------------------------------------------------------------------------
 
 void ModbusRTU::Process(void)
 {
@@ -88,7 +86,32 @@ void ModbusRTU::Process(void)
     {
         case MODBUS_IDLE:
         {
-            // No pending command → nothing to do
+            // --- Chemin SLAVE : détection d'une requête RTU complète ---
+            if(nOS_SemTake(&m_RX_IdleSem, 0) == NOS_OK)
+            {
+                int Count = m_Fifo.Read(m_pRX_Buffer, MODBUS_RTU_MAX_FRAME_SIZE);
+
+                if(Count > 0)
+                {
+                    m_RX_Length = (size_t)Count;
+
+                    // Une requête RTU complète est-elle reçue ?
+                    if(IsEndOfRTU_Request(m_pRX_Buffer, m_RX_Length))
+                    {
+                        // Est-ce une adresse que ce backend peut gérer ?
+                        if(CanHandle(m_pRX_Buffer[0]))
+                        {
+                            // On signale au Router qu'une requête est prête
+                            m_HasPending = true;
+                        }
+                    }
+                }
+
+                // On ne bloque pas, on sort de Process()
+                return;
+            }
+
+            // --- Chemin MASTER : une commande a été queue() ---
             if(m_HasPending == false)
             {
                 return;
@@ -108,19 +131,17 @@ void ModbusRTU::Process(void)
                 return;
             }
 
-            // Ask the manager to build the RTU frame
+            // Demande au manager de construire la trame RTU (MASTER)
             int FrameLength = m_pManager->BuildFrame(m_Command, m_pTX_Buffer, MODBUS_RTU_MAX_FRAME_SIZE);
 
             if(FrameLength <= 0)
             {
-                // Invalid command or buffer too small
                 m_State = MODBUS_ERROR;
                 return;
             }
 
             m_pTX_Length = (size_t)FrameLength;
 
-            // Next step: send the frame
             m_State = MODBUS_SEND_FRAME;
         }
         break;
@@ -135,16 +156,13 @@ void ModbusRTU::Process(void)
                 return;
             }
 
-            // Start silent interval timer
             m_SilentTick = GetTick();
-
-            m_State = MODBUS_WAIT_SILENT;
+            m_State      = MODBUS_WAIT_SILENT;
         }
         break;
 
         case MODBUS_WAIT_SILENT:
         {
-            // Wait for the required silent interval before receiving
             if(TickHasTimeOut(m_SilentTick, MODBUS_RTU_SILENT_INTERVAL_MSEC))
             {
                 m_RX_Length = 0;
@@ -155,42 +173,41 @@ void ModbusRTU::Process(void)
         }
         break;
 
-		case MODBUS_WAIT_RESPONSE:
-		{
-			// Wait for incoming data notification (non-blocking)
-			if(nOS_SemTake(&m_RX_IdleSem, 0) == NOS_OK)
-			{
-				// Read all available bytes from the UART FIFO
-				int Count = (int)m_Fifo.Read(&m_pRX_Buffer[m_RX_Length], MODBUS_RTU_MAX_FRAME_SIZE - m_RX_Length);
+        case MODBUS_WAIT_RESPONSE:
+        {
+            if(nOS_SemTake(&m_RX_IdleSem, 0) == NOS_OK)
+            {
+                int Count = (int)m_Fifo.Read(&m_pRX_Buffer[m_RX_Length],
+                                             MODBUS_RTU_MAX_FRAME_SIZE - m_RX_Length);
 
-				if(Count < 0)
-				{
-					m_State = MODBUS_ERROR;
-					return;
-				}
+                if(Count < 0)
+                {
+                    m_State = MODBUS_ERROR;
+                    return;
+                }
 
-				m_RX_Length += Count;
+                m_RX_Length += (size_t)Count;
 
-				// Check if the RTU frame is complete
-				if(IsEndOfRTU_Frame(m_pRX_Buffer, m_RX_Length))
-				{
-					m_State = MODBUS_PARSE_RESPONSE;
-					return;
-				}
-			}
+                if(IsEndOfRTU_Frame(m_pRX_Buffer, m_RX_Length))
+                {
+                    m_State = MODBUS_PARSE_RESPONSE;
+                    return;
+                }
+            }
 
-			// Check global Modbus response timeout
-			if(TickHasTimeOut(m_StartTick, m_Command.TimeoutMsec))
-			{
-				m_State = MODBUS_ERROR;
-				return;
-			}
-		}
-		break;
+            if(TickHasTimeOut(m_StartTick, m_Command.TimeoutMsec))
+            {
+                m_State = MODBUS_ERROR;
+                return;
+            }
+        }
+        break;
 
         case MODBUS_PARSE_RESPONSE:
         {
-            int Status = m_pManager->ParseResponse(m_Command, m_pRX_Buffer, m_RX_Length);
+            int Status = m_pManager->ParseResponse(m_Command,
+                                                   m_pRX_Buffer,
+                                                   m_RX_Length);
 
             if(Status < 0)
             {
@@ -204,7 +221,6 @@ void ModbusRTU::Process(void)
 
         case MODBUS_DONE:
         {
-            // Command completed successfully
             m_HasPending = false;
             m_State      = MODBUS_IDLE;
         }
@@ -212,7 +228,6 @@ void ModbusRTU::Process(void)
 
         case MODBUS_ERROR:
         {
-            // Error occurred → reset state
             m_HasPending = false;
             m_State      = MODBUS_IDLE;
         }
@@ -325,12 +340,83 @@ bool ModbusRTU::IsEndOfRTU_Frame(const uint8_t* pBuffer, size_t Length)
 
 //-------------------------------------------------------------------------------------------------
 
+bool ModbusRTU::IsEndOfRTU_Request(const uint8_t* pBuffer, size_t Length)
+{
+    // Minimum: addr + func + CRC(2)
+    if(Length < 4)
+    {
+        return false;
+    }
+
+    uint8_t Function = pBuffer[1];
+
+    switch(Function)
+    {
+        // READ functions: always 8 bytes request
+        case MODBUS_READ_COILS:
+        case MODBUS_READ_DISCRETE_INPUTS:
+        case MODBUS_READ_HOLDING_REGISTERS:
+        case MODBUS_READ_INPUT_REGISTERS:
+        {
+            return (Length == 8);
+        }
+
+        // WRITE SINGLE: always 8 bytes request
+        case MODBUS_WRITE_SINGLE_COIL:
+        case MODBUS_WRITE_SINGLE_REGISTER:
+        {
+            return (Length == 8);
+        }
+
+        // WRITE MULTIPLE: variable length
+        case MODBUS_WRITE_MULTIPLE_COILS:
+        case MODBUS_WRITE_MULTIPLE_REGISTERS:
+        {
+            if(Length < 7)
+            {
+                return false;
+            }
+
+            uint8_t ByteCount = pBuffer[6];
+            size_t Expected = 7 + ByteCount + 2;   // header + bytecount + data + CRC
+
+            return (Length == Expected);
+        }
+
+        default:
+            return false;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+bool ModbusRTU::GetRequest(const uint8_t** ppRX, size_t* pLength)
+{
+    if(ppRX == nullptr || pLength == nullptr)
+    {
+        return false;
+    }
+
+    if(m_HasPending == false)
+    {
+        return false;
+    }
+
+    *ppRX   = m_pRX_Buffer;
+    *pLength = m_RX_Length;
+
+    // La requête a été consommée par le Router
+    m_HasPending = false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------------------------------
+
 bool ModbusRTU::CanHandle(uint8_t Address)
 {
     return (Address >= m_MinDeviceAddress) && (Address <= m_MaxDeviceAddress);
 }
-
-//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 //

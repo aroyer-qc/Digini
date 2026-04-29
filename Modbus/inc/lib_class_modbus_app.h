@@ -64,30 +64,20 @@
 #if (DIGINI_USE_MODBUS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// Global Macro
+//-------------------------------------------------------------------------------------------------
+
+#ifdef MODBUS_APP_GLOBAL
+    #define MODBUS_APP_EXTERN
+#else
+    #define MODBUS_APP_EXTERN extern
+#endif
+
+//-------------------------------------------------------------------------------------------------
 // Macro(s)
 //-------------------------------------------------------------------------------------------------
 
 #define EXPAND_DECLARE_HANDLER(Address, Function, Handler)  extern void Handler(const MODBUS_Command_t& Command, MODBUS_Response_t& Response);
-	
-//-------------------------------------------------------------------------------------------------
-// Typedef(s)
-//-------------------------------------------------------------------------------------------------
-
-struct MODBUS_Response_t
-{
-    uint8_t     Function;                       // Function code (or function | 0x80 for exception)
-    uint8_t     Payload[MODBUS_MAX_PDU_SIZE];   // Raw payload bytes
-    size_t      PayloadLength;                  // Number of bytes in payload
-    bool        IsException;                    // True if exception frame
-    uint8_t     ExceptionCode;                  // Only valid if IsException = true
-};
-
-struct MODBUS_AppEntry_t
-{
-    uint8_t     DeviceAddress;
-    uint8_t     Function;
-    void        (*Callback)(const MODBUS_Command_t&, MODBUS_Response_t&);
-};
 
 //-------------------------------------------------------------------------------------------------
 // Declare external handler
@@ -99,22 +89,27 @@ MODBUS_APP_TABLE(EXPAND_DECLARE_HANDLER)
 // Class
 //-------------------------------------------------------------------------------------------------
 
-class ModbusAPP
+class MODBUS_Application
 {
     public:
 
-		      						    ModbusAPP    		();
-        
+		      						    MODBUS_Application  ();
+
 		bool 							Process				(MODBUS_Command_t& Command, MODBUS_Response_t& Response);
 		bool 							RegisterCommand 	(const MODBUS_AppEntry_t& Entry);
+		MODBUS_AppEntry_t*				FindHandler			(uint8_t DeviceAddress, uint8_t Function);
 
-    private:
-
-        const MODBUS_AppEntry_t* 		Find				(uint8_t DeviceAddress, uint8_t Function);
+	private:
 
 		static MODBUS_AppEntry_t 		m_ModbusAppTable    [MODBUS_MAX_COMMAND_ENTRY];
 		static size_t            		m_ModbusAppCount;   	// Number of used entries (static + dynamic)
 };
+
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+MODBUS_APP_EXTERN class MODBUS_Application 		myMODBUS_Application;
 
 //-------------------------------------------------------------------------------------------------
 

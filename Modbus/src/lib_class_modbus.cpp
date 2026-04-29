@@ -203,7 +203,7 @@ int MODBUS_Manager::BuildPayload(MODBUS_Command_t& Command, uint8_t* pOut, size_
 
             for(size_t i = 0; i < Command.Quantity; i++)
             {
-                uint16_t Reg = Command.Data[i];
+                uint16_t Reg = Command.pData[i];
                 pOut[Index++] = (uint8_t)(Reg >> 8);
                 pOut[Index++] = (uint8_t)(Reg & 0xFF);
             }
@@ -266,10 +266,16 @@ bool MODBUS_Manager::ValidateCRC(const uint8_t* pData, size_t Length)
 //                  echo of the request and requires no data extraction.
 //
 //-------------------------------------------------------------------------------------------------
-int MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command, uint8_t Function, const uint8_t* pIn, size_t Length)
+int MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command,
+                                 uint8_t Function,
+                                 const uint8_t* pIn,
+                                 size_t Length)
 {
     switch(Function)
     {
+        // ---------------------------------------------------------
+        // READ COILS / DISCRETE INPUTS
+        // ---------------------------------------------------------
         case MODBUS_READ_COILS:
         case MODBUS_READ_DISCRETE_INPUTS:
         {
@@ -285,12 +291,15 @@ int MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command, uint8_t Function, co
                 return -1;
             }
 
-            // Copy data in Command.ResultBuffer
-            memcpy(Command.ResultBuffer, &pIn[1], ByteCount);
+            // Copy raw bytes into pData
+            memcpy(Command.pData, &pIn[1], ByteCount);
             Command.ResultLength = ByteCount;
             return 0;
         }
 
+        // ---------------------------------------------------------
+        // READ HOLDING / INPUT REGISTERS
+        // ---------------------------------------------------------
         case MODBUS_READ_HOLDING_REGISTERS:
         case MODBUS_READ_INPUT_REGISTERS:
         {
@@ -306,18 +315,25 @@ int MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command, uint8_t Function, co
                 return -1;
             }
 
-            // Register per register extraction
+            // Interpret pData as uint16_t*
+            uint16_t* pRegs = (uint16_t*)Command.pData;
+
             for(size_t i = 0; i < (ByteCount / 2); i++)
             {
-                uint16_t Value = ((uint16_t)pIn[1 + (i * 2)] << 8) | (uint16_t)pIn[2 + (i * 2)];
-                Command.Data[i] = Value;
+                uint16_t Value =
+                    ((uint16_t)pIn[1 + (i * 2)] << 8) |
+                     (uint16_t)pIn[2 + (i * 2)];
+
+                pRegs[i] = Value;
             }
 
-            Command.ResultLength = ByteCount / 2;
+            Command.ResultLength = ByteCount / 2;   // number of registers
             return 0;
         }
 
-        // Write Single Coil / Register
+        // ---------------------------------------------------------
+        // WRITE SINGLE COIL / REGISTER
+        // ---------------------------------------------------------
         case MODBUS_WRITE_SINGLE_COIL:
         case MODBUS_WRITE_SINGLE_REGISTER:
         {
@@ -326,10 +342,14 @@ int MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command, uint8_t Function, co
                 return -1;
             }
 
-            // Echo command -> nothing to extract
+            // Echo only — nothing to extract
+            Command.ResultLength = 0;
             return 0;
         }
 
+        // ---------------------------------------------------------
+        // WRITE MULTIPLE REGISTERS
+        // ---------------------------------------------------------
         case MODBUS_WRITE_MULTIPLE_REGISTERS:
         {
             if(Length < 4)
@@ -337,7 +357,8 @@ int MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command, uint8_t Function, co
                 return -1;
             }
 
-            // Echo address + quantity -> OK
+            // Echo address + quantity — nothing else to extract
+            Command.ResultLength = 0;
             return 0;
         }
     }
@@ -345,12 +366,117 @@ int MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command, uint8_t Function, co
     return -1;
 }
 
+int MODBUS_Manager::HandleRequest(const uint8_t* pRX,
+                                  size_t RX_Length,
+                                  uint8_t* pTX,
+                                  size_t TX_Max,
+                                  size_t* pTX_Length)
+{
+    *pTX_Length = 0;
+
+    MODBUS_Command_t Cmd;
+    int Status = ParseRequest(pRX, RX_Length, Cmd);
+
+    if(Status < 0)
+    {
+        return BuildException(pRX[0], pRX[1],
+                              MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE,
+                              pTX, TX_Max, pTX_Length);
+    }
+
+    // Trouver handler
+    MODBUS_AppEntry_t* pHandler = FindHandler(Cmd.DeviceAddress, Cmd.Function);
+
+    if(pHandler == nullptr)
+    {
+        return BuildException(Cmd.DeviceAddress, Cmd.Function,
+                              MODBUS_EXCEPTION_ILLEGAL_FUNCTION,
+                              pTX, TX_Max, pTX_Length);
+    }
+
+    // Préparer la réponse
+    MODBUS_Response_t Rsp;
+    Rsp.pPayload    = pTX;
+    Rsp.MaxSize   = TX_Max;
+    Rsp.Length      = 0;
+
+    // Appeler l’application
+    pHandler->pCallback(Cmd, Rsp);
+
+
+    Rsp.Length = BuildFrame(Cmd, Rsp.pPayload, Rsp.MaxSize);
+    return (Rsp.Length > 0);
+}
+
+//-------------------------------------------------------------------------------------------------
+int MODBUS_Manager::ParseRequest(const uint8_t* pRX, size_t RX_Length, MODBUS_Command_t& Command)
+{
+    if(pRX == nullptr)
+    {
+        return -1;
+    }
+
+    if(RX_Length < 4)   // Addr + Func + CRC(2)
+    {
+        return -2;
+    }
+
+    // 1) Vérifier CRC
+    if(ValidateCRC(pRX, RX_Length) == false)
+    {
+        return -3;
+    }
+
+    // 2) Extraire adresse + fonction
+    Command.DeviceAddress = pRX[0];
+    Command.Function      = MODBUS_Function_e(pRX[1]);
+
+    // 3) Extraire payload (sans CRC)
+    Command.pData      = (uint8_t*)&pRX[2];
+    Command.DataLength = RX_Length - 4;
+
+    return 0;
+}
+
 //-------------------------------------------------------------------------------------------------
 
-#if (MODBUS_USE_ROUTER_PASSTHRU == DEF_DISABLED)        
+int MODBUS_Manager::BuildException(uint8_t Address, uint8_t Function, uint8_t ExceptionCode, uint8_t* pTX, size_t TX_MaxLength, size_t* pTX_Length)
+{
+    if(TX_MaxLength < 5)
+    {
+        return -1;
+    }
+
+    pTX[0] = Address;
+    pTX[1] = Function | 0x80;
+    pTX[2] = ExceptionCode;
+
+    CRC_Calc ModbusCRC(CRC_16_MODBUS);
+    uint16_t ComputedCRC = (uint16_t)ModbusCRC.CalculateBuffer(pTX, 3);
+    pTX[3] = (uint8_t)(ComputedCRC & 0xFF);
+    pTX[4] = (uint8_t)(ComputedCRC >> 8);
+
+    *pTX_Length = 5;
+
+    return 0;
+}
+
+MODBUS_AppEntry_t* MODBUS_Manager::FindHandler(uint8_t DeviceAddress, uint8_t Function)
+{
+    if(m_pApplication == nullptr)
+    {
+        return nullptr;
+    }
+
+    return m_pApplication->FindHandler(DeviceAddress, Function);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+#if (MODBUS_USE_ROUTER_PASSTHRU == DEF_ENABLED)
 MODBUS_PassThruRule_t 		MODBUS_Router::m_PassThruRules [MODBUS_MAX_PASSTHRU_RULES];
 size_t            			MODBUS_Router::m_PassThruCount = 0;
-#endif // (MODBUS_USE_ROUTER_PASSTHRU == DEF_DISABLED)        
+#endif // (MODBUS_USE_ROUTER_PASSTHRU == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -390,7 +516,11 @@ nOS_Error MODBUS_Router::Initialize(void)
         m_BackEnds[BackEnd] = nullptr;
     }
 
+  #if (MODBUS_USE_ROUTER_PASSTHRU == DEF_ENABLED)
 	MODBUS_ROUTER_PASSTHRU_TABLE(MODBUS_INIT_PASSTHRU_ENTRY)
+  #endif
+
+	m_Manager.SetApplication(&myMODBUS_Application);
 
     Error = nOS_ThreadCreate(&m_Handle,
                              ClassTaskMODBUS_Wrapper,
@@ -419,18 +549,48 @@ nOS_Error MODBUS_Router::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 void MODBUS_Router::Run(void)
 {
-	while(1)
-	{
-		for(size_t BackEnd = 0; BackEnd < MODBUS_MAX_BACKENDS; BackEnd++)
-		{
-			if(m_BackEnds[BackEnd] != nullptr)
-			{
-				m_BackEnds[BackEnd]->Process();
-			}
-		}
-		
-		nOS_Sleep(1);
-	}
+    while(1)
+    {
+        for(size_t BackEnd = 0; BackEnd < MODBUS_MAX_BACKENDS; BackEnd++)
+        {
+            MODBUS_InterfaceBackEnd* pBackEnd = m_BackEnds[BackEnd];
+
+            if(pBackEnd != nullptr)
+            {
+                // 1. Faire tourner le backend (MASTER + SLAVE transport)
+                pBackEnd->Process();
+
+                // 2. Vérifier si une requête SLAVE est prête
+                if(pBackEnd->HasRequest())
+                {
+                    const uint8_t* pRX;
+                    size_t         RX_Length;
+
+                    if(pBackEnd->GetRequest(&pRX, &RX_Length))
+                    {
+                        uint8_t* pTX       = pBackEnd->GetTXBuffer();
+                        size_t   TX_Max    = pBackEnd->GetTXBufferSize();
+                        size_t   TX_Length = 0;
+
+                        // 3. Appeler le Manager pour traiter la requête
+                        m_Manager.HandleRequest(pRX,
+                                                RX_Length,
+                                                pTX,
+                                                TX_Max,
+                                                &TX_Length);
+
+                        // 4. Envoyer la réponse RTU
+                        if(TX_Length > 0)
+                        {
+                            pBackEnd->Send(pTX, TX_Length);
+                        }
+                    }
+                }
+            }
+        }
+
+        nOS_Sleep(1);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -454,6 +614,7 @@ bool MODBUS_Router::RegisterEndpoint(MODBUS_InterfaceBackEnd* pBackEnd)
         if(m_BackEnds[BackEnd] == nullptr)
         {
             m_BackEnds[BackEnd] = pBackEnd;
+			pBackEnd->SetManager(&m_Manager);
             return true;
         }
     }
@@ -475,6 +636,7 @@ bool MODBUS_Router::RegisterEndpoint(MODBUS_InterfaceBackEnd* pBackEnd)
 //                  additional rules at runtime until the table reaches its maximum capacity.
 //
 //-------------------------------------------------------------------------------------------------
+#if (MODBUS_USE_ROUTER_PASSTHRU == DEF_DISABLED)
 bool MODBUS_Router::RegisterPassThru(const MODBUS_PassThruRule_t& PassThruRule)
 {
     if(m_PassThruCount >= MODBUS_MAX_PASSTHRU_RULES)
@@ -488,6 +650,7 @@ bool MODBUS_Router::RegisterPassThru(const MODBUS_PassThruRule_t& PassThruRule)
     m_PassThruCount++;
     return true;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //

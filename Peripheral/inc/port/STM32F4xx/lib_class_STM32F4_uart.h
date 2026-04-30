@@ -192,6 +192,7 @@ struct UART_Info_t
     UART_Config_e       Config;
     UART_Baud_e         BaudID;
     bool                IsItBlockingOnBusy;  // todo check if used
+    size_t              RX_FifoSize;
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;
 };

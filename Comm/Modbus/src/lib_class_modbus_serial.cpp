@@ -96,7 +96,7 @@ void ModbusRTU::Process(void)
                     m_RX_Length = (size_t)Count;
 
                     // Une requête RTU complète est-elle reçue ?
-                    if(IsEndOfRTU_Request(m_pRX_Buffer, m_RX_Length))
+                    if(IsEndOfRTU_Request(m_pRX_Buffer, m_RX_Length) == true)
                     {
                         // Est-ce une adresse que ce backend peut gérer ?
                         if(CanHandle(m_pRX_Buffer[0]))
@@ -132,7 +132,7 @@ void ModbusRTU::Process(void)
             }
 
             // Demande au manager de construire la trame RTU (MASTER)
-            int FrameLength = m_pManager->BuildFrame(m_Command, m_pTX_Buffer, MODBUS_RTU_MAX_FRAME_SIZE);
+            int FrameLength = m_pManager->BuildFrameMaster(m_Command, m_pTX_Buffer, MODBUS_RTU_MAX_FRAME_SIZE);
 
             if(FrameLength <= 0)
             {

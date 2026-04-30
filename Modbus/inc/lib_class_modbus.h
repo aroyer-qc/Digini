@@ -184,7 +184,6 @@ class MODBUS_InterfaceBackEnd
 		virtual void 		SetManager				(class MODBUS_Manager* pManager) 		= 0;
 
 		// --- TX buffer access (SLAVE response) ---
-		virtual uint8_t*	GetTXBuffer				(void) 									= 0;
 		virtual size_t   	GetTXBufferSize			(void) const 							= 0;
 };
 
@@ -194,7 +193,9 @@ class MODBUS_Manager
 {
     public:
 
-        int                 BuildFrame                  (MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength);
+        int                 BuildFrameMaster            (MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength);
+        int                 BuildFrameMaster            (const MODBUS_Command_t& Cmd, uint8_t* pOut, size_t MaxLength);
+        int                 BuildFrameSlave             (const MODBUS_Command_t& Cmd, const MODBUS_Response_t& Rsp, uint8_t* pOut, size_t MaxLength);
         int                 ParseResponse               (MODBUS_Command_t& Command, const uint8_t* pIn, size_t Length);
 		int 				HandleRequest				(const uint8_t* pRX, size_t RX_Length, uint8_t* pTX, size_t TX_Max, size_t* pTX_Length);
 		int 				ParseRequest				(const uint8_t* pRX, size_t RX_Length, MODBUS_Command_t& Command);

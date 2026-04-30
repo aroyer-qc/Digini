@@ -44,7 +44,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           BuildFrame
+//  Name:           BuildFrameMaster
 //
 //  Parameters:     Command     - Parsed Modbus command to serialize
 //                  pOut        - Output buffer where the Modbus frame will be written
@@ -59,14 +59,46 @@
 //                  buffer is too small, the function returns 0 to indicate failure.
 //
 //-------------------------------------------------------------------------------------------------
-int MODBUS_Manager::BuildFrame(MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength)
+int MODBUS_Manager::BuildFrameSlave(const MODBUS_Command_t& Cmd,
+                               const MODBUS_Response_t& Rsp,
+                               uint8_t* pOut,
+                               size_t MaxLength)
 {
     size_t Index = 0;
 
+    // Adresse + Fonction
+    pOut[Index++] = Cmd.DeviceAddress;
+    pOut[Index++] = Rsp.IsException ? (Cmd.Function | 0x80) : Cmd.Function;
+
+    // Copier le payload
+    if(Index + Rsp.Length + 2 > MaxLength)
+        return 0;
+
+    memcpy(&pOut[Index], Rsp.pPayload, Rsp.Length);
+    Index += Rsp.Length;
+
+    // CRC
+    CRC_Calc ModbusCRC(CRC_16_MODBUS);
+    uint16_t ComputedCRC = ModbusCRC.CalculateBuffer(pOut, Index);
+
+    pOut[Index++] = (uint8_t)(ComputedCRC & 0xFF);
+    pOut[Index++] = (uint8_t)(ComputedCRC >> 8);
+
+    return (int)Index;
+}
+
+int MODBUS_Manager::BuildFrameMaster(MODBUS_Command_t& Command,
+                                     uint8_t* pOut,
+                                     size_t MaxLength)
+{
+    size_t Index = 0;
+
+    // Adresse + Fonction
     pOut[Index++] = Command.DeviceAddress;
     pOut[Index++] = Command.Function;
-    int PayloadLength = BuildPayload(Command, &pOut[Index], MaxLength - Index); // Payload according to function
 
+    // Payload de REQUÊTE (adresse, quantité, valeur…)
+    int PayloadLength = BuildPayload(Command, &pOut[Index], MaxLength - Index);
     if(PayloadLength < 0)
     {
         return 0;
@@ -74,15 +106,17 @@ int MODBUS_Manager::BuildFrame(MODBUS_Command_t& Command, uint8_t* pOut, size_t 
 
     Index += PayloadLength;
 
-    if((Index + 2) > MaxLength)                                                 // CRC
+    // CRC
+    if(Index + 2 > MaxLength)
     {
         return 0;
     }
 
     CRC_Calc ModbusCRC(CRC_16_MODBUS);
-    uint16_t CRC_Result = uint16_t(ModbusCRC.CalculateBuffer(pOut, Index));
-    pOut[Index++] = (uint8_t)(CRC_Result & 0xFF);                               // CRC Low
-    pOut[Index++] = (uint8_t)((CRC_Result >> 8) & 0xFF);                        // CRC High
+    uint16_t ComputedCRC = ModbusCRC.CalculateBuffer(pOut, Index);
+
+    pOut[Index++] = (uint8_t)(ComputedCRC & 0xFF);     // CRC Low
+    pOut[Index++] = (uint8_t)(ComputedCRC >> 8);       // CRC High
 
     return (int)Index;
 }
@@ -266,10 +300,7 @@ bool MODBUS_Manager::ValidateCRC(const uint8_t* pData, size_t Length)
 //                  echo of the request and requires no data extraction.
 //
 //-------------------------------------------------------------------------------------------------
-int MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command,
-                                 uint8_t Function,
-                                 const uint8_t* pIn,
-                                 size_t Length)
+int MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command, uint8_t Function, const uint8_t* pIn, size_t Length)
 {
     switch(Function)
     {
@@ -366,10 +397,8 @@ int MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command,
     return -1;
 }
 
-int MODBUS_Manager::HandleRequest(const uint8_t* pRX,
-                                  size_t RX_Length,
-                                  uint8_t* pTX,
-                                  size_t TX_Max,
+int MODBUS_Manager::HandleRequest(const uint8_t* pRX, size_t RX_Length,
+                                  uint8_t* pTX, size_t TX_Max,
                                   size_t* pTX_Length)
 {
     *pTX_Length = 0;
@@ -384,7 +413,6 @@ int MODBUS_Manager::HandleRequest(const uint8_t* pRX,
                               pTX, TX_Max, pTX_Length);
     }
 
-    // Trouver handler
     MODBUS_AppEntry_t* pHandler = FindHandler(Cmd.DeviceAddress, Cmd.Function);
 
     if(pHandler == nullptr)
@@ -394,18 +422,21 @@ int MODBUS_Manager::HandleRequest(const uint8_t* pRX,
                               pTX, TX_Max, pTX_Length);
     }
 
-    // Préparer la réponse
+    // Payload = pTX + 2
     MODBUS_Response_t Rsp;
-    Rsp.pPayload    = pTX;
-    Rsp.MaxSize   = TX_Max;
-    Rsp.Length      = 0;
+    Rsp.Function = Cmd.Function;
+    Rsp.pPayload = &pTX[2];
+    Rsp.MaxSize  = TX_Max - 2;
+    Rsp.Length   = 0;
+    Rsp.IsException = false;
 
-    // Appeler l’application
+    // Application remplit Rsp
     pHandler->pCallback(Cmd, Rsp);
 
+    // Construire la trame complète (SLAVE)
+    *pTX_Length = BuildFrameSlave(Cmd, Rsp, pTX, TX_Max);
 
-    Rsp.Length = BuildFrame(Cmd, Rsp.pPayload, Rsp.MaxSize);
-    return (Rsp.Length > 0);
+    return (*pTX_Length > 0);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -561,23 +592,19 @@ void MODBUS_Router::Run(void)
                 pBackEnd->Process();
 
                 // 2. Vérifier si une requête SLAVE est prête
-                if(pBackEnd->HasRequest())
+                if(pBackEnd->HasRequest() == true)
                 {
                     const uint8_t* pRX;
                     size_t         RX_Length;
 
                     if(pBackEnd->GetRequest(&pRX, &RX_Length))
                     {
-                        uint8_t* pTX       = pBackEnd->GetTXBuffer();
                         size_t   TX_Max    = pBackEnd->GetTXBufferSize();
+                        uint8_t* pTX       = (uint8_t*)pMemoryPool->Alloc(TX_Max, MEM_DBG_MB_TX_SER);
                         size_t   TX_Length = 0;
 
                         // 3. Appeler le Manager pour traiter la requête
-                        m_Manager.HandleRequest(pRX,
-                                                RX_Length,
-                                                pTX,
-                                                TX_Max,
-                                                &TX_Length);
+                        m_Manager.HandleRequest(pRX, RX_Length, pTX, TX_Max, &TX_Length);
 
                         // 4. Envoyer la réponse RTU
                         if(TX_Length > 0)

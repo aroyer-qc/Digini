@@ -77,7 +77,7 @@
 // Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_DECLARE_HANDLER(Address, Function, Handler)  extern void Handler(const MODBUS_Command_t& Command, MODBUS_Response_t& Response);
+#define EXPAND_DECLARE_HANDLER(ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER)  extern void HANDLER(const MODBUS_Command_t& Command, MODBUS_SlaveResponse_t& Response);
 
 //-------------------------------------------------------------------------------------------------
 // Declare external handler
@@ -93,16 +93,32 @@ class MODBUS_Application
 {
     public:
 
-		      						    MODBUS_Application  ();
+											MODBUS_Application 		    ();
 
-		bool 							Process				(MODBUS_Command_t& Command, MODBUS_Response_t& Response);
-		bool 							RegisterCommand 	(const MODBUS_AppEntry_t& Entry);
-		MODBUS_AppEntry_t*				FindHandler			(uint8_t DeviceAddress, uint8_t Function);
+		bool 								Process						(MODBUS_Command_t& Command, MODBUS_SlaveResponse_t& Response);
+        void                                SetManager                  (MODBUS_Manager* pManager) { m_pManager = pManager; }
+
+		// SLAVE side
+		bool 								RegisterSlaveCommand 		(const MODBUS_SlaveCommandEntry_t& Entry);
+		MODBUS_SlaveCommandEntry_t*			FindSlaveHandler			(uint8_t DeviceAddress, uint8_t Function);
+
+		//Master side
+		bool 								RegisterMasterRequest		(const MODBUS_MasterEntry_t& Entry);
+		bool 								MasterRequest				(uint32_t RequestID, uint16_t Quantity);
+		MODBUS_MasterEntry_t* 				FindMasterRequest			(uint32_t RequestID);
+
 
 	private:
 
-		static MODBUS_AppEntry_t 		m_ModbusAppTable    [MODBUS_MAX_COMMAND_ENTRY];
-		static size_t            		m_ModbusAppCount;   	// Number of used entries (static + dynamic)
+        MODBUS_Manager*                     m_pManager = nullptr;
+
+		// SLAVE table
+		static MODBUS_SlaveCommandEntry_t 	m_ModbusAppTable    		[MODBUS_MAX_SLAVE_COMMAND_ENTRY];
+		static size_t            			m_ModbusAppCount;   		// Number of used entries (static + dynamic)
+
+		// MASTER table
+		static MODBUS_MasterEntry_t       	m_MasterTable				[MODBUS_MAX_MASTER_REQUEST_ENTRY];
+		static size_t                     	m_MasterCount;
 };
 
 //-------------------------------------------------------------------------------------------------

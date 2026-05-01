@@ -40,14 +40,17 @@
 // Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_MODBUS_INIT_ENTRY(DEVICE_ADDRESS, FUNCTION, HANDLER) m_ModbusAppTable[m_ModbusAppCount++] = { DEVICE_ADDRESS, FUNCTION, HANDLER };
+#define EXPAND_MODBUS_INIT_ENTRY(DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER) m_ModbusAppTable[m_ModbusAppCount++] = { DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER };
 
 //-------------------------------------------------------------------------------------------------
 // Variable(s)
 //-------------------------------------------------------------------------------------------------
 
-MODBUS_AppEntry_t MODBUS_Application::m_ModbusAppTable[MODBUS_MAX_COMMAND_ENTRY];
-size_t            MODBUS_Application::m_ModbusAppCount = 0;
+MODBUS_SlaveCommandEntry_t MODBUS_Application::m_ModbusAppTable[MODBUS_MAX_SLAVE_COMMAND_ENTRY];
+size_t            		   MODBUS_Application::m_ModbusAppCount = 0;
+
+MODBUS_MasterEntry_t       MODBUS_Application::m_MasterTable[MODBUS_MAX_MASTER_REQUEST_ENTRY];
+size_t                     MODBUS_Application::m_MasterCount = 0;
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -55,7 +58,7 @@ size_t            MODBUS_Application::m_ModbusAppCount = 0;
 //
 //  Parameters:     None
 //
-//  Description:    Initializes the Modbus application command table. Static entries are loaded
+//  Description:    Initializes the MODBUS application command table. Static entries are loaded
 //                  from the MODBUS_APP_TABLE macro, and the internal counter is set to the
 //                  number of predefined commands. Dynamic entries may be registered afterward.
 //
@@ -67,7 +70,7 @@ MODBUS_Application::MODBUS_Application()
   #endif
 
 	// Clear the table
-	for(int Index = m_ModbusAppCount; Index < MODBUS_MAX_COMMAND_ENTRY; Index++)
+	for(int Index = m_ModbusAppCount; Index < MODBUS_MAX_SLAVE_COMMAND_ENTRY; Index++)
 	{
 		m_ModbusAppTable[Index].DeviceAddress = 0;
 		m_ModbusAppTable[Index].Function      = 0;
@@ -79,7 +82,7 @@ MODBUS_Application::MODBUS_Application()
 //
 //  Name:           Process
 //
-//  Parameters:     Command     - Parsed Modbus request (validated by the manager)
+//  Parameters:     Command     - Parsed MODBUS request (validated by the manager)
 //                  Response    - Structure to be filled by the application callback
 //
 //  Returns:        true        - A matching entry was found and its callback executed
@@ -87,13 +90,13 @@ MODBUS_Application::MODBUS_Application()
 //
 //  Description:    Locates the application handler associated with the requested DeviceAddress and
 //                  Function code. If a matching entry exists and provides a callback, the
-//                  callback is invoked to generate the Modbus response. Passthru routing is
-//                  not handled here; it is performed by the Modbus manager before calling APP.
+//                  callback is invoked to generate the MODBUS response. Passthru routing is
+//                  not handled here; it is performed by the MODBUS manager before calling APP.
 //
 //-------------------------------------------------------------------------------------------------
-bool MODBUS_Application::Process(MODBUS_Command_t& Command, MODBUS_Response_t& Response)
+bool MODBUS_Application::Process(MODBUS_Command_t& Command, MODBUS_SlaveResponse_t& Response)
 {
-    const MODBUS_AppEntry_t* pEntry = FindHandler(Command.Address, Command.Function);
+    const MODBUS_SlaveCommandEntry_t* pEntry = FindSlaveHandler(Command.Address, Command.Function);
 
     if(pEntry == nullptr)
     {
@@ -105,11 +108,11 @@ bool MODBUS_Application::Process(MODBUS_Command_t& Command, MODBUS_Response_t& R
         return false;
     }
 
-    // Appel du handler applicatif
+    // Call to application handler
     pEntry->pCallback(Command, Response);
 
-    // Le callback doit remplir Response.Length
-    if(Response.Length == 0)
+    // Callback must fill Response.PayloadLength
+    if(Response.PayloadLength == 0)
     {
         return false;
     }
@@ -119,7 +122,7 @@ bool MODBUS_Application::Process(MODBUS_Command_t& Command, MODBUS_Response_t& R
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           RegisterCommand
+//  Name:           RegisterSlaveCommand
 //
 //  Parameters:     Entry   - Application command entry to register
 //
@@ -132,9 +135,9 @@ bool MODBUS_Application::Process(MODBUS_Command_t& Command, MODBUS_Response_t& R
 //                  maximum capacity.
 //
 //-------------------------------------------------------------------------------------------------
-bool MODBUS_Application::RegisterCommand(const MODBUS_AppEntry_t& Entry)
+bool MODBUS_Application::RegisterSlaveCommand(const MODBUS_SlaveCommandEntry_t& Entry)
 {
-    if(m_ModbusAppCount >= MODBUS_MAX_COMMAND_ENTRY)
+    if(m_ModbusAppCount >= MODBUS_MAX_SLAVE_COMMAND_ENTRY)
 	{
         return false;
 	}
@@ -149,23 +152,23 @@ bool MODBUS_Application::RegisterCommand(const MODBUS_AppEntry_t& Entry)
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           FindHandler
+//  Name:           FindSlaveHandler
 //
 //  Parameters:     DeviceAddress   - Modbus slave address to match
 //                  Function    - Modbus function code to match
 //
-//  Returns:        Pointer to the matching MODBUS_AppEntry_t, or nullptr if no entry matches.
+//  Returns:        Pointer to the matching MODBUS_SlaveCommandEntry_t, or nullptr if no entry matches.
 //
 //  Description:    Performs a linear search in the application command table and returns
 //                  the entry whose DeviceAddress and Function fields match the requested command.
 //                  Used by MODBUS_Application to locate the app handler for a given request.
 //
 //-------------------------------------------------------------------------------------------------
-MODBUS_AppEntry_t* MODBUS_Application::FindHandler(uint8_t DeviceAddress, uint8_t Function)
+MODBUS_SlaveCommandEntry_t* MODBUS_Application::FindSlaveHandler(uint8_t DeviceAddress, uint8_t Function)
 {
     for(size_t Index = 0; Index < m_ModbusAppCount; Index++)
     {
-        MODBUS_AppEntry_t* Entry = &m_ModbusAppTable[Index];
+        MODBUS_SlaveCommandEntry_t* Entry = &m_ModbusAppTable[Index];
 
         if(Entry->DeviceAddress == DeviceAddress)
         {
@@ -178,6 +181,62 @@ MODBUS_AppEntry_t* MODBUS_Application::FindHandler(uint8_t DeviceAddress, uint8_
 
     return nullptr;
 }
+
+bool MODBUS_Application::RegisterMasterRequest(const MODBUS_MasterEntry_t& Entry)
+{
+    if(m_MasterCount >= MODBUS_MAX_MASTER_REQUEST_ENTRY)
+    {
+        return false;
+    }
+
+    MODBUS_MasterEntry_t& NewEntry = m_MasterTable[m_MasterCount];
+
+    // Copy base command and callback
+    NewEntry = Entry;
+
+    // Assign unique RequestID
+    NewEntry.RequestID = m_MasterCount + 1;
+
+    // Internal state
+    NewEntry.IsPending      = false;
+    NewEntry.TimestampStart = 0;
+
+    m_MasterCount++;
+
+    return true;
+}
+
+MODBUS_MasterEntry_t* MODBUS_Application::FindMasterRequest(uint32_t RequestID)
+{
+    for(size_t i = 0; i < m_MasterCount; i++)
+    {
+        if(m_MasterTable[i].RequestID == RequestID)
+        {
+            return &m_MasterTable[i];
+        }
+    }
+
+    return nullptr;
+}
+
+bool MODBUS_Application::MasterRequest(uint32_t RequestID, uint16_t Quantity)
+{
+    MODBUS_MasterEntry_t* pEntry = FindMasterRequest(RequestID);
+    if(pEntry == nullptr)
+    {
+        return false;
+    }
+
+    // Application-level validation only
+    if(Quantity > pEntry->MaxRequestQuantity)
+    {
+        return false;
+    }
+
+    // Forward to Manager (Application does NOT modify the entry)
+    return m_pManager->MasterRequest(RequestID, Quantity);
+}
+
 
 //-------------------------------------------------------------------------------------------------
 

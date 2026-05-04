@@ -78,12 +78,11 @@
 //-------------------------------------------------------------------------------------------------
 
 #define EXPAND_SLAVE_CALLBACK(ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER)                   extern void HANDLER(const MODBUS_Command_t& Command, MODBUS_SlaveResponse_t& Response);
-#define EXPAND_MASTER_CALLBACK(ADDRESS, FUNCTION, MAX_REQUEST_QUANTITY, TIMEOUT, HANDLER) extern void HANDLER(MODBUS_MasterResponse_t& Response);
+#define EXPAND_MASTER_CALLBACK(ADDRESS, FUNCTION, MAX_REQUEST_QUANTITY, TIMEOUT, HANDLER) extern void HANDLER(uint32_t RequestID, const MODBUS_MasterResponse_t& Response);
 
 //-------------------------------------------------------------------------------------------------
 // Declare external handler
 //-------------------------------------------------------------------------------------------------
-
 MODBUS_APP_SLAVE_TABLE(EXPAND_SLAVE_CALLBACK)
 MODBUS_APP_MASTER_TABLE(EXPAND_MASTER_CALLBACK)
 

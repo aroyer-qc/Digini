@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_modbus_app.h
+//  File : lib_class_modbus_app.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -40,8 +40,8 @@
 // Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_MODBUS_INIT_SLAVE_ENTRY(DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER)           m_ModbusAppSlaveTable[m_ModbusAppSlaveCount++] = { DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER };
-#define EXPAND_MODBUS_INIT_MASTER_ENTRY(DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, TIMEOUT, HANDLER) m_ModbusAppMasterTable[m_ModbusAppMasterCount++] = { DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, TIMEOUT, HANDLER };
+#define EXPAND_MODBUS_INIT_SLAVE_ENTRY(DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER)             m_ModbusAppSlaveTable[m_ModbusAppSlaveCount++]   =  { DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER };
+#define EXPAND_MODBUS_INIT_MASTER_ENTRY(DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, TIMEOUT, HANDLER)   m_ModbusAppMasterTable[m_ModbusAppMasterCount++] =  { DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, TIMEOUT, HANDLER };
 
 //-------------------------------------------------------------------------------------------------
 // Variable(s)

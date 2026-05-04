@@ -186,14 +186,12 @@ struct MODBUS_PassThruRule_t
     uint8_t     		DstDeviceAddress;
 };
 
-//    uint32_t            RequestID;          // Unique ID assigned by the application
-
 struct MODBUS_MasterEntry_t
 {
     uint8_t     		DeviceAddress;
     MODBUS_Function_e	Function;
-    uint16_t            MaxRequestQuantity; // Maximum allowed quantity
-    uint32_t            TimeoutMsec;        // Timeout configured by the app
+    uint16_t            MaxRequestQuantity;     // Maximum allowed quantity
+    uint32_t            TimeoutMsec;            // Timeout configured by the app
     void 				(*pCallback)(uint32_t, const MODBUS_MasterResponse_t&);
 };
 
@@ -233,7 +231,7 @@ class MODBUS_InterfaceBackEnd
 
 		// Manager injection
 		virtual void 					SetManager				(class MODBUS_Manager* pManager) 		= 0;
-		
+
 		// Miscelleaneous
 		virtual size_t   				GetTX_BufferSize		(void) const 							= 0;	// To Get TX buffer size from backend
 };

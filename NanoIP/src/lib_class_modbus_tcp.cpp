@@ -105,12 +105,12 @@ int MODBUS_Manager::ParseResponse(const ModbusCommand& Command, const uint8_t* p
     uint8_t DeviceAddress = pIn[Index++];
     uint8_t Function  = pIn[Index++];
 
-    if(DeviceAddress != Command.DeviceAddress)                          // Verify DeviceAddress
+    if(DeviceAddress != Command.DeviceAddress)                   // Verify DeviceAddress
     {
         return -1;
     }
 
-    if(ValidateCRC(pIn, Length) == false)                       // Verify CRC
+    if(ValidateCRC(pIn, Length) != SYS_READY)                   // Verify CRC
     {
         return -1;
     }

@@ -394,7 +394,7 @@
     IF_USE( DIGINI_USE_CRC_16_KERMIT,      X_CRC( CRC_16_KERMIT,      0x1021,                  0x0000,                  0x0000,                  true,  true,  16 ) ) /* 0x2189                  */ \
     IF_USE( DIGINI_USE_CRC_16_MAXIM,       X_CRC( CRC_16_MAXIM,       0x8005,                  0x0000,                  0xFFFF,                  true,  true,  16 ) ) /* 0x44C2                  */ \
     IF_USE( DIGINI_USE_CRC_16_MCRF4XX,     X_CRC( CRC_16_MCRF4XX,     0x1021,                  0xFFFF,                  0x0000,                  true,  true,  16 ) ) /* 0x6F91                  */ \
-    IF_USE( DIGINI_USE_CRC_16_MODBUS,      X_CRC( CRC_16_MODBUS,      0xA001,                  0xFFFF,                  0x0000,                  false, false, 16 ) ) /* 0x????                  */ \
+    IF_USE( DIGINI_USE_CRC_16_MODBUS,      X_CRC( CRC_16_MODBUS,      0x8005,                  0xFFFF,                  0x0000,                  true,  true,  16 ) ) /* 0x????                  */ \
     IF_USE( DIGINI_USE_CRC_16_RIELLO,      X_CRC( CRC_16_RIELLO,      0x1021,                  0xB2AA,                  0x0000,                  true,  true,  16 ) ) /* 0x63D0                  */ \
     IF_USE( DIGINI_USE_CRC_16_T10_DIF,     X_CRC( CRC_16_T10_DIF,     0x8BB7,                  0x0000,                  0x0000,                  false, false, 16 ) ) /* 0xD0DB                  */ \
     IF_USE( DIGINI_USE_CRC_16_TELEDISK,    X_CRC( CRC_16_TELEDISK,    0xA097,                  0x0000,                  0x0000,                  false, false, 16 ) ) /* 0x0FB3                  */ \

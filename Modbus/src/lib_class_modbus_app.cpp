@@ -40,17 +40,18 @@
 // Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_MODBUS_INIT_ENTRY(DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER) m_ModbusAppTable[m_ModbusAppCount++] = { DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER };
+#define EXPAND_MODBUS_INIT_SLAVE_ENTRY(DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER)           m_ModbusAppSlaveTable[m_ModbusAppSlaveCount++] = { DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER };
+#define EXPAND_MODBUS_INIT_MASTER_ENTRY(DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, TIMEOUT, HANDLER) m_ModbusAppMasterTable[m_ModbusAppMasterCount++] = { DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, TIMEOUT, HANDLER };
 
 //-------------------------------------------------------------------------------------------------
 // Variable(s)
 //-------------------------------------------------------------------------------------------------
 
-MODBUS_SlaveCommandEntry_t MODBUS_Application::m_ModbusAppTable[MODBUS_MAX_SLAVE_COMMAND_ENTRY];
-size_t            		   MODBUS_Application::m_ModbusAppCount = 0;
+MODBUS_SlaveCommandEntry_t MODBUS_Application::m_ModbusAppSlaveTable[MODBUS_MAX_SLAVE_COMMAND_ENTRY];
+size_t            		   MODBUS_Application::m_ModbusAppSlaveCount = 0;
 
-MODBUS_MasterEntry_t       MODBUS_Application::m_MasterTable[MODBUS_MAX_MASTER_REQUEST_ENTRY];
-size_t                     MODBUS_Application::m_MasterCount = 0;
+MODBUS_MasterEntry_t       MODBUS_Application::m_ModbusAppMasterTable[MODBUS_MAX_MASTER_REQUEST_ENTRY];
+size_t                     MODBUS_Application::m_ModbusAppMasterCount = 0;
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -59,22 +60,36 @@ size_t                     MODBUS_Application::m_MasterCount = 0;
 //  Parameters:     None
 //
 //  Description:    Initializes the MODBUS application command table. Static entries are loaded
-//                  from the MODBUS_APP_TABLE macro, and the internal counter is set to the
+//                  from the MODBUS_APP_SLAVE_TABLE macro, and the internal counter is set to the
 //                  number of predefined commands. Dynamic entries may be registered afterward.
 //
 //-------------------------------------------------------------------------------------------------
 MODBUS_Application::MODBUS_Application()
 {
-  #ifdef MODBUS_APP_TABLE
-    MODBUS_APP_TABLE(EXPAND_MODBUS_INIT_ENTRY)
+  #ifdef MODBUS_APP_SLAVE_TABLE
+    MODBUS_APP_SLAVE_TABLE(EXPAND_MODBUS_INIT_SLAVE_ENTRY)
   #endif
 
-	// Clear the table
-	for(int Index = m_ModbusAppCount; Index < MODBUS_MAX_SLAVE_COMMAND_ENTRY; Index++)
+  #ifdef MODBUS_APP_MASTER_TABLE
+    MODBUS_APP_MASTER_TABLE(EXPAND_MODBUS_INIT_MASTER_ENTRY)
+  #endif
+
+	// Clear the slave table
+	for(int Index = m_ModbusAppSlaveCount; Index < MODBUS_MAX_SLAVE_COMMAND_ENTRY; Index++)
 	{
-		m_ModbusAppTable[Index].DeviceAddress = 0;
-		m_ModbusAppTable[Index].Function      = 0;
-		m_ModbusAppTable[Index].pCallback     = nullptr;
+		m_ModbusAppSlaveTable[Index].DeviceAddress = 0;
+		m_ModbusAppSlaveTable[Index].Function      = MODBUS_NO_FUNCTION;
+		m_ModbusAppSlaveTable[Index].pCallback     = nullptr;
+	}
+
+	// Clear the master table
+	for(int Index = m_ModbusAppMasterCount; Index < MODBUS_MAX_MASTER_REQUEST_ENTRY; Index++)
+	{
+		m_ModbusAppMasterTable[Index].DeviceAddress      = 0;
+		m_ModbusAppMasterTable[Index].Function           = MODBUS_NO_FUNCTION;
+		m_ModbusAppMasterTable[Index].MaxRequestQuantity = 0;
+		m_ModbusAppMasterTable[Index].TimeoutMsec        = 0;
+		m_ModbusAppMasterTable[Index].pCallback          = nullptr;
 	}
 }
 
@@ -137,16 +152,13 @@ bool MODBUS_Application::Process(MODBUS_Command_t& Command, MODBUS_SlaveResponse
 //-------------------------------------------------------------------------------------------------
 bool MODBUS_Application::RegisterSlaveCommand(const MODBUS_SlaveCommandEntry_t& Entry)
 {
-    if(m_ModbusAppCount >= MODBUS_MAX_SLAVE_COMMAND_ENTRY)
+    if(m_ModbusAppSlaveCount >= MODBUS_MAX_SLAVE_COMMAND_ENTRY)
 	{
         return false;
 	}
 
-    // Copy fields explicitly (safe)
-    m_ModbusAppTable[m_ModbusAppCount].DeviceAddress = Entry.DeviceAddress;
-    m_ModbusAppTable[m_ModbusAppCount].Function      = Entry.Function;
-    m_ModbusAppTable[m_ModbusAppCount].pCallback     = Entry.pCallback;
-    m_ModbusAppCount++;
+	m_ModbusAppSlaveTable[m_ModbusAppSlaveCount] = Entry;
+    m_ModbusAppSlaveCount++;
     return true;
 }
 
@@ -166,9 +178,9 @@ bool MODBUS_Application::RegisterSlaveCommand(const MODBUS_SlaveCommandEntry_t& 
 //-------------------------------------------------------------------------------------------------
 MODBUS_SlaveCommandEntry_t* MODBUS_Application::FindSlaveHandler(uint8_t DeviceAddress, uint8_t Function)
 {
-    for(size_t Index = 0; Index < m_ModbusAppCount; Index++)
+    for(size_t Index = 0; Index < m_ModbusAppSlaveCount; Index++)
     {
-        MODBUS_SlaveCommandEntry_t* Entry = &m_ModbusAppTable[Index];
+        MODBUS_SlaveCommandEntry_t* Entry = &m_ModbusAppSlaveTable[Index];
 
         if(Entry->DeviceAddress == DeviceAddress)
         {
@@ -182,41 +194,25 @@ MODBUS_SlaveCommandEntry_t* MODBUS_Application::FindSlaveHandler(uint8_t DeviceA
     return nullptr;
 }
 
-bool MODBUS_Application::RegisterMasterRequest(const MODBUS_MasterEntry_t& Entry)
+uint16_t MODBUS_Application::RegisterMasterRequest(const MODBUS_MasterEntry_t& Entry)
 {
-    if(m_MasterCount >= MODBUS_MAX_MASTER_REQUEST_ENTRY)
+    if(m_ModbusAppMasterCount >= MODBUS_MAX_MASTER_REQUEST_ENTRY)
     {
-        return false;
-    }
+		return 0xFFFF; // invalid ID
+	}
 
-    MODBUS_MasterEntry_t& NewEntry = m_MasterTable[m_MasterCount];
-
-    // Copy base command and callback
-    NewEntry = Entry;
-
-    // Assign unique RequestID
-    NewEntry.RequestID = m_MasterCount + 1;
-
-    // Internal state
-    NewEntry.IsPending      = false;
-    NewEntry.TimestampStart = 0;
-
-    m_MasterCount++;
-
-    return true;
+    m_ModbusAppMasterTable[m_ModbusAppMasterCount] = Entry;
+    return static_cast<uint16_t>(m_ModbusAppMasterCount++);
 }
 
 MODBUS_MasterEntry_t* MODBUS_Application::FindMasterRequest(uint32_t RequestID)
 {
-    for(size_t i = 0; i < m_MasterCount; i++)
+    if(RequestID >= m_ModbusAppMasterCount)
     {
-        if(m_MasterTable[i].RequestID == RequestID)
-        {
-            return &m_MasterTable[i];
-        }
+        return nullptr;
     }
 
-    return nullptr;
+    return &m_ModbusAppMasterTable[RequestID];
 }
 
 bool MODBUS_Application::MasterRequest(uint32_t RequestID, uint16_t Quantity)

@@ -77,13 +77,15 @@
 // Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_DECLARE_HANDLER(ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER)  extern void HANDLER(const MODBUS_Command_t& Command, MODBUS_SlaveResponse_t& Response);
+#define EXPAND_SLAVE_CALLBACK(ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER)                   extern void HANDLER(const MODBUS_Command_t& Command, MODBUS_SlaveResponse_t& Response);
+#define EXPAND_MASTER_CALLBACK(ADDRESS, FUNCTION, MAX_REQUEST_QUANTITY, TIMEOUT, HANDLER) extern void HANDLER(MODBUS_MasterResponse_t& Response);
 
 //-------------------------------------------------------------------------------------------------
 // Declare external handler
 //-------------------------------------------------------------------------------------------------
 
-MODBUS_APP_TABLE(EXPAND_DECLARE_HANDLER)
+MODBUS_APP_SLAVE_TABLE(EXPAND_SLAVE_CALLBACK)
+MODBUS_APP_MASTER_TABLE(EXPAND_MASTER_CALLBACK)
 
 //-------------------------------------------------------------------------------------------------
 // Class
@@ -96,16 +98,17 @@ class MODBUS_Application
 											MODBUS_Application 		    ();
 
 		bool 								Process						(MODBUS_Command_t& Command, MODBUS_SlaveResponse_t& Response);
-        void                                SetManager                  (MODBUS_Manager* pManager) { m_pManager = pManager; }
+        void                                SetManager                  (MODBUS_Manager* pManager) 					{ m_pManager = pManager; }
 
 		// SLAVE side
 		bool 								RegisterSlaveCommand 		(const MODBUS_SlaveCommandEntry_t& Entry);
 		MODBUS_SlaveCommandEntry_t*			FindSlaveHandler			(uint8_t DeviceAddress, uint8_t Function);
 
 		//Master side
-		bool 								RegisterMasterRequest		(const MODBUS_MasterEntry_t& Entry);
+		uint16_t 							RegisterMasterRequest		(const MODBUS_MasterEntry_t& Entry);
 		bool 								MasterRequest				(uint32_t RequestID, uint16_t Quantity);
 		MODBUS_MasterEntry_t* 				FindMasterRequest			(uint32_t RequestID);
+		size_t 								GetMasterCount				(void) 										{ return m_ModbusAppMasterCount; }
 
 
 	private:
@@ -113,12 +116,12 @@ class MODBUS_Application
         MODBUS_Manager*                     m_pManager = nullptr;
 
 		// SLAVE table
-		static MODBUS_SlaveCommandEntry_t 	m_ModbusAppTable    		[MODBUS_MAX_SLAVE_COMMAND_ENTRY];
-		static size_t            			m_ModbusAppCount;   		// Number of used entries (static + dynamic)
+		static MODBUS_SlaveCommandEntry_t 	m_ModbusAppSlaveTable    	[MODBUS_MAX_SLAVE_COMMAND_ENTRY];
+		static size_t            			m_ModbusAppSlaveCount;   	// Number of used entries (static + dynamic)
 
 		// MASTER table
-		static MODBUS_MasterEntry_t       	m_MasterTable				[MODBUS_MAX_MASTER_REQUEST_ENTRY];
-		static size_t                     	m_MasterCount;
+		static MODBUS_MasterEntry_t       	m_ModbusAppMasterTable		[MODBUS_MAX_MASTER_REQUEST_ENTRY];
+		static size_t                     	m_ModbusAppMasterCount;
 };
 
 //-------------------------------------------------------------------------------------------------

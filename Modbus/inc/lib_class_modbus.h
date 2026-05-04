@@ -105,6 +105,7 @@
 
 enum MODBUS_Function_e
 {
+    MODBUS_NO_FUNCTION                 = 0x00,
     MODBUS_READ_COILS                  = 0x01,
     MODBUS_READ_DISCRETE_INPUTS        = 0x02,
     MODBUS_READ_HOLDING_REGISTERS      = 0x03,
@@ -148,10 +149,17 @@ struct MODBUS_Command_t
     TickCount_t        	TimeoutMsec;    // Request timeout in milliseconds
 };
 
+struct MODBUS_MasterRuntime_t
+{
+	MODBUS_Command_t 	Command;          // Commande RTU/TCP en cours pour ce slot
+    uint32_t    		TimestampStart;   // When the request was sent
+    bool        		IsPending;        // True until response or timeout
+};
+
 struct MODBUS_MasterResponse_t
 {
     uint8_t             DeviceAddress;      // Address of the responding slave
-    uint8_t             Function;           // Function code (or function | 0x80 for exception)
+    MODBUS_Function_e   Function;           // Function code (or function | 0x80 for exception)
     bool                IsException;        // True if exception frame
     uint8_t             ExceptionCode;      // Only valid if IsException = true
 
@@ -164,7 +172,7 @@ struct MODBUS_MasterResponse_t
 
 struct MODBUS_SlaveResponse_t
 {
-    uint8_t     		Function;       // Function code (or function | 0x80 for exception)
+    MODBUS_Function_e	Function;       // Function code (or function | 0x80 for exception)
     uint8_t*    		pPayload;       // Pointer to external TX buffer
     size_t      		PayloadLength;  // Number of bytes written into Payload
     size_t      		MaxSize;        // Max size of external TX buffer
@@ -178,24 +186,23 @@ struct MODBUS_PassThruRule_t
     uint8_t     		DstDeviceAddress;
 };
 
+//    uint32_t            RequestID;          // Unique ID assigned by the application
+
 struct MODBUS_MasterEntry_t
 {
-    uint32_t                RequestID;      	// Unique ID assigned by the application
-    MODBUS_Command_t        Command;        	// Full Modbus request
-    uint16_t                MaxRequestQuantity; // Maximum allowed quantity for this request
-	uint32_t                TimeoutMsec;    	// Per-request timeout
-    uint32_t                TimestampStart; 	// Filled when request is queued
-    bool                    IsPending;      	// True until response or timeout
-
-    void (*pCallback)(uint32_t RequestID, const MODBUS_MasterResponse_t& Response);
+    uint8_t     		DeviceAddress;
+    MODBUS_Function_e	Function;
+    uint16_t            MaxRequestQuantity; // Maximum allowed quantity
+    uint32_t            TimeoutMsec;        // Timeout configured by the app
+    void 				(*pCallback)(uint32_t, const MODBUS_MasterResponse_t&);
 };
 
 struct MODBUS_SlaveCommandEntry_t
 {
-    uint8_t     DeviceAddress;
-    uint8_t     Function;
-	uint16_t 	MaxQuantity;
-	void        (*pCallback)(const MODBUS_Command_t&, MODBUS_SlaveResponse_t&);
+    uint8_t     		DeviceAddress;
+    MODBUS_Function_e	Function;
+	uint16_t 			MaxQuantity;
+	void       		 	(*pCallback)(const MODBUS_Command_t&, MODBUS_SlaveResponse_t&);
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -226,9 +233,9 @@ class MODBUS_InterfaceBackEnd
 
 		// Manager injection
 		virtual void 					SetManager				(class MODBUS_Manager* pManager) 		= 0;
-
+		
 		// Miscelleaneous
-		virtual size_t   				GetTXBufferSize			(void) const 							= 0;	// To Get TX buffer size from backend
+		virtual size_t   				GetTX_BufferSize		(void) const 							= 0;	// To Get TX buffer size from backend
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -238,37 +245,39 @@ class MODBUS_Manager
     public:
 
 		// Master
-		bool 							MasterRequest				(uint32_t RequestID, uint16_t Quantity);
-		bool 							HandleResponse				(const uint8_t* pRX, size_t RX_Length);
-        int                				BuildFrameMaster            (MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength);
+		SystemState_e					MasterRequest				(uint32_t RequestID, uint16_t Quantity);
+		SystemState_e   				HandleResponse				(const uint8_t* pRX, size_t RX_Length);
+        SystemState_e      				BuildFrameMaster            (MODBUS_Command_t& Command, uint8_t* pOut, size_t* pLength);
 
 		// Slave
-		int 							HandleRequest				(const uint8_t* pRX, size_t RX_Length, uint8_t* pTX, size_t TX_Max, size_t* pTX_Length);
+		SystemState_e					HandleRequest				(const uint8_t* pRX, size_t RX_Length, uint8_t* pTX, size_t TX_Max, size_t* pTX_Length);
 
 		// Common
 		void 							SetApplication				(class MODBUS_Application* pApp)		{ m_pApplication = pApp; }
-        int                 			ParsePayload                (MODBUS_Command_t& Command, uint8_t Function, const uint8_t* pIn, size_t Length);
+		void 							SetRouter					(class MODBUS_Router* pRouter)			{ m_pRouter = pRouter; }
+
+        //SystemState_e          			ParsePayload                (MODBUS_Command_t& Command, uint8_t Function, const uint8_t* pIn, size_t Length);
 
     private:
 
-
 		// Master internal
-        int                 			ParseResponse               (const uint8_t* pIn, size_t Length, MODBUS_MasterResponse_t& Response);
+        SystemState_e          			ParseResponse               (const uint8_t* pIn, size_t* pLength, MODBUS_MasterResponse_t& Response);
 
 		// Slave internal
-        int                 			BuildFrameSlave             (const MODBUS_Command_t& Command, const MODBUS_SlaveResponse_t& Response, uint8_t* pOut, size_t MaxLength);
-		int 							ParseRequest				(const uint8_t* pRX, size_t RX_Length, MODBUS_Command_t& Command);
+        SystemState_e          			BuildFrameSlave             (const MODBUS_Command_t& Command, const MODBUS_SlaveResponse_t& Response, uint8_t* pOut, size_t* pLength);
+		SystemState_e					ParseRequest				(const uint8_t* pRX, size_t RX_Length, MODBUS_Command_t& Command);
 		MODBUS_SlaveCommandEntry_t* 	FindSlaveHandler			(uint8_t DeviceAddress, uint8_t Function);
 
 		// Common - Low level MODBUS Helper
+		SystemState_e					BuildException				(uint8_t Address, uint8_t Function, uint8_t ExceptionCode, uint8_t* pTX, size_t TX_MaxLength, size_t* pTX_Length);
+        SystemState_e          			ValidateCRC                 (const uint8_t* pData, size_t Length);
+        SystemState_e          			BuildPayload                (MODBUS_Command_t& Command, uint8_t* pOut, size_t* pLength);
 
-		int 							BuildException				(uint8_t Address, uint8_t Function, uint8_t ExceptionCode, uint8_t* pTX, size_t TX_MaxLength, size_t* pTX_Length);
-        bool                			ValidateCRC                 (const uint8_t* pData, size_t Length);
-        int                 			BuildPayload                (MODBUS_Command_t& Command, uint8_t* pOut, size_t MaxLength);
-
-
-		MODBUS_Application* 			m_pApplication;
+		MODBUS_Application* 			m_pApplication		= nullptr;
+		MODBUS_Router* 					m_pRouter 			= nullptr;
+		static MODBUS_MasterRuntime_t  	m_ModbusMasterRuntimeTable	[MODBUS_MAX_MASTER_REQUEST_ENTRY];
 };
+
 
 //-------------------------------------------------------------------------------------------------
 

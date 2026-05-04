@@ -86,7 +86,7 @@ class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
         bool        HasRequest          (void) const                                { return m_HasPending; }
         bool        GetRequest          (const uint8_t** ppRX, size_t* pLength);
 
-        size_t      GetTXBufferSize     (void) const                                { return MODBUS_RTU_MAX_FRAME_SIZE; }
+        size_t      GetTX_BufferSize    (void) const                                { return MODBUS_RTU_MAX_FRAME_SIZE; }
 
         void        SetManager          (MODBUS_Manager* pManager)                  { m_pManager = pManager; }
         void        CallbackFunction    (int Type, void* pContext);

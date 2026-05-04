@@ -131,16 +131,17 @@ void ModbusRTU::Process(void)
                 return;
             }
 
-            // Demande au manager de construire la trame RTU (MASTER)
-            int FrameLength = m_pManager->BuildFrameMaster(m_Command, m_pTX_Buffer, MODBUS_RTU_MAX_FRAME_SIZE);
+            // Ask manager to build the RTU Frame (MASTER)
+            size_t FrameLength = MODBUS_RTU_MAX_FRAME_SIZE;
+            SystemState_e State = m_pManager->BuildFrameMaster(m_Command, m_pTX_Buffer, &FrameLength);
 
-            if(FrameLength <= 0)
+            if(State != SYS_READY)
             {
                 m_State = MODBUS_ERROR;
                 return;
             }
 
-            m_pTX_Length = (size_t)FrameLength;
+            m_pTX_Length = FrameLength;
 
             m_State = MODBUS_SEND_FRAME;
         }
@@ -228,155 +229,6 @@ void ModbusRTU::Process(void)
     }
 }
 
-/*
-void ModbusRTU::Process(void)
-{
-    switch(m_State)
-    {
-        case MODBUS_IDLE:
-        {
-            // --- Chemin SLAVE : détection d'une requête RTU complète ---
-            if(nOS_SemTake(&m_RX_IdleSem, 0) == NOS_OK)
-            {
-                int Count = m_Fifo.Read(m_pRX_Buffer, MODBUS_RTU_MAX_FRAME_SIZE);
-
-                if(Count > 0)
-                {
-                    m_RX_Length = (size_t)Count;
-
-                    // Une requête RTU complète est-elle reçue ?
-                    if(IsEndOfRTU_Request(m_pRX_Buffer, m_RX_Length) == true)
-                    {
-                        // Est-ce une adresse que ce backend peut gérer ?
-                        if(CanHandle(m_pRX_Buffer[0]))
-                        {
-                            // On signale au Router qu'une requête est prête
-                            m_HasPending = true;
-                        }
-                    }
-                }
-
-                // On ne bloque pas, on sort de Process()
-                return;
-            }
-
-            // --- Chemin MASTER : une commande a été queue() ---
-            if(m_HasPending == false)
-            {
-                return;
-            }
-
-            m_State = MODBUS_BUILD_FRAME;
-        }
-        break;
-
-        case MODBUS_BUILD_FRAME:
-        {
-            m_pTX_Buffer = (uint8_t*)pMemoryPool->Alloc(MODBUS_RTU_MAX_FRAME_SIZE, MEM_DBG_MB_SERIAL);
-
-            if(m_pTX_Buffer == nullptr)
-            {
-                m_State = MODBUS_ERROR;
-                return;
-            }
-
-            // Demande au manager de construire la trame RTU (MASTER)
-            int FrameLength = m_pManager->BuildFrameMaster(m_Command, m_pTX_Buffer, MODBUS_RTU_MAX_FRAME_SIZE);
-
-            if(FrameLength <= 0)
-            {
-                m_State = MODBUS_ERROR;
-                return;
-            }
-
-            m_pTX_Length = (size_t)FrameLength;
-
-            m_State = MODBUS_SEND_FRAME;
-        }
-        break;
-
-        case MODBUS_SEND_FRAME:
-        {
-            int Sent = Send(m_pTX_Buffer, m_pTX_Length);
-
-            if(Sent < 0)
-            {
-                m_State = MODBUS_ERROR;
-                return;
-            }
-
-            m_SilentTick = GetTick();
-            m_State      = MODBUS_WAIT_SILENT;
-        }
-        break;
-
-        case MODBUS_WAIT_SILENT:
-        {
-            if(TickHasTimeOut(m_SilentTick, MODBUS_RTU_SILENT_INTERVAL_MSEC))
-            {
-                m_RX_Length = 0;
-                m_StartTick = GetTick();
-
-                m_State = MODBUS_WAIT_RESPONSE;
-            }
-        }
-        break;
-
-        case MODBUS_WAIT_RESPONSE:
-        {
-            if(nOS_SemTake(&m_RX_IdleSem, 0) == NOS_OK)
-            {
-                int Count = (int)m_Fifo.Read(&m_pRX_Buffer[m_RX_Length], MODBUS_RTU_MAX_FRAME_SIZE - m_RX_Length);
-
-                if(Count < 0)
-                {
-                    m_State = MODBUS_ERROR;
-                    return;
-                }
-
-                m_RX_Length += (size_t)Count;
-
-                if(IsEndOfRTU_Frame(m_pRX_Buffer, m_RX_Length))
-                {
-                    m_State = MODBUS_PARSE_RESPONSE;
-                    return;
-                }
-            }
-
-            if(TickHasTimeOut(m_StartTick, m_Command.TimeoutMsec))
-            {
-                m_State = MODBUS_ERROR;
-                return;
-            }
-        }
-        break;
-
-        case MODBUS_PARSE_RESPONSE:
-        {
-            m_pRouter->OnFrameReceived(m_pRX_Buffer, m_RX_Length);
-            m_State = MODBUS_DONE;
-        }
-        break;
-
-        case MODBUS_DONE:
-        {
-            m_HasPending = false;
-            m_State      = MODBUS_IDLE;
-        }
-        break;
-
-        case MODBUS_ERROR:
-        {
-            m_HasPending = false;
-            m_State      = MODBUS_IDLE;
-        }
-        break;
-
-        default:
-            break;
-    }
-}
-*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Send
@@ -724,7 +576,6 @@ void ModbusRTU::CallbackFunction(int Type, void* pContext)
         case UART_CALLBACK_TX_DMA:
         {
             pMemoryPool->Free((void**)&pContext);
-            IO_SetPinLow(m_RE_DE_ControlPin);
         }
         break;
       #endif
@@ -733,13 +584,12 @@ void ModbusRTU::CallbackFunction(int Type, void* pContext)
       #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
         case UART_CALLBACK_TX_COMPLETED:
         {
-            pMemoryPool->Free((void**)&pContext);
             IO_SetPinLow(m_RE_DE_ControlPin);
         }
         break;
       #endif
 
-      #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED)                         // Don't know if we need to keep this... this mode is never use!!
+      #if (UART_DRIVER_RX_NOT_EMPTY_CFG == DEF_ENABLED) // Don't know if we need to keep this... this mode is never use!! on STM32 will need to see on other CPU
         case UART_CALLBACK_RX_NOT_EMPTY:
         {
             uint8_t* pData = (uint8_t*)pContext;

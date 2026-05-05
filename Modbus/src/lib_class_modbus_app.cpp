@@ -40,8 +40,10 @@
 // Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_MODBUS_INIT_SLAVE_ENTRY(DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER)             m_ModbusAppSlaveTable[m_ModbusAppSlaveCount++]   =  { DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, HANDLER };
-#define EXPAND_MODBUS_INIT_MASTER_ENTRY(DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, TIMEOUT, HANDLER)   m_ModbusAppMasterTable[m_ModbusAppMasterCount++] =  { DEVICE_ADDRESS, FUNCTION, MAX_QUANTITY, TIMEOUT, HANDLER };
+#define EXPAND_MODBUS_INIT_SLAVE_ENTRY(SLAVE_ID, FUNCTION, ADDRESS, MAX_QUANTITY, HANDLER) \
+     m_ModbusAppSlaveTable[m_ModbusAppSlaveCount++]   =  { SLAVE_ID, FUNCTION, ADDRESS, MAX_QUANTITY, HANDLER };
+#define EXPAND_MODBUS_INIT_MASTER_ENTRY(REQUEST_TO_ID, FUNCTION, ADDRESS, MAX_QUANTITY, TIMEOUT, HANDLER) \
+     m_ModbusAppMasterTable[m_ModbusAppMasterCount++] =  { REQUEST_TO_ID, FUNCTION, ADDRESS, MAX_QUANTITY, TIMEOUT, HANDLER };
 
 //-------------------------------------------------------------------------------------------------
 // Variable(s)
@@ -77,15 +79,15 @@ MODBUS_Application::MODBUS_Application()
 	// Clear the slave table
 	for(int Index = m_ModbusAppSlaveCount; Index < MODBUS_MAX_SLAVE_COMMAND_ENTRY; Index++)
 	{
-		m_ModbusAppSlaveTable[Index].DeviceAddress = 0;
 		m_ModbusAppSlaveTable[Index].Function      = MODBUS_NO_FUNCTION;
+		m_ModbusAppSlaveTable[Index].Address       = 0;
 		m_ModbusAppSlaveTable[Index].pCallback     = nullptr;
 	}
 
 	// Clear the master table
 	for(int Index = m_ModbusAppMasterCount; Index < MODBUS_MAX_MASTER_REQUEST_ENTRY; Index++)
 	{
-		m_ModbusAppMasterTable[Index].DeviceAddress      = 0;
+		m_ModbusAppMasterTable[Index].RequestToSlaveID   = 0;
 		m_ModbusAppMasterTable[Index].Function           = MODBUS_NO_FUNCTION;
 		m_ModbusAppMasterTable[Index].MaxRequestQuantity = 0;
 		m_ModbusAppMasterTable[Index].TimeoutMsec        = 0;
@@ -176,13 +178,13 @@ bool MODBUS_Application::RegisterSlaveCommand(const MODBUS_SlaveCommandEntry_t& 
 //                  Used by MODBUS_Application to locate the app handler for a given request.
 //
 //-------------------------------------------------------------------------------------------------
-MODBUS_SlaveCommandEntry_t* MODBUS_Application::FindSlaveHandler(uint8_t DeviceAddress, uint8_t Function)
+MODBUS_SlaveCommandEntry_t* MODBUS_Application::FindSlaveHandler(uint8_t Address, uint8_t Function)
 {
     for(size_t Index = 0; Index < m_ModbusAppSlaveCount; Index++)
     {
         MODBUS_SlaveCommandEntry_t* Entry = &m_ModbusAppSlaveTable[Index];
 
-        if(Entry->DeviceAddress == DeviceAddress)
+        if(Entry->Address == Address)
         {
             if(Entry->Function == Function)
             {

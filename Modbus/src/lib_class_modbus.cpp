@@ -71,7 +71,7 @@ SystemState_e MODBUS_Manager::BuildFrameSlave(const MODBUS_Command_t& Command, c
     size_t Index = 0;
 
     // Address + Function
-    pOut[Index++] = Command.DeviceAddress;
+    pOut[Index++] = Command.SlaveID;
     pOut[Index++] = Response.IsException ? (Command.Function | 0x80) : Command.Function;
 
     // Copy payload
@@ -99,22 +99,30 @@ SystemState_e MODBUS_Manager::BuildFrameSlave(const MODBUS_Command_t& Command, c
 SystemState_e MODBUS_Manager::MasterRequest(uint32_t RequestID, uint16_t Quantity)
 {
     if(RequestID >=  m_pApplication->GetMasterCount())
+    {
         return SYS_NULLPTR;
+    }
 
     MODBUS_MasterEntry_t* pEntry = m_pApplication->FindMasterRequest(RequestID);
     if(pEntry == nullptr)
+    {
         return SYS_NULLPTR;
+    }
 
     MODBUS_MasterRuntime_t& RunTime = m_ModbusMasterRuntimeTable[RequestID];
 
     if(RunTime.IsPending)
+    {
         return SYS_BUSY;
+    }
 
     if(Quantity > pEntry->MaxRequestQuantity)
+    {
         return SYS_INVALID_PARAMETER;
+    }
 
     // Build command (runtime)
-    RunTime.Command.DeviceAddress = pEntry->DeviceAddress;
+    RunTime.Command.SlaveID       = pEntry->RequestToSlaveID;
     RunTime.Command.Function      = pEntry->Function;
     RunTime.Command.Address       = 0;
     RunTime.Command.Quantity      = Quantity;
@@ -125,7 +133,9 @@ SystemState_e MODBUS_Manager::MasterRequest(uint32_t RequestID, uint16_t Quantit
 
     // Send command through router
     if(m_pRouter->Queue(RunTime.Command) == false)
+    {
         return SYS_FAIL;
+    }
 
     RunTime.IsPending      = true;
     RunTime.TimestampStart = GetTick();
@@ -157,7 +167,7 @@ SystemState_e MODBUS_Manager::BuildFrameMaster(MODBUS_Command_t& Command, uint8_
     size_t MaxLength = *pLength;
 
     // Address + Function
-    pOut[Index++] = Command.DeviceAddress;
+    pOut[Index++] = Command.SlaveID;
     pOut[Index++] = Command.Function;
 
     // Request payload (address, quantity, value…)
@@ -276,8 +286,8 @@ SystemState_e MODBUS_Manager::ParseResponse(const uint8_t* pIn, size_t* pLength,
 
     size_t Index = 0;
 
-    Response.DeviceAddress      = pIn[Index++];
-    MODBUS_Function_e Function  = MODBUS_Function_e(pIn[Index++]);
+    Response.SlaveID           = pIn[Index++];
+    MODBUS_Function_e Function = MODBUS_Function_e(pIn[Index++]);
 
     if(ValidateCRC(pIn, *pLength) == false)
     {
@@ -596,17 +606,17 @@ SystemState_e MODBUS_Manager::HandleRequest(const uint8_t* pRX, size_t RX_Length
         return BuildException(pRX[0], pRX[1], MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, pTX, TX_Max, pTX_Length);
     }
 
-    MODBUS_SlaveCommandEntry_t* pHandler = FindSlaveHandler(Command.DeviceAddress, Command.Function);
+    MODBUS_SlaveCommandEntry_t* pHandler = FindSlaveHandler(Command.SlaveID, Command.Function);
 
 	if(pHandler == nullptr)
     {
-        return BuildException(Command.DeviceAddress, Command.Function, MODBUS_EXCEPTION_ILLEGAL_FUNCTION, pTX, TX_Max, pTX_Length);
+        return BuildException(Command.SlaveID, Command.Function, MODBUS_EXCEPTION_ILLEGAL_FUNCTION, pTX, TX_Max, pTX_Length);
     }
 
     // Validate quantity limit for this handler (if configured)
     if(Command.Quantity > pHandler->MaxQuantity)
     {
-        return BuildException(Command.DeviceAddress, Command.Function, MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, pTX, TX_Max, pTX_Length);
+        return BuildException(Command.SlaveID, Command.Function, MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, pTX, TX_Max, pTX_Length);
     }
 
     // Payload = pTX + 2
@@ -658,8 +668,8 @@ SystemState_e MODBUS_Manager::ParseRequest(const uint8_t* pRX, size_t RX_Length,
         return SYS_CRC_FAIL;
 
     // Extract address and function
-    Command.DeviceAddress = pRX[0];
-    Command.Function      = MODBUS_Function_e(pRX[1]);
+    Command.SlaveID  = pRX[0];
+    Command.Function = MODBUS_Function_e(pRX[1]);
 
     // Extract payload (without CRC)
     Command.pPayload      = (uint8_t*)&pRX[2];
@@ -1003,7 +1013,7 @@ bool MODBUS_Router::Queue(MODBUS_Command_t& Command)
             {
                 MODBUS_InterfaceBackEnd* pBackEnd = m_BackEnds[BackEnd];
 
-                if((pBackEnd != 0) && (pBackEnd->CanHandle(NewCommand.DeviceAddress) == true))
+                if((pBackEnd != 0) && (pBackEnd->CanHandle(NewCommand.Address) == true))
                 {
                     return pBackEnd->Queue(NewCommand);
                 }
@@ -1018,7 +1028,7 @@ bool MODBUS_Router::Queue(MODBUS_Command_t& Command)
     {
         MODBUS_InterfaceBackEnd* pBackEnd = m_BackEnds[BackEnd];
 
-        if((pBackEnd != nullptr) && (pBackEnd->CanHandle(Command.DeviceAddress) == true))
+        if((pBackEnd != nullptr) && (pBackEnd->CanHandle(Command.SlaveID) == true))
         {
             return pBackEnd->Queue(Command);
         }

@@ -66,8 +66,6 @@ void ModbusRTU::Initialize(UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, u
 {
     m_pUartDriver      = pUartDriver;
     m_RE_DE_ControlPin = RE_DE_ControlPin;
-    m_FirstSlaveAddress = MinDeviceAddress;
-    m_LastSlaveAddress = MaxDeviceAddress;
 
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     m_pRX_Buffer = m_Fifo.GetBufferPointer();
@@ -544,7 +542,7 @@ bool ModbusRTU::GetRequest(const uint8_t** ppRX, size_t* pLength)
 //-------------------------------------------------------------------------------------------------
 bool ModbusRTU::CanHandle(uint8_t Address)
 {
-    return (Address >= m_FirstSlaveAddress) && (Address <= m_LastSlaveAddress);
+    return (Address == MODBUS_RTU_SLAVE_ID);
 }
 
 //-------------------------------------------------------------------------------------------------

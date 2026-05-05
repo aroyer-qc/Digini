@@ -138,7 +138,7 @@ enum MODBUS_Backend_e
 
 struct MODBUS_Command_t
 {
-    uint8_t            	DeviceAddress;	// Target slave address for this request
+    uint8_t            	SlaveID;    	// Target slave address for this request
     MODBUS_Function_e  	Function;       // Modbus function code (read/write coils/registers)
     uint8_t*           	pPayload;       // Pointer to raw payload (used for write-multiple operations)
     size_t             	PayloadLength;  // Length in bytes of pPayload (0 for read operations)
@@ -158,7 +158,7 @@ struct MODBUS_MasterRuntime_t
 
 struct MODBUS_MasterResponse_t
 {
-    uint8_t             DeviceAddress;      // Address of the responding slave
+    uint8_t             SlaveID;            // Address of the responding slave
     MODBUS_Function_e   Function;           // Function code (or function | 0x80 for exception)
     bool                IsException;        // True if exception frame
     uint8_t             ExceptionCode;      // Only valid if IsException = true
@@ -188,8 +188,9 @@ struct MODBUS_PassThruRule_t
 
 struct MODBUS_MasterEntry_t
 {
-    uint8_t     		DeviceAddress;
+    uint8_t             RequestToSlaveID;
     MODBUS_Function_e	Function;
+    uint8_t     		Address;
     uint16_t            MaxRequestQuantity;     // Maximum allowed quantity
     uint32_t            TimeoutMsec;            // Timeout configured by the app
     void 				(*pCallback)(uint32_t, const MODBUS_MasterResponse_t&);
@@ -197,8 +198,9 @@ struct MODBUS_MasterEntry_t
 
 struct MODBUS_SlaveCommandEntry_t
 {
-    uint8_t     		DeviceAddress;
+    uint8_t             SlaveID;
     MODBUS_Function_e	Function;
+    uint16_t     		Address;
 	uint16_t 			MaxQuantity;
 	void       		 	(*pCallback)(const MODBUS_Command_t&, MODBUS_SlaveResponse_t&);
 };

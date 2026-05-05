@@ -104,9 +104,6 @@ class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
         FIFO_Buffer     	m_Fifo;
         nOS_Sem         	m_RX_IdleSem;
 
-        uint8_t         	m_FirstSlaveAddress;
-        uint8_t         	m_LastSlaveAddress;
-
         uint8_t*        	m_pTX_Buffer        = nullptr;
 		size_t           	m_pTX_Length 		= 0;
 

@@ -79,19 +79,19 @@ MODBUS_Application::MODBUS_Application()
 	// Clear the slave table
 	for(int Index = m_ModbusAppSlaveCount; Index < MODBUS_MAX_SLAVE_COMMAND_ENTRY; Index++)
 	{
-		m_ModbusAppSlaveTable[Index].Function      = MODBUS_NO_FUNCTION;
-		m_ModbusAppSlaveTable[Index].Address       = 0;
-		m_ModbusAppSlaveTable[Index].pCallback     = nullptr;
+		m_ModbusAppSlaveTable[Index].Function        = MODBUS_NO_FUNCTION;
+		m_ModbusAppSlaveTable[Index].StartingAddress = 0;
+		m_ModbusAppSlaveTable[Index].pCallback       = nullptr;
 	}
 
 	// Clear the master table
 	for(int Index = m_ModbusAppMasterCount; Index < MODBUS_MAX_MASTER_REQUEST_ENTRY; Index++)
 	{
-		m_ModbusAppMasterTable[Index].RequestToSlaveID   = 0;
-		m_ModbusAppMasterTable[Index].Function           = MODBUS_NO_FUNCTION;
-		m_ModbusAppMasterTable[Index].MaxRequestQuantity = 0;
-		m_ModbusAppMasterTable[Index].TimeoutMsec        = 0;
-		m_ModbusAppMasterTable[Index].pCallback          = nullptr;
+		m_ModbusAppMasterTable[Index].RequestToSlaveID     = 0;
+		m_ModbusAppMasterTable[Index].Function             = MODBUS_NO_FUNCTION;
+		m_ModbusAppMasterTable[Index].MaxAvailableRegister = 0;
+		m_ModbusAppMasterTable[Index].TimeoutMsec          = 0;
+		m_ModbusAppMasterTable[Index].pCallback            = nullptr;
 	}
 }
 
@@ -113,7 +113,7 @@ MODBUS_Application::MODBUS_Application()
 //-------------------------------------------------------------------------------------------------
 bool MODBUS_Application::Process(MODBUS_Command_t& Command, MODBUS_SlaveResponse_t& Response)
 {
-    const MODBUS_SlaveCommandEntry_t* pEntry = FindSlaveHandler(Command.Address, Command.Function);
+    const MODBUS_SlaveCommandEntry_t* pEntry = SlaveFindHandler(Command.Address, Command.Function);
 
     if(pEntry == nullptr)
     {
@@ -139,7 +139,7 @@ bool MODBUS_Application::Process(MODBUS_Command_t& Command, MODBUS_SlaveResponse
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           RegisterSlaveCommand
+//  Name:           SlaveRegisterCommand
 //
 //  Parameters:     Entry   - Application command entry to register
 //
@@ -152,7 +152,7 @@ bool MODBUS_Application::Process(MODBUS_Command_t& Command, MODBUS_SlaveResponse
 //                  maximum capacity.
 //
 //-------------------------------------------------------------------------------------------------
-bool MODBUS_Application::RegisterSlaveCommand(const MODBUS_SlaveCommandEntry_t& Entry)
+bool MODBUS_Application::SlaveRegisterCommand(const MODBUS_SlaveCommandEntry_t& Entry)
 {
     if(m_ModbusAppSlaveCount >= MODBUS_MAX_SLAVE_COMMAND_ENTRY)
 	{
@@ -166,9 +166,9 @@ bool MODBUS_Application::RegisterSlaveCommand(const MODBUS_SlaveCommandEntry_t& 
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           FindSlaveHandler
+//  Name:           SlaveFindHandler
 //
-//  Parameters:     DeviceAddress   - Modbus slave address to match
+//  Parameters:     SlaveID     - Modbus slave address to match
 //                  Function    - Modbus function code to match
 //
 //  Returns:        Pointer to the matching MODBUS_SlaveCommandEntry_t, or nullptr if no entry matches.
@@ -178,13 +178,13 @@ bool MODBUS_Application::RegisterSlaveCommand(const MODBUS_SlaveCommandEntry_t& 
 //                  Used by MODBUS_Application to locate the app handler for a given request.
 //
 //-------------------------------------------------------------------------------------------------
-MODBUS_SlaveCommandEntry_t* MODBUS_Application::FindSlaveHandler(uint8_t Address, uint8_t Function)
+MODBUS_SlaveCommandEntry_t* MODBUS_Application::SlaveFindHandler(uint8_t SlaveID, uint8_t Function)
 {
     for(size_t Index = 0; Index < m_ModbusAppSlaveCount; Index++)
     {
         MODBUS_SlaveCommandEntry_t* Entry = &m_ModbusAppSlaveTable[Index];
 
-        if(Entry->Address == Address)
+        if(Entry->SlaveID == SlaveID)
         {
             if(Entry->Function == Function)
             {
@@ -196,7 +196,9 @@ MODBUS_SlaveCommandEntry_t* MODBUS_Application::FindSlaveHandler(uint8_t Address
     return nullptr;
 }
 
-uint16_t MODBUS_Application::RegisterMasterRequest(const MODBUS_MasterEntry_t& Entry)
+//-------------------------------------------------------------------------------------------------
+
+uint16_t MODBUS_Application::MasterRegisterRequest(const MODBUS_MasterEntry_t& Entry)
 {
     if(m_ModbusAppMasterCount >= MODBUS_MAX_MASTER_REQUEST_ENTRY)
     {
@@ -207,7 +209,9 @@ uint16_t MODBUS_Application::RegisterMasterRequest(const MODBUS_MasterEntry_t& E
     return static_cast<uint16_t>(m_ModbusAppMasterCount++);
 }
 
-MODBUS_MasterEntry_t* MODBUS_Application::FindMasterRequest(uint32_t RequestID)
+//-------------------------------------------------------------------------------------------------
+
+MODBUS_MasterEntry_t* MODBUS_Application::MasterFindRequest(uint32_t RequestID)
 {
     if(RequestID >= m_ModbusAppMasterCount)
     {
@@ -217,16 +221,19 @@ MODBUS_MasterEntry_t* MODBUS_Application::FindMasterRequest(uint32_t RequestID)
     return &m_ModbusAppMasterTable[RequestID];
 }
 
+//-------------------------------------------------------------------------------------------------
+
 bool MODBUS_Application::MasterRequest(uint32_t RequestID, uint16_t Quantity)
 {
-    MODBUS_MasterEntry_t* pEntry = FindMasterRequest(RequestID);
-    if(pEntry == nullptr)
+    MODBUS_MasterEntry_t* pEntry = MasterFindRequest(RequestID);
+
+	if(pEntry == nullptr)
     {
         return false;
     }
 
     // Application-level validation only
-    if(Quantity > pEntry->MaxRequestQuantity)
+    if(Quantity > pEntry->MaxAvailableRegister)
     {
         return false;
     }
@@ -234,7 +241,6 @@ bool MODBUS_Application::MasterRequest(uint32_t RequestID, uint16_t Quantity)
     // Forward to Manager (Application does NOT modify the entry)
     return m_pManager->MasterRequest(RequestID, Quantity);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 

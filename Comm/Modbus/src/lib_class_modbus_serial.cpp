@@ -131,7 +131,7 @@ void ModbusRTU::Process(void)
 
             // Ask manager to build the RTU Frame (MASTER)
             size_t FrameLength = MODBUS_RTU_MAX_FRAME_SIZE;
-            SystemState_e State = m_pManager->BuildFrameMaster(m_Command, m_pTX_Buffer, &FrameLength);
+            SystemState_e State = m_pManager->MasterBuildFrame(m_Command, m_pTX_Buffer, &FrameLength);
 
             if(State != SYS_READY)
             {
@@ -203,7 +203,7 @@ void ModbusRTU::Process(void)
 
         case MODBUS_PARSE_RESPONSE:
         {
-            m_pManager->HandleResponse(m_pRX_Buffer, m_RX_Length);
+            m_pManager->MasterHandleResponse(m_pRX_Buffer, m_RX_Length);
             m_State = MODBUS_DONE;
         }
         break;
@@ -527,7 +527,7 @@ bool ModbusRTU::GetRequest(const uint8_t** ppRX, size_t* pLength)
 //
 //  Name:           CanHandle
 //
-//  Parameters:     Address     - Modbus slave address extracted from the incoming request
+//  Parameters:     SlaveID     - Modbus slave address extracted from the incoming request
 //
 //  Returns:        true        - This RTU backend is responsible for this slave address
 //                  false       - The address is outside the configured slave address range
@@ -540,9 +540,9 @@ bool ModbusRTU::GetRequest(const uint8_t** ppRX, size_t* pLength)
 //                  are active.
 //
 //-------------------------------------------------------------------------------------------------
-bool ModbusRTU::CanHandle(uint8_t Address)
+bool ModbusRTU::CanHandle(uint8_t SlaveID)
 {
-    return (Address == MODBUS_RTU_SLAVE_ID);
+    return (SlaveID == MODBUS_RTU_SLAVE_ID);
 }
 
 //-------------------------------------------------------------------------------------------------

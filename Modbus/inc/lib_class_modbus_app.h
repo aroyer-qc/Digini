@@ -38,7 +38,7 @@
 //  +---------------------+
 //  |   MODBUS_Manager    |  <-- Modbus protocol logic (stateless)
 //  |  BuildFrame()       |
-//  |  ParseResponse()    |
+//  |  MasterParseResponse()    |
 //  +---------------------+
 //           ^
 //           |
@@ -80,7 +80,7 @@
 #define EXPAND_SLAVE_CALLBACK(SLAVE_ID, FUNCTION, ADDRESS, MAX_QUANTITY, HANDLER) \
         extern void HANDLER(const MODBUS_Command_t& Command, MODBUS_SlaveResponse_t& Response);
 #define EXPAND_MASTER_CALLBACK( REQUEST_TO_ID, FUNCTION, ADDRESS, MAX_QUANTITY, TIMEOUT, HANDLER) \
-        extern void HANDLER(uint32_t RequestID, const MODBUS_MasterResponse_t& Response);
+        extern void HANDLER(const MODBUS_MasterResponse_t& Response);
 
 //-------------------------------------------------------------------------------------------------
 // Declare external handler
@@ -103,14 +103,17 @@ class MODBUS_Application
         void                                SetManager                  (MODBUS_Manager* pManager) 					{ m_pManager = pManager; }
 
 		// SLAVE side
-		bool 								RegisterSlaveCommand 		(const MODBUS_SlaveCommandEntry_t& Entry);
-		MODBUS_SlaveCommandEntry_t*			FindSlaveHandler			(uint8_t DeviceAddress, uint8_t Function);
+		bool 								SlaveRegisterCommand 		(const MODBUS_SlaveCommandEntry_t& Entry);
+		MODBUS_SlaveCommandEntry_t*			SlaveFindHandler			(uint8_t DeviceAddress, uint8_t Function);
+
+		size_t                              SlaveGetCount               (void)        	{ return m_ModbusAppSlaveCount; }
+		const MODBUS_SlaveCommandEntry_t*   SlaveGetEntry               (size_t Index)  { return (Index < m_ModbusAppSlaveCount) ? &m_ModbusAppSlaveTable[Index] : nullptr; }
 
 		//Master side
-		uint16_t 							RegisterMasterRequest		(const MODBUS_MasterEntry_t& Entry);
+		uint16_t 							MasterRegisterRequest		(const MODBUS_MasterEntry_t& Entry);
 		bool 								MasterRequest				(uint32_t RequestID, uint16_t Quantity);
-		MODBUS_MasterEntry_t* 				FindMasterRequest			(uint32_t RequestID);
-		size_t 								GetMasterCount				(void) 										{ return m_ModbusAppMasterCount; }
+		MODBUS_MasterEntry_t* 				MasterFindRequest			(uint32_t RequestID);
+		size_t 								MasterGetCount				(void) 										{ return m_ModbusAppMasterCount; }
 
 
 	private:

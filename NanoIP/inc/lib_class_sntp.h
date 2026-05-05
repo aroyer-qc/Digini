@@ -65,7 +65,7 @@ class SNTP_Client
     private:
 
         bool            ReceiveResponse             (void);
-        bool            ParseResponse               (uint8_t* pPacket, size_t Length);
+        bool            MasterParseResponse               (uint8_t* pPacket, size_t Length);
         uint32_t        GetSystemTime_Seconds_1900  (void);
         uint32_t        Convert1900ToUnix           (uint32_t Seconds1900);
 

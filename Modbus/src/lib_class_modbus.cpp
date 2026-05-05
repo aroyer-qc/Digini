@@ -50,7 +50,7 @@ MODBUS_MasterRuntime_t MODBUS_Manager::m_ModbusMasterRuntimeTable	[MODBUS_MAX_MA
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           BuildFrameSlave
+//  Name:           SlaveBuildFrame
 //
 //  Parameters:     Command     - Parsed MODBUS request received from the master
 //                  Response    - Application-generated response (normal or exception)
@@ -66,7 +66,7 @@ MODBUS_MasterRuntime_t MODBUS_Manager::m_ModbusMasterRuntimeTable	[MODBUS_MAX_MA
 //                  the output buffer, the function returns 0 to indicate failure.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e MODBUS_Manager::BuildFrameSlave(const MODBUS_Command_t& Command, const MODBUS_SlaveResponse_t& Response, uint8_t* pOut, size_t* pLength)
+SystemState_e MODBUS_Manager::SlaveBuildFrame(const MODBUS_Command_t& Command, const MODBUS_SlaveResponse_t& Response, uint8_t* pOut, size_t* pLength)
 {
     size_t Index = 0;
 
@@ -98,13 +98,14 @@ SystemState_e MODBUS_Manager::BuildFrameSlave(const MODBUS_Command_t& Command, c
 
 SystemState_e MODBUS_Manager::MasterRequest(uint32_t RequestID, uint16_t Quantity)
 {
-    if(RequestID >=  m_pApplication->GetMasterCount())
+    if(RequestID >=  m_pApplication->MasterGetCount())
     {
         return SYS_NULLPTR;
     }
 
-    MODBUS_MasterEntry_t* pEntry = m_pApplication->FindMasterRequest(RequestID);
-    if(pEntry == nullptr)
+    MODBUS_MasterEntry_t* pEntry = m_pApplication->MasterFindRequest(RequestID);
+
+	if(pEntry == nullptr)
     {
         return SYS_NULLPTR;
     }
@@ -116,7 +117,7 @@ SystemState_e MODBUS_Manager::MasterRequest(uint32_t RequestID, uint16_t Quantit
         return SYS_BUSY;
     }
 
-    if(Quantity > pEntry->MaxRequestQuantity)
+    if(Quantity > pEntry->MaxAvailableRegister)
     {
         return SYS_INVALID_PARAMETER;
     }
@@ -145,7 +146,7 @@ SystemState_e MODBUS_Manager::MasterRequest(uint32_t RequestID, uint16_t Quantit
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           BuildFrameMaster
+//  Name:           MasterBuildFrame
 //
 //  Parameters:     Command     - MODBUS request to serialize (read/write operation)
 //                  pOut        - Output buffer where the complete MODBUS frame is written
@@ -161,7 +162,7 @@ SystemState_e MODBUS_Manager::MasterRequest(uint32_t RequestID, uint16_t Quantit
 //                  output buffer is too small, the function returns 0 to indicate failure.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e MODBUS_Manager::BuildFrameMaster(MODBUS_Command_t& Command, uint8_t* pOut, size_t* pLength)
+SystemState_e MODBUS_Manager::MasterBuildFrame(MODBUS_Command_t& Command, uint8_t* pOut, size_t* pLength)
 {
     size_t Index = 0;
     size_t MaxLength = *pLength;
@@ -199,7 +200,7 @@ SystemState_e MODBUS_Manager::BuildFrameMaster(MODBUS_Command_t& Command, uint8_
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           HandleResponse
+//  Name:           MasterHandleResponse
 //
 //  Parameters:     pRX         - Pointer to the received MODBUS frame
 //                  RX_Length   - Total number of bytes in the received frame
@@ -210,22 +211,22 @@ SystemState_e MODBUS_Manager::BuildFrameMaster(MODBUS_Command_t& Command, uint8_
 //                                length), unknown RequestID, or no matching pending request.
 //
 //  Description:    Processes a complete MODBUS response received from the Router/backend.
-//                  The function delegates frame decoding to ParseResponse(), which validates the
+//                  The function delegates frame decoding to MasterParseResponse(), which validates the
 //                  CRC, extracts the function code, identifies MODBUS exceptions, retrieves the
 //                  RequestID, and copies the payload into a MODBUS_Response_t structure.
 //
 //                  Once parsed, the RequestID is used to locate the corresponding master request
-//                  entry via MODBUS_Application::FindMasterRequest(). If a matching entry is
+//                  entry via MODBUS_Application::MasterFindRequest(). If a matching entry is
 //                  found, the request is marked as completed (IsPending cleared), and the
 //                  application-provided callback is invoked with the decoded response.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e MODBUS_Manager::HandleResponse(const uint8_t* pRX, size_t RX_Length)
+SystemState_e MODBUS_Manager::MasterHandleResponse(const uint8_t* pRX, size_t RX_Length)
 {
     MODBUS_MasterResponse_t Response;
 
     // 1) Parse frame
-    SystemState_e State = ParseResponse(pRX, &RX_Length, Response);
+    SystemState_e State = MasterParseResponse(pRX, &RX_Length, Response);
 
     if(State != SYS_READY)
     {
@@ -235,7 +236,7 @@ SystemState_e MODBUS_Manager::HandleResponse(const uint8_t* pRX, size_t RX_Lengt
     uint32_t RequestID = Response.RequestID;
 
     // 2) Validate ID
-    MODBUS_MasterEntry_t* pCfg = m_pApplication->FindMasterRequest(RequestID);
+    MODBUS_MasterEntry_t* pCfg = m_pApplication->MasterFindRequest(RequestID);
 
     if(pCfg == nullptr)
     {
@@ -248,7 +249,7 @@ SystemState_e MODBUS_Manager::HandleResponse(const uint8_t* pRX, size_t RX_Lengt
     // Invoke callback
     if(pCfg->pCallback != nullptr)
     {
-        pCfg->pCallback(RequestID, Response);
+        pCfg->pCallback(Response);
     }
 
     return SYS_READY;
@@ -256,7 +257,7 @@ SystemState_e MODBUS_Manager::HandleResponse(const uint8_t* pRX, size_t RX_Lengt
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           ParseResponse
+//  Name:           MasterParseResponse
 //
 //  Parameters:     pIn       - Pointer to the received MODBUS frame
 //                  Length    - Total number of bytes in the received frame
@@ -277,7 +278,7 @@ SystemState_e MODBUS_Manager::HandleResponse(const uint8_t* pRX, size_t RX_Lengt
 //                  in the MODBUS_Response_t structure.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e MODBUS_Manager::ParseResponse(const uint8_t* pIn, size_t* pLength, MODBUS_MasterResponse_t& Response)
+SystemState_e MODBUS_Manager::MasterParseResponse(const uint8_t* pIn, size_t* pLength, MODBUS_MasterResponse_t& Response)
 {
     if(*pLength < 4)
     {
@@ -478,7 +479,7 @@ SystemState_e MODBUS_Manager::ValidateCRC(const uint8_t* pData, size_t Length)
 //
 //  Returns:        0           - Payload successfully parsed
 //                  -1          - Invalid or incomplete payload format
-//                  < 0         - Reserved for exception codes (handled earlier in ParseResponse)
+//                  < 0         - Reserved for exception codes (handled earlier in MasterParseResponse)
 //
 //  Description:    Interprets the function-specific payload of a MODBUS response. The function
 //                  validates the payload length according to the expected format of the specified
@@ -575,7 +576,7 @@ SystemState_e MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command, uint8_t Fu
 */
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           HandleRequest
+//  Name:           SlaveHandleRequest
 //
 //  Parameters:     pRX         - Pointer to the received MODBUS request frame
 //                  RX_Length   - Number of bytes in the received request
@@ -587,26 +588,74 @@ SystemState_e MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command, uint8_t Fu
 //                  0           - No response generated (invalid request or internal error)
 //
 //  Description:    Processes a complete MODBUS request on the SLAVE side. The function first
-//                  parses the incoming frame using ParseRequest(). If the request is invalid,
+//                  parses the incoming frame using SlaveParseRequest(). If the request is invalid,
 //                  a MODBUS exception frame is generated. Otherwise, the appropriate application
-//                  handler is located via FindSlaveHandler(), and the handler is invoked to fill
-//                  the MODBUS_Response_t structure. Finally, BuildFrameSlave() serializes the
+//                  handler is located via SlaveFindHandler(), and the handler is invoked to fill
+//                  the MODBUS_Response_t structure. Finally, SlaveBuildFrame() serializes the
 //                  response (normal or exception) into the output buffer.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e MODBUS_Manager::HandleRequest(const uint8_t* pRX, size_t RX_Length, uint8_t* pTX, size_t TX_Max, size_t* pTX_Length)
+SystemState_e MODBUS_Manager::SlaveHandleRequest(const uint8_t* pRX, size_t RX_Length, uint8_t* pTX, size_t TX_Max, size_t* pTX_Length)
 {
     *pTX_Length = 0;
 
-    MODBUS_Command_t Command;
-    SystemState_e State = ParseRequest(pRX, RX_Length, Command);
+    MODBUS_Command_t Cmd;
+    SystemState_e State = SlaveParseRequest(pRX, RX_Length, Cmd);
 
     if(State != SYS_READY)
     {
         return BuildException(pRX[0], pRX[1], MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, pTX, TX_Max, pTX_Length);
     }
 
-    MODBUS_SlaveCommandEntry_t* pHandler = FindSlaveHandler(Command.SlaveID, Command.Function);
+    const MODBUS_SlaveCommandEntry_t* pEntry = nullptr;
+    const size_t Count = m_pApplication->SlaveGetCount();
+
+	for(size_t i = 0; i < Count; i++)
+    {
+        const MODBUS_SlaveCommandEntry_t* entry = m_pApplication->SlaveGetEntry(i);
+
+		if((entry != nullptr) && m_pRouter->CanHandle(entry, &Cmd))
+        {
+            pEntry = entry;
+            break;
+        }
+    }
+
+    if(pEntry == nullptr)
+    {
+        return BuildException(Cmd.SlaveID, Cmd.Function, MODBUS_EXCEPTION_ILLEGAL_FUNCTION, pTX, TX_Max, pTX_Length);
+    }
+
+    MODBUS_SlaveResponse_t Rsp;
+    Rsp.Function      = Cmd.Function;
+    Rsp.pPayload      = &pTX[2];
+    Rsp.MaxSize       = TX_Max - 2;
+    Rsp.PayloadLength = 0;
+    Rsp.IsException   = false;
+
+    pEntry->pCallback(Cmd, Rsp);
+
+    if(Rsp.IsException)
+    {
+        return BuildException(Cmd.SlaveID, Cmd.Function, Rsp.ExceptionCode, pTX, TX_Max, pTX_Length);
+	}
+
+    return SlaveBuildFrame(Cmd, Rsp, pTX, pTX_Length);
+}
+/*
+SystemState_e MODBUS_Manager::SlaveHandleRequest(const uint8_t* pRX, size_t RX_Length, uint8_t* pTX, size_t TX_Max, size_t* pTX_Length)
+{
+    *pTX_Length = 0;
+
+    MODBUS_Command_t Command;
+    SystemState_e State = SlaveParseRequest(pRX, RX_Length, Command);
+
+    if(State != SYS_READY)
+    {
+        return BuildException(pRX[0], pRX[1], MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, pTX, TX_Max, pTX_Length);
+    }
+
+    MODBUS_SlaveCommandEntry_t* pHandler = SlaveFindHandler(Command.SlaveID, Command.Function);
 
 	if(pHandler == nullptr)
     {
@@ -614,7 +663,7 @@ SystemState_e MODBUS_Manager::HandleRequest(const uint8_t* pRX, size_t RX_Length
     }
 
     // Validate quantity limit for this handler (if configured)
-    if(Command.Quantity > pHandler->MaxQuantity)
+    if(Command.Quantity > pHandler->MaxAvailableRegister)
     {
         return BuildException(Command.SlaveID, Command.Function, MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, pTX, TX_Max, pTX_Length);
     }
@@ -632,12 +681,12 @@ SystemState_e MODBUS_Manager::HandleRequest(const uint8_t* pRX, size_t RX_Length
 
     // Build complete frame (SLAVE)
 	*pTX_Length = TX_Max;
-     return BuildFrameSlave(Command, Response, pTX, pTX_Length);
+     return SlaveBuildFrame(Command, Response, pTX, pTX_Length);
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           ParseRequest
+//  Name:           SlaveParseRequest
 //
 //  Parameters:     pRX         - Pointer to the received MODBUS request frame
 //                  RX_Length   - Total number of bytes in the received frame
@@ -654,18 +703,22 @@ SystemState_e MODBUS_Manager::HandleRequest(const uint8_t* pRX, size_t RX_Length
 //                  interpreting the function‑specific fields.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e MODBUS_Manager::ParseRequest(const uint8_t* pRX, size_t RX_Length, MODBUS_Command_t& Command)
+SystemState_e MODBUS_Manager::SlaveParseRequest(const uint8_t* pRX, size_t RX_Length, MODBUS_Command_t& Command)
 {
     if(pRX == nullptr)
         return SYS_NULLPTR;
 
     // Minimum RTU frame: Addr + Func + CRC(2)
     if(RX_Length < 4)
+	{
         return SYS_WRONG_SIZE;
+	}
 
     // CRC validation
     if(ValidateCRC(pRX, RX_Length) != SYS_READY)
+	{
         return SYS_CRC_FAIL;
+	}
 
     // Extract address and function
     Command.SlaveID  = pRX[0];
@@ -773,7 +826,7 @@ SystemState_e MODBUS_Manager::BuildException(uint8_t Address, uint8_t Function, 
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           FindSlaveHandler
+//  Name:           SlaveFindHandler
 //
 //  Parameters:     DeviceAddress   - MODBUS slave address extracted from the request
 //                  Function        - MODBUS function code extracted from the request
@@ -789,14 +842,14 @@ SystemState_e MODBUS_Manager::BuildException(uint8_t Address, uint8_t Function, 
 //                  MODBUS exception response.
 //
 //-------------------------------------------------------------------------------------------------
-MODBUS_SlaveCommandEntry_t* MODBUS_Manager::FindSlaveHandler(uint8_t DeviceAddress, uint8_t Function)
+MODBUS_SlaveCommandEntry_t* MODBUS_Manager::SlaveFindHandler(uint8_t DeviceAddress, uint8_t Function)
 {
     if(m_pApplication == nullptr)
     {
         return nullptr;
     }
 
-    return m_pApplication->FindSlaveHandler(DeviceAddress, Function);
+    return m_pApplication->SlaveFindHandler(DeviceAddress, Function);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -905,7 +958,7 @@ void MODBUS_Router::Run(void)
                         size_t   TX_Length = 0;
 
                         // Call the manager to process the request
-                        m_Manager.HandleRequest(pRX, RX_Length, pTX, TX_Max, &TX_Length);
+                        m_Manager.SlaveHandleRequest(pRX, RX_Length, pTX, TX_Max, &TX_Length);
 
                         // Send the response
                         if(TX_Length > 0)
@@ -1013,7 +1066,7 @@ bool MODBUS_Router::Queue(MODBUS_Command_t& Command)
             {
                 MODBUS_InterfaceBackEnd* pBackEnd = m_BackEnds[BackEnd];
 
-                if((pBackEnd != 0) && (pBackEnd->CanHandle(NewCommand.Address) == true))
+                if((pBackEnd != 0) && (pBackEnd->CanHandle(NewCommand.SlaveID) == true))
                 {
                     return pBackEnd->Queue(NewCommand);
                 }
@@ -1035,6 +1088,16 @@ bool MODBUS_Router::Queue(MODBUS_Command_t& Command)
     }
 
     return false; // No backend to handle this address
+}
+
+bool MODBUS_Router::CanHandle(const MODBUS_SlaveCommandEntry_t* entry, const MODBUS_Command_t* Cmd)
+{
+    if(Cmd->SlaveID  != entry->SlaveID)         return false;
+    if(Cmd->Function != entry->Function)       return false;
+    if(Cmd->Address  < entry->StartingAddress)  return false;
+    if((Cmd->Address + Cmd->Quantity) > (entry->StartingAddress + entry->MaxAvailableRegister)) return false;
+
+    return true;
 }
 
 //-------------------------------------------------------------------------------------------------

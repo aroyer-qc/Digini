@@ -91,7 +91,7 @@ class HTTP_Server : public TCP_SocketEventHandler
 	
 		void    				AcceptIfNeeded				(void);
 		void    				HandleRX					(TCP_Socket* pClient);
-		bool    				ParseRequest				(uint8_t* pData, size_t Len, const char*& pMethod, const char*& pPath, const uint8_t*& pBody, size_t& BodyLen);
+		bool    				SlaveParseRequest				(uint8_t* pData, size_t Len, const char*& pMethod, const char*& pPath, const uint8_t*& pBody, size_t& BodyLen);
 
 		NetworkContext*     	m_pContext;
 		TCP_Manager&        	m_TCP;

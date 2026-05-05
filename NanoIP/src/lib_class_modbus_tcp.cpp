@@ -83,7 +83,7 @@ int MODBUS_Manager::BuildFrame(const ModbusCommand& Command, uint8_t* pOut, size
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           ParseResponse
+//  Name:           MasterParseResponse
 //
 //  Parameter(s):   
 //                  
@@ -94,7 +94,7 @@ int MODBUS_Manager::BuildFrame(const ModbusCommand& Command, uint8_t* pOut, size
 //  Description:
 //
 //-------------------------------------------------------------------------------------------------
-int MODBUS_Manager::ParseResponse(const ModbusCommand& Command, const uint8_t* pIn, size_t Length)
+int MODBUS_Manager::MasterParseResponse(const ModbusCommand& Command, const uint8_t* pIn, size_t Length)
 {
     if(Length < 4)                                              // Minimal length
     {
@@ -296,7 +296,7 @@ bool MODBUS_Router::Queue(ModbusCommand& Command)
     {
         MODBUS_InterfaceBackEnd* pBackEnd = m_BackEnds[i];
 
-        if((pBackEnd != nullptr) && (pBackEnd->CanHandle(Command.DeviceAddress) == true))
+        if((pBackEnd != nullptr) && (pBackEnd->CanHandle(Command.SlaveID) == true))
         {
             return pBackEnd->Queue(Command);
         }
@@ -324,7 +324,7 @@ bool MODBUS_Router::Queue(ModbusCommand& Command)
     {
         IModbusBackEnd* pBackEnd = m_BackEnds[i];
 
-        if((pBackEnd != nullptr) && (pBackEnd->CanHandle(Command.DeviceAddress) == true))
+        if((pBackEnd != nullptr) && (pBackEnd->CanHandle(Command.SlaveID) == true))
         {
             return pBackEnd->Queue(Command);
         }

@@ -82,8 +82,8 @@ class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
         bool        CanHandle           (uint8_t SlaveID);
         bool        IsBusy              (void)                                      { return (m_State != MODBUS_IDLE); }
 
-        // --- NOUVEAU : interface pour le Router ---
-        bool        HasRequest          (void) const                                { return m_HasPending; }
+        bool        SlaveHasRequest     (void) const                                { return m_SlaveHasRequest; }
+        bool        MasterHasPending    (void) const                                { return m_MasterHasPending; }
         bool        GetRequest          (const uint8_t** ppRX, size_t* pLength);
 
         size_t      GetTX_BufferSize    (void) const                                { return MODBUS_RTU_MAX_FRAME_SIZE; }
@@ -110,7 +110,8 @@ class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
         uint8_t*        	m_pRX_Buffer        = nullptr;
         size_t          	m_RX_Length         = 0;
 
-        bool            	m_HasPending        = false;
+        bool            	m_SlaveHasRequest   = false;    // A request was received for the SLAVE
+        bool            	m_MasterHasPending  = false;    // A MASTER command is in progress
 
         uint32_t        	m_StartTick         = 0;
         uint32_t        	m_SilentTick        = 0;

@@ -75,7 +75,7 @@ SystemState_e MODBUS_Manager::SlaveBuildFrame(const MODBUS_Command_t& Command, c
     pOut[Index++] = Response.IsException ? (Command.Function | 0x80) : Command.Function;
 
     // Copy payload
-    if(Index + Response.PayloadLength + 2 > *pLength)
+    if((Index + Response.PayloadLength + 2) > *pLength)
 	{
         return SYS_WRONG_SIZE;
 	}
@@ -96,21 +96,14 @@ SystemState_e MODBUS_Manager::SlaveBuildFrame(const MODBUS_Command_t& Command, c
 
 //-------------------------------------------------------------------------------------------------
 
-SystemState_e MODBUS_Manager::MasterRequest(uint32_t RequestID, uint16_t Quantity)
+SystemState_e MODBUS_Manager::MasterRequest(uint32_t SlotIndex, uint16_t Quantity, MODBUS_MasterEntry_t* pEntry)
 {
-    if(RequestID >=  m_pApplication->MasterGetCount())
+    if(SlotIndex >= m_pApplication->MasterGetCount())
     {
         return SYS_NULLPTR;
     }
 
-    MODBUS_MasterEntry_t* pEntry = m_pApplication->MasterFindRequest(RequestID);
-
-	if(pEntry == nullptr)
-    {
-        return SYS_NULLPTR;
-    }
-
-    MODBUS_MasterRuntime_t& RunTime = m_ModbusMasterRuntimeTable[RequestID];
+    MODBUS_MasterRuntime_t& RunTime = m_ModbusMasterRuntimeTable[SlotIndex];
 
     if(RunTime.IsPending)
     {
@@ -173,7 +166,7 @@ SystemState_e MODBUS_Manager::MasterBuildFrame(MODBUS_Command_t& Command, uint8_
 
     // Request payload (address, quantity, value…)
     size_t Length = MaxLength - Index;
-	SystemState_e State = BuildPayload(Command, &pOut[Index], pLength);
+	SystemState_e State = BuildPayload(Command, &pOut[Index], &Length);
 
 	if(State != SYS_READY)
     {
@@ -208,14 +201,14 @@ SystemState_e MODBUS_Manager::MasterBuildFrame(MODBUS_Command_t& Command, uint8_
 //  Returns:        true        - The response frame was valid, successfully parsed, and the
 //                                corresponding master request callback was invoked.
 //                  false       - Invalid frame (CRC failure, malformed payload, insufficient
-//                                length), unknown RequestID, or no matching pending request.
+//                                length), unknown SlotIndex, or no matching pending request.
 //
 //  Description:    Processes a complete MODBUS response received from the Router/backend.
 //                  The function delegates frame decoding to MasterParseResponse(), which validates the
 //                  CRC, extracts the function code, identifies MODBUS exceptions, retrieves the
-//                  RequestID, and copies the payload into a MODBUS_Response_t structure.
+//                  SlotIndex, and copies the payload into a MODBUS_Response_t structure.
 //
-//                  Once parsed, the RequestID is used to locate the corresponding master request
+//                  Once parsed, the SlotIndex is used to locate the corresponding master request
 //                  entry via MODBUS_Application::MasterFindRequest(). If a matching entry is
 //                  found, the request is marked as completed (IsPending cleared), and the
 //                  application-provided callback is invoked with the decoded response.
@@ -233,10 +226,10 @@ SystemState_e MODBUS_Manager::MasterHandleResponse(const uint8_t* pRX, size_t RX
         return State;
     }
 
-    uint32_t RequestID = Response.RequestID;
+    uint32_t SlotIndex = Response.SlotIndex;
 
     // 2) Validate ID
-    MODBUS_MasterEntry_t* pCfg = m_pApplication->MasterFindRequest(RequestID);
+    MODBUS_MasterEntry_t* pCfg = m_pApplication->MasterFindRequest(SlotIndex);
 
     if(pCfg == nullptr)
     {
@@ -244,7 +237,7 @@ SystemState_e MODBUS_Manager::MasterHandleResponse(const uint8_t* pRX, size_t RX
     }
 
     // Clear pending state
-    m_ModbusMasterRuntimeTable[RequestID].IsPending = false;
+    m_ModbusMasterRuntimeTable[SlotIndex].IsPending = false;
 
     // Invoke callback
     if(pCfg->pCallback != nullptr)
@@ -318,13 +311,13 @@ SystemState_e MODBUS_Manager::MasterParseResponse(const uint8_t* pIn, size_t* pL
     // Payload length excluding CRC
     size_t PayloadLength = *pLength - Index - 2;
 
-    if(PayloadLength < 2) // Need at least RequestID (2 bytes)
+    if(PayloadLength < 2) // Need at least SlotIndex (2 bytes)
     {
         return SYS_WRONG_SIZE;
     }
 
-    // First 2 bytes of payload = RequestID
-    Response.RequestID = (uint16_t)((pIn[Index] << 8) | pIn[Index + 1]);
+    // First 2 bytes of payload = SlotIndex
+    Response.SlotIndex = (uint16_t)((pIn[Index] << 8) | pIn[Index + 1]);
     Index         += 2;
     PayloadLength -= 2;
 
@@ -333,7 +326,7 @@ SystemState_e MODBUS_Manager::MasterParseResponse(const uint8_t* pIn, size_t* pL
         return SYS_WRONG_SIZE;
     }
 
-    if(PayloadLength > 0 && Response.pPayload != nullptr)
+    if((PayloadLength > 0) && (Response.pPayload != nullptr))
     {
         memcpy(Response.pPayload, &pIn[Index], PayloadLength);
     }
@@ -581,7 +574,6 @@ SystemState_e MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command, uint8_t Fu
 //  Parameters:     pRX         - Pointer to the received MODBUS request frame
 //                  RX_Length   - Number of bytes in the received request
 //                  pTX         - Output buffer where the slave response frame will be written
-//                  TX_Max      - Maximum number of bytes available in pTX
 //                  pTX_Length  - Output: total number of bytes written to pTX
 //
 //  Returns:        > 0         - Response successfully built and stored in pTX
@@ -595,16 +587,14 @@ SystemState_e MODBUS_Manager::ParsePayload(MODBUS_Command_t& Command, uint8_t Fu
 //                  response (normal or exception) into the output buffer.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e MODBUS_Manager::SlaveHandleRequest(const uint8_t* pRX, size_t RX_Length, uint8_t* pTX, size_t TX_Max, size_t* pTX_Length)
+SystemState_e MODBUS_Manager::SlaveHandleRequest(const uint8_t* pRX, size_t RX_Length, uint8_t* pTX, size_t* pTX_Length)
 {
-    *pTX_Length = 0;
-
-    MODBUS_Command_t Cmd;
-    SystemState_e State = SlaveParseRequest(pRX, RX_Length, Cmd);
+    MODBUS_Command_t Command;
+    SystemState_e State = SlaveParseRequest(pRX, RX_Length, Command);
 
     if(State != SYS_READY)
     {
-        return BuildException(pRX[0], pRX[1], MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, pTX, TX_Max, pTX_Length);
+        return BuildException(pRX[0], pRX[1], MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, pTX, pTX_Length);
     }
 
     const MODBUS_SlaveCommandEntry_t* pEntry = nullptr;
@@ -614,7 +604,7 @@ SystemState_e MODBUS_Manager::SlaveHandleRequest(const uint8_t* pRX, size_t RX_L
     {
         const MODBUS_SlaveCommandEntry_t* entry = m_pApplication->SlaveGetEntry(i);
 
-		if((entry != nullptr) && m_pRouter->CanHandle(entry, &Cmd))
+		if((entry != nullptr) && m_pRouter->CanHandle(entry, &Command))
         {
             pEntry = entry;
             break;
@@ -623,67 +613,26 @@ SystemState_e MODBUS_Manager::SlaveHandleRequest(const uint8_t* pRX, size_t RX_L
 
     if(pEntry == nullptr)
     {
-        return BuildException(Cmd.SlaveID, Cmd.Function, MODBUS_EXCEPTION_ILLEGAL_FUNCTION, pTX, TX_Max, pTX_Length);
+        return BuildException(Command.SlaveID, Command.Function, MODBUS_EXCEPTION_ILLEGAL_FUNCTION, pTX, pTX_Length);
     }
 
-    MODBUS_SlaveResponse_t Rsp;
-    Rsp.Function      = Cmd.Function;
-    Rsp.pPayload      = &pTX[2];
-    Rsp.MaxSize       = TX_Max - 2;
-    Rsp.PayloadLength = 0;
-    Rsp.IsException   = false;
+    MODBUS_SlaveResponse_t Response;
+    Response.Function      = Command.Function;
+    Response.pPayload      = &pTX[2];
+    Response.MaxSize       = *pTX_Length - 2;
+    Response.PayloadLength = 0;
+    Response.IsException   = false;
 
-    pEntry->pCallback(Cmd, Rsp);
+    pEntry->pCallback(Command, Response);
 
-    if(Rsp.IsException)
+    if(Response.IsException)
     {
-        return BuildException(Cmd.SlaveID, Cmd.Function, Rsp.ExceptionCode, pTX, TX_Max, pTX_Length);
+        return BuildException(Command.SlaveID, Command.Function, Response.ExceptionCode, pTX, pTX_Length);
 	}
 
-    return SlaveBuildFrame(Cmd, Rsp, pTX, pTX_Length);
+    return SlaveBuildFrame(Command, Response, pTX, pTX_Length);
 }
-/*
-SystemState_e MODBUS_Manager::SlaveHandleRequest(const uint8_t* pRX, size_t RX_Length, uint8_t* pTX, size_t TX_Max, size_t* pTX_Length)
-{
-    *pTX_Length = 0;
 
-    MODBUS_Command_t Command;
-    SystemState_e State = SlaveParseRequest(pRX, RX_Length, Command);
-
-    if(State != SYS_READY)
-    {
-        return BuildException(pRX[0], pRX[1], MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, pTX, TX_Max, pTX_Length);
-    }
-
-    MODBUS_SlaveCommandEntry_t* pHandler = SlaveFindHandler(Command.SlaveID, Command.Function);
-
-	if(pHandler == nullptr)
-    {
-        return BuildException(Command.SlaveID, Command.Function, MODBUS_EXCEPTION_ILLEGAL_FUNCTION, pTX, TX_Max, pTX_Length);
-    }
-
-    // Validate quantity limit for this handler (if configured)
-    if(Command.Quantity > pHandler->MaxAvailableRegister)
-    {
-        return BuildException(Command.SlaveID, Command.Function, MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, pTX, TX_Max, pTX_Length);
-    }
-
-    // Payload = pTX + 2
-    MODBUS_SlaveResponse_t Response;
-    Response.Function = Command.Function;
-    Response.pPayload = &pTX[2];
-    Response.MaxSize  = TX_Max - 2;
-    Response.PayloadLength   = 0;
-    Response.IsException = false;
-
-    // Application fillup Response
-    pHandler->pCallback(Command, Response);
-
-    // Build complete frame (SLAVE)
-	*pTX_Length = TX_Max;
-     return SlaveBuildFrame(Command, Response, pTX, pTX_Length);
-}
-*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SlaveParseRequest
@@ -790,7 +739,6 @@ SystemState_e MODBUS_Manager::SlaveParseRequest(const uint8_t* pRX, size_t RX_Le
 //                  Function        - Original MODBUS function code (before exception bit is added)
 //                  ExceptionCode   - MODBUS exception code to return (0x01–0x0B)
 //                  pTX             - Output buffer where the exception frame will be written
-//                  TX_MaxLength    - Maximum number of bytes available in pTX
 //                  pTX_Length      - Output: number of bytes written to pTX
 //
 //  Returns:        0               - Exception frame successfully built
@@ -803,9 +751,9 @@ SystemState_e MODBUS_Manager::SlaveParseRequest(const uint8_t* pRX, size_t RX_Le
 //                  fixed length of 5 bytes: [Addr][Func|0x80][Exception][CRC_L][CRC_H].
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e MODBUS_Manager::BuildException(uint8_t Address, uint8_t Function, uint8_t ExceptionCode, uint8_t* pTX, size_t TX_MaxLength, size_t* pTX_Length)
+SystemState_e MODBUS_Manager::BuildException(uint8_t Address, uint8_t Function, uint8_t ExceptionCode, uint8_t* pTX, size_t* pTX_Length)
 {
-    if(TX_MaxLength < 5)
+    if(*pTX_Length < 5)
     {
         return SYS_WRONG_SIZE;
     }
@@ -813,14 +761,10 @@ SystemState_e MODBUS_Manager::BuildException(uint8_t Address, uint8_t Function, 
     pTX[0] = Address;
     pTX[1] = Function | 0x80;
     pTX[2] = ExceptionCode;
-
     CRC_Calc ModbusCRC(CRC_16_MODBUS);
     uint16_t ComputedCRC = (uint16_t)ModbusCRC.CalculateBuffer(pTX, 3);
     pTX[3] = uint8_t(ComputedCRC);
     pTX[4] = uint8_t(ComputedCRC >> 8);
-
-    *pTX_Length = 5;
-
     return SYS_READY;
 }
 
@@ -946,19 +890,18 @@ void MODBUS_Router::Run(void)
                 pBackEnd->Process();
 
                 // 2. Vérifier si une requête SLAVE est prête
-                if(pBackEnd->HasRequest() == true)
+                if(pBackEnd->SlaveHasRequest() == true)
                 {
                     const uint8_t* pRX;
                     size_t         RX_Length;
 
                     if(pBackEnd->GetRequest(&pRX, &RX_Length))
                     {
-                        size_t   TX_Max    = pBackEnd->GetTX_BufferSize();
-                        uint8_t* pTX       = (uint8_t*)pMemoryPool->Alloc(TX_Max, MEM_DBG_MB_TX_SER);
-                        size_t   TX_Length = 0;
+                        size_t   TX_Length = pBackEnd->GetTX_BufferSize();
+                        uint8_t* pTX       = (uint8_t*)pMemoryPool->Alloc(TX_Length, MEM_DBG_MB_TX_SER);
 
                         // Call the manager to process the request
-                        m_Manager.SlaveHandleRequest(pRX, RX_Length, pTX, TX_Max, &TX_Length);
+                        m_Manager.SlaveHandleRequest(pRX, RX_Length, pTX, &TX_Length);
 
                         // Send the response
                         if(TX_Length > 0)
@@ -1093,7 +1036,7 @@ bool MODBUS_Router::Queue(MODBUS_Command_t& Command)
 bool MODBUS_Router::CanHandle(const MODBUS_SlaveCommandEntry_t* entry, const MODBUS_Command_t* Cmd)
 {
     if(Cmd->SlaveID  != entry->SlaveID)         return false;
-    if(Cmd->Function != entry->Function)       return false;
+    if(Cmd->Function != entry->Function)        return false;
     if(Cmd->Address  < entry->StartingAddress)  return false;
     if((Cmd->Address + Cmd->Quantity) > (entry->StartingAddress + entry->MaxAvailableRegister)) return false;
 

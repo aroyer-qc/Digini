@@ -78,6 +78,8 @@ void ModbusRTU::Initialize(UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, u
     pUartDriver->EnableCallbackType(UART_CALLBACK_RX_IDLE | UART_CALLBACK_TX_COMPLETED | UART_CALLBACK_RX_ERROR);
 }
 
+//-------------------------------------------------------------------------------------------------
+
 void ModbusRTU::Process(void)
 {
     switch(m_State)
@@ -100,7 +102,7 @@ void ModbusRTU::Process(void)
                         if(CanHandle(m_pRX_Buffer[0]))
                         {
                             // On signale au Router qu'une requête est prête
-                            m_HasPending = true;
+                            m_SlaveHasRequest = true;
                         }
                     }
                 }
@@ -110,7 +112,7 @@ void ModbusRTU::Process(void)
             }
 
             // --- Chemin MASTER : une commande a été queue() ---
-            if(m_HasPending == false)
+            if(m_MasterHasPending == false)
             {
                 return;
             }
@@ -210,14 +212,16 @@ void ModbusRTU::Process(void)
 
         case MODBUS_DONE:
         {
-            m_HasPending = false;
+            m_SlaveHasRequest = false;
+            m_MasterHasPending = false;
             m_State      = MODBUS_IDLE;
         }
         break;
 
         case MODBUS_ERROR:
         {
-            m_HasPending = false;
+            m_SlaveHasRequest = false;
+            m_MasterHasPending = false;
             m_State      = MODBUS_IDLE;
         }
         break;
@@ -302,14 +306,14 @@ int ModbusRTU::Received(uint8_t* pBuffer, size_t MaxLength)
 //-------------------------------------------------------------------------------------------------
 bool ModbusRTU::Queue(MODBUS_Command_t& Command)
 {
-    if(m_HasPending == true)                						// Already busy?
+    if(m_MasterHasPending == true)                						// Already busy?
     {
         return false;
     }
 
-    m_Command    = Command;                 						// Accept command
-    m_HasPending = true;
-    m_State      = MODBUS_BUILD_FRAME;      						// Start state machine
+    m_Command          = Command;                 						// Accept command
+    m_MasterHasPending = true;
+    m_State            = MODBUS_BUILD_FRAME;      						// Start state machine
 
     return true;
 }
@@ -508,7 +512,7 @@ bool ModbusRTU::GetRequest(const uint8_t** ppRX, size_t* pLength)
         return false;
     }
 
-    if(m_HasPending == false)
+    if(m_SlaveHasRequest == false)
     {
         return false;
     }
@@ -517,7 +521,7 @@ bool ModbusRTU::GetRequest(const uint8_t** ppRX, size_t* pLength)
     *pLength = m_RX_Length;
 
     // La requête a été consommée par le Router
-    m_HasPending = false;
+    m_SlaveHasRequest = false;
 
     return true;
 }

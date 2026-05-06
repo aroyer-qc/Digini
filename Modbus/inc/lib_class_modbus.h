@@ -161,7 +161,7 @@ struct MODBUS_MasterResponse_t
     MODBUS_Function_e   Function;           // Function code (or function | 0x80 for exception)
     bool                IsException;        // True if exception frame
     uint8_t             ExceptionCode;      // Only valid if IsException = true
-    uint16_t            RequestID;          // Index of the master request slot that originated this command (maps directly to MasterEntry and runtime table)
+    uint16_t            SlotIndex;          // Index of the master request slot that originated this command (maps directly to MasterEntry and runtime table)
     uint8_t*            pPayload;           // Pointer to external RX buffer (after RequestID)
     size_t              PayloadLength;      // Number of bytes copied into pPayload
     size_t              MaxPayloadLength;   // Maximum allowed payload size
@@ -215,10 +215,12 @@ class MODBUS_InterfaceBackEnd
 		// MASTER path
 		virtual bool 					Queue					(MODBUS_Command_t& Command) 			= 0;   	// Queue a command for transmission
 		virtual bool 					IsBusy					(void) 									= 0;    // Backend is executing a command
+        virtual bool                    MasterHasPending        (void) const                            = 0;
+
 
 
 		// SLAVE path
-		virtual bool					HasRequest				(void) const							= 0;    // A complete RTU/TCP request is ready
+		virtual bool					SlaveHasRequest 		(void) const							= 0;    // A complete RTU/TCP request is ready
 		virtual bool					GetRequest				(const uint8_t** ppRX, size_t* pLength) = 0; 	// Retrieve the request buffer
 
 		// Address filtering
@@ -242,12 +244,12 @@ class MODBUS_Manager
     public:
 
 		// Master
-		SystemState_e					MasterRequest				(uint32_t RequestID, uint16_t Quantity);
+		SystemState_e					MasterRequest				(uint32_t SlotIndex, uint16_t Quantity, MODBUS_MasterEntry_t* pEntry);
 		SystemState_e   				MasterHandleResponse		(const uint8_t* pRX, size_t RX_Length);
         SystemState_e      				MasterBuildFrame            (MODBUS_Command_t& Command, uint8_t* pOut, size_t* pLength);
 
 		// Slave
-		SystemState_e					SlaveHandleRequest			(const uint8_t* pRX, size_t RX_Length, uint8_t* pTX, size_t TX_Max, size_t* pTX_Length);
+		SystemState_e					SlaveHandleRequest			(const uint8_t* pRX, size_t RX_Length, uint8_t* pTX, size_t* pTX_Length);
 
 		// Common
 		void 							SetApplication				(class MODBUS_Application* pApp)		{ m_pApplication = pApp; }
@@ -264,7 +266,7 @@ class MODBUS_Manager
 		MODBUS_SlaveCommandEntry_t* 	SlaveFindHandler			(uint8_t DeviceAddress, uint8_t Function);
 
 		// Common - Low level MODBUS Helper
-		SystemState_e					BuildException				(uint8_t Address, uint8_t Function, uint8_t ExceptionCode, uint8_t* pTX, size_t TX_MaxLength, size_t* pTX_Length);
+		SystemState_e					BuildException				(uint8_t Address, uint8_t Function, uint8_t ExceptionCode, uint8_t* pTX, size_t* pTX_Length);
         SystemState_e          			ValidateCRC                 (const uint8_t* pData, size_t Length);
         SystemState_e          			BuildPayload                (MODBUS_Command_t& Command, uint8_t* pOut, size_t* pLength);
 

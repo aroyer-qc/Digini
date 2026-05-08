@@ -62,10 +62,11 @@
 
 //-------------------------------------------------------------------------------------------------
 
-void ModbusRTU::Initialize(UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress)
+void ModbusRTU::Initialize(UART_Driver* pUartDriver,  MODBUS_Mode_e Mode, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress)
 {
     m_pUartDriver      = pUartDriver;
     m_RE_DE_ControlPin = RE_DE_ControlPin;
+	m_Mode             = Mode;
 
     m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
     m_pRX_Buffer = m_Fifo.GetBufferPointer();

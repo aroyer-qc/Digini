@@ -129,11 +129,20 @@ enum  MODBUS_ExceptionCode_e
     MODBUS_EXCEPTION_GATEWAY_TARGET_FAILED    = 0x0B
 };
 
-enum MODBUS_Backend_e
+/*
+enum MODBUS_BackendType_e	// N/U
 {
     MODBUS_BACKEND_LOCAL,
     MODBUS_BACKEND_TCP,
     MODBUS_BACKEND_RTU,
+};
+*/
+
+enum MODBUS_Mode_e
+{
+    MODBUS_BACKEND_IS_SLAVE,
+    MODBUS_BACKEND_IS_MASTER,
+    MODBUS_BACKEND_IS_BOTH,					// Do not use at this time. need to elaborate strategy
 };
 
 struct MODBUS_Command_t
@@ -216,8 +225,6 @@ class MODBUS_InterfaceBackEnd
 		virtual bool 					Queue					(MODBUS_Command_t& Command) 			= 0;   	// Queue a command for transmission
 		virtual bool 					IsBusy					(void) 									= 0;    // Backend is executing a command
         virtual bool                    MasterHasPending        (void) const                            = 0;
-
-
 
 		// SLAVE path
 		virtual bool					SlaveHasRequest 		(void) const							= 0;    // A complete RTU/TCP request is ready

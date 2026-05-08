@@ -73,7 +73,9 @@ class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
 
         void        Process             (void);
 
-        void        Initialize          (UART_Driver* pUartDriver, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress);
+        void        Initialize          (UART_Driver* pUartDriver, MODBUS_Mode_e Mode, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress);
+		void		SetMode				(MODBUS_Mode_e Mode)						{ m_Mode = Mode; }
+
 
         int         Send                (const uint8_t* pData, size_t Length);
         int         Received            (uint8_t* pBuffer, size_t MaxLength);
@@ -100,6 +102,7 @@ class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
         MODBUS_Manager* 	m_pManager          = nullptr;
         IO_ID_e         	m_RE_DE_ControlPin;
         MODBUS_State_e  	m_State             = MODBUS_IDLE;
+		MODBUS_Mode_e 		m_Mode     		    = MODBUS_BACKEND_IS_SLAVE;
 
         FIFO_Buffer     	m_Fifo;
         nOS_Sem         	m_RX_IdleSem;

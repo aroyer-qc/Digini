@@ -95,6 +95,30 @@ SystemState_e MODBUS_Manager::SlaveBuildFrame(const MODBUS_Command_t& Command, c
 }
 
 //-------------------------------------------------------------------------------------------------
+//
+//  Name:           MasterRequest
+//
+//  Parameters:     SlotIndex   - Index of the master entry in the application master table
+//                  Quantity    - Number of registers to read or write for this request
+//                  pEntry      - Pointer to the master entry describing the target slave,
+//                                function code, timeout, and maximum register range
+//
+//  Returns:        SYS_READY              - Request successfully queued for transmission
+//                  SYS_BUSY               - A previous request for this slot is still pending
+//                  SYS_INVALID_PARAMETER  - Quantity exceeds the maximum allowed by pEntry
+//                  SYS_NULLPTR            - SlotIndex is out of range
+//                  SYS_FAIL               - Router could not queue the request
+//
+//  Description:    Builds and queues a MODBUS master request. The function initializes the
+//                  runtime command structure for the specified master slot, including the
+//                  target SlaveID, function code, register address, quantity, and timeout.
+//                  Once the command is prepared, it is submitted to the MODBUS router for
+//                  transmission through the appropriate backend. If the router accepts the
+//                  request, the runtime state is marked as pending and the start timestamp
+//                  is recorded. The function returns SYS_READY to indicate that the request
+//                  is now active and awaiting a response.
+//
+//-------------------------------------------------------------------------------------------------
 
 SystemState_e MODBUS_Manager::MasterRequest(uint32_t SlotIndex, uint16_t Quantity, MODBUS_MasterEntry_t* pEntry)
 {

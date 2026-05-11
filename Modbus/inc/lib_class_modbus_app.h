@@ -111,8 +111,8 @@ class MODBUS_Application
 
 		//Master side
 		uint16_t 							MasterRegisterRequest		(const MODBUS_MasterEntry_t& Entry);
-		bool 								MasterRequest				(uint32_t SlotIndex, uint16_t Quantity);
-		MODBUS_MasterEntry_t* 				MasterFindRequest			(uint32_t SlotIndex);
+		bool 								MasterRequest				(uint16_t SlotIndex, uint16_t Address, uint16_t Quantity);
+		MODBUS_MasterEntry_t* 				MasterFindRequest			(uint16_t SlotIndex);
 		size_t 								MasterGetCount				(void) 										{ return m_ModbusAppMasterCount; }
 
 

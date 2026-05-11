@@ -154,7 +154,9 @@ struct MODBUS_Command_t
     uint16_t           	Address;        	// Starting address of the Modbus operation
     uint16_t           	Quantity;       	// Number of coils or registers requested (logical units)
     uint16_t           	Value;          	// Single value for write‑single operations (0x05 / 0x06)
+    uint16_t            SlotIndex;
     TickCount_t        	TimeoutMsec;    	// Request timeout in milliseconds
+
 };
 
 struct MODBUS_MasterRuntime_t
@@ -174,6 +176,7 @@ struct MODBUS_MasterResponse_t
     uint8_t*            pPayload;           // Pointer to external RX buffer (after RequestID)
     size_t              PayloadLength;      // Number of bytes copied into pPayload
     size_t              MaxPayloadLength;   // Maximum allowed payload size
+    SystemState_e       State;
 };
 
 struct MODBUS_SlaveResponse_t
@@ -251,9 +254,10 @@ class MODBUS_Manager
     public:
 
 		// Master
-		SystemState_e					MasterRequest				(uint32_t SlotIndex, uint16_t Quantity, MODBUS_MasterEntry_t* pEntry);
+		SystemState_e					MasterRequest				(uint16_t SlotIndex, uint16_t Address, uint16_t Quantity, MODBUS_MasterEntry_t* pEntry);
 		SystemState_e   				MasterHandleResponse		(const uint8_t* pRX, size_t RX_Length);
         SystemState_e      				MasterBuildFrame            (MODBUS_Command_t& Command, uint8_t* pOut, size_t* pLength);
+        void                            MasterTimeOut               (uint16_t SlotIndex);
 
 		// Slave
 		SystemState_e					SlaveHandleRequest			(const uint8_t* pRX, size_t RX_Length, uint8_t* pTX, size_t* pTX_Length);

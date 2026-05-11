@@ -211,7 +211,7 @@ uint16_t MODBUS_Application::MasterRegisterRequest(const MODBUS_MasterEntry_t& E
 
 //-------------------------------------------------------------------------------------------------
 
-MODBUS_MasterEntry_t* MODBUS_Application::MasterFindRequest(uint32_t SlotIndex)
+MODBUS_MasterEntry_t* MODBUS_Application::MasterFindRequest(uint16_t SlotIndex)
 {
     if(SlotIndex >= m_ModbusAppMasterCount)
     {
@@ -223,7 +223,7 @@ MODBUS_MasterEntry_t* MODBUS_Application::MasterFindRequest(uint32_t SlotIndex)
 
 //-------------------------------------------------------------------------------------------------
 
-bool MODBUS_Application::MasterRequest(uint32_t SlotIndex, uint16_t Quantity)
+bool MODBUS_Application::MasterRequest(uint16_t SlotIndex, uint16_t Address, uint16_t Quantity)
 {
     MODBUS_MasterEntry_t* pEntry = MasterFindRequest(SlotIndex);
 
@@ -239,7 +239,7 @@ bool MODBUS_Application::MasterRequest(uint32_t SlotIndex, uint16_t Quantity)
     }
 
     // Forward to Manager (Application does NOT modify the entry)
-    return m_pManager->MasterRequest(SlotIndex, Quantity , pEntry);
+    return m_pManager->MasterRequest(SlotIndex, Address, Quantity, pEntry);
 }
 
 //-------------------------------------------------------------------------------------------------

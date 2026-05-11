@@ -68,7 +68,7 @@ void ModbusRTU::Initialize(UART_Driver* pUartDriver,  MODBUS_Mode_e Mode, IO_ID_
     m_RE_DE_ControlPin = RE_DE_ControlPin;
 	m_Mode             = Mode;
 
-    m_Fifo.Initialize(CON_FIFO_PARSER_RX_SIZE);
+    m_Fifo.Initialize(MODBUS_RTU_FIFO_RX_SIZE);
     m_pRX_Buffer = m_Fifo.GetBufferPointer();
 
     nOS_SemCreate(&m_RX_IdleSem, 0, MODBUS_RTU_RX_NB_OF_SEMAPHORE_COUNT);
@@ -196,8 +196,11 @@ void ModbusRTU::Process(void)
                 }
             }
 
+            // Timeout d'attente de la réponse du slave
             if(TickHasTimeOut(m_StartTick, m_Command.TimeoutMsec))
             {
+                // Notifier le manager qu'un timeout MASTER est survenu
+                m_pManager->MasterTimeOut(m_Command.SlotIndex);
                 m_State = MODBUS_ERROR;
                 return;
             }
@@ -213,17 +216,17 @@ void ModbusRTU::Process(void)
 
         case MODBUS_DONE:
         {
-            m_SlaveHasRequest = false;
+            m_SlaveHasRequest  = false;
             m_MasterHasPending = false;
-            m_State      = MODBUS_IDLE;
+            m_State            = MODBUS_IDLE;
         }
         break;
 
         case MODBUS_ERROR:
         {
-            m_SlaveHasRequest = false;
+            m_SlaveHasRequest  = false;
             m_MasterHasPending = false;
-            m_State      = MODBUS_IDLE;
+            m_State            = MODBUS_IDLE;
         }
         break;
 
@@ -588,6 +591,7 @@ void ModbusRTU::CallbackFunction(int Type, void* pContext)
         case UART_CALLBACK_TX_COMPLETED:
         {
             IO_SetPinLow(m_RE_DE_ControlPin);
+            m_Fifo.Flush(MODBUS_RTU_MAX_FRAME_SIZE);
         }
         break;
       #endif

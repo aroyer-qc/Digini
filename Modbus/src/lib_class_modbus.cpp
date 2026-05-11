@@ -99,28 +99,24 @@ SystemState_e MODBUS_Manager::SlaveBuildFrame(const MODBUS_Command_t& Command, c
 //  Name:           MasterRequest
 //
 //  Parameters:     SlotIndex   - Index of the master entry in the application master table
-//                  Quantity    - Number of registers to read or write for this request
+//                  Address     - Starting register address for this request
+//                  Quantity    - Number of registers to read or write
 //                  pEntry      - Pointer to the master entry describing the target slave,
-//                                function code, timeout, and maximum register range
+//                                function code, timeout, and allowed register range
 //
 //  Returns:        SYS_READY              - Request successfully queued for transmission
 //                  SYS_BUSY               - A previous request for this slot is still pending
-//                  SYS_INVALID_PARAMETER  - Quantity exceeds the maximum allowed by pEntry
+//                  SYS_INVALID_PARAMETER  - Address/Quantity exceed allowed range
 //                  SYS_NULLPTR            - SlotIndex is out of range
 //                  SYS_FAIL               - Router could not queue the request
 //
-//  Description:    Builds and queues a MODBUS master request. The function initializes the
-//                  runtime command structure for the specified master slot, including the
-//                  target SlaveID, function code, register address, quantity, and timeout.
-//                  Once the command is prepared, it is submitted to the MODBUS router for
-//                  transmission through the appropriate backend. If the router accepts the
-//                  request, the runtime state is marked as pending and the start timestamp
-//                  is recorded. The function returns SYS_READY to indicate that the request
-//                  is now active and awaiting a response.
+//  Description:    Builds and queues a MODBUS master request. The function validates that the
+//                  requested address range fits within the limits defined by the master entry.
+//                  If valid, the runtime command is prepared and submitted to the router. The
+//                  runtime state is marked as pending and the start timestamp is recorded.
 //
 //-------------------------------------------------------------------------------------------------
-
-SystemState_e MODBUS_Manager::MasterRequest(uint32_t SlotIndex, uint16_t Quantity, MODBUS_MasterEntry_t* pEntry)
+SystemState_e MODBUS_Manager::MasterRequest(uint16_t SlotIndex, uint16_t Address, uint16_t Quantity, MODBUS_MasterEntry_t* pEntry)
 {
     if(SlotIndex >= m_pApplication->MasterGetCount())
     {
@@ -129,7 +125,7 @@ SystemState_e MODBUS_Manager::MasterRequest(uint32_t SlotIndex, uint16_t Quantit
 
     MODBUS_MasterRuntime_t& RunTime = m_ModbusMasterRuntimeTable[SlotIndex];
 
-    if(RunTime.IsPending)
+    if(RunTime.IsPending == true)
     {
         return SYS_BUSY;
     }
@@ -139,15 +135,30 @@ SystemState_e MODBUS_Manager::MasterRequest(uint32_t SlotIndex, uint16_t Quantit
         return SYS_INVALID_PARAMETER;
     }
 
+    // Validate address range
+    const uint16_t Start = pEntry->StartingAddress;
+    const uint16_t End   = Start + pEntry->MaxAvailableRegister;
+
+    if(Address < Start)
+    {
+        return SYS_INVALID_PARAMETER;   // Below allowed range
+    }
+
+    if((Address + Quantity) > End)
+    {
+        return SYS_INVALID_PARAMETER;   // Exceeds allowed range
+    }
+
     // Build command (runtime)
     RunTime.Command.SlaveID       = pEntry->RequestToSlaveID;
     RunTime.Command.Function      = pEntry->Function;
-    RunTime.Command.Address       = 0;
+    RunTime.Command.Address       = Address;
     RunTime.Command.Quantity      = Quantity;
     RunTime.Command.Value         = 0;
     RunTime.Command.pPayload      = nullptr;
     RunTime.Command.PayloadLength = 0;
     RunTime.Command.TimeoutMsec   = pEntry->TimeoutMsec;
+    RunTime.Command.SlotIndex     = SlotIndex;
 
     // Send command through router
     if(m_pRouter->Queue(RunTime.Command) == false)
@@ -159,6 +170,53 @@ SystemState_e MODBUS_Manager::MasterRequest(uint32_t SlotIndex, uint16_t Quantit
     RunTime.TimestampStart = GetTick();
 
     return SYS_READY;
+}
+
+//-------------------------------------------------------------------------------------------------
+//
+//  Name:           MasterTimeOut
+//
+//  Parameters:     SlotIndex   - Index of the master request slot that timed out
+//
+//  Returns:        None
+//
+//  Description:    Handles a MASTER timeout condition. This function is invoked by the RTU
+//                  backend when the response timeout expires for a pending master request.
+//                  The runtime entry is marked as not pending, and the application callback
+//                  is invoked with a TIMEOUT state and no payload. The RTU backend will
+//                  transition to MODBUS_ERROR and clear its own pending state.
+//
+//-------------------------------------------------------------------------------------------------
+void MODBUS_Manager::MasterTimeOut(uint16_t SlotIndex)
+{
+    if(SlotIndex >= MODBUS_MAX_MASTER_REQUEST_ENTRY)
+    {
+        return;     // Out of range: nothing to do
+    }
+
+    // Locate the runtime entry associated with this command
+    MODBUS_MasterRuntime_t& RunTime = m_ModbusMasterRuntimeTable[SlotIndex];
+
+    RunTime.IsPending = false;                                    // Mark the runtime entry as no longer pending
+
+    // Prepare the timeout response structure for the application callback
+    MODBUS_MasterResponse_t Response;
+    Response.SlaveID          = RunTime.Command.SlaveID;
+    Response.Function         = RunTime.Command.Function;
+    Response.IsException      = false;
+    Response.ExceptionCode    = 0;
+    Response.SlotIndex        = SlotIndex;
+    Response.pPayload         = nullptr;           // No payload on timeout
+    Response.PayloadLength    = 0;
+    Response.MaxPayloadLength = 0;
+    Response.State            = SYS_TIME_OUT;                   // Explicit timeout state
+
+    MODBUS_MasterEntry_t* pEntry = m_pApplication->MasterFindRequest(SlotIndex);
+
+    if(pEntry->pCallback != nullptr)
+    {
+        pEntry->pCallback(Response);      // Invoke the application callback (if registered)
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

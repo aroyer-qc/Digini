@@ -71,32 +71,32 @@ class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
 {
     public:
 
-        void        Process             (void);
+        void                Process             (void);
 
-        void        Initialize          (UART_Driver* pUartDriver, MODBUS_Mode_e Mode, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress);
-		void		SetMode				(MODBUS_Mode_e Mode)						{ m_Mode = Mode; }
+        void                Initialize          (UART_Driver* pUartDriver, MODBUS_Mode_e Mode, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress);
+		void		        SetMode				(MODBUS_Mode_e Mode)						{ m_Mode = Mode; }
 
 
-        int         Send                (const uint8_t* pData, size_t Length);
-        int         Received            (uint8_t* pBuffer, size_t MaxLength);
+        int                 Send                (const uint8_t* pData, size_t Length);
+        int                 Received            (uint8_t* pBuffer, size_t MaxLength);
 
-        bool        Queue               (MODBUS_Command_t& Command);
-        bool        CanHandle           (uint8_t SlaveID);
-        bool        IsBusy              (void)                                      { return (m_State != MODBUS_IDLE); }
+        bool                Queue               (MODBUS_Command_t& Command);
+        bool                CanHandle           (uint8_t SlaveID);
+        bool                IsBusy              (void)                                      { return (m_State != MODBUS_IDLE); }
 
-        bool        SlaveHasRequest     (void) const                                { return m_SlaveHasRequest; }
-        bool        MasterHasPending    (void) const                                { return m_MasterHasPending; }
-        bool        GetRequest          (const uint8_t** ppRX, size_t* pLength);
+        bool                SlaveHasRequest     (void) const                                { return m_SlaveHasRequest; }
+        bool                MasterHasPending    (void) const                                { return m_MasterHasPending; }
+        bool                GetRequest          (const uint8_t** ppRX, size_t* pLength);
 
-        size_t      GetTX_BufferSize    (void) const                                { return MODBUS_RTU_MAX_FRAME_SIZE; }
+        size_t              GetTX_BufferSize    (void) const                                { return MODBUS_RTU_MAX_FRAME_SIZE; }
 
-        void        SetManager          (MODBUS_Manager* pManager)                  { m_pManager = pManager; }
-        void        CallbackFunction    (int Type, void* pContext);
+        void                SetManager          (MODBUS_Manager* pManager)                  { m_pManager = pManager; }
+        void                CallbackFunction    (int Type, void* pContext);
 
     private:
 
-        bool        IsEndOfRTU_Frame    (const uint8_t* pBuffer, size_t Length);
-        bool        IsEndOfRTU_Request  (const uint8_t* pBuffer, size_t Length);
+        bool                IsEndOfRTU_Frame    (const uint8_t* pBuffer, size_t Length);
+        bool                IsEndOfRTU_Request  (const uint8_t* pBuffer, size_t Length);
 
         UART_Driver*    	m_pUartDriver       = nullptr;
         MODBUS_Manager* 	m_pManager          = nullptr;

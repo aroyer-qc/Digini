@@ -197,7 +197,7 @@ SystemState_e DIGINI_PostInitialize(void)
   #endif
 
   #if (USE_USB_DRIVER == DEF_ENABLED)
-    USB.Initialize();
+    //USB.Initialize();
   #endif
 
   #if (DIGINI_USE_FATFS == DEF_ENABLED)

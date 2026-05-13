@@ -97,7 +97,7 @@
 #define MODBUS_EXCEPTION_RESPONSE		0x80
 
 #define TASK_MODBUS_PRIO                7
-#define TASK_MODBUS_STACK_SIZE          256
+#define TASK_MODBUS_STACK_SIZE          128
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)

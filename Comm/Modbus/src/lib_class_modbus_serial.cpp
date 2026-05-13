@@ -61,7 +61,25 @@
 #define MODBUS_RTU_FIFO_RX_SIZE         			MODBUS_RTU_MAX_FRAME_SIZE
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           Initialize
+//
+//  Parameters:     pUartDriver     	- Pointer to the UART driver used for RTU communication
+//                  Mode            	- Initial operating mode (MASTER or SLAVE)
+//                  RE_DE_ControlPin	- GPIO pin controlling RS‑485 driver direction (RE/DE)
+//                  MinDeviceAddress	- Lowest valid slave address accepted in SLAVE mode
+//                  MaxDeviceAddress	- Highest valid slave address accepted in SLAVE mode
+//
+//  Returns:        None
+//
+//  Description:    Initializes the Modbus RTU backend. This function configures the UART
+//                  driver, sets up the RX FIFO buffer, registers the UART callback handler,
+//                  and enables the required UART interrupt types (RX idle, TX completed,
+//                  RX error). The RS‑485 direction‑control pin is stored for later use by
+//                  the Send() routine. The backend mode (MASTER or SLAVE) is also stored,
+//                  allowing the processing logic to adapt its behavior accordingly.
+//
+//-------------------------------------------------------------------------------------------------
 void ModbusRTU::Initialize(UART_Driver* pUartDriver,  MODBUS_Mode_e Mode, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress)
 {
     m_pUartDriver      = pUartDriver;
@@ -80,14 +98,31 @@ void ModbusRTU::Initialize(UART_Driver* pUartDriver,  MODBUS_Mode_e Mode, IO_ID_
 }
 
 //-------------------------------------------------------------------------------------------------
-
+//
+//  Name:           Process
+//
+//  Parameters:     None
+//
+//  Returns:        None
+//
+//  Description:    Main state machine of the Modbus RTU backend. This function handles both
+//                  SLAVE and MASTER operation paths. In SLAVE mode, it monitors the RX idle
+//                  semaphore to detect the end of an incoming RTU request, validates the frame,
+//                  and signals the Router when a complete request is available. In MASTER mode,
+//                  it builds the outgoing RTU frame, transmits it, enforces the mandatory silent
+//                  interval, waits for the slave response, and delegates response parsing to the
+//                  MODBUS manager. All transitions between IDLE, BUILD, SEND, WAIT, PARSE, DONE,
+//                  and ERROR states are handled internally, ensuring non‑blocking operation and
+//                  strict Modbus RTU timing compliance.
+//
+//-------------------------------------------------------------------------------------------------
 void ModbusRTU::Process(void)
 {
     switch(m_State)
     {
         case MODBUS_IDLE:
         {
-            // --- Chemin SLAVE : détection d'une requête RTU complète ---
+            // --- SLAVE path: detect a complete RTU request ---
             if(nOS_SemTake(&m_RX_IdleSem, 0) == NOS_OK)
             {
                 int Count = m_Fifo.Read(m_pRX_Buffer, MODBUS_RTU_MAX_FRAME_SIZE);
@@ -96,23 +131,23 @@ void ModbusRTU::Process(void)
                 {
                     m_RX_Length = (size_t)Count;
 
-                    // Une requête RTU complète est-elle reçue ?
+                    // Check if a complete RTU request has been received
                     if(IsEndOfRTU_Request(m_pRX_Buffer, m_RX_Length) == true)
                     {
-                        // Est-ce une adresse que ce backend peut gérer ?
+                        // Is this a device address handled by this backend?
                         if(CanHandle(m_pRX_Buffer[0]))
                         {
-                            // On signale au Router qu'une requête est prête
+                            // Notify the Router that a SLAVE request is ready
                             m_SlaveHasRequest = true;
                         }
                     }
                 }
 
-                // On ne bloque pas, on sort de Process()
+                // Do not block; exit Process()
                 return;
             }
 
-            // --- Chemin MASTER : une commande a été queue() ---
+            // --- MASTER path: a command has been queued() ---
             if(m_MasterHasPending == false)
             {
                 return;
@@ -132,7 +167,7 @@ void ModbusRTU::Process(void)
                 return;
             }
 
-            // Ask manager to build the RTU Frame (MASTER)
+            // Ask the manager to build the RTU frame (MASTER)
             size_t FrameLength = MODBUS_RTU_MAX_FRAME_SIZE;
             SystemState_e State = m_pManager->MasterBuildFrame(m_Command, m_pTX_Buffer, &FrameLength);
 
@@ -165,6 +200,7 @@ void ModbusRTU::Process(void)
 
         case MODBUS_WAIT_SILENT:
         {
+            // Wait for the mandatory silent interval before listening for a response
             if(TickHasTimeOut(m_SilentTick, MODBUS_RTU_SILENT_INTERVAL_MSEC))
             {
                 m_RX_Length = 0;
@@ -177,6 +213,7 @@ void ModbusRTU::Process(void)
 
         case MODBUS_WAIT_RESPONSE:
         {
+            // Check if new RX data has arrived
             if(nOS_SemTake(&m_RX_IdleSem, 0) == NOS_OK)
             {
                 int Count = (int)m_Fifo.Read(&m_pRX_Buffer[m_RX_Length], MODBUS_RTU_MAX_FRAME_SIZE - m_RX_Length);
@@ -189,6 +226,7 @@ void ModbusRTU::Process(void)
 
                 m_RX_Length += (size_t)Count;
 
+                // Check if the full RTU response frame has been received
                 if(IsEndOfRTU_Frame(m_pRX_Buffer, m_RX_Length))
                 {
                     m_State = MODBUS_PARSE_RESPONSE;
@@ -196,10 +234,10 @@ void ModbusRTU::Process(void)
                 }
             }
 
-            // Timeout d'attente de la réponse du slave
+            // Timeout waiting for the slave response
             if(TickHasTimeOut(m_StartTick, m_Command.TimeoutMsec))
             {
-                // Notifier le manager qu'un timeout MASTER est survenu
+                // Notify the manager a MASTER timeout has occured.
                 m_pManager->MasterTimeOut(m_Command.SlotIndex);
                 m_State = MODBUS_ERROR;
                 return;
@@ -209,6 +247,7 @@ void ModbusRTU::Process(void)
 
         case MODBUS_PARSE_RESPONSE:
         {
+            // Delegate response parsing to the manager
             m_pManager->MasterHandleResponse(m_pRX_Buffer, m_RX_Length);
             m_State = MODBUS_DONE;
         }
@@ -216,6 +255,7 @@ void ModbusRTU::Process(void)
 
         case MODBUS_DONE:
         {
+            // Clear MASTER and SLAVE flags and return to IDLE
             m_SlaveHasRequest  = false;
             m_MasterHasPending = false;
             m_State            = MODBUS_IDLE;
@@ -224,6 +264,7 @@ void ModbusRTU::Process(void)
 
         case MODBUS_ERROR:
         {
+            // Reset state after any error
             m_SlaveHasRequest  = false;
             m_MasterHasPending = false;
             m_State            = MODBUS_IDLE;
@@ -524,12 +565,11 @@ bool ModbusRTU::GetRequest(const uint8_t** ppRX, size_t* pLength)
     *ppRX   = m_pRX_Buffer;
     *pLength = m_RX_Length;
 
-    // La requête a été consommée par le Router
+    // The request has been consume by the router
     m_SlaveHasRequest = false;
 
     return true;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //

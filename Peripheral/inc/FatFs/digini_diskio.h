@@ -37,14 +37,14 @@
 //-------------------------------------------------------------------------------------------------
 
 #define EXPAND_X_DRIVE_AS_ENUM(ENUM_ID, CLASS_, DISK_OBJ, ARG)              ENUM_ID,
-#define EXPAND_X_DRIVE_AS_OBJ_CREATION(ENUM_ID, CLASS_, DISK_OBJ, ARG)      class CLASS_ DISK_OBJ (ARG);
-#define EXPAND_X_DRIVE_AS_OBJ_DECLARATION(ENUM_ID, CLASS_, DISK_OBJ, ARG)   extern class CLASS_ DISK_OBJ;
 #define EXPAND_X_DRIVE_AS_OBJ_CONST_IN_DISK(ENUM_ID, CLASS_, DISK_OBJ, ARG) &DISK_OBJ
 
 //-------------------------------------------------------------------------------------------------
-// X-Macro
+// X-Macro example 
 //-------------------------------------------------------------------------------------------------
 
+#if 0
+// Those are example
 #define FAT_FS_DRIVE_DEF(X_DRIVE)\
 /*  Will create x-macro for defined drive only  */\
     IF_USE( DIGINI_FATFS_USE_SPI_FLASH_CHIP, X_DRIVE( DISK_SPI_FLASH,    FatFS_SPI_Flash,      SPI_Flash,    &mySPI_FLASH))/*  class object those should be set in config file as more than one instance can exist*/ \
@@ -52,6 +52,8 @@
     IF_USE( DIGINI_FATFS_USE_SDIO_SD_CARD,   X_DRIVE( DISK_SDIO_SD_CARD, FatFS_SDIO,           SDIO_SD_Card, &mySDIO     ))\
     IF_USE( DIGINI_FATFS_USE_USB_KEY,        X_DRIVE( DISK_USB_KEY,      FatFS_USB,            USB_Key,      &myUSB      ))\
     IF_USE( DIGINI_FATFS_USE_RAM_DISK,       X_DRIVE( DISK_RAM_DISK,     FatFS_RAM_Disk,       RAM_Disk,     nullptr     ))\
+
+#endif
 
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
@@ -65,6 +67,7 @@ typedef enum
   #endif  
     NUMBER_OF_DISK,
   //  FF_VOLUMES = NUMBER_OF_DISK,
+	INVALID_DISK,
 } DiskMedia_e;
 
 //-------------------------------------------------------------------------------------------------
@@ -78,13 +81,10 @@ class DiskIO    // Singleton
     public:
         static DiskIO& GetInstance()
         {
-            static DiskIO instance; // Guaranteed to be destroyed.
-                                    // Instantiated on first use.
+            static DiskIO instance;
+
             return instance;
         }
-
-
-        //void                RegisterDisk        (DiskMedia_e Disk, DiskIO_DeviceInterface* pDisk);
 
         DSTATUS             Initialize          (DiskMedia_e Disk);
         DSTATUS             Status              (DiskMedia_e Disk);
@@ -96,46 +96,21 @@ class DiskIO    // Singleton
          DRESULT            IO_Ctrl             (DiskMedia_e Disk, uint8_t Command, void* pBuffer);
       #endif
 
-    //    void                Sync                (DiskMedia_e Disk);
-   //     uint32_t            GetSectorCount      (DiskMedia_e Disk);
-   //     uint32_t            GetSectorSize       (DiskMedia_e Disk);
-   //     uint32_t            GetEraseBlockSize   (DiskMedia_e Disk);
-
     private:
 
-                            DiskIO              () {}                                              // Constructor? (the {} brackets) are needed here.
-
-    public:
-                            // C++ 11
-                            // =======
-                            // We can use the better technique of deleting the methods we don't want.
-                            // Note: Scott Meyers mentions in his Effective Modern
-                            //       C++ book, that deleted functions should generally
-                            //       be public as it results in better error messages
-                            //       due to the compilers behavior to check accessibility
-                            //       before deleted status
-                            DiskIO(DiskIO const&)               = delete;
-        void                operator=(DiskIO const&)            = delete;
-
-        static DiskIO_DeviceInterface*    pDiskList          [NUMBER_OF_DISK];              // Number of Disk is define in the FatFs_cfg.h of the application config directory
+        static DiskIO_DeviceInterface*   		pDiskList    		[NUMBER_OF_DISK];              // Number of Disk is define in the FatFs_cfg.h of the application config directory
 
 };
 #endif
+
+//-------------------------------------------------------------------------------------------------
+// Variable(s)
+//-------------------------------------------------------------------------------------------------
 
 #ifdef __cplusplus
   #if (DIGINI_USE_FATFS == DEF_ENABLED)
     #ifdef  DISKIO_GLOBAL
       class DiskIO&     FatFS_DiskIO = DiskIO::GetInstance();
-      // Create all FatFS_... object
-      FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_OBJ_CREATION)
-     #ifdef FAT_FS_CUSTOM_DRIVE_DEF 
-      FAT_FS_CUSTOM_DRIVE_DEF(EXPAND_X_DRIVE_AS_OBJ_CREATION)
-     #endif  
-    #else
-      FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_OBJ_DECLARATION)
-     #ifdef FAT_FS_CUSTOM_DRIVE_DEF 
-      FAT_FS_CUSTOM_DRIVE_DEF(EXPAND_X_DRIVE_AS_OBJ_DECLARATION)
-     #endif  
     #endif
   #endif
 #endif

@@ -303,7 +303,7 @@ class NetworkContext;
 #endif
 
 #if (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
-#include "./Peripheral/inc/port/FatFs/lib_class_fatfs_spi_flash_chip.h"     // TODO
+#include "./Peripheral/inc/port/FatFs/lib_class_fatfs_spi_flash_chip.h"
 #endif
 
 #if (DIGINI_FATFS_USE_SPI_SD_CARD == DEF_ENABLED)

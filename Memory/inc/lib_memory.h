@@ -251,6 +251,8 @@ class MemPoolDriver
         MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_ARRAY_DECL)
 };
 
+//-------------------------------------------------------------------------------------------------
+
 // ----- Memory allocation(s) ------
 #ifdef MEM_GLOBAL
 class MemPoolDriver                       _MemoryPool;
@@ -268,3 +270,4 @@ extern class MemPoolDriver*               pMemoryPool;
 #endif  // MEM_BLOCK_DEF
 
 //-------------------------------------------------------------------------------------------------
+

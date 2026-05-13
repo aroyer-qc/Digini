@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_comm.h
+//  File : lib_class_fatfs_spi_Flash_disk.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2024 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,54 +27,64 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-
-#if (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-// Global Macro
-//-------------------------------------------------------------------------------------------------
-
-#ifdef TASK_COMM_GLOBAL
-    #define TASK_COMM_EXTERN
-#else
-    #define TASK_COMM_EXTERN extern
-#endif
-
-//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define TASK_COMM_PRIO                                  7
-#define TASK_COMM_STACK_SIZE                            256
+#ifdef __cplusplus
+
+//-------------------------------------------------------------------------------------------------
+// Include file(s)
+//-------------------------------------------------------------------------------------------------
+
+#include "diskio_interface.h"
+
+//-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class ClassTaskCOMM
+class FatFS_SPI_FlashDisk : public DiskIO_DeviceInterface
 {
     public:
 
-        nOS_Error       Initialize         (Console* m_pConsole, UART_Driver* pUart, const char* pTaskName);
-        void            Run                (void);
+								FatFS_SPI_FlashDisk ();
+							   ~FatFS_SPI_FlashDisk (){}
+
+        void            		Configure           (uint8_t* pBuffer, size_t Size);
+
+		// Mandatory function required by FatFs
+        DSTATUS         		Initialize          (void);
+        DSTATUS         		Status              (void);
+        DRESULT         		Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
+      #if _USE_WRITE == 1
+        DRESULT         		Write               (const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
+      #endif
+      #if _USE_IOCTL == 1
+        DRESULT         		IO_Ctrl             (uint8_t Control, void* pBuffer);
+      #endif
 
     private:
 
-        nOS_Thread      m_Handle;
-        nOS_Stack       m_Stack[TASK_COMM_STACK_SIZE];
-        Console*        m_pConsole;
+        DRESULT        			 CheckError          (uint32_t Sector, uint16_t NumberOfSectors);
+
+        bool            		m_IsItInitialize    = false;
+        DSTATUS         		m_Status            = STA_NODISK;
+		DiskMedia_e				m_ThisDisk			= INVALID_DISK;
+		
+        uint8_t*        		m_pBuffer           = nullptr;
+        size_t          		m_Size              = 0;                       // size of the disk, is a multiple of 512
+		
+		static const MKFS_PARM 	m_MKFS_Option;
 };
 
 //-------------------------------------------------------------------------------------------------
-// Global variable(s) and constant(s)
-//-------------------------------------------------------------------------------------------------
 
-// Default Digini TaskComm
-TASK_COMM_EXTERN class ClassTaskCOMM  myTaskCOMM;
+#endif // (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
+#endif // __cplusplus
 

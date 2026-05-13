@@ -66,7 +66,7 @@ size_t                     MODBUS_Application::m_ModbusAppMasterCount = 0;
 //                  number of predefined commands. Dynamic entries may be registered afterward.
 //
 //-------------------------------------------------------------------------------------------------
-MODBUS_Application::MODBUS_Application()
+MODBUS_Application::MODBUS_Application(void)
 {
   #ifdef MODBUS_APP_SLAVE_TABLE
     MODBUS_APP_SLAVE_TABLE(EXPAND_MODBUS_INIT_SLAVE_ENTRY)

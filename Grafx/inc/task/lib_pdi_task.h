@@ -54,7 +54,7 @@
 #define TOUCH_TYPEMATIC_PRECOUNT            30
 #define TOUCH_TYPEMATIC_COUNT               2
 
-#define PDI_TASK_STACK_SIZE                 512
+#define PDI_TASK_STACK_SIZE                 128
 #define PDI_TASK_PRIO                       4
 
 #define PDI_SWAP_NONE                       ((uint8_t) 0x01)

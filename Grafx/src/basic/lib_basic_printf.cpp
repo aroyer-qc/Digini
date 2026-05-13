@@ -342,7 +342,7 @@ void GPrintf::ParseString(void)
         {
             if(*(m_pSubLineString[i] + j) != ASCII_CARRIAGE_RETURN)                         // Do all normal font parsing
             {
-                char LoadChar = *(m_pSubLineString[i] + j);
+// TODO find the use of this.. probably on multi line print (* see. old version)                char LoadChar = *(m_pSubLineString[i] + j);  // why it is working... ghost ???
 
               #ifdef GFX_ROM_DBASE_DEF
                 //DB_Central.Get(&FontInfo, GFX_FONT_INFO, 0, LoadChar);           // need the font number here

@@ -153,7 +153,6 @@ DRESULT DiskIO::IO_Ctrl(DiskMedia_e Disk, uint8_t Command, void* pBuffer)
     return pDiskList[Disk]->IO_Ctrl(Command, pBuffer);
 }
 
-
 #if 0
 //-------------------------------------------------------------------------------------------------
 //
@@ -227,6 +226,7 @@ uint32_t DiskIO::GetEraseBlockSize(DiskMedia_e Disk)
     return pDiskList[Disk]->GetEraseBlockSize();
 }
 #endif
+
 //-------------------------------------------------------------------------------------------------
 // Global function(s)
 //-------------------------------------------------------------------------------------------------
@@ -363,11 +363,11 @@ WCHAR ff_convert(WCHAR wch, UINT dir)
 {
     if(wch < 0x80)
     {
-        /* ASCII Char */
+        // ASCII Char
         return wch;
     }
 
-    /* I don't support unicode it is too big! */
+    // No support for unicode it is too big!
     return 0;
 }
 
@@ -375,7 +375,7 @@ WCHAR ff_wtoupper(WCHAR wch)
 {
     if(wch < 0x80)
     {
-        /* ASCII Char */
+        // ASCII Char
         if (wch >= 'a' && wch <= 'z')
         {
             wch &= ~0x20;
@@ -383,7 +383,7 @@ WCHAR ff_wtoupper(WCHAR wch)
         return wch;
     }
 
-    /* I don't support unicode it is too big! */
+    // No support for unicode as it is too big!
     return 0;
 }
 //-------------------------------------------------------------------------------------------------

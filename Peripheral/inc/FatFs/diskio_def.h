@@ -57,6 +57,7 @@
 #define GET_CSD_STRUCT                  21
 #define GET_SCR_STRUCT                  22
 #define GET_CARD_CAPACITY               23
+#define CTRL_FORMAT						24		// Formatting the drive is done via IO_Ctrl
 
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
@@ -65,10 +66,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-// Status of Disk Functions
-// They are mapped in Digini errors systems.
-//typedef SystemState_e DSTATUS;
 
 // Results of Disk Functions
 typedef enum
@@ -80,6 +77,8 @@ typedef enum
     RES_PARERR              // 4: Invalid Parameter
 } DRESULT;
 
+// Status of Disk Functions
+// They are mapped in Digini errors systems.
 typedef SystemState_e DSTATUS;
 
 #ifdef __cplusplus

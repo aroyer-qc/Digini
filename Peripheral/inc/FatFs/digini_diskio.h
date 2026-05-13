@@ -31,6 +31,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "diskio.h"
+#include "diskio_def.h"
 
 //-------------------------------------------------------------------------------------------------
 // Expanding Macro(s)
@@ -40,7 +41,7 @@
 #define EXPAND_X_DRIVE_AS_OBJ_CONST_IN_DISK(ENUM_ID, CLASS_, DISK_OBJ, ARG) &DISK_OBJ
 
 //-------------------------------------------------------------------------------------------------
-// X-Macro example 
+// X-Macro example
 //-------------------------------------------------------------------------------------------------
 
 #if 0
@@ -62,9 +63,9 @@
 typedef enum
 {
     FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_ENUM)
-  #ifdef FAT_FS_CUSTOM_DRIVE_DEF 
+  #ifdef FAT_FS_CUSTOM_DRIVE_DEF
     FAT_FS_CUSTOM_DRIVE_DEF(EXPAND_X_DRIVE_AS_ENUM)
-  #endif  
+  #endif
     NUMBER_OF_DISK,
   //  FF_VOLUMES = NUMBER_OF_DISK,
 	INVALID_DISK,
@@ -79,12 +80,8 @@ typedef enum
 class DiskIO    // Singleton
 {
     public:
-        static DiskIO& GetInstance()
-        {
-            static DiskIO instance;
 
-            return instance;
-        }
+        static DiskIO& 		GetInstance			(void)						{ static DiskIO instance; return instance; }
 
         DSTATUS             Initialize          (DiskMedia_e Disk);
         DSTATUS             Status              (DiskMedia_e Disk);
@@ -98,7 +95,7 @@ class DiskIO    // Singleton
 
     private:
 
-        static DiskIO_DeviceInterface*   		pDiskList    		[NUMBER_OF_DISK];              // Number of Disk is define in the FatFs_cfg.h of the application config directory
+        static DiskIO_DeviceInterface*   		pDiskList    		[NUMBER_OF_DISK];
 
 };
 #endif
@@ -111,6 +108,20 @@ class DiskIO    // Singleton
   #if (DIGINI_USE_FATFS == DEF_ENABLED)
     #ifdef  DISKIO_GLOBAL
       class DiskIO&     FatFS_DiskIO = DiskIO::GetInstance();
+
+  	  const MKFS_PARM 	MKFS_Option =
+	  {
+		  /*.fmt     =*/ FM_ANY | FM_SFD,
+		  /*.n_fat   =*/ 0,          		// 0 = Auto-select number of FAT tables (usually 2)
+		  /*.align   =*/ 0,          		// 0 = Auto-align clusters to data area block size
+		  /*.n_root  =*/ 0,         		// 0 = Auto-select root directory entries (for FAT12/16)
+		  /*.au_size =*/ 0,        			// 0 = Auto-select cluster size based on disk capacity
+	  };
+
+    #else
+
+  	  extern const MKFS_PARM MKFS_Option;
+
     #endif
   #endif
 #endif

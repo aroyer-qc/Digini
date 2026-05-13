@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_fatfs_spi_Flash_disk.h
+//  File : lib_class_fatfs_ram.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2026 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -40,49 +40,44 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
+#if (DIGINI_FATFS_USE_RAM_DISK == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class FatFS_SPI_FlashDisk : public DiskIO_DeviceInterface
+class FatFS_RAM : public DiskIO_DeviceInterface
 {
     public:
 
-								FatFS_SPI_FlashDisk ();
-							   ~FatFS_SPI_FlashDisk (){}
+                        FatFS_RAM           ();
+                       ~FatFS_RAM           (){}
 
-        void            		Configure           (uint8_t* pBuffer, size_t Size);
-
-		// Mandatory function required by FatFs
-        DSTATUS         		Initialize          (void);
-        DSTATUS         		Status              (void);
-        DRESULT         		Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
+        DSTATUS         Initialize          (void);
+        DSTATUS         Status              (void);
+        DRESULT         Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
       #if _USE_WRITE == 1
-        DRESULT         		Write               (const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
+        DRESULT         Write               (const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
       #endif
       #if _USE_IOCTL == 1
-        DRESULT         		IO_Ctrl             (uint8_t Control, void* pBuffer);
+        DRESULT         IO_Ctrl             (uint8_t Control, void* pBuffer);
       #endif
+
+        void            Configure           (uint8_t* pBuffer, size_t Size);
 
     private:
 
-        DRESULT        			 CheckError          (uint32_t Sector, uint16_t NumberOfSectors);
+        DRESULT         CheckError          (uint32_t Sector, uint16_t NumberOfSectors);
 
-        bool            		m_IsItInitialize    = false;
-        DSTATUS         		m_Status            = STA_NODISK;
-		DiskMedia_e				m_ThisDisk			= INVALID_DISK;
-		
-        uint8_t*        		m_pBuffer           = nullptr;
-        size_t          		m_Size              = 0;                       // size of the disk, is a multiple of 512
-		
-		static const MKFS_PARM 	m_MKFS_Option;
+        bool                        m_IsItInitialize;
+        DSTATUS                     m_Status;
+        uint8_t*                    m_pBuffer;
+        size_t                      m_Size;                       // size of the disk, is a multiple of 512
 };
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
+#endif // (DIGINI_FATFS_USE_RAM_DISK == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 

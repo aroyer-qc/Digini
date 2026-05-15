@@ -318,8 +318,8 @@ class NetworkContext;
 #include "./Peripheral/inc/FatFs/lib_class_fatfs_usb_key.h"
 #endif
 
+#include "./Peripheral/inc/FatFs/diskio.h"
 #include "./Peripheral/inc/FatFs/digini_diskio.h"
-//#include "diskio_drv_cfg.h"                     		// This will add any custom driver
 
 #endif // (DIGINI_USE_FATFS == DEF_ENABLED)
 

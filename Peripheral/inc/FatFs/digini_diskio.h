@@ -23,6 +23,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+//
+// note(s)
+//
+// Those are example
+//      #define FAT_FS_DRIVE_DEF(X_DRIVE)
+//      / *  Will create x-macro for defined drive only  * /
+//    X_DRIVE( DISK_SPI_FLASH,    FatFS_SPI_Flash,      SPI_Flash,    &mySPI_FLASH)
+//    X_DRIVE( SPI_SD_CARD,       FatFS_SD_Card,        SPI_SD_Card,  &mySPI_SD   )
+//    X_DRIVE( DISK_SDIO_SD_CARD, FatFS_SDIO,           SDIO_SD_Card, &mySDIO     )
+//    X_DRIVE( DISK_USB_KEY,      FatFS_USB,            USB_Key,      &myUSB      )
+//    X_DRIVE( DISK_RAM_DISK,     FatFS_RAM_Disk,       RAM_Disk,     nullptr     )
+//
+//-------------------------------------------------------------------------------------------------
 
 #pragma once
 
@@ -30,52 +43,39 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "diskio.h"
-#include "diskio_def.h"
+//#include "diskio.h"
+//#include "diskio_def.h"
+#include "FatFs_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 // Expanding Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_DRIVE_AS_ENUM(ENUM_ID, CLASS_, DISK_OBJ, ARG)              ENUM_ID,
-#define EXPAND_X_DRIVE_AS_OBJ_CONST_IN_DISK(ENUM_ID, CLASS_, DISK_OBJ, ARG) &DISK_OBJ
+#define EXPAND_X_DRIVE_AS_ENUM(ENUM_ID, CLASS_, DISK_OBJ, ARG)                          ENUM_ID,
+#define EXPAND_X_DRIVE_AS_DISK_CLASS_OBJECT_DECLARATION(ENUM_ID, CLASS_, DISK_OBJ, ARG) CLASS_ DISK_OBJ;
 
 //-------------------------------------------------------------------------------------------------
 // X-Macro example
 //-------------------------------------------------------------------------------------------------
 
-#if 0
-// Those are example
-#define FAT_FS_DRIVE_DEF(X_DRIVE)\
-/*  Will create x-macro for defined drive only  */\
-    IF_USE( DIGINI_FATFS_USE_SPI_FLASH_CHIP, X_DRIVE( DISK_SPI_FLASH,    FatFS_SPI_Flash,      SPI_Flash,    &mySPI_FLASH))/*  class object those should be set in config file as more than one instance can exist*/ \
-    IF_USE( DIGINI_FATFS_USE_SPI_SD_CARD,    X_DRIVE( SPI_SD_CARD,       FatFS_SD_Card,        SPI_SD_Card,  &mySPI_SD   ))\
-    IF_USE( DIGINI_FATFS_USE_SDIO_SD_CARD,   X_DRIVE( DISK_SDIO_SD_CARD, FatFS_SDIO,           SDIO_SD_Card, &mySDIO     ))\
-    IF_USE( DIGINI_FATFS_USE_USB_KEY,        X_DRIVE( DISK_USB_KEY,      FatFS_USB,            USB_Key,      &myUSB      ))\
-    IF_USE( DIGINI_FATFS_USE_RAM_DISK,       X_DRIVE( DISK_RAM_DISK,     FatFS_RAM_Disk,       RAM_Disk,     nullptr     ))\
-
-#endif
+#ifdef __cplusplus
 
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
 
-typedef enum
+enum DiskMedia_e
 {
     FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_ENUM)
-  #ifdef FAT_FS_CUSTOM_DRIVE_DEF
-    FAT_FS_CUSTOM_DRIVE_DEF(EXPAND_X_DRIVE_AS_ENUM)
-  #endif
     NUMBER_OF_DISK,
   //  FF_VOLUMES = NUMBER_OF_DISK,
 	INVALID_DISK,
-} DiskMedia_e;
+};
 
 //-------------------------------------------------------------------------------------------------
 // Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef __cplusplus
 
 class DiskIO    // Singleton
 {
@@ -96,7 +96,9 @@ class DiskIO    // Singleton
     private:
 
         static DiskIO_DeviceInterface*   		pDiskList    		[NUMBER_OF_DISK];
+        static void*                            pParameterList      [NUMBER_OF_DISK];
 
+        FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_DISK_CLASS_OBJECT_DECLARATION)
 };
 #endif
 
@@ -109,6 +111,7 @@ class DiskIO    // Singleton
     #ifdef  DISKIO_GLOBAL
       class DiskIO&     FatFS_DiskIO = DiskIO::GetInstance();
 
+      // Use 'Super Floppy Disk' to remove unused MBR sector
   	  const MKFS_PARM 	MKFS_Option =
 	  {
 		  /*.fmt     =*/ FM_ANY | FM_SFD,

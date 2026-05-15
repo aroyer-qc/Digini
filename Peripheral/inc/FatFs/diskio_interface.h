@@ -37,7 +37,7 @@ class DiskIO_DeviceInterface
         virtual                    ~DiskIO_DeviceInterface (){}
 
 
-        virtual DSTATUS             Initialize              (void)                                  = 0;
+        virtual DSTATUS             Initialize              (void*)                                 = 0;
         virtual DSTATUS             Status                  (void)                                  = 0;
         virtual DRESULT             Read                    (uint8_t*, uint32_t, uint16_t)          = 0;
       #if _USE_WRITE == 1

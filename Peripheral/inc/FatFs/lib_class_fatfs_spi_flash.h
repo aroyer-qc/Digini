@@ -56,7 +56,7 @@ class FatFS_SPI_Flash : public DiskIO_DeviceInterface
         void            		Configure           (uint8_t* pBuffer, size_t Size);
 
 		// Mandatory function required by FatFs
-        DSTATUS         		Initialize          (void);
+        DSTATUS         		Initialize          (void* pParameter);
         DSTATUS         		Status              (void);
         DRESULT         		Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
       #if _USE_WRITE == 1
@@ -72,8 +72,11 @@ class FatFS_SPI_Flash : public DiskIO_DeviceInterface
 
         bool            		m_IsItInitialize    = false;
         DSTATUS         		m_Status            = STA_NODISK;
-		DiskMedia_e				m_ThisDisk			= INVALID_DISK;
-		
+		//DiskMedia_e				m_ThisDisk			= INVALID_DISK;
+
+		IO_ID_e                 m_ChipSelect        = IO_NOT_DEFINED;
+        SPI_Driver              m_pSPI_Driver       = NULLPTR;
+
         uint8_t*        		m_pBuffer           = nullptr;
         size_t          		m_Size              = 0;                       // size of the disk, is a multiple of 512
 };

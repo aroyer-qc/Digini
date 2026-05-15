@@ -36,7 +36,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "diskio_interface.h"
+//#include "diskio_interface.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ class FatFS_USB_Key : public DiskIO_DeviceInterface
         //void            		Configure           (uint8_t* pBuffer, size_t Size);
 
 		// Mandatory function required by FatFs
-        DSTATUS         		Initialize          (void);
+        DSTATUS         		Initialize          (void* pParameter);
         DSTATUS         		Status              (void);
         DRESULT         		Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
       #if _USE_WRITE == 1
@@ -70,8 +70,8 @@ class FatFS_USB_Key : public DiskIO_DeviceInterface
 
         //bool            		m_IsItInitialize    = false;
         DSTATUS         		m_Status            = STA_NODISK;
-		DiskMedia_e				m_ThisDisk			= INVALID_DISK;
 
+		//DiskMedia_e				m_ThisDisk			= INVALID_DISK;
         //uint8_t*        		m_pBuffer           = nullptr;
         //size_t          		m_Size              = 0;                       // size of the disk, is a multiple of 512
 };

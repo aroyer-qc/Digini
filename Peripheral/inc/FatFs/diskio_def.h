@@ -31,7 +31,9 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "./Digini/inc/lib_typedef.h"
-#include "FatFs_cfg.h"
+
+//#include "./Digini/inc/lib_typedef.h"
+//#include "FatFs_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
 // Define(s)
@@ -62,10 +64,14 @@
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// Patch..
+typedef unsigned int	UINT;	        // int must be 16-bit or 32-bit
+typedef uint32_t		DWORD;	        // 32-bit unsigned integer
+typedef SystemState_e   DSTATUS;        // Status of Disk Functions. They are mapped in Digini errors systems.
 
 // Results of Disk Functions
 typedef enum
@@ -77,9 +83,12 @@ typedef enum
     RES_PARERR              // 4: Invalid Parameter
 } DRESULT;
 
-// Status of Disk Functions
-// They are mapped in Digini errors systems.
-typedef SystemState_e DSTATUS;
+typedef struct
+{
+    SPI_Driver*    pDriver;
+    IO_ID_e        IO_ChipSelect;
+
+} SPI_Param_t;
 
 #ifdef __cplusplus
 }

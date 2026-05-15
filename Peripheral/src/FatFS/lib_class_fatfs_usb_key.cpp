@@ -29,6 +29,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "./lib_digini.h"
+#include "usbh_def.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -69,8 +70,10 @@
 //   Description:   Initialize flash disk
 //
 //-------------------------------------------------------------------------------------------------
-DSTATUS FatFS_USB_Key::Initialize(void)
+DSTATUS FatFS_USB_Key::Initialize(void* pParameter)
 {
+    VAR_UNUSED(pParameter);
+
 	if(Status() != STA_OK)
 	{
 		return STA_NOINIT;
@@ -92,9 +95,9 @@ DSTATUS FatFS_USB_Key::Initialize(void)
 //-------------------------------------------------------------------------------------------------
 DSTATUS FatFS_USB_Key::Status(void)
 {
-    TaskUSB_Host* pUSB = TaskUSB_Host::GetInstance();
+    class TaskUSB_Host* pUSB = TaskUSB_Host::GetInstance();
 
-    if((pUSB ==nullptr) || (pUSBusb->IsMSC_Connected() == false))
+    if((pUSB ==nullptr) || (pUSB->IsMSC_Connected() == false))
 	{
         return STA_NOINIT;
 	}

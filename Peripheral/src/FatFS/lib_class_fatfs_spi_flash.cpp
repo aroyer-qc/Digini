@@ -70,14 +70,17 @@ void FatFS_SPI_Flash::Configure(uint8_t* pBuffer, size_t Size)
 //   Description:   Initialize flash disk
 //
 //-------------------------------------------------------------------------------------------------
-DSTATUS FatFS_SPI_Flash::Initialize(void)
+DSTATUS FatFS_SPI_Flash::Initialize(void* pParameter)
 {
+    VAR_UNUSED(pParameter);
+
     if(m_IsItInitialize == true)
     {
         m_Status = STA_OK;
     }
 
-// do
+    m_ChipSelect  = (SPI_Param_t*)pParameter)->IO_ChipSelect;
+    m_pSPI_Driver = (SPI_Param_t*)pParameter)->pDriver;
 
     return m_Status;
 }
@@ -204,7 +207,7 @@ DRESULT FatFS_SPI_Flash::IO_Ctrl(uint8_t Control, void *pBuffer)
         {
 			FATFS fs;
 			FRESULT res;
-			
+
 			// Allocate the mandatory working buffer for formatting Must be at least FF_MAX_SS
 			uint8_t* pSector = (uint8_t*)pMemoryPool->Alloc(FF_MAX_SS);
 
@@ -217,12 +220,12 @@ DRESULT FatFS_SPI_Flash::IO_Ctrl(uint8_t Control, void *pBuffer)
 				// Mount the drive immediately (1 = Force mount check)
 				//res = f_mount(&fs, "0:", 1);
 			//}
-			
+
 			// Free memory used by f_mkfs
 			pMemoryPool->Free((void**)&pSector);
 		}
 		break;
-		
+
         default:
         {
             res = RES_PARERR;
@@ -234,7 +237,7 @@ DRESULT FatFS_SPI_Flash::IO_Ctrl(uint8_t Control, void *pBuffer)
 #endif
 
 
-#if 0 
+#if 0
 
         SystemState_e               EraseSector             (uint32_t SectorAddress);
         SystemState_e               BulkErase               (void);
@@ -293,17 +296,17 @@ void format_super_floppy(void)
 {
     FATFS fs;
     FRESULT res;
-    
+
     // Allocate the mandatory working buffer for formatting
     // Must be at least _MAX_SS (Sector Size, typically 512 or 4096)
-    BYTE work_buffer[FF_MAX_SS]; 
+    BYTE work_buffer[FF_MAX_SS];
 
     // Initialize the configuration structure
     MKFS_PARM opt;
-    
+
     // Set format type to any valid FAT type (FAT/FAT32/exFAT) AND combine it with the Super Floppy Disk flag (FM_SFD, no MBR)
-    opt.fmt = FM_ANY | FM_SFD;  
-    
+    opt.fmt = FM_ANY | FM_SFD;
+
     opt.au_size = 0;        	// 0 = Auto-select cluster size based on disk capacity
     opt.align   = 0;          	// 0 = Auto-align clusters to data area block size
     opt.n_fat   = 0;          	// 0 = Auto-select number of FAT tables (usually 2)

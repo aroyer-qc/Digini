@@ -133,20 +133,20 @@ SystemState_e SPI_SerialFLashDriver::Initialize(SPI_Driver* pSPI, FlashList_e Fl
 
     if(FlashDensity > 0)
     {
-        m_FlashInfo.PageSize        = FLASH_PAGE_SIZE;
-        m_FlashInfo.NumberOfPages   = FlashDensity / FLASH_SFDP_PAGE_SIZE;
-        m_FlashInfo.PageEraseSize   = 0;
-        m_FlashInfo.SectorSize      = FLASH_SFDP_SECTOR_SIZE;
-        m_FlashInfo.SectorEraseSize = FLASH_SFDP_SECTOR_SIZE;
-        m_FlashInfo.NbSectors       = FlashDensity / FLASH_SFDP_SECTOR_SIZE;
-        m_FlashInfo.FlashID         = FlashID;
+        m_FlashInfo.PageSize         = FLASH_SFDP_PAGE_SIZE;
+        m_FlashInfo.NumberOfPages    = FlashDensity / FLASH_SFDP_PAGE_SIZE;
+        m_FlashInfo.PageEraseSize    = 0;
+        m_FlashInfo.SectorSize       = FLASH_SFDP_SECTOR_SIZE;
+        m_FlashInfo.SectorEraseSize  = FLASH_SFDP_SECTOR_SIZE;
+        m_FlashInfo.NumberOfSectors  = FlashDensity / FLASH_SFDP_SECTOR_SIZE;
+        m_FlashInfo.FlashID          = FlashID;
     }
     else
     {
         // Error... Flash not supported.
-        m_FlashInfo.PageSize  = 0;
-        m_FlashInfo.NbSectors = 0;                  // Unsupported Flash
-        m_FlashInfo.FlashID   = FlashID;
+        m_FlashInfo.PageSize        = 0;
+        m_FlashInfo.NumberOfSectors = 0;        // Unsupported Flash
+        m_FlashInfo.FlashID         = FlashID;
         return SYS_ERROR;
     }
   #else
@@ -297,7 +297,7 @@ SystemState_e SPI_SerialFLashDriver::Write(const void* pBuffer, uint32_t Address
     }
 
     uint8_t* pData = (uint8_t*)pBuffer;
-    uint32_t Size  = Address % m_FlashInfo.PageSize;   
+    uint32_t Size  = Address % m_FlashInfo.PageSize;
 
     if(Size != 0)
     {
@@ -546,7 +546,7 @@ SystemState_e SPI_SerialFLashDriver::WriteDisable(void)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Function:      SFDP_Read
+//   Function:      ReadSFDP
 //
 //   Parameter(s):  uint32_t    NumberOfByteToRead     Number of bytes to read from the SFDP table
 //                  uint32_t    Address                Starting SFDP address
@@ -561,7 +561,7 @@ SystemState_e SPI_SerialFLashDriver::WriteDisable(void)
 //
 //-------------------------------------------------------------------------------------------------
 #if (FLASH_USE_AUTO_DETECT_FLASH == DEF_ENABLED)
-SystemState_e SPI_SerialFLashDriver::SFDP_Read(uint32_t NumberOfByteToRead, uint32_t Address, uint8_t *pBuffer)
+SystemState_e SPI_SerialFLashDriver::ReadSFDP(uint32_t NumberOfByteToRead, uint32_t Address, uint8_t *pBuffer)
 {
     SystemState_e State;
 	uint8_t Dummy = 0;
@@ -609,12 +609,12 @@ SystemState_e SPI_SerialFLashDriver::SFDP_Read(uint32_t NumberOfByteToRead, uint
 //
 //-------------------------------------------------------------------------------------------------
 #if (FLASH_USE_AUTO_DETECT_FLASH == DEF_ENABLED)
-uint32_t TSPI_SerialFLashDriver::ReadSFDP_Density(void)
+uint32_t SPI_SerialFLashDriver::ReadSFDP_Density(void)
 {
     // Check JEDEC serial flash discoverable parameters for device specific info
     uint8_t Header[SFDP_HEADER_SIZE];
 
-    SFDPRead(SFDP_HEADER_SIZE, 0x0, Header);
+    ReadSFDP(SFDP_HEADER_SIZE, 0x0, Header);
 
     // Verify SFDP signature for sanity
     // Also check that major/minor version is acceptable
@@ -627,7 +627,7 @@ uint32_t TSPI_SerialFLashDriver::ReadSFDP_Density(void)
     // in the parameter headers, we check just to be safe
     if((Header[SFDP_PARAM_ID_LSB_OFFSET] != 0x00) ||
        (Header[SFDP_PARAM_ID_MSB_OFFSET] != 0xFF) ||
-       (Header[SFDP_PARAM_MAJOR_OFFSET]  != 1))
+       (Header[SFDP_PARAM_MINOR_OFFSET]  != 1))
     {
         return 0;
     }
@@ -639,7 +639,7 @@ uint32_t TSPI_SerialFLashDriver::ReadSFDP_Density(void)
                             (Header[SFDP_PARAM_TABLE_PTR_1] << 8)  |
                              Header[SFDP_PARAM_TABLE_PTR_0];
 
-    SFDP_Read(SFDP_BASIC_FLASH_PARAMETER_TABLE, TableAddress, Table);
+    ReadSFDP(SFDP_BASIC_FLASH_PARAMETER_TABLE, TableAddress, Table);
 
     // Check erase size, currently only supports 4 KB
     if(((Table[SFDP_TABLE_ERASE_SUPPORT_OFFSET] & 0x03) != 0x01) ||

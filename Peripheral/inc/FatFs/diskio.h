@@ -36,6 +36,7 @@ extern "C" {
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
+#include "FatFS_cfg.h"
 #include "diskio_def.h"
 #include "ff.h"
 

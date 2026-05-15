@@ -30,6 +30,8 @@
 
 #include "./lib_digini.h"
 #include "usbh_def.h"
+#include "usbh_msc.h"
+#include "task_usb_host.h"              // until USB is integrated into Digini!!
 
 //-------------------------------------------------------------------------------------------------
 
@@ -73,12 +75,6 @@
 DSTATUS FatFS_USB_Key::Initialize(void* pParameter)
 {
     VAR_UNUSED(pParameter);
-
-	if(Status() != STA_OK)
-	{
-		return STA_NOINIT;
-	}
-
 	m_Status = STA_OK;
     return STA_OK;
 }
@@ -95,9 +91,9 @@ DSTATUS FatFS_USB_Key::Initialize(void* pParameter)
 //-------------------------------------------------------------------------------------------------
 DSTATUS FatFS_USB_Key::Status(void)
 {
-    class TaskUSB_Host* pUSB = TaskUSB_Host::GetInstance();
+    TaskUSB_Host* pUSB = TaskUSB_Host::GetInstance();
 
-    if((pUSB ==nullptr) || (pUSB->IsMSC_Connected() == false))
+    if((pUSB == nullptr) || (pUSB->Get_MSC_IsConnected() == false))
 	{
         return STA_NOINIT;
 	}
@@ -130,7 +126,7 @@ DRESULT FatFS_USB_Key::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOf
 
     USBH_HandleTypeDef* pHost = pUSB->GetUSBH_Handle();
 
-    if(USBH_MSC_Read(pHost, 0, pBuffer, Sector, Count) == USBH_OK)
+    if(USBH_MSC_Read(pHost, 0, Sector, pBuffer, NumberOfSectors) == USBH_OK)
 	{
         return RES_OK;
 	}
@@ -162,7 +158,7 @@ DRESULT FatFS_USB_Key::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t N
 
     USBH_HandleTypeDef* pHost = pUSB->GetUSBH_Handle();
 
-    if(USBH_MSC_Write(pHost, 0, (uint8_t*)pBuffer, Sector, Count) == USBH_OK)
+    if(USBH_MSC_Write(pHost, 0, Sector,  (uint8_t*)pBuffer, NumberOfSectors) == USBH_OK)
 	{
         return RES_OK;
 	}
@@ -192,7 +188,7 @@ DRESULT FatFS_USB_Key::IO_Ctrl(uint8_t Control, void *pBuffer)
         return RES_NOTRDY;
 	}
 
-    MSC_LUNTypeDef* pLUN = usb->GetLUN_Info();
+    MSC_LUNTypeDef* pLUN = pUSB->GetLUN_Info();
 
     switch(Control)
     {
@@ -203,13 +199,13 @@ DRESULT FatFS_USB_Key::IO_Ctrl(uint8_t Control, void *pBuffer)
 
         case GET_SECTOR_COUNT:
 		{
-            *(DWORD*)pBuffer = lun->capacity.block_nbr;
+            *(DWORD*)pBuffer = pLUN->capacity.block_nbr;
 			return RES_OK;
 		}
 
         case GET_SECTOR_SIZE:
 		{
-            *(WORD*)pBuffer = lun->capacity.block_size;
+            *(WORD*)pBuffer = pLUN->capacity.block_size;
 			return RES_OK;
 		}
 

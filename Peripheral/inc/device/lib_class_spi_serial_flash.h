@@ -143,7 +143,7 @@ class SPI_SerialFLashDriver
         SystemState_e               WritePage               (void* pBuffer, uint32_t Address, size_t Length);
 
       #if (FLASH_USE_AUTO_DETECT_FLASH == DEF_ENABLED)
-        void                        ReadSFDP                (uint32_t NumberOfByteToRead, uint32_t Address, uint8_t* pBuffer);
+        SystemState_e               ReadSFDP                (uint32_t NumberOfByteToRead, uint32_t Address, uint8_t* pBuffer);
         uint32_t                    ReadSFDP_Density        (void);
       #endif
 

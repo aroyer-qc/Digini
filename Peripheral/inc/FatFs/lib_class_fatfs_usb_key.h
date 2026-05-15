@@ -33,12 +33,6 @@
 #ifdef __cplusplus
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-//#include "diskio_interface.h"
-
-//-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED)
 
@@ -49,11 +43,6 @@
 class FatFS_USB_Key : public DiskIO_DeviceInterface
 {
     public:
-
-								FatFS_USB_Key ();
-							   ~FatFS_USB_Key (){}
-
-        //void            		Configure           (uint8_t* pBuffer, size_t Size);
 
 		// Mandatory function required by FatFs
         DSTATUS         		Initialize          (void* pParameter);
@@ -68,12 +57,7 @@ class FatFS_USB_Key : public DiskIO_DeviceInterface
 
     private:
 
-        //bool            		m_IsItInitialize    = false;
         DSTATUS         		m_Status            = STA_NODISK;
-
-		//DiskMedia_e				m_ThisDisk			= INVALID_DISK;
-        //uint8_t*        		m_pBuffer           = nullptr;
-        //size_t          		m_Size              = 0;                       // size of the disk, is a multiple of 512
 };
 
 //-------------------------------------------------------------------------------------------------

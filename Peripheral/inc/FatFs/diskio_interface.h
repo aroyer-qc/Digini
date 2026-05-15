@@ -46,11 +46,6 @@ class DiskIO_DeviceInterface
       #if _USE_IOCTL == 1
         virtual DRESULT             IO_Ctrl                 (uint8_t, void*)                        = 0;
       #endif
-
-        //virtual void                Sync                    (void)                                  = 0;
-        //virtual uint32_t            GetSectorCount          (void)                                  = 0;
-        //virtual uint32_t            GetSectorSize           (void)                                  = 0;
-        //virtual uint32_t            GetEraseBlockSize       (void)                                  = 0;
 };
 
 #endif

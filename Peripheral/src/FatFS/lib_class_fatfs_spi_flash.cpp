@@ -32,7 +32,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
+#if (DIGINI_FATFS_USE_SPI_FLASH == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -42,23 +42,6 @@
 //   Description:   Class to handle FatFS for flash disk
 //
 //-------------------------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function:      Configure
-//
-//   Parameter(s):  uint8_t*    pBuffer         Data buffer allocated for flash disk
-//                  size_t      Size            Size of the buffer
-//
-//   Return value:  None
-//
-//-------------------------------------------------------------------------------------------------
-void FatFS_SPI_Flash::Configure(uint8_t* pBuffer, size_t Size)
-{
-    m_pBuffer        = pBuffer;
-    m_Size           = Size;
-    m_IsItInitialize = true;
-}
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -72,15 +55,8 @@ void FatFS_SPI_Flash::Configure(uint8_t* pBuffer, size_t Size)
 //-------------------------------------------------------------------------------------------------
 DSTATUS FatFS_SPI_Flash::Initialize(void* pParameter)
 {
-    VAR_UNUSED(pParameter);
-
-    if(m_IsItInitialize == true)
-    {
-        m_Status = STA_OK;
-    }
-
-    m_ChipSelect  = (SPI_Param_t*)pParameter)->IO_ChipSelect;
-    m_pSPI_Driver = (SPI_Param_t*)pParameter)->pDriver;
+    SPI_Param_t* pParam = ((SPI_Param_t*)pParameter);
+    m_SPI_Flash.Initialize(pParam->pDriver, pParam->IO_ChipSelect);
 
     return m_Status;
 }
@@ -104,9 +80,9 @@ DSTATUS FatFS_SPI_Flash::Status(void)
 //
 //   Function name: Read
 //
-//   Parameter(s):  uint8_t*  pBuffer
-//                  uint32_t  Sector
-//                  uint16_t   NumberOfSectors
+//   Parameter(s):  uint8_t*    pBuffer
+//                  uint32_t    Sector
+//                  uint16_t    NumberOfSectors
 //   Return value:  DRESULT
 //
 //   Description:   Read From flash disk device.
@@ -116,15 +92,16 @@ DSTATUS FatFS_SPI_Flash::Status(void)
 //-------------------------------------------------------------------------------------------------
 DRESULT FatFS_SPI_Flash::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {
-    DRESULT Result;
+    uint32_t Address = Sector * FF_MAX_SS;
+    size_t   Length  = (size_t)NumberOfSectors * FF_MAX_SS;
+    SystemState_e State = m_SPI_Flash.Read(pBuffer, Address, Length);
 
-    if((Result = CheckError(Sector, NumberOfSectors)) == RES_OK)
+    if(State == SYS_READY)
     {
-        memcpy(pBuffer, m_pBuffer + (Sector * FLASH_DISK_SECTOR_SIZE), NumberOfSectors * FLASH_DISK_SECTOR_SIZE);
         return RES_OK;
     }
 
-    return Result;
+    return RES_ERROR;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -142,15 +119,18 @@ DRESULT FatFS_SPI_Flash::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t Number
 #if _USE_WRITE == 1
 DRESULT FatFS_SPI_Flash::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {
-    DRESULT Result;
+    uint32_t Address = Sector * FF_MAX_SS;
+    size_t   Length  = (size_t)NumberOfSectors * FF_MAX_SS;
 
-    if((Result = CheckError(Sector, NumberOfSectors)) == RES_OK)
+    // Low-level flash write
+    SystemState_e State = m_SPI_Flash.Write(pBuffer, Address, Length);
+
+    if(State == SYS_READY)
     {
-        memcpy(m_pBuffer + (Sector * RAM_DISK_SECTOR_SIZE), pBuffer, NumberOfSectors * RAM_DISK_SECTOR_SIZE);
         return RES_OK;
     }
 
-    return Result;
+    return RES_ERROR;
 }
 #endif
 
@@ -185,7 +165,7 @@ DRESULT FatFS_SPI_Flash::IO_Ctrl(uint8_t Control, void *pBuffer)
 
         case GET_SECTOR_COUNT:                                                  // Get number of sectors on the disk (unit32_t)
         {
-            *(uint32_t*)pBuffer = pSPI_Flash->GetFlashSize() / FF_MAX_SS;
+            *(uint32_t*)pBuffer = m_SPI_Flash.GetFlashSize() / FF_MAX_SS;
             res = RES_OK;
         }
 		break;
@@ -199,31 +179,8 @@ DRESULT FatFS_SPI_Flash::IO_Ctrl(uint8_t Control, void *pBuffer)
 
         case GET_BLOCK_SIZE:                                                    // Get erase block size (In Flash this is sector)
         {
-            *(uint32_t*)pBuffer = pSPI_Flash->GetSectorEraseSize();
+           *(uint32_t*)pBuffer = m_SPI_Flash.GetSectorEraseSize()/ FF_MAX_SS;
         }
-		break;
-
-        case CTRL_FORMAT:
-        {
-			FATFS fs;
-			FRESULT res;
-
-			// Allocate the mandatory working buffer for formatting Must be at least FF_MAX_SS
-			uint8_t* pSector = (uint8_t*)pMemoryPool->Alloc(FF_MAX_SS);
-
-			// Execute formatting using the 4-parameter API "0:" indicates the logical drive number
-			//m_ThisDisk;
-			res = f_mkfs("0:", &FatFS_SPI_FlashDisk::m_MKFS_Option, FF_MAX_SS, FF_MAX_SS);
-
-			//if(res == FR_OK)
-			//{
-				// Mount the drive immediately (1 = Force mount check)
-				//res = f_mount(&fs, "0:", 1);
-			//}
-
-			// Free memory used by f_mkfs
-			pMemoryPool->Free((void**)&pSector);
-		}
 		break;
 
         default:
@@ -236,89 +193,6 @@ DRESULT FatFS_SPI_Flash::IO_Ctrl(uint8_t Control, void *pBuffer)
 }
 #endif
 
-
-#if 0
-
-        SystemState_e               EraseSector             (uint32_t SectorAddress);
-        SystemState_e               BulkErase               (void);
-        SystemState_e               Read                    (void* pBuffer, uint32_t Address, size_t Length);
-        SystemState_e               Write                   (const void* pBuffer, uint32_t Address, size_t Length);
-
-        uint32_t                    GetPageSize             (void)          { return m_FlashInfo.PageSize; }
-        uint64_t                    GetFlashSize            (void)          { return m_FlashInfo.NumberOfPages * m_FlashInfo.PageSize; }
-        uint32_t                    GetSectorEraseSize      (void)          { return m_FlashInfo.SectorEraseSize; }
-        uint32_t                    GetSectorSize           (void)          { return m_FlashInfo.SectorSize; }
-        uint32_t                    GetFlashID              (void)          { return m_FlashInfo.FlashID; }
-#endif
-
-//-------------------------------------------------------------------------------------------------
-//
-//   Function name: CheckError
-//
-//   Parameter(s):  uint32_t        Sector
-//                  uint8_t         NumberOfBlocks
-//   Return value:  DRESULT
-//
-//   Description:   Check for parameter error and flash boundary violation
-//
-//   Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-DRESULT FatFS_SPI_Flash::CheckError(uint32_t Sector, uint16_t NumberOfSectors)
-{
-    if(m_Status & (STA_NOINIT | STA_NODISK))
-    {
-        return RES_NOTRDY;
-    }
-
-    if(NumberOfSectors == 0)
-    {
-       return RES_PARERR;
-    }
-
-    if((Sector + ((NumberOfSectors - 1) * FLASH_DISK_SECTOR_SIZE)) >= (m_Size / FLASH_DISK_SECTOR_SIZE))
-    {
-       return RES_PARERR;
-    }
-
-    return RES_OK;
-}
-
 //-------------------------------------------------------------------------------------------------
 
-#endif // DIGINI_FATFS_USE_SPI_FLASH_CHIP
-
-
-#if 0
-
-// how to
-void format_super_floppy(void)
-{
-    FATFS fs;
-    FRESULT res;
-
-    // Allocate the mandatory working buffer for formatting
-    // Must be at least _MAX_SS (Sector Size, typically 512 or 4096)
-    BYTE work_buffer[FF_MAX_SS];
-
-    // Initialize the configuration structure
-    MKFS_PARM opt;
-
-    // Set format type to any valid FAT type (FAT/FAT32/exFAT) AND combine it with the Super Floppy Disk flag (FM_SFD, no MBR)
-    opt.fmt = FM_ANY | FM_SFD;
-
-    opt.au_size = 0;        	// 0 = Auto-select cluster size based on disk capacity
-    opt.align   = 0;          	// 0 = Auto-align clusters to data area block size
-    opt.n_fat   = 0;          	// 0 = Auto-select number of FAT tables (usually 2)
-    opt.n_root  = 0;         	// 0 = Auto-select root directory entries (for FAT12/16)
-
-    // Execute formatting using the 4-parameter API "0:" indicates the logical drive number
-    res = f_mkfs("0:", &opt, work_buffer, sizeof(work_buffer));
-
-    if(res == FR_OK)
-	{
-        // Mount the drive immediately (1 = Force mount check)
-        res = f_mount(&fs, "0:", 1);
-    }
-}
-#endif
+#endif // DIGINI_FATFS_USE_SPI_FLASH

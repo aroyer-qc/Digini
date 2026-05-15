@@ -142,7 +142,6 @@
 //
 //#include "./Peripheral/inc/port/interface/lib_class_driver_interface.h"
 
-
 //-------------------------------------------------------------------------------------------------
 // Driver
 //
@@ -291,6 +290,7 @@ class NetworkContext;
 
 #if (DIGINI_USE_FATFS == DEF_ENABLED)
 
+#include "FatFs_cfg.h"
 #include "./Peripheral/inc/FatFs/diskio_def.h"
 #include "./Peripheral/inc/FatFs/diskio_interface.h"
 
@@ -302,12 +302,12 @@ class NetworkContext;
 #include "./Peripheral/inc/FatFs/lib_class_fatfs_sdio.h"
 #endif
 
-#if (DIGINI_FATFS_USE_SPI_EEPROM_CHIP == DEF_ENABLED)
-#include "./Peripheral/inc/FatFs/lib_class_fatfs_spi_eeprom_chip.h"
+#if (DIGINI_FATFS_USE_SPI_EEPROM == DEF_ENABLED)
+#include "./Peripheral/inc/FatFs/lib_class_fatfs_spi_eeprom.h"
 #endif
 
-#if (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
-#include "./Peripheral/inc/FatFs/lib_class_fatfs_spi_flash_chip.h"
+#if (DIGINI_FATFS_USE_SPI_FLASH == DEF_ENABLED)
+#include "./Peripheral/inc/FatFs/lib_class_fatfs_spi_flash.h"
 #endif
 
 #if (DIGINI_FATFS_USE_SPI_SD_CARD == DEF_ENABLED)
@@ -318,6 +318,7 @@ class NetworkContext;
 #include "./Peripheral/inc/FatFs/lib_class_fatfs_usb_key.h"
 #endif
 
+#include "FatFs_var.h"
 #include "./Peripheral/inc/FatFs/diskio.h"
 #include "./Peripheral/inc/FatFs/digini_diskio.h"
 

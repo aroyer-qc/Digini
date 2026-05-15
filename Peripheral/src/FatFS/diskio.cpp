@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -40,9 +40,8 @@
 // Expanding Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-#define EXPAND_X_DRIVE_AS_DISK_OBJ(ENUM_ID, CLASS_, DISK_OBJ, ARG)                      &DISK_OBJ
-#define EXPAND_X_DRIVE_AS_DISK_ARG(ENUM_ID, CLASS_, DISK_OBJ, ARG)                      ARG
-#define EXPAND_X_DRIVE_AS_DISK_CLASS_OBJECT_CREATION(ENUM_ID, CLASS_, DISK_OBJ, ARG)    CLASS_ DiskIO::DISK_OBJ;
+#define EXPAND_X_DRIVE_AS_DISK_OBJ(ENUM_ID, CLASS_, DISK_OBJ, ARG)  &DiskIO::GetInstance().DISK_OBJ,
+#define EXPAND_X_DRIVE_AS_DISK_ARG(ENUM_ID, CLASS_, DISK_OBJ, ARG)  ARG,
 
 //-------------------------------------------------------------------------------------------------
 // Local variable(s) or Class
@@ -57,8 +56,6 @@ void* DiskIO::pParameterList[NUMBER_OF_DISK] =
 {
     FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_DISK_ARG)
 };
-
-FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_DISK_CLASS_OBJECT_CREATION)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -77,7 +74,7 @@ FAT_FS_DRIVE_DEF(EXPAND_X_DRIVE_AS_DISK_CLASS_OBJECT_CREATION)
 //-------------------------------------------------------------------------------------------------
 DSTATUS DiskIO::Initialize(DiskMedia_e Disk)
 {
-    return pDiskList[Disk]->Initialize();
+    return pDiskList[Disk]->Initialize(DiskIO::pParameterList[Disk]);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -95,7 +92,7 @@ DSTATUS DiskIO::Initialize(DiskMedia_e Disk)
 //-------------------------------------------------------------------------------------------------
 DSTATUS DiskIO::Status(DiskMedia_e Disk)
 {
-    return pDiskList[Disk]->Status();
+    return DiskIO::pDiskList[Disk]->Status();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -117,7 +114,7 @@ DSTATUS DiskIO::Status(DiskMedia_e Disk)
 //-------------------------------------------------------------------------------------------------
 DRESULT DiskIO::Read(DiskMedia_e Disk, uint8_t* pBuffer, uint32_t Sector, uint16_t Count)
 {
-    return pDiskList[Disk]->Read(pBuffer, Sector, Count);
+    return DiskIO::pDiskList[Disk]->Read(pBuffer, Sector, Count);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -140,7 +137,7 @@ DRESULT DiskIO::Read(DiskMedia_e Disk, uint8_t* pBuffer, uint32_t Sector, uint16
 #if _USE_WRITE == 1
 DRESULT DiskIO::Write(DiskMedia_e Disk, const uint8_t* pBuffer, uint32_t Sector, uint16_t Count)
 {
-    return pDiskList[Disk]->Write(pBuffer, Sector, Count);
+    return DiskIO::pDiskList[Disk]->Write(pBuffer, Sector, Count);
 }
 #endif
 
@@ -162,7 +159,37 @@ DRESULT DiskIO::Write(DiskMedia_e Disk, const uint8_t* pBuffer, uint32_t Sector,
 //-------------------------------------------------------------------------------------------------
 DRESULT DiskIO::IO_Ctrl(DiskMedia_e Disk, uint8_t Command, void* pBuffer)
 {
-    return pDiskList[Disk]->IO_Ctrl(Command, pBuffer);
+    if(Command == CTRL_FORMAT)
+    {
+        // Working buffer (FatFS need at least FF_MAX_SS bytes
+        uint8_t* pSector = (uint8_t*)pMemoryPool->Alloc(FF_MAX_SS);
+
+        if(pSector == nullptr)
+        {
+            return RES_ERROR;
+        }
+
+        // Build drive string: "0:", "1:", etc.
+        char DriveStr[3];
+        DriveStr[0] = '0' + uint8_t(Disk);
+        DriveStr[1] = ':';
+        DriveStr[2] = '\0';
+
+        // Format
+        FRESULT Result = f_mkfs(DriveStr, &MKFS_Option, pSector, FF_MAX_SS);
+
+        // Free working buffer
+        pMemoryPool->Free((void**)&pSector);
+
+        if(Result == FR_OK)
+        {
+            return RES_OK;
+        }
+
+        return RES_ERROR;
+    }
+
+    return DiskIO::pDiskList[Disk]->IO_Ctrl(Command, pBuffer);
 }
 
 #if 0

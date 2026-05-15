@@ -33,14 +33,8 @@
 #ifdef __cplusplus
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
 
-#include "diskio_interface.h"
-
-//-------------------------------------------------------------------------------------------------
-
-#if (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
+#if (DIGINI_FATFS_USE_SPI_FLASH == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
@@ -49,11 +43,6 @@
 class FatFS_SPI_Flash : public DiskIO_DeviceInterface
 {
     public:
-
-								FatFS_SPI_Flash ();
-							   ~FatFS_SPI_Flash (){}
-
-        void            		Configure           (uint8_t* pBuffer, size_t Size);
 
 		// Mandatory function required by FatFs
         DSTATUS         		Initialize          (void* pParameter);
@@ -66,24 +55,16 @@ class FatFS_SPI_Flash : public DiskIO_DeviceInterface
         DRESULT         		IO_Ctrl             (uint8_t Control, void* pBuffer);
       #endif
 
+
     private:
 
-        DRESULT        			 CheckError          (uint32_t Sector, uint16_t NumberOfSectors);
-
-        bool            		m_IsItInitialize    = false;
         DSTATUS         		m_Status            = STA_NODISK;
-		//DiskMedia_e				m_ThisDisk			= INVALID_DISK;
-
-		IO_ID_e                 m_ChipSelect        = IO_NOT_DEFINED;
-        SPI_Driver              m_pSPI_Driver       = NULLPTR;
-
-        uint8_t*        		m_pBuffer           = nullptr;
-        size_t          		m_Size              = 0;                       // size of the disk, is a multiple of 512
+        SPI_SerialFLashDriver   m_SPI_Flash;
 };
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (DIGINI_FATFS_USE_SPI_FLASH_CHIP == DEF_ENABLED)
+#endif // (DIGINI_FATFS_USE_SPI_FLASH == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 

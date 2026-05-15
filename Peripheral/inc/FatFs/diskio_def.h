@@ -32,9 +32,6 @@
 
 #include "./Digini/inc/lib_typedef.h"
 
-//#include "./Digini/inc/lib_typedef.h"
-//#include "FatFs_cfg.h"
-
 //-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
@@ -64,6 +61,7 @@
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
 //-------------------------------------------------------------------------------------------------
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -83,15 +81,17 @@ typedef enum
     RES_PARERR              // 4: Invalid Parameter
 } DRESULT;
 
-typedef struct
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+struct SPI_Param_t
 {
     SPI_Driver*    pDriver;
     IO_ID_e        IO_ChipSelect;
 
-} SPI_Param_t;
-
-#ifdef __cplusplus
-}
+};
 #endif
 
 //-------------------------------------------------------------------------------------------------

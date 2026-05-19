@@ -36,9 +36,7 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-//-------------------------------------------------------------------------------------------------
 // Standard header
-//
 #include <stdint.h>
 #include <ctype.h>
 #include <stdbool.h>
@@ -127,6 +125,7 @@
 #include "./RTOS_Wrapper/inc/nOS/lib_class_queue.h"
 #include "./RTOS_Wrapper/inc/nOS/lib_class_timer.h"
 #include "./Utility/inc/lib_utility.h"
+#include "./Utility/inc/lib_delay.h"
 #include "./Peripheral/inc/port/lib_isr.h"
 #include "./Utility/inc/lib_pid.h"
 #include "./Utility/inc/lib_sunset.h"

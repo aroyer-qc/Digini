@@ -43,20 +43,22 @@
 #define GET_SECTOR_SIZE                 2
 #define GET_BLOCK_SIZE                  3        // Mandatory for only f_mkfs()
 #define CTRL_ERASE_SECTOR               4        // Force erased a block of sectors (for only _USE_ERASE)
-#define MMC_GET_TYPE                    5        // FatFS definition N/U
-#define MMC_GET_CSD                     6        // FatFS definition N/U... use Formatted struct version GET_CSD_STRUCT
-#define MMC_GET_CID                     7        // FatFS definition N/U... use Formatted struct version GET_CID_STRUCT
-#define MMC_GET_OCR                     8
-#define ATA_GET_REV                     9        // FatFS definition N/U
-#define ATA_GET_MODEL                   10       // FatFS definition N/U
-#define ATA_GET_SN                      11       // FatFS definition N/U .. we use CID
+
+// Example of optional ioctl command
+#define CTRL_FORMAT						5		// Formatting the drive is done via IO_Ctrl
+#define MMC_GET_TYPE                    6        // FatFS definition N/U
+#define MMC_GET_CSD                     7        // FatFS definition N/U... use Formatted struct version GET_CSD_STRUCT
+#define MMC_GET_CID                     8        // FatFS definition N/U... use Formatted struct version GET_CID_STRUCT
+#define MMC_GET_OCR                     9
+#define ATA_GET_REV                     10        // FatFS definition N/U
+#define ATA_GET_MODEL                   11       // FatFS definition N/U
+#define ATA_GET_SN                      12       // FatFS definition N/U .. we use CID
 
 // Custom definition
-#define GET_CID_STRUCT                  20
-#define GET_CSD_STRUCT                  21
-#define GET_SCR_STRUCT                  22
+#define MMC_CID_STRUCT                  20
+#define MMC_CSD_STRUCT                  21
+#define MMC_GET_SCR                     22
 #define GET_CARD_CAPACITY               23
-#define CTRL_FORMAT						24		// Formatting the drive is done via IO_Ctrl
 
 //-------------------------------------------------------------------------------------------------
 // Type definition(s) and structure(s)
@@ -86,11 +88,10 @@ typedef enum
 #endif
 
 #ifdef __cplusplus
-struct SPI_Param_t
+struct SPI_Param_t			// SPI device, Flash, Eeprom SD card
 {
     SPI_Driver*    pDriver;
     IO_ID_e        IO_ChipSelect;
-
 };
 #endif
 

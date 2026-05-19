@@ -59,6 +59,8 @@ uint32_t            get_fattime             (void);
 DWORD               ff_convert              (DWORD wch, UINT dir);
 DWORD               ff_wtoupper             (DWORD wch);
 
+//-------------------------------------------------------------------------------------------------
+
 #ifdef __cplusplus
 }
 #endif

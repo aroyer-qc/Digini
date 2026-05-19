@@ -115,6 +115,7 @@ class DiskIO    // Singleton
 
     #else
 
+      extern class DiskIO& FatFS_DiskIO;
   	  extern const MKFS_PARM MKFS_Option;
 
     #endif

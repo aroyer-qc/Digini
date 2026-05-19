@@ -192,80 +192,6 @@ DRESULT DiskIO::IO_Ctrl(DiskMedia_e Disk, uint8_t Command, void* pBuffer)
     return DiskIO::pDiskList[Disk]->IO_Ctrl(Command, pBuffer);
 }
 
-#if 0
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:
-//
-//  Parameter(s):
-//  Return:
-//
-//  Description:
-//
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-void DiskIO::Sync(DiskMedia_e Disk)
-{
-    return pDiskList[Disk]->Sync();
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:
-//
-//  Parameter(s):
-//  Return:
-//
-//  Description:
-//
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-uint32_t DiskIO::GetSectorCount(DiskMedia_e Disk)
-{
-    return pDiskList[Disk]->GetSectorCount();
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:
-//
-//  Parameter(s):
-//  Return:
-//
-//  Description:
-//
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-uint32_t DiskIO::GetSectorSize(DiskMedia_e Disk)
-{
-    return pDiskList[Disk]->GetSectorSize();
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:
-//
-//  Parameter(s):
-//  Return:
-//
-//  Description:
-//
-//
-//  Note(s):
-//
-//-------------------------------------------------------------------------------------------------
-uint32_t DiskIO::GetEraseBlockSize(DiskMedia_e Disk)
-{
-    return pDiskList[Disk]->GetEraseBlockSize();
-}
-#endif
-
 //-------------------------------------------------------------------------------------------------
 // Global function(s)
 //-------------------------------------------------------------------------------------------------
@@ -371,7 +297,6 @@ extern "C" DRESULT disk_ioctl(uint8_t Disk, uint8_t Control, void* pBuffer)
 {
    return FatFS_DiskIO.GetInstance().IO_Ctrl(DiskMedia_e(Disk), Control, pBuffer);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //

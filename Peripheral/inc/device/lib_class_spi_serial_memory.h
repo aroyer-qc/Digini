@@ -49,21 +49,11 @@
 #define EXPAND_X_SERIAL_MEM_AS_CLASS_CONST(ENUM_ID, MEMORY_ID, PAGE_SIZE, NB_OF_PAGE, PAGE_ERASE_SIZE, SECTOR_SIZE, SECTOR_ERASE_SIZE, OPTION) \
                                                    {MEMORY_ID, PAGE_SIZE, NB_OF_PAGE, PAGE_ERASE_SIZE, SECTOR_SIZE, SECTOR_ERASE_SIZE, OPTION, ((NB_OF_PAGE * PAGE_SIZE) / SECTOR_SIZE)},
 
-#define SERIAL_FLASH_DEF(X_SERIAL_FLASH) \
+#define SERIAL_MEMORY_DEF(X_SERIAL_MEM) \
 /*                                                    Memory type,        Memory ID, Page Size,   NB of Page, Page Erase Sz,  Sector Sz, Sector Erase Sz,   Option */ \
-    IF_USE( MEM_USE_AT25SF321,          X_SERIAL_MEM( FLASH_AT25SF321,    0x1F8701,  256,         16384,      0,              4096,       4096,             MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_SFDP | MEM_OPT_SECTOR_ERASE )) \
-    IF_USE( MEM_USE_AT25SF641,          X_SERIAL_MEM( FLASH_AT25SF641,    0x1F1632,  256,         32768,      0,              4096,       4096,             MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_SFDP | MEM_OPT_SECTOR_ERASE | MEM_OPT_4_BYTES_ADDR )) \
     IF_USE( MEM_USE_M25PE16,            X_SERIAL_MEM( FLASH_M25PE16,      0x208015,  256,         8192,       256,            512,        65536,            MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_PAGE_ERASE | MEM_OPT_SECTOR_ERASE )) \
     IF_USE( MEM_USE_M25PE80,            X_SERIAL_MEM( FLASH_M25PE80,      0x208014,  256,         4096,       256,            512,        65536,            MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_PAGE_ERASE | MEM_OPT_SECTOR_ERASE )) \
-    IF_USE( MEM_USE_SST26VF032B,        X_SERIAL_MEM( FLASH_SST26VF032B,  0xBF2642,  256,         16384,      0,              4096,       4096,             MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_SFDP | MEM_OPT_SECTOR_ERASE )) \
-    IF_USE( MEM_USE_SST26VF064B,        X_SERIAL_MEM( FLASH_SST26VF064B,  0xBF2643,  256,         32768,      0,              4096,       4096,             MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_SFDP | MEM_OPT_SECTOR_ERASE | MEM_OPT_4_BYTES_ADDR )) \
-    IF_USE( MEM_USE_W25Q16JV,           X_SERIAL_MEM( FLASH_W25Q16JV,     0xEF4015,  256,         8192,       0,              4096,       4096,             MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_SFDP | MEM_OPT_SECTOR_ERASE )) \
-    IF_USE( MEM_USE_W25Q32JV,           X_SERIAL_MEM( FLASH_W25Q32JV,     0xEF4016,  256,         16384,      0,              4096,       4096,             MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_SFDP | MEM_OPT_SECTOR_ERASE )) \
-    IF_USE( MEM_USE_W25Q64JV,           X_SERIAL_MEM( FLASH_W25Q64JV,     0xEF4017,  256,         32768,      0,              4096,       4096,             MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_SFDP | MEM_OPT_SECTOR_ERASE )) \
-    IF_USE( MEM_USE_W25Q128JV,          X_SERIAL_MEM( FLASH_W25Q128JV,    0xEF4018,  256,         65536,      0,              4096,       4096,             MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_SFDP | MEM_OPT_SECTOR_ERASE | MEM_OPT_4_BYTES_ADDR )) \
-    IF_USE( MEM_USE_W25Q256JV,          X_SERIAL_MEM( FLASH_W25Q256JV,    0xEF4019,  256,         131072,     0,              4096,       4096,             MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_SFDP | MEM_OPT_SECTOR_ERASE | MEM_OPT_4_BYTES_ADDR )) \
-    IF_USE( MEM_USE_W25Q512JV,          X_SERIAL_MEM( FLASH_W25Q512JV,    0xEF4020,  256,         262144,     0,              4096,       4096,             MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_SFDP | MEM_OPT_SECTOR_ERASE | MEM_OPT_4_BYTES_ADDR )) \
-    IF_USE( MEM_USE_M95512,             X_SERIAL_MEM( EEPROM_M95512,      0x000000,  128,         512,        0,              0,          0,                MEM_OPT_EEPROM_STYLE | MEM_OPT_FAST_READ )) \
+    IF_USE( MEM_USE_M95512,             X_SERIAL_MEM( EEPROM_M95512,      0x000000,  128,         512,        0,              128,        0,                MEM_OPT_EEPROM_STYLE )) \
     IF_USE( MEM_USE_M95P16,             X_SERIAL_MEM( EEPROM_M95P16,      0x20BA15,  256,         8192,       256,            65536,      65536,            MEM_OPT_PAGE_ERASE | MEM_OPT_SECTOR_ERASE )) \
     IF_USE( MEM_USE_M95P32,             X_SERIAL_MEM( EEPROM_M95P32,      0x20BA16,  256,         16384,      256,            65536,      65536,            MEM_OPT_PAGE_ERASE | MEM_OPT_SECTOR_ERASE )) \
     IF_USE( MEM_USE_M95P64,             X_SERIAL_MEM( EEPROM_M95P64,      0x20BA17,  256,         32768,      256,            65536,      65536,            MEM_OPT_PAGE_ERASE | MEM_OPT_SECTOR_ERASE )) \
@@ -116,13 +106,14 @@ struct MemoryInfo_t
     uint32_t   NumberOfSectors;
 };
 
-#if (SERIAL_MEMORY_USE_AUTO_DETECT != DEF_ENABLED)
 enum MemoryList_e
 {
-    SERIAL_MEMORY_DEF(EXPAND_X_SERIAL_MEMORY_AS_ENUM)
+    SERIAL_MEMORY_DEF(EXPAND_X_SERIAL_MEM_AS_ENUM)
     NUMBER_OF_MEMORY,
+  #if (SERIAL_MEMORY_USE_AUTO_DETECT == DEF_ENABLED)
+    FLASH_AUTO_DETECT,
+  #endif
 };
-#endif
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -132,11 +123,7 @@ class SPI_SerialMemoryDriver
 {
     public:
 
-      #if (SERIAL_MEMORY_USE_AUTO_DETECT == DEF_ENABLED)
-        SystemState_e               Initialize              (SPI_Driver* pSPI, IO_ID_e ChipSelect);
-      #else
         SystemState_e               Initialize              (SPI_Driver* pSPI, MemoryList_e Memory, IO_ID_e ChipSelect);
-      #endif
 
         SystemState_e               EraseSector             (uint32_t SectorAddress);
         SystemState_e               BulkErase               (void);
@@ -168,10 +155,7 @@ class SPI_SerialMemoryDriver
         IO_ID_e                     m_WriteProtect;
         SPI_Driver*                 m_pSPI;
         MemoryInfo_t                m_MemoryInfo;
-
-      #if (SERIAL_MEMORY_USE_AUTO_DETECT != DEF_ENABLED)
-        static const MemoryInfo_t   m_MemoryInfoList         [NUMBER_OF_MEMORY];
-      #endif
+        static const MemoryInfo_t   m_MemoryInfoList        [NUMBER_OF_MEMORY];
 };
 
 //-------------------------------------------------------------------------------------------------

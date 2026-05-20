@@ -60,7 +60,7 @@
 DSTATUS FatFS_SPI_Memory::Initialize(void* pParameter)
 {
     SPI_Param_t* pParam = ((SPI_Param_t*)pParameter);
-    m_SPI_Memory.Initialize(pParam->pDriver, pParam->IO_ChipSelect);
+    m_SPI_Memory.Initialize(pParam->pDriver, pParam->MemoryID, pParam->IO_ChipSelect);
 
     return m_Status;
 }

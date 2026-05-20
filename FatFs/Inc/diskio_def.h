@@ -91,6 +91,7 @@ typedef enum
 struct SPI_Param_t			// SPI device, Flash, Eeprom SD card
 {
     SPI_Driver*    pDriver;
+    MemoryList_e   MemoryID;
     IO_ID_e        IO_ChipSelect;
 };
 #endif

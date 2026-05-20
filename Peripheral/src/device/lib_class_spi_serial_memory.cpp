@@ -75,12 +75,10 @@
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
-#if (SERIAL_MEMORY_USE_AUTO_DETECT != DEF_ENABLED)
 const MemoryInfo_t SPI_SerialMemoryDriver::m_MemoryInfoList[NUMBER_OF_MEMORY] =
 {
-    SERIAL_MEMORY_DEF(EXPAND_X_SERIAL_MEMORY_AS_CLASS_CONST)
+    SERIAL_MEMORY_DEF(EXPAND_X_SERIAL_MEM_AS_CLASS_CONST)
 };
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -103,63 +101,77 @@ const MemoryInfo_t SPI_SerialMemoryDriver::m_MemoryInfoList[NUMBER_OF_MEMORY] =
 //                  memory information from the static table.
 //
 //-------------------------------------------------------------------------------------------------
-#if (SERIAL_MEMORY_USE_AUTO_DETECT == DEF_ENABLED)
-SystemState_e SPI_SerialMemoryDriver::Initialize(SPI_Driver* pSPI, IO_ID_e ChipSelect)
-#else
 SystemState_e SPI_SerialMemoryDriver::Initialize(SPI_Driver* pSPI, MemoryList_e Memory, IO_ID_e ChipSelect)
-#endif
 {
-    uint32_t MemoryID;
+    uint32_t MemoryID = 0;
 
     m_pSPI       = pSPI;
     m_ChipSelect = ChipSelect;
 
     m_pSPI->Initialize();
 
-    MemoryID = ReadID();
-
-    if((MemoryID & MEM_SST_DEVICES) == MEM_SST_DEVICES)          // For SST devices unlock is needed
+    // Memory is defined
+    if(Memory < NUMBER_OF_MEMORY)
     {
-        m_pSPI->LockToDevice(m_ChipSelect, false);
-        WriteEnable();
-        m_pSPI->SelectChip(m_ChipSelect);
-        m_pSPI->Write(MEMORY_CMD_UNLOCK);
-        m_pSPI->DeSelectChip(m_ChipSelect);
-        m_pSPI->UnlockFromDevice(m_ChipSelect, false);
+        const MemoryInfo_t* pInfo = &m_MemoryInfoList[Memory];
+
+        // Read the D only if supported
+        if(pInfo->SupportOptions & MEM_OPT_READ_ID)
+        {
+            MemoryID = ReadID();
+
+            // For SST : unlock sequence is mandatory
+            if((MemoryID & MEM_SST_DEVICES) == MEM_SST_DEVICES)
+            {
+                m_pSPI->LockToDevice(m_ChipSelect, false);
+                WriteEnable();
+                m_pSPI->SelectChip(m_ChipSelect);
+                m_pSPI->Write(MEMORY_CMD_UNLOCK);
+                m_pSPI->DeSelectChip(m_ChipSelect);
+                m_pSPI->UnlockFromDevice(m_ChipSelect, false);
+            }
+        }
+
+        // Copier la structure complète
+        memcpy(&m_MemoryInfo, pInfo, sizeof(MemoryInfo_t));
+        m_MemoryInfo.MemoryID = MemoryID;
+
+        return SYS_READY;
     }
 
   #if (SERIAL_MEMORY_USE_AUTO_DETECT == DEF_ENABLED)
-    if (m_MemoryInfo.Flags & MEM_FLAG_SFDP)
-    {    
-		uint32_t FlashDensity = ReadSFDP_Density();
-
-		if(FlashDensity > 0)
-		{
-			m_MemoryInfo.PageSize         = MEM_SFDP_PAGE_SIZE;
-			m_MemoryInfo.NumberOfPages    = FlashDensity / MEM_SFDP_PAGE_SIZE;
-			m_MemoryInfo.PageEraseSize    = 0;
-			m_MemoryInfo.SectorSize       = MEM_SFDP_SECTOR_SIZE;
-			m_MemoryInfo.SectorEraseSize  = MEM_SFDP_SECTOR_SIZE;
-			m_MemoryInfo.NumberOfSectors  = FlashDensity / MEM_SFDP_SECTOR_SIZE;
-			m_MemoryInfo.MemoryID         = MemoryID;
-		}
-/*    else
+    // Auto detect mode
+    if(Memory == FLASH_AUTO_DETECT)
     {
-        // Error... Memory not supported.
-        m_MemoryInfo.PageSize        = 0;
-        m_MemoryInfo.NumberOfSectors = 0;        // Unsupported Memory
-        m_MemoryInfo.MemoryID        = MemoryID;
-        return SYS_ERROR;
-*/
+        // Read the ID
+        MemoryID = ReadID();
+
+        // Read SFDP
+        uint32_t FlashDensity = ReadSFDP_Density();
+
+        if(FlashDensity == 0)
+        {
+            return SYS_FAIL;   // Memory invalid
+        }
+
+        // Dynamic construction of the structure element
+        m_MemoryInfo.PageSize         = MEM_SFDP_PAGE_SIZE;
+        m_MemoryInfo.NumberOfPages    = FlashDensity / MEM_SFDP_PAGE_SIZE;
+        m_MemoryInfo.PageEraseSize    = 0;                                      // There is no page erase size when memory has SFDP
+        m_MemoryInfo.SectorSize       = MEM_SFDP_SECTOR_SIZE;
+        m_MemoryInfo.SectorEraseSize  = MEM_SFDP_SECTOR_SIZE;
+        m_MemoryInfo.NumberOfSectors  = FlashDensity / MEM_SFDP_SECTOR_SIZE;
+        m_MemoryInfo.MemoryID         = MemoryID;
+
+        // Standard capacity of SFDP
+        m_MemoryInfo.SupportOptions =  (MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_SFDP | MEM_OPT_SECTOR_ERASE);
+
+        return SYS_READY;
     }
-	
-	memcpy(&m_MemoryInfo, &m_MemoryInfoList[Memory], sizeof(MemoryInfo_t));
-	
-  #else
-    memcpy(&m_MemoryInfo, &m_MemoryInfoList[Memory], sizeof(MemoryInfo_t));
   #endif
 
-    return SYS_READY;
+    // If we reach here, then the memory is invalid
+    return SYS_FAIL;
 }
 
 //-------------------------------------------------------------------------------------------------

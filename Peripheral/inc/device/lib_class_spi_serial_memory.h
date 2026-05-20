@@ -41,22 +41,23 @@
 #define MEM_OPT_SECTOR_ERASE        (1 << 4)
 #define MEM_OPT_4_BYTES_ADDR        (1 << 5)
 #define MEM_OPT_EEPROM_STYLE        (1 << 6)   // pas d’effacement
+#define MEM_OPT_BULK_ERASE   		(1 << 7)
 
 
 #define EXPAND_X_SERIAL_MEM_AS_ENUM(ENUM_ID, MEMORY, PAGE_SIZE, NB_OF_PAGE, PAGE_ERASE_SIZE, SECTOR_SIZE, SECTOR_ERASE_SIZE, OPTION) \
                                     ENUM_ID,
 
 #define EXPAND_X_SERIAL_MEM_AS_CLASS_CONST(ENUM_ID, MEMORY_ID, PAGE_SIZE, NB_OF_PAGE, PAGE_ERASE_SIZE, SECTOR_SIZE, SECTOR_ERASE_SIZE, OPTION) \
-                                                   {MEMORY_ID, PAGE_SIZE, NB_OF_PAGE, PAGE_ERASE_SIZE, SECTOR_SIZE, SECTOR_ERASE_SIZE, OPTION, ((NB_OF_PAGE * PAGE_SIZE) / SECTOR_SIZE)},
+                                                   {MEMORY_ID, PAGE_SIZE, NB_OF_PAGE, PAGE_ERASE_SIZE, SECTOR_SIZE, SECTOR_ERASE_SIZE, OPTION, ((SECTOR_SIZE == 0) ? 0 : ((NB_OF_PAGE * PAGE_SIZE) / SECTOR_SIZE)), MEMORY_CMD_NONE, MEMORY_CMD_NONE},
 
 #define SERIAL_MEMORY_DEF(X_SERIAL_MEM) \
 /*                                                    Memory type,        Memory ID, Page Size,   NB of Page, Page Erase Sz,  Sector Sz, Sector Erase Sz,   Option */ \
     IF_USE( MEM_USE_M25PE16,            X_SERIAL_MEM( FLASH_M25PE16,      0x208015,  256,         8192,       256,            512,        65536,            MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_PAGE_ERASE | MEM_OPT_SECTOR_ERASE )) \
     IF_USE( MEM_USE_M25PE80,            X_SERIAL_MEM( FLASH_M25PE80,      0x208014,  256,         4096,       256,            512,        65536,            MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_PAGE_ERASE | MEM_OPT_SECTOR_ERASE )) \
-    IF_USE( MEM_USE_M95512,             X_SERIAL_MEM( EEPROM_M95512,      0x000000,  128,         512,        0,              128,        0,                MEM_OPT_EEPROM_STYLE )) \
-    IF_USE( MEM_USE_M95P16,             X_SERIAL_MEM( EEPROM_M95P16,      0x20BA15,  256,         8192,       256,            65536,      65536,            MEM_OPT_PAGE_ERASE | MEM_OPT_SECTOR_ERASE )) \
-    IF_USE( MEM_USE_M95P32,             X_SERIAL_MEM( EEPROM_M95P32,      0x20BA16,  256,         16384,      256,            65536,      65536,            MEM_OPT_PAGE_ERASE | MEM_OPT_SECTOR_ERASE )) \
-    IF_USE( MEM_USE_M95P64,             X_SERIAL_MEM( EEPROM_M95P64,      0x20BA17,  256,         32768,      256,            65536,      65536,            MEM_OPT_PAGE_ERASE | MEM_OPT_SECTOR_ERASE )) \
+    IF_USE( MEM_USE_M95512,             X_SERIAL_MEM( EEPROM_M95512,      0x000000,  128,         512,        0,              0,          0,                MEM_OPT_EEPROM_STYLE )) \
+    IF_USE( MEM_USE_M95P16,             X_SERIAL_MEM( EEPROM_M95P16,      0x20BA15,  256,         8192,       0,              0,          0,                MEM_OPT_EEPROM_STYLE )) \
+    IF_USE( MEM_USE_M95P32,             X_SERIAL_MEM( EEPROM_M95P32,      0x20BA16,  256,         16384,      0,              0,          0,                MEM_OPT_EEPROM_STYLE )) \
+    IF_USE( MEM_USE_M95P64,             X_SERIAL_MEM( EEPROM_M95P64,      0x20BA17,  256,         32768,      0,              0,          0,                MEM_OPT_EEPROM_STYLE )) \
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -64,9 +65,9 @@
 
 enum SerialMemoryCmd_e
 {
-    //MEMORY_CMD_READ_QPI                   = 0x00,     // Fast Read -- QPI             Winbond  QSPI not relevant here
+	MEMORY_CMD_NONE							= 0x00,
     MEMORY_CMD_WRITE_STATUS_REGISTER        = 0x01,     // Write status register
-    MEMORY_CMD_PAGE_PROGRAM                 = 0x02,     // Page program
+    MEMORY_CMD_WRITE                        = 0x02,     // Page Program or EEprom write
     MEMORY_CMD_READ                         = 0x03,     // Read data bytes
     MEMORY_CMD_WRITE_DISABLE                = 0x04,     // Write disable
     MEMORY_CMD_READ_STATUS_REGISTER         = 0x05,     // Read status register
@@ -74,7 +75,6 @@ enum SerialMemoryCmd_e
     MEMORY_CMD_PAGE_WRITE                   = 0x0A,     // Page write instruction                   ???
     MEMORY_CMD_FAST_READ                    = 0x0B,     // Read data bytes
     MEMORY_CMD_SECTOR_ERASE                 = 0x20,     // Sector erase -- 4K
-  //MEMORY_CMD_READ_STATUS_REGISTER_2       = 0x35,     // Read status register         Winbond
     MEMORY_CMD_SECTOR_ERASE_32K             = 0x52,     // Sector erase -- 32K
     MEMORY_CMD_READ_SFPD                    = 0x5A,     // Read SFDP command
     MEMORY_CMD_CHIP_ERASE                   = 0x60,     // Chip Erase
@@ -96,14 +96,16 @@ enum SerialMemoryCmd_e
 
 struct MemoryInfo_t
 {
-    uint32_t   MemoryID;
-    uint32_t   PageSize;
-    uint32_t   NumberOfPages;
-    uint32_t   PageEraseSize;
-    uint32_t   SectorSize;
-    uint32_t   SectorEraseSize;
-    uint32_t   SupportOptions;
-    uint32_t   NumberOfSectors;
+    uint32_t            MemoryID;
+    uint32_t            PageSize;
+    uint32_t            NumberOfPages;
+    uint32_t            PageEraseSize;
+    uint32_t            SectorSize;
+    uint32_t            SectorEraseSize;
+    uint32_t            SupportOptions;
+    uint32_t            NumberOfSectors;
+	SerialMemoryCmd_e	ChipEraseOpCode;
+	SerialMemoryCmd_e   SectorEraseOpCode;
 };
 
 enum MemoryList_e
@@ -143,11 +145,11 @@ class SPI_SerialMemoryDriver
         SystemState_e               WaitForEndWrite         (void);
         SystemState_e               WriteEnable             (void);
         SystemState_e               WriteDisable            (void);
-        SystemState_e               WritePage               (void* pBuffer, uint32_t Address, size_t Length);
+        SystemState_e               WriteBuffer             (void* pBuffer, uint32_t Address, size_t Length);
 
       #if (SERIAL_MEMORY_USE_AUTO_DETECT == DEF_ENABLED)
         SystemState_e               ReadSFDP                (uint32_t NumberOfByteToRead, uint32_t Address, uint8_t* pBuffer);
-        uint32_t                    ReadSFDP_Density        (void);
+        SystemState_e               ParseSFDP		        (void);
       #endif
 
         IO_ID_e                     m_ChipSelect;

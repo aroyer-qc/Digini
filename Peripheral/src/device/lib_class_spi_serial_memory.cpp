@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_spi_serial_flash.cpp
+//  File : lib_class_spi_serial_memory.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -28,9 +28,9 @@
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#define SPI_FLASH_GLOBAL
+#define SPI_MEMORY_GLOBAL
 #include "./lib_digini.h"
-#undef  SPI_FLASH_GLOBAL
+#undef  SPI_MEMORY_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 
@@ -40,15 +40,15 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define FLASH_SFDP_PAGE_SIZE                256             // At this time page are always 256 bytes
-#define FLASH_SFDP_SECTOR_SIZE              4096            // At this time sector are always 4096 bytes
+#define MEM_SFDP_PAGE_SIZE                	256             // At this time page are always 256 bytes
+#define MEM_SFDP_SECTOR_SIZE              	4096            // At this time sector are always 4096 bytes
 
-#define	FLASH_WIP_FLAG		                uint8_t(0x01)   // Write in progress Flag
+#define	MEM_WIP_FLAG		              	uint8_t(0x01)   // Write in progress Flag
 
-#define FLASH_SST_DEVICES                   uint32_t(0xBF0000)
+#define MEM_SST_DEVICES                   	uint32_t(0xBF0000)
 
-#define FLASH_WAIT_LOOP_DELAY               2
-#define FLASH_WAIT_LOOP_RETRY               15
+#define MEM_WAIT_LOOP_DELAY               	2
+#define MEM_WAIT_LOOP_RETRY               	15
 
 #define SFDP_SIGNATURE_0_OFFSET             0
 #define SFDP_MAJOR_REVISION_OFFSET          5
@@ -75,10 +75,10 @@
 // Const(s)
 //-------------------------------------------------------------------------------------------------
 
-#if (FLASH_USE_AUTO_DETECT_FLASH != DEF_ENABLED)
-const FlashInfo_t SPI_SerialFLashDriver::m_FlashInfoList[NUMBER_OF_FLASH] =
+#if (SERIAL_MEMORY_USE_AUTO_DETECT != DEF_ENABLED)
+const MemoryInfo_t SPI_SerialMemoryDriver::m_MemoryInfoList[NUMBER_OF_MEMORY] =
 {
-    SERIAL_FLASH_DEF(EXPAND_X_SERIAL_FLASH_AS_CLASS_CONST)
+    SERIAL_MEMORY_DEF(EXPAND_X_SERIAL_MEMORY_AS_CLASS_CONST)
 };
 #endif
 
@@ -87,70 +87,76 @@ const FlashInfo_t SPI_SerialFLashDriver::m_FlashInfoList[NUMBER_OF_FLASH] =
 //   Function:      Initialize
 //
 //   Parameter(s):  SPI_Driver*   pSPI          Pointer to SPI driver instance
-//                  IO_ID_e       ChipSelect    Chip-select line for the flash device
+//                  IO_ID_e       ChipSelect    Chip-select line for the memory device
 //
-//                  (Optional) FlashList_e Flash
-//                      Used when auto-detection is disabled to select a flash entry
-//                      from the static flash information table.
+//                  (Optional) MemoryList_e Memory
+//                      Used when auto-detection is disabled to select a memory entry
+//                      from the static memory information table.
 //
-//   Return Value:  SystemState_e       SYS_READY on success, or SYS_ERROR if the flash device is
+//   Return Value:  SystemState_e       SYS_READY on success, or SYS_ERROR if the memory device is
 //                                      unsupported or initialization fails.
 //
-//   Description:   Initializes the serial flash driver. The function stores the SPI driver
+//   Description:   Initializes the serial memory driver. The function stores the SPI driver
 //                  pointer, configures the chip-select line, initializes the SPI interface,
 //                  reads the JEDEC ID, performs device-specific unlock sequences (SST),
-//                  and either auto-detects flash parameters using SFDP or loads predefined
-//                  flash information from the static table.
+//                  and either auto-detects memory parameters using SFDP or loads predefined
+//                  memory information from the static table.
 //
 //-------------------------------------------------------------------------------------------------
-#if (FLASH_USE_AUTO_DETECT_FLASH == DEF_ENABLED)
-SystemState_e SPI_SerialFLashDriver::Initialize(SPI_Driver* pSPI, IO_ID_e ChipSelect)
+#if (SERIAL_MEMORY_USE_AUTO_DETECT == DEF_ENABLED)
+SystemState_e SPI_SerialMemoryDriver::Initialize(SPI_Driver* pSPI, IO_ID_e ChipSelect)
 #else
-SystemState_e SPI_SerialFLashDriver::Initialize(SPI_Driver* pSPI, FlashList_e Flash, IO_ID_e ChipSelect)
+SystemState_e SPI_SerialMemoryDriver::Initialize(SPI_Driver* pSPI, MemoryList_e Memory, IO_ID_e ChipSelect)
 #endif
 {
-    uint32_t FlashID;
+    uint32_t MemoryID;
 
     m_pSPI       = pSPI;
     m_ChipSelect = ChipSelect;
 
     m_pSPI->Initialize();
 
-    FlashID = ReadID();
+    MemoryID = ReadID();
 
-    if((FlashID & FLASH_SST_DEVICES) == FLASH_SST_DEVICES)          // For SST devices unlock is needed
+    if((MemoryID & MEM_SST_DEVICES) == MEM_SST_DEVICES)          // For SST devices unlock is needed
     {
         m_pSPI->LockToDevice(m_ChipSelect, false);
         WriteEnable();
         m_pSPI->SelectChip(m_ChipSelect);
-        m_pSPI->Write(FLASH_CMD_UNLOCK);
+        m_pSPI->Write(MEMORY_CMD_UNLOCK);
         m_pSPI->DeSelectChip(m_ChipSelect);
         m_pSPI->UnlockFromDevice(m_ChipSelect, false);
     }
 
-  #if (FLASH_USE_AUTO_DETECT_FLASH == DEF_ENABLED)
-    uint32_t FlashDensity = ReadSFDP_Density();
+  #if (SERIAL_MEMORY_USE_AUTO_DETECT == DEF_ENABLED)
+    if (m_MemoryInfo.Flags & MEM_FLAG_SFDP)
+    {    
+		uint32_t FlashDensity = ReadSFDP_Density();
 
-    if(FlashDensity > 0)
+		if(FlashDensity > 0)
+		{
+			m_MemoryInfo.PageSize         = MEM_SFDP_PAGE_SIZE;
+			m_MemoryInfo.NumberOfPages    = FlashDensity / MEM_SFDP_PAGE_SIZE;
+			m_MemoryInfo.PageEraseSize    = 0;
+			m_MemoryInfo.SectorSize       = MEM_SFDP_SECTOR_SIZE;
+			m_MemoryInfo.SectorEraseSize  = MEM_SFDP_SECTOR_SIZE;
+			m_MemoryInfo.NumberOfSectors  = FlashDensity / MEM_SFDP_SECTOR_SIZE;
+			m_MemoryInfo.MemoryID         = MemoryID;
+		}
+/*    else
     {
-        m_FlashInfo.PageSize         = FLASH_SFDP_PAGE_SIZE;
-        m_FlashInfo.NumberOfPages    = FlashDensity / FLASH_SFDP_PAGE_SIZE;
-        m_FlashInfo.PageEraseSize    = 0;
-        m_FlashInfo.SectorSize       = FLASH_SFDP_SECTOR_SIZE;
-        m_FlashInfo.SectorEraseSize  = FLASH_SFDP_SECTOR_SIZE;
-        m_FlashInfo.NumberOfSectors  = FlashDensity / FLASH_SFDP_SECTOR_SIZE;
-        m_FlashInfo.FlashID          = FlashID;
-    }
-    else
-    {
-        // Error... Flash not supported.
-        m_FlashInfo.PageSize        = 0;
-        m_FlashInfo.NumberOfSectors = 0;        // Unsupported Flash
-        m_FlashInfo.FlashID         = FlashID;
+        // Error... Memory not supported.
+        m_MemoryInfo.PageSize        = 0;
+        m_MemoryInfo.NumberOfSectors = 0;        // Unsupported Memory
+        m_MemoryInfo.MemoryID        = MemoryID;
         return SYS_ERROR;
+*/
     }
+	
+	memcpy(&m_MemoryInfo, &m_MemoryInfoList[Memory], sizeof(MemoryInfo_t));
+	
   #else
-    memcpy(&m_FlashInfo, &m_FlashInfoList[Flash], sizeof(FlashInfo_t));
+    memcpy(&m_MemoryInfo, &m_MemoryInfoList[Memory], sizeof(MemoryInfo_t));
   #endif
 
     return SYS_READY;
@@ -163,17 +169,17 @@ SystemState_e SPI_SerialFLashDriver::Initialize(SPI_Driver* pSPI, FlashList_e Fl
 //   Parameter(s):  None
 //   Return value:  uint32_t       24-bit JEDEC device ID
 //
-//   Description:   Sends the READ ID command to the serial flash device and retrieves the 3 bytes
+//   Description:   Sends the READ ID command to the serial memory device and retrieves the 3 bytes
 //                  manufacturer/device identifier. The command is issued over the SPI interface
 //                  and the returned bytes are combined into a single 24-bit value.
 //
 //-------------------------------------------------------------------------------------------------
-uint32_t SPI_SerialFLashDriver::ReadID(void)
+uint32_t SPI_SerialMemoryDriver::ReadID(void)
 {
     uint8_t     Buffer[3] = {0x00, 0x00, 0x00};
-    uint8_t     Command   = FLASH_CMD_READ_ID;
+    uint8_t     Command   = MEMORY_CMD_READ_ID;
 
-    // Send "FLASH_CMD_READ_ID" instruction and read ID
+    // Send "MEMORY_CMD_READ_ID" instruction and read ID
     m_pSPI->Transfer(&Command, 1, Buffer, 3, m_ChipSelect);
 	return (uint32_t(Buffer[0]) << 16) | (uint32_t(Buffer[1]) << 8) | uint32_t(Buffer[2]);
 }
@@ -182,18 +188,18 @@ uint32_t SPI_SerialFLashDriver::ReadID(void)
 //
 //   Function name: SendCommandAndAddress
 //
-//   Parameter(s):  Command     - Flash command opcode
-//                  Address     - 24-bit or 32-bit flash address to append
+//   Parameter(s):  Command     - Memory command opcode
+//                  Address     - 24-bit or 32-bit memory address to append
 //
 //   Return value:  SystemState_e
 //
 //   Description:   Combines the command byte and the address into a single 32-bit
 //                  big-endian sequence, then transmits the 4 bytes over SPI.
-//                  The address is byte-swapped to match the flash device’s MSB-first
+//                  The address is byte-swapped to match the memory device’s MSB-first
 //                  transmission order, and the command is inserted into the LSB.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_SerialFLashDriver::SendCommandAndAddress(SerialFlashCmd_e Command, uint32_t Address)
+SystemState_e SPI_SerialMemoryDriver::SendCommandAndAddress(SerialMemoryCmd_e Command, uint32_t Address)
 {
     uint32_t CmdAndAddress;
 
@@ -208,20 +214,20 @@ SystemState_e SPI_SerialFLashDriver::SendCommandAndAddress(SerialFlashCmd_e Comm
 //   Function:      Read
 //
 //   Parameter(s):  void*          pBuffer        Destination buffer
-//                  uint32_t       Address        Flash address to read from
+//                  uint32_t       Address        Memory address to read from
 //                  size_t         Length         Number of bytes to read
 //
 //   Return Value:  SystemState_e  SYS_READY on success, or an error code if the device is busy,
 //                                 communication fails, or the SPI interface cannot be
 //                                 locked/unlocked.
 //
-//   Description:   Reads a block of data from the serial flash device. The function locks the
+//   Description:   Reads a block of data from the serial memory device. The function locks the
 //                  SPI interface, waits for any ongoing program/erase operation to complete,
 //                  sends the FAST READ command and address, reads the requested number of bytes,
 //                  and then unlocks the SPI interface. Any error encountered is propagated.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_SerialFLashDriver::Read(void* pBuffer, uint32_t Address, size_t Length)
+SystemState_e SPI_SerialMemoryDriver::Read(void* pBuffer, uint32_t Address, size_t Length)
 {
     SystemState_e State;
 
@@ -242,7 +248,7 @@ SystemState_e SPI_SerialFLashDriver::Read(void* pBuffer, uint32_t Address, size_
     if(State == SYS_READY)
     {
         m_pSPI->SelectChip(m_ChipSelect);
-        State = SendCommandAndAddress(FLASH_CMD_FAST_READ, Address);
+        State = SendCommandAndAddress(MEMORY_CMD_FAST_READ, Address);
 
         if(State == SYS_READY)
         {
@@ -267,20 +273,20 @@ SystemState_e SPI_SerialFLashDriver::Read(void* pBuffer, uint32_t Address, size_
 //   Function:      Write
 //
 //   Parameter(s):  const void*    pBuffer       Source buffer
-//                  uint32_t       Address       Flash address to write to
+//                  uint32_t       Address       Memory address to write to
 //                  size_t         Length        Number of bytes to write
 //
 //   Return Value:  SystemState_e  SYS_READY on success, or an error code if the device is busy,
 //                                parameters are invalid, or SPI communication fails.
 //
-//   Description:   Writes a block of data to the serial flash device. The function locks the
+//   Description:   Writes a block of data to the serial memory device. The function locks the
 //                  SPI interface, aligns the first write to the current page boundary, and then
 //                  programs data page-by-page using WritePage(). The write operation continues
 //                  until all bytes are written or an error occurs. The SPI interface is unlocked
 //                  before returning.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_SerialFLashDriver::Write(const void* pBuffer, uint32_t Address, size_t Length)
+SystemState_e SPI_SerialMemoryDriver::Write(const void* pBuffer, uint32_t Address, size_t Length)
 {
     SystemState_e State;
 
@@ -297,11 +303,11 @@ SystemState_e SPI_SerialFLashDriver::Write(const void* pBuffer, uint32_t Address
     }
 
     uint8_t* pData = (uint8_t*)pBuffer;
-    uint32_t Size  = Address % m_FlashInfo.PageSize;
+    uint32_t Size  = Address % m_MemoryInfo.PageSize;
 
     if(Size != 0)
     {
-        Size     = m_FlashInfo.PageSize - Size;                                         // Calculate the size for this page data
+        Size     = m_MemoryInfo.PageSize - Size;                                        // Calculate the size for this page data
         State    = WritePage(pData, Address, Size);                                     // Write data in page
         Length  -= Size;						                                        // Calculate the remaining bytes to write.
         pData   += Size;						                                        // Adjust the pointer to the next block of data to write.
@@ -310,7 +316,7 @@ SystemState_e SPI_SerialFLashDriver::Write(const void* pBuffer, uint32_t Address
 
     while((Length > 0) && (State == SYS_READY))
     {
-        Size     = (Length < m_FlashInfo.PageSize) ? Length : m_FlashInfo.PageSize;     // Calculate the size for this page data
+        Size     = (Length < m_MemoryInfo.PageSize) ? Length : m_MemoryInfo.PageSize;   // Calculate the size for this page data
         State    = WritePage(pData, Address, Size);                                     // Write data in page
         Length  -= Size;						                                        // Calculate the remaining bytes to write.
         pData   += Size;						                                        // Adjust the pointer to the next block of data to write.
@@ -332,13 +338,13 @@ SystemState_e SPI_SerialFLashDriver::Write(const void* pBuffer, uint32_t Address
 //   Function:      WritePage
 //
 //   Parameter(s):  void*          pBuffer        Source buffer
-//                  uint32_t       Address        Flash address to program
+//                  uint32_t       Address        Memory address to program
 //                  size_t         Length         Number of bytes to write (within a single page)
 //
 //   Return Value:  SystemState_e  SYS_READY on success, or an error code if the device is busy or
 //                                 communication fails.
 //
-//   Description:   Issues a PAGE PROGRAM operation to the serial flash device. The function
+//   Description:   Issues a PAGE PROGRAM operation to the serial memory device. The function
 //                  assumes the SPI interface is already locked and that the write does not
 //                  cross a page boundary. It waits for any ongoing program/erase operation
 //                  to complete, enables writing, sends the PAGE PROGRAM command and address,
@@ -346,7 +352,7 @@ SystemState_e SPI_SerialFLashDriver::Write(const void* pBuffer, uint32_t Address
 //                  program operation is handled by the caller.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_SerialFLashDriver::WritePage(void* pBuffer, uint32_t Address, size_t Length)
+SystemState_e SPI_SerialMemoryDriver::WritePage(void* pBuffer, uint32_t Address, size_t Length)
 {
     SystemState_e State;
 
@@ -360,7 +366,7 @@ SystemState_e SPI_SerialFLashDriver::WritePage(void* pBuffer, uint32_t Address, 
         {
             m_pSPI->SelectChip(m_ChipSelect);
 
-            State = SendCommandAndAddress(FLASH_CMD_PAGE_PROGRAM, Address);     // Issue PAGE PROGRAM command
+            State = SendCommandAndAddress(MEMORY_CMD_PAGE_PROGRAM, Address);     // Issue PAGE PROGRAM command
 
             if(State == SYS_READY)
             {
@@ -382,13 +388,13 @@ SystemState_e SPI_SerialFLashDriver::WritePage(void* pBuffer, uint32_t Address, 
 //
 //   Return Value:  SystemState_e       SYS_READY or SYS_ERROR
 //
-//   Description:   Issues a bulk erase command to the flash device. The function locks the SPI
+//   Description:   Issues a bulk erase command to the memory device. The function locks the SPI
 //                  interface (without controlling chip select), enables writing, asserts chip
 //                  select, transmits the bulk erase opcode, then releases the device lock. Any
 //                  communication or sequencing error is propagated through the returned state.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_SerialFLashDriver::BulkErase(void)
+SystemState_e SPI_SerialMemoryDriver::BulkErase(void)
 {
     SystemState_e State;
 
@@ -404,7 +410,7 @@ SystemState_e SPI_SerialFLashDriver::BulkErase(void)
     if(State == SYS_READY)
     {
         m_pSPI->SelectChip(m_ChipSelect);
-        State = m_pSPI->Write(uint8_t(FLASH_CMD_BULK_ERASE));                   // Send bulk erase command
+        State = m_pSPI->Write(uint8_t(MEMORY_CMD_BULK_ERASE));                  // Send bulk erase command
         m_pSPI->DeSelectChip(m_ChipSelect);
     }
 
@@ -427,13 +433,13 @@ SystemState_e SPI_SerialFLashDriver::BulkErase(void)
 //
 //   Return Value:  SystemState_e       SYS_READY or SYS_ERROR
 //
-//   Description:   Sends an erase command to the serial flash device. The function locks the SPI
+//   Description:   Sends an erase command to the serial memory device. The function locks the SPI
 //                  interface to the target device, asserts chip select, transmits the erase opcode
 //                  and address, then releases the device lock. Any communication error is
 //                  propagated through the returned state.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_SerialFLashDriver::EraseSector(uint32_t Address)
+SystemState_e SPI_SerialMemoryDriver::EraseSector(uint32_t Address)
 {
     SystemState_e State;
 
@@ -444,7 +450,7 @@ SystemState_e SPI_SerialFLashDriver::EraseSector(uint32_t Address)
         return State;
     }
 
-    State = SendCommandAndAddress(FLASH_CMD_CHIP_ERASE, Address);
+    State = SendCommandAndAddress(MEMORY_CMD_CHIP_ERASE, Address);
     SystemState_e UnlockState = m_pSPI->UnlockFromDevice(m_ChipSelect);         // Unlock SPI access
 
     if(UnlockState != SYS_READY)
@@ -463,32 +469,32 @@ SystemState_e SPI_SerialFLashDriver::EraseSector(uint32_t Address)
 //
 //   Return Value:  SystemState_e       SYS_READY or SYS_TIME_OUT or SYS_ERROR
 //
-//   Description:   Polls the flash device's status register until the Write-In-Progress (WIP)
+//   Description:   Polls the memory device's status register until the Write-In-Progress (WIP)
 //                  bit clears or a retry timeout occurs. The function asserts chip select,
 //                  issues the READ STATUS command, reads the status byte, and repeats until
 //                  the write cycle completes. Any SPI communication error or timeout is
 //                  propagated through the returned state.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_SerialFLashDriver::WaitForEndWrite(void)
+SystemState_e SPI_SerialMemoryDriver::WaitForEndWrite(void)
 {
 	SystemState_e State;
 	uint8_t	      Command;
 	uint8_t	      ReadValue;
 	int           Retry;
 
-    Retry   = FLASH_WAIT_LOOP_RETRY;
-    Command = FLASH_CMD_READ_STATUS_REGISTER;
+    Retry   = MEM_WAIT_LOOP_RETRY;
+    Command = MEMORY_CMD_READ_STATUS_REGISTER;
 
 	do
 	{
-        nOS_Sleep(FLASH_WAIT_LOOP_DELAY); 							            // The write page take 11 ms typic. 25ms maximum.
+        nOS_Sleep(MEM_WAIT_LOOP_DELAY); 							            // The write page take 11 ms typic. 25ms maximum.
         Retry--;
 		m_pSPI->SelectChip(m_ChipSelect);
 		State = m_pSPI->Transfer(&Command, 1, &ReadValue, 1);		            // Send "Read Status" instruction
 		m_pSPI->DeSelectChip(m_ChipSelect);
 	}
-	while(((ReadValue & FLASH_WIP_FLAG) == FLASH_WIP_FLAG) && (Retry > 0)); 	// Write in progress
+	while(((ReadValue & MEM_WIP_FLAG) == MEM_WIP_FLAG) && (Retry > 0)); 	// Write in progress
 
 	if(Retry == 0)
     {
@@ -506,16 +512,16 @@ SystemState_e SPI_SerialFLashDriver::WaitForEndWrite(void)
 //
 //   Return Value:  SystemState_e       SYS_READY or ....
 //
-//   Description:   Sends the Write Enable (WREN) command to the flash device. The function
+//   Description:   Sends the Write Enable (WREN) command to the memory device. The function
 //                  asserts chip select, transmits the WREN opcode, and then releases chip select.
 //                  This sets the Write Enable Latch (WEL), allowing subsequent program or erase
 //                  operations to be accepted by the device.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_SerialFLashDriver::WriteEnable(void)
+SystemState_e SPI_SerialMemoryDriver::WriteEnable(void)
 {
     m_pSPI->SelectChip(m_ChipSelect);
-	SystemState_e State = m_pSPI->Write(FLASH_CMD_WRITE_ENABLE);        // Send "Write Enable" instruction
+	SystemState_e State = m_pSPI->Write(MEMORY_CMD_WRITE_ENABLE);        // Send "Write Enable" instruction
     m_pSPI->DeSelectChip(m_ChipSelect);
 
     return State;
@@ -529,16 +535,16 @@ SystemState_e SPI_SerialFLashDriver::WriteEnable(void)
 //
 //   Return Value:  SystemState_e       SYS_READY or ....
 //
-//   Description:   Sends the Write Disable (WRDI) command to the flash device. The function
+//   Description:   Sends the Write Disable (WRDI) command to the memory device. The function
 //                  asserts chip select, transmits the WRDI opcode, and then releases chip select.
 //                  This clears the Write Enable Latch (WEL) and prevents any program or erase
 //                  operations until WriteEnable() is issued again.
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e SPI_SerialFLashDriver::WriteDisable(void)
+SystemState_e SPI_SerialMemoryDriver::WriteDisable(void)
 {
     m_pSPI->SelectChip(m_ChipSelect);
-	SystemState_e State = m_pSPI->Write(FLASH_CMD_WRITE_DISABLE);       // Send "Write Disable" instruction
+	SystemState_e State = m_pSPI->Write(MEMORY_CMD_WRITE_DISABLE);       // Send "Write Disable" instruction
     m_pSPI->DeSelectChip(m_ChipSelect);
 
     return State;
@@ -554,14 +560,14 @@ SystemState_e SPI_SerialFLashDriver::WriteDisable(void)
 //
 //   Return Value:  SystemState_e                      SYS_READY or SYS_ERROR
 //
-//   Description:   Reads data from the Serial Flash Discoverable Parameters (SFDP) table. The
+//   Description:   Reads data from the Serial Memory Discoverable Parameters (SFDP) table. The
 //                  function locks the SPI interface, sends the SFDP read command and address,
 //                  performs a dummy byte transfer as required by the SFDP protocol, reads the
 //                  requested number of bytes, then unlocks the SPI interface.
 //
 //-------------------------------------------------------------------------------------------------
-#if (FLASH_USE_AUTO_DETECT_FLASH == DEF_ENABLED)
-SystemState_e SPI_SerialFLashDriver::ReadSFDP(uint32_t NumberOfByteToRead, uint32_t Address, uint8_t *pBuffer)
+#if (SERIAL_MEMORY_USE_AUTO_DETECT == DEF_ENABLED)
+SystemState_e SPI_SerialMemoryDriver::ReadSFDP(uint32_t NumberOfByteToRead, uint32_t Address, uint8_t *pBuffer)
 {
     SystemState_e State;
 	uint8_t Dummy = 0;
@@ -573,7 +579,7 @@ SystemState_e SPI_SerialFLashDriver::ReadSFDP(uint32_t NumberOfByteToRead, uint3
         return State;
     }
 
-    State = SendCommandAndAddress(FLASH_CMD_READ_SFPD, Address);
+    State = SendCommandAndAddress(MEMORY_CMD_READ_SFPD, Address);
 
     if(State == SYS_READY)
     {
@@ -597,21 +603,21 @@ SystemState_e SPI_SerialFLashDriver::ReadSFDP(uint32_t NumberOfByteToRead, uint3
 //
 //   Parameter(s):  None
 //
-//   Return Value:  uint32_t    Device density in bytes, as reported by the SFDP Basic Flash
+//   Return Value:  uint32_t    Device density in bytes, as reported by the SFDP Basic Memory
 //                              Parameter Table. Returns 0 if the SFDP header, parameter header,
 //                              erase type, address size, or density fields are invalid.
 //
-//   Description:   Reads the SFDP (Serial Flash Discoverable Parameters) header and the first
-//                  DWORDs of the Basic Flash Parameter Table to extract the device density. The
+//   Description:   Reads the SFDP (Serial Memory Discoverable Parameters) header and the first
+//                  DWORDs of the Basic Memory Parameter Table to extract the device density. The
 //                  SFDP specification encodes density as (number_of_bits - 1), so the function
 //                  reconstructs the true size and converts it to bytes. Only devices supporting
 //                  4‑KB erase and 3‑byte addressing are accepted.
 //
 //-------------------------------------------------------------------------------------------------
-#if (FLASH_USE_AUTO_DETECT_FLASH == DEF_ENABLED)
-uint32_t SPI_SerialFLashDriver::ReadSFDP_Density(void)
+#if (SERIAL_MEMORY_USE_AUTO_DETECT == DEF_ENABLED)
+uint32_t SPI_SerialMemoryDriver::ReadSFDP_Density(void)
 {
-    // Check JEDEC serial flash discoverable parameters for device specific info
+    // Check JEDEC serial memory discoverable parameters for device specific info
     uint8_t Header[SFDP_HEADER_SIZE];
 
     ReadSFDP(SFDP_HEADER_SIZE, 0x0, Header);

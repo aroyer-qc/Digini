@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_fatfs_spi_eeprom.cpp
+//  File : lib_class_fatfs_spi_memory.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -23,6 +23,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //-------------------------------------------------------------------------------------------------
+//
+// Note(s) : This backend unified Flash ans eeprom type of memory
+//
+//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 // Include file(s)
@@ -32,14 +36,14 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_FATFS_USE_SPI_EEPROM == DEF_ENABLED)
+#if (DIGINI_FATFS_USE_SPI_MEMORY == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: FatFS_SPI_EEprom
+//   Class: FatFS_SPI_Memory
 //
 //
-//   Description:   Class to handle FatFS for eeprom disk
+//   Description:   Class to handle FatFS for SPI Serial disk
 //
 //-------------------------------------------------------------------------------------------------
 
@@ -50,13 +54,13 @@
 //   Parameter(s):  None
 //   Return value:  DSTATUS
 //
-//   Description:   Initialize EEprom disk
+//   Description:   Initialize SPI Serial disk
 //
 //-------------------------------------------------------------------------------------------------
-DSTATUS FatFS_SPI_EEprom::Initialize(void* pParameter)
+DSTATUS FatFS_SPI_Memory::Initialize(void* pParameter)
 {
     SPI_Param_t* pParam = ((SPI_Param_t*)pParameter);
-    m_SPI_EEprom.Initialize(pParam->pDriver, pParam->IO_ChipSelect);
+    m_SPI_Memory.Initialize(pParam->pDriver, pParam->IO_ChipSelect);
 
     return m_Status;
 }
@@ -68,10 +72,10 @@ DSTATUS FatFS_SPI_EEprom::Initialize(void* pParameter)
 //   Parameter(s):  None
 //   Return value:  DSTATUS
 //
-//   Description:   Get Status from EEprom disk device.
+//   Description:   Get Status from SPI Serial disk device.
 //
 //-------------------------------------------------------------------------------------------------
-DSTATUS FatFS_SPI_EEprom::Status(void)
+DSTATUS FatFS_SPI_Memory::Status(void)
 {
     return m_Status;
 }
@@ -85,16 +89,16 @@ DSTATUS FatFS_SPI_EEprom::Status(void)
 //                  uint16_t    NumberOfSectors
 //   Return value:  DRESULT
 //
-//   Description:   Read From EEprom disk device.
+//   Description:   Read From SPI Serial disk device.
 //
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DRESULT FatFS_SPI_EEprom::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
+DRESULT FatFS_SPI_Memory::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {
     uint32_t Address = Sector * FF_MAX_SS;
     size_t   Length  = (size_t)NumberOfSectors * FF_MAX_SS;
-    SystemState_e State = m_SPI_EEprom.Read(pBuffer, Address, Length);
+    SystemState_e State = m_SPI_Memory.Read(pBuffer, Address, Length);
 
     if(State == SYS_READY)
     {
@@ -113,17 +117,17 @@ DRESULT FatFS_SPI_EEprom::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t Numbe
 //                  uint16_t        NumberOfSectors
 //   Return value:  DRESULT
 //
-//   Description:   Write to the EEprom disk device
+//   Description:   Write to the SPI Serial disk device
 //
 //-------------------------------------------------------------------------------------------------
 #if _USE_WRITE == 1
-DRESULT FatFS_SPI_EEprom::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
+DRESULT FatFS_SPI_Memory::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {
     uint32_t Address = Sector * FF_MAX_SS;
     size_t   Length  = (size_t)NumberOfSectors * FF_MAX_SS;
 
     // Low-level flash write
-    SystemState_e State = m_SPI_EEprom.Write(pBuffer, Address, Length);
+    SystemState_e State = m_SPI_Memory.Write(pBuffer, Address, Length);
 
     if(State == SYS_READY)
     {
@@ -146,7 +150,7 @@ DRESULT FatFS_SPI_EEprom::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_
 //
 //-------------------------------------------------------------------------------------------------
 #if _USE_IOCTL == 1
-DRESULT FatFS_SPI_EEprom::IO_Ctrl(uint8_t Control, void *pBuffer)
+DRESULT FatFS_SPI_Memory::IO_Ctrl(uint8_t Control, void *pBuffer)
 {
     DRESULT res = RES_ERROR;
 
@@ -165,7 +169,7 @@ DRESULT FatFS_SPI_EEprom::IO_Ctrl(uint8_t Control, void *pBuffer)
 
         case GET_SECTOR_COUNT:                                                  // Get number of sectors on the disk (unit32_t)
         {
-            *(uint32_t*)pBuffer = m_SPI_EEprom.GetFlashSize() / FF_MAX_SS;
+            *(uint32_t*)pBuffer = m_SPI_Memory.GetMemorySize() / FF_MAX_SS;
             res = RES_OK;
         }
 		break;
@@ -179,7 +183,7 @@ DRESULT FatFS_SPI_EEprom::IO_Ctrl(uint8_t Control, void *pBuffer)
 
         case GET_BLOCK_SIZE:                                                    // Get erase block size (In Flash this is sector)
         {
-           *(uint32_t*)pBuffer = m_SPI_EEprom.GetSectorEraseSize()/ FF_MAX_SS;
+           *(uint32_t*)pBuffer = m_SPI_Memory.GetSectorEraseSize()/ FF_MAX_SS;
         }
 		break;
 
@@ -195,4 +199,4 @@ DRESULT FatFS_SPI_EEprom::IO_Ctrl(uint8_t Control, void *pBuffer)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // DIGINI_FATFS_USE_SPI_EEPROM
+#endif // DIGINI_FATFS_USE_SPI_MEMORY

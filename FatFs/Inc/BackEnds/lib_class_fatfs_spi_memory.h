@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_fatfs_spi_Flash.h
+//  File : lib_class_fatfs_spi_memory.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -34,13 +34,13 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_FATFS_USE_SPI_FLASH == DEF_ENABLED)
+#if (DIGINI_FATFS_USE_SPI_MEMORY == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
-class FatFS_SPI_Flash : public DiskIO_DeviceInterface
+class FatFS_SPI_Memory : public DiskIO_DeviceInterface
 {
     public:
 
@@ -59,12 +59,12 @@ class FatFS_SPI_Flash : public DiskIO_DeviceInterface
     private:
 
         DSTATUS         		m_Status            = STA_NODISK;
-        SPI_SerialFLashDriver   m_SPI_Flash;
+        SPI_SerialMemoryDriver 	m_SPI_Memory;
 };
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (DIGINI_FATFS_USE_SPI_FLASH == DEF_ENABLED)
+#endif // (DIGINI_FATFS_USE_SPI_MEMORY == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 

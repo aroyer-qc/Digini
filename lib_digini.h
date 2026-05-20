@@ -301,12 +301,8 @@ class NetworkContext;
 #include "./FatFs/Inc/BackEnds/lib_class_fatfs_sdio.h"
 #endif
 
-#if (DIGINI_FATFS_USE_SPI_EEPROM == DEF_ENABLED)
-#include "./FatFs/Inc/BackEnds/lib_class_fatfs_spi_eeprom.h"
-#endif
-
-#if (DIGINI_FATFS_USE_SPI_FLASH == DEF_ENABLED)
-#include "./FatFs/Inc/BackEnds/lib_class_fatfs_spi_flash.h"
+#if (DIGINI_FATFS_USE_SPI_MEMORY == DEF_ENABLED)
+#include "./FatFs/Inc/BackEnds/lib_class_fatfs_spi_memory.h"
 #endif
 
 #if (DIGINI_FATFS_USE_SPI_SD_CARD == DEF_ENABLED)

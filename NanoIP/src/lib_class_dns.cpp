@@ -217,7 +217,7 @@ bool DNS_Manager::Process(void)
         if(slot >= 0)
         {
             IP_Address_t ResolvedIP;
-            bool Success = ParseResponse(pDNS, Length, ResolvedIP);
+            bool Success = MasterParseResponse(pDNS, Length, ResolvedIP);
 
           #if (IP_DBG_DNS == DEF_ENABLED)
             if(Success == true)
@@ -337,7 +337,7 @@ bool DNS_Manager::SendQuery(const char* pDomainName, DNS_Callback_t pCallback, v
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           ParseResponse
+//  Name:           MasterParseResponse
 //
 //  Parameter(s):   DNS_Header_t*   pMessage        Pointer to the received DNS message buffer
 //                  size_t          PacketLength    Total number of bytes received
@@ -354,7 +354,7 @@ bool DNS_Manager::SendQuery(const char* pDomainName, DNS_Callback_t pCallback, v
 //                  is written into OutIP and the function returns true.
 //
 //-------------------------------------------------------------------------------------------------
-bool DNS_Manager::ParseResponse(DNS_Header_t* pMessage, size_t PacketLength, IP_Address_t& OutIP)
+bool DNS_Manager::MasterParseResponse(DNS_Header_t* pMessage, size_t PacketLength, IP_Address_t& OutIP)
 {
     DNS_Header_t* pHeader = pMessage;
 

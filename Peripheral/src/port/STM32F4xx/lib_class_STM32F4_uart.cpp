@@ -220,7 +220,7 @@ void UART_Driver::Initialize(void)
 
         m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
         m_DMA_RX.SetSource((void*)&m_pUart->DR);
-        m_DMA_RX.SetLength(UART_DRIVER_INTERNAL_RX_BUFFER_SIZE);
+        m_DMA_RX.SetLength(m_pInfo->RX_FifoSize);
 
         m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
         m_DMA_TX.SetDestination((void*)&m_pUart->DR);

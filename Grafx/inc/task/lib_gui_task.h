@@ -50,9 +50,9 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define GUI_TASK_STACK_SIZE                    1024
-#define GUI_TASK_PRIO                           6
-#define GUI_NUMBER_OF_MSG                       4
+// see this in grafx_cfg.h -> #define GUI_TASK_STACK_SIZE   1024
+#define GUI_TASK_PRIO                                       6
+#define GUI_NUMBER_OF_MSG                                   4
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)

@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_fatfs_ram_disk.cpp
+//  File : lib_class_fatfs_ram.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -50,7 +50,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: CFatFS_RAM_Disk
+//   Class: FatFS_RAM
 //
 //
 //   Description:   Class to handle FatFS for RAM Disk
@@ -59,7 +59,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   CFatFS_RAM_Disk
+//   Constructor:   FatFS_RAM
 //
 //   Parameter(s):
 //   Return Value:
@@ -69,7 +69,7 @@
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-CFatFS_RAM_Disk::CFatFS_RAM_Disk()
+FatFS_RAM::FatFS_RAM()
 {
     m_IsItInitialize = false;
     m_Status         = STA_NODISK;
@@ -88,7 +88,7 @@ CFatFS_RAM_Disk::CFatFS_RAM_Disk()
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void CFatFS_RAM_Disk::Configure(uint8_t* pBuffer, size_t Size)
+void FatFS_RAM::Configure(uint8_t* pBuffer, size_t Size)
 {
     m_pBuffer        = pBuffer;
     m_Size           = Size;
@@ -108,7 +108,7 @@ void CFatFS_RAM_Disk::Configure(uint8_t* pBuffer, size_t Size)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DSTATUS CFatFS_RAM_Disk::Initialize(void)
+DSTATUS FatFS_RAM::Initialize(void)
 {
     if(m_IsItInitialize == true)
     {
@@ -130,7 +130,7 @@ DSTATUS CFatFS_RAM_Disk::Initialize(void)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DSTATUS CFatFS_RAM_Disk::Status()
+DSTATUS FatFS_RAM::Status()
 {
     return m_Status;
 }
@@ -149,7 +149,7 @@ DSTATUS CFatFS_RAM_Disk::Status()
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DRESULT CFatFS_RAM_Disk::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
+DRESULT FatFS_RAM::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {
     DRESULT Result;
 
@@ -177,7 +177,7 @@ DRESULT CFatFS_RAM_Disk::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t Number
 //
 //-------------------------------------------------------------------------------------------------
 #if _USE_WRITE == 1
-DRESULT CFatFS_RAM_Disk::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
+DRESULT FatFS_RAM::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {
     DRESULT Result;
 
@@ -205,7 +205,7 @@ DRESULT CFatFS_RAM_Disk::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t
 //
 //-------------------------------------------------------------------------------------------------
 #if _USE_IOCTL == 1
-DRESULT CFatFS_RAM_Disk::IO_Ctrl(uint8_t Control, void *pBuffer)
+DRESULT FatFS_RAM::IO_Ctrl(uint8_t Control, void *pBuffer)
 {
     DRESULT res = RES_ERROR;
 
@@ -266,7 +266,7 @@ DRESULT CFatFS_RAM_Disk::IO_Ctrl(uint8_t Control, void *pBuffer)
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-DRESULT CFatFS_RAM_Disk::CheckError(uint32_t Sector, uint16_t NumberOfSectors)
+DRESULT FatFS_RAM::CheckError(uint32_t Sector, uint16_t NumberOfSectors)
 {
     if(m_Status & (STA_NOINIT | STA_NODISK))
     {

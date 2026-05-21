@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_usb.h
+//  File : diskio_interface.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2023 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,23 +24,30 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#if (USE_USB_DRIVER == DEF_ENABLED)
+#pragma once
 
 //-------------------------------------------------------------------------------------------------
 
-#if defined STM32F1xx
- //#include "./Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_usb.h"
-#elif defined STM32F4xx
- //#include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_usb.h"
-#elif defined STM32F7xx
- //#include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_usb.h"
-#elif defined STM32H7xx
- //#include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32H7_usb.h"
+#ifdef __cplusplus
+
+class DiskIO_DeviceInterface
+{
+    public:
+
+        virtual                    ~DiskIO_DeviceInterface (){}
+
+
+        virtual DSTATUS             Initialize              (void*)                                 = 0;
+        virtual DSTATUS             Status                  (void)                                  = 0;
+        virtual DRESULT             Read                    (uint8_t*, uint32_t, uint16_t)          = 0;
+      #if _USE_WRITE == 1
+        virtual DRESULT             Write                   (const uint8_t*, uint32_t, uint16_t)    = 0;
+      #endif
+      #if _USE_IOCTL == 1
+        virtual DRESULT             IO_Ctrl                 (uint8_t, void*)                        = 0;
+      #endif
+};
+
 #endif
 
 //-------------------------------------------------------------------------------------------------
-
-#endif // (USE_USB_DRIVER == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-

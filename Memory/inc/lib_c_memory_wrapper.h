@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_usb.h
+//  File : lib_c_memory_wrapper.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -24,23 +24,20 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#if (USE_USB_DRIVER == DEF_ENABLED)
+#pragma once
 
 //-------------------------------------------------------------------------------------------------
 
-#if defined STM32F1xx
- //#include "./Peripheral/inc/port/STM32F1xx/lib_class_STM32F1_usb.h"
-#elif defined STM32F4xx
- //#include "./Peripheral/inc/port/STM32F4xx/lib_class_STM32F4_usb.h"
-#elif defined STM32F7xx
- //#include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32F7_usb.h"
-#elif defined STM32H7xx
- //#include "./Peripheral/inc/port/STM32F7xx/lib_class_STM32H7_usb.h"
-#endif
+#ifdef __cplusplus
+extern "C" {
+#endif	
 
-//-------------------------------------------------------------------------------------------------
+	void* MemoryPool_Alloc (size_t SizeRequired);
+	void  MemoryPool_Free  (void* pBlock);
 
-#endif // (USE_USB_DRIVER == DEF_ENABLED)
+#ifdef __cplusplus
+}
+#endif	
 
 //-------------------------------------------------------------------------------------------------
 

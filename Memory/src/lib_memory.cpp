@@ -634,3 +634,21 @@ uint32_t MemPoolDriver::GetPoolBlockHighPoint(uint32_t GroupID)
 #endif
 
 //-------------------------------------------------------------------------------------------------
+
+extern "C" {
+	void* MemoryPool_Alloc(size_t SizeRequired)
+	{
+		return pMemoryPool->Alloc(SizeRequired);
+	}
+
+	void MemoryPool_Free(void* pBlock)
+	{
+        if (pBlock != nullptr)
+		{
+			void* ptr = pBlock;
+			pMemoryPool->Free(&ptr);
+		}
+	}
+}
+
+//-------------------------------------------------------------------------------------------------

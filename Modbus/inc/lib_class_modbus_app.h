@@ -38,7 +38,7 @@
 //  +---------------------+
 //  |   MODBUS_Manager    |  <-- Modbus protocol logic (stateless)
 //  |  BuildFrame()       |
-//  |  ParseResponse()    |
+//  |  MasterParseResponse()    |
 //  +---------------------+
 //           ^
 //           |
@@ -64,45 +64,80 @@
 #if (DIGINI_USE_MODBUS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
+// Global Macro
 //-------------------------------------------------------------------------------------------------
 
-#define MODBUS_MAX_BACKENDS   8   // Pour le config plus tard!!
-
-
-#define MAKE_ENTRY(ID, FUNC, CB, PT) { ID, FUNC, CB, PT },
+#ifdef MODBUS_APP_GLOBAL
+    #define MODBUS_APP_EXTERN
+#else
+    #define MODBUS_APP_EXTERN extern
+#endif
 
 //-------------------------------------------------------------------------------------------------
-// Typedef(s)
+// Macro(s)
 //-------------------------------------------------------------------------------------------------
 
-struct MODBUS_AppEntry_t
-{
-    uint8_t         UnitID;
-    uint8_t         Function;
-    void            (*Callback)(const MODBUS_Command_t&, MODBUS_Response_t&);
-};
+#define EXPAND_SLAVE_CALLBACK(SLAVE_ID, FUNCTION, ADDRESS, MAX_QUANTITY, HANDLER) \
+        extern void HANDLER(const MODBUS_Command_t& Command, MODBUS_SlaveResponse_t& Response);
+#define EXPAND_MASTER_CALLBACK( REQUEST_TO_ID, FUNCTION, ADDRESS, MAX_QUANTITY, TIMEOUT, HANDLER) \
+        extern void HANDLER(const MODBUS_MasterResponse_t& Response);
 
+//-------------------------------------------------------------------------------------------------
+// Declare external handler
+//-------------------------------------------------------------------------------------------------
 
-/*
-#define MODBUS_APP_TABLE(X) \
-    X(1, 0x03, ReadHoldingRegs) \
-    X(1, 0x06, WriteSingleReg) \
-    X(2, 0x03, Poutine) \
-    X(3, 0x10, WriteMultipleRegs)
-*/
+MODBUS_APP_SLAVE_TABLE(EXPAND_SLAVE_CALLBACK)
+MODBUS_APP_MASTER_TABLE(EXPAND_MASTER_CALLBACK)
 
 //-------------------------------------------------------------------------------------------------
 // Class
 //-------------------------------------------------------------------------------------------------
 
-class ModbusAPP
+class MODBUS_Application
 {
     public:
-        
-        bool Process(const MODBUS_Command_t& Command, MODBUS_Response_t& Response);
 
-    private:
+											MODBUS_Application 		    ();
 
-        const ModbusAppEntry* Find(uint8_t UnitID, uint8_t Function);
+		bool 								Process						(MODBUS_Command_t& Command, MODBUS_SlaveResponse_t& Response);
+        void                                SetManager                  (MODBUS_Manager* pManager) 					{ m_pManager = pManager; }
+
+		// SLAVE side
+		bool 								SlaveRegisterCommand 		(const MODBUS_SlaveCommandEntry_t& Entry);
+		MODBUS_SlaveCommandEntry_t*			SlaveFindHandler			(uint8_t DeviceAddress, uint8_t Function);
+
+		size_t                              SlaveGetCount               (void)        	{ return m_ModbusAppSlaveCount; }
+		const MODBUS_SlaveCommandEntry_t*   SlaveGetEntry               (size_t Index)  { return (Index < m_ModbusAppSlaveCount) ? &m_ModbusAppSlaveTable[Index] : nullptr; }
+
+		//Master side
+		uint16_t 							MasterRegisterRequest		(const MODBUS_MasterEntry_t& Entry);
+		bool 								MasterRequest				(uint16_t SlotIndex, uint16_t Address, uint16_t Quantity);
+		MODBUS_MasterEntry_t* 				MasterFindRequest			(uint16_t SlotIndex);
+		size_t 								MasterGetCount				(void) 										{ return m_ModbusAppMasterCount; }
+
+
+	private:
+
+        MODBUS_Manager*                     m_pManager = nullptr;
+
+		// SLAVE table
+		static MODBUS_SlaveCommandEntry_t 	m_ModbusAppSlaveTable    	[MODBUS_MAX_SLAVE_COMMAND_ENTRY];
+		static size_t            			m_ModbusAppSlaveCount;   	// Number of used entries (static + dynamic)
+
+		// MASTER table
+		static MODBUS_MasterEntry_t       	m_ModbusAppMasterTable		[MODBUS_MAX_MASTER_REQUEST_ENTRY];
+		static size_t                     	m_ModbusAppMasterCount;
 };
+
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+MODBUS_APP_EXTERN class MODBUS_Application 		myMODBUS_Application;
+
+//-------------------------------------------------------------------------------------------------
+
+#endif //(DIGINI_USE_MODBUS == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+

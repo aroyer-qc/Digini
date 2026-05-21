@@ -148,10 +148,16 @@
   /*---------------------------------------------------------*/ \
   ) /* End of IP_USE_MQTT */                                    \
   /*---------------------------------------------------------*/ \
+\
+  /*---------------------------------------------------------*/ \
+  IF_USE(DIGINI_USE_SERIAL_MODBUS,                              \
+  /*---------------------------------------------------------*/ \
+    X_MEM_DBG(MEM_DBG_MB_SERIAL)                                \
+    X_MEM_DBG(MEM_DBG_MB_TX_SER)                                \
+  /*---------------------------------------------------------*/ \
+  ) /* End of DIGINI_USE_SERIAL_MODBUS */                       \
+  /*---------------------------------------------------------*/ \
     X_MEM_DBG(MEM_DBG_SERVICE)  /*grafx service*/               \
-
-\
-\
 
     /* UniqueID for lib_service                               */   // actually not used
 
@@ -245,6 +251,8 @@ class MemPoolDriver
         MEM_BLOCK_DEF(EXPAND_X_MEM_BLOCK_AS_ARRAY_DECL)
 };
 
+//-------------------------------------------------------------------------------------------------
+
 // ----- Memory allocation(s) ------
 #ifdef MEM_GLOBAL
 class MemPoolDriver                       _MemoryPool;
@@ -262,3 +270,4 @@ extern class MemPoolDriver*               pMemoryPool;
 #endif  // MEM_BLOCK_DEF
 
 //-------------------------------------------------------------------------------------------------
+

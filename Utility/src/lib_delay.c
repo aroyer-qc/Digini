@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :  lib_class_sntp.h
+//  File : lib_delay.c
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -24,60 +24,58 @@
 //
 //-------------------------------------------------------------------------------------------------
 
-#pragma once
-
+//-------------------------------------------------------------------------------------------------
+// Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#if (IP_USE_SNTP == DEF_ENABLED)
+#include "./Utility/inc/lib_delay.h"
+#include "clock_cfg.h"
+#include "driver_cfg.h"
 
 //-------------------------------------------------------------------------------------------------
-// Define(s)
+//
+//  Name:           LIB_Delay_uSec
+//
+//  Parameter(s):   uint32_t       Delay
+//  Return:         none
+//
+//  Description:    Approximation of 1 uSec delay
+//
+//  Note(s):        Adjust manually by changing value in clock_cfg.h in your config directory
+//
 //-------------------------------------------------------------------------------------------------
-
-//#define SNTP_UNIX_START                     2208988800UL                // January 1, 1970
-//#define SNTP_TIME_START                     3471292800UL                // January 1, 2010
-
-//-------------------------------------------------------------------------------------------------
-// Enum(s)
-//-------------------------------------------------------------------------------------------------
-
-enum SNTP_State_e
+void LIB_Delay_uSec(uint32_t Delay)
 {
-    SNTP_STATE_INITIAL,
-    SNTP_STATE_WAIT_RESPONSE,
-    SNTP_STATE_DONE,
-    SNTP_STATE_ERROR
-};
+  #if (USE_DWT_PERIPHERAL == DEF_ENABLED)
+    uint32_t Cycles = (SYSTEM_CORE_CLOCK / 1000000U) * Delay;
+    uint32_t Start  = DWT->CYCCNT;
+
+    while ((DWT->CYCCNT - Start) < Cycles) {};
+  #else
+    uint32_t i;
+    uint32_t j;
+
+    for(i = 0; i < Delay; i++)
+    {
+        for(j = 0; j <= CFG_DELAY_TIMING_LOOP_VALUE_FOR_1_USEC; j++) {};
+    }
+  #endif
+}
 
 //-------------------------------------------------------------------------------------------------
-// Class definition(s)
+//
+//  Name:           LIB_Delay_mSec
+//
+//  Parameter(s):   uint32_t       Delay in mSec
+//  Return:         none
+//
+//  Description:    mSec delay
+//
+//
 //-------------------------------------------------------------------------------------------------
-
-class SNTP_Client
+void LIB_Delay_mSec(uint32_t Delay)
 {
-    public:
-
-        bool            Initialize                  (NetworkContext* pContextt);
-        bool            Start                       (const IP_Address_t ServerIP);
-        void            Process                     (void);
-        uint32_t        GetUnixTime                 (void) const                            { return m_UnixTime; }
-
-    private:
-
-        bool            ReceiveResponse             (void);
-        bool            MasterParseResponse               (uint8_t* pPacket, size_t Length);
-        uint32_t        GetSystemTime_Seconds_1900  (void);
-        uint32_t        Convert1900ToUnix           (uint32_t Seconds1900);
-
-        NetworkContext* m_pContext;
-        Socket*         m_pSocket;
-        uint32_t        m_UnixTime;
-        SNTP_State_e    m_State;
-        TickCount_t     m_WaitStart;
-};
-
-//-------------------------------------------------------------------------------------------------
-
-#endif // (IP_USE_SNTP == DEF_ENABLED)
+    LIB_Delay_uSec(Delay * 1000);
+}
 
 //-------------------------------------------------------------------------------------------------

@@ -27,10 +27,31 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
+
+#if (DIGINI_USE_MODBUS == DEF_ENABLED) && (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+// Global Macro
+//-------------------------------------------------------------------------------------------------
+
+#ifdef MODBUS_RTU_GLOBAL
+    #define MODBUS_RTU_EXTERN
+#else
+    #define MODBUS_RTU_EXTERN extern
+#endif
+
+//-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------
 
-enum class MODBUS_State_e
+#define MODBUS_RTU_MAX_FRAME_SIZE       MODBUS_MAX_PDU_SIZE + 2   		// CRC16
+#define MODBUS_SERIAL_OUT_SIZE          MODBUS_RTU_MAX_FRAME_SIZE
+
+//-------------------------------------------------------------------------------------------------
+// Typedef(s)
+//-------------------------------------------------------------------------------------------------
+
+enum MODBUS_State_e
 {
     MODBUS_IDLE,
     MODBUS_BUILD_FRAME,
@@ -46,42 +67,70 @@ enum class MODBUS_State_e
 // Class
 //-------------------------------------------------------------------------------------------------
 
-class ModbusRTU : public ChildProcessInterface, public MODBUS_InterfaceBackEnd
+class ModbusRTU : public MODBUS_InterfaceBackEnd, public CallbackInterface
 {
     public:
 
-        void            IF_Process                  (void);
+        void                Process             (void);
 
-        void            Initialize                  (MODBUS_Manager* pManager, Console* pConsole, uint8_t MinID, uint8_t MaxID);
-        
-        int             Send                        (const uint8_t* pData, size_t Length);
-        int             Received                    (uint8_t* pBuffer, size_t MaxLength, TickCount_t TimeOutMsec);
-        bool            Queue                       (const MODBUS_Command_t& Command) override;
-        bool            CanHandle                   (uint8_t UnitID) override;
+        void                Initialize          (UART_Driver* pUartDriver, MODBUS_Mode_e Mode, IO_ID_e RE_DE_ControlPin, uint8_t MinDeviceAddress, uint8_t MaxDeviceAddress);
+		void		        SetMode				(MODBUS_Mode_e Mode)						{ m_Mode = Mode; }
+
+
+        int                 Send                (const uint8_t* pData, size_t Length);
+        int                 Received            (uint8_t* pBuffer, size_t MaxLength);
+
+        bool                Queue               (MODBUS_Command_t& Command);
+        bool                CanHandle           (uint8_t SlaveID);
+        bool                IsBusy              (void)                                      { return (m_State != MODBUS_IDLE); }
+
+        bool                SlaveHasRequest     (void) const                                { return m_SlaveHasRequest; }
+        bool                MasterHasPending    (void) const                                { return m_MasterHasPending; }
+        bool                GetRequest          (const uint8_t** ppRX, size_t* pLength);
+
+        size_t              GetTX_BufferSize    (void) const                                { return MODBUS_RTU_MAX_FRAME_SIZE; }
+
+        void                SetManager          (MODBUS_Manager* pManager)                  { m_pManager = pManager; }
+        void                CallbackFunction    (int Type, void* pContext);
 
     private:
 
-        bool            IsEndOfRTU_Frame            (const uint8_t* pBuffer, size_t Length);
+        bool                IsEndOfRTU_Frame    (const uint8_t* pBuffer, size_t Length);
+        bool                IsEndOfRTU_Request  (const uint8_t* pBuffer, size_t Length);
 
+        UART_Driver*    	m_pUartDriver       = nullptr;
+        MODBUS_Manager* 	m_pManager          = nullptr;
+        IO_ID_e         	m_RE_DE_ControlPin;
+        MODBUS_State_e  	m_State             = MODBUS_IDLE;
+		MODBUS_Mode_e 		m_Mode     		    = MODBUS_BACKEND_IS_SLAVE;
 
-        Console*            m_pConsole              = nullptr;
-        MODBUS_State_e      m_State                 = MODBUS_IDLE;
-        MODBUS_Manager*     m_pManager              = nullptr;
-        
-        uint8_t             m_MinUnitID;
-        uint8_t             m_MaxUnitID;
+        FIFO_Buffer     	m_Fifo;
+        nOS_Sem         	m_RX_IdleSem;
 
-        uint8_t*            m_pTxBuf                = nullptr;
-        size_t              m_TxLen                 = 0;
+        uint8_t*        	m_pTX_Buffer        = nullptr;
+		size_t           	m_pTX_Length 		= 0;
 
-        uint8_t*            m_pRxBuf                = nullptr;
-        size_t              m_RxLen                 = 0
+        uint8_t*        	m_pRX_Buffer        = nullptr;
+        size_t          	m_RX_Length         = 0;
 
-        MODBUS_Command_t    m_Command;
-        bool                m_HasPending            = false;
-        
-        uint32_t            m_StartTick             = 0;
-        uint32_t            m_SilentTick            = 0;
+        bool            	m_SlaveHasRequest   = false;    // A request was received for the SLAVE
+        bool            	m_MasterHasPending  = false;    // A MASTER command is in progress
+
+        uint32_t        	m_StartTick         = 0;
+        uint32_t        	m_SilentTick        = 0;
+
+	    MODBUS_Command_t	m_Command;          // Commande en cours (queue côté MASTER)
 };
+
+//-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
+
+// Default Digini Modbus RTU
+MODBUS_RTU_EXTERN class ModbusRTU myModbusRTU;
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // (DIGINI_USE_MODBUS == DEF_ENABLED) && (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

@@ -73,7 +73,7 @@ WidgetTerminal::WidgetTerminal(Terminal_t* pTerminal)
 
     // Reserve virtual screen memory and clear it's space
     VirtualScreenSize = m_NumberOfLine * m_NbOfCharPerLine;
-    m_pScreen = (uint8_t*)pMemoryPool->AllocAndClear(VirtualScreenSize);
+    m_pScreen = (uint8_t*)pMemoryPool->AllocAndClear(VirtualScreenSize, SERVTERM);
 
     m_CurrentLine = 0;
 }

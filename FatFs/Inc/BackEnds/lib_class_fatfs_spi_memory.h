@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : diskio_def.h
+//  File : lib_class_fatfs_spi_memory.h
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2023 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -27,63 +27,46 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-// Include file(s)
-//-------------------------------------------------------------------------------------------------
-
-#include "./Digini/inc/lib_typedef.h"
-#include "FatFs_cfg.h"
-
-//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-// Command code for disk_ioctrl()
-// Generic command
-#define CTRL_SYNC                       0       // Mandatory for write functions
-#define GET_SECTOR_COUNT                1       // Mandatory for only f_mkfs()
-#define GET_SECTOR_SIZE                 2
-#define GET_BLOCK_SIZE                  3        // Mandatory for only f_mkfs()
-#define CTRL_ERASE_SECTOR               4        // Force erased a block of sectors (for only _USE_ERASE)
-#define MMC_GET_TYPE                    5        // FatFS definition N/U
-#define MMC_GET_CSD                     6        // FatFS definition N/U... use Formatted struct version GET_CSD_STRUCT
-#define MMC_GET_CID                     7        // FatFS definition N/U... use Formatted struct version GET_CID_STRUCT
-#define MMC_GET_OCR                     8
-#define ATA_GET_REV                     9        // FatFS definition N/U
-#define ATA_GET_MODEL                   10       // FatFS definition N/U
-#define ATA_GET_SN                      11       // FatFS definition N/U .. we use CID
-
-// Custom definition
-#define GET_CID_STRUCT                  20
-#define GET_CSD_STRUCT                  21
-#define GET_SCR_STRUCT                  22
-#define GET_CARD_CAPACITY               23
-
-//-------------------------------------------------------------------------------------------------
-// Type definition(s) and structure(s)
-//-------------------------------------------------------------------------------------------------
-
 #ifdef __cplusplus
-extern "C" {
-#endif
 
-// Status of Disk Functions
-// They are mapped in Digini errors systems.
-//typedef SystemState_e DSTATUS;
+//-------------------------------------------------------------------------------------------------
 
-// Results of Disk Functions
-typedef enum
+#if (DIGINI_FATFS_USE_SPI_MEMORY == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+// Class definition(s)
+//-------------------------------------------------------------------------------------------------
+
+class FatFS_SPI_Memory : public DiskIO_DeviceInterface
 {
-    RES_OK = 0,             // 0: Successful
-    RES_ERROR,              // 1: R/W Error
-    RES_WRPRT,              // 2: Write Protected
-    RES_NOTRDY,             // 3: Not Ready
-    RES_PARERR              // 4: Invalid Parameter
-} DRESULT;
+    public:
 
-typedef SystemState_e DSTATUS;
+		// Mandatory function required by FatFs
+        DSTATUS         		Initialize          (void* pParameter);
+        DSTATUS         		Status              (void);
+        DRESULT         		Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
+      #if _USE_WRITE == 1
+        DRESULT         		Write               (const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
+      #endif
+      #if _USE_IOCTL == 1
+        DRESULT         		IO_Ctrl             (uint8_t Control, void* pBuffer);
+      #endif
 
-#ifdef __cplusplus
-}
-#endif
+
+    private:
+
+        DSTATUS         		m_Status            = STA_NODISK;
+        SPI_SerialMemoryDriver 	m_SPI_Memory;
+};
 
 //-------------------------------------------------------------------------------------------------
+
+#endif // (DIGINI_FATFS_USE_SPI_MEMORY == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+
+#endif // __cplusplus
+

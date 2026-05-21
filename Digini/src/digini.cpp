@@ -166,12 +166,38 @@ SystemState_e DIGINI_PostInitialize(void)
     //nOS_Error Error;
     //SystemState_e State;
 
-  #if (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)
-    pTaskCOMM->Initialize();
+ #if (DIGINI_USE_COMM_MODULE == DEF_ENABLED) && (DIGINI_USE_CONSOLE == DEF_ENABLED)
+    myTaskCOMM.Initialize(&DebugConsole, &UART_DebugTerminal, "TaskComm");
+
+  #if (DIGINI_USE_CMD_LINE == DEF_ENABLED)
+    myCommandLine.Initialize(&DebugConsole);
+    DebugConsole.GiveControlToChildProcess(&myCommandLine);           // Hijack the console for the CLI
+  #endif
+
+  #if (DIGINI_USE_VT100_MENU == DEF_ENABLED)
+    myVT100.Initialize(&DebugConsole);
+
+   #if (DIGINI_USE_CMD_LINE == DEF_DISABLED)
+    DebugConsole.GiveControlToChildProcess(&myVT100);                  // Hijack the console or the CLI for VT100
+   #endif
+  #endif
+ #endif
+
+  #if (DIGINI_USE_MODBUS == DEF_ENABLED)
+    myMODBUS_Router.Initialize();
+   #if (DIGINI_USE_SERIAL_MODBUS == DEF_ENABLED)
+	myModbusRTU.Initialize(MODBUS_RTU_UART, MODBUS_RTU_DEFAULT_MODE, MODBUS_RTU_IO_RE_DE_CONTROL_PIN, MODBUS_RTU_MIN_ADDRESS, MODBUS_RTU_MAX_ADDRESS);
+	myMODBUS_Router.RegisterEndpoint(&myModbusRTU);
+   #endif
+   #if (DIGINI_USE_TCP_MODBUS == DEF_ENABLED)
+	// TODO
+	//myMODBUS_TCP.Initialize(&myMODBUS_Manager, ???, MODBUS_TCP_MIN_ADDRESS, MODBUS_TCP_MAX_ADDRESS);
+	//myMODBUS_Router.RegisterEndpoint(&myModbusTCP);
+   #endif
   #endif
 
   #if (USE_USB_DRIVER == DEF_ENABLED)
-    USB.Initialize();
+    //USB.Initialize();
   #endif
 
   #if (DIGINI_USE_FATFS == DEF_ENABLED)

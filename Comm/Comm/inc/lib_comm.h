@@ -45,7 +45,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define TASK_COMM_PRIO                                  7
-#define TASK_COMM_STACK_SIZE                            512 //256
+#define TASK_COMM_STACK_SIZE                            256
 
 //-------------------------------------------------------------------------------------------------
 // Class definition(s)
@@ -55,28 +55,22 @@ class ClassTaskCOMM
 {
     public:
 
-        nOS_Error       Initialize         (void);
-        void            Run                (void);                              // Task
+        nOS_Error       Initialize         (Console* m_pConsole, UART_Driver* pUart, const char* pTaskName);
+        void            Run                (void);
 
     private:
 
         nOS_Thread      m_Handle;
         nOS_Stack       m_Stack[TASK_COMM_STACK_SIZE];
+        Console*        m_pConsole;
 };
 
 //-------------------------------------------------------------------------------------------------
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-// Only one instance for now
-
-TASK_COMM_EXTERN class ClassTaskCOMM  TaskCOMM;
-
-#ifdef TASK_COMM_GLOBAL
-                 class ClassTaskCOMM* pTaskCOMM = &TaskCOMM;
-#else
-    extern       class ClassTaskCOMM* pTaskCOMM;
-#endif
+// Default Digini TaskComm
+TASK_COMM_EXTERN class ClassTaskCOMM  myTaskCOMM;
 
 //-------------------------------------------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File :  lib_class_sntp.h
+//  File : lib_delay.h
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -27,57 +27,26 @@
 #pragma once
 
 //-------------------------------------------------------------------------------------------------
-
-#if (IP_USE_SNTP == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------
-// Define(s)
+// Include(s)
 //-------------------------------------------------------------------------------------------------
 
-//#define SNTP_UNIX_START                     2208988800UL                // January 1, 1970
-//#define SNTP_TIME_START                     3471292800UL                // January 1, 2010
+#include <stdint.h>
+#include "./Peripheral/inc/port/lib_system_clock.h"
 
 //-------------------------------------------------------------------------------------------------
-// Enum(s)
+// Function prototype(s)
 //-------------------------------------------------------------------------------------------------
 
-enum SNTP_State_e
-{
-    SNTP_STATE_INITIAL,
-    SNTP_STATE_WAIT_RESPONSE,
-    SNTP_STATE_DONE,
-    SNTP_STATE_ERROR
-};
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-//-------------------------------------------------------------------------------------------------
-// Class definition(s)
-//-------------------------------------------------------------------------------------------------
+void		LIB_Delay_uSec					(uint32_t Delay);
+void		LIB_Delay_mSec					(uint32_t Delay);
 
-class SNTP_Client
-{
-    public:
-
-        bool            Initialize                  (NetworkContext* pContextt);
-        bool            Start                       (const IP_Address_t ServerIP);
-        void            Process                     (void);
-        uint32_t        GetUnixTime                 (void) const                            { return m_UnixTime; }
-
-    private:
-
-        bool            ReceiveResponse             (void);
-        bool            MasterParseResponse               (uint8_t* pPacket, size_t Length);
-        uint32_t        GetSystemTime_Seconds_1900  (void);
-        uint32_t        Convert1900ToUnix           (uint32_t Seconds1900);
-
-        NetworkContext* m_pContext;
-        Socket*         m_pSocket;
-        uint32_t        m_UnixTime;
-        SNTP_State_e    m_State;
-        TickCount_t     m_WaitStart;
-};
+#ifdef __cplusplus
+}
+#endif
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (IP_USE_SNTP == DEF_ENABLED)
-
-//-------------------------------------------------------------------------------------------------

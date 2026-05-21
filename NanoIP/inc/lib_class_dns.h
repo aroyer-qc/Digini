@@ -62,7 +62,7 @@ private:
 
         inline int              FindFreeSlot        (void);
         int                     FindSlotByXID       (uint16_t XID);
-        bool                    ParseResponse       (DNS_Header_t* pMessage, size_t PacketLength, IP_Address_t& OutIP);
+        bool                    MasterParseResponse       (DNS_Header_t* pMessage, size_t PacketLength, IP_Address_t& OutIP);
         size_t                  BuildDNS_Query      (DNS_Header_t* pMessage, const char* pDomainName);
 
         NetworkContext*         m_pContext;

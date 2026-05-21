@@ -1,10 +1,10 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_timming.cpp
+//  File : lib_time.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -37,54 +37,6 @@
 const uint8_t  MonthSize[12]     = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 const uint8_t  WeekDayTable[12]  = {4, 7, 7, 3, 5, 8, 3, 6, 9, 4, 7, 9};
 const uint16_t DaysSoFar[12]     = {0, 31, 59, 90, 120, 151, 181, 212, 243, 274, 303, 334};
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           LIB_Delay_uSec
-//
-//  Parameter(s):   uint32_t       Delay
-//  Return:         none
-//
-//  Description:    Approximation of 1 uSec delay
-//
-//  Note(s):        Adjust manually by changing value in clock_cfg.h in your config directory
-//
-//-------------------------------------------------------------------------------------------------
-void LIB_Delay_uSec(uint32_t Delay)
-{
-  #ifdef DWT
-    uint32_t Cycles = (SYSTEM_CORE_CLOCK / 1000000U) * Delay;
-    uint32_t Start  = DWT->CYCCNT;
-
-    while ((DWT->CYCCNT - Start) < Cycles) {};
-  #else
-    uint32_t i;
-    uint32_t j;
-
-    for(i = 0; i < Delay; i++)
-    {
-        for(j = 0; j <= CFG_DELAY_TIMING_LOOP_VALUE_FOR_1_USEC; j++) {};
-    }
-  #endif  
-}
-
-//-------------------------------------------------------------------------------------------------
-//
-//  Name:           LIB_Delay_mSec
-//
-//  Parameter(s):   uint32_t       Delay in mSec
-//  Return:         none
-//
-//  Description:    mSec delay
-//
-//
-//-------------------------------------------------------------------------------------------------
-void LIB_Delay_mSec(uint32_t Delay)
-{
-    LIB_Delay_uSec(Delay * 1000);
-}
-
-
 
 //-------------------------------------------------------------------------------------------------
 //

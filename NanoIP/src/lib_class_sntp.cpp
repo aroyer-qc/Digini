@@ -229,7 +229,7 @@ void SNTP_Client::Process(void)
         {
             if(ReceiveResponse())                                           // Try to receive a response (non-blocking)
             {
-                // ParseResponse() already set state to DONE
+                // MasterParseResponse() already set state to DONE
                 break;
             }
 
@@ -262,7 +262,7 @@ void SNTP_Client::Process(void)
 //  Description:    Attempts a non-blocking read on the SNTP socket. If a UDP packet is available,
 //                  the function allocates a temporary buffer from the memory pool, receives up to
 //                  sizeof(SNTP_Header_t) bytes, validates the packet length, and forwards the
-//                  payload to ParseResponse() for protocol-level validation and timestamp
+//                  payload to MasterParseResponse() for protocol-level validation and timestamp
 //                  extraction.
 //
 //                  The receive buffer is ALWAYS freed before returning, regardless of success or
@@ -300,7 +300,7 @@ bool SNTP_Client::ReceiveResponse(void)
             goto exit;
         }
 
-        Response = ParseResponse(pBuffer, BytesReceived);
+        Response = MasterParseResponse(pBuffer, BytesReceived);
     }
 
 exit:
@@ -311,7 +311,7 @@ exit:
 
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           ParseResponse
+//  Name:           MasterParseResponse
 //
 //  Parameter(s):   uint8_t* pPacket    Pointer to the received SNTP packet (expected 48 bytes)
 //
@@ -336,7 +336,7 @@ exit:
 //                  higher-level logic.
 //
 //-------------------------------------------------------------------------------------------------
-bool SNTP_Client::ParseResponse(uint8_t* pPacket, size_t Length)
+bool SNTP_Client::MasterParseResponse(uint8_t* pPacket, size_t Length)
 {
     VAR_UNUSED(Length);
 

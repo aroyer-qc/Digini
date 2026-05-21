@@ -34,7 +34,7 @@
 #define     LIB_BA_BIT_PER_BYTE             8
 
 //-------------------------------------------------------------------------------------------------
-// Function prototype(s)
+// Function prototype(s) c++ only
 //-------------------------------------------------------------------------------------------------
 
 uint32_t    LIB_BitReversal                 (uint32_t Value);
@@ -63,9 +63,6 @@ uint16_t    LIB_TriangleToOppositeCoord     (uint16_t Angle, uint16_t AdjacentSi
 uint16_t    LIB_SinCos                      (uint16_t Angle, uint16_t Radius);              // For 0 - 45 degree
 
 void        LIB_ProcessFloatToString        (char* pStr, double Value, int NumberOfDecimal);
-
-void		LIB_Delay_uSec					(uint32_t Delay);
-void		LIB_Delay_mSec					(uint32_t Delay);
 
 void        LIB_GetTime                     (Time_t* pData);
 void        LIB_SetTime                     (Time_t* pData);
@@ -157,40 +154,5 @@ extern const uint8_t  MonthSize[12];
 extern const uint8_t  WeekDayTable[12];
 extern const uint16_t DaysSoFar[12];
 
-
-/*
-
-uint8_t                LIB_Checksum                        (const void* pMem, uint16_t wCount);
-uint32_t               LIB_SwapDWORD                       (uint32_t dwData);
-uint16_t               LIB_SwapWORD                        (uint16_t wData);
-void                   LIB_Copy_BYTETable_To_DWORDTable    (uint32_t* pdwDest, uint8_t *pbySource, uint8_t bySize);
-void                   LIB_Copy_DWORDTable_To_BYTETable    (uint8_t* pbyDest, uint32_t* pdwSource, uint8_t bySize);
-void                   LIB_StringByteToWord                (void* pOut, void *pIn);
-uint8_t                LIB_DecHex                          (uint8_t bySource);
-uint16_t               LIB_3AscHex                         (void* pSrc);
-uint16_t               LIB_4AscHex                         (void* pSrc);
-uint32_t               LIB_5AscHex                         (void* pSrc);
-uint32_t               LIB_6AscHex                         (void* pSrc);
-uint32_t               LIB_8AscHex                         (void* pSrc);
-uint8_t                LIB_1AscDec                         (void* pSrc);
-uint8_t                LIB_2AscDec                         (void* pSrc);
-uint16_t               LIB_3AscDec                         (void* pSrc);
-uint16_t               LIB_4AscDec                         (void* pSrc);
-uint32_t               LIB_5AscDec                         (void* pSrc);
-uint32_t               LIB_6AscDec                         (void* pSrc);
-uint32_t               LIB_7AscDec                         (void* pSrc);
-uint32_t               LIB_8AscDec                         (void* pSrc);
-uint32_t               LIB_10AscDec                        (void* pSrc);
-uint8_t                LIB_1AscDecp                        (void* pSrc);
-uint8_t                LIB_2AscDecp                        (void* pSrc);
-uint16_t               LIB_3AscDecp                        (void* pSrc);
-uint16_t               LIB_4AscDecp                        (void* pSrc);
-uint32_t               LIB_5AscDecp                        (void* pSrc);
-uint32_t               LIB_6AscDecp                        (void* pSrc);
-uint32_t               LIB_8AscDecp                        (void* pSrc);
-uint16_t               LIB_ExtractMedian                   (uint16_t *pValue, uint8_t byNbSamples);
-uint8_t                LIB_StringToGUID                    (void *pSrc, uint8_t *pGUID);
-
-*/
 //-------------------------------------------------------------------------------------------------
 

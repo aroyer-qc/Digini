@@ -270,7 +270,7 @@ void UART_Driver::Initialize(void)
 
         m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
         m_DMA_RX.SetSource((void*)&m_pUart->RDR);
-        m_DMA_RX.SetLength(UART_DRIVER_INTERNAL_RX_BUFFER_SIZE);
+        m_DMA_RX.SetLength(m_pInfo->RX_FifoSize);
 
         m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
         m_DMA_TX.SetDestination((void*)&m_pUart->TDR);
@@ -1095,7 +1095,7 @@ void UART_Driver::IRQ_Handler(void)
         {
             m_RX_Transfer.u.Head = m_RX_Transfer.StaticSize - m_DMA_RX.GetLength();      // Give actual position in the DMA Buffer
           #ifdef CORE_CM7
-            SCB_InvalidateDCache_by_Addr((uint32_t*)m_RX_Transfer.pBuffer, UART_DRIVER_INTERNAL_RX_BUFFER_SIZE);
+            SCB_InvalidateDCache_by_Addr((uint32_t*)m_RX_Transfer.pBuffer, m_pInfo->RX_FifoSize);
           #endif
             m_pUart->ICR = USART_ICR_IDLECF;
 

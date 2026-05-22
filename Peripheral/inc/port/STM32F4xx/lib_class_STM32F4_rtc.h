@@ -58,7 +58,6 @@ class RTC_Driver
     public:
 
         void                    Initialize              (void);
-
         void                    GetDate                 (Date_t* pDate);
         void                    GetTime                 (Time_t* pTime);
         void                    SetDate                 (Date_t* pDate);

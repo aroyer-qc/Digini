@@ -56,7 +56,7 @@ SystemState_e CommandLine::CmdMUTE(void* pArg)
 
     if(m_PlainCommand == true)
     {
-        myConsole.SetMuteLogging(true);
+        DebugConsole.SetMuteLogging(true);
         Error = SYS_READY;
     }
     else
@@ -85,7 +85,7 @@ SystemState_e CommandLine::CmdUNMUTE(void* pArg)
 
     if(m_PlainCommand == true)
     {
-        myConsole.SetMuteLogging(false);
+        DebugConsole.SetMuteLogging(false);
         Error = SYS_READY;
     }
     else

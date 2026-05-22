@@ -31,13 +31,22 @@
 #if (USE_RTC_DRIVER == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// Global Macro
+//-------------------------------------------------------------------------------------------------
+
+#ifdef RTC_DRIVER_GLOBAL
+    #define RTC_DRIVER_EXTERN
+#else
+    #define RTC_DRIVER_EXTERN extern
+#endif
+
+//-------------------------------------------------------------------------------------------------
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
 #define RTC_CLOCK_MODE_LSE          uint32_t(0x00000100)
 #define RTC_CLOCK_MODE_LSI          uint32_t(0x00000200)
 #define RTC_CLOCK_MODE_HSE          uint32_t(0x00000300)
-
 
 // This is for a 4 MHz HSE Clock
 #define USE_RTC_HSE_CLOCK
@@ -49,11 +58,12 @@
 //-------------------------------------------------------------------------------------------------
 
 // TO DO : Add alarm if needed
+
 class RTC_Driver
 {
     public:
 
-        void                    Initialize              (uint32_t Mode);
+        void                    Initialize              (void);
         void                    GetDate                 (Date_t* pDate);
         void                    GetTime                 (Time_t* pTime);
         void                    SetDate                 (Date_t* pDate);
@@ -76,6 +86,7 @@ class RTC_Driver
         void                    Enable                  (void);
         SystemState_e           EnterInitMode           (void);
         void                    ExitInitMode            (void);
+        uint8_t                 GetDayOfWeek            (Date_t* pDate);
         void                    Lock                    (void);
         void                    Unlock                  (void);
         void                    LockRegister            (void);
@@ -84,22 +95,18 @@ class RTC_Driver
         void                    UpdateTimeFeature       (void);
         SystemState_e           WaitForSynchro          (void);
 
-        bool                    m_IsItInitialize;
         nOS_Mutex               m_Mutex;
         uint32_t                m_TimeOut;
         TimeFormat_e            m_TimeFormat;
         Clock_t                 m_Clock;
-        static const uint8_t    m_MonthSize[12];
-        static const uint16_t   m_DaysSoFar[12];
 };
 
 //-------------------------------------------------------------------------------------------------
+// Global variable(s) and constant(s)
+//-------------------------------------------------------------------------------------------------
 
-#ifdef RTC_DRIVER_GLOBAL
-  class RTC_Driver                  myRTC;
-#else
-  extern class RTC_Driver           myRTC;
-#endif
+// Only one instance of RTC
+RTC_DRIVER_EXTERN  class RTC_Driver  myRTC;
 
 //-------------------------------------------------------------------------------------------------
 

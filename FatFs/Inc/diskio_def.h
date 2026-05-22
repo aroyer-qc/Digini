@@ -88,12 +88,14 @@ typedef enum
 #endif
 
 #ifdef __cplusplus
-struct SPI_Param_t			// SPI device, Flash, Eeprom SD card
-{
-    SPI_Driver*    pDriver;
-    MemoryList_e   MemoryID;
-    IO_ID_e        IO_ChipSelect;
-};
+ #if (USE_SPI_DRIVER == DEF_ENABLED)
+  struct SPI_Param_t			// SPI device, Flash, Eeprom SD card
+  {
+      SPI_Driver*    pDriver;
+      MemoryList_e   MemoryID;
+      IO_ID_e        IO_ChipSelect;
+  };
+ #endif
 #endif
 
 //-------------------------------------------------------------------------------------------------

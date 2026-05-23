@@ -61,10 +61,6 @@
 #define SFDP_TABLE_ERASE_SUPPORT_OFFSET     0
 #define SFDP_TABLE_ERASE_OPCODE_OFFSET      1
 #define SFDP_TABLE_ADDRESS_BYTES_OFFSET     2
-//#define SFDP_TABLE_DENSITY_0_OFFSET         4   // Density bits [7:0]
-//#define SFDP_TABLE_DENSITY_1_OFFSET         5
-//#define SFDP_TABLE_DENSITY_2_OFFSET         6
-//#define SFDP_TABLE_DENSITY_3_OFFSET         7   // Density bits [31:24]
 #define SFDP_SIGNATURE                      "SFDP"
 #define SFDP_SIGNATURE_SIZE                 4
 #define SFDP_BYTE_SIZE                      8
@@ -86,7 +82,7 @@
 #define BFPT_ERASE_TYPE_3_OPCODE_OFFSET     33
 #define BFPT_ERASE_TYPE_4_SIZE_EXP_OFFSET   34  // DWORD 10
 #define BFPT_ERASE_TYPE_4_OPCODE_OFFSET     35
-#define BFPT_CHIP_ERASE_OPCODE_OFFSET       31  // DWORD 8,  byte 3
+#define BFPT_CHIP_ERASE_OPCODE_OFFSET       44  // DWORD 11, byte 0
 #define BFPT_PAGE_SIZE_OFFSET_LSB           45  // DWORD 11, byte 1
 #define BFPT_PAGE_SIZE_OFFSET_MSB           46  // DWORD 11, byte 2
 
@@ -162,9 +158,6 @@ SystemState_e SPI_SerialMemoryDriver::Initialize(SPI_Driver* pSPI, MemoryList_e 
     // Auto detect mode
     if(Memory == FLASH_AUTO_DETECT)
     {
-        // Read the ID
-        MemoryID = ReadID();
-
         // Parse SFDP and fill m_MemoryInfo
         if(ParseSFDP() != SYS_READY)
         {
@@ -235,10 +228,13 @@ SystemState_e SPI_SerialMemoryDriver::SendCommandAndAddress(SerialMemoryCmd_e Co
 
     Buffer[Index++] = Command;
 
-	if((m_MemoryInfo.SupportOptions & MEM_OPT_4_BYTES_ADDR) != 0)
-	{
-		Buffer[Index++] = uint8_t(Address >> 24);
-	}
+    if(Command != MEMORY_CMD_READ_SFPD)
+    {
+        if((m_MemoryInfo.SupportOptions & MEM_OPT_4_BYTES_ADDR) != 0)
+        {
+            Buffer[Index++] = uint8_t(Address >> 24);
+        }
+    }
 
 	Buffer[Index++] = uint8_t(Address >> 16);
 	Buffer[Index++] = uint8_t(Address >> 8);
@@ -805,7 +801,6 @@ SystemState_e SPI_SerialMemoryDriver::ParseSFDP(void)
     }
 
     // Fill MemoryInfo structure
-    m_MemoryInfo.MemoryID          = ReadID();
     m_MemoryInfo.PageSize          = PageSize;
     m_MemoryInfo.NumberOfPages     = FlashDensity / PageSize;
     m_MemoryInfo.SectorSize        = EraseSize;
@@ -828,6 +823,9 @@ SystemState_e SPI_SerialMemoryDriver::ParseSFDP(void)
     {
         m_MemoryInfo.SupportOptions |= MEM_OPT_4_BYTES_ADDR;
     }
+
+    // Read the ID
+    m_MemoryInfo.MemoryID = ReadID();
 
     return SYS_READY;
 }

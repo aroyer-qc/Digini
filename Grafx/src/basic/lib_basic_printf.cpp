@@ -217,7 +217,8 @@ size_t GPrintf::PutString(void)
                 m_CorrectedPos.X = m_Position.X + m_FontDescriptor.LeftBearing;
                 m_CorrectedPos.Y = m_Position.Y + m_FontDescriptor.OffsetY;
 
-                if(m_FontDescriptor.pAddress != 0)
+                if(pLineString[j] != ' ')
+                //if(m_FontDescriptor.pAddress != 0) //need fix in GUI_Builder
                 {
                     DisplayLayer::SetTextColor(*m_pMovingUsedColorPtr);
                     PrintFont(&m_FontDescriptor, &m_CorrectedPos);

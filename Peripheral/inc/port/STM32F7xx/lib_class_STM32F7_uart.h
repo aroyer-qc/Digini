@@ -60,7 +60,6 @@
      (UART_DRIVER_RX_OVERRUN_ERROR_CFG  == DEF_ENABLED))
 
     #define UART_DRIVER_RX_ERROR_CFG            DEF_ENABLED
-
 #endif
 
 #if ((UART_DRIVER_RX_PARITY_ERROR_CFG   != DEF_ENABLED) && \
@@ -200,6 +199,7 @@ struct UART_Info_t
     UART_Config_e       Config;
     UART_Baud_e         BaudID;
     bool                IsItBlockingOnBusy;  // todo check if used
+    size_t              RX_FifoSize;
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;
 };

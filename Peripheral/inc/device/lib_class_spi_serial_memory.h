@@ -79,7 +79,7 @@ enum SerialMemoryCmd_e
     MEMORY_CMD_READ_SFPD                    = 0x5A,     // Read SFDP command
     MEMORY_CMD_CHIP_ERASE                   = 0x60,     // Chip Erase
     MEMORY_CMD_ENABLE_RESET                 = 0x66,     // Enable Reset flash           Winbond
-    MEMORY_CMD_READ_ID                      = 0x90,     // Read Manufacturer/Device ID
+    //MEMORY_CMD_READ_ID                      = 0x99,     // Read Manufacturer/Device ID
     MEMORY_CMD_UNLOCK                       = 0x98,     // Unlock SST devices           SST
     MEMORY_CMD_RESET                        = 0x99,     // Reset flash                  Winbond
     MEMORY_CMD_READ_JEDEC_ID                = 0x9F,     // Read JEDEC ID

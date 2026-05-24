@@ -50,6 +50,10 @@
 #define MEM_WAIT_LOOP_DELAY               	2
 #define MEM_WAIT_LOOP_RETRY               	15
 
+#define SFDP_SIGNATURE                      "SFDP"
+#define SFDP_SIGNATURE_SIZE                 4
+#define SFDP_HEADER_SIZE                    16
+
 #define SFDP_SIGNATURE_0_OFFSET             0
 #define SFDP_MAJOR_REVISION_OFFSET          5
 #define SFDP_PARAM_ID_LSB_OFFSET            8
@@ -58,16 +62,8 @@
 #define SFDP_PARAM_TABLE_PTR_0              12
 #define SFDP_PARAM_TABLE_PTR_1              13
 #define SFDP_PARAM_TABLE_PTR_2              14
-#define SFDP_TABLE_ERASE_SUPPORT_OFFSET     0
-#define SFDP_TABLE_ERASE_OPCODE_OFFSET      1
-#define SFDP_TABLE_ADDRESS_BYTES_OFFSET     2
-#define SFDP_SIGNATURE                      "SFDP"
-#define SFDP_SIGNATURE_SIZE                 4
-#define SFDP_BYTE_SIZE                      8
-#define SFDP_HEADER_SIZE                    16
-#define SFDP_BASIC_FLASH_PARAMETER_TABLE    8
+#define SFDP_PARAM_TABLE_LENGTH             15
 
-#define BFPT_TABLE_SIZE						64
 #define BFPT_ADDRESSING_MODE_OFFSET			2
 #define BFPT_DENSITY_OFFSET_0               4   // DWORD 1,  byte 0
 #define BFPT_DENSITY_OFFSET_1               5
@@ -82,7 +78,7 @@
 #define BFPT_ERASE_TYPE_3_OPCODE_OFFSET     33
 #define BFPT_ERASE_TYPE_4_SIZE_EXP_OFFSET   34  // DWORD 10
 #define BFPT_ERASE_TYPE_4_OPCODE_OFFSET     35
-#define BFPT_CHIP_ERASE_OPCODE_OFFSET       44  // DWORD 11, byte 0
+#define BFPT_CHIP_ERASE_OPCODE_OFFSET       43  // DWORD 10, byte 3
 #define BFPT_PAGE_SIZE_OFFSET_LSB           45  // DWORD 11, byte 1
 #define BFPT_PAGE_SIZE_OFFSET_MSB           46  // DWORD 11, byte 2
 
@@ -164,8 +160,6 @@ SystemState_e SPI_SerialMemoryDriver::Initialize(SPI_Driver* pSPI, MemoryList_e 
             return SYS_FAIL;
         }
 
-        m_MemoryInfo.MemoryID = MemoryID;
-
         return SYS_READY;
     }
   #endif
@@ -191,9 +185,9 @@ uint32_t SPI_SerialMemoryDriver::ReadID(void)
 	if((m_MemoryInfo.SupportOptions & MEM_OPT_READ_ID) != 0)
 	{
 		uint8_t     Buffer[3] = {0x00, 0x00, 0x00};
-		uint8_t     Command   = MEMORY_CMD_READ_ID;
+		uint8_t     Command   = MEMORY_CMD_READ_JEDEC_ID;
 
-		// Send "MEMORY_CMD_READ_ID" instruction and read ID
+		// Send "MEMORY_CMD_READ_JEDEC_ID" instruction and read ID
 		m_pSPI->Transfer(&Command, 1, Buffer, 3, m_ChipSelect);
 		return (uint32_t(Buffer[0]) << 16) | (uint32_t(Buffer[1]) << 8) | uint32_t(Buffer[2]);
 	}
@@ -724,15 +718,15 @@ SystemState_e SPI_SerialMemoryDriver::ReadSFDP(uint32_t NumberOfByteToRead, uint
 //                  specification are used.
 //
 //-------------------------------------------------------------------------------------------------
+#if (SERIAL_MEMORY_USE_AUTO_DETECT == DEF_ENABLED)
 SystemState_e SPI_SerialMemoryDriver::ParseSFDP(void)
 {
-    uint8_t  Header						[SFDP_HEADER_SIZE];
-    uint8_t  BasicFlashParameterTable	[BFPT_TABLE_SIZE];
+    uint8_t  Header[SFDP_HEADER_SIZE +2];
     uint32_t DensityBits  = 0;
     uint32_t FlashDensity = 0;
 
-    // Read SFDP header
-    if(ReadSFDP(SFDP_HEADER_SIZE, 0x00, Header) != SYS_READY)
+    // Read the SFDP header (must be at least 16 bytes)
+    if(ReadSFDP(SFDP_HEADER_SIZE + 1, 0x00, Header) != SYS_READY)
     {
         return SYS_FAIL;
     }
@@ -743,92 +737,149 @@ SystemState_e SPI_SerialMemoryDriver::ParseSFDP(void)
         return SYS_FAIL;
     }
 
-    // Extract BFPT address
-    uint32_t BFPT_Address = (Header[SFDP_PARAM_TABLE_PTR_2] << 16)  | (Header[SFDP_PARAM_TABLE_PTR_1] << 8) | Header[SFDP_PARAM_TABLE_PTR_0];
+    // Extract BFPT address (Parameter Header #0)
+    // NOTE: These offsets must map to bytes 12,13,14 of the SFDP header
+    uint32_t BFPT_Address = (uint32_t(Header[SFDP_PARAM_TABLE_PTR_2]) << 16) |
+                            (uint32_t(Header[SFDP_PARAM_TABLE_PTR_1]) << 8)  |
+                             uint32_t(Header[SFDP_PARAM_TABLE_PTR_0]);
 
-    // Read BFPT (64 bytes is enough for density + erase types + page size)
-    if(ReadSFDP(BFPT_TABLE_SIZE, BFPT_Address, BasicFlashParameterTable) != SYS_READY)
+    if(BFPT_Address > 0x100)
+    {
+        BFPT_Address = 0x10;   // Winbond errata fallback
+    }
+
+    // Extract BFPT length (DWORD count → convert to bytes)
+    uint8_t  BFPT_LengthDWords = Header[SFDP_PARAM_TABLE_LENGTH];
+
+    if((BFPT_LengthDWords == 0xFF) || (BFPT_LengthDWords == 0x00))
+    {
+        BFPT_LengthDWords = 0x09;   // Winbond errata fallback BFPT = 9 DWORDs
+    }
+
+    uint32_t BFPT_LengthBytes  = (uint32_t)BFPT_LengthDWords * 4;
+
+    // Basic safety check
+    if(BFPT_LengthBytes < 16)
     {
         return SYS_FAIL;
     }
 
-    // Density (1)
-    DensityBits  = (BasicFlashParameterTable[BFPT_DENSITY_OFFSET_3] << 24) |
-                   (BasicFlashParameterTable[BFPT_DENSITY_OFFSET_2] << 16) |
-                   (BasicFlashParameterTable[BFPT_DENSITY_OFFSET_1] << 8)  |
-                    BasicFlashParameterTable[BFPT_DENSITY_OFFSET_0];
+    // Allocate BFPT buffer
+    uint8_t* BasicFlashParameterTable = (uint8_t*)pMemoryPool->Alloc(BFPT_LengthBytes);
 
-    FlashDensity = (DensityBits + 1) / 8;   // Convert bits to bytes
-
-    // Erase types (7–10)
-    // Pick the smallest valid erase size
-    uint32_t EraseSize = 0;
-    uint8_t  EraseOpCode = 0;
-
-    for(int i = 0; i < 4; i++)
+    if(BasicFlashParameterTable == nullptr)
     {
-        uint8_t EraseSizeExponent = BasicFlashParameterTable[BFPT_ERASE_TYPE_1_SIZE_EXP_OFFSET + (i * 2)];
-        uint8_t OpCode            = BasicFlashParameterTable[BFPT_ERASE_TYPE_1_OPCODE_OFFSET   + (i * 2)];
+        return SYS_FAIL;
+    }
 
-        if((OpCode != 0x00) && (OpCode != 0xFF))
+    // Read BFPT table
+    if(ReadSFDP(BFPT_LengthBytes, BFPT_Address, BasicFlashParameterTable) == SYS_READY)
+    {
+        // Extract flash density (DWORD 1)
+        DensityBits = (BasicFlashParameterTable[BFPT_DENSITY_OFFSET_3] << 24) |
+                      (BasicFlashParameterTable[BFPT_DENSITY_OFFSET_2] << 16) |
+                      (BasicFlashParameterTable[BFPT_DENSITY_OFFSET_1] << 8)  |
+                       BasicFlashParameterTable[BFPT_DENSITY_OFFSET_0];
+
+        FlashDensity = (DensityBits + 1) / 8; // bits -> bytes
+
+        // Extract erase types (pick smallest valid erase size)
+        uint32_t EraseSize  = 0;
+        uint8_t  EraseOpCode = 0;
+
+        for(int i = 0; i < 4; i++)
         {
-            uint32_t Size = 1 << EraseSizeExponent;
+            uint32_t SizeOffset   = BFPT_ERASE_TYPE_1_SIZE_EXP_OFFSET + (i * 2);
+            uint32_t OpCopeOffset = BFPT_ERASE_TYPE_1_OPCODE_OFFSET   + (i * 2);
 
-            if((EraseSize == 0) || (Size < EraseSize))
+            if(OpCopeOffset >= BFPT_LengthBytes)
             {
-                EraseSize   = Size;
-                EraseOpCode = OpCode;
+                break;
             }
+
+            uint8_t Exponent = BasicFlashParameterTable[SizeOffset];
+            uint8_t OpCode   = BasicFlashParameterTable[OpCopeOffset];
+
+            if((OpCode != 0x00) && (OpCode != 0xFF))
+            {
+                uint32_t Size = 1 << Exponent;
+
+                if (EraseSize == 0 || Size < EraseSize)
+                {
+                    EraseSize   = Size;
+                    EraseOpCode = OpCode;
+                }
+            }
+        }
+
+        if(EraseSize != 0)
+        {
+            // Extract chip erase opcode (fallback to JEDEC if absent)
+            uint8_t ChipEraseOpCode = MEMORY_CMD_CHIP_ERASE; // default JEDEC (0xC7)
+            bool    HasChipErase    = true;
+
+            if(BFPT_LengthBytes > BFPT_CHIP_ERASE_OPCODE_OFFSET)
+            {
+                uint8_t OpCode = BasicFlashParameterTable[BFPT_CHIP_ERASE_OPCODE_OFFSET];
+
+                if((OpCode != 0x00) && (OpCode != 0xFF))
+                {
+                    ChipEraseOpCode = OpCode;
+                }
+                else
+                {
+                    HasChipErase = false;
+                }
+            }
+
+            // Extract page size (fallback to 256 if absent)
+            uint16_t PageSize = 256;
+
+            if(BFPT_LengthBytes > BFPT_PAGE_SIZE_OFFSET_MSB)
+            {
+                PageSize = (BasicFlashParameterTable[BFPT_PAGE_SIZE_OFFSET_MSB] << 8) | BasicFlashParameterTable[BFPT_PAGE_SIZE_OFFSET_LSB];
+
+                if(PageSize == 0)
+                {
+                    PageSize = 256;
+                }
+            }
+
+            // Fill MemoryInfo structure
+            m_MemoryInfo.PageSize          = PageSize;
+            m_MemoryInfo.NumberOfPages     = FlashDensity / PageSize;
+            m_MemoryInfo.SectorSize        = EraseSize;
+            m_MemoryInfo.SectorEraseSize   = EraseSize;
+            m_MemoryInfo.NumberOfSectors   = FlashDensity / EraseSize;
+            m_MemoryInfo.PageEraseSize     = 0;
+            m_MemoryInfo.ChipEraseOpCode   = SerialMemoryCmd_e(ChipEraseOpCode);
+            m_MemoryInfo.SectorEraseOpCode = SerialMemoryCmd_e(EraseOpCode);
+
+            m_MemoryInfo.SupportOptions = MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_SFDP | MEM_OPT_SECTOR_ERASE;
+
+            if(HasChipErase)
+            {
+                m_MemoryInfo.SupportOptions |= MEM_OPT_BULK_ERASE;
+            }
+
+            if(FlashDensity >= 16777216)
+            {
+                m_MemoryInfo.SupportOptions |= MEM_OPT_4_BYTES_ADDR;
+            }
+
+            // Free BFPT buffer
+            pMemoryPool->Free((void**)&BasicFlashParameterTable);
+
+            // Read JEDEC ID
+            m_MemoryInfo.MemoryID = ReadID();
+
+            return SYS_READY;
         }
     }
 
-    if(EraseSize == 0)
-    {
-        return SYS_FAIL; // No valid erase type found
-    }
-
-    // Chip Erase opcode (uint32_t 8)
-    uint8_t ChipEraseOpCode = BasicFlashParameterTable[BFPT_CHIP_ERASE_OPCODE_OFFSET];
-    bool    HasChipErase    = ((ChipEraseOpCode != 0x00) && (ChipEraseOpCode != 0xFF));
-
-    // Page size (uint32_t 11)
-    uint16_t PageSize = (BasicFlashParameterTable[BFPT_PAGE_SIZE_OFFSET_MSB] << 8) |
-                         BasicFlashParameterTable[BFPT_PAGE_SIZE_OFFSET_LSB];
-
-    if(PageSize == 0)
-    {
-        PageSize = 256; // Fallback for older devices
-    }
-
-    // Fill MemoryInfo structure
-    m_MemoryInfo.PageSize          = PageSize;
-    m_MemoryInfo.NumberOfPages     = FlashDensity / PageSize;
-    m_MemoryInfo.SectorSize        = EraseSize;
-    m_MemoryInfo.SectorEraseSize   = EraseSize;
-    m_MemoryInfo.NumberOfSectors   = FlashDensity / EraseSize;
-    m_MemoryInfo.PageEraseSize     = 0; // Flash does not support page erase
-    m_MemoryInfo.ChipEraseOpCode   = SerialMemoryCmd_e(ChipEraseOpCode);
-    m_MemoryInfo.SectorEraseOpCode = SerialMemoryCmd_e(EraseOpCode);
-    m_MemoryInfo.SupportOptions = MEM_OPT_READ_ID | MEM_OPT_FAST_READ | MEM_OPT_SFDP | MEM_OPT_SECTOR_ERASE;
-
-    if(HasChipErase == true)
-    {
-        m_MemoryInfo.SupportOptions |= MEM_OPT_BULK_ERASE;
-    }
-
-    // Addressing mode (0)
-    uint8_t AddressingMode = (BasicFlashParameterTable[BFPT_ADDRESSING_MODE_OFFSET] >> 1) & 0x03;
-
-    if((AddressingMode == 1) || (AddressingMode == 2))
-    {
-        m_MemoryInfo.SupportOptions |= MEM_OPT_4_BYTES_ADDR;
-    }
-
-    // Read the ID
-    m_MemoryInfo.MemoryID = ReadID();
-
-    return SYS_READY;
+    return SYS_FAIL;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 

@@ -34,6 +34,7 @@
 #ifndef     DBASE_MAX_SKIN_IMAGE_QTY
     #define DBASE_MAX_SKIN_IMAGE_QTY            256                                 // this is max the number of image in database
 #endif
+
 #ifndef     DBASE_MAX_SKIN_FONT_QTY
     #define DBASE_MAX_SKIN_FONT_QTY             32                                  // this is max the number of font in database
 #endif
@@ -58,8 +59,7 @@
     X_GFX_RAM_DBASE( GFX_FONT_INFO,           DBASE_MAX_SKIN_FONT_QTY,    1,                           sizeof(FontInfo_t)          )   \
     X_GFX_RAM_DBASE( GFX_FONT_DESC_INFO,      DBASE_MAX_SKIN_FONT_QTY,    FONT_CHARACTER_PER_FONT_MAX, sizeof(FontDescriptor_t)    )   \
     X_GFX_RAM_DBASE( GFX_IMAGE_INFO,          DBASE_MAX_SKIN_IMAGE_QTY,   1,                           sizeof(ImageInfo_t)         )   \
-#else
-	marde// mauvaise inclusion des .h
+
 #endif
 
 #if (GRAFX_USE_ROM_DATABASE == DEF_ENABLED)
@@ -74,4 +74,4 @@
 
 //-------------------------------------------------------------------------------------------------
 
- #endif // (DIGINI_USE_GRAFX == DEF_ENABLED)
+#endif // (DIGINI_USE_GRAFX == DEF_ENABLED)

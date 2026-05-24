@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -28,15 +28,17 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#include "ff.h"
-#include "./Peripheral/inc/FatFs/diskio.h"
-
-
 #ifdef __cplusplus
 
 //-------------------------------------------------------------------------------------------------
 
 #if (DIGINI_FATFS_USE_SDIO_SD_CARD == DEF_ENABLED)
+
+//-------------------------------------------------------------------------------------------------
+// Include file(s)
+//-------------------------------------------------------------------------------------------------
+
+#include "ff.h"
 
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
@@ -46,10 +48,7 @@ class FatFS_SDIO : public DiskIO_DeviceInterface
 {
     public:
 
-                        FatFS_SDIO          (void* pArg);
-                       ~FatFS_SDIO          (){};
-
-        DSTATUS         Initialize          (void);
+        DSTATUS         Initialize          (void* pParameter);
         DSTATUS         Status              (void);
         DRESULT         Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
       #if _USE_WRITE == 1
@@ -60,22 +59,21 @@ class FatFS_SDIO : public DiskIO_DeviceInterface
       #endif
 
         void            Configure           (SDIO_Driver* pDriver);     //uint8_t* pBuffer, size_t Size);
-
-
         FRESULT         GetDriveSize        (char* pDriveName, FatFS_Size_t* SizeStruct);
 
     private:
 
-       SDIO_Driver*    m_pSDIO_Driver;
-
-        bool            m_IsItInitialize;
-        DSTATUS         m_Status;
+        DSTATUS         m_Status            = STA_NODISK;
+        SDIO_Driver*    m_pSDIO_Driver;
+//        bool            m_IsItInitialize;
  };
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // (DIGINI_FATFS_USE_SDIO_SD_CARD == DEF_ENABLED)
+#endif //(DIGINI_FATFS_USE_SDIO_SD_CARD == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 
 #endif // __cplusplus
+
+//-------------------------------------------------------------------------------------------------

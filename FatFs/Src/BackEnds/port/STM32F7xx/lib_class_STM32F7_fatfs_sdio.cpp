@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2023 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -36,38 +36,31 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   FatFS_SDIO
+//   Class: FatFS_SDIO
 //
-//   Parameter(s):  None
 //
-//   Description:   Initialize SDIO Driver
-//
-//   Note(s):
+//   Description:   Class to handle FatFS for SDIO disk
 //
 //-------------------------------------------------------------------------------------------------
-FatFS_SDIO::FatFS_SDIO(void* pArg)
-{
-    m_pSDIO_Driver = (SDIO_Driver*)pArg;
-}
 
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: Initialize
 //
-//   Parameter(s):  None
+//   Parameter(s):  void* 		pParameter			Specific parameter for this device
 //   Return value:  DSTATUS
 //
 //   Description:   Initialize SD Card
 //
-//   Note(s):       This should the standard sequence to init a SD card
+//   Note(s):       This should be the standard sequence to init a SD card
 //
 //-------------------------------------------------------------------------------------------------
-DSTATUS FatFS_SDIO::Initialize(void)
+DSTATUS FatFS_SDIO::Initialize(void* pParameter)
 {
     SystemState_e  State;
 
+    m_pSDIO_Driver = (SDIO_Driver*)pParameter;
     m_pSDIO_Driver->Initialize();
-
     m_pSDIO_Driver->PowerOFF();
 
     // Check if SD card is present
@@ -284,7 +277,7 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
         break;
 
       #if (SDIO_USE_MAXIMUM_INFORMATION == DEF_ENABLED)
-        case GET_CID_STRUCT:
+        case MMC_GET_CID:
         {
             *((const SD_CID_t**)pBuffer) = m_pSDIO_Driver->GetCard_CID();
             Result = RES_OK;
@@ -292,7 +285,7 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
         break;
       #endif
 
-        case GET_CSD_STRUCT:
+        case MMC_GET_CSD:
         {
             *((const SD_CSD_t**)pBuffer) = m_pSDIO_Driver->GetCard_CSD();
             Result = RES_OK;
@@ -306,7 +299,7 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
         }
         break;
 
-        case GET_SCR_STRUCT:
+        case MMC_GET_SCR:
         {
             *((const SD_SCR_t**)pBuffer) = m_pSDIO_Driver->GetCard_SCR();
             Result = RES_OK;

@@ -704,9 +704,9 @@ VT100_InputType_e VT100_Terminal::CALLBACK_SD_CardInformation(uint8_t Input, VT1
 
             disk_initialize(FatFs->pdrv);
             disk_ioctl(FatFs->pdrv, MMC_GET_TYPE, &MMC_Type);
-            disk_ioctl(FatFs->pdrv, GET_CID_STRUCT, &pCID);
-            disk_ioctl(FatFs->pdrv, GET_CSD_STRUCT, &pCSD);
-            disk_ioctl(FatFs->pdrv, GET_SCR_STRUCT, &pSCR);
+            disk_ioctl(FatFs->pdrv, MMC_GET_CID, &pCID);
+            disk_ioctl(FatFs->pdrv, MMC_GET_CSD, &pCSD);
+            disk_ioctl(FatFs->pdrv, MMC_GET_SCR, &pSCR);
             disk_ioctl(FatFs->pdrv, GET_CARD_CAPACITY, &CardCapacity);
             ClearScreenWindow(0, 4, VT100_SCREEN_WIDTH, 30);
             VT100_Printf(1,  8,  LBL_SD_CARD_TYPE);

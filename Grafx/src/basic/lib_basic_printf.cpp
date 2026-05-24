@@ -349,7 +349,7 @@ void GPrintf::ParseString(void)
                 //DB_Central.Get(&FontInfo, GFX_FONT_INFO, 0, LoadChar);           // need the font number here
                 memcpy(&m_FontDescriptor, FontInfo.pDescriptor, sizeof(FontDescriptor_t));
               #else
-                DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, LoadChar);
+                //DB_Central.Get(&m_FontDescriptor, GFX_FONT_DESC_INFO, *m_pMovingUsedFontPtr, LoadChar);
               #endif
               //  *m_pMovingUsedFontPtr = m_FontDescriptor[LoadChar];  TODO fix
 

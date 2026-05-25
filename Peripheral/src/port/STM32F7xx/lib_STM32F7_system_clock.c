@@ -179,12 +179,12 @@ void SystemInit(void)
 
 //--------------------------------------------------------------------------
 //  RTC init clock
-    
+
   #if (CFG_RTC_CLOCK_SOURCE != CFG_RCC_BDCR_RTCSEL_NO_CLOCK)
    #if (CFG_RTC_CLOCK_SOURCE == CFG_RCC_BDCR_RTCSEL_HSE)
     MODIFY_REG(RCC->CFGR, RCC_CFGR_RTCPRE, CFG_RCC_CFGR_RTCPRE);
    #endif
-  
+
    #if (CFG_RTC_CLOCK_SOURCE == CFG_RCC_BDCR_RTCSEL_LSE)
     SET_BIT(RCC->BDCR, RCC_BDCR_LSEON);                                                     // External 32.768 KHz oscillator ON
     while((RCC->BDCR & RCC_BDCR_LSERDY) == 0);
@@ -197,13 +197,15 @@ void SystemInit(void)
 
     MODIFY_REG(RCC->BDCR, RCC_BDCR_RTCSEL, CFG_RTC_CLOCK_SOURCE);
     SET_BIT(RCC->BDCR, RCC_BDCR_RTCEN);
-  #endif 
+  #endif
 
 //--------------------------------------------------------------------------
 
+    DWT->LAR = 0xC5ACCE55;
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;                                         // Enable DWT
     DWT->CYCCNT = 0;                                                                        // Reset cycle counter
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;                                                    // Start cycle counter
+    DBGMCU->CR |= DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY;
 
 //--------------------------------------------------------------------------
 

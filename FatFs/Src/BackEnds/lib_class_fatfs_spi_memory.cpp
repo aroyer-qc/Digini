@@ -51,7 +51,7 @@
 //
 //   Function name: Initialize
 //
-//   Parameter(s):  None
+//   Parameter(s):  void* 		pParameter			Specific parameter for this device
 //   Return value:  DSTATUS
 //
 //   Description:   Initialize SPI Serial disk

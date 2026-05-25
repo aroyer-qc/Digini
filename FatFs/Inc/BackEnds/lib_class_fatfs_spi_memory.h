@@ -54,7 +54,6 @@ class FatFS_SPI_Memory : public DiskIO_DeviceInterface
         DRESULT         		IO_Ctrl             (uint8_t Control, void* pBuffer);
       #endif
 
-
     private:
 
         DSTATUS         		m_Status            = STA_NODISK;
@@ -70,3 +69,4 @@ class FatFS_SPI_Memory : public DiskIO_DeviceInterface
 
 #endif // __cplusplus
 
+//-------------------------------------------------------------------------------------------------

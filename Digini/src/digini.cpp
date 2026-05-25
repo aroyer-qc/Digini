@@ -200,10 +200,6 @@ SystemState_e DIGINI_PostInitialize(void)
     //USB.Initialize();
   #endif
 
-  #if (DIGINI_USE_FATFS == DEF_ENABLED)
-    //FatFS_DiskIO.Initialize();
-  #endif
-
   #if (DIGINI_USE_GRAFX == DEF_ENABLED)
     GRAFX_PostInitialize();
   #endif

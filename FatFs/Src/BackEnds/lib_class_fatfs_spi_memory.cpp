@@ -120,7 +120,6 @@ DRESULT FatFS_SPI_Memory::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t Numbe
 //   Description:   Write to the SPI Serial disk device
 //
 //-------------------------------------------------------------------------------------------------
-#if _USE_WRITE == 1
 DRESULT FatFS_SPI_Memory::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {
     uint32_t Address = Sector * FF_MAX_SS;
@@ -136,7 +135,6 @@ DRESULT FatFS_SPI_Memory::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_
 
     return RES_ERROR;
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -149,7 +147,6 @@ DRESULT FatFS_SPI_Memory::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_
 //   Description:   Control FatFs required functions
 //
 //-------------------------------------------------------------------------------------------------
-#if _USE_IOCTL == 1
 DRESULT FatFS_SPI_Memory::IO_Ctrl(uint8_t Control, void *pBuffer)
 {
     DRESULT res = RES_ERROR;
@@ -195,7 +192,6 @@ DRESULT FatFS_SPI_Memory::IO_Ctrl(uint8_t Control, void *pBuffer)
 
     return res;
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 

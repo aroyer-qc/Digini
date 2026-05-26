@@ -176,7 +176,6 @@ DRESULT FatFS_RAM::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSect
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if _USE_WRITE == 1
 DRESULT FatFS_RAM::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {
     DRESULT Result;
@@ -189,7 +188,6 @@ DRESULT FatFS_RAM::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t Numbe
 
     return Result;
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -204,7 +202,6 @@ DRESULT FatFS_RAM::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t Numbe
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if _USE_IOCTL == 1
 DRESULT FatFS_RAM::IO_Ctrl(uint8_t Control, void *pBuffer)
 {
     DRESULT res = RES_ERROR;
@@ -251,7 +248,6 @@ DRESULT FatFS_RAM::IO_Ctrl(uint8_t Control, void *pBuffer)
 
     return res;
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //

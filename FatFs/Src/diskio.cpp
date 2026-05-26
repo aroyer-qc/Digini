@@ -131,15 +131,11 @@ DRESULT DiskIO::Read(DiskMedia_e Disk, uint8_t* pBuffer, uint32_t Sector, uint16
 //  Description:    Writes one or more sectors to the media. Calls the Write() method
 //                  of the associated low-level driver.
 //
-//  Note(s):        Available only when _USE_WRITE == 1.
-//
 //-------------------------------------------------------------------------------------------------
-#if _USE_WRITE == 1
 DRESULT DiskIO::Write(DiskMedia_e Disk, const uint8_t* pBuffer, uint32_t Sector, uint16_t Count)
 {
     return DiskIO::pDiskList[Disk]->Write(pBuffer, Sector, Count);
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -153,8 +149,6 @@ DRESULT DiskIO::Write(DiskMedia_e Disk, const uint8_t* pBuffer, uint32_t Sector,
 //
 //  Description:    Control interface for special operations required by FatFS.
 //                  Redirects to the IO_Ctrl() method of the low-level driver.
-//
-//  Note(s):        Required when _USE_IOCTL == 1.
 //
 //-------------------------------------------------------------------------------------------------
 DRESULT DiskIO::IO_Ctrl(DiskMedia_e Disk, uint8_t Command, void* pBuffer)
@@ -266,15 +260,11 @@ extern "C" DRESULT disk_read(uint8_t Disk, uint8_t* pBuffer, uint32_t Sector, ui
 //
 //  Description:    C wrapper for DiskIO::Write().
 //
-//  Note(s):        Available only when _USE_WRITE == 1.
-//
 //-------------------------------------------------------------------------------------------------
-#if _USE_WRITE == 1
 extern "C" DRESULT disk_write(uint8_t Disk, const uint8_t* pBuffer, uint32_t Sector, uint16_t Count)
 {
    return FatFS_DiskIO.GetInstance().Write(DiskMedia_e(Disk), pBuffer, Sector, Count);
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -289,8 +279,8 @@ extern "C" DRESULT disk_write(uint8_t Disk, const uint8_t* pBuffer, uint32_t Sec
 //  Description:    Dispatches miscellaneous control operations requested by FatFS.
 //                  Redirects the command to DiskIO::IO_Ctrl() for the selected media.
 //
-//  Note(s):        Required when _USE_IOCTL == 1. FatFS uses this for non-read/write
-//                  operations such as synchronization, geometry queries, and device info.
+//  Note(s):       FatFS uses this for non-read/write operations such as synchronization,
+//                 geometry queries, and device info.
 //
 //-------------------------------------------------------------------------------------------------
 extern "C" DRESULT disk_ioctl(uint8_t Disk, uint8_t Control, void* pBuffer)

@@ -72,7 +72,7 @@ class SKIN_myClassTask
         bool            IsSkinLoaded                (void);
         uint16_t        PercentLoader               (void);
       #endif
-      #ifdef STATIC_SKIN_DEF
+      #ifdef STATIC_IMAGE_DEF
         bool            IsStaticSkinLoaded          (void);
       #endif
 
@@ -90,7 +90,7 @@ class SKIN_myClassTask
         SystemState_e   Get_uint16_t                (uint16_t* pValue);
         SystemState_e   Get_uint32_t                (uint32_t* pValue);
       #endif
-      #ifdef STATIC_SKIN_DEF
+      #ifdef STATIC_IMAGE_DEF
         void            StaticLoad                  (void);           // Initialize all static image
       #endif
 
@@ -112,7 +112,7 @@ class SKIN_myClassTask
         char                                        m_Path[15];
         uint8_t*                                    m_pRawInputBuffer;
       #endif
-      #ifdef STATIC_SKIN_DEF
+      #ifdef STATIC_IMAGE_DEF
         volatile bool                               m_IsStaticLoaded;
       #endif
         uint16_t                                    m_ItemCount;

@@ -40,12 +40,8 @@ class DiskIO_DeviceInterface
         virtual DSTATUS             Initialize              (void*)                                 = 0;
         virtual DSTATUS             Status                  (void)                                  = 0;
         virtual DRESULT             Read                    (uint8_t*, uint32_t, uint16_t)          = 0;
-      #if _USE_WRITE == 1
         virtual DRESULT             Write                   (const uint8_t*, uint32_t, uint16_t)    = 0;
-      #endif
-      #if _USE_IOCTL == 1
         virtual DRESULT             IO_Ctrl                 (uint8_t, void*)                        = 0;
-      #endif
 };
 
 #endif

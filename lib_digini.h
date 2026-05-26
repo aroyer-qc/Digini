@@ -289,7 +289,6 @@ class NetworkContext;
 
 #if (DIGINI_USE_FATFS == DEF_ENABLED)
 
-#include "FatFs_cfg.h"
 #include "./FatFs/Inc/diskio_def.h"
 #include "./FatFs/Inc/diskio_interface.h"
 

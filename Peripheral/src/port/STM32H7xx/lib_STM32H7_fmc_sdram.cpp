@@ -168,12 +168,12 @@ void SDRAM_Initialize(void)
 
     // SDRAM initialization sequence
     FMC_Bank5_6_R->SDCMR = (FMC_SDCMR_CMD_CLK_ENABLE | FMC_SDCMR_BANK);                                     // Clock enable command
-    LIB_Delay_uSec(1000);                                                      // Delay
+    LIB_Delay_uSec(1000);                                                                                   // Delay
     FMC_Bank5_6_R->SDCMR = (FMC_SDCMR_CMD_PALL | FMC_SDCMR_BANK);                                           // PALL command
     FMC_Bank5_6_R->SDCMR = (FMC_SDCMR_CMD_AUTO_REFRESH_MODE | FMC_SDCMR_BANK | SDCMR_AUTO_REFRESH_CYCLE);   // Auto refresh mode
-    FMC_Bank5_6_R->SDCMR = (FMC_SDCMR_CMD_LOAD_MODE | FMC_SDCMR_BANK | FMC_MRD_CONFIG);                          // Load mode
-    FMC_Bank5_6_R->SDRTR = (CFG_SDRAM_REFRESH_COUNT << 1);                                          // Set refresh count
-//    SET_BIT(FMC_Bank1_R->BTCR[0], FMC_BCR1_FMCEN);                                                  // FMC controller Enable
+    FMC_Bank5_6_R->SDCMR = (FMC_SDCMR_CMD_LOAD_MODE | FMC_SDCMR_BANK | FMC_MRD_CONFIG);                     // Load mode
+    FMC_Bank5_6_R->SDRTR = (CFG_SDRAM_REFRESH_COUNT << 1);                                                  // Set refresh count
+//    SET_BIT(FMC_Bank1_R->BTCR[0], FMC_BCR1_FMCEN);                                                        // FMC controller Enable
 }
 
 //-------------------------------------------------------------------------------------------------

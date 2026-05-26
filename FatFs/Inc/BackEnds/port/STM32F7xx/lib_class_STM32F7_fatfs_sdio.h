@@ -51,12 +51,8 @@ class FatFS_SDIO : public DiskIO_DeviceInterface
         DSTATUS         Initialize          (void* pParameter);
         DSTATUS         Status              (void);
         DRESULT         Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
-      #if _USE_WRITE == 1
         DRESULT         Write               (const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
-      #endif
-      #if _USE_IOCTL == 1
         DRESULT         IO_Ctrl             (uint8_t Control, void* pBuffer);
-      #endif
 
         void            Configure           (SDIO_Driver* pDriver);     //uint8_t* pBuffer, size_t Size);
         FRESULT         GetDriveSize        (char* pDriveName, FatFS_Size_t* SizeStruct);
@@ -65,7 +61,6 @@ class FatFS_SDIO : public DiskIO_DeviceInterface
 
         DSTATUS         m_Status            = STA_NODISK;
         SDIO_Driver*    m_pSDIO_Driver;
-//        bool            m_IsItInitialize;
  };
 
 //-------------------------------------------------------------------------------------------------

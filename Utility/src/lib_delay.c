@@ -39,7 +39,7 @@
 //  Parameter(s):   uint32_t       Delay
 //  Return:         none
 //
-//  Description:    Approximation of 1 uSec delay
+//  Description:    uSec delay
 //
 //  Note(s):        Adjust manually by changing value in clock_cfg.h in your config directory
 //
@@ -70,7 +70,6 @@ void LIB_Delay_uSec(uint32_t Delay)
 //  Return:         none
 //
 //  Description:    mSec delay
-//
 //
 //-------------------------------------------------------------------------------------------------
 void LIB_Delay_mSec(uint32_t Delay)

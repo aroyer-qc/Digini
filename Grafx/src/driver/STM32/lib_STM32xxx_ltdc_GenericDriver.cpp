@@ -89,6 +89,8 @@ const int32_t GrafxGenDriver::m_PixelFormatTable[PIXEL_FORMAT_COUNT] =
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::Initialize(const void* pArg)
 {
+    VAR_UNUSED(pArg);
+
   #ifdef LTDC
    #ifdef STM32H7xx
     RCC->APB3ENR |= RCC_APB3ENR_LTDCEN;
@@ -129,8 +131,6 @@ void GrafxGenDriver::Initialize(const void* pArg)
     LayerConfig(BACKGROUND_DISPLAY_LAYER_0);
     LayerConfig(FOREGROUND_DISPLAY_LAYER_0);
 
-  #else
-    VAR_UNUSED(pArg);
   #endif
 }
 
@@ -194,7 +194,7 @@ void GrafxGenDriver::ClearLayer(Layer_e Layer)
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
-	if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)
+	//if(DisplayLayer::GetDrawing() == CONSTRUCTION_FOREGROUND_LAYER)   // why??
     {
         uint32_t           PixelFormatSrc;
         uint32_t           PixelFormatDst;
@@ -243,7 +243,7 @@ void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pi
 
       #endif
     }
-    else
+ //   else
     {
 
     }
@@ -266,12 +266,12 @@ void GrafxGenDriver::BlockCopy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, Pi
 //-------------------------------------------------------------------------------------------------
 void GrafxGenDriver::CopyLinear(void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode)
 {
-    uint32_t PixelFormatSrc;
-    uint32_t PixelFormatDst;
-    uint32_t Address;
-    uint32_t AreaConfig;
-    DisplayLayer*  pLayer;
-    uint8_t  PixelSize;
+    uint32_t        PixelFormatSrc;
+    uint32_t        PixelFormatDst;
+    uint32_t        Address;
+    uint32_t        AreaConfig;
+    DisplayLayer*   pLayer;
+    uint8_t         PixelSize;
 
     pLayer         = &LayerTable[DisplayLayer::GetDrawing()];
     PixelFormatSrc = m_PixelFormatTable[SrcPixelFormat];

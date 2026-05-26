@@ -188,7 +188,6 @@ DRESULT FatFS_SDIO::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t Numb
 //   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#if _USE_IOCTL == 1
 DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
 {
     DRESULT     Result;
@@ -351,7 +350,6 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
 
     return Result;
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //

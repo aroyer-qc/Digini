@@ -36,7 +36,6 @@ extern "C" {
 // Include file(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "FatFS_cfg.h"
 #include "diskio_def.h"
 #include "ff.h"
 
@@ -48,12 +47,8 @@ extern "C" {
 DSTATUS             disk_initialize         (uint8_t Drive);
 DSTATUS             disk_status             (uint8_t Drive);
 DRESULT             disk_read               (uint8_t Drive, uint8_t*, uint32_t, uint16_t);
-#if _USE_WRITE == 1
 DRESULT             disk_write              (uint8_t Drive, const uint8_t*, uint32_t, uint16_t);
-#endif
-#if _USE_IOCTL == 1
 DRESULT             disk_ioctl              (uint8_t Drive, uint8_t, void*);
-#endif
 uint32_t            get_fattime             (void);
 
 DWORD               ff_convert              (DWORD wch, UINT dir);

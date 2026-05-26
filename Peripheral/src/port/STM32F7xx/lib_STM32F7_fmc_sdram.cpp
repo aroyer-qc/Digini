@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 //
-//  File : lib_class_STM32F7_sdram.cpp
+//  File : lib_class_STM32F7_fmc_sdram.cpp
 //
 //-------------------------------------------------------------------------------------------------
 //
@@ -84,6 +84,7 @@
                                              CFG_SDRAM_MRD_CAS_LATENCY      | \
                                              CFG_SDRAM_MRD_BURST_TYPE       | \
                                              CFG_SDRAM_MRD_BURST_LENGTH)
+#define FMC_SDCMR_AUTO_REFRESH_CYCLE        ((uint32_t(CFG_SDRAM_AUTO_REFRESH_CYCLE)      - 1) << FMC_SDCMR_NRFS_Pos)
 
 // SDTR timing macros (STM32F7 naming)
 #define FMC_SDTR_LOAD_TO_ACTIVITY_DELAY     (uint32_t(CFG_SDRAM_LOAD_TO_ACTIVITY_DELAY)   - 1)
@@ -93,15 +94,14 @@
 #define FMC_SDTR_WRITE_RECOVERY_TIME        ((uint32_t(CFG_SDRAM_WRITE_RECOVERY_TIME)     - 1) << FMC_SDTRx_TWR_Pos)
 #define FMC_SDTR_RP_DELAY                   ((uint32_t(CFG_SDRAM_RP_DELAY)                - 1) << FMC_SDTRx_TRP_Pos)
 #define FMC_SDTR_RCD_DELAY                  ((uint32_t(CFG_SDRAM_RCD_DELAY)               - 1) << FMC_SDTRx_TRCD_Pos)
-#define FMC_SDCMR_AUTO_REFRESH_CYCLE        ((uint32_t(CFG_SDRAM_AUTO_REFRESH_CYCLE)      - 1) << FMC_SDCMR_NRFS_Pos)
 
-#define SDRTR_REFRESH_COUNT                 ((uint32_t)(CFG_SDRAM_REFRESH_COUNT) << FMC_SDRTR_COUNT_Pos)
+#define FMC_SDRTR_REFRESH_COUNT             ((uint32_t)(CFG_SDRAM_REFRESH_COUNT) << FMC_SDRTR_COUNT_Pos)
 
 #define FMC_MRD_CONFIG						(CFG_SDRAM_MRD_BURST_LENGTH   | \
                                              CFG_SDRAM_MRD_BURST_TYPE     | \
                                              CFG_SDRAM_MRD_CAS_LATENCY    | \
 										     CFG_SDRAM_MRD_OPERATION_MODE | \
-										     (CFG_SDRAM_MRD_WRITE_BURST_MODE <<  FMC_SDCMR_MRD_Pos))
+										     (CFG_SDRAM_MRD_WRITE_BURST_MODE << FMC_SDCMR_MRD_Pos))
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -158,21 +158,22 @@ void SDRAM_Initialize(void)
 
     // Set SDRAM device timing parameters
     FMC_Bank5_6->SDTR[FMC_SDRAM_BANK1] = (FMC_SDTR_ROW_CYCLE_DELAY | SDTR_RP_DELAY);
-    FMC_Bank5_6->SDTR[FMC_SDRAM_BANK2] = (FMC_SDTR_LOAD_TO_ACTIVITY_DELAY    |
-                                          FMC_SDTR_EXIT_SELF_REFRESH_DELAY   |
-                                          FMC_SDTR_SELF_REFRESH_TIME         |
-                                          FMC_SDTR_WRITE_RECOVERY_TIME       |
+    FMC_Bank5_6->SDTR[FMC_SDRAM_BANK2] = (FMC_SDTR_LOAD_TO_ACTIVITY_DELAY  |
+                                          FMC_SDTR_EXIT_SELF_REFRESH_DELAY |
+                                          FMC_SDTR_SELF_REFRESH_TIME       |
+                                          FMC_SDTR_WRITE_RECOVERY_TIME     |
                                           FMC_SDTR_RCD_DELAY);
 
   #endif
 
     // SDRAM initialization sequence
-    FMC_Bank5_6->SDCMR = (FMC_SDCMR_CMD_CLK_ENABLE | FMC_SDCMR_BANK); 									    // Clock enable command
-    LIB_Delay_uSec(1000);                                                                            	    // Delay (simple loop)
-    FMC_Bank5_6->SDCMR = (FMC_SDCMR_CMD_PALL | FMC_SDCMR_BANK);                                     	    // PALL command
-    FMC_Bank5_6->SDCMR = (FMC_SDCMR_CMD_AUTO_REFRESH_MODE | FMC_SDCMR_BANK | FMC_SDCMR_AUTO_REFRESH_CYCLE); // Auto refresh mode
-    FMC_Bank5_6->SDCMR = (FMC_SDCMR_CMD_LOAD_MODE | FMC_SDCMR_BANK | FMC_MRD_CONFIG);
-    FMC_Bank5_6->SDRTR = (CFG_SDRAM_REFRESH_COUNT << 1);                                                    // Set refresh count
+    FMC_Bank5_6->SDCMR = (FMC_SDCMR_BANK | FMC_SDCMR_CMD_CLK_ENABLE); 	           	  							// Clock enable command
+    LIB_Delay_uSec(1000);                                                                          	       	  	// Delay (simple loop)
+    FMC_Bank5_6->SDCMR = (FMC_SDCMR_BANK | FMC_SDCMR_CMD_PALL);						                    		// PALL command
+    FMC_Bank5_6->SDCMR = (FMC_SDCMR_BANK | FMC_SDCMR_CMD_AUTO_REFRESH_MODE | FMC_SDCMR_AUTO_REFRESH_CYCLE); 	// Auto refresh mode
+    FMC_Bank5_6->SDCMR = (FMC_SDCMR_BANK | FMC_SDCMR_CMD_LOAD_MODE | FMC_MRD_CONFIG);
+    
+	FMC_Bank5_6->SDRTR = FMC_SDRTR_REFRESH_COUNT;                                                    			// Set refresh count
 }
 
 //-------------------------------------------------------------------------------------------------

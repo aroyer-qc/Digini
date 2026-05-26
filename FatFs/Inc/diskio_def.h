@@ -36,23 +36,31 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
+//-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+// Digini always use Write  and IO_Ctrl
+#define _USE_WRITE                     	1           // 1: Enable FatFS disk_write function
+#define _USE_IOCTL                      1           // 1: Enable FatFs disk_ioctl function
+
 // Command code for disk_ioctrl()
 // Generic command
-#define CTRL_SYNC                       0       // Mandatory for write functions
-#define GET_SECTOR_COUNT                1       // Mandatory for only f_mkfs()
+#define CTRL_SYNC                       0           // Mandatory for write functions
+#define GET_SECTOR_COUNT                1           // Mandatory for only f_mkfs()
 #define GET_SECTOR_SIZE                 2
-#define GET_BLOCK_SIZE                  3        // Mandatory for only f_mkfs()
-#define CTRL_ERASE_SECTOR               4        // Force erased a block of sectors (for only _USE_ERASE)
+#define GET_BLOCK_SIZE                  3           // Mandatory for only f_mkfs()
+#define CTRL_ERASE_SECTOR               4           // Force erased a block of sectors (for only _USE_ERASE)
 
 // Example of optional ioctl command
-#define CTRL_FORMAT						5		// Formatting the drive is done via IO_Ctrl
-#define MMC_GET_TYPE                    6        // FatFS definition N/U
-#define MMC_GET_CSD                     7        // FatFS definition N/U... use Formatted struct version GET_CSD_STRUCT
-#define MMC_GET_CID                     8        // FatFS definition N/U... use Formatted struct version GET_CID_STRUCT
+#define CTRL_FORMAT						5		    // Formatting the drive is done via IO_Ctrl
+#define MMC_GET_TYPE                    6           // FatFS definition N/U
+#define MMC_GET_CSD                     7           // FatFS definition N/U... use Formatted struct version GET_CSD_STRUCT
+#define MMC_GET_CID                     8           // FatFS definition N/U... use Formatted struct version GET_CID_STRUCT
 #define MMC_GET_OCR                     9
-#define ATA_GET_REV                     10        // FatFS definition N/U
-#define ATA_GET_MODEL                   11       // FatFS definition N/U
-#define ATA_GET_SN                      12       // FatFS definition N/U .. we use CID
+#define ATA_GET_REV                     10          // FatFS definition N/U
+#define ATA_GET_MODEL                   11          // FatFS definition N/U
+#define ATA_GET_SN                      12          // FatFS definition N/U .. we use CID
 
 // Custom definition
 #define MMC_CID_STRUCT                  20

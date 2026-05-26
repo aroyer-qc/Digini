@@ -78,12 +78,8 @@ class DiskIO    // Singleton
         DSTATUS             Initialize          (DiskMedia_e Disk);
         DSTATUS             Status              (DiskMedia_e Disk);
         DRESULT             Read                (DiskMedia_e Disk, uint8_t* pBuffer, uint32_t Sector, uint16_t Count);
-      #if _USE_WRITE == 1
         DRESULT             Write               (DiskMedia_e Disk, const uint8_t* pBuffer, uint32_t Sector, uint16_t Count);
-      #endif
-      #if _USE_IOCTL == 1
          DRESULT            IO_Ctrl             (DiskMedia_e Disk, uint8_t Command, void* pBuffer);
-      #endif
 
     private:
 

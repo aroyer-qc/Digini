@@ -185,7 +185,6 @@ size_t              WidgetPrint                         (Text_t* pText, ServiceR
 void                AlphaBlend                          (void);
 
 // Tools function
-
 Cartesian_t         GetMaxSize                          (void);
 bool                BoxValid                            (Box_t* pBox);
 void                SetXY_Justification                 (uint8_t Justification);
@@ -195,6 +194,11 @@ ServiceReturn_t*    ServiceCall                         (Service_t* pService, Se
 ServiceReturn_t*    ServiceCallApp                      (Service_t* pService, ServiceEvent_e* pServiceState);
 ServiceReturn_t*    GetServiceStruct                    (ServiceType_e ServiceType);
 void                FreeServiceStruct                   (ServiceReturn_t** pService);
+
+// Utility function
+void                DrawBox                             (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness);
+void                DrawBox                             (Box_t* pBox, uint16_t Thickness);
+void                DrawDebugBox                        (Box_t* pBox);
 
 class GPrintf
 {

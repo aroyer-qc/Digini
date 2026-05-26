@@ -41,7 +41,7 @@
 //-------------------------------------------------------------------------------------------------
 
 #define EXPAND_X_LAYER_AS_CALC(ENUM_ID, WORK_LAYER, PIXEL_FORMAT, SIZE_X, SIZE_Y) ((SIZE_X * SIZE_Y) * GFX_PixelSize[PIXEL_FORMAT]) +
-#define EXPAND_X_STATIC_IMAGE_AS_POINTER(ENUM_ID, SII) SII,
+#define EXPAND_X_STATIC_IMAGE_AS_POINTER(ENUM_ID, SII) &SII,
 
 //-------------------------------------------------------------------------------------------------
 // const(s)

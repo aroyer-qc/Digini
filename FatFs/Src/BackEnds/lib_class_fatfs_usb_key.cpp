@@ -146,7 +146,6 @@ DRESULT FatFS_USB_Key::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOf
 //   Description:   Write to the flash disk device
 //
 //-------------------------------------------------------------------------------------------------
-#if _USE_WRITE == 1
 DRESULT FatFS_USB_Key::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {
     TaskUSB_Host* pUSB = TaskUSB_Host::GetInstance();
@@ -165,7 +164,6 @@ DRESULT FatFS_USB_Key::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t N
 
     return RES_ERROR;
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -178,7 +176,6 @@ DRESULT FatFS_USB_Key::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t N
 //   Description:   Control FatFs required functions
 //
 //-------------------------------------------------------------------------------------------------
-#if _USE_IOCTL == 1
 DRESULT FatFS_USB_Key::IO_Ctrl(uint8_t Control, void *pBuffer)
 {
     TaskUSB_Host* pUSB = TaskUSB_Host::GetInstance();
@@ -218,7 +215,6 @@ DRESULT FatFS_USB_Key::IO_Ctrl(uint8_t Control, void *pBuffer)
 
     return RES_PARERR;
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 

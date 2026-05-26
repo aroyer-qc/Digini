@@ -52,20 +52,19 @@
 //-------------------------------------------------------------------------------------------------
 
 #define EXPAND_X_STATIC_SKIN_AS_CONST(ENUM_ID, SII)      extern const StaticImageInfo_t SII;
-#define EXPAND_X_STATIC_SKIN_AS_CONST_PTR(ENUM_ID, SII)  &SII,
+#define EXPAND_X_STATIC_SKIN_AS_CONST_PTR(ENUM_ID, SII)  &(SII),
 
 //-------------------------------------------------------------------------------------------------
 // Private variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#ifdef STATIC_SKIN_DEF
+#ifdef STATIC_IMAGE_DEF
 
- STATIC_SKIN_DEF(EXPAND_X_STATIC_SKIN_AS_CONST)
+ STATIC_IMAGE_DEF(EXPAND_X_STATIC_SKIN_AS_CONST)
 
  const StaticImageInfo_t* SII_Array[NUMBER_OF_STATIC_IMAGE] =
  {
-    nullptr,
-    STATIC_SKIN_DEF(EXPAND_X_STATIC_SKIN_AS_CONST_PTR)
+    STATIC_IMAGE_DEF(EXPAND_X_STATIC_SKIN_AS_CONST_PTR)
  };
 #endif
 
@@ -144,7 +143,7 @@ nOS_Error SKIN_myClassTask::Initialize(void)
 {
     nOS_Error Error;
 
-  #ifdef STATIC_SKIN_DEF
+  #ifdef STATIC_IMAGE_DEF
     m_IsStaticLoaded = false;
   #endif
   #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED)
@@ -178,7 +177,7 @@ nOS_Error SKIN_myClassTask::Initialize(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-#ifdef STATIC_SKIN_DEF
+#ifdef STATIC_IMAGE_DEF
 bool SKIN_myClassTask::IsStaticSkinLoaded(void)
 {
     return m_IsStaticLoaded;
@@ -241,7 +240,7 @@ uint16_t SKIN_myClassTask::PercentLoader(void)
 //-------------------------------------------------------------------------------------------------
 void SKIN_myClassTask::Run(void)
 {
-  #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED) || defined(STATIC_SKIN_DEF)
+  #if (GRAFX_USE_LOAD_SKIN == DEF_ENABLED) || defined(STATIC_IMAGE_DEF)
     uint8_t*  pFreePointer;
   #endif
 
@@ -267,7 +266,7 @@ void SKIN_myClassTask::Run(void)
             DB_Central.Set(&pFreePointer, GFX_FREE_RAM_POINTER,  0, 0);
           #endif
 
-          #ifdef STATIC_SKIN_DEF
+          #ifdef STATIC_IMAGE_DEF
             if(m_IsStaticLoaded == false)
             {
                 this->StaticLoad();           // Initialize all static image
@@ -663,7 +662,7 @@ SystemState_e SKIN_myClassTask::GetFontInfo(void)
 
 //-------------------------------------------------------------------------------------------------
 
-#ifdef STATIC_SKIN_DEF
+#ifdef STATIC_IMAGE_DEF
 void SKIN_myClassTask::StaticLoad(void)
 {
     ImageInfo_t Image;
@@ -677,13 +676,13 @@ void SKIN_myClassTask::StaticLoad(void)
     for(int StaticImage = 1; StaticImage < NUMBER_OF_STATIC_IMAGE; StaticImage++)
     {
 
-        Image.Size.Width  = SII_Array[StaticImage]->SizeX;
-        Image.Size.Height = SII_Array[StaticImage]->SizeY;
-        Image.PixelFormat = SII_Array[StaticImage]->PixelFormat;
+        Image.Size.Width  = SII_Array[StaticImage]->Info.Size.Width;
+        Image.Size.Height = SII_Array[StaticImage]->Info.Size.Height;
+        Image.PixelFormat = SII_Array[StaticImage]->Info.PixelFormat;
 
         if(SII_Array[StaticImage]->Compression != COMPX_COMPRESSION_NONE)
         {
-            pInput  = new RAW_Array(SII_Array[StaticImage]->pData);
+            pInput  = new RAW_Array(SII_Array[StaticImage]->Info.pPointer);
             pOutput = new RAW_Array(pFreePointer);
             Image.pPointer = pFreePointer;
             pFreePointer += m_pDecompress->Process(pOutput,
@@ -695,7 +694,7 @@ void SKIN_myClassTask::StaticLoad(void)
         }
         else // No compression, so we can work directly from flash memory
         {
-            Image.pPointer = SII_Array[StaticImage]->pData;
+            Image.pPointer = SII_Array[StaticImage]->Info.pPointer;
         }
 
         DB_Central.Set(&Image, GFX_IMAGE_INFO, StaticImage, 0);

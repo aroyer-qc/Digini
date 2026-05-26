@@ -47,12 +47,8 @@ class FatFS_SPI_Memory : public DiskIO_DeviceInterface
         DSTATUS         		Initialize          (void* pParameter);
         DSTATUS         		Status              (void);
         DRESULT         		Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
-      #if _USE_WRITE == 1
         DRESULT         		Write               (const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
-      #endif
-      #if _USE_IOCTL == 1
         DRESULT         		IO_Ctrl             (uint8_t Control, void* pBuffer);
-      #endif
 
     private:
 

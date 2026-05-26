@@ -37,6 +37,14 @@
 #if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
+// Define(s)
+//-------------------------------------------------------------------------------------------------
+
+#ifndef FATFS_USB_KEY_USE_WRITE
+    #define FATFS_USB_KEY_USE_WRITE        DEF_ENABLED
+#endif
+
+//-------------------------------------------------------------------------------------------------
 // Class definition(s)
 //-------------------------------------------------------------------------------------------------
 
@@ -48,12 +56,10 @@ class FatFS_USB_Key : public DiskIO_DeviceInterface
         DSTATUS         		Initialize          (void* pParameter);
         DSTATUS         		Status              (void);
         DRESULT         		Read                (uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
-      #if _USE_WRITE == 1
+      #if (FATFS_USB_KEY_USE_WRITE == DEF_ENABLED)
         DRESULT         		Write               (const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors);
       #endif
-      #if _USE_IOCTL == 1
         DRESULT         		IO_Ctrl             (uint8_t Control, void* pBuffer);
-      #endif
 
     private:
 

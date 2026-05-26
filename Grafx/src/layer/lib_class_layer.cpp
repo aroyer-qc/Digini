@@ -201,7 +201,7 @@ void DisplayLayer::Clear(void)
     DisplayLayer::PushDrawing();
     SetDrawing(m_VirtualLayer);         // why m_VirtualLayer ????
     m_Color = 0;
-    //myGrafx->DrawRectangle(0, 0, m_Size.X, m_Size.Y); //TODO commented while working on FMC8080
+    myGrafx->DrawRectangle(0, 0, m_Size.X, m_Size.Y);
     m_Color = DrawingColor;
     DisplayLayer::PopDrawing();
 }

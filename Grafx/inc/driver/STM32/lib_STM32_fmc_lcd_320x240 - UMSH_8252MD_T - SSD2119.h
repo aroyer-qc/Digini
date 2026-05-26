@@ -146,35 +146,34 @@ class GrafxDriver : public GrafxGenDriver
 {
     public:
 
-        void            Initialize                      (const void* pArg)     override;
-
-        void            ClearLayer                      (Layer_e Layer)        override;
-        void            DisplayOn                       (void)                 override         { LCD_REG = SSD2119_DISPLAY_CONTROL_REGISTER; LCD_RAM = SSD2119_DISPLAY_ON_VALUE; }
-        void            DisplayOff                      (void)                 override         { LCD_REG = SSD2119_DISPLAY_CONTROL_REGISTER; LCD_RAM = SSD2119_DISPLAY_OFF_VALUE; }
-
-        void            BlockCopy                       (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
-        void            Copy                            (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
-/*Old*/ void            CopyLinear                      (void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode);
-/*Old*/ void            CopyLinear                      (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode);
-        void            DrawBox                         (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness);
-        void            DrawLine                        (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction);
-        void            DrawPixel                       (uint16_t PosX, uint16_t PosY);
-        void            DrawRectangle                   (Box_t* pBox);
+        void        Initialize      (const void* pArg)     override;
+        void        DisplayOn       (void)                 override         { LCD_REG = SSD2119_DISPLAY_CONTROL_REGISTER; LCD_RAM = SSD2119_DISPLAY_ON_VALUE; }
+        void        DisplayOff      (void)                 override         { LCD_REG = SSD2119_DISPLAY_CONTROL_REGISTER; LCD_RAM = SSD2119_DISPLAY_OFF_VALUE; }
+        void        ClearLayer      (Layer_e Layer)        override;
+        void        BlockCopy       (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode) override;
+       // void        Copy            (void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode) override;
+/*Old*/ void        CopyLinear      (void* pSrc, Box_t* pBox, PixelFormat_e SrcPixelFormat, BlendMode_e BlendMode) override;
+/*Old*/ void        CopyLinear      (void* pSrc, uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height, PixelFormat_e PixelFormat, BlendMode_e BlendMode) override;
+        void        DrawBox         (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Height, uint16_t Thickness) override;
+        void        DrawLine        (uint16_t PosX, uint16_t PosY, uint16_t Length, uint16_t Thickness, DrawMode_e Direction) override;
+        void        DrawPixel       (uint16_t PosX, uint16_t PosY) override;
+        void        DrawRectangle   (Box_t* pBox) override;
+		void    	DrawRectangle   (uint16_t PosX, uint16_t PosY, uint16_t Width, uint16_t Height) override { GrafxGenDriver::DrawRectangle(PosX, PosY, Width, Height); }
 
 //validated
-        void            BlendFromImage                  (ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode);
-        void            ImageCopy                       (ImageID_e ImageID, uint16_t PosX, uint16_t PosY);
+        void        BlendFromImage  (ImageID_e ImageID, Cartesian_t Position, BlendMode_e BlendMode) override;
+        void        ImageCopy       (ImageID_e ImageID, uint16_t PosX, uint16_t PosY) override;
 
       #if (GRAFX_USE_CONSTRUCTION_ON_SINGLE_LAYER == DEF_ENABLED)
-        void            CopyBackgroundToConstruction    (Cartesian_t Position);
+        void        CopyBackgroundToConstruction    (Cartesian_t Position) override;
       #endif
 
       #if (GRAFX_USE_FULL_FRAME_CONSTRUCTION_LAYER == DEF_DISABLED)
-        void            CopyWidgetToDevice              (ImageID_e ImageID, Cartesian_t Position);
-        void            CopyWidgetToDevice              (BoxSize_t BoxSize, Cartesian_t Position);
+        void        CopyWidgetToDevice              (ImageID_e ImageID, Cartesian_t Position) override;
+        void        CopyWidgetToDevice              (BoxSize_t BoxSize, Cartesian_t Position) override;
       #endif
 
-        void            PrintFont                       (FontDescriptor_t* pDescriptor, Cartesian_t* pPos);
+        void        PrintFont       (FontDescriptor_t* pDescriptor, Cartesian_t* pPos) override;
 
     private:
 

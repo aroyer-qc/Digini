@@ -216,10 +216,10 @@ void GrafxDriver::DrawRectangle(Box_t* pBox)
         GrafxGenDriver::DrawRectangle(pBox);
     }
 }
-
+/*
 //-------------------------------------------------------------------------------------------------
 //
-//  Name:           DRV_Copy
+//  Name:           Copy
 //
 //  Parameter(s):   void*           pSrc
 //                  Box_t*          pBox
@@ -242,7 +242,7 @@ void GrafxDriver::Copy(void* pSrc, Box_t* pBox, Cartesian_t* pDstPos, PixelForma
     VAR_UNUSED(SrcPixelFormat);
     VAR_UNUSED(BlendMode);
 }
-
+*/
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           BlockCopy

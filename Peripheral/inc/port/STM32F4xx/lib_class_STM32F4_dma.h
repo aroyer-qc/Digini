@@ -86,6 +86,9 @@
 #define DMA_M2M_TRANSFERT_16_BITS      (DMA_SxCR_MSIZE_0 | DMA_SxCR_PSIZE_0)
 #define DMA_M2M_TRANSFERT_32_BITS      (DMA_SxCR_MSIZE_1 | DMA_SxCR_PSIZE_1)
 
+#define DMA_DISABLED                    (0xF0000000U)       // To disable DMA if not needed Reserved Bits in the register
+#define DMA_MASK_FOR_DISABLED           ~(0xF0000000U)
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------

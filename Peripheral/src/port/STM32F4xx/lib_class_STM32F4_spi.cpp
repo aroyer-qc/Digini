@@ -199,7 +199,7 @@ void SPI_Driver::Initialize(void)
     m_DMA_TX.EnableTransmitCompleteInterrupt();
     m_DMA_TX.EnableIRQ();                                       // NVIC Setup for TX DMA channels interrupt request
 
-    if(m_pInfo->DMA_RX.ConfigAndChannel != SPI_DMA_DISABLED)
+    if(m_pInfo->DMA_RX.ConfigAndChannel != DMA_DISABLED)
     {
         m_IsItUsingDMA_RX = true;
         m_DMA_RX.Initialize(&m_pInfo->DMA_RX);

@@ -88,7 +88,7 @@ class Console : public CallbackInterface
         inline void                 PrintSerialLog             (SystemDebugLevel_e, const char*, ...)          {}
         inline void                 PrintSerialLog             (SystemDebugLevel_e, const char*, va_list va)   {}
       #endif
-        SystemState_e               SendData                   (const uint8_t* p_BufferTX, size_t* pSizeTX);
+        SystemState_e               SendData                   (const uint8_t* pBufferTX, size_t* pSizeTX);
         void                        CallbackFunction           (int Type, void* pContext);
 
         // Passthru FIFO

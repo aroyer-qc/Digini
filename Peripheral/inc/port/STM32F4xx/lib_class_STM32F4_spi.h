@@ -95,8 +95,6 @@
 #define SPI_DATA_WIDTH_8_BIT        0x00000000U
 #define SPI_DATA_WIDTH_16_BIT       (SPI_CR1_DFF)
 
-#define SPI_DMA_DISABLED            (0xFFFFFFFFU)                                               // Config for spi_var, to disable DMA if not needed
-
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------

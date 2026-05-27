@@ -36,7 +36,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_FATFS_USE_SPI_MEMORY == DEF_ENABLED)
+#if (DIGINI_FATFS_USE_SPI_MEMORY == DEF_ENABLED) && (DIGINI_USE_FATFS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -195,4 +195,4 @@ DRESULT FatFS_SPI_Memory::IO_Ctrl(uint8_t Control, void *pBuffer)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // DIGINI_FATFS_USE_SPI_MEMORY
+#endif // (DIGINI_FATFS_USE_SPI_MEMORY == DEF_ENABLED) && (DIGINI_USE_FATFS == DEF_ENABLED)

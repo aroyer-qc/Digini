@@ -35,7 +35,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED)
+#if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED) &&  (DIGINI_USE_FATFS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -218,6 +218,6 @@ DRESULT FatFS_USB_Key::IO_Ctrl(uint8_t Control, void *pBuffer)
 
 //-------------------------------------------------------------------------------------------------
 
-#endif // DIGINI_FATFS_USE_USB_KEY
+#endif // (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED) &&  (DIGINI_USE_FATFS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------

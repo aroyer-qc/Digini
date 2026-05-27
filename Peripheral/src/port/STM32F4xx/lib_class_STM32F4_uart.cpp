@@ -82,9 +82,9 @@ const uint32_t UART_Driver::m_BaudRate[NB_OF_BAUD] =
 //-------------------------------------------------------------------------------------------------
 UART_Driver::UART_Driver(UART_ID_e UartID)
 {
-    m_UartID     = UartID;
-    m_pInfo      = (UART_Info_t*)&UART_Info[UartID];
-    m_pUart      = m_pInfo->pUARTx;
+    m_UartID = UartID;
+    m_pInfo  = (UART_Info_t*)&UART_Info[UartID];
+    m_pUart  = m_pInfo->pUARTx;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -513,9 +513,9 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             else
             {
 				m_TX_Transfer.StaticSize = *pSizeTX;
-				m_TX_Transfer.u.Size     = 1;
+				m_TX_Transfer.u.Size     = 0;
+                ClearFlag();
 				EnableTX_ISR(UART_SR_TX_EMPTY_MASK | UART_SR_TX_COMPLETED_MASK);
-				m_pUart->DR = m_TX_Transfer.pBuffer[0];
             }
 
 			while(m_IsItBusyTX == true)
@@ -1037,12 +1037,16 @@ void UART_Driver::IRQ_Handler(void)
           #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
             if(m_pCallback != nullptr)
             {
-                m_pCallback->CallbackFunction(UART_CALLBACK_TX_COMPLETED, (void*)m_TX_Transfer.pBuffer);
+                m_pCallback->CallbackFunction(UART_CALLBACK_TX_COMPLETED, nullptr);
             }
           #endif
 
-            DMA_DisableTX();
-            m_IsItBusyTX = false;
+            if(m_IsItBusyTX == true)
+            {
+                pMemoryPool->Free((void**)&m_TX_Transfer.pBuffer);
+                m_IsItBusyTX = false;
+            }
+
             return;
         }
       #endif
@@ -1059,12 +1063,17 @@ void UART_Driver::IRQ_Handler(void)
               #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
                 if(m_pCallback != nullptr)
                 {
-                    m_pCallback->CallbackFunction(UART_CALLBACK_TX_EMPTY, (void*)&m_TX_Transfer.pBuffer);
+                    m_pCallback->CallbackFunction(UART_CALLBACK_TX_EMPTY, nullptr);
                 }
               #endif
 
                 CLEAR_BIT(m_pUart->CR1, USART_CR1_TXEIE);
-				m_IsItBusyTX = false;
+
+                if(m_IsItBusyTX == true)
+                {
+                    pMemoryPool->Free((void**)&m_TX_Transfer.pBuffer);
+                    m_IsItBusyTX = false;
+                }
             }
 
             return;
@@ -1082,9 +1091,14 @@ void UART_Driver::IRQ_Handler(void)
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::DMA_TX_IRQ_Handler(void)
 {
-    m_pCallback->CallbackFunction(UART_CALLBACK_TX_DMA, (void*)m_TX_Transfer.pBuffer);
+    m_pCallback->CallbackFunction(UART_CALLBACK_TX_DMA, nullptr);
     DMA_DisableTX();
-    m_IsItBusyTX = false;
+
+    if(m_IsItBusyTX == true)
+    {
+        pMemoryPool->Free((void**)&m_TX_Transfer.pBuffer);
+        m_IsItBusyTX = false;
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -77,9 +77,6 @@
     #define UART_DRIVER_USE_CALLBACK_CFG     DEF_ENABLED
 #endif
 
-#define UART_WAIT_ON_BUSY                    true
-#define UART_DONT_WAIT_ON_BUSY               false
-
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------
@@ -171,13 +168,10 @@ enum UART_Config_e
 struct UART_Info_t
 {
     USART_TypeDef*      pUARTx;
-    //uint32_t            RCC_APBxPeriph;
-    //volatile uint32_t*  RCC_APBxEN_Register;
     IRQn_Type           IRQn_Channel;
     uint8_t             PreempPrio;
     UART_Config_e       Config;
     UART_Baud_e         BaudID;
-    bool                IsItBlockingOnBusy;
     size_t              RX_FifoSize;
     DMA_Info_t          DMA_RX;
     DMA_Info_t          DMA_TX;
@@ -214,7 +208,6 @@ class UART_Driver
         bool                IsItBusy                        (void);
 
         void                DMA_ConfigRX                    (uint8_t* pBufferRX, size_t SizeRX);
-        void                DMA_ConfigTX                    (uint8_t* pBufferTX, size_t SizeTX);
         void                DMA_EnableRX                    (void);
         void                DMA_DisableRX                   (void);
         void                DMA_EnableTX                    (void);
@@ -258,11 +251,11 @@ class UART_Driver
         UART_Transfer_t             m_TX_Transfer;
         uint32_t                    m_CopySR;
         uint32_t                    m_ClockFrequency;
+        volatile bool               m_IsItBusyTX;
 
         // DMA Config
         DMA_Driver                  m_DMA_RX;
         DMA_Driver                  m_DMA_TX;
-        volatile bool               m_DMA_IsItBusyTX;
 
       #if (UART_DRIVER_USE_CALLBACK_CFG == DEF_ENABLED)
         CallbackInterface*          m_pCallback;

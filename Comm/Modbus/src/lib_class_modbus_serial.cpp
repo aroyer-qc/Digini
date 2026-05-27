@@ -621,7 +621,6 @@ void ModbusRTU::CallbackFunction(int Type, void* pContext)
       #if (UART_DRIVER_DMA_TX_COMPLETED_CFG == DEF_ENABLED)
         case UART_CALLBACK_TX_DMA:
         {
-            pMemoryPool->Free((void**)&pContext);
         }
         break;
       #endif

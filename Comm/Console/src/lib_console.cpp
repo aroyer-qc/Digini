@@ -574,7 +574,6 @@ void Console::CallbackFunction(int Type, void* pContext)
       #if (UART_DRIVER_DMA_TX_COMPLETED_CFG == DEF_ENABLED)
         case UART_CALLBACK_TX_DMA:
         {
-            pMemoryPool->Free((void**)&pContext);
         }
         break;
       #endif
@@ -583,7 +582,6 @@ void Console::CallbackFunction(int Type, void* pContext)
       #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
         case UART_CALLBACK_TX_COMPLETED:
         {
-            //pMemoryPool->Free((void**)&pContext);
         }
         break;
       #endif

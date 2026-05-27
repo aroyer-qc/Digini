@@ -72,7 +72,7 @@ SystemState_e MODBUS_Manager::SlaveBuildFrame(const MODBUS_Command_t& Command, c
 
     // Address + Function
     pOut[Index++] = Command.SlaveID;
-    pOut[Index++] = Response.IsException ? (Command.Function | 0x80) : Command.Function;
+    pOut[Index++] = (Response.IsException == true) ? (Command.Function | 0x80) : Command.Function;
 
     // Copy payload
     if((Index + Response.PayloadLength + 2) > *pLength)
@@ -737,7 +737,9 @@ SystemState_e MODBUS_Manager::SlaveHandleRequest(const uint8_t* pRX, size_t RX_L
 SystemState_e MODBUS_Manager::SlaveParseRequest(const uint8_t* pRX, size_t RX_Length, MODBUS_Command_t& Command)
 {
     if(pRX == nullptr)
+    {
         return SYS_NULLPTR;
+    }
 
     // Minimum RTU frame: Addr + Func + CRC(2)
     if(RX_Length < 4)
@@ -773,7 +775,9 @@ SystemState_e MODBUS_Manager::SlaveParseRequest(const uint8_t* pRX, size_t RX_Le
         {
             // PDU: [HiAddr][LoAddr][HiQty][LoQty]
             if(Command.PayloadLength < 4)
+            {
                 return SYS_WRONG_SIZE;
+            }
 
             Command.Address  = (Command.pPayload[0] << 8) | Command.pPayload[1];
             Command.Quantity = (Command.pPayload[2] << 8) | Command.pPayload[3];
@@ -785,7 +789,9 @@ SystemState_e MODBUS_Manager::SlaveParseRequest(const uint8_t* pRX, size_t RX_Le
         {
             // PDU: [HiAddr][LoAddr][HiValue][LoValue]
             if(Command.PayloadLength < 4)
+            {
                 return SYS_WRONG_SIZE;
+            }
 
             Command.Address = (Command.pPayload[0] << 8) | Command.pPayload[1];
             Command.Value   = (Command.pPayload[2] << 8) | Command.pPayload[3];
@@ -798,7 +804,9 @@ SystemState_e MODBUS_Manager::SlaveParseRequest(const uint8_t* pRX, size_t RX_Le
         {
             // PDU: [HiAddr][LoAddr][HiQty][LoQty][ByteCount]...
             if(Command.PayloadLength < 5)
+            {
                 return SYS_WRONG_SIZE;
+            }
 
             Command.Address  = (Command.pPayload[0] << 8) | Command.pPayload[1];
             Command.Quantity = (Command.pPayload[2] << 8) | Command.pPayload[3];
@@ -806,7 +814,7 @@ SystemState_e MODBUS_Manager::SlaveParseRequest(const uint8_t* pRX, size_t RX_Le
         }
 
         default:
-            // Unknown function → leave fields at default
+            // Unknown function -> leave fields at default
             break;
     }
 

@@ -62,6 +62,9 @@
 
 #define DMA_START_TRANSFERT                 0x0001
 
+#define DMA_DISABLED                    (0x8000U)       // To disable DMA if not needed Reserved Bits in the register
+#define DMA_MASK_FOR_DISABLED           ~(0x8000U)
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------

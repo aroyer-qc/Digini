@@ -82,6 +82,8 @@
 #define DMA_M2M_INCREMENT_DESTINATION  DMA_SxCR_MINC
 #define DMA_M2M_INCREMENT_BOTH         (DMA_SxCR_MINC | DMA_SxCR_PINC)
 #define DMA_M2M_INCREMENT_NONE         0
+#define DMA_DISABLED                    (0xF0000000U)       // To disable DMA if not needed Reserved Bits in the register
+#define DMA_MASK_FOR_DISABLED           ~(0xF0000000U)
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)

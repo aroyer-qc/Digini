@@ -349,6 +349,9 @@
 #define BDMA_REQUEST_DFSDM2_FLT0     	    18   									// DMAMUX2 DFSDM2 request
 #endif // DFSDM1_Channel0
 
+#define DMA_DISABLED                    	(0xF0000000U)       // To disable DMA if not needed Reserved Bits in the register
+#define DMA_MASK_FOR_DISABLED           	~(0xF0000000U)
+
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
 //-------------------------------------------------------------------------------------------------

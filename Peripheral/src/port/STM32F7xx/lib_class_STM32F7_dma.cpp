@@ -73,7 +73,6 @@ void DMA_Driver::Initialize(DMA_Info_t* pInfo)
     m_pDMA->CR     = pInfo->ConfigAndChannel;
     m_Direction    = pInfo->ConfigAndChannel & DMA_DIRECTION_MASK;
     m_LastBoundaryTransferSize = 0;
-
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -187,6 +186,7 @@ void DMA_Driver::SetDestination(void* Destination)
 //  Return:         None
 //
 //  Description:    Clear flag for specific DMA stream.
+//
 //-------------------------------------------------------------------------------------------------
 void DMA_Driver::ClearFlag(uint32_t Flag)
 {

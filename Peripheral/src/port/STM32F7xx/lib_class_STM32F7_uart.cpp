@@ -509,13 +509,16 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
                 m_DMA_TX.Enable();                    // Transmission starts as soon as TXE is detected
                 DMA_EnableTX();
             }
+          #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED) || (UART_DRIVER_TX_EMPTY_CFG == DEF_ENABLED)
             else
             {
+
 				m_TX_Transfer.StaticSize = *pSizeTX;
 				m_TX_Transfer.u.Size     = 0;
                 ClearFlag();
-				EnableTX_ISR(UART_SR_TX_EMPTY_MASK | UART_SR_TX_COMPLETED_MASK);
+				EnableTX_ISR(UART_ISR_TX_EMPTY_MASK | UART_ISR_TX_COMPLETED_MASK);
             }
+          #endif
 
 			while(m_IsItBusyTX == true)
 			{

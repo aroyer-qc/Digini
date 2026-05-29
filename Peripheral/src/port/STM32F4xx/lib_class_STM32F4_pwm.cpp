@@ -68,8 +68,6 @@
 //
 //   Description:   Initializes the PWM_Driver class
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 PWM_Driver::PWM_Driver(PWM_ChannelID_e PWM_ID, TIM_Driver* pTimer)
 {

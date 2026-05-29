@@ -127,8 +127,6 @@ const uint32_t I2S_Driver::m_PLLR[NB_OF_I2S_FREQUENCY] = {5,   4,   4,   4,   4,
 //
 //   Description:   Initializes the I2Sx peripheral according to the specified Parameters
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 I2S_Driver::I2S_Driver(I2S_ID_e I2S_ID)
 {
@@ -365,8 +363,6 @@ void I2S_Driver::EnableCallbackType(int CallBackType, void* pContext)
 //
 //   Description:   Update the audio frequency
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e I2S_Driver::SetFrequency(I2S_Frequency_e Frequency)
 {
@@ -422,8 +418,6 @@ SystemState_e I2S_Driver::SetFrequency(I2S_Frequency_e Frequency)
 //
 //   Description:   Return general status of the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e I2S_Driver::GetStatus(void)
 {
@@ -439,8 +433,6 @@ SystemState_e I2S_Driver::GetStatus(void)
 //   Return Value:  None
 //
 //   Description:   Sends n-Bytes on the I2S interface using DMA.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e I2S_Driver::Transmit(uint16_t* pBuffer, size_t Size)

@@ -61,14 +61,11 @@
 //
 //   Description:   Initializes the SDIO peripheral according to the specified parameters
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 CSDIO::CSDIO(sSDIO* pSDIO)
 {
     m_pSDIO = pSDIO;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -78,13 +75,10 @@ CSDIO::CSDIO(sSDIO* pSDIO)
 //
 //   Description:    De-initializes the SDIO peripheral
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 CSDIO::~CSDIO()
 {
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -189,7 +183,6 @@ void CSDIO::Initialize(void)
     this->Unlock();
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: GetResponse
@@ -198,8 +191,6 @@ void CSDIO::Initialize(void)
 //   Return value:  SystemState_e
 //
 //   Description:   Get response from SD device
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e CSDIO::GetResponse(uint32_t* pResponse)
@@ -211,7 +202,6 @@ SystemState_e CSDIO::GetResponse(uint32_t* pResponse)
 
     return SYS_READY;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -242,7 +232,6 @@ uint32_t CSDIO::GetTransfertStatus(void)
     return Status;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: IsFlagSet
@@ -252,8 +241,6 @@ uint32_t CSDIO::GetTransfertStatus(void)
 //   Return value:  bool             true or false
 //
 //   Description:   Test the SD flag for this driver and return the state
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 bool CSDIO::IsFlagSet(uint32_t Status, SD_StatusFlag Flag_e)
@@ -276,7 +263,6 @@ bool CSDIO::IsFlagSet(uint32_t Status, SD_StatusFlag Flag_e)
     return ((((uint32_t)1 << Flag) & Status) != 0) ? true : false;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: TickHook
@@ -297,7 +283,6 @@ void CSDIO::TickHook(void)
     }
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: TransmitCommand
@@ -307,8 +292,6 @@ void CSDIO::TickHook(void)
 //   Return value:  None
 //
 //   Description:   Send command to the SD Card
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void CSDIO::TransmitCommand(uint8_t Command, uint32_t Argument, ResponseType_e ResponseType)
@@ -385,8 +368,6 @@ void CSDIO::StartBlockTransfert(const uint8_t *pBuffer, uint32_t Count, uint32_t
 //
 //  Description:    Wait Transfert End
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e CSDIO::WaitBlockTransfertEnd(void)
 {
@@ -415,7 +396,6 @@ SystemState_e CSDIO::WaitBlockTransfertEnd(void)
     if(m_TransfertError != SD_OK)   return m_TransfertError;
     if(m_TimeOut        == 0)       return TIME_OUT;
     return READY;
-
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -426,8 +406,6 @@ SystemState_e CSDIO::WaitBlockTransfertEnd(void)
 //  Return:         None
 //
 //  Description:    Set the speed of the interface and the basic normal config for the SD module
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void CSDIO::Config(DeviceSpeed_e DeviceSpeed)
@@ -467,18 +445,11 @@ void CSDIO::Config(DeviceSpeed_e DeviceSpeed)
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
-//   ----------------------------------------------------------------------------------------------
-//   date           author              description
-//   -------------  ------------------  -----------------------------------------------------------
-//   Apr 1,   2014  Alain Royer         New code
 //-------------------------------------------------------------------------------------------------
 void CSDIO::Lock(void)
 {
     while(xSemaphoreTakeRecursive(*m_pSDIO->pMutex, portMAX_DELAY) != true){};
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -489,14 +460,11 @@ void CSDIO::Lock(void)
 //
 //   Description:   Unlock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void CSDIO::Unlock(void)
 {
     xSemaphoreGiveRecursive(*m_pSDIO->pMutex);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -507,13 +475,6 @@ void CSDIO::Unlock(void)
 //   Return value:  None
 //
 //   Description:   Configuration for SDIO Data using SDIO_DataInitTypeDef
-//
-//   Note(s):
-//
-//   ----------------------------------------------------------------------------------------------
-//   date           author              description
-//   -------------  ------------------  -----------------------------------------------------------
-//   Apr 4,   2014  Alain Royer
 //
 //-------------------------------------------------------------------------------------------------
 void CSDIO::SDIO_DataInit(uint32_t TransfertDir, size_t Size)
@@ -539,8 +500,6 @@ void CSDIO::SDIO_DataInit(uint32_t TransfertDir, size_t Size)
 //   Return value:  None
 //
 //   Description:   Configuration of the DMA in RX
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void CSDIO::DMA_Config(uint32_t* pBuffer, uint32_t BufferSize, uint32_t Direction)
@@ -578,7 +537,6 @@ void CSDIO::DMA_Config(uint32_t* pBuffer, uint32_t BufferSize, uint32_t Directio
     DMA_Cmd(m_pSDIO->pDMA_Stream, ENABLE);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: DMA_StreamIRQHandler
@@ -587,8 +545,6 @@ void CSDIO::DMA_Config(uint32_t* pBuffer, uint32_t BufferSize, uint32_t Directio
 //   Return value:  None
 //
 //   Description:   DMA IRQ
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void CSDIO::DMA_StreamIRQHandler(void)
@@ -600,7 +556,6 @@ void CSDIO::DMA_StreamIRQHandler(void)
     }
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: SDIO_IRQHandler
@@ -609,8 +564,6 @@ void CSDIO::DMA_StreamIRQHandler(void)
 //   Return value:  None
 //
 //   Description:   SDIO IRQ
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void CSDIO::SDIO_IRQHandler(void)
@@ -653,8 +606,6 @@ void CSDIO::SDIO_IRQHandler(void)
 
     m_TransfertEnd = true;
 }
-
-
 
 //-------------------------------------------------------------------------------------------------
 

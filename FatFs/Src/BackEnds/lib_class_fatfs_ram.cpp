@@ -66,8 +66,6 @@
 //
 //   Description:   Initializes the RAM Disk volatile peripheral
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 FatFS_RAM::FatFS_RAM()
 {
@@ -84,8 +82,6 @@ FatFS_RAM::FatFS_RAM()
 //   Return value:  None
 //
 //   Description:   Initialize RAM Disk
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void FatFS_RAM::Configure(uint8_t* pBuffer, size_t Size)
@@ -104,8 +100,6 @@ void FatFS_RAM::Configure(uint8_t* pBuffer, size_t Size)
 //   Return value:  DSTATUS
 //
 //   Description:   Initialize RAM Disk
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 DSTATUS FatFS_RAM::Initialize(void)
@@ -127,8 +121,6 @@ DSTATUS FatFS_RAM::Initialize(void)
 //
 //   Description:   Get Status from RAM Disk Device
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 DSTATUS FatFS_RAM::Status()
 {
@@ -145,8 +137,6 @@ DSTATUS FatFS_RAM::Status()
 //   Return value:  DRESULT
 //
 //   Description:   Read From RAM Disk Device
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 DRESULT FatFS_RAM::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
@@ -173,8 +163,6 @@ DRESULT FatFS_RAM::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSect
 //
 //   Description:   Write to the RAM Disk Device
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 DRESULT FatFS_RAM::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {
@@ -198,8 +186,6 @@ DRESULT FatFS_RAM::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t Numbe
 //   Return value:  DRESULT
 //
 //   Description:   Control
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 DRESULT FatFS_RAM::IO_Ctrl(uint8_t Control, void *pBuffer)
@@ -258,8 +244,6 @@ DRESULT FatFS_RAM::IO_Ctrl(uint8_t Control, void *pBuffer)
 //   Return value:  DRESULT
 //
 //   Description:   Check for parameter error and RAM boundary violation
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 DRESULT FatFS_RAM::CheckError(uint32_t Sector, uint16_t NumberOfSectors)

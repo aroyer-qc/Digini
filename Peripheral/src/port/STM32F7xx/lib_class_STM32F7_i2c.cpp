@@ -269,8 +269,6 @@ void I2C_Driver::Initialize(void)
 //
 //   Description:   Return general status of the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e I2C_Driver::GetStatus(void)
 {
@@ -644,8 +642,6 @@ SystemState_e I2C_Driver::WriteRegister(uint8_t Register, uint8_t Value)
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::Lock(void)
 {
@@ -660,8 +656,6 @@ void I2C_Driver::Lock(void)
 //   Return Value:  None
 //
 //   Description:   Unlock the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::Unlock(void)

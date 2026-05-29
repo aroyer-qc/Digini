@@ -4,7 +4,7 @@
 //
 //-------------------------------------------------------------------------------------------------
 //
-// Copyright(c) 2020 Alain Royer.
+// Copyright(c) 2026 Alain Royer.
 // Email: aroyer.qc@gmail.com
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -42,7 +42,7 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Class: CUSART
+//   Class: UART_Driver
 //
 //
 //   Description:   Class to handle USART
@@ -51,17 +51,15 @@
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Constructor:   CUSART
+//   Constructor:   UART_Driver
 //
 //   Parameter(s):
 //   Return Value:
 //
 //   Description:   Initializes the USARTx peripheral according to the specified Parameters
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-CUSART::CUSART(USART_PortInfo_t* pPort)
+UART_Driver::UART_Driver(USART_PortInfo_t* pPort)
 {
     m_pPort   = pPort;
     m_pDevice = nullptr;
@@ -74,17 +72,15 @@ CUSART::CUSART(USART_PortInfo_t* pPort)
 
 //-------------------------------------------------------------------------------------------------
 //
-//   Destructor:   CUSART
+//   Destructor:   UART_Driver
 //
 //   Parameter(s):
 //   Return Value:
 //
 //   Description:    Deinitializes the USARTx peripheral
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-CUSART::~CUSART(void)
+UART_Driver::~UART_Driver(void)
 {
 }
 
@@ -97,10 +93,8 @@ CUSART::~CUSART(void)
 //
 //   Description:   Initialize this USART port
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-void CUSART::Init(void)
+void UART_Driver::Initialize(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
     USART_InitTypeDef USART_InitStructure;
@@ -172,7 +166,7 @@ void CUSART::Init(void)
 //  Note(s):        If a write without lock is executed then it will be done on the locked device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CUSART::LockToDevice(USART_DeviceInfo_t* pDevice)
+SystemState_e UART_Driver::LockToDevice(USART_DeviceInfo_t* pDevice)
 {
     while(nOS_MutexLock(pDevice->pMutex, NOS_WAIT_INFINITE) != NOS_OK){};
 
@@ -204,7 +198,7 @@ SystemState_e CUSART::LockToDevice(USART_DeviceInfo_t* pDevice)
 //                  if lock and no write at all if not lock to a device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e CUSART::UnlockFromDevice(USART_DeviceInfo_t* pDevice)
+SystemState_e UART_Driver::UnlockFromDevice(USART_DeviceInfo_t* pDevice)
 {
     if(pDevice == m_pDevice)
     {
@@ -228,10 +222,8 @@ SystemState_e CUSART::UnlockFromDevice(USART_DeviceInfo_t* pDevice)
 //
 //   Description:    SystemState_e  Return general status of the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-SystemState_e CUSART::GetStatus(void)
+SystemState_e UART_Driver::GetStatus(void)
 {
     return m_Status;
 }
@@ -245,10 +237,8 @@ SystemState_e CUSART::GetStatus(void)
 //
 //   Description:   Read overload function
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-SystemState_e CUSART::Read(uint8_t*  pData)
+SystemState_e UART_Driver::Read(uint8_t*  pData)
 {
     if(m_Status == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
     return Request(ACCESS_READ, pData, sizeof(uint8_t));
@@ -280,28 +270,26 @@ SystemState_e CUSART::Read(uint8_t* pBuffer, size_t Size)
 //
 //   Description:   Write overload function
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-SystemState_e CUSART::Write(uint8_t  Data)
+SystemState_e UART_Driver::Write(uint8_t  Data)
 {
     if(m_Status == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
     return Request(ACCESS_WRITE, (void*)&Data, sizeof(uint8_t));
 }
 
-SystemState_e CUSART::Write(uint16_t Data)
+SystemState_e UART_Driver::Write(uint16_t Data)
 {
     if(m_Status == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
     return Request(ACCESS_WRITE, (void*)&Data, sizeof(uint16_t));
 }
 
-SystemState_e CUSART::Write(uint32_t Data)
+SystemState_e UART_Driver::Write(uint32_t Data)
 {
     if(m_Status == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
     return Request(ACCESS_WRITE, (void*)&Data, sizeof(uint32_t));
 }
 
-SystemState_e CUSART::Write(uint8_t* pBuffer, size_t Size)
+SystemState_e UART_Driver::Write(uint8_t* pBuffer, size_t Size)
 {
     if(m_Status == SYS_DEVICE_NOT_PRESENT) return SYS_DEVICE_NOT_PRESENT;
     return Request(ACCESS_WRITE, pBuffer, Size);
@@ -316,14 +304,11 @@ SystemState_e CUSART::Write(uint8_t* pBuffer, size_t Size)
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-void CUSART::Lock(void)
+void UART_Driver::Lock(void)
 {
     while(nOS_MutexLock(m_pPort->pMutex, NOS_WAIT_INFINITE) != NOS_OK){};
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -334,10 +319,8 @@ void CUSART::Lock(void)
 //
 //   Description:   Unlock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-void CUSART::Unlock(void)
+void UART_Driver::Unlock(void)
 {
     nOS_MutexUnlock(m_pPort->pMutex);
 }
@@ -353,10 +336,8 @@ void CUSART::Unlock(void)
 //
 //  Description:    Read or writes data to USART device.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-SystemState_e CUSART::Request(AccessRequest_e Request, void* pBuffer, size_t Size)
+SystemState_e UART_Driver::Request(AccessRequest_e Request, void* pBuffer, size_t Size)
 {
     SystemState_e   Result       = SYS_FAIL;
     uint8_t*        pDataAddress = (uint8_t*)pBuffer;
@@ -407,16 +388,15 @@ SystemState_e CUSART::Request(AccessRequest_e Request, void* pBuffer, size_t Siz
 
     return Result;
 }
+
 //-------------------------------------------------------------------------------------------------
 //
 //  IRQ Handler:    IRQHandler
 //
 //  Description:    This function handles USARTx interrupt.
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-void CUSART::IRQHandler(void)
+void UART_Driver::IRQHandler(void)
 {
     uint8_t data;
 
@@ -448,7 +428,7 @@ void CUSART::IRQHandler(void)
 //  Description:    1ms state machine timeout tick hook (must be added to OS Tick hook function)
 //
 //-------------------------------------------------------------------------------------------------
-void CUSART::TickHook(void)
+void UART_Driver::TickHook(void)
 {
     if(m_Timeout > 0)
     {
@@ -457,7 +437,6 @@ void CUSART::TickHook(void)
         if(m_Timeout == 0) m_Status = SYS_HUNG;
         else               m_Status = BUSY;
     }
-
 }
 
 //-------------------------------------------------------------------------------------------------

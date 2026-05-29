@@ -42,8 +42,6 @@
 //
 //   Description:
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 DeCompression::DeCompression(CompxWorkMem_t* pCompxWorkMem)
 {
@@ -83,7 +81,7 @@ void DeCompression::operator delete(void* pPtr)
 //                  with DataSize. The information is base on the ImageInfo_t for this image.
 //
 //-------------------------------------------------------------------------------------------------
-size_t DeCompression::Process(RAW_Array* pRawData, RAW_Array* pCompxData, size_t DataSize, uint8_t CompressionMethod)
+size_t DeCompression::Process(RAW_Array* pRawData, RAW_Array* pCompxData, size_t DataSize, Compression_e CompressionMethod)
 {
     size_t DecompressedSize;
 
@@ -169,8 +167,6 @@ size_t DeCompression::Process(RAW_Array* pRawData, RAW_Array* pCompxData, size_t
 //
 //   Description:
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 size_t DeCompression::RLE_4_Method(void)
 {
@@ -205,8 +201,6 @@ size_t DeCompression::RLE_4_Method(void)
 //
 //   Description:
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 size_t DeCompression::RLE_8_Method(void)
 {
@@ -240,8 +234,6 @@ size_t DeCompression::RLE_8_Method(void)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 size_t DeCompression::RLE_16_Method(void)
@@ -278,8 +270,6 @@ size_t DeCompression::RLE_16_Method(void)
 //
 //   Description:
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 size_t DeCompression::RLE_32_Method(void)
 {
@@ -315,8 +305,6 @@ size_t DeCompression::RLE_32_Method(void)
 //
 //   Description:
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 size_t DeCompression::RLE_16_CLUT_Method(void)
 {
@@ -326,11 +314,11 @@ size_t DeCompression::RLE_16_CLUT_Method(void)
     uint16_t ReadValue;
     uint32_t DataOffset = 0;
 
-    CLUT_Offset   = DataOffset + 1;                                         // Beginning of the CLUT
-    DataOffset   += ((((int)m_pCompxData->At(DataOffset) + 1) * 2) + 1);    // Beginning of the data
+    CLUT_Offset = DataOffset + 1;                                         // Beginning of the CLUT
+    DataOffset += ((((int)m_pCompxData->At(DataOffset) + 1) * 2) + 1);    // Beginning of the data
     m_DataSize--;
-    m_DataSize   -= (DataOffset - CLUT_Offset);
-    m_DataSize  >>= 1;
+    m_DataSize -= (DataOffset - CLUT_Offset);
+    m_DataSize >>= 1;
 
     while(m_DataSize > 0)
     {
@@ -358,8 +346,6 @@ size_t DeCompression::RLE_16_CLUT_Method(void)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 size_t DeCompression::RLE_32_CLUT_Method(void)
@@ -402,8 +388,6 @@ size_t DeCompression::RLE_32_CLUT_Method(void)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 size_t DeCompression::LZW_Method(void)
@@ -479,8 +463,6 @@ size_t DeCompression::LZW_Method(void)
 //
 //   Description:
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void DeCompression::LZW_DecodeArray(uint32_t Code)
 {
@@ -509,8 +491,6 @@ void DeCompression::LZW_DecodeArray(uint32_t Code)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 uint32_t DeCompression::LZW_InputCode(void)

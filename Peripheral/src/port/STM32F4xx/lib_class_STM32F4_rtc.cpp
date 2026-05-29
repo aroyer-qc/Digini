@@ -66,8 +66,6 @@
 //
 //   Description:   Initializes the RTC peripheral according to the specified Parameters
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void RTC_Driver::Initialize(void)
 {
@@ -221,8 +219,6 @@ void RTC_Driver::SetDate(uint8_t Day, uint8_t Month, uint16_t Year)
 //
 //   Description:
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void RTC_Driver::SetTime(Time_t* pTime)
 {
@@ -313,8 +309,6 @@ void RTC_Driver::Disable(void)
 //
 //   Description:   Stop calendar and enter initialization mode
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e RTC_Driver::EnterInitMode(void)
 {
@@ -346,8 +340,6 @@ SystemState_e RTC_Driver::EnterInitMode(void)
 //
 //   Description:   Stop calendar and enter initialization mode
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void RTC_Driver::ExitInitMode(void)
 {
@@ -364,8 +356,6 @@ void RTC_Driver::ExitInitMode(void)
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void RTC_Driver::Lock(void)
 {
@@ -380,8 +370,6 @@ void RTC_Driver::Lock(void)
 //   Return Value:
 //
 //   Description:   Unlock the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void RTC_Driver::Unlock(void)
@@ -398,8 +386,6 @@ void RTC_Driver::Unlock(void)
 //   Return value:  None
 //
 //   Description:   Lock or unlock access to the RTC register
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void RTC_Driver::LockRegister(void)
@@ -511,8 +497,6 @@ SystemState_e RTC_Driver::WaitForSynchro(void)
 //   Return value:  None
 //
 //   Description:   IRQ Handler of the RTC module
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void RTC_Driver::WakeUp_IRQ_Handler(void)

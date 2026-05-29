@@ -52,8 +52,6 @@ const E2_DeviceInfo_t E2_Driver::m_DeviceInfo[NUMBER_OF_DEVICE] =
 //
 //   Description:   Initializes the EEprom object
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 E2_Driver::E2_Driver(const E2_Info_t* pInfo)
 {

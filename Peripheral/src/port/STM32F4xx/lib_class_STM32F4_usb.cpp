@@ -53,8 +53,6 @@
 //
 //   Description:   Initializes the USB peripheral
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 CUSB::CUSB(void)
 {
@@ -65,8 +63,6 @@ CUSB::CUSB(void)
 //   Destructor:   CUSB
 //
 //   Description:    De-initialize the USB peripheral
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 CUSB::~CUSB(void)
@@ -82,8 +78,6 @@ CUSB::~CUSB(void)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 USB_MSC_HostStatus_e CUSB::GetStatus(void)
@@ -106,8 +100,6 @@ USB_MSC_HostStatus_e CUSB::GetStatus(void)
 //
 //   Description:
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void CUSB::Initialize(void)
 {
@@ -125,8 +117,6 @@ void CUSB::Initialize(void)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 USB_MSC_HostStatus_e CUSB::Process(void)

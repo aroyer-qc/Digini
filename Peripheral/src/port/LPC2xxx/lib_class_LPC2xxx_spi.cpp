@@ -54,10 +54,8 @@
 //
 //   Description:   Initializes the SPIx peripheral according to the specified Parameters
 //
-//   Note(s):
-//
-//                    SPIx: where x can be 1 to 6 to select the SPI peripheral.
-//                    SPI_InitStruct: pointer to a SPI_InitTypeDef structure that contains
+//   Note(s):       SPIx: where x can be 1 to 6 to select the SPI peripheral.
+//                  SPI_InitStruct: pointer to a SPI_InitTypeDef structure that contains
 //                  the configuration information for the specified SPI peripheral.
 //
 //-------------------------------------------------------------------------------------------------
@@ -74,13 +72,10 @@ CSPI::CSPI(SPI_PortInfo_t* pPort)
 //
 //   Description:    De-initialize the SPIx peripheral
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 CSPI::~CSPI()
 {
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -91,14 +86,11 @@ CSPI::~CSPI()
 //
 //   Description:    SystemState_e  Return general status of the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e CSPI::GetStatus(void)
 {
     return m_Status;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -108,8 +100,6 @@ SystemState_e CSPI::GetStatus(void)
 //   Return Value:  None
 //
 //   Description:   Initialize this SPI port
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void CSPI::Initialize(void)
@@ -210,7 +200,6 @@ void CSPI::Initialize(void)
 
     nOS_MutexCreate(&this->m_Mutex, NOS_MUTEX_RECURSIVE, NOS_MUTEX_PRIO_INHERIT);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -496,7 +485,6 @@ uint16_t CSPI::GetPrescalerFromSpeed(uint32_t Speed)
     return i;     // 'i' is at an invalid value
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:      Lock
@@ -506,14 +494,11 @@ uint16_t CSPI::GetPrescalerFromSpeed(uint32_t Speed)
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void CSPI::Lock(void)
 {
     while(nOS_MutexLock(&this->m_Mutex, NOS_WAIT_INFINITE) != NOS_OK) {};
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -524,14 +509,11 @@ void CSPI::Lock(void)
 //
 //   Description:   Unlock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void CSPI::Unlock(void)
 {
     nOS_MutexUnlock(&this->m_Mutex);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -542,8 +524,6 @@ void CSPI::Unlock(void)
 //
 //  Description:    Set speed on the SPI port
 //
-//  Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void CSPI::Config(DeviceSpeed_e Speed)
 {
@@ -552,7 +532,6 @@ void CSPI::Config(DeviceSpeed_e Speed)
     m_pPort->pSPIx->CR1 |= (Speed == FAST_SPEED) ? m_FastSpeed : m_SlowSpeed;                       // Apply prescaler
     m_pPort->pSPIx->CR1 |= SPI_CR1_SPE;                                                             // Enable SPIx
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -595,7 +574,6 @@ void CSPI::TickHook(void)
     }
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Request
@@ -606,8 +584,6 @@ void CSPI::TickHook(void)
 //  Return:         SPI_eStatus     Status
 //
 //  Description:    Read or writes data to SPI device.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e CSPI::Request(AccessRequest_e Request, uint8_t* pBuffer, size_t Size)
@@ -732,7 +708,6 @@ SystemState_e CSPI::Request(AccessRequest_e Request, uint8_t* pBuffer, size_t Si
     return SYS_DEVICE_NOT_PRESENT;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  IRQ Handler:    WaitReady
@@ -770,14 +745,11 @@ SystemState_e CSPI::WaitReady(void)
     return SYS_READY;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  IRQ Handler:    IRQHandler
 //
 //  Description:    This function handles SPIx interrupt request.
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void CSPI::IRQHandler(void)

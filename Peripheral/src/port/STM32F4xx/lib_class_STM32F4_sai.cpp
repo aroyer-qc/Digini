@@ -55,8 +55,6 @@
 //
 //   Description:   Initialize the SAIx peripheral according to the specified Parameters
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SAI::SAI(SAI_PortInfo_t* pPort)
 {
@@ -577,8 +575,6 @@ void SAI::Initialize(void)
 //
 //   Description:   Return general status of the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e SAI::GetStatus(void)
 {
@@ -643,8 +639,6 @@ from branch antique radio F4
 //
 //   Description:   Initialize the SAIx peripheral according to the specified Parameters
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SAI_Driver::SAI_Driver(const SAI_PortInfo_t* pPort)
 {
@@ -659,8 +653,6 @@ SAI_Driver::SAI_Driver(const SAI_PortInfo_t* pPort)
 //   Return Value:  SystemState_e
 //
 //   Description:   Return general status of the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SAI_Driver::GetStatus(void)
@@ -677,8 +669,6 @@ SystemState_e SAI_Driver::GetStatus(void)
 //
 //   Description:   Get
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 uint32_t SAI_Driver::GetFrequency(void)
 {
@@ -694,8 +684,6 @@ uint32_t SAI_Driver::GetFrequency(void)
 //
 //   Description:   Set
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void SAI_Driver::SetFrequency(uint32_t AudioFrequency)
 {
@@ -710,8 +698,6 @@ void SAI_Driver::SetFrequency(uint32_t AudioFrequency)
 //   Return Value:  uint32_t
 //
 //   Description:   Return general status of the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SAI_Driver::SetAudioFrameSlot(uint32_t AudioFrameSlot)
@@ -735,8 +721,6 @@ void SAI_Driver::SetAudioFrameSlot(uint32_t AudioFrameSlot)
 //   Return Value:  SystemState_e
 //
 //   Description:   Transmit an amount of data in non-blocking mode with DMA.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SAI_Driver::Transmit_DMA(uint8_t* pData, uint16_t Size)

@@ -80,7 +80,6 @@ I2C_Driver::I2C_Driver(I2C_PortInfo_t* pPort)
     m_Status  = SYS_DEVICE_NOT_PRESENT;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Destructor:   I2C_Driver
@@ -96,7 +95,6 @@ I2C_Driver::I2C_Driver(I2C_PortInfo_t* pPort)
 I2C_Driver::~I2C_Driver()
 {
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -214,7 +212,6 @@ void I2C_Driver::Init()
     this->Unlock();
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:      GetStatus
@@ -224,14 +221,11 @@ void I2C_Driver::Init()
 //
 //   Description:   Return general status of the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e I2C_Driver::GetStatus()
 {
     return m_Status;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -242,14 +236,11 @@ SystemState_e I2C_Driver::GetStatus()
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::Lock()
 {
     while(nOS_MutexLock(m_pPort->pMutex, NOS_WAIT_INFINITE) != NOS_OK){};
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -260,14 +251,11 @@ void I2C_Driver::Lock()
 //
 //   Description:   Unlock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::Unlock()
 {
     nOS_MutexUnlock(m_pPort->pMutex);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -302,7 +290,6 @@ uint32_t I2C_Driver::GetLastEvent()
   return lastevent;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           LockToDevice
@@ -326,7 +313,6 @@ SystemState_e I2C_Driver::LockToDevice(I2C_DeviceInfo_t* pDevice)
     m_Status        = SYS_READY;
     return m_Status;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -356,7 +342,6 @@ SystemState_e I2C_Driver::UnlockFromDevice(I2C_DeviceInfo_t* pDevice)
     }
     return m_Status;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -522,7 +507,6 @@ SystemState_e I2C_Driver::Read(uint32_t AddressInDevice, uint32_t* pData, I2C_De
     return Status;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           TickHook
@@ -545,7 +529,6 @@ void I2C_Driver::TickHook()
         }
     }
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -595,7 +578,6 @@ void I2C_Driver::ClearBus()
     m_pPort->pGPIO_SCL->MODER  |=  CalculateBitMask(0x02, m_pPort->SCL_Pin);
     m_pPort->pGPIO_SDA->MODER  |=  CalculateBitMask(0x02, m_pPort->SDA_Pin);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -813,7 +795,6 @@ void I2C_Driver::EV_IRQHandler()
         }
     }
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //

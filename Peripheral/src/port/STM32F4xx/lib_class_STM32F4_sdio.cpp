@@ -68,8 +68,6 @@
 //
 //   Description:   Initializes the SDIO peripheral according to the specified parameters
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SDIO_Driver::SDIO_Driver(sSDIO* pSDIO)
 {
@@ -83,8 +81,6 @@ SDIO_Driver::SDIO_Driver(sSDIO* pSDIO)
 //   Parameter(s):
 //
 //   Description:    Deinitializes the SDIO peripheral
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SDIO_Driver::~SDIO_Driver()
@@ -198,8 +194,6 @@ void SDIO_Driver::Initialize(void)
 //
 //   Description:   Get response from SD device
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::GetResponse(uint32_t* pResponse)
 {
@@ -249,8 +243,6 @@ uint32_t SDIO_Driver::GetTransfertStatus(void)
 //   Return value:  bool             true or false
 //
 //   Description:   Test the SD flag for this driver and return the state
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 bool SDIO_Driver::IsFlagSet(uint32_t Status, SD_StatusFlag Flag_e)
@@ -302,8 +294,6 @@ void SDIO_Driver::TickHook(void)
 //   Return value:  None
 //
 //   Description:   Send command to the SD Card
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::TransmitCommand(uint8_t Command, uint32_t Argument, ResponseType_e ResponseType)
@@ -462,8 +452,6 @@ void SDIO_Driver::Config(DeviceSpeed_e DeviceSpeed)
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::Lock(void)
 {
@@ -478,8 +466,6 @@ void SDIO_Driver::Lock(void)
 //   Return Value:
 //
 //   Description:   Unlock the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::Unlock(void)
@@ -496,8 +482,6 @@ void SDIO_Driver::Unlock(void)
 //   Return value:  None
 //
 //   Description:   Configuration for SDIO Data using SDIO_DataInitTypeDef
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::SDIO_DataInit(uint32_t TransfertDir, size_t Size)
@@ -523,8 +507,6 @@ void SDIO_Driver::SDIO_DataInit(uint32_t TransfertDir, size_t Size)
 //   Return value:  None
 //
 //   Description:   Configuration of the DMA in RX
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::DMA_Config(uint32_t* pBuffer, uint32_t BufferSize, uint32_t Direction)
@@ -571,8 +553,6 @@ void SDIO_Driver::DMA_Config(uint32_t* pBuffer, uint32_t BufferSize, uint32_t Di
 //
 //   Description:   DMA IRQ
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::DMA_StreamIRQHandler(void)
 {
@@ -591,8 +571,6 @@ void SDIO_Driver::DMA_StreamIRQHandler(void)
 //   Return value:  None
 //
 //   Description:   SDIO IRQ
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::SDIO_IRQHandler(void)

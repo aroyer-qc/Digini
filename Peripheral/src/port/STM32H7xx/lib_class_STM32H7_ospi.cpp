@@ -61,9 +61,7 @@
 //
 //   Description:   Initializes the OSPI peripheral according to the specified Parameters
 //
-//   Note(s):
-//
-//                  OSPI_InitStruct: pointer to a OSPI_InitTypeDef structure that contains
+//   Note(s):       OSPI_InitStruct: pointer to a OSPI_InitTypeDef structure that contains
 //                  the configuration information for the specified OSPI peripheral.
 //
 //-------------------------------------------------------------------------------------------------
@@ -85,8 +83,6 @@ OSPI_Driver::OSPI_Driver()
 //   Return Value:  SystemState_e
 //
 //   Description:   Initialize the OSPI module
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e OSPI_Driver::Initialize(void)
@@ -128,8 +124,6 @@ SystemState_e OSPI_Driver::Initialize(void)
 //
 //   Description:   Reads an amount of data from the OSPI memory.
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e OSPI_Driver::Read(uint32_t Address, uint8_t* pBuffer, uint32_t Size)
 {
@@ -148,8 +142,6 @@ SystemState_e OSPI_Driver::Read(uint32_t Address, uint8_t* pBuffer, uint32_t Siz
 //   Return Value:  SystemState_e
 //
 //   Description:   Write an amount of data to the OSPI memory.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e OSPI_Driver::Write(uint32_t Address, uint8_t* pBuffer, uint32_t Size)
@@ -552,8 +544,6 @@ SystemState_e OSPI_Driver::Abort_IT(void)
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void OSPI_Driver::Lock(void)
 {
@@ -568,8 +558,6 @@ void OSPI_Driver::Lock(void)
 //   Return Value:
 //
 //   Description:   Unlock the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void OSPI_Driver::Unlock(void)
@@ -982,8 +970,6 @@ void OSPI_Driver::DMA_AbortCplt(void)
 //
 //   Description:   Configure the Memory Mapped mode.
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e OSPI_Driver::MemoryMapped(OSPI_CommandTypeDef* Command, OSPI_MemoryMappedTypeDef* Config)
 {
@@ -1026,8 +1012,6 @@ SystemState_e OSPI_Driver::MemoryMapped(OSPI_CommandTypeDef* Command, OSPI_Memor
 //   Return Value:  None
 //
 //   Description:   This function configures the communication registers
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void OSPI_Driver::Config(OSPI_CommandTypeDef *Command, uint32_t FunctionalMode)
@@ -1172,8 +1156,6 @@ void OSPI_Driver::Config(OSPI_CommandTypeDef *Command, uint32_t FunctionalMode)
 //   Return Value:  SystemState_e
 //
 //   Description:   This function is used only in Indirect Read or Write Modes
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e OSPI_Driver::Command(OSPI_CommandTypeDef* Command, uint32_t Timeout)

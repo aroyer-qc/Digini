@@ -412,8 +412,6 @@ void ADC_Driver::StartConversion(void)
 //
 //   Description:   Enables the selected ADC software start conversion of the injected channels.
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void ADC_Driver::StartInjectedConversion(void)
 {

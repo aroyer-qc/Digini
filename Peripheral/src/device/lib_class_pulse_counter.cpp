@@ -63,8 +63,6 @@
 //
 //   Description:   Initializes a Quad encoder object
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 PULSE_Counter::PULSE_Counter(TIM_Driver* pTimer)
 {

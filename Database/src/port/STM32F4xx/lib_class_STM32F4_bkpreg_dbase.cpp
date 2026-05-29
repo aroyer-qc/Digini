@@ -51,8 +51,6 @@ const uint8_t BKPREG_DataBase::m_ItemsSubQTY[NB_BKPREG_DBASE_ITEMS_CONST] =     
 //
 //   Description:   Initializes the database
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 BKPREG_DataBase::BKPREG_DataBase(RTC_Driver* pRTC)
 {

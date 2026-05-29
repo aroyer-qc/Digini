@@ -195,9 +195,7 @@ const QSPI_Command_t QSPI_Driver::m_Cmd[QSPI_NB_OF_CMD] =
 //
 //   Description:   Initializes the QSPI peripheral according to the specified Parameters
 //
-//   Note(s):
-//
-//                    QSPI_InitStruct: pointer to a QSPI_InitTypeDef structure that contains
+//   Note(s):       QSPI_InitStruct: pointer to a QSPI_InitTypeDef structure that contains
 //                  the configuration information for the specified QSPI peripheral.
 //
 //-------------------------------------------------------------------------------------------------
@@ -223,8 +221,6 @@ QSPI_Driver::QSPI_Driver()
 //   Return Value:  SystemState_e
 //
 //   Description:   Initialize the QSPI module
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e QSPI_Driver::Initialize(void)
@@ -403,8 +399,6 @@ SystemState_e QSPI_Driver::Initialize(void)
 //
 //   Description:   Reads an amount of data from the QSPI memory.
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e QSPI_Driver::Read(uint32_t Address, uint8_t* pBuffer, uint32_t Size)
 {
@@ -426,8 +420,6 @@ SystemState_e QSPI_Driver::Read(uint32_t Address, uint8_t* pBuffer, uint32_t Siz
 //   Return Value:  SystemState_e
 //
 //   Description:   Write an amount of data to the QSPI memory.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e QSPI_Driver::Write(uint32_t Address, uint8_t* pBuffer, uint32_t Size)
@@ -549,8 +541,6 @@ SystemState_e QSPI_Driver::FlashReady(void)
 //   Return Value:
 //
 //   Description:    SystemState_e  Return general status of the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e QSPI_Driver::GetStatus(void)
@@ -1395,8 +1385,6 @@ SystemState_e QSPI_Driver::Abort_IT(void)
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void QSPI_Driver::Lock(void)
 {
@@ -1411,8 +1399,6 @@ void QSPI_Driver::Lock(void)
 //   Return Value:
 //
 //   Description:   Unlock the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void QSPI_Driver::Unlock(void)
@@ -1825,8 +1811,6 @@ void QSPI_Driver::DMA_AbortCplt(void)
 //
 //   Description:   Configure the Memory Mapped mode.
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e QSPI_Driver::MemoryMapped(QSPI_CommandTypeDef* Command, QSPI_MemoryMappedTypeDef* Config)
 {
@@ -1869,8 +1853,6 @@ SystemState_e QSPI_Driver::MemoryMapped(QSPI_CommandTypeDef* Command, QSPI_Memor
 //   Return Value:  None
 //
 //   Description:   This function configures the communication registers
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void QSPI_Driver::Config(QSPI_CommandTypeDef *Command, uint32_t FunctionalMode)
@@ -2015,8 +1997,6 @@ void QSPI_Driver::Config(QSPI_CommandTypeDef *Command, uint32_t FunctionalMode)
 //   Return Value:  SystemState_e
 //
 //   Description:   This function is used only in Indirect Read or Write Modes
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e QSPI_Driver::Command(QSPI_CommandTypeDef* Command, uint32_t Timeout)

@@ -61,8 +61,6 @@
 //
 //   Description:   Initializes the VUARTx according to the specified Parameters
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 VUART_Driver::VUART_Driver(VUART_ID_e VuartID)
 {
@@ -78,8 +76,6 @@ VUART_Driver::VUART_Driver(VUART_ID_e VuartID)
 //   Return:        None
 //
 //   Description:   Initialize this VUART port.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void VUART_Driver::Initialize(void)
@@ -278,8 +274,6 @@ void VUART_Driver::DMA_ConfigRX(uint8_t* pBufferRX, size_t SizeRX)
 //   Return Value:  None
 //
 //   Description:   Initialization of UART DMA
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void VUART_Driver::DMA_ConfigTX(uint8_t* pBufferTX, size_t SizeTX)

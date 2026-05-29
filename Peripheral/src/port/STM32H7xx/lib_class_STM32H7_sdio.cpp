@@ -97,8 +97,6 @@ enum SD_CardState_t
 //
 //   Description:   Initializes the IO and the peripheral
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SDIO_Driver::SDIO_Driver(SDIO_Info_t* pInfo)
 {
@@ -187,8 +185,6 @@ void SDIO_Driver::Initialize(void)
 //
 //   Description:   Get response from SD device
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::GetStatus(void)
 {
@@ -225,8 +221,6 @@ SystemState_e SDIO_Driver::GetStatus(void)
 //   Return value:  SystemState_e
 //
 //   Description:   Get response from SD device
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::GetResponse(uint32_t* pResponse)
@@ -328,8 +322,6 @@ SystemState_e SDIO_Driver::SetBusWidth(uint32_t WideMode)
 //
 //   Description:   Send command to the SD Card
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::TransmitCommand(uint8_t Command, uint32_t Argument, int32_t ResponseType)
 {
@@ -359,8 +351,6 @@ SystemState_e SDIO_Driver::TransmitCommand(uint8_t Command, uint32_t Argument, i
 //   Return value:  SystemState_e
 //
 //   Description:   Analyze the OCR response and return the appropriate error code
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::CheckOCR_Response(uint32_t Response_R1)
@@ -402,8 +392,6 @@ SystemState_e SDIO_Driver::CheckOCR_Response(uint32_t Response_R1)
 //                              - R0, R1, R6, R7
 //                              - R2 (CID or CSD) response.
 //                              - R3 (OCR) response.
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
 {
@@ -469,8 +457,6 @@ SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
 //
 //   Description:   Test if card is present
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::IsDetected(void)
 {
@@ -490,8 +476,6 @@ SystemState_e SDIO_Driver::IsDetected(void)
 //
 //   Description:   Inquires cards about their operating voltage and configures clock
 //                  controls and stores SD information that will be needed in future.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::PowerON(void)
@@ -584,8 +568,6 @@ SystemState_e SDIO_Driver::PowerON(void)
 //
 //   Description:   Put interface in power OFF
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::PowerOFF(void)
 {
@@ -605,8 +587,6 @@ void SDIO_Driver::PowerOFF(void)
 //   Return Value:  SystemState_e
 //
 //   Description:   Initializes all cards or single card as the case may be Card(s) come into standby state.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::InitializeCard(void)
@@ -668,8 +648,6 @@ SystemState_e SDIO_Driver::InitializeCard(void)
 //
 //   Description:   Configuration for SDIO Data using SDIO_DataInitTypeDef
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::DataInit(uint32_t Size, uint32_t DataBlockSize, bool IsItReadFromCard)
 {
@@ -689,8 +667,6 @@ void SDIO_Driver::DataInit(uint32_t Size, uint32_t DataBlockSize, bool IsItReadF
 //   Return Value:
 //
 //   Description:   Finds the SD card SCR register value.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::FindSCR(void)
@@ -752,8 +728,6 @@ SystemState_e SDIO_Driver::FindSCR(void)
 //
 //   Description:   Returns information about specific card.
 //                  Contains all SD card information
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::GetCardInfo(void)
@@ -929,8 +903,6 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::Lock(void)
 {
@@ -945,8 +917,6 @@ void SDIO_Driver::Lock(void)
 //   Return Value:
 //
 //   Description:   Unlock the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::Unlock(void)
@@ -1202,8 +1172,6 @@ SystemState_e SDIO_Driver::WaitReady(uint32_t Timer)
 //
 //   Description:   DMA IRQ
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::DMA_Complete(DMA_Stream_TypeDef* pDMA_Stream)
 {
@@ -1221,8 +1189,6 @@ void SDIO_Driver::DMA_Complete(DMA_Stream_TypeDef* pDMA_Stream)
 //   Return value:  None
 //
 //   Description:   SDIO IRQ
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::SDMMC1_IRQHandler(void)
@@ -1254,8 +1220,6 @@ void SDIO_Driver::SDMMC1_IRQHandler(void)
 //   Return value:  None
 //
 //   Description:   DMA IRQ
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::RX_IRQHandler(void)
@@ -1343,8 +1307,6 @@ void SDIO_Driver::RX_IRQHandler(void)
 //
 //   Description:   DMA IRQ
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::TX_IRQHandler(void)
 {
@@ -1430,8 +1392,6 @@ void SDIO_Driver::TX_IRQHandler(void)
 //   Return value:  None
 //
 //   Description:   IRQ Handler for the card detect
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 #if (SD_CARD_USE_DETECT_SIGNAL == 1)

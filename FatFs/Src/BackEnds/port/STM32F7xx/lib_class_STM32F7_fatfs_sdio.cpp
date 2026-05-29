@@ -98,8 +98,6 @@ DSTATUS FatFS_SDIO::Initialize(void* pParameter)
 //
 //   Description:   Get Status from SD Card
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 DSTATUS FatFS_SDIO::Status(void)
 {
@@ -121,8 +119,6 @@ DSTATUS FatFS_SDIO::Status(void)
 //   Return value:  DRESULT
 //
 //   Description:   Read From SD Card
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 DRESULT FatFS_SDIO::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
@@ -154,8 +150,6 @@ DRESULT FatFS_SDIO::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSec
 //
 //   Description:   Write to the SD Card
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 DRESULT FatFS_SDIO::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {
@@ -184,8 +178,6 @@ DRESULT FatFS_SDIO::Write(const uint8_t* pBuffer, uint32_t Sector, uint16_t Numb
 //   Return value:  DRESULT
 //
 //   Description:   Control
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
@@ -360,8 +352,6 @@ DRESULT FatFS_SDIO::IO_Ctrl(uint8_t Control, void *pBuffer)
 //   Return value:  FRESULT
 //
 //   Description:   Get response from SD device
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 FRESULT FatFS_SDIO::GetDriveSize(char* pDriveName, FatFS_Size_t* SizeStruct)

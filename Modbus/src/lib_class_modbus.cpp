@@ -781,8 +781,8 @@ SystemState_e MODBUS_Manager::SlaveParseRequest(const uint8_t* pRX, size_t RX_Le
 
             Command.Address  = (Command.pPayload[0] << 8) | Command.pPayload[1];
             Command.Quantity = (Command.pPayload[2] << 8) | Command.pPayload[3];
-            break;
         }
+        break;
 
         case MODBUS_WRITE_SINGLE_COIL:          // 0x05
         case MODBUS_WRITE_SINGLE_REGISTER:      // 0x06
@@ -796,8 +796,8 @@ SystemState_e MODBUS_Manager::SlaveParseRequest(const uint8_t* pRX, size_t RX_Le
             Command.Address = (Command.pPayload[0] << 8) | Command.pPayload[1];
             Command.Value   = (Command.pPayload[2] << 8) | Command.pPayload[3];
             Command.Quantity = 1;
-            break;
         }
+        break;
 
         case MODBUS_WRITE_MULTIPLE_COILS:       // 0x0F
         case MODBUS_WRITE_MULTIPLE_REGISTERS:   // 0x10
@@ -810,12 +810,12 @@ SystemState_e MODBUS_Manager::SlaveParseRequest(const uint8_t* pRX, size_t RX_Le
 
             Command.Address  = (Command.pPayload[0] << 8) | Command.pPayload[1];
             Command.Quantity = (Command.pPayload[2] << 8) | Command.pPayload[3];
-            break;
         }
+        break;
 
         default:
             // Unknown function -> leave fields at default
-            break;
+        break;
     }
 
     return SYS_READY;

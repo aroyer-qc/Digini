@@ -35,7 +35,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
-#if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED) &&  (DIGINI_USE_FATFS == DEF_ENABLED)
+#if (DIGINI_FATFS_USE_USB_KEY == DEF_ENABLED) && (DIGINI_USE_FATFS == DEF_ENABLED)
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -111,8 +111,6 @@ DSTATUS FatFS_USB_Key::Status(void)
 //   Return value:  DRESULT
 //
 //   Description:   Read From flash disk device.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 DRESULT FatFS_USB_Key::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)

@@ -75,8 +75,6 @@ extern "C" void USB_HostWrapper(void* pvParameters)
 //
 //   Description:   Initializes the USB peripheral
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 //USB_Host::USB_Host()
 //{
@@ -90,8 +88,6 @@ extern "C" void USB_HostWrapper(void* pvParameters)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void USB_Host::Initialize(class USB_Application* pUSB)
@@ -166,8 +162,6 @@ void USB_Host::Initialize(class USB_Application* pUSB)
 //
 //   Description:
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e USB_Host::RegisterClass(class USB_HostClassInterface* pClass)
 {
@@ -196,8 +190,6 @@ SystemState_e USB_Host::RegisterClass(class USB_HostClassInterface* pClass)
 //
 //   Description:
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void USB_Host::Start(void)
 {
@@ -213,8 +205,6 @@ void USB_Host::Start(void)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void USB_Host::Stop(void)
@@ -674,8 +664,6 @@ void  USB_Host::DeInitStateMachine(void)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 USB_MSC_HostStatus_e USB_Host::GetStatus(void)

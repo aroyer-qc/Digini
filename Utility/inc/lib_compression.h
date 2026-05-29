@@ -85,7 +85,7 @@ class DeCompression
 
                             DeCompression           (CompxWorkMem_t* pCompxWorkMem);
 
-        size_t              Process                 (RAW_Array* pRawData, RAW_Array* pCompxData, size_t DataSize, uint8_t CompressionMethod);
+        size_t              Process                 (RAW_Array* pRawData, RAW_Array* pCompxData, size_t DataSize, Compression_e CompressionMethod);
 
 void*       operator new(size_t Size);
 void        operator delete(void* pPtr);
@@ -106,9 +106,6 @@ void        operator delete(void* pPtr);
         // Sub function LZW
         uint32_t            LZW_InputCode           (void);
         void                LZW_DecodeArray         (uint32_t Code);
-
-//void*               m_pAllocPtr;
-
 
         size_t              m_DataSize;
         RAW_Array*           m_pCompxData;

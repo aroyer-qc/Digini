@@ -321,8 +321,6 @@ static void DRV_WriteCommand(uint8_t Command)
 //
 //   Description:   Read 8 bits data from LCD
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 uint8_t DRV_u8_Read()
 {
@@ -344,8 +342,6 @@ uint8_t DRV_u8_Read()
 //   Return value:  uint16_t        Data
 //
 //   Description:   Read 15 bits data from LCD
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 WORD DRV_u16_Read()
@@ -374,8 +370,6 @@ WORD DRV_u16_Read()
 //
 //   Description:   Write 8 bits data to LCD
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 static void DRV_u8_Write(uint8_t Data)
 {
@@ -394,8 +388,6 @@ static void DRV_u8_Write(uint8_t Data)
 //   Return value:  None
 //
 //   Description:   Write 16 bits data to LCD
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 static void DRV_u16_Write(uint16_t Data)

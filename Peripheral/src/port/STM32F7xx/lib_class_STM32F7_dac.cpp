@@ -118,8 +118,6 @@ void DAC_Driver::Initialize(void)
 //
 //   Description:   Will start the DAC specified channel.
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void DAC_Driver::Start(uint8_t Channel)
 {

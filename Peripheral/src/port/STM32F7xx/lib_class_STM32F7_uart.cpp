@@ -77,8 +77,6 @@ const uint32_t UART_Driver::m_BaudRate[NB_OF_BAUD] =
 //
 //   Description:   Initializes the UART_Driver class
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 UART_Driver::UART_Driver(UART_ID_e UartID)
 {
@@ -95,8 +93,6 @@ UART_Driver::UART_Driver(UART_ID_e UartID)
 //   Return:        None
 //
 //   Description:   Initialize this UART port.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::Initialize(void)

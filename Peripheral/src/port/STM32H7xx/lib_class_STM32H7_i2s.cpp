@@ -74,8 +74,6 @@
 //
 //   Description:   Initialize the I2Sx peripheral according to the specified Parameters
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 I2S::I2S(I2S_PortInfo_t* pPort)
 {
@@ -83,7 +81,6 @@ I2S::I2S(I2S_PortInfo_t* pPort)
     m_Device  = -1;
     m_Status  = SYS_DEVICE_NOT_PRESENT;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -97,7 +94,6 @@ I2S::I2S(I2S_PortInfo_t* pPort)
 I2S::~I2S()
 {
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -229,7 +225,6 @@ void I2S::Initialize(void)
     m_pPort->pI2Sx->I2SCFGR = tmpreg;        // Write to SPIx I2SCFGR
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:      GetStatus
@@ -239,14 +234,11 @@ void I2S::Initialize(void)
 //
 //   Description:   Return general status of the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2C::GetStatus(void)
+SystemState_e I2S::GetStatus(void)
 {
     return m_Status;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -261,7 +253,7 @@ SystemState_e I2C::GetStatus(void)
 //  Note(s):        If a write without lock is executed then it will be done on the locked device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2C::LockToDevice(uint8_t Device)
+SystemState_e I2S::LockToDevice(uint8_t Device)
 {
     if(m_Device == -1)
     {
@@ -271,7 +263,6 @@ SystemState_e I2C::LockToDevice(uint8_t Device)
     }
     return SYS_NOT_LOCK_TO_DEVICE;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -286,7 +277,7 @@ SystemState_e I2C::LockToDevice(uint8_t Device)
 //                  if lock and no write at all if not lock to a device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2C::UnlockFromDevice(uint8_t Device)
+SystemState_e I2S::UnlockFromDevice(uint8_t Device)
 {
     if(Device == m_Device)
     {
@@ -302,7 +293,6 @@ SystemState_e I2C::UnlockFromDevice(uint8_t Device)
 
     return SYS_WRONG_DEVICE;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -321,7 +311,7 @@ SystemState_e I2C::UnlockFromDevice(uint8_t Device)
 //                  Call to UnlockFromDevice() after multiple operation are done
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2C::Transfer(void* pTxBuffer, size_t TxSize, void* pRxBuffer, size_t RxSize)
+SystemState_e I2S::Transfer(void* pTxBuffer, size_t TxSize, void* pRxBuffer, size_t RxSize)
 {
     uint32_t        RegisterCR1;
     uint32_t        RegisterCR2;
@@ -396,7 +386,6 @@ SystemState_e I2C::Transfer(void* pTxBuffer, size_t TxSize, void* pRxBuffer, siz
     return SYS_BUSY;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Transfer
@@ -413,7 +402,7 @@ SystemState_e I2C::Transfer(void* pTxBuffer, size_t TxSize, void* pRxBuffer, siz
 //  Note(s):        This is the overloaded version for single operation on the device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2C::Transfer(void* pTxBuffer, size_t TxSize, void* pRxBuffer, size_t RxSize, uint8_t Device)
+SystemState_e I2S::Transfer(void* pTxBuffer, size_t TxSize, void* pRxBuffer, size_t RxSize, uint8_t Device)
 {
     SystemState_e State;
 
@@ -425,7 +414,6 @@ SystemState_e I2C::Transfer(void* pTxBuffer, size_t TxSize, void* pRxBuffer, siz
 
     return State;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -443,7 +431,7 @@ SystemState_e I2C::Transfer(void* pTxBuffer, size_t TxSize, void* pRxBuffer, siz
 //  Note(s):        This is the overloaded version for single operation on the device
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2C::ReadRegister(uint8_t Register, void* pRxBuffer, size_t RxSize, uint8_t Device)
+SystemState_e I2S::ReadRegister(uint8_t Register, void* pRxBuffer, size_t RxSize, uint8_t Device)
 {
     SystemState_e State;
 
@@ -451,7 +439,6 @@ SystemState_e I2C::ReadRegister(uint8_t Register, void* pRxBuffer, size_t RxSize
 
     return State;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -470,14 +457,13 @@ SystemState_e I2C::ReadRegister(uint8_t Register, void* pRxBuffer, size_t RxSize
 //                  Call to UnlockFromDevice() after multiple operation are done
 //
 //-------------------------------------------------------------------------------------------------
-SystemState_e I2C::ReadRegister(uint8_t Register, void* pRxBuffer, size_t RxSize)
+SystemState_e I2S::ReadRegister(uint8_t Register, void* pRxBuffer, size_t RxSize)
 {
     SystemState_e State;
 
     State = this->Transfer(&Register, sizeof(uint8_t), pRxBuffer, RxSize);
     return State;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -492,7 +478,7 @@ SystemState_e I2C::ReadRegister(uint8_t Register, void* pRxBuffer, size_t RxSize
 //
 //-------------------------------------------------------------------------------------------------
 /*
-void I2C::ClearBus(void)
+void I2S::ClearBus(void)
 {
     uint8_t Count = 0;
 
@@ -544,7 +530,7 @@ void I2C::ClearBus(void)
 //
 //-------------------------------------------------------------------------------------------------
 /*
-uint32_t I2C::CalculateBitMask(uint8_t Mask, uint16_t BitConfig)
+uint32_t I2S::CalculateBitMask(uint8_t Mask, uint16_t BitConfig)
 {
     uint32_t NewMask = (uint32_t)Mask;
 
@@ -566,14 +552,11 @@ uint32_t I2C::CalculateBitMask(uint8_t Mask, uint16_t BitConfig)
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-void I2C::Lock(void)
+void I2S::Lock(void)
 {
     while(nOS_MutexLock(&this->m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -584,14 +567,11 @@ void I2C::Lock(void)
 //
 //   Description:   Unlock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
-void I2C::Unlock(void)
+void I2S::Unlock(void)
 {
     nOS_MutexUnlock(&this->m_Mutex);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -602,7 +582,7 @@ void I2C::Unlock(void)
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void I2C::EV_IRQHandler()
+void I2S::EV_IRQHandler()
 {
     uint32_t     Status;
     I2C_TypeDef* pI2C;
@@ -671,7 +651,6 @@ void I2C::EV_IRQHandler()
     }
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  IRQ Handler:    ER_IRQHandler
@@ -681,14 +660,13 @@ void I2C::EV_IRQHandler()
 //  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
-void I2C::ER_IRQHandler()
+void I2S::ER_IRQHandler()
 {
     //this->GetLastEvent();
     //m_pPort->pI2Cx->SR1    = 0;                                                    // After a  NACK, transfer is done
     m_Status            = SYS_READY;                                                // We're done!
     m_Timeout           = 0;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //  Handler:        I2Cx_EV_IRQHandler and I2Cx_EE_IRQHandler

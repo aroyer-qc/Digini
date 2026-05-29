@@ -267,13 +267,6 @@ struct SD_CardIO_t
 };
 #endif
 
-
-struct SDIO_Info_t
-{
-    DMA_Info_t          DMA_RX;
-    DMA_Info_t          DMA_TX;
-};
-
 //-------------------------------------------------------------------------------------------------
 // class definition(s)
 //-------------------------------------------------------------------------------------------------
@@ -281,7 +274,6 @@ struct SDIO_Info_t
 class SDIO_Driver
 {
     public:
-                            SDIO_Driver             (SDIO_Info_t* pInfo);
 
         void                Initialize              (void);
 
@@ -343,7 +335,7 @@ class SDIO_Driver
         void                Lock                    (void);
         void                Unlock                  (void);
 
-        bool                    m_IsItInitialize;
+        bool                    m_IsItInitialize   = false;
         nOS_Mutex               m_Mutex;
         uint8_t                 m_LastCommand;
         volatile SystemState_e  m_TransferError;
@@ -351,7 +343,8 @@ class SDIO_Driver
 //        volatile bool           m_DMA_XferComplete;
         volatile SD_Operation_e m_Operation;            // SD transfer operation (read/write)
 
-        SDIO_Info_t*            m_pInfo;
+		static const DMA_Info_t m_DMA_InfoRX;
+		static const DMA_Info_t m_DMA_InfoTX;
         DMA_Driver              m_DMA_RX;
         DMA_Driver              m_DMA_TX;
 
@@ -382,7 +375,15 @@ class SDIO_Driver
 // Global variable(s) and constant(s)
 //-------------------------------------------------------------------------------------------------
 
-#include "sdio_var.h"
+#ifdef SDIO_DRIVER_GLOBAL
+
+class SDIO_Driver mySDIO;
+
+#else // SDIO_DRIVER_GLOBAL
+
+extern class SDIO_Driver mySDIO;
+
+#endif // SDIO_DRIVER_GLOBAL
 
 //-------------------------------------------------------------------------------------------------
 

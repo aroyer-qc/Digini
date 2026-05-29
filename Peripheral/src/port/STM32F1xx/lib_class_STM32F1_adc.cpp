@@ -256,8 +256,6 @@ void ADC_Driver::EnableCallbackType(int CallBackType, void* pContext)
 //
 //   Description:   Return general status of the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e ADC_Driver::GetStatus(void)
 {
@@ -274,8 +272,6 @@ SystemState_e ADC_Driver::GetStatus(void)
 //   Return Value:  SystemState_e
 //
 //   Description:   Initializes the channel specified by ADC_Channel ID
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e ADC_Driver::AddChannelToGroup(ADC_ChannelID_e ChannelID, uint8_t Rank)
@@ -343,9 +339,6 @@ SystemState_e ADC_Driver::AddChannelToGroup(ADC_ChannelID_e ChannelID, uint8_t R
 //
 //   Description:   Enables the selected ADC software start conversion of the regular channels.
 //
-//   Note(s):
-//
-//
 //-------------------------------------------------------------------------------------------------
 void ADC_Driver::StartConversion(void)
 {
@@ -361,8 +354,6 @@ void ADC_Driver::StartConversion(void)
 //   Return Value:  None
 //
 //   Description:   Enables the selected ADC software start conversion of the injected channels.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void ADC_Driver::StartInjectedConversion(void)
@@ -443,8 +434,6 @@ void ADC_Driver::IRQHandler()
     m_pCallback->CallbackFunction(ADC_CALLBACK_INJECTED_CONVERSION_COMPLETED, m_pContextConversionInjectionCompleted);
     m_pCallback->CallbackFunction(ADC_CALLBACK_ERROR,                         m_pContextERROR);
 }
-
-//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 

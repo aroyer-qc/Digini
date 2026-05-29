@@ -144,8 +144,6 @@
 //
 //   Description:   Initializes the Touch panel
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 TouchDriver::TouchDriver(I2C_Driver* pI2C)
 {
@@ -155,7 +153,6 @@ TouchDriver::TouchDriver(I2C_Driver* pI2C)
     m_IsCorrectionEnable = false;
     this->Initialize();
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -384,7 +381,6 @@ bool TouchDriver::IsOperational()
     return true;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           SetIRQ_Enable
@@ -413,7 +409,6 @@ void TouchDriver::SetIRQ_Enable(bool State)
     m_pI2C->Write(INT_CTRL, Register);                                  // Write Back the Interrupt Control register
     m_pI2C->UnlockFromDevice(m_pDevice);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //

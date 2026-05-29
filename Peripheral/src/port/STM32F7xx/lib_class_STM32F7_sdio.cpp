@@ -44,7 +44,6 @@
 #define SDIO_DRIVER_GLOBAL
 #include "./lib_digini.h"
 #undef  SDIO_DRIVER_GLOBAL
-//#include "stm32f7xx_ll_sdmmc.h"   // to replace this with my stuff
 
 //-------------------------------------------------------------------------------------------------
 
@@ -75,6 +74,8 @@
 // SDMMC Initialization Frequency (400KHz max)
 #define SDMMC_INIT_CLK_DIV              ((uint8_t)0x76)
 
+#define IFCR_CLEAR_MASK_STREAM3 (DMA_LIFCR_CTCIF3 | DMA_LIFCR_CHTIF3 | DMA_LIFCR_CTEIF3 | DMA_LIFCR_CDMEIF3 | DMA_LIFCR_CFEIF3)
+#define IFCR_CLEAR_MASK_STREAM6 (DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6)
 
 //-------------------------------------------------------------------------------------------------
 // Typedef(s)
@@ -94,21 +95,46 @@ enum SD_CardState_t
 };
 
 //-------------------------------------------------------------------------------------------------
-//
-//   Constructor:   SDIO_Driver
-//
-//   Parameter(s):  SDIO_Info_t* pInfo
-//
-//   Description:   Initializes the IO and the peripheral
-//
-//   Note(s):
-//
+// Constant(s)
 //-------------------------------------------------------------------------------------------------
-SDIO_Driver::SDIO_Driver(SDIO_Info_t* pInfo)
+
+const DMA_Info_t SDIO_Driver::m_DMA_InfoRX =
 {
-    m_pInfo = pInfo;
-    m_IsItInitialize = false;
-}
+	// Configuration
+	DMA_MODE_PERIPHERAL_FLOW_CTRL    |
+	DMA_PERIPHERAL_TO_MEMORY         |
+	DMA_PERIPHERAL_NO_INCREMENT      |
+	DMA_MEMORY_INCREMENT             |
+	DMA_PERIPHERAL_SIZE_32_BITS      |
+	DMA_MEMORY_SIZE_32_BITS          |
+	DMA_PRIORITY_LEVEL_VERY_HIGH     |
+	DMA_PERIPHERAL_BURST_INC4        |
+	DMA_MEMORY_BURST_INC4            |
+	DMA_CHANNEL_4,                          // Connected to channel 4
+	IFCR_CLEAR_MASK_STREAM3,
+	DMA2_Stream3,                           // DMA_Stream_TypeDef
+	DMA2_Stream3_IRQn
+	//4,                                    // PreempPrio
+};
+
+const DMA_Info_t SDIO_Driver::m_DMA_InfoTX =
+{
+	// Configuration
+	DMA_MODE_PERIPHERAL_FLOW_CTRL    |
+	DMA_MEMORY_TO_PERIPHERAL         |
+	DMA_PERIPHERAL_NO_INCREMENT      |
+	DMA_MEMORY_INCREMENT             |
+	DMA_PERIPHERAL_SIZE_32_BITS      |
+	DMA_MEMORY_SIZE_32_BITS          |
+	DMA_PRIORITY_LEVEL_VERY_HIGH     |
+	DMA_PERIPHERAL_BURST_INC4        |
+	DMA_MEMORY_BURST_INC4            |
+	DMA_CHANNEL_4,                          // Connected to channel 4
+	IFCR_CLEAR_MASK_STREAM6,
+	DMA2_Stream6,                           // DMA_Stream_TypeDef
+	DMA2_Stream6_IRQn
+	//4,                                    // PreempPrio
+};
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -133,14 +159,14 @@ void SDIO_Driver::Initialize(void)
         RCC->APB2ENR |= RCC_APB2ENR_SDMMC1EN;
 
         // Initialize DMA2 channel 3 for RX from SD CARD
-        m_DMA_RX.Initialize(&m_pInfo->DMA_RX);                                      // Write config that will never change
+        m_DMA_RX.Initialize((DMA_Info_t*)&SDIO_Driver::m_DMA_InfoRX);               // Write config that will never change
         m_DMA_RX.SetSource((void*)&SDMMC1->FIFO);
         m_DMA_RX.ClearFlag();
         m_DMA_RX.SetFifoControl(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                   // Configuration FIFO control register
 
 
         // Initialize DMA2 channel 6 for TX to SD CARD
-        m_DMA_TX.Initialize(&m_pInfo->DMA_TX);                                      // Write config that will never change
+        m_DMA_TX.Initialize((DMA_Info_t*)&SDIO_Driver::m_DMA_InfoTX);               // Write config that will never change
         m_DMA_TX.SetDestination((void*)&SDMMC1->FIFO);
         m_DMA_TX.ClearFlag();
         m_DMA_TX.SetFifoControl(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);                   // Configuration FIFO control register
@@ -176,8 +202,6 @@ void SDIO_Driver::Initialize(void)
 //   Return value:  SystemState_e
 //
 //   Description:   Get response from SD device
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::GetStatus(void)
@@ -216,8 +240,6 @@ SystemState_e SDIO_Driver::GetStatus(void)
 //
 //   Description:   Get response from SD device
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::GetResponse(uint32_t* pResponse)
 {
@@ -237,8 +259,6 @@ SystemState_e SDIO_Driver::GetResponse(uint32_t* pResponse)
 //  Return:         SystemState_e   State
 //
 //  Description:    Set the bus width of the SDMMC module
-//
-//  Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::SetBusWidth(uint32_t WideMode)
@@ -318,8 +338,6 @@ SystemState_e SDIO_Driver::SetBusWidth(uint32_t WideMode)
 //
 //   Description:   Send command to the SD Card
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::TransmitCommand(uint8_t Command, uint32_t Argument, int32_t ResponseType)
 {
@@ -349,8 +367,6 @@ SystemState_e SDIO_Driver::TransmitCommand(uint8_t Command, uint32_t Argument, i
 //   Return value:  SystemState_e
 //
 //   Description:   Analyze the OCR response and return the appropriate error code
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::CheckOCR_Response(uint32_t Response_R1)
@@ -392,7 +408,6 @@ SystemState_e SDIO_Driver::CheckOCR_Response(uint32_t Response_R1)
 //                              - R0, R1, R6, R7
 //                              - R2 (CID or CSD) response.
 //                              - R3 (OCR) response.
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
@@ -459,8 +474,6 @@ SystemState_e SDIO_Driver::CmdResponse(uint8_t Command, int32_t ResponseType)
 //
 //   Description:   Test if card is present
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::IsDetected(void)
 {
@@ -480,8 +493,6 @@ SystemState_e SDIO_Driver::IsDetected(void)
 //
 //   Description:   Inquires cards about their operating voltage and configures clock
 //                  controls and stores SD information that will be needed in future.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::PowerON(void)
@@ -574,8 +585,6 @@ SystemState_e SDIO_Driver::PowerON(void)
 //
 //   Description:   Put interface in power OFF
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::PowerOFF(void)
 {
@@ -595,8 +604,6 @@ void SDIO_Driver::PowerOFF(void)
 //   Return Value:  SystemState_e
 //
 //   Description:   Initializes all cards or single card as the case may be Card(s) come into standby state.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::InitializeCard(void)
@@ -658,8 +665,6 @@ SystemState_e SDIO_Driver::InitializeCard(void)
 //
 //   Description:   Configuration for SDIO Data using SDIO_DataInitTypeDef
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::DataInit(uint32_t Size, uint32_t DataBlockSize, bool IsItReadFromCard)
 {
@@ -679,8 +684,6 @@ void SDIO_Driver::DataInit(uint32_t Size, uint32_t DataBlockSize, bool IsItReadF
 //   Return Value:
 //
 //   Description:   Finds the SD card SCR register value.
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::FindSCR(void)
@@ -742,8 +745,6 @@ SystemState_e SDIO_Driver::FindSCR(void)
 //
 //   Description:   Returns information about specific card.
 //                  Contains all SD card information
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e SDIO_Driver::GetCardInfo(void)
@@ -910,7 +911,6 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
 //-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------
 //
 //   Function:      Lock
 //
@@ -918,8 +918,6 @@ SystemState_e SDIO_Driver::GetCardInfo(void)
 //   Return Value:  None
 //
 //   Description:   Lock the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::Lock(void)
@@ -935,8 +933,6 @@ void SDIO_Driver::Lock(void)
 //   Return Value:
 //
 //   Description:   Unlock the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::Unlock(void)
@@ -1192,14 +1188,9 @@ SystemState_e SDIO_Driver::WaitReady(uint32_t Timer)
 //
 //   Description:   DMA IRQ
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::DMA_Complete(DMA_Stream_TypeDef* pDMA_Stream)
 {
-    //m_DMA_XferComplete = true;              // DMA transfer is complete          m_TransferComplete is probably enough
-    while(m_TransferComplete == false){}    // Wait until SD transfer is complete
-    //Disable
     pDMA_Stream->CR &= ~DMA_SxCR_EN;        // Disable the stream
 }
 
@@ -1211,8 +1202,6 @@ void SDIO_Driver::DMA_Complete(DMA_Stream_TypeDef* pDMA_Stream)
 //   Return value:  None
 //
 //   Description:   SDIO IRQ
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::SDMMC1_IRQHandler(void)
@@ -1244,8 +1233,6 @@ void SDIO_Driver::SDMMC1_IRQHandler(void)
 //   Return value:  None
 //
 //   Description:   DMA IRQ
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::RX_IRQHandler(void)
@@ -1333,8 +1320,6 @@ void SDIO_Driver::RX_IRQHandler(void)
 //
 //   Description:   DMA IRQ
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void SDIO_Driver::TX_IRQHandler(void)
 {
@@ -1420,8 +1405,6 @@ void SDIO_Driver::TX_IRQHandler(void)
 //   Return value:  None
 //
 //   Description:   IRQ Handler for the card detect
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 #if (SD_CARD_USE_DETECT_SIGNAL == 1)

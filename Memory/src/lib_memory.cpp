@@ -63,8 +63,6 @@
 //
 //   Description:   Initializes the memory allocation table and private support data
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 
 MemPoolDriver::MemPoolDriver()
@@ -113,8 +111,6 @@ MemPoolDriver::MemPoolDriver()
 //   Destructor:    ~MemPoolDriver
 //
 //   Description:   Free up any resources if any
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 MemPoolDriver::~MemPoolDriver()

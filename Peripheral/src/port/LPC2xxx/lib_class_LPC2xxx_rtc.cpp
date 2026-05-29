@@ -75,8 +75,6 @@ const uint16_t CRTC::m_DaysSoFar[12]     = {0, 31, 59, 90, 120, 151, 181, 212, 2
 //
 //   Description:   Initializes the RTC peripheral according to the specified Parameters
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 CRTC::CRTC(nOS_Mutex* pMutex, uint32_t Mode)
 {
@@ -121,7 +119,6 @@ CRTC::CRTC(nOS_Mutex* pMutex, uint32_t Mode)
     LockRegister();
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Destructor:   CRTC
@@ -150,7 +147,6 @@ uint32_t CRTC::GetBackupRegister(uint8_t Register)
     return *(&RTC->BKP0R + Register);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: SetBackupRegister
@@ -169,7 +165,6 @@ void CRTC::SetBackupRegister(uint8_t Register, uint32_t Value)
     PWR->CR  &= uint32_t(~PWR_CR_DBP);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: GetDate
@@ -185,7 +180,6 @@ void CRTC::GetDate(Date_t* pDate)
     memcpy(pDate, &m_Clock.Date, sizeof(Date_t));
     Unlock();
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -204,7 +198,6 @@ void CRTC::GetTime(Time_t* pTime)
     memcpy(pTime, &m_Clock.Time, sizeof(Time_t));
     Unlock();
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -236,7 +229,6 @@ void CRTC::SetDate(Date_t* pDate)
     Disable();
 }
 
-
 void CRTC::SetDate(uint8_t Day, uint8_t Month, uint16_t Year)
 {
     Date_t Date;
@@ -247,7 +239,6 @@ void CRTC::SetDate(uint8_t Day, uint8_t Month, uint16_t Year)
     SetDate(&Date);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: SetTime
@@ -256,8 +247,6 @@ void CRTC::SetDate(uint8_t Day, uint8_t Month, uint16_t Year)
 //   Return value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void CRTC::SetTime(Time_t* pTime)
@@ -285,7 +274,6 @@ void CRTC::SetTime(uint8_t Hour, uint8_t Minute, uint8_t Second)
     m_Clock.Time.Second = Second;
     SetTime(&Time);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -325,7 +313,6 @@ void CRTC::Enable(void)
     EnterInitMode();
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: Disable
@@ -343,7 +330,6 @@ void CRTC::Disable(void)
     Unlock();
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: EnterInitMode
@@ -352,8 +338,6 @@ void CRTC::Disable(void)
 //   Return value:  SystemState_e    State
 //
 //   Description:   Stop calendar and enter initialization mode
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 SystemState_e CRTC::EnterInitMode()
@@ -377,7 +361,6 @@ SystemState_e CRTC::EnterInitMode()
     return State;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: ExitInitMode
@@ -387,15 +370,12 @@ SystemState_e CRTC::EnterInitMode()
 //
 //   Description:   Stop calendar and enter initialization mode
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void CRTC::ExitInitMode(void)
 {
     // Exit initialization mode, and restart calendar counter
     RTC->ISR &= uint32_t(~RTC_ISR_INIT);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -429,7 +409,6 @@ uint8_t CRTC::GetDayOfWeek(Date_t* pDate)
     return uint8_t(Day % 7);
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:      Lock
@@ -439,14 +418,11 @@ uint8_t CRTC::GetDayOfWeek(Date_t* pDate)
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void CRTC::Lock(void)
 {
     while(nOS_MutexLock(m_pMutex, NOS_WAIT_INFINITE) != NOS_OK);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -457,14 +433,11 @@ void CRTC::Lock(void)
 //
 //   Description:   Unlock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void CRTC::Unlock(void)
 {
     while(nOS_MutexUnlock(m_pMutex) != NOS_OK);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -476,8 +449,6 @@ void CRTC::Unlock(void)
 //
 //   Description:   Lock or unlock access to the RTC register
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void CRTC::LockRegister(void)
 {
@@ -486,7 +457,6 @@ void CRTC::LockRegister(void)
     PWR->CR  &= uint32_t(~PWR_CR_DBP);
 }
 
-
 void CRTC::UnlockRegister(void)
 {
     // Write unlock key to "Write Protection Register"
@@ -494,7 +464,6 @@ void CRTC::UnlockRegister(void)
     RTC->WPR  = 0xCA;
     RTC->WPR  = 0x53;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -549,7 +518,6 @@ void CRTC::UpdateTimeFeature(void)
     m_Clock.WeekOfYear++;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function name: WaitForSynchro
@@ -580,7 +548,6 @@ SystemState_e CRTC::WaitForSynchro(void)
     return State;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   IRQ Handler:   WakeUp_IRQ_Handler
@@ -591,8 +558,6 @@ SystemState_e CRTC::WaitForSynchro(void)
 //   Return value:  None
 //
 //   Description:   IRQ Handler of the RTC module
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void CRTC::WakeUp_IRQ_Handler(void)

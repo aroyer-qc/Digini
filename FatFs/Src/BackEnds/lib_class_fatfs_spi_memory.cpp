@@ -91,8 +91,6 @@ DSTATUS FatFS_SPI_Memory::Status(void)
 //
 //   Description:   Read From SPI Serial disk device.
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 DRESULT FatFS_SPI_Memory::Read(uint8_t* pBuffer, uint32_t Sector, uint16_t NumberOfSectors)
 {

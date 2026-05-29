@@ -74,8 +74,6 @@
 //
 //   Description:   Initialize the I2Sx peripheral according to the specified Parameters
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 I2S::I2S(I2S_PortInfo_t* pPort)
 {
@@ -83,7 +81,6 @@ I2S::I2S(I2S_PortInfo_t* pPort)
     m_Device  = -1;
     m_Status  = SYS_DEVICE_NOT_PRESENT;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -97,7 +94,6 @@ I2S::I2S(I2S_PortInfo_t* pPort)
 I2S::~I2S()
 {
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -229,7 +225,6 @@ void I2S::Initialize(void)
     m_pPort->pI2Sx->I2SCFGR = tmpreg;        // Write to SPIx I2SCFGR
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:      GetStatus
@@ -239,14 +234,11 @@ void I2S::Initialize(void)
 //
 //   Description:   Return general status of the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e I2C::GetStatus(void)
 {
     return m_Status;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -271,7 +263,6 @@ SystemState_e I2C::LockToDevice(uint8_t Device)
     }
     return SYS_NOT_LOCK_TO_DEVICE;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -302,7 +293,6 @@ SystemState_e I2C::UnlockFromDevice(uint8_t Device)
 
     return SYS_WRONG_DEVICE;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -396,7 +386,6 @@ SystemState_e I2C::Transfer(void* pTxBuffer, size_t TxSize, void* pRxBuffer, siz
     return SYS_BUSY;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           Transfer
@@ -426,7 +415,6 @@ SystemState_e I2C::Transfer(void* pTxBuffer, size_t TxSize, void* pRxBuffer, siz
     return State;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           ReadRegister
@@ -452,7 +440,6 @@ SystemState_e I2C::ReadRegister(uint8_t Register, void* pRxBuffer, size_t RxSize
     return State;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //  Name:           ReadRegister
@@ -477,7 +464,6 @@ SystemState_e I2C::ReadRegister(uint8_t Register, void* pRxBuffer, size_t RxSize
     State = this->Transfer(&Register, sizeof(uint8_t), pRxBuffer, RxSize);
     return State;
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -566,14 +552,11 @@ uint32_t I2C::CalculateBitMask(uint8_t Mask, uint16_t BitConfig)
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void I2C::Lock(void)
 {
     while(nOS_MutexLock(&this->m_Mutex, NOS_WAIT_INFINITE) != NOS_OK){};
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -584,14 +567,11 @@ void I2C::Lock(void)
 //
 //   Description:   Unlock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void I2C::Unlock(void)
 {
     nOS_MutexUnlock(&this->m_Mutex);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //

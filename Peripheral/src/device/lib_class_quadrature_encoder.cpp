@@ -67,8 +67,6 @@ QUAD_EncoderInfo_t QUAD_Encoder::m_QuadInfo[NB_OF_QUADRATURE_ENCODER] =
 //
 //   Description:   Initializes a Quad encoder object
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 QUAD_Encoder::QUAD_Encoder(QUAD_EncoderID_e QuadID)
 {

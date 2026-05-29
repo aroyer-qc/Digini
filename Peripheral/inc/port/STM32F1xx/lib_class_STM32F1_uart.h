@@ -77,6 +77,9 @@
     #define UART_DRIVER_USE_CALLBACK_CFG     DEF_ENABLED
 #endif
 
+#define UART_WAIT_ON_BUSY                    true
+#define UART_DONT_WAIT_ON_BUSY               false
+
 //-------------------------------------------------------------------------------------------------
 //  Typedef(s)
 //-------------------------------------------------------------------------------------------------

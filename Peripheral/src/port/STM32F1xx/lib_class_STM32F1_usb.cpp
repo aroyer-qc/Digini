@@ -53,8 +53,6 @@
 //
 //   Description:   Initializes the USB peripheral
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 CUSB::CUSB(void)
 {
@@ -66,13 +64,10 @@ CUSB::CUSB(void)
 //
 //   Description:    De-initialize the USB peripheral
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 CUSB::~CUSB(void)
 {
 }
-
 
 //-------------------------------------------------------------------------------------------------
 //
@@ -82,8 +77,6 @@ CUSB::~CUSB(void)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 USB_MSC_HostStatus_e CUSB::GetStatus(void)
@@ -96,7 +89,6 @@ USB_MSC_HostStatus_e CUSB::GetStatus(void)
     return USB_MSC_DEV_DETACHED;
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:
@@ -105,8 +97,6 @@ USB_MSC_HostStatus_e CUSB::GetStatus(void)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void CUSB::Initialize(void)
@@ -116,7 +106,6 @@ void CUSB::Initialize(void)
     Process();
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //
 //   Function:
@@ -125,8 +114,6 @@ void CUSB::Initialize(void)
 //   Return Value:
 //
 //   Description:
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 USB_MSC_HostStatus_e CUSB::Process(void)
@@ -139,12 +126,10 @@ USB_MSC_HostStatus_e CUSB::Process(void)
     return m_MSC_HostStatus;
 }
 
-
 void CUSB::IRQHandler(void)
 {
     USBH_OTG_ISR_Handler(&m_OTG_Core);
 }
-
 
 //-------------------------------------------------------------------------------------------------
 

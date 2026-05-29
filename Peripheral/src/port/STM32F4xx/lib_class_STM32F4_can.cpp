@@ -1321,8 +1321,6 @@ SystemState_e CAN_Driver::UnlockFromDevice(uint8_t Device)
 //
 //   Description:   Lock the driver
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::Lock(void)
 {
@@ -1337,8 +1335,6 @@ void I2C_Driver::Lock(void)
 //   Return Value:  None
 //
 //   Description:   Unlock the driver
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 void I2C_Driver::Unlock(void)

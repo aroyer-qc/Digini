@@ -53,8 +53,6 @@
 //
 //   Description:   Initialize the OSPI module for Hyper Ram usage
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 SystemState_e HYPER_RAM_Initialize(void)
 {

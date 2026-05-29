@@ -53,8 +53,6 @@
 //
 //   Description:   Initializes the variables
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 CFatFS_USB::CFatFS_USB(USB_HostInterface* pUSB)
 {
@@ -72,8 +70,6 @@ CFatFS_USB::CFatFS_USB(USB_HostInterface* pUSB)
 //
 //   Description:   Initialize USB Host
 //
-//   Note(s):
-//
 //-------------------------------------------------------------------------------------------------
 DSTATUS CFatFS_USB::Initialize(void)
 {
@@ -88,8 +84,6 @@ DSTATUS CFatFS_USB::Initialize(void)
 //   Return value:  DSTATUS
 //
 //   Description:   Get Status from USB Device
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 DSTATUS CFatFS_USB::Status()
@@ -117,8 +111,6 @@ DSTATUS CFatFS_USB::Status()
 //   Return value:  DRESULT
 //
 //   Description:   Read From USB Device
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 DRESULT CFatFS_USB::Read(uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks)
@@ -169,8 +161,6 @@ DRESULT CFatFS_USB::Read(uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBloc
 //   Return value:  DRESULT
 //
 //   Description:   Write to the USB Device
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 DRESULT CFatFS_USB::Write(const uint8_t* pBuffer, uint32_t Sector, uint8_t NumberOfBlocks)
@@ -225,8 +215,6 @@ DRESULT CFatFS_USB::Write(const uint8_t* pBuffer, uint32_t Sector, uint8_t Numbe
 //   Return value:  DRESULT
 //
 //   Description:   Control
-//
-//   Note(s):
 //
 //-------------------------------------------------------------------------------------------------
 #if _USE_IOCTL == 1

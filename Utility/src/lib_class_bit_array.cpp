@@ -252,9 +252,12 @@ uint8_t* BIT_Array::GetBytePointer(uint32_t Index)
 //-------------------------------------------------------------------------------------------------
 uint8_t BIT_Array::GetBitMask(uint32_t Index)
 {
+    uint32_t Shift;
+
     if(Index < m_Size)
     {
-        return (uint8_t(1) << (Index % BA_BIT_PER_BYTE));
+        Shift = (Index % BA_BIT_PER_BYTE) -1;
+        return (uint8_t(1) << Shift);
     }
 
     return 0;       // No mask

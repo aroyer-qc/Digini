@@ -53,7 +53,7 @@ class IV_11_DigitDriver
 {
     public:
 
-                    IV_11_DigitDriver       (VFD_Driver* pDriver, const uint16_t* pInfo, uint8_t NumberOfTubes);
+                    IV_11_DigitDriver       (VFD_Driver* pDriver, const uint16_t* ppBitOffsetStream, uint8_t NumberOfTubes);
 
         void        GridControl             (bool IsItDriven);
         void        Write                   (const char* pBuffer);                                  // Update all digit from string. Supporting dot and send load command
@@ -66,7 +66,7 @@ class IV_11_DigitDriver
 
     private:
 
-        const uint16_t*             m_pInfo;
+        const uint16_t*             m_pBitOffsetStream;
         VFD_Driver*                 m_pDriver;
         uint8_t                     m_NumberOfTubes;
         static const uint8_t        m_EncodedValue[DIGIT_NUMBER_OF_STANDARD_ENCODED_VALUE];

@@ -69,12 +69,14 @@ class VFD_Driver
         void            Set                             (uint32_t Index, bool Value)                       { m_pBitArray->Set(Index + m_Padding, Value);        }
         void            Set                             (uint32_t Index, uint8_t* pData, size_t Count)     { m_pBitArray->Set(Index + m_Padding, pData, Count); }
 
+// temporary for debugging
+        uint8_t*                        m_pBitsStream;
+
     private:
 
         SPI_Driver*                     m_pSPI;
         PWM_Driver*                     m_pPWM;
         const VFD_Config_t*             m_pConfig;
-        uint8_t*                        m_pBitsStream;
         BIT_Array*                      m_pBitArray;
         bool                            m_IsItBlank;
         uint8_t                         m_DimValue;

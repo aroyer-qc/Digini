@@ -40,7 +40,7 @@
 // Define(s)
 //-------------------------------------------------------------------------------------------------
 
-#define IV_DIGIT_DOT_VALUE             0x80
+#define IV_DIGIT_DOT_VALUE             0x01
 #define IV_NUMBER_OF_BIT_IN_DIGIT      8
 #define IV_GRID_OFFSET                 8
 
@@ -50,20 +50,20 @@
 
 const uint8_t IV_11_DigitDriver::m_EncodedValue[DIGIT_NUMBER_OF_STANDARD_ENCODED_VALUE] =
 {
-    0x7E,   // 0
-    0x30,   // 1
-    0x6D,   // 2
-    0x79,   // 3
-    0x33,   // 4
-    0x5B,   // 5
-    0x5F,   // 6
-    0x70,   // 7
-    0x7F,   // 8
-    0x7B,   // 9
-    0x63,   // ° Degree
-    0x4E,   // C Celsius
-    0x47,   // F fahrenheit
-    0x80,   // . Dot
+    0xFE,   // 0
+    0xC0,   // 1
+    0xDA,   // 2
+    0xF2,   // 3
+    0x66,   // 4
+    0xB6,   // 5
+    0xBE,   // 6
+    0xE0,   // 7
+    0xFE,   // 8
+    0xF6,   // 9
+    0xC6,   // ° Degree
+    0x9C,   // C Celsius
+    0x8E,   // F fahrenheit
+    0x01,   // . Dot
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -71,17 +71,17 @@ const uint8_t IV_11_DigitDriver::m_EncodedValue[DIGIT_NUMBER_OF_STANDARD_ENCODED
 //  Name:           Constructor
 //
 //  Parameter(s):   VFD_Driver*         pDriver             VFD_Driver to use
-//                  const uint16_t*     pInfo               Info on position of each tube in stream
+//                  const uint16_t*     pBitOffsetStream    Info on bit position of each tube in stream
 //                  uint8_t             NumberOfTubes       Number of tube connected on the stream
 //
 //  Description:    Initialize configuration
 //
 //-------------------------------------------------------------------------------------------------
-IV_11_DigitDriver::IV_11_DigitDriver(VFD_Driver* pDriver, const uint16_t* pInfo, uint8_t NumberOfTubes)
+IV_11_DigitDriver::IV_11_DigitDriver(VFD_Driver* pDriver, const uint16_t* pBitOffsetStream, uint8_t NumberOfTubes)
 {
-    m_pDriver       = pDriver;
-    m_pInfo         = pInfo;
-    m_NumberOfTubes = NumberOfTubes;
+    m_pDriver          = pDriver;
+    m_pBitOffsetStream = pBitOffsetStream;
+    m_NumberOfTubes    = NumberOfTubes;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ void IV_11_DigitDriver::GridControl(bool IsItDriven)
 
     for(int Offset = 0; Offset < m_NumberOfTubes; Offset++)
     {
-        StreamIndex = m_pInfo[Offset] + IV_GRID_OFFSET;
+        StreamIndex = m_pBitOffsetStream[Offset] + IV_GRID_OFFSET;
         m_pDriver->Set(StreamIndex, IsItDriven);
     }
 }
@@ -190,7 +190,7 @@ void IV_11_DigitDriver::Write(uint8_t Value, uint8_t Offset, bool Dot)
     }
 
     EncodedValue  = m_EncodedValue[Value];
-    EncodedValue |= ((Dot == true ) ? IV_DIGIT_DOT_VALUE : 0);
+    EncodedValue |= IV_DIGIT_DOT_VALUE; // ((Dot == true ) ? IV_DIGIT_DOT_VALUE : 0);
     WriteEncodedValue(EncodedValue, Offset);
 }
 
@@ -214,8 +214,7 @@ void IV_11_DigitDriver::WriteEncodedValue(uint8_t EncodedValue, uint8_t Offset)
 
     if(Offset < m_NumberOfTubes)
     {
-        StreamIndex = m_pInfo[Offset];
-
+        StreamIndex = m_pBitOffsetStream[Offset];
         m_pDriver->Set(StreamIndex, &EncodedValue, IV_NUMBER_OF_BIT_IN_DIGIT);
     }
 }

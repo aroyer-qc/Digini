@@ -263,14 +263,14 @@ void UART_Driver::Initialize(void)
 
         ClearFlag();
 
-        if(m_pInfo->DMA_RX.ConfigAndChannel != DMA_DISABLED)
+        if(m_pInfo->DMA_RX.Config != DMA_DISABLED)
         {
         	m_DMA_RX.Initialize(&m_pInfo->DMA_RX);
         	m_DMA_RX.SetSource((void*)&m_pUart->RDR);
         	m_DMA_RX.SetLength(m_pInfo->RX_FifoSize);
         }
 
-        if(m_pInfo->DMA_TX.ConfigAndChannel != DMA_DISABLED)
+        if(m_pInfo->DMA_TX.Config != DMA_DISABLED)
         {
         	m_DMA_TX.Initialize(&m_pInfo->DMA_TX);
         	m_DMA_TX.SetDestination((void*)&m_pUart->TDR);
@@ -544,7 +544,7 @@ SystemState_e UART_Driver::SendData(const uint8_t* pBufferTX, size_t* pSizeTX)
             m_IsItBusyTX = true;
 			m_TX_Transfer.pBuffer = (uint8_t*)pBufferTX;
 
-            if(m_pInfo->DMA_TX.ConfigAndChannel != DMA_DISABLED)
+            if(m_pInfo->DMA_TX.Config != DMA_DISABLED)
             {
 				m_TX_Transfer.u.Size  = *pSizeTX;
                 m_DMA_TX.Disable();
@@ -608,7 +608,7 @@ void UART_Driver::DMA_ConfigRX(uint8_t* pBufferRX, size_t SizeRX)
 {
     UART_Transfer_t* pTransferRX = &m_RX_Transfer;
 
-    if((m_pUart != nullptr) &&(m_pInfo->DMA_RX.ConfigAndChannel != DMA_DISABLED))
+    if((m_pUart != nullptr) &&(m_pInfo->DMA_RX.Config != DMA_DISABLED))
     {
         DMA_DisableRX();
 
@@ -643,7 +643,7 @@ void UART_Driver::DMA_ConfigRX(uint8_t* pBufferRX, size_t SizeRX)
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::DMA_EnableRX(void)
 {
-    if((m_pUart != nullptr) &&(m_pInfo->DMA_RX.ConfigAndChannel != DMA_DISABLED))
+    if((m_pUart != nullptr) &&(m_pInfo->DMA_RX.Config != DMA_DISABLED))
     {
         m_pUart->CR3 |= USART_CR3_DMAR;         // Enable the DMA transfer
         (void)m_pUart->RDR;
@@ -665,7 +665,7 @@ void UART_Driver::DMA_EnableRX(void)
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::DMA_DisableRX(void)
 {
-    if((m_pUart != nullptr) &&(m_pInfo->DMA_RX.ConfigAndChannel != DMA_DISABLED))
+    if((m_pUart != nullptr) &&(m_pInfo->DMA_RX.Config != DMA_DISABLED))
     {
         m_DMA_RX.Disable();
         CLEAR_BIT(m_pUart->CR3, USART_CR3_DMAR);
@@ -686,7 +686,7 @@ void UART_Driver::DMA_DisableRX(void)
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::DMA_EnableTX(void)
 {
-    if((m_pUart != nullptr) &&(m_pInfo->DMA_TX.ConfigAndChannel != DMA_DISABLED))
+    if((m_pUart != nullptr) &&(m_pInfo->DMA_TX.Config != DMA_DISABLED))
     {
       #if (UART_DRIVER_TX_COMPLETED_CFG == DEF_ENABLED)
         EnableTX_ISR(UART_ISR_TX_COMPLETED_MASK);
@@ -708,7 +708,7 @@ void UART_Driver::DMA_EnableTX(void)
 //-------------------------------------------------------------------------------------------------
 void UART_Driver::DMA_DisableTX(void)
 {
-    if((m_pUart != nullptr) &&(m_pInfo->DMA_TX.ConfigAndChannel != DMA_DISABLED))
+    if((m_pUart != nullptr) &&(m_pInfo->DMA_TX.Config != DMA_DISABLED))
     {
         m_DMA_TX.Disable();
         m_DMA_TX.ClearFlag();
@@ -1062,7 +1062,7 @@ void UART_Driver::IRQ_Handler(void)
             }
           #endif
 
-            if((m_pInfo->DMA_RX.ConfigAndChannel & DMA_MODE_CIRCULAR) == 0)
+            if((m_pInfo->DMA_RX.Config & DMA_MODE_CIRCULAR) == 0)
             {
                 DMA_ConfigRX(nullptr, 0); // Reset RX packet to avoid override with a new RX packet
             }
